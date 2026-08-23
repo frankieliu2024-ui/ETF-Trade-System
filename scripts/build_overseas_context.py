@@ -17,11 +17,8 @@ except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, now_utc
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
-SHANGHAI = ZoneInfo("Asia/Shanghai")
+BEIJING = ZoneInfo("Asia/Shanghai")
 
-# Formal overseas/Asia index layer used by ETF decisions. Data availability may
-# degrade an object, but an object is not silently removed from the monitoring
-# frame merely because one provider is temporarily unavailable.
 OBJECTS = {
     "NDX": {"name": "纳斯达克100指数", "symbol": "^NDX", "timezone": "America/New_York", "role": "US_TECH"},
     "SOX": {"name": "费城半导体指数", "symbol": "^SOX", "timezone": "America/New_York", "role": "US_SEMICONDUCTOR"},
@@ -80,11 +77,13 @@ def latest_valid_row(payload: dict, symbol: str, timezone_name: str) -> dict:
             ts = int(timestamps[idx])
             dt_utc = datetime.fromtimestamp(ts, timezone.utc)
             dt_local = dt_utc.astimezone(zone)
+            dt_beijing = dt_utc.astimezone(BEIJING)
             row.update({
                 "volume": volume_values[idx] if idx < len(volume_values) else None,
                 "timestamp": ts,
                 "as_of_utc": dt_utc.isoformat(timespec="seconds").replace("+00:00", "Z"),
                 "as_of_local": dt_local.isoformat(timespec="seconds"),
+                "as_of_beijing": dt_beijing.isoformat(timespec="seconds"),
                 "market_date_local": dt_local.date().isoformat(),
                 "provider_timezone": result.get("meta", {}).get("timezone", timezone_name),
                 "symbol": symbol,
@@ -94,10 +93,7 @@ def latest_valid_row(payload: dict, symbol: str, timezone_name: str) -> dict:
 
 
 def validate_latest(latest: dict) -> str:
-    low = latest.get("low")
-    high = latest.get("high")
-    open_ = latest.get("open")
-    close = latest.get("close")
+    low, high, open_, close = latest.get("low"), latest.get("high"), latest.get("open"), latest.get("close")
     if any(value is None for value in (low, high, open_, close)):
         return "FAILED"
     if not (low <= open_ <= high and low <= close <= high):
@@ -106,12 +102,9 @@ def validate_latest(latest: dict) -> str:
 
 
 def time_relation(object_id: str, latest: dict, phase: str, generated_utc: datetime) -> str:
-    sh_date = generated_utc.astimezone(SHANGHAI).date().isoformat()
+    sh_date = generated_utc.astimezone(BEIJING).date().isoformat()
     source_date = latest.get("market_date_local", "")
     if object_id in {"NDX", "SOX"}:
-        # During normal A-share trading hours the US cash market is not in the
-        # same session. Treat the latest cash-index bar as prior-US-session
-        # evidence, never as simultaneous A-share intraday evidence.
         return "PREVIOUS_US_SESSION_REFERENCE"
     if source_date == sh_date and phase == "OPEN":
         return "SAME_DAY_LIVE_OR_LATEST_PROVIDER_BAR"
@@ -126,17 +119,13 @@ def fetch_yahoo(object_id: str, spec: dict, generated_utc: datetime) -> dict:
     phase = market_phase(spec["timezone"], generated_utc)
     quality = validate_latest(latest)
     return {
-        "object": object_id,
-        "name": spec["name"],
-        "reference_role": spec["role"],
-        "provider": "yahoo_chart_api",
-        "symbol": spec["symbol"],
-        "market_timezone": spec["timezone"],
+        "object": object_id, "name": spec["name"], "reference_role": spec["role"],
+        "provider": "yahoo_chart_api", "symbol": spec["symbol"], "market_timezone": spec["timezone"],
         "market_phase_at_generation": phase,
         "time_relation_to_a_share": time_relation(object_id, latest, phase, generated_utc),
-        "quality_status": quality,
-        "latest": latest,
-        "decision_note": "必须按as_of与market_phase解释；不同市场非同一时点，不得把上一收盘、盘中和当日收盘混为同步信号。",
+        "quality_status": quality, "latest": latest,
+        "display_time_rule": "正式输出优先显示latest.as_of_beijing（北京时间）；同时保留本地市场时区和market_phase用于跨市场解释。",
+        "decision_note": "必须按北京时间数据时点与market_phase解释；不同市场非同一时点，不得把上一收盘、盘中和当日收盘混为同步信号。",
     }
 
 
@@ -147,10 +136,7 @@ def fetch_hstech_hithink(generated_utc: datetime) -> dict:
     thscode = os.environ.get("HSTECH_HITHINK_CODE", "HS2083")
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "hstech.json"
-        completed = subprocess.run(
-            [cli, "index", "snapshot", "--thscodes", thscode, "--output", str(out), "--format", "json"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=25, check=False,
-        )
+        completed = subprocess.run([cli, "index", "snapshot", "--thscodes", thscode, "--output", str(out), "--format", "json"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=25, check=False)
         if completed.returncode != 0 or not out.exists():
             raise RuntimeError((completed.stderr or "hithink HS2083 request failed")[-500:])
         obj = json.loads(out.read_text(encoding="utf-8"))
@@ -161,28 +147,16 @@ def fetch_hstech_hithink(generated_utc: datetime) -> dict:
         required = ("open_price", "high_price", "low_price", "last_price")
         if any(item.get(k) is None for k in required):
             raise RuntimeError("HS2083 missing OHLC fields")
-        captured = generated_utc.astimezone(ZoneInfo("Asia/Hong_Kong"))
-        latest = {
-            "open": item["open_price"], "high": item["high_price"], "low": item["low_price"], "close": item["last_price"],
-            "volume": item.get("volume"), "amount": item.get("turnover"),
-            "as_of_utc": generated_utc.isoformat(timespec="seconds").replace("+00:00", "Z"),
-            "as_of_local": captured.isoformat(timespec="seconds"),
-            "market_date_local": captured.date().isoformat(),
-            "provider_timezone": "Asia/Hong_Kong", "symbol": thscode,
-        }
+        local = generated_utc.astimezone(ZoneInfo("Asia/Hong_Kong"))
+        beijing = generated_utc.astimezone(BEIJING)
+        latest = {"open": item["open_price"], "high": item["high_price"], "low": item["low_price"], "close": item["last_price"], "volume": item.get("volume"), "amount": item.get("turnover"), "as_of_utc": generated_utc.isoformat(timespec="seconds").replace("+00:00", "Z"), "as_of_local": local.isoformat(timespec="seconds"), "as_of_beijing": beijing.isoformat(timespec="seconds"), "market_date_local": local.date().isoformat(), "provider_timezone": "Asia/Hong_Kong", "symbol": thscode}
         phase = market_phase("Asia/Hong_Kong", generated_utc)
-        return {
-            "object": "HSTECH", "name": "恒生科技指数", "reference_role": "HK_TECH",
-            "provider": "hithink-finance", "symbol": thscode, "market_timezone": "Asia/Hong_Kong",
-            "market_phase_at_generation": phase,
-            "time_relation_to_a_share": time_relation("HSTECH", latest, phase, generated_utc),
-            "quality_status": validate_latest(latest), "latest": latest,
-            "decision_note": "恒生科技与A股交易时段部分重合但收盘时点不同；A股15:00时香港市场通常仍未完成当日收盘，必须按盘中时点解释。",
-        }
+        return {"object": "HSTECH", "name": "恒生科技指数", "reference_role": "HK_TECH", "provider": "hithink-finance", "symbol": thscode, "market_timezone": "Asia/Hong_Kong", "market_phase_at_generation": phase, "time_relation_to_a_share": time_relation("HSTECH", latest, phase, generated_utc), "quality_status": validate_latest(latest), "latest": latest, "display_time_rule": "正式输出优先显示latest.as_of_beijing（北京时间）。", "decision_note": "恒生科技与A股交易时段部分重合但收盘时点不同；必须按北京时间数据时点和香港market_phase解释。"}
 
 
 def build() -> dict:
     generated_utc = datetime.now(timezone.utc)
+    generated_beijing = generated_utc.astimezone(BEIJING)
     objects = {}
     pass_count = 0
     for object_id, spec in OBJECTS.items():
@@ -200,27 +174,19 @@ def build() -> dict:
                 pass_count += 1
             objects[object_id] = record
         except Exception as exc:
-            objects[object_id] = {
-                "object": object_id,
-                "name": spec["name"],
-                "reference_role": spec["role"],
-                "provider": "hithink-finance/yahoo_chart_api" if object_id == "HSTECH" else "yahoo_chart_api",
-                "symbol": "HS2083/^HSTECH" if object_id == "HSTECH" else spec["symbol"],
-                "market_timezone": spec["timezone"],
-                "market_phase_at_generation": market_phase(spec["timezone"], generated_utc),
-                "quality_status": "FAILED",
-                "error": str(exc)[-500:],
-                "decision_note": "监测对象保留但当前数据不可用；不得用旧值冒充当前状态，也不得因单一对象失败删除该监测职责。",
-            }
+            objects[object_id] = {"object": object_id, "name": spec["name"], "reference_role": spec["role"], "provider": "hithink-finance/yahoo_chart_api" if object_id == "HSTECH" else "yahoo_chart_api", "symbol": "HS2083/^HSTECH" if object_id == "HSTECH" else spec["symbol"], "market_timezone": spec["timezone"], "market_phase_at_generation": market_phase(spec["timezone"], generated_utc), "generated_at_beijing": generated_beijing.isoformat(timespec="seconds"), "quality_status": "FAILED", "error": str(exc)[-500:], "decision_note": "监测对象保留但当前数据不可用；不得用旧值冒充当前状态。"}
     overall = "PASS" if pass_count == len(OBJECTS) else ("DEGRADED" if pass_count else "FAILED")
     return {
         "generated_at": now_utc(),
+        "generated_at_beijing": generated_beijing.isoformat(timespec="seconds"),
+        "display_timezone": "Asia/Shanghai",
         "a_share_reference_timezone": "Asia/Shanghai",
         "scope": "FORMAL_OVERSEAS_AND_ASIA_INDEX_LAYER",
         "quality_status": overall,
         "required_objects": list(OBJECTS.keys()),
         "objects": objects,
-        "time_alignment_rule": "跨市场证据必须同时读取市场本地时区、as_of、market_phase和time_relation_to_a_share。美国现金指数在A股交易时段通常代表上一美股交易时段；亚洲市场按同日盘中/已收盘/上一交易日分别解释；不得把不同市场非同步价格当作同一时点共振。",
+        "output_time_rule": "任何正式行情输出必须明确标注数据时点，并统一优先转换为北京时间；海外对象同时保留market_timezone和market_phase，禁止只显示自然日期。",
+        "time_alignment_rule": "跨市场证据必须同时读取北京时间数据时点、市场本地时区、as_of_local、market_phase和time_relation_to_a_share。美国现金指数在A股交易时段通常代表上一美股交易时段；亚洲市场按同日盘中/已收盘/上一交易日分别解释。",
         "decision_boundary": "海外与亚洲指数是正式市场监测层的重要组成，但只作风险背景、增强或反向证据；必须继续经过本地传导与目标ETF自身反馈，不能单独生成ETF买卖动作。",
     }
 
@@ -228,11 +194,7 @@ def build() -> dict:
 def main() -> None:
     context = build()
     atomic_json_write(ROOT / "data" / "state" / "overseas_context.json", context)
-    print(json.dumps({
-        "ok": True,
-        "quality_status": context["quality_status"],
-        "objects": {k: v["quality_status"] for k, v in context["objects"].items()},
-    }, ensure_ascii=False))
+    print(json.dumps({"ok": True, "generated_at_beijing": context["generated_at_beijing"], "quality_status": context["quality_status"], "objects": {k: v["quality_status"] for k, v in context["objects"].items()}}, ensure_ascii=False))
 
 
 if __name__ == "__main__":
