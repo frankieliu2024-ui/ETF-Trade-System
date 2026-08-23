@@ -12,11 +12,14 @@ on:
         required: true
         default: "false"
   schedule:
-    # UTC. Trigger every 10 minutes across the possible A-share window.
-    # The runner applies the Asia/Shanghai session guard. Cron is a trigger target,
-    # not a promise of exact execution time; decision freshness is determined from
-    # captured_at and config/runtime_policy.json.
-    - cron: "*/10 1-7 * * 1-5"
+    # UTC. Target only the A-share trading windows plus the close-grace pulse.
+    # 09:30-11:30 Asia/Shanghai = 01:30-03:30 UTC.
+    - cron: "30,40,50 1 * * 1-5"
+    - cron: "*/10 2 * * 1-5"
+    - cron: "0,10,20,30 3 * * 1-5"
+    # 13:00-15:10 Asia/Shanghai = 05:00-07:10 UTC.
+    - cron: "*/10 5-6 * * 1-5"
+    - cron: "0,10 7 * * 1-5"
 
 permissions:
   contents: write
@@ -42,12 +45,19 @@ jobs:
           python-version: "3.11"
       - name: Run system consistency preflight
         run: python scripts/check_system_consistency.py
+      - name: Check exchange calendar and capture window
+        id: session_gate
+        run: python scripts/runtime_session_gate.py
       - uses: actions/setup-node@v4
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
         with:
           node-version: "20"
       - name: Install hithink-finance CLI
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
         run: npm install --global @hithink-tech/hithink-finance-cli
       - name: Run data-only snapshot
+        id: capture
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
         env:
           NODE_LABEL: ${{ github.event.inputs.node || 'scheduled' }}
           PROBE_ONLY: ${{ github.event.inputs.probe_only || 'false' }}
@@ -57,29 +67,51 @@ jobs:
           else
             python scripts/cloud_runner_snapshot.py --node "$NODE_LABEL"
           fi
+      - name: Verify a new valid snapshot was written
+        id: snapshot_result
+        if: ${{ steps.capture.outcome == 'success' }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('data/state/runtime_health.json')
+          written = False
+          reason = 'runtime_health_missing'
+          if path.exists():
+              data = json.loads(path.read_text(encoding='utf-8'))
+              status = data.get('status', '')
+              same_run = str(data.get('workflow_run_id', '')) == str(os.environ.get('GITHUB_RUN_ID', ''))
+              written = status == 'PASS' and same_run and bool(data.get('latest_snapshot'))
+              reason = status or 'missing_status'
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
+              f.write(f"snapshot_written={'true' if written else 'false'}\n")
+              f.write(f"reason={reason}\n")
+          print(json.dumps({'snapshot_written': written, 'reason': reason}, ensure_ascii=False))
+          PY
       - name: Build objective intraday market delta
-        if: ${{ success() && github.event.inputs.probe_only != 'true' }}
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_market_delta.py
       - name: Build resilient overseas core index context
-        if: ${{ success() && github.event.inputs.probe_only != 'true' }}
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_overseas_context.py
       - name: Build dynamic stock context from current account
-        if: ${{ success() && github.event.inputs.probe_only != 'true' }}
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_stock_context.py
       - name: Collect current account-stock market facts
-        if: ${{ success() && github.event.inputs.probe_only != 'true' }}
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_account_stock_market.py
       - name: Build state context and candidates
-        if: ${{ success() && github.event.inputs.probe_only != 'true' }}
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_state_context.py
       - name: Build on-demand query context
-        if: ${{ success() && github.event.inputs.probe_only != 'true' }}
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_query_context.py
       - name: Build post-market review event when closed
-        if: ${{ success() && github.event.inputs.probe_only != 'true' }}
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_post_market_review.py
       - name: Build ChatGPT task read probe
-        if: ${{ success() && github.event.inputs.probe_only != 'true' }}
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_chatgpt_task_probe.py
       - name: Commit runtime/data artifacts
         if: ${{ always() }}
