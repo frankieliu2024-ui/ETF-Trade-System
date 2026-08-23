@@ -17,17 +17,31 @@
 
 第一层：指数。正式固定复核上证指数、创业板指、NDX、SOX、N225、KOSPI、TWII、HSTECH；其他指数或商品只按具体假设条件调用。
 
-第二层：ETF。日常统一分为“持仓ETF + 观察ETF”。两类均持续获取行情并参加机会扫描、生命周期管理和统一资本比较；观察身份不自动产生Trial/Confirm权限，实际交易仍服从MASTER完整执行链。
+第二层：ETF。日常统一分为“持仓ETF + 观察ETF”。两类均持续获取行情并参加机会扫描、生命周期管理和统一资本比较；观察身份不自动产生Trial/Confirm权限，实际交易仍服从MASTER完整执行链。机器采集唯一运行清单为 `config/market/etf_monitor_universe.json`；它只定义需要持续采集的ETF全集，不写死持仓/观察身份。Dashboard中的“持仓ETF＋观察ETF”全集必须与该机器运行清单一致。
 
 第三层：个股。默认个股监测不维护固定股票代码，而由当日账户事实动态生成当前实际持有的非ETF个股。已确认资产角色为 `IPO_BASE_STOCK` 的个股进入打新底仓监测；首次出现且角色未知的个股标记 `UNCLASSIFIED_STOCK`，要求一次性确认，不依据代码或名称猜测用途。全部卖出后退出当前默认监测。
 
 产业链观察个股属于第三层的条件调用能力，不属于默认固定名单。只有ETF候选、持仓、行业冲击或产业传导分析需要时才临时发现和调用，可覆盖A股、美股、港股、韩股、台股、日股及其他已核验市场。历史上观察过三星电子、SK海力士或任何A股/美股公司，不构成永久日常监测资格。条件产业链个股只作背景、传导、增强或反向证据，不产生ETF领先信号，不单独生成ETF动作；跨市场个股同样必须完成时点对齐。
 
+## 系统一致性门禁
+
+一致性检查是相关更新维护后的基础操作。凡修改四个正式文件、三层监测对象、配置、数据入口、运行脚本、查询上下文或GitHub Actions，完成后必须运行 `scripts/check_system_consistency.py`。
+
+检查结果写入 `data/state/system_consistency.json`：
+
+- `PASS`：结构一致，可进入生产；
+- `WARNING`：例如当日账户事实缺失等正常状态，不阻断行情采集，但正式交易判断仍受对应门禁约束；
+- `FAIL`：正式文件、ETF全集、指数全集、动态个股规则、路径、脚本或workflow存在硬冲突，必须先修复，不得把当前结构当作完整生产状态。
+
+`.github/workflows/system-consistency.yml` 在相关文件推送到main后自动运行；`.github/workflows/market-snapshot.yml` 在每次行情采集前再次执行硬一致性预检。因此“一致性”同时覆盖维护后验收和生产前门禁。
+
 ## 运行读取路径
 
 - 状态：`data/state/CURRENT.json`、`data/state/account_fact.json`、`data/state/review_context.json`、`data/state/chatgpt_task_probe.json`
+- 系统一致性：`data/state/system_consistency.json`、`scripts/check_system_consistency.py`
+- ETF机器运行全集：`config/market/etf_monitor_universe.json`
 - 动态资产角色：`data/state/asset_roles.json`
-- 动态个股层：`data/state/stock_context.json`
+- 动态个股层：`data/state/stock_context.json`、`data/state/stock_market_context.json`
 - 个股监测策略：`config/market/stock_monitor_policy.json`
 - 运行健康：`data/state/runtime_health.json`
 - 实时相邻变化：`data/state/market_delta.json`
@@ -37,14 +51,14 @@
 - 行情：`data/market/snapshots/`
 - 审计：`data/market/audit/`
 - 查询上下文：`data/state/query_context.json`、`data/state/decision_context.json`
-- 云端 workflow：`.github/workflows/market-snapshot.yml`
+- 云端 workflow：`.github/workflows/market-snapshot.yml`、`.github/workflows/system-consistency.yml`
 - 运行脚本：`scripts/`
 - 测试：`tests/`；回放：`tests/replay/`；验收：`tests/validation/`
 - 历史报告：`archive/reports/`
 
 ## 实时读取原则
 
-云端采集目标频率不等于决策时钟。GitHub Actions可能存在调度排队，行情接口也可能延迟，因此任何“当前ETF判断”必须以 `CURRENT.json` 的 `captured_at` 为基准，结合 `config/runtime_policy.json` 重新计算数据年龄，并读取 `runtime_health.json`。
+云端采集目标频率不等于决策时钟。GitHub Actions可能存在调度排队，行情接口也可能延迟，因此任何“当前ETF判断”必须先确认 `system_consistency.json` 不存在硬FAIL，再以 `CURRENT.json` 的 `captured_at` 为基准，结合 `config/runtime_policy.json` 重新计算数据年龄，并读取 `runtime_health.json`。
 
 - `FRESH`：可作为当前行情事实进入正式决策链。
 - `DEGRADED`：仅作背景和连续性复核；若会改变机会、金额或卖出动作，优先等待下一有效脉冲或结合用户当前截图复核。
@@ -91,6 +105,8 @@
 
 |故障|系统动作|决策边界|
 |---|---|---|
+|系统一致性FAIL|停止把当前结构当作完整生产状态，先修复冲突|不得继续用冲突名单/路径形成正式判断|
+|系统一致性WARNING|继续数据链，但保留对应门禁|正常状态缺口不冒充结构故障|
 |GitHub Actions调度延迟|按 `captured_at` 重新计算数据年龄|不按cron计划时刻冒充行情时点|
 |单次hithink采集失败|保留上一有效CURRENT；记录FAILED|旧行情按FRESH/DEGRADED/STALE处理|
 |旧任务晚到|SUPERSEDED或被并发策略取消|不得覆盖更新快照|
@@ -106,11 +122,11 @@
 
 ## 读取场景
 
-1. ChatGPT规则读取：先读本索引，再读一级目录的 `ETF规则_MASTER.md`。
-2. ChatGPT当前状态：先读 `CURRENT.json`、`runtime_health.json`、`stock_context.json` 和运行策略；需要人工当前状态时再读一级目录的 `ETF当前状态_DASHBOARD.md`。
-3. 盘中查询：读 `CURRENT.json`、最新行情、`market_delta.json`、`overseas_context.json`、`stock_context.json`、`runtime_health.json` 和 `query_context.json`；按查询时刻重新判断新鲜度，不绑定固定截图节点。
-4. 盘后维护：读 `post_market_review/post_market_review_event.json`、`review_context.json`、账户事实、动态资产角色和四个正式文件。
+1. ChatGPT规则读取：先读本索引和 `system_consistency.json`，再读一级目录的 `ETF规则_MASTER.md`。
+2. ChatGPT当前状态：先读一致性状态、`CURRENT.json`、`runtime_health.json`、ETF运行全集、`stock_context.json` 和运行策略；需要人工当前状态时再读一级目录的 `ETF当前状态_DASHBOARD.md`。
+3. 盘中查询：读一致性状态、`CURRENT.json`、最新行情、`market_delta.json`、`overseas_context.json`、ETF运行全集、`stock_context.json`、`stock_market_context.json`、`runtime_health.json` 和 `query_context.json`；按查询时刻重新判断新鲜度，不绑定固定截图节点。
+4. 盘后维护：读 `post_market_review/post_market_review_event.json`、`review_context.json`、账户事实、动态资产角色和四个正式文件；维护结束后重新执行一致性检查。
 
 ## 写入边界
 
-自动程序可以生成状态、行情、审计、候选草稿、运行健康状态和报告；不得自动写 MASTER，不得生成交易动作，不得把历史回放文件当生产状态。自动识别账户中出现的新个股不等于自动改变其资产角色；角色首次确认仍需用户事实或明确记录。
+自动程序可以生成状态、行情、审计、候选草稿、运行健康状态、一致性报告和报告；不得自动写 MASTER，不得生成交易动作，不得把历史回放文件当生产状态。自动识别账户中出现的新个股不等于自动改变其资产角色；角色首次确认仍需用户事实或明确记录。
