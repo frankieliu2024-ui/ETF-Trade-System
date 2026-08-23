@@ -17,7 +17,7 @@ on:
     - cron: "30 3 * * 1-5"
     - cron: "30 5 * * 1-5"
     - cron: "30 6 * * 1-5"
-    - cron: "10 7 * * 1-5"
+    - cron: "0 7 * * 1-5"
 
 permissions:
   contents: write
@@ -54,11 +54,14 @@ jobs:
       - name: Build state context and candidates
         if: ${{ github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_state_context.py
+      - name: Build notification event
+        if: ${{ github.event.inputs.probe_only != 'true' }}
+        run: python scripts/build_notification_event.py
       - name: Commit data artifacts only
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/market/snapshots data/state/CURRENT.json data/state/dashboard_update_candidate.json decision_context.json events/events.jsonl
+          git add data/market/snapshots data/state/CURRENT.json data/state/dashboard_update_candidate.json decision_context.json events/events.jsonl notifications/notification_event.json
           git diff --cached --quiet || git commit -m "data: record market snapshot"
           git push
 
