@@ -25,23 +25,29 @@ ETF = [
     ("513180", "513180.SH"), ("518880", "518880.SH"),
 ]
 INDEX = [("000001", "000001.SH"), ("399006", "399006.SZ")]
-NODES = {"0925", "1030", "1130", "1330", "1430", "close", "manual", "scheduled"}
+NODES = {"0925", "1030", "1130", "1330", "1430", "close", "live", "manual", "scheduled"}
 PLANNED_TIMES = {"0925": "09:25", "1030": "10:30", "1130": "11:30", "1330": "13:30", "1430": "14:30", "close": "15:00"}
 
 
+def in_a_share_capture_window(captured_dt: datetime) -> bool:
+    """Return True only during the active A-share capture windows.
+
+    This is a runtime guard for scheduled cloud collection. It intentionally
+    replaces the old assumption that decisions occur only at fixed screenshot
+    nodes. Exchange-holiday validation remains a separate data-quality concern.
+    """
+    if captured_dt.weekday() >= 5:
+        return False
+    minute = captured_dt.hour * 60 + captured_dt.minute
+    morning = 9 * 60 + 30 <= minute <= 11 * 60 + 30
+    afternoon = 13 * 60 <= minute <= 15 * 60
+    return morning or afternoon
+
+
 def resolve_scheduled_node(captured_dt: datetime) -> str:
-    hhmm = captured_dt.hour * 60 + captured_dt.minute
-    if hhmm < 10 * 60:
-        return "0925"
-    if hhmm < 11 * 60 + 15:
-        return "1030"
-    if hhmm < 12 * 60 + 30:
-        return "1130"
-    if hhmm < 14 * 60:
-        return "1330"
-    if hhmm < 15 * 60:
-        return "1430"
-    return "close"
+    # Scheduled production runs are now time-agnostic intraday pulses.
+    # Keep legacy node labels only for explicit/manual compatibility and replay.
+    return "close" if (captured_dt.hour * 60 + captured_dt.minute) >= 15 * 60 else "live"
 
 
 def cli_path() -> str:
@@ -102,15 +108,28 @@ def main() -> int:
     captured_dt = datetime.now(SHANGHAI)
     captured = captured_dt.isoformat(timespec="seconds")
     market_date = captured_dt.date().isoformat()
+
+    if args.node == "scheduled" and not args.probe_only and not in_a_share_capture_window(captured_dt):
+        print(json.dumps({
+            "ok": True,
+            "skipped": True,
+            "reason": "outside_a_share_capture_window",
+            "market_date": market_date,
+            "captured_at": captured,
+        }, ensure_ascii=False))
+        return 0
+
     node = resolve_scheduled_node(captured_dt) if args.node == "scheduled" else args.node
     planned_time = PLANNED_TIMES.get(node, "")
     planned_dt = None
     if planned_time:
         planned_dt = captured_dt.replace(hour=int(planned_time[:2]), minute=int(planned_time[3:]), second=0, microsecond=0)
     delay_seconds = int((captured_dt - planned_dt).total_seconds()) if planned_dt else None
+
     if captured_dt.weekday() >= 5 and not args.probe_only:
         print(json.dumps({"ok": False, "reason": "non_trading_weekend", "market_date": market_date}, ensure_ascii=False))
         return 2
+
     cli = cli_path()
     run_dir = ROOT / "data" / "market" / "raw" / "hithink" / market_date
     snapshot_dir = ROOT / "data" / "market" / "snapshots"
@@ -128,9 +147,11 @@ def main() -> int:
         if thscode not in returned:
             raise RuntimeError(f"missing index row for {thscode}")
         rows.append(row("A_SHARE_INDEX", code, thscode, returned[thscode], captured, obj.get("data", {}).get("timestamp")))
+
     if args.probe_only:
         print(json.dumps({"ok": True, "probe_only": True, "count": len(rows), "market_date": market_date, "quality_status": "PASS", "node_written": False}, ensure_ascii=False))
         return 0
+
     snapshot = {
         "market_date": market_date, "node": node, "planned_time": planned_time,
         "actual_run_time": captured, "delay_seconds": delay_seconds,
@@ -148,7 +169,12 @@ def main() -> int:
         root=ROOT, market_date=market_date, node=node, captured_at=captured,
         latest_snapshot=str(target.relative_to(ROOT)).replace("\\", "/"),
         snapshot_commit=os.environ.get("GITHUB_SHA", ""), node_status="READY",
-        data_freshness={"status": "FRESH", "provider": "hithink-finance", "count": len(rows)},
+        data_freshness={
+            "status": "FRESH",
+            "provider": "hithink-finance",
+            "count": len(rows),
+            "capture_mode": "INTRADAY_PULSE" if node == "live" else "CLOSE",
+        },
     )
     print(json.dumps({"ok": True, "snapshot": str(target), "count": len(rows), "market_date": market_date, "node": node, "planned_time": planned_time, "delay_seconds": delay_seconds}, ensure_ascii=False))
     return 0
@@ -160,4 +186,3 @@ if __name__ == "__main__":
     except Exception as exc:
         print(f"cloud runner failed: {exc}", file=sys.stderr)
         raise SystemExit(1)
-
