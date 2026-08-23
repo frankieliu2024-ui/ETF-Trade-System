@@ -7,16 +7,38 @@ import shutil
 import subprocess
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from state_manager import update_current
+from state_manager import atomic_json_write, read_current, update_current
 
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
-RETRY_LIMIT = int(os.environ.get("HITHINK_RETRY_LIMIT", "3"))
-TIMEOUT_SECONDS = int(os.environ.get("HITHINK_TIMEOUT_SECONDS", "60"))
+UTC = timezone.utc
+
+
+def load_runtime_policy() -> dict:
+    path = ROOT / "config" / "runtime_policy.json"
+    default = {
+        "target_cadence_seconds": 600,
+        "fresh_max_age_seconds": 900,
+        "degraded_max_age_seconds": 1500,
+        "stale_after_seconds": 1500,
+        "provider_timeout_seconds": 25,
+        "provider_retry_limit": 2,
+        "provider_max_workers": 3,
+    }
+    if path.exists():
+        default.update(json.loads(path.read_text(encoding="utf-8")))
+    return default
+
+
+POLICY = load_runtime_policy()
+RETRY_LIMIT = int(os.environ.get("HITHINK_RETRY_LIMIT", POLICY["provider_retry_limit"]))
+TIMEOUT_SECONDS = int(os.environ.get("HITHINK_TIMEOUT_SECONDS", POLICY["provider_timeout_seconds"]))
+MAX_WORKERS = int(os.environ.get("HITHINK_MAX_WORKERS", POLICY["provider_max_workers"]))
 
 ETF = [
     ("561980", "561980.SH"), ("588000", "588000.SH"),
@@ -29,13 +51,15 @@ NODES = {"0925", "1030", "1130", "1330", "1430", "close", "live", "manual", "sch
 PLANNED_TIMES = {"0925": "09:25", "1030": "10:30", "1130": "11:30", "1330": "13:30", "1430": "14:30", "close": "15:00"}
 
 
-def in_a_share_capture_window(captured_dt: datetime) -> bool:
-    """Return True only during the active A-share capture windows.
+def now_shanghai() -> datetime:
+    return datetime.now(SHANGHAI)
 
-    This is a runtime guard for scheduled cloud collection. It intentionally
-    replaces the old assumption that decisions occur only at fixed screenshot
-    nodes. Exchange-holiday validation remains a separate data-quality concern.
-    """
+
+def now_utc_text() -> str:
+    return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+def in_a_share_capture_window(captured_dt: datetime) -> bool:
     if captured_dt.weekday() >= 5:
         return False
     minute = captured_dt.hour * 60 + captured_dt.minute
@@ -45,8 +69,6 @@ def in_a_share_capture_window(captured_dt: datetime) -> bool:
 
 
 def resolve_scheduled_node(captured_dt: datetime) -> str:
-    # Scheduled production runs are now time-agnostic intraday pulses.
-    # Keep legacy node labels only for explicit/manual compatibility and replay.
     return "close" if (captured_dt.hour * 60 + captured_dt.minute) >= 15 * 60 else "live"
 
 
@@ -55,6 +77,22 @@ def cli_path() -> str:
     if found:
         return found
     raise RuntimeError("hithink-finance CLI not found on PATH")
+
+
+def write_runtime_health(payload: dict) -> None:
+    base = {
+        "generated_at": now_utc_text(),
+        "workflow_run_id": os.environ.get("GITHUB_RUN_ID", ""),
+        "workflow_run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", ""),
+        "target_cadence_seconds": POLICY["target_cadence_seconds"],
+        "fresh_max_age_seconds": POLICY["fresh_max_age_seconds"],
+        "degraded_max_age_seconds": POLICY["degraded_max_age_seconds"],
+        "provider_timeout_seconds": TIMEOUT_SECONDS,
+        "provider_retry_limit": RETRY_LIMIT,
+        "provider_max_workers": MAX_WORKERS,
+    }
+    base.update(payload)
+    atomic_json_write(ROOT / "data" / "state" / "runtime_health.json", base)
 
 
 def run_json(cli: str, args: list[str], raw_path: Path) -> dict:
@@ -78,7 +116,7 @@ def run_json(cli: str, args: list[str], raw_path: Path) -> dict:
             else:
                 last_error = (completed.stderr or "CLI failed")[-500:]
         if attempt < RETRY_LIMIT:
-            time.sleep(2 ** (attempt - 1))
+            time.sleep(min(2 ** (attempt - 1), 4))
     raise RuntimeError(f"request failed after {RETRY_LIMIT} attempts: {args}; {last_error}")
 
 
@@ -100,47 +138,70 @@ def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, pr
     }
 
 
+def fetch_etf(cli: str, run_dir: Path, code: str, thscode: str, captured: str) -> dict:
+    obj = run_json(cli, ["fund", "snapshot", "--thscode", thscode], run_dir / f"ETF_{code}.json")
+    items = obj.get("data", {}).get("item") or []
+    if len(items) != 1:
+        raise RuntimeError(f"expected one ETF row for {code}, got {len(items)}")
+    return row("ETF", code, thscode, items[0], captured, obj.get("data", {}).get("timestamp"))
+
+
+def is_newer_than_current(captured_dt: datetime) -> bool:
+    current = read_current(ROOT)
+    text = current.get("captured_at", "")
+    if not text:
+        return True
+    try:
+        previous = datetime.fromisoformat(text)
+    except ValueError:
+        return True
+    if previous.tzinfo is None:
+        previous = previous.replace(tzinfo=SHANGHAI)
+    return captured_dt > previous.astimezone(SHANGHAI)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--node", default="manual", choices=sorted(NODES))
     parser.add_argument("--probe-only", action="store_true", help="Fetch and validate real data without creating a market node")
     args = parser.parse_args()
-    captured_dt = datetime.now(SHANGHAI)
+
+    run_started_monotonic = time.monotonic()
+    run_started_at = now_utc_text()
+    captured_dt = now_shanghai()
     captured = captured_dt.isoformat(timespec="seconds")
     market_date = captured_dt.date().isoformat()
 
     if args.node == "scheduled" and not args.probe_only and not in_a_share_capture_window(captured_dt):
-        print(json.dumps({
-            "ok": True,
-            "skipped": True,
+        write_runtime_health({
+            "status": "SKIPPED",
             "reason": "outside_a_share_capture_window",
             "market_date": market_date,
+            "run_started_at": run_started_at,
             "captured_at": captured,
-        }, ensure_ascii=False))
+        })
+        print(json.dumps({"ok": True, "skipped": True, "reason": "outside_a_share_capture_window", "market_date": market_date, "captured_at": captured}, ensure_ascii=False))
         return 0
 
     node = resolve_scheduled_node(captured_dt) if args.node == "scheduled" else args.node
     planned_time = PLANNED_TIMES.get(node, "")
-    planned_dt = None
-    if planned_time:
-        planned_dt = captured_dt.replace(hour=int(planned_time[:2]), minute=int(planned_time[3:]), second=0, microsecond=0)
-    delay_seconds = int((captured_dt - planned_dt).total_seconds()) if planned_dt else None
 
     if captured_dt.weekday() >= 5 and not args.probe_only:
-        print(json.dumps({"ok": False, "reason": "non_trading_weekend", "market_date": market_date}, ensure_ascii=False))
-        return 2
+        write_runtime_health({"status": "SKIPPED", "reason": "non_trading_weekend", "market_date": market_date, "run_started_at": run_started_at})
+        print(json.dumps({"ok": True, "skipped": True, "reason": "non_trading_weekend", "market_date": market_date}, ensure_ascii=False))
+        return 0
 
     cli = cli_path()
-    run_dir = ROOT / "data" / "market" / "raw" / "hithink" / market_date
+    run_dir = ROOT / "data" / "market" / "raw" / "hithink" / market_date / f"{captured_dt:%H%M%S}"
     snapshot_dir = ROOT / "data" / "market" / "snapshots"
     snapshot_dir.mkdir(parents=True, exist_ok=True)
+
     rows: list[dict] = []
-    for code, thscode in ETF:
-        obj = run_json(cli, ["fund", "snapshot", "--thscode", thscode], run_dir / f"ETF_{code}.json")
-        items = obj.get("data", {}).get("item") or []
-        if len(items) != 1:
-            raise RuntimeError(f"expected one ETF row for {code}, got {len(items)}")
-        rows.append(row("ETF", code, thscode, items[0], captured, obj.get("data", {}).get("timestamp")))
+    with ThreadPoolExecutor(max_workers=max(1, MAX_WORKERS)) as pool:
+        futures = {pool.submit(fetch_etf, cli, run_dir, code, thscode, captured): code for code, thscode in ETF}
+        for future in as_completed(futures):
+            rows.append(future.result())
+
     obj = run_json(cli, ["index", "snapshot", "--thscodes", ",".join(x[1] for x in INDEX)], run_dir / "INDEX_core.json")
     returned = {x.get("thscode"): x for x in (obj.get("data", {}).get("item") or [])}
     for code, thscode in INDEX:
@@ -148,35 +209,65 @@ def main() -> int:
             raise RuntimeError(f"missing index row for {thscode}")
         rows.append(row("A_SHARE_INDEX", code, thscode, returned[thscode], captured, obj.get("data", {}).get("timestamp")))
 
+    rows.sort(key=lambda x: (x["asset_class"], x["symbol"]))
+    acquisition_seconds = round(time.monotonic() - run_started_monotonic, 3)
+
     if args.probe_only:
-        print(json.dumps({"ok": True, "probe_only": True, "count": len(rows), "market_date": market_date, "quality_status": "PASS", "node_written": False}, ensure_ascii=False))
+        write_runtime_health({
+            "status": "PROBE_PASS", "market_date": market_date, "run_started_at": run_started_at,
+            "captured_at": captured, "acquisition_seconds": acquisition_seconds, "count": len(rows),
+        })
+        print(json.dumps({"ok": True, "probe_only": True, "count": len(rows), "market_date": market_date, "quality_status": "PASS", "node_written": False, "acquisition_seconds": acquisition_seconds}, ensure_ascii=False))
+        return 0
+
+    if not is_newer_than_current(captured_dt):
+        write_runtime_health({
+            "status": "SUPERSEDED", "reason": "newer_current_already_exists", "market_date": market_date,
+            "run_started_at": run_started_at, "captured_at": captured, "acquisition_seconds": acquisition_seconds,
+        })
+        print(json.dumps({"ok": True, "skipped": True, "reason": "newer_current_already_exists", "captured_at": captured}, ensure_ascii=False))
         return 0
 
     snapshot = {
         "market_date": market_date, "node": node, "planned_time": planned_time,
-        "actual_run_time": captured, "delay_seconds": delay_seconds,
-        "workflow_run_id": os.environ.get("GITHUB_RUN_ID", ""),
-        "captured_at": captured,
-        "timezone": "Asia/Shanghai", "provider": "hithink-finance",
-        "quality_status": "PASS", "count": len(rows), "rows": rows,
+        "actual_run_time": captured, "workflow_run_id": os.environ.get("GITHUB_RUN_ID", ""),
+        "captured_at": captured, "timezone": "Asia/Shanghai", "provider": "hithink-finance",
+        "quality_status": "PASS", "count": len(rows),
+        "runtime": {
+            "acquisition_seconds": acquisition_seconds,
+            "target_cadence_seconds": POLICY["target_cadence_seconds"],
+            "provider_timeout_seconds": TIMEOUT_SECONDS,
+            "provider_retry_limit": RETRY_LIMIT,
+            "provider_max_workers": MAX_WORKERS,
+        },
+        "rows": rows,
     }
-    name = f"{captured_dt:%Y-%m-%d_%H%M}.json"
+    name = f"{captured_dt:%Y-%m-%d_%H%M%S}.json"
     temp = snapshot_dir / f".{name}.tmp"
     target = snapshot_dir / name
     temp.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
     temp.replace(target)
+
     update_current(
         root=ROOT, market_date=market_date, node=node, captured_at=captured,
         latest_snapshot=str(target.relative_to(ROOT)).replace("\\", "/"),
         snapshot_commit=os.environ.get("GITHUB_SHA", ""), node_status="READY",
         data_freshness={
-            "status": "FRESH",
-            "provider": "hithink-finance",
-            "count": len(rows),
+            "status": "FRESH", "provider": "hithink-finance", "count": len(rows),
             "capture_mode": "INTRADAY_PULSE" if node == "live" else "CLOSE",
+            "captured_at": captured,
+            "target_cadence_seconds": POLICY["target_cadence_seconds"],
+            "fresh_max_age_seconds": POLICY["fresh_max_age_seconds"],
+            "degraded_max_age_seconds": POLICY["degraded_max_age_seconds"],
+            "acquisition_seconds": acquisition_seconds,
         },
     )
-    print(json.dumps({"ok": True, "snapshot": str(target), "count": len(rows), "market_date": market_date, "node": node, "planned_time": planned_time, "delay_seconds": delay_seconds}, ensure_ascii=False))
+    write_runtime_health({
+        "status": "PASS", "market_date": market_date, "node": node, "run_started_at": run_started_at,
+        "captured_at": captured, "acquisition_seconds": acquisition_seconds, "count": len(rows),
+        "latest_snapshot": str(target.relative_to(ROOT)).replace("\\", "/"),
+    })
+    print(json.dumps({"ok": True, "snapshot": str(target), "count": len(rows), "market_date": market_date, "node": node, "acquisition_seconds": acquisition_seconds}, ensure_ascii=False))
     return 0
 
 
@@ -184,5 +275,15 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except Exception as exc:
+        try:
+            write_runtime_health({
+                "status": "FAILED",
+                "reason": "collection_error",
+                "error": str(exc)[-1000:],
+                "failed_at": now_utc_text(),
+                "preserve_previous_current": True,
+            })
+        except Exception:
+            pass
         print(f"cloud runner failed: {exc}", file=sys.stderr)
         raise SystemExit(1)
