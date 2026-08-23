@@ -119,7 +119,7 @@ def main() -> None:
         production_replay_dir.mkdir(parents=True, exist_ok=True)
         for source in (replay_root / "data" / "market" / "snapshots" / "replay").glob("*.json"):
             shutil.copy2(source, production_replay_dir / source.name)
-        shutil.copy2(replay_root / "replay_decision_context.json", root / "replay_decision_context.json")
+        shutil.copy2(replay_root / "replay_decision_context.json", root / "tests" / "replay" / "replay_decision_context.json")
         shutil.copy2(replay_root / "data" / "state" / "CURRENT.json", root / "data" / "state" / "replay_CURRENT.json")
         shutil.copy2(replay_root / "data" / "state" / "account_fact.json", root / "data" / "state" / "replay_account_fact.json")
         print(json.dumps({"replay": "PASS", "replay_date": REPLAY_DATE, "node_count": 6, "snapshot_count": len(first_hashes), "idempotent_rerun": idempotent, "output": str(out)}, ensure_ascii=False))

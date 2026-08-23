@@ -27,7 +27,7 @@ def build(root: Path = ROOT) -> dict:
         "market_close": market_close, "latest_valid_node": node, "market_data_complete": data_complete,
         "need_account_screenshot": waiting, "account_fact_status": account["status"],
         "status": "WAITING_USER" if market_close and waiting else ("READY_FOR_REVIEW" if market_close and data_complete else "BLOCKED"),
-        "generated_at": now_utc(), "context_file": "review_context.json",
+        "generated_at": now_utc(), "context_file": "data/state/review_context.json",
         "prohibited_outputs": ["trade_amount", "buy_action", "sell_action", "order"],
     }
     review = {
@@ -44,7 +44,7 @@ def build(root: Path = ROOT) -> dict:
 
 def main() -> None:
     result = build(ROOT)
-    atomic_json_write(ROOT / "review_context.json", result["review"])
+    atomic_json_write(ROOT / "data" / "state" / "review_context.json", result["review"])
     if result["event"]["market_close"]:
         atomic_json_write(ROOT / "post_market_review" / "post_market_review_event.json", result["event"])
     print(json.dumps({"ok": True, "market_close": result["event"]["market_close"], "status": result["event"]["status"], "trade_output_generated": False}, ensure_ascii=False))

@@ -15,10 +15,10 @@
 
 ## 运行读取路径
 
-- 状态：`data/state/CURRENT.json`、`data/state/account_fact.json`、`data/state/review_context.json`
+- 状态：`data/state/CURRENT.json`、`data/state/account_fact.json`、`data/state/review_context.json`、`data/state/chatgpt_task_probe.json`
 - 行情：`data/market/snapshots/`
 - 审计：`data/market/audit/`
-- 查询上下文：`query_context.json`、`decision_context.json`
+- 查询上下文：`data/state/query_context.json`、`data/state/decision_context.json`
 - 云端 workflow：`.github/workflows/market-snapshot.yml`
 - 运行脚本：`scripts/`
 - 测试：`tests/`；回放：`tests/replay/`；验收：`tests/validation/`
@@ -28,8 +28,8 @@
 
 1. ChatGPT规则读取：先读本索引，再读一级目录的 `ETF规则_MASTER.md`。
 2. ChatGPT当前状态：读 `data/state/CURRENT.json`，需要人工当前状态时再读一级目录的 `ETF当前状态_DASHBOARD.md`。
-3. 盘中查询：读 `CURRENT.json`、最新 `data/market/snapshots/` 和 `query_context.json`。
-4. 盘后维护：读 `post_market_review/post_market_review_event.json`、`review_context.json`、账户事实和四个正式文件。
+3. 盘中查询：读 `CURRENT.json`、最新 `data/market/snapshots/` 和 `data/state/query_context.json`。
+4. 盘后维护：读 `post_market_review/post_market_review_event.json`、`data/state/review_context.json`、账户事实和四个正式文件。
 
 ## 写入边界
 

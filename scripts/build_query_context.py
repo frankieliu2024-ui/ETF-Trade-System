@@ -27,7 +27,7 @@ def build(root: Path = ROOT) -> dict:
 
 def main() -> None:
     context = build(ROOT)
-    atomic_json_write(ROOT / "query_context.json", context)
+    atomic_json_write(ROOT / "data" / "state" / "query_context.json", context)
     print(json.dumps({"ok": True, "market_date": context["market_date"], "latest_valid_node": context["latest_valid_node"], "account_fact_status": context["account_fact_status"]}, ensure_ascii=False))
 
 

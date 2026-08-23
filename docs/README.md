@@ -7,4 +7,4 @@ GitHub `main` 是 ETF-Trade-System 的云端唯一主版本。本目录承载四
 - `ETF交易复盘与经验库_2026.md`：CASE、OBS 和复盘历史；正式经验需人工边界控制。
 - `ETF市场行情档案_2026.md`：行情、成交、数据源、时点和质量事实；不写交易判断。
 
-统一路径入口见根目录 `ETF_SYSTEM_INDEX.md`。运行状态见 `data/state/`，行情快照见 `data/market/snapshots/`，历史报告见 `archive/reports/`。
+统一路径入口见根目录 `ETF_SYSTEM_INDEX.md`。运行状态和上下文见 `data/state/`，行情快照见 `data/market/snapshots/`，历史报告见 `archive/reports/`。

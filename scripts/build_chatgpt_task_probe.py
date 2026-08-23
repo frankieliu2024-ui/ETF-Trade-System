@@ -20,12 +20,12 @@ def main() -> None:
         commit = ""
     probe = {
         "repository": "frankieliu2024-ui/ETF-Trade-System", "latest_commit": commit,
-        "CURRENT_path": "data/state/CURRENT.json", "query_context_path": "query_context.json",
+        "CURRENT_path": "data/state/CURRENT.json", "query_context_path": "data/state/query_context.json",
         "post_market_review_path": "post_market_review/post_market_review_event.json", "last_update": now_utc(),
         "read_only": True, "access_verified": False,
         "note": "This is a read-only probe. Codex does not assume ChatGPT Scheduled Tasks can access a private GitHub repository.",
     }
-    atomic_json_write(ROOT / "chatgpt_task_probe.json", probe)
+    atomic_json_write(ROOT / "data" / "state" / "chatgpt_task_probe.json", probe)
     print(json.dumps({"ok": True, "latest_commit": commit, "access_verified": False}, ensure_ascii=False))
 
 

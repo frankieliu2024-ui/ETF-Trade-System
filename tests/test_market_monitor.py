@@ -5,13 +5,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 def test_monitor_config_has_three_classes_and_guards():
-    config = json.loads((ROOT / "market_monitor_config.json").read_text(encoding="utf-8"))
+    config = json.loads((ROOT / "config" / "market" / "market_monitor_config.json").read_text(encoding="utf-8"))
     assert set(config["classes"]) == {"A", "B", "C"}
     assert config["guardrails"]["no_trade_rules"] is True
     assert config["guardrails"]["no_master_write"] is True
 
 def test_matrix_covers_requested_objects_and_no_trade_language():
-    matrix = (ROOT / "market_monitor_data_matrix.md").read_text(encoding="utf-8")
+    matrix = (ROOT / "config" / "market" / "market_monitor_data_matrix.md").read_text(encoding="utf-8")
     for item in ["SOX", "NDX", "SPX", "VIX", "N225", "HSTECH", "TWII", "KOSPI", "DXY"]:
         assert item in matrix
     assert "买入" not in matrix

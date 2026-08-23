@@ -17,8 +17,8 @@
 
 ## 场景 3：无账户截图
 
-- `decision_context.json.account_fact_status=MISSING`。
-- `decision_context.json.needs_account_screenshot=true`。
+- `data/state/decision_context.json.account_fact_status=MISSING`。
+- `data/state/decision_context.json.needs_account_screenshot=true`。
 - 结果：明确要求账户截图；不生成正式金额、买入、卖出或订单，通过。
 
 ## 结论
