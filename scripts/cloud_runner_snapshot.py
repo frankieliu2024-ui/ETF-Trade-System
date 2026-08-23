@@ -79,11 +79,12 @@ def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, pr
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--node", default="manual", choices=sorted(NODES))
+    parser.add_argument("--probe-only", action="store_true", help="Fetch and validate real data without creating a market node")
     args = parser.parse_args()
     captured_dt = datetime.now(SHANGHAI)
     captured = captured_dt.isoformat(timespec="seconds")
     market_date = captured_dt.date().isoformat()
-    if captured_dt.weekday() >= 5:
+    if captured_dt.weekday() >= 5 and not args.probe_only:
         print(json.dumps({"ok": False, "reason": "non_trading_weekend", "market_date": market_date}, ensure_ascii=False))
         return 2
     cli = cli_path()
@@ -103,6 +104,9 @@ def main() -> int:
         if thscode not in returned:
             raise RuntimeError(f"missing index row for {thscode}")
         rows.append(row("A_SHARE_INDEX", code, thscode, returned[thscode], captured, obj.get("data", {}).get("timestamp")))
+    if args.probe_only:
+        print(json.dumps({"ok": True, "probe_only": True, "count": len(rows), "market_date": market_date, "quality_status": "PASS", "node_written": False}, ensure_ascii=False))
+        return 0
     snapshot = {
         "market_date": market_date, "node": args.node, "captured_at": captured,
         "timezone": "Asia/Shanghai", "provider": "hithink-finance",
@@ -131,3 +135,4 @@ if __name__ == "__main__":
     except Exception as exc:
         print(f"cloud runner failed: {exc}", file=sys.stderr)
         raise SystemExit(1)
+
