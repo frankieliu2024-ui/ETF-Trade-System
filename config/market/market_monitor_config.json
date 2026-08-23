@@ -1,5 +1,5 @@
 {
-  "version": "V1.1",
+  "version": "V1.2",
   "purpose": "数据能力与三层市场监测配置，不产生交易判断",
   "priority": ["direct_index", "reliable_alternative", "etf_proxy"],
   "providers": {
@@ -19,8 +19,33 @@
       "hstech": "A股15:00收盘时香港市场通常尚未完成当日收盘，必须按实际market_phase和as_of解释。"
     }
   },
+  "monitoring_layers": {
+    "index_monitor": {
+      "mode": "FORMAL_FIXED_LAYER",
+      "required_objects": ["000001.SH", "399006.SZ", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"],
+      "conditional_objects": ["KOSDAQ", "GOLD", "DXY", "SPX", "VIX"],
+      "rule": "正式指数层固定；条件对象仅按具体假设调用。"
+    },
+    "etf_monitor": {
+      "mode": "HOLDING_PLUS_OBSERVATION",
+      "holding_source": "当前账户事实与Dashboard",
+      "observation_source": "当前观察ETF清单",
+      "rule": "ETF层日常只分持仓ETF与观察ETF；二者均持续获取行情和参加统一扫描。观察身份不自动产生Trial/Confirm权限。"
+    },
+    "stock_monitor": {
+      "mode": "DYNAMIC_ACCOUNT_PLUS_QUERY_TIME_INDUSTRY",
+      "default_account_source": "data/state/account_fact.json",
+      "role_memory": "data/state/asset_roles.json",
+      "runtime_context": "data/state/stock_context.json",
+      "policy": "config/market/stock_monitor_policy.json",
+      "fixed_default_codes": [],
+      "rule": "默认个股监测不固定宁德时代、工业富联或任何股票代码，而是从当日账户实际非ETF持仓动态生成。已确认IPO_BASE_STOCK进入打新底仓个股监测；新出现但用途未知的个股只标记UNCLASSIFIED_STOCK并要求一次确认。产业链个股不设固定名单，按ETF候选、持仓、行业冲击或传导分析需要临时发现和调用。",
+      "conditional_industry_scope": ["A_SHARE", "US", "HK", "KR", "TW", "JP", "OTHER_VERIFIED"],
+      "examples_are_not_watchlist": true
+    }
+  },
   "classes": {
-    "A": {"name": "直接指数监测", "objects": [
+    "A": {"name": "正式指数层", "objects": [
       {"id":"000001.SH","name":"上证指数","preferred_source":"hithink_finance","status":"ACTIVE"},
       {"id":"399006.SZ","name":"创业板指","preferred_source":"hithink_finance","status":"ACTIVE"},
       {"id":"NDX","name":"纳斯达克100指数","preferred_source":"yahoo_chart_api","status":"ACTIVE"},
@@ -28,58 +53,10 @@
       {"id":"N225","name":"日经225指数","preferred_source":"yahoo_chart_api","status":"ACTIVE"},
       {"id":"KOSPI","name":"韩国综合指数","preferred_source":"yahoo_chart_api","status":"ACTIVE"},
       {"id":"TWII","name":"台湾加权指数","preferred_source":"yahoo_chart_api","status":"ACTIVE"},
-      {"id":"HSTECH","name":"恒生科技指数","preferred_source":"hithink_finance:HS2083","fallback_source":"yahoo_chart_api:^HSTECH|513180 proxy","status":"ACTIVE_WITH_FALLBACK"},
-      {"id":"SPX","name":"标普500指数","preferred_source":"yahoo_chart_api","status":"INACTIVE_CAPABILITY_RETAINED"},
-      {"id":"VIX","name":"VIX波动率指数","preferred_source":"yahoo_chart_api","status":"INACTIVE_CAPABILITY_RETAINED"},
-      {"id":"KOSDAQ","name":"韩国科技指数","preferred_source":"yahoo_chart_api","status":"INACTIVE_CONDITIONAL"},
-      {"id":"GOLD","name":"黄金价格指标","preferred_source":"reliable_external_source","status":"CONDITIONAL_DEGRADED"},
-      {"id":"DXY","name":"美元指数","preferred_source":"reliable_external_source","status":"CONDITIONAL_DEGRADED"}
+      {"id":"HSTECH","name":"恒生科技指数","preferred_source":"hithink_finance:HS2083","fallback_source":"yahoo_chart_api:^HSTECH|513180 proxy","status":"ACTIVE_WITH_FALLBACK"}
     ]},
-    "B": {"name": "ETF交易与代理层", "objects": [
-      {"id":"SOXQ","name":"半导体行业指数ETF","role":"ETF_TRADING_TARGET_OR_BACKUP_PROXY","proxy_for":["SOX"],"source":"yahoo_chart_api","status":"ACTIVE"},
-      {"id":"513520","name":"日经ETF华夏","role":"ETF_TRADING_TARGET_OR_BACKUP_PROXY","proxy_for":["N225"],"source":"hithink_finance","status":"ACTIVE"},
-      {"id":"513180","name":"恒生科技ETF华夏","role":"ETF_TRADING_TARGET_OR_BACKUP_PROXY","proxy_for":["HSTECH"],"source":"hithink_finance","status":"ACTIVE"},
-      {"id":"518880","name":"黄金ETF华安","role":"ETF_TRADING_TARGET_OR_BACKUP_PROXY","proxy_for":["GOLD"],"source":"hithink_finance","status":"ACTIVE"}
-    ]},
-    "C": {"name": "条件辅助风险指标", "objects": [
-      {"id":"GOLD","name":"黄金上游价格","status":"CONDITIONAL"},
-      {"id":"DXY","name":"美元指数","status":"CONDITIONAL"},
-      {"id":"KOSDAQ","name":"韩国科技指数","status":"CONDITIONAL"}
-    ]}
-  },
-  "monitoring_layers": {
-    "index_monitor": [
-      {"id":"000001.SH","type":"index_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null},
-      {"id":"399006.SZ","type":"index_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null},
-      {"id":"NDX","type":"index_monitor","provider":"yahoo_chart_api","status":"ACTIVE","replacement":null},
-      {"id":"SOX","type":"index_monitor","provider":"yahoo_chart_api","status":"ACTIVE","replacement":"SOXQ"},
-      {"id":"N225","type":"index_monitor","provider":"yahoo_chart_api","status":"ACTIVE","replacement":"513520"},
-      {"id":"KOSPI","type":"index_monitor","provider":"yahoo_chart_api","status":"ACTIVE","replacement":null},
-      {"id":"TWII","type":"index_monitor","provider":"yahoo_chart_api","status":"ACTIVE","replacement":null},
-      {"id":"HSTECH","type":"index_monitor","provider":"hithink_finance:HS2083|yahoo_chart_api","status":"ACTIVE_WITH_FALLBACK","replacement":"513180"},
-      {"id":"SPX","type":"index_monitor","provider":"yahoo_chart_api","status":"INACTIVE","replacement":null,"note":"保留数据适配能力，不进入默认链"},
-      {"id":"KOSDAQ","type":"index_monitor","provider":"yahoo_chart_api","status":"INACTIVE_CONDITIONAL","replacement":null},
-      {"id":"VIX","type":"index_monitor","provider":"yahoo_chart_api","status":"INACTIVE","replacement":null},
-      {"id":"GOLD","type":"index_monitor","provider":"yahoo_chart_api","status":"INACTIVE_CONDITIONAL","replacement":"518880"},
-      {"id":"DXY","type":"index_monitor","provider":"yahoo_chart_api","status":"INACTIVE_CONDITIONAL","replacement":null}
-    ],
-    "etf_monitor": [
-      {"id":"561980","type":"etf_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null},
-      {"id":"588000","type":"etf_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null},
-      {"id":"159781","type":"etf_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null},
-      {"id":"159941","type":"etf_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null},
-      {"id":"159561","type":"etf_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null},
-      {"id":"513520","type":"etf_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":"N225"},
-      {"id":"513180","type":"etf_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":"HSTECH"},
-      {"id":"518880","type":"etf_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":"GOLD"},
-      {"id":"SOXQ","type":"etf_monitor","provider":"yahoo_chart_api","status":"ACTIVE","replacement":"SOX","note":"交易/观察对象及SOX备用代理；不替代SOX直接指数"}
-    ],
-    "stock_monitor": [
-      {"id":"300750","type":"stock_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null,"note":"打新底仓"},
-      {"id":"601138","type":"stock_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null,"note":"打新底仓"},
-      {"id":"005930.KS","type":"stock_monitor","provider":"yahoo_chart_api","status":"INACTIVE_CONDITIONAL","replacement":null,"note":"仅条件产业链观察"},
-      {"id":"000660.KS","type":"stock_monitor","provider":"yahoo_chart_api","status":"INACTIVE_CONDITIONAL","replacement":null,"note":"仅条件产业链观察"}
-    ]
+    "B": {"name": "ETF层", "mode": "HOLDING_PLUS_OBSERVATION", "note": "具体ETF状态由当前账户与观察清单维护，不在本配置复制固定交易结论。"},
+    "C": {"name": "个股层", "mode": "DYNAMIC", "note": "打新底仓从账户动态识别；产业链个股按主题临时调用，不维护固定名单。"}
   },
   "guardrails": {
     "no_trade_rules": true,
@@ -87,6 +64,9 @@
     "proxy_cannot_replace_direct_index_permanently": true,
     "formal_index_objects_cannot_be_silently_omitted": true,
     "cross_market_time_alignment_required": true,
-    "different_market_dates_or_phases_cannot_be_called_synchronous": true
+    "different_market_dates_or_phases_cannot_be_called_synchronous": true,
+    "no_fixed_ipo_base_stock_codes": true,
+    "no_fixed_industry_stock_watchlist": true,
+    "new_account_stock_role_requires_confirmation": true
   }
 }
