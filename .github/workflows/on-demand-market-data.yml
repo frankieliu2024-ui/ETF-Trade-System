@@ -7,12 +7,18 @@ on:
       - "requests/market_data/**.json"
       - "scripts/process_market_data_request.py"
       - ".github/workflows/on-demand-market-data.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "requests/market_data/**.json"
+      - "scripts/process_market_data_request.py"
+      - ".github/workflows/on-demand-market-data.yml"
 
 permissions:
   contents: write
 
 concurrency:
-  group: on-demand-market-data
+  group: on-demand-market-data-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -60,6 +66,7 @@ jobs:
           echo "found=$found failed=$failed"
           exit 0
       - name: Persist results
+        if: ${{ github.event_name == 'push' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
