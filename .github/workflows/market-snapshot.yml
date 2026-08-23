@@ -7,6 +7,10 @@ on:
         description: "Data-only node label"
         required: true
         default: "manual"
+      probe_only:
+        description: "Fetch and validate without writing a valid node"
+        required: true
+        default: "false"
   schedule:
     - cron: "25 1 * * 1-5"
     - cron: "30 2 * * 1-5"
@@ -40,7 +44,13 @@ jobs:
       - name: Run data-only snapshot
         env:
           NODE_LABEL: ${{ github.event.inputs.node || 'scheduled' }}
-        run: python scripts/cloud_runner_snapshot.py --node "$NODE_LABEL"
+          PROBE_ONLY: ${{ github.event.inputs.probe_only || 'false' }}
+        run: |
+          if [ "$PROBE_ONLY" = "true" ]; then
+            python scripts/cloud_runner_snapshot.py --node "$NODE_LABEL" --probe-only
+          else
+            python scripts/cloud_runner_snapshot.py --node "$NODE_LABEL"
+          fi
       - name: Commit data artifacts only
         run: |
           git config user.name "github-actions[bot]"
@@ -48,3 +58,4 @@ jobs:
           git add data/market/snapshots data/state/CURRENT.json
           git diff --cached --quiet || git commit -m "data: record market snapshot"
           git push
+
