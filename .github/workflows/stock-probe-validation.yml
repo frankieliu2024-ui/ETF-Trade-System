@@ -49,12 +49,13 @@ jobs:
             --output "data/market/audit/hithink_stock_probe_${PROBE_CODE}_${PROBE_DATE}.json" \
             > /tmp/hithink_probe_stdout.txt 2> /tmp/hithink_probe_stderr.txt
           rc=$?
+          export PROBE_RC="$rc"
           python - <<'PY'
           import json, os
           from pathlib import Path
           code = os.environ['PROBE_CODE']
           day = os.environ['PROBE_DATE']
-          rc = int(os.environ.get('PROBE_RC', '0'))
+          rc = int(os.environ['PROBE_RC'])
           result_path = Path(f'data/market/audit/hithink_stock_probe_{code}_{day}.json')
           stdout = Path('/tmp/hithink_probe_stdout.txt').read_text(encoding='utf-8', errors='replace') if Path('/tmp/hithink_probe_stdout.txt').exists() else ''
           stderr = Path('/tmp/hithink_probe_stderr.txt').read_text(encoding='utf-8', errors='replace') if Path('/tmp/hithink_probe_stderr.txt').exists() else ''
@@ -70,11 +71,6 @@ jobs:
           if stderr.strip(): payload['stderr'] = stderr.strip()[-4000:]
           result_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
-          exit 0
-        env:
-          PROBE_CODE: ${{ github.event.inputs.code || '688981' }}
-          PROBE_DATE: ${{ github.event.inputs.date || '2026-08-21' }}
-          PROBE_RC: "0"
       - name: Persist validation audit result
         if: ${{ github.event_name != 'pull_request' }}
         run: |
