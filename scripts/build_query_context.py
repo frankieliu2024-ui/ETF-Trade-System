@@ -22,12 +22,15 @@ CANONICAL_FILES = {
     "current": "data/state/CURRENT.json",
     "account_fact": "data/state/account_fact.json",
     "asset_roles": "data/state/asset_roles.json",
+    "etf_monitor_universe": "config/market/etf_monitor_universe.json",
     "stock_context": "data/state/stock_context.json",
+    "stock_market_context": "data/state/stock_market_context.json",
     "stock_monitor_policy": "config/market/stock_monitor_policy.json",
     "market_delta": "data/state/market_delta.json",
     "overseas_context": "data/state/overseas_context.json",
     "runtime_health": "data/state/runtime_health.json",
     "runtime_policy": "config/runtime_policy.json",
+    "system_consistency": "data/state/system_consistency.json",
 }
 
 
@@ -92,11 +95,14 @@ def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict)
         CANONICAL_FILES["index"],
         CANONICAL_FILES["master"],
         CANONICAL_FILES["current"],
+        CANONICAL_FILES["system_consistency"],
         CANONICAL_FILES["runtime_policy"],
         CANONICAL_FILES["runtime_health"],
+        CANONICAL_FILES["etf_monitor_universe"],
         CANONICAL_FILES["overseas_context"],
         CANONICAL_FILES["stock_monitor_policy"],
         CANONICAL_FILES["stock_context"],
+        CANONICAL_FILES["stock_market_context"],
     ]
     if latest_snapshot:
         required.append(latest_snapshot)
@@ -121,12 +127,17 @@ def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict)
             "captured_at": current.get("captured_at", ""),
             "market_delta": CANONICAL_FILES["market_delta"],
             "overseas_context": CANONICAL_FILES["overseas_context"],
+            "etf_monitor_universe": CANONICAL_FILES["etf_monitor_universe"],
             "stock_context": CANONICAL_FILES["stock_context"],
+            "stock_market_context": CANONICAL_FILES["stock_market_context"],
+            "system_consistency": CANONICAL_FILES["system_consistency"],
             "runtime_health": CANONICAL_FILES["runtime_health"],
             "runtime_policy": CANONICAL_FILES["runtime_policy"],
             "freshness_at_context_build": freshness,
             "data_freshness": current.get("data_freshness", {}),
             "query_time_rule": "每次ChatGPT查询必须用当前时间减CURRENT.captured_at重新计算数据年龄；不得仅沿用文件内旧FRESH标签。FRESH可用于当前行情判断；DEGRADED只作背景/连续性复核，涉及当前机会、金额或卖出动作时优先等待下一有效脉冲或结合用户当前截图；STALE不得冒充实时行情。",
+            "consistency_rule": "正式分析前读取system_consistency.json；若存在硬一致性FAIL，先处理系统冲突，不得把不一致的数据/名单当作完整生产状态。WARNING类账户缺失不阻断行情采集，但必须遵守账户事实门禁。",
+            "etf_rule": "ETF层机器采集对象以config/market/etf_monitor_universe.json为唯一运行清单；持仓/观察身份由Dashboard和当日账户事实解释，禁止采集脚本私自维护第二份ETF名单。",
             "overseas_rule": "正式海外与亚洲指数层必须检查NDX、SOX、N225、KOSPI、TWII、HSTECH，并完成跨市场时点对齐。",
             "stock_rule": "第三层默认个股监测由当日account_fact中的实际非ETF持仓动态生成；已确认IPO_BASE_STOCK进入打新底仓监测，未知角色个股只标记待确认。产业链观察个股按当前分析需要动态发现，可覆盖A股、美股及其他已核验市场，不维护固定三星/海力士或其他永久名单；产业链个股只作背景和传导证据。",
             "rule": "盘中查询使用最新有效状态和相邻行情变化，不绑定旧固定截图节点；数据不足时明确不足。",
@@ -149,6 +160,9 @@ def build(root: Path = ROOT) -> dict:
     runtime_health = read_json(root / CANONICAL_FILES["runtime_health"], {})
     overseas_context = read_json(root / CANONICAL_FILES["overseas_context"], {})
     stock_context = read_json(root / CANONICAL_FILES["stock_context"], {})
+    stock_market_context = read_json(root / CANONICAL_FILES["stock_market_context"], {})
+    consistency = read_json(root / CANONICAL_FILES["system_consistency"], {})
+    etf_universe = read_json(root / CANONICAL_FILES["etf_monitor_universe"], {})
     freshness = evaluate_freshness(current, policy)
     account_gate = account_gate_status(current, account, policy)
     return {
@@ -162,14 +176,18 @@ def build(root: Path = ROOT) -> dict:
         "data_status": current.get("data_freshness", {}),
         "freshness_at_context_build": freshness,
         "runtime_health": runtime_health,
+        "system_consistency_status": consistency.get("status", "MISSING"),
+        "system_consistency_hard_errors": consistency.get("hard_error_count", None),
+        "etf_universe_count": len(etf_universe.get("objects") or []),
         "overseas_context_status": overseas_context.get("quality_status", "MISSING"),
         "stock_context_status": stock_context.get("account_fact_status", "MISSING"),
+        "stock_market_context_status": stock_market_context.get("quality_status", "MISSING"),
         "stock_role_confirmation_needed": stock_context.get("needs_role_confirmation", False),
         "account_fact_status": account["status"],
         "account_gate": account_gate,
         "needs_account_screenshot": not account_gate["can_use_current_account_fact"],
         "read_only": True,
-        "interaction_boundary": "用户主动查询时读取最新有效状态、ETF层、动态个股层、正式海外与亚洲指数层、运行健康状态与正式文件；本文件只组织读取，不生成交易动作。",
+        "interaction_boundary": "用户主动查询时先核对系统一致性，再读取最新有效状态、ETF层、动态个股层、正式海外与亚洲指数层、运行健康状态与正式文件；本文件只组织读取，不生成交易动作。",
     }
 
 
@@ -180,11 +198,14 @@ def main() -> None:
         "ok": True,
         "market_date": context["market_date"],
         "latest_valid_node": context["latest_valid_node"],
+        "system_consistency_status": context["system_consistency_status"],
+        "etf_universe_count": context["etf_universe_count"],
         "account_fact_status": context["account_fact_status"],
         "account_usable": context["account_gate"]["can_use_current_account_fact"],
         "freshness": context["freshness_at_context_build"]["status"],
         "overseas_context_status": context["overseas_context_status"],
         "stock_context_status": context["stock_context_status"],
+        "stock_market_context_status": context["stock_market_context_status"],
         "stock_role_confirmation_needed": context["stock_role_confirmation_needed"],
         "read_plan_mode": context["decision_read_plan"]["mode"],
     }, ensure_ascii=False))
