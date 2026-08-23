@@ -18,6 +18,7 @@
 - 状态：`data/state/CURRENT.json`、`data/state/account_fact.json`、`data/state/review_context.json`、`data/state/chatgpt_task_probe.json`
 - 运行健康：`data/state/runtime_health.json`
 - 实时相邻变化：`data/state/market_delta.json`
+- 海外核心背景：`data/state/overseas_context.json`（NDX、SOX、N225；仅背景/增强/反向证据）
 - 运行策略：`config/runtime_policy.json`
 - 行情：`data/market/snapshots/`
 - 审计：`data/market/audit/`
@@ -35,12 +36,44 @@
 - `DEGRADED`：仅作背景和连续性复核；若会改变机会、金额或卖出动作，优先等待下一有效脉冲或结合用户当前截图复核。
 - `STALE`：不得冒充实时行情，只能作历史/背景事实。
 - 采集失败：上一有效 `CURRENT` 与快照继续保留；失败状态记录在 `runtime_health.json`，下一采集脉冲自动恢复，不用失败数据覆盖有效状态。
+- 收盘补采：15:00计划任务允许在 `runtime_policy.close_grace_seconds` 宽限窗口内补采；一旦当日 `close` 已成功写入，后续重复收盘任务跳过。
+
+## 账户事实原则
+
+`account_fact.json` 的 `VALID` 仅表示该份截图/账户事实本身通过校验，不表示可以跨交易日自动沿用。正式盘中或盘后决策必须同时满足：
+
+1. `account_fact.status == VALID`；
+2. `account_fact.updated_at` 对应上海日期与当前 `CURRENT.market_date` 一致。
+
+不满足时，ChatGPT必须要求当日券商截图或当日账户确认，不得用旧Dashboard推定持仓、现金或成交未变化。
+
+## 海外背景原则
+
+生产链独立生成 `overseas_context.json`：
+
+- NDX、SOX、N225分别独立记录数据质量；
+- 单个海外对象失败不阻断A股八ETF、上证指数、创业板指的核心行情脉冲；
+- 失败对象不得用旧值冒充当前状态；
+- 海外信息只作市场背景、增强证据或反向证据，不单独生成ETF买卖动作。
+
+## 故障退化表
+
+|故障|系统动作|决策边界|
+|---|---|---|
+|GitHub Actions调度延迟|按 `captured_at` 重新计算数据年龄|不按cron计划时刻冒充行情时点|
+|单次hithink采集失败|保留上一有效CURRENT；记录FAILED|旧行情按FRESH/DEGRADED/STALE处理|
+|旧任务晚到|SUPERSEDED或被并发策略取消|不得覆盖更新快照|
+|15:00任务延迟|宽限窗口补采close|已存在成功close则不重复覆盖|
+|Yahoo单个海外对象失败|该对象FAILED，其余对象继续|失败对象不参与当前证据|
+|账户事实来自上一交易日|账户门禁判不可用|必须补当日账户事实|
+|Git推送遇到同期人工/Codex提交|workflow先rebase再推送|不得覆盖正式文件；冲突时以保留数据和人工检查优先|
+|行情STALE|明确标注数据不足|不得输出依赖实时价格成立的新增金额或卖出动作|
 
 ## 读取场景
 
 1. ChatGPT规则读取：先读本索引，再读一级目录的 `ETF规则_MASTER.md`。
 2. ChatGPT当前状态：先读 `CURRENT.json`、`runtime_health.json` 和运行策略；需要人工当前状态时再读一级目录的 `ETF当前状态_DASHBOARD.md`。
-3. 盘中查询：读 `CURRENT.json`、最新 `data/market/snapshots/`、`market_delta.json`、`runtime_health.json` 和 `data/state/query_context.json`；按查询时刻重新判断新鲜度，不绑定固定截图节点。
+3. 盘中查询：读 `CURRENT.json`、最新 `data/market/snapshots/`、`market_delta.json`、`overseas_context.json`、`runtime_health.json` 和 `data/state/query_context.json`；按查询时刻重新判断新鲜度，不绑定固定截图节点。
 4. 盘后维护：读 `post_market_review/post_market_review_event.json`、`data/state/review_context.json`、账户事实和四个正式文件。
 
 ## 写入边界
