@@ -1,0 +1,28 @@
+{
+  "version": "V1.0",
+  "purpose": "第三层个股监测策略。账户持仓动态生成默认个股层；产业链个股按分析主题条件调用，不维护固定名单。",
+  "account_stock_monitor": {
+    "source": "data/state/account_fact.json",
+    "role_memory": "data/state/asset_roles.json",
+    "output": "data/state/stock_context.json",
+    "principle": "当前账户实际持有的非ETF个股自动进入个股发现；只有已确认资产角色为IPO_BASE_STOCK的个股进入默认打新底仓监测。新出现但角色未确认的个股标记UNCLASSIFIED_STOCK并要求一次性确认，不从代码或名称猜测用途。",
+    "remove_rule": "账户持仓数量归零后退出默认持仓个股监测；资产角色记忆可保留用于未来重新出现时核对，但不得据此虚构当前持仓。"
+  },
+  "conditional_industry_observation": {
+    "mode": "QUERY_TIME_DYNAMIC_DISCOVERY",
+    "persistent_fixed_list": false,
+    "markets": ["A_SHARE", "US", "HK", "KR", "TW", "JP", "OTHER_VERIFIED"],
+    "trigger": "仅当ETF候选、持仓、行业冲击或产业链传导分析确有需要时调用。",
+    "selection_rule": "围绕当前假设选择最有解释力的上游、下游、设备、材料、设计、制造、终端或龙头公司；可包含A股、美股及其他市场个股。不得因为历史上观察过某公司就永久进入每日默认监测。",
+    "examples": "半导体分析可按当时主题临时调用A股存储/设备公司、美国半导体龙头、韩国存储龙头等；示例只说明能力范围，不形成固定名单。",
+    "decision_boundary": "产业链个股只提供背景、传导、增强或反向证据，不产生ETF领先信号，不单独生成ETF买卖动作。",
+    "time_alignment_required": true
+  },
+  "guardrails": {
+    "no_fixed_ipo_base_stock_codes": true,
+    "no_fixed_industry_stock_watchlist": true,
+    "account_position_cannot_imply_role_without_confirmation": true,
+    "conditional_stock_cannot_generate_trade_action": true,
+    "cross_market_time_alignment_required": true
+  }
+}
