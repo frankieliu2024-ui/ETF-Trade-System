@@ -18,7 +18,8 @@
 - 状态：`data/state/CURRENT.json`、`data/state/account_fact.json`、`data/state/review_context.json`、`data/state/chatgpt_task_probe.json`
 - 运行健康：`data/state/runtime_health.json`
 - 实时相邻变化：`data/state/market_delta.json`
-- 海外核心背景：`data/state/overseas_context.json`（NDX、SOX、N225；仅背景/增强/反向证据）
+- 正式海外与亚洲指数层：`data/state/overseas_context.json`（NDX、SOX、N225、KOSPI、TWII、HSTECH）
+- 监测配置：`config/market/market_monitor_config.json`
 - 运行策略：`config/runtime_policy.json`
 - 行情：`data/market/snapshots/`
 - 审计：`data/market/audit/`
@@ -47,14 +48,24 @@
 
 不满足时，ChatGPT必须要求当日券商截图或当日账户确认，不得用旧Dashboard推定持仓、现金或成交未变化。
 
-## 海外背景原则
+## 海外与亚洲指数原则
 
-生产链独立生成 `overseas_context.json`：
+生产链独立生成 `overseas_context.json`，正式对象固定为：纳斯达克100指数（NDX）、费城半导体指数（SOX）、日经225指数（N225）、韩国综合指数（KOSPI）、台湾加权指数（TWII）、恒生科技指数（HSTECH）。
 
-- NDX、SOX、N225分别独立记录数据质量；
+- 六个对象都属于正式指数层；单一对象数据失败可以DEGRADED／FAILED，但不得静默从正式查询中遗漏；
+- 直接指数优先。SOXQ、513520、513180等仅在对应直接指数不可用时承担明确的备用代理职责，不得写成指数本身；
+- HSTECH优先尝试同花顺HS2083，失败后再使用允许的替代数据源或513180代理；
 - 单个海外对象失败不阻断A股八ETF、上证指数、创业板指的核心行情脉冲；
-- 失败对象不得用旧值冒充当前状态；
-- 海外信息只作市场背景、增强证据或反向证据，不单独生成ETF买卖动作。
+- 海外与亚洲指数不是次要信息，但只作市场背景、增强证据或反向证据，仍须经过本地传导和目标ETF自身反馈才能进入交易判断。
+
+### 跨市场时间对齐
+
+任何跨市场比较必须同时读取并展示：`market_timezone`、`latest.as_of_local`、`market_phase_at_generation`、`time_relation_to_a_share`。
+
+- 美国现金指数：A股交易时段通常对应上一美股交易时段，不得称为与A股当前盘中“同步”；
+- 日经、韩国、台湾、恒生科技：根据各自市场阶段区分同日盘中、同日已收盘、上一交易日；
+- A股15:00收盘不代表恒生科技已经当日收盘；
+- 日期相同不等于时点同步，不允许把上一收盘、当前盘中和当日收盘混成同一组共振证据。
 
 ## 故障退化表
 
@@ -64,7 +75,8 @@
 |单次hithink采集失败|保留上一有效CURRENT；记录FAILED|旧行情按FRESH/DEGRADED/STALE处理|
 |旧任务晚到|SUPERSEDED或被并发策略取消|不得覆盖更新快照|
 |15:00任务延迟|宽限窗口补采close|已存在成功close则不重复覆盖|
-|Yahoo单个海外对象失败|该对象FAILED，其余对象继续|失败对象不参与当前证据|
+|海外/亚洲单个指数失败|该对象FAILED，其余对象继续|失败对象不参与当前证据，但监测职责不删除|
+|跨市场时点不一致|显式标注各自as_of和market_phase|不得称为同步共振|
 |账户事实来自上一交易日|账户门禁判不可用|必须补当日账户事实|
 |Git推送遇到同期人工/Codex提交|workflow先rebase再推送|不得覆盖正式文件；冲突时以保留数据和人工检查优先|
 |行情STALE|明确标注数据不足|不得输出依赖实时价格成立的新增金额或卖出动作|
