@@ -21,8 +21,8 @@ class StateLayerTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
         (self.root / "data" / "state").mkdir(parents=True)
-        (self.root / "system").mkdir()
-        (self.root / "system" / "ETF当前状态_DASHBOARD.md").write_text("manual dashboard", encoding="utf-8")
+        (self.root / "docs" / "state").mkdir(parents=True)
+        (self.root / "docs" / "state" / "ETF当前状态_DASHBOARD.md").write_text("manual dashboard", encoding="utf-8")
         (self.root / "data" / "state" / "account_fact.json").write_text(json.dumps({
             "updated_at": "", "source": "BROKER_SCREENSHOT", "status": "MISSING",
             "total_asset": None, "cash": None, "positions": [], "orders": [], "trades": [],
