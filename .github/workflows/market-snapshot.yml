@@ -23,8 +23,6 @@ permissions:
 
 concurrency:
   group: etf-market-snapshot
-  # A delayed older run must never queue behind and later overwrite a fresher run.
-  # Each snapshot is atomic and CURRENT keeps the last valid state, so prioritise recency.
   cancel-in-progress: true
 
 jobs:
@@ -63,6 +61,9 @@ jobs:
       - name: Build resilient overseas core index context
         if: ${{ success() && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_overseas_context.py
+      - name: Build dynamic stock context from current account
+        if: ${{ success() && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/build_stock_context.py
       - name: Build state context and candidates
         if: ${{ success() && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_state_context.py
@@ -80,12 +81,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/market/snapshots data/state/CURRENT.json data/state/runtime_health.json data/state/market_delta.json data/state/overseas_context.json data/state/dashboard_update_candidate.json data/state/decision_context.json data/state/query_context.json data/state/chatgpt_task_probe.json post_market_review/post_market_review_event.json data/state/review_context.json events/events.jsonl 2>/dev/null || true
+          git add data/market/snapshots data/state/CURRENT.json data/state/runtime_health.json data/state/market_delta.json data/state/overseas_context.json data/state/stock_context.json data/state/dashboard_update_candidate.json data/state/decision_context.json data/state/query_context.json data/state/chatgpt_task_probe.json post_market_review/post_market_review_event.json data/state/review_context.json events/events.jsonl 2>/dev/null || true
           if git diff --cached --quiet; then
             exit 0
           fi
           git commit -m "data: record market snapshot/runtime health"
-          # A human/Codex commit may land while this run is executing. Rebase once on
-          # current main so a harmless repository update does not lose the data pulse.
           git pull --rebase origin main
           git push origin HEAD:main
