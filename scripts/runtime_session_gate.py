@@ -20,6 +20,18 @@ def set_output(key: str, value: str) -> None:
             f.write(f"{key}={value}\n")
 
 
+def market_phase(minute: int) -> str:
+    if 9 * 60 + 15 <= minute <= 9 * 60 + 25:
+        return "OPENING_CALL_AUCTION"
+    if 9 * 60 + 30 <= minute <= 11 * 60 + 30:
+        return "CONTINUOUS_MORNING"
+    if 13 * 60 <= minute < 14 * 60 + 57:
+        return "CONTINUOUS_AFTERNOON"
+    if 14 * 60 + 57 <= minute <= 15 * 60:
+        return "CLOSING_CALL_AUCTION"
+    return "OUTSIDE_SESSION"
+
+
 def main() -> int:
     now = datetime.now(SHANGHAI)
     date_text = now.date().isoformat()
@@ -31,6 +43,7 @@ def main() -> int:
         set_output("should_capture", "true")
         set_output("reason", "manual_dispatch")
         set_output("market_date", date_text)
+        set_output("market_phase", "MANUAL")
         print(json.dumps({"should_capture": True, "reason": "manual_dispatch", "market_date": date_text}, ensure_ascii=False))
         return 0
 
@@ -39,23 +52,26 @@ def main() -> int:
     if not start or not end or not (start <= date_text <= end):
         raise RuntimeError(f"A-share trading calendar does not cover {date_text}: {start}..{end}")
 
+    minute = now.hour * 60 + now.minute
+    phase = market_phase(minute)
     if now.weekday() >= 5:
         should_capture, reason = False, "weekend"
     elif date_text in set(calendar.get("closed_dates") or []):
         should_capture, reason = False, "exchange_closed"
     else:
-        minute = now.hour * 60 + now.minute
         close_grace_minutes = max(1, int(policy.get("close_grace_seconds", 900)) // 60)
+        in_opening_auction = 9 * 60 + 15 <= minute <= 9 * 60 + 25
         in_morning = 9 * 60 + 30 <= minute <= 11 * 60 + 30
         in_afternoon = 13 * 60 <= minute <= 15 * 60
         in_close_grace = 15 * 60 < minute <= 15 * 60 + close_grace_minutes
-        should_capture = in_morning or in_afternoon or in_close_grace
+        should_capture = in_opening_auction or in_morning or in_afternoon or in_close_grace
         reason = "capture_window" if should_capture else "outside_capture_window"
 
     set_output("should_capture", "true" if should_capture else "false")
     set_output("reason", reason)
     set_output("market_date", date_text)
-    print(json.dumps({"should_capture": should_capture, "reason": reason, "market_date": date_text, "captured_at": now.isoformat(timespec="seconds")}, ensure_ascii=False))
+    set_output("market_phase", phase)
+    print(json.dumps({"should_capture": should_capture, "reason": reason, "market_date": date_text, "market_phase": phase, "captured_at_beijing": now.isoformat(timespec="seconds")}, ensure_ascii=False))
     return 0
 
 
