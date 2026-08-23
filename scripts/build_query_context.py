@@ -19,6 +19,7 @@ CANONICAL_FILES = {
     "market_archive": "ETF市场行情档案_2026.md",
     "current": "data/state/CURRENT.json",
     "account_fact": "data/state/account_fact.json",
+    "market_delta": "data/state/market_delta.json",
 }
 
 
@@ -32,6 +33,7 @@ def build_read_plan(current: dict, account: dict) -> dict:
     ]
     if latest_snapshot:
         required.append(latest_snapshot)
+    required.append(CANONICAL_FILES["market_delta"])
     required.append(CANONICAL_FILES["dashboard"])
     if account_valid:
         required.append(CANONICAL_FILES["account_fact"])
@@ -53,8 +55,9 @@ def build_read_plan(current: dict, account: dict) -> dict:
             "node_status": current.get("node_status", ""),
             "latest_valid_node": current.get("latest_valid_node", ""),
             "latest_snapshot": latest_snapshot,
+            "market_delta": CANONICAL_FILES["market_delta"],
             "data_freshness": current.get("data_freshness", {}),
-            "rule": "盘中查询使用最新有效状态，不绑定旧固定截图节点；数据不足时明确不足。",
+            "rule": "盘中查询使用最新有效状态和相邻行情变化，不绑定旧固定截图节点；数据不足时明确不足。",
         },
     }
 
@@ -75,7 +78,7 @@ def build(root: Path = ROOT) -> dict:
         "account_fact_status": account["status"],
         "needs_account_screenshot": account["status"] != "VALID",
         "read_only": True,
-        "interaction_boundary": "用户主动查询时读取最新有效状态与正式文件；本文件只组织读取，不生成交易动作。",
+        "interaction_boundary": "用户主动查询时读取最新有效状态、相邻行情变化与正式文件；本文件只组织读取，不生成交易动作。",
     }
 
 
