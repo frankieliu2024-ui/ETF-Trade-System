@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "timezone": "Asia/Shanghai",
+  "target_cadence_seconds": 600,
+  "fresh_max_age_seconds": 900,
+  "degraded_max_age_seconds": 1500,
+  "stale_after_seconds": 1500,
+  "provider_timeout_seconds": 25,
+  "provider_retry_limit": 2,
+  "provider_max_workers": 3,
+  "workflow_timeout_minutes": 6,
+  "policy": {
+    "FRESH": "可用于当前行情判断；仍须按MASTER和账户事实完成正式决策链。",
+    "DEGRADED": "可用于背景和连续性复核；涉及当前机会、金额或卖出动作时，应优先等待下一有效脉冲或结合用户当前截图复核。",
+    "STALE": "不得把该行情冒充当前实时状态；仅可作为历史/背景信息。",
+    "FAILED": "保留上一有效CURRENT与快照，不覆盖；记录运行失败并等待下一次采集自动恢复。"
+  }
+}
