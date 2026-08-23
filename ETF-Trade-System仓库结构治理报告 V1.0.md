@@ -53,10 +53,10 @@ GitHub Actions 使用的 `scripts/` 和 `data/` 生产路径保持稳定，无�
 
 本地治理提交：`8345707`（`chore: govern repository structure`）。
 
-本次通过 HTTPS 推送到 `origin/main` 时两次遇到网络连接失败；远端核验显示 `ETF_SYSTEM_INDEX.md` 尚未出现在 GitHub 默认分支。因此当前本地 `main` 领先 `origin/main` 1 个提交，未使用强制推送，也未改写远端历史。
+本次通过本机 HTTPS 推送时两次遇到网络连接失败；随后改用已授权的 GitHub API 通道，以远端 `main` 的 `6a2df5f` 为父提交，非强制更新到远端提交 `90ac2b5`。远端统一入口和四个正式文件路径已核验存在。
 
 ## 7. 结论与未完成事项
 
-本地仓库结构治理完成，正式文件、运行层、测试层和历史层已分离，ChatGPT/Codex/GitHub Actions 的读取和维护路径已在本地 `ETF_SYSTEM_INDEX.md` 中明确。
+仓库结构治理完成，正式文件、运行层、测试层和历史层已分离，ChatGPT/Codex/GitHub Actions 的读取和维护路径已在 `ETF_SYSTEM_INDEX.md` 中明确。
 
-未完成事项：需要重新建立网络连接后推送 `8345707`，在 GitHub 上确认本次提交后的 Actions workflow 至少成功运行一次；这属于远端运行验证，不是本次目录治理的本地测试结果。
+未完成事项：本次结构治理提交没有触发 Actions，因为工作流仅配置了手动和定时触发；如需远端运行验证，应在 GitHub Actions 页面手动运行一次 workflow。
