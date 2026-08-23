@@ -1,0 +1,35 @@
+name: ETF system consistency
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "ETF规则_MASTER.md"
+      - "ETF当前状态_DASHBOARD.md"
+      - "ETF交易复盘与经验库_2026.md"
+      - "ETF市场行情档案_2026.md"
+      - "ETF_SYSTEM_INDEX.md"
+      - "config/market/**"
+      - "config/runtime_policy.json"
+      - "scripts/**"
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-system-consistency
+  cancel-in-progress: true
+
+jobs:
+  consistency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate formal files, monitoring layers and runtime wiring
+        run: python scripts/check_system_consistency.py
