@@ -38,4 +38,4 @@
 
 新增对象优化矩阵和三层配置字段；更新 provider priority、接口规范和行情档案。MASTER、Dashboard、经验库无修改。10个直接测试函数通过，JSON校验通过；无交易建议、金额、买卖动作或规则变化。
 
-Git提交：待本次提交完成后记录于交付说明。
+Git提交：`a3cbfed`；已同步 GitHub `main`。
