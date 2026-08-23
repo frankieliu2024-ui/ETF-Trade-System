@@ -2,7 +2,7 @@
 
 This repository is the Phase 1 cloud-infrastructure migration branch. It is data-only: it collects and validates market snapshots, preserves raw responses, and maintains `data/state/CURRENT.json`.
 
-The authoritative trading rules remain in `docs/rules/ETF规则_MASTER.md`; the canonical repository map is `ETF_SYSTEM_INDEX.md`. This repository does not place API keys in files, does not generate trade recommendations, does not modify the MASTER, and does not place orders.
+The authoritative trading rules remain in the root-level `ETF规则_MASTER.md`; the canonical repository map is `ETF_SYSTEM_INDEX.md`. This repository does not place API keys in files, does not generate trade recommendations, does not modify the MASTER, and does not place orders.
 
 The frozen transaction workbook set is under `history/baseline_2026-08-21/` and is retained for audit/reference only. It is not an automated update input.
 

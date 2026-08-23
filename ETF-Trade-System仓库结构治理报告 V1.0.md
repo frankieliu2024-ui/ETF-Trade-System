@@ -12,17 +12,17 @@
 
 ## 3. 治理后结构
 
-- 规则入口：`docs/rules/ETF规则_MASTER.md`
-- 状态入口：`docs/state/ETF当前状态_DASHBOARD.md`
-- 复盘入口：`docs/review/ETF交易复盘与经验库_2026.md`
-- 行情档案入口：`docs/market/ETF市场行情档案_2026.md`
+- 规则入口：一级目录 `ETF规则_MASTER.md`
+- 状态入口：一级目录 `ETF当前状态_DASHBOARD.md`
+- 复盘入口：一级目录 `ETF交易复盘与经验库_2026.md`
+- 行情档案入口：一级目录 `ETF市场行情档案_2026.md`
 - 运行状态：`data/state/`
 - 行情快照：`data/market/snapshots/`
 - 测试与回放：`tests/`、`tests/replay/`、`tests/validation/`
 - 历史报告：`archive/reports/`
 - 总入口：`ETF_SYSTEM_INDEX.md`
 
-`system/ETF行情数据接口使用规范_V1.0.md`未迁移，因为它不是本次定义的四个正式文件，且当前生产代码不依赖迁移路径。
+`system/ETF行情数据接口使用规范_V1.0.md`未迁移，因为它不是本次定义的四个正式文件，且当前生产代码不依赖迁移路径。四个正式文件最终置于一级目录，降低云端读取和人工维护的路径复杂度。
 
 ## 4. 文件迁移与兼容修改
 
@@ -30,7 +30,8 @@
 
 已同步修正：
 
-- `scripts/state_manager.py` 的 Dashboard 读取路径；
+- `scripts/state_manager.py` 的一级目录 Dashboard 读取路径；
+- `query_context.json`、`decision_context.json`、回放上下文和账户模拟上下文中的旧 `system/` Dashboard 引用；
 - 状态层和运行模式测试的临时目录路径；
 - 回放脚本的仓库根目录定位、源数据路径和结果路径；
 - `README.md`、`notifications/README.md` 的入口说明。

@@ -28,7 +28,7 @@ def setup(root: Path, source_root: Path) -> None:
     (root / "events").mkdir(parents=True, exist_ok=True)
     (root / "system").mkdir(parents=True, exist_ok=True)
     (root / "events" / "events.jsonl").write_text("", encoding="utf-8")
-    shutil.copy2(source_root / "system" / "ETF当前状态_DASHBOARD.md", root / "system" / "ETF当前状态_DASHBOARD.md")
+    shutil.copy2(source_root / "ETF当前状态_DASHBOARD.md", root / "ETF当前状态_DASHBOARD.md")
     atomic_json_write(root / "data" / "state" / "account_fact.json", {"updated_at": "", "source": "BROKER_SCREENSHOT", "status": "MISSING", "total_asset": None, "cash": None, "positions": [], "orders": [], "trades": []})
     atomic_json_write(root / "data" / "state" / "CURRENT.json", {"market_date": "", "latest_valid_node": "", "captured_at": "", "node_status": "NON_TRADING_DAY", "latest_snapshot": "", "snapshot_commit": "", "superseded_nodes": [], "data_freshness": {}, "account_fact": {"status": "MISSING", "updated_at": "", "source": ""}, "needs_account_update": True, "last_trade_event_id": "", "rules_version": "V2.2.15", "generated_at": ""})
 

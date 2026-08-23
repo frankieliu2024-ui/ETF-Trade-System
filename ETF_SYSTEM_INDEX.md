@@ -6,10 +6,10 @@
 
 | 职责 | 唯一路径 | 说明 |
 |---|---|---|
-| 规则 | `docs/rules/ETF规则_MASTER.md` | 交易规则唯一来源；不得自动修改 |
-| 当前状态 | `docs/state/ETF当前状态_DASHBOARD.md` | 当前状态和账户事实入口；规则不在此定义 |
-| 经验复盘 | `docs/review/ETF交易复盘与经验库_2026.md` | CASE、OBS、复盘历史 |
-| 行情事实 | `docs/market/ETF市场行情档案_2026.md` | 行情、成交、来源和质量事实 |
+| 规则 | `ETF规则_MASTER.md` | 交易规则唯一来源；不得自动修改 |
+| 当前状态 | `ETF当前状态_DASHBOARD.md` | 当前状态和账户事实入口；规则不在此定义 |
+| 经验复盘 | `ETF交易复盘与经验库_2026.md` | CASE、OBS、复盘历史 |
+| 行情事实 | `ETF市场行情档案_2026.md` | 行情、成交、来源和质量事实 |
 
 历史聊天不属于正式来源。发生冲突时遵循 MASTER > Dashboard > 当前行情与成交 > 经验库 > 行情档案 > 历史聊天。
 
@@ -26,8 +26,8 @@
 
 ## 读取场景
 
-1. ChatGPT规则读取：先读本索引，再读 `docs/rules/ETF规则_MASTER.md`。
-2. ChatGPT当前状态：读 `data/state/CURRENT.json`，需要人工当前状态时再读 `docs/state/ETF当前状态_DASHBOARD.md`。
+1. ChatGPT规则读取：先读本索引，再读一级目录的 `ETF规则_MASTER.md`。
+2. ChatGPT当前状态：读 `data/state/CURRENT.json`，需要人工当前状态时再读一级目录的 `ETF当前状态_DASHBOARD.md`。
 3. 盘中查询：读 `CURRENT.json`、最新 `data/market/snapshots/` 和 `query_context.json`。
 4. 盘后维护：读 `post_market_review/post_market_review_event.json`、`review_context.json`、账户事实和四个正式文件。
 

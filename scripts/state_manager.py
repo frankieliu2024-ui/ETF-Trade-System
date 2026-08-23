@@ -185,7 +185,7 @@ def build_decision_context(root: Path | None = None) -> dict[str, Any]:
     root = root or root_from_env()
     current = read_current(root)
     account = read_account_fact(root)
-    dashboard = root / "docs" / "state" / "ETF当前状态_DASHBOARD.md"
+    dashboard = root / "ETF当前状态_DASHBOARD.md"
     latest = current.get("latest_snapshot", "")
     snapshot = read_json(root / latest, {}) if latest else {}
     return {

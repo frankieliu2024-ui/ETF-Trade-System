@@ -15,8 +15,7 @@ class ModeOptimizationTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
         (self.root / "data" / "state").mkdir(parents=True)
-        (self.root / "docs" / "state").mkdir(parents=True)
-        (self.root / "docs" / "state" / "ETF当前状态_DASHBOARD.md").write_text("read-only dashboard", encoding="utf-8")
+        (self.root / "ETF当前状态_DASHBOARD.md").write_text("read-only dashboard", encoding="utf-8")
         atomic_json_write(self.root / "data" / "state" / "account_fact.json", {"updated_at": "", "source": "BROKER_SCREENSHOT", "status": "MISSING", "total_asset": None, "cash": None, "positions": [], "orders": [], "trades": []})
 
     def tearDown(self) -> None:

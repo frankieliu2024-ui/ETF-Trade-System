@@ -26,7 +26,7 @@ def run() -> dict:
         root = Path(temp)
         (root / "system").mkdir()
         (root / "data" / "state").mkdir(parents=True)
-        (root / "system" / "ETF当前状态_DASHBOARD.md").write_text("manual dashboard", encoding="utf-8")
+        (root / "ETF当前状态_DASHBOARD.md").write_text("manual dashboard", encoding="utf-8")
         (root / "data" / "state" / "account_fact.json").write_text(json.dumps({"status": "MISSING", "source": "BROKER_SCREENSHOT", "updated_at": "", "total_asset": None, "cash": None, "positions": [], "orders": [], "trades": []}), encoding="utf-8")
         update_current(root=root, market_date="", node="", captured_at="", node_status="NON_TRADING_DAY")
         for index, scenario in enumerate(SCENARIOS, 1):
