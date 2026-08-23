@@ -12,9 +12,10 @@ on:
         required: true
         default: "false"
   schedule:
-    # UTC. Runs every 10 minutes across the possible A-share trading window.
-    # The Python runner performs the Asia/Shanghai session guard and exits cleanly
-    # outside 09:30-11:30 / 13:00-15:00. This replaces legacy fixed screenshot nodes.
+    # UTC. Trigger every 10 minutes across the possible A-share window.
+    # The runner applies the Asia/Shanghai session guard. Cron is a trigger target,
+    # not a promise of exact execution time; decision freshness is determined from
+    # captured_at and config/runtime_policy.json.
     - cron: "*/10 1-7 * * 1-5"
 
 permissions:
@@ -22,17 +23,20 @@ permissions:
 
 concurrency:
   group: etf-market-snapshot
-  cancel-in-progress: false
+  # A delayed older run must never queue behind and later overwrite a fresher run.
+  # Each snapshot is atomic and CURRENT keeps the last valid state, so prioritise recency.
+  cancel-in-progress: true
 
 jobs:
   snapshot:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 6
     env:
       HITHINK_FINANCE_API_KEY: ${{ secrets.HITHINK_FINANCE_API_KEY }}
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
-      HITHINK_RETRY_LIMIT: "3"
-      HITHINK_TIMEOUT_SECONDS: "60"
+      HITHINK_RETRY_LIMIT: "2"
+      HITHINK_TIMEOUT_SECONDS: "25"
+      HITHINK_MAX_WORKERS: "3"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -54,24 +58,31 @@ jobs:
             python scripts/cloud_runner_snapshot.py --node "$NODE_LABEL"
           fi
       - name: Build objective intraday market delta
-        if: ${{ github.event.inputs.probe_only != 'true' }}
+        if: ${{ success() && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_market_delta.py
       - name: Build state context and candidates
-        if: ${{ github.event.inputs.probe_only != 'true' }}
+        if: ${{ success() && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_state_context.py
       - name: Build on-demand query context
-        if: ${{ github.event.inputs.probe_only != 'true' }}
+        if: ${{ success() && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_query_context.py
       - name: Build post-market review event when closed
-        if: ${{ github.event.inputs.probe_only != 'true' }}
+        if: ${{ success() && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_post_market_review.py
       - name: Build ChatGPT task read probe
-        if: ${{ github.event.inputs.probe_only != 'true' }}
+        if: ${{ success() && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_chatgpt_task_probe.py
-      - name: Commit data artifacts only
+      - name: Commit runtime/data artifacts
+        if: ${{ always() }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/market/snapshots data/state/CURRENT.json data/state/market_delta.json data/state/dashboard_update_candidate.json data/state/decision_context.json data/state/query_context.json data/state/chatgpt_task_probe.json post_market_review/post_market_review_event.json data/state/review_context.json events/events.jsonl
-          git diff --cached --quiet || git commit -m "data: record market snapshot"
-          git push
+          git add data/market/snapshots data/state/CURRENT.json data/state/runtime_health.json data/state/market_delta.json data/state/dashboard_update_candidate.json data/state/decision_context.json data/state/query_context.json data/state/chatgpt_task_probe.json post_market_review/post_market_review_event.json data/state/review_context.json events/events.jsonl 2>/dev/null || true
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "data: record market snapshot/runtime health"
+          # A human/Codex commit may land while this run is executing. Rebase once on
+          # current main so a harmless repository update does not lose the data pulse.
+          git pull --rebase origin main
+          git push origin HEAD:main
