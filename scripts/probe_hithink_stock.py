@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+# Validation trigger: 688981.SH / 2026-08-21 via same-repo PR Actions.
 import argparse
 import json
 import os
