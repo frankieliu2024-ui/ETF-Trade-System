@@ -13,7 +13,6 @@ from pathlib import Path
 
 from state_manager import atomic_json_write, read_current, update_current
 
-
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 UTC = timezone.utc
@@ -66,8 +65,8 @@ MAX_WORKERS = int(os.environ.get("HITHINK_MAX_WORKERS", POLICY["provider_max_wor
 CLOSE_GRACE_SECONDS = int(POLICY.get("close_grace_seconds", 900))
 
 INDEX = [("000001", "000001.SH"), ("399006", "399006.SZ")]
-NODES = {"0925", "1030", "1130", "1330", "1430", "close", "live", "manual", "scheduled"}
-PLANNED_TIMES = {"0925": "09:25", "1030": "10:30", "1130": "11:30", "1330": "13:30", "1430": "14:30", "close": "15:00"}
+NODES = {"auction", "0925", "1030", "1130", "1330", "1430", "close", "live", "manual", "scheduled"}
+PLANNED_TIMES = {"auction": "09:15-09:25", "0925": "09:25", "1030": "10:30", "1130": "11:30", "1330": "13:30", "1430": "14:30", "close": "15:00"}
 
 
 def now_shanghai() -> datetime:
@@ -78,19 +77,38 @@ def now_utc_text() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
+def a_share_market_phase(captured_dt: datetime) -> str:
+    minute = captured_dt.hour * 60 + captured_dt.minute
+    if 9 * 60 + 15 <= minute <= 9 * 60 + 25:
+        return "OPENING_CALL_AUCTION"
+    if 9 * 60 + 30 <= minute <= 11 * 60 + 30:
+        return "CONTINUOUS_MORNING"
+    if 13 * 60 <= minute < 14 * 60 + 57:
+        return "CONTINUOUS_AFTERNOON"
+    if 14 * 60 + 57 <= minute <= 15 * 60:
+        return "CLOSING_CALL_AUCTION"
+    if 15 * 60 < minute <= 15 * 60 + max(1, CLOSE_GRACE_SECONDS // 60):
+        return "POST_CLOSE_GRACE"
+    return "OUTSIDE_SESSION"
+
+
 def in_a_share_capture_window(captured_dt: datetime) -> bool:
     if captured_dt.weekday() >= 5:
         return False
     minute = captured_dt.hour * 60 + captured_dt.minute
+    opening_auction = 9 * 60 + 15 <= minute <= 9 * 60 + 25
     morning = 9 * 60 + 30 <= minute <= 11 * 60 + 30
     afternoon = 13 * 60 <= minute <= 15 * 60
     close_grace_end = 15 * 60 + max(1, CLOSE_GRACE_SECONDS // 60)
     close_grace = 15 * 60 < minute <= close_grace_end
-    return morning or afternoon or close_grace
+    return opening_auction or morning or afternoon or close_grace
 
 
 def resolve_scheduled_node(captured_dt: datetime) -> str:
-    return "close" if (captured_dt.hour * 60 + captured_dt.minute) >= 15 * 60 else "live"
+    minute = captured_dt.hour * 60 + captured_dt.minute
+    if 9 * 60 + 15 <= minute <= 9 * 60 + 25:
+        return "auction"
+    return "close" if minute >= 15 * 60 else "live"
 
 
 def close_already_recorded(market_date: str) -> bool:
@@ -148,7 +166,7 @@ def run_json(cli: str, args: list[str], raw_path: Path) -> dict:
     raise RuntimeError(f"request failed after {RETRY_LIMIT} attempts: {args}; {last_error}")
 
 
-def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, provider_ts: object) -> dict:
+def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, provider_ts: object, market_phase: str) -> dict:
     required = ["open_price", "high_price", "low_price", "last_price", "volume", "turnover"]
     missing = [key for key in required if item.get(key) is None]
     if missing:
@@ -161,17 +179,19 @@ def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, pr
         "low": item["low_price"], "close": item["last_price"],
         "volume": item["volume"], "amount": item["turnover"],
         "provider": "hithink-finance", "provider_timestamp_ms": provider_ts,
-        "captured_at": captured, "timezone": "Asia/Shanghai",
+        "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai",
+        "market_phase": market_phase,
         "quality_status": "PASS",
+        "semantic_note": "OPENING_CALL_AUCTION阶段仅按集合竞价时点快照解释，不与连续竞价最新成交语义混用。" if market_phase == "OPENING_CALL_AUCTION" else "",
     }
 
 
-def fetch_etf(cli: str, run_dir: Path, code: str, thscode: str, captured: str) -> dict:
+def fetch_etf(cli: str, run_dir: Path, code: str, thscode: str, captured: str, market_phase: str) -> dict:
     obj = run_json(cli, ["fund", "snapshot", "--thscode", thscode], run_dir / f"ETF_{code}.json")
     items = obj.get("data", {}).get("item") or []
     if len(items) != 1:
         raise RuntimeError(f"expected one ETF row for {code}, got {len(items)}")
-    return row("ETF", code, thscode, items[0], captured, obj.get("data", {}).get("timestamp"))
+    return row("ETF", code, thscode, items[0], captured, obj.get("data", {}).get("timestamp"), market_phase)
 
 
 def is_newer_than_current(captured_dt: datetime) -> bool:
@@ -199,29 +219,18 @@ def main() -> int:
     captured_dt = now_shanghai()
     captured = captured_dt.isoformat(timespec="seconds")
     market_date = captured_dt.date().isoformat()
+    market_phase = a_share_market_phase(captured_dt)
 
     if args.node == "scheduled" and not args.probe_only and not in_a_share_capture_window(captured_dt):
-        write_runtime_health({
-            "status": "SKIPPED",
-            "reason": "outside_a_share_capture_window",
-            "market_date": market_date,
-            "run_started_at": run_started_at,
-            "captured_at": captured,
-        })
-        print(json.dumps({"ok": True, "skipped": True, "reason": "outside_a_share_capture_window", "market_date": market_date, "captured_at": captured}, ensure_ascii=False))
+        write_runtime_health({"status": "SKIPPED", "reason": "outside_a_share_capture_window", "market_date": market_date, "run_started_at": run_started_at, "captured_at": captured, "captured_at_beijing": captured, "market_phase": market_phase})
+        print(json.dumps({"ok": True, "skipped": True, "reason": "outside_a_share_capture_window", "market_date": market_date, "captured_at_beijing": captured}, ensure_ascii=False))
         return 0
 
     node = resolve_scheduled_node(captured_dt) if args.node == "scheduled" else args.node
     planned_time = PLANNED_TIMES.get(node, "")
 
     if args.node == "scheduled" and node == "close" and close_already_recorded(market_date):
-        write_runtime_health({
-            "status": "SKIPPED",
-            "reason": "close_already_recorded",
-            "market_date": market_date,
-            "run_started_at": run_started_at,
-            "captured_at": captured,
-        })
+        write_runtime_health({"status": "SKIPPED", "reason": "close_already_recorded", "market_date": market_date, "run_started_at": run_started_at, "captured_at": captured, "captured_at_beijing": captured, "market_phase": market_phase})
         print(json.dumps({"ok": True, "skipped": True, "reason": "close_already_recorded", "market_date": market_date}, ensure_ascii=False))
         return 0
 
@@ -237,7 +246,7 @@ def main() -> int:
 
     rows: list[dict] = []
     with ThreadPoolExecutor(max_workers=max(1, MAX_WORKERS)) as pool:
-        futures = {pool.submit(fetch_etf, cli, run_dir, code, thscode, captured): code for code, thscode in ETF}
+        futures = {pool.submit(fetch_etf, cli, run_dir, code, thscode, captured, market_phase): code for code, thscode in ETF}
         for future in as_completed(futures):
             rows.append(future.result())
 
@@ -246,40 +255,29 @@ def main() -> int:
     for code, thscode in INDEX:
         if thscode not in returned:
             raise RuntimeError(f"missing index row for {thscode}")
-        rows.append(row("A_SHARE_INDEX", code, thscode, returned[thscode], captured, obj.get("data", {}).get("timestamp")))
+        rows.append(row("A_SHARE_INDEX", code, thscode, returned[thscode], captured, obj.get("data", {}).get("timestamp"), market_phase))
 
     rows.sort(key=lambda x: (x["asset_class"], x["symbol"]))
     acquisition_seconds = round(time.monotonic() - run_started_monotonic, 3)
 
     if args.probe_only:
-        write_runtime_health({
-            "status": "PROBE_PASS", "market_date": market_date, "run_started_at": run_started_at,
-            "captured_at": captured, "acquisition_seconds": acquisition_seconds, "count": len(rows),
-        })
-        print(json.dumps({"ok": True, "probe_only": True, "count": len(rows), "market_date": market_date, "quality_status": "PASS", "node_written": False, "acquisition_seconds": acquisition_seconds, "etf_universe_count": len(ETF)}, ensure_ascii=False))
+        write_runtime_health({"status": "PROBE_PASS", "market_date": market_date, "run_started_at": run_started_at, "captured_at": captured, "captured_at_beijing": captured, "market_phase": market_phase, "acquisition_seconds": acquisition_seconds, "count": len(rows)})
+        print(json.dumps({"ok": True, "probe_only": True, "count": len(rows), "market_date": market_date, "quality_status": "PASS", "node_written": False, "market_phase": market_phase, "captured_at_beijing": captured, "acquisition_seconds": acquisition_seconds, "etf_universe_count": len(ETF)}, ensure_ascii=False))
         return 0
 
     if not is_newer_than_current(captured_dt):
-        write_runtime_health({
-            "status": "SUPERSEDED", "reason": "newer_current_already_exists", "market_date": market_date,
-            "run_started_at": run_started_at, "captured_at": captured, "acquisition_seconds": acquisition_seconds,
-        })
-        print(json.dumps({"ok": True, "skipped": True, "reason": "newer_current_already_exists", "captured_at": captured}, ensure_ascii=False))
+        write_runtime_health({"status": "SUPERSEDED", "reason": "newer_current_already_exists", "market_date": market_date, "run_started_at": run_started_at, "captured_at": captured, "captured_at_beijing": captured, "market_phase": market_phase, "acquisition_seconds": acquisition_seconds})
+        print(json.dumps({"ok": True, "skipped": True, "reason": "newer_current_already_exists", "captured_at_beijing": captured}, ensure_ascii=False))
         return 0
 
     snapshot = {
         "market_date": market_date, "node": node, "planned_time": planned_time,
+        "market_phase": market_phase,
         "actual_run_time": captured, "workflow_run_id": os.environ.get("GITHUB_RUN_ID", ""),
-        "captured_at": captured, "timezone": "Asia/Shanghai", "provider": "hithink-finance",
+        "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai", "provider": "hithink-finance",
         "quality_status": "PASS", "count": len(rows), "etf_universe_count": len(ETF),
-        "runtime": {
-            "acquisition_seconds": acquisition_seconds,
-            "target_cadence_seconds": POLICY["target_cadence_seconds"],
-            "provider_timeout_seconds": TIMEOUT_SECONDS,
-            "provider_retry_limit": RETRY_LIMIT,
-            "provider_max_workers": MAX_WORKERS,
-            "close_grace_seconds": CLOSE_GRACE_SECONDS,
-        },
+        "semantic_scope": "集合竞价脉冲只按集合竞价信息解释；连续竞价脉冲才按盘中成交语义解释。",
+        "runtime": {"acquisition_seconds": acquisition_seconds, "target_cadence_seconds": POLICY["target_cadence_seconds"], "provider_timeout_seconds": TIMEOUT_SECONDS, "provider_retry_limit": RETRY_LIMIT, "provider_max_workers": MAX_WORKERS, "close_grace_seconds": CLOSE_GRACE_SECONDS},
         "rows": rows,
     }
     name = f"{captured_dt:%Y-%m-%d_%H%M%S}.json"
@@ -288,27 +286,10 @@ def main() -> int:
     temp.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
     temp.replace(target)
 
-    update_current(
-        root=ROOT, market_date=market_date, node=node, captured_at=captured,
-        latest_snapshot=str(target.relative_to(ROOT)).replace("\\", "/"),
-        snapshot_commit=os.environ.get("GITHUB_SHA", ""), node_status="READY",
-        data_freshness={
-            "status": "FRESH", "provider": "hithink-finance", "count": len(rows),
-            "etf_universe_count": len(ETF),
-            "capture_mode": "INTRADAY_PULSE" if node == "live" else "CLOSE",
-            "captured_at": captured,
-            "target_cadence_seconds": POLICY["target_cadence_seconds"],
-            "fresh_max_age_seconds": POLICY["fresh_max_age_seconds"],
-            "degraded_max_age_seconds": POLICY["degraded_max_age_seconds"],
-            "acquisition_seconds": acquisition_seconds,
-        },
-    )
-    write_runtime_health({
-        "status": "PASS", "market_date": market_date, "node": node, "run_started_at": run_started_at,
-        "captured_at": captured, "acquisition_seconds": acquisition_seconds, "count": len(rows),
-        "latest_snapshot": str(target.relative_to(ROOT)).replace("\\", "/"),
-    })
-    print(json.dumps({"ok": True, "snapshot": str(target), "count": len(rows), "market_date": market_date, "node": node, "acquisition_seconds": acquisition_seconds, "etf_universe_count": len(ETF)}, ensure_ascii=False))
+    capture_mode = "OPENING_AUCTION_PULSE" if market_phase == "OPENING_CALL_AUCTION" else ("CLOSE" if node == "close" else "INTRADAY_PULSE")
+    update_current(root=ROOT, market_date=market_date, node=node, captured_at=captured, latest_snapshot=str(target.relative_to(ROOT)).replace("\\", "/"), snapshot_commit=os.environ.get("GITHUB_SHA", ""), node_status="READY", data_freshness={"status": "FRESH", "provider": "hithink-finance", "count": len(rows), "etf_universe_count": len(ETF), "capture_mode": capture_mode, "market_phase": market_phase, "captured_at": captured, "captured_at_beijing": captured, "target_cadence_seconds": POLICY["target_cadence_seconds"], "fresh_max_age_seconds": POLICY["fresh_max_age_seconds"], "degraded_max_age_seconds": POLICY["degraded_max_age_seconds"], "acquisition_seconds": acquisition_seconds})
+    write_runtime_health({"status": "PASS", "market_date": market_date, "node": node, "market_phase": market_phase, "run_started_at": run_started_at, "captured_at": captured, "captured_at_beijing": captured, "acquisition_seconds": acquisition_seconds, "count": len(rows), "latest_snapshot": str(target.relative_to(ROOT)).replace("\\", "/")})
+    print(json.dumps({"ok": True, "snapshot": str(target), "count": len(rows), "market_date": market_date, "node": node, "market_phase": market_phase, "captured_at_beijing": captured, "acquisition_seconds": acquisition_seconds, "etf_universe_count": len(ETF)}, ensure_ascii=False))
     return 0
 
 
@@ -317,13 +298,7 @@ if __name__ == "__main__":
         raise SystemExit(main())
     except Exception as exc:
         try:
-            write_runtime_health({
-                "status": "FAILED",
-                "reason": "collection_error",
-                "error": str(exc)[-1000:],
-                "failed_at": now_utc_text(),
-                "preserve_previous_current": True,
-            })
+            write_runtime_health({"status": "FAILED", "reason": "collection_error", "error": str(exc)[-1000:], "failed_at": now_utc_text(), "preserve_previous_current": True})
         except Exception:
             pass
         print(f"cloud runner failed: {exc}", file=sys.stderr)
