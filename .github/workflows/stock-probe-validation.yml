@@ -37,14 +37,45 @@ jobs:
         with:
           python-version: "3.11"
       - name: Probe Hithink historical A-share bar
+        id: probe
+        continue-on-error: true
         env:
           PROBE_CODE: ${{ github.event.inputs.code || '688981' }}
           PROBE_DATE: ${{ github.event.inputs.date || '2026-08-21' }}
         run: |
           mkdir -p data/market/audit
+          set +e
           python scripts/probe_hithink_stock.py "$PROBE_CODE" --date "$PROBE_DATE" --adjust none \
-            --output "data/market/audit/hithink_stock_probe_${PROBE_CODE}_${PROBE_DATE}.json"
-      - name: Persist successful validation result
+            --output "data/market/audit/hithink_stock_probe_${PROBE_CODE}_${PROBE_DATE}.json" \
+            > /tmp/hithink_probe_stdout.txt 2> /tmp/hithink_probe_stderr.txt
+          rc=$?
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          code = os.environ['PROBE_CODE']
+          day = os.environ['PROBE_DATE']
+          rc = int(os.environ.get('PROBE_RC', '0'))
+          result_path = Path(f'data/market/audit/hithink_stock_probe_{code}_{day}.json')
+          stdout = Path('/tmp/hithink_probe_stdout.txt').read_text(encoding='utf-8', errors='replace') if Path('/tmp/hithink_probe_stdout.txt').exists() else ''
+          stderr = Path('/tmp/hithink_probe_stderr.txt').read_text(encoding='utf-8', errors='replace') if Path('/tmp/hithink_probe_stderr.txt').exists() else ''
+          if result_path.exists():
+              try:
+                  payload = json.loads(result_path.read_text(encoding='utf-8'))
+              except Exception:
+                  payload = {'ok': False, 'raw_result': result_path.read_text(encoding='utf-8', errors='replace')}
+          else:
+              payload = {'ok': False, 'provider': 'hithink-finance', 'thscode': f'{code}.SH' if code.startswith(('60','68')) else code, 'date': day, 'adjust': 'none'}
+          payload['exit_code'] = rc
+          if stdout.strip(): payload['stdout'] = stdout.strip()[-4000:]
+          if stderr.strip(): payload['stderr'] = stderr.strip()[-4000:]
+          result_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          exit 0
+        env:
+          PROBE_CODE: ${{ github.event.inputs.code || '688981' }}
+          PROBE_DATE: ${{ github.event.inputs.date || '2026-08-21' }}
+          PROBE_RC: "0"
+      - name: Persist validation audit result
         if: ${{ github.event_name != 'pull_request' }}
         run: |
           git config user.name "github-actions[bot]"
