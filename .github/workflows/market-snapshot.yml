@@ -40,6 +40,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Run system consistency preflight
+        run: python scripts/check_system_consistency.py
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -84,7 +86,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/market/snapshots data/state/CURRENT.json data/state/runtime_health.json data/state/market_delta.json data/state/overseas_context.json data/state/stock_context.json data/state/stock_market_context.json data/state/dashboard_update_candidate.json data/state/decision_context.json data/state/query_context.json data/state/chatgpt_task_probe.json post_market_review/post_market_review_event.json data/state/review_context.json events/events.jsonl 2>/dev/null || true
+          git add data/market/snapshots data/state/CURRENT.json data/state/runtime_health.json data/state/system_consistency.json data/state/market_delta.json data/state/overseas_context.json data/state/stock_context.json data/state/stock_market_context.json data/state/dashboard_update_candidate.json data/state/decision_context.json data/state/query_context.json data/state/chatgpt_task_probe.json post_market_review/post_market_review_event.json data/state/review_context.json events/events.jsonl 2>/dev/null || true
           if git diff --cached --quiet; then
             exit 0
           fi
