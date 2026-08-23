@@ -10,6 +10,8 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from state_manager import update_current
+
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
@@ -117,14 +119,12 @@ def main() -> int:
     target = snapshot_dir / name
     temp.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
     temp.replace(target)
-    current = {
-        "market_date": market_date, "latest_valid_node": args.node,
-        "captured_at": captured, "node_status": "VALID",
-        "snapshot_commit": os.environ.get("GITHUB_SHA", ""),
-        "data_freshness": "fresh", "rules_version": "V2.2.15",
-        "generated_at": captured,
-    }
-    (ROOT / "data" / "state" / "CURRENT.json").write_text(json.dumps(current, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    update_current(
+        root=ROOT, market_date=market_date, node=args.node, captured_at=captured,
+        latest_snapshot=str(target.relative_to(ROOT)).replace("\\", "/"),
+        snapshot_commit=os.environ.get("GITHUB_SHA", ""), node_status="READY",
+        data_freshness={"status": "FRESH", "provider": "hithink-finance", "count": len(rows)},
+    )
     print(json.dumps({"ok": True, "snapshot": str(target), "count": len(rows), "market_date": market_date, "node": args.node}, ensure_ascii=False))
     return 0
 
