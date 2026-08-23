@@ -15,9 +15,9 @@
 
 ## 一级目录基础数据规范
 
-`ETF与市场监测数据接口使用规范.md` 是数据与云端运行的基础规范，负责三层监测结构、数据源、盘中脉冲、新鲜度、质量验收、跨市场时间对齐、故障降级和维护一致性。它不是第五个交易规则文件，不产生风险许可、Trial／Confirm、金额、卖出或其他交易权限。
+`ETF与市场监测数据接口使用规范.md` 是数据与云端运行的基础规范，负责三层监测结构、数据源、盘中脉冲、新鲜度、交易日历、质量验收、跨市场时间对齐、故障降级和维护一致性。它不是第五个交易规则文件，不产生风险许可、Trial／Confirm、金额、卖出或其他交易权限。
 
-任何涉及三层监测对象、provider优先级、ETF运行全集、脉冲参数、跨市场时点、状态文件、脚本或GitHub Actions的更新，都必须同步复核该规范并执行系统一致性检查。
+任何涉及三层监测对象、provider优先级、ETF运行全集、交易日历、脉冲参数、跨市场时点、状态文件、脚本或GitHub Actions的更新，都必须同步复核该规范并执行系统一致性检查。
 
 ## 三层市场监测结构
 
@@ -31,19 +31,20 @@
 
 ## 系统一致性门禁
 
-一致性检查是相关更新维护后的基础操作。凡修改四个正式文件、一级目录数据规范、三层监测对象、provider、脉冲参数、配置、数据入口、运行脚本、查询上下文或GitHub Actions，完成后必须运行 `scripts/check_system_consistency.py`。
+一致性检查是相关更新维护后的基础操作。凡修改四个正式文件、一级目录数据规范、三层监测对象、provider、交易日历、脉冲参数、配置、数据入口、运行脚本、查询上下文或GitHub Actions，完成后必须运行 `scripts/check_system_consistency.py`。
 
 检查结果写入 `data/state/system_consistency.json`：
 
 - `PASS`：结构一致，可进入生产；
 - `WARNING`：例如当日账户事实缺失等正常状态，不阻断行情采集，但正式交易判断仍受对应门禁约束；
-- `FAIL`：正式文件、数据规范、ETF全集、指数全集、动态个股规则、provider、脉冲参数、路径、脚本或workflow存在硬冲突，必须先修复，不得把当前结构当作完整生产状态。
+- `FAIL`：正式文件、数据规范、ETF全集、指数全集、动态个股规则、provider、交易日历、脉冲参数、路径、脚本或workflow存在硬冲突，必须先修复，不得把当前结构当作完整生产状态。
 
-`.github/workflows/system-consistency.yml` 在相关文件推送到main后自动运行；`.github/workflows/market-snapshot.yml` 在每次行情采集前再次执行硬一致性预检。因此“一致性”同时覆盖维护后验收和生产前门禁。
+`.github/workflows/system-consistency.yml` 在相关文件推送到main后自动运行并持久化一致性结果；`.github/workflows/market-snapshot.yml` 在每次行情采集前再次执行硬一致性预检。行情workflow预检PASS时不重复改写一致性时间戳，避免休市日和无行情节点产生无意义提交；预检FAIL则停止后续生产链。
 
 ## 运行读取路径
 
 - 基础数据规范：`ETF与市场监测数据接口使用规范.md`
+- A股官方交易日历：`config/market/a_share_trading_calendar_2026.json`
 - 状态：`data/state/CURRENT.json`、`data/state/account_fact.json`、`data/state/review_context.json`、`data/state/chatgpt_task_probe.json`
 - 系统一致性：`data/state/system_consistency.json`、`scripts/check_system_consistency.py`
 - ETF机器运行全集：`config/market/etf_monitor_universe.json`
@@ -66,7 +67,9 @@
 
 ## 实时读取与盘中脉冲原则
 
-云端当前采用10分钟目标脉冲，但采集目标频率不等于决策时钟。GitHub Actions可能存在调度排队，行情接口也可能延迟，因此任何“当前ETF判断”必须先确认 `system_consistency.json` 不存在硬FAIL，再以 `CURRENT.json` 的 `captured_at` 为基准，结合 `config/runtime_policy.json` 重新计算数据年龄，并读取 `runtime_health.json`。
+云端当前采用10分钟目标脉冲，但采集目标频率不等于决策时钟。任何“当前ETF判断”必须先确认 `system_consistency.json` 不存在硬FAIL，再读取官方交易日历确认当前是交易日前、盘中、盘后、周末还是交易所休市；随后以 `CURRENT.json` 的 `captured_at` 为基准，结合 `config/runtime_policy.json` 重新计算数据年龄，并读取 `runtime_health.json`。
+
+计划采集只在A股09:30—11:30、13:00—15:10（Asia/Shanghai，含收盘宽限）附近触发；`scripts/runtime_session_gate.py` 再按真实上海时间和官方交易日历决定是否实际执行。不能仅凭“周一到周五”推定A股开市。
 
 - `FRESH`：可作为当前行情事实进入正式决策链。
 - `DEGRADED`：仅作背景和连续性复核；若会改变机会、金额或卖出动作，优先等待下一有效脉冲或结合用户当前截图复核。
@@ -74,6 +77,7 @@
 - 采集失败：上一有效 `CURRENT` 与快照继续保留；失败状态记录在 `runtime_health.json`，下一采集脉冲自动恢复，不用失败数据覆盖有效状态。
 - 旧任务晚到：必须取消或SUPERSEDED，不得覆盖更新状态。
 - 收盘补采：15:00计划任务允许在 `runtime_policy.close_grace_seconds` 宽限窗口内补采；一旦当日 `close` 已成功写入，后续重复收盘任务跳过。
+- 只有本次workflow真实写入新的PASS快照后，才允许生成 `market_delta`、海外指数上下文、动态个股上下文、query context和盘后事件；SKIPPED、SUPERSEDED、重复close或probe-only不得伪造新的决策上下文。
 - 当前系统是10分钟级近实时云端状态，不得描述为交易所tick级实时流。
 
 ## 账户事实与动态个股原则
@@ -118,7 +122,10 @@
 |---|---|---|
 |系统一致性FAIL|停止把当前结构当作完整生产状态，先修复冲突|不得继续用冲突名单/路径形成正式判断|
 |系统一致性WARNING|继续数据链，但保留对应门禁|正常状态缺口不冒充结构故障|
+|周一至周五但交易所官方休市|session gate直接跳过生产采集|不得把旧行情包装成当日行情|
+|交易日历未覆盖当前日期|一致性FAIL|更新官方日历后才能继续生产|
 |GitHub Actions调度延迟|按 `captured_at` 重新计算数据年龄|不按cron计划时刻冒充行情时点|
+|runner未写入新有效快照|全部下游context跳过|不得制造“新上下文、旧行情”|
 |单次hithink采集失败|保留上一有效CURRENT；记录FAILED|旧行情按FRESH/DEGRADED/STALE处理|
 |Yahoo单个海外对象失败|该对象FAILED，其余对象继续|失败对象不参与当前证据，但监测职责不删除|
 |旧任务晚到|SUPERSEDED或被并发策略取消|不得覆盖更新快照|
@@ -134,8 +141,8 @@
 ## 读取场景
 
 1. ChatGPT规则读取：先读本索引和 `system_consistency.json`，再读一级目录的 `ETF规则_MASTER.md`；涉及数据来源、脉冲、新鲜度或跨市场时间时同时读取 `ETF与市场监测数据接口使用规范.md`。
-2. ChatGPT当前状态：先读一致性状态、数据规范、`CURRENT.json`、`runtime_health.json`、ETF运行全集、`stock_context.json` 和运行策略；需要人工当前状态时再读一级目录的 `ETF当前状态_DASHBOARD.md`。
-3. 盘中查询：读一致性状态、数据规范、`CURRENT.json`、最新行情、`market_delta.json`、`overseas_context.json`、ETF运行全集、`stock_context.json`、`stock_market_context.json`、`runtime_health.json` 和 `query_context.json`；按查询时刻重新判断新鲜度，不绑定固定截图节点。
+2. ChatGPT当前状态：先读一致性状态、数据规范、A股官方交易日历、`CURRENT.json`、`runtime_health.json`、ETF运行全集、`stock_context.json` 和运行策略；需要人工当前状态时再读一级目录的 `ETF当前状态_DASHBOARD.md`。
+3. 盘中查询：读一致性状态、数据规范、A股官方交易日历、`CURRENT.json`、最新行情、`market_delta.json`、`overseas_context.json`、ETF运行全集、`stock_context.json`、`stock_market_context.json`、`runtime_health.json` 和 `query_context.json`；按查询时刻重新判断交易日状态和新鲜度，不绑定固定截图节点。
 4. 盘后维护：读 `post_market_review/post_market_review_event.json`、`review_context.json`、账户事实、动态资产角色和四个正式文件；维护结束后重新执行一致性检查。
 
 ## 写入边界
