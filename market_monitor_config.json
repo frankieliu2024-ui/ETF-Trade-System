@@ -36,5 +36,39 @@
       {"id":"HG_F_COMEX","name":"COMEX铜期货","source":"历史公开文件","status":"DEGRADED"}
     ]}
   },
-  "guardrails": {"no_trade_rules":true,"no_trade_actions":true,"no_master_write":true,"proxy_cannot_replace_direct_index_permanently":true}
+  "monitoring_layers": {
+    "index_monitor": [
+      {"id":"000001.SH","type":"index_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null},
+      {"id":"399006.SZ","type":"index_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null},
+      {"id":"NDX","type":"index_monitor","provider":"yahoo_chart_api","status":"ACTIVE","replacement":null},
+      {"id":"SOX","type":"index_monitor","provider":"yahoo_chart_api","status":"ACTIVE","replacement":"SOXQ"},
+      {"id":"N225","type":"index_monitor","provider":"yahoo_chart_api","status":"ACTIVE","replacement":"513520"},
+      {"id":"HSTECH","type":"index_monitor","provider":"hsi_official_api|yahoo_chart_api","status":"INACTIVE","replacement":"513180","note":"HS2083/HSTECH自动历史源未通过稳定性门槛"},
+      {"id":"SPX","type":"index_monitor","provider":"yahoo_chart_api","status":"INACTIVE","replacement":null,"note":"能力已验证，但不新增为默认监测对象"},
+      {"id":"KOSPI","type":"index_monitor","provider":"yahoo_chart_api","status":"INACTIVE","replacement":null,"note":"保留为条件背景，不进入默认链"},
+      {"id":"KOSDAQ","type":"index_monitor","provider":"yahoo_chart_api","status":"INACTIVE","replacement":null,"note":"保留为条件背景，不进入默认链"},
+      {"id":"VIX","type":"index_monitor","provider":"yahoo_chart_api","status":"INACTIVE","replacement":null,"note":"DEGRADED，不进入默认链"},
+      {"id":"TWII","type":"index_monitor","provider":"yahoo_chart_api","status":"INACTIVE","replacement":null,"note":"DEGRADED，延续既有非默认边界"},
+      {"id":"GOLD","type":"index_monitor","provider":"yahoo_chart_api","status":"INACTIVE","replacement":"518880","note":"DEGRADED，保留为黄金ETF条件背景"},
+      {"id":"DXY","type":"index_monitor","provider":"yahoo_chart_api","status":"INACTIVE","replacement":null,"note":"DEGRADED，保留为条件背景"}
+    ],
+    "etf_monitor": [
+      {"id":"561980","type":"etf_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null},
+      {"id":"588000","type":"etf_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null},
+      {"id":"159781","type":"etf_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null},
+      {"id":"159941","type":"etf_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null},
+      {"id":"159561","type":"etf_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null},
+      {"id":"513520","type":"etf_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":"N225"},
+      {"id":"513180","type":"etf_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":"HSTECH"},
+      {"id":"518880","type":"etf_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":"GOLD"},
+      {"id":"SOXQ","type":"etf_monitor","provider":"yahoo_chart_api","status":"ACTIVE","replacement":"SOX","note":"交易对象；不再承担SOX唯一指数职责"}
+    ],
+    "stock_monitor": [
+      {"id":"300750","type":"stock_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null,"note":"既有打新底仓观察"},
+      {"id":"601138","type":"stock_monitor","provider":"hithink_finance","status":"ACTIVE","replacement":null,"note":"既有打新底仓观察"},
+      {"id":"005930.KS","type":"stock_monitor","provider":"yahoo_chart_api","status":"INACTIVE","replacement":null,"note":"DEGRADED，仅条件观察"},
+      {"id":"000660.KS","type":"stock_monitor","provider":"yahoo_chart_api","status":"INACTIVE","replacement":null,"note":"DEGRADED，仅条件观察"}
+    ]
+  },
+  "guardrails": {"no_trade_rules":true,"no_trade_actions":true,"no_master_write":true,"proxy_cannot_replace_direct_index_permanently":true,"no_scope_expansion":true}
 }

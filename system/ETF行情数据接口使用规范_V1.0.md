@@ -159,6 +159,10 @@ A股ETF继续以 hithink-finance 为主源；海外指数、海外个股和商�
 
 本补充不改变数据进入生产快照的质量门槛，不把海外行情自动转换为交易判断。
 
+### 6.5 监测对象优化原则（V2.0数据能力补充）
+
+新增数据源不等于新增监测对象。对象先按指数监测层、ETF监测层、个股监测层归属，再依据可获取性、质量、直接性和重复职责执行KEEP、REPLACE、REMOVE、UPGRADE或DOWNGRADE。直接指数达到稳定质量门槛时，优先替代ETF的指数代理职责；直接指数未达到门槛时，保留原ETF代理。能力探针通过但未进入最终配置的对象，不得进入默认监测链。
+
 ```powershell
 python accept_hithink_etf.py
 python refresh_etf_history_hithink_cli.py
