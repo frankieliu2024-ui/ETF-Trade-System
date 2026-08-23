@@ -6,6 +6,11 @@ on:
     paths:
       - "scripts/probe_hithink_stock.py"
       - ".github/workflows/stock-probe-validation.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/probe_hithink_stock.py"
+      - ".github/workflows/stock-probe-validation.yml"
   workflow_dispatch:
     inputs:
       code:
@@ -40,6 +45,7 @@ jobs:
           python scripts/probe_hithink_stock.py "$PROBE_CODE" --date "$PROBE_DATE" --adjust none \
             --output "data/market/audit/hithink_stock_probe_${PROBE_CODE}_${PROBE_DATE}.json"
       - name: Persist successful validation result
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
