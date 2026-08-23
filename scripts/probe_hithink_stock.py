@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+"""Generic on-demand Hithink A-share quote and daily-bar probe."""
+
 import argparse
 import json
 import os
