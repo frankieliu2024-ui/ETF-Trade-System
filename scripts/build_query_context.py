@@ -19,6 +19,7 @@ CANONICAL_FILES = {
     "dashboard": "ETF当前状态_DASHBOARD.md",
     "experience": "ETF交易复盘与经验库_2026.md",
     "market_archive": "ETF市场行情档案_2026.md",
+    "data_standard": "ETF与市场监测数据接口使用规范.md",
     "current": "data/state/CURRENT.json",
     "account_fact": "data/state/account_fact.json",
     "asset_roles": "data/state/asset_roles.json",
@@ -94,6 +95,7 @@ def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict)
     required = [
         CANONICAL_FILES["index"],
         CANONICAL_FILES["master"],
+        CANONICAL_FILES["data_standard"],
         CANONICAL_FILES["current"],
         CANONICAL_FILES["system_consistency"],
         CANONICAL_FILES["runtime_policy"],
@@ -131,12 +133,14 @@ def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict)
             "stock_context": CANONICAL_FILES["stock_context"],
             "stock_market_context": CANONICAL_FILES["stock_market_context"],
             "system_consistency": CANONICAL_FILES["system_consistency"],
+            "data_standard": CANONICAL_FILES["data_standard"],
             "runtime_health": CANONICAL_FILES["runtime_health"],
             "runtime_policy": CANONICAL_FILES["runtime_policy"],
             "freshness_at_context_build": freshness,
             "data_freshness": current.get("data_freshness", {}),
             "query_time_rule": "每次ChatGPT查询必须用当前时间减CURRENT.captured_at重新计算数据年龄；不得仅沿用文件内旧FRESH标签。FRESH可用于当前行情判断；DEGRADED只作背景/连续性复核，涉及当前机会、金额或卖出动作时优先等待下一有效脉冲或结合用户当前截图；STALE不得冒充实时行情。",
             "consistency_rule": "正式分析前读取system_consistency.json；若存在硬一致性FAIL，先处理系统冲突，不得把不一致的数据/名单当作完整生产状态。WARNING类账户缺失不阻断行情采集，但必须遵守账户事实门禁。",
+            "data_standard_rule": "行情与监测数据的来源、质量、脉冲、新鲜度、跨市场时点和降级边界以一级目录ETF与市场监测数据接口使用规范.md为基础规范；该规范不产生交易权限。",
             "etf_rule": "ETF层机器采集对象以config/market/etf_monitor_universe.json为唯一运行清单；持仓/观察身份由Dashboard和当日账户事实解释，禁止采集脚本私自维护第二份ETF名单。",
             "overseas_rule": "正式海外与亚洲指数层必须检查NDX、SOX、N225、KOSPI、TWII、HSTECH，并完成跨市场时点对齐。",
             "stock_rule": "第三层默认个股监测由当日account_fact中的实际非ETF持仓动态生成；已确认IPO_BASE_STOCK进入打新底仓监测，未知角色个股只标记待确认。产业链观察个股按当前分析需要动态发现，可覆盖A股、美股及其他已核验市场，不维护固定三星/海力士或其他永久名单；产业链个股只作背景和传导证据。",
@@ -187,7 +191,7 @@ def build(root: Path = ROOT) -> dict:
         "account_gate": account_gate,
         "needs_account_screenshot": not account_gate["can_use_current_account_fact"],
         "read_only": True,
-        "interaction_boundary": "用户主动查询时先核对系统一致性，再读取最新有效状态、ETF层、动态个股层、正式海外与亚洲指数层、运行健康状态与正式文件；本文件只组织读取，不生成交易动作。",
+        "interaction_boundary": "用户主动查询时先核对系统一致性和数据接口规范，再读取最新有效状态、ETF层、动态个股层、正式海外与亚洲指数层、运行健康状态与正式文件；本文件只组织读取，不生成交易动作。",
     }
 
 
