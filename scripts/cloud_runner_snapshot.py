@@ -26,6 +26,7 @@ def load_runtime_policy() -> dict:
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "stale_after_seconds": 1500,
+        "close_grace_seconds": 900,
         "provider_timeout_seconds": 25,
         "provider_retry_limit": 2,
         "provider_max_workers": 3,
@@ -39,6 +40,7 @@ POLICY = load_runtime_policy()
 RETRY_LIMIT = int(os.environ.get("HITHINK_RETRY_LIMIT", POLICY["provider_retry_limit"]))
 TIMEOUT_SECONDS = int(os.environ.get("HITHINK_TIMEOUT_SECONDS", POLICY["provider_timeout_seconds"]))
 MAX_WORKERS = int(os.environ.get("HITHINK_MAX_WORKERS", POLICY["provider_max_workers"]))
+CLOSE_GRACE_SECONDS = int(POLICY.get("close_grace_seconds", 900))
 
 ETF = [
     ("561980", "561980.SH"), ("588000", "588000.SH"),
@@ -65,11 +67,18 @@ def in_a_share_capture_window(captured_dt: datetime) -> bool:
     minute = captured_dt.hour * 60 + captured_dt.minute
     morning = 9 * 60 + 30 <= minute <= 11 * 60 + 30
     afternoon = 13 * 60 <= minute <= 15 * 60
-    return morning or afternoon
+    close_grace_end = 15 * 60 + max(1, CLOSE_GRACE_SECONDS // 60)
+    close_grace = 15 * 60 < minute <= close_grace_end
+    return morning or afternoon or close_grace
 
 
 def resolve_scheduled_node(captured_dt: datetime) -> str:
     return "close" if (captured_dt.hour * 60 + captured_dt.minute) >= 15 * 60 else "live"
+
+
+def close_already_recorded(market_date: str) -> bool:
+    current = read_current(ROOT)
+    return current.get("market_date") == market_date and current.get("latest_valid_node") == "close" and current.get("node_status") == "READY"
 
 
 def cli_path() -> str:
@@ -87,6 +96,7 @@ def write_runtime_health(payload: dict) -> None:
         "target_cadence_seconds": POLICY["target_cadence_seconds"],
         "fresh_max_age_seconds": POLICY["fresh_max_age_seconds"],
         "degraded_max_age_seconds": POLICY["degraded_max_age_seconds"],
+        "close_grace_seconds": CLOSE_GRACE_SECONDS,
         "provider_timeout_seconds": TIMEOUT_SECONDS,
         "provider_retry_limit": RETRY_LIMIT,
         "provider_max_workers": MAX_WORKERS,
@@ -186,6 +196,17 @@ def main() -> int:
     node = resolve_scheduled_node(captured_dt) if args.node == "scheduled" else args.node
     planned_time = PLANNED_TIMES.get(node, "")
 
+    if args.node == "scheduled" and node == "close" and close_already_recorded(market_date):
+        write_runtime_health({
+            "status": "SKIPPED",
+            "reason": "close_already_recorded",
+            "market_date": market_date,
+            "run_started_at": run_started_at,
+            "captured_at": captured,
+        })
+        print(json.dumps({"ok": True, "skipped": True, "reason": "close_already_recorded", "market_date": market_date}, ensure_ascii=False))
+        return 0
+
     if captured_dt.weekday() >= 5 and not args.probe_only:
         write_runtime_health({"status": "SKIPPED", "reason": "non_trading_weekend", "market_date": market_date, "run_started_at": run_started_at})
         print(json.dumps({"ok": True, "skipped": True, "reason": "non_trading_weekend", "market_date": market_date}, ensure_ascii=False))
@@ -239,6 +260,7 @@ def main() -> int:
             "provider_timeout_seconds": TIMEOUT_SECONDS,
             "provider_retry_limit": RETRY_LIMIT,
             "provider_max_workers": MAX_WORKERS,
+            "close_grace_seconds": CLOSE_GRACE_SECONDS,
         },
         "rows": rows,
     }
