@@ -1,0 +1,16 @@
+{
+  "verification_date": "2026-08-23",
+  "provider": "yahoo_chart_api",
+  "range": "5y",
+  "interval": "1d",
+  "adjusted": false,
+  "objects_pass": ["SOX", "SOXX", "SOXQ", "NDX", "SPX", "KOSPI", "KOSDAQ", "N225"],
+  "objects_degraded": ["SAMSUNG_005930.KS", "SK_HYNIX_000660.KS", "VIX", "TWII", "GOLD", "DXY"],
+  "objects_failed": ["HSTECH"],
+  "notes": [
+    "PASS means all required OHLCV fields were present in the returned rows and OHLC validation passed.",
+    "DEGRADED means the endpoint returned data but missing fields or OHLC anomalies require a quality gate.",
+    "HSTECH symbol ^HSTECH returned HTTP 404.",
+    "No result is automatically promoted to a trading decision or production snapshot."
+  ]
+}
