@@ -18,7 +18,7 @@ on:
         default: "2026-08-21"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:
@@ -36,4 +36,17 @@ jobs:
           PROBE_CODE: ${{ github.event.inputs.code || '688825' }}
           PROBE_DATE: ${{ github.event.inputs.date || '2026-08-21' }}
         run: |
-          python scripts/probe_hithink_stock.py "$PROBE_CODE" --date "$PROBE_DATE" --adjust none
+          mkdir -p data/market/audit
+          python scripts/probe_hithink_stock.py "$PROBE_CODE" --date "$PROBE_DATE" --adjust none \
+            --output "data/market/audit/hithink_stock_probe_${PROBE_CODE}_${PROBE_DATE}.json"
+      - name: Persist successful validation result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/market/audit/hithink_stock_probe_*.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "data: record Hithink stock probe validation"
+          git pull --rebase origin main
+          git push origin HEAD:main
