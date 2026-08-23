@@ -16,7 +16,7 @@ on:
       code:
         description: "A-share ticker or thscode"
         required: true
-        default: "688825"
+        default: "688981"
       date:
         description: "Historical trading date YYYY-MM-DD"
         required: true
@@ -38,7 +38,7 @@ jobs:
           python-version: "3.11"
       - name: Probe Hithink historical A-share bar
         env:
-          PROBE_CODE: ${{ github.event.inputs.code || '688825' }}
+          PROBE_CODE: ${{ github.event.inputs.code || '688981' }}
           PROBE_DATE: ${{ github.event.inputs.date || '2026-08-21' }}
         run: |
           mkdir -p data/market/audit
