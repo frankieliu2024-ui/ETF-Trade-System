@@ -24,6 +24,7 @@ CANONICAL_FILES = {
     "account_fact": "data/state/account_fact.json",
     "asset_roles": "data/state/asset_roles.json",
     "etf_monitor_universe": "config/market/etf_monitor_universe.json",
+    "trading_calendar": "config/market/a_share_trading_calendar_2026.json",
     "stock_context": "data/state/stock_context.json",
     "stock_market_context": "data/state/stock_market_context.json",
     "stock_monitor_policy": "config/market/stock_monitor_policy.json",
@@ -64,6 +65,24 @@ def evaluate_freshness(current: dict, policy: dict) -> dict:
     return {"status": status, "age_seconds": age, "fresh_max_age_seconds": fresh_max, "degraded_max_age_seconds": degraded_max}
 
 
+def current_trading_day_status(calendar: dict) -> dict:
+    now = datetime.now(SHANGHAI)
+    date_text = now.date().isoformat()
+    start = str(calendar.get("coverage_start", ""))
+    end = str(calendar.get("coverage_end", ""))
+    covered = bool(start and end and start <= date_text <= end)
+    weekend = now.weekday() >= 5
+    exchange_closed = date_text in set(calendar.get("closed_dates") or [])
+    return {
+        "market_date": date_text,
+        "calendar_covered": covered,
+        "weekend": weekend,
+        "exchange_closed": exchange_closed,
+        "is_candidate_trading_day": covered and not weekend and not exchange_closed,
+        "calendar_source": calendar.get("source", {}),
+    }
+
+
 def account_gate_status(current: dict, account: dict, policy: dict) -> dict:
     raw_valid = account.get("status") == "VALID"
     market_date = current.get("market_date", "")
@@ -100,6 +119,7 @@ def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict)
         CANONICAL_FILES["system_consistency"],
         CANONICAL_FILES["runtime_policy"],
         CANONICAL_FILES["runtime_health"],
+        CANONICAL_FILES["trading_calendar"],
         CANONICAL_FILES["etf_monitor_universe"],
         CANONICAL_FILES["overseas_context"],
         CANONICAL_FILES["stock_monitor_policy"],
@@ -130,6 +150,7 @@ def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict)
             "market_delta": CANONICAL_FILES["market_delta"],
             "overseas_context": CANONICAL_FILES["overseas_context"],
             "etf_monitor_universe": CANONICAL_FILES["etf_monitor_universe"],
+            "trading_calendar": CANONICAL_FILES["trading_calendar"],
             "stock_context": CANONICAL_FILES["stock_context"],
             "stock_market_context": CANONICAL_FILES["stock_market_context"],
             "system_consistency": CANONICAL_FILES["system_consistency"],
@@ -139,6 +160,7 @@ def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict)
             "freshness_at_context_build": freshness,
             "data_freshness": current.get("data_freshness", {}),
             "query_time_rule": "每次ChatGPT查询必须用当前时间减CURRENT.captured_at重新计算数据年龄；不得仅沿用文件内旧FRESH标签。FRESH可用于当前行情判断；DEGRADED只作背景/连续性复核，涉及当前机会、金额或卖出动作时优先等待下一有效脉冲或结合用户当前截图；STALE不得冒充实时行情。",
+            "trading_day_rule": "每次当前查询先读取A股官方交易日历，区分正常交易日前/盘中/盘后、周末与交易所休市；没有新脉冲不能直接推断采集故障。",
             "consistency_rule": "正式分析前读取system_consistency.json；若存在硬一致性FAIL，先处理系统冲突，不得把不一致的数据/名单当作完整生产状态。WARNING类账户缺失不阻断行情采集，但必须遵守账户事实门禁。",
             "data_standard_rule": "行情与监测数据的来源、质量、脉冲、新鲜度、跨市场时点和降级边界以一级目录ETF与市场监测数据接口使用规范.md为基础规范；该规范不产生交易权限。",
             "etf_rule": "ETF层机器采集对象以config/market/etf_monitor_universe.json为唯一运行清单；持仓/观察身份由Dashboard和当日账户事实解释，禁止采集脚本私自维护第二份ETF名单。",
@@ -167,7 +189,9 @@ def build(root: Path = ROOT) -> dict:
     stock_market_context = read_json(root / CANONICAL_FILES["stock_market_context"], {})
     consistency = read_json(root / CANONICAL_FILES["system_consistency"], {})
     etf_universe = read_json(root / CANONICAL_FILES["etf_monitor_universe"], {})
+    trading_calendar = read_json(root / CANONICAL_FILES["trading_calendar"], {})
     freshness = evaluate_freshness(current, policy)
+    trading_day_status = current_trading_day_status(trading_calendar)
     account_gate = account_gate_status(current, account, policy)
     return {
         "generated_at": now_utc(),
@@ -179,6 +203,7 @@ def build(root: Path = ROOT) -> dict:
         "canonical_files": CANONICAL_FILES,
         "data_status": current.get("data_freshness", {}),
         "freshness_at_context_build": freshness,
+        "trading_day_status": trading_day_status,
         "runtime_health": runtime_health,
         "system_consistency_status": consistency.get("status", "MISSING"),
         "system_consistency_hard_errors": consistency.get("hard_error_count", None),
@@ -191,7 +216,7 @@ def build(root: Path = ROOT) -> dict:
         "account_gate": account_gate,
         "needs_account_screenshot": not account_gate["can_use_current_account_fact"],
         "read_only": True,
-        "interaction_boundary": "用户主动查询时先核对系统一致性和数据接口规范，再读取最新有效状态、ETF层、动态个股层、正式海外与亚洲指数层、运行健康状态与正式文件；本文件只组织读取，不生成交易动作。",
+        "interaction_boundary": "用户主动查询时先核对系统一致性、交易日历和数据接口规范，再读取最新有效状态、ETF层、动态个股层、正式海外与亚洲指数层、运行健康状态与正式文件；本文件只组织读取，不生成交易动作。",
     }
 
 
@@ -203,6 +228,7 @@ def main() -> None:
         "market_date": context["market_date"],
         "latest_valid_node": context["latest_valid_node"],
         "system_consistency_status": context["system_consistency_status"],
+        "candidate_trading_day": context["trading_day_status"]["is_candidate_trading_day"],
         "etf_universe_count": context["etf_universe_count"],
         "account_fact_status": context["account_fact_status"],
         "account_usable": context["account_gate"]["can_use_current_account_fact"],
