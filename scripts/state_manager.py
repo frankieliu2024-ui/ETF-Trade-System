@@ -190,9 +190,15 @@ def build_decision_context(root: Path | None = None) -> dict[str, Any]:
     snapshot = read_json(root / latest, {}) if latest else {}
     return {
         "generated_at": now_utc(), "rules_version": "V2.2.15",
+        "market_date": current.get("market_date", ""),
         "latest_node": current.get("latest_valid_node", ""),
         "current": current, "latest_snapshot": snapshot,
         "dashboard_source": str(dashboard.relative_to(root)).replace("\\", "/"),
+        "dashboard_summary": {
+            "maintenance_mode": "candidate_only",
+            "automatic_overwrite": False,
+            "automatic_trade_output": False,
+        },
         "account_fact_status": account["status"],
         "needs_account_screenshot": account["status"] != "VALID",
         "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。",

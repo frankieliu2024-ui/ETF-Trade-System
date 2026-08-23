@@ -74,6 +74,12 @@ class StateLayerTests(unittest.TestCase):
         self.assertEqual(len((self.root / "events" / "events.jsonl").read_text(encoding="utf-8").splitlines()), 1)
         self.assertEqual(read_current(self.root)["last_trade_event_id"], first["event_id"])
 
+    def test_decision_context_has_interaction_safe_dashboard_summary(self) -> None:
+        context = build_decision_context(self.root)
+        self.assertIn("market_date", context)
+        self.assertFalse(context["dashboard_summary"]["automatic_overwrite"])
+        self.assertTrue(context["needs_account_screenshot"])
+
     def test_conflict_stops_overwrite(self) -> None:
         path = self.root / "data" / "state" / "conflict.json"
         atomic_json_write(path, {"version": 1})
