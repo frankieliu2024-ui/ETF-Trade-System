@@ -60,6 +60,9 @@ jobs:
       - name: Build objective intraday market delta
         if: ${{ success() && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_market_delta.py
+      - name: Build resilient overseas core index context
+        if: ${{ success() && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/build_overseas_context.py
       - name: Build state context and candidates
         if: ${{ success() && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_state_context.py
@@ -77,7 +80,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/market/snapshots data/state/CURRENT.json data/state/runtime_health.json data/state/market_delta.json data/state/dashboard_update_candidate.json data/state/decision_context.json data/state/query_context.json data/state/chatgpt_task_probe.json post_market_review/post_market_review_event.json data/state/review_context.json events/events.jsonl 2>/dev/null || true
+          git add data/market/snapshots data/state/CURRENT.json data/state/runtime_health.json data/state/market_delta.json data/state/overseas_context.json data/state/dashboard_update_candidate.json data/state/decision_context.json data/state/query_context.json data/state/chatgpt_task_probe.json post_market_review/post_market_review_event.json data/state/review_context.json events/events.jsonl 2>/dev/null || true
           if git diff --cached --quiet; then
             exit 0
           fi
