@@ -12,15 +12,17 @@ on:
         required: true
         default: "false"
   schedule:
-    - cron: "25 1 * * 1-5"
-    - cron: "30 2 * * 1-5"
-    - cron: "30 3 * * 1-5"
-    - cron: "30 5 * * 1-5"
-    - cron: "30 6 * * 1-5"
-    - cron: "0 7 * * 1-5"
+    # UTC. Runs every 10 minutes across the possible A-share trading window.
+    # The Python runner performs the Asia/Shanghai session guard and exits cleanly
+    # outside 09:30-11:30 / 13:00-15:00. This replaces legacy fixed screenshot nodes.
+    - cron: "*/10 1-7 * * 1-5"
 
 permissions:
   contents: write
+
+concurrency:
+  group: etf-market-snapshot
+  cancel-in-progress: false
 
 jobs:
   snapshot:
@@ -70,5 +72,3 @@ jobs:
           git add data/market/snapshots data/state/CURRENT.json data/state/dashboard_update_candidate.json data/state/decision_context.json data/state/query_context.json data/state/chatgpt_task_probe.json post_market_review/post_market_review_event.json data/state/review_context.json events/events.jsonl
           git diff --cached --quiet || git commit -m "data: record market snapshot"
           git push
-
-
