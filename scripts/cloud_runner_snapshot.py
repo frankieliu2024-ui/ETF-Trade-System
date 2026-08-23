@@ -36,18 +36,35 @@ def load_runtime_policy() -> dict:
     return default
 
 
+def load_etf_universe() -> list[tuple[str, str]]:
+    path = ROOT / "config" / "market" / "etf_monitor_universe.json"
+    if not path.exists():
+        raise RuntimeError("missing canonical ETF universe: config/market/etf_monitor_universe.json")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    objects = data.get("objects") or []
+    result: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for item in objects:
+        code = str(item.get("code", "")).strip()
+        thscode = str(item.get("thscode", "")).strip()
+        if not code or not thscode:
+            raise RuntimeError("ETF universe contains missing code/thscode")
+        if code in seen:
+            raise RuntimeError(f"duplicate ETF code in universe: {code}")
+        seen.add(code)
+        result.append((code, thscode))
+    if not result:
+        raise RuntimeError("canonical ETF universe is empty")
+    return result
+
+
 POLICY = load_runtime_policy()
+ETF = load_etf_universe()
 RETRY_LIMIT = int(os.environ.get("HITHINK_RETRY_LIMIT", POLICY["provider_retry_limit"]))
 TIMEOUT_SECONDS = int(os.environ.get("HITHINK_TIMEOUT_SECONDS", POLICY["provider_timeout_seconds"]))
 MAX_WORKERS = int(os.environ.get("HITHINK_MAX_WORKERS", POLICY["provider_max_workers"]))
 CLOSE_GRACE_SECONDS = int(POLICY.get("close_grace_seconds", 900))
 
-ETF = [
-    ("561980", "561980.SH"), ("588000", "588000.SH"),
-    ("159781", "159781.SZ"), ("159941", "159941.SZ"),
-    ("159561", "159561.SZ"), ("513520", "513520.SH"),
-    ("513180", "513180.SH"), ("518880", "518880.SH"),
-]
 INDEX = [("000001", "000001.SH"), ("399006", "399006.SZ")]
 NODES = {"0925", "1030", "1130", "1330", "1430", "close", "live", "manual", "scheduled"}
 PLANNED_TIMES = {"0925": "09:25", "1030": "10:30", "1130": "11:30", "1330": "13:30", "1430": "14:30", "close": "15:00"}
@@ -100,6 +117,7 @@ def write_runtime_health(payload: dict) -> None:
         "provider_timeout_seconds": TIMEOUT_SECONDS,
         "provider_retry_limit": RETRY_LIMIT,
         "provider_max_workers": MAX_WORKERS,
+        "etf_universe_count": len(ETF),
     }
     base.update(payload)
     atomic_json_write(ROOT / "data" / "state" / "runtime_health.json", base)
@@ -238,7 +256,7 @@ def main() -> int:
             "status": "PROBE_PASS", "market_date": market_date, "run_started_at": run_started_at,
             "captured_at": captured, "acquisition_seconds": acquisition_seconds, "count": len(rows),
         })
-        print(json.dumps({"ok": True, "probe_only": True, "count": len(rows), "market_date": market_date, "quality_status": "PASS", "node_written": False, "acquisition_seconds": acquisition_seconds}, ensure_ascii=False))
+        print(json.dumps({"ok": True, "probe_only": True, "count": len(rows), "market_date": market_date, "quality_status": "PASS", "node_written": False, "acquisition_seconds": acquisition_seconds, "etf_universe_count": len(ETF)}, ensure_ascii=False))
         return 0
 
     if not is_newer_than_current(captured_dt):
@@ -253,7 +271,7 @@ def main() -> int:
         "market_date": market_date, "node": node, "planned_time": planned_time,
         "actual_run_time": captured, "workflow_run_id": os.environ.get("GITHUB_RUN_ID", ""),
         "captured_at": captured, "timezone": "Asia/Shanghai", "provider": "hithink-finance",
-        "quality_status": "PASS", "count": len(rows),
+        "quality_status": "PASS", "count": len(rows), "etf_universe_count": len(ETF),
         "runtime": {
             "acquisition_seconds": acquisition_seconds,
             "target_cadence_seconds": POLICY["target_cadence_seconds"],
@@ -276,6 +294,7 @@ def main() -> int:
         snapshot_commit=os.environ.get("GITHUB_SHA", ""), node_status="READY",
         data_freshness={
             "status": "FRESH", "provider": "hithink-finance", "count": len(rows),
+            "etf_universe_count": len(ETF),
             "capture_mode": "INTRADAY_PULSE" if node == "live" else "CLOSE",
             "captured_at": captured,
             "target_cadence_seconds": POLICY["target_cadence_seconds"],
@@ -289,7 +308,7 @@ def main() -> int:
         "captured_at": captured, "acquisition_seconds": acquisition_seconds, "count": len(rows),
         "latest_snapshot": str(target.relative_to(ROOT)).replace("\\", "/"),
     })
-    print(json.dumps({"ok": True, "snapshot": str(target), "count": len(rows), "market_date": market_date, "node": node, "acquisition_seconds": acquisition_seconds}, ensure_ascii=False))
+    print(json.dumps({"ok": True, "snapshot": str(target), "count": len(rows), "market_date": market_date, "node": node, "acquisition_seconds": acquisition_seconds, "etf_universe_count": len(ETF)}, ensure_ascii=False))
     return 0
 
 
