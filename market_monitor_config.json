@@ -1,0 +1,33 @@
+{
+  "version": "V1.0",
+  "purpose": "数据能力监测配置，不产生交易判断",
+  "priority": ["direct_index", "reliable_alternative", "etf_proxy"],
+  "classes": {
+    "A": {"name": "直接指数监测", "objects": [
+      {"id":"SOX","name":"费城半导体指数","preferred_source":"hithink-finance index.history","status":"NOT_COVERED"},
+      {"id":"NASDAQ_SEMICONDUCTOR","name":"纳斯达克半导体指数","preferred_source":"hithink-finance index.history","status":"NOT_COVERED"},
+      {"id":"KOSPI","name":"韩国综合指数","preferred_source":"hithink-finance index.history","status":"NOT_COVERED"},
+      {"id":"KOSDAQ","name":"韩国科技指数","preferred_source":"hithink-finance index.history","status":"NOT_COVERED"},
+      {"id":"NDX","name":"纳斯达克100指数","preferred_source":"hithink-finance index.history","status":"NOT_COVERED"},
+      {"id":"SPX","name":"标普500指数","preferred_source":"hithink-finance index.history","status":"NOT_COVERED"},
+      {"id":"VIX","name":"VIX波动率指数","preferred_source":"hithink-finance index.history","status":"NOT_COVERED"},
+      {"id":"N225","name":"日经225指数","preferred_source":"hithink-finance index.history","status":"NOT_COVERED"},
+      {"id":"HSTECH","name":"恒生科技指数","preferred_source":"hithink-finance index.history","status":"NOT_COVERED"},
+      {"id":"TWII","name":"台湾加权指数","preferred_source":"hithink-finance index.history","status":"NOT_COVERED"},
+      {"id":"GOLD","name":"黄金价格指标","preferred_source":"reliable_external_source","status":"DEGRADED"},
+      {"id":"DXY","name":"美元指数","preferred_source":"reliable_external_source","status":"DEGRADED"}
+    ]},
+    "B": {"name": "ETF代理监测", "objects": [
+      {"id":"SOXQ","name":"半导体行业指数ETF","proxy_for":["SOX","NASDAQ_SEMICONDUCTOR"],"source":"历史成交Excel仅为交易事实，不作为行情序列","status":"NOT_QUALIFIED"},
+      {"id":"513520","name":"日经ETF华夏","proxy_for":["N225"],"source":"hithink fund.history已纳入ETF层，非直接指数","status":"AVAILABLE_AS_PROXY"},
+      {"id":"513180","name":"恒生科技ETF华夏","proxy_for":["HSTECH"],"source":"hithink fund.history已纳入ETF层，非直接指数","status":"AVAILABLE_AS_PROXY"},
+      {"id":"518880","name":"黄金ETF华安","proxy_for":["GOLD"],"source":"hithink fund.history已纳入ETF层，非直接指数","status":"AVAILABLE_AS_PROXY"}
+    ]},
+    "C": {"name": "辅助风险指标", "objects": [
+      {"id":"000001.SH","name":"上证指数","source":"hithink-finance index.history","status":"AVAILABLE"},
+      {"id":"399006.SZ","name":"创业板指","source":"hithink-finance index.history","status":"AVAILABLE"},
+      {"id":"HG_F_COMEX","name":"COMEX铜期货","source":"历史公开文件","status":"DEGRADED"}
+    ]}
+  },
+  "guardrails": {"no_trade_rules":true,"no_trade_actions":true,"no_master_write":true,"proxy_cannot_replace_direct_index_permanently":true}
+}

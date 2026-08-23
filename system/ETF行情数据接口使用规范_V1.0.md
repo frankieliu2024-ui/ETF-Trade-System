@@ -147,6 +147,12 @@ hithink-finance CLI
 
 正式长历史实现位于`专项回测/refresh_etf_history_hithink_cli.py`，盘中十项快照实现位于`专项回测/refresh_v2215_market_snapshot_hithink_cli.py`；后者一次读取八ETF、上证指数和创业板指，并保存原始响应、标准CSV及质量清单。`专项回测/hithink_etf_data.py`与`专项回测/accept_hithink_etf.py`保留用于REST近期验收。`fetch_v2214_pool_data.py --hithink-primary`不得再作为长历史正式刷新入口，以免REST回退短区间覆盖完整CSV。海外和商品监测继续使用各自已核验来源。
 
+### 6.3 市场监测对象的指数优先原则（V1.0数据能力补充）
+
+市场监测对象按以下顺序选择数据：第一层为对象本身的直接指数或直接价格指标；第二层为指数官方或其他已核验的可靠替代源；第三层才使用相关ETF作为代理。ETF代理只能标记为代理来源，不得长期替代直接指数，也不得因历史已有代理而停止寻找直接指数。当前 hithink-finance `index.history` 契约已实测覆盖上证指数与创业板指，但不覆盖本次验证的海外指数对象；海外和商品对象必须保留来源、时间戳、字段完整性和质量告警。
+
+本补充只规定数据源优先级和质量登记，不生成交易判断，不改变MASTER、风险许可、Trial、Confirm、金额档、卖出规则、研究池或交易权限。
+
 ```powershell
 python accept_hithink_etf.py
 python refresh_etf_history_hithink_cli.py
