@@ -1,0 +1,39 @@
+name: Hithink stock probe validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/probe_hithink_stock.py"
+      - ".github/workflows/stock-probe-validation.yml"
+  workflow_dispatch:
+    inputs:
+      code:
+        description: "A-share ticker or thscode"
+        required: true
+        default: "688825"
+      date:
+        description: "Historical trading date YYYY-MM-DD"
+        required: true
+        default: "2026-08-21"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      HITHINK_FINANCE_API_KEY: ${{ secrets.HITHINK_FINANCE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Probe Hithink historical A-share bar
+        env:
+          PROBE_CODE: ${{ github.event.inputs.code || '688825' }}
+          PROBE_DATE: ${{ github.event.inputs.date || '2026-08-21' }}
+        run: |
+          python scripts/probe_hithink_stock.py "$PROBE_CODE" --date "$PROBE_DATE" --adjust none
