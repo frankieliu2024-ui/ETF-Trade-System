@@ -120,7 +120,7 @@ def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict)
             "freshness_at_context_build": freshness,
             "data_freshness": current.get("data_freshness", {}),
             "query_time_rule": "每次ChatGPT查询必须用当前时间减CURRENT.captured_at重新计算数据年龄；不得仅沿用文件内旧FRESH标签。FRESH可用于当前行情判断；DEGRADED只作背景/连续性复核，涉及当前机会、金额或卖出动作时优先等待下一有效脉冲或结合用户当前截图；STALE不得冒充实时行情。",
-            "overseas_rule": "NDX、SOX、N225按最新可得数据作为背景/增强/反向证据；单个海外对象失败不阻断A股核心行情，但失败对象不得用旧值冒充当前状态。",
+            "overseas_rule": "正式海外与亚洲指数层必须检查纳斯达克100指数NDX、费城半导体指数SOX、日经225指数N225、韩国综合指数KOSPI、台湾加权指数TWII、恒生科技指数HSTECH。每项必须同时读取quality_status、market_timezone、market_phase_at_generation、latest.as_of_local与time_relation_to_a_share；数据失败可降级但不得静默遗漏。美国现金指数在A股交易时段通常是上一美股交易时段参考；亚洲指数按同日盘中、同日已收盘或上一交易日分别解释，不得把不同市场非同步价格当作同一时点共振。",
             "rule": "盘中查询使用最新有效状态和相邻行情变化，不绑定旧固定截图节点；数据不足时明确不足。",
         },
         "runtime_resilience": {
@@ -158,7 +158,7 @@ def build(root: Path = ROOT) -> dict:
         "account_gate": account_gate,
         "needs_account_screenshot": not account_gate["can_use_current_account_fact"],
         "read_only": True,
-        "interaction_boundary": "用户主动查询时读取最新有效状态、相邻行情变化、海外核心背景、运行健康状态与正式文件；本文件只组织读取，不生成交易动作。",
+        "interaction_boundary": "用户主动查询时读取最新有效状态、相邻行情变化、正式海外与亚洲指数层、运行健康状态与正式文件；本文件只组织读取，不生成交易动作。",
     }
 
 
