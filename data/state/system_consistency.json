@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-08-23T15:33:00Z",
+  "status": "WARNING",
+  "hard_error_count": 0,
+  "warning_count": 1,
+  "checks": [
+    {"name":"formal_files","status":"PASS","detail":"4/4正式文件存在且ETF_SYSTEM_INDEX入口完整"},
+    {"name":"monitoring_layers","status":"PASS","detail":"指数层-ETF层-个股层三层结构一致"},
+    {"name":"index_layer","status":"PASS","detail":"000001.SH,399006.SZ,NDX,SOX,N225,KOSPI,TWII,HSTECH与正式配置一致"},
+    {"name":"etf_universe","status":"PASS","detail":"Dashboard持仓ETF+观察ETF全集与config/market/etf_monitor_universe.json一致，共11只"},
+    {"name":"etf_runtime","status":"PASS","detail":"cloud_runner_snapshot.py从ETF唯一运行清单加载，不再硬编码原8只ETF"},
+    {"name":"stock_layer","status":"PASS","detail":"打新底仓由账户动态识别；条件产业链个股不设固定名单"},
+    {"name":"cross_market_time","status":"PASS","detail":"正式指数与跨市场对象要求market_timezone/as_of/market_phase/time_relation_to_a_share"},
+    {"name":"query_context","status":"PASS","detail":"查询上下文读取ETF运行全集、动态个股行情和系统一致性状态"},
+    {"name":"market_snapshot_workflow","status":"PASS","detail":"生产行情workflow在采集前执行系统一致性预检"},
+    {"name":"maintenance_workflow","status":"PASS","detail":"相关维护推送main后自动执行system-consistency workflow"},
+    {"name":"master_maintenance_rule","status":"PASS","detail":"MASTER已明确一致性检查为相关更新维护后的基础验收步骤"},
+    {"name":"stale_parallel_pool","status":"PASS","detail":"未发现现行MASTER继续使用固定8只研究池作为平行ETF管理口径"},
+    {"name":"account_fact","status":"WARNING","detail":"当前account_fact.status=MISSING；这是正常状态缺口，不属于结构冲突，明日正式账户判断仍需当日券商事实"}
+  ],
+  "errors": [],
+  "warnings": [
+    "account_fact: current status is MISSING; trading/account decisions require current-day broker facts"
+  ],
+  "principle": "任何规则、Dashboard、监测对象、数据入口、运行脚本或workflow相关更新后，一致性检查是基础验收步骤；硬冲突不得进入生产，账户缺失等正常状态只告警。"
+}
