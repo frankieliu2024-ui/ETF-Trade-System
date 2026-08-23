@@ -44,7 +44,9 @@ jobs:
         with:
           python-version: "3.11"
       - name: Run system consistency preflight
-        run: python scripts/check_system_consistency.py
+        run: |
+          python scripts/check_system_consistency.py
+          git checkout -- data/state/system_consistency.json
       - name: Check exchange calendar and capture window
         id: session_gate
         run: python scripts/runtime_session_gate.py
