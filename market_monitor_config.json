@@ -2,6 +2,13 @@
   "version": "V1.0",
   "purpose": "数据能力监测配置，不产生交易判断",
   "priority": ["direct_index", "reliable_alternative", "etf_proxy"],
+  "providers": {
+    "hithink_finance": {"priority": 1, "scope": "A股ETF与已覆盖A股指数", "requires_key": true},
+    "yahoo_chart_api": {"priority": 1, "scope": "海外指数、海外个股、商品探针", "requires_key": false, "adjusted": false},
+    "akshare": {"priority": 2, "scope": "候选多源适配器", "requires_key": false, "not_live_verified": true},
+    "pandas_datareader": {"priority": 2, "scope": "宏观/因子数据候选", "not_live_verified": true},
+    "investpy": {"priority": 3, "scope": "不优先候选", "stale_upstream": true}
+  },
   "classes": {
     "A": {"name": "直接指数监测", "objects": [
       {"id":"SOX","name":"费城半导体指数","preferred_source":"hithink-finance index.history","status":"NOT_COVERED"},
@@ -18,10 +25,10 @@
       {"id":"DXY","name":"美元指数","preferred_source":"reliable_external_source","status":"DEGRADED"}
     ]},
     "B": {"name": "ETF代理监测", "objects": [
-      {"id":"SOXQ","name":"半导体行业指数ETF","proxy_for":["SOX","NASDAQ_SEMICONDUCTOR"],"source":"历史成交Excel仅为交易事实，不作为行情序列","status":"NOT_QUALIFIED"},
-      {"id":"513520","name":"日经ETF华夏","proxy_for":["N225"],"source":"hithink fund.history已纳入ETF层，非直接指数","status":"AVAILABLE_AS_PROXY"},
-      {"id":"513180","name":"恒生科技ETF华夏","proxy_for":["HSTECH"],"source":"hithink fund.history已纳入ETF层，非直接指数","status":"AVAILABLE_AS_PROXY"},
-      {"id":"518880","name":"黄金ETF华安","proxy_for":["GOLD"],"source":"hithink fund.history已纳入ETF层，非直接指数","status":"AVAILABLE_AS_PROXY"}
+      {"id":"SOXQ","name":"半导体行业指数ETF","role":"ETF_TRADING_TARGET","proxy_for":["SOX","NASDAQ_SEMICONDUCTOR"],"source":"yahoo_chart_api直接ETF数据；历史成交Excel不作为行情序列","status":"DIRECT_ETF_AND_INDEX_PROXY"},
+      {"id":"513520","name":"日经ETF华夏","role":"ETF_TRADING_TARGET","proxy_for":["N225"],"source":"hithink fund.history ETF层；非直接指数","status":"ETF_INDEX_PROXY"},
+      {"id":"513180","name":"恒生科技ETF华夏","role":"ETF_TRADING_TARGET","proxy_for":["HSTECH"],"source":"hithink fund.history ETF层；非直接指数","status":"ETF_INDEX_PROXY"},
+      {"id":"518880","name":"黄金ETF华安","role":"ETF_TRADING_TARGET","proxy_for":["GOLD"],"source":"hithink fund.history ETF层；非直接指数","status":"ETF_INDEX_PROXY"}
     ]},
     "C": {"name": "辅助风险指标", "objects": [
       {"id":"000001.SH","name":"上证指数","source":"hithink-finance index.history","status":"AVAILABLE"},

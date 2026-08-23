@@ -153,6 +153,12 @@ hithink-finance CLI
 
 本补充只规定数据源优先级和质量登记，不生成交易判断，不改变MASTER、风险许可、Trial、Confirm、金额档、卖出规则、研究池或交易权限。
 
+### 6.4 多源行情适配边界（V1.0数据能力补充）
+
+A股ETF继续以 hithink-finance 为主源；海外指数、海外个股和商品允许接入经过审计的公开行情API或官方/交易所源。统一适配器必须保留 provider、原始symbol、时区、是否复权、历史范围、缺失字段、重复日期和OHLC检查结果。多个源同时成功时按质量和可追溯性排序，不因获取成功自动替换现有数据；ETF只能作为明确标注的交易目标或指数代理，不得与直接指数混称。
+
+本补充不改变数据进入生产快照的质量门槛，不把海外行情自动转换为交易判断。
+
 ```powershell
 python accept_hithink_etf.py
 python refresh_etf_history_hithink_cli.py

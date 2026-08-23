@@ -1,0 +1,28 @@
+{
+  "version": "V1.0",
+  "policy": "质量优先；获取成功不等于自动采用；所有源先经过质量审计",
+  "providers": {
+    "hithink_finance": {"kind": "A股ETF/指数", "requires_key": true, "role": "primary_for_cn"},
+    "yahoo_chart_api": {"kind": "公开海外行情API", "requires_key": false, "role": "primary_for_overseas_probe", "adjusted": false},
+    "akshare": {"kind": "Python多源适配库", "requires_key": false, "role": "candidate_secondary", "not_live_verified": true},
+    "pandas_datareader": {"kind": "宏观/因子数据适配库", "requires_key": "source_dependent", "role": "candidate_secondary", "not_live_verified": true},
+    "investpy": {"kind": "Investing.com适配库", "requires_key": false, "role": "not_preferred", "stale_upstream": true}
+  },
+  "objects": {
+    "SOX": ["yahoo_chart_api", "ETF_PROXY_SOXQ"],
+    "SOXX": ["yahoo_chart_api"],
+    "SOXQ": ["yahoo_chart_api"],
+    "SAMSUNG_005930.KS": ["yahoo_chart_api"],
+    "SK_HYNIX_000660.KS": ["yahoo_chart_api"],
+    "NDX": ["yahoo_chart_api"],
+    "SPX": ["yahoo_chart_api"],
+    "VIX": ["yahoo_chart_api"],
+    "KOSPI": ["yahoo_chart_api"],
+    "KOSDAQ": ["yahoo_chart_api"],
+    "N225": ["yahoo_chart_api", "ETF_PROXY_513520"],
+    "TWII": ["yahoo_chart_api"],
+    "HSTECH": ["yahoo_chart_api", "ETF_PROXY_513180"],
+    "GOLD": ["yahoo_chart_api", "ETF_PROXY_518880"],
+    "DXY": ["yahoo_chart_api"]
+  }
+}
