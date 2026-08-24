@@ -38,11 +38,13 @@ jobs:
         run: python scripts/build_overseas_context.py
       - name: Refresh US extended-hours context
         run: python scripts/build_us_extended_hours_context.py
+      - name: Rebuild on-demand query context
+        run: python scripts/build_query_context.py
       - name: Commit overseas contexts
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/state/overseas_context.json data/state/us_extended_hours_context.json
+          git add data/state/overseas_context.json data/state/us_extended_hours_context.json data/state/query_context.json
           if git diff --cached --quiet; then
             exit 0
           fi
