@@ -211,6 +211,46 @@ def evaluate_context_freshness(root: Path, current: dict[str, Any]) -> dict[str,
     return freshness
 
 
+def build_research_evidence_summary(root: Path) -> dict[str, Any]:
+    """Aggregate current research evidence for ChatGPT consumption without creating trade signals."""
+    research = read_json(root / "data" / "state" / "research_context.json", {
+        "status": "MISSING", "read_only": True,
+    })
+    relative = read_json(root / "data" / "state" / "relative_strength.json", {
+        "items": [], "read_only": True,
+    })
+    items = []
+    for row in relative.get("items") or []:
+        code = str(row.get("code") or "")
+        name = str(row.get("name") or "")
+        if not code:
+            continue
+        items.append({
+            "display_name": f"{name}（{code}）" if name else code,
+            "code": code,
+            "name": name,
+            "close_return_pct": row.get("close_return_pct"),
+            "etf_universe_rank": row.get("rank"),
+            "vs_universe_median_pct_points": row.get("vs_universe_median_pct_points"),
+            "vs_shanghai_pct_points": row.get("vs_shanghai_pct_points"),
+            "vs_chinext_pct_points": row.get("vs_chinext_pct_points"),
+            "recent_slope_pct_per_10m": row.get("recent_slope_pct_per_10m"),
+            "sampling_coverage": row.get("sampling_coverage"),
+        })
+    return {
+        "status": research.get("status", "MISSING"),
+        "market_date": relative.get("market_date") or research.get("market_date"),
+        "as_of_beijing": relative.get("as_of_beijing"),
+        "etf_evidence": items,
+        "historical_evidence_status": "ACCUMULATING" if research.get("status") == "READY" else "INSUFFICIENT_OR_MISSING",
+        "use_in_current_decision": True,
+        "interpretation_rule": "盘中必须把相对强弱、ETF横截面位置和日内变化作为价格结构/成交承接/生命周期之外的研究证据参与统一比较；不得把单日排名、单一相对强弱或研究统计直接转换成买卖动作。",
+        "output_rule": "正式输出若研究证据能改变候选比较、机会强弱、0元主因、持仓资本效率或最大风险，应自然语言说明；若不改变决议可不单列研究段落，避免增加输出负担。",
+        "master_feedback_rule": "当前研究证据可直接改善MASTER执行时的分析；只有经过MASTER第8.1规定的数据质量、样本充分、逻辑稳定、执行可转化和风险不增加审查的高质量专项研究，或多个真实CASE反复暴露的同类问题，才进入MASTER维护。机器不得自动修改MASTER。",
+        "read_only": True,
+    }
+
+
 def build_decision_context(root: Path | None = None) -> dict[str, Any]:
     root = root or root_from_env()
     current = read_current(root)
@@ -222,6 +262,7 @@ def build_decision_context(root: Path | None = None) -> dict[str, Any]:
     intraday_path = read_json(root / "data" / "state" / "intraday_path_features.json", {
         "status": "MISSING", "features": [],
     })
+    research_evidence = build_research_evidence_summary(root)
     return {
         "generated_at": now_utc(), "rules_version": "V2.2.15",
         "market_date": current.get("market_date", ""),
@@ -230,6 +271,13 @@ def build_decision_context(root: Path | None = None) -> dict[str, Any]:
         "data_status": effective_data_status,
         "freshness_at_context_build": effective_data_status,
         "intraday_path_features": intraday_path,
+        "research_evidence": research_evidence,
+        "research_context_file": "data/state/research_context.json",
+        "relative_strength_file": "data/state/relative_strength.json",
+        "research_master_feedback": {
+            "current_decision": "研究证据直接进入机会判断、统一资本比较、持仓资本效率与正式输出解释。",
+            "master_maintenance": "研究结论只有通过MASTER第8.1正式研究转化机制后才可修改MASTER；自动程序只提供证据，不修改规则。",
+        },
         "dashboard_source": str(dashboard.relative_to(root)).replace("\\", "/"),
         "dashboard_summary": {
             "maintenance_mode": "candidate_only",
@@ -238,5 +286,5 @@ def build_decision_context(root: Path | None = None) -> dict[str, Any]:
         },
         "account_fact_status": account["status"],
         "needs_account_screenshot": account["status"] != "VALID",
-        "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。日内路径特征只描述离散脉冲结构，不是交易信号。",
+        "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。日内路径特征和研究证据必须参与完整MASTER判断，但单独均不是交易信号。",
     }

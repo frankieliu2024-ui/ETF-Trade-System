@@ -24,6 +24,9 @@ on:
       - "data/state/query_context.json"
       - "data/state/decision_context.json"
       - "data/state/market_delta.json"
+      - "data/state/research_context.json"
+      - "data/state/relative_strength.json"
+      - "data/state/research_master_candidates.json"
       - "post_market_review/**"
 
 permissions:
@@ -45,7 +48,16 @@ jobs:
       - name: Validate formal files, data standard, monitoring layers and runtime wiring
         id: consistency
         continue-on-error: true
-        run: python scripts/check_system_consistency.py
+        shell: bash
+        run: |
+          set +e
+          python scripts/check_system_consistency.py
+          rc1=$?
+          python scripts/check_research_integration.py
+          rc2=$?
+          if [ "$rc1" -ne 0 ] || [ "$rc2" -ne 0 ]; then
+            exit 1
+          fi
       - name: Persist consistency state
         if: ${{ always() }}
         run: |
