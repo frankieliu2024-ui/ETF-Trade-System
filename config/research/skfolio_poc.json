@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "role": "RESEARCH_EVIDENCE_ONLY",
+  "decision_eligible": false,
+  "trade_signal": null,
+  "master_override": false,
+  "upstream": {
+    "repository": "skfolio/skfolio",
+    "commit": "1c892a53a27913335f9ef506ccf6453869365abf",
+    "version_context": "v1.0.0"
+  },
+  "purpose": "验证skfolio是否能稳定识别ETF共同风险与提升样本外分散效率，为共同风险篮子和下一单位资本比较提供研究证据；不得直接产生仓位或买卖动作。",
+  "data": {
+    "source_dir": "events/research/daily_features",
+    "start_date": "2024-01-01",
+    "end_date": "2026-08-21",
+    "minimum_assets_per_fold": 7
+  },
+  "walk_forward": {
+    "train_days": 120,
+    "test_days": 20,
+    "step_days": 20,
+    "minimum_folds": 12
+  },
+  "models": [
+    "EqualWeighted",
+    "InverseVolatility",
+    "RiskBudgeting",
+    "MaximumDiversification"
+  ],
+  "correlation": {
+    "lookback_days": 120,
+    "high_correlation_threshold": 0.70,
+    "very_high_correlation_threshold": 0.85
+  },
+  "validation": {
+    "primary_metrics": [
+      "annualized_volatility",
+      "max_drawdown",
+      "cvar_95",
+      "diversification_ratio",
+      "effective_asset_count",
+      "high_corr_weight_share"
+    ],
+    "baseline": "EqualWeighted",
+    "screening_rule": "只有当至少一种skfolio风险方法在多数walk-forward folds中同时降低样本外波动/尾部风险或高相关集中度，且没有通过极端单一资产集中实现，才可进入第二阶段研究。该规则仅为研究筛选，不是MASTER交易规则。"
+  },
+  "hard_boundaries": [
+    "不得直接生成风险许可、机会状态、Trial、Confirm、金额、持有、降低风险或退出",
+    "不得将优化器权重解释为正式目标仓位",
+    "不得覆盖MASTER中的共同风险篮子或资金判断规则",
+    "历史验证必须point-in-time，训练窗口不得使用测试期数据",
+    "研究结果只有通过正式研究转化机制后才可进入决策证据层"
+  ]
+}
