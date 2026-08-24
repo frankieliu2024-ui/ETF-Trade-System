@@ -1,11 +1,77 @@
 {
-  "generated_at": "",
-  "generated_at_beijing": "",
+  "generated_at": "2026-08-24T00:34:00Z",
+  "generated_at_beijing": "2026-08-24T08:34:00+08:00",
   "a_share_reference_timezone": "Asia/Shanghai",
   "scope": "FORMAL_OVERSEAS_AND_ASIA_INDEX_LAYER",
-  "quality_status": "NOT_RUN",
+  "quality_status": "DEGRADED_WEB_VERIFIED_FALLBACK",
   "required_objects": ["NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"],
-  "objects": {},
+  "objects": {
+    "NDX": {
+      "provider": "NASDAQ_OFFICIAL_WEB_VERIFIED",
+      "value": 29385.39,
+      "change_pct": 0.59,
+      "as_of_beijing": "2026-08-22T04:00:00+08:00",
+      "market_timezone": "America/New_York",
+      "market_phase_at_generation": "PREVIOUS_US_SESSION_CLOSED",
+      "time_relation_to_a_share": "PREVIOUS_US_SESSION_REFERENCE",
+      "quality": "PASS_PREVIOUS_SESSION"
+    },
+    "SOX": {
+      "provider": "NASDAQ_OFFICIAL_WEB_VERIFIED",
+      "value": 11740.37,
+      "change_pct": -0.51,
+      "as_of_beijing": "2026-08-22T04:00:00+08:00",
+      "market_timezone": "America/New_York",
+      "market_phase_at_generation": "PREVIOUS_US_SESSION_CLOSED",
+      "time_relation_to_a_share": "PREVIOUS_US_SESSION_REFERENCE",
+      "quality": "PASS_PREVIOUS_SESSION"
+    },
+    "N225": {
+      "provider": "WSJ_WEB_VERIFIED_FALLBACK",
+      "value": 66212.61,
+      "change_pct": 0.3,
+      "as_of_beijing": null,
+      "retrieved_at_beijing": "2026-08-24T08:34:00+08:00",
+      "market_timezone": "Asia/Tokyo",
+      "market_phase_at_generation": "REGULAR",
+      "time_relation_to_a_share": "SAME_DAY_LEADING_ASIA_SESSION",
+      "quality": "DEGRADED_NO_EXACT_SOURCE_TIMESTAMP"
+    },
+    "KOSPI": {
+      "provider": "REUTERS_WEB_VERIFIED_FALLBACK",
+      "value": null,
+      "change_pct": -0.7,
+      "as_of_beijing": "2026-08-24T08:13:00+08:00",
+      "market_timezone": "Asia/Seoul",
+      "market_phase_at_generation": "REGULAR",
+      "time_relation_to_a_share": "SAME_DAY_LEADING_ASIA_SESSION",
+      "quality": "PASS_DIRECTION_AND_TIMESTAMP",
+      "industry_context": {
+        "Samsung_Electronics_change_pct": -5.2,
+        "SK_Hynix_change_pct": 2.4
+      }
+    },
+    "TWII": {
+      "provider": "NOT_YET_OPEN_AT_CHECK",
+      "value": null,
+      "change_pct": null,
+      "as_of_beijing": null,
+      "market_timezone": "Asia/Taipei",
+      "market_phase_at_generation": "PRE_OPEN",
+      "time_relation_to_a_share": "SAME_DAY_NOT_YET_OPEN",
+      "quality": "WAITING_MARKET_OPEN_09_00_BEIJING"
+    },
+    "HSTECH": {
+      "provider": "NOT_YET_PREOPEN_AT_CHECK",
+      "value": null,
+      "change_pct": null,
+      "as_of_beijing": null,
+      "market_timezone": "Asia/Hong_Kong",
+      "market_phase_at_generation": "PRE_OPEN_NOT_STARTED",
+      "time_relation_to_a_share": "SAME_DAY_NOT_YET_PREOPEN",
+      "quality": "WAITING_HK_PREOPEN_09_00_BEIJING"
+    }
+  },
   "time_alignment_rule": "跨市场证据必须按北京时间数据时点、市场本地时区、market_phase和time_relation_to_a_share解释。",
-  "decision_boundary": "海外与亚洲指数属于正式监测层；NOT_RUN不得冒充当前行情，也不得单独生成ETF买卖动作。"
+  "decision_boundary": "本状态为云端自动海外脉冲未落库时的已核验公开来源降级状态；不得把N225无精确源时间的数据当成秒级实时，不得把NDX/SOX上一美股现金盘当成A股同步行情。海外信息仍需本地传导和ETF自身反馈。"
 }
