@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -181,6 +181,36 @@ def build_dashboard_candidate(root: Path | None = None) -> dict[str, Any]:
     }
 
 
+def evaluate_context_freshness(root: Path, current: dict[str, Any]) -> dict[str, Any]:
+    freshness = dict(current.get("data_freshness") or {})
+    raw = freshness.get("captured_at_beijing") or freshness.get("captured_at") or current.get("captured_at", "")
+    try:
+        captured = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+        if captured.tzinfo is None:
+            captured = captured.replace(tzinfo=timezone.utc)
+        age_seconds = max(0, int((datetime.now(timezone.utc) - captured.astimezone(timezone.utc)).total_seconds()))
+    except (TypeError, ValueError):
+        age_seconds = None
+    policy = read_json(root / "config" / "runtime_policy.json", {})
+    fresh_max = int(policy.get("fresh_max_age_seconds", 900))
+    degraded_max = int(policy.get("degraded_max_age_seconds", 1500))
+    if age_seconds is None:
+        status = "STALE"
+    elif age_seconds <= fresh_max:
+        status = "FRESH"
+    elif age_seconds <= degraded_max:
+        status = "DEGRADED"
+    else:
+        status = "STALE"
+    freshness.update({
+        "status": status,
+        "age_seconds": age_seconds,
+        "fresh_max_age_seconds": fresh_max,
+        "degraded_max_age_seconds": degraded_max,
+    })
+    return freshness
+
+
 def build_decision_context(root: Path | None = None) -> dict[str, Any]:
     root = root or root_from_env()
     current = read_current(root)
@@ -188,6 +218,7 @@ def build_decision_context(root: Path | None = None) -> dict[str, Any]:
     dashboard = root / "ETF当前状态_DASHBOARD.md"
     latest = current.get("latest_snapshot", "")
     snapshot = read_json(root / latest, {}) if latest else {}
+    effective_data_status = evaluate_context_freshness(root, current)
     intraday_path = read_json(root / "data" / "state" / "intraday_path_features.json", {
         "status": "MISSING", "features": [],
     })
@@ -196,6 +227,8 @@ def build_decision_context(root: Path | None = None) -> dict[str, Any]:
         "market_date": current.get("market_date", ""),
         "latest_node": current.get("latest_valid_node", ""),
         "current": current, "latest_snapshot": snapshot,
+        "data_status": effective_data_status,
+        "freshness_at_context_build": effective_data_status,
         "intraday_path_features": intraday_path,
         "dashboard_source": str(dashboard.relative_to(root)).replace("\\", "/"),
         "dashboard_summary": {
