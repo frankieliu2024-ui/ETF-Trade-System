@@ -55,13 +55,12 @@ def load_panel(start: str, end: str) -> pd.DataFrame:
         raise RuntimeError("No historical daily research facts found")
     for col in ["close", "high", "low", "volume", "amount"]:
         frame[col] = pd.to_numeric(frame[col], errors="coerce")
-    frame = frame.dropna(subset=["close"]).sort_values(["instrument", "datetime"]).reset_index(drop=True)
-    return frame
+    return frame.dropna(subset=["close"]).sort_values(["instrument", "datetime"]).reset_index(drop=True)
 
 
 def build_features(raw: pd.DataFrame, horizons: list[int]) -> pd.DataFrame:
     parts = []
-    for code, g in raw.groupby("instrument", sort=True):
+    for _, g in raw.groupby("instrument", sort=True):
         g = g.sort_values("datetime").copy()
         close = g["close"]
         ret1 = close.pct_change() * 100.0
@@ -80,16 +79,13 @@ def build_features(raw: pd.DataFrame, horizons: list[int]) -> pd.DataFrame:
         parts.append(g)
     frame = pd.concat(parts, ignore_index=True)
 
-    def add_cross_section(day: pd.DataFrame) -> pd.DataFrame:
-        out = day.copy()
-        r1 = out["ret_1d_pct"]
-        std = r1.std(ddof=0)
-        out["cross_section_ret1_z"] = (r1 - r1.mean()) / std if pd.notna(std) and std > 0 else 0.0
-        out["cross_section_ret5_rank_pct"] = out["ret_5d_pct"].rank(pct=True)
-        out["cross_section_ret20_rank_pct"] = out["ret_20d_pct"].rank(pct=True)
-        return out
-
-    frame = frame.groupby("datetime", group_keys=False).apply(add_cross_section, include_groups=False).reset_index()
+    grouped = frame.groupby("datetime", sort=False)
+    r1_mean = grouped["ret_1d_pct"].transform("mean")
+    r1_std = grouped["ret_1d_pct"].transform(lambda s: s.std(ddof=0))
+    frame["cross_section_ret1_z"] = (frame["ret_1d_pct"] - r1_mean) / r1_std.replace(0, np.nan)
+    frame["cross_section_ret1_z"] = frame["cross_section_ret1_z"].fillna(0.0)
+    frame["cross_section_ret5_rank_pct"] = grouped["ret_5d_pct"].rank(pct=True)
+    frame["cross_section_ret20_rank_pct"] = grouped["ret_20d_pct"].rank(pct=True)
     return frame.sort_values(["datetime", "instrument"]).reset_index(drop=True)
 
 
@@ -112,28 +108,20 @@ class FrameDataset:
             seg_name = None
         start_ts, end_ts = pd.Timestamp(start), pd.Timestamp(end)
         mask = self.data["datetime"].between(start_ts, end_ts)
-        # Purge labels whose realization lies outside the segment for train/valid.
         if seg_name in {"train", "valid"}:
             mask &= self.data[self.label_date_col].notna() & (self.data[self.label_date_col] <= end_ts)
         else:
             mask &= self.data[self.label_date_col].notna()
-        sub = self.data.loc[mask].copy()
-        sub = sub.dropna(subset=self.feature_cols + [self.label_col])
+        sub = self.data.loc[mask].copy().dropna(subset=self.feature_cols + [self.label_col])
         idx = pd.MultiIndex.from_frame(sub[["datetime", "instrument"]], names=["datetime", "instrument"])
         if col_set == "feature":
             out = sub[self.feature_cols].copy()
             out.index = idx
             return out
         if isinstance(col_set, (list, tuple)) and "feature" in col_set and "label" in col_set:
-            arrays = []
-            values = []
-            for col in self.feature_cols:
-                arrays.append(("feature", col))
-                values.append(sub[col].to_numpy())
-            arrays.append(("label", self.label_col))
-            values.append(sub[self.label_col].to_numpy())
-            out = pd.DataFrame(np.column_stack(values), index=idx, columns=pd.MultiIndex.from_tuples(arrays))
-            return out
+            tuples = [("feature", col) for col in self.feature_cols] + [("label", self.label_col)]
+            values = [sub[col].to_numpy() for col in self.feature_cols] + [sub[self.label_col].to_numpy()]
+            return pd.DataFrame(np.column_stack(values), index=idx, columns=pd.MultiIndex.from_tuples(tuples))
         if col_set == "label":
             out = sub[[self.label_col]].copy()
             out.index = idx
@@ -180,8 +168,7 @@ def candidate_stats(score: pd.Series, actual: pd.Series) -> dict:
 
 
 def evaluate_score(score: pd.Series, actual: pd.Series, min_n: int) -> dict:
-    rank = spearman_by_date(score, actual, min_n)
-    return {**rank, **candidate_stats(score, actual)}
+    return {**spearman_by_date(score, actual, min_n), **candidate_stats(score, actual)}
 
 
 def main() -> int:
@@ -192,11 +179,8 @@ def main() -> int:
     config = load_json(ROOT / request["config_path"])
     horizons = [int(x) for x in config["horizons_trading_days"]]
     feature_cols = list(config["features"])
-    raw = load_panel(request["data_start"], request["data_end"])
-    frame = build_features(raw, horizons)
+    frame = build_features(load_panel(request["data_start"], request["data_end"]), horizons)
 
-    # Use Microsoft's pinned Qlib LGBModel implementation. Recorder output is intentionally disabled;
-    # the repository JSON files are the only research audit trail for this isolated PoC.
     from qlib.contrib.model import gbdt as qlib_gbdt
 
     class NoopRecorder:
@@ -205,7 +189,6 @@ def main() -> int:
             return None
 
     qlib_gbdt.R = NoopRecorder()
-
     model_cfg = config["model"]
     min_n = int(config["validation"]["minimum_cross_section_size"])
     folds_out = []
@@ -246,15 +229,12 @@ def main() -> int:
                 q_metrics = evaluate_score(pred, actual, min_n)
                 baseline_metrics = {}
                 for baseline in request["baselines"]:
-                    score = test["feature"][baseline]
-                    baseline_metrics[baseline] = evaluate_score(score, actual, min_n)
+                    baseline_metrics[baseline] = evaluate_score(test["feature"][baseline], actual, min_n)
                 feature_importance = {}
                 if getattr(model, "model", None) is not None:
                     imp = model.model.feature_importance(importance_type="gain")
-                    feature_importance = {
-                        k: round4(v) for k, v in sorted(zip(feature_cols, imp), key=lambda x: x[1], reverse=True)
-                    }
-                result = {
+                    feature_importance = {k: round4(v) for k, v in sorted(zip(feature_cols, imp), key=lambda x: x[1], reverse=True)}
+                folds_out.append({
                     "fold": fold["name"],
                     "horizon_trading_days": h,
                     "segments": segments,
@@ -262,13 +242,11 @@ def main() -> int:
                     "qlib": q_metrics,
                     "baselines": baseline_metrics,
                     "feature_importance_gain": feature_importance,
-                }
-                folds_out.append(result)
+                })
                 aggregates[h]["qlib_ic"].append(q_metrics.get("mean_rank_ic"))
                 aggregates[h]["qlib_spread"].append(q_metrics.get("top_minus_bottom_mean_spread_pct_points"))
                 for baseline, metrics in baseline_metrics.items():
                     aggregates[h][f"{baseline}_ic"].append(metrics.get("mean_rank_ic"))
-                    aggregates[h][f"{baseline}_spread"].append(metrics.get("top_minus_bottom_mean_spread_pct_points"))
             except Exception as exc:
                 failures.append({"fold": fold["name"], "horizon": h, "error": f"{type(exc).__name__}: {exc}"})
 
@@ -285,7 +263,7 @@ def main() -> int:
         b5_mean = float(np.mean(b5)) if b5 else float("nan")
         b20_mean = float(np.mean(b20)) if b20 else float("nan")
         positive_folds = sum(x > 0 for x in q_ic)
-        beats_both = math.isfinite(q_mean) and q_mean > max(b5_mean, b20_mean)
+        beats_both = all(math.isfinite(x) for x in [q_mean, b5_mean, b20_mean]) and q_mean > max(b5_mean, b20_mean)
         stable = len(q_ic) >= 3 and positive_folds >= 2 and beats_both
         stable_horizons += int(stable)
         summary[str(h)] = {
@@ -295,7 +273,7 @@ def main() -> int:
             "qlib_mean_top_minus_bottom_spread_pct_points": round4(np.mean(q_spread)) if q_spread else None,
             "mom5_mean_rank_ic": round4(b5_mean),
             "mom20_mean_rank_ic": round4(b20_mean),
-            "qlib_minus_best_momentum_rank_ic": round4(q_mean - max(b5_mean, b20_mean)) if beats_both or math.isfinite(q_mean) else None,
+            "qlib_minus_best_momentum_rank_ic": round4(q_mean - max(b5_mean, b20_mean)) if all(math.isfinite(x) for x in [q_mean, b5_mean, b20_mean]) else None,
             "screening_increment_stable": stable,
         }
 
@@ -322,7 +300,7 @@ def main() -> int:
         "interpretation_boundary": "本结果仅验证Qlib是否对ETF横截面机会排序提供稳定样本外增量。不得直接生成风险许可、机会状态、金额、持有、降低风险或退出。",
     }
     atomic_json_write(OUT_PATH, payload)
-    status = {
+    atomic_json_write(STATUS_PATH, {
         "schema_version": "1.0",
         "generated_at": now_utc(),
         "mode": "QLIB_RESEARCH_POC",
@@ -336,8 +314,7 @@ def main() -> int:
         "decision_eligible": False,
         "trade_signal": None,
         "boundary": config["boundaries"]["description"],
-    }
-    atomic_json_write(STATUS_PATH, status)
+    })
     print(json.dumps({"runs": len(folds_out), "failures": len(failures), "interpretation": interpretation}, ensure_ascii=False))
     return 0 if not failures and folds_out else 1
 
