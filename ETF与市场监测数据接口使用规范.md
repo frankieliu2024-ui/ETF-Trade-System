@@ -111,7 +111,8 @@ Nasdaq常规盘为美东09:30—16:00，盘前为04:00—09:30，盘后为16:00�
 - `close_grace_seconds = 900`：15:00收盘任务允许15分钟调度宽限；
 - `provider_timeout_seconds = 25`：单次接口调用超时25秒；
 - `provider_retry_limit = 2`：有限重试，不无限阻塞；
-- `provider_max_workers = 3`：受控并发；
+- `scheduled_provider_max_workers = 1`：定时任务单并发；
+- `query_provider_max_workers = 2`：查询时补采最多2并发；
 - workflow单次运行最长6分钟。
 
 核心原则：
@@ -223,6 +224,10 @@ A股ETF、A股指数和账户截图均优先按北京时间标注。海外/亚�
 一致性检查的对象包括但不限于文本、配置、脚本、workflow、Git跟踪状态、当前commit标识、运行状态文件、自动检查状态和真实生产脉冲。不能以“文档相同”替代系统一致性。
 
 GitHub `main` 是云端唯一主版本；本规范位于一级目录：`ETF与市场监测数据接口使用规范.md`。
+
+### 9.1 一致性结果提交审计语义
+
+一致性脚本中的 `checked_commit` 表示本次检查实际读取和验证的代码/配置提交，通常等于运行时的 `HEAD`，并在 GitHub Actions 中与 `GITHUB_SHA` 对照。后续用于保存 `system_consistency.json` 的状态提交属于 `persisted_state_commit`，它是持久化检查结果的后续提交，不要求、也不应通过递归提交让报告反向引用自身最终SHA。因而，`system_consistency.json` 的 PASS 首先表示 `checked_commit` 通过；审计时应同时查看报告中的持久化提交语义，而不是误读为报告文件必须与最终状态提交使用同一个SHA。
 
 ## 10. 边界
 
