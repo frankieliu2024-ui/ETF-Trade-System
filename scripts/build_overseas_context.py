@@ -192,6 +192,21 @@ def compare_hstech_attempts(attempts: list[dict]) -> dict:
     }
 
 
+def select_best_candidate(candidates: list[tuple[dict, dict]]) -> tuple[dict, dict] | None:
+    """Select the lowest-latency valid direct source, not the first response."""
+    eligible = [
+        pair for pair in candidates
+        if pair[0].get("quality_status") == "PASS"
+        and pair[1].get("as_of_beijing")
+        and pair[1].get("delay_minutes") is not None
+    ]
+    if not eligible:
+        return None
+    stable = [pair for pair in eligible if pair[1].get("stable_for_10m_pulse") is True]
+    pool = stable or eligible
+    return min(pool, key=lambda pair: float(pair[1].get("delay_minutes", float("inf"))))
+
+
 def time_relation(object_id: str, latest: dict, phase: str, generated_utc: datetime) -> str:
     sh_date = generated_utc.astimezone(BEIJING).date().isoformat()
     source_date = latest.get("market_date_local", "")
@@ -359,11 +374,12 @@ def build() -> dict:
                         candidates.append((delayed, delayed_summary))
                     except Exception as delayed_error:
                         attempts.append(failed_attempt("eastmoney_push2delay:124.HSTECH", str(delayed_error)[-500:], generated_utc))
-                selected = next(((candidate, summary) for candidate, summary in candidates if summary["stable_for_10m_pulse"]), None)
+                selected = select_best_candidate(candidates)
                 if selected:
                     record, selected_summary = selected
                     record["quality_status"] = "PASS"
                     record["selected_provider_id"] = selected_summary["provider"]
+                    record["selection_basis"] = "lowest_provider_latency_among_valid_direct_sources"
                 else:
                     record = candidates[-1][0] if candidates else {
                         "object": "HSTECH", "name": spec["name"], "reference_role": spec["role"],
