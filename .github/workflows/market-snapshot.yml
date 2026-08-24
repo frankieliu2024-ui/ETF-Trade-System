@@ -127,7 +127,7 @@ jobs:
           data.update({
               'scheduled_for': f'{market_date} {planned}' if planned else f'{market_date} {snapshot.get("node", "")}',
               'started_at': data.get('run_started_at', ''),
-              'finished_at': data.get('captured_at_beijing', datetime.now(shanghai).isoformat(timespec='seconds'))
+              'finished_at': data.get('captured_at_beijing', datetime.now(shanghai).isoformat(timespec='seconds')),
               'run_id': os.environ.get('GITHUB_RUN_ID', ''),
               'input_commit': os.environ.get('GITHUB_SHA', ''),
               'data_commit': '',
