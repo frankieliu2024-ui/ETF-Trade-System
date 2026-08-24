@@ -15,22 +15,15 @@ on:
     paths:
       - "requests/live_snapshot/**.json"
   schedule:
-    # UTC. A-share opening auction starts at 09:15 Asia/Shanghai = 01:15 UTC.
-    # Auction-specific pulses: 09:15, 09:20, 09:25; then 09:30 and 10-minute continuous pulses.
     - cron: "15,20,25,30,40,50 1 * * 1-5"
     - cron: "*/10 2 * * 1-5"
     - cron: "0,10,20,30 3 * * 1-5"
-    # 13:00-15:10 Asia/Shanghai = 05:00-07:10 UTC.
     - cron: "*/10 5-6 * * 1-5"
     - cron: "0,10 7 * * 1-5"
 
 permissions:
   contents: write
 
-# Scheduled production, manual recovery and query-time refresh share one ordered
-# queue. A query-time push may cancel an older in-flight pulse so the user's
-# current request is not forced to wait behind stale work. Scheduled pulses do
-# not cancel each other.
 concurrency:
   group: etf-market-snapshot-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'push' }}
@@ -44,11 +37,11 @@ jobs:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
       HITHINK_RETRY_LIMIT: "2"
       HITHINK_TIMEOUT_SECONDS: "25"
-      # Query-time refresh prioritizes latency with controlled two-way fan-out.
-      # Scheduled production remains single-worker to minimize provider pressure.
       HITHINK_MAX_WORKERS: ${{ github.event_name == 'push' && '2' || '1' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -222,9 +215,6 @@ jobs:
         if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_chatgpt_task_probe.py
       - name: Commit downstream runtime/data artifacts
-        # Core CURRENT is already published as soon as the 13-object snapshot passes.
-        # Account/Dashboard maintenance is deliberately downstream so user-facing
-        # analysis can consume the new core snapshot before slower persistence ends.
         if: ${{ always() && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success' || steps.state_sync.outputs.processed == 'true') }}
         run: |
           git config user.name "github-actions[bot]"
