@@ -1,6 +1,6 @@
 # ETF与市场监测数据接口使用规范
 
-> 版本：V1.3  
+> 版本：V1.4  
 > 更新日期：2026-08-24  
 > 定位：ETF云端系统一级目录基础数据规范。负责数据源、三层监测、盘前/盘中脉冲、质量验收、跨市场时点、故障降级和维护一致性；不是交易规则来源，不产生买卖动作。  
 > 规则边界：交易权限、风险许可、Trial／Confirm、金额与卖出规则只以 `ETF规则_MASTER.md` 为准。
@@ -52,9 +52,11 @@ ETF层只使用“持仓ETF + 观察ETF”两种身份。两类均持续获取�
 
 **hithink-finance（同花顺金融数据CLI/API）**：主要用于A股ETF、A股指数、当前打新底仓A股行情，以及已验证可覆盖的直接指数。A股ETF和上证／创业板指数为主要生产源；HSTECH可优先尝试已验证的HS2083入口。
 
-**Yahoo Chart API**：主要用于海外及亚洲正式指数、海外产业链个股、商品或宏观辅助对象。当前正式海外指数层主要覆盖NDX、SOX、N225、KOSPI、TWII，并作为HSTECH等对象的允许备用来源之一。Yahoo返回成功仍须经过时点、市场阶段和质量检查，不因来源公开而自动视为实时。
+**Yahoo Chart API**：主要用于海外及亚洲正式指数、海外产业链个股、商品或宏观辅助对象，以及美股扩展时段5分钟级行情。Yahoo返回成功仍须经过时点、市场阶段和质量检查，不因来源公开而自动视为实时。
 
 直接指数不可用时，可使用已定义ETF代理辅助，但必须明确标注 `PROXY`，不得把ETF代理写成指数本身。例如：SOXQ仅可作为SOX备用代理；513520可辅助N225；513180可辅助HSTECH；518880可辅助黄金风险路径。代理是降级工具，不得永久替代已经可稳定获取的直接指数。
+
+美股扩展时段与现金指数必须分开：NDX/SOX用于正式现金盘结构；QQQ/SOXX可作为纳指100与半导体方向的扩展时段代理。美股产业链个股如INTC、NVDA、AMD等只在当前假设需要时动态调用，不形成永久固定名单。
 
 AKShare、pandas-datareader等可作为候选二级适配器，只有完成真实环境验证、字段映射、时区验证和质量审计后才能升级为正式生产源。未经验证的数据源不得因为“能返回数据”进入正式决策链。
 
@@ -70,18 +72,31 @@ A股生产脉冲必须先通过交易日与交易时段门禁。`config/market/a
 
 市场监测不得等到A股9:30连续竞价才启动。
 
-- 日经225与KOSPI：北京时间08:00进入常规交易，海外/亚洲指数预开盘脉冲从北京时间08:00开始，每10分钟刷新至09:10；
-- 台湾加权：北京时间09:00进入常规交易，纳入同一预开盘脉冲；
-- 恒生科技：北京时间09:00进入港股盘前阶段，09:30进入常规交易；09:00—09:20数据按 `PRE_OPEN` 解释，不得当作正式连续成交；
+- 美股上一现金盘：NDX/SOX作为前序外部结构读取；
+- 美股盘后：云端从北京时间07:00开始刷新QQQ/SOXX扩展时段状态，捕捉上一美股交易日盘后的最后阶段；美国夏令时盘后通常约北京时间08:00结束，冬令时通常约09:00结束，由 `America/New_York` 时区自动换算，不硬编码固定北京时间终点；
+- 美股下一交易日盘前：Nasdaq盘前为美东04:00—09:30，通常对应北京时间16:00—21:30（夏令时）或17:00—22:30（冬令时）。因此它通常发生在A股收盘后，是**下一A股交易日**可能使用的前置信号，不得误称为当天A股上午的同步领先行情；
+- 日经225与KOSPI：北京时间08:00进入常规交易，海外/亚洲指数预开盘脉冲持续刷新；
+- 台湾加权：北京时间09:00进入常规交易；
+- 恒生科技：北京时间09:00进入港股盘前阶段，09:30进入常规交易；
 - A股ETF与指数：北京时间09:15进入开盘集合竞价，09:15、09:20、09:25为集合竞价专用脉冲，09:30起转为连续竞价10分钟级脉冲。
 
-盘前海外脉冲由 `.github/workflows/overseas-preopen-pulse.yml` 负责；A股集合竞价及盘中脉冲由 `.github/workflows/market-snapshot.yml` 负责。
+盘前海外脉冲由 `.github/workflows/overseas-preopen-pulse.yml` 负责，生成 `overseas_context.json` 与 `us_extended_hours_context.json`；A股集合竞价及盘中脉冲由 `.github/workflows/market-snapshot.yml` 负责。
 
-### 4.2 A股集合竞价语义
+### 4.2 美股扩展时段语义
+
+美股信息必须区分：`REGULAR`（正式现金盘）、`POST_MARKET`（盘后）、`PRE_MARKET`（盘前）。禁止把三者合并成“美股当前行情”。
+
+Nasdaq常规盘为美东09:30—16:00，盘前为04:00—09:30，盘后为16:00—20:00。扩展时段流动性通常较低、价差更大、波动更高，因此扩展时段涨跌只能作为前置信号。
+
+例如“英特尔盘前上涨5%”可以成为半导体链的增强证据，但必须同时标注：标的、`PRE_MARKET`、北京时间as_of、相对上一正式现金盘收盘的涨跌，以及数据来源。它不能等同于SOX正式指数上涨5%，也不能绕过“外部结构 → 本地传导 → ETF自身反馈 → 机会判断”。
+
+原则是：**不高估海外时间领先，也不低估海外时间领先。** 已经完成的美国盘后/盘前价格发现必须读取；尚未发生的美国盘前不能虚构为领先信息；扩展时段存在真实价格信号，但证据权重低于正式现金盘且需本地验证。
+
+### 4.3 A股集合竞价语义
 
 09:15—09:25属于 `OPENING_CALL_AUCTION`。该阶段交易所即时行情与连续竞价字段语义不同；即使provider返回open/high/low/last等通用字段，也只能作为集合竞价时点快照解释，不得与09:30后的连续成交最新价、成交量价结构直接混用。正式机会、金额或卖出判断若依赖连续成交承接，应等待连续竞价数据。
 
-### 4.3 目标频率与新鲜度
+### 4.4 目标频率与新鲜度
 
 当前运行参数以 `config/runtime_policy.json` 为唯一机器来源：
 
@@ -119,18 +134,20 @@ A股生产脉冲必须先通过交易日与交易时段门禁。`config/market/a
 【数据时点（北京时间）】2026-08-24 09:20:xx
 ```
 
-A股ETF、A股指数和账户截图均优先按北京时间标注。海外/亚洲对象必须至少提供 `as_of_beijing`；同时保留 `market_timezone`、`as_of_local`、`market_phase` 和 `time_relation_to_a_share` 用于解释。若一个正式分析引用多个不同数据时点，不能只给一个笼统总时间，必须对存在明显错位的对象分别标注。
+A股ETF、A股指数和账户截图均优先按北京时间标注。海外/亚洲对象必须至少提供 `as_of_beijing`；同时保留 `market_timezone`、`as_of_local`、`market_phase` 和 `time_relation_to_a_share` 用于解释。美股扩展时段对象必须同时显示 `market_phase_of_latest = PRE_MARKET / REGULAR / POST_MARKET`。
 
-若provider返回值相对当前查询时间存在延迟，输出不得隐藏延迟；应直接显示其 `as_of_beijing`，必要时注明“距当前约X分钟”。数据时间本身就是质量信息。
+若一个正式分析引用多个不同数据时点，不能只给一个笼统总时间，必须对存在明显错位的对象分别标注。若provider返回值相对当前查询时间存在延迟，输出不得隐藏延迟；应直接显示其 `as_of_beijing`，必要时注明“距当前约X分钟”。数据时间本身就是质量信息。
 
 ### 5.2 跨市场对齐
 
 跨市场数据必须携带或能够明确推导：`as_of_beijing`、`market_timezone`、`as_of_local`、`market_phase`、`time_relation_to_a_share`。不得按自然日期相同就认定为同步行情。
 
-- 美国现金指数和美股个股：A股交易时段通常对应上一美股交易时段的已完成信息，只能作为前序外部结构；
+- 美国现金指数：A股交易时段主要对应上一美股正式现金盘；
+- 美国盘后：可能对次日A股开盘形成领先信息，冬夏令时导致与北京时间重叠程度不同；
+- 美国下一交易日盘前：通常在A股当天收盘后出现，主要影响下一A股交易日，不能倒置时间关系；
 - 日经、韩国、台湾：根据各自市场实际阶段区分同日盘中、同日已收盘或上一交易日；
 - 恒生科技：A股15:00收盘时香港市场通常尚未完成当日收盘；
-- 不同市场上一收盘、当前盘中和当日收盘不得混成一组“共振”证据。
+- 不同市场上一收盘、盘后、盘前、当前盘中和当日收盘不得混成一组“共振”证据。
 
 跨市场信息进入交易判断的顺序始终为：
 
@@ -142,13 +159,15 @@ A股ETF、A股指数和账户截图均优先按北京时间标注。海外/亚�
 
 每个生产对象至少检查：标的身份与代码、允许的数据源、关键字段、OHLC逻辑、数据时点、时区、市场阶段、provider时间戳、交易日/交易时段、累计成交量/额语义、多源冲突、代理与直接指数区分、休市旧数据识别以及账户事实来源。
 
-强制时间字段：A股快照至少保存 `captured_at_beijing` 与 `market_phase`；海外/亚洲对象至少保存 `latest.as_of_beijing`、`market_timezone`、`market_phase_at_generation` 与 `time_relation_to_a_share`。缺少可解释数据时点的对象不得按FRESH进入正式行情判断。
+强制时间字段：A股快照至少保存 `captured_at_beijing` 与 `market_phase`；海外/亚洲指数至少保存 `latest.as_of_beijing`、`market_timezone`、`market_phase_at_generation` 与 `time_relation_to_a_share`；美股扩展时段至少保存 `latest.as_of_beijing`、`market_phase_of_latest`、`regular_session_close_reference` 与 `extended_change_vs_regular_close_pct`。缺少可解释数据时点的对象不得按FRESH进入正式行情判断。
 
 相邻脉冲变化由 `data/state/market_delta.json` 保存，只表达客观价格、高低、成交量／成交额变化，不设置固定阈值、机会等级或交易动作。
 
 ## 7. 生产状态与审计文件
 
-核心运行文件包括：`CURRENT.json`、`runtime_health.json`、`market_delta.json`、`overseas_context.json`、`account_fact.json`、`stock_context.json`、`stock_market_context.json`、`query_context.json`、`system_consistency.json`。核心运行配置还包括A股官方交易日历、provider优先级、ETF运行全集和runtime policy。
+核心运行文件包括：`CURRENT.json`、`runtime_health.json`、`market_delta.json`、`overseas_context.json`、`us_extended_hours_context.json`、`account_fact.json`、`stock_context.json`、`stock_market_context.json`、`query_context.json`、`system_consistency.json`。核心运行配置还包括A股官方交易日历、provider优先级、ETF运行全集和runtime policy。
+
+`us_extended_hours_context.json` 默认只保留QQQ/SOXX作为扩展时段方向代理；条件美股产业链个股由 `US_EXTENDED_SYMBOLS` 或查询时外部核验动态加入，不形成永久名单。
 
 生产原始响应、快照与审计材料应保持可追溯。失败记录不得伪装成成功快照，历史回放不得写入生产CURRENT。
 
@@ -158,6 +177,8 @@ A股ETF、A股指数和账户截图均优先按北京时间标注。海外/亚�
 - 工作日但交易所官方休市：session gate直接跳过；
 - runner正常返回但未写入新有效快照：下游context全部跳过；
 - 同花顺或Yahoo局部失败：局部降级并保留监测职责；
+- 美股扩展时段无有效bar：明确FAILED/STALE，不用上一正式现金盘冒充盘后或盘前；
+- 美股扩展时段个股大幅异动：保留真实价格信号，但标记扩展时段，不自动提升为正式指数确认；
 - 数据格式正常但时间戳陈旧：按时点规则降级，不能视为FRESH；
 - 当日账户事实缺失：行情采集可以继续，账户、风险率、资金与卖出判断不得引用旧日账户作为当前事实；
 - Git推送冲突：先rebase；不得覆盖正式文件；无法自动解决时保留数据并要求人工检查。
@@ -171,7 +192,8 @@ A股ETF、A股指数和账户截图均优先按北京时间标注。海外/亚�
 3. **运行链**：workflow → session gate → provider → snapshot → CURRENT/runtime_health → downstream context → commit，关键步骤存在且门禁有效；
 4. **代码与提交完整性**：关键文件必须被Git跟踪；当前运行必须能记录 `HEAD/GITHUB_SHA`、workflow run id；相关更新完成后必须形成真实commit，不允许“本地/工作树已经改、main未提交”却宣称维护完成；
 5. **自动验收结果**：`system_consistency.json` 不得存在硬FAIL；相关commit触发的自动一致性workflow应有可追溯结果；
-6. **运行状态**：核心状态文件存在、结构合法；真实交易日还需用实际脉冲验证接口和GitHub Actions执行链。
+6. **运行状态**：核心状态文件存在、结构合法；真实交易日还需用实际脉冲验证接口和GitHub Actions执行链；
+7. **跨市场扩展时段链**：美股现金盘、POST_MARKET、PRE_MARKET必须可区分；QQQ/SOXX扩展时段脚本、状态文件、workflow和query读取入口必须一致，不能只写在文档中。
 
 `scripts/check_system_consistency.py` 是基础自动验收脚本；`.github/workflows/system-consistency.yml` 负责维护后自动重算并持久化结果；生产行情workflow在采集前再次预检。硬冲突必须判FAIL并阻断生产；账户事实缺失等正常状态只记WARNING。
 
