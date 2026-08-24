@@ -1,0 +1,175 @@
+from __future__ import annotations
+
+import json
+import os
+import urllib.parse
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+try:
+    from state_manager import atomic_json_write, now_utc
+except ModuleNotFoundError:
+    from scripts.state_manager import atomic_json_write, now_utc
+
+ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
+NEW_YORK = ZoneInfo("America/New_York")
+BEIJING = ZoneInfo("Asia/Shanghai")
+
+# Broad-market extended-hours proxies are always allowed. Individual companies are
+# never hard-coded here: query-time industry names may be supplied through
+# US_EXTENDED_SYMBOLS, e.g. INTC,NVDA,AMD, but remain conditional evidence only.
+BASE_PROXIES = {
+    "QQQ": {"name": "纳指100ETF代理", "role": "NASDAQ100_EXTENDED_HOURS_PROXY"},
+    "SOXX": {"name": "半导体ETF代理", "role": "SEMICONDUCTOR_EXTENDED_HOURS_PROXY"},
+}
+
+
+def request_chart(symbol: str) -> dict:
+    encoded = urllib.parse.quote(symbol, safe="")
+    url = (
+        f"https://query1.finance.yahoo.com/v8/finance/chart/{encoded}"
+        "?range=1d&interval=5m&includePrePost=true&events=div%2Csplits"
+    )
+    req = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.15"})
+    with urllib.request.urlopen(req, timeout=20) as response:
+        return json.load(response)
+
+
+def session_for_et(dt_et: datetime) -> str:
+    minute = dt_et.hour * 60 + dt_et.minute
+    if 4 * 60 <= minute < 9 * 60 + 30:
+        return "PRE_MARKET"
+    if 9 * 60 + 30 <= minute < 16 * 60:
+        return "REGULAR"
+    if 16 * 60 <= minute <= 20 * 60:
+        return "POST_MARKET"
+    return "OFF_SESSION"
+
+
+def extract_rows(payload: dict) -> tuple[list[dict], dict]:
+    result = payload["chart"]["result"][0]
+    timestamps = result.get("timestamp") or []
+    quote = (result.get("indicators", {}).get("quote") or [{}])[0]
+    rows: list[dict] = []
+    for i, ts in enumerate(timestamps):
+        values = {}
+        for field in ("open", "high", "low", "close", "volume"):
+            series = quote.get(field) or []
+            values[field] = series[i] if i < len(series) else None
+        if values["close"] is None:
+            continue
+        dt_utc = datetime.fromtimestamp(int(ts), timezone.utc)
+        dt_et = dt_utc.astimezone(NEW_YORK)
+        dt_bj = dt_utc.astimezone(BEIJING)
+        rows.append({
+            **values,
+            "timestamp": int(ts),
+            "as_of_utc": dt_utc.isoformat(timespec="seconds").replace("+00:00", "Z"),
+            "as_of_local": dt_et.isoformat(timespec="seconds"),
+            "as_of_beijing": dt_bj.isoformat(timespec="seconds"),
+            "session": session_for_et(dt_et),
+        })
+    return rows, result.get("meta", {})
+
+
+def pct_change(a: float | None, b: float | None) -> float | None:
+    if a is None or b in (None, 0):
+        return None
+    return round((a / b - 1) * 100, 4)
+
+
+def build_symbol(symbol: str, name: str, role: str, conditional: bool) -> dict:
+    rows, meta = extract_rows(request_chart(symbol))
+    if not rows:
+        raise RuntimeError("no valid intraday rows")
+    latest = rows[-1]
+    regular_rows = [r for r in rows if r["session"] == "REGULAR"]
+    regular_close = regular_rows[-1]["close"] if regular_rows else meta.get("previousClose")
+    return {
+        "symbol": symbol,
+        "name": name,
+        "reference_role": role,
+        "conditional_industry_object": conditional,
+        "provider": "yahoo_chart_api",
+        "market_timezone": "America/New_York",
+        "market_phase_of_latest": latest["session"],
+        "quality_status": "PASS",
+        "latest": latest,
+        "regular_session_close_reference": regular_close,
+        "extended_change_vs_regular_close_pct": pct_change(latest.get("close"), regular_close),
+        "decision_note": (
+            "扩展时段价格只作前置信号。PRE_MARKET/POST_MARKET流动性和价格发现质量低于正式现金盘；"
+            "不得把个股或ETF扩展时段涨跌直接等同于NDX/SOX正式指数涨跌，也不得单独生成A股ETF动作。"
+        ),
+    }
+
+
+def build() -> dict:
+    requested = [x.strip().upper() for x in os.environ.get("US_EXTENDED_SYMBOLS", "").split(",") if x.strip()]
+    specs: dict[str, tuple[str, str, bool]] = {
+        symbol: (spec["name"], spec["role"], False) for symbol, spec in BASE_PROXIES.items()
+    }
+    for symbol in requested:
+        if symbol not in specs:
+            specs[symbol] = (symbol, "CONDITIONAL_US_INDUSTRY_STOCK", True)
+
+    objects: dict[str, dict] = {}
+    passes = 0
+    for symbol, (name, role, conditional) in specs.items():
+        try:
+            record = build_symbol(symbol, name, role, conditional)
+            passes += 1
+        except Exception as exc:
+            record = {
+                "symbol": symbol,
+                "name": name,
+                "reference_role": role,
+                "conditional_industry_object": conditional,
+                "provider": "yahoo_chart_api",
+                "market_timezone": "America/New_York",
+                "quality_status": "FAILED",
+                "error": str(exc)[-500:],
+            }
+        objects[symbol] = record
+
+    now = datetime.now(timezone.utc)
+    return {
+        "generated_at": now_utc(),
+        "generated_at_beijing": now.astimezone(BEIJING).isoformat(timespec="seconds"),
+        "scope": "US_EXTENDED_HOURS_CONTEXT",
+        "quality_status": "PASS" if passes == len(specs) else ("DEGRADED" if passes else "FAILED"),
+        "base_proxies": list(BASE_PROXIES.keys()),
+        "conditional_symbols": requested,
+        "objects": objects,
+        "session_definition": {
+            "PRE_MARKET_ET": "04:00-09:30",
+            "REGULAR_ET": "09:30-16:00",
+            "POST_MARKET_ET": "16:00-20:00",
+            "timezone": "America/New_York",
+        },
+        "a_share_time_rule": (
+            "美股扩展时段按America/New_York自动处理夏令时/冬令时。A股早盘前通常能看到上一美股现金盘及盘后信息；"
+            "下一美股交易日PRE_MARKET通常在北京时间A股收盘后才开始，因此不得把美国盘前误称为当天A股上午的同步领先信号。"
+        ),
+        "decision_boundary": (
+            "NDX/SOX用于上一正式现金盘结构；QQQ/SOXX及条件美股个股用于扩展时段前置信号。"
+            "扩展时段必须继续经过A股本地传导与目标ETF自身反馈后才可进入机会判断。"
+        ),
+    }
+
+
+def main() -> None:
+    context = build()
+    atomic_json_write(ROOT / "data" / "state" / "us_extended_hours_context.json", context)
+    print(json.dumps({
+        "ok": True,
+        "generated_at_beijing": context["generated_at_beijing"],
+        "quality_status": context["quality_status"],
+        "objects": {k: v.get("quality_status", "FAILED") for k, v in context["objects"].items()},
+    }, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()
