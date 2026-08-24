@@ -12,9 +12,9 @@ on:
         required: true
         default: "false"
   schedule:
-    # UTC. Target only the A-share trading windows plus the close-grace pulse.
-    # 09:30-11:30 Asia/Shanghai = 01:30-03:30 UTC.
-    - cron: "30,40,50 1 * * 1-5"
+    # UTC. A-share opening auction starts at 09:15 Asia/Shanghai = 01:15 UTC.
+    # Auction-specific pulses: 09:15, 09:20, 09:25; then 09:30 and 10-minute continuous pulses.
+    - cron: "15,20,25,30,40,50 1 * * 1-5"
     - cron: "*/10 2 * * 1-5"
     - cron: "0,10,20,30 3 * * 1-5"
     # 13:00-15:10 Asia/Shanghai = 05:00-07:10 UTC.
@@ -94,7 +94,7 @@ jobs:
       - name: Build objective intraday market delta
         if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_market_delta.py
-      - name: Build resilient overseas core index context
+      - name: Refresh overseas and Asia index context
         if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_overseas_context.py
       - name: Build dynamic stock context from current account
