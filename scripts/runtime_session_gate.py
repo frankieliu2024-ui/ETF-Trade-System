@@ -20,7 +20,7 @@ def set_output(key: str, value: str) -> None:
             f.write(f"{key}={value}\n")
 
 
-def market_phase(minute: int) -> str:
+def market_phase(minute: int, close_grace_minutes: int = 15) -> str:
     # 09:25-09:29 is the post-auction/pre-continuous static window. A delayed
     # GitHub Actions runner may still capture the final opening-auction result
     # there, but it must not be interpreted as continuous-trading execution.
@@ -32,6 +32,8 @@ def market_phase(minute: int) -> str:
         return "CONTINUOUS_AFTERNOON"
     if 14 * 60 + 57 <= minute <= 15 * 60:
         return "CLOSING_CALL_AUCTION"
+    if 15 * 60 < minute <= 15 * 60 + max(1, close_grace_minutes):
+        return "POST_CLOSE_GRACE"
     return "OUTSIDE_SESSION"
 
 
@@ -40,21 +42,21 @@ def main() -> int:
     date_text = now.date().isoformat()
     event_name = os.environ.get("GITHUB_EVENT_NAME", "")
     policy = load_json(ROOT / "config" / "runtime_policy.json")
-    calendar = load_json(ROOT / "config" / "market" / "a_share_trading_calendar_2026.json")
+    calendar = load_json(ROOT / "config" / "market" / "a_share_trading_calendar_2026.json"))
 
     start = calendar.get("coverage_start", "")
     end = calendar.get("coverage_end", "")
     if not start or not end or not (start <= date_text <= end):
         raise RuntimeError(f"A-share trading calendar does not cover {date_text}: {start}..{end}")
 
+    close_grace_minutes = max(1, int(policy.get("close_grace_seconds", 900)) // 60)
     minute = now.hour * 60 + now.minute
-    phase = market_phase(minute)
+    phase = market_phase(minute, close_grace_minutes)
     if now.weekday() >= 5:
         should_capture, reason = False, "weekend"
     elif date_text in set(calendar.get("closed_dates") or []):
         should_capture, reason = False, "exchange_closed"
     else:
-        close_grace_minutes = max(1, int(policy.get("close_grace_seconds", 900)) // 60)
         in_opening_auction = 9 * 60 + 15 <= minute < 9 * 60 + 30
         in_morning = 9 * 60 + 30 <= minute <= 11 * 60 + 30
         in_afternoon = 13 * 60 <= minute <= 15 * 60
