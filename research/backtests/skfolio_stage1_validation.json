@@ -1,0 +1,4643 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-08-24T23:47:14Z",
+  "mode": "SKFOLIO_STAGE1_WALK_FORWARD_VALIDATION",
+  "upstream_commit": "1c892a53a27913335f9ef506ccf6453869365abf",
+  "data_start": "2024-01-01",
+  "data_end": "2026-08-21",
+  "fold_count": 25,
+  "failure_count": 0,
+  "failures": [],
+  "methods_summary": {
+    "EqualWeighted": {
+      "fold_count": 25,
+      "vs_equal_weight": {
+        "annualized_volatility": {
+          "mean_difference": 0.0,
+          "median_difference": 0.0,
+          "win_rate": 0.0
+        },
+        "max_drawdown": {
+          "mean_difference": 0.0,
+          "median_difference": 0.0,
+          "win_rate": 0.0
+        },
+        "cvar_95": {
+          "mean_difference": 0.0,
+          "median_difference": 0.0,
+          "win_rate": 0.0
+        },
+        "diversification_ratio": {
+          "mean_difference": 0.0,
+          "median_difference": 0.0,
+          "win_rate": 0.0
+        },
+        "effective_asset_count": {
+          "mean_difference": 0.0,
+          "median_difference": 0.0,
+          "win_rate": 0.0
+        },
+        "largest_high_corr_component_weight_share": {
+          "mean_difference": 0.0,
+          "median_difference": 0.0,
+          "win_rate": 0.0
+        }
+      },
+      "stage2_candidate": false
+    },
+    "InverseVolatility": {
+      "fold_count": 25,
+      "vs_equal_weight": {
+        "annualized_volatility": {
+          "mean_difference": -0.02,
+          "median_difference": -0.0165,
+          "win_rate": 1.0
+        },
+        "max_drawdown": {
+          "mean_difference": -0.0054,
+          "median_difference": -0.0022,
+          "win_rate": 0.92
+        },
+        "cvar_95": {
+          "mean_difference": -0.0023,
+          "median_difference": -0.0019,
+          "win_rate": 0.84
+        },
+        "diversification_ratio": {
+          "mean_difference": 0.0719,
+          "median_difference": 0.0503,
+          "win_rate": 0.88
+        },
+        "effective_asset_count": {
+          "mean_difference": -0.9863,
+          "median_difference": -0.7647,
+          "win_rate": 0.0
+        },
+        "largest_high_corr_component_weight_share": {
+          "mean_difference": -0.0971,
+          "median_difference": -0.0851,
+          "win_rate": 0.96
+        }
+      },
+      "stage2_candidate": true
+    },
+    "RiskBudgeting": {
+      "fold_count": 25,
+      "vs_equal_weight": {
+        "annualized_volatility": {
+          "mean_difference": -0.0346,
+          "median_difference": -0.0286,
+          "win_rate": 0.96
+        },
+        "max_drawdown": {
+          "mean_difference": -0.0086,
+          "median_difference": -0.0046,
+          "win_rate": 0.72
+        },
+        "cvar_95": {
+          "mean_difference": -0.0034,
+          "median_difference": -0.0032,
+          "win_rate": 0.84
+        },
+        "diversification_ratio": {
+          "mean_difference": 0.129,
+          "median_difference": 0.1071,
+          "win_rate": 0.88
+        },
+        "effective_asset_count": {
+          "mean_difference": -2.3092,
+          "median_difference": -2.2922,
+          "win_rate": 0.0
+        },
+        "largest_high_corr_component_weight_share": {
+          "mean_difference": -0.1694,
+          "median_difference": -0.1498,
+          "win_rate": 1.0
+        }
+      },
+      "stage2_candidate": true
+    },
+    "MaximumDiversification": {
+      "fold_count": 25,
+      "vs_equal_weight": {
+        "annualized_volatility": {
+          "mean_difference": -0.049,
+          "median_difference": -0.0451,
+          "win_rate": 0.92
+        },
+        "max_drawdown": {
+          "mean_difference": -0.0116,
+          "median_difference": -0.0109,
+          "win_rate": 0.68
+        },
+        "cvar_95": {
+          "mean_difference": -0.004,
+          "median_difference": -0.0041,
+          "win_rate": 0.8
+        },
+        "diversification_ratio": {
+          "mean_difference": 0.1819,
+          "median_difference": 0.1455,
+          "win_rate": 0.84
+        },
+        "effective_asset_count": {
+          "mean_difference": -5.8875,
+          "median_difference": -5.6753,
+          "win_rate": 0.0
+        },
+        "largest_high_corr_component_weight_share": {
+          "mean_difference": -0.2505,
+          "median_difference": -0.245,
+          "win_rate": 1.0
+        }
+      },
+      "stage2_candidate": false
+    }
+  },
+  "promising_methods": [
+    "InverseVolatility",
+    "RiskBudgeting"
+  ],
+  "research_interpretation": "PROMISING_FOR_STAGE2",
+  "fold_results": [
+    {
+      "fold": 1,
+      "train_start": "2024-01-02",
+      "train_end": "2024-07-03",
+      "test_start": "2024-07-04",
+      "test_end": "2024-07-31",
+      "asset_count": 9,
+      "assets": [
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "159992",
+          "515880",
+          "561980",
+          "588000"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.9345
+        },
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.9053
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.8219
+        },
+        {
+          "a": "159992",
+          "b": "588000",
+          "correlation": 0.8184
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.7878
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.7824
+        },
+        {
+          "a": "159781",
+          "b": "159992",
+          "correlation": 0.778
+        },
+        {
+          "a": "515880",
+          "b": "561980",
+          "correlation": 0.7324
+        },
+        {
+          "a": "159992",
+          "b": "561980",
+          "correlation": 0.6903
+        },
+        {
+          "a": "159992",
+          "b": "513180",
+          "correlation": 0.621
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 0.2169,
+            "annualized_volatility": 0.1776,
+            "max_drawdown": 0.0486,
+            "cvar_95": 0.0214,
+            "diversification_ratio": 1.5933,
+            "effective_asset_count": 9.0,
+            "largest_high_corr_component_weight_share": 0.5556
+          },
+          "weights": {
+            "159781": 0.1111,
+            "159941": 0.1111,
+            "159992": 0.1111,
+            "513180": 0.1111,
+            "513520": 0.1111,
+            "515880": 0.1111,
+            "518880": 0.1111,
+            "561980": 0.1111,
+            "588000": 0.1111
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 0.1885,
+            "annualized_volatility": 0.1589,
+            "max_drawdown": 0.0464,
+            "cvar_95": 0.0181,
+            "diversification_ratio": 1.6757,
+            "effective_asset_count": 7.9516,
+            "largest_high_corr_component_weight_share": 0.4705
+          },
+          "weights": {
+            "159781": 0.1171,
+            "159941": 0.1598,
+            "159992": 0.094,
+            "513180": 0.0839,
+            "513520": 0.0851,
+            "515880": 0.0694,
+            "518880": 0.2007,
+            "561980": 0.0839,
+            "588000": 0.1061
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 0.1516,
+            "annualized_volatility": 0.1447,
+            "max_drawdown": 0.0482,
+            "cvar_95": 0.0182,
+            "diversification_ratio": 1.7477,
+            "effective_asset_count": 5.8715,
+            "largest_high_corr_component_weight_share": 0.3391
+          },
+          "weights": {
+            "159781": 0.081,
+            "159941": 0.163,
+            "159992": 0.074,
+            "513180": 0.0646,
+            "513520": 0.112,
+            "515880": 0.0456,
+            "518880": 0.3213,
+            "561980": 0.0636,
+            "588000": 0.0749
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.237,
+            "annualized_volatility": 0.1425,
+            "max_drawdown": 0.0488,
+            "cvar_95": 0.0201,
+            "diversification_ratio": 1.7388,
+            "effective_asset_count": 3.5376,
+            "largest_high_corr_component_weight_share": 0.244
+          },
+          "weights": {
+            "159781": 0.0,
+            "159941": 0.1049,
+            "159992": 0.119,
+            "513180": 0.0264,
+            "513520": 0.1605,
+            "515880": 0.0,
+            "518880": 0.4641,
+            "561980": 0.125,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 2,
+      "train_start": "2024-01-30",
+      "train_end": "2024-07-31",
+      "test_start": "2024-08-01",
+      "test_end": "2024-08-28",
+      "asset_count": 9,
+      "assets": [
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "159992",
+          "515880",
+          "561980",
+          "588000"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.9397
+        },
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.8844
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.8054
+        },
+        {
+          "a": "159992",
+          "b": "588000",
+          "correlation": 0.7993
+        },
+        {
+          "a": "159781",
+          "b": "159992",
+          "correlation": 0.7643
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.7271
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.7184
+        },
+        {
+          "a": "515880",
+          "b": "561980",
+          "correlation": 0.6771
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.6515
+        },
+        {
+          "a": "159992",
+          "b": "561980",
+          "correlation": 0.6323
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": -0.6759,
+            "annualized_volatility": 0.1921,
+            "max_drawdown": 0.0634,
+            "cvar_95": 0.0396,
+            "diversification_ratio": 1.2601,
+            "effective_asset_count": 9.0,
+            "largest_high_corr_component_weight_share": 0.5556
+          },
+          "weights": {
+            "159781": 0.1111,
+            "159941": 0.1111,
+            "159992": 0.1111,
+            "513180": 0.1111,
+            "513520": 0.1111,
+            "515880": 0.1111,
+            "518880": 0.1111,
+            "561980": 0.1111,
+            "588000": 0.1111
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": -0.532,
+            "annualized_volatility": 0.1904,
+            "max_drawdown": 0.0623,
+            "cvar_95": 0.0399,
+            "diversification_ratio": 1.2654,
+            "effective_asset_count": 8.2353,
+            "largest_high_corr_component_weight_share": 0.4703
+          },
+          "weights": {
+            "159781": 0.1182,
+            "159941": 0.1529,
+            "159992": 0.092,
+            "513180": 0.09,
+            "513520": 0.103,
+            "515880": 0.0712,
+            "518880": 0.1838,
+            "561980": 0.0842,
+            "588000": 0.1047
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": -0.3524,
+            "annualized_volatility": 0.1885,
+            "max_drawdown": 0.0607,
+            "cvar_95": 0.0407,
+            "diversification_ratio": 1.2707,
+            "effective_asset_count": 6.357,
+            "largest_high_corr_component_weight_share": 0.3555
+          },
+          "weights": {
+            "159781": 0.0851,
+            "159941": 0.156,
+            "159992": 0.0785,
+            "513180": 0.0718,
+            "513520": 0.1221,
+            "515880": 0.0481,
+            "518880": 0.2946,
+            "561980": 0.0663,
+            "588000": 0.0776
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": -0.1565,
+            "annualized_volatility": 0.1744,
+            "max_drawdown": 0.0528,
+            "cvar_95": 0.0395,
+            "diversification_ratio": 1.3293,
+            "effective_asset_count": 3.7195,
+            "largest_high_corr_component_weight_share": 0.2717
+          },
+          "weights": {
+            "159781": 0.0,
+            "159941": 0.0909,
+            "159992": 0.1544,
+            "513180": 0.0122,
+            "513520": 0.1939,
+            "515880": 0.0,
+            "518880": 0.4313,
+            "561980": 0.1141,
+            "588000": 0.0033
+          }
+        }
+      }
+    },
+    {
+      "fold": 3,
+      "train_start": "2024-03-06",
+      "train_end": "2024-08-28",
+      "test_start": "2024-08-29",
+      "test_end": "2024-09-27",
+      "asset_count": 9,
+      "assets": [
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "159992",
+          "561980",
+          "588000"
+        ],
+        [
+          "159941",
+          "513520"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.933
+        },
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.8415
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.7726
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.7679
+        },
+        {
+          "a": "159781",
+          "b": "159992",
+          "correlation": 0.7419
+        },
+        {
+          "a": "159992",
+          "b": "588000",
+          "correlation": 0.7328
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.6713
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.6566
+        },
+        {
+          "a": "515880",
+          "b": "561980",
+          "correlation": 0.597
+        },
+        {
+          "a": "159781",
+          "b": "513180",
+          "correlation": 0.5314
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 1.2721,
+            "annualized_volatility": 0.2418,
+            "max_drawdown": 0.0405,
+            "cvar_95": 0.0222,
+            "diversification_ratio": 1.3271,
+            "effective_asset_count": 9.0,
+            "largest_high_corr_component_weight_share": 0.4444
+          },
+          "weights": {
+            "159781": 0.1111,
+            "159941": 0.1111,
+            "159992": 0.1111,
+            "513180": 0.1111,
+            "513520": 0.1111,
+            "515880": 0.1111,
+            "518880": 0.1111,
+            "561980": 0.1111,
+            "588000": 0.1111
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 1.2136,
+            "annualized_volatility": 0.2282,
+            "max_drawdown": 0.0383,
+            "cvar_95": 0.021,
+            "diversification_ratio": 1.3531,
+            "effective_asset_count": 8.5841,
+            "largest_high_corr_component_weight_share": 0.4554
+          },
+          "weights": {
+            "159781": 0.1283,
+            "159941": 0.1104,
+            "159992": 0.1099,
+            "513180": 0.0922,
+            "513520": 0.0928,
+            "515880": 0.0814,
+            "518880": 0.1678,
+            "561980": 0.0967,
+            "588000": 0.1205
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 1.0583,
+            "annualized_volatility": 0.1899,
+            "max_drawdown": 0.0341,
+            "cvar_95": 0.0179,
+            "diversification_ratio": 1.4668,
+            "effective_asset_count": 7.017,
+            "largest_high_corr_component_weight_share": 0.384
+          },
+          "weights": {
+            "159781": 0.0974,
+            "159941": 0.1078,
+            "159992": 0.111,
+            "513180": 0.08,
+            "513520": 0.0948,
+            "515880": 0.0603,
+            "518880": 0.2731,
+            "561980": 0.0823,
+            "588000": 0.0932
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.6987,
+            "annualized_volatility": 0.1325,
+            "max_drawdown": 0.0258,
+            "cvar_95": 0.0133,
+            "diversification_ratio": 1.746,
+            "effective_asset_count": 3.6063,
+            "largest_high_corr_component_weight_share": 0.355
+          },
+          "weights": {
+            "159781": 0.0,
+            "159941": 0.0734,
+            "159992": 0.2404,
+            "513180": 0.0071,
+            "513520": 0.138,
+            "515880": 0.0,
+            "518880": 0.4265,
+            "561980": 0.1147,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 4,
+      "train_start": "2024-04-03",
+      "train_end": "2024-09-27",
+      "test_start": "2024-09-30",
+      "test_end": "2024-11-01",
+      "asset_count": 9,
+      "assets": [
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "159992",
+          "515880",
+          "561980",
+          "588000"
+        ],
+        [
+          "159941",
+          "513520"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.9556
+        },
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.871
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.8258
+        },
+        {
+          "a": "159992",
+          "b": "588000",
+          "correlation": 0.8057
+        },
+        {
+          "a": "159781",
+          "b": "159992",
+          "correlation": 0.8023
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.7907
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.735
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.6874
+        },
+        {
+          "a": "159992",
+          "b": "561980",
+          "correlation": 0.6393
+        },
+        {
+          "a": "515880",
+          "b": "561980",
+          "correlation": 0.6302
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 1.4624,
+            "annualized_volatility": 0.5027,
+            "max_drawdown": 0.0819,
+            "cvar_95": 0.0334,
+            "diversification_ratio": 1.2128,
+            "effective_asset_count": 9.0,
+            "largest_high_corr_component_weight_share": 0.5556
+          },
+          "weights": {
+            "159781": 0.1111,
+            "159941": 0.1111,
+            "159992": 0.1111,
+            "513180": 0.1111,
+            "513520": 0.1111,
+            "515880": 0.1111,
+            "518880": 0.1111,
+            "561980": 0.1111,
+            "588000": 0.1111
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 1.4012,
+            "annualized_volatility": 0.4718,
+            "max_drawdown": 0.0761,
+            "cvar_95": 0.0301,
+            "diversification_ratio": 1.2264,
+            "effective_asset_count": 8.4842,
+            "largest_high_corr_component_weight_share": 0.5132
+          },
+          "weights": {
+            "159781": 0.116,
+            "159941": 0.1105,
+            "159992": 0.1094,
+            "513180": 0.0941,
+            "513520": 0.0982,
+            "515880": 0.0866,
+            "518880": 0.1841,
+            "561980": 0.0926,
+            "588000": 0.1086
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 1.1983,
+            "annualized_volatility": 0.3725,
+            "max_drawdown": 0.0557,
+            "cvar_95": 0.0226,
+            "diversification_ratio": 1.3053,
+            "effective_asset_count": 6.5982,
+            "largest_high_corr_component_weight_share": 0.4125
+          },
+          "weights": {
+            "159781": 0.0867,
+            "159941": 0.1159,
+            "159992": 0.1054,
+            "513180": 0.0766,
+            "513520": 0.0995,
+            "515880": 0.0613,
+            "518880": 0.2954,
+            "561980": 0.0765,
+            "588000": 0.0827
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.7811,
+            "annualized_volatility": 0.2032,
+            "max_drawdown": 0.0261,
+            "cvar_95": 0.0138,
+            "diversification_ratio": 1.6102,
+            "effective_asset_count": 3.5565,
+            "largest_high_corr_component_weight_share": 0.3335
+          },
+          "weights": {
+            "159781": 0.0,
+            "159941": 0.1231,
+            "159992": 0.2395,
+            "513180": 0.0,
+            "513520": 0.1102,
+            "515880": 0.0,
+            "518880": 0.4332,
+            "561980": 0.094,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 5,
+      "train_start": "2024-05-08",
+      "train_end": "2024-11-01",
+      "test_start": "2024-11-04",
+      "test_end": "2024-11-29",
+      "asset_count": 10,
+      "assets": [
+        "159561",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "159992",
+          "515880",
+          "561980",
+          "588000"
+        ],
+        [
+          "159941",
+          "513520"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.9614
+        },
+        {
+          "a": "159781",
+          "b": "159992",
+          "correlation": 0.8732
+        },
+        {
+          "a": "159992",
+          "b": "588000",
+          "correlation": 0.833
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8181
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.8056
+        },
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.7886
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.7727
+        },
+        {
+          "a": "515880",
+          "b": "561980",
+          "correlation": 0.6783
+        },
+        {
+          "a": "159992",
+          "b": "513180",
+          "correlation": 0.6773
+        },
+        {
+          "a": "159781",
+          "b": "513180",
+          "correlation": 0.669
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 0.351,
+            "annualized_volatility": 0.2115,
+            "max_drawdown": 0.0706,
+            "cvar_95": 0.0237,
+            "diversification_ratio": 1.3511,
+            "effective_asset_count": 10.0,
+            "largest_high_corr_component_weight_share": 0.5
+          },
+          "weights": {
+            "159561": 0.1,
+            "159781": 0.1,
+            "159941": 0.1,
+            "159992": 0.1,
+            "513180": 0.1,
+            "513520": 0.1,
+            "515880": 0.1,
+            "518880": 0.1,
+            "561980": 0.1,
+            "588000": 0.1
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 0.2358,
+            "annualized_volatility": 0.1511,
+            "max_drawdown": 0.0506,
+            "cvar_95": 0.0199,
+            "diversification_ratio": 1.5936,
+            "effective_asset_count": 8.1344,
+            "largest_high_corr_component_weight_share": 0.3234
+          },
+          "weights": {
+            "159561": 0.1753,
+            "159781": 0.0532,
+            "159941": 0.1113,
+            "159992": 0.0783,
+            "513180": 0.086,
+            "513520": 0.1031,
+            "515880": 0.0729,
+            "518880": 0.2009,
+            "561980": 0.0664,
+            "588000": 0.0526
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 0.2069,
+            "annualized_volatility": 0.1321,
+            "max_drawdown": 0.0429,
+            "cvar_95": 0.0185,
+            "diversification_ratio": 1.7048,
+            "effective_asset_count": 6.7577,
+            "largest_high_corr_component_weight_share": 0.2626
+          },
+          "weights": {
+            "159561": 0.1869,
+            "159781": 0.042,
+            "159941": 0.1152,
+            "159992": 0.0706,
+            "513180": 0.0628,
+            "513520": 0.1086,
+            "515880": 0.049,
+            "518880": 0.2638,
+            "561980": 0.0596,
+            "588000": 0.0414
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.191,
+            "annualized_volatility": 0.1238,
+            "max_drawdown": 0.0408,
+            "cvar_95": 0.0184,
+            "diversification_ratio": 1.7519,
+            "effective_asset_count": 4.4663,
+            "largest_high_corr_component_weight_share": 0.255
+          },
+          "weights": {
+            "159561": 0.1491,
+            "159781": 0.0,
+            "159941": 0.0938,
+            "159992": 0.1599,
+            "513180": 0.0,
+            "513520": 0.1242,
+            "515880": 0.0,
+            "518880": 0.3779,
+            "561980": 0.0951,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 6,
+      "train_start": "2024-06-05",
+      "train_end": "2024-11-29",
+      "test_start": "2024-12-02",
+      "test_end": "2024-12-27",
+      "asset_count": 10,
+      "assets": [
+        "159561",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "159992",
+          "515880",
+          "561980",
+          "588000"
+        ],
+        [
+          "159941",
+          "513520"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.9639
+        },
+        {
+          "a": "159781",
+          "b": "159992",
+          "correlation": 0.868
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8302
+        },
+        {
+          "a": "159992",
+          "b": "588000",
+          "correlation": 0.8291
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.8179
+        },
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.8049
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.7643
+        },
+        {
+          "a": "515880",
+          "b": "561980",
+          "correlation": 0.7105
+        },
+        {
+          "a": "159992",
+          "b": "513180",
+          "correlation": 0.6858
+        },
+        {
+          "a": "159781",
+          "b": "513180",
+          "correlation": 0.6821
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 0.3162,
+            "annualized_volatility": 0.1006,
+            "max_drawdown": 0.0238,
+            "cvar_95": 0.0155,
+            "diversification_ratio": 1.9345,
+            "effective_asset_count": 10.0,
+            "largest_high_corr_component_weight_share": 0.5
+          },
+          "weights": {
+            "159561": 0.1,
+            "159781": 0.1,
+            "159941": 0.1,
+            "159992": 0.1,
+            "513180": 0.1,
+            "513520": 0.1,
+            "515880": 0.1,
+            "518880": 0.1,
+            "561980": 0.1,
+            "588000": 0.1
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 0.3235,
+            "annualized_volatility": 0.0841,
+            "max_drawdown": 0.0222,
+            "cvar_95": 0.0119,
+            "diversification_ratio": 2.1192,
+            "effective_asset_count": 8.0219,
+            "largest_high_corr_component_weight_share": 0.3134
+          },
+          "weights": {
+            "159561": 0.1832,
+            "159781": 0.0523,
+            "159941": 0.1108,
+            "159992": 0.0763,
+            "513180": 0.0875,
+            "513520": 0.1051,
+            "515880": 0.0695,
+            "518880": 0.2,
+            "561980": 0.0639,
+            "588000": 0.0514
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 0.3027,
+            "annualized_volatility": 0.082,
+            "max_drawdown": 0.0238,
+            "cvar_95": 0.0103,
+            "diversification_ratio": 2.0475,
+            "effective_asset_count": 6.5741,
+            "largest_high_corr_component_weight_share": 0.248
+          },
+          "weights": {
+            "159561": 0.197,
+            "159781": 0.0404,
+            "159941": 0.1143,
+            "159992": 0.0676,
+            "513180": 0.0635,
+            "513520": 0.1103,
+            "515880": 0.0466,
+            "518880": 0.2668,
+            "561980": 0.054,
+            "588000": 0.0394
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.1333,
+            "annualized_volatility": 0.0823,
+            "max_drawdown": 0.0281,
+            "cvar_95": 0.0095,
+            "diversification_ratio": 1.8092,
+            "effective_asset_count": 4.3247,
+            "largest_high_corr_component_weight_share": 0.2357
+          },
+          "weights": {
+            "159561": 0.1663,
+            "159781": 0.0,
+            "159941": 0.0932,
+            "159992": 0.1639,
+            "513180": 0.0,
+            "513520": 0.1193,
+            "515880": 0.0,
+            "518880": 0.3855,
+            "561980": 0.0718,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 7,
+      "train_start": "2024-07-04",
+      "train_end": "2024-12-27",
+      "test_start": "2024-12-30",
+      "test_end": "2025-01-27",
+      "asset_count": 9,
+      "assets": [
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "159992",
+          "515880",
+          "561980",
+          "588000"
+        ],
+        [
+          "159941",
+          "513520"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.9645
+        },
+        {
+          "a": "159781",
+          "b": "159992",
+          "correlation": 0.8692
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8381
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.8292
+        },
+        {
+          "a": "159992",
+          "b": "588000",
+          "correlation": 0.8249
+        },
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.8064
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.7816
+        },
+        {
+          "a": "515880",
+          "b": "561980",
+          "correlation": 0.7152
+        },
+        {
+          "a": "159992",
+          "b": "513180",
+          "correlation": 0.6963
+        },
+        {
+          "a": "159781",
+          "b": "513180",
+          "correlation": 0.6908
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": -0.3141,
+            "annualized_volatility": 0.1825,
+            "max_drawdown": 0.0522,
+            "cvar_95": 0.0203,
+            "diversification_ratio": 1.4193,
+            "effective_asset_count": 9.0,
+            "largest_high_corr_component_weight_share": 0.5556
+          },
+          "weights": {
+            "159781": 0.1111,
+            "159941": 0.1111,
+            "159992": 0.1111,
+            "513180": 0.1111,
+            "513520": 0.1111,
+            "515880": 0.1111,
+            "518880": 0.1111,
+            "561980": 0.1111,
+            "588000": 0.1111
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": -0.1163,
+            "annualized_volatility": 0.1383,
+            "max_drawdown": 0.0343,
+            "cvar_95": 0.0161,
+            "diversification_ratio": 1.6343,
+            "effective_asset_count": 7.1739,
+            "largest_high_corr_component_weight_share": 0.3805
+          },
+          "weights": {
+            "159781": 0.0631,
+            "159941": 0.1302,
+            "159992": 0.0925,
+            "513180": 0.1055,
+            "513520": 0.1286,
+            "515880": 0.0851,
+            "518880": 0.2551,
+            "561980": 0.0774,
+            "588000": 0.0623
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": -0.0252,
+            "annualized_volatility": 0.1149,
+            "max_drawdown": 0.0227,
+            "cvar_95": 0.0149,
+            "diversification_ratio": 1.7845,
+            "effective_asset_count": 5.5415,
+            "largest_high_corr_component_weight_share": 0.2998
+          },
+          "weights": {
+            "159781": 0.0456,
+            "159941": 0.1532,
+            "159992": 0.0772,
+            "513180": 0.0786,
+            "513520": 0.1466,
+            "515880": 0.0556,
+            "518880": 0.3349,
+            "561980": 0.0636,
+            "588000": 0.0448
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.0313,
+            "annualized_volatility": 0.0835,
+            "max_drawdown": 0.0135,
+            "cvar_95": 0.0113,
+            "diversification_ratio": 2.0352,
+            "effective_asset_count": 3.6167,
+            "largest_high_corr_component_weight_share": 0.3001
+          },
+          "weights": {
+            "159781": 0.0,
+            "159941": 0.1565,
+            "159992": 0.1743,
+            "513180": 0.0,
+            "513520": 0.1436,
+            "515880": 0.0,
+            "518880": 0.4401,
+            "561980": 0.0855,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 8,
+      "train_start": "2024-08-01",
+      "train_end": "2025-01-27",
+      "test_start": "2025-02-05",
+      "test_end": "2025-03-04",
+      "asset_count": 9,
+      "assets": [
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "159992",
+          "513180",
+          "515880",
+          "561980",
+          "588000"
+        ],
+        [
+          "159941",
+          "513520"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.9627
+        },
+        {
+          "a": "159781",
+          "b": "159992",
+          "correlation": 0.8896
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8385
+        },
+        {
+          "a": "159992",
+          "b": "588000",
+          "correlation": 0.8304
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.8215
+        },
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.8107
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.734
+        },
+        {
+          "a": "515880",
+          "b": "561980",
+          "correlation": 0.7332
+        },
+        {
+          "a": "159992",
+          "b": "513180",
+          "correlation": 0.7183
+        },
+        {
+          "a": "159992",
+          "b": "515880",
+          "correlation": 0.7179
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 0.679,
+            "annualized_volatility": 0.2223,
+            "max_drawdown": 0.0434,
+            "cvar_95": 0.0379,
+            "diversification_ratio": 1.3261,
+            "effective_asset_count": 9.0,
+            "largest_high_corr_component_weight_share": 0.6667
+          },
+          "weights": {
+            "159781": 0.1111,
+            "159941": 0.1111,
+            "159992": 0.1111,
+            "513180": 0.1111,
+            "513520": 0.1111,
+            "515880": 0.1111,
+            "518880": 0.1111,
+            "561980": 0.1111,
+            "588000": 0.1111
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 0.5378,
+            "annualized_volatility": 0.172,
+            "max_drawdown": 0.0395,
+            "cvar_95": 0.0315,
+            "diversification_ratio": 1.5197,
+            "effective_asset_count": 6.8615,
+            "largest_high_corr_component_weight_share": 0.468
+          },
+          "weights": {
+            "159781": 0.0606,
+            "159941": 0.1283,
+            "159992": 0.0932,
+            "513180": 0.1014,
+            "513520": 0.1316,
+            "515880": 0.0785,
+            "518880": 0.2721,
+            "561980": 0.0741,
+            "588000": 0.0601
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 0.437,
+            "annualized_volatility": 0.1478,
+            "max_drawdown": 0.0365,
+            "cvar_95": 0.0273,
+            "diversification_ratio": 1.6119,
+            "effective_asset_count": 4.9995,
+            "largest_high_corr_component_weight_share": 0.34
+          },
+          "weights": {
+            "159781": 0.0419,
+            "159941": 0.1441,
+            "159992": 0.0738,
+            "513180": 0.0748,
+            "513520": 0.1444,
+            "515880": 0.0495,
+            "518880": 0.3715,
+            "561980": 0.0583,
+            "588000": 0.0416
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.3438,
+            "annualized_volatility": 0.1256,
+            "max_drawdown": 0.0317,
+            "cvar_95": 0.02,
+            "diversification_ratio": 1.6236,
+            "effective_asset_count": 3.1918,
+            "largest_high_corr_component_weight_share": 0.2668
+          },
+          "weights": {
+            "159781": 0.0,
+            "159941": 0.157,
+            "159992": 0.1627,
+            "513180": 0.0,
+            "513520": 0.1098,
+            "515880": 0.0,
+            "518880": 0.4943,
+            "561980": 0.0762,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 9,
+      "train_start": "2024-08-29",
+      "train_end": "2025-03-04",
+      "test_start": "2025-03-05",
+      "test_end": "2025-04-01",
+      "asset_count": 9,
+      "assets": [
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "159992",
+          "513180",
+          "515880",
+          "561980",
+          "588000"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.9599
+        },
+        {
+          "a": "159781",
+          "b": "159992",
+          "correlation": 0.8965
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8446
+        },
+        {
+          "a": "159992",
+          "b": "588000",
+          "correlation": 0.8346
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.8169
+        },
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.812
+        },
+        {
+          "a": "159992",
+          "b": "515880",
+          "correlation": 0.7374
+        },
+        {
+          "a": "515880",
+          "b": "561980",
+          "correlation": 0.7293
+        },
+        {
+          "a": "159992",
+          "b": "513180",
+          "correlation": 0.7053
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.6949
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": -0.2057,
+            "annualized_volatility": 0.1628,
+            "max_drawdown": 0.0543,
+            "cvar_95": 0.0167,
+            "diversification_ratio": 1.3639,
+            "effective_asset_count": 9.0,
+            "largest_high_corr_component_weight_share": 0.6667
+          },
+          "weights": {
+            "159781": 0.1111,
+            "159941": 0.1111,
+            "159992": 0.1111,
+            "513180": 0.1111,
+            "513520": 0.1111,
+            "515880": 0.1111,
+            "518880": 0.1111,
+            "561980": 0.1111,
+            "588000": 0.1111
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": -0.0085,
+            "annualized_volatility": 0.1315,
+            "max_drawdown": 0.032,
+            "cvar_95": 0.0129,
+            "diversification_ratio": 1.5281,
+            "effective_asset_count": 6.9848,
+            "largest_high_corr_component_weight_share": 0.4354
+          },
+          "weights": {
+            "159781": 0.0578,
+            "159941": 0.1538,
+            "159992": 0.0889,
+            "513180": 0.0883,
+            "513520": 0.1698,
+            "515880": 0.0741,
+            "518880": 0.2411,
+            "561980": 0.0695,
+            "588000": 0.0568
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 0.097,
+            "annualized_volatility": 0.1164,
+            "max_drawdown": 0.0257,
+            "cvar_95": 0.0119,
+            "diversification_ratio": 1.5958,
+            "effective_asset_count": 5.1896,
+            "largest_high_corr_component_weight_share": 0.3
+          },
+          "weights": {
+            "159781": 0.0373,
+            "159941": 0.1776,
+            "159992": 0.0642,
+            "513180": 0.0611,
+            "513520": 0.1939,
+            "515880": 0.0482,
+            "518880": 0.3285,
+            "561980": 0.0519,
+            "588000": 0.0373
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.351,
+            "annualized_volatility": 0.1071,
+            "max_drawdown": 0.0209,
+            "cvar_95": 0.0126,
+            "diversification_ratio": 1.6164,
+            "effective_asset_count": 3.6563,
+            "largest_high_corr_component_weight_share": 0.2157
+          },
+          "weights": {
+            "159781": 0.0,
+            "159941": 0.1926,
+            "159992": 0.1353,
+            "513180": 0.0,
+            "513520": 0.1606,
+            "515880": 0.0,
+            "518880": 0.4311,
+            "561980": 0.0804,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 10,
+      "train_start": "2024-09-30",
+      "train_end": "2025-04-01",
+      "test_start": "2025-04-02",
+      "test_end": "2025-04-30",
+      "asset_count": 10,
+      "assets": [
+        "159326",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159326",
+          "159781",
+          "159992",
+          "515880",
+          "561980",
+          "588000"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.9583
+        },
+        {
+          "a": "159781",
+          "b": "159992",
+          "correlation": 0.8773
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8387
+        },
+        {
+          "a": "159326",
+          "b": "159781",
+          "correlation": 0.8369
+        },
+        {
+          "a": "159326",
+          "b": "515880",
+          "correlation": 0.8274
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.8156
+        },
+        {
+          "a": "159992",
+          "b": "588000",
+          "correlation": 0.8081
+        },
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.8051
+        },
+        {
+          "a": "159326",
+          "b": "159992",
+          "correlation": 0.7922
+        },
+        {
+          "a": "159326",
+          "b": "588000",
+          "correlation": 0.7793
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": -0.1787,
+            "annualized_volatility": 0.3611,
+            "max_drawdown": 0.0982,
+            "cvar_95": 0.0886,
+            "diversification_ratio": 1.1895,
+            "effective_asset_count": 10.0,
+            "largest_high_corr_component_weight_share": 0.6
+          },
+          "weights": {
+            "159326": 0.1,
+            "159781": 0.1,
+            "159941": 0.1,
+            "159992": 0.1,
+            "513180": 0.1,
+            "513520": 0.1,
+            "515880": 0.1,
+            "518880": 0.1,
+            "561980": 0.1,
+            "588000": 0.1
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 0.0147,
+            "annualized_volatility": 0.3439,
+            "max_drawdown": 0.0903,
+            "cvar_95": 0.0821,
+            "diversification_ratio": 1.2398,
+            "effective_asset_count": 8.0477,
+            "largest_high_corr_component_weight_share": 0.4254
+          },
+          "weights": {
+            "159326": 0.1127,
+            "159781": 0.0516,
+            "159941": 0.1315,
+            "159992": 0.081,
+            "513180": 0.0773,
+            "513520": 0.1583,
+            "515880": 0.0667,
+            "518880": 0.2074,
+            "561980": 0.0627,
+            "588000": 0.0507
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 0.2044,
+            "annualized_volatility": 0.3325,
+            "max_drawdown": 0.0826,
+            "cvar_95": 0.0758,
+            "diversification_ratio": 1.2718,
+            "effective_asset_count": 5.7374,
+            "largest_high_corr_component_weight_share": 0.2852
+          },
+          "weights": {
+            "159326": 0.0758,
+            "159781": 0.0323,
+            "159941": 0.157,
+            "159992": 0.0557,
+            "513180": 0.0541,
+            "513520": 0.202,
+            "515880": 0.0422,
+            "518880": 0.3017,
+            "561980": 0.0465,
+            "588000": 0.0327
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.365,
+            "annualized_volatility": 0.3151,
+            "max_drawdown": 0.071,
+            "cvar_95": 0.0675,
+            "diversification_ratio": 1.2805,
+            "effective_asset_count": 4.0551,
+            "largest_high_corr_component_weight_share": 0.2372
+          },
+          "weights": {
+            "159326": 0.0809,
+            "159781": 0.0,
+            "159941": 0.1647,
+            "159992": 0.0822,
+            "513180": 0.0,
+            "513520": 0.1946,
+            "515880": 0.0,
+            "518880": 0.4035,
+            "561980": 0.0742,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 11,
+      "train_start": "2024-11-04",
+      "train_end": "2025-04-30",
+      "test_start": "2025-05-06",
+      "test_end": "2025-06-03",
+      "asset_count": 10,
+      "assets": [
+        "159326",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159326",
+          "159781",
+          "159992",
+          "513180",
+          "515880",
+          "561980",
+          "588000"
+        ],
+        [
+          "159941",
+          "513520"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.941
+        },
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.8972
+        },
+        {
+          "a": "159326",
+          "b": "159781",
+          "correlation": 0.855
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.8383
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8232
+        },
+        {
+          "a": "159781",
+          "b": "159992",
+          "correlation": 0.7915
+        },
+        {
+          "a": "159326",
+          "b": "588000",
+          "correlation": 0.7707
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.7556
+        },
+        {
+          "a": "159326",
+          "b": "515880",
+          "correlation": 0.7529
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.7335
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 0.2483,
+            "annualized_volatility": 0.1291,
+            "max_drawdown": 0.0191,
+            "cvar_95": 0.0144,
+            "diversification_ratio": 1.4498,
+            "effective_asset_count": 10.0,
+            "largest_high_corr_component_weight_share": 0.7
+          },
+          "weights": {
+            "159326": 0.1,
+            "159781": 0.1,
+            "159941": 0.1,
+            "159992": 0.1,
+            "513180": 0.1,
+            "513520": 0.1,
+            "515880": 0.1,
+            "518880": 0.1,
+            "561980": 0.1,
+            "588000": 0.1
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 0.2431,
+            "annualized_volatility": 0.119,
+            "max_drawdown": 0.015,
+            "cvar_95": 0.0146,
+            "diversification_ratio": 1.553,
+            "effective_asset_count": 9.5054,
+            "largest_high_corr_component_weight_share": 0.6398
+          },
+          "weights": {
+            "159326": 0.1178,
+            "159781": 0.0922,
+            "159941": 0.0929,
+            "159992": 0.1045,
+            "513180": 0.0796,
+            "513520": 0.1117,
+            "515880": 0.0731,
+            "518880": 0.1556,
+            "561980": 0.084,
+            "588000": 0.0886
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 0.2379,
+            "annualized_volatility": 0.1137,
+            "max_drawdown": 0.0192,
+            "cvar_95": 0.016,
+            "diversification_ratio": 1.6626,
+            "effective_asset_count": 7.7078,
+            "largest_high_corr_component_weight_share": 0.523
+          },
+          "weights": {
+            "159326": 0.0921,
+            "159781": 0.0675,
+            "159941": 0.1016,
+            "159992": 0.0861,
+            "513180": 0.0701,
+            "513520": 0.1199,
+            "515880": 0.0633,
+            "518880": 0.2556,
+            "561980": 0.0746,
+            "588000": 0.0692
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.2154,
+            "annualized_volatility": 0.1287,
+            "max_drawdown": 0.0305,
+            "cvar_95": 0.0214,
+            "diversification_ratio": 1.6501,
+            "effective_asset_count": 3.3081,
+            "largest_high_corr_component_weight_share": 0.2714
+          },
+          "weights": {
+            "159326": 0.0,
+            "159781": 0.0,
+            "159941": 0.2045,
+            "159992": 0.0,
+            "513180": 0.041,
+            "513520": 0.046,
+            "515880": 0.0878,
+            "518880": 0.4782,
+            "561980": 0.1426,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 12,
+      "train_start": "2024-12-02",
+      "train_end": "2025-06-03",
+      "test_start": "2025-06-04",
+      "test_end": "2025-07-01",
+      "asset_count": 10,
+      "assets": [
+        "159326",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159326",
+          "159781",
+          "159992",
+          "513180",
+          "515880",
+          "561980",
+          "588000"
+        ],
+        [
+          "159941",
+          "513520"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.919
+        },
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.8906
+        },
+        {
+          "a": "159326",
+          "b": "159781",
+          "correlation": 0.8521
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.8076
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8035
+        },
+        {
+          "a": "159326",
+          "b": "588000",
+          "correlation": 0.7521
+        },
+        {
+          "a": "159781",
+          "b": "513180",
+          "correlation": 0.7482
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.748
+        },
+        {
+          "a": "159781",
+          "b": "159992",
+          "correlation": 0.7442
+        },
+        {
+          "a": "159326",
+          "b": "515880",
+          "correlation": 0.7435
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 0.5606,
+            "annualized_volatility": 0.1095,
+            "max_drawdown": 0.0206,
+            "cvar_95": 0.01,
+            "diversification_ratio": 1.5722,
+            "effective_asset_count": 10.0,
+            "largest_high_corr_component_weight_share": 0.7
+          },
+          "weights": {
+            "159326": 0.1,
+            "159781": 0.1,
+            "159941": 0.1,
+            "159992": 0.1,
+            "513180": 0.1,
+            "513520": 0.1,
+            "515880": 0.1,
+            "518880": 0.1,
+            "561980": 0.1,
+            "588000": 0.1
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 0.4916,
+            "annualized_volatility": 0.1008,
+            "max_drawdown": 0.0199,
+            "cvar_95": 0.0099,
+            "diversification_ratio": 1.6535,
+            "effective_asset_count": 9.6334,
+            "largest_high_corr_component_weight_share": 0.6619
+          },
+          "weights": {
+            "159326": 0.118,
+            "159781": 0.099,
+            "159941": 0.0879,
+            "159992": 0.1067,
+            "513180": 0.076,
+            "513520": 0.1073,
+            "515880": 0.0726,
+            "518880": 0.1429,
+            "561980": 0.0922,
+            "588000": 0.0973
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 0.4232,
+            "annualized_volatility": 0.0848,
+            "max_drawdown": 0.016,
+            "cvar_95": 0.0092,
+            "diversification_ratio": 1.8823,
+            "effective_asset_count": 7.9994,
+            "largest_high_corr_component_weight_share": 0.5502
+          },
+          "weights": {
+            "159326": 0.094,
+            "159781": 0.0726,
+            "159941": 0.0948,
+            "159992": 0.0912,
+            "513180": 0.0665,
+            "513520": 0.1105,
+            "515880": 0.0654,
+            "518880": 0.2445,
+            "561980": 0.0838,
+            "588000": 0.0767
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.3659,
+            "annualized_volatility": 0.0596,
+            "max_drawdown": 0.0097,
+            "cvar_95": 0.0062,
+            "diversification_ratio": 2.3232,
+            "effective_asset_count": 3.147,
+            "largest_high_corr_component_weight_share": 0.2895
+          },
+          "weights": {
+            "159326": 0.0,
+            "159781": 0.0,
+            "159941": 0.2222,
+            "159992": 0.0046,
+            "513180": 0.0131,
+            "513520": 0.0097,
+            "515880": 0.1028,
+            "518880": 0.4785,
+            "561980": 0.169,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 13,
+      "train_start": "2024-12-30",
+      "train_end": "2025-07-01",
+      "test_start": "2025-07-02",
+      "test_end": "2025-07-29",
+      "asset_count": 10,
+      "assets": [
+        "159326",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159326",
+          "159781",
+          "513180",
+          "515880",
+          "561980",
+          "588000"
+        ],
+        [
+          "159941",
+          "513520"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.9216
+        },
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.8808
+        },
+        {
+          "a": "159326",
+          "b": "159781",
+          "correlation": 0.8598
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8113
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.7994
+        },
+        {
+          "a": "159326",
+          "b": "588000",
+          "correlation": 0.7596
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.7528
+        },
+        {
+          "a": "159326",
+          "b": "515880",
+          "correlation": 0.7519
+        },
+        {
+          "a": "159781",
+          "b": "513180",
+          "correlation": 0.7394
+        },
+        {
+          "a": "513180",
+          "b": "588000",
+          "correlation": 0.7062
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 0.9346,
+            "annualized_volatility": 0.0988,
+            "max_drawdown": 0.007,
+            "cvar_95": 0.0095,
+            "diversification_ratio": 1.8707,
+            "effective_asset_count": 10.0,
+            "largest_high_corr_component_weight_share": 0.6
+          },
+          "weights": {
+            "159326": 0.1,
+            "159781": 0.1,
+            "159941": 0.1,
+            "159992": 0.1,
+            "513180": 0.1,
+            "513520": 0.1,
+            "515880": 0.1,
+            "518880": 0.1,
+            "561980": 0.1,
+            "588000": 0.1
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 0.8575,
+            "annualized_volatility": 0.09,
+            "max_drawdown": 0.0068,
+            "cvar_95": 0.0085,
+            "diversification_ratio": 1.9914,
+            "effective_asset_count": 9.6586,
+            "largest_high_corr_component_weight_share": 0.5585
+          },
+          "weights": {
+            "159326": 0.1182,
+            "159781": 0.0995,
+            "159941": 0.0906,
+            "159992": 0.102,
+            "513180": 0.0758,
+            "513520": 0.1076,
+            "515880": 0.0731,
+            "518880": 0.1412,
+            "561980": 0.094,
+            "588000": 0.098
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 0.7159,
+            "annualized_volatility": 0.0828,
+            "max_drawdown": 0.0074,
+            "cvar_95": 0.0073,
+            "diversification_ratio": 2.0445,
+            "effective_asset_count": 7.8719,
+            "largest_high_corr_component_weight_share": 0.4578
+          },
+          "weights": {
+            "159326": 0.0932,
+            "159781": 0.0723,
+            "159941": 0.0924,
+            "159992": 0.0901,
+            "513180": 0.0669,
+            "513520": 0.1085,
+            "515880": 0.0645,
+            "518880": 0.2511,
+            "561980": 0.0849,
+            "588000": 0.0761
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.4627,
+            "annualized_volatility": 0.0836,
+            "max_drawdown": 0.0084,
+            "cvar_95": 0.0084,
+            "diversification_ratio": 1.7401,
+            "effective_asset_count": 3.3211,
+            "largest_high_corr_component_weight_share": 0.2656
+          },
+          "weights": {
+            "159326": 0.0,
+            "159781": 0.0,
+            "159941": 0.2,
+            "159992": 0.0215,
+            "513180": 0.0392,
+            "513520": 0.0318,
+            "515880": 0.0908,
+            "518880": 0.4811,
+            "561980": 0.1356,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 14,
+      "train_start": "2025-02-05",
+      "train_end": "2025-07-29",
+      "test_start": "2025-07-30",
+      "test_end": "2025-08-26",
+      "asset_count": 11,
+      "assets": [
+        "159326",
+        "159561",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159326",
+          "159781",
+          "513180",
+          "515880",
+          "561980",
+          "588000"
+        ],
+        [
+          "159941",
+          "513520"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.9101
+        },
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.8654
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8055
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.7784
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.7507
+        },
+        {
+          "a": "159326",
+          "b": "159781",
+          "correlation": 0.7426
+        },
+        {
+          "a": "159781",
+          "b": "513180",
+          "correlation": 0.7374
+        },
+        {
+          "a": "513180",
+          "b": "588000",
+          "correlation": 0.7307
+        },
+        {
+          "a": "159781",
+          "b": "159992",
+          "correlation": 0.6883
+        },
+        {
+          "a": "513180",
+          "b": "561980",
+          "correlation": 0.6615
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 1.1584,
+            "annualized_volatility": 0.1693,
+            "max_drawdown": 0.0141,
+            "cvar_95": 0.0105,
+            "diversification_ratio": 1.4544,
+            "effective_asset_count": 11.0,
+            "largest_high_corr_component_weight_share": 0.5455
+          },
+          "weights": {
+            "159326": 0.0909,
+            "159561": 0.0909,
+            "159781": 0.0909,
+            "159941": 0.0909,
+            "159992": 0.0909,
+            "513180": 0.0909,
+            "513520": 0.0909,
+            "515880": 0.0909,
+            "518880": 0.0909,
+            "561980": 0.0909,
+            "588000": 0.0909
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 1.1171,
+            "annualized_volatility": 0.161,
+            "max_drawdown": 0.0138,
+            "cvar_95": 0.0097,
+            "diversification_ratio": 1.4789,
+            "effective_asset_count": 10.6095,
+            "largest_high_corr_component_weight_share": 0.529
+          },
+          "weights": {
+            "159326": 0.1104,
+            "159561": 0.0661,
+            "159781": 0.0937,
+            "159941": 0.085,
+            "159992": 0.0907,
+            "513180": 0.0705,
+            "513520": 0.1034,
+            "515880": 0.0685,
+            "518880": 0.1258,
+            "561980": 0.0917,
+            "588000": 0.0942
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 0.9633,
+            "annualized_volatility": 0.1393,
+            "max_drawdown": 0.0129,
+            "cvar_95": 0.0092,
+            "diversification_ratio": 1.5615,
+            "effective_asset_count": 9.1666,
+            "largest_high_corr_component_weight_share": 0.4462
+          },
+          "weights": {
+            "159326": 0.0923,
+            "159561": 0.0876,
+            "159781": 0.0678,
+            "159941": 0.0776,
+            "159992": 0.081,
+            "513180": 0.061,
+            "513520": 0.0929,
+            "515880": 0.062,
+            "518880": 0.2148,
+            "561980": 0.0887,
+            "588000": 0.0745
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.7869,
+            "annualized_volatility": 0.1134,
+            "max_drawdown": 0.013,
+            "cvar_95": 0.0098,
+            "diversification_ratio": 1.7398,
+            "effective_asset_count": 4.0302,
+            "largest_high_corr_component_weight_share": 0.2997
+          },
+          "weights": {
+            "159326": 0.0,
+            "159561": 0.1759,
+            "159781": 0.0,
+            "159941": 0.0821,
+            "159992": 0.0328,
+            "513180": 0.0292,
+            "513520": 0.0,
+            "515880": 0.0891,
+            "518880": 0.4094,
+            "561980": 0.1815,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 15,
+      "train_start": "2025-03-05",
+      "train_end": "2025-08-26",
+      "test_start": "2025-08-27",
+      "test_end": "2025-09-23",
+      "asset_count": 11,
+      "assets": [
+        "159326",
+        "159561",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "513180",
+          "515880",
+          "561980",
+          "588000"
+        ],
+        [
+          "159561",
+          "159941",
+          "513520"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.9099
+        },
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.9045
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.7881
+        },
+        {
+          "a": "159561",
+          "b": "513520",
+          "correlation": 0.7706
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.7647
+        },
+        {
+          "a": "159561",
+          "b": "159941",
+          "correlation": 0.7638
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.7588
+        },
+        {
+          "a": "159781",
+          "b": "513180",
+          "correlation": 0.7286
+        },
+        {
+          "a": "159326",
+          "b": "159781",
+          "correlation": 0.6937
+        },
+        {
+          "a": "513180",
+          "b": "515880",
+          "correlation": 0.679
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 1.1024,
+            "annualized_volatility": 0.2337,
+            "max_drawdown": 0.0485,
+            "cvar_95": 0.03,
+            "diversification_ratio": 1.4169,
+            "effective_asset_count": 11.0,
+            "largest_high_corr_component_weight_share": 0.4545
+          },
+          "weights": {
+            "159326": 0.0909,
+            "159561": 0.0909,
+            "159781": 0.0909,
+            "159941": 0.0909,
+            "159992": 0.0909,
+            "513180": 0.0909,
+            "513520": 0.0909,
+            "515880": 0.0909,
+            "518880": 0.0909,
+            "561980": 0.0909,
+            "588000": 0.0909
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 1.0499,
+            "annualized_volatility": 0.2101,
+            "max_drawdown": 0.0431,
+            "cvar_95": 0.0263,
+            "diversification_ratio": 1.4709,
+            "effective_asset_count": 10.6687,
+            "largest_high_corr_component_weight_share": 0.4006
+          },
+          "weights": {
+            "159326": 0.1068,
+            "159561": 0.0934,
+            "159781": 0.0873,
+            "159941": 0.0833,
+            "159992": 0.0881,
+            "513180": 0.0774,
+            "513520": 0.0985,
+            "515880": 0.0643,
+            "518880": 0.1293,
+            "561980": 0.0835,
+            "588000": 0.0879
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 1.0553,
+            "annualized_volatility": 0.1873,
+            "max_drawdown": 0.0368,
+            "cvar_95": 0.0234,
+            "diversification_ratio": 1.5524,
+            "effective_asset_count": 9.0599,
+            "largest_high_corr_component_weight_share": 0.3504
+          },
+          "weights": {
+            "159326": 0.0927,
+            "159561": 0.0818,
+            "159781": 0.0651,
+            "159941": 0.0819,
+            "159992": 0.0811,
+            "513180": 0.0667,
+            "513520": 0.0924,
+            "515880": 0.0593,
+            "518880": 0.2198,
+            "561980": 0.0866,
+            "588000": 0.0726
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 1.3101,
+            "annualized_volatility": 0.1683,
+            "max_drawdown": 0.0252,
+            "cvar_95": 0.0206,
+            "diversification_ratio": 1.597,
+            "effective_asset_count": 3.2949,
+            "largest_high_corr_component_weight_share": 0.2711
+          },
+          "weights": {
+            "159326": 0.0,
+            "159561": 0.0,
+            "159781": 0.0,
+            "159941": 0.2306,
+            "159992": 0.0196,
+            "513180": 0.0,
+            "513520": 0.0242,
+            "515880": 0.0806,
+            "518880": 0.4545,
+            "561980": 0.1906,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 16,
+      "train_start": "2025-04-02",
+      "train_end": "2025-09-23",
+      "test_start": "2025-09-24",
+      "test_end": "2025-10-29",
+      "asset_count": 11,
+      "assets": [
+        "159326",
+        "159561",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "515880",
+          "561980",
+          "588000"
+        ],
+        [
+          "159561",
+          "159941",
+          "513520"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.9117
+        },
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.9016
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8495
+        },
+        {
+          "a": "159561",
+          "b": "159941",
+          "correlation": 0.8018
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.7806
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.7535
+        },
+        {
+          "a": "159561",
+          "b": "513520",
+          "correlation": 0.7393
+        },
+        {
+          "a": "159326",
+          "b": "159781",
+          "correlation": 0.6763
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.66
+        },
+        {
+          "a": "159326",
+          "b": "513180",
+          "correlation": 0.6152
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 0.8801,
+            "annualized_volatility": 0.2722,
+            "max_drawdown": 0.0572,
+            "cvar_95": 0.0273,
+            "diversification_ratio": 1.3382,
+            "effective_asset_count": 11.0,
+            "largest_high_corr_component_weight_share": 0.3636
+          },
+          "weights": {
+            "159326": 0.0909,
+            "159561": 0.0909,
+            "159781": 0.0909,
+            "159941": 0.0909,
+            "159992": 0.0909,
+            "513180": 0.0909,
+            "513520": 0.0909,
+            "515880": 0.0909,
+            "518880": 0.0909,
+            "561980": 0.0909,
+            "588000": 0.0909
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 0.8865,
+            "annualized_volatility": 0.25,
+            "max_drawdown": 0.0474,
+            "cvar_95": 0.0229,
+            "diversification_ratio": 1.4042,
+            "effective_asset_count": 10.4689,
+            "largest_high_corr_component_weight_share": 0.3033
+          },
+          "weights": {
+            "159326": 0.1067,
+            "159561": 0.1037,
+            "159781": 0.0759,
+            "159941": 0.096,
+            "159992": 0.0877,
+            "513180": 0.088,
+            "513520": 0.1037,
+            "515880": 0.0532,
+            "518880": 0.1339,
+            "561980": 0.0717,
+            "588000": 0.0796
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 0.8919,
+            "annualized_volatility": 0.2349,
+            "max_drawdown": 0.0393,
+            "cvar_95": 0.0217,
+            "diversification_ratio": 1.4991,
+            "effective_asset_count": 8.9039,
+            "largest_high_corr_component_weight_share": 0.2871
+          },
+          "weights": {
+            "159326": 0.0891,
+            "159561": 0.0921,
+            "159781": 0.0569,
+            "159941": 0.0941,
+            "159992": 0.0809,
+            "513180": 0.0774,
+            "513520": 0.101,
+            "515880": 0.0487,
+            "518880": 0.2216,
+            "561980": 0.0731,
+            "588000": 0.0651
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.9852,
+            "annualized_volatility": 0.2243,
+            "max_drawdown": 0.0229,
+            "cvar_95": 0.0183,
+            "diversification_ratio": 1.6151,
+            "effective_asset_count": 3.5684,
+            "largest_high_corr_component_weight_share": 0.2859
+          },
+          "weights": {
+            "159326": 0.0,
+            "159561": 0.0,
+            "159781": 0.0,
+            "159941": 0.2432,
+            "159992": 0.041,
+            "513180": 0.0312,
+            "513520": 0.0427,
+            "515880": 0.0515,
+            "518880": 0.4361,
+            "561980": 0.1543,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 17,
+      "train_start": "2025-05-06",
+      "train_end": "2025-10-29",
+      "test_start": "2025-10-30",
+      "test_end": "2025-11-26",
+      "asset_count": 11,
+      "assets": [
+        "159326",
+        "159561",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "515880",
+          "561980",
+          "588000"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.917
+        },
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.8916
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8669
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.7964
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.6514
+        },
+        {
+          "a": "159781",
+          "b": "513180",
+          "correlation": 0.5713
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.5612
+        },
+        {
+          "a": "515880",
+          "b": "561980",
+          "correlation": 0.5577
+        },
+        {
+          "a": "159326",
+          "b": "159781",
+          "correlation": 0.5464
+        },
+        {
+          "a": "159326",
+          "b": "513180",
+          "correlation": 0.5386
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": -0.7641,
+            "annualized_volatility": 0.2087,
+            "max_drawdown": 0.0773,
+            "cvar_95": 0.0316,
+            "diversification_ratio": 1.3585,
+            "effective_asset_count": 11.0,
+            "largest_high_corr_component_weight_share": 0.3636
+          },
+          "weights": {
+            "159326": 0.0909,
+            "159561": 0.0909,
+            "159781": 0.0909,
+            "159941": 0.0909,
+            "159992": 0.0909,
+            "513180": 0.0909,
+            "513520": 0.0909,
+            "515880": 0.0909,
+            "518880": 0.0909,
+            "561980": 0.0909,
+            "588000": 0.0909
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": -0.6098,
+            "annualized_volatility": 0.1957,
+            "max_drawdown": 0.0717,
+            "cvar_95": 0.029,
+            "diversification_ratio": 1.3687,
+            "effective_asset_count": 9.9398,
+            "largest_high_corr_component_weight_share": 0.2389
+          },
+          "weights": {
+            "159326": 0.0941,
+            "159561": 0.1415,
+            "159781": 0.067,
+            "159941": 0.14,
+            "159992": 0.0844,
+            "513180": 0.0898,
+            "513520": 0.1018,
+            "515880": 0.047,
+            "518880": 0.1095,
+            "561980": 0.0558,
+            "588000": 0.069
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": -0.4562,
+            "annualized_volatility": 0.1843,
+            "max_drawdown": 0.0668,
+            "cvar_95": 0.0263,
+            "diversification_ratio": 1.3919,
+            "effective_asset_count": 8.4733,
+            "largest_high_corr_component_weight_share": 0.1812
+          },
+          "weights": {
+            "159326": 0.076,
+            "159561": 0.1369,
+            "159781": 0.0457,
+            "159941": 0.1514,
+            "159992": 0.0797,
+            "513180": 0.0705,
+            "513520": 0.104,
+            "515880": 0.0367,
+            "518880": 0.2003,
+            "561980": 0.0472,
+            "588000": 0.0516
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": -0.1902,
+            "annualized_volatility": 0.1849,
+            "max_drawdown": 0.056,
+            "cvar_95": 0.0231,
+            "diversification_ratio": 1.3478,
+            "effective_asset_count": 3.8309,
+            "largest_high_corr_component_weight_share": 0.0991
+          },
+          "weights": {
+            "159326": 0.0064,
+            "159561": 0.0215,
+            "159781": 0.0,
+            "159941": 0.345,
+            "159992": 0.1085,
+            "513180": 0.0,
+            "513520": 0.0799,
+            "515880": 0.01,
+            "518880": 0.3395,
+            "561980": 0.0892,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 18,
+      "train_start": "2025-06-04",
+      "train_end": "2025-11-26",
+      "test_start": "2025-11-27",
+      "test_end": "2025-12-24",
+      "asset_count": 11,
+      "assets": [
+        "159326",
+        "159561",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "515880",
+          "561980",
+          "588000"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.9176
+        },
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.8958
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8758
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.7987
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.6795
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.6678
+        },
+        {
+          "a": "159561",
+          "b": "159941",
+          "correlation": 0.6372
+        },
+        {
+          "a": "159781",
+          "b": "513180",
+          "correlation": 0.594
+        },
+        {
+          "a": "515880",
+          "b": "561980",
+          "correlation": 0.5745
+        },
+        {
+          "a": "159561",
+          "b": "513520",
+          "correlation": 0.5557
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 0.5634,
+            "annualized_volatility": 0.1706,
+            "max_drawdown": 0.0305,
+            "cvar_95": 0.0189,
+            "diversification_ratio": 1.2599,
+            "effective_asset_count": 11.0,
+            "largest_high_corr_component_weight_share": 0.3636
+          },
+          "weights": {
+            "159326": 0.0909,
+            "159561": 0.0909,
+            "159781": 0.0909,
+            "159941": 0.0909,
+            "159992": 0.0909,
+            "513180": 0.0909,
+            "513520": 0.0909,
+            "515880": 0.0909,
+            "518880": 0.0909,
+            "561980": 0.0909,
+            "588000": 0.0909
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 0.4207,
+            "annualized_volatility": 0.1477,
+            "max_drawdown": 0.0268,
+            "cvar_95": 0.0175,
+            "diversification_ratio": 1.2919,
+            "effective_asset_count": 9.9154,
+            "largest_high_corr_component_weight_share": 0.239
+          },
+          "weights": {
+            "159326": 0.0859,
+            "159561": 0.1495,
+            "159781": 0.0658,
+            "159941": 0.1278,
+            "159992": 0.0873,
+            "513180": 0.0948,
+            "513520": 0.0951,
+            "515880": 0.0471,
+            "518880": 0.1207,
+            "561980": 0.0564,
+            "588000": 0.0697
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 0.4446,
+            "annualized_volatility": 0.1365,
+            "max_drawdown": 0.0232,
+            "cvar_95": 0.0166,
+            "diversification_ratio": 1.324,
+            "effective_asset_count": 8.5072,
+            "largest_high_corr_component_weight_share": 0.1907
+          },
+          "weights": {
+            "159326": 0.0753,
+            "159561": 0.1495,
+            "159781": 0.047,
+            "159941": 0.1241,
+            "159992": 0.0823,
+            "513180": 0.0761,
+            "513520": 0.0931,
+            "515880": 0.0387,
+            "518880": 0.209,
+            "561980": 0.0507,
+            "588000": 0.0543
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.5193,
+            "annualized_volatility": 0.1222,
+            "max_drawdown": 0.0165,
+            "cvar_95": 0.0144,
+            "diversification_ratio": 1.3473,
+            "effective_asset_count": 5.0399,
+            "largest_high_corr_component_weight_share": 0.1223
+          },
+          "weights": {
+            "159326": 0.0472,
+            "159561": 0.1301,
+            "159781": 0.0,
+            "159941": 0.1781,
+            "159992": 0.1035,
+            "513180": 0.0,
+            "513520": 0.07,
+            "515880": 0.0235,
+            "518880": 0.3487,
+            "561980": 0.0988,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 19,
+      "train_start": "2025-07-02",
+      "train_end": "2025-12-24",
+      "test_start": "2025-12-25",
+      "test_end": "2026-01-23",
+      "asset_count": 11,
+      "assets": [
+        "159326",
+        "159561",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "515880",
+          "561980",
+          "588000"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.918
+        },
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.8941
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8862
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.7985
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.6844
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.6826
+        },
+        {
+          "a": "159561",
+          "b": "159941",
+          "correlation": 0.6205
+        },
+        {
+          "a": "159992",
+          "b": "513180",
+          "correlation": 0.6147
+        },
+        {
+          "a": "159781",
+          "b": "513180",
+          "correlation": 0.6099
+        },
+        {
+          "a": "515880",
+          "b": "561980",
+          "correlation": 0.5878
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 0.7997,
+            "annualized_volatility": 0.1436,
+            "max_drawdown": 0.015,
+            "cvar_95": 0.0134,
+            "diversification_ratio": 1.6155,
+            "effective_asset_count": 11.0,
+            "largest_high_corr_component_weight_share": 0.3636
+          },
+          "weights": {
+            "159326": 0.0909,
+            "159561": 0.0909,
+            "159781": 0.0909,
+            "159941": 0.0909,
+            "159992": 0.0909,
+            "513180": 0.0909,
+            "513520": 0.0909,
+            "515880": 0.0909,
+            "518880": 0.0909,
+            "561980": 0.0909,
+            "588000": 0.0909
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 0.6794,
+            "annualized_volatility": 0.1247,
+            "max_drawdown": 0.0143,
+            "cvar_95": 0.0115,
+            "diversification_ratio": 1.6841,
+            "effective_asset_count": 9.7828,
+            "largest_high_corr_component_weight_share": 0.2326
+          },
+          "weights": {
+            "159326": 0.082,
+            "159561": 0.1587,
+            "159781": 0.0636,
+            "159941": 0.125,
+            "159992": 0.0918,
+            "513180": 0.0968,
+            "513520": 0.0935,
+            "515880": 0.0454,
+            "518880": 0.1197,
+            "561980": 0.0551,
+            "588000": 0.0685
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 0.6981,
+            "annualized_volatility": 0.1209,
+            "max_drawdown": 0.0159,
+            "cvar_95": 0.0097,
+            "diversification_ratio": 1.7025,
+            "effective_asset_count": 8.6376,
+            "largest_high_corr_component_weight_share": 0.1904
+          },
+          "weights": {
+            "159326": 0.0732,
+            "159561": 0.1632,
+            "159781": 0.0473,
+            "159941": 0.1223,
+            "159992": 0.0865,
+            "513180": 0.0779,
+            "513520": 0.0931,
+            "515880": 0.0387,
+            "518880": 0.1934,
+            "561980": 0.0496,
+            "588000": 0.0548
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.7414,
+            "annualized_volatility": 0.1202,
+            "max_drawdown": 0.0201,
+            "cvar_95": 0.0079,
+            "diversification_ratio": 1.6861,
+            "effective_asset_count": 5.2089,
+            "largest_high_corr_component_weight_share": 0.1258
+          },
+          "weights": {
+            "159326": 0.0391,
+            "159561": 0.1387,
+            "159781": 0.0,
+            "159941": 0.1507,
+            "159992": 0.1151,
+            "513180": 0.0,
+            "513520": 0.0865,
+            "515880": 0.036,
+            "518880": 0.3441,
+            "561980": 0.0899,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 20,
+      "train_start": "2025-07-30",
+      "train_end": "2026-01-23",
+      "test_start": "2026-01-26",
+      "test_end": "2026-03-02",
+      "asset_count": 11,
+      "assets": [
+        "159326",
+        "159561",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "515880",
+          "561980",
+          "588000"
+        ],
+        [
+          "159941",
+          "513520"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.8896
+        },
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.8891
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.887
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.7868
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.721
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.6927
+        },
+        {
+          "a": "159992",
+          "b": "513180",
+          "correlation": 0.6671
+        },
+        {
+          "a": "159561",
+          "b": "159941",
+          "correlation": 0.6517
+        },
+        {
+          "a": "159781",
+          "b": "513180",
+          "correlation": 0.6217
+        },
+        {
+          "a": "513180",
+          "b": "588000",
+          "correlation": 0.608
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 0.0486,
+            "annualized_volatility": 0.2052,
+            "max_drawdown": 0.0515,
+            "cvar_95": 0.0325,
+            "diversification_ratio": 1.5055,
+            "effective_asset_count": 11.0,
+            "largest_high_corr_component_weight_share": 0.3636
+          },
+          "weights": {
+            "159326": 0.0909,
+            "159561": 0.0909,
+            "159781": 0.0909,
+            "159941": 0.0909,
+            "159992": 0.0909,
+            "513180": 0.0909,
+            "513520": 0.0909,
+            "515880": 0.0909,
+            "518880": 0.0909,
+            "561980": 0.0909,
+            "588000": 0.0909
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 0.0577,
+            "annualized_volatility": 0.2042,
+            "max_drawdown": 0.0513,
+            "cvar_95": 0.0332,
+            "diversification_ratio": 1.4959,
+            "effective_asset_count": 9.6116,
+            "largest_high_corr_component_weight_share": 0.2283
+          },
+          "weights": {
+            "159326": 0.0776,
+            "159561": 0.1712,
+            "159781": 0.063,
+            "159941": 0.1243,
+            "159992": 0.095,
+            "513180": 0.0949,
+            "513520": 0.0954,
+            "515880": 0.0464,
+            "518880": 0.1133,
+            "561980": 0.0526,
+            "588000": 0.0663
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 0.1745,
+            "annualized_volatility": 0.2262,
+            "max_drawdown": 0.0562,
+            "cvar_95": 0.0378,
+            "diversification_ratio": 1.4614,
+            "effective_asset_count": 8.7116,
+            "largest_high_corr_component_weight_share": 0.2196
+          },
+          "weights": {
+            "159326": 0.0742,
+            "159561": 0.172,
+            "159781": 0.0483,
+            "159941": 0.1269,
+            "159992": 0.086,
+            "513180": 0.0767,
+            "513520": 0.0927,
+            "515880": 0.0408,
+            "518880": 0.1803,
+            "561980": 0.0488,
+            "588000": 0.0532
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.3767,
+            "annualized_volatility": 0.298,
+            "max_drawdown": 0.0795,
+            "cvar_95": 0.0506,
+            "diversification_ratio": 1.3054,
+            "effective_asset_count": 4.8949,
+            "largest_high_corr_component_weight_share": 0.2817
+          },
+          "weights": {
+            "159326": 0.0574,
+            "159561": 0.1048,
+            "159781": 0.0,
+            "159941": 0.2279,
+            "159992": 0.0737,
+            "513180": 0.0,
+            "513520": 0.0538,
+            "515880": 0.0442,
+            "518880": 0.3452,
+            "561980": 0.0929,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 21,
+      "train_start": "2025-08-27",
+      "train_end": "2026-03-02",
+      "test_start": "2026-03-03",
+      "test_end": "2026-03-30",
+      "asset_count": 11,
+      "assets": [
+        "159326",
+        "159561",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "515880",
+          "561980",
+          "588000"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.9081
+        },
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.8869
+        },
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.8689
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.7707
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.7394
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.6853
+        },
+        {
+          "a": "515880",
+          "b": "561980",
+          "correlation": 0.6269
+        },
+        {
+          "a": "159992",
+          "b": "513180",
+          "correlation": 0.6242
+        },
+        {
+          "a": "513180",
+          "b": "588000",
+          "correlation": 0.6085
+        },
+        {
+          "a": "159561",
+          "b": "159941",
+          "correlation": 0.5966
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": -1.0017,
+            "annualized_volatility": 0.3036,
+            "max_drawdown": 0.0942,
+            "cvar_95": 0.0452,
+            "diversification_ratio": 1.1758,
+            "effective_asset_count": 11.0,
+            "largest_high_corr_component_weight_share": 0.3636
+          },
+          "weights": {
+            "159326": 0.0909,
+            "159561": 0.0909,
+            "159781": 0.0909,
+            "159941": 0.0909,
+            "159992": 0.0909,
+            "513180": 0.0909,
+            "513520": 0.0909,
+            "515880": 0.0909,
+            "518880": 0.0909,
+            "561980": 0.0909,
+            "588000": 0.0909
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": -1.0491,
+            "annualized_volatility": 0.2981,
+            "max_drawdown": 0.0935,
+            "cvar_95": 0.0453,
+            "diversification_ratio": 1.1672,
+            "effective_asset_count": 9.9272,
+            "largest_high_corr_component_weight_share": 0.2577
+          },
+          "weights": {
+            "159326": 0.0774,
+            "159561": 0.1558,
+            "159781": 0.0705,
+            "159941": 0.1326,
+            "159992": 0.104,
+            "513180": 0.1013,
+            "513520": 0.0941,
+            "515880": 0.0511,
+            "518880": 0.077,
+            "561980": 0.059,
+            "588000": 0.0771
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": -1.1,
+            "annualized_volatility": 0.3016,
+            "max_drawdown": 0.0984,
+            "cvar_95": 0.0475,
+            "diversification_ratio": 1.1725,
+            "effective_asset_count": 9.6644,
+            "largest_high_corr_component_weight_share": 0.2217
+          },
+          "weights": {
+            "159326": 0.0812,
+            "159561": 0.1625,
+            "159781": 0.0578,
+            "159941": 0.1281,
+            "159992": 0.1037,
+            "513180": 0.0901,
+            "513520": 0.0971,
+            "515880": 0.0473,
+            "518880": 0.1156,
+            "561980": 0.055,
+            "588000": 0.0617
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": -1.2312,
+            "annualized_volatility": 0.3258,
+            "max_drawdown": 0.1154,
+            "cvar_95": 0.0548,
+            "diversification_ratio": 1.178,
+            "effective_asset_count": 6.9079,
+            "largest_high_corr_component_weight_share": 0.1543
+          },
+          "weights": {
+            "159326": 0.1061,
+            "159561": 0.1779,
+            "159781": 0.0,
+            "159941": 0.0725,
+            "159992": 0.1267,
+            "513180": 0.0065,
+            "513520": 0.1272,
+            "515880": 0.0718,
+            "518880": 0.2289,
+            "561980": 0.0825,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 22,
+      "train_start": "2025-09-24",
+      "train_end": "2026-03-30",
+      "test_start": "2026-03-31",
+      "test_end": "2026-04-28",
+      "asset_count": 11,
+      "assets": [
+        "159326",
+        "159561",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "513180",
+          "515880",
+          "561980",
+          "588000"
+        ],
+        [
+          "159941",
+          "513520"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8971
+        },
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.8659
+        },
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.8562
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.7583
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.7299
+        },
+        {
+          "a": "513180",
+          "b": "588000",
+          "correlation": 0.725
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.707
+        },
+        {
+          "a": "159561",
+          "b": "159941",
+          "correlation": 0.694
+        },
+        {
+          "a": "159992",
+          "b": "513180",
+          "correlation": 0.6897
+        },
+        {
+          "a": "159561",
+          "b": "513520",
+          "correlation": 0.6598
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 1.2623,
+            "annualized_volatility": 0.2704,
+            "max_drawdown": 0.0217,
+            "cvar_95": 0.0217,
+            "diversification_ratio": 1.1966,
+            "effective_asset_count": 11.0,
+            "largest_high_corr_component_weight_share": 0.4545
+          },
+          "weights": {
+            "159326": 0.0909,
+            "159561": 0.0909,
+            "159781": 0.0909,
+            "159941": 0.0909,
+            "159992": 0.0909,
+            "513180": 0.0909,
+            "513520": 0.0909,
+            "515880": 0.0909,
+            "518880": 0.0909,
+            "561980": 0.0909,
+            "588000": 0.0909
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 1.2189,
+            "annualized_volatility": 0.263,
+            "max_drawdown": 0.0208,
+            "cvar_95": 0.0207,
+            "diversification_ratio": 1.1918,
+            "effective_asset_count": 10.4532,
+            "largest_high_corr_component_weight_share": 0.4077
+          },
+          "weights": {
+            "159326": 0.0758,
+            "159561": 0.1213,
+            "159781": 0.0843,
+            "159941": 0.1279,
+            "159992": 0.109,
+            "513180": 0.1033,
+            "513520": 0.0875,
+            "515880": 0.0635,
+            "518880": 0.0707,
+            "561980": 0.0679,
+            "588000": 0.0887
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 1.1643,
+            "annualized_volatility": 0.2591,
+            "max_drawdown": 0.0206,
+            "cvar_95": 0.0206,
+            "diversification_ratio": 1.1964,
+            "effective_asset_count": 10.5037,
+            "largest_high_corr_component_weight_share": 0.376
+          },
+          "weights": {
+            "159326": 0.0867,
+            "159561": 0.1176,
+            "159781": 0.075,
+            "159941": 0.1236,
+            "159992": 0.1127,
+            "513180": 0.0973,
+            "513520": 0.0862,
+            "515880": 0.0621,
+            "518880": 0.0974,
+            "561980": 0.0668,
+            "588000": 0.0749
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.9988,
+            "annualized_volatility": 0.2458,
+            "max_drawdown": 0.0194,
+            "cvar_95": 0.0194,
+            "diversification_ratio": 1.2463,
+            "effective_asset_count": 6.6919,
+            "largest_high_corr_component_weight_share": 0.2468
+          },
+          "weights": {
+            "159326": 0.1584,
+            "159561": 0.0022,
+            "159781": 0.0,
+            "159941": 0.1193,
+            "159992": 0.1577,
+            "513180": 0.0412,
+            "513520": 0.0785,
+            "515880": 0.1074,
+            "518880": 0.237,
+            "561980": 0.0982,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 23,
+      "train_start": "2025-10-30",
+      "train_end": "2026-04-28",
+      "test_start": "2026-04-29",
+      "test_end": "2026-05-29",
+      "asset_count": 11,
+      "assets": [
+        "159326",
+        "159561",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "513180",
+          "515880",
+          "561980",
+          "588000"
+        ],
+        [
+          "159561",
+          "159941",
+          "513520"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8995
+        },
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.8648
+        },
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.8438
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.7629
+        },
+        {
+          "a": "159561",
+          "b": "159941",
+          "correlation": 0.7487
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.7477
+        },
+        {
+          "a": "159561",
+          "b": "513520",
+          "correlation": 0.736
+        },
+        {
+          "a": "513180",
+          "b": "588000",
+          "correlation": 0.7291
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.703
+        },
+        {
+          "a": "513180",
+          "b": "513520",
+          "correlation": 0.6911
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 1.1905,
+            "annualized_volatility": 0.2255,
+            "max_drawdown": 0.0326,
+            "cvar_95": 0.0156,
+            "diversification_ratio": 1.5262,
+            "effective_asset_count": 11.0,
+            "largest_high_corr_component_weight_share": 0.4545
+          },
+          "weights": {
+            "159326": 0.0909,
+            "159561": 0.0909,
+            "159781": 0.0909,
+            "159941": 0.0909,
+            "159992": 0.0909,
+            "513180": 0.0909,
+            "513520": 0.0909,
+            "515880": 0.0909,
+            "518880": 0.0909,
+            "561980": 0.0909,
+            "588000": 0.0909
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 1.0988,
+            "annualized_volatility": 0.212,
+            "max_drawdown": 0.0339,
+            "cvar_95": 0.0138,
+            "diversification_ratio": 1.5543,
+            "effective_asset_count": 10.6065,
+            "largest_high_corr_component_weight_share": 0.4182
+          },
+          "weights": {
+            "159326": 0.0788,
+            "159561": 0.1117,
+            "159781": 0.0877,
+            "159941": 0.1202,
+            "159992": 0.1088,
+            "513180": 0.105,
+            "513520": 0.0886,
+            "515880": 0.064,
+            "518880": 0.0737,
+            "561980": 0.0713,
+            "588000": 0.0903
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 1.0074,
+            "annualized_volatility": 0.2061,
+            "max_drawdown": 0.0344,
+            "cvar_95": 0.0142,
+            "diversification_ratio": 1.5775,
+            "effective_asset_count": 10.6023,
+            "largest_high_corr_component_weight_share": 0.3911
+          },
+          "weights": {
+            "159326": 0.0955,
+            "159561": 0.1035,
+            "159781": 0.0801,
+            "159941": 0.1129,
+            "159992": 0.1241,
+            "513180": 0.1005,
+            "513520": 0.0819,
+            "515880": 0.0652,
+            "518880": 0.0909,
+            "561980": 0.0687,
+            "588000": 0.0766
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.3975,
+            "annualized_volatility": 0.1847,
+            "max_drawdown": 0.0448,
+            "cvar_95": 0.0182,
+            "diversification_ratio": 1.6571,
+            "effective_asset_count": 5.5251,
+            "largest_high_corr_component_weight_share": 0.2999
+          },
+          "weights": {
+            "159326": 0.193,
+            "159561": 0.0,
+            "159781": 0.0,
+            "159941": 0.0546,
+            "159992": 0.2666,
+            "513180": 0.0975,
+            "513520": 0.0,
+            "515880": 0.1519,
+            "518880": 0.186,
+            "561980": 0.0505,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 24,
+      "train_start": "2025-11-27",
+      "train_end": "2026-05-29",
+      "test_start": "2026-06-01",
+      "test_end": "2026-06-29",
+      "asset_count": 11,
+      "assets": [
+        "159326",
+        "159561",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "515880",
+          "561980",
+          "588000"
+        ],
+        [
+          "159561",
+          "159941",
+          "513520"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.8767
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8683
+        },
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.8442
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.7537
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.7483
+        },
+        {
+          "a": "159561",
+          "b": "513520",
+          "correlation": 0.7364
+        },
+        {
+          "a": "159561",
+          "b": "159941",
+          "correlation": 0.7111
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.6573
+        },
+        {
+          "a": "513180",
+          "b": "513520",
+          "correlation": 0.6534
+        },
+        {
+          "a": "159561",
+          "b": "513180",
+          "correlation": 0.6202
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": 0.811,
+            "annualized_volatility": 0.3217,
+            "max_drawdown": 0.0571,
+            "cvar_95": 0.0336,
+            "diversification_ratio": 1.359,
+            "effective_asset_count": 11.0,
+            "largest_high_corr_component_weight_share": 0.3636
+          },
+          "weights": {
+            "159326": 0.0909,
+            "159561": 0.0909,
+            "159781": 0.0909,
+            "159941": 0.0909,
+            "159992": 0.0909,
+            "513180": 0.0909,
+            "513520": 0.0909,
+            "515880": 0.0909,
+            "518880": 0.0909,
+            "561980": 0.0909,
+            "588000": 0.0909
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": 0.6031,
+            "annualized_volatility": 0.3055,
+            "max_drawdown": 0.0572,
+            "cvar_95": 0.0333,
+            "diversification_ratio": 1.3794,
+            "effective_asset_count": 10.528,
+            "largest_high_corr_component_weight_share": 0.3251
+          },
+          "weights": {
+            "159326": 0.0805,
+            "159561": 0.1127,
+            "159781": 0.0881,
+            "159941": 0.1229,
+            "159992": 0.1124,
+            "513180": 0.1086,
+            "513520": 0.0896,
+            "515880": 0.0667,
+            "518880": 0.0756,
+            "561980": 0.064,
+            "588000": 0.079
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": 0.5621,
+            "annualized_volatility": 0.2986,
+            "max_drawdown": 0.0558,
+            "cvar_95": 0.0328,
+            "diversification_ratio": 1.4038,
+            "effective_asset_count": 10.4512,
+            "largest_high_corr_component_weight_share": 0.3
+          },
+          "weights": {
+            "159326": 0.0934,
+            "159561": 0.1025,
+            "159781": 0.0787,
+            "159941": 0.116,
+            "159992": 0.1327,
+            "513180": 0.1051,
+            "513520": 0.0815,
+            "515880": 0.0671,
+            "518880": 0.091,
+            "561980": 0.0633,
+            "588000": 0.0687
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": 0.4766,
+            "annualized_volatility": 0.2766,
+            "max_drawdown": 0.0481,
+            "cvar_95": 0.0306,
+            "diversification_ratio": 1.5377,
+            "effective_asset_count": 5.9282,
+            "largest_high_corr_component_weight_share": 0.2124
+          },
+          "weights": {
+            "159326": 0.1636,
+            "159561": 0.0,
+            "159781": 0.0,
+            "159941": 0.0888,
+            "159992": 0.2708,
+            "513180": 0.0959,
+            "513520": 0.0,
+            "515880": 0.1228,
+            "518880": 0.1685,
+            "561980": 0.0896,
+            "588000": 0.0
+          }
+        }
+      }
+    },
+    {
+      "fold": 25,
+      "train_start": "2025-12-25",
+      "train_end": "2026-06-29",
+      "test_start": "2026-06-30",
+      "test_end": "2026-07-27",
+      "asset_count": 11,
+      "assets": [
+        "159326",
+        "159561",
+        "159781",
+        "159941",
+        "159992",
+        "513180",
+        "513520",
+        "515880",
+        "518880",
+        "561980",
+        "588000"
+      ],
+      "high_corr_components": [
+        [
+          "159781",
+          "515880",
+          "561980",
+          "588000"
+        ],
+        [
+          "159941",
+          "513520"
+        ]
+      ],
+      "top_correlated_pairs": [
+        {
+          "a": "561980",
+          "b": "588000",
+          "correlation": 0.8859
+        },
+        {
+          "a": "159781",
+          "b": "515880",
+          "correlation": 0.8708
+        },
+        {
+          "a": "159781",
+          "b": "588000",
+          "correlation": 0.8629
+        },
+        {
+          "a": "159941",
+          "b": "513520",
+          "correlation": 0.7658
+        },
+        {
+          "a": "159781",
+          "b": "561980",
+          "correlation": 0.74
+        },
+        {
+          "a": "159561",
+          "b": "513520",
+          "correlation": 0.6702
+        },
+        {
+          "a": "159561",
+          "b": "159941",
+          "correlation": 0.6617
+        },
+        {
+          "a": "515880",
+          "b": "588000",
+          "correlation": 0.6589
+        },
+        {
+          "a": "159781",
+          "b": "513520",
+          "correlation": 0.6025
+        },
+        {
+          "a": "159326",
+          "b": "515880",
+          "correlation": 0.5903
+        }
+      ],
+      "models": {
+        "EqualWeighted": {
+          "metrics": {
+            "annualized_return": -1.0026,
+            "annualized_volatility": 0.3716,
+            "max_drawdown": 0.1286,
+            "cvar_95": 0.0508,
+            "diversification_ratio": 1.2935,
+            "effective_asset_count": 11.0,
+            "largest_high_corr_component_weight_share": 0.3636
+          },
+          "weights": {
+            "159326": 0.0909,
+            "159561": 0.0909,
+            "159781": 0.0909,
+            "159941": 0.0909,
+            "159992": 0.0909,
+            "513180": 0.0909,
+            "513520": 0.0909,
+            "515880": 0.0909,
+            "518880": 0.0909,
+            "561980": 0.0909,
+            "588000": 0.0909
+          }
+        },
+        "InverseVolatility": {
+          "metrics": {
+            "annualized_return": -0.7958,
+            "annualized_volatility": 0.3353,
+            "max_drawdown": 0.1084,
+            "cvar_95": 0.0481,
+            "diversification_ratio": 1.3286,
+            "effective_asset_count": 10.5529,
+            "largest_high_corr_component_weight_share": 0.2955
+          },
+          "weights": {
+            "159326": 0.0839,
+            "159561": 0.1238,
+            "159781": 0.0855,
+            "159941": 0.114,
+            "159992": 0.1058,
+            "513180": 0.1108,
+            "513520": 0.0841,
+            "515880": 0.068,
+            "518880": 0.0821,
+            "561980": 0.064,
+            "588000": 0.078
+          }
+        },
+        "RiskBudgeting": {
+          "metrics": {
+            "annualized_return": -0.7387,
+            "annualized_volatility": 0.3262,
+            "max_drawdown": 0.1022,
+            "cvar_95": 0.048,
+            "diversification_ratio": 1.3553,
+            "effective_asset_count": 10.3654,
+            "largest_high_corr_component_weight_share": 0.2701
+          },
+          "weights": {
+            "159326": 0.0938,
+            "159561": 0.1135,
+            "159781": 0.0735,
+            "159941": 0.1058,
+            "159992": 0.1358,
+            "513180": 0.1077,
+            "513520": 0.0754,
+            "515880": 0.0659,
+            "518880": 0.0979,
+            "561980": 0.0644,
+            "588000": 0.0663
+          }
+        },
+        "MaximumDiversification": {
+          "metrics": {
+            "annualized_return": -0.6773,
+            "annualized_volatility": 0.3362,
+            "max_drawdown": 0.092,
+            "cvar_95": 0.0535,
+            "diversification_ratio": 1.4063,
+            "effective_asset_count": 5.3832,
+            "largest_high_corr_component_weight_share": 0.2153
+          },
+          "weights": {
+            "159326": 0.1635,
+            "159561": 0.0,
+            "159781": 0.0,
+            "159941": 0.0595,
+            "159992": 0.3052,
+            "513180": 0.0747,
+            "513520": 0.0,
+            "515880": 0.1241,
+            "518880": 0.1818,
+            "561980": 0.0913,
+            "588000": 0.0
+          }
+        }
+      }
+    }
+  ],
+  "decision_eligible": false,
+  "trade_signal": null,
+  "portfolio_target": null,
+  "trial_confirm": null,
+  "master_override": false,
+  "historical_decision_prohibited": true,
+  "interpretation_boundary": "本结果只验证共同风险识别与样本外分散效率。优化权重不得解释为正式目标仓位，不得直接生成风险许可、机会状态、金额或卖出动作。"
+}
