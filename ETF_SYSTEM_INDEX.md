@@ -51,11 +51,12 @@
 - 动态个股层：`data/state/asset_roles.json`、`data/state/stock_context.json`、`data/state/stock_market_context.json`
 - provider优先级：`config/market/provider_priority.json`
 - 实时相邻变化：`data/state/market_delta.json`
+- 日内路径特征：`data/state/intraday_path_features.json`、`scripts/build_intraday_path_features.py`；由当日连续有效快照重建离散分时路径，输出低点修复、距高低位、近期斜率、成交增量、相对指数强弱和描述性结构候选；不得直接生成交易动作
 - 正式海外/亚洲指数：`data/state/overseas_context.json`
 - 美股扩展时段：`data/state/us_extended_hours_context.json`、`scripts/build_us_extended_hours_context.py`
 - 三层监测配置：`config/market/market_monitor_config.json`
 - 运行策略与全天截图路由：`config/runtime_policy.json`
-- 查询上下文：`data/state/query_context.json`、`data/state/decision_context.json`；其中 `decision_context.json` 是ChatGPT盘中快速读取的聚合决策上下文，不另建平行decision bundle
+- 查询上下文：`data/state/query_context.json`、`data/state/decision_context.json`；其中 `decision_context.json` 是ChatGPT盘中快速读取的聚合决策上下文，并内嵌最新日内路径特征，不另建平行decision bundle
 - 收盘复盘上下文：`data/state/review_context.json`、`post_market_review/post_market_review_event.json`
 - 查询时即时补采与可选状态同步请求：`requests/live_snapshot/*.json`
 - 账户/Dashboard/成交/正式复盘异步同步处理：`scripts/process_state_sync_request.py`
@@ -92,12 +93,14 @@
 1. 先从截图确认当次账户、持仓、现金和成交事实，并确定 `interaction_scenario`；
 2. 需要当前市场行情时立即通过 `requests/live_snapshot/*.json` 触发查询时补采，查询时行情优先于最近生产快照；午间和收盘后则使用对应已结束A股时段的正式快照，不把请求时间冒充行情时间；
 3. 新核心 `CURRENT` 在短等待预算内可用则使用；若即时补采尚未完成而最近有效快照仍为FRESH，则立即回退最近FRESH快照并明确标注真实时点，不为等待文档维护延迟正式回复；
-4. 同一查询请求可携带 `account_fact`、`formal_decision`、`trade_event`、`interaction_scenario`、`formal_review`。13个A股核心对象与 `CURRENT` 先发布，账户/Dashboard及其他下游维护随后继续；
-5. `formal_decision` 和 `formal_review` 只允许写入ChatGPT已经形成的正式结论，自动程序不得自行推导风险许可、生命周期、金额、卖出动作或复盘经验；
-6. 普通无成交盘中截图更新账户事实和Dashboard云端实时状态区块，不机械改写MASTER、经验库或行情档案；
-7. 若存在用户确认或券商事实确认的真实成交，除更新账户事实和Dashboard外，同时生成 `events/trades/` 成交事件，在行情档案登记客观成交，并在经验库生成待复盘CASE入口；
-8. `POST_CLOSE_REVIEW` 在正式收盘数据和账户事实满足门禁后，可按ChatGPT已经形成的正式复盘结论幂等维护Dashboard、行情档案和经验库；MASTER仅检查是否需要正式规则维护，默认不修改；
-9. `ETF规则_MASTER.md` 永不由异步维护链自动修改，系统不自动下单。
+4. 每次有效快照后，`build_state_context` 同步刷新 `intraday_path_features.json`，并把最新特征嵌入 `decision_context.json`；ChatGPT可直接读取路径特征判断V型修复、急跌、突然拉升、高位震荡等结构候选，无需常规依赖用户上传分时图；
+5. 日内路径特征属于行情事实层。`RAPID_RISE_CANDIDATE`、`SHARP_DROP_CANDIDATE`、`V_RECOVERY_CANDIDATE`、`HIGH_ZONE_CONSOLIDATION_CANDIDATE` 仅为描述性候选标签，必须同时读取采样覆盖和最大间隔；离散脉冲不能恢复两次采样之间全部分钟级路径，标签不得绕过MASTER生成风险许可、机会、金额或买卖动作；
+6. 同一查询请求可携带 `account_fact`、`formal_decision`、`trade_event`、`interaction_scenario`、`formal_review`。13个A股核心对象与 `CURRENT` 先发布，账户/Dashboard及其他下游维护随后继续；
+7. `formal_decision` 和 `formal_review` 只允许写入ChatGPT已经形成的正式结论，自动程序不得自行推导风险许可、生命周期、金额、卖出动作或复盘经验；
+8. 普通无成交盘中截图更新账户事实和Dashboard云端实时状态区块，不机械改写MASTER、经验库或行情档案；
+9. 若存在用户确认或券商事实确认的真实成交，除更新账户事实和Dashboard外，同时生成 `events/trades/` 成交事件，在行情档案登记客观成交，并在经验库生成待复盘CASE入口；
+10. `POST_CLOSE_REVIEW` 在正式收盘数据和账户事实满足门禁后，可按ChatGPT已经形成的正式复盘结论幂等维护Dashboard、行情档案和经验库；MASTER仅检查是否需要正式规则维护，默认不修改；
+11. `ETF规则_MASTER.md` 永不由异步维护链自动修改，系统不自动下单。
 
 Dashboard中的 `<!-- AUTO_STATE_SYNC_START -->` 至 `<!-- AUTO_STATE_SYNC_END -->` 为机器管理实时区块，优先展示最新已确认账户事实和最近一次ChatGPT正式决策/复盘；其后的历史人工维护内容保留用于追溯，不得用旧历史区块覆盖机器管理区块中的更新事实。
 
@@ -124,7 +127,7 @@ Dashboard中的 `<!-- AUTO_STATE_SYNC_START -->` 至 `<!-- AUTO_STATE_SYNC_END -
 2. `POST_MARKET`：上一美股交易日盘后。Nasdaq盘后为美东16:00—20:00；夏令时大致对应北京时间04:00—08:00，冬令时大致05:00—09:00，因此可能在A股开盘前提供新的价格发现。
 3. `PRE_MARKET`：下一美股交易日盘前。Nasdaq盘前为美东04:00—09:30，通常对应北京时间16:00—21:30（夏令时）或17:00—22:30（冬令时），主要形成下一A股交易日的前置信号，而不是当天A股上午的同步行情。
 
-QQQ/SOXX作为扩展时段方向代理；INTC、NVDA、AMD等产业链个股只在具体ETF/行业假设需要时动态调用。扩展时段必须标注 `PRE_MARKET/POST_MARKET`，不得把“英特尔盘前+5%”写成“SOX上涨5%”。原则是：不高估海外行情的时间领先，也不低估其时间领先。
+QQQ/SOXX作为扩展时段方向代理；INTC、NVDA、AMD等产业链个股只在具体ETF/行业假设需要时动态调用。扩展时段必须标注 `PRE_MARKET/POST_MARKET`，不得把“英特尔盘前+5%”写成“SOX上涨5%”。原则是：不高估海外时间领先，也不低估海外时间领先。
 
 任何正式行情分析必须强制显示数据时点，并统一优先使用北京时间：
 
@@ -132,7 +135,7 @@ QQQ/SOXX作为扩展时段方向代理；INTC、NVDA、AMD等产业链个股只�
 【数据时点（北京时间）】YYYY-MM-DD HH:MM:SS
 ```
 
-A股使用 `captured_at_beijing`；海外/亚洲对象使用 `latest.as_of_beijing`；美股扩展时段同时使用 `latest.as_of_beijing` 与 `market_phase_of_latest`。若多个市场时点明显不同，分别标注，不能用一个总时间掩盖延迟或错位。
+A股使用 `captured_at_beijing`；海外/亚洲对象使用 `latest.as_of_beijing`；美股扩展时段同时使用 `latest.as_of_beijing` 与 `market_phase_of_latest`。若多个市场时点明显不同，分别标注，不能用一个总时点掩盖延迟或错位。
 
 FRESH/DEGRADED/STALE必须按真实数据时点重新计算，不能按cron计划时刻判断。美国现金指数、盘后、盘前及亚洲各市场必须按各自实际阶段解释。
 
@@ -154,7 +157,7 @@ FRESH/DEGRADED/STALE必须按真实数据时点重新计算，不能按cron计�
 ## 读取场景
 
 1. ChatGPT规则读取：本索引 → `system_consistency.json` → MASTER；涉及数据时同时读数据规范。
-2. 当前状态：一致性、数据规范、交易日历、CURRENT、runtime health、ETF全集、`overseas_context.json`、`us_extended_hours_context.json`、动态个股层，再读Dashboard；盘中快速路径可先读取 `decision_context.json`，规则版本/hash或具体条款需要核实时再读取MASTER全文。
+2. 当前状态：一致性、数据规范、交易日历、CURRENT、runtime health、ETF全集、`overseas_context.json`、`us_extended_hours_context.json`、动态个股层，再读Dashboard；盘中快速路径可先读取 `decision_context.json`，其中已包含最新日内路径特征，规则版本/hash或具体条款需要核实时再读取MASTER全文。
 3. 盘前/盘中查询：按全天截图路由执行；需要当前行情时先执行查询时即时补采，失败、超时或尚未完成时才回退最近有效快照，并检查北京时间数据时点和新鲜度；海外对象逐一读取as_of与market phase。
 4. 午间复盘：A股使用11:30上午收盘，其他市场按各自最新有效时点；形成下午第一观察条件和资本用途判断。
 5. 盘后维护：15:00后当天首次最终账户截图默认进入正式收盘复盘；读取账户事实、review context及四文件，按需维护Dashboard、行情档案、经验库，MASTER默认不改；维护结束后再次执行一致性检查。
