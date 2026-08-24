@@ -42,7 +42,7 @@ def main() -> int:
     date_text = now.date().isoformat()
     event_name = os.environ.get("GITHUB_EVENT_NAME", "")
     policy = load_json(ROOT / "config" / "runtime_policy.json")
-    calendar = load_json(ROOT / "config" / "market" / "a_share_trading_calendar_2026.json"))
+    calendar = load_json(ROOT / "config" / "market" / "a_share_trading_calendar_2026.json")
 
     start = calendar.get("coverage_start", "")
     end = calendar.get("coverage_end", "")
