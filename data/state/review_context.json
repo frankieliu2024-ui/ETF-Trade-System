@@ -1,7 +1,9 @@
 {
-  "generated_at": "2026-08-24T07:09:48Z",
+  "generated_at": "2026-08-24T07:33:28Z",
   "market_date": "2026-08-24",
-  "market_close": false,
+  "review_key": "2026-08-24",
+  "market_close": true,
+  "market_phase": "POST_CLOSE_GRACE",
   "daily_market_summary": {
     "latest_valid_node": "live",
     "data_status": {
@@ -59,10 +61,12 @@
     "automatic_trade_output": false
   },
   "account_fact_status": "VALID",
+  "account_updated_at": "2026-08-24T14:52:00+08:00",
   "need_account_screenshot": false,
-  "review_status": "BLOCKED",
+  "review_status": "READY_FOR_REVIEW",
   "waiting_for_user_screenshot": false,
   "formal_review_generated": false,
-  "formal_review_allowed": false,
-  "review_boundary": "账户事实只能来自用户上传；账户缺失时不生成正式复盘结论。"
+  "formal_review_allowed": true,
+  "same_day_review_idempotent": true,
+  "review_boundary": "15:00后当天首次最终账户截图默认触发正式收盘复盘；账户事实只能来自用户或券商确认。重复截图如无账户/成交变化只做差异更新，不重复制造CASE。A股复盘使用15:00正式收盘数据，不用截图提交时间冒充行情时间。"
 }

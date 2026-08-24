@@ -5,6 +5,7 @@
 
 > 更新时间：2026-08-24T14:52:00+08:00  
 > 来源：BROKER_SCREENSHOT_20260824_1452_USER_CONFIRMED  
+> 场景：POST_CLOSE_REVIEW_PREP  
 > 本区块只同步已确认账户事实与ChatGPT已形成的正式决策；自动程序不得自行推导交易权限或下单。
 
 |项目|最新事实|
@@ -42,7 +43,7 @@
 - 最大风险或0元主因：风险控制区特殊Trial入口尚未完整成立
 - 决策数据时点：账户2026-08-24 14:52；A股全量行情2026-08-24 14:49:48—14:49:58；恒生科技指数（HSTECH）2026-08-24 14:50:00
 
-同步请求：`live_state_sync_acceptance_20260824_1508_retry`。
+同步请求：`post_close_review_prep_acceptance_20260824_1533`。
 <!-- AUTO_STATE_SYNC_END -->
 
 
