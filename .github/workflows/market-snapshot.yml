@@ -178,6 +178,25 @@ jobs:
             git pull --rebase origin main
             git push origin HEAD:main
           fi
+      - name: Process optional broker/dashboard state sync
+        id: state_sync
+        if: ${{ github.event_name == 'push' && github.event.inputs.probe_only != 'true' }}
+        shell: bash
+        run: |
+          processed=false
+          files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
+          for f in $files; do
+            if python - "$f" <<'PY'
+          import json, sys
+          data = json.load(open(sys.argv[1], encoding='utf-8'))
+          raise SystemExit(0 if any(k in data for k in ('account_fact','formal_decision','trade_event')) else 1)
+          PY
+            then
+              python scripts/process_state_sync_request.py "$f"
+              processed=true
+            fi
+          done
+          echo "processed=$processed" >> "$GITHUB_OUTPUT"
       - name: Build objective intraday market delta
         if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_market_delta.py
@@ -191,10 +210,10 @@ jobs:
         if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_account_stock_market.py
       - name: Build state context and candidates
-        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_state_context.py
       - name: Build on-demand query context
-        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_query_context.py
       - name: Build post-market review event when closed
         if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
@@ -204,25 +223,29 @@ jobs:
         run: python scripts/build_chatgpt_task_probe.py
       - name: Commit downstream runtime/data artifacts
         # Core CURRENT is already published as soon as the 13-object snapshot passes.
-        # This second commit persists slower downstream contexts and final health metadata.
-        if: ${{ always() && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success') }}
+        # Account/Dashboard maintenance is deliberately downstream so user-facing
+        # analysis can consume the new core snapshot before slower persistence ends.
+        if: ${{ always() && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success' || steps.state_sync.outputs.processed == 'true') }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A -- data/market/snapshots data/state post_market_review events
+          git add -A -- data/market/snapshots data/state post_market_review events ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
           if git diff --cached --quiet; then
             exit 0
           fi
-          git commit -m "data: record downstream market contexts"
+          git commit -m "data: record downstream market contexts and state sync"
           python - <<'PY'
           import json, subprocess
           from pathlib import Path
           path = Path('data/state/runtime_health.json')
-          data = json.loads(path.read_text(encoding='utf-8'))
-          data['data_commit'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
-          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          if path.exists():
+              data = json.loads(path.read_text(encoding='utf-8'))
+              data['data_commit'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+              path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
           git add data/state/runtime_health.json
-          git commit -m "state: finalize runtime health commit"
+          if ! git diff --cached --quiet; then
+            git commit -m "state: finalize runtime health commit"
+          fi
           git pull --rebase origin main
           git push origin HEAD:main
