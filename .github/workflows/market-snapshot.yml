@@ -28,10 +28,12 @@ permissions:
   contents: write
 
 # Scheduled production, manual recovery and query-time refresh share one ordered
-# queue. An older run must never race a newer CURRENT update.
+# queue. A query-time push may cancel an older in-flight pulse so the user's
+# current request is not forced to wait behind stale work. Scheduled pulses do
+# not cancel each other.
 concurrency:
   group: etf-market-snapshot-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   snapshot:
