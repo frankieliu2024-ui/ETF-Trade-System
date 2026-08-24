@@ -45,6 +45,28 @@ def standard_number(text: str, key: str) -> int | None:
     return int(match.group(1)) if match else None
 
 
+
+def expected_freshness_status(age_seconds: object, runtime: dict) -> str | None:
+    if not isinstance(age_seconds, (int, float)):
+        return None
+    fresh_limit = int(runtime.get("fresh_max_age_seconds", 900))
+    degraded_limit = int(runtime.get("degraded_max_age_seconds", 1500))
+    if age_seconds <= fresh_limit:
+        return "FRESH"
+    if age_seconds <= degraded_limit:
+        return "DEGRADED"
+    return "STALE"
+
+
+def context_freshness(context: dict) -> dict:
+    freshness = context.get("freshness_at_context_build") or {}
+    data_status = context.get("data_status") or {}
+    return {
+        "status": str(freshness.get("status") or data_status.get("status") or "").upper(),
+        "age_seconds": freshness.get("age_seconds", data_status.get("age_seconds")),
+    }
+
+
 def main() -> int:
     errors: list[str] = []
     warnings: list[str] = []
@@ -137,7 +159,7 @@ def main() -> int:
     check("data_standard:us_extended_hours", all(x in standard for x in ["POST_MARKET", "PRE_MARKET", "QQQ", "SOXX", "不高估海外时间领先，也不低估海外时间领先"]), "US extended-hours timing and evidence boundaries documented")
 
     runtime = read_json("config/runtime_policy.json")
-    for key in ["target_cadence_seconds", "fresh_max_age_seconds", "degraded_max_age_seconds", "close_grace_seconds", "provider_timeout_seconds", "provider_retry_limit", "provider_max_workers"]:
+    for key in ["target_cadence_seconds", "fresh_max_age_seconds", "degraded_max_age_seconds", "close_grace_seconds", "provider_timeout_seconds", "provider_retry_limit", "scheduled_provider_max_workers", "query_provider_max_workers"]:
         check(f"pulse_policy:{key}", standard_number(standard, key) == runtime.get(key), f"standard={standard_number(standard, key)} runtime={runtime.get(key)}")
     check("pulse_policy:workflow_timeout", "workflow单次运行最长6分钟" in standard and int(runtime.get("workflow_timeout_minutes", 0)) == 6, f"runtime={runtime.get('workflow_timeout_minutes')}")
 
@@ -203,6 +225,18 @@ def main() -> int:
     check("maintenance_workflow:no_recovery_state_machine", "full_snapshot_recovery" not in maintenance_workflow and "run_full_snapshot_recovery.py" not in maintenance_workflow, "consistency workflow validates only; it does not duplicate production recovery")
 
     runtime_health = read_json("data/state/runtime_health.json")
+    query_context = read_json("data/state/query_context.json")
+    decision_context = read_json("data/state/decision_context.json")
+    query_freshness = context_freshness(query_context)
+    decision_freshness = context_freshness(decision_context)
+    query_expected = expected_freshness_status(query_freshness["age_seconds"], runtime)
+    decision_expected = expected_freshness_status(decision_freshness["age_seconds"], runtime)
+    check("dynamic_freshness:query_recalculated", bool(query_expected) and query_freshness["status"] == query_expected, f"declared={query_freshness['status']} expected={query_expected} age_seconds={query_freshness['age_seconds']}", warning=True)
+    check("dynamic_freshness:decision_recalculated", bool(decision_expected) and decision_freshness["status"] == decision_expected, f"declared={decision_freshness['status']} expected={decision_expected} age_seconds={decision_freshness['age_seconds']}")
+    check("dynamic_freshness:query_decision_aligned", query_freshness["status"] == decision_freshness["status"], f"query={query_freshness['status']} decision={decision_freshness['status']}")
+    current = read_json("data/state/CURRENT.json")
+    current_status = str((current.get("data_freshness") or {}).get("status", "")).upper()
+    check("dynamic_freshness:current_snapshot_boundary", bool(current_status) and bool(query_expected), f"CURRENT snapshot_status={current_status}; context_status={query_expected}; CURRENT is not required to age-transition automatically")
     runtime_status = str(runtime_health.get("status", "")).upper()
     allowed_runtime_statuses = {"NOT_RUN", "PASS", "DEGRADED", "FAILED", "SKIPPED", "SUPERSEDED"}
     check("runtime_health:structured", runtime_status in allowed_runtime_statuses, f"status={runtime_status or 'MISSING'}")
@@ -260,6 +294,12 @@ def main() -> int:
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
         "generated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
         "repository": {"head_sha": head_sha, "github_sha": github_sha, "github_run_id": os.environ.get("GITHUB_RUN_ID", ""), "github_ref": os.environ.get("GITHUB_REF", "")},
+        "commit_audit": {
+            "checked_commit": head_sha,
+            "workflow_sha": github_sha,
+            "persisted_state_commit": "",
+            "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。",
+        },
         "status": "FAIL" if errors else ("WARNING" if warnings else "PASS"),
         "hard_error_count": len(errors), "warning_count": len(warnings), "checks": checks, "errors": errors, "warnings": warnings,
         "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
