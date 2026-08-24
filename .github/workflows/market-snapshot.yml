@@ -205,6 +205,6 @@ jobs:
           path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
           git add data/state/runtime_health.json
-          git commit --amend --no-edit
+          git commit -m "state: finalize runtime health commit"
           git pull --rebase origin main
           git push origin HEAD:main
