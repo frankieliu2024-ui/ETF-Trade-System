@@ -14,7 +14,7 @@ SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
 FORMAL_FILES = ["ETF规则_MASTER.md", "ETF当前状态_DASHBOARD.md", "ETF交易复盘与经验库_2026.md", "ETF市场行情档案_2026.md"]
 CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/account_fact.json", "data/state/us_extended_hours_context.json", "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json", "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json"]
-CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_query_context.py", ".github/workflows/market-snapshot.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
+CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_query_context.py", ".github/workflows/market-snapshot.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
 EXPECTED_INDICES = {"000001.SH", "399006.SZ", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
 REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api"}
 
@@ -77,7 +77,7 @@ def main() -> int:
     for path in FORMAL_FILES:
         check(f"index_entry:{path}", f"`{path}`" in index_text, "canonical entry present" if f"`{path}`" in index_text else "missing")
     check("index_entry:data_standard", DATA_STANDARD in index_text, "data standard entry present")
-    check("index_entry:us_extended_hours", "us_extended_hours_context.json" in index_text, "US extended-hours context present in system index")
+    check("index_entry:us_extended_hours", "us_extended_hours_context.json" in index_text and "us-extended-hours-pulse.yml" in index_text, "US extended-hours state and workflow present in system index")
 
     market_cfg = read_json("config/market/market_monitor_config.json")
     formal_indices = set(market_cfg.get("formal_index_layer", {}).get("required_objects", []))
@@ -166,10 +166,15 @@ def main() -> int:
 
     overseas_workflow = read_text(".github/workflows/overseas-preopen-pulse.yml")
     check("workflow:overseas_preopen_exists", "build_overseas_context.py" in overseas_workflow, "standalone overseas pre-open pulse wired")
-    check("workflow:us_extended_wired", "build_us_extended_hours_context.py" in overseas_workflow and "us_extended_hours_context.json" in overseas_workflow, "US extended-hours context wired into pre-open workflow")
+    check("workflow:us_extended_wired", "build_us_extended_hours_context.py" in overseas_workflow and "us_extended_hours_context.json" in overseas_workflow, "US extended-hours context wired into A-share pre-open workflow")
     check("workflow:us_postmarket_0700_start", '*/10 23 * * 0-4' in overseas_workflow, "Beijing 07:00-07:50 prior-US post-market tail scheduled")
     check("workflow:overseas_0800_start", '*/10 0 * * 1-5' in overseas_workflow, "Beijing 08:00-08:50 overseas pulses scheduled")
     check("workflow:overseas_0900_0910", '0,10 1 * * 1-5' in overseas_workflow, "Beijing 09:00/09:10 overseas pulses scheduled")
+
+    us_workflow = read_text(".github/workflows/us-extended-hours-pulse.yml")
+    check("workflow:us_afternoon_exists", "build_us_extended_hours_context.py" in us_workflow, "standalone US afternoon/evening extended-hours pulse wired")
+    check("workflow:us_premarket_dst_window", '0 8-13 * * 1-5' in us_workflow and '20,30 13 * * 1-5' in us_workflow, "Beijing 16:00-21:30 DST-sensitive US pre-market coverage scheduled")
+    check("workflow:us_premarket_standard_window", '0,20,30 14 * * 1-5' in us_workflow, "Beijing 22:00-22:30 standard-time US pre-market/open boundary scheduled")
 
     maintenance_workflow = read_text(".github/workflows/system-consistency.yml")
     check("maintenance_workflow:data_standard_trigger", DATA_STANDARD in maintenance_workflow, "data standard changes trigger consistency workflow")
