@@ -7,22 +7,18 @@ on:
         description: "Research backfill request JSON path"
         required: true
         default: "requests/research_backfill/20260824_stage1.json"
-  push:
-    branches: [main]
-    paths:
-      - "requests/research_backfill/history_run_trigger.txt"
 
 permissions:
   contents: write
 
 concurrency:
   group: etf-research-backfill
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   backfill:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 12
     env:
       HITHINK_FINANCE_API_KEY: ${{ secrets.HITHINK_FINANCE_API_KEY }}
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
@@ -30,72 +26,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
-
-      - name: Record historical backfill run start
-        run: |
-          mkdir -p data/state
-          python - <<'PY'
-          import json, os
-          from pathlib import Path
-          Path('data/state/historical_backfill_workflow_probe.json').write_text(json.dumps({
-              'run_id': os.environ.get('GITHUB_RUN_ID'),
-              'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
-              'status': 'RUNNING',
-              'sha': os.environ.get('GITHUB_SHA'),
-              'event': os.environ.get('GITHUB_EVENT_NAME'),
-          }, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-          PY
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/state/historical_backfill_workflow_probe.json
-          git commit -m "ops: record historical backfill start"
-          git pull --rebase origin main
-          git push origin HEAD:main
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       - name: Install research dependency
         run: python -m pip install --disable-pip-version-check pandas
-
       - name: Run requested historical research backfill
-        run: |
-          REQUEST_PATH="${{ github.event.inputs.request_path }}"
-          if [ -z "$REQUEST_PATH" ]; then
-            REQUEST_PATH="requests/research_backfill/20260824_stage1.json"
-          fi
-          python scripts/backfill_research_daily_history.py "$REQUEST_PATH"
-
+        run: python scripts/backfill_research_daily_history.py "${{ github.event.inputs.request_path }}"
       - name: Commit compact historical research facts
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A -- events/research/daily_features data/state/historical_backfill_status.json data/market/audit/research_backfill
+          git add -A -- events/research/daily_features data/state/historical_backfill_status.json
           if git diff --cached --quiet; then
             exit 0
           fi
           git commit -m "research: backfill ETF daily evidence"
-          git pull --rebase origin main
-          git push origin HEAD:main
-
-      - name: Record historical backfill outcome
-        if: always()
-        run: |
-          python - <<'PY'
-          import json, os
-          from pathlib import Path
-          Path('data/state/historical_backfill_workflow_probe.json').write_text(json.dumps({
-              'run_id': os.environ.get('GITHUB_RUN_ID'),
-              'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
-              'status': '${{ job.status }}',
-              'sha': os.environ.get('GITHUB_SHA'),
-              'event': os.environ.get('GITHUB_EVENT_NAME'),
-          }, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-          PY
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/state/historical_backfill_workflow_probe.json
-          git commit -m "ops: record historical backfill outcome" || exit 0
           git pull --rebase origin main
           git push origin HEAD:main
