@@ -76,6 +76,7 @@ def account_gate_status(current: dict, account: dict, policy: dict) -> dict:
 def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict) -> dict:
     latest_snapshot = current.get("latest_snapshot", "")
     account_gate = account_gate_status(current, account, policy)
+    effective_data_status = {**(current.get("data_freshness") or {}), **freshness}
     required = [CANONICAL_FILES[k] for k in ["index", "master", "data_standard", "current", "system_consistency", "runtime_policy", "runtime_health", "trading_calendar", "etf_monitor_universe", "overseas_context", "us_extended_hours_context", "stock_monitor_policy", "stock_context", "stock_market_context"]]
     if latest_snapshot:
         required.append(latest_snapshot)
@@ -105,7 +106,7 @@ def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict)
             "etf_monitor_universe": CANONICAL_FILES["etf_monitor_universe"], "trading_calendar": CANONICAL_FILES["trading_calendar"],
             "stock_context": CANONICAL_FILES["stock_context"], "stock_market_context": CANONICAL_FILES["stock_market_context"],
             "system_consistency": CANONICAL_FILES["system_consistency"], "data_standard": CANONICAL_FILES["data_standard"], "runtime_health": CANONICAL_FILES["runtime_health"], "runtime_policy": CANONICAL_FILES["runtime_policy"],
-            "freshness_at_context_build": freshness, "data_freshness": current.get("data_freshness", {}),
+            "freshness_at_context_build": freshness, "data_freshness": effective_data_status,
             "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新计算FRESH/DEGRADED/STALE。",
             "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
             "broker_screenshot_rule": "券商截图只确定账户、持仓、现金和成交事实；收到截图后行情仍应优先重新补采。截图时间不得冒充ETF、指数或个股行情时间。",
@@ -144,7 +145,7 @@ def build(root: Path = ROOT) -> dict:
         "generated_at": now_utc(), "generated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
         "market_date": current.get("market_date", ""), "latest_valid_node": current.get("latest_valid_node", ""),
         "current": current, "decision_context": decision, "decision_read_plan": build_read_plan(current, account, policy, freshness),
-        "canonical_files": CANONICAL_FILES, "data_status": current.get("data_freshness", {}), "freshness_at_context_build": freshness,
+        "canonical_files": CANONICAL_FILES, "data_status": effective_data_status, "freshness_at_context_build": freshness,
         "trading_day_status": trading_day_status, "runtime_health": runtime_health,
         "system_consistency_status": consistency.get("status", "MISSING"), "system_consistency_hard_errors": consistency.get("hard_error_count", None),
         "etf_universe_count": len(etf_universe.get("objects") or []), "overseas_context_status": overseas_context.get("quality_status", "MISSING"),
