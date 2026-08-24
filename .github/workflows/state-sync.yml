@@ -1,0 +1,60 @@
+name: ETF asynchronous state sync
+
+on:
+  push:
+    paths:
+      - "requests/state_sync/**.json"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: etf-state-sync-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Resolve changed state-sync requests
+        id: requests
+        shell: bash
+        run: |
+          files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/state_sync/*.json' | tr '\n' ' ')
+          echo "files=$files" >> "$GITHUB_OUTPUT"
+          echo "state-sync requests: $files"
+      - name: Process state-sync requests
+        if: ${{ steps.requests.outputs.files != '' }}
+        shell: bash
+        run: |
+          for f in ${{ steps.requests.outputs.files }}; do
+            python scripts/process_state_sync_request.py "$f"
+          done
+      - name: Refresh state and query contexts
+        if: ${{ steps.requests.outputs.files != '' }}
+        run: |
+          python scripts/build_state_context.py
+          python scripts/build_query_context.py
+      - name: Run system consistency check
+        if: ${{ steps.requests.outputs.files != '' }}
+        run: python scripts/check_system_consistency.py
+      - name: Commit asynchronous state maintenance
+        if: ${{ steps.requests.outputs.files != '' }}
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md data/state events/trades
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "state: sync broker facts and dashboard"
+          git pull --rebase origin main
+          git push origin HEAD:main
