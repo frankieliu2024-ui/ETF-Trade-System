@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "enabled": true,
+  "role": "RESEARCH_EVIDENCE_ONLY",
+  "decision_eligible": false,
+  "upstream": {
+    "repository": "https://github.com/microsoft/qlib.git",
+    "commit": "79633dd9506ea689e5400dea0197717b5b3d74b7",
+    "license": "MIT"
+  },
+  "model": {
+    "class": "qlib.contrib.model.gbdt.LGBModel",
+    "loss": "mse",
+    "num_boost_round": 300,
+    "early_stopping_rounds": 30,
+    "learning_rate": 0.03,
+    "num_leaves": 15,
+    "max_depth": 5,
+    "min_data_in_leaf": 30,
+    "feature_fraction": 0.85,
+    "bagging_fraction": 0.85,
+    "bagging_freq": 1,
+    "seed": 20260824
+  },
+  "features": [
+    "ret_1d_pct",
+    "ret_5d_pct",
+    "ret_10d_pct",
+    "ret_20d_pct",
+    "volatility_5d_pct",
+    "volatility_20d_pct",
+    "drawdown_from_20d_high_pct",
+    "range_1d_pct",
+    "volume_ratio_5d_20d",
+    "amount_ratio_5d_20d",
+    "cross_section_ret1_z",
+    "cross_section_ret5_rank_pct",
+    "cross_section_ret20_rank_pct"
+  ],
+  "horizons_trading_days": [5, 10],
+  "validation": {
+    "minimum_cross_section_size": 6,
+    "primary_metrics": [
+      "sample_out_cross_section_rank_ic",
+      "top_candidate_forward_return",
+      "top_minus_bottom_forward_spread",
+      "time_split_repeatability",
+      "increment_vs_momentum_baselines"
+    ]
+  },
+  "boundaries": {
+    "trade_signal_prohibited": true,
+    "trial_confirm_generation_prohibited": true,
+    "master_rule_override_prohibited": true,
+    "historical_decision_reconstruction_prohibited": true,
+    "description": "Qlib第一阶段仅验证现有客观研究事实能否改善ETF未来5/10日横截面排序。不得直接生成风险许可、机会状态、金额、持有、降低风险或退出结论。"
+  }
+}
