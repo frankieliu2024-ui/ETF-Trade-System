@@ -37,7 +37,6 @@ jobs:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
       HITHINK_RETRY_LIMIT: "2"
       HITHINK_TIMEOUT_SECONDS: "25"
-      HITHINK_MAX_WORKERS: ${{ github.event_name == 'push' && '2' || '1' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -96,6 +95,23 @@ jobs:
       - name: Install hithink-finance CLI
         if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
         run: npm install --global @hithink-tech/hithink-finance-cli
+      - name: Load unified provider concurrency policy
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          policy = json.loads(Path("config/runtime_policy.json").read_text(encoding="utf-8"))
+          key = "query_provider_max_workers" if os.environ.get("GITHUB_EVENT_NAME") == "push" else "scheduled_provider_max_workers"
+          value = policy.get(key)
+          if not isinstance(value, int) or value < 1:
+              raise SystemExit(f"invalid {key}={value!r}")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
+              handle.write(f"HITHINK_MAX_WORKERS={value}\n")
+          print(f"provider concurrency: {key}={value}")
+      
       - name: Run data-only snapshot
         id: capture
         if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
