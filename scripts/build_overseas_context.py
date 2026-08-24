@@ -103,6 +103,95 @@ def validate_latest(latest: dict) -> str:
     return "PASS"
 
 
+def parse_provider_datetime(raw_value, timezone_name: str) -> datetime:
+    if raw_value in (None, "", 0, "0"):
+        raise RuntimeError("provider timestamp missing")
+    zone = ZoneInfo(timezone_name)
+    if isinstance(raw_value, (int, float)) or str(raw_value).isdigit():
+        ts = int(float(raw_value))
+        if ts > 10_000_000_000:
+            ts //= 1000
+        return datetime.fromtimestamp(ts, timezone.utc)
+    parsed = datetime.fromisoformat(str(raw_value).replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=zone)
+    return parsed.astimezone(timezone.utc)
+
+
+def freshness_for_pulse(record: dict, generated_utc: datetime) -> tuple[str, bool, float | None]:
+    latest = record.get("latest") or {}
+    as_of = latest.get("as_of_utc")
+    if not as_of:
+        return "STALE", False, None
+    observed = parse_provider_datetime(as_of, record.get("market_timezone", "Asia/Hong_Kong"))
+    delay = max(0.0, (generated_utc - observed).total_seconds() / 60)
+    phase = record.get("market_phase_at_generation", "")
+    same_local_date = latest.get("market_date_local") == generated_utc.astimezone(ZoneInfo(record.get("market_timezone", "Asia/Hong_Kong"))).date().isoformat()
+    if phase == "OPEN":
+        if same_local_date and delay <= 10:
+            return "FRESH", True, round(delay, 2)
+        if same_local_date and delay <= 20:
+            return "DELAYED", False, round(delay, 2)
+        return "STALE", False, round(delay, 2)
+    if phase in {"BREAK", "CLOSED"} and same_local_date:
+        return "SESSION_REFERENCE", True, round(delay, 2)
+    return "PREVIOUS_SESSION_REFERENCE", False, round(delay, 2)
+
+
+def provider_attempt(record: dict, provider_id: str, generated_utc: datetime) -> dict:
+    freshness, stable, delay = freshness_for_pulse(record, generated_utc)
+    latest = record.get("latest") or {}
+    return {
+        "provider": provider_id,
+        "result": "PASS" if stable else "DEGRADED",
+        "http_or_cli_result": record.get("provider_result", ""),
+        "quality_status": record.get("quality_status", "MISSING"),
+        "freshness_status": freshness,
+        "stable_for_10m_pulse": stable,
+        "symbol": record.get("symbol", ""),
+        "latest_price": latest.get("close"),
+        "open": latest.get("open"),
+        "high": latest.get("high"),
+        "low": latest.get("low"),
+        "close": latest.get("close"),
+        "provider_timestamp": latest.get("timestamp"),
+        "provider_timestamp_field": record.get("provider_timestamp_field", ""),
+        "as_of_beijing": latest.get("as_of_beijing", ""),
+        "market_phase": record.get("market_phase_at_generation", ""),
+        "delay_minutes": delay,
+    }
+
+
+def failed_attempt(provider_id: str, result: str, generated_utc: datetime) -> dict:
+    return {
+        "provider": provider_id,
+        "result": "FAILED",
+        "http_or_cli_result": result,
+        "quality_status": "FAILED",
+        "freshness_status": "MISSING",
+        "stable_for_10m_pulse": False,
+        "as_of_beijing": "",
+        "market_phase": market_phase("Asia/Hong_Kong", generated_utc),
+        "delay_minutes": None,
+    }
+
+
+def compare_hstech_attempts(attempts: list[dict]) -> dict:
+    usable = [x for x in attempts if x.get("latest_price") is not None and x.get("as_of_beijing")]
+    if len(usable) < 2:
+        return {"comparable": False, "reason": "fewer_than_two_timestamped_direct_sources"}
+    times = [parse_provider_datetime(x["as_of_beijing"], "Asia/Hong_Kong") for x in usable]
+    time_gap = (max(times) - min(times)).total_seconds() / 60
+    prices = [float(x["latest_price"]) for x in usable]
+    price_gap_pct = (max(prices) - min(prices)) / min(prices) * 100 if min(prices) else None
+    return {
+        "comparable": time_gap <= 10,
+        "time_gap_minutes": round(time_gap, 2),
+        "price_gap_pct": round(price_gap_pct, 4) if price_gap_pct is not None else None,
+        "reason": "timestamps_aligned" if time_gap <= 10 else "timestamps_not_aligned",
+    }
+
+
 def time_relation(object_id: str, latest: dict, phase: str, generated_utc: datetime) -> str:
     sh_date = generated_utc.astimezone(BEIJING).date().isoformat()
     source_date = latest.get("market_date_local", "")
@@ -126,33 +215,32 @@ def fetch_yahoo(object_id: str, spec: dict, generated_utc: datetime) -> dict:
         "market_phase_at_generation": phase,
         "time_relation_to_a_share": time_relation(object_id, latest, phase, generated_utc),
         "quality_status": quality, "latest": latest,
+        "provider_result": "HTTP 200", "provider_timestamp_field": "chart.timestamp",
         "display_time_rule": "正式输出优先显示latest.as_of_beijing（北京时间）；同时保留本地市场时区和market_phase用于跨市场解释。",
         "decision_note": "必须按北京时间数据时点与market_phase解释；不同市场非同一时点，不得把上一收盘、盘中和当日收盘混为同步信号。",
     }
 
 
-def fetch_hstech_eastmoney(generated_utc: datetime) -> dict:
+def fetch_hstech_eastmoney(generated_utc: datetime, *, host: str = "push2.eastmoney.com") -> dict:
     params = {
         "secid": "124.HSTECH",
         "fltt": "2",
         "invt": "2",
-        "fields": "f43,f44,f45,f46,f47,f48,f57,f58,f60,f124",
+        "fields": "f43,f44,f45,f46,f47,f48,f57,f58,f60,f86,f124",
     }
-    url = "https://push2.eastmoney.com/api/qt/stock/get?" + urllib.parse.urlencode(params)
+    url = f"https://{host}/api/qt/stock/get?" + urllib.parse.urlencode(params)
     req = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.15"})
     with urllib.request.urlopen(req, timeout=20) as response:
+        status_code = int(response.status)
         payload = json.load(response)
     data = payload.get("data") or {}
     required = {"open": data.get("f46"), "high": data.get("f44"), "low": data.get("f45"), "close": data.get("f43")}
     if any(value in (None, "-") for value in required.values()):
-        raise RuntimeError("eastmoney 124.HSTECH missing OHLC fields")
-    raw_ts = data.get("f124")
-    if raw_ts in (None, "", 0):
-        raise RuntimeError("eastmoney 124.HSTECH missing provider timestamp f124")
-    ts = int(raw_ts)
-    if ts > 10_000_000_000:
-        ts //= 1000
-    dt_utc = datetime.fromtimestamp(ts, timezone.utc)
+        raise RuntimeError(f"{host} 124.HSTECH missing OHLC fields")
+    timestamp_field = "f124" if data.get("f124") not in (None, "", 0, "0") else "f86"
+    raw_ts = data.get(timestamp_field)
+    dt_utc = parse_provider_datetime(raw_ts, "Asia/Hong_Kong")
+    ts = int(dt_utc.timestamp())
     local = dt_utc.astimezone(ZoneInfo("Asia/Hong_Kong"))
     beijing = dt_utc.astimezone(BEIJING)
     latest = {
@@ -169,11 +257,15 @@ def fetch_hstech_eastmoney(generated_utc: datetime) -> dict:
         "symbol": "124.HSTECH",
     }
     phase = market_phase("Asia/Hong_Kong", generated_utc)
+    provider_name = "eastmoney_push2delay" if host.startswith("push2delay") else "eastmoney_push2"
     return {
         "object": "HSTECH",
         "name": "恒生科技指数",
         "reference_role": "HK_TECH",
-        "provider": "eastmoney_push2",
+        "provider": provider_name,
+        "provider_result": f"HTTP {status_code}",
+        "provider_timestamp_field": timestamp_field,
+        "provider_endpoint": host,
         "symbol": "124.HSTECH",
         "market_timezone": "Asia/Hong_Kong",
         "market_phase_at_generation": phase,
@@ -181,33 +273,59 @@ def fetch_hstech_eastmoney(generated_utc: datetime) -> dict:
         "quality_status": validate_latest(latest),
         "latest": latest,
         "display_time_rule": "正式输出优先显示latest.as_of_beijing（北京时间）。",
-        "decision_note": "东方财富为恒生科技指数直接行情备源；必须使用provider时间戳f124，不得用workflow执行时间冒充行情时间。",
+        "decision_note": "东方财富为恒生科技指数直接行情备源；使用provider时间戳f124，若f124为0则使用实测有效的f86；不得用workflow执行时间冒充行情时间。",
     }
 
 
 def fetch_hstech_hithink(generated_utc: datetime) -> dict:
     cli = shutil.which("hithink-finance")
     if not cli:
-        raise RuntimeError("hithink-finance CLI not found")
+        raise RuntimeError("CLI unavailable: hithink-finance not installed")
     thscode = os.environ.get("HSTECH_HITHINK_CODE", "HS2083")
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "hstech.json"
         completed = subprocess.run([cli, "index", "snapshot", "--thscodes", thscode, "--output", str(out), "--format", "json"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=25, check=False)
         if completed.returncode != 0 or not out.exists():
-            raise RuntimeError((completed.stderr or "hithink HS2083 request failed")[-500:])
+            detail = (completed.stdout or completed.stderr or "hithink request failed")[-500:]
+            raise RuntimeError(f"CLI exit={completed.returncode}: {detail}")
         obj = json.loads(out.read_text(encoding="utf-8"))
         items = obj.get("data", {}).get("item") or []
         if len(items) != 1:
-            raise RuntimeError(f"HS2083 expected one row, got {len(items)}")
+            raise RuntimeError(f"CLI exit=0: HS2083 expected one row, got {len(items)}")
         item = items[0]
         required = ("open_price", "high_price", "low_price", "last_price")
         if any(item.get(k) is None for k in required):
-            raise RuntimeError("HS2083 missing OHLC fields")
-        local = generated_utc.astimezone(ZoneInfo("Asia/Hong_Kong"))
-        beijing = generated_utc.astimezone(BEIJING)
-        latest = {"open": item["open_price"], "high": item["high_price"], "low": item["low_price"], "close": item["last_price"], "volume": item.get("volume"), "amount": item.get("turnover"), "as_of_utc": generated_utc.isoformat(timespec="seconds").replace("+00:00", "Z"), "as_of_local": local.isoformat(timespec="seconds"), "as_of_beijing": beijing.isoformat(timespec="seconds"), "market_date_local": local.date().isoformat(), "provider_timezone": "Asia/Hong_Kong", "symbol": thscode}
+            raise RuntimeError("CLI exit=0: HS2083 missing OHLC fields")
+        timestamp_fields = ("timestamp", "quote_timestamp", "update_timestamp", "trade_timestamp", "update_time", "trade_time", "datetime")
+        timestamp_field = next((field for field in timestamp_fields if item.get(field) not in (None, "", 0, "0")), "")
+        if not timestamp_field and item.get("trade_date") and item.get("trade_time"):
+            timestamp_field = "trade_date+trade_time"
+            raw_timestamp = f"{item['trade_date']}T{item['trade_time']}"
+        else:
+            raw_timestamp = item.get(timestamp_field) if timestamp_field else None
+        if raw_timestamp is None:
+            raise RuntimeError("CLI exit=0: HS2083 missing provider timestamp; workflow time is forbidden")
+        dt_utc = parse_provider_datetime(raw_timestamp, "Asia/Hong_Kong")
+        local = dt_utc.astimezone(ZoneInfo("Asia/Hong_Kong"))
+        beijing = dt_utc.astimezone(BEIJING)
+        latest = {
+            "open": item["open_price"], "high": item["high_price"], "low": item["low_price"], "close": item["last_price"],
+            "volume": item.get("volume"), "amount": item.get("turnover"), "timestamp": int(dt_utc.timestamp()),
+            "as_of_utc": dt_utc.isoformat(timespec="seconds").replace("+00:00", "Z"),
+            "as_of_local": local.isoformat(timespec="seconds"), "as_of_beijing": beijing.isoformat(timespec="seconds"),
+            "market_date_local": local.date().isoformat(), "provider_timezone": "Asia/Hong_Kong", "symbol": thscode,
+        }
         phase = market_phase("Asia/Hong_Kong", generated_utc)
-        return {"object": "HSTECH", "name": "恒生科技指数", "reference_role": "HK_TECH", "provider": "hithink-finance", "symbol": thscode, "market_timezone": "Asia/Hong_Kong", "market_phase_at_generation": phase, "time_relation_to_a_share": time_relation("HSTECH", latest, phase, generated_utc), "quality_status": validate_latest(latest), "latest": latest, "display_time_rule": "正式输出优先显示latest.as_of_beijing（北京时间）。", "decision_note": "恒生科技与A股交易时段部分重合但收盘时点不同；必须按北京时间数据时点和香港market_phase解释。"}
+        return {
+            "object": "HSTECH", "name": "恒生科技指数", "reference_role": "HK_TECH",
+            "provider": "hithink-finance", "provider_result": "CLI exit=0",
+            "provider_timestamp_field": timestamp_field, "symbol": thscode,
+            "market_timezone": "Asia/Hong_Kong", "market_phase_at_generation": phase,
+            "time_relation_to_a_share": time_relation("HSTECH", latest, phase, generated_utc),
+            "quality_status": validate_latest(latest), "latest": latest,
+            "display_time_rule": "正式输出优先显示latest.as_of_beijing（北京时间）。",
+            "decision_note": "恒生科技与A股交易时段部分重合但收盘时点不同；只接受provider自身时间戳，不以workflow时间代替。",
+        }
 
 
 def build() -> dict:
@@ -218,17 +336,46 @@ def build() -> dict:
     for object_id, spec in OBJECTS.items():
         try:
             if object_id == "HSTECH":
-                try:
-                    record = fetch_hstech_hithink(generated_utc)
-                except Exception as hithink_error:
+                attempts = []
+                candidates = []
+                direct_chain = [
+                    ("hithink-finance:HS2083", lambda: fetch_hstech_hithink(generated_utc)),
+                    ("yahoo_chart_api:HSTECH.HK", lambda: fetch_yahoo(object_id, spec, generated_utc)),
+                    ("eastmoney_push2:124.HSTECH", lambda: fetch_hstech_eastmoney(generated_utc)),
+                ]
+                for provider_id, loader in direct_chain:
                     try:
-                        record = fetch_yahoo(object_id, spec, generated_utc)
-                        record["fallback_from"] = "hithink-finance:HS2083"
-                        record["fallback_reason"] = str(hithink_error)[-300:]
-                    except Exception as yahoo_error:
-                        record = fetch_hstech_eastmoney(generated_utc)
-                        record["fallback_from"] = "hithink-finance:HS2083 -> yahoo_chart_api:HSTECH.HK"
-                        record["fallback_reason"] = f"hithink={str(hithink_error)[-180:]}; yahoo={str(yahoo_error)[-180:]}"
+                        candidate = loader()
+                        summary = provider_attempt(candidate, provider_id, generated_utc)
+                        attempts.append(summary)
+                        candidates.append((candidate, summary))
+                    except Exception as provider_error:
+                        attempts.append(failed_attempt(provider_id, str(provider_error)[-500:], generated_utc))
+                if attempts[-1]["result"] == "FAILED":
+                    try:
+                        delayed = fetch_hstech_eastmoney(generated_utc, host="push2delay.eastmoney.com")
+                        delayed_summary = provider_attempt(delayed, "eastmoney_push2delay:124.HSTECH", generated_utc)
+                        attempts.append(delayed_summary)
+                        candidates.append((delayed, delayed_summary))
+                    except Exception as delayed_error:
+                        attempts.append(failed_attempt("eastmoney_push2delay:124.HSTECH", str(delayed_error)[-500:], generated_utc))
+                selected = next(((candidate, summary) for candidate, summary in candidates if summary["stable_for_10m_pulse"]), None)
+                if selected:
+                    record, selected_summary = selected
+                    record["quality_status"] = "PASS"
+                    record["selected_provider_id"] = selected_summary["provider"]
+                else:
+                    record = candidates[-1][0] if candidates else {
+                        "object": "HSTECH", "name": spec["name"], "reference_role": spec["role"],
+                        "provider": "DIRECT_SOURCES_UNAVAILABLE", "symbol": "HS2083/HSTECH.HK/124.HSTECH",
+                        "market_timezone": spec["timezone"], "market_phase_at_generation": market_phase(spec["timezone"], generated_utc),
+                    }
+                    record["quality_status"] = "DEGRADED"
+                    record["error"] = "no direct HSTECH source met timestamp/freshness requirements; ETF_PROXY_513180 is eligible but not used as a direct index"
+                    record["proxy_eligible"] = "ETF_PROXY_513180"
+                record["provider_attempts"] = attempts
+                record["source_comparison"] = compare_hstech_attempts(attempts)
+                record["direct_source_chain"] = ["hithink-finance:HS2083", "yahoo_chart_api:HSTECH.HK", "eastmoney_push2:124.HSTECH"]
             else:
                 record = fetch_yahoo(object_id, spec, generated_utc)
             if record["quality_status"] == "PASS":
