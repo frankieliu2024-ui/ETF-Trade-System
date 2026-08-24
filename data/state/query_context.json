@@ -1,5 +1,6 @@
 {
-  "generated_at": "2026-08-23T12:12:23Z",
+  "generated_at": "2026-08-24T01:05:15Z",
+  "generated_at_beijing": "2026-08-24T09:05:15+08:00",
   "market_date": "",
   "latest_valid_node": "",
   "current": {
@@ -22,7 +23,7 @@
     "generated_at": ""
   },
   "decision_context": {
-    "generated_at": "2026-08-23T12:12:23Z",
+    "generated_at": "2026-08-24T01:05:15Z",
     "rules_version": "V2.2.15",
     "market_date": "",
     "latest_node": "",
@@ -52,13 +53,169 @@
       "automatic_overwrite": false,
       "automatic_trade_output": false
     },
-    "account_fact_status": "MISSING",
-    "needs_account_screenshot": true,
+    "account_fact_status": "VALID",
+    "needs_account_screenshot": false,
     "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。"
   },
+  "decision_read_plan": {
+    "mode": "LATEST_STATE_ON_DEMAND",
+    "required_reads": [
+      "ETF_SYSTEM_INDEX.md",
+      "ETF规则_MASTER.md",
+      "ETF与市场监测数据接口使用规范.md",
+      "data/state/CURRENT.json",
+      "data/state/system_consistency.json",
+      "config/runtime_policy.json",
+      "data/state/runtime_health.json",
+      "config/market/a_share_trading_calendar_2026.json",
+      "config/market/etf_monitor_universe.json",
+      "data/state/overseas_context.json",
+      "data/state/us_extended_hours_context.json",
+      "config/market/stock_monitor_policy.json",
+      "data/state/stock_context.json",
+      "data/state/stock_market_context.json",
+      "data/state/market_delta.json",
+      "ETF当前状态_DASHBOARD.md",
+      "data/state/account_fact.json",
+      "data/state/asset_roles.json"
+    ],
+    "conditional_reads": {
+      "lifecycle_or_prior_case_needed": "ETF交易复盘与经验库_2026.md",
+      "historical_market_fact_needed": "ETF市场行情档案_2026.md",
+      "industry_chain_stock_needed": "按当前ETF/行业假设临时发现跨市场最有解释力的产业链公司；美股个股可同时核验REGULAR/POST_MARKET/PRE_MARKET，但不使用永久固定名单。"
+    },
+    "account_gate": {
+      "raw_status": "VALID",
+      "updated_at": "2026-08-21T15:00:00+08:00",
+      "updated_market_date": "2026-08-21",
+      "current_market_date": "",
+      "same_market_date_required": false,
+      "can_use_current_account_fact": true,
+      "requires_user_broker_screenshot": false,
+      "reason": "OK",
+      "rule": "正式盘中/盘后决策使用的账户、持仓、现金和成交事实必须属于当前market_date；旧日VALID不得自动沿用为当日VALID。"
+    },
+    "market_gate": {
+      "node_status": "NON_TRADING_DAY",
+      "latest_valid_node": "",
+      "latest_snapshot": "",
+      "captured_at": "",
+      "captured_at_beijing": "",
+      "market_delta": "data/state/market_delta.json",
+      "overseas_context": "data/state/overseas_context.json",
+      "us_extended_hours_context": "data/state/us_extended_hours_context.json",
+      "etf_monitor_universe": "config/market/etf_monitor_universe.json",
+      "trading_calendar": "config/market/a_share_trading_calendar_2026.json",
+      "stock_context": "data/state/stock_context.json",
+      "stock_market_context": "data/state/stock_market_context.json",
+      "system_consistency": "data/state/system_consistency.json",
+      "data_standard": "ETF与市场监测数据接口使用规范.md",
+      "runtime_health": "data/state/runtime_health.json",
+      "runtime_policy": "config/runtime_policy.json",
+      "freshness_at_context_build": {
+        "status": "STALE",
+        "age_seconds": null,
+        "reason": "missing_captured_at"
+      },
+      "data_freshness": {},
+      "query_time_rule": "每次查询必须重新计算数据年龄；FRESH/DEGRADED/STALE以实际数据时点判断，不按cron计划时间判断。",
+      "output_time_rule": "任何正式行情分析、ETF判断、盘中复核或盘后复盘，只要引用行情，必须显式输出【数据时点（北京时间）】。A股使用captured_at_beijing；海外/亚洲对象优先使用latest.as_of_beijing；美股扩展时段同时标注PRE_MARKET/REGULAR/POST_MARKET。多个对象时点明显不一致时分别标注。",
+      "delay_visibility_rule": "若数据相对查询时刻存在可见延迟，不隐藏延迟；直接展示北京时间as_of，并在必要时注明距当前约多少分钟。",
+      "trading_day_rule": "每次当前查询先读取A股官方交易日历，区分正常交易日前/盘中/盘后、周末与交易所休市。",
+      "consistency_rule": "正式分析前读取system_consistency.json；硬FAIL先处理系统冲突。",
+      "data_standard_rule": "行情来源、质量、盘前/盘中脉冲、新鲜度、跨市场时点和降级边界以一级目录数据规范为基础。",
+      "etf_rule": "ETF机器采集以etf_monitor_universe.json为唯一运行清单；持仓/观察身份由Dashboard和当日账户事实解释。",
+      "overseas_rule": "正式海外/亚洲指数必须检查NDX、SOX、N225、KOSPI、TWII、HSTECH；北京时间08:00起已有日韩市场脉冲，不能等A股9:30才开始读取海外。",
+      "us_extended_hours_rule": "美国信息分三段解释：上一正式现金盘（NDX/SOX）、POST_MARKET（QQQ/SOXX及条件个股）、下一交易日PRE_MARKET。A股早盘前可能获得上一美股盘后信息；下一美股PRE_MARKET通常在北京时间A股收盘后开始，主要形成下一A股交易日的前置信号。扩展时段不得等同正式指数确认。",
+      "stock_rule": "第三层默认个股由当日账户事实动态生成；产业链个股按查询主题动态发现。",
+      "rule": "盘中查询使用最新有效状态和相邻行情变化；数据不足时明确不足。"
+    },
+    "runtime_resilience": {
+      "target_cadence_seconds": 600,
+      "fresh_max_age_seconds": 900,
+      "degraded_max_age_seconds": 1500,
+      "close_grace_seconds": 900,
+      "principle": "常规10分钟为目标；关键集合竞价节点允许事件脉冲；延迟或失败时保留上一有效状态。"
+    }
+  },
+  "canonical_files": {
+    "index": "ETF_SYSTEM_INDEX.md",
+    "master": "ETF规则_MASTER.md",
+    "dashboard": "ETF当前状态_DASHBOARD.md",
+    "experience": "ETF交易复盘与经验库_2026.md",
+    "market_archive": "ETF市场行情档案_2026.md",
+    "data_standard": "ETF与市场监测数据接口使用规范.md",
+    "current": "data/state/CURRENT.json",
+    "account_fact": "data/state/account_fact.json",
+    "asset_roles": "data/state/asset_roles.json",
+    "etf_monitor_universe": "config/market/etf_monitor_universe.json",
+    "trading_calendar": "config/market/a_share_trading_calendar_2026.json",
+    "stock_context": "data/state/stock_context.json",
+    "stock_market_context": "data/state/stock_market_context.json",
+    "stock_monitor_policy": "config/market/stock_monitor_policy.json",
+    "market_delta": "data/state/market_delta.json",
+    "overseas_context": "data/state/overseas_context.json",
+    "us_extended_hours_context": "data/state/us_extended_hours_context.json",
+    "runtime_health": "data/state/runtime_health.json",
+    "runtime_policy": "config/runtime_policy.json",
+    "system_consistency": "data/state/system_consistency.json"
+  },
   "data_status": {},
-  "account_fact_status": "MISSING",
-  "needs_account_screenshot": true,
+  "freshness_at_context_build": {
+    "status": "STALE",
+    "age_seconds": null,
+    "reason": "missing_captured_at"
+  },
+  "trading_day_status": {
+    "market_date": "2026-08-24",
+    "calendar_covered": true,
+    "weekend": false,
+    "exchange_closed": false,
+    "is_candidate_trading_day": true,
+    "calendar_source": {
+      "authority": "Shanghai Stock Exchange",
+      "title": "2026年休市安排",
+      "published_date": "2025-12-22",
+      "url": "https://www.sse.com.cn/disclosure/dealinstruc/closed/"
+    }
+  },
+  "runtime_health": {
+    "generated_at": "2026-08-24T07:46:00+08:00",
+    "status": "NOT_RUN",
+    "reason": "initialized_before_first_live_trading-day pulse",
+    "market_date": "2026-08-24",
+    "target_cadence_seconds": 600,
+    "fresh_max_age_seconds": 900,
+    "degraded_max_age_seconds": 1500,
+    "close_grace_seconds": 900,
+    "provider_timeout_seconds": 25,
+    "provider_retry_limit": 2,
+    "provider_max_workers": 3,
+    "preserve_previous_current": true
+  },
+  "system_consistency_status": "PASS",
+  "system_consistency_hard_errors": 0,
+  "etf_universe_count": 11,
+  "overseas_context_status": "DEGRADED",
+  "overseas_generated_at_beijing": "2026-08-24T09:05:14+08:00",
+  "us_extended_hours_status": "PASS",
+  "us_extended_hours_generated_at_beijing": "2026-08-24T09:05:15+08:00",
+  "stock_context_status": "MISSING",
+  "stock_market_context_status": "EMPTY",
+  "stock_role_confirmation_needed": false,
+  "account_fact_status": "VALID",
+  "account_gate": {
+    "raw_status": "VALID",
+    "updated_at": "2026-08-21T15:00:00+08:00",
+    "updated_market_date": "2026-08-21",
+    "current_market_date": "",
+    "same_market_date_required": false,
+    "can_use_current_account_fact": true,
+    "requires_user_broker_screenshot": false,
+    "reason": "OK",
+    "rule": "正式盘中/盘后决策使用的账户、持仓、现金和成交事实必须属于当前market_date；旧日VALID不得自动沿用为当日VALID。"
+  },
+  "needs_account_screenshot": false,
   "read_only": true,
-  "interaction_boundary": "用户主动查询读取最新状态；正式交易判断仍需人工确认，不生成自动交易输出。"
+  "interaction_boundary": "用户主动查询时先核对一致性、交易日历和数据规范；正式输出必须标注北京时间数据时点，并区分美股现金盘、盘后和盘前。"
 }
