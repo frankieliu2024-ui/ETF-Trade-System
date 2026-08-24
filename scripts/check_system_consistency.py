@@ -13,8 +13,8 @@ DATA_STANDARD = "ETF与市场监测数据接口使用规范.md"
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
 FORMAL_FILES = ["ETF规则_MASTER.md", "ETF当前状态_DASHBOARD.md", "ETF交易复盘与经验库_2026.md", "ETF市场行情档案_2026.md"]
-CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/account_fact.json", "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json", "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json"]
-CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_overseas_context.py", "scripts/build_query_context.py", ".github/workflows/market-snapshot.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
+CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/account_fact.json", "data/state/us_extended_hours_context.json", "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json", "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json"]
+CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_query_context.py", ".github/workflows/market-snapshot.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
 EXPECTED_INDICES = {"000001.SH", "399006.SZ", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
 REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api"}
 
@@ -77,6 +77,7 @@ def main() -> int:
     for path in FORMAL_FILES:
         check(f"index_entry:{path}", f"`{path}`" in index_text, "canonical entry present" if f"`{path}`" in index_text else "missing")
     check("index_entry:data_standard", DATA_STANDARD in index_text, "data standard entry present")
+    check("index_entry:us_extended_hours", "us_extended_hours_context.json" in index_text, "US extended-hours context present in system index")
 
     market_cfg = read_json("config/market/market_monitor_config.json")
     formal_indices = set(market_cfg.get("formal_index_layer", {}).get("required_objects", []))
@@ -114,6 +115,8 @@ def main() -> int:
     providers = set((provider_cfg.get("providers") or {}).keys())
     check("providers:required_sources", REQUIRED_PROVIDERS.issubset(providers), f"required={sorted(REQUIRED_PROVIDERS)} actual={sorted(providers)}")
     check("providers:formal_indices", set(provider_cfg.get("formal_index_objects") or []) == EXPECTED_INDICES, f"provider formal indices={provider_cfg.get('formal_index_objects')}")
+    us_provider = provider_cfg.get("us_extended_hours", {})
+    check("providers:us_extended_hours", us_provider.get("base_proxies") == ["QQQ", "SOXX"] and us_provider.get("conditional_industry_stocks") == "dynamic_only", f"us_extended_hours={us_provider}")
 
     standard = read_text(DATA_STANDARD)
     check("data_standard:three_layers", all(x in standard for x in ["第一层：指数", "第二层：ETF", "第三层：个股"]), "three-layer structure documented")
@@ -122,6 +125,7 @@ def main() -> int:
     check("data_standard:preopen_start", all(x in standard for x in ["北京时间08:00", "北京时间09:15", "OPENING_CALL_AUCTION"]), "Asia pre-open and A-share auction start documented")
     check("data_standard:mandatory_timestamp", "正式输出强制时间戳" in standard and "as_of_beijing" in standard and "数据时点（北京时间）" in standard, "mandatory Beijing-time output documented")
     check("data_standard:consistency_scope", "代码与提交完整性" in standard and "运行链" in standard and "Git跟踪状态" in standard, "consistency extends beyond text")
+    check("data_standard:us_extended_hours", all(x in standard for x in ["POST_MARKET", "PRE_MARKET", "QQQ", "SOXX", "不高估海外时间领先，也不低估海外时间领先"]), "US extended-hours timing and evidence boundaries documented")
 
     runtime = read_json("config/runtime_policy.json")
     for key in ["target_cadence_seconds", "fresh_max_age_seconds", "degraded_max_age_seconds", "close_grace_seconds", "provider_timeout_seconds", "provider_retry_limit", "provider_max_workers"]:
@@ -139,10 +143,16 @@ def main() -> int:
     check("query:stock_market_read", "stock_market_context" in query, "query context reads stock market context")
     check("query:data_standard_read", DATA_STANDARD in query, "query context references data standard")
     check("query:mandatory_beijing_output", "output_time_rule" in query and "数据时点（北京时间）" in query, "query context forces Beijing-time output")
+    check("query:us_extended_hours_read", "us_extended_hours_context" in query and "us_extended_hours_rule" in query, "query context reads and explains US extended hours")
 
     overseas_builder = read_text("scripts/build_overseas_context.py")
     check("overseas:beijing_timestamp", "as_of_beijing" in overseas_builder and "generated_at_beijing" in overseas_builder, "overseas context exposes Beijing timestamps")
     check("overseas:market_phase", "market_phase_at_generation" in overseas_builder, "overseas market phase retained")
+
+    us_builder = read_text("scripts/build_us_extended_hours_context.py")
+    check("us_extended:session_split", all(x in us_builder for x in ["PRE_MARKET", "REGULAR", "POST_MARKET"]), "US cash/pre/post sessions are explicitly split")
+    check("us_extended:beijing_timestamp", "as_of_beijing" in us_builder and "generated_at_beijing" in us_builder, "US extended hours expose Beijing timestamps")
+    check("us_extended:dynamic_industry_symbols", "US_EXTENDED_SYMBOLS" in us_builder and "CONDITIONAL_US_INDUSTRY_STOCK" in us_builder, "US industry stocks remain query-time dynamic")
 
     session_gate = read_text("scripts/runtime_session_gate.py")
     check("session_gate:calendar_read", "a_share_trading_calendar_2026.json" in session_gate, "session gate reads official exchange calendar")
@@ -156,6 +166,8 @@ def main() -> int:
 
     overseas_workflow = read_text(".github/workflows/overseas-preopen-pulse.yml")
     check("workflow:overseas_preopen_exists", "build_overseas_context.py" in overseas_workflow, "standalone overseas pre-open pulse wired")
+    check("workflow:us_extended_wired", "build_us_extended_hours_context.py" in overseas_workflow and "us_extended_hours_context.json" in overseas_workflow, "US extended-hours context wired into pre-open workflow")
+    check("workflow:us_postmarket_0700_start", '*/10 23 * * 0-4' in overseas_workflow, "Beijing 07:00-07:50 prior-US post-market tail scheduled")
     check("workflow:overseas_0800_start", '*/10 0 * * 1-5' in overseas_workflow, "Beijing 08:00-08:50 overseas pulses scheduled")
     check("workflow:overseas_0900_0910", '0,10 1 * * 1-5' in overseas_workflow, "Beijing 09:00/09:10 overseas pulses scheduled")
 
@@ -174,7 +186,7 @@ def main() -> int:
         "repository": {"head_sha": head_sha, "github_sha": github_sha, "github_run_id": os.environ.get("GITHUB_RUN_ID", ""), "github_ref": os.environ.get("GITHUB_REF", "")},
         "status": "FAIL" if errors else ("WARNING" if warnings else "PASS"),
         "hard_error_count": len(errors), "warning_count": len(warnings), "checks": checks, "errors": errors, "warnings": warnings,
-        "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段和自动验收结果；硬冲突不得进入生产。",
+        "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
     }
     REPORT.parent.mkdir(parents=True, exist_ok=True)
     REPORT.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
