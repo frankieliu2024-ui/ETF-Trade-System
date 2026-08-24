@@ -14,21 +14,11 @@ from typing import Any
 
 
 YAHOO_SYMBOLS = {
-    "SOX": "^SOX",
-    "SOXX": "SOXX",
-    "SOXQ": "SOXQ",
-    "SAMSUNG_005930.KS": "005930.KS",
-    "SK_HYNIX_000660.KS": "000660.KS",
-    "NDX": "^NDX",
-    "SPX": "^GSPC",
-    "VIX": "^VIX",
-    "KOSPI": "^KS11",
-    "KOSDAQ": "^KQ11",
-    "N225": "^N225",
-    "TWII": "^TWII",
-    "HSTECH": "^HSTECH",
-    "GOLD": "GC=F",
-    "DXY": "DX-Y.NYB",
+    "SOX": "^SOX", "SOXX": "SOXX", "SOXQ": "SOXQ",
+    "SAMSUNG_005930.KS": "005930.KS", "SK_HYNIX_000660.KS": "000660.KS",
+    "NDX": "^NDX", "SPX": "^GSPC", "VIX": "^VIX",
+    "KOSPI": "^KS11", "KOSDAQ": "^KQ11", "N225": "^N225", "TWII": "^TWII",
+    "HSTECH": "^HSTECH", "GOLD": "GC=F", "DXY": "DX-Y.NYB",
 }
 
 
@@ -39,6 +29,8 @@ def _request_json(
     include_prepost: bool = False,
 ) -> dict[str, Any]:
     encoded = urllib.parse.quote(symbol, safe="")
+    # Short windows are intentionally intraday. Do not silently downgrade them
+    # to daily bars because callers use them for pulse/as_of validation.
     chosen_interval = interval or ("5m" if period in {"1d", "5d"} else "1d")
     prepost = "true" if include_prepost else "false"
     url = (
@@ -56,37 +48,45 @@ def normalize_chart(payload: dict[str, Any], symbol: str) -> dict[str, Any]:
     quote = (result.get("indicators", {}).get("quote") or [{}])[0]
     rows = []
     for index, timestamp in enumerate(timestamps):
-        row = {"date": datetime.fromtimestamp(timestamp, timezone.utc).date().isoformat()}
+        dt = datetime.fromtimestamp(int(timestamp), timezone.utc)
+        row = {
+            "timestamp": int(timestamp),
+            "as_of_utc": dt.isoformat(timespec="seconds").replace("+00:00", "Z"),
+            "date": dt.date().isoformat(),
+        }
         for field in ("open", "high", "low", "close", "volume"):
             values = quote.get(field) or []
             row[field] = values[index] if index < len(values) else None
         rows.append(row)
     quality = validate_rows(rows)
+    latest = next((row for row in reversed(rows) if all(row.get(field) is not None for field in ("open", "high", "low", "close", "volume"))), None)
     return {
         "provider": "yahoo_chart_api",
         "symbol": symbol,
         "timezone": result.get("meta", {}).get("timezone", "unknown"),
         "adjusted": False,
+        "interval": result.get("meta", {}).get("dataGranularity", "unknown"),
         "rows": len(rows),
-        "latest_date": next((row["date"] for row in reversed(rows) if all(row.get(field) is not None for field in ("open", "high", "low", "close", "volume"))), None),
+        "latest_date": latest.get("date") if latest else None,
+        "latest_as_of_utc": latest.get("as_of_utc") if latest else None,
         "quality": quality,
     }
 
 
 def validate_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
-    dates = [row["date"] for row in rows]
+    timestamps = [row.get("timestamp") for row in rows]
     valid = [row for row in rows if all(row.get(field) is not None for field in ("open", "high", "low", "close", "volume"))]
     bad_ohlc = sum(
         not (row["low"] <= row["open"] <= row["high"] and row["low"] <= row["close"] <= row["high"])
         for row in valid
     )
-    duplicate_dates = len(dates) - len(set(dates))
+    duplicate_timestamps = len(timestamps) - len(set(timestamps))
     return {
         "valid_rows": len(valid),
         "missing_required_rows": len(rows) - len(valid),
-        "duplicate_dates": duplicate_dates,
+        "duplicate_timestamps": duplicate_timestamps,
         "bad_ohlc_rows": bad_ohlc,
-        "pass": bool(valid and len(valid) == len(rows) and duplicate_dates == 0 and bad_ohlc == 0),
+        "pass": bool(valid and len(valid) == len(rows) and duplicate_timestamps == 0 and bad_ohlc == 0),
     }
 
 
