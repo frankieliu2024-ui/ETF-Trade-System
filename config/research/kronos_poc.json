@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "enabled": true,
+  "role": "RESEARCH_EVIDENCE_ONLY",
+  "decision_eligible": false,
+  "upstream": {
+    "repository": "https://github.com/shiyu-coder/Kronos.git",
+    "commit": "67b630e67f6a18c9e9be918d9b4337c960db1e9a"
+  },
+  "model": {
+    "tokenizer": "NeoQuasar/Kronos-Tokenizer-2k",
+    "predictor": "NeoQuasar/Kronos-mini",
+    "max_context": 2048,
+    "device": "cpu"
+  },
+  "forecast": {
+    "lookback": 256,
+    "pred_len": 5,
+    "sample_paths": 5,
+    "temperature": 1.0,
+    "top_p": 0.9,
+    "top_k": 0,
+    "seed": 20260824,
+    "bullish_terminal_return_pct": 1.0,
+    "bearish_terminal_return_pct": -1.0
+  },
+  "validation": {
+    "minimum_history_rows": 120,
+    "minimum_evaluations_per_code": 12,
+    "primary_questions": [
+      "是否改善Trial到Confirm的筛选质量",
+      "是否改善ETF统一比较与机会排序",
+      "是否提前识别失败Confirm或更优退出窗口"
+    ]
+  },
+  "boundaries": {
+    "trade_signal_prohibited": true,
+    "trial_confirm_generation_prohibited": true,
+    "master_rule_override_prohibited": true,
+    "historical_decision_reconstruction_prohibited": true,
+    "description": "Kronos仅生成point-in-time研究证据。任何预测不得直接生成交易金额、Trial、Confirm、持有、降低风险或退出结论；正式交易判断仍由ETF规则_MASTER及当时可得证据完成。"
+  }
+}
