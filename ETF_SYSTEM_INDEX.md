@@ -36,6 +36,7 @@
 - workflow → session gate → provider → snapshot → CURRENT/runtime_health → downstream context → commit 的运行链；
 - 关键文件是否被Git跟踪、当前HEAD/GITHUB_SHA、工作树是否存在未提交关键修改；
 - 强制北京时间数据字段与跨市场阶段字段；
+- 美股现金盘、POST_MARKET、PRE_MARKET是否被正确分离；
 - `system_consistency.json` 自动验收结果和真实生产脉冲状态。
 
 `PASS`表示结构一致；`WARNING`表示账户事实缺失等正常状态；`FAIL`表示硬冲突，必须先修复。`.github/workflows/system-consistency.yml` 在相关维护推送main后自动运行并持久化结果；生产workflow在采集前再次预检。
@@ -51,11 +52,12 @@
 - provider优先级：`config/market/provider_priority.json`
 - 实时相邻变化：`data/state/market_delta.json`
 - 正式海外/亚洲指数：`data/state/overseas_context.json`
+- 美股扩展时段：`data/state/us_extended_hours_context.json`、`scripts/build_us_extended_hours_context.py`
 - 三层监测配置：`config/market/market_monitor_config.json`
 - 运行策略：`config/runtime_policy.json`
 - 查询上下文：`data/state/query_context.json`、`data/state/decision_context.json`
 - A股/ETF workflow：`.github/workflows/market-snapshot.yml`
-- 亚洲盘前 workflow：`.github/workflows/overseas-preopen-pulse.yml`
+- 海外盘前 workflow：`.github/workflows/overseas-preopen-pulse.yml`
 - 一致性 workflow：`.github/workflows/system-consistency.yml`
 - 运行脚本：`scripts/`
 - 行情快照：`data/market/snapshots/`
@@ -65,7 +67,8 @@
 
 市场监测不是9:30才启动：
 
-- 北京时间08:00：日经225、KOSPI常规交易开始，亚洲盘前独立脉冲启动；
+- 北京时间07:00起：读取上一美股交易日盘后尾段，默认使用QQQ/SOXX扩展时段代理；
+- 北京时间08:00：日经225、KOSPI常规交易开始，亚洲盘前独立脉冲继续；
 - 北京时间09:00：台湾加权进入常规交易，香港进入盘前阶段；
 - 北京时间09:15：A股进入开盘集合竞价，09:15/09:20/09:25为集合竞价事件脉冲；
 - 北京时间09:30以后：A股连续竞价按10分钟级目标脉冲运行；
@@ -73,15 +76,25 @@
 
 集合竞价数据必须标记 `OPENING_CALL_AUCTION`，不得和连续竞价价格/承接语义混用。只有本次workflow真实写入新PASS快照后，才允许刷新依赖A股当前行情的下游context。
 
+### 美国时间关系
+
+美国信息必须拆成三类：
+
+1. `REGULAR`：NDX/SOX等正式现金盘结构；A股上午通常读取上一美股交易时段。
+2. `POST_MARKET`：上一美股交易日盘后。Nasdaq盘后为美东16:00—20:00；夏令时大致对应北京时间04:00—08:00，冬令时大致05:00—09:00，因此可能在A股开盘前提供新的价格发现。
+3. `PRE_MARKET`：下一美股交易日盘前。Nasdaq盘前为美东04:00—09:30，通常对应北京时间16:00—21:30（夏令时）或17:00—22:30（冬令时），主要形成下一A股交易日的前置信号，而不是当天A股上午的同步行情。
+
+QQQ/SOXX作为扩展时段方向代理；INTC、NVDA、AMD等产业链个股只在具体ETF/行业假设需要时动态调用。扩展时段必须标注 `PRE_MARKET/POST_MARKET`，不得把“英特尔盘前+5%”写成“SOX上涨5%”。原则是：不高估海外行情的时间领先，也不低估其时间领先。
+
 任何正式行情分析必须强制显示数据时点，并统一优先使用北京时间：
 
 ```text
 【数据时点（北京时间）】YYYY-MM-DD HH:MM:SS
 ```
 
-A股使用 `captured_at_beijing`；海外/亚洲对象使用 `latest.as_of_beijing`，同时保留 `market_timezone`、`as_of_local`、`market_phase_at_generation` 与 `time_relation_to_a_share`。若多个市场时点明显不同，分别标注，不能用一个总时间掩盖延迟或错位。
+A股使用 `captured_at_beijing`；海外/亚洲对象使用 `latest.as_of_beijing`；美股扩展时段同时使用 `latest.as_of_beijing` 与 `market_phase_of_latest`。若多个市场时点明显不同，分别标注，不能用一个总时间掩盖延迟或错位。
 
-FRESH/DEGRADED/STALE必须按真实数据时点重新计算，不能按cron计划时刻判断。美国现金指数在A股交易时段通常是上一美股交易时段；日经、韩国、台湾、恒生科技按各自实际阶段解释。
+FRESH/DEGRADED/STALE必须按真实数据时点重新计算，不能按cron计划时刻判断。美国现金指数、盘后、盘前及亚洲各市场必须按各自实际阶段解释。
 
 ## 账户事实与动态个股原则
 
@@ -93,6 +106,7 @@ FRESH/DEGRADED/STALE必须按真实数据时点重新计算，不能按cron计�
 - 官方休市或窗口外：跳过A股生产采集；
 - runner未写入新快照：下游A股依赖context跳过；
 - Hithink/Yahoo单对象失败：局部FAILED/DEGRADED，不静默删除监测职责；
+- 美股扩展时段无有效bar：不得用上一正式现金盘冒充盘前/盘后；
 - 数据时点陈旧：降级，不冒充当前；
 - Git推送冲突：rebase后重试，不能覆盖正式文件；
 - 账户事实缺失：行情可继续，账户/资金/卖出正式判断受门禁。
@@ -100,8 +114,8 @@ FRESH/DEGRADED/STALE必须按真实数据时点重新计算，不能按cron计�
 ## 读取场景
 
 1. ChatGPT规则读取：本索引 → `system_consistency.json` → MASTER；涉及数据时同时读数据规范。
-2. 当前状态：一致性、数据规范、交易日历、CURRENT、runtime health、ETF全集、海外context、动态个股层，再读Dashboard。
-3. 盘中查询：必须检查北京时间数据时点和新鲜度；海外对象逐一读取 `as_of_beijing` 与market phase。
+2. 当前状态：一致性、数据规范、交易日历、CURRENT、runtime health、ETF全集、`overseas_context.json`、`us_extended_hours_context.json`、动态个股层，再读Dashboard。
+3. 盘中查询：必须检查北京时间数据时点和新鲜度；海外对象逐一读取as_of与market phase；涉及美股科技/半导体传导时，同时区分上一现金盘、盘后及盘前。
 4. 盘后维护：读取账户事实、review context及四文件；维护结束后再次执行一致性检查。
 
 ## 写入边界
