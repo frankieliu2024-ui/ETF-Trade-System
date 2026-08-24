@@ -1,5 +1,4 @@
 name: ETF system consistency
-# Operational note: workflow-only edits or the dedicated consistency probe may trigger a fresh validation of current main without changing trading semantics.
 
 on:
   workflow_dispatch:
@@ -16,7 +15,6 @@ on:
       - "config/runtime_policy.json"
       - "scripts/**"
       - ".github/workflows/**"
-      - "requests/consistency_probe.txt"
       - "requests/research_backfill/*.json"
       - "data/state/CURRENT.json"
       - "data/state/runtime_health.json"
