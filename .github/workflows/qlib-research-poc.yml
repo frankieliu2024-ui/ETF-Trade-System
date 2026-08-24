@@ -1,0 +1,91 @@
+name: ETF Qlib research PoC
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_path:
+        description: "Qlib PoC request JSON path"
+        required: true
+        default: "requests/research_backfill/20260824_qlib_poc.json"
+  push:
+    branches: [main]
+    paths:
+      - "requests/research_backfill/qlib_run_trigger.txt"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: etf-qlib-research-poc
+  cancel-in-progress: false
+
+jobs:
+  qlib-poc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+      QLIB_REPO_DIR: ${{ github.workspace }}/.cache/qlib
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache Python packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: qlib-stage1-${{ runner.os }}-79633dd
+
+      - name: Fetch pinned Qlib upstream
+        run: |
+          rm -rf "$QLIB_REPO_DIR"
+          git clone --filter=blob:none https://github.com/microsoft/qlib.git "$QLIB_REPO_DIR"
+          git -C "$QLIB_REPO_DIR" checkout --detach 79633dd9506ea689e5400dea0197717b5b3d74b7
+          test "$(git -C "$QLIB_REPO_DIR" rev-parse HEAD)" = "79633dd9506ea689e5400dea0197717b5b3d74b7"
+
+      - name: Install pinned Qlib research dependencies
+        run: |
+          python -m pip install --disable-pip-version-check --upgrade pip
+          python -m pip install --disable-pip-version-check "$QLIB_REPO_DIR" pandas==2.2.2 scipy lightgbm
+
+      - name: Run Qlib point-in-time stage1
+        run: |
+          REQUEST_PATH="${{ github.event.inputs.request_path }}"
+          if [ -z "$REQUEST_PATH" ]; then
+            REQUEST_PATH="requests/research_backfill/20260824_qlib_poc.json"
+          fi
+          python scripts/run_qlib_stage1_poc.py "$REQUEST_PATH"
+
+      - name: Enforce research-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result = json.loads(Path('research/backtests/qlib_stage1_validation.json').read_text(encoding='utf-8'))
+          status = json.loads(Path('data/state/qlib_research_status.json').read_text(encoding='utf-8'))
+          assert result.get('decision_eligible') is False
+          assert result.get('trade_signal') is None
+          assert result.get('trial_confirm') is None
+          assert result.get('master_override') is False
+          assert result.get('historical_decision_prohibited') is True
+          assert status.get('decision_eligible') is False
+          assert status.get('trade_signal') is None
+          print('Qlib research boundary PASS')
+          PY
+
+      - name: Commit compact Qlib research evidence
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- research/backtests/qlib_stage1_validation.json data/state/qlib_research_status.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "research: complete Qlib stage1 PoC"
+          git pull --rebase origin main
+          git push origin HEAD:main
