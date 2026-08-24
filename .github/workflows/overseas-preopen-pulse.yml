@@ -24,12 +24,18 @@ jobs:
     timeout-minutes: 6
     env:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
+      HITHINK_FINANCE_API_KEY: ${{ secrets.HITHINK_FINANCE_API_KEY }}
       SCHEDULED_FOR: ${{ github.event.schedule || github.event_name }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install hithink-finance CLI
+        run: npm install --global @hithink-tech/hithink-finance-cli
       - name: Run system consistency preflight
         run: python scripts/check_system_consistency.py
       - name: Refresh formal overseas and Asia index context
