@@ -7,6 +7,10 @@ on:
         description: "Kronos PoC request JSON path"
         required: true
         default: "requests/research_backfill/20260824_kronos_poc.json"
+  push:
+    branches: [main]
+    paths:
+      - "requests/research_backfill/kronos_run_trigger.txt"
 
 permissions:
   contents: write
@@ -53,7 +57,12 @@ jobs:
           test "$(git -C "$KRONOS_REPO_DIR" rev-parse HEAD)" = "67b630e67f6a18c9e9be918d9b4337c960db1e9a"
 
       - name: Run point-in-time Kronos validation
-        run: python scripts/backfill_kronos_evidence.py "${{ github.event.inputs.request_path }}"
+        run: |
+          REQUEST_PATH="${{ github.event.inputs.request_path }}"
+          if [ -z "$REQUEST_PATH" ]; then
+            REQUEST_PATH="requests/research_backfill/20260824_kronos_poc.json"
+          fi
+          python scripts/backfill_kronos_evidence.py "$REQUEST_PATH"
 
       - name: Summarize validation evidence
         run: python scripts/summarize_kronos_validation.py
