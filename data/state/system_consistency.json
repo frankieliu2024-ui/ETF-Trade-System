@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-24T04:57:24Z",
-  "generated_at_beijing": "2026-08-24T12:57:24+08:00",
+  "generated_at": "2026-08-24T05:05:01Z",
+  "generated_at_beijing": "2026-08-24T13:05:01+08:00",
   "repository": {
-    "head_sha": "83ef48d806157e29d0e618665a7622d33e9978c8",
-    "github_sha": "83ef48d806157e29d0e618665a7622d33e9978c8",
-    "github_run_id": "32691840647",
+    "head_sha": "88f293adee035354f2d965d1d5d53f5ffbc748eb",
+    "github_sha": "88f293adee035354f2d965d1d5d53f5ffbc748eb",
+    "github_run_id": "32692267112",
     "github_ref": "refs/heads/main"
   },
-  "status": "WARNING",
+  "status": "PASS",
   "hard_error_count": 0,
-  "warning_count": 3,
+  "warning_count": 0,
   "checks": [
     {
       "name": "formal_file:ETF规则_MASTER.md",
@@ -89,12 +89,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=83ef48d806157e29d0e618665a7622d33e9978c8"
+      "detail": "HEAD=88f293adee035354f2d965d1d5d53f5ffbc748eb"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=83ef48d806157e29d0e618665a7622d33e9978c8 GITHUB_SHA=83ef48d806157e29d0e618665a7622d33e9978c8"
+      "detail": "HEAD=88f293adee035354f2d965d1d5d53f5ffbc748eb GITHUB_SHA=88f293adee035354f2d965d1d5d53f5ffbc748eb"
     },
     {
       "name": "git:critical_files_tracked",
@@ -528,18 +528,53 @@
     },
     {
       "name": "a_share_runtime:live_state_available",
-      "status": "WARNING",
-      "detail": "runtime_status=PASS current_snapshot=MISSING"
+      "status": "PASS",
+      "detail": "runtime_status=PASS current_snapshot=data/market/snapshots/2026-08-24_130404.json"
+    },
+    {
+      "name": "a_share_runtime:current_ready",
+      "status": "PASS",
+      "detail": "market_date=2026-08-24 node=live status=READY"
+    },
+    {
+      "name": "a_share_runtime:snapshot_exists",
+      "status": "PASS",
+      "detail": "path=data/market/snapshots/2026-08-24_130404.json"
+    },
+    {
+      "name": "a_share_runtime:snapshot_count",
+      "status": "PASS",
+      "detail": "snapshot_count=13 rows=13 expected=13"
+    },
+    {
+      "name": "a_share_runtime:market_date_alignment",
+      "status": "PASS",
+      "detail": "snapshot=2026-08-24 current=2026-08-24 health=2026-08-24"
+    },
+    {
+      "name": "a_share_runtime:etf_complete",
+      "status": "PASS",
+      "detail": "count=11 expected=11"
+    },
+    {
+      "name": "a_share_runtime:core_indices_complete",
+      "status": "PASS",
+      "detail": "indices=['000001.SH', '399006.SZ']"
+    },
+    {
+      "name": "a_share_runtime:beijing_capture",
+      "status": "PASS",
+      "detail": "captured_at_beijing=2026-08-24T13:04:04+08:00 timezone=Asia/Shanghai"
     },
     {
       "name": "stock_runtime:dynamic_account_membership",
-      "status": "WARNING",
-      "detail": "detected=[] expected=['300750', '601138']"
+      "status": "PASS",
+      "detail": "detected=['300750', '601138'] expected=['300750', '601138']"
     },
     {
       "name": "stock_runtime:market_complete",
-      "status": "WARNING",
-      "detail": "codes=[] status=EMPTY"
+      "status": "PASS",
+      "detail": "codes=['300750', '601138'] status=PASS"
     },
     {
       "name": "overseas_runtime:structured",
@@ -559,12 +594,12 @@
     {
       "name": "overseas_runtime:N225:same_day_bar",
       "status": "PASS",
-      "detail": "quality=PASS as_of_beijing=2026-08-24T12:36:35+08:00"
+      "detail": "quality=PASS as_of_beijing=2026-08-24T12:42:20+08:00"
     },
     {
       "name": "overseas_runtime:KOSPI:same_day_bar",
       "status": "PASS",
-      "detail": "quality=PASS as_of_beijing=2026-08-24T12:31:30+08:00"
+      "detail": "quality=PASS as_of_beijing=2026-08-24T12:37:20+08:00"
     },
     {
       "name": "account_fact:current_availability",
@@ -573,10 +608,6 @@
     }
   ],
   "errors": [],
-  "warnings": [
-    "a_share_runtime:live_state_available: runtime_status=PASS current_snapshot=MISSING",
-    "stock_runtime:dynamic_account_membership: detected=[] expected=['300750', '601138']",
-    "stock_runtime:market_complete: codes=[] status=EMPTY"
-  ],
+  "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。"
 }
