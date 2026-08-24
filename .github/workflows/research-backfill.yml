@@ -37,28 +37,63 @@ jobs:
       - name: Install research dependency
         run: python -m pip install --disable-pip-version-check pandas
       - name: Run requested historical research backfill
+        id: run_backfill
         shell: bash
         env:
           INPUT_REQUEST_PATH: ${{ github.event.inputs.request_path || '' }}
         run: |
-          set -euo pipefail
+          set +e
+          rc=0
+          files=""
           if [ -n "$INPUT_REQUEST_PATH" ]; then
-            python scripts/backfill_research_daily_history.py "$INPUT_REQUEST_PATH"
+            files="$INPUT_REQUEST_PATH"
           else
             files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/research_backfill/*.json')
-            test -n "$files"
+            if [ -z "$files" ]; then
+              rc=20
+            fi
+          fi
+          if [ "$rc" -eq 0 ]; then
             for f in $files; do
               python scripts/backfill_research_daily_history.py "$f"
+              step_rc=$?
+              if [ "$step_rc" -ne 0 ]; then
+                rc=$step_rc
+                break
+              fi
             done
           fi
-      - name: Commit compact historical research facts
+          mkdir -p data/state
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          payload = {
+              "schema_version": "1.0",
+              "generated_at": datetime.now(timezone.utc).isoformat(),
+              "workflow": "ETF research historical backfill",
+              "github_sha": os.environ.get("GITHUB_SHA"),
+              "request_path": os.environ.get("INPUT_REQUEST_PATH") or None,
+              "note": "Execution observability only; no trading authority and no historical decision reconstruction."
+          }
+          Path("data/state/historical_backfill_execution.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
+          PY
+          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Commit compact historical research facts and diagnostics
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A -- events/research/daily_features data/state/historical_backfill_status.json data/market/audit/research_backfill
+          git add -A -- events/research/daily_features data/state/historical_backfill_status.json data/state/historical_backfill_execution.json data/market/audit/research_backfill
           if git diff --cached --quiet; then
             exit 0
           fi
           git commit -m "research: backfill ETF daily evidence"
           git pull --rebase origin main
           git push origin HEAD:main
+      - name: Assert backfill success
+        if: always()
+        run: |
+          code="${{ steps.run_backfill.outputs.exit_code || '99' }}"
+          test "$code" = "0"
