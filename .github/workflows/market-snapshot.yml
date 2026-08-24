@@ -182,7 +182,8 @@ jobs:
             if python - "$f" <<'PY'
           import json, sys
           data = json.load(open(sys.argv[1], encoding='utf-8'))
-          raise SystemExit(0 if any(k in data for k in ('account_fact','formal_decision','trade_event')) else 1)
+          keys = ('account_fact','formal_decision','trade_event','formal_review','interaction_scenario')
+          raise SystemExit(0 if any(k in data for k in keys) else 1)
           PY
             then
               python scripts/process_state_sync_request.py "$f"
@@ -228,14 +229,11 @@ jobs:
           import json, subprocess
           from pathlib import Path
           path = Path('data/state/runtime_health.json')
-          if path.exists():
-              data = json.loads(path.read_text(encoding='utf-8'))
-              data['data_commit'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
-              path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          data['data_commit'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
           git add data/state/runtime_health.json
-          if ! git diff --cached --quiet; then
-            git commit -m "state: finalize runtime health commit"
-          fi
+          git commit -m "state: finalize runtime health commit"
           git pull --rebase origin main
           git push origin HEAD:main
