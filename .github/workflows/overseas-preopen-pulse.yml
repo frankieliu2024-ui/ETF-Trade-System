@@ -1,0 +1,46 @@
+name: Overseas pre-open pulse
+
+on:
+  workflow_dispatch:
+  schedule:
+    # UTC. Beijing 08:00-09:10, every 10 minutes.
+    # Tokyo and Korea regular sessions start at 08:00 Beijing; Taiwan starts at 09:00;
+    # Hong Kong enters pre-opening at 09:00 and regular session at 09:30.
+    - cron: "*/10 0 * * 1-5"
+    - cron: "0,10 1 * * 1-5"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: etf-overseas-preopen-pulse
+  cancel-in-progress: true
+
+jobs:
+  overseas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run system consistency preflight
+        run: |
+          python scripts/check_system_consistency.py
+          git checkout -- data/state/system_consistency.json
+      - name: Refresh formal overseas and Asia index context
+        run: python scripts/build_overseas_context.py
+      - name: Commit overseas context
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/state/overseas_context.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "data: refresh pre-open overseas context"
+          git pull --rebase origin main
+          git push origin HEAD:main
