@@ -21,7 +21,10 @@ def set_output(key: str, value: str) -> None:
 
 
 def market_phase(minute: int) -> str:
-    if 9 * 60 + 15 <= minute <= 9 * 60 + 25:
+    # 09:25-09:29 is the post-auction/pre-continuous static window. A delayed
+    # GitHub Actions runner may still capture the final opening-auction result
+    # there, but it must not be interpreted as continuous-trading execution.
+    if 9 * 60 + 15 <= minute < 9 * 60 + 30:
         return "OPENING_CALL_AUCTION"
     if 9 * 60 + 30 <= minute <= 11 * 60 + 30:
         return "CONTINUOUS_MORNING"
@@ -60,7 +63,7 @@ def main() -> int:
         should_capture, reason = False, "exchange_closed"
     else:
         close_grace_minutes = max(1, int(policy.get("close_grace_seconds", 900)) // 60)
-        in_opening_auction = 9 * 60 + 15 <= minute <= 9 * 60 + 25
+        in_opening_auction = 9 * 60 + 15 <= minute < 9 * 60 + 30
         in_morning = 9 * 60 + 30 <= minute <= 11 * 60 + 30
         in_afternoon = 13 * 60 <= minute <= 15 * 60
         in_close_grace = 15 * 60 < minute <= 15 * 60 + close_grace_minutes
