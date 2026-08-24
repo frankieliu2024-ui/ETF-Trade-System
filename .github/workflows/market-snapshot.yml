@@ -29,11 +29,11 @@ on:
 permissions:
   contents: write
 
-# Keep pulses ordered instead of cancelling the in-flight capture. The runner
-# uses actual captured_at plus is_newer_than_current() to prevent an older
-# result from overwriting a newer CURRENT state.
+# Scheduled pulses and query-time/manual recovery must not block each other.
+# Within each event class, keep runs ordered; the runner's captured_at guard
+# prevents an older result from overwriting a newer CURRENT state.
 concurrency:
-  group: etf-market-snapshot
+  group: etf-market-snapshot-${{ github.event_name }}
   cancel-in-progress: false
 
 jobs:
