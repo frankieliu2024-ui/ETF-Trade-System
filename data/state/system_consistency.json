@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-24T02:23:14Z",
-  "generated_at_beijing": "2026-08-24T10:23:14+08:00",
+  "generated_at": "2026-08-24T03:44:19Z",
+  "generated_at_beijing": "2026-08-24T11:44:19+08:00",
   "repository": {
-    "head_sha": "f102f6106c3ce1276a611be78b01509bd0d1a43f",
-    "github_sha": "f102f6106c3ce1276a611be78b01509bd0d1a43f",
-    "github_run_id": "32682867337",
+    "head_sha": "cd2ba7a9990119cfe470c386bd995d0d0b591f58",
+    "github_sha": "cd2ba7a9990119cfe470c386bd995d0d0b591f58",
+    "github_run_id": "32687481954",
     "github_ref": "refs/heads/main"
   },
-  "status": "PASS",
+  "status": "WARNING",
   "hard_error_count": 0,
-  "warning_count": 0,
+  "warning_count": 3,
   "checks": [
     {
       "name": "formal_file:ETF规则_MASTER.md",
@@ -89,12 +89,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=f102f6106c3ce1276a611be78b01509bd0d1a43f"
+      "detail": "HEAD=cd2ba7a9990119cfe470c386bd995d0d0b591f58"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=f102f6106c3ce1276a611be78b01509bd0d1a43f GITHUB_SHA=f102f6106c3ce1276a611be78b01509bd0d1a43f"
+      "detail": "HEAD=cd2ba7a9990119cfe470c386bd995d0d0b591f58 GITHUB_SHA=cd2ba7a9990119cfe470c386bd995d0d0b591f58"
     },
     {
       "name": "git:critical_files_tracked",
@@ -202,6 +202,11 @@
       "detail": "A-share snapshots expose Beijing timestamp"
     },
     {
+      "name": "runner:provider_timestamp",
+      "status": "PASS",
+      "detail": "A-share rows retain provider time separately from capture completion time"
+    },
+    {
       "name": "stock_layer:no_fixed_default_codes",
       "status": "PASS",
       "detail": "fixed_default_codes=[]"
@@ -210,6 +215,21 @@
       "name": "stock_layer:dynamic_mode",
       "status": "PASS",
       "detail": "mode=DYNAMIC_ACCOUNT_PLUS_QUERY_TIME_INDUSTRY"
+    },
+    {
+      "name": "stock_layer:canonical_etf_universe",
+      "status": "PASS",
+      "detail": "stock classification reads canonical ETF universe"
+    },
+    {
+      "name": "stock_layer:hithink_market_snapshot",
+      "status": "PASS",
+      "detail": "dynamic account stocks use the supported market.snapshot capability"
+    },
+    {
+      "name": "stock_layer:beijing_timestamp",
+      "status": "PASS",
+      "detail": "stock facts expose Beijing provider time and market phase"
     },
     {
       "name": "providers:required_sources",
@@ -422,6 +442,21 @@
       "detail": "downstream contexts require new valid A-share snapshot"
     },
     {
+      "name": "workflow:single_full_recovery_entry",
+      "status": "PASS",
+      "detail": "market-snapshot workflow_dispatch is the only full-state recovery entry"
+    },
+    {
+      "name": "workflow:runtime_artifact_staging",
+      "status": "PASS",
+      "detail": "runtime staging cannot silently drop a snapshot because an optional path is absent"
+    },
+    {
+      "name": "workflow:on_demand_degraded_only",
+      "status": "PASS",
+      "detail": "single-object on-demand service cannot impersonate production CURRENT"
+    },
+    {
       "name": "workflow:overseas_preopen_exists",
       "status": "PASS",
       "detail": "standalone overseas pre-open pulse wired"
@@ -482,9 +517,29 @@
       "detail": "workflow changes trigger consistency workflow"
     },
     {
+      "name": "maintenance_workflow:no_recovery_state_machine",
+      "status": "PASS",
+      "detail": "consistency workflow validates only; it does not duplicate production recovery"
+    },
+    {
       "name": "runtime_health:structured",
       "status": "PASS",
       "detail": "status=PASS"
+    },
+    {
+      "name": "a_share_runtime:live_state_available",
+      "status": "WARNING",
+      "detail": "runtime_status=PASS current_snapshot=MISSING"
+    },
+    {
+      "name": "stock_runtime:dynamic_account_membership",
+      "status": "WARNING",
+      "detail": "detected=[] expected=['300750', '601138']"
+    },
+    {
+      "name": "stock_runtime:market_complete",
+      "status": "WARNING",
+      "detail": "codes=[] status=EMPTY"
     },
     {
       "name": "overseas_runtime:structured",
@@ -504,12 +559,12 @@
     {
       "name": "overseas_runtime:N225:same_day_bar",
       "status": "PASS",
-      "detail": "quality=PASS as_of_beijing=2026-08-24T09:41:45+08:00"
+      "detail": "quality=PASS as_of_beijing=2026-08-24T10:08:10+08:00"
     },
     {
       "name": "overseas_runtime:KOSPI:same_day_bar",
       "status": "PASS",
-      "detail": "quality=PASS as_of_beijing=2026-08-24T09:36:40+08:00"
+      "detail": "quality=PASS as_of_beijing=2026-08-24T10:03:10+08:00"
     },
     {
       "name": "account_fact:current_availability",
@@ -518,6 +573,10 @@
     }
   ],
   "errors": [],
-  "warnings": [],
+  "warnings": [
+    "a_share_runtime:live_state_available: runtime_status=PASS current_snapshot=MISSING",
+    "stock_runtime:dynamic_account_membership: detected=[] expected=['300750', '601138']",
+    "stock_runtime:market_complete: codes=[] status=EMPTY"
+  ],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。"
 }
