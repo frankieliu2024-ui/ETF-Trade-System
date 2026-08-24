@@ -35,14 +35,15 @@ YAHOO_SYMBOLS = {
 def _request_json(
     symbol: str,
     period: str = "5y",
-    interval: str = "1d",
+    interval: str | None = None,
     include_prepost: bool = False,
 ) -> dict[str, Any]:
     encoded = urllib.parse.quote(symbol, safe="")
+    chosen_interval = interval or ("5m" if period in {"1d", "5d"} else "1d")
     prepost = "true" if include_prepost else "false"
     url = (
         f"https://query1.finance.yahoo.com/v8/finance/chart/{encoded}"
-        f"?range={period}&interval={interval}&includePrePost={prepost}&events=history"
+        f"?range={period}&interval={chosen_interval}&includePrePost={prepost}&events=history"
     )
     request = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.15"})
     with urllib.request.urlopen(request, timeout=20) as response:
