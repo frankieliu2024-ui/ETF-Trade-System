@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-24T10:32:26Z",
-  "generated_at_beijing": "2026-08-24T18:32:26+08:00",
+  "generated_at": "2026-08-24T23:21:50Z",
+  "generated_at_beijing": "2026-08-25T07:21:50+08:00",
   "market_date": "2026-08-24",
   "latest_valid_node": "live",
   "current": {
@@ -36,7 +36,7 @@
     "generated_at": "2026-08-24T07:09:41Z"
   },
   "decision_context": {
-    "generated_at": "2026-08-24T10:32:26Z",
+    "generated_at": "2026-08-24T23:21:50Z",
     "rules_version": "V2.2.15",
     "market_date": "2026-08-24",
     "latest_node": "live",
@@ -398,7 +398,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 10.336,
-      "age_seconds": 12165
+      "age_seconds": 58329
     },
     "freshness_at_context_build": {
       "status": "STALE",
@@ -413,7 +413,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 10.336,
-      "age_seconds": 12165
+      "age_seconds": 58329
     },
     "intraday_path_features": {
       "generated_at": "2026-08-24T10:32:26Z",
@@ -1120,6 +1120,29 @@
         }
       ]
     },
+    "research_evidence": {
+      "status": "MISSING",
+      "market_date": null,
+      "as_of_beijing": null,
+      "evidence_time_semantics": "UNKNOWN",
+      "prior_research_as_of_beijing": "",
+      "etf_evidence": [],
+      "historical_evidence_status": "INSUFFICIENT_OR_MISSING",
+      "use_in_current_decision": true,
+      "interpretation_rule": "盘中优先解释相对上一研究节点真正新增、增强或减弱的证据，并结合价格结构、成交承接、生命周期和风险收益进行统一比较；当日收益排名仅为描述维度，不是资本效率排名。",
+      "output_rule": "正式输出若研究证据变化能改变候选比较、机会状态、金额、持仓资本效率、0元主因或最大风险，应自然语言说明变化；无决策影响时不重复陈列全部指标。",
+      "capital_efficiency_rule": "不生成综合资本效率分数或机械排名。不同ETF表达不同风险因子；下一单位资本效率由多维研究证据与MASTER完整决策链共同判断。",
+      "master_feedback_rule": "当前研究证据可直接改善MASTER执行时的分析；只有经过MASTER第8.1规定审查的高质量专项研究，或多个真实CASE反复暴露的同类问题，才进入MASTER维护。机器不得自动修改MASTER。",
+      "optimization_principle": "系统不追求完美交易系统。只保留能够改善事前收益效率、风险边界、执行质量或复盘学习的复杂度；在可接受风险范围内实现可实现收益最大化。",
+      "read_only": true
+    },
+    "research_context_file": "data/state/research_context.json",
+    "relative_strength_file": "data/state/relative_strength.json",
+    "research_evidence_delta_file": "data/state/research_evidence_delta.json",
+    "research_master_feedback": {
+      "current_decision": "研究证据及其节点变化直接进入机会判断、统一资本比较、持仓资本效率与正式输出解释。",
+      "master_maintenance": "研究结论只有通过MASTER第8.1正式研究转化机制后才可修改MASTER；自动程序只提供证据，不修改规则。"
+    },
     "dashboard_source": "ETF当前状态_DASHBOARD.md",
     "dashboard_summary": {
       "maintenance_mode": "candidate_only",
@@ -1128,7 +1151,7 @@
     },
     "account_fact_status": "VALID",
     "needs_account_screenshot": false,
-    "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。日内路径特征只描述离散脉冲结构，不是交易信号。"
+    "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。日内路径、研究证据及证据变化必须参与完整MASTER判断，但单独均不是交易信号。系统不追求完美，只增加能提高事前资本收益效率的复杂度。"
   },
   "decision_read_plan": {
     "mode": "QUERY_TIME_REFRESH_FIRST",
@@ -1194,7 +1217,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "STALE",
-        "age_seconds": 12165,
+        "age_seconds": 58329,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -1211,7 +1234,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 10.336,
-        "age_seconds": 12165
+        "age_seconds": 58329
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新计算FRESH/DEGRADED/STALE。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -1270,16 +1293,16 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 10.336,
-    "age_seconds": 12165
+    "age_seconds": 58329
   },
   "freshness_at_context_build": {
     "status": "STALE",
-    "age_seconds": 12165,
+    "age_seconds": 58329,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
   "trading_day_status": {
-    "market_date": "2026-08-24",
+    "market_date": "2026-08-25",
     "calendar_covered": true,
     "weekend": false,
     "exchange_closed": false,
@@ -1292,7 +1315,7 @@
     }
   },
   "runtime_health": {
-    "generated_at": "2026-08-24T07:09:41Z",
+    "generated_at": "2026-08-25T07:21:50+08:00",
     "workflow_run_id": "32717282752",
     "workflow_run_attempt": "1",
     "target_cadence_seconds": 600,
@@ -1303,9 +1326,9 @@
     "provider_retry_limit": 2,
     "provider_max_workers": 2,
     "etf_universe_count": 11,
-    "status": "SKIPPED",
+    "status": "DEGRADED",
     "quality_status": "SKIPPED",
-    "market_date": "2026-08-24",
+    "market_date": "2026-08-25",
     "node": "live",
     "market_phase": "OUTSIDE_SESSION",
     "run_started_at": "2026-08-24T07:09:31Z",
@@ -1321,18 +1344,24 @@
     "finished_at": "2026-08-24T18:32:26+08:00",
     "run_id": "32717282752",
     "input_commit": "666ca0d5c156448856838d0a2492ade379c95c6f",
-    "data_commit": "",
+    "data_commit": "81d6134a63ef8187c4c785db1068c13a48da55a7",
     "provider_as_of": "",
     "failure_stage": "session_gate",
-    "reason": "outside_a_share_capture_window"
+    "reason": "outside_a_share_capture_window",
+    "last_run_id": "32788960551",
+    "last_commit_sha": "8f7ba172f21414f5303775a6fa2d75fe2cdeabf6",
+    "overseas_runtime_health": "data/state/overseas_runtime_health.json",
+    "overseas_pulse_success": true,
+    "overseas_hard_error_count": 0,
+    "overseas_warning_count": 2
   },
   "system_consistency_status": "PASS",
   "system_consistency_hard_errors": 0,
   "etf_universe_count": 11,
   "overseas_context_status": "PASS",
-  "overseas_generated_at_beijing": "2026-08-24T15:09:43+08:00",
+  "overseas_generated_at_beijing": "2026-08-25T07:21:44+08:00",
   "us_extended_hours_status": "PASS",
-  "us_extended_hours_generated_at_beijing": "2026-08-24T17:42:16+08:00",
+  "us_extended_hours_generated_at_beijing": "2026-08-25T07:21:50+08:00",
   "stock_context_status": "VALID",
   "stock_market_context_status": "PASS",
   "stock_role_confirmation_needed": false,
