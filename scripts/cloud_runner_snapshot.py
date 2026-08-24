@@ -79,7 +79,9 @@ def now_utc_text() -> str:
 
 def a_share_market_phase(captured_dt: datetime) -> str:
     minute = captured_dt.hour * 60 + captured_dt.minute
-    if 9 * 60 + 15 <= minute <= 9 * 60 + 25:
+    # 09:25-09:29 is still pre-continuous trading. A delayed scheduled runner
+    # may capture the final opening-auction result here; keep auction semantics.
+    if 9 * 60 + 15 <= minute < 9 * 60 + 30:
         return "OPENING_CALL_AUCTION"
     if 9 * 60 + 30 <= minute <= 11 * 60 + 30:
         return "CONTINUOUS_MORNING"
@@ -96,7 +98,7 @@ def in_a_share_capture_window(captured_dt: datetime) -> bool:
     if captured_dt.weekday() >= 5:
         return False
     minute = captured_dt.hour * 60 + captured_dt.minute
-    opening_auction = 9 * 60 + 15 <= minute <= 9 * 60 + 25
+    opening_auction = 9 * 60 + 15 <= minute < 9 * 60 + 30
     morning = 9 * 60 + 30 <= minute <= 11 * 60 + 30
     afternoon = 13 * 60 <= minute <= 15 * 60
     close_grace_end = 15 * 60 + max(1, CLOSE_GRACE_SECONDS // 60)
@@ -106,7 +108,7 @@ def in_a_share_capture_window(captured_dt: datetime) -> bool:
 
 def resolve_scheduled_node(captured_dt: datetime) -> str:
     minute = captured_dt.hour * 60 + captured_dt.minute
-    if 9 * 60 + 15 <= minute <= 9 * 60 + 25:
+    if 9 * 60 + 15 <= minute < 9 * 60 + 30:
         return "auction"
     return "close" if minute >= 15 * 60 else "live"
 
