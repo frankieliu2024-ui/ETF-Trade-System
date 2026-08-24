@@ -13,7 +13,7 @@ DATA_STANDARD = "ETF与市场监测数据接口使用规范.md"
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
 FORMAL_FILES = ["ETF规则_MASTER.md", "ETF当前状态_DASHBOARD.md", "ETF交易复盘与经验库_2026.md", "ETF市场行情档案_2026.md"]
-CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/account_fact.json", "data/state/us_extended_hours_context.json", "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json", "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json"]
+CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/overseas_runtime_health.json", "data/state/account_fact.json", "data/state/us_extended_hours_context.json", "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json", "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json"]
 CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_query_context.py", ".github/workflows/market-snapshot.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
 EXPECTED_INDICES = {"000001.SH", "399006.SZ", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
 REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api"}
@@ -170,6 +170,7 @@ def main() -> int:
     check("workflow:us_postmarket_0700_start", '*/10 23 * * 0-4' in overseas_workflow, "Beijing 07:00-07:50 prior-US post-market tail scheduled")
     check("workflow:overseas_0800_start", '*/10 0 * * 1-5' in overseas_workflow, "Beijing 08:00-08:50 overseas pulses scheduled")
     check("workflow:overseas_0900_0910", '0,10 1 * * 1-5' in overseas_workflow, "Beijing 09:00/09:10 overseas pulses scheduled")
+    check("workflow:overseas_runtime_health", "build_overseas_runtime_health.py" in overseas_workflow and "overseas_runtime_health.json" in overseas_workflow, "overseas runtime health is generated and committed")
 
     us_workflow = read_text(".github/workflows/us-extended-hours-pulse.yml")
     check("workflow:us_afternoon_exists", "build_us_extended_hours_context.py" in us_workflow, "standalone US afternoon/evening extended-hours pulse wired")
@@ -182,6 +183,13 @@ def main() -> int:
 
     runtime_health = read_json("data/state/runtime_health.json")
     check("runtime_health:structured", bool(runtime_health.get("status")), f"status={runtime_health.get('status', 'MISSING')}")
+    overseas_health = read_json("data/state/overseas_runtime_health.json")
+    check("overseas_runtime:structured", bool(overseas_health.get("status")), f"status={overseas_health.get('status', 'MISSING')}")
+    check("overseas_runtime:pulse_success", overseas_health.get("pulse_success") is True, f"pulse_success={overseas_health.get('pulse_success')}", warning=True)
+    check("overseas_runtime:hard_errors", int(overseas_health.get("hard_error_count", 0)) == 0, f"hard_error_count={overseas_health.get('hard_error_count')}", warning=True)
+    for object_id in ("N225", "KOSPI"):
+        object_health = (overseas_health.get("objects") or {}).get(object_id) or {}
+        check(f"overseas_runtime:{object_id}:same_day_bar", object_health.get("quality_status") == "PASS" and bool(object_health.get("as_of_beijing")), f"quality={object_health.get('quality_status')} as_of_beijing={object_health.get('as_of_beijing', '')}", warning=True)
     account = read_json("data/state/account_fact.json")
     check("account_fact:current_availability", account.get("status") == "VALID", f"status={account.get('status', 'MISSING')} (state warning only)", warning=True)
 
