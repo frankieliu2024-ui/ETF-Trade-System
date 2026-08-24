@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-08-24T23:47:54Z",
-  "generated_at_beijing": "2026-08-25T07:47:54+08:00",
+  "generated_at": "2026-08-24T23:52:15Z",
+  "generated_at_beijing": "2026-08-25T07:52:15+08:00",
   "repository": {
-    "head_sha": "b2c59cb88b53c2457d1f16d66e27b759666de502",
-    "github_sha": "b2c59cb88b53c2457d1f16d66e27b759666de502",
-    "github_run_id": "32790925466",
+    "head_sha": "7ddbe19c68e878b954f3b0281b37b51924903e23",
+    "github_sha": "7ddbe19c68e878b954f3b0281b37b51924903e23",
+    "github_run_id": "32791198649",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "b2c59cb88b53c2457d1f16d66e27b759666de502",
-    "workflow_sha": "b2c59cb88b53c2457d1f16d66e27b759666de502",
+    "checked_commit": "7ddbe19c68e878b954f3b0281b37b51924903e23",
+    "workflow_sha": "7ddbe19c68e878b954f3b0281b37b51924903e23",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "WARNING",
-  "hard_error_count": 0,
+  "status": "FAIL",
+  "hard_error_count": 1,
   "warning_count": 1,
   "checks": [
     {
@@ -95,12 +95,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=b2c59cb88b53c2457d1f16d66e27b759666de502"
+      "detail": "HEAD=7ddbe19c68e878b954f3b0281b37b51924903e23"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=b2c59cb88b53c2457d1f16d66e27b759666de502 GITHUB_SHA=b2c59cb88b53c2457d1f16d66e27b759666de502"
+      "detail": "HEAD=7ddbe19c68e878b954f3b0281b37b51924903e23 GITHUB_SHA=7ddbe19c68e878b954f3b0281b37b51924903e23"
     },
     {
       "name": "git:critical_files_tracked",
@@ -109,8 +109,8 @@
     },
     {
       "name": "git:working_tree_clean_before_check",
-      "status": "PASS",
-      "detail": "clean"
+      "status": "FAIL",
+      "detail": "dirty=M data/state/historical_backfill_status.json"
     },
     {
       "name": "index_entry:ETF规则_MASTER.md",
@@ -673,7 +673,9 @@
       "detail": "research complexity is justified by expected-return efficiency, not perfection-seeking"
     }
   ],
-  "errors": [],
+  "errors": [
+    "git:working_tree_clean_before_check: dirty=M data/state/historical_backfill_status.json"
+  ],
   "warnings": [
     "a_share_runtime:live_state_available: runtime_status=DEGRADED current_snapshot=data/market/snapshots/2026-08-24_150941.json"
   ],
