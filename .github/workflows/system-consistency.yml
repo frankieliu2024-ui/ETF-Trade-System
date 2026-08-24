@@ -15,7 +15,6 @@ on:
       - "config/runtime_policy.json"
       - "scripts/**"
       - ".github/workflows/**"
-      - "requests/market_data/full_snapshot_*.json"
 
 permissions:
   contents: write
@@ -51,44 +50,4 @@ jobs:
           git push origin HEAD:main
       - name: Enforce hard consistency result
         if: ${{ steps.consistency.outcome == 'failure' }}
-        run: exit 1
-
-  full_snapshot_recovery:
-    needs: consistency
-    if: ${{ github.event_name == 'push' && startsWith(github.event.head_commit.message, 'runtime: trigger consistency-backed full snapshot recovery') }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    env:
-      HITHINK_FINANCE_API_KEY: ${{ secrets.HITHINK_FINANCE_API_KEY }}
-      ETF_SYSTEM_ROOT: ${{ github.workspace }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-      - name: Install Hithink CLI
-        run: npm install --global @hithink-tech/hithink-finance-cli
-      - name: Run full snapshot recovery
-        id: recovery
-        continue-on-error: true
-        run: python scripts/run_full_snapshot_recovery.py
-      - name: Persist recovered market state
-        if: ${{ always() }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/market/snapshots data/state/CURRENT.json data/state/runtime_health.json data/state/system_consistency.json data/state/market_delta.json data/state/overseas_context.json data/state/stock_context.json data/state/stock_market_context.json data/state/dashboard_update_candidate.json data/state/decision_context.json data/state/query_context.json data/state/chatgpt_task_probe.json data/state/full_snapshot_recovery.json post_market_review/post_market_review_event.json data/state/review_context.json events/events.jsonl 2>/dev/null || true
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          git commit -m "data: persist consistency-backed full snapshot recovery"
-          git pull --rebase origin main
-          git push origin HEAD:main
-      - name: Enforce recovery result
-        if: ${{ steps.recovery.outcome == 'failure' }}
         run: exit 1

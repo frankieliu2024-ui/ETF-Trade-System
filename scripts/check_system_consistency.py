@@ -200,6 +200,7 @@ def main() -> int:
     maintenance_workflow = read_text(".github/workflows/system-consistency.yml")
     check("maintenance_workflow:data_standard_trigger", DATA_STANDARD in maintenance_workflow, "data standard changes trigger consistency workflow")
     check("maintenance_workflow:workflow_trigger", ".github/workflows/**" in maintenance_workflow, "workflow changes trigger consistency workflow")
+    check("maintenance_workflow:no_recovery_state_machine", "full_snapshot_recovery" not in maintenance_workflow and "run_full_snapshot_recovery.py" not in maintenance_workflow, "consistency workflow validates only; it does not duplicate production recovery")
 
     runtime_health = read_json("data/state/runtime_health.json")
     check("runtime_health:structured", bool(runtime_health.get("status")), f"status={runtime_health.get('status', 'MISSING')}")
