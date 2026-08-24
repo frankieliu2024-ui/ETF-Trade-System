@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-24T09:44:45Z",
-  "generated_at_beijing": "2026-08-24T17:44:45+08:00",
+  "generated_at": "2026-08-24T10:32:26Z",
+  "generated_at_beijing": "2026-08-24T18:32:26+08:00",
   "market_date": "2026-08-24",
   "latest_valid_node": "live",
   "current": {
@@ -36,7 +36,7 @@
     "generated_at": "2026-08-24T07:09:41Z"
   },
   "decision_context": {
-    "generated_at": "2026-08-24T09:44:45Z",
+    "generated_at": "2026-08-24T10:32:26Z",
     "rules_version": "V2.2.15",
     "market_date": "2026-08-24",
     "latest_node": "live",
@@ -385,8 +385,38 @@
         }
       ]
     },
+    "data_status": {
+      "status": "STALE",
+      "provider": "hithink-finance",
+      "count": 13,
+      "etf_universe_count": 11,
+      "capture_mode": "INTRADAY_PULSE",
+      "market_phase": "POST_CLOSE_GRACE",
+      "captured_at": "2026-08-24T15:09:41+08:00",
+      "captured_at_beijing": "2026-08-24T15:09:41+08:00",
+      "target_cadence_seconds": 600,
+      "fresh_max_age_seconds": 900,
+      "degraded_max_age_seconds": 1500,
+      "acquisition_seconds": 10.336,
+      "age_seconds": 12165
+    },
+    "freshness_at_context_build": {
+      "status": "STALE",
+      "provider": "hithink-finance",
+      "count": 13,
+      "etf_universe_count": 11,
+      "capture_mode": "INTRADAY_PULSE",
+      "market_phase": "POST_CLOSE_GRACE",
+      "captured_at": "2026-08-24T15:09:41+08:00",
+      "captured_at_beijing": "2026-08-24T15:09:41+08:00",
+      "target_cadence_seconds": 600,
+      "fresh_max_age_seconds": 900,
+      "degraded_max_age_seconds": 1500,
+      "acquisition_seconds": 10.336,
+      "age_seconds": 12165
+    },
     "intraday_path_features": {
-      "generated_at": "2026-08-24T09:44:45Z",
+      "generated_at": "2026-08-24T10:32:26Z",
       "market_date": "2026-08-24",
       "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
       "read_only": true,
@@ -1164,12 +1194,12 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "STALE",
-        "age_seconds": 9304,
+        "age_seconds": 12165,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
       "data_freshness": {
-        "status": "FRESH",
+        "status": "STALE",
         "provider": "hithink-finance",
         "count": 13,
         "etf_universe_count": 11,
@@ -1180,7 +1210,8 @@
         "target_cadence_seconds": 600,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
-        "acquisition_seconds": 10.336
+        "acquisition_seconds": 10.336,
+        "age_seconds": 12165
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新计算FRESH/DEGRADED/STALE。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -1227,7 +1258,7 @@
     "system_consistency": "data/state/system_consistency.json"
   },
   "data_status": {
-    "status": "FRESH",
+    "status": "STALE",
     "provider": "hithink-finance",
     "count": 13,
     "etf_universe_count": 11,
@@ -1238,11 +1269,12 @@
     "target_cadence_seconds": 600,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
-    "acquisition_seconds": 10.336
+    "acquisition_seconds": 10.336,
+    "age_seconds": 12165
   },
   "freshness_at_context_build": {
     "status": "STALE",
-    "age_seconds": 9304,
+    "age_seconds": 12165,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -1261,7 +1293,7 @@
   },
   "runtime_health": {
     "generated_at": "2026-08-24T07:09:41Z",
-    "workflow_run_id": "32713169343",
+    "workflow_run_id": "32717282752",
     "workflow_run_attempt": "1",
     "target_cadence_seconds": 600,
     "fresh_max_age_seconds": 900,
@@ -1285,10 +1317,10 @@
     "latest_snapshot": "data/market/snapshots/2026-08-24_150941.json",
     "scheduled_for": "query_time_push",
     "trigger_mode": "QUERY_TIME_PUSH",
-    "started_at": "2026-08-24T17:44:44+08:00",
-    "finished_at": "2026-08-24T17:44:44+08:00",
-    "run_id": "32713169343",
-    "input_commit": "35f08271f5ec86cc11d7ccff32aa9d622d48a889",
+    "started_at": "2026-08-24T18:32:26+08:00",
+    "finished_at": "2026-08-24T18:32:26+08:00",
+    "run_id": "32717282752",
+    "input_commit": "666ca0d5c156448856838d0a2492ade379c95c6f",
     "data_commit": "",
     "provider_as_of": "",
     "failure_stage": "session_gate",

@@ -36,7 +36,7 @@
 
 最近一次正式决策未随本次同步请求提供；脚本不自行推断，保留人工/ChatGPT正式决议。
 
-同步请求：`final_audit_sync_20260824`。
+同步请求：`final_audit_sync_20260824_retry`。
 <!-- AUTO_STATE_SYNC_END -->
 
 
