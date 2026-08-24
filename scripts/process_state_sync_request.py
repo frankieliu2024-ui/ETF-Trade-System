@@ -57,13 +57,18 @@ def money(v: object) -> str:
         return "—"
 
 
+def display_name(p: dict) -> str:
+    return f"{p.get('name', '')}（{p.get('code', '')}）"
+
+
 def build_dashboard_block(account: dict, decision: dict | None, request: dict) -> str:
     positions = account.get("positions") or []
     etfs = [p for p in positions if p.get("asset_type") == "ETF"]
     stocks = [p for p in positions if p.get("asset_type") == "STOCK"]
     etf_pnl = sum(float(p.get("holding_pnl") or 0) for p in etfs)
     risk_rate = etf_pnl / 200000.0 * 100.0
-    exposure = (float(account.get("stock_market_value") or 0) / float(account.get("total_asset") or 1)) * 100.0
+    total_asset = float(account.get("total_asset") or 0)
+    exposure = (float(account.get("stock_market_value") or 0) / total_asset * 100.0) if total_asset else 0.0
     lines = [
         "## 云端实时状态（自动同步）",
         "",
@@ -89,9 +94,11 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
     ]
     for p in positions:
         lines.append(
-            f"|{p.get('name','')}（{p.get('code','')}）|{int(p.get('quantity') or 0):,}|{float(p.get('cost') or 0):.3f}|{float(p.get('last_price') or 0):.3f}|{money(p.get('market_value'))}|{money(p.get('holding_pnl'))}（{float(p.get('holding_pnl_pct') or 0):+.2f}%）|"
+            f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|{float(p.get('cost') or 0):.3f}|{float(p.get('last_price') or 0):.3f}|{money(p.get('market_value'))}|{money(p.get('holding_pnl'))}（{float(p.get('holding_pnl_pct') or 0):+.2f}%）|"
         )
-    lines += ["", f"持仓ETF：{'、'.join(f\"{p.get('name')}（{p.get('code')}）\" for p in etfs) or '无'}。", f"账户个股：{'、'.join(f\"{p.get('name')}（{p.get('code')}）\" for p in stocks) or '无'}。"]
+    etf_names = "、".join(display_name(p) for p in etfs) or "无"
+    stock_names = "、".join(display_name(p) for p in stocks) or "无"
+    lines += ["", f"持仓ETF：{etf_names}。", f"账户个股：{stock_names}。"]
     if decision:
         lines += [
             "",
