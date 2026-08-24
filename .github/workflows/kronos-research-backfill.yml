@@ -4,9 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       request_path:
-        description: "Kronos PoC request JSON path"
+        description: "Kronos research request JSON path"
         required: true
-        default: "requests/research_backfill/20260824_kronos_poc.json"
+        default: "requests/research_backfill/20260824_kronos_stage2.json"
+  push:
+    branches: [main]
+    paths:
+      - "requests/research_backfill/kronos_stage2_run_trigger.txt"
 
 permissions:
   contents: write
@@ -48,16 +52,22 @@ jobs:
           git -C "$KRONOS_REPO_DIR" checkout --detach 67b630e67f6a18c9e9be918d9b4337c960db1e9a
           test "$(git -C "$KRONOS_REPO_DIR" rev-parse HEAD)" = "67b630e67f6a18c9e9be918d9b4337c960db1e9a"
       - name: Run point-in-time Kronos validation
-        run: python scripts/backfill_kronos_evidence.py "${{ github.event.inputs.request_path }}"
+        run: |
+          REQUEST_PATH="${{ github.event.inputs.request_path }}"
+          if [ -z "$REQUEST_PATH" ]; then
+            REQUEST_PATH="requests/research_backfill/20260824_kronos_stage2.json"
+          fi
+          python scripts/backfill_kronos_evidence.py "$REQUEST_PATH"
       - name: Summarize validation evidence
-        run: python scripts/summarize_kronos_validation.py
+        run: |
+          python scripts/summarize_kronos_validation.py
+          python scripts/summarize_kronos_stage2.py
       - name: Enforce research-only boundary
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          root = Path('.')
-          files = list((root / 'events/research/kronos_backfill').glob('*.json'))
+          files = list(Path('events/research/kronos_backfill').glob('*.json'))
           assert files, 'No Kronos evidence generated'
           for path in files:
               obj = json.loads(path.read_text(encoding='utf-8'))
@@ -68,16 +78,20 @@ jobs:
               assert forecast.get('trade_signal') is None, path
               assert forecast.get('trial_confirm') is None, path
               assert forecast.get('master_override') is False, path
+          stage2 = json.loads(Path('research/backtests/kronos_stage2_validation.json').read_text(encoding='utf-8'))
+          assert stage2.get('decision_eligible') is False
+          assert stage2.get('trade_signal') is None
+          assert stage2.get('baseline_boundary', {}).get('master_baseline_reconstructed') is False
           print(f'boundary PASS: {len(files)} evidence files')
           PY
       - name: Commit compact Kronos research evidence
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A -- events/research/kronos_backfill data/state/kronos_research_status.json research/backtests/kronos_validation_summary.json
+          git add -A -- events/research/kronos_backfill data/state/kronos_research_status.json research/backtests/kronos_validation_summary.json research/backtests/kronos_stage2_validation.json
           if git diff --cached --quiet; then
             exit 0
           fi
-          git commit -m "research: backfill Kronos point-in-time evidence"
+          git commit -m "research: complete Kronos stage2 validation"
           git pull --rebase origin main
           git push origin HEAD:main
