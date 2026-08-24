@@ -52,6 +52,43 @@ jobs:
       - name: Check exchange calendar and capture window
         id: session_gate
         run: python scripts/runtime_session_gate.py
+      - name: Record skipped runtime health
+        if: ${{ steps.session_gate.outputs.should_capture != 'true' }}
+        env:
+          SESSION_MARKET_DATE: ${{ steps.session_gate.outputs.market_date }}
+          SESSION_MARKET_PHASE: ${{ steps.session_gate.outputs.market_phase }}
+          EVENT_SCHEDULE: ${{ github.event.schedule || '' }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone, timedelta
+          from pathlib import Path
+          shanghai = timezone(timedelta(hours=8), name='Asia/Shanghai')
+          now = datetime.now(shanghai).isoformat(timespec='seconds')
+          health_path = Path('data/state/runtime_health.json')
+          current_path = Path('data/state/CURRENT.json')
+          health = json.loads(health_path.read_text(encoding='utf-8')) if health_path.exists() else {}
+          current = json.loads(current_path.read_text(encoding='utf-8')) if current_path.exists() else {}
+          health.update({
+              'status': 'SKIPPED',
+              'quality_status': 'SKIPPED',
+              'reason': 'outside_a_share_capture_window',
+              'failure_stage': 'session_gate',
+              'scheduled_for': 'cron:' + os.environ.get('EVENT_SCHEDULE', '') if os.environ.get('EVENT_SCHEDULE') else 'workflow_dispatch',
+              'started_at': now,
+              'finished_at': now,
+              'workflow_run_id': os.environ.get('GITHUB_RUN_ID', ''),
+              'run_id': os.environ.get('GITHUB_RUN_ID', ''),
+              'input_commit': os.environ.get('GITHUB_SHA', ''),
+              'data_commit': '',
+              'provider_as_of': '',
+              'latest_snapshot': current.get('latest_snapshot', health.get('latest_snapshot', '')),
+              'market_date': os.environ.get('SESSION_MARKET_DATE', current.get('market_date', '')),
+              'market_phase': os.environ.get('SESSION_MARKET_PHASE', 'OUTSIDE_SESSION'),
+          })
+          health_path.write_text(json.dumps(health, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
       - uses: actions/setup-node@v4
         if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
         with:
@@ -71,6 +108,34 @@ jobs:
           else
             python scripts/cloud_runner_snapshot.py --node "$NODE_LABEL"
           fi
+      - name: Normalize runtime health observability
+        if: ${{ steps.capture.outcome == 'success' && steps.session_gate.outputs.should_capture == 'true' }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone, timedelta
+          from pathlib import Path
+          shanghai = timezone(timedelta(hours=8), name='Asia/Shanghai')
+          path = Path('data/state/runtime_health.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          snapshot_path = Path(data.get('latest_snapshot', ''))
+          snapshot = json.loads(snapshot_path.read_text(encoding='utf-8')) if snapshot_path.exists() else {}
+          provider_times = [row.get('as_of_beijing') for row in (snapshot.get('rows') or []) if row.get('as_of_beijing')]
+          planned = snapshot.get('planned_time', '')
+          market_date = snapshot.get('market_date', data.get('market_date', ''))
+          data.update({
+              'scheduled_for': f'{market_date} {planned}' if planned else f'{market_date} {snapshot.get("node", "")}',
+              'started_at': data.get('run_started_at', ''),
+              'finished_at': data.get('captured_at_beijing', datetime.now(shanghai).isoformat(timespec='seconds'))
+              'run_id': os.environ.get('GITHUB_RUN_ID', ''),
+              'input_commit': os.environ.get('GITHUB_SHA', ''),
+              'data_commit': '',
+              'provider_as_of': max(provider_times) if provider_times else '',
+              'failure_stage': '',
+          })
+          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
       - name: Verify a new valid snapshot was written
         id: snapshot_result
         if: ${{ steps.capture.outcome == 'success' }}
@@ -131,5 +196,15 @@ jobs:
             exit 0
           fi
           git commit -m "data: record market snapshot/runtime health"
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          path = Path('data/state/runtime_health.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          data['data_commit'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          git add data/state/runtime_health.json
+          git commit --amend --no-edit
           git pull --rebase origin main
           git push origin HEAD:main
