@@ -203,11 +203,22 @@ def main() -> int:
     check("maintenance_workflow:no_recovery_state_machine", "full_snapshot_recovery" not in maintenance_workflow and "run_full_snapshot_recovery.py" not in maintenance_workflow, "consistency workflow validates only; it does not duplicate production recovery")
 
     runtime_health = read_json("data/state/runtime_health.json")
-    check("runtime_health:structured", bool(runtime_health.get("status")), f"status={runtime_health.get('status', 'MISSING')}")
+    runtime_status = str(runtime_health.get("status", "")).upper()
+    allowed_runtime_statuses = {"NOT_RUN", "PASS", "DEGRADED", "FAILED", "SKIPPED", "SUPERSEDED"}
+    check("runtime_health:structured", runtime_status in allowed_runtime_statuses, f"status={runtime_status or 'MISSING'}")
     current = read_json("data/state/CURRENT.json")
     latest_snapshot = str(current.get("latest_snapshot", ""))
-    live_runtime = runtime_health.get("status") == "PASS" and bool(runtime_health.get("latest_snapshot")) and bool(latest_snapshot)
-    check("a_share_runtime:live_state_available", live_runtime, f"runtime_status={runtime_health.get('status')} current_snapshot={latest_snapshot or 'MISSING'}", warning=True)
+    current_ready = current.get("node_status") == "READY" and bool(current.get("market_date")) and bool(current.get("latest_valid_node"))
+    runtime_snapshot = bool(runtime_health.get("latest_snapshot"))
+    if runtime_status == "PASS":
+        check("runtime_health:pass_requires_snapshot", runtime_snapshot and bool(latest_snapshot), f"runtime_snapshot={runtime_health.get('latest_snapshot', '')} current_snapshot={latest_snapshot or 'MISSING'}")
+    elif runtime_status == "SKIPPED":
+        check("runtime_health:skipped_reason", runtime_health.get("failure_stage") == "session_gate" and bool(runtime_health.get("reason")), f"failure_stage={runtime_health.get('failure_stage', '')} reason={runtime_health.get('reason', '')}", warning=True)
+    live_runtime = current_ready and bool(latest_snapshot) and (
+        (runtime_status == "PASS" and runtime_snapshot) or
+        (runtime_status == "SKIPPED" and runtime_snapshot)
+    )
+    check("a_share_runtime:live_state_available", live_runtime, f"runtime_status={runtime_status or 'MISSING'} current_snapshot={latest_snapshot or 'MISSING'}", warning=True)
     if live_runtime:
         snapshot_path = ROOT / latest_snapshot
         check("a_share_runtime:current_ready", current.get("node_status") == "READY" and bool(current.get("market_date")) and bool(current.get("latest_valid_node")), f"market_date={current.get('market_date')} node={current.get('latest_valid_node')} status={current.get('node_status')}")
