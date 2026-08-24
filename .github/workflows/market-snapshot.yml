@@ -11,6 +11,9 @@ on:
         description: "Fetch and validate without writing a valid node"
         required: true
         default: "false"
+  push:
+    paths:
+      - "requests/live_snapshot/**.json"
   schedule:
     # UTC. A-share opening auction starts at 09:15 Asia/Shanghai = 01:15 UTC.
     # Auction-specific pulses: 09:15, 09:20, 09:25; then 09:30 and 10-minute continuous pulses.
@@ -24,8 +27,8 @@ on:
 permissions:
   contents: write
 
-# Scheduled production and the single manual full-snapshot recovery entry share
-# one ordered queue. An older run must never race a newer CURRENT update.
+# Scheduled production, manual recovery and query-time refresh share one ordered
+# queue. An older run must never race a newer CURRENT update.
 concurrency:
   group: etf-market-snapshot-${{ github.ref }}
   cancel-in-progress: false
@@ -39,7 +42,9 @@ jobs:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
       HITHINK_RETRY_LIMIT: "2"
       HITHINK_TIMEOUT_SECONDS: "25"
-      HITHINK_MAX_WORKERS: "1"
+      # Query-time refresh prioritizes latency with controlled two-way fan-out.
+      # Scheduled production remains single-worker to minimize provider pressure.
+      HITHINK_MAX_WORKERS: ${{ github.event_name == 'push' && '2' || '1' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -75,7 +80,7 @@ jobs:
               'quality_status': 'SKIPPED',
               'reason': 'outside_a_share_capture_window',
               'failure_stage': 'session_gate',
-              'scheduled_for': 'cron:' + os.environ.get('EVENT_SCHEDULE', '') if os.environ.get('EVENT_SCHEDULE') else 'workflow_dispatch',
+              'scheduled_for': 'cron:' + os.environ.get('EVENT_SCHEDULE', '') if os.environ.get('EVENT_SCHEDULE') else ('query_time_push' if os.environ.get('GITHUB_EVENT_NAME') == 'push' else 'workflow_dispatch'),
               'started_at': now,
               'finished_at': now,
               'workflow_run_id': os.environ.get('GITHUB_RUN_ID', ''),
@@ -93,6 +98,8 @@ jobs:
         if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
         with:
           node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "package-lock.json"
       - name: Install hithink-finance CLI
         if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
         run: npm install --global @hithink-tech/hithink-finance-cli
@@ -100,7 +107,7 @@ jobs:
         id: capture
         if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
         env:
-          NODE_LABEL: ${{ github.event.inputs.node || 'scheduled' }}
+          NODE_LABEL: ${{ github.event_name == 'push' && 'live' || (github.event.inputs.node || 'scheduled') }}
           PROBE_ONLY: ${{ github.event.inputs.probe_only || 'false' }}
         run: |
           if [ "$PROBE_ONLY" = "true" ]; then
@@ -125,7 +132,8 @@ jobs:
           planned = snapshot.get('planned_time', '')
           market_date = snapshot.get('market_date', data.get('market_date', ''))
           data.update({
-              'scheduled_for': f'{market_date} {planned}' if planned else f'{market_date} {snapshot.get("node", "")}',
+              'scheduled_for': 'query_time_push' if os.environ.get('GITHUB_EVENT_NAME') == 'push' else (f'{market_date} {planned}' if planned else f'{market_date} {snapshot.get("node", "")}'),
+              'trigger_mode': 'QUERY_TIME_PUSH' if os.environ.get('GITHUB_EVENT_NAME') == 'push' else 'SCHEDULE_OR_DISPATCH',
               'started_at': data.get('run_started_at', ''),
               'finished_at': data.get('captured_at_beijing', datetime.now(shanghai).isoformat(timespec='seconds')),
               'run_id': os.environ.get('GITHUB_RUN_ID', ''),
@@ -158,6 +166,18 @@ jobs:
               f.write(f"reason={reason}\n")
           print(json.dumps({'snapshot_written': written, 'reason': reason}, ensure_ascii=False))
           PY
+      - name: Publish core snapshot and CURRENT immediately
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- data/market/snapshots data/state/CURRENT.json data/state/runtime_health.json
+          if ! git diff --cached --quiet; then
+            git commit -m "data: publish core market snapshot"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
       - name: Build objective intraday market delta
         if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_market_delta.py
@@ -182,22 +202,18 @@ jobs:
       - name: Build ChatGPT task read probe
         if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_chatgpt_task_probe.py
-      - name: Commit runtime/data artifacts
-        # Do not let a preflight failure re-commit stale runtime state.
-        # Session-gate skips and capture failures still persist their explicit health.
+      - name: Commit downstream runtime/data artifacts
+        # Core CURRENT is already published as soon as the 13-object snapshot passes.
+        # This second commit persists slower downstream contexts and final health metadata.
         if: ${{ always() && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success') }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Stage existing runtime directories, not a brittle list containing
-          # optional files. A missing optional path previously made git add fail
-          # atomically while stderr was suppressed, so valid snapshots vanished
-          # with the ephemeral runner.
           git add -A -- data/market/snapshots data/state post_market_review events
           if git diff --cached --quiet; then
             exit 0
           fi
-          git commit -m "data: record market snapshot/runtime health"
+          git commit -m "data: record downstream market contexts"
           python - <<'PY'
           import json, subprocess
           from pathlib import Path
