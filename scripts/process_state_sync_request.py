@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -138,6 +139,66 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
     return "\n".join(lines)
 
 
+def record_formal_decision(request: dict) -> tuple[bool, str]:
+    decision = request.get("formal_decision")
+    if not isinstance(decision, dict) or not decision:
+        return False, ""
+    current_path = ROOT / "data/state/CURRENT.json"
+    current = load_json(current_path) if current_path.exists() else {}
+    market_date = str(request.get("market_date") or current.get("market_date") or "")
+    main_candidate = str(decision.get("main_candidate") or "")
+    explicit_code = str(decision.get("candidate_code") or decision.get("code") or "")
+    match = re.search(r"（(\d{6})）", main_candidate) or re.search(r"(?<!\d)(\d{6})(?!\d)", main_candidate)
+    code = explicit_code or (match.group(1) if match else "")
+    name = str(decision.get("candidate_name") or "")
+    if not name and code:
+        name_match = re.search(rf"([^｜+，,；;]+?)（{re.escape(code)}）", main_candidate)
+        if name_match:
+            name = name_match.group(1).strip()
+
+    snapshot_rel = str(current.get("latest_snapshot") or "")
+    snapshot_path = ROOT / snapshot_rel if snapshot_rel else None
+    snapshot = load_json(snapshot_path) if snapshot_path and snapshot_path.exists() else {}
+    price_at_decision = None
+    price_as_of = ""
+    if code:
+        row = next((x for x in (snapshot.get("rows") or []) if str(x.get("symbol")) == code and x.get("quality_status") == "PASS"), None)
+        if row:
+            price_at_decision = row.get("close")
+            price_as_of = str(row.get("as_of_beijing") or "")
+
+    decision_time = str(decision.get("data_as_of_beijing") or price_as_of or datetime.now(SHANGHAI).isoformat(timespec="seconds"))
+    request_id = str(request.get("request_id") or "")
+    fingerprint = hashlib.sha256(json.dumps({"request_id": request_id, "market_date": market_date, "formal_decision": decision}, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+    decision_id = str(decision.get("decision_id") or request_id or f"{market_date}_{fingerprint[:12]}")
+    decision_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", decision_id)
+    event = {
+        "event_type": "FORMAL_DECISION",
+        "decision_id": decision_id,
+        "fingerprint": fingerprint,
+        "market_date": market_date,
+        "decision_time_beijing": decision_time,
+        "interaction_scenario": request.get("interaction_scenario"),
+        "candidate_code": code,
+        "candidate_name": name,
+        "price_at_decision": price_at_decision,
+        "price_as_of_beijing": price_as_of,
+        "price_source_snapshot": snapshot_rel,
+        "formal_decision": decision,
+        "read_only_research_event": True,
+        "decision_boundary": "仅保存ChatGPT已经形成的正式决策及当时可见价格，用于后续结果归因；不自行推导交易权限或动作。",
+        "recorded_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
+    }
+    event_path = ROOT / "events/decisions" / f"{decision_id}.json"
+    event_path.parent.mkdir(parents=True, exist_ok=True)
+    if event_path.exists():
+        prior = load_json(event_path)
+        if prior.get("fingerprint") == fingerprint and prior.get("price_source_snapshot") == snapshot_rel:
+            return True, decision_id
+    atomic_json_write(event_path, event)
+    return True, decision_id
+
+
 def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     review = request.get("formal_review")
     if request.get("interaction_scenario") != "POST_CLOSE_REVIEW" or not review:
@@ -194,6 +255,8 @@ def main() -> int:
     if account.get("status") != "VALID":
         raise RuntimeError("account_fact is not VALID")
 
+    decision_recorded, decision_id = record_formal_decision(request)
+
     dashboard = DASHBOARD.read_text(encoding="utf-8")
     dashboard = replace_block(dashboard, START, END, build_dashboard_block(account, request.get("formal_decision"), request), insert_after_heading=True)
     DASHBOARD.write_text(dashboard, encoding="utf-8")
@@ -212,6 +275,7 @@ def main() -> int:
             "amount": trade.get("amount"),
             "lifecycle": trade.get("lifecycle"),
             "source": trade.get("source", account.get("source")),
+            "linked_decision_id": trade.get("decision_id") or decision_id or None,
         }
         event_path = ROOT / "events" / "trades" / f"{event_id}.json"
         event_path.parent.mkdir(parents=True, exist_ok=True)
@@ -230,6 +294,8 @@ def main() -> int:
         "interaction_scenario": request.get("interaction_scenario"),
         "account_updated_at": account.get("updated_at"),
         "dashboard_updated": True,
+        "formal_decision_recorded": decision_recorded,
+        "formal_decision_id": decision_id,
         "trade_event_recorded": bool(trade),
         "post_close_review_recorded": review_recorded,
         "post_close_review_idempotent_noop": review_idempotent,
