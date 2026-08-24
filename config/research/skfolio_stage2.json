@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "role": "RESEARCH_EVIDENCE_ONLY",
+  "decision_eligible": false,
+  "trade_signal": null,
+  "master_override": false,
+  "upstream": {
+    "repository": "skfolio/skfolio",
+    "commit": "1c892a53a27913335f9ef506ccf6453869365abf",
+    "version_context": "v1.0.0"
+  },
+  "purpose": "验证Stage1通过的InverseVolatility与RiskBudgeting在不同训练窗口、相关阈值、leave-one-ETF-out条件下是否仍能稳定识别重复风险，并量化风险侧边际资本释放效率。",
+  "data": {
+    "source_dir": "events/research/daily_features",
+    "start_date": "2024-01-01",
+    "end_date": "2026-08-21",
+    "minimum_assets_per_fold": 7
+  },
+  "robustness_grid": {
+    "train_days": [80, 120, 180],
+    "test_days": 20,
+    "step_days": 20,
+    "correlation_thresholds": [0.65, 0.70, 0.80]
+  },
+  "models": ["EqualWeighted", "InverseVolatility", "RiskBudgeting"],
+  "marginal_capital": {
+    "release_fraction_of_portfolio": 0.05,
+    "interpretation": "仅衡量将既有ETF风险暴露移向现金时的风险侧边际效果，不估计收益机会成本，不产生卖出建议。"
+  },
+  "validation": {
+    "baseline": "EqualWeighted",
+    "minimum_parameter_cells": 6,
+    "minimum_risk_metric_win_rate": 0.60,
+    "minimum_release_rank_stability": 0.50,
+    "screening_rule": "Stage2通过要求候选方法在大多数参数组合中保持样本外风险改善，同时共同风险簇识别与风险侧释放排序不依赖单一ETF或单一参数。该筛选只决定是否值得进入研究证据集，不是交易规则。"
+  },
+  "current_account_mapping": {
+    "enabled": true,
+    "account_fact_path": "data/state/account_fact.json",
+    "warning": "账户映射仅用于验证工具能否解释真实持仓结构；历史风险矩阵截止2026-08-21，不得作为2026-08-25当前正式交易决策。"
+  },
+  "hard_boundaries": [
+    "不得直接生成风险许可、机会状态、Trial、Confirm、金额、持有、降低风险或退出",
+    "不得将优化器权重解释为目标仓位",
+    "风险侧释放效率不得等同于收益侧资本效率或卖出优先级",
+    "不得使用测试期数据估计训练期相关性、协方差或权重",
+    "不得因Stage2通过自动修改MASTER",
+    "当前账户映射若行情时点落后必须明确标记STALE_RESEARCH_MAPPING"
+  ]
+}
