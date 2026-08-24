@@ -197,6 +197,7 @@ def main() -> int:
 
     workflow = read_text(".github/workflows/market-snapshot.yml")
     check("workflow:consistency_preflight", "check_system_consistency.py" in workflow, "preflight consistency gate present")
+    check("workflow:concurrency_policy_loader", "Load unified provider concurrency policy" in workflow and "runtime_policy.json" in workflow and "HITHINK_MAX_WORKERS" in workflow, "workflow loads scheduled/query concurrency from runtime policy")
     check("workflow:session_gate", "runtime_session_gate.py" in workflow and "session_gate.outputs.should_capture" in workflow, "exchange calendar/session gate wired")
     check("workflow:auction_cron", '15,20,25,30,40,50 1 * * 1-5' in workflow, "09:15/09:20/09:25 auction pulses scheduled")
     check("workflow:valid_snapshot_downstream_gate", "snapshot_result.outputs.snapshot_written == 'true'" in workflow, "downstream contexts require new valid A-share snapshot")
