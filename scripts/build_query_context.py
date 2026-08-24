@@ -21,8 +21,9 @@ CANONICAL_FILES = {
     "etf_monitor_universe": "config/market/etf_monitor_universe.json", "trading_calendar": "config/market/a_share_trading_calendar_2026.json",
     "stock_context": "data/state/stock_context.json", "stock_market_context": "data/state/stock_market_context.json",
     "stock_monitor_policy": "config/market/stock_monitor_policy.json", "market_delta": "data/state/market_delta.json",
-    "overseas_context": "data/state/overseas_context.json", "runtime_health": "data/state/runtime_health.json",
-    "runtime_policy": "config/runtime_policy.json", "system_consistency": "data/state/system_consistency.json",
+    "overseas_context": "data/state/overseas_context.json", "us_extended_hours_context": "data/state/us_extended_hours_context.json",
+    "runtime_health": "data/state/runtime_health.json", "runtime_policy": "config/runtime_policy.json",
+    "system_consistency": "data/state/system_consistency.json",
 }
 
 
@@ -75,7 +76,7 @@ def account_gate_status(current: dict, account: dict, policy: dict) -> dict:
 def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict) -> dict:
     latest_snapshot = current.get("latest_snapshot", "")
     account_gate = account_gate_status(current, account, policy)
-    required = [CANONICAL_FILES[k] for k in ["index", "master", "data_standard", "current", "system_consistency", "runtime_policy", "runtime_health", "trading_calendar", "etf_monitor_universe", "overseas_context", "stock_monitor_policy", "stock_context", "stock_market_context"]]
+    required = [CANONICAL_FILES[k] for k in ["index", "master", "data_standard", "current", "system_consistency", "runtime_policy", "runtime_health", "trading_calendar", "etf_monitor_universe", "overseas_context", "us_extended_hours_context", "stock_monitor_policy", "stock_context", "stock_market_context"]]
     if latest_snapshot:
         required.append(latest_snapshot)
     required.extend([CANONICAL_FILES["market_delta"], CANONICAL_FILES["dashboard"]])
@@ -85,23 +86,29 @@ def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict)
     return {
         "mode": "LATEST_STATE_ON_DEMAND",
         "required_reads": required,
-        "conditional_reads": {"lifecycle_or_prior_case_needed": CANONICAL_FILES["experience"], "historical_market_fact_needed": CANONICAL_FILES["market_archive"], "industry_chain_stock_needed": "按当前ETF/行业假设临时发现跨市场最有解释力的产业链公司；不使用永久固定名单。"},
+        "conditional_reads": {
+            "lifecycle_or_prior_case_needed": CANONICAL_FILES["experience"],
+            "historical_market_fact_needed": CANONICAL_FILES["market_archive"],
+            "industry_chain_stock_needed": "按当前ETF/行业假设临时发现跨市场最有解释力的产业链公司；美股个股可同时核验REGULAR/POST_MARKET/PRE_MARKET，但不使用永久固定名单。",
+        },
         "account_gate": account_gate,
         "market_gate": {
             "node_status": current.get("node_status", ""), "latest_valid_node": current.get("latest_valid_node", ""), "latest_snapshot": latest_snapshot,
             "captured_at": current.get("captured_at", ""), "captured_at_beijing": current.get("data_freshness", {}).get("captured_at_beijing", current.get("captured_at", "")),
-            "market_delta": CANONICAL_FILES["market_delta"], "overseas_context": CANONICAL_FILES["overseas_context"], "etf_monitor_universe": CANONICAL_FILES["etf_monitor_universe"],
-            "trading_calendar": CANONICAL_FILES["trading_calendar"], "stock_context": CANONICAL_FILES["stock_context"], "stock_market_context": CANONICAL_FILES["stock_market_context"],
+            "market_delta": CANONICAL_FILES["market_delta"], "overseas_context": CANONICAL_FILES["overseas_context"], "us_extended_hours_context": CANONICAL_FILES["us_extended_hours_context"],
+            "etf_monitor_universe": CANONICAL_FILES["etf_monitor_universe"], "trading_calendar": CANONICAL_FILES["trading_calendar"],
+            "stock_context": CANONICAL_FILES["stock_context"], "stock_market_context": CANONICAL_FILES["stock_market_context"],
             "system_consistency": CANONICAL_FILES["system_consistency"], "data_standard": CANONICAL_FILES["data_standard"], "runtime_health": CANONICAL_FILES["runtime_health"], "runtime_policy": CANONICAL_FILES["runtime_policy"],
             "freshness_at_context_build": freshness, "data_freshness": current.get("data_freshness", {}),
             "query_time_rule": "每次查询必须重新计算数据年龄；FRESH/DEGRADED/STALE以实际数据时点判断，不按cron计划时间判断。",
-            "output_time_rule": "任何正式行情分析、ETF判断、盘中复核或盘后复盘，只要引用行情，必须显式输出【数据时点（北京时间）】。A股使用captured_at_beijing；海外/亚洲对象优先使用latest.as_of_beijing，并同时解释market_phase。多个对象时点明显不一致时分别标注，不得用一个笼统时间覆盖。",
+            "output_time_rule": "任何正式行情分析、ETF判断、盘中复核或盘后复盘，只要引用行情，必须显式输出【数据时点（北京时间）】。A股使用captured_at_beijing；海外/亚洲对象优先使用latest.as_of_beijing；美股扩展时段同时标注PRE_MARKET/REGULAR/POST_MARKET。多个对象时点明显不一致时分别标注。",
             "delay_visibility_rule": "若数据相对查询时刻存在可见延迟，不隐藏延迟；直接展示北京时间as_of，并在必要时注明距当前约多少分钟。",
             "trading_day_rule": "每次当前查询先读取A股官方交易日历，区分正常交易日前/盘中/盘后、周末与交易所休市。",
             "consistency_rule": "正式分析前读取system_consistency.json；硬FAIL先处理系统冲突。",
             "data_standard_rule": "行情来源、质量、盘前/盘中脉冲、新鲜度、跨市场时点和降级边界以一级目录数据规范为基础。",
             "etf_rule": "ETF机器采集以etf_monitor_universe.json为唯一运行清单；持仓/观察身份由Dashboard和当日账户事实解释。",
             "overseas_rule": "正式海外/亚洲指数必须检查NDX、SOX、N225、KOSPI、TWII、HSTECH；北京时间08:00起已有日韩市场脉冲，不能等A股9:30才开始读取海外。",
+            "us_extended_hours_rule": "美国信息分三段解释：上一正式现金盘（NDX/SOX）、POST_MARKET（QQQ/SOXX及条件个股）、下一交易日PRE_MARKET。A股早盘前可能获得上一美股盘后信息；下一美股PRE_MARKET通常在北京时间A股收盘后开始，主要形成下一A股交易日的前置信号。扩展时段不得等同正式指数确认。",
             "stock_rule": "第三层默认个股由当日账户事实动态生成；产业链个股按查询主题动态发现。",
             "rule": "盘中查询使用最新有效状态和相邻行情变化；数据不足时明确不足。",
         },
@@ -116,6 +123,7 @@ def build(root: Path = ROOT) -> dict:
     policy = read_json(root / CANONICAL_FILES["runtime_policy"], {})
     runtime_health = read_json(root / CANONICAL_FILES["runtime_health"], {})
     overseas_context = read_json(root / CANONICAL_FILES["overseas_context"], {})
+    us_extended = read_json(root / CANONICAL_FILES["us_extended_hours_context"], {})
     stock_context = read_json(root / CANONICAL_FILES["stock_context"], {})
     stock_market_context = read_json(root / CANONICAL_FILES["stock_market_context"], {})
     consistency = read_json(root / CANONICAL_FILES["system_consistency"], {})
@@ -133,17 +141,18 @@ def build(root: Path = ROOT) -> dict:
         "system_consistency_status": consistency.get("status", "MISSING"), "system_consistency_hard_errors": consistency.get("hard_error_count", None),
         "etf_universe_count": len(etf_universe.get("objects") or []), "overseas_context_status": overseas_context.get("quality_status", "MISSING"),
         "overseas_generated_at_beijing": overseas_context.get("generated_at_beijing", ""),
+        "us_extended_hours_status": us_extended.get("quality_status", "MISSING"), "us_extended_hours_generated_at_beijing": us_extended.get("generated_at_beijing", ""),
         "stock_context_status": stock_context.get("account_fact_status", "MISSING"), "stock_market_context_status": stock_market_context.get("quality_status", "MISSING"),
         "stock_role_confirmation_needed": stock_context.get("needs_role_confirmation", False), "account_fact_status": account["status"], "account_gate": account_gate,
         "needs_account_screenshot": not account_gate["can_use_current_account_fact"], "read_only": True,
-        "interaction_boundary": "用户主动查询时先核对一致性、交易日历和数据规范；正式输出必须标注北京时间数据时点。",
+        "interaction_boundary": "用户主动查询时先核对一致性、交易日历和数据规范；正式输出必须标注北京时间数据时点，并区分美股现金盘、盘后和盘前。",
     }
 
 
 def main() -> None:
     context = build(ROOT)
     atomic_json_write(ROOT / "data" / "state" / "query_context.json", context)
-    print(json.dumps({"ok": True, "generated_at_beijing": context["generated_at_beijing"], "market_date": context["market_date"], "latest_valid_node": context["latest_valid_node"], "system_consistency_status": context["system_consistency_status"], "candidate_trading_day": context["trading_day_status"]["is_candidate_trading_day"], "etf_universe_count": context["etf_universe_count"], "account_fact_status": context["account_fact_status"], "account_usable": context["account_gate"]["can_use_current_account_fact"], "freshness": context["freshness_at_context_build"]["status"], "overseas_context_status": context["overseas_context_status"], "overseas_generated_at_beijing": context["overseas_generated_at_beijing"], "stock_context_status": context["stock_context_status"], "stock_market_context_status": context["stock_market_context_status"], "read_plan_mode": context["decision_read_plan"]["mode"]}, ensure_ascii=False))
+    print(json.dumps({"ok": True, "generated_at_beijing": context["generated_at_beijing"], "market_date": context["market_date"], "latest_valid_node": context["latest_valid_node"], "system_consistency_status": context["system_consistency_status"], "candidate_trading_day": context["trading_day_status"]["is_candidate_trading_day"], "etf_universe_count": context["etf_universe_count"], "account_fact_status": context["account_fact_status"], "account_usable": context["account_gate"]["can_use_current_account_fact"], "freshness": context["freshness_at_context_build"]["status"], "overseas_context_status": context["overseas_context_status"], "us_extended_hours_status": context["us_extended_hours_status"], "stock_context_status": context["stock_context_status"], "stock_market_context_status": context["stock_market_context_status"], "read_plan_mode": context["decision_read_plan"]["mode"]}, ensure_ascii=False))
 
 
 if __name__ == "__main__":
