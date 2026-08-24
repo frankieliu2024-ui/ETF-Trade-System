@@ -1,5 +1,5 @@
 {
-  "version": "1.1",
+  "version": "1.2",
   "timezone": "Asia/Shanghai",
   "target_cadence_seconds": 600,
   "fresh_max_age_seconds": 900,
@@ -10,7 +10,15 @@
   "provider_retry_limit": 2,
   "provider_max_workers": 3,
   "workflow_timeout_minutes": 6,
-  "account_fact_same_market_date_required": true,
+  "account_fact_same_market_date_required": false,
+  "account_fact_validity_mode": "EVENT_DRIVEN_CARRY_FORWARD",
+  "account_fact_invalidation_events": [
+    "USER_REPORTED_TRADE",
+    "BROKER_SCREENSHOT_CHANGE",
+    "CASH_TRANSFER",
+    "CORPORATE_ACTION_POSITION_CHANGE",
+    "OTHER_CONFIRMED_ACCOUNT_CHANGE"
+  ],
   "preserve_last_valid_snapshot_on_failure": true,
   "policy": {
     "FRESH": "可用于当前行情判断；仍须按MASTER和账户事实完成正式决策链。",
@@ -18,6 +26,6 @@
     "STALE": "不得把该行情冒充当前实时状态；仅可作为历史/背景信息。",
     "FAILED": "保留上一有效CURRENT与快照，不覆盖；记录运行失败并等待下一次采集自动恢复。",
     "CLOSE_GRACE": "15:00计划任务允许在15分钟宽限窗口内补采收盘快照，避免GitHub Actions调度延迟造成收盘节点缺失。",
-    "ACCOUNT_FACT": "正式盘中/盘后决策所使用的账户事实必须与当前market_date一致；旧日VALID不得自动沿用为当日VALID。"
+    "ACCOUNT_FACT": "账户事实按事件驱动延续：上一交易日已核实账户在没有新成交、资金划转、公司行为导致持仓变化或其他已确认账户变化时继续有效，不因跨自然日或交易日自动失效。发生任一账户变化事件后必须刷新事实；不得在已知发生变化后继续沿用旧账户。"
   }
 }
