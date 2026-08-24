@@ -47,6 +47,8 @@ def market_phase(timestamp_ms: object) -> str:
         return "CONTINUOUS_AFTERNOON"
     if 14 * 60 + 57 <= minute <= 15 * 60:
         return "CLOSING_CALL_AUCTION"
+    if 15 * 60 < minute <= 15 * 60 + 15:
+        return "POST_CLOSE_GRACE"
     return "OUTSIDE_SESSION"
 
 
