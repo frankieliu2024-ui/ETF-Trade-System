@@ -33,6 +33,22 @@ def build(root: Path = ROOT) -> dict:
         status = "READY_FOR_REVIEW"
     else:
         status = "BLOCKED"
+
+    # The formal review event is written by the authenticated state-sync path.
+    # Reflect its real existence instead of leaving a permanently false flag.
+    review_event_path = root / "events" / "reviews" / f"{current.get('market_date', '')}.json"
+    formal_review_generated = False
+    if review_event_path.exists():
+        try:
+            prior_event = json.loads(review_event_path.read_text(encoding="utf-8"))
+            formal_review_generated = (
+                prior_event.get("event_type") == "FORMAL_POST_CLOSE_REVIEW"
+                and prior_event.get("market_date") == current.get("market_date")
+                and isinstance(prior_event.get("review"), dict)
+            )
+        except (OSError, json.JSONDecodeError):
+            formal_review_generated = False
+
     event = {
         "event_type": "POST_MARKET_REVIEW_REQUIRED",
         "market_date": current.get("market_date", ""),
@@ -69,7 +85,7 @@ def build(root: Path = ROOT) -> dict:
         "need_account_screenshot": waiting,
         "review_status": status,
         "waiting_for_user_screenshot": waiting,
-        "formal_review_generated": False,
+        "formal_review_generated": formal_review_generated,
         "formal_review_allowed": bool(market_close and data_complete and not waiting),
         "same_day_review_idempotent": True,
         "review_boundary": "15:00后当天首次最终账户截图默认触发正式收盘复盘；账户事实只能来自用户或券商确认。重复截图如无账户/成交变化只做差异更新，不重复制造CASE。A股复盘使用15:00正式收盘数据，不用截图提交时间冒充行情时间。",
