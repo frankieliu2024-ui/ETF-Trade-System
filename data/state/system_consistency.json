@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-08-24T05:07:57Z",
-  "generated_at_beijing": "2026-08-24T13:07:57+08:00",
+  "generated_at": "2026-08-24T05:12:36Z",
+  "generated_at_beijing": "2026-08-24T13:12:36+08:00",
   "repository": {
-    "head_sha": "fe28e5a9d260afcaecb94a1801f8d05260738efb",
-    "github_sha": "fe28e5a9d260afcaecb94a1801f8d05260738efb",
-    "github_run_id": "32692428443",
+    "head_sha": "9d7326f4ba895e3f5a9524add9efb054f4c43b55",
+    "github_sha": "9d7326f4ba895e3f5a9524add9efb054f4c43b55",
+    "github_run_id": "32692693217",
     "github_ref": "refs/heads/main"
   },
-  "status": "PASS",
-  "hard_error_count": 0,
+  "status": "FAIL",
+  "hard_error_count": 1,
   "warning_count": 0,
   "checks": [
     {
@@ -89,12 +89,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=fe28e5a9d260afcaecb94a1801f8d05260738efb"
+      "detail": "HEAD=9d7326f4ba895e3f5a9524add9efb054f4c43b55"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=fe28e5a9d260afcaecb94a1801f8d05260738efb GITHUB_SHA=fe28e5a9d260afcaecb94a1801f8d05260738efb"
+      "detail": "HEAD=9d7326f4ba895e3f5a9524add9efb054f4c43b55 GITHUB_SHA=9d7326f4ba895e3f5a9524add9efb054f4c43b55"
     },
     {
       "name": "git:critical_files_tracked",
@@ -529,7 +529,7 @@
     {
       "name": "a_share_runtime:live_state_available",
       "status": "PASS",
-      "detail": "runtime_status=PASS current_snapshot=data/market/snapshots/2026-08-24_130404.json"
+      "detail": "runtime_status=PASS current_snapshot=data/market/snapshots/2026-08-24_131110.json"
     },
     {
       "name": "a_share_runtime:current_ready",
@@ -539,7 +539,7 @@
     {
       "name": "a_share_runtime:snapshot_exists",
       "status": "PASS",
-      "detail": "path=data/market/snapshots/2026-08-24_130404.json"
+      "detail": "path=data/market/snapshots/2026-08-24_131110.json"
     },
     {
       "name": "a_share_runtime:snapshot_count",
@@ -564,7 +564,7 @@
     {
       "name": "a_share_runtime:beijing_capture",
       "status": "PASS",
-      "detail": "captured_at_beijing=2026-08-24T13:04:04+08:00 timezone=Asia/Shanghai"
+      "detail": "captured_at_beijing=2026-08-24T13:11:10+08:00 timezone=Asia/Shanghai"
     },
     {
       "name": "stock_runtime:dynamic_account_membership",
@@ -573,8 +573,8 @@
     },
     {
       "name": "stock_runtime:market_complete",
-      "status": "PASS",
-      "detail": "codes=['300750', '601138'] status=PASS"
+      "status": "FAIL",
+      "detail": "codes=['300750', '601138'] status=FAILED"
     },
     {
       "name": "overseas_runtime:structured",
@@ -607,7 +607,9 @@
       "detail": "status=VALID (state warning only)"
     }
   ],
-  "errors": [],
+  "errors": [
+    "stock_runtime:market_complete: codes=['300750', '601138'] status=FAILED"
+  ],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。"
 }
