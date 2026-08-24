@@ -1,0 +1,119 @@
+name: ETF skfolio stage2 validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_path:
+        description: "skfolio stage2 request JSON path"
+        required: true
+        default: "requests/research_backfill/20260825_skfolio_stage2.json"
+  push:
+    branches: [main]
+    paths:
+      - "requests/research_backfill/skfolio_stage2_trigger.txt"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: etf-skfolio-stage2
+  cancel-in-progress: false
+
+jobs:
+  skfolio-stage2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+      SKFOLIO_REPO_DIR: ${{ github.workspace }}/.cache/skfolio
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Record stage2 run start
+        run: |
+          mkdir -p data/state
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path('data/state/skfolio_stage2_workflow_probe.json').write_text(json.dumps({
+              'run_id': os.environ.get('GITHUB_RUN_ID'), 'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
+              'status': 'RUNNING', 'sha': os.environ.get('GITHUB_SHA'), 'event': os.environ.get('GITHUB_EVENT_NAME')
+          }, indent=2) + '\n')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/state/skfolio_stage2_workflow_probe.json
+          git commit -m "ops: record skfolio stage2 start"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache Python packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: skfolio-stage2-${{ runner.os }}-1c892a5
+
+      - name: Fetch pinned skfolio upstream
+        run: |
+          rm -rf "$SKFOLIO_REPO_DIR"
+          git clone --filter=blob:none https://github.com/skfolio/skfolio.git "$SKFOLIO_REPO_DIR"
+          git -C "$SKFOLIO_REPO_DIR" checkout --detach 1c892a53a27913335f9ef506ccf6453869365abf
+          test "$(git -C "$SKFOLIO_REPO_DIR" rev-parse HEAD)" = "1c892a53a27913335f9ef506ccf6453869365abf"
+
+      - name: Install pinned skfolio dependencies
+        run: |
+          python -m pip install --disable-pip-version-check --upgrade pip
+          python -m pip install --disable-pip-version-check "$SKFOLIO_REPO_DIR" pandas==2.2.2
+
+      - name: Run skfolio stage2 robustness validation
+        run: |
+          REQUEST_PATH="${{ github.event.inputs.request_path }}"
+          if [ -z "$REQUEST_PATH" ]; then REQUEST_PATH="requests/research_backfill/20260825_skfolio_stage2.json"; fi
+          python scripts/run_skfolio_stage2_validation.py "$REQUEST_PATH"
+
+      - name: Enforce research-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('research/backtests/skfolio_stage2_validation.json').read_text())
+          s=json.loads(Path('data/state/skfolio_research_status.json').read_text())
+          assert r['decision_eligible'] is False and r['trade_signal'] is None and r['portfolio_target'] is None
+          assert r['trial_confirm'] is None and r['master_override'] is False and r['historical_decision_prohibited'] is True
+          assert s['decision_eligible'] is False and s['trade_signal'] is None
+          print('skfolio stage2 research boundary PASS')
+          PY
+
+      - name: Commit compact stage2 evidence
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- research/backtests/skfolio_stage2_validation.json data/state/skfolio_research_status.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "research: complete skfolio stage2 validation"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Record stage2 run outcome
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path('data/state/skfolio_stage2_workflow_probe.json').write_text(json.dumps({
+              'run_id': os.environ.get('GITHUB_RUN_ID'), 'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
+              'status': '${{ job.status }}', 'sha': os.environ.get('GITHUB_SHA'), 'event': os.environ.get('GITHUB_EVENT_NAME')
+          }, indent=2) + '\n')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/state/skfolio_stage2_workflow_probe.json
+          git commit -m "ops: record skfolio stage2 outcome" || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main
