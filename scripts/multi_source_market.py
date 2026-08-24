@@ -18,7 +18,7 @@ YAHOO_SYMBOLS = {
     "SAMSUNG_005930.KS": "005930.KS", "SK_HYNIX_000660.KS": "000660.KS",
     "NDX": "^NDX", "SPX": "^GSPC", "VIX": "^VIX",
     "KOSPI": "^KS11", "KOSDAQ": "^KQ11", "N225": "^N225", "TWII": "^TWII",
-    "HSTECH": "^HSTECH", "GOLD": "GC=F", "DXY": "DX-Y.NYB",
+    "HSTECH": "HSTECH.HK", "GOLD": "GC=F", "DXY": "DX-Y.NYB",
 }
 
 
