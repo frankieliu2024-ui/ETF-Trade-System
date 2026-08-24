@@ -98,8 +98,6 @@ jobs:
         if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: "package-lock.json"
       - name: Install hithink-finance CLI
         if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
         run: npm install --global @hithink-tech/hithink-finance-cli
