@@ -7,10 +7,6 @@ on:
         description: "skfolio stage2 request JSON path"
         required: true
         default: "requests/research_backfill/20260825_skfolio_stage2.json"
-  push:
-    branches: [main]
-    paths:
-      - "requests/research_backfill/skfolio_stage2_trigger.txt"
 
 permissions:
   contents: write
@@ -30,24 +26,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
-
-      - name: Record stage2 run start
-        run: |
-          mkdir -p data/state
-          python - <<'PY'
-          import json, os
-          from pathlib import Path
-          Path('data/state/skfolio_stage2_workflow_probe.json').write_text(json.dumps({
-              'run_id': os.environ.get('GITHUB_RUN_ID'), 'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
-              'status': 'RUNNING', 'sha': os.environ.get('GITHUB_SHA'), 'event': os.environ.get('GITHUB_EVENT_NAME')
-          }, indent=2) + '\n')
-          PY
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/state/skfolio_stage2_workflow_probe.json
-          git commit -m "ops: record skfolio stage2 start"
-          git pull --rebase origin main
-          git push origin HEAD:main
 
       - uses: actions/setup-python@v5
         with:
@@ -73,9 +51,7 @@ jobs:
 
       - name: Run skfolio stage2 robustness validation
         run: |
-          REQUEST_PATH="${{ github.event.inputs.request_path }}"
-          if [ -z "$REQUEST_PATH" ]; then REQUEST_PATH="requests/research_backfill/20260825_skfolio_stage2.json"; fi
-          python scripts/run_skfolio_stage2_validation.py "$REQUEST_PATH"
+          python scripts/run_skfolio_stage2_validation.py "${{ github.event.inputs.request_path }}"
 
       - name: Enforce research-only boundary
         run: |
@@ -97,23 +73,5 @@ jobs:
           git add -A -- research/backtests/skfolio_stage2_validation.json data/state/skfolio_research_status.json
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "research: complete skfolio stage2 validation"
-          git pull --rebase origin main
-          git push origin HEAD:main
-
-      - name: Record stage2 run outcome
-        if: always()
-        run: |
-          python - <<'PY'
-          import json, os
-          from pathlib import Path
-          Path('data/state/skfolio_stage2_workflow_probe.json').write_text(json.dumps({
-              'run_id': os.environ.get('GITHUB_RUN_ID'), 'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
-              'status': '${{ job.status }}', 'sha': os.environ.get('GITHUB_SHA'), 'event': os.environ.get('GITHUB_EVENT_NAME')
-          }, indent=2) + '\n')
-          PY
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/state/skfolio_stage2_workflow_probe.json
-          git commit -m "ops: record skfolio stage2 outcome" || exit 0
           git pull --rebase origin main
           git push origin HEAD:main
