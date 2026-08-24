@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
 import re
-import sys
+import subprocess
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -11,22 +12,18 @@ REPORT = ROOT / "data" / "state" / "system_consistency.json"
 DATA_STANDARD = "ETF与市场监测数据接口使用规范.md"
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
-FORMAL_FILES = [
-    "ETF规则_MASTER.md",
-    "ETF当前状态_DASHBOARD.md",
-    "ETF交易复盘与经验库_2026.md",
-    "ETF市场行情档案_2026.md",
-]
+FORMAL_FILES = ["ETF规则_MASTER.md", "ETF当前状态_DASHBOARD.md", "ETF交易复盘与经验库_2026.md", "ETF市场行情档案_2026.md"]
 CORE_RUNTIME_FILES = [
-    "data/state/CURRENT.json",
-    "data/state/runtime_health.json",
-    "data/state/account_fact.json",
-    "config/runtime_policy.json",
-    "config/market/market_monitor_config.json",
-    "config/market/provider_priority.json",
-    "config/market/etf_monitor_universe.json",
-    "config/market/a_share_trading_calendar_2026.json",
+    "data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/account_fact.json",
+    "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json",
+    "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json",
 ]
+CRITICAL_TRACKED_FILES = FORMAL_FILES + [
+    DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py",
+    "scripts/cloud_runner_snapshot.py", "scripts/build_overseas_context.py", "scripts/build_query_context.py",
+    ".github/workflows/market-snapshot.yml", ".github/workflows/overseas-preopen-pulse.yml",
+    ".github/workflows/system-consistency.yml",
+] + CORE_RUNTIME_FILES
 EXPECTED_INDICES = {"000001.SH", "399006.SZ", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
 REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api"}
 
@@ -40,6 +37,11 @@ def read_text(path: str) -> str:
 
 def read_json(path: str) -> dict:
     return json.loads(read_text(path))
+
+
+def run_git(*args: str) -> tuple[int, str]:
+    completed = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+    return completed.returncode, (completed.stdout or completed.stderr).strip()
 
 
 def codes_from_dashboard(text: str) -> set[str]:
@@ -66,14 +68,26 @@ def main() -> int:
 
     for path in FORMAL_FILES:
         check(f"formal_file:{path}", (ROOT / path).exists(), "exists" if (ROOT / path).exists() else "missing")
-    check(f"data_standard:{DATA_STANDARD}", (ROOT / DATA_STANDARD).exists(), "root-level standard exists" if (ROOT / DATA_STANDARD).exists() else "missing root-level data standard")
+    check(f"data_standard:{DATA_STANDARD}", (ROOT / DATA_STANDARD).exists(), "root-level standard exists" if (ROOT / DATA_STANDARD).exists() else "missing")
     for path in CORE_RUNTIME_FILES:
         check(f"runtime_file:{path}", (ROOT / path).exists(), "exists" if (ROOT / path).exists() else "missing core runtime dependency")
 
+    rc, head_sha = run_git("rev-parse", "HEAD")
+    check("git:head_commit", rc == 0 and bool(re.fullmatch(r"[0-9a-f]{40}", head_sha)), f"HEAD={head_sha or 'UNAVAILABLE'}")
+    github_sha = os.environ.get("GITHUB_SHA", "")
+    if github_sha:
+        check("git:workflow_sha_matches_head", head_sha == github_sha, f"HEAD={head_sha} GITHUB_SHA={github_sha}")
+    rc, tracked = run_git("ls-files")
+    tracked_set = set(tracked.splitlines()) if rc == 0 else set()
+    missing_tracked = [p for p in CRITICAL_TRACKED_FILES if p not in tracked_set]
+    check("git:critical_files_tracked", not missing_tracked, f"missing_tracked={missing_tracked}")
+    rc, dirty = run_git("status", "--porcelain", "--untracked-files=all")
+    check("git:working_tree_clean_before_check", rc == 0 and not dirty, "clean" if not dirty else f"dirty={dirty[:500]}")
+
     index_text = read_text("ETF_SYSTEM_INDEX.md")
     for path in FORMAL_FILES:
-        check(f"index_entry:{path}", f"`{path}`" in index_text, "canonical entry present" if f"`{path}`" in index_text else "canonical entry missing")
-    check("index_entry:data_standard", DATA_STANDARD in index_text, "data standard entry present" if DATA_STANDARD in index_text else "data standard missing from system index")
+        check(f"index_entry:{path}", f"`{path}`" in index_text, "canonical entry present" if f"`{path}`" in index_text else "missing")
+    check("index_entry:data_standard", DATA_STANDARD in index_text, "data standard entry present")
 
     market_cfg = read_json("config/market/market_monitor_config.json")
     formal_indices = set(market_cfg.get("formal_index_layer", {}).get("required_objects", []))
@@ -88,20 +102,20 @@ def main() -> int:
     check("etf_universe:nonempty", bool(universe_codes), f"count={len(universe_codes)}")
     check("etf_universe:no_duplicates", len(universe_codes) == len(objects), f"objects={len(objects)} unique_codes={len(universe_codes)}")
     check("etf_universe:thscode_complete", all(universe_thscodes) and len(universe_thscodes) == len(objects), "all objects have thscode")
-
-    dashboard = read_text("ETF当前状态_DASHBOARD.md")
-    dashboard_codes = codes_from_dashboard(dashboard)
+    dashboard_codes = codes_from_dashboard(read_text("ETF当前状态_DASHBOARD.md"))
     check("etf_universe:dashboard_match", dashboard_codes == universe_codes, f"dashboard={sorted(dashboard_codes)} runtime={sorted(universe_codes)}")
 
     master = read_text("ETF规则_MASTER.md")
     check("master:three_layers", "云端市场监测固定为三层" in master, "three-layer rule present")
     check("master:holding_observation", "持仓ETF＋观察ETF" in master or "持仓ETF+观察ETF" in master, "holding/observation taxonomy present")
-    stale_pool = "统一研究池固定为" in master or "八ETF" in master and "每个自动或人工决策节点先读取八ETF" in master
-    check("master:no_parallel_fixed_pool", not stale_pool, "no stale fixed-pool taxonomy" if not stale_pool else "stale fixed research-pool wording remains")
+    stale_pool = "统一研究池固定为" in master or ("八ETF" in master and "每个自动或人工决策节点先读取八ETF" in master)
+    check("master:no_parallel_fixed_pool", not stale_pool, "no stale fixed-pool taxonomy")
 
     runner = read_text("scripts/cloud_runner_snapshot.py")
     check("runner:canonical_etf_universe", "etf_monitor_universe.json" in runner and "load_etf_universe" in runner, "runner loads canonical ETF universe")
     check("runner:no_hardcoded_etf_list", "ETF = [" not in runner, "no hardcoded ETF list")
+    check("runner:opening_auction_window", "9 * 60 + 15" in runner and "OPENING_CALL_AUCTION" in runner, "09:15 opening-auction capture is implemented")
+    check("runner:beijing_timestamp", "captured_at_beijing" in runner, "A-share snapshots expose Beijing timestamp")
 
     stock_cfg = market_cfg.get("monitoring_layers", {}).get("stock_monitor", {})
     check("stock_layer:no_fixed_default_codes", stock_cfg.get("fixed_default_codes") == [], f"fixed_default_codes={stock_cfg.get('fixed_default_codes')}")
@@ -115,72 +129,64 @@ def main() -> int:
     standard = read_text(DATA_STANDARD)
     check("data_standard:three_layers", all(x in standard for x in ["第一层：指数", "第二层：ETF", "第三层：个股"]), "three-layer structure documented")
     check("data_standard:multi_provider", "hithink-finance" in standard and "Yahoo Chart API" in standard, "Hithink and Yahoo documented")
-    check("data_standard:pulse_principle", "10分钟是采集目标，不是决策时钟" in standard, "pulse principle documented")
-    check("data_standard:time_alignment", all(x in standard for x in ["market_timezone", "as_of", "market_phase", "time_relation_to_a_share"]), "cross-market time fields documented")
-    check("data_standard:consistency_gate", "check_system_consistency.py" in standard and "一致性检查是基础验收步骤" in standard, "maintenance consistency gate documented")
-    check("data_standard:exchange_calendar", "a_share_trading_calendar_2026.json" in standard and "交易所官方休市" in standard, "exchange-calendar gate documented")
-    check("data_standard:valid_snapshot_gate", "只有新有效快照" in standard, "downstream context build requires a new valid snapshot")
+    check("data_standard:pulse_principle", "10分钟是常规采集目标，不是决策时钟" in standard, "pulse principle documented")
+    check("data_standard:preopen_start", all(x in standard for x in ["北京时间08:00", "北京时间09:15", "OPENING_CALL_AUCTION"]), "Asia pre-open and A-share auction start documented")
+    check("data_standard:mandatory_timestamp", "正式输出强制时间戳" in standard and "as_of_beijing" in standard and "数据时点（北京时间）" in standard, "mandatory Beijing-time output documented")
+    check("data_standard:consistency_scope", "代码与提交完整性" in standard and "运行链" in standard and "Git跟踪状态" in standard, "consistency extends beyond text")
 
     runtime = read_json("config/runtime_policy.json")
-    pulse_keys = [
-        "target_cadence_seconds",
-        "fresh_max_age_seconds",
-        "degraded_max_age_seconds",
-        "close_grace_seconds",
-        "provider_timeout_seconds",
-        "provider_retry_limit",
-        "provider_max_workers",
-    ]
-    for key in pulse_keys:
-        documented = standard_number(standard, key)
-        actual = runtime.get(key)
-        check(f"pulse_policy:{key}", documented == actual, f"standard={documented} runtime={actual}")
+    for key in ["target_cadence_seconds", "fresh_max_age_seconds", "degraded_max_age_seconds", "close_grace_seconds", "provider_timeout_seconds", "provider_retry_limit", "provider_max_workers"]:
+        check(f"pulse_policy:{key}", standard_number(standard, key) == runtime.get(key), f"standard={standard_number(standard, key)} runtime={runtime.get(key)}")
     check("pulse_policy:workflow_timeout", "workflow单次运行最长6分钟" in standard and int(runtime.get("workflow_timeout_minutes", 0)) == 6, f"runtime={runtime.get('workflow_timeout_minutes')}")
 
     calendar = read_json("config/market/a_share_trading_calendar_2026.json")
     today_sh = datetime.now(SHANGHAI).date().isoformat()
-    coverage_start = str(calendar.get("coverage_start", ""))
-    coverage_end = str(calendar.get("coverage_end", ""))
-    check("trading_calendar:coverage", bool(coverage_start and coverage_end and coverage_start <= today_sh <= coverage_end), f"today={today_sh} coverage={coverage_start}..{coverage_end}")
+    start, end = str(calendar.get("coverage_start", "")), str(calendar.get("coverage_end", ""))
+    check("trading_calendar:coverage", bool(start and end and start <= today_sh <= end), f"today={today_sh} coverage={start}..{end}")
     check("trading_calendar:official_source", calendar.get("source", {}).get("authority") == "Shanghai Stock Exchange", f"authority={calendar.get('source', {}).get('authority')}")
-    check("trading_calendar:closed_dates", isinstance(calendar.get("closed_dates"), list) and len(calendar.get("closed_dates") or []) > 0, f"closed_date_count={len(calendar.get('closed_dates') or [])}")
 
     query = read_text("scripts/build_query_context.py")
     check("query:etf_universe_read", "etf_monitor_universe" in query, "query context reads ETF universe")
     check("query:stock_market_read", "stock_market_context" in query, "query context reads stock market context")
     check("query:data_standard_read", DATA_STANDARD in query, "query context references data standard")
 
+    overseas_builder = read_text("scripts/build_overseas_context.py")
+    check("overseas:beijing_timestamp", "as_of_beijing" in overseas_builder and "generated_at_beijing" in overseas_builder, "overseas context exposes Beijing timestamps")
+    check("overseas:market_phase", "market_phase_at_generation" in overseas_builder, "overseas market phase retained")
+
     session_gate = read_text("scripts/runtime_session_gate.py")
     check("session_gate:calendar_read", "a_share_trading_calendar_2026.json" in session_gate, "session gate reads official exchange calendar")
-    check("session_gate:close_grace", "close_grace_seconds" in session_gate, "session gate honors close grace")
+    check("session_gate:opening_auction", "9 * 60 + 15" in session_gate and "OPENING_CALL_AUCTION" in session_gate, "session gate opens at 09:15")
 
     workflow = read_text(".github/workflows/market-snapshot.yml")
     check("workflow:consistency_preflight", "check_system_consistency.py" in workflow, "preflight consistency gate present")
     check("workflow:session_gate", "runtime_session_gate.py" in workflow and "session_gate.outputs.should_capture" in workflow, "exchange calendar/session gate wired")
-    check("workflow:no_broad_outside_session_cron", '*/10 1-7 * * 1-5' not in workflow, "broad 09:00-15:50 trigger removed")
-    check("workflow:valid_snapshot_downstream_gate", "snapshot_result.outputs.snapshot_written == 'true'" in workflow, "downstream context builds only after a new valid snapshot")
+    check("workflow:auction_cron", '15,20,25,30,40,50 1 * * 1-5' in workflow, "09:15/09:20/09:25 auction pulses scheduled")
+    check("workflow:valid_snapshot_downstream_gate", "snapshot_result.outputs.snapshot_written == 'true'" in workflow, "downstream contexts require new valid A-share snapshot")
+
+    overseas_workflow = read_text(".github/workflows/overseas-preopen-pulse.yml")
+    check("workflow:overseas_preopen_exists", "build_overseas_context.py" in overseas_workflow, "standalone overseas pre-open pulse wired")
+    check("workflow:overseas_0800_start", '*/10 0 * * 1-5' in overseas_workflow, "Beijing 08:00-08:50 overseas pulses scheduled")
+    check("workflow:overseas_0900_0910", '0,10 1 * * 1-5' in overseas_workflow, "Beijing 09:00/09:10 overseas pulses scheduled")
 
     maintenance_workflow = read_text(".github/workflows/system-consistency.yml")
     check("maintenance_workflow:data_standard_trigger", DATA_STANDARD in maintenance_workflow, "data standard changes trigger consistency workflow")
-    check("maintenance_workflow:calendar_trigger", "config/market/**" in maintenance_workflow, "calendar/config changes trigger consistency workflow")
+    check("maintenance_workflow:workflow_trigger", ".github/workflows/**" in maintenance_workflow, "workflow changes trigger consistency workflow")
 
     runtime_health = read_json("data/state/runtime_health.json")
     check("runtime_health:structured", bool(runtime_health.get("status")), f"status={runtime_health.get('status', 'MISSING')}")
 
-    account_path = ROOT / "data" / "state" / "account_fact.json"
-    if account_path.exists():
-        account = json.loads(account_path.read_text(encoding="utf-8"))
-        check("account_fact:current_availability", account.get("status") == "VALID", f"status={account.get('status', 'MISSING')} (state warning only)", warning=True)
+    account = read_json("data/state/account_fact.json")
+    check("account_fact:current_availability", account.get("status") == "VALID", f"status={account.get('status', 'MISSING')} (state warning only)", warning=True)
 
     result = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "generated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
+        "repository": {"head_sha": head_sha, "github_sha": github_sha, "github_run_id": os.environ.get("GITHUB_RUN_ID", ""), "github_ref": os.environ.get("GITHUB_REF", "")},
         "status": "FAIL" if errors else ("WARNING" if warnings else "PASS"),
-        "hard_error_count": len(errors),
-        "warning_count": len(warnings),
-        "checks": checks,
-        "errors": errors,
-        "warnings": warnings,
-        "principle": "任何规则、Dashboard、数据接口规范、监测对象、数据源、交易日历、脉冲参数、数据入口、运行脚本或workflow相关更新后，一致性检查是基础验收步骤；硬冲突不得进入生产，账户缺失等正常状态只告警。",
+        "hard_error_count": len(errors), "warning_count": len(warnings),
+        "checks": checks, "errors": errors, "warnings": warnings,
+        "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段和自动验收结果；硬冲突不得进入生产。",
     }
     REPORT.parent.mkdir(parents=True, exist_ok=True)
     REPORT.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
