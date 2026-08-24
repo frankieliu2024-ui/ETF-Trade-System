@@ -31,6 +31,27 @@ jobs:
         with:
           fetch-depth: 2
 
+      - name: Record Qlib run start
+        run: |
+          mkdir -p data/state
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path('data/state/qlib_workflow_probe.json').write_text(json.dumps({
+              'run_id': os.environ.get('GITHUB_RUN_ID'),
+              'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
+              'status': 'RUNNING',
+              'sha': os.environ.get('GITHUB_SHA'),
+              'event': os.environ.get('GITHUB_EVENT_NAME'),
+          }, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/state/qlib_workflow_probe.json
+          git commit -m "ops: record Qlib workflow start"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -83,9 +104,29 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A -- research/backtests/qlib_stage1_validation.json data/state/qlib_research_status.json
-          if git diff --cached --quiet; then
-            exit 0
+          if ! git diff --cached --quiet; then
+            git commit -m "research: complete Qlib stage1 PoC"
+            git pull --rebase origin main
+            git push origin HEAD:main
           fi
-          git commit -m "research: complete Qlib stage1 PoC"
+
+      - name: Record Qlib run outcome
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path('data/state/qlib_workflow_probe.json').write_text(json.dumps({
+              'run_id': os.environ.get('GITHUB_RUN_ID'),
+              'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
+              'status': '${{ job.status }}',
+              'sha': os.environ.get('GITHUB_SHA'),
+              'event': os.environ.get('GITHUB_EVENT_NAME'),
+          }, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/state/qlib_workflow_probe.json
+          git commit -m "ops: record Qlib workflow outcome" || exit 0
           git pull --rebase origin main
           git push origin HEAD:main
