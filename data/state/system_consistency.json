@@ -1,7 +1,14 @@
 {
-  "generated_at": "2026-08-24T00:01:23Z",
+  "generated_at": "2026-08-24T00:02:02Z",
+  "generated_at_beijing": "2026-08-24T08:02:02+08:00",
+  "repository": {
+    "head_sha": "b58580f736ce6ddfa64d18bdfc383f0ab22b71ea",
+    "github_sha": "b58580f736ce6ddfa64d18bdfc383f0ab22b71ea",
+    "github_run_id": "32675368339",
+    "github_ref": "refs/heads/main"
+  },
   "status": "FAIL",
-  "hard_error_count": 2,
+  "hard_error_count": 1,
   "warning_count": 1,
   "checks": [
     {
@@ -68,6 +75,26 @@
       "name": "runtime_file:config/market/a_share_trading_calendar_2026.json",
       "status": "PASS",
       "detail": "exists"
+    },
+    {
+      "name": "git:head_commit",
+      "status": "PASS",
+      "detail": "HEAD=b58580f736ce6ddfa64d18bdfc383f0ab22b71ea"
+    },
+    {
+      "name": "git:workflow_sha_matches_head",
+      "status": "PASS",
+      "detail": "HEAD=b58580f736ce6ddfa64d18bdfc383f0ab22b71ea GITHUB_SHA=b58580f736ce6ddfa64d18bdfc383f0ab22b71ea"
+    },
+    {
+      "name": "git:critical_files_tracked",
+      "status": "FAIL",
+      "detail": "missing_tracked=['ETF规则_MASTER.md', 'ETF当前状态_DASHBOARD.md', 'ETF交易复盘与经验库_2026.md', 'ETF市场行情档案_2026.md', 'ETF与市场监测数据接口使用规范.md']"
+    },
+    {
+      "name": "git:working_tree_clean_before_check",
+      "status": "PASS",
+      "detail": "clean"
     },
     {
       "name": "index_entry:ETF规则_MASTER.md",
@@ -150,6 +177,16 @@
       "detail": "no hardcoded ETF list"
     },
     {
+      "name": "runner:opening_auction_window",
+      "status": "PASS",
+      "detail": "09:15 opening-auction capture is implemented"
+    },
+    {
+      "name": "runner:beijing_timestamp",
+      "status": "PASS",
+      "detail": "A-share snapshots expose Beijing timestamp"
+    },
+    {
       "name": "stock_layer:no_fixed_default_codes",
       "status": "PASS",
       "detail": "fixed_default_codes=[]"
@@ -181,28 +218,23 @@
     },
     {
       "name": "data_standard:pulse_principle",
-      "status": "FAIL",
+      "status": "PASS",
       "detail": "pulse principle documented"
     },
     {
-      "name": "data_standard:time_alignment",
+      "name": "data_standard:preopen_start",
       "status": "PASS",
-      "detail": "cross-market time fields documented"
+      "detail": "Asia pre-open and A-share auction start documented"
     },
     {
-      "name": "data_standard:consistency_gate",
-      "status": "FAIL",
-      "detail": "maintenance consistency gate documented"
+      "name": "data_standard:mandatory_timestamp",
+      "status": "PASS",
+      "detail": "mandatory Beijing-time output documented"
     },
     {
-      "name": "data_standard:exchange_calendar",
+      "name": "data_standard:consistency_scope",
       "status": "PASS",
-      "detail": "exchange-calendar gate documented"
-    },
-    {
-      "name": "data_standard:valid_snapshot_gate",
-      "status": "PASS",
-      "detail": "downstream context build requires a new valid snapshot"
+      "detail": "consistency extends beyond text"
     },
     {
       "name": "pulse_policy:target_cadence_seconds",
@@ -255,11 +287,6 @@
       "detail": "authority=Shanghai Stock Exchange"
     },
     {
-      "name": "trading_calendar:closed_dates",
-      "status": "PASS",
-      "detail": "closed_date_count=39"
-    },
-    {
       "name": "query:etf_universe_read",
       "status": "PASS",
       "detail": "query context reads ETF universe"
@@ -275,14 +302,24 @@
       "detail": "query context references data standard"
     },
     {
+      "name": "overseas:beijing_timestamp",
+      "status": "PASS",
+      "detail": "overseas context exposes Beijing timestamps"
+    },
+    {
+      "name": "overseas:market_phase",
+      "status": "PASS",
+      "detail": "overseas market phase retained"
+    },
+    {
       "name": "session_gate:calendar_read",
       "status": "PASS",
       "detail": "session gate reads official exchange calendar"
     },
     {
-      "name": "session_gate:close_grace",
+      "name": "session_gate:opening_auction",
       "status": "PASS",
-      "detail": "session gate honors close grace"
+      "detail": "session gate opens at 09:15"
     },
     {
       "name": "workflow:consistency_preflight",
@@ -295,14 +332,29 @@
       "detail": "exchange calendar/session gate wired"
     },
     {
-      "name": "workflow:no_broad_outside_session_cron",
+      "name": "workflow:auction_cron",
       "status": "PASS",
-      "detail": "broad 09:00-15:50 trigger removed"
+      "detail": "09:15/09:20/09:25 auction pulses scheduled"
     },
     {
       "name": "workflow:valid_snapshot_downstream_gate",
       "status": "PASS",
-      "detail": "downstream context builds only after a new valid snapshot"
+      "detail": "downstream contexts require new valid A-share snapshot"
+    },
+    {
+      "name": "workflow:overseas_preopen_exists",
+      "status": "PASS",
+      "detail": "standalone overseas pre-open pulse wired"
+    },
+    {
+      "name": "workflow:overseas_0800_start",
+      "status": "PASS",
+      "detail": "Beijing 08:00-08:50 overseas pulses scheduled"
+    },
+    {
+      "name": "workflow:overseas_0900_0910",
+      "status": "PASS",
+      "detail": "Beijing 09:00/09:10 overseas pulses scheduled"
     },
     {
       "name": "maintenance_workflow:data_standard_trigger",
@@ -310,9 +362,9 @@
       "detail": "data standard changes trigger consistency workflow"
     },
     {
-      "name": "maintenance_workflow:calendar_trigger",
+      "name": "maintenance_workflow:workflow_trigger",
       "status": "PASS",
-      "detail": "calendar/config changes trigger consistency workflow"
+      "detail": "workflow changes trigger consistency workflow"
     },
     {
       "name": "runtime_health:structured",
@@ -326,11 +378,10 @@
     }
   ],
   "errors": [
-    "data_standard:pulse_principle: pulse principle documented",
-    "data_standard:consistency_gate: maintenance consistency gate documented"
+    "git:critical_files_tracked: missing_tracked=['ETF规则_MASTER.md', 'ETF当前状态_DASHBOARD.md', 'ETF交易复盘与经验库_2026.md', 'ETF市场行情档案_2026.md', 'ETF与市场监测数据接口使用规范.md']"
   ],
   "warnings": [
     "account_fact:current_availability: status=MISSING (state warning only)"
   ],
-  "principle": "任何规则、Dashboard、数据接口规范、监测对象、数据源、交易日历、脉冲参数、数据入口、运行脚本或workflow相关更新后，一致性检查是基础验收步骤；硬冲突不得进入生产，账户缺失等正常状态只告警。"
+  "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段和自动验收结果；硬冲突不得进入生产。"
 }
