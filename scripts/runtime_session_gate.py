@@ -42,14 +42,6 @@ def main() -> int:
     policy = load_json(ROOT / "config" / "runtime_policy.json")
     calendar = load_json(ROOT / "config" / "market" / "a_share_trading_calendar_2026.json")
 
-    if event_name == "workflow_dispatch":
-        set_output("should_capture", "true")
-        set_output("reason", "manual_dispatch")
-        set_output("market_date", date_text)
-        set_output("market_phase", "MANUAL")
-        print(json.dumps({"should_capture": True, "reason": "manual_dispatch", "market_date": date_text}, ensure_ascii=False))
-        return 0
-
     start = calendar.get("coverage_start", "")
     end = calendar.get("coverage_end", "")
     if not start or not end or not (start <= date_text <= end):
@@ -69,6 +61,9 @@ def main() -> int:
         in_close_grace = 15 * 60 < minute <= 15 * 60 + close_grace_minutes
         should_capture = in_opening_auction or in_morning or in_afternoon or in_close_grace
         reason = "capture_window" if should_capture else "outside_capture_window"
+
+    if event_name == "workflow_dispatch":
+        reason = "manual_dispatch_capture_window" if should_capture else f"manual_dispatch_{reason}"
 
     set_output("should_capture", "true" if should_capture else "false")
     set_output("reason", reason)
