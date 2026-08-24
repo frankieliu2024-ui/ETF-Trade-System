@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-08-24T01:39:23Z",
-  "generated_at_beijing": "2026-08-24T09:39:23+08:00",
+  "generated_at": "2026-08-24T01:39:49Z",
+  "generated_at_beijing": "2026-08-24T09:39:49+08:00",
   "repository": {
-    "head_sha": "f8939165a7a37561c76eac9c77003fb342f86d91",
-    "github_sha": "f8939165a7a37561c76eac9c77003fb342f86d91",
-    "github_run_id": "32680478725",
+    "head_sha": "24eed40d21804727e5d9cac14ecad12f43fdd6ef",
+    "github_sha": "24eed40d21804727e5d9cac14ecad12f43fdd6ef",
+    "github_run_id": "32680498511",
     "github_ref": "refs/heads/main"
   },
-  "status": "PASS",
-  "hard_error_count": 0,
+  "status": "FAIL",
+  "hard_error_count": 1,
   "warning_count": 0,
   "checks": [
     {
@@ -89,12 +89,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=f8939165a7a37561c76eac9c77003fb342f86d91"
+      "detail": "HEAD=24eed40d21804727e5d9cac14ecad12f43fdd6ef"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=f8939165a7a37561c76eac9c77003fb342f86d91 GITHUB_SHA=f8939165a7a37561c76eac9c77003fb342f86d91"
+      "detail": "HEAD=24eed40d21804727e5d9cac14ecad12f43fdd6ef GITHUB_SHA=24eed40d21804727e5d9cac14ecad12f43fdd6ef"
     },
     {
       "name": "git:critical_files_tracked",
@@ -214,12 +214,17 @@
     {
       "name": "providers:required_sources",
       "status": "PASS",
-      "detail": "required=['hithink_finance', 'yahoo_chart_api'] actual=['akshare', 'eastmoney_push2', 'hithink_finance', 'investpy', 'pandas_datareader', 'yahoo_chart_api']"
+      "detail": "required=['eastmoney_push2', 'hithink_finance', 'yahoo_chart_api'] actual=['akshare', 'eastmoney_push2', 'hithink_finance', 'investpy', 'pandas_datareader', 'yahoo_chart_api']"
     },
     {
       "name": "providers:formal_indices",
       "status": "PASS",
       "detail": "provider formal indices=['000001.SH', '399006.SZ', 'NDX', 'SOX', 'N225', 'KOSPI', 'TWII', 'HSTECH']"
+    },
+    {
+      "name": "providers:hstech_chain_exact",
+      "status": "FAIL",
+      "detail": "actual=['hithink_finance:HS2083', 'yahoo_chart_api:HSTECH.HK', 'eastmoney_push2:124.HSTECH', 'ETF_PROXY_513180'] expected=['hithink-finance:HS2083', 'yahoo_chart_api:HSTECH.HK', 'eastmoney_push2:124.HSTECH', 'ETF_PROXY_513180']"
     },
     {
       "name": "providers:us_extended_hours",
@@ -347,6 +352,31 @@
       "detail": "overseas market phase retained"
     },
     {
+      "name": "overseas:hstech_three_direct_sources",
+      "status": "PASS",
+      "detail": "HSTECH Hithink/Yahoo/Eastmoney chain present"
+    },
+    {
+      "name": "overseas:hstech_push2delay_degraded_fallback",
+      "status": "PASS",
+      "detail": "Eastmoney push2delay fallback present"
+    },
+    {
+      "name": "overseas:hstech_provider_timestamp",
+      "status": "PASS",
+      "detail": "HSTECH provider timestamp fields enforced"
+    },
+    {
+      "name": "overseas:hstech_no_invalid_yahoo_symbol",
+      "status": "PASS",
+      "detail": "invalid Yahoo production symbol absent"
+    },
+    {
+      "name": "provider_adapter:hstech_valid_yahoo_symbol",
+      "status": "PASS",
+      "detail": "Yahoo adapter uses HSTECH.HK only"
+    },
+    {
       "name": "us_extended:session_split",
       "status": "PASS",
       "detail": "US cash/pre/post sessions are explicitly split"
@@ -422,6 +452,11 @@
       "detail": "overseas runtime health is generated and committed"
     },
     {
+      "name": "workflow:overseas_hithink_runtime",
+      "status": "PASS",
+      "detail": "overseas runner installs Hithink CLI and receives secret"
+    },
+    {
       "name": "workflow:us_afternoon_exists",
       "status": "PASS",
       "detail": "standalone US afternoon/evening extended-hours pulse wired"
@@ -482,7 +517,9 @@
       "detail": "status=VALID (state warning only)"
     }
   ],
-  "errors": [],
+  "errors": [
+    "providers:hstech_chain_exact: actual=['hithink_finance:HS2083', 'yahoo_chart_api:HSTECH.HK', 'eastmoney_push2:124.HSTECH', 'ETF_PROXY_513180'] expected=['hithink-finance:HS2083', 'yahoo_chart_api:HSTECH.HK', 'eastmoney_push2:124.HSTECH', 'ETF_PROXY_513180']"
+  ],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。"
 }
