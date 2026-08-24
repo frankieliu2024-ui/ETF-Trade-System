@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-08-24T00:14:40Z",
-  "generated_at_beijing": "2026-08-24T08:14:40+08:00",
+  "generated_at": "2026-08-24T00:15:21Z",
+  "generated_at_beijing": "2026-08-24T08:15:21+08:00",
   "repository": {
-    "head_sha": "c3566280d6a9b19e12a6503c8b3c94f8950236ad",
-    "github_sha": "c3566280d6a9b19e12a6503c8b3c94f8950236ad",
-    "github_run_id": "32676043436",
+    "head_sha": "b7fab989dc925631d4d04cc6b9b68ab80047b9bb",
+    "github_sha": "b7fab989dc925631d4d04cc6b9b68ab80047b9bb",
+    "github_run_id": "32676088529",
     "github_ref": "refs/heads/main"
   },
-  "status": "WARNING",
-  "hard_error_count": 0,
+  "status": "FAIL",
+  "hard_error_count": 1,
   "warning_count": 1,
   "checks": [
     {
@@ -52,6 +52,11 @@
       "detail": "exists"
     },
     {
+      "name": "runtime_file:data/state/us_extended_hours_context.json",
+      "status": "PASS",
+      "detail": "exists"
+    },
+    {
       "name": "runtime_file:config/runtime_policy.json",
       "status": "PASS",
       "detail": "exists"
@@ -79,12 +84,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=c3566280d6a9b19e12a6503c8b3c94f8950236ad"
+      "detail": "HEAD=b7fab989dc925631d4d04cc6b9b68ab80047b9bb"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=c3566280d6a9b19e12a6503c8b3c94f8950236ad GITHUB_SHA=c3566280d6a9b19e12a6503c8b3c94f8950236ad"
+      "detail": "HEAD=b7fab989dc925631d4d04cc6b9b68ab80047b9bb GITHUB_SHA=b7fab989dc925631d4d04cc6b9b68ab80047b9bb"
     },
     {
       "name": "git:critical_files_tracked",
@@ -120,6 +125,11 @@
       "name": "index_entry:data_standard",
       "status": "PASS",
       "detail": "data standard entry present"
+    },
+    {
+      "name": "index_entry:us_extended_hours",
+      "status": "FAIL",
+      "detail": "US extended-hours context present in system index"
     },
     {
       "name": "index_layer:formal_vs_expected",
@@ -207,6 +217,11 @@
       "detail": "provider formal indices=['000001.SH', '399006.SZ', 'NDX', 'SOX', 'N225', 'KOSPI', 'TWII', 'HSTECH']"
     },
     {
+      "name": "providers:us_extended_hours",
+      "status": "PASS",
+      "detail": "us_extended_hours={'base_proxies': ['QQQ', 'SOXX'], 'conditional_industry_stocks': 'dynamic_only', 'sessions_et': {'PRE_MARKET': '04:00-09:30', 'REGULAR': '09:30-16:00', 'POST_MARKET': '16:00-20:00'}, 'rule': 'NDX/SOX现金指数与美股扩展时段分开解释；QQQ/SOXX及条件个股扩展时段只作前置信号，不直接生成A股ETF动作。'}"
+    },
+    {
       "name": "data_standard:three_layers",
       "status": "PASS",
       "detail": "three-layer structure documented"
@@ -235,6 +250,11 @@
       "name": "data_standard:consistency_scope",
       "status": "PASS",
       "detail": "consistency extends beyond text"
+    },
+    {
+      "name": "data_standard:us_extended_hours",
+      "status": "PASS",
+      "detail": "US extended-hours timing and evidence boundaries documented"
     },
     {
       "name": "pulse_policy:target_cadence_seconds",
@@ -307,6 +327,11 @@
       "detail": "query context forces Beijing-time output"
     },
     {
+      "name": "query:us_extended_hours_read",
+      "status": "PASS",
+      "detail": "query context reads and explains US extended hours"
+    },
+    {
       "name": "overseas:beijing_timestamp",
       "status": "PASS",
       "detail": "overseas context exposes Beijing timestamps"
@@ -315,6 +340,21 @@
       "name": "overseas:market_phase",
       "status": "PASS",
       "detail": "overseas market phase retained"
+    },
+    {
+      "name": "us_extended:session_split",
+      "status": "PASS",
+      "detail": "US cash/pre/post sessions are explicitly split"
+    },
+    {
+      "name": "us_extended:beijing_timestamp",
+      "status": "PASS",
+      "detail": "US extended hours expose Beijing timestamps"
+    },
+    {
+      "name": "us_extended:dynamic_industry_symbols",
+      "status": "PASS",
+      "detail": "US industry stocks remain query-time dynamic"
     },
     {
       "name": "session_gate:calendar_read",
@@ -352,6 +392,16 @@
       "detail": "standalone overseas pre-open pulse wired"
     },
     {
+      "name": "workflow:us_extended_wired",
+      "status": "PASS",
+      "detail": "US extended-hours context wired into pre-open workflow"
+    },
+    {
+      "name": "workflow:us_postmarket_0700_start",
+      "status": "PASS",
+      "detail": "Beijing 07:00-07:50 prior-US post-market tail scheduled"
+    },
+    {
       "name": "workflow:overseas_0800_start",
       "status": "PASS",
       "detail": "Beijing 08:00-08:50 overseas pulses scheduled"
@@ -382,9 +432,11 @@
       "detail": "status=MISSING (state warning only)"
     }
   ],
-  "errors": [],
+  "errors": [
+    "index_entry:us_extended_hours: US extended-hours context present in system index"
+  ],
   "warnings": [
     "account_fact:current_availability: status=MISSING (state warning only)"
   ],
-  "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段和自动验收结果；硬冲突不得进入生产。"
+  "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。"
 }
