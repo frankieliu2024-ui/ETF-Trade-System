@@ -11,6 +11,10 @@ on:
         description: "Fetch and validate without writing a valid node"
         required: true
         default: "false"
+  push:
+    branches: [main]
+    paths:
+      - "requests/live_snapshot/**.json"
   schedule:
     # UTC. A-share opening auction starts at 09:15 Asia/Shanghai = 01:15 UTC.
     # Auction-specific pulses: 09:15, 09:20, 09:25; then 09:30 and 10-minute continuous pulses.
