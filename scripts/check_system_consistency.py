@@ -13,17 +13,8 @@ DATA_STANDARD = "ETF与市场监测数据接口使用规范.md"
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
 FORMAL_FILES = ["ETF规则_MASTER.md", "ETF当前状态_DASHBOARD.md", "ETF交易复盘与经验库_2026.md", "ETF市场行情档案_2026.md"]
-CORE_RUNTIME_FILES = [
-    "data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/account_fact.json",
-    "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json",
-    "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json",
-]
-CRITICAL_TRACKED_FILES = FORMAL_FILES + [
-    DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py",
-    "scripts/cloud_runner_snapshot.py", "scripts/build_overseas_context.py", "scripts/build_query_context.py",
-    ".github/workflows/market-snapshot.yml", ".github/workflows/overseas-preopen-pulse.yml",
-    ".github/workflows/system-consistency.yml",
-] + CORE_RUNTIME_FILES
+CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/account_fact.json", "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json", "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json"]
+CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_overseas_context.py", "scripts/build_query_context.py", ".github/workflows/market-snapshot.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
 EXPECTED_INDICES = {"000001.SH", "399006.SZ", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
 REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api"}
 
@@ -46,9 +37,7 @@ def run_git(*args: str) -> tuple[int, str]:
 
 def codes_from_dashboard(text: str) -> set[str]:
     match = re.search(r"\|ETF层当前结构\|(.*?)\|\n", text)
-    if not match:
-        return set()
-    return set(re.findall(r"（(\d{6})）", match.group(1)))
+    return set(re.findall(r"（(\d{6})）", match.group(1))) if match else set()
 
 
 def standard_number(text: str, key: str) -> int | None:
@@ -77,7 +66,7 @@ def main() -> int:
     github_sha = os.environ.get("GITHUB_SHA", "")
     if github_sha:
         check("git:workflow_sha_matches_head", head_sha == github_sha, f"HEAD={head_sha} GITHUB_SHA={github_sha}")
-    rc, tracked = run_git("ls-files")
+    rc, tracked = run_git("-c", "core.quotePath=false", "ls-files")
     tracked_set = set(tracked.splitlines()) if rc == 0 else set()
     missing_tracked = [p for p in CRITICAL_TRACKED_FILES if p not in tracked_set]
     check("git:critical_files_tracked", not missing_tracked, f"missing_tracked={missing_tracked}")
@@ -149,6 +138,7 @@ def main() -> int:
     check("query:etf_universe_read", "etf_monitor_universe" in query, "query context reads ETF universe")
     check("query:stock_market_read", "stock_market_context" in query, "query context reads stock market context")
     check("query:data_standard_read", DATA_STANDARD in query, "query context references data standard")
+    check("query:mandatory_beijing_output", "output_time_rule" in query and "数据时点（北京时间）" in query, "query context forces Beijing-time output")
 
     overseas_builder = read_text("scripts/build_overseas_context.py")
     check("overseas:beijing_timestamp", "as_of_beijing" in overseas_builder and "generated_at_beijing" in overseas_builder, "overseas context exposes Beijing timestamps")
@@ -175,7 +165,6 @@ def main() -> int:
 
     runtime_health = read_json("data/state/runtime_health.json")
     check("runtime_health:structured", bool(runtime_health.get("status")), f"status={runtime_health.get('status', 'MISSING')}")
-
     account = read_json("data/state/account_fact.json")
     check("account_fact:current_availability", account.get("status") == "VALID", f"status={account.get('status', 'MISSING')} (state warning only)", warning=True)
 
@@ -184,8 +173,7 @@ def main() -> int:
         "generated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
         "repository": {"head_sha": head_sha, "github_sha": github_sha, "github_run_id": os.environ.get("GITHUB_RUN_ID", ""), "github_ref": os.environ.get("GITHUB_REF", "")},
         "status": "FAIL" if errors else ("WARNING" if warnings else "PASS"),
-        "hard_error_count": len(errors), "warning_count": len(warnings),
-        "checks": checks, "errors": errors, "warnings": warnings,
+        "hard_error_count": len(errors), "warning_count": len(warnings), "checks": checks, "errors": errors, "warnings": warnings,
         "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段和自动验收结果；硬冲突不得进入生产。",
     }
     REPORT.parent.mkdir(parents=True, exist_ok=True)
