@@ -72,9 +72,10 @@ jobs:
           exit 0
       - name: Recover full market state when requested
         if: ${{ github.event_name != 'pull_request' }}
+        continue-on-error: true
         run: python scripts/run_full_snapshot_recovery.py
       - name: Persist results and recovered runtime state
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ always() && github.event_name != 'pull_request' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
