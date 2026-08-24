@@ -3,10 +3,13 @@ name: Overseas pre-open pulse
 on:
   workflow_dispatch:
   schedule:
-    # UTC. Beijing 08:00-09:10, every 10 minutes.
-    # Tokyo and Korea regular sessions start at 08:00 Beijing; Taiwan starts at 09:00;
-    # Hong Kong enters pre-opening at 09:00 and regular session at 09:30.
+    # UTC / Beijing time.
+    # 23:00-23:50 UTC previous day = Beijing 07:00-07:50: capture the tail of the prior US post-market session
+    # (DST may end around 08:00 Beijing; standard time may extend to around 09:00).
+    - cron: "*/10 23 * * 0-4"
+    # 00:00-00:50 UTC = Beijing 08:00-08:50: Japan/Korea regular sessions are open.
     - cron: "*/10 0 * * 1-5"
+    # 01:00/01:10 UTC = Beijing 09:00/09:10: Taiwan regular session and HK pre-open context.
     - cron: "0,10 1 * * 1-5"
 
 permissions:
@@ -19,7 +22,7 @@ concurrency:
 jobs:
   overseas:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 4
     env:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
     steps:
@@ -33,11 +36,13 @@ jobs:
           git checkout -- data/state/system_consistency.json
       - name: Refresh formal overseas and Asia index context
         run: python scripts/build_overseas_context.py
-      - name: Commit overseas context
+      - name: Refresh US extended-hours context
+        run: python scripts/build_us_extended_hours_context.py
+      - name: Commit overseas contexts
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/state/overseas_context.json
+          git add data/state/overseas_context.json data/state/us_extended_hours_context.json
           if git diff --cached --quiet; then
             exit 0
           fi
