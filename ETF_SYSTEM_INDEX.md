@@ -55,7 +55,9 @@
 - 美股扩展时段：`data/state/us_extended_hours_context.json`、`scripts/build_us_extended_hours_context.py`
 - 三层监测配置：`config/market/market_monitor_config.json`
 - 运行策略：`config/runtime_policy.json`
-- 查询上下文：`data/state/query_context.json`、`data/state/decision_context.json`
+- 查询上下文：`data/state/query_context.json`、`data/state/decision_context.json`；其中 `decision_context.json` 是ChatGPT盘中快速读取的聚合决策上下文，不另建平行decision bundle
+- 查询时即时补采与可选状态同步请求：`requests/live_snapshot/*.json`
+- 账户/Dashboard异步同步处理：`scripts/process_state_sync_request.py`
 - A股/ETF workflow：`.github/workflows/market-snapshot.yml`
 - A股开盘前海外 workflow：`.github/workflows/overseas-preopen-pulse.yml`
 - 美股盘前/扩展时段 workflow：`.github/workflows/us-extended-hours-pulse.yml`
@@ -63,6 +65,21 @@
 - 运行脚本：`scripts/`
 - 行情快照：`data/market/snapshots/`
 - 审计：`data/market/audit/`
+
+## 盘中快速回复与异步维护
+
+盘中用户回复优先于文档维护。ChatGPT收到券商截图或正式盘中检查请求时，固定按以下顺序执行：
+
+1. 先从截图确认当次账户、持仓、现金和成交事实；
+2. 立即通过 `requests/live_snapshot/*.json` 触发查询时补采，查询时行情优先于最近生产快照；
+3. 新核心 `CURRENT` 在短等待预算内可用则使用；若即时补采尚未完成而最近有效快照仍为FRESH，则立即回退最近FRESH快照并明确标注真实时点，不为等待文档维护延迟正式回复；
+4. 同一查询请求可选携带 `account_fact`、`formal_decision`、`trade_event`。13个A股核心对象与 `CURRENT` 先发布，账户/Dashboard及其他下游维护随后继续；
+5. `formal_decision` 只允许写入ChatGPT已经形成的正式结论，自动程序不得自行推导风险许可、生命周期、金额或卖出动作；
+6. 普通无成交截图更新账户事实和Dashboard云端实时状态区块，不机械改写MASTER、经验库或行情档案；
+7. 若存在用户确认或券商事实确认的真实成交，除更新账户事实和Dashboard外，同时生成 `events/trades/` 成交事件，在行情档案登记客观成交，并在经验库生成“待复盘CASE入口”；正式复盘结论仍由盘后流程形成；
+8. `ETF规则_MASTER.md` 永不由该异步维护链自动修改，系统不自动下单。
+
+Dashboard中的 `<!-- AUTO_STATE_SYNC_START -->` 至 `<!-- AUTO_STATE_SYNC_END -->` 为机器管理实时区块，优先展示最新已确认账户事实和最近一次ChatGPT正式盘中决策；其后的历史人工维护内容保留用于追溯，不得用旧历史区块覆盖机器管理区块中的更新事实。
 
 ## 盘前、盘中与数据时点原则
 
@@ -100,7 +117,7 @@ FRESH/DEGRADED/STALE必须按真实数据时点重新计算，不能按cron计�
 
 ## 账户事实与动态个股原则
 
-`account_fact.status == VALID` 仍必须满足当日market_date一致。旧日账户事实不得自动沿用。账户事实有效后，非ETF持仓结合 `asset_roles.json` 生成打新底仓监测；未知角色只请求一次确认。
+账户事实采用事件驱动有效机制。最近一次已验证 `account_fact.status == VALID` 的账户事实，在没有用户确认或券商事实确认的成交、资金划转、公司行为或其他账户变更事件时可以继续沿用；一旦出现账户变更事件，必须先刷新 `account_fact.json` 再进行账户敏感决策。用户新提供的券商截图优先更新为最新账户事实。账户事实有效后，非ETF持仓结合 `asset_roles.json` 生成打新底仓监测；未知角色只请求一次确认。
 
 ## 故障退化
 
@@ -116,10 +133,10 @@ FRESH/DEGRADED/STALE必须按真实数据时点重新计算，不能按cron计�
 ## 读取场景
 
 1. ChatGPT规则读取：本索引 → `system_consistency.json` → MASTER；涉及数据时同时读数据规范。
-2. 当前状态：一致性、数据规范、交易日历、CURRENT、runtime health、ETF全集、`overseas_context.json`、`us_extended_hours_context.json`、动态个股层，再读Dashboard。
-3. 盘中查询：必须检查北京时间数据时点和新鲜度；海外对象逐一读取as_of与market phase；涉及美股科技/半导体传导时，同时区分上一现金盘、盘后及盘前。
+2. 当前状态：一致性、数据规范、交易日历、CURRENT、runtime health、ETF全集、`overseas_context.json`、`us_extended_hours_context.json`、动态个股层，再读Dashboard；盘中快速路径可先读取 `decision_context.json`，规则版本/hash或具体条款需要核实时再读取MASTER全文。
+3. 盘中查询：必须先执行查询时即时补采；失败、超时或尚未完成时才回退最近有效快照，并检查北京时间数据时点和新鲜度；海外对象逐一读取as_of与market phase。
 4. 盘后维护：读取账户事实、review context及四文件；维护结束后再次执行一致性检查。
 
 ## 写入边界
 
-自动程序可以生成行情、状态、审计、运行健康、一致性结果和上下文；不得自动写MASTER、不得自动下单。数据规范可在明确的数据架构或运行边界维护时更新，但每次更新必须通过系统一致性检查。
+自动程序可以生成行情、状态、审计、运行健康、一致性结果和上下文；可以在已确认账户事实和ChatGPT已形成正式决议的边界内维护Dashboard机器管理区块及真实成交事实入口；不得自动写MASTER、不得自行扩大交易权限、不得自动下单。数据规范可在明确的数据架构或运行边界维护时更新，但每次更新必须通过系统一致性检查。
