@@ -2,8 +2,10 @@ name: ETF research historical backfill
 
 on:
   push:
+    branches:
+      - main
     paths:
-      - "requests/research_backfill/**.json"
+      - "requests/research_backfill/*.json"
   workflow_dispatch:
     inputs:
       request_path:
