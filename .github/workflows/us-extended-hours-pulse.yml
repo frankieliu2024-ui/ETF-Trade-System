@@ -1,0 +1,48 @@
+name: US extended-hours pulse
+
+on:
+  workflow_dispatch:
+  schedule:
+    # UTC / Beijing time. Cover the full DST-sensitive US pre-market window.
+    # 08:00-13:00 UTC = Beijing 16:00-21:00, hourly discovery pulses.
+    - cron: "0 8-13 * * 1-5"
+    # Near the US regular open under daylight time (21:30 Beijing).
+    - cron: "20,30 13 * * 1-5"
+    # Cover standard-time pre-market through 22:30 Beijing.
+    - cron: "0,20,30 14 * * 1-5"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: etf-us-extended-hours-pulse
+  cancel-in-progress: true
+
+jobs:
+  us_extended:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run system consistency preflight
+        run: |
+          python scripts/check_system_consistency.py
+          git checkout -- data/state/system_consistency.json
+      - name: Refresh US extended-hours context
+        run: python scripts/build_us_extended_hours_context.py
+      - name: Commit US extended-hours context
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/state/us_extended_hours_context.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "data: refresh US extended-hours context"
+          git pull --rebase origin main
+          git push origin HEAD:main
