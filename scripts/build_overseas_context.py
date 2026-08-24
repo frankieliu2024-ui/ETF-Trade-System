@@ -5,6 +5,8 @@ import os
 import shutil
 import subprocess
 import tempfile
+import urllib.parse
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -25,7 +27,7 @@ OBJECTS = {
     "N225": {"name": "日经225指数", "symbol": "^N225", "timezone": "Asia/Tokyo", "role": "JAPAN_EQUITY"},
     "KOSPI": {"name": "韩国综合指数", "symbol": "^KS11", "timezone": "Asia/Seoul", "role": "KOREA_EQUITY"},
     "TWII": {"name": "台湾加权指数", "symbol": "^TWII", "timezone": "Asia/Taipei", "role": "TAIWAN_EQUITY"},
-    "HSTECH": {"name": "恒生科技指数", "symbol": "^HSTECH", "timezone": "Asia/Hong_Kong", "role": "HK_TECH"},
+    "HSTECH": {"name": "恒生科技指数", "symbol": "HSTECH.HK", "timezone": "Asia/Hong_Kong", "role": "HK_TECH"},
 }
 
 SESSIONS = {
@@ -129,6 +131,60 @@ def fetch_yahoo(object_id: str, spec: dict, generated_utc: datetime) -> dict:
     }
 
 
+def fetch_hstech_eastmoney(generated_utc: datetime) -> dict:
+    params = {
+        "secid": "124.HSTECH",
+        "fltt": "2",
+        "invt": "2",
+        "fields": "f43,f44,f45,f46,f47,f48,f57,f58,f60,f124",
+    }
+    url = "https://push2.eastmoney.com/api/qt/stock/get?" + urllib.parse.urlencode(params)
+    req = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.15"})
+    with urllib.request.urlopen(req, timeout=20) as response:
+        payload = json.load(response)
+    data = payload.get("data") or {}
+    required = {"open": data.get("f46"), "high": data.get("f44"), "low": data.get("f45"), "close": data.get("f43")}
+    if any(value in (None, "-") for value in required.values()):
+        raise RuntimeError("eastmoney 124.HSTECH missing OHLC fields")
+    raw_ts = data.get("f124")
+    if raw_ts in (None, "", 0):
+        raise RuntimeError("eastmoney 124.HSTECH missing provider timestamp f124")
+    ts = int(raw_ts)
+    if ts > 10_000_000_000:
+        ts //= 1000
+    dt_utc = datetime.fromtimestamp(ts, timezone.utc)
+    local = dt_utc.astimezone(ZoneInfo("Asia/Hong_Kong"))
+    beijing = dt_utc.astimezone(BEIJING)
+    latest = {
+        **required,
+        "volume": data.get("f47"),
+        "amount": data.get("f48"),
+        "previous_close": data.get("f60"),
+        "timestamp": ts,
+        "as_of_utc": dt_utc.isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "as_of_local": local.isoformat(timespec="seconds"),
+        "as_of_beijing": beijing.isoformat(timespec="seconds"),
+        "market_date_local": local.date().isoformat(),
+        "provider_timezone": "Asia/Hong_Kong",
+        "symbol": "124.HSTECH",
+    }
+    phase = market_phase("Asia/Hong_Kong", generated_utc)
+    return {
+        "object": "HSTECH",
+        "name": "恒生科技指数",
+        "reference_role": "HK_TECH",
+        "provider": "eastmoney_push2",
+        "symbol": "124.HSTECH",
+        "market_timezone": "Asia/Hong_Kong",
+        "market_phase_at_generation": phase,
+        "time_relation_to_a_share": time_relation("HSTECH", latest, phase, generated_utc),
+        "quality_status": validate_latest(latest),
+        "latest": latest,
+        "display_time_rule": "正式输出优先显示latest.as_of_beijing（北京时间）。",
+        "decision_note": "东方财富为恒生科技指数直接行情备源；必须使用provider时间戳f124，不得用workflow执行时间冒充行情时间。",
+    }
+
+
 def fetch_hstech_hithink(generated_utc: datetime) -> dict:
     cli = shutil.which("hithink-finance")
     if not cli:
@@ -165,16 +221,21 @@ def build() -> dict:
                 try:
                     record = fetch_hstech_hithink(generated_utc)
                 except Exception as hithink_error:
-                    record = fetch_yahoo(object_id, spec, generated_utc)
-                    record["fallback_from"] = "hithink-finance:HS2083"
-                    record["fallback_reason"] = str(hithink_error)[-300:]
+                    try:
+                        record = fetch_yahoo(object_id, spec, generated_utc)
+                        record["fallback_from"] = "hithink-finance:HS2083"
+                        record["fallback_reason"] = str(hithink_error)[-300:]
+                    except Exception as yahoo_error:
+                        record = fetch_hstech_eastmoney(generated_utc)
+                        record["fallback_from"] = "hithink-finance:HS2083 -> yahoo_chart_api:HSTECH.HK"
+                        record["fallback_reason"] = f"hithink={str(hithink_error)[-180:]}; yahoo={str(yahoo_error)[-180:]}"
             else:
                 record = fetch_yahoo(object_id, spec, generated_utc)
             if record["quality_status"] == "PASS":
                 pass_count += 1
             objects[object_id] = record
         except Exception as exc:
-            objects[object_id] = {"object": object_id, "name": spec["name"], "reference_role": spec["role"], "provider": "hithink-finance/yahoo_chart_api" if object_id == "HSTECH" else "yahoo_chart_api", "symbol": "HS2083/^HSTECH" if object_id == "HSTECH" else spec["symbol"], "market_timezone": spec["timezone"], "market_phase_at_generation": market_phase(spec["timezone"], generated_utc), "generated_at_beijing": generated_beijing.isoformat(timespec="seconds"), "quality_status": "FAILED", "error": str(exc)[-500:], "decision_note": "监测对象保留但当前数据不可用；不得用旧值冒充当前状态。"}
+            objects[object_id] = {"object": object_id, "name": spec["name"], "reference_role": spec["role"], "provider": "hithink-finance/yahoo_chart_api/eastmoney_push2" if object_id == "HSTECH" else "yahoo_chart_api", "symbol": "HS2083/HSTECH.HK/124.HSTECH" if object_id == "HSTECH" else spec["symbol"], "market_timezone": spec["timezone"], "market_phase_at_generation": market_phase(spec["timezone"], generated_utc), "generated_at_beijing": generated_beijing.isoformat(timespec="seconds"), "quality_status": "FAILED", "error": str(exc)[-500:], "decision_note": "监测对象保留但当前数据不可用；不得用旧值冒充当前状态。"}
     overall = "PASS" if pass_count == len(OBJECTS) else ("DEGRADED" if pass_count else "FAILED")
     return {
         "generated_at": now_utc(),
