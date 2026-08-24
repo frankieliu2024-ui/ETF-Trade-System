@@ -145,7 +145,7 @@ def build(root: Path = ROOT) -> dict:
         "generated_at": now_utc(), "generated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
         "market_date": current.get("market_date", ""), "latest_valid_node": current.get("latest_valid_node", ""),
         "current": current, "decision_context": decision, "decision_read_plan": build_read_plan(current, account, policy, freshness),
-        "canonical_files": CANONICAL_FILES, "data_status": effective_data_status, "freshness_at_context_build": freshness,
+        "canonical_files": CANONICAL_FILES, "data_status": {**(current.get("data_freshness") or {}), **freshness}, "freshness_at_context_build": freshness,
         "trading_day_status": trading_day_status, "runtime_health": runtime_health,
         "system_consistency_status": consistency.get("status", "MISSING"), "system_consistency_hard_errors": consistency.get("hard_error_count", None),
         "etf_universe_count": len(etf_universe.get("objects") or []), "overseas_context_status": overseas_context.get("quality_status", "MISSING"),
