@@ -42,9 +42,6 @@ jobs:
         run: |
           python scripts/build_state_context.py
           python scripts/build_query_context.py
-      - name: Run system consistency check
-        if: ${{ steps.requests.outputs.files != '' }}
-        run: python scripts/check_system_consistency.py
       - name: Commit asynchronous state maintenance
         if: ${{ steps.requests.outputs.files != '' }}
         shell: bash
@@ -58,3 +55,7 @@ jobs:
           git commit -m "state: sync broker facts and dashboard"
           git pull --rebase origin main
           git push origin HEAD:main
+
+# Consistency is intentionally not executed inside this job before commit: the
+# checker requires a clean working tree and workflow SHA == HEAD. The normal
+# system-consistency workflow runs after the state-maintenance commit reaches main.
