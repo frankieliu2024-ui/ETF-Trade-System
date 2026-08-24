@@ -7,10 +7,6 @@ on:
         description: "Kronos research request JSON path"
         required: true
         default: "requests/research_backfill/20260824_kronos_stage2.json"
-  push:
-    branches: [main]
-    paths:
-      - "requests/research_backfill/kronos_stage2_run_trigger.txt"
 
 permissions:
   contents: write
@@ -52,12 +48,7 @@ jobs:
           git -C "$KRONOS_REPO_DIR" checkout --detach 67b630e67f6a18c9e9be918d9b4337c960db1e9a
           test "$(git -C "$KRONOS_REPO_DIR" rev-parse HEAD)" = "67b630e67f6a18c9e9be918d9b4337c960db1e9a"
       - name: Run point-in-time Kronos validation
-        run: |
-          REQUEST_PATH="${{ github.event.inputs.request_path }}"
-          if [ -z "$REQUEST_PATH" ]; then
-            REQUEST_PATH="requests/research_backfill/20260824_kronos_stage2.json"
-          fi
-          python scripts/backfill_kronos_evidence.py "$REQUEST_PATH"
+        run: python scripts/backfill_kronos_evidence.py "${{ github.event.inputs.request_path }}"
       - name: Summarize validation evidence
         run: |
           python scripts/summarize_kronos_validation.py
@@ -92,6 +83,6 @@ jobs:
           if git diff --cached --quiet; then
             exit 0
           fi
-          git commit -m "research: complete Kronos stage2 validation"
+          git commit -m "research: complete Kronos validation"
           git pull --rebase origin main
           git push origin HEAD:main
