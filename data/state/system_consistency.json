@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-08-24T00:16:40Z",
-  "generated_at_beijing": "2026-08-24T08:16:40+08:00",
+  "generated_at": "2026-08-24T00:17:21Z",
+  "generated_at_beijing": "2026-08-24T08:17:21+08:00",
   "repository": {
-    "head_sha": "27fa9db76cc7504ea3e025c3c86f82a87b1caea3",
-    "github_sha": "27fa9db76cc7504ea3e025c3c86f82a87b1caea3",
-    "github_run_id": "32676162784",
+    "head_sha": "48129e663d88edef0aa48dd2bf7ccc3696f697f1",
+    "github_sha": "48129e663d88edef0aa48dd2bf7ccc3696f697f1",
+    "github_run_id": "32676200893",
     "github_ref": "refs/heads/main"
   },
-  "status": "WARNING",
-  "hard_error_count": 0,
+  "status": "FAIL",
+  "hard_error_count": 1,
   "warning_count": 1,
   "checks": [
     {
@@ -84,12 +84,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=27fa9db76cc7504ea3e025c3c86f82a87b1caea3"
+      "detail": "HEAD=48129e663d88edef0aa48dd2bf7ccc3696f697f1"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=27fa9db76cc7504ea3e025c3c86f82a87b1caea3 GITHUB_SHA=27fa9db76cc7504ea3e025c3c86f82a87b1caea3"
+      "detail": "HEAD=48129e663d88edef0aa48dd2bf7ccc3696f697f1 GITHUB_SHA=48129e663d88edef0aa48dd2bf7ccc3696f697f1"
     },
     {
       "name": "git:critical_files_tracked",
@@ -128,8 +128,8 @@
     },
     {
       "name": "index_entry:us_extended_hours",
-      "status": "PASS",
-      "detail": "US extended-hours context present in system index"
+      "status": "FAIL",
+      "detail": "US extended-hours state and workflow present in system index"
     },
     {
       "name": "index_layer:formal_vs_expected",
@@ -394,7 +394,7 @@
     {
       "name": "workflow:us_extended_wired",
       "status": "PASS",
-      "detail": "US extended-hours context wired into pre-open workflow"
+      "detail": "US extended-hours context wired into A-share pre-open workflow"
     },
     {
       "name": "workflow:us_postmarket_0700_start",
@@ -410,6 +410,21 @@
       "name": "workflow:overseas_0900_0910",
       "status": "PASS",
       "detail": "Beijing 09:00/09:10 overseas pulses scheduled"
+    },
+    {
+      "name": "workflow:us_afternoon_exists",
+      "status": "PASS",
+      "detail": "standalone US afternoon/evening extended-hours pulse wired"
+    },
+    {
+      "name": "workflow:us_premarket_dst_window",
+      "status": "PASS",
+      "detail": "Beijing 16:00-21:30 DST-sensitive US pre-market coverage scheduled"
+    },
+    {
+      "name": "workflow:us_premarket_standard_window",
+      "status": "PASS",
+      "detail": "Beijing 22:00-22:30 standard-time US pre-market/open boundary scheduled"
     },
     {
       "name": "maintenance_workflow:data_standard_trigger",
@@ -432,7 +447,9 @@
       "detail": "status=MISSING (state warning only)"
     }
   ],
-  "errors": [],
+  "errors": [
+    "index_entry:us_extended_hours: US extended-hours state and workflow present in system index"
+  ],
   "warnings": [
     "account_fact:current_availability: status=MISSING (state warning only)"
   ],
