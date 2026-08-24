@@ -14,7 +14,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "requests/live_snapshot/**.json"
+      - "requests/live_snapshot/**"
   schedule:
     # UTC. A-share opening auction starts at 09:15 Asia/Shanghai = 01:15 UTC.
     # Auction-specific pulses: 09:15, 09:20, 09:25; then 09:30 and 10-minute continuous pulses.
@@ -28,9 +28,12 @@ on:
 permissions:
   contents: write
 
+# Keep pulses ordered instead of cancelling the in-flight capture. The runner
+# uses actual captured_at plus is_newer_than_current() to prevent an older
+# result from overwriting a newer CURRENT state.
 concurrency:
   group: etf-market-snapshot
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   snapshot:
