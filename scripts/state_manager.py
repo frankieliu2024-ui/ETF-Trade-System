@@ -188,11 +188,15 @@ def build_decision_context(root: Path | None = None) -> dict[str, Any]:
     dashboard = root / "ETF当前状态_DASHBOARD.md"
     latest = current.get("latest_snapshot", "")
     snapshot = read_json(root / latest, {}) if latest else {}
+    intraday_path = read_json(root / "data" / "state" / "intraday_path_features.json", {
+        "status": "MISSING", "features": [],
+    })
     return {
         "generated_at": now_utc(), "rules_version": "V2.2.15",
         "market_date": current.get("market_date", ""),
         "latest_node": current.get("latest_valid_node", ""),
         "current": current, "latest_snapshot": snapshot,
+        "intraday_path_features": intraday_path,
         "dashboard_source": str(dashboard.relative_to(root)).replace("\\", "/"),
         "dashboard_summary": {
             "maintenance_mode": "candidate_only",
@@ -201,5 +205,5 @@ def build_decision_context(root: Path | None = None) -> dict[str, Any]:
         },
         "account_fact_status": account["status"],
         "needs_account_screenshot": account["status"] != "VALID",
-        "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。",
+        "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。日内路径特征只描述离散脉冲结构，不是交易信号。",
     }
