@@ -14,7 +14,7 @@ SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
 FORMAL_FILES = ["ETF规则_MASTER.md", "ETF当前状态_DASHBOARD.md", "ETF交易复盘与经验库_2026.md", "ETF市场行情档案_2026.md"]
 CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/overseas_runtime_health.json", "data/state/account_fact.json", "data/state/us_extended_hours_context.json", "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json", "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json"]
-CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_query_context.py", ".github/workflows/market-snapshot.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
+CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_stock_context.py", "scripts/build_account_stock_market.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_query_context.py", ".github/workflows/market-snapshot.yml", ".github/workflows/on-demand-market-data.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
 EXPECTED_INDICES = {"000001.SH", "399006.SZ", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
 REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api", "eastmoney_push2"}
 
@@ -106,10 +106,16 @@ def main() -> int:
     check("runner:no_hardcoded_etf_list", "ETF = [" not in runner, "no hardcoded ETF list")
     check("runner:opening_auction_window", "9 * 60 + 15" in runner and "OPENING_CALL_AUCTION" in runner, "09:15 opening-auction capture is implemented")
     check("runner:beijing_timestamp", "captured_at_beijing" in runner, "A-share snapshots expose Beijing timestamp")
+    check("runner:provider_timestamp", "provider_as_of_beijing" in runner and "provider_timestamp_ms" in runner, "A-share rows retain provider time separately from capture completion time")
 
     stock_cfg = market_cfg.get("monitoring_layers", {}).get("stock_monitor", {})
     check("stock_layer:no_fixed_default_codes", stock_cfg.get("fixed_default_codes") == [], f"fixed_default_codes={stock_cfg.get('fixed_default_codes')}")
     check("stock_layer:dynamic_mode", stock_cfg.get("mode") == "DYNAMIC_ACCOUNT_PLUS_QUERY_TIME_INDUSTRY", f"mode={stock_cfg.get('mode')}")
+    stock_context_builder = read_text("scripts/build_stock_context.py")
+    stock_market_builder = read_text("scripts/build_account_stock_market.py")
+    check("stock_layer:canonical_etf_universe", "etf_monitor_universe.json" in stock_context_builder and "load_etf_codes" in stock_context_builder, "stock classification reads canonical ETF universe")
+    check("stock_layer:hithink_market_snapshot", '"market", "snapshot"' in stock_market_builder and '"stock", "snapshot"' not in stock_market_builder, "dynamic account stocks use the supported market.snapshot capability")
+    check("stock_layer:beijing_timestamp", "as_of_beijing" in stock_market_builder and "market_phase" in stock_market_builder, "stock facts expose Beijing provider time and market phase")
 
     provider_cfg = read_json("config/market/provider_priority.json")
     providers = set((provider_cfg.get("providers") or {}).keys())
@@ -172,6 +178,10 @@ def main() -> int:
     check("workflow:session_gate", "runtime_session_gate.py" in workflow and "session_gate.outputs.should_capture" in workflow, "exchange calendar/session gate wired")
     check("workflow:auction_cron", '15,20,25,30,40,50 1 * * 1-5' in workflow, "09:15/09:20/09:25 auction pulses scheduled")
     check("workflow:valid_snapshot_downstream_gate", "snapshot_result.outputs.snapshot_written == 'true'" in workflow, "downstream contexts require new valid A-share snapshot")
+    check("workflow:single_full_recovery_entry", "workflow_dispatch" in workflow and not (ROOT / ".github/workflows/full-snapshot-recovery.yml").exists(), "market-snapshot workflow_dispatch is the only full-state recovery entry")
+    check("workflow:runtime_artifact_staging", "git add -A -- data/market/snapshots data/state" in workflow and "2>/dev/null || true" not in workflow, "runtime staging cannot silently drop a snapshot because an optional path is absent")
+    on_demand_workflow = read_text(".github/workflows/on-demand-market-data.yml")
+    check("workflow:on_demand_degraded_only", "run_full_snapshot_recovery.py" not in on_demand_workflow and "data/state/CURRENT.json" not in on_demand_workflow, "single-object on-demand service cannot impersonate production CURRENT")
 
     overseas_workflow = read_text(".github/workflows/overseas-preopen-pulse.yml")
     check("workflow:overseas_preopen_exists", "build_overseas_context.py" in overseas_workflow, "standalone overseas pre-open pulse wired")
@@ -193,6 +203,38 @@ def main() -> int:
 
     runtime_health = read_json("data/state/runtime_health.json")
     check("runtime_health:structured", bool(runtime_health.get("status")), f"status={runtime_health.get('status', 'MISSING')}")
+    current = read_json("data/state/CURRENT.json")
+    latest_snapshot = str(current.get("latest_snapshot", ""))
+    live_runtime = runtime_health.get("status") == "PASS" and bool(runtime_health.get("latest_snapshot")) and bool(latest_snapshot)
+    check("a_share_runtime:live_state_available", live_runtime, f"runtime_status={runtime_health.get('status')} current_snapshot={latest_snapshot or 'MISSING'}", warning=True)
+    if live_runtime:
+        snapshot_path = ROOT / latest_snapshot
+        check("a_share_runtime:current_ready", current.get("node_status") == "READY" and bool(current.get("market_date")) and bool(current.get("latest_valid_node")), f"market_date={current.get('market_date')} node={current.get('latest_valid_node')} status={current.get('node_status')}")
+        check("a_share_runtime:snapshot_exists", snapshot_path.exists(), f"path={latest_snapshot}")
+        if snapshot_path.exists():
+            snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+            rows = snapshot.get("rows") or []
+            etf_rows = [row for row in rows if row.get("asset_class") == "ETF"]
+            index_rows = [row for row in rows if row.get("asset_class") == "A_SHARE_INDEX"]
+            check("a_share_runtime:snapshot_count", snapshot.get("count") == len(rows) == len(objects) + 2, f"snapshot_count={snapshot.get('count')} rows={len(rows)} expected={len(objects)+2}")
+            check("a_share_runtime:market_date_alignment", snapshot.get("market_date") == current.get("market_date") == runtime_health.get("market_date"), f"snapshot={snapshot.get('market_date')} current={current.get('market_date')} health={runtime_health.get('market_date')}")
+            check("a_share_runtime:etf_complete", {str(row.get('symbol', '')) for row in etf_rows} == universe_codes and all(row.get("quality_status") == "PASS" for row in etf_rows), f"count={len(etf_rows)} expected={len(universe_codes)}")
+            check("a_share_runtime:core_indices_complete", {str(row.get('thscode', '')) for row in index_rows} == {"000001.SH", "399006.SZ"} and all(row.get("quality_status") == "PASS" for row in index_rows), f"indices={[row.get('thscode') for row in index_rows]}")
+            check("a_share_runtime:beijing_capture", bool(snapshot.get("captured_at_beijing")) and snapshot.get("timezone") == "Asia/Shanghai", f"captured_at_beijing={snapshot.get('captured_at_beijing')} timezone={snapshot.get('timezone')}")
+
+    account = read_json("data/state/account_fact.json")
+    expected_account_stocks = {
+        str(position.get("code", "")) for position in (account.get("positions") or [])
+        if isinstance(position, dict) and str(position.get("asset_type", "")).upper() == "STOCK" and float(position.get("quantity") or 0) > 0
+    }
+    stock_context = read_json("data/state/stock_context.json")
+    detected_stocks = {
+        str(item.get("code", "")) for item in (stock_context.get("default_stock_layer", {}).get("detected_non_etf_stocks") or [])
+    }
+    stock_market = read_json("data/state/stock_market_context.json")
+    stock_market_codes = set((stock_market.get("objects") or {}).keys())
+    check("stock_runtime:dynamic_account_membership", detected_stocks == expected_account_stocks, f"detected={sorted(detected_stocks)} expected={sorted(expected_account_stocks)}", warning=not live_runtime)
+    check("stock_runtime:market_complete", stock_market_codes == expected_account_stocks and all(item.get("quality_status") == "PASS" and item.get("as_of_beijing") for item in (stock_market.get("objects") or {}).values()), f"codes={sorted(stock_market_codes)} status={stock_market.get('quality_status')}", warning=not live_runtime)
     overseas_health = read_json("data/state/overseas_runtime_health.json")
     check("overseas_runtime:structured", bool(overseas_health.get("status")), f"status={overseas_health.get('status', 'MISSING')}")
     check("overseas_runtime:pulse_success", overseas_health.get("pulse_success") is True, f"pulse_success={overseas_health.get('pulse_success')}", warning=True)
@@ -200,7 +242,6 @@ def main() -> int:
     for object_id in ("N225", "KOSPI"):
         object_health = (overseas_health.get("objects") or {}).get(object_id) or {}
         check(f"overseas_runtime:{object_id}:same_day_bar", object_health.get("quality_status") == "PASS" and bool(object_health.get("as_of_beijing")), f"quality={object_health.get('quality_status')} as_of_beijing={object_health.get('as_of_beijing', '')}", warning=True)
-    account = read_json("data/state/account_fact.json")
     check("account_fact:current_availability", account.get("status") == "VALID", f"status={account.get('status', 'MISSING')} (state warning only)", warning=True)
 
     result = {

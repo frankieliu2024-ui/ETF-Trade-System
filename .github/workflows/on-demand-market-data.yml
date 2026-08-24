@@ -6,14 +6,12 @@ on:
     paths:
       - "requests/market_data/**.json"
       - "scripts/process_market_data_request.py"
-      - "scripts/run_full_snapshot_recovery.py"
       - ".github/workflows/on-demand-market-data.yml"
   pull_request:
     branches: [main]
     paths:
       - "requests/market_data/**.json"
       - "scripts/process_market_data_request.py"
-      - "scripts/run_full_snapshot_recovery.py"
       - ".github/workflows/on-demand-market-data.yml"
   schedule:
     - cron: "17 * * * *"
@@ -22,8 +20,8 @@ permissions:
   contents: write
 
 concurrency:
-  group: on-demand-market-data-${{ github.event_name }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: on-demand-market-data-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   process:
@@ -70,19 +68,17 @@ jobs:
           done
           echo "found=$found failed=$failed"
           exit 0
-      - name: Recover full market state when requested
-        if: ${{ github.event_name != 'pull_request' }}
-        continue-on-error: true
-        run: python scripts/run_full_snapshot_recovery.py
-      - name: Persist results and recovered runtime state
+      - name: Persist independent on-demand results
         if: ${{ always() && github.event_name != 'pull_request' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/market/on_demand/results data/market/on_demand/datasets data/market/snapshots data/state/CURRENT.json data/state/runtime_health.json data/state/system_consistency.json data/state/market_delta.json data/state/overseas_context.json data/state/stock_context.json data/state/stock_market_context.json data/state/dashboard_update_candidate.json data/state/decision_context.json data/state/query_context.json data/state/chatgpt_task_probe.json data/state/full_snapshot_recovery.json post_market_review/post_market_review_event.json data/state/review_context.json events/events.jsonl 2>/dev/null || true
+          # This DEGRADED data service never writes CURRENT or production
+          # snapshots. Full recovery is market-snapshot workflow_dispatch only.
+          git add -A -- data/market/on_demand/results data/market/on_demand/datasets
           if git diff --cached --quiet; then
             exit 0
           fi
-          git commit -m "data: persist on-demand and recovered market state"
+          git commit -m "data: persist on-demand market result"
           git pull --rebase origin main
           git push origin HEAD:main

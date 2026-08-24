@@ -4,7 +4,7 @@ import json
 import os
 import shutil
 import subprocess
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 try:
@@ -16,6 +16,7 @@ ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1
 STOCK_CONTEXT = ROOT / "data" / "state" / "stock_context.json"
 OUTPUT = ROOT / "data" / "state" / "stock_market_context.json"
 TIMEOUT = int(os.environ.get("HITHINK_TIMEOUT_SECONDS", "25"))
+SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
 
 def thscode(code: str) -> str:
@@ -29,34 +30,87 @@ def thscode(code: str) -> str:
     return code
 
 
-def fetch_one(cli: str, code: str) -> dict:
+def as_beijing(timestamp_ms: object) -> str:
+    if timestamp_ms in (None, ""):
+        return ""
+    return datetime.fromtimestamp(float(timestamp_ms) / 1000, tz=SHANGHAI).isoformat(timespec="seconds")
+
+
+def market_phase(timestamp_ms: object) -> str:
+    dt = datetime.fromtimestamp(float(timestamp_ms) / 1000, tz=SHANGHAI) if timestamp_ms not in (None, "") else datetime.now(SHANGHAI)
+    minute = dt.hour * 60 + dt.minute
+    if 9 * 60 + 15 <= minute < 9 * 60 + 30:
+        return "OPENING_CALL_AUCTION"
+    if 9 * 60 + 30 <= minute <= 11 * 60 + 30:
+        return "CONTINUOUS_MORNING"
+    if 13 * 60 <= minute < 14 * 60 + 57:
+        return "CONTINUOUS_AFTERNOON"
+    if 14 * 60 + 57 <= minute <= 15 * 60:
+        return "CLOSING_CALL_AUCTION"
+    return "OUTSIDE_SESSION"
+
+
+def validate_item(code: str, item: dict) -> None:
+    required = ("open_price", "high_price", "low_price", "last_price", "volume", "turnover")
+    missing = [key for key in required if item.get(key) is None]
+    if missing:
+        raise RuntimeError(f"{code} missing fields: {','.join(missing)}")
+    o, h, low, close = (float(item[key]) for key in ("open_price", "high_price", "low_price", "last_price"))
+    if h < max(o, low, close) or low > min(o, h, close):
+        raise RuntimeError(f"{code} failed OHLC relationship")
+
+
+def fetch_many(cli: str, stocks: list[dict]) -> dict[str, dict]:
     raw_dir = ROOT / "data" / "market" / "raw" / "account_stocks"
     raw_dir.mkdir(parents=True, exist_ok=True)
-    path = raw_dir / f"{code}.json"
+    path = raw_dir / "current_account_stocks.json"
+    requested = {thscode(str(stock.get("code", ""))): stock for stock in stocks if stock.get("code")}
     completed = subprocess.run(
-        [cli, "stock", "snapshot", "--thscode", thscode(code), "--output", str(path), "--format", "json"],
+        [cli, "market", "snapshot", "--thscodes", ",".join(requested), "--output", str(path), "--format", "json"],
         capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=TIMEOUT, check=False,
     )
     if completed.returncode != 0 or not path.exists():
-        raise RuntimeError((completed.stderr or "stock snapshot failed")[-400:])
+        raise RuntimeError((completed.stderr or completed.stdout or "market snapshot failed")[-800:])
     payload = json.loads(path.read_text(encoding="utf-8"))
     items = payload.get("data", {}).get("item") or []
-    if not payload.get("ok") or len(items) != 1:
-        raise RuntimeError("invalid stock snapshot payload")
-    item = items[0]
-    return {
-        "code": code,
-        "thscode": thscode(code),
-        "open": item.get("open_price"),
-        "high": item.get("high_price"),
-        "low": item.get("low_price"),
-        "close": item.get("last_price"),
-        "volume": item.get("volume"),
-        "amount": item.get("turnover"),
-        "provider_timestamp_ms": payload.get("data", {}).get("timestamp"),
-        "provider": "hithink-finance",
-        "quality_status": "PASS",
-    }
+    if not payload.get("ok") or payload.get("meta", {}).get("source") != "remote":
+        raise RuntimeError("invalid or non-remote market snapshot payload")
+    timestamp_ms = payload.get("data", {}).get("timestamp")
+    returned = {str(item.get("thscode", "")): item for item in items}
+    result: dict[str, dict] = {}
+    for requested_thscode, stock in requested.items():
+        code = str(stock.get("code", ""))
+        item = returned.get(requested_thscode)
+        if item is None:
+            result[code] = {"code": code, "name": stock.get("name", ""), "thscode": requested_thscode, "quality_status": "FAILED", "error": "provider returned no exact item"}
+            continue
+        try:
+            validate_item(code, item)
+        except Exception as exc:
+            result[code] = {"code": code, "name": stock.get("name", ""), "thscode": requested_thscode, "quality_status": "FAILED", "error": str(exc)}
+            continue
+        result[code] = {
+            "code": code,
+            "name": stock.get("name", ""),
+            "thscode": requested_thscode,
+            "open": item.get("open_price"),
+            "high": item.get("high_price"),
+            "low": item.get("low_price"),
+            "close": item.get("last_price"),
+            "prev_close": item.get("prev_price"),
+            "change_pct": item.get("price_change_ratio_pct"),
+            "volume": item.get("volume"),
+            "amount": item.get("turnover"),
+            "provider_timestamp_ms": timestamp_ms,
+            "as_of_beijing": as_beijing(timestamp_ms),
+            "market_phase": market_phase(timestamp_ms),
+            "provider": "hithink-finance",
+            "provider_request_id": payload.get("meta", {}).get("request_id", ""),
+            "quality_status": "PASS",
+            "quantity": stock.get("quantity"),
+            "market_value_from_account": stock.get("market_value"),
+        }
+    return result
 
 
 def build() -> dict:
@@ -76,25 +130,19 @@ def build() -> dict:
         result["quality_status"] = "FAILED"
         result["error"] = "hithink-finance CLI not found"
         return result
-    failures = 0
-    for stock in stocks:
-        code = str(stock.get("code", ""))
-        if not code:
-            continue
-        try:
-            quote = fetch_one(cli, code)
-            quote["name"] = stock.get("name", "")
-            quote["quantity"] = stock.get("quantity")
-            quote["market_value_from_account"] = stock.get("market_value")
-            result["objects"][code] = quote
-        except Exception as exc:
-            failures += 1
-            result["objects"][code] = {
-                "code": code,
+    try:
+        result["objects"] = fetch_many(cli, stocks)
+    except Exception as exc:
+        result["objects"] = {
+            str(stock.get("code", "")): {
+                "code": str(stock.get("code", "")),
                 "name": stock.get("name", ""),
                 "quality_status": "FAILED",
-                "error": str(exc)[-400:],
+                "error": str(exc)[-800:],
             }
+            for stock in stocks if stock.get("code")
+        }
+    failures = sum(1 for item in result["objects"].values() if item.get("quality_status") != "PASS")
     if failures:
         result["quality_status"] = "DEGRADED" if failures < len(stocks) else "FAILED"
     return result

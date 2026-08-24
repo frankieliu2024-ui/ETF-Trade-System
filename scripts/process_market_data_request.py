@@ -108,9 +108,13 @@ def write_csv(path: Path, rows: list[dict]) -> None:
 
 def process(path: Path) -> dict:
     req = json.loads(path.read_text(encoding="utf-8")); request_id = req.get("request_id") or path.stem
-    asset_type = str(req.get("asset_type", "stock")).lower(); mode = str(req.get("mode", "snapshot")).lower(); thscode = to_thscode(req["code"])
-    result = {"ok": False, "request_id": request_id, "provider": "hithink-finance", "asset_type": asset_type, "mode": mode, "thscode": thscode, "processed_at": datetime.now(SHANGHAI).isoformat(), "request_file": str(path.relative_to(ROOT))}
+    asset_type = str(req.get("asset_type", "stock")).lower(); mode = str(req.get("mode", "snapshot")).lower()
+    result = {"ok": False, "request_id": request_id, "provider": "hithink-finance", "asset_type": asset_type, "mode": mode, "processed_at": datetime.now(SHANGHAI).isoformat(), "request_file": str(path.relative_to(ROOT))}
     try:
+        if not req.get("code"):
+            raise ValueError("request has no code; legacy full-snapshot trigger files are not single-object requests")
+        thscode = to_thscode(req["code"])
+        result["thscode"] = thscode
         if mode == "snapshot": result.update(snapshot(asset_type, thscode)); result["ok"] = True
         elif mode == "history":
             start = date.fromisoformat(req["start_date"]); end = date.fromisoformat(req["end_date"])

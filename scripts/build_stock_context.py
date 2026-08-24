@@ -13,11 +13,19 @@ ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1
 POLICY_PATH = ROOT / "config" / "market" / "stock_monitor_policy.json"
 ROLE_PATH = ROOT / "data" / "state" / "asset_roles.json"
 OUTPUT_PATH = ROOT / "data" / "state" / "stock_context.json"
+ETF_UNIVERSE_PATH = ROOT / "config" / "market" / "etf_monitor_universe.json"
 
-ETF_CODES = {
-    "561980", "588000", "159781", "159941", "159561", "513520", "513180", "518880",
-    "159992", "515880", "159326",
-}
+
+def load_etf_codes() -> set[str]:
+    universe = read_json(ETF_UNIVERSE_PATH, {})
+    codes = {
+        str(item.get("code", "")).strip()
+        for item in (universe.get("objects") or [])
+        if isinstance(item, dict) and item.get("code")
+    }
+    if not codes:
+        raise RuntimeError("canonical ETF universe is missing or empty")
+    return codes
 
 
 def first(position: dict, *keys: str):
@@ -45,14 +53,15 @@ def numeric(value: object) -> float | None:
         return None
 
 
-def looks_like_etf(position: dict, code: str) -> bool:
+def looks_like_etf(position: dict, code: str, etf_codes: set[str]) -> bool:
     security_type = str(first(position, "security_type", "asset_type", "type", "instrument_type") or "").upper()
     name = str(first(position, "name", "security_name", "instrument_name") or "")
-    return code in ETF_CODES or "ETF" in security_type or "ETF" in name.upper()
+    return code in etf_codes or "ETF" in security_type or "ETF" in name.upper()
 
 
 def build() -> dict:
     account = read_account_fact(ROOT)
+    etf_codes = load_etf_codes()
     policy = read_json(POLICY_PATH, {})
     role_memory = read_json(ROLE_PATH, {"roles": {}})
     roles = role_memory.get("roles", {}) if isinstance(role_memory, dict) else {}
@@ -70,7 +79,7 @@ def build() -> dict:
         quantity = numeric(first(position, "quantity", "qty", "position", "shares", "volume"))
         if quantity is not None and quantity <= 0:
             continue
-        if looks_like_etf(position, code):
+        if looks_like_etf(position, code, etf_codes):
             continue
 
         item = {

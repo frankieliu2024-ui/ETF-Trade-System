@@ -77,6 +77,12 @@ def now_utc_text() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
+def provider_as_of_beijing(timestamp_ms: object) -> str:
+    if timestamp_ms in (None, ""):
+        return ""
+    return datetime.fromtimestamp(float(timestamp_ms) / 1000, tz=SHANGHAI).isoformat(timespec="seconds")
+
+
 def a_share_market_phase(captured_dt: datetime) -> str:
     minute = captured_dt.hour * 60 + captured_dt.minute
     # 09:25-09:29 is still pre-continuous trading. A delayed scheduled runner
@@ -179,8 +185,11 @@ def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, pr
         "asset_class": asset_class, "symbol": code, "thscode": thscode,
         "open": item["open_price"], "high": item["high_price"],
         "low": item["low_price"], "close": item["last_price"],
+        "prev_close": item.get("prev_price"),
+        "change_pct": item.get("price_change_ratio_pct"),
         "volume": item["volume"], "amount": item["turnover"],
         "provider": "hithink-finance", "provider_timestamp_ms": provider_ts,
+        "as_of_beijing": provider_as_of_beijing(provider_ts),
         "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai",
         "market_phase": market_phase,
         "quality_status": "PASS",
@@ -188,12 +197,13 @@ def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, pr
     }
 
 
-def fetch_etf(cli: str, run_dir: Path, code: str, thscode: str, captured: str, market_phase: str) -> dict:
+def fetch_etf(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
     obj = run_json(cli, ["fund", "snapshot", "--thscode", thscode], run_dir / f"ETF_{code}.json")
     items = obj.get("data", {}).get("item") or []
     if len(items) != 1:
         raise RuntimeError(f"expected one ETF row for {code}, got {len(items)}")
-    return row("ETF", code, thscode, items[0], captured, obj.get("data", {}).get("timestamp"), market_phase)
+    received = now_shanghai()
+    return row("ETF", code, thscode, items[0], received.isoformat(timespec="seconds"), obj.get("data", {}).get("timestamp"), a_share_market_phase(received))
 
 
 def is_newer_than_current(captured_dt: datetime) -> bool:
@@ -218,37 +228,37 @@ def main() -> int:
 
     run_started_monotonic = time.monotonic()
     run_started_at = now_utc_text()
-    captured_dt = now_shanghai()
-    captured = captured_dt.isoformat(timespec="seconds")
-    market_date = captured_dt.date().isoformat()
-    market_phase = a_share_market_phase(captured_dt)
+    run_started_dt = now_shanghai()
+    capture_started_at = run_started_dt.isoformat(timespec="seconds")
+    market_date = run_started_dt.date().isoformat()
+    market_phase = a_share_market_phase(run_started_dt)
 
-    if args.node == "scheduled" and not args.probe_only and not in_a_share_capture_window(captured_dt):
-        write_runtime_health({"status": "SKIPPED", "reason": "outside_a_share_capture_window", "market_date": market_date, "run_started_at": run_started_at, "captured_at": captured, "captured_at_beijing": captured, "market_phase": market_phase})
-        print(json.dumps({"ok": True, "skipped": True, "reason": "outside_a_share_capture_window", "market_date": market_date, "captured_at_beijing": captured}, ensure_ascii=False))
+    if args.node == "scheduled" and not args.probe_only and not in_a_share_capture_window(run_started_dt):
+        write_runtime_health({"status": "SKIPPED", "reason": "outside_a_share_capture_window", "market_date": market_date, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "market_phase": market_phase})
+        print(json.dumps({"ok": True, "skipped": True, "reason": "outside_a_share_capture_window", "market_date": market_date, "capture_started_at_beijing": capture_started_at}, ensure_ascii=False))
         return 0
 
-    node = resolve_scheduled_node(captured_dt) if args.node == "scheduled" else args.node
+    node = resolve_scheduled_node(run_started_dt) if args.node == "scheduled" else args.node
     planned_time = PLANNED_TIMES.get(node, "")
 
     if args.node == "scheduled" and node == "close" and close_already_recorded(market_date):
-        write_runtime_health({"status": "SKIPPED", "reason": "close_already_recorded", "market_date": market_date, "run_started_at": run_started_at, "captured_at": captured, "captured_at_beijing": captured, "market_phase": market_phase})
+        write_runtime_health({"status": "SKIPPED", "reason": "close_already_recorded", "market_date": market_date, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "market_phase": market_phase})
         print(json.dumps({"ok": True, "skipped": True, "reason": "close_already_recorded", "market_date": market_date}, ensure_ascii=False))
         return 0
 
-    if captured_dt.weekday() >= 5 and not args.probe_only:
+    if run_started_dt.weekday() >= 5 and not args.probe_only:
         write_runtime_health({"status": "SKIPPED", "reason": "non_trading_weekend", "market_date": market_date, "run_started_at": run_started_at})
         print(json.dumps({"ok": True, "skipped": True, "reason": "non_trading_weekend", "market_date": market_date}, ensure_ascii=False))
         return 0
 
     cli = cli_path()
-    run_dir = ROOT / "data" / "market" / "raw" / "hithink" / market_date / f"{captured_dt:%H%M%S}"
+    run_dir = ROOT / "data" / "market" / "raw" / "hithink" / market_date / f"{run_started_dt:%H%M%S}"
     snapshot_dir = ROOT / "data" / "market" / "snapshots"
     snapshot_dir.mkdir(parents=True, exist_ok=True)
 
     rows: list[dict] = []
     with ThreadPoolExecutor(max_workers=max(1, MAX_WORKERS)) as pool:
-        futures = {pool.submit(fetch_etf, cli, run_dir, code, thscode, captured, market_phase): code for code, thscode in ETF}
+        futures = {pool.submit(fetch_etf, cli, run_dir, code, thscode): code for code, thscode in ETF}
         for future in as_completed(futures):
             rows.append(future.result())
 
@@ -257,13 +267,17 @@ def main() -> int:
     for code, thscode in INDEX:
         if thscode not in returned:
             raise RuntimeError(f"missing index row for {thscode}")
-        rows.append(row("A_SHARE_INDEX", code, thscode, returned[thscode], captured, obj.get("data", {}).get("timestamp"), market_phase))
+        received = now_shanghai()
+        rows.append(row("A_SHARE_INDEX", code, thscode, returned[thscode], received.isoformat(timespec="seconds"), obj.get("data", {}).get("timestamp"), a_share_market_phase(received)))
 
     rows.sort(key=lambda x: (x["asset_class"], x["symbol"]))
     acquisition_seconds = round(time.monotonic() - run_started_monotonic, 3)
+    captured_dt = now_shanghai()
+    captured = captured_dt.isoformat(timespec="seconds")
+    market_phase = a_share_market_phase(captured_dt)
 
     if args.probe_only:
-        write_runtime_health({"status": "PROBE_PASS", "market_date": market_date, "run_started_at": run_started_at, "captured_at": captured, "captured_at_beijing": captured, "market_phase": market_phase, "acquisition_seconds": acquisition_seconds, "count": len(rows)})
+        write_runtime_health({"status": "PROBE_PASS", "market_date": market_date, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "captured_at": captured, "captured_at_beijing": captured, "market_phase": market_phase, "acquisition_seconds": acquisition_seconds, "count": len(rows)})
         print(json.dumps({"ok": True, "probe_only": True, "count": len(rows), "market_date": market_date, "quality_status": "PASS", "node_written": False, "market_phase": market_phase, "captured_at_beijing": captured, "acquisition_seconds": acquisition_seconds, "etf_universe_count": len(ETF)}, ensure_ascii=False))
         return 0
 
@@ -276,6 +290,7 @@ def main() -> int:
         "market_date": market_date, "node": node, "planned_time": planned_time,
         "market_phase": market_phase,
         "actual_run_time": captured, "workflow_run_id": os.environ.get("GITHUB_RUN_ID", ""),
+        "capture_started_at_beijing": capture_started_at,
         "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai", "provider": "hithink-finance",
         "quality_status": "PASS", "count": len(rows), "etf_universe_count": len(ETF),
         "semantic_scope": "集合竞价脉冲只按集合竞价信息解释；连续竞价脉冲才按盘中成交语义解释。",
@@ -290,7 +305,7 @@ def main() -> int:
 
     capture_mode = "OPENING_AUCTION_PULSE" if market_phase == "OPENING_CALL_AUCTION" else ("CLOSE" if node == "close" else "INTRADAY_PULSE")
     update_current(root=ROOT, market_date=market_date, node=node, captured_at=captured, latest_snapshot=str(target.relative_to(ROOT)).replace("\\", "/"), snapshot_commit=os.environ.get("GITHUB_SHA", ""), node_status="READY", data_freshness={"status": "FRESH", "provider": "hithink-finance", "count": len(rows), "etf_universe_count": len(ETF), "capture_mode": capture_mode, "market_phase": market_phase, "captured_at": captured, "captured_at_beijing": captured, "target_cadence_seconds": POLICY["target_cadence_seconds"], "fresh_max_age_seconds": POLICY["fresh_max_age_seconds"], "degraded_max_age_seconds": POLICY["degraded_max_age_seconds"], "acquisition_seconds": acquisition_seconds})
-    write_runtime_health({"status": "PASS", "market_date": market_date, "node": node, "market_phase": market_phase, "run_started_at": run_started_at, "captured_at": captured, "captured_at_beijing": captured, "acquisition_seconds": acquisition_seconds, "count": len(rows), "latest_snapshot": str(target.relative_to(ROOT)).replace("\\", "/")})
+    write_runtime_health({"status": "PASS", "quality_status": "PASS", "market_date": market_date, "node": node, "market_phase": market_phase, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "captured_at": captured, "captured_at_beijing": captured, "acquisition_seconds": acquisition_seconds, "count": len(rows), "latest_snapshot": str(target.relative_to(ROOT)).replace("\\", "/")})
     print(json.dumps({"ok": True, "snapshot": str(target), "count": len(rows), "market_date": market_date, "node": node, "market_phase": market_phase, "captured_at_beijing": captured, "acquisition_seconds": acquisition_seconds, "etf_universe_count": len(ETF)}, ensure_ascii=False))
     return 0
 
