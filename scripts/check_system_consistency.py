@@ -16,7 +16,7 @@ FORMAL_FILES = ["ETF规则_MASTER.md", "ETF当前状态_DASHBOARD.md", "ETF交�
 CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/overseas_runtime_health.json", "data/state/account_fact.json", "data/state/us_extended_hours_context.json", "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json", "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json"]
 CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_query_context.py", ".github/workflows/market-snapshot.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
 EXPECTED_INDICES = {"000001.SH", "399006.SZ", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
-REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api"}
+REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api", "eastmoney_push2"}
 
 
 def read_text(path: str) -> str:
@@ -115,6 +115,9 @@ def main() -> int:
     providers = set((provider_cfg.get("providers") or {}).keys())
     check("providers:required_sources", REQUIRED_PROVIDERS.issubset(providers), f"required={sorted(REQUIRED_PROVIDERS)} actual={sorted(providers)}")
     check("providers:formal_indices", set(provider_cfg.get("formal_index_objects") or []) == EXPECTED_INDICES, f"provider formal indices={provider_cfg.get('formal_index_objects')}")
+    expected_hstech_chain = ["hithink-finance:HS2083", "yahoo_chart_api:HSTECH.HK", "eastmoney_push2:124.HSTECH", "ETF_PROXY_513180"]
+    actual_hstech_chain = (provider_cfg.get("objects") or {}).get("HSTECH") or []
+    check("providers:hstech_chain_exact", actual_hstech_chain == expected_hstech_chain, f"actual={actual_hstech_chain} expected={expected_hstech_chain}")
     us_provider = provider_cfg.get("us_extended_hours", {})
     check("providers:us_extended_hours", us_provider.get("base_proxies") == ["QQQ", "SOXX"] and us_provider.get("conditional_industry_stocks") == "dynamic_only", f"us_extended_hours={us_provider}")
 
@@ -148,6 +151,12 @@ def main() -> int:
     overseas_builder = read_text("scripts/build_overseas_context.py")
     check("overseas:beijing_timestamp", "as_of_beijing" in overseas_builder and "generated_at_beijing" in overseas_builder, "overseas context exposes Beijing timestamps")
     check("overseas:market_phase", "market_phase_at_generation" in overseas_builder, "overseas market phase retained")
+    check("overseas:hstech_three_direct_sources", all(token in overseas_builder for token in ["HS2083", "HSTECH.HK", "124.HSTECH"]), "HSTECH Hithink/Yahoo/Eastmoney chain present")
+    check("overseas:hstech_push2delay_degraded_fallback", "push2delay.eastmoney.com" in overseas_builder, "Eastmoney push2delay fallback present")
+    check("overseas:hstech_provider_timestamp", all(token in overseas_builder for token in ["f86", "f124", "provider_timestamp_field"]), "HSTECH provider timestamp fields enforced")
+    check("overseas:hstech_no_invalid_yahoo_symbol", "^HSTECH" not in overseas_builder, "invalid Yahoo production symbol absent")
+    multi_source = read_text("scripts/multi_source_market.py")
+    check("provider_adapter:hstech_valid_yahoo_symbol", '"HSTECH": "HSTECH.HK"' in multi_source and "^HSTECH" not in multi_source, "Yahoo adapter uses HSTECH.HK only")
 
     us_builder = read_text("scripts/build_us_extended_hours_context.py")
     check("us_extended:session_split", all(x in us_builder for x in ["PRE_MARKET", "REGULAR", "POST_MARKET"]), "US cash/pre/post sessions are explicitly split")
@@ -171,6 +180,7 @@ def main() -> int:
     check("workflow:overseas_0800_start", '*/10 0 * * 1-5' in overseas_workflow, "Beijing 08:00-08:50 overseas pulses scheduled")
     check("workflow:overseas_0900_0910", '0,10 1 * * 1-5' in overseas_workflow, "Beijing 09:00/09:10 overseas pulses scheduled")
     check("workflow:overseas_runtime_health", "build_overseas_runtime_health.py" in overseas_workflow and "overseas_runtime_health.json" in overseas_workflow, "overseas runtime health is generated and committed")
+    check("workflow:overseas_hithink_runtime", "HITHINK_FINANCE_API_KEY" in overseas_workflow and "@hithink-tech/hithink-finance-cli" in overseas_workflow, "overseas runner installs Hithink CLI and receives secret")
 
     us_workflow = read_text(".github/workflows/us-extended-hours-pulse.yml")
     check("workflow:us_afternoon_exists", "build_us_extended_hours_context.py" in us_workflow, "standalone US afternoon/evening extended-hours pulse wired")
