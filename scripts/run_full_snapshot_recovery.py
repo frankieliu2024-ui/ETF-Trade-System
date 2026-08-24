@@ -14,7 +14,11 @@ STATE_PATH = ROOT / "data" / "state" / "full_snapshot_recovery.json"
 
 def run(script: str, *args: str) -> None:
     cmd = [sys.executable, str(ROOT / "scripts" / script), *args]
-    subprocess.run(cmd, cwd=ROOT, check=True)
+    env = os.environ.copy()
+    # Full-universe recovery deliberately stays below the configured provider
+    # concurrency ceiling to reduce burst-rate 429 failures.
+    env["HITHINK_MAX_WORKERS"] = "1"
+    subprocess.run(cmd, cwd=ROOT, env=env, check=True)
 
 
 def load_state() -> dict:
