@@ -1,11 +1,17 @@
 {
-  "generated_at": "2026-08-24T10:46:52Z",
-  "generated_at_beijing": "2026-08-24T18:46:52+08:00",
+  "generated_at": "2026-08-24T10:48:46Z",
+  "generated_at_beijing": "2026-08-24T18:48:46+08:00",
   "repository": {
-    "head_sha": "88b7077bb372023513487d84b6079dfeb8bcf393",
-    "github_sha": "88b7077bb372023513487d84b6079dfeb8bcf393",
-    "github_run_id": "32718495518",
+    "head_sha": "ffbdd6c39fcabb9852cbe8c36dc474882783c05d",
+    "github_sha": "ffbdd6c39fcabb9852cbe8c36dc474882783c05d",
+    "github_run_id": "32718649207",
     "github_ref": "refs/heads/main"
+  },
+  "commit_audit": {
+    "checked_commit": "ffbdd6c39fcabb9852cbe8c36dc474882783c05d",
+    "workflow_sha": "ffbdd6c39fcabb9852cbe8c36dc474882783c05d",
+    "persisted_state_commit": "",
+    "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "status": "PASS",
   "hard_error_count": 0,
@@ -89,12 +95,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=88b7077bb372023513487d84b6079dfeb8bcf393"
+      "detail": "HEAD=ffbdd6c39fcabb9852cbe8c36dc474882783c05d"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=88b7077bb372023513487d84b6079dfeb8bcf393 GITHUB_SHA=88b7077bb372023513487d84b6079dfeb8bcf393"
+      "detail": "HEAD=ffbdd6c39fcabb9852cbe8c36dc474882783c05d GITHUB_SHA=ffbdd6c39fcabb9852cbe8c36dc474882783c05d"
     },
     {
       "name": "git:critical_files_tracked",
@@ -317,9 +323,14 @@
       "detail": "standard=2 runtime=2"
     },
     {
-      "name": "pulse_policy:provider_max_workers",
+      "name": "pulse_policy:scheduled_provider_max_workers",
       "status": "PASS",
-      "detail": "standard=None runtime=None"
+      "detail": "standard=1 runtime=1"
+    },
+    {
+      "name": "pulse_policy:query_provider_max_workers",
+      "status": "PASS",
+      "detail": "standard=2 runtime=2"
     },
     {
       "name": "pulse_policy:workflow_timeout",
@@ -520,6 +531,26 @@
       "name": "maintenance_workflow:no_recovery_state_machine",
       "status": "PASS",
       "detail": "consistency workflow validates only; it does not duplicate production recovery"
+    },
+    {
+      "name": "dynamic_freshness:query_recalculated",
+      "status": "PASS",
+      "detail": "declared=STALE expected=STALE age_seconds=12165"
+    },
+    {
+      "name": "dynamic_freshness:decision_recalculated",
+      "status": "PASS",
+      "detail": "declared=STALE expected=STALE age_seconds=12165"
+    },
+    {
+      "name": "dynamic_freshness:query_decision_aligned",
+      "status": "PASS",
+      "detail": "query=STALE decision=STALE"
+    },
+    {
+      "name": "dynamic_freshness:current_snapshot_boundary",
+      "status": "PASS",
+      "detail": "CURRENT snapshot_status=FRESH; context_status=STALE; CURRENT is not required to age-transition automatically"
     },
     {
       "name": "runtime_health:structured",
