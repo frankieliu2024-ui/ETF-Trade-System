@@ -183,7 +183,9 @@ jobs:
         if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_chatgpt_task_probe.py
       - name: Commit runtime/data artifacts
-        if: ${{ always() }}
+        # Do not let a preflight failure re-commit stale runtime state.
+        # Session-gate skips and capture failures still persist their explicit health.
+        if: ${{ always() && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success') }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
