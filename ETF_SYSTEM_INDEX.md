@@ -57,7 +57,8 @@
 - 运行策略：`config/runtime_policy.json`
 - 查询上下文：`data/state/query_context.json`、`data/state/decision_context.json`
 - A股/ETF workflow：`.github/workflows/market-snapshot.yml`
-- 海外盘前 workflow：`.github/workflows/overseas-preopen-pulse.yml`
+- A股开盘前海外 workflow：`.github/workflows/overseas-preopen-pulse.yml`
+- 美股盘前/扩展时段 workflow：`.github/workflows/us-extended-hours-pulse.yml`
 - 一致性 workflow：`.github/workflows/system-consistency.yml`
 - 运行脚本：`scripts/`
 - 行情快照：`data/market/snapshots/`
@@ -72,7 +73,8 @@
 - 北京时间09:00：台湾加权进入常规交易，香港进入盘前阶段；
 - 北京时间09:15：A股进入开盘集合竞价，09:15/09:20/09:25为集合竞价事件脉冲；
 - 北京时间09:30以后：A股连续竞价按10分钟级目标脉冲运行；
-- A股15:00收盘后允许收盘宽限补采。
+- A股15:00收盘后允许收盘宽限补采；
+- 北京时间16:00—22:30：独立美股扩展时段workflow覆盖夏令时/冬令时盘前窗口，并按 `America/New_York` 实际阶段自动标记PRE_MARKET或REGULAR。
 
 集合竞价数据必须标记 `OPENING_CALL_AUCTION`，不得和连续竞价价格/承接语义混用。只有本次workflow真实写入新PASS快照后，才允许刷新依赖A股当前行情的下游context。
 
