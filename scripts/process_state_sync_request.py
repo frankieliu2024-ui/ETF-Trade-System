@@ -7,6 +7,7 @@ import os
 import re
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from statistics import median
 
 from state_manager import atomic_json_write
 
@@ -30,6 +31,32 @@ REVIEW_EXPERIENCE_END = "<!-- AUTO_POST_CLOSE_REVIEW_CASES_END -->"
 
 def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def safe_float(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def parse_time(text: object) -> datetime | None:
+    if not text:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(text).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=SHANGHAI)
+    return dt.astimezone(SHANGHAI)
+
+
+def pct(new, old):
+    new_v, old_v = safe_float(new), safe_float(old)
+    if new_v is None or old_v in (None, 0.0):
+        return None
+    return round((new_v / old_v - 1.0) * 100.0, 4)
 
 
 def replace_block(text: str, start: str, end: str, block: str, insert_after_heading: bool = False) -> str:
@@ -89,54 +116,87 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
     total_asset = float(account.get("total_asset") or 0)
     exposure = (float(account.get("stock_market_value") or 0) / total_asset * 100.0) if total_asset else 0.0
     scenario = request.get("interaction_scenario") or "UNSPECIFIED"
-    lines = [
-        "## 云端实时状态（自动同步）",
-        "",
-        f"> 更新时间：{account.get('updated_at','')}  ",
-        f"> 来源：{account.get('source','')}  ",
-        f"> 场景：{scenario}  ",
-        "> 本区块只同步已确认账户事实与ChatGPT已形成的正式决策；自动程序不得自行推导交易权限或下单。",
-        "",
-        "|项目|最新事实|",
-        "|-|-|",
-        f"|总资产|{money(account.get('total_asset'))}|",
-        f"|股票市值|{money(account.get('stock_market_value'))}|",
-        f"|可用资金|{money(account.get('cash'))}|",
-        f"|账户持仓盈亏|{money(account.get('holding_pnl'))}|",
-        f"|当日盈亏|{money(account.get('daily_pnl'))}（{float(account.get('daily_pnl_pct') or 0):+.2f}%）|",
-        f"|账户总风险暴露率|约{exposure:.2f}%|",
-        f"|ETF持仓浮动盈亏|{money(etf_pnl)}|",
-        f"|ETF策略风险率|约{risk_rate:.2f}%（仅按MASTER固定20万元计划本金计算，不由本脚本推导风险许可）|",
-        "",
-        "### 当前持仓事实",
-        "",
-        "|标的|数量|成本|现价|市值|浮动盈亏|",
-        "|-|-:|-:|-:|-:|-:|",
-    ]
+    lines = ["## 云端实时状态（自动同步）", "", f"> 更新时间：{account.get('updated_at','')}  ", f"> 来源：{account.get('source','')}  ", f"> 场景：{scenario}  ", "> 本区块只同步已确认账户事实与ChatGPT已形成的正式决策；自动程序不得自行推导交易权限或下单。", "", "|项目|最新事实|", "|-|-|", f"|总资产|{money(account.get('total_asset'))}|", f"|股票市值|{money(account.get('stock_market_value'))}|", f"|可用资金|{money(account.get('cash'))}|", f"|账户持仓盈亏|{money(account.get('holding_pnl'))}|", f"|当日盈亏|{money(account.get('daily_pnl'))}（{float(account.get('daily_pnl_pct') or 0):+.2f}%）|", f"|账户总风险暴露率|约{exposure:.2f}%|", f"|ETF持仓浮动盈亏|{money(etf_pnl)}|", f"|ETF策略风险率|约{risk_rate:.2f}%（仅按MASTER固定20万元计划本金计算，不由本脚本推导风险许可）|", "", "### 当前持仓事实", "", "|标的|数量|成本|现价|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|"]
     for p in positions:
-        lines.append(
-            f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|{float(p.get('cost') or 0):.3f}|{float(p.get('last_price') or 0):.3f}|{money(p.get('market_value'))}|{money(p.get('holding_pnl'))}（{float(p.get('holding_pnl_pct') or 0):+.2f}%）|"
-        )
-    etf_names = "、".join(display_name(p) for p in etfs) or "无"
-    stock_names = "、".join(display_name(p) for p in stocks) or "无"
-    lines += ["", f"持仓ETF：{etf_names}。", f"账户个股：{stock_names}。"]
+        lines.append(f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|{float(p.get('cost') or 0):.3f}|{float(p.get('last_price') or 0):.3f}|{money(p.get('market_value'))}|{money(p.get('holding_pnl'))}（{float(p.get('holding_pnl_pct') or 0):+.2f}%）|")
+    lines += ["", f"持仓ETF：{'、'.join(display_name(p) for p in etfs) or '无'}。", f"账户个股：{'、'.join(display_name(p) for p in stocks) or '无'}。"]
     if decision:
         title = "最近一次正式收盘复盘" if scenario == "POST_CLOSE_REVIEW" else "最近一次正式盘中决策"
-        lines += [
-            "",
-            f"### {title}",
-            "",
-            f"- 风险许可：{decision.get('risk_permission','未提供')}",
-            f"- 生命周期：{decision.get('lifecycle','未提供')}",
-            f"- 唯一主候选：{decision.get('main_candidate','无新的主候选。')}",
-            f"- 金额与动作：{decision.get('amount_action','未提供')}",
-            f"- 最大风险或0元主因：{decision.get('decisive_reason','未提供')}",
-            f"- 决策数据时点：{decision.get('data_as_of_beijing','未提供')}",
-        ]
+        lines += ["", f"### {title}", "", f"- 风险许可：{decision.get('risk_permission','未提供')}", f"- 生命周期：{decision.get('lifecycle','未提供')}", f"- 唯一主候选：{decision.get('main_candidate','无新的主候选。')}", f"- 金额与动作：{decision.get('amount_action','未提供')}", f"- 最大风险或0元主因：{decision.get('decisive_reason','未提供')}", f"- 决策数据时点：{decision.get('data_as_of_beijing','未提供')}"]
     else:
         lines += ["", "最近一次正式决策未随本次同步请求提供；脚本不自行推断，保留人工/ChatGPT正式决议。"]
     lines += ["", f"同步请求：`{request.get('request_id','')}`。"]
     return "\n".join(lines)
+
+
+def select_point_in_time_snapshot(market_date: str, decision_time: str) -> tuple[str, dict, str]:
+    cutoff = parse_time(decision_time)
+    if not market_date or cutoff is None:
+        return "", {}, "NO_VALID_DECISION_TIME"
+    candidates = []
+    for path in sorted((ROOT / "data/market/snapshots").glob(f"{market_date}_*.json")):
+        try:
+            snap = load_json(path)
+        except Exception:
+            continue
+        if snap.get("market_date") != market_date or snap.get("quality_status") != "PASS":
+            continue
+        captured = parse_time(snap.get("captured_at_beijing") or snap.get("captured_at"))
+        if captured is not None and captured <= cutoff:
+            candidates.append((captured, path, snap))
+    if not candidates:
+        return "", {}, "NO_PRIOR_SNAPSHOT"
+    _, path, snap = max(candidates, key=lambda x: x[0])
+    return str(path.relative_to(ROOT)).replace("\\", "/"), snap, "POINT_IN_TIME_PRIOR_OR_EQUAL"
+
+
+def build_comparison_snapshot(snapshot: dict) -> dict:
+    universe = load_json(ROOT / "config/market/etf_monitor_universe.json")
+    names = {str(x.get("code")): str(x.get("name")) for x in (universe.get("objects") or []) if x.get("code")}
+    rows = {str(x.get("symbol")): x for x in (snapshot.get("rows") or []) if x.get("quality_status") == "PASS"}
+    changes = [safe_float(rows[c].get("change_pct")) for c in names if c in rows]
+    changes = [x for x in changes if x is not None]
+    med = median(changes) if changes else None
+    sh = safe_float((rows.get("000001") or {}).get("change_pct"))
+    cyb = safe_float((rows.get("399006") or {}).get("change_pct"))
+    items = []
+    for code, name in names.items():
+        row = rows.get(code)
+        if not row:
+            continue
+        change = safe_float(row.get("change_pct"))
+        items.append({"code": code, "name": name, "display_name": f"{name}（{code}）", "as_of_beijing": row.get("as_of_beijing"), "price": row.get("close"), "change_pct": change, "vs_universe_median_pct_points": round(change - med, 4) if change is not None and med is not None else None, "vs_shanghai_pct_points": round(change - sh, 4) if change is not None and sh is not None else None, "vs_chinext_pct_points": round(change - cyb, 4) if change is not None and cyb is not None else None})
+    ranked = sorted([x for x in items if x.get("change_pct") is not None], key=lambda x: x["change_pct"], reverse=True)
+    rank_map = {x["code"]: i + 1 for i, x in enumerate(ranked)}
+    for item in items:
+        item["descriptive_daily_return_rank"] = rank_map.get(item["code"])
+    return {"as_of_beijing": snapshot.get("captured_at_beijing"), "market_phase": snapshot.get("market_phase"), "etf_count": len(items), "items": items, "interpretation_rule": "保留正式决策时点的全ETF横截面证据，用于以后验证候选选择质量；当日涨跌排名只是描述维度，不是资本效率评分，不生成轮动动作。"}
+
+
+def resolve_hypothesis_id(decision: dict, code: str, market_date: str, decision_id: str) -> tuple[str, str]:
+    explicit = str(decision.get("hypothesis_id") or "").strip()
+    if explicit:
+        return explicit, "EXPLICIT"
+    lifecycle = str(decision.get("lifecycle") or "")
+    if code and "Trial" in lifecycle:
+        return f"HYP_{code}_{market_date.replace('-', '')}_{decision_id[-8:]}", "NEW_TRIAL"
+    prior_dir = ROOT / "events/decisions"
+    if code and prior_dir.exists():
+        priors = []
+        for path in prior_dir.glob("*.json"):
+            try:
+                obj = load_json(path)
+            except Exception:
+                continue
+            if str(obj.get("candidate_code") or "") == code and obj.get("hypothesis_id"):
+                priors.append(obj)
+        if priors:
+            priors.sort(key=lambda x: str(x.get("decision_time_beijing") or ""))
+            latest = priors[-1]
+            if not latest.get("hypothesis_closed"):
+                return str(latest["hypothesis_id"]), "CARRY_FORWARD_PRIOR"
+            return "", "PRIOR_HYPOTHESIS_CLOSED"
+    return "", "UNRESOLVED"
 
 
 def record_formal_decision(request: dict) -> tuple[bool, str]:
@@ -155,40 +215,36 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
         name_match = re.search(rf"([^｜+，,；;]+?)（{re.escape(code)}）", main_candidate)
         if name_match:
             name = name_match.group(1).strip()
+    request_id = str(request.get("request_id") or "")
+    fingerprint = hashlib.sha256(json.dumps({"request_id": request_id, "market_date": market_date, "formal_decision": decision}, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+    decision_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(decision.get("decision_id") or request_id or f"{market_date}_{fingerprint[:12]}"))
 
-    snapshot_rel = str(current.get("latest_snapshot") or "")
-    snapshot_path = ROOT / snapshot_rel if snapshot_rel else None
-    snapshot = load_json(snapshot_path) if snapshot_path and snapshot_path.exists() else {}
-    price_at_decision = None
-    price_as_of = ""
-    if code:
+    decision_time = str(decision.get("data_as_of_beijing") or "")
+    if not decision_time:
+        decision_time = datetime.now(SHANGHAI).isoformat(timespec="seconds")
+    cutoff = parse_time(decision_time)
+    snapshot_rel, snapshot, pit_status = select_point_in_time_snapshot(market_date, decision_time)
+    supplied_price = safe_float(decision.get("price_at_decision"))
+    supplied_as_of = str(decision.get("price_as_of_beijing") or "")
+    supplied_time = parse_time(supplied_as_of)
+    supplied_point_in_time = supplied_price is not None and supplied_time is not None and cutoff is not None and supplied_time <= cutoff
+    price_at_decision = supplied_price if supplied_point_in_time else None
+    price_as_of = supplied_as_of if supplied_point_in_time else ""
+    price_source = "FORMAL_DECISION_SUPPLIED_POINT_IN_TIME" if supplied_point_in_time else ""
+    if price_at_decision is None and code and snapshot:
         row = next((x for x in (snapshot.get("rows") or []) if str(x.get("symbol")) == code and x.get("quality_status") == "PASS"), None)
         if row:
             price_at_decision = row.get("close")
             price_as_of = str(row.get("as_of_beijing") or "")
+            price_source = "POINT_IN_TIME_SNAPSHOT"
+    if supplied_price is not None and not supplied_point_in_time and not price_source:
+        pit_status = "SUPPLIED_PRICE_REJECTED_NO_VERIFIABLE_POINT_IN_TIME"
 
-    decision_time = str(decision.get("data_as_of_beijing") or price_as_of or datetime.now(SHANGHAI).isoformat(timespec="seconds"))
-    request_id = str(request.get("request_id") or "")
-    fingerprint = hashlib.sha256(json.dumps({"request_id": request_id, "market_date": market_date, "formal_decision": decision}, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
-    decision_id = str(decision.get("decision_id") or request_id or f"{market_date}_{fingerprint[:12]}")
-    decision_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", decision_id)
-    event = {
-        "event_type": "FORMAL_DECISION",
-        "decision_id": decision_id,
-        "fingerprint": fingerprint,
-        "market_date": market_date,
-        "decision_time_beijing": decision_time,
-        "interaction_scenario": request.get("interaction_scenario"),
-        "candidate_code": code,
-        "candidate_name": name,
-        "price_at_decision": price_at_decision,
-        "price_as_of_beijing": price_as_of,
-        "price_source_snapshot": snapshot_rel,
-        "formal_decision": decision,
-        "read_only_research_event": True,
-        "decision_boundary": "仅保存ChatGPT已经形成的正式决策及当时可见价格，用于后续结果归因；不自行推导交易权限或动作。",
-        "recorded_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
-    }
+    hypothesis_id, hypothesis_link_status = resolve_hypothesis_id(decision, code, market_date, decision_id)
+    lifecycle = str(decision.get("lifecycle") or "")
+    hypothesis_closed = "退出" in lifecycle or str(decision.get("hypothesis_status") or "").upper() == "CLOSED"
+    comparison = build_comparison_snapshot(snapshot) if snapshot else {"items": [], "interpretation_rule": "决策时点无可用历史快照，不使用未来数据补齐。"}
+    event = {"event_type": "FORMAL_DECISION", "decision_id": decision_id, "fingerprint": fingerprint, "market_date": market_date, "decision_time_beijing": decision_time, "interaction_scenario": request.get("interaction_scenario"), "candidate_code": code, "candidate_name": name, "hypothesis_id": hypothesis_id, "hypothesis_link_status": hypothesis_link_status, "hypothesis_closed": hypothesis_closed, "price_at_decision": price_at_decision, "price_as_of_beijing": price_as_of, "price_source_snapshot": snapshot_rel, "price_source": price_source, "point_in_time_status": pit_status, "comparison_snapshot": comparison, "formal_decision": decision, "read_only_research_event": True, "decision_boundary": "只保存ChatGPT已经形成的正式决策和决策时点可见证据。禁止使用决策时点之后的行情回填价格或比较快照；研究留痕用于验证候选选择、假设生命周期、判断与执行质量，不自行推导交易权限。", "recorded_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
     event_path = ROOT / "events/decisions" / f"{decision_id}.json"
     event_path.parent.mkdir(parents=True, exist_ok=True)
     if event_path.exists():
@@ -212,26 +268,36 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     prior = load_json(event_path) if event_path.exists() else {}
     if prior.get("fingerprint") == fingerprint:
         return True, True
-    event = {
-        "event_type": "FORMAL_POST_CLOSE_REVIEW",
-        "market_date": market_date,
-        "account_updated_at": account.get("updated_at"),
-        "fingerprint": fingerprint,
-        "request_id": request.get("request_id"),
-        "review": review,
-        "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
-    }
+    event = {"event_type": "FORMAL_POST_CLOSE_REVIEW", "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "review": review, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
     event_path.parent.mkdir(parents=True, exist_ok=True)
     atomic_json_write(event_path, event)
     archive_entry = str(review.get("archive_entry") or "").strip()
     if archive_entry:
-        archive = upsert_managed_line(ARCHIVE.read_text(encoding="utf-8"), REVIEW_ARCHIVE_START, REVIEW_ARCHIVE_END, market_date, archive_entry)
-        ARCHIVE.write_text(archive, encoding="utf-8")
+        ARCHIVE.write_text(upsert_managed_line(ARCHIVE.read_text(encoding="utf-8"), REVIEW_ARCHIVE_START, REVIEW_ARCHIVE_END, market_date, archive_entry), encoding="utf-8")
     experience_entry = str(review.get("experience_entry") or "").strip()
     if experience_entry:
-        experience = upsert_managed_line(EXPERIENCE.read_text(encoding="utf-8"), REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry)
-        EXPERIENCE.write_text(experience, encoding="utf-8")
+        EXPERIENCE.write_text(upsert_managed_line(EXPERIENCE.read_text(encoding="utf-8"), REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry), encoding="utf-8")
     return True, False
+
+
+def execution_attribution(trade: dict, linked_decision_id: str) -> dict:
+    if not linked_decision_id:
+        return {"status": "NO_LINKED_DECISION"}
+    path = ROOT / "events/decisions" / f"{linked_decision_id}.json"
+    if not path.exists():
+        return {"status": "LINKED_DECISION_NOT_FOUND"}
+    decision = load_json(path)
+    dprice = safe_float(decision.get("price_at_decision"))
+    eprice = safe_float(trade.get("price"))
+    diff_pct = pct(eprice, dprice) if dprice not in (None, 0.0) and eprice is not None else None
+    side = str(trade.get("side") or "").upper()
+    is_buy = side in {"BUY", "B", "买", "买入"} or "买" in side
+    is_sell = side in {"SELL", "S", "卖", "卖出"} or "卖" in side
+    adverse = diff_pct if is_buy else (-diff_pct if is_sell and diff_pct is not None else None)
+    dt0 = parse_time(decision.get("decision_time_beijing"))
+    dt1 = parse_time(trade.get("confirmed_at_beijing"))
+    delay = round((dt1 - dt0).total_seconds(), 1) if dt0 and dt1 else None
+    return {"status": "READY" if dprice is not None and eprice is not None else "PARTIAL", "decision_id": linked_decision_id, "hypothesis_id": decision.get("hypothesis_id"), "decision_price": dprice, "execution_price": eprice, "execution_price_vs_decision_pct": diff_pct, "adverse_execution_cost_pct": adverse, "decision_to_execution_seconds": delay, "method_note": "正的adverse_execution_cost_pct表示相对正式决策价格出现不利执行偏差；买入价更高或卖出价更低均为正。该指标分离判断质量与执行质量，不改变交易权限。"}
 
 
 def main() -> int:
@@ -242,7 +308,6 @@ def main() -> int:
     if ROOT not in req_path.parents or not req_path.exists():
         raise RuntimeError("invalid state sync request path")
     request = load_json(req_path)
-
     supplied_account = request.get("account_fact")
     if supplied_account:
         supplied_account.setdefault("status", "VALID")
@@ -254,52 +319,23 @@ def main() -> int:
     account = load_json(ACCOUNT)
     if account.get("status") != "VALID":
         raise RuntimeError("account_fact is not VALID")
-
     decision_recorded, decision_id = record_formal_decision(request)
-
-    dashboard = DASHBOARD.read_text(encoding="utf-8")
-    dashboard = replace_block(dashboard, START, END, build_dashboard_block(account, request.get("formal_decision"), request), insert_after_heading=True)
+    dashboard = replace_block(DASHBOARD.read_text(encoding="utf-8"), START, END, build_dashboard_block(account, request.get("formal_decision"), request), insert_after_heading=True)
     DASHBOARD.write_text(dashboard, encoding="utf-8")
-
     trade = request.get("trade_event")
     if trade:
         event_id = str(trade.get("event_id") or request.get("request_id") or datetime.now(SHANGHAI).strftime("%Y%m%d_%H%M%S"))
-        event = {
-            "event_id": event_id,
-            "confirmed_at_beijing": trade.get("confirmed_at_beijing") or account.get("updated_at"),
-            "name": trade.get("name"),
-            "code": trade.get("code"),
-            "side": trade.get("side"),
-            "quantity": trade.get("quantity"),
-            "price": trade.get("price"),
-            "amount": trade.get("amount"),
-            "lifecycle": trade.get("lifecycle"),
-            "source": trade.get("source", account.get("source")),
-            "linked_decision_id": trade.get("decision_id") or decision_id or None,
-        }
+        linked_decision_id = str(trade.get("decision_id") or decision_id or "")
+        confirmed_at = trade.get("confirmed_at_beijing") or account.get("updated_at")
+        attribution = execution_attribution({**trade, "confirmed_at_beijing": confirmed_at}, linked_decision_id)
+        event = {"event_id": event_id, "confirmed_at_beijing": confirmed_at, "name": trade.get("name"), "code": trade.get("code"), "side": trade.get("side"), "quantity": trade.get("quantity"), "price": trade.get("price"), "amount": trade.get("amount"), "lifecycle": trade.get("lifecycle"), "source": trade.get("source", account.get("source")), "linked_decision_id": linked_decision_id or None, "hypothesis_id": trade.get("hypothesis_id") or attribution.get("hypothesis_id") or None, "execution_attribution": attribution}
         event_path = ROOT / "events" / "trades" / f"{event_id}.json"
         event_path.parent.mkdir(parents=True, exist_ok=True)
         atomic_json_write(event_path, event)
-        fact_line = f"- {event['confirmed_at_beijing']}：{event.get('name')}（{event.get('code')}）{event.get('side')} {event.get('quantity')}份/股，成交价{event.get('price')}，金额{event.get('amount')}；来源：{event.get('source')}。"
-        archive = append_managed_line(ARCHIVE.read_text(encoding="utf-8"), TRADE_START, TRADE_END, fact_line)
-        ARCHIVE.write_text(archive, encoding="utf-8")
-        case_line = f"- 待复盘CASE｜{event['confirmed_at_beijing']}｜{event.get('name')}（{event.get('code')}）｜{event.get('side')} {event.get('quantity')}份/股｜生命周期：{event.get('lifecycle') or '待确认'}｜仅登记真实成交，复盘结论留待盘后形成。"
-        experience = append_managed_line(EXPERIENCE.read_text(encoding="utf-8"), CASE_START, CASE_END, case_line)
-        EXPERIENCE.write_text(experience, encoding="utf-8")
-
+        ARCHIVE.write_text(append_managed_line(ARCHIVE.read_text(encoding="utf-8"), TRADE_START, TRADE_END, f"- {event['confirmed_at_beijing']}：{event.get('name')}（{event.get('code')}）{event.get('side')} {event.get('quantity')}份/股，成交价{event.get('price')}，金额{event.get('amount')}；来源：{event.get('source')}。"), encoding="utf-8")
+        EXPERIENCE.write_text(append_managed_line(EXPERIENCE.read_text(encoding="utf-8"), CASE_START, CASE_END, f"- 待复盘CASE｜{event['confirmed_at_beijing']}｜{event.get('name')}（{event.get('code')}）｜{event.get('side')} {event.get('quantity')}份/股｜生命周期：{event.get('lifecycle') or '待确认'}｜仅登记真实成交，复盘结论留待盘后形成。"), encoding="utf-8")
     review_recorded, review_idempotent = record_post_close_review(account, request)
-    result = {
-        "ok": True,
-        "request_id": request.get("request_id"),
-        "interaction_scenario": request.get("interaction_scenario"),
-        "account_updated_at": account.get("updated_at"),
-        "dashboard_updated": True,
-        "formal_decision_recorded": decision_recorded,
-        "formal_decision_id": decision_id,
-        "trade_event_recorded": bool(trade),
-        "post_close_review_recorded": review_recorded,
-        "post_close_review_idempotent_noop": review_idempotent,
-    }
+    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": bool(trade), "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent}
     print(json.dumps(result, ensure_ascii=False))
     return 0
 
