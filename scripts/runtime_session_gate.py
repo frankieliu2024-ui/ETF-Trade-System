@@ -66,7 +66,9 @@ def main() -> int:
 
     query_time_refresh = os.environ.get("QUERY_TIME_REFRESH", "").lower() == "true"
     if query_time_refresh and event_name == "push":
-        should_capture, reason = True, "query_time_refresh_global_bypass"
+        # User-time refresh is a separate query path. It must not turn a
+        # non-A-share session into a full A-share snapshot capture.
+        reason = "query_time_refresh_separate_global_path"
     elif event_name == "workflow_dispatch":
         reason = "manual_dispatch_capture_window" if should_capture else f"manual_dispatch_{reason}"
 
