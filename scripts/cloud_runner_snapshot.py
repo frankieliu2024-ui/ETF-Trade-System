@@ -565,6 +565,7 @@ def main() -> int:
         "status": "AUTO_HEALED" if fallback_rows and not failed_rows else ("DEGRADED" if failed_rows else "PASS"),
     }
     snapshot_provider = providers_used[0] if len(providers_used) == 1 else "mixed"
+    runtime_status = "AUTO_HEALED" if coverage["auto_healed"] and not failed_rows else ("DEGRADED" if failed_rows else "PASS")
     acquisition_seconds = round(time.monotonic() - run_started_monotonic, 3)
     captured_dt = now_shanghai()
     captured = captured_dt.isoformat(timespec="seconds")
@@ -599,7 +600,7 @@ def main() -> int:
 
     capture_mode = "OPENING_AUCTION_PULSE" if market_phase == "OPENING_CALL_AUCTION" else ("CLOSE" if node == "close" else "INTRADAY_PULSE")
     update_current(root=ROOT, market_date=market_date, node=node, captured_at=captured, latest_snapshot=str(target.relative_to(ROOT)).replace("\\", "/"), snapshot_commit=os.environ.get("GITHUB_SHA", ""), node_status=("READY" if overall_quality == "PASS" else "DEGRADED"), data_freshness={"status": overall_quality, "provider": "hithink-finance", "count": len(rows), "etf_universe_count": len(ETF), "capture_mode": capture_mode, "market_phase": market_phase, "captured_at": captured, "captured_at_beijing": captured, "target_cadence_seconds": POLICY["target_cadence_seconds"], "fresh_max_age_seconds": POLICY["fresh_max_age_seconds"], "degraded_max_age_seconds": POLICY["degraded_max_age_seconds"], "acquisition_seconds": acquisition_seconds})
-    write_runtime_health({"status": ("PASS" if overall_quality == "PASS" else "DEGRADED"), "quality_status": overall_quality, "market_date": market_date, "node": node, "market_phase": market_phase, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "captured_at": captured, "captured_at_beijing": captured, "acquisition_seconds": acquisition_seconds, "count": len(rows), "latest_snapshot": str(target.relative_to(ROOT)).replace("\\", "/"), "analysis_coverage": coverage})
+    write_runtime_health({"status": runtime_status, "quality_status": overall_quality, "market_date": market_date, "node": node, "market_phase": market_phase, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "captured_at": captured, "captured_at_beijing": captured, "acquisition_seconds": acquisition_seconds, "count": len(rows), "latest_snapshot": str(target.relative_to(ROOT)).replace("\\", "/"), "analysis_coverage": coverage})
     print(json.dumps({"ok": True, "snapshot": str(target), "count": len(rows), "market_date": market_date, "node": node, "market_phase": market_phase, "captured_at_beijing": captured, "acquisition_seconds": acquisition_seconds, "etf_universe_count": len(ETF)}, ensure_ascii=False))
     return 0
 
