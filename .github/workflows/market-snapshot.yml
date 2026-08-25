@@ -91,14 +91,14 @@ jobs:
           health_path.write_text(json.dumps(health, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
       - uses: actions/setup-node@v4
-        if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' || github.event_name == 'push' }}
         with:
           node-version: "20"
       - name: Install hithink-finance CLI
-        if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' || github.event_name == 'push' }}
         run: npm install --global @hithink-tech/hithink-finance-cli
       - name: Load unified provider concurrency policy
-        if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' || github.event_name == 'push' }}
         shell: bash
         run: |
           python - <<'PY'
@@ -182,7 +182,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A -- data/market/snapshots data/state/CURRENT.json data/state/runtime_health.json
+          # Include all generated state before rebasing so no downstream write can leave the index dirty.
+          git add -A -- data/market/snapshots data/state
           if ! git diff --cached --quiet; then
             git commit -m "data: publish core market snapshot"
             git pull --rebase origin main
@@ -233,7 +234,7 @@ jobs:
         if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_state_context.py
       - name: Build on-demand query context
-        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: |
           if [ "$GITHUB_EVENT_NAME" = "push" ]; then
             python scripts/build_query_context.py --force-refresh
