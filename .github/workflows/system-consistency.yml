@@ -102,14 +102,23 @@ jobs:
           if [ "$rc1" -ne 0 ] || [ "$rc2" -ne 0 ]; then
             exit 1
           fi
-      - name: Persist consistency and research state
+      - name: Reconcile ETF ledger and prepare maintenance diagnostics
+        id: maintenance_guard
+        continue-on-error: true
+        shell: bash
+        run: |
+          python scripts/maintenance_guard.py
+      - name: Persist consistency and maintenance state
         if: ${{ always() }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Consistency owns its result file. Do not stage every generated
-          # runtime/research artifact, which races market-snapshot commits.
+          # These are owned validation/maintenance state files. Do not stage all
+          # generated runtime artifacts, which can race market-snapshot commits.
           git add data/state/system_consistency.json
+          for f in data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json; do
+            [ -f "$f" ] && git add "$f"
+          done
           if [ "${{ steps.backfill_request.outputs.has_request }}" = "true" ]; then
             git add data/state/historical_backfill_status.json data/state/historical_position_research.json research/reports events/research/daily_features
             git add -f -- data/market/audit/research_backfill
@@ -120,10 +129,10 @@ jobs:
           if [ "${{ steps.backfill_request.outputs.has_request }}" = "true" ]; then
             msg="research: backfill ETF daily evidence"
           else
-            msg="state: refresh system consistency"
+            msg="state: refresh consistency and maintenance guard"
           fi
           git commit -m "$msg"
-          # Context refresh is derived and must not block the owned consistency commit.
+          # Context refresh is derived and must not block the owned state commit.
           git restore --worktree .
           git pull --rebase origin main
           git push origin HEAD:main
@@ -132,4 +141,7 @@ jobs:
         run: exit 1
       - name: Enforce hard consistency result
         if: ${{ steps.consistency.outcome == 'failure' }}
+        run: exit 1
+      - name: Enforce maintenance reconciliation result
+        if: ${{ steps.maintenance_guard.outcome == 'failure' }}
         run: exit 1
