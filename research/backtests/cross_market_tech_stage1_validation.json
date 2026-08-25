@@ -1,0 +1,601 @@
+{
+  "schema_version": "1.1",
+  "generated_at": "2026-08-25T08:18:19Z",
+  "mode": "CROSS_MARKET_TECH_TRANSMISSION_STAGE1",
+  "objective": "Test whether prior completed US technology/semiconductor sessions contain stable point-in-time information for executable future returns of core A-share technology ETFs beyond local momentum, and only if that passes, beyond validated ETF share-flow evidence.",
+  "targets": [
+    {
+      "code": "561980",
+      "name": "半导体设备ETF"
+    },
+    {
+      "code": "588000",
+      "name": "科创50ETF"
+    },
+    {
+      "code": "159781",
+      "name": "科创创业ETF"
+    },
+    {
+      "code": "515880",
+      "name": "通信ETF"
+    }
+  ],
+  "external_objects": {
+    "SOX": {
+      "name": "费城半导体指数",
+      "symbol": "^SOX",
+      "timezone": "America/New_York"
+    },
+    "NDX": {
+      "name": "纳斯达克100指数",
+      "symbol": "^NDX",
+      "timezone": "America/New_York"
+    }
+  },
+  "entry_rule": "For A-share trading date D, external data may use only the latest fully completed US cash session whose close occurred before the A-share open on D. Return labels start at the A-share open on D.",
+  "point_in_time_rule": "No US session completing after the A-share open may be used. Local momentum uses closes no later than D-1. If Stage B is reached, ETF share facts for trading day T are usable only from T+1 A-share trading day.",
+  "stage_a_reference": "research/backtests/cross_market_tech_stage1_a_validation.json",
+  "stage_a_passing_signals": [
+    "us_tech_equal_3d"
+  ],
+  "stage_b": {
+    "controls": [
+      "mom5_lag1",
+      "mom20_lag1",
+      "reverse_share_change_5d_lag1"
+    ],
+    "fold_results": [
+      {
+        "fold": "fold1",
+        "code": "561980",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": -0.0102,
+            "top_bottom_spread_pct_points": 0.112
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "561980",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": 0.0263,
+            "top_bottom_spread_pct_points": 0.9848
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "561980",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": 0.0158,
+            "top_bottom_spread_pct_points": 1.1958
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "588000",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": -0.0571,
+            "top_bottom_spread_pct_points": -0.0349
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "588000",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": 0.0203,
+            "top_bottom_spread_pct_points": 0.1594
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "588000",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": 0.0275,
+            "top_bottom_spread_pct_points": -0.0755
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "159781",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": -0.0694,
+            "top_bottom_spread_pct_points": 0.1391
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "159781",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": 0.0618,
+            "top_bottom_spread_pct_points": 0.8449
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "159781",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": 0.0912,
+            "top_bottom_spread_pct_points": 1.0076
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "515880",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 0,
+            "partial_rank_ic": null,
+            "top_bottom_spread_pct_points": null
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "515880",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 0,
+            "partial_rank_ic": null,
+            "top_bottom_spread_pct_points": null
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "515880",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 0,
+            "partial_rank_ic": null,
+            "top_bottom_spread_pct_points": null
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "561980",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.0727,
+            "top_bottom_spread_pct_points": 0.6229
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "561980",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.0788,
+            "top_bottom_spread_pct_points": 0.5119
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "561980",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.1115,
+            "top_bottom_spread_pct_points": 0.8675
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "588000",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.1503,
+            "top_bottom_spread_pct_points": 0.5649
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "588000",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.09,
+            "top_bottom_spread_pct_points": 0.3856
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "588000",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.0746,
+            "top_bottom_spread_pct_points": 0.3579
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "159781",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.2788,
+            "top_bottom_spread_pct_points": 0.9295
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "159781",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.1939,
+            "top_bottom_spread_pct_points": 0.7158
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "159781",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.1556,
+            "top_bottom_spread_pct_points": 0.763
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "515880",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 0,
+            "partial_rank_ic": null,
+            "top_bottom_spread_pct_points": null
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "515880",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 0,
+            "partial_rank_ic": null,
+            "top_bottom_spread_pct_points": null
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "515880",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 0,
+            "partial_rank_ic": null,
+            "top_bottom_spread_pct_points": null
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "561980",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": -0.0373,
+            "top_bottom_spread_pct_points": -0.1069
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "561980",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": -0.0989,
+            "top_bottom_spread_pct_points": -1.1388
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "561980",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": -0.1174,
+            "top_bottom_spread_pct_points": -2.5421
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "588000",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": -0.0222,
+            "top_bottom_spread_pct_points": -0.7412
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "588000",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": -0.0205,
+            "top_bottom_spread_pct_points": -1.5367
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "588000",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": -0.0812,
+            "top_bottom_spread_pct_points": -3.1097
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "159781",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": 0.14,
+            "top_bottom_spread_pct_points": 0.8865
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "159781",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": 0.2746,
+            "top_bottom_spread_pct_points": 2.7385
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "159781",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": 0.2088,
+            "top_bottom_spread_pct_points": 1.7906
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "515880",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 0,
+            "partial_rank_ic": null,
+            "top_bottom_spread_pct_points": null
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "515880",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 0,
+            "partial_rank_ic": null,
+            "top_bottom_spread_pct_points": null
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "515880",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "us_tech_equal_3d": {
+            "n": 0,
+            "partial_rank_ic": null,
+            "top_bottom_spread_pct_points": null
+          }
+        }
+      }
+    ],
+    "signal_summary": {
+      "us_tech_equal_3d": {
+        "qualifying_horizon_count": 0,
+        "stage_pass": false,
+        "horizons": {
+          "1": {
+            "cell_count": 9,
+            "positive_cells": 4,
+            "mean_partial_rank_ic": 0.0495,
+            "mean_top_bottom_spread_pct_points": 0.2635,
+            "stable_etfs": [
+              "159781"
+            ],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.1165,
+                "mean_top_bottom_spread_pct_points": 0.6517
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": 0.0084,
+                "mean_top_bottom_spread_pct_points": 0.2093
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": 0.0237,
+                "mean_top_bottom_spread_pct_points": -0.0704
+              }
+            },
+            "qualifies": false
+          },
+          "3": {
+            "cell_count": 9,
+            "positive_cells": 7,
+            "mean_partial_rank_ic": 0.0696,
+            "mean_top_bottom_spread_pct_points": 0.4073,
+            "stable_etfs": [
+              "159781",
+              "561980",
+              "588000"
+            ],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.1768,
+                "mean_top_bottom_spread_pct_points": 1.4331
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0021,
+                "mean_top_bottom_spread_pct_points": 0.1193
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0299,
+                "mean_top_bottom_spread_pct_points": -0.3306
+              }
+            },
+            "qualifies": false
+          },
+          "5": {
+            "cell_count": 9,
+            "positive_cells": 7,
+            "mean_partial_rank_ic": 0.054,
+            "mean_top_bottom_spread_pct_points": 0.0283,
+            "stable_etfs": [
+              "159781",
+              "561980",
+              "588000"
+            ],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.1519,
+                "mean_top_bottom_spread_pct_points": 1.1871
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0033,
+                "mean_top_bottom_spread_pct_points": -0.1596
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.007,
+                "mean_top_bottom_spread_pct_points": -0.9424
+              }
+            },
+            "qualifies": false
+          }
+        }
+      }
+    },
+    "passing_signals": []
+  },
+  "share_coverage": {
+    "share_fact_rows": 1920,
+    "SSE_targets": 2,
+    "SZSE_targets": 2
+  },
+  "research_interpretation": "NO_INCREMENT_BEYOND_VALIDATED_SHARE_FLOW_CONTROLS",
+  "passing_signals": [],
+  "decision_eligible": false,
+  "trade_signal": null,
+  "trial_confirm": null,
+  "portfolio_target": null,
+  "master_override": false,
+  "historical_decision_prohibited": true,
+  "production_context_integration": false,
+  "interpretation_boundary": "Cross-market Stage B is research evidence only. It cannot directly generate risk permission, opportunity status, amount, holding reduction, exit, portfolio targets or a composite capital-efficiency score."
+}
