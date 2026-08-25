@@ -108,8 +108,11 @@ def _a_share(symbol: str, root: Path, now: datetime, policy: dict) -> dict:
     cli = shutil.which("hithink-finance")
     if not cli: raise RuntimeError("hithink-finance CLI unavailable for query-time A-share refresh")
     code = symbol.upper()
-    thscode = code if "." in code else (f"{code}.SH" if code.startswith(("5", "6")) else f"{code}.SZ")
-    if code.startswith(("5", "6")):
+    raw_code = code.split(".")[0]
+    thscode = code if "." in code else (f"{code}.SH" if raw_code.startswith(("5", "6")) else f"{code}.SZ")
+    if raw_code in {"000001", "399006"}:
+        obj = _cli_json(cli, ["index", "snapshot", "--thscodes", thscode], root)
+    elif raw_code.startswith("159") or raw_code.startswith(("5", "588")):
         obj = _cli_json(cli, ["fund", "snapshot", "--thscode", thscode], root)
     else:
         obj = _cli_json(cli, ["market", "snapshot", "--thscodes", thscode], root)
