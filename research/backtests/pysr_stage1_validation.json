@@ -1,0 +1,424 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-08-25T05:55:48Z",
+  "mode": "PYSR_STAGE1_RETURN_ENHANCEMENT_POC",
+  "upstream": {
+    "repository": "astroautomata/PySR",
+    "version": "1.5.10",
+    "commit": "f51299e6dddc7bd2bfd7f473bfddca7c32d83206",
+    "license": "Apache-2.0"
+  },
+  "objective": "Find simple interpretable nonlinear cross-sectional formulas that improve future ETF relative-return ranking beyond momentum and the validated share-flow-plus-momentum ensemble.",
+  "point_in_time_rule": "All input features are constructed only from facts available by the tested close. ETF share facts for trading day T are shifted to become available from T+1 trading day. Training rows are purged unless their forward label is fully realized by train_end. Test outcomes must be realized no later than data_end.",
+  "complexity_boundary": "Formula search is intentionally constrained. No ETF code, price level, instrument identity, future information, lifecycle decision, trade result or post-hoc feature selection is allowed as an input.",
+  "features": [
+    "rank_neg_share_change_1d",
+    "rank_neg_share_change_3d",
+    "rank_neg_share_change_5d",
+    "rank_ret_1d",
+    "rank_ret_5d",
+    "rank_ret_10d",
+    "rank_ret_20d",
+    "rank_vol_20d"
+  ],
+  "coverage": {
+    "SSE": 6,
+    "SZSE": 5,
+    "share_rows": 6796
+  },
+  "fold_horizon_runs": 6,
+  "failure_count": 0,
+  "failures": [],
+  "fold_results": [
+    {
+      "fold": "fold1",
+      "horizon_trading_days": 5,
+      "train_rows": 2765,
+      "test_rows": 1378,
+      "formula": {
+        "equation": "(0.00609676 / (0.90493983 * rank_vol_20d)) + 0.53025645",
+        "complexity": 7,
+        "loss": 0.0826,
+        "score": 0.0011
+      },
+      "pysr": {
+        "eligible_dates": 126,
+        "mean_rank_ic": -0.1813,
+        "median_rank_ic": -0.2591,
+        "positive_ic_rate": 0.3016,
+        "top1_mean_forward_pct": 0.817,
+        "top3_mean_forward_pct": 0.8175,
+        "top1_minus_bottom_spread_pct_points": -2.1049
+      },
+      "baselines": {
+        "ret_5d_pct": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0375,
+          "median_rank_ic": 0.0409,
+          "positive_ic_rate": 0.5238,
+          "top1_mean_forward_pct": 1.7375,
+          "top3_mean_forward_pct": 1.8414,
+          "top1_minus_bottom_spread_pct_points": 0.6433
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0857,
+          "median_rank_ic": 0.1091,
+          "positive_ic_rate": 0.5714,
+          "top1_mean_forward_pct": 3.0389,
+          "top3_mean_forward_pct": 2.2543,
+          "top1_minus_bottom_spread_pct_points": 2.2571
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0663,
+          "median_rank_ic": 0.0756,
+          "positive_ic_rate": 0.5556,
+          "top1_mean_forward_pct": 2.0164,
+          "top3_mean_forward_pct": 2.1178,
+          "top1_minus_bottom_spread_pct_points": 1.3158
+        },
+        "share_momentum_ensemble": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0672,
+          "median_rank_ic": 0.0818,
+          "positive_ic_rate": 0.5556,
+          "top1_mean_forward_pct": 2.0566,
+          "top3_mean_forward_pct": 1.903,
+          "top1_minus_bottom_spread_pct_points": 1.0411
+        }
+      }
+    },
+    {
+      "fold": "fold1",
+      "horizon_trading_days": 10,
+      "train_rows": 2710,
+      "test_rows": 1378,
+      "formula": {
+        "equation": "0.6145252 - ((rank_ret_20d + 0.35026833) * 0.07293515)",
+        "complexity": 7,
+        "loss": 0.0828,
+        "score": 0.0019
+      },
+      "pysr": {
+        "eligible_dates": 126,
+        "mean_rank_ic": -0.1347,
+        "median_rank_ic": -0.1864,
+        "positive_ic_rate": 0.3492,
+        "top1_mean_forward_pct": 1.7141,
+        "top3_mean_forward_pct": 1.9318,
+        "top1_minus_bottom_spread_pct_points": -3.8762
+      },
+      "baselines": {
+        "ret_5d_pct": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.041,
+          "median_rank_ic": 0.0,
+          "positive_ic_rate": 0.4921,
+          "top1_mean_forward_pct": 4.3235,
+          "top3_mean_forward_pct": 3.5527,
+          "top1_minus_bottom_spread_pct_points": 1.9089
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.1347,
+          "median_rank_ic": 0.1864,
+          "positive_ic_rate": 0.6349,
+          "top1_mean_forward_pct": 5.5903,
+          "top3_mean_forward_pct": 4.3017,
+          "top1_minus_bottom_spread_pct_points": 3.8762
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0922,
+          "median_rank_ic": 0.0811,
+          "positive_ic_rate": 0.5952,
+          "top1_mean_forward_pct": 4.6365,
+          "top3_mean_forward_pct": 4.0506,
+          "top1_minus_bottom_spread_pct_points": 3.2614
+        },
+        "share_momentum_ensemble": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0997,
+          "median_rank_ic": 0.0936,
+          "positive_ic_rate": 0.6032,
+          "top1_mean_forward_pct": 3.8066,
+          "top3_mean_forward_pct": 3.9292,
+          "top1_minus_bottom_spread_pct_points": 1.797
+        }
+      }
+    },
+    {
+      "fold": "fold2",
+      "horizon_trading_days": 5,
+      "train_rows": 4143,
+      "test_rows": 1276,
+      "formula": {
+        "equation": "square(rank_vol_20d * -0.19749027) - -0.53206575",
+        "complexity": 6,
+        "loss": 0.0828,
+        "score": 0.0007
+      },
+      "pysr": {
+        "eligible_dates": 116,
+        "mean_rank_ic": 0.0729,
+        "median_rank_ic": 0.1273,
+        "positive_ic_rate": 0.5862,
+        "top1_mean_forward_pct": 0.5031,
+        "top3_mean_forward_pct": 0.7448,
+        "top1_minus_bottom_spread_pct_points": 0.7419
+      },
+      "baselines": {
+        "ret_5d_pct": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0658,
+          "median_rank_ic": 0.0727,
+          "positive_ic_rate": 0.5776,
+          "top1_mean_forward_pct": 0.4881,
+          "top3_mean_forward_pct": 0.6602,
+          "top1_minus_bottom_spread_pct_points": 0.3234
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0236,
+          "median_rank_ic": -0.0136,
+          "positive_ic_rate": 0.4741,
+          "top1_mean_forward_pct": -0.9213,
+          "top3_mean_forward_pct": 0.3636,
+          "top1_minus_bottom_spread_pct_points": -0.9784
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0667,
+          "median_rank_ic": 0.0342,
+          "positive_ic_rate": 0.5517,
+          "top1_mean_forward_pct": 0.4455,
+          "top3_mean_forward_pct": 0.7157,
+          "top1_minus_bottom_spread_pct_points": 0.2778
+        },
+        "share_momentum_ensemble": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.1188,
+          "median_rank_ic": 0.0911,
+          "positive_ic_rate": 0.6207,
+          "top1_mean_forward_pct": 0.8329,
+          "top3_mean_forward_pct": 0.5918,
+          "top1_minus_bottom_spread_pct_points": 0.9565
+        }
+      }
+    },
+    {
+      "fold": "fold2",
+      "horizon_trading_days": 10,
+      "train_rows": 4088,
+      "test_rows": 1276,
+      "formula": {
+        "equation": "(rank_neg_share_change_3d * 0.060844067) + 0.5141208",
+        "complexity": 5,
+        "loss": 0.0828,
+        "score": 0.0009
+      },
+      "pysr": {
+        "eligible_dates": 116,
+        "mean_rank_ic": 0.0813,
+        "median_rank_ic": 0.0591,
+        "positive_ic_rate": 0.5948,
+        "top1_mean_forward_pct": 2.3064,
+        "top3_mean_forward_pct": 1.2341,
+        "top1_minus_bottom_spread_pct_points": 1.6648
+      },
+      "baselines": {
+        "ret_5d_pct": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.035,
+          "median_rank_ic": 0.0409,
+          "positive_ic_rate": 0.5862,
+          "top1_mean_forward_pct": -0.0835,
+          "top3_mean_forward_pct": 0.8095,
+          "top1_minus_bottom_spread_pct_points": -1.122
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.1111,
+          "median_rank_ic": 0.0909,
+          "positive_ic_rate": 0.6034,
+          "top1_mean_forward_pct": -0.5111,
+          "top3_mean_forward_pct": 0.9528,
+          "top1_minus_bottom_spread_pct_points": -0.0222
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.1103,
+          "median_rank_ic": 0.0796,
+          "positive_ic_rate": 0.6034,
+          "top1_mean_forward_pct": 0.4287,
+          "top3_mean_forward_pct": 1.209,
+          "top1_minus_bottom_spread_pct_points": 0.7615
+        },
+        "share_momentum_ensemble": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.1096,
+          "median_rank_ic": 0.1342,
+          "positive_ic_rate": 0.5948,
+          "top1_mean_forward_pct": 1.5573,
+          "top3_mean_forward_pct": 1.0676,
+          "top1_minus_bottom_spread_pct_points": 1.552
+        }
+      }
+    },
+    {
+      "fold": "fold3",
+      "horizon_trading_days": 5,
+      "train_rows": 5419,
+      "test_rows": 968,
+      "formula": {
+        "equation": "(rank_neg_share_change_3d * 0.048349544) - -0.5202829",
+        "complexity": 5,
+        "loss": 0.0827,
+        "score": 0.0006
+      },
+      "pysr": {
+        "eligible_dates": 88,
+        "mean_rank_ic": 0.0849,
+        "median_rank_ic": 0.0773,
+        "positive_ic_rate": 0.5795,
+        "top1_mean_forward_pct": 1.9078,
+        "top3_mean_forward_pct": 2.235,
+        "top1_minus_bottom_spread_pct_points": -0.0003
+      },
+      "baselines": {
+        "ret_5d_pct": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.0993,
+          "median_rank_ic": 0.1182,
+          "positive_ic_rate": 0.625,
+          "top1_mean_forward_pct": 1.834,
+          "top3_mean_forward_pct": 1.8194,
+          "top1_minus_bottom_spread_pct_points": 1.2619
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1825,
+          "median_rank_ic": 0.2045,
+          "positive_ic_rate": 0.6477,
+          "top1_mean_forward_pct": 0.8472,
+          "top3_mean_forward_pct": 1.9428,
+          "top1_minus_bottom_spread_pct_points": 0.8892
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1692,
+          "median_rank_ic": 0.2034,
+          "positive_ic_rate": 0.6477,
+          "top1_mean_forward_pct": 1.3001,
+          "top3_mean_forward_pct": 1.6862,
+          "top1_minus_bottom_spread_pct_points": 1.9618
+        },
+        "share_momentum_ensemble": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.21,
+          "median_rank_ic": 0.2743,
+          "positive_ic_rate": 0.7159,
+          "top1_mean_forward_pct": 2.377,
+          "top3_mean_forward_pct": 2.2219,
+          "top1_minus_bottom_spread_pct_points": 2.4033
+        }
+      }
+    },
+    {
+      "fold": "fold3",
+      "horizon_trading_days": 10,
+      "train_rows": 5364,
+      "test_rows": 968,
+      "formula": {
+        "equation": "((rank_vol_20d * 0.08198644) * square(rank_neg_share_change_5d)) + 0.5294933",
+        "complexity": 8,
+        "loss": 0.0826,
+        "score": 0.0011
+      },
+      "pysr": {
+        "eligible_dates": 88,
+        "mean_rank_ic": 0.1578,
+        "median_rank_ic": 0.1955,
+        "positive_ic_rate": 0.7159,
+        "top1_mean_forward_pct": 6.6654,
+        "top3_mean_forward_pct": 4.302,
+        "top1_minus_bottom_spread_pct_points": 5.3808
+      },
+      "baselines": {
+        "ret_5d_pct": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1951,
+          "median_rank_ic": 0.2545,
+          "positive_ic_rate": 0.625,
+          "top1_mean_forward_pct": 4.9017,
+          "top3_mean_forward_pct": 4.0393,
+          "top1_minus_bottom_spread_pct_points": 4.4434
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.2156,
+          "median_rank_ic": 0.1955,
+          "positive_ic_rate": 0.6591,
+          "top1_mean_forward_pct": 1.6639,
+          "top3_mean_forward_pct": 3.4165,
+          "top1_minus_bottom_spread_pct_points": 0.9299
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.2405,
+          "median_rank_ic": 0.3425,
+          "positive_ic_rate": 0.6591,
+          "top1_mean_forward_pct": 3.1926,
+          "top3_mean_forward_pct": 3.7094,
+          "top1_minus_bottom_spread_pct_points": 4.4314
+        },
+        "share_momentum_ensemble": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.2741,
+          "median_rank_ic": 0.3406,
+          "positive_ic_rate": 0.7045,
+          "top1_mean_forward_pct": 5.6041,
+          "top3_mean_forward_pct": 4.4364,
+          "top1_minus_bottom_spread_pct_points": 5.8464
+        }
+      }
+    }
+  ],
+  "horizon_summary": {
+    "5": {
+      "fold_count": 3,
+      "mean_rank_ic": -0.0078,
+      "positive_ic_folds": 2,
+      "mean_top3_forward_pct": 1.2658,
+      "best_baseline_rank_ic_name": "share_momentum_ensemble",
+      "best_baseline_mean_rank_ic": 0.132,
+      "increment_vs_best_baseline_rank_ic": -0.1398,
+      "best_baseline_top3_name": "share_momentum_ensemble",
+      "best_baseline_mean_top3_forward_pct": 1.5722,
+      "increment_vs_best_baseline_top3_pct_points": -0.3065,
+      "stage1_pass": false
+    },
+    "10": {
+      "fold_count": 3,
+      "mean_rank_ic": 0.0348,
+      "positive_ic_folds": 2,
+      "mean_top3_forward_pct": 2.4893,
+      "best_baseline_rank_ic_name": "share_momentum_ensemble",
+      "best_baseline_mean_rank_ic": 0.1611,
+      "increment_vs_best_baseline_rank_ic": -0.1263,
+      "best_baseline_top3_name": "share_momentum_ensemble",
+      "best_baseline_mean_top3_forward_pct": 3.1444,
+      "increment_vs_best_baseline_top3_pct_points": -0.6551,
+      "stage1_pass": false
+    }
+  },
+  "research_interpretation": "NO_STABLE_INCREMENT_STAGE1",
+  "decision_eligible": false,
+  "trade_signal": null,
+  "trial_confirm": null,
+  "portfolio_target": null,
+  "master_override": false,
+  "historical_decision_prohibited": true,
+  "interpretation_boundary": "PySR formula output is research evidence only. It cannot directly create risk permission, opportunity status, Trial/Confirm, amount, holding reduction, exit, target weights or a capital-efficiency score."
+}
