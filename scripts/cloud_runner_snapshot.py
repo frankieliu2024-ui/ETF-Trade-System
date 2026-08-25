@@ -177,14 +177,30 @@ def run_json(cli: str, args: list[str], raw_path: Path) -> dict:
 def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, provider_ts: object, market_phase: str) -> dict:
     required = ["open_price", "high_price", "low_price", "last_price", "volume", "turnover"]
     missing = [key for key in required if item.get(key) is None]
-    if missing:
+    auction_partial = (
+        market_phase == "OPENING_CALL_AUCTION"
+        and set(missing).issubset({"open_price", "high_price", "low_price"})
+        and item.get("last_price") is not None
+        and item.get("prev_price") is not None
+        and provider_ts not in (None, "")
+    )
+    if missing and not auction_partial:
         raise RuntimeError(f"{code} missing fields: {','.join(missing)}")
-    if item["high_price"] < max(item["open_price"], item["last_price"]) or item["low_price"] > min(item["open_price"], item["last_price"]):
+    if not auction_partial and (
+        item["high_price"] < max(item["open_price"], item["last_price"])
+        or item["low_price"] > min(item["open_price"], item["last_price"])
+    ):
         raise RuntimeError(f"{code} failed OHLC relationship")
+    quality_status = "DEGRADED" if auction_partial else "PASS"
+    semantic_note = (
+        "OPENING_CALL_AUCTION阶段provider尚未形成完整日内OHLC；保留最新价、昨收、成交量、成交额和provider时点，禁止用旧OHLC补齐。"
+        if auction_partial
+        else ("OPENING_CALL_AUCTION阶段仅按集合竞价时点快照解释，不与连续竞价最新成交语义混用。" if market_phase == "OPENING_CALL_AUCTION" else "")
+    )
     return {
         "asset_class": asset_class, "symbol": code, "thscode": thscode,
-        "open": item["open_price"], "high": item["high_price"],
-        "low": item["low_price"], "close": item["last_price"],
+        "open": item.get("open_price"), "high": item.get("high_price"),
+        "low": item.get("low_price"), "close": item.get("last_price"),
         "prev_close": item.get("prev_price"),
         "change_pct": item.get("price_change_ratio_pct"),
         "volume": item["volume"], "amount": item["turnover"],
@@ -192,8 +208,8 @@ def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, pr
         "as_of_beijing": provider_as_of_beijing(provider_ts),
         "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai",
         "market_phase": market_phase,
-        "quality_status": "PASS",
-        "semantic_note": "OPENING_CALL_AUCTION阶段仅按集合竞价时点快照解释，不与连续竞价最新成交语义混用。" if market_phase == "OPENING_CALL_AUCTION" else "",
+        "quality_status": quality_status,
+        "semantic_note": semantic_note,
     }
 
 
@@ -271,6 +287,7 @@ def main() -> int:
         rows.append(row("A_SHARE_INDEX", code, thscode, returned[thscode], received.isoformat(timespec="seconds"), obj.get("data", {}).get("timestamp"), a_share_market_phase(received)))
 
     rows.sort(key=lambda x: (x["asset_class"], x["symbol"]))
+    overall_quality = "PASS" if all(item.get("quality_status") == "PASS" for item in rows) else "DEGRADED"
     acquisition_seconds = round(time.monotonic() - run_started_monotonic, 3)
     captured_dt = now_shanghai()
     captured = captured_dt.isoformat(timespec="seconds")
@@ -278,7 +295,7 @@ def main() -> int:
 
     if args.probe_only:
         write_runtime_health({"status": "PROBE_PASS", "market_date": market_date, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "captured_at": captured, "captured_at_beijing": captured, "market_phase": market_phase, "acquisition_seconds": acquisition_seconds, "count": len(rows)})
-        print(json.dumps({"ok": True, "probe_only": True, "count": len(rows), "market_date": market_date, "quality_status": "PASS", "node_written": False, "market_phase": market_phase, "captured_at_beijing": captured, "acquisition_seconds": acquisition_seconds, "etf_universe_count": len(ETF)}, ensure_ascii=False))
+        print(json.dumps({"ok": True, "probe_only": True, "count": len(rows), "market_date": market_date, "quality_status": overall_quality, "node_written": False, "market_phase": market_phase, "captured_at_beijing": captured, "acquisition_seconds": acquisition_seconds, "etf_universe_count": len(ETF)}, ensure_ascii=False))
         return 0
 
     if not is_newer_than_current(captured_dt):
@@ -292,7 +309,7 @@ def main() -> int:
         "actual_run_time": captured, "workflow_run_id": os.environ.get("GITHUB_RUN_ID", ""),
         "capture_started_at_beijing": capture_started_at,
         "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai", "provider": "hithink-finance",
-        "quality_status": "PASS", "count": len(rows), "etf_universe_count": len(ETF),
+        "quality_status": overall_quality, "count": len(rows), "etf_universe_count": len(ETF),
         "semantic_scope": "集合竞价脉冲只按集合竞价信息解释；连续竞价脉冲才按盘中成交语义解释。",
         "runtime": {"acquisition_seconds": acquisition_seconds, "target_cadence_seconds": POLICY["target_cadence_seconds"], "provider_timeout_seconds": TIMEOUT_SECONDS, "provider_retry_limit": RETRY_LIMIT, "provider_max_workers": MAX_WORKERS, "close_grace_seconds": CLOSE_GRACE_SECONDS},
         "rows": rows,
@@ -304,8 +321,8 @@ def main() -> int:
     temp.replace(target)
 
     capture_mode = "OPENING_AUCTION_PULSE" if market_phase == "OPENING_CALL_AUCTION" else ("CLOSE" if node == "close" else "INTRADAY_PULSE")
-    update_current(root=ROOT, market_date=market_date, node=node, captured_at=captured, latest_snapshot=str(target.relative_to(ROOT)).replace("\\", "/"), snapshot_commit=os.environ.get("GITHUB_SHA", ""), node_status="READY", data_freshness={"status": "FRESH", "provider": "hithink-finance", "count": len(rows), "etf_universe_count": len(ETF), "capture_mode": capture_mode, "market_phase": market_phase, "captured_at": captured, "captured_at_beijing": captured, "target_cadence_seconds": POLICY["target_cadence_seconds"], "fresh_max_age_seconds": POLICY["fresh_max_age_seconds"], "degraded_max_age_seconds": POLICY["degraded_max_age_seconds"], "acquisition_seconds": acquisition_seconds})
-    write_runtime_health({"status": "PASS", "quality_status": "PASS", "market_date": market_date, "node": node, "market_phase": market_phase, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "captured_at": captured, "captured_at_beijing": captured, "acquisition_seconds": acquisition_seconds, "count": len(rows), "latest_snapshot": str(target.relative_to(ROOT)).replace("\\", "/")})
+    update_current(root=ROOT, market_date=market_date, node=node, captured_at=captured, latest_snapshot=str(target.relative_to(ROOT)).replace("\\", "/"), snapshot_commit=os.environ.get("GITHUB_SHA", ""), node_status=("READY" if overall_quality == "PASS" else "DEGRADED"), data_freshness={"status": overall_quality, "provider": "hithink-finance", "count": len(rows), "etf_universe_count": len(ETF), "capture_mode": capture_mode, "market_phase": market_phase, "captured_at": captured, "captured_at_beijing": captured, "target_cadence_seconds": POLICY["target_cadence_seconds"], "fresh_max_age_seconds": POLICY["fresh_max_age_seconds"], "degraded_max_age_seconds": POLICY["degraded_max_age_seconds"], "acquisition_seconds": acquisition_seconds})
+    write_runtime_health({"status": ("PASS" if overall_quality == "PASS" else "DEGRADED"), "quality_status": overall_quality, "market_date": market_date, "node": node, "market_phase": market_phase, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "captured_at": captured, "captured_at_beijing": captured, "acquisition_seconds": acquisition_seconds, "count": len(rows), "latest_snapshot": str(target.relative_to(ROOT)).replace("\\", "/")})
     print(json.dumps({"ok": True, "snapshot": str(target), "count": len(rows), "market_date": market_date, "node": node, "market_phase": market_phase, "captured_at_beijing": captured, "acquisition_seconds": acquisition_seconds, "etf_universe_count": len(ETF)}, ensure_ascii=False))
     return 0
 
