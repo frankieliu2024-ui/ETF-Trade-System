@@ -1,0 +1,50 @@
+{
+  "research_id": "active_return_stage1",
+  "review_status": "CONVERTED_WITH_REGIME_LIMITATION",
+  "source_validation": "research/backtests/active_return_stage1_validation.json",
+  "reviewed_hypotheses": {
+    "leadership_continuation": {
+      "result": "REJECTED_AS_STANDALONE_EVIDENCE",
+      "reason": "Although mean forward excess was positive at several horizons, event-level positive rate and fold stability did not meet the predeclared gate. Current strong ranking alone must not create buy/Confirm/amount decisions."
+    },
+    "active_migration_spread": {
+      "result": "CONVERTED_TO_OPPORTUNITY_COST_EVIDENCE",
+      "passing_horizons": [10, 20],
+      "10d_gross_mean_spread": 0.012093,
+      "10d_mean_net_after_20bps": 0.010093,
+      "20d_gross_mean_spread": 0.016898,
+      "20d_mean_net_after_20bps": 0.014898,
+      "regime_limitation": "fold1 (2024-04-01..2024-12-31) was negative; fold2 and fold3 were positive. Use only as conditional opportunity-cost evidence when the old holding has independently weakened and the new candidate has independently passed the full buy chain. No mechanical rotation."
+    },
+    "right_tail_holding": {
+      "result": "CONVERTED_TO_RIGHT_TAIL_PROTECTION_EVIDENCE",
+      "passing_horizons": [3, 5, 10, 20],
+      "mean_excess": {"3d": 0.005815, "5d": 0.008522, "10d": 0.015964, "20d": 0.022674},
+      "regime_limitation": "2024 fold was weak/negative at several medium horizons; 2025-2026 were materially stronger. The conclusion is not that new highs are automatic buy points; it is that new highs alone are poor reasons to cut a still-valid strong position."
+    }
+  },
+  "master_change": false,
+  "decision_layer_effect": [
+    "When an existing position independently weakens and a separate new opportunity independently qualifies, explicitly compare the opportunity cost of keeping the old capital versus reallocating it.",
+    "Protect the right tail of strong valid holdings; do not sell or reduce solely because price is at a new high.",
+    "Do not buy or add solely because an ETF ranks strong cross-sectionally."
+  ],
+  "prohibited": [
+    "mechanical buy-strong/sell-weak rotation",
+    "rank-based Trial or Confirm",
+    "new-high automatic buying",
+    "hidden capital-efficiency score",
+    "automatic MASTER modification"
+  ],
+  "formal_conversion_rationale": {
+    "data_quality": "PASS: 639 objective daily feature days across the monitored ETF universe; no historical ChatGPT decision reconstruction.",
+    "point_in_time": "PASS: signal uses close-D facts and simulated allocation starts at next trading-day open.",
+    "sample_size": "PASS for converted hypotheses; hundreds of event/day observations.",
+    "stability": "CONDITIONAL: material regime variation is preserved explicitly rather than averaged away.",
+    "execution_convertibility": "PASS: conclusions map to opportunity-cost comparison and right-tail holding review without creating a parallel trading engine.",
+    "risk_boundary": "PASS: no new risk permission, amount, lifecycle, or automated trade action."
+  },
+  "decision_eligible": false,
+  "trade_signal": null,
+  "master_override": false
+}
