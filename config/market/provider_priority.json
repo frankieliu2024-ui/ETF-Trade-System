@@ -1,6 +1,6 @@
 {
   "version": "V1.3",
-  "policy": "质量优先；正式监测对象不得因单一源失败被静默省略；获取成功不等于自动采用；所有源先经过质量审计并保留市场时点信息",
+  "policy": "质量优先；正式对象按对象级primary→verified direct fallback处理；单点风险明确告警；失败对象不得静默省略；获取成功不等于自动采用；所有源先经过质量审计并保留市场时点信息",
   "providers": {
     "hithink_finance": {
       "kind": "A股ETF/指数及已覆盖直接指数",
@@ -290,5 +290,9 @@
       ],
       "direct_only": true
     }
+  },
+  "notes": {
+    "a_share_index_000001": "Eastmoney secid=1.000001映射为个股而非上证指数，暂不作为直接fallback；保持single-source risk warning",
+    "hstech": "HS2083当前有失败证据但保留在直接源审计链，待跨多个生产节点证据后再决定是否降级"
   }
 }
