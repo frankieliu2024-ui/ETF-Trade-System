@@ -105,7 +105,7 @@ def main() -> int:
     rc, dirty = run_git("status", "--porcelain", "--untracked-files=all")
     dirty_lines = [line for line in dirty.splitlines() if line.strip()]
     allowed_dirty_prefixes = ("data/state/", "events/research/")
-    unexpected_dirty = [line for line in dirty_lines if not (line[3:].startswith(allowed_dirty_prefixes) or line[3:].startswith("data/state/dashboard_update_candidate.json"))]
+    unexpected_dirty = [line for line in dirty_lines if not (line[2:].strip().startswith(allowed_dirty_prefixes) or line[2:].strip().startswith("data/state/dashboard_update_candidate.json"))]
     check("git:working_tree_clean_before_check", rc == 0 and not unexpected_dirty, "clean" if not dirty_lines else f"generated_state_dirty={len(dirty_lines)} unexpected={unexpected_dirty[:20]}")
 
     index_text = read_text("ETF_SYSTEM_INDEX.md")
