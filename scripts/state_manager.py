@@ -87,7 +87,7 @@ def update_current(*, root: Path | None = None, market_date: str, node: str, cap
     account = read_account_fact(root)
     previous_node = current.get("latest_valid_node", "")
     previous_date = current.get("market_date", "")
-    is_valid = node_status == "READY"
+    is_valid = node_status in {"READY", "DEGRADED"}
     if is_valid and previous_node and (previous_date, previous_node) != (market_date, node):
         superseded = current.setdefault("superseded_nodes", [])
         entry = {"node": previous_node, "market_date": previous_date, "superseded_at": now_utc()}
