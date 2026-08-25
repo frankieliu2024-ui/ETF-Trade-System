@@ -1,0 +1,243 @@
+{
+  "status": "READY",
+  "mode": "VALIDATED_ACTIVE_RETURN_METHOD_EVIDENCE",
+  "use_in_current_decision": true,
+  "validated_reference": {
+    "research_id": "active_return_stage1",
+    "generated_at_beijing": "2026-08-25T23:49:29+08:00",
+    "path": "research/backtests/active_return_stage1_validation.json",
+    "daily_feature_days": 639,
+    "point_in_time": "signal uses facts through close D; simulated allocation starts at open of next trading day"
+  },
+  "leadership_continuation": {
+    "status": "NO_STABLE_INCREMENT",
+    "interpretation": "单纯处于5日和20日横截面强势前列，没有形成足够稳定的跨阶段增量；排名本身不得作为买入或加仓理由。",
+    "selected_horizons": {
+      "5": {
+        "n": 854,
+        "mean": 0.005476,
+        "median": 0.0,
+        "positive_rate": 0.489461,
+        "positive_folds": 2
+      },
+      "10": {
+        "n": 847,
+        "mean": 0.012038,
+        "median": 0.001254,
+        "positive_rate": 0.508855,
+        "positive_folds": 2
+      },
+      "20": {
+        "n": 837,
+        "mean": 0.019803,
+        "median": 0.0,
+        "positive_rate": 0.494624,
+        "positive_folds": 2
+      }
+    }
+  },
+  "active_migration_spread": {
+    "status": "PASS",
+    "passing_horizons": [
+      10,
+      20
+    ],
+    "selected_horizons": {
+      "10": {
+        "n": 451,
+        "mean": 0.012093,
+        "median": 0.006799,
+        "positive_rate": 0.54102,
+        "positive_folds": 2,
+        "mean_net_spread_after_20bps": 0.010093,
+        "folds": {
+          "fold1": {
+            "n": 126,
+            "mean": -0.025042,
+            "median": -0.01599,
+            "positive_rate": 0.388889
+          },
+          "fold2": {
+            "n": 178,
+            "mean": 0.020043,
+            "median": 0.014362,
+            "positive_rate": 0.595506
+          },
+          "fold3": {
+            "n": 116,
+            "mean": 0.043116,
+            "median": 0.05283,
+            "positive_rate": 0.637931
+          }
+        }
+      },
+      "20": {
+        "n": 445,
+        "mean": 0.016898,
+        "median": 0.009869,
+        "positive_rate": 0.548315,
+        "positive_folds": 2,
+        "mean_net_spread_after_20bps": 0.014898,
+        "folds": {
+          "fold1": {
+            "n": 126,
+            "mean": -0.033384,
+            "median": -0.019146,
+            "positive_rate": 0.404762
+          },
+          "fold2": {
+            "n": 178,
+            "mean": 0.040037,
+            "median": 0.029307,
+            "positive_rate": 0.629213
+          },
+          "fold3": {
+            "n": 110,
+            "mean": 0.048663,
+            "median": 0.042356,
+            "positive_rate": 0.645455
+          }
+        }
+      }
+    },
+    "interpretation": "当旧仓已经按独立证据弱化、且新机会已经独立通过完整买入链时，强候选相对弱候选的机会成本差值得明确比较；历史10日/20日跨度在20bps成本情景后仍为正，但2024样本为负，因此不得机械买强卖弱或按排名轮动。"
+  },
+  "right_tail_holding": {
+    "status": "PASS",
+    "passing_horizons": [
+      3,
+      5,
+      10,
+      20
+    ],
+    "selected_horizons": {
+      "3": {
+        "n": 443,
+        "mean": 0.005815,
+        "median": 0.002473,
+        "positive_rate": 0.528217,
+        "positive_folds": 3,
+        "folds": {
+          "fold1": {
+            "n": 112,
+            "mean": 0.000768,
+            "median": 0.0,
+            "positive_rate": 0.491071
+          },
+          "fold2": {
+            "n": 186,
+            "mean": 0.006566,
+            "median": 0.003454,
+            "positive_rate": 0.548387
+          },
+          "fold3": {
+            "n": 122,
+            "mean": 0.011492,
+            "median": 0.007507,
+            "positive_rate": 0.565574
+          }
+        }
+      },
+      "5": {
+        "n": 442,
+        "mean": 0.008522,
+        "median": 0.002694,
+        "positive_rate": 0.529412,
+        "positive_folds": 2,
+        "folds": {
+          "fold1": {
+            "n": 112,
+            "mean": -0.002488,
+            "median": 0.0,
+            "positive_rate": 0.482143
+          },
+          "fold2": {
+            "n": 187,
+            "mean": 0.013157,
+            "median": 0.003012,
+            "positive_rate": 0.540107
+          },
+          "fold3": {
+            "n": 120,
+            "mean": 0.012578,
+            "median": 0.003806,
+            "positive_rate": 0.566667
+          }
+        }
+      },
+      "10": {
+        "n": 435,
+        "mean": 0.015964,
+        "median": 0.008184,
+        "positive_rate": 0.556322,
+        "positive_folds": 2,
+        "folds": {
+          "fold1": {
+            "n": 112,
+            "mean": -0.005818,
+            "median": -0.005502,
+            "positive_rate": 0.4375
+          },
+          "fold2": {
+            "n": 186,
+            "mean": 0.0259,
+            "median": 0.017132,
+            "positive_rate": 0.629032
+          },
+          "fold3": {
+            "n": 114,
+            "mean": 0.022347,
+            "median": 0.020327,
+            "positive_rate": 0.561404
+          }
+        }
+      },
+      "20": {
+        "n": 432,
+        "mean": 0.022674,
+        "median": 0.002614,
+        "positive_rate": 0.506944,
+        "positive_folds": 2,
+        "folds": {
+          "fold1": {
+            "n": 112,
+            "mean": -0.00621,
+            "median": -0.007984,
+            "positive_rate": 0.419643
+          },
+          "fold2": {
+            "n": 187,
+            "mean": 0.040007,
+            "median": 0.017267,
+            "positive_rate": 0.550802
+          },
+          "fold3": {
+            "n": 110,
+            "mean": 0.027467,
+            "median": 0.016277,
+            "positive_rate": 0.545455
+          }
+        }
+      }
+    },
+    "interpretation": "已经处于强趋势且创20日收盘新高的ETF，历史上仍保留正的后续相对收益；创新高本身不是止盈或减仓理由。若原假设、结构和新增资本效率仍有效，应优先保护右尾；但2024部分中长周期为负，不得把创新高反过来机械定义为买点。"
+  },
+  "regime_note": "两个通过结论都存在阶段差异：2025–2026明显强于2024。正式决策必须结合当前结构、风险收益、资金证据和替代机会，不把历史均值当成固定阈值。",
+  "decision_effect_contract": {
+    "allowed": [
+      "增强或削弱旧仓继续占用资本的机会成本判断",
+      "增强保护强势持仓右尾的理由",
+      "在候选已独立成立后辅助比较下一单位资本用途"
+    ],
+    "prohibited": [
+      "按横截面排名机械买强卖弱",
+      "仅因创新高买入或加仓",
+      "直接生成Trial、Confirm、金额、卖出或风险许可"
+    ]
+  },
+  "decision_eligible": false,
+  "trade_signal": null,
+  "trial_confirm": null,
+  "portfolio_target": null,
+  "master_override": false
+}

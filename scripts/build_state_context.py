@@ -12,6 +12,7 @@ from build_execution_quality import build as build_execution_quality
 from build_skfolio_risk_evidence import build as build_skfolio_risk_evidence
 from build_etf_share_flow_evidence import build as build_etf_share_flow_evidence
 from build_margin_financing_evidence import build as build_margin_financing_evidence
+from build_active_return_evidence import build as build_active_return_evidence
 from build_research_contribution_audit import build as build_research_contribution_audit
 from build_phase4_automation import build as build_phase4_automation
 from state_manager import atomic_json_write, build_dashboard_candidate, build_decision_context
@@ -139,6 +140,9 @@ def main() -> None:
     atomic_json_write(ROOT / "data" / "state" / "margin_financing_evidence.json", margin_financing)
     margin_financing_summary = compact_margin_financing(margin_financing)
 
+    active_return = build_active_return_evidence(ROOT)
+    atomic_json_write(ROOT / "data" / "state" / "active_return_evidence.json", active_return)
+
     contribution_audit = build_research_contribution_audit(ROOT)
     atomic_json_write(ROOT / "data" / "state" / "research_contribution_audit.json", contribution_audit)
     contribution_summary = compact_contribution_audit(contribution_audit)
@@ -148,7 +152,7 @@ def main() -> None:
     atomic_json_write(ROOT / "data" / "state" / "research_context.json", {
         **research,
         "read_only": True,
-        "decision_boundary": "研究层向当前决策提供事实、相对强弱、日内路径、证据变化、共同风险、经验证的ETF份额与融资杠杆证据，并记录研究是否真实改变决策；不得绕过MASTER生成交易动作。",
+        "decision_boundary": "研究层向当前决策提供事实、相对强弱、日内路径、证据变化、共同风险、经验证的ETF份额、融资杠杆与主动收益方法证据，并记录研究是否真实改变决策；不得绕过MASTER生成交易动作。",
         "current_decision_use": "研究证据及其相对上一节点变化参与机会、金额、持仓和卖出判断；正式决策只记录最多3项真正改变判断的research_evidence_used。没有改变判断的研究不记贡献，缺少显式记录不得自动推断贡献。",
         "master_feedback": "研究层可形成MASTER维护输入，但只有通过MASTER第8.1正式研究转化机制的高质量专项研究，或多个真实CASE反复暴露的同类问题，才允许正式修改MASTER。",
         "optimization_principle": "不打造完美交易系统；复杂度只有在改善事前收益效率、风险边界、执行质量或复盘学习时才保留。长期未改变任何正式决策且无独立风险/复盘价值的研究模块才进入删除审查。",
@@ -156,6 +160,7 @@ def main() -> None:
             "skfolio_risk": skfolio_summary,
             "etf_share_flow": share_flow_summary,
             "margin_financing": margin_financing_summary,
+            "active_return": active_return,
         },
         "research_contribution_audit": contribution_summary,
         "paths": {
@@ -167,6 +172,7 @@ def main() -> None:
             "skfolio_risk_evidence": "data/state/skfolio_risk_evidence.json",
             "etf_share_flow_evidence": "data/state/etf_share_flow_evidence.json",
             "margin_financing_evidence": "data/state/margin_financing_evidence.json",
+            "active_return_evidence": "data/state/active_return_evidence.json",
             "research_contribution_audit": "data/state/research_contribution_audit.json",
             "historical_backfill_status": "data/state/historical_backfill_status.json",
             "provider_metrics": "data/state/provider_metrics.json",
@@ -183,10 +189,12 @@ def main() -> None:
     context.setdefault("research_evidence", {})["skfolio_risk_evidence"] = skfolio_summary
     context["research_evidence"]["etf_share_flow_evidence"] = share_flow_summary
     context["research_evidence"]["margin_financing_evidence"] = margin_financing_summary
+    context["research_evidence"]["active_return_evidence"] = active_return
     context["research_evidence"]["research_contribution_audit"] = contribution_summary
     context["skfolio_risk_evidence_file"] = "data/state/skfolio_risk_evidence.json"
     context["etf_share_flow_evidence_file"] = "data/state/etf_share_flow_evidence.json"
     context["margin_financing_evidence_file"] = "data/state/margin_financing_evidence.json"
+    context["active_return_evidence_file"] = "data/state/active_return_evidence.json"
     context["research_contribution_audit_file"] = "data/state/research_contribution_audit.json"
     context["research_master_candidates"] = research_master
     context["execution_quality"] = execution_quality
@@ -213,6 +221,8 @@ def main() -> None:
         "etf_share_flow_use_in_current_decision": share_flow.get("use_in_current_decision", False),
         "margin_financing_status": margin_financing.get("status"),
         "margin_financing_use_in_current_decision": margin_financing.get("use_in_current_decision", False),
+        "active_return_status": active_return.get("status"),
+        "active_return_use_in_current_decision": active_return.get("use_in_current_decision", False),
         "research_attribution_explicit_coverage": (contribution_audit.get("decision_attribution") or {}).get("explicit_coverage_ratio", 0),
         "research_attributed_trade_count": (contribution_audit.get("trade_attribution") or {}).get("attributed_trade_count", 0),
         "execution_quality_sample_count": execution_quality.get("execution_cost_sample_count", 0),
