@@ -50,7 +50,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A -- data/state/skfolio_risk_evidence.json data/state/research_context.json data/state/decision_context.json data/state/relative_strength.json data/state/research_evidence_delta.json data/state/execution_quality.json data/state/research_master_candidates.json data/state/provider_metrics.json events/research/daily_features events/research/evidence_snapshots
+          git add -A -- data/state events/research
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "research: activate minimal skfolio evidence integration"
           git pull --rebase origin main
