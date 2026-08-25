@@ -1,0 +1,1071 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-08-25T01:50:55Z",
+  "mode": "ETF_SHARE_FLOW_CONDITIONAL_INCREMENT_POC",
+  "stage1_prerequisite": {
+    "research_interpretation": "NO_STABLE_INCREMENT_STAGE1",
+    "passing_signals": []
+  },
+  "candidate_signal": "neg_share_change_5d_pct_lag1",
+  "point_in_time_rule": "The candidate share-flow fact for trading day T is available only from T+1 trading day. All momentum controls and future labels use only prices available at the tested node; no later research result is used to construct historical inputs.",
+  "coverage": {
+    "SSE": 6,
+    "SZSE": 5,
+    "share_rows": 6796
+  },
+  "cross_section_correlation": [
+    {
+      "fold": "fold1",
+      "eligible_dates": 126,
+      "mean_share_vs_ret5": 0.0915,
+      "mean_share_vs_ret20": 0.1246,
+      "median_share_vs_ret5": 0.0818,
+      "median_share_vs_ret20": 0.1297
+    },
+    {
+      "fold": "fold2",
+      "eligible_dates": 116,
+      "mean_share_vs_ret5": 0.0695,
+      "mean_share_vs_ret20": -0.0569,
+      "median_share_vs_ret5": 0.0636,
+      "median_share_vs_ret20": -0.0682
+    },
+    {
+      "fold": "fold3",
+      "eligible_dates": 88,
+      "mean_share_vs_ret5": 0.1331,
+      "mean_share_vs_ret20": -0.0122,
+      "median_share_vs_ret5": 0.1318,
+      "median_share_vs_ret20": -0.0045
+    }
+  ],
+  "fold_results": [
+    {
+      "fold": "fold1",
+      "horizon_trading_days": 1,
+      "metrics": {
+        "share_residual_vs_momentum": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.009,
+          "median_rank_ic": 0.0228,
+          "positive_ic_rate": 0.5397,
+          "top1_mean_forward_pct": 0.3547,
+          "top3_mean_forward_pct": 0.3773,
+          "top1_minus_bottom_spread_pct_points": -0.2555
+        },
+        "combo_share_ret5": {
+          "eligible_dates": 126,
+          "mean_rank_ic": -0.0103,
+          "median_rank_ic": -0.0137,
+          "positive_ic_rate": 0.4762,
+          "top1_mean_forward_pct": 0.2439,
+          "top3_mean_forward_pct": 0.2865,
+          "top1_minus_bottom_spread_pct_points": 0.046
+        },
+        "combo_share_ret20": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0266,
+          "median_rank_ic": 0.0594,
+          "positive_ic_rate": 0.5556,
+          "top1_mean_forward_pct": 0.2639,
+          "top3_mean_forward_pct": 0.4029,
+          "top1_minus_bottom_spread_pct_points": 0.1367
+        },
+        "combo_share_momentum_ensemble": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0218,
+          "median_rank_ic": 0.0206,
+          "positive_ic_rate": 0.5079,
+          "top1_mean_forward_pct": 0.3132,
+          "top3_mean_forward_pct": 0.3597,
+          "top1_minus_bottom_spread_pct_points": 0.0038
+        },
+        "ret_5d_pct": {
+          "eligible_dates": 126,
+          "mean_rank_ic": -0.0116,
+          "median_rank_ic": -0.0636,
+          "positive_ic_rate": 0.4444,
+          "top1_mean_forward_pct": 0.3531,
+          "top3_mean_forward_pct": 0.324,
+          "top1_minus_bottom_spread_pct_points": -0.0396
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0486,
+          "median_rank_ic": 0.0318,
+          "positive_ic_rate": 0.5238,
+          "top1_mean_forward_pct": 0.6184,
+          "top3_mean_forward_pct": 0.4682,
+          "top1_minus_bottom_spread_pct_points": 0.4676
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0212,
+          "median_rank_ic": 0.0117,
+          "positive_ic_rate": 0.5,
+          "top1_mean_forward_pct": 0.3488,
+          "top3_mean_forward_pct": 0.3695,
+          "top1_minus_bottom_spread_pct_points": 0.1556
+        }
+      }
+    },
+    {
+      "fold": "fold1",
+      "horizon_trading_days": 3,
+      "metrics": {
+        "share_residual_vs_momentum": {
+          "eligible_dates": 126,
+          "mean_rank_ic": -0.0071,
+          "median_rank_ic": 0.0136,
+          "positive_ic_rate": 0.5079,
+          "top1_mean_forward_pct": 0.9329,
+          "top3_mean_forward_pct": 0.9949,
+          "top1_minus_bottom_spread_pct_points": -0.5351
+        },
+        "combo_share_ret5": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0268,
+          "median_rank_ic": 0.0367,
+          "positive_ic_rate": 0.5159,
+          "top1_mean_forward_pct": 1.0781,
+          "top3_mean_forward_pct": 0.9336,
+          "top1_minus_bottom_spread_pct_points": 0.2552
+        },
+        "combo_share_ret20": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.038,
+          "median_rank_ic": 0.0574,
+          "positive_ic_rate": 0.5397,
+          "top1_mean_forward_pct": 0.9088,
+          "top3_mean_forward_pct": 1.1258,
+          "top1_minus_bottom_spread_pct_points": 0.3618
+        },
+        "combo_share_momentum_ensemble": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0518,
+          "median_rank_ic": 0.0591,
+          "positive_ic_rate": 0.5397,
+          "top1_mean_forward_pct": 1.0226,
+          "top3_mean_forward_pct": 1.0759,
+          "top1_minus_bottom_spread_pct_points": 0.4144
+        },
+        "ret_5d_pct": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.038,
+          "median_rank_ic": 0.0,
+          "positive_ic_rate": 0.4921,
+          "top1_mean_forward_pct": 0.8577,
+          "top3_mean_forward_pct": 1.0608,
+          "top1_minus_bottom_spread_pct_points": 0.1257
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0685,
+          "median_rank_ic": 0.0682,
+          "positive_ic_rate": 0.5238,
+          "top1_mean_forward_pct": 1.8317,
+          "top3_mean_forward_pct": 1.3658,
+          "top1_minus_bottom_spread_pct_points": 1.4198
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0626,
+          "median_rank_ic": 0.0576,
+          "positive_ic_rate": 0.5714,
+          "top1_mean_forward_pct": 1.1599,
+          "top3_mean_forward_pct": 1.1926,
+          "top1_minus_bottom_spread_pct_points": 0.7131
+        }
+      }
+    },
+    {
+      "fold": "fold1",
+      "horizon_trading_days": 5,
+      "metrics": {
+        "share_residual_vs_momentum": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0056,
+          "median_rank_ic": 0.0545,
+          "positive_ic_rate": 0.5635,
+          "top1_mean_forward_pct": 1.3227,
+          "top3_mean_forward_pct": 1.8111,
+          "top1_minus_bottom_spread_pct_points": -0.9584
+        },
+        "combo_share_ret5": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.029,
+          "median_rank_ic": 0.0148,
+          "positive_ic_rate": 0.5079,
+          "top1_mean_forward_pct": 2.1589,
+          "top3_mean_forward_pct": 1.7036,
+          "top1_minus_bottom_spread_pct_points": 0.9355
+        },
+        "combo_share_ret20": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0556,
+          "median_rank_ic": 0.114,
+          "positive_ic_rate": 0.5397,
+          "top1_mean_forward_pct": 1.9367,
+          "top3_mean_forward_pct": 1.9796,
+          "top1_minus_bottom_spread_pct_points": 0.8924
+        },
+        "combo_share_momentum_ensemble": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.068,
+          "median_rank_ic": 0.0593,
+          "positive_ic_rate": 0.5556,
+          "top1_mean_forward_pct": 2.0566,
+          "top3_mean_forward_pct": 1.9131,
+          "top1_minus_bottom_spread_pct_points": 1.0411
+        },
+        "ret_5d_pct": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.038,
+          "median_rank_ic": 0.0409,
+          "positive_ic_rate": 0.5238,
+          "top1_mean_forward_pct": 1.7375,
+          "top3_mean_forward_pct": 1.84,
+          "top1_minus_bottom_spread_pct_points": 0.6433
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0912,
+          "median_rank_ic": 0.1182,
+          "positive_ic_rate": 0.5714,
+          "top1_mean_forward_pct": 3.0777,
+          "top3_mean_forward_pct": 2.2513,
+          "top1_minus_bottom_spread_pct_points": 2.2958
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.068,
+          "median_rank_ic": 0.0756,
+          "positive_ic_rate": 0.5556,
+          "top1_mean_forward_pct": 2.0009,
+          "top3_mean_forward_pct": 2.1316,
+          "top1_minus_bottom_spread_pct_points": 1.3003
+        }
+      }
+    },
+    {
+      "fold": "fold1",
+      "horizon_trading_days": 10,
+      "metrics": {
+        "share_residual_vs_momentum": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0225,
+          "median_rank_ic": 0.0727,
+          "positive_ic_rate": 0.5476,
+          "top1_mean_forward_pct": 2.9041,
+          "top3_mean_forward_pct": 3.6291,
+          "top1_minus_bottom_spread_pct_points": -1.4233
+        },
+        "combo_share_ret5": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0556,
+          "median_rank_ic": 0.0482,
+          "positive_ic_rate": 0.5714,
+          "top1_mean_forward_pct": 3.8419,
+          "top3_mean_forward_pct": 3.4078,
+          "top1_minus_bottom_spread_pct_points": 1.613
+        },
+        "combo_share_ret20": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0995,
+          "median_rank_ic": 0.1142,
+          "positive_ic_rate": 0.6032,
+          "top1_mean_forward_pct": 3.7422,
+          "top3_mean_forward_pct": 4.0793,
+          "top1_minus_bottom_spread_pct_points": 1.5634
+        },
+        "combo_share_momentum_ensemble": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.1011,
+          "median_rank_ic": 0.0917,
+          "positive_ic_rate": 0.6032,
+          "top1_mean_forward_pct": 3.8066,
+          "top3_mean_forward_pct": 3.9267,
+          "top1_minus_bottom_spread_pct_points": 1.797
+        },
+        "ret_5d_pct": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0435,
+          "median_rank_ic": 0.0136,
+          "positive_ic_rate": 0.5,
+          "top1_mean_forward_pct": 4.3235,
+          "top3_mean_forward_pct": 3.5648,
+          "top1_minus_bottom_spread_pct_points": 1.9089
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.1338,
+          "median_rank_ic": 0.1955,
+          "positive_ic_rate": 0.6349,
+          "top1_mean_forward_pct": 5.5225,
+          "top3_mean_forward_pct": 4.2419,
+          "top1_minus_bottom_spread_pct_points": 3.8084
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.093,
+          "median_rank_ic": 0.0712,
+          "positive_ic_rate": 0.5952,
+          "top1_mean_forward_pct": 4.5732,
+          "top3_mean_forward_pct": 4.0561,
+          "top1_minus_bottom_spread_pct_points": 3.1981
+        }
+      }
+    },
+    {
+      "fold": "fold2",
+      "horizon_trading_days": 1,
+      "metrics": {
+        "share_residual_vs_momentum": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0228,
+          "median_rank_ic": -0.0273,
+          "positive_ic_rate": 0.4741,
+          "top1_mean_forward_pct": -0.0414,
+          "top3_mean_forward_pct": 0.065,
+          "top1_minus_bottom_spread_pct_points": 0.1528
+        },
+        "combo_share_ret5": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.019,
+          "median_rank_ic": -0.0023,
+          "positive_ic_rate": 0.4741,
+          "top1_mean_forward_pct": -0.0756,
+          "top3_mean_forward_pct": 0.0171,
+          "top1_minus_bottom_spread_pct_points": 0.1326
+        },
+        "combo_share_ret20": {
+          "eligible_dates": 116,
+          "mean_rank_ic": -0.0006,
+          "median_rank_ic": 0.0091,
+          "positive_ic_rate": 0.5086,
+          "top1_mean_forward_pct": 0.0813,
+          "top3_mean_forward_pct": -0.0154,
+          "top1_minus_bottom_spread_pct_points": 0.0554
+        },
+        "combo_share_momentum_ensemble": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0154,
+          "median_rank_ic": -0.0068,
+          "positive_ic_rate": 0.4914,
+          "top1_mean_forward_pct": 0.0204,
+          "top3_mean_forward_pct": 0.0908,
+          "top1_minus_bottom_spread_pct_points": -0.0269
+        },
+        "ret_5d_pct": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0031,
+          "median_rank_ic": 0.0682,
+          "positive_ic_rate": 0.5517,
+          "top1_mean_forward_pct": 0.2903,
+          "top3_mean_forward_pct": 0.1195,
+          "top1_minus_bottom_spread_pct_points": 0.3342
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 116,
+          "mean_rank_ic": -0.0186,
+          "median_rank_ic": -0.05,
+          "positive_ic_rate": 0.4655,
+          "top1_mean_forward_pct": -0.3352,
+          "top3_mean_forward_pct": 0.0248,
+          "top1_minus_bottom_spread_pct_points": -0.4081
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 116,
+          "mean_rank_ic": -0.0043,
+          "median_rank_ic": -0.0091,
+          "positive_ic_rate": 0.4914,
+          "top1_mean_forward_pct": 0.1282,
+          "top3_mean_forward_pct": 0.0912,
+          "top1_minus_bottom_spread_pct_points": 0.087
+        }
+      }
+    },
+    {
+      "fold": "fold2",
+      "horizon_trading_days": 3,
+      "metrics": {
+        "share_residual_vs_momentum": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0748,
+          "median_rank_ic": 0.0227,
+          "positive_ic_rate": 0.5259,
+          "top1_mean_forward_pct": 0.2039,
+          "top3_mean_forward_pct": 0.2053,
+          "top1_minus_bottom_spread_pct_points": 0.7581
+        },
+        "combo_share_ret5": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.1116,
+          "median_rank_ic": 0.089,
+          "positive_ic_rate": 0.5948,
+          "top1_mean_forward_pct": 0.1046,
+          "top3_mean_forward_pct": 0.3215,
+          "top1_minus_bottom_spread_pct_points": 0.6006
+        },
+        "combo_share_ret20": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0781,
+          "median_rank_ic": 0.0824,
+          "positive_ic_rate": 0.5862,
+          "top1_mean_forward_pct": 0.2375,
+          "top3_mean_forward_pct": 0.2069,
+          "top1_minus_bottom_spread_pct_points": 0.3088
+        },
+        "combo_share_momentum_ensemble": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0988,
+          "median_rank_ic": 0.1391,
+          "positive_ic_rate": 0.6293,
+          "top1_mean_forward_pct": 0.3085,
+          "top3_mean_forward_pct": 0.2901,
+          "top1_minus_bottom_spread_pct_points": 0.3416
+        },
+        "ret_5d_pct": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0587,
+          "median_rank_ic": 0.0409,
+          "positive_ic_rate": 0.5517,
+          "top1_mean_forward_pct": 0.5083,
+          "top3_mean_forward_pct": 0.4352,
+          "top1_minus_bottom_spread_pct_points": 0.7288
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 116,
+          "mean_rank_ic": -0.0034,
+          "median_rank_ic": -0.0818,
+          "positive_ic_rate": 0.4224,
+          "top1_mean_forward_pct": -0.7493,
+          "top3_mean_forward_pct": 0.1336,
+          "top1_minus_bottom_spread_pct_points": -0.9076
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0429,
+          "median_rank_ic": 0.0,
+          "positive_ic_rate": 0.4914,
+          "top1_mean_forward_pct": 0.4975,
+          "top3_mean_forward_pct": 0.4018,
+          "top1_minus_bottom_spread_pct_points": 0.4525
+        }
+      }
+    },
+    {
+      "fold": "fold2",
+      "horizon_trading_days": 5,
+      "metrics": {
+        "share_residual_vs_momentum": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0884,
+          "median_rank_ic": 0.1,
+          "positive_ic_rate": 0.6034,
+          "top1_mean_forward_pct": 0.8203,
+          "top3_mean_forward_pct": 0.5964,
+          "top1_minus_bottom_spread_pct_points": 1.4988
+        },
+        "combo_share_ret5": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.1339,
+          "median_rank_ic": 0.1144,
+          "positive_ic_rate": 0.6034,
+          "top1_mean_forward_pct": 0.7812,
+          "top3_mean_forward_pct": 0.7066,
+          "top1_minus_bottom_spread_pct_points": 1.1668
+        },
+        "combo_share_ret20": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.1097,
+          "median_rank_ic": 0.1271,
+          "positive_ic_rate": 0.5776,
+          "top1_mean_forward_pct": 0.8514,
+          "top3_mean_forward_pct": 0.5759,
+          "top1_minus_bottom_spread_pct_points": 0.7599
+        },
+        "combo_share_momentum_ensemble": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.1188,
+          "median_rank_ic": 0.0911,
+          "positive_ic_rate": 0.6207,
+          "top1_mean_forward_pct": 0.8329,
+          "top3_mean_forward_pct": 0.5918,
+          "top1_minus_bottom_spread_pct_points": 0.9565
+        },
+        "ret_5d_pct": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0658,
+          "median_rank_ic": 0.0727,
+          "positive_ic_rate": 0.5776,
+          "top1_mean_forward_pct": 0.4881,
+          "top3_mean_forward_pct": 0.6602,
+          "top1_minus_bottom_spread_pct_points": 0.3234
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0236,
+          "median_rank_ic": -0.0136,
+          "positive_ic_rate": 0.4741,
+          "top1_mean_forward_pct": -0.9213,
+          "top3_mean_forward_pct": 0.3636,
+          "top1_minus_bottom_spread_pct_points": -0.9784
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0667,
+          "median_rank_ic": 0.0342,
+          "positive_ic_rate": 0.5517,
+          "top1_mean_forward_pct": 0.4455,
+          "top3_mean_forward_pct": 0.7157,
+          "top1_minus_bottom_spread_pct_points": 0.2778
+        }
+      }
+    },
+    {
+      "fold": "fold2",
+      "horizon_trading_days": 10,
+      "metrics": {
+        "share_residual_vs_momentum": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0686,
+          "median_rank_ic": 0.0409,
+          "positive_ic_rate": 0.5431,
+          "top1_mean_forward_pct": 2.1395,
+          "top3_mean_forward_pct": 1.3308,
+          "top1_minus_bottom_spread_pct_points": 2.0904
+        },
+        "combo_share_ret5": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0826,
+          "median_rank_ic": 0.122,
+          "positive_ic_rate": 0.6034,
+          "top1_mean_forward_pct": 1.9105,
+          "top3_mean_forward_pct": 1.0824,
+          "top1_minus_bottom_spread_pct_points": 1.4178
+        },
+        "combo_share_ret20": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.1456,
+          "median_rank_ic": 0.136,
+          "positive_ic_rate": 0.681,
+          "top1_mean_forward_pct": 2.5882,
+          "top3_mean_forward_pct": 1.4005,
+          "top1_minus_bottom_spread_pct_points": 2.6728
+        },
+        "combo_share_momentum_ensemble": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.1096,
+          "median_rank_ic": 0.1342,
+          "positive_ic_rate": 0.5948,
+          "top1_mean_forward_pct": 1.5573,
+          "top3_mean_forward_pct": 1.0676,
+          "top1_minus_bottom_spread_pct_points": 1.552
+        },
+        "ret_5d_pct": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.035,
+          "median_rank_ic": 0.0409,
+          "positive_ic_rate": 0.5862,
+          "top1_mean_forward_pct": -0.0835,
+          "top3_mean_forward_pct": 0.8095,
+          "top1_minus_bottom_spread_pct_points": -1.122
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.1111,
+          "median_rank_ic": 0.0909,
+          "positive_ic_rate": 0.6034,
+          "top1_mean_forward_pct": -0.5111,
+          "top3_mean_forward_pct": 0.9528,
+          "top1_minus_bottom_spread_pct_points": -0.0222
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.1103,
+          "median_rank_ic": 0.0796,
+          "positive_ic_rate": 0.6034,
+          "top1_mean_forward_pct": 0.4287,
+          "top3_mean_forward_pct": 1.209,
+          "top1_minus_bottom_spread_pct_points": 0.7615
+        }
+      }
+    },
+    {
+      "fold": "fold3",
+      "horizon_trading_days": 1,
+      "metrics": {
+        "share_residual_vs_momentum": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.0275,
+          "median_rank_ic": 0.0136,
+          "positive_ic_rate": 0.5114,
+          "top1_mean_forward_pct": 0.2171,
+          "top3_mean_forward_pct": 0.3343,
+          "top1_minus_bottom_spread_pct_points": 0.2227
+        },
+        "combo_share_ret5": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.0833,
+          "median_rank_ic": 0.1313,
+          "positive_ic_rate": 0.5682,
+          "top1_mean_forward_pct": 0.7366,
+          "top3_mean_forward_pct": 0.4987,
+          "top1_minus_bottom_spread_pct_points": 0.7545
+        },
+        "combo_share_ret20": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1119,
+          "median_rank_ic": 0.1079,
+          "positive_ic_rate": 0.6136,
+          "top1_mean_forward_pct": 0.4942,
+          "top3_mean_forward_pct": 0.4798,
+          "top1_minus_bottom_spread_pct_points": 0.5972
+        },
+        "combo_share_momentum_ensemble": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1076,
+          "median_rank_ic": 0.1162,
+          "positive_ic_rate": 0.5795,
+          "top1_mean_forward_pct": 0.569,
+          "top3_mean_forward_pct": 0.5288,
+          "top1_minus_bottom_spread_pct_points": 0.5469
+        },
+        "ret_5d_pct": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.0863,
+          "median_rank_ic": 0.1227,
+          "positive_ic_rate": 0.5795,
+          "top1_mean_forward_pct": 0.5892,
+          "top3_mean_forward_pct": 0.4831,
+          "top1_minus_bottom_spread_pct_points": 0.405
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1041,
+          "median_rank_ic": 0.15,
+          "positive_ic_rate": 0.5909,
+          "top1_mean_forward_pct": 0.3723,
+          "top3_mean_forward_pct": 0.4015,
+          "top1_minus_bottom_spread_pct_points": 0.4886
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1131,
+          "median_rank_ic": 0.1908,
+          "positive_ic_rate": 0.5568,
+          "top1_mean_forward_pct": 0.3496,
+          "top3_mean_forward_pct": 0.3917,
+          "top1_minus_bottom_spread_pct_points": 0.4389
+        }
+      }
+    },
+    {
+      "fold": "fold3",
+      "horizon_trading_days": 3,
+      "metrics": {
+        "share_residual_vs_momentum": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.0775,
+          "median_rank_ic": 0.0273,
+          "positive_ic_rate": 0.5795,
+          "top1_mean_forward_pct": 1.1505,
+          "top3_mean_forward_pct": 0.8531,
+          "top1_minus_bottom_spread_pct_points": 1.1133
+        },
+        "combo_share_ret5": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1373,
+          "median_rank_ic": 0.2263,
+          "positive_ic_rate": 0.6364,
+          "top1_mean_forward_pct": 1.9822,
+          "top3_mean_forward_pct": 1.5432,
+          "top1_minus_bottom_spread_pct_points": 1.7019
+        },
+        "combo_share_ret20": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1922,
+          "median_rank_ic": 0.2263,
+          "positive_ic_rate": 0.7045,
+          "top1_mean_forward_pct": 1.8952,
+          "top3_mean_forward_pct": 1.5327,
+          "top1_minus_bottom_spread_pct_points": 2.4637
+        },
+        "combo_share_momentum_ensemble": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1946,
+          "median_rank_ic": 0.2417,
+          "positive_ic_rate": 0.7159,
+          "top1_mean_forward_pct": 1.5422,
+          "top3_mean_forward_pct": 1.5188,
+          "top1_minus_bottom_spread_pct_points": 1.4045
+        },
+        "ret_5d_pct": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1106,
+          "median_rank_ic": 0.1,
+          "positive_ic_rate": 0.5682,
+          "top1_mean_forward_pct": 1.3175,
+          "top3_mean_forward_pct": 1.2063,
+          "top1_minus_bottom_spread_pct_points": 0.9612
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1815,
+          "median_rank_ic": 0.2136,
+          "positive_ic_rate": 0.7273,
+          "top1_mean_forward_pct": 0.653,
+          "top3_mean_forward_pct": 1.1626,
+          "top1_minus_bottom_spread_pct_points": 0.459
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1703,
+          "median_rank_ic": 0.2435,
+          "positive_ic_rate": 0.6591,
+          "top1_mean_forward_pct": 0.8184,
+          "top3_mean_forward_pct": 1.0549,
+          "top1_minus_bottom_spread_pct_points": 1.1442
+        }
+      }
+    },
+    {
+      "fold": "fold3",
+      "horizon_trading_days": 5,
+      "metrics": {
+        "share_residual_vs_momentum": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.0906,
+          "median_rank_ic": 0.1045,
+          "positive_ic_rate": 0.6818,
+          "top1_mean_forward_pct": 1.8857,
+          "top3_mean_forward_pct": 1.4461,
+          "top1_minus_bottom_spread_pct_points": 1.6412
+        },
+        "combo_share_ret5": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1625,
+          "median_rank_ic": 0.2034,
+          "positive_ic_rate": 0.7045,
+          "top1_mean_forward_pct": 2.8858,
+          "top3_mean_forward_pct": 2.2927,
+          "top1_minus_bottom_spread_pct_points": 2.3557
+        },
+        "combo_share_ret20": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.2154,
+          "median_rank_ic": 0.2331,
+          "positive_ic_rate": 0.6705,
+          "top1_mean_forward_pct": 2.8331,
+          "top3_mean_forward_pct": 2.3648,
+          "top1_minus_bottom_spread_pct_points": 3.6182
+        },
+        "combo_share_momentum_ensemble": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.21,
+          "median_rank_ic": 0.2743,
+          "positive_ic_rate": 0.7159,
+          "top1_mean_forward_pct": 2.377,
+          "top3_mean_forward_pct": 2.2219,
+          "top1_minus_bottom_spread_pct_points": 2.4033
+        },
+        "ret_5d_pct": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.0993,
+          "median_rank_ic": 0.1182,
+          "positive_ic_rate": 0.625,
+          "top1_mean_forward_pct": 1.834,
+          "top3_mean_forward_pct": 1.8194,
+          "top1_minus_bottom_spread_pct_points": 1.2619
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1825,
+          "median_rank_ic": 0.2045,
+          "positive_ic_rate": 0.6477,
+          "top1_mean_forward_pct": 0.8472,
+          "top3_mean_forward_pct": 1.9428,
+          "top1_minus_bottom_spread_pct_points": 0.8892
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1692,
+          "median_rank_ic": 0.2034,
+          "positive_ic_rate": 0.6477,
+          "top1_mean_forward_pct": 1.3001,
+          "top3_mean_forward_pct": 1.6862,
+          "top1_minus_bottom_spread_pct_points": 1.9618
+        }
+      }
+    },
+    {
+      "fold": "fold3",
+      "horizon_trading_days": 10,
+      "metrics": {
+        "share_residual_vs_momentum": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.0899,
+          "median_rank_ic": 0.1045,
+          "positive_ic_rate": 0.5909,
+          "top1_mean_forward_pct": 3.8101,
+          "top3_mean_forward_pct": 2.7836,
+          "top1_minus_bottom_spread_pct_points": 2.8862
+        },
+        "combo_share_ret5": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.2386,
+          "median_rank_ic": 0.3101,
+          "positive_ic_rate": 0.6818,
+          "top1_mean_forward_pct": 5.8543,
+          "top3_mean_forward_pct": 4.4093,
+          "top1_minus_bottom_spread_pct_points": 5.0871
+        },
+        "combo_share_ret20": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.2442,
+          "median_rank_ic": 0.2834,
+          "positive_ic_rate": 0.7045,
+          "top1_mean_forward_pct": 5.6483,
+          "top3_mean_forward_pct": 3.8335,
+          "top1_minus_bottom_spread_pct_points": 7.0236
+        },
+        "combo_share_momentum_ensemble": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.2741,
+          "median_rank_ic": 0.3406,
+          "positive_ic_rate": 0.7045,
+          "top1_mean_forward_pct": 5.6041,
+          "top3_mean_forward_pct": 4.4364,
+          "top1_minus_bottom_spread_pct_points": 5.8464
+        },
+        "ret_5d_pct": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1951,
+          "median_rank_ic": 0.2545,
+          "positive_ic_rate": 0.625,
+          "top1_mean_forward_pct": 4.9017,
+          "top3_mean_forward_pct": 4.0393,
+          "top1_minus_bottom_spread_pct_points": 4.4434
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.2156,
+          "median_rank_ic": 0.1955,
+          "positive_ic_rate": 0.6591,
+          "top1_mean_forward_pct": 1.6639,
+          "top3_mean_forward_pct": 3.4165,
+          "top1_minus_bottom_spread_pct_points": 0.9299
+        },
+        "momentum_ensemble": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.2405,
+          "median_rank_ic": 0.3425,
+          "positive_ic_rate": 0.6591,
+          "top1_mean_forward_pct": 3.1926,
+          "top3_mean_forward_pct": 3.7094,
+          "top1_minus_bottom_spread_pct_points": 4.4314
+        }
+      }
+    }
+  ],
+  "horizon_summary": {
+    "1": {
+      "best_baseline": "ret_20d_pct",
+      "best_baseline_mean_rank_ic": 0.0447,
+      "best_baseline_mean_top3_forward_pct": 0.2982,
+      "derived": {
+        "share_residual_vs_momentum": {
+          "fold_count": 3,
+          "mean_rank_ic": 0.0198,
+          "positive_ic_folds": 3,
+          "increment_vs_best_baseline_ic": -0.0249,
+          "mean_top3_forward_pct": 0.2589,
+          "increment_vs_best_baseline_top3_pct_points": -0.0393,
+          "beats_best_baseline_ic": false
+        },
+        "combo_share_ret5": {
+          "fold_count": 3,
+          "mean_rank_ic": 0.0307,
+          "positive_ic_folds": 2,
+          "increment_vs_best_baseline_ic": -0.014,
+          "mean_top3_forward_pct": 0.2674,
+          "increment_vs_best_baseline_top3_pct_points": -0.0307,
+          "beats_best_baseline_ic": false
+        },
+        "combo_share_ret20": {
+          "fold_count": 3,
+          "mean_rank_ic": 0.046,
+          "positive_ic_folds": 2,
+          "increment_vs_best_baseline_ic": 0.0013,
+          "mean_top3_forward_pct": 0.2891,
+          "increment_vs_best_baseline_top3_pct_points": -0.0091,
+          "beats_best_baseline_ic": true
+        },
+        "combo_share_momentum_ensemble": {
+          "fold_count": 3,
+          "mean_rank_ic": 0.0483,
+          "positive_ic_folds": 3,
+          "increment_vs_best_baseline_ic": 0.0036,
+          "mean_top3_forward_pct": 0.3264,
+          "increment_vs_best_baseline_top3_pct_points": 0.0283,
+          "beats_best_baseline_ic": true
+        }
+      }
+    },
+    "3": {
+      "best_baseline": "momentum_ensemble",
+      "best_baseline_mean_rank_ic": 0.0919,
+      "best_baseline_mean_top3_forward_pct": 0.8831,
+      "derived": {
+        "share_residual_vs_momentum": {
+          "fold_count": 3,
+          "mean_rank_ic": 0.0484,
+          "positive_ic_folds": 2,
+          "increment_vs_best_baseline_ic": -0.0435,
+          "mean_top3_forward_pct": 0.6844,
+          "increment_vs_best_baseline_top3_pct_points": -0.1987,
+          "beats_best_baseline_ic": false
+        },
+        "combo_share_ret5": {
+          "fold_count": 3,
+          "mean_rank_ic": 0.0919,
+          "positive_ic_folds": 3,
+          "increment_vs_best_baseline_ic": -0.0,
+          "mean_top3_forward_pct": 0.9328,
+          "increment_vs_best_baseline_top3_pct_points": 0.0497,
+          "beats_best_baseline_ic": false
+        },
+        "combo_share_ret20": {
+          "fold_count": 3,
+          "mean_rank_ic": 0.1028,
+          "positive_ic_folds": 3,
+          "increment_vs_best_baseline_ic": 0.0108,
+          "mean_top3_forward_pct": 0.9551,
+          "increment_vs_best_baseline_top3_pct_points": 0.072,
+          "beats_best_baseline_ic": true
+        },
+        "combo_share_momentum_ensemble": {
+          "fold_count": 3,
+          "mean_rank_ic": 0.1151,
+          "positive_ic_folds": 3,
+          "increment_vs_best_baseline_ic": 0.0231,
+          "mean_top3_forward_pct": 0.9616,
+          "increment_vs_best_baseline_top3_pct_points": 0.0785,
+          "beats_best_baseline_ic": true
+        }
+      }
+    },
+    "5": {
+      "best_baseline": "momentum_ensemble",
+      "best_baseline_mean_rank_ic": 0.1013,
+      "best_baseline_mean_top3_forward_pct": 1.5112,
+      "derived": {
+        "share_residual_vs_momentum": {
+          "fold_count": 3,
+          "mean_rank_ic": 0.0615,
+          "positive_ic_folds": 3,
+          "increment_vs_best_baseline_ic": -0.0398,
+          "mean_top3_forward_pct": 1.2845,
+          "increment_vs_best_baseline_top3_pct_points": -0.2266,
+          "beats_best_baseline_ic": false
+        },
+        "combo_share_ret5": {
+          "fold_count": 3,
+          "mean_rank_ic": 0.1085,
+          "positive_ic_folds": 3,
+          "increment_vs_best_baseline_ic": 0.0072,
+          "mean_top3_forward_pct": 1.5676,
+          "increment_vs_best_baseline_top3_pct_points": 0.0565,
+          "beats_best_baseline_ic": true
+        },
+        "combo_share_ret20": {
+          "fold_count": 3,
+          "mean_rank_ic": 0.1269,
+          "positive_ic_folds": 3,
+          "increment_vs_best_baseline_ic": 0.0256,
+          "mean_top3_forward_pct": 1.6401,
+          "increment_vs_best_baseline_top3_pct_points": 0.1289,
+          "beats_best_baseline_ic": true
+        },
+        "combo_share_momentum_ensemble": {
+          "fold_count": 3,
+          "mean_rank_ic": 0.1323,
+          "positive_ic_folds": 3,
+          "increment_vs_best_baseline_ic": 0.031,
+          "mean_top3_forward_pct": 1.5756,
+          "increment_vs_best_baseline_top3_pct_points": 0.0644,
+          "beats_best_baseline_ic": true
+        }
+      }
+    },
+    "10": {
+      "best_baseline": "ret_20d_pct",
+      "best_baseline_mean_rank_ic": 0.1535,
+      "best_baseline_mean_top3_forward_pct": 2.8704,
+      "derived": {
+        "share_residual_vs_momentum": {
+          "fold_count": 3,
+          "mean_rank_ic": 0.0603,
+          "positive_ic_folds": 3,
+          "increment_vs_best_baseline_ic": -0.0932,
+          "mean_top3_forward_pct": 2.5812,
+          "increment_vs_best_baseline_top3_pct_points": -0.2892,
+          "beats_best_baseline_ic": false
+        },
+        "combo_share_ret5": {
+          "fold_count": 3,
+          "mean_rank_ic": 0.1256,
+          "positive_ic_folds": 3,
+          "increment_vs_best_baseline_ic": -0.0279,
+          "mean_top3_forward_pct": 2.9665,
+          "increment_vs_best_baseline_top3_pct_points": 0.0961,
+          "beats_best_baseline_ic": false
+        },
+        "combo_share_ret20": {
+          "fold_count": 3,
+          "mean_rank_ic": 0.1631,
+          "positive_ic_folds": 3,
+          "increment_vs_best_baseline_ic": 0.0096,
+          "mean_top3_forward_pct": 3.1044,
+          "increment_vs_best_baseline_top3_pct_points": 0.234,
+          "beats_best_baseline_ic": true
+        },
+        "combo_share_momentum_ensemble": {
+          "fold_count": 3,
+          "mean_rank_ic": 0.1616,
+          "positive_ic_folds": 3,
+          "increment_vs_best_baseline_ic": 0.0081,
+          "mean_top3_forward_pct": 3.1436,
+          "increment_vs_best_baseline_top3_pct_points": 0.2732,
+          "beats_best_baseline_ic": true
+        }
+      }
+    }
+  },
+  "validation_summary": {
+    "residual_positive_horizons": 3,
+    "combo_increment_horizons": {
+      "combo_share_ret20": 4,
+      "combo_share_momentum_ensemble": 4,
+      "combo_share_ret5": 1
+    },
+    "combo_positive_top3_horizons": {
+      "combo_share_momentum_ensemble": 4,
+      "combo_share_ret20": 3,
+      "combo_share_ret5": 1
+    },
+    "qualifying_combos": [
+      "combo_share_ret20",
+      "combo_share_momentum_ensemble"
+    ]
+  },
+  "research_interpretation": "PROMISING_CONDITIONAL_INCREMENT",
+  "decision_eligible": false,
+  "trade_signal": null,
+  "trial_confirm": null,
+  "portfolio_target": null,
+  "master_override": false,
+  "historical_decision_prohibited": true,
+  "interpretation_boundary": "Conditional share-flow results remain research evidence only and cannot directly generate risk permission, opportunity status, amount, holding reduction, exit, target weights or a composite capital-efficiency score."
+}
