@@ -35,6 +35,12 @@ jobs:
       US_EXTENDED_SYMBOLS: ${{ inputs.symbols || '' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Rebase pulse workspace before refresh
+        run: |
+          git fetch origin main
+          git rebase origin/main
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -49,8 +55,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main
-          git rebase origin/main
           git add data/state/us_extended_hours_context.json
           if git diff --cached --quiet; then
             exit 0
