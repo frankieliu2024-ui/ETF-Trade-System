@@ -89,6 +89,10 @@ jobs:
             exit 0
           fi
           git commit -m "ops: record deterministic runtime self-healing"
+          # Derived builders may touch other tracked state files. Keep only the
+          # owned repair commit before rebasing so concurrent state commits do
+          # not make git pull --rebase fail on a dirty worktree.
+          git restore --worktree .
           git pull --rebase origin main
           git push origin HEAD:main
 
