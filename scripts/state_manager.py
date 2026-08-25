@@ -48,7 +48,7 @@ def default_current() -> dict[str, Any]:
         "market_date": "", "latest_valid_node": "", "captured_at": "", "node_status": "NON_TRADING_DAY",
         "latest_snapshot": "", "snapshot_commit": "", "superseded_nodes": [], "data_freshness": {},
         "account_fact": {"status": "MISSING", "updated_at": "", "source": ""}, "needs_account_update": True,
-        "last_trade_event_id": "", "rules_version": "V2.2.15", "generated_at": "",
+        "last_trade_event_id": "", "rules_version": "V2.2.16", "generated_at": "",
     }
 
 
@@ -276,6 +276,24 @@ def build_formal_action_summary(account: dict[str, Any]) -> dict[str, Any]:
     return {**value, "read_only": True}
 
 
+def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
+    equity = read_json(root / "data" / "state" / "etf_strategy_equity.json", {})
+    summary = equity.get("summary") or {}
+    account = read_account_fact(root)
+    etf_float = sum(float(p.get("holding_pnl") or 0) for p in (account.get("positions") or []) if p.get("asset_type") == "ETF")
+    capital = float(summary.get("starting_etf_strategy_capital") or 200000)
+    return {
+        "current_etf_holding_floating_risk_pct": round(etf_float / capital * 100.0, 2),
+        "etf_cumulative_strategy_return_pct_gross": summary.get("current_strategy_return_pct_gross"),
+        "etf_cumulative_strategy_return_pct_known_net": summary.get("known_net_current_strategy_return_pct"),
+        "etf_high_watermark_drawdown_pct_gross": summary.get("current_drawdown_pct"),
+        "etf_high_watermark_drawdown_pct_known_net": summary.get("known_net_current_drawdown_pct"),
+        "known_net_fee_status": summary.get("fee_status", ""),
+        "decision_role": "三项指标联合解释：持仓浮动压力、累计策略损益、距高水位回撤；不单独生成交易动作。",
+        "read_only": True,
+    }
+
+
 def build_decision_context(root: Path | None = None) -> dict[str, Any]:
     root = root or root_from_env()
     current, account = read_current(root), read_account_fact(root)
@@ -287,7 +305,7 @@ def build_decision_context(root: Path | None = None) -> dict[str, Any]:
     quality = build_data_quality_summary(snapshot)
     return {
         "generated_at": generated, "rules_version": "V2.2.15", "market_date": current.get("market_date", ""), "latest_node": current.get("latest_valid_node", ""), "current": current, "latest_snapshot": snapshot, "data_status": effective, "freshness_at_context_build": effective,
-        "data_quality_summary": quality, "analysis_coverage": build_analysis_coverage(root, snapshot, account, quality), "point_in_time": build_point_in_time_summary(current, account, snapshot, generated), "scheduled_pulse_health": build_scheduled_pulse_health(root, current), "formal_action": build_formal_action_summary(account),
+        "data_quality_summary": quality, "etf_strategy_risk_metrics": build_etf_strategy_risk_metrics(root), "analysis_coverage": build_analysis_coverage(root, snapshot, account, quality), "point_in_time": build_point_in_time_summary(current, account, snapshot, generated), "scheduled_pulse_health": build_scheduled_pulse_health(root, current), "formal_action": build_formal_action_summary(account),
         "intraday_path_features": read_json(root / "data" / "state" / "intraday_path_features.json", {"status": "MISSING", "features": []}), "research_evidence": build_research_evidence_summary(root),
         "research_context_file": "data/state/research_context.json", "relative_strength_file": "data/state/relative_strength.json", "research_evidence_delta_file": "data/state/research_evidence_delta.json",
         "research_master_feedback": {"current_decision": "研究证据及其节点变化直接进入机会判断、统一资本比较、持仓资本效率与正式输出解释。", "master_maintenance": "研究结论只有通过MASTER第8.1正式研究转化机制后才可修改MASTER；自动程序只提供证据，不修改规则。"},
