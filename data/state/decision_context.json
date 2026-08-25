@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-25T10:24:50Z",
+  "generated_at": "2026-08-25T11:32:34Z",
   "rules_version": "V2.2.16",
   "market_date": "2026-08-25",
   "latest_node": "close",
@@ -419,7 +419,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 29.59,
-    "age_seconds": 11850
+    "age_seconds": 15914
   },
   "freshness_at_context_build": {
     "status": "STALE",
@@ -434,7 +434,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 29.59,
-    "age_seconds": 11850
+    "age_seconds": 15914
   },
   "data_quality_summary": {
     "pass_count": 13,
@@ -483,7 +483,7 @@
     "account_fact_time": "2026-08-25T14:31:51+08:00",
     "market_snapshot_time": "2026-08-25T15:07:20+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-08-25T10:24:50Z",
+    "context_generated_time": "2026-08-25T11:32:34Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -510,7 +510,7 @@
     "read_only": true
   },
   "intraday_path_features": {
-    "generated_at": "2026-08-25T10:24:17Z",
+    "generated_at": "2026-08-25T11:32:23Z",
     "market_date": "2026-08-25",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -1617,9 +1617,8 @@
       "use_in_current_decision": false,
       "price_as_of_market_date": "2026-08-25",
       "share_fact_latest_date": null,
-      "coverage": null,
-      "conditional_increment_ranking": [],
-      "interpretation_rule": null,
+      "degraded_reason": null,
+      "interpretation_rule": "当前证据不可用于决策时只保留状态和原因，不把空排名或旧值塞入正式决策上下文。",
       "decision_eligible": false,
       "trade_signal": null,
       "trial_confirm": null,
@@ -1694,6 +1693,60 @@
       "trade_signal": null,
       "trial_confirm": null,
       "portfolio_target": null
+    },
+    "research_contribution_audit": {
+      "status": "READY",
+      "mode": "EXPLICIT_RESEARCH_CONTRIBUTION_AND_OUTCOME_AUDIT",
+      "rule": "只统计正式决策中显式记录的research_evidence_used；最多3项。结果归因按T+1/T+3/T+5自然成熟，不事后补写历史研究贡献，不把共同市场涨跌误记为单一研究的功劳。",
+      "decision_attribution": {
+        "total_decisions": 10,
+        "explicit_attribution_or_none": 0,
+        "explicit_coverage_ratio": 0.0,
+        "status_counts": {
+          "NOT_RECORDED": 10
+        },
+        "mature_explicit_research_decisions": 0,
+        "evidence_effectiveness": {},
+        "effectiveness_interpretation": "方向调整收益仅表示使用该研究证据的决策随后表现如何，不证明该证据单独造成结果。样本不足时不得据此修改规则。"
+      },
+      "trade_attribution": {
+        "total_trades": 2,
+        "attributed_trade_count": 0,
+        "explicit_no_research_trade_count": 0,
+        "legacy_or_unlinked_trade_count": 2,
+        "pit_link_rule": "成交只能归到成交时点之前或同时、对象与动作匹配的正式决策。"
+      },
+      "evidence_use_counts": {},
+      "recent_trades": [
+        {
+          "event_id": "20260825_112516",
+          "confirmed_at_beijing": "2026-08-25T11:22:34+08:00",
+          "display_name": "半导体设备ETF（561980）",
+          "side": "SELL",
+          "quantity": 13000,
+          "linked_decision_id": "2026-08-25_7734ccf57b51",
+          "pit_link_status": "EXPLICIT_PIT_VALID",
+          "research_attribution_status": "NOT_RECORDED",
+          "research_evidence_used": []
+        },
+        {
+          "event_id": "20260825_100518",
+          "confirmed_at_beijing": "2026-08-25T10:02:57+08:00",
+          "display_name": "恒生科技ETF（513180）",
+          "side": "SELL",
+          "quantity": 8200,
+          "linked_decision_id": "2026-08-25_207443bb40c2",
+          "pit_link_status": "EXPLICIT_PIT_VALID",
+          "research_attribution_status": "NOT_RECORDED",
+          "research_evidence_used": []
+        }
+      ],
+      "redundancy_review": {
+        "automatic_deletion": false,
+        "rule": "只有在足够多显式研究归因且已成熟的正式决策中，某研究长期未改变决策或没有独立风险/复盘价值时，才进入人工删除审查；不按短期胜负自动删研究。",
+        "mature_explicit_decision_count": 0,
+        "sample_sufficient": false
+      }
     }
   },
   "research_context_file": "data/state/research_context.json",
@@ -1715,9 +1768,10 @@
   "skfolio_risk_evidence_file": "data/state/skfolio_risk_evidence.json",
   "etf_share_flow_evidence_file": "data/state/etf_share_flow_evidence.json",
   "margin_financing_evidence_file": "data/state/margin_financing_evidence.json",
+  "research_contribution_audit_file": "data/state/research_contribution_audit.json",
   "research_master_candidates": {
     "schema_version": "1.0",
-    "generated_at": "2026-08-25T10:24:50Z",
+    "generated_at": "2026-08-25T11:32:34Z",
     "mode": "RESEARCH_TO_MASTER_MAINTENANCE_FEED",
     "read_only": true,
     "automatic_master_update": false,
@@ -1725,7 +1779,7 @@
     "current_inventory": {
       "daily_feature_days": 641,
       "formal_decision_events": 10,
-      "decision_outcomes": 4,
+      "decision_outcomes": 10,
       "outcomes_with_T_plus_1": 0,
       "outcomes_with_T_plus_3": 0,
       "outcomes_with_T_plus_5": 0
@@ -1746,49 +1800,64 @@
     "candidate_rule": "机器只维护证据库存和审查门槛；具体MASTER维护候选必须由ChatGPT基于专项研究或多个CASE形成明确建议后写入，不自动从胜率、排名、单一阈值或相关性生成规则。"
   },
   "execution_quality": {
-    "schema_version": "1.0",
-    "generated_at": "2026-08-25T10:24:18Z",
+    "schema_version": "1.1",
+    "generated_at": "2026-08-25T11:32:23Z",
     "mode": "DECISION_EXECUTION_ATTRIBUTION",
     "read_only": true,
     "trade_event_count": 2,
     "linked_trade_count": 2,
-    "execution_cost_sample_count": 0,
-    "mean_adverse_execution_cost_pct": null,
-    "delay_sample_count": 0,
-    "mean_decision_to_execution_seconds": null,
+    "corrected_future_or_invalid_link_count": 0,
+    "execution_cost_sample_count": 1,
+    "mean_adverse_execution_cost_pct": 0.8969,
+    "delay_sample_count": 2,
+    "mean_decision_to_execution_seconds": 739.0,
     "items": [
       {
         "trade_event_id": "20260825_100518",
-        "decision_id": "2026-08-25_7b9c7d457700",
+        "decision_id": "2026-08-25_207443bb40c2",
+        "raw_linked_decision_id": "2026-08-25_207443bb40c2",
+        "link_status": "EXPLICIT_PIT_VALID",
         "hypothesis_id": "",
         "code": "513180",
         "name": "恒生科技ETF",
         "side": "SELL",
-        "decision_time_beijing": "2026-08-25T10:05:18+08:00",
+        "decision_time_beijing": "2026-08-25T10:02:03+08:00",
         "execution_time_beijing": "2026-08-25T10:02:57+08:00",
         "decision_price": null,
         "execution_price": 0.574,
-        "decision_to_execution_seconds": -141,
+        "decision_to_execution_seconds": 54.0,
         "adverse_execution_cost_pct": null,
         "status": "PARTIAL"
       },
       {
         "trade_event_id": "20260825_112516",
-        "decision_id": "2026-08-25_73c690a327d3",
+        "decision_id": "2026-08-25_7734ccf57b51",
+        "raw_linked_decision_id": "2026-08-25_7734ccf57b51",
+        "link_status": "EXPLICIT_PIT_VALID",
         "hypothesis_id": "",
         "code": "561980",
         "name": "半导体设备ETF",
         "side": "SELL",
-        "decision_time_beijing": "2026-08-25T11:25:16+08:00",
+        "decision_time_beijing": "2026-08-25T10:58:50+08:00",
         "execution_time_beijing": "2026-08-25T11:22:34+08:00",
-        "decision_price": null,
+        "decision_price": 0.669,
         "execution_price": 0.663,
-        "decision_to_execution_seconds": -162,
-        "adverse_execution_cost_pct": null,
-        "status": "PARTIAL"
+        "decision_to_execution_seconds": 1424.0,
+        "adverse_execution_cost_pct": 0.8969,
+        "status": "READY"
       }
     ],
-    "interpretation_rule": "把判断质量与执行质量分开：决策时点后的市场结果评价判断，决策价格与真实成交价之间的偏差评价执行。不得因一次慢成交或一次有利成交自动修改交易规则。",
+    "interpretation_rule": "成交只能归因到成交时点之前或同时的正式决策。决策后的确认事件不得反向链接到成交；判断质量与执行质量分开评价。",
     "optimization_principle": "只分析能够帮助减少可避免执行损失或提高资本实现效率的差异；不追求零滑点、零延迟或完美执行。"
+  },
+  "formal_decision_research_attribution_contract": {
+    "field": "research_evidence_used",
+    "max_items": 3,
+    "item_fields": [
+      "evidence_id",
+      "change",
+      "decision_effect"
+    ],
+    "rule": "只记录实际改变本次机会、金额、持仓或卖出判断的研究证据；若研究没有实质贡献，显式写空列表。不得自动把decision_context中存在的证据视为已使用。"
   }
 }
