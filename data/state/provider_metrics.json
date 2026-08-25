@@ -2,17 +2,17 @@
   "schema_version": "1.0",
   "providers": {
     "hithink-finance": {
-      "observation_count": 256,
-      "pass_count": 223,
+      "observation_count": 268,
+      "pass_count": 235,
       "degraded_or_fail_count": 33,
-      "lag_sample_count": 223,
-      "lag_seconds_sum": 1879.0,
-      "lag_seconds_max": 46.0,
+      "lag_sample_count": 235,
+      "lag_seconds_sum": 2205.0,
+      "lag_seconds_max": 56.0,
       "source_types": [
         "A_SHARE_SNAPSHOT"
       ],
-      "pass_rate": 87.1094,
-      "mean_lag_seconds": 8.426
+      "pass_rate": 87.6866,
+      "mean_lag_seconds": 9.383
     },
     "yahoo_chart_api": {
       "observation_count": 15,
@@ -28,21 +28,35 @@
       "mean_lag_seconds": 15905.6667
     },
     "eastmoney_push2": {
-      "observation_count": 10,
-      "pass_count": 10,
+      "observation_count": 11,
+      "pass_count": 11,
       "degraded_or_fail_count": 0,
-      "lag_sample_count": 5,
-      "lag_seconds_sum": 57281.0,
+      "lag_sample_count": 6,
+      "lag_seconds_sum": 57321.0,
       "lag_seconds_max": 57233.0,
       "source_types": [
         "A_SHARE_SNAPSHOT",
         "OVERSEAS_INDEX"
       ],
       "pass_rate": 100.0,
-      "mean_lag_seconds": 11456.2
+      "mean_lag_seconds": 9553.5
+    },
+    "eastmoney_push2delay": {
+      "observation_count": 1,
+      "pass_count": 1,
+      "degraded_or_fail_count": 0,
+      "lag_sample_count": 0,
+      "lag_seconds_sum": 0.0,
+      "lag_seconds_max": 0.0,
+      "source_types": [
+        "OVERSEAS_INDEX"
+      ],
+      "pass_rate": 100.0,
+      "mean_lag_seconds": null
     }
   },
   "processed_observations": [
+    "overseas|HSTECH|eastmoney_push2delay|2026-08-25T14:53:46+08:00",
     "overseas|HSTECH|eastmoney_push2|2026-08-24T16:08:42+08:00",
     "overseas|HSTECH|eastmoney_push2|2026-08-25T09:39:52+08:00",
     "overseas|HSTECH|eastmoney_push2|2026-08-25T10:32:14+08:00",
@@ -323,9 +337,22 @@
     "snapshot|data/market/snapshots/2026-08-25_145004.json|515880|2026-08-25T14:50:07+08:00",
     "snapshot|data/market/snapshots/2026-08-25_145004.json|518880|2026-08-25T14:50:00+08:00",
     "snapshot|data/market/snapshots/2026-08-25_145004.json|561980|2026-08-25T14:49:50+08:00",
-    "snapshot|data/market/snapshots/2026-08-25_145004.json|588000|2026-08-25T14:49:52+08:00"
+    "snapshot|data/market/snapshots/2026-08-25_145004.json|588000|2026-08-25T14:49:52+08:00",
+    "snapshot|data/market/snapshots/2026-08-25_145326.json|000001|2026-08-25T14:53:25+08:00",
+    "snapshot|data/market/snapshots/2026-08-25_145326.json|159326|2026-08-25T14:53:18+08:00",
+    "snapshot|data/market/snapshots/2026-08-25_145326.json|159561|2026-08-25T14:53:00+08:00",
+    "snapshot|data/market/snapshots/2026-08-25_145326.json|159781|2026-08-25T14:52:50+08:00",
+    "snapshot|data/market/snapshots/2026-08-25_145326.json|159941|2026-08-25T14:52:52+08:00",
+    "snapshot|data/market/snapshots/2026-08-25_145326.json|159992|2026-08-25T14:53:28+08:00",
+    "snapshot|data/market/snapshots/2026-08-25_145326.json|399006|2026-08-25T14:53:25+08:00",
+    "snapshot|data/market/snapshots/2026-08-25_145326.json|513180|2026-08-25T14:52:51+08:00",
+    "snapshot|data/market/snapshots/2026-08-25_145326.json|513520|2026-08-25T14:52:54+08:00",
+    "snapshot|data/market/snapshots/2026-08-25_145326.json|515880|2026-08-25T14:53:34+08:00",
+    "snapshot|data/market/snapshots/2026-08-25_145326.json|518880|2026-08-25T14:53:34+08:00",
+    "snapshot|data/market/snapshots/2026-08-25_145326.json|561980|2026-08-25T14:52:44+08:00",
+    "snapshot|data/market/snapshots/2026-08-25_145326.json|588000|2026-08-25T14:53:39+08:00"
   ],
-  "generated_at": "2026-08-25T06:50:14Z",
+  "generated_at": "2026-08-25T06:53:50Z",
   "mode": "PROVIDER_OBSERVABILITY_METRICS",
   "read_only": true,
   "decision_boundary": "provider指标用于数据质量与维护，不产生交易动作，也不自动修改provider优先级。"
