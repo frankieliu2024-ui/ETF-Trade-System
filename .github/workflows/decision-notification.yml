@@ -39,10 +39,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
-          fetch-depth: 2
+          fetch-depth: 20
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Build delayed execution reconciliation
+        if: ${{ github.event_name == 'workflow_run' }}
+        run: python scripts/build_execution_reconciliation.py
 
       - name: Send safe notification-channel test
         id: test_notify
@@ -62,26 +66,28 @@ jobs:
         continue-on-error: true
         run: python scripts/notification_center.py --mode close
 
-      - name: Persist unified notification state
+      - name: Persist unified notification and execution-reconciliation state
         if: ${{ always() }}
         shell: bash
         run: |
-          if [ ! -f data/state/notification_center.json ]; then
+          mkdir -p /tmp/etf-notification-state/data/state
+          [ -f data/state/notification_center.json ] && cp data/state/notification_center.json /tmp/etf-notification-state/data/state/notification_center.json || true
+          [ -f data/state/execution_reconciliation.json ] && cp data/state/execution_reconciliation.json /tmp/etf-notification-state/data/state/execution_reconciliation.json || true
+          if [ ! -f /tmp/etf-notification-state/data/state/notification_center.json ] && [ ! -f /tmp/etf-notification-state/data/state/execution_reconciliation.json ]; then
             exit 0
           fi
-          mkdir -p /tmp/etf-notification-state/data/state
-          cp data/state/notification_center.json /tmp/etf-notification-state/data/state/notification_center.json
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main
           git reset --hard origin/main
-          cp /tmp/etf-notification-state/data/state/notification_center.json data/state/notification_center.json
-          git add data/state/notification_center.json
+          [ -f /tmp/etf-notification-state/data/state/notification_center.json ] && cp /tmp/etf-notification-state/data/state/notification_center.json data/state/notification_center.json || true
+          [ -f /tmp/etf-notification-state/data/state/execution_reconciliation.json ] && cp /tmp/etf-notification-state/data/state/execution_reconciliation.json data/state/execution_reconciliation.json || true
+          git add data/state/notification_center.json data/state/execution_reconciliation.json 2>/dev/null || true
           if git diff --cached --quiet; then
             exit 0
           fi
-          git commit -m "state: record unified notification center"
+          git commit -m "state: record notification and execution reconciliation"
           git push origin HEAD:main
 
       - name: Surface notification delivery failure without blocking trading system
