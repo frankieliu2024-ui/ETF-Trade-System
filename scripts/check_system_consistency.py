@@ -292,6 +292,15 @@ def main() -> int:
     action = decision_context.get("formal_action") or {}
     check("formal_action:execution_boundary", action.get("execution_status") in {"UNKNOWN", "PENDING", "EXECUTED", "SUPERSEDED"} or not action, f"execution_status={action.get('execution_status', 'MISSING')}")
 
+    phase4_trigger = read_json("data/state/decision_trigger.json")
+    phase4_ranking = read_json("data/state/capital_efficiency_ranking.json")
+    e2e_state = read_json("data/state/e2e_status.json")
+    check("phase4:trigger_schema", isinstance(phase4_trigger, dict) and phase4_trigger.get("read_only") is True and "requires_formal_reassessment" in phase4_trigger, f"status={phase4_trigger.get('status', 'MISSING')}", warning=True)
+    check("phase4:ranking_schema", isinstance(phase4_ranking, dict) and phase4_ranking.get("read_only") is True and isinstance(phase4_ranking.get("ordered_candidates"), list), f"status={phase4_ranking.get('status', 'MISSING')}", warning=True)
+    check("phase4:e2e_boundary", str(phase4_ranking.get("e2e_status") or "").upper() != "BLOCKED" or not any(x.get("category") == "CASH" and x.get("eligibility") == "FORMAL_ACTION" for x in (phase4_ranking.get("ordered_candidates") or []) if isinstance(x, dict)), "E2E BLOCKED cannot create formal action")
+    check("phase4:no_score", not any("score" in str(x).lower() for x in (phase4_ranking.get("ordered_candidates") or []) if isinstance(x, dict)), "capital ranking contains no composite score")
+    check("phase4:e2e_state_present", str(e2e_state.get("purpose") or "").startswith("TOP_LEVEL_SYSTEM_USABILITY_ONLY"), f"status={e2e_state.get('status', 'MISSING')}", warning=True)
+
     runtime_status = str(runtime_health.get("status", "")).upper()
     allowed_runtime_statuses = {"NOT_RUN", "PASS", "DEGRADED", "FAILED", "SKIPPED", "SUPERSEDED"}
     check("runtime_health:structured", runtime_status in allowed_runtime_statuses, f"status={runtime_status or 'MISSING'}")
