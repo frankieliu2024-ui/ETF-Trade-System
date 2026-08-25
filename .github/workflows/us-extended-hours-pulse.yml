@@ -3,12 +3,14 @@ name: US extended-hours pulse
 on:
   workflow_dispatch:
   schedule:
-    # US pre-market and regular session coverage (UTC, DST handled by provider data)
-    # Beijing roughly 16:00-22:00
-    - cron: "0 8-14 * * 1-5"
-    # US regular session continuous monitoring after open
-    # Beijing roughly 22:30-04:00 during US daylight time
-    - cron: "0,30 14-20 * * 1-5"
+    # US pre-market during US daylight time: Beijing roughly 16:00-21:30.
+    - cron: "0 8-13 * * 1-5"
+    - cron: "20,30 13 * * 1-5"
+    # Standard-time/open-boundary coverage: Beijing roughly 22:00-22:30.
+    - cron: "0,20,30 14 * * 1-5"
+    # US regular session continuous monitoring after the pre-market boundary.
+    # Beijing roughly 22:30-04:00 during US daylight time.
+    - cron: "0,30 15-20 * * 1-5"
     # Final regular-session / post-market reference refresh
     - cron: "0 21-23 * * 1-5"
 
