@@ -100,7 +100,7 @@ def execution_confirmation_event() -> dict | None:
         title = f"发现{target}可能已执行{lifecycle}，请确认"
         content = f"最新账户信息显示{target}{size_text}，与{date or '此前'}的{lifecycle}{action}决策相符。\n\n建议：请确认是否按该决策执行，以及实际交易日。系统会把交易日与截图/确认日期分开记录。"
     key = f"execution-confirm:{intent.get('decision_id','')}:{code}:{status}:{date}:{qty or ''}"
-    return {"key": key, "type": "成交确认", "title": title, "content": content, "source": "execution_reconciliation", "event_type": "PENDING_EXECUTION_CONFIRMATION", "related_decision_id": str(intent.get("decision_id") or ""), "security_code": code, "security_name": name, "confirmation_context": {"decision_id": str(intent.get("decision_id") or ""), "security_code": code, "security_name": name, "side": side, "lifecycle": lifecycle, "quantity": qty, "approx_amount_yuan": observed.get("approx_amount_yuan"), "suggested_execution_date": date, "lifecycle_t_date": match.get("suggested_lifecycle_t_date") or date}}
+    return {"key": key, "type": "成交确认", "title": title, "content": content, "source": "execution_reconciliation", "event_type": "PENDING_EXECUTION_CONFIRMATION", "related_decision_id": str(intent.get("decision_id") or ""), "security_code": code, "security_name": name, "user_severity": "需要操作", "user_action": "确认成交或补充成交明细", "confirmation_context": {"decision_id": str(intent.get("decision_id") or ""), "security_code": code, "security_name": name, "side": side, "lifecycle": lifecycle, "quantity": qty, "approx_amount_yuan": observed.get("approx_amount_yuan"), "suggested_execution_date": date, "lifecycle_t_date": match.get("suggested_lifecycle_t_date") or date}}
 
 
 def decision_event() -> dict | None:
@@ -122,7 +122,7 @@ def decision_event() -> dict | None:
         title = "此前暂缓的交易判断现在可以继续"; content = "此前因为关键行情、账户或决策信息不完整而暂缓的交易判断，现在所需信息已经补齐。\n\n建议：重新处理之前尚未完成的交易判断。"
     else:
         target = display_from_code(applicable, account); title = f"{target}出现值得重新评估的新变化"; content = f"{target}出现了可能改变原交易判断的新市场或研究证据。\n\n建议：现在重新检查该标的的机会、持仓或风险收益判断。"
-    return {"key": f"decision:{key}", "type": "交易判断", "title": title, "content": content, "source": "decision_trigger"}
+    return {"key": f"decision:{key}", "type": "交易判断", "title": title, "content": content, "source": "decision_trigger", "user_severity": "需要关注", "user_action": "重新评估交易计划"}
 
 
 def account_confirmation_event() -> dict | None:
@@ -134,18 +134,77 @@ def account_confirmation_event() -> dict | None:
     code = str(event.get("code") or event.get("object") or "")
     target = display_from_code(code, account)
     event_time = str(event.get("event_time") or event.get("occurred_at") or account.get("updated_at") or "")
-    return {"key": f"account:{code}:{event_time}:{event.get('change_summary','')}", "type": "账户确认", "title": "发现一项需要你确认的账户变化", "content": f"{target}相关的账户变化暂时无法由已确认成交或其他已知事件解释。\n\n建议：请确认是否存在未记录成交、资金划转或其他账户变化；必要时上传当前账户截图。", "source": "account_fact"}
+    return {"key": f"account:{code}:{event_time}:{event.get('change_summary','')}", "type": "账户确认", "title": "发现一项需要你确认的账户变化", "content": f"{target}相关的账户变化暂时无法由已确认成交或其他已知事件解释。\n\n建议：请确认是否存在未记录成交、资金划转或其他账户变化；必要时上传当前账户截图。", "source": "account_fact", "user_severity": "需要操作", "user_action": "确认账户变化或上传截图"}
+
+
+def failed_steps_text(diag: dict) -> str:
+    parts = []
+    for row in diag.get("failed_steps") or []:
+        step = str(row.get("step") or "").strip()
+        job = str(row.get("job") or "").strip()
+        if step:
+            parts.append(f"{job + ' / ' if job else ''}{step}")
+    return "；".join(parts[:3]) or "未提供具体失败步骤"
 
 
 def system_event() -> dict | None:
     heal = read_json(STATE / "self_healing_status.json", {})
     classification, action = str(heal.get("classification") or ""), str(heal.get("recommended_action") or "")
     if action == "ESCALATE" or classification in {"PERSISTENT_RUNTIME_FAILURE", "CONSISTENCY_REGRESSION"}:
-        return {"key": f"system:selfheal:{classification}:{heal.get('checked_at') or heal.get('updated_at') or ''}", "type": "系统异常", "title": "ETF系统出现持续异常，需要关注", "content": "行情或系统状态连续异常，自动修复已经到达安全边界。\n\n影响：当前交易判断的可靠性可能下降。建议：暂缓依赖系统进行新的交易判断，待异常恢复后再继续。", "source": "self_healing_status"}
+        system_consistency = str(heal.get("system_consistency_status") or "未知")
+        runtime_health = str(heal.get("runtime_health_status") or "未知")
+        title = "【真实运行异常｜影响交易判断】ETF系统运行状态异常"
+        content = (
+            f"发生了什么：系统运行状态连续异常，自动修复已到达安全边界。\n\n"
+            f"当前已知：一致性检查={system_consistency}；行情运行状态={runtime_health}。\n\n"
+            "影响：在恢复前，行情或交易判断的可靠性可能受影响。\n\n"
+            "你现在需要做什么：暂缓依据系统执行新的买入/卖出判断；已有券商持仓不会被系统自动修改。\n\n"
+            "系统下一步：继续按既有安全机制检查恢复；恢复后如有待处理交易判断，会再次通知。"
+        )
+        return {"key": f"system:selfheal:{classification}:{heal.get('checked_at') or heal.get('updated_at') or ''}", "type": "系统异常", "title": title, "content": content, "source": "self_healing_status", "user_severity": "影响交易判断", "user_action": "暂缓依据系统做新交易判断"}
+
     diag = read_json(STATE / "workflow_failure_diagnostic.json", {})
-    if str(diag.get("recommended_action") or "") == "ESCALATE_WITH_DIAGNOSTIC":
-        return {"key": f"system:workflow:{diag.get('run_id','')}:{diag.get('classification','')}", "type": "系统异常", "title": "ETF系统有一项故障未能自动处理", "content": "后台维护发现一项无法安全自动修复的故障。\n\n如果该故障影响行情、账户或交易判断，系统将保持谨慎降级；建议稍后检查恢复情况。", "source": "workflow_failure_diagnostic"}
-    return None
+    if str(diag.get("recommended_action") or "") != "ESCALATE_WITH_DIAGNOSTIC":
+        return None
+
+    safety = diag.get("safety") or {}
+    head_sha = str(diag.get("head_sha") or "")
+    main_head_sha = str(diag.get("main_head_sha") or "")
+    head_is_current_main = bool(safety.get("head_is_current_main"))
+    # Historical/stale failures must not be pushed as current incidents. A newer main has already superseded them.
+    if (head_sha and main_head_sha and head_sha != main_head_sha) or not head_is_current_main:
+        return None
+
+    workflow = str(diag.get("workflow_name") or "后台任务")
+    run_id = str(diag.get("run_id") or "未知")
+    classification = str(diag.get("classification") or "未知")
+    steps = failed_steps_text(diag)
+    changed_files = [str(x) for x in (diag.get("changed_files") or []) if x]
+    changed_text = "、".join(changed_files[:3]) if changed_files else "无明确业务数据文件变更"
+
+    if workflow == "ETF market snapshot":
+        severity = "影响交易判断"
+        action_text = "暂缓依据系统做新的交易判断，等待行情采集恢复。"
+        impact = "行情采集任务失败，最新ETF/指数行情可能不完整；账户事实不会因此被自动修改。"
+    elif workflow == "ETF system consistency":
+        severity = "需要关注"
+        action_text = "暂时无需手工修复；如果你正准备依赖系统做交易判断，请先等待下一轮一致性检查结果。"
+        impact = "系统一致性检查失败，说明某项状态或校验未通过；不代表券商账户或实际持仓发生变化。"
+    else:
+        severity = "需要关注"
+        action_text = "暂时无需手工修改数据；如后续影响行情、账户或交易判断，系统会升级通知。"
+        impact = "后台维护任务失败，但当前诊断没有证据表明券商账户或持仓被改动。"
+
+    title = f"【真实运行异常｜{severity}】{workflow}失败"
+    content = (
+        f"发生了什么：{workflow}运行失败（Run {run_id}）。\n\n"
+        f"具体失败：{steps}。\n\n"
+        f"影响：{impact}\n\n"
+        f"涉及变更：{changed_text}。\n\n"
+        f"你现在需要做什么：{action_text}\n\n"
+        f"系统为什么没有自动修：自动处理触及安全边界，因此停止自动修改。诊断分类：{classification}。"
+    )
+    return {"key": f"system:workflow:{run_id}:{classification}", "type": "系统异常", "title": title, "content": content, "source": "workflow_failure_diagnostic", "user_severity": severity, "user_action": action_text}
 
 
 def close_account_event(force: bool = False) -> dict | None:
@@ -165,7 +224,7 @@ def close_account_event(force: bool = False) -> dict | None:
             pass
     if final_confirmed:
         return None
-    return {"key": f"close-account:{market_date}", "type": "收盘账户", "title": "今日收盘账户信息尚未确认", "content": "系统还没有今天15:00之后的最终账户信息。\n\n建议：请上传收盘持仓截图；如果今天15:00后账户没有任何变化，也可以直接确认“收盘账户无变化”。", "source": "account_fact"}
+    return {"key": f"close-account:{market_date}", "type": "收盘账户", "title": "今日收盘账户信息尚未确认", "content": "系统还没有今天15:00之后的最终账户信息。\n\n建议：请上传收盘持仓截图；如果今天15:00后账户没有任何变化，也可以直接确认“收盘账户无变化”。", "source": "account_fact", "user_severity": "需要操作", "user_action": "上传收盘截图或确认收盘账户无变化"}
 
 
 def choose_event(mode: str) -> dict | None:
@@ -175,7 +234,6 @@ def choose_event(mode: str) -> dict | None:
         event = builder()
         if event: return event
     return None
-
 
 
 LIFECYCLE_STATUSES = {"CREATED", "SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED", "EXPIRED"}
@@ -199,6 +257,8 @@ def normalize_notification(event: dict, record: dict | None = None) -> dict:
         "related_decision_id": str(record.get("related_decision_id") or event.get("related_decision_id") or context.get("decision_id") or ""),
         "security_code": str(record.get("security_code") or event.get("security_code") or context.get("security_code") or ""),
         "security_name": str(record.get("security_name") or event.get("security_name") or context.get("security_name") or ""),
+        "user_severity": str(record.get("user_severity") or event.get("user_severity") or ""),
+        "user_action": str(record.get("user_action") or event.get("user_action") or ""),
         "lifecycle_status": str(record.get("lifecycle_status") or record.get("status") or "CREATED"),
         "created_at": created,
         "sent_at": record.get("sent_at"),
@@ -258,6 +318,8 @@ def compact_recent(item: dict) -> dict:
         "title": item.get("title"),
         "content": item.get("content"),
         "source": item.get("source"),
+        "user_severity": item.get("user_severity"),
+        "user_action": item.get("user_action"),
         "status": "SENT" if item.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION"} else item.get("lifecycle_status"),
         "attempted_at": item.get("last_attempted_at") or item.get("sent_at") or item.get("created_at"),
         "response": item.get("response") or {},
@@ -279,23 +341,22 @@ def main() -> int:
     notifications = expire_notifications(raw_items)
 
     if args.mode == "channel-test":
-        event = {"key": f"channel-test:{now().isoformat(timespec='seconds')}", "type": "测试", "title": "ETF系统通知中心测试", "content": "通知中心已经可以主动联系你。正式运行时，只推送需要你关注、确认或决策的事项。", "source": "manual_test", "event_type": "CHANNEL_TEST"}
+        event = {"key": f"channel-test:{now().isoformat(timespec='seconds')}", "type": "测试", "title": "【测试】ETF系统通知中心", "content": "这是一条通知通道测试，不代表真实行情、账户、交易或系统故障。\n\n你现在需要做什么：无需操作。收到即表示 GitHub → PushPlus → 微信通道正常。", "source": "manual_test", "event_type": "CHANNEL_TEST", "user_severity": "测试", "user_action": "无需操作"}
     else:
         event = choose_event(args.mode)
     if not event:
-        state.update({"schema_version": "2.0", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]})
+        state.update({"schema_version": "2.1", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]})
         write_json(state_path, state)
         print(json.dumps({"status": "NO_NOTIFICATION_NEEDED"}, ensure_ascii=False))
         return 0
 
     existing = find_existing_notification(notifications, event)
     if existing and existing.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED"}:
-        state.update({"schema_version": "2.0", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]})
+        state.update({"schema_version": "2.1", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]})
         write_json(state_path, state)
         print(json.dumps({"status": "ALREADY_MANAGED", "notification_id": existing.get("notification_id"), "lifecycle_status": existing.get("lifecycle_status")}, ensure_ascii=False))
         return 0
     if existing and existing.get("lifecycle_status") == "EXPIRED":
-        # A new source event id is required; an expired item is never silently re-sent.
         print(json.dumps({"status": "EXPIRED_REQUIRES_NEW_EVENT", "notification_id": existing.get("notification_id")}, ensure_ascii=False))
         return 0
 
@@ -303,7 +364,7 @@ def main() -> int:
     item["lifecycle_status"] = "CREATED"
     item["created_at"] = item.get("created_at") or now().isoformat(timespec="seconds")
     if not token:
-        state.update({"schema_version": "2.0", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]})
+        state.update({"schema_version": "2.1", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]})
         write_json(state_path, state)
         print(json.dumps({"status": "SKIPPED_NO_SECRET", "notification_id": item["notification_id"], "lifecycle_status": "CREATED"}, ensure_ascii=False))
         return 0
@@ -317,7 +378,7 @@ def main() -> int:
     if existing:
         notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
     notifications.append(item)
-    state = {"schema_version": "2.0", "updated_at": stamp, "last_status": item["lifecycle_status"], "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": "只推送需要用户关注、确认或决策的事项；普通行情刷新、成功自愈和普通后台运行不推送。", "safety_boundary": "通知中心不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"}
+    state = {"schema_version": "2.1", "updated_at": stamp, "last_status": item["lifecycle_status"], "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": "通知必须让用户明确知道发生了什么、影响什么、是否需要行动；测试必须明确标注测试；历史失效故障不作为当前真实异常推送。", "safety_boundary": "通知中心不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"}
     write_json(state_path, state)
     print(json.dumps(item, ensure_ascii=False))
     return 0 if ok else 1
