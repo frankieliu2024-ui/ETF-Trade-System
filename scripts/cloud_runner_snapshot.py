@@ -222,6 +222,33 @@ def fetch_etf(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
     return row("ETF", code, thscode, items[0], received.isoformat(timespec="seconds"), obj.get("data", {}).get("timestamp"), a_share_market_phase(received))
 
 
+def failed_etf_row(code: str, thscode: str, error: str, market_phase: str) -> dict:
+    captured = now_shanghai().isoformat(timespec="seconds")
+    return {
+        "asset_class": "ETF",
+        "symbol": code,
+        "thscode": thscode,
+        "open": None,
+        "high": None,
+        "low": None,
+        "close": None,
+        "prev_close": None,
+        "change_pct": None,
+        "volume": None,
+        "amount": None,
+        "provider": "hithink-finance",
+        "provider_timestamp_ms": None,
+        "as_of_beijing": "",
+        "captured_at": captured,
+        "captured_at_beijing": captured,
+        "timezone": "Asia/Shanghai",
+        "market_phase": market_phase,
+        "quality_status": "FAILED",
+        "error": error[-500:],
+        "semantic_note": "该对象provider请求失败；未使用旧行情、代理或伪造OHLC补齐。"
+    }
+
+
 def is_newer_than_current(captured_dt: datetime) -> bool:
     current = read_current(ROOT)
     text = current.get("captured_at", "")
@@ -274,9 +301,15 @@ def main() -> int:
 
     rows: list[dict] = []
     with ThreadPoolExecutor(max_workers=max(1, MAX_WORKERS)) as pool:
-        futures = {pool.submit(fetch_etf, cli, run_dir, code, thscode): code for code, thscode in ETF}
+        futures = {pool.submit(fetch_etf, cli, run_dir, code, thscode): (code, thscode) for code, thscode in ETF}
         for future in as_completed(futures):
-            rows.append(future.result())
+            code, thscode = futures[future]
+            try:
+                rows.append(future.result())
+            except Exception as error:  # noqa: BLE001 - preserve object-level provider failure
+                failed = failed_etf_row(code, thscode, str(error), a_share_market_phase(now_shanghai()))
+                rows.append(failed)
+                print(json.dumps({"object_failure": failed}, ensure_ascii=False))
 
     obj = run_json(cli, ["index", "snapshot", "--thscodes", ",".join(x[1] for x in INDEX)], run_dir / "INDEX_core.json")
     returned = {x.get("thscode"): x for x in (obj.get("data", {}).get("item") or [])}
