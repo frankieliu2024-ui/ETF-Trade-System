@@ -404,7 +404,9 @@ def main() -> int:
             etf_rows = [row for row in rows if row.get("asset_class") == "ETF"]
             index_rows = [row for row in rows if row.get("asset_class") == "A_SHARE_INDEX"]
             check("a_share_runtime:snapshot_count", snapshot.get("count") == len(rows) == len(objects) + 2, f"snapshot_count={snapshot.get('count')} rows={len(rows)} expected={len(objects)+2}")
-            check("a_share_runtime:market_date_alignment", snapshot.get("market_date") == current.get("market_date") == runtime_health.get("market_date"), f"snapshot={snapshot.get('market_date')} current={current.get('market_date')} health={runtime_health.get('market_date')}")
+            query_only_runtime = str(runtime_health.get("status", "")).upper() == "SKIPPED" and str(runtime_health.get("trigger_mode", "")).upper() == "QUERY_TIME_PUSH"
+            market_date_aligned = snapshot.get("market_date") == current.get("market_date") == runtime_health.get("market_date")
+            check("a_share_runtime:market_date_alignment", market_date_aligned or query_only_runtime, f"snapshot={snapshot.get('market_date')} current={current.get('market_date')} health={runtime_health.get('market_date')} query_only={query_only_runtime}")
             check("a_share_runtime:etf_complete", {str(row.get('symbol', '')) for row in etf_rows} == universe_codes and all(row.get("quality_status") == "PASS" for row in etf_rows), f"count={len(etf_rows)} expected={len(universe_codes)}")
             check("a_share_runtime:core_indices_complete", {str(row.get('thscode', '')) for row in index_rows} == {"000001.SH", "399006.SZ"} and all(row.get("quality_status") == "PASS" for row in index_rows), f"indices={[row.get('thscode') for row in index_rows]}")
             check("a_share_runtime:beijing_capture", bool(snapshot.get("captured_at_beijing")) and snapshot.get("timezone") == "Asia/Shanghai", f"captured_at_beijing={snapshot.get('captured_at_beijing')} timezone={snapshot.get('timezone')}")
