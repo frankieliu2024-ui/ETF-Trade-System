@@ -1,0 +1,74 @@
+name: ETF decision notification
+
+on:
+  workflow_run:
+    workflows: ["ETF market snapshot"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      test_notification:
+        description: "Send one safe PushPlus test notification"
+        required: true
+        default: "true"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: etf-decision-notification
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+      PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Send safe test notification
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.test_notification == 'true' }}
+        run: python scripts/send_decision_notification.py --test
+
+      - name: Send material decision notification
+        id: notify
+        if: ${{ github.event_name == 'workflow_run' }}
+        continue-on-error: true
+        run: python scripts/send_decision_notification.py
+
+      - name: Persist notification state
+        if: ${{ github.event_name == 'workflow_run' && always() }}
+        shell: bash
+        run: |
+          if [ ! -f data/state/decision_notification.json ]; then
+            exit 0
+          fi
+          mkdir -p /tmp/etf-notification-state/data/state
+          cp data/state/decision_notification.json /tmp/etf-notification-state/data/state/decision_notification.json
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git reset --hard origin/main
+          cp /tmp/etf-notification-state/data/state/decision_notification.json data/state/decision_notification.json
+          git add data/state/decision_notification.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "state: record decision notification"
+          git push origin HEAD:main
+
+      - name: Surface notification delivery failure without blocking market workflow
+        if: ${{ github.event_name == 'workflow_run' && steps.notify.outcome == 'failure' }}
+        run: |
+          echo "Decision notification failed; market/data workflow remains unaffected. The notification state was persisted for retry/diagnosis."
+          exit 1
