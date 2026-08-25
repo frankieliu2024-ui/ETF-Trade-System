@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-25T03:38:27Z",
-  "generated_at_beijing": "2026-08-25T11:38:27+08:00",
+  "generated_at": "2026-08-25T04:15:57Z",
+  "generated_at_beijing": "2026-08-25T12:15:57+08:00",
   "market_date": "2026-08-25",
   "latest_valid_node": "live",
   "current": {
@@ -36,7 +36,7 @@
     "generated_at": "2026-08-25T03:25:15Z"
   },
   "decision_context": {
-    "generated_at": "2026-08-25T03:38:27Z",
+    "generated_at": "2026-08-25T04:15:57Z",
     "rules_version": "V2.2.15",
     "market_date": "2026-08-25",
     "latest_node": "live",
@@ -441,7 +441,7 @@
       ]
     },
     "data_status": {
-      "status": "FRESH",
+      "status": "STALE",
       "provider": "hithink-finance",
       "count": 13,
       "etf_universe_count": 11,
@@ -453,10 +453,10 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 16.632,
-      "age_seconds": 792
+      "age_seconds": 3042
     },
     "freshness_at_context_build": {
-      "status": "FRESH",
+      "status": "STALE",
       "provider": "hithink-finance",
       "count": 13,
       "etf_universe_count": 11,
@@ -468,10 +468,69 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 16.632,
-      "age_seconds": 792
+      "age_seconds": 3042
+    },
+    "data_quality_summary": {
+      "pass_count": 10,
+      "degraded_count": 0,
+      "failed_count": 3,
+      "stale_count": 0,
+      "failed_objects": [
+        "159561",
+        "513180",
+        "561980"
+      ],
+      "degraded_objects": [],
+      "stale_objects": [],
+      "read_only": true,
+      "source": "latest_snapshot_rows"
+    },
+    "analysis_coverage": {
+      "indices_total": 2,
+      "indices_available": 2,
+      "held_etfs_total": 4,
+      "held_etfs_available": 3,
+      "observed_etfs_total": 7,
+      "observed_etfs_available": 5,
+      "account_stocks_total": 2,
+      "account_stocks_available": 2,
+      "cash_available": true,
+      "failed_objects": [
+        "159561",
+        "513180",
+        "561980"
+      ],
+      "degraded_objects": [],
+      "missing_objects": [],
+      "coverage_status": "DEGRADED",
+      "read_only": true
+    },
+    "point_in_time": {
+      "account_fact_time": "2026-08-25T11:36:22+08:00",
+      "market_snapshot_time": "2026-08-25T11:25:15+08:00",
+      "market_phase": "CONTINUOUS_MORNING",
+      "context_generated_time": "2026-08-25T04:15:57Z",
+      "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
+      "read_only": true
+    },
+    "scheduled_pulse_health": {
+      "expected_slots": [],
+      "observed_slots": [
+        "cron:0,10,20,30 3 * * 1-5"
+      ],
+      "missing_slots": [],
+      "status": "UNKNOWN",
+      "observation_basis": "仅当前runtime记录，未调用Actions API，无法区分cron未触发与触发后未产出。",
+      "read_only": true
+    },
+    "formal_action": {
+      "status": "NOT_PROVIDED",
+      "execution_status": "UNKNOWN",
+      "preserve_rule": "普通账户同步不擦除最近正式决策。",
+      "read_only": true
     },
     "intraday_path_features": {
-      "generated_at": "2026-08-25T03:38:26Z",
+      "generated_at": "2026-08-25T04:15:56Z",
       "market_date": "2026-08-25",
       "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
       "read_only": true,
@@ -1243,7 +1302,7 @@
       ],
       "skfolio_risk_evidence": {
         "schema_version": "1.0",
-        "generated_at": "2026-08-25T03:38:27Z",
+        "generated_at": "2026-08-25T04:15:56Z",
         "status": "READY",
         "mode": "SKFOLIO_VALIDATED_RISK_EVIDENCE",
         "validation_basis": {
@@ -1434,7 +1493,66 @@
     },
     "account_fact_status": "VALID",
     "needs_account_screenshot": false,
-    "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。日内路径、研究证据及证据变化必须参与完整MASTER判断，但单独均不是交易信号。系统不追求完美，只增加能提高事前资本收益效率的复杂度。"
+    "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。日内路径、研究证据及证据变化必须参与完整MASTER判断，但单独均不是交易信号。"
+  },
+  "analysis_coverage": {
+    "indices_total": 2,
+    "indices_available": 2,
+    "held_etfs_total": 4,
+    "held_etfs_available": 3,
+    "observed_etfs_total": 7,
+    "observed_etfs_available": 5,
+    "account_stocks_total": 2,
+    "account_stocks_available": 2,
+    "cash_available": true,
+    "failed_objects": [
+      "159561",
+      "513180",
+      "561980"
+    ],
+    "degraded_objects": [],
+    "missing_objects": [],
+    "coverage_status": "DEGRADED",
+    "read_only": true
+  },
+  "data_quality_summary": {
+    "pass_count": 10,
+    "degraded_count": 0,
+    "failed_count": 3,
+    "stale_count": 0,
+    "failed_objects": [
+      "159561",
+      "513180",
+      "561980"
+    ],
+    "degraded_objects": [],
+    "stale_objects": [],
+    "read_only": true,
+    "source": "latest_snapshot_rows"
+  },
+  "point_in_time": {
+    "account_fact_time": "2026-08-25T11:36:22+08:00",
+    "market_snapshot_time": "2026-08-25T11:25:15+08:00",
+    "market_phase": "CONTINUOUS_MORNING",
+    "context_generated_time": "2026-08-25T04:15:57Z",
+    "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
+    "read_only": true
+  },
+  "scheduled_pulse_health": {
+    "expected_slots": [],
+    "observed_slots": [
+      "cron:0,10,20,30 3 * * 1-5"
+    ],
+    "missing_slots": [],
+    "status": "UNKNOWN",
+    "observation_basis": "仅当前runtime记录，未调用Actions API，无法区分cron未触发与触发后未产出。",
+    "read_only": true
+  },
+  "formal_action": {
+    "status": "NOT_PROVIDED",
+    "execution_status": "UNKNOWN",
+    "preserve_rule": "普通账户同步不擦除最近正式决策。",
+    "read_only": true
   },
   "decision_read_plan": {
     "mode": "QUERY_TIME_REFRESH_FIRST",
@@ -1499,13 +1617,13 @@
       "runtime_health": "data/state/runtime_health.json",
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
-        "status": "FRESH",
-        "age_seconds": 792,
+        "status": "STALE",
+        "age_seconds": 3042,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
       "data_freshness": {
-        "status": "FRESH",
+        "status": "STALE",
         "provider": "hithink-finance",
         "count": 13,
         "etf_universe_count": 11,
@@ -1517,7 +1635,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 16.632,
-        "age_seconds": 792
+        "age_seconds": 3042
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新计算FRESH/DEGRADED/STALE。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -1564,7 +1682,7 @@
     "system_consistency": "data/state/system_consistency.json"
   },
   "data_status": {
-    "status": "FRESH",
+    "status": "STALE",
     "provider": "hithink-finance",
     "count": 13,
     "etf_universe_count": 11,
@@ -1576,11 +1694,11 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 16.632,
-    "age_seconds": 792
+    "age_seconds": 3042
   },
   "freshness_at_context_build": {
-    "status": "FRESH",
-    "age_seconds": 792,
+    "status": "STALE",
+    "age_seconds": 3042,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -1599,7 +1717,7 @@
   },
   "runtime_health": {
     "generated_at": "2026-08-25T03:25:15Z",
-    "workflow_run_id": "32805925243",
+    "workflow_run_id": "32806560883",
     "workflow_run_attempt": "1",
     "target_cadence_seconds": 600,
     "fresh_max_age_seconds": 900,
@@ -1621,19 +1739,19 @@
     "acquisition_seconds": 16.632,
     "count": 13,
     "latest_snapshot": "data/market/snapshots/2026-08-25_112515.json",
-    "scheduled_for": "query_time_push",
+    "scheduled_for": "cron:0,10,20,30 3 * * 1-5",
     "trigger_mode": "QUERY_TIME_PUSH",
-    "started_at": "2026-08-25T11:38:26+08:00",
-    "finished_at": "2026-08-25T11:38:26+08:00",
-    "run_id": "32805925243",
-    "input_commit": "a34e64b39f32b10a3099f6b34fe1153914d5dfc0",
-    "data_commit": "",
+    "started_at": "2026-08-25T11:48:45+08:00",
+    "finished_at": "2026-08-25T11:48:45+08:00",
+    "run_id": "32806560883",
+    "input_commit": "d5eeddc19389293268b33a77274ba2aff2360451",
+    "data_commit": "abbcc89c382c558e87f65a10d4d7e41b2a8b9b9e",
     "provider_as_of": "",
     "failure_stage": "session_gate",
     "reason": "outside_a_share_capture_window"
   },
-  "system_consistency_status": "WARNING",
-  "system_consistency_hard_errors": 0,
+  "system_consistency_status": "FAIL",
+  "system_consistency_hard_errors": 3,
   "etf_universe_count": 11,
   "overseas_context_status": "PASS",
   "overseas_generated_at_beijing": "2026-08-25T10:32:11+08:00",

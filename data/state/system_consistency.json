@@ -1,21 +1,21 @@
 {
-  "generated_at": "2026-08-25T04:10:22Z",
-  "generated_at_beijing": "2026-08-25T12:10:22+08:00",
+  "generated_at": "2026-08-25T04:15:57Z",
+  "generated_at_beijing": "2026-08-25T12:15:57+08:00",
   "repository": {
-    "head_sha": "5dff35a16d51f9921290687cbed0aac4e583c90b",
-    "github_sha": "5dff35a16d51f9921290687cbed0aac4e583c90b",
-    "github_run_id": "32807932028",
+    "head_sha": "e29616924f463ec327145871b1b911efe5dfae3a",
+    "github_sha": "e29616924f463ec327145871b1b911efe5dfae3a",
+    "github_run_id": "32808293415",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "5dff35a16d51f9921290687cbed0aac4e583c90b",
-    "workflow_sha": "5dff35a16d51f9921290687cbed0aac4e583c90b",
+    "checked_commit": "e29616924f463ec327145871b1b911efe5dfae3a",
+    "workflow_sha": "e29616924f463ec327145871b1b911efe5dfae3a",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "status": "FAIL",
-  "hard_error_count": 3,
-  "warning_count": 3,
+  "hard_error_count": 1,
+  "warning_count": 1,
   "checks": [
     {
       "name": "formal_file:ETF规则_MASTER.md",
@@ -95,12 +95,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=5dff35a16d51f9921290687cbed0aac4e583c90b"
+      "detail": "HEAD=e29616924f463ec327145871b1b911efe5dfae3a"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=5dff35a16d51f9921290687cbed0aac4e583c90b GITHUB_SHA=5dff35a16d51f9921290687cbed0aac4e583c90b"
+      "detail": "HEAD=e29616924f463ec327145871b1b911efe5dfae3a GITHUB_SHA=e29616924f463ec327145871b1b911efe5dfae3a"
     },
     {
       "name": "git:critical_files_tracked",
@@ -109,8 +109,8 @@
     },
     {
       "name": "git:working_tree_clean_before_check",
-      "status": "PASS",
-      "detail": "clean"
+      "status": "FAIL",
+      "detail": "dirty=M data/state/dashboard_update_candidate.json\n M data/state/decision_context.json\n M data/state/execution_quality.json\n M data/state/intraday_path_features.json\n M data/state/provider_metrics.json\n M data/state/query_context.json\n M data/state/relative_strength.json\n M data/state/research_context.json\n M data/state/research_evidence_delta.json\n M data/state/research_master_candidates.json\n M data/state/skfolio_risk_evidence.json\n M events/research/daily_features/2026-08-25.json\n M events/research"
     },
     {
       "name": "index_entry:ETF规则_MASTER.md",
@@ -540,37 +540,37 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=FRESH expected=FRESH age_seconds=792"
+      "detail": "declared=STALE expected=STALE age_seconds=3042"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=FRESH expected=FRESH age_seconds=792"
+      "detail": "declared=STALE expected=STALE age_seconds=3042"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
       "status": "PASS",
-      "detail": "query=FRESH decision=FRESH"
+      "detail": "query=STALE decision=STALE"
     },
     {
       "name": "dynamic_freshness:current_snapshot_boundary",
       "status": "PASS",
-      "detail": "CURRENT snapshot_status=DEGRADED; context_status=FRESH; CURRENT is not required to age-transition automatically"
+      "detail": "CURRENT snapshot_status=DEGRADED; context_status=STALE; CURRENT is not required to age-transition automatically"
     },
     {
       "name": "decision:coverage_summary",
-      "status": "FAIL",
-      "detail": "coverage_status=MISSING"
+      "status": "PASS",
+      "detail": "coverage_status=DEGRADED"
     },
     {
       "name": "decision:quality_summary",
-      "status": "FAIL",
-      "detail": "keys=[]"
+      "status": "PASS",
+      "detail": "keys=['degraded_count', 'degraded_objects', 'failed_count', 'failed_objects', 'pass_count', 'read_only', 'source', 'stale_count', 'stale_objects']"
     },
     {
       "name": "decision:failed_objects_explicit",
       "status": "PASS",
-      "detail": "failed_count=None failed_objects=None"
+      "detail": "failed_count=3 failed_objects=['159561', '513180', '561980']"
     },
     {
       "name": "decision:query_decision_current_aligned",
@@ -579,23 +579,23 @@
     },
     {
       "name": "point_in_time:context_not_before_market",
-      "status": "WARNING",
-      "detail": "context=None market=None"
+      "status": "PASS",
+      "detail": "context=2026-08-25T04:15:57Z market=2026-08-25T11:25:15+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
-      "status": "FAIL",
-      "detail": "fields=[]"
+      "status": "PASS",
+      "detail": "fields=['account_fact_time', 'context_generated_time', 'market_phase', 'market_snapshot_time', 'read_only', 'source_separation']"
     },
     {
       "name": "scheduled_pulse:observable",
-      "status": "WARNING",
-      "detail": "status=MISSING"
+      "status": "PASS",
+      "detail": "status=UNKNOWN"
     },
     {
       "name": "formal_action:execution_boundary",
       "status": "PASS",
-      "detail": "execution_status=MISSING"
+      "detail": "execution_status=UNKNOWN"
     },
     {
       "name": "runtime_health:structured",
@@ -734,13 +734,9 @@
     }
   ],
   "errors": [
-    "decision:coverage_summary: coverage_status=MISSING",
-    "decision:quality_summary: keys=[]",
-    "point_in_time:account_time_separate: fields=[]"
+    "git:working_tree_clean_before_check: dirty=M data/state/dashboard_update_candidate.json\n M data/state/decision_context.json\n M data/state/execution_quality.json\n M data/state/intraday_path_features.json\n M data/state/provider_metrics.json\n M data/state/query_context.json\n M data/state/relative_strength.json\n M data/state/research_context.json\n M data/state/research_evidence_delta.json\n M data/state/research_master_candidates.json\n M data/state/skfolio_risk_evidence.json\n M events/research/daily_features/2026-08-25.json\n M events/research"
   ],
   "warnings": [
-    "point_in_time:context_not_before_market: context=None market=None",
-    "scheduled_pulse:observable: status=MISSING",
     "a_share_runtime:live_state_available: runtime_status=SKIPPED current_snapshot=data/market/snapshots/2026-08-25_112515.json"
   ],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。"
