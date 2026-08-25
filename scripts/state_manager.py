@@ -214,28 +214,77 @@ def build_research_evidence_summary(root: Path) -> dict[str, Any]:
     }
 
 
+
+def _snapshot_rows(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
+    return [x for x in (snapshot.get("rows") if isinstance(snapshot, dict) else []) if isinstance(x, dict)]
+
+
+def build_data_quality_summary(snapshot: dict[str, Any]) -> dict[str, Any]:
+    out = {"pass_count": 0, "degraded_count": 0, "failed_count": 0, "stale_count": 0, "failed_objects": [], "degraded_objects": [], "stale_objects": [], "read_only": True}
+    for row in _snapshot_rows(snapshot):
+        code = str(row.get("symbol") or row.get("thscode") or "")
+        label = f"{row.get('name')}（{code}）" if row.get("name") else code
+        status = str(row.get("quality_status") or row.get("status") or "").upper()
+        if status == "PASS": out["pass_count"] += 1
+        elif status in {"FAILED", "FAIL"}: out["failed_count"] += 1; out["failed_objects"].append(label)
+        elif status in {"DEGRADED", "PARTIAL"}: out["degraded_count"] += 1; out["degraded_objects"].append(label)
+        if status == "STALE" or str(row.get("freshness") or "").upper() == "STALE": out["stale_count"] += 1; out["stale_objects"].append(label)
+    out["source"] = "latest_snapshot_rows"
+    return out
+
+
+def build_analysis_coverage(root: Path, snapshot: dict[str, Any], account: dict[str, Any], quality: dict[str, Any]) -> dict[str, Any]:
+    universe = read_json(root / "config" / "market" / "etf_monitor_universe.json", {})
+    etfs = {str(x.get("code")) for x in universe.get("objects", []) if x.get("code")}
+    rows = _snapshot_rows(snapshot)
+    by_code = {str(x.get("symbol") or ""): x for x in rows}
+    stocks_ctx = read_json(root / "data" / "state" / "stock_market_context.json", {})
+    positions = account.get("positions") or []
+    held = {str(x.get("code")) for x in positions if x.get("asset_type") == "ETF" and float(x.get("quantity") or 0) > 0}
+    stocks = {str(x.get("code")) for x in positions if x.get("asset_type") == "STOCK" and float(x.get("quantity") or 0) > 0}
+    def usable(row): return bool(row) and str(row.get("quality_status") or row.get("status") or "").upper() not in {"FAILED", "FAIL"}
+    observed = etfs - held
+    missing = sorted((etfs | {"000001", "399006"}) - set(by_code))
+    status = "INCOMPLETE" if missing else ("DEGRADED" if quality["failed_count"] or quality["degraded_count"] or quality["stale_count"] else "COMPLETE")
+    stock_objects = stocks_ctx.get("objects") or {}
+    return {"indices_total": 2, "indices_available": sum(usable(x) for x in rows if x.get("asset_class") == "A_SHARE_INDEX"), "held_etfs_total": len(held), "held_etfs_available": sum(usable(by_code.get(x)) for x in held), "observed_etfs_total": len(observed), "observed_etfs_available": sum(usable(by_code.get(x)) for x in observed), "account_stocks_total": len(stocks), "account_stocks_available": sum(str((stock_objects.get(x) or {}).get("quality_status") or "").upper() in {"PASS", "DEGRADED"} for x in stocks), "cash_available": account.get("cash") is not None, "failed_objects": quality["failed_objects"], "degraded_objects": quality["degraded_objects"] + quality["stale_objects"], "missing_objects": missing, "coverage_status": status, "read_only": True}
+
+
+def build_scheduled_pulse_health(root: Path, current: dict[str, Any]) -> dict[str, Any]:
+    runtime = read_json(root / "data" / "state" / "runtime_health.json", {})
+    value = runtime.get("scheduled_pulse_health")
+    if isinstance(value, dict): return value
+    scheduled = str(runtime.get("scheduled_for") or "")
+    trigger = str(runtime.get("trigger_mode") or "").upper()
+    observed = [scheduled] if scheduled and ("SCHEDULE" in trigger or scheduled.startswith("cron:")) else []
+    return {"expected_slots": [], "observed_slots": observed, "missing_slots": [], "status": "WARNING" if current.get("market_date") and not observed else "UNKNOWN", "observation_basis": "仅当前runtime记录，未调用Actions API，无法区分cron未触发与触发后未产出。", "read_only": True}
+
+
+def build_point_in_time_summary(current: dict[str, Any], account: dict[str, Any], snapshot: dict[str, Any], generated_at: str) -> dict[str, Any]:
+    return {"account_fact_time": str(account.get("updated_at") or ""), "market_snapshot_time": str(snapshot.get("captured_at_beijing") or snapshot.get("captured_at") or current.get("captured_at") or ""), "market_phase": snapshot.get("market_phase") or (current.get("data_freshness") or {}).get("market_phase") or "", "context_generated_time": generated_at, "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。", "read_only": True}
+
+
+def build_formal_action_summary(account: dict[str, Any]) -> dict[str, Any]:
+    value = account.get("formal_action") or account.get("last_formal_decision")
+    if not isinstance(value, dict): return {"status": "NOT_PROVIDED", "execution_status": "UNKNOWN", "preserve_rule": "普通账户同步不擦除最近正式决策。", "read_only": True}
+    return {**value, "read_only": True}
+
+
 def build_decision_context(root: Path | None = None) -> dict[str, Any]:
     root = root or root_from_env()
-    current = read_current(root)
-    account = read_account_fact(root)
+    current, account = read_current(root), read_account_fact(root)
     dashboard = root / "ETF当前状态_DASHBOARD.md"
     latest = current.get("latest_snapshot", "")
     snapshot = read_json(root / latest, {}) if latest else {}
-    effective_data_status = evaluate_context_freshness(root, current)
-    intraday_path = read_json(root / "data" / "state" / "intraday_path_features.json", {"status": "MISSING", "features": []})
-    research_evidence = build_research_evidence_summary(root)
+    effective = evaluate_context_freshness(root, current)
+    generated = now_utc()
+    quality = build_data_quality_summary(snapshot)
     return {
-        "generated_at": now_utc(), "rules_version": "V2.2.15", "market_date": current.get("market_date", ""), "latest_node": current.get("latest_valid_node", ""),
-        "current": current, "latest_snapshot": snapshot, "data_status": effective_data_status, "freshness_at_context_build": effective_data_status,
-        "intraday_path_features": intraday_path, "research_evidence": research_evidence,
-        "research_context_file": "data/state/research_context.json", "relative_strength_file": "data/state/relative_strength.json",
-        "research_evidence_delta_file": "data/state/research_evidence_delta.json",
-        "research_master_feedback": {
-            "current_decision": "研究证据及其节点变化直接进入机会判断、统一资本比较、持仓资本效率与正式输出解释。",
-            "master_maintenance": "研究结论只有通过MASTER第8.1正式研究转化机制后才可修改MASTER；自动程序只提供证据，不修改规则。",
-        },
-        "dashboard_source": str(dashboard.relative_to(root)).replace("\\", "/"),
-        "dashboard_summary": {"maintenance_mode": "candidate_only", "automatic_overwrite": False, "automatic_trade_output": False},
-        "account_fact_status": account["status"], "needs_account_screenshot": account["status"] != "VALID",
-        "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。日内路径、研究证据及证据变化必须参与完整MASTER判断，但单独均不是交易信号。系统不追求完美，只增加能提高事前资本收益效率的复杂度。",
+        "generated_at": generated, "rules_version": "V2.2.15", "market_date": current.get("market_date", ""), "latest_node": current.get("latest_valid_node", ""), "current": current, "latest_snapshot": snapshot, "data_status": effective, "freshness_at_context_build": effective,
+        "data_quality_summary": quality, "analysis_coverage": build_analysis_coverage(root, snapshot, account, quality), "point_in_time": build_point_in_time_summary(current, account, snapshot, generated), "scheduled_pulse_health": build_scheduled_pulse_health(root, current), "formal_action": build_formal_action_summary(account),
+        "intraday_path_features": read_json(root / "data" / "state" / "intraday_path_features.json", {"status": "MISSING", "features": []}), "research_evidence": build_research_evidence_summary(root),
+        "research_context_file": "data/state/research_context.json", "relative_strength_file": "data/state/relative_strength.json", "research_evidence_delta_file": "data/state/research_evidence_delta.json",
+        "research_master_feedback": {"current_decision": "研究证据及其节点变化直接进入机会判断、统一资本比较、持仓资本效率与正式输出解释。", "master_maintenance": "研究结论只有通过MASTER第8.1正式研究转化机制后才可修改MASTER；自动程序只提供证据，不修改规则。"},
+        "dashboard_source": str(dashboard.relative_to(root)).replace("\\", "/"), "dashboard_summary": {"maintenance_mode": "candidate_only", "automatic_overwrite": False, "automatic_trade_output": False}, "account_fact_status": account["status"], "needs_account_screenshot": account["status"] != "VALID",
+        "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。日内路径、研究证据及证据变化必须参与完整MASTER判断，但单独均不是交易信号。",
     }

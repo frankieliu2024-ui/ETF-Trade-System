@@ -67,6 +67,16 @@ def context_freshness(context: dict) -> dict:
     }
 
 
+
+def _time_not_before(later: object, earlier: object) -> bool:
+    if not later or not earlier: return False
+    try:
+        a = datetime.fromisoformat(str(later).replace("Z", "+00:00")); b = datetime.fromisoformat(str(earlier).replace("Z", "+00:00"))
+        if a.tzinfo is None: a = a.replace(tzinfo=timezone.utc)
+        if b.tzinfo is None: b = b.replace(tzinfo=timezone.utc)
+        return a >= b
+    except (TypeError, ValueError): return False
+
 def main() -> int:
     errors: list[str] = []
     warnings: list[str] = []
@@ -238,6 +248,21 @@ def main() -> int:
     current = read_json("data/state/CURRENT.json")
     current_status = str((current.get("data_freshness") or {}).get("status", "")).upper()
     check("dynamic_freshness:current_snapshot_boundary", bool(current_status) and bool(query_expected), f"CURRENT snapshot_status={current_status}; context_status={query_expected}; CURRENT is not required to age-transition automatically")
+
+    coverage = decision_context.get("analysis_coverage") or query_context.get("analysis_coverage") or {}
+    quality = decision_context.get("data_quality_summary") or query_context.get("data_quality_summary") or {}
+    check("decision:coverage_summary", coverage.get("coverage_status") in {"COMPLETE", "DEGRADED", "INCOMPLETE"}, f"coverage_status={coverage.get('coverage_status', 'MISSING')}")
+    check("decision:quality_summary", all(key in quality for key in ("pass_count", "degraded_count", "failed_count", "failed_objects", "degraded_objects")), f"keys={sorted(quality)}")
+    check("decision:failed_objects_explicit", not quality.get("failed_count") or bool(quality.get("failed_objects")), f"failed_count={quality.get('failed_count')} failed_objects={quality.get('failed_objects')}", warning=True)
+    check("decision:query_decision_current_aligned", query_context.get("current", {}).get("latest_snapshot") == decision_context.get("current", {}).get("latest_snapshot"), f"query={query_context.get('current', {}).get('latest_snapshot')} decision={decision_context.get('current', {}).get('latest_snapshot')}")
+    pit = decision_context.get("point_in_time") or query_context.get("point_in_time") or {}
+    check("point_in_time:context_not_before_market", _time_not_before(pit.get("context_generated_time"), pit.get("market_snapshot_time")), f"context={pit.get('context_generated_time')} market={pit.get('market_snapshot_time')}", warning=True)
+    check("point_in_time:account_time_separate", "account_fact_time" in pit and "market_snapshot_time" in pit, f"fields={sorted(pit)}")
+    pulse = decision_context.get("scheduled_pulse_health") or query_context.get("scheduled_pulse_health") or {}
+    check("scheduled_pulse:observable", all(key in pulse for key in ("expected_slots", "observed_slots", "missing_slots", "status")), f"status={pulse.get('status', 'MISSING')}", warning=True)
+    action = decision_context.get("formal_action") or {}
+    check("formal_action:execution_boundary", action.get("execution_status") in {"UNKNOWN", "PENDING", "EXECUTED", "SUPERSEDED"} or not action, f"execution_status={action.get('execution_status', 'MISSING')}")
+
     runtime_status = str(runtime_health.get("status", "")).upper()
     allowed_runtime_statuses = {"NOT_RUN", "PASS", "DEGRADED", "FAILED", "SKIPPED", "SUPERSEDED"}
     check("runtime_health:structured", runtime_status in allowed_runtime_statuses, f"status={runtime_status or 'MISSING'}")
