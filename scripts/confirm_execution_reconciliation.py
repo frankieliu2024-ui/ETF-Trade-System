@@ -163,6 +163,16 @@ def main() -> int:
         item["last_error"] = result.stderr[-500:] or result.stdout[-500:]
         update_state(items, item)
         raise RuntimeError("state sync failed after explicit confirmation")
+    # Rebuild only existing derived state; no provider/network call is made here.
+    for builder in ("build_state_context.py", "build_query_context.py", "build_e2e_status.py"):
+        derived = subprocess.run(["python", str(ROOT / "scripts" / builder)], cwd=ROOT, capture_output=True, text=True, check=False)
+        if derived.returncode != 0:
+            item["lifecycle_status"] = "CONFIRMED"
+            item["derived_state_status"] = "REBUILD_FAILED"
+            item["last_error"] = f"{builder}: " + (derived.stderr[-500:] or derived.stdout[-500:])
+            update_state(items, item)
+            raise RuntimeError("confirmed trade recorded but derived state rebuild failed")
+
     item["lifecycle_status"] = "CONFIRMED"
     item["confirmed_at"] = confirmation_date
     item["confirmation_answer"] = "CONFIRM"
