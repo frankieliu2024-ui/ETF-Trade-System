@@ -319,5 +319,11 @@ jobs:
           PY
           git add data/state/runtime_health.json
           git commit -m "state: finalize runtime health commit"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          # Another pulse may publish between fetch and push; retry the
+          # fast-forward rebase instead of losing a valid fresh context.
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main && git push origin HEAD:main && break
+            if [ "$attempt" = "3" ]; then exit 1; fi
+            git rebase --abort || true
+          done
