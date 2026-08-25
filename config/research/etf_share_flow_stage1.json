@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "role": "RESEARCH_EVIDENCE_ONLY",
+  "decision_eligible": false,
+  "objective": "Test whether lagged official ETF share changes provide stable incremental cross-sectional forward-return information beyond simple momentum.",
+  "official_sources": {
+    "SSE": {
+      "url": "https://query.sse.com.cn/commonQuery.do",
+      "sql_id": "COMMON_SSE_ZQPZ_ETFZL_XXPL_ETFGM_SEARCH_L",
+      "field": "TOT_VOL",
+      "unit": "10000_shares"
+    },
+    "SZSE": {
+      "url": "https://www.szse.cn/api/report/ShowReport/data",
+      "catalog_id": "scsj_fund_jjgm",
+      "field": "current_size",
+      "unit": "10000_shares"
+    }
+  },
+  "availability_rule": "A trading day's published total share is treated as usable only from the next trading day. Signals at date t therefore use share facts no later than t-1.",
+  "horizons_trading_days": [1, 3, 5, 10],
+  "signals": [
+    "share_change_1d_pct_lag1",
+    "share_change_3d_pct_lag1",
+    "share_change_5d_pct_lag1",
+    "neg_share_change_1d_pct_lag1",
+    "neg_share_change_3d_pct_lag1",
+    "neg_share_change_5d_pct_lag1"
+  ],
+  "baselines": ["ret_5d_pct", "ret_20d_pct"],
+  "validation": {
+    "minimum_cross_section_size": 7,
+    "top_k": 3,
+    "required_positive_ic_folds": 2,
+    "required_horizons_with_increment": 2,
+    "increment_rule": "For a signal-direction hypothesis to pass Stage1, it must have positive mean Rank IC in at least 2/3 folds and exceed the best momentum baseline mean Rank IC on at least two forward horizons."
+  },
+  "boundaries": {
+    "trade_signal": null,
+    "trial_confirm": null,
+    "portfolio_target": null,
+    "master_override": false,
+    "historical_decision_reconstruction": false
+  }
+}
