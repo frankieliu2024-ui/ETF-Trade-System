@@ -8,6 +8,7 @@ import re
 import subprocess
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "data" / "state" / "system_consistency.json"
@@ -252,6 +253,30 @@ def main() -> int:
     check("us_extended:session_split", all(x in us_builder for x in ["PRE_MARKET", "REGULAR", "POST_MARKET"]), "US cash/pre/post sessions are explicitly split")
     check("us_extended:beijing_timestamp", "as_of_beijing" in us_builder and "generated_at_beijing" in us_builder, "US extended hours expose Beijing timestamps")
     check("us_extended:dynamic_industry_symbols", "US_EXTENDED_SYMBOLS" in us_builder and "CONDITIONAL_US_INDUSTRY_STOCK" in us_builder, "US industry stocks remain query-time dynamic")
+
+    us_live = read_json("data/state/us_extended_hours_context.json")
+    us_now = datetime.now(timezone.utc)
+    us_local = us_now.astimezone(ZoneInfo("America/New_York"))
+    us_minute = us_local.hour * 60 + us_local.minute
+    us_active = us_local.weekday() < 5 and (4 * 60 <= us_minute < 20 * 60)
+    us_live_ages = []
+    for symbol, record in (us_live.get("objects") or {}).items():
+        latest = record.get("latest") if isinstance(record, dict) else None
+        timestamp = latest.get("timestamp") if isinstance(latest, dict) else None
+        if timestamp is not None:
+            us_live_ages.append(max(0, int((us_now - datetime.fromtimestamp(int(timestamp), timezone.utc)).total_seconds())))
+    live_fresh_limit = int(read_json("config/runtime_policy.json").get("fresh_max_age_seconds", 900))
+    us_live_ok = (not us_active) or (
+        len(us_live_ages) == len(us_live.get("objects") or {})
+        and bool(us_live_ages)
+        and max(us_live_ages) <= live_fresh_limit
+        and str(us_live.get("quality_status", "")).upper() == "PASS"
+    )
+    check(
+        "us_extended:live_freshness",
+        us_live_ok,
+        f"active={us_active} phase={us_local.strftime('%H:%M')} max_age_seconds={max(us_live_ages) if us_live_ages else None} limit={live_fresh_limit}",
+    )
 
     session_gate = read_text("scripts/runtime_session_gate.py")
     check("session_gate:calendar_read", "a_share_trading_calendar_2026.json" in session_gate, "session gate reads official exchange calendar")
