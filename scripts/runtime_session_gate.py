@@ -64,7 +64,10 @@ def main() -> int:
         should_capture = in_opening_auction or in_morning or in_afternoon or in_close_grace
         reason = "capture_window" if should_capture else "outside_capture_window"
 
-    if event_name == "workflow_dispatch":
+    query_time_refresh = os.environ.get("QUERY_TIME_REFRESH", "").lower() == "true"
+    if query_time_refresh and event_name == "push":
+        should_capture, reason = True, "query_time_refresh_global_bypass"
+    elif event_name == "workflow_dispatch":
         reason = "manual_dispatch_capture_window" if should_capture else f"manual_dispatch_{reason}"
 
     set_output("should_capture", "true" if should_capture else "false")
