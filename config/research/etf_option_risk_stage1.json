@@ -1,0 +1,42 @@
+{
+  "research_id": "etf_option_risk_stage1",
+  "status": "ACTIVE_STAGE1",
+  "source_project": {
+    "repository": "simonlin1212/a-stock-data",
+    "reviewed_commit": "f90d67853b8108f13d286e1df20b357e2c5198a9",
+    "license": "Apache-2.0",
+    "role": "method_and_public_data_interface_reference_only"
+  },
+  "target": {
+    "name": "科创50ETF",
+    "code": "588000",
+    "option_underlying": "588000"
+  },
+  "research_question": "ETF期权风险定价是否提供区别于ETF自身价格、ETF份额和全市场融资杠杆的可复用研究信息？",
+  "stage1_scope": [
+    "live_option_chain_availability",
+    "near_month_atm_call_put_iv",
+    "near_month_put_minus_call_iv_skew",
+    "near_vs_next_month_iv_term_structure",
+    "put_call_open_interest_structure",
+    "historical_backfill_availability_and_point_in_time_boundary"
+  ],
+  "stage1_gate": {
+    "live_chain_required": true,
+    "greeks_iv_required": true,
+    "minimum_two_active_expiries_for_term_structure": true,
+    "historical_test_required_for_alpha_claim": true,
+    "no_history_result": "LIVE_FEASIBLE_HISTORY_INSUFFICIENT",
+    "historical_alpha_claim_when_no_history": false
+  },
+  "boundaries": {
+    "research_only": true,
+    "decision_eligible": false,
+    "trade_signal": null,
+    "master_override": false,
+    "production_integration": false,
+    "no_local_bsm_rescue": true,
+    "no_future_information": true,
+    "active_contract_quotes_are_current_fact_only": true
+  }
+}
