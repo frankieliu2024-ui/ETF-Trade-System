@@ -10,6 +10,7 @@ from pathlib import Path
 from statistics import median
 
 from state_manager import atomic_json_write
+from sync_formal_files import sync_formal_files
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
@@ -112,7 +113,14 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
     etfs = [p for p in positions if p.get("asset_type") == "ETF"]
     stocks = [p for p in positions if p.get("asset_type") == "STOCK"]
     etf_pnl = sum(float(p.get("holding_pnl") or 0) for p in etfs)
-    risk_rate = etf_pnl / 200000.0 * 100.0
+    # The formal risk rate is the maintained Known-net strategy return. Broker
+    # floating PnL remains a separate holding-pressure fact.
+    equity_path = ROOT / "data/state/etf_strategy_equity.json"
+    equity = load_json(equity_path) if equity_path.exists() else {}
+    equity_summary = equity.get("summary") or {}
+    risk_rate = safe_float(equity_summary.get("known_net_current_strategy_return_pct"))
+    if risk_rate is None:
+        risk_rate = etf_pnl / 200000.0 * 100.0
     total_asset = float(account.get("total_asset") or 0)
     exposure = (float(account.get("stock_market_value") or 0) / total_asset * 100.0) if total_asset else 0.0
     scenario = request.get("interaction_scenario") or "UNSPECIFIED"
@@ -531,7 +539,10 @@ def main() -> int:
         atomic_json_write(ACCOUNT, account)
         write_trade_review_required(event)
     review_recorded, review_idempotent = record_post_close_review(account, request)
-    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent}
+    # Keep the three human-readable fact documents synchronized even when the
+    # request only confirms a fee/account snapshot and creates no new trade event.
+    formal_files_sync = sync_formal_files(ROOT, account)
+    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "formal_files_sync": formal_files_sync}
     print(json.dumps(result, ensure_ascii=False))
     return 0
 
