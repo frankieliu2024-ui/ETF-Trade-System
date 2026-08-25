@@ -10,6 +10,9 @@ on:
         description: "Send one safe PushPlus test notification"
         required: true
         default: "true"
+  push:
+    paths:
+      - "requests/notification_test/*.json"
 
 permissions:
   contents: write
@@ -20,7 +23,7 @@ concurrency:
 
 jobs:
   notify:
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     env:
@@ -36,7 +39,7 @@ jobs:
           python-version: "3.11"
 
       - name: Send safe test notification
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.test_notification == 'true' }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.test_notification == 'true') || github.event_name == 'push' }}
         run: python scripts/send_decision_notification.py --test
 
       - name: Send material decision notification
