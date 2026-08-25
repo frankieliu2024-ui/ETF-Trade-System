@@ -1,5 +1,5 @@
 {
-  "version": "V1.1",
+  "version": "V1.2",
   "purpose": "统一市场行情查询路由，不生成交易动作",
   "principle": "24小时可查询，但必须根据交易所时区和市场阶段返回正确语义行情",
   "market_priority": {
@@ -77,7 +77,9 @@
     "market_status_cn",
     "data_nature_cn",
     "source",
-    "freshness"
+    "freshness",
+    "refresh_mode",
+    "refresh_failures"
   ],
   "forbidden_behavior": [
     "during_regular_session_return_old_close_as_latest",
@@ -121,5 +123,11 @@
   },
   "query_entry": "scripts/market_quote_router.py::build_market_quote_context",
   "selection_rule": "交易中返回最新实时；盘前返回盘前行情并附最近正式收盘；盘后返回盘后行情并附当日正式收盘；休市返回最近正式收盘。",
-  "user_display_rule": "用户可见市场状态和数据性质必须使用中文；内部phase仅供机器审计。"
+  "user_display_rule": "用户可见市场状态和数据性质必须使用中文；内部phase仅供机器审计。",
+  "query_time_refresh": {
+    "entry": "scripts/query_time_market_refresh.py::refresh_market_quotes",
+    "policy": "config/runtime_policy.json::query_time_refresh_preference",
+    "fallback": "latest_valid_snapshot",
+    "response_rule": "provider result is returned directly for this query; persistence is asynchronous and not required before response"
+  }
 }
