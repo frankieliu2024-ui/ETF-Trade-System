@@ -143,13 +143,13 @@ def update_experience(text: str, account: dict) -> tuple[str, int]:
                 continue
             fee = trade.get("fee")
             amount = trade.get("amount", trade.get("gross_amount"))
-            parts[7] = f"{float(fee):.2f}" if fee is not None else parts[7]
-            parts[8] = f"−{float(amount):,.2f}" if action.upper() in {"BUY", "买入"} else f"{float(amount):,.2f}"
-            note = parts[9].strip()
+            parts[8] = f"{float(fee):.2f}" if fee is not None else parts[8]
+            parts[9] = f"−{float(amount):,.2f}" if action.upper() in {"BUY", "买入"} else f"{float(amount):,.2f}"
+            note = parts[10].strip()
             marker = "费用已确认" if str(fee) else "费用待确认"
             if marker not in note:
                 note = (note + "；" if note else "") + marker
-            parts[9] = note
+            parts[10] = note
             lines[i] = "|".join(parts)
             changed += 1
             break
