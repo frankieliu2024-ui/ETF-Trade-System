@@ -61,7 +61,24 @@ def load_etf_universe() -> list[tuple[str, str]]:
 
 POLICY = load_runtime_policy()
 ETF = load_etf_universe()
-EASTMONEY_FALLBACK_ETFS = {"159561", "159941"}
+
+
+def load_eastmoney_fallback_etfs() -> set[str]:
+    path = ROOT / "config" / "market" / "provider_priority.json"
+    if not path.exists():
+        return set()
+    config = json.loads(path.read_text(encoding="utf-8"))
+    policy = config.get("object_fallback_policy") or {}
+    return {
+        str(thscode).split(".")[0]
+        for thscode, rule in policy.items()
+        if str(rule.get("primary", "")) == "hithink_finance"
+        and "eastmoney_push2" in (rule.get("fallback") or [])
+        and rule.get("direct_only") is True
+    }
+
+
+EASTMONEY_FALLBACK_ETFS = load_eastmoney_fallback_etfs()
 RETRY_LIMIT = int(os.environ.get("HITHINK_RETRY_LIMIT", POLICY["provider_retry_limit"]))
 TIMEOUT_SECONDS = int(os.environ.get("HITHINK_TIMEOUT_SECONDS", POLICY["provider_timeout_seconds"]))
 MAX_WORKERS = int(os.environ.get("HITHINK_MAX_WORKERS", POLICY["provider_max_workers"]))
@@ -233,7 +250,7 @@ def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
     if not thscode.endswith(".SZ"):
         raise RuntimeError(f"Eastmoney ETF fallback expects SZ ETF thscode, got {thscode}")
     params = {
-        "secid": f"0.{code}",
+        "secid": f"{'1' if thscode.endswith('.SH') else '0'}.{code}",
         "fltt": "2",
         "invt": "2",
         "fields": "f43,f44,f45,f46,f47,f48,f57,f58,f60,f86,f124",
@@ -275,7 +292,7 @@ def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
         provider="eastmoney_push2", provider_primary="hithink-finance",
         fallback_used=True,
         fallback_reason="hithink-finance fund snapshot unavailable or unsupported; verified direct Eastmoney push2 ETF quote",
-    ) | {"provider_http_status": status_code, "provider_symbol": f"0.{code}", "provider_timestamp_field": "f124" if data.get("f124") not in (None, "", 0, "0") else "f86"}
+    ) | {"provider_http_status": status_code, "provider_symbol": f"{'1' if thscode.endswith('.SH') else '0'}.{code}", "provider_timestamp_field": "f124" if data.get("f124") not in (None, "", 0, "0") else "f86"}
 
 
 def fetch_etf_with_fallback(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
