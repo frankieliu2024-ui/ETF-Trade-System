@@ -122,6 +122,8 @@ jobs:
             msg="state: refresh system consistency"
           fi
           git commit -m "$msg"
+          # Context refresh is derived and must not block the owned consistency commit.
+          git restore --worktree .
           git pull --rebase origin main
           git push origin HEAD:main
       - name: Enforce research backfill result
