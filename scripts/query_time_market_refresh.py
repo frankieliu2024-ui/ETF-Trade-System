@@ -154,6 +154,11 @@ def refresh_market_quotes(root: Path | str, requested_symbols: list[str], now: d
     for symbol in deduped:
         market = "CN" if _cn_code(symbol) else DEFAULT_SYMBOLS.get(symbol, ("", _market_for_symbol(symbol)))[1]
         try:
+            # Closed and midday-break markets fall back to their last valid
+            # regular snapshot; only a publishable session is queried.
+            phase = market_phase(market, now=now)
+            if phase not in {"REGULAR", "OPENING_AUCTION", "PRE_MARKET", "POST_MARKET"}:
+                continue
             if market == "CN":
                 quotes.append(_a_share(symbol, root, now, policy))
             else:
