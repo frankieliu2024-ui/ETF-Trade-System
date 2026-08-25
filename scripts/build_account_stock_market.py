@@ -88,7 +88,7 @@ def fetch_eastmoney_stock(stock: dict) -> dict:
         raise RuntimeError(f"Eastmoney {code} provider date is stale: {provider_dt.isoformat()}")
     if abs((now_dt - provider_dt).total_seconds()) > 1500:
         raise RuntimeError(f"Eastmoney {code} provider timestamp is stale: {provider_dt.isoformat()}")
-    return {
+    candidate = {
         "code": code, "name": stock.get("name", ""), "thscode": symbol,
         "open": values["open"], "high": values["high"], "low": values["low"], "close": values["close"], "prev_close": values["prev_close"],
         "change_pct": ((float(values["close"]) / float(values["prev_close"])) - 1) * 100 if float(values["prev_close"]) else None,
@@ -98,6 +98,10 @@ def fetch_eastmoney_stock(stock: dict) -> dict:
         "volume_raw": data.get("f47"), "volume_unit_raw": "hand", "volume_unit": "share", "amount_unit": "CNY",
         "quality_status": "PASS", "quantity": stock.get("quantity"), "market_value_from_account": stock.get("market_value"),
     }
+    ok, reason = validate_market_row(candidate, code, expected_name=str(data.get("f58") or stock.get("name") or ""), market_date=now_dt.date().isoformat(), now=now_dt.astimezone(timezone.utc), runtime_policy={"degraded_max_age_seconds": 1500})
+    if not ok:
+        raise RuntimeError(f"{code} quality guard: {reason}")
+    return candidate
 
 
 def market_phase(timestamp_ms: object) -> str:
