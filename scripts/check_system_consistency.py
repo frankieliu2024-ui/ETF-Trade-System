@@ -16,7 +16,7 @@ SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
 FORMAL_FILES = ["ETF规则_MASTER.md", "ETF当前状态_DASHBOARD.md", "ETF交易复盘与经验库_2026.md", "ETF市场行情档案_2026.md"]
 CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/overseas_runtime_health.json", "data/state/account_fact.json", "data/state/us_extended_hours_context.json", "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json", "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json"]
-CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_stock_context.py", "scripts/build_account_stock_market.py", "scripts/market_data_guard.py", "tests/test_market_data_guard.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_query_context.py", ".github/workflows/market-snapshot.yml", ".github/workflows/on-demand-market-data.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
+CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_stock_context.py", "scripts/build_account_stock_market.py", "scripts/market_data_guard.py", "tests/test_market_data_guard.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_query_context.py", "scripts/market_quote_router.py", "config/market/market_quote_router.json", "tests/test_market_quote_router.py", "scripts/build_post_market_review.py", ".github/workflows/market-snapshot.yml", ".github/workflows/on-demand-market-data.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
 EXPECTED_INDICES = {"000001.SH", "399006.SZ", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
 REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api", "eastmoney_push2"}
 
@@ -97,15 +97,26 @@ def main() -> int:
         if not ok:
             (warnings if warning else errors).append(f"{name}: {detail}")
 
-    test_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "discover", "-s", "tests", "-p", "test_market_data_guard.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-    check("tests:market_data_guard", test_proc.returncode == 0, (test_proc.stdout + test_proc.stderr)[-1000:])
+    test_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "discover", "-s", "tests", "-p", "test_market*.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+    check("tests:market_data_and_quote_router", test_proc.returncode == 0, (test_proc.stdout + test_proc.stderr)[-1000:])
 
-    compile_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "py_compile", "scripts/market_data_guard.py", "scripts/cloud_runner_snapshot.py", "scripts/build_account_stock_market.py", "scripts/build_overseas_context.py", "scripts/build_overseas_runtime_health.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-    check("tests:market_data_guard_compile", compile_proc.returncode == 0, (compile_proc.stdout + compile_proc.stderr)[-1000:])
+    compile_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "py_compile", "scripts/market_data_guard.py", "scripts/market_quote_router.py", "scripts/cloud_runner_snapshot.py", "scripts/build_account_stock_market.py", "scripts/build_overseas_context.py", "scripts/build_overseas_runtime_health.py", "scripts/build_query_context.py", "scripts/build_post_market_review.py", "scripts/state_manager.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+    check("tests:runtime_modules_compile", compile_proc.returncode == 0, (compile_proc.stdout + compile_proc.stderr)[-1000:])
 
     for path in FORMAL_FILES:
         check(f"formal_file:{path}", (ROOT / path).exists(), "exists" if (ROOT / path).exists() else "missing")
     check(f"data_standard:{DATA_STANDARD}", (ROOT / DATA_STANDARD).exists(), "root-level standard exists" if (ROOT / DATA_STANDARD).exists() else "missing")
+    router_config = read_json("config/market/market_quote_router.json")
+    check("router:config_exists", (ROOT / "config/market/market_quote_router.json").exists(), "unified router configuration exists")
+    check("router:module_exists", (ROOT / "scripts/market_quote_router.py").exists(), "unified router module exists")
+    router_module = read_text("scripts/market_quote_router.py")
+    check("router:implementation_entry", "build_market_quote_context" in router_module and "display_market_status" in router_module, "router builds a routed quote view and Chinese display status")
+    check("router:user_display_chinese", all(label in router_module for label in ("美股交易中", "美股盘前", "美股盘后", "美股休市中")), "US user-facing statuses are Chinese")
+    check("router:required_output_contract", all(key in router_config.get("required_output_fields", []) for key in ("market_status_cn", "data_nature_cn", "data_time_beijing")), "config declares routed output fields")
+    for entry_path in ("scripts/state_manager.py", "scripts/build_query_context.py", "scripts/build_post_market_review.py"):
+        entry_text = read_text(entry_path)
+        check(f"router:entry:{entry_path}", "market_quote_router" in entry_text and "build_market_quote_context" in entry_text, "query/review entry is wired to the unified router")
+    check("router:decision_context_field", "market_quote_router" in read_text("scripts/state_manager.py"), "decision context exposes routed quotes")
     for path in CORE_RUNTIME_FILES:
         check(f"runtime_file:{path}", (ROOT / path).exists(), "exists" if (ROOT / path).exists() else "missing core runtime dependency")
 
