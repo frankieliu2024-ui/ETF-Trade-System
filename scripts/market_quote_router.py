@@ -216,9 +216,10 @@ def _row_quote(row: dict[str, Any], market: str, route_info: MarketQuoteRoute, n
 
 def _latest_overseas_record(key: str, market: str, phase: str, overseas: dict, extended: dict) -> dict[str, Any] | None:
     record = (overseas.get("objects") or {}).get(key)
-    extended_record = (extended.get("objects") or {}).get(key)
+    proxy_key = {"NDX": "QQQ", "SOX": "SOXX"}.get(key, key)
+    extended_record = (extended.get("objects") or {}).get(proxy_key)
     if market == "US" and phase in {"PRE_MARKET", "POST_MARKET"} and extended_record:
-        return extended_record
+        return {**extended_record, "symbol": key, "name": record.get("name", key), "reference_role": "EXTENDED_HOURS_PROXY"}
     return record or extended_record
 
 
