@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from state_manager import atomic_json_write, read_current, update_current
+from market_data_guard import validate_market_row
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
@@ -276,7 +277,7 @@ def fetch_eastmoney_index(code: str, thscode: str, market_phase: str) -> dict:
     if provider_dt.date() != now_dt.date() or abs((now_dt - provider_dt).total_seconds()) > max(60, int(POLICY["degraded_max_age_seconds"])):
         raise RuntimeError(f"Eastmoney index {code} provider timestamp is stale: {provider_dt.isoformat()}")
     item = {**fields, "price_change_ratio_pct": ((fields["last_price"] / fields["prev_price"]) - 1) * 100 if fields["prev_price"] else None}
-    return row("A_SHARE_INDEX", code, thscode, item, now_dt.isoformat(timespec="seconds"), provider_ts, market_phase, provider="eastmoney_push2", provider_primary="hithink-finance", fallback_used=True, fallback_reason="hithink-finance index snapshot unavailable or invalid; verified direct Eastmoney quote") | {"provider_symbol": f"{'1' if thscode.endswith('.SH') else '0'}.{code}", "provider_timestamp_field": "f86", "volume_raw": data.get("f47"), "volume_unit_raw": "hand", "volume_unit": "share", "amount_raw": data.get("f48"), "amount_unit": "CNY", "provider_name": str(data.get("f58", ""))}
+    candidate = row("A_SHARE_INDEX", code, thscode, item, now_dt.isoformat(timespec="seconds"), provider_ts, market_phase, provider="eastmoney_push2", provider_primary="hithink-finance", fallback_used=True, fallback_reason="hithink-finance index snapshot unavailable or invalid; verified direct Eastmoney quote") | {"provider_symbol": f"{'1' if thscode.endswith('.SH') else '0'}.{code}", "provider_timestamp_field": "f86", "volume_raw": data.get("f47"), "volume_unit_raw": "hand", "volume_unit": "share", "amount_raw": data.get("f48"), "amount_unit": "CNY", "provider_name": str(data.get("f58", ""))}
 
 
 def failed_index_row(code: str, thscode: str, error: str, market_phase: str) -> dict:
@@ -331,7 +332,7 @@ def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
         **fields,
         "price_change_ratio_pct": ((fields["last_price"] / fields["prev_price"]) - 1) * 100 if fields["prev_price"] else None,
     }
-    return row(
+    candidate = row(
         "ETF", code, thscode, item, now_dt.isoformat(timespec="seconds"), provider_ts, market_phase,
         provider="eastmoney_push2", provider_primary="hithink-finance",
         fallback_used=True,
@@ -347,6 +348,10 @@ def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
         "amount_raw": data.get("f48"),
         "amount_unit": "CNY",
     }
+    ok, reason = validate_market_row(candidate, code, expected_name=candidate.get("provider_name"), market_date=now_dt.date().isoformat(), now=now_dt.astimezone(UTC), runtime_policy=POLICY)
+    if not ok:
+        raise RuntimeError(f"{code} quality guard: {reason}")
+    return candidate
 
 
 def fetch_etf_with_fallback(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
@@ -367,7 +372,11 @@ def fetch_etf(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
     if len(items) != 1:
         raise RuntimeError(f"expected one ETF row for {code}, got {len(items)}")
     received = now_shanghai()
-    return row("ETF", code, thscode, items[0], received.isoformat(timespec="seconds"), obj.get("data", {}).get("timestamp"), a_share_market_phase(received))
+    candidate = row("ETF", code, thscode, items[0], received.isoformat(timespec="seconds"), obj.get("data", {}).get("timestamp"), a_share_market_phase(received))
+    ok, reason = validate_market_row(candidate, code, market_date=received.date().isoformat(), now=received.astimezone(UTC), runtime_policy=POLICY)
+    if not ok:
+        raise RuntimeError(f"{code} quality guard: {reason}")
+    return candidate
 
 
 def failed_etf_row(code: str, thscode: str, error: str, market_phase: str) -> dict:
