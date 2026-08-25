@@ -302,15 +302,14 @@ def main() -> int:
     check("workflow:overseas_preopen_exists", "build_overseas_context.py" in overseas_workflow, "standalone overseas pre-open pulse wired")
     check("workflow:us_extended_wired", "build_us_extended_hours_context.py" in overseas_workflow and "us_extended_hours_context.json" in overseas_workflow, "US extended-hours context wired into A-share pre-open workflow")
     check("workflow:us_postmarket_0700_start", '*/10 23 * * 0-4' in overseas_workflow, "Beijing 07:00-07:50 prior-US post-market tail scheduled")
-    check("workflow:overseas_0800_start", '*/10 0 * * 1-5' in overseas_workflow, "Beijing 08:00-08:50 overseas pulses scheduled")
+    check("workflow:overseas_0800_start", '*/10 0-7 * * 1-5' in overseas_workflow, "Beijing 08:00-15:50 overseas pulses scheduled")
     check("workflow:overseas_asia_10m", '*/10 0-7 * * 1-5' in overseas_workflow, "Beijing 08:00-15:50 Asia pulses scheduled every ten minutes")
     check("workflow:overseas_runtime_health", "build_overseas_runtime_health.py" in overseas_workflow and "overseas_runtime_health.json" in overseas_workflow, "overseas runtime health is generated and committed")
     check("workflow:overseas_hithink_runtime", "HITHINK_FINANCE_API_KEY" in overseas_workflow and "@hithink-tech/hithink-finance-cli" in overseas_workflow, "overseas runner installs Hithink CLI and receives secret")
 
     us_workflow = read_text(".github/workflows/us-extended-hours-pulse.yml")
     check("workflow:us_afternoon_exists", "build_us_extended_hours_context.py" in us_workflow, "standalone US afternoon/evening extended-hours pulse wired")
-    check("workflow:us_premarket_dst_window", '0 8-13 * * 1-5' in us_workflow and '20,30 13 * * 1-5' in us_workflow, "Beijing 16:00-21:30 DST-sensitive US pre-market coverage scheduled")
-    check("workflow:us_premarket_standard_window", '0,20,30 14 * * 1-5' in us_workflow, "Beijing 22:00-22:30 standard-time US pre-market/open boundary scheduled")
+    check("workflow:us_10m_schedule", '*/10 8-23 * * 1-5' in us_workflow and '*/10 0-1 * * 2-6' in us_workflow, "US pre-market/regular/post-market pulses scheduled every ten minutes")
 
     maintenance_workflow = read_text(".github/workflows/system-consistency.yml")
     check("maintenance_workflow:data_standard_trigger", DATA_STANDARD in maintenance_workflow, "data standard changes trigger consistency workflow")
