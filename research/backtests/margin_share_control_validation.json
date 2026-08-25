@@ -1,0 +1,1362 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-08-25T10:10:34Z",
+  "mode": "RESEARCH_ONLY_MARGIN_SHARE_FLOW_FINAL_VALIDATION",
+  "objective": "Test whether Stage1-passing margin-financing signals retain stable incremental information after ETF own momentum and validated reverse 5d ETF share-flow control.",
+  "targets": [
+    {
+      "code": "561980",
+      "name": "半导体设备ETF"
+    },
+    {
+      "code": "588000",
+      "name": "科创50ETF"
+    },
+    {
+      "code": "159781",
+      "name": "科创创业ETF"
+    },
+    {
+      "code": "159992",
+      "name": "创新药ETF"
+    },
+    {
+      "code": "515880",
+      "name": "通信ETF"
+    },
+    {
+      "code": "159326",
+      "name": "电网设备ETF"
+    }
+  ],
+  "stage1_reference": "research/backtests/market_breadth_margin_stage1_validation.json",
+  "stage1_passing_signals": [
+    "margin_balance_5d_change_lag1",
+    "margin_buy_5d_vs20_lag1"
+  ],
+  "controls": [
+    "mom5_lag1",
+    "mom20_lag1",
+    "reverse_share_change_5d_lag1"
+  ],
+  "point_in_time": {
+    "margin": "T margin facts usable from T+1",
+    "etf_share_flow": "T ETF share facts usable from T+1",
+    "local": "momentum closes no later than D-1; forward return starts ETF open D"
+  },
+  "margin_coverage": {
+    "status": "PASS",
+    "rows_complete": 370,
+    "sse_rows": 398,
+    "szse_rows": 390,
+    "provider_path": "SSE+SZSE official"
+  },
+  "share_coverage": {
+    "share_fact_rows": 2388,
+    "SSE_targets": [
+      "515880",
+      "561980",
+      "588000"
+    ],
+    "SZSE_targets": [
+      "159326",
+      "159781",
+      "159992"
+    ],
+    "errors": [],
+    "by_etf": {
+      "159326": {
+        "share_rows": 398,
+        "control_rows": 392
+      },
+      "159781": {
+        "share_rows": 398,
+        "control_rows": 392
+      },
+      "159992": {
+        "share_rows": 398,
+        "control_rows": 392
+      },
+      "515880": {
+        "share_rows": 398,
+        "control_rows": 392
+      },
+      "561980": {
+        "share_rows": 398,
+        "control_rows": 392
+      },
+      "588000": {
+        "share_rows": 398,
+        "control_rows": 392
+      }
+    }
+  },
+  "validation": {
+    "controls": [
+      "mom5_lag1",
+      "mom20_lag1",
+      "reverse_share_change_5d_lag1"
+    ],
+    "fold_results": [
+      {
+        "fold": "fold1",
+        "code": "561980",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.1459,
+            "top_bottom_spread_pct_points": 0.4007
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": -0.0638,
+            "top_bottom_spread_pct_points": -0.0527
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "561980",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.1347,
+            "top_bottom_spread_pct_points": 0.8932
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": -0.1476,
+            "top_bottom_spread_pct_points": -0.8318
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "561980",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.2361,
+            "top_bottom_spread_pct_points": 1.9083
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": -0.1424,
+            "top_bottom_spread_pct_points": -1.7366
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "588000",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.1125,
+            "top_bottom_spread_pct_points": 0.5109
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": -0.0007,
+            "top_bottom_spread_pct_points": 0.2584
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "588000",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.0999,
+            "top_bottom_spread_pct_points": 0.7814
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": -0.0833,
+            "top_bottom_spread_pct_points": 0.3031
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "588000",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.1935,
+            "top_bottom_spread_pct_points": 1.8308
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": -0.081,
+            "top_bottom_spread_pct_points": 0.061
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "159781",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.1851,
+            "top_bottom_spread_pct_points": 0.9534
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.0393,
+            "top_bottom_spread_pct_points": 0.493
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "159781",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.095,
+            "top_bottom_spread_pct_points": 1.6774
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": -0.0703,
+            "top_bottom_spread_pct_points": 0.6004
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "159781",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.1752,
+            "top_bottom_spread_pct_points": 2.905
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": -0.0938,
+            "top_bottom_spread_pct_points": 0.9562
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "159992",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.1363,
+            "top_bottom_spread_pct_points": 0.6323
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.1341,
+            "top_bottom_spread_pct_points": 0.4604
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "159992",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.2376,
+            "top_bottom_spread_pct_points": 1.4091
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.2163,
+            "top_bottom_spread_pct_points": 1.5154
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "159992",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.1676,
+            "top_bottom_spread_pct_points": 1.0626
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.2237,
+            "top_bottom_spread_pct_points": 1.6894
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "515880",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.2209,
+            "top_bottom_spread_pct_points": 1.421
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.0628,
+            "top_bottom_spread_pct_points": 0.5661
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "515880",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.1911,
+            "top_bottom_spread_pct_points": 2.3194
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.0607,
+            "top_bottom_spread_pct_points": 1.1561
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "515880",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.1315,
+            "top_bottom_spread_pct_points": 2.1276
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": -0.0314,
+            "top_bottom_spread_pct_points": 1.0625
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "159326",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.0814,
+            "top_bottom_spread_pct_points": 0.3754
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.0121,
+            "top_bottom_spread_pct_points": 0.1105
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "159326",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.1171,
+            "top_bottom_spread_pct_points": 0.7207
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": -0.1115,
+            "top_bottom_spread_pct_points": -0.1391
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "159326",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 126,
+            "partial_rank_ic": 0.232,
+            "top_bottom_spread_pct_points": 0.9493
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 126,
+            "partial_rank_ic": -0.1342,
+            "top_bottom_spread_pct_points": -0.0994
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "561980",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": -0.0463,
+            "top_bottom_spread_pct_points": -0.0924
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.0631,
+            "top_bottom_spread_pct_points": 0.3972
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "561980",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": -0.2076,
+            "top_bottom_spread_pct_points": -1.6638
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.0278,
+            "top_bottom_spread_pct_points": 1.177
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "561980",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": -0.1082,
+            "top_bottom_spread_pct_points": -1.5036
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.1048,
+            "top_bottom_spread_pct_points": 2.3043
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "588000",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": -0.0741,
+            "top_bottom_spread_pct_points": -0.2611
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.0428,
+            "top_bottom_spread_pct_points": 0.1983
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "588000",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": -0.1581,
+            "top_bottom_spread_pct_points": -1.1779
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.0588,
+            "top_bottom_spread_pct_points": 0.7988
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "588000",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": -0.0221,
+            "top_bottom_spread_pct_points": -0.5688
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.1717,
+            "top_bottom_spread_pct_points": 1.7512
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "159781",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.0788,
+            "top_bottom_spread_pct_points": 0.0582
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.0826,
+            "top_bottom_spread_pct_points": 0.1262
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "159781",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": -0.0717,
+            "top_bottom_spread_pct_points": -0.5173
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.0267,
+            "top_bottom_spread_pct_points": 0.076
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "159781",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.0772,
+            "top_bottom_spread_pct_points": 0.3474
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.1952,
+            "top_bottom_spread_pct_points": 1.0512
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "159992",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": -0.1452,
+            "top_bottom_spread_pct_points": -0.6248
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.0587,
+            "top_bottom_spread_pct_points": 0.3188
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "159992",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": -0.2234,
+            "top_bottom_spread_pct_points": -1.3714
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.0498,
+            "top_bottom_spread_pct_points": 0.2393
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "159992",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": -0.1467,
+            "top_bottom_spread_pct_points": -1.2396
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.1297,
+            "top_bottom_spread_pct_points": 1.1418
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "515880",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.0601,
+            "top_bottom_spread_pct_points": -0.437
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.0545,
+            "top_bottom_spread_pct_points": -0.161
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "515880",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": -0.1805,
+            "top_bottom_spread_pct_points": -2.0345
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": -0.0995,
+            "top_bottom_spread_pct_points": -1.0026
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "515880",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": -0.1783,
+            "top_bottom_spread_pct_points": -2.2728
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": -0.0412,
+            "top_bottom_spread_pct_points": -0.9252
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "159326",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": -0.1365,
+            "top_bottom_spread_pct_points": -0.7981
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.0578,
+            "top_bottom_spread_pct_points": 0.4232
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "159326",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.0127,
+            "top_bottom_spread_pct_points": -0.1204
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.1032,
+            "top_bottom_spread_pct_points": 0.747
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "159326",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.1774,
+            "top_bottom_spread_pct_points": 1.4437
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 116,
+            "partial_rank_ic": 0.1215,
+            "top_bottom_spread_pct_points": 0.6408
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "561980",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.1389,
+            "top_bottom_spread_pct_points": 1.5184
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.266,
+            "top_bottom_spread_pct_points": 1.9759
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "561980",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.3188,
+            "top_bottom_spread_pct_points": 5.0149
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.4529,
+            "top_bottom_spread_pct_points": 7.5102
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "561980",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.3731,
+            "top_bottom_spread_pct_points": 8.5677
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.4281,
+            "top_bottom_spread_pct_points": 9.7754
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "588000",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.0733,
+            "top_bottom_spread_pct_points": 0.9119
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.256,
+            "top_bottom_spread_pct_points": 1.7336
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "588000",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.2785,
+            "top_bottom_spread_pct_points": 3.5131
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.4383,
+            "top_bottom_spread_pct_points": 5.5431
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "588000",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.269,
+            "top_bottom_spread_pct_points": 5.4079
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.3931,
+            "top_bottom_spread_pct_points": 6.0963
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "159781",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.1895,
+            "top_bottom_spread_pct_points": 0.3508
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.2281,
+            "top_bottom_spread_pct_points": 1.309
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "159781",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.3497,
+            "top_bottom_spread_pct_points": 3.6006
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.3131,
+            "top_bottom_spread_pct_points": 3.2654
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "159781",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.4576,
+            "top_bottom_spread_pct_points": 5.4616
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.3146,
+            "top_bottom_spread_pct_points": 4.1013
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "159992",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": -0.0661,
+            "top_bottom_spread_pct_points": -0.0535
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": -0.118,
+            "top_bottom_spread_pct_points": -0.9344
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "159992",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": -0.059,
+            "top_bottom_spread_pct_points": -0.1277
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": -0.0677,
+            "top_bottom_spread_pct_points": -1.055
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "159992",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": -0.2155,
+            "top_bottom_spread_pct_points": -1.2165
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": -0.2251,
+            "top_bottom_spread_pct_points": -1.9151
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "515880",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.0265,
+            "top_bottom_spread_pct_points": 0.0728
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.0916,
+            "top_bottom_spread_pct_points": 0.842
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "515880",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.0853,
+            "top_bottom_spread_pct_points": 0.9797
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.0092,
+            "top_bottom_spread_pct_points": 1.7655
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "515880",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.1285,
+            "top_bottom_spread_pct_points": 2.3024
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": -0.0136,
+            "top_bottom_spread_pct_points": 1.5072
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "159326",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.0289,
+            "top_bottom_spread_pct_points": 0.0185
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.0533,
+            "top_bottom_spread_pct_points": 0.2483
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "159326",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.0052,
+            "top_bottom_spread_pct_points": -0.6994
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": -0.0417,
+            "top_bottom_spread_pct_points": -0.3014
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "159326",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "margin_balance_5d_change_lag1": {
+            "n": 88,
+            "partial_rank_ic": 0.0422,
+            "top_bottom_spread_pct_points": -1.7468
+          },
+          "margin_buy_5d_vs20_lag1": {
+            "n": 88,
+            "partial_rank_ic": -0.0278,
+            "top_bottom_spread_pct_points": -0.6539
+          }
+        }
+      }
+    ],
+    "signal_summary": {
+      "margin_balance_5d_change_lag1": {
+        "qualifying_horizon_count": 3,
+        "stage_pass": true,
+        "horizons": {
+          "1": {
+            "cell_count": 18,
+            "positive_cells": 13,
+            "mean_partial_rank_ic": 0.0561,
+            "mean_top_bottom_spread_pct_points": 0.2754,
+            "stable_etfs": [
+              "159781",
+              "515880",
+              "561980",
+              "588000"
+            ],
+            "etf_summary": {
+              "159326": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": -0.0087,
+                "mean_top_bottom_spread_pct_points": -0.1347
+              },
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.1511,
+                "mean_top_bottom_spread_pct_points": 0.4541
+              },
+              "159992": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.025,
+                "mean_top_bottom_spread_pct_points": -0.0153
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.1025,
+                "mean_top_bottom_spread_pct_points": 0.3523
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0795,
+                "mean_top_bottom_spread_pct_points": 0.6089
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0372,
+                "mean_top_bottom_spread_pct_points": 0.3872
+              }
+            },
+            "qualifies": true
+          },
+          "3": {
+            "cell_count": 18,
+            "positive_cells": 12,
+            "mean_partial_rank_ic": 0.057,
+            "mean_top_bottom_spread_pct_points": 0.7332,
+            "stable_etfs": [
+              "159326",
+              "159781",
+              "515880",
+              "561980",
+              "588000"
+            ],
+            "etf_summary": {
+              "159326": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.045,
+                "mean_top_bottom_spread_pct_points": -0.033
+              },
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.1243,
+                "mean_top_bottom_spread_pct_points": 1.5869
+              },
+              "159992": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0149,
+                "mean_top_bottom_spread_pct_points": -0.03
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.032,
+                "mean_top_bottom_spread_pct_points": 0.4215
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.082,
+                "mean_top_bottom_spread_pct_points": 1.4148
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0734,
+                "mean_top_bottom_spread_pct_points": 1.0389
+              }
+            },
+            "qualifies": true
+          },
+          "5": {
+            "cell_count": 18,
+            "positive_cells": 13,
+            "mean_partial_rank_ic": 0.1106,
+            "mean_top_bottom_spread_pct_points": 1.4315,
+            "stable_etfs": [
+              "159326",
+              "159781",
+              "515880",
+              "561980",
+              "588000"
+            ],
+            "etf_summary": {
+              "159326": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.1505,
+                "mean_top_bottom_spread_pct_points": 0.2154
+              },
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.2367,
+                "mean_top_bottom_spread_pct_points": 2.9047
+              },
+              "159992": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0649,
+                "mean_top_bottom_spread_pct_points": -0.4645
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0272,
+                "mean_top_bottom_spread_pct_points": 0.7191
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.167,
+                "mean_top_bottom_spread_pct_points": 2.9908
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.1468,
+                "mean_top_bottom_spread_pct_points": 2.2233
+              }
+            },
+            "qualifies": true
+          }
+        }
+      },
+      "margin_buy_5d_vs20_lag1": {
+        "qualifying_horizon_count": 2,
+        "stage_pass": true,
+        "horizons": {
+          "1": {
+            "cell_count": 18,
+            "positive_cells": 15,
+            "mean_partial_rank_ic": 0.0733,
+            "mean_top_bottom_spread_pct_points": 0.4618,
+            "stable_etfs": [
+              "159326",
+              "159781",
+              "159992",
+              "515880",
+              "561980",
+              "588000"
+            ],
+            "etf_summary": {
+              "159326": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.0411,
+                "mean_top_bottom_spread_pct_points": 0.2607
+              },
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.1167,
+                "mean_top_bottom_spread_pct_points": 0.6427
+              },
+              "159992": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0249,
+                "mean_top_bottom_spread_pct_points": -0.0517
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.0696,
+                "mean_top_bottom_spread_pct_points": 0.4157
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0884,
+                "mean_top_bottom_spread_pct_points": 0.7735
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0994,
+                "mean_top_bottom_spread_pct_points": 0.7301
+              }
+            },
+            "qualifies": true
+          },
+          "3": {
+            "cell_count": 18,
+            "positive_cells": 11,
+            "mean_partial_rank_ic": 0.0631,
+            "mean_top_bottom_spread_pct_points": 1.1871,
+            "stable_etfs": [
+              "159781",
+              "159992",
+              "561980",
+              "588000"
+            ],
+            "etf_summary": {
+              "159326": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0167,
+                "mean_top_bottom_spread_pct_points": 0.1022
+              },
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0898,
+                "mean_top_bottom_spread_pct_points": 1.3139
+              },
+              "159992": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0661,
+                "mean_top_bottom_spread_pct_points": 0.2332
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": -0.0099,
+                "mean_top_bottom_spread_pct_points": 0.6397
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.111,
+                "mean_top_bottom_spread_pct_points": 2.6185
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.1379,
+                "mean_top_bottom_spread_pct_points": 2.215
+              }
+            },
+            "qualifies": true
+          },
+          "5": {
+            "cell_count": 18,
+            "positive_cells": 9,
+            "mean_partial_rank_ic": 0.0718,
+            "mean_top_bottom_spread_pct_points": 1.4894,
+            "stable_etfs": [
+              "159781",
+              "159992",
+              "561980",
+              "588000"
+            ],
+            "etf_summary": {
+              "159326": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0135,
+                "mean_top_bottom_spread_pct_points": -0.0375
+              },
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.1387,
+                "mean_top_bottom_spread_pct_points": 2.0362
+              },
+              "159992": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0428,
+                "mean_top_bottom_spread_pct_points": 0.3054
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 0,
+                "mean_partial_rank_ic": -0.0287,
+                "mean_top_bottom_spread_pct_points": 0.5482
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.1302,
+                "mean_top_bottom_spread_pct_points": 3.4477
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.1613,
+                "mean_top_bottom_spread_pct_points": 2.6362
+              }
+            },
+            "qualifies": false
+          }
+        }
+      }
+    },
+    "passing_signals": [
+      "margin_balance_5d_change_lag1",
+      "margin_buy_5d_vs20_lag1"
+    ]
+  },
+  "passing_signals": [
+    "margin_balance_5d_change_lag1",
+    "margin_buy_5d_vs20_lag1"
+  ],
+  "research_interpretation": "PROMISING_MARGIN_INCREMENT_BEYOND_SHARE_FLOW",
+  "decision_eligible": false,
+  "trade_signal": null,
+  "trial_confirm": null,
+  "portfolio_target": null,
+  "master_override": false,
+  "production_context_integration": false,
+  "conversion_review_required": true,
+  "research_boundary": "Final statistical independence test only. A passer still requires formal research-conversion review before any current decision-context use; no direct trade action."
+}
