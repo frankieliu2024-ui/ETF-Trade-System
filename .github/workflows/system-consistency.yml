@@ -108,6 +108,12 @@ jobs:
         shell: bash
         run: |
           python scripts/maintenance_guard.py
+      - name: Build top-level end-to-end readiness
+        id: e2e_status
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          python scripts/build_e2e_status.py
       - name: Persist consistency and maintenance state
         if: ${{ always() }}
         shell: bash
@@ -119,7 +125,7 @@ jobs:
           # worktree to latest main before committing. This avoids conflicts
           # when another state-only workflow advances main concurrently.
           mkdir -p /tmp/etf-owned-state/data/state
-          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json; do
+          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json; do
             if [ -f "$f" ]; then
               mkdir -p "/tmp/etf-owned-state/$(dirname "$f")"
               cp "$f" "/tmp/etf-owned-state/$f"
@@ -132,7 +138,7 @@ jobs:
 
           git fetch origin main
           git reset --hard origin/main
-          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json; do
+          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json; do
             if [ -f "/tmp/etf-owned-state/$f" ]; then
               mkdir -p "$(dirname "$f")"
               cp "/tmp/etf-owned-state/$f" "$f"
@@ -153,7 +159,7 @@ jobs:
           if [ "${{ steps.backfill_request.outputs.has_request }}" = "true" ]; then
             msg="research: backfill ETF daily evidence"
           else
-            msg="state: refresh consistency and maintenance guard"
+            msg="state: refresh consistency maintenance and e2e readiness"
           fi
           git commit -m "$msg"
           git push origin HEAD:main
