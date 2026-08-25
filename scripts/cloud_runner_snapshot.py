@@ -14,7 +14,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from state_manager import atomic_json_write, read_current, update_current
-from market_data_guard import validate_market_row
+from market_data_guard import classify_provider_failure, validate_market_row
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
@@ -286,7 +286,7 @@ def fetch_eastmoney_index(code: str, thscode: str, market_phase: str) -> dict:
 
 def failed_index_row(code: str, thscode: str, error: str, market_phase: str) -> dict:
     captured = now_shanghai().isoformat(timespec="seconds")
-    return {"asset_class": "A_SHARE_INDEX", "symbol": code, "thscode": thscode, "open": None, "high": None, "low": None, "close": None, "prev_close": None, "change_pct": None, "volume": None, "amount": None, "provider": "hithink-finance", "provider_primary": "hithink-finance", "provider_used": "hithink-finance", "fallback_used": False, "fallback_reason": "", "provider_timestamp_ms": None, "as_of_beijing": "", "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai", "market_phase": market_phase, "quality_status": "FAILED", "error": error[-500:], "semantic_note": "指数直接行情失败；未使用代理或旧行情补齐。"}
+    return {"asset_class": "A_SHARE_INDEX", "symbol": code, "thscode": thscode, "open": None, "high": None, "low": None, "close": None, "prev_close": None, "change_pct": None, "volume": None, "amount": None, "provider": "hithink-finance", "provider_primary": "hithink-finance", "provider_used": "hithink-finance", "fallback_used": False, "fallback_reason": "", "provider_timestamp_ms": None, "as_of_beijing": "", "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai", "market_phase": market_phase, "quality_status": "FAILED", "error": error[-500:], "failure_class": classify_provider_failure(error), "semantic_note": "指数直接行情失败；未使用代理或旧行情补齐。"}
 
 
 def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
@@ -410,6 +410,7 @@ def failed_etf_row(code: str, thscode: str, error: str, market_phase: str) -> di
         "market_phase": market_phase,
         "quality_status": "FAILED",
         "error": error[-500:],
+        "failure_class": classify_provider_failure(error),
         "semantic_note": "该对象provider请求失败；未使用旧行情、代理或伪造OHLC补齐。"
     }
 
