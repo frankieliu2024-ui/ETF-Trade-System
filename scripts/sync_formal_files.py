@@ -85,6 +85,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str) -> str:
     summary = equity.get("summary") or {}
     pending = summary.get("unknown_fee_flag", True)
     known_fees = summary.get("known_fees")
+    confirmed_account_fees = sum(float(t.get("fee") or 0) for t in (account.get("trades") or []) if str(t.get("fee_status", "")).upper() == "CONFIRMED")
     lines = [
         "## 云端实时状态（自动同步）", "",
         f"> 更新时间：{account.get('updated_at', '')}  ",
@@ -99,7 +100,8 @@ def build_dashboard_block(account: dict, equity: dict, existing: str) -> str:
         f"|当日盈亏|{money(account.get('daily_pnl'))}（{float(account.get('daily_pnl_pct') or 0):+.2f}%）|",
         f"|账户总风险暴露率|约{exposure:.2f}%|",
         f"|ETF策略风险率|约{risk:.2f}%（Known-net；唯一决定风险区间）|" if risk is not None else "|ETF策略风险率|当前辅助权益状态缺失，保留最近有效值|",
-        f"|ETF已确认费用|{money(known_fees)}；待确认费用状态：{'存在' if pending else '无'}|",
+        f"|累计已知ETF费用（权益状态）|{money(known_fees)}；待确认费用状态：{'存在' if pending else '无'}|",
+        f"|本次账户事实已确认费用|{money(confirmed_account_fees)}（仅展示本次确认，权益状态按既有账本维护）|",
         "", "### 当前持仓事实", "",
         "|标的|数量|成本|现价|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|",
     ]
