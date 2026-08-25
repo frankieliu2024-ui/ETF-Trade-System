@@ -37,6 +37,7 @@ jobs:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
       HITHINK_RETRY_LIMIT: "2"
       HITHINK_TIMEOUT_SECONDS: "25"
+      QUERY_TIME_REFRESH: ${{ github.event_name == 'push' && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@v4
         with:
