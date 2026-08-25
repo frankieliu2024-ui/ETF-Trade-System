@@ -1,4 +1,4 @@
-name: Market breadth margin Stage1 temp
+name: Margin share-flow final validation temp
 
 on:
   push:
@@ -10,13 +10,13 @@ permissions:
   contents: write
 
 concurrency:
-  group: market-breadth-margin-stage1
+  group: margin-share-flow-final-validation
   cancel-in-progress: false
 
 jobs:
-  stage1:
+  validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     env:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
       PYTHONUNBUFFERED: "1"
@@ -32,16 +32,16 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install "numpy==1.26.4" "pandas==2.2.2" "requests==2.32.3"
           python -m pip install "git+https://github.com/akfamily/akshare.git@0e7db00cb98ac6709e2b553efb5a79629aca7a72"
-      - name: Run strict PIT market breadth margin Stage1
+      - name: Run strict PIT margin x ETF share-flow final validation
         run: |
-          python scripts/run_market_breadth_margin_stage1_v2.py requests/research_backfill/20260825_market_breadth_margin_stage1.json
+          python scripts/run_margin_share_control_validation.py requests/research_backfill/20260825_market_breadth_margin_stage1.json
       - name: Enforce research-only boundary
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          r=json.loads(Path('research/backtests/market_breadth_margin_stage1_validation.json').read_text(encoding='utf-8'))
-          s=json.loads(Path('data/state/market_breadth_margin_research_status.json').read_text(encoding='utf-8'))
+          r=json.loads(Path('research/backtests/margin_share_control_validation.json').read_text(encoding='utf-8'))
+          s=json.loads(Path('data/state/margin_share_control_status.json').read_text(encoding='utf-8'))
           assert r['decision_eligible'] is False
           assert r['trade_signal'] is None
           assert r['trial_confirm'] is None
@@ -57,8 +57,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add research/backtests/market_breadth_margin_stage1_validation.json data/state/market_breadth_margin_research_status.json
+          git add research/backtests/margin_share_control_validation.json data/state/margin_share_control_status.json
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "research: record market breadth margin Stage1"
+          git commit -m "research: record margin share-flow final validation"
           git pull --rebase origin main
           git push origin HEAD:main
