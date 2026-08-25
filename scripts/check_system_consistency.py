@@ -242,7 +242,7 @@ def main() -> int:
     check("global_quote_router_exists", "build_market_quote_context" in router_module, "global quote router implementation exists")
     check("query_time_refresh_entry_exists", (ROOT / "scripts/query_time_market_refresh.py").exists() and "refresh_market_quotes" in refresh_module, "query-time refresh facade exists")
     check("query_time_refresh_can_bypass_stale_cache", "force_refresh" in query and "QUERY_TIME_IMMEDIATE_REFRESH" in router_module and "_query_refresh_needed" in router_module, "stale cache can trigger provider refresh")
-    check("scheduled_target_cadence_600s", runtime.get("target_cadence_seconds") == 600 and "*/10" in overseas_workflow and "*/10" in read_text(".github/workflows/us-extended-hours-pulse.yml"), "scheduled market workflows target ten-minute cadence")
+    check("scheduled_target_cadence_600s", runtime.get("target_cadence_seconds") == 600 and "*/10" in read_text(".github/workflows/overseas-preopen-pulse.yml") and "*/10" in read_text(".github/workflows/us-extended-hours-pulse.yml"), "scheduled market workflows target ten-minute cadence")
 
     overseas_builder = read_text("scripts/build_overseas_context.py")
     check("overseas:beijing_timestamp", "as_of_beijing" in overseas_builder and "generated_at_beijing" in overseas_builder, "overseas context exposes Beijing timestamps")
