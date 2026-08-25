@@ -50,23 +50,12 @@ def position_map(account: dict) -> dict[str, dict]:
 
 
 def git_previous_account() -> tuple[dict, str]:
-    """Return account_fact immediately before its latest committed change.
-
-    This is used only for deterministic quantity-delta detection. It never turns
-    an observed delta into a trade fact without user confirmation.
-    """
     try:
-        result = subprocess.run(
-            ["git", "log", "-n", "1", "--format=%H", "--", "data/state/account_fact.json"],
-            cwd=ROOT, capture_output=True, text=True, check=False,
-        )
+        result = subprocess.run(["git", "log", "-n", "1", "--format=%H", "--", "data/state/account_fact.json"], cwd=ROOT, capture_output=True, text=True, check=False)
         change_sha = result.stdout.strip()
         if not change_sha:
             return {}, "NO_ACCOUNT_HISTORY"
-        show = subprocess.run(
-            ["git", "show", f"{change_sha}^:data/state/account_fact.json"],
-            cwd=ROOT, capture_output=True, text=True, check=False,
-        )
+        show = subprocess.run(["git", "show", f"{change_sha}^:data/state/account_fact.json"], cwd=ROOT, capture_output=True, text=True, check=False)
         if show.returncode != 0 or not show.stdout.strip():
             return {}, "NO_PRIOR_ACCOUNT_VERSION"
         return json.loads(show.stdout), f"GIT_PARENT_OF_{change_sha[:12]}"
@@ -74,45 +63,74 @@ def git_previous_account() -> tuple[dict, str]:
         return {}, "ACCOUNT_HISTORY_UNAVAILABLE"
 
 
-def decision_is_executable_trial(event: dict) -> bool:
+def parse_money(text: str) -> int | None:
+    for pat, mult in [(r"(10|20|30)\s*[kK]", 1000), (r"(5|10|20|30)\s*,?000\s*元?", 1000)]:
+        m = re.search(pat, text)
+        if m:
+            return int(m.group(1)) * mult
+    return None
+
+
+def extract_sell_intents(text: str) -> list[dict]:
+    out = []
+    # Chinese security name（code） followed by an explicit sell/reduce/exit action.
+    for m in re.finditer(r"([^；;，,。\n]{1,30}?)（(\d{6})）([^；;。\n]{0,60})", text):
+        name, code, tail = m.group(1).strip(), m.group(2), m.group(3)
+        if not any(x in tail for x in ["卖出", "减持", "降低风险", "退出", "清仓"]):
+            continue
+        qty_m = re.search(r"([\d,]+)\s*份", tail)
+        full_exit = any(x in tail for x in ["全部卖出", "全部退出", "清仓", "全部清仓"])
+        out.append({"code": code, "name": name, "side": "SELL", "planned_quantity": int(qty_m.group(1).replace(",", "")) if qty_m else None, "full_exit": full_exit})
+    return out
+
+
+def decision_intents(event: dict) -> list[dict]:
     formal = event.get("formal_decision") or {}
-    amount = str(formal.get("amount_action") or "")
-    lifecycle = str(formal.get("lifecycle") or "")
+    amount_action = str(formal.get("amount_action") or "")
+    lifecycle_text = str(formal.get("lifecycle") or "")
     risk = str(formal.get("risk_permission") or "")
-    text = " ".join([amount, lifecycle, risk])
-    has_trial = "Trial" in text
-    has_5000 = bool(re.search(r"(?:5,?000|5000)\s*元?", text))
-    prohibited = any(x in amount for x in ["新增0元", "0元", "禁止新增"])
-    return has_trial and has_5000 and not prohibited
+    text = " ".join([amount_action, lifecycle_text, risk])
+    if "新增0元" in amount_action:
+        return []
+    dt = parse_dt(event.get("decision_time_beijing"))
+    base = {
+        "decision_id": str(event.get("decision_id") or ""),
+        "decision_time": event.get("decision_time_beijing"),
+        "decision_market_date": event.get("market_date") or (dt.date().isoformat() if dt else ""),
+        "source_event": "",
+    }
+    intents: list[dict] = []
+    code = str(event.get("candidate_code") or "")
+    name = str(event.get("candidate_name") or "")
+    amount = parse_money(text)
+    if code and "Trial" in text and amount == 5000 and "禁止新增" not in risk:
+        intents.append({**base, "code": code, "name": name, "side": "BUY", "lifecycle": "Trial", "planned_amount_yuan": 5000, "planned_quantity": None})
+    elif code and "Confirm" in text and amount in {10000, 20000, 30000} and "禁止新增" not in risk:
+        intents.append({**base, "code": code, "name": name, "side": "BUY", "lifecycle": "Confirm", "planned_amount_yuan": amount, "planned_quantity": None})
+    for sell in extract_sell_intents(amount_action):
+        intents.append({**base, **sell, "lifecycle": "EXIT_OR_RISK_REDUCTION", "planned_amount_yuan": None})
+    return intents
 
 
-def recent_trial_intents() -> list[dict]:
+def recent_intents() -> list[dict]:
     cutoff = datetime.now(TZ) - timedelta(days=LOOKBACK_DAYS)
     intents = []
     for path in (ROOT / "events" / "decisions").glob("*.json"):
         event = read_json(path, {})
-        if event.get("event_type") != "FORMAL_DECISION" or not decision_is_executable_trial(event):
+        if event.get("event_type") != "FORMAL_DECISION":
             continue
         dt = parse_dt(event.get("decision_time_beijing"))
         if dt is None or dt < cutoff:
             continue
-        code = str(event.get("candidate_code") or "")
-        if not code:
-            continue
-        formal = event.get("formal_decision") or {}
-        intents.append({
-            "decision_id": str(event.get("decision_id") or path.stem),
-            "decision_time": event.get("decision_time_beijing"),
-            "decision_market_date": event.get("market_date") or (dt.date().isoformat() if dt else ""),
-            "code": code,
-            "name": str(event.get("candidate_name") or ""),
-            "lifecycle": "Trial",
-            "planned_amount_yuan": 5000,
-            "amount_action": formal.get("amount_action"),
-            "source_event": str(path.relative_to(ROOT)).replace("\\", "/"),
-        })
-    intents.sort(key=lambda x: str(x.get("decision_time") or ""), reverse=True)
-    return intents
+        for intent in decision_intents(event):
+            intent["source_event"] = str(path.relative_to(ROOT)).replace("\\", "/")
+            intents.append(intent)
+    # Deduplicate same decision/security/direction/lifecycle.
+    dedup = {}
+    for x in intents:
+        key = (x["decision_id"], x["code"], x["side"], x["lifecycle"])
+        dedup[key] = x
+    return sorted(dedup.values(), key=lambda x: str(x.get("decision_time") or ""), reverse=True)
 
 
 def trades_for_code(code: str) -> list[dict]:
@@ -124,103 +142,130 @@ def trades_for_code(code: str) -> list[dict]:
     return rows
 
 
-def confirmed_against_intent(intent: dict) -> dict | None:
-    decision_id = intent["decision_id"]
+def relevant_trades(intent: dict) -> list[dict]:
     decision_dt = parse_dt(intent.get("decision_time"))
+    out = []
     for trade in trades_for_code(intent["code"]):
-        if str(trade.get("side") or "").upper() != "BUY":
+        if str(trade.get("side") or "").upper() != intent["side"]:
             continue
-        linked = str(trade.get("linked_decision_id") or "")
         trade_dt = parse_dt(trade.get("executed_at_beijing") or trade.get("confirmed_at_beijing"))
-        if linked == decision_id:
-            return trade
-        if decision_dt and trade_dt and trade_dt >= decision_dt and trade_dt <= decision_dt + timedelta(days=LOOKBACK_DAYS):
-            # Same-code unlinked buy is relevant evidence, but not enough for silent attribution.
-            return {**trade, "_same_code_unlinked": True}
-    return None
+        if decision_dt and trade_dt and decision_dt <= trade_dt <= decision_dt + timedelta(days=LOOKBACK_DAYS):
+            out.append(trade)
+    return out
+
+
+def planned_vs_actual(intent: dict, actual_qty: float | None, actual_amount: float | None) -> tuple[str, float | None]:
+    if intent.get("planned_quantity") and actual_qty is not None:
+        ratio = actual_qty / float(intent["planned_quantity"])
+    elif intent.get("planned_amount_yuan") and actual_amount is not None:
+        ratio = actual_amount / float(intent["planned_amount_yuan"])
+    else:
+        return "UNKNOWN", None
+    if 0.9 <= ratio <= 1.1:
+        return "FULL_OR_ROUNDING_MATCH", round(ratio, 4)
+    if 0 < ratio < 0.9:
+        return "PARTIAL_EXECUTION", round(ratio, 4)
+    if ratio > 1.1:
+        return "OVER_EXECUTION_OR_MULTIPLE_OPERATIONS", round(ratio, 4)
+    return "UNKNOWN", round(ratio, 4)
 
 
 def build() -> dict:
     current = read_json(STATE / "account_fact.json", {})
     previous, history_source = git_previous_account()
-    current_pos = position_map(current)
-    previous_pos = position_map(previous)
-    intents = recent_trial_intents()
+    current_pos, previous_pos = position_map(current), position_map(previous)
+    intents = recent_intents()
     matches = []
 
     for intent in intents:
         code = intent["code"]
-        trade = confirmed_against_intent(intent)
-        if trade and not trade.get("_same_code_unlinked"):
-            matches.append({
-                "status": "CONFIRMED_BY_TRADE_EVENT",
-                "requires_user_confirmation": False,
-                "intent": intent,
-                "trade_event_id": trade.get("event_id"),
-                "execution_date": str(trade.get("executed_at_beijing") or trade.get("confirmed_at_beijing") or "")[:10],
-                "confirmation_date": str(trade.get("confirmed_at_beijing") or "")[:10],
-                "lifecycle_t_date": str(trade.get("executed_at_beijing") or trade.get("confirmed_at_beijing") or "")[:10],
-            })
+        linked = [t for t in relevant_trades(intent) if str(t.get("linked_decision_id") or "") == intent["decision_id"]]
+        unlinked = [t for t in relevant_trades(intent) if str(t.get("linked_decision_id") or "") != intent["decision_id"]]
+        if linked:
+            actual_qty = sum(float(t.get("quantity") or 0) for t in linked)
+            actual_amount = sum(float(t.get("amount") or 0) for t in linked)
+            fill, ratio = planned_vs_actual(intent, actual_qty, actual_amount)
+            dates = [str(t.get("executed_at_beijing") or t.get("confirmed_at_beijing") or "")[:10] for t in linked]
+            matches.append({"status": "CONFIRMED_BY_TRADE_EVENT", "requires_user_confirmation": False, "intent": intent, "trade_event_ids": [t.get("event_id") for t in linked], "fill_status": fill, "fill_ratio": ratio, "execution_date": min(dates) if dates else "", "confirmation_date": max(str(t.get("confirmed_at_beijing") or "")[:10] for t in linked), "lifecycle_t_date": min(dates) if dates else ""})
             continue
 
         old_qty = float((previous_pos.get(code) or {}).get("quantity") or 0)
         new_qty = float((current_pos.get(code) or {}).get("quantity") or 0)
-        delta_qty = new_qty - old_qty
-        if delta_qty <= 0:
-            if trade and trade.get("_same_code_unlinked"):
-                matches.append({
-                    "status": "UNLINKED_BUY_TRADE_REQUIRES_ATTRIBUTION",
-                    "requires_user_confirmation": True,
-                    "intent": intent,
-                    "trade_event_id": trade.get("event_id"),
-                    "suggested_execution_date": str(trade.get("executed_at_beijing") or trade.get("confirmed_at_beijing") or "")[:10],
-                    "reason": "发现同代码买入成交，但尚未明确归因到该Trial决策。",
-                })
+        signed_delta = new_qty - old_qty
+        observed_qty = signed_delta if intent["side"] == "BUY" else -signed_delta
+
+        if unlinked:
+            actual_qty = sum(float(t.get("quantity") or 0) for t in unlinked)
+            actual_amount = sum(float(t.get("amount") or 0) for t in unlinked)
+            fill, ratio = planned_vs_actual(intent, actual_qty, actual_amount)
+            multiple = len(unlinked) > 1
+            matches.append({
+                "status": "MULTIPLE_OPERATIONS_REQUIRE_DETAIL" if multiple else "UNLINKED_TRADE_REQUIRES_ATTRIBUTION",
+                "requires_user_confirmation": True,
+                "intent": intent,
+                "trade_event_ids": [t.get("event_id") for t in unlinked],
+                "fill_status": fill,
+                "fill_ratio": ratio,
+                "suggested_execution_date": str(unlinked[0].get("executed_at_beijing") or unlinked[0].get("confirmed_at_beijing") or "")[:10],
+                "reason": "发现同代码同方向成交，但尚未明确归因到该正式决策。" if not multiple else "同一决策窗口内发现多笔同代码成交，仅靠最终持仓无法安全判断每笔归因。",
+            })
             continue
 
-        row = current_pos.get(code) or {}
-        approx_value = None
-        cost = row.get("cost")
+        if observed_qty <= 0:
+            # A final position snapshot cannot reconstruct an intraday buy-then-sell or sell-then-buy round trip with zero net quantity change.
+            continue
+
+        row = current_pos.get(code) or previous_pos.get(code) or {}
+        approx_amount = None
         try:
-            if old_qty == 0 and cost is not None:
-                approx_value = round(delta_qty * float(cost), 2)
+            if intent["side"] == "BUY" and old_qty == 0 and row.get("cost") is not None:
+                approx_amount = round(observed_qty * float(row["cost"]), 2)
+            elif intent["side"] == "SELL" and row.get("last_price") is not None:
+                approx_amount = round(observed_qty * float(row["last_price"]), 2)
         except (TypeError, ValueError):
-            approx_value = None
-        confidence = "HIGH" if old_qty == 0 else "MEDIUM"
+            pass
+        fill, ratio = planned_vs_actual(intent, observed_qty, approx_amount)
         account_date = str(current.get("last_confirmed_market_date") or "")
         suggested_date = str(intent.get("decision_market_date") or account_date)
+        ambiguity = fill in {"OVER_EXECUTION_OR_MULTIPLE_OPERATIONS"}
+        if intent["side"] == "BUY" and old_qty > 0 and intent.get("planned_amount_yuan"):
+            fill = "AMOUNT_NOT_INFERABLE_FROM_MIXED_COST"
+            ratio = None
+        action_word = "新增" if intent["side"] == "BUY" else "减少"
+        lifecycle = intent["lifecycle"]
+        prompt = f"检测到{intent['name'] or code}（{code}）持仓{action_word}{int(observed_qty):,}份，与{suggested_date}的{lifecycle}决策相符。请确认是否按该决策执行，并确认实际交易日。"
+        if ambiguity:
+            prompt += " 实际变化超过计划规模，可能存在多次操作，请补充成交明细后再归因。"
+        elif fill == "PARTIAL_EXECUTION":
+            prompt += " 当前迹象更像部分成交，请确认实际成交数量/金额。"
         matches.append({
-            "status": "LIKELY_EXECUTED_REQUIRES_CONFIRMATION",
+            "status": "MULTIPLE_OPERATIONS_REQUIRE_DETAIL" if ambiguity else ("PARTIAL_EXECUTION_REQUIRES_CONFIRMATION" if fill == "PARTIAL_EXECUTION" else "LIKELY_EXECUTED_REQUIRES_CONFIRMATION"),
             "requires_user_confirmation": True,
-            "confidence": confidence,
+            "confidence": "HIGH" if (intent["side"] == "BUY" and old_qty == 0) or intent.get("planned_quantity") else "MEDIUM",
             "intent": intent,
-            "observed_account_change": {
-                "previous_quantity": old_qty,
-                "current_quantity": new_qty,
-                "quantity_increase": delta_qty,
-                "approx_position_cost_value_yuan": approx_value,
-                "account_fact_updated_at": current.get("updated_at"),
-                "account_confirmed_market_date": account_date,
-                "history_source": history_source,
-            },
+            "fill_status": fill,
+            "fill_ratio": ratio,
+            "observed_account_change": {"previous_quantity": old_qty, "current_quantity": new_qty, "quantity_change": signed_delta, "directional_quantity": observed_qty, "approx_amount_yuan": approx_amount, "account_fact_updated_at": current.get("updated_at"), "account_confirmed_market_date": account_date, "history_source": history_source},
             "suggested_execution_date": suggested_date,
-            "suggested_lifecycle_t_date": suggested_date,
+            "suggested_lifecycle_t_date": suggested_date if lifecycle in {"Trial", "Confirm"} else None,
             "confirmation_date": now_text()[:10],
-            "user_confirmation_prompt": f"检测到{intent['name'] or code}（{code}）新增持仓，与{suggested_date}的5,000元Trial决策高度匹配。请确认这是否是按该Trial执行的买入；如果是，请确认实际交易日是否为{suggested_date}。",
-            "safety_boundary": "这里只做反向对账候选，不自动生成成交事实；交易日与确认日分开记录，只有用户确认后才能回填Trial的T日。",
+            "user_confirmation_prompt": prompt,
+            "safety_boundary": "这里只生成反向对账候选；不自动生成成交事实。交易日、确认日和生命周期T日分开记录。",
         })
 
     actionable = [x for x in matches if x.get("requires_user_confirmation")]
     result = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "generated_at": now_text(),
         "status": "CONFIRMATION_REQUIRED" if actionable else ("RECONCILED" if matches else "NO_MATCH"),
         "lookback_days": LOOKBACK_DAYS,
+        "supported_intents": ["Trial买入", "Confirm买入", "明确份额减持/卖出", "全部退出/清仓（仅在事实足够时匹配）"],
         "matches": matches,
         "actionable_count": len(actionable),
         "account_fact_updated_at": current.get("updated_at"),
-        "design_rule": "微信/正式决策可以先于成交确认；后续账户截图允许反向匹配最近可执行Trial。execution_date、confirmation_date、lifecycle_t_date必须分离，延迟上传不得把上传日误当交易日。",
-        "safety_boundary": "不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊匹配只请求最小人工确认。",
+        "design_rule": "允许交易决策与实际成交异步确认；支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。",
+        "known_limitation": "仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。",
+        "safety_boundary": "不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。",
     }
     write_json(OUT, result)
     print(json.dumps(result, ensure_ascii=False))
