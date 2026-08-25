@@ -80,10 +80,8 @@ def account_component(account: dict, current: dict) -> dict:
 
 def risk_component(equity: dict) -> dict:
     summary = equity.get("summary") or {}
-    risk_pct = summary.get("known_net_cumulative_return_pct")
-    if risk_pct is None:
-        risk_pct = summary.get("known_net_return_pct")
-    data_quality = equity.get("data_quality") or summary.get("data_quality")
+    risk_pct = summary.get("known_net_current_strategy_return_pct")
+    data_quality = summary.get("known_net_equity_data_quality")
     if risk_pct is not None:
         status = "READY"
         reason = "formal ETF strategy risk metric is available"
