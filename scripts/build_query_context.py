@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import os
 from datetime import datetime, timedelta, timezone
@@ -127,7 +128,7 @@ def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict)
     }
 
 
-def build(root: Path = ROOT) -> dict:
+def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: list[str] | None = None) -> dict:
     current = read_current(root)
     account = read_account_fact(root)
     decision = build_decision_context(root)
@@ -143,6 +144,7 @@ def build(root: Path = ROOT) -> dict:
     freshness = evaluate_freshness(current, policy)
     trading_day_status = current_trading_day_status(trading_calendar)
     account_gate = account_gate_status(current, account, policy)
+    market_quote = build_market_quote_context(root, force_refresh=force_refresh, requested_symbols=requested_symbols)
     return {
         "generated_at": now_utc(), "generated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
         "market_date": current.get("market_date", ""), "latest_valid_node": current.get("latest_valid_node", ""),
@@ -154,7 +156,7 @@ def build(root: Path = ROOT) -> dict:
         "scheduled_pulse_health": decision.get("scheduled_pulse_health", {}),
         "formal_action": decision.get("formal_action", {}),
         "decision_read_plan": build_read_plan(current, account, policy, freshness),
-        "market_quote_router": decision.get("market_quote_router") or build_market_quote_context(root),
+        "market_quote_router": market_quote,
         "canonical_files": CANONICAL_FILES, "data_status": {**(current.get("data_freshness") or {}), **freshness}, "freshness_at_context_build": freshness,
         "trading_day_status": trading_day_status, "runtime_health": runtime_health,
         "system_consistency_status": consistency.get("status", "MISSING"), "system_consistency_hard_errors": consistency.get("hard_error_count", None),
@@ -169,7 +171,12 @@ def build(root: Path = ROOT) -> dict:
 
 
 def main() -> None:
-    context = build(ROOT)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--force-refresh", action="store_true")
+    parser.add_argument("--symbols", default="")
+    args = parser.parse_args()
+    symbols = [x.strip() for x in args.symbols.split(",") if x.strip()]
+    context = build(ROOT, force_refresh=args.force_refresh, requested_symbols=symbols)
     atomic_json_write(ROOT / "data" / "state" / "query_context.json", context)
     print(json.dumps({"ok": True, "generated_at_beijing": context["generated_at_beijing"], "market_date": context["market_date"], "latest_valid_node": context["latest_valid_node"], "system_consistency_status": context["system_consistency_status"], "candidate_trading_day": context["trading_day_status"]["is_candidate_trading_day"], "etf_universe_count": context["etf_universe_count"], "account_fact_status": context["account_fact_status"], "account_usable": context["account_gate"]["can_use_current_account_fact"], "freshness": context["freshness_at_context_build"]["status"], "overseas_context_status": context["overseas_context_status"], "us_extended_hours_status": context["us_extended_hours_status"], "stock_context_status": context["stock_context_status"], "stock_market_context_status": context["stock_market_context_status"], "read_plan_mode": context["decision_read_plan"]["mode"]}, ensure_ascii=False))
 
