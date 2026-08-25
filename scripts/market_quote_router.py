@@ -257,10 +257,14 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
             if isinstance(quote, dict):
                 quotes.append(quote)
         refresh_failures = refreshed.get("failures", [])
+        refreshed_symbols = {str(x.get("symbol", "")).upper() for x in refreshed.get("quotes", []) if isinstance(x, dict)}
     else:
         refresh_failures = []
+        refreshed_symbols = set()
 
     for row in snapshot.get("rows") or []:
+        if str(row.get("symbol", "")).upper() in refreshed_symbols:
+            continue
         if not isinstance(row, dict):
             continue
         asset_class = str(row.get("asset_class") or "").upper()
@@ -270,6 +274,8 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
             quotes.append(_row_quote(row, market, info, query_time))
 
     for key, raw in (overseas.get("objects") or {}).items():
+        if str(key).upper() in refreshed_symbols:
+            continue
         if not isinstance(raw, dict):
             continue
         market = _market_for_overseas(str(key), raw)
