@@ -6,8 +6,10 @@ from pathlib import Path
 
 try:
     from state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current
+    from market_quote_router import build_market_quote_context
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current
+    from scripts.market_quote_router import build_market_quote_context
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 CLOSE_NODES = {"1500", "close"}
@@ -64,6 +66,7 @@ def build(root: Path = ROOT) -> dict:
         "same_day_review_idempotent": True,
         "generated_at": now_utc(),
         "context_file": "data/state/review_context.json",
+        "market_quote_router": build_market_quote_context(root),
         "prohibited_outputs": ["trade_amount", "buy_action", "sell_action", "order"],
     }
     review = {
@@ -79,6 +82,7 @@ def build(root: Path = ROOT) -> dict:
             "latest_snapshot": current.get("latest_snapshot", ""),
         },
         "current": current,
+        "market_quote_router": build_market_quote_context(root),
         "dashboard_summary": decision.get("dashboard_summary", {}),
         "account_fact_status": account["status"],
         "account_updated_at": account.get("updated_at", ""),
