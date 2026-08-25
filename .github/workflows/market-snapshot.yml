@@ -242,6 +242,34 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Finalize runtime health from the post-retry snapshot, not the initial capture result.
+          python - <<'PY'
+          import json
+          from datetime import datetime
+          from pathlib import Path
+          health_path = Path('data/state/runtime_health.json')
+          if health_path.exists():
+              health = json.loads(health_path.read_text(encoding='utf-8'))
+              snapshot_path = Path(str(health.get('latest_snapshot') or ''))
+              if snapshot_path.exists():
+                  snapshot = json.loads(snapshot_path.read_text(encoding='utf-8'))
+                  if str(snapshot.get('workflow_run_id', '')) == str(__import__('os').environ.get('GITHUB_RUN_ID', '')):
+                      quality = str(snapshot.get('quality_status') or '')
+                      if quality in {'PASS', 'DEGRADED'}:
+                          provider_times = [row.get('as_of_beijing') for row in (snapshot.get('rows') or []) if row.get('as_of_beijing')]
+                          health['status'] = quality
+                          health['quality_status'] = quality
+                          health['market_date'] = snapshot.get('market_date', health.get('market_date', ''))
+                          health['node'] = snapshot.get('node', health.get('node', 'live'))
+                          health['market_phase'] = snapshot.get('market_phase', health.get('market_phase', ''))
+                          health['captured_at'] = snapshot.get('captured_at', health.get('captured_at', ''))
+                          health['captured_at_beijing'] = snapshot.get('captured_at_beijing', health.get('captured_at_beijing', ''))
+                          health['provider_as_of'] = max(provider_times) if provider_times else health.get('provider_as_of', '')
+                          health['count'] = snapshot.get('count', health.get('count', 0))
+                          health['latest_snapshot'] = str(snapshot_path).replace('\\\\', '/')
+                          health['failure_stage'] = '' if quality == 'PASS' else health.get('failure_stage', '')
+                          health_path.write_text(json.dumps(health, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')
+          PY
           git add -A -- data/market/snapshots data/state post_market_review events ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
           if git diff --cached --quiet; then
             exit 0
