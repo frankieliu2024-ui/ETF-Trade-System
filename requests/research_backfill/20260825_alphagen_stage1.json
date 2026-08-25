@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "mode": "ALPHAGEN_STAGE1_POINT_IN_TIME_VALIDATION",
+  "config_path": "config/research/alphagen_poc.json",
+  "data_start": "2024-01-01",
+  "data_end": "2026-08-24",
+  "folds": [
+    {
+      "name": "fold1",
+      "train_start": "2024-04-01",
+      "train_end": "2025-03-31",
+      "test_start": "2025-04-01",
+      "test_end": "2025-09-30"
+    },
+    {
+      "name": "fold2",
+      "train_start": "2024-04-01",
+      "train_end": "2025-09-30",
+      "test_start": "2025-10-01",
+      "test_end": "2026-03-31"
+    },
+    {
+      "name": "fold3",
+      "train_start": "2024-04-01",
+      "train_end": "2026-03-31",
+      "test_start": "2026-04-01",
+      "test_end": "2026-08-07"
+    }
+  ],
+  "baselines": ["ret_5d_pct", "ret_20d_pct"],
+  "point_in_time_rule": "Training labels must be fully realized no later than train_end. Test outcomes may use only prices no later than data_end. No historical Trial/Confirm decisions are reconstructed.",
+  "decision_eligible": false
+}
