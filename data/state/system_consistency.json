@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-25T17:26:19Z",
-  "generated_at_beijing": "2026-08-26T01:26:19+08:00",
+  "generated_at": "2026-08-25T17:28:15Z",
+  "generated_at_beijing": "2026-08-26T01:28:15+08:00",
   "repository": {
-    "head_sha": "f361f50a4cc1dff22b9e6d562c2c87598c0ed47e",
-    "github_sha": "f361f50a4cc1dff22b9e6d562c2c87598c0ed47e",
-    "github_run_id": "32877738591",
+    "head_sha": "f7e112896c73160d86ea2a2b890367314770b3f2",
+    "github_sha": "f7e112896c73160d86ea2a2b890367314770b3f2",
+    "github_run_id": "32878044616",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "f361f50a4cc1dff22b9e6d562c2c87598c0ed47e",
-    "workflow_sha": "f361f50a4cc1dff22b9e6d562c2c87598c0ed47e",
+    "checked_commit": "f7e112896c73160d86ea2a2b890367314770b3f2",
+    "workflow_sha": "f7e112896c73160d86ea2a2b890367314770b3f2",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
@@ -19,8 +19,8 @@
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
-      "status": "PASS",
-      "detail": ".............\n----------------------------------------------------------------------\nRan 13 tests in 0.001s\n\nOK\n"
+      "status": "FAIL",
+      "detail": "e_and_exposes_failure\n    self.assertTrue(result[\"refresh_failures\"])\nAssertionError: [] is not true\n\n======================================================================\nFAIL: test_stale_cache_calls_provider_and_prefers_new_quote (test_market_query_time_refresh.QueryTimeRefreshTests.test_stale_cache_calls_provider_and_prefers_new_quote)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_query_time_refresh.py\", line 43, in test_stale_cache_calls_provider_and_prefers_new_quote\n    refresh.assert_called_once()\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/mock.py\", line 918, in assert_called_once\n    raise AssertionError(msg)\nAssertionError: Expected 'refresh_market_quotes' to have been called once. Called 0 times.\n\n----------------------------------------------------------------------\nRan 16 tests in 0.225s\n\nFAILED (failures=2)\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -165,12 +165,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=f361f50a4cc1dff22b9e6d562c2c87598c0ed47e"
+      "detail": "HEAD=f7e112896c73160d86ea2a2b890367314770b3f2"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=f361f50a4cc1dff22b9e6d562c2c87598c0ed47e GITHUB_SHA=f361f50a4cc1dff22b9e6d562c2c87598c0ed47e"
+      "detail": "HEAD=f7e112896c73160d86ea2a2b890367314770b3f2 GITHUB_SHA=f7e112896c73160d86ea2a2b890367314770b3f2"
     },
     {
       "name": "git:critical_files_tracked",
@@ -478,6 +478,26 @@
       "detail": "query context reads and explains US extended hours"
     },
     {
+      "name": "global_quote_router_exists",
+      "status": "PASS",
+      "detail": "global quote router implementation exists"
+    },
+    {
+      "name": "query_time_refresh_entry_exists",
+      "status": "PASS",
+      "detail": "query-time refresh facade exists"
+    },
+    {
+      "name": "query_time_refresh_can_bypass_stale_cache",
+      "status": "PASS",
+      "detail": "stale cache can trigger provider refresh"
+    },
+    {
+      "name": "scheduled_target_cadence_600s",
+      "status": "PASS",
+      "detail": "scheduled market workflows target ten-minute cadence"
+    },
+    {
       "name": "overseas:beijing_timestamp",
       "status": "PASS",
       "detail": "overseas context exposes Beijing timestamps"
@@ -530,7 +550,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "FAIL",
-      "detail": "active=True phase=13:26 max_age_seconds=9423 limit=900"
+      "detail": "active=True phase=13:28 max_age_seconds=9539 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -603,9 +623,9 @@
       "detail": "Beijing 08:00-08:50 overseas pulses scheduled"
     },
     {
-      "name": "workflow:overseas_0900_0910",
-      "status": "FAIL",
-      "detail": "Beijing 09:00/09:10 overseas pulses scheduled"
+      "name": "workflow:overseas_asia_10m",
+      "status": "PASS",
+      "detail": "Beijing 08:00-15:50 Asia pulses scheduled every ten minutes"
     },
     {
       "name": "workflow:overseas_runtime_health",
@@ -650,12 +670,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=37138"
+      "detail": "declared=STALE expected=STALE age_seconds=37254"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=37138"
+      "detail": "declared=STALE expected=STALE age_seconds=37254"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -695,7 +715,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-25T17:26:18Z market=2026-08-25T15:07:20+08:00"
+      "detail": "context=2026-08-25T17:28:14Z market=2026-08-25T15:07:20+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -956,97 +976,12 @@
       "name": "research:runtime_master_candidates_no_auto_update",
       "status": "PASS",
       "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
-    },
-    {
-      "name": "research:decision_context_consumes_evidence",
-      "status": "PASS",
-      "detail": "central decision context must directly consume current research evidence"
-    },
-    {
-      "name": "research:evidence_delta_consumed",
-      "status": "PASS",
-      "detail": "decision context must consume changes versus the prior research node, not only static levels"
-    },
-    {
-      "name": "research:no_composite_capital_efficiency_score",
-      "status": "PASS",
-      "detail": "capital efficiency remains a multidimensional MASTER judgment rather than a hidden score"
-    },
-    {
-      "name": "research:current_decision_boundary",
-      "status": "PASS",
-      "detail": "research evidence is a current-decision input but not a parallel trading entry"
-    },
-    {
-      "name": "research:master_feedback_builder",
-      "status": "PASS",
-      "detail": "MASTER feedback feed exists and automatic MASTER modification is disabled"
-    },
-    {
-      "name": "research:state_context_wiring",
-      "status": "PASS",
-      "detail": "research evidence, delta, execution attribution and MASTER-feedback artifacts are wired into state context"
-    },
-    {
-      "name": "research:no_trade_authority",
-      "status": "PASS",
-      "detail": "research builder remains read-only and cannot generate trading authority"
-    },
-    {
-      "name": "research:point_in_time_decision_price",
-      "status": "PASS",
-      "detail": "formal decision price and comparison evidence must not use a snapshot after decision time"
-    },
-    {
-      "name": "research:decision_comparison_snapshot",
-      "status": "PASS",
-      "detail": "formal decisions preserve the full ETF cross-section for later selection-alpha review"
-    },
-    {
-      "name": "research:hypothesis_lifecycle_link",
-      "status": "PASS",
-      "detail": "Trial/Confirm/holding decisions can be linked by hypothesis without creating a new trading lifecycle label"
-    },
-    {
-      "name": "research:execution_attribution",
-      "status": "PASS",
-      "detail": "decision quality and execution quality are separated and attributable"
-    },
-    {
-      "name": "research:evidence_delta_builder",
-      "status": "PASS",
-      "detail": "research layer explicitly tracks what changed between decision nodes without a composite score"
-    },
-    {
-      "name": "research:historical_backfill_boundary",
-      "status": "PASS",
-      "detail": "historical ETF facts can be backfilled without manufacturing historical decisions"
-    },
-    {
-      "name": "research:optimization_not_perfection",
-      "status": "PASS",
-      "detail": "research complexity is retained only when it improves ex-ante return efficiency or another explicit system objective, not for perfection-seeking"
-    },
-    {
-      "name": "research:runtime_context_read_only",
-      "status": "PASS",
-      "detail": "research_context must be read_only"
-    },
-    {
-      "name": "research:runtime_relative_read_only",
-      "status": "PASS",
-      "detail": "relative_strength must be read_only"
-    },
-    {
-      "name": "research:runtime_master_candidates_no_auto_update",
-      "status": "PASS",
-      "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
     }
   ],
   "errors": [
-    "us_extended:live_freshness: active=True phase=13:26 max_age_seconds=9423 limit=900",
+    "tests:market_data_and_quote_router: e_and_exposes_failure\n    self.assertTrue(result[\"refresh_failures\"])\nAssertionError: [] is not true\n\n======================================================================\nFAIL: test_stale_cache_calls_provider_and_prefers_new_quote (test_market_query_time_refresh.QueryTimeRefreshTests.test_stale_cache_calls_provider_and_prefers_new_quote)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_query_time_refresh.py\", line 43, in test_stale_cache_calls_provider_and_prefers_new_quote\n    refresh.assert_called_once()\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/mock.py\", line 918, in assert_called_once\n    raise AssertionError(msg)\nAssertionError: Expected 'refresh_market_quotes' to have been called once. Called 0 times.\n\n----------------------------------------------------------------------\nRan 16 tests in 0.225s\n\nFAILED (failures=2)\n",
+    "us_extended:live_freshness: active=True phase=13:28 max_age_seconds=9539 limit=900",
     "workflow:overseas_0800_start: Beijing 08:00-08:50 overseas pulses scheduled",
-    "workflow:overseas_0900_0910: Beijing 09:00/09:10 overseas pulses scheduled",
     "workflow:us_premarket_dst_window: Beijing 16:00-21:30 DST-sensitive US pre-market coverage scheduled",
     "workflow:us_premarket_standard_window: Beijing 22:00-22:30 standard-time US pre-market/open boundary scheduled"
   ],
