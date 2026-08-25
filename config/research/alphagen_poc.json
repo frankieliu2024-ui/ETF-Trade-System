@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "role": "RESEARCH_EVIDENCE_ONLY",
+  "decision_eligible": false,
+  "upstream": {
+    "repository": "ICT-FinD-Lab/alphagen",
+    "commit": "259687e8f316994426416c530a94842a2fe6405e",
+    "license_status": "NO_ROOT_LICENSE_DETECTED_2026-08-25",
+    "integration_rule": "Do not copy or vendor upstream source into this repository. Temporary pinned checkout is allowed only for isolated research validation; production adoption requires separate license review."
+  },
+  "objective": "Test whether AlphaGen formulaic alpha mining can provide stable incremental cross-sectional ETF return ranking beyond simple momentum baselines.",
+  "horizons_trading_days": [5, 10],
+  "alpha_mining": {
+    "pool_capacity": 10,
+    "total_timesteps": 8000,
+    "seed": 20260825,
+    "max_backtrack_days": 60,
+    "l1_alpha": 0.0,
+    "device": "cpu",
+    "note": "Stage1 uses AlphaGen RL expression generation and linear alpha pool, with least-squares pool optimization for bounded CPU cost."
+  },
+  "validation": {
+    "minimum_cross_section_size": 7,
+    "top_k": 3,
+    "required_positive_ic_folds": 2,
+    "required_horizons_stable": 2,
+    "baseline_scores": ["ret_5d_pct", "ret_20d_pct"]
+  },
+  "boundaries": {
+    "trade_signal": null,
+    "trial_confirm": null,
+    "portfolio_target": null,
+    "master_override": false,
+    "historical_decision_reconstruction": false
+  }
+}
