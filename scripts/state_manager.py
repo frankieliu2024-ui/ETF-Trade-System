@@ -277,19 +277,33 @@ def build_formal_action_summary(account: dict[str, Any]) -> dict[str, Any]:
 
 
 def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
+    """Build the compact risk summary used by decision/query contexts.
+
+    Only etf_strategy_risk_pct defines the formal risk interval. The other
+    two percentages are explanatory facts and must not become permissions.
+    """
     equity = read_json(root / "data" / "state" / "etf_strategy_equity.json", {})
     summary = equity.get("summary") or {}
     account = read_account_fact(root)
-    etf_float = sum(float(p.get("holding_pnl") or 0) for p in (account.get("positions") or []) if p.get("asset_type") == "ETF")
+    etf_float = sum(
+        float(p.get("holding_pnl") or 0)
+        for p in (account.get("positions") or [])
+        if p.get("asset_type") == "ETF"
+    )
     capital = float(summary.get("starting_etf_strategy_capital") or 200000)
+    known_net = summary.get("known_net_current_strategy_return_pct")
+    if known_net is None:
+        pnl = summary.get("known_net_current_cumulative_pnl")
+        known_net = (float(pnl) / capital * 100.0) if pnl is not None else None
     return {
-        "current_etf_holding_floating_risk_pct": round(etf_float / capital * 100.0, 2),
-        "etf_cumulative_strategy_return_pct_gross": summary.get("current_strategy_return_pct_gross"),
-        "etf_cumulative_strategy_return_pct_known_net": summary.get("known_net_current_strategy_return_pct"),
-        "etf_high_watermark_drawdown_pct_gross": summary.get("current_drawdown_pct"),
-        "etf_high_watermark_drawdown_pct_known_net": summary.get("known_net_current_drawdown_pct"),
-        "known_net_fee_status": summary.get("fee_status", ""),
-        "decision_role": "三项指标联合解释：持仓浮动压力、累计策略损益、距高水位回撤；不单独生成交易动作。",
+        "etf_strategy_risk_pct": known_net,
+        "etf_holding_unrealized_pct": round(etf_float / capital * 100.0, 2),
+        "etf_drawdown_from_high_pct": summary.get("known_net_current_drawdown_pct"),
+        "equity_data_quality": summary.get("known_net_equity_data_quality") or summary.get("equity_coverage_status"),
+        "strategy_equity_known_net": summary.get("known_net_current_strategy_equity"),
+        "high_watermark": summary.get("known_net_high_watermark", capital),
+        "fee_status": summary.get("fee_status", ""),
+        "interpretation": "唯一ETF策略风险率决定风险区间；持仓浮盈亏率与高水位回撤率只解释持仓压力和近期改善/恶化。",
         "read_only": True,
     }
 
@@ -304,7 +318,7 @@ def build_decision_context(root: Path | None = None) -> dict[str, Any]:
     generated = now_utc()
     quality = build_data_quality_summary(snapshot)
     return {
-        "generated_at": generated, "rules_version": "V2.2.15", "market_date": current.get("market_date", ""), "latest_node": current.get("latest_valid_node", ""), "current": current, "latest_snapshot": snapshot, "data_status": effective, "freshness_at_context_build": effective,
+        "generated_at": generated, "rules_version": "V2.2.16", "market_date": current.get("market_date", ""), "latest_node": current.get("latest_valid_node", ""), "current": current, "latest_snapshot": snapshot, "data_status": effective, "freshness_at_context_build": effective,
         "data_quality_summary": quality, "etf_strategy_risk_metrics": build_etf_strategy_risk_metrics(root), "analysis_coverage": build_analysis_coverage(root, snapshot, account, quality), "point_in_time": build_point_in_time_summary(current, account, snapshot, generated), "scheduled_pulse_health": build_scheduled_pulse_health(root, current), "formal_action": build_formal_action_summary(account),
         "intraday_path_features": read_json(root / "data" / "state" / "intraday_path_features.json", {"status": "MISSING", "features": []}), "research_evidence": build_research_evidence_summary(root),
         "research_context_file": "data/state/research_context.json", "relative_strength_file": "data/state/relative_strength.json", "research_evidence_delta_file": "data/state/research_evidence_delta.json",
