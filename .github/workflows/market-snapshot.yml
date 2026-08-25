@@ -223,6 +223,10 @@ jobs:
       - name: Collect current account-stock market facts
         if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_account_stock_market.py
+      - name: Build E2E usability state
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/build_e2e_status.py
+
       - name: Build state context and candidates
         if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_state_context.py
@@ -231,10 +235,6 @@ jobs:
         run: |
           python scripts/build_query_context.py
           python scripts/refresh_gate.py --annotate-contexts
-      - name: Build E2E usability state
-        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
-        run: python scripts/build_e2e_status.py
-
       - name: Build post-market review context
         if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_post_market_review.py
