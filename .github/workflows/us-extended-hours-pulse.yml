@@ -2,6 +2,11 @@ name: US extended-hours pulse
 
 on:
   workflow_dispatch:
+    inputs:
+      symbols:
+        description: "Optional comma-separated US symbols for immediate query-time refresh"
+        required: false
+        default: ""
   schedule:
     # US pre-market during US daylight time: Beijing roughly 16:00-21:30.
     - cron: "0 8-13 * * 1-5"
@@ -27,6 +32,7 @@ jobs:
     timeout-minutes: 10
     env:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
+      US_EXTENDED_SYMBOLS: ${{ inputs.symbols || '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
