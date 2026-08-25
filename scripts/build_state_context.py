@@ -11,6 +11,7 @@ from build_research_master_feedback import build as build_research_master_feedba
 from build_execution_quality import build as build_execution_quality
 from build_skfolio_risk_evidence import build as build_skfolio_risk_evidence
 from build_etf_share_flow_evidence import build as build_etf_share_flow_evidence
+from build_margin_financing_evidence import build as build_margin_financing_evidence
 from state_manager import atomic_json_write, build_dashboard_candidate, build_decision_context
 
 
@@ -67,6 +68,25 @@ def compact_share_flow(evidence: dict) -> dict:
     }
 
 
+def compact_margin_financing(evidence: dict) -> dict:
+    return {
+        "status": evidence.get("status"),
+        "mode": evidence.get("mode"),
+        "use_in_current_decision": evidence.get("use_in_current_decision", False),
+        "fact_latest_date": evidence.get("fact_latest_date"),
+        "provider": evidence.get("provider"),
+        "primary_evidence": evidence.get("primary_evidence") or {},
+        "secondary_evidence": evidence.get("secondary_evidence") or {},
+        "applies_to": evidence.get("applies_to") or [],
+        "validated_reference": evidence.get("validated_reference") or {},
+        "interpretation_rule": evidence.get("interpretation_rule"),
+        "decision_eligible": False,
+        "trade_signal": None,
+        "trial_confirm": None,
+        "portfolio_target": None,
+    }
+
+
 def main() -> None:
     path_features = build_intraday_path_features(ROOT)
     atomic_json_write(ROOT / "data" / "state" / "intraday_path_features.json", path_features)
@@ -85,18 +105,23 @@ def main() -> None:
     atomic_json_write(ROOT / "data" / "state" / "etf_share_flow_evidence.json", share_flow)
     share_flow_summary = compact_share_flow(share_flow)
 
+    margin_financing = build_margin_financing_evidence(ROOT)
+    atomic_json_write(ROOT / "data" / "state" / "margin_financing_evidence.json", margin_financing)
+    margin_financing_summary = compact_margin_financing(margin_financing)
+
     research_master = build_research_master_feedback(ROOT)
     atomic_json_write(ROOT / "data" / "state" / "research_master_candidates.json", research_master)
     atomic_json_write(ROOT / "data" / "state" / "research_context.json", {
         **research,
         "read_only": True,
-        "decision_boundary": "研究层直接向当前决策提供事实、相对强弱、日内路径、证据变化、共同风险与风险侧边际资本信息、经专项验证的ETF份额变化收益增强证据、数据质量、判断/执行归因证据；不得绕过MASTER生成交易动作。",
-        "current_decision_use": "研究证据及其相对上一节点的变化必须参与机会判断、统一资本比较、持仓资本效率和必要的正式输出解释；单一排名、单一相对强弱、单一份额变化、单一风险贡献或研究统计不得机械产生动作。",
+        "decision_boundary": "研究层直接向当前决策提供事实、相对强弱、日内路径、证据变化、共同风险与风险侧边际资本信息、经专项验证的ETF份额变化收益增强证据、经份额控制后仍有独立增量的市场级融资杠杆证据、数据质量、判断/执行归因证据；不得绕过MASTER生成交易动作。",
+        "current_decision_use": "研究证据及其相对上一节点的变化必须参与机会判断、统一资本比较、持仓资本效率和必要的正式输出解释；单一排名、单一相对强弱、单一份额变化、单一融资杠杆变化、单一风险贡献或研究统计不得机械产生动作。",
         "master_feedback": "研究层可形成MASTER维护输入，但只有通过MASTER第8.1正式研究转化机制的高质量专项研究，或多个真实CASE反复暴露的同类问题，才允许正式修改MASTER。",
         "optimization_principle": "不打造完美交易系统；复杂度只有在改善事前收益效率、风险边界、执行质量或复盘学习时才保留。最高目标仍是在可接受风险范围内实现可实现收益最大化。",
         "validated_evidence_summary": {
             "skfolio_risk": skfolio_summary,
             "etf_share_flow": share_flow_summary,
+            "margin_financing": margin_financing_summary,
         },
         "paths": {
             "daily_features": "events/research/daily_features/<market_date>.json",
@@ -106,6 +131,7 @@ def main() -> None:
             "execution_quality": "data/state/execution_quality.json",
             "skfolio_risk_evidence": "data/state/skfolio_risk_evidence.json",
             "etf_share_flow_evidence": "data/state/etf_share_flow_evidence.json",
+            "margin_financing_evidence": "data/state/margin_financing_evidence.json",
             "historical_backfill_status": "data/state/historical_backfill_status.json",
             "provider_metrics": "data/state/provider_metrics.json",
             "decision_events": "events/decisions/<decision_id>.json",
@@ -118,8 +144,10 @@ def main() -> None:
     context = build_decision_context(ROOT)
     context.setdefault("research_evidence", {})["skfolio_risk_evidence"] = skfolio_summary
     context["research_evidence"]["etf_share_flow_evidence"] = share_flow_summary
+    context["research_evidence"]["margin_financing_evidence"] = margin_financing_summary
     context["skfolio_risk_evidence_file"] = "data/state/skfolio_risk_evidence.json"
     context["etf_share_flow_evidence_file"] = "data/state/etf_share_flow_evidence.json"
+    context["margin_financing_evidence_file"] = "data/state/margin_financing_evidence.json"
     context["research_master_candidates"] = research_master
     context["execution_quality"] = execution_quality
     atomic_json_write(ROOT / "data" / "state" / "dashboard_update_candidate.json", candidate)
@@ -137,6 +165,8 @@ def main() -> None:
         "skfolio_use_in_current_decision": skfolio_risk.get("use_in_current_decision", False),
         "etf_share_flow_status": share_flow.get("status"),
         "etf_share_flow_use_in_current_decision": share_flow.get("use_in_current_decision", False),
+        "margin_financing_status": margin_financing.get("status"),
+        "margin_financing_use_in_current_decision": margin_financing.get("use_in_current_decision", False),
         "execution_quality_sample_count": execution_quality.get("execution_cost_sample_count", 0),
         "research_master_candidate_count": len(research_master.get("candidates") or []),
         "trade_decision_generated": False,
