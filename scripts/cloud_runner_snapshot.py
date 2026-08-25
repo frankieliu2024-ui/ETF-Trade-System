@@ -278,6 +278,10 @@ def fetch_eastmoney_index(code: str, thscode: str, market_phase: str) -> dict:
         raise RuntimeError(f"Eastmoney index {code} provider timestamp is stale: {provider_dt.isoformat()}")
     item = {**fields, "price_change_ratio_pct": ((fields["last_price"] / fields["prev_price"]) - 1) * 100 if fields["prev_price"] else None}
     candidate = row("A_SHARE_INDEX", code, thscode, item, now_dt.isoformat(timespec="seconds"), provider_ts, market_phase, provider="eastmoney_push2", provider_primary="hithink-finance", fallback_used=True, fallback_reason="hithink-finance index snapshot unavailable or invalid; verified direct Eastmoney quote") | {"provider_symbol": f"{'1' if thscode.endswith('.SH') else '0'}.{code}", "provider_timestamp_field": "f86", "volume_raw": data.get("f47"), "volume_unit_raw": "hand", "volume_unit": "share", "amount_raw": data.get("f48"), "amount_unit": "CNY", "provider_name": str(data.get("f58", ""))}
+    ok, reason = validate_market_row(candidate, code, expected_name=candidate.get("provider_name"), market_date=now_dt.date().isoformat(), now=now_dt.astimezone(UTC), runtime_policy=POLICY)
+    if not ok:
+        raise RuntimeError(f"{code} quality guard: {reason}")
+    return candidate
 
 
 def failed_index_row(code: str, thscode: str, error: str, market_phase: str) -> dict:
