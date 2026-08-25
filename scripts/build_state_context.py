@@ -53,6 +53,8 @@ def main() -> None:
 
     candidate = build_dashboard_candidate(ROOT)
     context = build_decision_context(ROOT)
+    context.setdefault("research_evidence", {})["skfolio_risk_evidence"] = skfolio_risk
+    context["skfolio_risk_evidence_file"] = "data/state/skfolio_risk_evidence.json"
     context["research_master_candidates"] = research_master
     context["execution_quality"] = execution_quality
     atomic_json_write(ROOT / "data" / "state" / "dashboard_update_candidate.json", candidate)
