@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-08-25T01:53:59Z",
-  "generated_at_beijing": "2026-08-25T09:53:59+08:00",
+  "generated_at": "2026-08-25T01:54:15Z",
+  "generated_at_beijing": "2026-08-25T09:54:15+08:00",
   "repository": {
-    "head_sha": "b6b0824e2a8c345310251f6b0594823d02615e22",
-    "github_sha": "b6b0824e2a8c345310251f6b0594823d02615e22",
-    "github_run_id": "32799297591",
+    "head_sha": "ba4c9b68890e8e42266b71d74936e782209a6d8b",
+    "github_sha": "ba4c9b68890e8e42266b71d74936e782209a6d8b",
+    "github_run_id": "32799314503",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "b6b0824e2a8c345310251f6b0594823d02615e22",
-    "workflow_sha": "b6b0824e2a8c345310251f6b0594823d02615e22",
+    "checked_commit": "ba4c9b68890e8e42266b71d74936e782209a6d8b",
+    "workflow_sha": "ba4c9b68890e8e42266b71d74936e782209a6d8b",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "FAIL",
-  "hard_error_count": 1,
+  "status": "WARNING",
+  "hard_error_count": 0,
   "warning_count": 1,
   "checks": [
     {
@@ -95,12 +95,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=b6b0824e2a8c345310251f6b0594823d02615e22"
+      "detail": "HEAD=ba4c9b68890e8e42266b71d74936e782209a6d8b"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=b6b0824e2a8c345310251f6b0594823d02615e22 GITHUB_SHA=b6b0824e2a8c345310251f6b0594823d02615e22"
+      "detail": "HEAD=ba4c9b68890e8e42266b71d74936e782209a6d8b GITHUB_SHA=ba4c9b68890e8e42266b71d74936e782209a6d8b"
     },
     {
       "name": "git:critical_files_tracked",
@@ -540,22 +540,22 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=67108"
+      "detail": "declared=FRESH expected=FRESH age_seconds=354"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=FRESH expected=FRESH age_seconds=0"
+      "detail": "declared=FRESH expected=FRESH age_seconds=354"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
-      "status": "FAIL",
-      "detail": "query=STALE decision=FRESH"
+      "status": "PASS",
+      "detail": "query=FRESH decision=FRESH"
     },
     {
       "name": "dynamic_freshness:current_snapshot_boundary",
       "status": "PASS",
-      "detail": "CURRENT snapshot_status=DEGRADED; context_status=STALE; CURRENT is not required to age-transition automatically"
+      "detail": "CURRENT snapshot_status=DEGRADED; context_status=FRESH; CURRENT is not required to age-transition automatically"
     },
     {
       "name": "runtime_health:structured",
@@ -688,9 +688,7 @@
       "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
     }
   ],
-  "errors": [
-    "dynamic_freshness:query_decision_aligned: query=STALE decision=FRESH"
-  ],
+  "errors": [],
   "warnings": [
     "a_share_runtime:live_state_available: runtime_status=DEGRADED current_snapshot=data/market/snapshots/2026-08-25_094809.json"
   ],
