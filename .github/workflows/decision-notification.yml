@@ -2,7 +2,10 @@ name: ETF decision notification
 
 on:
   workflow_run:
-    workflows: ["ETF market snapshot"]
+    workflows:
+      - "ETF market snapshot"
+      - "ETF runtime self-healing watchdog"
+      - "ETF workflow failure guard"
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -13,6 +16,9 @@ on:
   push:
     paths:
       - "requests/notification_test/*.json"
+  schedule:
+    # Beijing 15:20 on weekdays: remind only when the final post-close account fact is still missing.
+    - cron: "20 7 * * 1-5"
 
 permissions:
   contents: write
@@ -23,7 +29,7 @@ concurrency:
 
 jobs:
   notify:
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     env:
@@ -38,40 +44,48 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Send safe test notification
+      - name: Send safe notification-channel test
+        id: test_notify
         if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.test_notification == 'true') || github.event_name == 'push' }}
-        run: python scripts/send_decision_notification.py --test
+        continue-on-error: true
+        run: python scripts/notification_center.py --mode channel-test
 
-      - name: Send material decision notification
-        id: notify
+      - name: Send material user-action notification
+        id: event_notify
         if: ${{ github.event_name == 'workflow_run' }}
         continue-on-error: true
-        run: python scripts/send_decision_notification.py
+        run: python scripts/notification_center.py --mode event
 
-      - name: Persist notification state
-        if: ${{ github.event_name == 'workflow_run' && always() }}
+      - name: Send conditional post-close account reminder
+        id: close_notify
+        if: ${{ github.event_name == 'schedule' }}
+        continue-on-error: true
+        run: python scripts/notification_center.py --mode close
+
+      - name: Persist unified notification state
+        if: ${{ always() }}
         shell: bash
         run: |
-          if [ ! -f data/state/decision_notification.json ]; then
+          if [ ! -f data/state/notification_center.json ]; then
             exit 0
           fi
           mkdir -p /tmp/etf-notification-state/data/state
-          cp data/state/decision_notification.json /tmp/etf-notification-state/data/state/decision_notification.json
+          cp data/state/notification_center.json /tmp/etf-notification-state/data/state/notification_center.json
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main
           git reset --hard origin/main
-          cp /tmp/etf-notification-state/data/state/decision_notification.json data/state/decision_notification.json
-          git add data/state/decision_notification.json
+          cp /tmp/etf-notification-state/data/state/notification_center.json data/state/notification_center.json
+          git add data/state/notification_center.json
           if git diff --cached --quiet; then
             exit 0
           fi
-          git commit -m "state: record decision notification"
+          git commit -m "state: record unified notification center"
           git push origin HEAD:main
 
-      - name: Surface notification delivery failure without blocking market workflow
-        if: ${{ github.event_name == 'workflow_run' && steps.notify.outcome == 'failure' }}
+      - name: Surface notification delivery failure without blocking trading system
+        if: ${{ steps.test_notify.outcome == 'failure' || steps.event_notify.outcome == 'failure' || steps.close_notify.outcome == 'failure' }}
         run: |
-          echo "Decision notification failed; market/data workflow remains unaffected. The notification state was persisted for retry/diagnosis."
+          echo "User notification delivery failed; ETF market/data/trading-decision workflows remain unaffected."
           exit 1
