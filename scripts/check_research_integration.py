@@ -110,8 +110,8 @@ def main() -> int:
     )
     check(
         "research:optimization_not_perfection",
-        "不追求完美" in state_manager and "可接受风险范围内" in state_context,
-        "research complexity is justified by expected-return efficiency, not perfection-seeking",
+        "不追求完美" in state_manager and all(token in state_context for token in ["不打造完美交易系统", "事前收益效率"]),
+        "research complexity is retained only when it improves ex-ante return efficiency or another explicit system objective, not for perfection-seeking",
     )
 
     research_context = load("data/state/research_context.json", None)
