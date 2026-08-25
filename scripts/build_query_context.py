@@ -7,8 +7,10 @@ from pathlib import Path
 
 try:
     from state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current, read_json
+    from market_quote_router import build_market_quote_context
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current, read_json
+    from scripts.market_quote_router import build_market_quote_context
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
@@ -23,7 +25,7 @@ CANONICAL_FILES = {
     "stock_monitor_policy": "config/market/stock_monitor_policy.json", "market_delta": "data/state/market_delta.json",
     "overseas_context": "data/state/overseas_context.json", "us_extended_hours_context": "data/state/us_extended_hours_context.json",
     "runtime_health": "data/state/runtime_health.json", "runtime_policy": "config/runtime_policy.json",
-    "system_consistency": "data/state/system_consistency.json",
+    "system_consistency": "data/state/system_consistency.json", "market_quote_router": "scripts/market_quote_router.py", "market_quote_router_config": "config/market/market_quote_router.json",
 }
 
 
@@ -144,7 +146,7 @@ def build(root: Path = ROOT) -> dict:
     return {
         "generated_at": now_utc(), "generated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
         "market_date": current.get("market_date", ""), "latest_valid_node": current.get("latest_valid_node", ""),
-        "current": current, "decision_context": decision,
+        "current": current, "decision_context": decision, "market_quote_router": decision.get("market_quote_router") or build_market_quote_context(root),
         "analysis_coverage": decision.get("analysis_coverage", {}),
         "etf_strategy_risk_metrics": decision.get("etf_strategy_risk_metrics", {}),
         "data_quality_summary": decision.get("data_quality_summary", {}),
@@ -152,6 +154,7 @@ def build(root: Path = ROOT) -> dict:
         "scheduled_pulse_health": decision.get("scheduled_pulse_health", {}),
         "formal_action": decision.get("formal_action", {}),
         "decision_read_plan": build_read_plan(current, account, policy, freshness),
+        "market_quote_router": decision.get("market_quote_router") or build_market_quote_context(root),
         "canonical_files": CANONICAL_FILES, "data_status": {**(current.get("data_freshness") or {}), **freshness}, "freshness_at_context_build": freshness,
         "trading_day_status": trading_day_status, "runtime_health": runtime_health,
         "system_consistency_status": consistency.get("status", "MISSING"), "system_consistency_hard_errors": consistency.get("hard_error_count", None),
