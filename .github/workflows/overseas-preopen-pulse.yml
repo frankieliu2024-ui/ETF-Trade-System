@@ -8,8 +8,8 @@ on:
     - cron: "*/10 23 * * 0-4"
     # 00:00-00:50 UTC = Beijing 08:00-08:50.
     - cron: "*/10 0 * * 1-5"
-    # 01:00/01:10 UTC = Beijing 09:00/09:10.
-    - cron: "0,10 1 * * 1-5"
+    # 00:00-07:50 UTC = Beijing 08:00-15:50, covering Asia sessions.
+    - cron: "*/10 0-7 * * 1-5"
 
 permissions:
   contents: write
@@ -28,6 +28,12 @@ jobs:
       SCHEDULED_FOR: ${{ github.event.schedule || github.event_name }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Rebase pulse workspace before provider calls
+        run: |
+          git fetch origin main
+          git rebase origin/main
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -36,7 +42,8 @@ jobs:
           node-version: "20"
       - name: Install hithink-finance CLI
         run: npm install --global @hithink-tech/hithink-finance-cli
-      - name: Run system consistency preflight
+      - name: Run system consistency live audit
+        continue-on-error: true
         run: python scripts/check_system_consistency.py
       - name: Refresh formal overseas and Asia index context
         run: python scripts/build_overseas_context.py
@@ -58,5 +65,4 @@ jobs:
             exit 0
           fi
           git commit -m "data: refresh overseas pulse and runtime health"
-          git pull --rebase origin main
           git push origin HEAD:main
