@@ -1,8 +1,12 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import sys
 import time
+from pathlib import Path
 import pandas as pd
 import requests
-import scripts.run_etf_share_flow_stage1 as core
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import run_etf_share_flow_stage1 as core
 
 
 def fetch_one(ts, wanted):
