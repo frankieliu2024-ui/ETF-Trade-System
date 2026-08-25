@@ -1,9 +1,9 @@
 {
   "schema_version": "2.0",
-  "updated_at": "2026-08-25T22:27:20+08:00",
-  "last_status": "ARCHIVED",
-  "last_type": "测试",
-  "last_title": "ETF系统通知中心测试",
+  "updated_at": "2026-08-25T23:43:29+08:00",
+  "last_status": "SENT",
+  "last_type": "系统异常",
+  "last_title": "ETF系统有一项故障未能自动处理",
   "notifications": [
     {
       "notification_id": "notification_0000000000004d625bdd",
@@ -17,7 +17,7 @@
       "sent_at": "2026-08-25T22:27:20+08:00",
       "confirmed_at": null,
       "archived_at": "2026-08-25T22:27:20+08:00",
-      "expires_at": null,
+      "expires_at": "2026-08-27T22:27:20+08:00",
       "title": "ETF系统通知中心测试",
       "content": "通知中心已经可以主动联系你。正式运行时，只推送需要你关注、确认或决策的事项。",
       "source": "manual_test",
@@ -28,6 +28,30 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-08-25T22:27:20+08:00"
+    },
+    {
+      "notification_id": "notification_b3e988fbf8abb6d3e8a8",
+      "event_type": "系统异常",
+      "source_event_id": "system:workflow:32867470397:WORKFLOW_FAILURE_UNCLASSIFIED",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-08-25T23:43:28+08:00",
+      "sent_at": "2026-08-25T23:43:29+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-08-27T23:43:28+08:00",
+      "title": "ETF系统有一项故障未能自动处理",
+      "content": "后台维护发现一项无法安全自动修复的故障。\n\n如果该故障影响行情、账户或交易判断，系统将保持谨慎降级；建议稍后检查恢复情况。",
+      "source": "workflow_failure_diagnostic",
+      "confirmation_context": {},
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-08-25T23:43:29+08:00"
     }
   ],
   "recent": [
@@ -46,9 +70,25 @@
       },
       "notification_id": "notification_0000000000004d625bdd",
       "lifecycle_status": "ARCHIVED"
+    },
+    {
+      "key": "system:workflow:32867470397:WORKFLOW_FAILURE_UNCLASSIFIED",
+      "type": "系统异常",
+      "title": "ETF系统有一项故障未能自动处理",
+      "content": "后台维护发现一项无法安全自动修复的故障。\n\n如果该故障影响行情、账户或交易判断，系统将保持谨慎降级；建议稍后检查恢复情况。",
+      "source": "workflow_failure_diagnostic",
+      "status": "SENT",
+      "attempted_at": "2026-08-25T23:43:29+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_b3e988fbf8abb6d3e8a8",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [],
   "policy": "只推送需要用户关注、确认或决策的事项；普通行情刷新、成功自愈和普通后台运行不推送。",
-  "safety_boundary": "通知中心不生成交易动作；只有用户明确确认后才进入trade_event。"
+  "safety_boundary": "通知中心不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
 }
