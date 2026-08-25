@@ -294,5 +294,6 @@
   "notes": {
     "a_share_index_000001": "Eastmoney secid=1.000001映射为个股而非上证指数，暂不作为直接fallback；保持single-source risk warning",
     "hstech": "HS2083当前有失败证据但保留在直接源审计链，待跨多个生产节点证据后再决定是否降级"
-  }
+  },
+  "audit_scope": "对象级主源失败后仅调用已验证直接备源；未验证映射保留SINGLE_SOURCE_RISK，不以代理冒充直连"
 }
