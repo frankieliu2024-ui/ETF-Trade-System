@@ -5,7 +5,7 @@
 
 > 更新时间：2026-08-24T16:10:00+08:00  
 > 来源：BROKER_SCREENSHOT_20260824_1610_USER_CONFIRMED  
-> 场景：POST_CLOSE_REVIEW  
+> 场景：OPENING_CALL_AUCTION  
 > 本区块只同步已确认账户事实与ChatGPT已形成的正式决策；自动程序不得自行推导交易权限或下单。
 
 |项目|最新事实|
@@ -36,7 +36,7 @@
 
 最近一次正式决策未随本次同步请求提供；脚本不自行推断，保留人工/ChatGPT正式决议。
 
-同步请求：`final_audit_sync_20260824_retry`。
+同步请求：``。
 <!-- AUTO_STATE_SYNC_END -->
 
 
