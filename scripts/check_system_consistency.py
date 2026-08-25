@@ -159,6 +159,21 @@ def main() -> int:
     expected_hstech_chain = ["hithink-finance:HS2083", "yahoo_chart_api:HSTECH.HK", "eastmoney_push2:124.HSTECH", "ETF_PROXY_513180"]
     actual_hstech_chain = (provider_cfg.get("objects") or {}).get("HSTECH") or []
     check("providers:hstech_chain_exact", actual_hstech_chain == expected_hstech_chain, f"actual={actual_hstech_chain} expected={expected_hstech_chain}")
+    fallback_policy = provider_cfg.get("object_fallback_policy") or {}
+    universe = read_json("config/market/etf_monitor_universe.json")
+    etf_codes = {str(item.get("code")) for item in (universe.get("objects") or []) if item.get("code")}
+    etf_missing_fallback = sorted(code for code in etf_codes if not isinstance(fallback_policy.get(code + (".SH" if code.startswith(("5", "6")) else ".SZ")), dict))
+    check("providers:etf_fallback_policy", not etf_missing_fallback, f"missing object fallback entries={etf_missing_fallback}", warning=True)
+    invalid_direct = []
+    for object_id, rule in fallback_policy.items():
+        if rule.get("direct_only") is True and any(str(x).startswith("ETF_PROXY") for x in (rule.get("fallback") or [])):
+            invalid_direct.append(object_id)
+    check("providers:direct_only_no_proxy", not invalid_direct, f"direct_only objects with proxy fallback={invalid_direct}")
+    account = read_json("data/state/account_fact.json")
+    account_stocks = [str(item.get("code")) for item in (account.get("positions") or []) if item.get("asset_type") == "STOCK" and float(item.get("quantity") or 0) > 0]
+    stock_missing_fallback = sorted(code for code in account_stocks if code + (".SH" if code.startswith(("6", "5")) else ".SZ") not in fallback_policy)
+    check("providers:account_stock_fallback_policy", not stock_missing_fallback, f"account stocks without direct fallback={stock_missing_fallback}", warning=True)
+    check("providers:single_source_shanghai_index", "000001.SH" not in fallback_policy, "000001.SH remains single-source until a verified Eastmoney index mapping exists", warning=True)
     us_provider = provider_cfg.get("us_extended_hours", {})
     check("providers:us_extended_hours", us_provider.get("base_proxies") == ["QQQ", "SOXX"] and us_provider.get("conditional_industry_stocks") == "dynamic_only", f"us_extended_hours={us_provider}")
 
