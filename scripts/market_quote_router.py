@@ -164,7 +164,7 @@ def _beijing_time(value: Any) -> str:
         return str(value)
 
 
-def _freshness(timestamp: str, now: datetime) -> str:
+def _freshness(timestamp: str, now: datetime, policy: dict[str, Any] | None = None) -> str:
     if not timestamp:
         return "UNKNOWN"
     try:
@@ -174,7 +174,10 @@ def _freshness(timestamp: str, now: datetime) -> str:
         age = max(0, int((now.astimezone(timezone.utc) - dt.astimezone(timezone.utc)).total_seconds()))
     except (TypeError, ValueError):
         return "UNKNOWN"
-    return "FRESH" if age <= 900 else ("DEGRADED" if age <= 1500 else "STALE")
+    policy = policy or {}
+    fresh_limit = int(policy.get("fresh_max_age_seconds", 900))
+    degraded_limit = int(policy.get("degraded_max_age_seconds", 1500))
+    return "FRESH" if age <= fresh_limit else ("DEGRADED" if age <= degraded_limit else "STALE")
 
 
 def _market_for_overseas(key: str, record: dict[str, Any]) -> str:
@@ -192,7 +195,7 @@ def _market_for_overseas(key: str, record: dict[str, Any]) -> str:
     return "UNKNOWN"
 
 
-def _row_quote(row: dict[str, Any], market: str, route_info: MarketQuoteRoute, now: datetime) -> dict[str, Any]:
+def _row_quote(row: dict[str, Any], market: str, route_info: MarketQuoteRoute, now: datetime, policy: dict[str, Any] | None = None) -> dict[str, Any]:
     timestamp = _first_value(row.get("as_of_beijing"), row.get("provider_timestamp"), row.get("captured_at_beijing"), row.get("captured_at"))
     price = _first_value(row.get("latest"), row.get("last"), row.get("latest_price"), row.get("close"), row.get("price"))
     if isinstance(price, dict):
@@ -219,7 +222,7 @@ def _row_quote(row: dict[str, Any], market: str, route_info: MarketQuoteRoute, n
             "最近正式收盘行情"
         ),
         "source": source or "state_context",
-        "freshness": _freshness(_beijing_time(timestamp), now),
+        "freshness": _freshness(_beijing_time(timestamp), now, policy),
         "quality_status": str(row.get("quality_status") or row.get("status") or "UNKNOWN").upper(),
         "direct_quote": not bool(row.get("proxy") or row.get("is_proxy") or row.get("reference_role", "").endswith("PROXY")),
         "route_rule": route_info.semantic_rule,
@@ -242,6 +245,7 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
     if query_time.tzinfo is None:
         query_time = query_time.replace(tzinfo=BEIJING)
     current = _read_json(root, "data/state/CURRENT.json", {})
+    policy = _read_json(root, "config/runtime_policy.json", {})
     snapshot = _read_json(root, str(current.get("latest_snapshot") or ""), {})
     overseas = _read_json(root, "data/state/overseas_context.json", {})
     extended = _read_json(root, "data/state/us_extended_hours_context.json", {})
@@ -271,7 +275,7 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
         if asset_class in {"ETF", "A_SHARE_INDEX", "STOCK"}:
             market = "CN"
             info = route("CN", now=query_time)
-            quotes.append(_row_quote(row, market, info, query_time))
+            quotes.append(_row_quote(row, market, info, query_time, policy))
 
     for key, raw in (overseas.get("objects") or {}).items():
         if str(key).upper() in refreshed_symbols:
@@ -284,7 +288,7 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
         info = route(market, now=query_time)
         selected = _latest_overseas_record(str(key), market, info.phase, overseas, extended)
         if selected:
-            quote = _row_quote({**selected, "symbol": str(selected.get("symbol") or key)}, market, info, query_time)
+            quote = _row_quote({**selected, "symbol": str(selected.get("symbol") or key)}, market, info, query_time, policy)
             quotes.append(quote)
 
     return {
