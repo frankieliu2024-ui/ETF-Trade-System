@@ -1,0 +1,58 @@
+name: ETF share-flow conditional increment PoC
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "requests/research_backfill/etf_share_flow_increment_trigger.txt"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: etf-share-flow-increment-poc
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install bounded dependencies
+        run: pip install numpy==1.26.4 pandas==2.2.2 scipy==1.13.1 requests==2.32.3
+      - name: Run conditional increment validation
+        run: python scripts/run_etf_share_flow_increment_poc.py requests/research_backfill/20260825_etf_share_flow_increment_poc.json
+      - name: Enforce research-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('research/backtests/etf_share_flow_increment_poc.json').read_text(encoding='utf-8'))
+          s=json.loads(Path('data/state/etf_share_flow_increment_status.json').read_text(encoding='utf-8'))
+          assert p['decision_eligible'] is False
+          assert p['trade_signal'] is None
+          assert p['trial_confirm'] is None
+          assert p['portfolio_target'] is None
+          assert p['master_override'] is False
+          assert p['historical_decision_prohibited'] is True
+          assert s['decision_eligible'] is False
+          print(json.dumps({'interpretation':p['research_interpretation'],'summary':p['validation_summary']},ensure_ascii=False))
+          PY
+      - name: Commit compact result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/backtests/etf_share_flow_increment_poc.json data/state/etf_share_flow_increment_status.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "research: record share-flow conditional increment validation"
+          git pull --rebase origin main
+          git push origin HEAD:main
