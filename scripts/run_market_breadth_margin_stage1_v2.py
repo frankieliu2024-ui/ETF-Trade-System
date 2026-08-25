@@ -1,7 +1,7 @@
 from __future__ import annotations
 import pandas as pd
 import akshare as ak
-import scripts.run_market_breadth_margin_stage1 as base
+import run_market_breadth_margin_stage1 as base
 
 _original_fetch_margin = base.fetch_margin
 
