@@ -32,11 +32,12 @@ DISPLAY_STATUS = {
     "CN": {
         "OPENING_AUCTION": "A股开盘前（集合竞价）",
         "REGULAR": "A股交易中",
+        "MIDDAY_BREAK": "A股午间休市",
         "OFF_SESSION": "A股收盘",
     },
-    "HK": {"PRE_OPEN": "港股开盘前", "REGULAR": "港股交易中", "OFF_SESSION": "港股收盘"},
+    "HK": {"PRE_OPEN": "港股开盘前", "REGULAR": "港股交易中", "MIDDAY_BREAK": "港股午间休市", "OFF_SESSION": "港股收盘"},
     "TW": {"PRE_OPEN": "台股开盘前", "REGULAR": "台股交易中", "OFF_SESSION": "台股收盘"},
-    "JP": {"PRE_OPEN": "日股开盘前", "REGULAR": "日股交易中", "OFF_SESSION": "日股收盘"},
+    "JP": {"PRE_OPEN": "日股开盘前", "REGULAR": "日股交易中", "MIDDAY_BREAK": "日股午间休市", "OFF_SESSION": "日股收盘"},
     "KR": {"PRE_OPEN": "韩股开盘前", "REGULAR": "韩股交易中", "OFF_SESSION": "韩股收盘"},
     "US": {
         "PRE_MARKET": "美股盘前",
@@ -84,14 +85,24 @@ def market_phase(market: str, now: datetime | None = None) -> str:
             return "OPENING_AUCTION"
         if _in_window(minute, 9 * 60 + 30, 11 * 60 + 30) or _in_window(minute, 13 * 60, 15 * 60):
             return "REGULAR"
+        if _in_window(minute, 11 * 60 + 30, 13 * 60):
+            return "MIDDAY_BREAK"
         return "OFF_SESSION"
 
     if market == "HK":
-        return "REGULAR" if _in_window(minute, 9 * 60 + 30, 12 * 60) or _in_window(minute, 13 * 60, 16 * 60) else ("PRE_OPEN" if minute < 9 * 60 + 30 else "OFF_SESSION")
+        if _in_window(minute, 9 * 60 + 30, 12 * 60) or _in_window(minute, 13 * 60, 16 * 60):
+            return "REGULAR"
+        if _in_window(minute, 12 * 60, 13 * 60):
+            return "MIDDAY_BREAK"
+        return "PRE_OPEN" if minute < 9 * 60 + 30 else "OFF_SESSION"
     if market == "TW":
         return "REGULAR" if _in_window(minute, 9 * 60, 13 * 60 + 30) else ("PRE_OPEN" if minute < 9 * 60 else "OFF_SESSION")
     if market == "JP":
-        return "REGULAR" if _in_window(minute, 9 * 60, 11 * 60 + 30) or _in_window(minute, 12 * 60 + 30, 15 * 60 + 30) else ("PRE_OPEN" if minute < 9 * 60 else "OFF_SESSION")
+        if _in_window(minute, 9 * 60, 11 * 60 + 30) or _in_window(minute, 12 * 60 + 30, 15 * 60 + 30):
+            return "REGULAR"
+        if _in_window(minute, 11 * 60 + 30, 12 * 60 + 30):
+            return "MIDDAY_BREAK"
+        return "PRE_OPEN" if minute < 9 * 60 else "OFF_SESSION"
     if market == "KR":
         return "REGULAR" if _in_window(minute, 9 * 60, 15 * 60 + 30) else ("PRE_OPEN" if minute < 9 * 60 else "OFF_SESSION")
     if market == "US":
@@ -202,6 +213,7 @@ def _row_quote(row: dict[str, Any], market: str, route_info: MarketQuoteRoute, n
         "market_status_cn": route_info.market_status_cn,
         "data_nature_cn": (
             "实时交易行情" if route_info.phase == "REGULAR" else
+            "午间休市期间的上午最新有效行情" if route_info.phase == "MIDDAY_BREAK" else
             "盘前行情（附最近正式收盘基准）" if route_info.phase == "PRE_MARKET" else
             "盘后行情（附当日正式收盘）" if route_info.phase == "POST_MARKET" else
             "最近正式收盘行情"
@@ -223,7 +235,7 @@ def _latest_overseas_record(key: str, market: str, phase: str, overseas: dict, e
     return record or extended_record
 
 
-def build_market_quote_context(root: Path | str, now: datetime | None = None) -> dict[str, Any]:
+def build_market_quote_context(root: Path | str, now: datetime | None = None, *, force_refresh: bool = False, requested_symbols: list[str] | None = None) -> dict[str, Any]:
     """Build the single routed quote view from already-produced state; no network calls."""
     root = Path(root)
     query_time = now or datetime.now(BEIJING)
@@ -234,6 +246,19 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None) ->
     overseas = _read_json(root, "data/state/overseas_context.json", {})
     extended = _read_json(root, "data/state/us_extended_hours_context.json", {})
     quotes: list[dict[str, Any]] = []
+
+    if force_refresh:
+        try:
+            from query_time_market_refresh import refresh_market_quotes
+        except ModuleNotFoundError:
+            from scripts.query_time_market_refresh import refresh_market_quotes
+        refreshed = refresh_market_quotes(root, requested_symbols or [], query_time)
+        for quote in refreshed.get("quotes", []):
+            if isinstance(quote, dict):
+                quotes.append(quote)
+        refresh_failures = refreshed.get("failures", [])
+    else:
+        refresh_failures = []
 
     for row in snapshot.get("rows") or []:
         if not isinstance(row, dict):
@@ -258,6 +283,8 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None) ->
 
     return {
         "generated_at_beijing": query_time.astimezone(BEIJING).isoformat(timespec="seconds"),
+        "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH" if force_refresh else "CACHED_STATE",
+        "refresh_failures": refresh_failures,
         "route_version": "V1.0",
         "query_entry": "market_quote_router",
         "quotes": quotes,
