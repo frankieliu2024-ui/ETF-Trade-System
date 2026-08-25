@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from typing import Any
 
 
@@ -115,7 +116,7 @@ def validate_market_row(
     if direct_only and ("proxy" in str(row.get("provider", "")).lower() or "proxy" in str(row.get("quality_status", "")).lower()):
         return False, "direct-only object cannot pass with proxy data"
     row["provider_timestamp_ms"] = ts_ms
-    row["as_of_beijing"] = provider_dt.astimezone(timezone.utc).isoformat(timespec="seconds")
+    row["as_of_beijing"] = provider_dt.astimezone(ZoneInfo("Asia/Shanghai")).isoformat(timespec="seconds")
     row["freshness_at_validation_seconds"] = round(age, 3)
     row["freshness_status"] = "FRESH" if age <= fresh_max else "DEGRADED"
     return True, ""
