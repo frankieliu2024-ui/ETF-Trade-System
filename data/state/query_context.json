@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-25T04:18:34Z",
-  "generated_at_beijing": "2026-08-25T12:18:34+08:00",
+  "generated_at": "2026-08-25T04:47:22Z",
+  "generated_at_beijing": "2026-08-25T12:47:22+08:00",
   "market_date": "2026-08-25",
   "latest_valid_node": "live",
   "current": {
@@ -31,12 +31,12 @@
       "source": "BROKER_SCREENSHOT_20260825_105632_USER_CONFIRMED"
     },
     "needs_account_update": false,
-    "last_trade_event_id": "",
+    "last_trade_event_id": "20260825_112516",
     "rules_version": "V2.2.15",
-    "generated_at": "2026-08-25T03:25:15Z"
+    "generated_at": "2026-08-25T04:46:24Z"
   },
   "decision_context": {
-    "generated_at": "2026-08-25T04:18:34Z",
+    "generated_at": "2026-08-25T04:47:22Z",
     "rules_version": "V2.2.15",
     "market_date": "2026-08-25",
     "latest_node": "live",
@@ -68,9 +68,9 @@
         "source": "BROKER_SCREENSHOT_20260825_105632_USER_CONFIRMED"
       },
       "needs_account_update": false,
-      "last_trade_event_id": "",
+      "last_trade_event_id": "20260825_112516",
       "rules_version": "V2.2.15",
-      "generated_at": "2026-08-25T03:25:15Z"
+      "generated_at": "2026-08-25T04:46:24Z"
     },
     "latest_snapshot": {
       "market_date": "2026-08-25",
@@ -453,7 +453,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 16.632,
-      "age_seconds": 3199
+      "age_seconds": 4927
     },
     "freshness_at_context_build": {
       "status": "STALE",
@@ -468,7 +468,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 16.632,
-      "age_seconds": 3199
+      "age_seconds": 4927
     },
     "data_quality_summary": {
       "pass_count": 10,
@@ -509,7 +509,7 @@
       "account_fact_time": "2026-08-25T11:36:22+08:00",
       "market_snapshot_time": "2026-08-25T11:25:15+08:00",
       "market_phase": "CONTINUOUS_MORNING",
-      "context_generated_time": "2026-08-25T04:18:34Z",
+      "context_generated_time": "2026-08-25T04:47:22Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
@@ -530,7 +530,7 @@
       "read_only": true
     },
     "intraday_path_features": {
-      "generated_at": "2026-08-25T04:18:33Z",
+      "generated_at": "2026-08-25T04:47:22Z",
       "market_date": "2026-08-25",
       "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
       "read_only": true,
@@ -1302,7 +1302,7 @@
       ],
       "skfolio_risk_evidence": {
         "schema_version": "1.0",
-        "generated_at": "2026-08-25T04:18:34Z",
+        "generated_at": "2026-08-25T04:47:22Z",
         "status": "READY",
         "mode": "SKFOLIO_VALIDATED_RISK_EVIDENCE",
         "validation_basis": {
@@ -1534,7 +1534,7 @@
     "account_fact_time": "2026-08-25T11:36:22+08:00",
     "market_snapshot_time": "2026-08-25T11:25:15+08:00",
     "market_phase": "CONTINUOUS_MORNING",
-    "context_generated_time": "2026-08-25T04:18:34Z",
+    "context_generated_time": "2026-08-25T04:47:22Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -1618,7 +1618,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "STALE",
-        "age_seconds": 3199,
+        "age_seconds": 4927,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -1635,7 +1635,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 16.632,
-        "age_seconds": 3199
+        "age_seconds": 4927
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新计算FRESH/DEGRADED/STALE。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -1694,11 +1694,11 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 16.632,
-    "age_seconds": 3199
+    "age_seconds": 4927
   },
   "freshness_at_context_build": {
     "status": "STALE",
-    "age_seconds": 3199,
+    "age_seconds": 4927,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -1750,8 +1750,8 @@
     "failure_stage": "session_gate",
     "reason": "outside_a_share_capture_window"
   },
-  "system_consistency_status": "FAIL",
-  "system_consistency_hard_errors": 1,
+  "system_consistency_status": "WARNING",
+  "system_consistency_hard_errors": 0,
   "etf_universe_count": 11,
   "overseas_context_status": "PASS",
   "overseas_generated_at_beijing": "2026-08-25T10:32:11+08:00",
