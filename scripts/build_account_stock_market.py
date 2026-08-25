@@ -14,6 +14,7 @@ try:
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, now_utc, read_json
     from scripts.market_data_guard import validate_market_row
+    from scripts.market_data_guard import validate_market_row
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STOCK_CONTEXT = ROOT / "data" / "state" / "stock_context.json"
