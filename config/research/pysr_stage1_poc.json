@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0",
+  "mode": "PYSR_STAGE1_RETURN_ENHANCEMENT_POC",
+  "role": "RESEARCH_EVIDENCE_ONLY",
+  "upstream": {
+    "repository": "astroautomata/PySR",
+    "version": "1.5.10",
+    "commit": "f51299e6dddc7bd2bfd7f473bfddca7c32d83206",
+    "license": "Apache-2.0"
+  },
+  "objective": "Find simple interpretable nonlinear cross-sectional formulas that improve future ETF relative-return ranking beyond momentum and the validated share-flow-plus-momentum ensemble.",
+  "horizons_trading_days": [5, 10],
+  "feature_columns": [
+    "rank_neg_share_change_1d",
+    "rank_neg_share_change_3d",
+    "rank_neg_share_change_5d",
+    "rank_ret_1d",
+    "rank_ret_5d",
+    "rank_ret_10d",
+    "rank_ret_20d",
+    "rank_vol_20d"
+  ],
+  "baseline_signals": [
+    "ret_5d_pct",
+    "ret_20d_pct",
+    "momentum_ensemble",
+    "share_momentum_ensemble"
+  ],
+  "minimum_cross_section_size": 7,
+  "top_k": 3,
+  "pysr": {
+    "niterations": 40,
+    "populations": 6,
+    "population_size": 20,
+    "maxsize": 9,
+    "maxdepth": 4,
+    "binary_operators": ["+", "-", "*", "/"],
+    "unary_operators": ["square"],
+    "model_selection": "best",
+    "parallelism": "serial",
+    "random_state": 20260825
+  },
+  "validation": {
+    "required_positive_ic_folds_per_horizon": 2,
+    "require_both_horizons_incremental": true,
+    "require_mean_rank_ic_above_best_baseline": true,
+    "require_mean_top3_above_best_baseline": true
+  },
+  "point_in_time_rule": "All input features are constructed only from facts available by the tested close. ETF share facts for trading day T are shifted to become available from T+1 trading day. Training rows are purged unless their forward label is fully realized by train_end. Test outcomes must be realized no later than data_end.",
+  "complexity_boundary": "Formula search is intentionally constrained. No ETF code, price level, instrument identity, future information, lifecycle decision, trade result or post-hoc feature selection is allowed as an input.",
+  "decision_eligible": false,
+  "trade_signal": null,
+  "trial_confirm": null,
+  "portfolio_target": null,
+  "master_override": false
+}
