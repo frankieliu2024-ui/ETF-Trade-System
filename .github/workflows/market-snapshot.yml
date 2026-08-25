@@ -182,8 +182,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Include all generated state before rebasing so no downstream write can leave the index dirty.
+          # Consistency is persisted by its own workflow; excluding it prevents a
+          # concurrent audit write from conflicting with the market-data commit.
+          git checkout -- data/state/system_consistency.json
           git add -A -- data/market/snapshots data/state
+          git reset -- data/state/system_consistency.json
           if ! git diff --cached --quiet; then
             git commit -m "data: publish core market snapshot"
             git pull --rebase origin main
