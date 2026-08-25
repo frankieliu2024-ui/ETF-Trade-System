@@ -1,0 +1,36 @@
+name: Temporary research outcome refresh
+
+on:
+  push:
+    paths:
+      - ".github/workflows/research-outcome-refresh-temp.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Refresh outcome and research contexts
+        run: python scripts/build_state_context.py
+      - name: Persist only outcome loop artifacts
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- events/research/decision_outcomes data/state/research_contribution_audit.json data/state/research_context.json data/state/decision_context.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "research: persist outcome effectiveness state"
+          git restore --worktree .
+          git pull --rebase origin main
+          git push origin HEAD:main
