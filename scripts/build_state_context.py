@@ -13,6 +13,7 @@ from build_skfolio_risk_evidence import build as build_skfolio_risk_evidence
 from build_etf_share_flow_evidence import build as build_etf_share_flow_evidence
 from build_margin_financing_evidence import build as build_margin_financing_evidence
 from build_research_contribution_audit import build as build_research_contribution_audit
+from build_phase4_automation import build as build_phase4_automation
 from state_manager import atomic_json_write, build_dashboard_candidate, build_decision_context
 
 
@@ -175,6 +176,8 @@ def main() -> None:
         },
     })
 
+    # Phase 4 is a deterministic downstream state build; it does not call providers or create actions.
+    phase4 = build_phase4_automation(ROOT)
     candidate = build_dashboard_candidate(ROOT)
     context = build_decision_context(ROOT)
     context.setdefault("research_evidence", {})["skfolio_risk_evidence"] = skfolio_summary
