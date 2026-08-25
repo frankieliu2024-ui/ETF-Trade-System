@@ -17,6 +17,56 @@ from state_manager import atomic_json_write, build_dashboard_candidate, build_de
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 
 
+def compact_skfolio_risk(evidence: dict) -> dict:
+    account = evidence.get("current_account") or {}
+    release = [
+        {
+            "display_name": x.get("display_name"),
+            "risk_side_release_efficiency": x.get("risk_side_release_efficiency"),
+            "account_etf_weight": x.get("account_etf_weight"),
+        }
+        for x in (account.get("risk_side_release_efficiency") or [])
+    ]
+    return {
+        "status": evidence.get("status"),
+        "mode": evidence.get("mode"),
+        "risk_data_end": evidence.get("risk_data_end"),
+        "data_alignment": evidence.get("data_alignment"),
+        "use_in_current_decision": evidence.get("use_in_current_decision", False),
+        "current_account_high_corr_components": account.get("high_corr_components") or [],
+        "risk_side_release_efficiency": release,
+        "interpretation_rule": evidence.get("interpretation_rule"),
+        "decision_eligible": False,
+        "trade_signal": None,
+        "portfolio_target": None,
+    }
+
+
+def compact_share_flow(evidence: dict) -> dict:
+    ranking = [
+        {
+            "display_name": x.get("display_name"),
+            "rank": x.get("conditional_increment_rank"),
+            "rank_value": x.get("conditional_increment_rank_value"),
+        }
+        for x in (evidence.get("items") or [])
+    ]
+    return {
+        "status": evidence.get("status"),
+        "mode": evidence.get("mode"),
+        "use_in_current_decision": evidence.get("use_in_current_decision", False),
+        "price_as_of_market_date": evidence.get("price_as_of_market_date"),
+        "share_fact_latest_date": evidence.get("share_fact_latest_date"),
+        "coverage": evidence.get("coverage"),
+        "conditional_increment_ranking": ranking,
+        "interpretation_rule": evidence.get("interpretation_rule"),
+        "decision_eligible": False,
+        "trade_signal": None,
+        "trial_confirm": None,
+        "portfolio_target": None,
+    }
+
+
 def main() -> None:
     path_features = build_intraday_path_features(ROOT)
     atomic_json_write(ROOT / "data" / "state" / "intraday_path_features.json", path_features)
@@ -26,10 +76,15 @@ def main() -> None:
     atomic_json_write(ROOT / "data" / "state" / "research_evidence_delta.json", evidence_delta)
     execution_quality = build_execution_quality(ROOT)
     atomic_json_write(ROOT / "data" / "state" / "execution_quality.json", execution_quality)
+
     skfolio_risk = build_skfolio_risk_evidence(ROOT)
     atomic_json_write(ROOT / "data" / "state" / "skfolio_risk_evidence.json", skfolio_risk)
+    skfolio_summary = compact_skfolio_risk(skfolio_risk)
+
     share_flow = build_etf_share_flow_evidence(ROOT)
     atomic_json_write(ROOT / "data" / "state" / "etf_share_flow_evidence.json", share_flow)
+    share_flow_summary = compact_share_flow(share_flow)
+
     research_master = build_research_master_feedback(ROOT)
     atomic_json_write(ROOT / "data" / "state" / "research_master_candidates.json", research_master)
     atomic_json_write(ROOT / "data" / "state" / "research_context.json", {
@@ -39,7 +94,10 @@ def main() -> None:
         "current_decision_use": "研究证据及其相对上一节点的变化必须参与机会判断、统一资本比较、持仓资本效率和必要的正式输出解释；单一排名、单一相对强弱、单一份额变化、单一风险贡献或研究统计不得机械产生动作。",
         "master_feedback": "研究层可形成MASTER维护输入，但只有通过MASTER第8.1正式研究转化机制的高质量专项研究，或多个真实CASE反复暴露的同类问题，才允许正式修改MASTER。",
         "optimization_principle": "不打造完美交易系统；复杂度只有在改善事前收益效率、风险边界、执行质量或复盘学习时才保留。最高目标仍是在可接受风险范围内实现可实现收益最大化。",
-        "etf_share_flow_evidence": share_flow,
+        "validated_evidence_summary": {
+            "skfolio_risk": skfolio_summary,
+            "etf_share_flow": share_flow_summary,
+        },
         "paths": {
             "daily_features": "events/research/daily_features/<market_date>.json",
             "relative_strength": "data/state/relative_strength.json",
@@ -58,8 +116,8 @@ def main() -> None:
 
     candidate = build_dashboard_candidate(ROOT)
     context = build_decision_context(ROOT)
-    context.setdefault("research_evidence", {})["skfolio_risk_evidence"] = skfolio_risk
-    context["research_evidence"]["etf_share_flow_evidence"] = share_flow
+    context.setdefault("research_evidence", {})["skfolio_risk_evidence"] = skfolio_summary
+    context["research_evidence"]["etf_share_flow_evidence"] = share_flow_summary
     context["skfolio_risk_evidence_file"] = "data/state/skfolio_risk_evidence.json"
     context["etf_share_flow_evidence_file"] = "data/state/etf_share_flow_evidence.json"
     context["research_master_candidates"] = research_master
