@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "mode": "ETF_SHARE_FLOW_CONDITIONAL_INCREMENT_POC",
+  "config_path": "config/research/etf_share_flow_increment_poc.json",
+  "data_start": "2024-01-01",
+  "data_end": "2026-08-24",
+  "folds": [
+    {"name":"fold1","test_start":"2025-04-01","test_end":"2025-09-30"},
+    {"name":"fold2","test_start":"2025-10-01","test_end":"2026-03-31"},
+    {"name":"fold3","test_start":"2026-04-01","test_end":"2026-08-07"}
+  ],
+  "stage1_result": "research/backtests/etf_share_flow_stage1_validation.json",
+  "point_in_time_rule": "Use exactly the Stage1 data horizon and folds. T-day ETF share facts are lagged one trading day before use. No historical Trial/Confirm decisions are reconstructed.",
+  "decision_eligible": false
+}
