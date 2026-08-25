@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "mode": "RESEARCH_ONLY_COMPONENT_INDUSTRY_LEAD_STAGE1",
+  "objective": "Test whether lagged breadth and relative momentum of a fixed, interpretable basket of current core constituents/industry-chain leaders adds point-in-time information for future ETF returns beyond the ETF's own lagged momentum.",
+  "targets": [
+    {"code":"561980","name":"半导体设备ETF","leaders":["688012.SS","002371.SZ","688256.SS","688041.SS","300604.SZ"]},
+    {"code":"588000","name":"科创50ETF","leaders":["688256.SS","688008.SS","688012.SS","688041.SS","688981.SS"]},
+    {"code":"515880","name":"通信ETF","leaders":["300502.SZ","300308.SZ","601138.SS","600487.SS","300394.SZ"]},
+    {"code":"159326","name":"电网设备ETF","leaders":["600487.SS","600522.SS","600089.SS","002028.SZ","600406.SS"]}
+  ],
+  "candidate_signals": ["leader_equal_1d_lag1","leader_equal_3d_lag1","leader_breadth_pos_3d_lag1","leader_minus_etf_3d_lag1"],
+  "controls": ["mom5_lag1","mom20_lag1"],
+  "horizons_trading_days": [1,3,5],
+  "validation": {
+    "minimum_observations_per_fold": 80,
+    "required_positive_folds_per_etf": 2,
+    "minimum_stable_etfs_per_horizon": 2,
+    "minimum_positive_cells_per_horizon": 7,
+    "minimum_partial_rank_ic": 0.02,
+    "required_qualifying_horizons": 2,
+    "require_positive_top_bottom_spread": true
+  },
+  "method_note": "Static representative baskets are fixed using publicly disclosed 2026-06-30 top holdings. They are equal-weighted for research and are not historical constituent reconstructions. Results therefore carry survivorship/constituent-lookback bias and are screening evidence only; they cannot be promoted to decision evidence without a later PIT historical-membership validation and share-flow control."
+}
