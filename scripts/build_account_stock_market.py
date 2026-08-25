@@ -11,10 +11,10 @@ from pathlib import Path
 
 try:
     from state_manager import atomic_json_write, now_utc, read_json
-    from market_data_guard import validate_market_row
+    from market_data_guard import classify_provider_failure, validate_market_row
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, now_utc, read_json
-    from scripts.market_data_guard import validate_market_row
+    from scripts.market_data_guard import classify_provider_failure, validate_market_row
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STOCK_CONTEXT = ROOT / "data" / "state" / "stock_context.json"
@@ -228,6 +228,7 @@ def build() -> dict:
             current = result.setdefault("objects", {}).setdefault(code, {"code": code, "name": stock.get("name", ""), "thscode": thscode(code)})
             current["fallback_provider"] = "eastmoney_push2"
             current["fallback_error"] = str(fallback_exc)[-800:]
+            current["failure_class"] = classify_provider_failure(fallback_exc)
     failures = sum(1 for item in result["objects"].values() if item.get("quality_status") != "PASS")
     if failures:
         result["quality_status"] = "DEGRADED" if failures < len(stocks) else "FAILED"
