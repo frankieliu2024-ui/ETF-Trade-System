@@ -11,3 +11,4 @@
 确认成功后生成现有研究目录下的 `TRADE_COMPLETED_REVIEW_REQUIRED` 客观复盘待办，保留 `execution_date` 与 `confirmation_date` 两个时点。复盘待办不自动判断交易正确/错误，不修改 MASTER，不生成新的交易动作。
 
 系统事件、收盘账户提醒和决策重评仍由现有 `.github/workflows/decision-notification.yml` 驱动；本次没有新增 workflow、provider 或行情请求。
+确认请求通过 `scripts/confirm_execution_reconciliation.py <request.json>` 进入；没有明确确认或必要成交字段时，只保留待确认问题，不写入正式成交事实。
