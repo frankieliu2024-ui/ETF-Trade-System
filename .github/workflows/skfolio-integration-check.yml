@@ -1,0 +1,57 @@
+name: Temporary skfolio integration check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "requests/research_backfill/skfolio_integration_trigger.txt"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: skfolio-integration-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build integrated research context
+        run: python scripts/build_state_context.py
+      - name: Enforce skfolio research boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('data/state/skfolio_risk_evidence.json').read_text(encoding='utf-8'))
+          d=json.loads(Path('data/state/decision_context.json').read_text(encoding='utf-8'))
+          assert r.get('decision_eligible') is False
+          assert r.get('trade_signal') is None
+          assert r.get('portfolio_target') is None
+          assert r.get('trial_confirm') is None
+          assert r.get('master_override') is False
+          embedded=(d.get('research_evidence') or {}).get('skfolio_risk_evidence') or {}
+          assert embedded.get('mode') == 'SKFOLIO_VALIDATED_RISK_EVIDENCE'
+          assert embedded.get('decision_eligible') is False
+          assert d.get('skfolio_risk_evidence_file') == 'data/state/skfolio_risk_evidence.json'
+          print(json.dumps({'risk_status':r.get('status'),'use_in_current_decision':r.get('use_in_current_decision'),'risk_data_end':r.get('risk_data_end'),'account_fact_status':r.get('account_fact_status')}, ensure_ascii=False))
+          PY
+      - name: Commit integration state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- data/state/skfolio_risk_evidence.json data/state/research_context.json data/state/decision_context.json data/state/relative_strength.json data/state/research_evidence_delta.json data/state/execution_quality.json data/state/research_master_candidates.json data/state/provider_metrics.json events/research/daily_features events/research/evidence_snapshots
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "research: activate minimal skfolio evidence integration"
+          git pull --rebase origin main
+          git push origin HEAD:main
