@@ -1,0 +1,1793 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-08-25T08:05:02Z",
+  "mode": "RESEARCH_ONLY_CROSS_MARKET_TECH_STAGE1_A",
+  "objective": "Test whether prior completed US technology/semiconductor sessions contain stable point-in-time information for executable future returns of core A-share technology ETFs beyond local momentum, and only if that passes, beyond validated ETF share-flow evidence.",
+  "targets": [
+    {
+      "code": "561980",
+      "name": "半导体设备ETF"
+    },
+    {
+      "code": "588000",
+      "name": "科创50ETF"
+    },
+    {
+      "code": "159781",
+      "name": "科创创业ETF"
+    },
+    {
+      "code": "515880",
+      "name": "通信ETF"
+    }
+  ],
+  "external_objects": {
+    "SOX": {
+      "name": "费城半导体指数",
+      "symbol": "^SOX",
+      "timezone": "America/New_York"
+    },
+    "NDX": {
+      "name": "纳斯达克100指数",
+      "symbol": "^NDX",
+      "timezone": "America/New_York"
+    }
+  },
+  "entry_rule": "For A-share trading date D, external data may use only the latest fully completed US cash session whose close occurred before the A-share open on D. Return labels start at the A-share open on D.",
+  "point_in_time_rule": "No US session completing after the A-share open may be used. Local momentum uses closes no later than D-1. If Stage B is reached, ETF share facts for trading day T are usable only from T+1 A-share trading day.",
+  "local_rows": 2560,
+  "external_rows": {
+    "SOX": 668,
+    "NDX": 668
+  },
+  "stage_a": {
+    "controls": [
+      "mom5_lag1",
+      "mom20_lag1"
+    ],
+    "fold_results": [
+      {
+        "fold": "fold1",
+        "code": "561980",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "sox_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.1618,
+            "top_bottom_spread_pct_points": -0.9418
+          },
+          "ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.1803,
+            "top_bottom_spread_pct_points": -1.254
+          },
+          "us_tech_equal_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.1754,
+            "top_bottom_spread_pct_points": -0.8305
+          },
+          "sox_minus_ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.0873,
+            "top_bottom_spread_pct_points": -0.0444
+          },
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": 0.0034,
+            "top_bottom_spread_pct_points": 0.0129
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "561980",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "sox_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.0416,
+            "top_bottom_spread_pct_points": -0.7846
+          },
+          "ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.1186,
+            "top_bottom_spread_pct_points": -1.0862
+          },
+          "us_tech_equal_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.0794,
+            "top_bottom_spread_pct_points": -0.5573
+          },
+          "sox_minus_ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": 0.0438,
+            "top_bottom_spread_pct_points": 0.3722
+          },
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": 0.054,
+            "top_bottom_spread_pct_points": 0.9238
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "561980",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "sox_1d": {
+            "n": 126,
+            "partial_rank_ic": 0.0144,
+            "top_bottom_spread_pct_points": -0.3034
+          },
+          "ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.0474,
+            "top_bottom_spread_pct_points": -1.5373
+          },
+          "us_tech_equal_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.0097,
+            "top_bottom_spread_pct_points": -0.2884
+          },
+          "sox_minus_ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": 0.0713,
+            "top_bottom_spread_pct_points": 1.1069
+          },
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": 0.0605,
+            "top_bottom_spread_pct_points": 1.1689
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "588000",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "sox_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.148,
+            "top_bottom_spread_pct_points": -0.3963
+          },
+          "ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.1145,
+            "top_bottom_spread_pct_points": -0.6454
+          },
+          "us_tech_equal_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.1441,
+            "top_bottom_spread_pct_points": -0.405
+          },
+          "sox_minus_ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.1199,
+            "top_bottom_spread_pct_points": -0.0121
+          },
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": -0.0597,
+            "top_bottom_spread_pct_points": -0.0349
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "588000",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "sox_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.0493,
+            "top_bottom_spread_pct_points": -0.5458
+          },
+          "ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.0984,
+            "top_bottom_spread_pct_points": -1.2059
+          },
+          "us_tech_equal_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.0764,
+            "top_bottom_spread_pct_points": -0.4749
+          },
+          "sox_minus_ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": 0.0003,
+            "top_bottom_spread_pct_points": 0.2811
+          },
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": 0.0144,
+            "top_bottom_spread_pct_points": 0.1594
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "588000",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "sox_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.0002,
+            "top_bottom_spread_pct_points": -0.04
+          },
+          "ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.092,
+            "top_bottom_spread_pct_points": -1.6547
+          },
+          "us_tech_equal_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.0333,
+            "top_bottom_spread_pct_points": -0.3178
+          },
+          "sox_minus_ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": 0.072,
+            "top_bottom_spread_pct_points": 0.9241
+          },
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": 0.0212,
+            "top_bottom_spread_pct_points": -0.0755
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "159781",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "sox_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.151,
+            "top_bottom_spread_pct_points": -0.0568
+          },
+          "ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.1257,
+            "top_bottom_spread_pct_points": -0.4823
+          },
+          "us_tech_equal_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.1473,
+            "top_bottom_spread_pct_points": -0.1356
+          },
+          "sox_minus_ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.1236,
+            "top_bottom_spread_pct_points": 0.1613
+          },
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": -0.0687,
+            "top_bottom_spread_pct_points": 0.1862
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "159781",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "sox_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.043,
+            "top_bottom_spread_pct_points": -0.3064
+          },
+          "ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.0817,
+            "top_bottom_spread_pct_points": -1.3251
+          },
+          "us_tech_equal_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.0586,
+            "top_bottom_spread_pct_points": -0.3558
+          },
+          "sox_minus_ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.0022,
+            "top_bottom_spread_pct_points": 0.4377
+          },
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": 0.0581,
+            "top_bottom_spread_pct_points": 0.8654
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "159781",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "sox_1d": {
+            "n": 126,
+            "partial_rank_ic": 0.0127,
+            "top_bottom_spread_pct_points": 0.1867
+          },
+          "ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.0727,
+            "top_bottom_spread_pct_points": -1.5887
+          },
+          "us_tech_equal_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.0076,
+            "top_bottom_spread_pct_points": -0.0391
+          },
+          "sox_minus_ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": 0.0896,
+            "top_bottom_spread_pct_points": 1.207
+          },
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": 0.0817,
+            "top_bottom_spread_pct_points": 1.0047
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "515880",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "sox_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.1828,
+            "top_bottom_spread_pct_points": -0.3156
+          },
+          "ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.1694,
+            "top_bottom_spread_pct_points": -0.9311
+          },
+          "us_tech_equal_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.1867,
+            "top_bottom_spread_pct_points": -0.4947
+          },
+          "sox_minus_ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.1207,
+            "top_bottom_spread_pct_points": 0.114
+          },
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": -0.0699,
+            "top_bottom_spread_pct_points": 0.1098
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "515880",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "sox_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.0768,
+            "top_bottom_spread_pct_points": -0.0681
+          },
+          "ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.1644,
+            "top_bottom_spread_pct_points": -2.2915
+          },
+          "us_tech_equal_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.1171,
+            "top_bottom_spread_pct_points": -0.5044
+          },
+          "sox_minus_ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": 0.0207,
+            "top_bottom_spread_pct_points": 1.1667
+          },
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": 0.0455,
+            "top_bottom_spread_pct_points": 1.4526
+          }
+        }
+      },
+      {
+        "fold": "fold1",
+        "code": "515880",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "sox_1d": {
+            "n": 126,
+            "partial_rank_ic": 0.012,
+            "top_bottom_spread_pct_points": 0.8429
+          },
+          "ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.0895,
+            "top_bottom_spread_pct_points": -1.749
+          },
+          "us_tech_equal_1d": {
+            "n": 126,
+            "partial_rank_ic": -0.02,
+            "top_bottom_spread_pct_points": 0.1213
+          },
+          "sox_minus_ndx_1d": {
+            "n": 126,
+            "partial_rank_ic": 0.1082,
+            "top_bottom_spread_pct_points": 2.2118
+          },
+          "us_tech_equal_3d": {
+            "n": 126,
+            "partial_rank_ic": 0.0363,
+            "top_bottom_spread_pct_points": 1.2682
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "561980",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "sox_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0053,
+            "top_bottom_spread_pct_points": -0.2169
+          },
+          "ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.016,
+            "top_bottom_spread_pct_points": -0.3375
+          },
+          "us_tech_equal_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.0068,
+            "top_bottom_spread_pct_points": -0.2895
+          },
+          "sox_minus_ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.0124,
+            "top_bottom_spread_pct_points": -0.3257
+          },
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.0703,
+            "top_bottom_spread_pct_points": 0.574
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "561980",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "sox_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0771,
+            "top_bottom_spread_pct_points": -0.643
+          },
+          "ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0952,
+            "top_bottom_spread_pct_points": -0.6169
+          },
+          "us_tech_equal_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0742,
+            "top_bottom_spread_pct_points": -0.2023
+          },
+          "sox_minus_ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0279,
+            "top_bottom_spread_pct_points": -0.0114
+          },
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.07,
+            "top_bottom_spread_pct_points": 0.2432
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "561980",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "sox_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0275,
+            "top_bottom_spread_pct_points": -0.6606
+          },
+          "ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0574,
+            "top_bottom_spread_pct_points": -1.0609
+          },
+          "us_tech_equal_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0269,
+            "top_bottom_spread_pct_points": -0.333
+          },
+          "sox_minus_ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.0148,
+            "top_bottom_spread_pct_points": 0.3536
+          },
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.0991,
+            "top_bottom_spread_pct_points": 0.6036
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "588000",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "sox_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.0207,
+            "top_bottom_spread_pct_points": -0.0129
+          },
+          "ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.0321,
+            "top_bottom_spread_pct_points": -0.0771
+          },
+          "us_tech_equal_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.0428,
+            "top_bottom_spread_pct_points": 0.0646
+          },
+          "sox_minus_ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0028,
+            "top_bottom_spread_pct_points": -0.303
+          },
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.1494,
+            "top_bottom_spread_pct_points": 0.5649
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "588000",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "sox_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0565,
+            "top_bottom_spread_pct_points": -0.5145
+          },
+          "ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0196,
+            "top_bottom_spread_pct_points": -0.0852
+          },
+          "us_tech_equal_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0333,
+            "top_bottom_spread_pct_points": -0.0192
+          },
+          "sox_minus_ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0639,
+            "top_bottom_spread_pct_points": -0.3849
+          },
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.0907,
+            "top_bottom_spread_pct_points": 0.3856
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "588000",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "sox_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0447,
+            "top_bottom_spread_pct_points": -0.8823
+          },
+          "ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0484,
+            "top_bottom_spread_pct_points": -0.6986
+          },
+          "us_tech_equal_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.035,
+            "top_bottom_spread_pct_points": -0.3809
+          },
+          "sox_minus_ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0147,
+            "top_bottom_spread_pct_points": -0.0613
+          },
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.0743,
+            "top_bottom_spread_pct_points": 0.3579
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "159781",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "sox_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.1376,
+            "top_bottom_spread_pct_points": 0.296
+          },
+          "ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.0891,
+            "top_bottom_spread_pct_points": 0.2043
+          },
+          "us_tech_equal_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.139,
+            "top_bottom_spread_pct_points": 0.2072
+          },
+          "sox_minus_ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.1452,
+            "top_bottom_spread_pct_points": 0.1587
+          },
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.2871,
+            "top_bottom_spread_pct_points": 0.9266
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "159781",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "sox_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.0321,
+            "top_bottom_spread_pct_points": -0.1986
+          },
+          "ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.0419,
+            "top_bottom_spread_pct_points": 0.1318
+          },
+          "us_tech_equal_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.0437,
+            "top_bottom_spread_pct_points": 0.0667
+          },
+          "sox_minus_ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.0307,
+            "top_bottom_spread_pct_points": 0.1766
+          },
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.2022,
+            "top_bottom_spread_pct_points": 0.9934
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "159781",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "sox_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0001,
+            "top_bottom_spread_pct_points": -0.3354
+          },
+          "ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0025,
+            "top_bottom_spread_pct_points": -0.0042
+          },
+          "us_tech_equal_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.0066,
+            "top_bottom_spread_pct_points": 0.0604
+          },
+          "sox_minus_ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.0221,
+            "top_bottom_spread_pct_points": 0.2196
+          },
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.1601,
+            "top_bottom_spread_pct_points": 1.005
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "515880",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "sox_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.0478,
+            "top_bottom_spread_pct_points": -0.1412
+          },
+          "ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.0501,
+            "top_bottom_spread_pct_points": 0.0565
+          },
+          "us_tech_equal_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.0535,
+            "top_bottom_spread_pct_points": -0.0529
+          },
+          "sox_minus_ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": 0.0567,
+            "top_bottom_spread_pct_points": -0.3482
+          },
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.1525,
+            "top_bottom_spread_pct_points": 0.8372
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "515880",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "sox_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0927,
+            "top_bottom_spread_pct_points": -0.7365
+          },
+          "ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.031,
+            "top_bottom_spread_pct_points": -0.4102
+          },
+          "us_tech_equal_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0696,
+            "top_bottom_spread_pct_points": -0.7188
+          },
+          "sox_minus_ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0953,
+            "top_bottom_spread_pct_points": -0.651
+          },
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.0641,
+            "top_bottom_spread_pct_points": 0.7069
+          }
+        }
+      },
+      {
+        "fold": "fold2",
+        "code": "515880",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "sox_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.1404,
+            "top_bottom_spread_pct_points": -0.7503
+          },
+          "ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.0797,
+            "top_bottom_spread_pct_points": -0.6643
+          },
+          "us_tech_equal_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.119,
+            "top_bottom_spread_pct_points": -0.5076
+          },
+          "sox_minus_ndx_1d": {
+            "n": 116,
+            "partial_rank_ic": -0.1279,
+            "top_bottom_spread_pct_points": -0.8485
+          },
+          "us_tech_equal_3d": {
+            "n": 116,
+            "partial_rank_ic": 0.0056,
+            "top_bottom_spread_pct_points": 0.5339
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "561980",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "sox_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0879,
+            "top_bottom_spread_pct_points": -1.342
+          },
+          "ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.1808,
+            "top_bottom_spread_pct_points": -2.0708
+          },
+          "us_tech_equal_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.1143,
+            "top_bottom_spread_pct_points": -1.3122
+          },
+          "sox_minus_ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0204,
+            "top_bottom_spread_pct_points": -0.4734
+          },
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": 0.0225,
+            "top_bottom_spread_pct_points": -0.1097
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "561980",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "sox_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.1087,
+            "top_bottom_spread_pct_points": -1.4839
+          },
+          "ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.1125,
+            "top_bottom_spread_pct_points": -2.552
+          },
+          "us_tech_equal_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.108,
+            "top_bottom_spread_pct_points": -1.4988
+          },
+          "sox_minus_ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.1009,
+            "top_bottom_spread_pct_points": -1.5598
+          },
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": -0.0291,
+            "top_bottom_spread_pct_points": -0.4173
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "561980",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "sox_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0546,
+            "top_bottom_spread_pct_points": -1.979
+          },
+          "ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0947,
+            "top_bottom_spread_pct_points": -1.9746
+          },
+          "us_tech_equal_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0749,
+            "top_bottom_spread_pct_points": -1.8501
+          },
+          "sox_minus_ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.028,
+            "top_bottom_spread_pct_points": -1.1854
+          },
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": -0.0164,
+            "top_bottom_spread_pct_points": -1.0864
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "588000",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "sox_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0444,
+            "top_bottom_spread_pct_points": -0.6247
+          },
+          "ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.1326,
+            "top_bottom_spread_pct_points": -1.1712
+          },
+          "us_tech_equal_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0708,
+            "top_bottom_spread_pct_points": -0.7138
+          },
+          "sox_minus_ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": 0.0127,
+            "top_bottom_spread_pct_points": 0.2981
+          },
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": 0.0205,
+            "top_bottom_spread_pct_points": -0.7008
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "588000",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "sox_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0847,
+            "top_bottom_spread_pct_points": -0.7485
+          },
+          "ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.079,
+            "top_bottom_spread_pct_points": -1.7363
+          },
+          "us_tech_equal_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0805,
+            "top_bottom_spread_pct_points": -1.2092
+          },
+          "sox_minus_ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0817,
+            "top_bottom_spread_pct_points": -0.5412
+          },
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": 0.0303,
+            "top_bottom_spread_pct_points": -0.3296
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "588000",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "sox_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0379,
+            "top_bottom_spread_pct_points": -1.2819
+          },
+          "ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0521,
+            "top_bottom_spread_pct_points": -1.8656
+          },
+          "us_tech_equal_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0493,
+            "top_bottom_spread_pct_points": -1.5621
+          },
+          "sox_minus_ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0242,
+            "top_bottom_spread_pct_points": 0.0538
+          },
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": 0.0088,
+            "top_bottom_spread_pct_points": -1.4702
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "159781",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "sox_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.039,
+            "top_bottom_spread_pct_points": -0.1388
+          },
+          "ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0814,
+            "top_bottom_spread_pct_points": -0.587
+          },
+          "us_tech_equal_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0501,
+            "top_bottom_spread_pct_points": -0.3672
+          },
+          "sox_minus_ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0059,
+            "top_bottom_spread_pct_points": 0.3951
+          },
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": 0.1384,
+            "top_bottom_spread_pct_points": 0.8408
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "159781",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "sox_1d": {
+            "n": 88,
+            "partial_rank_ic": 0.0306,
+            "top_bottom_spread_pct_points": 0.0442
+          },
+          "ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": 0.0946,
+            "top_bottom_spread_pct_points": 0.3359
+          },
+          "us_tech_equal_1d": {
+            "n": 88,
+            "partial_rank_ic": 0.0619,
+            "top_bottom_spread_pct_points": 0.0756
+          },
+          "sox_minus_ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": 0.0061,
+            "top_bottom_spread_pct_points": -0.4034
+          },
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": 0.2888,
+            "top_bottom_spread_pct_points": 3.0134
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "159781",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "sox_1d": {
+            "n": 88,
+            "partial_rank_ic": 0.0341,
+            "top_bottom_spread_pct_points": -0.6844
+          },
+          "ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": 0.0644,
+            "top_bottom_spread_pct_points": 0.4565
+          },
+          "us_tech_equal_1d": {
+            "n": 88,
+            "partial_rank_ic": 0.0454,
+            "top_bottom_spread_pct_points": -0.4663
+          },
+          "sox_minus_ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": 0.0267,
+            "top_bottom_spread_pct_points": -0.2095
+          },
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": 0.2364,
+            "top_bottom_spread_pct_points": 2.4316
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "515880",
+        "horizon_trading_days": 1,
+        "metrics": {
+          "sox_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.028,
+            "top_bottom_spread_pct_points": 0.2078
+          },
+          "ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0085,
+            "top_bottom_spread_pct_points": 0.1107
+          },
+          "us_tech_equal_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0194,
+            "top_bottom_spread_pct_points": 0.0577
+          },
+          "sox_minus_ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": -0.0254,
+            "top_bottom_spread_pct_points": 0.3576
+          },
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": 0.2438,
+            "top_bottom_spread_pct_points": 2.3391
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "515880",
+        "horizon_trading_days": 3,
+        "metrics": {
+          "sox_1d": {
+            "n": 88,
+            "partial_rank_ic": 0.1703,
+            "top_bottom_spread_pct_points": 1.9687
+          },
+          "ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": 0.2738,
+            "top_bottom_spread_pct_points": 3.4159
+          },
+          "us_tech_equal_1d": {
+            "n": 88,
+            "partial_rank_ic": 0.2202,
+            "top_bottom_spread_pct_points": 2.1933
+          },
+          "sox_minus_ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": 0.1101,
+            "top_bottom_spread_pct_points": 1.5579
+          },
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": 0.449,
+            "top_bottom_spread_pct_points": 5.725
+          }
+        }
+      },
+      {
+        "fold": "fold3",
+        "code": "515880",
+        "horizon_trading_days": 5,
+        "metrics": {
+          "sox_1d": {
+            "n": 88,
+            "partial_rank_ic": 0.0952,
+            "top_bottom_spread_pct_points": 0.5288
+          },
+          "ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": 0.1848,
+            "top_bottom_spread_pct_points": 3.8016
+          },
+          "us_tech_equal_1d": {
+            "n": 88,
+            "partial_rank_ic": 0.1325,
+            "top_bottom_spread_pct_points": 0.8506
+          },
+          "sox_minus_ndx_1d": {
+            "n": 88,
+            "partial_rank_ic": 0.0476,
+            "top_bottom_spread_pct_points": 0.0209
+          },
+          "us_tech_equal_3d": {
+            "n": 88,
+            "partial_rank_ic": 0.3534,
+            "top_bottom_spread_pct_points": 5.9378
+          }
+        }
+      }
+    ],
+    "signal_summary": {
+      "sox_1d": {
+        "qualifying_horizon_count": 0,
+        "stage_pass": false,
+        "horizons": {
+          "1": {
+            "cell_count": 12,
+            "positive_cells": 3,
+            "mean_partial_rank_ic": -0.0535,
+            "mean_top_bottom_spread_pct_points": -0.3069,
+            "stable_etfs": [],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0175,
+                "mean_top_bottom_spread_pct_points": 0.0335
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0543,
+                "mean_top_bottom_spread_pct_points": -0.083
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 0,
+                "mean_partial_rank_ic": -0.085,
+                "mean_top_bottom_spread_pct_points": -0.8336
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0572,
+                "mean_top_bottom_spread_pct_points": -0.3446
+              }
+            },
+            "qualifies": false
+          },
+          "3": {
+            "cell_count": 12,
+            "positive_cells": 3,
+            "mean_partial_rank_ic": -0.0331,
+            "mean_top_bottom_spread_pct_points": -0.3348,
+            "stable_etfs": [
+              "159781"
+            ],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0066,
+                "mean_top_bottom_spread_pct_points": -0.1536
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": 0.0003,
+                "mean_top_bottom_spread_pct_points": 0.388
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 0,
+                "mean_partial_rank_ic": -0.0758,
+                "mean_top_bottom_spread_pct_points": -0.9705
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 0,
+                "mean_partial_rank_ic": -0.0635,
+                "mean_top_bottom_spread_pct_points": -0.6029
+              }
+            },
+            "qualifies": false
+          },
+          "5": {
+            "cell_count": 12,
+            "positive_cells": 5,
+            "mean_partial_rank_ic": -0.0114,
+            "mean_top_bottom_spread_pct_points": -0.4466,
+            "stable_etfs": [
+              "159781"
+            ],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0156,
+                "mean_top_bottom_spread_pct_points": -0.2777
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": -0.0111,
+                "mean_top_bottom_spread_pct_points": 0.2071
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0226,
+                "mean_top_bottom_spread_pct_points": -0.981
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 0,
+                "mean_partial_rank_ic": -0.0276,
+                "mean_top_bottom_spread_pct_points": -0.7347
+              }
+            },
+            "qualifies": false
+          }
+        }
+      },
+      "ndx_1d": {
+        "qualifying_horizon_count": 0,
+        "stage_pass": false,
+        "horizons": {
+          "1": {
+            "cell_count": 12,
+            "positive_cells": 3,
+            "mean_partial_rank_ic": -0.0698,
+            "mean_top_bottom_spread_pct_points": -0.5987,
+            "stable_etfs": [],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0393,
+                "mean_top_bottom_spread_pct_points": -0.2883
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0426,
+                "mean_top_bottom_spread_pct_points": -0.2546
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 0,
+                "mean_partial_rank_ic": -0.1257,
+                "mean_top_bottom_spread_pct_points": -1.2208
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0717,
+                "mean_top_bottom_spread_pct_points": -0.6312
+              }
+            },
+            "qualifies": false
+          },
+          "3": {
+            "cell_count": 12,
+            "positive_cells": 3,
+            "mean_partial_rank_ic": -0.0325,
+            "mean_top_bottom_spread_pct_points": -0.6188,
+            "stable_etfs": [
+              "159781"
+            ],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0183,
+                "mean_top_bottom_spread_pct_points": -0.2858
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": 0.0261,
+                "mean_top_bottom_spread_pct_points": 0.2381
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 0,
+                "mean_partial_rank_ic": -0.1088,
+                "mean_top_bottom_spread_pct_points": -1.4184
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 0,
+                "mean_partial_rank_ic": -0.0657,
+                "mean_top_bottom_spread_pct_points": -1.0091
+              }
+            },
+            "qualifies": false
+          },
+          "5": {
+            "cell_count": 12,
+            "positive_cells": 2,
+            "mean_partial_rank_ic": -0.0323,
+            "mean_top_bottom_spread_pct_points": -0.7117,
+            "stable_etfs": [],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0036,
+                "mean_top_bottom_spread_pct_points": -0.3788
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": 0.0052,
+                "mean_top_bottom_spread_pct_points": 0.4628
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 0,
+                "mean_partial_rank_ic": -0.0665,
+                "mean_top_bottom_spread_pct_points": -1.5243
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 0,
+                "mean_partial_rank_ic": -0.0642,
+                "mean_top_bottom_spread_pct_points": -1.4063
+              }
+            },
+            "qualifies": false
+          }
+        }
+      },
+      "us_tech_equal_1d": {
+        "qualifying_horizon_count": 0,
+        "stage_pass": false,
+        "horizons": {
+          "1": {
+            "cell_count": 12,
+            "positive_cells": 4,
+            "mean_partial_rank_ic": -0.0555,
+            "mean_top_bottom_spread_pct_points": -0.356,
+            "stable_etfs": [],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0195,
+                "mean_top_bottom_spread_pct_points": -0.0985
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0509,
+                "mean_top_bottom_spread_pct_points": -0.1633
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0943,
+                "mean_top_bottom_spread_pct_points": -0.8107
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0574,
+                "mean_top_bottom_spread_pct_points": -0.3514
+              }
+            },
+            "qualifies": false
+          },
+          "3": {
+            "cell_count": 12,
+            "positive_cells": 3,
+            "mean_partial_rank_ic": -0.0309,
+            "mean_top_bottom_spread_pct_points": -0.2671,
+            "stable_etfs": [
+              "159781"
+            ],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0157,
+                "mean_top_bottom_spread_pct_points": -0.0712
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": 0.0112,
+                "mean_top_bottom_spread_pct_points": 0.3234
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 0,
+                "mean_partial_rank_ic": -0.0872,
+                "mean_top_bottom_spread_pct_points": -0.7528
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 0,
+                "mean_partial_rank_ic": -0.0634,
+                "mean_top_bottom_spread_pct_points": -0.5678
+              }
+            },
+            "qualifies": false
+          },
+          "5": {
+            "cell_count": 12,
+            "positive_cells": 3,
+            "mean_partial_rank_ic": -0.0159,
+            "mean_top_bottom_spread_pct_points": -0.3928,
+            "stable_etfs": [
+              "159781"
+            ],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0148,
+                "mean_top_bottom_spread_pct_points": -0.1483
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0022,
+                "mean_top_bottom_spread_pct_points": 0.1548
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 0,
+                "mean_partial_rank_ic": -0.0372,
+                "mean_top_bottom_spread_pct_points": -0.8238
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 0,
+                "mean_partial_rank_ic": -0.0392,
+                "mean_top_bottom_spread_pct_points": -0.7536
+              }
+            },
+            "qualifies": false
+          }
+        }
+      },
+      "sox_minus_ndx_1d": {
+        "qualifying_horizon_count": 1,
+        "stage_pass": false,
+        "horizons": {
+          "1": {
+            "cell_count": 12,
+            "positive_cells": 4,
+            "mean_partial_rank_ic": -0.0233,
+            "mean_top_bottom_spread_pct_points": -0.0018,
+            "stable_etfs": [],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": 0.0052,
+                "mean_top_bottom_spread_pct_points": 0.2384
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0298,
+                "mean_top_bottom_spread_pct_points": 0.0411
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0318,
+                "mean_top_bottom_spread_pct_points": -0.2812
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0367,
+                "mean_top_bottom_spread_pct_points": -0.0057
+              }
+            },
+            "qualifies": false
+          },
+          "3": {
+            "cell_count": 12,
+            "positive_cells": 6,
+            "mean_partial_rank_ic": -0.0133,
+            "mean_top_bottom_spread_pct_points": 0.0367,
+            "stable_etfs": [
+              "159781",
+              "515880"
+            ],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0115,
+                "mean_top_bottom_spread_pct_points": 0.0703
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0118,
+                "mean_top_bottom_spread_pct_points": 0.6912
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0283,
+                "mean_top_bottom_spread_pct_points": -0.3997
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": -0.0484,
+                "mean_top_bottom_spread_pct_points": -0.215
+              }
+            },
+            "qualifies": false
+          },
+          "5": {
+            "cell_count": 12,
+            "positive_cells": 8,
+            "mean_partial_rank_ic": 0.0215,
+            "mean_top_bottom_spread_pct_points": 0.3161,
+            "stable_etfs": [
+              "159781",
+              "515880",
+              "561980"
+            ],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.0461,
+                "mean_top_bottom_spread_pct_points": 0.4057
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0093,
+                "mean_top_bottom_spread_pct_points": 0.4614
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0194,
+                "mean_top_bottom_spread_pct_points": 0.0917
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 1,
+                "mean_partial_rank_ic": 0.011,
+                "mean_top_bottom_spread_pct_points": 0.3055
+              }
+            },
+            "qualifies": true
+          }
+        }
+      },
+      "us_tech_equal_3d": {
+        "qualifying_horizon_count": 3,
+        "stage_pass": true,
+        "horizons": {
+          "1": {
+            "cell_count": 12,
+            "positive_cells": 9,
+            "mean_partial_rank_ic": 0.0741,
+            "mean_top_bottom_spread_pct_points": 0.4622,
+            "stable_etfs": [
+              "159781",
+              "515880",
+              "561980",
+              "588000"
+            ],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.1189,
+                "mean_top_bottom_spread_pct_points": 0.6512
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.1088,
+                "mean_top_bottom_spread_pct_points": 1.0954
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.0321,
+                "mean_top_bottom_spread_pct_points": 0.1591
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0367,
+                "mean_top_bottom_spread_pct_points": -0.0569
+              }
+            },
+            "qualifies": true
+          },
+          "3": {
+            "cell_count": 12,
+            "positive_cells": 11,
+            "mean_partial_rank_ic": 0.1115,
+            "mean_top_bottom_spread_pct_points": 1.1435,
+            "stable_etfs": [
+              "159781",
+              "515880",
+              "561980",
+              "588000"
+            ],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.183,
+                "mean_top_bottom_spread_pct_points": 1.6241
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.1862,
+                "mean_top_bottom_spread_pct_points": 2.6282
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0316,
+                "mean_top_bottom_spread_pct_points": 0.2499
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.0451,
+                "mean_top_bottom_spread_pct_points": 0.0718
+              }
+            },
+            "qualifies": true
+          },
+          "5": {
+            "cell_count": 12,
+            "positive_cells": 11,
+            "mean_partial_rank_ic": 0.0934,
+            "mean_top_bottom_spread_pct_points": 0.9733,
+            "stable_etfs": [
+              "159781",
+              "515880",
+              "561980",
+              "588000"
+            ],
+            "etf_summary": {
+              "159781": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.1594,
+                "mean_top_bottom_spread_pct_points": 1.4804
+              },
+              "515880": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.1318,
+                "mean_top_bottom_spread_pct_points": 2.58
+              },
+              "561980": {
+                "fold_count": 3,
+                "positive_folds": 2,
+                "mean_partial_rank_ic": 0.0477,
+                "mean_top_bottom_spread_pct_points": 0.2287
+              },
+              "588000": {
+                "fold_count": 3,
+                "positive_folds": 3,
+                "mean_partial_rank_ic": 0.0348,
+                "mean_top_bottom_spread_pct_points": -0.3959
+              }
+            },
+            "qualifies": true
+          }
+        }
+      }
+    },
+    "passing_signals": [
+      "us_tech_equal_3d"
+    ]
+  },
+  "research_interpretation": "STAGE_A_PROMISING",
+  "stage_a_passing_signals": [
+    "us_tech_equal_3d"
+  ],
+  "stage_b_required": true,
+  "decision_eligible": false,
+  "trade_signal": null,
+  "trial_confirm": null,
+  "portfolio_target": null,
+  "master_override": false,
+  "historical_decision_prohibited": true,
+  "production_context_integration": false,
+  "interpretation_boundary": "Stage A only tests incremental cross-market information beyond lagged local momentum. It cannot generate any trade action. Stage B share-flow control is mandatory before any research conversion discussion."
+}
