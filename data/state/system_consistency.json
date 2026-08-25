@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-08-25T16:14:39Z",
-  "generated_at_beijing": "2026-08-26T00:14:39+08:00",
+  "generated_at": "2026-08-25T16:16:48Z",
+  "generated_at_beijing": "2026-08-26T00:16:48+08:00",
   "repository": {
-    "head_sha": "a02b1a78e137f0e936d29fef1f69106fa7ca3655",
-    "github_sha": "a02b1a78e137f0e936d29fef1f69106fa7ca3655",
-    "github_run_id": "32870726350",
+    "head_sha": "ef3d69e2a15de46573a70e6b2528d194834a3873",
+    "github_sha": "ef3d69e2a15de46573a70e6b2528d194834a3873",
+    "github_run_id": "32870961027",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "a02b1a78e137f0e936d29fef1f69106fa7ca3655",
-    "workflow_sha": "a02b1a78e137f0e936d29fef1f69106fa7ca3655",
+    "checked_commit": "ef3d69e2a15de46573a70e6b2528d194834a3873",
+    "workflow_sha": "ef3d69e2a15de46573a70e6b2528d194834a3873",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "FAIL",
-  "hard_error_count": 2,
+  "status": "PASS",
+  "hard_error_count": 0,
   "warning_count": 0,
   "checks": [
     {
@@ -105,12 +105,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=a02b1a78e137f0e936d29fef1f69106fa7ca3655"
+      "detail": "HEAD=ef3d69e2a15de46573a70e6b2528d194834a3873"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=a02b1a78e137f0e936d29fef1f69106fa7ca3655 GITHUB_SHA=a02b1a78e137f0e936d29fef1f69106fa7ca3655"
+      "detail": "HEAD=ef3d69e2a15de46573a70e6b2528d194834a3873 GITHUB_SHA=ef3d69e2a15de46573a70e6b2528d194834a3873"
     },
     {
       "name": "git:critical_files_tracked",
@@ -559,12 +559,12 @@
     },
     {
       "name": "workflow:us_premarket_dst_window",
-      "status": "FAIL",
+      "status": "PASS",
       "detail": "Beijing 16:00-21:30 DST-sensitive US pre-market coverage scheduled"
     },
     {
       "name": "workflow:us_premarket_standard_window",
-      "status": "FAIL",
+      "status": "PASS",
       "detail": "Beijing 22:00-22:30 standard-time US pre-market/open boundary scheduled"
     },
     {
@@ -585,12 +585,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=32839"
+      "detail": "declared=STALE expected=STALE age_seconds=32967"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=32839"
+      "detail": "declared=STALE expected=STALE age_seconds=32967"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -630,7 +630,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-25T16:14:39Z market=2026-08-25T15:07:20+08:00"
+      "detail": "context=2026-08-25T16:16:47Z market=2026-08-25T15:07:20+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -700,7 +700,7 @@
     {
       "name": "phase4:e2e_state_present",
       "status": "PASS",
-      "detail": "status=READY"
+      "detail": "status=BLOCKED"
     },
     {
       "name": "notification:managed_schema",
@@ -893,10 +893,7 @@
       "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
     }
   ],
-  "errors": [
-    "workflow:us_premarket_dst_window: Beijing 16:00-21:30 DST-sensitive US pre-market coverage scheduled",
-    "workflow:us_premarket_standard_window: Beijing 22:00-22:30 standard-time US pre-market/open boundary scheduled"
-  ],
+  "errors": [],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。"
 }
