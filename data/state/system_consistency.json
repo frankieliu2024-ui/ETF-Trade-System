@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-08-25T17:20:37Z",
-  "generated_at_beijing": "2026-08-26T01:20:37+08:00",
+  "generated_at": "2026-08-25T17:21:07Z",
+  "generated_at_beijing": "2026-08-26T01:21:07+08:00",
   "repository": {
-    "head_sha": "84db45f9d59f2e35f8f9164f278f6e47fee8f995",
-    "github_sha": "84db45f9d59f2e35f8f9164f278f6e47fee8f995",
-    "github_run_id": "32877270570",
+    "head_sha": "2c9afa9c08f37a06ecfe912d3d773a6eae9c04a7",
+    "github_sha": "2c9afa9c08f37a06ecfe912d3d773a6eae9c04a7",
+    "github_run_id": "32877286336",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "84db45f9d59f2e35f8f9164f278f6e47fee8f995",
-    "workflow_sha": "84db45f9d59f2e35f8f9164f278f6e47fee8f995",
+    "checked_commit": "2c9afa9c08f37a06ecfe912d3d773a6eae9c04a7",
+    "workflow_sha": "2c9afa9c08f37a06ecfe912d3d773a6eae9c04a7",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "status": "FAIL",
-  "hard_error_count": 1,
+  "hard_error_count": 2,
   "warning_count": 0,
   "checks": [
     {
@@ -165,12 +165,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=84db45f9d59f2e35f8f9164f278f6e47fee8f995"
+      "detail": "HEAD=2c9afa9c08f37a06ecfe912d3d773a6eae9c04a7"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=84db45f9d59f2e35f8f9164f278f6e47fee8f995 GITHUB_SHA=84db45f9d59f2e35f8f9164f278f6e47fee8f995"
+      "detail": "HEAD=2c9afa9c08f37a06ecfe912d3d773a6eae9c04a7 GITHUB_SHA=2c9afa9c08f37a06ecfe912d3d773a6eae9c04a7"
     },
     {
       "name": "git:critical_files_tracked",
@@ -179,8 +179,8 @@
     },
     {
       "name": "git:working_tree_clean_before_check",
-      "status": "PASS",
-      "detail": "generated_state_dirty=17 unexpected=[]"
+      "status": "FAIL",
+      "detail": "generated_state_dirty=22 unexpected=['M \"ETF\\\\344\\\\272\\\\244\\\\346\\\\230\\\\223\\\\345\\\\244\\\\215\\\\347\\\\233\\\\230\\\\344\\\\270\\\\216\\\\347\\\\273\\\\217\\\\351\\\\252\\\\214\\\\345\\\\272\\\\223_2026.md\"', ' M \"ETF\\\\345\\\\270\\\\202\\\\345\\\\234\\\\272\\\\350\\\\241\\\\214\\\\346\\\\203\\\\205\\\\346\\\\241\\\\243\\\\346\\\\241\\\\210_2026.md\"', ' M \"ETF\\\\345\\\\275\\\\223\\\\345\\\\211\\\\215\\\\347\\\\212\\\\266\\\\346\\\\200\\\\201_DASHBOARD.md\"']"
     },
     {
       "name": "index_entry:ETF规则_MASTER.md",
@@ -530,7 +530,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "FAIL",
-      "detail": "active=True phase=13:20 max_age_seconds=9081 limit=900"
+      "detail": "active=True phase=13:21 max_age_seconds=9111 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -650,12 +650,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=36797"
+      "detail": "declared=STALE expected=STALE age_seconds=36827"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=36797"
+      "detail": "declared=STALE expected=STALE age_seconds=36827"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -695,7 +695,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-25T17:20:37Z market=2026-08-25T15:07:20+08:00"
+      "detail": "context=2026-08-25T17:21:07Z market=2026-08-25T15:07:20+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -959,7 +959,8 @@
     }
   ],
   "errors": [
-    "us_extended:live_freshness: active=True phase=13:20 max_age_seconds=9081 limit=900"
+    "git:working_tree_clean_before_check: generated_state_dirty=22 unexpected=['M \"ETF\\\\344\\\\272\\\\244\\\\346\\\\230\\\\223\\\\345\\\\244\\\\215\\\\347\\\\233\\\\230\\\\344\\\\270\\\\216\\\\347\\\\273\\\\217\\\\351\\\\252\\\\214\\\\345\\\\272\\\\223_2026.md\"', ' M \"ETF\\\\345\\\\270\\\\202\\\\345\\\\234\\\\272\\\\350\\\\241\\\\214\\\\346\\\\203\\\\205\\\\346\\\\241\\\\243\\\\346\\\\241\\\\210_2026.md\"', ' M \"ETF\\\\345\\\\275\\\\223\\\\345\\\\211\\\\215\\\\347\\\\212\\\\266\\\\346\\\\200\\\\201_DASHBOARD.md\"']",
+    "us_extended:live_freshness: active=True phase=13:21 max_age_seconds=9111 limit=900"
   ],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。"

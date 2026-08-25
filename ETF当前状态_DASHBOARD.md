@@ -78,4 +78,5 @@
 
 <!-- AUTO_TRADE_FACT_CORRECTIONS_START -->
 FEE_20260825_112516｜- 成交费用补充：半导体设备ETF（561980） 5.00元已确认；ETF累计已确认费用115.01元；ETF策略Known-net收益率约-8.30%。
+FEE_20260825_100518｜- 成交费用补充：恒生科技ETF（513180） 5.00元已确认；ETF累计已确认费用120.01元；ETF策略Known-net收益率约-8.30%。
 <!-- AUTO_TRADE_FACT_CORRECTIONS_END -->
