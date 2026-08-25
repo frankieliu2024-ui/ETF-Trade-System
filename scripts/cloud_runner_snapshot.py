@@ -375,11 +375,65 @@ def is_newer_than_current(captured_dt: datetime) -> bool:
     return captured_dt > previous.astimezone(SHANGHAI)
 
 
+
+def retry_failed_snapshot() -> int:
+    current = read_current(ROOT)
+    latest_snapshot = str(current.get("latest_snapshot") or "")
+    snapshot_path = ROOT / latest_snapshot
+    if not latest_snapshot or not snapshot_path.exists():
+        raise RuntimeError("cannot quick-retry without a current snapshot")
+    snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    failed_rows = [
+        row for row in (snapshot.get("rows") or [])
+        if row.get("asset_class") == "ETF" and str(row.get("quality_status") or "").upper() in {"FAILED", "FAIL"}
+    ]
+    if not failed_rows:
+        print(json.dumps({"ok": True, "quick_retry": False, "reason": "no_failed_etf_objects"}, ensure_ascii=False))
+        return 0
+    started = time.monotonic()
+    now_dt = now_shanghai()
+    market_phase = a_share_market_phase(now_dt)
+    cli = cli_path()
+    run_dir = ROOT / "data" / "market" / "raw" / "hithink" / now_dt.date().isoformat() / f"{now_dt:%H%M%S}_quick_retry"
+    replacements = {}
+    with ThreadPoolExecutor(max_workers=min(max(1, MAX_WORKERS), len(failed_rows))) as pool:
+        futures = {pool.submit(fetch_etf_with_fallback, cli, run_dir, str(row.get("symbol")), str(row.get("thscode"))): row for row in failed_rows}
+        for future in as_completed(futures):
+            original = futures[future]
+            code = str(original.get("symbol") or "")
+            thscode = str(original.get("thscode") or "")
+            try:
+                replacements[code] = future.result()
+            except Exception as error:
+                replacements[code] = failed_etf_row(code, thscode, str(error), market_phase)
+    rows = [replacements.get(str(row.get("symbol")), row) for row in (snapshot.get("rows") or [])]
+    rows.sort(key=lambda row: (row.get("asset_class", ""), row.get("symbol", "")))
+    quality = "PASS" if all(row.get("quality_status") == "PASS" for row in rows) else "DEGRADED"
+    finished = now_shanghai()
+    captured = finished.isoformat(timespec="seconds")
+    elapsed = round(time.monotonic() - started, 3)
+    snapshot["rows"] = rows
+    snapshot["quality_status"] = quality
+    snapshot["captured_at"] = captured
+    snapshot["captured_at_beijing"] = captured
+    snapshot.setdefault("runtime", {})["quick_retry_objects"] = sorted(replacements)
+    snapshot["runtime"]["quick_retry_seconds"] = elapsed
+    temp = snapshot_path.with_name(f".{snapshot_path.name}.quick_retry.tmp")
+    temp.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
+    temp.replace(snapshot_path)
+    update_current(root=ROOT, market_date=str(snapshot.get("market_date") or current.get("market_date") or finished.date().isoformat()), node=str(snapshot.get("node") or current.get("latest_valid_node") or "live"), captured_at=captured, latest_snapshot=latest_snapshot, snapshot_commit=os.environ.get("GITHUB_SHA", ""), node_status="READY" if quality == "PASS" else "DEGRADED", data_freshness={**(current.get("data_freshness") or {}), "status": quality, "market_phase": snapshot.get("market_phase") or market_phase, "captured_at": captured, "captured_at_beijing": captured, "quick_retry_objects": sorted(replacements), "quick_retry_seconds": elapsed})
+    write_runtime_health({"status": "PASS" if quality == "PASS" else "DEGRADED", "quality_status": quality, "market_date": snapshot.get("market_date", ""), "node": snapshot.get("node", "live"), "market_phase": snapshot.get("market_phase") or market_phase, "captured_at": captured, "captured_at_beijing": captured, "acquisition_seconds": elapsed, "count": len(rows), "latest_snapshot": latest_snapshot, "quick_retry_objects": sorted(replacements), "quick_retry_seconds": elapsed})
+    print(json.dumps({"ok": True, "quick_retry": True, "objects": sorted(replacements), "quality_status": quality, "captured_at_beijing": captured, "acquisition_seconds": elapsed}, ensure_ascii=False))
+    return 0
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--node", default="manual", choices=sorted(NODES))
     parser.add_argument("--probe-only", action="store_true", help="Fetch and validate real data without creating a market node")
+    parser.add_argument("--retry-failed", action="store_true", help="Retry only failed ETF rows in the latest published snapshot")
     args = parser.parse_args()
+    if args.retry_failed:
+        return retry_failed_snapshot()
 
     run_started_monotonic = time.monotonic()
     run_started_at = now_utc_text()

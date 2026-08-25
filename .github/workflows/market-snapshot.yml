@@ -168,7 +168,7 @@ jobs:
               data = json.loads(path.read_text(encoding='utf-8'))
               status = data.get('status', '')
               same_run = str(data.get('workflow_run_id', '')) == str(os.environ.get('GITHUB_RUN_ID', ''))
-              written = status == 'PASS' and same_run and bool(data.get('latest_snapshot'))
+              written = status in {'PASS', 'DEGRADED'} and same_run and bool(data.get('latest_snapshot'))
               reason = status or 'missing_status'
           with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
               f.write(f"snapshot_written={'true' if written else 'false'}\n")
@@ -187,6 +187,10 @@ jobs:
             git pull --rebase origin main
             git push origin HEAD:main
           fi
+      - name: Quick retry failed core objects after initial publish
+        id: quick_retry
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/cloud_runner_snapshot.py --retry-failed
       - name: Process optional broker/dashboard state sync
         id: state_sync
         if: ${{ github.event_name == 'push' && github.event.inputs.probe_only != 'true' }}

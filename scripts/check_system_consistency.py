@@ -256,6 +256,7 @@ def main() -> int:
     quality = decision_context.get("data_quality_summary") or query_context.get("data_quality_summary") or {}
     check("decision:coverage_summary", coverage.get("coverage_status") in {"COMPLETE", "DEGRADED", "INCOMPLETE"}, f"coverage_status={coverage.get('coverage_status', 'MISSING')}")
     check("decision:quality_summary", all(key in quality for key in ("pass_count", "degraded_count", "failed_count", "failed_objects", "degraded_objects")), f"keys={sorted(quality)}")
+    check("decision:core_stock_coverage_fields", all(key in coverage for key in ("core_market_pass", "core_market_failed", "account_stock_market_pass", "account_stock_market_failed")), f"coverage_keys={sorted(coverage)}", warning=True)
     check("decision:failed_objects_explicit", not quality.get("failed_count") or bool(quality.get("failed_objects")), f"failed_count={quality.get('failed_count')} failed_objects={quality.get('failed_objects')}", warning=True)
     check("decision:query_decision_current_aligned", query_context.get("current", {}).get("latest_snapshot") == decision_context.get("current", {}).get("latest_snapshot"), f"query={query_context.get('current', {}).get('latest_snapshot')} decision={decision_context.get('current', {}).get('latest_snapshot')}")
     pit = decision_context.get("point_in_time") or query_context.get("point_in_time") or {}
@@ -310,6 +311,24 @@ def main() -> int:
     stock_market_codes = set((stock_market.get("objects") or {}).keys())
     check("stock_runtime:dynamic_account_membership", detected_stocks == expected_account_stocks, f"detected={sorted(detected_stocks)} expected={sorted(expected_account_stocks)}", warning=not live_runtime)
     # Third-layer quote failure is explicit DEGRADED/FAILED evidence, but must not block the core ETF/index production pulse.\n    # The stock layer remains a hard requirement for full three-layer acceptance and is reported as WARNING here until refreshed.\n    check("stock_runtime:market_complete", stock_market_codes == expected_account_stocks and all(item.get("quality_status") == "PASS" and item.get("as_of_beijing") for item in (stock_market.get("objects") or {}).values()), f"codes={sorted(stock_market_codes)} status={stock_market.get('quality_status')}", warning=True)
+    core_time_text = str(current.get("captured_at") or "")
+    stock_time_texts = [str(item.get("as_of_beijing") or "") for item in (stock_market.get("objects") or {}).values() if item.get("as_of_beijing")]
+    stock_time_aligned = True
+    stock_time_detail = "not_comparable"
+    if live_runtime and core_time_text and stock_time_texts:
+        try:
+            core_dt = datetime.fromisoformat(core_time_text.replace("Z", "+00:00"))
+            stock_delays = []
+            for stock_time in stock_time_texts:
+                stock_dt = datetime.fromisoformat(stock_time.replace("Z", "+00:00"))
+                stock_delays.append(round((core_dt - stock_dt).total_seconds()))
+            max_delay = max(stock_delays)
+            stock_time_aligned = max_delay <= 900
+            stock_time_detail = f"max_core_minus_stock_seconds={max_delay}"
+        except ValueError:
+            stock_time_aligned = False
+            stock_time_detail = "invalid_timestamp"
+    check("stock_runtime:market_time_alignment", stock_time_aligned, stock_time_detail, warning=True)
     overseas_health = read_json("data/state/overseas_runtime_health.json")
     check("overseas_runtime:structured", bool(overseas_health.get("status")), f"status={overseas_health.get('status', 'MISSING')}")
     check("overseas_runtime:pulse_success", overseas_health.get("pulse_success") is True, f"pulse_success={overseas_health.get('pulse_success')}", warning=True)
