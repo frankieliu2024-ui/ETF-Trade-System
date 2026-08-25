@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-25T07:26:31Z",
-  "generated_at_beijing": "2026-08-25T15:26:31+08:00",
+  "generated_at": "2026-08-25T10:24:50Z",
+  "generated_at_beijing": "2026-08-25T18:24:50+08:00",
   "market_date": "2026-08-25",
   "latest_valid_node": "close",
   "current": {
@@ -38,11 +38,11 @@
     },
     "needs_account_update": false,
     "last_trade_event_id": "20260825_112516",
-    "rules_version": "V2.2.16",
+    "rules_version": "V2.2.15",
     "generated_at": "2026-08-25T07:07:20Z"
   },
   "decision_context": {
-    "generated_at": "2026-08-25T07:26:31Z",
+    "generated_at": "2026-08-25T10:24:50Z",
     "rules_version": "V2.2.16",
     "market_date": "2026-08-25",
     "latest_node": "close",
@@ -81,7 +81,7 @@
       },
       "needs_account_update": false,
       "last_trade_event_id": "20260825_112516",
-      "rules_version": "V2.2.16",
+      "rules_version": "V2.2.15",
       "generated_at": "2026-08-25T07:07:20Z"
     },
     "latest_snapshot": {
@@ -450,7 +450,7 @@
       ]
     },
     "data_status": {
-      "status": "DEGRADED",
+      "status": "STALE",
       "provider": "hithink-finance",
       "count": 13,
       "etf_universe_count": 11,
@@ -462,10 +462,10 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 29.59,
-      "age_seconds": 1151
+      "age_seconds": 11850
     },
     "freshness_at_context_build": {
-      "status": "DEGRADED",
+      "status": "STALE",
       "provider": "hithink-finance",
       "count": 13,
       "etf_universe_count": 11,
@@ -477,7 +477,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 29.59,
-      "age_seconds": 1151
+      "age_seconds": 11850
     },
     "data_quality_summary": {
       "pass_count": 13,
@@ -489,6 +489,17 @@
       "stale_objects": [],
       "read_only": true,
       "source": "latest_snapshot_rows"
+    },
+    "etf_strategy_risk_metrics": {
+      "etf_strategy_risk_pct": -8.3,
+      "etf_holding_unrealized_pct": -8.03,
+      "etf_drawdown_from_high_pct": -8.3,
+      "equity_data_quality": "KNOWN_NET_PARTIAL_PENDING_2026_08_25_SELL_FEES",
+      "strategy_equity_known_net": 183402.49,
+      "high_watermark": 200000,
+      "fee_status": "2026-08-25 SELL FEES PENDING_OR_NOT_YET_DISPLAYED",
+      "interpretation": "唯一ETF策略风险率决定风险区间；持仓浮盈亏率与高水位回撤率只解释持仓压力和近期改善/恶化。",
+      "read_only": true
     },
     "analysis_coverage": {
       "indices_total": 2,
@@ -515,14 +526,14 @@
       "account_fact_time": "2026-08-25T14:31:51+08:00",
       "market_snapshot_time": "2026-08-25T15:07:20+08:00",
       "market_phase": "POST_CLOSE_GRACE",
-      "context_generated_time": "2026-08-25T07:26:31Z",
+      "context_generated_time": "2026-08-25T10:24:50Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
     "scheduled_pulse_health": {
       "expected_slots": [],
       "observed_slots": [
-        "2026-08-25 15:00"
+        "cron:0,10 7 * * 1-5"
       ],
       "missing_slots": [],
       "status": "UNKNOWN",
@@ -542,7 +553,7 @@
       "read_only": true
     },
     "intraday_path_features": {
-      "generated_at": "2026-08-25T07:26:20Z",
+      "generated_at": "2026-08-25T10:24:17Z",
       "market_date": "2026-08-25",
       "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
       "read_only": true,
@@ -572,17 +583,17 @@
           "recent_interval_minutes": 13.9,
           "recent_move_pct": 0.0352,
           "recent_slope_pct_per_10m": 0.0253,
-          "recent_volume_delta": 1677665000,
-          "recent_amount_delta": 26710990000,
+          "recent_volume_delta": 1677665000.0,
+          "recent_amount_delta": 26710990000.0,
           "relative_to_indices": {
+            "000001": {
+              "latest_relative_change_pct_points": 0.0,
+              "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
             "399006": {
               "latest_relative_change_pct_points": 1.1929,
               "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
-            "000001": {
-              "latest_relative_change_pct_points": 0,
-              "benchmark_change_pct": 0.1914,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -623,20 +634,20 @@
           "recovery_from_path_low_pct": 2.9575,
           "retreat_from_path_high_pct": -0.9484,
           "latest_day_range_position": 0.75,
-          "recent_interval_minutes": 14,
-          "recent_move_pct": 0,
-          "recent_slope_pct_per_10m": 0,
-          "recent_volume_delta": 5559700,
-          "recent_amount_delta": 9296620,
+          "recent_interval_minutes": 14.0,
+          "recent_move_pct": 0.0,
+          "recent_slope_pct_per_10m": 0.0,
+          "recent_volume_delta": 5559700.0,
+          "recent_amount_delta": 9296620.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 1.9073,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": 0.7144,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 1.9073,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -693,22 +704,22 @@
           "path_high": 1.377,
           "path_high_as_of_beijing": "2026-08-25T14:33:27+08:00",
           "recovery_from_path_low_pct": 0.4376,
-          "retreat_from_path_high_pct": 0,
+          "retreat_from_path_high_pct": 0.0,
           "latest_day_range_position": 0.875,
           "recent_interval_minutes": 14.07,
-          "recent_move_pct": 0,
-          "recent_slope_pct_per_10m": 0,
-          "recent_volume_delta": 2339100,
+          "recent_move_pct": 0.0,
+          "recent_slope_pct_per_10m": 0.0,
+          "recent_volume_delta": 2339100.0,
           "recent_amount_delta": 3220097.7,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 1.3659,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": 0.173,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 1.3659,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -726,8 +737,8 @@
                 "tail_spread_pct": 0.0727,
                 "range_positions": [
                   0.8333,
-                  1,
-                  1
+                  1.0,
+                  1.0
                 ]
               }
             }
@@ -752,17 +763,17 @@
           "recent_interval_minutes": 14.1,
           "recent_move_pct": -0.0941,
           "recent_slope_pct_per_10m": -0.0667,
-          "recent_volume_delta": 5640600,
-          "recent_amount_delta": 5992090,
+          "recent_volume_delta": 5640600.0,
+          "recent_amount_delta": 5992090.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 0.5329,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": -0.66,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 0.5329,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -803,17 +814,17 @@
           "recent_interval_minutes": 14.08,
           "recent_move_pct": 0.1219,
           "recent_slope_pct_per_10m": 0.0865,
-          "recent_volume_delta": 33656420,
-          "recent_amount_delta": 55262000,
+          "recent_volume_delta": 33656420.0,
+          "recent_amount_delta": 55262000.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 2.6723,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": 1.4794,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 2.6723,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -864,19 +875,19 @@
           "retreat_from_path_high_pct": -0.1151,
           "latest_day_range_position": 0.9286,
           "recent_interval_minutes": 13.73,
-          "recent_move_pct": 0,
-          "recent_slope_pct_per_10m": 0,
-          "recent_volume_delta": 20056500,
-          "recent_amount_delta": 17414330,
+          "recent_move_pct": 0.0,
+          "recent_slope_pct_per_10m": 0.0,
+          "recent_volume_delta": 20056500.0,
+          "recent_amount_delta": 17414330.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 3.1191,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": 1.9263,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 3.1191,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -929,17 +940,17 @@
           "recent_interval_minutes": 13.9,
           "recent_move_pct": -0.0366,
           "recent_slope_pct_per_10m": -0.0263,
-          "recent_volume_delta": 644150000,
-          "recent_amount_delta": 15459840000,
+          "recent_volume_delta": 644150000.0,
+          "recent_amount_delta": 15459840000.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 0,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": -1.1929,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 0.0,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -970,17 +981,17 @@
           "recent_interval_minutes": 14.15,
           "recent_move_pct": -0.1724,
           "recent_slope_pct_per_10m": -0.1218,
-          "recent_volume_delta": 147767600,
-          "recent_amount_delta": 85567700,
+          "recent_volume_delta": 147767600.0,
+          "recent_amount_delta": 85567700.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 0.8291,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": -0.3638,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 0.8291,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -998,7 +1009,7 @@
                 "tail_spread_pct": 0.1727,
                 "range_positions": [
                   0.8333,
-                  1,
+                  1.0,
                   0.8333
                 ]
               }
@@ -1019,22 +1030,22 @@
           "path_high": 2.273,
           "path_high_as_of_beijing": "2026-08-25T15:07:07+08:00",
           "recovery_from_path_low_pct": 1.6093,
-          "retreat_from_path_high_pct": 0,
-          "latest_day_range_position": 1,
+          "retreat_from_path_high_pct": 0.0,
+          "latest_day_range_position": 1.0,
           "recent_interval_minutes": 14.22,
           "recent_move_pct": 0.1322,
           "recent_slope_pct_per_10m": 0.093,
-          "recent_volume_delta": 5025000,
-          "recent_amount_delta": 11413060,
+          "recent_volume_delta": 5025000.0,
+          "recent_amount_delta": 11413060.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 2.0686,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": 0.8757,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 2.0686,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -1051,7 +1062,7 @@
                 "low_as_of_beijing": "2026-08-25T10:01:57+08:00",
                 "recovery_from_path_low_pct": 1.6093,
                 "points_after_low": 22,
-                "latest_range_position": 1
+                "latest_range_position": 1.0
               }
             },
             {
@@ -1062,7 +1073,7 @@
                 "range_positions": [
                   0.8889,
                   0.9167,
-                  1
+                  1.0
                 ]
               }
             }
@@ -1087,17 +1098,17 @@
           "recent_interval_minutes": 13.68,
           "recent_move_pct": -0.1541,
           "recent_slope_pct_per_10m": -0.1126,
-          "recent_volume_delta": 125973900,
-          "recent_amount_delta": 81669000,
+          "recent_volume_delta": 125973900.0,
+          "recent_amount_delta": 81669000.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 1.0015,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": -0.1914,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 1.0015,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -1138,17 +1149,17 @@
           "recent_interval_minutes": 13.57,
           "recent_move_pct": -0.1257,
           "recent_slope_pct_per_10m": -0.0927,
-          "recent_volume_delta": 16987600,
-          "recent_amount_delta": 161997400,
+          "recent_volume_delta": 16987600.0,
+          "recent_amount_delta": 161997400.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 0.6774,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": -0.5155,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 0.6774,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -1179,17 +1190,17 @@
           "recent_interval_minutes": 14.12,
           "recent_move_pct": 0.2972,
           "recent_slope_pct_per_10m": 0.2105,
-          "recent_volume_delta": 8658900,
-          "recent_amount_delta": 5839230,
+          "recent_volume_delta": 8658900.0,
+          "recent_amount_delta": 5839230.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": -0.602,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": -1.7949,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": -0.602,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -1248,17 +1259,17 @@
           "recent_interval_minutes": 13.23,
           "recent_move_pct": 0.0591,
           "recent_slope_pct_per_10m": 0.0447,
-          "recent_volume_delta": 94940500,
-          "recent_amount_delta": 160686900,
+          "recent_volume_delta": 94940500.0,
+          "recent_amount_delta": 160686900.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 1.1198,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": -0.0731,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 1.1198,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -1298,7 +1309,7 @@
           "vs_universe_median_pct_points": 1.9994,
           "vs_shanghai_pct_points": 1.9263,
           "vs_chinext_pct_points": 3.1191,
-          "recent_slope_pct_per_10m": 0,
+          "recent_slope_pct_per_10m": 0.0,
           "sampling_coverage": "MEDIUM",
           "evidence_delta": {
             "rank_improvement_places": 0,
@@ -1379,7 +1390,7 @@
           "vs_universe_median_pct_points": 0.7875,
           "vs_shanghai_pct_points": 0.7144,
           "vs_chinext_pct_points": 1.9073,
-          "recent_slope_pct_per_10m": 0,
+          "recent_slope_pct_per_10m": 0.0,
           "sampling_coverage": "MEDIUM",
           "evidence_delta": {
             "rank_improvement_places": 0,
@@ -1406,7 +1417,7 @@
           "vs_universe_median_pct_points": 0.2462,
           "vs_shanghai_pct_points": 0.173,
           "vs_chinext_pct_points": 1.3659,
-          "recent_slope_pct_per_10m": 0,
+          "recent_slope_pct_per_10m": 0.0,
           "sampling_coverage": "MEDIUM",
           "evidence_delta": {
             "rank_improvement_places": 0,
@@ -1430,7 +1441,7 @@
           "name": "科创50ETF",
           "close_return_pct": 0.1183,
           "descriptive_daily_return_rank": 6,
-          "vs_universe_median_pct_points": 0,
+          "vs_universe_median_pct_points": 0.0,
           "vs_shanghai_pct_points": -0.0731,
           "vs_chinext_pct_points": 1.1198,
           "recent_slope_pct_per_10m": 0.0447,
@@ -1455,7 +1466,7 @@
           "display_name": "通信ETF（515880）",
           "code": "515880",
           "name": "通信ETF",
-          "close_return_pct": 0,
+          "close_return_pct": 0.0,
           "descriptive_daily_return_rank": 7,
           "vs_universe_median_pct_points": -0.1183,
           "vs_shanghai_pct_points": -0.1914,
@@ -1589,7 +1600,7 @@
       ],
       "skfolio_risk_evidence": {
         "schema_version": "1.0",
-        "generated_at": "2026-08-25T07:26:20Z",
+        "generated_at": "2026-08-25T10:24:18Z",
         "status": "READY",
         "mode": "SKFOLIO_VALIDATED_RISK_EVIDENCE",
         "validation_basis": {
@@ -1780,18 +1791,7 @@
     },
     "account_fact_status": "VALID",
     "needs_account_screenshot": false,
-    "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。日内路径、研究证据及证据变化必须参与完整MASTER判断，但单独均不是交易信号。",
-    "etf_strategy_risk_metrics": {
-      "etf_strategy_risk_pct": -8.3,
-      "etf_holding_unrealized_pct": -8.03,
-      "etf_drawdown_from_high_pct": -8.3,
-      "equity_data_quality": "PARTIAL_KNOWN_NET_PENDING_FEES",
-      "strategy_equity_known_net": 183402.49,
-      "high_watermark": 200000,
-      "fee_status": "2026-08-25 SELL FEES PENDING_OR_NOT_YET_DISPLAYED",
-      "interpretation": "唯一ETF策略风险率决定风险区间；持仓浮盈亏率与高水位回撤率只解释持仓压力和近期改善/恶化。",
-      "read_only": true
-    }
+    "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。日内路径、研究证据及证据变化必须参与完整MASTER判断，但单独均不是交易信号。"
   },
   "analysis_coverage": {
     "indices_total": 2,
@@ -1814,6 +1814,17 @@
     "coverage_status": "COMPLETE",
     "read_only": true
   },
+  "etf_strategy_risk_metrics": {
+    "etf_strategy_risk_pct": -8.3,
+    "etf_holding_unrealized_pct": -8.03,
+    "etf_drawdown_from_high_pct": -8.3,
+    "equity_data_quality": "KNOWN_NET_PARTIAL_PENDING_2026_08_25_SELL_FEES",
+    "strategy_equity_known_net": 183402.49,
+    "high_watermark": 200000,
+    "fee_status": "2026-08-25 SELL FEES PENDING_OR_NOT_YET_DISPLAYED",
+    "interpretation": "唯一ETF策略风险率决定风险区间；持仓浮盈亏率与高水位回撤率只解释持仓压力和近期改善/恶化。",
+    "read_only": true
+  },
   "data_quality_summary": {
     "pass_count": 13,
     "degraded_count": 0,
@@ -1829,14 +1840,14 @@
     "account_fact_time": "2026-08-25T14:31:51+08:00",
     "market_snapshot_time": "2026-08-25T15:07:20+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-08-25T07:26:31Z",
+    "context_generated_time": "2026-08-25T10:24:50Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
   "scheduled_pulse_health": {
     "expected_slots": [],
     "observed_slots": [
-      "2026-08-25 15:00"
+      "cron:0,10 7 * * 1-5"
     ],
     "missing_slots": [],
     "status": "UNKNOWN",
@@ -1918,13 +1929,13 @@
       "runtime_health": "data/state/runtime_health.json",
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
-        "status": "DEGRADED",
-        "age_seconds": 1151,
+        "status": "STALE",
+        "age_seconds": 11850,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
       "data_freshness": {
-        "status": "DEGRADED",
+        "status": "STALE",
         "provider": "hithink-finance",
         "count": 13,
         "etf_universe_count": 11,
@@ -1936,7 +1947,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 29.59,
-        "age_seconds": 1151
+        "age_seconds": 11850
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新计算FRESH/DEGRADED/STALE。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -1983,7 +1994,7 @@
     "system_consistency": "data/state/system_consistency.json"
   },
   "data_status": {
-    "status": "DEGRADED",
+    "status": "STALE",
     "provider": "hithink-finance",
     "count": 13,
     "etf_universe_count": 11,
@@ -1995,11 +2006,11 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 29.59,
-    "age_seconds": 1151
+    "age_seconds": 11850
   },
   "freshness_at_context_build": {
-    "status": "DEGRADED",
-    "age_seconds": 1151,
+    "status": "STALE",
+    "age_seconds": 11850,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -2018,7 +2029,7 @@
   },
   "runtime_health": {
     "generated_at": "2026-08-25T07:07:20Z",
-    "workflow_run_id": "32819994457",
+    "workflow_run_id": "32822346556",
     "workflow_run_attempt": "1",
     "target_cadence_seconds": 600,
     "fresh_max_age_seconds": 900,
@@ -2028,11 +2039,11 @@
     "provider_retry_limit": 2,
     "provider_max_workers": 1,
     "etf_universe_count": 11,
-    "status": "PASS",
-    "quality_status": "PASS",
+    "status": "SKIPPED",
+    "quality_status": "SKIPPED",
     "market_date": "2026-08-25",
     "node": "close",
-    "market_phase": "POST_CLOSE_GRACE",
+    "market_phase": "OUTSIDE_SESSION",
     "run_started_at": "2026-08-25T07:06:50Z",
     "capture_started_at_beijing": "2026-08-25T15:06:50+08:00",
     "captured_at": "2026-08-25T15:07:20+08:00",
@@ -2040,15 +2051,16 @@
     "acquisition_seconds": 29.59,
     "count": 13,
     "latest_snapshot": "data/market/snapshots/2026-08-25_150720.json",
-    "scheduled_for": "2026-08-25 15:00",
+    "scheduled_for": "cron:0,10 7 * * 1-5",
     "trigger_mode": "SCHEDULE_OR_DISPATCH",
-    "started_at": "2026-08-25T07:06:50Z",
-    "finished_at": "2026-08-25T15:07:20+08:00",
-    "run_id": "32819994457",
-    "input_commit": "477da31f20da21bc7689199c31dffcfd498f3004",
-    "data_commit": "",
-    "provider_as_of": "2026-08-25T15:07:19+08:00",
-    "failure_stage": ""
+    "started_at": "2026-08-25T15:35:40+08:00",
+    "finished_at": "2026-08-25T15:35:40+08:00",
+    "run_id": "32822346556",
+    "input_commit": "74c85d0680145018fe453fa5d98b05dace7b6c84",
+    "data_commit": "e1ef748f7c5c6d03d34d9c25a64cdc5c952b7ce0",
+    "provider_as_of": "",
+    "failure_stage": "session_gate",
+    "reason": "outside_a_share_capture_window"
   },
   "system_consistency_status": "PASS",
   "system_consistency_hard_errors": 0,
@@ -2056,7 +2068,7 @@
   "overseas_context_status": "PASS",
   "overseas_generated_at_beijing": "2026-08-25T14:53:40+08:00",
   "us_extended_hours_status": "PASS",
-  "us_extended_hours_generated_at_beijing": "2026-08-25T10:19:11+08:00",
+  "us_extended_hours_generated_at_beijing": "2026-08-25T17:31:29+08:00",
   "stock_context_status": "VALID",
   "stock_market_context_status": "PASS",
   "stock_role_confirmation_needed": false,
@@ -2074,16 +2086,5 @@
   },
   "needs_account_screenshot": false,
   "read_only": true,
-  "interaction_boundary": "用户主动查询时先核对一致性与交易日历，再按‘查询时立即补采 → 最近一次有效快照 → 明确降级/缺失’获取行情；正式输出必须标注北京时间真实数据时点，并区分美股现金盘、盘后和盘前。",
-  "etf_strategy_risk_metrics": {
-    "etf_strategy_risk_pct": -8.3,
-    "etf_holding_unrealized_pct": -8.03,
-    "etf_drawdown_from_high_pct": -8.3,
-    "equity_data_quality": "PARTIAL_KNOWN_NET_PENDING_FEES",
-    "strategy_equity_known_net": 183402.49,
-    "high_watermark": 200000,
-    "fee_status": "2026-08-25 SELL FEES PENDING_OR_NOT_YET_DISPLAYED",
-    "interpretation": "唯一ETF策略风险率决定风险区间；持仓浮盈亏率与高水位回撤率只解释持仓压力和近期改善/恶化。",
-    "read_only": true
-  }
+  "interaction_boundary": "用户主动查询时先核对一致性与交易日历，再按‘查询时立即补采 → 最近一次有效快照 → 明确降级/缺失’获取行情；正式输出必须标注北京时间真实数据时点，并区分美股现金盘、盘后和盘前。"
 }

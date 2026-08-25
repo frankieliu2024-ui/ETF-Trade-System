@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-25T07:26:31Z",
+  "generated_at": "2026-08-25T10:24:50Z",
   "rules_version": "V2.2.16",
   "market_date": "2026-08-25",
   "latest_node": "close",
@@ -38,7 +38,7 @@
     },
     "needs_account_update": false,
     "last_trade_event_id": "20260825_112516",
-    "rules_version": "V2.2.16",
+    "rules_version": "V2.2.15",
     "generated_at": "2026-08-25T07:07:20Z"
   },
   "latest_snapshot": {
@@ -407,7 +407,7 @@
     ]
   },
   "data_status": {
-    "status": "DEGRADED",
+    "status": "STALE",
     "provider": "hithink-finance",
     "count": 13,
     "etf_universe_count": 11,
@@ -419,10 +419,10 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 29.59,
-    "age_seconds": 1151
+    "age_seconds": 11850
   },
   "freshness_at_context_build": {
-    "status": "DEGRADED",
+    "status": "STALE",
     "provider": "hithink-finance",
     "count": 13,
     "etf_universe_count": 11,
@@ -434,7 +434,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 29.59,
-    "age_seconds": 1151
+    "age_seconds": 11850
   },
   "data_quality_summary": {
     "pass_count": 13,
@@ -446,6 +446,17 @@
     "stale_objects": [],
     "read_only": true,
     "source": "latest_snapshot_rows"
+  },
+  "etf_strategy_risk_metrics": {
+    "etf_strategy_risk_pct": -8.3,
+    "etf_holding_unrealized_pct": -8.03,
+    "etf_drawdown_from_high_pct": -8.3,
+    "equity_data_quality": "KNOWN_NET_PARTIAL_PENDING_2026_08_25_SELL_FEES",
+    "strategy_equity_known_net": 183402.49,
+    "high_watermark": 200000,
+    "fee_status": "2026-08-25 SELL FEES PENDING_OR_NOT_YET_DISPLAYED",
+    "interpretation": "唯一ETF策略风险率决定风险区间；持仓浮盈亏率与高水位回撤率只解释持仓压力和近期改善/恶化。",
+    "read_only": true
   },
   "analysis_coverage": {
     "indices_total": 2,
@@ -472,14 +483,14 @@
     "account_fact_time": "2026-08-25T14:31:51+08:00",
     "market_snapshot_time": "2026-08-25T15:07:20+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-08-25T07:26:31Z",
+    "context_generated_time": "2026-08-25T10:24:50Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
   "scheduled_pulse_health": {
     "expected_slots": [],
     "observed_slots": [
-      "2026-08-25 15:00"
+      "cron:0,10 7 * * 1-5"
     ],
     "missing_slots": [],
     "status": "UNKNOWN",
@@ -499,7 +510,7 @@
     "read_only": true
   },
   "intraday_path_features": {
-    "generated_at": "2026-08-25T07:26:20Z",
+    "generated_at": "2026-08-25T10:24:17Z",
     "market_date": "2026-08-25",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -529,17 +540,17 @@
         "recent_interval_minutes": 13.9,
         "recent_move_pct": 0.0352,
         "recent_slope_pct_per_10m": 0.0253,
-        "recent_volume_delta": 1677665000,
-        "recent_amount_delta": 26710990000,
+        "recent_volume_delta": 1677665000.0,
+        "recent_amount_delta": 26710990000.0,
         "relative_to_indices": {
+          "000001": {
+            "latest_relative_change_pct_points": 0.0,
+            "benchmark_change_pct": 0.1914,
+            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+          },
           "399006": {
             "latest_relative_change_pct_points": 1.1929,
             "benchmark_change_pct": -1.0015,
-            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-          },
-          "000001": {
-            "latest_relative_change_pct_points": 0,
-            "benchmark_change_pct": 0.1914,
             "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
           }
         },
@@ -580,20 +591,20 @@
         "recovery_from_path_low_pct": 2.9575,
         "retreat_from_path_high_pct": -0.9484,
         "latest_day_range_position": 0.75,
-        "recent_interval_minutes": 14,
-        "recent_move_pct": 0,
-        "recent_slope_pct_per_10m": 0,
-        "recent_volume_delta": 5559700,
-        "recent_amount_delta": 9296620,
+        "recent_interval_minutes": 14.0,
+        "recent_move_pct": 0.0,
+        "recent_slope_pct_per_10m": 0.0,
+        "recent_volume_delta": 5559700.0,
+        "recent_amount_delta": 9296620.0,
         "relative_to_indices": {
-          "399006": {
-            "latest_relative_change_pct_points": 1.9073,
-            "benchmark_change_pct": -1.0015,
-            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-          },
           "000001": {
             "latest_relative_change_pct_points": 0.7144,
             "benchmark_change_pct": 0.1914,
+            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+          },
+          "399006": {
+            "latest_relative_change_pct_points": 1.9073,
+            "benchmark_change_pct": -1.0015,
             "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
           }
         },
@@ -650,22 +661,22 @@
         "path_high": 1.377,
         "path_high_as_of_beijing": "2026-08-25T14:33:27+08:00",
         "recovery_from_path_low_pct": 0.4376,
-        "retreat_from_path_high_pct": 0,
+        "retreat_from_path_high_pct": 0.0,
         "latest_day_range_position": 0.875,
         "recent_interval_minutes": 14.07,
-        "recent_move_pct": 0,
-        "recent_slope_pct_per_10m": 0,
-        "recent_volume_delta": 2339100,
+        "recent_move_pct": 0.0,
+        "recent_slope_pct_per_10m": 0.0,
+        "recent_volume_delta": 2339100.0,
         "recent_amount_delta": 3220097.7,
         "relative_to_indices": {
-          "399006": {
-            "latest_relative_change_pct_points": 1.3659,
-            "benchmark_change_pct": -1.0015,
-            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-          },
           "000001": {
             "latest_relative_change_pct_points": 0.173,
             "benchmark_change_pct": 0.1914,
+            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+          },
+          "399006": {
+            "latest_relative_change_pct_points": 1.3659,
+            "benchmark_change_pct": -1.0015,
             "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
           }
         },
@@ -683,8 +694,8 @@
               "tail_spread_pct": 0.0727,
               "range_positions": [
                 0.8333,
-                1,
-                1
+                1.0,
+                1.0
               ]
             }
           }
@@ -709,17 +720,17 @@
         "recent_interval_minutes": 14.1,
         "recent_move_pct": -0.0941,
         "recent_slope_pct_per_10m": -0.0667,
-        "recent_volume_delta": 5640600,
-        "recent_amount_delta": 5992090,
+        "recent_volume_delta": 5640600.0,
+        "recent_amount_delta": 5992090.0,
         "relative_to_indices": {
-          "399006": {
-            "latest_relative_change_pct_points": 0.5329,
-            "benchmark_change_pct": -1.0015,
-            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-          },
           "000001": {
             "latest_relative_change_pct_points": -0.66,
             "benchmark_change_pct": 0.1914,
+            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+          },
+          "399006": {
+            "latest_relative_change_pct_points": 0.5329,
+            "benchmark_change_pct": -1.0015,
             "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
           }
         },
@@ -760,17 +771,17 @@
         "recent_interval_minutes": 14.08,
         "recent_move_pct": 0.1219,
         "recent_slope_pct_per_10m": 0.0865,
-        "recent_volume_delta": 33656420,
-        "recent_amount_delta": 55262000,
+        "recent_volume_delta": 33656420.0,
+        "recent_amount_delta": 55262000.0,
         "relative_to_indices": {
-          "399006": {
-            "latest_relative_change_pct_points": 2.6723,
-            "benchmark_change_pct": -1.0015,
-            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-          },
           "000001": {
             "latest_relative_change_pct_points": 1.4794,
             "benchmark_change_pct": 0.1914,
+            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+          },
+          "399006": {
+            "latest_relative_change_pct_points": 2.6723,
+            "benchmark_change_pct": -1.0015,
             "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
           }
         },
@@ -821,19 +832,19 @@
         "retreat_from_path_high_pct": -0.1151,
         "latest_day_range_position": 0.9286,
         "recent_interval_minutes": 13.73,
-        "recent_move_pct": 0,
-        "recent_slope_pct_per_10m": 0,
-        "recent_volume_delta": 20056500,
-        "recent_amount_delta": 17414330,
+        "recent_move_pct": 0.0,
+        "recent_slope_pct_per_10m": 0.0,
+        "recent_volume_delta": 20056500.0,
+        "recent_amount_delta": 17414330.0,
         "relative_to_indices": {
-          "399006": {
-            "latest_relative_change_pct_points": 3.1191,
-            "benchmark_change_pct": -1.0015,
-            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-          },
           "000001": {
             "latest_relative_change_pct_points": 1.9263,
             "benchmark_change_pct": 0.1914,
+            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+          },
+          "399006": {
+            "latest_relative_change_pct_points": 3.1191,
+            "benchmark_change_pct": -1.0015,
             "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
           }
         },
@@ -886,17 +897,17 @@
         "recent_interval_minutes": 13.9,
         "recent_move_pct": -0.0366,
         "recent_slope_pct_per_10m": -0.0263,
-        "recent_volume_delta": 644150000,
-        "recent_amount_delta": 15459840000,
+        "recent_volume_delta": 644150000.0,
+        "recent_amount_delta": 15459840000.0,
         "relative_to_indices": {
-          "399006": {
-            "latest_relative_change_pct_points": 0,
-            "benchmark_change_pct": -1.0015,
-            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-          },
           "000001": {
             "latest_relative_change_pct_points": -1.1929,
             "benchmark_change_pct": 0.1914,
+            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+          },
+          "399006": {
+            "latest_relative_change_pct_points": 0.0,
+            "benchmark_change_pct": -1.0015,
             "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
           }
         },
@@ -927,17 +938,17 @@
         "recent_interval_minutes": 14.15,
         "recent_move_pct": -0.1724,
         "recent_slope_pct_per_10m": -0.1218,
-        "recent_volume_delta": 147767600,
-        "recent_amount_delta": 85567700,
+        "recent_volume_delta": 147767600.0,
+        "recent_amount_delta": 85567700.0,
         "relative_to_indices": {
-          "399006": {
-            "latest_relative_change_pct_points": 0.8291,
-            "benchmark_change_pct": -1.0015,
-            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-          },
           "000001": {
             "latest_relative_change_pct_points": -0.3638,
             "benchmark_change_pct": 0.1914,
+            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+          },
+          "399006": {
+            "latest_relative_change_pct_points": 0.8291,
+            "benchmark_change_pct": -1.0015,
             "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
           }
         },
@@ -955,7 +966,7 @@
               "tail_spread_pct": 0.1727,
               "range_positions": [
                 0.8333,
-                1,
+                1.0,
                 0.8333
               ]
             }
@@ -976,22 +987,22 @@
         "path_high": 2.273,
         "path_high_as_of_beijing": "2026-08-25T15:07:07+08:00",
         "recovery_from_path_low_pct": 1.6093,
-        "retreat_from_path_high_pct": 0,
-        "latest_day_range_position": 1,
+        "retreat_from_path_high_pct": 0.0,
+        "latest_day_range_position": 1.0,
         "recent_interval_minutes": 14.22,
         "recent_move_pct": 0.1322,
         "recent_slope_pct_per_10m": 0.093,
-        "recent_volume_delta": 5025000,
-        "recent_amount_delta": 11413060,
+        "recent_volume_delta": 5025000.0,
+        "recent_amount_delta": 11413060.0,
         "relative_to_indices": {
-          "399006": {
-            "latest_relative_change_pct_points": 2.0686,
-            "benchmark_change_pct": -1.0015,
-            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-          },
           "000001": {
             "latest_relative_change_pct_points": 0.8757,
             "benchmark_change_pct": 0.1914,
+            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+          },
+          "399006": {
+            "latest_relative_change_pct_points": 2.0686,
+            "benchmark_change_pct": -1.0015,
             "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
           }
         },
@@ -1008,7 +1019,7 @@
               "low_as_of_beijing": "2026-08-25T10:01:57+08:00",
               "recovery_from_path_low_pct": 1.6093,
               "points_after_low": 22,
-              "latest_range_position": 1
+              "latest_range_position": 1.0
             }
           },
           {
@@ -1019,7 +1030,7 @@
               "range_positions": [
                 0.8889,
                 0.9167,
-                1
+                1.0
               ]
             }
           }
@@ -1044,17 +1055,17 @@
         "recent_interval_minutes": 13.68,
         "recent_move_pct": -0.1541,
         "recent_slope_pct_per_10m": -0.1126,
-        "recent_volume_delta": 125973900,
-        "recent_amount_delta": 81669000,
+        "recent_volume_delta": 125973900.0,
+        "recent_amount_delta": 81669000.0,
         "relative_to_indices": {
-          "399006": {
-            "latest_relative_change_pct_points": 1.0015,
-            "benchmark_change_pct": -1.0015,
-            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-          },
           "000001": {
             "latest_relative_change_pct_points": -0.1914,
             "benchmark_change_pct": 0.1914,
+            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+          },
+          "399006": {
+            "latest_relative_change_pct_points": 1.0015,
+            "benchmark_change_pct": -1.0015,
             "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
           }
         },
@@ -1095,17 +1106,17 @@
         "recent_interval_minutes": 13.57,
         "recent_move_pct": -0.1257,
         "recent_slope_pct_per_10m": -0.0927,
-        "recent_volume_delta": 16987600,
-        "recent_amount_delta": 161997400,
+        "recent_volume_delta": 16987600.0,
+        "recent_amount_delta": 161997400.0,
         "relative_to_indices": {
-          "399006": {
-            "latest_relative_change_pct_points": 0.6774,
-            "benchmark_change_pct": -1.0015,
-            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-          },
           "000001": {
             "latest_relative_change_pct_points": -0.5155,
             "benchmark_change_pct": 0.1914,
+            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+          },
+          "399006": {
+            "latest_relative_change_pct_points": 0.6774,
+            "benchmark_change_pct": -1.0015,
             "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
           }
         },
@@ -1136,17 +1147,17 @@
         "recent_interval_minutes": 14.12,
         "recent_move_pct": 0.2972,
         "recent_slope_pct_per_10m": 0.2105,
-        "recent_volume_delta": 8658900,
-        "recent_amount_delta": 5839230,
+        "recent_volume_delta": 8658900.0,
+        "recent_amount_delta": 5839230.0,
         "relative_to_indices": {
-          "399006": {
-            "latest_relative_change_pct_points": -0.602,
-            "benchmark_change_pct": -1.0015,
-            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-          },
           "000001": {
             "latest_relative_change_pct_points": -1.7949,
             "benchmark_change_pct": 0.1914,
+            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+          },
+          "399006": {
+            "latest_relative_change_pct_points": -0.602,
+            "benchmark_change_pct": -1.0015,
             "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
           }
         },
@@ -1205,17 +1216,17 @@
         "recent_interval_minutes": 13.23,
         "recent_move_pct": 0.0591,
         "recent_slope_pct_per_10m": 0.0447,
-        "recent_volume_delta": 94940500,
-        "recent_amount_delta": 160686900,
+        "recent_volume_delta": 94940500.0,
+        "recent_amount_delta": 160686900.0,
         "relative_to_indices": {
-          "399006": {
-            "latest_relative_change_pct_points": 1.1198,
-            "benchmark_change_pct": -1.0015,
-            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-          },
           "000001": {
             "latest_relative_change_pct_points": -0.0731,
             "benchmark_change_pct": 0.1914,
+            "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+          },
+          "399006": {
+            "latest_relative_change_pct_points": 1.1198,
+            "benchmark_change_pct": -1.0015,
             "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
           }
         },
@@ -1255,7 +1266,7 @@
         "vs_universe_median_pct_points": 1.9994,
         "vs_shanghai_pct_points": 1.9263,
         "vs_chinext_pct_points": 3.1191,
-        "recent_slope_pct_per_10m": 0,
+        "recent_slope_pct_per_10m": 0.0,
         "sampling_coverage": "MEDIUM",
         "evidence_delta": {
           "rank_improvement_places": 0,
@@ -1336,7 +1347,7 @@
         "vs_universe_median_pct_points": 0.7875,
         "vs_shanghai_pct_points": 0.7144,
         "vs_chinext_pct_points": 1.9073,
-        "recent_slope_pct_per_10m": 0,
+        "recent_slope_pct_per_10m": 0.0,
         "sampling_coverage": "MEDIUM",
         "evidence_delta": {
           "rank_improvement_places": 0,
@@ -1363,7 +1374,7 @@
         "vs_universe_median_pct_points": 0.2462,
         "vs_shanghai_pct_points": 0.173,
         "vs_chinext_pct_points": 1.3659,
-        "recent_slope_pct_per_10m": 0,
+        "recent_slope_pct_per_10m": 0.0,
         "sampling_coverage": "MEDIUM",
         "evidence_delta": {
           "rank_improvement_places": 0,
@@ -1387,7 +1398,7 @@
         "name": "科创50ETF",
         "close_return_pct": 0.1183,
         "descriptive_daily_return_rank": 6,
-        "vs_universe_median_pct_points": 0,
+        "vs_universe_median_pct_points": 0.0,
         "vs_shanghai_pct_points": -0.0731,
         "vs_chinext_pct_points": 1.1198,
         "recent_slope_pct_per_10m": 0.0447,
@@ -1412,7 +1423,7 @@
         "display_name": "通信ETF（515880）",
         "code": "515880",
         "name": "通信ETF",
-        "close_return_pct": 0,
+        "close_return_pct": 0.0,
         "descriptive_daily_return_rank": 7,
         "vs_universe_median_pct_points": -0.1183,
         "vs_shanghai_pct_points": -0.1914,
@@ -1613,6 +1624,76 @@
       "trade_signal": null,
       "trial_confirm": null,
       "portfolio_target": null
+    },
+    "margin_financing_evidence": {
+      "status": "READY",
+      "mode": "VALIDATED_MARGIN_FINANCING_EVIDENCE",
+      "use_in_current_decision": true,
+      "fact_latest_date": "2026-08-24",
+      "provider": "Eastmoney aggregate margin daily trade",
+      "primary_evidence": {
+        "name": "融资余额5日变化",
+        "signal": "margin_balance_5d_change_lag1",
+        "value_pct": -1.3731,
+        "state": "CONTRACTING",
+        "role": "PRIMARY"
+      },
+      "secondary_evidence": {
+        "name": "融资买入5日均值相对20日均值",
+        "signal": "margin_buy_5d_vs20_lag1",
+        "value_pct": -8.1035,
+        "state": "CONTRACTING",
+        "role": "SECONDARY"
+      },
+      "applies_to": [
+        {
+          "code": "561980",
+          "name": "半导体设备ETF",
+          "display_name": "半导体设备ETF（561980）"
+        },
+        {
+          "code": "588000",
+          "name": "科创50ETF",
+          "display_name": "科创50ETF（588000）"
+        },
+        {
+          "code": "159781",
+          "name": "科创创业ETF",
+          "display_name": "科创创业ETF（159781）"
+        },
+        {
+          "code": "159992",
+          "name": "创新药ETF",
+          "display_name": "创新药ETF（159992）"
+        },
+        {
+          "code": "515880",
+          "name": "通信ETF",
+          "display_name": "通信ETF（515880）"
+        },
+        {
+          "code": "159326",
+          "name": "电网设备ETF",
+          "display_name": "电网设备ETF（159326）"
+        }
+      ],
+      "validated_reference": {
+        "stage1": "research/backtests/market_breadth_margin_stage1_validation.json",
+        "final": "research/backtests/margin_share_control_validation.json",
+        "result": "PROMISING_MARGIN_INCREMENT_BEYOND_SHARE_FLOW",
+        "controls": [
+          "mom5_lag1",
+          "mom20_lag1",
+          "reverse_share_change_5d_lag1"
+        ],
+        "primary_signal": "margin_balance_5d_change_lag1",
+        "secondary_signal": "margin_buy_5d_vs20_lag1"
+      },
+      "interpretation_rule": "作为A股风险资产ETF的市场级杠杆资金证据：融资余额5日变化为主证据，融资买入5日/20日加速度为辅助证据。只能与ETF自身结构、相对强弱、份额变化、生命周期、风险收益和替代机会共同参与机会比较；不得单独产生风险许可、Trial/Confirm、金额、降低风险或退出动作。",
+      "decision_eligible": false,
+      "trade_signal": null,
+      "trial_confirm": null,
+      "portfolio_target": null
     }
   },
   "research_context_file": "data/state/research_context.json",
@@ -1633,9 +1714,10 @@
   "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。日内路径、研究证据及证据变化必须参与完整MASTER判断，但单独均不是交易信号。",
   "skfolio_risk_evidence_file": "data/state/skfolio_risk_evidence.json",
   "etf_share_flow_evidence_file": "data/state/etf_share_flow_evidence.json",
+  "margin_financing_evidence_file": "data/state/margin_financing_evidence.json",
   "research_master_candidates": {
     "schema_version": "1.0",
-    "generated_at": "2026-08-25T07:26:31Z",
+    "generated_at": "2026-08-25T10:24:50Z",
     "mode": "RESEARCH_TO_MASTER_MAINTENANCE_FEED",
     "read_only": true,
     "automatic_master_update": false,
@@ -1665,7 +1747,7 @@
   },
   "execution_quality": {
     "schema_version": "1.0",
-    "generated_at": "2026-08-25T07:26:20Z",
+    "generated_at": "2026-08-25T10:24:18Z",
     "mode": "DECISION_EXECUTION_ATTRIBUTION",
     "read_only": true,
     "trade_event_count": 2,
@@ -1708,16 +1790,5 @@
     ],
     "interpretation_rule": "把判断质量与执行质量分开：决策时点后的市场结果评价判断，决策价格与真实成交价之间的偏差评价执行。不得因一次慢成交或一次有利成交自动修改交易规则。",
     "optimization_principle": "只分析能够帮助减少可避免执行损失或提高资本实现效率的差异；不追求零滑点、零延迟或完美执行。"
-  },
-  "etf_strategy_risk_metrics": {
-    "etf_strategy_risk_pct": -8.3,
-    "etf_holding_unrealized_pct": -8.03,
-    "etf_drawdown_from_high_pct": -8.3,
-    "equity_data_quality": "PARTIAL_KNOWN_NET_PENDING_FEES",
-    "strategy_equity_known_net": 183402.49,
-    "high_watermark": 200000,
-    "fee_status": "2026-08-25 SELL FEES PENDING_OR_NOT_YET_DISPLAYED",
-    "interpretation": "唯一ETF策略风险率决定风险区间；持仓浮盈亏率与高水位回撤率只解释持仓压力和近期改善/恶化。",
-    "read_only": true
   }
 }
