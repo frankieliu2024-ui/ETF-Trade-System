@@ -1,69 +1,585 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-25T00:55:46Z",
+  "generated_at": "2026-08-25T00:59:18Z",
   "mode": "ALPHAGEN_STAGE1_POINT_IN_TIME_VALIDATION",
   "upstream_repository": "ICT-FinD-Lab/alphagen",
   "upstream_commit": "259687e8f316994426416c530a94842a2fe6405e",
   "upstream_license_status": "NO_ROOT_LICENSE_DETECTED_2026-08-25",
   "execution_note": "Pinned upstream code was checked out temporarily for isolated research execution and was not vendored into this repository.",
-  "fold_results": [],
+  "fold_results": [
+    {
+      "fold": "fold1",
+      "horizon_trading_days": 5,
+      "train_segment": [
+        "2024-04-01",
+        "2025-03-31"
+      ],
+      "test_segment": [
+        "2025-04-01",
+        "2025-09-30"
+      ],
+      "alpha_pool_size": 10,
+      "alpha_pool": [
+        {
+          "expression": "Greater(1.0,$high)",
+          "weight": -6.1199
+        },
+        {
+          "expression": "Div(1.0,$open)",
+          "weight": -5.4654
+        },
+        {
+          "expression": "Div(Div(10.0,$low),$low)",
+          "weight": 3.9038
+        },
+        {
+          "expression": "Add(Log(Div($open,1.0)),-0.01)",
+          "weight": -4816.8358
+        },
+        {
+          "expression": "Log(Div(Log(Log(Div(10.0,$open))),10.0))",
+          "weight": -1.5955
+        },
+        {
+          "expression": "Add(-0.01,Mul(Log($open),-30.0))",
+          "weight": -4801.8905
+        },
+        {
+          "expression": "Div(Div(10.0,Sub($high,-0.5)),-5.0)",
+          "weight": -1.0825
+        },
+        {
+          "expression": "Sub(2.0,$high)",
+          "weight": -7.5498
+        },
+        {
+          "expression": "Div(-30.0,$open)",
+          "weight": 5.4663
+        },
+        {
+          "expression": "$high",
+          "weight": 7.5498
+        }
+      ],
+      "train_pool_ic": 0.1933,
+      "alphagen": {
+        "eligible_dates": 126,
+        "mean_rank_ic": 0.0846,
+        "median_rank_ic": 0.1047,
+        "positive_ic_rate": 0.6032,
+        "top1_mean_forward_pct": 1.6845,
+        "top1_positive_rate": 0.5952,
+        "top3_mean_forward_pct": 1.8058,
+        "bottom_mean_forward_pct": 1.4164,
+        "top1_minus_bottom_spread_pct_points": 0.2681
+      },
+      "baselines": {
+        "ret_5d_pct": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.038,
+          "median_rank_ic": 0.0409,
+          "positive_ic_rate": 0.5238,
+          "top1_mean_forward_pct": 1.7375,
+          "top1_positive_rate": 0.627,
+          "top3_mean_forward_pct": 1.84,
+          "bottom_mean_forward_pct": 1.0942,
+          "top1_minus_bottom_spread_pct_points": 0.6433
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0912,
+          "median_rank_ic": 0.1182,
+          "positive_ic_rate": 0.5714,
+          "top1_mean_forward_pct": 3.0777,
+          "top1_positive_rate": 0.7381,
+          "top3_mean_forward_pct": 2.2513,
+          "bottom_mean_forward_pct": 0.7819,
+          "top1_minus_bottom_spread_pct_points": 2.2958
+        }
+      }
+    },
+    {
+      "fold": "fold1",
+      "horizon_trading_days": 10,
+      "train_segment": [
+        "2024-04-01",
+        "2025-03-31"
+      ],
+      "test_segment": [
+        "2025-04-01",
+        "2025-09-30"
+      ],
+      "alpha_pool_size": 10,
+      "alpha_pool": [
+        {
+          "expression": "Div(Mul(5.0,$vwap),-30.0)",
+          "weight": 1.7253
+        },
+        {
+          "expression": "Greater(Abs($vwap),-0.01)",
+          "weight": -1.7069
+        },
+        {
+          "expression": "Greater(-2.0,Less(Greater(Less(Add($close,0.01),2.0),-0.01),5.0))",
+          "weight": 1.1156
+        },
+        {
+          "expression": "Div(Log($vwap),-1.0)",
+          "weight": 3.3443
+        },
+        {
+          "expression": "Greater(Mul($high,10.0),Less(Div(0.01,Greater(Max(Abs($open),10d),-0.5)),$vwap))",
+          "weight": 3.9948
+        },
+        {
+          "expression": "Less($close,1.0)",
+          "weight": 0.4882
+        },
+        {
+          "expression": "Add(-10.0,Less(Div($open,5.0),0.5))",
+          "weight": -2.2523
+        },
+        {
+          "expression": "Less(Mad(Mul(-30.0,$volume),5d),Log($vwap))",
+          "weight": 3.7712
+        },
+        {
+          "expression": "Div(-1.0,Div($low,0.5))",
+          "weight": -1729.642
+        },
+        {
+          "expression": "Sub(Div(Div(2.0,$low),2.0),-1.0)",
+          "weight": -1728.6714
+        }
+      ],
+      "train_pool_ic": 0.2358,
+      "alphagen": {
+        "eligible_dates": 126,
+        "mean_rank_ic": 0.1279,
+        "median_rank_ic": 0.2091,
+        "positive_ic_rate": 0.6746,
+        "top1_mean_forward_pct": 5.494,
+        "top1_positive_rate": 0.8016,
+        "top3_mean_forward_pct": 3.873,
+        "bottom_mean_forward_pct": 1.2797,
+        "top1_minus_bottom_spread_pct_points": 4.2143
+      },
+      "baselines": {
+        "ret_5d_pct": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.0435,
+          "median_rank_ic": 0.0136,
+          "positive_ic_rate": 0.5,
+          "top1_mean_forward_pct": 4.3235,
+          "top1_positive_rate": 0.6825,
+          "top3_mean_forward_pct": 3.5648,
+          "bottom_mean_forward_pct": 2.4146,
+          "top1_minus_bottom_spread_pct_points": 1.9089
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 126,
+          "mean_rank_ic": 0.1338,
+          "median_rank_ic": 0.1955,
+          "positive_ic_rate": 0.6349,
+          "top1_mean_forward_pct": 5.5225,
+          "top1_positive_rate": 0.7381,
+          "top3_mean_forward_pct": 4.2419,
+          "bottom_mean_forward_pct": 1.7141,
+          "top1_minus_bottom_spread_pct_points": 3.8084
+        }
+      }
+    },
+    {
+      "fold": "fold2",
+      "horizon_trading_days": 5,
+      "train_segment": [
+        "2024-04-01",
+        "2025-09-30"
+      ],
+      "test_segment": [
+        "2025-10-01",
+        "2026-03-31"
+      ],
+      "alpha_pool_size": 10,
+      "alpha_pool": [
+        {
+          "expression": "Log(Add($high,2.0))",
+          "weight": -1.7814
+        },
+        {
+          "expression": "Mul(-0.01,Add(Mean(Less(Abs($close),Add($high,0.5)),5d),Mul(-0.5,$high)))",
+          "weight": -4.5063
+        },
+        {
+          "expression": "Div(-0.5,$open)",
+          "weight": -2918.1765
+        },
+        {
+          "expression": "Mul(Sub(-1.0,$open),Div($vwap,-5.0))",
+          "weight": -4.5131
+        },
+        {
+          "expression": "Less(Mul($vwap,-1.0),-5.0)",
+          "weight": -2.0626
+        },
+        {
+          "expression": "Log(Less($high,$volume))",
+          "weight": 1.66
+        },
+        {
+          "expression": "Div(5.0,$open)",
+          "weight": -2917.2123
+        },
+        {
+          "expression": "$high",
+          "weight": -0.6251
+        },
+        {
+          "expression": "Mul(-1.0,Less(Div(Add($high,$volume),2.0),Div($vwap,-0.5)))",
+          "weight": 1317.1384
+        },
+        {
+          "expression": "Sub(-2.0,Div($vwap,30.0))",
+          "weight": 1317.1886
+        }
+      ],
+      "train_pool_ic": 0.1297,
+      "alphagen": {
+        "eligible_dates": 116,
+        "mean_rank_ic": 0.0615,
+        "median_rank_ic": 0.0545,
+        "positive_ic_rate": 0.5517,
+        "top1_mean_forward_pct": 0.5922,
+        "top1_positive_rate": 0.6034,
+        "top3_mean_forward_pct": 0.3289,
+        "bottom_mean_forward_pct": 0.8075,
+        "top1_minus_bottom_spread_pct_points": -0.2153
+      },
+      "baselines": {
+        "ret_5d_pct": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0658,
+          "median_rank_ic": 0.0727,
+          "positive_ic_rate": 0.5776,
+          "top1_mean_forward_pct": 0.4881,
+          "top1_positive_rate": 0.5431,
+          "top3_mean_forward_pct": 0.6602,
+          "bottom_mean_forward_pct": 0.1647,
+          "top1_minus_bottom_spread_pct_points": 0.3234
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.0236,
+          "median_rank_ic": -0.0136,
+          "positive_ic_rate": 0.4741,
+          "top1_mean_forward_pct": -0.9213,
+          "top1_positive_rate": 0.431,
+          "top3_mean_forward_pct": 0.3636,
+          "bottom_mean_forward_pct": 0.0571,
+          "top1_minus_bottom_spread_pct_points": -0.9784
+        }
+      }
+    },
+    {
+      "fold": "fold2",
+      "horizon_trading_days": 10,
+      "train_segment": [
+        "2024-04-01",
+        "2025-09-30"
+      ],
+      "test_segment": [
+        "2025-10-01",
+        "2026-03-31"
+      ],
+      "alpha_pool_size": 10,
+      "alpha_pool": [
+        {
+          "expression": "$vwap",
+          "weight": -3012.9768
+        },
+        {
+          "expression": "Less($low,10.0)",
+          "weight": 3.1117
+        },
+        {
+          "expression": "Log(Ref(Div($vwap,1.0),1d))",
+          "weight": 1.3776
+        },
+        {
+          "expression": "Log(Abs(Mul(1.0,$open)))",
+          "weight": -6.7042
+        },
+        {
+          "expression": "Mul(Sub(-2.0,Log(Abs($high))),1.0)",
+          "weight": -4.119
+        },
+        {
+          "expression": "Sub(-30.0,Abs(Less($vwap,10.0)))",
+          "weight": -3010.4345
+        },
+        {
+          "expression": "Less(Delta(Log($vwap),20d),Less(Less(-0.5,Mul(Div($high,-5.0),30.0)),$volume))",
+          "weight": -1.9515
+        },
+        {
+          "expression": "Abs(Greater($open,1.0))",
+          "weight": -1.0544
+        },
+        {
+          "expression": "Abs(Div(Div(Add(-10.0,$vwap),Div(-5.0,Greater($low,-2.0))),$vwap))",
+          "weight": 1.6389
+        },
+        {
+          "expression": "Less(0.5,Log($high))",
+          "weight": -0.8336
+        }
+      ],
+      "train_pool_ic": 0.1911,
+      "alphagen": {
+        "eligible_dates": 116,
+        "mean_rank_ic": -0.062,
+        "median_rank_ic": -0.0455,
+        "positive_ic_rate": 0.4397,
+        "top1_mean_forward_pct": -1.2956,
+        "top1_positive_rate": 0.3362,
+        "top3_mean_forward_pct": -0.0564,
+        "bottom_mean_forward_pct": 0.3498,
+        "top1_minus_bottom_spread_pct_points": -1.6454
+      },
+      "baselines": {
+        "ret_5d_pct": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.035,
+          "median_rank_ic": 0.0409,
+          "positive_ic_rate": 0.5862,
+          "top1_mean_forward_pct": -0.0835,
+          "top1_positive_rate": 0.5172,
+          "top3_mean_forward_pct": 0.8095,
+          "bottom_mean_forward_pct": 1.0386,
+          "top1_minus_bottom_spread_pct_points": -1.122
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 116,
+          "mean_rank_ic": 0.1111,
+          "median_rank_ic": 0.0909,
+          "positive_ic_rate": 0.6034,
+          "top1_mean_forward_pct": -0.5111,
+          "top1_positive_rate": 0.5172,
+          "top3_mean_forward_pct": 0.9528,
+          "bottom_mean_forward_pct": -0.4889,
+          "top1_minus_bottom_spread_pct_points": -0.0222
+        }
+      }
+    },
+    {
+      "fold": "fold3",
+      "horizon_trading_days": 5,
+      "train_segment": [
+        "2024-04-01",
+        "2026-03-31"
+      ],
+      "test_segment": [
+        "2026-04-01",
+        "2026-08-07"
+      ],
+      "alpha_pool_size": 10,
+      "alpha_pool": [
+        {
+          "expression": "Sub($open,-5.0)",
+          "weight": 0.283
+        },
+        {
+          "expression": "Greater(5.0,$open)",
+          "weight": 1.1351
+        },
+        {
+          "expression": "Less(5.0,Abs($vwap))",
+          "weight": 0.4041
+        },
+        {
+          "expression": "Sub(0.5,$vwap)",
+          "weight": 1.1788
+        },
+        {
+          "expression": "Sub(0.5,$open)",
+          "weight": -0.283
+        },
+        {
+          "expression": "$vwap",
+          "weight": -1.1788
+        },
+        {
+          "expression": "Greater(Div(0.5,$high),0.01)",
+          "weight": -0.5103
+        },
+        {
+          "expression": "Std(Sub(Mul($vwap,-30.0),5.0),40d)",
+          "weight": 0.122
+        },
+        {
+          "expression": "Div(-10.0,Greater($vwap,Add(0.5,$close)))",
+          "weight": 0.3313
+        },
+        {
+          "expression": "Div(-0.5,$close)",
+          "weight": -0.8142
+        }
+      ],
+      "train_pool_ic": 0.147,
+      "alphagen": {
+        "eligible_dates": 88,
+        "mean_rank_ic": 0.0192,
+        "median_rank_ic": 0.0182,
+        "positive_ic_rate": 0.5227,
+        "top1_mean_forward_pct": -0.363,
+        "top1_positive_rate": 0.4886,
+        "top3_mean_forward_pct": 0.6214,
+        "bottom_mean_forward_pct": 1.3248,
+        "top1_minus_bottom_spread_pct_points": -1.6879
+      },
+      "baselines": {
+        "ret_5d_pct": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.0993,
+          "median_rank_ic": 0.1182,
+          "positive_ic_rate": 0.625,
+          "top1_mean_forward_pct": 1.834,
+          "top1_positive_rate": 0.5682,
+          "top3_mean_forward_pct": 1.8194,
+          "bottom_mean_forward_pct": 0.5721,
+          "top1_minus_bottom_spread_pct_points": 1.2619
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1825,
+          "median_rank_ic": 0.2045,
+          "positive_ic_rate": 0.6477,
+          "top1_mean_forward_pct": 0.8472,
+          "top1_positive_rate": 0.5795,
+          "top3_mean_forward_pct": 1.9428,
+          "bottom_mean_forward_pct": -0.0421,
+          "top1_minus_bottom_spread_pct_points": 0.8892
+        }
+      }
+    },
+    {
+      "fold": "fold3",
+      "horizon_trading_days": 10,
+      "train_segment": [
+        "2024-04-01",
+        "2026-03-31"
+      ],
+      "test_segment": [
+        "2026-04-01",
+        "2026-08-07"
+      ],
+      "alpha_pool_size": 10,
+      "alpha_pool": [
+        {
+          "expression": "Greater($vwap,-0.01)",
+          "weight": 8.3932
+        },
+        {
+          "expression": "Div(0.01,$low)",
+          "weight": 0.6867
+        },
+        {
+          "expression": "Div(-2.0,$vwap)",
+          "weight": 1.3959
+        },
+        {
+          "expression": "Log(Div(5.0,$vwap))",
+          "weight": -5282.5874
+        },
+        {
+          "expression": "Mul(5.0,Mean(Log($vwap),1d))",
+          "weight": -5285.9439
+        },
+        {
+          "expression": "Add(2.0,Less($vwap,5.0))",
+          "weight": 1.127
+        },
+        {
+          "expression": "Div(Ref(Sub(-1.0,Add($open,-0.5)),10d),0.01)",
+          "weight": -0.0496
+        },
+        {
+          "expression": "Sub(30.0,$vwap)",
+          "weight": 7.7166
+        },
+        {
+          "expression": "Log($open)",
+          "weight": -0.9185
+        },
+        {
+          "expression": "Mul(-30.0,Log($high))",
+          "weight": -1.6852
+        }
+      ],
+      "train_pool_ic": 0.2231,
+      "alphagen": {
+        "eligible_dates": 88,
+        "mean_rank_ic": 0.1493,
+        "median_rank_ic": 0.1773,
+        "positive_ic_rate": 0.6023,
+        "top1_mean_forward_pct": 4.6702,
+        "top1_positive_rate": 0.6591,
+        "top3_mean_forward_pct": 3.1389,
+        "bottom_mean_forward_pct": 0.4448,
+        "top1_minus_bottom_spread_pct_points": 4.2254
+      },
+      "baselines": {
+        "ret_5d_pct": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.1951,
+          "median_rank_ic": 0.2545,
+          "positive_ic_rate": 0.625,
+          "top1_mean_forward_pct": 4.9017,
+          "top1_positive_rate": 0.6136,
+          "top3_mean_forward_pct": 4.0393,
+          "bottom_mean_forward_pct": 0.4584,
+          "top1_minus_bottom_spread_pct_points": 4.4434
+        },
+        "ret_20d_pct": {
+          "eligible_dates": 88,
+          "mean_rank_ic": 0.2156,
+          "median_rank_ic": 0.1955,
+          "positive_ic_rate": 0.6591,
+          "top1_mean_forward_pct": 1.6639,
+          "top1_positive_rate": 0.5227,
+          "top3_mean_forward_pct": 3.4165,
+          "bottom_mean_forward_pct": 0.734,
+          "top1_minus_bottom_spread_pct_points": 0.9299
+        }
+      }
+    }
+  ],
   "aggregate_summary": {
     "5": {
-      "fold_count": 0,
-      "alphagen_mean_rank_ic": null,
-      "alphagen_positive_ic_folds": 0,
-      "alphagen_mean_top1_forward_pct": null,
-      "alphagen_mean_top3_forward_pct": null,
-      "mom5_mean_rank_ic": null,
-      "mom20_mean_rank_ic": null,
-      "alphagen_minus_best_momentum_rank_ic": null,
+      "fold_count": 3,
+      "alphagen_mean_rank_ic": 0.0551,
+      "alphagen_positive_ic_folds": 3,
+      "alphagen_mean_top1_forward_pct": 0.6379,
+      "alphagen_mean_top3_forward_pct": 0.9187,
+      "mom5_mean_rank_ic": 0.0677,
+      "mom20_mean_rank_ic": 0.0991,
+      "alphagen_minus_best_momentum_rank_ic": -0.044,
       "screening_increment_stable": false
     },
     "10": {
-      "fold_count": 0,
-      "alphagen_mean_rank_ic": null,
-      "alphagen_positive_ic_folds": 0,
-      "alphagen_mean_top1_forward_pct": null,
-      "alphagen_mean_top3_forward_pct": null,
-      "mom5_mean_rank_ic": null,
-      "mom20_mean_rank_ic": null,
-      "alphagen_minus_best_momentum_rank_ic": null,
+      "fold_count": 3,
+      "alphagen_mean_rank_ic": 0.0717,
+      "alphagen_positive_ic_folds": 2,
+      "alphagen_mean_top1_forward_pct": 2.9562,
+      "alphagen_mean_top3_forward_pct": 2.3185,
+      "mom5_mean_rank_ic": 0.0912,
+      "mom20_mean_rank_ic": 0.1535,
+      "alphagen_minus_best_momentum_rank_ic": -0.0818,
       "screening_increment_stable": false
     }
   },
-  "failure_count": 6,
-  "failures": [
-    {
-      "fold": "fold1",
-      "horizon": 5,
-      "error": "RuntimeError: Need 60 pre-segment trading days before 2024-04-01"
-    },
-    {
-      "fold": "fold1",
-      "horizon": 10,
-      "error": "RuntimeError: Need 60 pre-segment trading days before 2024-04-01"
-    },
-    {
-      "fold": "fold2",
-      "horizon": 5,
-      "error": "RuntimeError: Need 60 pre-segment trading days before 2024-04-01"
-    },
-    {
-      "fold": "fold2",
-      "horizon": 10,
-      "error": "RuntimeError: Need 60 pre-segment trading days before 2024-04-01"
-    },
-    {
-      "fold": "fold3",
-      "horizon": 5,
-      "error": "RuntimeError: Need 60 pre-segment trading days before 2024-04-01"
-    },
-    {
-      "fold": "fold3",
-      "horizon": 10,
-      "error": "RuntimeError: Need 60 pre-segment trading days before 2024-04-01"
-    }
-  ],
+  "failure_count": 0,
+  "failures": [],
   "research_interpretation": "NO_STABLE_INCREMENT_STAGE1",
   "screening_note": "Stage1 passes only if both 5d and 10d horizons have at least 2/3 positive Rank-IC folds and average Rank IC exceeds both 5d and 20d momentum baselines. This is research screening, not a MASTER rule.",
   "decision_eligible": false,
