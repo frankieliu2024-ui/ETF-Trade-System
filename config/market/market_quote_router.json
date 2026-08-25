@@ -1,0 +1,61 @@
+{
+  "version": "V1.0",
+  "purpose": "统一市场行情查询路由，不生成交易动作",
+  "principle": "24小时可查询，但必须根据交易所时区和市场阶段返回正确语义行情",
+  "market_priority": {
+    "A_SHARE": {
+      "timezone": "Asia/Shanghai",
+      "live_phase": ["OPENING_CALL_AUCTION", "REGULAR"],
+      "closed_phase": "POST_CLOSE",
+      "closed_return": "same_day_close",
+      "preopen_return": "previous_trading_day_close"
+    },
+    "HONG_KONG": {
+      "timezone": "Asia/Hong_Kong",
+      "live_phase": ["PRE_OPEN", "REGULAR"],
+      "closed_return": "same_day_close",
+      "preopen_return": "previous_trading_day_close"
+    },
+    "TAIWAN": {
+      "timezone": "Asia/Taipei",
+      "live_phase": ["REGULAR"],
+      "closed_return": "same_day_close",
+      "preopen_return": "previous_trading_day_close"
+    },
+    "JAPAN": {
+      "timezone": "Asia/Tokyo",
+      "live_phase": ["REGULAR"],
+      "closed_return": "same_day_close",
+      "preopen_return": "previous_trading_day_close"
+    },
+    "KOREA": {
+      "timezone": "Asia/Seoul",
+      "live_phase": ["REGULAR"],
+      "closed_return": "same_day_close",
+      "preopen_return": "previous_trading_day_close"
+    },
+    "UNITED_STATES": {
+      "timezone": "America/New_York",
+      "live_phase": ["REGULAR"],
+      "extended_phase": ["PRE_MARKET", "POST_MARKET"],
+      "regular_return": "realtime",
+      "extended_return": "extended_price_with_regular_close_reference",
+      "closed_return": "latest_regular_close"
+    }
+  },
+  "required_output_fields": [
+    "symbol",
+    "market",
+    "price",
+    "data_time_local",
+    "data_time_beijing",
+    "market_phase",
+    "source",
+    "freshness"
+  ],
+  "forbidden_behavior": [
+    "during_regular_session_return_old_close_as_latest",
+    "mix_different_market_timezones_without_label",
+    "treat_extended_hours_as_regular_session"
+  ]
+}
