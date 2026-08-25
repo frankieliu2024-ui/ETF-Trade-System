@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "mode": "CROSS_MARKET_TECH_TRANSMISSION_STAGE1",
+  "role": "RESEARCH_EVIDENCE_ONLY",
+  "decision_eligible": false,
+  "objective": "Test whether prior completed US technology/semiconductor sessions contain stable point-in-time information for executable future returns of core A-share technology ETFs beyond local momentum, and only if that passes, beyond validated ETF share-flow evidence.",
+  "targets": [
+    {"code": "561980", "name": "半导体设备ETF"},
+    {"code": "588000", "name": "科创50ETF"},
+    {"code": "159781", "name": "科创创业ETF"},
+    {"code": "515880", "name": "通信ETF"}
+  ],
+  "external_objects": {
+    "SOX": {"name": "费城半导体指数", "symbol": "^SOX", "timezone": "America/New_York"},
+    "NDX": {"name": "纳斯达克100指数", "symbol": "^NDX", "timezone": "America/New_York"}
+  },
+  "candidate_signals": [
+    "sox_1d",
+    "ndx_1d",
+    "us_tech_equal_1d",
+    "sox_minus_ndx_1d",
+    "us_tech_equal_3d"
+  ],
+  "horizons_trading_days": [1, 3, 5],
+  "entry_rule": "For A-share trading date D, external data may use only the latest fully completed US cash session whose close occurred before the A-share open on D. Return labels start at the A-share open on D.",
+  "point_in_time_rule": "No US session completing after the A-share open may be used. Local momentum uses closes no later than D-1. If Stage B is reached, ETF share facts for trading day T are usable only from T+1 A-share trading day.",
+  "stage_a_controls": ["mom5_lag1", "mom20_lag1"],
+  "stage_b_controls": ["mom5_lag1", "mom20_lag1", "reverse_share_change_5d_lag1"],
+  "validation": {
+    "minimum_observations_per_fold": 35,
+    "minimum_stable_etfs_per_horizon": 3,
+    "minimum_positive_cells_per_horizon": 8,
+    "minimum_partial_rank_ic": 0.02,
+    "required_qualifying_horizons": 2,
+    "required_positive_folds_per_etf": 2,
+    "require_positive_top_bottom_spread": true
+  },
+  "boundaries": {
+    "trade_signal": null,
+    "trial_confirm": null,
+    "portfolio_target": null,
+    "master_override": false,
+    "historical_decision_reconstruction": false,
+    "production_context_integration": false
+  },
+  "method_note": "The GitHub lead-lag project is methodological inspiration only. This PoC independently implements simple point-in-time lag alignment and partial Spearman diagnostics; no upstream code is copied into production."
+}
