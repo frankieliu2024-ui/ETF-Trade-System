@@ -10,9 +10,9 @@
   "provider_retry_limit": 2,
   "provider_max_workers": 2,
   "etf_universe_count": 11,
-  "status": "PASS",
-  "reason": "collection_error",
-  "error": "request failed after 2 attempts: ['fund', 'snapshot', '--thscode', '561980.SH']; {\"ok\":false,\"command\":\"fund\",\"error\":{\"code\":\"FUYAO_3004\",\"category\":\"upstream\",\"message\":\"This fund does not support market data\",\"hint\":\"Retry later and retain the request ID when reporting a persistent failure.\",\"retryable\":false,\"request_id\":\"1caca8dca15149e1abd07387b8e32d72\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n",
+  "status": "FAILED",
+  "reason": "previous_production_run_failed_provider",
+  "error": "request failed after 2 attempts: ['fund', 'snapshot', '--thscode', '561980.SH']; {\"ok\":false,\"command\":\"fund\",\"error\":{\"code\":\"FUYAO_3004\",\"category\":\"upstream\",\"message\":\"This fund does not support market data\",\"hint\":\"Retry later and retain the request ID when reporting a persistent failure.\",\"retryable\":false,\"request_id\":\"1caca8dca15149e1abd07387b8e32d72\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}",
   "failed_at": "2026-08-25T01:34:19Z",
   "preserve_previous_current": true,
   "data_commit": "47ecd235432166bb8d9f3271e42b3c567534075e",
@@ -22,5 +22,10 @@
   "overseas_runtime_health": "data/state/overseas_runtime_health.json",
   "overseas_pulse_success": true,
   "overseas_hard_error_count": 0,
-  "overseas_warning_count": 0
+  "overseas_warning_count": 0,
+  "quality_status": "FAILED",
+  "failure_stage": "provider",
+  "finished_at": "2026-08-25T01:34:19Z",
+  "latest_snapshot": "",
+  "provider_as_of": ""
 }
