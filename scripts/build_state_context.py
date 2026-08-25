@@ -12,6 +12,7 @@ from build_execution_quality import build as build_execution_quality
 from build_skfolio_risk_evidence import build as build_skfolio_risk_evidence
 from build_etf_share_flow_evidence import build as build_etf_share_flow_evidence
 from build_margin_financing_evidence import build as build_margin_financing_evidence
+from build_research_contribution_audit import build as build_research_contribution_audit
 from state_manager import atomic_json_write, build_dashboard_candidate, build_decision_context
 
 
@@ -44,6 +45,21 @@ def compact_skfolio_risk(evidence: dict) -> dict:
 
 
 def compact_share_flow(evidence: dict) -> dict:
+    usable = bool(evidence.get("use_in_current_decision", False))
+    if not usable:
+        return {
+            "status": evidence.get("status"),
+            "mode": evidence.get("mode"),
+            "use_in_current_decision": False,
+            "price_as_of_market_date": evidence.get("price_as_of_market_date"),
+            "share_fact_latest_date": evidence.get("share_fact_latest_date"),
+            "degraded_reason": evidence.get("degraded_reason") or evidence.get("error") or evidence.get("status_reason"),
+            "interpretation_rule": "当前证据不可用于决策时只保留状态和原因，不把空排名或旧值塞入正式决策上下文。",
+            "decision_eligible": False,
+            "trade_signal": None,
+            "trial_confirm": None,
+            "portfolio_target": None,
+        }
     ranking = [
         {
             "display_name": x.get("display_name"),
@@ -55,7 +71,7 @@ def compact_share_flow(evidence: dict) -> dict:
     return {
         "status": evidence.get("status"),
         "mode": evidence.get("mode"),
-        "use_in_current_decision": evidence.get("use_in_current_decision", False),
+        "use_in_current_decision": True,
         "price_as_of_market_date": evidence.get("price_as_of_market_date"),
         "share_fact_latest_date": evidence.get("share_fact_latest_date"),
         "coverage": evidence.get("coverage"),
@@ -87,6 +103,19 @@ def compact_margin_financing(evidence: dict) -> dict:
     }
 
 
+def compact_contribution_audit(audit: dict) -> dict:
+    return {
+        "status": audit.get("status"),
+        "mode": audit.get("mode"),
+        "rule": audit.get("rule"),
+        "decision_attribution": audit.get("decision_attribution") or {},
+        "trade_attribution": audit.get("trade_attribution") or {},
+        "evidence_use_counts": audit.get("evidence_use_counts") or {},
+        "recent_trades": audit.get("recent_trades") or [],
+        "redundancy_review": audit.get("redundancy_review") or {},
+    }
+
+
 def main() -> None:
     path_features = build_intraday_path_features(ROOT)
     atomic_json_write(ROOT / "data" / "state" / "intraday_path_features.json", path_features)
@@ -109,20 +138,25 @@ def main() -> None:
     atomic_json_write(ROOT / "data" / "state" / "margin_financing_evidence.json", margin_financing)
     margin_financing_summary = compact_margin_financing(margin_financing)
 
+    contribution_audit = build_research_contribution_audit(ROOT)
+    atomic_json_write(ROOT / "data" / "state" / "research_contribution_audit.json", contribution_audit)
+    contribution_summary = compact_contribution_audit(contribution_audit)
+
     research_master = build_research_master_feedback(ROOT)
     atomic_json_write(ROOT / "data" / "state" / "research_master_candidates.json", research_master)
     atomic_json_write(ROOT / "data" / "state" / "research_context.json", {
         **research,
         "read_only": True,
-        "decision_boundary": "研究层直接向当前决策提供事实、相对强弱、日内路径、证据变化、共同风险与风险侧边际资本信息、经专项验证的ETF份额变化收益增强证据、经份额控制后仍有独立增量的市场级融资杠杆证据、数据质量、判断/执行归因证据；不得绕过MASTER生成交易动作。",
-        "current_decision_use": "研究证据及其相对上一节点的变化必须参与机会判断、统一资本比较、持仓资本效率和必要的正式输出解释；单一排名、单一相对强弱、单一份额变化、单一融资杠杆变化、单一风险贡献或研究统计不得机械产生动作。",
+        "decision_boundary": "研究层向当前决策提供事实、相对强弱、日内路径、证据变化、共同风险、经验证的ETF份额与融资杠杆证据，并记录研究是否真实改变决策；不得绕过MASTER生成交易动作。",
+        "current_decision_use": "研究证据及其相对上一节点变化参与机会、金额、持仓和卖出判断；正式决策只记录最多3项真正改变判断的research_evidence_used。没有改变判断的研究不记贡献，缺少显式记录不得自动推断贡献。",
         "master_feedback": "研究层可形成MASTER维护输入，但只有通过MASTER第8.1正式研究转化机制的高质量专项研究，或多个真实CASE反复暴露的同类问题，才允许正式修改MASTER。",
-        "optimization_principle": "不打造完美交易系统；复杂度只有在改善事前收益效率、风险边界、执行质量或复盘学习时才保留。最高目标仍是在可接受风险范围内实现可实现收益最大化。",
+        "optimization_principle": "不打造完美交易系统；复杂度只有在改善事前收益效率、风险边界、执行质量或复盘学习时才保留。长期未改变任何正式决策且无独立风险/复盘价值的研究模块才进入删除审查。",
         "validated_evidence_summary": {
             "skfolio_risk": skfolio_summary,
             "etf_share_flow": share_flow_summary,
             "margin_financing": margin_financing_summary,
         },
+        "research_contribution_audit": contribution_summary,
         "paths": {
             "daily_features": "events/research/daily_features/<market_date>.json",
             "relative_strength": "data/state/relative_strength.json",
@@ -132,6 +166,7 @@ def main() -> None:
             "skfolio_risk_evidence": "data/state/skfolio_risk_evidence.json",
             "etf_share_flow_evidence": "data/state/etf_share_flow_evidence.json",
             "margin_financing_evidence": "data/state/margin_financing_evidence.json",
+            "research_contribution_audit": "data/state/research_contribution_audit.json",
             "historical_backfill_status": "data/state/historical_backfill_status.json",
             "provider_metrics": "data/state/provider_metrics.json",
             "decision_events": "events/decisions/<decision_id>.json",
@@ -145,11 +180,19 @@ def main() -> None:
     context.setdefault("research_evidence", {})["skfolio_risk_evidence"] = skfolio_summary
     context["research_evidence"]["etf_share_flow_evidence"] = share_flow_summary
     context["research_evidence"]["margin_financing_evidence"] = margin_financing_summary
+    context["research_evidence"]["research_contribution_audit"] = contribution_summary
     context["skfolio_risk_evidence_file"] = "data/state/skfolio_risk_evidence.json"
     context["etf_share_flow_evidence_file"] = "data/state/etf_share_flow_evidence.json"
     context["margin_financing_evidence_file"] = "data/state/margin_financing_evidence.json"
+    context["research_contribution_audit_file"] = "data/state/research_contribution_audit.json"
     context["research_master_candidates"] = research_master
     context["execution_quality"] = execution_quality
+    context["formal_decision_research_attribution_contract"] = {
+        "field": "research_evidence_used",
+        "max_items": 3,
+        "item_fields": ["evidence_id", "change", "decision_effect"],
+        "rule": "只记录实际改变本次机会、金额、持仓或卖出判断的研究证据；若研究没有实质贡献，显式写空列表。不得自动把decision_context中存在的证据视为已使用。",
+    }
     atomic_json_write(ROOT / "data" / "state" / "dashboard_update_candidate.json", candidate)
     atomic_json_write(ROOT / "data" / "state" / "decision_context.json", context)
     print(json.dumps({
@@ -167,6 +210,8 @@ def main() -> None:
         "etf_share_flow_use_in_current_decision": share_flow.get("use_in_current_decision", False),
         "margin_financing_status": margin_financing.get("status"),
         "margin_financing_use_in_current_decision": margin_financing.get("use_in_current_decision", False),
+        "research_attribution_explicit_coverage": (contribution_audit.get("decision_attribution") or {}).get("explicit_coverage_ratio", 0),
+        "research_attributed_trade_count": (contribution_audit.get("trade_attribution") or {}).get("attributed_trade_count", 0),
         "execution_quality_sample_count": execution_quality.get("execution_cost_sample_count", 0),
         "research_master_candidate_count": len(research_master.get("candidates") or []),
         "trade_decision_generated": False,
