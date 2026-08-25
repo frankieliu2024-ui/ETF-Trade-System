@@ -7,6 +7,8 @@ import shutil
 import subprocess
 import sys
 import time
+import urllib.parse
+import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -59,6 +61,7 @@ def load_etf_universe() -> list[tuple[str, str]]:
 
 POLICY = load_runtime_policy()
 ETF = load_etf_universe()
+EASTMONEY_FALLBACK_ETFS = {"159561", "159941"}
 RETRY_LIMIT = int(os.environ.get("HITHINK_RETRY_LIMIT", POLICY["provider_retry_limit"]))
 TIMEOUT_SECONDS = int(os.environ.get("HITHINK_TIMEOUT_SECONDS", POLICY["provider_timeout_seconds"]))
 MAX_WORKERS = int(os.environ.get("HITHINK_MAX_WORKERS", POLICY["provider_max_workers"]))
@@ -174,7 +177,7 @@ def run_json(cli: str, args: list[str], raw_path: Path) -> dict:
     raise RuntimeError(f"request failed after {RETRY_LIMIT} attempts: {args}; {last_error}")
 
 
-def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, provider_ts: object, market_phase: str) -> dict:
+def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, provider_ts: object, market_phase: str, *, provider: str = "hithink-finance", provider_primary: str = "hithink-finance", fallback_used: bool = False, fallback_reason: str = "") -> dict:
     required = ["open_price", "high_price", "low_price", "last_price", "volume", "turnover"]
     missing = [key for key in required if item.get(key) is None]
     auction_partial = (
@@ -204,13 +207,87 @@ def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, pr
         "prev_close": item.get("prev_price"),
         "change_pct": item.get("price_change_ratio_pct"),
         "volume": item["volume"], "amount": item["turnover"],
-        "provider": "hithink-finance", "provider_timestamp_ms": provider_ts,
+        "provider": provider, "provider_primary": provider_primary, "provider_used": provider,
+        "fallback_used": fallback_used, "fallback_reason": fallback_reason,
+        "provider_timestamp_ms": provider_ts,
         "as_of_beijing": provider_as_of_beijing(provider_ts),
         "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai",
         "market_phase": market_phase,
         "quality_status": quality_status,
         "semantic_note": semantic_note,
     }
+
+
+def eastmoney_timestamp_ms(value: object) -> int:
+    if value in (None, "", "-", 0, "0"):
+        raise RuntimeError("Eastmoney response has no provider timestamp")
+    number = float(value)
+    if number < 10_000_000_000:
+        number *= 1000
+    return int(number)
+
+
+def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
+    if code not in EASTMONEY_FALLBACK_ETFS:
+        raise RuntimeError(f"Eastmoney ETF fallback is not enabled for {code}")
+    if not thscode.endswith(".SZ"):
+        raise RuntimeError(f"Eastmoney ETF fallback expects SZ ETF thscode, got {thscode}")
+    params = {
+        "secid": f"0.{code}",
+        "fltt": "2",
+        "invt": "2",
+        "fields": "f43,f44,f45,f46,f47,f48,f57,f58,f60,f86,f124",
+    }
+    url = "https://push2.eastmoney.com/api/qt/stock/get?" + urllib.parse.urlencode(params)
+    request = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.15"})
+    with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
+        status_code = int(response.status)
+        payload = json.load(response)
+    data = payload.get("data") or {}
+    if str(data.get("f57", "")) != code:
+        raise RuntimeError(f"Eastmoney code mismatch for {code}: {data.get('f57')}")
+    fields = {
+        "open_price": data.get("f46"),
+        "high_price": data.get("f44"),
+        "low_price": data.get("f45"),
+        "last_price": data.get("f43"),
+        "prev_price": data.get("f60"),
+        "volume": data.get("f47"),
+        "turnover": data.get("f48"),
+    }
+    if any(value in (None, "", "-") for value in fields.values()):
+        raise RuntimeError(f"Eastmoney {code} missing direct ETF fields")
+    provider_ts = eastmoney_timestamp_ms(data.get("f124") or data.get("f86"))
+    provider_dt = datetime.fromtimestamp(provider_ts / 1000, tz=SHANGHAI)
+    now_dt = now_shanghai()
+    if provider_dt.date() != now_dt.date():
+        raise RuntimeError(f"Eastmoney {code} provider date is stale: {provider_dt.isoformat()}")
+    if abs((now_dt - provider_dt).total_seconds()) > max(60, int(POLICY["degraded_max_age_seconds"])):
+        raise RuntimeError(f"Eastmoney {code} provider timestamp is stale: {provider_dt.isoformat()}")
+    if fields["high_price"] < max(fields["open_price"], fields["last_price"]) or fields["low_price"] > min(fields["open_price"], fields["last_price"]):
+        raise RuntimeError(f"Eastmoney {code} failed OHLC relationship")
+    item = {
+        **fields,
+        "price_change_ratio_pct": ((fields["last_price"] / fields["prev_price"]) - 1) * 100 if fields["prev_price"] else None,
+    }
+    return row(
+        "ETF", code, thscode, item, now_dt.isoformat(timespec="seconds"), provider_ts, market_phase,
+        provider="eastmoney_push2", provider_primary="hithink-finance",
+        fallback_used=True,
+        fallback_reason="hithink-finance fund snapshot unavailable or unsupported; verified direct Eastmoney push2 ETF quote",
+    ) | {"provider_http_status": status_code, "provider_symbol": f"0.{code}", "provider_timestamp_field": "f124" if data.get("f124") not in (None, "", 0, "0") else "f86"}
+
+
+def fetch_etf_with_fallback(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
+    try:
+        return fetch_etf(cli, run_dir, code, thscode)
+    except Exception as primary_error:
+        if code not in EASTMONEY_FALLBACK_ETFS:
+            raise
+        try:
+            return fetch_eastmoney_etf(code, thscode, a_share_market_phase(now_shanghai()))
+        except Exception as fallback_error:
+            raise RuntimeError(f"primary hithink-finance failed: {primary_error}; direct eastmoney_push2 fallback failed: {fallback_error}") from fallback_error
 
 
 def fetch_etf(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
@@ -237,6 +314,10 @@ def failed_etf_row(code: str, thscode: str, error: str, market_phase: str) -> di
         "volume": None,
         "amount": None,
         "provider": "hithink-finance",
+        "provider_primary": "hithink-finance",
+        "provider_used": "hithink-finance",
+        "fallback_used": False,
+        "fallback_reason": "",
         "provider_timestamp_ms": None,
         "as_of_beijing": "",
         "captured_at": captured,
@@ -301,7 +382,7 @@ def main() -> int:
 
     rows: list[dict] = []
     with ThreadPoolExecutor(max_workers=max(1, MAX_WORKERS)) as pool:
-        futures = {pool.submit(fetch_etf, cli, run_dir, code, thscode): (code, thscode) for code, thscode in ETF}
+        futures = {pool.submit(fetch_etf_with_fallback, cli, run_dir, code, thscode): (code, thscode) for code, thscode in ETF}
         for future in as_completed(futures):
             code, thscode = futures[future]
             try:
@@ -321,6 +402,8 @@ def main() -> int:
 
     rows.sort(key=lambda x: (x["asset_class"], x["symbol"]))
     overall_quality = "PASS" if all(item.get("quality_status") == "PASS" for item in rows) else "DEGRADED"
+    providers_used = sorted({str(item.get("provider_used") or item.get("provider") or "") for item in rows if item.get("provider_used") or item.get("provider")})
+    snapshot_provider = providers_used[0] if len(providers_used) == 1 else "mixed"
     acquisition_seconds = round(time.monotonic() - run_started_monotonic, 3)
     captured_dt = now_shanghai()
     captured = captured_dt.isoformat(timespec="seconds")
@@ -341,7 +424,7 @@ def main() -> int:
         "market_phase": market_phase,
         "actual_run_time": captured, "workflow_run_id": os.environ.get("GITHUB_RUN_ID", ""),
         "capture_started_at_beijing": capture_started_at,
-        "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai", "provider": "hithink-finance",
+        "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai", "provider": snapshot_provider,
         "quality_status": overall_quality, "count": len(rows), "etf_universe_count": len(ETF),
         "semantic_scope": "集合竞价脉冲只按集合竞价信息解释；连续竞价脉冲才按盘中成交语义解释。",
         "runtime": {"acquisition_seconds": acquisition_seconds, "target_cadence_seconds": POLICY["target_cadence_seconds"], "provider_timeout_seconds": TIMEOUT_SECONDS, "provider_retry_limit": RETRY_LIMIT, "provider_max_workers": MAX_WORKERS, "close_grace_seconds": CLOSE_GRACE_SECONDS},
