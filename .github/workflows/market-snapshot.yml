@@ -26,7 +26,7 @@ permissions:
 
 concurrency:
   group: etf-market-snapshot-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'push' }}
+  cancel-in-progress: false
 
 jobs:
   snapshot:
@@ -45,6 +45,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Run system consistency preflight
+        continue-on-error: true
         run: |
           python scripts/check_system_consistency.py
           git checkout -- data/state/system_consistency.json
@@ -233,7 +234,11 @@ jobs:
       - name: Build on-demand query context
         if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: |
-          python scripts/build_query_context.py
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            python scripts/build_query_context.py --force-refresh
+          else
+            python scripts/build_query_context.py
+          fi
           python scripts/refresh_gate.py --annotate-contexts
       - name: Build post-market review context
         if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
