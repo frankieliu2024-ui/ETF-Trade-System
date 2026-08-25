@@ -33,6 +33,7 @@ jobs:
           assert s['trade_signal'] is None
           assert s['master_override'] is False
           assert s['production_integration'] is False
+          assert s['history_sufficient_for_alpha_test'] is False
           PY
       - name: Persist Stage1 result only
         shell: bash
@@ -43,7 +44,7 @@ jobs:
           if git diff --cached --quiet; then
             exit 0
           fi
-          git commit -m "research: record ETF option risk Stage1"
+          git commit -m "research: record corrected ETF option risk Stage1"
           git restore --worktree .
           git pull --rebase origin main
           git push origin HEAD:main
