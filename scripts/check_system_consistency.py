@@ -79,6 +79,14 @@ def _time_not_before(later: object, earlier: object) -> bool:
         return a >= b
     except (TypeError, ValueError): return False
 
+def _python_ast_ok(relative_path: str) -> bool:
+    try:
+        ast.parse((ROOT / relative_path).read_text(encoding="utf-8"))
+        return True
+    except (OSError, SyntaxError):
+        return False
+
+
 def main() -> int:
     errors: list[str] = []
     warnings: list[str] = []
@@ -294,7 +302,7 @@ def main() -> int:
     action = decision_context.get("formal_action") or {}
     check("formal_action:execution_boundary", action.get("execution_status") in {"UNKNOWN", "PENDING", "EXECUTED", "SUPERSEDED"} or not action, f"execution_status={action.get('execution_status', 'MISSING')}")
 
-    for script_path in ("scripts/build_phase4_automation.py", "scripts/process_state_sync_request.py", "scripts/build_state_context.py", "scripts/build_query_context.py"):
+    for script_path in ("scripts/build_phase4_automation.py", "scripts/process_state_sync_request.py", "scripts/build_state_context.py", "scripts/build_query_context.py", "scripts/notification_center.py", "scripts/confirm_execution_reconciliation.py"):
         try:
             ast.parse((ROOT / script_path).read_text(encoding="utf-8"))
             check(f"python:syntax:{script_path}", True, "AST parse passed")
@@ -309,6 +317,22 @@ def main() -> int:
     check("phase4:e2e_boundary", str(phase4_ranking.get("e2e_status") or "").upper() != "BLOCKED" or not any(x.get("category") == "CASH" and x.get("eligibility") == "FORMAL_ACTION" for x in (phase4_ranking.get("ordered_candidates") or []) if isinstance(x, dict)), "E2E BLOCKED cannot create formal action")
     check("phase4:no_score", not any("score" in str(x).lower() for x in (phase4_ranking.get("ordered_candidates") or []) if isinstance(x, dict)), "capital ranking contains no composite score")
     check("phase4:e2e_state_present", str(e2e_state.get("purpose") or "").startswith("TOP_LEVEL_SYSTEM_USABILITY_ONLY"), f"status={e2e_state.get('status', 'MISSING')}", warning=True)
+
+
+    notification_state = read_json("data/state/notification_center.json")
+    notification_items = notification_state.get("notifications") or []
+    required_notification_fields = {"notification_id", "event_type", "source_event_id", "related_decision_id", "security_code", "security_name", "lifecycle_status", "created_at", "sent_at", "confirmed_at", "archived_at"}
+    notification_statuses = {"CREATED", "SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED", "EXPIRED"}
+    check("notification:managed_schema", isinstance(notification_items, list) and all(required_notification_fields.issubset(set(item)) and item.get("lifecycle_status") in notification_statuses for item in notification_items if isinstance(item, dict)), f"count={len(notification_items)}")
+    active_notification_sources = [str(item.get("source_event_id") or "") for item in notification_items if isinstance(item, dict) and item.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION"}]
+    check("notification:no_duplicate_active_source", len(active_notification_sources) == len(set(active_notification_sources)), f"active_sources={active_notification_sources}")
+    check("notification:confirmation_entry_syntax", _python_ast_ok("scripts/confirm_execution_reconciliation.py"), "explicit confirmation entry AST parse passed")
+    reconciliation = read_json("data/state/execution_reconciliation.json")
+    if isinstance(reconciliation, dict):
+        for match in reconciliation.get("matches") or []:
+            if match.get("requires_user_confirmation"):
+                check("reconciliation:confirmation_boundary", "不自动" in str(match.get("safety_boundary") or "") or "不会" in str(match.get("safety_boundary") or ""), "unconfirmed match remains a candidate", warning=True)
+                break
 
     runtime_status = str(runtime_health.get("status", "")).upper()
     allowed_runtime_statuses = {"NOT_RUN", "PASS", "DEGRADED", "FAILED", "SKIPPED", "SUPERSEDED"}
