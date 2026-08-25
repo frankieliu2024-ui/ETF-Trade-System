@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-25T16:47:30Z",
-  "generated_at_beijing": "2026-08-26T00:47:30+08:00",
+  "generated_at": "2026-08-25T16:48:16Z",
+  "generated_at_beijing": "2026-08-26T00:48:16+08:00",
   "repository": {
-    "head_sha": "6fdae80a77f4a9980f87082714458cb38bb3ab8e",
-    "github_sha": "6fdae80a77f4a9980f87082714458cb38bb3ab8e",
-    "github_run_id": "32874018811",
+    "head_sha": "698652b88ac06bb6c3c50eeedba627f885f1b34a",
+    "github_sha": "698652b88ac06bb6c3c50eeedba627f885f1b34a",
+    "github_run_id": "32874102208",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "6fdae80a77f4a9980f87082714458cb38bb3ab8e",
-    "workflow_sha": "6fdae80a77f4a9980f87082714458cb38bb3ab8e",
+    "checked_commit": "698652b88ac06bb6c3c50eeedba627f885f1b34a",
+    "workflow_sha": "698652b88ac06bb6c3c50eeedba627f885f1b34a",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
@@ -18,12 +18,12 @@
   "warning_count": 0,
   "checks": [
     {
-      "name": "tests:market_data_guard",
+      "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK\n"
+      "detail": ".........\n----------------------------------------------------------------------\nRan 9 tests in 0.001s\n\nOK\n"
     },
     {
-      "name": "tests:market_data_guard_compile",
+      "name": "tests:runtime_modules_compile",
       "status": "PASS",
       "detail": ""
     },
@@ -51,6 +51,51 @@
       "name": "data_standard:ETF与市场监测数据接口使用规范.md",
       "status": "PASS",
       "detail": "root-level standard exists"
+    },
+    {
+      "name": "router:config_exists",
+      "status": "PASS",
+      "detail": "unified router configuration exists"
+    },
+    {
+      "name": "router:module_exists",
+      "status": "PASS",
+      "detail": "unified router module exists"
+    },
+    {
+      "name": "router:implementation_entry",
+      "status": "PASS",
+      "detail": "router builds a routed quote view and Chinese display status"
+    },
+    {
+      "name": "router:user_display_chinese",
+      "status": "PASS",
+      "detail": "US user-facing statuses are Chinese"
+    },
+    {
+      "name": "router:required_output_contract",
+      "status": "PASS",
+      "detail": "config declares routed output fields"
+    },
+    {
+      "name": "router:entry:scripts/state_manager.py",
+      "status": "PASS",
+      "detail": "query/review entry is wired to the unified router"
+    },
+    {
+      "name": "router:entry:scripts/build_query_context.py",
+      "status": "PASS",
+      "detail": "query/review entry is wired to the unified router"
+    },
+    {
+      "name": "router:entry:scripts/build_post_market_review.py",
+      "status": "PASS",
+      "detail": "query/review entry is wired to the unified router"
+    },
+    {
+      "name": "router:decision_context_field",
+      "status": "PASS",
+      "detail": "decision context exposes routed quotes"
     },
     {
       "name": "runtime_file:data/state/CURRENT.json",
@@ -105,12 +150,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=6fdae80a77f4a9980f87082714458cb38bb3ab8e"
+      "detail": "HEAD=698652b88ac06bb6c3c50eeedba627f885f1b34a"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=6fdae80a77f4a9980f87082714458cb38bb3ab8e GITHUB_SHA=6fdae80a77f4a9980f87082714458cb38bb3ab8e"
+      "detail": "HEAD=698652b88ac06bb6c3c50eeedba627f885f1b34a GITHUB_SHA=698652b88ac06bb6c3c50eeedba627f885f1b34a"
     },
     {
       "name": "git:critical_files_tracked",
@@ -585,12 +630,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=34809"
+      "detail": "declared=STALE expected=STALE age_seconds=34856"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=34809"
+      "detail": "declared=STALE expected=STALE age_seconds=34856"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -630,7 +675,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-25T16:47:29Z market=2026-08-25T15:07:20+08:00"
+      "detail": "context=2026-08-25T16:48:16Z market=2026-08-25T15:07:20+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
