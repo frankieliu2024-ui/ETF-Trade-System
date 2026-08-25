@@ -135,11 +135,15 @@ def update_experience(text: str, account: dict) -> tuple[str, int]:
         price = str(trade.get("price") or "")
         date = str(trade.get("trade_time") or "")[:10]
         lines = text.splitlines()
-        action_tokens = {action, "买入" if action.upper() in {"BUY", "B"} else "", "卖出" if action.upper() in {"SELL", "S"} else ""}
+        action_upper = action.upper()
+        action_tokens = {action, "买入" if action_upper in {"BUY", "B"} else "", "卖出" if action_upper in {"SELL", "S"} else ""}
         normalized_quantity = quantity.replace(",", "")
+        normalized_price = f"{float(trade.get('price')):.3f}" if trade.get("price") is not None else price
         for i, line in enumerate(lines):
             normalized_line = line.replace(",", "")
-            if not (line.startswith("|") and date in line and code in line and any(token and token in line for token in action_tokens) and normalized_quantity in normalized_line and price in line):
+            action_match = any(token and token in line for token in action_tokens)
+            price_match = price in line or normalized_price in line
+            if not (line.startswith("|") and date in line and code in line and action_match and normalized_quantity in normalized_line and price_match):
                 continue
             parts = line.split("|")
             if len(parts) < 10:
