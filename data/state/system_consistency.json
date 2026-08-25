@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-25T11:13:28Z",
-  "generated_at_beijing": "2026-08-25T19:13:28+08:00",
+  "generated_at": "2026-08-25T11:15:33Z",
+  "generated_at_beijing": "2026-08-25T19:15:33+08:00",
   "repository": {
-    "head_sha": "a0725e990fce7b70ee50adb7a471bfef6ed088db",
-    "github_sha": "a0725e990fce7b70ee50adb7a471bfef6ed088db",
-    "github_run_id": "32841163515",
+    "head_sha": "105510ab292617ffd65c76d178acf0bc31360a86",
+    "github_sha": "105510ab292617ffd65c76d178acf0bc31360a86",
+    "github_run_id": "32841362112",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "a0725e990fce7b70ee50adb7a471bfef6ed088db",
-    "workflow_sha": "a0725e990fce7b70ee50adb7a471bfef6ed088db",
+    "checked_commit": "105510ab292617ffd65c76d178acf0bc31360a86",
+    "workflow_sha": "105510ab292617ffd65c76d178acf0bc31360a86",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "FAIL",
-  "hard_error_count": 1,
+  "status": "PASS",
+  "hard_error_count": 0,
   "warning_count": 0,
   "checks": [
     {
       "name": "tests:market_data_guard",
       "status": "PASS",
-      "detail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.006s\n\nOK\n"
+      "detail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.005s\n\nOK\n"
     },
     {
       "name": "tests:market_data_guard_compile",
@@ -105,12 +105,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=a0725e990fce7b70ee50adb7a471bfef6ed088db"
+      "detail": "HEAD=105510ab292617ffd65c76d178acf0bc31360a86"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=a0725e990fce7b70ee50adb7a471bfef6ed088db GITHUB_SHA=a0725e990fce7b70ee50adb7a471bfef6ed088db"
+      "detail": "HEAD=105510ab292617ffd65c76d178acf0bc31360a86 GITHUB_SHA=105510ab292617ffd65c76d178acf0bc31360a86"
     },
     {
       "name": "git:critical_files_tracked",
@@ -585,12 +585,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=14767"
+      "detail": "declared=STALE expected=STALE age_seconds=14892"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=14767"
+      "detail": "declared=STALE expected=STALE age_seconds=14892"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -630,7 +630,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-25T11:13:27Z market=2026-08-25T15:07:20+08:00"
+      "detail": "context=2026-08-25T11:15:32Z market=2026-08-25T15:07:20+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -804,8 +804,8 @@
     },
     {
       "name": "research:optimization_not_perfection",
-      "status": "FAIL",
-      "detail": "research complexity is justified by expected-return efficiency, not perfection-seeking"
+      "status": "PASS",
+      "detail": "research complexity is retained only when it improves ex-ante return efficiency or another explicit system objective, not for perfection-seeking"
     },
     {
       "name": "research:runtime_context_read_only",
@@ -823,9 +823,7 @@
       "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
     }
   ],
-  "errors": [
-    "research:optimization_not_perfection: research complexity is justified by expected-return efficiency, not perfection-seeking"
-  ],
+  "errors": [],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。"
 }
