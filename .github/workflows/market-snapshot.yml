@@ -284,7 +284,11 @@ jobs:
                           health['failure_stage'] = '' if quality == 'PASS' else health.get('failure_stage', '')
                           health_path.write_text(json.dumps(health, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')
           PY
+          # system_consistency is owned by the dedicated audit workflow and may
+          # change concurrently; keep it out of this data commit.
+          git checkout -- data/state/system_consistency.json
           git add -A -- data/market/snapshots data/state post_market_review events ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
+          git reset -- data/state/system_consistency.json
           if git diff --cached --quiet; then
             exit 0
           fi
