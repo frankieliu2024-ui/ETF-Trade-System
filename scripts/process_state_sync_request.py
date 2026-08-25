@@ -315,6 +315,20 @@ def _find_existing_trade(trade: dict, confirmed_at: str, key: str) -> dict | Non
             return prior
     return None
 
+def _latest_trade_event_id() -> str:
+    directory = ROOT / "events" / "trades"
+    candidates = []
+    for path in sorted(directory.glob("*.json")) if directory.exists() else []:
+        try:
+            event = load_json(path)
+        except Exception:
+            continue
+        event_id = str(event.get("event_id") or "")
+        if event_id:
+            candidates.append((str(event.get("confirmed_at_beijing") or ""), event_id))
+    return max(candidates)[1] if candidates else ""
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("request_path")
@@ -335,6 +349,14 @@ def main() -> int:
         supplied_account.setdefault("account_change_events_after_confirmed_at", [])
         atomic_json_write(ACCOUNT, supplied_account)
     account = load_json(ACCOUNT)
+    latest_trade_event_id = _latest_trade_event_id()
+    if latest_trade_event_id:
+        current_path = ROOT / "data/state/CURRENT.json"
+        current = load_json(current_path) if current_path.exists() else {}
+        if current.get("last_trade_event_id") != latest_trade_event_id:
+            current["last_trade_event_id"] = latest_trade_event_id
+            current["generated_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            atomic_json_write(current_path, current)
     if account.get("status") != "VALID":
         raise RuntimeError("account_fact is not VALID")
     decision_recorded, decision_id = record_formal_decision(request)
