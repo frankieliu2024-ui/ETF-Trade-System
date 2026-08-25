@@ -1,27 +1,27 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-26T01:38:38+08:00",
+  "generated_at": "2026-08-26T01:39:08+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 32879023316,
+  "run_id": 32879040190,
   "run_attempt": 1,
-  "head_sha": "7f9a02f68b31b28ba591e11fce250475216d94f1",
-  "main_head_sha": "c0fa756ac4609c4ab5084b7bb086f558ff51bd7c",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "e3435ecac43de7717f897abf6e95f0067834bce1",
+  "main_head_sha": "fe5e8dbf58b1cea7b133830d0d702d321056f882",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 15
+      "step": "Persist consistency and maintenance state",
+      "number": 12
     }
   ],
   "changed_files": [
-    "scripts/query_time_market_refresh.py"
+    "scripts/runtime_session_gate.py"
   ],
-  "commit_message": "fix: refresh only active market sessions",
+  "commit_message": "fix: keep query refresh separate from A-share capture gate",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "ESCALATE_WITH_DIAGNOSTIC",
-  "reason": "automatic action stopped at safety boundary",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
