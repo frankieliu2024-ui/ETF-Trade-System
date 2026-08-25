@@ -329,6 +329,104 @@ def _latest_trade_event_id() -> str:
     return max(candidates)[1] if candidates else ""
 
 
+
+def _account_change_events(prior: dict, current: dict, request: dict, trade: dict | None) -> list[dict]:
+    """Record only observable account deltas; never infer an unexplained trade."""
+    prior_positions = {str(x.get("code")): x for x in (prior.get("positions") or []) if x.get("code")}
+    current_positions = {str(x.get("code")): x for x in (current.get("positions") or []) if x.get("code")}
+    codes = sorted(set(prior_positions) | set(current_positions))
+    confirmed_code = str((trade or {}).get("code") or "")
+    confirmed_side = str((trade or {}).get("side") or "").upper()
+    confirmed_qty = safe_float((trade or {}).get("quantity"))
+    event_type = str(request.get("account_change_event_type") or "").strip() or (
+        "USER_REPORTED_TRADE" if trade else "BROKER_SCREENSHOT_CHANGE"
+    )
+    event_time = str((trade or {}).get("confirmed_at_beijing") or current.get("updated_at") or "")
+    events: list[dict] = []
+    for code in codes:
+        before = safe_float(prior_positions.get(code, {}).get("quantity")) or 0.0
+        after = safe_float(current_positions.get(code, {}).get("quantity")) or 0.0
+        delta = round(after - before, 8)
+        if delta == 0:
+            continue
+        row = current_positions.get(code) or prior_positions.get(code) or {}
+        explained = bool(
+            trade and code == confirmed_code and confirmed_qty is not None
+            and abs(abs(delta) - confirmed_qty) < 1e-8
+            and ((delta > 0 and confirmed_side in {"BUY", "B", "买入", "买"})
+                 or (delta < 0 and confirmed_side in {"SELL", "S", "卖出", "卖"}))
+        )
+        key_body = {"event_type": event_type, "code": code, "delta": delta, "event_time": event_time}
+        key = "account_change_" + hashlib.sha256(json.dumps(key_body, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:20]
+        events.append({
+            "event_id": key, "idempotency_key": key, "event_type": event_type,
+            "event_time": event_time, "object": display_name(row),
+            "code": code, "quantity_before": before, "quantity_after": after,
+            "quantity_delta": delta,
+            "change_summary": ("买入/新增持仓" if delta > 0 else "卖出/减少持仓"),
+            "reconciliation_status": "RECONCILED_BY_CONFIRMED_TRADE" if explained else "UNRECONCILED_ACCOUNT_CHANGE",
+            "source": str(current.get("source") or request.get("source") or "USER_CONFIRMED"),
+            "read_only": True,
+        })
+    for field in ("cash", "total_asset"):
+        before = safe_float(prior.get(field))
+        after = safe_float(current.get(field))
+        if before is None or after is None or abs(after - before) < 0.005:
+            continue
+        key_body = {"event_type": event_type, "field": field, "delta": round(after - before, 2), "event_time": event_time}
+        key = "account_change_" + hashlib.sha256(json.dumps(key_body, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:20]
+        events.append({
+            "event_id": key, "idempotency_key": key, "event_type": event_type,
+            "event_time": event_time, "object": field, "change_summary": f"{field}变化 {after - before:+.2f}",
+            "amount_before": before, "amount_after": after, "amount_delta": round(after - before, 2),
+            "reconciliation_status": "RECONCILED_BY_CONFIRMED_TRADE" if trade else "UNRECONCILED_ACCOUNT_CHANGE",
+            "source": str(current.get("source") or request.get("source") or "USER_CONFIRMED"),
+            "read_only": True,
+        })
+    return events
+
+
+def _apply_trade_to_account(prior: dict, trade: dict) -> dict:
+    """Safely carry a user-confirmed trade into the account fact when no screenshot is supplied."""
+    account = json.loads(json.dumps(prior))
+    account.setdefault("positions", [])
+    code = str(trade.get("code") or "")
+    side = str(trade.get("side") or "").upper()
+    qty = safe_float(trade.get("quantity"))
+    amount = safe_float(trade.get("amount"))
+    if not code or qty is None or qty <= 0 or amount is None:
+        return account
+    sign = 1 if side in {"BUY", "B", "买入", "买"} else -1 if side in {"SELL", "S", "卖出", "卖"} else 0
+    if sign == 0:
+        return account
+    position = next((p for p in account["positions"] if str(p.get("code")) == code), None)
+    if position is None:
+        if sign < 0:
+            return account
+        position = {"asset_type": trade.get("asset_type") or "ETF", "name": trade.get("name") or code, "code": code, "quantity": 0, "cost": safe_float(trade.get("price")) or 0, "last_price": safe_float(trade.get("price")) or 0, "market_value": 0, "holding_pnl": 0, "holding_pnl_pct": 0}
+        account["positions"].append(position)
+    before = safe_float(position.get("quantity")) or 0.0
+    after = before + sign * qty
+    if after < -1e-8:
+        return account
+    position["quantity"] = int(after) if abs(after - round(after)) < 1e-8 else after
+    if sign > 0 and position.get("cost") in (None, 0, 0.0):
+        position["cost"] = safe_float(trade.get("price")) or position.get("cost") or 0
+    if position.get("last_price") in (None, 0, 0.0):
+        position["last_price"] = safe_float(trade.get("price")) or 0
+    position["market_value"] = round(float(position.get("last_price") or 0) * float(position["quantity"]), 2)
+    cash_delta = -sign * amount
+    account["cash"] = round((safe_float(account.get("cash")) or 0) + cash_delta, 2)
+    if account.get("total_asset") is not None:
+        account["total_asset"] = round((safe_float(account.get("total_asset")) or 0) + cash_delta, 2)
+    account["updated_at"] = str(trade.get("confirmed_at_beijing") or account.get("updated_at") or datetime.now(SHANGHAI).isoformat(timespec="seconds"))
+    account["last_confirmed_market_date"] = account["updated_at"][:10]
+    account["status"] = "VALID"
+    account["source"] = str(trade.get("source") or "USER_REPORTED_TRADE_CONFIRMED")
+    account["validity_mode"] = "EVENT_DRIVEN_TRADE_CONFIRMED"
+    return account
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("request_path")
@@ -337,16 +435,23 @@ def main() -> int:
     if ROOT not in req_path.parents or not req_path.exists():
         raise RuntimeError("invalid state sync request path")
     request = load_json(req_path)
+    trade = request.get("trade_event")
+    prior_account = load_json(ACCOUNT) if ACCOUNT.exists() else {}
     supplied_account = request.get("account_fact")
+    if not supplied_account and isinstance(trade, dict):
+        supplied_account = _apply_trade_to_account(prior_account, trade)
     if supplied_account:
-        prior_account = load_json(ACCOUNT) if ACCOUNT.exists() else {}
+        supplied_account = json.loads(json.dumps(supplied_account))
         if "formal_action" not in supplied_account and prior_account.get("formal_action"):
             supplied_account["formal_action"] = prior_account["formal_action"]
         supplied_account.setdefault("status", "VALID")
         supplied_account.setdefault("validity_mode", "EVENT_DRIVEN_CARRY_FORWARD")
         supplied_account.setdefault("orders", [])
         supplied_account.setdefault("trades", [])
-        supplied_account.setdefault("account_change_events_after_confirmed_at", [])
+        prior_events = prior_account.get("account_change_events_after_confirmed_at") or []
+        new_events = _account_change_events(prior_account, supplied_account, request, trade)
+        known = {str(x.get("idempotency_key") or x.get("event_id") or "") for x in prior_events}
+        supplied_account["account_change_events_after_confirmed_at"] = prior_events + [x for x in new_events if str(x.get("idempotency_key")) not in known]
         atomic_json_write(ACCOUNT, supplied_account)
     account = load_json(ACCOUNT)
     latest_trade_event_id = _latest_trade_event_id()
@@ -375,7 +480,6 @@ def main() -> int:
             atomic_json_write(ACCOUNT, account)
     dashboard = replace_block(DASHBOARD.read_text(encoding="utf-8"), START, END, build_dashboard_block(account, request.get("formal_decision"), request), insert_after_heading=True)
     DASHBOARD.write_text(dashboard, encoding="utf-8")
-    trade = request.get("trade_event")
     trade_event_recorded = False
     if trade:
         confirmed_at = trade.get("confirmed_at_beijing") or account.get("updated_at")
