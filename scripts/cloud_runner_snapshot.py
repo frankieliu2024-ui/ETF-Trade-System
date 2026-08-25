@@ -247,8 +247,6 @@ def eastmoney_timestamp_ms(value: object) -> int:
 def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
     if code not in EASTMONEY_FALLBACK_ETFS:
         raise RuntimeError(f"Eastmoney ETF fallback is not enabled for {code}")
-    if not thscode.endswith(".SZ"):
-        raise RuntimeError(f"Eastmoney ETF fallback expects SZ ETF thscode, got {thscode}")
     params = {
         "secid": f"{'1' if thscode.endswith('.SH') else '0'}.{code}",
         "fltt": "2",
@@ -292,7 +290,17 @@ def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
         provider="eastmoney_push2", provider_primary="hithink-finance",
         fallback_used=True,
         fallback_reason="hithink-finance fund snapshot unavailable or unsupported; verified direct Eastmoney push2 ETF quote",
-    ) | {"provider_http_status": status_code, "provider_symbol": f"{'1' if thscode.endswith('.SH') else '0'}.{code}", "provider_timestamp_field": "f124" if data.get("f124") not in (None, "", 0, "0") else "f86"}
+    ) | {
+        "provider_http_status": status_code,
+        "provider_symbol": f"{'1' if thscode.endswith('.SH') else '0'}.{code}",
+        "provider_name": str(data.get("f58")),
+        "provider_timestamp_field": "f86",
+        "volume_raw": data.get("f47"),
+        "volume_unit_raw": "hand",
+        "volume_unit": "share",
+        "amount_raw": data.get("f48"),
+        "amount_unit": "CNY",
+    }
 
 
 def fetch_etf_with_fallback(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
