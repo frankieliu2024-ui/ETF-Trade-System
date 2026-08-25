@@ -17,6 +17,7 @@ on:
       - "scripts/**"
       - ".github/workflows/**"
       - "requests/research_backfill/*.json"
+      - "requests/trade_fact_correction/*.json"
       - "data/state/CURRENT.json"
       - "data/state/runtime_health.json"
       - "data/state/overseas_runtime_health.json"
@@ -69,6 +70,17 @@ jobs:
           else
             echo "has_request=false" >> "$GITHUB_OUTPUT"
           fi
+      - name: Detect trade fact correction request
+        id: trade_fact_correction_request
+        shell: bash
+        run: |
+          files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/trade_fact_correction/*.json' || true)
+          if [ -n "$files" ]; then
+            echo "has_request=true" >> "$GITHUB_OUTPUT"
+            printf '%s\n' "$files" > /tmp/trade_fact_correction_requests.txt
+          else
+            echo "has_request=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Run requested research historical backfill
         id: backfill
         if: ${{ steps.backfill_request.outputs.has_request == 'true' }}
@@ -82,6 +94,19 @@ jobs:
             python scripts/backfill_research_daily_history.py "$f" || rc=$?
             [ "$rc" -ne 0 ] && break
           done < /tmp/research_backfill_requests.txt
+          exit "$rc"
+      - name: Apply confirmed trade fact correction
+        id: trade_fact_correction
+        if: ${{ steps.trade_fact_correction_request.outputs.has_request == 'true' }}
+        continue-on-error: true
+        shell: bash
+        run: |
+          rc=0
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            python scripts/apply_trade_fact_correction.py "$f" || rc=$?
+            [ "$rc" -ne 0 ] && break
+          done < /tmp/trade_fact_correction_requests.txt
           exit "$rc"
       - name: Refresh decision and query context
         id: refresh_context
@@ -135,6 +160,16 @@ jobs:
             mkdir -p /tmp/etf-owned-state/backfill
             cp -r data/state/historical_backfill_status.json data/state/historical_position_research.json research/reports events/research/daily_features /tmp/etf-owned-state/backfill/ 2>/dev/null || true
           fi
+          if [ "${{ steps.trade_fact_correction_request.outputs.has_request }}" = "true" ] && [ "${{ steps.trade_fact_correction.outcome }}" != "failure" ]; then
+            mkdir -p /tmp/etf-owned-state/trade-correction/events/trades /tmp/etf-owned-state/trade-correction/data/state
+            cp ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md /tmp/etf-owned-state/trade-correction/
+            cp data/state/etf_strategy_equity.json data/state/trade_fact_correction_receipt.json /tmp/etf-owned-state/trade-correction/data/state/ 2>/dev/null || true
+            while IFS= read -r f; do
+              [ -z "$f" ] && continue
+              event_id=$(python -c 'import json,sys; print(json.load(open(sys.argv[1],encoding="utf-8")).get("trade_event_id",""))' "$f")
+              [ -z "$event_id" ] || cp "events/trades/$event_id.json" /tmp/etf-owned-state/trade-correction/events/trades/
+            done < /tmp/trade_fact_correction_requests.txt
+          fi
 
           git fetch origin main
           git reset --hard origin/main
@@ -152,11 +187,22 @@ jobs:
             git add data/state/historical_backfill_status.json data/state/historical_position_research.json research/reports events/research/daily_features 2>/dev/null || true
             git add -f -- data/market/audit/research_backfill 2>/dev/null || true
           fi
+          if [ "${{ steps.trade_fact_correction_request.outputs.has_request }}" = "true" ] && [ "${{ steps.trade_fact_correction.outcome }}" != "failure" ]; then
+            cp /tmp/etf-owned-state/trade-correction/ETF当前状态_DASHBOARD.md .
+            cp /tmp/etf-owned-state/trade-correction/ETF市场行情档案_2026.md .
+            cp /tmp/etf-owned-state/trade-correction/ETF交易复盘与经验库_2026.md .
+            cp /tmp/etf-owned-state/trade-correction/data/state/etf_strategy_equity.json data/state/
+            cp /tmp/etf-owned-state/trade-correction/data/state/trade_fact_correction_receipt.json data/state/ 2>/dev/null || true
+            cp /tmp/etf-owned-state/trade-correction/events/trades/*.json events/trades/ 2>/dev/null || true
+            git add ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md data/state/etf_strategy_equity.json data/state/trade_fact_correction_receipt.json events/trades 2>/dev/null || true
+          fi
 
           if git diff --cached --quiet; then
             exit 0
           fi
-          if [ "${{ steps.backfill_request.outputs.has_request }}" = "true" ]; then
+          if [ "${{ steps.trade_fact_correction_request.outputs.has_request }}" = "true" ] && [ "${{ steps.trade_fact_correction.outcome }}" != "failure" ]; then
+            msg="state: backfill confirmed trade fee facts"
+          elif [ "${{ steps.backfill_request.outputs.has_request }}" = "true" ]; then
             msg="research: backfill ETF daily evidence"
           else
             msg="state: refresh consistency maintenance and e2e readiness"
@@ -165,6 +211,9 @@ jobs:
           git push origin HEAD:main
       - name: Enforce research backfill result
         if: ${{ steps.backfill_request.outputs.has_request == 'true' && steps.backfill.outcome == 'failure' }}
+        run: exit 1
+      - name: Enforce trade fact correction result
+        if: ${{ steps.trade_fact_correction_request.outputs.has_request == 'true' && steps.trade_fact_correction.outcome == 'failure' }}
         run: exit 1
       - name: Enforce hard consistency result
         if: ${{ steps.consistency.outcome == 'failure' }}
