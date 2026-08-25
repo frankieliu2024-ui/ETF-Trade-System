@@ -1,21 +1,21 @@
 {
-  "generated_at": "2026-08-25T04:53:30Z",
-  "generated_at_beijing": "2026-08-25T12:53:30+08:00",
+  "generated_at": "2026-08-25T05:15:11Z",
+  "generated_at_beijing": "2026-08-25T13:15:11+08:00",
   "repository": {
-    "head_sha": "1c9669f477ed547bb9d74a7f473dda547fa5d8ac",
-    "github_sha": "1c9669f477ed547bb9d74a7f473dda547fa5d8ac",
-    "github_run_id": "32810673471",
+    "head_sha": "47c040f37bd9ad5efbadbe0a088ef0191d2ef111",
+    "github_sha": "47c040f37bd9ad5efbadbe0a088ef0191d2ef111",
+    "github_run_id": "32812098032",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "1c9669f477ed547bb9d74a7f473dda547fa5d8ac",
-    "workflow_sha": "1c9669f477ed547bb9d74a7f473dda547fa5d8ac",
+    "checked_commit": "47c040f37bd9ad5efbadbe0a088ef0191d2ef111",
+    "workflow_sha": "47c040f37bd9ad5efbadbe0a088ef0191d2ef111",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "status": "WARNING",
   "hard_error_count": 0,
-  "warning_count": 1,
+  "warning_count": 2,
   "checks": [
     {
       "name": "formal_file:ETF规则_MASTER.md",
@@ -95,12 +95,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=1c9669f477ed547bb9d74a7f473dda547fa5d8ac"
+      "detail": "HEAD=47c040f37bd9ad5efbadbe0a088ef0191d2ef111"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=1c9669f477ed547bb9d74a7f473dda547fa5d8ac GITHUB_SHA=1c9669f477ed547bb9d74a7f473dda547fa5d8ac"
+      "detail": "HEAD=47c040f37bd9ad5efbadbe0a088ef0191d2ef111 GITHUB_SHA=47c040f37bd9ad5efbadbe0a088ef0191d2ef111"
     },
     {
       "name": "git:critical_files_tracked",
@@ -540,22 +540,22 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=5295"
+      "detail": "declared=FRESH expected=FRESH age_seconds=530"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=5295"
+      "detail": "declared=FRESH expected=FRESH age_seconds=530"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
       "status": "PASS",
-      "detail": "query=STALE decision=STALE"
+      "detail": "query=FRESH decision=FRESH"
     },
     {
       "name": "dynamic_freshness:current_snapshot_boundary",
       "status": "PASS",
-      "detail": "CURRENT snapshot_status=DEGRADED; context_status=STALE; CURRENT is not required to age-transition automatically"
+      "detail": "CURRENT snapshot_status=DEGRADED; context_status=FRESH; CURRENT is not required to age-transition automatically"
     },
     {
       "name": "decision:coverage_summary",
@@ -570,17 +570,17 @@
     {
       "name": "decision:failed_objects_explicit",
       "status": "PASS",
-      "detail": "failed_count=3 failed_objects=['159561', '513180', '561980']"
+      "detail": "failed_count=2 failed_objects=['513180', '588000']"
     },
     {
       "name": "decision:query_decision_current_aligned",
       "status": "PASS",
-      "detail": "query=data/market/snapshots/2026-08-25_112515.json decision=data/market/snapshots/2026-08-25_112515.json"
+      "detail": "query=data/market/snapshots/2026-08-25_130621.json decision=data/market/snapshots/2026-08-25_130621.json"
     },
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-25T04:53:30Z market=2026-08-25T11:25:15+08:00"
+      "detail": "context=2026-08-25T05:15:11Z market=2026-08-25T13:06:21+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -590,7 +590,7 @@
     {
       "name": "scheduled_pulse:observable",
       "status": "PASS",
-      "detail": "status=UNKNOWN"
+      "detail": "status=WARNING"
     },
     {
       "name": "formal_action:execution_boundary",
@@ -600,22 +600,17 @@
     {
       "name": "runtime_health:structured",
       "status": "PASS",
-      "detail": "status=SKIPPED"
-    },
-    {
-      "name": "runtime_health:skipped_reason",
-      "status": "PASS",
-      "detail": "failure_stage=session_gate reason=outside_a_share_capture_window"
+      "detail": "status=DEGRADED"
     },
     {
       "name": "a_share_runtime:live_state_available",
       "status": "WARNING",
-      "detail": "runtime_status=SKIPPED current_snapshot=data/market/snapshots/2026-08-25_112515.json"
+      "detail": "runtime_status=DEGRADED current_snapshot=data/market/snapshots/2026-08-25_130621.json"
     },
     {
       "name": "stock_runtime:dynamic_account_membership",
-      "status": "PASS",
-      "detail": "detected=['300750', '601138'] expected=['300750', '601138']"
+      "status": "WARNING",
+      "detail": "detected=['300750', '601138'] expected=[]"
     },
     {
       "name": "overseas_runtime:structured",
@@ -735,7 +730,8 @@
   ],
   "errors": [],
   "warnings": [
-    "a_share_runtime:live_state_available: runtime_status=SKIPPED current_snapshot=data/market/snapshots/2026-08-25_112515.json"
+    "a_share_runtime:live_state_available: runtime_status=DEGRADED current_snapshot=data/market/snapshots/2026-08-25_130621.json",
+    "stock_runtime:dynamic_account_membership: detected=['300750', '601138'] expected=[]"
   ],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。"
 }
