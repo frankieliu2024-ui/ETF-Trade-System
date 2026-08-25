@@ -319,6 +319,7 @@ def main() -> int:
     check("phase4:e2e_state_present", str(e2e_state.get("purpose") or "").startswith("TOP_LEVEL_SYSTEM_USABILITY_ONLY"), f"status={e2e_state.get('status', 'MISSING')}", warning=True)
 
 
+    # Notification lifecycle checks remain state-only and never block market data production.
     notification_state = read_json("data/state/notification_center.json")
     notification_items = notification_state.get("notifications") or []
     required_notification_fields = {"notification_id", "event_type", "source_event_id", "related_decision_id", "security_code", "security_name", "lifecycle_status", "created_at", "sent_at", "confirmed_at", "archived_at"}
