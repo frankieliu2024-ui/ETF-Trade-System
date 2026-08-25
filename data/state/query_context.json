@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-25T12:07:49Z",
-  "generated_at_beijing": "2026-08-25T20:07:49+08:00",
+  "generated_at": "2026-08-25T17:41:07Z",
+  "generated_at_beijing": "2026-08-26T01:41:07+08:00",
   "market_date": "2026-08-25",
   "latest_valid_node": "close",
   "current": {
@@ -42,7 +42,7 @@
     "generated_at": "2026-08-25T07:07:20Z"
   },
   "decision_context": {
-    "generated_at": "2026-08-25T12:07:49Z",
+    "generated_at": "2026-08-25T17:41:06Z",
     "rules_version": "V2.2.16",
     "market_date": "2026-08-25",
     "latest_node": "close",
@@ -462,7 +462,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 29.59,
-      "age_seconds": 18029
+      "age_seconds": 38026
     },
     "freshness_at_context_build": {
       "status": "STALE",
@@ -477,7 +477,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 29.59,
-      "age_seconds": 18029
+      "age_seconds": 38026
     },
     "data_quality_summary": {
       "pass_count": 13,
@@ -492,12 +492,12 @@
     },
     "etf_strategy_risk_metrics": {
       "etf_strategy_risk_pct": -8.3,
-      "etf_holding_unrealized_pct": -8.03,
+      "etf_holding_unrealized_pct": -8.17,
       "etf_drawdown_from_high_pct": -8.3,
-      "equity_data_quality": "KNOWN_NET_PARTIAL_PENDING_2026_08_25_SELL_FEES",
-      "strategy_equity_known_net": 183402.49,
+      "equity_data_quality": "KNOWN_NET_COMPLETE_FOR_RECORDED_TRADE_FEES",
+      "strategy_equity_known_net": 183392.49,
       "high_watermark": 200000,
-      "fee_status": "2026-08-25 SELL FEES PENDING_OR_NOT_YET_DISPLAYED",
+      "fee_status": "ALL_RECORDED_TRADE_FEES_CONFIRMED",
       "interpretation": "唯一ETF策略风险率决定风险区间；持仓浮盈亏率与高水位回撤率只解释持仓压力和近期改善/恶化。",
       "read_only": true
     },
@@ -523,17 +523,17 @@
       "read_only": true
     },
     "point_in_time": {
-      "account_fact_time": "2026-08-25T14:31:51+08:00",
+      "account_fact_time": "2026-08-25T15:24:00+08:00",
       "market_snapshot_time": "2026-08-25T15:07:20+08:00",
       "market_phase": "POST_CLOSE_GRACE",
-      "context_generated_time": "2026-08-25T12:07:49Z",
+      "context_generated_time": "2026-08-25T17:41:06Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
     "scheduled_pulse_health": {
       "expected_slots": [],
       "observed_slots": [
-        "cron:0,10 7 * * 1-5"
+        "query_time_push"
       ],
       "missing_slots": [],
       "status": "UNKNOWN",
@@ -541,16 +541,474 @@
       "read_only": true
     },
     "formal_action": {
-      "action": "新增0元；现有四只ETF继续持有；不回补半导体设备ETF（561980）上午卖出的13,000份；14:50节点不追加减持，现金继续保留，15:00收盘复核。",
-      "quantity": null,
-      "decision_id": "20260825_1451_formal_intraday_decision",
-      "decision_time": "2026-08-25T14:50:07+08:00",
-      "source": "CHATGPT_FORMAL_DECISION",
-      "lifecycle": "半导体设备ETF（561980）持有；科创50ETF（588000）持有；科创创业ETF（159781）持有；纳指ETF（159941）持有。",
-      "applicable_object": "159992",
-      "validity": "ACTIVE",
-      "execution_status": "PENDING",
+      "status": "NOT_PROVIDED",
+      "execution_status": "UNKNOWN",
+      "preserve_rule": "普通账户同步不擦除最近正式决策。",
       "read_only": true
+    },
+    "market_quote_router": {
+      "generated_at_beijing": "2026-08-26T01:41:06+08:00",
+      "refresh_mode": "CACHED_STATE",
+      "refresh_failures": [],
+      "route_version": "V1.0",
+      "query_entry": "market_quote_router",
+      "quotes": [
+        {
+          "market": "CN",
+          "market_name": "中国大陆",
+          "symbol": "000001",
+          "name": "",
+          "latest_price": 3889.44,
+          "data_time_beijing": "2026-08-25T15:07:19+08:00",
+          "data_time_local": "",
+          "market_phase": "OFF_SESSION",
+          "market_status_cn": "A股收盘",
+          "data_nature_cn": "最近正式收盘行情",
+          "source": "hithink-finance",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+        },
+        {
+          "market": "CN",
+          "market_name": "中国大陆",
+          "symbol": "399006",
+          "name": "",
+          "latest_price": 3397.5153,
+          "data_time_beijing": "2026-08-25T15:07:19+08:00",
+          "data_time_local": "",
+          "market_phase": "OFF_SESSION",
+          "market_status_cn": "A股收盘",
+          "data_nature_cn": "最近正式收盘行情",
+          "source": "hithink-finance",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+        },
+        {
+          "market": "CN",
+          "market_name": "中国大陆",
+          "symbol": "159326",
+          "name": "",
+          "latest_price": 1.671,
+          "data_time_beijing": "2026-08-25T15:07:18+08:00",
+          "data_time_local": "",
+          "market_phase": "OFF_SESSION",
+          "market_status_cn": "A股收盘",
+          "data_nature_cn": "最近正式收盘行情",
+          "source": "hithink-finance",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+        },
+        {
+          "market": "CN",
+          "market_name": "中国大陆",
+          "symbol": "159561",
+          "name": "",
+          "latest_price": 1.377,
+          "data_time_beijing": "2026-08-25T15:07:04+08:00",
+          "data_time_local": "",
+          "market_phase": "OFF_SESSION",
+          "market_status_cn": "A股收盘",
+          "data_nature_cn": "最近正式收盘行情",
+          "source": "hithink-finance",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+        },
+        {
+          "market": "CN",
+          "market_name": "中国大陆",
+          "symbol": "159781",
+          "name": "",
+          "latest_price": 1.062,
+          "data_time_beijing": "2026-08-25T15:06:56+08:00",
+          "data_time_local": "",
+          "market_phase": "OFF_SESSION",
+          "market_status_cn": "A股收盘",
+          "data_nature_cn": "最近正式收盘行情",
+          "source": "hithink-finance",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+        },
+        {
+          "market": "CN",
+          "market_name": "中国大陆",
+          "symbol": "159941",
+          "name": "",
+          "latest_price": 1.643,
+          "data_time_beijing": "2026-08-25T15:06:57+08:00",
+          "data_time_local": "",
+          "market_phase": "OFF_SESSION",
+          "market_status_cn": "A股收盘",
+          "data_nature_cn": "最近正式收盘行情",
+          "source": "hithink-finance",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+        },
+        {
+          "market": "CN",
+          "market_name": "中国大陆",
+          "symbol": "159992",
+          "name": "",
+          "latest_price": 0.868,
+          "data_time_beijing": "2026-08-25T15:07:12+08:00",
+          "data_time_local": "",
+          "market_phase": "OFF_SESSION",
+          "market_status_cn": "A股收盘",
+          "data_nature_cn": "最近正式收盘行情",
+          "source": "hithink-finance",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+        },
+        {
+          "market": "CN",
+          "market_name": "中国大陆",
+          "symbol": "513180",
+          "name": "",
+          "latest_price": 0.579,
+          "data_time_beijing": "2026-08-25T15:07:00+08:00",
+          "data_time_local": "",
+          "market_phase": "OFF_SESSION",
+          "market_status_cn": "A股收盘",
+          "data_nature_cn": "最近正式收盘行情",
+          "source": "hithink-finance",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+        },
+        {
+          "market": "CN",
+          "market_name": "中国大陆",
+          "symbol": "513520",
+          "name": "",
+          "latest_price": 2.273,
+          "data_time_beijing": "2026-08-25T15:07:07+08:00",
+          "data_time_local": "",
+          "market_phase": "OFF_SESSION",
+          "market_status_cn": "A股收盘",
+          "data_nature_cn": "最近正式收盘行情",
+          "source": "hithink-finance",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+        },
+        {
+          "market": "CN",
+          "market_name": "中国大陆",
+          "symbol": "515880",
+          "name": "",
+          "latest_price": 0.648,
+          "data_time_beijing": "2026-08-25T15:07:15+08:00",
+          "data_time_local": "",
+          "market_phase": "OFF_SESSION",
+          "market_status_cn": "A股收盘",
+          "data_nature_cn": "最近正式收盘行情",
+          "source": "hithink-finance",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+        },
+        {
+          "market": "CN",
+          "market_name": "中国大陆",
+          "symbol": "518880",
+          "name": "",
+          "latest_price": 9.533,
+          "data_time_beijing": "2026-08-25T15:07:08+08:00",
+          "data_time_local": "",
+          "market_phase": "OFF_SESSION",
+          "market_status_cn": "A股收盘",
+          "data_nature_cn": "最近正式收盘行情",
+          "source": "hithink-finance",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+        },
+        {
+          "market": "CN",
+          "market_name": "中国大陆",
+          "symbol": "561980",
+          "name": "",
+          "latest_price": 0.675,
+          "data_time_beijing": "2026-08-25T15:06:51+08:00",
+          "data_time_local": "",
+          "market_phase": "OFF_SESSION",
+          "market_status_cn": "A股收盘",
+          "data_nature_cn": "最近正式收盘行情",
+          "source": "hithink-finance",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+        },
+        {
+          "market": "CN",
+          "market_name": "中国大陆",
+          "symbol": "588000",
+          "name": "",
+          "latest_price": 1.693,
+          "data_time_beijing": "2026-08-25T15:06:53+08:00",
+          "data_time_local": "",
+          "market_phase": "OFF_SESSION",
+          "market_status_cn": "A股收盘",
+          "data_nature_cn": "最近正式收盘行情",
+          "source": "hithink-finance",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+        },
+        {
+          "market": "US",
+          "market_name": "美国",
+          "symbol": "^NDX",
+          "name": "纳斯达克100指数",
+          "latest_price": 29023.181640625,
+          "data_time_beijing": "2026-08-25T04:00:00+08:00",
+          "data_time_local": "",
+          "market_phase": "REGULAR",
+          "market_status_cn": "美股交易中",
+          "data_nature_cn": "实时交易行情",
+          "source": "yahoo_chart_api",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "返回正式现金盘最新实时行情"
+        },
+        {
+          "market": "US",
+          "market_name": "美国",
+          "symbol": "^SOX",
+          "name": "费城半导体指数",
+          "latest_price": 11423.1689453125,
+          "data_time_beijing": "2026-08-25T04:00:00+08:00",
+          "data_time_local": "",
+          "market_phase": "REGULAR",
+          "market_status_cn": "美股交易中",
+          "data_nature_cn": "实时交易行情",
+          "source": "yahoo_chart_api",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "返回正式现金盘最新实时行情"
+        },
+        {
+          "market": "JP",
+          "market_name": "日本",
+          "symbol": "^N225",
+          "name": "日经225指数",
+          "latest_price": 65856.4296875,
+          "data_time_beijing": "2026-08-25T14:30:00+08:00",
+          "data_time_local": "",
+          "market_phase": "PRE_OPEN",
+          "market_status_cn": "日股开盘前",
+          "data_nature_cn": "最近正式收盘行情",
+          "source": "yahoo_chart_api",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+        },
+        {
+          "market": "KR",
+          "market_name": "韩国",
+          "symbol": "^KS11",
+          "name": "韩国综合指数",
+          "latest_price": 6742.740234375,
+          "data_time_beijing": "2026-08-25T14:00:00+08:00",
+          "data_time_local": "",
+          "market_phase": "PRE_OPEN",
+          "market_status_cn": "韩股开盘前",
+          "data_nature_cn": "最近正式收盘行情",
+          "source": "yahoo_chart_api",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+        },
+        {
+          "market": "TW",
+          "market_name": "中国台湾",
+          "symbol": "^TWII",
+          "name": "台湾加权指数",
+          "latest_price": 45169.4609375,
+          "data_time_beijing": "2026-08-25T13:30:00+08:00",
+          "data_time_local": "",
+          "market_phase": "PRE_OPEN",
+          "market_status_cn": "台股开盘前",
+          "data_nature_cn": "最近正式收盘行情",
+          "source": "yahoo_chart_api",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+        },
+        {
+          "market": "HK",
+          "market_name": "中国香港",
+          "symbol": "124.HSTECH",
+          "name": "恒生科技指数",
+          "latest_price": 4596.72,
+          "data_time_beijing": "2026-08-25T14:53:46+08:00",
+          "data_time_local": "",
+          "market_phase": "PRE_OPEN",
+          "market_status_cn": "港股开盘前",
+          "data_nature_cn": "最近正式收盘行情",
+          "source": "eastmoney_push2delay",
+          "freshness": "STALE",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+        }
+      ],
+      "markets": {
+        "CN": {
+          "phase": "OFF_SESSION",
+          "market_status_cn": "A股收盘"
+        },
+        "HK": {
+          "phase": "PRE_OPEN",
+          "market_status_cn": "港股开盘前"
+        },
+        "TW": {
+          "phase": "PRE_OPEN",
+          "market_status_cn": "台股开盘前"
+        },
+        "US": {
+          "phase": "REGULAR",
+          "market_status_cn": "美股交易中"
+        },
+        "JP": {
+          "phase": "PRE_OPEN",
+          "market_status_cn": "日股开盘前"
+        },
+        "KR": {
+          "phase": "PRE_OPEN",
+          "market_status_cn": "韩股开盘前"
+        }
+      },
+      "selection_rule": "交易中返回最新实时；盘前返回盘前行情并附最近正式收盘；盘后返回盘后行情并附当日正式收盘；休市返回最近正式收盘。",
+      "user_display_rule": "用户展示只使用中文市场状态和数据性质，不直接输出内部英文状态码。",
+      "decision_boundary": "路由只提供事实与时点，不生成风险许可、Trial、Confirm、金额、卖出或其他交易动作。",
+      "source_state_paths": [
+        "data/state/CURRENT.json",
+        "data/state/overseas_context.json",
+        "data/state/us_extended_hours_context.json"
+      ]
+    },
+    "decision_trigger": {
+      "schema_version": "1.0",
+      "generated_at": "2026-08-25T20:58:42+08:00",
+      "status": "NO_NEW_TRIGGER",
+      "trigger_type": "",
+      "triggered_at": "",
+      "applicable_object": "",
+      "previous_decision_id": "20260825_1451_formal_intraday_decision",
+      "evidence_change": "",
+      "evidence_time": "2026-08-25T15:07:20+08:00",
+      "e2e_status": "READY",
+      "requires_formal_reassessment": false,
+      "pending_trigger": false,
+      "idempotency_key": "",
+      "risk_zone": "RISK_CONTROL",
+      "last_trade_event_id": "20260825_112516",
+      "safety_boundary": "确定性识别仅生成重评请求，不生成金额、份额或交易动作。",
+      "read_only": true
+    },
+    "capital_efficiency_ranking": {
+      "schema_version": "1.0",
+      "generated_at": "2026-08-25T20:58:42+08:00",
+      "as_of": "2026-08-25T15:07:20+08:00",
+      "e2e_status": "READY",
+      "risk_zone": "RISK_CONTROL",
+      "top_candidate": "现金",
+      "next_unit_capital_use": "现金/持仓/观察候选按原MASTER链人工比较；本结果不生成金额。",
+      "ordered_candidates": [
+        {
+          "display_name": "现金",
+          "code": null,
+          "category": "CASH",
+          "eligibility": "AVAILABLE",
+          "reason": "等待价值与风险缓冲可直接参与比较；不自动等同于低效率。"
+        },
+        {
+          "display_name": "半导体设备ETF（561980）",
+          "code": "561980",
+          "category": "HELD_ETF",
+          "eligibility": "HOLDING_COMPARISON",
+          "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
+          "comparison_basis": [
+            "当前价格与结构",
+            "持仓压力",
+            "相关性",
+            "可释放资本"
+          ],
+          "action_boundary": "仍需MASTER正式判断"
+        },
+        {
+          "display_name": "科创50ETF（588000）",
+          "code": "588000",
+          "category": "HELD_ETF",
+          "eligibility": "HOLDING_COMPARISON",
+          "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
+          "comparison_basis": [
+            "当前价格与结构",
+            "持仓压力",
+            "相关性",
+            "可释放资本"
+          ],
+          "action_boundary": "仍需MASTER正式判断"
+        },
+        {
+          "display_name": "科创创业ETF（159781）",
+          "code": "159781",
+          "category": "HELD_ETF",
+          "eligibility": "HOLDING_COMPARISON",
+          "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
+          "comparison_basis": [
+            "当前价格与结构",
+            "持仓压力",
+            "相关性",
+            "可释放资本"
+          ],
+          "action_boundary": "仍需MASTER正式判断"
+        },
+        {
+          "display_name": "纳指ETF（159941）",
+          "code": "159941",
+          "category": "HELD_ETF",
+          "eligibility": "HOLDING_COMPARISON",
+          "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
+          "comparison_basis": [
+            "当前价格与结构",
+            "持仓压力",
+            "相关性",
+            "可释放资本"
+          ],
+          "action_boundary": "仍需MASTER正式判断"
+        }
+      ],
+      "excluded_candidates": [],
+      "key_reason": "两阶段：先做E2E、风险扩张、质量和可执行性硬过滤，再保留少量定性比较对象；不生成综合资本效率分数。",
+      "previous_top_candidate": null,
+      "read_only": true,
+      "safety_boundary": "资本排序不替代唯一主候选，不自动生成Trial、Confirm、金额、卖出份额或订单。"
     },
     "intraday_path_features": {
       "generated_at": "2026-08-25T12:07:25Z",
@@ -583,17 +1041,17 @@
           "recent_interval_minutes": 13.9,
           "recent_move_pct": 0.0352,
           "recent_slope_pct_per_10m": 0.0253,
-          "recent_volume_delta": 1677665000,
-          "recent_amount_delta": 26710990000,
+          "recent_volume_delta": 1677665000.0,
+          "recent_amount_delta": 26710990000.0,
           "relative_to_indices": {
+            "000001": {
+              "latest_relative_change_pct_points": 0.0,
+              "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
             "399006": {
               "latest_relative_change_pct_points": 1.1929,
               "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
-            "000001": {
-              "latest_relative_change_pct_points": 0,
-              "benchmark_change_pct": 0.1914,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -634,20 +1092,20 @@
           "recovery_from_path_low_pct": 2.9575,
           "retreat_from_path_high_pct": -0.9484,
           "latest_day_range_position": 0.75,
-          "recent_interval_minutes": 14,
-          "recent_move_pct": 0,
-          "recent_slope_pct_per_10m": 0,
-          "recent_volume_delta": 5559700,
-          "recent_amount_delta": 9296620,
+          "recent_interval_minutes": 14.0,
+          "recent_move_pct": 0.0,
+          "recent_slope_pct_per_10m": 0.0,
+          "recent_volume_delta": 5559700.0,
+          "recent_amount_delta": 9296620.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 1.9073,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": 0.7144,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 1.9073,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -704,22 +1162,22 @@
           "path_high": 1.377,
           "path_high_as_of_beijing": "2026-08-25T14:33:27+08:00",
           "recovery_from_path_low_pct": 0.4376,
-          "retreat_from_path_high_pct": 0,
+          "retreat_from_path_high_pct": 0.0,
           "latest_day_range_position": 0.875,
           "recent_interval_minutes": 14.07,
-          "recent_move_pct": 0,
-          "recent_slope_pct_per_10m": 0,
-          "recent_volume_delta": 2339100,
+          "recent_move_pct": 0.0,
+          "recent_slope_pct_per_10m": 0.0,
+          "recent_volume_delta": 2339100.0,
           "recent_amount_delta": 3220097.7,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 1.3659,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": 0.173,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 1.3659,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -737,8 +1195,8 @@
                 "tail_spread_pct": 0.0727,
                 "range_positions": [
                   0.8333,
-                  1,
-                  1
+                  1.0,
+                  1.0
                 ]
               }
             }
@@ -763,17 +1221,17 @@
           "recent_interval_minutes": 14.1,
           "recent_move_pct": -0.0941,
           "recent_slope_pct_per_10m": -0.0667,
-          "recent_volume_delta": 5640600,
-          "recent_amount_delta": 5992090,
+          "recent_volume_delta": 5640600.0,
+          "recent_amount_delta": 5992090.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 0.5329,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": -0.66,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 0.5329,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -814,17 +1272,17 @@
           "recent_interval_minutes": 14.08,
           "recent_move_pct": 0.1219,
           "recent_slope_pct_per_10m": 0.0865,
-          "recent_volume_delta": 33656420,
-          "recent_amount_delta": 55262000,
+          "recent_volume_delta": 33656420.0,
+          "recent_amount_delta": 55262000.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 2.6723,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": 1.4794,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 2.6723,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -875,19 +1333,19 @@
           "retreat_from_path_high_pct": -0.1151,
           "latest_day_range_position": 0.9286,
           "recent_interval_minutes": 13.73,
-          "recent_move_pct": 0,
-          "recent_slope_pct_per_10m": 0,
-          "recent_volume_delta": 20056500,
-          "recent_amount_delta": 17414330,
+          "recent_move_pct": 0.0,
+          "recent_slope_pct_per_10m": 0.0,
+          "recent_volume_delta": 20056500.0,
+          "recent_amount_delta": 17414330.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 3.1191,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": 1.9263,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 3.1191,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -940,17 +1398,17 @@
           "recent_interval_minutes": 13.9,
           "recent_move_pct": -0.0366,
           "recent_slope_pct_per_10m": -0.0263,
-          "recent_volume_delta": 644150000,
-          "recent_amount_delta": 15459840000,
+          "recent_volume_delta": 644150000.0,
+          "recent_amount_delta": 15459840000.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 0,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": -1.1929,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 0.0,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -981,17 +1439,17 @@
           "recent_interval_minutes": 14.15,
           "recent_move_pct": -0.1724,
           "recent_slope_pct_per_10m": -0.1218,
-          "recent_volume_delta": 147767600,
-          "recent_amount_delta": 85567700,
+          "recent_volume_delta": 147767600.0,
+          "recent_amount_delta": 85567700.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 0.8291,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": -0.3638,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 0.8291,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -1009,7 +1467,7 @@
                 "tail_spread_pct": 0.1727,
                 "range_positions": [
                   0.8333,
-                  1,
+                  1.0,
                   0.8333
                 ]
               }
@@ -1030,22 +1488,22 @@
           "path_high": 2.273,
           "path_high_as_of_beijing": "2026-08-25T15:07:07+08:00",
           "recovery_from_path_low_pct": 1.6093,
-          "retreat_from_path_high_pct": 0,
-          "latest_day_range_position": 1,
+          "retreat_from_path_high_pct": 0.0,
+          "latest_day_range_position": 1.0,
           "recent_interval_minutes": 14.22,
           "recent_move_pct": 0.1322,
           "recent_slope_pct_per_10m": 0.093,
-          "recent_volume_delta": 5025000,
-          "recent_amount_delta": 11413060,
+          "recent_volume_delta": 5025000.0,
+          "recent_amount_delta": 11413060.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 2.0686,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": 0.8757,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 2.0686,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -1062,7 +1520,7 @@
                 "low_as_of_beijing": "2026-08-25T10:01:57+08:00",
                 "recovery_from_path_low_pct": 1.6093,
                 "points_after_low": 22,
-                "latest_range_position": 1
+                "latest_range_position": 1.0
               }
             },
             {
@@ -1073,7 +1531,7 @@
                 "range_positions": [
                   0.8889,
                   0.9167,
-                  1
+                  1.0
                 ]
               }
             }
@@ -1098,17 +1556,17 @@
           "recent_interval_minutes": 13.68,
           "recent_move_pct": -0.1541,
           "recent_slope_pct_per_10m": -0.1126,
-          "recent_volume_delta": 125973900,
-          "recent_amount_delta": 81669000,
+          "recent_volume_delta": 125973900.0,
+          "recent_amount_delta": 81669000.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 1.0015,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": -0.1914,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 1.0015,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -1149,17 +1607,17 @@
           "recent_interval_minutes": 13.57,
           "recent_move_pct": -0.1257,
           "recent_slope_pct_per_10m": -0.0927,
-          "recent_volume_delta": 16987600,
-          "recent_amount_delta": 161997400,
+          "recent_volume_delta": 16987600.0,
+          "recent_amount_delta": 161997400.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 0.6774,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": -0.5155,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 0.6774,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -1190,17 +1648,17 @@
           "recent_interval_minutes": 14.12,
           "recent_move_pct": 0.2972,
           "recent_slope_pct_per_10m": 0.2105,
-          "recent_volume_delta": 8658900,
-          "recent_amount_delta": 5839230,
+          "recent_volume_delta": 8658900.0,
+          "recent_amount_delta": 5839230.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": -0.602,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": -1.7949,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": -0.602,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -1259,17 +1717,17 @@
           "recent_interval_minutes": 13.23,
           "recent_move_pct": 0.0591,
           "recent_slope_pct_per_10m": 0.0447,
-          "recent_volume_delta": 94940500,
-          "recent_amount_delta": 160686900,
+          "recent_volume_delta": 94940500.0,
+          "recent_amount_delta": 160686900.0,
           "relative_to_indices": {
-            "399006": {
-              "latest_relative_change_pct_points": 1.1198,
-              "benchmark_change_pct": -1.0015,
-              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
-            },
             "000001": {
               "latest_relative_change_pct_points": -0.0731,
               "benchmark_change_pct": 0.1914,
+              "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
+            },
+            "399006": {
+              "latest_relative_change_pct_points": 1.1198,
+              "benchmark_change_pct": -1.0015,
               "benchmark_as_of_beijing": "2026-08-25T15:07:19+08:00"
             }
           },
@@ -1309,7 +1767,7 @@
           "vs_universe_median_pct_points": 1.9994,
           "vs_shanghai_pct_points": 1.9263,
           "vs_chinext_pct_points": 3.1191,
-          "recent_slope_pct_per_10m": 0,
+          "recent_slope_pct_per_10m": 0.0,
           "sampling_coverage": "MEDIUM",
           "evidence_delta": {
             "rank_improvement_places": 0,
@@ -1390,7 +1848,7 @@
           "vs_universe_median_pct_points": 0.7875,
           "vs_shanghai_pct_points": 0.7144,
           "vs_chinext_pct_points": 1.9073,
-          "recent_slope_pct_per_10m": 0,
+          "recent_slope_pct_per_10m": 0.0,
           "sampling_coverage": "MEDIUM",
           "evidence_delta": {
             "rank_improvement_places": 0,
@@ -1417,7 +1875,7 @@
           "vs_universe_median_pct_points": 0.2462,
           "vs_shanghai_pct_points": 0.173,
           "vs_chinext_pct_points": 1.3659,
-          "recent_slope_pct_per_10m": 0,
+          "recent_slope_pct_per_10m": 0.0,
           "sampling_coverage": "MEDIUM",
           "evidence_delta": {
             "rank_improvement_places": 0,
@@ -1441,7 +1899,7 @@
           "name": "科创50ETF",
           "close_return_pct": 0.1183,
           "descriptive_daily_return_rank": 6,
-          "vs_universe_median_pct_points": 0,
+          "vs_universe_median_pct_points": 0.0,
           "vs_shanghai_pct_points": -0.0731,
           "vs_chinext_pct_points": 1.1198,
           "recent_slope_pct_per_10m": 0.0447,
@@ -1466,7 +1924,7 @@
           "display_name": "通信ETF（515880）",
           "code": "515880",
           "name": "通信ETF",
-          "close_return_pct": 0,
+          "close_return_pct": 0.0,
           "descriptive_daily_return_rank": 7,
           "vs_universe_median_pct_points": -0.1183,
           "vs_shanghai_pct_points": -0.1914,
@@ -1600,7 +2058,7 @@
       ],
       "skfolio_risk_evidence": {
         "schema_version": "1.0",
-        "generated_at": "2026-08-25T12:07:25Z",
+        "generated_at": "2026-08-25T07:29:43Z",
         "status": "READY",
         "mode": "SKFOLIO_VALIDATED_RISK_EVIDENCE",
         "validation_basis": {
@@ -1816,12 +2274,12 @@
   },
   "etf_strategy_risk_metrics": {
     "etf_strategy_risk_pct": -8.3,
-    "etf_holding_unrealized_pct": -8.03,
+    "etf_holding_unrealized_pct": -8.17,
     "etf_drawdown_from_high_pct": -8.3,
-    "equity_data_quality": "KNOWN_NET_PARTIAL_PENDING_2026_08_25_SELL_FEES",
-    "strategy_equity_known_net": 183402.49,
+    "equity_data_quality": "KNOWN_NET_COMPLETE_FOR_RECORDED_TRADE_FEES",
+    "strategy_equity_known_net": 183392.49,
     "high_watermark": 200000,
-    "fee_status": "2026-08-25 SELL FEES PENDING_OR_NOT_YET_DISPLAYED",
+    "fee_status": "ALL_RECORDED_TRADE_FEES_CONFIRMED",
     "interpretation": "唯一ETF策略风险率决定风险区间；持仓浮盈亏率与高水位回撤率只解释持仓压力和近期改善/恶化。",
     "read_only": true
   },
@@ -1837,17 +2295,17 @@
     "source": "latest_snapshot_rows"
   },
   "point_in_time": {
-    "account_fact_time": "2026-08-25T14:31:51+08:00",
+    "account_fact_time": "2026-08-25T15:24:00+08:00",
     "market_snapshot_time": "2026-08-25T15:07:20+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-08-25T12:07:49Z",
+    "context_generated_time": "2026-08-25T17:41:06Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
   "scheduled_pulse_health": {
     "expected_slots": [],
     "observed_slots": [
-      "cron:0,10 7 * * 1-5"
+      "query_time_push"
     ],
     "missing_slots": [],
     "status": "UNKNOWN",
@@ -1855,15 +2313,9 @@
     "read_only": true
   },
   "formal_action": {
-    "action": "新增0元；现有四只ETF继续持有；不回补半导体设备ETF（561980）上午卖出的13,000份；14:50节点不追加减持，现金继续保留，15:00收盘复核。",
-    "quantity": null,
-    "decision_id": "20260825_1451_formal_intraday_decision",
-    "decision_time": "2026-08-25T14:50:07+08:00",
-    "source": "CHATGPT_FORMAL_DECISION",
-    "lifecycle": "半导体设备ETF（561980）持有；科创50ETF（588000）持有；科创创业ETF（159781）持有；纳指ETF（159941）持有。",
-    "applicable_object": "159992",
-    "validity": "ACTIVE",
-    "execution_status": "PENDING",
+    "status": "NOT_PROVIDED",
+    "execution_status": "UNKNOWN",
+    "preserve_rule": "普通账户同步不擦除最近正式决策。",
     "read_only": true
   },
   "decision_read_plan": {
@@ -1902,7 +2354,7 @@
     },
     "account_gate": {
       "raw_status": "VALID",
-      "updated_at": "2026-08-25T14:31:51+08:00",
+      "updated_at": "2026-08-25T15:24:00+08:00",
       "updated_market_date": "2026-08-25",
       "current_market_date": "2026-08-25",
       "same_market_date_required": false,
@@ -1930,7 +2382,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "STALE",
-        "age_seconds": 18029,
+        "age_seconds": 38026,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -1947,7 +2399,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 29.59,
-        "age_seconds": 18029
+        "age_seconds": 38026
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新计算FRESH/DEGRADED/STALE。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -1969,7 +2421,422 @@
       "degraded_max_age_seconds": 1500,
       "close_grace_seconds": 900,
       "principle": "查询时立即补采优先；常规10分钟只是生产目标。补采失败才回退最近有效状态，并按查询时刻重新判定新鲜度。"
+    },
+    "refresh_gate": {
+      "status": "READY",
+      "formal_analysis_allowed": true,
+      "formal_decision_persist_allowed": true,
+      "fallback_allowed": false,
+      "request_file": "requests/live_snapshot/20260825_1438_refresh_gate_acceptance.json",
+      "request_id": "20260825_1438_refresh_gate_acceptance",
+      "requested_at_beijing": "2026-08-25T14:38:30+08:00",
+      "requested_market_time": "2026-08-25T14:38:00+08:00",
+      "current_snapshot_time": "2026-08-25T15:07:20+08:00",
+      "resolved_snapshot_time": "2026-08-25T15:07:20+08:00",
+      "latest_snapshot": "data/market/snapshots/2026-08-25_150720.json",
+      "failure_reason": "",
+      "rule": "用户明确要求‘等补采/等指定节点数据后再回复’时，必须等本次请求之后且不早于requested_market_time的新CURRENT发布后，才允许正式风险许可、主候选、金额或卖出判断并持久化；PENDING/FAILED时禁止自动回退旧快照，除非用户随后明确授权回退。"
     }
+  },
+  "market_quote_router": {
+    "generated_at_beijing": "2026-08-26T01:41:06+08:00",
+    "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
+    "refresh_failures": [],
+    "route_version": "V1.0",
+    "query_entry": "market_quote_router",
+    "quotes": [
+      {
+        "market": "US",
+        "market_name": "美国",
+        "symbol": "NDX",
+        "name": "^NDX",
+        "latest_price": 29151.462890625,
+        "data_time_beijing": "2026-08-26T01:41:04+08:00",
+        "data_time_local": "2026-08-25T13:41:04-04:00",
+        "market_phase": "REGULAR",
+        "market_status_cn": "美股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "yahoo_chart_api",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "US",
+        "market_name": "美国",
+        "symbol": "SOX",
+        "name": "^SOX",
+        "latest_price": 11552.0810546875,
+        "data_time_beijing": "2026-08-26T01:41:02+08:00",
+        "data_time_local": "2026-08-25T13:41:02-04:00",
+        "market_phase": "REGULAR",
+        "market_status_cn": "美股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "yahoo_chart_api",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "US",
+        "market_name": "美国",
+        "symbol": "QQQ",
+        "name": "QQQ",
+        "latest_price": 709.4000244140625,
+        "data_time_beijing": "2026-08-26T01:41:06+08:00",
+        "data_time_local": "2026-08-25T13:41:06-04:00",
+        "market_phase": "REGULAR",
+        "market_status_cn": "美股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "yahoo_chart_api",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "US",
+        "market_name": "美国",
+        "symbol": "SOXX",
+        "name": "SOXX",
+        "latest_price": 512.8159790039062,
+        "data_time_beijing": "2026-08-26T01:41:03+08:00",
+        "data_time_local": "2026-08-25T13:41:03-04:00",
+        "market_phase": "REGULAR",
+        "market_status_cn": "美股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "yahoo_chart_api",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "000001",
+        "name": "",
+        "latest_price": 3889.44,
+        "data_time_beijing": "2026-08-25T15:07:19+08:00",
+        "data_time_local": "",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "A股收盘",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "hithink-finance",
+        "freshness": "STALE",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "399006",
+        "name": "",
+        "latest_price": 3397.5153,
+        "data_time_beijing": "2026-08-25T15:07:19+08:00",
+        "data_time_local": "",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "A股收盘",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "hithink-finance",
+        "freshness": "STALE",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "159326",
+        "name": "",
+        "latest_price": 1.671,
+        "data_time_beijing": "2026-08-25T15:07:18+08:00",
+        "data_time_local": "",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "A股收盘",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "hithink-finance",
+        "freshness": "STALE",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "159561",
+        "name": "",
+        "latest_price": 1.377,
+        "data_time_beijing": "2026-08-25T15:07:04+08:00",
+        "data_time_local": "",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "A股收盘",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "hithink-finance",
+        "freshness": "STALE",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "159781",
+        "name": "",
+        "latest_price": 1.062,
+        "data_time_beijing": "2026-08-25T15:06:56+08:00",
+        "data_time_local": "",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "A股收盘",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "hithink-finance",
+        "freshness": "STALE",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "159941",
+        "name": "",
+        "latest_price": 1.643,
+        "data_time_beijing": "2026-08-25T15:06:57+08:00",
+        "data_time_local": "",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "A股收盘",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "hithink-finance",
+        "freshness": "STALE",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "159992",
+        "name": "",
+        "latest_price": 0.868,
+        "data_time_beijing": "2026-08-25T15:07:12+08:00",
+        "data_time_local": "",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "A股收盘",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "hithink-finance",
+        "freshness": "STALE",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "513180",
+        "name": "",
+        "latest_price": 0.579,
+        "data_time_beijing": "2026-08-25T15:07:00+08:00",
+        "data_time_local": "",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "A股收盘",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "hithink-finance",
+        "freshness": "STALE",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "513520",
+        "name": "",
+        "latest_price": 2.273,
+        "data_time_beijing": "2026-08-25T15:07:07+08:00",
+        "data_time_local": "",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "A股收盘",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "hithink-finance",
+        "freshness": "STALE",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "515880",
+        "name": "",
+        "latest_price": 0.648,
+        "data_time_beijing": "2026-08-25T15:07:15+08:00",
+        "data_time_local": "",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "A股收盘",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "hithink-finance",
+        "freshness": "STALE",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "518880",
+        "name": "",
+        "latest_price": 9.533,
+        "data_time_beijing": "2026-08-25T15:07:08+08:00",
+        "data_time_local": "",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "A股收盘",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "hithink-finance",
+        "freshness": "STALE",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "561980",
+        "name": "",
+        "latest_price": 0.675,
+        "data_time_beijing": "2026-08-25T15:06:51+08:00",
+        "data_time_local": "",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "A股收盘",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "hithink-finance",
+        "freshness": "STALE",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "588000",
+        "name": "",
+        "latest_price": 1.693,
+        "data_time_beijing": "2026-08-25T15:06:53+08:00",
+        "data_time_local": "",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "A股收盘",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "hithink-finance",
+        "freshness": "STALE",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
+        "market": "JP",
+        "market_name": "日本",
+        "symbol": "^N225",
+        "name": "日经225指数",
+        "latest_price": 65856.4296875,
+        "data_time_beijing": "2026-08-25T14:30:00+08:00",
+        "data_time_local": "",
+        "market_phase": "PRE_OPEN",
+        "market_status_cn": "日股开盘前",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "yahoo_chart_api",
+        "freshness": "STALE",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
+        "market": "KR",
+        "market_name": "韩国",
+        "symbol": "^KS11",
+        "name": "韩国综合指数",
+        "latest_price": 6742.740234375,
+        "data_time_beijing": "2026-08-25T14:00:00+08:00",
+        "data_time_local": "",
+        "market_phase": "PRE_OPEN",
+        "market_status_cn": "韩股开盘前",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "yahoo_chart_api",
+        "freshness": "STALE",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
+        "market": "TW",
+        "market_name": "中国台湾",
+        "symbol": "^TWII",
+        "name": "台湾加权指数",
+        "latest_price": 45169.4609375,
+        "data_time_beijing": "2026-08-25T13:30:00+08:00",
+        "data_time_local": "",
+        "market_phase": "PRE_OPEN",
+        "market_status_cn": "台股开盘前",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "yahoo_chart_api",
+        "freshness": "STALE",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
+        "market": "HK",
+        "market_name": "中国香港",
+        "symbol": "124.HSTECH",
+        "name": "恒生科技指数",
+        "latest_price": 4596.72,
+        "data_time_beijing": "2026-08-25T14:53:46+08:00",
+        "data_time_local": "",
+        "market_phase": "PRE_OPEN",
+        "market_status_cn": "港股开盘前",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "eastmoney_push2delay",
+        "freshness": "STALE",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      }
+    ],
+    "markets": {
+      "CN": {
+        "phase": "OFF_SESSION",
+        "market_status_cn": "A股收盘"
+      },
+      "HK": {
+        "phase": "PRE_OPEN",
+        "market_status_cn": "港股开盘前"
+      },
+      "TW": {
+        "phase": "PRE_OPEN",
+        "market_status_cn": "台股开盘前"
+      },
+      "US": {
+        "phase": "REGULAR",
+        "market_status_cn": "美股交易中"
+      },
+      "JP": {
+        "phase": "PRE_OPEN",
+        "market_status_cn": "日股开盘前"
+      },
+      "KR": {
+        "phase": "PRE_OPEN",
+        "market_status_cn": "韩股开盘前"
+      }
+    },
+    "selection_rule": "交易中返回最新实时；盘前返回盘前行情并附最近正式收盘；盘后返回盘后行情并附当日正式收盘；休市返回最近正式收盘。",
+    "user_display_rule": "用户展示只使用中文市场状态和数据性质，不直接输出内部英文状态码。",
+    "decision_boundary": "路由只提供事实与时点，不生成风险许可、Trial、Confirm、金额、卖出或其他交易动作。",
+    "source_state_paths": [
+      "data/state/CURRENT.json",
+      "data/state/overseas_context.json",
+      "data/state/us_extended_hours_context.json"
+    ]
   },
   "canonical_files": {
     "index": "ETF_SYSTEM_INDEX.md",
@@ -1991,7 +2858,9 @@
     "us_extended_hours_context": "data/state/us_extended_hours_context.json",
     "runtime_health": "data/state/runtime_health.json",
     "runtime_policy": "config/runtime_policy.json",
-    "system_consistency": "data/state/system_consistency.json"
+    "system_consistency": "data/state/system_consistency.json",
+    "market_quote_router": "scripts/market_quote_router.py",
+    "market_quote_router_config": "config/market/market_quote_router.json"
   },
   "data_status": {
     "status": "STALE",
@@ -2006,16 +2875,16 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 29.59,
-    "age_seconds": 18029
+    "age_seconds": 38026
   },
   "freshness_at_context_build": {
     "status": "STALE",
-    "age_seconds": 18029,
+    "age_seconds": 38026,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
   "trading_day_status": {
-    "market_date": "2026-08-25",
+    "market_date": "2026-08-26",
     "calendar_covered": true,
     "weekend": false,
     "exchange_closed": false,
@@ -2029,7 +2898,7 @@
   },
   "runtime_health": {
     "generated_at": "2026-08-25T07:07:20Z",
-    "workflow_run_id": "32822346556",
+    "workflow_run_id": "32879289065",
     "workflow_run_attempt": "1",
     "target_cadence_seconds": 600,
     "fresh_max_age_seconds": 900,
@@ -2041,7 +2910,7 @@
     "etf_universe_count": 11,
     "status": "SKIPPED",
     "quality_status": "SKIPPED",
-    "market_date": "2026-08-25",
+    "market_date": "2026-08-26",
     "node": "close",
     "market_phase": "OUTSIDE_SESSION",
     "run_started_at": "2026-08-25T07:06:50Z",
@@ -2051,31 +2920,31 @@
     "acquisition_seconds": 29.59,
     "count": 13,
     "latest_snapshot": "data/market/snapshots/2026-08-25_150720.json",
-    "scheduled_for": "cron:0,10 7 * * 1-5",
+    "scheduled_for": "query_time_push",
     "trigger_mode": "SCHEDULE_OR_DISPATCH",
-    "started_at": "2026-08-25T15:35:40+08:00",
-    "finished_at": "2026-08-25T15:35:40+08:00",
-    "run_id": "32822346556",
-    "input_commit": "74c85d0680145018fe453fa5d98b05dace7b6c84",
-    "data_commit": "e1ef748f7c5c6d03d34d9c25a64cdc5c952b7ce0",
+    "started_at": "2026-08-26T01:40:50+08:00",
+    "finished_at": "2026-08-26T01:40:50+08:00",
+    "run_id": "32879289065",
+    "input_commit": "4fdfa83c6347ddd3cd58014be109bc877da8616e",
+    "data_commit": "",
     "provider_as_of": "",
     "failure_stage": "session_gate",
     "reason": "outside_a_share_capture_window"
   },
-  "system_consistency_status": "PASS",
-  "system_consistency_hard_errors": 0,
+  "system_consistency_status": "FAIL",
+  "system_consistency_hard_errors": 2,
   "etf_universe_count": 11,
   "overseas_context_status": "PASS",
   "overseas_generated_at_beijing": "2026-08-25T14:53:40+08:00",
   "us_extended_hours_status": "PASS",
-  "us_extended_hours_generated_at_beijing": "2026-08-25T19:23:09+08:00",
+  "us_extended_hours_generated_at_beijing": "2026-08-25T22:49:19+08:00",
   "stock_context_status": "VALID",
   "stock_market_context_status": "PASS",
   "stock_role_confirmation_needed": false,
   "account_fact_status": "VALID",
   "account_gate": {
     "raw_status": "VALID",
-    "updated_at": "2026-08-25T14:31:51+08:00",
+    "updated_at": "2026-08-25T15:24:00+08:00",
     "updated_market_date": "2026-08-25",
     "current_market_date": "2026-08-25",
     "same_market_date_required": false,
@@ -2087,102 +2956,20 @@
   "needs_account_screenshot": false,
   "read_only": true,
   "interaction_boundary": "用户主动查询时先核对一致性与交易日历，再按‘查询时立即补采 → 最近一次有效快照 → 明确降级/缺失’获取行情；正式输出必须标注北京时间真实数据时点，并区分美股现金盘、盘后和盘前。",
-  "decision_trigger": {
-    "schema_version": "1.0",
-    "generated_at": "2026-08-25T20:58:42+08:00",
-    "status": "NO_NEW_TRIGGER",
-    "trigger_type": "",
-    "triggered_at": "",
-    "applicable_object": "",
-    "previous_decision_id": "20260825_1451_formal_intraday_decision",
-    "evidence_change": "",
-    "evidence_time": "2026-08-25T15:07:20+08:00",
-    "e2e_status": "READY",
-    "requires_formal_reassessment": false,
-    "pending_trigger": false,
-    "idempotency_key": "",
-    "risk_zone": "RISK_CONTROL",
-    "last_trade_event_id": "20260825_112516",
-    "safety_boundary": "确定性识别仅生成重评请求，不生成金额、份额或交易动作。",
-    "read_only": true
+  "refresh_gate": {
+    "status": "READY",
+    "formal_analysis_allowed": true,
+    "formal_decision_persist_allowed": true,
+    "fallback_allowed": false,
+    "request_file": "requests/live_snapshot/20260825_1438_refresh_gate_acceptance.json",
+    "request_id": "20260825_1438_refresh_gate_acceptance",
+    "requested_at_beijing": "2026-08-25T14:38:30+08:00",
+    "requested_market_time": "2026-08-25T14:38:00+08:00",
+    "current_snapshot_time": "2026-08-25T15:07:20+08:00",
+    "resolved_snapshot_time": "2026-08-25T15:07:20+08:00",
+    "latest_snapshot": "data/market/snapshots/2026-08-25_150720.json",
+    "failure_reason": "",
+    "rule": "用户明确要求‘等补采/等指定节点数据后再回复’时，必须等本次请求之后且不早于requested_market_time的新CURRENT发布后，才允许正式风险许可、主候选、金额或卖出判断并持久化；PENDING/FAILED时禁止自动回退旧快照，除非用户随后明确授权回退。"
   },
-  "capital_efficiency_ranking": {
-    "schema_version": "1.0",
-    "generated_at": "2026-08-25T20:58:42+08:00",
-    "as_of": "2026-08-25T15:07:20+08:00",
-    "e2e_status": "READY",
-    "risk_zone": "RISK_CONTROL",
-    "top_candidate": "现金",
-    "next_unit_capital_use": "现金/持仓/观察候选按原MASTER链人工比较；本结果不生成金额。",
-    "ordered_candidates": [
-      {
-        "display_name": "现金",
-        "code": null,
-        "category": "CASH",
-        "eligibility": "AVAILABLE",
-        "reason": "等待价值与风险缓冲可直接参与比较；不自动等同于低效率。"
-      },
-      {
-        "display_name": "半导体设备ETF（561980）",
-        "code": "561980",
-        "category": "HELD_ETF",
-        "eligibility": "HOLDING_COMPARISON",
-        "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
-        "comparison_basis": [
-          "当前价格与结构",
-          "持仓压力",
-          "相关性",
-          "可释放资本"
-        ],
-        "action_boundary": "仍需MASTER正式判断"
-      },
-      {
-        "display_name": "科创50ETF（588000）",
-        "code": "588000",
-        "category": "HELD_ETF",
-        "eligibility": "HOLDING_COMPARISON",
-        "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
-        "comparison_basis": [
-          "当前价格与结构",
-          "持仓压力",
-          "相关性",
-          "可释放资本"
-        ],
-        "action_boundary": "仍需MASTER正式判断"
-      },
-      {
-        "display_name": "科创创业ETF（159781）",
-        "code": "159781",
-        "category": "HELD_ETF",
-        "eligibility": "HOLDING_COMPARISON",
-        "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
-        "comparison_basis": [
-          "当前价格与结构",
-          "持仓压力",
-          "相关性",
-          "可释放资本"
-        ],
-        "action_boundary": "仍需MASTER正式判断"
-      },
-      {
-        "display_name": "纳指ETF（159941）",
-        "code": "159941",
-        "category": "HELD_ETF",
-        "eligibility": "HOLDING_COMPARISON",
-        "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
-        "comparison_basis": [
-          "当前价格与结构",
-          "持仓压力",
-          "相关性",
-          "可释放资本"
-        ],
-        "action_boundary": "仍需MASTER正式判断"
-      }
-    ],
-    "excluded_candidates": [],
-    "key_reason": "两阶段：先做E2E、风险扩张、质量和可执行性硬过滤，再保留少量定性比较对象；不生成综合资本效率分数。",
-    "previous_top_candidate": null,
-    "read_only": true,
-    "safety_boundary": "资本排序不替代唯一主候选，不自动生成Trial、Confirm、金额、卖出份额或订单。"
-  }
+  "formal_analysis_allowed": true
 }

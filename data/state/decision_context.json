@@ -2230,5 +2230,21 @@
       "decision_effect"
     ],
     "rule": "只记录实际改变本次机会、金额、持仓或卖出判断的研究证据；若研究没有实质贡献，显式写空列表。不得自动把decision_context中存在的证据视为已使用。"
-  }
+  },
+  "refresh_gate": {
+    "status": "READY",
+    "formal_analysis_allowed": true,
+    "formal_decision_persist_allowed": true,
+    "fallback_allowed": false,
+    "request_file": "requests/live_snapshot/20260825_1438_refresh_gate_acceptance.json",
+    "request_id": "20260825_1438_refresh_gate_acceptance",
+    "requested_at_beijing": "2026-08-25T14:38:30+08:00",
+    "requested_market_time": "2026-08-25T14:38:00+08:00",
+    "current_snapshot_time": "2026-08-25T15:07:20+08:00",
+    "resolved_snapshot_time": "2026-08-25T15:07:20+08:00",
+    "latest_snapshot": "data/market/snapshots/2026-08-25_150720.json",
+    "failure_reason": "",
+    "rule": "用户明确要求‘等补采/等指定节点数据后再回复’时，必须等本次请求之后且不早于requested_market_time的新CURRENT发布后，才允许正式风险许可、主候选、金额或卖出判断并持久化；PENDING/FAILED时禁止自动回退旧快照，除非用户随后明确授权回退。"
+  },
+  "formal_analysis_allowed": true
 }
