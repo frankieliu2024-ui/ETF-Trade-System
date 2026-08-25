@@ -180,6 +180,10 @@ def main() -> int:
     stock_missing_fallback = sorted(code for code in account_stocks if code + (".SH" if code.startswith(("6", "5")) else ".SZ") not in fallback_policy)
     check("providers:account_stock_fallback_policy", not stock_missing_fallback, f"account stocks without direct fallback={stock_missing_fallback}", warning=True)
     check("providers:single_source_shanghai_index", "000001.SH" not in fallback_policy, "000001.SH remains single-source until a verified Eastmoney index mapping exists", warning=True)
+    guard_text = read_text("scripts/market_data_guard.py")
+    check("providers:guard_module", all(token in guard_text for token in ("def validate_market_row", "def classify_provider_failure", "def update_structural_health")), "shared market data guard functions present")
+    check("providers:guard_call_chain", "market_data_guard" in read_text("scripts/cloud_runner_snapshot.py") and "market_data_guard" in read_text("scripts/build_account_stock_market.py"), "ETF/index and account-stock collectors import the shared guard")
+    check("providers:hstech_health_memory", "provider_health" in read_text("scripts/build_overseas_context.py") and "provider_health" in read_text("scripts/build_overseas_runtime_health.py"), "HSTECH structural provider memory reuses overseas runtime health")
     us_provider = provider_cfg.get("us_extended_hours", {})
     check("providers:us_extended_hours", us_provider.get("base_proxies") == ["QQQ", "SOXX"] and us_provider.get("conditional_industry_stocks") == "dynamic_only", f"us_extended_hours={us_provider}")
 
