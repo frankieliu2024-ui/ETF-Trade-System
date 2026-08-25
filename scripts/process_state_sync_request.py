@@ -394,6 +394,9 @@ def _apply_trade_to_account(prior: dict, trade: dict) -> dict:
     side = str(trade.get("side") or "").upper()
     qty = safe_float(trade.get("quantity"))
     amount = safe_float(trade.get("amount"))
+    if amount is None:
+        price = safe_float(trade.get("price"))
+        amount = round(price * qty, 6) if price is not None else None
     if not code or qty is None or qty <= 0 or amount is None:
         return account
     sign = 1 if side in {"BUY", "B", "买入", "买"} else -1 if side in {"SELL", "S", "卖出", "卖"} else 0
