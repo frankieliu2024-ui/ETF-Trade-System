@@ -146,6 +146,7 @@ def build(root: Path = ROOT) -> dict:
         "market_date": current.get("market_date", ""), "latest_valid_node": current.get("latest_valid_node", ""),
         "current": current, "decision_context": decision,
         "analysis_coverage": decision.get("analysis_coverage", {}),
+        "etf_strategy_risk_metrics": decision.get("etf_strategy_risk_metrics", {}),
         "data_quality_summary": decision.get("data_quality_summary", {}),
         "point_in_time": decision.get("point_in_time", {}),
         "scheduled_pulse_health": decision.get("scheduled_pulse_health", {}),
