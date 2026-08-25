@@ -2,10 +2,6 @@ name: ETF share-flow conditional increment PoC
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "requests/research_backfill/etf_share_flow_increment_trigger.txt"
 
 permissions:
   contents: write
@@ -30,7 +26,7 @@ jobs:
       - name: Install bounded dependencies
         run: pip install numpy==1.26.4 pandas==2.2.2 scipy==1.13.1 requests==2.32.3
       - name: Run conditional increment validation
-        run: python scripts/run_etf_share_flow_increment_retry.py requests/research_backfill/20260825_etf_share_flow_increment_poc.json
+        run: python scripts/run_etf_share_flow_increment_official.py requests/research_backfill/20260825_etf_share_flow_increment_poc.json
       - name: Enforce research-only boundary
         run: |
           python - <<'PY'
