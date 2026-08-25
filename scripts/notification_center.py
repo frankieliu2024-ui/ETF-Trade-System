@@ -100,7 +100,7 @@ def execution_confirmation_event() -> dict | None:
         title = f"发现{target}可能已执行{lifecycle}，请确认"
         content = f"最新账户信息显示{target}{size_text}，与{date or '此前'}的{lifecycle}{action}决策相符。\n\n建议：请确认是否按该决策执行，以及实际交易日。系统会把交易日与截图/确认日期分开记录。"
     key = f"execution-confirm:{intent.get('decision_id','')}:{code}:{status}:{date}:{qty or ''}"
-    return {"key": key, "type": "成交确认", "title": title, "content": content, "source": "execution_reconciliation"}
+    return {"key": key, "type": "成交确认", "title": title, "content": content, "source": "execution_reconciliation", "event_type": "PENDING_EXECUTION_CONFIRMATION", "related_decision_id": str(intent.get("decision_id") or ""), "security_code": code, "security_name": name, "confirmation_context": {"decision_id": str(intent.get("decision_id") or ""), "security_code": code, "security_name": name, "side": side, "lifecycle": lifecycle, "quantity": qty, "approx_amount_yuan": observed.get("approx_amount_yuan"), "suggested_execution_date": date, "lifecycle_t_date": match.get("suggested_lifecycle_t_date") or date}}
 
 
 def decision_event() -> dict | None:
@@ -177,6 +177,95 @@ def choose_event(mode: str) -> dict | None:
     return None
 
 
+
+LIFECYCLE_STATUSES = {"CREATED", "SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED", "EXPIRED"}
+USER_ACTION_TYPES = {"成交确认", "账户确认", "收盘账户", "交易判断", "系统异常"}
+NOTIFICATION_TTL_DAYS = 2
+
+
+def notification_id_for(event: dict) -> str:
+    source = str(event.get("source_event_id") or event.get("key") or "")
+    return "notification_" + __import__("hashlib").sha256(source.encode("utf-8")).hexdigest()[:20]
+
+
+def normalize_notification(event: dict, record: dict | None = None) -> dict:
+    record = record or {}
+    created = str(record.get("created_at") or event.get("created_at") or now().isoformat(timespec="seconds"))
+    context = event.get("confirmation_context") or {}
+    return {
+        "notification_id": str(record.get("notification_id") or event.get("notification_id") or notification_id_for(event)),
+        "event_type": str(record.get("event_type") or event.get("event_type") or event.get("type") or "SYSTEM_EVENT"),
+        "source_event_id": str(record.get("source_event_id") or event.get("source_event_id") or event.get("key") or ""),
+        "related_decision_id": str(record.get("related_decision_id") or event.get("related_decision_id") or context.get("decision_id") or ""),
+        "security_code": str(record.get("security_code") or event.get("security_code") or context.get("security_code") or ""),
+        "security_name": str(record.get("security_name") or event.get("security_name") or context.get("security_name") or ""),
+        "lifecycle_status": str(record.get("lifecycle_status") or record.get("status") or "CREATED"),
+        "created_at": created,
+        "sent_at": record.get("sent_at"),
+        "confirmed_at": record.get("confirmed_at"),
+        "archived_at": record.get("archived_at"),
+        "expires_at": record.get("expires_at") or ((parse_notification_time(created) + timedelta(days=NOTIFICATION_TTL_DAYS)).isoformat(timespec="seconds") if parse_notification_time(created) else None),
+        "title": str(record.get("title") or event.get("title") or ""),
+        "content": str(record.get("content") or event.get("content") or ""),
+        "source": str(record.get("source") or event.get("source") or ""),
+        "confirmation_context": context or record.get("confirmation_context") or {},
+        "response": record.get("response") or {},
+        "last_attempted_at": record.get("last_attempted_at") or record.get("attempted_at"),
+    }
+
+
+def parse_notification_time(value: Any) -> datetime | None:
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=TZ)
+    return dt.astimezone(TZ)
+
+
+def expire_notifications(items: list[dict]) -> list[dict]:
+    current = now()
+    out = []
+    for raw in items:
+        item = normalize_notification(raw, raw)
+        status = str(item.get("lifecycle_status") or "")
+        expiry = parse_notification_time(item.get("expires_at"))
+        if status in {"SENT", "WAITING_CONFIRMATION"} and expiry and current >= expiry:
+            item["lifecycle_status"] = "EXPIRED"
+            item["archived_at"] = item.get("archived_at") or current.isoformat(timespec="seconds")
+        out.append(item)
+    return out
+
+
+def find_existing_notification(items: list[dict], event: dict) -> dict | None:
+    source = str(event.get("source_event_id") or event.get("key") or "")
+    nid = str(event.get("notification_id") or "")
+    for item in items:
+        if nid and str(item.get("notification_id") or "") == nid:
+            return item
+        if source and str(item.get("source_event_id") or "") == source:
+            return item
+    return None
+
+
+def compact_recent(item: dict) -> dict:
+    return {
+        "key": item.get("source_event_id"),
+        "type": item.get("event_type"),
+        "title": item.get("title"),
+        "content": item.get("content"),
+        "source": item.get("source"),
+        "status": "SENT" if item.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION"} else item.get("lifecycle_status"),
+        "attempted_at": item.get("last_attempted_at") or item.get("sent_at") or item.get("created_at"),
+        "response": item.get("response") or {},
+        "notification_id": item.get("notification_id"),
+        "lifecycle_status": item.get("lifecycle_status"),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["event", "close", "close-test", "channel-test"], default="event")
@@ -184,24 +273,53 @@ def main() -> int:
     token = os.environ.get("PUSHPLUS_TOKEN", "").strip()
     state_path = STATE / "notification_center.json"
     state = read_json(state_path, {"schema_version": "1.0", "recent": []})
-    recent = state.get("recent") or []
-    sent_keys = {str(x.get("key") or "") for x in recent if str(x.get("status") or "") == "SENT"}
+    raw_items = list(state.get("notifications") or [])
+    if not raw_items:
+        raw_items = [normalize_notification(x, x) for x in (state.get("recent") or [])]
+    notifications = expire_notifications(raw_items)
+
     if args.mode == "channel-test":
-        event = {"key": f"channel-test:{now().isoformat(timespec='seconds')}", "type": "测试", "title": "ETF系统通知中心测试", "content": "通知中心已经可以主动联系你。正式运行时，只推送需要你关注、确认或决策的事项。", "source": "manual_test"}
+        event = {"key": f"channel-test:{now().isoformat(timespec='seconds')}", "type": "测试", "title": "ETF系统通知中心测试", "content": "通知中心已经可以主动联系你。正式运行时，只推送需要你关注、确认或决策的事项。", "source": "manual_test", "event_type": "CHANNEL_TEST"}
     else:
         event = choose_event(args.mode)
     if not event:
-        print(json.dumps({"status": "NO_NOTIFICATION_NEEDED"}, ensure_ascii=False)); return 0
-    if event["key"] in sent_keys:
-        print(json.dumps({"status": "ALREADY_SENT", "key": event["key"]}, ensure_ascii=False)); return 0
+        state.update({"schema_version": "2.0", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]})
+        write_json(state_path, state)
+        print(json.dumps({"status": "NO_NOTIFICATION_NEEDED"}, ensure_ascii=False))
+        return 0
+
+    existing = find_existing_notification(notifications, event)
+    if existing and existing.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED"}:
+        state.update({"schema_version": "2.0", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]})
+        write_json(state_path, state)
+        print(json.dumps({"status": "ALREADY_MANAGED", "notification_id": existing.get("notification_id"), "lifecycle_status": existing.get("lifecycle_status")}, ensure_ascii=False))
+        return 0
+    if existing and existing.get("lifecycle_status") == "EXPIRED":
+        # A new source event id is required; an expired item is never silently re-sent.
+        print(json.dumps({"status": "EXPIRED_REQUIRES_NEW_EVENT", "notification_id": existing.get("notification_id")}, ensure_ascii=False))
+        return 0
+
+    item = normalize_notification(event, existing)
+    item["lifecycle_status"] = "CREATED"
+    item["created_at"] = item.get("created_at") or now().isoformat(timespec="seconds")
     if not token:
-        print(json.dumps({"status": "SKIPPED_NO_SECRET", "key": event["key"]}, ensure_ascii=False)); return 0
-    ok, response = send(token, event["title"], event["content"])
-    record = {**event, "status": "SENT" if ok else "FAILED", "attempted_at": now().isoformat(timespec="seconds"), "response": response}
-    recent.append(record)
-    state = {"schema_version": "1.1", "updated_at": now().isoformat(timespec="seconds"), "last_status": record["status"], "last_type": record["type"], "last_title": record["title"], "recent": recent[-HISTORY_LIMIT:], "policy": "只推送需要用户关注、确认或决策的事项；普通行情刷新、成功自愈和普通后台运行不推送。", "safety_boundary": "通知中心不生成交易动作，不修改MASTER、风险许可、金额或卖出份额。"}
+        state.update({"schema_version": "2.0", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]})
+        write_json(state_path, state)
+        print(json.dumps({"status": "SKIPPED_NO_SECRET", "notification_id": item["notification_id"], "lifecycle_status": "CREATED"}, ensure_ascii=False))
+        return 0
+
+    ok, response = send(token, item["title"], item["content"])
+    stamp = now().isoformat(timespec="seconds")
+    item["last_attempted_at"] = stamp
+    item["response"] = response
+    item["lifecycle_status"] = "WAITING_CONFIRMATION" if ok and item["event_type"] in {"PENDING_EXECUTION_CONFIRMATION", "成交确认", "账户确认", "收盘账户"} else ("SENT" if ok else "CREATED")
+    item["sent_at"] = stamp if ok else item.get("sent_at")
+    if existing:
+        notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
+    notifications.append(item)
+    state = {"schema_version": "2.0", "updated_at": stamp, "last_status": item["lifecycle_status"], "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": "只推送需要用户关注、确认或决策的事项；普通行情刷新、成功自愈和普通后台运行不推送。", "safety_boundary": "通知中心不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"}
     write_json(state_path, state)
-    print(json.dumps(record, ensure_ascii=False))
+    print(json.dumps(item, ensure_ascii=False))
     return 0 if ok else 1
 
 
