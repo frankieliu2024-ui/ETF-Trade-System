@@ -13,7 +13,7 @@ CFG = ROOT / "config/research/etf_option_risk_stage1.json"
 OUT = ROOT / "research/backtests/etf_option_risk_stage1_validation.json"
 STATUS = ROOT / "data/state/etf_option_risk_research_status.json"
 BJ = timezone(timedelta(hours=8), name="Asia/Shanghai")
-UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/117.0.0.0 Safari/537.36"
+UA = "Mozilla/5.0 (Windows NT 10.0; Win64 x64) Chrome/117.0.0.0 Safari/537.36"
 HDR = {"Referer": "https://stock.finance.sina.com.cn/", "User-Agent": UA}
 
 
@@ -106,7 +106,6 @@ def paired_atm(call_rows: list[dict], put_rows: list[dict]) -> dict:
     p = atm_row(put_rows, "PUT")
     if not c or not p:
         return {"status": "INSUFFICIENT"}
-    # Prefer a common strike if the independently chosen 50-delta contracts differ.
     common = sorted(set(r["strike"] for r in call_rows) & set(r["strike"] for r in put_rows))
     if common:
         def score(k):
@@ -117,11 +116,8 @@ def paired_atm(call_rows: list[dict], put_rows: list[dict]) -> dict:
         c = min((r for r in call_rows if r["strike"] == k), key=lambda x: abs(x["delta"] - 0.5))
         p = min((r for r in put_rows if r["strike"] == k), key=lambda x: abs(x["delta"] + 0.5))
     mean_iv = (c["iv"] + p["iv"]) / 2.0
-    return {
-        "status": "READY", "strike": c["strike"], "call": c, "put": p,
-        "atm_mean_iv": round(mean_iv, 6),
-        "put_minus_call_iv": round(p["iv"] - c["iv"], 6),
-    }
+    return {"status": "READY", "strike": c["strike"], "call": c, "put": p,
+            "atm_mean_iv": round(mean_iv, 6), "put_minus_call_iv": round(p["iv"] - c["iv"], 6)}
 
 
 def oi_ratio(call_rows: list[dict], put_rows: list[dict]):
@@ -145,9 +141,14 @@ def previous_month_codes(underlying: str, n: int = 3) -> list[dict]:
         try:
             vals = sina_list(f"OP_UP_{underlying}{key}")
             codes = [x for x in vals if x.startswith("CON_OP_")]
-            probes.append({"month": key, "returned_contract_count": len(codes), "archive_visible_via_active_list_interface": bool(codes)})
+            probes.append({"month": key, "returned_contract_count": len(codes),
+                           "expired_contract_metadata_visible": bool(codes),
+                           "historical_daily_iv_timeseries_proven": False})
         except Exception as e:
-            probes.append({"month": key, "returned_contract_count": 0, "archive_visible_via_active_list_interface": False, "error": str(e)[:180]})
+            probes.append({"month": key, "returned_contract_count": 0,
+                           "expired_contract_metadata_visible": False,
+                           "historical_daily_iv_timeseries_proven": False,
+                           "error": str(e)[:180]})
     return probes
 
 
@@ -170,51 +171,48 @@ def main() -> int:
         pr = enrich(puts[month], "PUT")
         pair = paired_atm(cr, pr)
         expiry_results.append({"month": month, "call_contracts": len(calls[month]), "put_contracts": len(puts[month]),
-                               "usable_call_iv_rows": len(cr), "usable_put_iv_rows": len(pr), "atm": pair, "open_interest": oi_ratio(cr, pr)})
+                               "usable_call_iv_rows": len(cr), "usable_put_iv_rows": len(pr), "atm": pair,
+                               "open_interest": oi_ratio(cr, pr)})
 
     live_ok = bool(expiry_results and expiry_results[0].get("atm", {}).get("status") == "READY")
     term_ok = len(expiry_results) >= 2 and all(x.get("atm", {}).get("status") == "READY" for x in expiry_results[:2])
-    term = None
-    if term_ok:
-        term = round(expiry_results[1]["atm"]["atm_mean_iv"] - expiry_results[0]["atm"]["atm_mean_iv"], 6)
+    term = round(expiry_results[1]["atm"]["atm_mean_iv"] - expiry_results[0]["atm"]["atm_mean_iv"], 6) if term_ok else None
 
     historical_probe = previous_month_codes(underlying, 3)
-    archive_found = any(x.get("archive_visible_via_active_list_interface") for x in historical_probe)
-    historical_status = "LIMITED_ARCHIVE_VISIBLE_REQUIRES_VALIDATION" if archive_found else "NO_HISTORICAL_IV_ARCHIVE_IN_REVIEWED_INTERFACE"
+    expired_metadata_visible = any(x.get("expired_contract_metadata_visible") for x in historical_probe)
+    historical_status = "EXPIRED_CONTRACT_METADATA_VISIBLE_NO_DAILY_IV_TIMESERIES" if expired_metadata_visible else "NO_HISTORICAL_IV_ARCHIVE_IN_REVIEWED_INTERFACE"
 
     if not live_ok:
-        interpretation = "LIVE_CHAIN_FAILED"
-        status = "FAILED"
-    elif historical_status == "NO_HISTORICAL_IV_ARCHIVE_IN_REVIEWED_INTERFACE":
-        interpretation = "LIVE_FEASIBLE_HISTORY_INSUFFICIENT"
-        status = "PASS"
+        interpretation, status = "LIVE_CHAIN_FAILED", "FAILED"
     else:
-        interpretation = "LIVE_FEASIBLE_HISTORY_PATH_REQUIRES_VALIDATION"
-        status = "PASS"
+        interpretation, status = "LIVE_FEASIBLE_HISTORY_INSUFFICIENT", "PASS"
 
     result = {
         "research_id": cfg["research_id"], "generated_at_beijing": generated, "status": status,
         "research_interpretation": interpretation,
-        "source": {"project": cfg["source_project"], "provider": "Sina hq.sinajs + StockOptionService", "provider_mode": "current_active_contract_quotes"},
+        "source": {"project": cfg["source_project"], "provider": "Sina hq.sinajs + StockOptionService",
+                   "provider_mode": "current_active_contract_quotes"},
         "target": cfg["target"],
-        "live_chain": {"status": "PASS" if live_ok else "FAILED", "active_common_expiries": common_months, "tested_expiries": expiry_results,
-                       "near_vs_next_month_atm_iv_spread": term, "term_structure_status": "READY" if term_ok else "INSUFFICIENT"},
+        "live_chain": {"status": "PASS" if live_ok else "FAILED", "active_common_expiries": common_months,
+                       "tested_expiries": expiry_results, "near_vs_next_month_atm_iv_spread": term,
+                       "term_structure_status": "READY" if term_ok else "INSUFFICIENT"},
         "historical_availability": {"status": historical_status, "expired_month_probes": historical_probe,
-                                    "point_in_time_note": "Reviewed a-stock-data interface exposes active-contract current quotes/Greeks only. No historical IV series is assumed or fabricated."},
+                                    "point_in_time_note": "Expired contract codes may remain discoverable, but this is metadata visibility only. The reviewed interface does not establish a daily historical IV/Skew/term-structure time series, so no historical alpha test is permitted."},
         "stage1_gate": {"live_chain_required": True, "live_chain_pass": live_ok, "history_required_for_alpha_claim": True,
-                        "history_sufficient_for_alpha_test": historical_status != "NO_HISTORICAL_IV_ARCHIVE_IN_REVIEWED_INTERFACE",
-                        "alpha_test_performed": False, "reason": "Historical PIT IV/Skew/term-structure series unavailable through reviewed interface."},
+                        "history_sufficient_for_alpha_test": False, "alpha_test_performed": False,
+                        "reason": "Historical daily PIT IV/Skew/term-structure series is not available through the reviewed interface; expired contract metadata is not a substitute."},
         "decision_eligible": False, "trade_signal": None, "master_override": False, "production_integration": False,
-        "recommended_next_step": "If live chain is stable but history remains unavailable, either locate an independent historical options source before alpha testing or start a read-only daily research archive; do not integrate into decision_context yet.",
+        "recommended_next_step": "Do not integrate into decision_context. Before any alpha claim, locate a genuine historical daily options-risk source; alternatively archive live facts prospectively for future PIT research.",
         "errors": errors,
     }
     dump(OUT, result)
-    status_obj = {"research_id": cfg["research_id"], "generated_at_beijing": generated, "status": status,
-                  "interpretation": interpretation, "decision_eligible": False, "trade_signal": None, "master_override": False,
-                  "production_integration": False, "historical_status": historical_status, "live_chain_status": result["live_chain"]["status"],
-                  "further_research_required": bool(live_ok)}
-    dump(STATUS, status_obj)
-    print(json.dumps({"status": status, "interpretation": interpretation, "live": result["live_chain"], "historical": result["historical_availability"]}, ensure_ascii=False))
+    dump(STATUS, {"research_id": cfg["research_id"], "generated_at_beijing": generated, "status": status,
+                  "interpretation": interpretation, "decision_eligible": False, "trade_signal": None,
+                  "master_override": False, "production_integration": False, "historical_status": historical_status,
+                  "history_sufficient_for_alpha_test": False, "live_chain_status": result["live_chain"]["status"],
+                  "further_research_required": bool(live_ok)})
+    print(json.dumps({"status": status, "interpretation": interpretation, "live": result["live_chain"],
+                      "historical": result["historical_availability"]}, ensure_ascii=False))
     return 0 if live_ok else 2
 
 
