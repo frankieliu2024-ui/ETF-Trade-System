@@ -106,7 +106,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A -- data/state/system_consistency.json data/state/historical_backfill_status.json data/state/query_context.json data/state/decision_context.json events/research/daily_features
+          git add -A -- data/state/system_consistency.json data/state/historical_backfill_status.json data/state/query_context.json data/state/decision_context.json data/state/intraday_path_features.json data/state/research_evidence_delta.json data/state/execution_quality.json data/state/skfolio_risk_evidence.json data/state/etf_share_flow_evidence.json data/state/research_master_candidates.json data/state/research_context.json data/state/dashboard_update_candidate.json events/research/daily_features
           git add -f -- data/market/audit/research_backfill
           if git diff --cached --quiet; then
             exit 0
