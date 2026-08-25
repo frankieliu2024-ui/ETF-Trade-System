@@ -1,0 +1,31 @@
+{
+  "research_id": "active_return_stage1",
+  "status": "ACTIVE_STAGE1",
+  "data": {
+    "source": "events/research/daily_features/*.json",
+    "start_date": "2024-01-01",
+    "end_date": "2026-08-21",
+    "point_in_time": "signal uses facts through close D; simulated allocation starts at open of next trading day"
+  },
+  "hypotheses": {
+    "leadership_continuation": "ETF simultaneously in top-3 cross-sectional 5d and 20d momentum with both positive has positive forward excess return versus same-day investable-universe median.",
+    "active_migration_spread": "Moving the next unit of capital from simultaneous bottom-3 5d/20d momentum laggards to simultaneous top-3 leaders produces positive forward spread after conservative ETF trading-cost scenarios.",
+    "right_tail_holding": "A leader making a 20-trading-day closing high retains positive forward excess return, so new highs alone should not justify profit-taking."
+  },
+  "horizons": [3, 5, 10, 20],
+  "folds": [
+    {"name": "fold1", "start": "2024-04-01", "end": "2024-12-31"},
+    {"name": "fold2", "start": "2025-01-01", "end": "2025-12-31"},
+    {"name": "fold3", "start": "2026-01-01", "end": "2026-08-21"}
+  ],
+  "cost_scenarios_bps_round_trip": [10, 20, 30],
+  "boundaries": {
+    "research_only": true,
+    "decision_eligible": false,
+    "trade_signal": null,
+    "master_override": false,
+    "production_integration": false,
+    "no_historical_decision_reconstruction": true,
+    "no_hidden_capital_efficiency_score": true
+  }
+}
