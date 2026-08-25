@@ -3,7 +3,7 @@ from __future__ import annotations
 """Minimal idempotent maintenance for confirmed account facts.
 
 This module updates only the human-readable fact documents. It never writes
-ETF规则_MASTER.md and never derives permissions, orders, or lifecycle actions.
+rule or permission documents and never derives orders or lifecycle actions.
 It is invoked after an accepted state-sync request, so account_fact remains the
 machine source of truth.
 """
