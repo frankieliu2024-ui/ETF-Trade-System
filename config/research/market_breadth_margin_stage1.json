@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "mode": "RESEARCH_ONLY_MARKET_BREADTH_MARGIN_STAGE1",
+  "objective": "Test whether A-share market extreme-breadth structure and exchange-published margin-financing state add stable point-in-time information for future returns of domestic risk-asset ETFs beyond each ETF's own lagged momentum.",
+  "targets": [
+    {"code":"561980","name":"半导体设备ETF"},
+    {"code":"588000","name":"科创50ETF"},
+    {"code":"159781","name":"科创创业ETF"},
+    {"code":"159992","name":"创新药ETF"},
+    {"code":"515880","name":"通信ETF"},
+    {"code":"159326","name":"电网设备ETF"}
+  ],
+  "modules": {
+    "breadth": {
+      "provider": "Eastmoney limit-up/limit-down/broken-board pools",
+      "historical_probe_dates": ["2025-06-30","2025-12-31","2026-06-30"],
+      "minimum_probe_successes": 2,
+      "signals": ["limit_net_strength_lag1","seal_quality_lag1","limit_up_5d_change_lag1"]
+    },
+    "margin": {
+      "providers": ["SSE official margin summary","SZSE official margin summary"],
+      "signals": ["margin_balance_1d_change_lag1","margin_balance_5d_change_lag1","margin_buy_5d_vs20_lag1"]
+    }
+  },
+  "controls": ["mom5_lag1","mom20_lag1"],
+  "horizons_trading_days": [1,3,5],
+  "validation": {
+    "minimum_observations_per_fold": 70,
+    "required_positive_folds_per_etf": 2,
+    "minimum_stable_etfs_per_horizon": 3,
+    "minimum_positive_cells_per_horizon": 10,
+    "minimum_partial_rank_ic": 0.02,
+    "required_qualifying_horizons": 2,
+    "require_positive_top_bottom_spread": true
+  },
+  "point_in_time": {
+    "market_breadth": "Trading-day T final breadth facts are first usable on the next A-share trading day T+1.",
+    "margin": "SSE/SZSE trading-day T margin summary facts are first usable on the next A-share trading day T+1.",
+    "local_controls": "ETF momentum controls use closes no later than D-1; forward labels start at ETF open on D."
+  },
+  "research_boundary": "No signal may generate risk permission, Trial/Confirm, amount, sell action, portfolio target, MASTER override or production decision-context integration. Any Stage1 passer must later be tested against validated ETF share-flow evidence before conversion discussion."
+}
