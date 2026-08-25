@@ -294,9 +294,9 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
     should_refresh = force_refresh and _query_refresh_needed(root, requested_symbols or [], query_time, policy)
     if should_refresh:
         try:
-            from query_time_market_refresh import refresh_market_quotes
-        except ModuleNotFoundError:
             from scripts.query_time_market_refresh import refresh_market_quotes
+        except ModuleNotFoundError:
+            from query_time_market_refresh import refresh_market_quotes
         refreshed = refresh_market_quotes(root, requested_symbols or [], query_time)
         for quote in refreshed.get("quotes", []):
             if isinstance(quote, dict):
