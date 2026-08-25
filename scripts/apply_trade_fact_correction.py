@@ -126,19 +126,18 @@ def main() -> int:
         raise RuntimeError("existing trade event not found; correction cannot create a trade")
     prior_fee = safe_float(event.get("fee_amount"))
     prior_status = str(event.get("fee_status") or "").upper()
-    if prior_status == "CONFIRMED" and prior_fee is not None:
-        if abs(prior_fee - fee) < 0.005:
-            print(json.dumps({"status": "IDEMPOTENT_NOOP", "trade_event_id": event_id, "fee_amount": fee}, ensure_ascii=False))
-            return 0
+    already_confirmed_same = prior_status == "CONFIRMED" and prior_fee is not None and abs(prior_fee - fee) < 0.005
+    if prior_status == "CONFIRMED" and prior_fee is not None and not already_confirmed_same:
         raise RuntimeError("existing confirmed fee differs; explicit correction conflict requires manual review")
 
     stamp = datetime.now(TZ).isoformat(timespec="seconds")
-    event["fee_amount"] = round(fee, 2)
-    event["fee_status"] = "CONFIRMED"
-    event["fee_confirmed_at_beijing"] = str(req.get("evidence_time_beijing") or stamp)
-    event["fee_source"] = str(req.get("source") or "BROKER_SCREENSHOT_CONFIRMED")
-    event["fact_updated_at_beijing"] = stamp
-    write_json(event_path, event)
+    if not already_confirmed_same:
+        event["fee_amount"] = round(fee, 2)
+        event["fee_status"] = "CONFIRMED"
+        event["fee_confirmed_at_beijing"] = str(req.get("evidence_time_beijing") or stamp)
+        event["fee_source"] = str(req.get("source") or "BROKER_SCREENSHOT_CONFIRMED")
+        event["fact_updated_at_beijing"] = stamp
+        write_json(event_path, event)
 
     equity = read_json(EQUITY, {}) or {}
     trades = equity.get("trades") or []
@@ -160,7 +159,8 @@ def main() -> int:
     target = f"{event.get('name') or ''}（{event.get('code') or ''}）"
     correction_key = f"FEE_{event_id}"
     date = str(event.get("execution_date") or event.get("confirmed_at_beijing") or "")[:10]
-    line = f"{date} 已有成交事实补充：{target}成交费用确认{fee:.2f}元；原成交数量、价格、方向和交易日不变；来源：{event['fee_source']}。"
+    fee_source = str(event.get("fee_source") or req.get("source") or "BROKER_SCREENSHOT_CONFIRMED")
+    line = f"{date} 已有成交事实补充：{target}成交费用确认{fee:.2f}元；原成交数量、价格、方向和交易日不变；来源：{fee_source}。"
     upsert_line(ARCHIVE, ARCHIVE_START, ARCHIVE_END, correction_key, f"- {line}")
     upsert_line(EXPERIENCE, EXPERIENCE_START, EXPERIENCE_END, correction_key, f"- 事实补充｜{line} 不新增CASE、不改变历史交易判断。")
     summary = equity.get("summary") or {}
@@ -168,11 +168,11 @@ def main() -> int:
     upsert_line(DASHBOARD, DASH_START, DASH_END, correction_key, f"- {dashboard_line}")
 
     receipt = {
-        "status": "APPLIED",
+        "status": "RECONCILED" if already_confirmed_same else "APPLIED",
         "trade_event_id": event_id,
         "security": target,
         "fee_amount": round(fee, 2),
-        "trade_event_updated": True,
+        "trade_event_updated": not already_confirmed_same,
         "equity_updated": True,
         "dashboard_updated": True,
         "archive_updated": True,
