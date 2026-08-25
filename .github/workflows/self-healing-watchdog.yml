@@ -1,0 +1,94 @@
+name: ETF runtime self-healing watchdog
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Beijing 09:19-09:59: redundant watchdog offset from production snapshot cron.
+    - cron: "19,29,39,49,59 1 * * 1-5"
+    # Beijing 10:04-10:54.
+    - cron: "4,14,24,34,44,54 2 * * 1-5"
+    # Beijing 11:04-11:34.
+    - cron: "4,14,24,34 3 * * 1-5"
+    # Beijing 13:04-14:54.
+    - cron: "4,14,24,34,44,54 5-6 * * 1-5"
+    # Beijing 15:04/15:14 close-grace watchdog.
+    - cron: "4,14 7 * * 1-5"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: etf-runtime-self-healing-watchdog
+  cancel-in-progress: true
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Assess deterministic runtime health
+        id: assess
+        shell: bash
+        run: |
+          python scripts/runtime_self_heal.py --assess
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          data = json.loads(Path('data/state/self_healing_status.json').read_text(encoding='utf-8'))
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
+              f.write(f"action={data.get('recommended_action', 'NONE')}\n")
+              f.write(f"classification={data.get('classification', 'UNKNOWN')}\n")
+          print(f"classification={data.get('classification')} action={data.get('recommended_action')}")
+          PY
+
+      - name: Rebuild derived contexts safely
+        if: ${{ steps.assess.outputs.action == 'REBUILD_DERIVED_CONTEXTS' }}
+        run: |
+          python scripts/build_state_context.py
+          python scripts/build_query_context.py
+          python scripts/runtime_self_heal.py --assess
+
+      - name: Repair deterministic metadata drift
+        if: ${{ steps.assess.outputs.action == 'SYNC_RULES_VERSION_METADATA' }}
+        run: |
+          python scripts/runtime_self_heal.py --repair-safe
+          python scripts/build_state_context.py
+          python scripts/build_query_context.py
+          python scripts/runtime_self_heal.py --assess
+
+      - name: Dispatch replacement market snapshot
+        if: ${{ steps.assess.outputs.action == 'REFRESH_SNAPSHOT' }}
+        run: |
+          gh workflow run market-snapshot.yml --ref main -f node=self_heal -f probe_only=false
+          python scripts/runtime_self_heal.py --record-trigger
+
+      - name: Persist bounded self-healing state and deterministic repairs
+        if: ${{ steps.assess.outputs.action != 'NONE' }}
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- data/state/self_healing_status.json data/state/CURRENT.json data/state/query_context.json data/state/decision_context.json data/state/intraday_path_features.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "ops: record deterministic runtime self-healing"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Escalate persistent or structural failure
+        if: ${{ steps.assess.outputs.action == 'ESCALATE' }}
+        run: |
+          echo "Self-healing stopped at the safety boundary. Manual/Codex diagnosis is required."
+          cat data/state/self_healing_status.json
+          exit 1
