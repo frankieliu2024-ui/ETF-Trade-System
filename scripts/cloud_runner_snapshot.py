@@ -79,6 +79,18 @@ def load_eastmoney_fallback_etfs() -> set[str]:
 
 
 EASTMONEY_FALLBACK_ETFS = load_eastmoney_fallback_etfs()
+
+
+def load_eastmoney_fallback_indices() -> set[str]:
+    path = ROOT / "config" / "market" / "provider_priority.json"
+    if not path.exists():
+        return set()
+    config = json.loads(path.read_text(encoding="utf-8"))
+    policy = config.get("object_fallback_policy") or {}
+    return {str(thscode).split(".")[0] for thscode, rule in policy.items() if "eastmoney_push2" in (rule.get("fallback") or []) and rule.get("direct_only") is True and str(thscode).upper().endswith((".SH", ".SZ")) and str(thscode).split(".")[0] in {"000001", "399006"}}
+
+
+EASTMONEY_FALLBACK_INDICES = load_eastmoney_fallback_indices()
 RETRY_LIMIT = int(os.environ.get("HITHINK_RETRY_LIMIT", POLICY["provider_retry_limit"]))
 TIMEOUT_SECONDS = int(os.environ.get("HITHINK_TIMEOUT_SECONDS", POLICY["provider_timeout_seconds"]))
 MAX_WORKERS = int(os.environ.get("HITHINK_MAX_WORKERS", POLICY["provider_max_workers"]))
@@ -242,6 +254,34 @@ def eastmoney_timestamp_ms(value: object) -> int:
     if number < 10_000_000_000:
         number *= 1000
     return int(number)
+
+
+def fetch_eastmoney_index(code: str, thscode: str, market_phase: str) -> dict:
+    if code not in EASTMONEY_FALLBACK_INDICES:
+        raise RuntimeError(f"Eastmoney index fallback is not enabled for {code}")
+    params = {"secid": f"{'1' if thscode.endswith('.SH') else '0'}.{code}", "fltt": "2", "invt": "2", "fields": "f43,f44,f45,f46,f47,f48,f57,f58,f60,f86,f124"}
+    url = "https://push2.eastmoney.com/api/qt/stock/get?" + urllib.parse.urlencode(params)
+    request = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.15"})
+    with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
+        payload = json.load(response)
+    data = payload.get("data") or {}
+    if str(data.get("f57", "")) != code:
+        raise RuntimeError(f"Eastmoney index code mismatch for {code}: {data.get('f57')}")
+    fields = {"open_price": data.get("f46"), "high_price": data.get("f44"), "low_price": data.get("f45"), "last_price": data.get("f43"), "prev_price": data.get("f60"), "volume": int(float(data.get("f47")) * 100) if data.get("f47") not in (None, "", "-") else None, "turnover": data.get("f48")}
+    if any(value in (None, "", "-") for value in fields.values()):
+        raise RuntimeError(f"Eastmoney index {code} missing direct fields")
+    provider_ts = eastmoney_timestamp_ms(data.get("f86"))
+    provider_dt = datetime.fromtimestamp(provider_ts / 1000, tz=SHANGHAI)
+    now_dt = now_shanghai()
+    if provider_dt.date() != now_dt.date() or abs((now_dt - provider_dt).total_seconds()) > max(60, int(POLICY["degraded_max_age_seconds"])):
+        raise RuntimeError(f"Eastmoney index {code} provider timestamp is stale: {provider_dt.isoformat()}")
+    item = {**fields, "price_change_ratio_pct": ((fields["last_price"] / fields["prev_price"]) - 1) * 100 if fields["prev_price"] else None}
+    return row("A_SHARE_INDEX", code, thscode, item, now_dt.isoformat(timespec="seconds"), provider_ts, market_phase, provider="eastmoney_push2", provider_primary="hithink-finance", fallback_used=True, fallback_reason="hithink-finance index snapshot unavailable or invalid; verified direct Eastmoney quote") | {"provider_symbol": f"{'1' if thscode.endswith('.SH') else '0'}.{code}", "provider_timestamp_field": "f86", "volume_raw": data.get("f47"), "volume_unit_raw": "hand", "volume_unit": "share", "amount_raw": data.get("f48"), "amount_unit": "CNY", "provider_name": str(data.get("f58", ""))}
+
+
+def failed_index_row(code: str, thscode: str, error: str, market_phase: str) -> dict:
+    captured = now_shanghai().isoformat(timespec="seconds")
+    return {"asset_class": "A_SHARE_INDEX", "symbol": code, "thscode": thscode, "open": None, "high": None, "low": None, "close": None, "prev_close": None, "change_pct": None, "volume": None, "amount": None, "provider": "hithink-finance", "provider_primary": "hithink-finance", "provider_used": "hithink-finance", "fallback_used": False, "fallback_reason": "", "provider_timestamp_ms": None, "as_of_beijing": "", "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai", "market_phase": market_phase, "quality_status": "FAILED", "error": error[-500:], "semantic_note": "指数直接行情失败；未使用代理或旧行情补齐。"}
 
 
 def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
@@ -477,13 +517,23 @@ def main() -> int:
                 rows.append(failed)
                 print(json.dumps({"object_failure": failed}, ensure_ascii=False))
 
-    obj = run_json(cli, ["index", "snapshot", "--thscodes", ",".join(x[1] for x in INDEX)], run_dir / "INDEX_core.json")
-    returned = {x.get("thscode"): x for x in (obj.get("data", {}).get("item") or [])}
+    try:
+        obj = run_json(cli, ["index", "snapshot", "--thscodes", ",".join(x[1] for x in INDEX)], run_dir / "INDEX_core.json")
+        returned = {x.get("thscode"): x for x in (obj.get("data", {}).get("item") or [])}
+        index_error = ""
+    except Exception as exc:
+        returned, obj, index_error = {}, {}, str(exc)
     for code, thscode in INDEX:
-        if thscode not in returned:
-            raise RuntimeError(f"missing index row for {thscode}")
         received = now_shanghai()
-        rows.append(row("A_SHARE_INDEX", code, thscode, returned[thscode], received.isoformat(timespec="seconds"), obj.get("data", {}).get("timestamp"), a_share_market_phase(received)))
+        try:
+            if thscode not in returned:
+                raise RuntimeError(index_error or f"missing index row for {thscode}")
+            rows.append(row("A_SHARE_INDEX", code, thscode, returned[thscode], received.isoformat(timespec="seconds"), obj.get("data", {}).get("timestamp"), a_share_market_phase(received)))
+        except Exception as primary_error:
+            try:
+                rows.append(fetch_eastmoney_index(code, thscode, a_share_market_phase(received)))
+            except Exception as fallback_error:
+                rows.append(failed_index_row(code, thscode, f"primary={primary_error}; fallback={fallback_error}", a_share_market_phase(received)))
 
     rows.sort(key=lambda x: (x["asset_class"], x["symbol"]))
     overall_quality = "PASS" if all(item.get("quality_status") == "PASS" for item in rows) else "DEGRADED"
