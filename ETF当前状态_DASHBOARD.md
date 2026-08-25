@@ -35,7 +35,7 @@
 
 最近一次正式决策未随本次同步请求提供；脚本不自行推断，保留人工/ChatGPT正式决议。
 
-同步请求：`20260825_1438_refresh_gate_acceptance`。
+同步请求：`20260825_1449_intraday_analysis`。
 <!-- AUTO_STATE_SYNC_END -->
 
 ## 当前状态使用边界
