@@ -14,7 +14,7 @@ SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
 FORMAL_FILES = ["ETF规则_MASTER.md", "ETF当前状态_DASHBOARD.md", "ETF交易复盘与经验库_2026.md", "ETF市场行情档案_2026.md"]
 CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/overseas_runtime_health.json", "data/state/account_fact.json", "data/state/us_extended_hours_context.json", "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json", "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json"]
-CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_stock_context.py", "scripts/build_account_stock_market.py", "scripts/market_data_guard.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_query_context.py", ".github/workflows/market-snapshot.yml", ".github/workflows/on-demand-market-data.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
+CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_stock_context.py", "scripts/build_account_stock_market.py", "scripts/market_data_guard.py", "tests/test_market_data_guard.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_query_context.py", ".github/workflows/market-snapshot.yml", ".github/workflows/on-demand-market-data.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
 EXPECTED_INDICES = {"000001.SH", "399006.SZ", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
 REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api", "eastmoney_push2"}
 
@@ -86,6 +86,9 @@ def main() -> int:
         checks.append({"name": name, "status": "PASS" if ok else ("WARNING" if warning else "FAIL"), "detail": detail})
         if not ok:
             (warnings if warning else errors).append(f"{name}: {detail}")
+
+    test_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "discover", "-s", "tests", "-p", "test_market_data_guard.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+    check("tests:market_data_guard", test_proc.returncode == 0, (test_proc.stdout + test_proc.stderr)[-1000:])
 
     for path in FORMAL_FILES:
         check(f"formal_file:{path}", (ROOT / path).exists(), "exists" if (ROOT / path).exists() else "missing")
