@@ -82,6 +82,12 @@ jobs:
             [ "$rc" -ne 0 ] && break
           done < /tmp/research_backfill_requests.txt
           exit "$rc"
+      - name: Refresh decision and query context
+        id: refresh_context
+        shell: bash
+        run: |
+          python scripts/build_state_context.py
+          python scripts/build_query_context.py
       - name: Validate formal files, data standard, monitoring layers and runtime wiring
         id: consistency
         continue-on-error: true
@@ -100,7 +106,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A -- data/state/system_consistency.json data/state/historical_backfill_status.json events/research/daily_features
+          git add -A -- data/state/system_consistency.json data/state/historical_backfill_status.json data/state/query_context.json data/state/decision_context.json events/research/daily_features
           git add -f -- data/market/audit/research_backfill
           if git diff --cached --quiet; then
             exit 0
