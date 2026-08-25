@@ -430,6 +430,32 @@ def _apply_trade_to_account(prior: dict, trade: dict) -> dict:
     return account
 
 
+def write_trade_review_required(event: dict) -> None:
+    event_id = str(event.get("event_id") or "")
+    if not event_id:
+        return
+    path = ROOT / "events" / "research" / "decision_outcomes" / f"TRADE_COMPLETED_REVIEW_REQUIRED_{event_id}.json"
+    if path.exists():
+        return
+    atomic_json_write(path, {
+        "event_type": "TRADE_COMPLETED_REVIEW_REQUIRED",
+        "event_id": event_id,
+        "notification_id": event.get("notification_id"),
+        "related_decision_id": event.get("linked_decision_id"),
+        "execution_date": event.get("execution_date"),
+        "confirmation_date": event.get("confirmation_date"),
+        "security_code": event.get("code"),
+        "security_name": event.get("name"),
+        "side": event.get("side"),
+        "quantity": event.get("quantity"),
+        "price": event.get("price"),
+        "amount": event.get("amount"),
+        "review_status": "PENDING_FORMAL_REVIEW",
+        "objective_fields": ["trade_event", "strategy_risk_rate_change", "cash_change", "next_observation_point"],
+        "safety_boundary": "只生成客观复盘待办，不自动判断交易正确/错误，不修改MASTER，不生成新的交易动作。",
+    })
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("request_path")
@@ -503,6 +529,7 @@ def main() -> int:
             trade_event_recorded = True
         account["formal_action"] = {**(account.get("formal_action") or {}), "execution_status": "EXECUTED", "execution_fact_ref": f"events/trades/{event_id}.json", "last_executed_event_id": event_id}
         atomic_json_write(ACCOUNT, account)
+        write_trade_review_required(event)
     review_recorded, review_idempotent = record_post_close_review(account, request)
     result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent}
     print(json.dumps(result, ensure_ascii=False))
