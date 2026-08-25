@@ -91,6 +91,7 @@ def main() -> int:
         "overseas_quality_status": context.get("quality_status", "MISSING"),
         "us_extended_hours_status": us_context.get("quality_status", "MISSING"),
         "objects": object_health,
+        "provider_health": context.get("provider_health") or {},
         "rules": {
             "n225_kospi_same_day_required_after_beijing": "08:20",
             "provider_bar_time_is_authoritative": True,
