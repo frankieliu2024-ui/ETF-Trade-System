@@ -111,7 +111,6 @@ jobs:
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
               handle.write(f"HITHINK_MAX_WORKERS={value}\n")
           print(f"provider concurrency: {key}={value}")
-      
       - name: Run data-only snapshot
         id: capture
         if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
@@ -206,6 +205,7 @@ jobs:
           raise SystemExit(0 if any(k in data for k in keys) else 1)
           PY
             then
+              python scripts/refresh_gate.py --guard-request "$f"
               python scripts/process_state_sync_request.py "$f"
               processed=true
             fi
@@ -228,7 +228,9 @@ jobs:
         run: python scripts/build_state_context.py
       - name: Build on-demand query context
         if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
-        run: python scripts/build_query_context.py
+        run: |
+          python scripts/build_query_context.py
+          python scripts/refresh_gate.py --annotate-contexts
       - name: Build post-market review context
         if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_post_market_review.py
