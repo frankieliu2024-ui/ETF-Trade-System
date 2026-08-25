@@ -90,6 +90,9 @@ def main() -> int:
     test_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "discover", "-s", "tests", "-p", "test_market_data_guard.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:market_data_guard", test_proc.returncode == 0, (test_proc.stdout + test_proc.stderr)[-1000:])
 
+    compile_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "py_compile", "scripts/market_data_guard.py", "scripts/cloud_runner_snapshot.py", "scripts/build_account_stock_market.py", "scripts/build_overseas_context.py", "scripts/build_overseas_runtime_health.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+    check("tests:market_data_guard_compile", compile_proc.returncode == 0, (compile_proc.stdout + compile_proc.stderr)[-1000:])
+
     for path in FORMAL_FILES:
         check(f"formal_file:{path}", (ROOT / path).exists(), "exists" if (ROOT / path).exists() else "missing")
     check(f"data_standard:{DATA_STANDARD}", (ROOT / DATA_STANDARD).exists(), "root-level standard exists" if (ROOT / DATA_STANDARD).exists() else "missing")
