@@ -82,6 +82,36 @@ def trade_display(event_id: str) -> str:
     return name or code or "相关交易对象"
 
 
+def execution_confirmation_event() -> dict | None:
+    recon = read_json(STATE / "execution_reconciliation.json", {})
+    if str(recon.get("status") or "") != "CONFIRMATION_REQUIRED":
+        return None
+    matches = [x for x in (recon.get("matches") or []) if x.get("requires_user_confirmation")]
+    if not matches:
+        return None
+    match = matches[0]
+    intent = match.get("intent") or {}
+    code = str(intent.get("code") or "")
+    name = str(intent.get("name") or "")
+    target = f"{name}（{code}）" if name and code else (code or "相关ETF")
+    decision_id = str(intent.get("decision_id") or "")
+    suggested_date = str(match.get("suggested_execution_date") or intent.get("decision_market_date") or "")
+    qty = (match.get("observed_account_change") or {}).get("quantity_increase")
+    qty_text = f"，新增约{int(qty):,}份" if isinstance(qty, (int, float)) and qty > 0 else ""
+    if str(match.get("status") or "") == "UNLINKED_BUY_TRADE_REQUIRES_ATTRIBUTION":
+        content = f"发现{target}存在已确认买入成交，但还没有明确归因到此前的Trial决策。\n\n建议：请在ETF交易会话确认这笔买入是否属于{suggested_date or '此前'}的5,000元Trial。"
+    else:
+        content = f"最新账户信息显示{target}{qty_text}，与{suggested_date or '此前'}的5,000元Trial决策高度匹配。\n\n建议：请在ETF交易会话确认是否按该Trial执行，以及实际交易日。系统会把交易日与今天的截图/确认日期分开记录。"
+    key = f"execution-confirm:{decision_id}:{code}:{suggested_date}:{qty or ''}"
+    return {
+        "key": key,
+        "type": "成交确认",
+        "title": f"发现{target}可能已执行Trial，请确认",
+        "content": content,
+        "source": "execution_reconciliation",
+    }
+
+
 def decision_event() -> dict | None:
     trigger = read_json(STATE / "decision_trigger.json", {})
     if not trigger.get("requires_formal_reassessment"):
@@ -94,7 +124,6 @@ def decision_event() -> dict | None:
     account = read_json(STATE / "account_fact.json", {})
     event_type = str(trigger.get("trigger_type") or "")
     applicable = str(trigger.get("applicable_object") or "")
-    evidence = str(trigger.get("evidence_change") or "")
 
     if event_type == "TRADE_CONFIRMED":
         target = trade_display(applicable)
@@ -177,7 +206,6 @@ def close_account_event(force: bool = False) -> dict | None:
         return None
     updated = str(account.get("updated_at") or "")
     confirmed_date = str(account.get("last_confirmed_market_date") or "")
-    # A final account fact at/after 15:00 Beijing means no screenshot reminder is needed.
     final_confirmed = False
     if confirmed_date == market_date and updated:
         try:
@@ -202,8 +230,8 @@ def choose_event(mode: str) -> dict | None:
         return close_account_event()
     if mode == "close-test":
         return close_account_event(force=True)
-    # User-action items first; system fault comes before routine decision reassessment.
-    for builder in (account_confirmation_event, system_event, decision_event):
+    # First ask for the smallest missing human fact. Then surface system faults and decision reassessment.
+    for builder in (execution_confirmation_event, account_confirmation_event, system_event, decision_event):
         event = builder()
         if event:
             return event
@@ -250,13 +278,13 @@ def main() -> int:
     }
     recent.append(record)
     state = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "updated_at": now().isoformat(timespec="seconds"),
         "last_status": record["status"],
         "last_type": record["type"],
         "last_title": record["title"],
         "recent": recent[-HISTORY_LIMIT:],
-        "policy": "只推送需要用户关注、确认或决策的事项；普通行情刷新、成功自愈和普通后台运行不推送。",
+        "policy": "只推送需要用户关注、确认或决策的事项；延迟上传账户截图时优先提示疑似执行匹配；普通行情刷新、成功自愈和普通后台运行不推送。",
         "safety_boundary": "通知中心不生成交易动作，不修改MASTER、风险许可、金额或卖出份额。",
     }
     write_json(state_path, state)
