@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import ast
+
 import json
 import os
 import re
@@ -291,6 +293,13 @@ def main() -> int:
     check("scheduled_pulse:observable", all(key in pulse for key in ("expected_slots", "observed_slots", "missing_slots", "status")), f"status={pulse.get('status', 'MISSING')}", warning=True)
     action = decision_context.get("formal_action") or {}
     check("formal_action:execution_boundary", action.get("execution_status") in {"UNKNOWN", "PENDING", "EXECUTED", "SUPERSEDED"} or not action, f"execution_status={action.get('execution_status', 'MISSING')}")
+
+    for script_path in ("scripts/build_phase4_automation.py", "scripts/process_state_sync_request.py", "scripts/build_state_context.py", "scripts/build_query_context.py"):
+        try:
+            ast.parse((ROOT / script_path).read_text(encoding="utf-8"))
+            check(f"python:syntax:{script_path}", True, "AST parse passed")
+        except (OSError, SyntaxError) as exc:
+            check(f"python:syntax:{script_path}", False, str(exc))
 
     phase4_trigger = read_json("data/state/decision_trigger.json")
     phase4_ranking = read_json("data/state/capital_efficiency_ranking.json")
