@@ -1,9 +1,9 @@
 {
   "schema_version": "2.1",
-  "updated_at": "2026-08-26T01:19:40+08:00",
+  "updated_at": "2026-08-26T01:22:07+08:00",
   "last_status": "SENT",
   "last_type": "系统异常",
-  "last_title": "ETF系统有一项故障未能自动处理",
+  "last_title": "【真实运行异常｜影响交易判断】ETF系统运行状态异常",
   "notifications": [
     {
       "notification_id": "notification_0000000000004d625bdd",
@@ -56,6 +56,32 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-08-25T23:43:29+08:00"
+    },
+    {
+      "notification_id": "notification_b15d0ca9a98adf153863",
+      "event_type": "系统异常",
+      "source_event_id": "system:selfheal:CONSISTENCY_REGRESSION:2026-08-26T01:21:28+08:00",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "user_severity": "影响交易判断",
+      "user_action": "暂缓依据系统做新交易判断",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-08-26T01:22:06+08:00",
+      "sent_at": "2026-08-26T01:22:07+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-08-28T01:22:06+08:00",
+      "title": "【真实运行异常｜影响交易判断】ETF系统运行状态异常",
+      "content": "发生了什么：系统运行状态连续异常，自动修复已到达安全边界。\n\n当前已知：一致性检查=FAIL；行情运行状态=SKIPPED。\n\n影响：在恢复前，行情或交易判断的可靠性可能受影响。\n\n你现在需要做什么：暂缓依据系统执行新的买入/卖出判断；已有券商持仓不会被系统自动修改。\n\n系统下一步：继续按既有安全机制检查恢复；恢复后如有待处理交易判断，会再次通知。",
+      "source": "self_healing_status",
+      "confirmation_context": {},
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-08-26T01:22:07+08:00"
     }
   ],
   "recent": [
@@ -94,9 +120,27 @@
       },
       "notification_id": "notification_b3e988fbf8abb6d3e8a8",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "system:selfheal:CONSISTENCY_REGRESSION:2026-08-26T01:21:28+08:00",
+      "type": "系统异常",
+      "title": "【真实运行异常｜影响交易判断】ETF系统运行状态异常",
+      "content": "发生了什么：系统运行状态连续异常，自动修复已到达安全边界。\n\n当前已知：一致性检查=FAIL；行情运行状态=SKIPPED。\n\n影响：在恢复前，行情或交易判断的可靠性可能受影响。\n\n你现在需要做什么：暂缓依据系统执行新的买入/卖出判断；已有券商持仓不会被系统自动修改。\n\n系统下一步：继续按既有安全机制检查恢复；恢复后如有待处理交易判断，会再次通知。",
+      "source": "self_healing_status",
+      "user_severity": "影响交易判断",
+      "user_action": "暂缓依据系统做新交易判断",
+      "status": "SENT",
+      "attempted_at": "2026-08-26T01:22:07+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_b15d0ca9a98adf153863",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [],
-  "policy": "只推送需要用户关注、确认或决策的事项；普通行情刷新、成功自愈和普通后台运行不推送。",
+  "policy": "通知必须让用户明确知道发生了什么、影响什么、是否需要行动；测试必须明确标注测试；历史失效故障不作为当前真实异常推送。",
   "safety_boundary": "通知中心不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
 }
