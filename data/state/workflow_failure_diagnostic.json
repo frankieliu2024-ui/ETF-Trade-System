@@ -1,32 +1,32 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-26T01:19:20+08:00",
+  "generated_at": "2026-08-26T01:21:48+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 32877103100,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 32877390752,
   "run_attempt": 1,
-  "head_sha": "7625be95432f12a671ce6baaa95cdf52c5b21bfb",
-  "main_head_sha": "f2e31c7146005c2ebf8209709ae87231d42d4395",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "96495a7eb6507d4f6048ea5f5413505413515f7c",
+  "main_head_sha": "8f8b112ba1cb468d498ce9c75313402fc025dfaf",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 15
+      "job": "watchdog",
+      "step": "Escalate persistent or structural failure",
+      "number": 9
     }
   ],
   "changed_files": [
-    "requests/trade_fact_correction/20260826_561980_fee5.json"
+    "config/runtime_policy.json"
   ],
-  "commit_message": "fact: confirm 561980 sell fee 5",
+  "commit_message": "config: define query-time refresh preference",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "ESCALATE_WITH_DIAGNOSTIC",
-  "reason": "automatic action stopped at safety boundary",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
-    "forbidden_path_touched": false,
+    "forbidden_path_touched": true,
     "bot_or_revert_commit": false,
     "may_modify_master": false,
     "may_modify_account_fact": false,
