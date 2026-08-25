@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-08-25T17:02:50Z",
-  "generated_at_beijing": "2026-08-26T01:02:50+08:00",
+  "generated_at": "2026-08-25T17:03:17Z",
+  "generated_at_beijing": "2026-08-26T01:03:17+08:00",
   "repository": {
-    "head_sha": "7e6f5f377193e698e2e6930a5e9d740bdd85451d",
-    "github_sha": "7e6f5f377193e698e2e6930a5e9d740bdd85451d",
-    "github_run_id": "32875525067",
+    "head_sha": "e10ddc1de9a3ef39ea60a10a75d49dc38913be78",
+    "github_sha": "e10ddc1de9a3ef39ea60a10a75d49dc38913be78",
+    "github_run_id": "32875578591",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "7e6f5f377193e698e2e6930a5e9d740bdd85451d",
-    "workflow_sha": "7e6f5f377193e698e2e6930a5e9d740bdd85451d",
+    "checked_commit": "e10ddc1de9a3ef39ea60a10a75d49dc38913be78",
+    "workflow_sha": "e10ddc1de9a3ef39ea60a10a75d49dc38913be78",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "PASS",
-  "hard_error_count": 0,
+  "status": "FAIL",
+  "hard_error_count": 1,
   "warning_count": 0,
   "checks": [
     {
@@ -61,6 +61,21 @@
       "name": "router:module_exists",
       "status": "PASS",
       "detail": "unified router module exists"
+    },
+    {
+      "name": "formal_sync:module_exists",
+      "status": "PASS",
+      "detail": "formal account fact sync module exists"
+    },
+    {
+      "name": "formal_sync:state_sync_wired",
+      "status": "PASS",
+      "detail": "state sync invokes formal document maintenance"
+    },
+    {
+      "name": "formal_sync:master_is_not_target",
+      "status": "FAIL",
+      "detail": "formal sync module cannot target MASTER"
     },
     {
       "name": "router:implementation_entry",
@@ -150,12 +165,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=7e6f5f377193e698e2e6930a5e9d740bdd85451d"
+      "detail": "HEAD=e10ddc1de9a3ef39ea60a10a75d49dc38913be78"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=7e6f5f377193e698e2e6930a5e9d740bdd85451d GITHUB_SHA=7e6f5f377193e698e2e6930a5e9d740bdd85451d"
+      "detail": "HEAD=e10ddc1de9a3ef39ea60a10a75d49dc38913be78 GITHUB_SHA=e10ddc1de9a3ef39ea60a10a75d49dc38913be78"
     },
     {
       "name": "git:critical_files_tracked",
@@ -630,12 +645,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=35730"
+      "detail": "declared=STALE expected=STALE age_seconds=35757"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=35730"
+      "detail": "declared=STALE expected=STALE age_seconds=35756"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -675,7 +690,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-25T17:02:50Z market=2026-08-25T15:07:20+08:00"
+      "detail": "context=2026-08-25T17:03:16Z market=2026-08-25T15:07:20+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -938,7 +953,9 @@
       "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
     }
   ],
-  "errors": [],
+  "errors": [
+    "formal_sync:master_is_not_target: formal sync module cannot target MASTER"
+  ],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。"
 }
