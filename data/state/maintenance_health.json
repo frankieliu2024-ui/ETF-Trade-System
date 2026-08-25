@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.0",
-  "checked_at": "2026-08-25T20:44:08+08:00",
+  "schema_version": "1.1",
+  "checked_at": "2026-08-25T20:46:03+08:00",
   "mode": "DETERMINISTIC_MAINTENANCE_GUARD",
   "status": "PASS",
   "system_consistency_status": "PASS",
@@ -68,8 +68,9 @@
   "automatic_actions": {
     "reconciliation": "CHECK_ONLY",
     "diagnostic_packet": "AUTO_GENERATE_ON_FAILURE",
+    "workflow_failure_diagnosis": "AUTO_CLASSIFY_FAILED_STEP_AND_RECENT_DIFF",
     "last_known_good": "AUTO_ADVANCE_ONLY_AFTER_ALL_GATES_PASS",
-    "rollback": "PREPARED_ONLY_NOT_AUTO_EXECUTED",
+    "rollback": "RESTRICTED_MAINTENANCE_ONLY; HEAD_ONLY; STRICT_ALLOWLIST; NEVER_FORMAL_RULES_OR_ACCOUNT_FACTS",
     "ai_patch_main": "FORBIDDEN"
   }
 }

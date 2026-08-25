@@ -1,10 +1,12 @@
 {
-  "schema_version": "1.0",
-  "updated_at": "2026-08-25T20:44:08+08:00",
+  "schema_version": "1.1",
+  "updated_at": "2026-08-25T20:46:03+08:00",
   "status": "VALID",
-  "commit_sha": "8954a58d1be7b9530a7d89ac87d7c57ea1b3c47f",
+  "commit_sha": "d5c348f20cc2e2847e5f3812395ad0e71bd1d8af",
   "basis": "system_consistency PASS + ETF ledger/account reconciliation PASS + self-healing not escalated",
-  "previous_commit_sha": "f9e1697e6d21c3340a43834b1a397010b575a341",
-  "rollback_policy": "PREPARED_ONLY; never automatically revert MASTER, trading rules, provider policy, or user-confirmed account facts",
-  "automatic_rollback_enabled": false
+  "previous_commit_sha": "8954a58d1be7b9530a7d89ac87d7c57ea1b3c47f",
+  "rollback_policy": "RESTRICTED_MAINTENANCE_ONLY; automatic revert is allowed only for current-HEAD deterministic regressions whose changed files are entirely inside the strict maintenance allowlist; never automatically revert MASTER, trading rules, provider policy, market data, trade events, or user-confirmed account facts",
+  "automatic_rollback_enabled": true,
+  "automatic_rollback_scope": "STRICT_MAINTENANCE_ALLOWLIST_ONLY",
+  "automatic_rollback_guard": "workflow-failure-guard.yml + scripts/workflow_failure_guard.py"
 }
