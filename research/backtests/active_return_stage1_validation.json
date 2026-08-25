@@ -1,0 +1,472 @@
+{
+  "research_id": "active_return_stage1",
+  "generated_at_beijing": "2026-08-25T23:49:29+08:00",
+  "status": "PASS",
+  "research_interpretation": "PROMISING_ACTIVE_RETURN_EVIDENCE_REQUIRES_FORMAL_CONVERSION_REVIEW",
+  "data_quality": {
+    "daily_feature_days": 639,
+    "first_date": "2024-01-02",
+    "last_date": "2026-08-21",
+    "codes": [
+      "159326",
+      "159561",
+      "159781",
+      "159941",
+      "159992",
+      "513180",
+      "513520",
+      "515880",
+      "518880",
+      "561980",
+      "588000"
+    ],
+    "point_in_time": "signal uses facts through close D; simulated allocation starts at open of next trading day",
+    "historical_decision_reconstruction": false
+  },
+  "method": {
+    "leader_definition": "simultaneous top-3 cross-sectional 5d and 20d close momentum, both positive, observed at close D",
+    "laggard_definition": "simultaneous bottom-3 cross-sectional 5d and 20d close momentum at close D",
+    "entry": "next trading day open after signal close",
+    "forward_exit": "close on the h-th trading day after signal date",
+    "benchmark": "same-signal-date investable ETF universe median forward return",
+    "migration_cost_scenarios_bps_round_trip": [
+      10,
+      20,
+      30
+    ],
+    "no_hidden_score": true
+  },
+  "leadership_continuation": {
+    "3": {
+      "n": 856,
+      "mean": 0.003401,
+      "median": 0.0,
+      "positive_rate": 0.481308,
+      "folds": {
+        "fold1": {
+          "n": 229,
+          "mean": -0.001629,
+          "median": -0.001612,
+          "positive_rate": 0.441048
+        },
+        "fold2": {
+          "n": 350,
+          "mean": 0.004396,
+          "median": 0.0,
+          "positive_rate": 0.48
+        },
+        "fold3": {
+          "n": 221,
+          "mean": 0.009729,
+          "median": 0.002756,
+          "positive_rate": 0.529412
+        }
+      },
+      "positive_folds_with_n10": 2,
+      "passes_horizon_gate": false
+    },
+    "5": {
+      "n": 854,
+      "mean": 0.005476,
+      "median": 0.0,
+      "positive_rate": 0.489461,
+      "folds": {
+        "fold1": {
+          "n": 229,
+          "mean": -0.002156,
+          "median": -0.002916,
+          "positive_rate": 0.436681
+        },
+        "fold2": {
+          "n": 350,
+          "mean": 0.008257,
+          "median": 0.0,
+          "positive_rate": 0.494286
+        },
+        "fold3": {
+          "n": 219,
+          "mean": 0.011843,
+          "median": 0.00327,
+          "positive_rate": 0.534247
+        }
+      },
+      "positive_folds_with_n10": 2,
+      "passes_horizon_gate": false
+    },
+    "10": {
+      "n": 847,
+      "mean": 0.012038,
+      "median": 0.001254,
+      "positive_rate": 0.508855,
+      "folds": {
+        "fold1": {
+          "n": 229,
+          "mean": -0.007468,
+          "median": -0.009742,
+          "positive_rate": 0.401747
+        },
+        "fold2": {
+          "n": 350,
+          "mean": 0.019202,
+          "median": 0.005487,
+          "positive_rate": 0.551429
+        },
+        "fold3": {
+          "n": 212,
+          "mean": 0.023341,
+          "median": 0.019467,
+          "positive_rate": 0.566038
+        }
+      },
+      "positive_folds_with_n10": 2,
+      "passes_horizon_gate": false
+    },
+    "20": {
+      "n": 837,
+      "mean": 0.019803,
+      "median": 0.0,
+      "positive_rate": 0.494624,
+      "folds": {
+        "fold1": {
+          "n": 229,
+          "mean": -0.003366,
+          "median": -0.004484,
+          "positive_rate": 0.445415
+        },
+        "fold2": {
+          "n": 351,
+          "mean": 0.031249,
+          "median": 0.002496,
+          "positive_rate": 0.507123
+        },
+        "fold3": {
+          "n": 201,
+          "mean": 0.032116,
+          "median": 0.01875,
+          "positive_rate": 0.552239
+        }
+      },
+      "positive_folds_with_n10": 2,
+      "passes_horizon_gate": false
+    }
+  },
+  "active_migration_spread": {
+    "3": {
+      "n": 455,
+      "mean": 0.0036,
+      "median": 0.003372,
+      "positive_rate": 0.536264,
+      "folds": {
+        "fold1": {
+          "n": 126,
+          "mean": -0.003796,
+          "median": -0.00384,
+          "positive_rate": 0.436508
+        },
+        "fold2": {
+          "n": 178,
+          "mean": 0.00368,
+          "median": 0.002928,
+          "positive_rate": 0.544944
+        },
+        "fold3": {
+          "n": 120,
+          "mean": 0.014535,
+          "median": 0.020018,
+          "positive_rate": 0.65
+        }
+      },
+      "cost_scenarios_bps_round_trip": {
+        "10": {
+          "mean_net_spread": 0.0026,
+          "median_net_spread": 0.002372
+        },
+        "20": {
+          "mean_net_spread": 0.0016,
+          "median_net_spread": 0.001372
+        },
+        "30": {
+          "mean_net_spread": 0.0006,
+          "median_net_spread": 0.000372
+        }
+      },
+      "positive_folds_with_n10": 2,
+      "passes_horizon_gate": false
+    },
+    "5": {
+      "n": 454,
+      "mean": 0.005431,
+      "median": 0.002905,
+      "positive_rate": 0.517621,
+      "folds": {
+        "fold1": {
+          "n": 126,
+          "mean": -0.008887,
+          "median": -0.008559,
+          "positive_rate": 0.388889
+        },
+        "fold2": {
+          "n": 178,
+          "mean": 0.007207,
+          "median": 0.004091,
+          "positive_rate": 0.52809
+        },
+        "fold3": {
+          "n": 119,
+          "mean": 0.022553,
+          "median": 0.029153,
+          "positive_rate": 0.655462
+        }
+      },
+      "cost_scenarios_bps_round_trip": {
+        "10": {
+          "mean_net_spread": 0.004431,
+          "median_net_spread": 0.001905
+        },
+        "20": {
+          "mean_net_spread": 0.003431,
+          "median_net_spread": 0.000905
+        },
+        "30": {
+          "mean_net_spread": 0.002431,
+          "median_net_spread": -9.5e-05
+        }
+      },
+      "positive_folds_with_n10": 2,
+      "passes_horizon_gate": false
+    },
+    "10": {
+      "n": 451,
+      "mean": 0.012093,
+      "median": 0.006799,
+      "positive_rate": 0.54102,
+      "folds": {
+        "fold1": {
+          "n": 126,
+          "mean": -0.025042,
+          "median": -0.01599,
+          "positive_rate": 0.388889
+        },
+        "fold2": {
+          "n": 178,
+          "mean": 0.020043,
+          "median": 0.014362,
+          "positive_rate": 0.595506
+        },
+        "fold3": {
+          "n": 116,
+          "mean": 0.043116,
+          "median": 0.05283,
+          "positive_rate": 0.637931
+        }
+      },
+      "cost_scenarios_bps_round_trip": {
+        "10": {
+          "mean_net_spread": 0.011093,
+          "median_net_spread": 0.005799
+        },
+        "20": {
+          "mean_net_spread": 0.010093,
+          "median_net_spread": 0.004799
+        },
+        "30": {
+          "mean_net_spread": 0.009093,
+          "median_net_spread": 0.003799
+        }
+      },
+      "positive_folds_with_n10": 2,
+      "passes_horizon_gate": true
+    },
+    "20": {
+      "n": 445,
+      "mean": 0.016898,
+      "median": 0.009869,
+      "positive_rate": 0.548315,
+      "folds": {
+        "fold1": {
+          "n": 126,
+          "mean": -0.033384,
+          "median": -0.019146,
+          "positive_rate": 0.404762
+        },
+        "fold2": {
+          "n": 178,
+          "mean": 0.040037,
+          "median": 0.029307,
+          "positive_rate": 0.629213
+        },
+        "fold3": {
+          "n": 110,
+          "mean": 0.048663,
+          "median": 0.042356,
+          "positive_rate": 0.645455
+        }
+      },
+      "cost_scenarios_bps_round_trip": {
+        "10": {
+          "mean_net_spread": 0.015898,
+          "median_net_spread": 0.008869
+        },
+        "20": {
+          "mean_net_spread": 0.014898,
+          "median_net_spread": 0.007869
+        },
+        "30": {
+          "mean_net_spread": 0.013898,
+          "median_net_spread": 0.006869
+        }
+      },
+      "positive_folds_with_n10": 2,
+      "passes_horizon_gate": true
+    }
+  },
+  "right_tail_holding": {
+    "3": {
+      "n": 443,
+      "mean": 0.005815,
+      "median": 0.002473,
+      "positive_rate": 0.528217,
+      "folds": {
+        "fold1": {
+          "n": 112,
+          "mean": 0.000768,
+          "median": 0.0,
+          "positive_rate": 0.491071
+        },
+        "fold2": {
+          "n": 186,
+          "mean": 0.006566,
+          "median": 0.003454,
+          "positive_rate": 0.548387
+        },
+        "fold3": {
+          "n": 122,
+          "mean": 0.011492,
+          "median": 0.007507,
+          "positive_rate": 0.565574
+        }
+      },
+      "positive_folds_with_n8": 3,
+      "passes_horizon_gate": true
+    },
+    "5": {
+      "n": 442,
+      "mean": 0.008522,
+      "median": 0.002694,
+      "positive_rate": 0.529412,
+      "folds": {
+        "fold1": {
+          "n": 112,
+          "mean": -0.002488,
+          "median": 0.0,
+          "positive_rate": 0.482143
+        },
+        "fold2": {
+          "n": 187,
+          "mean": 0.013157,
+          "median": 0.003012,
+          "positive_rate": 0.540107
+        },
+        "fold3": {
+          "n": 120,
+          "mean": 0.012578,
+          "median": 0.003806,
+          "positive_rate": 0.566667
+        }
+      },
+      "positive_folds_with_n8": 2,
+      "passes_horizon_gate": true
+    },
+    "10": {
+      "n": 435,
+      "mean": 0.015964,
+      "median": 0.008184,
+      "positive_rate": 0.556322,
+      "folds": {
+        "fold1": {
+          "n": 112,
+          "mean": -0.005818,
+          "median": -0.005502,
+          "positive_rate": 0.4375
+        },
+        "fold2": {
+          "n": 186,
+          "mean": 0.0259,
+          "median": 0.017132,
+          "positive_rate": 0.629032
+        },
+        "fold3": {
+          "n": 114,
+          "mean": 0.022347,
+          "median": 0.020327,
+          "positive_rate": 0.561404
+        }
+      },
+      "positive_folds_with_n8": 2,
+      "passes_horizon_gate": true
+    },
+    "20": {
+      "n": 432,
+      "mean": 0.022674,
+      "median": 0.002614,
+      "positive_rate": 0.506944,
+      "folds": {
+        "fold1": {
+          "n": 112,
+          "mean": -0.00621,
+          "median": -0.007984,
+          "positive_rate": 0.419643
+        },
+        "fold2": {
+          "n": 187,
+          "mean": 0.040007,
+          "median": 0.017267,
+          "positive_rate": 0.550802
+        },
+        "fold3": {
+          "n": 110,
+          "mean": 0.027467,
+          "median": 0.016277,
+          "positive_rate": 0.545455
+        }
+      },
+      "positive_folds_with_n8": 2,
+      "passes_horizon_gate": true
+    }
+  },
+  "conclusions": {
+    "leadership_continuation": {
+      "status": "NO_STABLE_INCREMENT",
+      "passing_horizons": [],
+      "interpretation": "No sufficiently stable multi-horizon evidence that current leaders alone deserve incremental capital."
+    },
+    "active_migration_spread": {
+      "status": "PASS",
+      "passing_horizons": [
+        10,
+        20
+      ],
+      "interpretation": "Leader-vs-laggard spread remains positive after conservative ETF trading-cost scenarios; supports explicit opportunity-cost comparison when an old holding weakens and an independent new opportunity exists, but does not authorize mechanical rotation."
+    },
+    "right_tail_holding": {
+      "status": "PASS",
+      "passing_horizons": [
+        3,
+        5,
+        10,
+        20
+      ],
+      "interpretation": "Leaders at 20-day closing highs retain positive forward excess return; supports protecting right-tail winners and rejects new-high-only profit taking."
+    }
+  },
+  "passing_hypotheses": [
+    "active_migration_spread",
+    "right_tail_holding"
+  ],
+  "decision_eligible": false,
+  "trade_signal": null,
+  "master_override": false,
+  "production_integration": false,
+  "conversion_review_required": true,
+  "boundary": "Research evidence may inform opportunity comparison, holding right-tail protection, and opportunity-cost review only after formal conversion. It must not create mechanical top-rank buying, bottom-rank selling, rotation, amount, or risk permission."
+}
