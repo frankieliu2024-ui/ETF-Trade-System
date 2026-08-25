@@ -60,7 +60,9 @@ def snapshot_series(root: Path, market_date: str) -> list[tuple[str, dict]]:
             obj = load_json(path)
         except Exception:
             continue
-        if obj.get("market_date") != market_date or obj.get("quality_status") != "PASS":
+        # A DEGRADED snapshot still contains valid PASS rows for most symbols. Keep the
+        # snapshot in the path series, then filter unusable rows in build_points().
+        if obj.get("market_date") != market_date or obj.get("quality_status") not in {"PASS", "DEGRADED"}:
             continue
         phase = str(obj.get("market_phase") or "")
         # Keep opening auction separately out of continuous-path geometry.
