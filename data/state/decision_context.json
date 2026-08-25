@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-25T06:53:50Z",
+  "generated_at": "2026-08-25T06:57:42Z",
   "rules_version": "V2.2.15",
   "market_date": "2026-08-25",
   "latest_node": "live",
@@ -443,7 +443,7 @@
       "588000"
     ],
     "quick_retry_seconds": 12.528,
-    "age_seconds": 10
+    "age_seconds": 242
   },
   "freshness_at_context_build": {
     "status": "FRESH",
@@ -465,7 +465,7 @@
       "588000"
     ],
     "quick_retry_seconds": 12.528,
-    "age_seconds": 10
+    "age_seconds": 242
   },
   "data_quality_summary": {
     "pass_count": 13,
@@ -503,7 +503,7 @@
     "account_fact_time": "2026-08-25T14:31:51+08:00",
     "market_snapshot_time": "2026-08-25T14:53:40+08:00",
     "market_phase": "CONTINUOUS_AFTERNOON",
-    "context_generated_time": "2026-08-25T06:53:50Z",
+    "context_generated_time": "2026-08-25T06:57:42Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -528,7 +528,7 @@
     "read_only": true
   },
   "intraday_path_features": {
-    "generated_at": "2026-08-25T06:53:50Z",
+    "generated_at": "2026-08-25T06:57:41Z",
     "market_date": "2026-08-25",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -1738,7 +1738,7 @@
   "etf_share_flow_evidence_file": "data/state/etf_share_flow_evidence.json",
   "research_master_candidates": {
     "schema_version": "1.0",
-    "generated_at": "2026-08-25T06:53:50Z",
+    "generated_at": "2026-08-25T06:57:42Z",
     "mode": "RESEARCH_TO_MASTER_MAINTENANCE_FEED",
     "read_only": true,
     "automatic_master_update": false,
@@ -1768,7 +1768,7 @@
   },
   "execution_quality": {
     "schema_version": "1.0",
-    "generated_at": "2026-08-25T06:53:50Z",
+    "generated_at": "2026-08-25T06:57:42Z",
     "mode": "DECISION_EXECUTION_ATTRIBUTION",
     "read_only": true,
     "trade_event_count": 2,
@@ -1811,21 +1811,5 @@
     ],
     "interpretation_rule": "把判断质量与执行质量分开：决策时点后的市场结果评价判断，决策价格与真实成交价之间的偏差评价执行。不得因一次慢成交或一次有利成交自动修改交易规则。",
     "optimization_principle": "只分析能够帮助减少可避免执行损失或提高资本实现效率的差异；不追求零滑点、零延迟或完美执行。"
-  },
-  "refresh_gate": {
-    "status": "READY",
-    "formal_analysis_allowed": true,
-    "formal_decision_persist_allowed": true,
-    "fallback_allowed": false,
-    "request_file": "requests/live_snapshot/20260825_1438_refresh_gate_acceptance.json",
-    "request_id": "20260825_1438_refresh_gate_acceptance",
-    "requested_at_beijing": "2026-08-25T14:38:30+08:00",
-    "requested_market_time": "2026-08-25T14:38:00+08:00",
-    "current_snapshot_time": "2026-08-25T14:53:40+08:00",
-    "resolved_snapshot_time": "2026-08-25T14:53:40+08:00",
-    "latest_snapshot": "data/market/snapshots/2026-08-25_145326.json",
-    "failure_reason": "",
-    "rule": "用户明确要求‘等补采/等指定节点数据后再回复’时，必须等本次请求之后且不早于requested_market_time的新CURRENT发布后，才允许正式风险许可、主候选、金额或卖出判断并持久化；PENDING/FAILED时禁止自动回退旧快照，除非用户随后明确授权回退。"
-  },
-  "formal_analysis_allowed": true
+  }
 }

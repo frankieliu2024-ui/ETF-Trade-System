@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-25T06:53:50Z",
-  "generated_at_beijing": "2026-08-25T14:53:50+08:00",
+  "generated_at": "2026-08-25T06:57:42Z",
+  "generated_at_beijing": "2026-08-25T14:57:42+08:00",
   "market_date": "2026-08-25",
   "latest_valid_node": "live",
   "current": {
@@ -43,7 +43,7 @@
     "generated_at": "2026-08-25T06:53:40Z"
   },
   "decision_context": {
-    "generated_at": "2026-08-25T06:53:50Z",
+    "generated_at": "2026-08-25T06:57:42Z",
     "rules_version": "V2.2.15",
     "market_date": "2026-08-25",
     "latest_node": "live",
@@ -487,7 +487,7 @@
         "588000"
       ],
       "quick_retry_seconds": 12.528,
-      "age_seconds": 10
+      "age_seconds": 242
     },
     "freshness_at_context_build": {
       "status": "FRESH",
@@ -509,7 +509,7 @@
         "588000"
       ],
       "quick_retry_seconds": 12.528,
-      "age_seconds": 10
+      "age_seconds": 242
     },
     "data_quality_summary": {
       "pass_count": 13,
@@ -547,7 +547,7 @@
       "account_fact_time": "2026-08-25T14:31:51+08:00",
       "market_snapshot_time": "2026-08-25T14:53:40+08:00",
       "market_phase": "CONTINUOUS_AFTERNOON",
-      "context_generated_time": "2026-08-25T06:53:50Z",
+      "context_generated_time": "2026-08-25T06:57:42Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
@@ -572,7 +572,7 @@
       "read_only": true
     },
     "intraday_path_features": {
-      "generated_at": "2026-08-25T06:53:50Z",
+      "generated_at": "2026-08-25T06:57:41Z",
       "market_date": "2026-08-25",
       "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
       "read_only": true,
@@ -1637,7 +1637,7 @@
       ],
       "skfolio_risk_evidence": {
         "schema_version": "1.0",
-        "generated_at": "2026-08-25T06:53:50Z",
+        "generated_at": "2026-08-25T06:57:42Z",
         "status": "READY",
         "mode": "SKFOLIO_VALIDATED_RISK_EVIDENCE",
         "validation_basis": {
@@ -1866,7 +1866,7 @@
     "account_fact_time": "2026-08-25T14:31:51+08:00",
     "market_snapshot_time": "2026-08-25T14:53:40+08:00",
     "market_phase": "CONTINUOUS_AFTERNOON",
-    "context_generated_time": "2026-08-25T06:53:50Z",
+    "context_generated_time": "2026-08-25T06:57:42Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -1954,7 +1954,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "FRESH",
-        "age_seconds": 10,
+        "age_seconds": 242,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -1978,7 +1978,7 @@
           "588000"
         ],
         "quick_retry_seconds": 12.528,
-        "age_seconds": 10
+        "age_seconds": 242
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新计算FRESH/DEGRADED/STALE。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -2000,21 +2000,6 @@
       "degraded_max_age_seconds": 1500,
       "close_grace_seconds": 900,
       "principle": "查询时立即补采优先；常规10分钟只是生产目标。补采失败才回退最近有效状态，并按查询时刻重新判定新鲜度。"
-    },
-    "refresh_gate": {
-      "status": "READY",
-      "formal_analysis_allowed": true,
-      "formal_decision_persist_allowed": true,
-      "fallback_allowed": false,
-      "request_file": "requests/live_snapshot/20260825_1438_refresh_gate_acceptance.json",
-      "request_id": "20260825_1438_refresh_gate_acceptance",
-      "requested_at_beijing": "2026-08-25T14:38:30+08:00",
-      "requested_market_time": "2026-08-25T14:38:00+08:00",
-      "current_snapshot_time": "2026-08-25T14:53:40+08:00",
-      "resolved_snapshot_time": "2026-08-25T14:53:40+08:00",
-      "latest_snapshot": "data/market/snapshots/2026-08-25_145326.json",
-      "failure_reason": "",
-      "rule": "用户明确要求‘等补采/等指定节点数据后再回复’时，必须等本次请求之后且不早于requested_market_time的新CURRENT发布后，才允许正式风险许可、主候选、金额或卖出判断并持久化；PENDING/FAILED时禁止自动回退旧快照，除非用户随后明确授权回退。"
     }
   },
   "canonical_files": {
@@ -2059,11 +2044,11 @@
       "588000"
     ],
     "quick_retry_seconds": 12.528,
-    "age_seconds": 10
+    "age_seconds": 242
   },
   "freshness_at_context_build": {
     "status": "FRESH",
-    "age_seconds": 10,
+    "age_seconds": 242,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -2108,7 +2093,8 @@
       "518880",
       "588000"
     ],
-    "quick_retry_seconds": 12.528
+    "quick_retry_seconds": 12.528,
+    "data_commit": "b7c563ca179a84a080b387b7c7064360d3830da7"
   },
   "system_consistency_status": "WARNING",
   "system_consistency_hard_errors": 0,
@@ -2134,21 +2120,5 @@
   },
   "needs_account_screenshot": false,
   "read_only": true,
-  "interaction_boundary": "用户主动查询时先核对一致性与交易日历，再按‘查询时立即补采 → 最近一次有效快照 → 明确降级/缺失’获取行情；正式输出必须标注北京时间真实数据时点，并区分美股现金盘、盘后和盘前。",
-  "refresh_gate": {
-    "status": "READY",
-    "formal_analysis_allowed": true,
-    "formal_decision_persist_allowed": true,
-    "fallback_allowed": false,
-    "request_file": "requests/live_snapshot/20260825_1438_refresh_gate_acceptance.json",
-    "request_id": "20260825_1438_refresh_gate_acceptance",
-    "requested_at_beijing": "2026-08-25T14:38:30+08:00",
-    "requested_market_time": "2026-08-25T14:38:00+08:00",
-    "current_snapshot_time": "2026-08-25T14:53:40+08:00",
-    "resolved_snapshot_time": "2026-08-25T14:53:40+08:00",
-    "latest_snapshot": "data/market/snapshots/2026-08-25_145326.json",
-    "failure_reason": "",
-    "rule": "用户明确要求‘等补采/等指定节点数据后再回复’时，必须等本次请求之后且不早于requested_market_time的新CURRENT发布后，才允许正式风险许可、主候选、金额或卖出判断并持久化；PENDING/FAILED时禁止自动回退旧快照，除非用户随后明确授权回退。"
-  },
-  "formal_analysis_allowed": true
+  "interaction_boundary": "用户主动查询时先核对一致性与交易日历，再按‘查询时立即补采 → 最近一次有效快照 → 明确降级/缺失’获取行情；正式输出必须标注北京时间真实数据时点，并区分美股现金盘、盘后和盘前。"
 }
