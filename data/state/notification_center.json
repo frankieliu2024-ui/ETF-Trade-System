@@ -1,25 +1,54 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "2.0",
   "updated_at": "2026-08-25T22:27:20+08:00",
-  "last_status": "SENT",
+  "last_status": "ARCHIVED",
   "last_type": "测试",
   "last_title": "ETF系统通知中心测试",
-  "recent": [
+  "notifications": [
     {
-      "key": "channel-test:2026-08-25T22:27:19+08:00",
-      "type": "测试",
+      "notification_id": "notification_0000000000004d625bdd",
+      "event_type": "CHANNEL_TEST",
+      "source_event_id": "channel-test:2026-08-25T22:27:19+08:00",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "lifecycle_status": "ARCHIVED",
+      "created_at": "2026-08-25T22:27:20+08:00",
+      "sent_at": "2026-08-25T22:27:20+08:00",
+      "confirmed_at": null,
+      "archived_at": "2026-08-25T22:27:20+08:00",
+      "expires_at": null,
       "title": "ETF系统通知中心测试",
       "content": "通知中心已经可以主动联系你。正式运行时，只推送需要你关注、确认或决策的事项。",
       "source": "manual_test",
-      "status": "SENT",
+      "confirmation_context": {},
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-08-25T22:27:20+08:00"
+    }
+  ],
+  "recent": [
+    {
+      "key": "channel-test:2026-08-25T22:27:19+08:00",
+      "type": "CHANNEL_TEST",
+      "title": "ETF系统通知中心测试",
+      "content": "通知中心已经可以主动联系你。正式运行时，只推送需要你关注、确认或决策的事项。",
+      "source": "manual_test",
+      "status": "ARCHIVED",
       "attempted_at": "2026-08-25T22:27:20+08:00",
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
-      }
+      },
+      "notification_id": "notification_0000000000004d625bdd",
+      "lifecycle_status": "ARCHIVED"
     }
   ],
+  "pending_questions": [],
   "policy": "只推送需要用户关注、确认或决策的事项；普通行情刷新、成功自愈和普通后台运行不推送。",
-  "safety_boundary": "通知中心不生成交易动作，不修改MASTER、风险许可、金额或卖出份额。"
+  "safety_boundary": "通知中心不生成交易动作；只有用户明确确认后才进入trade_event。"
 }
