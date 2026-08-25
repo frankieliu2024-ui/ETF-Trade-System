@@ -261,18 +261,24 @@ def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
     data = payload.get("data") or {}
     if str(data.get("f57", "")) != code:
         raise RuntimeError(f"Eastmoney code mismatch for {code}: {data.get('f57')}")
+    if not str(data.get("f58", "")).strip():
+        raise RuntimeError(f"Eastmoney {code} missing security name")
+    volume_raw = data.get("f47")
+    amount_raw = data.get("f48")
     fields = {
         "open_price": data.get("f46"),
         "high_price": data.get("f44"),
         "low_price": data.get("f45"),
         "last_price": data.get("f43"),
         "prev_price": data.get("f60"),
-        "volume": data.get("f47"),
-        "turnover": data.get("f48"),
+        "volume": int(float(volume_raw) * 100) if volume_raw not in (None, "", "-") else None,
+        "turnover": amount_raw,
     }
     if any(value in (None, "", "-") for value in fields.values()):
         raise RuntimeError(f"Eastmoney {code} missing direct ETF fields")
-    provider_ts = eastmoney_timestamp_ms(data.get("f124") or data.get("f86"))
+    if fields["volume"] < 0 or float(amount_raw) < 0:
+        raise RuntimeError(f"Eastmoney {code} has negative volume or amount")
+    provider_ts = eastmoney_timestamp_ms(data.get("f86"))
     provider_dt = datetime.fromtimestamp(provider_ts / 1000, tz=SHANGHAI)
     now_dt = now_shanghai()
     if provider_dt.date() != now_dt.date():
