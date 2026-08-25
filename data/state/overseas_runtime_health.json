@@ -1,33 +1,36 @@
 {
-  "status": "PASS",
+  "status": "DEGRADED",
   "pulse_success": true,
   "hard_error_count": 0,
-  "warning_count": 0,
+  "warning_count": 2,
   "hard_errors": [],
-  "warnings": [],
-  "scheduled_for": "0,10 1 * * 1-5",
+  "warnings": [
+    "N225: quality=PASS as_of_beijing=2026-08-25T14:30:00+08:00",
+    "KOSPI: quality=PASS as_of_beijing=2026-08-25T14:00:00+08:00"
+  ],
+  "scheduled_for": "*/10 23 * * 0-4",
   "trigger": "schedule",
-  "started_at": "2026-08-25T02:19:11Z",
-  "provider_as_of": "2026-08-25T10:19:10+08:00",
+  "started_at": "2026-08-25T23:24:52Z",
+  "provider_as_of": "2026-08-26T04:00:00+08:00",
   "provider_as_of_by_object": {
-    "NDX": "2026-08-25T04:00:00+08:00",
-    "SOX": "2026-08-25T04:00:00+08:00",
-    "N225": "2026-08-25T10:03:40+08:00",
-    "KOSPI": "2026-08-25T09:58:40+08:00",
-    "TWII": "2026-08-25T09:58:45+08:00",
-    "HSTECH": "2026-08-25T10:19:10+08:00"
+    "NDX": "2026-08-26T04:00:00+08:00",
+    "SOX": "2026-08-26T04:00:00+08:00",
+    "N225": "2026-08-25T14:30:00+08:00",
+    "KOSPI": "2026-08-25T14:00:00+08:00",
+    "TWII": "2026-08-25T13:30:00+08:00",
+    "HSTECH": "2026-08-25T16:08:38+08:00"
   },
-  "finished_at": "2026-08-25T02:19:11Z",
-  "commit_sha": "3a50716ebdbaab9fc4db931dff8973476e09dc1f",
-  "run_id": "32800902037",
-  "market_date_beijing": "2026-08-25",
+  "finished_at": "2026-08-25T23:24:52Z",
+  "commit_sha": "394d34565797e42e6347bd2b9f362ccd07684f35",
+  "run_id": "32910606468",
+  "market_date_beijing": "2026-08-26",
   "overseas_quality_status": "PASS",
   "us_extended_hours_status": "PASS",
   "objects": {
     "NDX": {
       "quality_status": "PASS",
-      "as_of_beijing": "2026-08-25T04:00:00+08:00",
-      "market_date_local": "2026-08-24",
+      "as_of_beijing": "2026-08-26T04:00:00+08:00",
+      "market_date_local": "2026-08-25",
       "provider": "yahoo_chart_api",
       "symbol": "^NDX",
       "market_phase": "CLOSED",
@@ -35,8 +38,8 @@
     },
     "SOX": {
       "quality_status": "PASS",
-      "as_of_beijing": "2026-08-25T04:00:00+08:00",
-      "market_date_local": "2026-08-24",
+      "as_of_beijing": "2026-08-26T04:00:00+08:00",
+      "market_date_local": "2026-08-25",
       "provider": "yahoo_chart_api",
       "symbol": "^SOX",
       "market_phase": "CLOSED",
@@ -44,39 +47,57 @@
     },
     "N225": {
       "quality_status": "PASS",
-      "as_of_beijing": "2026-08-25T10:03:40+08:00",
+      "as_of_beijing": "2026-08-25T14:30:00+08:00",
       "market_date_local": "2026-08-25",
       "provider": "yahoo_chart_api",
       "symbol": "^N225",
-      "market_phase": "OPEN",
+      "market_phase": "PRE_OPEN",
       "error": ""
     },
     "KOSPI": {
       "quality_status": "PASS",
-      "as_of_beijing": "2026-08-25T09:58:40+08:00",
+      "as_of_beijing": "2026-08-25T14:00:00+08:00",
       "market_date_local": "2026-08-25",
       "provider": "yahoo_chart_api",
       "symbol": "^KS11",
-      "market_phase": "OPEN",
+      "market_phase": "PRE_OPEN",
       "error": ""
     },
     "TWII": {
       "quality_status": "PASS",
-      "as_of_beijing": "2026-08-25T09:58:45+08:00",
+      "as_of_beijing": "2026-08-25T13:30:00+08:00",
       "market_date_local": "2026-08-25",
       "provider": "yahoo_chart_api",
       "symbol": "^TWII",
-      "market_phase": "OPEN",
+      "market_phase": "PRE_OPEN",
       "error": ""
     },
     "HSTECH": {
       "quality_status": "PASS",
-      "as_of_beijing": "2026-08-25T10:19:10+08:00",
+      "as_of_beijing": "2026-08-25T16:08:38+08:00",
       "market_date_local": "2026-08-25",
-      "provider": "eastmoney_push2delay",
+      "provider": "eastmoney_push2",
       "symbol": "124.HSTECH",
-      "market_phase": "OPEN",
+      "market_phase": "PRE_OPEN",
       "error": ""
+    }
+  },
+  "provider_health": {
+    "hithink-finance:HS2083": {
+      "status": "ACTIVE",
+      "consecutive_failures": 0,
+      "failure_class": "TRANSIENT",
+      "bypass_date": "2026-08-26"
+    },
+    "yahoo_chart_api:HSTECH.HK": {
+      "status": "ACTIVE",
+      "consecutive_failures": 0,
+      "last_success_at": "2026-08-25T23:24:37+00:00"
+    },
+    "eastmoney_push2:124.HSTECH": {
+      "status": "ACTIVE",
+      "consecutive_failures": 0,
+      "last_success_at": "2026-08-25T23:24:37+00:00"
     }
   },
   "rules": {
