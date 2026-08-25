@@ -1,8 +1,8 @@
 {
   "research_id": "etf_option_risk_stage1",
-  "generated_at_beijing": "2026-08-25T22:55:35+08:00",
+  "generated_at_beijing": "2026-08-25T22:59:24+08:00",
   "status": "PASS",
-  "research_interpretation": "LIVE_FEASIBLE_HISTORY_PATH_REQUIRES_VALIDATION",
+  "research_interpretation": "LIVE_FEASIBLE_HISTORY_INSUFFICIENT",
   "source": {
     "project": {
       "repository": "simonlin1212/a-stock-data",
@@ -112,38 +112,41 @@
     "term_structure_status": "READY"
   },
   "historical_availability": {
-    "status": "LIMITED_ARCHIVE_VISIBLE_REQUIRES_VALIDATION",
+    "status": "EXPIRED_CONTRACT_METADATA_VISIBLE_NO_DAILY_IV_TIMESERIES",
     "expired_month_probes": [
       {
         "month": "2607",
         "returned_contract_count": 22,
-        "archive_visible_via_active_list_interface": true
+        "expired_contract_metadata_visible": true,
+        "historical_daily_iv_timeseries_proven": false
       },
       {
         "month": "2606",
         "returned_contract_count": 24,
-        "archive_visible_via_active_list_interface": true
+        "expired_contract_metadata_visible": true,
+        "historical_daily_iv_timeseries_proven": false
       },
       {
         "month": "2605",
         "returned_contract_count": 23,
-        "archive_visible_via_active_list_interface": true
+        "expired_contract_metadata_visible": true,
+        "historical_daily_iv_timeseries_proven": false
       }
     ],
-    "point_in_time_note": "Reviewed a-stock-data interface exposes active-contract current quotes/Greeks only. No historical IV series is assumed or fabricated."
+    "point_in_time_note": "Expired contract codes may remain discoverable, but this is metadata visibility only. The reviewed interface does not establish a daily historical IV/Skew/term-structure time series, so no historical alpha test is permitted."
   },
   "stage1_gate": {
     "live_chain_required": true,
     "live_chain_pass": true,
     "history_required_for_alpha_claim": true,
-    "history_sufficient_for_alpha_test": true,
+    "history_sufficient_for_alpha_test": false,
     "alpha_test_performed": false,
-    "reason": "Historical PIT IV/Skew/term-structure series unavailable through reviewed interface."
+    "reason": "Historical daily PIT IV/Skew/term-structure series is not available through the reviewed interface; expired contract metadata is not a substitute."
   },
   "decision_eligible": false,
   "trade_signal": null,
   "master_override": false,
   "production_integration": false,
-  "recommended_next_step": "If live chain is stable but history remains unavailable, either locate an independent historical options source before alpha testing or start a read-only daily research archive; do not integrate into decision_context yet.",
+  "recommended_next_step": "Do not integrate into decision_context. Before any alpha claim, locate a genuine historical daily options-risk source; alternatively archive live facts prospectively for future PIT research.",
   "errors": []
 }
