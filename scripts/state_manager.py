@@ -178,6 +178,7 @@ def build_research_evidence_summary(root: Path) -> dict[str, Any]:
     research = read_json(root / "data" / "state" / "research_context.json", {"status": "MISSING", "read_only": True})
     relative = read_json(root / "data" / "state" / "relative_strength.json", {"items": [], "read_only": True})
     delta = read_json(root / "data" / "state" / "research_evidence_delta.json", {"items": [], "read_only": True})
+    skfolio_risk = read_json(root / "data" / "state" / "skfolio_risk_evidence.json", {"status": "MISSING", "decision_eligible": False, "trade_signal": None, "read_only": True})
     delta_map = {str(x.get("code")): x for x in (delta.get("items") or []) if x.get("code")}
     items = []
     for row in relative.get("items") or []:
@@ -201,6 +202,7 @@ def build_research_evidence_summary(root: Path) -> dict[str, Any]:
         "status": research.get("status", "MISSING"), "market_date": relative.get("market_date") or research.get("market_date"),
         "as_of_beijing": relative.get("as_of_beijing"), "evidence_time_semantics": delta.get("evidence_time_semantics", "UNKNOWN"),
         "prior_research_as_of_beijing": delta.get("prior_as_of_beijing", ""), "etf_evidence": items,
+        "skfolio_risk_evidence": skfolio_risk,
         "historical_evidence_status": "ACCUMULATING" if research.get("status") == "READY" else "INSUFFICIENT_OR_MISSING",
         "use_in_current_decision": True,
         "interpretation_rule": "盘中优先解释相对上一研究节点真正新增、增强或减弱的证据，并结合价格结构、成交承接、生命周期和风险收益进行统一比较；当日收益排名仅为描述维度，不是资本效率排名。",
