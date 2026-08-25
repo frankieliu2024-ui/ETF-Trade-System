@@ -362,8 +362,17 @@ def main() -> int:
     decision_recorded, decision_id = record_formal_decision(request)
     if decision_recorded:
         decision = request.get("formal_decision") or {}
-        account["formal_action"] = {"action": decision.get("action") or decision.get("amount_action") or "", "quantity": decision.get("quantity"), "decision_id": decision_id, "decision_time": decision.get("decision_time") or decision.get("data_as_of_beijing") or datetime.now(SHANGHAI).isoformat(timespec="seconds"), "source": "CHATGPT_FORMAL_DECISION", "lifecycle": decision.get("lifecycle"), "applicable_object": decision.get("candidate_code") or decision.get("code") or "", "validity": "ACTIVE", "execution_status": "PENDING"}
-        atomic_json_write(ACCOUNT, account)
+        prior_action = account.get("formal_action") or {}
+        same_executed_decision = (
+            str(prior_action.get("decision_id") or "") == decision_id
+            and str(prior_action.get("execution_status") or "").upper() == "EXECUTED"
+        )
+        # Replaying the same formal decision is idempotent: an executed action
+        # must never be downgraded back to PENDING. A genuinely new decision
+        # may still become the current pending action.
+        if not same_executed_decision:
+            account["formal_action"] = {"action": decision.get("action") or decision.get("amount_action") or "", "quantity": decision.get("quantity"), "decision_id": decision_id, "decision_time": decision.get("decision_time") or decision.get("data_as_of_beijing") or datetime.now(SHANGHAI).isoformat(timespec="seconds"), "source": "CHATGPT_FORMAL_DECISION", "lifecycle": decision.get("lifecycle"), "applicable_object": decision.get("candidate_code") or decision.get("code") or "", "validity": "ACTIVE", "execution_status": "PENDING"}
+            atomic_json_write(ACCOUNT, account)
     dashboard = replace_block(DASHBOARD.read_text(encoding="utf-8"), START, END, build_dashboard_block(account, request.get("formal_decision"), request), insert_after_heading=True)
     DASHBOARD.write_text(dashboard, encoding="utf-8")
     trade = request.get("trade_event")
