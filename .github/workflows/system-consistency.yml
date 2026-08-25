@@ -110,19 +110,43 @@ jobs:
           python scripts/maintenance_guard.py
       - name: Persist consistency and maintenance state
         if: ${{ always() }}
+        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # These are owned validation/maintenance state files. Do not stage all
-          # generated runtime artifacts, which can race market-snapshot commits.
-          git add data/state/system_consistency.json
-          for f in data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json; do
-            [ -f "$f" ] && git add "$f"
+
+          # Preserve only files owned by this validation run, then rebase the
+          # worktree to latest main before committing. This avoids conflicts
+          # when another state-only workflow advances main concurrently.
+          mkdir -p /tmp/etf-owned-state/data/state
+          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json; do
+            if [ -f "$f" ]; then
+              mkdir -p "/tmp/etf-owned-state/$(dirname "$f")"
+              cp "$f" "/tmp/etf-owned-state/$f"
+            fi
           done
           if [ "${{ steps.backfill_request.outputs.has_request }}" = "true" ]; then
-            git add data/state/historical_backfill_status.json data/state/historical_position_research.json research/reports events/research/daily_features
-            git add -f -- data/market/audit/research_backfill
+            mkdir -p /tmp/etf-owned-state/backfill
+            cp -r data/state/historical_backfill_status.json data/state/historical_position_research.json research/reports events/research/daily_features /tmp/etf-owned-state/backfill/ 2>/dev/null || true
           fi
+
+          git fetch origin main
+          git reset --hard origin/main
+          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json; do
+            if [ -f "/tmp/etf-owned-state/$f" ]; then
+              mkdir -p "$(dirname "$f")"
+              cp "/tmp/etf-owned-state/$f" "$f"
+              git add "$f"
+            fi
+          done
+
+          if [ "${{ steps.backfill_request.outputs.has_request }}" = "true" ]; then
+            # Historical backfill remains owned by this workflow; existing
+            # backfill persistence behavior is intentionally unchanged.
+            git add data/state/historical_backfill_status.json data/state/historical_position_research.json research/reports events/research/daily_features 2>/dev/null || true
+            git add -f -- data/market/audit/research_backfill 2>/dev/null || true
+          fi
+
           if git diff --cached --quiet; then
             exit 0
           fi
@@ -132,9 +156,6 @@ jobs:
             msg="state: refresh consistency and maintenance guard"
           fi
           git commit -m "$msg"
-          # Context refresh is derived and must not block the owned state commit.
-          git restore --worktree .
-          git pull --rebase origin main
           git push origin HEAD:main
       - name: Enforce research backfill result
         if: ${{ steps.backfill_request.outputs.has_request == 'true' && steps.backfill.outcome == 'failure' }}
