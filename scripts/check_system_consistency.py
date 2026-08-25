@@ -238,6 +238,11 @@ def main() -> int:
     check("query:data_standard_read", DATA_STANDARD in query, "query context references data standard")
     check("query:mandatory_beijing_output", "output_time_rule" in query and "数据时点（北京时间）" in query, "query context forces Beijing-time output")
     check("query:us_extended_hours_read", "us_extended_hours_context" in query and "us_extended_hours_rule" in query, "query context reads and explains US extended hours")
+    refresh_module = read_text("scripts/query_time_market_refresh.py")
+    check("global_quote_router_exists", "build_market_quote_context" in router_module, "global quote router implementation exists")
+    check("query_time_refresh_entry_exists", (ROOT / "scripts/query_time_market_refresh.py").exists() and "refresh_market_quotes" in refresh_module, "query-time refresh facade exists")
+    check("query_time_refresh_can_bypass_stale_cache", "force_refresh" in query and "QUERY_TIME_IMMEDIATE_REFRESH" in router_module and "_query_refresh_needed" in router_module, "stale cache can trigger provider refresh")
+    check("scheduled_target_cadence_600s", runtime.get("target_cadence_seconds") == 600 and "*/10" in overseas_workflow and "*/10" in read_text(".github/workflows/us-extended-hours-pulse.yml"), "scheduled market workflows target ten-minute cadence")
 
     overseas_builder = read_text("scripts/build_overseas_context.py")
     check("overseas:beijing_timestamp", "as_of_beijing" in overseas_builder and "generated_at_beijing" in overseas_builder, "overseas context exposes Beijing timestamps")
@@ -298,7 +303,7 @@ def main() -> int:
     check("workflow:us_extended_wired", "build_us_extended_hours_context.py" in overseas_workflow and "us_extended_hours_context.json" in overseas_workflow, "US extended-hours context wired into A-share pre-open workflow")
     check("workflow:us_postmarket_0700_start", '*/10 23 * * 0-4' in overseas_workflow, "Beijing 07:00-07:50 prior-US post-market tail scheduled")
     check("workflow:overseas_0800_start", '*/10 0 * * 1-5' in overseas_workflow, "Beijing 08:00-08:50 overseas pulses scheduled")
-    check("workflow:overseas_0900_0910", '0,10 1 * * 1-5' in overseas_workflow, "Beijing 09:00/09:10 overseas pulses scheduled")
+    check("workflow:overseas_asia_10m", '*/10 0-7 * * 1-5' in overseas_workflow, "Beijing 08:00-15:50 Asia pulses scheduled every ten minutes")
     check("workflow:overseas_runtime_health", "build_overseas_runtime_health.py" in overseas_workflow and "overseas_runtime_health.json" in overseas_workflow, "overseas runtime health is generated and committed")
     check("workflow:overseas_hithink_runtime", "HITHINK_FINANCE_API_KEY" in overseas_workflow and "@hithink-tech/hithink-finance-cli" in overseas_workflow, "overseas runner installs Hithink CLI and receives secret")
 
