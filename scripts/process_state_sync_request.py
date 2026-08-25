@@ -300,6 +300,21 @@ def execution_attribution(trade: dict, linked_decision_id: str) -> dict:
     return {"status": "READY" if dprice is not None and eprice is not None else "PARTIAL", "decision_id": linked_decision_id, "hypothesis_id": decision.get("hypothesis_id"), "decision_price": dprice, "execution_price": eprice, "execution_price_vs_decision_pct": diff_pct, "adverse_execution_cost_pct": adverse, "decision_to_execution_seconds": delay, "method_note": "正的adverse_execution_cost_pct表示相对正式决策价格出现不利执行偏差；买入价更高或卖出价更低均为正。该指标分离判断质量与执行质量，不改变交易权限。"}
 
 
+
+def _trade_idempotency_key(trade: dict, confirmed_at: str) -> str:
+    explicit = str(trade.get("idempotency_key") or "").strip()
+    return explicit or "|".join(str(trade.get(key) or "") for key in ("code", "side", "quantity", "price")) + "|" + str(confirmed_at)
+
+
+def _find_existing_trade(trade: dict, confirmed_at: str, key: str) -> dict | None:
+    directory = ROOT / "events" / "trades"
+    for path in sorted(directory.glob("*.json")) if directory.exists() else []:
+        try: prior = load_json(path)
+        except Exception: continue
+        if prior.get("idempotency_key") == key or (all(str(prior.get(k) or "") == str(trade.get(k) or "") for k in ("code", "side", "quantity", "price")) and str(prior.get("confirmed_at_beijing") or "") == str(confirmed_at)):
+            return prior
+    return None
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("request_path")
@@ -310,6 +325,9 @@ def main() -> int:
     request = load_json(req_path)
     supplied_account = request.get("account_fact")
     if supplied_account:
+        prior_account = load_json(ACCOUNT) if ACCOUNT.exists() else {}
+        if "formal_action" not in supplied_account and prior_account.get("formal_action"):
+            supplied_account["formal_action"] = prior_account["formal_action"]
         supplied_account.setdefault("status", "VALID")
         supplied_account.setdefault("validity_mode", "EVENT_DRIVEN_CARRY_FORWARD")
         supplied_account.setdefault("orders", [])
@@ -320,22 +338,35 @@ def main() -> int:
     if account.get("status") != "VALID":
         raise RuntimeError("account_fact is not VALID")
     decision_recorded, decision_id = record_formal_decision(request)
+    if decision_recorded:
+        decision = request.get("formal_decision") or {}
+        account["formal_action"] = {"action": decision.get("action") or decision.get("amount_action") or "", "quantity": decision.get("quantity"), "decision_id": decision_id, "decision_time": decision.get("decision_time") or decision.get("data_as_of_beijing") or datetime.now(SHANGHAI).isoformat(timespec="seconds"), "source": "CHATGPT_FORMAL_DECISION", "lifecycle": decision.get("lifecycle"), "applicable_object": decision.get("candidate_code") or decision.get("code") or "", "validity": "ACTIVE", "execution_status": "PENDING"}
+        atomic_json_write(ACCOUNT, account)
     dashboard = replace_block(DASHBOARD.read_text(encoding="utf-8"), START, END, build_dashboard_block(account, request.get("formal_decision"), request), insert_after_heading=True)
     DASHBOARD.write_text(dashboard, encoding="utf-8")
     trade = request.get("trade_event")
+    trade_event_recorded = False
     if trade:
-        event_id = str(trade.get("event_id") or request.get("request_id") or datetime.now(SHANGHAI).strftime("%Y%m%d_%H%M%S"))
-        linked_decision_id = str(trade.get("decision_id") or decision_id or "")
         confirmed_at = trade.get("confirmed_at_beijing") or account.get("updated_at")
-        attribution = execution_attribution({**trade, "confirmed_at_beijing": confirmed_at}, linked_decision_id)
-        event = {"event_id": event_id, "confirmed_at_beijing": confirmed_at, "name": trade.get("name"), "code": trade.get("code"), "side": trade.get("side"), "quantity": trade.get("quantity"), "price": trade.get("price"), "amount": trade.get("amount"), "lifecycle": trade.get("lifecycle"), "source": trade.get("source", account.get("source")), "linked_decision_id": linked_decision_id or None, "hypothesis_id": trade.get("hypothesis_id") or attribution.get("hypothesis_id") or None, "execution_attribution": attribution}
-        event_path = ROOT / "events" / "trades" / f"{event_id}.json"
-        event_path.parent.mkdir(parents=True, exist_ok=True)
-        atomic_json_write(event_path, event)
-        ARCHIVE.write_text(append_managed_line(ARCHIVE.read_text(encoding="utf-8"), TRADE_START, TRADE_END, f"- {event['confirmed_at_beijing']}：{event.get('name')}（{event.get('code')}）{event.get('side')} {event.get('quantity')}份/股，成交价{event.get('price')}，金额{event.get('amount')}；来源：{event.get('source')}。"), encoding="utf-8")
-        EXPERIENCE.write_text(append_managed_line(EXPERIENCE.read_text(encoding="utf-8"), CASE_START, CASE_END, f"- 待复盘CASE｜{event['confirmed_at_beijing']}｜{event.get('name')}（{event.get('code')}）｜{event.get('side')} {event.get('quantity')}份/股｜生命周期：{event.get('lifecycle') or '待确认'}｜仅登记真实成交，复盘结论留待盘后形成。"), encoding="utf-8")
+        idempotency_key = _trade_idempotency_key(trade, confirmed_at)
+        existing = _find_existing_trade(trade, confirmed_at, idempotency_key)
+        if existing:
+            event, event_id, trade_event_recorded = existing, str(existing.get("event_id") or ""), True
+        else:
+            event_id = str(trade.get("event_id") or request.get("request_id") or datetime.now(SHANGHAI).strftime("%Y%m%d_%H%M%S"))
+            linked_decision_id = str(trade.get("decision_id") or decision_id or "")
+            attribution = execution_attribution({**trade, "confirmed_at_beijing": confirmed_at}, linked_decision_id)
+            event = {"event_id": event_id, "idempotency_key": idempotency_key, "confirmed_at_beijing": confirmed_at, "name": trade.get("name"), "code": trade.get("code"), "side": trade.get("side"), "quantity": trade.get("quantity"), "price": trade.get("price"), "amount": trade.get("amount"), "lifecycle": trade.get("lifecycle"), "source": trade.get("source", account.get("source")), "linked_decision_id": linked_decision_id or None, "hypothesis_id": trade.get("hypothesis_id") or attribution.get("hypothesis_id") or None, "execution_status": "EXECUTED", "execution_attribution": attribution}
+            event_path = ROOT / "events" / "trades" / f"{event_id}.json"
+            event_path.parent.mkdir(parents=True, exist_ok=True)
+            atomic_json_write(event_path, event)
+            ARCHIVE.write_text(append_managed_line(ARCHIVE.read_text(encoding="utf-8"), TRADE_START, TRADE_END, f"- {event['confirmed_at_beijing']}：{event.get('name')}（{event.get('code')}）{event.get('side')} {event.get('quantity')}份/股，成交价{event.get('price')}，金额{event.get('amount')}；来源：{event.get('source')}。"), encoding="utf-8")
+            EXPERIENCE.write_text(append_managed_line(EXPERIENCE.read_text(encoding="utf-8"), CASE_START, CASE_END, f"- 待复盘CASE｜{event['confirmed_at_beijing']}｜{event.get('name')}（{event.get('code')}）｜{event.get('side')} {event.get('quantity')}份/股｜生命周期：{event.get('lifecycle') or '待确认'}｜仅登记真实成交，复盘结论留待盘后形成。"), encoding="utf-8")
+            trade_event_recorded = True
+        account["formal_action"] = {**(account.get("formal_action") or {}), "execution_status": "EXECUTED", "execution_fact_ref": f"events/trades/{event_id}.json", "last_executed_event_id": event_id}
+        atomic_json_write(ACCOUNT, account)
     review_recorded, review_idempotent = record_post_close_review(account, request)
-    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": bool(trade), "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent}
+    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent}
     print(json.dumps(result, ensure_ascii=False))
     return 0
 
