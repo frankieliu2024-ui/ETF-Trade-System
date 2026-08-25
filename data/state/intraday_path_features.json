@@ -1,51 +1,51 @@
 {
-  "generated_at": "2026-08-25T06:03:14Z",
+  "generated_at": "2026-08-25T06:05:48Z",
   "market_date": "2026-08-25",
   "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
   "read_only": true,
   "decision_boundary": "只描述离散行情脉冲形成的日内路径几何、成交增量和相对强弱；结构候选标签不是交易信号，不生成风险许可、机会状态、金额或买卖动作。",
   "label_boundary": "RAPID_RISE/SHARP_DROP/V_RECOVERY/HIGH_ZONE_CONSOLIDATION均为描述性候选标签。必须结合采样覆盖、实际时点、市场阶段及MASTER完整决策链解释。",
   "status": "READY",
-  "snapshot_count": 21,
+  "snapshot_count": 22,
   "first_snapshot": "data/market/snapshots/2026-08-25_094809.json",
-  "latest_snapshot": "data/market/snapshots/2026-08-25_140314.json",
+  "latest_snapshot": "data/market/snapshots/2026-08-25_140411.json",
   "features": [
     {
       "symbol": "000001",
       "asset_class": "A_SHARE_INDEX",
-      "sample_count": 21,
+      "sample_count": 22,
       "first_as_of_beijing": "2026-08-25T09:48:08+08:00",
-      "latest_as_of_beijing": "2026-08-25T14:03:14+08:00",
+      "latest_as_of_beijing": "2026-08-25T14:04:11+08:00",
       "first_price": 3852.85,
-      "latest_price": 3887.53,
-      "path_change_pct": 0.9001,
+      "latest_price": 3888.77,
+      "path_change_pct": 0.9323,
       "path_low": 3852.85,
       "path_low_as_of_beijing": "2026-08-25T09:48:08+08:00",
       "path_high": 3896.16,
       "path_high_as_of_beijing": "2026-08-25T13:16:05+08:00",
-      "recovery_from_path_low_pct": 0.9001,
-      "retreat_from_path_high_pct": -0.2215,
-      "latest_day_range_position": 0.8086,
-      "recent_interval_minutes": 2.55,
-      "recent_move_pct": 0.0026,
-      "recent_slope_pct_per_10m": 0.0101,
-      "recent_volume_delta": 298804000.0,
-      "recent_amount_delta": 4994860000.0,
+      "recovery_from_path_low_pct": 0.9323,
+      "retreat_from_path_high_pct": -0.1897,
+      "latest_day_range_position": 0.8359,
+      "recent_interval_minutes": 0.95,
+      "recent_move_pct": 0.0319,
+      "recent_slope_pct_per_10m": 0.3358,
+      "recent_volume_delta": 93616000.0,
+      "recent_amount_delta": 1514560000.0,
       "relative_to_indices": {
         "000001": {
           "latest_relative_change_pct_points": 0.0,
-          "benchmark_change_pct": 0.1422,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "benchmark_change_pct": 0.1741,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 0.996,
-          "benchmark_change_pct": -0.8538,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 1.0043,
+          "benchmark_change_pct": -0.8302,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         }
       },
       "sampling": {
         "coverage": "MEDIUM",
-        "median_gap_minutes": 7.1,
+        "median_gap_minutes": 6.97,
         "max_gap_minutes": 101.1,
         "limitation": "离散脉冲只能重建近实时路径；两次采样之间的瞬时拉升/急跌可能遗漏。日内high/low可证明期间发生过极值，但不能单独确定具体分钟形态。"
       },
@@ -54,11 +54,11 @@
           "label": "HIGH_ZONE_CONSOLIDATION_CANDIDATE",
           "evidence": {
             "tail_points": 3,
-            "tail_spread_pct": 0.0203,
+            "tail_spread_pct": 0.0345,
             "range_positions": [
-              0.7825,
               0.7984,
-              0.8007
+              0.8007,
+              0.8294
             ]
           }
         }
@@ -67,39 +67,39 @@
     {
       "symbol": "159326",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 15,
       "first_as_of_beijing": "2026-08-25T09:48:06+08:00",
-      "latest_as_of_beijing": "2026-08-25T14:03:11+08:00",
+      "latest_as_of_beijing": "2026-08-25T14:04:10+08:00",
       "first_price": 1.623,
-      "latest_price": 1.675,
-      "path_change_pct": 3.2039,
+      "latest_price": 1.676,
+      "path_change_pct": 3.2656,
       "path_low": 1.623,
       "path_low_as_of_beijing": "2026-08-25T09:48:06+08:00",
       "path_high": 1.687,
       "path_high_as_of_beijing": "2026-08-25T13:16:03+08:00",
-      "recovery_from_path_low_pct": 3.2039,
-      "retreat_from_path_high_pct": -0.7113,
-      "latest_day_range_position": 0.8088,
-      "recent_interval_minutes": 25.97,
-      "recent_move_pct": -0.1193,
-      "recent_slope_pct_per_10m": -0.0459,
-      "recent_volume_delta": 18787400.0,
-      "recent_amount_delta": 31483070.0,
+      "recovery_from_path_low_pct": 3.2656,
+      "retreat_from_path_high_pct": -0.652,
+      "latest_day_range_position": 0.8235,
+      "recent_interval_minutes": 0.98,
+      "recent_move_pct": 0.0597,
+      "recent_slope_pct_per_10m": 0.6071,
+      "recent_volume_delta": 1100200.0,
+      "recent_amount_delta": 1842810.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 1.0051,
-          "benchmark_change_pct": 0.1422,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 1.0336,
+          "benchmark_change_pct": 0.1741,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 2.0011,
-          "benchmark_change_pct": -0.8538,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 2.0379,
+          "benchmark_change_pct": -0.8302,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         }
       },
       "sampling": {
         "coverage": "MEDIUM",
-        "median_gap_minutes": 13.68,
+        "median_gap_minutes": 11.7,
         "max_gap_minutes": 101.1,
         "limitation": "离散脉冲只能重建近实时路径；两次采样之间的瞬时拉升/急跌可能遗漏。日内high/low可证明期间发生过极值，但不能单独确定具体分钟形态。"
       },
@@ -117,20 +117,20 @@
           "label": "V_RECOVERY_CANDIDATE",
           "evidence": {
             "low_as_of_beijing": "2026-08-25T09:48:06+08:00",
-            "recovery_from_path_low_pct": 3.2039,
-            "points_after_low": 13,
-            "latest_range_position": 0.8125
+            "recovery_from_path_low_pct": 3.2656,
+            "points_after_low": 14,
+            "latest_range_position": 0.8281
           }
         },
         {
           "label": "HIGH_ZONE_CONSOLIDATION_CANDIDATE",
           "evidence": {
             "tail_points": 3,
-            "tail_spread_pct": 0.5373,
+            "tail_spread_pct": 0.1194,
             "range_positions": [
-              0.9531,
               0.8438,
-              0.8125
+              0.8125,
+              0.8281
             ]
           }
         }
@@ -139,39 +139,39 @@
     {
       "symbol": "159561",
       "asset_class": "ETF",
-      "sample_count": 17,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-08-25T09:48:02+08:00",
-      "latest_as_of_beijing": "2026-08-25T14:03:07+08:00",
+      "latest_as_of_beijing": "2026-08-25T14:03:59+08:00",
       "first_price": 1.371,
-      "latest_price": 1.376,
-      "path_change_pct": 0.3647,
+      "latest_price": 1.375,
+      "path_change_pct": 0.2918,
       "path_low": 1.371,
       "path_low_as_of_beijing": "2026-08-25T09:48:02+08:00",
       "path_high": 1.376,
       "path_high_as_of_beijing": "2026-08-25T13:31:40+08:00",
-      "recovery_from_path_low_pct": 0.3647,
-      "retreat_from_path_high_pct": 0.0,
-      "latest_day_range_position": 1.0,
-      "recent_interval_minutes": 2.53,
-      "recent_move_pct": 0.0727,
-      "recent_slope_pct_per_10m": 0.2871,
-      "recent_volume_delta": 951900.0,
-      "recent_amount_delta": 1308978.0,
+      "recovery_from_path_low_pct": 0.2918,
+      "retreat_from_path_high_pct": -0.0727,
+      "latest_day_range_position": 0.8333,
+      "recent_interval_minutes": 0.87,
+      "recent_move_pct": -0.0727,
+      "recent_slope_pct_per_10m": -0.8386,
+      "recent_volume_delta": 321000.0,
+      "recent_amount_delta": 441396.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 0.1494,
-          "benchmark_change_pct": 0.1422,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 0.0445,
+          "benchmark_change_pct": 0.1741,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 1.1453,
-          "benchmark_change_pct": -0.8538,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 1.0489,
+          "benchmark_change_pct": -0.8302,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         }
       },
       "sampling": {
         "coverage": "MEDIUM",
-        "median_gap_minutes": 9.12,
+        "median_gap_minutes": 8.53,
         "max_gap_minutes": 120.3,
         "limitation": "离散脉冲只能重建近实时路径；两次采样之间的瞬时拉升/急跌可能遗漏。日内high/low可证明期间发生过极值，但不能单独确定具体分钟形态。"
       },
@@ -183,8 +183,8 @@
             "tail_spread_pct": 0.0727,
             "range_positions": [
               0.8,
-              0.8,
-              1.0
+              1.0,
+              0.8
             ]
           }
         }
@@ -213,14 +213,14 @@
       "recent_amount_delta": 15220650.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -0.5171,
-          "benchmark_change_pct": 0.1422,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": -0.549,
+          "benchmark_change_pct": 0.1741,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 0.4789,
-          "benchmark_change_pct": -0.8538,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 0.4553,
+          "benchmark_change_pct": -0.8302,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         }
       },
       "sampling": {
@@ -244,9 +244,9 @@
     {
       "symbol": "159941",
       "asset_class": "ETF",
-      "sample_count": 19,
+      "sample_count": 20,
       "first_as_of_beijing": "2026-08-25T09:47:56+08:00",
-      "latest_as_of_beijing": "2026-08-25T14:03:06+08:00",
+      "latest_as_of_beijing": "2026-08-25T14:03:55+08:00",
       "first_price": 1.61,
       "latest_price": 1.644,
       "path_change_pct": 2.1118,
@@ -257,26 +257,26 @@
       "recovery_from_path_low_pct": 2.1118,
       "retreat_from_path_high_pct": -0.1215,
       "latest_day_range_position": 0.8571,
-      "recent_interval_minutes": 2.6,
-      "recent_move_pct": 0.0609,
-      "recent_slope_pct_per_10m": 0.2341,
-      "recent_volume_delta": 5693200.0,
-      "recent_amount_delta": 9357700.0,
+      "recent_interval_minutes": 0.82,
+      "recent_move_pct": 0.0,
+      "recent_slope_pct_per_10m": 0.0,
+      "recent_volume_delta": 228300.0,
+      "recent_amount_delta": 375300.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 1.5905,
-          "benchmark_change_pct": 0.1422,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 1.5585,
+          "benchmark_change_pct": 0.1741,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 2.5864,
-          "benchmark_change_pct": -0.8538,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 2.5629,
+          "benchmark_change_pct": -0.8302,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         }
       },
       "sampling": {
         "coverage": "MEDIUM",
-        "median_gap_minutes": 9.15,
+        "median_gap_minutes": 8.6,
         "max_gap_minutes": 101.18,
         "limitation": "离散脉冲只能重建近实时路径；两次采样之间的瞬时拉升/急跌可能遗漏。日内high/low可证明期间发生过极值，但不能单独确定具体分钟形态。"
       },
@@ -286,7 +286,7 @@
           "evidence": {
             "low_as_of_beijing": "2026-08-25T09:47:56+08:00",
             "recovery_from_path_low_pct": 2.1118,
-            "points_after_low": 18,
+            "points_after_low": 19,
             "latest_range_position": 0.9444
           }
         },
@@ -294,10 +294,10 @@
           "label": "HIGH_ZONE_CONSOLIDATION_CANDIDATE",
           "evidence": {
             "tail_points": 3,
-            "tail_spread_pct": 0.1217,
+            "tail_spread_pct": 0.0609,
             "range_positions": [
-              0.9722,
               0.9167,
+              0.9444,
               0.9444
             ]
           }
@@ -307,39 +307,39 @@
     {
       "symbol": "159992",
       "asset_class": "ETF",
-      "sample_count": 19,
+      "sample_count": 20,
       "first_as_of_beijing": "2026-08-25T09:48:05+08:00",
-      "latest_as_of_beijing": "2026-08-25T14:03:10+08:00",
+      "latest_as_of_beijing": "2026-08-25T14:04:03+08:00",
       "first_price": 0.848,
-      "latest_price": 0.865,
-      "path_change_pct": 2.0047,
+      "latest_price": 0.866,
+      "path_change_pct": 2.1226,
       "path_low": 0.848,
       "path_low_as_of_beijing": "2026-08-25T09:48:05+08:00",
       "path_high": 0.866,
       "path_high_as_of_beijing": "2026-08-25T13:16:04+08:00",
-      "recovery_from_path_low_pct": 2.0047,
-      "retreat_from_path_high_pct": -0.1155,
-      "latest_day_range_position": 0.92,
-      "recent_interval_minutes": 2.57,
-      "recent_move_pct": -0.1155,
-      "recent_slope_pct_per_10m": -0.4499,
-      "recent_volume_delta": 10315100.0,
-      "recent_amount_delta": 8932550.0,
+      "recovery_from_path_low_pct": 2.1226,
+      "retreat_from_path_high_pct": 0.0,
+      "latest_day_range_position": 0.96,
+      "recent_interval_minutes": 0.88,
+      "recent_move_pct": 0.1156,
+      "recent_slope_pct_per_10m": 1.3088,
+      "recent_volume_delta": 2888100.0,
+      "recent_amount_delta": 2500060.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 1.6225,
-          "benchmark_change_pct": 0.1422,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 1.7082,
+          "benchmark_change_pct": 0.1741,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 2.6185,
-          "benchmark_change_pct": -0.8538,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 2.7126,
+          "benchmark_change_pct": -0.8302,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         }
       },
       "sampling": {
         "coverage": "MEDIUM",
-        "median_gap_minutes": 7.77,
+        "median_gap_minutes": 6.98,
         "max_gap_minutes": 101.1,
         "limitation": "离散脉冲只能重建近实时路径；两次采样之间的瞬时拉升/急跌可能遗漏。日内high/low可证明期间发生过极值，但不能单独确定具体分钟形态。"
       },
@@ -348,20 +348,20 @@
           "label": "V_RECOVERY_CANDIDATE",
           "evidence": {
             "low_as_of_beijing": "2026-08-25T09:48:05+08:00",
-            "recovery_from_path_low_pct": 2.0047,
-            "points_after_low": 18,
-            "latest_range_position": 0.9444
+            "recovery_from_path_low_pct": 2.1226,
+            "points_after_low": 19,
+            "latest_range_position": 1.0
           }
         },
         {
           "label": "HIGH_ZONE_CONSOLIDATION_CANDIDATE",
           "evidence": {
             "tail_points": 3,
-            "tail_spread_pct": 0.3476,
+            "tail_spread_pct": 0.1156,
             "range_positions": [
-              0.8333,
               1.0,
-              0.9444
+              0.9444,
+              1.0
             ]
           }
         }
@@ -370,39 +370,39 @@
     {
       "symbol": "399006",
       "asset_class": "A_SHARE_INDEX",
-      "sample_count": 21,
+      "sample_count": 22,
       "first_as_of_beijing": "2026-08-25T09:48:08+08:00",
-      "latest_as_of_beijing": "2026-08-25T14:03:14+08:00",
+      "latest_as_of_beijing": "2026-08-25T14:04:11+08:00",
       "first_price": 3369.8808,
-      "latest_price": 3402.5846,
-      "path_change_pct": 0.9705,
+      "latest_price": 3403.3934,
+      "path_change_pct": 0.9945,
       "path_low": 3369.8808,
       "path_low_as_of_beijing": "2026-08-25T09:48:08+08:00",
       "path_high": 3438.3978,
       "path_high_as_of_beijing": "2026-08-25T13:16:05+08:00",
-      "recovery_from_path_low_pct": 0.9705,
-      "retreat_from_path_high_pct": -1.0416,
-      "latest_day_range_position": 0.5296,
-      "recent_interval_minutes": 2.55,
-      "recent_move_pct": 0.0532,
-      "recent_slope_pct_per_10m": 0.2088,
-      "recent_volume_delta": 106451000.0,
-      "recent_amount_delta": 2816470000.0,
+      "recovery_from_path_low_pct": 0.9945,
+      "retreat_from_path_high_pct": -1.018,
+      "latest_day_range_position": 0.5396,
+      "recent_interval_minutes": 0.95,
+      "recent_move_pct": 0.0238,
+      "recent_slope_pct_per_10m": 0.2502,
+      "recent_volume_delta": 37616000.0,
+      "recent_amount_delta": 925050000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -0.996,
-          "benchmark_change_pct": 0.1422,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": -1.0043,
+          "benchmark_change_pct": 0.1741,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         },
         "399006": {
           "latest_relative_change_pct_points": 0.0,
-          "benchmark_change_pct": -0.8538,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "benchmark_change_pct": -0.8302,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         }
       },
       "sampling": {
         "coverage": "MEDIUM",
-        "median_gap_minutes": 7.1,
+        "median_gap_minutes": 6.97,
         "max_gap_minutes": 101.1,
         "limitation": "离散脉冲只能重建近实时路径；两次采样之间的瞬时拉升/急跌可能遗漏。日内high/low可证明期间发生过极值，但不能单独确定具体分钟形态。"
       },
@@ -411,9 +411,9 @@
     {
       "symbol": "513180",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 15,
       "first_as_of_beijing": "2026-08-25T09:54:48+08:00",
-      "latest_as_of_beijing": "2026-08-25T14:00:31+08:00",
+      "latest_as_of_beijing": "2026-08-25T14:03:56+08:00",
       "first_price": 0.576,
       "latest_price": 0.579,
       "path_change_pct": 0.5208,
@@ -424,26 +424,26 @@
       "recovery_from_path_low_pct": 0.8711,
       "retreat_from_path_high_pct": 0.0,
       "latest_day_range_position": 0.8571,
-      "recent_interval_minutes": 27.48,
-      "recent_move_pct": 0.5208,
-      "recent_slope_pct_per_10m": 0.1895,
-      "recent_volume_delta": 363253800.0,
-      "recent_amount_delta": 209959100.0,
+      "recent_interval_minutes": 3.42,
+      "recent_move_pct": 0.0,
+      "recent_slope_pct_per_10m": 0.0,
+      "recent_volume_delta": 26131200.0,
+      "recent_amount_delta": 15129800.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -0.3146,
-          "benchmark_change_pct": 0.1422,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": -0.3466,
+          "benchmark_change_pct": 0.1741,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 0.6814,
-          "benchmark_change_pct": -0.8538,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 0.6578,
+          "benchmark_change_pct": -0.8302,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         }
       },
       "sampling": {
         "coverage": "MEDIUM",
-        "median_gap_minutes": 8.58,
+        "median_gap_minutes": 7.92,
         "max_gap_minutes": 130.03,
         "limitation": "离散脉冲只能重建近实时路径；两次采样之间的瞬时拉升/急跌可能遗漏。日内high/low可证明期间发生过极值，但不能单独确定具体分钟形态。"
       },
@@ -452,9 +452,9 @@
     {
       "symbol": "513520",
       "asset_class": "ETF",
-      "sample_count": 18,
+      "sample_count": 19,
       "first_as_of_beijing": "2026-08-25T09:55:01+08:00",
-      "latest_as_of_beijing": "2026-08-25T14:03:08+08:00",
+      "latest_as_of_beijing": "2026-08-25T14:04:00+08:00",
       "first_price": 2.238,
       "latest_price": 2.265,
       "path_change_pct": 1.2064,
@@ -465,26 +465,26 @@
       "recovery_from_path_low_pct": 1.2517,
       "retreat_from_path_high_pct": -0.0441,
       "latest_day_range_position": 0.9318,
-      "recent_interval_minutes": 2.58,
-      "recent_move_pct": 0.0442,
-      "recent_slope_pct_per_10m": 0.171,
-      "recent_volume_delta": 757900.0,
-      "recent_amount_delta": 1716370.0,
+      "recent_interval_minutes": 0.87,
+      "recent_move_pct": 0.0,
+      "recent_slope_pct_per_10m": 0.0,
+      "recent_volume_delta": 790500.0,
+      "recent_amount_delta": 1790490.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 0.5692,
-          "benchmark_change_pct": 0.1422,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 0.5373,
+          "benchmark_change_pct": 0.1741,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 1.5652,
-          "benchmark_change_pct": -0.8538,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 1.5416,
+          "benchmark_change_pct": -0.8302,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         }
       },
       "sampling": {
         "coverage": "MEDIUM",
-        "median_gap_minutes": 8.57,
+        "median_gap_minutes": 7.88,
         "max_gap_minutes": 101.12,
         "limitation": "离散脉冲只能重建近实时路径；两次采样之间的瞬时拉升/急跌可能遗漏。日内high/low可证明期间发生过极值，但不能单独确定具体分钟形态。"
       },
@@ -494,7 +494,7 @@
           "evidence": {
             "low_as_of_beijing": "2026-08-25T10:01:57+08:00",
             "recovery_from_path_low_pct": 1.2517,
-            "points_after_low": 16,
+            "points_after_low": 17,
             "latest_range_position": 0.9655
           }
         },
@@ -504,8 +504,8 @@
             "tail_points": 3,
             "tail_spread_pct": 0.0442,
             "range_positions": [
-              0.9655,
               0.931,
+              0.9655,
               0.9655
             ]
           }
@@ -515,39 +515,39 @@
     {
       "symbol": "515880",
       "asset_class": "ETF",
-      "sample_count": 16,
+      "sample_count": 17,
       "first_as_of_beijing": "2026-08-25T09:55:04+08:00",
-      "latest_as_of_beijing": "2026-08-25T14:03:13+08:00",
+      "latest_as_of_beijing": "2026-08-25T14:04:06+08:00",
       "first_price": 0.638,
-      "latest_price": 0.649,
-      "path_change_pct": 1.7241,
+      "latest_price": 0.65,
+      "path_change_pct": 1.8809,
       "path_low": 0.638,
       "path_low_as_of_beijing": "2026-08-25T09:55:04+08:00",
       "path_high": 0.66,
       "path_high_as_of_beijing": "2026-08-25T13:16:02+08:00",
-      "recovery_from_path_low_pct": 1.7241,
-      "retreat_from_path_high_pct": -1.6667,
-      "latest_day_range_position": 0.625,
-      "recent_interval_minutes": 23.4,
-      "recent_move_pct": -0.3072,
-      "recent_slope_pct_per_10m": -0.1313,
-      "recent_volume_delta": 280821900.0,
-      "recent_amount_delta": 182080500.0,
+      "recovery_from_path_low_pct": 1.8809,
+      "retreat_from_path_high_pct": -1.5152,
+      "latest_day_range_position": 0.6562,
+      "recent_interval_minutes": 0.88,
+      "recent_move_pct": 0.1541,
+      "recent_slope_pct_per_10m": 1.7443,
+      "recent_volume_delta": 3592100.0,
+      "recent_amount_delta": 2333800.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 0.0121,
-          "benchmark_change_pct": 0.1422,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 0.1345,
+          "benchmark_change_pct": 0.1741,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 1.0081,
-          "benchmark_change_pct": -0.8538,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 1.1388,
+          "benchmark_change_pct": -0.8302,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         }
       },
       "sampling": {
         "coverage": "MEDIUM",
-        "median_gap_minutes": 9.72,
+        "median_gap_minutes": 8.31,
         "max_gap_minutes": 101.08,
         "limitation": "离散脉冲只能重建近实时路径；两次采样之间的瞬时拉升/急跌可能遗漏。日内high/low可证明期间发生过极值，但不能单独确定具体分钟形态。"
       },
@@ -565,9 +565,9 @@
           "label": "V_RECOVERY_CANDIDATE",
           "evidence": {
             "low_as_of_beijing": "2026-08-25T09:55:04+08:00",
-            "recovery_from_path_low_pct": 1.7241,
-            "points_after_low": 15,
-            "latest_range_position": 0.5
+            "recovery_from_path_low_pct": 1.8809,
+            "points_after_low": 16,
+            "latest_range_position": 0.5455
           }
         }
       ]
@@ -575,39 +575,39 @@
     {
       "symbol": "518880",
       "asset_class": "ETF",
-      "sample_count": 19,
+      "sample_count": 20,
       "first_as_of_beijing": "2026-08-25T09:48:03+08:00",
-      "latest_as_of_beijing": "2026-08-25T14:03:09+08:00",
+      "latest_as_of_beijing": "2026-08-25T14:04:02+08:00",
       "first_price": 9.61,
-      "latest_price": 9.542,
-      "path_change_pct": -0.7076,
+      "latest_price": 9.54,
+      "path_change_pct": -0.7284,
       "path_low": 9.501,
       "path_low_as_of_beijing": "2026-08-25T10:58:44+08:00",
       "path_high": 9.61,
       "path_high_as_of_beijing": "2026-08-25T09:48:03+08:00",
-      "recovery_from_path_low_pct": 0.4315,
-      "retreat_from_path_high_pct": -0.7076,
-      "latest_day_range_position": 0.3659,
-      "recent_interval_minutes": 2.55,
-      "recent_move_pct": 0.0314,
-      "recent_slope_pct_per_10m": 0.1233,
-      "recent_volume_delta": 4921500.0,
-      "recent_amount_delta": 46954200.0,
+      "recovery_from_path_low_pct": 0.4105,
+      "retreat_from_path_high_pct": -0.7284,
+      "latest_day_range_position": 0.3496,
+      "recent_interval_minutes": 0.88,
+      "recent_move_pct": -0.021,
+      "recent_slope_pct_per_10m": -0.2373,
+      "recent_volume_delta": 1257700.0,
+      "recent_amount_delta": 12000100.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -0.3722,
-          "benchmark_change_pct": 0.1422,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": -0.4251,
+          "benchmark_change_pct": 0.1741,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 0.6237,
-          "benchmark_change_pct": -0.8538,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 0.5793,
+          "benchmark_change_pct": -0.8302,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         }
       },
       "sampling": {
         "coverage": "MEDIUM",
-        "median_gap_minutes": 8.62,
+        "median_gap_minutes": 8.52,
         "max_gap_minutes": 101.13,
         "limitation": "离散脉冲只能重建近实时路径；两次采样之间的瞬时拉升/急跌可能遗漏。日内high/low可证明期间发生过极值，但不能单独确定具体分钟形态。"
       },
@@ -616,39 +616,39 @@
     {
       "symbol": "561980",
       "asset_class": "ETF",
-      "sample_count": 17,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-08-25T09:47:54+08:00",
-      "latest_as_of_beijing": "2026-08-25T14:03:01+08:00",
+      "latest_as_of_beijing": "2026-08-25T14:03:49+08:00",
       "first_price": 0.657,
-      "latest_price": 0.673,
-      "path_change_pct": 2.4353,
+      "latest_price": 0.674,
+      "path_change_pct": 2.5875,
       "path_low": 0.657,
       "path_low_as_of_beijing": "2026-08-25T09:47:54+08:00",
       "path_high": 0.684,
       "path_high_as_of_beijing": "2026-08-25T13:15:51+08:00",
-      "recovery_from_path_low_pct": 2.4353,
-      "retreat_from_path_high_pct": -1.6082,
-      "latest_day_range_position": 0.6333,
-      "recent_interval_minutes": 2.57,
-      "recent_move_pct": 0.0,
-      "recent_slope_pct_per_10m": 0.0,
-      "recent_volume_delta": 3155400.0,
-      "recent_amount_delta": 2123940.0,
+      "recovery_from_path_low_pct": 2.5875,
+      "retreat_from_path_high_pct": -1.462,
+      "latest_day_range_position": 0.6667,
+      "recent_interval_minutes": 0.8,
+      "recent_move_pct": 0.1486,
+      "recent_slope_pct_per_10m": 1.8574,
+      "recent_volume_delta": 163600.0,
+      "recent_amount_delta": 110230.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -2.0372,
-          "benchmark_change_pct": 0.1422,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": -1.9234,
+          "benchmark_change_pct": 0.1741,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": -1.0413,
-          "benchmark_change_pct": -0.8538,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": -0.9191,
+          "benchmark_change_pct": -0.8302,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         }
       },
       "sampling": {
         "coverage": "MEDIUM",
-        "median_gap_minutes": 7.03,
+        "median_gap_minutes": 6.85,
         "max_gap_minutes": 120.35,
         "limitation": "离散脉冲只能重建近实时路径；两次采样之间的瞬时拉升/急跌可能遗漏。日内high/low可证明期间发生过极值，但不能单独确定具体分钟形态。"
       },
@@ -675,9 +675,9 @@
           "label": "V_RECOVERY_CANDIDATE",
           "evidence": {
             "low_as_of_beijing": "2026-08-25T09:47:54+08:00",
-            "recovery_from_path_low_pct": 2.4353,
-            "points_after_low": 16,
-            "latest_range_position": 0.5926
+            "recovery_from_path_low_pct": 2.5875,
+            "points_after_low": 17,
+            "latest_range_position": 0.6296
           }
         }
       ]
@@ -685,39 +685,39 @@
     {
       "symbol": "588000",
       "asset_class": "ETF",
-      "sample_count": 15,
+      "sample_count": 16,
       "first_as_of_beijing": "2026-08-25T09:54:44+08:00",
-      "latest_as_of_beijing": "2026-08-25T14:00:27+08:00",
+      "latest_as_of_beijing": "2026-08-25T14:03:50+08:00",
       "first_price": 1.676,
-      "latest_price": 1.693,
-      "path_change_pct": 1.0143,
+      "latest_price": 1.695,
+      "path_change_pct": 1.1337,
       "path_low": 1.675,
       "path_low_as_of_beijing": "2026-08-25T10:58:39+08:00",
       "path_high": 1.713,
       "path_high_as_of_beijing": "2026-08-25T13:15:51+08:00",
-      "recovery_from_path_low_pct": 1.0746,
-      "retreat_from_path_high_pct": -1.1675,
-      "latest_day_range_position": 0.6667,
-      "recent_interval_minutes": 20.85,
-      "recent_move_pct": -0.4703,
-      "recent_slope_pct_per_10m": -0.2256,
-      "recent_volume_delta": 163096300.0,
-      "recent_amount_delta": 276077100.0,
+      "recovery_from_path_low_pct": 1.194,
+      "retreat_from_path_high_pct": -1.0508,
+      "latest_day_range_position": 0.6984,
+      "recent_interval_minutes": 3.38,
+      "recent_move_pct": 0.1181,
+      "recent_slope_pct_per_10m": 0.3492,
+      "recent_volume_delta": 18725200.0,
+      "recent_amount_delta": 31716000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -0.0239,
-          "benchmark_change_pct": 0.1422,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 0.0624,
+          "benchmark_change_pct": 0.1741,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 0.972,
-          "benchmark_change_pct": -0.8538,
-          "benchmark_as_of_beijing": "2026-08-25T14:03:14+08:00"
+          "latest_relative_change_pct_points": 1.0668,
+          "benchmark_change_pct": -0.8302,
+          "benchmark_as_of_beijing": "2026-08-25T14:04:11+08:00"
         }
       },
       "sampling": {
         "coverage": "MEDIUM",
-        "median_gap_minutes": 10.56,
+        "median_gap_minutes": 8.58,
         "max_gap_minutes": 110.83,
         "limitation": "离散脉冲只能重建近实时路径；两次采样之间的瞬时拉升/急跌可能遗漏。日内high/low可证明期间发生过极值，但不能单独确定具体分钟形态。"
       },
@@ -729,6 +729,15 @@
             "to": "2026-08-25T10:31:49+08:00",
             "minutes": 14.2,
             "move_pct": -1.059446733372571
+          }
+        },
+        {
+          "label": "V_RECOVERY_CANDIDATE",
+          "evidence": {
+            "low_as_of_beijing": "2026-08-25T10:58:39+08:00",
+            "recovery_from_path_low_pct": 1.194,
+            "points_after_low": 8,
+            "latest_range_position": 0.5263
           }
         }
       ]
