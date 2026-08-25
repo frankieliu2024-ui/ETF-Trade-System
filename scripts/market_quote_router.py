@@ -238,6 +238,46 @@ def _latest_overseas_record(key: str, market: str, phase: str, overseas: dict, e
     return record or extended_record
 
 
+def _query_refresh_needed(root: Path, symbols: list[str], now: datetime, policy: dict[str, Any]) -> bool:
+    preference = policy.get("query_time_refresh_preference") or {}
+    threshold = int(preference.get("active_market_max_age_seconds", 300))
+    requested = {str(x).upper() for x in symbols if str(x).strip()}
+    current = _read_json(root, "data/state/CURRENT.json", {})
+    snapshot = _read_json(root, str(current.get("latest_snapshot") or ""), {})
+    candidates: list[tuple[str, str]] = []
+    for row in snapshot.get("rows") or []:
+        candidates.append((str(row.get("symbol") or "").upper(), str(row.get("as_of_beijing") or row.get("captured_at_beijing") or "")))
+    overseas = _read_json(root, "data/state/overseas_context.json", {})
+    extended = _read_json(root, "data/state/us_extended_hours_context.json", {})
+    for key, raw in (overseas.get("objects") or {}).items():
+        latest = raw.get("latest") if isinstance(raw, dict) else {}
+        candidates.append((str(key).upper(), str(latest.get("as_of_beijing") or "")))
+    for key, raw in (extended.get("objects") or {}).items():
+        latest = raw.get("latest") if isinstance(raw, dict) else {}
+        candidates.append((str(key).upper(), str(latest.get("as_of_beijing") or "")))
+    if requested:
+        candidates = [x for x in candidates if x[0] in requested]
+    if not candidates:
+        return True
+    active = False
+    for symbol, timestamp in candidates:
+        market = "CN" if symbol.isdigit() else ("US" if symbol in {"NDX", "SOX", "QQQ", "SOXX"} else _market_for_overseas(symbol, {}))
+        phase = market_phase(market, now=now)
+        if phase in {"REGULAR", "OPENING_AUCTION", "PRE_MARKET", "POST_MARKET"}:
+            active = True
+            if not timestamp:
+                return True
+            try:
+                dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                if (now.astimezone(timezone.utc) - dt.astimezone(timezone.utc)).total_seconds() > threshold:
+                    return True
+            except ValueError:
+                return True
+    return False
+
+
 def build_market_quote_context(root: Path | str, now: datetime | None = None, *, force_refresh: bool = False, requested_symbols: list[str] | None = None) -> dict[str, Any]:
     """Build the single routed quote view from already-produced state; no network calls."""
     root = Path(root)
@@ -251,7 +291,8 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
     extended = _read_json(root, "data/state/us_extended_hours_context.json", {})
     quotes: list[dict[str, Any]] = []
 
-    if force_refresh:
+    should_refresh = force_refresh and _query_refresh_needed(root, requested_symbols or [], query_time, policy)
+    if should_refresh:
         try:
             from query_time_market_refresh import refresh_market_quotes
         except ModuleNotFoundError:
@@ -293,7 +334,7 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
 
     return {
         "generated_at_beijing": query_time.astimezone(BEIJING).isoformat(timespec="seconds"),
-        "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH" if force_refresh else "CACHED_STATE",
+        "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH" if should_refresh else "CACHED_STATE",
         "refresh_failures": refresh_failures,
         "route_version": "V1.0",
         "query_entry": "market_quote_router",
