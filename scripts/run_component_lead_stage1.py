@@ -60,6 +60,10 @@ def yahoo(symbol,start,end):
         except Exception as e: last=e; time.sleep(k+1)
     raise RuntimeError(f'{symbol}: {last}')
 
+def covered_mean(df,min_count):
+    m=df.mean(axis=1,skipna=True)
+    return m.where(df.notna().sum(axis=1)>=min_count)
+
 def attach_leaders(panel,cfg,start,end):
     syms=sorted({s for t in cfg['targets'] for s in t['leaders']}); hist={s:yahoo(s,start,end) for s in syms}
     parts=[]; coverage={}
@@ -70,11 +74,11 @@ def attach_leaders(panel,cfg,start,end):
             x=hist[s].set_index('date').close.reindex(g.index)
             ret1=(x/x.shift(1)-1)*100; ret3=(x/x.shift(3)-1)*100
             series.append((s,ret1,ret3))
-        r1=pd.concat([x[1] for x in series],axis=1);r3=pd.concat([x[2] for x in series],axis=1)
-        # All signals usable at date D are based only on closes through D-1.
-        g['leader_equal_1d_lag1']=r1.mean(axis=1,min_count=max(3,len(series)-1)).shift(1)
-        g['leader_equal_3d_lag1']=r3.mean(axis=1,min_count=max(3,len(series)-1)).shift(1)
-        g['leader_breadth_pos_3d_lag1']=(r3.gt(0).sum(axis=1)/r3.notna().sum(axis=1).replace(0,np.nan)*100).shift(1)
+        r1=pd.concat([x[1] for x in series],axis=1);r3=pd.concat([x[2] for x in series],axis=1);minc=max(3,len(series)-1)
+        g['leader_equal_1d_lag1']=covered_mean(r1,minc).shift(1)
+        g['leader_equal_3d_lag1']=covered_mean(r3,minc).shift(1)
+        denom=r3.notna().sum(axis=1);breadth=(r3.gt(0).sum(axis=1)/denom.replace(0,np.nan)*100).where(denom>=minc)
+        g['leader_breadth_pos_3d_lag1']=breadth.shift(1)
         g['leader_minus_etf_3d_lag1']=g['leader_equal_3d_lag1']-g['etf_3d_lag1']
         coverage[code]={'leaders':t['leaders'],'rows_with_3d_basket':int(g['leader_equal_3d_lag1'].notna().sum())}
         parts.append(g.reset_index())
