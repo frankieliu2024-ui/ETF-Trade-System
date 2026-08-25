@@ -18,6 +18,18 @@ ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1
 STOCK_CONTEXT = ROOT / "data" / "state" / "stock_context.json"
 OUTPUT = ROOT / "data" / "state" / "stock_market_context.json"
 TIMEOUT = int(os.environ.get("HITHINK_TIMEOUT_SECONDS", "25"))
+
+
+def load_stock_fallback_codes() -> set[str]:
+    path = ROOT / "config" / "market" / "provider_priority.json"
+    if not path.exists():
+        return set()
+    config = json.loads(path.read_text(encoding="utf-8"))
+    policy = config.get("object_fallback_policy") or {}
+    return {str(key).split(".")[0] for key, rule in policy.items() if str(rule.get("primary")) == "hithink_finance" and "eastmoney_push2" in (rule.get("fallback") or []) and rule.get("direct_only") is True}
+
+
+STOCK_FALLBACK_CODES = load_stock_fallback_codes()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
 
@@ -159,6 +171,10 @@ def fetch_many(cli: str, stocks: list[dict]) -> dict[str, dict]:
             "as_of_beijing": as_beijing(timestamp_ms),
             "market_phase": market_phase(timestamp_ms),
             "provider": "hithink-finance",
+            "provider_primary": "hithink-finance",
+            "provider_used": "hithink-finance",
+            "fallback_used": False,
+            "fallback_reason": "",
             "provider_request_id": payload.get("meta", {}).get("request_id", ""),
             "quality_status": "PASS",
             "quantity": stock.get("quantity"),
@@ -198,7 +214,7 @@ def build() -> dict:
     # primary objects call Eastmoney; successful Hithink objects incur no extra request.
     for stock in stocks:
         code = str(stock.get("code", ""))
-        if not code or (result.get("objects", {}).get(code) or {}).get("quality_status") == "PASS":
+        if not code or code not in STOCK_FALLBACK_CODES or (result.get("objects", {}).get(code) or {}).get("quality_status") == "PASS":
             continue
         try:
             result["objects"][code] = fetch_eastmoney_stock(stock)
