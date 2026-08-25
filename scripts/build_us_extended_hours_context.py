@@ -5,6 +5,7 @@ import os
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -16,6 +17,7 @@ except ModuleNotFoundError:
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 NEW_YORK = ZoneInfo("America/New_York")
 BEIJING = ZoneInfo("Asia/Shanghai")
+RUNTIME_POLICY = ROOT / "config" / "runtime_policy.json"
 
 # Broad-market extended-hours proxies are always allowed. Individual companies are
 # never hard-coded here: query-time industry names may be supplied through
@@ -87,6 +89,19 @@ def build_symbol(symbol: str, name: str, role: str, conditional: bool) -> dict:
     latest = rows[-1]
     regular_rows = [r for r in rows if r["session"] == "REGULAR"]
     regular_close = regular_rows[-1]["close"] if regular_rows else meta.get("previousClose")
+    now = datetime.now(timezone.utc)
+    age_seconds = max(0, int((now - datetime.fromtimestamp(latest["timestamp"], timezone.utc)).total_seconds()))
+    try:
+        policy = json.loads(RUNTIME_POLICY.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        policy = {"fresh_max_age_seconds": 900, "degraded_max_age_seconds": 1500}
+    fresh_limit = int(policy.get("fresh_max_age_seconds", 900))
+    degraded_limit = int(policy.get("degraded_max_age_seconds", 1500))
+    freshness = "FRESH" if age_seconds <= fresh_limit else ("DEGRADED" if age_seconds <= degraded_limit else "STALE")
+    current_phase = session_for_et(now.astimezone(NEW_YORK))
+    usable_status = freshness
+    if current_phase == "OFF_SESSION" and latest["session"] == "REGULAR":
+        usable_status = "PASS"
     return {
         "symbol": symbol,
         "name": name,
@@ -95,7 +110,10 @@ def build_symbol(symbol: str, name: str, role: str, conditional: bool) -> dict:
         "provider": "yahoo_chart_api",
         "market_timezone": "America/New_York",
         "market_phase_of_latest": latest["session"],
-        "quality_status": "PASS",
+        "quality_status": usable_status,
+        "freshness_status": freshness,
+        "data_age_seconds": age_seconds,
+        "current_market_phase": current_phase,
         "latest": latest,
         "regular_session_close_reference": regular_close,
         "extended_change_vs_regular_close_pct": pct_change(latest.get("close"), regular_close),
@@ -139,7 +157,10 @@ def build() -> dict:
         "generated_at": now_utc(),
         "generated_at_beijing": now.astimezone(BEIJING).isoformat(timespec="seconds"),
         "scope": "US_EXTENDED_HOURS_CONTEXT",
-        "quality_status": "PASS" if passes == len(specs) else ("DEGRADED" if passes else "FAILED"),
+        "quality_status": (
+            "PASS" if passes == len(specs) and all(v.get("quality_status") in {"PASS", "FRESH"} for v in objects.values())
+            else ("DEGRADED" if passes else "FAILED")
+        ),
         "base_proxies": list(BASE_PROXIES.keys()),
         "conditional_symbols": requested,
         "objects": objects,
