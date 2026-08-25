@@ -57,5 +57,9 @@ jobs:
             exit 0
           fi
           git commit -m "data: refresh US extended-hours context"
+          # The audit may leave unrelated generated files dirty. They are
+          # owned by their own workflows and must not block the US data push.
+          git stash push --include-untracked -m "preserve non-US generated state" || true
           git pull --rebase origin main
+          git stash drop || true
           git push origin HEAD:main
