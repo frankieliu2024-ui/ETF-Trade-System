@@ -29,7 +29,17 @@ jobs:
           python-version: "3.11"
       - name: Build share-flow evidence and state context
         run: |
-          python scripts/build_etf_share_flow_evidence.py
+          for i in 1 2 3 4 5; do
+            python scripts/build_etf_share_flow_evidence.py
+            STATUS=$(python - <<'PY'
+          import json
+          from pathlib import Path
+          print(json.loads(Path('data/state/etf_share_flow_evidence.json').read_text(encoding='utf-8')).get('status',''))
+          PY
+          )
+            if [ "$STATUS" = "READY" ]; then break; fi
+            sleep 15
+          done
           python scripts/build_state_context.py
       - name: Enforce formal research boundary and wiring
         run: |
