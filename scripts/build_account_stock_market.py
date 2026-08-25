@@ -4,6 +4,8 @@ import json
 import os
 import shutil
 import subprocess
+import urllib.parse
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -34,6 +36,56 @@ def as_beijing(timestamp_ms: object) -> str:
     if timestamp_ms in (None, ""):
         return ""
     return datetime.fromtimestamp(float(timestamp_ms) / 1000, tz=SHANGHAI).isoformat(timespec="seconds")
+
+
+def eastmoney_timestamp_ms(value: object) -> int:
+    if value in (None, "", "-", 0, "0"):
+        raise RuntimeError("Eastmoney response has no provider timestamp")
+    number = float(value)
+    if number < 10_000_000_000:
+        number *= 1000
+    return int(number)
+
+
+def fetch_eastmoney_stock(stock: dict) -> dict:
+    code = str(stock.get("code", ""))
+    symbol = thscode(code)
+    market = "1" if symbol.endswith(".SH") else "0"
+    params = {"secid": f"{market}.{code}", "fltt": "2", "invt": "2", "fields": "f43,f44,f45,f46,f47,f48,f57,f58,f60,f86,f124"}
+    url = "https://push2.eastmoney.com/api/qt/stock/get?" + urllib.parse.urlencode(params)
+    request = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.15"})
+    with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+        payload = json.load(response)
+    data = payload.get("data") or {}
+    if str(data.get("f57", "")) != code:
+        raise RuntimeError(f"Eastmoney code mismatch for {code}: {data.get('f57')}")
+    if not str(data.get("f58", "")).strip():
+        raise RuntimeError(f"Eastmoney {code} missing security name")
+    values = {"open": data.get("f46"), "high": data.get("f44"), "low": data.get("f45"), "close": data.get("f43"), "prev_close": data.get("f60"), "volume_raw": data.get("f47"), "amount": data.get("f48")}
+    if any(value in (None, "", "-") for value in values.values()):
+        raise RuntimeError(f"Eastmoney {code} missing direct stock fields")
+    values["volume"] = int(float(values.pop("volume_raw")) * 100)
+    if values["volume"] < 0 or float(values["amount"]) < 0:
+        raise RuntimeError(f"Eastmoney {code} has negative volume or amount")
+    if float(values["high"]) < max(float(values["open"]), float(values["close"])) or float(values["low"]) > min(float(values["open"]), float(values["close"])):
+        raise RuntimeError(f"Eastmoney {code} failed OHLC relationship")
+    provider_ts = eastmoney_timestamp_ms(data.get("f86"))
+    provider_dt = datetime.fromtimestamp(provider_ts / 1000, tz=SHANGHAI)
+    now_dt = datetime.now(SHANGHAI)
+    if provider_dt.date() != now_dt.date():
+        raise RuntimeError(f"Eastmoney {code} provider date is stale: {provider_dt.isoformat()}")
+    if abs((now_dt - provider_dt).total_seconds()) > 1500:
+        raise RuntimeError(f"Eastmoney {code} provider timestamp is stale: {provider_dt.isoformat()}")
+    return {
+        "code": code, "name": stock.get("name", ""), "thscode": symbol,
+        "open": values["open"], "high": values["high"], "low": values["low"], "close": values["close"], "prev_close": values["prev_close"],
+        "change_pct": ((float(values["close"]) / float(values["prev_close"])) - 1) * 100 if float(values["prev_close"]) else None,
+        "volume": values["volume"], "amount": values["amount"], "provider_timestamp_ms": provider_ts, "as_of_beijing": as_beijing(provider_ts),
+        "market_phase": market_phase(provider_ts), "provider": "eastmoney_push2", "provider_primary": "hithink-finance", "provider_used": "eastmoney_push2",
+        "fallback_used": True, "fallback_reason": "hithink-finance snapshot unavailable or invalid; verified direct Eastmoney quote", "provider_timestamp_field": "f86",
+        "volume_raw": data.get("f47"), "volume_unit_raw": "hand", "volume_unit": "share", "amount_unit": "CNY",
+        "quality_status": "PASS", "quantity": stock.get("quantity"), "market_value_from_account": stock.get("market_value"),
+    }
 
 
 def market_phase(timestamp_ms: object) -> str:
@@ -137,13 +189,23 @@ def build() -> dict:
     except Exception as exc:
         result["objects"] = {
             str(stock.get("code", "")): {
-                "code": str(stock.get("code", "")),
-                "name": stock.get("name", ""),
-                "quality_status": "FAILED",
-                "error": str(exc)[-800:],
+                "code": str(stock.get("code", "")), "name": stock.get("name", ""),
+                "thscode": thscode(str(stock.get("code", ""))), "quality_status": "FAILED", "error": str(exc)[-800:],
             }
             for stock in stocks if stock.get("code")
         }
+    # Reuse the same object-level fallback policy as ETF collection. Only failed
+    # primary objects call Eastmoney; successful Hithink objects incur no extra request.
+    for stock in stocks:
+        code = str(stock.get("code", ""))
+        if not code or (result.get("objects", {}).get(code) or {}).get("quality_status") == "PASS":
+            continue
+        try:
+            result["objects"][code] = fetch_eastmoney_stock(stock)
+        except Exception as fallback_exc:
+            current = result.setdefault("objects", {}).setdefault(code, {"code": code, "name": stock.get("name", ""), "thscode": thscode(code)})
+            current["fallback_provider"] = "eastmoney_push2"
+            current["fallback_error"] = str(fallback_exc)[-800:]
     failures = sum(1 for item in result["objects"].values() if item.get("quality_status") != "PASS")
     if failures:
         result["quality_status"] = "DEGRADED" if failures < len(stocks) else "FAILED"
