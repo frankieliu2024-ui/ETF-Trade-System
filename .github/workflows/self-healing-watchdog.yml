@@ -2,6 +2,12 @@ name: ETF runtime self-healing watchdog
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/runtime_self_heal.py"
+      - "config/runtime_policy.json"
+      - ".github/workflows/self-healing-watchdog.yml"
   schedule:
     # Beijing 09:19-09:59: redundant watchdog offset from production snapshot cron.
     - cron: "19,29,39,49,59 1 * * 1-5"
