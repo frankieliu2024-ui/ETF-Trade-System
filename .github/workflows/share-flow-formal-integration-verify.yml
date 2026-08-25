@@ -39,6 +39,8 @@ jobs:
           e=json.loads(Path('data/state/etf_share_flow_evidence.json').read_text(encoding='utf-8'))
           d=json.loads(Path('data/state/decision_context.json').read_text(encoding='utf-8'))
           r=json.loads(Path('data/state/research_context.json').read_text(encoding='utf-8'))
+          assert e['status'] == 'READY'
+          assert e['use_in_current_decision'] is True
           assert e['decision_eligible'] is False
           assert e['trade_signal'] is None
           assert e['trial_confirm'] is None
@@ -57,5 +59,6 @@ jobs:
           git add data/state/etf_share_flow_evidence.json data/state/research_context.json data/state/decision_context.json data/state/dashboard_update_candidate.json data/state/research_evidence_delta.json data/state/execution_quality.json data/state/skfolio_risk_evidence.json data/state/research_master_candidates.json data/state/intraday_path_features.json data/state/provider_metrics.json data/state/relative_strength.json
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "research: publish minimal ETF share-flow evidence"
+          git reset --hard HEAD
           git pull --rebase origin main
           git push origin HEAD:main
