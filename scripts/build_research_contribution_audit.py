@@ -4,6 +4,11 @@ import json
 from collections import Counter
 from pathlib import Path
 
+try:
+    from decision_trade_link import resolve_link
+except ModuleNotFoundError:
+    from scripts.decision_trade_link import resolve_link
+
 
 def _load(path: Path) -> dict:
     try:
@@ -70,9 +75,13 @@ def build(root: Path) -> dict:
     attributed_trade_count = 0
     explicit_no_research_trade_count = 0
     legacy_unattributed_trade_count = 0
+    corrected_link_count = 0
     for path in sorted(trade_dir.glob("*.json")) if trade_dir.exists() else []:
         trade = _load(path)
-        linked = str(trade.get("linked_decision_id") or "")
+        raw_link = str(trade.get("linked_decision_id") or "")
+        linked, event, link_status = resolve_link(root, trade, raw_link)
+        if link_status == "AUTO_PRIOR_MATCH":
+            corrected_link_count += 1
         d = decisions.get(linked) if linked else None
         status = d.get("attribution_status") if d else "NO_LINKED_ATTRIBUTION"
         used = d.get("research_evidence_used") if d else []
@@ -88,7 +97,9 @@ def build(root: Path) -> dict:
             "display_name": f"{trade.get('name','')}（{trade.get('code','')}）",
             "side": trade.get("side"),
             "quantity": trade.get("quantity"),
+            "raw_linked_decision_id": raw_link or None,
             "linked_decision_id": linked or None,
+            "link_status": link_status,
             "research_attribution_status": status,
             "research_evidence_used": used or [],
         })
@@ -102,7 +113,7 @@ def build(root: Path) -> dict:
         "status": "READY",
         "mode": "EXPLICIT_RESEARCH_CONTRIBUTION_AUDIT",
         "read_only": True,
-        "rule": "只统计正式决策中显式记录的research_evidence_used；最多3项，每项只回答证据、相对上一节点变化、对本次决策的实际影响。缺失记录不得自动推断研究贡献。",
+        "rule": "只统计正式决策中显式记录的research_evidence_used；成交归因只允许链接成交时点之前或同时的正式决策。最多3项，每项只回答证据、相对上一节点变化、对本次决策的实际影响。缺失记录不得自动推断研究贡献。",
         "decision_attribution": {
             "total_decisions": total_decisions,
             "explicit_attribution_or_none": explicit_decisions,
@@ -114,6 +125,7 @@ def build(root: Path) -> dict:
             "attributed_trade_count": attributed_trade_count,
             "explicit_no_research_trade_count": explicit_no_research_trade_count,
             "legacy_or_unlinked_trade_count": legacy_unattributed_trade_count,
+            "corrected_future_or_invalid_link_count": corrected_link_count,
         },
         "evidence_use_counts": dict(module_counts.most_common()),
         "recent_trades": trade_rows[:10],
