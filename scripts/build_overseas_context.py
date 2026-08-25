@@ -14,12 +14,24 @@ from zoneinfo import ZoneInfo
 try:
     from multi_source_market import _request_json
     from state_manager import atomic_json_write, now_utc
+    from market_data_guard import classify_provider_failure, update_structural_health
 except ModuleNotFoundError:
     from scripts.multi_source_market import _request_json
     from scripts.state_manager import atomic_json_write, now_utc
+    from scripts.market_data_guard import classify_provider_failure, update_structural_health
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 BEIJING = ZoneInfo("Asia/Shanghai")
+
+def load_provider_health() -> dict:
+    path = ROOT / "data" / "state" / "overseas_runtime_health.json"
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        return dict(payload.get("provider_health") or {})
+    except (OSError, json.JSONDecodeError):
+        return {}
 
 OBJECTS = {
     "NDX": {"name": "纳斯达克100指数", "symbol": "^NDX", "timezone": "America/New_York", "role": "US_TECH"},
@@ -348,6 +360,7 @@ def build() -> dict:
     generated_beijing = generated_utc.astimezone(BEIJING)
     objects = {}
     pass_count = 0
+    provider_health = load_provider_health()
     for object_id, spec in OBJECTS.items():
         try:
             if object_id == "HSTECH":
@@ -359,13 +372,24 @@ def build() -> dict:
                     ("eastmoney_push2:124.HSTECH", lambda: fetch_hstech_eastmoney(generated_utc)),
                 ]
                 for provider_id, loader in direct_chain:
+                    health_entry = provider_health.get(provider_id) or {}
+                    if provider_id == "hithink-finance:HS2083" and health_entry.get("status") == "SESSION_BYPASS" and health_entry.get("bypass_date") == generated_utc.astimezone(BEIJING).date().isoformat():
+                        attempts.append(failed_attempt(provider_id, "SESSION_BYPASS: structural provider failure memory", generated_utc))
+                        continue
                     try:
                         candidate = loader()
                         summary = provider_attempt(candidate, provider_id, generated_utc)
                         attempts.append(summary)
                         candidates.append((candidate, summary))
+                        provider_health[provider_id] = {**health_entry, "status": "ACTIVE", "consecutive_failures": 0, "last_success_at": generated_utc.isoformat(timespec="seconds")}
                     except Exception as provider_error:
-                        attempts.append(failed_attempt(provider_id, str(provider_error)[-500:], generated_utc))
+                        reason = str(provider_error)[-500:]
+                        failure_class = classify_provider_failure(reason)
+                        state = {"provider_health": provider_health}
+                        update_structural_health(state, provider_id, failure_class=failure_class, reason=reason, now=generated_utc, threshold=2)
+                        provider_health = state["provider_health"]
+                        provider_health[provider_id]["bypass_date"] = generated_utc.astimezone(BEIJING).date().isoformat()
+                        attempts.append(failed_attempt(provider_id, reason, generated_utc))
                 if attempts[-1]["result"] == "FAILED":
                     try:
                         delayed = fetch_hstech_eastmoney(generated_utc, host="push2delay.eastmoney.com")
@@ -412,6 +436,7 @@ def build() -> dict:
         "output_time_rule": "任何正式行情输出必须明确标注数据时点，并统一优先转换为北京时间；海外对象同时保留market_timezone和market_phase，禁止只显示自然日期。",
         "time_alignment_rule": "跨市场证据必须同时读取北京时间数据时点、市场本地时区、as_of_local、market_phase和time_relation_to_a_share。美国现金指数在A股交易时段通常代表上一美股交易时段；亚洲市场按同日盘中/已收盘/上一交易日分别解释。",
         "decision_boundary": "海外与亚洲指数是正式市场监测层的重要组成，但只作风险背景、增强或反向证据；必须继续经过本地传导与目标ETF自身反馈，不能单独生成ETF买卖动作。",
+        "provider_health": provider_health,
     }
 
 
