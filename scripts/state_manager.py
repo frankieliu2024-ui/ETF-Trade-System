@@ -320,6 +320,8 @@ def build_decision_context(root: Path | None = None) -> dict[str, Any]:
     return {
         "generated_at": generated, "rules_version": "V2.2.16", "market_date": current.get("market_date", ""), "latest_node": current.get("latest_valid_node", ""), "current": current, "latest_snapshot": snapshot, "data_status": effective, "freshness_at_context_build": effective,
         "data_quality_summary": quality, "etf_strategy_risk_metrics": build_etf_strategy_risk_metrics(root), "analysis_coverage": build_analysis_coverage(root, snapshot, account, quality), "point_in_time": build_point_in_time_summary(current, account, snapshot, generated), "scheduled_pulse_health": build_scheduled_pulse_health(root, current), "formal_action": build_formal_action_summary(account),
+        "decision_trigger": read_json(root / "data" / "state" / "decision_trigger.json", {"status": "NOT_BUILT", "requires_formal_reassessment": False, "read_only": True}),
+        "capital_efficiency_ranking": read_json(root / "data" / "state" / "capital_efficiency_ranking.json", {"status": "NOT_BUILT", "ordered_candidates": [], "read_only": True}),
         "intraday_path_features": read_json(root / "data" / "state" / "intraday_path_features.json", {"status": "MISSING", "features": []}), "research_evidence": build_research_evidence_summary(root),
         "research_context_file": "data/state/research_context.json", "relative_strength_file": "data/state/relative_strength.json", "research_evidence_delta_file": "data/state/research_evidence_delta.json",
         "research_master_feedback": {"current_decision": "研究证据及其节点变化直接进入机会判断、统一资本比较、持仓资本效率与正式输出解释。", "master_maintenance": "研究结论只有通过MASTER第8.1正式研究转化机制后才可修改MASTER；自动程序只提供证据，不修改规则。"},
