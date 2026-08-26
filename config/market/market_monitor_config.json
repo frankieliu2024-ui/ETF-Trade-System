@@ -1,5 +1,5 @@
 {
-  "version": "V1.4",
+  "version": "V1.5",
   "purpose": "数据能力与三层市场监测配置，不产生交易判断",
   "priority": [
     "direct_index",
@@ -15,7 +15,7 @@
     },
     "eastmoney_push2": {
       "priority": 1,
-      "scope": "恒生科技指数直接主源；已验证A股ETF/个股/部分指数直接备源",
+      "scope": "恒生科技指数直接主源；已验证A股ETF/个股/部分指数直接备源；纳斯达克100指数（NDX）对象级直接备源100.NDX100",
       "requires_key": false,
       "adjusted": false
     },
@@ -150,7 +150,8 @@
           "id": "NDX",
           "name": "纳斯达克100指数",
           "preferred_source": "yahoo_chart_api",
-          "status": "ACTIVE"
+          "status": "ACTIVE_WITH_FALLBACK",
+          "fallback_source": "eastmoney_push2:100.NDX100"
         },
         {
           "id": "SOX",
