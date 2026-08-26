@@ -48,6 +48,8 @@ def main() -> int:
             "provider": record.get("provider", ""),
             "symbol": record.get("symbol", ""),
             "market_phase": record.get("market_phase_at_generation", ""),
+            "freshness_status": record.get("freshness_status", ""),
+            "delay_minutes": record.get("delay_minutes"),
             "error": record.get("error", ""),
         }
 
@@ -56,11 +58,14 @@ def main() -> int:
         latest = record.get("latest") or {}
         as_of = parse_time(latest.get("as_of_beijing", ""))
         same_day = bool(as_of and as_of.astimezone(BEIJING).date() == now_bj.date())
-        valid = record.get("quality_status") == "PASS" and same_day
+        valid = record.get("quality_status") in {"PASS", "DEGRADED"} and same_day
         if not valid:
             detail = f"{object_id}: quality={record.get('quality_status', 'MISSING')} as_of_beijing={latest.get('as_of_beijing', '') or 'MISSING'}"
             if now_bj.hour * 60 + now_bj.minute >= 8 * 60 + 20:
-                hard_errors.append(detail)
+                if record.get("quality_status") in {"FAILED", "MISSING"}:
+                    hard_errors.append(detail)
+                else:
+                    warnings.append(detail)
             else:
                 warnings.append(detail)
 
@@ -74,7 +79,7 @@ def main() -> int:
     top_as_of = max(all_as_of).astimezone(BEIJING).isoformat(timespec="seconds") if all_as_of else ""
     report = {
         "status": status,
-        "pulse_success": not hard_errors and all((objects.get(k) or {}).get("quality_status") == "PASS" for k in ("N225", "KOSPI")),
+        "pulse_success": not hard_errors and all((objects.get(k) or {}).get("quality_status") in {"PASS", "DEGRADED"} for k in ("N225", "KOSPI")),
         "hard_error_count": len(hard_errors),
         "warning_count": len(warnings),
         "hard_errors": hard_errors,
