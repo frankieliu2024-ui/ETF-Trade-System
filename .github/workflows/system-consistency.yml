@@ -21,7 +21,6 @@ on:
       - "data/state/CURRENT.json"
       - "data/state/runtime_health.json"
       - "data/state/overseas_runtime_health.json"
-      - "data/state/us_extended_hours_context.json"
       - "data/state/stock_context.json"
       - "data/state/stock_market_context.json"
       - "data/state/query_context.json"
@@ -59,6 +58,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Refresh US extended-hours context for point-in-time audit
+        shell: bash
+        run: |
+          python scripts/build_us_extended_hours_context.py
       - name: Detect research backfill request
         id: backfill_request
         shell: bash
@@ -150,7 +153,7 @@ jobs:
           # worktree to latest main before committing. This avoids conflicts
           # when another state-only workflow advances main concurrently.
           mkdir -p /tmp/etf-owned-state/data/state
-          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json; do
+          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json data/state/us_extended_hours_context.json; do
             if [ -f "$f" ]; then
               mkdir -p "/tmp/etf-owned-state/$(dirname "$f")"
               cp "$f" "/tmp/etf-owned-state/$f"
@@ -173,7 +176,7 @@ jobs:
 
           git fetch origin main
           git reset --hard origin/main
-          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json; do
+          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json data/state/us_extended_hours_context.json; do
             if [ -f "/tmp/etf-owned-state/$f" ]; then
               mkdir -p "$(dirname "$f")"
               cp "/tmp/etf-owned-state/$f" "$f"
