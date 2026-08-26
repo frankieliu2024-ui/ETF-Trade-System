@@ -220,6 +220,52 @@ def main() -> None:
         "item_fields": ["evidence_id", "change", "decision_effect"],
         "rule": "只记录实际改变本次机会、金额、持仓或卖出判断的研究证据；若研究没有实质贡献，显式写空列表。不得自动把decision_context中存在的证据视为已使用。",
     }
+    required_context_present = {
+        "candidate_selection_contract": bool(context.get("candidate_selection_contract")),
+        "market_structure_context": market_structure.get("status") == "READY" and bool(market_structure.get("items")),
+        "historical_position_and_trend": all(
+            (x.get("historical_context") or {}).get("historical_zone")
+            and (x.get("historical_context") or {}).get("trend_state")
+            for x in (market_structure.get("items") or [])
+        ),
+        "intraday_path_and_extreme_sequence": all(
+            (x.get("intraday_context") or {}).get("morphology")
+            and (x.get("intraday_context") or {}).get("extreme_sequence")
+            for x in (market_structure.get("items") or [])
+        ),
+        "time_normalized_turnover_acceptance": all(
+            (x.get("turnover_acceptance_context") or {}).get("status") in {"READY", "DEGRADED"}
+            for x in (market_structure.get("items") or [])
+        ),
+    }
+    context["formal_intraday_response_contract"] = {
+        "schema_version": "1.0",
+        "scope": "FORMAL_INTRADAY_DECISION",
+        "rule": "正式盘中回复必须在形成唯一主候选前完整消费当前decision_context；不得只读取价格、涨幅或上一轮主候选。",
+        "required_before_main_candidate": [
+            "读取candidate_selection_contract",
+            "重新统一比较持仓ETF、观察ETF与现金，不自动沿用上一轮主候选",
+            "对主候选显式解释历史位置与趋势、日内路径与极值时序、时间归一化成交承接、风险收益或下一单位资本效率",
+            "横截面涨幅、名次与相对强弱仅作验证证据",
+        ],
+        "required_candidate_evidence": [
+            "historical_position_and_trend",
+            "intraday_path_and_extreme_sequence",
+            "time_normalized_turnover_acceptance",
+            "risk_reward_or_capital_efficiency",
+        ],
+        "missing_evidence_rule": "任一必需证据缺失时必须显式标记MISSING或DEGRADED并说明影响，不得静默跳过后直接维持或生成主候选。",
+        "previous_candidate_rule": "previous_main_candidate只作连续性参考，不得自动继承；每个正式盘中节点必须重新进入统一比较。若继续保留上一主候选，必须说明本节点的新结构证据为何独立支持继续保留。",
+        "cross_section_rule": "当日涨幅、横截面名次和相对指数强弱只能验证候选，不得产生主候选。",
+        "submission_expectation": "若formal_decision包含main_candidate，回复/提交应能明确指出已消费market_structure_context及上一主候选已重新比较；否则按DECISION_CONTEXT_INCOMPLETE处理。",
+        "non_blocking": True,
+        "decision_boundary": "本契约只约束ChatGPT盘中决策的读取与表达完整性，不生成风险许可、生命周期、机会状态、金额、卖出份额或订单。",
+    }
+    context["formal_intraday_context_completeness"] = {
+        "status": "READY" if all(required_context_present.values()) else "DECISION_CONTEXT_INCOMPLETE",
+        "required_context_present": required_context_present,
+        "note": "该状态只证明机器上下文已具备正式盘中分析所需结构，不等于ChatGPT已实际消费；正式回复仍必须遵守formal_intraday_response_contract。",
+    }
     atomic_json_write(ROOT / "data" / "state" / "dashboard_update_candidate.json", candidate)
     atomic_json_write(ROOT / "data" / "state" / "decision_context.json", context)
     print(json.dumps({
@@ -230,6 +276,7 @@ def main() -> None:
         "market_structure_status": market_structure.get("status"),
         "market_structure_item_count": len(market_structure.get("items") or []),
         "market_structure_history_available_count": sum(1 for x in (market_structure.get("items") or []) if (x.get("historical_context") or {}).get("status") == "READY"),
+        "formal_intraday_context_completeness": context["formal_intraday_context_completeness"]["status"],
         "research_status": research.get("status"),
         "research_daily_feature_count": research.get("daily_feature_count", 0),
         "research_relative_strength_count": research.get("relative_strength_count", 0),
