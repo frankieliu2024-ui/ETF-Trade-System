@@ -63,7 +63,16 @@ def fetch_tencent_quotes(thscodes: list[str], timeout: int = 10) -> dict[str, di
             "low_price": _number(fields[34]),
             "last_price": price,
             "prev_price": prev_close,
-            "price_change_ratio_pct": _number(fields[31]),
+            # Tencent field 31 is the absolute price change; field 32 is the
+            # percentage change. Compute the percentage from the verified last
+            # and previous close so a provider semantic mismatch cannot enter
+            # downstream contexts as a 100x scale error.
+            "provider_price_change_amount": _number(fields[31]),
+            "provider_price_change_ratio_pct": _number(fields[32]),
+            "price_change_ratio_pct": ((price / prev_close) - 1) * 100 if prev_close else None,
+            "change_pct_source": "CALCULATED_FROM_LAST_PREV_CLOSE",
+            "provider_field_31_semantics": "price_change_amount",
+            "provider_field_32_semantics": "price_change_ratio_pct",
             "volume": (_number(fields[6]) * 100) if _number(fields[6]) is not None else None,
             "turnover": (_number(fields[37]) * 10000) if _number(fields[37]) is not None else None,
             "provider_timestamp_ms": timestamp_ms,
