@@ -245,7 +245,7 @@ jobs:
             REQUEST_SYMBOLS=$(python - <<'PY'
           import json, os, subprocess
           files = subprocess.check_output(
-              ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", os.environ["GITHUB_SHA"], "--", "requests/live_snapshot/*.json"],
+              ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", os.environ["GITHUB_SHA"], "--", "requests/live_snapshot/"],
               text=True,
           ).splitlines()
           symbols = []
