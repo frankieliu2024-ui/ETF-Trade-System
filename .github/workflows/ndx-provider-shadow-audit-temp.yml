@@ -18,21 +18,37 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Compare Yahoo and Eastmoney NDX100 timestamps
+      - name: Compare Yahoo and Eastmoney NDX100 in parallel
         shell: bash
         run: |
           python - <<'PY'
-          import json, urllib.parse, urllib.request
+          import json, urllib.parse, urllib.request, time
+          from concurrent.futures import ThreadPoolExecutor
           from datetime import datetime, timezone
 
-          def get_json(url):
-              req=urllib.request.Request(url,headers={'User-Agent':'ETF-Trade-System/provider-shadow-audit'})
-              with urllib.request.urlopen(req,timeout=20) as r:
-                  return json.load(r)
+          HEADERS={'User-Agent':'ETF-Trade-System/provider-shadow-audit'}
 
-          now=datetime.now(timezone.utc)
+          def timed_get_json(url):
+              start_wall=datetime.now(timezone.utc)
+              start=time.perf_counter()
+              req=urllib.request.Request(url,headers=HEADERS)
+              with urllib.request.urlopen(req,timeout=20) as r:
+                  payload=json.load(r)
+              end=time.perf_counter()
+              received=datetime.now(timezone.utc)
+              return payload, start_wall, received, round((end-start)*1000,2)
+
           yurl='https://query1.finance.yahoo.com/v8/finance/chart/%5ENDX?range=1d&interval=1m&includePrePost=false'
-          y=get_json(yurl)['chart']['result'][0]
+          params={'secid':'100.NDX100','fltt':'2','invt':'2','fields':'f43,f44,f45,f46,f57,f58,f60,f86,f124'}
+          eurl='https://push2.eastmoney.com/api/qt/stock/get?'+urllib.parse.urlencode(params)
+
+          with ThreadPoolExecutor(max_workers=2) as ex:
+              fy=ex.submit(timed_get_json,yurl)
+              fe=ex.submit(timed_get_json,eurl)
+              ypayload,ystart,yrecv,ylat=fy.result()
+              epayload,estart,erecv,elat=fe.result()
+
+          y=ypayload['chart']['result'][0]
           ts=y.get('timestamp') or []
           q=(y.get('indicators',{}).get('quote') or [{}])[0]
           yi=None
@@ -43,9 +59,7 @@ jobs:
                   break
           if not yi: raise RuntimeError('Yahoo no complete NDX row')
 
-          params={'secid':'100.NDX100','fltt':'2','invt':'2','fields':'f43,f44,f45,f46,f57,f58,f60,f86,f124'}
-          eurl='https://push2.eastmoney.com/api/qt/stock/get?'+urllib.parse.urlencode(params)
-          e=get_json(eurl).get('data') or {}
+          e=epayload.get('data') or {}
           raw=e.get('f124') or e.get('f86')
           if raw in (None,'',0,'0'): raise RuntimeError('Eastmoney provider timestamp missing')
           ets=int(float(raw)); ets=ets//1000 if ets>10_000_000_000 else ets
@@ -53,13 +67,33 @@ jobs:
           if any(v in (None,'-') for v in evals.values()): raise RuntimeError('Eastmoney missing OHLC')
 
           yts,yvals=yi
+          ydt=datetime.fromtimestamp(yts,timezone.utc)
+          edt=datetime.fromtimestamp(ets,timezone.utc)
+          common=max(yrecv,erecv)
           out={
-            'captured_at_utc':now.isoformat(timespec='seconds'),
-            'yahoo':{'timestamp':yts,'as_of_utc':datetime.fromtimestamp(yts,timezone.utc).isoformat(timespec='seconds'),'close':yvals['close'],'age_seconds':round((now-datetime.fromtimestamp(yts,timezone.utc)).total_seconds())},
-            'eastmoney':{'timestamp':ets,'as_of_utc':datetime.fromtimestamp(ets,timezone.utc).isoformat(timespec='seconds'),'close':evals['close'],'age_seconds':round((now-datetime.fromtimestamp(ets,timezone.utc)).total_seconds()),'timestamp_field':'f124' if e.get('f124') not in (None,'',0,'0') else 'f86'},
-            'eastmoney_minus_yahoo_seconds':ets-yts,
-            'price_gap_pct':round((float(evals['close'])-float(yvals['close']))/float(yvals['close'])*100,6),
+            'common_observation_utc':common.isoformat(timespec='milliseconds'),
+            'request_start_skew_ms':round((estart-ystart).total_seconds()*1000,2),
+            'yahoo':{
+              'request_start_utc':ystart.isoformat(timespec='milliseconds'),
+              'response_received_utc':yrecv.isoformat(timespec='milliseconds'),
+              'http_latency_ms':ylat,
+              'provider_timestamp':yts,
+              'as_of_utc':ydt.isoformat(timespec='seconds'),
+              'freshness_at_response_seconds':round((yrecv-ydt).total_seconds(),3),
+              'close':yvals['close']
+            },
+            'eastmoney':{
+              'request_start_utc':estart.isoformat(timespec='milliseconds'),
+              'response_received_utc':erecv.isoformat(timespec='milliseconds'),
+              'http_latency_ms':elat,
+              'provider_timestamp':ets,
+              'timestamp_field':'f124' if e.get('f124') not in (None,'',0,'0') else 'f86',
+              'as_of_utc':edt.isoformat(timespec='seconds'),
+              'freshness_at_response_seconds':round((erecv-edt).total_seconds(),3),
+              'close':evals['close']
+            },
+            'eastmoney_minus_yahoo_provider_seconds':ets-yts,
+            'price_gap_pct':round((float(evals['close'])-float(yvals['close']))/float(yvals['close'])*100,6)
           }
-          print('NDX100_PROVIDER_SHADOW_RESULT='+json.dumps(out,ensure_ascii=False,sort_keys=True))
+          print('NDX100_PARALLEL_RESULT='+json.dumps(out,ensure_ascii=False,sort_keys=True))
           PY
-# sample-3
