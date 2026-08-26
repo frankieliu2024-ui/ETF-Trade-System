@@ -116,7 +116,7 @@ jobs:
           print(f"provider concurrency: {key}={value}")
       - name: Run data-only snapshot
         id: capture
-        if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' && github.event_name != 'push' }}
         env:
           NODE_LABEL: ${{ github.event_name == 'push' && 'live' || (github.event.inputs.node || 'scheduled') }}
           PROBE_ONLY: ${{ github.event.inputs.probe_only || 'false' }}
@@ -241,7 +241,30 @@ jobs:
         if: ${{ (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: |
           if [ "$GITHUB_EVENT_NAME" = "push" ]; then
-            python scripts/build_query_context.py --force-refresh
+            REQUEST_SYMBOLS=$(python - <<'PY'
+          import json, os, subprocess
+          files = subprocess.check_output(
+              ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", os.environ["GITHUB_SHA"], "--", "requests/live_snapshot/*.json"],
+              text=True,
+          ).splitlines()
+          symbols = []
+          for name in files:
+              try:
+                  obj = json.loads(open(name, encoding="utf-8").read())
+              except (OSError, json.JSONDecodeError):
+                  continue
+              for value in obj.get("symbols") or []:
+                  value = str(value).strip()
+                  if value and value not in symbols:
+                      symbols.append(value)
+          print(",".join(symbols))
+          PY
+            )
+            if [ -n "$REQUEST_SYMBOLS" ]; then
+              python scripts/build_query_context.py --force-refresh --symbols "$REQUEST_SYMBOLS"
+            else
+              python scripts/build_query_context.py --force-refresh
+            fi
           else
             python scripts/build_query_context.py
           fi
