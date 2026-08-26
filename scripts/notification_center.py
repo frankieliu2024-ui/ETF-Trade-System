@@ -14,6 +14,8 @@ STATE = ROOT / "data" / "state"
 TZ = timezone(timedelta(hours=8))
 PUSHPLUS_URL = "https://www.pushplus.plus/send"
 HISTORY_LIMIT = 50
+OPPORTUNITY_STATUSES = {"观察机会", "Trial机会", "Confirm机会"}
+OPPORTUNITY_EVENT_MAX_AGE_MINUTES = 45
 
 
 def read_json(path: Path, default: Any) -> Any:
@@ -103,6 +105,82 @@ def execution_confirmation_event() -> dict | None:
     return {"key": key, "type": "成交确认", "title": title, "content": content, "source": "execution_reconciliation", "event_type": "PENDING_EXECUTION_CONFIRMATION", "related_decision_id": str(intent.get("decision_id") or ""), "security_code": code, "security_name": name, "user_severity": "需要操作", "user_action": "确认成交或补充成交明细", "confirmation_context": {"decision_id": str(intent.get("decision_id") or ""), "security_code": code, "security_name": name, "side": side, "lifecycle": lifecycle, "quantity": qty, "approx_amount_yuan": observed.get("approx_amount_yuan"), "suggested_execution_date": date, "lifecycle_t_date": match.get("suggested_lifecycle_t_date") or date}}
 
 
+def _formal_decision_events() -> list[dict]:
+    directory = ROOT / "events" / "decisions"
+    rows: list[dict] = []
+    for path in directory.glob("*.json") if directory.exists() else []:
+        event = read_json(path, {})
+        if str(event.get("event_type") or "") != "FORMAL_DECISION":
+            continue
+        decision = event.get("formal_decision") or {}
+        status = str(decision.get("opportunity_status") or "").strip()
+        if not status:
+            main_candidate = str(decision.get("main_candidate") or "")
+            status = next((x for x in OPPORTUNITY_STATUSES if x in main_candidate), "")
+        event = dict(event)
+        event["_opportunity_status"] = status
+        rows.append(event)
+    rows.sort(key=lambda x: str(x.get("decision_time_beijing") or x.get("recorded_at_beijing") or ""))
+    return rows
+
+
+def formal_opportunity_event() -> dict | None:
+    events = _formal_decision_events()
+    if not events:
+        return None
+    latest = events[-1]
+    decision = latest.get("formal_decision") or {}
+    status = str(latest.get("_opportunity_status") or "")
+    if status not in OPPORTUNITY_STATUSES:
+        return None
+    decision_time = parse_notification_time(latest.get("decision_time_beijing") or decision.get("data_as_of_beijing"))
+    if not decision_time or now() - decision_time > timedelta(minutes=OPPORTUNITY_EVENT_MAX_AGE_MINUTES):
+        return None
+    code = str(latest.get("candidate_code") or decision.get("candidate_code") or "")
+    name = str(latest.get("candidate_name") or decision.get("candidate_name") or "")
+    target = f"{name}（{code}）" if name and code else str(decision.get("main_candidate") or code or "当前主候选")
+    previous = events[-2] if len(events) > 1 else {}
+    previous_decision = previous.get("formal_decision") or {}
+    previous_status = str(previous.get("_opportunity_status") or "")
+    previous_code = str(previous.get("candidate_code") or previous_decision.get("candidate_code") or "")
+    if previous_status == status and previous_code == code:
+        return None
+    decision_id = str(latest.get("decision_id") or decision.get("decision_id") or "")
+    risk_permission = str(decision.get("risk_permission") or "未提供")
+    amount_action = str(decision.get("amount_action") or decision.get("action") or "未提供")
+    decisive_reason = str(decision.get("decisive_reason") or "未提供")
+    data_as_of = str(decision.get("data_as_of_beijing") or latest.get("decision_time_beijing") or "未提供")
+    if status == "观察机会":
+        severity = "需要关注"
+        user_action = "关注后续正式节点；当前不因通知自动交易"
+    else:
+        severity = "需要操作"
+        user_action = "打开ETF项目查看正式判断并由用户决定是否人工执行"
+    title = f"【{status}】{target}机会状态发生变化"
+    content = (
+        f"发生了什么：正式ETF判断已将{target}更新为“{status}”。\n\n"
+        f"风险许可：{risk_permission}\n\n"
+        f"金额与动作：{amount_action}\n\n"
+        f"决定性原因：{decisive_reason}\n\n"
+        f"数据时点：{data_as_of}\n\n"
+        f"你现在需要做什么：{user_action}。"
+    )
+    return {
+        "key": f"opportunity:{decision_id}:{code}:{status}",
+        "type": "机会状态",
+        "event_type": "OPPORTUNITY_STATE_CHANGED",
+        "title": title,
+        "content": content,
+        "source": "formal_decision_event",
+        "related_decision_id": decision_id,
+        "security_code": code,
+        "security_name": name,
+        "user_severity": severity,
+        "user_action": user_action,
+        "confirmation_context": {"decision_id": decision_id, "security_code": code, "security_name": name, "opportunity_status": status, "previous_opportunity_status": previous_status, "previous_security_code": previous_code},
+    }
+
+
 def decision_event() -> dict | None:
     trigger = read_json(STATE / "decision_trigger.json", {})
     if not trigger.get("requires_formal_reassessment") or str(trigger.get("status") or "") not in {"TRIGGERED", "ALREADY_RECORDED"}:
@@ -171,7 +249,6 @@ def system_event() -> dict | None:
     head_sha = str(diag.get("head_sha") or "")
     main_head_sha = str(diag.get("main_head_sha") or "")
     head_is_current_main = bool(safety.get("head_is_current_main"))
-    # Historical/stale failures must not be pushed as current incidents. A newer main has already superseded them.
     if (head_sha and main_head_sha and head_sha != main_head_sha) or not head_is_current_main:
         return None
 
@@ -230,14 +307,14 @@ def close_account_event(force: bool = False) -> dict | None:
 def choose_event(mode: str) -> dict | None:
     if mode == "close": return close_account_event()
     if mode == "close-test": return close_account_event(force=True)
-    for builder in (execution_confirmation_event, account_confirmation_event, system_event, decision_event):
+    for builder in (execution_confirmation_event, formal_opportunity_event, account_confirmation_event, system_event, decision_event):
         event = builder()
         if event: return event
     return None
 
 
 LIFECYCLE_STATUSES = {"CREATED", "SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED", "EXPIRED"}
-USER_ACTION_TYPES = {"成交确认", "账户确认", "收盘账户", "交易判断", "系统异常"}
+USER_ACTION_TYPES = {"成交确认", "账户确认", "收盘账户", "交易判断", "机会状态", "系统异常"}
 NOTIFICATION_TTL_DAYS = 2
 
 
@@ -378,7 +455,7 @@ def main() -> int:
     if existing:
         notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
     notifications.append(item)
-    state = {"schema_version": "2.1", "updated_at": stamp, "last_status": item["lifecycle_status"], "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": "通知必须让用户明确知道发生了什么、影响什么、是否需要行动；测试必须明确标注测试；历史失效故障不作为当前真实异常推送。", "safety_boundary": "通知中心不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"}
+    state = {"schema_version": "2.1", "updated_at": stamp, "last_status": item["lifecycle_status"], "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": "通知必须让用户明确知道发生了什么、影响什么、是否需要行动；正式机会状态仅由ChatGPT已记录的正式决策事件触发，状态未变化不重复通知；测试必须明确标注测试；历史失效故障不作为当前真实异常推送。", "safety_boundary": "通知中心不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"}
     write_json(state_path, state)
     print(json.dumps(item, ensure_ascii=False))
     return 0 if ok else 1
