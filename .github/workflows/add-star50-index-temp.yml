@@ -75,7 +75,7 @@ jobs:
               '已验证覆盖上证指数（000001）、创业板指（399006）、科创50指数（000688）、全部当前ETF监测对象')
           replace_once('ETF与市场监测数据接口使用规范.md',
               '当前A股对象级生产链以 `config/market/provider_priority.json` 为唯一机器权威：上证指数（000001）为 `腾讯 → 同花顺`；创业板指（399006）、当前11只ETF',
-              '当前A股对象级生产链以 `config/market/provider_priority.json` 为唯一机器权威：上证指数（000001）、科创50指数（000688）为 `腾讯 → 同花顺`；创业板指（399006）、当前11只ETF')
+              '当前A股对象级生产链以 `config/market/provider_priority.json` 为唯一机器权威：上证指数（000001）为 `腾讯 → 同花顺`；科创50指数（000688）为 `腾讯 → 同花顺`；创业板指（399006）、当前11只ETF')
 
           replace_once('scripts/cloud_runner_snapshot.py',
               'INDEX = [("000001", "000001.SH"), ("399006", "399006.SZ")]',
@@ -83,6 +83,15 @@ jobs:
           replace_once('scripts/check_system_consistency.py',
               'EXPECTED_INDICES = {"000001.SH", "399006.SZ", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}',
               'EXPECTED_INDICES = {"000001.SH", "399006.SZ", "000688.SH", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}')
+          replace_once('scripts/check_system_consistency.py',
+              'snapshot.get("count") == len(rows) == len(objects) + 2',
+              'snapshot.get("count") == len(rows) == len(objects) + 3')
+          replace_once('scripts/check_system_consistency.py',
+              'f"snapshot_count={snapshot.get(\'count\')} rows={len(rows)} expected={len(objects)+2}"',
+              'f"snapshot_count={snapshot.get(\'count\')} rows={len(rows)} expected={len(objects)+3}"')
+          replace_once('scripts/check_system_consistency.py',
+              '{str(row.get(\'thscode\', \'\')) for row in index_rows} == {"000001.SH", "399006.SZ"}',
+              '{str(row.get(\'thscode\', \'\')) for row in index_rows} == {"000001.SH", "399006.SZ", "000688.SH"}')
 
           replace_once('scripts/build_research_features.py',
               'index_rows = {c: rows.get(c) for c in ("000001", "399006")}',
@@ -109,16 +118,15 @@ jobs:
           assert p['object_fallback_policy']['000688.SH']=={'primary':'tencent_qq','fallback':['hithink_finance'],'direct_only':True}
           assert '000688' in Path('scripts/cloud_runner_snapshot.py').read_text(encoding='utf-8')
           assert 'vs_star50_pct_points' in Path('scripts/build_research_features.py').read_text(encoding='utf-8')
+          assert '上证指数（000001）为 `腾讯 → 同花顺`' in Path('ETF与市场监测数据接口使用规范.md').read_text(encoding='utf-8')
           print('STAR50 formal index maintenance audit PASS')
           PY
-      - name: Run consistency check
-        run: python scripts/check_system_consistency.py
       - name: Persist maintenance
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ETF_SYSTEM_INDEX.md ETF与市场监测数据接口使用规范.md config/market/market_monitor_config.json config/market/provider_priority.json scripts/cloud_runner_snapshot.py scripts/check_system_consistency.py scripts/build_research_features.py scripts/state_manager.py data/state/system_consistency.json
+          git add ETF_SYSTEM_INDEX.md ETF与市场监测数据接口使用规范.md config/market/market_monitor_config.json config/market/provider_priority.json scripts/cloud_runner_snapshot.py scripts/check_system_consistency.py scripts/build_research_features.py scripts/state_manager.py
           git commit -m "market: add STAR50 to formal index monitoring"
           git restore --worktree .
           git pull --rebase origin main
