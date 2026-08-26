@@ -58,7 +58,7 @@ jobs:
         id: session_gate
         run: python scripts/runtime_session_gate.py
       - name: Record skipped runtime health
-        if: ${{ steps.session_gate.outputs.should_capture != 'true' }}
+        if: ${{ steps.session_gate.outputs.should_capture != 'true' && github.event_name != 'push' }}
         env:
           SESSION_MARKET_DATE: ${{ steps.session_gate.outputs.market_date }}
           SESSION_MARKET_PHASE: ${{ steps.session_gate.outputs.market_phase }}
