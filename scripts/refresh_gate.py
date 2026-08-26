@@ -12,6 +12,7 @@ CURRENT = ROOT / "data" / "state" / "CURRENT.json"
 RUNTIME_HEALTH = ROOT / "data" / "state" / "runtime_health.json"
 QUERY_CONTEXT = ROOT / "data" / "state" / "query_context.json"
 DECISION_CONTEXT = ROOT / "data" / "state" / "decision_context.json"
+RUNTIME_POLICY = ROOT / "config" / "runtime_policy.json"
 
 
 def load_json(path: Path, default=None):
@@ -39,6 +40,19 @@ def atomic_write(path: Path, payload: dict) -> None:
     tmp.replace(path)
 
 
+def _explicit_latest_intent() -> str:
+    policy = load_json(RUNTIME_POLICY, {})
+    preference = policy.get("query_time_refresh_preference") or {}
+    return str(preference.get("explicit_latest_query_intent") or "EXPLICIT_LATEST").upper()
+
+
+def _requires_wait(req: dict) -> bool:
+    if req.get("wait_for_refresh") is True or req.get("require_post_request_snapshot") is True:
+        return True
+    intent = str(req.get("query_intent") or req.get("request_kind") or "").upper()
+    return bool(intent and intent == _explicit_latest_intent())
+
+
 def latest_wait_request() -> tuple[Path | None, dict]:
     candidates = []
     if REQUEST_DIR.exists():
@@ -47,7 +61,7 @@ def latest_wait_request() -> tuple[Path | None, dict]:
                 req = load_json(path)
             except Exception:
                 continue
-            if req.get("wait_for_refresh") is not True:
+            if not _requires_wait(req):
                 continue
             requested = parse_time(req.get("requested_at_beijing"))
             if requested is not None:
@@ -66,17 +80,18 @@ def build_gate() -> dict:
             "formal_analysis_allowed": True,
             "formal_decision_persist_allowed": True,
             "fallback_allowed": True,
-            "rule": "普通盘中请求允许即时补采失败后回退最近有效快照；用户明确要求等待新数据时关闭自动回退。",
+            "rule": "普通盘中请求允许即时补采失败后回退最近有效快照；用户明确要求最新/当前/现在行情或等待指定节点新数据时，必须先建立显式query-time请求并关闭请求前快照回退。",
         }
 
     current = load_json(CURRENT)
     health = load_json(RUNTIME_HEALTH)
     requested = parse_time(req.get("requested_at_beijing"))
     target = parse_time(req.get("requested_market_time") or req.get("requested_at_beijing"))
-    threshold = max(x for x in (requested, target) if x is not None)
+    threshold_candidates = [x for x in (requested, target) if x is not None]
+    threshold = max(threshold_candidates) if threshold_candidates else None
     captured_text = current.get("data_freshness", {}).get("captured_at_beijing") or current.get("captured_at")
     captured = parse_time(captured_text)
-    ready = captured is not None and captured >= threshold
+    ready = threshold is not None and captured is not None and captured >= threshold
 
     finished = parse_time(health.get("finished_at") or health.get("captured_at_beijing"))
     failed_after_request = (
@@ -87,11 +102,14 @@ def build_gate() -> dict:
         and not ready
     )
     status = "READY" if ready else ("FAILED" if failed_after_request else "PENDING")
+    explicit_latest = str(req.get("query_intent") or req.get("request_kind") or "").upper() == _explicit_latest_intent()
+    allow_fallback = req.get("allow_wait_refresh_fallback") is True and not explicit_latest
     return {
         "status": status,
-        "formal_analysis_allowed": ready,
-        "formal_decision_persist_allowed": ready,
-        "fallback_allowed": False,
+        "formal_analysis_allowed": ready or allow_fallback,
+        "formal_decision_persist_allowed": ready or allow_fallback,
+        "fallback_allowed": allow_fallback,
+        "query_intent": req.get("query_intent") or req.get("request_kind") or "",
         "request_file": str(path.relative_to(ROOT)).replace("\\", "/") if path else "",
         "request_id": str(req.get("request_id") or (path.stem if path else "")),
         "requested_at_beijing": req.get("requested_at_beijing", ""),
@@ -100,7 +118,7 @@ def build_gate() -> dict:
         "resolved_snapshot_time": captured_text if ready else "",
         "latest_snapshot": current.get("latest_snapshot", ""),
         "failure_reason": health.get("reason", "") if failed_after_request else "",
-        "rule": "用户明确要求‘等补采/等指定节点数据后再回复’时，必须等本次请求之后且不早于requested_market_time的新CURRENT发布后，才允许正式风险许可、主候选、金额或卖出判断并持久化；PENDING/FAILED时禁止自动回退旧快照，除非用户随后明确授权回退。",
+        "rule": "EXPLICIT_LATEST或wait_for_refresh请求必须等本次请求之后且不早于requested_market_time的新CURRENT发布后才可称为最新/当前行情；请求前即使仍处普通FRESH窗口，也不得冒充本次最新查询结果。仅非EXPLICIT_LATEST且用户明确授权时可回退旧快照。",
     }
 
 
@@ -108,7 +126,7 @@ def guard_request(path: Path) -> int:
     req = load_json(path)
     if not isinstance(req.get("formal_decision"), dict):
         return 0
-    if req.get("allow_wait_refresh_fallback") is True:
+    if req.get("allow_wait_refresh_fallback") is True and str(req.get("query_intent") or "").upper() != _explicit_latest_intent():
         return 0
     gate = build_gate()
     if gate.get("formal_decision_persist_allowed", True):
