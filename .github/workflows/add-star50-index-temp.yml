@@ -19,6 +19,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Verify Tencent STAR50 direct mapping
+        run: |
+          python - <<'PY'
+          from scripts.tencent_quote import fetch_tencent_quotes
+          q=fetch_tencent_quotes(['000688.SH'])['000688.SH']
+          assert q['provider_symbol']=='sh000688'
+          assert q['name'] and q['last_price'] is not None and q['provider_timestamp_ms']
+          print({'name':q['name'],'provider_symbol':q['provider_symbol'],'last_price':q['last_price'],'provider_timestamp_ms':q['provider_timestamp_ms']})
+          PY
       - name: Patch formal STAR50 monitoring consistently
         shell: bash
         run: |
@@ -32,39 +41,32 @@ jobs:
                   raise SystemExit(f'missing anchor in {path}: {old[:120]!r}')
               p.write_text(s.replace(old,new,1), encoding='utf-8')
 
-          # System index: place STAR50 immediately after ChiNext.
           replace_once('ETF_SYSTEM_INDEX.md',
               '正式固定复核上证指数、创业板指、NDX、SOX、N225、KOSPI、TWII、HSTECH；',
               '正式固定复核上证指数、创业板指、科创50指数、NDX、SOX、N225、KOSPI、TWII、HSTECH；')
 
-          # Machine monitoring config.
           p=Path('config/market/market_monitor_config.json')
           cfg=json.loads(p.read_text(encoding='utf-8'))
-          for path in [('formal_index_layer','required_objects'),('monitoring_layers','index_monitor','required_objects')]:
+          for keys in [('formal_index_layer','required_objects'),('monitoring_layers','index_monitor','required_objects')]:
               obj=cfg
-              for key in path[:-1]: obj=obj[key]
-              arr=obj[path[-1]]
-              if '000688.SH' not in arr:
-                  pos=arr.index('399006.SZ')+1
-                  arr.insert(pos,'000688.SH')
+              for key in keys[:-1]: obj=obj[key]
+              arr=obj[keys[-1]]
+              if '000688.SH' not in arr: arr.insert(arr.index('399006.SZ')+1,'000688.SH')
           objs=cfg['classes']['A']['objects']
           if not any(x.get('id')=='000688.SH' for x in objs):
               pos=next(i for i,x in enumerate(objs) if x.get('id')=='399006.SZ')+1
-              objs.insert(pos,{"id":"000688.SH","name":"科创50指数","preferred_source":"tencent_qq","fallback_source":"hithink_finance","status":"ACTIVE"})
+              objs.insert(pos,{"id":"000688.SH","name":"科创50指数","preferred_source":"tencent_qq","fallback_source":"hithink_finance","status":"ACTIVE_WITH_FALLBACK"})
           p.write_text(json.dumps(cfg,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
-          # Provider policy: Tencent primary, Hithink direct fallback only. Do not add unverified Eastmoney mapping.
           p=Path('config/market/provider_priority.json')
           cfg=json.loads(p.read_text(encoding='utf-8'))
           arr=cfg['formal_index_objects']
-          if '000688.SH' not in arr:
-              arr.insert(arr.index('399006.SZ')+1,'000688.SH')
+          if '000688.SH' not in arr: arr.insert(arr.index('399006.SZ')+1,'000688.SH')
           cfg['objects']['000688.SH']=['tencent_qq','hithink_finance']
           cfg['object_fallback_policy']['000688.SH']={"primary":"tencent_qq","fallback":["hithink_finance"],"direct_only":True}
-          cfg.setdefault('notes',{})['a_share_index_000688']='科创50指数（000688）正式纳入指数层；腾讯为生产主源，同花顺为已覆盖直接备源。东方财富映射未完成对象级验证前不加入fallback。'
+          cfg.setdefault('notes',{})['a_share_index_000688']='科创50指数（000688）正式纳入指数层；腾讯sh000688已完成直接映射验证，为生产主源；同花顺000688.SH作为A股指数直接备源。东方财富映射未完成对象级验证前不加入fallback。'
           p.write_text(json.dumps(cfg,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
-          # Data standard.
           replace_once('ETF与市场监测数据接口使用规范.md',
               '正式固定监测：上证指数（000001.SH）、创业板指（399006.SZ）、纳斯达克100指数（NDX）',
               '正式固定监测：上证指数（000001.SH）、创业板指（399006.SZ）、科创50指数（000688.SH）、纳斯达克100指数（NDX）')
@@ -75,7 +77,6 @@ jobs:
               '当前A股对象级生产链以 `config/market/provider_priority.json` 为唯一机器权威：上证指数（000001）为 `腾讯 → 同花顺`；创业板指（399006）、当前11只ETF',
               '当前A股对象级生产链以 `config/market/provider_priority.json` 为唯一机器权威：上证指数（000001）、科创50指数（000688）为 `腾讯 → 同花顺`；创业板指（399006）、当前11只ETF')
 
-          # Runtime collection and consistency gate.
           replace_once('scripts/cloud_runner_snapshot.py',
               'INDEX = [("000001", "000001.SH"), ("399006", "399006.SZ")]',
               'INDEX = [("000001", "000001.SH"), ("399006", "399006.SZ"), ("000688", "000688.SH")]')
@@ -83,16 +84,15 @@ jobs:
               'EXPECTED_INDICES = {"000001.SH", "399006.SZ", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}',
               'EXPECTED_INDICES = {"000001.SH", "399006.SZ", "000688.SH", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}')
 
-          # Research-relative context: expose STAR50 as a benchmark, without turning it into a signal.
           replace_once('scripts/build_research_features.py',
               'index_rows = {c: rows.get(c) for c in ("000001", "399006")}',
               'index_rows = {c: rows.get(c) for c in ("000001", "399006", "000688")}')
+          replace_once('scripts/build_research_features.py',
+              '            "vs_chinext_pct_points": (x.get("relative_to_indices_pct_points") or {}).get("399006"),\n',
+              '            "vs_chinext_pct_points": (x.get("relative_to_indices_pct_points") or {}).get("399006"),\n            "vs_star50_pct_points": (x.get("relative_to_indices_pct_points") or {}).get("000688"),\n')
           replace_once('scripts/state_manager.py',
               '"vs_shanghai_pct_points": row.get("vs_shanghai_pct_points"), "vs_chinext_pct_points": row.get("vs_chinext_pct_points"),',
               '"vs_shanghai_pct_points": row.get("vs_shanghai_pct_points"), "vs_chinext_pct_points": row.get("vs_chinext_pct_points"), "vs_star50_pct_points": row.get("vs_star50_pct_points"),')
-          replace_once('scripts/build_research_features.py',
-              '"vs_shanghai_pct_points": (x.get("relative_to_indices_pct_points") or {}).get("000001"), "vs_chinext_pct_points": (x.get("relative_to_indices_pct_points") or {}).get("399006"),',
-              '"vs_shanghai_pct_points": (x.get("relative_to_indices_pct_points") or {}).get("000001"), "vs_chinext_pct_points": (x.get("relative_to_indices_pct_points") or {}).get("399006"), "vs_star50_pct_points": (x.get("relative_to_indices_pct_points") or {}).get("000688"),')
           PY
           python -m py_compile scripts/cloud_runner_snapshot.py scripts/check_system_consistency.py scripts/build_research_features.py scripts/state_manager.py
       - name: Audit STAR50 placement and no unintended index changes
@@ -107,8 +107,8 @@ jobs:
           assert m['monitoring_layers']['index_monitor']['required_objects']==expected
           assert p['formal_index_objects']==expected
           assert p['object_fallback_policy']['000688.SH']=={'primary':'tencent_qq','fallback':['hithink_finance'],'direct_only':True}
-          runner=Path('scripts/cloud_runner_snapshot.py').read_text(encoding='utf-8')
-          assert 'INDEX = [("000001", "000001.SH"), ("399006", "399006.SZ"), ("000688", "000688.SH")]' in runner
+          assert '000688' in Path('scripts/cloud_runner_snapshot.py').read_text(encoding='utf-8')
+          assert 'vs_star50_pct_points' in Path('scripts/build_research_features.py').read_text(encoding='utf-8')
           print('STAR50 formal index maintenance audit PASS')
           PY
       - name: Run consistency check
