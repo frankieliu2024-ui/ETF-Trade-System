@@ -81,7 +81,7 @@ def build_daily_features(root: Path, current: dict, snapshot_path: str, snapshot
     universe_changes = [safe_float(x.get("change_pct")) for x in etf_rows]
     universe_changes = [x for x in universe_changes if x is not None]
     universe_median = median(universe_changes) if universe_changes else None
-    index_rows = {c: rows.get(c) for c in ("000001", "399006")}
+    index_rows = {c: rows.get(c) for c in ("000001", "399006", "000688")}
 
     features = []
     for code, name in universe.items():
@@ -160,6 +160,7 @@ def build_relative_strength(daily: dict) -> dict:
             "vs_universe_median_pct_points": x.get("relative_to_etf_universe_median_pct_points"),
             "vs_shanghai_pct_points": (x.get("relative_to_indices_pct_points") or {}).get("000001"),
             "vs_chinext_pct_points": (x.get("relative_to_indices_pct_points") or {}).get("399006"),
+            "vs_star50_pct_points": (x.get("relative_to_indices_pct_points") or {}).get("000688"),
             "recent_slope_pct_per_10m": (x.get("intraday_path") or {}).get("recent_slope_pct_per_10m"),
             "sampling_coverage": (x.get("intraday_path") or {}).get("sampling_coverage"),
         })

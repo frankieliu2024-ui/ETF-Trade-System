@@ -18,7 +18,7 @@ SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 FORMAL_FILES = ["ETF规则_MASTER.md", "ETF当前状态_DASHBOARD.md", "ETF交易复盘与经验库_2026.md", "ETF市场行情档案_2026.md"]
 CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/overseas_runtime_health.json", "data/state/account_fact.json", "data/state/us_extended_hours_context.json", "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json", "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json"]
 CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_stock_context.py", "scripts/build_account_stock_market.py", "scripts/market_data_guard.py", "tests/test_market_data_guard.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_query_context.py", "scripts/market_quote_router.py", "scripts/sync_formal_files.py", "scripts/query_market_object.py", "config/market/market_quote_router.json", "tests/test_market_quote_router.py", "scripts/build_post_market_review.py", ".github/workflows/market-snapshot.yml", ".github/workflows/on-demand-market-data.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
-EXPECTED_INDICES = {"000001.SH", "399006.SZ", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
+EXPECTED_INDICES = {"000001.SH", "399006.SZ", "000688.SH", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
 REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api", "eastmoney_push2"}
 
 
@@ -428,12 +428,12 @@ def main() -> int:
             rows = snapshot.get("rows") or []
             etf_rows = [row for row in rows if row.get("asset_class") == "ETF"]
             index_rows = [row for row in rows if row.get("asset_class") == "A_SHARE_INDEX"]
-            check("a_share_runtime:snapshot_count", snapshot.get("count") == len(rows) == len(objects) + 2, f"snapshot_count={snapshot.get('count')} rows={len(rows)} expected={len(objects)+2}")
+            check("a_share_runtime:snapshot_count", snapshot.get("count") == len(rows) == len(objects) + 3, f"snapshot_count={snapshot.get('count')} rows={len(rows)} expected={len(objects)+3}")
             query_only_runtime = str(runtime_health.get("status", "")).upper() == "SKIPPED" and str(runtime_health.get("trigger_mode", "")).upper() == "QUERY_TIME_PUSH"
             market_date_aligned = snapshot.get("market_date") == current.get("market_date") == runtime_health.get("market_date")
             check("a_share_runtime:market_date_alignment", market_date_aligned or query_only_runtime, f"snapshot={snapshot.get('market_date')} current={current.get('market_date')} health={runtime_health.get('market_date')} query_only={query_only_runtime}")
             check("a_share_runtime:etf_complete", {str(row.get('symbol', '')) for row in etf_rows} == universe_codes and all(row.get("quality_status") == "PASS" for row in etf_rows), f"count={len(etf_rows)} expected={len(universe_codes)}")
-            check("a_share_runtime:core_indices_complete", {str(row.get('thscode', '')) for row in index_rows} == {"000001.SH", "399006.SZ"} and all(row.get("quality_status") == "PASS" for row in index_rows), f"indices={[row.get('thscode') for row in index_rows]}")
+            check("a_share_runtime:core_indices_complete", {str(row.get('thscode', '')) for row in index_rows} == {"000001.SH", "399006.SZ", "000688.SH"} and all(row.get("quality_status") == "PASS" for row in index_rows), f"indices={[row.get('thscode') for row in index_rows]}")
             check("a_share_runtime:beijing_capture", bool(snapshot.get("captured_at_beijing")) and snapshot.get("timezone") == "Asia/Shanghai", f"captured_at_beijing={snapshot.get('captured_at_beijing')} timezone={snapshot.get('timezone')}")
 
     account = read_json("data/state/account_fact.json")

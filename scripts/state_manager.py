@@ -221,7 +221,7 @@ def build_research_evidence_summary(root: Path) -> dict[str, Any]:
             "close_return_pct": row.get("close_return_pct"),
             "descriptive_daily_return_rank": row.get("rank"),
             "vs_universe_median_pct_points": row.get("vs_universe_median_pct_points"),
-            "vs_shanghai_pct_points": row.get("vs_shanghai_pct_points"), "vs_chinext_pct_points": row.get("vs_chinext_pct_points"),
+            "vs_shanghai_pct_points": row.get("vs_shanghai_pct_points"), "vs_chinext_pct_points": row.get("vs_chinext_pct_points"), "vs_star50_pct_points": row.get("vs_star50_pct_points"),
             "recent_slope_pct_per_10m": row.get("recent_slope_pct_per_10m"), "sampling_coverage": row.get("sampling_coverage"),
             "evidence_delta": d.get("delta_from_prior_research_node", {}),
             "comparison_dimensions": d.get("comparison_dimensions", []),

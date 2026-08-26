@@ -23,7 +23,7 @@
 
 ## 三层市场监测结构
 
-第一层：指数。正式固定复核上证指数、创业板指、NDX、SOX、N225、KOSPI、TWII、HSTECH；其他指数或商品按具体假设条件调用。
+第一层：指数。正式固定复核上证指数、创业板指、科创50指数、NDX、SOX、N225、KOSPI、TWII、HSTECH；其他指数或商品按具体假设条件调用。
 
 第二层：ETF。日常统一为“持仓ETF + 观察ETF”。两类均持续获取行情并参加机会扫描、生命周期管理和统一资本比较；机器采集唯一运行清单为 `config/market/etf_monitor_universe.json`，不写死持仓/观察身份。Dashboard中的ETF全集必须与机器清单一致。
 
