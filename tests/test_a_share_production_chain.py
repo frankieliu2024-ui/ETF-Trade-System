@@ -56,10 +56,13 @@ class AShareProductionChainTests(unittest.TestCase):
         self.assertTrue(all(item["quality_status"] == "PASS" for item in result.values()))
         self.assertTrue(all(item["as_of_beijing"].endswith("+08:00") for item in result.values()))
 
-    def test_only_market_snapshot_dispatch_can_write_full_state(self):
+    def test_scheduled_and_query_requests_share_canonical_snapshot_producer(self):
         production = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
         on_demand = (ROOT / ".github/workflows/on-demand-market-data.yml").read_text(encoding="utf-8")
         self.assertIn("workflow_dispatch", production)
+        self.assertIn("if: ${{ steps.session_gate.outputs.should_capture == 'true' }}", production)
+        self.assertIn("github.event_name != 'push'", production)
+        self.assertIn("steps.snapshot_result.outputs.snapshot_written", production)
         self.assertIn("git add -A -- data/market/snapshots data/state", production)
         self.assertNotIn("run_full_snapshot_recovery.py", on_demand)
         self.assertNotIn("data/state/CURRENT.json", on_demand)

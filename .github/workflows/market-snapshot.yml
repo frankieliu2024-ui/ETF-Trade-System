@@ -117,7 +117,10 @@ jobs:
           print(f"provider concurrency: {key}={value}")
       - name: Run data-only snapshot
         id: capture
-        if: ${{ steps.session_gate.outputs.should_capture == 'true' && github.event_name != 'push' }}
+        # Scheduled pulses and in-session user requests share the same producer.
+        # This keeps query-time A-share facts on the canonical snapshot/CURRENT
+        # path instead of maintaining a second non-persisted market-data chain.
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
         env:
           NODE_LABEL: ${{ github.event_name == 'push' && 'live' || (github.event.inputs.node || 'scheduled') }}
           PROBE_ONLY: ${{ github.event.inputs.probe_only || 'false' }}
@@ -196,7 +199,9 @@ jobs:
           fi
       - name: Quick retry failed core objects after initial publish
         id: quick_retry
-        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        # A user request gets the first publishable PASS/DEGRADED/FAILED result
+        # immediately. Slow repair remains a scheduled, post-publish activity.
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
         run: python scripts/cloud_runner_snapshot.py --retry-failed
       - name: Process optional broker/dashboard state sync
         id: state_sync
@@ -241,7 +246,7 @@ jobs:
       - name: Build on-demand query context
         if: ${{ (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: |
-          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "${{ steps.snapshot_result.outputs.snapshot_written }}" != "true" ]; then
             REQUEST_SYMBOLS=$(python - <<'PY'
           import json, os, subprocess
           files = subprocess.check_output(
