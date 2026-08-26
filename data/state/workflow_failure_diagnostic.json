@@ -1,27 +1,27 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-26T16:59:47+08:00",
+  "generated_at": "2026-08-26T17:04:55+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 32950601997,
+  "run_id": 32951058282,
   "run_attempt": 1,
-  "head_sha": "512192c1a60089498dba6d805308f6b5187cf69d",
-  "main_head_sha": "28d1c68e0ed1719d757400186ec29ad3c265d008",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "636da026878f6b011af4352339dfece2dbbeaf63",
+  "main_head_sha": "7ba1f697d7c9fd77efd2e40dc4e67e37b3985b6d",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 16
+      "step": "Persist consistency and maintenance state",
+      "number": 13
     }
   ],
   "changed_files": [
-    "scripts/tencent_quote.py"
+    "scripts/akshare_capability_poc.py"
   ],
-  "commit_message": "chore: trigger Tencent Shanghai index validation",
+  "commit_message": "research: add AkShare ETF minute-path capability PoC",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "ESCALATE_WITH_DIAGNOSTIC",
-  "reason": "automatic action stopped at safety boundary",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
