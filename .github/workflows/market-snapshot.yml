@@ -294,32 +294,9 @@ jobs:
             exit 0
           fi
           git commit -m "data: record downstream market contexts and state sync"
-          python - <<'PY'
-          import json, subprocess
-          from pathlib import Path
-          path = Path('data/state/runtime_health.json')
-          raw = path.read_text(encoding='utf-8')
-          decoder = json.JSONDecoder()
-          position = 0
-          documents = []
-          while position < len(raw):
-              while position < len(raw) and raw[position].isspace():
-                  position += 1
-              if position >= len(raw):
-                  break
-              value, end = decoder.raw_decode(raw, position)
-              documents.append(value)
-              position = end
-          if not documents or not isinstance(documents[-1], dict):
-              raise RuntimeError('runtime_health.json contains no valid JSON object')
-          # A concurrent state write may leave two complete JSON documents in the
-          # workspace; retain the last complete state and never invent fields.
-          data = documents[-1]
-          data['data_commit'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
-          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-          PY
-          git add data/state/runtime_health.json
-          git commit -m "state: finalize runtime health commit"
+          # runtime_health is already normalized before the data commit.
+          # Do not parse/rewrite it a second time: concurrent writers can leave
+          # a transient multi-document buffer and must not invalidate fresh data.
           # Another pulse may publish between fetch and push; retry the
           # fast-forward rebase instead of losing a valid fresh context.
           for attempt in 1 2 3; do
