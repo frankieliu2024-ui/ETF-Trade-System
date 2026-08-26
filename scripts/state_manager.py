@@ -245,7 +245,8 @@ def build_research_evidence_summary(root: Path) -> dict[str, Any]:
 
 
 def _snapshot_rows(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
-    return [x for x in (snapshot.get("rows") if isinstance(snapshot, dict) else []) if isinstance(x, dict)]
+    rows = snapshot.get("rows") if isinstance(snapshot, dict) else []
+    return [x for x in (rows or []) if isinstance(x, dict)]
 
 
 def build_data_quality_summary(snapshot: dict[str, Any]) -> dict[str, Any]:
