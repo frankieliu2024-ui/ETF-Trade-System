@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -16,6 +17,7 @@ FILES = {
     "decision": STATE / "decision_context.json",
     "maintenance": STATE / "maintenance_health.json",
 }
+DASHBOARD = ROOT / "ETF当前状态_DASHBOARD.md"
 OUT = STATE / "e2e_status.json"
 
 
@@ -25,6 +27,25 @@ def read_json(path: Path) -> dict:
         return data if isinstance(data, dict) else {}
     except (OSError, json.JSONDecodeError):
         return {}
+
+
+def read_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+
+def parse_time(value: object) -> datetime | None:
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=TZ)
+    return dt.astimezone(TZ)
 
 
 def write_json(path: Path, obj: dict) -> None:
@@ -58,14 +79,24 @@ def market_component(current: dict) -> dict:
 
 def account_component(account: dict, current: dict) -> dict:
     status_raw = str(account.get("status") or "UNKNOWN").upper()
-    changed = account.get("account_change_events_after_confirmed_at") or []
-    needs_update = bool(current.get("needs_account_update")) or bool(changed)
+    account_time = parse_time(account.get("updated_at"))
+    audit_events = account.get("account_change_events_after_confirmed_at") or []
+    pending_events = []
+    for event in audit_events:
+        event_time = parse_time(event.get("event_time")) if isinstance(event, dict) else None
+        if account_time is not None and event_time is not None and event_time <= account_time:
+            continue
+        if isinstance(event, dict) and str(event.get("reconciliation_status") or "").upper().startswith("RECONCILED"):
+            continue
+        pending_events.append(event)
+
+    needs_update = bool(current.get("needs_account_update")) or bool(pending_events)
     if status_raw == "VALID" and not needs_update:
         status = "READY"
-        reason = "confirmed account facts remain valid under event-driven carry-forward"
+        reason = "confirmed account facts remain valid; historical audit deltas are not pending updates"
     elif status_raw == "VALID":
         status = "DEGRADED"
-        reason = "account change event exists after last confirmed account fact"
+        reason = "account change event exists after the latest confirmed account fact"
     else:
         status = "BLOCKED"
         reason = "confirmed account facts unavailable"
@@ -74,25 +105,70 @@ def account_component(account: dict, current: dict) -> dict:
         "reason": reason,
         "updated_at": account.get("updated_at"),
         "source": account.get("source"),
-        "pending_change_events": changed,
+        "pending_change_events": pending_events,
+        "historical_audit_event_count": len(audit_events),
     }
 
 
-def risk_component(equity: dict) -> dict:
+def dashboard_risk_metric(dashboard: str) -> tuple[float | None, str]:
+    if not dashboard:
+        return None, ""
+    match = re.search(r"\|ETF策略风险率\|约?\s*([+-]?\d+(?:\.\d+)?)%", dashboard)
+    if not match:
+        return None, ""
+    updated = re.search(r">\s*更新时间：([^\n]+)", dashboard)
+    return float(match.group(1)), (updated.group(1).strip() if updated else "")
+
+
+def risk_component(equity: dict, dashboard: str, current: dict) -> dict:
+    dashboard_pct, dashboard_updated = dashboard_risk_metric(dashboard)
     summary = equity.get("summary") or {}
-    risk_pct = summary.get("known_net_current_strategy_return_pct")
-    data_quality = summary.get("known_net_equity_data_quality")
-    if risk_pct is not None:
-        status = "READY"
-        reason = "formal ETF strategy risk metric is available"
-    else:
-        status = "BLOCKED"
-        reason = "formal ETF strategy risk metric is unavailable"
+    reconstruction_pct = summary.get("known_net_current_strategy_return_pct")
+    reconstruction_generated = parse_time(equity.get("generated_at"))
+    market_date = str(current.get("market_date") or "")
+    reconstruction_fresh_for_market = bool(
+        reconstruction_generated and market_date and reconstruction_generated.date().isoformat() >= market_date
+    )
+
+    if dashboard_pct is not None:
+        return {
+            "status": "READY",
+            "reason": "formal ETF strategy risk metric is available from the current Dashboard",
+            "etf_strategy_risk_pct": dashboard_pct,
+            "source": "ETF当前状态_DASHBOARD.md",
+            "source_updated_at": dashboard_updated,
+            "reconstruction_risk_pct": reconstruction_pct,
+            "reconstruction_generated_at": equity.get("generated_at"),
+            "reconstruction_fresh_for_market_date": reconstruction_fresh_for_market,
+            "data_quality": "FORMAL_DASHBOARD_CURRENT; RECONSTRUCTION_IS_AUXILIARY",
+        }
+    if reconstruction_pct is not None and reconstruction_fresh_for_market:
+        return {
+            "status": "READY",
+            "reason": "formal ETF strategy risk metric is available from a current reconstruction",
+            "etf_strategy_risk_pct": reconstruction_pct,
+            "source": "data/state/etf_strategy_equity.json",
+            "source_updated_at": equity.get("generated_at"),
+            "reconstruction_fresh_for_market_date": True,
+            "data_quality": summary.get("known_net_equity_data_quality"),
+        }
+    if reconstruction_pct is not None:
+        return {
+            "status": "DEGRADED",
+            "reason": "ETF strategy equity reconstruction is stale for the current market date and cannot be treated as the current formal risk metric",
+            "etf_strategy_risk_pct": None,
+            "source": "data/state/etf_strategy_equity.json",
+            "stale_reconstruction_risk_pct": reconstruction_pct,
+            "source_updated_at": equity.get("generated_at"),
+            "reconstruction_fresh_for_market_date": False,
+            "data_quality": summary.get("known_net_equity_data_quality"),
+        }
     return {
-        "status": status,
-        "reason": reason,
-        "etf_strategy_risk_pct": risk_pct,
-        "data_quality": data_quality,
+        "status": "BLOCKED",
+        "reason": "formal ETF strategy risk metric is unavailable",
+        "etf_strategy_risk_pct": None,
+        "source": "",
+        "data_quality": summary.get("known_net_equity_data_quality"),
     }
 
 
@@ -127,10 +203,11 @@ def maintenance_component(maintenance: dict) -> dict:
 
 def main() -> int:
     data = {name: read_json(path) for name, path in FILES.items()}
+    dashboard = read_text(DASHBOARD)
     components = {
         "market": market_component(data["current"]),
         "account": account_component(data["account"], data["current"]),
-        "risk": risk_component(data["equity"]),
+        "risk": risk_component(data["equity"], dashboard, data["current"]),
         "decision_context": context_component(data["query"], data["decision"]),
         "maintenance": maintenance_component(data["maintenance"]),
     }
@@ -147,7 +224,7 @@ def main() -> int:
     degradations = [name for name, value in components.items() if value["status"] == "DEGRADED"]
 
     result = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "generated_at": datetime.now(TZ).isoformat(timespec="seconds"),
         "status": overall,
         "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
