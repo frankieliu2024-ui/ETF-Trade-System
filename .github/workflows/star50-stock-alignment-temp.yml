@@ -1,0 +1,49 @@
+name: STAR50 stock alignment temp
+
+on:
+  push:
+    paths:
+      - ".github/workflows/star50-stock-alignment-temp.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  align:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+      HITHINK_TIMEOUT_SECONDS: "25"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Refresh account-stock close facts
+        run: |
+          python scripts/build_account_stock_market.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          x=json.loads(Path('data/state/stock_market_context.json').read_text(encoding='utf-8'))
+          assert x.get('quality_status')=='PASS', x
+          assert set(x.get('objects',{}))=={'300750','601138'}
+          assert all(v.get('as_of_beijing') for v in x['objects'].values())
+          print({k:{'as_of_beijing':v.get('as_of_beijing'),'provider':v.get('provider')} for k,v in x['objects'].items()})
+          PY
+      - name: Refresh contexts
+        run: python scripts/build_state_context.py
+      - name: Persist aligned state
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/state/stock_market_context.json data/state/research_context.json data/state/decision_context.json data/state/query_context.json data/state/review_context.json data/state/*.json events/research || true
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "state: align post-close account-stock facts"
+          git restore --worktree .
+          git pull --rebase origin main
+          git push origin HEAD:main
