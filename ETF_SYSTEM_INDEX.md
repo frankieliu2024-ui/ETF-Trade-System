@@ -17,7 +17,7 @@
 
 `ETF与市场监测数据接口使用规范.md` 是数据与云端运行的基础规范，负责三层监测结构、多数据源、盘前/盘中脉冲、新鲜度、交易日历、强制数据时点、质量验收、跨市场时间对齐、故障降级和维护一致性。它不是第五个交易规则文件，不产生风险许可、Trial／Confirm、金额、卖出或其他交易权限。
 
-补充查询技术说明：`docs/市场行情查询路由与全球时点规则_V1.0.md` 定义用户查询时的市场、时区、阶段和数据选择说明；唯一实现入口为 `scripts/market_quote_router.py`，配置为 `config/market/market_quote_router.json`；查询时 provider 补采统一由 `scripts/query_time_market_refresh.py` 执行，成功结果先直返本次查询，再异步持久化。它不是交易规则，也不替代上述正式数据规范。
+补充查询技术说明：`docs/市场行情查询路由与全球时点规则_V1.0.md` 定义用户查询时的市场、时区、阶段和数据选择说明；唯一实现入口为 `scripts/market_quote_router.py`，配置为 `config/market/market_quote_router.json`；查询时 provider 补采统一由 `scripts/query_time_market_refresh.py` 执行，成功结果先直返本次查询，再异步持久化。它不是交易规则，也不替代上述正式数据规范。 单对象查询统一入口为 `scripts/query_market_object.py`：正式监测对象返回 `SYSTEM_MONITORED`，用户明确指定但未纳入监测池的对象返回 `USER_REQUESTED`；扩展查询结果只写入现有 `query_context.json` 查询区域，不改变机器监测全集。
 
 任何涉及三层监测对象、provider优先级、ETF运行全集、交易日历、脉冲参数、跨市场时点、状态文件、脚本、workflow或代码提交的更新，都必须同步复核该规范并执行系统一致性检查。
 
