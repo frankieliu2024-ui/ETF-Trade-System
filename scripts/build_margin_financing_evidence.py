@@ -10,6 +10,7 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 CURRENT = ROOT / "data/state/CURRENT.json"
+OUT = ROOT / "data/state/margin_financing_evidence.json"
 VALIDATION = ROOT / "research/backtests/margin_share_control_validation.json"
 URL = "https://datacenter-web.eastmoney.com/api/data/v1/get"
 
@@ -35,6 +36,11 @@ def r4(value):
     except (TypeError, ValueError):
         return None
     return round(x, 4) if math.isfinite(x) else None
+
+
+def is_post_close_phase(current: dict) -> bool:
+    phase = str(current.get("market_phase") or "").upper()
+    return "POST_CLOSE" in phase or phase in {"CLOSED", "CLOSE"}
 
 
 def fetch_history() -> list[dict]:
@@ -98,6 +104,12 @@ def build(root: Path = ROOT) -> dict:
         market_date = date.fromisoformat(market_date_text)
     except ValueError:
         market_date = datetime.now(timezone.utc).date()
+
+    if not is_post_close_phase(current):
+        cached = load(OUT, {})
+        if cached:
+            return cached
+        return {**base, "status": "DEGRADED", "use_in_current_decision": False, "market_date": market_date_text, "reason": "intraday_cache_only; low-frequency margin refresh runs after A-share close"}
 
     try:
         history = fetch_history()
@@ -168,7 +180,7 @@ def build(root: Path = ROOT) -> dict:
 
 if __name__ == "__main__":
     out = build()
-    path = ROOT / "data/state/margin_financing_evidence.json"
+    path = OUT
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"status": out.get("status"), "fact_latest_date": out.get("fact_latest_date"), "use_in_current_decision": out.get("use_in_current_decision")}, ensure_ascii=False))
