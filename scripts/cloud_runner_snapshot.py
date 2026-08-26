@@ -16,6 +16,7 @@ from pathlib import Path
 
 from state_manager import atomic_json_write, read_current, update_current
 from market_data_guard import classify_provider_failure, validate_market_row
+from tencent_quote import fetch_tencent_quotes
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
@@ -307,6 +308,33 @@ def failed_index_row(code: str, thscode: str, error: str, market_phase: str) -> 
     return {"asset_class": "A_SHARE_INDEX", "symbol": code, "thscode": thscode, "open": None, "high": None, "low": None, "close": None, "prev_close": None, "change_pct": None, "volume": None, "amount": None, "provider": "hithink-finance", "provider_primary": "hithink-finance", "provider_used": "hithink-finance", "fallback_used": False, "fallback_reason": "", "provider_timestamp_ms": None, "as_of_beijing": "", "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai", "market_phase": market_phase, "quality_status": "FAILED", "error": error[-500:], "failure_class": classify_provider_failure(error), "semantic_note": "指数直接行情失败；未使用代理或旧行情补齐。"}
 
 
+def fetch_tencent_a_share(asset_class: str, code: str, thscode: str, market_phase: str) -> dict:
+    quote = fetch_tencent_quotes([thscode], timeout=min(TIMEOUT_SECONDS, 10))[str(thscode).upper()]
+    received = now_shanghai()
+    candidate = row(
+        asset_class, code, thscode, quote, received.isoformat(timespec="seconds"),
+        quote["provider_timestamp_ms"], market_phase,
+        provider="tencent_qq", provider_primary="tencent_qq",
+    )
+    candidate.update({
+        "provider_symbol": quote["provider_symbol"],
+        "provider_timestamp_field": "Tencent field 30",
+        "volume_raw": quote.get("volume"),
+        "volume_unit": "share",
+        "amount_raw": quote.get("turnover"),
+        "amount_unit": "CNY",
+        "provider_name": quote.get("name"),
+    })
+    ok, reason = validate_market_row(
+        candidate, code, expected_name=quote.get("name"),
+        market_date=received.date().isoformat(),
+        now=received.astimezone(UTC), runtime_policy=POLICY,
+    )
+    if not ok:
+        raise RuntimeError(f"Tencent {thscode} quality guard: {reason}")
+    return candidate
+
+
 def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
     if code not in EASTMONEY_FALLBACK_ETFS:
         raise RuntimeError(f"Eastmoney ETF fallback is not enabled for {code}")
@@ -405,29 +433,37 @@ def fetch_etf_market_snapshot(cli: str, run_dir: Path, code: str, thscode: str, 
 
 
 def fetch_etf_with_fallback(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
-    primary_error = RuntimeError("hithink-finance bypassed after a transient failure earlier in this run")
+    tencent_error = None
+    try:
+        return fetch_tencent_a_share("ETF", code, thscode, a_share_market_phase(now_shanghai()))
+    except Exception as error:
+        tencent_error = error
+
+    hithink_error = RuntimeError("hithink-finance bypassed after a transient failure earlier in this run")
     if not PRIMARY_RUN_BYPASS.is_set():
         try:
             return fetch_etf(cli, run_dir, code, thscode)
         except Exception as error:
-            primary_error = error
+            hithink_error = error
 
-    # Configured ETFs use the verified direct fallback immediately. The older
-    # Hithink market endpoint remains only for objects without a direct fallback.
     if code in EASTMONEY_FALLBACK_ETFS:
         try:
             return fetch_eastmoney_etf(code, thscode, a_share_market_phase(now_shanghai()))
         except Exception as fallback_error:
             raise RuntimeError(
-                f"primary hithink-finance failed: {primary_error}; "
-                f"direct eastmoney_push2 fallback failed: {fallback_error}"
+                f"Tencent primary failed: {tencent_error}; "
+                f"Hithink fallback failed: {hithink_error}; "
+                f"Eastmoney fallback failed: {fallback_error}"
             ) from fallback_error
 
     try:
         return fetch_etf_market_snapshot(cli, run_dir, code, thscode, a_share_market_phase(now_shanghai()))
     except Exception as market_error:
-        raise RuntimeError(f"primary hithink-finance failed: {primary_error}; direct market snapshot failed: {market_error}") from market_error
-
+        raise RuntimeError(
+            f"Tencent primary failed: {tencent_error}; "
+            f"Hithink fallback failed: {hithink_error}; "
+            f"direct market fallback failed: {market_error}"
+        ) from market_error
 
 def fetch_etf(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
     obj = run_json(cli, ["fund", "snapshot", "--thscode", thscode], run_dir / f"ETF_{code}.json")
@@ -591,25 +627,28 @@ def main() -> int:
                 rows.append(failed)
                 print(json.dumps({"object_failure": failed}, ensure_ascii=False))
 
-    try:
-        if PRIMARY_RUN_BYPASS.is_set():
-            raise RuntimeError("hithink-finance bypassed after a transient failure earlier in this run")
-        obj = run_json(cli, ["index", "snapshot", "--thscodes", ",".join(x[1] for x in INDEX)], run_dir / "INDEX_core.json")
-        returned = {x.get("thscode"): x for x in (obj.get("data", {}).get("item") or [])}
-        index_error = ""
-    except Exception as exc:
-        returned, obj, index_error = {}, {}, str(exc)
     for code, thscode in INDEX:
         received = now_shanghai()
         try:
+            rows.append(fetch_tencent_a_share("A_SHARE_INDEX", code, thscode, a_share_market_phase(received)))
+            continue
+        except Exception as tencent_error:
+            primary_error = tencent_error
+        try:
+            if PRIMARY_RUN_BYPASS.is_set():
+                raise RuntimeError("hithink-finance bypassed after a transient failure earlier in this run")
+            obj = run_json(cli, ["index", "snapshot", "--thscodes", thscode], run_dir / f"INDEX_{code}.json")
+            returned = {x.get("thscode"): x for x in (obj.get("data", {}).get("item") or [])}
             if thscode not in returned:
-                raise RuntimeError(index_error or f"missing index row for {thscode}")
+                raise RuntimeError(f"missing index row for {thscode}")
             rows.append(row("A_SHARE_INDEX", code, thscode, returned[thscode], received.isoformat(timespec="seconds"), obj.get("data", {}).get("timestamp"), a_share_market_phase(received)))
-        except Exception as primary_error:
-            try:
-                rows.append(fetch_eastmoney_index(code, thscode, a_share_market_phase(received)))
-            except Exception as fallback_error:
-                rows.append(failed_index_row(code, thscode, f"primary={primary_error}; fallback={fallback_error}", a_share_market_phase(received)))
+            continue
+        except Exception as hithink_error:
+            primary_error = RuntimeError(f"Tencent={primary_error}; Hithink={hithink_error}")
+        try:
+            rows.append(fetch_eastmoney_index(code, thscode, a_share_market_phase(received)))
+        except Exception as fallback_error:
+            rows.append(failed_index_row(code, thscode, f"primary={primary_error}; fallback={fallback_error}", a_share_market_phase(received)))
 
     rows.sort(key=lambda x: (x["asset_class"], x["symbol"]))
     overall_quality = "PASS" if all(item.get("quality_status") == "PASS" for item in rows) else "DEGRADED"
