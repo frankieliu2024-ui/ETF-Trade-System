@@ -282,10 +282,12 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # Finalize runtime health from the post-retry snapshot, not the initial capture result.
           python - <<'PY'
-          import json
+          import json, os
           from datetime import datetime
           from pathlib import Path
           health_path = Path('data/state/runtime_health.json')
+          if os.environ.get('GITHUB_EVENT_NAME') == 'push':
+              raise SystemExit(0)
           if health_path.exists():
               health = json.loads(health_path.read_text(encoding='utf-8'))
               snapshot_path = Path(str(health.get('latest_snapshot') or ''))
