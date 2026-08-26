@@ -15,6 +15,10 @@ on:
   push:
     paths:
       - "requests/live_snapshot/**.json"
+      - "scripts/cloud_runner_snapshot.py"
+      - "scripts/query_time_market_refresh.py"
+      - "scripts/tencent_quote.py"
+      - "config/market/provider_priority.json"
   schedule:
     # Explicit opening-auction pulses, followed by ten-minute pulses in active A-share windows.
     - cron: "15,20,25,30,40,50 1 * * 1-5"
