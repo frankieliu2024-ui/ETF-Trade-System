@@ -75,7 +75,7 @@ def load_eastmoney_fallback_etfs() -> set[str]:
     return {
         str(thscode).split(".")[0]
         for thscode, rule in policy.items()
-        if str(rule.get("primary", "")) == "hithink_finance"
+        if str(rule.get("primary", "")) == "tencent_qq"
         and "eastmoney_push2" in (rule.get("fallback") or [])
         and rule.get("direct_only") is True
     }
@@ -398,9 +398,9 @@ def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
     }
     candidate = row(
         "ETF", code, thscode, item, now_dt.isoformat(timespec="seconds"), provider_ts, market_phase,
-        provider="eastmoney_push2", provider_primary="hithink-finance",
+        provider="eastmoney_push2", provider_primary="tencent_qq",
         fallback_used=True,
-        fallback_reason="hithink-finance fund snapshot unavailable or unsupported; verified direct Eastmoney push2 ETF quote",
+        fallback_reason="Tencent primary and Hithink fallback unavailable; verified direct Eastmoney push2 ETF quote",
     ) | {
         "provider_http_status": status_code,
         "provider_symbol": f"{'1' if thscode.endswith('.SH') else '0'}.{code}",
