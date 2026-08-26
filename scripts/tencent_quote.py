@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 
 SHANGHAI = ZoneInfo("Asia/Shanghai")
 _SYMBOL_RE = re.compile(r'v_(sh|sz)([0-9]{6})="([^"]*)"')
+# Shanghai index 000001.SH is a verified production Tencent symbol: sh000001.
 
 
 def _number(value: str):
