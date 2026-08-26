@@ -12,9 +12,11 @@ from pathlib import Path
 try:
     from state_manager import atomic_json_write, now_utc, read_json
     from market_data_guard import classify_provider_failure, validate_market_row
+    from tencent_quote import fetch_tencent_quotes
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, now_utc, read_json
     from scripts.market_data_guard import classify_provider_failure, validate_market_row
+    from scripts.tencent_quote import fetch_tencent_quotes
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STOCK_CONTEXT = ROOT / "data" / "state" / "stock_context.json"
@@ -188,6 +190,29 @@ def fetch_many(cli: str, stocks: list[dict]) -> dict[str, dict]:
         }
     return result
 
+
+
+
+def fetch_tencent_many(stocks: list[dict]) -> dict[str, dict]:
+    quotes = fetch_tencent_quotes([thscode(str(stock.get("code", ""))) for stock in stocks if stock.get("code")], timeout=min(TIMEOUT, 10))
+    result = {}
+    for stock in stocks:
+        code = str(stock.get("code", ""))
+        symbol = thscode(code)
+        quote = quotes.get(symbol)
+        if not quote:
+            raise RuntimeError(f"Tencent returned no exact item for {symbol}")
+        candidate = {
+            "code": code, "name": quote.get("name") or stock.get("name", ""), "thscode": symbol,
+            "open": quote.get("open_price"), "high": quote.get("high_price"), "low": quote.get("low_price"), "close": quote.get("last_price"), "prev_close": quote.get("prev_price"),
+            "change_pct": quote.get("price_change_ratio_pct"), "volume": quote.get("volume"), "amount": quote.get("turnover"), "provider_timestamp_ms": quote.get("provider_timestamp_ms"), "as_of_beijing": as_beijing(quote.get("provider_timestamp_ms")),
+            "market_phase": market_phase(quote.get("provider_timestamp_ms")), "provider": "tencent_qq", "provider_primary": "tencent_qq", "provider_used": "tencent_qq", "fallback_used": False, "fallback_reason": "", "provider_timestamp_field": "Tencent field 30", "quality_status": "PASS", "quantity": stock.get("quantity"), "market_value_from_account": stock.get("market_value"),
+        }
+        ok, reason = validate_market_row(candidate, code, expected_name=candidate["name"], market_date=datetime.now(SHANGHAI).date().isoformat(), now=datetime.now(timezone.utc), runtime_policy={"degraded_max_age_seconds": 1500})
+        if not ok:
+            raise RuntimeError(f"Tencent {code} quality guard: {reason}")
+        result[code] = candidate
+    return result
 
 def build() -> dict:
     stock_context = read_json(STOCK_CONTEXT, {})
