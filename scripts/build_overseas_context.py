@@ -32,6 +32,16 @@ OBJECTS = {
     "HSTECH": {"name": "恒生科技指数", "symbol": "HSTECH.HK", "timezone": "Asia/Hong_Kong", "role": "HK_TECH"},
 }
 
+# Object-level direct fallbacks already mapped and validated for Eastmoney push2.
+# Yahoo remains the formal primary for these objects; this chain is only used
+# when the primary is unavailable/invalid or materially stale while OPEN.
+EASTMONEY_DIRECT_FALLBACKS = {
+    "NDX": "100.NDX",
+    "N225": "100.N225",
+    "KOSPI": "100.KS11",
+    "TWII": "100.TWII",
+}
+
 SESSIONS = {
     "America/New_York": [((9, 30), (16, 0))],
     "Asia/Tokyo": [((9, 0), (11, 30)), ((12, 30), (15, 30))],
@@ -181,11 +191,11 @@ def provider_attempt(record: dict, provider_id: str, generated_utc: datetime) ->
     }
 
 
-def failed_attempt(provider_id: str, result: str, generated_utc: datetime) -> dict:
+def failed_attempt(provider_id: str, result: str, generated_utc: datetime, *, timezone_name: str = "Asia/Hong_Kong") -> dict:
     return {
         "provider": provider_id, "result": "FAILED", "http_or_cli_result": result,
         "quality_status": "FAILED", "freshness_status": "MISSING", "stable_for_10m_pulse": False,
-        "as_of_beijing": "", "market_phase": market_phase("Asia/Hong_Kong", generated_utc), "delay_minutes": None,
+        "as_of_beijing": "", "market_phase": market_phase(timezone_name, generated_utc), "delay_minutes": None,
     }
 
 
@@ -241,6 +251,42 @@ def fetch_yahoo(object_id: str, spec: dict, generated_utc: datetime) -> dict:
         "provider_result": "HTTP 200", "provider_timestamp_field": "chart.timestamp",
         "display_time_rule": "正式输出优先显示latest.as_of_beijing（北京时间）；同时保留本地市场时区和market_phase。",
         "decision_note": "不同市场非同一时点，不得把上一收盘、盘中和当日收盘混为同步信号。",
+    }
+
+
+def fetch_eastmoney_index(object_id: str, spec: dict, generated_utc: datetime, secid: str, *, host: str = "push2.eastmoney.com") -> dict:
+    params = {"secid": secid, "fltt": "2", "invt": "2", "fields": "f43,f44,f45,f46,f47,f48,f57,f58,f60,f86,f124"}
+    url = f"https://{host}/api/qt/stock/get?" + urllib.parse.urlencode(params)
+    req = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.16"})
+    with urllib.request.urlopen(req, timeout=20) as response:
+        status_code = int(response.status)
+        payload = json.load(response)
+    data = payload.get("data") or {}
+    required = {"open": data.get("f46"), "high": data.get("f44"), "low": data.get("f45"), "close": data.get("f43")}
+    if any(value in (None, "-") for value in required.values()):
+        raise RuntimeError(f"{host} {secid} missing OHLC fields")
+    timestamp_field = "f124" if data.get("f124") not in (None, "", 0, "0") else "f86"
+    dt_utc = parse_provider_datetime(data.get(timestamp_field), spec["timezone"])
+    local = dt_utc.astimezone(ZoneInfo(spec["timezone"]))
+    latest = {
+        **required,
+        "volume": data.get("f47"), "amount": data.get("f48"), "previous_close": data.get("f60"),
+        "timestamp": int(dt_utc.timestamp()),
+        "as_of_utc": dt_utc.isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "as_of_local": local.isoformat(timespec="seconds"),
+        "as_of_beijing": dt_utc.astimezone(BEIJING).isoformat(timespec="seconds"),
+        "market_date_local": local.date().isoformat(), "provider_timezone": spec["timezone"], "symbol": secid,
+    }
+    phase = market_phase(spec["timezone"], generated_utc)
+    return {
+        "object": object_id, "name": spec["name"], "reference_role": spec["role"],
+        "provider": "eastmoney_push2", "provider_result": f"HTTP {status_code}", "provider_timestamp_field": timestamp_field,
+        "provider_endpoint": host, "symbol": secid, "market_timezone": spec["timezone"],
+        "market_phase_at_generation": phase,
+        "time_relation_to_a_share": time_relation(object_id, latest, phase, generated_utc),
+        "quality_status": validate_latest(latest), "latest": latest,
+        "display_time_rule": "正式输出优先显示latest.as_of_beijing（北京时间）；同时保留本地市场时区和market_phase。",
+        "decision_note": "东方财富对象级直接备源；仅在Yahoo主源不可用、无效或开放交易阶段明显延迟时启用。",
     }
 
 
@@ -336,9 +382,54 @@ def build() -> dict:
     for object_id, spec in OBJECTS.items():
         try:
             if object_id != "HSTECH":
-                record = fetch_yahoo(object_id, spec, generated_utc)
-            else:
                 attempts: list[dict] = []
+                record: dict | None = None
+                primary_error = ""
+                try:
+                    primary = fetch_yahoo(object_id, spec, generated_utc)
+                    primary_summary = provider_attempt(primary, "yahoo_chart_api", generated_utc)
+                    attempts.append(primary_summary)
+                    primary_freshness = primary_summary.get("freshness_status")
+                    primary_open_stale = primary.get("market_phase_at_generation") == "OPEN" and primary_freshness in {"DELAYED", "STALE"}
+                    if primary.get("quality_status") == "PASS" and not primary_open_stale:
+                        record = primary
+                        record["selection_basis"] = "configured_primary_yahoo_valid_for_current_market_phase"
+                    else:
+                        record = primary
+                        primary_error = f"primary quality={primary.get('quality_status')} freshness={primary_freshness}"
+                except Exception as primary_exc:
+                    primary_error = str(primary_exc)[-500:]
+                    attempts.append(failed_attempt("yahoo_chart_api", primary_error, generated_utc, timezone_name=spec["timezone"]))
+
+                secid = EASTMONEY_DIRECT_FALLBACKS.get(object_id)
+                needs_fallback = record is None or record.get("quality_status") != "PASS" or (
+                    record.get("market_phase_at_generation") == "OPEN" and freshness_for_pulse(record, generated_utc)[0] in {"DELAYED", "STALE"}
+                )
+                if needs_fallback and secid:
+                    provider_id = f"eastmoney_push2:{secid}"
+                    try:
+                        fallback = fetch_eastmoney_index(object_id, spec, generated_utc, secid)
+                        fallback_summary = provider_attempt(fallback, provider_id, generated_utc)
+                        attempts.append(fallback_summary)
+                        fallback_freshness = fallback_summary.get("freshness_status")
+                        fallback_open_stale = fallback.get("market_phase_at_generation") == "OPEN" and fallback_freshness in {"DELAYED", "STALE"}
+                        if fallback.get("quality_status") == "PASS" and not fallback_open_stale:
+                            record = fallback
+                            record["selection_basis"] = "yahoo_unavailable_invalid_or_open_stale_then_verified_eastmoney_direct_fallback"
+                            record["fallback_reason"] = primary_error
+                    except Exception as fallback_exc:
+                        attempts.append(failed_attempt(provider_id, str(fallback_exc)[-500:], generated_utc, timezone_name=spec["timezone"]))
+
+                if record is None:
+                    raise RuntimeError(f"no usable direct source; yahoo={primary_error or 'unavailable'}")
+                record["provider_attempts"] = attempts
+                record["configured_primary"] = "yahoo_chart_api"
+                if secid:
+                    record["direct_source_chain"] = ["yahoo_chart_api", f"eastmoney_push2:{secid}"]
+                else:
+                    record["direct_source_chain"] = ["yahoo_chart_api"]
+            else:
+                attempts = []
                 candidates: list[tuple[dict, dict]] = []
                 direct_chain = [
                     ("eastmoney_push2:124.HSTECH", lambda: fetch_hstech_eastmoney(generated_utc)),
@@ -404,10 +495,11 @@ def build() -> dict:
                 pass_count += 1
             objects[object_id] = record
         except Exception as exc:
+            fallback_secid = EASTMONEY_DIRECT_FALLBACKS.get(object_id, "")
             objects[object_id] = {
                 "object": object_id, "name": spec["name"], "reference_role": spec["role"],
-                "provider": "eastmoney_push2/yahoo_chart_api/hithink-finance" if object_id == "HSTECH" else "yahoo_chart_api",
-                "symbol": "124.HSTECH/HSTECH.HK/HS2083" if object_id == "HSTECH" else spec["symbol"],
+                "provider": "eastmoney_push2/yahoo_chart_api/hithink-finance" if object_id == "HSTECH" else ("yahoo_chart_api/eastmoney_push2" if fallback_secid else "yahoo_chart_api"),
+                "symbol": "124.HSTECH/HSTECH.HK/HS2083" if object_id == "HSTECH" else (f"{spec['symbol']}/{fallback_secid}" if fallback_secid else spec["symbol"]),
                 "market_timezone": spec["timezone"], "market_phase_at_generation": market_phase(spec["timezone"], generated_utc),
                 "generated_at_beijing": generated_beijing.isoformat(timespec="seconds"), "quality_status": "FAILED",
                 "error": str(exc)[-500:], "decision_note": "监测对象保留但当前数据不可用；不得用旧值冒充当前状态。",
