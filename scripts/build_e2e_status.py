@@ -124,10 +124,11 @@ def risk_component(equity: dict, dashboard: str, current: dict) -> dict:
     dashboard_pct, dashboard_updated = dashboard_risk_metric(dashboard)
     summary = equity.get("summary") or {}
     reconstruction_pct = summary.get("known_net_current_strategy_return_pct")
-    reconstruction_generated = parse_time(equity.get("generated_at"))
+    reconstruction_generated = equity.get("generated_at")
+    reconstruction_as_of = str(equity.get("as_of_transaction_date") or "")
     market_date = str(current.get("market_date") or "")
     reconstruction_fresh_for_market = bool(
-        reconstruction_generated and market_date and reconstruction_generated.date().isoformat() >= market_date
+        reconstruction_as_of and market_date and reconstruction_as_of >= market_date
     )
 
     if dashboard_pct is not None:
@@ -138,7 +139,8 @@ def risk_component(equity: dict, dashboard: str, current: dict) -> dict:
             "source": "ETF当前状态_DASHBOARD.md",
             "source_updated_at": dashboard_updated,
             "reconstruction_risk_pct": reconstruction_pct,
-            "reconstruction_generated_at": equity.get("generated_at"),
+            "reconstruction_generated_at": reconstruction_generated,
+            "reconstruction_as_of_transaction_date": reconstruction_as_of,
             "reconstruction_fresh_for_market_date": reconstruction_fresh_for_market,
             "data_quality": "FORMAL_DASHBOARD_CURRENT; RECONSTRUCTION_IS_AUXILIARY",
         }
@@ -148,7 +150,8 @@ def risk_component(equity: dict, dashboard: str, current: dict) -> dict:
             "reason": "formal ETF strategy risk metric is available from a current reconstruction",
             "etf_strategy_risk_pct": reconstruction_pct,
             "source": "data/state/etf_strategy_equity.json",
-            "source_updated_at": equity.get("generated_at"),
+            "source_updated_at": reconstruction_generated,
+            "reconstruction_as_of_transaction_date": reconstruction_as_of,
             "reconstruction_fresh_for_market_date": True,
             "data_quality": summary.get("known_net_equity_data_quality"),
         }
@@ -159,7 +162,8 @@ def risk_component(equity: dict, dashboard: str, current: dict) -> dict:
             "etf_strategy_risk_pct": None,
             "source": "data/state/etf_strategy_equity.json",
             "stale_reconstruction_risk_pct": reconstruction_pct,
-            "source_updated_at": equity.get("generated_at"),
+            "source_updated_at": reconstruction_generated,
+            "reconstruction_as_of_transaction_date": reconstruction_as_of,
             "reconstruction_fresh_for_market_date": False,
             "data_quality": summary.get("known_net_equity_data_quality"),
         }
