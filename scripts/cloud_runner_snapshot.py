@@ -224,6 +224,7 @@ def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, pr
     missing = [key for key in required if item.get(key) is None]
     auction_partial = (
         market_phase == "OPENING_CALL_AUCTION"
+        and bool(missing)
         and set(missing).issubset({"open_price", "high_price", "low_price"})
         and item.get("last_price") is not None
         and item.get("prev_price") is not None
@@ -231,6 +232,7 @@ def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, pr
     )
     no_trade_partial = (
         market_phase in {"CONTINUOUS_MORNING", "CONTINUOUS_AFTERNOON", "CLOSING_CALL_AUCTION"}
+        and bool(missing)
         and set(missing).issubset({"open_price", "high_price", "low_price", "volume", "turnover"})
         and item.get("last_price") is not None
         and item.get("prev_price") is not None
