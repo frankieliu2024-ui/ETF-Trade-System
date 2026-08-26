@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import urllib.error
@@ -14,8 +15,8 @@ STATE = ROOT / "data" / "state"
 TZ = timezone(timedelta(hours=8))
 PUSHPLUS_URL = "https://www.pushplus.plus/send"
 HISTORY_LIMIT = 50
-OPPORTUNITY_STATUSES = {"观察机会", "Trial机会", "Confirm机会"}
-OPPORTUNITY_EVENT_MAX_AGE_MINUTES = 45
+OPPORTUNITY_STATUSES = {"无机会", "观察机会", "Trial机会", "Confirm机会"}
+FORMAL_EVENT_MAX_AGE_MINUTES = 45
 
 
 def read_json(path: Path, default: Any) -> Any:
@@ -105,6 +106,19 @@ def execution_confirmation_event() -> dict | None:
     return {"key": key, "type": "成交确认", "title": title, "content": content, "source": "execution_reconciliation", "event_type": "PENDING_EXECUTION_CONFIRMATION", "related_decision_id": str(intent.get("decision_id") or ""), "security_code": code, "security_name": name, "user_severity": "需要操作", "user_action": "确认成交或补充成交明细", "confirmation_context": {"decision_id": str(intent.get("decision_id") or ""), "security_code": code, "security_name": name, "side": side, "lifecycle": lifecycle, "quantity": qty, "approx_amount_yuan": observed.get("approx_amount_yuan"), "suggested_execution_date": date, "lifecycle_t_date": match.get("suggested_lifecycle_t_date") or date}}
 
 
+def _normalize_opportunity_status(decision: dict) -> str:
+    status = str(decision.get("opportunity_status") or "").strip()
+    if status in OPPORTUNITY_STATUSES:
+        return status
+    main_candidate = str(decision.get("main_candidate") or "")
+    for candidate in ("Confirm机会", "Trial机会", "观察机会", "无机会"):
+        if candidate in main_candidate:
+            return candidate
+    if "无新的主候选" in main_candidate:
+        return "无机会"
+    return ""
+
+
 def _formal_decision_events() -> list[dict]:
     directory = ROOT / "events" / "decisions"
     rows: list[dict] = []
@@ -113,62 +127,115 @@ def _formal_decision_events() -> list[dict]:
         if str(event.get("event_type") or "") != "FORMAL_DECISION":
             continue
         decision = event.get("formal_decision") or {}
-        status = str(decision.get("opportunity_status") or "").strip()
-        if not status:
-            main_candidate = str(decision.get("main_candidate") or "")
-            status = next((x for x in OPPORTUNITY_STATUSES if x in main_candidate), "")
         event = dict(event)
-        event["_opportunity_status"] = status
+        event["_opportunity_status"] = _normalize_opportunity_status(decision)
         rows.append(event)
     rows.sort(key=lambda x: str(x.get("decision_time_beijing") or x.get("recorded_at_beijing") or ""))
     return rows
 
 
-def formal_opportunity_event() -> dict | None:
+def _target_for(event: dict) -> tuple[str, str, str]:
+    decision = event.get("formal_decision") or {}
+    code = str(event.get("candidate_code") or decision.get("candidate_code") or "")
+    name = str(event.get("candidate_name") or decision.get("candidate_name") or "")
+    target = f"{name}（{code}）" if name and code else str(decision.get("main_candidate") or code or "当前主候选")
+    return code, name, target
+
+
+def _material_holding_action(text: str) -> bool:
+    value = str(text or "")
+    return any(term in value for term in ("全部退出", "降低风险", "明确合法份额"))
+
+
+def _compact_amount_action(text: str) -> str:
+    value = str(text or "未提供")
+    if "新增0元" in value and not _material_holding_action(value) and "卖出" not in value:
+        return "新增0元；现有持仓维持正式判断；现金继续保留。"
+    return value
+
+
+def formal_decision_change_event() -> dict | None:
     events = _formal_decision_events()
     if not events:
         return None
     latest = events[-1]
     decision = latest.get("formal_decision") or {}
-    status = str(latest.get("_opportunity_status") or "")
-    if status not in OPPORTUNITY_STATUSES:
-        return None
     decision_time = parse_notification_time(latest.get("decision_time_beijing") or decision.get("data_as_of_beijing"))
-    if not decision_time or now() - decision_time > timedelta(minutes=OPPORTUNITY_EVENT_MAX_AGE_MINUTES):
+    if not decision_time or now() - decision_time > timedelta(minutes=FORMAL_EVENT_MAX_AGE_MINUTES):
         return None
-    code = str(latest.get("candidate_code") or decision.get("candidate_code") or "")
-    name = str(latest.get("candidate_name") or decision.get("candidate_name") or "")
-    target = f"{name}（{code}）" if name and code else str(decision.get("main_candidate") or code or "当前主候选")
+
     previous = events[-2] if len(events) > 1 else {}
     previous_decision = previous.get("formal_decision") or {}
+    status = str(latest.get("_opportunity_status") or "")
     previous_status = str(previous.get("_opportunity_status") or "")
-    previous_code = str(previous.get("candidate_code") or previous_decision.get("candidate_code") or "")
-    if previous_status == status and previous_code == code:
+    code, name, target = _target_for(latest)
+    previous_code, _, previous_target = _target_for(previous) if previous else ("", "", "")
+    risk_permission = str(decision.get("risk_permission") or "")
+    previous_risk = str(previous_decision.get("risk_permission") or "")
+    amount_action = str(decision.get("amount_action") or decision.get("action") or "")
+    previous_amount_action = str(previous_decision.get("amount_action") or previous_decision.get("action") or "")
+
+    opportunity_changed = bool(status) and (status != previous_status or code != previous_code)
+    risk_changed = bool(risk_permission and previous_risk and risk_permission != previous_risk)
+    holding_action_now = _material_holding_action(amount_action)
+    holding_action_changed = holding_action_now and amount_action != previous_amount_action
+
+    if not (opportunity_changed or risk_changed or holding_action_changed):
         return None
+
     decision_id = str(latest.get("decision_id") or decision.get("decision_id") or "")
-    risk_permission = str(decision.get("risk_permission") or "未提供")
-    amount_action = str(decision.get("amount_action") or decision.get("action") or "未提供")
     decisive_reason = str(decision.get("decisive_reason") or "未提供")
     data_as_of = str(decision.get("data_as_of_beijing") or latest.get("decision_time_beijing") or "未提供")
-    if status == "观察机会":
-        severity = "需要关注"
-        user_action = "关注后续正式节点；当前不因通知自动交易"
-    else:
+    action_summary = _compact_amount_action(amount_action)
+
+    changes: list[str] = []
+    if opportunity_changed:
+        old = f"{previous_target} {previous_status}".strip() if previous_status else "上一正式状态"
+        new = f"{target} {status}".strip()
+        changes.append(f"机会：{old} → {new}")
+    if risk_changed:
+        changes.append(f"风险许可：{previous_risk} → {risk_permission}")
+    if holding_action_changed:
+        changes.append(f"持仓动作：{action_summary}")
+
+    if holding_action_changed:
+        title = "【持仓动作｜需处理】ETF持仓需要降低风险/退出"
         severity = "需要操作"
-        user_action = "打开ETF项目查看正式判断并由用户决定是否人工执行"
-    title = f"【{status}】{target}机会状态发生变化"
+        user_action = "打开ETF项目核对正式卖出份额/退出动作，并由用户人工执行"
+    elif status in {"Trial机会", "Confirm机会"} and opportunity_changed:
+        title = f"【{status}｜需决策】{target}"
+        severity = "需要操作"
+        user_action = "打开ETF项目查看正式金额与失效条件，并由用户决定是否人工执行"
+    elif risk_changed:
+        title = f"【风险许可变化】{previous_risk} → {risk_permission}"
+        severity = "需要关注" if risk_permission != "禁止新增" else "需要操作"
+        user_action = "按最新风险许可重新查看当前正式交易判断"
+    elif status == "观察机会":
+        title = f"【观察机会｜无需下单】{target}"
+        severity = "需要关注"
+        user_action = "无需下单；关注后续正式节点是否升级为Trial/Confirm或失效"
+    elif status == "无机会":
+        title = f"【机会变化】{previous_target or target}当前无机会"
+        severity = "需要关注"
+        user_action = "无需追单；以最新正式判断为准"
+    else:
+        title = f"【正式决策变化】{target}"
+        severity = "需要关注"
+        user_action = "打开ETF项目查看最新正式判断"
+
     content = (
-        f"发生了什么：正式ETF判断已将{target}更新为“{status}”。\n\n"
-        f"风险许可：{risk_permission}\n\n"
-        f"金额与动作：{amount_action}\n\n"
-        f"决定性原因：{decisive_reason}\n\n"
+        f"结论：{'；'.join(changes)}。\n\n"
+        f"当前动作：{action_summary or '未提供'}\n\n"
+        f"关键原因：{decisive_reason}\n\n"
         f"数据时点：{data_as_of}\n\n"
-        f"你现在需要做什么：{user_action}。"
+        f"你需要做：{user_action}。\n\n"
+        "说明：通知只转发已经形成的正式ETF判断，不会自动下单。"
     )
+    signature = hashlib.sha256(json.dumps({"decision_id": decision_id, "status": status, "code": code, "risk": risk_permission, "action": amount_action}, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:12]
     return {
-        "key": f"opportunity:{decision_id}:{code}:{status}",
-        "type": "机会状态",
-        "event_type": "OPPORTUNITY_STATE_CHANGED",
+        "key": f"formal-change:{decision_id}:{signature}",
+        "type": "正式决策变化",
+        "event_type": "FORMAL_DECISION_MATERIAL_CHANGE",
         "title": title,
         "content": content,
         "source": "formal_decision_event",
@@ -177,7 +244,17 @@ def formal_opportunity_event() -> dict | None:
         "security_name": name,
         "user_severity": severity,
         "user_action": user_action,
-        "confirmation_context": {"decision_id": decision_id, "security_code": code, "security_name": name, "opportunity_status": status, "previous_opportunity_status": previous_status, "previous_security_code": previous_code},
+        "confirmation_context": {
+            "decision_id": decision_id,
+            "security_code": code,
+            "security_name": name,
+            "opportunity_status": status,
+            "previous_opportunity_status": previous_status,
+            "previous_security_code": previous_code,
+            "risk_permission": risk_permission,
+            "previous_risk_permission": previous_risk,
+            "holding_action_changed": holding_action_changed,
+        },
     }
 
 
@@ -244,43 +321,26 @@ def system_event() -> dict | None:
     diag = read_json(STATE / "workflow_failure_diagnostic.json", {})
     if str(diag.get("recommended_action") or "") != "ESCALATE_WITH_DIAGNOSTIC":
         return None
-
     safety = diag.get("safety") or {}
     head_sha = str(diag.get("head_sha") or "")
     main_head_sha = str(diag.get("main_head_sha") or "")
     head_is_current_main = bool(safety.get("head_is_current_main"))
     if (head_sha and main_head_sha and head_sha != main_head_sha) or not head_is_current_main:
         return None
-
     workflow = str(diag.get("workflow_name") or "后台任务")
     run_id = str(diag.get("run_id") or "未知")
     classification = str(diag.get("classification") or "未知")
     steps = failed_steps_text(diag)
     changed_files = [str(x) for x in (diag.get("changed_files") or []) if x]
     changed_text = "、".join(changed_files[:3]) if changed_files else "无明确业务数据文件变更"
-
     if workflow == "ETF market snapshot":
-        severity = "影响交易判断"
-        action_text = "暂缓依据系统做新的交易判断，等待行情采集恢复。"
-        impact = "行情采集任务失败，最新ETF/指数行情可能不完整；账户事实不会因此被自动修改。"
+        severity = "影响交易判断"; action_text = "暂缓依据系统做新的交易判断，等待行情采集恢复。"; impact = "行情采集任务失败，最新ETF/指数行情可能不完整；账户事实不会因此被自动修改。"
     elif workflow == "ETF system consistency":
-        severity = "需要关注"
-        action_text = "暂时无需手工修复；如果你正准备依赖系统做交易判断，请先等待下一轮一致性检查结果。"
-        impact = "系统一致性检查失败，说明某项状态或校验未通过；不代表券商账户或实际持仓发生变化。"
+        severity = "需要关注"; action_text = "暂时无需手工修复；如果你正准备依赖系统做交易判断，请先等待下一轮一致性检查结果。"; impact = "系统一致性检查失败，说明某项状态或校验未通过；不代表券商账户或实际持仓发生变化。"
     else:
-        severity = "需要关注"
-        action_text = "暂时无需手工修改数据；如后续影响行情、账户或交易判断，系统会升级通知。"
-        impact = "后台维护任务失败，但当前诊断没有证据表明券商账户或持仓被改动。"
-
+        severity = "需要关注"; action_text = "暂时无需手工修改数据；如后续影响行情、账户或交易判断，系统会升级通知。"; impact = "后台维护任务失败，但当前诊断没有证据表明券商账户或持仓被改动。"
     title = f"【真实运行异常｜{severity}】{workflow}失败"
-    content = (
-        f"发生了什么：{workflow}运行失败（Run {run_id}）。\n\n"
-        f"具体失败：{steps}。\n\n"
-        f"影响：{impact}\n\n"
-        f"涉及变更：{changed_text}。\n\n"
-        f"你现在需要做什么：{action_text}\n\n"
-        f"系统为什么没有自动修：自动处理触及安全边界，因此停止自动修改。诊断分类：{classification}。"
-    )
+    content = f"发生了什么：{workflow}运行失败（Run {run_id}）。\n\n具体失败：{steps}。\n\n影响：{impact}\n\n涉及变更：{changed_text}。\n\n你现在需要做什么：{action_text}\n\n系统为什么没有自动修：自动处理触及安全边界，因此停止自动修改。诊断分类：{classification}。"
     return {"key": f"system:workflow:{run_id}:{classification}", "type": "系统异常", "title": title, "content": content, "source": "workflow_failure_diagnostic", "user_severity": severity, "user_action": action_text}
 
 
@@ -307,48 +367,27 @@ def close_account_event(force: bool = False) -> dict | None:
 def choose_event(mode: str) -> dict | None:
     if mode == "close": return close_account_event()
     if mode == "close-test": return close_account_event(force=True)
-    for builder in (execution_confirmation_event, formal_opportunity_event, account_confirmation_event, system_event, decision_event):
+    for builder in (execution_confirmation_event, formal_decision_change_event, account_confirmation_event, system_event, decision_event):
         event = builder()
         if event: return event
     return None
 
 
 LIFECYCLE_STATUSES = {"CREATED", "SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED", "EXPIRED"}
-USER_ACTION_TYPES = {"成交确认", "账户确认", "收盘账户", "交易判断", "机会状态", "系统异常"}
+USER_ACTION_TYPES = {"成交确认", "账户确认", "收盘账户", "交易判断", "正式决策变化", "系统异常"}
 NOTIFICATION_TTL_DAYS = 2
 
 
 def notification_id_for(event: dict) -> str:
     source = str(event.get("source_event_id") or event.get("key") or "")
-    return "notification_" + __import__("hashlib").sha256(source.encode("utf-8")).hexdigest()[:20]
+    return "notification_" + hashlib.sha256(source.encode("utf-8")).hexdigest()[:20]
 
 
 def normalize_notification(event: dict, record: dict | None = None) -> dict:
     record = record or {}
     created = str(record.get("created_at") or event.get("created_at") or now().isoformat(timespec="seconds"))
     context = event.get("confirmation_context") or {}
-    return {
-        "notification_id": str(record.get("notification_id") or event.get("notification_id") or notification_id_for(event)),
-        "event_type": str(record.get("event_type") or event.get("event_type") or event.get("type") or "SYSTEM_EVENT"),
-        "source_event_id": str(record.get("source_event_id") or event.get("source_event_id") or event.get("key") or ""),
-        "related_decision_id": str(record.get("related_decision_id") or event.get("related_decision_id") or context.get("decision_id") or ""),
-        "security_code": str(record.get("security_code") or event.get("security_code") or context.get("security_code") or ""),
-        "security_name": str(record.get("security_name") or event.get("security_name") or context.get("security_name") or ""),
-        "user_severity": str(record.get("user_severity") or event.get("user_severity") or ""),
-        "user_action": str(record.get("user_action") or event.get("user_action") or ""),
-        "lifecycle_status": str(record.get("lifecycle_status") or record.get("status") or "CREATED"),
-        "created_at": created,
-        "sent_at": record.get("sent_at"),
-        "confirmed_at": record.get("confirmed_at"),
-        "archived_at": record.get("archived_at"),
-        "expires_at": record.get("expires_at") or ((parse_notification_time(created) + timedelta(days=NOTIFICATION_TTL_DAYS)).isoformat(timespec="seconds") if parse_notification_time(created) else None),
-        "title": str(record.get("title") or event.get("title") or ""),
-        "content": str(record.get("content") or event.get("content") or ""),
-        "source": str(record.get("source") or event.get("source") or ""),
-        "confirmation_context": context or record.get("confirmation_context") or {},
-        "response": record.get("response") or {},
-        "last_attempted_at": record.get("last_attempted_at") or record.get("attempted_at"),
-    }
+    return {"notification_id": str(record.get("notification_id") or event.get("notification_id") or notification_id_for(event)), "event_type": str(record.get("event_type") or event.get("event_type") or event.get("type") or "SYSTEM_EVENT"), "source_event_id": str(record.get("source_event_id") or event.get("source_event_id") or event.get("key") or ""), "related_decision_id": str(record.get("related_decision_id") or event.get("related_decision_id") or context.get("decision_id") or ""), "security_code": str(record.get("security_code") or event.get("security_code") or context.get("security_code") or ""), "security_name": str(record.get("security_name") or event.get("security_name") or context.get("security_name") or ""), "user_severity": str(record.get("user_severity") or event.get("user_severity") or ""), "user_action": str(record.get("user_action") or event.get("user_action") or ""), "lifecycle_status": str(record.get("lifecycle_status") or record.get("status") or "CREATED"), "created_at": created, "sent_at": record.get("sent_at"), "confirmed_at": record.get("confirmed_at"), "archived_at": record.get("archived_at"), "expires_at": record.get("expires_at") or ((parse_notification_time(created) + timedelta(days=NOTIFICATION_TTL_DAYS)).isoformat(timespec="seconds") if parse_notification_time(created) else None), "title": str(record.get("title") or event.get("title") or ""), "content": str(record.get("content") or event.get("content") or ""), "source": str(record.get("source") or event.get("source") or ""), "confirmation_context": context or record.get("confirmation_context") or {}, "response": record.get("response") or {}, "last_attempted_at": record.get("last_attempted_at") or record.get("attempted_at")}
 
 
 def parse_notification_time(value: Any) -> datetime | None:
@@ -364,101 +403,55 @@ def parse_notification_time(value: Any) -> datetime | None:
 
 
 def expire_notifications(items: list[dict]) -> list[dict]:
-    current = now()
-    out = []
+    current = now(); out = []
     for raw in items:
         item = normalize_notification(raw, raw)
         status = str(item.get("lifecycle_status") or "")
         expiry = parse_notification_time(item.get("expires_at"))
         if status in {"SENT", "WAITING_CONFIRMATION"} and expiry and current >= expiry:
-            item["lifecycle_status"] = "EXPIRED"
-            item["archived_at"] = item.get("archived_at") or current.isoformat(timespec="seconds")
+            item["lifecycle_status"] = "EXPIRED"; item["archived_at"] = item.get("archived_at") or current.isoformat(timespec="seconds")
         out.append(item)
     return out
 
 
 def find_existing_notification(items: list[dict], event: dict) -> dict | None:
-    source = str(event.get("source_event_id") or event.get("key") or "")
-    nid = str(event.get("notification_id") or "")
+    source = str(event.get("source_event_id") or event.get("key") or ""); nid = str(event.get("notification_id") or "")
     for item in items:
-        if nid and str(item.get("notification_id") or "") == nid:
-            return item
-        if source and str(item.get("source_event_id") or "") == source:
-            return item
+        if nid and str(item.get("notification_id") or "") == nid: return item
+        if source and str(item.get("source_event_id") or "") == source: return item
     return None
 
 
 def compact_recent(item: dict) -> dict:
-    return {
-        "key": item.get("source_event_id"),
-        "type": item.get("event_type"),
-        "title": item.get("title"),
-        "content": item.get("content"),
-        "source": item.get("source"),
-        "user_severity": item.get("user_severity"),
-        "user_action": item.get("user_action"),
-        "status": "SENT" if item.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION"} else item.get("lifecycle_status"),
-        "attempted_at": item.get("last_attempted_at") or item.get("sent_at") or item.get("created_at"),
-        "response": item.get("response") or {},
-        "notification_id": item.get("notification_id"),
-        "lifecycle_status": item.get("lifecycle_status"),
-    }
+    return {"key": item.get("source_event_id"), "type": item.get("event_type"), "title": item.get("title"), "content": item.get("content"), "source": item.get("source"), "user_severity": item.get("user_severity"), "user_action": item.get("user_action"), "status": "SENT" if item.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION"} else item.get("lifecycle_status"), "attempted_at": item.get("last_attempted_at") or item.get("sent_at") or item.get("created_at"), "response": item.get("response") or {}, "notification_id": item.get("notification_id"), "lifecycle_status": item.get("lifecycle_status")}
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=["event", "close", "close-test", "channel-test"], default="event")
-    args = parser.parse_args()
-    token = os.environ.get("PUSHPLUS_TOKEN", "").strip()
-    state_path = STATE / "notification_center.json"
-    state = read_json(state_path, {"schema_version": "1.0", "recent": []})
+    parser = argparse.ArgumentParser(); parser.add_argument("--mode", choices=["event", "close", "close-test", "channel-test"], default="event"); args = parser.parse_args()
+    token = os.environ.get("PUSHPLUS_TOKEN", "").strip(); state_path = STATE / "notification_center.json"; state = read_json(state_path, {"schema_version": "1.0", "recent": []})
     raw_items = list(state.get("notifications") or [])
-    if not raw_items:
-        raw_items = [normalize_notification(x, x) for x in (state.get("recent") or [])]
+    if not raw_items: raw_items = [normalize_notification(x, x) for x in (state.get("recent") or [])]
     notifications = expire_notifications(raw_items)
-
     if args.mode == "channel-test":
         event = {"key": f"channel-test:{now().isoformat(timespec='seconds')}", "type": "测试", "title": "【测试】ETF系统通知中心", "content": "这是一条通知通道测试，不代表真实行情、账户、交易或系统故障。\n\n你现在需要做什么：无需操作。收到即表示 GitHub → PushPlus → 微信通道正常。", "source": "manual_test", "event_type": "CHANNEL_TEST", "user_severity": "测试", "user_action": "无需操作"}
     else:
         event = choose_event(args.mode)
     if not event:
-        state.update({"schema_version": "2.1", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]})
-        write_json(state_path, state)
-        print(json.dumps({"status": "NO_NOTIFICATION_NEEDED"}, ensure_ascii=False))
-        return 0
-
+        state.update({"schema_version": "2.1", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "NO_NOTIFICATION_NEEDED"}, ensure_ascii=False)); return 0
     existing = find_existing_notification(notifications, event)
     if existing and existing.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED"}:
-        state.update({"schema_version": "2.1", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]})
-        write_json(state_path, state)
-        print(json.dumps({"status": "ALREADY_MANAGED", "notification_id": existing.get("notification_id"), "lifecycle_status": existing.get("lifecycle_status")}, ensure_ascii=False))
-        return 0
+        state.update({"schema_version": "2.1", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "ALREADY_MANAGED", "notification_id": existing.get("notification_id"), "lifecycle_status": existing.get("lifecycle_status")}, ensure_ascii=False)); return 0
     if existing and existing.get("lifecycle_status") == "EXPIRED":
-        print(json.dumps({"status": "EXPIRED_REQUIRES_NEW_EVENT", "notification_id": existing.get("notification_id")}, ensure_ascii=False))
-        return 0
-
-    item = normalize_notification(event, existing)
-    item["lifecycle_status"] = "CREATED"
-    item["created_at"] = item.get("created_at") or now().isoformat(timespec="seconds")
+        print(json.dumps({"status": "EXPIRED_REQUIRES_NEW_EVENT", "notification_id": existing.get("notification_id")}, ensure_ascii=False)); return 0
+    item = normalize_notification(event, existing); item["lifecycle_status"] = "CREATED"; item["created_at"] = item.get("created_at") or now().isoformat(timespec="seconds")
     if not token:
-        state.update({"schema_version": "2.1", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]})
-        write_json(state_path, state)
-        print(json.dumps({"status": "SKIPPED_NO_SECRET", "notification_id": item["notification_id"], "lifecycle_status": "CREATED"}, ensure_ascii=False))
-        return 0
-
-    ok, response = send(token, item["title"], item["content"])
-    stamp = now().isoformat(timespec="seconds")
-    item["last_attempted_at"] = stamp
-    item["response"] = response
-    item["lifecycle_status"] = "WAITING_CONFIRMATION" if ok and item["event_type"] in {"PENDING_EXECUTION_CONFIRMATION", "成交确认", "账户确认", "收盘账户"} else ("SENT" if ok else "CREATED")
-    item["sent_at"] = stamp if ok else item.get("sent_at")
-    if existing:
-        notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
+        state.update({"schema_version": "2.1", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "SKIPPED_NO_SECRET", "notification_id": item["notification_id"], "lifecycle_status": "CREATED"}, ensure_ascii=False)); return 0
+    ok, response = send(token, item["title"], item["content"]); stamp = now().isoformat(timespec="seconds"); item["last_attempted_at"] = stamp; item["response"] = response
+    item["lifecycle_status"] = "WAITING_CONFIRMATION" if ok and item["event_type"] in {"PENDING_EXECUTION_CONFIRMATION", "成交确认", "账户确认", "收盘账户"} else ("SENT" if ok else "CREATED"); item["sent_at"] = stamp if ok else item.get("sent_at")
+    if existing: notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
     notifications.append(item)
-    state = {"schema_version": "2.1", "updated_at": stamp, "last_status": item["lifecycle_status"], "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": "通知必须让用户明确知道发生了什么、影响什么、是否需要行动；正式机会状态仅由ChatGPT已记录的正式决策事件触发，状态未变化不重复通知；测试必须明确标注测试；历史失效故障不作为当前真实异常推送。", "safety_boundary": "通知中心不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"}
-    write_json(state_path, state)
-    print(json.dumps(item, ensure_ascii=False))
-    return 0 if ok else 1
+    state = {"schema_version": "2.1", "updated_at": stamp, "last_status": item["lifecycle_status"], "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；同一正式决策合并为一条通知，不因普通行情波动重复推送。", "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"}
+    write_json(state_path, state); print(json.dumps(item, ensure_ascii=False)); return 0 if ok else 1
 
 
 if __name__ == "__main__":
