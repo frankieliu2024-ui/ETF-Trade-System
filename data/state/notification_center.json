@@ -1,9 +1,9 @@
 {
   "schema_version": "2.1",
-  "updated_at": "2026-08-26T14:39:08+08:00",
-  "last_status": "SENT",
-  "last_type": "FORMAL_DECISION_MATERIAL_CHANGE",
-  "last_title": "【观察机会｜无需下单】电网设备ETF（159326）",
+  "updated_at": "2026-08-26T14:45:30+08:00",
+  "last_status": "WAITING_CONFIRMATION",
+  "last_type": "账户确认",
+  "last_title": "发现一项需要你确认的账户变化",
   "notifications": [
     {
       "notification_id": "notification_0000000000004d625bdd",
@@ -239,6 +239,32 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-08-26T14:10:28+08:00"
+    },
+    {
+      "notification_id": "notification_4e91f89a855e842bed11",
+      "event_type": "账户确认",
+      "source_event_id": "account:total_asset:2026-08-26T13:58:00+08:00:total_asset变化 -70.00",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "user_severity": "需要操作",
+      "user_action": "确认账户变化或上传截图",
+      "lifecycle_status": "WAITING_CONFIRMATION",
+      "created_at": "2026-08-26T14:45:29+08:00",
+      "sent_at": "2026-08-26T14:45:30+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-08-28T14:45:29+08:00",
+      "title": "发现一项需要你确认的账户变化",
+      "content": "total_asset相关的账户变化暂时无法由已确认成交或其他已知事件解释。\n\n建议：请确认是否存在未记录成交、资金划转或其他账户变化；必要时上传当前账户截图。",
+      "source": "account_fact",
+      "confirmation_context": {},
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-08-26T14:45:30+08:00"
     }
   ],
   "recent": [
@@ -385,11 +411,30 @@
       },
       "notification_id": "notification_ef89406b5a55656fbf1f",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "account:total_asset:2026-08-26T13:58:00+08:00:total_asset变化 -70.00",
+      "type": "账户确认",
+      "title": "发现一项需要你确认的账户变化",
+      "content": "total_asset相关的账户变化暂时无法由已确认成交或其他已知事件解释。\n\n建议：请确认是否存在未记录成交、资金划转或其他账户变化；必要时上传当前账户截图。",
+      "source": "account_fact",
+      "user_severity": "需要操作",
+      "user_action": "确认账户变化或上传截图",
+      "status": "SENT",
+      "attempted_at": "2026-08-26T14:45:30+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_4e91f89a855e842bed11",
+      "lifecycle_status": "WAITING_CONFIRMATION"
     }
   ],
   "pending_questions": [
-    "notification_f0549e24768dfa08b115"
+    "notification_f0549e24768dfa08b115",
+    "notification_4e91f89a855e842bed11"
   ],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；同一正式决策合并为一条通知，不因普通行情波动重复推送；收盘账户提醒仅在A股交易日触发。",
+  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；同一正式decision_id只允许一条主动通知，不因模板或代码变化重复推送；收盘账户提醒仅在A股交易日触发。",
   "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
 }
