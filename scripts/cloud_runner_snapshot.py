@@ -358,16 +358,45 @@ def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
     return candidate
 
 
+def fetch_etf_market_snapshot(cli: str, run_dir: Path, code: str, thscode: str, market_phase: str) -> dict:
+    """Use the direct market endpoint when the fund endpoint does not cover an ETF."""
+    obj = run_json(cli, ["market", "snapshot", "--thscodes", thscode], run_dir / f"ETF_{code}_market.json")
+    items = obj.get("data", {}).get("item") or []
+    exact = [item for item in items if str(item.get("thscode") or "") == thscode]
+    if len(exact) != 1:
+        raise RuntimeError(f"expected one direct market row for {code}, got {len(exact)}")
+    received = now_shanghai()
+    candidate = row(
+        "ETF", code, thscode, exact[0], received.isoformat(timespec="seconds"),
+        obj.get("data", {}).get("timestamp"), market_phase,
+        provider="hithink-finance-market", provider_primary="hithink-finance",
+        fallback_used=True,
+        fallback_reason="fund snapshot unsupported; verified direct Hithink market snapshot",
+    )
+    ok, reason = validate_market_row(candidate, code, market_date=received.date().isoformat(), now=received.astimezone(UTC), runtime_policy=POLICY)
+    if not ok:
+        raise RuntimeError(f"{code} direct market quality guard: {reason}")
+    return candidate
+
+
 def fetch_etf_with_fallback(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
+    primary_error = None
     try:
         return fetch_etf(cli, run_dir, code, thscode)
-    except Exception as primary_error:
+    except Exception as error:
+        primary_error = error
+    try:
+        return fetch_etf_market_snapshot(cli, run_dir, code, thscode, a_share_market_phase(now_shanghai()))
+    except Exception as market_error:
         if code not in EASTMONEY_FALLBACK_ETFS:
-            raise
+            raise RuntimeError(f"primary hithink-finance failed: {primary_error}; direct market snapshot failed: {market_error}") from market_error
         try:
             return fetch_eastmoney_etf(code, thscode, a_share_market_phase(now_shanghai()))
         except Exception as fallback_error:
-            raise RuntimeError(f"primary hithink-finance failed: {primary_error}; direct eastmoney_push2 fallback failed: {fallback_error}") from fallback_error
+            raise RuntimeError(
+                f"primary hithink-finance failed: {primary_error}; direct market snapshot failed: {market_error}; "
+                f"direct eastmoney_push2 fallback failed: {fallback_error}"
+            ) from fallback_error
 
 
 def fetch_etf(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
