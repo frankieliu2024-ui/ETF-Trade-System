@@ -1,9 +1,9 @@
 {
-  "version": "V1.4",
+  "version": "V1.5",
   "policy": "质量优先；正式对象按对象级primary→verified direct fallback处理；单点风险明确告警；失败对象不得静默省略；获取成功不等于自动采用；所有源先经过质量审计并保留市场时点信息",
   "providers": {
     "tencent_qq": {
-      "kind": "腾讯证券公开行情接口，当前生产支持A股指数、ETF及A股个股实时快照",
+      "kind": "腾讯证券公开行情接口，当前生产支持A股指数、ETF、账户个股及查询时A股产业链个股实时快照",
       "requires_key": false,
       "role": "primary_for_verified_A_share_realtime_quotes",
       "adjusted": false
@@ -82,10 +82,19 @@
     "601138.SH": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
     "HSTECH": {"primary": "eastmoney_push2:124.HSTECH", "fallback": ["yahoo_chart_api:HSTECH.HK", "hithink-finance:HS2083", "ETF_PROXY_513180"], "direct_only": false}
   },
+  "dynamic_scope_policy": {
+    "A_SHARE_QUERY_TIME_INDUSTRY_STOCK": {
+      "primary": "tencent_qq",
+      "fallback": ["hithink_finance"],
+      "direct_only": true,
+      "eastmoney_status": "NOT_YET_GENERICALLY_WIRED_FOR_ARBITRARY_STOCKS",
+      "rule": "仅查询时按当前产业链/行业假设临时调用，不写入固定观察池；腾讯失败时允许同花顺直接行情兜底。"
+    }
+  },
   "tencent_expansion_policy": {
-    "production_enabled": ["A_SHARE_INDEX", "A_SHARE_ETF", "A_SHARE_ACCOUNT_STOCK"],
-    "next_verified_scope": ["A_SHARE_QUERY_TIME_INDUSTRY_STOCK"],
-    "overseas_status": "VALIDATION_REQUIRED_BEFORE_PRODUCTION",
+    "production_enabled": ["A_SHARE_INDEX", "A_SHARE_ETF", "A_SHARE_ACCOUNT_STOCK", "A_SHARE_QUERY_TIME_INDUSTRY_STOCK"],
+    "next_verified_scope": ["OVERSEAS_INDEX_AND_STOCK_SHADOW_VALIDATION"],
+    "overseas_status": "SHADOW_VALIDATION_REQUIRED_BEFORE_PRODUCTION",
     "overseas_rule": "当前tencent_quote.py仅解析sh/sz六位代码并按A股字段语义校验；海外指数、港股、美股、日韩台对象不得因A股表现良好而直接升为生产主源。必须逐对象验证provider symbol、时间戳、OHLC/成交量字段语义、交易阶段和稳定性后再进入object_fallback_policy。",
     "promotion_rule": "至少跨多个真实交易节点验证低延迟、字段语义一致、时间戳真实且质量PASS后，才可由candidate提升为verified direct source。"
   },
@@ -103,7 +112,8 @@
   "notes": {
     "a_share_index_000001": "Eastmoney secid=1.000001映射为个股而非上证指数，暂不作为直接fallback；腾讯主源失败时仅走同花顺直接指数备源。",
     "hstech": "东方财富124.HSTECH已在真实交易时段验证为低延迟直接行情，正式提升为主源。objects字段保留历史审计枚举顺序；实际主备权威以object_fallback_policy.primary及build_overseas_context configured_primary为准；513180仅为最后代理。",
-    "etf_fallback": "ETF生产意图为腾讯→同花顺→东方财富；运行代码必须与本对象级政策保持一致。"
+    "etf_fallback": "ETF生产意图为腾讯→同花顺→东方财富；运行代码必须与本对象级政策保持一致。",
+    "tencent_a_share_industry": "查询时A股产业链个股正式启用腾讯主源；不建立固定个股池，仍由当前ETF/行业假设动态发现。"
   },
   "audit_scope": "对象级主源失败后仅调用已验证直接备源；未验证映射保留SINGLE_SOURCE_RISK，不以代理冒充直连"
 }
