@@ -1,319 +1,109 @@
 {
-  "version": "V1.3",
+  "version": "V1.4",
   "policy": "质量优先；正式对象按对象级primary→verified direct fallback处理；单点风险明确告警；失败对象不得静默省略；获取成功不等于自动采用；所有源先经过质量审计并保留市场时点信息",
   "providers": {
+    "tencent_qq": {
+      "kind": "腾讯证券公开行情接口，当前生产支持A股指数、ETF及A股个股实时快照",
+      "requires_key": false,
+      "role": "primary_for_verified_A_share_realtime_quotes",
+      "adjusted": false
+    },
     "hithink_finance": {
       "kind": "A股ETF/指数及已覆盖直接指数",
       "requires_key": true,
-      "role": "primary_for_cn_and_supported_direct_indices"
+      "role": "first_direct_fallback_for_A_share_and_audited_direct_indices"
+    },
+    "eastmoney_push2": {
+      "kind": "公开行情接口，支持已验证A股ETF/个股/部分指数直接行情；恒生科技指数124.HSTECH已验证为低延迟直接源",
+      "requires_key": false,
+      "role": "primary_for_HSTECH_and_verified_direct_fallback_for_A_share",
+      "adjusted": false
     },
     "yahoo_chart_api": {
       "kind": "公开海外与亚洲行情API，支持海外指数及美股扩展时段5分钟级行情",
       "requires_key": false,
-      "role": "primary_for_formal_overseas_indices_and_us_extended_hours",
+      "role": "primary_for_formal_overseas_indices_except_HSTECH_and_us_extended_hours",
       "adjusted": false
     },
-    "eastmoney_push2": {
-      "kind": "公开行情接口，可作为已验证A股ETF对象级直接行情备源及部分指数直接行情备源",
-      "requires_key": false,
-      "role": "verified_direct_fallback_for_A_share_ETFs_indices_and_account_stocks",
-      "adjusted": false
-    },
-    "akshare": {
-      "kind": "Python多源适配库",
-      "requires_key": false,
-      "role": "candidate_secondary",
-      "not_live_verified": true
-    },
-    "pandas_datareader": {
-      "kind": "宏观/因子数据适配库",
-      "requires_key": "source_dependent",
-      "role": "candidate_secondary",
-      "not_live_verified": true
-    },
-    "investpy": {
-      "kind": "Investing.com适配库",
-      "requires_key": false,
-      "role": "not_preferred",
-      "stale_upstream": true
-    },
-    "tencent_qq": {
-      "kind": "腾讯证券公开行情接口，支持A股指数、ETF及账户个股实时快照",
-      "requires_key": false,
-      "role": "primary_for_verified_A_share_realtime_quotes",
-      "adjusted": false
-    }
+    "akshare": {"kind": "Python多源适配库", "requires_key": false, "role": "candidate_secondary", "not_live_verified": true},
+    "pandas_datareader": {"kind": "宏观/因子数据适配库", "requires_key": "source_dependent", "role": "candidate_secondary", "not_live_verified": true},
+    "investpy": {"kind": "Investing.com适配库", "requires_key": false, "role": "not_preferred", "stale_upstream": true}
   },
-  "formal_index_objects": [
-    "000001.SH",
-    "399006.SZ",
-    "NDX",
-    "SOX",
-    "N225",
-    "KOSPI",
-    "TWII",
-    "HSTECH"
-  ],
+  "formal_index_objects": ["000001.SH", "399006.SZ", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"],
   "objects": {
-    "000001.SH": [
-      "hithink_finance"
-    ],
-    "399006.SZ": [
-      "hithink_finance",
-      "eastmoney_push2"
-    ],
-    "SOX": [
-      "yahoo_chart_api",
-      "ETF_PROXY_SOXQ"
-    ],
-    "NDX": [
-      "yahoo_chart_api"
-    ],
-    "N225": [
-      "yahoo_chart_api",
-      "ETF_PROXY_513520"
-    ],
-    "KOSPI": [
-      "yahoo_chart_api"
-    ],
-    "TWII": [
-      "yahoo_chart_api"
-    ],
-    "HSTECH": [
-      "hithink-finance:HS2083",
-      "yahoo_chart_api:HSTECH.HK",
-      "eastmoney_push2:124.HSTECH",
-      "ETF_PROXY_513180"
-    ],
-    "QQQ_EXTENDED": [
-      "yahoo_chart_api:includePrePost=true"
-    ],
-    "SOXX_EXTENDED": [
-      "yahoo_chart_api:includePrePost=true"
-    ],
-    "US_CONDITIONAL_INDUSTRY_STOCK_EXTENDED": [
-      "yahoo_chart_api:includePrePost=true",
-      "verified_external_source"
-    ],
-    "SOXQ": [
-      "yahoo_chart_api"
-    ],
-    "KOSDAQ": [
-      "yahoo_chart_api"
-    ],
-    "SPX": [
-      "yahoo_chart_api"
-    ],
-    "VIX": [
-      "yahoo_chart_api"
-    ],
-    "SAMSUNG_005930.KS": [
-      "yahoo_chart_api"
-    ],
-    "SK_HYNIX_000660.KS": [
-      "yahoo_chart_api"
-    ],
-    "GOLD": [
-      "yahoo_chart_api",
-      "ETF_PROXY_518880"
-    ],
-    "DXY": [
-      "yahoo_chart_api"
-    ],
-    "159561.SZ": [
-      "hithink_finance",
-      "eastmoney_push2"
-    ],
-    "159941.SZ": [
-      "hithink_finance",
-      "eastmoney_push2"
-    ],
-    "561980.SH": [
-      "hithink_finance",
-      "eastmoney_push2"
-    ],
-    "159326.SZ": [
-      "hithink_finance",
-      "eastmoney_push2"
-    ],
-    "159781.SZ": [
-      "hithink_finance",
-      "eastmoney_push2"
-    ],
-    "159992.SZ": [
-      "hithink_finance",
-      "eastmoney_push2"
-    ],
-    "513180.SH": [
-      "hithink_finance",
-      "eastmoney_push2"
-    ],
-    "513520.SH": [
-      "hithink_finance",
-      "eastmoney_push2"
-    ],
-    "515880.SH": [
-      "hithink_finance",
-      "eastmoney_push2"
-    ],
-    "518880.SH": [
-      "hithink_finance",
-      "eastmoney_push2"
-    ],
-    "588000.SH": [
-      "hithink_finance",
-      "eastmoney_push2"
-    ],
-    "300750.SZ": [
-      "hithink_finance",
-      "eastmoney_push2"
-    ],
-    "601138.SH": [
-      "hithink_finance",
-      "eastmoney_push2"
-    ]
+    "000001.SH": ["tencent_qq", "hithink_finance"],
+    "399006.SZ": ["tencent_qq", "hithink_finance", "eastmoney_push2"],
+    "SOX": ["yahoo_chart_api", "ETF_PROXY_SOXQ"],
+    "NDX": ["yahoo_chart_api"],
+    "N225": ["yahoo_chart_api", "ETF_PROXY_513520"],
+    "KOSPI": ["yahoo_chart_api"],
+    "TWII": ["yahoo_chart_api"],
+    "HSTECH": ["eastmoney_push2:124.HSTECH", "yahoo_chart_api:HSTECH.HK", "hithink-finance:HS2083", "ETF_PROXY_513180"],
+    "QQQ_EXTENDED": ["yahoo_chart_api:includePrePost=true"],
+    "SOXX_EXTENDED": ["yahoo_chart_api:includePrePost=true"],
+    "US_CONDITIONAL_INDUSTRY_STOCK_EXTENDED": ["yahoo_chart_api:includePrePost=true", "verified_external_source"],
+    "SOXQ": ["yahoo_chart_api"],
+    "KOSDAQ": ["yahoo_chart_api"],
+    "SPX": ["yahoo_chart_api"],
+    "VIX": ["yahoo_chart_api"],
+    "SAMSUNG_005930.KS": ["yahoo_chart_api"],
+    "SK_HYNIX_000660.KS": ["yahoo_chart_api"],
+    "GOLD": ["yahoo_chart_api", "ETF_PROXY_518880"],
+    "DXY": ["yahoo_chart_api"],
+    "159561.SZ": ["tencent_qq", "hithink_finance", "eastmoney_push2"],
+    "159941.SZ": ["tencent_qq", "hithink_finance", "eastmoney_push2"],
+    "561980.SH": ["tencent_qq", "hithink_finance", "eastmoney_push2"],
+    "159326.SZ": ["tencent_qq", "hithink_finance", "eastmoney_push2"],
+    "159781.SZ": ["tencent_qq", "hithink_finance", "eastmoney_push2"],
+    "159992.SZ": ["tencent_qq", "hithink_finance", "eastmoney_push2"],
+    "513180.SH": ["tencent_qq", "hithink_finance", "eastmoney_push2"],
+    "513520.SH": ["tencent_qq", "hithink_finance", "eastmoney_push2"],
+    "515880.SH": ["tencent_qq", "hithink_finance", "eastmoney_push2"],
+    "518880.SH": ["tencent_qq", "hithink_finance", "eastmoney_push2"],
+    "588000.SH": ["tencent_qq", "hithink_finance", "eastmoney_push2"],
+    "300750.SZ": ["tencent_qq", "hithink_finance", "eastmoney_push2"],
+    "601138.SH": ["tencent_qq", "hithink_finance", "eastmoney_push2"]
+  },
+  "object_fallback_policy": {
+    "000001.SH": {"primary": "tencent_qq", "fallback": ["hithink_finance"], "direct_only": true},
+    "399006.SZ": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
+    "159561.SZ": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
+    "159941.SZ": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
+    "561980.SH": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
+    "159326.SZ": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
+    "159781.SZ": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
+    "159992.SZ": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
+    "513180.SH": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
+    "513520.SH": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
+    "515880.SH": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
+    "518880.SH": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
+    "588000.SH": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
+    "300750.SZ": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
+    "601138.SH": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
+    "HSTECH": {"primary": "eastmoney_push2:124.HSTECH", "fallback": ["yahoo_chart_api:HSTECH.HK", "hithink-finance:HS2083", "ETF_PROXY_513180"], "direct_only": true}
+  },
+  "tencent_expansion_policy": {
+    "production_enabled": ["A_SHARE_INDEX", "A_SHARE_ETF", "A_SHARE_ACCOUNT_STOCK"],
+    "next_verified_scope": ["A_SHARE_QUERY_TIME_INDUSTRY_STOCK"],
+    "overseas_status": "VALIDATION_REQUIRED_BEFORE_PRODUCTION",
+    "overseas_rule": "当前tencent_quote.py仅解析sh/sz六位代码并按A股字段语义校验；海外指数、港股、美股、日韩台对象不得因A股表现良好而直接升为生产主源。必须逐对象验证provider symbol、时间戳、OHLC/成交量字段语义、交易阶段和稳定性后再进入object_fallback_policy。",
+    "promotion_rule": "至少跨多个真实交易节点验证低延迟、字段语义一致、时间戳真实且质量PASS后，才可由candidate提升为verified direct source。"
   },
   "us_extended_hours": {
-    "base_proxies": [
-      "QQQ",
-      "SOXX"
-    ],
+    "base_proxies": ["QQQ", "SOXX"],
     "conditional_industry_stocks": "dynamic_only",
-    "sessions_et": {
-      "PRE_MARKET": "04:00-09:30",
-      "REGULAR": "09:30-16:00",
-      "POST_MARKET": "16:00-20:00"
-    },
+    "sessions_et": {"PRE_MARKET": "04:00-09:30", "REGULAR": "09:30-16:00", "POST_MARKET": "16:00-20:00"},
     "rule": "NDX/SOX现金指数与美股扩展时段分开解释；QQQ/SOXX及条件个股扩展时段只作前置信号，不直接生成A股ETF动作。"
   },
   "time_alignment": {
     "required": true,
-    "fields": [
-      "as_of_beijing",
-      "market_timezone",
-      "as_of_local",
-      "market_phase",
-      "time_relation_to_a_share"
-    ],
+    "fields": ["as_of_beijing", "market_timezone", "as_of_local", "market_phase", "time_relation_to_a_share"],
     "rule": "跨市场证据按各市场实际时点解释；美国现金盘、盘后、下一交易日盘前必须分开；亚洲市场按同日盘中/同日已收盘/上一交易日区分。"
   },
-  "object_fallback_policy": {
-    "159561.SZ": {
-      "primary": "tencent_qq",
-      "fallback": [
-        "hithink_finance",
-        "eastmoney_push2"
-      ],
-      "direct_only": true
-    },
-    "159941.SZ": {
-      "primary": "tencent_qq",
-      "fallback": [
-        "hithink_finance",
-        "eastmoney_push2"
-      ],
-      "direct_only": true
-    },
-    "561980.SH": {
-      "primary": "tencent_qq",
-      "fallback": [
-        "hithink_finance",
-        "eastmoney_push2"
-      ],
-      "direct_only": true
-    },
-    "159326.SZ": {
-      "primary": "tencent_qq",
-      "fallback": [
-        "hithink_finance",
-        "eastmoney_push2"
-      ],
-      "direct_only": true
-    },
-    "159781.SZ": {
-      "primary": "tencent_qq",
-      "fallback": [
-        "hithink_finance",
-        "eastmoney_push2"
-      ],
-      "direct_only": true
-    },
-    "159992.SZ": {
-      "primary": "tencent_qq",
-      "fallback": [
-        "hithink_finance",
-        "eastmoney_push2"
-      ],
-      "direct_only": true
-    },
-    "513180.SH": {
-      "primary": "tencent_qq",
-      "fallback": [
-        "hithink_finance",
-        "eastmoney_push2"
-      ],
-      "direct_only": true
-    },
-    "513520.SH": {
-      "primary": "tencent_qq",
-      "fallback": [
-        "hithink_finance",
-        "eastmoney_push2"
-      ],
-      "direct_only": true
-    },
-    "515880.SH": {
-      "primary": "tencent_qq",
-      "fallback": [
-        "hithink_finance",
-        "eastmoney_push2"
-      ],
-      "direct_only": true
-    },
-    "518880.SH": {
-      "primary": "tencent_qq",
-      "fallback": [
-        "hithink_finance",
-        "eastmoney_push2"
-      ],
-      "direct_only": true
-    },
-    "588000.SH": {
-      "primary": "tencent_qq",
-      "fallback": [
-        "hithink_finance",
-        "eastmoney_push2"
-      ],
-      "direct_only": true
-    },
-    "399006.SZ": {
-      "primary": "tencent_qq",
-      "fallback": [
-        "hithink_finance",
-        "eastmoney_push2"
-      ],
-      "direct_only": true
-    },
-    "300750.SZ": {
-      "primary": "tencent_qq",
-      "fallback": [
-        "hithink_finance",
-        "eastmoney_push2"
-      ],
-      "direct_only": true
-    },
-    "601138.SH": {
-      "primary": "tencent_qq",
-      "fallback": [
-        "hithink_finance",
-        "eastmoney_push2"
-      ],
-      "direct_only": true
-    }
-  },
   "notes": {
-    "a_share_index_000001": "Eastmoney secid=1.000001映射为个股而非上证指数，暂不作为直接fallback；保持single-source risk warning",
-    "hstech": "HS2083当前有失败证据但保留在直接源审计链，待跨多个生产节点证据后再决定是否降级"
+    "a_share_index_000001": "Eastmoney secid=1.000001映射为个股而非上证指数，暂不作为直接fallback；腾讯主源失败时仅走同花顺直接指数备源。",
+    "hstech": "东方财富124.HSTECH已在真实交易时段验证为低延迟直接行情，正式提升为主源；Yahoo为第一海外直接备源，同花顺HS2083保留审计性备源，513180仅为最后代理。",
+    "etf_fallback": "ETF生产意图为腾讯→同花顺→东方财富；运行代码必须与本对象级政策保持一致。"
   },
   "audit_scope": "对象级主源失败后仅调用已验证直接备源；未验证映射保留SINGLE_SOURCE_RISK，不以代理冒充直连"
 }
