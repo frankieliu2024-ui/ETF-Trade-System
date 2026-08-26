@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-26T09:28:19Z",
-  "generated_at_beijing": "2026-08-26T17:28:19+08:00",
+  "generated_at": "2026-08-26T09:30:35Z",
+  "generated_at_beijing": "2026-08-26T17:30:35+08:00",
   "repository": {
-    "head_sha": "269d74027e9803478d22f91877c6c4a7df17f700",
-    "github_sha": "269d74027e9803478d22f91877c6c4a7df17f700",
-    "github_run_id": "32953155423",
+    "head_sha": "a8d915d21eb31256808bdd4fbdc11e5bb9059731",
+    "github_sha": "a8d915d21eb31256808bdd4fbdc11e5bb9059731",
+    "github_run_id": "32953365675",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "269d74027e9803478d22f91877c6c4a7df17f700",
-    "workflow_sha": "269d74027e9803478d22f91877c6c4a7df17f700",
+    "checked_commit": "a8d915d21eb31256808bdd4fbdc11e5bb9059731",
+    "workflow_sha": "a8d915d21eb31256808bdd4fbdc11e5bb9059731",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
@@ -20,7 +20,7 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.010s\n\nOK\n"
+      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.023s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -190,12 +190,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=269d74027e9803478d22f91877c6c4a7df17f700"
+      "detail": "HEAD=a8d915d21eb31256808bdd4fbdc11e5bb9059731"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=269d74027e9803478d22f91877c6c4a7df17f700 GITHUB_SHA=269d74027e9803478d22f91877c6c4a7df17f700"
+      "detail": "HEAD=a8d915d21eb31256808bdd4fbdc11e5bb9059731 GITHUB_SHA=a8d915d21eb31256808bdd4fbdc11e5bb9059731"
     },
     {
       "name": "git:critical_files_tracked",
@@ -283,6 +283,11 @@
       "detail": "no stale fixed-pool taxonomy"
     },
     {
+      "name": "master:direct_confirm_explicit",
+      "status": "PASS",
+      "detail": "MASTER explicitly allows direct Confirm when full Confirm evidence is already satisfied"
+    },
+    {
       "name": "runner:canonical_etf_universe",
       "status": "PASS",
       "detail": "runner loads canonical ETF universe"
@@ -343,9 +348,14 @@
       "detail": "provider formal indices=['000001.SH', '399006.SZ', 'NDX', 'SOX', 'N225', 'KOSPI', 'TWII', 'HSTECH']"
     },
     {
-      "name": "providers:hstech_chain_exact",
+      "name": "providers:hstech_sources_registered",
       "status": "PASS",
-      "detail": "actual=['hithink-finance:HS2083', 'yahoo_chart_api:HSTECH.HK', 'eastmoney_push2:124.HSTECH', 'ETF_PROXY_513180'] expected=['hithink-finance:HS2083', 'yahoo_chart_api:HSTECH.HK', 'eastmoney_push2:124.HSTECH', 'ETF_PROXY_513180']"
+      "detail": "registered=['hithink-finance:HS2083', 'yahoo_chart_api:HSTECH.HK', 'eastmoney_push2:124.HSTECH', 'ETF_PROXY_513180']"
+    },
+    {
+      "name": "providers:hstech_primary_fallback_policy",
+      "status": "PASS",
+      "detail": "primary=eastmoney_push2:124.HSTECH fallback=['yahoo_chart_api:HSTECH.HK', 'hithink-finance:HS2083', 'ETF_PROXY_513180']"
     },
     {
       "name": "providers:etf_fallback_policy",
@@ -421,6 +431,26 @@
       "name": "data_standard:us_extended_hours",
       "status": "PASS",
       "detail": "US extended-hours timing and evidence boundaries documented"
+    },
+    {
+      "name": "data_standard:current_provider_roles",
+      "status": "PASS",
+      "detail": "current provider primary/fallback roles documented"
+    },
+    {
+      "name": "data_standard:market_session_table",
+      "status": "PASS",
+      "detail": "cross-market canonical session table documented"
+    },
+    {
+      "name": "formal_files:confirmed_fee_closure",
+      "status": "PASS",
+      "detail": "Dashboard confirmed fee closure is not contradicted by experience CASE/index"
+    },
+    {
+      "name": "formal_files:archive_current_provider_roles",
+      "status": "PASS",
+      "detail": "market archive records current production provider roles"
     },
     {
       "name": "pulse_policy:target_cadence_seconds",
@@ -575,7 +605,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=True phase=05:28 max_age_seconds=155 limit=900"
+      "detail": "active=True phase=05:30 max_age_seconds=291 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -690,12 +720,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=7937"
+      "detail": "declared=STALE expected=STALE age_seconds=8074"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=7936"
+      "detail": "declared=STALE expected=STALE age_seconds=8074"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -735,7 +765,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-26T09:28:17Z market=2026-08-26T15:16:01+08:00"
+      "detail": "context=2026-08-26T09:30:35Z market=2026-08-26T15:16:01+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
