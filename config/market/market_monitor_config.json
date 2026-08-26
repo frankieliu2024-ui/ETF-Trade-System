@@ -1,10 +1,12 @@
 {
-  "version": "V1.2",
+  "version": "V1.3",
   "purpose": "数据能力与三层市场监测配置，不产生交易判断",
   "priority": ["direct_index", "reliable_alternative", "etf_proxy"],
   "providers": {
-    "hithink_finance": {"priority": 1, "scope": "A股ETF、A股指数及已覆盖直接指数（含HS2083）", "requires_key": true},
-    "yahoo_chart_api": {"priority": 1, "scope": "海外与亚洲指数、海外个股、商品辅助", "requires_key": false, "adjusted": false},
+    "tencent_qq": {"priority": 1, "scope": "已验证A股指数、ETF、账户个股实时快照", "requires_key": false, "adjusted": false},
+    "eastmoney_push2": {"priority": 1, "scope": "恒生科技指数直接主源；已验证A股ETF/个股/部分指数直接备源", "requires_key": false, "adjusted": false},
+    "hithink_finance": {"priority": 2, "scope": "A股ETF、A股指数及已覆盖直接指数备源/审计源", "requires_key": true},
+    "yahoo_chart_api": {"priority": 1, "scope": "海外与亚洲指数、海外个股、商品辅助；HSTECH为备源", "requires_key": false, "adjusted": false},
     "akshare": {"priority": 2, "scope": "候选多源适配器", "requires_key": false, "not_live_verified": true},
     "pandas_datareader": {"priority": 2, "scope": "宏观/因子数据候选", "not_live_verified": true},
     "investpy": {"priority": 3, "scope": "不优先候选", "stale_upstream": true}
@@ -16,7 +18,7 @@
       "required_fields": ["market_timezone", "as_of", "market_phase", "time_relation_to_a_share"],
       "us_cash_indices": "A股交易时段通常使用上一美股交易时段的已完成现金指数信息，禁止表述为与A股当前盘中同步。",
       "asia_indices": "按同日盘中、同日已收盘或上一交易日分别解释；日期相同不等于时点同步。",
-      "hstech": "A股15:00收盘时香港市场通常尚未完成当日收盘，必须按实际market_phase和as_of解释。"
+      "hstech": "东方财富124.HSTECH为正式直接主源；A股15:00收盘时香港市场通常尚未完成当日收盘，必须按实际market_phase和as_of解释。"
     }
   },
   "monitoring_layers": {
@@ -39,24 +41,30 @@
       "runtime_context": "data/state/stock_context.json",
       "policy": "config/market/stock_monitor_policy.json",
       "fixed_default_codes": [],
-      "rule": "默认个股监测不固定宁德时代、工业富联或任何股票代码，而是从当日账户实际非ETF持仓动态生成。已确认IPO_BASE_STOCK进入打新底仓个股监测；新出现但用途未知的个股只标记UNCLASSIFIED_STOCK并要求一次确认。产业链个股不设固定名单，按ETF候选、持仓、行业冲击或传导分析需要临时发现和调用。",
+      "rule": "默认个股监测不固定任何股票代码，而是从当日账户实际非ETF持仓动态生成。A股账户个股已由腾讯作为实时主源；A股产业链临时个股下一阶段优先验证腾讯批量直连。海外个股继续按既有海外源，未完成对象级验证前不得直接把腾讯升为生产源。",
       "conditional_industry_scope": ["A_SHARE", "US", "HK", "KR", "TW", "JP", "OTHER_VERIFIED"],
       "examples_are_not_watchlist": true
     }
   },
   "classes": {
     "A": {"name": "正式指数层", "objects": [
-      {"id":"000001.SH","name":"上证指数","preferred_source":"hithink_finance","status":"ACTIVE"},
-      {"id":"399006.SZ","name":"创业板指","preferred_source":"hithink_finance","status":"ACTIVE"},
+      {"id":"000001.SH","name":"上证指数","preferred_source":"tencent_qq","fallback_source":"hithink_finance","status":"ACTIVE"},
+      {"id":"399006.SZ","name":"创业板指","preferred_source":"tencent_qq","fallback_source":"hithink_finance|eastmoney_push2","status":"ACTIVE_WITH_FALLBACK"},
       {"id":"NDX","name":"纳斯达克100指数","preferred_source":"yahoo_chart_api","status":"ACTIVE"},
       {"id":"SOX","name":"费城半导体指数","preferred_source":"yahoo_chart_api","status":"ACTIVE"},
       {"id":"N225","name":"日经225指数","preferred_source":"yahoo_chart_api","status":"ACTIVE"},
       {"id":"KOSPI","name":"韩国综合指数","preferred_source":"yahoo_chart_api","status":"ACTIVE"},
       {"id":"TWII","name":"台湾加权指数","preferred_source":"yahoo_chart_api","status":"ACTIVE"},
-      {"id":"HSTECH","name":"恒生科技指数","preferred_source":"hithink_finance:HS2083","fallback_source":"yahoo_chart_api:^HSTECH|513180 proxy","status":"ACTIVE_WITH_FALLBACK"}
+      {"id":"HSTECH","name":"恒生科技指数","preferred_source":"eastmoney_push2:124.HSTECH","fallback_source":"yahoo_chart_api:HSTECH.HK|hithink_finance:HS2083|513180 proxy","status":"ACTIVE_WITH_FALLBACK"}
     ]},
-    "B": {"name": "ETF层", "mode": "HOLDING_PLUS_OBSERVATION", "note": "具体ETF状态由当前账户与观察清单维护，不在本配置复制固定交易结论。"},
-    "C": {"name": "个股层", "mode": "DYNAMIC", "note": "打新底仓从账户动态识别；产业链个股按主题临时调用，不维护固定名单。"}
+    "B": {"name": "ETF层", "mode": "HOLDING_PLUS_OBSERVATION", "note": "具体ETF状态由当前账户与观察清单维护；生产实时主源统一为腾讯，备源按provider_priority对象级策略。"},
+    "C": {"name": "个股层", "mode": "DYNAMIC", "note": "A股账户个股腾讯主源；A股临时产业链个股优先进入腾讯对象级验证；海外个股继续使用既有海外源，腾讯海外覆盖尚处验证阶段。"}
+  },
+  "provider_expansion": {
+    "tencent_current_production": ["A_SHARE_INDEX", "A_SHARE_ETF", "A_SHARE_ACCOUNT_STOCK"],
+    "tencent_next_candidate": ["A_SHARE_QUERY_TIME_INDUSTRY_STOCK"],
+    "tencent_overseas": "VALIDATION_REQUIRED",
+    "rule": "不得把A股接口稳定性直接外推到海外代码体系。海外指数/个股必须逐对象验证symbol映射、时间戳、OHLC字段、交易阶段、成交量语义和多节点稳定性后才可升级。"
   },
   "guardrails": {
     "no_trade_rules": true,
@@ -67,6 +75,7 @@
     "different_market_dates_or_phases_cannot_be_called_synchronous": true,
     "no_fixed_ipo_base_stock_codes": true,
     "no_fixed_industry_stock_watchlist": true,
-    "new_account_stock_role_requires_confirmation": true
+    "new_account_stock_role_requires_confirmation": true,
+    "unverified_tencent_overseas_cannot_be_production_primary": true
   }
 }
