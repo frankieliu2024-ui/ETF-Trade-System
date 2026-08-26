@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-26T08:43:56Z",
-  "generated_at_beijing": "2026-08-26T16:43:56+08:00",
+  "generated_at": "2026-08-26T08:48:21Z",
+  "generated_at_beijing": "2026-08-26T16:48:21+08:00",
   "repository": {
-    "head_sha": "a016ed6908a2e3b4e9dd302a9bde76c6a370e425",
-    "github_sha": "a016ed6908a2e3b4e9dd302a9bde76c6a370e425",
-    "github_run_id": "32949255474",
+    "head_sha": "ce40f75df9f645fa20bb852cc65c531ca951d49b",
+    "github_sha": "ce40f75df9f645fa20bb852cc65c531ca951d49b",
+    "github_run_id": "32949635248",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "a016ed6908a2e3b4e9dd302a9bde76c6a370e425",
-    "workflow_sha": "a016ed6908a2e3b4e9dd302a9bde76c6a370e425",
+    "checked_commit": "ce40f75df9f645fa20bb852cc65c531ca951d49b",
+    "workflow_sha": "ce40f75df9f645fa20bb852cc65c531ca951d49b",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "status": "FAIL",
-  "hard_error_count": 1,
+  "hard_error_count": 2,
   "warning_count": 1,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.015s\n\nOK\n"
+      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.010s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -190,12 +190,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=a016ed6908a2e3b4e9dd302a9bde76c6a370e425"
+      "detail": "HEAD=ce40f75df9f645fa20bb852cc65c531ca951d49b"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=a016ed6908a2e3b4e9dd302a9bde76c6a370e425 GITHUB_SHA=a016ed6908a2e3b4e9dd302a9bde76c6a370e425"
+      "detail": "HEAD=ce40f75df9f645fa20bb852cc65c531ca951d49b GITHUB_SHA=ce40f75df9f645fa20bb852cc65c531ca951d49b"
     },
     {
       "name": "git:critical_files_tracked",
@@ -575,7 +575,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "FAIL",
-      "detail": "active=True phase=04:43 max_age_seconds=1333 limit=900"
+      "detail": "active=True phase=04:48 max_age_seconds=1598 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -690,12 +690,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=5274"
+      "detail": "declared=STALE expected=STALE age_seconds=5539"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=5274"
+      "detail": "declared=STALE expected=STALE age_seconds=5539"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -735,7 +735,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-26T08:43:55Z market=2026-08-26T15:16:01+08:00"
+      "detail": "context=2026-08-26T08:48:20Z market=2026-08-26T15:16:01+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -749,8 +749,8 @@
     },
     {
       "name": "formal_action:execution_boundary",
-      "status": "PASS",
-      "detail": "execution_status=PENDING"
+      "status": "FAIL",
+      "detail": "execution_status=NO_EXECUTION_REQUIRED"
     },
     {
       "name": "python:syntax:scripts/build_phase4_automation.py",
@@ -805,7 +805,7 @@
     {
       "name": "phase4:e2e_state_present",
       "status": "PASS",
-      "detail": "status=DEGRADED"
+      "detail": "status=BLOCKED"
     },
     {
       "name": "notification:managed_schema",
@@ -1004,7 +1004,8 @@
     }
   ],
   "errors": [
-    "us_extended:live_freshness: active=True phase=04:43 max_age_seconds=1333 limit=900"
+    "us_extended:live_freshness: active=True phase=04:48 max_age_seconds=1598 limit=900",
+    "formal_action:execution_boundary: execution_status=NO_EXECUTION_REQUIRED"
   ],
   "warnings": [
     "providers:single_source_shanghai_index: 000001.SH remains single-source until a verified Eastmoney index mapping exists"
