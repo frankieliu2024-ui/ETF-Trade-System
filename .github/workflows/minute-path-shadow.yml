@@ -1,0 +1,54 @@
+name: ETF minute path shadow validation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/build_minute_path_features.py"
+      - ".github/workflows/minute-path-shadow.yml"
+  schedule:
+    # Beijing 10:30, 13:45, 14:30, 14:55 on weekdays.
+    - cron: "30 2 * * 1-5"
+    - cron: "45 5 * * 1-5"
+    - cron: "30 6 * * 1-5"
+    - cron: "55 6 * * 1-5"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: etf-minute-path-shadow
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Rebase before minute-path validation
+        run: |
+          git fetch origin main
+          git rebase origin/main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile minute-path module
+        run: python -m py_compile scripts/build_minute_path_features.py
+      - name: Build Tencent 1-minute ETF path shadow state
+        run: python scripts/build_minute_path_features.py
+      - name: Commit shadow state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/state/minute_path_features.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "data: refresh ETF minute path shadow state"
+          git pull --rebase origin main
+          git push origin HEAD:main
