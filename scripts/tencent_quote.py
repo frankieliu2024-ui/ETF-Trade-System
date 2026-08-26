@@ -1,0 +1,71 @@
+from __future__ import annotations
+
+import re
+import urllib.parse
+import urllib.request
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+SHANGHAI = ZoneInfo("Asia/Shanghai")
+_SYMBOL_RE = re.compile(r'v_(sh|sz)([0-9]{6})="([^"]*)"')
+
+
+def _number(value: str):
+    if value in {"", "-", None}:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _timestamp_ms(value: str) -> int:
+    if not value:
+        raise RuntimeError("Tencent quote missing provider timestamp")
+    try:
+        dt = datetime.strptime(value, "%Y%m%d%H%M%S").replace(tzinfo=SHANGHAI)
+    except ValueError as exc:
+        raise RuntimeError(f"Tencent quote invalid provider timestamp: {value}") from exc
+    return int(dt.timestamp() * 1000)
+
+
+def fetch_tencent_quotes(thscodes: list[str], timeout: int = 10) -> dict[str, dict]:
+    """Fetch a batch of Shanghai/Shenzhen quotes from Tencent's public quote endpoint."""
+    normalized = []
+    for thscode in thscodes:
+        code, suffix = str(thscode).upper().split(".", 1)
+        if suffix not in {"SH", "SZ"} or not code.isdigit():
+            raise RuntimeError(f"Tencent unsupported A-share code: {thscode}")
+        normalized.append(("sh" if suffix == "SH" else "sz") + code)
+    if not normalized:
+        return {}
+    url = "https://qt.gtimg.cn/q=" + urllib.parse.quote(",".join(normalized), safe=",")
+    request = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.16", "Referer": "https://gu.qq.com/"})
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        if int(response.status) != 200:
+            raise RuntimeError(f"Tencent HTTP status {response.status}")
+        raw = response.read().decode("gbk", "replace")
+    parsed = {f"{market.upper()}{code}": fields.split("~") for market, code, fields in _SYMBOL_RE.findall(raw)}
+    result = {}
+    for thscode, provider_symbol in zip(thscodes, normalized):
+        fields = parsed.get(provider_symbol.upper()) or []
+        if len(fields) < 38 or fields[2] != provider_symbol[2:]:
+            raise RuntimeError(f"Tencent quote missing or mismatched row for {thscode}")
+        timestamp_ms = _timestamp_ms(fields[30])
+        price, prev_close = _number(fields[3]), _number(fields[4])
+        if price is None or prev_close is None or price < 0 or prev_close < 0:
+            raise RuntimeError(f"Tencent quote missing price fields for {thscode}")
+        result[str(thscode).upper()] = {
+            "name": fields[1].strip(),
+            "provider_symbol": provider_symbol,
+            "open_price": _number(fields[5]),
+            "high_price": _number(fields[33]),
+            "low_price": _number(fields[34]),
+            "last_price": price,
+            "prev_price": prev_close,
+            "price_change_ratio_pct": _number(fields[31]),
+            "volume": (_number(fields[6]) * 100) if _number(fields[6]) is not None else None,
+            "turnover": (_number(fields[37]) * 10000) if _number(fields[37]) is not None else None,
+            "provider_timestamp_ms": timestamp_ms,
+        }
+    return result
