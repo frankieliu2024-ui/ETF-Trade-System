@@ -76,7 +76,8 @@ class QueryTimeRefreshTests(unittest.TestCase):
                 }]
             }
         }
-        with patch("scripts.query_time_market_refresh.shutil.which", return_value="hithink-finance"), \
+        with patch("scripts.query_time_market_refresh.fetch_tencent_quotes", side_effect=RuntimeError("Tencent unavailable")), \
+             patch("scripts.query_time_market_refresh.shutil.which", return_value="hithink-finance"), \
              patch("scripts.query_time_market_refresh._cli_json", side_effect=[RuntimeError("fund not found"), direct]) as cli:
             result = refresh_market_quotes(root, ["159941.SZ"], now)
 
