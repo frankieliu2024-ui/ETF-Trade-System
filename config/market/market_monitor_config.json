@@ -1,5 +1,5 @@
 {
-  "version": "V1.5",
+  "version": "V1.6",
   "purpose": "数据能力与三层市场监测配置，不产生交易判断",
   "priority": [
     "direct_index",
@@ -15,7 +15,7 @@
     },
     "eastmoney_push2": {
       "priority": 1,
-      "scope": "恒生科技指数直接主源；已验证A股ETF/个股/部分指数直接备源；纳斯达克100指数（NDX）对象级直接备源100.NDX100",
+      "scope": "恒生科技指数直接主源；已验证A股ETF/个股/部分指数直接备源；纳斯达克100指数（NDX）及已确认日经225指数（N225）、韩国综合指数（KOSPI）、台湾加权指数（TWII）对象级直接备源",
       "requires_key": false,
       "adjusted": false
     },
@@ -163,19 +163,22 @@
           "id": "N225",
           "name": "日经225指数",
           "preferred_source": "yahoo_chart_api",
-          "status": "ACTIVE"
+          "status": "ACTIVE_WITH_FALLBACK",
+          "fallback_source": "eastmoney_push2:100.N225|513520 proxy"
         },
         {
           "id": "KOSPI",
           "name": "韩国综合指数",
           "preferred_source": "yahoo_chart_api",
-          "status": "ACTIVE"
+          "status": "ACTIVE_WITH_FALLBACK",
+          "fallback_source": "eastmoney_push2:100.KS11"
         },
         {
           "id": "TWII",
           "name": "台湾加权指数",
           "preferred_source": "yahoo_chart_api",
-          "status": "ACTIVE"
+          "status": "ACTIVE_WITH_FALLBACK",
+          "fallback_source": "eastmoney_push2:100.TWII"
         },
         {
           "id": "HSTECH",

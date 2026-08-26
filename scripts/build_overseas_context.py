@@ -34,6 +34,9 @@ OBJECTS = {
 
 EASTMONEY_DIRECT_FALLBACKS = {
     "NDX": "100.NDX100",
+    "N225": "100.N225",
+    "KOSPI": "100.KS11",
+    "TWII": "100.TWII",
 }
 
 SESSIONS = {
