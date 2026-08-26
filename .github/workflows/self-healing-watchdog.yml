@@ -75,7 +75,7 @@ jobs:
       - name: Dispatch replacement market snapshot
         if: ${{ steps.assess.outputs.action == 'REFRESH_SNAPSHOT' }}
         run: |
-          gh workflow run market-snapshot.yml --ref main -f node=self_heal -f probe_only=false
+          gh workflow run market-snapshot.yml --ref main -f node=scheduled -f probe_only=false
           python scripts/runtime_self_heal.py --record-trigger
 
       - name: Persist bounded self-healing state and deterministic repairs
