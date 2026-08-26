@@ -3796,5 +3796,22 @@
       "time_normalized_turnover_acceptance": true
     },
     "note": "该状态只证明机器上下文已具备市场层+标的层正式盘中分析所需结构，不等于ChatGPT已实际消费；正式回复仍必须遵守formal_intraday_response_contract。"
-  }
+  },
+  "refresh_gate": {
+    "status": "READY",
+    "formal_analysis_allowed": true,
+    "formal_decision_persist_allowed": true,
+    "fallback_allowed": false,
+    "query_intent": "EXPLICIT_LATEST",
+    "request_file": "requests/live_snapshot/20260826_1453_broker_screenshot_intraday.json",
+    "request_id": "20260826_1453_broker_screenshot_intraday",
+    "requested_at_beijing": "2026-08-26T14:53:00+08:00",
+    "requested_market_time": "2026-08-26T14:53:00+08:00",
+    "current_snapshot_time": "2026-08-26T18:06:34+08:00",
+    "resolved_snapshot_time": "2026-08-26T18:06:34+08:00",
+    "latest_snapshot": "data/market/snapshots/2026-08-26_180634.json",
+    "failure_reason": "",
+    "rule": "EXPLICIT_LATEST或wait_for_refresh请求必须等本次请求之后且不早于requested_market_time的新CURRENT发布后才可称为最新/当前行情；请求前即使仍处普通FRESH窗口，也不得冒充本次最新查询结果。仅非EXPLICIT_LATEST且用户明确授权时可回退旧快照。"
+  },
+  "formal_analysis_allowed": true
 }
