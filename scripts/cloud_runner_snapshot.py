@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
+import threading
 import time
 import urllib.parse
 import urllib.request
@@ -95,6 +96,10 @@ EASTMONEY_FALLBACK_INDICES = load_eastmoney_fallback_indices()
 RETRY_LIMIT = int(os.environ.get("HITHINK_RETRY_LIMIT", POLICY["provider_retry_limit"]))
 TIMEOUT_SECONDS = int(os.environ.get("HITHINK_TIMEOUT_SECONDS", POLICY["provider_timeout_seconds"]))
 MAX_WORKERS = int(os.environ.get("HITHINK_MAX_WORKERS", POLICY["provider_max_workers"]))
+
+# Run-local circuit breaker: bypass a transiently unavailable primary for the
+# remainder of this run, without persisting a provider disable decision.
+PRIMARY_RUN_BYPASS = threading.Event()
 CLOSE_GRACE_SECONDS = int(POLICY.get("close_grace_seconds", 900))
 
 INDEX = [("000001", "000001.SH"), ("399006", "399006.SZ")]
@@ -202,6 +207,12 @@ def run_json(cli: str, args: list[str], raw_path: Path) -> dict:
                 last_error = f"business failure meta={obj.get('meta')}"
             else:
                 last_error = (completed.stderr or "CLI failed")[-500:]
+        failure_class = classify_provider_failure(last_error)
+        if failure_class == "STRUCTURAL":
+            break
+        if failure_class == "TRANSIENT":
+            PRIMARY_RUN_BYPASS.set()
+            break
         if attempt < RETRY_LIMIT:
             time.sleep(min(2 ** (attempt - 1), 4))
     raise RuntimeError(f"request failed after {RETRY_LIMIT} attempts: {args}; {last_error}")
@@ -393,23 +404,28 @@ def fetch_etf_market_snapshot(cli: str, run_dir: Path, code: str, thscode: str, 
 
 
 def fetch_etf_with_fallback(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
-    primary_error = None
-    try:
-        return fetch_etf(cli, run_dir, code, thscode)
-    except Exception as error:
-        primary_error = error
-    try:
-        return fetch_etf_market_snapshot(cli, run_dir, code, thscode, a_share_market_phase(now_shanghai()))
-    except Exception as market_error:
-        if code not in EASTMONEY_FALLBACK_ETFS:
-            raise RuntimeError(f"primary hithink-finance failed: {primary_error}; direct market snapshot failed: {market_error}") from market_error
+    primary_error = RuntimeError("hithink-finance bypassed after a transient failure earlier in this run")
+    if not PRIMARY_RUN_BYPASS.is_set():
+        try:
+            return fetch_etf(cli, run_dir, code, thscode)
+        except Exception as error:
+            primary_error = error
+
+    # Configured ETFs use the verified direct fallback immediately. The older
+    # Hithink market endpoint remains only for objects without a direct fallback.
+    if code in EASTMONEY_FALLBACK_ETFS:
         try:
             return fetch_eastmoney_etf(code, thscode, a_share_market_phase(now_shanghai()))
         except Exception as fallback_error:
             raise RuntimeError(
-                f"primary hithink-finance failed: {primary_error}; direct market snapshot failed: {market_error}; "
+                f"primary hithink-finance failed: {primary_error}; "
                 f"direct eastmoney_push2 fallback failed: {fallback_error}"
             ) from fallback_error
+
+    try:
+        return fetch_etf_market_snapshot(cli, run_dir, code, thscode, a_share_market_phase(now_shanghai()))
+    except Exception as market_error:
+        raise RuntimeError(f"primary hithink-finance failed: {primary_error}; direct market snapshot failed: {market_error}") from market_error
 
 
 def fetch_etf(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
@@ -528,6 +544,7 @@ def main() -> int:
     parser.add_argument("--probe-only", action="store_true", help="Fetch and validate real data without creating a market node")
     parser.add_argument("--retry-failed", action="store_true", help="Retry only failed ETF rows in the latest published snapshot")
     args = parser.parse_args()
+    PRIMARY_RUN_BYPASS.clear()
     if args.retry_failed:
         return retry_failed_snapshot()
 
@@ -574,6 +591,8 @@ def main() -> int:
                 print(json.dumps({"object_failure": failed}, ensure_ascii=False))
 
     try:
+        if PRIMARY_RUN_BYPASS.is_set():
+            raise RuntimeError("hithink-finance bypassed after a transient failure earlier in this run")
         obj = run_json(cli, ["index", "snapshot", "--thscodes", ",".join(x[1] for x in INDEX)], run_dir / "INDEX_core.json")
         returned = {x.get("thscode"): x for x in (obj.get("data", {}).get("item") or [])}
         index_error = ""
