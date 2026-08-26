@@ -60,7 +60,8 @@ def _quote(symbol: str, market: str, price: dict, now: datetime, policy: dict, s
     phase = market_phase(market, now=now)
     status = _status(ts, now, policy)
     nature = {
-        "REGULAR": "实时交易行情", "PRE_MARKET": "盘前行情（附最近正式收盘基准）",
+        "REGULAR": "实时交易行情" if status == "FRESH" else "交易中但数据源延迟的盘中行情",
+        "PRE_MARKET": "盘前行情（附最近正式收盘基准）",
         "POST_MARKET": "盘后行情（附当日正式收盘）", "MIDDAY_BREAK": "午间休市期间的上午最新有效行情",
         "OPENING_AUCTION": "集合竞价时点行情", "OFF_SESSION": "最近正式收盘行情",
     }.get(phase, "最新有效行情")
