@@ -105,6 +105,50 @@ def _cli_json(cli: str, args: list[str], root: Path) -> dict:
         output.unlink(missing_ok=True)
 
 
+def _eastmoney_etf(symbol: str, thscode: str, now: datetime, policy: dict) -> dict:
+    code = thscode.split(".")[0]
+    secid = f"{'1' if thscode.endswith('.SH') else '0'}.{code}"
+    params = urllib.parse.urlencode({
+        "secid": secid,
+        "fltt": "2",
+        "invt": "2",
+        "fields": "f43,f44,f45,f46,f47,f48,f57,f58,f60,f86",
+    })
+    url = "https://push2.eastmoney.com/api/qt/stock/get?" + params
+    request = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.15"})
+    with urllib.request.urlopen(request, timeout=30) as response:
+        data = (json.load(response).get("data") or {})
+    if str(data.get("f57") or "") != code:
+        raise RuntimeError(f"Eastmoney code mismatch for {thscode}: {data.get('f57')}")
+    values = [data.get(key) for key in ("f43", "f44", "f45", "f46", "f60", "f86")]
+    if any(value in (None, "", "-") for value in values):
+        raise RuntimeError(f"Eastmoney {thscode} missing direct ETF fields")
+    raw_ts = float(data["f86"])
+    timestamp_ms = int(raw_ts * 1000 if raw_ts < 10_000_000_000 else raw_ts)
+    timestamp = datetime.fromtimestamp(timestamp_ms / 1000, timezone.utc)
+    status = _status(timestamp, now, policy)
+    if status == "STALE":
+        raise RuntimeError(f"Eastmoney {thscode} provider timestamp is stale: {timestamp.isoformat()}")
+    volume = data.get("f47")
+    amount = data.get("f48")
+    return {
+        "market": "CN", "market_name": "中国大陆", "symbol": symbol, "name": str(data.get("f58") or symbol),
+        "latest_price": float(data["f43"]), "open": float(data["f46"]), "high": float(data["f44"]),
+        "low": float(data["f45"]), "prev_close": float(data["f60"]),
+        "volume": int(float(volume) * 100) if volume not in (None, "", "-") else None,
+        "amount": float(amount) if amount not in (None, "", "-") else None,
+        "turnover": float(amount) if amount not in (None, "", "-") else None,
+        "data_time_beijing": timestamp.astimezone(BEIJING).isoformat(timespec="seconds"),
+        "data_time_local": timestamp.astimezone(BEIJING).isoformat(timespec="seconds"),
+        "market_phase": market_phase("CN", now=now),
+        "market_status_cn": display_market_status("CN", market_phase("CN", now=now)),
+        "data_nature_cn": "实时交易行情" if status == "FRESH" else "交易中但数据源延迟的盘中行情",
+        "source": "eastmoney_push2", "freshness": status,
+        "quality_status": "PASS" if status in {"FRESH", "DEGRADED"} else status,
+        "direct_quote": True, "refresh_source": "QUERY_TIME_PROVIDER",
+    }
+
+
 def _a_share(symbol: str, root: Path, now: datetime, policy: dict) -> dict:
     cli = shutil.which("hithink-finance")
     if not cli: raise RuntimeError("hithink-finance CLI unavailable for query-time A-share refresh")
@@ -116,20 +160,30 @@ def _a_share(symbol: str, root: Path, now: datetime, policy: dict) -> dict:
     elif raw_code.startswith("159") or raw_code.startswith(("5", "588")):
         try:
             obj = _cli_json(cli, ["fund", "snapshot", "--thscode", thscode], root)
+            items = obj.get("data", {}).get("item") or []
+            item = next((candidate for candidate in items if str(candidate.get("thscode") or "") == thscode), items[0] if items else {})
+            close = item.get("last_price", item.get("close_price"))
+            ts = obj.get("data", {}).get("timestamp")
+            if close is None or ts in (None, ""):
+                raise RuntimeError(f"fund snapshot returned incomplete quote for {thscode}")
         except Exception as fund_error:
             try:
                 obj = _cli_json(cli, ["market", "snapshot", "--thscodes", thscode], root)
+                items = obj.get("data", {}).get("item") or []
+                item = next((candidate for candidate in items if str(candidate.get("thscode") or "") == thscode), items[0] if items else {})
+                close = item.get("last_price", item.get("close_price"))
+                ts = obj.get("data", {}).get("timestamp")
+                if close is None or ts in (None, ""):
+                    raise RuntimeError(f"direct market snapshot returned incomplete quote for {thscode}")
             except Exception as market_error:
-                raise RuntimeError(
-                    f"A-share ETF fund snapshot failed: {fund_error}; direct market snapshot failed: {market_error}"
-                ) from market_error
+                return _eastmoney_etf(symbol, thscode, now, policy)
     else:
         obj = _cli_json(cli, ["market", "snapshot", "--thscodes", thscode], root)
-    items = obj.get("data", {}).get("item") or []
-    item = next((candidate for candidate in items if str(candidate.get("thscode") or "") == thscode), items[0] if items else {})
-    close = item.get("last_price", item.get("close_price"))
-    ts = obj.get("data", {}).get("timestamp")
-    if close is None or ts in (None, ""): raise RuntimeError(f"A-share provider returned incomplete quote for {thscode}")
+        items = obj.get("data", {}).get("item") or []
+        item = next((candidate for candidate in items if str(candidate.get("thscode") or "") == thscode), items[0] if items else {})
+        close = item.get("last_price", item.get("close_price"))
+        ts = obj.get("data", {}).get("timestamp")
+        if close is None or ts in (None, ""): raise RuntimeError(f"A-share provider returned incomplete quote for {thscode}")
     dt = datetime.fromtimestamp(float(ts) / 1000, timezone.utc)
     phase = market_phase("CN", now=now)
     age_status = _status(dt, now, policy)
