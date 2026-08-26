@@ -55,6 +55,35 @@ class QueryTimeRefreshTests(unittest.TestCase):
         self.assertEqual(result["quotes"][0]["latest_price"], 100)
         self.assertEqual(result["quotes"][0]["freshness"], "STALE")
 
+    def test_etf_provider_fallback_uses_direct_market_snapshot(self):
+        from scripts.query_time_market_refresh import refresh_market_quotes
+
+        root = self._root("2026-08-26T02:00:00+08:00")
+        now = datetime.fromisoformat("2026-08-26T10:15:00+08:00")
+        direct = {
+            "data": {
+                "timestamp": 1787710490000,
+                "item": [{
+                    "thscode": "159941.SZ",
+                    "name": "纳指ETF",
+                    "last_price": 1.234,
+                    "open_price": 1.22,
+                    "high_price": 1.24,
+                    "low_price": 1.21,
+                    "pre_close": 1.20,
+                    "volume": 1000,
+                    "amount": 1234,
+                }]
+            }
+        }
+        with patch("scripts.query_time_market_refresh.shutil.which", return_value="hithink-finance"), \
+             patch("scripts.query_time_market_refresh._cli_json", side_effect=[RuntimeError("fund not found"), direct]) as cli:
+            result = refresh_market_quotes(root, ["159941.SZ"], now)
+
+        self.assertEqual(result["failures"], [])
+        self.assertEqual(result["quotes"][0]["latest_price"], 1.234)
+        self.assertEqual(cli.call_count, 2)
+        self.assertEqual(cli.call_args_list[1].args[1], ["market", "snapshot", "--thscodes", "159941.SZ"])
     def test_kospi_regular_refresh_uses_provider_quote(self):
         root = self._root("2026-08-26T07:00:00+08:00")
         now = datetime.fromisoformat("2026-08-26T10:15:00+09:00")
