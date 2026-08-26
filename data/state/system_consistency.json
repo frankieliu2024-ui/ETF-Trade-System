@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-26T08:57:36Z",
-  "generated_at_beijing": "2026-08-26T16:57:36+08:00",
+  "generated_at": "2026-08-26T08:59:32Z",
+  "generated_at_beijing": "2026-08-26T16:59:32+08:00",
   "repository": {
-    "head_sha": "d75f3353c7919781c7ea507996808449aa99072c",
-    "github_sha": "d75f3353c7919781c7ea507996808449aa99072c",
-    "github_run_id": "32950438803",
+    "head_sha": "a0c0038f21557055f3daa439cad4aecbdc9e3217",
+    "github_sha": "512192c1a60089498dba6d805308f6b5187cf69d",
+    "github_run_id": "32950601997",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "d75f3353c7919781c7ea507996808449aa99072c",
-    "workflow_sha": "d75f3353c7919781c7ea507996808449aa99072c",
+    "checked_commit": "a0c0038f21557055f3daa439cad4aecbdc9e3217",
+    "workflow_sha": "512192c1a60089498dba6d805308f6b5187cf69d",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "WARNING",
-  "hard_error_count": 0,
+  "status": "FAIL",
+  "hard_error_count": 1,
   "warning_count": 1,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.009s\n\nOK\n"
+      "detail": "n\n\tmodified:   data/state/provider_metrics.json\n\tmodified:   data/state/query_context.json\n\tmodified:   data/state/relative_strength.json\n\tmodified:   data/state/research_context.json\n\tmodified:   data/state/research_evidence_delta.json\n\tmodified:   data/state/research_master_candidates.json\n\tmodified:   data/state/skfolio_risk_evidence.json\n\tmodified:   data/state/us_extended_hours_context.json\n\tmodified:   events/research/daily_features/2026-08-26.json\n\tmodified:   events/research/evidence_snapshots/2026-08-26/20260826_151601_0800.json\n\nno changes added to commit (use \"git add\" and/or \"git commit -a\")\nDropped refs/stash@{0} (554ea85b6d13f3efdfa207b0ab54b49261874c72)\n.............From https://github.com/frankieliu2024-ui/ETF-Trade-System\n * branch            main       -> FETCH_HEAD\nTo https://github.com/frankieliu2024-ui/ETF-Trade-System\n   512192c..a0c0038  HEAD -> main\n...............\n----------------------------------------------------------------------\nRan 28 tests in 1.527s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -190,12 +190,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=d75f3353c7919781c7ea507996808449aa99072c"
+      "detail": "HEAD=a0c0038f21557055f3daa439cad4aecbdc9e3217"
     },
     {
       "name": "git:workflow_sha_matches_head",
-      "status": "PASS",
-      "detail": "HEAD=d75f3353c7919781c7ea507996808449aa99072c GITHUB_SHA=d75f3353c7919781c7ea507996808449aa99072c"
+      "status": "FAIL",
+      "detail": "HEAD=a0c0038f21557055f3daa439cad4aecbdc9e3217 GITHUB_SHA=512192c1a60089498dba6d805308f6b5187cf69d"
     },
     {
       "name": "git:critical_files_tracked",
@@ -575,7 +575,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=True phase=04:57 max_age_seconds=124 limit=900"
+      "detail": "active=True phase=04:59 max_age_seconds=30 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -690,12 +690,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=6095"
+      "detail": "declared=STALE expected=STALE age_seconds=6209"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=6095"
+      "detail": "declared=STALE expected=STALE age_seconds=6209"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -735,7 +735,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-26T08:57:36Z market=2026-08-26T15:16:01+08:00"
+      "detail": "context=2026-08-26T08:59:30Z market=2026-08-26T15:16:01+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1003,7 +1003,9 @@
       "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
     }
   ],
-  "errors": [],
+  "errors": [
+    "git:workflow_sha_matches_head: HEAD=a0c0038f21557055f3daa439cad4aecbdc9e3217 GITHUB_SHA=512192c1a60089498dba6d805308f6b5187cf69d"
+  ],
   "warnings": [
     "providers:single_source_shanghai_index: 000001.SH remains single-source until a verified Eastmoney index mapping exists"
   ],
