@@ -1,0 +1,23 @@
+{
+  "recorded_at_beijing": "2026-08-26T22:42:30+08:00",
+  "source": "user_confirmation",
+  "purpose": "记录已由用户确认的东方财富对象映射，作为生产直接备源配置依据；不产生交易规则。",
+  "objects": {
+    "N225": {
+      "name": "日经225指数",
+      "primary": "yahoo_chart_api:^N225",
+      "confirmed_direct_fallback": "eastmoney_push2:100.N225"
+    },
+    "KOSPI": {
+      "name": "韩国综合指数",
+      "primary": "yahoo_chart_api:^KS11",
+      "confirmed_direct_fallback": "eastmoney_push2:100.KS11"
+    },
+    "TWII": {
+      "name": "台湾加权指数",
+      "primary": "yahoo_chart_api:^TWII",
+      "confirmed_direct_fallback": "eastmoney_push2:100.TWII"
+    }
+  },
+  "boundary": "对象映射已确认；未来如评估主源优劣，仍需按真实OPEN时段分别比较时点、价格一致性、响应耗时与稳定性。"
+}
