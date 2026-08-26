@@ -144,6 +144,22 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     freshness = evaluate_freshness(current, policy)
     trading_day_status = current_trading_day_status(trading_calendar)
     account_gate = account_gate_status(current, account, policy)
+    system_objects = []
+    seen_system_codes = set()
+    for item in etf_universe.get("objects") or []:
+        code = str(item.get("code") or "").upper()
+        if code and code not in seen_system_codes:
+            system_objects.append({"object_code": code, "object_name": item.get("name") or code, "source_type": "SYSTEM_MONITORED"})
+            seen_system_codes.add(code)
+    for code in ("000001.SH", "399006.SZ", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"):
+        if code not in seen_system_codes:
+            system_objects.append({"object_code": code, "source_type": "SYSTEM_MONITORED"})
+            seen_system_codes.add(code)
+    for position in account.get("positions") or []:
+        code = str(position.get("code") or "").upper()
+        if int(position.get("quantity") or 0) > 0 and code not in seen_system_codes:
+            system_objects.append({"object_code": code, "object_name": position.get("name") or code, "source_type": "SYSTEM_MONITORED"})
+            seen_system_codes.add(code)
     market_quote = build_market_quote_context(root, force_refresh=force_refresh, requested_symbols=requested_symbols)
     return {
         "generated_at": now_utc(), "generated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
@@ -157,6 +173,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         "formal_action": decision.get("formal_action", {}),
         "decision_read_plan": build_read_plan(current, account, policy, freshness),
         "market_quote_router": market_quote,
+        "system_objects": system_objects, "user_requested_objects": [],
         "canonical_files": CANONICAL_FILES, "data_status": {**(current.get("data_freshness") or {}), **freshness}, "freshness_at_context_build": freshness,
         "trading_day_status": trading_day_status, "runtime_health": runtime_health,
         "system_consistency_status": consistency.get("status", "MISSING"), "system_consistency_hard_errors": consistency.get("hard_error_count", None),
