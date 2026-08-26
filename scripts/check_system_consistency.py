@@ -116,6 +116,7 @@ def main() -> int:
     check("query_entry:no_monitor_pool_write", "write_text(root / \"config" not in query_entry, "user queries cannot write monitoring configuration")
     query_context_text = read_text("scripts/build_query_context.py")
     check("query_entry:context_categories", "system_objects" in query_context_text and "user_requested_objects" in query_context_text, "query context exposes two object categories")
+    check("query_entry:failure_contract", "DATA_UNAVAILABLE" in query_entry and "USER_REQUESTED" in query_entry and "SYSTEM_MONITORED" in query_entry, "query entry exposes explicit source and unavailable contracts")
     check("formal_sync:module_exists", (ROOT / "scripts/sync_formal_files.py").exists(), "formal account fact sync module exists")
     check("formal_sync:state_sync_wired", "sync_formal_files" in read_text("scripts/process_state_sync_request.py"), "state sync invokes formal document maintenance")
     check("formal_sync:master_is_not_target", "ETF规则_MASTER.md" not in read_text("scripts/sync_formal_files.py"), "formal sync module cannot target MASTER")
