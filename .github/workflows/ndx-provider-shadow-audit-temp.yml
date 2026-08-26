@@ -1,4 +1,4 @@
-name: NDX provider shadow audit temp
+name: Apply verified NDX100 fallback temp
 
 on:
   push:
@@ -7,93 +7,83 @@ on:
       - ".github/workflows/ndx-provider-shadow-audit-temp.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  audit:
+  apply:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Compare Yahoo and Eastmoney NDX100 in parallel
+      - name: Patch verified NDX100 fallback only
         shell: bash
         run: |
           python - <<'PY'
-          import json, urllib.parse, urllib.request, time
-          from concurrent.futures import ThreadPoolExecutor
-          from datetime import datetime, timezone
+          from pathlib import Path
+          import json
 
-          HEADERS={'User-Agent':'ETF-Trade-System/provider-shadow-audit'}
+          p=Path('config/market/provider_priority.json')
+          d=json.loads(p.read_text(encoding='utf-8'))
+          d['version']='V1.6'
+          d['providers']['eastmoney_push2']['kind']='公开行情接口，支持已验证A股ETF/个股/部分指数直接行情；恒生科技指数124.HSTECH为主源；纳斯达克100指数100.NDX100为已验证直接备源'
+          d['providers']['eastmoney_push2']['role']='primary_for_HSTECH_and_verified_direct_fallback_for_A_share_and_NDX'
+          d['objects']['NDX']=['yahoo_chart_api','eastmoney_push2:100.NDX100']
+          d['object_fallback_policy']['NDX']={'primary':'yahoo_chart_api','fallback':['eastmoney_push2:100.NDX100'],'direct_only':True}
+          d['notes']['ndx_direct_fallback']='纳斯达克100指数（NDX）保留Yahoo ^NDX主源，并启用东方财富100.NDX100作为经真实REGULAR时段对象、价格、时间戳与并行延迟验证的直接备源；仅在主源不可用、质量失败或开放交易阶段明显延迟时切换。错误映射100.NDX禁止使用。'
+          p.write_text(json.dumps(d,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
-          def timed_get_json(url):
-              start_wall=datetime.now(timezone.utc)
-              start=time.perf_counter()
-              req=urllib.request.Request(url,headers=HEADERS)
-              with urllib.request.urlopen(req,timeout=20) as r:
-                  payload=json.load(r)
-              end=time.perf_counter()
-              received=datetime.now(timezone.utc)
-              return payload, start_wall, received, round((end-start)*1000,2)
+          p=Path('config/market/market_monitor_config.json')
+          d=json.loads(p.read_text(encoding='utf-8'))
+          d['version']='V1.5'
+          d['providers']['eastmoney_push2']['scope']='恒生科技指数直接主源；已验证A股ETF/个股/部分指数直接备源；纳斯达克100指数（NDX）对象级直接备源100.NDX100'
+          for obj in d['classes']['A']['objects']:
+              if obj.get('id')=='NDX':
+                  obj['preferred_source']='yahoo_chart_api'
+                  obj['fallback_source']='eastmoney_push2:100.NDX100'
+                  obj['status']='ACTIVE_WITH_FALLBACK'
+          p.write_text(json.dumps(d,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
-          yurl='https://query1.finance.yahoo.com/v8/finance/chart/%5ENDX?range=1d&interval=1m&includePrePost=false'
-          params={'secid':'100.NDX100','fltt':'2','invt':'2','fields':'f43,f44,f45,f46,f57,f58,f60,f86,f124'}
-          eurl='https://push2.eastmoney.com/api/qt/stock/get?'+urllib.parse.urlencode(params)
+          p=Path('scripts/build_overseas_context.py')
+          s=p.read_text(encoding='utf-8')
+          marker='SESSIONS = {'
+          mapping='EASTMONEY_DIRECT_FALLBACKS = {\n    "NDX": "100.NDX100",\n}\n\n'
+          if 'EASTMONEY_DIRECT_FALLBACKS' not in s:
+              s=s.replace(marker,mapping+marker,1)
+          old='def failed_attempt(provider_id: str, result: str, generated_utc: datetime) -> dict:\n'
+          new='def failed_attempt(provider_id: str, result: str, generated_utc: datetime, *, timezone_name: str = "Asia/Hong_Kong") -> dict:\n'
+          s=s.replace(old,new,1)
+          s=s.replace('"as_of_beijing": "", "market_phase": market_phase("Asia/Hong_Kong", generated_utc), "delay_minutes": None,','"as_of_beijing": "", "market_phase": market_phase(timezone_name, generated_utc), "delay_minutes": None,',1)
 
-          with ThreadPoolExecutor(max_workers=2) as ex:
-              fy=ex.submit(timed_get_json,yurl)
-              fe=ex.submit(timed_get_json,eurl)
-              ypayload,ystart,yrecv,ylat=fy.result()
-              epayload,estart,erecv,elat=fe.result()
+          anchor='def fetch_hstech_eastmoney(generated_utc: datetime, *, host: str = "push2.eastmoney.com") -> dict:\n'
+          if 'def fetch_eastmoney_index(' not in s:
+              func='''def fetch_eastmoney_index(object_id: str, spec: dict, generated_utc: datetime, secid: str, *, host: str = "push2.eastmoney.com") -> dict:\n    params = {"secid": secid, "fltt": "2", "invt": "2", "fields": "f43,f44,f45,f46,f47,f48,f57,f58,f60,f86,f124"}\n    url = f"https://{host}/api/qt/stock/get?" + urllib.parse.urlencode(params)\n    req = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.16"})\n    with urllib.request.urlopen(req, timeout=20) as response:\n        status_code = int(response.status)\n        payload = json.load(response)\n    data = payload.get("data") or {}\n    required = {"open": data.get("f46"), "high": data.get("f44"), "low": data.get("f45"), "close": data.get("f43")}\n    if any(value in (None, "-") for value in required.values()):\n        raise RuntimeError(f"{host} {secid} missing OHLC fields")\n    timestamp_field = "f124" if data.get("f124") not in (None, "", 0, "0") else "f86"\n    dt_utc = parse_provider_datetime(data.get(timestamp_field), spec["timezone"])\n    local = dt_utc.astimezone(ZoneInfo(spec["timezone"]))\n    latest = {\n        **required,\n        "volume": data.get("f47"), "amount": data.get("f48"), "previous_close": data.get("f60"),\n        "timestamp": int(dt_utc.timestamp()),\n        "as_of_utc": dt_utc.isoformat(timespec="seconds").replace("+00:00", "Z"),\n        "as_of_local": local.isoformat(timespec="seconds"),\n        "as_of_beijing": dt_utc.astimezone(BEIJING).isoformat(timespec="seconds"),\n        "market_date_local": local.date().isoformat(), "provider_timezone": spec["timezone"], "symbol": secid,\n    }\n    phase = market_phase(spec["timezone"], generated_utc)\n    return {\n        "object": object_id, "name": spec["name"], "reference_role": spec["role"],\n        "provider": "eastmoney_push2", "provider_result": f"HTTP {status_code}", "provider_timestamp_field": timestamp_field,\n        "provider_endpoint": host, "symbol": secid, "market_timezone": spec["timezone"],\n        "market_phase_at_generation": phase,\n        "time_relation_to_a_share": time_relation(object_id, latest, phase, generated_utc),\n        "quality_status": validate_latest(latest), "latest": latest,\n        "display_time_rule": "正式输出优先显示latest.as_of_beijing（北京时间）；同时保留本地市场时区和market_phase。",\n        "decision_note": "东方财富对象级直接备源；仅在Yahoo主源不可用、无效或开放交易阶段明显延迟时启用。",\n    }\n\n\n'''
+              s=s.replace(anchor,func+anchor,1)
 
-          y=ypayload['chart']['result'][0]
-          ts=y.get('timestamp') or []
-          q=(y.get('indicators',{}).get('quote') or [{}])[0]
-          yi=None
-          for i in range(len(ts)-1,-1,-1):
-              vals={k:(q.get(k) or [None]*len(ts))[i] for k in ('open','high','low','close')}
-              if all(v is not None for v in vals.values()):
-                  yi=(int(ts[i]),vals)
-                  break
-          if not yi: raise RuntimeError('Yahoo no complete NDX row')
-
-          e=epayload.get('data') or {}
-          raw=e.get('f124') or e.get('f86')
-          if raw in (None,'',0,'0'): raise RuntimeError('Eastmoney provider timestamp missing')
-          ets=int(float(raw)); ets=ets//1000 if ets>10_000_000_000 else ets
-          evals={'open':e.get('f46'),'high':e.get('f44'),'low':e.get('f45'),'close':e.get('f43')}
-          if any(v in (None,'-') for v in evals.values()): raise RuntimeError('Eastmoney missing OHLC')
-
-          yts,yvals=yi
-          ydt=datetime.fromtimestamp(yts,timezone.utc)
-          edt=datetime.fromtimestamp(ets,timezone.utc)
-          common=max(yrecv,erecv)
-          out={
-            'common_observation_utc':common.isoformat(timespec='milliseconds'),
-            'request_start_skew_ms':round((estart-ystart).total_seconds()*1000,2),
-            'yahoo':{
-              'request_start_utc':ystart.isoformat(timespec='milliseconds'),
-              'response_received_utc':yrecv.isoformat(timespec='milliseconds'),
-              'http_latency_ms':ylat,
-              'provider_timestamp':yts,
-              'as_of_utc':ydt.isoformat(timespec='seconds'),
-              'freshness_at_response_seconds':round((yrecv-ydt).total_seconds(),3),
-              'close':yvals['close']
-            },
-            'eastmoney':{
-              'request_start_utc':estart.isoformat(timespec='milliseconds'),
-              'response_received_utc':erecv.isoformat(timespec='milliseconds'),
-              'http_latency_ms':elat,
-              'provider_timestamp':ets,
-              'timestamp_field':'f124' if e.get('f124') not in (None,'',0,'0') else 'f86',
-              'as_of_utc':edt.isoformat(timespec='seconds'),
-              'freshness_at_response_seconds':round((erecv-edt).total_seconds(),3),
-              'close':evals['close']
-            },
-            'eastmoney_minus_yahoo_provider_seconds':ets-yts,
-            'price_gap_pct':round((float(evals['close'])-float(yvals['close']))/float(yvals['close'])*100,6)
-          }
-          print('NDX100_PARALLEL_RESULT='+json.dumps(out,ensure_ascii=False,sort_keys=True))
+          old_block='''            if object_id != "HSTECH":\n                record = fetch_yahoo(object_id, spec, generated_utc)\n            else:\n                attempts: list[dict] = []\n'''
+          new_block='''            if object_id != "HSTECH":\n                attempts: list[dict] = []\n                record: dict | None = None\n                primary_error = ""\n                try:\n                    primary = fetch_yahoo(object_id, spec, generated_utc)\n                    primary_summary = provider_attempt(primary, "yahoo_chart_api", generated_utc)\n                    attempts.append(primary_summary)\n                    primary_freshness = primary_summary.get("freshness_status")\n                    primary_open_stale = primary.get("market_phase_at_generation") == "OPEN" and primary_freshness in {"DELAYED", "STALE"}\n                    if primary.get("quality_status") == "PASS" and not primary_open_stale:\n                        record = primary\n                        record["selection_basis"] = "configured_primary_yahoo_valid_for_current_market_phase"\n                    else:\n                        record = primary\n                        primary_error = f"primary quality={primary.get('quality_status')} freshness={primary_freshness}"\n                except Exception as primary_exc:\n                    primary_error = str(primary_exc)[-500:]\n                    attempts.append(failed_attempt("yahoo_chart_api", primary_error, generated_utc, timezone_name=spec["timezone"]))\n\n                secid = EASTMONEY_DIRECT_FALLBACKS.get(object_id)\n                if secid and (record is None or primary_error):\n                    provider_id = f"eastmoney_push2:{secid}"\n                    try:\n                        fallback = fetch_eastmoney_index(object_id, spec, generated_utc, secid)\n                        fallback_summary = provider_attempt(fallback, provider_id, generated_utc)\n                        attempts.append(fallback_summary)\n                        if fallback.get("quality_status") == "PASS" and fallback_summary.get("stable_for_10m_pulse") is True:\n                            record = fallback\n                            record["selection_basis"] = "yahoo_primary_unavailable_or_degraded_then_verified_eastmoney_direct_fallback"\n                        elif record is None:\n                            record = fallback\n                    except Exception as fallback_exc:\n                        attempts.append(failed_attempt(provider_id, str(fallback_exc)[-500:], generated_utc, timezone_name=spec["timezone"]))\n\n                if record is None:\n                    raise RuntimeError(primary_error or "no usable direct source")\n                if secid:\n                    record["provider_attempts"] = attempts\n                    record["direct_source_chain"] = ["yahoo_chart_api", f"eastmoney_push2:{secid}"]\n                    record["configured_primary"] = "yahoo_chart_api"\n            else:\n                attempts: list[dict] = []\n'''
+          if old_block not in s:
+              raise SystemExit('expected build block not found')
+          s=s.replace(old_block,new_block,1)
+          p.write_text(s,encoding='utf-8')
           PY
+
+          python -m py_compile scripts/build_overseas_context.py
+          python - <<'PY'
+          import json
+          for path in ['config/market/provider_priority.json','config/market/market_monitor_config.json']:
+              json.load(open(path,encoding='utf-8'))
+          print('config-json-ok')
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add config/market/provider_priority.json config/market/market_monitor_config.json scripts/build_overseas_context.py
+          git diff --cached --check
+          git commit -m "market: add verified NDX100 direct fallback"
+          git push origin HEAD:main
