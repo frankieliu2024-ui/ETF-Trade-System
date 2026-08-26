@@ -1,7 +1,7 @@
 {
-  "schema_version": "1.0",
-  "generated_at": "2026-08-26T16:26:18+08:00",
-  "status": "DEGRADED",
+  "schema_version": "1.1",
+  "generated_at": "2026-08-26T16:43:56+08:00",
+  "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
@@ -13,102 +13,23 @@
       "market_phase": "OUTSIDE_SESSION"
     },
     "account": {
-      "status": "DEGRADED",
-      "reason": "account change event exists after last confirmed account fact",
+      "status": "READY",
+      "reason": "confirmed account facts remain valid; historical audit deltas are not pending updates",
       "updated_at": "2026-08-26T16:01:00+08:00",
       "source": "BROKER_SCREENSHOT_20260826_1601_USER_CONFIRMED",
-      "pending_change_events": [
-        {
-          "event_id": "account_change_39be422832e33157e726",
-          "idempotency_key": "account_change_39be422832e33157e726",
-          "event_type": "BROKER_SCREENSHOT_CHANGE",
-          "event_time": "2026-08-26T10:40:00+08:00",
-          "object": "cash",
-          "change_summary": "cash变化 +1.00",
-          "amount_before": 15318.87,
-          "amount_after": 15319.87,
-          "amount_delta": 1.0,
-          "reconciliation_status": "UNRECONCILED_ACCOUNT_CHANGE",
-          "source": "BROKER_SCREENSHOT_20260826_1040_USER_CONFIRMED",
-          "read_only": true
-        },
-        {
-          "event_id": "account_change_f074ca576d7e4244834a",
-          "idempotency_key": "account_change_f074ca576d7e4244834a",
-          "event_type": "BROKER_SCREENSHOT_CHANGE",
-          "event_time": "2026-08-26T10:40:00+08:00",
-          "object": "total_asset",
-          "change_summary": "total_asset变化 +2901.00",
-          "amount_before": 182725.27,
-          "amount_after": 185626.27,
-          "amount_delta": 2901.0,
-          "reconciliation_status": "UNRECONCILED_ACCOUNT_CHANGE",
-          "source": "BROKER_SCREENSHOT_20260826_1040_USER_CONFIRMED",
-          "read_only": true
-        },
-        {
-          "event_id": "account_change_5e00aa34c30f0225017f",
-          "idempotency_key": "account_change_5e00aa34c30f0225017f",
-          "event_type": "BROKER_SCREENSHOT_CHANGE",
-          "event_time": "2026-08-26T13:32:00+08:00",
-          "object": "total_asset",
-          "change_summary": "total_asset变化 -744.00",
-          "amount_before": 185626.27,
-          "amount_after": 184882.27,
-          "amount_delta": -744.0,
-          "reconciliation_status": "UNRECONCILED_ACCOUNT_CHANGE",
-          "source": "BROKER_SCREENSHOT_20260826_1332_USER_CONFIRMED",
-          "read_only": true
-        },
-        {
-          "event_id": "account_change_91014a8157cb8ed67401",
-          "idempotency_key": "account_change_91014a8157cb8ed67401",
-          "event_type": "BROKER_SCREENSHOT_CHANGE",
-          "event_time": "2026-08-26T13:58:00+08:00",
-          "object": "total_asset",
-          "change_summary": "total_asset变化 -70.00",
-          "amount_before": 184882.27,
-          "amount_after": 184812.27,
-          "amount_delta": -70.0,
-          "reconciliation_status": "UNRECONCILED_ACCOUNT_CHANGE",
-          "source": "BROKER_SCREENSHOT_20260826_1358_USER_CONFIRMED",
-          "read_only": true
-        },
-        {
-          "event_id": "account_change_13c346b8e401887a43c8",
-          "idempotency_key": "account_change_13c346b8e401887a43c8",
-          "event_type": "BROKER_SCREENSHOT_CHANGE",
-          "event_time": "2026-08-26T14:53:00+08:00",
-          "object": "total_asset",
-          "change_summary": "total_asset变化 -200.40",
-          "amount_before": 184812.27,
-          "amount_after": 184611.87,
-          "amount_delta": -200.4,
-          "reconciliation_status": "UNRECONCILED_ACCOUNT_CHANGE",
-          "source": "BROKER_SCREENSHOT_20260826_1453_USER_CONFIRMED",
-          "read_only": true
-        },
-        {
-          "event_id": "account_change_395b9661e86d956ecfae",
-          "idempotency_key": "account_change_395b9661e86d956ecfae",
-          "event_type": "BROKER_SCREENSHOT_CHANGE",
-          "event_time": "2026-08-26T16:01:00+08:00",
-          "object": "total_asset",
-          "change_summary": "total_asset变化 -213.30",
-          "amount_before": 184611.87,
-          "amount_after": 184398.57,
-          "amount_delta": -213.3,
-          "reconciliation_status": "UNRECONCILED_ACCOUNT_CHANGE",
-          "source": "BROKER_SCREENSHOT_20260826_1601_USER_CONFIRMED",
-          "read_only": true
-        }
-      ]
+      "pending_change_events": [],
+      "historical_audit_event_count": 6
     },
     "risk": {
       "status": "READY",
-      "reason": "formal ETF strategy risk metric is available",
-      "etf_strategy_risk_pct": -8.3,
-      "data_quality": "KNOWN_NET_COMPLETE_FOR_RECORDED_TRADE_FEES"
+      "reason": "formal ETF strategy risk metric is available from the current Dashboard",
+      "etf_strategy_risk_pct": -7.69,
+      "source": "ETF当前状态_DASHBOARD.md",
+      "source_updated_at": "2026-08-26T16:22:00+08:00",
+      "reconstruction_risk_pct": -8.3,
+      "reconstruction_generated_at": "2026-08-25T17:20:54Z",
+      "reconstruction_fresh_for_market_date": true,
+      "data_quality": "FORMAL_DASHBOARD_CURRENT; RECONSTRUCTION_IS_AUXILIARY"
     },
     "decision_context": {
       "status": "READY",
@@ -117,14 +38,14 @@
       "decision_context": true
     },
     "maintenance": {
-      "status": "READY",
-      "reason": "maintenance guard passed",
-      "checked_at": "2026-08-26T16:26:18+08:00"
+      "status": "BLOCKED",
+      "reason": "maintenance status=FAIL",
+      "checked_at": "2026-08-26T16:43:56+08:00"
     }
   },
-  "blockers": [],
-  "degradations": [
-    "account"
+  "blockers": [
+    "maintenance"
   ],
+  "degradations": [],
   "safety_boundary": "This state does not create or modify risk permission, Trial/Confirm rules, amounts, sell rules, or execution authority."
 }
