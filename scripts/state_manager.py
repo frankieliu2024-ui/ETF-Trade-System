@@ -60,7 +60,15 @@ def default_current() -> dict[str, Any]:
 def read_json(path: Path, fallback: Any) -> Any:
     if not path.exists():
         return fallback
-    return json.loads(path.read_text(encoding="utf-8"))
+    raw = path.read_text(encoding="utf-8")
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        # Recover only the known legacy literal trailing backslash-n emitted
+        # by an older workflow shell; genuine malformed JSON still propagates.
+        if raw.endswith("\\n"):
+            return json.loads(raw[:-2] + "\n")
+        raise
 
 
 def read_current(root: Path | None = None) -> dict[str, Any]:
