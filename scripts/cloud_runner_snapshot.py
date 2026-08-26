@@ -324,6 +324,11 @@ def fetch_tencent_a_share(asset_class: str, code: str, thscode: str, market_phas
         "amount_raw": quote.get("turnover"),
         "amount_unit": "CNY",
         "provider_name": quote.get("name"),
+        "provider_price_change_amount": quote.get("provider_price_change_amount"),
+        "provider_price_change_ratio_pct": quote.get("provider_price_change_ratio_pct"),
+        "change_pct_source": quote.get("change_pct_source"),
+        "provider_field_31_semantics": quote.get("provider_field_31_semantics"),
+        "provider_field_32_semantics": quote.get("provider_field_32_semantics"),
     })
     ok, reason = validate_market_row(
         candidate, code, expected_name=quote.get("name"),
@@ -657,7 +662,7 @@ def main() -> int:
     failed_rows = [item for item in rows if str(item.get("quality_status") or "").upper() in {"FAILED", "FAIL"}]
     coverage = {
         "planned_count": len(rows),
-        "primary_success_count": sum(1 for item in rows if item.get("fallback_used") is not True and item.get("quality_status") == "PASS"),
+        "primary_success_count": sum(1 for item in rows if item.get("fallback_used") is not True and str(item.get("quality_status") or "").upper() not in {"FAILED", "FAIL"}),
         "fallback_success_count": len(fallback_rows),
         "failed_count": len(failed_rows),
         "failed_objects": [str(item.get("symbol") or "") for item in failed_rows],
