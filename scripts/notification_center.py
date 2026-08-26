@@ -18,6 +18,8 @@ HISTORY_LIMIT = 50
 OPPORTUNITY_STATUSES = {"无机会", "观察机会", "Trial机会", "Confirm机会"}
 RISK_PERMISSIONS = ("禁止新增", "允许Confirm", "允许Trial")
 FORMAL_EVENT_MAX_AGE_MINUTES = 45
+ACCOUNT_EVENT_MAX_AGE_MINUTES = 30
+MIN_UNEXPLAINED_CASH_DELTA_YUAN = 10.0
 TRADING_CALENDAR = ROOT / "config" / "market" / "a_share_trading_calendar_2026.json"
 
 
@@ -370,16 +372,86 @@ def decision_event() -> dict | None:
     return {"key": f"decision:{key}", "type": "交易判断", "title": title, "content": content, "source": "decision_trigger", "user_severity": "需要关注", "user_action": "重新评估交易计划"}
 
 
+def _meaningful_unreconciled_account_changes(account: dict) -> list[dict]:
+    """Return only account deltas that can represent a real user/account action.
+
+    Mark-to-market fields such as total_asset, market value and floating P/L move
+    whenever prices move and must never be presented as unexplained trades.
+    """
+    rows: list[dict] = []
+    ignored_mark_to_market = {"total_asset", "stock_market_value", "market_value", "holding_pnl", "daily_pnl", "daily_pnl_pct"}
+    for event in account.get("account_change_events_after_confirmed_at") or []:
+        if str(event.get("reconciliation_status") or "").upper() != "UNRECONCILED_ACCOUNT_CHANGE":
+            continue
+        event_time = parse_notification_time(event.get("event_time") or event.get("occurred_at"))
+        if not event_time or now() - event_time > timedelta(minutes=ACCOUNT_EVENT_MAX_AGE_MINUTES):
+            continue
+        obj = str(event.get("object") or "").strip()
+        code = str(event.get("code") or "").strip()
+        qty_delta = event.get("quantity_delta")
+        amount_delta = event.get("amount_delta")
+        if obj in ignored_mark_to_market:
+            continue
+        if code and isinstance(qty_delta, (int, float)) and abs(float(qty_delta)) > 0:
+            rows.append(event)
+            continue
+        if obj == "cash" and isinstance(amount_delta, (int, float)) and abs(float(amount_delta)) >= MIN_UNEXPLAINED_CASH_DELTA_YUAN:
+            rows.append(event)
+    return rows
+
+
 def account_confirmation_event() -> dict | None:
     account = read_json(STATE / "account_fact.json", {})
-    unresolved = [e for e in (account.get("account_change_events_after_confirmed_at") or []) if str(e.get("reconciliation_status") or "").upper() == "UNRECONCILED_ACCOUNT_CHANGE"]
+    unresolved = _meaningful_unreconciled_account_changes(account)
     if not unresolved:
         return None
-    event = unresolved[-1]
-    code = str(event.get("code") or event.get("object") or "")
-    target = display_from_code(code, account)
-    event_time = str(event.get("event_time") or event.get("occurred_at") or account.get("updated_at") or "")
-    return {"key": f"account:{code}:{event_time}:{event.get('change_summary','')}", "type": "账户确认", "title": "发现一项需要你确认的账户变化", "content": f"{target}相关的账户变化暂时无法由已确认成交或其他已知事件解释。\n\n建议：请确认是否存在未记录成交、资金划转或其他账户变化；必要时上传当前账户截图。", "source": "account_fact", "user_severity": "需要操作", "user_action": "确认账户变化或上传截图"}
+
+    # One broker screenshot may produce both a position and cash delta. Group the
+    # latest timestamp into one user message instead of sending one alert per field.
+    latest_time = max(str(e.get("event_time") or e.get("occurred_at") or "") for e in unresolved)
+    group = [e for e in unresolved if str(e.get("event_time") or e.get("occurred_at") or "") == latest_time]
+    event_ids = sorted(str(e.get("event_id") or e.get("idempotency_key") or "") for e in group)
+    digest = hashlib.sha256("|".join(event_ids).encode("utf-8")).hexdigest()[:12]
+
+    details: list[str] = []
+    for event in group:
+        code = str(event.get("code") or "")
+        if code:
+            target = display_from_code(code, account)
+            before = event.get("quantity_before")
+            after = event.get("quantity_after")
+            delta = event.get("quantity_delta")
+            details.append(f"- **{target}持仓数量**：{before:g} → {after:g}（变化{float(delta):+g}）")
+        elif str(event.get("object") or "") == "cash":
+            before = float(event.get("amount_before") or 0)
+            after = float(event.get("amount_after") or 0)
+            delta = float(event.get("amount_delta") or 0)
+            details.append(f"- **可用资金**：{before:,.2f}元 → {after:,.2f}元（变化{delta:+,.2f}元）")
+
+    if not details:
+        return None
+
+    title = "【账户变化｜需确认】发现未解释的持仓/资金变化"
+    content = (
+        "### 发生了什么\n"
+        + "\n".join(details)
+        + "\n\n这些变化目前**没有对应到已确认成交、资金划转或其他已知账户事件**。\n\n"
+        + "### 你需要做什么\n"
+        + "如果你刚刚有实际买卖或资金划转，请在 ChatGPT → ETF项目 → 当前交易沟通窗口告诉我；如果没有，请上传当前券商账户截图核对。\n\n"
+        + f"### 账户事实时点（北京时间）\n{human_time(latest_time)}\n\n"
+        + "> 仅价格涨跌造成的总资产、市值和浮动盈亏变化不会触发此通知。"
+    )
+    return {
+        "key": f"account-change:{latest_time}:{digest}",
+        "type": "账户确认",
+        "event_type": "ACCOUNT_FACT_CONFIRMATION",
+        "title": title,
+        "content": content,
+        "source": "account_fact",
+        "user_severity": "需要操作",
+        "user_action": "确认是否有实际成交/资金划转；无则上传账户截图",
+        "confirmation_context": {"account_event_ids": event_ids, "account_event_time_beijing": latest_time},
+    }
 
 
 def failed_steps_text(diag: dict) -> str:
@@ -503,6 +575,7 @@ def find_existing_notification(items: list[dict], event: dict) -> dict | None:
     nid = str(event.get("notification_id") or "")
     related_decision_id = str(event.get("related_decision_id") or (event.get("confirmation_context") or {}).get("decision_id") or "")
     event_type = str(event.get("event_type") or "")
+    event_account_ids = set((event.get("confirmation_context") or {}).get("account_event_ids") or [])
     for item in items:
         if nid and str(item.get("notification_id") or "") == nid:
             return item
@@ -510,6 +583,10 @@ def find_existing_notification(items: list[dict], event: dict) -> dict | None:
             return item
         if event_type == "FORMAL_DECISION_MATERIAL_CHANGE" and related_decision_id and str(item.get("related_decision_id") or "") == related_decision_id:
             return item
+        if event_type == "ACCOUNT_FACT_CONFIRMATION" and event_account_ids:
+            item_ids = set((item.get("confirmation_context") or {}).get("account_event_ids") or [])
+            if event_account_ids & item_ids:
+                return item
     return None
 
 
@@ -528,20 +605,20 @@ def main() -> int:
     else:
         event = choose_event(args.mode)
     if not event:
-        state.update({"schema_version": "2.1", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "NO_NOTIFICATION_NEEDED"}, ensure_ascii=False)); return 0
+        state.update({"schema_version": "2.2", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "NO_NOTIFICATION_NEEDED"}, ensure_ascii=False)); return 0
     existing = find_existing_notification(notifications, event)
     if existing and existing.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED"}:
-        state.update({"schema_version": "2.1", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "ALREADY_MANAGED", "notification_id": existing.get("notification_id"), "lifecycle_status": existing.get("lifecycle_status")}, ensure_ascii=False)); return 0
+        state.update({"schema_version": "2.2", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "ALREADY_MANAGED", "notification_id": existing.get("notification_id"), "lifecycle_status": existing.get("lifecycle_status")}, ensure_ascii=False)); return 0
     if existing and existing.get("lifecycle_status") == "EXPIRED":
         print(json.dumps({"status": "EXPIRED_REQUIRES_NEW_EVENT", "notification_id": existing.get("notification_id")}, ensure_ascii=False)); return 0
     item = normalize_notification(event, existing); item["lifecycle_status"] = "CREATED"; item["created_at"] = item.get("created_at") or now().isoformat(timespec="seconds")
     if not token:
-        state.update({"schema_version": "2.1", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "SKIPPED_NO_SECRET", "notification_id": item["notification_id"], "lifecycle_status": "CREATED"}, ensure_ascii=False)); return 0
+        state.update({"schema_version": "2.2", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "SKIPPED_NO_SECRET", "notification_id": item["notification_id"], "lifecycle_status": "CREATED"}, ensure_ascii=False)); return 0
     ok, response = send(token, item["title"], item["content"]); stamp = now().isoformat(timespec="seconds"); item["last_attempted_at"] = stamp; item["response"] = response
-    item["lifecycle_status"] = "WAITING_CONFIRMATION" if ok and item["event_type"] in {"PENDING_EXECUTION_CONFIRMATION", "成交确认", "账户确认", "收盘账户"} else ("SENT" if ok else "CREATED"); item["sent_at"] = stamp if ok else item.get("sent_at")
+    item["lifecycle_status"] = "WAITING_CONFIRMATION" if ok and item["event_type"] in {"PENDING_EXECUTION_CONFIRMATION", "成交确认", "账户确认", "ACCOUNT_FACT_CONFIRMATION", "收盘账户"} else ("SENT" if ok else "CREATED"); item["sent_at"] = stamp if ok else item.get("sent_at")
     if existing: notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
     notifications.append(item)
-    state = {"schema_version": "2.1", "updated_at": stamp, "last_status": item["lifecycle_status"], "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；同一正式decision_id只允许一条主动通知，不因模板或代码变化重复推送；收盘账户提醒仅在A股交易日触发。", "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"}
+    state = {"schema_version": "2.2", "updated_at": stamp, "last_status": item["lifecycle_status"], "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。", "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"}
     write_json(state_path, state); print(json.dumps(item, ensure_ascii=False)); return 0 if ok else 1
 
 
