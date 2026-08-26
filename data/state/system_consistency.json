@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-26T10:02:07Z",
-  "generated_at_beijing": "2026-08-26T18:02:07+08:00",
+  "generated_at": "2026-08-26T10:04:33Z",
+  "generated_at_beijing": "2026-08-26T18:04:33+08:00",
   "repository": {
-    "head_sha": "49d9b40b179d5592bc8d250850ca65bd7891c7e3",
-    "github_sha": "49d9b40b179d5592bc8d250850ca65bd7891c7e3",
-    "github_run_id": "32956131008",
+    "head_sha": "1c7352e5aae69077000e300998bf259b9b3bc08f",
+    "github_sha": "1c7352e5aae69077000e300998bf259b9b3bc08f",
+    "github_run_id": "32956353105",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "49d9b40b179d5592bc8d250850ca65bd7891c7e3",
-    "workflow_sha": "49d9b40b179d5592bc8d250850ca65bd7891c7e3",
+    "checked_commit": "1c7352e5aae69077000e300998bf259b9b3bc08f",
+    "workflow_sha": "1c7352e5aae69077000e300998bf259b9b3bc08f",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "PASS",
-  "hard_error_count": 0,
+  "status": "FAIL",
+  "hard_error_count": 2,
   "warning_count": 0,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.012s\n\nOK\n"
+      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.014s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -190,12 +190,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=49d9b40b179d5592bc8d250850ca65bd7891c7e3"
+      "detail": "HEAD=1c7352e5aae69077000e300998bf259b9b3bc08f"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=49d9b40b179d5592bc8d250850ca65bd7891c7e3 GITHUB_SHA=49d9b40b179d5592bc8d250850ca65bd7891c7e3"
+      "detail": "HEAD=1c7352e5aae69077000e300998bf259b9b3bc08f GITHUB_SHA=1c7352e5aae69077000e300998bf259b9b3bc08f"
     },
     {
       "name": "git:critical_files_tracked",
@@ -240,12 +240,12 @@
     {
       "name": "index_layer:formal_vs_expected",
       "status": "PASS",
-      "detail": "actual=['000001.SH', '399006.SZ', 'HSTECH', 'KOSPI', 'N225', 'NDX', 'SOX', 'TWII'] expected=['000001.SH', '399006.SZ', 'HSTECH', 'KOSPI', 'N225', 'NDX', 'SOX', 'TWII']"
+      "detail": "actual=['000001.SH', '000688.SH', '399006.SZ', 'HSTECH', 'KOSPI', 'N225', 'NDX', 'SOX', 'TWII'] expected=['000001.SH', '000688.SH', '399006.SZ', 'HSTECH', 'KOSPI', 'N225', 'NDX', 'SOX', 'TWII']"
     },
     {
       "name": "index_layer:monitor_vs_formal",
       "status": "PASS",
-      "detail": "monitor=['000001.SH', '399006.SZ', 'HSTECH', 'KOSPI', 'N225', 'NDX', 'SOX', 'TWII'] formal=['000001.SH', '399006.SZ', 'HSTECH', 'KOSPI', 'N225', 'NDX', 'SOX', 'TWII']"
+      "detail": "monitor=['000001.SH', '000688.SH', '399006.SZ', 'HSTECH', 'KOSPI', 'N225', 'NDX', 'SOX', 'TWII'] formal=['000001.SH', '000688.SH', '399006.SZ', 'HSTECH', 'KOSPI', 'N225', 'NDX', 'SOX', 'TWII']"
     },
     {
       "name": "etf_universe:nonempty",
@@ -345,7 +345,7 @@
     {
       "name": "providers:formal_indices",
       "status": "PASS",
-      "detail": "provider formal indices=['000001.SH', '399006.SZ', 'NDX', 'SOX', 'N225', 'KOSPI', 'TWII', 'HSTECH']"
+      "detail": "provider formal indices=['000001.SH', '399006.SZ', '000688.SH', 'NDX', 'SOX', 'N225', 'KOSPI', 'TWII', 'HSTECH']"
     },
     {
       "name": "providers:hstech_sources_registered",
@@ -605,7 +605,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=True phase=06:02 max_age_seconds=158 limit=900"
+      "detail": "active=True phase=06:04 max_age_seconds=32 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -720,12 +720,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=9965"
+      "detail": "declared=STALE expected=STALE age_seconds=10111"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=9965"
+      "detail": "declared=STALE expected=STALE age_seconds=10111"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -765,7 +765,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-26T10:02:06Z market=2026-08-26T15:16:01+08:00"
+      "detail": "context=2026-08-26T10:04:32Z market=2026-08-26T15:16:01+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -879,8 +879,8 @@
     },
     {
       "name": "a_share_runtime:snapshot_count",
-      "status": "PASS",
-      "detail": "snapshot_count=13 rows=13 expected=13"
+      "status": "FAIL",
+      "detail": "snapshot_count=13 rows=13 expected=14"
     },
     {
       "name": "a_share_runtime:market_date_alignment",
@@ -894,7 +894,7 @@
     },
     {
       "name": "a_share_runtime:core_indices_complete",
-      "status": "PASS",
+      "status": "FAIL",
       "detail": "indices=['000001.SH', '399006.SZ']"
     },
     {
@@ -1033,7 +1033,10 @@
       "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
     }
   ],
-  "errors": [],
+  "errors": [
+    "a_share_runtime:snapshot_count: snapshot_count=13 rows=13 expected=14",
+    "a_share_runtime:core_indices_complete: indices=['000001.SH', '399006.SZ']"
+  ],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。"
 }
