@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "mode": "MARKET_LEVEL_REGIME_CONTEXT",
+  "status": "READY",
+  "market_date": "2026-08-26",
+  "as_of_beijing": "2026-08-26T15:16:01+08:00",
+  "source_snapshot": "data/market/snapshots/2026-08-26_151601.json",
+  "indices": [
+    {
+      "display_name": "上证指数（000001）",
+      "code": "000001",
+      "as_of_beijing": "2026-08-26T15:15:00+08:00",
+      "price": 3912.52,
+      "change_pct": 0.5934016207988835,
+      "day_range_position": 0.6886,
+      "path_change_pct": -0.0256,
+      "recent_slope_pct_per_10m": -0.0096,
+      "recovery_from_path_low_pct": 0.0447,
+      "retreat_from_path_high_pct": -0.0968,
+      "sampling_coverage": "HIGH"
+    },
+    {
+      "display_name": "创业板指（399006）",
+      "code": "399006",
+      "as_of_beijing": "2026-08-26T15:15:42+08:00",
+      "price": 3414.88,
+      "change_pct": 0.5109609362123013,
+      "day_range_position": 0.4657,
+      "path_change_pct": -0.4202,
+      "recent_slope_pct_per_10m": -0.0183,
+      "recovery_from_path_low_pct": 0.0,
+      "retreat_from_path_high_pct": -0.4251,
+      "sampling_coverage": "HIGH"
+    }
+  ],
+  "etf_breadth": {
+    "etf_count": 11,
+    "positive_count": 8,
+    "negative_count": 1,
+    "flat_count": 2,
+    "positive_share": 0.7273,
+    "median_return_pct": 0.308,
+    "breadth_state": "BROAD_RISK_ON"
+  },
+  "style_context": {
+    "chinext_minus_shanghai_pct_points": -0.0824,
+    "state": "BALANCED",
+    "interpretation_cn": "上证与创业板差异有限，风格暂不极端"
+  },
+  "market_regime": "BROAD_REPAIR_OR_RISK_ON",
+  "market_regime_interpretation_cn": "指数与ETF宽度同步偏强，市场更接近广泛修复/风险偏好改善",
+  "analysis_contract": {
+    "rule": "正式盘中决策必须先完成市场层分析，再进入账户、持仓、观察ETF和现金的统一比较。",
+    "required_dimensions": [
+      "上证指数（000001）日内位置与路径",
+      "创业板指（399006）日内位置与路径",
+      "ETF全集上涨/下跌宽度与中位收益",
+      "上证与创业板的风格差异",
+      "必要时结合海外/亚洲反馈，但不得用陈旧海外数据替代A股自身反馈"
+    ],
+    "forbidden_shortcut": "只分析持仓和观察ETF、跳过市场层后直接形成主候选或金额动作"
+  },
+  "decision_boundary": "本文件只描述市场环境、指数路径、ETF宽度与风格，不直接生成风险许可、Trial/Confirm、金额或买卖动作。",
+  "read_only": true
+}
