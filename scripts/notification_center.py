@@ -39,6 +39,32 @@ def now() -> datetime:
     return datetime.now(TZ)
 
 
+def parse_notification_time(value: Any) -> datetime | None:
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=TZ)
+    return dt.astimezone(TZ)
+
+
+def human_time(value: Any, *, include_date: bool = True) -> str:
+    dt = parse_notification_time(value)
+    if not dt:
+        return "未提供"
+    return dt.strftime("%Y-%m-%d %H:%M:%S") if include_date else dt.strftime("%H:%M:%S")
+
+
+def minutes_between(later: Any, earlier: Any) -> float | None:
+    a, b = parse_notification_time(later), parse_notification_time(earlier)
+    if not a or not b:
+        return None
+    return max(0.0, (a - b).total_seconds() / 60.0)
+
+
 def send(token: str, title: str, content: str) -> tuple[bool, dict]:
     payload = json.dumps({"token": token, "title": title, "content": content, "template": "markdown", "channel": "wechat"}, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(PUSHPLUS_URL, data=payload, headers={"Content-Type": "application/json", "User-Agent": "ETF-Trade-System/1.0"}, method="POST")
@@ -177,13 +203,23 @@ def _compact_amount_action(text: str) -> str:
     return value
 
 
+def _formal_market_as_of(event: dict) -> str:
+    comparison = event.get("comparison_snapshot") or {}
+    return str(comparison.get("as_of_beijing") or event.get("price_as_of_beijing") or "")
+
+
+def _formal_account_as_of(event: dict, decision: dict) -> str:
+    return str(decision.get("account_as_of_beijing") or event.get("account_as_of_beijing") or "")
+
+
 def formal_decision_change_event() -> dict | None:
     events = _formal_decision_events()
     if not events:
         return None
     latest = events[-1]
     decision = latest.get("formal_decision") or {}
-    decision_time = parse_notification_time(latest.get("decision_time_beijing") or decision.get("data_as_of_beijing"))
+    decision_time_raw = latest.get("decision_time_beijing") or decision.get("data_as_of_beijing")
+    decision_time = parse_notification_time(decision_time_raw)
     if not decision_time or now() - decision_time > timedelta(minutes=FORMAL_EVENT_MAX_AGE_MINUTES):
         return None
 
@@ -210,8 +246,11 @@ def formal_decision_change_event() -> dict | None:
 
     decision_id = str(latest.get("decision_id") or decision.get("decision_id") or "")
     decisive_reason = str(decision.get("decisive_reason") or "未提供")
-    data_as_of = str(decision.get("data_as_of_beijing") or latest.get("decision_time_beijing") or "未提供")
     action_summary = _compact_amount_action(amount_action)
+    market_as_of_raw = _formal_market_as_of(latest)
+    account_as_of_raw = _formal_account_as_of(latest, decision)
+    notification_generated = now()
+    market_age = minutes_between(decision_time_raw, market_as_of_raw)
 
     change_lines: list[str] = []
     if candidate_changed:
@@ -226,6 +265,9 @@ def formal_decision_change_event() -> dict | None:
         change_lines.append(f"- **风险许可**：{risk_permission}（未变化）")
     if holding_action_changed:
         change_lines.append(f"- **持仓动作**：{action_summary}")
+
+    actionable = holding_action_changed or (status in {"Trial机会", "Confirm机会"} and opportunity_changed) or risk_permission == "禁止新增"
+    stale_action_warning = actionable and market_age is not None and market_age > 10
 
     if holding_action_changed:
         title = "【持仓动作｜需处理】ETF持仓需要降低风险/退出"
@@ -252,18 +294,32 @@ def formal_decision_change_event() -> dict | None:
         severity = "需要关注"
         user_action = "打开ChatGPT的ETF项目查看最新正式判断"
 
+    if stale_action_warning:
+        user_action = "该判断使用的A股行情距判断时点超过10分钟；请先打开ChatGPT的ETF项目刷新最新行情，再决定是否人工执行"
+
+    timing_lines = [
+        f"- **判断时点**：{human_time(decision_time_raw)}",
+        f"- **行情依据**：{human_time(market_as_of_raw)}" if market_as_of_raw else "- **行情依据**：未单独记录",
+    ]
+    if market_age is not None:
+        timing_lines.append(f"- **行情距判断**：约{market_age:.0f}分钟")
+    if account_as_of_raw:
+        timing_lines.append(f"- **账户依据**：{human_time(account_as_of_raw)}")
+    timing_lines.append(f"- **通知生成**：{notification_generated.strftime('%Y-%m-%d %H:%M:%S')}")
+
     content = (
         "### 发生了什么\n"
         + "\n".join(change_lines)
         + f"\n\n### 现在怎么做\n**{user_action}**\n\n"
         + f"### 当前动作\n{action_summary or '未提供'}\n\n"
         + f"### 为什么\n{decisive_reason}\n\n"
-        + f"### 数据时点\n{data_as_of}\n\n"
-        + "> 通知只转发已经形成的正式ETF判断，不会自动下单。"
+        + "### 时间信息（北京时间）\n"
+        + "\n".join(timing_lines)
+        + "\n\n> 微信消息顶部显示的是实际发送时间；通知只转发已经形成的正式ETF判断，不会自动下单。"
     )
-    signature = hashlib.sha256(json.dumps({"decision_id": decision_id, "status": status, "code": code, "risk": risk_permission, "action": amount_action}, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:12]
+
     return {
-        "key": f"formal-change:{decision_id}:{signature}",
+        "key": f"formal-change:{decision_id}",
         "type": "正式决策变化",
         "event_type": "FORMAL_DECISION_MATERIAL_CHANGE",
         "title": title,
@@ -284,6 +340,10 @@ def formal_decision_change_event() -> dict | None:
             "risk_permission": risk_permission,
             "previous_risk_permission": previous_risk,
             "holding_action_changed": holding_action_changed,
+            "decision_time_beijing": str(decision_time_raw or ""),
+            "market_as_of_beijing": market_as_of_raw,
+            "account_as_of_beijing": account_as_of_raw,
+            "market_age_minutes_at_decision": market_age,
         },
     }
 
@@ -426,18 +486,6 @@ def normalize_notification(event: dict, record: dict | None = None) -> dict:
     return {"notification_id": str(record.get("notification_id") or event.get("notification_id") or notification_id_for(event)), "event_type": str(record.get("event_type") or event.get("event_type") or event.get("type") or "SYSTEM_EVENT"), "source_event_id": str(record.get("source_event_id") or event.get("source_event_id") or event.get("key") or ""), "related_decision_id": str(record.get("related_decision_id") or event.get("related_decision_id") or context.get("decision_id") or ""), "security_code": str(record.get("security_code") or event.get("security_code") or context.get("security_code") or ""), "security_name": str(record.get("security_name") or event.get("security_name") or context.get("security_name") or ""), "user_severity": str(record.get("user_severity") or event.get("user_severity") or ""), "user_action": str(record.get("user_action") or event.get("user_action") or ""), "lifecycle_status": str(record.get("lifecycle_status") or record.get("status") or "CREATED"), "created_at": created, "sent_at": record.get("sent_at"), "confirmed_at": record.get("confirmed_at"), "archived_at": record.get("archived_at"), "expires_at": record.get("expires_at") or ((parse_notification_time(created) + timedelta(days=NOTIFICATION_TTL_DAYS)).isoformat(timespec="seconds") if parse_notification_time(created) else None), "title": str(record.get("title") or event.get("title") or ""), "content": str(record.get("content") or event.get("content") or ""), "source": str(record.get("source") or event.get("source") or ""), "confirmation_context": context or record.get("confirmation_context") or {}, "response": record.get("response") or {}, "last_attempted_at": record.get("last_attempted_at") or record.get("attempted_at")}
 
 
-def parse_notification_time(value: Any) -> datetime | None:
-    if not value:
-        return None
-    try:
-        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=TZ)
-    return dt.astimezone(TZ)
-
-
 def expire_notifications(items: list[dict]) -> list[dict]:
     current = now(); out = []
     for raw in items:
@@ -451,10 +499,17 @@ def expire_notifications(items: list[dict]) -> list[dict]:
 
 
 def find_existing_notification(items: list[dict], event: dict) -> dict | None:
-    source = str(event.get("source_event_id") or event.get("key") or ""); nid = str(event.get("notification_id") or "")
+    source = str(event.get("source_event_id") or event.get("key") or "")
+    nid = str(event.get("notification_id") or "")
+    related_decision_id = str(event.get("related_decision_id") or (event.get("confirmation_context") or {}).get("decision_id") or "")
+    event_type = str(event.get("event_type") or "")
     for item in items:
-        if nid and str(item.get("notification_id") or "") == nid: return item
-        if source and str(item.get("source_event_id") or "") == source: return item
+        if nid and str(item.get("notification_id") or "") == nid:
+            return item
+        if source and str(item.get("source_event_id") or "") == source:
+            return item
+        if event_type == "FORMAL_DECISION_MATERIAL_CHANGE" and related_decision_id and str(item.get("related_decision_id") or "") == related_decision_id:
+            return item
     return None
 
 
@@ -486,7 +541,7 @@ def main() -> int:
     item["lifecycle_status"] = "WAITING_CONFIRMATION" if ok and item["event_type"] in {"PENDING_EXECUTION_CONFIRMATION", "成交确认", "账户确认", "收盘账户"} else ("SENT" if ok else "CREATED"); item["sent_at"] = stamp if ok else item.get("sent_at")
     if existing: notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
     notifications.append(item)
-    state = {"schema_version": "2.1", "updated_at": stamp, "last_status": item["lifecycle_status"], "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；同一正式决策合并为一条通知，不因普通行情波动重复推送；收盘账户提醒仅在A股交易日触发。", "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"}
+    state = {"schema_version": "2.1", "updated_at": stamp, "last_status": item["lifecycle_status"], "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；同一正式decision_id只允许一条主动通知，不因模板或代码变化重复推送；收盘账户提醒仅在A股交易日触发。", "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"}
     write_json(state_path, state); print(json.dumps(item, ensure_ascii=False)); return 0 if ok else 1
 
 
