@@ -289,6 +289,7 @@ def fetch_eastmoney_index(code: str, thscode: str, market_phase: str) -> dict:
     fields = {"open_price": data.get("f46"), "high_price": data.get("f44"), "low_price": data.get("f45"), "last_price": data.get("f43"), "prev_price": data.get("f60"), "volume": int(float(data.get("f47")) * 100) if data.get("f47") not in (None, "", "-") else None, "turnover": data.get("f48")}
     if any(value in (None, "", "-") for value in fields.values()):
         raise RuntimeError(f"Eastmoney index {code} missing direct fields")
+    provider_ts = eastmoney_timestamp_ms(data.get("f86"))
     provider_dt = datetime.fromtimestamp(provider_ts / 1000, tz=SHANGHAI)
     now_dt = now_shanghai()
     if provider_dt.date() != now_dt.date() or abs((now_dt - provider_dt).total_seconds()) > max(60, int(POLICY["degraded_max_age_seconds"])):
