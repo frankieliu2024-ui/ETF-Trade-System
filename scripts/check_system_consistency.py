@@ -17,7 +17,7 @@ SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
 FORMAL_FILES = ["ETF规则_MASTER.md", "ETF当前状态_DASHBOARD.md", "ETF交易复盘与经验库_2026.md", "ETF市场行情档案_2026.md"]
 CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/overseas_runtime_health.json", "data/state/account_fact.json", "data/state/us_extended_hours_context.json", "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json", "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json"]
-CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_stock_context.py", "scripts/build_account_stock_market.py", "scripts/market_data_guard.py", "tests/test_market_data_guard.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_query_context.py", "scripts/market_quote_router.py", "scripts/sync_formal_files.py", "config/market/market_quote_router.json", "tests/test_market_quote_router.py", "scripts/build_post_market_review.py", ".github/workflows/market-snapshot.yml", ".github/workflows/on-demand-market-data.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
+CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_stock_context.py", "scripts/build_account_stock_market.py", "scripts/market_data_guard.py", "tests/test_market_data_guard.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_query_context.py", "scripts/market_quote_router.py", "scripts/sync_formal_files.py", "scripts/query_market_object.py", "config/market/market_quote_router.json", "tests/test_market_quote_router.py", "scripts/build_post_market_review.py", ".github/workflows/market-snapshot.yml", ".github/workflows/on-demand-market-data.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
 EXPECTED_INDICES = {"000001.SH", "399006.SZ", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
 REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api", "eastmoney_push2"}
 
@@ -101,7 +101,7 @@ def main() -> int:
     test_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "discover", "-s", "tests", "-p", "test_market*.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:market_data_and_quote_router", test_proc.returncode == 0, (test_proc.stdout + test_proc.stderr)[-1000:])
 
-    compile_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "py_compile", "scripts/market_data_guard.py", "scripts/market_quote_router.py", "scripts/cloud_runner_snapshot.py", "scripts/build_account_stock_market.py", "scripts/build_overseas_context.py", "scripts/build_overseas_runtime_health.py", "scripts/build_query_context.py", "scripts/build_post_market_review.py", "scripts/state_manager.py", "scripts/process_state_sync_request.py", "scripts/sync_formal_files.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+    compile_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "py_compile", "scripts/market_data_guard.py", "scripts/market_quote_router.py", "scripts/cloud_runner_snapshot.py", "scripts/build_account_stock_market.py", "scripts/build_overseas_context.py", "scripts/build_overseas_runtime_health.py", "scripts/build_query_context.py", "scripts/build_post_market_review.py", "scripts/state_manager.py", "scripts/process_state_sync_request.py", "scripts/sync_formal_files.py", "scripts/query_market_object.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:runtime_modules_compile", compile_proc.returncode == 0, (compile_proc.stdout + compile_proc.stderr)[-1000:])
 
     for path in FORMAL_FILES:
@@ -110,6 +110,12 @@ def main() -> int:
     router_config = read_json("config/market/market_quote_router.json")
     check("router:config_exists", (ROOT / "config/market/market_quote_router.json").exists(), "unified router configuration exists")
     check("router:module_exists", (ROOT / "scripts/market_quote_router.py").exists(), "unified router module exists")
+    check("query_entry:module_exists", (ROOT / "scripts/query_market_object.py").exists(), "single-object query entry exists")
+    query_entry = read_text("scripts/query_market_object.py")
+    check("query_entry:shared_guard_router", "validate_market_row" in query_entry and "build_market_quote_context" in query_entry, "query entry uses shared quality guard and router")
+    check("query_entry:no_monitor_pool_write", "etf_monitor_universe.json"), "w"" not in query_entry and "market_monitor_config.json"), "w"" not in query_entry, "user queries cannot write monitoring configuration")
+    query_context_text = read_text("scripts/build_query_context.py")
+    check("query_entry:context_categories", "system_objects" in query_context_text and "user_requested_objects" in query_context_text, "query context exposes two object categories")
     check("formal_sync:module_exists", (ROOT / "scripts/sync_formal_files.py").exists(), "formal account fact sync module exists")
     check("formal_sync:state_sync_wired", "sync_formal_files" in read_text("scripts/process_state_sync_request.py"), "state sync invokes formal document maintenance")
     check("formal_sync:master_is_not_target", "ETF规则_MASTER.md" not in read_text("scripts/sync_formal_files.py"), "formal sync module cannot target MASTER")
