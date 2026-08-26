@@ -194,9 +194,27 @@ jobs:
           git add -A -- data/market/snapshots data/state
           git reset -- data/state/system_consistency.json
           if ! git diff --cached --quiet; then
-            git commit -m "data: publish core market snapshot"
-            git pull --rebase origin main
-            git push origin HEAD:main
+            mkdir -p /tmp/etf-core-publish
+            git diff --cached --name-only -z > /tmp/etf-core-files
+            while IFS= read -r -d '' file; do
+              mkdir -p "/tmp/etf-core-publish/$(dirname "$file")"
+              cp "$file" "/tmp/etf-core-publish/$file"
+            done < /tmp/etf-core-files
+            for attempt in 1 2 3; do
+              git fetch origin main
+              git reset --hard origin/main
+              while IFS= read -r -d '' file; do
+                mkdir -p "$(dirname "$file")"
+                cp "/tmp/etf-core-publish/$file" "$file"
+              done < /tmp/etf-core-files
+              git add -A -- data/market/snapshots data/state
+              git reset -- data/state/system_consistency.json
+              git commit -m "data: publish core market snapshot"
+              if git push origin HEAD:main; then
+                break
+              fi
+              if [ "$attempt" = "3" ]; then exit 1; fi
+            done
           fi
       - name: Quick retry failed core objects after initial publish
         id: quick_retry
@@ -325,15 +343,27 @@ jobs:
           if git diff --cached --quiet; then
             exit 0
           fi
-          git commit -m "data: record downstream market contexts and state sync"
-          # runtime_health is already normalized before the data commit.
-          # Do not parse/rewrite it a second time: concurrent writers can leave
-          # a transient multi-document buffer and must not invalidate fresh data.
-          # Another pulse may publish between fetch and push; retry the
-          # fast-forward rebase instead of losing a valid fresh context.
+          mkdir -p /tmp/etf-downstream-publish
+          git diff --cached --name-only -z > /tmp/etf-downstream-files
+          while IFS= read -r -d '' file; do
+            mkdir -p "/tmp/etf-downstream-publish/$(dirname "$file")"
+            cp "$file" "/tmp/etf-downstream-publish/$file"
+          done < /tmp/etf-downstream-files
           for attempt in 1 2 3; do
             git fetch origin main
-            git rebase origin/main && git push origin HEAD:main && break
+            git reset --hard origin/main
+            while IFS= read -r -d '' file; do
+              mkdir -p "$(dirname "$file")"
+              cp "/tmp/etf-downstream-publish/$file" "$file"
+            done < /tmp/etf-downstream-files
+            git add -A -- data/market/snapshots data/state post_market_review events ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
+            git reset -- data/state/system_consistency.json
+            if git diff --cached --quiet; then
+              exit 0
+            fi
+            git commit -m "data: record downstream market contexts and state sync"
+            if git push origin HEAD:main; then
+              break
+            fi
             if [ "$attempt" = "3" ]; then exit 1; fi
-            git rebase --abort || true
           done
