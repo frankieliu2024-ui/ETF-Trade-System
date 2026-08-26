@@ -63,11 +63,27 @@ def read_json(path: Path, fallback: Any) -> Any:
     raw = path.read_text(encoding="utf-8")
     try:
         return json.loads(raw)
-    except json.JSONDecodeError:
-        # Recover only the known legacy literal trailing backslash-n emitted
-        # by an older workflow shell; genuine malformed JSON still propagates.
+    except json.JSONDecodeError as exc:
+        # Recover only known runtime_health concurrent-write buffers. Older
+        # writers could leave two complete JSON documents concatenated; use
+        # the last complete document so downstream context can continue while
+        # the owning workflow rewrites the file atomically.
         if raw.endswith("\\n"):
             return json.loads(raw[:-2] + "\n")
+        if path.name == "runtime_health.json" and "Extra data" in str(exc):
+            decoder = json.JSONDecoder()
+            index = 0
+            last = None
+            while index < len(raw):
+                while index < len(raw) and raw[index].isspace():
+                    index += 1
+                if index >= len(raw):
+                    break
+                value, end = decoder.raw_decode(raw, index)
+                last = value
+                index = end
+            if last is not None:
+                return last
         raise
 
 
