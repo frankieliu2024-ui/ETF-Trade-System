@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Compare Yahoo and Eastmoney NDX timestamps
+      - name: Compare Yahoo and Eastmoney NDX100 timestamps
         shell: bash
         run: |
           python - <<'PY'
@@ -31,7 +31,6 @@ jobs:
                   return json.load(r)
 
           now=datetime.now(timezone.utc)
-
           yurl='https://query1.finance.yahoo.com/v8/finance/chart/%5ENDX?range=1d&interval=1m&includePrePost=false'
           y=get_json(yurl)['chart']['result'][0]
           ts=y.get('timestamp') or []
@@ -44,7 +43,7 @@ jobs:
                   break
           if not yi: raise RuntimeError('Yahoo no complete NDX row')
 
-          params={'secid':'100.NDX','fltt':'2','invt':'2','fields':'f43,f44,f45,f46,f57,f58,f60,f86,f124'}
+          params={'secid':'100.NDX100','fltt':'2','invt':'2','fields':'f43,f44,f45,f46,f57,f58,f60,f86,f124'}
           eurl='https://push2.eastmoney.com/api/qt/stock/get?'+urllib.parse.urlencode(params)
           e=get_json(eurl).get('data') or {}
           raw=e.get('f124') or e.get('f86')
@@ -61,5 +60,5 @@ jobs:
             'eastmoney_minus_yahoo_seconds':ets-yts,
             'price_gap_pct':round((float(evals['close'])-float(yvals['close']))/float(yvals['close'])*100,6),
           }
-          print('NDX_PROVIDER_SHADOW_RESULT='+json.dumps(out,ensure_ascii=False,sort_keys=True))
+          print('NDX100_PROVIDER_SHADOW_RESULT='+json.dumps(out,ensure_ascii=False,sort_keys=True))
           PY
