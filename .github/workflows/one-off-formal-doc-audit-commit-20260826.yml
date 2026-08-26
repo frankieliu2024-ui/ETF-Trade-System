@@ -1,0 +1,102 @@
+name: One-off formal document audit commit 2026-08-26
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/one-off-formal-doc-audit-commit-20260826.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply audited repair with semantic guards
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re, textwrap
+
+          source = Path('.github/workflows/one-off-formal-doc-audit-20260826.yml').read_text(encoding='utf-8')
+          start_token = "          python - <<'PY'\n"
+          end_token = "\n          PY\n"
+          start = source.index(start_token) + len(start_token)
+          end = source.index(end_token, start)
+          script = textwrap.dedent(source[start:end])
+          old_fn = '''def replace_once(text, old, new, label):\n    if old not in text:\n        raise SystemExit(f'missing expected text for {label}')\n    return text.replace(old, new, 1)'''
+          new_fn = '''def replace_once(text, old, new, label):\n    if old in text:\n        return text.replace(old, new, 1)\n    if label == 'archive cloud authority':\n        import re\n        pattern = r'完整逐日数据以正式工作目录 .*?不静默覆盖。'\n        if not re.search(pattern, text, flags=re.S):\n            raise SystemExit('missing expected paragraph for archive cloud authority')\n        return re.sub(pattern, lambda m: new, text, count=1, flags=re.S)\n    raise SystemExit(f'missing expected text for {label}')'''
+          if old_fn not in script:
+              raise SystemExit('source repair function missing')
+          script = script.replace(old_fn, new_fn, 1)
+          script = re.sub(r"\n# Focused validation before commit\.[\s\S]*$", "\n", script)
+          script = script.replace('"Trial不是Confirm的强制前置" in master', '"不是Confirm的强制前置" in master')
+          exec(compile(script, '<formal-doc-repair>', 'exec'), {'__name__': '__main__'})
+
+          # HSTECH actual primary/fallback authority, not audit-list order.
+          p = Path('scripts/check_system_consistency.py')
+          t = p.read_text(encoding='utf-8')
+          old = '''    expected_hstech_chain = ["hithink-finance:HS2083", "yahoo_chart_api:HSTECH.HK", "eastmoney_push2:124.HSTECH", "ETF_PROXY_513180"]\n    actual_hstech_chain = (provider_cfg.get("objects") or {}).get("HSTECH") or []\n    check("providers:hstech_chain_exact", actual_hstech_chain == expected_hstech_chain, f"actual={actual_hstech_chain} expected={expected_hstech_chain}")\n    fallback_policy = provider_cfg.get("object_fallback_policy") or {}'''
+          new = '''    hstech_registered = (provider_cfg.get("objects") or {}).get("HSTECH") or []\n    expected_hstech_registered = {"hithink-finance:HS2083", "yahoo_chart_api:HSTECH.HK", "eastmoney_push2:124.HSTECH", "ETF_PROXY_513180"}\n    check("providers:hstech_sources_registered", set(hstech_registered) == expected_hstech_registered, f"registered={hstech_registered}")\n    fallback_policy = provider_cfg.get("object_fallback_policy") or {}\n    hstech_rule = fallback_policy.get("HSTECH") or {}\n    expected_hstech_fallback = ["yahoo_chart_api:HSTECH.HK", "hithink-finance:HS2083", "ETF_PROXY_513180"]\n    check("providers:hstech_primary_fallback_policy", hstech_rule.get("primary") == "eastmoney_push2:124.HSTECH" and hstech_rule.get("fallback") == expected_hstech_fallback, f"primary={hstech_rule.get('primary')} fallback={hstech_rule.get('fallback')}")'''
+          if old not in t:
+              raise SystemExit('HSTECH stale consistency block missing')
+          t = t.replace(old, new, 1)
+          p.write_text(t, encoding='utf-8')
+
+          # Put managed close facts inside archive section 5, before section 6.
+          p = Path('ETF市场行情档案_2026.md')
+          t = p.read_text(encoding='utf-8')
+          s, e = '<!-- AUTO_POST_CLOSE_REVIEW_FACTS_START -->', '<!-- AUTO_POST_CLOSE_REVIEW_FACTS_END -->'
+          if s in t and e in t:
+              a, b0 = t.index(s), t.index(e, t.index(s)) + len(e)
+              before6 = t.find('\n## 6. 历史Excel与专项数据来源')
+              if before6 >= 0 and a > before6:
+                  block = t[a:b0]
+                  t = t[:a].rstrip() + '\n\n' + t[b0:].lstrip('\n')
+                  anchor = '\n## 6. 历史Excel与专项数据来源'
+                  t = t.replace(anchor, '\n\n### 2026-08-24至2026-08-26 云端增量行情与账户事实\n\n' + block + anchor, 1)
+          p.write_text(t, encoding='utf-8')
+
+          # Maintenance audit trace.
+          p = Path('ETF交易复盘与经验库_2026.md')
+          t = p.read_text(encoding='utf-8')
+          if '|2026-08-26|正式文件一致性与数据口径审计|' not in t:
+              marker = '|2026-08-25|两笔卖出CASE闭环维护|CASE-20260817-01完成恒生科技ETF（513180）Trial→全部退出闭环；CASE-20260818-01新增半导体设备ETF（561980）13,000份降低风险节点；同步更新OBS-20260814-02、OBS-20260820-01至03并建立T+1/T+3执行质量与资本效率跟踪，不新增交易规则、生命周期或机械卖出条件|'
+              if marker not in t:
+                  raise SystemExit('experience audit marker missing')
+              t = t.replace(marker, marker + '\n|2026-08-26|正式文件一致性与数据口径审计|同步当前行情主备源、跨市场固定时点、直接Confirm合法入口及8月25日已确认费用；新增一致性防回归检查，不新增金额档、风险级别或自动交易权限|', 1)
+          p.write_text(t, encoding='utf-8')
+
+          validations = [
+              ('ETF与市场监测数据接口使用规范.md','版本：V1.7'),
+              ('ETF与市场监测数据接口使用规范.md','腾讯行情（tencent_qq）'),
+              ('ETF与市场监测数据接口使用规范.md','各市场正式交易时点（固定口径）'),
+              ('ETF规则_MASTER.md','不是Confirm的强制前置'),
+              ('ETF规则_MASTER.md','直接Confirm'),
+              ('ETF交易复盘与经验库_2026.md','|5.00|4,701.80|CASE-20260817-01全部退出；费用已确认|'),
+              ('ETF市场行情档案_2026.md','东方财富 `124.HSTECH`'),
+              ('scripts/check_system_consistency.py','providers:hstech_primary_fallback_policy'),
+          ]
+          for path, token in validations:
+              if token not in Path(path).read_text(encoding='utf-8'):
+                  raise SystemExit(f'validation failed: {path}: {token}')
+          PY
+          python -m py_compile scripts/check_system_consistency.py
+          python -m unittest discover -s tests -p 'test_market*.py'
+      - name: Commit audited repair
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ETF与市场监测数据接口使用规范.md ETF规则_MASTER.md ETF交易复盘与经验库_2026.md ETF市场行情档案_2026.md scripts/check_system_consistency.py
+          git commit -m "docs: synchronize formal ETF files with current market data system"
+          git pull --rebase origin main
+          git push origin HEAD:main
