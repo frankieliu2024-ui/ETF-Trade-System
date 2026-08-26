@@ -48,7 +48,6 @@ def standard_number(text: str, key: str) -> int | None:
     return int(match.group(1)) if match else None
 
 
-
 def expected_freshness_status(age_seconds: object, runtime: dict) -> str | None:
     if not isinstance(age_seconds, (int, float)):
         return None
@@ -70,7 +69,6 @@ def context_freshness(context: dict) -> dict:
     }
 
 
-
 def _time_not_before(later: object, earlier: object) -> bool:
     if not later or not earlier: return False
     try:
@@ -79,6 +77,7 @@ def _time_not_before(later: object, earlier: object) -> bool:
         if b.tzinfo is None: b = b.replace(tzinfo=timezone.utc)
         return a >= b
     except (TypeError, ValueError): return False
+
 
 def _python_ast_ok(relative_path: str) -> bool:
     try:
@@ -295,7 +294,7 @@ def main() -> int:
     check("session_gate:opening_auction", "9 * 60 + 15" in session_gate and "OPENING_CALL_AUCTION" in session_gate, "session gate opens at 09:15")
 
     workflow = read_text(".github/workflows/market-snapshot.yml")
-    check("workflow:consistency_preflight", "check_system_consistency.py" in workflow, "preflight consistency gate present")
+    check("workflow:no_full_consistency_preflight", "check_system_consistency.py" not in workflow, "high-frequency market workflow does not run full consistency before provider capture")
     check("workflow:concurrency_policy_loader", "Load unified provider concurrency policy" in workflow and "runtime_policy.json" in workflow and "HITHINK_MAX_WORKERS" in workflow, "workflow loads scheduled/query concurrency from runtime policy")
     check("workflow:session_gate", "runtime_session_gate.py" in workflow and "session_gate.outputs.should_capture" in workflow, "exchange calendar/session gate wired")
     check("workflow:auction_cron", '15,20,25,30,40,50 1 * * 1-5' in workflow, "09:15/09:20/09:25 auction pulses scheduled")
@@ -368,8 +367,6 @@ def main() -> int:
     check("phase4:no_score", not any("score" in str(x).lower() for x in (phase4_ranking.get("ordered_candidates") or []) if isinstance(x, dict)), "capital ranking contains no composite score")
     check("phase4:e2e_state_present", str(e2e_state.get("purpose") or "").startswith("TOP_LEVEL_SYSTEM_USABILITY_ONLY"), f"status={e2e_state.get('status', 'MISSING')}", warning=True)
 
-
-    # Notification lifecycle checks remain state-only and never block market data production.
     notification_state = read_json("data/state/notification_center.json")
     notification_items = notification_state.get("notifications") or []
     required_notification_fields = {"notification_id", "event_type", "source_event_id", "related_decision_id", "security_code", "security_name", "lifecycle_status", "created_at", "sent_at", "confirmed_at", "archived_at"}
@@ -430,7 +427,7 @@ def main() -> int:
     stock_market = read_json("data/state/stock_market_context.json")
     stock_market_codes = set((stock_market.get("objects") or {}).keys())
     check("stock_runtime:dynamic_account_membership", detected_stocks == expected_account_stocks, f"detected={sorted(detected_stocks)} expected={sorted(expected_account_stocks)}", warning=not live_runtime)
-    # Third-layer quote failure is explicit DEGRADED/FAILED evidence, but must not block the core ETF/index production pulse.\n    # The stock layer remains a hard requirement for full three-layer acceptance and is reported as WARNING here until refreshed.\n    check("stock_runtime:market_complete", stock_market_codes == expected_account_stocks and all(item.get("quality_status") == "PASS" and item.get("as_of_beijing") for item in (stock_market.get("objects") or {}).values()), f"codes={sorted(stock_market_codes)} status={stock_market.get('quality_status')}", warning=True)
+    check("stock_runtime:market_complete", stock_market_codes == expected_account_stocks and all(item.get("quality_status") == "PASS" and item.get("as_of_beijing") for item in (stock_market.get("objects") or {}).values()), f"codes={sorted(stock_market_codes)} status={stock_market.get('quality_status')}", warning=True)
     core_time_text = str(current.get("captured_at") or "")
     stock_time_texts = [str(item.get("as_of_beijing") or "") for item in (stock_market.get("objects") or {}).values() if item.get("as_of_beijing")]
     stock_time_aligned = True
