@@ -122,6 +122,27 @@ def build_gate() -> dict:
     }
 
 
+def _formal_decision_matches_requested_refresh(req: dict, gate: dict) -> tuple[bool, str]:
+    decision = req.get("formal_decision")
+    if not isinstance(decision, dict):
+        return True, "NO_FORMAL_DECISION"
+    if not _requires_wait(req):
+        return True, "NO_EXPLICIT_REFRESH_REQUIREMENT"
+
+    target = parse_time(req.get("requested_market_time") or req.get("requested_at_beijing"))
+    decision_as_of = parse_time(decision.get("data_as_of_beijing"))
+    resolved = parse_time(gate.get("resolved_snapshot_time"))
+    if target is None:
+        return False, "REQUESTED_MARKET_TIME_INVALID"
+    if decision_as_of is None:
+        return False, "FORMAL_DECISION_DATA_TIME_MISSING"
+    if decision_as_of < target:
+        return False, "FORMAL_DECISION_PREDATES_REQUESTED_REFRESH"
+    if resolved is not None and decision_as_of > resolved:
+        return False, "FORMAL_DECISION_DATA_TIME_AFTER_RESOLVED_SNAPSHOT"
+    return True, "FORMAL_DECISION_REFRESH_ALIGNED"
+
+
 def guard_request(path: Path) -> int:
     req = load_json(path)
     if not isinstance(req.get("formal_decision"), dict):
@@ -129,10 +150,21 @@ def guard_request(path: Path) -> int:
     if req.get("allow_wait_refresh_fallback") is True and str(req.get("query_intent") or "").upper() != _explicit_latest_intent():
         return 0
     gate = build_gate()
-    if gate.get("formal_decision_persist_allowed", True):
-        return 0
-    print(json.dumps({"ok": False, "reason": "WAIT_FOR_REFRESH_NOT_READY", "refresh_gate": gate, "request": str(path)}, ensure_ascii=False))
-    return 3
+    if not gate.get("formal_decision_persist_allowed", True):
+        print(json.dumps({"ok": False, "reason": "WAIT_FOR_REFRESH_NOT_READY", "refresh_gate": gate, "request": str(path)}, ensure_ascii=False))
+        return 3
+    aligned, reason = _formal_decision_matches_requested_refresh(req, gate)
+    if not aligned:
+        print(json.dumps({
+            "ok": False,
+            "reason": reason,
+            "refresh_gate": gate,
+            "decision_data_as_of_beijing": (req.get("formal_decision") or {}).get("data_as_of_beijing", ""),
+            "requested_market_time": req.get("requested_market_time") or req.get("requested_at_beijing") or "",
+            "request": str(path),
+        }, ensure_ascii=False))
+        return 4
+    return 0
 
 
 def annotate_contexts() -> None:
