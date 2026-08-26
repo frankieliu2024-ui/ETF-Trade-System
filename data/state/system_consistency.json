@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-26T02:03:36Z",
-  "generated_at_beijing": "2026-08-26T10:03:36+08:00",
+  "generated_at": "2026-08-26T02:14:27Z",
+  "generated_at_beijing": "2026-08-26T10:14:27+08:00",
   "repository": {
-    "head_sha": "51b7f92c9dbafa85f22d02c36ee49656d61d0506",
-    "github_sha": "51b7f92c9dbafa85f22d02c36ee49656d61d0506",
-    "github_run_id": "32921269782",
+    "head_sha": "23e5810fce16a4e29a3246c72106c2fb708e1b25",
+    "github_sha": "23e5810fce16a4e29a3246c72106c2fb708e1b25",
+    "github_run_id": "32921960050",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "51b7f92c9dbafa85f22d02c36ee49656d61d0506",
-    "workflow_sha": "51b7f92c9dbafa85f22d02c36ee49656d61d0506",
+    "checked_commit": "23e5810fce16a4e29a3246c72106c2fb708e1b25",
+    "workflow_sha": "23e5810fce16a4e29a3246c72106c2fb708e1b25",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "WARNING",
-  "hard_error_count": 0,
+  "status": "FAIL",
+  "hard_error_count": 1,
   "warning_count": 1,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": ".....................\n----------------------------------------------------------------------\nRan 21 tests in 0.011s\n\nOK\n"
+      "detail": ".....................\n----------------------------------------------------------------------\nRan 21 tests in 0.026s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -190,12 +190,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=51b7f92c9dbafa85f22d02c36ee49656d61d0506"
+      "detail": "HEAD=23e5810fce16a4e29a3246c72106c2fb708e1b25"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=51b7f92c9dbafa85f22d02c36ee49656d61d0506 GITHUB_SHA=51b7f92c9dbafa85f22d02c36ee49656d61d0506"
+      "detail": "HEAD=23e5810fce16a4e29a3246c72106c2fb708e1b25 GITHUB_SHA=23e5810fce16a4e29a3246c72106c2fb708e1b25"
     },
     {
       "name": "git:critical_files_tracked",
@@ -205,7 +205,7 @@
     {
       "name": "git:working_tree_clean_before_check",
       "status": "PASS",
-      "detail": "generated_state_dirty=17 unexpected=[]"
+      "detail": "clean"
     },
     {
       "name": "index_entry:ETF规则_MASTER.md",
@@ -575,7 +575,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=22:03 max_age_seconds=7458 limit=900"
+      "detail": "active=False phase=22:14 max_age_seconds=8109 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -690,17 +690,17 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=2209"
+      "detail": "declared=STALE expected=STALE age_seconds=2688"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=2209"
+      "detail": "declared=FRESH expected=FRESH age_seconds=20"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
-      "status": "PASS",
-      "detail": "query=STALE decision=STALE"
+      "status": "FAIL",
+      "detail": "query=STALE decision=FRESH"
     },
     {
       "name": "dynamic_freshness:current_snapshot_boundary",
@@ -735,7 +735,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-26T02:03:36Z market=2026-08-26T09:26:47+08:00"
+      "detail": "context=2026-08-26T01:27:07Z market=2026-08-26T09:26:47+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -805,7 +805,7 @@
     {
       "name": "phase4:e2e_state_present",
       "status": "PASS",
-      "detail": "status=BLOCKED"
+      "detail": "status=DEGRADED"
     },
     {
       "name": "notification:managed_schema",
@@ -871,94 +871,11 @@
       "name": "account_fact:current_availability",
       "status": "PASS",
       "detail": "status=VALID (state warning only)"
-    },
-    {
-      "name": "research:decision_context_consumes_evidence",
-      "status": "PASS",
-      "detail": "central decision context must directly consume current research evidence"
-    },
-    {
-      "name": "research:evidence_delta_consumed",
-      "status": "PASS",
-      "detail": "decision context must consume changes versus the prior research node, not only static levels"
-    },
-    {
-      "name": "research:no_composite_capital_efficiency_score",
-      "status": "PASS",
-      "detail": "capital efficiency remains a multidimensional MASTER judgment rather than a hidden score"
-    },
-    {
-      "name": "research:current_decision_boundary",
-      "status": "PASS",
-      "detail": "research evidence is a current-decision input but not a parallel trading entry"
-    },
-    {
-      "name": "research:master_feedback_builder",
-      "status": "PASS",
-      "detail": "MASTER feedback feed exists and automatic MASTER modification is disabled"
-    },
-    {
-      "name": "research:state_context_wiring",
-      "status": "PASS",
-      "detail": "research evidence, delta, execution attribution and MASTER-feedback artifacts are wired into state context"
-    },
-    {
-      "name": "research:no_trade_authority",
-      "status": "PASS",
-      "detail": "research builder remains read-only and cannot generate trading authority"
-    },
-    {
-      "name": "research:point_in_time_decision_price",
-      "status": "PASS",
-      "detail": "formal decision price and comparison evidence must not use a snapshot after decision time"
-    },
-    {
-      "name": "research:decision_comparison_snapshot",
-      "status": "PASS",
-      "detail": "formal decisions preserve the full ETF cross-section for later selection-alpha review"
-    },
-    {
-      "name": "research:hypothesis_lifecycle_link",
-      "status": "PASS",
-      "detail": "Trial/Confirm/holding decisions can be linked by hypothesis without creating a new trading lifecycle label"
-    },
-    {
-      "name": "research:execution_attribution",
-      "status": "PASS",
-      "detail": "decision quality and execution quality are separated and attributable"
-    },
-    {
-      "name": "research:evidence_delta_builder",
-      "status": "PASS",
-      "detail": "research layer explicitly tracks what changed between decision nodes without a composite score"
-    },
-    {
-      "name": "research:historical_backfill_boundary",
-      "status": "PASS",
-      "detail": "historical ETF facts can be backfilled without manufacturing historical decisions"
-    },
-    {
-      "name": "research:optimization_not_perfection",
-      "status": "PASS",
-      "detail": "research complexity is retained only when it improves ex-ante return efficiency or another explicit system objective, not for perfection-seeking"
-    },
-    {
-      "name": "research:runtime_context_read_only",
-      "status": "PASS",
-      "detail": "research_context must be read_only"
-    },
-    {
-      "name": "research:runtime_relative_read_only",
-      "status": "PASS",
-      "detail": "relative_strength must be read_only"
-    },
-    {
-      "name": "research:runtime_master_candidates_no_auto_update",
-      "status": "PASS",
-      "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
     }
   ],
-  "errors": [],
+  "errors": [
+    "dynamic_freshness:query_decision_aligned: query=STALE decision=FRESH"
+  ],
   "warnings": [
     "a_share_runtime:live_state_available: runtime_status=DEGRADED current_snapshot=data/market/snapshots/2026-08-26_092436.json"
   ],
