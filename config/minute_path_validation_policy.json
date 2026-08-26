@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "scope": "TENCENT_ETF_1M_REAL_INTRADAY_VALIDATION",
+  "timezone": "Asia/Shanghai",
+  "scheduled_shadow_nodes_beijing": ["10:30", "13:45", "14:30", "14:55"],
+  "minimum_valid_nodes": 2,
+  "preferred_session_coverage": {
+    "morning_min": 1,
+    "afternoon_min": 1
+  },
+  "quality_requirements": {
+    "etf_coverage_ratio": 1.0,
+    "minute_continuity_required": true,
+    "freshness_required": true,
+    "quote_alignment_required": true,
+    "github_actions_stability_required": true
+  },
+  "decision_levels": {
+    "FORMAL_PASS": "至少2个有效真实盘中节点，且至少覆盖上午1个、下午1个；关键质量项全部合格。允许按既定收益顺序推进正式接入与小型重构。",
+    "LIMITED_PASS": "仅有上午2个有效节点且关键质量项全部合格。允许有限重构，但必须标记全天盘中验证未完成；10分钟正式脉冲只允许评估降职责，不允许降频。",
+    "FAIL": "只有1个有效节点，或任一关键质量项不合格，或下午节点出现明显滞后、缺分钟、quote不一致。不得判定正式通过，不推进正式接入。"
+  },
+  "ten_minute_pulse_rule": "四节点不是机械硬条件。只有跨上午/下午证据充分且分钟源稳定后，才允许评估10分钟正式脉冲降职责或降频；不得直接删除，必须保留正式状态锚点、provider健康检查和fallback。",
+  "integration_boundary": "分钟源仅增强日内路径、极值时序与成交承接证据；正式最新价仍由quote router决定；不修改MASTER、Trial/Confirm或交易权限。"
+}
