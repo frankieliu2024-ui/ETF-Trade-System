@@ -55,6 +55,17 @@ class QueryTimeRefreshTests(unittest.TestCase):
         self.assertEqual(result["quotes"][0]["latest_price"], 100)
         self.assertEqual(result["quotes"][0]["freshness"], "STALE")
 
+    def test_kospi_regular_refresh_uses_provider_quote(self):
+        root = self._root("2026-08-26T07:00:00+08:00")
+        now = datetime.fromisoformat("2026-08-26T10:15:00+09:00")
+        fresh = {"symbol": "^KS11", "market": "KR", "latest_price": 6781.33, "data_time_beijing": "2026-08-26T10:14:50+08:00", "data_time_local": "2026-08-26T10:14:50+09:00", "market_phase": "REGULAR", "market_status_cn": "韩股交易中", "data_nature_cn": "实时交易行情", "freshness": "FRESH", "source": "yahoo_chart_api"}
+        with patch("scripts.query_time_market_refresh._yahoo", return_value=fresh) as provider:
+            from scripts.query_time_market_refresh import refresh_market_quotes
+            result = refresh_market_quotes(root, ["KOSPI"], now)
+        provider.assert_called_once_with("^KS11", "KR", now, json.loads((root / "config/runtime_policy.json").read_text(encoding="utf-8")))
+        self.assertEqual(result["quotes"][0]["latest_price"], 6781.33)
+        self.assertEqual(result["quotes"][0]["market_status_cn"], "韩股交易中")
+
 
 if __name__ == "__main__":
     unittest.main()
