@@ -28,7 +28,7 @@ def load_stock_fallback_codes() -> set[str]:
         return set()
     config = json.loads(path.read_text(encoding="utf-8"))
     policy = config.get("object_fallback_policy") or {}
-    return {str(key).split(".")[0] for key, rule in policy.items() if str(rule.get("primary")) == "hithink_finance" and "eastmoney_push2" in (rule.get("fallback") or []) and rule.get("direct_only") is True}
+    return {str(key).split(".")[0] for key, rule in policy.items() if str(rule.get("primary")) == "tencent_qq" and "eastmoney_push2" in (rule.get("fallback") or []) and rule.get("direct_only") is True}
 
 
 STOCK_FALLBACK_CODES = load_stock_fallback_codes()
@@ -201,13 +201,8 @@ def build() -> dict:
     }
     if not stocks:
         return result
-    cli = shutil.which("hithink-finance")
-    if not cli:
-        result["quality_status"] = "FAILED"
-        result["error"] = "hithink-finance CLI not found"
-        return result
     try:
-        result["objects"] = fetch_many(cli, stocks)
+        result["objects"] = fetch_tencent_many(stocks)
     except Exception as exc:
         result["objects"] = {
             str(stock.get("code", "")): {
@@ -216,8 +211,18 @@ def build() -> dict:
             }
             for stock in stocks if stock.get("code")
         }
-    # Reuse the same object-level fallback policy as ETF collection. Only failed
-    # primary objects call Eastmoney; successful Hithink objects incur no extra request.
+    # Tencent is the configured primary. Only failed objects proceed to the
+    # existing Hithink/Eastmoney fallback chain; successful objects incur no extra request.
+    failed_stocks = [stock for stock in stocks if str(stock.get("code", "")) not in result["objects"] or (result["objects"].get(str(stock.get("code", ""))) or {}).get("quality_status") != "PASS"]
+    cli = shutil.which("hithink-finance")
+    if cli and failed_stocks:
+        try:
+            result["objects"].update(fetch_many(cli, failed_stocks))
+        except Exception as hithink_exc:
+            for stock in failed_stocks:
+                code = str(stock.get("code", ""))
+                result.setdefault("objects", {}).setdefault(code, {"code": code, "name": stock.get("name", ""), "thscode": thscode(code)})
+                result["objects"][code]["hithink_error"] = str(hithink_exc)[-800:]
     for stock in stocks:
         code = str(stock.get("code", ""))
         if not code or code not in STOCK_FALLBACK_CODES or (result.get("objects", {}).get(code) or {}).get("quality_status") == "PASS":
