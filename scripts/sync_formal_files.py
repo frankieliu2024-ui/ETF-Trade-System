@@ -2,10 +2,12 @@ from __future__ import annotations
 
 """Minimal idempotent maintenance for confirmed account facts.
 
-This module updates only the human-readable fact documents. It never writes
-rule or permission documents and never derives orders or lifecycle actions.
-It is invoked after an accepted state-sync request, so account_fact remains the
-machine source of truth.
+This module updates only human-readable fact documents plus the account reference
+embedded in CURRENT. It never writes rule or permission documents and never
+derives orders or lifecycle actions. It is invoked after an accepted state-sync
+request, so account_fact remains the machine source of truth while CURRENT keeps
+an up-to-date account pointer after the core market snapshot has already been
+published.
 """
 
 import argparse
@@ -189,6 +191,34 @@ def build_archive_fact_block(account: dict) -> str:
     ])
 
 
+def sync_current_account_reference(root: Path, account: dict) -> bool:
+    """Keep CURRENT.account_fact coherent after a later account-state sync.
+
+    Core market publishing intentionally happens before broker/dashboard state sync
+    for response speed. Without this repair, CURRENT may keep the account pointer
+    that existed at core-publish time even though account_fact.json was updated a
+    few seconds later in the same workflow.
+    """
+    current_path = root / "data/state/CURRENT.json"
+    if not current_path.exists():
+        return False
+    current = load_json(current_path)
+    desired = {
+        "status": account.get("status"),
+        "updated_at": account.get("updated_at"),
+        "source": account.get("source"),
+    }
+    needs_account_update = str(account.get("status") or "").upper() != "VALID"
+    changed = current.get("account_fact") != desired or current.get("needs_account_update") != needs_account_update
+    if not changed:
+        return False
+    current["account_fact"] = desired
+    current["needs_account_update"] = needs_account_update
+    current["account_fact_reference_synced_at"] = account.get("updated_at")
+    current_path.write_text(json.dumps(current, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return True
+
+
 def sync_formal_files(root: Path = ROOT, account: dict | None = None) -> dict:
     dashboard_path = root / "ETF当前状态_DASHBOARD.md"
     experience_path = root / "ETF交易复盘与经验库_2026.md"
@@ -205,11 +235,18 @@ def sync_formal_files(root: Path = ROOT, account: dict | None = None) -> dict:
     archive = archive_path.read_text(encoding="utf-8")
     archive = replace_block(archive, START_ARCHIVE, END_ARCHIVE, build_archive_fact_block(account))
     archive_path.write_text(archive, encoding="utf-8")
-    return {"dashboard_updated": True, "experience_trade_rows_updated": experience_updates, "archive_updated": True, "master_touched": False}
+    current_account_ref_updated = sync_current_account_reference(root, account)
+    return {
+        "dashboard_updated": True,
+        "experience_trade_rows_updated": experience_updates,
+        "archive_updated": True,
+        "current_account_ref_updated": current_account_ref_updated,
+        "master_touched": False,
+    }
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Sync confirmed account facts into formal fact documents.")
+    parser = argparse.ArgumentParser(description="Sync confirmed account facts into formal fact documents and CURRENT account reference.")
     parser.add_argument("--check", action="store_true", help="validate inputs and markers without writing")
     args = parser.parse_args()
     root = ROOT
