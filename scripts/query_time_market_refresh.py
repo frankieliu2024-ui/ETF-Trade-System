@@ -114,11 +114,19 @@ def _a_share(symbol: str, root: Path, now: datetime, policy: dict) -> dict:
     if raw_code in {"000001", "399006"}:
         obj = _cli_json(cli, ["index", "snapshot", "--thscodes", thscode], root)
     elif raw_code.startswith("159") or raw_code.startswith(("5", "588")):
-        obj = _cli_json(cli, ["fund", "snapshot", "--thscode", thscode], root)
+        try:
+            obj = _cli_json(cli, ["fund", "snapshot", "--thscode", thscode], root)
+        except Exception as fund_error:
+            try:
+                obj = _cli_json(cli, ["market", "snapshot", "--thscodes", thscode], root)
+            except Exception as market_error:
+                raise RuntimeError(
+                    f"A-share ETF fund snapshot failed: {fund_error}; direct market snapshot failed: {market_error}"
+                ) from market_error
     else:
         obj = _cli_json(cli, ["market", "snapshot", "--thscodes", thscode], root)
     items = obj.get("data", {}).get("item") or []
-    item = items[0] if items else {}
+    item = next((candidate for candidate in items if str(candidate.get("thscode") or "") == thscode), items[0] if items else {})
     close = item.get("last_price", item.get("close_price"))
     ts = obj.get("data", {}).get("timestamp")
     if close is None or ts in (None, ""): raise RuntimeError(f"A-share provider returned incomplete quote for {thscode}")
