@@ -18,7 +18,7 @@ def classify_provider_failure(error: object) -> str:
     )):
         return "TRANSIENT"
     if any(token in text for token in (
-        "unsupported", "unknown thscode", "unknown symbol", "invalid symbol",
+        "unsupported", "does not support", "unknown thscode", "unknown symbol", "invalid symbol",
         "invalid mapping", "code mismatch", "fund not found", "not found",
         "no exact item",
     )):
