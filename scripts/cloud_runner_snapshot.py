@@ -217,18 +217,25 @@ def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, pr
         and item.get("prev_price") is not None
         and provider_ts not in (None, "")
     )
-    if missing and not auction_partial:
+    no_trade_partial = (
+        market_phase in {"CONTINUOUS_MORNING", "CONTINUOUS_AFTERNOON", "CLOSING_CALL_AUCTION"}
+        and set(missing).issubset({"open_price", "high_price", "low_price", "volume", "turnover"})
+        and item.get("last_price") is not None
+        and item.get("prev_price") is not None
+        and provider_ts not in (None, "")
+    )
+    if missing and not (auction_partial or no_trade_partial):
         raise RuntimeError(f"{code} missing fields: {','.join(missing)}")
-    if not auction_partial and (
+    if not (auction_partial or no_trade_partial) and (
         item["high_price"] < max(item["open_price"], item["last_price"])
         or item["low_price"] > min(item["open_price"], item["last_price"])
     ):
         raise RuntimeError(f"{code} failed OHLC relationship")
-    quality_status = "DEGRADED" if auction_partial else "PASS"
+    quality_status = "DEGRADED" if (auction_partial or no_trade_partial) else "PASS"
     semantic_note = (
         "OPENING_CALL_AUCTION阶段provider尚未形成完整日内OHLC；保留最新价、昨收、成交量、成交额和provider时点，禁止用旧OHLC补齐。"
         if auction_partial
-        else ("OPENING_CALL_AUCTION阶段仅按集合竞价时点快照解释，不与连续竞价最新成交语义混用。" if market_phase == "OPENING_CALL_AUCTION" else "")
+        else ("交易中provider仅返回最新价和昨收，未产生可用新成交量/OHLC；保留事实并标记为延迟/无新成交，不用旧OHLC补齐。" if no_trade_partial else ("OPENING_CALL_AUCTION阶段仅按集合竞价时点快照解释，不与连续竞价最新成交语义混用。" if market_phase == "OPENING_CALL_AUCTION" else ""))
     )
     return {
         "asset_class": asset_class, "symbol": code, "thscode": thscode,
@@ -271,7 +278,6 @@ def fetch_eastmoney_index(code: str, thscode: str, market_phase: str) -> dict:
     fields = {"open_price": data.get("f46"), "high_price": data.get("f44"), "low_price": data.get("f45"), "last_price": data.get("f43"), "prev_price": data.get("f60"), "volume": int(float(data.get("f47")) * 100) if data.get("f47") not in (None, "", "-") else None, "turnover": data.get("f48")}
     if any(value in (None, "", "-") for value in fields.values()):
         raise RuntimeError(f"Eastmoney index {code} missing direct fields")
-    provider_ts = eastmoney_timestamp_ms(data.get("f86"))
     provider_dt = datetime.fromtimestamp(provider_ts / 1000, tz=SHANGHAI)
     now_dt = now_shanghai()
     if provider_dt.date() != now_dt.date() or abs((now_dt - provider_dt).total_seconds()) > max(60, int(POLICY["degraded_max_age_seconds"])):
@@ -319,9 +325,16 @@ def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
         "volume": int(float(volume_raw) * 100) if volume_raw not in (None, "", "-") else None,
         "turnover": amount_raw,
     }
-    if any(value in (None, "", "-") for value in fields.values()):
+    provider_ts = eastmoney_timestamp_ms(data.get("f86"))
+    no_trade_partial = (
+        fields["last_price"] not in (None, "", "-")
+        and fields["prev_price"] not in (None, "", "-")
+        and provider_ts > 0
+        and all(fields[key] in (None, "", "-") for key in ("open_price", "high_price", "low_price", "volume", "turnover"))
+    )
+    if any(value in (None, "", "-") for value in fields.values()) and not no_trade_partial:
         raise RuntimeError(f"Eastmoney {code} missing direct ETF fields")
-    if fields["volume"] < 0 or float(amount_raw) < 0:
+    if fields["volume"] not in (None, "", "-") and fields["volume"] < 0 or amount_raw not in (None, "", "-") and float(amount_raw) < 0:
         raise RuntimeError(f"Eastmoney {code} has negative volume or amount")
     provider_ts = eastmoney_timestamp_ms(data.get("f86"))
     provider_dt = datetime.fromtimestamp(provider_ts / 1000, tz=SHANGHAI)
@@ -330,7 +343,7 @@ def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
         raise RuntimeError(f"Eastmoney {code} provider date is stale: {provider_dt.isoformat()}")
     if abs((now_dt - provider_dt).total_seconds()) > max(60, int(POLICY["degraded_max_age_seconds"])):
         raise RuntimeError(f"Eastmoney {code} provider timestamp is stale: {provider_dt.isoformat()}")
-    if fields["high_price"] < max(fields["open_price"], fields["last_price"]) or fields["low_price"] > min(fields["open_price"], fields["last_price"]):
+    if not no_trade_partial and (fields["high_price"] < max(fields["open_price"], fields["last_price"]) or fields["low_price"] > min(fields["open_price"], fields["last_price"])):
         raise RuntimeError(f"Eastmoney {code} failed OHLC relationship")
     item = {
         **fields,
