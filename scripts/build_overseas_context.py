@@ -418,6 +418,13 @@ def build() -> dict:
                 record["direct_source_chain"] = ["hithink-finance:HS2083", "yahoo_chart_api:HSTECH.HK", "eastmoney_push2:124.HSTECH"]
             else:
                 record = fetch_yahoo(object_id, spec, generated_utc)
+            freshness, stable_for_pulse, delay_minutes = freshness_for_pulse(record, generated_utc)
+            record["freshness_status"] = freshness
+            record["delay_minutes"] = delay_minutes
+            record["stable_for_pulse"] = stable_for_pulse
+            if record.get("quality_status") == "PASS" and freshness in {"DELAYED", "STALE"}:
+                record["quality_status"] = "DEGRADED"
+                record["quality_reason"] = "provider请求成功但当前开放交易阶段数据延迟，不按实时PASS解释"
             if record["quality_status"] == "PASS":
                 pass_count += 1
             objects[object_id] = record
