@@ -1,9 +1,16 @@
 name: US extended-hours pulse
 
 on:
+  # Only global/US-targeted request files need the US context workflow.
+  # A-share broker/account refreshes remain owned by market-snapshot and
+  # must not start an unrelated US runner.
   push:
     paths:
-      - "requests/live_snapshot/**.json"
+      - "requests/live_snapshot/**global*.json"
+      - "requests/live_snapshot/**us*.json"
+      - "requests/live_snapshot/**ndx*.json"
+      - "requests/live_snapshot/**hstech*.json"
+      - "requests/live_snapshot/**kospi*.json"
   workflow_dispatch:
     inputs:
       symbols:
