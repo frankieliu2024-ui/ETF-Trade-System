@@ -64,9 +64,21 @@ def parse_dt(date_text: str, hm: str) -> datetime:
     return datetime.strptime(f"{date_text} {hm}", "%Y%m%d %H%M").replace(tzinfo=BEIJING)
 
 
-def summarize_points(points: list[dict], formal_close, formal_as_of):
+def in_a_share_session(dt: datetime, market_date: str) -> bool:
+    if dt.date().isoformat() != market_date:
+        return False
+    minute = dt.hour * 60 + dt.minute
+    return (570 <= minute <= 690) or (780 <= minute <= 900)
+
+
+def session_points(points: list[dict], market_date: str) -> list[dict]:
+    return [x for x in points if in_a_share_session(x["dt"], market_date)]
+
+
+def summarize_points(points: list[dict], formal_close, formal_as_of, market_date: str):
+    points = session_points(points, market_date)
     if not points:
-        raise RuntimeError("empty minute rows")
+        raise RuntimeError("empty same-day A-share session minute rows")
     points.sort(key=lambda x: x["dt"])
     if len({x["dt"] for x in points}) != len(points):
         raise RuntimeError("duplicate minute timestamps")
@@ -80,7 +92,7 @@ def summarize_points(points: list[dict], formal_close, formal_as_of):
             diff_pct = (float(last_price) / float(formal_close) - 1.0) * 100.0
     except Exception:
         pass
-    expected_minutes = 242  # 09:30-11:30 inclusive (121) + 13:00-15:00 inclusive (121)
+    expected_minutes = 242
     return {
         "sample_count": len(points),
         "expected_full_day_minute_points": expected_minutes,
@@ -98,10 +110,11 @@ def summarize_points(points: list[dict], formal_close, formal_as_of):
         "has_cumulative_volume": any(x.get("cum_volume") is not None for x in points),
         "has_cumulative_amount": any(x.get("cum_amount") is not None for x in points),
         "has_ohlc": all(all(k in x for k in ("open", "close", "high", "low")) for x in points),
+        "session_filter": "09:30-11:30 and 13:00-15:00 Beijing, same market date only",
     }
 
 
-def tencent_minute_query(thscode: str, formal_row: dict):
+def tencent_minute_query(thscode: str, formal_row: dict, market_date: str):
     symbol = market_prefix(thscode)
     url = "https://web.ifzq.gtimg.cn/appstock/app/minute/query?" + urllib.parse.urlencode({"code": symbol, "r": str(time.time())})
     payload, elapsed = request_json(url)
@@ -109,92 +122,55 @@ def tencent_minute_query(thscode: str, formal_row: dict):
         raise RuntimeError(f"provider code={payload.get('code')} msg={payload.get('msg')}")
     node = ((payload.get("data") or {}).get(symbol) or {}).get("data") or {}
     date_text = str(node.get("date") or "")
-    raw_rows = node.get("data") or []
     points = []
-    for raw in raw_rows:
+    for raw in node.get("data") or []:
         parts = str(raw).split()
         if len(parts) < 3:
             continue
-        points.append({
-            "dt": parse_dt(date_text, parts[0]),
-            "price": float(parts[1]),
-            "cum_volume": float(parts[2]),
-            "cum_amount": float(parts[3]) if len(parts) >= 4 else None,
-        })
-    summary = summarize_points(points, formal_row.get("close"), formal_row.get("as_of_beijing"))
-    return {
-        "status": "PASS",
-        "provider": "tencent_qq",
-        "endpoint": "web.ifzq.gtimg.cn/appstock/app/minute/query",
-        "period": "1m transaction-price path",
-        "request_seconds": round(elapsed, 3),
-        **summary,
-    }
+        points.append({"dt": parse_dt(date_text, parts[0]), "price": float(parts[1]), "cum_volume": float(parts[2]), "cum_amount": float(parts[3]) if len(parts) >= 4 else None})
+    summary = summarize_points(points, formal_row.get("close"), formal_row.get("as_of_beijing"), market_date)
+    return {"status": "PASS", "provider": "tencent_qq", "endpoint": "web.ifzq.gtimg.cn/appstock/app/minute/query", "period": "1m transaction-price path", "request_seconds": round(elapsed, 3), **summary}
 
 
-def tencent_mkline(thscode: str, formal_row: dict):
+def tencent_mkline(thscode: str, formal_row: dict, market_date: str):
     symbol = market_prefix(thscode)
     url = "https://ifzq.gtimg.cn/appstock/app/kline/mkline?" + urllib.parse.urlencode({"param": f"{symbol},m1,,320"})
     payload, elapsed = request_json(url)
     if payload.get("code") != 0:
         raise RuntimeError(f"provider code={payload.get('code')} msg={payload.get('msg')}")
     node = (payload.get("data") or {}).get(symbol) or {}
-    raw_rows = node.get("m1") or []
     points = []
-    for raw in raw_rows:
+    for raw in node.get("m1") or []:
         if not isinstance(raw, list) or len(raw) < 6:
             continue
         dt = datetime.strptime(str(raw[0]), "%Y%m%d%H%M").replace(tzinfo=BEIJING)
         points.append({"dt": dt, "open": float(raw[1]), "close": float(raw[2]), "high": float(raw[3]), "low": float(raw[4]), "price": float(raw[2]), "volume": float(raw[5])})
-    summary = summarize_points(points, formal_row.get("close"), formal_row.get("as_of_beijing"))
-    return {
-        "status": "PASS",
-        "provider": "tencent_qq",
-        "endpoint": "ifzq.gtimg.cn/appstock/app/kline/mkline",
-        "period": "1m OHLC",
-        "request_seconds": round(elapsed, 3),
-        **summary,
-    }
+    summary = summarize_points(points, formal_row.get("close"), formal_row.get("as_of_beijing"), market_date)
+    return {"status": "PASS", "provider": "tencent_qq", "endpoint": "ifzq.gtimg.cn/appstock/app/kline/mkline", "period": "1m OHLC", "request_seconds": round(elapsed, 3), **summary}
 
 
-def eastmoney_trends(thscode: str, formal_row: dict):
-    params = {
-        "secid": secid(thscode),
-        "fields1": "f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13",
-        "fields2": "f51,f52,f53,f54,f55,f56,f57,f58",
-        "ut": "fa5fd1943c7b386f172d6893dbfba10b",
-        "ndays": "1",
-        "iscr": "0",
-    }
+def eastmoney_trends(thscode: str, formal_row: dict, market_date: str):
+    params = {"secid": secid(thscode), "fields1": "f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13", "fields2": "f51,f52,f53,f54,f55,f56,f57,f58", "ut": "fa5fd1943c7b386f172d6893dbfba10b", "ndays": "1", "iscr": "0"}
     url = "https://push2.eastmoney.com/api/qt/stock/trends2/get?" + urllib.parse.urlencode(params)
     payload, elapsed = request_json(url, referer="https://quote.eastmoney.com/")
-    data = payload.get("data") or {}
-    rows = data.get("trends") or []
     points = []
-    for raw in rows:
+    for raw in ((payload.get("data") or {}).get("trends") or []):
         p = str(raw).split(",")
         if len(p) < 7:
             continue
         dt = datetime.strptime(p[0], "%Y-%m-%d %H:%M").replace(tzinfo=BEIJING)
         points.append({"dt": dt, "price": float(p[1]), "cum_volume": float(p[5]), "cum_amount": float(p[6])})
-    summary = summarize_points(points, formal_row.get("close"), formal_row.get("as_of_beijing"))
-    return {
-        "status": "PASS",
-        "provider": "eastmoney_push2",
-        "endpoint": "push2.eastmoney.com/api/qt/stock/trends2/get",
-        "period": "1m transaction-price path",
-        "request_seconds": round(elapsed, 3),
-        **summary,
-    }
+    summary = summarize_points(points, formal_row.get("close"), formal_row.get("as_of_beijing"), market_date)
+    return {"status": "PASS", "provider": "eastmoney_push2", "endpoint": "push2.eastmoney.com/api/qt/stock/trends2/get", "period": "1m transaction-price path", "request_seconds": round(elapsed, 3), **summary}
 
 
-def run_source(name: str, fn, items, snapshot_rows):
+def run_source(name: str, fn, items, snapshot_rows, market_date: str):
     results = []
     t0 = time.monotonic()
     for code, label, thscode in items:
         formal = snapshot_rows.get(code) or {}
         try:
-            row = fn(thscode, formal)
+            row = fn(thscode, formal, market_date)
             row.update({"code": code, "name": label, "thscode": thscode})
         except Exception as exc:
             row = {"code": code, "name": label, "thscode": thscode, "status": "FAILED", "error": str(exc)[-600:]}
@@ -206,45 +182,32 @@ def run_source(name: str, fn, items, snapshot_rows):
     mincov = min((float(x.get("coverage_ratio") or 0.0) for x in passed), default=0.0)
     avg_request = sum(float(x.get("request_seconds") or 0.0) for x in passed) / len(passed) if passed else None
     max_diff = max(alignment) if alignment else None
+    ohlc_coverage = sum(1 for x in passed if x.get("has_ohlc") is True) / len(passed) if passed else 0.0
+    amount_coverage = sum(1 for x in passed if x.get("has_cumulative_amount") is True) / len(passed) if passed else 0.0
     eligible = coverage >= 0.90 and mincov >= 0.95 and max_diff is not None and max_diff <= 0.30 and total_elapsed <= 15.0
-    return {
-        "source_id": name,
-        "status": "PASS" if eligible else ("DEGRADED" if passed else "FAILED"),
-        "decision_path_eligible": eligible,
-        "coverage_ratio": round(coverage, 4),
-        "minimum_minute_coverage_ratio": round(mincov, 4),
-        "total_request_seconds": round(total_elapsed, 3),
-        "average_request_seconds": round(avg_request, 3) if avg_request is not None else None,
-        "max_abs_close_diff_pct": round(max_diff, 4) if max_diff is not None else None,
-        "items": results,
-    }
+    return {"source_id": name, "status": "PASS" if eligible else ("DEGRADED" if passed else "FAILED"), "decision_path_eligible": eligible, "coverage_ratio": round(coverage, 4), "minimum_minute_coverage_ratio": round(mincov, 4), "total_request_seconds": round(total_elapsed, 3), "average_request_seconds": round(avg_request, 3) if avg_request is not None else None, "max_abs_close_diff_pct": round(max_diff, 4) if max_diff is not None else None, "ohlc_coverage_ratio": round(ohlc_coverage, 4), "cumulative_amount_coverage_ratio": round(amount_coverage, 4), "items": results}
 
 
 def main():
     now = datetime.now(BEIJING)
     current, snapshot_rows = current_snapshot_rows()
+    market_date = str(current.get("market_date") or now.date().isoformat())
     items = universe()
     sources = [
-        run_source("tencent_minute_query", tencent_minute_query, items, snapshot_rows),
-        run_source("tencent_mkline_m1", tencent_mkline, items, snapshot_rows),
-        run_source("eastmoney_direct_trends2", eastmoney_trends, items, snapshot_rows),
+        run_source("tencent_minute_query", tencent_minute_query, items, snapshot_rows, market_date),
+        run_source("tencent_mkline_m1", tencent_mkline, items, snapshot_rows, market_date),
+        run_source("eastmoney_direct_trends2", eastmoney_trends, items, snapshot_rows, market_date),
     ]
     eligible = [x for x in sources if x.get("decision_path_eligible")]
-    eligible.sort(key=lambda x: (float(x.get("total_request_seconds") or 9999), -float(x.get("minimum_minute_coverage_ratio") or 0)))
+    eligible.sort(key=lambda x: (-float(x.get("ohlc_coverage_ratio") or 0), float(x.get("total_request_seconds") or 9999)))
     best = eligible[0]["source_id"] if eligible else None
     payload = {
         "generated_at_beijing": now.isoformat(timespec="seconds"),
-        "market_date": current.get("market_date") or now.date().isoformat(),
+        "market_date": market_date,
         "scope": "ETF_MINUTE_SOURCE_GITHUB_ACTIONS_POC",
         "status": "PASS" if best else "DEGRADED",
         "objective": "寻找GitHub Actions中稳定、低延迟的ETF分钟行情源，将离散日内路径升级为分钟级路径。",
-        "selection_gate": {
-            "required_etf_coverage_ratio": 0.90,
-            "required_minimum_minute_coverage_ratio": 0.95,
-            "max_close_alignment_diff_pct": 0.30,
-            "max_total_request_seconds_for_11_etfs": 15.0,
-            "note": "PoC通过只代表可以进入正式集成候选；仍需在真实盘中至少多个节点验证provider时间、最新分钟及时性和稳定性。",
-        },
+        "selection_gate": {"required_etf_coverage_ratio": 0.90, "required_minimum_minute_coverage_ratio": 0.95, "max_close_alignment_diff_pct": 0.30, "max_total_request_seconds_for_11_etfs": 15.0, "note": "PoC通过只代表进入正式集成候选；正式启用前仍需多个真实盘中节点验证最新分钟及时性和连续稳定性。"},
         "sources": sources,
         "best_candidate": best,
         "recommended_role": "FORMAL_INTRADAY_PATH_EVIDENCE_CANDIDATE" if best else "KEEP_DISCRETE_PATH_AND_CONTINUE_SEARCH",
