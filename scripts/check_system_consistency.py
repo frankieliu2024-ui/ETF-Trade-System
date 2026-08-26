@@ -113,7 +113,7 @@ def main() -> int:
     check("query_entry:module_exists", (ROOT / "scripts/query_market_object.py").exists(), "single-object query entry exists")
     query_entry = read_text("scripts/query_market_object.py")
     check("query_entry:shared_guard_router", "validate_market_row" in query_entry and "build_market_quote_context" in query_entry, "query entry uses shared quality guard and router")
-    check("query_entry:no_monitor_pool_write", "etf_monitor_universe.json"), "w"" not in query_entry and "market_monitor_config.json"), "w"" not in query_entry, "user queries cannot write monitoring configuration")
+    check("query_entry:no_monitor_pool_write", "write_text(root / \"config" not in query_entry, "user queries cannot write monitoring configuration")
     query_context_text = read_text("scripts/build_query_context.py")
     check("query_entry:context_categories", "system_objects" in query_context_text and "user_requested_objects" in query_context_text, "query context exposes two object categories")
     check("formal_sync:module_exists", (ROOT / "scripts/sync_formal_files.py").exists(), "formal account fact sync module exists")
