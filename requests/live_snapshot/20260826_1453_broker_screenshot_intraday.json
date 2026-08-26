@@ -1,0 +1,131 @@
+{
+  "request_id": "20260826_1453_broker_screenshot_intraday",
+  "requested_at_beijing": "2026-08-26T14:53:00+08:00",
+  "market_date": "2026-08-26",
+  "query_intent": "EXPLICIT_LATEST",
+  "requested_market_time": "2026-08-26T14:53:00+08:00",
+  "interaction_scenario": "INTRADAY",
+  "source": "BROKER_SCREENSHOT_20260826_1453_USER_CONFIRMED",
+  "account_change_event_type": "BROKER_SCREENSHOT_CHANGE",
+  "account_fact": {
+    "status": "VALID",
+    "updated_at": "2026-08-26T14:53:00+08:00",
+    "source": "BROKER_SCREENSHOT_20260826_1453_USER_CONFIRMED",
+    "last_confirmed_market_date": "2026-08-26",
+    "total_asset": 184611.87,
+    "stock_market_value": 169292.00,
+    "cash": 15319.87,
+    "holding_pnl": -15095.70,
+    "daily_pnl": 1896.70,
+    "daily_pnl_pct": 1.04,
+    "orders": [],
+    "trades": [
+      {
+        "object": "半导体设备ETF",
+        "code": "561980",
+        "action": "SELL",
+        "quantity": 13000,
+        "price": 0.663,
+        "gross_amount": 8619.0,
+        "fee": 5.0,
+        "fee_status": "CONFIRMED",
+        "amount": 8614.0,
+        "trade_time": "2026-08-25T11:22:00+08:00",
+        "source": "BROKER_SCREENSHOT_20260825_152527_USER_CONFIRMED"
+      }
+    ],
+    "positions": [
+      {
+        "asset_type": "STOCK",
+        "name": "宁德时代",
+        "code": "300750",
+        "quantity": 100,
+        "cost": 393.781,
+        "last_price": 379.480,
+        "market_value": 37948.00,
+        "holding_pnl": -1430.07,
+        "holding_pnl_pct": -3.631
+      },
+      {
+        "asset_type": "ETF",
+        "name": "半导体设备ETF",
+        "code": "561980",
+        "quantity": 51900,
+        "cost": 0.806,
+        "last_price": 0.687,
+        "market_value": 35655.30,
+        "holding_pnl": -6157.60,
+        "holding_pnl_pct": -14.727
+      },
+      {
+        "asset_type": "STOCK",
+        "name": "工业富联",
+        "code": "601138",
+        "quantity": 500,
+        "cost": 58.054,
+        "last_price": 60.630,
+        "market_value": 30315.00,
+        "holding_pnl": 1287.78,
+        "holding_pnl_pct": 4.436
+      },
+      {
+        "asset_type": "ETF",
+        "name": "科创50ETF",
+        "code": "588000",
+        "quantity": 14100,
+        "cost": 2.099,
+        "last_price": 1.724,
+        "market_value": 24308.40,
+        "holding_pnl": -5286.01,
+        "holding_pnl_pct": -17.862
+      },
+      {
+        "asset_type": "ETF",
+        "name": "科创创业ETF",
+        "code": "159781",
+        "quantity": 19500,
+        "cost": 1.269,
+        "last_price": 1.076,
+        "market_value": 20982.00,
+        "holding_pnl": -3766.60,
+        "holding_pnl_pct": -15.219
+      },
+      {
+        "asset_type": "ETF",
+        "name": "纳指ETF",
+        "code": "159941",
+        "quantity": 12200,
+        "cost": 1.626,
+        "last_price": 1.647,
+        "market_value": 20093.40,
+        "holding_pnl": 256.80,
+        "holding_pnl_pct": 1.295
+      }
+    ]
+  },
+  "formal_decision": {
+    "decision_id": "20260826_1453_formal_intraday_decision",
+    "risk_permission": "禁止新增",
+    "lifecycle": "半导体设备ETF（561980）持有；科创50ETF（588000）持有；科创创业ETF（159781）持有；纳指ETF（159941）持有。",
+    "main_candidate": "黄金ETF（518880）—观察机会",
+    "candidate_code": "518880",
+    "candidate_name": "黄金ETF",
+    "amount_action": "新增0元；四只ETF继续持有；可用资金15,319.87元保留，等待15:00正式收盘复核。",
+    "decisive_reason": "ETF策略风险率约-8.30%，仍处风险控制区，普通新增被禁止。重新统一比较后，黄金ETF（518880）因低相关收益来源且历史高位区仍为上升趋势，优于仅靠当日涨幅的候选进入观察；但其日内更接近冲高回落，风险收益尚不足以升级。科技持仓与电网设备ETF（159326）多数仍是下降/混合趋势中的缩量上涨，承接证据不足。",
+    "data_as_of_beijing": "2026-08-26T14:48:57+08:00",
+    "price_at_decision": 9.527,
+    "price_as_of_beijing": "2026-08-26T14:48:52+08:00",
+    "research_evidence_used": [
+      {
+        "evidence_id": "market_structure_context:518880",
+        "change": "黄金ETF（518880）处于历史高位区且近期高低点同步抬升，但日内先高后低、接近冲高回落。",
+        "decision_effect": "使其成为唯一观察主候选，但不升级Trial。"
+      },
+      {
+        "evidence_id": "skfolio_risk_evidence:high_corr_cluster",
+        "change": "半导体设备ETF（561980）、科创50ETF（588000）、科创创业ETF（159781）构成高相关风险簇，约占ETF账户权重80%。",
+        "decision_effect": "提高低相关收益来源的比较优先级，但不绕过风险许可。"
+      }
+    ]
+  }
+}
