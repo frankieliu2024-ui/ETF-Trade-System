@@ -17,7 +17,9 @@ on:
     paths:
       - "requests/notification_test/*.json"
   schedule:
-    # Beijing 15:20 on weekdays: remind only when the final post-close account fact is still missing.
+    # Technical trigger envelope: Beijing 15:20 Monday-Friday.
+    # notification_center.py then checks the formal A-share trading calendar;
+    # non-trading weekdays produce no close-account reminder.
     - cron: "20 7 * * 1-5"
 
 permissions:
@@ -60,7 +62,7 @@ jobs:
         continue-on-error: true
         run: python scripts/notification_center.py --mode event
 
-      - name: Send conditional post-close account reminder
+      - name: Send conditional A-share trading-day post-close account reminder
         id: close_notify
         if: ${{ github.event_name == 'schedule' }}
         continue-on-error: true
