@@ -335,7 +335,7 @@ jobs:
                           health['count'] = snapshot.get('count', health.get('count', 0))
                           health['latest_snapshot'] = str(snapshot_path).replace('\\\\', '/')
                           health['failure_stage'] = '' if quality == 'PASS' else health.get('failure_stage', '')
-                          health_path.write_text(json.dumps(health, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')
+                          health_path.write_text(json.dumps(health, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
           # system_consistency is owned by the dedicated audit workflow and may
           # change concurrently; keep it out of this data commit.
