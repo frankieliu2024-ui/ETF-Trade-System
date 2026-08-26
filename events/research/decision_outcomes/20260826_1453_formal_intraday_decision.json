@@ -1,0 +1,40 @@
+{
+  "schema_version": "2.0",
+  "decision_id": "20260826_1453_formal_intraday_decision",
+  "market_date": "2026-08-26",
+  "candidate_code": "518880",
+  "candidate_name": "黄金ETF",
+  "display_name": "黄金ETF（518880）",
+  "action_class": "OBSERVE_OR_HOLD",
+  "price_at_decision": 9.527,
+  "research_evidence_used": [
+    {
+      "evidence_id": "market_structure_context:518880",
+      "change": "黄金ETF（518880）处于历史高位区且近期高低点同步抬升，但日内先高后低、接近冲高回落。",
+      "decision_effect": "使其成为唯一观察主候选，但不升级Trial。"
+    },
+    {
+      "evidence_id": "skfolio_risk_evidence:high_corr_cluster",
+      "change": "半导体设备ETF（561980）、科创50ETF（588000）、科创创业ETF（159781）构成高相关风险簇，约占ETF账户权重80%。",
+      "decision_effect": "提高低相关收益来源的比较优先级，但不绕过风险许可。"
+    }
+  ],
+  "horizons": {
+    "T_plus_1": {
+      "status": "PENDING",
+      "target_trading_day_index": 1
+    },
+    "T_plus_3": {
+      "status": "PENDING",
+      "target_trading_day_index": 3
+    },
+    "T_plus_5": {
+      "status": "PENDING",
+      "target_trading_day_index": 5
+    }
+  },
+  "linked_trades": [],
+  "read_only": true,
+  "method_note": "严格使用决策日之后已经形成的交易日日线事实；T+1/T+3/T+5未到时保持PENDING，不用未来信息补值。ETF全集相对结果使用决策时点comparison_snapshot中的各ETF价格作为统一起点。",
+  "decision_boundary": "结果只用于判断质量、执行质量和研究贡献复盘；不自动修改MASTER、不生成交易动作、不把相关性解释为因果。"
+}
