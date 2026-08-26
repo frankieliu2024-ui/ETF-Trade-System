@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 from build_intraday_path_features import build as build_intraday_path_features
+from build_market_regime_context import build as build_market_regime_context
 from build_market_structure_context import build as build_market_structure_context
 from build_research_features import build as build_research_features
 from build_research_evidence_delta import build as build_research_evidence_delta
@@ -123,6 +124,9 @@ def main() -> None:
     path_features = build_intraday_path_features(ROOT)
     atomic_json_write(ROOT / "data" / "state" / "intraday_path_features.json", path_features)
 
+    market_regime = build_market_regime_context(ROOT)
+    atomic_json_write(ROOT / "data" / "state" / "market_regime_context.json", market_regime)
+
     market_structure = build_market_structure_context(ROOT)
     atomic_json_write(ROOT / "data" / "state" / "market_structure_context.json", market_structure)
 
@@ -156,8 +160,9 @@ def main() -> None:
     atomic_json_write(ROOT / "data" / "state" / "research_context.json", {
         **research,
         "read_only": True,
-        "decision_boundary": "研究层向当前决策提供事实、历史价格位置、日内路径、相对强弱、证据变化、共同风险、经验证的ETF份额、融资杠杆与主动收益方法证据，并记录研究是否真实改变决策；不得绕过MASTER生成交易动作。",
-        "current_decision_use": "候选比较必须先读假设/相关性、历史位置、日内路径和风险收益，再读相对强弱与当日涨幅；正式决策只记录最多3项真正改变判断的research_evidence_used。没有改变判断的研究不记贡献，缺少显式记录不得自动推断贡献。",
+        "decision_boundary": "研究层向当前决策提供市场环境、事实、历史价格位置、日内路径、相对强弱、证据变化、共同风险、经验证的ETF份额、融资杠杆与主动收益方法证据，并记录研究是否真实改变决策；不得绕过MASTER生成交易动作。",
+        "current_decision_use": "正式盘中先读市场层指数/宽度/风格，再做候选比较；候选比较必须先读假设/相关性、历史位置、日内路径和风险收益，再读相对强弱与当日涨幅。正式决策只记录最多3项真正改变判断的research_evidence_used。",
+        "market_regime_context": market_regime,
         "candidate_selection_contract": market_structure.get("candidate_selection_contract") or {},
         "market_structure_summary": {
             "status": market_structure.get("status"),
@@ -168,6 +173,7 @@ def main() -> None:
         "master_feedback": "研究层可形成MASTER维护输入，但只有通过MASTER第8.1正式研究转化机制的高质量专项研究，或多个真实CASE反复暴露的同类问题，才允许正式修改MASTER。",
         "optimization_principle": "不打造完美交易系统；复杂度只有在改善事前收益效率、风险边界、执行质量或复盘学习时才保留。长期未改变任何正式决策且无独立风险/复盘价值的研究模块才进入删除审查。",
         "validated_evidence_summary": {
+            "market_regime": market_regime,
             "market_structure": market_structure,
             "skfolio_risk": skfolio_summary,
             "etf_share_flow": share_flow_summary,
@@ -177,6 +183,7 @@ def main() -> None:
         "research_contribution_audit": contribution_summary,
         "paths": {
             "daily_features": "events/research/daily_features/<market_date>.json",
+            "market_regime_context": "data/state/market_regime_context.json",
             "market_structure_context": "data/state/market_structure_context.json",
             "relative_strength": "data/state/relative_strength.json",
             "evidence_delta": "data/state/research_evidence_delta.json",
@@ -199,13 +206,16 @@ def main() -> None:
     phase4 = build_phase4_automation(ROOT)
     candidate = build_dashboard_candidate(ROOT)
     context = build_decision_context(ROOT)
-    context.setdefault("research_evidence", {})["market_structure_context"] = market_structure
+    context.setdefault("research_evidence", {})["market_regime_context"] = market_regime
+    context["research_evidence"]["market_structure_context"] = market_structure
     context["research_evidence"]["skfolio_risk_evidence"] = skfolio_summary
     context["research_evidence"]["etf_share_flow_evidence"] = share_flow_summary
     context["research_evidence"]["margin_financing_evidence"] = margin_financing_summary
     context["research_evidence"]["active_return_evidence"] = active_return
     context["research_evidence"]["research_contribution_audit"] = contribution_summary
+    context["market_regime_context"] = market_regime
     context["candidate_selection_contract"] = market_structure.get("candidate_selection_contract") or {}
+    context["market_regime_context_file"] = "data/state/market_regime_context.json"
     context["market_structure_context_file"] = "data/state/market_structure_context.json"
     context["skfolio_risk_evidence_file"] = "data/state/skfolio_risk_evidence.json"
     context["etf_share_flow_evidence_file"] = "data/state/etf_share_flow_evidence.json"
@@ -221,6 +231,7 @@ def main() -> None:
         "rule": "只记录实际改变本次机会、金额、持仓或卖出判断的研究证据；若研究没有实质贡献，显式写空列表。不得自动把decision_context中存在的证据视为已使用。",
     }
     required_context_present = {
+        "market_level_analysis": market_regime.get("status") in {"READY", "DEGRADED"} and bool(market_regime.get("indices")),
         "candidate_selection_contract": bool(context.get("candidate_selection_contract")),
         "market_structure_context": market_structure.get("status") == "READY" and bool(market_structure.get("items")),
         "historical_position_and_trend": all(
@@ -239,14 +250,22 @@ def main() -> None:
         ),
     }
     context["formal_intraday_response_contract"] = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "scope": "FORMAL_INTRADAY_DECISION",
-        "rule": "正式盘中回复必须在形成唯一主候选前完整消费当前decision_context；不得只读取价格、涨幅或上一轮主候选。",
+        "rule": "正式盘中回复必须先完成市场层分析，再形成账户风险、生命周期和唯一主候选；不得只读取价格、持仓/观察ETF、涨幅或上一轮主候选。",
         "required_before_main_candidate": [
+            "先读取market_regime_context，完成上证指数（000001）、创业板指（399006）、ETF市场宽度和风格/风险偏好分析；必要时再读取海外/亚洲反馈",
             "读取candidate_selection_contract",
             "重新统一比较持仓ETF、观察ETF与现金，不自动沿用上一轮主候选",
             "对主候选显式解释历史位置与趋势、日内路径与极值时序、时间归一化成交承接、风险收益或下一单位资本效率",
             "横截面涨幅、名次与相对强弱仅作验证证据",
+        ],
+        "required_market_analysis": [
+            "上证指数（000001）当日涨跌、日内位置与路径",
+            "创业板指（399006）当日涨跌、日内位置与路径",
+            "ETF全集上涨/下跌宽度与中位收益",
+            "上证与创业板的风格差异和风险偏好",
+            "海外/亚洲信息仅在时点有效且与当前假设相关时使用，并说明是否与A股反馈背离",
         ],
         "required_candidate_evidence": [
             "historical_position_and_trend",
@@ -257,14 +276,16 @@ def main() -> None:
         "missing_evidence_rule": "任一必需证据缺失时必须显式标记MISSING或DEGRADED并说明影响，不得静默跳过后直接维持或生成主候选。",
         "previous_candidate_rule": "previous_main_candidate只作连续性参考，不得自动继承；每个正式盘中节点必须重新进入统一比较。若继续保留上一主候选，必须说明本节点的新结构证据为何独立支持继续保留。",
         "cross_section_rule": "当日涨幅、横截面名次和相对指数强弱只能验证候选，不得产生主候选。",
-        "submission_expectation": "若formal_decision包含main_candidate，回复/提交应能明确指出已消费market_structure_context及上一主候选已重新比较；否则按DECISION_CONTEXT_INCOMPLETE处理。",
+        "market_analysis_rule": "市场层分析必须先于持仓和候选分析；禁止只围绕持仓ETF和观察ETF写回复而不解释指数、市场宽度及风格环境。",
+        "refresh_rule": "EXPLICIT_LATEST/当前/最新行情请求只能在请求后新CURRENT满足requested_market_time后形成正式决策；正式决策data_as_of_beijing不得早于requested_market_time。",
+        "submission_expectation": "若formal_decision包含main_candidate，回复/提交应能明确指出已消费market_regime_context、market_structure_context及上一主候选已重新比较；否则按DECISION_CONTEXT_INCOMPLETE处理。",
         "non_blocking": True,
         "decision_boundary": "本契约只约束ChatGPT盘中决策的读取与表达完整性，不生成风险许可、生命周期、机会状态、金额、卖出份额或订单。",
     }
     context["formal_intraday_context_completeness"] = {
         "status": "READY" if all(required_context_present.values()) else "DECISION_CONTEXT_INCOMPLETE",
         "required_context_present": required_context_present,
-        "note": "该状态只证明机器上下文已具备正式盘中分析所需结构，不等于ChatGPT已实际消费；正式回复仍必须遵守formal_intraday_response_contract。",
+        "note": "该状态只证明机器上下文已具备市场层+标的层正式盘中分析所需结构，不等于ChatGPT已实际消费；正式回复仍必须遵守formal_intraday_response_contract。",
     }
     atomic_json_write(ROOT / "data" / "state" / "dashboard_update_candidate.json", candidate)
     atomic_json_write(ROOT / "data" / "state" / "decision_context.json", context)
@@ -273,6 +294,7 @@ def main() -> None:
         "account_fact_status": context["account_fact_status"],
         "intraday_path_status": path_features.get("status"),
         "intraday_path_feature_count": len(path_features.get("features") or []),
+        "market_regime_status": market_regime.get("status"),
         "market_structure_status": market_structure.get("status"),
         "market_structure_item_count": len(market_structure.get("items") or []),
         "market_structure_history_available_count": sum(1 for x in (market_structure.get("items") or []) if (x.get("historical_context") or {}).get("status") == "READY"),
