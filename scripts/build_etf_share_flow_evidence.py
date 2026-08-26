@@ -10,6 +10,7 @@ from http.cookiejar import CookieJar
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 DAILY = ROOT / "events/research/daily_features"
 UNIVERSE = ROOT / "config/market/etf_monitor_universe.json"
+CURRENT = ROOT / "data/state/CURRENT.json"
 OUT = ROOT / "data/state/etf_share_flow_evidence.json"
 VALIDATION = ROOT / "research/backtests/etf_share_flow_increment_poc.json"
 SSE_URL = "https://query.sse.com.cn/commonQuery.do"
@@ -46,6 +47,11 @@ def complete_daily_files():
         if x.get("quality_status") == "PASS" and ("POST_CLOSE" in phase or phase in {"CLOSED","CLOSE"}):
             rows.append((str(x.get("market_date") or p.stem), p, x))
     return sorted(rows, key=lambda z:z[0])
+
+def is_post_close_phase():
+    current=load(CURRENT,{})
+    phase=str(current.get("market_phase") or "").upper()
+    return "POST_CLOSE" in phase or phase in {"CLOSED","CLOSE"}
 
 def get_url(url, headers, params=None, opener=None, verify=True):
     if params: url += ("&" if "?" in url else "?") + urlencode(params)
@@ -93,6 +99,10 @@ def build(root=ROOT):
     d=files[-1][0]
     old=load(OUT,{})
     if old.get("price_as_of_market_date")==d and old.get("status")=="READY": return old
+    if not is_post_close_phase():
+        if old:
+            return old
+        return {**base,"status":"DEGRADED","use_in_current_decision":False,"price_as_of_market_date":d,"reason":"intraday_cache_only; low-frequency share refresh runs after A-share close"}
     dates=[x[0] for x in files]
     prev_date, old_share_date=dates[-2],dates[-7]
     needed_price_dates=[dates[-1],dates[-6],dates[-21]]
