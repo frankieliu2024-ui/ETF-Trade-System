@@ -17,6 +17,10 @@ try:
 except ModuleNotFoundError:
     from scripts.market_quote_router import display_market_status, market_phase
     from scripts.multi_source_market import _request_json
+try:
+    from tencent_quote import fetch_tencent_quotes
+except ModuleNotFoundError:
+    from scripts.tencent_quote import fetch_tencent_quotes
 
 BEIJING = ZoneInfo("Asia/Shanghai")
 MARKET_ZONES = {"HK": "Asia/Hong_Kong", "TW": "Asia/Taipei", "JP": "Asia/Tokyo", "KR": "Asia/Seoul", "US": "America/New_York"}
@@ -154,54 +158,63 @@ def _eastmoney_etf(symbol: str, thscode: str, now: datetime, policy: dict) -> di
 
 
 def _a_share(symbol: str, root: Path, now: datetime, policy: dict) -> dict:
-    cli = shutil.which("hithink-finance")
-    if not cli: raise RuntimeError("hithink-finance CLI unavailable for query-time A-share refresh")
     code = symbol.upper()
     raw_code = code.split(".")[0]
     thscode = code if "." in code else (f"{code}.SH" if raw_code.startswith(("5", "6")) else f"{code}.SZ")
-    if raw_code in {"000001", "399006"}:
-        obj = _cli_json(cli, ["index", "snapshot", "--thscodes", thscode], root)
-    elif raw_code.startswith("159") or raw_code.startswith(("5", "588")):
+    phase = market_phase("CN", now=now)
+    tencent_error = None
+    try:
+        quote = fetch_tencent_quotes([thscode], timeout=10)[thscode.upper()]
+        timestamp = datetime.fromtimestamp(int(quote["provider_timestamp_ms"]) / 1000, timezone.utc)
+        status = _status(timestamp, now, policy)
+        if status == "STALE":
+            raise RuntimeError(f"Tencent {thscode} provider timestamp is stale: {timestamp.isoformat()}")
+        no_trade_partial = any(quote.get(key) is None for key in ("open_price", "high_price", "low_price", "volume", "turnover"))
+        return {
+            "market": "CN", "market_name": "中国大陆", "symbol": code, "name": quote.get("name", code),
+            "latest_price": quote["last_price"], "open": quote.get("open_price"), "high": quote.get("high_price"),
+            "low": quote.get("low_price"), "prev_close": quote["prev_price"],
+            "volume": quote.get("volume"), "amount": quote.get("turnover"), "turnover": quote.get("turnover"),
+            "data_time_beijing": timestamp.astimezone(BEIJING).isoformat(timespec="seconds"),
+            "data_time_local": timestamp.astimezone(BEIJING).isoformat(timespec="seconds"), "market_phase": phase,
+            "market_status_cn": display_market_status("CN", phase),
+            "data_nature_cn": "交易中暂无新成交的最新有效价" if no_trade_partial else ("实时交易行情" if status == "FRESH" else "交易中但数据源延迟的盘中行情"),
+            "source": "tencent_qq", "freshness": status,
+            "quality_status": "PASS" if status in {"FRESH", "DEGRADED"} else status,
+            "direct_quote": True, "refresh_source": "QUERY_TIME_PROVIDER",
+            "provider_symbol": quote.get("provider_symbol"), "provider_timestamp_ms": quote["provider_timestamp_ms"],
+        }
+    except Exception as error:
+        tencent_error = error
+
+    cli = shutil.which("hithink-finance")
+    if cli:
         try:
-            obj = _cli_json(cli, ["fund", "snapshot", "--thscode", thscode], root)
+            command = ["index", "snapshot", "--thscodes", thscode] if raw_code in {"000001", "399006"} else ["market", "snapshot", "--thscodes", thscode]
+            obj = _cli_json(cli, command, root)
             items = obj.get("data", {}).get("item") or []
             item = next((candidate for candidate in items if str(candidate.get("thscode") or "") == thscode), items[0] if items else {})
             close = item.get("last_price", item.get("close_price"))
             ts = obj.get("data", {}).get("timestamp")
-            if close is None or ts in (None, ""):
-                raise RuntimeError(f"fund snapshot returned incomplete quote for {thscode}")
-        except Exception as fund_error:
-            try:
-                obj = _cli_json(cli, ["market", "snapshot", "--thscodes", thscode], root)
-                items = obj.get("data", {}).get("item") or []
-                item = next((candidate for candidate in items if str(candidate.get("thscode") or "") == thscode), items[0] if items else {})
-                close = item.get("last_price", item.get("close_price"))
-                ts = obj.get("data", {}).get("timestamp")
-                if close is None or ts in (None, ""):
-                    raise RuntimeError(f"direct market snapshot returned incomplete quote for {thscode}")
-            except Exception as market_error:
-                return _eastmoney_etf(symbol, thscode, now, policy)
-    else:
-        obj = _cli_json(cli, ["market", "snapshot", "--thscodes", thscode], root)
-        items = obj.get("data", {}).get("item") or []
-        item = next((candidate for candidate in items if str(candidate.get("thscode") or "") == thscode), items[0] if items else {})
-        close = item.get("last_price", item.get("close_price"))
-        ts = obj.get("data", {}).get("timestamp")
-        if close is None or ts in (None, ""): raise RuntimeError(f"A-share provider returned incomplete quote for {thscode}")
-    dt = datetime.fromtimestamp(float(ts) / 1000, timezone.utc)
-    phase = market_phase("CN", now=now)
-    age_status = _status(dt, now, policy)
-    return {
-        "market": "CN", "market_name": "中国大陆", "symbol": code, "name": item.get("name", code),
-        "latest_price": close, "open": item.get("open_price"), "high": item.get("high_price"), "low": item.get("low_price"), "prev_close": item.get("pre_close"), "volume": item.get("volume"), "amount": item.get("amount"), "turnover": item.get("amount"), "data_time_beijing": dt.astimezone(BEIJING).isoformat(timespec="seconds"),
-        "data_time_local": dt.astimezone(BEIJING).isoformat(timespec="seconds"), "market_phase": phase,
-        "market_status_cn": display_market_status("CN", phase),
-        "data_nature_cn": "实时交易行情" if phase == "REGULAR" else "最近有效行情",
-        "source": "hithink-finance", "freshness": age_status,
-        "quality_status": "PASS" if age_status in {"FRESH", "DEGRADED"} else age_status,
-        "direct_quote": True, "refresh_source": "QUERY_TIME_PROVIDER",
-    }
-
+            if close is not None and ts not in (None, ""):
+                dt = datetime.fromtimestamp(float(ts) / 1000, timezone.utc)
+                status = _status(dt, now, policy)
+                if status != "STALE":
+                    return {
+                        "market": "CN", "market_name": "中国大陆", "symbol": code, "name": item.get("name", code),
+                        "latest_price": close, "open": item.get("open_price"), "high": item.get("high_price"), "low": item.get("low_price"),
+                        "prev_close": item.get("pre_close"), "volume": item.get("volume"), "amount": item.get("amount"), "turnover": item.get("amount"),
+                        "data_time_beijing": dt.astimezone(BEIJING).isoformat(timespec="seconds"), "data_time_local": dt.astimezone(BEIJING).isoformat(timespec="seconds"),
+                        "market_phase": phase, "market_status_cn": display_market_status("CN", phase),
+                        "data_nature_cn": "实时交易行情" if status == "FRESH" else "交易中但数据源延迟的盘中行情",
+                        "source": "hithink-finance", "freshness": status, "quality_status": "PASS",
+                        "direct_quote": True, "refresh_source": "QUERY_TIME_PROVIDER",
+                    }
+        except Exception:
+            pass
+    if raw_code.startswith("159") or raw_code.startswith(("5", "588")):
+        return _eastmoney_etf(code, thscode, now, policy)
+    raise RuntimeError(f"Tencent primary failed for {thscode}: {tencent_error}; no valid A-share fallback")
 
 def refresh_market_quotes(root: Path | str, requested_symbols: list[str], now: datetime) -> dict:
     root = Path(root)
