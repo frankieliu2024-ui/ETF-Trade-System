@@ -15,8 +15,12 @@ on:
     paths:
       - "requests/live_snapshot/**.json"
   schedule:
-    # One explicit 10-minute target cadence; runtime_session_gate keeps provider calls inside A-share phases.
-    - cron: "*/10 1-7 * * 1-5"
+    # Explicit opening-auction pulses, followed by the regular ten-minute target cadence.
+    - cron: "15,20,25,30,40,50 1 * * 1-5"
+    - cron: "*/10 2 * * 1-5"
+    - cron: "0,10,20,30 3 * * 1-5"
+    - cron: "*/10 5-6 * * 1-5"
+    - cron: "0,10 7 * * 1-5"
 
 permissions:
   contents: write
