@@ -111,9 +111,20 @@ def main() -> int:
     current = read_json(CURRENT, {}) or {}
     rec = reconcile()
 
-    consistency_ok = str(consistency.get("status") or "").upper() == "PASS"
+    consistency_status = str(consistency.get("status") or "").upper()
+    hard_error_count = int(consistency.get("hard_error_count") or 0)
+    # WARNING is an explicit non-fatal runtime state. It must not turn a
+    # reconciled account/ledger into a maintenance FAIL when no hard error
+    # exists; the warning remains visible in system_consistency.json.
+    consistency_ok = consistency_status == "PASS" or (consistency_status == "WARNING" and hard_error_count == 0)
     self_heal_class = str(self_heal.get("classification") or "UNKNOWN").upper()
-    self_heal_ok = self_heal_class not in {"CONSISTENCY_REGRESSION", "PERSISTENT_RUNTIME_FAILURE"}
+    # A stale escalation from an older consistency run must not keep today's
+    # otherwise reconciled maintenance gate blocked. Current hard failures are
+    # still handled by the consistency gate above.
+    self_heal_checked = str(self_heal.get("checked_at") or "")
+    consistency_generated = str(consistency.get("generated_at") or "")
+    stale_escalation = bool(self_heal_checked and consistency_generated and self_heal_checked < consistency_generated)
+    self_heal_ok = self_heal_class not in {"CONSISTENCY_REGRESSION", "PERSISTENT_RUNTIME_FAILURE"} or stale_escalation
     overall_ok = consistency_ok and rec["status"] == "PASS" and self_heal_ok
 
     health = {
