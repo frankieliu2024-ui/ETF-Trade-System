@@ -172,6 +172,7 @@ def main() -> int:
     check("master:holding_observation", "持仓ETF＋观察ETF" in master or "持仓ETF+观察ETF" in master, "holding/observation taxonomy present")
     stale_pool = "统一研究池固定为" in master or ("八ETF" in master and "每个自动或人工决策节点先读取八ETF" in master)
     check("master:no_parallel_fixed_pool", not stale_pool, "no stale fixed-pool taxonomy")
+    check("master:direct_confirm_explicit", "不是Confirm的强制前置" in master and "直接Confirm" in master, "MASTER explicitly allows direct Confirm when full Confirm evidence is already satisfied")
 
     runner = read_text("scripts/cloud_runner_snapshot.py")
     check("runner:canonical_etf_universe", "etf_monitor_universe.json" in runner and "load_etf_universe" in runner, "runner loads canonical ETF universe")
@@ -193,10 +194,13 @@ def main() -> int:
     providers = set((provider_cfg.get("providers") or {}).keys())
     check("providers:required_sources", REQUIRED_PROVIDERS.issubset(providers), f"required={sorted(REQUIRED_PROVIDERS)} actual={sorted(providers)}")
     check("providers:formal_indices", set(provider_cfg.get("formal_index_objects") or []) == EXPECTED_INDICES, f"provider formal indices={provider_cfg.get('formal_index_objects')}")
-    expected_hstech_chain = ["hithink-finance:HS2083", "yahoo_chart_api:HSTECH.HK", "eastmoney_push2:124.HSTECH", "ETF_PROXY_513180"]
-    actual_hstech_chain = (provider_cfg.get("objects") or {}).get("HSTECH") or []
-    check("providers:hstech_chain_exact", actual_hstech_chain == expected_hstech_chain, f"actual={actual_hstech_chain} expected={expected_hstech_chain}")
+    hstech_registered = (provider_cfg.get("objects") or {}).get("HSTECH") or []
+    expected_hstech_registered = {"hithink-finance:HS2083", "yahoo_chart_api:HSTECH.HK", "eastmoney_push2:124.HSTECH", "ETF_PROXY_513180"}
+    check("providers:hstech_sources_registered", set(hstech_registered) == expected_hstech_registered, f"registered={hstech_registered}")
     fallback_policy = provider_cfg.get("object_fallback_policy") or {}
+    hstech_rule = fallback_policy.get("HSTECH") or {}
+    expected_hstech_fallback = ["yahoo_chart_api:HSTECH.HK", "hithink-finance:HS2083", "ETF_PROXY_513180"]
+    check("providers:hstech_primary_fallback_policy", hstech_rule.get("primary") == "eastmoney_push2:124.HSTECH" and hstech_rule.get("fallback") == expected_hstech_fallback, f"primary={hstech_rule.get('primary')} fallback={hstech_rule.get('fallback')}")
     universe = read_json("config/market/etf_monitor_universe.json")
     etf_codes = {str(item.get("code")) for item in (universe.get("objects") or []) if item.get("code")}
     etf_missing_fallback = sorted(code for code in etf_codes if not isinstance(fallback_policy.get(code + (".SH" if code.startswith(("5", "6")) else ".SZ")), dict))
@@ -233,6 +237,16 @@ def main() -> int:
     check("data_standard:mandatory_timestamp", "正式输出强制时间戳" in standard and "as_of_beijing" in standard and "数据时点（北京时间）" in standard, "mandatory Beijing-time output documented")
     check("data_standard:consistency_scope", "代码与提交完整性" in standard and "运行链" in standard and "Git跟踪状态" in standard, "consistency extends beyond text")
     check("data_standard:us_extended_hours", all(x in standard for x in ["POST_MARKET", "PRE_MARKET", "QQQ", "SOXX", "不高估海外时间领先，也不低估海外时间领先"]), "US extended-hours timing and evidence boundaries documented")
+    check("data_standard:current_provider_roles", all(x in standard for x in ["腾讯行情（tencent_qq）", "上证指数（000001）为 `腾讯 → 同花顺`", "eastmoney_push2:124.HSTECH", "Yahoo Chart API"]), "current provider primary/fallback roles documented")
+    check("data_standard:market_session_table", all(x in standard for x in ["各市场正式交易时点（固定口径）", "港股", "台股", "日股", "韩股", "夏令时", "冬令时"]), "cross-market canonical session table documented")
+
+    dashboard_text = read_text("ETF当前状态_DASHBOARD.md")
+    experience_text = read_text("ETF交易复盘与经验库_2026.md")
+    archive_text = read_text("ETF市场行情档案_2026.md")
+    fee_closed = "累计已确认ETF费用|120.01元；待确认费用：无" in dashboard_text
+    stale_fee_text = "2026-08-25恒生科技ETF（513180）卖出费用仍待" in experience_text or "|2026-08-25 10:02:57|恒生科技ETF（513180）|513180|卖出|8,200|0.574|4,706.80|待确认|" in experience_text or "卖出费用待券商结算确认" in experience_text
+    check("formal_files:confirmed_fee_closure", not fee_closed or not stale_fee_text, "Dashboard confirmed fee closure is not contradicted by experience CASE/index")
+    check("formal_files:archive_current_provider_roles", all(x in archive_text for x in ["腾讯行情", "东方财富 `124.HSTECH`", "provider_priority.json"]), "market archive records current production provider roles")
 
     runtime = read_json("config/runtime_policy.json")
     for key in ["target_cadence_seconds", "fresh_max_age_seconds", "degraded_max_age_seconds", "close_grace_seconds", "provider_timeout_seconds", "provider_retry_limit", "scheduled_provider_max_workers", "query_provider_max_workers"]:
