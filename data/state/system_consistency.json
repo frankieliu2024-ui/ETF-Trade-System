@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-26T03:48:04Z",
-  "generated_at_beijing": "2026-08-26T11:48:04+08:00",
+  "generated_at": "2026-08-26T03:50:51Z",
+  "generated_at_beijing": "2026-08-26T11:50:51+08:00",
   "repository": {
-    "head_sha": "d7bc7b1f0e0826cd00d447cdd2e8c7af87180941",
-    "github_sha": "d7bc7b1f0e0826cd00d447cdd2e8c7af87180941",
-    "github_run_id": "32927788111",
+    "head_sha": "163624e87a38aafc52989986499e8721a1d984ae",
+    "github_sha": "163624e87a38aafc52989986499e8721a1d984ae",
+    "github_run_id": "32927957259",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "d7bc7b1f0e0826cd00d447cdd2e8c7af87180941",
-    "workflow_sha": "d7bc7b1f0e0826cd00d447cdd2e8c7af87180941",
+    "checked_commit": "163624e87a38aafc52989986499e8721a1d984ae",
+    "workflow_sha": "163624e87a38aafc52989986499e8721a1d984ae",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "FAIL",
-  "hard_error_count": 1,
+  "status": "WARNING",
+  "hard_error_count": 0,
   "warning_count": 1,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
-      "status": "FAIL",
-      "detail": "..........F..........\n======================================================================\nFAIL: test_etf_provider_fallback_uses_direct_market_snapshot (test_market_query_time_refresh.QueryTimeRefreshTests.test_etf_provider_fallback_uses_direct_market_snapshot)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_query_time_refresh.py\", line 84, in test_etf_provider_fallback_uses_direct_market_snapshot\n    self.assertEqual(result[\"quotes\"][0][\"latest_price\"], 1.234)\nAssertionError: 1.647 != 1.234\n\n----------------------------------------------------------------------\nRan 21 tests in 1.207s\n\nFAILED (failures=1)\n"
+      "status": "PASS",
+      "detail": ".....................\n----------------------------------------------------------------------\nRan 21 tests in 0.013s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -190,12 +190,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=d7bc7b1f0e0826cd00d447cdd2e8c7af87180941"
+      "detail": "HEAD=163624e87a38aafc52989986499e8721a1d984ae"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=d7bc7b1f0e0826cd00d447cdd2e8c7af87180941 GITHUB_SHA=d7bc7b1f0e0826cd00d447cdd2e8c7af87180941"
+      "detail": "HEAD=163624e87a38aafc52989986499e8721a1d984ae GITHUB_SHA=163624e87a38aafc52989986499e8721a1d984ae"
     },
     {
       "name": "git:critical_files_tracked",
@@ -575,7 +575,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=23:48 max_age_seconds=13726 limit=900"
+      "detail": "active=False phase=23:50 max_age_seconds=13893 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -690,12 +690,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=1751"
+      "detail": "declared=STALE expected=STALE age_seconds=1919"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=1751"
+      "detail": "declared=STALE expected=STALE age_seconds=1919"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -735,7 +735,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-26T03:48:02Z market=2026-08-26T11:18:51+08:00"
+      "detail": "context=2026-08-26T03:50:50Z market=2026-08-26T11:18:51+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -963,9 +963,7 @@
       "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
     }
   ],
-  "errors": [
-    "tests:market_data_and_quote_router: ..........F..........\n======================================================================\nFAIL: test_etf_provider_fallback_uses_direct_market_snapshot (test_market_query_time_refresh.QueryTimeRefreshTests.test_etf_provider_fallback_uses_direct_market_snapshot)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_query_time_refresh.py\", line 84, in test_etf_provider_fallback_uses_direct_market_snapshot\n    self.assertEqual(result[\"quotes\"][0][\"latest_price\"], 1.234)\nAssertionError: 1.647 != 1.234\n\n----------------------------------------------------------------------\nRan 21 tests in 1.207s\n\nFAILED (failures=1)\n"
-  ],
+  "errors": [],
   "warnings": [
     "a_share_runtime:live_state_available: runtime_status=SKIPPED current_snapshot=data/market/snapshots/2026-08-26_111827.json"
   ],
