@@ -1,9 +1,9 @@
 {
   "schema_version": "2.1",
-  "updated_at": "2026-08-26T13:43:12+08:00",
+  "updated_at": "2026-08-26T13:45:49+08:00",
   "last_status": "SENT",
-  "last_type": "CHANNEL_TEST",
-  "last_title": "【测试】ETF系统通知中心",
+  "last_type": "OPPORTUNITY_STATE_CHANGED",
+  "last_title": "【观察机会】半导体设备ETF（561980）机会状态发生变化",
   "notifications": [
     {
       "notification_id": "notification_0000000000004d625bdd",
@@ -134,6 +134,39 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-08-26T13:39:31+08:00"
+    },
+    {
+      "notification_id": "notification_2f431169b147d0be6a88",
+      "event_type": "OPPORTUNITY_STATE_CHANGED",
+      "source_event_id": "opportunity:20260826_1332_formal_intraday_decision:561980:观察机会",
+      "related_decision_id": "20260826_1332_formal_intraday_decision",
+      "security_code": "561980",
+      "security_name": "半导体设备ETF",
+      "user_severity": "需要关注",
+      "user_action": "关注后续正式节点；当前不因通知自动交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-08-26T13:45:49+08:00",
+      "sent_at": "2026-08-26T13:45:49+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-08-28T13:45:49+08:00",
+      "title": "【观察机会】半导体设备ETF（561980）机会状态发生变化",
+      "content": "发生了什么：正式ETF判断已将半导体设备ETF（561980）更新为“观察机会”。\n\n风险许可：允许Trial\n\n金额与动作：新增0元；半导体设备ETF（561980）、科创50ETF（588000）、科创创业ETF（159781）、纳指ETF（159941）继续持有；现金15,319.87元继续保留。\n\n决定性原因：最强候选仍属于现有高度相关科技持仓，当前尚没有足够独立的新价格证据证明再投入5,000元的边际资本效率优于保留现金。\n\n数据时点：2026-08-26T13:26:29+08:00\n\n你现在需要做什么：关注后续正式节点；当前不因通知自动交易。",
+      "source": "formal_decision_event",
+      "confirmation_context": {
+        "decision_id": "20260826_1332_formal_intraday_decision",
+        "security_code": "561980",
+        "security_name": "半导体设备ETF",
+        "opportunity_status": "观察机会",
+        "previous_opportunity_status": "观察机会",
+        "previous_security_code": "159326"
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-08-26T13:45:49+08:00"
     }
   ],
   "recent": [
@@ -226,11 +259,29 @@
       },
       "notification_id": "notification_7e3eff118d952d0d6596",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "opportunity:20260826_1332_formal_intraday_decision:561980:观察机会",
+      "type": "OPPORTUNITY_STATE_CHANGED",
+      "title": "【观察机会】半导体设备ETF（561980）机会状态发生变化",
+      "content": "发生了什么：正式ETF判断已将半导体设备ETF（561980）更新为“观察机会”。\n\n风险许可：允许Trial\n\n金额与动作：新增0元；半导体设备ETF（561980）、科创50ETF（588000）、科创创业ETF（159781）、纳指ETF（159941）继续持有；现金15,319.87元继续保留。\n\n决定性原因：最强候选仍属于现有高度相关科技持仓，当前尚没有足够独立的新价格证据证明再投入5,000元的边际资本效率优于保留现金。\n\n数据时点：2026-08-26T13:26:29+08:00\n\n你现在需要做什么：关注后续正式节点；当前不因通知自动交易。",
+      "source": "formal_decision_event",
+      "user_severity": "需要关注",
+      "user_action": "关注后续正式节点；当前不因通知自动交易",
+      "status": "SENT",
+      "attempted_at": "2026-08-26T13:45:49+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_2f431169b147d0be6a88",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [
     "notification_f0549e24768dfa08b115"
   ],
-  "policy": "通知必须让用户明确知道发生了什么、影响什么、是否需要行动；测试必须明确标注测试；历史失效故障不作为当前真实异常推送。",
+  "policy": "通知必须让用户明确知道发生了什么、影响什么、是否需要行动；正式机会状态仅由ChatGPT已记录的正式决策事件触发，状态未变化不重复通知；测试必须明确标注测试；历史失效故障不作为当前真实异常推送。",
   "safety_boundary": "通知中心不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
 }
