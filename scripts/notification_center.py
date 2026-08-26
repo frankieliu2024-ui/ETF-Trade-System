@@ -16,7 +16,9 @@ TZ = timezone(timedelta(hours=8))
 PUSHPLUS_URL = "https://www.pushplus.plus/send"
 HISTORY_LIMIT = 50
 OPPORTUNITY_STATUSES = {"无机会", "观察机会", "Trial机会", "Confirm机会"}
+RISK_PERMISSIONS = ("禁止新增", "允许Confirm", "允许Trial")
 FORMAL_EVENT_MAX_AGE_MINUTES = 45
+TRADING_CALENDAR = ROOT / "config" / "market" / "a_share_trading_calendar_2026.json"
 
 
 def read_json(path: Path, default: Any) -> Any:
@@ -66,6 +68,19 @@ def trade_display(event_id: str) -> str:
     name = str(event.get("name") or event.get("security_name") or "")
     code = str(event.get("code") or event.get("security_code") or event.get("symbol") or "")
     return f"{name}（{code}）" if name and code else (name or code or "相关交易对象")
+
+
+def is_a_share_trading_day(dt: datetime) -> bool:
+    local = dt.astimezone(TZ)
+    if local.weekday() >= 5:
+        return False
+    calendar = read_json(TRADING_CALENDAR, {})
+    date_text = local.date().isoformat()
+    coverage_start = str(calendar.get("coverage_start") or "")
+    coverage_end = str(calendar.get("coverage_end") or "")
+    if not coverage_start or not coverage_end or not (coverage_start <= date_text <= coverage_end):
+        return False
+    return date_text not in set(calendar.get("closed_dates") or [])
 
 
 def execution_confirmation_event() -> dict | None:
@@ -119,6 +134,14 @@ def _normalize_opportunity_status(decision: dict) -> str:
     return ""
 
 
+def _normalize_risk_permission(value: Any) -> str:
+    text = str(value or "").strip()
+    for status in RISK_PERMISSIONS:
+        if status in text:
+            return status
+    return text
+
+
 def _formal_decision_events() -> list[dict]:
     directory = ROOT / "events" / "decisions"
     rows: list[dict] = []
@@ -150,7 +173,7 @@ def _material_holding_action(text: str) -> bool:
 def _compact_amount_action(text: str) -> str:
     value = str(text or "未提供")
     if "新增0元" in value and not _material_holding_action(value) and "卖出" not in value:
-        return "新增0元；现有持仓维持正式判断；现金继续保留。"
+        return "新增0元；现有持仓维持；现金保留。"
     return value
 
 
@@ -170,12 +193,14 @@ def formal_decision_change_event() -> dict | None:
     previous_status = str(previous.get("_opportunity_status") or "")
     code, name, target = _target_for(latest)
     previous_code, _, previous_target = _target_for(previous) if previous else ("", "", "")
-    risk_permission = str(decision.get("risk_permission") or "")
-    previous_risk = str(previous_decision.get("risk_permission") or "")
+    risk_permission = _normalize_risk_permission(decision.get("risk_permission"))
+    previous_risk = _normalize_risk_permission(previous_decision.get("risk_permission"))
     amount_action = str(decision.get("amount_action") or decision.get("action") or "")
     previous_amount_action = str(previous_decision.get("amount_action") or previous_decision.get("action") or "")
 
-    opportunity_changed = bool(status) and (status != previous_status or code != previous_code)
+    candidate_changed = bool(code and previous_code and code != previous_code)
+    opportunity_level_changed = bool(status and previous_status and status != previous_status)
+    opportunity_changed = bool(status) and (opportunity_level_changed or candidate_changed)
     risk_changed = bool(risk_permission and previous_risk and risk_permission != previous_risk)
     holding_action_now = _material_holding_action(amount_action)
     holding_action_changed = holding_action_now and amount_action != previous_amount_action
@@ -188,32 +213,36 @@ def formal_decision_change_event() -> dict | None:
     data_as_of = str(decision.get("data_as_of_beijing") or latest.get("decision_time_beijing") or "未提供")
     action_summary = _compact_amount_action(amount_action)
 
-    changes: list[str] = []
-    if opportunity_changed:
-        old = f"{previous_target} {previous_status}".strip() if previous_status else "上一正式状态"
-        new = f"{target} {status}".strip()
-        changes.append(f"机会：{old} → {new}")
+    change_lines: list[str] = []
+    if candidate_changed:
+        change_lines.append(f"- **主候选**：{previous_target} → {target}")
+    if opportunity_level_changed:
+        change_lines.append(f"- **机会状态**：{previous_status} → {status}")
+    elif opportunity_changed:
+        change_lines.append(f"- **机会状态**：{status}（状态不变，主候选发生切换）")
     if risk_changed:
-        changes.append(f"风险许可：{previous_risk} → {risk_permission}")
+        change_lines.append(f"- **风险许可**：{previous_risk} → {risk_permission}")
+    elif risk_permission:
+        change_lines.append(f"- **风险许可**：{risk_permission}（未变化）")
     if holding_action_changed:
-        changes.append(f"持仓动作：{action_summary}")
+        change_lines.append(f"- **持仓动作**：{action_summary}")
 
     if holding_action_changed:
         title = "【持仓动作｜需处理】ETF持仓需要降低风险/退出"
         severity = "需要操作"
-        user_action = "打开ETF项目核对正式卖出份额/退出动作，并由用户人工执行"
+        user_action = "打开ChatGPT的ETF项目，在当前交易沟通会话核对正式卖出份额/退出动作，并由你人工执行"
     elif status in {"Trial机会", "Confirm机会"} and opportunity_changed:
         title = f"【{status}｜需决策】{target}"
         severity = "需要操作"
-        user_action = "打开ETF项目查看正式金额与失效条件，并由用户决定是否人工执行"
+        user_action = "打开ChatGPT的ETF项目查看正式金额与失效条件，再决定是否人工执行"
     elif risk_changed:
         title = f"【风险许可变化】{previous_risk} → {risk_permission}"
         severity = "需要关注" if risk_permission != "禁止新增" else "需要操作"
-        user_action = "按最新风险许可重新查看当前正式交易判断"
+        user_action = "打开ChatGPT的ETF项目，按最新风险许可查看当前正式交易判断"
     elif status == "观察机会":
         title = f"【观察机会｜无需下单】{target}"
         severity = "需要关注"
-        user_action = "无需下单；关注后续正式节点是否升级为Trial/Confirm或失效"
+        user_action = "无需下单；等待后续是否升级为Trial/Confirm或失效"
     elif status == "无机会":
         title = f"【机会变化】{previous_target or target}当前无机会"
         severity = "需要关注"
@@ -221,15 +250,16 @@ def formal_decision_change_event() -> dict | None:
     else:
         title = f"【正式决策变化】{target}"
         severity = "需要关注"
-        user_action = "打开ETF项目查看最新正式判断"
+        user_action = "打开ChatGPT的ETF项目查看最新正式判断"
 
     content = (
-        f"结论：{'；'.join(changes)}。\n\n"
-        f"当前动作：{action_summary or '未提供'}\n\n"
-        f"关键原因：{decisive_reason}\n\n"
-        f"数据时点：{data_as_of}\n\n"
-        f"你需要做：{user_action}。\n\n"
-        "说明：通知只转发已经形成的正式ETF判断，不会自动下单。"
+        "### 发生了什么\n"
+        + "\n".join(change_lines)
+        + f"\n\n### 现在怎么做\n**{user_action}**\n\n"
+        + f"### 当前动作\n{action_summary or '未提供'}\n\n"
+        + f"### 为什么\n{decisive_reason}\n\n"
+        + f"### 数据时点\n{data_as_of}\n\n"
+        + "> 通知只转发已经形成的正式ETF判断，不会自动下单。"
     )
     signature = hashlib.sha256(json.dumps({"decision_id": decision_id, "status": status, "code": code, "risk": risk_permission, "action": amount_action}, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:12]
     return {
@@ -346,11 +376,11 @@ def system_event() -> dict | None:
 
 def close_account_event(force: bool = False) -> dict | None:
     current, account = read_json(STATE / "CURRENT.json", {}), read_json(STATE / "account_fact.json", {})
-    market_date = str(current.get("market_date") or "")
-    if not market_date:
-        return None
     dt = now()
-    if not force and (dt.weekday() >= 5 or dt.hour < 15):
+    if not force and (not is_a_share_trading_day(dt) or dt.hour < 15):
+        return None
+    market_date = str(current.get("market_date") or "")
+    if not market_date or market_date != dt.date().isoformat():
         return None
     updated, confirmed_date = str(account.get("updated_at") or ""), str(account.get("last_confirmed_market_date") or "")
     final_confirmed = False
@@ -361,7 +391,13 @@ def close_account_event(force: bool = False) -> dict | None:
             pass
     if final_confirmed:
         return None
-    return {"key": f"close-account:{market_date}", "type": "收盘账户", "title": "今日收盘账户信息尚未确认", "content": "系统还没有今天15:00之后的最终账户信息。\n\n建议：请上传收盘持仓截图；如果今天15:00后账户没有任何变化，也可以直接确认“收盘账户无变化”。", "source": "account_fact", "user_severity": "需要操作", "user_action": "上传收盘截图或确认收盘账户无变化"}
+    content = (
+        "今天是A股交易日，系统尚未取得15:00之后可确认的最终账户事实。\n\n"
+        "### 你需要做\n"
+        "请把**15:00收盘后的券商持仓/账户截图**上传到 **ChatGPT → ETF项目 →「ETF交易复盘」聊天窗口**。\n\n"
+        "如果收盘后账户没有任何变化，也可以直接在该窗口回复：**收盘账户无变化**。"
+    )
+    return {"key": f"close-account:{market_date}", "type": "收盘账户", "title": "【收盘账户｜需确认】请到ETF交易复盘上传收盘截图", "content": content, "source": "account_fact", "user_severity": "需要操作", "user_action": "到ChatGPT ETF项目的「ETF交易复盘」聊天窗口上传收盘截图或确认无变化"}
 
 
 def choose_event(mode: str) -> dict | None:
@@ -450,7 +486,7 @@ def main() -> int:
     item["lifecycle_status"] = "WAITING_CONFIRMATION" if ok and item["event_type"] in {"PENDING_EXECUTION_CONFIRMATION", "成交确认", "账户确认", "收盘账户"} else ("SENT" if ok else "CREATED"); item["sent_at"] = stamp if ok else item.get("sent_at")
     if existing: notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
     notifications.append(item)
-    state = {"schema_version": "2.1", "updated_at": stamp, "last_status": item["lifecycle_status"], "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；同一正式决策合并为一条通知，不因普通行情波动重复推送。", "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"}
+    state = {"schema_version": "2.1", "updated_at": stamp, "last_status": item["lifecycle_status"], "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；同一正式决策合并为一条通知，不因普通行情波动重复推送；收盘账户提醒仅在A股交易日触发。", "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"}
     write_json(state_path, state); print(json.dumps(item, ensure_ascii=False)); return 0 if ok else 1
 
 
