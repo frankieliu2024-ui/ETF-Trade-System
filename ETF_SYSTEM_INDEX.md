@@ -41,7 +41,7 @@
 - 美股现金盘、POST_MARKET、PRE_MARKET是否被正确分离；
 - `system_consistency.json` 自动验收结果和真实生产脉冲状态。
 
-`PASS`表示结构一致；`WARNING`表示账户事实缺失等正常状态；`FAIL`表示硬冲突，必须先修复。`.github/workflows/system-consistency.yml` 在相关维护推送main后自动运行并持久化结果；生产workflow在采集前再次预检。
+`PASS`表示结构一致；`WARNING`表示账户事实缺失等正常状态；`FAIL`表示硬冲突，必须先修复。`.github/workflows/system-consistency.yml` 在相关维护推送main后自动运行并持久化结果；高频行情workflow不再在provider采集前重复执行完整一致性检查，以避免阻塞行情主链。
 
 ## 运行读取路径
 
@@ -95,7 +95,7 @@
 1. 先从截图确认当次账户、持仓、现金和成交事实，并确定 `interaction_scenario`；
 2. 需要当前市场行情时立即通过 `requests/live_snapshot/*.json` 触发查询时补采，查询时行情优先于最近生产快照；午间和收盘后则使用对应已结束A股时段的正式快照，不把请求时间冒充行情时间；
 3. 新核心 `CURRENT` 在短等待预算内可用则使用；若即时补采尚未完成而最近有效快照仍为FRESH，则立即回退最近FRESH快照并明确标注真实时点，不为等待文档维护延迟正式回复；
-4. 每次有效快照后，`build_state_context` 同步刷新 `intraday_path_features.json`，并把最新特征嵌入 `decision_context.json`；ChatGPT可直接读取路径特征判断V型修复、急跌、突然拉升、高位震荡等结构候选，无需常规依赖用户上传分时图；
+4. 每次有效快照后，`build_state_context` 同步刷新 `intraday_path_features.json`，并把最新特征嵌入 `decision_context.json`；ChatGPT可直接读取路径特征判断V型修复、急跌、突然拉升、高位震荡等结构候选，无需常规依赖用户上传分时图。ETF份额、融资融券等日频研究在A股连续交易阶段只读取最近有效缓存，不重复发起低频外网请求；真正刷新放在收盘后的低频阶段；
 5. 日内路径特征属于行情事实层。`RAPID_RISE_CANDIDATE`、`SHARP_DROP_CANDIDATE`、`V_RECOVERY_CANDIDATE`、`HIGH_ZONE_CONSOLIDATION_CANDIDATE` 仅为描述性候选标签，必须同时读取采样覆盖和最大间隔；离散脉冲不能恢复两次采样之间全部分钟级路径，标签不得绕过MASTER生成风险许可、机会、金额或买卖动作；
 6. 同一查询请求可携带 `account_fact`、`formal_decision`、`trade_event`、`interaction_scenario`、`formal_review`。13个A股核心对象与 `CURRENT` 先发布，账户/Dashboard及其他下游维护随后继续；
 7. `formal_decision` 和 `formal_review` 只允许写入ChatGPT已经形成的正式结论，自动程序不得自行推导风险许可、生命周期、金额、卖出动作或复盘经验；
