@@ -1,21 +1,23 @@
 {
   "schema_version": "1.0",
-  "checked_at": "2026-08-26T01:21:28+08:00",
+  "checked_at": "2026-08-26T10:40:25+08:00",
   "mode": "DETERMINISTIC_RUNTIME_SELF_HEALING",
   "enabled": true,
-  "classification": "CONSISTENCY_REGRESSION",
-  "recommended_action": "ESCALATE",
-  "reason": "system consistency has a hard failure; automatic code/rule repair is forbidden",
+  "classification": "SCHEDULE_MISSED_OR_STALE",
+  "recommended_action": "REFRESH_SNAPSHOT",
+  "reason": "capture age=4418s, health=PASS, threshold=780s",
   "market_open_date": true,
-  "watch_window_active": false,
-  "current_capture_at": "2026-08-25T15:07:20+08:00",
-  "current_capture_age_seconds": 36848,
-  "runtime_health_status": "SKIPPED",
-  "system_consistency_status": "FAIL",
+  "watch_window_active": true,
+  "current_capture_at": "2026-08-26T09:26:47+08:00",
+  "current_capture_age_seconds": 4418,
+  "runtime_health_status": "PASS",
+  "system_consistency_status": "WARNING",
   "master_rules_version": "V2.2.16",
   "current_rules_version": "V2.2.16",
-  "snapshot_refresh_attempts": [],
-  "last_snapshot_refresh_trigger_at": null,
+  "snapshot_refresh_attempts": [
+    "2026-08-26T10:40:25+08:00"
+  ],
+  "last_snapshot_refresh_trigger_at": "2026-08-26T10:40:25+08:00",
   "last_safe_repair_at": "2026-08-25T20:07:24+08:00",
   "safety_boundary": {
     "may_modify_master": false,
@@ -23,5 +25,6 @@
     "may_change_provider_policy": false,
     "may_auto_trade": false,
     "may_ai_patch_main": false
-  }
+  },
+  "trigger_recorded": true
 }
