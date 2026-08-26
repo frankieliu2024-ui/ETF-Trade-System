@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-26T07:48:18Z",
-  "generated_at_beijing": "2026-08-26T15:48:18+08:00",
+  "generated_at": "2026-08-26T07:51:08Z",
+  "generated_at_beijing": "2026-08-26T15:51:08+08:00",
   "repository": {
-    "head_sha": "199db59bcb496ee7f4f7010b8e72bb67b1a9ce19",
-    "github_sha": "199db59bcb496ee7f4f7010b8e72bb67b1a9ce19",
-    "github_run_id": "32944540083",
+    "head_sha": "856e3ed30d6d1c0317773af6dde8cbdcaa8c2195",
+    "github_sha": "856e3ed30d6d1c0317773af6dde8cbdcaa8c2195",
+    "github_run_id": "32944771270",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "199db59bcb496ee7f4f7010b8e72bb67b1a9ce19",
-    "workflow_sha": "199db59bcb496ee7f4f7010b8e72bb67b1a9ce19",
+    "checked_commit": "856e3ed30d6d1c0317773af6dde8cbdcaa8c2195",
+    "workflow_sha": "856e3ed30d6d1c0317773af6dde8cbdcaa8c2195",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "FAIL",
-  "hard_error_count": 2,
+  "status": "WARNING",
+  "hard_error_count": 0,
   "warning_count": 1,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.013s\n\nOK\n"
+      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.021s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -190,12 +190,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=199db59bcb496ee7f4f7010b8e72bb67b1a9ce19"
+      "detail": "HEAD=856e3ed30d6d1c0317773af6dde8cbdcaa8c2195"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=199db59bcb496ee7f4f7010b8e72bb67b1a9ce19 GITHUB_SHA=199db59bcb496ee7f4f7010b8e72bb67b1a9ce19"
+      "detail": "HEAD=856e3ed30d6d1c0317773af6dde8cbdcaa8c2195 GITHUB_SHA=856e3ed30d6d1c0317773af6dde8cbdcaa8c2195"
     },
     {
       "name": "git:critical_files_tracked",
@@ -344,8 +344,8 @@
     },
     {
       "name": "providers:hstech_chain_exact",
-      "status": "FAIL",
-      "detail": "actual=['eastmoney_push2:124.HSTECH', 'yahoo_chart_api:HSTECH.HK', 'hithink-finance:HS2083', 'ETF_PROXY_513180'] expected=['hithink-finance:HS2083', 'yahoo_chart_api:HSTECH.HK', 'eastmoney_push2:124.HSTECH', 'ETF_PROXY_513180']"
+      "status": "PASS",
+      "detail": "actual=['hithink-finance:HS2083', 'yahoo_chart_api:HSTECH.HK', 'eastmoney_push2:124.HSTECH', 'ETF_PROXY_513180'] expected=['hithink-finance:HS2083', 'yahoo_chart_api:HSTECH.HK', 'eastmoney_push2:124.HSTECH', 'ETF_PROXY_513180']"
     },
     {
       "name": "providers:etf_fallback_policy",
@@ -354,8 +354,8 @@
     },
     {
       "name": "providers:direct_only_no_proxy",
-      "status": "FAIL",
-      "detail": "direct_only objects with proxy fallback=['HSTECH']"
+      "status": "PASS",
+      "detail": "direct_only objects with proxy fallback=[]"
     },
     {
       "name": "providers:account_stock_fallback_policy",
@@ -575,7 +575,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=03:48 max_age_seconds=28140 limit=900"
+      "detail": "active=False phase=03:51 max_age_seconds=28310 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -690,12 +690,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=1936"
+      "detail": "declared=STALE expected=STALE age_seconds=2106"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=1936"
+      "detail": "declared=STALE expected=STALE age_seconds=2106"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -735,7 +735,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-26T07:48:17Z market=2026-08-26T15:16:01+08:00"
+      "detail": "context=2026-08-26T07:51:07Z market=2026-08-26T15:16:01+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1003,10 +1003,7 @@
       "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
     }
   ],
-  "errors": [
-    "providers:hstech_chain_exact: actual=['eastmoney_push2:124.HSTECH', 'yahoo_chart_api:HSTECH.HK', 'hithink-finance:HS2083', 'ETF_PROXY_513180'] expected=['hithink-finance:HS2083', 'yahoo_chart_api:HSTECH.HK', 'eastmoney_push2:124.HSTECH', 'ETF_PROXY_513180']",
-    "providers:direct_only_no_proxy: direct_only objects with proxy fallback=['HSTECH']"
-  ],
+  "errors": [],
   "warnings": [
     "providers:single_source_shanghai_index: 000001.SH remains single-source until a verified Eastmoney index mapping exists"
   ],
