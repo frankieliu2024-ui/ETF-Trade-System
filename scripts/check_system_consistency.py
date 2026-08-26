@@ -210,7 +210,14 @@ def main() -> int:
     account_stocks = [str(item.get("code")) for item in (account.get("positions") or []) if item.get("asset_type") == "STOCK" and float(item.get("quantity") or 0) > 0]
     stock_missing_fallback = sorted(code for code in account_stocks if code + (".SH" if code.startswith(("6", "5")) else ".SZ") not in fallback_policy)
     check("providers:account_stock_fallback_policy", not stock_missing_fallback, f"account stocks without direct fallback={stock_missing_fallback}", warning=True)
-    check("providers:single_source_shanghai_index", "000001.SH" not in fallback_policy, "000001.SH remains single-source until a verified Eastmoney index mapping exists", warning=True)
+    shanghai_rule = fallback_policy.get("000001.SH") or {}
+    shanghai_direct_sources = [shanghai_rule.get("primary"), *(shanghai_rule.get("fallback") or [])]
+    shanghai_multisource_ok = (
+        shanghai_rule.get("direct_only") is True
+        and shanghai_rule.get("primary") == "tencent_qq"
+        and "hithink_finance" in shanghai_direct_sources
+    )
+    check("providers:shanghai_index_direct_fallback", shanghai_multisource_ok, f"000001.SH direct sources={shanghai_direct_sources}", warning=True)
     guard_text = read_text("scripts/market_data_guard.py")
     check("providers:guard_module", all(token in guard_text for token in ("def validate_market_row", "def classify_provider_failure", "def update_structural_health")), "shared market data guard functions present")
     check("providers:guard_call_chain", "market_data_guard" in read_text("scripts/cloud_runner_snapshot.py") and "market_data_guard" in read_text("scripts/build_account_stock_market.py"), "ETF/index and account-stock collectors import the shared guard")
