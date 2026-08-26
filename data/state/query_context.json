@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-26T02:14:51Z",
-  "generated_at_beijing": "2026-08-26T10:14:51+08:00",
+  "generated_at": "2026-08-26T02:18:12Z",
+  "generated_at_beijing": "2026-08-26T10:18:12+08:00",
   "market_date": "2026-08-26",
   "latest_valid_node": "live",
   "current": {
@@ -61,7 +61,7 @@
     "generated_at": "2026-08-26T01:26:47Z"
   },
   "decision_context": {
-    "generated_at": "2026-08-26T02:14:51Z",
+    "generated_at": "2026-08-26T02:16:20Z",
     "rules_version": "V2.2.16",
     "market_date": "2026-08-26",
     "latest_node": "live",
@@ -670,7 +670,7 @@
         "588000"
       ],
       "quick_retry_seconds": 129.985,
-      "age_seconds": 2884
+      "age_seconds": 2973
     },
     "freshness_at_context_build": {
       "status": "STALE",
@@ -699,7 +699,7 @@
         "588000"
       ],
       "quick_retry_seconds": 129.985,
-      "age_seconds": 2884
+      "age_seconds": 2973
     },
     "data_quality_summary": {
       "pass_count": 0,
@@ -778,7 +778,7 @@
       "account_fact_time": "2026-08-25T15:24:00+08:00",
       "market_snapshot_time": "2026-08-26T09:26:47+08:00",
       "market_phase": "OPENING_CALL_AUCTION",
-      "context_generated_time": "2026-08-26T02:14:51Z",
+      "context_generated_time": "2026-08-26T02:16:20Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
@@ -797,7 +797,7 @@
       "read_only": true
     },
     "market_quote_router": {
-      "generated_at_beijing": "2026-08-26T10:14:51+08:00",
+      "generated_at_beijing": "2026-08-26T10:16:20+08:00",
       "refresh_mode": "CACHED_STATE",
       "refresh_failures": [],
       "route_version": "V1.0",
@@ -1698,7 +1698,7 @@
     "account_fact_time": "2026-08-25T15:24:00+08:00",
     "market_snapshot_time": "2026-08-26T09:26:47+08:00",
     "market_phase": "OPENING_CALL_AUCTION",
-    "context_generated_time": "2026-08-26T02:14:51Z",
+    "context_generated_time": "2026-08-26T02:16:20Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -1780,7 +1780,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "STALE",
-        "age_seconds": 2884,
+        "age_seconds": 2973,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -1811,7 +1811,7 @@
           "588000"
         ],
         "quick_retry_seconds": 129.985,
-        "age_seconds": 2884
+        "age_seconds": 2973
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新计算FRESH/DEGRADED/STALE。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -1833,12 +1833,72 @@
       "degraded_max_age_seconds": 1500,
       "close_grace_seconds": 900,
       "principle": "查询时立即补采优先；常规10分钟只是生产目标。补采失败才回退最近有效状态，并按查询时刻重新判定新鲜度。"
+    },
+    "refresh_gate": {
+      "status": "READY",
+      "formal_analysis_allowed": true,
+      "formal_decision_persist_allowed": true,
+      "fallback_allowed": false,
+      "request_file": "requests/live_snapshot/20260825_1438_refresh_gate_acceptance.json",
+      "request_id": "20260825_1438_refresh_gate_acceptance",
+      "requested_at_beijing": "2026-08-25T14:38:30+08:00",
+      "requested_market_time": "2026-08-25T14:38:00+08:00",
+      "current_snapshot_time": "2026-08-26T09:26:47+08:00",
+      "resolved_snapshot_time": "2026-08-26T09:26:47+08:00",
+      "latest_snapshot": "data/market/snapshots/2026-08-26_092436.json",
+      "failure_reason": "",
+      "rule": "用户明确要求‘等补采/等指定节点数据后再回复’时，必须等本次请求之后且不早于requested_market_time的新CURRENT发布后，才允许正式风险许可、主候选、金额或卖出判断并持久化；PENDING/FAILED时禁止自动回退旧快照，除非用户随后明确授权回退。"
     }
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-08-26T10:14:51+08:00",
-    "refresh_mode": "CACHED_STATE",
-    "refresh_failures": [],
+    "generated_at_beijing": "2026-08-26T10:16:20+08:00",
+    "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
+    "refresh_failures": [
+      {
+        "symbol": "561980.SZ",
+        "error": "reporting a persistent failure.\",\"retryable\":false,\"request_id\":\"232c52abe0454e779afc0df7115a5482\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n; direct market snapshot failed: {\"ok\":false,\"command\":\"market\",\"error\":{\"code\":\"FUYAO_1002\",\"category\":\"validation\",\"message\":\"Unknown thscode: 561980.SZ\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"ab572c70fbca41edacc84f2a3d85dced\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n"
+      },
+      {
+        "symbol": "588000.SH",
+        "error": "reporting a persistent failure.\",\"retryable\":false,\"request_id\":\"371f6024dab84823851108a78db8719d\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n; direct market snapshot failed: {\"ok\":false,\"command\":\"market\",\"error\":{\"code\":\"FUYAO_1002\",\"category\":\"validation\",\"message\":\"Unknown thscode: 588000.SH\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"72c13a8869e344909b1906d4adbaaf44\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n"
+      },
+      {
+        "symbol": "159781.SZ",
+        "error": "reporting a persistent failure.\",\"retryable\":false,\"request_id\":\"8ed6d8ba6d3c49a39e91fae49206b4bd\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n; direct market snapshot failed: {\"ok\":false,\"command\":\"market\",\"error\":{\"code\":\"FUYAO_1002\",\"category\":\"validation\",\"message\":\"Unknown thscode: 159781.SZ\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"87634835dd8542d9abd15bd596da9e1e\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n"
+      },
+      {
+        "symbol": "159941.SZ",
+        "error": "reporting a persistent failure.\",\"retryable\":false,\"request_id\":\"8a1c71c7a9d94c828218b31b528952c4\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n; direct market snapshot failed: {\"ok\":false,\"command\":\"market\",\"error\":{\"code\":\"FUYAO_1002\",\"category\":\"validation\",\"message\":\"Unknown thscode: 159941.SZ\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"2204c178a7154d5ab500b77951c986b1\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n"
+      },
+      {
+        "symbol": "513180.SH",
+        "error": "reporting a persistent failure.\",\"retryable\":false,\"request_id\":\"41b265b185524453a0ad15ea5e9eaf2c\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n; direct market snapshot failed: {\"ok\":false,\"command\":\"market\",\"error\":{\"code\":\"FUYAO_1002\",\"category\":\"validation\",\"message\":\"Unknown thscode: 513180.SH\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"42c67e3a447246cc8b4ea821e1ce103c\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n"
+      },
+      {
+        "symbol": "159561.SZ",
+        "error": "reporting a persistent failure.\",\"retryable\":false,\"request_id\":\"61cc7ccbfd1e4d05bc95f53af3cf0622\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n; direct market snapshot failed: {\"ok\":false,\"command\":\"market\",\"error\":{\"code\":\"FUYAO_1002\",\"category\":\"validation\",\"message\":\"Unknown thscode: 159561.SZ\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"43add5bb88d0465a857d17d9d1267f04\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n"
+      },
+      {
+        "symbol": "513520.SH",
+        "error": "reporting a persistent failure.\",\"retryable\":false,\"request_id\":\"482318cc1ac546c9a57d3776f20f3a8e\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n; direct market snapshot failed: {\"ok\":false,\"command\":\"market\",\"error\":{\"code\":\"FUYAO_1002\",\"category\":\"validation\",\"message\":\"Unknown thscode: 513520.SH\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"6258b8486a764a7790b862a5c57cd155\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n"
+      },
+      {
+        "symbol": "518880.SH",
+        "error": "reporting a persistent failure.\",\"retryable\":false,\"request_id\":\"67ad8bca68294ae68ab7907d6f3dea4d\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n; direct market snapshot failed: {\"ok\":false,\"command\":\"market\",\"error\":{\"code\":\"FUYAO_1002\",\"category\":\"validation\",\"message\":\"Unknown thscode: 518880.SH\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"ba6322c9693b47c792ed758a3da5d1f7\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n"
+      },
+      {
+        "symbol": "159992.SZ",
+        "error": " request ID when reporting a persistent failure.\",\"retryable\":false,\"request_id\":\"a86748f63064456a889e82d2fb674494\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n; direct market snapshot failed: {\"ok\":false,\"command\":\"market\",\"error\":{\"code\":\"UPSTREAM_NETWORK_FAILURE\",\"category\":\"upstream\",\"message\":\"The Fuyao service could not be reached before the timeout.\",\"hint\":\"Check network connectivity and retry the command.\",\"retryable\":true},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n"
+      },
+      {
+        "symbol": "515880.SH",
+        "error": "reporting a persistent failure.\",\"retryable\":false,\"request_id\":\"05258e834110440481c23c27285813f2\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n; direct market snapshot failed: {\"ok\":false,\"command\":\"market\",\"error\":{\"code\":\"FUYAO_1002\",\"category\":\"validation\",\"message\":\"Unknown thscode: 515880.SH\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"4abd5bea58a64cceae554834077971ea\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n"
+      },
+      {
+        "symbol": "159326.SZ",
+        "error": "reporting a persistent failure.\",\"retryable\":false,\"request_id\":\"2b6cfc44ef8f4ed980d9c6971f4a1d2c\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n; direct market snapshot failed: {\"ok\":false,\"command\":\"market\",\"error\":{\"code\":\"FUYAO_1002\",\"category\":\"validation\",\"message\":\"Unknown thscode: 159326.SZ\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"33d0c4c29b5a4d188b3908d56b50fe16\"},\"meta\":{\"cli_version\":\"0.1.5\",\"schema_version\":\"1\"}}\n"
+      }
+    ],
     "route_version": "V1.0",
     "query_entry": "market_quote_router",
     "quotes": [
@@ -2485,11 +2545,11 @@
       "588000"
     ],
     "quick_retry_seconds": 129.985,
-    "age_seconds": 2884
+    "age_seconds": 2973
   },
   "freshness_at_context_build": {
     "status": "STALE",
-    "age_seconds": 2884,
+    "age_seconds": 2973,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -2575,5 +2635,21 @@
   },
   "needs_account_screenshot": false,
   "read_only": true,
-  "interaction_boundary": "用户主动查询时先核对一致性与交易日历，再按‘查询时立即补采 → 最近一次有效快照 → 明确降级/缺失’获取行情；正式输出必须标注北京时间真实数据时点，并区分美股现金盘、盘后和盘前。"
+  "interaction_boundary": "用户主动查询时先核对一致性与交易日历，再按‘查询时立即补采 → 最近一次有效快照 → 明确降级/缺失’获取行情；正式输出必须标注北京时间真实数据时点，并区分美股现金盘、盘后和盘前。",
+  "refresh_gate": {
+    "status": "READY",
+    "formal_analysis_allowed": true,
+    "formal_decision_persist_allowed": true,
+    "fallback_allowed": false,
+    "request_file": "requests/live_snapshot/20260825_1438_refresh_gate_acceptance.json",
+    "request_id": "20260825_1438_refresh_gate_acceptance",
+    "requested_at_beijing": "2026-08-25T14:38:30+08:00",
+    "requested_market_time": "2026-08-25T14:38:00+08:00",
+    "current_snapshot_time": "2026-08-26T09:26:47+08:00",
+    "resolved_snapshot_time": "2026-08-26T09:26:47+08:00",
+    "latest_snapshot": "data/market/snapshots/2026-08-26_092436.json",
+    "failure_reason": "",
+    "rule": "用户明确要求‘等补采/等指定节点数据后再回复’时，必须等本次请求之后且不早于requested_market_time的新CURRENT发布后，才允许正式风险许可、主候选、金额或卖出判断并持久化；PENDING/FAILED时禁止自动回退旧快照，除非用户随后明确授权回退。"
+  },
+  "formal_analysis_allowed": true
 }
