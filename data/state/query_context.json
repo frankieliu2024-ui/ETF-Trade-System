@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-26T02:24:21Z",
-  "generated_at_beijing": "2026-08-26T10:24:21+08:00",
+  "generated_at": "2026-08-26T02:47:48Z",
+  "generated_at_beijing": "2026-08-26T10:47:48+08:00",
   "market_date": "2026-08-26",
   "latest_valid_node": "live",
   "current": {
@@ -61,7 +61,7 @@
     "generated_at": "2026-08-26T01:26:47Z"
   },
   "decision_context": {
-    "generated_at": "2026-08-26T02:23:37Z",
+    "generated_at": "2026-08-26T02:45:31Z",
     "rules_version": "V2.2.16",
     "market_date": "2026-08-26",
     "latest_node": "live",
@@ -670,7 +670,7 @@
         "588000"
       ],
       "quick_retry_seconds": 129.985,
-      "age_seconds": 3410
+      "age_seconds": 4724
     },
     "freshness_at_context_build": {
       "status": "STALE",
@@ -699,7 +699,7 @@
         "588000"
       ],
       "quick_retry_seconds": 129.985,
-      "age_seconds": 3410
+      "age_seconds": 4724
     },
     "data_quality_summary": {
       "pass_count": 0,
@@ -729,7 +729,7 @@
     },
     "etf_strategy_risk_metrics": {
       "etf_strategy_risk_pct": -8.3,
-      "etf_holding_unrealized_pct": -8.17,
+      "etf_holding_unrealized_pct": -7.2,
       "etf_drawdown_from_high_pct": -8.3,
       "equity_data_quality": "KNOWN_NET_COMPLETE_FOR_RECORDED_TRADE_FEES",
       "strategy_equity_known_net": 183392.49,
@@ -775,10 +775,10 @@
       "read_only": true
     },
     "point_in_time": {
-      "account_fact_time": "2026-08-25T15:24:00+08:00",
+      "account_fact_time": "2026-08-26T10:40:00+08:00",
       "market_snapshot_time": "2026-08-26T09:26:47+08:00",
       "market_phase": "OPENING_CALL_AUCTION",
-      "context_generated_time": "2026-08-26T02:23:37Z",
+      "context_generated_time": "2026-08-26T02:45:31Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
@@ -791,13 +791,19 @@
       "read_only": true
     },
     "formal_action": {
-      "status": "NOT_PROVIDED",
-      "execution_status": "UNKNOWN",
-      "preserve_rule": "普通账户同步不擦除最近正式决策。",
+      "action": "新增0元；现有四只ETF继续持有；现金保留至11:30复核。",
+      "quantity": null,
+      "decision_id": "20260826_1040_formal_intraday_decision",
+      "decision_time": "2026-08-26T10:40:00+08:00",
+      "source": "CHATGPT_FORMAL_DECISION",
+      "lifecycle": "半导体设备ETF（561980）持有管理；科创50ETF（588000）持有管理；科创创业ETF（159781）持有管理；纳指ETF（159941）持有管理。",
+      "applicable_object": "159326",
+      "validity": "ACTIVE",
+      "execution_status": "PENDING",
       "read_only": true
     },
     "market_quote_router": {
-      "generated_at_beijing": "2026-08-26T10:23:37+08:00",
+      "generated_at_beijing": "2026-08-26T10:45:31+08:00",
       "refresh_mode": "CACHED_STATE",
       "refresh_failures": [],
       "route_version": "V1.0",
@@ -1178,11 +1184,11 @@
           "turnover": null,
           "data_time_beijing": "2026-08-26T09:59:25+08:00",
           "data_time_local": "",
-          "market_phase": "REGULAR",
-          "market_status_cn": "日股交易中",
-          "data_nature_cn": "实时交易行情",
+          "market_phase": "MIDDAY_BREAK",
+          "market_status_cn": "日股午间休市",
+          "data_nature_cn": "午间休市期间的上午最新有效行情",
           "source": "yahoo_chart_api",
-          "freshness": "DEGRADED",
+          "freshness": "STALE",
           "quality_status": "PASS",
           "direct_quote": true,
           "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
@@ -1254,7 +1260,7 @@
           "market_status_cn": "港股交易中",
           "data_nature_cn": "实时交易行情",
           "source": "eastmoney_push2delay",
-          "freshness": "FRESH",
+          "freshness": "STALE",
           "quality_status": "PASS",
           "direct_quote": true,
           "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
@@ -1278,8 +1284,8 @@
           "market_status_cn": "美股休市中"
         },
         "JP": {
-          "phase": "REGULAR",
-          "market_status_cn": "日股交易中"
+          "phase": "MIDDAY_BREAK",
+          "market_status_cn": "日股午间休市"
         },
         "KR": {
           "phase": "REGULAR",
@@ -1297,28 +1303,29 @@
     },
     "decision_trigger": {
       "schema_version": "1.0",
-      "generated_at": "2026-08-26T09:27:07+08:00",
-      "status": "NO_NEW_TRIGGER",
-      "trigger_type": "",
-      "triggered_at": "",
-      "applicable_object": "",
-      "previous_decision_id": "",
-      "evidence_change": "",
-      "evidence_time": "2026-08-26T09:26:47+08:00",
-      "e2e_status": "BLOCKED",
-      "requires_formal_reassessment": false,
-      "pending_trigger": false,
-      "idempotency_key": "",
+      "generated_at": "2026-08-26T10:45:31+08:00",
+      "status": "TRIGGERED",
+      "trigger_type": "ACCOUNT_STRUCTURE_CHANGED",
+      "triggered_at": "2026-08-26T10:45:31+08:00",
+      "applicable_object": "total_asset",
+      "previous_decision_id": "20260826_1040_formal_intraday_decision",
+      "evidence_change": "total_asset变化 +2901.00",
+      "evidence_time": "2026-08-26T10:40:00+08:00",
+      "e2e_status": "DEGRADED",
+      "requires_formal_reassessment": true,
+      "pending_trigger": true,
+      "idempotency_key": "ACCOUNT_STRUCTURE_CHANGED|total_asset|2026-08-26T10:40|20260826_1040_formal_intraday_decision|20260825_112516",
       "risk_zone": "RISK_CONTROL",
       "last_trade_event_id": "20260825_112516",
+      "cooldown_rule": "同一事件类型、对象、证据窗口、上一正式决策不重复生成；普通10分钟行情变化不触发。",
       "safety_boundary": "确定性识别仅生成重评请求，不生成金额、份额或交易动作。",
       "read_only": true
     },
     "capital_efficiency_ranking": {
       "schema_version": "1.0",
-      "generated_at": "2026-08-26T09:27:07+08:00",
+      "generated_at": "2026-08-26T10:45:31+08:00",
       "as_of": "2026-08-26T09:26:47+08:00",
-      "e2e_status": "BLOCKED",
+      "e2e_status": "DEGRADED",
       "risk_zone": "RISK_CONTROL",
       "top_candidate": "现金",
       "next_unit_capital_use": "现金/持仓/观察候选按原MASTER链人工比较；本结果不生成金额。",
@@ -1328,7 +1335,7 @@
           "code": null,
           "category": "CASH",
           "eligibility": "AVAILABLE",
-          "reason": "E2E BLOCKED；只保留现金观察，不输出正式金额或份额。"
+          "reason": "等待价值与风险缓冲可直接参与比较；不自动等同于低效率。"
         },
         {
           "display_name": "159781",
@@ -1376,31 +1383,31 @@
       "excluded_candidates": [
         {
           "display_name": "159326",
-          "reason": "E2E_BLOCKED"
+          "reason": "风险控制区普通风险扩张候选不预先放行；如属风险中性迁移仍走原交易链。"
         },
         {
           "display_name": "159561",
-          "reason": "E2E_BLOCKED"
+          "reason": "风险控制区普通风险扩张候选不预先放行；如属风险中性迁移仍走原交易链。"
         },
         {
           "display_name": "159992",
-          "reason": "E2E_BLOCKED"
+          "reason": "风险控制区普通风险扩张候选不预先放行；如属风险中性迁移仍走原交易链。"
         },
         {
           "display_name": "513180",
-          "reason": "E2E_BLOCKED"
+          "reason": "风险控制区普通风险扩张候选不预先放行；如属风险中性迁移仍走原交易链。"
         },
         {
           "display_name": "513520",
-          "reason": "E2E_BLOCKED"
+          "reason": "风险控制区普通风险扩张候选不预先放行；如属风险中性迁移仍走原交易链。"
         },
         {
           "display_name": "515880",
-          "reason": "E2E_BLOCKED"
+          "reason": "风险控制区普通风险扩张候选不预先放行；如属风险中性迁移仍走原交易链。"
         },
         {
           "display_name": "518880",
-          "reason": "E2E_BLOCKED"
+          "reason": "风险控制区普通风险扩张候选不预先放行；如属风险中性迁移仍走原交易链。"
         }
       ],
       "key_reason": "两阶段：先做E2E、风险扩张、质量和可执行性硬过滤，再保留少量定性比较对象；不生成综合资本效率分数。",
@@ -1409,7 +1416,7 @@
       "safety_boundary": "资本排序不替代唯一主候选，不自动生成Trial、Confirm、金额、卖出份额或订单。"
     },
     "intraday_path_features": {
-      "generated_at": "2026-08-26T01:26:53Z",
+      "generated_at": "2026-08-26T02:45:18Z",
       "market_date": "2026-08-26",
       "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
       "read_only": true,
@@ -1428,7 +1435,7 @@
       "etf_evidence": [],
       "skfolio_risk_evidence": {
         "schema_version": "1.0",
-        "generated_at": "2026-08-26T01:26:54Z",
+        "generated_at": "2026-08-26T02:45:18Z",
         "status": "READY",
         "mode": "SKFOLIO_VALIDATED_RISK_EVIDENCE",
         "validation_basis": {
@@ -1450,7 +1457,7 @@
         "current_market_date": "2026-08-26",
         "data_alignment": "LATEST_AVAILABLE_RESEARCH_DATE",
         "account_fact_status": "VALID",
-        "account_fact_updated_at": "2026-08-25T15:24:00+08:00",
+        "account_fact_updated_at": "2026-08-26T10:40:00+08:00",
         "eligible_etf_count": 11,
         "universe_high_corr_components": [
           {
@@ -1534,10 +1541,10 @@
         ],
         "current_account": {
           "etf_weights": {
-            "半导体设备ETF（561980）": 0.3515,
-            "科创50ETF（588000）": 0.2395,
-            "科创创业ETF（159781）": 0.2078,
-            "纳指ETF（159941）": 0.2011
+            "半导体设备ETF（561980）": 0.354,
+            "科创50ETF（588000）": 0.2401,
+            "科创创业ETF（159781）": 0.2077,
+            "纳指ETF（159941）": 0.1982
           },
           "high_corr_components": [
             {
@@ -1551,7 +1558,7 @@
                 "半导体设备ETF（561980）",
                 "科创50ETF（588000）"
               ],
-              "account_etf_weight_share": 0.7989
+              "account_etf_weight_share": 0.8018
             }
           ],
           "risk_side_release_efficiency": [
@@ -1559,29 +1566,29 @@
               "code": "561980",
               "name": "半导体设备ETF",
               "display_name": "半导体设备ETF（561980）",
-              "risk_side_release_efficiency": 0.5896,
-              "account_etf_weight": 0.3515
+              "risk_side_release_efficiency": 0.59,
+              "account_etf_weight": 0.354
             },
             {
               "code": "588000",
               "name": "科创50ETF",
               "display_name": "科创50ETF（588000）",
               "risk_side_release_efficiency": 0.5104,
-              "account_etf_weight": 0.2395
+              "account_etf_weight": 0.2401
             },
             {
               "code": "159781",
               "name": "科创创业ETF",
               "display_name": "科创创业ETF（159781）",
-              "risk_side_release_efficiency": 0.4428,
-              "account_etf_weight": 0.2078
+              "risk_side_release_efficiency": 0.4426,
+              "account_etf_weight": 0.2077
             },
             {
               "code": "159941",
               "name": "纳指ETF",
               "display_name": "纳指ETF（159941）",
-              "risk_side_release_efficiency": 0.1725,
-              "account_etf_weight": 0.2011
+              "risk_side_release_efficiency": 0.172,
+              "account_etf_weight": 0.1982
             }
           ]
         },
@@ -1659,7 +1666,7 @@
   },
   "etf_strategy_risk_metrics": {
     "etf_strategy_risk_pct": -8.3,
-    "etf_holding_unrealized_pct": -8.17,
+    "etf_holding_unrealized_pct": -7.2,
     "etf_drawdown_from_high_pct": -8.3,
     "equity_data_quality": "KNOWN_NET_COMPLETE_FOR_RECORDED_TRADE_FEES",
     "strategy_equity_known_net": 183392.49,
@@ -1695,10 +1702,10 @@
     "source": "latest_snapshot_rows"
   },
   "point_in_time": {
-    "account_fact_time": "2026-08-25T15:24:00+08:00",
+    "account_fact_time": "2026-08-26T10:40:00+08:00",
     "market_snapshot_time": "2026-08-26T09:26:47+08:00",
     "market_phase": "OPENING_CALL_AUCTION",
-    "context_generated_time": "2026-08-26T02:23:37Z",
+    "context_generated_time": "2026-08-26T02:45:31Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -1711,9 +1718,15 @@
     "read_only": true
   },
   "formal_action": {
-    "status": "NOT_PROVIDED",
-    "execution_status": "UNKNOWN",
-    "preserve_rule": "普通账户同步不擦除最近正式决策。",
+    "action": "新增0元；现有四只ETF继续持有；现金保留至11:30复核。",
+    "quantity": null,
+    "decision_id": "20260826_1040_formal_intraday_decision",
+    "decision_time": "2026-08-26T10:40:00+08:00",
+    "source": "CHATGPT_FORMAL_DECISION",
+    "lifecycle": "半导体设备ETF（561980）持有管理；科创50ETF（588000）持有管理；科创创业ETF（159781）持有管理；纳指ETF（159941）持有管理。",
+    "applicable_object": "159326",
+    "validity": "ACTIVE",
+    "execution_status": "PENDING",
     "read_only": true
   },
   "decision_read_plan": {
@@ -1752,8 +1765,8 @@
     },
     "account_gate": {
       "raw_status": "VALID",
-      "updated_at": "2026-08-25T15:24:00+08:00",
-      "updated_market_date": "2026-08-25",
+      "updated_at": "2026-08-26T10:40:00+08:00",
+      "updated_market_date": "2026-08-26",
       "current_market_date": "2026-08-26",
       "same_market_date_required": false,
       "can_use_current_account_fact": true,
@@ -1780,7 +1793,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "STALE",
-        "age_seconds": 3410,
+        "age_seconds": 4724,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -1811,7 +1824,7 @@
           "588000"
         ],
         "quick_retry_seconds": 129.985,
-        "age_seconds": 3410
+        "age_seconds": 4724
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新计算FRESH/DEGRADED/STALE。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -1851,44 +1864,20 @@
     }
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-08-26T10:23:37+08:00",
+    "generated_at_beijing": "2026-08-26T10:45:31+08:00",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
     "refresh_failures": [
       {
-        "symbol": "159781.SZ",
-        "error": "HTTP Error 502: Bad Gateway"
+        "symbol": "000001",
+        "error": "cannot access local variable 'ts' where it is not associated with a value"
       },
       {
-        "symbol": "159941.SZ",
-        "error": "HTTP Error 502: Bad Gateway"
+        "symbol": "399006",
+        "error": "cannot access local variable 'ts' where it is not associated with a value"
       },
       {
-        "symbol": "513180.SH",
-        "error": "HTTP Error 502: Bad Gateway"
-      },
-      {
-        "symbol": "159561.SZ",
-        "error": "HTTP Error 502: Bad Gateway"
-      },
-      {
-        "symbol": "513520.SH",
-        "error": "HTTP Error 502: Bad Gateway"
-      },
-      {
-        "symbol": "518880.SH",
-        "error": "HTTP Error 502: Bad Gateway"
-      },
-      {
-        "symbol": "159992.SZ",
-        "error": "HTTP Error 502: Bad Gateway"
-      },
-      {
-        "symbol": "515880.SH",
-        "error": "HTTP Error 502: Bad Gateway"
-      },
-      {
-        "symbol": "159326.SZ",
-        "error": "HTTP Error 502: Bad Gateway"
+        "symbol": "561980",
+        "error": "<urlopen error _ssl.c:999: The handshake operation timed out>"
       }
     ],
     "route_version": "V1.0",
@@ -1897,18 +1886,18 @@
       {
         "market": "CN",
         "market_name": "中国大陆",
-        "symbol": "561980.SH",
-        "name": "半导体设备ETF招商",
-        "latest_price": 0.675,
-        "open": 0.675,
-        "high": 0.679,
-        "low": 0.666,
-        "prev_close": 0.675,
-        "volume": 200442200,
-        "amount": 135026051.0,
-        "turnover": 135026051.0,
-        "data_time_beijing": "2026-08-26T10:23:39+08:00",
-        "data_time_local": "2026-08-26T10:23:39+08:00",
+        "symbol": "588000",
+        "name": "科创50ETF华夏",
+        "latest_price": 1.726,
+        "open": 1.694,
+        "high": 1.732,
+        "low": 1.687,
+        "prev_close": 1.693,
+        "volume": 1759200100,
+        "amount": 2999253235.0,
+        "turnover": 2999253235.0,
+        "data_time_beijing": "2026-08-26T10:46:09+08:00",
+        "data_time_local": "2026-08-26T10:46:09+08:00",
         "market_phase": "REGULAR",
         "market_status_cn": "A股交易中",
         "data_nature_cn": "实时交易行情",
@@ -1921,22 +1910,262 @@
       {
         "market": "CN",
         "market_name": "中国大陆",
-        "symbol": "588000.SH",
-        "name": "科创50ETF华夏",
-        "latest_price": 1.7,
-        "open": 1.694,
-        "high": 1.707,
-        "low": 1.687,
-        "prev_close": 1.693,
-        "volume": 1123750400,
-        "amount": 1908077012.0,
-        "turnover": 1908077012.0,
-        "data_time_beijing": "2026-08-26T10:23:45+08:00",
-        "data_time_local": "2026-08-26T10:23:45+08:00",
+        "symbol": "159781",
+        "name": "科创创业ETF易方达",
+        "latest_price": 1.078,
+        "open": 1.064,
+        "high": 1.082,
+        "low": 1.056,
+        "prev_close": 1.062,
+        "volume": 136085700,
+        "amount": 145098893.502,
+        "turnover": 145098893.502,
+        "data_time_beijing": "2026-08-26T10:46:42+08:00",
+        "data_time_local": "2026-08-26T10:46:42+08:00",
         "market_phase": "REGULAR",
         "market_status_cn": "A股交易中",
         "data_nature_cn": "实时交易行情",
         "source": "eastmoney_push2",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "159941",
+        "name": "纳指ETF广发",
+        "latest_price": 1.651,
+        "open": 1.644,
+        "high": 1.653,
+        "low": 1.644,
+        "prev_close": 1.643,
+        "volume": 122794200,
+        "amount": 202456430.086,
+        "turnover": 202456430.086,
+        "data_time_beijing": "2026-08-26T10:47:15+08:00",
+        "data_time_local": "2026-08-26T10:47:15+08:00",
+        "market_phase": "REGULAR",
+        "market_status_cn": "A股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "eastmoney_push2",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "513180",
+        "name": "恒生科技ETF华夏",
+        "latest_price": 0.586,
+        "open": 0.58,
+        "high": 0.587,
+        "low": 0.58,
+        "prev_close": 0.579,
+        "volume": 1491558500,
+        "amount": 872075583.0,
+        "turnover": 872075583.0,
+        "data_time_beijing": "2026-08-26T10:47:21+08:00",
+        "data_time_local": "2026-08-26T10:47:21+08:00",
+        "market_phase": "REGULAR",
+        "market_status_cn": "A股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "eastmoney_push2",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "513520",
+        "name": "日经ETF华夏",
+        "latest_price": 2.291,
+        "open": 2.259,
+        "high": 2.291,
+        "low": 2.256,
+        "prev_close": 2.273,
+        "volume": 65126400,
+        "amount": 147958585.0,
+        "turnover": 147958585.0,
+        "data_time_beijing": "2026-08-26T10:47:24+08:00",
+        "data_time_local": "2026-08-26T10:47:24+08:00",
+        "market_phase": "REGULAR",
+        "market_status_cn": "A股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "eastmoney_push2",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "159561",
+        "name": "德国ETF嘉实",
+        "latest_price": 1.383,
+        "open": 1.38,
+        "high": 1.384,
+        "low": 1.378,
+        "prev_close": 1.377,
+        "volume": 22604500,
+        "amount": 31204128.2,
+        "turnover": 31204128.2,
+        "data_time_beijing": "2026-08-26T10:47:24+08:00",
+        "data_time_local": "2026-08-26T10:47:24+08:00",
+        "market_phase": "REGULAR",
+        "market_status_cn": "A股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "eastmoney_push2",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "518880",
+        "name": "黄金ETF华安",
+        "latest_price": 9.583,
+        "open": 9.539,
+        "high": 9.588,
+        "low": 9.525,
+        "prev_close": 9.533,
+        "volume": 195720100,
+        "amount": 1870943139.0,
+        "turnover": 1870943139.0,
+        "data_time_beijing": "2026-08-26T10:47:31+08:00",
+        "data_time_local": "2026-08-26T10:47:31+08:00",
+        "market_phase": "REGULAR",
+        "market_status_cn": "A股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "eastmoney_push2",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "159992",
+        "name": "创新药ETF银华",
+        "latest_price": 0.87,
+        "open": 0.868,
+        "high": 0.883,
+        "low": 0.866,
+        "prev_close": 0.868,
+        "volume": 668928000,
+        "amount": 586016668.278,
+        "turnover": 586016668.278,
+        "data_time_beijing": "2026-08-26T10:47:36+08:00",
+        "data_time_local": "2026-08-26T10:47:36+08:00",
+        "market_phase": "REGULAR",
+        "market_status_cn": "A股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "eastmoney_push2",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "515880",
+        "name": "通信ETF国泰",
+        "latest_price": 0.653,
+        "open": 0.651,
+        "high": 0.655,
+        "low": 0.635,
+        "prev_close": 0.648,
+        "volume": 1745474900,
+        "amount": 1127341074.0,
+        "turnover": 1127341074.0,
+        "data_time_beijing": "2026-08-26T10:47:40+08:00",
+        "data_time_local": "2026-08-26T10:47:40+08:00",
+        "market_phase": "REGULAR",
+        "market_status_cn": "A股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "eastmoney_push2",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "159326",
+        "name": "电网设备ETF华夏",
+        "latest_price": 1.687,
+        "open": 1.677,
+        "high": 1.69,
+        "low": 1.667,
+        "prev_close": 1.671,
+        "volume": 127079700,
+        "amount": 213322262.7,
+        "turnover": 213322262.7,
+        "data_time_beijing": "2026-08-26T10:47:42+08:00",
+        "data_time_local": "2026-08-26T10:47:42+08:00",
+        "market_phase": "REGULAR",
+        "market_status_cn": "A股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "eastmoney_push2",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "300750",
+        "name": "300750",
+        "latest_price": 384.17,
+        "open": 379.9,
+        "high": 385.5,
+        "low": 373.71,
+        "prev_close": null,
+        "volume": 10698151,
+        "amount": null,
+        "turnover": null,
+        "data_time_beijing": "2026-08-26T10:47:46+08:00",
+        "data_time_local": "2026-08-26T10:47:46+08:00",
+        "market_phase": "REGULAR",
+        "market_status_cn": "A股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "hithink-finance",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "CN",
+        "market_name": "中国大陆",
+        "symbol": "601138",
+        "name": "601138",
+        "latest_price": 60.33,
+        "open": 60.2,
+        "high": 60.58,
+        "low": 59.38,
+        "prev_close": null,
+        "volume": 35960321,
+        "amount": null,
+        "turnover": null,
+        "data_time_beijing": "2026-08-26T10:47:47+08:00",
+        "data_time_local": "2026-08-26T10:47:47+08:00",
+        "market_phase": "REGULAR",
+        "market_status_cn": "A股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "hithink-finance",
         "freshness": "FRESH",
         "quality_status": "PASS",
         "direct_quote": true,
@@ -1993,222 +2222,6 @@
       {
         "market": "CN",
         "market_name": "中国大陆",
-        "symbol": "159326",
-        "name": "",
-        "latest_price": 1.677,
-        "open": 1.677,
-        "high": 1.677,
-        "low": 1.677,
-        "prev_close": 1.671,
-        "volume": 1633100,
-        "amount": 2738708.7,
-        "turnover": 2738708.7,
-        "data_time_beijing": "2026-08-26T09:25:00+08:00",
-        "data_time_local": "",
-        "market_phase": "REGULAR",
-        "market_status_cn": "A股交易中",
-        "data_nature_cn": "实时交易行情",
-        "source": "eastmoney_push2",
-        "freshness": "STALE",
-        "quality_status": "DEGRADED",
-        "direct_quote": true,
-        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
-      },
-      {
-        "market": "CN",
-        "market_name": "中国大陆",
-        "symbol": "159561",
-        "name": "",
-        "latest_price": 1.38,
-        "open": 1.38,
-        "high": 1.38,
-        "low": 1.38,
-        "prev_close": 1.377,
-        "volume": 1383100,
-        "amount": 1908678.0,
-        "turnover": 1908678.0,
-        "data_time_beijing": "2026-08-26T09:25:00+08:00",
-        "data_time_local": "",
-        "market_phase": "REGULAR",
-        "market_status_cn": "A股交易中",
-        "data_nature_cn": "实时交易行情",
-        "source": "eastmoney_push2",
-        "freshness": "STALE",
-        "quality_status": "DEGRADED",
-        "direct_quote": true,
-        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
-      },
-      {
-        "market": "CN",
-        "market_name": "中国大陆",
-        "symbol": "159781",
-        "name": "",
-        "latest_price": 1.064,
-        "open": 1.064,
-        "high": 1.064,
-        "low": 1.064,
-        "prev_close": 1.062,
-        "volume": 1092900,
-        "amount": 1162845.6,
-        "turnover": 1162845.6,
-        "data_time_beijing": "2026-08-26T09:25:12+08:00",
-        "data_time_local": "",
-        "market_phase": "REGULAR",
-        "market_status_cn": "A股交易中",
-        "data_nature_cn": "实时交易行情",
-        "source": "eastmoney_push2",
-        "freshness": "STALE",
-        "quality_status": "DEGRADED",
-        "direct_quote": true,
-        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
-      },
-      {
-        "market": "CN",
-        "market_name": "中国大陆",
-        "symbol": "159941",
-        "name": "",
-        "latest_price": null,
-        "open": null,
-        "high": null,
-        "low": null,
-        "prev_close": null,
-        "volume": null,
-        "amount": null,
-        "turnover": null,
-        "data_time_beijing": "2026-08-26T09:25:28+08:00",
-        "data_time_local": "",
-        "market_phase": "REGULAR",
-        "market_status_cn": "A股交易中",
-        "data_nature_cn": "实时交易行情",
-        "source": "hithink-finance",
-        "freshness": "STALE",
-        "quality_status": "FAILED",
-        "direct_quote": true,
-        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
-      },
-      {
-        "market": "CN",
-        "market_name": "中国大陆",
-        "symbol": "159992",
-        "name": "",
-        "latest_price": 0.868,
-        "open": 0.868,
-        "high": 0.868,
-        "low": 0.868,
-        "prev_close": 0.868,
-        "volume": 4523800,
-        "amount": 3926658.4,
-        "turnover": 3926658.4,
-        "data_time_beijing": "2026-08-26T09:25:24+08:00",
-        "data_time_local": "",
-        "market_phase": "REGULAR",
-        "market_status_cn": "A股交易中",
-        "data_nature_cn": "实时交易行情",
-        "source": "eastmoney_push2",
-        "freshness": "STALE",
-        "quality_status": "DEGRADED",
-        "direct_quote": true,
-        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
-      },
-      {
-        "market": "CN",
-        "market_name": "中国大陆",
-        "symbol": "513180",
-        "name": "",
-        "latest_price": 0.58,
-        "open": 0.58,
-        "high": 0.58,
-        "low": 0.58,
-        "prev_close": 0.579,
-        "volume": 18398700,
-        "amount": 10671246.0,
-        "turnover": 10671246.0,
-        "data_time_beijing": "2026-08-26T09:25:41+08:00",
-        "data_time_local": "",
-        "market_phase": "REGULAR",
-        "market_status_cn": "A股交易中",
-        "data_nature_cn": "实时交易行情",
-        "source": "eastmoney_push2",
-        "freshness": "STALE",
-        "quality_status": "DEGRADED",
-        "direct_quote": true,
-        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
-      },
-      {
-        "market": "CN",
-        "market_name": "中国大陆",
-        "symbol": "513520",
-        "name": "",
-        "latest_price": 2.259,
-        "open": 2.259,
-        "high": 2.259,
-        "low": 2.259,
-        "prev_close": 2.273,
-        "volume": 765900,
-        "amount": 1730168.0,
-        "turnover": 1730168.0,
-        "data_time_beijing": "2026-08-26T09:25:48+08:00",
-        "data_time_local": "",
-        "market_phase": "REGULAR",
-        "market_status_cn": "A股交易中",
-        "data_nature_cn": "实时交易行情",
-        "source": "eastmoney_push2",
-        "freshness": "STALE",
-        "quality_status": "DEGRADED",
-        "direct_quote": true,
-        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
-      },
-      {
-        "market": "CN",
-        "market_name": "中国大陆",
-        "symbol": "515880",
-        "name": "",
-        "latest_price": 0.651,
-        "open": 0.651,
-        "high": 0.651,
-        "low": 0.651,
-        "prev_close": 0.648,
-        "volume": 47818100,
-        "amount": 31129583.0,
-        "turnover": 31129583.0,
-        "data_time_beijing": "2026-08-26T09:25:55+08:00",
-        "data_time_local": "",
-        "market_phase": "REGULAR",
-        "market_status_cn": "A股交易中",
-        "data_nature_cn": "实时交易行情",
-        "source": "eastmoney_push2",
-        "freshness": "STALE",
-        "quality_status": "DEGRADED",
-        "direct_quote": true,
-        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
-      },
-      {
-        "market": "CN",
-        "market_name": "中国大陆",
-        "symbol": "518880",
-        "name": "",
-        "latest_price": 9.539,
-        "open": 9.539,
-        "high": 9.539,
-        "low": 9.539,
-        "prev_close": 9.533,
-        "volume": 1997200,
-        "amount": 19051291.0,
-        "turnover": 19051291.0,
-        "data_time_beijing": "2026-08-26T09:26:16+08:00",
-        "data_time_local": "",
-        "market_phase": "REGULAR",
-        "market_status_cn": "A股交易中",
-        "data_nature_cn": "实时交易行情",
-        "source": "eastmoney_push2",
-        "freshness": "STALE",
-        "quality_status": "DEGRADED",
-        "direct_quote": true,
-        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
-      },
-      {
-        "market": "CN",
-        "market_name": "中国大陆",
         "symbol": "561980",
         "name": "",
         "latest_price": 0.675,
@@ -2220,30 +2233,6 @@
         "amount": 2408670.0,
         "turnover": 2408670.0,
         "data_time_beijing": "2026-08-26T09:26:12+08:00",
-        "data_time_local": "",
-        "market_phase": "REGULAR",
-        "market_status_cn": "A股交易中",
-        "data_nature_cn": "实时交易行情",
-        "source": "eastmoney_push2",
-        "freshness": "STALE",
-        "quality_status": "DEGRADED",
-        "direct_quote": true,
-        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
-      },
-      {
-        "market": "CN",
-        "market_name": "中国大陆",
-        "symbol": "588000",
-        "name": "",
-        "latest_price": 1.694,
-        "open": 1.694,
-        "high": 1.694,
-        "low": 1.694,
-        "prev_close": 1.693,
-        "volume": 17828700,
-        "amount": 30201818.0,
-        "turnover": 30201818.0,
-        "data_time_beijing": "2026-08-26T09:26:24+08:00",
         "data_time_local": "",
         "market_phase": "REGULAR",
         "market_status_cn": "A股交易中",
@@ -2317,11 +2306,11 @@
         "turnover": null,
         "data_time_beijing": "2026-08-26T09:59:25+08:00",
         "data_time_local": "",
-        "market_phase": "REGULAR",
-        "market_status_cn": "日股交易中",
-        "data_nature_cn": "实时交易行情",
+        "market_phase": "MIDDAY_BREAK",
+        "market_status_cn": "日股午间休市",
+        "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "yahoo_chart_api",
-        "freshness": "DEGRADED",
+        "freshness": "STALE",
         "quality_status": "PASS",
         "direct_quote": true,
         "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
@@ -2393,7 +2382,7 @@
         "market_status_cn": "港股交易中",
         "data_nature_cn": "实时交易行情",
         "source": "eastmoney_push2delay",
-        "freshness": "FRESH",
+        "freshness": "STALE",
         "quality_status": "PASS",
         "direct_quote": true,
         "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
@@ -2417,8 +2406,8 @@
         "market_status_cn": "美股休市中"
       },
       "JP": {
-        "phase": "REGULAR",
-        "market_status_cn": "日股交易中"
+        "phase": "MIDDAY_BREAK",
+        "market_status_cn": "日股午间休市"
       },
       "KR": {
         "phase": "REGULAR",
@@ -2585,11 +2574,11 @@
       "588000"
     ],
     "quick_retry_seconds": 129.985,
-    "age_seconds": 3410
+    "age_seconds": 4724
   },
   "freshness_at_context_build": {
     "status": "STALE",
-    "age_seconds": 3410,
+    "age_seconds": 4724,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -2664,8 +2653,8 @@
   "account_fact_status": "VALID",
   "account_gate": {
     "raw_status": "VALID",
-    "updated_at": "2026-08-25T15:24:00+08:00",
-    "updated_market_date": "2026-08-25",
+    "updated_at": "2026-08-26T10:40:00+08:00",
+    "updated_market_date": "2026-08-26",
     "current_market_date": "2026-08-26",
     "same_market_date_required": false,
     "can_use_current_account_fact": true,
