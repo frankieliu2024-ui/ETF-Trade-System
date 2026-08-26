@@ -66,7 +66,7 @@ def _quote(symbol: str, market: str, price: dict, now: datetime, policy: dict, s
     }.get(phase, "最新有效行情")
     return {
         "market": market, "market_name": {"US": "美国", "HK": "中国香港", "TW": "中国台湾", "JP": "日本", "KR": "韩国"}.get(market, market),
-        "symbol": symbol, "name": symbol, "latest_price": price.get("close"),
+        "symbol": symbol, "name": symbol, "latest_price": price.get("close"), "open": price.get("open"), "high": price.get("high"), "low": price.get("low"), "prev_close": price.get("prev_close"), "volume": price.get("volume"), "amount": price.get("amount"), "turnover": price.get("amount"),
         "data_time_beijing": ts.astimezone(BEIJING).isoformat(timespec="seconds"),
         "data_time_local": ts.astimezone(ZoneInfo(MARKET_ZONES.get(market, "America/New_York"))).isoformat(timespec="seconds"),
         "market_phase": phase, "market_status_cn": display_market_status(market, phase),
@@ -84,7 +84,7 @@ def _yahoo(symbol: str, market: str, now: datetime, policy: dict) -> dict:
     for index in range(len(timestamps) - 1, -1, -1):
         close = (quote.get("close") or [])[index] if index < len(quote.get("close") or []) else None
         if close is not None:
-            return _quote(symbol, market, {"timestamp": int(timestamps[index]), "close": close}, now, policy, "yahoo_chart_api")
+            return _quote(symbol, market, {"timestamp": int(timestamps[index]), "close": close, "open": (quote.get("open") or [None])[index], "high": (quote.get("high") or [None])[index], "low": (quote.get("low") or [None])[index], "volume": (quote.get("volume") or [None])[index], "prev_close": result.get("meta", {}).get("previousClose") or result.get("meta", {}).get("chartPreviousClose"), "amount": None}, now, policy, "yahoo_chart_api")
     raise RuntimeError(f"Yahoo returned no valid bar for {symbol}")
 
 
@@ -126,7 +126,7 @@ def _a_share(symbol: str, root: Path, now: datetime, policy: dict) -> dict:
     age_status = _status(dt, now, policy)
     return {
         "market": "CN", "market_name": "中国大陆", "symbol": code, "name": item.get("name", code),
-        "latest_price": close, "data_time_beijing": dt.astimezone(BEIJING).isoformat(timespec="seconds"),
+        "latest_price": close, "open": item.get("open_price"), "high": item.get("high_price"), "low": item.get("low_price"), "prev_close": item.get("pre_close"), "volume": item.get("volume"), "amount": item.get("amount"), "turnover": item.get("amount"), "data_time_beijing": dt.astimezone(BEIJING).isoformat(timespec="seconds"),
         "data_time_local": dt.astimezone(BEIJING).isoformat(timespec="seconds"), "market_phase": phase,
         "market_status_cn": display_market_status("CN", phase),
         "data_nature_cn": "实时交易行情" if phase == "REGULAR" else "最近有效行情",
