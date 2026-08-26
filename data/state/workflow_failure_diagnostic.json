@@ -1,27 +1,27 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-26T11:48:18+08:00",
+  "generated_at": "2026-08-26T14:45:15+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 32927788111,
+  "run_id": 32939498346,
   "run_attempt": 1,
-  "head_sha": "d7bc7b1f0e0826cd00d447cdd2e8c7af87180941",
-  "main_head_sha": "760fceb6ebb436a663eb655efd8030793000a0d8",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "e29aa75fe4d409cd4dd1db8c0fbcc7a44d02afed",
+  "main_head_sha": "428dfc8086b18d846341fb5d0f282219b87c0712",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 15
+      "step": "Persist consistency and maintenance state",
+      "number": 12
     }
   ],
   "changed_files": [
-    "scripts/query_time_market_refresh.py"
+    "scripts/refresh_gate.py"
   ],
-  "commit_message": "fix: preserve Hithink market fallback after Tencent",
+  "commit_message": "runtime: harden explicit latest refresh gate",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "ESCALATE_WITH_DIAGNOSTIC",
-  "reason": "automatic action stopped at safety boundary",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
