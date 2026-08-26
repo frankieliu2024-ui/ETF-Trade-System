@@ -1,0 +1,65 @@
+name: NDX provider shadow audit temp
+
+on:
+  push:
+    branches: [audit/ndx-provider-shadow-20260826]
+    paths:
+      - ".github/workflows/ndx-provider-shadow-audit-temp.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compare Yahoo and Eastmoney NDX timestamps
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, urllib.parse, urllib.request
+          from datetime import datetime, timezone
+
+          def get_json(url):
+              req=urllib.request.Request(url,headers={'User-Agent':'ETF-Trade-System/provider-shadow-audit'})
+              with urllib.request.urlopen(req,timeout=20) as r:
+                  return json.load(r)
+
+          now=datetime.now(timezone.utc)
+
+          yurl='https://query1.finance.yahoo.com/v8/finance/chart/%5ENDX?range=1d&interval=1m&includePrePost=false'
+          y=get_json(yurl)['chart']['result'][0]
+          ts=y.get('timestamp') or []
+          q=(y.get('indicators',{}).get('quote') or [{}])[0]
+          yi=None
+          for i in range(len(ts)-1,-1,-1):
+              vals={k:(q.get(k) or [None]*len(ts))[i] for k in ('open','high','low','close')}
+              if all(v is not None for v in vals.values()):
+                  yi=(int(ts[i]),vals)
+                  break
+          if not yi: raise RuntimeError('Yahoo no complete NDX row')
+
+          params={'secid':'100.NDX','fltt':'2','invt':'2','fields':'f43,f44,f45,f46,f57,f58,f60,f86,f124'}
+          eurl='https://push2.eastmoney.com/api/qt/stock/get?'+urllib.parse.urlencode(params)
+          e=get_json(eurl).get('data') or {}
+          raw=e.get('f124') or e.get('f86')
+          if raw in (None,'',0,'0'): raise RuntimeError('Eastmoney provider timestamp missing')
+          ets=int(float(raw)); ets=ets//1000 if ets>10_000_000_000 else ets
+          evals={'open':e.get('f46'),'high':e.get('f44'),'low':e.get('f45'),'close':e.get('f43')}
+          if any(v in (None,'-') for v in evals.values()): raise RuntimeError('Eastmoney missing OHLC')
+
+          yts,yvals=yi
+          out={
+            'captured_at_utc':now.isoformat(timespec='seconds'),
+            'yahoo':{'timestamp':yts,'as_of_utc':datetime.fromtimestamp(yts,timezone.utc).isoformat(timespec='seconds'),'close':yvals['close'],'age_seconds':round((now-datetime.fromtimestamp(yts,timezone.utc)).total_seconds())},
+            'eastmoney':{'timestamp':ets,'as_of_utc':datetime.fromtimestamp(ets,timezone.utc).isoformat(timespec='seconds'),'close':evals['close'],'age_seconds':round((now-datetime.fromtimestamp(ets,timezone.utc)).total_seconds()),'timestamp_field':'f124' if e.get('f124') not in (None,'',0,'0') else 'f86'},
+            'eastmoney_minus_yahoo_seconds':ets-yts,
+            'price_gap_pct':round((float(evals['close'])-float(yvals['close']))/float(yvals['close'])*100,6),
+          }
+          print('NDX_PROVIDER_SHADOW_RESULT='+json.dumps(out,ensure_ascii=False,sort_keys=True))
+          PY
