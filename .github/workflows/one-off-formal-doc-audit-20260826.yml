@@ -1,0 +1,123 @@
+name: One-off formal document audit repair 2026-08-26
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/one-off-formal-doc-audit-20260826.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Repair audited formal document inconsistencies
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def read(path):
+              return Path(path).read_text(encoding='utf-8')
+          def write(path, text):
+              Path(path).write_text(text, encoding='utf-8')
+          def replace_once(text, old, new, label):
+              if old not in text:
+                  raise SystemExit(f'missing expected text for {label}')
+              return text.replace(old, new, 1)
+
+          # 1) Data standard: current providers + canonical market sessions.
+          p = 'ETF与市场监测数据接口使用规范.md'
+          t = read(p)
+          t = replace_once(t, '> 版本：V1.6  \n> 更新日期：2026-08-24  ', '> 版本：V1.7  \n> 更新日期：2026-08-26  ', 'data standard version/date')
+          old = '''**hithink-finance（同花顺金融数据CLI/API）**：主要用于A股ETF、A股指数、当前打新底仓A股行情，以及已验证可覆盖的直接指数。A股ETF和上证／创业板指数为主要生产源；HSTECH优先尝试HS2083直接指数入口。\n\n**Yahoo Chart API**：主要用于海外及亚洲正式指数、海外产业链个股、商品或宏观辅助对象，以及美股扩展时段5分钟级行情。Yahoo返回成功仍须经过时点、市场阶段和质量检查，不因来源公开而自动视为实时。恒生科技指数的Yahoo正式映射为 `HSTECH.HK`，不得使用已验证返回404的 `^HSTECH`。\n\n**Eastmoney push2（东方财富公开行情接口）**：作为部分全球/港股指数的直接行情备源。恒生科技指数允许使用 `124.HSTECH`；必须读取并校验provider行情时间戳，不得用workflow执行时间冒充行情时间。若主站异常，可在完成真实环境验证后使用明确的延迟/备用主机，但必须保留provider与质量标签。\n\n恒生科技指数（HSTECH）的正式直接源优先级固定为：`hithink-finance:HS2083 → yahoo_chart_api:HSTECH.HK → eastmoney_push2:124.HSTECH`。只有三条直接指数路径均不可用时，才允许使用恒生科技ETF（513180）作为 `PROXY` 辅助；代理不得冒充恒生科技指数本身。'''
+          new = '''**腾讯行情（tencent_qq）**：当前A股实时生产主源。已验证覆盖上证指数（000001）、创业板指（399006）、全部当前ETF监测对象、账户A股个股及查询时动态A股产业链个股。腾讯返回成功仍须经过字段、真实provider时间戳、市场阶段和质量门禁；A股对象采用腾讯不代表腾讯可自动扩展为海外生产源。\n\n**hithink-finance（同花顺金融数据CLI/API）**：当前主要承担A股对象的已验证直连第一备源、ETF历史日线，以及部分已审计直接指数。腾讯主源失败时按对象级策略切换同花顺；不得因同花顺仍可用而把旧的“同花顺主源”表述继续写入正式文件。\n\n**Yahoo Chart API**：当前是纳斯达克100指数（NDX）、费城半导体指数（SOX）、日经225指数（N225）、韩国综合指数（KOSPI）、台湾加权指数（TWII）等正式海外/亚洲指数的主要直接源，也用于海外产业链个股、商品/宏观辅助对象和美股扩展时段5分钟级行情。Yahoo返回成功仍须经过时点、市场阶段和质量检查。恒生科技指数的Yahoo正式映射为 `HSTECH.HK`，不得使用已验证返回404的 `^HSTECH`。\n\n**Eastmoney push2（东方财富公开行情接口）**：当前为恒生科技指数（HSTECH）的正式主源，使用已在真实交易时段验证的 `124.HSTECH`；同时作为除上证指数（000001）外多数已验证A股ETF/个股/指数对象的后备直连源。上证指数的 `secid=1.000001` 已验证并非可靠指数映射，因此不得作为上证指数备源。所有东方财富行情必须读取并校验provider行情时间戳，不得用workflow执行时间冒充行情时间。\n\n当前A股对象级生产链以 `config/market/provider_priority.json` 为唯一机器权威：上证指数（000001）为 `腾讯 → 同花顺`；创业板指（399006）、当前11只ETF和已确认账户A股个股原则上为 `腾讯 → 同花顺 → 东方财富`；查询时动态A股产业链个股为 `腾讯 → 同花顺`。对象映射未经逐项验证不得自行加入fallback。\n\n恒生科技指数（HSTECH）的当前正式链为：`eastmoney_push2:124.HSTECH → yahoo_chart_api:HSTECH.HK → hithink-finance:HS2083 → ETF_PROXY_513180`。前三项均为直接指数路径；只有直接路径均不可用时，才允许使用恒生科技ETF（513180）作为 `PROXY` 辅助，代理不得冒充恒生科技指数本身。'''
+          t = replace_once(t, old, new, 'provider roles')
+          anchor = '''盘前海外脉冲由 `.github/workflows/overseas-preopen-pulse.yml` 负责，生成 `overseas_context.json` 与 `us_extended_hours_context.json`；A股集合竞价及盘中脉冲由 `.github/workflows/market-snapshot.yml` 负责。\n\n### 4.2 美股扩展时段语义'''
+          market_table = '''盘前海外脉冲由 `.github/workflows/overseas-preopen-pulse.yml` 负责，生成 `overseas_context.json` 与 `us_extended_hours_context.json`；A股集合竞价及盘中脉冲由 `.github/workflows/market-snapshot.yml` 负责。\n\n### 4.2 各市场正式交易时点（固定口径）\n\n正式输出和跨市场对齐统一以下表为人类可读时间口径；机器判断仍以交易日历、`market_timezone`、`market_phase`和provider实际时间戳为准。遇交易所临时休市、半日市或规则调整，以当日交易所日历为更高优先级，不用本表硬覆盖。\n\n|市场|市场本地正式时段|北京时间常规对应|说明|\n|-|-|-|-|\n|A股|集合竞价09:15–09:25；连续竞价09:30–11:30、13:00–15:00|同左|09:25–09:30为开盘衔接阶段，不按连续成交解释|\n|港股|开市前09:00–09:30；持续交易09:30–12:00、13:00–16:00|同左|收盘后使用当日正式收盘；HSTECH按实际provider阶段解释|\n|台股|常规09:00–13:30|同左|无A股式午间分段|\n|日股|常规09:00–11:30、12:30–15:30（东京时间）|08:00–10:30、11:30–14:30|东京时间比北京时间快1小时|\n|韩股|常规09:00–15:30（首尔时间）|08:00–14:30|首尔时间比北京时间快1小时|\n|美股|盘前04:00–09:30、现金盘09:30–16:00、盘后16:00–20:00（美东时间）|夏令时：盘前16:00–21:30、现金盘21:30–次日04:00、盘后次日04:00–08:00；冬令时整体顺延1小时|美东本地时间为权威；北京时间跨自然日时必须标明对应美国交易日|\n\n不同市场比较时必须显示各自【数据时点（北京时间）】，不得为了表格整齐把非同步市场强行改写成同一时间。\n\n### 4.3 美股扩展时段语义'''
+          t = replace_once(t, anchor, market_table, 'market sessions table')
+          t = t.replace('### 4.3 A股集合竞价语义', '### 4.4 A股集合竞价语义')
+          t = t.replace('### 4.4 目标频率与新鲜度', '### 4.5 目标频率与新鲜度')
+          write(p, t)
+
+          # 2) MASTER: make direct Confirm explicit; Trial is not mandatory predecessor.
+          p = 'ETF规则_MASTER.md'
+          t = read(p)
+          t = replace_once(t, '> 更新日期：2026-08-25  ', '> 更新日期：2026-08-26  ', 'master update date')
+          t = t.replace('《ETF与市场监测数据接口使用规范 V1.6》', '《ETF与市场监测数据接口使用规范 V1.7》')
+          old = '''```text\n发现机会 → Trial → Confirm → 持仓管理 → 降低风险／退出\n```\n\n交易动作完成后进入复盘，但复盘不是盘中生命周期标签。'''
+          new = '''```text\n发现机会 → Trial → Confirm → 持仓管理 → 降低风险／退出\n         ↘ 直接Confirm ↗\n```\n\nTrial是用有限风险购买信息的合法路径，但不是Confirm的强制前置。若尚需通过小额仓位验证假设，进入Trial；若风险许可允许Confirm，且在未先执行Trial的情况下当前证据已经完整达到Confirm标准、风险收益与金额资金判断均可形成正式决议，则可以直接Confirm。直接Confirm仍必须执行完整买入链，不得把“跳过Trial”理解为降低证据、风险许可或金额标准。\n\n交易动作完成后进入复盘，但复盘不是盘中生命周期标签。'''
+          t = replace_once(t, old, new, 'master mainline direct confirm')
+          old = 'Confirm扩大已验证且仍有效的机会。核心问题：原假设是否继续有效、ETF反馈是否一致、新增资本是否仍有合理收益风险比。Confirm不要求市场最强、持续领涨或所有辅助信息一致，但证据要求高于Trial。'
+          new = 'Confirm用于扩大Trial已经验证且仍有效的机会，也允许在未先执行Trial但当前证据已经直接达到Confirm标准时建立Confirm仓位。核心问题始终是：交易假设是否有效、ETF反馈是否一致、新增资本是否仍有合理收益风险比。Confirm不要求市场最强、持续领涨或所有辅助信息一致，但证据要求高于Trial；直接Confirm不能降低这一证据标准。'
+          t = replace_once(t, old, new, 'master confirm definition')
+          write(p, t)
+
+          # 3) Experience library: fee closure + lifecycle wording.
+          p = 'ETF交易复盘与经验库_2026.md'
+          t = read(p)
+          t = replace_once(t, '> 更新时点：2026-08-25（已纳入中国银河证券2026-07-13至2026-08-25对账单事实，并完成当日两笔ETF卖出CASE闭环维护）  ', '> 更新时点：2026-08-26（已纳入中国银河证券2026-07-13至2026-08-25对账单事实、两笔8月25日ETF卖出费用确认及8月26日正式收盘复盘）  ', 'experience update time')
+          t = t.replace('《ETF与市场监测数据接口使用规范 V1.6》', '《ETF与市场监测数据接口使用规范 V1.7》')
+          t = replace_once(t, '2. Trial购买信息，允许辅助证据不完整；Confirm释放已验证机会，要求更高但不追求市场最强或绝对确定。', '2. Trial购买信息，允许辅助证据不完整；Confirm既可在Trial验证后扩大，也可在当前证据直接达到Confirm标准时进入。Trial不是Confirm强制前置；Confirm要求更高但不追求市场最强或绝对确定。', 'experience direct confirm principle')
+          t = replace_once(t, '2026-08-25恒生科技ETF（513180）卖出费用仍待券商结算确认；半导体设备ETF（561980）费用5.00元已由15:24账户事实确认，不再标记为待确认。', '2026-08-25恒生科技ETF（513180）与半导体设备ETF（561980）两笔卖出费用均已确认，各5.00元；截至2026-08-26累计已确认ETF费用120.01元，无待确认ETF费用。', 'experience fee intro')
+          t = replace_once(t, '|2026-08-25 10:02:57|恒生科技ETF（513180）|513180|卖出|8,200|0.574|4,706.80|待确认|4,706.80|CASE-20260817-01全部退出；费用未显示|', '|2026-08-25 10:02:57|恒生科技ETF（513180）|513180|卖出|8,200|0.574|4,706.80|5.00|4,701.80|CASE-20260817-01全部退出；费用已确认|', 'experience fee row')
+          t = replace_once(t, '- 执行：8月25日10:02:57以0.574元卖出8,200份，成交本金4,706.80元，全部退出；卖出费用待券商结算确认。', '- 执行：8月25日10:02:57以0.574元卖出8,200份，成交本金4,706.80元，全部退出；卖出费用5.00元已确认，资金发生额4,701.80元。', 'experience case fee prose')
+          write(p, t)
+
+          # 4) Market archive: current header/source authority/provider matrix/navigation.
+          p = 'ETF市场行情档案_2026.md'
+          t = read(p)
+          t = replace_once(t, '> 版本：ETF波段交易系统 V2.2.15  \n> 更新时点：2026-08-23（行情与账户事实截至2026-08-21 15:00；同花顺及云端监测数据边界复核截至2026-08-23）  ', '> 版本：ETF波段交易系统 V2.2.16  \n> 更新时点：2026-08-26（已纳入8月24—26云端行情/账户增量、8月25两笔ETF卖出与费用闭环，并同步当前腾讯/同花顺/东方财富/Yahoo对象级主备体系）  ', 'archive header')
+          t = t.replace('《ETF与市场监测数据接口使用规范 V1.6》', '《ETF与市场监测数据接口使用规范 V1.7》')
+          t = replace_once(t, '`hithink-finance`及其他机器行情进入本档案前，须按《ETF与市场监测数据接口使用规范 V1.7》完成标的、时点、字段、单位、缺口和来源校验。', '腾讯行情、`hithink-finance`、Eastmoney push2、Yahoo Chart API及其他机器行情进入本档案前，须按《ETF与市场监测数据接口使用规范 V1.7》完成标的、时点、字段、单位、缺口和来源校验。', 'archive source intro')
+          old = '完整逐日数据以正式工作目录 `C:\\\\Users\\刘晓飞\\Documents\\Codex\\ETF波段交易系统` 下最新已核对批次为准；当前原十八项批次为`历史成交EXCEL（截止2026-08-21）`，V2.2.15新增黄金ETF（518880）及候选工具使用已验收同花顺CLI日线。旧批次继续保留，新批次经字段、日期、缺失值、首行收益和近期事实核对后取得优先权。本文件只保留检索所需的索引和关键日期快照。数据优先级为：同一标的最新已核对的正式Excel或同花顺标准日线、券商成交与账户截图、本文件既有记录；发生冲突时并列保留来源，不静默覆盖。'
+          new = '历史Excel与本地工作目录只作为可追溯历史数据资产，不再承担“当前事实主版本”职责。GitHub `main` 中的有效云端快照、CURRENT/runtime状态、已确认券商账户与真实成交是当前事实入口；历史长序列继续使用已核对Excel、同花顺历史日线及其他通过质量审计的历史源。`历史成交EXCEL（截止2026-08-21）` 继续作为历史基线保留，V2.2.16以后新增行情由云端生产链和后续已验收历史回补衔接。不同来源冲突时保留来源、时点和质量标签，不静默覆盖。'
+          t = replace_once(t, old, new, 'archive cloud authority')
+          anchor = '### 2.1 云端生产数据入口\n\n|数据对象|生产入口|客观职责|'
+          matrix = '''### 2.1 云端生产数据入口\n\n当前生产行情源以 `config/market/provider_priority.json` 的对象级 `object_fallback_policy` 为机器唯一权威：\n\n|对象范围|当前主源|已验证备源|\n|-|-|-|\n|上证指数（000001）|腾讯行情|同花顺|\n|创业板指（399006）、当前11只ETF、已确认账户A股个股|腾讯行情|同花顺 → 东方财富|\n|查询时动态A股产业链个股|腾讯行情|同花顺|\n|纳斯达克100指数（NDX）、费城半导体指数（SOX）、日经225指数（N225）、韩国综合指数（KOSPI）、台湾加权指数（TWII）|Yahoo Chart API|仅使用各对象已验证直连/明确代理策略|\n|恒生科技指数（HSTECH）|东方财富 `124.HSTECH`|Yahoo `HSTECH.HK` → 同花顺 `HS2083` → 恒生科技ETF（513180）代理|\n\n该表记录当前数据来源事实，不产生机会排序或交易权限。上证指数不得使用已验证错误的东方财富 `secid=1.000001` 作为指数备源。\n\n|数据对象|生产入口|客观职责|'''
+          t = replace_once(t, anchor, matrix, 'archive provider matrix')
+          t = replace_once(t, '|2026-08-21|第5章15:00收盘行情与账户快照|', '|2026-08-21|第5章15:00收盘行情与账户快照|\n|2026-08-24至2026-08-26|文件末机器管理增量区块：8月24/26正式收盘、8月25成交、账户事实与费用更正；后续结构维护逐步归并至日期正文|', 'archive date index')
+          marker = '|2026-08-23|完成动态账户个股数据入口：宁德时代、工业富联不再因历史记录永久写死为默认监测；云端以当日account_fact识别当前非ETF持仓并结合asset_roles确认打新底仓，生成stock_context和stock_market_context。条件产业链个股按分析需要跨市场临时调用，不建立固定公司名单|'
+          extra = marker + '\n|2026-08-26|A股实时生产主源统一为腾讯行情；对象级备源按 `provider_priority.json` 执行，上证指数（000001）为腾讯→同花顺，其余已验证A股核心对象原则上腾讯→同花顺→东方财富；恒生科技指数（HSTECH）正式主源为东方财富124.HSTECH|\n|2026-08-26|完成正式文件数据口径审计：文件头、数据源说明、日期索引、两笔8月25日卖出费用与8月26日云端事实同步；历史Excel降为历史资产，不再表述为当前事实主版本|'
+          t = replace_once(t, marker, extra, 'archive maintenance rows')
+          write(p, t)
+
+          # 5) Consistency checks to prevent the same regressions.
+          p = 'scripts/check_system_consistency.py'
+          t = read(p)
+          master_anchor = '    check("master:no_parallel_fixed_pool", not stale_pool, "no stale fixed-pool taxonomy")\n'
+          master_extra = master_anchor + '    check("master:direct_confirm_explicit", "Trial不是Confirm的强制前置" in master and "直接Confirm" in master, "MASTER explicitly allows direct Confirm when full Confirm evidence is already satisfied")\n'
+          t = replace_once(t, master_anchor, master_extra, 'consistency master direct confirm')
+          standard_anchor = '    check("data_standard:us_extended_hours", all(x in standard for x in ["POST_MARKET", "PRE_MARKET", "QQQ", "SOXX", "不高估海外时间领先，也不低估海外时间领先"]), "US extended-hours timing and evidence boundaries documented")\n'
+          standard_extra = standard_anchor + '    check("data_standard:current_provider_roles", all(x in standard for x in ["腾讯行情（tencent_qq）", "上证指数（000001）为 `腾讯 → 同花顺`", "eastmoney_push2:124.HSTECH", "Yahoo Chart API"]), "current provider primary/fallback roles documented")\n    check("data_standard:market_session_table", all(x in standard for x in ["各市场正式交易时点（固定口径）", "港股", "台股", "日股", "韩股", "夏令时", "冬令时"]), "cross-market canonical session table documented")\n'
+          t = replace_once(t, standard_anchor, standard_extra, 'consistency data standard')
+          runtime_anchor = '    runtime = read_json("config/runtime_policy.json")\n'
+          formal_checks = '''    dashboard_text = read_text("ETF当前状态_DASHBOARD.md")\n    experience_text = read_text("ETF交易复盘与经验库_2026.md")\n    archive_text = read_text("ETF市场行情档案_2026.md")\n    fee_closed = "累计已确认ETF费用|120.01元；待确认费用：无" in dashboard_text\n    stale_fee_text = "2026-08-25恒生科技ETF（513180）卖出费用仍待" in experience_text or "|2026-08-25 10:02:57|恒生科技ETF（513180）|513180|卖出|8,200|0.574|4,706.80|待确认|" in experience_text or "卖出费用待券商结算确认" in experience_text\n    check("formal_files:confirmed_fee_closure", not fee_closed or not stale_fee_text, "Dashboard confirmed fee closure is not contradicted by experience CASE/index")\n    check("formal_files:archive_current_provider_roles", all(x in archive_text for x in ["腾讯行情", "东方财富 `124.HSTECH`", "provider_priority.json"]), "market archive records current production provider roles")\n\n'''+runtime_anchor
+          t = replace_once(t, runtime_anchor, formal_checks, 'consistency formal fact cross-check')
+          write(p, t)
+
+          # Focused validation before commit.
+          assert '版本：V1.7' in read('ETF与市场监测数据接口使用规范.md')
+          assert 'Trial不是Confirm的强制前置' in read('ETF规则_MASTER.md')
+          assert '4,701.80' in read('ETF交易复盘与经验库_2026.md')
+          assert '东方财富 `124.HSTECH`' in read('ETF市场行情档案_2026.md')
+          PY
+          python -m py_compile scripts/check_system_consistency.py
+          python -m unittest discover -s tests -p 'test_market*.py'
+      - name: Commit audited repair
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ETF与市场监测数据接口使用规范.md ETF规则_MASTER.md ETF交易复盘与经验库_2026.md ETF市场行情档案_2026.md scripts/check_system_consistency.py
+          git commit -m "docs: synchronize formal ETF files with current market data system"
+          git pull --rebase origin main
+          git push origin HEAD:main
