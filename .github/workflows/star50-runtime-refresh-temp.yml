@@ -1,0 +1,60 @@
+name: STAR50 runtime refresh temp
+
+on:
+  push:
+    paths:
+      - ".github/workflows/star50-runtime-refresh-temp.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HITHINK_FINANCE_API_KEY: ${{ secrets.HITHINK_FINANCE_API_KEY }}
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+      HITHINK_RETRY_LIMIT: "2"
+      HITHINK_TIMEOUT_SECONDS: "25"
+      HITHINK_MAX_WORKERS: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install hithink-finance CLI
+        run: npm install --global @hithink-tech/hithink-finance-cli
+      - name: Refresh same-day post-close snapshot with STAR50
+        run: python scripts/cloud_runner_snapshot.py --node close
+      - name: Assert complete A-share snapshot
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          c=json.loads(Path('data/state/CURRENT.json').read_text(encoding='utf-8'))
+          s=json.loads(Path(c['latest_snapshot']).read_text(encoding='utf-8'))
+          indices=[r for r in s['rows'] if r.get('asset_class')=='A_SHARE_INDEX']
+          assert s['count']==14, s['count']
+          assert {r['thscode'] for r in indices}=={'000001.SH','399006.SZ','000688.SH'}
+          assert all(r.get('quality_status')=='PASS' for r in indices)
+          star=next(r for r in indices if r['thscode']=='000688.SH')
+          print({'snapshot':c['latest_snapshot'],'count':s['count'],'STAR50':{'close':star.get('close'),'provider':star.get('provider'),'as_of_beijing':star.get('as_of_beijing')}})
+          PY
+      - name: Refresh downstream contexts
+        run: python scripts/build_state_context.py
+      - name: Persist refreshed runtime
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- data/market/snapshots data/state events/research
+          git commit -m "state: refresh runtime with STAR50 index"
+          git restore --worktree .
+          git pull --rebase origin main
+          git push origin HEAD:main
