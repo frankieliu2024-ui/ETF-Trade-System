@@ -1,5 +1,5 @@
 {
-  "version": "V1.5",
+  "version": "V1.6",
   "policy": "质量优先；正式对象按对象级primary→verified direct fallback处理；单点风险明确告警；失败对象不得静默省略；获取成功不等于自动采用；所有源先经过质量审计并保留市场时点信息",
   "providers": {
     "tencent_qq": {
@@ -14,9 +14,9 @@
       "role": "first_direct_fallback_for_A_share_and_audited_direct_indices"
     },
     "eastmoney_push2": {
-      "kind": "公开行情接口，支持已验证A股ETF/个股/部分指数直接行情；恒生科技指数124.HSTECH已验证为低延迟直接源",
+      "kind": "公开行情接口，支持已验证A股ETF/个股/部分指数直接行情；恒生科技指数124.HSTECH为主源；100.NDX、100.N225、100.KS11、100.TWII作为已验证海外/亚洲指数直接备源",
       "requires_key": false,
-      "role": "primary_for_HSTECH_and_verified_direct_fallback_for_A_share",
+      "role": "primary_for_HSTECH_and_verified_direct_fallback_for_A_share_and_selected_overseas_indices",
       "adjusted": false
     },
     "yahoo_chart_api": {
@@ -70,17 +70,21 @@
       "ETF_PROXY_SOXQ"
     ],
     "NDX": [
-      "yahoo_chart_api"
+      "yahoo_chart_api",
+      "eastmoney_push2:100.NDX"
     ],
     "N225": [
       "yahoo_chart_api",
+      "eastmoney_push2:100.N225",
       "ETF_PROXY_513520"
     ],
     "KOSPI": [
-      "yahoo_chart_api"
+      "yahoo_chart_api",
+      "eastmoney_push2:100.KS11"
     ],
     "TWII": [
-      "yahoo_chart_api"
+      "yahoo_chart_api",
+      "eastmoney_push2:100.TWII"
     ],
     "HSTECH": [
       "hithink-finance:HS2083",
@@ -206,6 +210,35 @@
       "fallback": [
         "hithink_finance",
         "eastmoney_push2"
+      ],
+      "direct_only": true
+    },
+    "NDX": {
+      "primary": "yahoo_chart_api",
+      "fallback": [
+        "eastmoney_push2:100.NDX"
+      ],
+      "direct_only": true
+    },
+    "N225": {
+      "primary": "yahoo_chart_api",
+      "fallback": [
+        "eastmoney_push2:100.N225",
+        "ETF_PROXY_513520"
+      ],
+      "direct_only": false
+    },
+    "KOSPI": {
+      "primary": "yahoo_chart_api",
+      "fallback": [
+        "eastmoney_push2:100.KS11"
+      ],
+      "direct_only": true
+    },
+    "TWII": {
+      "primary": "yahoo_chart_api",
+      "fallback": [
+        "eastmoney_push2:100.TWII"
       ],
       "direct_only": true
     },
@@ -382,6 +415,7 @@
   "notes": {
     "a_share_index_000001": "Eastmoney secid=1.000001映射为个股而非上证指数，暂不作为直接fallback；腾讯主源失败时仅走同花顺直接指数备源。",
     "hstech": "东方财富124.HSTECH已在真实交易时段验证为低延迟直接行情，正式提升为主源。objects字段保留历史审计枚举顺序；实际主备权威以object_fallback_policy.primary及build_overseas_context configured_primary为准；513180仅为最后代理。",
+    "overseas_direct_fallback": "纳斯达克100指数（NDX）、日经225指数（N225）、韩国综合指数（KOSPI）、台湾加权指数（TWII）保留Yahoo主源，并启用东方财富100.NDX、100.N225、100.KS11、100.TWII作为对象级直接备源；仅在主源不可用、质量失败或开放交易阶段明显延迟时切换，不以ETF代理冒充直接指数。",
     "etf_fallback": "ETF生产意图为腾讯→同花顺→东方财富；运行代码必须与本对象级政策保持一致。",
     "tencent_a_share_industry": "查询时A股产业链个股正式启用腾讯主源；不建立固定个股池，仍由当前ETF/行业假设动态发现。",
     "a_share_index_000688": "科创50指数（000688）正式纳入指数层；腾讯sh000688已完成直接映射验证，为生产主源；同花顺000688.SH作为A股指数直接备源。东方财富映射未完成对象级验证前不加入fallback。"
