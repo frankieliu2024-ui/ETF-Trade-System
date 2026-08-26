@@ -120,7 +120,7 @@ def _eastmoney_etf(symbol: str, thscode: str, now: datetime, policy: dict) -> di
         data = (json.load(response).get("data") or {})
     if str(data.get("f57") or "") != code:
         raise RuntimeError(f"Eastmoney code mismatch for {thscode}: {data.get('f57')}")
-    values = [data.get(key) for key in ("f43", "f44", "f45", "f46", "f60", "f86")]
+    values = [data.get(key) for key in ("f43", "f60", "f86")]
     if any(value in (None, "", "-") for value in values):
         raise RuntimeError(f"Eastmoney {thscode} missing direct ETF fields")
     raw_ts = float(data["f86"])
@@ -131,10 +131,14 @@ def _eastmoney_etf(symbol: str, thscode: str, now: datetime, policy: dict) -> di
         raise RuntimeError(f"Eastmoney {thscode} provider timestamp is stale: {timestamp.isoformat()}")
     volume = data.get("f47")
     amount = data.get("f48")
+    open_price = float(data["f46"]) if data.get("f46") not in (None, "", "-") else None
+    high_price = float(data["f44"]) if data.get("f44") not in (None, "", "-") else None
+    low_price = float(data["f45"]) if data.get("f45") not in (None, "", "-") else None
+    no_trade_partial = open_price is None and high_price is None and low_price is None and volume in (None, "", "-") and amount in (None, "", "-")
     return {
         "market": "CN", "market_name": "中国大陆", "symbol": symbol, "name": str(data.get("f58") or symbol),
-        "latest_price": float(data["f43"]), "open": float(data["f46"]), "high": float(data["f44"]),
-        "low": float(data["f45"]), "prev_close": float(data["f60"]),
+        "latest_price": float(data["f43"]), "open": open_price, "high": high_price,
+        "low": low_price, "prev_close": float(data["f60"]),
         "volume": int(float(volume) * 100) if volume not in (None, "", "-") else None,
         "amount": float(amount) if amount not in (None, "", "-") else None,
         "turnover": float(amount) if amount not in (None, "", "-") else None,
@@ -142,9 +146,9 @@ def _eastmoney_etf(symbol: str, thscode: str, now: datetime, policy: dict) -> di
         "data_time_local": timestamp.astimezone(BEIJING).isoformat(timespec="seconds"),
         "market_phase": market_phase("CN", now=now),
         "market_status_cn": display_market_status("CN", market_phase("CN", now=now)),
-        "data_nature_cn": "实时交易行情" if status == "FRESH" else "交易中但数据源延迟的盘中行情",
+        "data_nature_cn": "交易中暂无新成交的最新有效价" if no_trade_partial else ("实时交易行情" if status == "FRESH" else "交易中但数据源延迟的盘中行情"),
         "source": "eastmoney_push2", "freshness": status,
-        "quality_status": "PASS" if status in {"FRESH", "DEGRADED"} else status,
+        "quality_status": "DEGRADED" if no_trade_partial else ("PASS" if status in {"FRESH", "DEGRADED"} else status),
         "direct_quote": True, "refresh_source": "QUERY_TIME_PROVIDER",
     }
 
