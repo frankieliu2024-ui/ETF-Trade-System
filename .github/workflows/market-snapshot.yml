@@ -49,11 +49,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Run system consistency preflight
-        continue-on-error: true
-        run: |
-          python scripts/check_system_consistency.py
-          git checkout -- data/state/system_consistency.json
       - name: Check exchange calendar and capture window
         id: session_gate
         run: python scripts/runtime_session_gate.py
@@ -299,9 +294,6 @@ jobs:
       - name: Build post-market review context
         if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_post_market_review.py
-      - name: Build ChatGPT task read probe
-        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
-        run: python scripts/build_chatgpt_task_probe.py
       - name: Commit downstream runtime/data artifacts
         if: ${{ always() && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success' || steps.state_sync.outputs.processed == 'true') }}
         run: |
