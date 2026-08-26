@@ -60,6 +60,7 @@ def build_close_data_contract(root: Path, current: dict) -> dict:
         if row.get("as_of_beijing")
     )
     return {
+        "schema_version": "1.1",
         "status": "VERIFIED_SESSION_CLOSE" if verified else "UNVERIFIED",
         "verified_session_close": verified,
         "market_date": market_date,
