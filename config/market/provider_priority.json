@@ -38,7 +38,7 @@
     "N225": ["yahoo_chart_api", "ETF_PROXY_513520"],
     "KOSPI": ["yahoo_chart_api"],
     "TWII": ["yahoo_chart_api"],
-    "HSTECH": ["eastmoney_push2:124.HSTECH", "yahoo_chart_api:HSTECH.HK", "hithink-finance:HS2083", "ETF_PROXY_513180"],
+    "HSTECH": ["hithink-finance:HS2083", "yahoo_chart_api:HSTECH.HK", "eastmoney_push2:124.HSTECH", "ETF_PROXY_513180"],
     "QQQ_EXTENDED": ["yahoo_chart_api:includePrePost=true"],
     "SOXX_EXTENDED": ["yahoo_chart_api:includePrePost=true"],
     "US_CONDITIONAL_INDUSTRY_STOCK_EXTENDED": ["yahoo_chart_api:includePrePost=true", "verified_external_source"],
@@ -80,7 +80,7 @@
     "588000.SH": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
     "300750.SZ": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
     "601138.SH": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": true},
-    "HSTECH": {"primary": "eastmoney_push2:124.HSTECH", "fallback": ["yahoo_chart_api:HSTECH.HK", "hithink-finance:HS2083", "ETF_PROXY_513180"], "direct_only": true}
+    "HSTECH": {"primary": "eastmoney_push2:124.HSTECH", "fallback": ["yahoo_chart_api:HSTECH.HK", "hithink-finance:HS2083", "ETF_PROXY_513180"], "direct_only": false}
   },
   "tencent_expansion_policy": {
     "production_enabled": ["A_SHARE_INDEX", "A_SHARE_ETF", "A_SHARE_ACCOUNT_STOCK"],
@@ -102,7 +102,7 @@
   },
   "notes": {
     "a_share_index_000001": "Eastmoney secid=1.000001映射为个股而非上证指数，暂不作为直接fallback；腾讯主源失败时仅走同花顺直接指数备源。",
-    "hstech": "东方财富124.HSTECH已在真实交易时段验证为低延迟直接行情，正式提升为主源；Yahoo为第一海外直接备源，同花顺HS2083保留审计性备源，513180仅为最后代理。",
+    "hstech": "东方财富124.HSTECH已在真实交易时段验证为低延迟直接行情，正式提升为主源。objects字段保留历史审计枚举顺序；实际主备权威以object_fallback_policy.primary及build_overseas_context configured_primary为准；513180仅为最后代理。",
     "etf_fallback": "ETF生产意图为腾讯→同花顺→东方财富；运行代码必须与本对象级政策保持一致。"
   },
   "audit_scope": "对象级主源失败后仅调用已验证直接备源；未验证映射保留SINGLE_SOURCE_RISK，不以代理冒充直连"
