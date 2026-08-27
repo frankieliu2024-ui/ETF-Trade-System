@@ -1,16 +1,26 @@
 from __future__ import annotations
 
 from pathlib import Path
-import re
 
 ROOT = Path(__file__).resolve().parents[1]
-# Trigger-only revision after the temporary workflow exists on the branch.
 
 
 def require_replace(text: str, old: str, new: str, label: str) -> str:
     if old not in text:
         raise RuntimeError(f"missing patch anchor: {label}")
     return text.replace(old, new, 1)
+
+
+def remove_function_span(text: str, start_name: str, next_name: str, label: str) -> str:
+    start_token = f"\ndef {start_name}("
+    end_token = f"\ndef {next_name}("
+    start = text.find(start_token)
+    end = text.find(end_token, start + 1) if start >= 0 else -1
+    if start < 0 or end < 0 or end <= start:
+        raise RuntimeError(f"missing function span: {label} start={start} end={end}")
+    if text.find(start_token, start + len(start_token)) >= 0:
+        raise RuntimeError(f"duplicate function start: {label}")
+    return text[:start] + "\n" + text[end:]
 
 
 def patch_process() -> None:
@@ -22,10 +32,7 @@ def patch_process() -> None:
         "from state_manager import atomic_json_write\nfrom sync_formal_files import sync_formal_files\nfrom formal_file_mutation_gateway import (\n    append_managed_line,\n    replace_managed_block as replace_block,\n    upsert_formal_line,\n    upsert_managed_line,\n    write_formal_text_if_changed,\n)\n",
         "process imports",
     )
-    pattern = re.compile(r"\ndef replace_block\(.*?(?=\ndef money\()", re.S)
-    text, count = pattern.subn("\n", text, count=1)
-    if count != 1:
-        raise RuntimeError(f"process helper block removal count={count}")
+    text = remove_function_span(text, "replace_block", "money", "process managed helpers")
     text = require_replace(
         text,
         '        ARCHIVE.write_text(upsert_managed_line(ARCHIVE.read_text(encoding="utf-8"), REVIEW_ARCHIVE_START, REVIEW_ARCHIVE_END, market_date, archive_entry), encoding="utf-8")',
@@ -74,10 +81,7 @@ def patch_sync() -> None:
         "from pathlib import Path\n\nfrom formal_file_mutation_gateway import (\n    replace_managed_block as replace_block,\n    write_formal_text_if_changed,\n)\n",
         "sync imports",
     )
-    pattern = re.compile(r"\ndef replace_block\(.*?(?=\ndef display_name\()", re.S)
-    text, count = pattern.subn("\n", text, count=1)
-    if count != 1:
-        raise RuntimeError(f"sync helper block removal count={count}")
+    text = remove_function_span(text, "replace_block", "display_name", "sync replace helper")
     text = require_replace(
         text,
         '        dash_path.write_text(new_dash, encoding="utf-8")',
@@ -108,10 +112,7 @@ def patch_correction() -> None:
         "from typing import Any\n\nfrom formal_file_mutation_gateway import upsert_formal_line\n",
         "correction import",
     )
-    pattern = re.compile(r"\ndef upsert_line\(.*?(?=\ndef pending_fee_count\()", re.S)
-    text, count = pattern.subn("\n", text, count=1)
-    if count != 1:
-        raise RuntimeError(f"correction helper removal count={count}")
+    text = remove_function_span(text, "upsert_line", "pending_fee_count", "correction upsert helper")
     text = require_replace(
         text,
         '    upsert_line(ARCHIVE, ARCHIVE_START, ARCHIVE_END, correction_key, f"- {line}")',
