@@ -54,8 +54,39 @@ def reconcile() -> dict:
     summary = equity.get("summary") or {}
     trades = equity.get("trades") or []
 
+    # Position reconciliation must include user-confirmed executed trade events
+    # even when the slower historical equity reconstruction has not yet been
+    # rebuilt. Actual fills outrank the auxiliary reconstruction. Exact trade
+    # signatures prevent already-integrated event trades from being counted twice.
+    def trade_signature(t: dict) -> tuple:
+        stamp = str(t.get("datetime") or t.get("confirmed_at_beijing") or t.get("trade_time") or "")
+        stamp = stamp.replace("T", " ")[:19]
+        return (
+            str(t.get("code") or ""),
+            str(t.get("side") or t.get("action") or "").upper(),
+            float(t.get("quantity") or 0),
+            round(float(t.get("price") or 0), 6),
+            stamp,
+        )
+
+    trades_for_positions = list(trades)
+    known_signatures = {trade_signature(t) for t in trades_for_positions}
+    events_dir = ROOT / "events" / "trades"
+    executed_event_overlay_count = 0
+    if events_dir.exists():
+        for path in sorted(events_dir.glob("*.json")):
+            event = read_json(path, {}) or {}
+            if str(event.get("execution_status") or "").upper() != "EXECUTED":
+                continue
+            sig = trade_signature(event)
+            if not sig[0] or sig in known_signatures:
+                continue
+            trades_for_positions.append(event)
+            known_signatures.add(sig)
+            executed_event_overlay_count += 1
+
     ledger_qty: dict[str, float] = defaultdict(float)
-    for t in trades:
+    for t in trades_for_positions:
         code = str(t.get("code") or "")
         qty = float(t.get("quantity") or 0)
         if not code:
@@ -97,6 +128,8 @@ def reconcile() -> dict:
         "status": "PASS" if overall else "FAIL",
         "trade_count": len(trades),
         "trade_count_matches_summary": trade_count_ok,
+        "executed_trade_event_overlay_count": executed_event_overlay_count,
+        "position_ledger_basis": "AUXILIARY_EQUITY_RECONSTRUCTION_PLUS_EXECUTED_TRADE_EVENTS",
         "position_reconciliation": {"status": "PASS" if quantity_ok else "FAIL", "checks": quantity_checks},
         "known_fee_reconciliation": {"status": "PASS" if fee_ok else "FAIL", "confirmed_trade_fee_sum": confirmed_fee_sum, "summary_known_fees": summary_known_fees, "difference": rounded(confirmed_fee_sum - summary_known_fees, 2)},
         "gross_equity_reconciliation": {"status": "PASS" if equity_ok else "FAIL", "strategy_cash": strategy_cash, "current_etf_market_value": etf_mv, "reported_gross_equity": gross_equity, "difference": equity_diff},
