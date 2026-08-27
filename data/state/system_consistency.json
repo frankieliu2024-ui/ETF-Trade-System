@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-27T08:00:11Z",
-  "generated_at_beijing": "2026-08-27T16:00:11+08:00",
+  "generated_at": "2026-08-27T08:10:37Z",
+  "generated_at_beijing": "2026-08-27T16:10:37+08:00",
   "repository": {
     "head_sha": "68244d103786756521c1410bbf34a051b8ff6ccf",
     "github_sha": "68244d103786756521c1410bbf34a051b8ff6ccf",
@@ -13,14 +13,14 @@
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "FAIL",
-  "hard_error_count": 1,
+  "status": "WARNING",
+  "hard_error_count": 0,
   "warning_count": 1,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.023s\n\nOK\n"
+      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.014s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -669,8 +669,8 @@
     },
     {
       "name": "us_extended:live_freshness",
-      "status": "FAIL",
-      "detail": "active=True phase=04:00 max_age_seconds=29111 limit=900"
+      "status": "PASS",
+      "detail": "active=True phase=04:10 max_age_seconds=5 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -785,12 +785,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=2394"
+      "detail": "declared=STALE expected=STALE age_seconds=3020"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=2394"
+      "detail": "declared=STALE expected=STALE age_seconds=3020"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -830,7 +830,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-27T08:00:10Z market=2026-08-27T15:20:16+08:00"
+      "detail": "context=2026-08-27T08:10:36Z market=2026-08-27T15:20:16+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1683,9 +1683,7 @@
       "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
     }
   ],
-  "errors": [
-    "us_extended:live_freshness: active=True phase=04:00 max_age_seconds=29111 limit=900"
-  ],
+  "errors": [],
   "warnings": [
     "runtime_health:skipped_reason: failure_stage= reason=close_already_recorded"
   ],
