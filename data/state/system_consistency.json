@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-27T15:35:42Z",
-  "generated_at_beijing": "2026-08-27T23:35:42+08:00",
+  "generated_at": "2026-08-27T23:43:29Z",
+  "generated_at_beijing": "2026-08-28T07:43:29+08:00",
   "repository": {
-    "head_sha": "2fdea32ed4980d638334fbae0be76770d1849d96",
-    "github_sha": "2fdea32ed4980d638334fbae0be76770d1849d96",
-    "github_run_id": "33088630158",
+    "head_sha": "85cd83e6813cd46070faba6f6c4fead56eb763ca",
+    "github_sha": "85cd83e6813cd46070faba6f6c4fead56eb763ca",
+    "github_run_id": "33127257913",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "2fdea32ed4980d638334fbae0be76770d1849d96",
-    "workflow_sha": "2fdea32ed4980d638334fbae0be76770d1849d96",
+    "checked_commit": "85cd83e6813cd46070faba6f6c4fead56eb763ca",
+    "workflow_sha": "85cd83e6813cd46070faba6f6c4fead56eb763ca",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "PASS",
-  "hard_error_count": 0,
+  "status": "FAIL",
+  "hard_error_count": 2,
   "warning_count": 0,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.012s\n\nOK\n"
+      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.020s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -235,12 +235,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=2fdea32ed4980d638334fbae0be76770d1849d96"
+      "detail": "HEAD=85cd83e6813cd46070faba6f6c4fead56eb763ca"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=2fdea32ed4980d638334fbae0be76770d1849d96 GITHUB_SHA=2fdea32ed4980d638334fbae0be76770d1849d96"
+      "detail": "HEAD=85cd83e6813cd46070faba6f6c4fead56eb763ca GITHUB_SHA=85cd83e6813cd46070faba6f6c4fead56eb763ca"
     },
     {
       "name": "git:critical_files_tracked",
@@ -565,7 +565,7 @@
     {
       "name": "trading_calendar:coverage",
       "status": "PASS",
-      "detail": "today=2026-08-27 coverage=2026-01-01..2026-12-31"
+      "detail": "today=2026-08-28 coverage=2026-01-01..2026-12-31"
     },
     {
       "name": "trading_calendar:official_source",
@@ -669,8 +669,8 @@
     },
     {
       "name": "us_extended:live_freshness",
-      "status": "PASS",
-      "detail": "active=True phase=11:35 max_age_seconds=7 limit=900"
+      "status": "FAIL",
+      "detail": "active=True phase=19:43 max_age_seconds=8909 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -785,12 +785,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=29725"
+      "detail": "declared=STALE expected=STALE age_seconds=58993"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=29725"
+      "detail": "declared=STALE expected=STALE age_seconds=58993"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -830,7 +830,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-27T15:35:41Z market=2026-08-27T15:20:16+08:00"
+      "detail": "context=2026-08-27T23:43:29Z market=2026-08-27T15:20:16+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -905,12 +905,12 @@
     {
       "name": "notification:managed_schema",
       "status": "PASS",
-      "detail": "count=17"
+      "detail": "count=18"
     },
     {
       "name": "notification:no_duplicate_active_source",
       "status": "PASS",
-      "detail": "active_sources=['system:workflow:32867470397:WORKFLOW_FAILURE_UNCLASSIFIED', 'system:selfheal:CONSISTENCY_REGRESSION:2026-08-26T01:21:28+08:00', 'account:total_asset:2026-08-26T10:40:00+08:00:total_asset变化 +2901.00', 'channel-test:2026-08-26T13:39:30+08:00', 'opportunity:20260826_1332_formal_intraday_decision:561980:观察机会', 'formal-change:20260826_1358_formal_intraday_decision:7781f960401f', 'formal-change:20260826_1358_formal_intraday_decision:57f1d4714cf6', 'account:total_asset:2026-08-26T13:58:00+08:00:total_asset变化 -70.00', 'formal-change:20260826_1453_formal_intraday_decision', 'close-account:2026-08-26', 'formal-change:20260827_095649_515880_trial_5000', 'decision:ACCOUNT_STRUCTURE_CHANGED|total_asset|2026-08-27T10:08|20260827_095649_515880_trial_5000|20260825_112516', 'decision:TRADE_CONFIRMED|20260827_100843_515880_buy|2026-08-27T13:40|20260827_095649_515880_trial_5000|20260827_100843_515880_buy', 'market-shock:a-share:000688:UP:EXTREME:2026082719:0', 'us-session-summary:2026-08-27:OPEN', 'market-value:us:2026-08-27:SOX:UP:EXTREME:23:1']"
+      "detail": "active_sources=['account:total_asset:2026-08-26T10:40:00+08:00:total_asset变化 +2901.00', 'channel-test:2026-08-26T13:39:30+08:00', 'opportunity:20260826_1332_formal_intraday_decision:561980:观察机会', 'formal-change:20260826_1358_formal_intraday_decision:7781f960401f', 'formal-change:20260826_1358_formal_intraday_decision:57f1d4714cf6', 'account:total_asset:2026-08-26T13:58:00+08:00:total_asset变化 -70.00', 'formal-change:20260826_1453_formal_intraday_decision', 'close-account:2026-08-26', 'formal-change:20260827_095649_515880_trial_5000', 'decision:ACCOUNT_STRUCTURE_CHANGED|total_asset|2026-08-27T10:08|20260827_095649_515880_trial_5000|20260825_112516', 'decision:TRADE_CONFIRMED|20260827_100843_515880_buy|2026-08-27T13:40|20260827_095649_515880_trial_5000|20260827_100843_515880_buy', 'market-shock:a-share:000688:UP:EXTREME:2026082719:0', 'us-session-summary:2026-08-27:OPEN', 'market-value:us:2026-08-27:SOX:UP:EXTREME:23:1', 'system:workflow:33096867945:WORKFLOW_FAILURE_UNCLASSIFIED']"
     },
     {
       "name": "notification:confirmation_entry_syntax",
@@ -949,8 +949,8 @@
     },
     {
       "name": "a_share_runtime:market_date_alignment",
-      "status": "PASS",
-      "detail": "snapshot=2026-08-27 current=2026-08-27 health=2026-08-27 query_only=False"
+      "status": "FAIL",
+      "detail": "snapshot=2026-08-27 current=2026-08-27 health=2026-08-28 query_only=False"
     },
     {
       "name": "a_share_runtime:etf_complete",
@@ -1683,7 +1683,10 @@
       "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
     }
   ],
-  "errors": [],
+  "errors": [
+    "us_extended:live_freshness: active=True phase=19:43 max_age_seconds=8909 limit=900",
+    "a_share_runtime:market_date_alignment: snapshot=2026-08-27 current=2026-08-27 health=2026-08-28 query_only=False"
+  ],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
   "production_mutation_protocol": {
