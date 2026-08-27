@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.2",
+  "mode": "RESEARCH_ONLY_INDEX_FUTURES_ROBUSTNESS",
+  "decision_eligible": false,
+  "trade_signal": null,
+  "master_override": false,
+  "pit": "T facts shifted one ETF observation",
+  "continuous_contract_limitation": "Continuous contracts with strict ±5-day discontinuity exclusion; still not expiry-aware.",
+  "data_quality": {
+    "IF": {"rows": 2332, "strict_clean_rows": 1407, "excluded_pct": 39.67},
+    "IC": {"rows": 2332, "strict_clean_rows": 1355, "excluded_pct": 41.9},
+    "IM": {"rows": 994, "strict_clean_rows": 556, "excluded_pct": 44.06},
+    "561980": {"provider": "Yahoo chart", "rows": 723},
+    "588000": {"provider": "Yahoo chart", "rows": 1124},
+    "159781": {"provider": "Yahoo chart", "rows": 1124},
+    "159992": {"provider": "Yahoo chart", "rows": 1124},
+    "515880": {"provider": "Yahoo chart", "rows": 1124},
+    "159326": {"provider": "Yahoo chart", "rows": 476}
+  },
+  "signals": {
+    "IF_basis_change_5d": {"tests": 36, "early_median_ic": 0.1416, "late_median_ic": 0.0468, "overall_median_ic": 0.1243, "sign_consistency": 0.75, "passed": true},
+    "IC_basis_change_5d": {"tests": 36, "early_median_ic": 0.1493, "late_median_ic": 0.0316, "overall_median_ic": 0.1086, "sign_consistency": 0.7778, "passed": true},
+    "IC_oi_change_1d": {"tests": 36, "early_median_ic": 0.0528, "late_median_ic": 0.05, "overall_median_ic": 0.0513, "sign_consistency": 0.7222, "passed": true},
+    "IM_basis_change_5d": {"tests": 36, "early_median_ic": 0.1749, "late_median_ic": 0.064, "overall_median_ic": 0.1294, "sign_consistency": 0.9444, "passed": true}
+  },
+  "research_interpretation": "ROBUST_CONTINUOUS_CONTRACT_INCREMENT",
+  "passing_signals": ["IF_basis_change_5d", "IC_basis_change_5d", "IC_oi_change_1d", "IM_basis_change_5d"],
+  "production_boundary": "No production integration from this study alone; basis still requires contract/expiry-aware validation."
+}
