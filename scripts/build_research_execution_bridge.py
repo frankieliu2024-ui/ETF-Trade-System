@@ -11,6 +11,7 @@ except ModuleNotFoundError:
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 OUTPUT = ROOT / "data/state/research_execution_summary.json"
+STOCK_SIGNAL_CONCLUSION = ROOT / "research/backtests/ipo_base_stock_specific_signal_conclusion.json"
 
 
 def _num(value):
@@ -71,6 +72,45 @@ def _research_conclusion_digest(root: Path, research_context: dict) -> dict:
     }
 
 
+def _stock_specific_signal_map(root: Path) -> dict[str, dict]:
+    obj = read_json(root / "research/backtests/ipo_base_stock_specific_signal_conclusion.json", {})
+    if not isinstance(obj, dict) or obj.get("mode") != "IPO_BASE_STOCK_SPECIFIC_SIGNAL_FINAL_CONCLUSION":
+        return {}
+    output = {}
+    for stock in obj.get("stocks") or []:
+        if not isinstance(stock, dict):
+            continue
+        code = str(stock.get("code") or "")
+        if not code:
+            continue
+        validated = []
+        for signal in stock.get("validated_signals") or []:
+            if not isinstance(signal, dict) or not signal.get("decision_eligible"):
+                continue
+            validated.append({
+                "signal_id": signal.get("signal_id"),
+                "display_name": signal.get("display_name"),
+                "direction": signal.get("direction"),
+                "definition": signal.get("definition"),
+                "current_completed_bar_match": bool(signal.get("current_completed_bar_match", False)),
+                "primary_validation": signal.get("primary_validation"),
+                "yearly_robustness": signal.get("yearly_robustness"),
+                "automatic_trade": False,
+                "trade_signal": None,
+            })
+        output[code] = {
+            "status": stock.get("validated_stock_specific_signal_status") or ("VALIDATED_RESEARCH_SIGNAL_AVAILABLE" if validated else "NO_STABLE_INCREMENTAL_SIGNAL_AFTER_ROBUSTNESS"),
+            "validated_signals": validated,
+            "rejected_after_robustness": stock.get("rejected_after_robustness") or [],
+            "current_completed_bar_matches": stock.get("current_completed_bar_matches") or [],
+            "source": "research/backtests/ipo_base_stock_specific_signal_conclusion.json",
+            "data_cutoff": obj.get("data_cutoff"),
+            "automatic_trade": False,
+            "trade_signal": None,
+        }
+    return output
+
+
 def build(root: Path | None = None) -> dict:
     root = root or ROOT
     research_context = read_json(root / "data/state/research_context.json", {})
@@ -78,6 +118,7 @@ def build(root: Path | None = None) -> dict:
     account = read_json(root / "data/state/account_fact.json", {})
     stock_context = read_json(root / "data/state/stock_context.json", {})
     stock_market = read_json(root / "data/state/stock_market_context.json", {})
+    stock_signal_map = _stock_specific_signal_map(root)
 
     positions = {str(x.get("code") or ""): x for x in (account.get("positions") or []) if isinstance(x, dict) and x.get("code")}
     market_objects = stock_market.get("objects") or {}
@@ -92,6 +133,7 @@ def build(root: Path | None = None) -> dict:
             continue
         pos = positions.get(code) or {}
         market = market_objects.get(code) or {}
+        stock_research = stock_signal_map.get(code) or {}
         mv = _num(pos.get("market_value"))
         if mv is None:
             mv = _num(item.get("market_value"))
@@ -113,7 +155,12 @@ def build(root: Path | None = None) -> dict:
             "quality_status": market.get("quality_status") or "MISSING",
             "use_in_current_decision": True,
             "research_scope": "CURRENT_FACT_CAPITAL_ROLE_AND_MATCHED_VALIDATED_RESEARCH",
-            "validated_stock_specific_signal_status": "NO_MATCHED_VALIDATED_SIGNAL" if not research_context.get("ipo_base_stock_research") else "SEE_RESEARCH_CONTEXT",
+            "validated_stock_specific_signal_status": stock_research.get("status") or ("NO_MATCHED_VALIDATED_SIGNAL" if not research_context.get("ipo_base_stock_research") else "SEE_RESEARCH_CONTEXT"),
+            "validated_stock_specific_signals": stock_research.get("validated_signals") or [],
+            "rejected_stock_specific_signals_after_robustness": stock_research.get("rejected_after_robustness") or [],
+            "stock_specific_signal_current_completed_bar_matches": stock_research.get("current_completed_bar_matches") or [],
+            "stock_specific_research_source": stock_research.get("source"),
+            "stock_specific_research_data_cutoff": stock_research.get("data_cutoff"),
             "decision_effects_allowed": ["持有价值和风险收益复核", "是否作为新增资本候选", "是否作为ETF或其他机会的可释放资金来源", "卖出后资金进入现金还是独立成立的新机会"],
             "automatic_trade": False,
             "trade_signal": None,
@@ -151,6 +198,13 @@ def build(root: Path | None = None) -> dict:
     }
 
     research_context["research_execution_summary"] = summary
+    research_context["ipo_base_stock_research"] = {
+        "status": "READY" if stock_signal_map else "NO_VALIDATED_STOCK_SPECIFIC_RESEARCH",
+        "source": "research/backtests/ipo_base_stock_specific_signal_conclusion.json" if stock_signal_map else None,
+        "stocks": stock_signal_map,
+        "automatic_trade": False,
+        "trade_signal": None,
+    }
     research_context["ipo_base_stock_research_coverage"] = {
         "status": "READY" if stock_evidence else "NO_CURRENT_IPO_BASE_STOCK",
         "object_count": len(stock_evidence),

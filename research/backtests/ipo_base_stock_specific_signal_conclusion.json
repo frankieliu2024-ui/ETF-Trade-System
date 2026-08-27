@@ -1,0 +1,169 @@
+{
+  "schema_version": "1.0",
+  "generated_at_beijing": "2026-08-27T09:55:57+08:00",
+  "mode": "IPO_BASE_STOCK_SPECIFIC_SIGNAL_FINAL_CONCLUSION",
+  "point_in_time": true,
+  "data_cutoff": "2026-08-26",
+  "automatic_trade": false,
+  "trade_signal": null,
+  "decision_eligible": true,
+  "production_context_integration": true,
+  "research_interpretation": "ONE_ROBUST_STOCK_SPECIFIC_SIGNAL_AFTER_YEARLY_VALIDATION",
+  "conclusion": "宁德时代（300750）的超跌反转研究信号通过固定PIT初筛与2024、2025、2026YTD年度分段稳健性复核，可作为只读执行证据；宁德时代（300750）与工业富联（601138）的60日放量突破初筛信号均因2026YTD出现明显反向失效而不进入正式执行证据。研究时点两只股票均未在2026-08-26完整日线触发最终保留的稳健信号。",
+  "research_design": {
+    "sample_start": "2020-01-02",
+    "sample_end": "2026-08-26",
+    "rows_each_stock": 1612,
+    "validation_start": "2024-01-01",
+    "forward_horizons_trading_days": [5, 10],
+    "stock_history_provider": "yahoo_chart_api",
+    "price_field": "raw quote.close",
+    "adjusted_close_used": false,
+    "broad_market_control": "上证指数（000001）",
+    "broad_market_control_role": "仅用于剔除广义A股市场方向，不作为行业或风格基准",
+    "fixed_signal_family_count": 6,
+    "parameter_grid_search": false,
+    "optimizer_used": false,
+    "composite_score": false,
+    "primary_gate": "5日与10日均要求训练期/验证期样本>=12、验证期方向性平均超额收益>0.50个百分点、中位数同向、相对无条件样本增量>0.35个百分点、方向命中率>=55%、训练期方向一致、历史末日价格与正式实时链前收盘身份校验PASS",
+    "robustness_gate": "仅复核初筛通过信号；2024、2025、2026YTD三个切片中5日和10日至少2/3年度切片方向一致，且任一n>=4年度切片不得出现超过2.0个百分点的反向平均超额收益；不重新调参"
+  },
+  "stocks": [
+    {
+      "code": "300750",
+      "display_name": "宁德时代（300750）",
+      "identity_check": {
+        "historical_last_close": 379.0,
+        "formal_current_prev_close": 379.0,
+        "gap_pct": 0.0,
+        "status": "PASS"
+      },
+      "validated_stock_specific_signal_status": "VALIDATED_RESEARCH_SIGNAL_AVAILABLE",
+      "validated_signals": [
+        {
+          "signal_id": "OVERSOLD_REVERSAL",
+          "display_name": "超跌反转",
+          "direction": "POSITIVE",
+          "definition": "5个交易日跌幅不高于-8%，且收盘价低于20日均线；仅在完整日线形成后判定",
+          "primary_validation": {
+            "5d": {
+              "n": 17,
+              "mean_excess_pct": 2.4306,
+              "median_excess_pct": 1.9203,
+              "positive_excess_rate": 0.7059,
+              "mean_stock_return_pct": 2.9424
+            },
+            "10d": {
+              "n": 17,
+              "mean_excess_pct": 5.2089,
+              "median_excess_pct": 3.3884,
+              "positive_excess_rate": 0.9412,
+              "mean_stock_return_pct": 6.0906
+            }
+          },
+          "training": {
+            "5d_n": 59,
+            "5d_mean_excess_pct": 1.5305,
+            "10d_n": 59,
+            "10d_mean_excess_pct": 0.7203
+          },
+          "yearly_robustness": {
+            "2024": {
+              "5d_n": 5,
+              "5d_mean_excess_pct": 4.2339,
+              "10d_n": 5,
+              "10d_mean_excess_pct": 4.5698
+            },
+            "2025": {
+              "5d_n": 9,
+              "5d_mean_excess_pct": 0.7373,
+              "10d_n": 9,
+              "10d_mean_excess_pct": 3.707
+            },
+            "2026YTD": {
+              "5d_n": 3,
+              "5d_mean_excess_pct": 4.5051,
+              "10d_n": 3,
+              "10d_mean_excess_pct": 10.7799
+            },
+            "robustness_pass": true,
+            "catastrophic_reversals": []
+          },
+          "current_completed_bar_match": false,
+          "decision_eligible": true,
+          "production_context_integration": true,
+          "automatic_trade": false,
+          "trade_signal": null
+        }
+      ],
+      "rejected_after_robustness": [
+        {
+          "signal_id": "VOLUME_BREAKOUT_60D",
+          "display_name": "60日放量突破",
+          "primary_validation_pass": true,
+          "reason": "2026YTD 10日平均相对广义A股市场超额收益为-2.6997%，触发超过2个百分点的反向失效门禁",
+          "decision_eligible": false
+        }
+      ],
+      "current_completed_bar_matches": [],
+      "automatic_trade": false,
+      "trade_signal": null
+    },
+    {
+      "code": "601138",
+      "display_name": "工业富联（601138）",
+      "identity_check": {
+        "historical_last_close": 60.56999969482422,
+        "formal_current_prev_close": 60.57,
+        "gap_pct": 0.0,
+        "status": "PASS"
+      },
+      "validated_stock_specific_signal_status": "NO_STABLE_INCREMENTAL_SIGNAL_AFTER_ROBUSTNESS",
+      "validated_signals": [],
+      "rejected_after_robustness": [
+        {
+          "signal_id": "VOLUME_BREAKOUT_60D",
+          "display_name": "60日放量突破",
+          "primary_validation": {
+            "5d": {
+              "n": 32,
+              "mean_excess_pct": 3.8348,
+              "median_excess_pct": 2.8211,
+              "positive_excess_rate": 0.6562
+            },
+            "10d": {
+              "n": 32,
+              "mean_excess_pct": 7.619,
+              "median_excess_pct": 7.3669,
+              "positive_excess_rate": 0.6875
+            }
+          },
+          "primary_validation_pass": true,
+          "reason": "2026YTD 5日和10日平均相对广义A股市场超额收益分别为-3.3391%和-5.8340%，均触发超过2个百分点的反向失效门禁",
+          "decision_eligible": false
+        }
+      ],
+      "current_completed_bar_matches": [],
+      "automatic_trade": false,
+      "trade_signal": null
+    }
+  ],
+  "execution_eligible_signals": [
+    {
+      "code": "300750",
+      "display_name": "宁德时代（300750）",
+      "signal_id": "OVERSOLD_REVERSAL",
+      "display_signal_name": "超跌反转",
+      "direction": "POSITIVE",
+      "current_completed_bar_match": false,
+      "automatic_trade": false,
+      "trade_signal": null
+    }
+  ],
+  "boundary": "该结论只改变研究证据和资本比较；不单独生成风险许可、Trial/Confirm、金额、卖出份额或订单。当前完整日线未触发稳健信号，因此本文件本身不构成当前买入或卖出动作。",
+  "audit_source": {
+    "branch": "research/ipo-base-stock-signals-20260827",
+    "primary_result_commit": "17aa9b0",
+    "robustness_result_commit": "425c780"
+  }
+}
