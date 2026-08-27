@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-27T09:39:23Z",
-  "generated_at_beijing": "2026-08-27T17:39:23+08:00",
+  "generated_at": "2026-08-27T09:46:08Z",
+  "generated_at_beijing": "2026-08-27T17:46:08+08:00",
   "repository": {
-    "head_sha": "d09bfcda95bfb73275b9048afd66bd6e2c70b272",
-    "github_sha": "d09bfcda95bfb73275b9048afd66bd6e2c70b272",
-    "github_run_id": "33059533162",
+    "head_sha": "f47f9864763b76f704f43e335af88d3e8d8bd46d",
+    "github_sha": "f47f9864763b76f704f43e335af88d3e8d8bd46d",
+    "github_run_id": "33060038690",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "d09bfcda95bfb73275b9048afd66bd6e2c70b272",
-    "workflow_sha": "d09bfcda95bfb73275b9048afd66bd6e2c70b272",
+    "checked_commit": "f47f9864763b76f704f43e335af88d3e8d8bd46d",
+    "workflow_sha": "f47f9864763b76f704f43e335af88d3e8d8bd46d",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "FAIL",
-  "hard_error_count": 2,
+  "status": "PASS",
+  "hard_error_count": 0,
   "warning_count": 0,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.024s\n\nOK\n"
+      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.012s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -235,12 +235,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=d09bfcda95bfb73275b9048afd66bd6e2c70b272"
+      "detail": "HEAD=f47f9864763b76f704f43e335af88d3e8d8bd46d"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=d09bfcda95bfb73275b9048afd66bd6e2c70b272 GITHUB_SHA=d09bfcda95bfb73275b9048afd66bd6e2c70b272"
+      "detail": "HEAD=f47f9864763b76f704f43e335af88d3e8d8bd46d GITHUB_SHA=f47f9864763b76f704f43e335af88d3e8d8bd46d"
     },
     {
       "name": "git:critical_files_tracked",
@@ -614,7 +614,7 @@
     },
     {
       "name": "scheduled_target_cadence_600s",
-      "status": "FAIL",
+      "status": "PASS",
       "detail": "scheduled market workflows target ten-minute cadence"
     },
     {
@@ -670,7 +670,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=True phase=05:39 max_age_seconds=44 limit=900"
+      "detail": "active=True phase=05:46 max_age_seconds=15 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -764,7 +764,7 @@
     },
     {
       "name": "workflow:us_10m_schedule",
-      "status": "FAIL",
+      "status": "PASS",
       "detail": "US pre-market/regular/post-market pulses scheduled every ten minutes"
     },
     {
@@ -785,12 +785,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=8347"
+      "detail": "declared=STALE expected=STALE age_seconds=8751"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=8347"
+      "detail": "declared=STALE expected=STALE age_seconds=8751"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -830,7 +830,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-27T09:39:23Z market=2026-08-27T15:20:16+08:00"
+      "detail": "context=2026-08-27T09:46:07Z market=2026-08-27T15:20:16+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -900,7 +900,7 @@
     {
       "name": "phase4:e2e_state_present",
       "status": "PASS",
-      "detail": "status=READY"
+      "detail": "status=BLOCKED"
     },
     {
       "name": "notification:managed_schema",
@@ -1683,10 +1683,7 @@
       "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
     }
   ],
-  "errors": [
-    "scheduled_target_cadence_600s: scheduled market workflows target ten-minute cadence",
-    "workflow:us_10m_schedule: US pre-market/regular/post-market pulses scheduled every ten minutes"
-  ],
+  "errors": [],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
   "production_mutation_protocol": {
