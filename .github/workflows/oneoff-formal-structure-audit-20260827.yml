@@ -18,21 +18,27 @@ jobs:
           python - <<'PY'
           import re, json
           from pathlib import Path
-          files=['ETF交易复盘与经验库_2026.md','ETF市场行情档案_2026.md','ETF当前状态_DASHBOARD.md','README.md','ETF_SYSTEM_INDEX.md']
           out={}
+          files=['ETF交易复盘与经验库_2026.md','ETF市场行情档案_2026.md','ETF当前状态_DASHBOARD.md','README.md','ETF_SYSTEM_INDEX.md']
           for fn in files:
               t=Path(fn).read_text(encoding='utf-8')
+              lines=t.splitlines()
               hs=[]
-              for i,l in enumerate(t.splitlines(),1):
+              for i,l in enumerate(lines,1):
                   if re.match(r'^#{1,4}\s+',l): hs.append({'line':i,'heading':l})
-              out[fn]={'headings':hs}
+              markers=[]
+              for i,l in enumerate(lines,1):
+                  if l.startswith('<!-- AUTO_'):
+                      prev=next((h['heading'] for h in reversed(hs) if h['line']<i),None)
+                      nxt=next((h['heading'] for h in hs if h['line']>i),None)
+                      markers.append({'line':i,'marker':l,'prev_heading':prev,'next_heading':nxt})
+              out[fn]={'headings':hs,'managed_markers':markers}
           exp=Path('ETF交易复盘与经验库_2026.md').read_text(encoding='utf-8')
           case_heads=[]
           for i,l in enumerate(exp.splitlines(),1):
               m=re.match(r'^###\s+(\d+(?:\.\d+)?)\s+(CASE-(\d{8})-\d{2})[:：]',l)
               if m: case_heads.append({'line':i,'section':m.group(1),'case':m.group(2),'date':m.group(3)})
-          out['experience_case_order']={'cases':case_heads,'dates':[x['date'] for x in case_heads], 'chronological': all(case_heads[i]['date']<=case_heads[i+1]['date'] for i in range(len(case_heads)-1))}
-          # identify duplicate subsection numbers under chapter 2 and managed blocks located after later top-level chapters
+          out['experience_case_order']={'cases':case_heads,'chronological':all(case_heads[i]['date']<=case_heads[i+1]['date'] for i in range(len(case_heads)-1))}
           nums=[]
           for x in out['ETF交易复盘与经验库_2026.md']['headings']:
               m=re.match(r'^###\s+(2\.\d+)\b',x['heading'])
