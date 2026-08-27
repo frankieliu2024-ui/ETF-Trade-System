@@ -38,7 +38,6 @@ def _recent_duplicate(event: dict) -> bool:
         if not stamp or now() - stamp > timedelta(minutes=COOLDOWN_MINUTES):
             continue
         old_severity = str(ctx.get("shock_severity") or "")
-        # A new EXTREME event may escalate a prior SUDDEN alert; otherwise suppress.
         if severity == "EXTREME" and old_severity != "EXTREME":
             return False
         return True
@@ -56,7 +55,6 @@ def _a_share_candidate() -> dict | None:
     snapshot, rows = _snapshot_rows()
     if not rows:
         return None
-    row_map = {str(r.get("symbol") or ""): r for r in rows}
     delta = read_json(STATE / "market_delta.json", {})
     interval_min = number(delta.get("interval_seconds"))
     interval_min = interval_min / 60.0 if interval_min is not None else None
@@ -125,18 +123,28 @@ def _context_candidate(market: str) -> dict | None:
         "N225": "日经225指数（N225）", "KOSPI": "韩国综合指数（KOSPI）", "TWII": "台湾加权指数（TWII）",
     }
     candidates = []
+    metric_labels: dict[str, str] = {}
     for code in symbols:
         obj = current_objects.get(code) or {}
         latest = obj.get("latest") or {}
         price_now = number(latest.get("close"))
         if price_now is None or obj.get("quality_status") not in {"PASS", "FRESH"}:
             continue
-        day = None
         if market == "us":
-            day = number(obj.get("regular_session_change_vs_previous_close_pct"))
+            phase = str(obj.get("current_market_phase") or "")
+            if phase == "REGULAR":
+                day = number(obj.get("regular_session_change_vs_previous_close_pct"))
+                metric_labels[code] = "现金盘较前收"
+            elif phase in {"PRE_MARKET", "POST_MARKET"}:
+                day = number(obj.get("extended_change_vs_regular_close_pct"))
+                metric_labels[code] = "扩展时段较最近现金盘收盘"
+            else:
+                day = None
+                metric_labels[code] = "当前阶段"
         else:
             prev_close = number(latest.get("previous_close")) or number(obj.get("previous_close_reference"))
             day = pct_change(price_now, prev_close)
+            metric_labels[code] = "较前收"
         if day is not None and abs(day) >= THRESHOLDS[market]["index_extreme"]:
             candidates.append((abs(day) / THRESHOLDS[market]["index_extreme"] + 1.0, "EXTREME", code, day, None, latest))
         prev_obj = previous_objects.get(code) or {}
@@ -165,19 +173,19 @@ def _context_candidate(market: str) -> dict | None:
         "event_type": "MARKET_SHOCK_ALERT",
         "title": title,
         "content": render_shock(
-            what=[f"- **市场**：{market_name}", f"- **对象**：{label}", f"- **当日/正式盘变化**：{pct(day)}", f"- **最近脉冲变化**：{pct(sudden) if sudden is not None else '未触发'}"],
+            what=[f"- **市场**：{market_name}", f"- **对象**：{label}", f"- **{metric_labels.get(code, '当前阶段变化')}**：{pct(day)}", f"- **最近脉冲变化**：{pct(sudden) if sudden is not None else '未触发'}"],
             why=why,
             implication="把本次异动作为外部结构的新证据，观察是否向A股科技、风险偏好或相关ETF传导；如果A股尚未开盘，则纳入下一盘前；如果A股正在交易，则立即检查本地是否共振或背离。",
             action="无需因海外单一异动机械调整A股持仓；在最近有效A股决策节点重新完成外部结构→本地传导→ETF自身反馈→机会判断。",
             as_of=as_of or "未提供",
-            boundary="海外异动通知只提高关注优先级，不直接生成A股风险许可、金额或卖出动作。",
+            boundary="海外异动通知只提高关注优先级，不直接生成A股风险许可、金额或卖出动作；美股盘前/盘后不得重复使用上一现金盘旧涨跌充当当前异动。",
         ),
         "source": str(current_path.relative_to(ROOT)),
         "security_code": code,
         "security_name": labels[code].split("（")[0],
         "user_severity": "需要关注",
         "user_action": "纳入最近A股决策节点重新验证，不机械交易",
-        "confirmation_context": {"market": market.upper(), "direction": direction, "shock_severity": severity, "day_change_pct": day, "sudden_change_pct": sudden, "market_as_of_beijing": as_of},
+        "confirmation_context": {"market": market.upper(), "direction": direction, "shock_severity": severity, "phase_metric_change_pct": day, "sudden_change_pct": sudden, "market_as_of_beijing": as_of},
     }
     return None if _recent_duplicate(event) else event
 
