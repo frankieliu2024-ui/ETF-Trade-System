@@ -36,7 +36,13 @@ def replace_managed_block(
     block: str,
     *,
     after_heading: bool = False,
+    insert_after_heading: bool | None = None,
 ) -> str:
+    # process_state_sync_request historically used insert_after_heading while
+    # sync_formal_files used after_heading. The gateway accepts both during the
+    # migration so behavior is unchanged and callers share one implementation.
+    if insert_after_heading is not None:
+        after_heading = bool(insert_after_heading)
     managed = f"{start}\n{block.rstrip()}\n{end}"
     if start in text and end in text:
         a = text.index(start)
