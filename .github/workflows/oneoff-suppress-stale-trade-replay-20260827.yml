@@ -1,0 +1,59 @@
+name: One-off suppress stale trade replay 20260827
+on:
+  push:
+    paths:
+      - ".github/workflows/oneoff-suppress-stale-trade-replay-20260827.yml"
+permissions:
+  contents: write
+concurrency:
+  group: production-main-writer
+  cancel-in-progress: false
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Synchronize latest main
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+      - name: Prevent stale trade replay
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/build_phase4_automation.py')
+          s=p.read_text(encoding='utf-8')
+          anchor='''def _quality(row: dict) -> str:\n    return str(row.get("quality_status") or row.get("status") or "").upper()\n\n\ndef _build_trigger'''
+          helper='''def _quality(row: dict) -> str:\n    return str(row.get("quality_status") or row.get("status") or "").upper()\n\n\ndef _latest_trade_is_recent(account: dict, max_age_minutes: int = 45) -> bool:\n    trades = [x for x in (account.get("trades") or []) if x.get("trade_time")]\n    if not trades:\n        return False\n    try:\n        latest = max(datetime.fromisoformat(str(x.get("trade_time")).replace("Z", "+00:00")) for x in trades)\n        if latest.tzinfo is None:\n            latest = latest.replace(tzinfo=TZ)\n        latest = latest.astimezone(TZ)\n    except ValueError:\n        return False\n    return datetime.now(TZ) - latest <= timedelta(minutes=max_age_minutes)\n\n\ndef _build_trigger'''
+          if anchor not in s:
+              raise RuntimeError('trade recency helper anchor not found')
+          s=s.replace(anchor,helper,1)
+          old='''    elif current.get("last_trade_event_id") and current.get("last_trade_event_id") != prior.get("last_trade_event_id"):\n        event_type = "TRADE_CONFIRMED"\n'''
+          new='''    elif current.get("last_trade_event_id") and current.get("last_trade_event_id") != prior.get("last_trade_event_id") and _latest_trade_is_recent(account):\n        event_type = "TRADE_CONFIRMED"\n'''
+          if old not in s:
+              raise RuntimeError('trade trigger anchor not found')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          python -m py_compile scripts/build_phase4_automation.py
+          python scripts/build_phase4_automation.py >/dev/null
+          python scripts/build_state_context.py >/dev/null
+          python scripts/build_query_context.py >/dev/null
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          t=json.loads(Path('data/state/decision_trigger.json').read_text(encoding='utf-8'))
+          assert t['trigger_type'] != 'TRADE_CONFIRMED', t
+          assert t['risk_zone'] == 'RISK_OBSERVATION', t
+          print('stale trade replay suppressed')
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/build_phase4_automation.py data/state/decision_trigger.json data/state/capital_efficiency_ranking.json data/state/decision_context.json data/state/query_context.json data/state/dashboard_update_candidate.json data/state/intraday_path_features.json data/state/market_regime_context.json data/state/market_structure_context.json data/state/research_context.json data/state/research_evidence_delta.json data/state/research_execution_summary.json data/state/research_master_candidates.json data/state/execution_quality.json data/state/skfolio_risk_evidence.json events/research/daily_features/2026-08-27.json || true
+          git commit -m "fix: suppress stale trade event replay"
+          git push origin HEAD:main
