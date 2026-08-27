@@ -3,6 +3,22 @@ name: ETF system consistency
 
 on:
   workflow_dispatch:
+  # Read-only precheck for changes that can redefine consistency semantics.
+  # It reuses the same production checks before merge, but never executes
+  # mutation requests or persists generated state back to main.
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/system-consistency.yml"
+      - "scripts/check_system_consistency.py"
+      - "scripts/check_system_consistency_core.py"
+      - "scripts/check_research_integration.py"
+      - "scripts/check_market_state_consistency.py"
+      - "scripts/check_production_mutation_protocol.py"
+      - "scripts/formal_document_structure.py"
+      - "scripts/maintenance_guard.py"
+      - "scripts/build_e2e_status.py"
+      - "config/maintenance/production_mutation_protocol.json"
   push:
     branches: [main]
     paths:
@@ -47,7 +63,9 @@ permissions:
   contents: write
 
 concurrency:
-  group: etf-system-consistency
+  # PR prechecks must never queue behind or delay the production consistency
+  # lane. Production keeps its existing single serialized group.
+  group: ${{ github.event_name == 'pull_request' && format('etf-system-consistency-pr-{0}', github.event.pull_request.number) || 'etf-system-consistency' }}
   cancel-in-progress: false
 
 jobs:
@@ -74,6 +92,7 @@ jobs:
           python scripts/build_us_extended_hours_context.py
       - name: Detect research backfill request
         id: backfill_request
+        if: ${{ github.event_name != 'pull_request' }}
         shell: bash
         run: |
           files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/research_backfill/*.json' || true)
@@ -85,6 +104,7 @@ jobs:
           fi
       - name: Detect trade fact correction request
         id: trade_fact_correction_request
+        if: ${{ github.event_name != 'pull_request' }}
         shell: bash
         run: |
           files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/trade_fact_correction/*.json' || true)
@@ -96,7 +116,7 @@ jobs:
           fi
       - name: Run requested research historical backfill
         id: backfill
-        if: ${{ steps.backfill_request.outputs.has_request == 'true' }}
+        if: ${{ github.event_name != 'pull_request' && steps.backfill_request.outputs.has_request == 'true' }}
         continue-on-error: true
         shell: bash
         run: |
@@ -110,7 +130,7 @@ jobs:
           exit "$rc"
       - name: Apply confirmed trade fact correction
         id: trade_fact_correction
-        if: ${{ steps.trade_fact_correction_request.outputs.has_request == 'true' }}
+        if: ${{ github.event_name != 'pull_request' && steps.trade_fact_correction_request.outputs.has_request == 'true' }}
         continue-on-error: true
         shell: bash
         run: |
@@ -155,7 +175,7 @@ jobs:
         run: |
           python scripts/build_e2e_status.py
       - name: Persist consistency and maintenance state
-        if: ${{ always() }}
+        if: ${{ always() && github.event_name != 'pull_request' }}
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
@@ -225,10 +245,10 @@ jobs:
           git commit -m "$msg"
           git push origin HEAD:main
       - name: Enforce research backfill result
-        if: ${{ steps.backfill_request.outputs.has_request == 'true' && steps.backfill.outcome == 'failure' }}
+        if: ${{ github.event_name != 'pull_request' && steps.backfill_request.outputs.has_request == 'true' && steps.backfill.outcome == 'failure' }}
         run: exit 1
       - name: Enforce trade fact correction result
-        if: ${{ steps.trade_fact_correction_request.outputs.has_request == 'true' && steps.trade_fact_correction.outcome == 'failure' }}
+        if: ${{ github.event_name != 'pull_request' && steps.trade_fact_correction_request.outputs.has_request == 'true' && steps.trade_fact_correction.outcome == 'failure' }}
         run: exit 1
       - name: Enforce hard consistency result
         if: ${{ steps.consistency.outcome == 'failure' }}
