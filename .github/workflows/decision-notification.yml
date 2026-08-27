@@ -34,7 +34,7 @@ jobs:
   notify:
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 4
     env:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
       PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
@@ -68,6 +68,18 @@ jobs:
       - name: Build delayed execution reconciliation
         if: ${{ github.event_name == 'workflow_run' }}
         run: python scripts/build_execution_reconciliation.py
+
+      - name: Send A-share open/close summary when due
+        id: a_share_summary_notify
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot' }}
+        continue-on-error: true
+        run: python scripts/send_regional_session_summary.py --market a-share
+
+      - name: Send A-share extreme/sudden move alert when due
+        id: a_share_shock_notify
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot' }}
+        continue-on-error: true
+        run: python scripts/send_market_shock_notification.py --market a-share
 
       - name: Send safe notification-channel test
         id: test_notify
@@ -115,7 +127,7 @@ jobs:
           git push origin HEAD:main
 
       - name: Surface notification delivery failure without blocking trading system
-        if: ${{ steps.test_notify.outcome == 'failure' || steps.event_notify.outcome == 'failure' || steps.close_notify.outcome == 'failure' }}
+        if: ${{ steps.test_notify.outcome == 'failure' || steps.event_notify.outcome == 'failure' || steps.close_notify.outcome == 'failure' || steps.a_share_summary_notify.outcome == 'failure' || steps.a_share_shock_notify.outcome == 'failure' }}
         run: |
           echo "User notification delivery failed; ETF market/data/trading-decision workflows remain unaffected."
           exit 1
