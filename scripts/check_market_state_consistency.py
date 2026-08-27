@@ -33,7 +33,23 @@ if str(runtime.get('latest_snapshot') or '') != snapshot_rel:
     fail('runtime_health.latest_snapshot != CURRENT.latest_snapshot')
 if str(runtime.get('market_date') or '') != str(current.get('market_date') or ''):
     fail('runtime_health.market_date != CURRENT.market_date')
-if str(runtime.get('market_phase') or '') != phase:
+
+runtime_phase = str(runtime.get('market_phase') or '')
+runtime_status = str(runtime.get('status') or '')
+runtime_reason = str(runtime.get('reason') or '')
+runtime_failure_stage = str(runtime.get('failure_stage') or '')
+# Outside the A-share capture window, runtime_health describes the most recent
+# collection attempt (SKIPPED), while CURRENT/snapshot intentionally retain the
+# last valid formal close. Those are different semantics and must not be forced
+# to share one market_phase. All other runtime/snapshot phase mismatches remain
+# hard failures.
+post_session_skip = (
+    runtime_status == 'SKIPPED'
+    and runtime_failure_stage == 'session_gate'
+    and runtime_reason == 'outside_a_share_capture_window'
+    and str(current.get('latest_valid_node') or '') == 'close'
+)
+if runtime_phase != phase and not post_session_skip:
     fail('runtime_health.market_phase != snapshot.market_phase')
 
 node = str(snapshot.get('node') or '')
@@ -81,6 +97,7 @@ print(json.dumps({
     'market_date': current.get('market_date'),
     'node': node,
     'market_phase': phase,
+    'runtime_phase_semantics': 'POST_SESSION_SKIPPED_LAST_VALID_CLOSE_RETAINED' if post_session_skip else 'ALIGNED',
     'snapshot': snapshot_rel,
     'rows': len(rows),
     'failed_objects': failed,
