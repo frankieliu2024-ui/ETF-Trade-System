@@ -7,6 +7,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from formal_file_mutation_gateway import upsert_formal_line
+
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STATE = ROOT / "data" / "state"
 EQUITY = STATE / "etf_strategy_equity.json"
@@ -42,21 +44,6 @@ def safe_float(value: Any) -> float | None:
     except (TypeError, ValueError):
         return None
 
-
-def upsert_line(path: Path, start: str, end: str, key: str, line: str) -> None:
-    text = path.read_text(encoding="utf-8")
-    tagged = f"{key}｜{line}"
-    if start in text and end in text:
-        a = text.index(start) + len(start)
-        b = text.index(end, a)
-        rows = [x for x in text[a:b].strip().splitlines() if x.strip()]
-        rows = [x for x in rows if not x.startswith(f"{key}｜")]
-        rows.append(tagged)
-        body = "\n".join(rows)
-        text = text[:a] + "\n" + body + "\n" + text[b:]
-    else:
-        text = text.rstrip() + f"\n\n{start}\n{tagged}\n{end}\n"
-    path.write_text(text, encoding="utf-8")
 
 
 def pending_fee_count(trades: list[dict]) -> int:
@@ -161,11 +148,11 @@ def main() -> int:
     date = str(event.get("execution_date") or event.get("confirmed_at_beijing") or "")[:10]
     fee_source = str(event.get("fee_source") or req.get("source") or "BROKER_SCREENSHOT_CONFIRMED")
     line = f"{date} 已有成交事实补充：{target}成交费用确认{fee:.2f}元；原成交数量、价格、方向和交易日不变；来源：{fee_source}。"
-    upsert_line(ARCHIVE, ARCHIVE_START, ARCHIVE_END, correction_key, f"- {line}")
-    upsert_line(EXPERIENCE, EXPERIENCE_START, EXPERIENCE_END, correction_key, f"- 事实补充｜{line} 不新增CASE、不改变历史交易判断。")
+    upsert_formal_line(ROOT, ARCHIVE.name, ARCHIVE_START, ARCHIVE_END, correction_key, f"- {line}")
+    upsert_formal_line(ROOT, EXPERIENCE.name, EXPERIENCE_START, EXPERIENCE_END, correction_key, f"- 事实补充｜{line} 不新增CASE、不改变历史交易判断。")
     summary = equity.get("summary") or {}
     dashboard_line = f"成交费用补充：{target} {fee:.2f}元已确认；ETF累计已确认费用{float(summary.get('known_fees') or 0):.2f}元；ETF策略Known-net收益率约{float(summary.get('known_net_current_strategy_return_pct') or 0):.2f}%。"
-    upsert_line(DASHBOARD, DASH_START, DASH_END, correction_key, f"- {dashboard_line}")
+    upsert_formal_line(ROOT, DASHBOARD.name, DASH_START, DASH_END, correction_key, f"- {dashboard_line}")
 
     receipt = {
         "status": "RECONCILED" if already_confirmed_same else "APPLIED",

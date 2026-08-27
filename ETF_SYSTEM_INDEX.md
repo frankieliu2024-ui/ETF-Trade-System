@@ -65,7 +65,7 @@
 - 正式研究证据源：`data/state/margin_financing_evidence.json`、`data/state/skfolio_risk_evidence.json`、`data/state/active_return_evidence.json`、`research/backtests/ipo_base_stock_specific_signal_conclusion.json`；研究文件存在不等于正式转化，是否允许参与执行以MASTER第6.4和执行桥语义共同约束。
 - 收盘复盘上下文：`data/state/review_context.json`、`post_market_review/post_market_review_event.json`
 - 查询时即时补采与可选状态同步请求：`requests/live_snapshot/*.json`
-- 账户/Dashboard/成交/正式复盘异步同步处理：`scripts/process_state_sync_request.py`
+- 账户/Dashboard/成交/正式复盘异步同步处理：`scripts/process_state_sync_request.py`；三份人类可读正式事实文件的低层写入统一经过 `scripts/formal_file_mutation_gateway.py`，账户同步由 `scripts/sync_formal_files.py` 负责，已确认成交费用纠错由 `scripts/apply_trade_fact_correction.py` 负责；gateway 不产生交易结论且禁止写 `ETF规则_MASTER.md`
 - A股/ETF workflow：`.github/workflows/market-snapshot.yml`
 - A股开盘前海外 workflow：`.github/workflows/overseas-preopen-pulse.yml`
 - 美股盘前/扩展时段 workflow：`.github/workflows/us-extended-hours-pulse.yml`
