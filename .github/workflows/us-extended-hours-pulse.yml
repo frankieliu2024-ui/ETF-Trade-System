@@ -19,12 +19,9 @@ on:
         default: ""
   schedule:
     # US pre-market, regular session and post-market at ten-minute target.
-    # Offset by three minutes from round ten-minute boundaries because GitHub
-    # schedule is best-effort and is more likely to be delayed/dropped under
-    # platform load near common cron boundaries. Frequency remains unchanged.
-    - cron: "3,13,23,33,43,53 8-23 * * 1-5"
-    # Standard-time tail crosses UTC midnight on Tue-Sat; keep the same offset.
-    - cron: "3,13,23,33,43,53 0-1 * * 2-6"
+    - cron: "*/10 8-23 * * 1-5"
+    # Standard-time tail crosses UTC midnight on Tue-Sat.
+    - cron: "*/10 0-1 * * 2-6"
 
 permissions:
   contents: write
