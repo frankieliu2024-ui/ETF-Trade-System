@@ -143,7 +143,7 @@ Nasdaq常规盘为美东09:30—16:00，盘前为04:00—09:30，盘后为16:00�
 - `fresh_max_age_seconds = 900`：数据年龄不超过15分钟为 `FRESH`；
 - `degraded_max_age_seconds = 1500`：15—25分钟为 `DEGRADED`；
 - 超过25分钟为 `STALE`；
-- `close_grace_seconds = 900`：15:00收盘任务允许15分钟调度宽限；
+- `close_grace_seconds = 1800`：15:00收盘任务允许30分钟调度宽限；
 - `provider_timeout_seconds = 25`：单次接口调用超时25秒；
 - `provider_retry_limit = 2`：有限重试，不无限阻塞；
 - `scheduled_provider_max_workers = 1`：定时任务单并发；
