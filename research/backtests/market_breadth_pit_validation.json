@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "mode": "RESEARCH_ONLY_MARKET_BREADTH_PIT_VALIDATION",
+  "generated_for": "2026-08-27 leading indicator research",
+  "objective": "验证A股市场宽度是否能在ETF自身价格结构、动量和已验证融资证据之外，为未来1/3/5个交易日收益提供稳定Point-in-Time增量。",
+  "decision_eligible": false,
+  "trade_signal": null,
+  "master_override": false,
+  "production_context_integration": false,
+  "point_in_time_requirement": "交易日T最终宽度事实只能从T+1进入决策；不得使用当前成分或后来形成的截面反推历史宽度。",
+  "source_findings": {
+    "current_full_breadth": {
+      "provider_path": "AKShare stock_market_activity_legu / 乐咕赚钱效应",
+      "status": "CURRENT_ONLY",
+      "observed_fields": ["上涨", "涨停", "真实涨停", "st股票涨停", "下跌", "跌停", "真实跌停", "st股票跌停", "平盘", "停牌", "活跃度", "统计日期"],
+      "historical_parameter": false
+    },
+    "eastmoney_limit_up_pool": {
+      "status": "NOT_RELIABLE_FOR_LONG_HISTORY",
+      "finding": "当前日可返回记录；较早日期大量返回空表，不能证明当日真实为0家，因此不得作为长期PIT历史序列。"
+    },
+    "eastmoney_limit_down_pool": {"status": "INSUFFICIENT_HISTORY", "explicit_limit": "最近30个交易日"},
+    "eastmoney_broken_limit_pool": {"status": "INSUFFICIENT_HISTORY", "explicit_limit": "最近30个交易日"}
+  },
+  "required_history_for_validation": "至少覆盖多个市场阶段并支持ETF目标1/3/5日forward验证；当前30个交易日或仅当前截面显著不足。",
+  "research_interpretation": "TERMINATED_INSUFFICIENT_HISTORICAL_PIT_BREADTH",
+  "termination_reason": "现有免费/已接入数据路径无法提供足够长度、可审计且Point-in-Time安全的全市场上涨/下跌、新高/新低或等价宽度历史。继续拼接当前截面、近30日极端股池或后验股票历史会增加复杂度并引入缺失值误判、成分存活和look-ahead风险。",
+  "future_low_complexity_option": "若系统运行成本可接受，可从当前交易日起在收盘后积累完整上涨/下跌/平盘/涨停/跌停等客观宽度事实；在自然样本足够前只做行情档案事实，不进入decision_context，不产生交易动作。",
+  "conclusion": "本轮不纳入市场宽度领先指标，也不新增宽度评分或交易规则。"
+}
