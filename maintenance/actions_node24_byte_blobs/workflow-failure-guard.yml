@@ -1,0 +1,176 @@
+name: ETF workflow failure guard
+
+on:
+  workflow_run:
+    workflows:
+      - "ETF system consistency"
+      - "ETF runtime self-healing watchdog"
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: etf-workflow-failure-guard
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 20
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Build failure packet with failed step and recent diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUN_ID='${{ github.event.workflow_run.id }}'
+          HEAD_SHA='${{ github.event.workflow_run.head_sha }}'
+          WORKFLOW_NAME='${{ github.event.workflow_run.name }}'
+          RUN_ATTEMPT='${{ github.event.workflow_run.run_attempt }}'
+
+          git fetch origin main --quiet
+          MAIN_HEAD=$(git rev-parse origin/main)
+          COMMIT_MESSAGE=$(git show -s --format=%s "$HEAD_SHA" 2>/dev/null || true)
+          COMMIT_AUTHOR=$(git show -s --format='%an <%ae>' "$HEAD_SHA" 2>/dev/null || true)
+          PARENT_SHA=$(git rev-parse "$HEAD_SHA^" 2>/dev/null || true)
+          if [ -n "$PARENT_SHA" ]; then
+            git diff --name-only "$PARENT_SHA" "$HEAD_SHA" > /tmp/changed_files.txt
+          else
+            : > /tmp/changed_files.txt
+          fi
+
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=100" > /tmp/jobs.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          jobs_raw = json.loads(Path('/tmp/jobs.json').read_text())
+          jobs = []
+          for job in jobs_raw.get('jobs', []):
+              jobs.append({
+                  'id': job.get('id'),
+                  'name': job.get('name'),
+                  'conclusion': job.get('conclusion'),
+                  'steps': [
+                      {
+                          'name': s.get('name'),
+                          'number': s.get('number'),
+                          'conclusion': s.get('conclusion'),
+                      }
+                      for s in job.get('steps', [])
+                  ],
+              })
+          payload = {
+              'workflow_name': os.environ['WORKFLOW_NAME'],
+              'run_id': int(os.environ['RUN_ID']),
+              'run_attempt': int(os.environ['RUN_ATTEMPT']),
+              'head_sha': os.environ['HEAD_SHA'],
+              'main_head_sha': os.environ['MAIN_HEAD'],
+              'parent_sha': os.environ.get('PARENT_SHA') or None,
+              'commit_message': os.environ.get('COMMIT_MESSAGE') or None,
+              'commit_author': os.environ.get('COMMIT_AUTHOR') or None,
+              'changed_files': [x.strip() for x in Path('/tmp/changed_files.txt').read_text().splitlines() if x.strip()],
+              'jobs': jobs,
+          }
+          Path('/tmp/workflow_failure_input.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n')
+          PY
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+          MAIN_HEAD: ${{ github.event.workflow_run.head_sha }}
+          PARENT_SHA: ""
+          COMMIT_MESSAGE: ""
+          COMMIT_AUTHOR: ""
+
+      - name: Normalize packet against live main and classify
+        id: classify
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          p = Path('/tmp/workflow_failure_input.json')
+          data = json.loads(p.read_text())
+          def out(*args):
+              r = subprocess.run(args, capture_output=True, text=True, check=False)
+              return r.stdout.strip() if r.returncode == 0 else ''
+          head = data.get('head_sha') or ''
+          data['main_head_sha'] = out('git', 'rev-parse', 'origin/main')
+          data['parent_sha'] = out('git', 'rev-parse', f'{head}^') or None
+          data['commit_message'] = out('git', 'show', '-s', '--format=%s', head) or None
+          data['commit_author'] = out('git', 'show', '-s', '--format=%an <%ae>', head) or None
+          if data['parent_sha']:
+              changed = out('git', 'diff', '--name-only', data['parent_sha'], head)
+              data['changed_files'] = [x for x in changed.splitlines() if x]
+          p.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
+          PY
+          python scripts/workflow_failure_guard.py /tmp/workflow_failure_input.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          d = json.loads(Path('data/state/workflow_failure_diagnostic.json').read_text())
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
+              f.write(f"action={d.get('recommended_action', 'ESCALATE_WITH_DIAGNOSTIC')}\n")
+              f.write(f"classification={d.get('classification', 'UNKNOWN')}\n")
+          print(json.dumps(d, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Re-run transient failed jobs once
+        if: ${{ steps.classify.outputs.action == 'RERUN_FAILED_JOBS_ONCE' }}
+        run: |
+          gh run rerun '${{ github.event.workflow_run.id }}' --failed
+
+      - name: Restricted automatic revert of maintenance-only regression
+        if: ${{ steps.classify.outputs.action == 'AUTO_REVERT_HEAD_MAINTENANCE_COMMIT' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET=$(python -c "import json; print(json.load(open('data/state/restricted_rollback_plan.json'))['target_sha'])")
+          git fetch origin main --quiet
+          LIVE_HEAD=$(git rev-parse origin/main)
+          if [ "$TARGET" != "$LIVE_HEAD" ]; then
+            echo "main advanced; automatic revert aborted"
+            exit 0
+          fi
+          git checkout -B main origin/main
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git revert --no-edit "$TARGET"
+          git push origin HEAD:main
+
+      - name: Persist diagnostic and rollback plan
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [ -f data/state/workflow_failure_diagnostic.json ] || exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main --quiet
+          git checkout -B guard-state origin/main
+          git add -f data/state/workflow_failure_diagnostic.json data/state/restricted_rollback_plan.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "state: record workflow failure diagnosis"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Escalation boundary
+        if: ${{ steps.classify.outputs.action == 'ESCALATE_WITH_DIAGNOSTIC' }}
+        run: |
+          echo "Automatic maintenance stopped at the safety boundary."
+          cat data/state/workflow_failure_diagnostic.json

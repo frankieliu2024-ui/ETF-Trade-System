@@ -1,0 +1,72 @@
+name: US extended-hours pulse
+
+on:
+  # Only global/US-targeted request files need the US context workflow.
+  # A-share broker/account refreshes remain owned by market-snapshot and
+  # must not start an unrelated US runner.
+  push:
+    paths:
+      - "requests/live_snapshot/**global*.json"
+      - "requests/live_snapshot/**us*.json"
+      - "requests/live_snapshot/**ndx*.json"
+      - "requests/live_snapshot/**hstech*.json"
+      - "requests/live_snapshot/**kospi*.json"
+  workflow_dispatch:
+    inputs:
+      symbols:
+        description: "Optional comma-separated US symbols for immediate query-time refresh"
+        required: false
+        default: ""
+  schedule:
+    # US pre-market, regular session and post-market at ten-minute target.
+    - cron: "*/10 8-23 * * 1-5"
+    # Standard-time tail crosses UTC midnight on Tue-Sat.
+    - cron: "*/10 0-1 * * 2-6"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: etf-us-extended-hours-pulse
+  cancel-in-progress: false
+
+jobs:
+  us_extended:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+      US_EXTENDED_SYMBOLS: ${{ inputs.symbols || '' }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Rebase pulse workspace before refresh
+        run: |
+          git fetch origin main
+          git rebase origin/main
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Refresh US extended-hours context
+        run: python scripts/build_us_extended_hours_context.py
+      - name: Run system consistency live audit
+        continue-on-error: true
+        run: |
+          python scripts/check_system_consistency.py
+          git checkout -- data/state/system_consistency.json || true
+      - name: Commit US extended-hours context
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/state/us_extended_hours_context.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "data: refresh US extended-hours context"
+          # The audit may leave unrelated generated files dirty. They are
+          # owned by their own workflows and must not block the US data push.
+          git stash push --include-untracked -m "preserve non-US generated state" || true
+          git pull --rebase origin main
+          git stash drop || true
+          git push origin HEAD:main

@@ -1,0 +1,38 @@
+name: ETF minute source PoC
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/minute_source_capability_poc.py"
+      - ".github/workflows/minute-source-poc.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-minute-source-poc
+  cancel-in-progress: false
+
+jobs:
+  poc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Compile PoC
+        run: python -m py_compile scripts/minute_source_capability_poc.py
+      - name: Run ETF minute source PoC
+        run: python scripts/minute_source_capability_poc.py
+      - name: Upload PoC evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: minute-source-poc-${{ github.run_id }}
+          path: data/state/minute_source_poc.json
+          if-no-files-found: error
+          retention-days: 14
