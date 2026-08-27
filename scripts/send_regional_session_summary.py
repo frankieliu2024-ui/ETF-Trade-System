@@ -25,10 +25,8 @@ def _bj_node(market: str) -> str:
         if 15 * 60 <= minute <= 15 * 60 + 30:
             return "CLOSE"
     if market == "asia":
-        # Japan/Korea have traded for about one hour when Taiwan has also opened.
         if 9 * 60 + 5 <= minute <= 9 * 60 + 30:
             return "OPEN"
-        # Taiwan is already closed; Japan/Korea close around Beijing 14:30.
         if 14 * 60 + 30 <= minute <= 14 * 60 + 55:
             return "CLOSE"
     return ""
@@ -61,8 +59,8 @@ def _a_share_event() -> dict | None:
     features = _feature_map()
 
     index_names = {"000001": "上证指数（000001）", "000688": "科创50指数（000688）", "399006": "创业板指（399006）"}
-    headline = []
-    path_lines = []
+    headline: list[str] = []
+    path_lines: list[str] = []
     for code in ("000001", "000688", "399006"):
         row = indices.get(code)
         if not row:
@@ -96,13 +94,24 @@ def _a_share_event() -> dict | None:
         action = "先看全天结构是否强化或破坏当前持仓/候选假设；完整交易结论以随后ETF交易复盘为准。"
         boundary = "收盘PushPlus不重复完整复盘，不根据单日涨跌机械生成买卖动作。"
 
-    as_of = max([str(x.get("as_of_beijing") or "") for x in rows if x.get("as_of_beijing")], default=str(snapshot.get("captured_at_beijing") or ""))
+    provider_as_of = max([str(x.get("as_of_beijing") or "") for x in rows if x.get("as_of_beijing")], default=str(snapshot.get("captured_at_beijing") or ""))
+    if node == "CLOSE":
+        market_as_of = f"{market_date} 15:00:00"
+        time_lines = [
+            f"- **价格有效时点**：{market_as_of}",
+            f"- **provider补查/观测上限**：{provider_as_of or '未提供'}",
+            f"- **通知生成**：{now().strftime('%Y-%m-%d %H:%M:%S')}",
+        ]
+    else:
+        market_as_of = provider_as_of
+        time_lines = [f"- **A股行情依据**：{market_as_of or '未提供'}", f"- **通知生成**：{now().strftime('%Y-%m-%d %H:%M:%S')}"]
+
     content = render_summary(
         headline_lines=[f"- **节点**：{'开盘后稳定观察' if node == 'OPEN' else '15:00正式收盘'}"] + headline,
         path_lines=path_lines,
         implication=implication,
         action=action,
-        as_of_lines=[f"- **A股行情依据**：{as_of or '未提供'}", f"- **通知生成**：{now().strftime('%Y-%m-%d %H:%M:%S')}"],
+        as_of_lines=time_lines,
         boundary=boundary,
     )
     return {
@@ -114,7 +123,7 @@ def _a_share_event() -> dict | None:
         "source": "CURRENT+intraday_path_features",
         "user_severity": "需要关注",
         "user_action": "查看结构摘要；正式交易动作以MASTER完整决策链为准",
-        "confirmation_context": {"market_date": market_date, "session_node": node, "market_as_of_beijing": as_of},
+        "confirmation_context": {"market_date": market_date, "session_node": node, "market_as_of_beijing": market_as_of, "provider_observed_as_of_beijing": provider_as_of},
     }
 
 
@@ -156,12 +165,13 @@ def _asia_event() -> dict | None:
         tone = "区域分化/相对平稳"
 
     headline = [f"- **综合判断**：{tone}"]
-    path_lines = []
-    dates = []
-    times = []
+    path_lines: list[str] = []
+    dates: list[str] = []
+    times: list[str] = []
     for code, label, obj, latest in selected:
         ret = _asia_return(obj)
-        headline.append(f"- **{label}**：较前收{pct(ret)}")
+        open_to_now = pct_change(number(latest.get("close")), number(latest.get("open")))
+        headline.append(f"- **{label}**：{'较前收' + pct(ret) if ret is not None else '较开盘' + pct(open_to_now)}")
         path_lines.append(f"- **{label}**：{ohlc_path_phrase(number(latest.get('open')), number(latest.get('high')), number(latest.get('low')), number(latest.get('close')))}")
         dates.append(str(latest.get("market_date_local") or ""))
         if latest.get("as_of_beijing"):
