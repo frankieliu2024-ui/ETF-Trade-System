@@ -1,0 +1,78 @@
+name: One-off semantic structure repair 20260827
+on:
+  push:
+    paths:
+      - ".github/workflows/oneoff-semantic-structure-repair-20260827.yml"
+permissions:
+  contents: write
+concurrency:
+  group: production-main-writer
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Synchronize latest main
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+      - name: Normalize formal document semantics and wire permanent guards
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from scripts.formal_document_structure import normalize_files, validate_files
+          root=Path('.').resolve()
+          print(normalize_files(root))
+
+          p=Path('scripts/sync_formal_files.py')
+          s=p.read_text(encoding='utf-8')
+          if 'from formal_document_structure import normalize_files' not in s:
+              s=s.replace('SHANGHAI = timezone', 'from formal_document_structure import normalize_files\n\nSHANGHAI = timezone', 1)
+          old='''    current_changed = sync_current_account_reference(root, account)\n    return {\n'''
+          new='''    current_changed = sync_current_account_reference(root, account)\n    # Canonical semantic placement is part of the same fact-maintenance transaction:\n    # no formal fact may remain merely appended at the document tail.\n    structure_sync = normalize_files(root)\n    return {\n'''
+          if old in s and 'structure_sync = normalize_files(root)' not in s:
+              s=s.replace(old,new,1)
+          s=s.replace('''        "current_account_reference_changed": current_changed,\n''','''        "current_account_reference_changed": current_changed,\n        "formal_structure_changed": structure_sync.get("changed", []),\n''',1)
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('scripts/check_system_consistency.py')
+          s=p.read_text(encoding='utf-8')
+          if 'def _validate_semantic_formal_structure' not in s:
+              marker='\ndef main() -> int:\n'
+              fn='''\n\ndef _validate_semantic_formal_structure(report: dict) -> None:\n    from formal_document_structure import validate_files\n    errors = validate_files(ROOT)\n    status = "FAIL" if errors else "PASS"\n    report.setdefault("checks", []).append({\n        "name": "formal_files:semantic_structure",\n        "status": status,\n        "detail": "semantic chapter/order/managed-block placement valid" if not errors else "; ".join(errors),\n    })\n    for item in errors:\n        message = "formal_semantic_structure:" + item\n        if message not in report.setdefault("errors", []):\n            report["errors"].append(message)\n    report["hard_error_count"] = len(report.get("errors") or [])\n    report["warning_count"] = len(report.get("warnings") or [])\n    report["status"] = "FAIL" if report["hard_error_count"] else ("WARNING" if report["warning_count"] else "PASS")\n'''
+              if marker not in s:
+                  raise RuntimeError('check_system_consistency main anchor missing')
+              s=s.replace(marker,fn+marker,1)
+          call='    _validate_historical_trade_case_mapping(report)\n'
+          if '    _validate_semantic_formal_structure(report)\n' not in s:
+              if call not in s: raise RuntimeError('historical mapping call anchor missing')
+              s=s.replace(call,call+'    _validate_semantic_formal_structure(report)\n',1)
+          p.write_text(s,encoding='utf-8')
+
+          errors=validate_files(root)
+          if errors:
+              raise SystemExit('structure validation failed: '+repr(errors))
+          PY
+      - name: Focused validation
+        run: |
+          python -m py_compile scripts/formal_document_structure.py scripts/sync_formal_files.py scripts/check_system_consistency.py
+          python - <<'PY'
+          from pathlib import Path
+          from scripts.formal_document_structure import validate_files
+          errors=validate_files(Path('.').resolve())
+          assert not errors, errors
+          print('semantic structure PASS')
+          PY
+      - name: Commit repair
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ETF交易复盘与经验库_2026.md ETF市场行情档案_2026.md scripts/formal_document_structure.py scripts/sync_formal_files.py scripts/check_system_consistency.py
+          git commit -m "maintenance: enforce semantic formal document structure"
+          git push origin HEAD:main
