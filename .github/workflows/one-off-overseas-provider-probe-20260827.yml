@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           python - <<'PY'
-          import json, urllib.request, urllib.parse, re, datetime
+          import json, urllib.request, urllib.parse, datetime
           from pathlib import Path
 
           HEADERS = {"User-Agent":"Mozilla/5.0 ETF-Trade-System/2.2.16","Referer":"https://finance.sina.com.cn/"}
@@ -52,13 +52,20 @@ jobs:
               for secid in ['100.N225','100.KS11']:
                   probe('eastmoney_'+host.split('.')[0]+'_'+secid,f'https://{host}/api/qt/stock/get?secid={secid}&fltt=2&invt=2&fields=f43,f44,f45,f46,f47,f48,f57,f58,f60,f86,f124')
           out={"generated_at_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(),"results":results}
+          print('PROBE_RESULT_START')
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          print('PROBE_RESULT_END')
           p=Path('data/market/audit/provider_probe_20260827.json'); p.parent.mkdir(parents=True,exist_ok=True); p.write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')
           PY
       - name: Commit probe audit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp data/market/audit/provider_probe_20260827.json /tmp/provider_probe_20260827.json
+          git fetch origin main
+          git reset --hard origin/main
+          mkdir -p data/market/audit
+          cp /tmp/provider_probe_20260827.json data/market/audit/provider_probe_20260827.json
           git add -f data/market/audit/provider_probe_20260827.json
           git commit -m "audit: record N225 and KOSPI provider probe" || exit 0
-          git pull --rebase origin main
           git push origin HEAD:main
