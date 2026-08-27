@@ -446,12 +446,25 @@ def fetch_etf_with_fallback(cli: str, run_dir: Path, code: str, thscode: str) ->
     except Exception as error:
         tencent_error = error
 
-    hithink_error = RuntimeError("hithink-finance bypassed after a transient failure earlier in this run")
+    hithink_fund_error = RuntimeError("hithink-finance fund endpoint not attempted")
     if not PRIMARY_RUN_BYPASS.is_set():
         try:
             return fetch_etf(cli, run_dir, code, thscode)
         except Exception as error:
-            hithink_error = error
+            hithink_fund_error = error
+    else:
+        hithink_fund_error = RuntimeError("hithink-finance fund endpoint bypassed after a transient failure earlier in this run")
+
+    # The market snapshot endpoint is an independently validated direct endpoint
+    # within the same Hithink provider family. A fund-endpoint coverage failure
+    # must not prevent this object-level direct fallback from being attempted.
+    hithink_market_error = RuntimeError("hithink-finance market endpoint not attempted")
+    try:
+        return fetch_etf_market_snapshot(
+            cli, run_dir, code, thscode, a_share_market_phase(now_shanghai())
+        )
+    except Exception as error:
+        hithink_market_error = error
 
     if code in EASTMONEY_FALLBACK_ETFS:
         try:
@@ -459,18 +472,16 @@ def fetch_etf_with_fallback(cli: str, run_dir: Path, code: str, thscode: str) ->
         except Exception as fallback_error:
             raise RuntimeError(
                 f"Tencent primary failed: {tencent_error}; "
-                f"Hithink fallback failed: {hithink_error}; "
+                f"Hithink fund fallback failed: {hithink_fund_error}; "
+                f"Hithink market fallback failed: {hithink_market_error}; "
                 f"Eastmoney fallback failed: {fallback_error}"
             ) from fallback_error
 
-    try:
-        return fetch_etf_market_snapshot(cli, run_dir, code, thscode, a_share_market_phase(now_shanghai()))
-    except Exception as market_error:
-        raise RuntimeError(
-            f"Tencent primary failed: {tencent_error}; "
-            f"Hithink fallback failed: {hithink_error}; "
-            f"direct market fallback failed: {market_error}"
-        ) from market_error
+    raise RuntimeError(
+        f"Tencent primary failed: {tencent_error}; "
+        f"Hithink fund fallback failed: {hithink_fund_error}; "
+        f"Hithink market fallback failed: {hithink_market_error}"
+    )
 
 def fetch_etf(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
     obj = run_json(cli, ["fund", "snapshot", "--thscode", thscode], run_dir / f"ETF_{code}.json")
