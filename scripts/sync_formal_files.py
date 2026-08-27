@@ -21,7 +21,6 @@ from formal_file_mutation_gateway import (
     write_formal_text_if_changed,
 )
 
-from formal_document_structure import normalize_files
 
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 START_DASH = "<!-- AUTO_STATE_SYNC_START -->"
@@ -247,7 +246,7 @@ def sync_formal_files(root: Path = ROOT, account: dict | None = None) -> dict:
         write_formal_text_if_changed(root, dash_path.name, new_dash)
 
     existing_archive = archive_path.read_text(encoding="utf-8")
-    new_archive = replace_block(existing_archive, START_ARCHIVE, END_ARCHIVE, build_archive_fact_block(account))
+    new_archive = replace_block(existing_archive, START_ARCHIVE, END_ARCHIVE, build_archive_fact_block(account), before_heading="## 6. 历史Excel与专项数据来源")
     archive_changed = new_archive != existing_archive
     if archive_changed:
         write_formal_text_if_changed(root, archive_path.name, new_archive)
@@ -259,16 +258,12 @@ def sync_formal_files(root: Path = ROOT, account: dict | None = None) -> dict:
         write_formal_text_if_changed(root, experience_path.name, new_experience)
 
     current_changed = sync_current_account_reference(root, account)
-    # Canonical semantic placement is part of the same fact-maintenance transaction:
-    # no formal fact may remain merely appended at the document tail.
-    structure_sync = normalize_files(root)
     return {
         "dashboard_changed": dash_changed,
         "archive_changed": archive_changed,
         "experience_changed": experience_changed,
         "experience_fee_rows_updated": experience_updates,
         "current_account_reference_changed": current_changed,
-        "formal_structure_changed": structure_sync.get("changed", []),
     }
 
 

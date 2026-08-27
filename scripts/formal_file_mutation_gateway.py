@@ -37,6 +37,7 @@ def replace_managed_block(
     *,
     after_heading: bool = False,
     insert_after_heading: bool | None = None,
+    before_heading: str | None = None,
 ) -> str:
     # process_state_sync_request historically used insert_after_heading while
     # sync_formal_files used after_heading. The gateway accepts both during the
@@ -53,6 +54,11 @@ def replace_managed_block(
         pos = 1 if lines and lines[0].startswith("#") else 0
         lines[pos:pos] = ["", managed, ""]
         return "\n".join(lines).rstrip() + "\n"
+    if before_heading:
+        if before_heading not in text:
+            raise ValueError(f"semantic anchor missing: {before_heading}")
+        pos = text.index(before_heading)
+        return text[:pos].rstrip() + "\n\n" + managed + "\n\n" + text[pos:].lstrip()
     return text.rstrip() + "\n\n" + managed + "\n"
 
 
@@ -66,7 +72,7 @@ def append_managed_line(text: str, start: str, end: str, line: str) -> str:
     return text.rstrip() + f"\n\n{start}\n{line}\n{end}\n"
 
 
-def upsert_managed_line(text: str, start: str, end: str, key: str, line: str) -> str:
+def upsert_managed_line(text: str, start: str, end: str, key: str, line: str, *, before_heading: str | None = None) -> str:
     tagged = f"{key}｜{line}"
     if start in text and end in text:
         a = text.index(start) + len(start)
@@ -75,7 +81,13 @@ def upsert_managed_line(text: str, start: str, end: str, key: str, line: str) ->
         rows = [x for x in rows if not x.startswith(f"{key}｜")]
         rows.append(tagged)
         return text[:a] + "\n" + "\n".join(rows) + "\n" + text[b:]
-    return text.rstrip() + f"\n\n{start}\n{tagged}\n{end}\n"
+    managed = f"{start}\n{tagged}\n{end}"
+    if before_heading:
+        if before_heading not in text:
+            raise ValueError(f"semantic anchor missing: {before_heading}")
+        pos = text.index(before_heading)
+        return text[:pos].rstrip() + "\n\n" + managed + "\n\n" + text[pos:].lstrip()
+    return text.rstrip() + "\n\n" + managed + "\n"
 
 
 def write_formal_text_if_changed(root: Path, filename: str, new_text: str) -> bool:
@@ -117,5 +129,5 @@ def replace_formal_block(
     )
 
 
-def upsert_formal_line(root: Path, filename: str, start: str, end: str, key: str, line: str) -> bool:
-    return mutate_formal_text(root, filename, lambda text: upsert_managed_line(text, start, end, key, line))
+def upsert_formal_line(root: Path, filename: str, start: str, end: str, key: str, line: str, *, before_heading: str | None = None) -> bool:
+    return mutate_formal_text(root, filename, lambda text: upsert_managed_line(text, start, end, key, line, before_heading=before_heading))
