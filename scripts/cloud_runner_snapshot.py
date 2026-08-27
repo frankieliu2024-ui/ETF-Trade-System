@@ -225,7 +225,7 @@ def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, pr
     auction_partial = (
         market_phase == "OPENING_CALL_AUCTION"
         and bool(missing)
-        and set(missing).issubset({"open_price", "high_price", "low_price"})
+        and set(missing).issubset({"open_price", "high_price", "low_price", "volume", "turnover"})
         and item.get("last_price") is not None
         and item.get("prev_price") is not None
         and provider_ts not in (None, "")
@@ -605,6 +605,11 @@ def main() -> int:
         return 0
 
     node = resolve_scheduled_node(run_started_dt) if args.node == "scheduled" else args.node
+    # Query-time/manual callers use a generic live label. During 09:15-09:29,
+    # normalize that label to the formal opening-auction node so CURRENT.node,
+    # snapshot.node and market_phase cannot disagree semantically.
+    if market_phase == "OPENING_CALL_AUCTION" and node in {"live", "manual"}:
+        node = "auction"
     planned_time = PLANNED_TIMES.get(node, "")
 
     if args.node == "scheduled" and node == "close" and close_already_recorded(market_date):
