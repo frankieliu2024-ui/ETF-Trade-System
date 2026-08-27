@@ -122,10 +122,17 @@ def _validate_trade_event_formal_sync(report: dict) -> None:
         if f"{event_id}｜" not in archive:
             errors.append(f"{event_id}:archive")
         if f"{event_id}｜" not in experience:
-            errors.append(f"{event_id}:experience_case")
+            errors.append(f"{event_id}:experience_case_intake")
         confirmed = str(event.get("confirmed_at_beijing") or "")[:10]
-        if confirmed >= "2026-08-27" and f"TRADE_EVENT:{event_id}" not in experience:
-            errors.append(f"{event_id}:experience_transaction_index")
+        if confirmed >= "2026-08-27":
+            if f"TRADE_EVENT:{event_id}" not in experience:
+                errors.append(f"{event_id}:experience_transaction_index")
+            import re
+            mapping = re.search(rf"^{re.escape(event_id)}｜- 已归入(CASE-\d{{8}}-\d{{2}})｜", experience, re.MULTILINE)
+            if not mapping:
+                errors.append(f"{event_id}:formal_case_mapping")
+            elif mapping.group(1) not in experience or f"### " not in experience[:experience.find(mapping.group(1)) + 4]:
+                errors.append(f"{event_id}:formal_case_section")
     status = "FAIL" if errors else "PASS"
     report.setdefault("checks", []).append({
         "name": "formal_files:executed_trade_event_sync",
@@ -140,6 +147,47 @@ def _validate_trade_event_formal_sync(report: dict) -> None:
     report["warning_count"] = len(report.get("warnings") or [])
     report["status"] = "FAIL" if report["hard_error_count"] else ("WARNING" if report["warning_count"] else "PASS")
 
+
+
+def _validate_readme_front_door(report: dict) -> None:
+    import re
+
+    path = ROOT / "README.md"
+    errors = []
+    if not path.exists():
+        errors.append("missing")
+        readme = ""
+    else:
+        readme = path.read_text(encoding="utf-8")
+    first_line = readme.splitlines()[0].strip() if readme.splitlines() else ""
+    if first_line != "# ETF Trade System":
+        errors.append(f"unexpected_h1={first_line}")
+    if re.search(r"ETF Trade System\s+V\d+\.\d+\.\d+", readme, re.IGNORECASE):
+        errors.append("hardcoded_system_version")
+    required = [
+        "ETF规则_MASTER.md",
+        "ETF_SYSTEM_INDEX.md",
+        "ETF当前状态_DASHBOARD.md",
+        "ETF交易复盘与经验库_2026.md",
+        "ETF市场行情档案_2026.md",
+        "ETF与市场监测数据接口使用规范.md",
+    ]
+    missing_links = [name for name in required if name not in readme]
+    if missing_links:
+        errors.append("missing_links=" + ",".join(missing_links))
+    status = "FAIL" if errors else "PASS"
+    report.setdefault("checks", []).append({
+        "name": "readme:canonical_front_door",
+        "status": status,
+        "detail": "README uses MASTER as sole formal version source" if not errors else ";".join(errors),
+    })
+    for item in errors:
+        message = "readme_front_door:" + item
+        if message not in report.setdefault("errors", []):
+            report["errors"].append(message)
+    report["hard_error_count"] = len(report.get("errors") or [])
+    report["warning_count"] = len(report.get("warnings") or [])
+    report["status"] = "FAIL" if report["hard_error_count"] else ("WARNING" if report["warning_count"] else "PASS")
 
 def _validate_production_mutation_protocol(report: dict) -> None:
     result = run_mutation_protocol(ROOT)
@@ -169,6 +217,7 @@ def main() -> int:
     _normalize_stock_market_time_alignment(report)
     _validate_formal_risk_precedence(report)
     _validate_trade_event_formal_sync(report)
+    _validate_readme_front_door(report)
     _validate_production_mutation_protocol(report)
     REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
@@ -177,6 +226,7 @@ def main() -> int:
         "warning_count": report.get("warning_count"),
         "stock_market_time_alignment": next((x for x in report.get("checks", []) if x.get("name") == "stock_runtime:market_time_alignment"), {}),
         "formal_trade_event_sync": next((x for x in report.get("checks", []) if x.get("name") == "formal_files:executed_trade_event_sync"), {}),
+        "readme_front_door": next((x for x in report.get("checks", []) if x.get("name") == "readme:canonical_front_door"), {}),
         "production_mutation_protocol": report.get("production_mutation_protocol") or {},
     }, ensure_ascii=False))
     return 1 if report.get("errors") else rc

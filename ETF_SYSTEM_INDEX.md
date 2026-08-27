@@ -13,6 +13,8 @@
 
 历史聊天不属于正式来源。发生冲突时遵循 MASTER > Dashboard > 当前行情与成交 > 经验库 > 行情档案 > 历史聊天。
 
+仓库首页 `README.md` 只承担导航和运行说明，不复制正式系统版本号、provider优先级或其他容易随生产状态变化的事实；当前正式版本只从 `ETF规则_MASTER.md` 读取。README导航完整性和禁止硬编码版本由系统一致性检查维护。
+
 ## 一级目录基础数据规范
 
 `ETF与市场监测数据接口使用规范.md` 是数据与云端运行的基础规范，负责三层监测结构、多数据源、盘前/盘中脉冲、新鲜度、交易日历、强制数据时点、质量验收、跨市场时间对齐、故障降级和维护一致性。它不是第五个交易规则文件，不产生风险许可、Trial／Confirm、金额、卖出或其他交易权限。
@@ -33,7 +35,7 @@
 
 一致性检查是相关更新维护后的基础操作，不只是文本口径检查。至少覆盖：
 
-- 四个正式文件与数据规范；
+- 四个正式文件、README导航与数据规范；
 - 三层监测对象、provider、ETF全集、交易日历、runtime参数；
 - workflow → session gate → provider → snapshot → CURRENT/runtime_health → downstream context → commit 的运行链；
 - 关键文件是否被Git跟踪、当前HEAD/GITHUB_SHA、工作树是否存在未提交关键修改；
@@ -102,7 +104,7 @@
 6. 同一查询请求可携带 `account_fact`、`formal_decision`、`trade_event`、`interaction_scenario`、`formal_review`。13个A股核心对象与 `CURRENT` 先发布，账户/Dashboard及其他下游维护随后继续；
 7. `formal_decision` 和 `formal_review` 只允许写入ChatGPT已经形成的正式结论，自动程序不得自行推导风险许可、生命周期、金额、卖出动作或复盘经验；
 8. 普通无成交盘中截图更新账户事实和Dashboard云端实时状态区块，不机械改写MASTER、经验库或行情档案；
-9. 若存在用户确认或券商事实确认的真实成交，除更新账户事实和Dashboard外，同时生成 `events/trades/` 成交事件，在行情档案登记客观成交，并在经验库生成待复盘CASE入口；
+9. 若存在用户确认或券商事实确认的真实成交，除更新账户事实和Dashboard外，同时生成 `events/trades/` 成交事件，在行情档案登记客观成交，并在经验库建立正式CASE入口；CASE可以先以进行中状态记录已知事前证据和真实执行，但不得只停留在“待复盘CASE”占位；
 10. `POST_CLOSE_REVIEW` 在正式收盘数据和账户事实满足门禁后，可按ChatGPT已经形成的正式复盘结论幂等维护Dashboard、行情档案和经验库；MASTER仅检查是否需要正式规则维护，默认不修改；
 11. `ETF规则_MASTER.md` 永不由异步维护链自动修改，系统不自动下单。
 
