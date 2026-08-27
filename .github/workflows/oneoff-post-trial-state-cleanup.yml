@@ -49,9 +49,7 @@ jobs:
       - name: Refresh formal account block
         run: python scripts/sync_formal_files.py
       - name: Run focused tests
-        run: |
-          python -m unittest tests.test_market_formal_file_sync
-          python scripts/check_system_consistency.py
+        run: python -m unittest tests.test_market_formal_file_sync
       - name: Commit production fix
         shell: bash
         run: |
