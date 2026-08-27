@@ -129,7 +129,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str) -> str:
         f"|账户总风险暴露率|约{exposure:.2f}%|",
         f"|ETF策略风险率|约{risk:.2f}%（Known-net；唯一决定风险区间）|" if risk is not None else "|ETF策略风险率|当前辅助权益状态缺失，保留最近有效值|",
         f"|累计已知ETF费用（权益状态）|{money(known_fees)}；待确认费用状态：{'存在' if pending else '无'}|",
-        f"|本次账户事实已确认费用|{money(confirmed_account_fees)}（仅展示本次确认，权益状态按既有账本维护）|",
+        f"|账户事实内已确认费用记录合计|{money(confirmed_account_fees)}（仅统计account_fact中明确标记CONFIRMED的记录；不代表当前最新一笔成交费用）|",
         "", "### 当前持仓事实", "",
         "|标的|数量|成本|现价|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|",
     ]
@@ -218,72 +218,69 @@ def build_archive_fact_block(account: dict) -> str:
 
 
 def sync_current_account_reference(root: Path, account: dict) -> bool:
-    """Keep CURRENT.account_fact coherent after a later account-state sync.
-
-    Core market publishing intentionally happens before broker/dashboard state sync
-    for response speed. Without this repair, CURRENT may keep the account pointer
-    that existed at core-publish time even though account_fact.json was updated a
-    few seconds later in the same workflow.
-    """
-    current_path = root / "data/state/CURRENT.json"
-    if not current_path.exists():
+    path = root / "data/state/CURRENT.json"
+    if not path.exists():
         return False
-    current = load_json(current_path)
-    desired = {
-        "status": account.get("status"),
-        "updated_at": account.get("updated_at"),
-        "source": account.get("source"),
+    current = load_json(path)
+    changed = False
+    wanted = {
+        "account_fact_path": "data/state/account_fact.json",
+        "account_fact_updated_at": account.get("updated_at"),
+        "account_fact_status": account.get("status"),
+        "account_fact_source": account.get("source"),
     }
-    needs_account_update = str(account.get("status") or "").upper() != "VALID"
-    changed = current.get("account_fact") != desired or current.get("needs_account_update") != needs_account_update
-    if not changed:
-        return False
-    current["account_fact"] = desired
-    current["needs_account_update"] = needs_account_update
-    current["account_fact_reference_synced_at"] = account.get("updated_at")
-    current_path.write_text(json.dumps(current, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return True
+    for key, value in wanted.items():
+        if current.get(key) != value:
+            current[key] = value
+            changed = True
+    if changed:
+        path.write_text(json.dumps(current, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return changed
 
 
 def sync_formal_files(root: Path = ROOT, account: dict | None = None) -> dict:
-    dashboard_path = root / "ETF当前状态_DASHBOARD.md"
-    experience_path = root / "ETF交易复盘与经验库_2026.md"
-    archive_path = root / "ETF市场行情档案_2026.md"
     account = account or load_json(root / "data/state/account_fact.json")
     equity_path = root / "data/state/etf_strategy_equity.json"
-    equity = load_json(equity_path) if equity_path.exists() else {}
-    dashboard = dashboard_path.read_text(encoding="utf-8")
-    dashboard = replace_block(dashboard, START_DASH, END_DASH, build_dashboard_block(account, equity, dashboard), after_heading=True)
-    dashboard_path.write_text(dashboard, encoding="utf-8")
-    experience = experience_path.read_text(encoding="utf-8")
-    experience, experience_updates = update_experience(experience, account)
-    experience_path.write_text(experience, encoding="utf-8")
-    archive = archive_path.read_text(encoding="utf-8")
-    archive = replace_block(archive, START_ARCHIVE, END_ARCHIVE, build_archive_fact_block(account))
-    archive_path.write_text(archive, encoding="utf-8")
-    current_account_ref_updated = sync_current_account_reference(root, account)
+    equity = load_json(equity_path) if equity_path.exists() else {"summary": {}}
+    dash_path = root / "ETF当前状态_DASHBOARD.md"
+    archive_path = root / "ETF市场行情档案_2026.md"
+    experience_path = root / "ETF交易复盘与经验库_2026.md"
+
+    existing_dash = dash_path.read_text(encoding="utf-8")
+    new_dash = replace_block(existing_dash, START_DASH, END_DASH, build_dashboard_block(account, equity, existing_dash), after_heading=True)
+    dash_changed = new_dash != existing_dash
+    if dash_changed:
+        dash_path.write_text(new_dash, encoding="utf-8")
+
+    existing_archive = archive_path.read_text(encoding="utf-8")
+    new_archive = replace_block(existing_archive, START_ARCHIVE, END_ARCHIVE, build_archive_fact_block(account))
+    archive_changed = new_archive != existing_archive
+    if archive_changed:
+        archive_path.write_text(new_archive, encoding="utf-8")
+
+    existing_experience = experience_path.read_text(encoding="utf-8")
+    new_experience, experience_updates = update_experience(existing_experience, account)
+    experience_changed = new_experience != existing_experience
+    if experience_changed:
+        experience_path.write_text(new_experience, encoding="utf-8")
+
+    current_changed = sync_current_account_reference(root, account)
     return {
-        "dashboard_updated": True,
-        "experience_trade_rows_updated": experience_updates,
-        "archive_updated": True,
-        "current_account_ref_updated": current_account_ref_updated,
-        "master_touched": False,
+        "dashboard_changed": dash_changed,
+        "archive_changed": archive_changed,
+        "experience_changed": experience_changed,
+        "experience_fee_rows_updated": experience_updates,
+        "current_account_reference_changed": current_changed,
     }
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Sync confirmed account facts into formal fact documents and CURRENT account reference.")
-    parser.add_argument("--check", action="store_true", help="validate inputs and markers without writing")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root", default=str(ROOT))
     args = parser.parse_args()
-    root = ROOT
-    account = load_json(root / "data/state/account_fact.json")
-    required = [root / "ETF当前状态_DASHBOARD.md", root / "ETF交易复盘与经验库_2026.md", root / "ETF市场行情档案_2026.md"]
-    if not all(path.exists() for path in required):
-        raise SystemExit("formal fact document missing")
-    if args.check:
-        print(json.dumps({"ok": True, "master_touched": False, "account_updated_at": account.get("updated_at")}, ensure_ascii=False))
-        return 0
-    print(json.dumps(sync_formal_files(root, account), ensure_ascii=False))
+    root = Path(args.root).resolve()
+    result = sync_formal_files(root)
+    print(json.dumps({"ok": True, **result}, ensure_ascii=False))
     return 0
 
 
