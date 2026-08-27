@@ -76,6 +76,20 @@ def _quality(row: dict) -> str:
     return str(row.get("quality_status") or row.get("status") or "").upper()
 
 
+def _latest_trade_is_recent(account: dict, max_age_minutes: int = 45) -> bool:
+    trades = [x for x in (account.get("trades") or []) if x.get("trade_time")]
+    if not trades:
+        return False
+    try:
+        latest = max(datetime.fromisoformat(str(x.get("trade_time")).replace("Z", "+00:00")) for x in trades)
+        if latest.tzinfo is None:
+            latest = latest.replace(tzinfo=TZ)
+        latest = latest.astimezone(TZ)
+    except ValueError:
+        return False
+    return datetime.now(TZ) - latest <= timedelta(minutes=max_age_minutes)
+
+
 def _build_trigger(current: dict, account: dict, e2e: dict, equity: dict, prior: dict, ranking: dict, delta: dict) -> dict:
     now = _now()
     e2e_status = str(e2e.get("status") or "BLOCKED").upper()
@@ -95,7 +109,7 @@ def _build_trigger(current: dict, account: dict, e2e: dict, equity: dict, prior:
         applicable = str(event.get("object") or event.get("code") or "")
         evidence_time = str(event.get("event_time") or evidence_time)
         evidence_change = str(event.get("change_summary") or event.get("reconciliation_status") or "confirmed account change")
-    elif current.get("last_trade_event_id") and current.get("last_trade_event_id") != prior.get("last_trade_event_id"):
+    elif current.get("last_trade_event_id") and current.get("last_trade_event_id") != prior.get("last_trade_event_id") and _latest_trade_is_recent(account):
         event_type = "TRADE_CONFIRMED"
         applicable = str(current.get("last_trade_event_id"))
         evidence_change = "new confirmed trade event"
