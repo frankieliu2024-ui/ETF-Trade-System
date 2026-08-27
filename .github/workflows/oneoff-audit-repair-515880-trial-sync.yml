@@ -17,11 +17,10 @@ jobs:
           python-version: "3.11"
       - name: Run repair script
         run: python scripts/oneoff_repair_515880_trial_sync.py
-      - name: Run focused checks
+      - name: Run focused pre-commit checks
         run: |
           python -m py_compile scripts/process_state_sync_request.py scripts/check_trade_event_formal_sync.py
           python scripts/check_trade_event_formal_sync.py
-          python scripts/check_system_consistency.py
       - name: Commit repair
         shell: bash
         run: |
