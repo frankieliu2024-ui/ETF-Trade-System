@@ -95,6 +95,52 @@ def _validate_formal_risk_precedence(report: dict) -> None:
         report["status"] = "FAIL"
 
 
+def _validate_trade_event_formal_sync(report: dict) -> None:
+    """Require every executed trade event to be visible in both human formal records.
+
+    For trade events created from 2026-08-27 onward, also require the event marker
+    in Experience §2.1, the declared unique human-readable transaction index.
+    This prevents a machine event / Dashboard update from silently outrunning the
+    archive or experience record.
+    """
+    archive = (ROOT / "ETF市场行情档案_2026.md").read_text(encoding="utf-8")
+    experience = (ROOT / "ETF交易复盘与经验库_2026.md").read_text(encoding="utf-8")
+    errors = []
+    checked = 0
+    trade_dir = ROOT / "events" / "trades"
+    for path in sorted(trade_dir.glob("*.json")) if trade_dir.exists() else []:
+        try:
+            event = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if str(event.get("execution_status") or "").upper() != "EXECUTED":
+            continue
+        event_id = str(event.get("event_id") or "")
+        if not event_id:
+            continue
+        checked += 1
+        if f"{event_id}｜" not in archive:
+            errors.append(f"{event_id}:archive")
+        if f"{event_id}｜" not in experience:
+            errors.append(f"{event_id}:experience_case")
+        confirmed = str(event.get("confirmed_at_beijing") or "")[:10]
+        if confirmed >= "2026-08-27" and f"TRADE_EVENT:{event_id}" not in experience:
+            errors.append(f"{event_id}:experience_transaction_index")
+    status = "FAIL" if errors else "PASS"
+    report.setdefault("checks", []).append({
+        "name": "formal_files:executed_trade_event_sync",
+        "status": status,
+        "detail": f"executed_events_checked={checked} missing={errors}",
+    })
+    for item in errors:
+        message = "formal_trade_sync:" + item
+        if message not in report.setdefault("errors", []):
+            report["errors"].append(message)
+    report["hard_error_count"] = len(report.get("errors") or [])
+    report["warning_count"] = len(report.get("warnings") or [])
+    report["status"] = "FAIL" if report["hard_error_count"] else ("WARNING" if report["warning_count"] else "PASS")
+
+
 def _validate_production_mutation_protocol(report: dict) -> None:
     result = run_mutation_protocol(ROOT)
     for item in result.get("checks") or []:
@@ -122,6 +168,7 @@ def main() -> int:
     report = _read_json("data/state/system_consistency.json")
     _normalize_stock_market_time_alignment(report)
     _validate_formal_risk_precedence(report)
+    _validate_trade_event_formal_sync(report)
     _validate_production_mutation_protocol(report)
     REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
@@ -129,6 +176,7 @@ def main() -> int:
         "hard_error_count": report.get("hard_error_count"),
         "warning_count": report.get("warning_count"),
         "stock_market_time_alignment": next((x for x in report.get("checks", []) if x.get("name") == "stock_runtime:market_time_alignment"), {}),
+        "formal_trade_event_sync": next((x for x in report.get("checks", []) if x.get("name") == "formal_files:executed_trade_event_sync"), {}),
         "production_mutation_protocol": report.get("production_mutation_protocol") or {},
     }, ensure_ascii=False))
     return 1 if report.get("errors") else rc
