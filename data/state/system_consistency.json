@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-08-27T23:45:49Z",
-  "generated_at_beijing": "2026-08-28T07:45:49+08:00",
+  "generated_at": "2026-08-27T23:52:20Z",
+  "generated_at_beijing": "2026-08-28T07:52:20+08:00",
   "repository": {
-    "head_sha": "2122022388863963bbd1bd85815711aa74676d60",
-    "github_sha": "2122022388863963bbd1bd85815711aa74676d60",
-    "github_run_id": "33127397469",
+    "head_sha": "c8cde865ec47975c4b8a1f0c10073d0c135729aa",
+    "github_sha": "c8cde865ec47975c4b8a1f0c10073d0c135729aa",
+    "github_run_id": "33127767831",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "2122022388863963bbd1bd85815711aa74676d60",
-    "workflow_sha": "2122022388863963bbd1bd85815711aa74676d60",
+    "checked_commit": "c8cde865ec47975c4b8a1f0c10073d0c135729aa",
+    "workflow_sha": "c8cde865ec47975c4b8a1f0c10073d0c135729aa",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "FAIL",
-  "hard_error_count": 2,
+  "status": "PASS",
+  "hard_error_count": 0,
   "warning_count": 0,
   "checks": [
     {
@@ -235,12 +235,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=2122022388863963bbd1bd85815711aa74676d60"
+      "detail": "HEAD=c8cde865ec47975c4b8a1f0c10073d0c135729aa"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=2122022388863963bbd1bd85815711aa74676d60 GITHUB_SHA=2122022388863963bbd1bd85815711aa74676d60"
+      "detail": "HEAD=c8cde865ec47975c4b8a1f0c10073d0c135729aa GITHUB_SHA=c8cde865ec47975c4b8a1f0c10073d0c135729aa"
     },
     {
       "name": "git:critical_files_tracked",
@@ -669,8 +669,8 @@
     },
     {
       "name": "us_extended:live_freshness",
-      "status": "FAIL",
-      "detail": "active=True phase=19:45 max_age_seconds=9049 limit=900"
+      "status": "PASS",
+      "detail": "phase_aware phase=POST_MARKET live_objects=['QQQ', 'SOXX'] max_age_seconds=221 limit=900; cash indices are session references outside REGULAR"
     },
     {
       "name": "session_gate:calendar_read",
@@ -785,12 +785,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=59132"
+      "detail": "declared=STALE expected=STALE age_seconds=59523"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=59132"
+      "detail": "declared=STALE expected=STALE age_seconds=59523"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -830,7 +830,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-27T23:45:48Z market=2026-08-27T15:20:16+08:00"
+      "detail": "context=2026-08-27T23:52:19Z market=2026-08-27T15:20:16+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -949,8 +949,8 @@
     },
     {
       "name": "a_share_runtime:market_date_alignment",
-      "status": "FAIL",
-      "detail": "snapshot=2026-08-27 current=2026-08-27 health=2026-08-28 query_only=False"
+      "status": "PASS",
+      "detail": "off_window_attempt_date=2026-08-28 preserved_last_valid_market_date=2026-08-27 snapshot=data/market/snapshots/2026-08-27_152016.json"
     },
     {
       "name": "a_share_runtime:etf_complete",
@@ -1683,10 +1683,7 @@
       "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
     }
   ],
-  "errors": [
-    "us_extended:live_freshness: active=True phase=19:45 max_age_seconds=9049 limit=900",
-    "a_share_runtime:market_date_alignment: snapshot=2026-08-27 current=2026-08-27 health=2026-08-28 query_only=False"
-  ],
+  "errors": [],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
   "production_mutation_protocol": {
