@@ -21,6 +21,8 @@
 
 补充查询技术说明：`docs/市场行情查询路由与全球时点规则_V1.0.md` 定义用户查询时的市场、时区、阶段和数据选择说明；唯一实现入口为 `scripts/market_quote_router.py`，配置为 `config/market/market_quote_router.json`；查询时 provider 补采统一由 `scripts/query_time_market_refresh.py` 执行，成功结果先直返本次查询，再异步持久化。它不是交易规则，也不替代上述正式数据规范。 单对象查询统一入口为 `scripts/query_market_object.py`：正式监测对象返回 `SYSTEM_MONITORED`，用户明确指定但未纳入监测池的对象返回 `USER_REQUESTED`；扩展查询结果只写入现有 `query_context.json` 查询区域，不改变机器监测全集。
 
+主动通知运行说明：`docs/ETF主动通知体系.md` 是 PushPlus 主动通知的唯一人类可读规范，定义通知价值原则、监测对象、五类市场事件、一级标题、固定总结节点、正式机会/账户/系统通知条件、去重与 Point-in-Time 边界；它不是交易规则，不得产生风险许可、生命周期、金额或买卖动作。`notifications/README.md` 仅保留实现目录入口，不复制整套规范。
+
 任何涉及三层监测对象、provider优先级、ETF运行全集、交易日历、脉冲参数、跨市场时点、状态文件、脚本、workflow或代码提交的更新，都必须同步复核该规范并执行系统一致性检查。
 
 ## 三层市场监测结构
@@ -48,6 +50,7 @@
 ## 运行读取路径
 
 - 基础数据规范：`ETF与市场监测数据接口使用规范.md`
+- 主动通知规范：`docs/ETF主动通知体系.md`
 - A股官方交易日历：`config/market/a_share_trading_calendar_2026.json`
 - 状态：`data/state/CURRENT.json`、`data/state/account_fact.json`、`data/state/runtime_health.json`
 - 系统一致性：`data/state/system_consistency.json`、`scripts/check_system_consistency.py`
