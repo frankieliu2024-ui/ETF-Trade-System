@@ -1,0 +1,175 @@
+name: Leading indicator research temp
+
+on:
+  push:
+    branches: [research/leading-indicators-20260827]
+    paths:
+      - ".github/workflows/leading-indicator-research-temp.yml"
+      - "research/requests/index_futures_stage1.json"
+      - "research/requests/market_breadth_stage2.json"
+
+permissions:
+  contents: write
+
+jobs:
+  futures-stage1:
+    if: contains(github.event.head_commit.message, 'run index futures stage1')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/leading-indicators-20260827
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install research dependencies
+        run: pip install -q akshare pandas numpy scipy
+      - name: Run PIT futures basis and OI validation
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, math, warnings
+          from pathlib import Path
+          import numpy as np, pandas as pd
+          from scipy.stats import spearmanr
+          import akshare as ak
+          warnings.filterwarnings('ignore')
+
+          ROOT=Path('.')
+          OUT=ROOT/'research/backtests/index_futures_lead_stage1_validation.json'
+          TARGETS={
+            '561980':'sh561980','588000':'sh588000','159781':'sz159781',
+            '159992':'sz159992','515880':'sh515880','159326':'sz159326'
+          }
+          FUTS={'IF':('IF0','sh000300'),'IC':('IC0','sh000905'),'IM':('IM0','sh000852')}
+
+          def idx_daily(sym):
+            d=ak.stock_zh_index_daily(symbol=sym).copy()
+            d['date']=pd.to_datetime(d['date']); d['close']=pd.to_numeric(d['close'],errors='coerce')
+            return d[['date','close']].dropna().drop_duplicates('date').sort_values('date')
+          def etf_daily(sym):
+            code=sym[2:]
+            d=ak.fund_etf_hist_em(symbol=code, period='daily', start_date='20220101', end_date='20260826', adjust='').copy()
+            d=d.rename(columns={'日期':'date','收盘':'close'})
+            d['date']=pd.to_datetime(d['date']); d['close']=pd.to_numeric(d['close'],errors='coerce')
+            return d[['date','close']].dropna().drop_duplicates('date').sort_values('date')
+          def fut_daily(sym):
+            d=ak.futures_zh_daily_sina(symbol=sym).copy()
+            cols={c.lower():c for c in d.columns}
+            d=d.rename(columns={cols.get('date','date'):'date',cols.get('close','close'):'close',cols.get('hold','hold'):'hold'})
+            d['date']=pd.to_datetime(d['date']); d['close']=pd.to_numeric(d['close'],errors='coerce'); d['hold']=pd.to_numeric(d['hold'],errors='coerce')
+            return d[['date','close','hold']].dropna().drop_duplicates('date').sort_values('date')
+          def margin_hist():
+            import urllib.parse, urllib.request
+            url='https://datacenter-web.eastmoney.com/api/data/v1/get'
+            params={'reportName':'RPTA_WEB_MARGIN_DAILYTRADE','columns':'STATISTICS_DATE,FIN_BALANCE,FIN_BUY_AMT','pageNumber':'1','pageSize':'1000','sortColumns':'STATISTICS_DATE','sortTypes':'-1','p':'1','pageNo':'1','pageNum':'1'}
+            req=urllib.request.Request(url+'?'+urllib.parse.urlencode(params),headers={'User-Agent':'Mozilla/5.0 research'})
+            raw=json.loads(urllib.request.urlopen(req,timeout=20).read().decode())
+            rows=((raw.get('result') or {}).get('data') or [])
+            d=pd.DataFrame(rows)
+            if d.empty: return d
+            d['date']=pd.to_datetime(d['STATISTICS_DATE'].astype(str).str[:10]); d['balance']=pd.to_numeric(d['FIN_BALANCE'],errors='coerce'); d['buy']=pd.to_numeric(d['FIN_BUY_AMT'],errors='coerce')
+            d=d[['date','balance','buy']].dropna().sort_values('date')
+            d['margin_balance_5d']=d['balance'].pct_change(5)*100
+            d['margin_buy_5v20']=(d['buy'].rolling(5).mean()/d['buy'].rolling(20).mean()-1)*100
+            return d[['date','margin_balance_5d','margin_buy_5v20']]
+
+          result={'schema_version':'1.0','mode':'RESEARCH_ONLY_INDEX_FUTURES_LEAD_STAGE1','point_in_time_rule':'T日收盘期指/现货/OI与融资事实仅从T+1进入决策；ETF forward label从D日开盘近似为D-1收盘后的下一日收益开始。','decision_eligible':False,'trade_signal':None,'master_override':False,'data_quality':{},'validation':{},'research_interpretation':'UNSET'}
+
+          try:
+            margins=margin_hist()
+            result['data_quality']['margin_rows']=int(len(margins))
+          except Exception as e:
+            margins=pd.DataFrame(columns=['date','margin_balance_5d','margin_buy_5v20'])
+            result['data_quality']['margin_error']=f'{type(e).__name__}: {e}'
+
+          factor_frames=[]
+          for k,(fsym,isym) in FUTS.items():
+            try:
+              f=fut_daily(fsym); s=idx_daily(isym)
+              x=f.merge(s,on='date',suffixes=('_fut','_spot'))
+              x['basis_pct']=(x['close_fut']/x['close_spot']-1)*100
+              x['basis_change_1d']=x['basis_pct'].diff()
+              x['basis_change_5d']=x['basis_pct'].diff(5)
+              x['oi_change_1d']=x['hold'].pct_change()*100
+              x['oi_change_5d']=x['hold'].pct_change(5)*100
+              x['fut_ret_1d']=x['close_fut'].pct_change()*100
+              # Roll-robust filter: exclude discontinuity day and immediate neighbors.
+              bad=(x['oi_change_1d'].abs()>45)|(x['basis_change_1d'].abs()>2.5)|(x['fut_ret_1d'].abs()>10)
+              bad=bad|bad.shift(1,fill_value=False)|bad.shift(-1,fill_value=False)
+              x['usable']=~bad
+              x['price_oi_regime']=np.sign(x['fut_ret_1d'])*np.sign(x['oi_change_1d'])
+              keep=['date','basis_pct','basis_change_1d','basis_change_5d','oi_change_1d','oi_change_5d','price_oi_regime','usable']
+              x=x[keep].rename(columns={c:f'{k}_{c}' for c in keep if c!='date'})
+              factor_frames.append(x)
+              result['data_quality'][k]={'futures_rows':int(len(f)),'spot_rows':int(len(s)),'merged_rows':int(len(x)),'usable_rows':int(x[f'{k}_usable'].sum())}
+            except Exception as e:
+              result['data_quality'][k]={'error':f'{type(e).__name__}: {e}'}
+
+          if len(factor_frames)<2:
+            result['research_interpretation']='TERMINATED_INSUFFICIENT_FUTURES_DATA'
+            OUT.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
+            raise SystemExit(0)
+          fac=factor_frames[0]
+          for y in factor_frames[1:]: fac=fac.merge(y,on='date',how='outer')
+          if not margins.empty: fac=fac.merge(margins,on='date',how='left')
+          # PIT lag: feature observed at T is used for ETF date D=T+next trading day by shifting after merge on ETF calendar.
+          signals=[c for c in fac.columns if any(z in c for z in ['basis_change_1d','basis_change_5d','oi_change_1d','oi_change_5d','price_oi_regime'])]
+          per_signal={s:[] for s in signals}
+          for code,sym in TARGETS.items():
+            try: e=etf_daily(sym)
+            except Exception as ex:
+              result['data_quality'][code]={'error':f'{type(ex).__name__}: {ex}'}; continue
+            d=e.merge(fac,on='date',how='left').sort_values('date')
+            for c in signals+['margin_balance_5d','margin_buy_5v20']:
+              if c in d: d[c]=d[c].shift(1)
+            d['mom5']=d['close'].pct_change(5).shift(1)*100; d['mom20']=d['close'].pct_change(20).shift(1)*100
+            for h in [1,3,5]: d[f'fwd{h}']=(d['close'].shift(-h)/d['close']-1)*100
+            for sig in signals:
+              prefix=sig.split('_')[0]
+              usecol=f'{prefix}_usable'
+              for h in [1,3,5]:
+                cols=[sig,'mom5','mom20',f'fwd{h}']
+                if 'margin_balance_5d' in d: cols+=['margin_balance_5d']
+                z=d[cols+([usecol] if usecol in d else [])].replace([np.inf,-np.inf],np.nan).dropna()
+                if usecol in z: z=z[z[usecol].astype(bool)]
+                if len(z)<120: continue
+                controls=['mom5','mom20']+(['margin_balance_5d'] if 'margin_balance_5d' in z else [])
+                X=np.column_stack([np.ones(len(z))]+[z[c].to_numpy(float) for c in controls])
+                try:
+                  bx=np.linalg.lstsq(X,z[sig].to_numpy(float),rcond=None)[0]; by=np.linalg.lstsq(X,z[f'fwd{h}'].to_numpy(float),rcond=None)[0]
+                  rx=z[sig].to_numpy(float)-X@bx; ry=z[f'fwd{h}'].to_numpy(float)-X@by
+                  ic=float(spearmanr(rx,ry).statistic)
+                except Exception: continue
+                q=pd.qcut(z[sig],5,duplicates='drop')
+                means=z.groupby(q,observed=True)[f'fwd{h}'].mean()
+                spread=float(means.iloc[-1]-means.iloc[0]) if len(means)>=3 else None
+                per_signal[sig].append({'code':code,'horizon':h,'n':int(len(z)),'partial_rank_ic':round(ic,4),'top_bottom_spread_pp':None if spread is None else round(spread,4)})
+
+          summary={}
+          passing=[]
+          for sig,rows in per_signal.items():
+            if not rows: continue
+            ics=[r['partial_rank_ic'] for r in rows if r['partial_rank_ic'] is not None]
+            spreads=[r['top_bottom_spread_pp'] for r in rows if r['top_bottom_spread_pp'] is not None]
+            sign_cons=max(sum(x>0 for x in ics),sum(x<0 for x in ics))/len(ics)
+            med_ic=float(np.median(ics)); med_sp=float(np.median(spreads)) if spreads else 0
+            # conservative stage-1: material median IC and >=70% sign consistency across ETF/horizons.
+            passed=abs(med_ic)>=0.06 and sign_cons>=0.70 and (abs(med_sp)>=0.35)
+            summary[sig]={'tests':len(rows),'median_partial_rank_ic':round(med_ic,4),'sign_consistency':round(sign_cons,4),'median_top_bottom_spread_pp':round(med_sp,4),'passed':passed}
+            if passed: passing.append(sig)
+          result['validation']={'controls':['ETF mom5 lag1','ETF mom20 lag1','margin_balance_5d lag1 when available'],'signals':summary,'passing_signals':passing}
+          result['research_interpretation']='PROMISING_INCREMENT_STAGE1' if passing else 'NO_STABLE_INCREMENT_STAGE1'
+          result['next_step']='If passing, require contract-level/expiry-aware robustness before production; continuous-contract result alone cannot qualify basis for decision integration.' if passing else 'Do not productionize futures lead indicators.'
+          OUT.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
+          print(json.dumps({'interpretation':result['research_interpretation'],'passing':passing,'data_quality':result['data_quality']},ensure_ascii=False))
+          PY
+      - name: Commit stage1 result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/backtests/index_futures_lead_stage1_validation.json
+          git commit -m "research: record index futures lead stage1 result" || exit 0
+          git push origin HEAD:research/leading-indicators-20260827
