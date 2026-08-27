@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "mode": "RESEARCH_ONLY_INDEX_FUTURES_LEAD_CONCLUSION",
+  "generated_for": "2026-08-27 leading indicator research",
+  "objective": "验证IF/IC/IM基差变化与持仓量变化是否在ETF自身5日/20日动量及融资余额证据之外提供稳定PIT领先增量。",
+  "decision_eligible": false,
+  "trade_signal": null,
+  "master_override": false,
+  "production_context_integration": false,
+  "point_in_time_rule": "T日收盘期指、现货、OI及融资事实仅从下一ETF交易日进入验证。",
+  "stage1": {
+    "result": "PROMISING_INCREMENT_STAGE1",
+    "passing_signals": ["IF_basis_change_5d", "IC_basis_change_5d", "IC_oi_change_1d", "IM_basis_change_5d"],
+    "reference": "research/backtests/index_futures_lead_stage1_validation.json"
+  },
+  "robustness": {
+    "result": "ROBUST_CONTINUOUS_CONTRACT_INCREMENT",
+    "method": "对连续合约中OI单日跳变>25%、基差单日跳变>1.5个百分点或期指单日变化>8%的异常/换月敏感节点，连同前后各5个交易观察全部剔除；再对每只ETF的可用样本做前后半段稳定性检验。",
+    "excluded_share": {"IF_pct": 39.67, "IC_pct": 41.9, "IM_pct": 44.06},
+    "signals": {
+      "IF_basis_change_5d": {"overall_median_partial_rank_ic": 0.1243, "late_median_ic": 0.0468, "sign_consistency": 0.75},
+      "IC_basis_change_5d": {"overall_median_partial_rank_ic": 0.1086, "late_median_ic": 0.0316, "sign_consistency": 0.7778},
+      "IC_oi_change_1d": {"overall_median_partial_rank_ic": 0.0513, "late_median_ic": 0.05, "sign_consistency": 0.7222},
+      "IM_basis_change_5d": {"overall_median_partial_rank_ic": 0.1294, "late_median_ic": 0.064, "sign_consistency": 0.9444}
+    },
+    "reference": "research/backtests/index_futures_lead_robustness_validation.json"
+  },
+  "research_interpretation": "PROMISING_REQUIRES_EXPIRY_AWARE_VALIDATION",
+  "conclusion": "股指期货领先证据值得继续，其中IM 5日基差变化当前最稳定，IF/IC 5日基差次之，IC 1日OI变化提供较弱但时间分段稳定的独立增量。由于基差仍基于连续合约，尚未逐合约校正剩余到期日、换月和期限结构，因此本轮不进入decision_context、不形成交易规则。",
+  "next_validation": "若继续推进，只需做一项最小补充：使用CFFEX逐合约、到期日明确的历史数据重建近月/主力合约基差，并验证上述3类5日基差结果是否保持；OI可同步验证。通过后再做正式研究转化审查。"
+}
