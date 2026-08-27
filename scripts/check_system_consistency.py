@@ -271,6 +271,24 @@ def _validate_production_mutation_protocol(report: dict) -> None:
     report["status"] = "FAIL" if report["hard_error_count"] else ("WARNING" if report["warning_count"] else "PASS")
 
 
+
+def _validate_semantic_formal_structure(report: dict) -> None:
+    from formal_document_structure import validate_files
+    errors = validate_files(ROOT)
+    status = "FAIL" if errors else "PASS"
+    report.setdefault("checks", []).append({
+        "name": "formal_files:semantic_structure",
+        "status": status,
+        "detail": "semantic chapter/order/managed-block placement valid" if not errors else "; ".join(errors),
+    })
+    for item in errors:
+        message = "formal_semantic_structure:" + item
+        if message not in report.setdefault("errors", []):
+            report["errors"].append(message)
+    report["hard_error_count"] = len(report.get("errors") or [])
+    report["warning_count"] = len(report.get("warnings") or [])
+    report["status"] = "FAIL" if report["hard_error_count"] else ("WARNING" if report["warning_count"] else "PASS")
+
 def main() -> int:
     rc = core_main()
     report = _read_json("data/state/system_consistency.json")
@@ -278,6 +296,7 @@ def main() -> int:
     _validate_formal_risk_precedence(report)
     _validate_trade_event_formal_sync(report)
     _validate_historical_trade_case_mapping(report)
+    _validate_semantic_formal_structure(report)
     _validate_readme_front_door(report)
     _validate_production_mutation_protocol(report)
     REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
