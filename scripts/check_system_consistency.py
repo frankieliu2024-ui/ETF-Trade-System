@@ -4,6 +4,7 @@ import json
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+from check_production_mutation_protocol import run as run_mutation_protocol
 from check_system_consistency_core import main as core_main
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -88,9 +89,32 @@ def _validate_formal_risk_precedence(report: dict) -> None:
     report.setdefault("checks", []).append({"name": "risk:formal_precedence", "status": "FAIL" if mismatches else "PASS", "detail": f"formal={formal_risk:.4f} source={source} " + (" ".join(mismatches) if mismatches else "dashboard/e2e aligned")})
     if mismatches:
         message = "risk:formal_precedence:" + ";".join(mismatches)
-        if message not in report.setdefault("errors", []): report["errors"].append(message)
+        if message not in report.setdefault("errors", []):
+            report["errors"].append(message)
         report["hard_error_count"] = len(report["errors"])
         report["status"] = "FAIL"
+
+
+def _validate_production_mutation_protocol(report: dict) -> None:
+    result = run_mutation_protocol(ROOT)
+    for item in result.get("checks") or []:
+        report.setdefault("checks", []).append(item)
+    for message in result.get("errors") or []:
+        normalized = "mutation_protocol:" + str(message)
+        if normalized not in report.setdefault("errors", []):
+            report["errors"].append(normalized)
+    for message in result.get("warnings") or []:
+        normalized = "mutation_protocol:" + str(message)
+        if normalized not in report.setdefault("warnings", []):
+            report["warnings"].append(normalized)
+    report["production_mutation_protocol"] = {
+        "status": result.get("status"),
+        "direct_main_writers": result.get("direct_main_writers") or [],
+        "fact_precedence": result.get("fact_precedence") or [],
+    }
+    report["hard_error_count"] = len(report.get("errors") or [])
+    report["warning_count"] = len(report.get("warnings") or [])
+    report["status"] = "FAIL" if report["hard_error_count"] else ("WARNING" if report["warning_count"] else "PASS")
 
 
 def main() -> int:
@@ -98,12 +122,14 @@ def main() -> int:
     report = _read_json("data/state/system_consistency.json")
     _normalize_stock_market_time_alignment(report)
     _validate_formal_risk_precedence(report)
+    _validate_production_mutation_protocol(report)
     REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
         "status": report.get("status"),
         "hard_error_count": report.get("hard_error_count"),
         "warning_count": report.get("warning_count"),
         "stock_market_time_alignment": next((x for x in report.get("checks", []) if x.get("name") == "stock_runtime:market_time_alignment"), {}),
+        "production_mutation_protocol": report.get("production_mutation_protocol") or {},
     }, ensure_ascii=False))
     return 1 if report.get("errors") else rc
 

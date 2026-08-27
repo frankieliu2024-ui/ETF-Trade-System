@@ -42,7 +42,11 @@ jobs:
         run: npm install --global @hithink-tech/hithink-finance-cli
       - name: Run system consistency live audit
         continue-on-error: true
-        run: python scripts/check_system_consistency.py
+        run: |
+          python scripts/check_system_consistency.py
+          # The audit report is owned by system-consistency.yml. This pulse may
+          # read it transiently but must never persist its own copy.
+          git checkout -- data/state/system_consistency.json || true
       - name: Refresh formal overseas and Asia index context
         run: python scripts/build_overseas_context.py
       - name: Refresh US extended-hours context
@@ -58,7 +62,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/state/overseas_context.json data/state/us_extended_hours_context.json data/state/query_context.json data/state/overseas_runtime_health.json data/state/runtime_health.json data/state/system_consistency.json
+          # Persist only files owned by the overseas pulse. A-share runtime_health
+          # and system_consistency are owned by their canonical workflows.
+          git add data/state/overseas_context.json data/state/us_extended_hours_context.json data/state/query_context.json data/state/overseas_runtime_health.json
           if git diff --cached --quiet; then
             exit 0
           fi
