@@ -43,7 +43,7 @@ FORBIDDEN_PREFIXES = (
 
 # These failures normally mean the workflow obtained facts successfully but did
 # not persist them because Git/GitHub state moved concurrently. Retry once before
-# escalating; an isolated persistence failure is not itself a user-facing system blockage.
+# recording; an isolated persistence failure is not itself a user-facing system blockage.
 TRANSIENT_STEP_HINTS = (
     "checkout",
     "persist",
@@ -163,8 +163,11 @@ def main() -> int:
         recommended_action = "AUTO_REVERT_HEAD_MAINTENANCE_COMMIT"
         reason = "deterministic regression is confined to the strict maintenance allowlist and failed SHA is still main HEAD"
     else:
-        recommended_action = "ESCALATE_WITH_DIAGNOSTIC"
-        reason = "automatic action stopped at safety boundary"
+        # A raw workflow failure is diagnostic evidence, not a user-facing alert.
+        # If it truly degrades current/next-node reliability, self-healing will
+        # observe the resulting stale/failed runtime state and own escalation.
+        recommended_action = "RECORD_DIAGNOSTIC_ONLY"
+        reason = "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing"
 
     diagnostic = {
         "schema_version": "1.0",
@@ -188,6 +191,8 @@ def main() -> int:
             "changes_confined_to_auto_rollback_allowlist": allowlisted_change,
             "forbidden_path_touched": forbidden_change,
             "bot_or_revert_commit": bot_or_revert_commit,
+            "user_notification_authority": False,
+            "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
             "may_modify_master": False,
             "may_modify_account_fact": False,
             "may_change_provider_policy": False,
@@ -210,6 +215,7 @@ def main() -> int:
             "changed files must remain entirely inside strict maintenance allowlist",
             "never revert MASTER, trading rules, provider policy, market data or user-confirmed account facts",
             "never auto-revert github-actions state commits or a prior revert commit",
+            "workflow diagnostics never directly earn PushPlus interruption authority",
         ],
     }
     write_json(ROLLBACK_PLAN, plan)
