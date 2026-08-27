@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "mode": "PRODUCTION_MUTATION_PROTOCOL",
   "purpose": "允许并行诊断与计算，但对共享生产状态实行隔离实施、latest-main重放、文件所有权和串行集成约束。",
   "principles": [
@@ -34,6 +34,53 @@
       "reason": "两条链使用同一A股核心producer并可能写CURRENT/runtime及快照，必须共享串行队列。"
     }
   ],
+  "state_file_contracts": {
+    "data/state/CURRENT.json": {
+      "state_class": "CANONICAL_MARKET_STATE",
+      "canonical_builder": "scripts/cloud_runner_snapshot.py",
+      "canonical_writers": [
+        ".github/workflows/market-snapshot.yml",
+        ".github/workflows/opening-auction-current-fallback.yml"
+      ],
+      "bounded_repair_writers": {
+        ".github/workflows/self-healing-watchdog.yml": {
+          "required_script": "scripts/runtime_self_heal.py",
+          "allowed_mutation": "CURRENT.rules_version only when MASTER metadata drift is detected"
+        }
+      },
+      "rule": "行情价格、时点、快照指针和market phase只能来自canonical snapshot producer；自愈不得重建行情事实。"
+    },
+    "data/state/runtime_health.json": {
+      "state_class": "CANONICAL_A_SHARE_RUNTIME_HEALTH",
+      "canonical_builder": "scripts/cloud_runner_snapshot.py",
+      "canonical_writers": [
+        ".github/workflows/market-snapshot.yml",
+        ".github/workflows/opening-auction-current-fallback.yml"
+      ],
+      "rule": "A股runtime health随canonical snapshot producer生成；海外、通知、研究和一致性workflow不得持久化该文件。"
+    },
+    "data/state/decision_context.json": {
+      "state_class": "DERIVED_REBUILDABLE_STATE",
+      "canonical_builder": "scripts/build_state_context.py",
+      "allowed_writers": [
+        ".github/workflows/market-snapshot.yml",
+        ".github/workflows/opening-auction-current-fallback.yml",
+        ".github/workflows/self-healing-watchdog.yml"
+      ],
+      "rule": "允许多个受控入口触发，但所有持久化版本必须由同一个canonical builder从当时最新正式事实重建，不允许workflow手工拼接。"
+    },
+    "data/state/query_context.json": {
+      "state_class": "DERIVED_REBUILDABLE_STATE",
+      "canonical_builder": "scripts/build_query_context.py",
+      "allowed_writers": [
+        ".github/workflows/market-snapshot.yml",
+        ".github/workflows/opening-auction-current-fallback.yml",
+        ".github/workflows/overseas-preopen-pulse.yml",
+        ".github/workflows/self-healing-watchdog.yml"
+      ],
+      "rule": "允许A股核心、海外刷新和自愈重建，但所有持久化版本必须调用同一个canonical builder；system-consistency只可临时重建用于审计，不应把query_context作为自身owned state提交。"
+    }
+  },
   "fact_precedence": [
     "ETF规则_MASTER.md > 派生状态与历史聊天",
     "用户确认或券商确认的实际成交 > 辅助权益/历史账本重构",
