@@ -1,0 +1,173 @@
+name: Index futures expiry-aware parallel temp
+
+on:
+  push:
+    branches: [research/index-futures-expiry-aware-20260827]
+    paths:
+      - 'research/requests/index_futures_expiry_parallel.json'
+      - '.github/workflows/index-futures-expiry-aware-parallel-temp.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-year:
+    strategy:
+      fail-fast: false
+      matrix:
+        year: [2022, 2023, 2024, 2025, 2026]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/index-futures-expiry-aware-20260827
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -q akshare pandas
+      - name: Fetch CFFEX explicit contracts for year
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os, akshare as ak, pandas as pd
+          y=int('${{ matrix.year }}')
+          start=f'{y}0101'; end='20260826' if y==2026 else f'{y}1231'
+          d=ak.get_futures_daily(start_date=start,end_date=end,market='CFFEX')
+          d=d[d['variety'].isin(['IF','IC','IM'])].copy()
+          d.to_csv(f'cffex_{y}.csv',index=False)
+          print({'year':y,'rows':len(d),'contracts':d['symbol'].nunique() if len(d) else 0,'date_min':d['date'].min() if len(d) else None,'date_max':d['date'].max() if len(d) else None})
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cffex-${{ matrix.year }}
+          path: cffex_${{ matrix.year }}.csv
+          retention-days: 1
+
+  validate:
+    needs: fetch-year
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/index-futures-expiry-aware-20260827
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -q akshare pandas numpy scipy
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cffex-*
+          path: /tmp/cffex
+          merge-multiple: true
+      - name: Run pre-registered contract-level PIT validation
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, urllib.request, urllib.parse, warnings, glob
+          from pathlib import Path
+          import numpy as np, pandas as pd
+          from scipy.stats import spearmanr
+          import akshare as ak
+          warnings.filterwarnings('ignore')
+          OUT=Path('research/backtests/index_futures_expiry_aware_final_validation.json')
+          TARGETS={'561980':'561980.SS','588000':'588000.SS','159781':'159781.SZ','159992':'159992.SZ','515880':'515880.SS','159326':'159326.SZ'}
+          SPOT={'IF':'sh000300','IC':'sh000905','IM':'sh000852'}
+          CANDS=['IF_basis_change_5d','IC_basis_change_5d','IM_basis_change_5d','IC_oi_change_1d']
+          METHODS=['front','dominant']
+          def yahoo(sym):
+              url='https://query1.finance.yahoo.com/v8/finance/chart/'+urllib.parse.quote(sym,safe='')+'?period1=1640995200&period2=1787875200&interval=1d&events=history'
+              req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'}); raw=json.loads(urllib.request.urlopen(req,timeout=25).read().decode()); r=raw['chart']['result'][0]; q=r['indicators']['quote'][0]
+              d=pd.DataFrame({'date':pd.to_datetime(r['timestamp'],unit='s',utc=True).tz_convert('Asia/Shanghai').tz_localize(None).normalize(),'close':q['close']})
+              return d.dropna().drop_duplicates('date').sort_values('date')
+          def idx(sym):
+              d=ak.stock_zh_index_daily(symbol=sym); d['date']=pd.to_datetime(d['date']); d['close']=pd.to_numeric(d['close'],errors='coerce'); return d[['date','close']].dropna().sort_values('date')
+          def margin():
+              u='https://datacenter-web.eastmoney.com/api/data/v1/get'; p={'reportName':'RPTA_WEB_MARGIN_DAILYTRADE','columns':'STATISTICS_DATE,FIN_BALANCE','pageNumber':'1','pageSize':'1000','sortColumns':'STATISTICS_DATE','sortTypes':'-1'}
+              req=urllib.request.Request(u+'?'+urllib.parse.urlencode(p),headers={'User-Agent':'Mozilla/5.0 research'}); rows=((json.loads(urllib.request.urlopen(req,timeout=25).read().decode()).get('result') or {}).get('data') or [])
+              d=pd.DataFrame(rows); d['date']=pd.to_datetime(d.STATISTICS_DATE.astype(str).str[:10]); d['balance']=pd.to_numeric(d.FIN_BALANCE,errors='coerce'); d=d[['date','balance']].dropna().sort_values('date'); d['margin5']=d.balance.pct_change(5)*100; return d[['date','margin5']]
+          def cm(s):
+              x=str(s); return (2000+int(x[2:4]))*100+int(x[4:6])
+          fs=sorted(glob.glob('/tmp/cffex/cffex_*.csv'))
+          fut=pd.concat([pd.read_csv(f) for f in fs],ignore_index=True)
+          fut=fut[fut.variety.isin(['IF','IC','IM'])].copy(); fut['date']=pd.to_datetime(fut.date.astype(str));
+          for c in ['close','open_interest','volume','settle']: fut[c]=pd.to_numeric(fut[c],errors='coerce')
+          fut=fut.dropna(subset=['date','symbol','close','open_interest']).drop_duplicates(['date','symbol']).sort_values(['date','variety','symbol']); fut=fut[(fut.close>0)&(fut.volume>=0)]; fut['contract_month']=fut.symbol.map(cm)
+          res={'schema_version':'2.1','mode':'RESEARCH_ONLY_INDEX_FUTURES_EXPIRY_AWARE_FINAL','decision_eligible':False,'trade_signal':None,'master_override':False,'production_context_integration':False,
+               'pre_registered_thresholds':{'base':'overall median IC >=0.045; positive sign consistency >=0.70; early/mid/late median each >=0.025','margin':'overall median IC >=0.03; positive sign consistency >=0.65; early/mid/late median each >=0.015','final':'signal must pass both front and dominant contract selection'},
+               'point_in_time_rule':'T日收盘逐合约期指、现货、OI及融资事实仅从下一ETF交易观察进入验证。',
+               'contract_semantics':{'source':'CFFEX exchange daily explicit contract rows via AKShare get_futures_daily','front':'当日实际挂牌合约中合约月份最早者','dominant':'当日open_interest最大者','roll_guard':'basis5 only if same explicit contract at t and t-5 futures observations; OI1 only if same contract at t and t-1'},
+               'data_quality':{'artifact_files':[Path(f).name for f in fs],'contract_rows':int(len(fut)),'date_min':str(fut.date.min().date()),'date_max':str(fut.date.max().date()),'contracts_by_variety':{}},'methods':{},'final_candidates':{},'research_interpretation':'INCONCLUSIVE'}
+          for v in ['IF','IC','IM']:
+              z=fut[fut.variety==v]; res['data_quality']['contracts_by_variety'][v]={'rows':int(len(z)),'contracts':int(z.symbol.nunique()),'first':str(z.date.min().date()),'last':str(z.date.max().date())}
+          spots={v:idx(s) for v,s in SPOT.items()}
+          try: mrg=margin(); res['data_quality']['margin_rows']=int(len(mrg))
+          except Exception as e: mrg=pd.DataFrame(columns=['date','margin5']); res['data_quality']['margin_error']=f'{type(e).__name__}: {e}'
+          facs={}
+          for method in METHODS:
+              pcs=[]; qual={}
+              for v in ['IF','IC','IM']:
+                  z=fut[fut.variety==v].copy()
+                  if method=='front': sel=z.sort_values(['date','contract_month','symbol']).groupby('date',as_index=False).first()
+                  else: sel=z.sort_values(['date','open_interest','volume'],ascending=[True,False,False]).groupby('date',as_index=False).first()
+                  sel=sel.merge(spots[v],on='date',how='inner',suffixes=('_f','_s')).sort_values('date'); sel['basis']=(sel.close_f/sel.close_s-1)*100
+                  same5=sel.symbol.eq(sel.symbol.shift(5)); same1=sel.symbol.eq(sel.symbol.shift(1)); sel[f'{v}_basis_change_5d']=sel.basis.diff(5).where(same5); sel[f'{v}_oi_change_1d']=(sel.open_interest.pct_change()*100).where(same1)
+                  qual[v]={'selected_rows':int(len(sel)),'unique_contracts':int(sel.symbol.nunique()),'basis5_same_contract_rows':int(sel[f'{v}_basis_change_5d'].notna().sum()),'cross_roll_5d_dropped':int((~same5 & sel.basis.shift(5).notna()).sum()),'oi1_same_contract_rows':int(sel[f'{v}_oi_change_1d'].notna().sum()),'cross_roll_1d_dropped':int((~same1 & sel.open_interest.shift(1).notna()).sum())}
+                  pcs.append(sel[['date',f'{v}_basis_change_5d',f'{v}_oi_change_1d']])
+              fac=pcs[0]
+              for p in pcs[1:]: fac=fac.merge(p,on='date',how='outer')
+              if len(mrg): fac=fac.merge(mrg,on='date',how='left')
+              facs[method]=fac; res['methods'][method]={'selection_quality':qual,'signals':{}}
+          etfs={}
+          for code,sym in TARGETS.items():
+              try:
+                  d=yahoo(sym); etfs[code]=d; res['data_quality'][code]={'provider':'Yahoo chart','rows':int(len(d)),'first':str(d.date.min().date()),'last':str(d.date.max().date())}
+              except Exception as e: res['data_quality'][code]={'error':f'{type(e).__name__}: {e}'}
+          def pic(zz,sig,target,controls):
+              X=np.column_stack([np.ones(len(zz))]+[zz[c].to_numpy(float) for c in controls]); bx=np.linalg.lstsq(X,zz[sig].to_numpy(float),rcond=None)[0]; by=np.linalg.lstsq(X,zz[target].to_numpy(float),rcond=None)[0]
+              return float(spearmanr(zz[sig].to_numpy(float)-X@bx,zz[target].to_numpy(float)-X@by).statistic)
+          for method in METHODS:
+              rec={s:{'base':[],'margin':[]} for s in CANDS}; fac=facs[method]
+              for code,d0 in etfs.items():
+                  d=d0.merge(fac,on='date',how='left').sort_values('date')
+                  for s in CANDS: d[s]=d[s].shift(1)
+                  if 'margin5' in d: d['margin5']=d.margin5.shift(1)
+                  d['mom5']=d.close.pct_change(5).shift(1)*100; d['mom20']=d.close.pct_change(20).shift(1)*100
+                  for h in [1,3,5]: d[f'fwd{h}']=(d.close.shift(-h)/d.close-1)*100
+                  for sig in CANDS:
+                      for h in [1,3,5]:
+                          for spec,ctrl in [('base',['mom5','mom20']),('margin',['mom5','mom20','margin5'])]:
+                              if any(c not in d for c in ctrl): continue
+                              z=d[['date',sig,f'fwd{h}']+ctrl].replace([np.inf,-np.inf],np.nan).dropna()
+                              if len(z)<150: continue
+                              thirds=np.array_split(np.arange(len(z)),3)
+                              for part,ix in zip(['early','mid','late'],thirds):
+                                  zz=z.iloc[ix]
+                                  if len(zz)<45: continue
+                                  rec[sig][spec].append({'code':code,'horizon':h,'part':part,'n':int(len(zz)),'partial_rank_ic':round(pic(zz,sig,f'fwd{h}',ctrl),4)})
+              for sig in CANDS:
+                  sm={}
+                  for spec in ['base','margin']:
+                      rs=rec[sig][spec]
+                      if not rs: sm[spec]={'tests':0,'passed':False}; continue
+                      vals=[r['partial_rank_ic'] for r in rs]; parts={p:[r['partial_rank_ic'] for r in rs if r['part']==p] for p in ['early','mid','late']}; meds={p:float(np.median(v)) if v else np.nan for p,v in parts.items()}; overall=float(np.median(vals)); cons=sum(x>0 for x in vals)/len(vals)
+                      ok=(overall>=.045 and cons>=.70 and all(np.isfinite(meds[p]) and meds[p]>=.025 for p in meds)) if spec=='base' else (overall>=.03 and cons>=.65 and all(np.isfinite(meds[p]) and meds[p]>=.015 for p in meds))
+                      sm[spec]={'tests':len(rs),'overall_median_ic':round(overall,4),'sign_consistency_positive':round(cons,4),'third_median_ic':{p:round(meds[p],4) for p in meds},'passed':bool(ok)}
+                  sm['passed']=bool(sm['base'].get('passed') and sm['margin'].get('passed')); res['methods'][method]['signals'][sig]=sm
+          confirmed=[]
+          for sig in CANDS:
+              f=bool(res['methods']['front']['signals'][sig]['passed']); d=bool(res['methods']['dominant']['signals'][sig]['passed']); ok=f and d; res['final_candidates'][sig]={'front_passed':f,'dominant_passed':d,'confirmed_across_contract_selection':ok}; confirmed += [sig] if ok else []
+          res['confirmed_signals']=confirmed; n=sum(s in confirmed for s in ['IF_basis_change_5d','IC_basis_change_5d','IM_basis_change_5d']); res['research_interpretation']='CONFIRMED_EXPIRY_AWARE_INCREMENT' if n>=2 else ('PARTIAL_EXPIRY_AWARE_INCREMENT' if confirmed else 'NOT_CONFIRMED_EXPIRY_AWARE')
+          res['production_boundary']='Research only; formal research-conversion review is still required before decision_context integration. No direct trading action or MASTER modification.'
+          OUT.write_text(json.dumps(res,ensure_ascii=False,indent=2)+'\n',encoding='utf-8'); print(json.dumps({'interpretation':res['research_interpretation'],'confirmed':confirmed,'contract_rows':len(fut)},ensure_ascii=False))
+          PY
+      - name: Commit final validation
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/backtests/index_futures_expiry_aware_final_validation.json
+          git commit -m 'research: record expiry-aware futures final validation' || exit 0
+          git push origin HEAD:research/index-futures-expiry-aware-20260827
