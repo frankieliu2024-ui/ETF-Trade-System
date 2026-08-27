@@ -69,13 +69,16 @@ jobs:
         if: ${{ github.event_name == 'workflow_run' }}
         run: python scripts/build_execution_reconciliation.py
 
-      - name: Send A-share open/close summary when due
+      - name: Send A-share opening value signal or close summary when due
         id: a_share_summary_notify
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot' }}
         continue-on-error: true
         run: python scripts/send_regional_session_summary.py --market a-share
 
-      - name: Send A-share extreme/sudden move alert when due
+      # A-share is only the data source route here. The event engine evaluates
+      # every currently monitored index/ETF/account stock by attention value;
+      # market membership itself never grants or blocks notification eligibility.
+      - name: Send A-share monitored-object value event when due
         id: a_share_shock_notify
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot' }}
         continue-on-error: true
