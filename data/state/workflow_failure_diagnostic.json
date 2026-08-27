@@ -1,31 +1,31 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-28T07:43:45+08:00",
+  "generated_at": "2026-08-28T07:44:14+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33127257913,
+  "run_id": 33127279402,
   "run_attempt": 1,
-  "head_sha": "85cd83e6813cd46070faba6f6c4fead56eb763ca",
-  "main_head_sha": "842c914190404c477bdf4409e1d0d3a536c089e5",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "8636e376a528850a7c30e7d902d7009ece4eee15",
+  "main_head_sha": "37b507b181ec48dc4c90b3d860c79dca8417dad5",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 17
+      "step": "Persist consistency and maintenance state",
+      "number": 14
     }
   ],
   "changed_files": [
-    ".github/workflows/overseas-preopen-pulse.yml"
+    "scripts/workflow_failure_guard.py"
   ],
-  "commit_message": "fix: isolate pulse audit state and backstop US close summary",
+  "commit_message": "fix: treat pulse persistence failures as retryable",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "ESCALATE_WITH_DIAGNOSTIC",
-  "reason": "automatic action stopped at safety boundary",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
-    "changes_confined_to_auto_rollback_allowlist": false,
+    "changes_confined_to_auto_rollback_allowlist": true,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
     "may_modify_master": false,
