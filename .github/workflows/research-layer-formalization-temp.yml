@@ -7,6 +7,7 @@ permissions:
   contents: write
 jobs:
   apply:
+    if: "!contains(github.event.head_commit.message, 'system: formalize research evidence registry') && !contains(github.event.head_commit.message, 'state: persist research formalization consistency')"
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -18,17 +19,22 @@ jobs:
           python-version: '3.11'
       - name: Apply formalization patch
         run: python scripts/_temp_apply_research_layer_formalization.py
-      - name: Validate syntax and research semantics
+      - name: Validate syntax and bridge build
         run: |
           python -m py_compile scripts/build_research_execution_bridge.py scripts/build_state_context.py scripts/check_system_consistency_core.py
           python scripts/build_research_execution_bridge.py
-          python scripts/check_system_consistency.py
-      - name: Remove temporary maintenance files and commit
+      - name: Commit clean formal changes
         run: |
           rm -f scripts/_temp_apply_research_layer_formalization.py .github/workflows/research-layer-formalization-temp.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ETF规则_MASTER.md ETF_SYSTEM_INDEX.md scripts/build_research_execution_bridge.py scripts/build_state_context.py scripts/check_system_consistency_core.py data/state/research_execution_summary.json data/state/research_context.json data/state/decision_context.json data/state/system_consistency.json
+          git add ETF规则_MASTER.md ETF_SYSTEM_INDEX.md scripts/build_research_execution_bridge.py scripts/build_state_context.py scripts/check_system_consistency_core.py data/state/research_execution_summary.json data/state/research_context.json data/state/decision_context.json
           git add -u scripts/_temp_apply_research_layer_formalization.py .github/workflows/research-layer-formalization-temp.yml
           git commit -m "system: formalize research evidence registry"
+      - name: Run consistency on clean tree
+        run: python scripts/check_system_consistency.py
+      - name: Persist consistency and push
+        run: |
+          git add data/state/system_consistency.json
+          git commit -m "state: persist research formalization consistency" || true
           git push origin HEAD:maintenance/research-layer-formalization-20260827
