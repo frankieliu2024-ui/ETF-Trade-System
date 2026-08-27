@@ -20,8 +20,10 @@ on:
       - "requests/trade_fact_correction/*.json"
       - "data/state/account_fact.json"
       - "data/state/CURRENT.json"
-      - "data/state/runtime_health.json"
-      - "data/state/overseas_runtime_health.json"
+      # Runtime health files are owned by their canonical producer/watchdog
+      # chains and are not source facts for full-system validation. Abnormal
+      # A-share runtime is handled by the self-healing watchdog; overseas pulse
+      # failures are routed through the shared workflow failure guard.
       # Rebuildable query/decision/market-delta, stock-monitoring and current
       # research-summary states are deliberately not full-consistency push
       # triggers. Their canonical producers own local quality checks; the
