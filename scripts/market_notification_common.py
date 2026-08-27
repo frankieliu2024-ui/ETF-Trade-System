@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from datetime import datetime, timedelta
 from typing import Any
 
 from notification_center import (
@@ -101,7 +102,39 @@ def render_shock(*, what: list[str], why: str, implication: str, action: str, as
     )
 
 
+def _parse_time(value: Any) -> datetime | None:
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=now().tzinfo)
+    return dt.astimezone(now().tzinfo)
+
+
+def _future_time_error(event: dict) -> str:
+    ctx = event.get("confirmation_context") or {}
+    # Market/provider facts may never be newer than the actual notification
+    # generation time. A two-minute tolerance covers clock skew without allowing
+    # screenshots such as "22:24 generated / 22:44 market data" to be sent.
+    for key in (
+        "market_as_of_beijing",
+        "provider_observed_as_of_beijing",
+        "a_share_as_of_beijing",
+    ):
+        dt = _parse_time(ctx.get(key))
+        if dt and dt > now() + timedelta(minutes=2):
+            return f"{key}={dt.isoformat(timespec='seconds')}"
+    return ""
+
+
 def persist_and_send(event: dict, *, policy: str) -> dict:
+    future_error = _future_time_error(event)
+    if future_error:
+        return {"status": "REJECTED_FUTURE_MARKET_TIME", "detail": future_error, "title": event.get("title")}
+
     state = read_json(NOTIFICATION_STATE, {"schema_version": "2.2", "notifications": [], "recent": []})
     raw_items = list(state.get("notifications") or [])
     if not raw_items:
