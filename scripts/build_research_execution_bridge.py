@@ -36,6 +36,8 @@ def _research_conclusion_digest(root: Path, research_context: dict) -> dict:
             "status": value.get("status"),
             "use_in_current_decision": bool(value.get("use_in_current_decision", value.get("status") in {"READY", "DEGRADED"})),
             "decision_eligible": value.get("decision_eligible"),
+            "use_as_decision_evidence": bool(value.get("use_in_current_decision", value.get("status") in {"READY", "DEGRADED"})),
+            "can_generate_decision_independently": False,
             "trade_signal": None,
         })
 
@@ -54,6 +56,8 @@ def _research_conclusion_digest(root: Path, research_context: dict) -> dict:
             "research_interpretation": obj.get("research_interpretation"),
             "conclusion": obj.get("conclusion"),
             "decision_eligible": bool(obj.get("decision_eligible", False)),
+            "use_as_decision_evidence": bool(obj.get("decision_eligible", False) or obj.get("production_context_integration", False)),
+            "can_generate_decision_independently": False,
             "production_context_integration": bool(obj.get("production_context_integration", False)),
             "trade_signal": None,
         }
@@ -68,6 +72,7 @@ def _research_conclusion_digest(root: Path, research_context: dict) -> dict:
         "execution_eligible_backtest_conclusions": execution_eligible,
         "research_only_backtest_conclusions": research_only,
         "automatic_promotion": False,
+        "semantic_contract": {"use_as_decision_evidence": "可进入完整判断", "can_generate_decision_independently": "是否可独立形成交易决议；研究证据固定为false"},
         "trade_signal": None,
     }
 
@@ -95,6 +100,8 @@ def _stock_specific_signal_map(root: Path) -> dict[str, dict]:
                 "current_completed_bar_match": bool(signal.get("current_completed_bar_match", False)),
                 "primary_validation": signal.get("primary_validation"),
                 "yearly_robustness": signal.get("yearly_robustness"),
+                "use_as_decision_evidence": True,
+                "can_generate_decision_independently": False,
                 "automatic_trade": False,
                 "trade_signal": None,
             })
