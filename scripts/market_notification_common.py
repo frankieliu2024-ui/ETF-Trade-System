@@ -85,20 +85,31 @@ def render_summary(*, headline_lines: list[str], path_lines: list[str], implicat
     )
 
 
+def _clean_market_implication(what: list[str], implication: str) -> str:
+    """Remove object-specific boilerplate when it does not belong to this alert."""
+    joined = " ".join(what)
+    if "HSTECH" not in joined and "恒生科技指数" not in joined:
+        implication = implication.replace("；恒生科技指数（HSTECH）事件还要直接复核恒生科技ETF（513180）的自身反馈", "")
+        implication = implication.replace("恒生科技指数（HSTECH）事件还要直接复核恒生科技ETF（513180）的自身反馈。", "")
+    return implication.strip()
+
+
 def render_shock(*, what: list[str], why: str, implication: str, action: str, as_of: str, boundary: str) -> str:
+    implication = _clean_market_implication(what, implication)
+    # Market alerts should be decision-readable, not a generic monitoring report.
+    # Put the actual event first, then the decision relevance and next action.
     return (
-        "### 发生了什么\n"
+        "### 核心结论\n"
         + "\n".join(what)
-        + "\n\n### 为什么值得现在知道\n"
+        + "\n\n**判断**："
         + why
-        + "\n\n### 对ETF系统的启示\n"
+        + "\n\n### 对ETF系统的影响\n"
         + implication
-        + "\n\n### 现在怎么做\n**"
+        + "\n\n### 当前动作\n**"
         + action
-        + "**\n\n### 数据时点（北京时间）\n"
-        + as_of
-        + "\n\n### 解释边界\n"
-        + boundary
+        + "**\n\n### 数据与边界\n"
+        + f"- **行情时点（北京时间）**：{as_of}\n"
+        + f"- **边界**：{boundary}"
     )
 
 
@@ -130,7 +141,16 @@ def _future_time_error(event: dict) -> str:
     return ""
 
 
+def _normalize_user_title(event: dict) -> dict:
+    title = str(event.get("title") or "")
+    if title.startswith("【异动提醒】"):
+        event = dict(event)
+        event["title"] = "【市场异动】" + title[len("【异动提醒】"):]
+    return event
+
+
 def persist_and_send(event: dict, *, policy: str) -> dict:
+    event = _normalize_user_title(event)
     future_error = _future_time_error(event)
     if future_error:
         return {"status": "REJECTED_FUTURE_MARKET_TIME", "detail": future_error, "title": event.get("title")}
