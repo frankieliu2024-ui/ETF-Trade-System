@@ -1,0 +1,244 @@
+{
+  "schema_version": "1.0",
+  "generated_at_beijing": "2026-08-27T09:55:57+08:00",
+  "mode": "IPO_BASE_STOCK_SIGNAL_YEARLY_ROBUSTNESS",
+  "point_in_time": true,
+  "automatic_trade": false,
+  "trade_signal": null,
+  "source_validation": "research/backtests/ipo_base_stock_signal_validation.json",
+  "rule": "Only signals passing the fixed primary PIT gate are checked. Robust if expected-direction mean excess is positive in at least 2 of 3 validation-year slices (2024, 2025, 2026YTD) for both 5d and 10d, and no slice with n>=4 reverses by more than 2.0pp on either horizon. No parameter retuning.",
+  "signals": [
+    {
+      "code": "300750",
+      "display_name": "宁德时代（300750）",
+      "signal_id": "VOLUME_BREAKOUT_60D",
+      "direction": "POSITIVE",
+      "yearly_validation": {
+        "2024": {
+          "5": {
+            "n": 9,
+            "mean_excess_pct": 4.154,
+            "median_excess_pct": 0.7023,
+            "positive_excess_rate": 0.6667,
+            "mean_stock_return_pct": 7.3737
+          },
+          "10": {
+            "n": 9,
+            "mean_excess_pct": 2.0043,
+            "median_excess_pct": 3.8475,
+            "positive_excess_rate": 0.7778,
+            "mean_stock_return_pct": 4.007
+          }
+        },
+        "2025": {
+          "5": {
+            "n": 8,
+            "mean_excess_pct": 1.698,
+            "median_excess_pct": 1.3194,
+            "positive_excess_rate": 0.75,
+            "mean_stock_return_pct": 1.9331
+          },
+          "10": {
+            "n": 8,
+            "mean_excess_pct": 3.3506,
+            "median_excess_pct": 6.5134,
+            "positive_excess_rate": 0.625,
+            "mean_stock_return_pct": 4.0165
+          }
+        },
+        "2026": {
+          "5": {
+            "n": 4,
+            "mean_excess_pct": -1.9712,
+            "median_excess_pct": -2.6701,
+            "positive_excess_rate": 0.25,
+            "mean_stock_return_pct": -2.3188
+          },
+          "10": {
+            "n": 4,
+            "mean_excess_pct": -2.6997,
+            "median_excess_pct": -2.9968,
+            "positive_excess_rate": 0.25,
+            "mean_stock_return_pct": -2.7142
+          }
+        }
+      },
+      "alignment_summary": {
+        "5": {
+          "positive_direction_year_slices": 2,
+          "available_year_slices": 3,
+          "pass": true
+        },
+        "10": {
+          "positive_direction_year_slices": 2,
+          "available_year_slices": 3,
+          "pass": true
+        }
+      },
+      "catastrophic_reversals": [
+        "2026_H10_REVERSAL_GT_2PP"
+      ],
+      "robustness_pass": false,
+      "decision_eligible_after_robustness": false,
+      "automatic_trade": false,
+      "trade_signal": null
+    },
+    {
+      "code": "300750",
+      "display_name": "宁德时代（300750）",
+      "signal_id": "OVERSOLD_REVERSAL",
+      "direction": "POSITIVE",
+      "yearly_validation": {
+        "2024": {
+          "5": {
+            "n": 5,
+            "mean_excess_pct": 4.2339,
+            "median_excess_pct": 2.2927,
+            "positive_excess_rate": 1.0,
+            "mean_stock_return_pct": 3.4249
+          },
+          "10": {
+            "n": 5,
+            "mean_excess_pct": 4.5698,
+            "median_excess_pct": 2.6453,
+            "positive_excess_rate": 0.8,
+            "mean_stock_return_pct": 3.1057
+          }
+        },
+        "2025": {
+          "5": {
+            "n": 9,
+            "mean_excess_pct": 0.7373,
+            "median_excess_pct": 0.2722,
+            "positive_excess_rate": 0.5556,
+            "mean_stock_return_pct": 2.5823
+          },
+          "10": {
+            "n": 9,
+            "mean_excess_pct": 3.707,
+            "median_excess_pct": 3.3884,
+            "positive_excess_rate": 1.0,
+            "mean_stock_return_pct": 6.5182
+          }
+        },
+        "2026": {
+          "5": {
+            "n": 3,
+            "mean_excess_pct": 4.5051,
+            "median_excess_pct": 4.6602,
+            "positive_excess_rate": 0.6667,
+            "mean_stock_return_pct": 3.2188
+          },
+          "10": {
+            "n": 3,
+            "mean_excess_pct": 10.7799,
+            "median_excess_pct": 14.374,
+            "positive_excess_rate": 1.0,
+            "mean_stock_return_pct": 9.7827
+          }
+        }
+      },
+      "alignment_summary": {
+        "5": {
+          "positive_direction_year_slices": 3,
+          "available_year_slices": 3,
+          "pass": true
+        },
+        "10": {
+          "positive_direction_year_slices": 3,
+          "available_year_slices": 3,
+          "pass": true
+        }
+      },
+      "catastrophic_reversals": [],
+      "robustness_pass": true,
+      "decision_eligible_after_robustness": true,
+      "automatic_trade": false,
+      "trade_signal": null
+    },
+    {
+      "code": "601138",
+      "display_name": "工业富联（601138）",
+      "signal_id": "VOLUME_BREAKOUT_60D",
+      "direction": "POSITIVE",
+      "yearly_validation": {
+        "2024": {
+          "5": {
+            "n": 10,
+            "mean_excess_pct": 5.6231,
+            "median_excess_pct": 3.5304,
+            "positive_excess_rate": 0.7,
+            "mean_stock_return_pct": 6.1648
+          },
+          "10": {
+            "n": 10,
+            "mean_excess_pct": 9.8499,
+            "median_excess_pct": 11.8592,
+            "positive_excess_rate": 0.7,
+            "mean_stock_return_pct": 10.6892
+          }
+        },
+        "2025": {
+          "5": {
+            "n": 16,
+            "mean_excess_pct": 5.4073,
+            "median_excess_pct": 5.349,
+            "positive_excess_rate": 0.8125,
+            "mean_stock_return_pct": 5.9811
+          },
+          "10": {
+            "n": 16,
+            "mean_excess_pct": 11.2697,
+            "median_excess_pct": 10.2393,
+            "positive_excess_rate": 0.875,
+            "mean_stock_return_pct": 13.1671
+          }
+        },
+        "2026": {
+          "5": {
+            "n": 6,
+            "mean_excess_pct": -3.3391,
+            "median_excess_pct": -3.4462,
+            "positive_excess_rate": 0.1667,
+            "mean_stock_return_pct": -4.3754
+          },
+          "10": {
+            "n": 6,
+            "mean_excess_pct": -5.834,
+            "median_excess_pct": -6.3639,
+            "positive_excess_rate": 0.1667,
+            "mean_stock_return_pct": -5.7299
+          }
+        }
+      },
+      "alignment_summary": {
+        "5": {
+          "positive_direction_year_slices": 2,
+          "available_year_slices": 3,
+          "pass": true
+        },
+        "10": {
+          "positive_direction_year_slices": 2,
+          "available_year_slices": 3,
+          "pass": true
+        }
+      },
+      "catastrophic_reversals": [
+        "2026_H5_REVERSAL_GT_2PP",
+        "2026_H10_REVERSAL_GT_2PP"
+      ],
+      "robustness_pass": false,
+      "decision_eligible_after_robustness": false,
+      "automatic_trade": false,
+      "trade_signal": null
+    }
+  ],
+  "robust_signal_count": 1,
+  "robust_signals": [
+    {
+      "code": "300750",
+      "signal_id": "OVERSOLD_REVERSAL"
+    }
+  ],
+  "conclusion": "Primary PIT signals with yearly robustness remain eligible as read-only execution evidence."
+}
