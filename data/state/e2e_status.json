@@ -1,16 +1,16 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-08-27T09:19:36+08:00",
-  "status": "READY",
+  "generated_at": "2026-08-27T09:28:57+08:00",
+  "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
     "market": {
-      "status": "READY",
-      "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-08-26_180634.json",
-      "captured_at": "2026-08-26T18:06:34+08:00",
-      "market_phase": "OUTSIDE_SESSION"
+      "status": "DEGRADED",
+      "reason": "market data quality=DEGRADED, node=DEGRADED",
+      "snapshot": "data/market/snapshots/2026-08-27_092841.json",
+      "captured_at": "2026-08-27T09:28:41+08:00",
+      "market_phase": "OPENING_CALL_AUCTION"
     },
     "account": {
       "status": "READY",
@@ -45,6 +45,8 @@
     }
   },
   "blockers": [],
-  "degradations": [],
+  "degradations": [
+    "market"
+  ],
   "safety_boundary": "This state does not create or modify risk permission, Trial/Confirm rules, amounts, sell rules, or execution authority."
 }
