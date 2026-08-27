@@ -156,6 +156,15 @@ def main() -> int:
     monitor_indices = set(market_cfg.get("monitoring_layers", {}).get("index_monitor", {}).get("required_objects", []))
     check("index_layer:formal_vs_expected", formal_indices == EXPECTED_INDICES, f"actual={sorted(formal_indices)} expected={sorted(EXPECTED_INDICES)}")
     check("index_layer:monitor_vs_formal", monitor_indices == formal_indices, f"monitor={sorted(monitor_indices)} formal={sorted(formal_indices)}")
+    provider_priority = read_json("config/market/provider_priority.json")
+    twii_policy = (provider_priority.get("object_fallback_policy") or {}).get("TWII") or {}
+    n225_policy = (provider_priority.get("object_fallback_policy") or {}).get("N225") or {}
+    kospi_policy = (provider_priority.get("object_fallback_policy") or {}).get("KOSPI") or {}
+    check("provider_policy:twii_primary_twse", twii_policy.get("primary") == "twse_mis:tse_t00.tw" and twii_policy.get("fallback") == ["eastmoney_push2delay:100.TWII", "eastmoney_push2:100.TWII", "yahoo_chart_api"], f"TWII={twii_policy}")
+    check("provider_policy:n225_current_primary", n225_policy.get("primary") == "eastmoney_push2delay:100.N225", f"N225={n225_policy}")
+    check("provider_policy:kospi_current_primary", kospi_policy.get("primary") == "naver_finance:KOSPI", f"KOSPI={kospi_policy}")
+    standard_text = read_text(DATA_STANDARD)
+    check("data_standard:asia_current_provider_roles", all(token in standard_text for token in ("twse_mis:tse_t00.tw", "eastmoney_push2delay:100.N225", "naver_finance:KOSPI", "缺少第二个独立秒级实时直连源")), "Asia live provider roles and N225 redundancy limitation are explicit")
 
     universe = read_json("config/market/etf_monitor_universe.json")
     objects = universe.get("objects") or []

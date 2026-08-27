@@ -316,6 +316,29 @@ def fetch_naver_kospi(generated_utc: datetime) -> dict:
     }
 
 
+def fetch_twse_taiex(generated_utc: datetime) -> dict:
+    params = {"ex_ch": "tse_t00.tw", "json": "1", "delay": "0", "_": str(int(generated_utc.timestamp() * 1000))}
+    url = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp?" + urllib.parse.urlencode(params)
+    req = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.16", "Referer": "https://mis.twse.com.tw/stock/fibest.jsp?stock=t00"})
+    with urllib.request.urlopen(req, timeout=20) as response:
+        status_code = int(response.status); payload = json.load(response)
+    rows = payload.get("msgArray") or []
+    if len(rows) != 1: raise RuntimeError(f"TWSE MIS TAIEX expected one row, got {len(rows)}")
+    data = rows[0]
+    def num(key):
+        raw=data.get(key)
+        if raw in (None,"","-"): return None
+        return float(str(raw).replace(",",""))
+    required={"open":num("o"),"high":num("h"),"low":num("l"),"close":num("z")}
+    if any(v is None for v in required.values()): raise RuntimeError("TWSE MIS TAIEX missing OHLC fields")
+    raw_time=data.get("tlong")
+    if not raw_time: raise RuntimeError("TWSE MIS TAIEX missing tlong provider timestamp")
+    dt_utc=parse_provider_datetime(raw_time,"Asia/Taipei"); local=dt_utc.astimezone(ZoneInfo("Asia/Taipei"))
+    latest={**required,"volume":num("v"),"previous_close":num("y"),"timestamp":int(dt_utc.timestamp()),"as_of_utc":dt_utc.isoformat(timespec="seconds").replace("+00:00","Z"),"as_of_local":local.isoformat(timespec="seconds"),"as_of_beijing":dt_utc.astimezone(BEIJING).isoformat(timespec="seconds"),"market_date_local":local.date().isoformat(),"provider_timezone":"Asia/Taipei","symbol":"tse_t00.tw"}
+    phase=market_phase("Asia/Taipei",generated_utc)
+    return {"object":"TWII","name":"台湾加权指数","reference_role":"TAIWAN_EQUITY","provider":"twse_mis","provider_result":f"HTTP {status_code}","provider_timestamp_field":"tlong","symbol":"tse_t00.tw","market_timezone":"Asia/Taipei","market_phase_at_generation":phase,"time_relation_to_a_share":time_relation("TWII",latest,phase,generated_utc),"quality_status":validate_latest(latest),"latest":latest,"display_time_rule":"正式输出优先显示latest.as_of_beijing（北京时间）；同时保留台湾本地交易时点。","decision_note":"台湾证券交易所官方MIS为台湾加权指数正式实时主源；使用tlong作为provider时点，不得用请求时间代替行情时间。"}
+
+
 def fetch_eastmoney_index(object_id: str, spec: dict, generated_utc: datetime, secid: str, *, host: str = "push2.eastmoney.com") -> dict:
     params = {"secid": secid, "fltt": "2", "invt": "2", "fields": "f43,f44,f45,f46,f47,f48,f57,f58,f60,f86,f124"}
     url = f"https://{host}/api/qt/stock/get?" + urllib.parse.urlencode(params)
@@ -348,7 +371,7 @@ def fetch_eastmoney_index(object_id: str, spec: dict, generated_utc: datetime, s
         "time_relation_to_a_share": time_relation(object_id, latest, phase, generated_utc),
         "quality_status": validate_latest(latest), "latest": latest,
         "display_time_rule": "正式输出优先显示latest.as_of_beijing（北京时间）；同时保留本地市场时区和market_phase。",
-        "decision_note": "东方财富对象级直接备源；仅在Yahoo主源不可用、无效或开放交易阶段明显延迟时启用。",
+        "decision_note": "东方财富对象级直接行情；按当前对象级正式主备策略使用，并始终以provider自身时间戳通过质量门禁。",
     }
 
 
@@ -448,27 +471,19 @@ def build() -> dict:
                 record: dict | None = None
                 selected_provider_id = ""
 
-                # N225/KOSPI priorities were promoted after three parallel live rounds on
-                # 2026-08-27. Yahoo remained ~15m/~20m delayed respectively, while the
-                # selected live paths stayed within seconds of capture. Other objects keep
-                # the existing Yahoo-first policy.
-                if object_id in {"N225", "KOSPI"}:
+                # N225/KOSPI/TWII priorities were promoted after live-session parallel validation on
+                # 2026-08-27. Production selection uses the first fresh, valid direct source.
+                if object_id in {"N225", "KOSPI", "TWII"}:
                     secid = EASTMONEY_DIRECT_FALLBACKS.get(object_id)
                     if object_id == "N225":
-                        direct_chain = [
-                            (f"eastmoney_push2delay:{secid}", lambda: fetch_eastmoney_index(object_id, spec, generated_utc, secid, host="push2delay.eastmoney.com")),
-                            (f"eastmoney_push2:{secid}", lambda: fetch_eastmoney_index(object_id, spec, generated_utc, secid, host="push2.eastmoney.com")),
-                            ("yahoo_chart_api", lambda: fetch_yahoo(object_id, spec, generated_utc)),
-                        ]
+                        direct_chain = [(f"eastmoney_push2delay:{secid}", lambda: fetch_eastmoney_index(object_id, spec, generated_utc, secid, host="push2delay.eastmoney.com")),(f"eastmoney_push2:{secid}", lambda: fetch_eastmoney_index(object_id, spec, generated_utc, secid, host="push2.eastmoney.com")),("yahoo_chart_api", lambda: fetch_yahoo(object_id, spec, generated_utc))]
                         configured_primary = f"eastmoney_push2delay:{secid}"
-                    else:
-                        direct_chain = [
-                            ("naver_finance:KOSPI", lambda: fetch_naver_kospi(generated_utc)),
-                            (f"eastmoney_push2delay:{secid}", lambda: fetch_eastmoney_index(object_id, spec, generated_utc, secid, host="push2delay.eastmoney.com")),
-                            (f"eastmoney_push2:{secid}", lambda: fetch_eastmoney_index(object_id, spec, generated_utc, secid, host="push2.eastmoney.com")),
-                            ("yahoo_chart_api", lambda: fetch_yahoo(object_id, spec, generated_utc)),
-                        ]
+                    elif object_id == "KOSPI":
+                        direct_chain = [("naver_finance:KOSPI", lambda: fetch_naver_kospi(generated_utc)),(f"eastmoney_push2delay:{secid}", lambda: fetch_eastmoney_index(object_id, spec, generated_utc, secid, host="push2delay.eastmoney.com")),(f"eastmoney_push2:{secid}", lambda: fetch_eastmoney_index(object_id, spec, generated_utc, secid, host="push2.eastmoney.com")),("yahoo_chart_api", lambda: fetch_yahoo(object_id, spec, generated_utc))]
                         configured_primary = "naver_finance:KOSPI"
+                    else:
+                        direct_chain = [("twse_mis:tse_t00.tw", lambda: fetch_twse_taiex(generated_utc)),(f"eastmoney_push2delay:{secid}", lambda: fetch_eastmoney_index(object_id, spec, generated_utc, secid, host="push2delay.eastmoney.com")),(f"eastmoney_push2:{secid}", lambda: fetch_eastmoney_index(object_id, spec, generated_utc, secid, host="push2.eastmoney.com")),("yahoo_chart_api", lambda: fetch_yahoo(object_id, spec, generated_utc))]
+                        configured_primary = "twse_mis:tse_t00.tw"
 
                     last_candidate: dict | None = None
                     for provider_id, loader in direct_chain:
