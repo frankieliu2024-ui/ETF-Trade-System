@@ -18,9 +18,6 @@ NEW_YORK = ZoneInfo("America/New_York")
 BEIJING = ZoneInfo("Asia/Shanghai")
 RUNTIME_POLICY = ROOT / "config" / "runtime_policy.json"
 
-# Broad-market extended-hours proxies are always allowed. Individual companies are
-# never hard-coded here: query-time industry names may be supplied through
-# US_EXTENDED_SYMBOLS, e.g. INTC,NVDA,AMD, but remain conditional evidence only.
 BASE_PROXIES = {
     "QQQ": {"name": "纳指100ETF代理", "role": "NASDAQ100_EXTENDED_HOURS_PROXY"},
     "SOXX": {"name": "半导体ETF代理", "role": "SEMICONDUCTOR_EXTENDED_HOURS_PROXY"},
@@ -33,7 +30,7 @@ def request_chart(symbol: str) -> dict:
         f"https://query1.finance.yahoo.com/v8/finance/chart/{encoded}"
         "?range=5d&interval=5m&includePrePost=true&events=div%2Csplits"
     )
-    req = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.16"})
+    req = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.18"})
     with urllib.request.urlopen(req, timeout=20) as response:
         return json.load(response)
 
@@ -82,38 +79,65 @@ def pct_change(a: float | None, b: float | None) -> float | None:
     return round((a / b - 1) * 100, 4)
 
 
-def classify_freshness(latest: dict, now: datetime, fresh_limit: int, degraded_limit: int) -> tuple[str, str, int]:
-    """Return quality_status, freshness_status and age_seconds.
+def summarize_regular_path(rows: list[dict]) -> dict:
+    if not rows:
+        return {}
+    closes = [float(r["close"]) for r in rows if r.get("close") is not None]
+    highs = [float(r["high"]) for r in rows if r.get("high") is not None]
+    lows = [float(r["low"]) for r in rows if r.get("low") is not None]
+    if not closes:
+        return {}
+    open_price = rows[0].get("open") if rows[0].get("open") is not None else closes[0]
+    last = closes[-1]
+    high = max(highs or closes)
+    low = min(lows or closes)
+    high_idx = max(range(len(rows)), key=lambda i: float(rows[i].get("high") if rows[i].get("high") is not None else rows[i]["close"]))
+    low_idx = min(range(len(rows)), key=lambda i: float(rows[i].get("low") if rows[i].get("low") is not None else rows[i]["close"]))
+    first_hour = [r for r in rows if datetime.fromtimestamp(int(r["timestamp"]), timezone.utc).astimezone(NEW_YORK).hour < 11]
+    midday = [r for r in rows if 11 <= datetime.fromtimestamp(int(r["timestamp"]), timezone.utc).astimezone(NEW_YORK).hour < 14]
+    late = [r for r in rows if datetime.fromtimestamp(int(r["timestamp"]), timezone.utc).astimezone(NEW_YORK).hour >= 14]
 
-    During an active PRE/REGULAR/POST session the normal age thresholds apply.
-    Once the US post-market session has completed, its last valid bar remains the
-    authoritative completed-session reference for the next A-share pre-market.
-    It must retain its real provider timestamp and must never be described as a
-    current live quote merely because a later workflow reruns.
-    """
+    def segment_change(segment: list[dict]) -> float | None:
+        if not segment:
+            return None
+        start = segment[0].get("open") if segment[0].get("open") is not None else segment[0].get("close")
+        return pct_change(segment[-1].get("close"), start)
+
+    day_range = high - low
+    range_pos = None if day_range <= 0 else round((last - low) / day_range, 4)
+    return {
+        "sample_count": len(rows),
+        "open": open_price,
+        "high": high,
+        "low": low,
+        "latest_or_close": last,
+        "change_from_open_pct": pct_change(last, open_price),
+        "recovery_from_low_pct": pct_change(last, low),
+        "retreat_from_high_pct": pct_change(last, high),
+        "range_position": range_pos,
+        "high_as_of_beijing": rows[high_idx].get("as_of_beijing"),
+        "low_as_of_beijing": rows[low_idx].get("as_of_beijing"),
+        "first_hour_change_pct": segment_change(first_hour),
+        "midday_change_pct": segment_change(midday),
+        "late_session_change_pct": segment_change(late),
+        "sampling_note": "由Yahoo 5分钟现金盘bar重建日内路径；用于总结高低点、修复/回撤和分段走势，不直接生成A股交易动作。",
+    }
+
+
+def classify_freshness(latest: dict, now: datetime, fresh_limit: int, degraded_limit: int) -> tuple[str, str, int]:
     latest_dt = datetime.fromtimestamp(latest["timestamp"], timezone.utc)
     age_seconds = max(0, int((now - latest_dt).total_seconds()))
     current_et = now.astimezone(NEW_YORK)
     current_phase = session_for_et(current_et)
     latest_session = latest["session"]
     latest_et = latest_dt.astimezone(NEW_YORK)
-
     freshness = "FRESH" if age_seconds <= fresh_limit else ("DEGRADED" if age_seconds <= degraded_limit else "STALE")
-
-    # Active market phases must obey the live freshness clock.
     if current_phase in {"PRE_MARKET", "REGULAR", "POST_MARKET"}:
         return freshness, freshness, age_seconds
-
-    # Off-session after the same local trading day's close: the completed regular
-    # or post-market observation is a valid session reference, not a stale live quote.
     if latest_et.date() == current_et.date() and latest_session in {"REGULAR", "POST_MARKET"}:
         return "PASS", "SESSION_REFERENCE", age_seconds
-
-    # On weekends / holidays or before the next US session starts, preserve the
-    # last completed US trading-session reference, but label it explicitly as previous.
     if latest_session in {"REGULAR", "POST_MARKET"}:
         return "PASS", "PREVIOUS_SESSION_REFERENCE", age_seconds
-
     return freshness, freshness, age_seconds
 
 
@@ -131,6 +155,7 @@ def build_symbol(symbol: str, name: str, role: str, conditional: bool) -> dict:
         regular_open = regular_rows[0].get("open") if regular_rows[0].get("open") is not None else regular_rows[0].get("close")
     regular_close = regular_rows[-1]["close"] if regular_rows else previous_regular_close
     regular_market_date = regular_rows[-1].get("market_date_local") if regular_rows else latest.get("market_date_local")
+    regular_path = summarize_regular_path(regular_rows)
     now = datetime.now(timezone.utc)
     try:
         policy = json.loads(RUNTIME_POLICY.read_text(encoding="utf-8"))
@@ -159,6 +184,7 @@ def build_symbol(symbol: str, name: str, role: str, conditional: bool) -> dict:
         "regular_session_market_date": regular_market_date,
         "regular_session_change_vs_previous_close_pct": pct_change(regular_close, previous_regular_close),
         "regular_session_change_from_open_pct": pct_change(regular_close, regular_open),
+        "regular_session_path": regular_path,
         "extended_change_vs_regular_close_pct": pct_change(latest.get("close"), regular_close),
         "decision_note": (
             "扩展时段价格只作前置信号。PRE_MARKET/POST_MARKET流动性和价格发现质量低于正式现金盘；"
@@ -176,7 +202,6 @@ def build() -> dict:
     for symbol in requested:
         if symbol not in specs:
             specs[symbol] = (symbol, "CONDITIONAL_US_INDUSTRY_STOCK", True)
-
     objects: dict[str, dict] = {}
     passes = 0
     for symbol, (name, role, conditional) in specs.items():
