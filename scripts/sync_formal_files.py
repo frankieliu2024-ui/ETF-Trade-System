@@ -107,7 +107,11 @@ def build_dashboard_block(account: dict, equity: dict, existing: str) -> str:
     exposure = float(account.get("stock_market_value") or 0) / total_asset * 100 if total_asset else 0
     risk = canonical_risk(equity, latest_formal_risk())
     summary = equity.get("summary") or {}
-    pending = summary.get("unknown_fee_flag", True)
+    pending_fee_trades = [
+        t for t in (account.get("trades") or [])
+        if str(t.get("fee_status", "")).upper() in {"PENDING", "PENDING_CONFIRMATION", "UNKNOWN"}
+    ]
+    pending = bool(summary.get("unknown_fee_flag", True) or pending_fee_trades)
     known_fees = summary.get("known_fees")
     confirmed_account_fees = sum(float(t.get("fee") or 0) for t in (account.get("trades") or []) if str(t.get("fee_status", "")).upper() == "CONFIRMED")
     lines = [
