@@ -446,65 +446,92 @@ def build() -> dict:
             if object_id != "HSTECH":
                 attempts: list[dict] = []
                 record: dict | None = None
-                primary_error = ""
-                try:
-                    primary = fetch_yahoo(object_id, spec, generated_utc)
-                    primary_summary = provider_attempt(primary, "yahoo_chart_api", generated_utc)
-                    attempts.append(primary_summary)
-                    primary_freshness = primary_summary.get("freshness_status")
-                    primary_open_stale = primary.get("market_phase_at_generation") == "OPEN" and primary_freshness in {"DELAYED", "STALE"}
-                    if primary.get("quality_status") == "PASS" and not primary_open_stale:
-                        record = primary
-                        record["selection_basis"] = "configured_primary_yahoo_valid_for_current_market_phase"
-                    else:
-                        record = primary
-                        primary_error = f"primary quality={primary.get('quality_status')} freshness={primary_freshness}"
-                except Exception as primary_exc:
-                    primary_error = str(primary_exc)[-500:]
-                    attempts.append(failed_attempt("yahoo_chart_api", primary_error, generated_utc, timezone_name=spec["timezone"]))
+                selected_provider_id = ""
 
-                secid = EASTMONEY_DIRECT_FALLBACKS.get(object_id)
-                if secid and (record is None or primary_error):
-                    eastmoney_selected = False
-                    eastmoney_hosts = ("push2.eastmoney.com", "push2delay.eastmoney.com") if object_id in {"N225", "KOSPI"} else ("push2.eastmoney.com",)
-                    for host in eastmoney_hosts:
-                        provider_family = "eastmoney_push2" if host.startswith("push2.") else "eastmoney_push2delay"
-                        provider_id = f"{provider_family}:{secid}"
+                # N225/KOSPI priorities were promoted after three parallel live rounds on
+                # 2026-08-27. Yahoo remained ~15m/~20m delayed respectively, while the
+                # selected live paths stayed within seconds of capture. Other objects keep
+                # the existing Yahoo-first policy.
+                if object_id in {"N225", "KOSPI"}:
+                    secid = EASTMONEY_DIRECT_FALLBACKS.get(object_id)
+                    if object_id == "N225":
+                        direct_chain = [
+                            (f"eastmoney_push2delay:{secid}", lambda: fetch_eastmoney_index(object_id, spec, generated_utc, secid, host="push2delay.eastmoney.com")),
+                            (f"eastmoney_push2:{secid}", lambda: fetch_eastmoney_index(object_id, spec, generated_utc, secid, host="push2.eastmoney.com")),
+                            ("yahoo_chart_api", lambda: fetch_yahoo(object_id, spec, generated_utc)),
+                        ]
+                        configured_primary = f"eastmoney_push2delay:{secid}"
+                    else:
+                        direct_chain = [
+                            ("naver_finance:KOSPI", lambda: fetch_naver_kospi(generated_utc)),
+                            (f"eastmoney_push2delay:{secid}", lambda: fetch_eastmoney_index(object_id, spec, generated_utc, secid, host="push2delay.eastmoney.com")),
+                            (f"eastmoney_push2:{secid}", lambda: fetch_eastmoney_index(object_id, spec, generated_utc, secid, host="push2.eastmoney.com")),
+                            ("yahoo_chart_api", lambda: fetch_yahoo(object_id, spec, generated_utc)),
+                        ]
+                        configured_primary = "naver_finance:KOSPI"
+
+                    last_candidate: dict | None = None
+                    for provider_id, loader in direct_chain:
                         try:
-                            fallback = fetch_eastmoney_index(object_id, spec, generated_utc, secid, host=host)
+                            candidate = loader()
+                            summary = provider_attempt(candidate, provider_id, generated_utc)
+                            attempts.append(summary)
+                            last_candidate = candidate
+                            if candidate.get("quality_status") == "PASS" and summary.get("stable_for_10m_pulse") is True:
+                                record = candidate
+                                selected_provider_id = provider_id
+                                record["selected_provider_id"] = provider_id
+                                record["selection_basis"] = "validated_live_priority_first_usable_direct_source"
+                                break
+                        except Exception as provider_exc:
+                            attempts.append(failed_attempt(provider_id, str(provider_exc)[-500:], generated_utc, timezone_name=spec["timezone"]))
+                    if record is None and last_candidate is not None:
+                        record = last_candidate
+                    if record is None:
+                        raise RuntimeError("no usable direct source in validated JP/KR chain")
+                    record["provider_attempts"] = attempts
+                    record["direct_source_chain"] = [provider_id for provider_id, _ in direct_chain]
+                    record["configured_primary"] = configured_primary
+                else:
+                    primary_error = ""
+                    try:
+                        primary = fetch_yahoo(object_id, spec, generated_utc)
+                        primary_summary = provider_attempt(primary, "yahoo_chart_api", generated_utc)
+                        attempts.append(primary_summary)
+                        primary_freshness = primary_summary.get("freshness_status")
+                        primary_open_stale = primary.get("market_phase_at_generation") == "OPEN" and primary_freshness in {"DELAYED", "STALE"}
+                        if primary.get("quality_status") == "PASS" and not primary_open_stale:
+                            record = primary
+                            record["selection_basis"] = "configured_primary_yahoo_valid_for_current_market_phase"
+                        else:
+                            record = primary
+                            primary_error = f"primary quality={primary.get('quality_status')} freshness={primary_freshness}"
+                    except Exception as primary_exc:
+                        primary_error = str(primary_exc)[-500:]
+                        attempts.append(failed_attempt("yahoo_chart_api", primary_error, generated_utc, timezone_name=spec["timezone"]))
+
+                    secid = EASTMONEY_DIRECT_FALLBACKS.get(object_id)
+                    if secid and (record is None or primary_error):
+                        provider_id = f"eastmoney_push2:{secid}"
+                        try:
+                            fallback = fetch_eastmoney_index(object_id, spec, generated_utc, secid, host="push2.eastmoney.com")
                             fallback_summary = provider_attempt(fallback, provider_id, generated_utc)
                             attempts.append(fallback_summary)
                             if fallback.get("quality_status") == "PASS" and fallback_summary.get("stable_for_10m_pulse") is True:
                                 record = fallback
                                 record["selected_provider_id"] = provider_id
                                 record["selection_basis"] = "yahoo_primary_delayed_then_verified_eastmoney_direct_fallback"
-                                eastmoney_selected = True
-                                break
-                            elif record is None:
-                                record = fallback
-                        except Exception as fallback_exc:
-                            attempts.append(failed_attempt(provider_id, str(fallback_exc)[-500:], generated_utc, timezone_name=spec["timezone"]))
-                    if object_id == "KOSPI" and not eastmoney_selected:
-                        provider_id = "naver_finance:KOSPI"
-                        try:
-                            fallback = fetch_naver_kospi(generated_utc)
-                            fallback_summary = provider_attempt(fallback, provider_id, generated_utc)
-                            attempts.append(fallback_summary)
-                            if fallback.get("quality_status") == "PASS" and fallback_summary.get("stable_for_10m_pulse") is True:
-                                record = fallback
-                                record["selected_provider_id"] = provider_id
-                                record["selection_basis"] = "yahoo_and_eastmoney_unavailable_or_delayed_then_naver_direct_fallback"
                             elif record is None:
                                 record = fallback
                         except Exception as fallback_exc:
                             attempts.append(failed_attempt(provider_id, str(fallback_exc)[-500:], generated_utc, timezone_name=spec["timezone"]))
 
-                if record is None:
-                    raise RuntimeError(primary_error or "no usable direct source")
-                if secid:
-                    record["provider_attempts"] = attempts
-                    record["direct_source_chain"] = ["yahoo_chart_api", f"eastmoney_push2:{secid}"] + ([f"eastmoney_push2delay:{secid}"] if object_id in {"N225", "KOSPI"} else []) + (["naver_finance:KOSPI"] if object_id == "KOSPI" else [])
-                    record["configured_primary"] = "yahoo_chart_api"
+                    if record is None:
+                        raise RuntimeError(primary_error or "no usable direct source")
+                    if secid:
+                        record["provider_attempts"] = attempts
+                        record["direct_source_chain"] = ["yahoo_chart_api", f"eastmoney_push2:{secid}"]
+                        record["configured_primary"] = "yahoo_chart_api"
             else:
                 attempts: list[dict] = []
                 candidates: list[tuple[dict, dict]] = []

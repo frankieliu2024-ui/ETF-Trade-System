@@ -1,5 +1,5 @@
 {
-  "version": "V1.8",
+  "version": "V1.9",
   "policy": "质量优先；正式对象按对象级primary→verified direct fallback处理；单点风险明确告警；失败对象不得静默省略；获取成功不等于自动采用；所有源先经过质量审计并保留市场时点信息",
   "providers": {
     "tencent_qq": {
@@ -22,7 +22,7 @@
     "yahoo_chart_api": {
       "kind": "公开海外与亚洲行情API，支持海外指数及美股扩展时段5分钟级行情",
       "requires_key": false,
-      "role": "primary_for_formal_overseas_indices_except_HSTECH_and_us_extended_hours",
+      "role": "primary_for_formal_overseas_indices_except_HSTECH_N225_KOSPI_and_us_extended_hours; delayed_crosscheck_for_N225_KOSPI",
       "adjusted": false
     },
     "akshare": {
@@ -46,13 +46,13 @@
     "naver_finance": {
       "kind": "Naver Finance公开韩国市场行情JSON；当前仅验证韩国综合指数KOSPI实时直连",
       "requires_key": false,
-      "role": "verified_direct_fallback_for_KOSPI",
+      "role": "primary_for_KOSPI_after_live_parallel_validation_20260827",
       "adjusted": false
     },
     "eastmoney_push2delay": {
-      "kind": "东方财富push2备用host；仅作为同一provider家族网络级重试，不计作独立数据源",
+      "kind": "东方财富push2备用host；对日经225指数（N225）经2026-08-27三轮开盘并行验证后作为该对象首选生产endpoint；对韩国综合指数（KOSPI）作为Naver后的直接备源；仍属于东方财富同一provider家族，不计作独立第二数据源",
       "requires_key": false,
-      "role": "network_retry_for_verified_eastmoney_overseas_index_paths",
+      "role": "preferred_endpoint_for_N225_and_verified_direct_fallback_for_KOSPI",
       "adjusted": false
     }
   },
@@ -86,16 +86,16 @@
       "eastmoney_push2:100.NDX100"
     ],
     "N225": [
-      "yahoo_chart_api",
-      "eastmoney_push2:100.N225",
       "eastmoney_push2delay:100.N225",
+      "eastmoney_push2:100.N225",
+      "yahoo_chart_api",
       "ETF_PROXY_513520"
     ],
     "KOSPI": [
-      "yahoo_chart_api",
-      "eastmoney_push2:100.KS11",
+      "naver_finance:KOSPI",
       "eastmoney_push2delay:100.KS11",
-      "naver_finance:KOSPI"
+      "eastmoney_push2:100.KS11",
+      "yahoo_chart_api"
     ],
     "TWII": [
       "yahoo_chart_api",
@@ -356,20 +356,20 @@
       "direct_only": true
     },
     "N225": {
-      "primary": "yahoo_chart_api",
+      "primary": "eastmoney_push2delay:100.N225",
       "fallback": [
         "eastmoney_push2:100.N225",
-        "eastmoney_push2delay:100.N225",
+        "yahoo_chart_api",
         "ETF_PROXY_513520"
       ],
       "direct_only": false
     },
     "KOSPI": {
-      "primary": "yahoo_chart_api",
+      "primary": "naver_finance:KOSPI",
       "fallback": [
-        "eastmoney_push2:100.KS11",
         "eastmoney_push2delay:100.KS11",
-        "naver_finance:KOSPI"
+        "eastmoney_push2:100.KS11",
+        "yahoo_chart_api"
       ],
       "direct_only": true
     },
