@@ -43,26 +43,53 @@ def _feature_map() -> dict[str, dict]:
 
 def _a_share_node() -> str:
     minute = _minute_now()
-    if 9 * 60 + 35 <= minute <= 10 * 60:
+    # Preserve actual opening facts through the first hour so one delayed/missed
+    # GitHub schedule cannot erase a material opening gap after price fades.
+    if 9 * 60 + 35 <= minute <= 10 * 60 + 30:
         return "OPEN"
     if 15 * 60 <= minute <= 15 * 60 + 30:
         return "CLOSE"
     return ""
 
 
+def _derived_previous_close(row: dict) -> float | None:
+    close = number(row.get("close"))
+    change = number(row.get("change_pct"))
+    if close is None or change is None or change <= -99.9:
+        return None
+    return close / (1.0 + change / 100.0)
+
+
+def _a_share_open_gap(row: dict) -> float | None:
+    return pct_change(number(row.get("open")), _derived_previous_close(row))
+
+
 def _a_share_open_is_valuable(indices: dict[str, dict], etfs: list[dict]) -> tuple[bool, str]:
-    index_changes = [abs(float(x.get("change_pct"))) for x in indices.values() if number(x.get("change_pct")) is not None]
-    etf_changes = [float(x.get("change_pct")) for x in etfs if number(x.get("change_pct")) is not None]
-    max_index = max(index_changes, default=0.0)
-    max_etf_abs = max((abs(x) for x in etf_changes), default=0.0)
-    spread = (max(etf_changes) - min(etf_changes)) if etf_changes else 0.0
-    if max_index >= A_SHARE_OPEN_INDEX_ABS_PCT:
-        return True, f"核心指数开盘绝对涨跌达到约{max_index:.2f}%"
-    if max_etf_abs >= A_SHARE_OPEN_ETF_ABS_PCT:
-        return True, f"监测ETF开盘最大绝对涨跌达到约{max_etf_abs:.2f}%"
-    if spread >= A_SHARE_OPEN_ETF_SPREAD_PCT:
-        return True, f"监测ETF开盘横截面分化约{spread:.2f}个百分点"
-    return False, "开盘结构未达到主动通知价值门槛"
+    index_open = [abs(x) for x in (_a_share_open_gap(r) for r in indices.values()) if x is not None]
+    etf_open_signed = [x for x in (_a_share_open_gap(r) for r in etfs) if x is not None]
+    current_index = [abs(float(x.get("change_pct"))) for x in indices.values() if number(x.get("change_pct")) is not None]
+    current_etf = [float(x.get("change_pct")) for x in etfs if number(x.get("change_pct")) is not None]
+
+    max_index_open = max(index_open, default=0.0)
+    max_etf_open_abs = max((abs(x) for x in etf_open_signed), default=0.0)
+    open_spread = (max(etf_open_signed) - min(etf_open_signed)) if etf_open_signed else 0.0
+    current_max_index = max(current_index, default=0.0)
+    current_max_etf_abs = max((abs(x) for x in current_etf), default=0.0)
+    current_spread = (max(current_etf) - min(current_etf)) if current_etf else 0.0
+
+    if max_index_open >= A_SHARE_OPEN_INDEX_ABS_PCT:
+        return True, f"核心指数实际开盘相对前收最大跳空约{max_index_open:.2f}%"
+    if max_etf_open_abs >= A_SHARE_OPEN_ETF_ABS_PCT:
+        return True, f"监测ETF实际开盘最大绝对跳空约{max_etf_open_abs:.2f}%"
+    if open_spread >= A_SHARE_OPEN_ETF_SPREAD_PCT:
+        return True, f"监测ETF实际开盘横截面分化约{open_spread:.2f}个百分点"
+    if current_max_index >= A_SHARE_OPEN_INDEX_ABS_PCT:
+        return True, f"开盘观察窗口核心指数最大绝对涨跌约{current_max_index:.2f}%"
+    if current_max_etf_abs >= A_SHARE_OPEN_ETF_ABS_PCT:
+        return True, f"开盘观察窗口监测ETF最大绝对涨跌约{current_max_etf_abs:.2f}%"
+    if current_spread >= A_SHARE_OPEN_ETF_SPREAD_PCT:
+        return True, f"开盘观察窗口监测ETF横截面分化约{current_spread:.2f}个百分点"
+    return False, "实际开盘跳空及首小时结构均未达到主动通知价值门槛"
 
 
 def _a_share_event() -> dict | None:
@@ -99,7 +126,10 @@ def _a_share_event() -> dict | None:
         row = indices.get(code)
         if not row:
             continue
-        headline.append(f"- **{index_names[code]}**：{pct(number(row.get('change_pct')))}")
+        if node == "OPEN":
+            headline.append(f"- **{index_names[code]}**：实际开盘较前收{pct(_a_share_open_gap(row))}；当前{pct(number(row.get('change_pct')))}")
+        else:
+            headline.append(f"- **{index_names[code]}**：{pct(number(row.get('change_pct')))}")
         f = features.get(code) or {}
         if f:
             path_lines.append(
@@ -117,12 +147,12 @@ def _a_share_event() -> dict | None:
     headline.append("- **ETF横截面靠后**：" + "、".join(f"{x.get('provider_name') or x.get('symbol')}（{x.get('symbol')}）{pct(number(x.get('change_pct')))}" for x in bottom))
 
     if node == "OPEN":
-        title = "【A股市场｜开盘有价值信号】结构出现明显变化"
-        implication = "开盘已出现值得占用注意力的指数幅度、ETF强弱或横截面分化；这只是早盘结构证据，仍需承接、相对强弱、风险收益和完整交易链验证。"
+        title = "【异动提醒】A股开盘结构出现有价值变化"
+        implication = "开盘已出现值得占用注意力的指数跳空、ETF强弱或横截面分化；实际开盘事实不会因为首个有效采样延迟、价格随后回落而被抹掉，但仍需承接、相对强弱、风险收益和完整交易链验证。"
         action = "打开ETF项目查看当前正式判断；若没有风险许可、机会状态或持仓动作变化，不因开盘信号机械交易。"
-        boundary = "A股开盘不再固定推送；只有达到通知价值门槛才发。门槛仅控制注意力，不属于MASTER交易规则。"
+        boundary = "A股开盘不逢开必报；实际开盘跳空在首小时恢复窗口内持续作为事实。门槛仅控制注意力，不属于MASTER交易规则。"
     else:
-        title = "【A股市场｜收盘总结】全天结构与ETF强弱"
+        title = "【收盘总结】A股全天结构与ETF强弱"
         implication = "固定收盘总结用于确认全天指数、ETF横截面和日内路径最终结果；15:30的ETF交易复盘仍负责账户、风险许可、生命周期、资本效率、卖出判断和CASE闭环。"
         action = "先看全天结构是否强化或破坏当前持仓/候选假设；完整交易结论以随后ETF交易复盘为准。"
         boundary = "收盘PushPlus不重复完整正式复盘，也不根据单日涨跌机械生成买卖动作。"
@@ -145,8 +175,8 @@ def _a_share_event() -> dict | None:
     )
     return {
         "key": f"a-share-session-summary:{market_date}:{node}",
-        "type": "A股市场总结",
-        "event_type": "A_SHARE_SESSION_SUMMARY",
+        "type": "A股市场总结" if node == "CLOSE" else "市场有价值事件",
+        "event_type": "A_SHARE_SESSION_SUMMARY" if node == "CLOSE" else "A_SHARE_OPEN_VALUE_ALERT",
         "title": title,
         "content": content,
         "source": "CURRENT+intraday_path_features",
@@ -163,6 +193,14 @@ def _apac_return(obj: dict) -> float | None:
     if prev is None:
         prev = number(obj.get("previous_close_reference"))
     return pct_change(close, prev)
+
+
+def _apac_open_gap(obj: dict) -> float | None:
+    latest = obj.get("latest") or {}
+    prev = number(latest.get("previous_close"))
+    if prev is None:
+        prev = number(obj.get("previous_close_reference"))
+    return pct_change(number(latest.get("open")), prev)
 
 
 def _apac_selected(objects: dict, today: str) -> list[tuple[str, str, dict, dict]]:
@@ -253,33 +291,45 @@ def _apac_event() -> dict | None:
     if not selected:
         return None
 
-    # APAC markets open at different times. Do not wait for all of them: any
-    # same-day market with a material opening move can create one value signal.
+    # APAC markets open at different times. Use the actual opening gap as a
+    # persistent same-session fact, then current return as secondary evidence.
+    # This prevents a late first successful pulse from erasing a Korean/Japanese/
+    # Taiwan/Hong Kong opening anomaly after an early fade.
     if 8 * 60 <= minute <= 10 * 60 + 30:
-        candidates: list[tuple[float, str, str, float]] = []
+        candidates: list[tuple[float, str, str, float, float | None]] = []
         for code, label, obj, _ in selected:
-            ret = _apac_return(obj)
-            if ret is not None and abs(ret) >= APAC_OPEN_SIGNAL_ABS_PCT:
-                candidates.append((abs(ret), code, label, ret))
+            open_gap = _apac_open_gap(obj)
+            current_ret = _apac_return(obj)
+            trigger = open_gap if open_gap is not None and abs(open_gap) >= APAC_OPEN_SIGNAL_ABS_PCT else current_ret
+            if trigger is not None and abs(trigger) >= APAC_OPEN_SIGNAL_ABS_PCT:
+                candidates.append((abs(trigger), code, label, trigger, open_gap))
         if not candidates:
             return None
-        _, lead_code, lead_label, lead_ret = max(candidates, key=lambda x: x[0])
+        _, lead_code, lead_label, lead_ret, lead_open_gap = max(candidates, key=lambda x: x[0])
         direction = "UP" if lead_ret > 0 else "DOWN"
         tone = _apac_tone(selected)
         headline, path_lines, times, _ = _apac_lines(selected, mark_hk_live=True)
-        headline = [f"- **触发对象**：{lead_label}，较前收{pct(lead_ret)}", f"- **当前区域判断**：{tone}", f"- **当日已取得有效行情市场数**：{len(selected)}/4"] + headline
-        title = f"【亚太市场｜开盘有价值信号】{lead_label}{pct(lead_ret)}"
+        lead_obj = objects.get(lead_code) or {}
+        lead_current = _apac_return(lead_obj)
+        headline = [
+            f"- **触发对象**：{lead_label}",
+            f"- **实际开盘较前收**：{pct(lead_open_gap)}",
+            f"- **当前较前收**：{pct(lead_current)}",
+            f"- **当前区域判断**：{tone}",
+            f"- **当日已取得有效行情市场数**：{len(selected)}/4",
+        ] + headline
+        title = f"【异动提醒】{lead_label}开盘出现有价值变化"
         content = render_summary(
             headline_lines=["- **节点**：亚太市场错位开盘中的实时价值信号"] + headline,
             path_lines=path_lines,
-            implication="亚太各市场并不同步开盘；某一先开市场出现明显方向时，本身就可以成为A股盘前/早盘的外部结构证据，无需等待台湾或香港全部开盘。重点是随后其他市场及A股是否共振、减弱或形成背离。",
+            implication="亚太各市场并不同步开盘；某一先开市场的实际开盘跳空本身可以成为A股盘前/早盘的外部结构证据，且不会因为首个成功pulse延迟、价格随后回落而被抹掉。重点仍是随后其他市场及A股是否共振、减弱或形成背离。",
             action="把该信号纳入最近A股决策节点；如果其他亚太市场随后给出相反反馈，应更新区域结构判断，而不是机械沿用第一条开盘方向。",
             as_of_lines=[f"- **各市场最新有效时点上限**：{max(times) if times else '未提供'}", f"- **通知生成**：{now().strftime('%Y-%m-%d %H:%M:%S')}"],
-            boundary="亚太开盘不固定推送；只在已有开盘市场出现约1%以上显著方向时发送。该门槛只控制注意力，不属于MASTER交易规则。\n\n> 外部结构 → 本地传导 → ETF自身反馈 → 机会判断。",
+            boundary="亚太开盘不逢开必报；实际开盘跳空在早盘恢复窗口内持续作为事实，约1%的门槛只控制注意力，不属于MASTER交易规则。\n\n> 外部结构 → 本地传导 → ETF自身反馈 → 机会判断。",
         )
         return {
             "key": f"apac-open-signal:{today}:{lead_code}:{direction}",
-            "type": "亚太市场开盘信号",
+            "type": "市场有价值事件",
             "event_type": "APAC_OPEN_SIGNAL",
             "title": title,
             "content": content,
@@ -288,18 +338,15 @@ def _apac_event() -> dict | None:
             "security_name": lead_label.split("（")[0],
             "user_severity": "需要关注",
             "user_action": "纳入最近A股节点验证区域共振或背离，不机械交易",
-            "confirmation_context": {"market_date": today, "session_node": "OPEN_SIGNAL", "lead_code": lead_code, "lead_change_pct": lead_ret, "tone": tone, "market_as_of_beijing": max(times) if times else ""},
+            "confirmation_context": {"market_date": today, "session_node": "OPEN_SIGNAL", "lead_code": lead_code, "lead_open_gap_pct": lead_open_gap, "lead_change_pct": lead_current, "tone": tone, "market_as_of_beijing": max(times) if times else ""},
         }
 
-    # Primary APAC close summary is intentionally before A-share close. Japan
-    # and Korea close at about 14:30 Beijing, Taiwan is already closed, while
-    # Hong Kong remains live. This timing maximizes usefulness for A-share tail risk.
     if 14 * 60 + 35 <= minute <= 14 * 60 + 55:
         tone = _apac_tone(selected)
         headline, path_lines, times, hstech_ret = _apac_lines(selected, mark_hk_live=True)
         a_lines, a_time = _a_share_reference(today)
         headline = [f"- **区域判断**：{tone}", f"- **当日有效覆盖**：{len(selected)}/4", "- **时点语义**：日本/韩国/台湾进入收盘结果区间；香港仍在交易"] + headline + a_lines
-        title = f"【亚太市场｜主要市场收盘】A股尾盘参考：{tone}"
+        title = f"【收盘总结】亚太主要市场收盘，A股尾盘参考：{tone}"
         content = render_summary(
             headline_lines=["- **节点**：日韩台主要市场收盘后、A股15:00收盘前"] + headline,
             path_lines=path_lines,
@@ -320,9 +367,6 @@ def _apac_event() -> dict | None:
             "confirmation_context": {"market_date": today, "session_node": "PRIMARY_CLOSE", "tone": tone, "coverage": len(selected), "hstech_change_pct": hstech_ret, "market_as_of_beijing": max(times) if times else "", "a_share_as_of_beijing": a_time},
         }
 
-    # Hong Kong close is a late supplement, not a second fixed daily essay.
-    # Send only if it materially changes the 14:35 APAC interpretation, or as
-    # a fallback when the primary summary was missed operationally.
     if 16 * 60 + 5 <= minute <= 16 * 60 + 30:
         prior = _latest_primary_apac(today)
         tone = _apac_tone(selected)
@@ -342,7 +386,7 @@ def _apac_event() -> dict | None:
 
         fallback = prior is None
         headline = [f"- **区域最终判断**：{tone}", f"- **14:35后判断变化**：{'主总结缺失，本条作为兜底' if fallback else (f'恒生科技变化约{hstech_delta:+.2f}个百分点' if hstech_delta is not None else '区域方向发生变化')}"] + headline
-        title = f"【亚太市场｜香港收盘后更新】{'主总结兜底' if fallback else '区域判断发生实质变化'}"
+        title = f"【收盘总结】亚太香港收盘后{'主总结兜底' if fallback else '区域判断发生实质变化'}"
         content = render_summary(
             headline_lines=["- **节点**：香港16:00收盘后的价值更新"] + headline,
             path_lines=path_lines,
@@ -375,7 +419,7 @@ def main() -> int:
         return 0
     result = persist_and_send(
         event,
-        policy="市场固定为A股/美股/亚太三类；开盘只推送有价值信号；A股和美股固定收盘，亚太主要收盘总结前移服务A股尾盘，香港收盘仅在实质改变判断时追加。",
+        policy="开盘只推送有价值信号，但实际开盘事实在首小时恢复窗口内持续保留，避免首个GitHub pulse延迟后被当前价格抹掉；A股和美股固定收盘，亚太主要收盘总结前移服务A股尾盘，香港收盘仅在实质改变判断时追加。",
     )
     print(json.dumps(result, ensure_ascii=False))
     return 1 if result.get("status") == "CREATED" else 0
