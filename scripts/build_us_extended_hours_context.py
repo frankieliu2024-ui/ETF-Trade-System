@@ -5,7 +5,6 @@ import os
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
-from zoneinfo import ZoneInfo
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -32,9 +31,9 @@ def request_chart(symbol: str) -> dict:
     encoded = urllib.parse.quote(symbol, safe="")
     url = (
         f"https://query1.finance.yahoo.com/v8/finance/chart/{encoded}"
-        "?range=1d&interval=5m&includePrePost=true&events=div%2Csplits"
+        "?range=5d&interval=5m&includePrePost=true&events=div%2Csplits"
     )
-    req = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.15"})
+    req = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.16"})
     with urllib.request.urlopen(req, timeout=20) as response:
         return json.load(response)
 
@@ -71,6 +70,7 @@ def extract_rows(payload: dict) -> tuple[list[dict], dict]:
             "as_of_utc": dt_utc.isoformat(timespec="seconds").replace("+00:00", "Z"),
             "as_of_local": dt_et.isoformat(timespec="seconds"),
             "as_of_beijing": dt_bj.isoformat(timespec="seconds"),
+            "market_date_local": dt_et.date().isoformat(),
             "session": session_for_et(dt_et),
         })
     return rows, result.get("meta", {})
@@ -82,26 +82,59 @@ def pct_change(a: float | None, b: float | None) -> float | None:
     return round((a / b - 1) * 100, 4)
 
 
+def classify_freshness(latest: dict, now: datetime, fresh_limit: int, degraded_limit: int) -> tuple[str, str, int]:
+    """Return quality_status, freshness_status and age_seconds.
+
+    During an active PRE/REGULAR/POST session the normal age thresholds apply.
+    Once the US post-market session has completed, its last valid bar remains the
+    authoritative completed-session reference for the next A-share pre-market.
+    It must retain its real provider timestamp and must never be described as a
+    current live quote merely because a later workflow reruns.
+    """
+    latest_dt = datetime.fromtimestamp(latest["timestamp"], timezone.utc)
+    age_seconds = max(0, int((now - latest_dt).total_seconds()))
+    current_et = now.astimezone(NEW_YORK)
+    current_phase = session_for_et(current_et)
+    latest_session = latest["session"]
+    latest_et = latest_dt.astimezone(NEW_YORK)
+
+    freshness = "FRESH" if age_seconds <= fresh_limit else ("DEGRADED" if age_seconds <= degraded_limit else "STALE")
+
+    # Active market phases must obey the live freshness clock.
+    if current_phase in {"PRE_MARKET", "REGULAR", "POST_MARKET"}:
+        return freshness, freshness, age_seconds
+
+    # Off-session after the same local trading day's close: the completed regular
+    # or post-market observation is a valid session reference, not a stale live quote.
+    if latest_et.date() == current_et.date() and latest_session in {"REGULAR", "POST_MARKET"}:
+        return "PASS", "SESSION_REFERENCE", age_seconds
+
+    # On weekends / holidays or before the next US session starts, preserve the
+    # last completed US trading-session reference, but label it explicitly as previous.
+    if latest_session in {"REGULAR", "POST_MARKET"}:
+        return "PASS", "PREVIOUS_SESSION_REFERENCE", age_seconds
+
+    return freshness, freshness, age_seconds
+
+
 def build_symbol(symbol: str, name: str, role: str, conditional: bool) -> dict:
     rows, meta = extract_rows(request_chart(symbol))
     if not rows:
         raise RuntimeError("no valid intraday rows")
     latest = rows[-1]
-    regular_rows = [r for r in rows if r["session"] == "REGULAR"]
+    regular_rows = [r for r in rows if r["session"] == "REGULAR" and r.get("market_date_local") == latest.get("market_date_local")]
+    if not regular_rows:
+        regular_rows = [r for r in rows if r["session"] == "REGULAR"]
     regular_close = regular_rows[-1]["close"] if regular_rows else meta.get("previousClose")
     now = datetime.now(timezone.utc)
-    age_seconds = max(0, int((now - datetime.fromtimestamp(latest["timestamp"], timezone.utc)).total_seconds()))
     try:
         policy = json.loads(RUNTIME_POLICY.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         policy = {"fresh_max_age_seconds": 900, "degraded_max_age_seconds": 1500}
     fresh_limit = int(policy.get("fresh_max_age_seconds", 900))
     degraded_limit = int(policy.get("degraded_max_age_seconds", 1500))
-    freshness = "FRESH" if age_seconds <= fresh_limit else ("DEGRADED" if age_seconds <= degraded_limit else "STALE")
+    quality_status, freshness_status, age_seconds = classify_freshness(latest, now, fresh_limit, degraded_limit)
     current_phase = session_for_et(now.astimezone(NEW_YORK))
-    usable_status = freshness
-    if current_phase == "OFF_SESSION" and latest["session"] == "REGULAR":
-        usable_status = "PASS"
     return {
         "symbol": symbol,
         "name": name,
@@ -110,8 +143,8 @@ def build_symbol(symbol: str, name: str, role: str, conditional: bool) -> dict:
         "provider": "yahoo_chart_api",
         "market_timezone": "America/New_York",
         "market_phase_of_latest": latest["session"],
-        "quality_status": usable_status,
-        "freshness_status": freshness,
+        "quality_status": quality_status,
+        "freshness_status": freshness_status,
         "data_age_seconds": age_seconds,
         "current_market_phase": current_phase,
         "latest": latest,
@@ -119,6 +152,7 @@ def build_symbol(symbol: str, name: str, role: str, conditional: bool) -> dict:
         "extended_change_vs_regular_close_pct": pct_change(latest.get("close"), regular_close),
         "decision_note": (
             "扩展时段价格只作前置信号。PRE_MARKET/POST_MARKET流动性和价格发现质量低于正式现金盘；"
+            "SESSION_REFERENCE/PREVIOUS_SESSION_REFERENCE只表示已结束时段的最后有效参考，不是当前实时价格；"
             "不得把个股或ETF扩展时段涨跌直接等同于NDX/SOX正式指数涨跌，也不得单独生成A股ETF动作。"
         ),
     }
@@ -153,12 +187,13 @@ def build() -> dict:
         objects[symbol] = record
 
     now = datetime.now(timezone.utc)
+    accepted_quality = {"PASS", "FRESH"}
     return {
         "generated_at": now_utc(),
         "generated_at_beijing": now.astimezone(BEIJING).isoformat(timespec="seconds"),
         "scope": "US_EXTENDED_HOURS_CONTEXT",
         "quality_status": (
-            "PASS" if passes == len(specs) and all(v.get("quality_status") in {"PASS", "FRESH"} for v in objects.values())
+            "PASS" if passes == len(specs) and all(v.get("quality_status") in accepted_quality for v in objects.values())
             else ("DEGRADED" if passes else "FAILED")
         ),
         "base_proxies": list(BASE_PROXIES.keys()),
@@ -172,6 +207,7 @@ def build() -> dict:
         },
         "a_share_time_rule": (
             "美股扩展时段按America/New_York自动处理夏令时/冬令时。A股早盘前通常能看到上一美股现金盘及盘后信息；"
+            "盘后结束后的最后有效价格按SESSION_REFERENCE保存真实provider时点，不继续套用盘中15分钟新鲜度；"
             "下一美股交易日PRE_MARKET通常在北京时间A股收盘后才开始，因此不得把美国盘前误称为当天A股上午的同步领先信号。"
         ),
         "decision_boundary": (
