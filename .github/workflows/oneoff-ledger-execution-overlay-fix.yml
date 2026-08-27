@@ -1,0 +1,48 @@
+name: One-off executed trade ledger overlay fix
+on:
+  push:
+    paths:
+      - ".github/workflows/oneoff-ledger-execution-overlay-fix.yml"
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Patch maintenance reconciliation to include executed trade events
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/maintenance_guard.py')
+          s = p.read_text(encoding='utf-8')
+          old = '''    trades = equity.get("trades") or []\n\n    ledger_qty: dict[str, float] = defaultdict(float)\n    for t in trades:\n'''
+          new = '''    trades = equity.get("trades") or []\n\n    # Position reconciliation must include user-confirmed executed trade events\n    # even when the slower historical equity reconstruction has not yet been\n    # rebuilt. Actual fills outrank the auxiliary reconstruction. Exact trade\n    # signatures prevent already-integrated event trades from being counted twice.\n    def trade_signature(t: dict) -> tuple:\n        stamp = str(t.get("datetime") or t.get("confirmed_at_beijing") or t.get("trade_time") or "")\n        stamp = stamp.replace("T", " ")[:19]\n        return (\n            str(t.get("code") or ""),\n            str(t.get("side") or t.get("action") or "").upper(),\n            float(t.get("quantity") or 0),\n            round(float(t.get("price") or 0), 6),\n            stamp,\n        )\n\n    trades_for_positions = list(trades)\n    known_signatures = {trade_signature(t) for t in trades_for_positions}\n    events_dir = ROOT / "events" / "trades"\n    executed_event_overlay_count = 0\n    if events_dir.exists():\n        for path in sorted(events_dir.glob("*.json")):\n            event = read_json(path, {}) or {}\n            if str(event.get("execution_status") or "").upper() != "EXECUTED":\n                continue\n            sig = trade_signature(event)\n            if not sig[0] or sig in known_signatures:\n                continue\n            trades_for_positions.append(event)\n            known_signatures.add(sig)\n            executed_event_overlay_count += 1\n\n    ledger_qty: dict[str, float] = defaultdict(float)\n    for t in trades_for_positions:\n'''
+          if old not in s:
+              raise SystemExit('maintenance_guard patch marker not found')
+          s = s.replace(old, new, 1)
+          old2 = '''        "trade_count": len(trades),\n        "trade_count_matches_summary": trade_count_ok,\n'''
+          new2 = '''        "trade_count": len(trades),\n        "trade_count_matches_summary": trade_count_ok,\n        "executed_trade_event_overlay_count": executed_event_overlay_count,\n        "position_ledger_basis": "AUXILIARY_EQUITY_RECONSTRUCTION_PLUS_EXECUTED_TRADE_EVENTS",\n'''
+          if old2 not in s:
+              raise SystemExit('maintenance_guard result marker not found')
+          s = s.replace(old2, new2, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Run maintenance reconciliation
+        run: |
+          python -m py_compile scripts/maintenance_guard.py
+          python scripts/maintenance_guard.py
+      - name: Commit production fix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/maintenance_guard.py data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json
+          git commit -m "fix: reconcile executed ETF trades before equity rebuild"
+          git push origin HEAD:main
