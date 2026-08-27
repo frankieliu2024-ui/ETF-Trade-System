@@ -1,0 +1,44 @@
+name: One-off formal structure audit 20260827
+on:
+  push:
+    paths:
+      - ".github/workflows/oneoff-formal-structure-audit-20260827.yml"
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Audit formal document structure
+        run: |
+          python - <<'PY'
+          import re, json
+          from pathlib import Path
+          files=['ETF交易复盘与经验库_2026.md','ETF市场行情档案_2026.md','ETF当前状态_DASHBOARD.md','README.md','ETF_SYSTEM_INDEX.md']
+          out={}
+          for fn in files:
+              t=Path(fn).read_text(encoding='utf-8')
+              hs=[]
+              for i,l in enumerate(t.splitlines(),1):
+                  if re.match(r'^#{1,4}\s+',l): hs.append({'line':i,'heading':l})
+              out[fn]={'headings':hs}
+          exp=Path('ETF交易复盘与经验库_2026.md').read_text(encoding='utf-8')
+          case_heads=[]
+          for i,l in enumerate(exp.splitlines(),1):
+              m=re.match(r'^###\s+(\d+(?:\.\d+)?)\s+(CASE-(\d{8})-\d{2})[:：]',l)
+              if m: case_heads.append({'line':i,'section':m.group(1),'case':m.group(2),'date':m.group(3)})
+          out['experience_case_order']={'cases':case_heads,'dates':[x['date'] for x in case_heads], 'chronological': all(case_heads[i]['date']<=case_heads[i+1]['date'] for i in range(len(case_heads)-1))}
+          # identify duplicate subsection numbers under chapter 2 and managed blocks located after later top-level chapters
+          nums=[]
+          for x in out['ETF交易复盘与经验库_2026.md']['headings']:
+              m=re.match(r'^###\s+(2\.\d+)\b',x['heading'])
+              if m: nums.append((m.group(1),x['line'],x['heading']))
+          from collections import Counter
+          c=Counter(n for n,_,_ in nums)
+          out['experience_duplicate_2x']=[x for x in nums if c[x[0]]>1]
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
