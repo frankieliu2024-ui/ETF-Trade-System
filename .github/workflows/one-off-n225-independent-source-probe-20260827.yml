@@ -1,0 +1,70 @@
+name: One-off N225 independent source probe 2026-08-27
+on:
+  push:
+    paths:
+      - ".github/workflows/one-off-n225-independent-source-probe-20260827.yml"
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Probe N225 candidates twice
+        run: |
+          python - <<'PY'
+          import json,re,time,urllib.parse,urllib.request
+          from concurrent.futures import ThreadPoolExecutor,as_completed
+          from datetime import datetime,timezone
+          from zoneinfo import ZoneInfo
+          BJ=ZoneInfo('Asia/Shanghai')
+          def get(url,headers=None,timeout=8):
+              h={'User-Agent':'Mozilla/5.0','Accept':'application/json,text/html,*/*',**(headers or {})}
+              with urllib.request.urlopen(urllib.request.Request(url,headers=h),timeout=timeout) as r:
+                  return r.status,r.read().decode('utf-8','replace')
+          def naver_day():
+              u='https://finance.naver.com/world/worldDayListJson.naver?symbol='+urllib.parse.quote('NII@NI225')+'&fdtc=0&page=1'
+              s,b=get(u,{'Referer':'https://finance.naver.com/world/'}); o=json.loads(b)
+              return {'http':s,'type':type(o).__name__,'sample':o[:2] if isinstance(o,list) else o}
+          def naver_page():
+              u='https://finance.naver.com/world/sise.naver?symbol='+urllib.parse.quote('NII@NI225')+'&fdtc=0&page=1'
+              s,b=get(u,{'Referer':'https://finance.naver.com/world/'})
+              # capture surrounding snippets for current/time labels without treating scrape as production yet
+              plain=re.sub(r'\s+',' ',re.sub(r'<[^>]+>',' ',b))
+              hits=[]
+              for pat in ['NI225','Nikkei','日経','현재가','현재','기준','시간']:
+                  m=re.search(pat,plain,re.I)
+                  if m: hits.append(plain[max(0,m.start()-180):m.start()+360])
+              return {'http':s,'bytes':len(b),'snippets':hits[:5]}
+          def naver_api(path):
+              s,b=get('https://api.stock.naver.com'+path,{'Referer':'https://stock.naver.com/'})
+              try:o=json.loads(b)
+              except:o={'raw':b[:500]}
+              return {'http':s,'payload':o}
+          def google():
+              s,b=get('https://www.google.com/finance/quote/NI225:INDEXNIKKEI?hl=en',{'Accept-Language':'en-US,en;q=0.9'})
+              # Google page is audit-only unless a real market timestamp can be extracted.
+              prices=re.findall(r'data-last-price="([0-9.]+)"',b)
+              return {'http':s,'bytes':len(b),'data_last_price':prices[:3],'has_timestamp_token':('data-last-normal-market-timestamp' in b), 'timestamp_samples':re.findall(r'data-last-normal-market-timestamp="([0-9]+)"',b)[:3]}
+          probes={
+            'naver_day_correct_symbol':naver_day,
+            'naver_world_page':naver_page,
+            'naver_api_basic':lambda:naver_api('/index/'+urllib.parse.quote('NII@NI225',safe='')+'/basic'),
+            'naver_api_price':lambda:naver_api('/index/'+urllib.parse.quote('NII@NI225',safe='')+'/price?page=1&pageSize=2'),
+            'google_finance':google,
+          }
+          for rnd in range(2):
+              out={'round':rnd+1,'observed_at_beijing':datetime.now(timezone.utc).astimezone(BJ).isoformat(timespec='seconds'),'results':{}}
+              with ThreadPoolExecutor(max_workers=len(probes)) as ex:
+                  fs={ex.submit(fn):k for k,fn in probes.items()}
+                  for f in as_completed(fs):
+                      k=fs[f]
+                      try: out['results'][k]={'status':'PASS',**f.result()}
+                      except Exception as e: out['results'][k]={'status':'FAILED','error':repr(e)}
+              print('N225_PROBE_JSON='+json.dumps(out,ensure_ascii=False))
+              if rnd==0: time.sleep(20)
+          PY
