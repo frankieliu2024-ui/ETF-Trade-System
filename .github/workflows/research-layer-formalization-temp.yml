@@ -31,8 +31,10 @@ jobs:
           git add ETF规则_MASTER.md ETF_SYSTEM_INDEX.md scripts/build_research_execution_bridge.py scripts/build_state_context.py scripts/check_system_consistency_core.py data/state/research_execution_summary.json data/state/research_context.json data/state/decision_context.json
           git add -u scripts/_temp_apply_research_layer_formalization.py .github/workflows/research-layer-formalization-temp.yml
           git commit -m "system: formalize research evidence registry"
-      - name: Run consistency on clean tree
-        run: python scripts/check_system_consistency.py
+      - name: Run consistency on generated commit
+        run: |
+          CHECK_SHA=$(git rev-parse HEAD)
+          GITHUB_SHA="$CHECK_SHA" python scripts/check_system_consistency.py
       - name: Persist consistency and push
         run: |
           git add data/state/system_consistency.json
