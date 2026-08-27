@@ -37,6 +37,7 @@ jobs:
     env:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
       US_EXTENDED_SYMBOLS: ${{ inputs.symbols || '' }}
+      PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -50,6 +51,10 @@ jobs:
           python-version: "3.11"
       - name: Refresh US extended-hours context
         run: python scripts/build_us_extended_hours_context.py
+      - name: Send US regular-session open/close summary when due
+        id: us_summary_notify
+        continue-on-error: true
+        run: python scripts/send_us_session_summary.py
       - name: Run system consistency live audit
         continue-on-error: true
         run: |
@@ -59,7 +64,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/state/us_extended_hours_context.json
+          git add data/state/us_extended_hours_context.json data/state/notification_center.json
           if git diff --cached --quiet; then
             exit 0
           fi
@@ -70,3 +75,8 @@ jobs:
           git pull --rebase origin main
           git stash drop || true
           git push origin HEAD:main
+      - name: Surface US summary delivery failure without blocking market data
+        if: ${{ steps.us_summary_notify.outcome == 'failure' }}
+        run: |
+          echo "US session summary notification failed; US market-data refresh remains valid."
+          exit 1
