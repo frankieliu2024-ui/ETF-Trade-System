@@ -19,8 +19,17 @@ BEIJING = ZoneInfo("Asia/Shanghai")
 RUNTIME_POLICY = ROOT / "config" / "runtime_policy.json"
 
 BASE_PROXIES = {
-    "QQQ": {"name": "纳指100ETF代理", "role": "NASDAQ100_EXTENDED_HOURS_PROXY"},
-    "SOXX": {"name": "半导体ETF代理", "role": "SEMICONDUCTOR_EXTENDED_HOURS_PROXY"},
+    "QQQ": {"name": "纳指100ETF代理", "role": "NASDAQ100_EXTENDED_HOURS_PROXY", "symbol": "QQQ"},
+    "SOXX": {"name": "半导体ETF代理", "role": "SEMICONDUCTOR_EXTENDED_HOURS_PROXY", "symbol": "SOXX"},
+}
+
+# Formal cash-session indices. They are sampled by the same US pulse so the
+# regular-session monitor does not silently fall back to ETF proxies when the
+# direct index feed is available. Outside REGULAR they remain session references;
+# QQQ/SOXX continue to own PRE_MARKET/POST_MARKET price discovery.
+BASE_CASH_INDICES = {
+    "NDX": {"name": "纳斯达克100指数", "role": "FORMAL_US_CASH_INDEX", "symbol": "^NDX"},
+    "SOX": {"name": "费城半导体指数", "role": "FORMAL_US_CASH_INDEX", "symbol": "^SOX"},
 }
 
 
@@ -164,7 +173,18 @@ def build_symbol(symbol: str, name: str, role: str, conditional: bool) -> dict:
     fresh_limit = int(policy.get("fresh_max_age_seconds", 900))
     degraded_limit = int(policy.get("degraded_max_age_seconds", 1500))
     quality_status, freshness_status, age_seconds = classify_freshness(latest, now, fresh_limit, degraded_limit)
-    current_phase = session_for_et(now.astimezone(NEW_YORK))
+    current_et = now.astimezone(NEW_YORK)
+    current_phase = session_for_et(current_et)
+
+    # Direct indices do not have genuine pre/post trading. Treat their last
+    # completed REGULAR value as a session reference outside cash hours instead
+    # of incorrectly degrading the whole US context. During REGULAR they remain
+    # subject to the same freshness gate as every live object.
+    if role == "FORMAL_US_CASH_INDEX" and current_phase != "REGULAR" and latest.get("session") == "REGULAR":
+        latest_et = datetime.fromtimestamp(int(latest["timestamp"]), timezone.utc).astimezone(NEW_YORK)
+        quality_status = "PASS"
+        freshness_status = "SESSION_REFERENCE" if latest_et.date() == current_et.date() else "PREVIOUS_SESSION_REFERENCE"
+
     return {
         "symbol": symbol,
         "name": name,
@@ -187,30 +207,35 @@ def build_symbol(symbol: str, name: str, role: str, conditional: bool) -> dict:
         "regular_session_path": regular_path,
         "extended_change_vs_regular_close_pct": pct_change(latest.get("close"), regular_close),
         "decision_note": (
-            "扩展时段价格只作前置信号。PRE_MARKET/POST_MARKET流动性和价格发现质量低于正式现金盘；"
-            "SESSION_REFERENCE/PREVIOUS_SESSION_REFERENCE只表示已结束时段的最后有效参考，不是当前实时价格；"
-            "不得把个股或ETF扩展时段涨跌直接等同于NDX/SOX正式指数涨跌，也不得单独生成A股ETF动作。"
+            "NDX/SOX是正式现金盘指数，只在REGULAR承担直接指数实时语义；其盘前/盘后值仅作最近现金盘SESSION_REFERENCE。"
+            "QQQ/SOXX用于PRE_MARKET/POST_MARKET前置信号，也可作为现金盘数据异常时的明确代理备份。"
+            "扩展时段不得把ETF代理涨跌直接等同于NDX/SOX正式指数涨跌，也不得单独生成A股ETF动作。"
         ),
     }
 
 
 def build() -> dict:
     requested = [x.strip().upper() for x in os.environ.get("US_EXTENDED_SYMBOLS", "").split(",") if x.strip()]
-    specs: dict[str, tuple[str, str, bool]] = {
-        symbol: (spec["name"], spec["role"], False) for symbol, spec in BASE_PROXIES.items()
+    specs: dict[str, tuple[str, str, bool, str]] = {
+        key: (spec["name"], spec["role"], False, spec["symbol"]) for key, spec in BASE_PROXIES.items()
     }
+    specs.update({
+        key: (spec["name"], spec["role"], False, spec["symbol"]) for key, spec in BASE_CASH_INDICES.items()
+    })
     for symbol in requested:
         if symbol not in specs:
-            specs[symbol] = (symbol, "CONDITIONAL_US_INDUSTRY_STOCK", True)
+            specs[symbol] = (symbol, "CONDITIONAL_US_INDUSTRY_STOCK", True, symbol)
     objects: dict[str, dict] = {}
     passes = 0
-    for symbol, (name, role, conditional) in specs.items():
+    for key, (name, role, conditional, provider_symbol) in specs.items():
         try:
-            record = build_symbol(symbol, name, role, conditional)
+            record = build_symbol(provider_symbol, name, role, conditional)
+            record["object"] = key
             passes += 1
         except Exception as exc:
             record = {
-                "symbol": symbol,
+                "object": key,
+                "symbol": provider_symbol,
                 "name": name,
                 "reference_role": role,
                 "conditional_industry_object": conditional,
@@ -219,19 +244,20 @@ def build() -> dict:
                 "quality_status": "FAILED",
                 "error": str(exc)[-500:],
             }
-        objects[symbol] = record
+        objects[key] = record
 
     now = datetime.now(timezone.utc)
     accepted_quality = {"PASS", "FRESH"}
     return {
         "generated_at": now_utc(),
         "generated_at_beijing": now.astimezone(BEIJING).isoformat(timespec="seconds"),
-        "scope": "US_EXTENDED_HOURS_CONTEXT",
+        "scope": "US_SESSION_CONTEXT",
         "quality_status": (
             "PASS" if passes == len(specs) and all(v.get("quality_status") in accepted_quality for v in objects.values())
             else ("DEGRADED" if passes else "FAILED")
         ),
         "base_proxies": list(BASE_PROXIES.keys()),
+        "base_cash_indices": list(BASE_CASH_INDICES.keys()),
         "conditional_symbols": requested,
         "objects": objects,
         "session_definition": {
@@ -241,13 +267,14 @@ def build() -> dict:
             "timezone": "America/New_York",
         },
         "a_share_time_rule": (
-            "美股扩展时段按America/New_York自动处理夏令时/冬令时。A股早盘前通常能看到上一美股现金盘及盘后信息；"
+            "美股时段按America/New_York自动处理夏令时/冬令时。A股早盘前通常能看到上一美股现金盘及盘后信息；"
             "盘后结束后的最后有效价格按SESSION_REFERENCE保存真实provider时点，不继续套用盘中15分钟新鲜度；"
             "下一美股交易日PRE_MARKET通常在北京时间A股收盘后才开始，因此不得把美国盘前误称为当天A股上午的同步领先信号。"
         ),
         "decision_boundary": (
-            "NDX/SOX用于上一正式现金盘结构；QQQ/SOXX及条件美股个股用于扩展时段前置信号。"
-            "扩展时段必须继续经过A股本地传导与目标ETF自身反馈后才可进入机会判断。"
+            "REGULAR优先使用纳斯达克100指数（NDX）和费城半导体指数（SOX）直接指数数据；"
+            "PRE_MARKET/POST_MARKET使用QQQ/SOXX及条件美股个股作为前置信号；直接指数不可用时代理必须明确标注。"
+            "任何美股证据都必须继续经过A股本地传导与目标ETF自身反馈后才可进入机会判断。"
         ),
     }
 
