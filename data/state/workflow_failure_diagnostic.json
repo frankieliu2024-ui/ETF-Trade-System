@@ -1,31 +1,31 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-27T09:19:17+08:00",
+  "generated_at": "2026-08-27T09:36:16+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33029686146,
+  "run_id": 33030595674,
   "run_attempt": 1,
-  "head_sha": "94bc7336fceaff96232af56f2977cfe4d703722a",
-  "main_head_sha": "b3dc52c8f77aa366899496d23f3968748345e958",
-  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
+  "head_sha": "a81b92c2719580c451d15d5365fc54255bd5c7aa",
+  "main_head_sha": "81eaa0eed71c3d70df991b4171e3a60ca9b30b84",
+  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "Persist consistency and maintenance state",
-      "number": 14
+      "step": "Enforce hard consistency result",
+      "number": 17
     }
   ],
   "changed_files": [
-    ".github/workflows/one-off-promote-twse-twii-and-sync-asia-policy-v2-20260827.yml"
+    ".github/workflows/system-consistency.yml"
   ],
-  "commit_message": "chore: remove completed one-off TWII promotion workflow",
+  "commit_message": "fix: include market-state contract in system consistency",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
-  "reason": "failure is classified as transient/persistence and this is the first attempt",
+  "recommended_action": "ESCALATE_WITH_DIAGNOSTIC",
+  "reason": "automatic action stopped at safety boundary",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
-    "changes_confined_to_auto_rollback_allowlist": false,
+    "changes_confined_to_auto_rollback_allowlist": true,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
     "may_modify_master": false,
