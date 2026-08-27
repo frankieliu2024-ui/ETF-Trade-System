@@ -105,6 +105,29 @@ def main() -> int:
 
     for path in FORMAL_FILES:
         check(f"formal_file:{path}", (ROOT / path).exists(), "exists" if (ROOT / path).exists() else "missing")
+
+    master_text = read_text("ETF规则_MASTER.md")
+    research_registry_markers = {
+        "margin_financing": "融资余额5日变化",
+        "skfolio_risk": "组合风险研究证据",
+        "active_return": "主动收益／资本迁移研究证据",
+        "ipo_base_stock_specific": "宁德时代（300750）超跌反转专项证据",
+    }
+    for evidence_id, marker in research_registry_markers.items():
+        check(f"research_registry:{evidence_id}", marker in master_text, f"MASTER registry contains {marker}", warning=True)
+    bridge_path = ROOT / "data/state/research_execution_summary.json"
+    if bridge_path.exists():
+        bridge_state = read_json("data/state/research_execution_summary.json")
+        runtime_ids = {str(x.get("evidence_id")) for x in ((bridge_state.get("conclusion_digest") or {}).get("runtime_validated_evidence") or []) if isinstance(x, dict) and x.get("use_in_current_decision")}
+        for evidence_id in ("margin_financing", "skfolio_risk", "active_return"):
+            if evidence_id in runtime_ids:
+                marker = research_registry_markers[evidence_id]
+                check(f"research_registry_drift:{evidence_id}", marker in master_text, f"runtime evidence {evidence_id} is registered in MASTER", warning=True)
+        exec_items = ((bridge_state.get("conclusion_digest") or {}).get("execution_eligible_backtest_conclusions") or [])
+        stock_exec = any(isinstance(x, dict) and str(x.get("source") or "").endswith("ipo_base_stock_specific_signal_conclusion.json") for x in exec_items)
+        if stock_exec:
+            check("research_registry_drift:ipo_base_stock_specific", research_registry_markers["ipo_base_stock_specific"] in master_text, "execution-eligible stock-specific research is registered in MASTER", warning=True)
+        check("research_semantics:no_independent_trade", bridge_state.get("automatic_trade") is False and bridge_state.get("trade_signal") is None, "research bridge remains read-only and cannot auto-trade")
     check(f"data_standard:{DATA_STANDARD}", (ROOT / DATA_STANDARD).exists(), "root-level standard exists" if (ROOT / DATA_STANDARD).exists() else "missing")
     router_config = read_json("config/market/market_quote_router.json")
     check("router:config_exists", (ROOT / "config/market/market_quote_router.json").exists(), "unified router configuration exists")

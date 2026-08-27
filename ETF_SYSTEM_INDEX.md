@@ -59,7 +59,8 @@
 - 三层监测配置：`config/market/market_monitor_config.json`
 - 运行策略与全天截图路由：`config/runtime_policy.json`
 - 查询上下文：`data/state/query_context.json`、`data/state/decision_context.json`；其中 `decision_context.json` 是ChatGPT盘中快速读取的聚合决策上下文，并内嵌最新日内路径特征，不另建平行decision bundle
-- `data/state/research_execution_summary.json`：研究结论归纳后的只读执行证据桥，覆盖ETF与当前打新底仓；可改变正式判断但不自动交易。
+- `data/state/research_execution_summary.json`：研究结论归纳后的只读执行证据桥，覆盖ETF与当前打新底仓；可改变正式判断但不自动交易。MASTER第6.4登记“哪些研究已正式转化及其稳定使用边界”，本文件与研究执行桥保存路径，动态数值和当前触发不复制进MASTER。
+- 正式研究证据源：`data/state/margin_financing_evidence.json`、`data/state/skfolio_risk_evidence.json`、`data/state/active_return_evidence.json`、`research/backtests/ipo_base_stock_specific_signal_conclusion.json`；研究文件存在不等于正式转化，是否允许参与执行以MASTER第6.4和执行桥语义共同约束。
 - 收盘复盘上下文：`data/state/review_context.json`、`post_market_review/post_market_review_event.json`
 - 查询时即时补采与可选状态同步请求：`requests/live_snapshot/*.json`
 - 账户/Dashboard/成交/正式复盘异步同步处理：`scripts/process_state_sync_request.py`
