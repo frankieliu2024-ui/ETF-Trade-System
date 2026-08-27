@@ -2,6 +2,19 @@
 
 通知层只推送需要用户关注、确认或重新评估的事项，不生成盘中交易动作。现有 PushPlus 链保持不变，通知记录由 `data/state/notification_center.json` 管理。
 
+## 通知价值与时段原则
+
+PushPlus 是用户行动通道，不是 GitHub 运行日志出口。通知是否发送以“现在知道这件事是否有独立行动/关注价值”为准，不以 A 股是否正在交易为唯一条件。
+
+- 不设置夜间免打扰或“非 A 股交易时间禁止推送”的硬限制；晚间、深夜、周末和休市日，只要出现确实需要用户确认/处理、会影响下一有效交易节点，或系统可靠性达到真实阻塞级别的事件，可以立即推送。
+- A 股可交易时段内，已经形成的 Trial/Confirm 机会、风险许可实质变化、明确降低风险/退出动作等应及时推送，避免延迟损害执行质量。
+- 收盘后允许推送完成当日闭环所必需的事项，例如最终账户事实缺失、成交待确认或未解释的持仓/资金变化。
+- 普通行情波动、海外市场涨跌、研究更新、GitHub 维护成功、自动修复成功、例行状态刷新以及无独立用户行动价值的变化，只保留后台事实，不单独 PushPlus。
+- 海外或非 A 股时段信息只有在已经形成正式、实质的用户关注/行动事件时才推送；不得把原始海外涨跌本身直接包装成交易通知。
+- 不新增“延迟到次日盘前”的消息队列。晚间通知可接受，因此系统保持“有价值立即推送、无价值不推送”的两态设计，避免增加调度复杂度。
+
+同一原则在所有通知入口统一适用：事件必须能回答“发生了什么、为什么现在值得用户知道、用户现在需要做什么”。若不能回答，则不应生成主动通知。
+
 ## 生命周期
 
 通知记录使用 `CREATED → SENT/WAITING_CONFIRMATION → CONFIRMED → ARCHIVED`，超过确认窗口进入 `EXPIRED`。同一 `source_event_id` 在未关闭或已关闭时不重复推送；失败/未发送不会被当作用户已确认。
@@ -10,7 +23,7 @@
 
 确认成功后生成现有研究目录下的 `TRADE_COMPLETED_REVIEW_REQUIRED` 客观复盘待办，保留 `execution_date` 与 `confirmation_date` 两个时点。复盘待办不自动判断交易正确/错误，不修改 MASTER，不生成新的交易动作。
 
-系统事件、收盘账户提醒和决策重评仍由现有 `.github/workflows/decision-notification.yml` 驱动；没有新增 workflow、provider 或行情请求。确认请求通过 `scripts/confirm_execution_reconciliation.py <request.json>` 进入；没有明确确认或必要成交字段时，只保留待确认问题，不写入正式成交事实。
+系统事件、收盘账户提醒和决策重评仍由现有 `.github/workflows/decision-notification.yml` 驱动；没有新增 workflow、provider、行情请求或通知排队系统。确认请求通过 `scripts/confirm_execution_reconciliation.py <request.json>` 进入；没有明确确认或必要成交字段时，只保留待确认问题，不写入正式成交事实。
 
 ## 微信通知的人机界面要求
 
