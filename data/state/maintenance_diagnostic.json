@@ -1,7 +1,82 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-27T10:09:24+08:00",
-  "classification": "NONE",
-  "requires_codex_or_manual_review": false,
-  "reason": "all maintenance gates passed"
+  "generated_at": "2026-08-27T10:11:45+08:00",
+  "classification": "MAINTENANCE_GUARD_FAILURE",
+  "requires_codex_or_manual_review": true,
+  "head_sha": "a2786bae93d15c93cb9e4626b15ab115b301c57f",
+  "system_consistency": {
+    "status": "FAIL",
+    "hard_error_count": 1,
+    "warning_count": 0,
+    "run_id": "33032507515"
+  },
+  "self_healing": {
+    "classification": "SCHEDULE_MISSED_OR_STALE",
+    "recommended_action": "REFRESH_SNAPSHOT",
+    "reason": "capture age=5256s, health=PASS, threshold=780s"
+  },
+  "runtime": {
+    "status": "PASS",
+    "latest_snapshot": "data/market/snapshots/2026-08-27_101019.json",
+    "captured_at": "2026-08-27T10:10:19+08:00"
+  },
+  "reconciliation": {
+    "status": "PASS",
+    "trade_count": 23,
+    "trade_count_matches_summary": true,
+    "position_reconciliation": {
+      "status": "PASS",
+      "checks": [
+        {
+          "code": "159781",
+          "ledger_quantity": 19500.0,
+          "account_quantity": 19500.0,
+          "difference": 0.0,
+          "status": "PASS"
+        },
+        {
+          "code": "159941",
+          "ledger_quantity": 12200.0,
+          "account_quantity": 12200.0,
+          "difference": 0.0,
+          "status": "PASS"
+        },
+        {
+          "code": "513180",
+          "ledger_quantity": 0.0,
+          "account_quantity": 0.0,
+          "difference": 0.0,
+          "status": "PASS"
+        },
+        {
+          "code": "561980",
+          "ledger_quantity": 51900.0,
+          "account_quantity": 51900.0,
+          "difference": 0.0,
+          "status": "PASS"
+        },
+        {
+          "code": "588000",
+          "ledger_quantity": 14100.0,
+          "account_quantity": 14100.0,
+          "difference": 0.0,
+          "status": "PASS"
+        }
+      ]
+    },
+    "known_fee_reconciliation": {
+      "status": "PASS",
+      "confirmed_trade_fee_sum": 120.01,
+      "summary_known_fees": 120.01,
+      "difference": 0.0
+    },
+    "gross_equity_reconciliation": {
+      "status": "PASS",
+      "strategy_cash": 83855.1,
+      "current_etf_market_value": 99657.4,
+      "reported_gross_equity": 183512.5,
+      "difference": 0.0
+    }
+  },
+  "safety_boundary": "No automatic MASTER/provider/trading-rule/account-fact change and no AI direct patch to main."
 }
