@@ -57,6 +57,54 @@ def _normalize_stock_market_time_alignment(report: dict) -> None:
         report["status"] = "WARNING" if report["warnings"] else "PASS"
 
 
+def _normalize_idempotent_close_skip(report: dict) -> None:
+    """Accept only a proven idempotent close skip as healthy runtime state.
+
+    A generic SKIPPED runtime remains warning-worthy. The warning is normalized
+    only when the runner explicitly reports close_already_recorded and both
+    runtime_health and canonical CURRENT still point to the same READY close
+    snapshot for the same market date. This preserves anomaly visibility while
+    preventing a legitimate duplicate close pulse from degrading consistency.
+    """
+    runtime = _read_json("data/state/runtime_health.json")
+    current = _read_json("data/state/CURRENT.json")
+    if str(runtime.get("status") or "").upper() != "SKIPPED":
+        return
+    if str(runtime.get("reason") or "") != "close_already_recorded":
+        return
+    if str(current.get("node_status") or "").upper() != "READY":
+        return
+    if str(current.get("latest_valid_node") or "").lower() != "close":
+        return
+    market_date = str(current.get("market_date") or "")
+    latest_snapshot = str(current.get("latest_snapshot") or "")
+    if not market_date or not latest_snapshot:
+        return
+    if str(runtime.get("market_date") or "") != market_date:
+        return
+    if str(runtime.get("latest_snapshot") or "") != latest_snapshot:
+        return
+    snapshot_path = ROOT / latest_snapshot
+    if not snapshot_path.exists():
+        return
+    try:
+        snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    if str(snapshot.get("market_date") or "") != market_date:
+        return
+    target = next((x for x in report.get("checks", []) if x.get("name") == "runtime_health:skipped_reason"), None)
+    if not target or target.get("status") != "WARNING":
+        return
+    target["status"] = "PASS"
+    target["detail"] = f"idempotent_close_skip reason=close_already_recorded snapshot={latest_snapshot}"
+    prefix = "runtime_health:skipped_reason:"
+    report["warnings"] = [x for x in (report.get("warnings") or []) if not str(x).startswith(prefix)]
+    report["warning_count"] = len(report["warnings"])
+    if not report.get("errors"):
+        report["status"] = "WARNING" if report["warnings"] else "PASS"
+
+
 def _validate_formal_risk_precedence(report: dict) -> None:
     review_dir = ROOT / "events" / "reviews"
     candidates = []
@@ -293,6 +341,7 @@ def main() -> int:
     rc = core_main()
     report = _read_json("data/state/system_consistency.json")
     _normalize_stock_market_time_alignment(report)
+    _normalize_idempotent_close_skip(report)
     _validate_formal_risk_precedence(report)
     _validate_trade_event_formal_sync(report)
     _validate_historical_trade_case_mapping(report)
