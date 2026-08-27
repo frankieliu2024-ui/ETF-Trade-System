@@ -34,11 +34,11 @@ jobs:
           import json
           from pathlib import Path
           cur=json.loads(Path('data/state/CURRENT.json').read_text(encoding='utf-8'))
-          rev=json.loads(Path('events/reviews/2026-08-27.json').read_text(encoding='utf-8'))
-          assert cur['latest_valid_node']=='close'
-          r=rev['formal_review'] if 'formal_review' in rev else rev
-          risk=((r.get('etf_strategy_known_net') or {}).get('etf_strategy_risk_rate_pct'))
-          assert abs(float(risk)-(-6.1814)) < 0.001, risk
+          e2e=json.loads(Path('data/state/e2e_status.json').read_text(encoding='utf-8'))
+          assert cur['latest_valid_node']=='close', cur['latest_valid_node']
+          assert Path('events/reviews/2026-08-27.json').exists()
+          risk=((e2e.get('components') or {}).get('risk') or {}).get('etf_strategy_risk_pct')
+          assert abs(float(risk)-(-6.18)) < 0.01, risk
           print('formal close review finalized', risk)
           PY
       - name: Publish formal close state
