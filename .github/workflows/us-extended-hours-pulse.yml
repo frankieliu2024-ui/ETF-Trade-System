@@ -58,12 +58,37 @@ jobs:
         id: us_summary_notify
         continue-on-error: true
         run: python scripts/send_us_session_summary.py
-      - name: Send US extreme/sudden move alert when due
+      - name: Send US monitored-object value event when due
         id: us_shock_notify
         continue-on-error: true
         env:
           PREVIOUS_CONTEXT_PATH: /tmp/us_extended_hours_context_prev.json
         run: python scripts/send_market_shock_notification.py --market us
+      - name: Record dedicated US pulse heartbeat
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          ctx_path = Path('data/state/us_extended_hours_context.json')
+          ctx = json.loads(ctx_path.read_text(encoding='utf-8')) if ctx_path.exists() else {}
+          now = datetime.now(timezone.utc).isoformat(timespec='seconds').replace('+00:00','Z')
+          payload = {
+              'status': 'PASS' if ctx.get('quality_status') in {'PASS','DEGRADED'} else 'FAILED',
+              'pulse_success': ctx.get('quality_status') in {'PASS','DEGRADED'},
+              'trigger': os.environ.get('GITHUB_EVENT_NAME',''),
+              'scheduled_for': os.environ.get('GITHUB_EVENT_NAME',''),
+              'finished_at': now,
+              'run_id': os.environ.get('GITHUB_RUN_ID',''),
+              'context_generated_at': ctx.get('generated_at',''),
+              'context_generated_at_beijing': ctx.get('generated_at_beijing',''),
+              'context_quality_status': ctx.get('quality_status','UNKNOWN'),
+          }
+          Path('data/state/us_pulse_runtime_health.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
+          print(json.dumps(payload, ensure_ascii=False))
+          PY
       - name: Run system consistency live audit
         continue-on-error: true
         run: |
@@ -73,7 +98,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/state/us_extended_hours_context.json data/state/notification_center.json
+          git add data/state/us_extended_hours_context.json data/state/us_pulse_runtime_health.json data/state/notification_center.json
           if git diff --cached --quiet; then
             exit 0
           fi
