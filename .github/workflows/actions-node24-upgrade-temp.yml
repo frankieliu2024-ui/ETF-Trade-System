@@ -1,0 +1,50 @@
+name: actions-node24-upgrade-temp
+
+on:
+  push:
+    branches:
+      - maintenance/actions-node24-runtime-20260827
+    paths:
+      - "scripts/apply_actions_node24_upgrade_temp.py"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: actions-node24-upgrade-temp-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  upgrade-and-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Apply Node 24 action runtime upgrade
+        run: python scripts/apply_actions_node24_upgrade_temp.py
+      - name: Verify deprecated action majors are gone
+        shell: bash
+        run: |
+          if git grep -n -E 'actions/checkout@v4|actions/setup-python@v5' -- '.github/workflows/*.yml' '.github/workflows/*.yaml'; then
+            echo 'Deprecated Node 20 action major remains' >&2
+            exit 1
+          fi
+      - name: Validate production mutation protocol
+        run: python scripts/check_production_mutation_protocol.py
+      - name: Commit upgraded workflow sources to isolated branch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows
+          if git diff --cached --quiet; then
+            echo 'No workflow action versions changed' >&2
+            exit 1
+          fi
+          git commit -m "maintenance: move core GitHub actions to Node 24 runtime"
+          git push origin HEAD:maintenance/actions-node24-runtime-20260827
