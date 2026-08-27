@@ -13,9 +13,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  repair:
+  probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,26 +23,46 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Wire verified Hithink market endpoint before Eastmoney
+      - name: Probe 159941 direct quote providers
         shell: bash
         run: |
           python - <<'PY'
+          import json, urllib.parse, urllib.request
+          from datetime import datetime, timezone, timedelta
           from pathlib import Path
-          p = Path('scripts/cloud_runner_snapshot.py')
-          text = p.read_text(encoding='utf-8')
-          start = text.index('def fetch_etf_with_fallback(')
-          end = text.index('\ndef fetch_etf(', start)
-          replacement = '''def fetch_etf_with_fallback(cli: str, run_dir: Path, code: str, thscode: str) -> dict:\n    tencent_error = None\n    try:\n        return fetch_tencent_a_share("ETF", code, thscode, a_share_market_phase(now_shanghai()))\n    except Exception as error:\n        tencent_error = error\n\n    hithink_fund_error = RuntimeError("hithink-finance fund endpoint not attempted")\n    if not PRIMARY_RUN_BYPASS.is_set():\n        try:\n            return fetch_etf(cli, run_dir, code, thscode)\n        except Exception as error:\n            hithink_fund_error = error\n    else:\n        hithink_fund_error = RuntimeError("hithink-finance fund endpoint bypassed after a transient failure earlier in this run")\n\n    # The market snapshot endpoint is an independently validated direct endpoint\n    # within the same Hithink provider family. A fund-endpoint coverage failure\n    # must not prevent this object-level direct fallback from being attempted.\n    hithink_market_error = RuntimeError("hithink-finance market endpoint not attempted")\n    try:\n        return fetch_etf_market_snapshot(\n            cli, run_dir, code, thscode, a_share_market_phase(now_shanghai())\n        )\n    except Exception as error:\n        hithink_market_error = error\n\n    if code in EASTMONEY_FALLBACK_ETFS:\n        try:\n            return fetch_eastmoney_etf(code, thscode, a_share_market_phase(now_shanghai()))\n        except Exception as fallback_error:\n            raise RuntimeError(\n                f"Tencent primary failed: {tencent_error}; "\n                f"Hithink fund fallback failed: {hithink_fund_error}; "\n                f"Hithink market fallback failed: {hithink_market_error}; "\n                f"Eastmoney fallback failed: {fallback_error}"\n            ) from fallback_error\n\n    raise RuntimeError(\n        f"Tencent primary failed: {tencent_error}; "\n        f"Hithink fund fallback failed: {hithink_fund_error}; "\n        f"Hithink market fallback failed: {hithink_market_error}"\n    )\n'''
-          p.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
+
+          out = {'captured_at_beijing': datetime.now(timezone(timedelta(hours=8))).isoformat(timespec='seconds'), 'object': '159941.SZ', 'probes': {}}
+
+          def get_text(name, url, encoding='utf-8', headers=None):
+              try:
+                  req = urllib.request.Request(url, headers=headers or {'User-Agent':'ETF-Trade-System/2.2.16'})
+                  with urllib.request.urlopen(req, timeout=12) as r:
+                      raw = r.read()
+                      out['probes'][name] = {'http_status': r.status, 'text': raw.decode(encoding, 'replace')[:4000]}
+              except Exception as e:
+                  out['probes'][name] = {'error': repr(e)}
+
+          get_text('tencent_sz159941', 'https://qt.gtimg.cn/q=sz159941', 'gbk', {'User-Agent':'ETF-Trade-System/2.2.16','Referer':'https://gu.qq.com/'})
+          get_text('tencent_simple_sz159941', 'https://qt.gtimg.cn/q=s_sz159941', 'gbk', {'User-Agent':'ETF-Trade-System/2.2.16','Referer':'https://gu.qq.com/'})
+
+          fields='f43,f44,f45,f46,f47,f48,f57,f58,f60,f86,f124'
+          qs=urllib.parse.urlencode({'secid':'0.159941','fltt':'2','invt':'2','fields':fields})
+          get_text('eastmoney_standard', 'https://push2.eastmoney.com/api/qt/stock/get?'+qs)
+          get_text('eastmoney_delay', 'https://push2delay.eastmoney.com/api/qt/stock/get?'+qs)
+
+          get_text('sina_sz159941', 'https://hq.sinajs.cn/list=sz159941', 'gbk', {'User-Agent':'Mozilla/5.0','Referer':'https://finance.sina.com.cn/'})
+
+          path=Path('data/market/audit/159941_provider_probe_20260827.json')
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(json.dumps(out, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
+          print(json.dumps(out, ensure_ascii=False))
           PY
-          python -m py_compile scripts/cloud_runner_snapshot.py scripts/check_market_state_consistency.py
-          git diff --check
-      - name: Commit code repair to main
+      - name: Commit probe audit
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add scripts/cloud_runner_snapshot.py
-          git commit -m 'fix: complete ETF direct fallback chain'
+          git add -f data/market/audit/159941_provider_probe_20260827.json
+          git commit -m 'test: record 159941 provider probe'
           git pull --rebase origin main
           git push origin HEAD:main
