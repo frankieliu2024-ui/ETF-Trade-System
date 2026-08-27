@@ -8,7 +8,12 @@ on:
       - "scripts/runtime_self_heal.py"
       - "config/runtime_policy.json"
       - ".github/workflows/self-healing-watchdog.yml"
+      - ".github/workflows/us-extended-hours-pulse.yml"
+      - ".github/workflows/overseas-preopen-pulse.yml"
   schedule:
+    # Beijing 08:07-09:07: cover APAC open before the A-share watchdog starts.
+    - cron: "7,27,47 0 * * 1-5"
+    - cron: "7 1 * * 1-5"
     # Beijing 09:19-09:59: redundant watchdog offset from production snapshot cron.
     - cron: "19,29,39,49,59 1 * * 1-5"
     # Beijing 10:04-10:54.
@@ -19,6 +24,14 @@ on:
     - cron: "4,14,24,34,44,54 5-6 * * 1-5"
     # Beijing 15:04/15:14 close-grace watchdog.
     - cron: "4,14 7 * * 1-5"
+    # Beijing 15:27-16:27: cover Hong Kong/APAC tail after A-share watchdog ends.
+    - cron: "27,47 7 * * 1-5"
+    - cron: "7,27 8 * * 1-5"
+    # US pre-market/regular/post-market heartbeat guard. The Python gate below
+    # checks America/New_York phase, so these broad UTC schedules are harmless
+    # outside an active US session and automatically handle DST/standard time.
+    - cron: "7,27,47 9-23 * * 1-5"
+    - cron: "7,27,47 0-1 * * 2-6"
 
 permissions:
   contents: write
@@ -56,6 +69,93 @@ jobs:
               f.write(f"classification={data.get('classification', 'UNKNOWN')}\n")
           print(f"classification={data.get('classification')} action={data.get('recommended_action')}")
           PY
+
+      - name: Assess dedicated cross-market pulse heartbeats
+        id: pulse_guard
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from zoneinfo import ZoneInfo
+
+          root = Path('.')
+          policy = json.loads((root/'config/runtime_policy.json').read_text(encoding='utf-8'))
+          threshold = int(policy.get('degraded_max_age_seconds', 1500))
+          now_utc = datetime.now(timezone.utc)
+          now_bj = now_utc.astimezone(ZoneInfo('Asia/Shanghai'))
+          now_et = now_utc.astimezone(ZoneInfo('America/New_York'))
+
+          def parse(raw):
+              if not raw:
+                  return None
+              try:
+                  return datetime.fromisoformat(str(raw).replace('Z','+00:00')).astimezone(timezone.utc)
+              except Exception:
+                  return None
+
+          def load(path):
+              try:
+                  return json.loads(Path(path).read_text(encoding='utf-8'))
+              except Exception:
+                  return {}
+
+          # APAC union activity window: Japan/Korea begin 08:00 Beijing; Hong Kong
+          # is the last monitored market to close at 16:00 Beijing.
+          bj_min = now_bj.hour * 60 + now_bj.minute
+          apac_active = now_bj.weekday() < 5 and 8*60 <= bj_min < 16*60
+          apac_health = load('data/state/overseas_runtime_health.json')
+          apac_stamp = parse(apac_health.get('finished_at'))
+          apac_age = int((now_utc-apac_stamp).total_seconds()) if apac_stamp else None
+          need_apac = apac_active and (apac_age is None or apac_age > threshold)
+
+          et_min = now_et.hour * 60 + now_et.minute
+          us_active = now_et.weekday() < 5 and 4*60 <= et_min <= 20*60
+          us_health = load('data/state/us_pulse_runtime_health.json')
+          us_stamp = parse(us_health.get('finished_at'))
+          us_age = int((now_utc-us_stamp).total_seconds()) if us_stamp else None
+          need_us = us_active and (us_age is None or us_age > threshold)
+
+          result = {
+              'checked_at': now_utc.isoformat(timespec='seconds'),
+              'threshold_seconds': threshold,
+              'apac_active': apac_active,
+              'apac_heartbeat_age_seconds': apac_age,
+              'need_apac_dispatch': need_apac,
+              'us_active': us_active,
+              'us_heartbeat_age_seconds': us_age,
+              'need_us_dispatch': need_us,
+          }
+          print(json.dumps(result, ensure_ascii=False))
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
+              f.write(f"need_apac={'true' if need_apac else 'false'}\n")
+              f.write(f"need_us={'true' if need_us else 'false'}\n")
+          PY
+
+      - name: Redispatch stale APAC pulse through canonical workflow
+        if: ${{ steps.pulse_guard.outputs.need_apac == 'true' }}
+        shell: bash
+        run: |
+          active=$(gh run list --workflow overseas-preopen-pulse.yml --limit 5 --json status --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | length')
+          if [ "$active" != "0" ]; then
+            echo "APAC pulse already queued/in progress; no duplicate dispatch."
+            exit 0
+          fi
+          gh workflow run overseas-preopen-pulse.yml --ref main
+          echo "Dispatched canonical APAC pulse because dedicated heartbeat was stale."
+
+      - name: Redispatch stale US pulse through canonical workflow
+        if: ${{ steps.pulse_guard.outputs.need_us == 'true' }}
+        shell: bash
+        run: |
+          active=$(gh run list --workflow us-extended-hours-pulse.yml --limit 5 --json status --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | length')
+          if [ "$active" != "0" ]; then
+            echo "US pulse already queued/in progress; no duplicate dispatch."
+            exit 0
+          fi
+          gh workflow run us-extended-hours-pulse.yml --ref main
+          echo "Dispatched canonical US pulse because dedicated heartbeat was stale."
 
       - name: Rebuild derived contexts safely
         if: ${{ steps.assess.outputs.action == 'REBUILD_DERIVED_CONTEXTS' }}
