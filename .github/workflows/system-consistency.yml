@@ -1,5 +1,5 @@
 name: ETF system consistency
-# Remote latest-main consistency validation trigger; active US context is refreshed before audit without relaxing freshness limits.
+# Remote latest-main consistency validation trigger; active US and formal overseas contexts are refreshed before audit without relaxing freshness limits.
 
 on:
   workflow_dispatch:
@@ -36,6 +36,12 @@ on:
       - "data/market/audit/research_backfill/**"
       - "research/reports/**"
       - "post_market_review/**"
+  schedule:
+    # Pre-market readiness fallback. The dedicated overseas pulse remains the
+    # primary collector; these runs prevent a missed/delayed GitHub schedule
+    # from leaving formal overseas_context on the previous Beijing date.
+    - cron: "50 23 * * 0-4"   # Beijing 07:50 Mon-Fri
+    - cron: "20,50 0 * * 1-5" # Beijing 08:20 / 08:50 Mon-Fri
 
 permissions:
   contents: write
@@ -58,6 +64,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Refresh formal overseas and Asia index context for pre-market readiness
+        shell: bash
+        run: |
+          python scripts/build_overseas_context.py
       - name: Refresh US extended-hours context for point-in-time audit
         shell: bash
         run: |
@@ -153,7 +163,7 @@ jobs:
           # worktree to latest main before committing. This avoids conflicts
           # when another state-only workflow advances main concurrently.
           mkdir -p /tmp/etf-owned-state/data/state
-          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json data/state/us_extended_hours_context.json; do
+          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json data/state/us_extended_hours_context.json data/state/overseas_context.json; do
             if [ -f "$f" ]; then
               mkdir -p "/tmp/etf-owned-state/$(dirname "$f")"
               cp "$f" "/tmp/etf-owned-state/$f"
@@ -176,7 +186,7 @@ jobs:
 
           git fetch origin main
           git reset --hard origin/main
-          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json data/state/us_extended_hours_context.json; do
+          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json data/state/us_extended_hours_context.json data/state/overseas_context.json; do
             if [ -f "/tmp/etf-owned-state/$f" ]; then
               mkdir -p "$(dirname "$f")"
               cp "/tmp/etf-owned-state/$f" "$f"
