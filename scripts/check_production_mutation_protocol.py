@@ -15,9 +15,11 @@ def _read_json(path: Path) -> dict:
 
 
 def _is_direct_main_writer(text: str) -> bool:
+    # Require an exact main ref boundary. Without the boundary, HEAD:maintenance/*
+    # is falsely matched by the HEAD:main prefix.
     patterns = (
-        r"git\s+push[^\n]*(?:HEAD:main|origin\s+main)",
-        r"git\s+push[^\n]*refs/heads/main",
+        r"git\s+push[^\n]*(?:HEAD:main(?=\s|$)|origin\s+main(?=\s|$))",
+        r"git\s+push[^\n]*refs/heads/main(?=\s|$)",
     )
     return any(re.search(p, text) for p in patterns)
 
@@ -107,7 +109,7 @@ def run(root: Path = ROOT) -> dict:
         )
         check(
             f"mutation_writer:{rel}:no_force_push",
-            not re.search(r"git\s+push[^\n]*--force(?:-with-lease)?[^\n]*main", text),
+            not re.search(r"git\s+push[^\n]*--force(?:-with-lease)?[^\n]*(?:HEAD:main(?=\s|$)|origin\s+main(?=\s|$)|refs/heads/main(?=\s|$))", text),
             "direct main writer does not force-push main",
         )
 
