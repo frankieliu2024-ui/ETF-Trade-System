@@ -635,8 +635,18 @@ def main() -> int:
     planned_time = PLANNED_TIMES.get(node, "")
 
     if args.node == "scheduled" and node == "close" and close_already_recorded(market_date):
-        write_runtime_health({"status": "SKIPPED", "reason": "close_already_recorded", "market_date": market_date, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "market_phase": market_phase})
-        print(json.dumps({"ok": True, "skipped": True, "reason": "close_already_recorded", "market_date": market_date}, ensure_ascii=False))
+        current = read_current(ROOT)
+        write_runtime_health({
+            "status": "SKIPPED",
+            "reason": "close_already_recorded",
+            "market_date": market_date,
+            "run_started_at": run_started_at,
+            "capture_started_at_beijing": capture_started_at,
+            "market_phase": market_phase,
+            "latest_snapshot": current.get("latest_snapshot", ""),
+            "provider_as_of": (current.get("data_freshness") or {}).get("captured_at_beijing", ""),
+        })
+        print(json.dumps({"ok": True, "skipped": True, "reason": "close_already_recorded", "market_date": market_date, "latest_snapshot": current.get("latest_snapshot", "")}, ensure_ascii=False))
         return 0
 
     if run_started_dt.weekday() >= 5 and not args.probe_only:
