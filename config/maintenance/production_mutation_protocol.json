@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "mode": "PRODUCTION_MUTATION_PROTOCOL",
+  "purpose": "允许并行诊断与计算，但对共享生产状态实行隔离实施、latest-main重放、文件所有权和串行集成约束。",
+  "principles": [
+    "parallel_diagnosis_is_allowed",
+    "implementation_isolated_by_branch_or_workflow",
+    "production_integration_is_serialized",
+    "dynamic_state_is_rebuilt_from_latest_main",
+    "fact_precedence_must_not_depend_on_last_writer_wins"
+  ],
+  "writer_requirements": {
+    "require_concurrency_group": true,
+    "require_latest_main_sync_before_push": true,
+    "forbid_force_push_to_main": true,
+    "latest_main_sync_markers": [
+      "git pull --rebase origin main",
+      "git reset --hard origin/main",
+      "git rebase origin/main"
+    ]
+  },
+  "single_owner_files": {
+    "data/state/system_consistency.json": ".github/workflows/system-consistency.yml",
+    "ETF规则_MASTER.md": "NO_AUTOMATIC_WORKFLOW"
+  },
+  "shared_writer_families": [
+    {
+      "family_id": "A_SHARE_CORE_SNAPSHOT",
+      "members": [
+        ".github/workflows/market-snapshot.yml",
+        ".github/workflows/opening-auction-current-fallback.yml"
+      ],
+      "required_concurrency_token": "etf-market-snapshot-${{ github.ref }}",
+      "reason": "两条链使用同一A股核心producer并可能写CURRENT/runtime及快照，必须共享串行队列。"
+    }
+  ],
+  "fact_precedence": [
+    "ETF规则_MASTER.md > 派生状态与历史聊天",
+    "用户确认或券商确认的实际成交 > 辅助权益/历史账本重构",
+    "最新有效账户事实 > 旧Dashboard或旧缓存",
+    "更新的正式复盘事实 > 辅助历史重构",
+    "真实provider时点 > workflow计划时间",
+    "最新main上的正式源文件 > 旧分支生成的动态状态"
+  ],
+  "integration_sequence": [
+    "analyze_in_parallel",
+    "implement_in_isolation",
+    "merge_one_change",
+    "wait_for_latest_main_consistency",
+    "rebase_or_replay_next_change_on_latest_main",
+    "run_combined_end_to_end_validation"
+  ]
+}
