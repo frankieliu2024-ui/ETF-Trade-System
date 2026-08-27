@@ -1,12 +1,23 @@
 {
-  "version": "V1.0",
+  "version": "V1.1",
   "purpose": "ETF层机器监测唯一运行清单；管理身份由Dashboard与账户事实决定，本文件只定义需要持续采集的ETF对象。",
   "mode": "HOLDING_PLUS_OBSERVATION",
   "objects": [
     {"code":"561980","name":"半导体设备ETF","thscode":"561980.SH"},
     {"code":"588000","name":"科创50ETF","thscode":"588000.SH"},
     {"code":"159781","name":"科创创业ETF","thscode":"159781.SZ"},
-    {"code":"159941","name":"纳指ETF","thscode":"159941.SZ"},
+    {
+      "code":"159941",
+      "name":"纳指ETF",
+      "thscode":"159941.SZ",
+      "market_state_note":"近期常见开市后停牌至10:30附近；仅在当前provider明确返回SUSPENDED/HALTED时标注为停牌/不可交易，不计入行情provider失败，不伪造OHLC或可成交价格；10:30后重新按当前provider状态和普通连续竞价质量门槛判断。",
+      "recurring_opening_suspension": {
+        "typical_start":"09:30",
+        "typical_end":"10:30",
+        "confirmation_required":true,
+        "provider_failure_semantics":"NOT_PROVIDER_FAILURE_WHEN_SUSPENSION_CONFIRMED"
+      }
+    },
     {"code":"513180","name":"恒生科技ETF","thscode":"513180.SH"},
     {"code":"159561","name":"德国ETF","thscode":"159561.SZ"},
     {"code":"513520","name":"日经ETF","thscode":"513520.SH"},
