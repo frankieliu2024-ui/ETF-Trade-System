@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-27T08:27:45Z",
-  "generated_at_beijing": "2026-08-27T16:27:45+08:00",
+  "generated_at": "2026-08-27T08:31:44Z",
+  "generated_at_beijing": "2026-08-27T16:31:44+08:00",
   "repository": {
-    "head_sha": "17d3411ef060323bf2cd12a592f8fb86731f39ff",
-    "github_sha": "17d3411ef060323bf2cd12a592f8fb86731f39ff",
-    "github_run_id": "33054113909",
+    "head_sha": "ee365f871824f517c4ac28ce51ea300a2f5e864c",
+    "github_sha": "ee365f871824f517c4ac28ce51ea300a2f5e864c",
+    "github_run_id": "33054364251",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "17d3411ef060323bf2cd12a592f8fb86731f39ff",
-    "workflow_sha": "17d3411ef060323bf2cd12a592f8fb86731f39ff",
+    "checked_commit": "ee365f871824f517c4ac28ce51ea300a2f5e864c",
+    "workflow_sha": "ee365f871824f517c4ac28ce51ea300a2f5e864c",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "WARNING",
+  "status": "PASS",
   "hard_error_count": 0,
-  "warning_count": 1,
+  "warning_count": 0,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.012s\n\nOK\n"
+      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.010s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -235,12 +235,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=17d3411ef060323bf2cd12a592f8fb86731f39ff"
+      "detail": "HEAD=ee365f871824f517c4ac28ce51ea300a2f5e864c"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=17d3411ef060323bf2cd12a592f8fb86731f39ff GITHUB_SHA=17d3411ef060323bf2cd12a592f8fb86731f39ff"
+      "detail": "HEAD=ee365f871824f517c4ac28ce51ea300a2f5e864c GITHUB_SHA=ee365f871824f517c4ac28ce51ea300a2f5e864c"
     },
     {
       "name": "git:critical_files_tracked",
@@ -670,7 +670,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=True phase=04:27 max_age_seconds=5 limit=900"
+      "detail": "active=True phase=04:31 max_age_seconds=15 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -785,12 +785,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=4048"
+      "detail": "declared=STALE expected=STALE age_seconds=4287"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=4048"
+      "detail": "declared=STALE expected=STALE age_seconds=4287"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -830,7 +830,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-27T08:27:44Z market=2026-08-27T15:20:16+08:00"
+      "detail": "context=2026-08-27T08:31:43Z market=2026-08-27T15:20:16+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -924,8 +924,8 @@
     },
     {
       "name": "runtime_health:skipped_reason",
-      "status": "WARNING",
-      "detail": "failure_stage= reason=close_already_recorded"
+      "status": "PASS",
+      "detail": "idempotent_close_skip reason=close_already_recorded snapshot=data/market/snapshots/2026-08-27_152016.json"
     },
     {
       "name": "a_share_runtime:live_state_available",
@@ -1684,9 +1684,7 @@
     }
   ],
   "errors": [],
-  "warnings": [
-    "runtime_health:skipped_reason: failure_stage= reason=close_already_recorded"
-  ],
+  "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
   "production_mutation_protocol": {
     "status": "PASS",
