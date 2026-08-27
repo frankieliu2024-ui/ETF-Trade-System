@@ -1,0 +1,35 @@
+name: Breadth history depth probe temp
+on:
+  push:
+    branches: [research/leading-indicators-20260827]
+    paths: ["research/requests/market_breadth_history_depth.json"]
+permissions: {contents: write}
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: research/leading-indicators-20260827, fetch-depth: 2}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: pip install -q akshare pandas
+      - name: Probe historical breadth dates
+        run: |
+          python - <<'PY'
+          import akshare as ak, json
+          from pathlib import Path
+          dates=['20260826','20260302','20250826','20250303','20240826','20240301','20230825']
+          out={}
+          for ds in dates:
+            row={}
+            for n in ['stock_zt_pool_em','stock_zt_pool_dtgc_em','stock_zt_pool_zbgc_em']:
+              try:
+                d=getattr(ak,n)(date=ds); row[n]={'ok':True,'rows':len(d)}
+              except Exception as e: row[n]={'ok':False,'error':f'{type(e).__name__}: {e}'}
+            out[ds]=row
+          Path('research/backtests/market_breadth_history_depth_probe.json').write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n'); print(json.dumps(out,ensure_ascii=False))
+          PY
+      - name: Commit probe
+        run: |
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"; git add research/backtests/market_breadth_history_depth_probe.json; git commit -m "research: record breadth history depth probe" || exit 0; git push origin HEAD:research/leading-indicators-20260827
