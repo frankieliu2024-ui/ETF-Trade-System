@@ -15,6 +15,7 @@ on:
         default: "true"
   push:
     paths:
+      - "events/decisions/*.json"
       - "requests/notification_test/*.json"
   schedule:
     # Technical trigger envelope: Beijing 15:20 Monday-Friday.
@@ -46,19 +47,37 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Detect push notification kind
+        if: ${{ github.event_name == 'push' }}
+        id: push_kind
+        shell: bash
+        run: |
+          git diff --name-only HEAD^ HEAD > /tmp/changed_files.txt || true
+          if grep -Eq '^events/decisions/[^/]+\.json$' /tmp/changed_files.txt; then
+            echo "decision=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "decision=false" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -Eq '^requests/notification_test/[^/]+\.json$' /tmp/changed_files.txt; then
+            echo "test=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "test=false" >> "$GITHUB_OUTPUT"
+          fi
+          cat /tmp/changed_files.txt
+
       - name: Build delayed execution reconciliation
         if: ${{ github.event_name == 'workflow_run' }}
         run: python scripts/build_execution_reconciliation.py
 
       - name: Send safe notification-channel test
         id: test_notify
-        if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.test_notification == 'true') || github.event_name == 'push' }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.test_notification == 'true') || (github.event_name == 'push' && steps.push_kind.outputs.test == 'true') }}
         continue-on-error: true
         run: python scripts/notification_center.py --mode channel-test
 
       - name: Send material user-action notification
         id: event_notify
-        if: ${{ github.event_name == 'workflow_run' }}
+        if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && steps.push_kind.outputs.decision == 'true') }}
         continue-on-error: true
         run: python scripts/notification_center.py --mode event
 
