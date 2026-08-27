@@ -9,6 +9,8 @@ from notification_center import STATE, now, read_json
 
 CONTEXT = STATE / "us_extended_hours_context.json"
 NEW_YORK = ZoneInfo("America/New_York")
+US_OPEN_ABS_PCT = 1.0
+US_OPEN_DIVERGENCE_PCT = 1.0
 
 
 def _market_tone(qqq: float | None, soxx: float | None) -> tuple[str, str]:
@@ -36,6 +38,16 @@ def _window(now_et: datetime, phase: str) -> str:
     if phase == "POST_MARKET" and 16 * 60 + 5 <= minute <= 16 * 60 + 30:
         return "CLOSE"
     return ""
+
+
+def _valuable_open(qqq_change: float, soxx_change: float) -> tuple[bool, str]:
+    max_abs = max(abs(qqq_change), abs(soxx_change))
+    divergence = abs(qqq_change - soxx_change)
+    if max_abs >= US_OPEN_ABS_PCT:
+        return True, f"核心科技代理开盘最大绝对涨跌约{max_abs:.2f}%"
+    if divergence >= US_OPEN_DIVERGENCE_PCT:
+        return True, f"QQQ与SOXX开盘分化约{divergence:.2f}个百分点"
+    return False, "开盘结构未达到主动通知价值门槛"
 
 
 def _path_line(label: str, obj: dict) -> str:
@@ -81,25 +93,33 @@ def build_event() -> dict | None:
     soxx_change = number(soxx.get("regular_session_change_vs_previous_close_pct"))
     if qqq_change is None or soxx_change is None:
         return None
+
+    value_reason = "固定收盘总结"
+    if node == "OPEN":
+        valuable, value_reason = _valuable_open(qqq_change, soxx_change)
+        if not valuable:
+            return None
+
     tone, implication = _market_tone(qqq_change, soxx_change)
     latest_times = [str((qqq.get("latest") or {}).get("as_of_beijing") or ""), str((soxx.get("latest") or {}).get("as_of_beijing") or "")]
     as_of = max([x for x in latest_times if x], default=str(context.get("generated_at_beijing") or ""))
     generated = now().strftime("%Y-%m-%d %H:%M:%S")
 
     if node == "OPEN":
-        title = f"【美股开盘｜次日A股参考】科技风险偏好{tone}"
-        node_name = "美股现金盘开盘后稳定观察窗口"
-        action = "今晚无需机械调整A股持仓；把开盘结构作为海外证据保存，继续观察其是否在美股日内强化、衰减或反转。"
-        boundary = "开盘总结不是全天结论；QQQ/SOXX是科技与半导体代理，不等同于纳斯达克100指数（NDX）/费城半导体指数（SOX）的扩展时段指数报价。"
+        title = f"【美股市场｜开盘有价值信号】科技风险偏好{tone}"
+        node_name = "美股现金盘开盘后的有价值结构信号"
+        action = "今晚无需机械调整A股持仓；把开盘结构作为海外证据保存，并继续观察其在日内强化、衰减或反转。"
+        boundary = "美股开盘不再固定推送；只有QQQ/SOXX出现明显方向或分化才发。门槛只控制注意力；QQQ/SOXX也不等同于纳斯达克100指数（NDX）/费城半导体指数（SOX）的扩展时段指数报价。"
     else:
-        title = f"【美股收盘｜次日A股参考】科技风险偏好{tone}"
-        node_name = "美股现金盘收盘总结"
+        title = f"【美股市场｜收盘总结】科技风险偏好{tone}"
+        node_name = "美股现金盘固定收盘总结"
         action = "将收盘方向和日内路径直接纳入下一A股交易日盘前分析，再验证本地指数、目标ETF自身反馈与资本效率。"
         boundary = "收盘总结只提供海外结构证据；盘后变化仍属于扩展时段前置信号。海外结构必须继续经过本地传导和ETF自身反馈后才能进入机会判断。"
 
     content = render_summary(
         headline_lines=[
             f"- **节点**：{node_name}",
+            f"- **通知价值**：{value_reason}",
             f"- **纳指100ETF代理（QQQ）**：较上一现金盘收盘 {pct(qqq_change)}；较当日开盘 {pct(number(qqq.get('regular_session_change_from_open_pct')))}",
             f"- **半导体ETF代理（SOXX）**：较上一现金盘收盘 {pct(soxx_change)}；较当日开盘 {pct(number(soxx.get('regular_session_change_from_open_pct')))}",
             f"- **综合判断**：{tone}",
@@ -112,14 +132,14 @@ def build_event() -> dict | None:
     )
     return {
         "key": f"us-session-summary:{qqq_date}:{node}",
-        "type": "美股节点总结",
+        "type": "美股市场总结",
         "event_type": "US_SESSION_SUMMARY",
         "title": title,
         "content": content,
         "source": "us_extended_hours_context",
         "user_severity": "需要关注",
         "user_action": "纳入下一A股交易节点的海外结构判断，无需机械交易",
-        "confirmation_context": {"us_market_date": qqq_date, "session_node": node, "qqq_change_pct": qqq_change, "soxx_change_pct": soxx_change, "tone": tone, "market_as_of_beijing": as_of},
+        "confirmation_context": {"us_market_date": qqq_date, "session_node": node, "qqq_change_pct": qqq_change, "soxx_change_pct": soxx_change, "tone": tone, "market_as_of_beijing": as_of, "value_reason": value_reason},
     }
 
 
@@ -128,7 +148,7 @@ def main() -> int:
     if not event:
         print(json.dumps({"status": "NO_NOTIFICATION_NEEDED"}, ensure_ascii=False))
         return 0
-    result = persist_and_send(event, policy="节点总结采用统一模板并包含日内路径；美股开盘/收盘各一次，作为下一A股交易节点的海外结构证据，不直接生成A股动作。")
+    result = persist_and_send(event, policy="美股市场开盘只推送有价值结构信号，现金盘收盘固定总结；总结包含日内路径并服务下一A股节点，不直接生成A股动作。")
     print(json.dumps(result, ensure_ascii=False))
     return 1 if result.get("status") == "CREATED" else 0
 
