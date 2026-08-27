@@ -63,8 +63,6 @@ def _bounded_current_repair_is_narrow(root: Path, script_path: str) -> bool:
     if not path.exists():
         return False
     text = path.read_text(encoding="utf-8")
-    # The bounded exception may update only CURRENT.rules_version. Any future
-    # additional CURRENT assignment must be reviewed before production use.
     writes = re.findall(r"current\s*\[\s*[\"']([^\"']+)[\"']\s*\]\s*=", text)
     return bool(writes) and set(writes) == {"rules_version"}
 
@@ -144,6 +142,30 @@ def run(root: Path = ROOT) -> dict:
                 f"shared writer family uses concurrency token {token}",
             )
 
+    for rel, contract in (cfg.get("nonproduction_validation_workflows") or {}).items():
+        text = workflow_texts.get(str(rel), "")
+        artifact_path = str((contract or {}).get("artifact_path") or "")
+        check(
+            f"nonproduction_validation:{rel}:exists",
+            bool(text),
+            "registered nonproduction validation workflow exists",
+        )
+        check(
+            f"nonproduction_validation:{rel}:no_main_write",
+            bool(text) and not _is_direct_main_writer(text),
+            "PoC/shadow workflow cannot directly write main",
+        )
+        check(
+            f"nonproduction_validation:{rel}:read_only_contents",
+            bool(text) and "contents: read" in text and "contents: write" not in text,
+            "PoC/shadow workflow has read-only repository contents permission",
+        )
+        check(
+            f"nonproduction_validation:{rel}:artifact",
+            bool(text) and "actions/upload-artifact@v4" in text and artifact_path and artifact_path in text,
+            f"validation evidence is uploaded as artifact path={artifact_path}",
+        )
+
     for state_path, contract in (cfg.get("state_file_contracts") or {}).items():
         state_class = str(contract.get("state_class") or "UNKNOWN")
         canonical_builder = str(contract.get("canonical_builder") or "")
@@ -196,13 +218,14 @@ def run(root: Path = ROOT) -> dict:
                 )
 
     return {
-        "schema_version": "1.1",
+        "schema_version": "1.2",
         "mode": "PRODUCTION_MUTATION_PROTOCOL_CHECK",
         "status": "FAIL" if errors else ("WARNING" if warnings else "PASS"),
         "errors": errors,
         "warnings": warnings,
         "checks": checks,
         "direct_main_writers": writer_rows,
+        "nonproduction_validation_workflows": cfg.get("nonproduction_validation_workflows") or {},
         "state_file_contracts": cfg.get("state_file_contracts") or {},
         "fact_precedence": cfg.get("fact_precedence") or [],
     }
