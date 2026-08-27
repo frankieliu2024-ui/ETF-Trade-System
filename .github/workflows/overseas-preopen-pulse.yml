@@ -43,11 +43,15 @@ jobs:
           node-version: "20"
       - name: Install hithink-finance CLI
         run: npm install --global @hithink-tech/hithink-finance-cli
-      - name: Run system consistency live audit
+      - name: Run system consistency live audit without retaining audit state
         continue-on-error: true
+        shell: bash
         run: |
+          set +e
           python scripts/check_system_consistency.py
-          git checkout -- data/state/system_consistency.json || true
+          rc=$?
+          git restore --worktree --staged data/state/system_consistency.json 2>/dev/null || git checkout -- data/state/system_consistency.json || true
+          exit $rc
       - name: Preserve previous APAC pulse for sudden-move comparison
         run: |
           [ -f data/state/overseas_context.json ] && cp data/state/overseas_context.json /tmp/overseas_context_prev.json || true
@@ -55,11 +59,15 @@ jobs:
         run: python scripts/build_overseas_context.py
       - name: Refresh US extended-hours context
         run: python scripts/build_us_extended_hours_context.py
+      - name: Backstop US regular-session open/close summary from refreshed context
+        id: us_summary_notify
+        continue-on-error: true
+        run: python scripts/send_us_session_summary.py
       - name: Send value-driven APAC opening signal or fixed close summary when due
         id: apac_summary_notify
         continue-on-error: true
         run: python scripts/send_regional_session_summary.py --market apac
-      - name: Send APAC extreme/sudden move alert when due
+      - name: Send APAC monitored-object value event when due
         id: apac_shock_notify
         continue-on-error: true
         env:
@@ -81,10 +89,13 @@ jobs:
             exit 0
           fi
           git commit -m "data: refresh overseas pulse and notifications"
+          # Builders/audits may touch unrelated tracked state. Only the owned pulse
+          # commit is allowed to participate in the rebase/push transaction.
+          git restore --worktree .
           git pull --rebase origin main
           git push origin HEAD:main
-      - name: Surface APAC notification delivery failure without blocking market data
-        if: ${{ steps.apac_summary_notify.outcome == 'failure' || steps.apac_shock_notify.outcome == 'failure' }}
+      - name: Surface market notification delivery failure without blocking market data
+        if: ${{ steps.us_summary_notify.outcome == 'failure' || steps.apac_summary_notify.outcome == 'failure' || steps.apac_shock_notify.outcome == 'failure' }}
         run: |
-          echo "APAC market notification failed; overseas market-data refresh remains valid."
+          echo "Market notification delivery failed; refreshed market data remains valid."
           exit 1
