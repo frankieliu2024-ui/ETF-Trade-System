@@ -38,14 +38,14 @@ jobs:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
       US_EXTENDED_SYMBOLS: ${{ inputs.symbols || '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Rebase pulse workspace before refresh
         run: |
           git fetch origin main
           git rebase origin/main
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - name: Refresh US extended-hours context

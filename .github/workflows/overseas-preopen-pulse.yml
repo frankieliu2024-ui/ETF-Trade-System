@@ -25,14 +25,14 @@ jobs:
       HITHINK_FINANCE_API_KEY: ${{ secrets.HITHINK_FINANCE_API_KEY }}
       SCHEDULED_FOR: ${{ github.event.schedule || github.event_name }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Rebase pulse workspace before provider calls
         run: |
           git fetch origin main
           git rebase origin/main
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - uses: actions/setup-node@v4
