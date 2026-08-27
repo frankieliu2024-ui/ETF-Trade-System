@@ -72,21 +72,47 @@ def _validate_formal_risk_precedence(report: dict) -> None:
         candidates.append((updated, risk, str(path.relative_to(ROOT))))
     if not candidates:
         return
-    _, formal_risk, source = max(candidates, key=lambda x: x[0])
+
+    formal_updated, formal_risk, source = max(candidates, key=lambda x: x[0])
     dashboard = (ROOT / "ETF当前状态_DASHBOARD.md").read_text(encoding="utf-8")
     match = __import__("re").search(r"\|ETF策略风险率\|约?\s*([+-]?\d+(?:\.\d+)?)%", dashboard)
     e2e = _read_json("data/state/e2e_status.json")
-    e2e_risk = ((e2e.get("components") or {}).get("risk") or {}).get("etf_strategy_risk_pct")
+    risk_component = ((e2e.get("components") or {}).get("risk") or {})
+    e2e_risk = risk_component.get("etf_strategy_risk_pct")
+    e2e_source_updated_raw = risk_component.get("source_updated_at") or e2e.get("generated_at")
+    try:
+        e2e_source_updated = datetime.fromisoformat(str(e2e_source_updated_raw).replace("Z", "+00:00")) if e2e_source_updated_raw else None
+    except (TypeError, ValueError):
+        e2e_source_updated = None
+
     dashboard_risk = float(match.group(1)) if match else None
     mismatches = []
+    notes = []
     if dashboard_risk is None or abs(dashboard_risk - formal_risk) > 0.03:
         mismatches.append(f"dashboard={dashboard_risk}")
-    try:
-        if e2e_risk is None or abs(float(e2e_risk) - formal_risk) > 0.03:
+
+    # e2e_status is a derived state and is rebuilt later in system-consistency.yml.
+    # A newer formal review must not be rejected by a pre-rebuild stale E2E cache.
+    # Once E2E's own source timestamp is at least as new as the formal review,
+    # the equality check is strict again.
+    e2e_is_current = bool(e2e_source_updated and e2e_source_updated >= formal_updated)
+    if e2e_is_current:
+        try:
+            if e2e_risk is None or abs(float(e2e_risk) - formal_risk) > 0.03:
+                mismatches.append(f"e2e={e2e_risk}")
+        except (TypeError, ValueError):
             mismatches.append(f"e2e={e2e_risk}")
-    except (TypeError, ValueError):
-        mismatches.append(f"e2e={e2e_risk}")
-    report.setdefault("checks", []).append({"name": "risk:formal_precedence", "status": "FAIL" if mismatches else "PASS", "detail": f"formal={formal_risk:.4f} source={source} " + (" ".join(mismatches) if mismatches else "dashboard/e2e aligned")})
+    else:
+        notes.append(f"pre_rebuild_e2e_stale={e2e_risk}@{e2e_source_updated_raw or 'MISSING'}")
+
+    detail = f"formal={formal_risk:.4f} source={source} updated={formal_updated.isoformat()}"
+    if mismatches:
+        detail += " " + " ".join(mismatches)
+    elif notes:
+        detail += " dashboard_aligned " + " ".join(notes)
+    else:
+        detail += " dashboard/e2e aligned"
+    report.setdefault("checks", []).append({"name": "risk:formal_precedence", "status": "FAIL" if mismatches else "PASS", "detail": detail})
     if mismatches:
         message = "risk:formal_precedence:" + ";".join(mismatches)
         if message not in report.setdefault("errors", []):
@@ -146,7 +172,6 @@ def _validate_trade_event_formal_sync(report: dict) -> None:
     report["hard_error_count"] = len(report.get("errors") or [])
     report["warning_count"] = len(report.get("warnings") or [])
     report["status"] = "FAIL" if report["hard_error_count"] else ("WARNING" if report["warning_count"] else "PASS")
-
 
 
 
