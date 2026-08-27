@@ -32,7 +32,7 @@ def _git_add_mentions(text: str, path: str) -> bool:
 
 
 def _broad_state_add_without_exclusion(text: str, path: str) -> bool:
-    if path != "data/state/system_consistency.json":
+    if not path.startswith("data/state/"):
         return False
     broad = False
     for line in text.splitlines():
@@ -46,11 +46,27 @@ def _broad_state_add_without_exclusion(text: str, path: str) -> bool:
     excluded = any(
         token in text
         for token in (
-            "git reset -- data/state/system_consistency.json",
-            "git checkout -- data/state/system_consistency.json",
+            f"git reset -- {path}",
+            f"git checkout -- {path}",
+            f"git restore --staged {path}",
         )
     )
     return broad and not excluded
+
+
+def _workflow_may_stage(text: str, path: str) -> bool:
+    return _git_add_mentions(text, path) or _broad_state_add_without_exclusion(text, path)
+
+
+def _bounded_current_repair_is_narrow(root: Path, script_path: str) -> bool:
+    path = root / script_path
+    if not path.exists():
+        return False
+    text = path.read_text(encoding="utf-8")
+    # The bounded exception may update only CURRENT.rules_version. Any future
+    # additional CURRENT assignment must be reviewed before production use.
+    writes = re.findall(r"current\s*\[\s*[\"']([^\"']+)[\"']\s*\]\s*=", text)
+    return bool(writes) and set(writes) == {"rules_version"}
 
 
 def run(root: Path = ROOT) -> dict:
@@ -110,7 +126,7 @@ def run(root: Path = ROOT) -> dict:
                 continue
             if rel == owner:
                 continue
-            violation = _git_add_mentions(text, owned_path) or _broad_state_add_without_exclusion(text, owned_path)
+            violation = _workflow_may_stage(text, owned_path)
             check(
                 f"mutation_owner:{owned_path}:{rel}",
                 not violation,
@@ -128,14 +144,66 @@ def run(root: Path = ROOT) -> dict:
                 f"shared writer family uses concurrency token {token}",
             )
 
+    for state_path, contract in (cfg.get("state_file_contracts") or {}).items():
+        state_class = str(contract.get("state_class") or "UNKNOWN")
+        canonical_builder = str(contract.get("canonical_builder") or "")
+        canonical_writers = [str(x) for x in contract.get("canonical_writers") or []]
+        allowed_writers = [str(x) for x in contract.get("allowed_writers") or []]
+        repair_writers = contract.get("bounded_repair_writers") or {}
+        permitted = set(canonical_writers) | set(allowed_writers) | set(repair_writers)
+
+        check(
+            f"state_contract:{state_path}:registered",
+            bool(state_class and canonical_builder),
+            f"class={state_class} builder={canonical_builder}",
+        )
+
+        for rel, text in workflow_texts.items():
+            stages = _workflow_may_stage(text, state_path)
+            if stages and rel not in permitted:
+                check(
+                    f"state_contract:{state_path}:writer:{rel}",
+                    False,
+                    f"unregistered production writer for {state_path}",
+                )
+
+        for rel in canonical_writers + allowed_writers:
+            text = workflow_texts.get(rel, "")
+            check(
+                f"state_contract:{state_path}:builder:{rel}",
+                bool(text) and canonical_builder in text,
+                f"registered writer invokes canonical builder {canonical_builder}",
+            )
+            check(
+                f"state_contract:{state_path}:staging:{rel}",
+                bool(text) and _workflow_may_stage(text, state_path),
+                f"registered writer persists {state_path}",
+            )
+
+        for rel, repair in repair_writers.items():
+            text = workflow_texts.get(str(rel), "")
+            required_script = str((repair or {}).get("required_script") or "")
+            check(
+                f"state_contract:{state_path}:bounded_repair:{rel}:wired",
+                bool(text) and required_script and required_script in text and _workflow_may_stage(text, state_path),
+                f"bounded repair writer uses {required_script} and persists {state_path}",
+            )
+            if state_path == "data/state/CURRENT.json":
+                check(
+                    f"state_contract:{state_path}:bounded_repair:{rel}:narrow",
+                    _bounded_current_repair_is_narrow(root, required_script),
+                    "bounded CURRENT repair mutates rules_version only",
+                )
+
     return {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "mode": "PRODUCTION_MUTATION_PROTOCOL_CHECK",
         "status": "FAIL" if errors else ("WARNING" if warnings else "PASS"),
         "errors": errors,
         "warnings": warnings,
         "checks": checks,
         "direct_main_writers": writer_rows,
+        "state_file_contracts": cfg.get("state_file_contracts") or {},
         "fact_precedence": cfg.get("fact_precedence") or [],
     }
 
