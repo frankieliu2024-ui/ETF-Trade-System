@@ -29,12 +29,22 @@ for field in ('market_date', 'captured_at'):
 phase = str(snapshot.get('market_phase') or '')
 if str((current.get('data_freshness') or {}).get('market_phase') or '') != phase:
     fail('CURRENT market_phase != snapshot market_phase')
-if str(runtime.get('latest_snapshot') or '') != snapshot_rel:
-    fail('runtime_health.latest_snapshot != CURRENT.latest_snapshot')
+
+runtime_status = str(runtime.get('status') or '').upper()
+runtime_reason = str(runtime.get('reason') or '')
+duplicate_close_skip = (
+    runtime_status == 'SKIPPED'
+    and runtime_reason == 'close_already_recorded'
+    and str(current.get('latest_valid_node') or '').lower() == 'close'
+    and str(current.get('node_status') or '').upper() == 'READY'
+)
 if str(runtime.get('market_date') or '') != str(current.get('market_date') or ''):
     fail('runtime_health.market_date != CURRENT.market_date')
-if str(runtime.get('market_phase') or '') != phase:
-    fail('runtime_health.market_phase != snapshot.market_phase')
+if not duplicate_close_skip:
+    if str(runtime.get('latest_snapshot') or '') != snapshot_rel:
+        fail('runtime_health.latest_snapshot != CURRENT.latest_snapshot')
+    if str(runtime.get('market_phase') or '') != phase:
+        fail('runtime_health.market_phase != snapshot.market_phase')
 
 node = str(snapshot.get('node') or '')
 if node != str(current.get('latest_valid_node') or ''):
@@ -82,6 +92,9 @@ print(json.dumps({
     'node': node,
     'market_phase': phase,
     'snapshot': snapshot_rel,
+    'runtime_status': runtime_status,
+    'runtime_reason': runtime_reason or None,
+    'duplicate_close_skip': duplicate_close_skip,
     'rows': len(rows),
     'failed_objects': failed,
 }, ensure_ascii=False))
