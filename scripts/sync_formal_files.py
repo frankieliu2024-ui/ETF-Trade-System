@@ -53,10 +53,7 @@ def display_name(position: dict) -> str:
     return f"{position.get('name', '')}（{position.get('code', '')}）"
 
 
-def canonical_risk(equity: dict) -> float | None:
-    # A later formal post-close review outranks the auxiliary historical equity
-    # reconstruction. This prevents account-maintenance sync from regressing the
-    # Dashboard risk metric to an older reconstruction value.
+def latest_formal_risk() -> float | None:
     review_dir = ROOT / "events" / "reviews"
     candidates = []
     for path in review_dir.glob("*.json") if review_dir.exists() else []:
@@ -65,14 +62,20 @@ def canonical_risk(equity: dict) -> float | None:
             review = event.get("review") or event.get("formal_review") or {}
             fact = review.get("etf_strategy_known_net") or {}
             risk = float(fact.get("etf_strategy_risk_rate_pct"))
-            equity_value = float(fact.get("known_net_strategy_equity"))
+            float(fact.get("known_net_strategy_equity"))
             stamp = str(event.get("updated_at_beijing") or event.get("account_updated_at") or "")
         except (OSError, json.JSONDecodeError, TypeError, ValueError):
             continue
         if stamp:
-            candidates.append((stamp, risk, equity_value))
-    if candidates:
-        return max(candidates, key=lambda x: x[0])[1]
+            candidates.append((stamp, risk))
+    return max(candidates, key=lambda x: x[0])[1] if candidates else None
+
+
+def canonical_risk(equity: dict, formal_override: float | None = None) -> float | None:
+    # Pure parser remains independently testable; production callers explicitly
+    # supply the newest formal review value when one exists.
+    if formal_override is not None:
+        return float(formal_override)
     summary = equity.get("summary") or {}
     for key in ("known_net_current_strategy_return_pct", "current_strategy_return_pct_gross"):
         try:
@@ -102,7 +105,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str) -> str:
     stocks = [p for p in positions if p.get("asset_type") == "STOCK"]
     total_asset = float(account.get("total_asset") or 0)
     exposure = float(account.get("stock_market_value") or 0) / total_asset * 100 if total_asset else 0
-    risk = canonical_risk(equity)
+    risk = canonical_risk(equity, latest_formal_risk())
     summary = equity.get("summary") or {}
     pending = summary.get("unknown_fee_flag", True)
     known_fees = summary.get("known_fees")
