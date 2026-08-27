@@ -21,11 +21,11 @@ jobs:
         run: |
           python -m py_compile scripts/process_state_sync_request.py scripts/check_trade_event_formal_sync.py
           python scripts/check_trade_event_formal_sync.py
-      - name: Commit repair
+      - name: Commit non-workflow production repair
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ETF规则_MASTER.md ETF当前状态_DASHBOARD.md ETF交易复盘与经验库_2026.md ETF市场行情档案_2026.md scripts/process_state_sync_request.py scripts/check_trade_event_formal_sync.py .github/workflows/system-consistency.yml
+          git add ETF规则_MASTER.md ETF当前状态_DASHBOARD.md ETF交易复盘与经验库_2026.md ETF市场行情档案_2026.md scripts/process_state_sync_request.py scripts/check_trade_event_formal_sync.py
           git commit -m "fix: complete executed Trial synchronization across formal records"
           git push origin HEAD:main
