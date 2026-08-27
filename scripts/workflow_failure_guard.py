@@ -14,6 +14,7 @@ TZ = timezone(timedelta(hours=8))
 SUPPORTED_WORKFLOWS = {
     "ETF system consistency",
     "ETF runtime self-healing watchdog",
+    "Overseas pre-open pulse",
 }
 
 # Automatic rollback is deliberately limited to maintenance infrastructure.
