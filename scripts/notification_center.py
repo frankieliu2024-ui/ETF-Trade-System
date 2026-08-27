@@ -359,10 +359,14 @@ def decision_event() -> dict | None:
         return None
     account = read_json(STATE / "account_fact.json", {})
     event_type, applicable = str(trigger.get("trigger_type") or ""), str(trigger.get("applicable_object") or "")
+    # Account changes have one canonical notification path only.  The dedicated
+    # account_confirmation_event() applies freshness, materiality and exact-delta
+    # checks; routing the same change through decision_event() creates duplicate,
+    # generic alerts such as mark-to-market total_asset moves.
+    if event_type == "ACCOUNT_STRUCTURE_CHANGED":
+        return None
     if event_type == "TRADE_CONFIRMED":
         target = trade_display(applicable); title = f"{target}成交后需要重新评估"; content = f"{target}的成交已经确认，账户持仓或现金结构发生变化。\n\n建议：现在重新检查持仓、资金和下一步交易安排。"
-    elif event_type == "ACCOUNT_STRUCTURE_CHANGED":
-        target = display_from_code(applicable, account); title = "账户状态发生重要变化"; content = f"{target}相关的持仓、现金或资产结构出现已确认变化。\n\n建议：现在重新检查当前持仓和可用资金，确认是否需要调整原交易判断。"
     elif event_type == "RISK_BOUNDARY_CROSSED":
         title = "ETF策略风险状态发生变化"; content = "ETF策略风险状态已跨过关键区间，这可能改变新增交易的可用空间。\n\n建议：现在重新评估风险许可和当前交易计划。"
     elif event_type == "E2E_RECOVERED":
