@@ -18,16 +18,14 @@ on:
       - ".github/workflows/**"
       - "requests/research_backfill/*.json"
       - "requests/trade_fact_correction/*.json"
+      - "data/state/account_fact.json"
       - "data/state/CURRENT.json"
       - "data/state/runtime_health.json"
       - "data/state/overseas_runtime_health.json"
-      - "data/state/stock_context.json"
-      - "data/state/stock_market_context.json"
-      # Rebuildable query/decision/market-delta states are deliberately not
-      # full-consistency push triggers. Their canonical producers own local
-      # quality checks; source/config/formal-fact changes still trigger this gate.
-      - "data/state/research_context.json"
-      - "data/state/relative_strength.json"
+      # Rebuildable query/decision/market-delta, stock-monitoring and current
+      # research-summary states are deliberately not full-consistency push
+      # triggers. Their canonical producers own local quality checks; the
+      # account/source/config/formal/research inputs still trigger this gate.
       - "data/state/research_master_candidates.json"
       - "data/state/historical_backfill_status.json"
       - "data/state/historical_position_research.json"
