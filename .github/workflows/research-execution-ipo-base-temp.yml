@@ -6,9 +6,9 @@ on:
     paths:
       - .github/workflows/research-execution-ipo-base-temp.yml
 permissions:
-  contents: write
+  contents: read
 jobs:
-  apply:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,24 +17,26 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Patch temporary script index anchor
+      - name: Validate bridge syntax
+        run: python -m py_compile scripts/build_research_execution_bridge.py scripts/build_state_context.py scripts/check_research_integration.py
+      - name: Build research execution bridge from current formal state
+        run: python scripts/build_research_execution_bridge.py
+      - name: Assert IPO-base coverage and no auto trade
         shell: bash
         run: |
           python - <<'PY'
-          from pathlib import Path
-          p = Path('scripts/apply_research_execution_upgrade_temp.py')
-          t = p.read_text(encoding='utf-8')
-          t = t.replace("anchor = '- `data/state/research_context.json`'", "anchor = '- 查询上下文：`data/state/query_context.json`、`data/state/decision_context.json`；其中 `decision_context.json` 是ChatGPT盘中快速读取的聚合决策上下文，并内嵌最新日内路径特征，不另建平行decision bundle'")
-          p.write_text(t, encoding='utf-8')
+          import json
+          s=json.load(open('data/state/research_execution_summary.json',encoding='utf-8'))
+          d=json.load(open('data/state/decision_context.json',encoding='utf-8'))
+          assert s['read_only'] is True
+          assert s['automatic_trade'] is False
+          assert s['trade_signal'] is None
+          assert len(s['ipo_base_stock_evidence']) == 2
+          assert {x['code'] for x in s['ipo_base_stock_evidence']} == {'300750','601138'}
+          assert d['research_execution_summary_file'] == 'data/state/research_execution_summary.json'
+          assert len(d['ipo_base_stock_evidence']) == 2
+          assert d['unified_capital_reallocation_contract']['direct_execution_contribution'] is True
+          print(json.dumps({'portfolio_exposure':s['portfolio_exposure'],'ipo_base_stock_evidence':s['ipo_base_stock_evidence'],'execution_bridge':s['execution_bridge']},ensure_ascii=False))
           PY
-      - name: Apply architecture patch
-        run: python scripts/apply_research_execution_upgrade_temp.py
-      - name: Validate Python syntax
-        run: python -m py_compile scripts/build_research_execution_bridge.py scripts/build_state_context.py scripts/check_research_integration.py
-      - name: Commit upgrade
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ETF规则_MASTER.md ETF_SYSTEM_INDEX.md scripts/build_research_execution_bridge.py scripts/build_state_context.py scripts/check_research_integration.py
-          git commit -m "research: bridge evidence into capital execution"
-          git push origin HEAD:fix/research-execution-ipo-base-20260827
+      - name: Run research integration consistency extension
+        run: python scripts/check_research_integration.py
