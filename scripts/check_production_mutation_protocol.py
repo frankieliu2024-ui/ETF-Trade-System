@@ -34,14 +34,15 @@ def _git_add_mentions(text: str, path: str) -> bool:
 def _broad_state_add_without_exclusion(text: str, path: str) -> bool:
     if path != "data/state/system_consistency.json":
         return False
-    broad = any(
-        token in text
-        for token in (
-            "git add -A -- data/market/snapshots data/state",
-            "git add -A -- data/state",
-            "git add data/state",
-        )
-    )
+    broad = False
+    for line in text.splitlines():
+        s = line.strip()
+        if re.match(r"^git add(?:\s+-A)?(?:\s+--)?\s+data/state(?:\s|$)", s):
+            broad = True
+            break
+        if "git add -A -- data/market/snapshots data/state" in s:
+            broad = True
+            break
     excluded = any(
         token in text
         for token in (
