@@ -125,7 +125,12 @@ def build_symbol(symbol: str, name: str, role: str, conditional: bool) -> dict:
     regular_rows = [r for r in rows if r["session"] == "REGULAR" and r.get("market_date_local") == latest.get("market_date_local")]
     if not regular_rows:
         regular_rows = [r for r in rows if r["session"] == "REGULAR"]
-    regular_close = regular_rows[-1]["close"] if regular_rows else meta.get("previousClose")
+    previous_regular_close = meta.get("previousClose")
+    regular_open = None
+    if regular_rows:
+        regular_open = regular_rows[0].get("open") if regular_rows[0].get("open") is not None else regular_rows[0].get("close")
+    regular_close = regular_rows[-1]["close"] if regular_rows else previous_regular_close
+    regular_market_date = regular_rows[-1].get("market_date_local") if regular_rows else latest.get("market_date_local")
     now = datetime.now(timezone.utc)
     try:
         policy = json.loads(RUNTIME_POLICY.read_text(encoding="utf-8"))
@@ -148,7 +153,12 @@ def build_symbol(symbol: str, name: str, role: str, conditional: bool) -> dict:
         "data_age_seconds": age_seconds,
         "current_market_phase": current_phase,
         "latest": latest,
+        "previous_regular_close_reference": previous_regular_close,
+        "regular_session_open_reference": regular_open,
         "regular_session_close_reference": regular_close,
+        "regular_session_market_date": regular_market_date,
+        "regular_session_change_vs_previous_close_pct": pct_change(regular_close, previous_regular_close),
+        "regular_session_change_from_open_pct": pct_change(regular_close, regular_open),
         "extended_change_vs_regular_close_pct": pct_change(latest.get("close"), regular_close),
         "decision_note": (
             "扩展时段价格只作前置信号。PRE_MARKET/POST_MARKET流动性和价格发现质量低于正式现金盘；"
