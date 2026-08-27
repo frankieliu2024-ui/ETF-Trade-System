@@ -38,8 +38,6 @@ def _recent_duplicate(event: dict) -> bool:
             continue
         old_severity = str(ctx.get("shock_severity") or "")
         old_market_date = str(ctx.get("market_date") or "")
-        # A persistent extreme condition is one event per market day. A prior
-        # SUDDEN alert may still escalate once to EXTREME.
         if severity == "EXTREME" and old_severity == "EXTREME" and market_date and old_market_date == market_date:
             return True
         stamp = parse_notification_time(item.get("sent_at") or item.get("created_at"))
@@ -135,14 +133,16 @@ def _context_candidate(market: str) -> dict | None:
     previous = read_json(previous_path, {}) if previous_path.exists() else {}
     current_objects = current.get("objects") or {}
     previous_objects = previous.get("objects") or {}
-    symbols = ("QQQ", "SOXX") if market == "us" else ("N225", "KOSPI", "TWII")
+    symbols = ("QQQ", "SOXX") if market == "us" else ("N225", "KOSPI", "TWII", "HSTECH")
     labels = {
         "QQQ": "纳指100ETF代理（QQQ）", "SOXX": "半导体ETF代理（SOXX）",
         "N225": "日经225指数（N225）", "KOSPI": "韩国综合指数（KOSPI）", "TWII": "台湾加权指数（TWII）",
+        "HSTECH": "恒生科技指数（HSTECH）",
     }
     candidates = []
     metric_labels: dict[str, str] = {}
     market_dates: dict[str, str] = {}
+    today_bj = datetime.now(BEIJING).date().isoformat()
     for code in symbols:
         obj = current_objects.get(code) or {}
         latest = obj.get("latest") or {}
@@ -150,6 +150,10 @@ def _context_candidate(market: str) -> dict | None:
         if price_now is None or obj.get("quality_status") not in {"PASS", "FRESH"}:
             continue
         market_dates[code] = str(latest.get("market_date_local") or obj.get("regular_session_market_date") or "")
+        # Asia/HK alerts must be from the current Beijing trading date. This
+        # prevents previous-session closes being replayed before the local market opens.
+        if market == "asia" and market_dates[code] != today_bj:
+            continue
         if market == "us":
             phase = str(obj.get("current_market_phase") or "")
             if phase == "REGULAR":
@@ -164,7 +168,11 @@ def _context_candidate(market: str) -> dict | None:
         else:
             prev_close = number(latest.get("previous_close")) or number(obj.get("previous_close_reference"))
             day = pct_change(price_now, prev_close)
-            metric_labels[code] = "较前收"
+            if day is None:
+                day = pct_change(price_now, number(latest.get("open")))
+                metric_labels[code] = "较开盘"
+            else:
+                metric_labels[code] = "较前收"
         if day is not None and abs(day) >= THRESHOLDS[market]["index_extreme"]:
             candidates.append((abs(day) / THRESHOLDS[market]["index_extreme"] + 1.0, "EXTREME", code, day, None, latest))
         prev_obj = previous_objects.get(code) or {}
@@ -184,8 +192,8 @@ def _context_candidate(market: str) -> dict | None:
     label = labels[code]
     move = sudden if severity == "SUDDEN" and sudden is not None else (day or 0.0)
     direction = "UP" if move >= 0 else "DOWN"
-    market_name = "美股" if market == "us" else "日韩台"
-    market_date = market_dates.get(code) or datetime.now(BEIJING).date().isoformat()
+    market_name = "美股" if market == "us" else "亚太（日韩台港）"
+    market_date = market_dates.get(code) or today_bj
     title = f"【{'极端涨跌' if severity == 'EXTREME' else '突然涨跌'}｜需关注】{label}{pct(move)}"
     why = "涨跌达到海外通知层的极端阈值，可能改变下一A股交易节点的外部风险背景。" if severity == "EXTREME" else "连续海外脉冲之间出现快速变化，说明外部风险偏好正在短时间重新定价。"
     as_of = str(latest.get("as_of_beijing") or current.get("generated_at_beijing") or "")
@@ -198,10 +206,10 @@ def _context_candidate(market: str) -> dict | None:
         "content": render_shock(
             what=[f"- **市场**：{market_name}", f"- **对象**：{label}", f"- **{metric_labels.get(code, '当前阶段变化')}**：{pct(day)}", f"- **最近脉冲变化**：{pct(sudden) if sudden is not None else '未触发'}"],
             why=why,
-            implication="把本次异动作为外部结构的新证据，观察是否向A股科技、风险偏好或相关ETF传导；如果A股尚未开盘，则纳入下一盘前；如果A股正在交易，则立即检查本地是否共振或背离。",
+            implication="把本次异动作为外部结构的新证据，观察是否向A股科技、风险偏好或相关ETF传导；恒生科技指数（HSTECH）异动还要直接复核恒生科技ETF（513180）的自身反馈。如果A股正在交易，则立即检查本地是否共振或背离。",
             action="无需因海外单一异动机械调整A股持仓；在最近有效A股决策节点重新完成外部结构→本地传导→ETF自身反馈→机会判断。",
             as_of=as_of or "未提供",
-            boundary="海外异动通知只提高关注优先级，不直接生成A股风险许可、金额或卖出动作；美股盘前/盘后不得重复使用上一现金盘旧涨跌充当当前异动。",
+            boundary="海外异动通知只提高关注优先级，不直接生成A股风险许可、金额或卖出动作；美股盘前/盘后不得重复使用上一现金盘旧涨跌，亚洲/香港开盘前不得重放上一交易日收盘异动。",
         ),
         "source": str(current_path.relative_to(ROOT)),
         "security_code": code,
@@ -221,7 +229,7 @@ def main() -> int:
     if not event:
         print(json.dumps({"status": "NO_NOTIFICATION_NEEDED"}, ensure_ascii=False))
         return 0
-    result = persist_and_send(event, policy="极端/突然涨跌采用统一异动模板；SUDDEN同对象同方向45分钟冷却；EXTREME同一市场日只发一次，SUDDEN升级EXTREME允许追加；阈值仅控制注意力，不属于交易规则。")
+    result = persist_and_send(event, policy="极端/突然涨跌采用统一异动模板；A股、美股、日韩台、香港均覆盖；SUDDEN同对象同方向45分钟冷却；EXTREME同一市场日只发一次，SUDDEN升级EXTREME允许追加；阈值仅控制注意力，不属于交易规则。")
     print(json.dumps(result, ensure_ascii=False))
     return 1 if result.get("status") == "CREATED" else 0
 
