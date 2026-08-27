@@ -17,6 +17,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Patch temporary script index anchor
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/apply_research_execution_upgrade_temp.py')
+          t = p.read_text(encoding='utf-8')
+          t = t.replace("anchor = '- `data/state/research_context.json`'", "anchor = '- 查询上下文：`data/state/query_context.json`、`data/state/decision_context.json`；其中 `decision_context.json` 是ChatGPT盘中快速读取的聚合决策上下文，并内嵌最新日内路径特征，不另建平行decision bundle'")
+          p.write_text(t, encoding='utf-8')
+          PY
       - name: Apply architecture patch
         run: python scripts/apply_research_execution_upgrade_temp.py
       - name: Validate Python syntax
