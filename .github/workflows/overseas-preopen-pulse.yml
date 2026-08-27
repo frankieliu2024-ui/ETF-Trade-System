@@ -19,11 +19,12 @@ concurrency:
 jobs:
   overseas:
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 8
     env:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
       HITHINK_FINANCE_API_KEY: ${{ secrets.HITHINK_FINANCE_API_KEY }}
       SCHEDULED_FOR: ${{ github.event.schedule || github.event_name }}
+      PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -44,30 +45,45 @@ jobs:
         continue-on-error: true
         run: |
           python scripts/check_system_consistency.py
-          # The audit report is owned by system-consistency.yml. This pulse may
-          # read it transiently but must never persist its own copy.
           git checkout -- data/state/system_consistency.json || true
+      - name: Preserve previous Asia pulse for sudden-move comparison
+        run: |
+          [ -f data/state/overseas_context.json ] && cp data/state/overseas_context.json /tmp/overseas_context_prev.json || true
       - name: Refresh formal overseas and Asia index context
         run: python scripts/build_overseas_context.py
       - name: Refresh US extended-hours context
         run: python scripts/build_us_extended_hours_context.py
+      - name: Send aggregated Japan-Korea-Taiwan open/close summary when due
+        id: asia_summary_notify
+        continue-on-error: true
+        run: python scripts/send_regional_session_summary.py --market asia
+      - name: Send Asia extreme/sudden move alert when due
+        id: asia_shock_notify
+        continue-on-error: true
+        env:
+          PREVIOUS_CONTEXT_PATH: /tmp/overseas_context_prev.json
+        run: python scripts/send_market_shock_notification.py --market asia
       - name: Record overseas pulse runtime health
         if: always()
         run: python scripts/build_overseas_runtime_health.py
       - name: Rebuild on-demand query context
         if: success()
         run: python scripts/build_query_context.py
-      - name: Commit overseas contexts and runtime health
+      - name: Commit overseas contexts, notifications and runtime health
         if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Persist only files owned by the overseas pulse. A-share runtime_health
-          # and system_consistency are owned by their canonical workflows.
-          git add data/state/overseas_context.json data/state/us_extended_hours_context.json data/state/query_context.json data/state/overseas_runtime_health.json
+          # Persist only files owned by the overseas pulse plus unified notification state.
+          git add data/state/overseas_context.json data/state/us_extended_hours_context.json data/state/query_context.json data/state/overseas_runtime_health.json data/state/notification_center.json
           if git diff --cached --quiet; then
             exit 0
           fi
-          git commit -m "data: refresh overseas pulse and runtime health"
+          git commit -m "data: refresh overseas pulse and notifications"
           git pull --rebase origin main
           git push origin HEAD:main
+      - name: Surface Asia notification delivery failure without blocking market data
+        if: ${{ steps.asia_summary_notify.outcome == 'failure' || steps.asia_shock_notify.outcome == 'failure' }}
+        run: |
+          echo "Asia market notification failed; overseas market-data refresh remains valid."
+          exit 1
