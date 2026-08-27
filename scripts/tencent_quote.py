@@ -52,14 +52,12 @@ def fetch_tencent_quotes(thscodes: list[str], timeout: int = 10) -> dict[str, di
         fields = parsed.get(provider_symbol.upper()) or []
         if len(fields) < 38 or fields[2] != provider_symbol[2:]:
             raise RuntimeError(f"Tencent quote missing or mismatched row for {thscode}")
-        suspended = (
-            len(fields) > 42
-            and fields[42].strip().upper() == "S"
-            and len(fields) > 32
-            and bool(re.fullmatch(r"[0-9]{14}", fields[32] or ""))
-        )
-        timestamp_field = fields[32] if suspended else fields[30]
-        timestamp_ms = _timestamp_ms(timestamp_field)
+        # Tencent's suspended-security row keeps the standard provider timestamp
+        # in field 30 and exposes the non-trading status code "S" in field 40.
+        # Raw production probe on 2026-08-27 confirmed this shape across the
+        # affected ETF; do not infer suspension merely from zero volume.
+        suspended = len(fields) > 40 and fields[40].strip().upper() == "S"
+        timestamp_ms = _timestamp_ms(fields[30])
         price, prev_close = _number(fields[3]), _number(fields[4])
         if price is None or prev_close is None or price < 0 or prev_close < 0:
             raise RuntimeError(f"Tencent quote missing price fields for {thscode}")
