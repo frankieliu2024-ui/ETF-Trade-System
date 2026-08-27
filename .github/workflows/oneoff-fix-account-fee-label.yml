@@ -1,0 +1,37 @@
+name: One-off fix account fee label
+on:
+  push:
+    paths:
+      - ".github/workflows/oneoff-fix-account-fee-label.yml"
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Patch fee wording
+        run: python scripts/oneoff_fix_account_fee_label.py
+      - name: Validate syntax
+        run: python -m py_compile scripts/sync_formal_files.py
+      - name: Commit production wording fix
+        shell: bash
+        run: |
+          mkdir -p /tmp/fee-fix/scripts
+          cp scripts/sync_formal_files.py /tmp/fee-fix/scripts/
+          cp ETF当前状态_DASHBOARD.md /tmp/fee-fix/
+          git fetch origin main
+          git reset --hard origin/main
+          cp /tmp/fee-fix/scripts/sync_formal_files.py scripts/
+          cp /tmp/fee-fix/ETF当前状态_DASHBOARD.md .
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/sync_formal_files.py ETF当前状态_DASHBOARD.md
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "fix: distinguish account fee records from latest trade fee"
+          git push origin HEAD:main
