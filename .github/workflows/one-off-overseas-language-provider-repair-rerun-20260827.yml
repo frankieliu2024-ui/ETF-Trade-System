@@ -1,0 +1,58 @@
+name: One-off overseas language and provider repair rerun 2026-08-27
+
+on:
+  push:
+    paths:
+      - ".github/workflows/one-off-overseas-language-provider-repair-rerun-20260827.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Reuse validated repair patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('.github/workflows/one-off-overseas-language-provider-repair-20260827.yml').read_text(encoding='utf-8')
+          start=src.index("          python - <<'PY'\n") + len("          python - <<'PY'\n")
+          end=src.index("\n          PY\n", start)
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in src[start:end].splitlines())
+          Path('/tmp/apply_repair.py').write_text(code,encoding='utf-8')
+          PY
+          python /tmp/apply_repair.py
+          python -m py_compile scripts/build_overseas_context.py scripts/market_quote_router.py scripts/build_query_context.py
+          python scripts/build_overseas_context.py
+          python scripts/build_us_extended_hours_context.py
+          # Full consistency is intentionally post-commit; before commit the
+          # consistency guard must reject the expected modified worktree.
+      - name: Commit repair
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p /tmp/repair/scripts /tmp/repair/config/market /tmp/repair/data/state
+          cp scripts/build_overseas_context.py scripts/market_quote_router.py scripts/build_query_context.py /tmp/repair/scripts/
+          cp ETF与市场监测数据接口使用规范.md ETF规则_MASTER.md ETF_SYSTEM_INDEX.md /tmp/repair/
+          cp config/market/provider_priority.json /tmp/repair/config/market/
+          cp data/state/overseas_context.json data/state/us_extended_hours_context.json /tmp/repair/data/state/
+          git fetch origin main
+          git reset --hard origin/main
+          cp /tmp/repair/scripts/* scripts/
+          cp /tmp/repair/ETF与市场监测数据接口使用规范.md /tmp/repair/ETF规则_MASTER.md /tmp/repair/ETF_SYSTEM_INDEX.md ./
+          cp /tmp/repair/config/market/provider_priority.json config/market/
+          cp /tmp/repair/data/state/* data/state/
+          git add scripts/build_overseas_context.py scripts/market_quote_router.py scripts/build_query_context.py ETF与市场监测数据接口使用规范.md ETF规则_MASTER.md ETF_SYSTEM_INDEX.md config/market/provider_priority.json data/state/overseas_context.json data/state/us_extended_hours_context.json
+          git commit -m "fix: localize market quality language and strengthen Asia fallbacks"
+          git push origin HEAD:main
