@@ -149,6 +149,66 @@ def _validate_trade_event_formal_sync(report: dict) -> None:
 
 
 
+
+def _validate_historical_trade_case_mapping(report: dict) -> None:
+    """Require every canonical securities trade-index row to have exactly one valid CASE owner."""
+    import re
+
+    experience = (ROOT / "ETF交易复盘与经验库_2026.md").read_text(encoding="utf-8")
+    start_token = "### 2.1 2026-07-13以来完整证券成交索引"
+    end_token = "### 2.2 银证转账与非交易现金流水"
+    errors = []
+    rows = []
+    try:
+        start = experience.index(start_token)
+        section = experience[start:experience.index(end_token, start)]
+    except ValueError:
+        section = ""
+        errors.append("transaction_index_section_missing")
+    for line in section.splitlines():
+        if not line.startswith("|2026-"):
+            continue
+        cols = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cols) < 10:
+            errors.append("malformed_row=" + line[:80])
+            continue
+        rows.append(cols)
+    headings = set(re.findall(r"^###\s+.*?(CASE-\d{8}-\d{2})[:：]", experience, re.MULTILINE))
+    etf_count = 0
+    stock_count = 0
+    for cols in rows:
+        dt, name, code, side, qty, price, principal, fee, cashflow, remark = cols[:10]
+        case_ids = sorted(set(re.findall(r"CASE-\d{8}-\d{2}", remark)))
+        if len(case_ids) != 1:
+            errors.append(f"{dt}:{code}:case_count={len(case_ids)}")
+        elif case_ids[0] not in headings:
+            errors.append(f"{dt}:{code}:missing_case_heading={case_ids[0]}")
+        if "ETF" in name:
+            etf_count += 1
+        else:
+            stock_count += 1
+    declared = re.search(r"共(\d+)笔证券交易：ETF\s*(\d+)笔、个股(\d+)笔", section)
+    if declared:
+        declared_counts = tuple(map(int, declared.groups()))
+        actual_counts = (len(rows), etf_count, stock_count)
+        if declared_counts != actual_counts:
+            errors.append(f"declared_counts={declared_counts} actual={actual_counts}")
+    else:
+        errors.append("declared_trade_counts_missing")
+    status = "FAIL" if errors else "PASS"
+    report.setdefault("checks", []).append({
+        "name": "formal_files:historical_trade_case_mapping",
+        "status": status,
+        "detail": f"trade_rows={len(rows)} etf={etf_count} stock={stock_count} missing={errors}",
+    })
+    for item in errors:
+        message = "historical_trade_case_mapping:" + item
+        if message not in report.setdefault("errors", []):
+            report["errors"].append(message)
+    report["hard_error_count"] = len(report.get("errors") or [])
+    report["warning_count"] = len(report.get("warnings") or [])
+    report["status"] = "FAIL" if report["hard_error_count"] else ("WARNING" if report["warning_count"] else "PASS")
+
 def _validate_readme_front_door(report: dict) -> None:
     import re
 
@@ -217,6 +277,7 @@ def main() -> int:
     _normalize_stock_market_time_alignment(report)
     _validate_formal_risk_precedence(report)
     _validate_trade_event_formal_sync(report)
+    _validate_historical_trade_case_mapping(report)
     _validate_readme_front_door(report)
     _validate_production_mutation_protocol(report)
     REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
