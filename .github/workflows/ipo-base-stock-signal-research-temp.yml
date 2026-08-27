@@ -1,0 +1,52 @@
+name: IPO base stock signal research temp
+
+on:
+  push:
+    branches:
+      - research/ipo-base-stock-signals-20260827
+    paths:
+      - scripts/research_ipo_base_stock_signals_temp.py
+      - .github/workflows/ipo-base-stock-signal-research-temp.yml
+
+permissions:
+  contents: write
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/ipo-base-stock-signals-20260827
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install research dependencies
+        run: python -m pip install --disable-pip-version-check pandas numpy akshare
+      - name: Run PIT stock-specific signal validation
+        run: python scripts/research_ipo_base_stock_signals_temp.py
+      - name: Validate result boundaries
+        run: |
+          python - <<'PY'
+          import json
+          p='research/backtests/ipo_base_stock_signal_validation.json'
+          x=json.load(open(p,encoding='utf-8'))
+          assert x['point_in_time'] is True
+          assert x['automatic_trade'] is False
+          assert x['trade_signal'] is None
+          assert {s['code'] for s in x['stocks']} == {'300750','601138'}
+          assert all(s['automatic_trade'] is False and s['trade_signal'] is None for s in x['stocks'])
+          print(json.dumps({'conclusion':x['conclusion'],'execution_eligible_signal_count':x['execution_eligible_signal_count'],'stocks':[{'display_name':s['display_name'],'status':s['validated_stock_specific_signal_status'],'validated_signal_ids':s['validated_signal_ids'],'current_completed_bar_matches':s['current_completed_bar_matches'],'identity':s['latest_identity_check']} for s in x['stocks']]},ensure_ascii=False))
+          PY
+      - name: Commit research result to audit branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/backtests/ipo_base_stock_signal_validation.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "research: record IPO-base stock signal validation"
+          git push origin HEAD:research/ipo-base-stock-signals-20260827
