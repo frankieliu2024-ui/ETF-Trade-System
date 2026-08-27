@@ -53,6 +53,37 @@ def parse_time(text: object) -> datetime | None:
     return dt.astimezone(SHANGHAI)
 
 
+def latest_formal_risk_fact() -> dict:
+    review_dir = ROOT / "events" / "reviews"
+    candidates = []
+    if review_dir.exists():
+        for path in review_dir.glob("*.json"):
+            try:
+                event = load_json(path)
+            except Exception:
+                continue
+            review = event.get("review") or event.get("formal_review") or {}
+            fact = review.get("etf_strategy_known_net") or {}
+            risk = safe_float(fact.get("etf_strategy_risk_rate_pct"))
+            equity = safe_float(fact.get("known_net_strategy_equity"))
+            pnl = safe_float(fact.get("known_net_cumulative_pnl"))
+            updated = parse_time(event.get("updated_at_beijing") or event.get("account_updated_at"))
+            if risk is None or equity is None or updated is None:
+                continue
+            calculated = (pnl / 200000.0 * 100.0) if pnl is not None else ((equity / 200000.0 - 1.0) * 100.0)
+            if abs(calculated - risk) > 0.03:
+                continue
+            candidates.append((updated, {
+                "risk_rate_pct": risk,
+                "strategy_equity_known_net": equity,
+                "cumulative_pnl_known_net": pnl,
+                "market_date": event.get("market_date") or review.get("market_date"),
+                "updated_at_beijing": updated.isoformat(timespec="seconds"),
+                "source": str(path.relative_to(ROOT)).replace("\\", "/"),
+            }))
+    return max(candidates, key=lambda x: x[0])[1] if candidates else {}
+
+
 def pct(new, old):
     new_v, old_v = safe_float(new), safe_float(old)
     if new_v is None or old_v in (None, 0.0):
@@ -115,16 +146,20 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
     etf_pnl = sum(float(p.get("holding_pnl") or 0) for p in etfs)
     # The formal risk rate is the maintained Known-net strategy return. Broker
     # floating PnL remains a separate holding-pressure fact.
-    equity_path = ROOT / "data/state/etf_strategy_equity.json"
-    equity = load_json(equity_path) if equity_path.exists() else {}
-    equity_summary = equity.get("summary") or {}
-    risk_rate = safe_float(equity_summary.get("known_net_current_strategy_return_pct"))
+    formal_risk = latest_formal_risk_fact()
+    risk_rate = safe_float(formal_risk.get("risk_rate_pct"))
+    formal_risk_equity = safe_float(formal_risk.get("strategy_equity_known_net"))
+    if risk_rate is None:
+        equity_path = ROOT / "data/state/etf_strategy_equity.json"
+        equity = load_json(equity_path) if equity_path.exists() else {}
+        equity_summary = equity.get("summary") or {}
+        risk_rate = safe_float(equity_summary.get("known_net_current_strategy_return_pct"))
     if risk_rate is None:
         risk_rate = etf_pnl / 200000.0 * 100.0
     total_asset = float(account.get("total_asset") or 0)
     exposure = (float(account.get("stock_market_value") or 0) / total_asset * 100.0) if total_asset else 0.0
     scenario = request.get("interaction_scenario") or "UNSPECIFIED"
-    lines = ["## 云端实时状态（自动同步）", "", f"> 更新时间：{account.get('updated_at','')}  ", f"> 来源：{account.get('source','')}  ", f"> 场景：{scenario}  ", "> 本区块只同步已确认账户事实与ChatGPT已形成的正式决策；自动程序不得自行推导交易权限或下单。", "", "|项目|最新事实|", "|-|-|", f"|总资产|{money(account.get('total_asset'))}|", f"|股票市值|{money(account.get('stock_market_value'))}|", f"|可用资金|{money(account.get('cash'))}|", f"|账户持仓盈亏|{money(account.get('holding_pnl'))}|", f"|当日盈亏|{money(account.get('daily_pnl'))}（{float(account.get('daily_pnl_pct') or 0):+.2f}%）|", f"|账户总风险暴露率|约{exposure:.2f}%|", f"|ETF持仓浮动盈亏|{money(etf_pnl)}|", f"|ETF策略风险率|约{risk_rate:.2f}%（仅按MASTER固定20万元计划本金计算，不由本脚本推导风险许可）|", "", "### 当前持仓事实", "", "|标的|数量|成本|现价|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|"]
+    lines = ["## 云端实时状态（自动同步）", "", f"> 更新时间：{account.get('updated_at','')}  ", f"> 来源：{account.get('source','')}  ", f"> 场景：{scenario}  ", "> 本区块只同步已确认账户事实与ChatGPT已形成的正式决策；自动程序不得自行推导交易权限或下单。", "", "|项目|最新事实|", "|-|-|", f"|总资产|{money(account.get('total_asset'))}|", f"|股票市值|{money(account.get('stock_market_value'))}|", f"|可用资金|{money(account.get('cash'))}|", f"|账户持仓盈亏|{money(account.get('holding_pnl'))}|", f"|当日盈亏|{money(account.get('daily_pnl'))}（{float(account.get('daily_pnl_pct') or 0):+.2f}%）|", f"|账户总风险暴露率|约{exposure:.2f}%|", f"|ETF持仓浮动盈亏|{money(etf_pnl)}|", *(([f"|ETF策略Known-net权益|{money(formal_risk_equity)}|"] if formal_risk_equity is not None else [])), f"|ETF策略风险率|约{risk_rate:.2f}%（Known-net；最新正式复盘风险事实优先，旧重建仅在无正式事实时回退）|", "", "### 当前持仓事实", "", "|标的|数量|成本|现价|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|"]
     for p in positions:
         lines.append(f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|{float(p.get('cost') or 0):.3f}|{float(p.get('last_price') or 0):.3f}|{money(p.get('market_value'))}|{money(p.get('holding_pnl'))}（{float(p.get('holding_pnl_pct') or 0):+.2f}%）|")
     lines += ["", f"持仓ETF：{'、'.join(display_name(p) for p in etfs) or '无'}。", f"账户个股：{'、'.join(display_name(p) for p in stocks) or '无'}。"]

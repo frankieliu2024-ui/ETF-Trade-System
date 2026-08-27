@@ -120,6 +120,26 @@ def dashboard_risk_metric(dashboard: str) -> tuple[float | None, str]:
     return float(match.group(1)), (updated.group(1).strip() if updated else "")
 
 
+def latest_formal_review_risk() -> dict:
+    directory = ROOT / "events" / "reviews"
+    candidates = []
+    if directory.exists():
+        for path in directory.glob("*.json"):
+            event = read_json(path)
+            review = event.get("review") or event.get("formal_review") or {}
+            fact = review.get("etf_strategy_known_net") or {}
+            try:
+                risk = float(fact.get("etf_strategy_risk_rate_pct"))
+                equity = float(fact.get("known_net_strategy_equity"))
+            except (TypeError, ValueError):
+                continue
+            updated = parse_time(event.get("updated_at_beijing") or event.get("account_updated_at"))
+            if updated is None:
+                continue
+            candidates.append((updated, {"risk_pct": risk, "equity": equity, "updated_at": updated.isoformat(timespec="seconds"), "market_date": event.get("market_date") or review.get("market_date"), "source": str(path.relative_to(ROOT)).replace("\\", "/")}))
+    return max(candidates, key=lambda x: x[0])[1] if candidates else {}
+
+
 def risk_component(equity: dict, dashboard: str, current: dict) -> dict:
     dashboard_pct, dashboard_updated = dashboard_risk_metric(dashboard)
     summary = equity.get("summary") or {}
@@ -131,6 +151,26 @@ def risk_component(equity: dict, dashboard: str, current: dict) -> dict:
         reconstruction_as_of and market_date and reconstruction_as_of >= market_date
     )
 
+    formal_review = latest_formal_review_risk()
+    formal_review_pct = formal_review.get("risk_pct")
+    if formal_review_pct is not None:
+        dashboard_matches = dashboard_pct is not None and abs(float(dashboard_pct) - float(formal_review_pct)) <= 0.03
+        return {
+            "status": "READY",
+            "reason": "latest formal post-close risk fact is authoritative; Dashboard is reconciled or automatically bypassed if transiently regressed",
+            "etf_strategy_risk_pct": round(float(formal_review_pct), 2),
+            "source": formal_review.get("source"),
+            "source_updated_at": formal_review.get("updated_at"),
+            "formal_review_market_date": formal_review.get("market_date"),
+            "dashboard_risk_pct": dashboard_pct,
+            "dashboard_matches_formal_review": dashboard_matches,
+            "dashboard_updated_at": dashboard_updated,
+            "reconstruction_risk_pct": reconstruction_pct,
+            "reconstruction_generated_at": reconstruction_generated,
+            "reconstruction_as_of_transaction_date": reconstruction_as_of,
+            "reconstruction_fresh_for_market_date": reconstruction_fresh_for_market,
+            "data_quality": "FORMAL_REVIEW_PRIMARY; DASHBOARD_RECONCILED; RECONSTRUCTION_AUXILIARY",
+        }
     if dashboard_pct is not None:
         return {
             "status": "READY",

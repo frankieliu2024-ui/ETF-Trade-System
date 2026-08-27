@@ -56,10 +56,48 @@ def _normalize_stock_market_time_alignment(report: dict) -> None:
         report["status"] = "WARNING" if report["warnings"] else "PASS"
 
 
+def _validate_formal_risk_precedence(report: dict) -> None:
+    review_dir = ROOT / "events" / "reviews"
+    candidates = []
+    for path in review_dir.glob("*.json") if review_dir.exists() else []:
+        try:
+            event = json.loads(path.read_text(encoding="utf-8"))
+            review = event.get("review") or event.get("formal_review") or {}
+            fact = review.get("etf_strategy_known_net") or {}
+            risk = float(fact.get("etf_strategy_risk_rate_pct"))
+            updated = datetime.fromisoformat(str(event.get("updated_at_beijing") or event.get("account_updated_at")).replace("Z", "+00:00"))
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+            continue
+        candidates.append((updated, risk, str(path.relative_to(ROOT))))
+    if not candidates:
+        return
+    _, formal_risk, source = max(candidates, key=lambda x: x[0])
+    dashboard = (ROOT / "ETF当前状态_DASHBOARD.md").read_text(encoding="utf-8")
+    match = __import__("re").search(r"\|ETF策略风险率\|约?\s*([+-]?\d+(?:\.\d+)?)%", dashboard)
+    e2e = _read_json("data/state/e2e_status.json")
+    e2e_risk = ((e2e.get("components") or {}).get("risk") or {}).get("etf_strategy_risk_pct")
+    dashboard_risk = float(match.group(1)) if match else None
+    mismatches = []
+    if dashboard_risk is None or abs(dashboard_risk - formal_risk) > 0.03:
+        mismatches.append(f"dashboard={dashboard_risk}")
+    try:
+        if e2e_risk is None or abs(float(e2e_risk) - formal_risk) > 0.03:
+            mismatches.append(f"e2e={e2e_risk}")
+    except (TypeError, ValueError):
+        mismatches.append(f"e2e={e2e_risk}")
+    report.setdefault("checks", []).append({"name": "risk:formal_precedence", "status": "FAIL" if mismatches else "PASS", "detail": f"formal={formal_risk:.4f} source={source} " + (" ".join(mismatches) if mismatches else "dashboard/e2e aligned")})
+    if mismatches:
+        message = "risk:formal_precedence:" + ";".join(mismatches)
+        if message not in report.setdefault("errors", []): report["errors"].append(message)
+        report["hard_error_count"] = len(report["errors"])
+        report["status"] = "FAIL"
+
+
 def main() -> int:
     rc = core_main()
     report = _read_json("data/state/system_consistency.json")
     _normalize_stock_market_time_alignment(report)
+    _validate_formal_risk_precedence(report)
     REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
         "status": report.get("status"),
