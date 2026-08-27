@@ -1,0 +1,291 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-08-27T01:37:52Z",
+  "mode": "RESEARCH_TO_EXECUTION_READ_ONLY_BRIDGE",
+  "read_only": true,
+  "use_in_current_decision": true,
+  "decision_output_generated": false,
+  "automatic_trade": false,
+  "trade_signal": null,
+  "research_conclusions_must_be_synthesized": true,
+  "conclusion_digest": {
+    "rule": "研究结论先归纳为可执行证据摘要，再进入正式判断；研究结论可以改变风险收益、候选比较、持有/卖出、金额与资金来源/去向，但不能单独生成订单或自动交易。",
+    "runtime_validated_evidence": [
+      {
+        "evidence_id": "market_regime",
+        "status": "READY",
+        "use_in_current_decision": true,
+        "decision_eligible": null,
+        "trade_signal": null
+      },
+      {
+        "evidence_id": "market_structure",
+        "status": "READY",
+        "use_in_current_decision": true,
+        "decision_eligible": null,
+        "trade_signal": null
+      },
+      {
+        "evidence_id": "skfolio_risk",
+        "status": "READY",
+        "use_in_current_decision": true,
+        "decision_eligible": false,
+        "trade_signal": null
+      },
+      {
+        "evidence_id": "etf_share_flow",
+        "status": "DEGRADED",
+        "use_in_current_decision": false,
+        "decision_eligible": false,
+        "trade_signal": null
+      },
+      {
+        "evidence_id": "margin_financing",
+        "status": "READY",
+        "use_in_current_decision": true,
+        "decision_eligible": false,
+        "trade_signal": null
+      },
+      {
+        "evidence_id": "active_return",
+        "status": "READY",
+        "use_in_current_decision": true,
+        "decision_eligible": false,
+        "trade_signal": null
+      }
+    ],
+    "execution_eligible_backtest_conclusions": [],
+    "research_only_backtest_conclusions": [
+      {
+        "source": "research/backtests/active_return_stage1_validation.json",
+        "mode": null,
+        "research_interpretation": "PROMISING_ACTIVE_RETURN_EVIDENCE_REQUIRES_FORMAL_CONVERSION_REVIEW",
+        "conclusion": null,
+        "decision_eligible": false,
+        "production_context_integration": false,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/alphagen_stage1_validation.json",
+        "mode": "ALPHAGEN_STAGE1_POINT_IN_TIME_VALIDATION",
+        "research_interpretation": "NO_STABLE_INCREMENT_STAGE1",
+        "conclusion": null,
+        "decision_eligible": false,
+        "production_context_integration": false,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/component_lead_stage1_validation.json",
+        "mode": "RESEARCH_ONLY_COMPONENT_INDUSTRY_LEAD_STAGE1",
+        "research_interpretation": "PROMISING_STATIC_BASKET_INCREMENT_REQUIRES_HISTORICAL_MEMBERSHIP_VALIDATION",
+        "conclusion": null,
+        "decision_eligible": false,
+        "production_context_integration": false,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/cross_market_tech_stage1_a_validation.json",
+        "mode": "RESEARCH_ONLY_CROSS_MARKET_TECH_STAGE1_A",
+        "research_interpretation": "STAGE_A_PROMISING",
+        "conclusion": null,
+        "decision_eligible": false,
+        "production_context_integration": false,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/cross_market_tech_stage1_validation.json",
+        "mode": "CROSS_MARKET_TECH_TRANSMISSION_STAGE1",
+        "research_interpretation": "NO_INCREMENT_BEYOND_VALIDATED_SHARE_FLOW_CONTROLS",
+        "conclusion": null,
+        "decision_eligible": false,
+        "production_context_integration": false,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/etf_share_flow_increment_poc.json",
+        "mode": "ETF_SHARE_FLOW_CONDITIONAL_INCREMENT_POC",
+        "research_interpretation": "PROMISING_CONDITIONAL_INCREMENT",
+        "conclusion": null,
+        "decision_eligible": false,
+        "production_context_integration": false,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/etf_share_flow_stage1_validation.json",
+        "mode": "ETF_SHARE_FLOW_STAGE1_POINT_IN_TIME_VALIDATION",
+        "research_interpretation": "NO_STABLE_INCREMENT_STAGE1",
+        "conclusion": null,
+        "decision_eligible": false,
+        "production_context_integration": false,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/index_futures_lead_research_conclusion.json",
+        "mode": "RESEARCH_ONLY_INDEX_FUTURES_LEAD_CONCLUSION",
+        "research_interpretation": "PROMISING_REQUIRES_EXPIRY_AWARE_VALIDATION",
+        "conclusion": "股指期货领先证据值得继续，其中IM 5日基差变化当前最稳定，IF/IC 5日基差次之，IC 1日OI变化提供较弱但时间分段稳定的独立增量。由于基差仍基于连续合约，尚未逐合约校正剩余到期日、换月和期限结构，因此本轮不进入decision_context、不形成交易规则。",
+        "decision_eligible": false,
+        "production_context_integration": false,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/index_futures_lead_robustness_validation.json",
+        "mode": "RESEARCH_ONLY_INDEX_FUTURES_ROBUSTNESS",
+        "research_interpretation": "ROBUST_CONTINUOUS_CONTRACT_INCREMENT",
+        "conclusion": null,
+        "decision_eligible": false,
+        "production_context_integration": false,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/index_futures_lead_stage1_validation.json",
+        "mode": "RESEARCH_ONLY_INDEX_FUTURES_LEAD_STAGE1",
+        "research_interpretation": "PROMISING_INCREMENT_STAGE1",
+        "conclusion": null,
+        "decision_eligible": false,
+        "production_context_integration": false,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/margin_share_control_validation.json",
+        "mode": "RESEARCH_ONLY_MARGIN_SHARE_FLOW_FINAL_VALIDATION",
+        "research_interpretation": "PROMISING_MARGIN_INCREMENT_BEYOND_SHARE_FLOW",
+        "conclusion": null,
+        "decision_eligible": false,
+        "production_context_integration": false,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/market_breadth_margin_stage1_validation.json",
+        "mode": "RESEARCH_ONLY_MARKET_BREADTH_MARGIN_STAGE1",
+        "research_interpretation": "PROMISING_INCREMENT_REQUIRES_SHARE_FLOW_CONTROL",
+        "conclusion": null,
+        "decision_eligible": false,
+        "production_context_integration": false,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/market_breadth_pit_validation.json",
+        "mode": "RESEARCH_ONLY_MARKET_BREADTH_PIT_VALIDATION",
+        "research_interpretation": "TERMINATED_INSUFFICIENT_HISTORICAL_PIT_BREADTH",
+        "conclusion": "本轮不纳入市场宽度领先指标，也不新增宽度评分或交易规则。",
+        "decision_eligible": false,
+        "production_context_integration": false,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/pysr_stage1_validation.json",
+        "mode": "PYSR_STAGE1_RETURN_ENHANCEMENT_POC",
+        "research_interpretation": "NO_STABLE_INCREMENT_STAGE1",
+        "conclusion": null,
+        "decision_eligible": false,
+        "production_context_integration": false,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/qlib_stage1_validation.json",
+        "mode": "QLIB_STAGE1_POINT_IN_TIME_VALIDATION",
+        "research_interpretation": "NO_STABLE_INCREMENT_STAGE1",
+        "conclusion": null,
+        "decision_eligible": false,
+        "production_context_integration": false,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/skfolio_stage1_validation.json",
+        "mode": "SKFOLIO_STAGE1_WALK_FORWARD_VALIDATION",
+        "research_interpretation": "PROMISING_FOR_STAGE2",
+        "conclusion": null,
+        "decision_eligible": false,
+        "production_context_integration": false,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/skfolio_stage2_validation.json",
+        "mode": "SKFOLIO_STAGE2_ROBUSTNESS_VALIDATION",
+        "research_interpretation": "PROMISING_FOR_RESEARCH_INTEGRATION",
+        "conclusion": null,
+        "decision_eligible": false,
+        "production_context_integration": false,
+        "trade_signal": null
+      }
+    ],
+    "automatic_promotion": false,
+    "trade_signal": null
+  },
+  "portfolio_exposure": {
+    "ipo_base_stock_market_value": 68185.0,
+    "ipo_base_stock_share_of_total_asset_pct": 36.98,
+    "ipo_base_stock_count": 2,
+    "account_total_asset": 184398.57
+  },
+  "ipo_base_stock_evidence": [
+    {
+      "display_name": "宁德时代（300750）",
+      "code": "300750",
+      "name": "宁德时代",
+      "role": "IPO_BASE_STOCK",
+      "role_status": "CONFIRMED",
+      "quantity": 100.0,
+      "market_value": 37900.0,
+      "account_weight_pct": 20.55,
+      "holding_pnl_pct": -3.754,
+      "last_price": 373.8,
+      "change_pct": -1.372,
+      "as_of_beijing": "2026-08-27T09:37:45+08:00",
+      "quality_status": "PASS",
+      "use_in_current_decision": true,
+      "research_scope": "CURRENT_FACT_CAPITAL_ROLE_AND_MATCHED_VALIDATED_RESEARCH",
+      "validated_stock_specific_signal_status": "NO_MATCHED_VALIDATED_SIGNAL",
+      "decision_effects_allowed": [
+        "持有价值和风险收益复核",
+        "是否作为新增资本候选",
+        "是否作为ETF或其他机会的可释放资金来源",
+        "卖出后资金进入现金还是独立成立的新机会"
+      ],
+      "automatic_trade": false,
+      "trade_signal": null
+    },
+    {
+      "display_name": "工业富联（601138）",
+      "code": "601138",
+      "name": "工业富联",
+      "role": "IPO_BASE_STOCK",
+      "role_status": "CONFIRMED",
+      "quantity": 500.0,
+      "market_value": 30285.0,
+      "account_weight_pct": 16.42,
+      "holding_pnl_pct": 4.333,
+      "last_price": 62.74,
+      "change_pct": 3.5826,
+      "as_of_beijing": "2026-08-27T09:37:48+08:00",
+      "quality_status": "PASS",
+      "use_in_current_decision": true,
+      "research_scope": "CURRENT_FACT_CAPITAL_ROLE_AND_MATCHED_VALIDATED_RESEARCH",
+      "validated_stock_specific_signal_status": "NO_MATCHED_VALIDATED_SIGNAL",
+      "decision_effects_allowed": [
+        "持有价值和风险收益复核",
+        "是否作为新增资本候选",
+        "是否作为ETF或其他机会的可释放资金来源",
+        "卖出后资金进入现金还是独立成立的新机会"
+      ],
+      "automatic_trade": false,
+      "trade_signal": null
+    }
+  ],
+  "execution_bridge": {
+    "direct_execution_contribution": true,
+    "allowed_effects": [
+      "改变候选比较和机会强弱",
+      "改变持仓风险收益和卖出判断",
+      "改变新增金额判断",
+      "改变资金来源选择",
+      "改变卖出资金去向选择"
+    ],
+    "stock_buy_capital_source_rule": "若打新底仓个股出现独立、可证伪且足以改变决策的明显新增证据，必须比较现金、低效率ETF及其他合法可释放资本；现金不是机械唯一来源，任何ETF卖出仍需独立通过卖出链。",
+    "stock_sell_destination_rule": "若打新底仓个股出现足以支持降低风险或退出的证据，必须比较资金进入现金还是已经独立通过完整机会判断的ETF/其他合法机会；不得先卖出再寻找用途，也不得机械轮动。",
+    "etf_buy_source_rule": "ETF机会成立而现金不足时，打新底仓只有在其自身继续持有的边际收益效率更低、账户打新/底仓功能不被破坏且卖出决议独立成立时，才可作为资金来源。",
+    "separate_decisions_rule": "旧资产卖出与新资产买入始终分别决议；研究层只改变证据和比较结果，不自动联动两笔交易。"
+  },
+  "decision_boundary": "研究结论可直接贡献到执行判断，但不自动生成风险许可、Trial/Confirm、金额、卖出份额或订单；最终动作仍由MASTER完整买入/卖出链和用户人工下单决定。"
+}
