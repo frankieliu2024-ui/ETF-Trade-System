@@ -1,0 +1,61 @@
+name: One-off align close consistency 20260827
+on:
+  push:
+    paths:
+      - ".github/workflows/oneoff-close-consistency-20260827.yml"
+permissions:
+  contents: write
+concurrency:
+  group: production-main-writer
+  cancel-in-progress: false
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Synchronize latest main
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+      - name: Align close grace contract and close idempotency runtime health
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          standard = Path('ETF与市场监测数据接口使用规范.md')
+          text = standard.read_text(encoding='utf-8')
+          old = '- `close_grace_seconds = 900`：15:00收盘任务允许15分钟调度宽限；'
+          new = '- `close_grace_seconds = 1800`：15:00收盘任务允许30分钟调度宽限，仅用于收盘后补取当日最终收盘事实，不扩展连续竞价或可成交时段语义；'
+          assert old in text, 'data-standard close grace line not found'
+          text = text.replace(old, new, 1)
+          standard.write_text(text, encoding='utf-8')
+
+          runner = Path('scripts/cloud_runner_snapshot.py')
+          src = runner.read_text(encoding='utf-8')
+          old_block = '''    if args.node == "scheduled" and node == "close" and close_already_recorded(market_date):\n        write_runtime_health({"status": "SKIPPED", "reason": "close_already_recorded", "market_date": market_date, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "market_phase": market_phase})\n        print(json.dumps({"ok": True, "skipped": True, "reason": "close_already_recorded", "market_date": market_date}, ensure_ascii=False))\n        return 0\n'''
+          new_block = '''    if args.node == "scheduled" and node == "close" and close_already_recorded(market_date):\n        current = read_current(ROOT)\n        write_runtime_health({\n            "status": "SKIPPED",\n            "reason": "close_already_recorded",\n            "market_date": market_date,\n            "run_started_at": run_started_at,\n            "capture_started_at_beijing": capture_started_at,\n            "market_phase": market_phase,\n            "latest_snapshot": current.get("latest_snapshot", ""),\n            "provider_as_of": (current.get("data_freshness") or {}).get("captured_at_beijing", ""),\n        })\n        print(json.dumps({"ok": True, "skipped": True, "reason": "close_already_recorded", "market_date": market_date, "latest_snapshot": current.get("latest_snapshot", "")}, ensure_ascii=False))\n        return 0\n'''
+          assert old_block in src, 'close_already_recorded branch not found'
+          src = src.replace(old_block, new_block, 1)
+          runner.write_text(src, encoding='utf-8')
+
+          # Static verification before publish.
+          assert 'close_grace_seconds = 1800' in standard.read_text(encoding='utf-8')
+          out = runner.read_text(encoding='utf-8')
+          assert '"latest_snapshot": current.get("latest_snapshot", "")' in out
+          print('close consistency contract aligned')
+          PY
+          python -m py_compile scripts/cloud_runner_snapshot.py
+      - name: Publish and self-remove
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/oneoff-close-consistency-20260827.yml
+          git add ETF与市场监测数据接口使用规范.md scripts/cloud_runner_snapshot.py
+          git commit -m "fix: align close grace contract and idempotent runtime health"
+          git pull --rebase origin main
+          git push origin HEAD:main
