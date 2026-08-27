@@ -15,17 +15,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Run repair script
-        run: python scripts/oneoff_repair_515880_trial_sync.py
+      - name: Finalize transaction-index synchronization
+        run: python scripts/oneoff_finalize_trade_sync.py
       - name: Run focused pre-commit checks
         run: |
-          python -m py_compile scripts/process_state_sync_request.py scripts/check_trade_event_formal_sync.py
+          python -m py_compile scripts/process_state_sync_request.py
           python scripts/check_trade_event_formal_sync.py
-      - name: Commit non-workflow production repair
+      - name: Commit final production repair
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ETF规则_MASTER.md ETF当前状态_DASHBOARD.md ETF交易复盘与经验库_2026.md ETF市场行情档案_2026.md scripts/process_state_sync_request.py scripts/check_trade_event_formal_sync.py
-          git commit -m "fix: complete executed Trial synchronization across formal records"
+          git add ETF交易复盘与经验库_2026.md scripts/process_state_sync_request.py
+          git commit -m "fix: keep human trade index synchronized with fills"
           git push origin HEAD:main
