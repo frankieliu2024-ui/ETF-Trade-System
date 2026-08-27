@@ -46,6 +46,32 @@ def _display(name: Any, code: Any) -> str:
     return f"{name}（{code}）" if name and code else str(code or name or "未知标的")
 
 
+def _material_unreconciled_account_changes(account: dict) -> list[dict]:
+    ignored = {"total_asset", "stock_market_value", "market_value", "holding_pnl", "daily_pnl", "daily_pnl_pct"}
+    cutoff = datetime.now(TZ) - timedelta(minutes=30)
+    rows = []
+    for event in account.get("account_change_events_after_confirmed_at") or []:
+        if str(event.get("reconciliation_status") or "").upper() != "UNRECONCILED_ACCOUNT_CHANGE":
+            continue
+        obj = str(event.get("object") or "").strip()
+        if obj in ignored:
+            continue
+        try:
+            event_time = datetime.fromisoformat(str(event.get("event_time") or event.get("occurred_at") or "").replace("Z", "+00:00"))
+            if event_time.tzinfo is None:
+                event_time = event_time.replace(tzinfo=TZ)
+            event_time = event_time.astimezone(TZ)
+        except ValueError:
+            continue
+        if event_time < cutoff:
+            continue
+        if event.get("code") and abs(float(event.get("quantity_delta") or 0)) > 0:
+            rows.append(event)
+        elif obj == "cash" and abs(float(event.get("amount_delta") or 0)) >= 10:
+            rows.append(event)
+    return rows
+
+
 def _quality(row: dict) -> str:
     return str(row.get("quality_status") or row.get("status") or "").upper()
 
@@ -53,15 +79,18 @@ def _quality(row: dict) -> str:
 def _build_trigger(current: dict, account: dict, e2e: dict, equity: dict, prior: dict, ranking: dict, delta: dict) -> dict:
     now = _now()
     e2e_status = str(e2e.get("status") or "BLOCKED").upper()
-    risk = ((equity.get("summary") or {}).get("known_net_current_strategy_return_pct"))
+    risk = ((((e2e.get("components") or {}).get("risk") or {}).get("etf_strategy_risk_pct")))
+    if risk is None:
+        risk = ((equity.get("summary") or {}).get("known_net_current_strategy_return_pct"))
     zone = _risk_zone(risk)
     prior_zone = str(prior.get("risk_zone") or "")
     event_type = ""
     applicable = ""
     evidence_time = str(current.get("captured_at") or account.get("updated_at") or now)
     evidence_change = ""
-    if account.get("account_change_events_after_confirmed_at"):
-        event = account["account_change_events_after_confirmed_at"][-1]
+    account_changes = _material_unreconciled_account_changes(account)
+    if account_changes:
+        event = account_changes[-1]
         event_type = "ACCOUNT_STRUCTURE_CHANGED"
         applicable = str(event.get("object") or event.get("code") or "")
         evidence_time = str(event.get("event_time") or evidence_time)
@@ -116,7 +145,9 @@ def _build_trigger(current: dict, account: dict, e2e: dict, equity: dict, prior:
 def _build_ranking(current: dict, account: dict, e2e: dict, equity: dict, prior: dict) -> dict:
     now = _now()
     e2e_status = str(e2e.get("status") or "BLOCKED").upper()
-    risk = ((equity.get("summary") or {}).get("known_net_current_strategy_return_pct"))
+    risk = ((((e2e.get("components") or {}).get("risk") or {}).get("etf_strategy_risk_pct")))
+    if risk is None:
+        risk = ((equity.get("summary") or {}).get("known_net_current_strategy_return_pct"))
     risk_zone = _risk_zone(risk)
     latest = str(current.get("latest_snapshot") or "")
     snapshot = _read(ROOT / latest, {}) if latest else {}

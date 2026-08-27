@@ -53,7 +53,7 @@ def default_current() -> dict[str, Any]:
         "market_date": "", "latest_valid_node": "", "captured_at": "", "node_status": "NON_TRADING_DAY",
         "latest_snapshot": "", "snapshot_commit": "", "superseded_nodes": [], "data_freshness": {},
         "account_fact": {"status": "MISSING", "updated_at": "", "source": ""}, "needs_account_update": True,
-        "last_trade_event_id": "", "rules_version": "V2.2.16", "generated_at": "",
+        "last_trade_event_id": "", "rules_version": "", "generated_at": "",
     }
 
 
@@ -128,6 +128,13 @@ def update_current(*, root: Path | None = None, market_date: str, node: str, cap
     current["data_freshness"] = data_freshness or current.get("data_freshness", {})
     current["account_fact"] = {k: account.get(k, "") for k in ("status", "updated_at", "source")}
     current["needs_account_update"] = account["status"] != "VALID"
+    master = root / "ETF规则_MASTER.md"
+    if master.exists():
+        first = master.read_text(encoding="utf-8").splitlines()[0] if master.stat().st_size else ""
+        current["rules_version"] = next((x for x in first.split() if x.startswith("V") and x[1:2].isdigit()), current.get("rules_version", ""))
+    formal_action = account.get("formal_action") or {}
+    if str(formal_action.get("execution_status") or "").upper() == "EXECUTED" and formal_action.get("last_executed_event_id"):
+        current["last_trade_event_id"] = str(formal_action.get("last_executed_event_id"))
     current["generated_at"] = now_utc()
     atomic_json_write(root / "data" / "state" / "CURRENT.json", current, expected_sha256)
     return current
