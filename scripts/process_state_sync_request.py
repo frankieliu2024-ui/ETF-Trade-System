@@ -11,6 +11,13 @@ from statistics import median
 
 from state_manager import atomic_json_write
 from sync_formal_files import sync_formal_files
+from formal_file_mutation_gateway import (
+    append_managed_line,
+    replace_managed_block as replace_block,
+    upsert_formal_line,
+    upsert_managed_line,
+    write_formal_text_if_changed,
+)
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
@@ -90,42 +97,6 @@ def pct(new, old):
         return None
     return round((new_v / old_v - 1.0) * 100.0, 4)
 
-
-def replace_block(text: str, start: str, end: str, block: str, insert_after_heading: bool = False) -> str:
-    managed = f"{start}\n{block.rstrip()}\n{end}"
-    if start in text and end in text:
-        a = text.index(start)
-        b = text.index(end, a) + len(end)
-        return text[:a] + managed + text[b:]
-    if insert_after_heading:
-        lines = text.splitlines()
-        pos = 1 if lines and lines[0].startswith("#") else 0
-        lines[pos:pos] = ["", managed, ""]
-        return "\n".join(lines).rstrip() + "\n"
-    return text.rstrip() + "\n\n" + managed + "\n"
-
-
-def append_managed_line(text: str, start: str, end: str, line: str) -> str:
-    if start in text and end in text:
-        a = text.index(start) + len(start)
-        b = text.index(end, a)
-        existing = text[a:b].strip()
-        body = (existing + "\n" + line).strip() if existing else line
-        return text[:a] + "\n" + body + "\n" + text[b:]
-    return text.rstrip() + f"\n\n{start}\n{line}\n{end}\n"
-
-
-def upsert_managed_line(text: str, start: str, end: str, key: str, line: str) -> str:
-    tagged = f"{key}｜{line}"
-    if start in text and end in text:
-        a = text.index(start) + len(start)
-        b = text.index(end, a)
-        existing_lines = [x for x in text[a:b].strip().splitlines() if x.strip()]
-        kept = [x for x in existing_lines if not x.startswith(f"{key}｜")]
-        kept.append(tagged)
-        body = "\n".join(kept)
-        return text[:a] + "\n" + body + "\n" + text[b:]
-    return text.rstrip() + f"\n\n{start}\n{tagged}\n{end}\n"
 
 
 def money(v: object) -> str:
@@ -316,10 +287,10 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     atomic_json_write(event_path, event)
     archive_entry = str(review.get("archive_entry") or "").strip()
     if archive_entry:
-        ARCHIVE.write_text(upsert_managed_line(ARCHIVE.read_text(encoding="utf-8"), REVIEW_ARCHIVE_START, REVIEW_ARCHIVE_END, market_date, archive_entry), encoding="utf-8")
+        upsert_formal_line(ROOT, ARCHIVE.name, REVIEW_ARCHIVE_START, REVIEW_ARCHIVE_END, market_date, archive_entry)
     experience_entry = str(review.get("experience_entry") or "").strip()
     if experience_entry:
-        EXPERIENCE.write_text(upsert_managed_line(EXPERIENCE.read_text(encoding="utf-8"), REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry), encoding="utf-8")
+        upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry)
     return True, False
 
 
@@ -539,7 +510,7 @@ def sync_experience_transaction_index(event: dict) -> None:
         count=1,
     )
     text = re.sub(r"不属于\d+笔证券交易", f"不属于{total}笔证券交易", text, count=1)
-    EXPERIENCE.write_text(text, encoding="utf-8")
+    write_formal_text_if_changed(ROOT, EXPERIENCE.name, text)
 
 def write_trade_review_required(event: dict) -> None:
     event_id = str(event.get("event_id") or "")
@@ -619,7 +590,7 @@ def main() -> int:
             account["formal_action"] = {"action": decision.get("action") or decision.get("amount_action") or "", "quantity": decision.get("quantity"), "decision_id": decision_id, "decision_time": decision.get("decision_time") or decision.get("data_as_of_beijing") or datetime.now(SHANGHAI).isoformat(timespec="seconds"), "source": "CHATGPT_FORMAL_DECISION", "lifecycle": decision.get("lifecycle"), "applicable_object": decision.get("candidate_code") or decision.get("code") or "", "validity": "ACTIVE", "execution_status": "PENDING"}
             atomic_json_write(ACCOUNT, account)
     dashboard = replace_block(DASHBOARD.read_text(encoding="utf-8"), START, END, build_dashboard_block(account, request.get("formal_decision"), request), insert_after_heading=True)
-    DASHBOARD.write_text(dashboard, encoding="utf-8")
+    write_formal_text_if_changed(ROOT, DASHBOARD.name, dashboard)
     trade_event_recorded = False
     if trade:
         confirmed_at = trade.get("confirmed_at_beijing") or account.get("updated_at")
@@ -640,8 +611,8 @@ def main() -> int:
         # This repairs a missing archive/CASE line without creating a second trade event.
         archive_line = f"- {event['confirmed_at_beijing']}：{event.get('name')}（{event.get('code')}）{event.get('side')} {int(event.get('quantity') or 0):,}份/股，成交价{event.get('price')}，成交本金{float(event.get('amount') or 0):,.2f}元；来源：{event.get('source')}。"
         case_line = f"- 待复盘CASE｜{event['confirmed_at_beijing']}｜{event.get('name')}（{event.get('code')}）｜{event.get('side')} {int(event.get('quantity') or 0):,}份/股｜生命周期：{event.get('lifecycle') or '待确认'}｜仅登记真实成交，复盘结论留待盘后形成。"
-        ARCHIVE.write_text(upsert_managed_line(ARCHIVE.read_text(encoding="utf-8"), TRADE_START, TRADE_END, event_id, archive_line), encoding="utf-8")
-        EXPERIENCE.write_text(upsert_managed_line(EXPERIENCE.read_text(encoding="utf-8"), CASE_START, CASE_END, event_id, case_line), encoding="utf-8")
+        upsert_formal_line(ROOT, ARCHIVE.name, TRADE_START, TRADE_END, event_id, archive_line)
+        upsert_formal_line(ROOT, EXPERIENCE.name, CASE_START, CASE_END, event_id, case_line)
         sync_experience_transaction_index(event)
         account["formal_action"] = {**(account.get("formal_action") or {}), "execution_status": "EXECUTED", "execution_fact_ref": f"events/trades/{event_id}.json", "last_executed_event_id": event_id}
         atomic_json_write(ACCOUNT, account)

@@ -16,6 +16,11 @@ import os
 from datetime import timezone, timedelta
 from pathlib import Path
 
+from formal_file_mutation_gateway import (
+    replace_managed_block as replace_block,
+    write_formal_text_if_changed,
+)
+
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 START_DASH = "<!-- AUTO_STATE_SYNC_START -->"
 END_DASH = "<!-- AUTO_STATE_SYNC_END -->"
@@ -34,19 +39,6 @@ def money(value) -> str:
     except (TypeError, ValueError):
         return "—"
 
-
-def replace_block(text: str, start: str, end: str, block: str, after_heading: bool = False) -> str:
-    managed = f"{start}\n{block.rstrip()}\n{end}"
-    if start in text and end in text:
-        a = text.index(start)
-        b = text.index(end, a) + len(end)
-        return text[:a] + managed + text[b:]
-    if after_heading:
-        lines = text.splitlines()
-        pos = 1 if lines and lines[0].startswith("#") else 0
-        lines[pos:pos] = ["", managed, ""]
-        return "\n".join(lines).rstrip() + "\n"
-    return text.rstrip() + "\n\n" + managed + "\n"
 
 
 def display_name(position: dict) -> str:
@@ -250,19 +242,19 @@ def sync_formal_files(root: Path = ROOT, account: dict | None = None) -> dict:
     new_dash = replace_block(existing_dash, START_DASH, END_DASH, build_dashboard_block(account, equity, existing_dash), after_heading=True)
     dash_changed = new_dash != existing_dash
     if dash_changed:
-        dash_path.write_text(new_dash, encoding="utf-8")
+        write_formal_text_if_changed(root, dash_path.name, new_dash)
 
     existing_archive = archive_path.read_text(encoding="utf-8")
     new_archive = replace_block(existing_archive, START_ARCHIVE, END_ARCHIVE, build_archive_fact_block(account))
     archive_changed = new_archive != existing_archive
     if archive_changed:
-        archive_path.write_text(new_archive, encoding="utf-8")
+        write_formal_text_if_changed(root, archive_path.name, new_archive)
 
     existing_experience = experience_path.read_text(encoding="utf-8")
     new_experience, experience_updates = update_experience(existing_experience, account)
     experience_changed = new_experience != existing_experience
     if experience_changed:
-        experience_path.write_text(new_experience, encoding="utf-8")
+        write_formal_text_if_changed(root, experience_path.name, new_experience)
 
     current_changed = sync_current_account_reference(root, account)
     return {
