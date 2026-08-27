@@ -43,10 +43,10 @@ jobs:
       HITHINK_TIMEOUT_SECONDS: "25"
       QUERY_TIME_REFRESH: ${{ github.event_name == 'push' && 'true' || 'false' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 2
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - name: Check exchange calendar and capture window
