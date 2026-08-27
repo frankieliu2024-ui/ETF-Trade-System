@@ -1,0 +1,22 @@
+name: formal-file-gateway-final-temp
+on:
+  push:
+    branches:
+      - maintenance/formal-file-mutation-gateway-final-20260827
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile formal mutation modules
+        run: python -m py_compile scripts/formal_file_mutation_gateway.py scripts/process_state_sync_request.py scripts/sync_formal_files.py scripts/apply_trade_fact_correction.py scripts/check_production_mutation_protocol.py
+      - name: Run gateway and existing formal sync tests
+        run: python -m unittest tests.test_formal_file_mutation_gateway tests.test_market_formal_file_sync
+      - name: Validate production mutation protocol
+        run: python scripts/check_production_mutation_protocol.py
