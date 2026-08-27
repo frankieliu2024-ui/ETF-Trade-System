@@ -1,0 +1,111 @@
+name: One-off formal risk precedence repair
+
+on:
+  push:
+    paths:
+      - '.github/workflows/oneoff-risk-precedence-repair.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply formal risk precedence and automatic reconciliation
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          # 1) Account/dashboard maintenance: latest formal post-close risk fact
+          # outranks an older auxiliary equity reconstruction.
+          p = Path('scripts/process_state_sync_request.py')
+          text = p.read_text(encoding='utf-8')
+          marker = '''def pct(new, old):\n'''
+          helper = '''def latest_formal_risk_fact() -> dict:\n    review_dir = ROOT / "events" / "reviews"\n    candidates = []\n    if review_dir.exists():\n        for path in review_dir.glob("*.json"):\n            try:\n                event = load_json(path)\n            except Exception:\n                continue\n            review = event.get("review") or event.get("formal_review") or {}\n            fact = review.get("etf_strategy_known_net") or {}\n            risk = safe_float(fact.get("etf_strategy_risk_rate_pct"))\n            equity = safe_float(fact.get("known_net_strategy_equity"))\n            pnl = safe_float(fact.get("known_net_cumulative_pnl"))\n            updated = parse_time(event.get("updated_at_beijing") or event.get("account_updated_at"))\n            if risk is None or equity is None or updated is None:\n                continue\n            calculated = (pnl / 200000.0 * 100.0) if pnl is not None else ((equity / 200000.0 - 1.0) * 100.0)\n            if abs(calculated - risk) > 0.03:\n                continue\n            candidates.append((updated, {\n                "risk_rate_pct": risk,\n                "strategy_equity_known_net": equity,\n                "cumulative_pnl_known_net": pnl,\n                "market_date": event.get("market_date") or review.get("market_date"),\n                "updated_at_beijing": updated.isoformat(timespec="seconds"),\n                "source": str(path.relative_to(ROOT)).replace("\\\\", "/"),\n            }))\n    return max(candidates, key=lambda x: x[0])[1] if candidates else {}\n\n\n'''
+          if 'def latest_formal_risk_fact()' not in text:
+              if marker not in text: raise SystemExit('process helper marker missing')
+              text = text.replace(marker, helper + marker, 1)
+          old = '''    equity_path = ROOT / "data/state/etf_strategy_equity.json"\n    equity = load_json(equity_path) if equity_path.exists() else {}\n    equity_summary = equity.get("summary") or {}\n    risk_rate = safe_float(equity_summary.get("known_net_current_strategy_return_pct"))\n    if risk_rate is None:\n        risk_rate = etf_pnl / 200000.0 * 100.0\n'''
+          new = '''    formal_risk = latest_formal_risk_fact()\n    risk_rate = safe_float(formal_risk.get("risk_rate_pct"))\n    formal_risk_equity = safe_float(formal_risk.get("strategy_equity_known_net"))\n    if risk_rate is None:\n        equity_path = ROOT / "data/state/etf_strategy_equity.json"\n        equity = load_json(equity_path) if equity_path.exists() else {}\n        equity_summary = equity.get("summary") or {}\n        risk_rate = safe_float(equity_summary.get("known_net_current_strategy_return_pct"))\n    if risk_rate is None:\n        risk_rate = etf_pnl / 200000.0 * 100.0\n'''
+          if old not in text: raise SystemExit('process risk block missing')
+          text = text.replace(old, new, 1)
+          old_piece = 'f"|ETF持仓浮动盈亏|{money(etf_pnl)}|", f"|ETF策略风险率|约{risk_rate:.2f}%（仅按MASTER固定20万元计划本金计算，不由本脚本推导风险许可）|", "", "### 当前持仓事实"'
+          new_piece = 'f"|ETF持仓浮动盈亏|{money(etf_pnl)}|", *(([f"|ETF策略Known-net权益|{money(formal_risk_equity)}|"] if formal_risk_equity is not None else [])), f"|ETF策略风险率|约{risk_rate:.2f}%（Known-net；最新正式复盘风险事实优先，旧重建仅在无正式事实时回退）|", "", "### 当前持仓事实"'
+          if old_piece not in text: raise SystemExit('process dashboard risk row missing')
+          text = text.replace(old_piece, new_piece, 1)
+          p.write_text(text, encoding='utf-8')
+
+          # 2) E2E independently resolves the newest formal review and will not
+          # echo a stale Dashboard regression if one appears transiently.
+          p = Path('scripts/build_e2e_status.py')
+          text = p.read_text(encoding='utf-8')
+          marker = '''def risk_component(equity: dict, dashboard: str, current: dict) -> dict:\n'''
+          helper = '''def latest_formal_review_risk() -> dict:\n    directory = ROOT / "events" / "reviews"\n    candidates = []\n    if directory.exists():\n        for path in directory.glob("*.json"):\n            event = read_json(path)\n            review = event.get("review") or event.get("formal_review") or {}\n            fact = review.get("etf_strategy_known_net") or {}\n            try:\n                risk = float(fact.get("etf_strategy_risk_rate_pct"))\n                equity = float(fact.get("known_net_strategy_equity"))\n            except (TypeError, ValueError):\n                continue\n            updated = parse_time(event.get("updated_at_beijing") or event.get("account_updated_at"))\n            if updated is None:\n                continue\n            candidates.append((updated, {"risk_pct": risk, "equity": equity, "updated_at": updated.isoformat(timespec="seconds"), "market_date": event.get("market_date") or review.get("market_date"), "source": str(path.relative_to(ROOT)).replace("\\\\", "/")}))\n    return max(candidates, key=lambda x: x[0])[1] if candidates else {}\n\n\n'''
+          if 'def latest_formal_review_risk()' not in text:
+              if marker not in text: raise SystemExit('e2e marker missing')
+              text = text.replace(marker, helper + marker, 1)
+          old = '''    if dashboard_pct is not None:\n        return {\n            "status": "READY",\n            "reason": "formal ETF strategy risk metric is available from the current Dashboard",\n            "etf_strategy_risk_pct": dashboard_pct,\n            "source": "ETF当前状态_DASHBOARD.md",\n            "source_updated_at": dashboard_updated,\n            "reconstruction_risk_pct": reconstruction_pct,\n            "reconstruction_generated_at": reconstruction_generated,\n            "reconstruction_as_of_transaction_date": reconstruction_as_of,\n            "reconstruction_fresh_for_market_date": reconstruction_fresh_for_market,\n            "data_quality": "FORMAL_DASHBOARD_CURRENT; RECONSTRUCTION_IS_AUXILIARY",\n        }\n'''
+          new = '''    formal_review = latest_formal_review_risk()\n    formal_review_pct = formal_review.get("risk_pct")\n    if formal_review_pct is not None:\n        dashboard_matches = dashboard_pct is not None and abs(float(dashboard_pct) - float(formal_review_pct)) <= 0.03\n        return {\n            "status": "READY",\n            "reason": "latest formal post-close risk fact is authoritative; Dashboard is reconciled or automatically bypassed if transiently regressed",\n            "etf_strategy_risk_pct": round(float(formal_review_pct), 2),\n            "source": formal_review.get("source"),\n            "source_updated_at": formal_review.get("updated_at"),\n            "formal_review_market_date": formal_review.get("market_date"),\n            "dashboard_risk_pct": dashboard_pct,\n            "dashboard_matches_formal_review": dashboard_matches,\n            "dashboard_updated_at": dashboard_updated,\n            "reconstruction_risk_pct": reconstruction_pct,\n            "reconstruction_generated_at": reconstruction_generated,\n            "reconstruction_as_of_transaction_date": reconstruction_as_of,\n            "reconstruction_fresh_for_market_date": reconstruction_fresh_for_market,\n            "data_quality": "FORMAL_REVIEW_PRIMARY; DASHBOARD_RECONCILED; RECONSTRUCTION_AUXILIARY",\n        }\n    if dashboard_pct is not None:\n        return {\n            "status": "READY",\n            "reason": "formal ETF strategy risk metric is available from the current Dashboard",\n            "etf_strategy_risk_pct": dashboard_pct,\n            "source": "ETF当前状态_DASHBOARD.md",\n            "source_updated_at": dashboard_updated,\n            "reconstruction_risk_pct": reconstruction_pct,\n            "reconstruction_generated_at": reconstruction_generated,\n            "reconstruction_as_of_transaction_date": reconstruction_as_of,\n            "reconstruction_fresh_for_market_date": reconstruction_fresh_for_market,\n            "data_quality": "FORMAL_DASHBOARD_CURRENT; RECONSTRUCTION_IS_AUXILIARY",\n        }\n'''
+          if old not in text: raise SystemExit('e2e risk branch missing')
+          text = text.replace(old, new, 1)
+          p.write_text(text, encoding='utf-8')
+
+          # 3) Consistency gate: a future Dashboard/E2E regression against the
+          # newest formal review is a hard consistency error, not a silent drift.
+          p = Path('scripts/check_system_consistency.py')
+          text = p.read_text(encoding='utf-8')
+          insert_before = '''def main() -> int:\n'''
+          helper = '''def _validate_formal_risk_precedence(report: dict) -> None:\n    review_dir = ROOT / "events" / "reviews"\n    candidates = []\n    for path in review_dir.glob("*.json") if review_dir.exists() else []:\n        try:\n            event = json.loads(path.read_text(encoding="utf-8"))\n            review = event.get("review") or event.get("formal_review") or {}\n            fact = review.get("etf_strategy_known_net") or {}\n            risk = float(fact.get("etf_strategy_risk_rate_pct"))\n            updated = datetime.fromisoformat(str(event.get("updated_at_beijing") or event.get("account_updated_at")).replace("Z", "+00:00"))\n        except (OSError, json.JSONDecodeError, TypeError, ValueError):\n            continue\n        candidates.append((updated, risk, str(path.relative_to(ROOT))))\n    if not candidates:\n        return\n    _, formal_risk, source = max(candidates, key=lambda x: x[0])\n    dashboard = (ROOT / "ETF当前状态_DASHBOARD.md").read_text(encoding="utf-8")\n    match = __import__("re").search(r"\\|ETF策略风险率\\|约?\\s*([+-]?\\d+(?:\\.\\d+)?)%", dashboard)\n    e2e = _read_json("data/state/e2e_status.json")\n    e2e_risk = ((e2e.get("components") or {}).get("risk") or {}).get("etf_strategy_risk_pct")\n    dashboard_risk = float(match.group(1)) if match else None\n    mismatches = []\n    if dashboard_risk is None or abs(dashboard_risk - formal_risk) > 0.03:\n        mismatches.append(f"dashboard={dashboard_risk}")\n    try:\n        if e2e_risk is None or abs(float(e2e_risk) - formal_risk) > 0.03:\n            mismatches.append(f"e2e={e2e_risk}")\n    except (TypeError, ValueError):\n        mismatches.append(f"e2e={e2e_risk}")\n    report.setdefault("checks", []).append({"name": "risk:formal_precedence", "status": "FAIL" if mismatches else "PASS", "detail": f"formal={formal_risk:.4f} source={source} " + (" ".join(mismatches) if mismatches else "dashboard/e2e aligned")})\n    if mismatches:\n        message = "risk:formal_precedence:" + ";".join(mismatches)\n        if message not in report.setdefault("errors", []): report["errors"].append(message)\n        report["hard_error_count"] = len(report["errors"])\n        report["status"] = "FAIL"\n\n\n'''
+          if 'def _validate_formal_risk_precedence' not in text:
+              if insert_before not in text: raise SystemExit('consistency main marker missing')
+              text = text.replace(insert_before, helper + insert_before, 1)
+          old = '''    _normalize_stock_market_time_alignment(report)\n    REPORT.write_text'''
+          new = '''    _normalize_stock_market_time_alignment(report)\n    _validate_formal_risk_precedence(report)\n    REPORT.write_text'''
+          if old not in text: raise SystemExit('consistency hook missing')
+          text = text.replace(old, new, 1)
+          p.write_text(text, encoding='utf-8')
+
+          # 4) Repair the already-regressed current Dashboard from the latest
+          # formal review fact without hardcoding the numeric value.
+          import json
+          reviews = []
+          for rp in Path('events/reviews').glob('*.json'):
+              obj = json.loads(rp.read_text(encoding='utf-8'))
+              fact = (obj.get('review') or {}).get('etf_strategy_known_net') or {}
+              if fact.get('etf_strategy_risk_rate_pct') is not None and fact.get('known_net_strategy_equity') is not None:
+                  reviews.append((obj.get('updated_at_beijing') or obj.get('account_updated_at') or '', fact))
+          if not reviews: raise SystemExit('no formal risk review found')
+          _, fact = max(reviews, key=lambda x: x[0])
+          risk = float(fact['etf_strategy_risk_rate_pct'])
+          eq = float(fact['known_net_strategy_equity'])
+          d = Path('ETF当前状态_DASHBOARD.md')
+          dash = d.read_text(encoding='utf-8')
+          dash, n = re.subn(r'\|ETF策略风险率\|[^\n]*\|', f'|ETF策略风险率|约{risk:.2f}%（Known-net；最新正式复盘风险事实，旧重建不得覆盖）|', dash, count=1)
+          if n != 1: raise SystemExit('dashboard risk row not found')
+          if '|ETF策略Known-net权益|' not in dash.split('<!-- AUTO_STATE_SYNC_END -->',1)[0]:
+              dash = dash.replace('|ETF策略风险率|', f'|ETF策略Known-net权益|{eq:,.2f}元|\n|ETF策略风险率|', 1)
+          d.write_text(dash, encoding='utf-8')
+          PY
+          python -m py_compile scripts/process_state_sync_request.py scripts/build_e2e_status.py scripts/check_system_consistency.py
+          python scripts/build_e2e_status.py >/tmp/e2e.json
+          python -m unittest discover -s tests -p 'test_*.py'
+          git diff --check
+      - name: Commit production repair
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/process_state_sync_request.py scripts/build_e2e_status.py scripts/check_system_consistency.py ETF当前状态_DASHBOARD.md data/state/e2e_status.json
+          git commit -m 'fix: enforce formal ETF risk precedence and auto-reconcile e2e'
+          git pull --rebase origin main
+          git push origin HEAD:main
