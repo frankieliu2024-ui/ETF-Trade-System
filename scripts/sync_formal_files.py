@@ -54,6 +54,25 @@ def display_name(position: dict) -> str:
 
 
 def canonical_risk(equity: dict) -> float | None:
+    # A later formal post-close review outranks the auxiliary historical equity
+    # reconstruction. This prevents account-maintenance sync from regressing the
+    # Dashboard risk metric to an older reconstruction value.
+    review_dir = ROOT / "events" / "reviews"
+    candidates = []
+    for path in review_dir.glob("*.json") if review_dir.exists() else []:
+        try:
+            event = load_json(path)
+            review = event.get("review") or event.get("formal_review") or {}
+            fact = review.get("etf_strategy_known_net") or {}
+            risk = float(fact.get("etf_strategy_risk_rate_pct"))
+            equity_value = float(fact.get("known_net_strategy_equity"))
+            stamp = str(event.get("updated_at_beijing") or event.get("account_updated_at") or "")
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+            continue
+        if stamp:
+            candidates.append((stamp, risk, equity_value))
+    if candidates:
+        return max(candidates, key=lambda x: x[0])[1]
     summary = equity.get("summary") or {}
     for key in ("known_net_current_strategy_return_pct", "current_strategy_return_pct_gross"):
         try:
