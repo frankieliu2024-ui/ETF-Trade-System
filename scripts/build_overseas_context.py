@@ -23,6 +23,21 @@ except ModuleNotFoundError:
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 BEIJING = ZoneInfo("Asia/Shanghai")
 
+QUALITY_STATUS_CN = {
+    "PASS": "数据可用",
+    "DEGRADED": "数据受限",
+    "FAILED": "当前不可用",
+    "MISSING": "当前缺失",
+}
+FRESHNESS_STATUS_CN = {
+    "FRESH": "时点正常",
+    "DELAYED": "存在延迟",
+    "STALE": "时点过旧",
+    "SESSION_REFERENCE": "已结束交易时段参考",
+    "PREVIOUS_SESSION_REFERENCE": "上一交易时段参考",
+    "MISSING": "当前缺失",
+}
+
 OBJECTS = {
     "NDX": {"name": "纳斯达克100指数", "symbol": "^NDX", "timezone": "America/New_York", "role": "US_TECH"},
     "SOX": {"name": "费城半导体指数", "symbol": "^SOX", "timezone": "America/New_York", "role": "US_SEMICONDUCTOR"},
@@ -251,6 +266,56 @@ def fetch_yahoo(object_id: str, spec: dict, generated_utc: datetime) -> dict:
     }
 
 
+def fetch_naver_kospi(generated_utc: datetime) -> dict:
+    url = "https://polling.finance.naver.com/api/realtime/domestic/index/KOSPI"
+    req = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.16"})
+    with urllib.request.urlopen(req, timeout=20) as response:
+        status_code = int(response.status)
+        payload = json.load(response)
+    rows = payload.get("datas") or []
+    if len(rows) != 1:
+        raise RuntimeError(f"Naver KOSPI expected one row, got {len(rows)}")
+    data = rows[0]
+    def num(key):
+        raw = data.get(key + "Raw", data.get(key))
+        if raw in (None, "", "-"):
+            return None
+        return float(str(raw).replace(",", ""))
+    required = {"open": num("openPrice"), "high": num("highPrice"), "low": num("lowPrice"), "close": num("closePrice")}
+    if any(v is None for v in required.values()):
+        raise RuntimeError("Naver KOSPI missing OHLC fields")
+    raw_time = data.get("localTradedAt")
+    if not raw_time:
+        raise RuntimeError("Naver KOSPI missing localTradedAt")
+    local = datetime.fromisoformat(str(raw_time))
+    if local.tzinfo is None:
+        local = local.replace(tzinfo=ZoneInfo("Asia/Seoul"))
+    dt_utc = local.astimezone(timezone.utc)
+    latest = {
+        **required,
+        "volume": num("accumulatedTradingVolume"),
+        "amount": num("accumulatedTradingValue"),
+        "timestamp": int(dt_utc.timestamp()),
+        "as_of_utc": dt_utc.isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "as_of_local": local.isoformat(timespec="seconds"),
+        "as_of_beijing": dt_utc.astimezone(BEIJING).isoformat(timespec="seconds"),
+        "market_date_local": local.date().isoformat(),
+        "provider_timezone": "Asia/Seoul",
+        "symbol": "KOSPI",
+    }
+    phase = market_phase("Asia/Seoul", generated_utc)
+    return {
+        "object": "KOSPI", "name": "韩国综合指数", "reference_role": "KOREA_EQUITY",
+        "provider": "naver_finance", "provider_result": f"HTTP {status_code}",
+        "provider_timestamp_field": "localTradedAt", "symbol": "KOSPI", "market_timezone": "Asia/Seoul",
+        "market_phase_at_generation": phase,
+        "time_relation_to_a_share": time_relation("KOSPI", latest, phase, generated_utc),
+        "quality_status": validate_latest(latest), "latest": latest,
+        "display_time_rule": "正式输出优先显示latest.as_of_beijing（北京时间）；同时保留韩国本地交易时点。",
+        "decision_note": "Naver Finance公开实时指数JSON；使用localTradedAt作为provider时点，作为韩国综合指数直连备源。",
+    }
+
+
 def fetch_eastmoney_index(object_id: str, spec: dict, generated_utc: datetime, secid: str, *, host: str = "push2.eastmoney.com") -> dict:
     params = {"secid": secid, "fltt": "2", "invt": "2", "fields": "f43,f44,f45,f46,f47,f48,f57,f58,f60,f86,f124"}
     url = f"https://{host}/api/qt/stock/get?" + urllib.parse.urlencode(params)
@@ -400,24 +465,44 @@ def build() -> dict:
 
                 secid = EASTMONEY_DIRECT_FALLBACKS.get(object_id)
                 if secid and (record is None or primary_error):
-                    provider_id = f"eastmoney_push2:{secid}"
-                    try:
-                        fallback = fetch_eastmoney_index(object_id, spec, generated_utc, secid)
-                        fallback_summary = provider_attempt(fallback, provider_id, generated_utc)
-                        attempts.append(fallback_summary)
-                        if fallback.get("quality_status") == "PASS" and fallback_summary.get("stable_for_10m_pulse") is True:
-                            record = fallback
-                            record["selection_basis"] = "yahoo_primary_unavailable_or_degraded_then_verified_eastmoney_direct_fallback"
-                        elif record is None:
-                            record = fallback
-                    except Exception as fallback_exc:
-                        attempts.append(failed_attempt(provider_id, str(fallback_exc)[-500:], generated_utc, timezone_name=spec["timezone"]))
+                    eastmoney_selected = False
+                    for host in ("push2.eastmoney.com", "push2delay.eastmoney.com"):
+                        provider_family = "eastmoney_push2" if host.startswith("push2.") else "eastmoney_push2delay"
+                        provider_id = f"{provider_family}:{secid}"
+                        try:
+                            fallback = fetch_eastmoney_index(object_id, spec, generated_utc, secid, host=host)
+                            fallback_summary = provider_attempt(fallback, provider_id, generated_utc)
+                            attempts.append(fallback_summary)
+                            if fallback.get("quality_status") == "PASS" and fallback_summary.get("stable_for_10m_pulse") is True:
+                                record = fallback
+                                record["selected_provider_id"] = provider_id
+                                record["selection_basis"] = "yahoo_primary_delayed_then_verified_eastmoney_direct_fallback"
+                                eastmoney_selected = True
+                                break
+                            elif record is None:
+                                record = fallback
+                        except Exception as fallback_exc:
+                            attempts.append(failed_attempt(provider_id, str(fallback_exc)[-500:], generated_utc, timezone_name=spec["timezone"]))
+                    if object_id == "KOSPI" and not eastmoney_selected:
+                        provider_id = "naver_finance:KOSPI"
+                        try:
+                            fallback = fetch_naver_kospi(generated_utc)
+                            fallback_summary = provider_attempt(fallback, provider_id, generated_utc)
+                            attempts.append(fallback_summary)
+                            if fallback.get("quality_status") == "PASS" and fallback_summary.get("stable_for_10m_pulse") is True:
+                                record = fallback
+                                record["selected_provider_id"] = provider_id
+                                record["selection_basis"] = "yahoo_and_eastmoney_unavailable_or_delayed_then_naver_direct_fallback"
+                            elif record is None:
+                                record = fallback
+                        except Exception as fallback_exc:
+                            attempts.append(failed_attempt(provider_id, str(fallback_exc)[-500:], generated_utc, timezone_name=spec["timezone"]))
 
                 if record is None:
                     raise RuntimeError(primary_error or "no usable direct source")
                 if secid:
                     record["provider_attempts"] = attempts
-                    record["direct_source_chain"] = ["yahoo_chart_api", f"eastmoney_push2:{secid}"]
+                    record["direct_source_chain"] = ["yahoo_chart_api", f"eastmoney_push2:{secid}", f"eastmoney_push2delay:{secid}"] + (["naver_finance:KOSPI"] if object_id == "KOSPI" else [])
                     record["configured_primary"] = "yahoo_chart_api"
             else:
                 attempts: list[dict] = []
@@ -495,12 +580,18 @@ def build() -> dict:
                 "error": str(exc)[-500:], "decision_note": "监测对象保留但当前数据不可用；不得用旧值冒充当前状态。",
             }
 
+    for record in objects.values():
+        raw_quality = str(record.get("quality_status") or "MISSING").upper()
+        raw_freshness = str(record.get("freshness_status") or "MISSING").upper()
+        record["quality_status_cn"] = QUALITY_STATUS_CN.get(raw_quality, "状态待确认")
+        record["freshness_status_cn"] = FRESHNESS_STATUS_CN.get(raw_freshness, "时点待确认")
     overall = "PASS" if pass_count == len(OBJECTS) else ("DEGRADED" if pass_count else "FAILED")
     return {
         "generated_at": now_utc(),
         "generated_at_beijing": generated_beijing.isoformat(timespec="seconds"),
         "display_timezone": "Asia/Shanghai", "a_share_reference_timezone": "Asia/Shanghai",
         "scope": "FORMAL_OVERSEAS_AND_ASIA_INDEX_LAYER", "quality_status": overall,
+        "quality_status_cn": QUALITY_STATUS_CN.get(overall, "状态待确认"),
         "required_objects": list(OBJECTS.keys()), "objects": objects,
         "output_time_rule": "任何正式行情输出必须明确标注数据时点，并统一优先转换为北京时间；海外对象同时保留market_timezone和market_phase。",
         "time_alignment_rule": "美国现金指数在A股交易时段通常代表上一美股交易时段；亚洲市场按同日盘中/已收盘/上一交易日分别解释。",

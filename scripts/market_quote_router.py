@@ -28,6 +28,9 @@ MARKET_NAMES = {
     "US": "美国",
 }
 
+QUALITY_STATUS_CN = {"PASS": "数据可用", "DEGRADED": "数据受限", "FAILED": "当前不可用", "UNKNOWN": "状态待确认", "MISSING": "当前缺失"}
+FRESHNESS_STATUS_CN = {"FRESH": "时点正常", "DEGRADED": "存在延迟", "STALE": "时点过旧", "SESSION_REFERENCE": "已结束交易时段参考", "PREVIOUS_SESSION_REFERENCE": "上一交易时段参考", "UNKNOWN": "时点待确认"}
+
 DISPLAY_STATUS = {
     "CN": {
         "OPENING_AUCTION": "A股开盘前（集合竞价）",
@@ -230,7 +233,9 @@ def _row_quote(row: dict[str, Any], market: str, route_info: MarketQuoteRoute, n
         ),
         "source": source or "state_context",
         "freshness": _freshness(_beijing_time(timestamp), now, policy),
+        "freshness_cn": FRESHNESS_STATUS_CN.get(_freshness(_beijing_time(timestamp), now, policy), "时点待确认"),
         "quality_status": str(row.get("quality_status") or row.get("status") or "UNKNOWN").upper(),
+        "quality_status_cn": QUALITY_STATUS_CN.get(str(row.get("quality_status") or row.get("status") or "UNKNOWN").upper(), "状态待确认"),
         "direct_quote": not bool(row.get("proxy") or row.get("is_proxy") or row.get("reference_role", "").endswith("PROXY")),
         "route_rule": route_info.semantic_rule,
     }

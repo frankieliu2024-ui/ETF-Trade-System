@@ -1,5 +1,5 @@
 {
-  "version": "V1.7",
+  "version": "V1.8",
   "policy": "质量优先；正式对象按对象级primary→verified direct fallback处理；单点风险明确告警；失败对象不得静默省略；获取成功不等于自动采用；所有源先经过质量审计并保留市场时点信息",
   "providers": {
     "tencent_qq": {
@@ -42,6 +42,18 @@
       "requires_key": false,
       "role": "not_preferred",
       "stale_upstream": true
+    },
+    "naver_finance": {
+      "kind": "Naver Finance公开韩国市场行情JSON；当前仅验证韩国综合指数KOSPI实时直连",
+      "requires_key": false,
+      "role": "verified_direct_fallback_for_KOSPI",
+      "adjusted": false
+    },
+    "eastmoney_push2delay": {
+      "kind": "东方财富push2备用host；仅作为同一provider家族网络级重试，不计作独立数据源",
+      "requires_key": false,
+      "role": "network_retry_for_verified_eastmoney_overseas_index_paths",
+      "adjusted": false
     }
   },
   "formal_index_objects": [
@@ -76,11 +88,14 @@
     "N225": [
       "yahoo_chart_api",
       "eastmoney_push2:100.N225",
+      "eastmoney_push2delay:100.N225",
       "ETF_PROXY_513520"
     ],
     "KOSPI": [
       "yahoo_chart_api",
-      "eastmoney_push2:100.KS11"
+      "eastmoney_push2:100.KS11",
+      "eastmoney_push2delay:100.KS11",
+      "naver_finance:KOSPI"
     ],
     "TWII": [
       "yahoo_chart_api",
@@ -344,6 +359,7 @@
       "primary": "yahoo_chart_api",
       "fallback": [
         "eastmoney_push2:100.N225",
+        "eastmoney_push2delay:100.N225",
         "ETF_PROXY_513520"
       ],
       "direct_only": false
@@ -351,7 +367,9 @@
     "KOSPI": {
       "primary": "yahoo_chart_api",
       "fallback": [
-        "eastmoney_push2:100.KS11"
+        "eastmoney_push2:100.KS11",
+        "eastmoney_push2delay:100.KS11",
+        "naver_finance:KOSPI"
       ],
       "direct_only": true
     },
@@ -419,7 +437,8 @@
     "tencent_a_share_industry": "查询时A股产业链个股正式启用腾讯主源；不建立固定个股池，仍由当前ETF/行业假设动态发现。",
     "a_share_index_000688": "科创50指数（000688）正式纳入指数层；腾讯sh000688已完成直接映射验证，为生产主源；同花顺000688.SH作为A股指数直接备源。东方财富映射未完成对象级验证前不加入fallback。",
     "ndx_direct_fallback": "纳斯达克100指数（NDX）保留Yahoo ^NDX主源，并启用东方财富100.NDX100作为经真实REGULAR时段对象、价格、时间戳与并行延迟验证的直接备源；仅在主源不可用、质量失败或开放交易阶段明显延迟时切换。错误映射100.NDX禁止使用。",
-    "asia_direct_fallback": "日经225指数（N225）、韩国综合指数（KOSPI）、台湾加权指数（TWII）保留Yahoo主源；根据用户已确认的东方财富对象映射，分别启用100.N225、100.KS11、100.TWII作为直接备源。N225仍保留513520仅作最后ETF代理。"
+    "asia_direct_fallback": "日经225指数（N225）、韩国综合指数（KOSPI）、台湾加权指数（TWII）保留Yahoo主源；根据用户已确认的东方财富对象映射，分别启用100.N225、100.KS11、100.TWII作为直接备源。N225仍保留513520仅作最后ETF代理。",
+    "n225_kospi_redundancy": "2026-08-27 live probe: Eastmoney 100.N225/100.KS11 returned current provider timestamps; push2delay is same-provider network retry, not independent source. Naver KOSPI returned OPEN, delayTime=0 and localTradedAt and is a verified independent direct fallback. Sina int_nikkei lacked OHLC/provider timestamp and Tencent tested symbols did not map, so neither was promoted."
   },
   "audit_scope": "对象级主源失败后仅调用已验证直接备源；未验证映射保留SINGLE_SOURCE_RISK，不以代理冒充直连"
 }
