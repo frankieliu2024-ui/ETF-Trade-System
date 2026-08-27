@@ -1,0 +1,126 @@
+name: One-off JP TW live provider validation 2026-08-27
+on:
+  push:
+    paths:
+      - ".github/workflows/one-off-jp-tw-live-provider-validation-20260827.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Parallel live probes
+        run: |
+          python - <<'PY'
+          import csv, io, json, re, time, urllib.parse, urllib.request
+          from concurrent.futures import ThreadPoolExecutor, as_completed
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from zoneinfo import ZoneInfo
+
+          BJ=ZoneInfo('Asia/Shanghai')
+          UA={'User-Agent':'Mozilla/5.0','Accept':'application/json,text/plain,*/*','Referer':'https://mis.twse.com.tw/stock/fibest.jsp?stock=t00'}
+          def get(url, headers=None, timeout=10):
+              req=urllib.request.Request(url,headers={**UA,**(headers or {})})
+              with urllib.request.urlopen(req,timeout=timeout) as r:
+                  return r.status, r.read().decode('utf-8','replace')
+          def iso_from_epoch(v):
+              ts=int(float(v)); ts=ts//1000 if ts>10_000_000_000 else ts
+              return datetime.fromtimestamp(ts,timezone.utc).astimezone(BJ).isoformat(timespec='seconds')
+          def probe_twse():
+              # Official TWSE MIS aggregate TAIEX channel.
+              url='https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_t00.tw&json=1&delay=0&_='+str(int(time.time()*1000))
+              status, body=get(url)
+              p=json.loads(body); row=(p.get('msgArray') or [])[0]
+              if not row: raise RuntimeError('TWSE empty msgArray')
+              tlong=row.get('tlong')
+              return {'provider':'twse_mis','http':status,'name':row.get('n') or row.get('nf'),'price':row.get('z'),'open':row.get('o'),'high':row.get('h'),'low':row.get('l'),'prev':row.get('y'),'volume':row.get('v'),'date':row.get('d'),'time':row.get('t'),'provider_timestamp':tlong,'as_of_beijing':iso_from_epoch(tlong) if tlong else None,'rtmessage':p.get('rtmessage')}
+          def probe_eastmoney(secid, host='push2.eastmoney.com'):
+              fields='f43,f44,f45,f46,f47,f48,f57,f58,f60,f86'
+              url=f'https://{host}/api/qt/stock/get?secid={urllib.parse.quote(secid)}&fields={fields}&invt=2&fltt=2'
+              status, body=get(url, {'Referer':'https://quote.eastmoney.com/'})
+              p=json.loads(body); d=p.get('data') or {}
+              if not d: raise RuntimeError('Eastmoney empty data')
+              return {'provider':'eastmoney_'+host.split('.')[0],'http':status,'symbol':secid,'price':d.get('f43'),'open':d.get('f46'),'high':d.get('f44'),'low':d.get('f45'),'prev':d.get('f60'),'volume':d.get('f47'),'provider_timestamp':d.get('f86'),'as_of_beijing':iso_from_epoch(d.get('f86')) if d.get('f86') else None}
+          def probe_yahoo(symbol):
+              url='https://query1.finance.yahoo.com/v8/finance/chart/'+urllib.parse.quote(symbol,safe='')+'?interval=1m&range=1d&includePrePost=false'
+              status,body=get(url, {'User-Agent':'Mozilla/5.0'})
+              p=json.loads(body); r=p['chart']['result'][0]; ts=r.get('timestamp') or []
+              q=(r.get('indicators',{}).get('quote') or [{}])[0]
+              for i in range(len(ts)-1,-1,-1):
+                  vals={k:(q.get(k) or [None]*len(ts))[i] for k in ('open','high','low','close','volume')}
+                  if all(vals[k] is not None for k in ('open','high','low','close')):
+                      return {'provider':'yahoo','http':status,'symbol':symbol,'price':vals['close'],**vals,'provider_timestamp':ts[i],'as_of_beijing':iso_from_epoch(ts[i])}
+              raise RuntimeError('Yahoo no complete row')
+          def probe_stooq(symbol):
+              url='https://stooq.com/q/l/?s='+urllib.parse.quote(symbol,safe='^')+'&f=sd2t2ohlcv&h&e=csv'
+              status,body=get(url, {'User-Agent':'Mozilla/5.0'})
+              rows=list(csv.DictReader(io.StringIO(body)))
+              if not rows: raise RuntimeError('Stooq empty')
+              r=rows[0]
+              if r.get('Date') in (None,'N/D'): raise RuntimeError('Stooq N/D '+body[:200])
+              # Stooq exchange-local timestamp; for Japan treat as JST if intraday value exists.
+              raw=f"{r.get('Date')}T{r.get('Time')}"
+              dt=datetime.fromisoformat(raw).replace(tzinfo=ZoneInfo('Asia/Tokyo'))
+              return {'provider':'stooq','http':status,'symbol':symbol,'price':r.get('Close'),'open':r.get('Open'),'high':r.get('High'),'low':r.get('Low'),'volume':r.get('Volume'),'provider_timestamp':raw,'as_of_beijing':dt.astimezone(BJ).isoformat(timespec='seconds'),'raw':r}
+          def probe_naver_world(url, label):
+              status,body=get(url, {'Referer':'https://finance.naver.com/world/'})
+              obj=json.loads(body)
+              return {'provider':label,'http':status,'body_type':type(obj).__name__,'sample':obj if isinstance(obj,dict) else obj[:2]}
+          def probe_nikkei_html():
+              url='https://indexes.nikkei.co.jp/en/nkave/index/profile?idx=nk225'
+              status,body=get(url, {'Accept':'text/html,*/*'})
+              # Audit only; must not be promoted without a structured provider timestamp.
+              nums=re.findall(r'\b\d{2,3},\d{3}\.\d{2}\b', body)
+              return {'provider':'nikkei_official_html','http':status,'structured_timestamp':False,'sample_prices':nums[:5],'bytes':len(body)}
+
+          probes={
+            'TWII_twse':probe_twse,
+            'TWII_eastmoney':lambda:probe_eastmoney('100.TWII'),
+            'TWII_eastmoney_delay':lambda:probe_eastmoney('100.TWII','push2delay.eastmoney.com'),
+            'TWII_yahoo':lambda:probe_yahoo('^TWII'),
+            'N225_eastmoney_delay':lambda:probe_eastmoney('100.N225','push2delay.eastmoney.com'),
+            'N225_yahoo':lambda:probe_yahoo('^N225'),
+            'N225_stooq_nkx':lambda:probe_stooq('^nkx'),
+            'N225_stooq_n225':lambda:probe_stooq('^n225'),
+            'N225_nikkei_official_html':probe_nikkei_html,
+            'N225_naver_world_daily':lambda:probe_naver_world('https://finance.naver.com/world/worldDayListJson.naver?symbol=NIK@NI225&fdtc=0&page=1','naver_world_daily'),
+          }
+          rounds=[]
+          for n in range(3):
+              observed=datetime.now(timezone.utc)
+              row={'round':n+1,'observed_at_beijing':observed.astimezone(BJ).isoformat(timespec='seconds'),'results':{}}
+              with ThreadPoolExecutor(max_workers=len(probes)) as ex:
+                  futs={ex.submit(fn):name for name,fn in probes.items()}
+                  for fut in as_completed(futs):
+                      name=futs[fut]
+                      try:
+                          v=fut.result();
+                          ts=v.get('as_of_beijing')
+                          if ts:
+                              dt=datetime.fromisoformat(ts)
+                              v['delay_seconds']=round(max(0,(observed-dt.astimezone(timezone.utc)).total_seconds()),2)
+                          row['results'][name]={'status':'PASS',**v}
+                      except Exception as e:
+                          row['results'][name]={'status':'FAILED','error':repr(e)}
+              rounds.append(row)
+              if n<2: time.sleep(20)
+          out={'generated_at_beijing':datetime.now(timezone.utc).astimezone(BJ).isoformat(timespec='seconds'),'purpose':'JP_TW_OPEN_SESSION_PARALLEL_PROVIDER_VALIDATION','rounds':rounds}
+          path=Path('data/market/audit/jp_tw_live_provider_validation_20260827.json'); path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit audit result
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add data/market/audit/jp_tw_live_provider_validation_20260827.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "audit: validate Japan Taiwan live providers in parallel"
+          git pull --rebase origin main
+          git push origin HEAD:main
