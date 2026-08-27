@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "mode": "PRODUCTION_MUTATION_PROTOCOL",
   "purpose": "允许并行诊断与计算，但对共享生产状态实行隔离实施、latest-main重放、文件所有权和串行集成约束。",
   "principles": [
@@ -7,7 +7,8 @@
     "implementation_isolated_by_branch_or_workflow",
     "production_integration_is_serialized",
     "dynamic_state_is_rebuilt_from_latest_main",
-    "fact_precedence_must_not_depend_on_last_writer_wins"
+    "fact_precedence_must_not_depend_on_last_writer_wins",
+    "research_and_shadow_validation_do_not_write_main"
   ],
   "writer_requirements": {
     "require_concurrency_group": true,
@@ -34,6 +35,20 @@
       "reason": "两条链使用同一A股核心producer并可能写CURRENT/runtime及快照，必须共享串行队列。"
     }
   ],
+  "nonproduction_validation_workflows": {
+    ".github/workflows/akshare-capability-poc.yml": {
+      "artifact_path": "data/state/akshare_poc.json",
+      "rule": "PoC结果仅作为短期验证证据，不持久化main。"
+    },
+    ".github/workflows/minute-source-poc.yml": {
+      "artifact_path": "data/state/minute_source_poc.json",
+      "rule": "分钟源能力验证只保留Actions artifact；正式启用必须另走生产转化。"
+    },
+    ".github/workflows/minute-path-shadow.yml": {
+      "artifact_path": "data/state/minute_path_features.json",
+      "rule": "shadow输出不属于正式decision context；只做短期artifact留档，不直接写main。"
+    }
+  },
   "state_file_contracts": {
     "data/state/CURRENT.json": {
       "state_class": "CANONICAL_MARKET_STATE",
