@@ -49,12 +49,21 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Preserve previous US pulse for sudden-move comparison
+        run: |
+          [ -f data/state/us_extended_hours_context.json ] && cp data/state/us_extended_hours_context.json /tmp/us_extended_hours_context_prev.json || true
       - name: Refresh US extended-hours context
         run: python scripts/build_us_extended_hours_context.py
       - name: Send US regular-session open/close summary when due
         id: us_summary_notify
         continue-on-error: true
         run: python scripts/send_us_session_summary.py
+      - name: Send US extreme/sudden move alert when due
+        id: us_shock_notify
+        continue-on-error: true
+        env:
+          PREVIOUS_CONTEXT_PATH: /tmp/us_extended_hours_context_prev.json
+        run: python scripts/send_market_shock_notification.py --market us
       - name: Run system consistency live audit
         continue-on-error: true
         run: |
@@ -69,14 +78,12 @@ jobs:
             exit 0
           fi
           git commit -m "data: refresh US extended-hours context"
-          # The audit may leave unrelated generated files dirty. They are
-          # owned by their own workflows and must not block the US data push.
           git stash push --include-untracked -m "preserve non-US generated state" || true
           git pull --rebase origin main
           git stash drop || true
           git push origin HEAD:main
-      - name: Surface US summary delivery failure without blocking market data
-        if: ${{ steps.us_summary_notify.outcome == 'failure' }}
+      - name: Surface US notification delivery failure without blocking market data
+        if: ${{ steps.us_summary_notify.outcome == 'failure' || steps.us_shock_notify.outcome == 'failure' }}
         run: |
-          echo "US session summary notification failed; US market-data refresh remains valid."
+          echo "US market notification failed; US market-data refresh remains valid."
           exit 1
