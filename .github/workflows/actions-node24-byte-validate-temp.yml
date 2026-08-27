@@ -1,0 +1,51 @@
+name: actions-node24-byte-validate-temp
+
+on:
+  push:
+    branches:
+      - maintenance/actions-node24-byte-preserving-20260827
+    paths:
+      - "scripts/apply_actions_node24_byte_preserving_temp.py"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: actions-node24-byte-validate-temp-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Apply byte-preserving action upgrade and build mirrors
+        run: python scripts/apply_actions_node24_byte_preserving_temp.py
+      - name: Verify deprecated action majors are absent
+        shell: bash
+        run: |
+          if git grep -n -E 'actions/checkout@v4|actions/setup-python@v5' -- '.github/workflows/*.yml' '.github/workflows/*.yaml'; then
+            echo 'Deprecated action major remains' >&2
+            exit 1
+          fi
+      - name: Validate production mutation protocol
+        run: python scripts/check_production_mutation_protocol.py
+      - name: Persist only byte-preserved mirrors
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git restore .github/workflows
+          git add maintenance/actions_node24_byte_blobs maintenance/actions_node24_byte_manifest.json
+          if git diff --cached --quiet; then
+            echo 'No mirrors generated' >&2
+            exit 1
+          fi
+          git commit -m "ops: persist byte-preserved Node 24 workflow mirrors"
+          git push origin HEAD:maintenance/actions-node24-byte-preserving-20260827
