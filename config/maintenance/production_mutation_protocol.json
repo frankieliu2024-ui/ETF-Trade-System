@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.2",
+  "schema_version": "1.3",
   "mode": "PRODUCTION_MUTATION_PROTOCOL",
   "purpose": "允许并行诊断与计算，但对共享生产状态实行隔离实施、latest-main重放、文件所有权和串行集成约束。",
   "principles": [
@@ -8,7 +8,8 @@
     "production_integration_is_serialized",
     "dynamic_state_is_rebuilt_from_latest_main",
     "fact_precedence_must_not_depend_on_last_writer_wins",
-    "research_and_shadow_validation_do_not_write_main"
+    "research_and_shadow_validation_do_not_write_main",
+    "formal_fact_documents_use_one_low_level_mutation_gateway"
   ],
   "writer_requirements": {
     "require_concurrency_group": true,
@@ -23,6 +24,21 @@
   "single_owner_files": {
     "data/state/system_consistency.json": ".github/workflows/system-consistency.yml",
     "ETF规则_MASTER.md": "NO_AUTOMATIC_WORKFLOW"
+  },
+  "formal_file_mutation_contract": {
+    "canonical_gateway": "scripts/formal_file_mutation_gateway.py",
+    "allowed_fact_files": [
+      "ETF当前状态_DASHBOARD.md",
+      "ETF市场行情档案_2026.md",
+      "ETF交易复盘与经验库_2026.md"
+    ],
+    "forbidden_rule_file": "ETF规则_MASTER.md",
+    "registered_callers": [
+      "scripts/sync_formal_files.py",
+      "scripts/process_state_sync_request.py",
+      "scripts/apply_trade_fact_correction.py"
+    ],
+    "rule": "业务脚本可以分别负责账户同步、成交/复盘事件和已确认费用纠错，但对三份人类可读正式事实文件的低层managed-block/upsert/write必须统一经过canonical gateway；gateway绝不允许写MASTER。"
   },
   "shared_writer_families": [
     {
