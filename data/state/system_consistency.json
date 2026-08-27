@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-27T07:55:56Z",
-  "generated_at_beijing": "2026-08-27T15:55:56+08:00",
+  "generated_at": "2026-08-27T08:00:11Z",
+  "generated_at_beijing": "2026-08-27T16:00:11+08:00",
   "repository": {
-    "head_sha": "7453afaad1420754f47e57e5c42d803210fb21cc",
-    "github_sha": "7453afaad1420754f47e57e5c42d803210fb21cc",
-    "github_run_id": "33051774565",
+    "head_sha": "68244d103786756521c1410bbf34a051b8ff6ccf",
+    "github_sha": "68244d103786756521c1410bbf34a051b8ff6ccf",
+    "github_run_id": "33052072791",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "7453afaad1420754f47e57e5c42d803210fb21cc",
-    "workflow_sha": "7453afaad1420754f47e57e5c42d803210fb21cc",
+    "checked_commit": "68244d103786756521c1410bbf34a051b8ff6ccf",
+    "workflow_sha": "68244d103786756521c1410bbf34a051b8ff6ccf",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "status": "FAIL",
   "hard_error_count": 1,
-  "warning_count": 2,
+  "warning_count": 1,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.014s\n\nOK\n"
+      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.023s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -235,12 +235,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=7453afaad1420754f47e57e5c42d803210fb21cc"
+      "detail": "HEAD=68244d103786756521c1410bbf34a051b8ff6ccf"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=7453afaad1420754f47e57e5c42d803210fb21cc GITHUB_SHA=7453afaad1420754f47e57e5c42d803210fb21cc"
+      "detail": "HEAD=68244d103786756521c1410bbf34a051b8ff6ccf GITHUB_SHA=68244d103786756521c1410bbf34a051b8ff6ccf"
     },
     {
       "name": "git:critical_files_tracked",
@@ -534,8 +534,8 @@
     },
     {
       "name": "pulse_policy:close_grace_seconds",
-      "status": "FAIL",
-      "detail": "standard=900 runtime=1800"
+      "status": "PASS",
+      "detail": "standard=1800 runtime=1800"
     },
     {
       "name": "pulse_policy:provider_timeout_seconds",
@@ -669,8 +669,8 @@
     },
     {
       "name": "us_extended:live_freshness",
-      "status": "PASS",
-      "detail": "active=False phase=03:55 max_age_seconds=28557 limit=900"
+      "status": "FAIL",
+      "detail": "active=True phase=04:00 max_age_seconds=29111 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -785,12 +785,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=2139"
+      "detail": "declared=STALE expected=STALE age_seconds=2394"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=2138"
+      "detail": "declared=STALE expected=STALE age_seconds=2394"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -830,7 +830,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-27T07:55:54Z market=2026-08-27T15:20:16+08:00"
+      "detail": "context=2026-08-27T08:00:10Z market=2026-08-27T15:20:16+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -929,8 +929,43 @@
     },
     {
       "name": "a_share_runtime:live_state_available",
-      "status": "WARNING",
+      "status": "PASS",
       "detail": "runtime_status=SKIPPED current_snapshot=data/market/snapshots/2026-08-27_152016.json"
+    },
+    {
+      "name": "a_share_runtime:current_ready",
+      "status": "PASS",
+      "detail": "market_date=2026-08-27 node=close status=READY"
+    },
+    {
+      "name": "a_share_runtime:snapshot_exists",
+      "status": "PASS",
+      "detail": "path=data/market/snapshots/2026-08-27_152016.json"
+    },
+    {
+      "name": "a_share_runtime:snapshot_count",
+      "status": "PASS",
+      "detail": "snapshot_count=14 rows=14 expected=14"
+    },
+    {
+      "name": "a_share_runtime:market_date_alignment",
+      "status": "PASS",
+      "detail": "snapshot=2026-08-27 current=2026-08-27 health=2026-08-27 query_only=False"
+    },
+    {
+      "name": "a_share_runtime:etf_complete",
+      "status": "PASS",
+      "detail": "count=11 expected=11"
+    },
+    {
+      "name": "a_share_runtime:core_indices_complete",
+      "status": "PASS",
+      "detail": "indices=['000001.SH', '000688.SH', '399006.SZ']"
+    },
+    {
+      "name": "a_share_runtime:beijing_capture",
+      "status": "PASS",
+      "detail": "captured_at_beijing=2026-08-27T15:20:16+08:00 timezone=Asia/Shanghai"
     },
     {
       "name": "stock_runtime:dynamic_account_membership",
@@ -945,7 +980,7 @@
     {
       "name": "stock_runtime:market_time_alignment",
       "status": "PASS",
-      "detail": "not_comparable"
+      "detail": "max_core_minus_stock_seconds=1"
     },
     {
       "name": "overseas_runtime:structured",
@@ -1053,21 +1088,6 @@
       "detail": "direct main writer does not force-push main"
     },
     {
-      "name": "mutation_writer:.github/workflows/oneoff-close-consistency-20260827.yml:concurrency",
-      "status": "PASS",
-      "detail": "direct main writer has concurrency group"
-    },
-    {
-      "name": "mutation_writer:.github/workflows/oneoff-close-consistency-20260827.yml:latest_main_sync",
-      "status": "PASS",
-      "detail": "direct main writer synchronizes latest main before production push"
-    },
-    {
-      "name": "mutation_writer:.github/workflows/oneoff-close-consistency-20260827.yml:no_force_push",
-      "status": "PASS",
-      "detail": "direct main writer does not force-push main"
-    },
-    {
       "name": "mutation_writer:.github/workflows/overseas-preopen-pulse.yml:concurrency",
       "status": "PASS",
       "detail": "direct main writer has concurrency group"
@@ -1160,7 +1180,7 @@
     {
       "name": "mutation_protocol:direct_writers_discovered",
       "status": "PASS",
-      "detail": "writers=['.github/workflows/base-stock-screen.yml', '.github/workflows/decision-notification.yml', '.github/workflows/on-demand-market-data.yml', '.github/workflows/oneoff-close-consistency-20260827.yml', '.github/workflows/overseas-preopen-pulse.yml', '.github/workflows/research-backfill.yml', '.github/workflows/self-healing-watchdog.yml', '.github/workflows/system-consistency.yml', '.github/workflows/us-extended-hours-pulse.yml', '.github/workflows/workflow-failure-guard.yml']"
+      "detail": "writers=['.github/workflows/base-stock-screen.yml', '.github/workflows/decision-notification.yml', '.github/workflows/on-demand-market-data.yml', '.github/workflows/overseas-preopen-pulse.yml', '.github/workflows/research-backfill.yml', '.github/workflows/self-healing-watchdog.yml', '.github/workflows/system-consistency.yml', '.github/workflows/us-extended-hours-pulse.yml', '.github/workflows/workflow-failure-guard.yml']"
     },
     {
       "name": "mutation_owner:data/state/system_consistency.json:.github/workflows/akshare-capability-poc.yml",
@@ -1194,11 +1214,6 @@
     },
     {
       "name": "mutation_owner:data/state/system_consistency.json:.github/workflows/on-demand-market-data.yml",
-      "status": "PASS",
-      "detail": "single-owner file remains owned by .github/workflows/system-consistency.yml"
-    },
-    {
-      "name": "mutation_owner:data/state/system_consistency.json:.github/workflows/oneoff-close-consistency-20260827.yml",
       "status": "PASS",
       "detail": "single-owner file remains owned by .github/workflows/system-consistency.yml"
     },
@@ -1264,11 +1279,6 @@
     },
     {
       "name": "mutation_owner:ETF规则_MASTER.md:.github/workflows/on-demand-market-data.yml",
-      "status": "PASS",
-      "detail": "formal single-owner file is not automatically staged"
-    },
-    {
-      "name": "mutation_owner:ETF规则_MASTER.md:.github/workflows/oneoff-close-consistency-20260827.yml",
       "status": "PASS",
       "detail": "formal single-owner file is not automatically staged"
     },
@@ -1674,11 +1684,10 @@
     }
   ],
   "errors": [
-    "pulse_policy:close_grace_seconds: standard=900 runtime=1800"
+    "us_extended:live_freshness: active=True phase=04:00 max_age_seconds=29111 limit=900"
   ],
   "warnings": [
-    "runtime_health:skipped_reason: failure_stage= reason=close_already_recorded",
-    "a_share_runtime:live_state_available: runtime_status=SKIPPED current_snapshot=data/market/snapshots/2026-08-27_152016.json"
+    "runtime_health:skipped_reason: failure_stage= reason=close_already_recorded"
   ],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
   "production_mutation_protocol": {
@@ -1687,7 +1696,6 @@
       ".github/workflows/base-stock-screen.yml",
       ".github/workflows/decision-notification.yml",
       ".github/workflows/on-demand-market-data.yml",
-      ".github/workflows/oneoff-close-consistency-20260827.yml",
       ".github/workflows/overseas-preopen-pulse.yml",
       ".github/workflows/research-backfill.yml",
       ".github/workflows/self-healing-watchdog.yml",
