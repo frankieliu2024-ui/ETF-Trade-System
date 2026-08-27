@@ -1,0 +1,52 @@
+name: Index futures expiry-aware probe temp
+
+on:
+  push:
+    branches: [research/index-futures-expiry-aware-20260827]
+    paths:
+      - 'research/requests/index_futures_expiry_probe.json'
+      - '.github/workflows/index-futures-expiry-aware-probe-temp.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/index-futures-expiry-aware-20260827
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -q akshare pandas
+      - name: Probe CFFEX contract-level history
+        shell: bash
+        run: |
+          python - <<'PY'
+          import akshare as ak, pandas as pd, json, inspect
+          from pathlib import Path
+          out={'function':{},'dates':{}}
+          fn=getattr(ak,'get_futures_daily',None)
+          out['function']['get_futures_daily']={'exists':bool(fn),'signature':str(inspect.signature(fn)) if fn else None,'doc':(inspect.getdoc(fn) or '')[:1200] if fn else None}
+          for d in ['20260820','20260801','20260320','20250820','20240820','20230818']:
+              try:
+                  x=ak.get_futures_daily(start_date=d,end_date=d,market='CFFEX')
+                  out['dates'][d]={'ok':True,'rows':len(x),'columns':list(x.columns),'sample':x.head(20).astype(str).to_dict('records')}
+              except Exception as e:
+                  out['dates'][d]={'ok':False,'error':f'{type(e).__name__}: {e}'}
+          p=Path('research/backtests/index_futures_expiry_source_probe.json')
+          p.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps({k:{'ok':v.get('ok'),'rows':v.get('rows'),'error':v.get('error')} for k,v in out['dates'].items()},ensure_ascii=False))
+          PY
+      - name: Commit probe result
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/backtests/index_futures_expiry_source_probe.json
+          git commit -m 'research: record CFFEX contract source probe' || exit 0
+          git push origin HEAD:research/index-futures-expiry-aware-20260827
