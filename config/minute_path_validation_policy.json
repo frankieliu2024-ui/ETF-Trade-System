@@ -1,25 +1,50 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "scope": "TENCENT_ETF_1M_REAL_INTRADAY_VALIDATION",
   "timezone": "Asia/Shanghai",
+  "evidence_contract": {
+    "workflow_name": "ETF minute path shadow validation",
+    "workflow_path": ".github/workflows/minute-path-shadow.yml",
+    "workflow_id": 342784194,
+    "storage": "GITHUB_ACTIONS_ARTIFACT_ONLY",
+    "artifact_name_pattern": "minute-path-shadow-<run_id>",
+    "artifact_file": "minute_path_features.json",
+    "retention_days": 14,
+    "main_state_is_not_validation_evidence": true,
+    "scheduled_event_role": "PRIMARY_FORMAL_VALIDATION_EVIDENCE",
+    "push_or_dispatch_role": "SUPPLEMENTAL_ONLY_NOT_SUFFICIENT_FOR_FORMAL_PASS"
+  },
   "scheduled_shadow_nodes_beijing": ["10:30", "13:45", "14:30", "14:55"],
   "minimum_valid_nodes": 2,
   "preferred_session_coverage": {
     "morning_min": 1,
     "afternoon_min": 1
   },
+  "valid_node_requirements": {
+    "branch": "main",
+    "event": "schedule",
+    "market_phase": "A_SHARE_CONTINUOUS_TRADING",
+    "artifact_required": true,
+    "artifact_quality_summary_formal_gate_pass": true
+  },
   "quality_requirements": {
     "etf_coverage_ratio": 1.0,
     "minute_continuity_required": true,
     "freshness_required": true,
+    "freshness_max_seconds": 180,
     "quote_alignment_required": true,
+    "quote_alignment_reference": "SIMULTANEOUS_TENCENT_QUOTE_ENDPOINT",
+    "quote_alignment_max_abs_diff_pct": 0.25,
+    "quote_comparable_max_seconds": 90,
     "github_actions_stability_required": true
   },
+  "quote_alignment_semantics": "活动盘中不得用数分钟前的CURRENT快照作为硬性分钟价一致性门槛；shadow脚本应同时抓取腾讯quote endpoint并以provider timestamp判断是否可比。CURRENT仅保留为上下文参照，正式最新价仍由quote router决定。",
   "decision_levels": {
-    "FORMAL_PASS": "至少2个有效真实盘中节点，且至少覆盖上午1个、下午1个；关键质量项全部合格。允许按既定收益顺序推进正式接入与小型重构。",
-    "LIMITED_PASS": "仅有上午2个有效节点且关键质量项全部合格。允许有限重构，但必须标记全天盘中验证未完成；10分钟正式脉冲只允许评估降职责，不允许降频。",
-    "FAIL": "只有1个有效节点，或任一关键质量项不合格，或下午节点出现明显滞后、缺分钟、quote不一致。不得判定正式通过，不推进正式接入。"
+    "FORMAL_PASS": "至少2个有效真实盘中scheduled节点，且至少覆盖上午1个、下午1个；关键质量项全部合格。允许按既定收益顺序推进正式接入与小型重构。",
+    "LIMITED_PASS": "若未来显式安排上午两个scheduled节点且二者关键质量项全部合格，可允许有限重构，但必须标记全天盘中验证未完成；10分钟正式脉冲只允许评估降职责，不允许降频。当前默认四节点计划下，push/dispatch样本不能替代上午scheduled证据。",
+    "FAIL": "只有1个有效scheduled节点，或任一关键质量项不合格，或下午节点出现明显滞后、缺分钟、quote不一致。不得判定正式通过，不推进正式接入。",
+    "EVIDENCE_INSUFFICIENT": "scheduled节点未按计划产生或artifact缺失时，归类为证据不足/调度链问题，不得误判腾讯分钟源本身失败，也不得推进正式接入。"
   },
-  "ten_minute_pulse_rule": "四节点不是机械硬条件。只有跨上午/下午证据充分且分钟源稳定后，才允许评估10分钟正式脉冲降职责或降频；不得直接删除，必须保留正式状态锚点、provider健康检查和fallback。",
+  "ten_minute_pulse_rule": "四节点不是机械硬条件。只有跨上午/下午证据充分且分钟源稳定后，才允许评估10分钟正式脉冲降职责或降频；首次正式接入阶段只降职责、不降频，至少继续观察若干完整交易日后再单独评估降频。不得直接删除，必须保留正式状态锚点、provider健康检查和fallback。",
   "integration_boundary": "分钟源仅增强日内路径、极值时序与成交承接证据；正式最新价仍由quote router决定；不修改MASTER、Trial/Confirm或交易权限。"
 }
