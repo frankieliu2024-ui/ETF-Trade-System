@@ -4,6 +4,9 @@ on:
   workflow_dispatch:
   schedule:
     # UTC / Beijing time.
+    # 20:15/20:30 UTC = Beijing 04:15/04:30. Independent schedule backstop for
+    # the fixed US cash-session close summary if the dedicated US pulse misses.
+    - cron: "15,30 20 * * 1-5"
     # 23:00-23:50 UTC previous day = Beijing 07:00-07:50.
     - cron: "*/10 23 * * 0-4"
     # 00:00-07:50 UTC = Beijing 08:00-15:50, covering Asia-Pacific sessions.
