@@ -1,0 +1,363 @@
+name: ETF market snapshot
+
+# Schedule registration marker: this workflow remains on the default branch for GitHub cron dispatch.
+on:
+  workflow_dispatch:
+    inputs:
+      node:
+        description: "Data-only node label"
+        required: true
+        default: "scheduled"
+      probe_only:
+        description: "Fetch and validate without writing a valid node"
+        required: true
+        default: "false"
+  push:
+    paths:
+      - "requests/live_snapshot/**.json"
+      - "scripts/cloud_runner_snapshot.py"
+      - "scripts/query_time_market_refresh.py"
+      - "scripts/tencent_quote.py"
+      - "config/market/provider_priority.json"
+  schedule:
+    # Explicit opening-auction pulses, followed by ten-minute pulses in active A-share windows.
+    - cron: "15,20,25,30,40,50 1 * * 1-5"
+    - cron: "*/10 2-3,5-6 * * 1-5"
+    - cron: "0,10 7 * * 1-5"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: etf-market-snapshot-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HITHINK_FINANCE_API_KEY: ${{ secrets.HITHINK_FINANCE_API_KEY }}
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+      HITHINK_RETRY_LIMIT: "2"
+      HITHINK_TIMEOUT_SECONDS: "25"
+      QUERY_TIME_REFRESH: ${{ github.event_name == 'push' && 'true' || 'false' }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Check exchange calendar and capture window
+        id: session_gate
+        run: python scripts/runtime_session_gate.py
+      - name: Record skipped runtime health
+        if: ${{ steps.session_gate.outputs.should_capture != 'true' && github.event_name != 'push' }}
+        env:
+          SESSION_MARKET_DATE: ${{ steps.session_gate.outputs.market_date }}
+          SESSION_MARKET_PHASE: ${{ steps.session_gate.outputs.market_phase }}
+          EVENT_SCHEDULE: ${{ github.event.schedule || '' }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone, timedelta
+          from pathlib import Path
+          shanghai = timezone(timedelta(hours=8), name='Asia/Shanghai')
+          now = datetime.now(shanghai).isoformat(timespec='seconds')
+          health_path = Path('data/state/runtime_health.json')
+          current_path = Path('data/state/CURRENT.json')
+          health = json.loads(health_path.read_text(encoding='utf-8')) if health_path.exists() else {}
+          current = json.loads(current_path.read_text(encoding='utf-8')) if current_path.exists() else {}
+          health.update({
+              'status': 'SKIPPED',
+              'quality_status': 'SKIPPED',
+              'reason': 'outside_a_share_capture_window',
+              'failure_stage': 'session_gate',
+              'scheduled_for': 'cron:' + os.environ.get('EVENT_SCHEDULE', '') if os.environ.get('EVENT_SCHEDULE') else ('query_time_push' if os.environ.get('GITHUB_EVENT_NAME') == 'push' else 'workflow_dispatch'),
+              'trigger_mode': 'QUERY_TIME_PUSH' if os.environ.get('GITHUB_EVENT_NAME') == 'push' else 'SCHEDULE_OR_DISPATCH',
+              'started_at': now,
+              'finished_at': now,
+              'workflow_run_id': os.environ.get('GITHUB_RUN_ID', ''),
+              'run_id': os.environ.get('GITHUB_RUN_ID', ''),
+              'input_commit': os.environ.get('GITHUB_SHA', ''),
+              'data_commit': '',
+              'provider_as_of': '',
+              'latest_snapshot': current.get('latest_snapshot', health.get('latest_snapshot', '')),
+              'market_date': os.environ.get('SESSION_MARKET_DATE', current.get('market_date', '')),
+              'market_phase': os.environ.get('SESSION_MARKET_PHASE', 'OUTSIDE_SESSION'),
+          })
+          health_path.write_text(json.dumps(health, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+      - uses: actions/setup-node@v4
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' || github.event_name == 'push' }}
+        with:
+          node-version: "20"
+      - name: Install hithink-finance CLI
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' || github.event_name == 'push' }}
+        run: npm install --global @hithink-tech/hithink-finance-cli
+      - name: Load unified provider concurrency policy
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' || github.event_name == 'push' }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          policy = json.loads(Path("config/runtime_policy.json").read_text(encoding="utf-8"))
+          key = "query_provider_max_workers" if os.environ.get("GITHUB_EVENT_NAME") == "push" else "scheduled_provider_max_workers"
+          value = policy.get(key)
+          if not isinstance(value, int) or value < 1:
+              raise SystemExit(f"invalid {key}={value!r}")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
+              handle.write(f"HITHINK_MAX_WORKERS={value}\n")
+          print(f"provider concurrency: {key}={value}")
+      - name: Run data-only snapshot
+        id: capture
+        # Scheduled pulses and in-session user requests share the same producer.
+        # This keeps query-time A-share facts on the canonical snapshot/CURRENT
+        # path instead of maintaining a second non-persisted market-data chain.
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
+        env:
+          NODE_LABEL: ${{ github.event_name == 'push' && 'live' || (github.event.inputs.node || 'scheduled') }}
+          PROBE_ONLY: ${{ github.event.inputs.probe_only || 'false' }}
+        run: |
+          if [ "$PROBE_ONLY" = "true" ]; then
+            python scripts/cloud_runner_snapshot.py --node "$NODE_LABEL" --probe-only
+          else
+            python scripts/cloud_runner_snapshot.py --node "$NODE_LABEL"
+          fi
+      - name: Normalize runtime health observability
+        if: ${{ steps.capture.outcome == 'success' && steps.session_gate.outputs.should_capture == 'true' }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone, timedelta
+          from pathlib import Path
+          shanghai = timezone(timedelta(hours=8), name='Asia/Shanghai')
+          path = Path('data/state/runtime_health.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          snapshot_path = Path(data.get('latest_snapshot', ''))
+          snapshot = json.loads(snapshot_path.read_text(encoding='utf-8')) if snapshot_path.exists() else {}
+          provider_times = [row.get('as_of_beijing') for row in (snapshot.get('rows') or []) if row.get('as_of_beijing')]
+          planned = snapshot.get('planned_time', '')
+          market_date = snapshot.get('market_date', data.get('market_date', ''))
+          data.update({
+              'scheduled_for': 'query_time_push' if os.environ.get('GITHUB_EVENT_NAME') == 'push' else (f'{market_date} {planned}' if planned else f'{market_date} {snapshot.get("node", "")}'),
+              'trigger_mode': 'QUERY_TIME_PUSH' if os.environ.get('GITHUB_EVENT_NAME') == 'push' else 'SCHEDULE_OR_DISPATCH',
+              'started_at': data.get('run_started_at', ''),
+              'finished_at': data.get('captured_at_beijing', datetime.now(shanghai).isoformat(timespec='seconds')),
+              'run_id': os.environ.get('GITHUB_RUN_ID', ''),
+              'input_commit': os.environ.get('GITHUB_SHA', ''),
+              'data_commit': '',
+              'provider_as_of': max(provider_times) if provider_times else '',
+              'failure_stage': '',
+          })
+          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+      - name: Verify a new valid snapshot was written
+        id: snapshot_result
+        if: ${{ steps.capture.outcome == 'success' }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('data/state/runtime_health.json')
+          written = False
+          reason = 'runtime_health_missing'
+          if path.exists():
+              data = json.loads(path.read_text(encoding='utf-8'))
+              status = data.get('status', '')
+              same_run = str(data.get('workflow_run_id', '')) == str(os.environ.get('GITHUB_RUN_ID', ''))
+              written = status in {'PASS', 'DEGRADED'} and same_run and bool(data.get('latest_snapshot'))
+              reason = status or 'missing_status'
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
+              f.write(f"snapshot_written={'true' if written else 'false'}\n")
+              f.write(f"reason={reason}\n")
+          print(json.dumps({'snapshot_written': written, 'reason': reason}, ensure_ascii=False))
+          PY
+      - name: Publish core snapshot and CURRENT immediately
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Consistency is persisted by its own workflow; excluding it prevents a
+          # concurrent audit write from conflicting with the market-data commit.
+          git checkout -- data/state/system_consistency.json
+          git add -A -- data/market/snapshots data/state
+          git reset -- data/state/system_consistency.json
+          if ! git diff --cached --quiet; then
+            mkdir -p /tmp/etf-core-publish
+            git diff --cached --name-only -z > /tmp/etf-core-files
+            while IFS= read -r -d '' file; do
+              mkdir -p "/tmp/etf-core-publish/$(dirname "$file")"
+              cp "$file" "/tmp/etf-core-publish/$file"
+            done < /tmp/etf-core-files
+            for attempt in 1 2 3; do
+              git fetch origin main
+              git reset --hard origin/main
+              while IFS= read -r -d '' file; do
+                mkdir -p "$(dirname "$file")"
+                cp "/tmp/etf-core-publish/$file" "$file"
+              done < /tmp/etf-core-files
+              git add -A -- data/market/snapshots data/state
+              git reset -- data/state/system_consistency.json
+              git commit -m "data: publish core market snapshot"
+              if git push origin HEAD:main; then
+                break
+              fi
+              if [ "$attempt" = "3" ]; then exit 1; fi
+            done
+          fi
+      - name: Quick retry failed core objects after initial publish
+        id: quick_retry
+        # A user request gets the first publishable PASS/DEGRADED/FAILED result
+        # immediately. Slow repair remains a scheduled, post-publish activity.
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
+        run: python scripts/cloud_runner_snapshot.py --retry-failed
+      - name: Process optional broker/dashboard state sync
+        id: state_sync
+        if: ${{ github.event_name == 'push' && github.event.inputs.probe_only != 'true' }}
+        shell: bash
+        run: |
+          processed=false
+          files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
+          for f in $files; do
+            if python - "$f" <<'PY'
+          import json, sys
+          data = json.load(open(sys.argv[1], encoding='utf-8'))
+          keys = ('account_fact','formal_decision','trade_event','formal_review','interaction_scenario')
+          raise SystemExit(0 if any(k in data for k in keys) else 1)
+          PY
+            then
+              python scripts/refresh_gate.py --guard-request "$f"
+              python scripts/process_state_sync_request.py "$f"
+              processed=true
+            fi
+          done
+          echo "processed=$processed" >> "$GITHUB_OUTPUT"
+      - name: Build objective intraday market delta
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/build_market_delta.py
+      - name: Refresh overseas and Asia index context
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/build_overseas_context.py
+      - name: Build dynamic stock context from current account
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/build_stock_context.py
+      - name: Collect current account-stock market facts
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/build_account_stock_market.py
+      - name: Build E2E usability state
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/build_e2e_status.py
+
+      - name: Build state context and candidates
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/build_state_context.py
+      - name: Build on-demand query context
+        if: ${{ (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "${{ steps.snapshot_result.outputs.snapshot_written }}" != "true" ]; then
+            REQUEST_SYMBOLS=$(python - <<'PY'
+          import json, os, subprocess
+          files = subprocess.check_output(
+              ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", os.environ["GITHUB_SHA"], "--", "requests/live_snapshot/"],
+              text=True,
+          ).splitlines()
+          symbols = []
+          for name in files:
+              try:
+                  obj = json.loads(open(name, encoding="utf-8").read())
+              except (OSError, json.JSONDecodeError):
+                  continue
+              for value in obj.get("symbols") or []:
+                  value = str(value).strip()
+                  if value and value not in symbols:
+                      symbols.append(value)
+          print(",".join(symbols))
+          PY
+            )
+            if [ -n "$REQUEST_SYMBOLS" ]; then
+              python scripts/build_query_context.py --force-refresh --symbols "$REQUEST_SYMBOLS"
+            else
+              python scripts/build_query_context.py --force-refresh
+            fi
+          else
+            python scripts/build_query_context.py
+          fi
+          python scripts/refresh_gate.py --annotate-contexts
+      - name: Build post-market review context
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/build_post_market_review.py
+      - name: Commit downstream runtime/data artifacts
+        if: ${{ always() && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success' || steps.state_sync.outputs.processed == 'true') }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Finalize runtime health from the post-retry snapshot, not the initial capture result.
+          python - <<'PY'
+          import json, os
+          from datetime import datetime
+          from pathlib import Path
+          health_path = Path('data/state/runtime_health.json')
+          if os.environ.get('GITHUB_EVENT_NAME') == 'push':
+              raise SystemExit(0)
+          if health_path.exists():
+              health = json.loads(health_path.read_text(encoding='utf-8'))
+              snapshot_path = Path(str(health.get('latest_snapshot') or ''))
+              if snapshot_path.exists():
+                  snapshot = json.loads(snapshot_path.read_text(encoding='utf-8'))
+                  if str(snapshot.get('workflow_run_id', '')) == str(__import__('os').environ.get('GITHUB_RUN_ID', '')):
+                      quality = str(snapshot.get('quality_status') or '')
+                      if quality in {'PASS', 'DEGRADED'}:
+                          provider_times = [row.get('as_of_beijing') for row in (snapshot.get('rows') or []) if row.get('as_of_beijing')]
+                          health['status'] = quality
+                          health['quality_status'] = quality
+                          health['market_date'] = snapshot.get('market_date', health.get('market_date', ''))
+                          health['node'] = snapshot.get('node', health.get('node', 'live'))
+                          health['market_phase'] = snapshot.get('market_phase', health.get('market_phase', ''))
+                          health['captured_at'] = snapshot.get('captured_at', health.get('captured_at', ''))
+                          health['captured_at_beijing'] = snapshot.get('captured_at_beijing', health.get('captured_at_beijing', ''))
+                          health['provider_as_of'] = max(provider_times) if provider_times else health.get('provider_as_of', '')
+                          health['count'] = snapshot.get('count', health.get('count', 0))
+                          health['latest_snapshot'] = str(snapshot_path).replace('\\\\', '/')
+                          health['failure_stage'] = '' if quality == 'PASS' else health.get('failure_stage', '')
+                          health_path.write_text(json.dumps(health, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          # system_consistency is owned by the dedicated audit workflow and may
+          # change concurrently; keep it out of this data commit.
+          git checkout -- data/state/system_consistency.json
+          git add -A -- data/market/snapshots data/state post_market_review events ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
+          git reset -- data/state/system_consistency.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          mkdir -p /tmp/etf-downstream-publish
+          git diff --cached --name-only -z > /tmp/etf-downstream-files
+          while IFS= read -r -d '' file; do
+            mkdir -p "/tmp/etf-downstream-publish/$(dirname "$file")"
+            cp "$file" "/tmp/etf-downstream-publish/$file"
+          done < /tmp/etf-downstream-files
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            while IFS= read -r -d '' file; do
+              mkdir -p "$(dirname "$file")"
+              cp "/tmp/etf-downstream-publish/$file" "$file"
+            done < /tmp/etf-downstream-files
+            git add -A -- data/market/snapshots data/state post_market_review events ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
+            git reset -- data/state/system_consistency.json
+            if git diff --cached --quiet; then
+              exit 0
+            fi
+            git commit -m "data: record downstream market contexts and state sync"
+            if git push origin HEAD:main; then
+              break
+            fi
+            if [ "$attempt" = "3" ]; then exit 1; fi
+          done

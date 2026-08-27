@@ -1,0 +1,40 @@
+name: AkShare capability PoC
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/akshare_capability_poc.py"
+      - ".github/workflows/akshare-capability-poc.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-akshare-capability-poc
+  cancel-in-progress: true
+
+jobs:
+  poc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install AkShare
+        run: python -m pip install --upgrade pip akshare
+      - name: Compile PoC
+        run: python -m py_compile scripts/akshare_capability_poc.py
+      - name: Run AkShare ETF minute-path PoC
+        run: python scripts/akshare_capability_poc.py
+      - name: Upload PoC evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: akshare-capability-poc-${{ github.run_id }}
+          path: data/state/akshare_poc.json
+          if-no-files-found: error
+          retention-days: 14

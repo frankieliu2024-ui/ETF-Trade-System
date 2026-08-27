@@ -1,0 +1,44 @@
+name: ETF minute path shadow validation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/build_minute_path_features.py"
+      - ".github/workflows/minute-path-shadow.yml"
+  schedule:
+    # Beijing 10:30, 13:45, 14:30, 14:55 on weekdays; the push path also provides an immediate validation run after code changes.
+    - cron: "30 2 * * 1-5"
+    - cron: "45 5 * * 1-5"
+    - cron: "30 6 * * 1-5"
+    - cron: "55 6 * * 1-5"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-minute-path-shadow
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Compile minute-path module
+        run: python -m py_compile scripts/build_minute_path_features.py
+      - name: Build Tencent 1-minute ETF path shadow state
+        run: python scripts/build_minute_path_features.py
+      - name: Upload shadow evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: minute-path-shadow-${{ github.run_id }}
+          path: data/state/minute_path_features.json
+          if-no-files-found: error
+          retention-days: 14

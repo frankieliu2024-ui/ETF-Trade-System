@@ -1,0 +1,153 @@
+name: ETF opening-auction CURRENT fallback
+
+# Reliability fallback only. The canonical market-snapshot workflow remains the
+# primary A-share collector. This wrapper uses the same cloud_runner_snapshot
+# producer when GitHub cron delay leaves CURRENT stale during 09:15-09:29.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "18,23,28 1 * * 1-5" # Beijing 09:18 / 09:23 / 09:28 Mon-Fri
+
+permissions:
+  contents: write
+
+concurrency:
+  # Share the primary workflow concurrency group so the fallback never races a
+  # canonical market-snapshot publish.
+  group: etf-market-snapshot-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  opening-auction-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      HITHINK_FINANCE_API_KEY: ${{ secrets.HITHINK_FINANCE_API_KEY }}
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+      HITHINK_RETRY_LIMIT: "2"
+      HITHINK_TIMEOUT_SECONDS: "25"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Decide whether opening-auction CURRENT needs repair
+        id: readiness
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timedelta, timezone
+          from pathlib import Path
+
+          bj = timezone(timedelta(hours=8), name='Asia/Shanghai')
+          now = datetime.now(bj)
+          today = now.date().isoformat()
+          minute = now.hour * 60 + now.minute
+          current = json.loads(Path('data/state/CURRENT.json').read_text(encoding='utf-8'))
+          calendar = json.loads(Path('config/market/a_share_trading_calendar_2026.json').read_text(encoding='utf-8'))
+          is_trading_day = now.weekday() < 5 and today not in set(calendar.get('closed_dates') or [])
+          in_auction = 9 * 60 + 15 <= minute < 9 * 60 + 30
+          captured_text = str(current.get('captured_at') or '')
+          try:
+              captured = datetime.fromisoformat(captured_text).astimezone(bj) if captured_text else None
+          except ValueError:
+              captured = None
+          current_is_today_auction = (
+              current.get('market_date') == today
+              and (current.get('data_freshness') or {}).get('market_phase') == 'OPENING_CALL_AUCTION'
+              and captured is not None
+          )
+          age_seconds = (now - captured).total_seconds() if current_is_today_auction else None
+          # Repair when CURRENT is still on the previous market date, when it is
+          # not an auction node, or when the latest auction pulse is older than
+          # five minutes. This keeps 09:25 final-auction evidence available even
+          # if one of the primary scheduled pulses is delayed.
+          need = bool(is_trading_day and in_auction and (not current_is_today_auction or age_seconds is None or age_seconds > 300))
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
+              f.write(f"need_capture={'true' if need else 'false'}\n")
+              f.write(f"market_date={today}\n")
+          print(json.dumps({
+              'need_capture': need,
+              'now_beijing': now.isoformat(timespec='seconds'),
+              'current_market_date': current.get('market_date'),
+              'current_node': current.get('latest_valid_node'),
+              'current_market_phase': (current.get('data_freshness') or {}).get('market_phase'),
+              'current_captured_at': captured_text,
+              'auction_age_seconds': age_seconds,
+          }, ensure_ascii=False))
+          PY
+
+      - uses: actions/setup-node@v4
+        if: ${{ steps.readiness.outputs.need_capture == 'true' }}
+        with:
+          node-version: "20"
+      - name: Install canonical A-share provider CLI
+        if: ${{ steps.readiness.outputs.need_capture == 'true' }}
+        run: npm install --global @hithink-tech/hithink-finance-cli
+      - name: Capture through canonical snapshot producer
+        if: ${{ steps.readiness.outputs.need_capture == 'true' }}
+        run: python scripts/cloud_runner_snapshot.py --node scheduled
+      - name: Refresh decision-facing contexts
+        if: ${{ steps.readiness.outputs.need_capture == 'true' }}
+        shell: bash
+        run: |
+          python scripts/build_market_delta.py
+          python scripts/build_overseas_context.py
+          python scripts/build_stock_context.py
+          python scripts/build_account_stock_market.py
+          python scripts/build_state_context.py
+          python scripts/build_query_context.py
+          python scripts/build_e2e_status.py
+      - name: Verify same-day auction CURRENT before publish
+        if: ${{ steps.readiness.outputs.need_capture == 'true' }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          current = json.loads(Path('data/state/CURRENT.json').read_text(encoding='utf-8'))
+          expected = '${{ steps.readiness.outputs.market_date }}'
+          phase = (current.get('data_freshness') or {}).get('market_phase')
+          if current.get('market_date') != expected or phase != 'OPENING_CALL_AUCTION':
+              raise SystemExit(f"opening-auction CURRENT verification failed: {current}")
+          if current.get('node_status') not in {'READY', 'DEGRADED'}:
+              raise SystemExit(f"opening-auction CURRENT not publishable: {current.get('node_status')}")
+          print(json.dumps({'verified': True, 'market_date': expected, 'phase': phase, 'snapshot': current.get('latest_snapshot')}, ensure_ascii=False))
+          PY
+      - name: Publish repaired CURRENT and contexts
+        if: ${{ steps.readiness.outputs.need_capture == 'true' }}
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -- data/state/system_consistency.json 2>/dev/null || true
+          git add -A -- data/market/snapshots data/state
+          git reset -- data/state/system_consistency.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          mkdir -p /tmp/opening-auction-fallback
+          git diff --cached --name-only -z > /tmp/opening-auction-files
+          while IFS= read -r -d '' file; do
+            mkdir -p "/tmp/opening-auction-fallback/$(dirname "$file")"
+            cp "$file" "/tmp/opening-auction-fallback/$file"
+          done < /tmp/opening-auction-files
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            while IFS= read -r -d '' file; do
+              mkdir -p "$(dirname "$file")"
+              cp "/tmp/opening-auction-fallback/$file" "$file"
+            done < /tmp/opening-auction-files
+            git add -A -- data/market/snapshots data/state
+            git reset -- data/state/system_consistency.json 2>/dev/null || true
+            git commit -m "data: repair opening-auction CURRENT readiness"
+            if git push origin HEAD:main; then
+              break
+            fi
+            if [ "$attempt" = "3" ]; then exit 1; fi
+          done

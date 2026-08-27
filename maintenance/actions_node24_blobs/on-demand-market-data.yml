@@ -1,0 +1,84 @@
+name: On-demand market data
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "requests/market_data/**.json"
+      - "scripts/process_market_data_request.py"
+      - ".github/workflows/on-demand-market-data.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "requests/market_data/**.json"
+      - "scripts/process_market_data_request.py"
+      - ".github/workflows/on-demand-market-data.yml"
+  schedule:
+    - cron: "17 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: on-demand-market-data-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HITHINK_FINANCE_API_KEY: ${{ secrets.HITHINK_FINANCE_API_KEY }}
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Hithink CLI
+        run: npm install --global @hithink-tech/hithink-finance-cli
+      - name: Process pending request files
+        shell: bash
+        run: |
+          set +e
+          mkdir -p data/market/on_demand/results data/market/on_demand/datasets
+          found=0
+          failed=0
+          for req in requests/market_data/*.json; do
+            [ -e "$req" ] || continue
+            found=1
+            rid=$(python - "$req" <<'PY'
+          import json, sys
+          from pathlib import Path
+          p=Path(sys.argv[1]); obj=json.loads(p.read_text(encoding='utf-8'))
+          print(obj.get('request_id') or p.stem)
+          PY
+          )
+            if [ -f "data/market/on_demand/results/${rid}.json" ]; then
+              continue
+            fi
+            python scripts/process_market_data_request.py "$req"
+            rc=$?
+            if [ $rc -ne 0 ]; then failed=1; fi
+          done
+          echo "found=$found failed=$failed"
+          exit 0
+      - name: Persist independent on-demand results
+        if: ${{ always() && github.event_name != 'pull_request' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # This DEGRADED data service never writes CURRENT or production
+          # snapshots. Full recovery is market-snapshot workflow_dispatch only.
+          git add -A -- data/market/on_demand/results data/market/on_demand/datasets
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "data: persist on-demand market result"
+          git pull --rebase origin main
+          git push origin HEAD:main
