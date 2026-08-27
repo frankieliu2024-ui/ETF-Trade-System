@@ -238,18 +238,26 @@ def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, pr
         and item.get("prev_price") is not None
         and provider_ts not in (None, "")
     )
-    if missing and not (auction_partial or no_trade_partial):
+    explicit_halt = (
+        str(item.get("trading_status") or "").upper() in {"SUSPENDED", "HALTED"}
+        and item.get("last_price") is not None
+        and item.get("prev_price") is not None
+        and provider_ts not in (None, "")
+    )
+    if missing and not (auction_partial or no_trade_partial or explicit_halt):
         raise RuntimeError(f"{code} missing fields: {','.join(missing)}")
-    if not (auction_partial or no_trade_partial) and (
+    if not (auction_partial or no_trade_partial or explicit_halt) and (
         item["high_price"] < max(item["open_price"], item["last_price"])
         or item["low_price"] > min(item["open_price"], item["last_price"])
     ):
         raise RuntimeError(f"{code} failed OHLC relationship")
-    quality_status = "DEGRADED" if (auction_partial or no_trade_partial) else "PASS"
+    quality_status = "PASS" if explicit_halt else ("DEGRADED" if (auction_partial or no_trade_partial) else "PASS")
     semantic_note = (
-        "OPENING_CALL_AUCTION阶段provider尚未形成完整日内OHLC；保留最新价、昨收、成交量、成交额和provider时点，禁止用旧OHLC补齐。"
+        "provider明确证券当前停牌/暂停交易；最新价仅为最后有效参考价，保留真实provider时点，不伪造OHLC，不按可成交价格解释。"
+        if explicit_halt
+        else ("OPENING_CALL_AUCTION阶段provider尚未形成完整日内OHLC；保留最新价、昨收、成交量、成交额和provider时点，禁止用旧OHLC补齐。"
         if auction_partial
-        else ("交易中provider仅返回最新价和昨收，未产生可用新成交量/OHLC；保留事实并标记为延迟/无新成交，不用旧OHLC补齐。" if no_trade_partial else ("OPENING_CALL_AUCTION阶段仅按集合竞价时点快照解释，不与连续竞价最新成交语义混用。" if market_phase == "OPENING_CALL_AUCTION" else ""))
+        else ("交易中provider仅返回最新价和昨收，未产生可用新成交量/OHLC；保留事实并标记为延迟/无新成交，不用旧OHLC补齐。" if no_trade_partial else ("OPENING_CALL_AUCTION阶段仅按集合竞价时点快照解释，不与连续竞价最新成交语义混用。" if market_phase == "OPENING_CALL_AUCTION" else "")))
     )
     return {
         "asset_class": asset_class, "symbol": code, "thscode": thscode,
@@ -266,6 +274,9 @@ def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, pr
         "market_phase": market_phase,
         "quality_status": quality_status,
         "semantic_note": semantic_note,
+        "trading_status": item.get("trading_status", "TRADING"),
+        "tradable": item.get("tradable", True),
+        "provider_status_code": item.get("provider_status_code", ""),
     }
 
 

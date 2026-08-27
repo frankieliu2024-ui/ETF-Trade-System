@@ -52,16 +52,23 @@ def fetch_tencent_quotes(thscodes: list[str], timeout: int = 10) -> dict[str, di
         fields = parsed.get(provider_symbol.upper()) or []
         if len(fields) < 38 or fields[2] != provider_symbol[2:]:
             raise RuntimeError(f"Tencent quote missing or mismatched row for {thscode}")
-        timestamp_ms = _timestamp_ms(fields[30])
+        suspended = (
+            len(fields) > 42
+            and fields[42].strip().upper() == "S"
+            and len(fields) > 32
+            and bool(re.fullmatch(r"[0-9]{14}", fields[32] or ""))
+        )
+        timestamp_field = fields[32] if suspended else fields[30]
+        timestamp_ms = _timestamp_ms(timestamp_field)
         price, prev_close = _number(fields[3]), _number(fields[4])
         if price is None or prev_close is None or price < 0 or prev_close < 0:
             raise RuntimeError(f"Tencent quote missing price fields for {thscode}")
         result[str(thscode).upper()] = {
             "name": fields[1].strip(),
             "provider_symbol": provider_symbol,
-            "open_price": _number(fields[5]),
-            "high_price": _number(fields[33]),
-            "low_price": _number(fields[34]),
+            "open_price": None if suspended else _number(fields[5]),
+            "high_price": None if suspended else _number(fields[33]),
+            "low_price": None if suspended else _number(fields[34]),
             "last_price": price,
             "prev_price": prev_close,
             # Tencent field 31 is the absolute price change; field 32 is the
@@ -74,8 +81,11 @@ def fetch_tencent_quotes(thscodes: list[str], timeout: int = 10) -> dict[str, di
             "change_pct_source": "CALCULATED_FROM_LAST_PREV_CLOSE",
             "provider_field_31_semantics": "price_change_amount",
             "provider_field_32_semantics": "price_change_ratio_pct",
-            "volume": (_number(fields[6]) * 100) if _number(fields[6]) is not None else None,
-            "turnover": (_number(fields[37]) * 10000) if _number(fields[37]) is not None else None,
+            "volume": 0.0 if suspended else ((_number(fields[6]) * 100) if _number(fields[6]) is not None else None),
+            "turnover": 0.0 if suspended else ((_number(fields[37]) * 10000) if _number(fields[37]) is not None else None),
             "provider_timestamp_ms": timestamp_ms,
+            "provider_status_code": "S" if suspended else "",
+            "trading_status": "SUSPENDED" if suspended else "TRADING",
+            "tradable": not suspended,
         }
     return result

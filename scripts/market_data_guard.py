@@ -96,13 +96,19 @@ def validate_market_row(
         and row.get("close") not in (None, "", "-")
         and row.get("prev_close") not in (None, "", "-")
     )
-    if missing_fields and not auction_partial:
+    explicit_halt = (
+        str(row.get("trading_status") or "").upper() in {"SUSPENDED", "HALTED"}
+        and row.get("tradable") is False
+        and row.get("close") not in (None, "", "-")
+        and row.get("prev_close") not in (None, "", "-")
+    )
+    if missing_fields and not (auction_partial or explicit_halt):
         return False, "missing required market fields: " + ",".join(missing_fields)
     close = _as_float(row.get("close"))
     prev_close = _as_float(row.get("prev_close"))
     if close is None or close <= 0 or prev_close is None or prev_close <= 0:
         return False, "last/prev_close must be positive"
-    if not auction_partial:
+    if not (auction_partial or explicit_halt):
         values = [_as_float(row.get(key)) for key in ("open", "high", "low")]
         if any(value is None for value in values):
             return False, "OHLC contains non-numeric value"
