@@ -7,6 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "config/maintenance/production_mutation_protocol.json"
 WORKFLOWS = ROOT / ".github/workflows"
+SCRIPTS = ROOT / "scripts"
 
 
 def _read_json(path: Path) -> dict:
@@ -70,6 +71,7 @@ def _bounded_current_repair_is_narrow(root: Path, script_path: str) -> bool:
 def run(root: Path = ROOT) -> dict:
     config_path = root / CONFIG.relative_to(ROOT)
     workflows_dir = root / WORKFLOWS.relative_to(ROOT)
+    scripts_dir = root / SCRIPTS.relative_to(ROOT)
     errors: list[str] = []
     warnings: list[str] = []
     checks: list[dict] = []
@@ -131,6 +133,55 @@ def run(root: Path = ROOT) -> dict:
                 f"single-owner file remains owned by {owner}",
             )
 
+    formal = cfg.get("formal_file_mutation_contract") or {}
+    gateway_rel = str(formal.get("canonical_gateway") or "")
+    gateway_path = root / gateway_rel if gateway_rel else Path()
+    allowed_fact_files = [str(x) for x in formal.get("allowed_fact_files") or []]
+    forbidden_rule = str(formal.get("forbidden_rule_file") or "")
+    registered_callers = [str(x) for x in formal.get("registered_callers") or []]
+    gateway_text = gateway_path.read_text(encoding="utf-8") if gateway_rel and gateway_path.exists() else ""
+    check("formal_gateway:exists", bool(gateway_rel and gateway_path.exists()), gateway_rel or "missing canonical gateway")
+    check(
+        "formal_gateway:allowed_fact_files",
+        bool(allowed_fact_files) and all(name in gateway_text for name in allowed_fact_files),
+        f"allowed={allowed_fact_files}",
+    )
+    check(
+        "formal_gateway:master_forbidden",
+        bool(forbidden_rule and forbidden_rule in gateway_text and "raise PermissionError" in gateway_text),
+        f"forbidden={forbidden_rule}",
+    )
+    for caller in registered_callers:
+        path = root / caller
+        text = path.read_text(encoding="utf-8") if path.exists() else ""
+        check(f"formal_gateway:caller:{caller}:exists", path.exists(), "registered formal mutation caller exists")
+        check(
+            f"formal_gateway:caller:{caller}:wired",
+            bool(text) and "formal_file_mutation_gateway" in text,
+            "registered caller uses canonical formal mutation gateway",
+        )
+    bypass_patterns = (
+        r"\bDASHBOARD\.write_text\(",
+        r"\bARCHIVE\.write_text\(",
+        r"\bEXPERIENCE\.write_text\(",
+        r"\bdash_path\.write_text\(",
+        r"\barchive_path\.write_text\(",
+        r"\bexperience_path\.write_text\(",
+    )
+    bypasses: list[str] = []
+    for path in sorted(scripts_dir.glob("*.py")):
+        rel = str(path.relative_to(root)).replace("\\", "/")
+        if rel == gateway_rel:
+            continue
+        text = path.read_text(encoding="utf-8")
+        if any(re.search(pattern, text) for pattern in bypass_patterns):
+            bypasses.append(rel)
+    check(
+        "formal_gateway:no_direct_formal_write_bypass",
+        not bypasses,
+        f"direct_write_bypasses={bypasses}",
+    )
+
     for family in cfg.get("shared_writer_families") or []:
         token = str(family.get("required_concurrency_token") or "")
         family_id = str(family.get("family_id") or "UNKNOWN")
@@ -145,11 +196,7 @@ def run(root: Path = ROOT) -> dict:
     for rel, contract in (cfg.get("nonproduction_validation_workflows") or {}).items():
         text = workflow_texts.get(str(rel), "")
         artifact_path = str((contract or {}).get("artifact_path") or "")
-        check(
-            f"nonproduction_validation:{rel}:exists",
-            bool(text),
-            "registered nonproduction validation workflow exists",
-        )
+        check(f"nonproduction_validation:{rel}:exists", bool(text), "registered nonproduction validation workflow exists")
         check(
             f"nonproduction_validation:{rel}:no_main_write",
             bool(text) and not _is_direct_main_writer(text),
@@ -179,16 +226,10 @@ def run(root: Path = ROOT) -> dict:
             bool(state_class and canonical_builder),
             f"class={state_class} builder={canonical_builder}",
         )
-
         for rel, text in workflow_texts.items():
             stages = _workflow_may_stage(text, state_path)
             if stages and rel not in permitted:
-                check(
-                    f"state_contract:{state_path}:writer:{rel}",
-                    False,
-                    f"unregistered production writer for {state_path}",
-                )
-
+                check(f"state_contract:{state_path}:writer:{rel}", False, f"unregistered production writer for {state_path}")
         for rel in canonical_writers + allowed_writers:
             text = workflow_texts.get(rel, "")
             check(
@@ -201,7 +242,6 @@ def run(root: Path = ROOT) -> dict:
                 bool(text) and _workflow_may_stage(text, state_path),
                 f"registered writer persists {state_path}",
             )
-
         for rel, repair in repair_writers.items():
             text = workflow_texts.get(str(rel), "")
             required_script = str((repair or {}).get("required_script") or "")
@@ -218,13 +258,14 @@ def run(root: Path = ROOT) -> dict:
                 )
 
     return {
-        "schema_version": "1.2",
+        "schema_version": "1.3",
         "mode": "PRODUCTION_MUTATION_PROTOCOL_CHECK",
         "status": "FAIL" if errors else ("WARNING" if warnings else "PASS"),
         "errors": errors,
         "warnings": warnings,
         "checks": checks,
         "direct_main_writers": writer_rows,
+        "formal_file_mutation_contract": formal,
         "nonproduction_validation_workflows": cfg.get("nonproduction_validation_workflows") or {},
         "state_file_contracts": cfg.get("state_file_contracts") or {},
         "fact_precedence": cfg.get("fact_precedence") or [],
