@@ -466,7 +466,8 @@ def build() -> dict:
                 secid = EASTMONEY_DIRECT_FALLBACKS.get(object_id)
                 if secid and (record is None or primary_error):
                     eastmoney_selected = False
-                    for host in ("push2.eastmoney.com", "push2delay.eastmoney.com"):
+                    eastmoney_hosts = ("push2.eastmoney.com", "push2delay.eastmoney.com") if object_id in {"N225", "KOSPI"} else ("push2.eastmoney.com",)
+                    for host in eastmoney_hosts:
                         provider_family = "eastmoney_push2" if host.startswith("push2.") else "eastmoney_push2delay"
                         provider_id = f"{provider_family}:{secid}"
                         try:
@@ -502,7 +503,7 @@ def build() -> dict:
                     raise RuntimeError(primary_error or "no usable direct source")
                 if secid:
                     record["provider_attempts"] = attempts
-                    record["direct_source_chain"] = ["yahoo_chart_api", f"eastmoney_push2:{secid}", f"eastmoney_push2delay:{secid}"] + (["naver_finance:KOSPI"] if object_id == "KOSPI" else [])
+                    record["direct_source_chain"] = ["yahoo_chart_api", f"eastmoney_push2:{secid}"] + ([f"eastmoney_push2delay:{secid}"] if object_id in {"N225", "KOSPI"} else []) + (["naver_finance:KOSPI"] if object_id == "KOSPI" else [])
                     record["configured_primary"] = "yahoo_chart_api"
             else:
                 attempts: list[dict] = []
