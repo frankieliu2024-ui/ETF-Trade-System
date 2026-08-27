@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-      - name: Build Node 24 workflow manifest
+      - name: Build Node 24 workflow mirrors
         run: python scripts/apply_actions_node24_upgrade_temp.py
       - name: Verify deprecated action majors are gone in transformed workspace
         shell: bash
@@ -36,16 +36,16 @@ jobs:
           fi
       - name: Validate production mutation protocol against transformed workspace
         run: python scripts/check_production_mutation_protocol.py
-      - name: Persist only transformation manifest
+      - name: Persist only validated mirrors and manifest
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git restore .github/workflows
-          git add maintenance/actions_node24_workflows.json
+          git add maintenance/actions_node24_workflows.json maintenance/actions_node24_blobs
           if git diff --cached --quiet; then
-            echo 'No manifest generated' >&2
+            echo 'No validated mirrors generated' >&2
             exit 1
           fi
-          git commit -m "ops: persist validated Node 24 workflow manifest"
+          git commit -m "ops: persist validated Node 24 workflow mirrors"
           git push origin HEAD:maintenance/actions-node24-runtime-20260827
