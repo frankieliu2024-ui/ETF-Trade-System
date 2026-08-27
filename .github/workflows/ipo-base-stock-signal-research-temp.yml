@@ -6,6 +6,7 @@ on:
       - research/ipo-base-stock-signals-20260827
     paths:
       - scripts/research_ipo_base_stock_signals_temp.py
+      - scripts/run_ipo_base_stock_signal_research_temp.py
       - .github/workflows/ipo-base-stock-signal-research-temp.yml
 
 permissions:
@@ -26,9 +27,9 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install research dependencies
-        run: python -m pip install --disable-pip-version-check pandas numpy akshare
+        run: python -m pip install --disable-pip-version-check pandas numpy
       - name: Run PIT stock-specific signal validation
-        run: python scripts/research_ipo_base_stock_signals_temp.py
+        run: python scripts/run_ipo_base_stock_signal_research_temp.py
       - name: Validate result boundaries
         run: |
           python - <<'PY'
