@@ -59,6 +59,7 @@
 - 三层监测配置：`config/market/market_monitor_config.json`
 - 运行策略与全天截图路由：`config/runtime_policy.json`
 - 查询上下文：`data/state/query_context.json`、`data/state/decision_context.json`；其中 `decision_context.json` 是ChatGPT盘中快速读取的聚合决策上下文，并内嵌最新日内路径特征，不另建平行decision bundle
+- `data/state/research_execution_summary.json`：研究结论归纳后的只读执行证据桥，覆盖ETF与当前打新底仓；可改变正式判断但不自动交易。
 - 收盘复盘上下文：`data/state/review_context.json`、`post_market_review/post_market_review_event.json`
 - 查询时即时补采与可选状态同步请求：`requests/live_snapshot/*.json`
 - 账户/Dashboard/成交/正式复盘异步同步处理：`scripts/process_state_sync_request.py`

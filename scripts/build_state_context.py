@@ -16,6 +16,7 @@ from build_etf_share_flow_evidence import build as build_etf_share_flow_evidence
 from build_margin_financing_evidence import build as build_margin_financing_evidence
 from build_active_return_evidence import build as build_active_return_evidence
 from build_research_contribution_audit import build as build_research_contribution_audit
+from build_research_execution_bridge import build as build_research_execution_bridge
 from build_phase4_automation import build as build_phase4_automation
 from state_manager import atomic_json_write, build_dashboard_candidate, build_decision_context
 
@@ -160,8 +161,8 @@ def main() -> None:
     atomic_json_write(ROOT / "data" / "state" / "research_context.json", {
         **research,
         "read_only": True,
-        "decision_boundary": "研究层向当前决策提供市场环境、事实、历史价格位置、日内路径、相对强弱、证据变化、共同风险、经验证的ETF份额、融资杠杆与主动收益方法证据，并记录研究是否真实改变决策；不得绕过MASTER生成交易动作。",
-        "current_decision_use": "正式盘中先读市场层指数/宽度/风格，再做候选比较；候选比较必须先读假设/相关性、历史位置、日内路径和风险收益，再读相对强弱与当日涨幅。正式决策只记录最多3项真正改变判断的research_evidence_used。",
+        "decision_boundary": "研究层向当前决策提供经过归纳的市场、ETF与打新底仓研究证据，可直接改变候选比较、风险收益、持仓/卖出、金额及资金来源/去向判断；不得绕过MASTER生成交易动作或自动交易。",
+        "current_decision_use": "正式盘中先读市场层，再统一比较现金、持仓/观察ETF与当前打新底仓；研究结论先归纳后进入执行判断，正式决策只记录真正改变机会、持有/卖出、金额或资金来源/去向的research_evidence_used。",
         "market_regime_context": market_regime,
         "candidate_selection_contract": market_structure.get("candidate_selection_contract") or {},
         "market_structure_summary": {
@@ -256,7 +257,7 @@ def main() -> None:
         "required_before_main_candidate": [
             "先读取market_regime_context，完成上证指数（000001）、创业板指（399006）、ETF市场宽度和风格/风险偏好分析；必要时再读取海外/亚洲反馈",
             "读取candidate_selection_contract",
-            "重新统一比较持仓ETF、观察ETF与现金，不自动沿用上一轮主候选",
+            "重新统一比较持仓ETF、观察ETF、当前打新底仓与现金，不自动沿用上一轮主候选",
             "对主候选显式解释历史位置与趋势、日内路径与极值时序、时间归一化成交承接、风险收益或下一单位资本效率",
             "横截面涨幅、名次与相对强弱仅作验证证据",
         ],
@@ -289,6 +290,7 @@ def main() -> None:
     }
     atomic_json_write(ROOT / "data" / "state" / "dashboard_update_candidate.json", candidate)
     atomic_json_write(ROOT / "data" / "state" / "decision_context.json", context)
+    research_execution_summary = build_research_execution_bridge(ROOT)
     print(json.dumps({
         "ok": True,
         "account_fact_status": context["account_fact_status"],
@@ -315,6 +317,8 @@ def main() -> None:
         "research_attributed_trade_count": (contribution_audit.get("trade_attribution") or {}).get("attributed_trade_count", 0),
         "execution_quality_sample_count": execution_quality.get("execution_cost_sample_count", 0),
         "research_master_candidate_count": len(research_master.get("candidates") or []),
+        "research_execution_bridge_status": research_execution_summary.get("mode"),
+        "ipo_base_stock_research_count": len(research_execution_summary.get("ipo_base_stock_evidence") or []),
         "trade_decision_generated": False,
     }, ensure_ascii=False))
 
