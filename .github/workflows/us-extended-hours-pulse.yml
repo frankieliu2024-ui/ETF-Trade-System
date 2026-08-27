@@ -38,6 +38,7 @@ jobs:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
       US_EXTENDED_SYMBOLS: ${{ inputs.symbols || '' }}
       PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+      EVENT_SCHEDULE: ${{ github.event.schedule || '' }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -75,11 +76,13 @@ jobs:
           ctx_path = Path('data/state/us_extended_hours_context.json')
           ctx = json.loads(ctx_path.read_text(encoding='utf-8')) if ctx_path.exists() else {}
           now = datetime.now(timezone.utc).isoformat(timespec='seconds').replace('+00:00','Z')
+          event_name = os.environ.get('GITHUB_EVENT_NAME','')
+          event_schedule = os.environ.get('EVENT_SCHEDULE','')
           payload = {
               'status': 'PASS' if ctx.get('quality_status') in {'PASS','DEGRADED'} else 'FAILED',
               'pulse_success': ctx.get('quality_status') in {'PASS','DEGRADED'},
-              'trigger': os.environ.get('GITHUB_EVENT_NAME',''),
-              'scheduled_for': os.environ.get('GITHUB_EVENT_NAME',''),
+              'trigger': event_name,
+              'scheduled_for': f'cron:{event_schedule}' if event_schedule else event_name,
               'finished_at': now,
               'run_id': os.environ.get('GITHUB_RUN_ID',''),
               'context_generated_at': ctx.get('generated_at',''),
