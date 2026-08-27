@@ -4,6 +4,7 @@ from pathlib import Path
 import re
 
 ROOT = Path(__file__).resolve().parents[1]
+# Trigger-only revision after the temporary workflow exists on the branch.
 
 
 def require_replace(text: str, old: str, new: str, label: str) -> str:
