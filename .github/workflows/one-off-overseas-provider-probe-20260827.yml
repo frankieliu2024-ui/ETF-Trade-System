@@ -1,0 +1,64 @@
+name: One-off overseas provider probe 2026-08-27
+
+on:
+  push:
+    paths:
+      - ".github/workflows/one-off-overseas-provider-probe-20260827.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Probe candidate providers
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, urllib.request, urllib.parse, re, datetime
+          from pathlib import Path
+
+          HEADERS = {"User-Agent":"Mozilla/5.0 ETF-Trade-System/2.2.16","Referer":"https://finance.sina.com.cn/"}
+          results = {}
+          def get(url, headers=None, encoding='utf-8'):
+              req=urllib.request.Request(url,headers=headers or {"User-Agent":HEADERS["User-Agent"]})
+              with urllib.request.urlopen(req,timeout=15) as r:
+                  raw=r.read(); status=r.status
+              return status, raw.decode(encoding,errors='replace')
+          def probe(name,url,headers=None,encoding='utf-8'):
+              try:
+                  status,text=get(url,headers,encoding)
+                  results[name]={"http_status":status,"url":url,"body":text[:4000]}
+              except Exception as e:
+                  results[name]={"url":url,"error":repr(e)}
+
+          probe('naver_kospi','https://polling.finance.naver.com/api/realtime/domestic/index/KOSPI')
+          probe('naver_kospi_query','https://polling.finance.naver.com/api/realtime?query=SERVICE_INDEX:KOSPI')
+          probe('naver_n225_world','https://finance.naver.com/world/sise.naver?symbol=NII@NI225&fdtc=0')
+          probe('naver_n225_dayjson','https://finance.naver.com/world/worldDayListJson.naver?symbol=NII@NI225&fdtc=0&page=1')
+          probe('sina_n225','https://hq.sinajs.cn/list=int_nikkei',HEADERS,'gb18030')
+          for symbol in ['s_jpN225','jpN225','s_N225','N225','int_nikkei']:
+              probe('tencent_'+symbol,'https://qt.gtimg.cn/q='+urllib.parse.quote(symbol))
+          for host in ['push2.eastmoney.com','push2delay.eastmoney.com','push2his.eastmoney.com']:
+              for secid in ['100.N225','100.KS11']:
+                  probe('eastmoney_'+host.split('.')[0]+'_'+secid,f'https://{host}/api/qt/stock/get?secid={secid}&fltt=2&invt=2&fields=f43,f44,f45,f46,f47,f48,f57,f58,f60,f86,f124')
+          out={"generated_at_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(),"results":results}
+          p=Path('data/market/audit/provider_probe_20260827.json'); p.parent.mkdir(parents=True,exist_ok=True); p.write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')
+          PY
+      - name: Commit probe audit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f data/market/audit/provider_probe_20260827.json
+          git commit -m "audit: record N225 and KOSPI provider probe" || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main
