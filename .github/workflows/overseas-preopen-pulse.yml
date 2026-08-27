@@ -8,6 +8,8 @@ on:
     - cron: "*/10 23 * * 0-4"
     # 00:00-07:50 UTC = Beijing 08:00-15:50, covering Asia sessions.
     - cron: "*/10 0-7 * * 1-5"
+    # 08:00-08:30 UTC = Beijing 16:00-16:30, covering Hong Kong close summary.
+    - cron: "0,10,20,30 8 * * 1-5"
 
 permissions:
   contents: write
@@ -57,7 +59,11 @@ jobs:
         id: asia_summary_notify
         continue-on-error: true
         run: python scripts/send_regional_session_summary.py --market asia
-      - name: Send Asia extreme/sudden move alert when due
+      - name: Send Hong Kong open/close summary when due
+        id: hk_summary_notify
+        continue-on-error: true
+        run: python scripts/send_regional_session_summary.py --market hk
+      - name: Send Asia and Hong Kong extreme/sudden move alert when due
         id: asia_shock_notify
         continue-on-error: true
         env:
@@ -83,7 +89,7 @@ jobs:
           git pull --rebase origin main
           git push origin HEAD:main
       - name: Surface Asia notification delivery failure without blocking market data
-        if: ${{ steps.asia_summary_notify.outcome == 'failure' || steps.asia_shock_notify.outcome == 'failure' }}
+        if: ${{ steps.asia_summary_notify.outcome == 'failure' || steps.hk_summary_notify.outcome == 'failure' || steps.asia_shock_notify.outcome == 'failure' }}
         run: |
-          echo "Asia market notification failed; overseas market-data refresh remains valid."
+          echo "Asia/Hong Kong market notification failed; overseas market-data refresh remains valid."
           exit 1
