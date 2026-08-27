@@ -567,9 +567,13 @@ def main() -> int:
             event_path = ROOT / "events" / "trades" / f"{event_id}.json"
             event_path.parent.mkdir(parents=True, exist_ok=True)
             atomic_json_write(event_path, event)
-            ARCHIVE.write_text(append_managed_line(ARCHIVE.read_text(encoding="utf-8"), TRADE_START, TRADE_END, f"- {event['confirmed_at_beijing']}：{event.get('name')}（{event.get('code')}）{event.get('side')} {event.get('quantity')}份/股，成交价{event.get('price')}，金额{event.get('amount')}；来源：{event.get('source')}。"), encoding="utf-8")
-            EXPERIENCE.write_text(append_managed_line(EXPERIENCE.read_text(encoding="utf-8"), CASE_START, CASE_END, f"- 待复盘CASE｜{event['confirmed_at_beijing']}｜{event.get('name')}（{event.get('code')}）｜{event.get('side')} {event.get('quantity')}份/股｜生命周期：{event.get('lifecycle') or '待确认'}｜仅登记真实成交，复盘结论留待盘后形成。"), encoding="utf-8")
             trade_event_recorded = True
+        # Always reconcile event-backed human-readable records, including idempotent replay.
+        # This repairs a missing archive/CASE line without creating a second trade event.
+        archive_line = f"- {event['confirmed_at_beijing']}：{event.get('name')}（{event.get('code')}）{event.get('side')} {int(event.get('quantity') or 0):,}份/股，成交价{event.get('price')}，成交本金{float(event.get('amount') or 0):,.2f}元；来源：{event.get('source')}。"
+        case_line = f"- 待复盘CASE｜{event['confirmed_at_beijing']}｜{event.get('name')}（{event.get('code')}）｜{event.get('side')} {int(event.get('quantity') or 0):,}份/股｜生命周期：{event.get('lifecycle') or '待确认'}｜仅登记真实成交，复盘结论留待盘后形成。"
+        ARCHIVE.write_text(upsert_managed_line(ARCHIVE.read_text(encoding="utf-8"), TRADE_START, TRADE_END, event_id, archive_line), encoding="utf-8")
+        EXPERIENCE.write_text(upsert_managed_line(EXPERIENCE.read_text(encoding="utf-8"), CASE_START, CASE_END, event_id, case_line), encoding="utf-8")
         account["formal_action"] = {**(account.get("formal_action") or {}), "execution_status": "EXECUTED", "execution_fact_ref": f"events/trades/{event_id}.json", "last_executed_event_id": event_id}
         atomic_json_write(ACCOUNT, account)
         write_trade_review_required(event)
