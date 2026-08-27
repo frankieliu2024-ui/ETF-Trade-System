@@ -23,9 +23,9 @@ on:
       - "data/state/overseas_runtime_health.json"
       - "data/state/stock_context.json"
       - "data/state/stock_market_context.json"
-      - "data/state/query_context.json"
-      - "data/state/decision_context.json"
-      - "data/state/market_delta.json"
+      # Rebuildable query/decision/market-delta states are deliberately not
+      # full-consistency push triggers. Their canonical producers own local
+      # quality checks; source/config/formal-fact changes still trigger this gate.
       - "data/state/research_context.json"
       - "data/state/relative_strength.json"
       - "data/state/research_master_candidates.json"
