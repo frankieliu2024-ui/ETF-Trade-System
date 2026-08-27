@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-27T00:29:43Z",
-  "generated_at_beijing": "2026-08-27T08:29:43+08:00",
+  "generated_at": "2026-08-27T00:36:04Z",
+  "generated_at_beijing": "2026-08-27T08:36:04+08:00",
   "scope": "US_EXTENDED_HOURS_CONTEXT",
-  "quality_status": "DEGRADED",
+  "quality_status": "PASS",
   "base_proxies": [
     "QQQ",
     "SOXX"
@@ -17,9 +17,9 @@
       "provider": "yahoo_chart_api",
       "market_timezone": "America/New_York",
       "market_phase_of_latest": "POST_MARKET",
-      "quality_status": "STALE",
-      "freshness_status": "STALE",
-      "data_age_seconds": 1784,
+      "quality_status": "PASS",
+      "freshness_status": "SESSION_REFERENCE",
+      "data_age_seconds": 2165,
       "current_market_phase": "OFF_SESSION",
       "latest": {
         "open": 719.7676,
@@ -31,11 +31,12 @@
         "as_of_utc": "2026-08-26T23:59:59Z",
         "as_of_local": "2026-08-26T19:59:59-04:00",
         "as_of_beijing": "2026-08-27T07:59:59+08:00",
+        "market_date_local": "2026-08-26",
         "session": "POST_MARKET"
       },
       "regular_session_close_reference": 711.2999877929688,
       "extended_change_vs_regular_close_pct": 1.1904,
-      "decision_note": "扩展时段价格只作前置信号。PRE_MARKET/POST_MARKET流动性和价格发现质量低于正式现金盘；不得把个股或ETF扩展时段涨跌直接等同于NDX/SOX正式指数涨跌，也不得单独生成A股ETF动作。"
+      "decision_note": "扩展时段价格只作前置信号。PRE_MARKET/POST_MARKET流动性和价格发现质量低于正式现金盘；SESSION_REFERENCE/PREVIOUS_SESSION_REFERENCE只表示已结束时段的最后有效参考，不是当前实时价格；不得把个股或ETF扩展时段涨跌直接等同于NDX/SOX正式指数涨跌，也不得单独生成A股ETF动作。"
     },
     "SOXX": {
       "symbol": "SOXX",
@@ -45,9 +46,9 @@
       "provider": "yahoo_chart_api",
       "market_timezone": "America/New_York",
       "market_phase_of_latest": "POST_MARKET",
-      "quality_status": "STALE",
-      "freshness_status": "STALE",
-      "data_age_seconds": 1784,
+      "quality_status": "PASS",
+      "freshness_status": "SESSION_REFERENCE",
+      "data_age_seconds": 2165,
       "current_market_phase": "OFF_SESSION",
       "latest": {
         "open": 528.2646,
@@ -59,11 +60,12 @@
         "as_of_utc": "2026-08-26T23:59:59Z",
         "as_of_local": "2026-08-26T19:59:59-04:00",
         "as_of_beijing": "2026-08-27T07:59:59+08:00",
+        "market_date_local": "2026-08-26",
         "session": "POST_MARKET"
       },
       "regular_session_close_reference": 515.52001953125,
       "extended_change_vs_regular_close_pct": 2.4722,
-      "decision_note": "扩展时段价格只作前置信号。PRE_MARKET/POST_MARKET流动性和价格发现质量低于正式现金盘；不得把个股或ETF扩展时段涨跌直接等同于NDX/SOX正式指数涨跌，也不得单独生成A股ETF动作。"
+      "decision_note": "扩展时段价格只作前置信号。PRE_MARKET/POST_MARKET流动性和价格发现质量低于正式现金盘；SESSION_REFERENCE/PREVIOUS_SESSION_REFERENCE只表示已结束时段的最后有效参考，不是当前实时价格；不得把个股或ETF扩展时段涨跌直接等同于NDX/SOX正式指数涨跌，也不得单独生成A股ETF动作。"
     }
   },
   "session_definition": {
@@ -72,6 +74,6 @@
     "POST_MARKET_ET": "16:00-20:00",
     "timezone": "America/New_York"
   },
-  "a_share_time_rule": "美股扩展时段按America/New_York自动处理夏令时/冬令时。A股早盘前通常能看到上一美股现金盘及盘后信息；下一美股交易日PRE_MARKET通常在北京时间A股收盘后才开始，因此不得把美国盘前误称为当天A股上午的同步领先信号。",
+  "a_share_time_rule": "美股扩展时段按America/New_York自动处理夏令时/冬令时。A股早盘前通常能看到上一美股现金盘及盘后信息；盘后结束后的最后有效价格按SESSION_REFERENCE保存真实provider时点，不继续套用盘中15分钟新鲜度；下一美股交易日PRE_MARKET通常在北京时间A股收盘后才开始，因此不得把美国盘前误称为当天A股上午的同步领先信号。",
   "decision_boundary": "NDX/SOX用于上一正式现金盘结构；QQQ/SOXX及条件美股个股用于扩展时段前置信号。扩展时段必须继续经过A股本地传导与目标ETF自身反馈后才可进入机会判断。"
 }
