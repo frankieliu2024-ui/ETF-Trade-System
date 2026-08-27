@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 import json
+import shutil
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ROOT / ".github" / "workflows"
 MANIFEST = ROOT / "maintenance" / "actions_node24_workflows.json"
+MIRROR_DIR = ROOT / "maintenance" / "actions_node24_blobs"
 TEMP_WORKFLOW = ".github/workflows/actions-node24-upgrade-temp.yml"
 REPLACEMENTS = {
     "actions/checkout@v4": "actions/checkout@v5",
@@ -39,11 +41,20 @@ if remaining:
     raise RuntimeError(f"deprecated action references remain: {remaining}")
 
 manifest_files: dict[str, str] = {}
+mirror_map: dict[str, str] = {}
+if MIRROR_DIR.exists():
+    shutil.rmtree(MIRROR_DIR)
+MIRROR_DIR.mkdir(parents=True, exist_ok=True)
+
 for row in changed:
     rel = row["path"]
     if rel == TEMP_WORKFLOW:
         continue
-    manifest_files[rel] = (ROOT / rel).read_text(encoding="utf-8")
+    source = ROOT / rel
+    manifest_files[rel] = source.read_text(encoding="utf-8")
+    mirror = MIRROR_DIR / source.name
+    mirror.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    mirror_map[rel] = str(mirror.relative_to(ROOT)).replace("\\", "/")
 
 if len(manifest_files) != 14:
     raise RuntimeError(f"expected 14 production workflow upgrades, got {len(manifest_files)}: {sorted(manifest_files)}")
@@ -56,6 +67,7 @@ MANIFEST.write_text(
             "source_branch": "maintenance/actions-node24-runtime-20260827",
             "replacement_contract": REPLACEMENTS,
             "production_workflow_count": len(manifest_files),
+            "mirror_map": mirror_map,
             "files": manifest_files,
         },
         ensure_ascii=False,
@@ -65,4 +77,4 @@ MANIFEST.write_text(
     encoding="utf-8",
 )
 
-print(json.dumps({"changed_count": len(changed), "production_manifest_count": len(manifest_files), "changed": changed}, ensure_ascii=False, indent=2))
+print(json.dumps({"changed_count": len(changed), "production_manifest_count": len(manifest_files), "mirror_count": len(mirror_map), "changed": changed}, ensure_ascii=False, indent=2))
