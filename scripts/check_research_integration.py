@@ -40,6 +40,7 @@ def main() -> int:
     master_feedback = text("scripts/build_research_master_feedback.py")
     state_sync = text("scripts/process_state_sync_request.py")
     execution_quality = text("scripts/build_execution_quality.py")
+    execution_bridge = text("scripts/build_research_execution_bridge.py")
     backfill = text("scripts/backfill_research_daily_history.py")
     backfill_workflow = text(".github/workflows/research-backfill.yml")
 
@@ -77,6 +78,21 @@ def main() -> int:
         "research:no_trade_authority",
         all(token in research_builder for token in ["decision_output_generated", "不自动修改MASTER", "不生成风险许可"]),
         "research builder remains read-only and cannot generate trading authority",
+    )
+    check(
+        "research:execution_bridge_wired",
+        "build_research_execution_bridge" in state_context and all(token in execution_bridge for token in ["RESEARCH_TO_EXECUTION_READ_ONLY_BRIDGE", "research_conclusions_must_be_synthesized", "ipo_base_stock_evidence", "stock_buy_capital_source_rule", "stock_sell_destination_rule"]),
+        "research conclusions must be synthesized into execution evidence covering IPO base stocks and capital source/destination without creating orders",
+    )
+    check(
+        "research:execution_bridge_no_auto_trade",
+        all(token in execution_bridge for token in ["automatic_trade\": False", "trade_signal\": None", "separate_decisions_rule"]),
+        "research-to-execution bridge must remain read-only and must not auto trade or mechanically rotate capital",
+    )
+    check(
+        "research:master_ipo_base_capital_bridge",
+        all(token in text("ETF规则_MASTER.md") for token in ["研究结论先归纳", "打新底仓个股出现独立、可证伪", "卖出后资金去向", "研究证据可以直接改变"]),
+        "MASTER must explicitly connect synthesized research evidence to IPO base stock capital-source and capital-destination decisions",
     )
     check(
         "research:point_in_time_decision_price",
@@ -120,6 +136,9 @@ def main() -> int:
     relative = load("data/state/relative_strength.json", None)
     if isinstance(relative, dict):
         check("research:runtime_relative_read_only", relative.get("read_only") is True, "relative_strength must be read_only")
+    execution_summary = load("data/state/research_execution_summary.json", None)
+    if isinstance(execution_summary, dict):
+        check("research:runtime_execution_summary_read_only", execution_summary.get("read_only") is True and execution_summary.get("automatic_trade") is False and execution_summary.get("trade_signal") is None, "research_execution_summary must be read-only, decision-usable evidence without automatic trading")
     candidates = load("data/state/research_master_candidates.json", None)
     if isinstance(candidates, dict):
         check("research:runtime_master_candidates_no_auto_update", candidates.get("read_only") is True and candidates.get("automatic_master_update") is False, "research MASTER candidate feed must remain read-only with automatic update disabled")
