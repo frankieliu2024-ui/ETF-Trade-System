@@ -8,7 +8,6 @@ from pathlib import Path
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 BEIJING = timezone(timedelta(hours=8), name="Asia/Shanghai")
 REPORT = ROOT / "data" / "state" / "overseas_runtime_health.json"
-RUNTIME = ROOT / "data" / "state" / "runtime_health.json"
 
 
 def parse_time(value: str):
@@ -106,20 +105,9 @@ def main() -> int:
     }
     REPORT.parent.mkdir(parents=True, exist_ok=True)
     REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    # Keep the existing generic runtime health file truthful for consistency/query readers.
-    runtime = load(RUNTIME)
-    runtime.update({
-        "generated_at": finished.astimezone(BEIJING).isoformat(timespec="seconds"),
-        "status": status,
-        "market_date": now_bj.date().isoformat(),
-        "last_run_id": os.environ.get("GITHUB_RUN_ID", ""),
-        "last_commit_sha": os.environ.get("GITHUB_SHA", ""),
-        "overseas_runtime_health": "data/state/overseas_runtime_health.json",
-        "overseas_pulse_success": report["pulse_success"],
-        "overseas_hard_error_count": len(hard_errors),
-        "overseas_warning_count": len(warnings),
-    })
-    RUNTIME.write_text(json.dumps(runtime, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    # Ownership boundary: the overseas pulse owns only overseas_runtime_health.
+    # Generic A-share runtime_health is owned by the canonical A-share snapshot
+    # producer family and must never be mutated by this builder, even transiently.
     print(json.dumps({"ok": not hard_errors, "status": status, "pulse_success": report["pulse_success"], "hard_error_count": len(hard_errors), "warning_count": len(warnings), "provider_as_of": top_as_of}, ensure_ascii=False))
     return 1 if hard_errors else 0
 
