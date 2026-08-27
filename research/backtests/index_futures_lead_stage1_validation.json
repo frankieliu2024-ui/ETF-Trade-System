@@ -1,0 +1,154 @@
+{
+  "schema_version": "1.0",
+  "mode": "RESEARCH_ONLY_INDEX_FUTURES_LEAD_STAGE1",
+  "point_in_time_rule": "T日收盘期指/现货/OI与融资事实仅从T+1进入决策；ETF forward label从D日开盘近似为D-1收盘后的下一日收益开始。",
+  "decision_eligible": false,
+  "trade_signal": null,
+  "master_override": false,
+  "data_quality": {
+    "margin_rows": 500,
+    "IF": {
+      "futures_rows": 2332,
+      "spot_rows": 5979,
+      "merged_rows": 2332,
+      "usable_rows": 2056
+    },
+    "IC": {
+      "futures_rows": 2332,
+      "spot_rows": 5258,
+      "merged_rows": 2332,
+      "usable_rows": 2038
+    },
+    "IM": {
+      "futures_rows": 994,
+      "spot_rows": 2885,
+      "merged_rows": 994,
+      "usable_rows": 877
+    },
+    "159326": {
+      "error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+    }
+  },
+  "validation": {
+    "controls": [
+      "ETF mom5 lag1",
+      "ETF mom20 lag1",
+      "margin_balance_5d lag1 when available"
+    ],
+    "signals": {
+      "IF_basis_change_1d": {
+        "tests": 15,
+        "median_partial_rank_ic": 0.0195,
+        "sign_consistency": 0.9333,
+        "median_top_bottom_spread_pp": 0.3982,
+        "passed": false
+      },
+      "IF_basis_change_5d": {
+        "tests": 15,
+        "median_partial_rank_ic": 0.0661,
+        "sign_consistency": 0.9333,
+        "median_top_bottom_spread_pp": 0.5158,
+        "passed": true
+      },
+      "IF_oi_change_1d": {
+        "tests": 15,
+        "median_partial_rank_ic": 0.0789,
+        "sign_consistency": 0.9333,
+        "median_top_bottom_spread_pp": 0.328,
+        "passed": false
+      },
+      "IF_oi_change_5d": {
+        "tests": 15,
+        "median_partial_rank_ic": 0.0409,
+        "sign_consistency": 0.8,
+        "median_top_bottom_spread_pp": 0.8774,
+        "passed": false
+      },
+      "IF_price_oi_regime": {
+        "tests": 15,
+        "median_partial_rank_ic": 0.0654,
+        "sign_consistency": 0.8,
+        "median_top_bottom_spread_pp": 0,
+        "passed": false
+      },
+      "IC_basis_change_1d": {
+        "tests": 15,
+        "median_partial_rank_ic": -0.0166,
+        "sign_consistency": 0.6,
+        "median_top_bottom_spread_pp": -0.1755,
+        "passed": false
+      },
+      "IC_basis_change_5d": {
+        "tests": 15,
+        "median_partial_rank_ic": 0.0675,
+        "sign_consistency": 0.9333,
+        "median_top_bottom_spread_pp": 1.0312,
+        "passed": true
+      },
+      "IC_oi_change_1d": {
+        "tests": 15,
+        "median_partial_rank_ic": 0.0637,
+        "sign_consistency": 0.9333,
+        "median_top_bottom_spread_pp": 0.5034,
+        "passed": true
+      },
+      "IC_oi_change_5d": {
+        "tests": 15,
+        "median_partial_rank_ic": 0.0341,
+        "sign_consistency": 0.8,
+        "median_top_bottom_spread_pp": 0.347,
+        "passed": false
+      },
+      "IC_price_oi_regime": {
+        "tests": 15,
+        "median_partial_rank_ic": 0.0758,
+        "sign_consistency": 1.0,
+        "median_top_bottom_spread_pp": 0,
+        "passed": false
+      },
+      "IM_basis_change_1d": {
+        "tests": 15,
+        "median_partial_rank_ic": 0.0482,
+        "sign_consistency": 0.8,
+        "median_top_bottom_spread_pp": 0.9816,
+        "passed": false
+      },
+      "IM_basis_change_5d": {
+        "tests": 15,
+        "median_partial_rank_ic": 0.065,
+        "sign_consistency": 0.9333,
+        "median_top_bottom_spread_pp": 1.2086,
+        "passed": true
+      },
+      "IM_oi_change_1d": {
+        "tests": 15,
+        "median_partial_rank_ic": 0.0443,
+        "sign_consistency": 0.9333,
+        "median_top_bottom_spread_pp": 0.5904,
+        "passed": false
+      },
+      "IM_oi_change_5d": {
+        "tests": 15,
+        "median_partial_rank_ic": 0.0581,
+        "sign_consistency": 0.8,
+        "median_top_bottom_spread_pp": 0.4858,
+        "passed": false
+      },
+      "IM_price_oi_regime": {
+        "tests": 15,
+        "median_partial_rank_ic": 0.0361,
+        "sign_consistency": 0.7333,
+        "median_top_bottom_spread_pp": 0,
+        "passed": false
+      }
+    },
+    "passing_signals": [
+      "IF_basis_change_5d",
+      "IC_basis_change_5d",
+      "IC_oi_change_1d",
+      "IM_basis_change_5d"
+    ]
+  },
+  "research_interpretation": "PROMISING_INCREMENT_STAGE1",
+  "next_step": "If passing, require contract-level/expiry-aware robustness before production; continuous-contract result alone cannot qualify basis for decision integration."
+}
