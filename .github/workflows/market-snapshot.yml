@@ -115,12 +115,12 @@ jobs:
           print(f"provider concurrency: {key}={value}")
       - name: Run data-only snapshot
         id: capture
-        # Scheduled pulses and in-session user requests share the same producer.
-        # This keeps query-time A-share facts on the canonical snapshot/CURRENT
-        # path instead of maintaining a second non-persisted market-data chain.
+        # Scheduled pulses and user requests share the same phase-aware producer.
+        # `scheduled` is resolved by cloud_runner_snapshot.py into auction/live/close
+        # from the actual A-share market phase, avoiding generic live labels after close.
         if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
         env:
-          NODE_LABEL: ${{ github.event_name == 'push' && 'live' || (github.event.inputs.node || 'scheduled') }}
+          NODE_LABEL: ${{ github.event_name == 'push' && 'scheduled' || (github.event.inputs.node || 'scheduled') }}
           PROBE_ONLY: ${{ github.event.inputs.probe_only || 'false' }}
         run: |
           if [ "$PROBE_ONLY" = "true" ]; then
