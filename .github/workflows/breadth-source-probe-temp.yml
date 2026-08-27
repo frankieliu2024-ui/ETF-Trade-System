@@ -1,0 +1,36 @@
+name: Market breadth source probe temp
+on:
+  push:
+    branches: [research/leading-indicators-20260827]
+    paths: ["research/requests/market_breadth_source_probe.json"]
+permissions: {contents: write}
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: research/leading-indicators-20260827, fetch-depth: 2}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: pip install -q akshare pandas
+      - name: Probe PIT-capable breadth sources
+        run: |
+          python - <<'PY'
+          import akshare as ak, json, inspect
+          from pathlib import Path
+          out={'functions':{},'probes':{}}
+          names=['stock_market_activity_legu','stock_zt_pool_em','stock_zt_pool_dtgc_em','stock_zt_pool_zbgc_em','stock_zt_pool_previous_em']
+          for n in names:
+            f=getattr(ak,n,None)
+            out['functions'][n]={'exists':bool(f),'signature':str(inspect.signature(f)) if f else None,'doc':(inspect.getdoc(f) or '')[:1200] if f else None}
+          tests=[('stock_market_activity_legu',{}),('stock_zt_pool_em',{'date':'20260826'}),('stock_zt_pool_dtgc_em',{'date':'20260826'}),('stock_zt_pool_zbgc_em',{'date':'20260826'}),('stock_zt_pool_previous_em',{'date':'20260826'})]
+          for n,kw in tests:
+            try:
+              d=getattr(ak,n)(**kw); out['probes'][n]={'ok':True,'rows':len(d),'columns':list(d.columns),'head':d.head(3).astype(str).to_dict('records'),'tail':d.tail(3).astype(str).to_dict('records')}
+            except Exception as e: out['probes'][n]={'ok':False,'error':f'{type(e).__name__}: {e}'}
+          p=Path('research/backtests/market_breadth_source_probe.json'); p.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n'); print(json.dumps(out,ensure_ascii=False)[:10000])
+          PY
+      - name: Commit probe
+        run: |
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"; git add research/backtests/market_breadth_source_probe.json; git commit -m "research: record market breadth source probe" || exit 0; git push origin HEAD:research/leading-indicators-20260827
