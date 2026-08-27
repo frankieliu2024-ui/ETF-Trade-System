@@ -1,0 +1,79 @@
+name: Futures robustness v2 temp
+on:
+  push:
+    branches: [research/leading-indicators-20260827]
+    paths: ["research/requests/index_futures_robustness_v2.json"]
+permissions: {contents: write}
+jobs:
+  robustness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: research/leading-indicators-20260827, fetch-depth: 2}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: pip install -q akshare pandas numpy scipy
+      - name: Run robustness with Yahoo ETF history
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, warnings, urllib.request, urllib.parse, time
+          from pathlib import Path
+          import numpy as np, pandas as pd
+          from scipy.stats import spearmanr
+          import akshare as ak
+          warnings.filterwarnings('ignore')
+          OUT=Path('research/backtests/index_futures_lead_robustness_validation.json')
+          TARGETS={'561980':'561980.SS','588000':'588000.SS','159781':'159781.SZ','159992':'159992.SZ','515880':'515880.SS','159326':'159326.SZ'}
+          FUTS={'IF':('IF0','sh000300'),'IC':('IC0','sh000905'),'IM':('IM0','sh000852')}
+          CANDS=['IF_basis_change_5d','IC_basis_change_5d','IC_oi_change_1d','IM_basis_change_5d']
+          def yahoo(sym):
+            url='https://query1.finance.yahoo.com/v8/finance/chart/'+urllib.parse.quote(sym,safe='')+'?period1=1640995200&period2=1787788800&interval=1d&events=history'
+            req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'}); raw=json.loads(urllib.request.urlopen(req,timeout=20).read().decode()); r=raw['chart']['result'][0]; q=r['indicators']['quote'][0]; d=pd.DataFrame({'date':pd.to_datetime(r['timestamp'],unit='s',utc=True).tz_convert('Asia/Shanghai').tz_localize(None).normalize(),'close':q['close']}); return d.dropna().drop_duplicates('date').sort_values('date')
+          def idx(sym):
+            d=ak.stock_zh_index_daily(symbol=sym); d['date']=pd.to_datetime(d['date']); d['close']=pd.to_numeric(d['close'],errors='coerce'); return d[['date','close']].dropna().sort_values('date')
+          def fut(sym):
+            d=ak.futures_zh_daily_sina(symbol=sym); d['date']=pd.to_datetime(d['date']); d['close']=pd.to_numeric(d['close'],errors='coerce'); d['hold']=pd.to_numeric(d['hold'],errors='coerce'); return d[['date','close','hold']].dropna().sort_values('date')
+          def margin():
+            u='https://datacenter-web.eastmoney.com/api/data/v1/get'; p={'reportName':'RPTA_WEB_MARGIN_DAILYTRADE','columns':'STATISTICS_DATE,FIN_BALANCE','pageNumber':'1','pageSize':'1000','sortColumns':'STATISTICS_DATE','sortTypes':'-1'}; req=urllib.request.Request(u+'?'+urllib.parse.urlencode(p),headers={'User-Agent':'Mozilla/5.0 research'}); rows=((json.loads(urllib.request.urlopen(req,timeout=20).read().decode()).get('result') or {}).get('data') or []); d=pd.DataFrame(rows); d['date']=pd.to_datetime(d.STATISTICS_DATE.astype(str).str[:10]); d['balance']=pd.to_numeric(d.FIN_BALANCE,errors='coerce'); d=d[['date','balance']].dropna().sort_values('date'); d['margin5']=d.balance.pct_change(5)*100; return d[['date','margin5']]
+          res={'schema_version':'1.1','mode':'RESEARCH_ONLY_INDEX_FUTURES_ROBUSTNESS','decision_eligible':False,'trade_signal':None,'master_override':False,'pit':'All T close facts lagged one ETF trading observation','continuous_contract_limitation':'Strictly filtered continuous-contract evidence; not production eligible without expiry-aware validation.','data_quality':{},'signals':{},'research_interpretation':'INCONCLUSIVE'}
+          fac=None
+          for k,(fs,isym) in FUTS.items():
+            f=fut(fs).merge(idx(isym),on='date',suffixes=('_f','_s')).sort_values('date'); f['basis']=(f.close_f/f.close_s-1)*100; f['basis1']=f.basis.diff(); f['basis5']=f.basis.diff(5); f['oi1']=f['hold'].pct_change()*100
+            raw=(f.oi1.abs()>25)|(f.basis1.abs()>1.5)|(f.close_f.pct_change().abs()>0.08); bad=raw.copy()
+            for j in range(1,6): bad=bad|raw.shift(j,fill_value=False)|raw.shift(-j,fill_value=False)
+            z=f[['date','basis5','oi1']].copy(); z[f'{k}_clean']=~bad; z=z.rename(columns={'basis5':f'{k}_basis_change_5d','oi1':f'{k}_oi_change_1d'}); fac=z if fac is None else fac.merge(z,on='date',how='outer'); res['data_quality'][k]={'rows':len(f),'strict_clean_rows':int((~bad).sum()),'excluded_pct':round(float(bad.mean()*100),2)}
+          try: fac=fac.merge(margin(),on='date',how='left')
+          except Exception as e: res['data_quality']['margin_error']=f'{type(e).__name__}: {e}'
+          by={s:[] for s in CANDS}
+          for code,sym in TARGETS.items():
+            try: d=yahoo(sym).merge(fac,on='date',how='left').sort_values('date'); res['data_quality'][code]={'provider':'Yahoo chart','rows':len(d)}
+            except Exception as e: res['data_quality'][code]={'error':f'{type(e).__name__}: {e}'}; continue
+            for c in CANDS+(['margin5'] if 'margin5' in d else []): d[c]=d[c].shift(1)
+            for k in FUTS:
+              if f'{k}_clean' in d: d[f'{k}_clean']=d[f'{k}_clean'].shift(1)
+            d['mom5']=d.close.pct_change(5).shift(1)*100; d['mom20']=d.close.pct_change(20).shift(1)*100
+            for h in [1,3,5]: d[f'fwd{h}']=(d.close.shift(-h)/d.close-1)*100
+            for sig in CANDS:
+              clean=f"{sig.split('_')[0]}_clean"
+              for h in [1,3,5]:
+                cols=[sig,'mom5','mom20',clean,'date',f'fwd{h}']+(['margin5'] if 'margin5' in d else []); z=d[cols].replace([np.inf,-np.inf],np.nan).dropna(); z=z[z[clean].astype(bool)]
+                if len(z)<160: continue
+                split=z.date.iloc[len(z)//2]
+                for part,zz in [('early',z[z.date<=split]),('late',z[z.date>split])]:
+                  if len(zz)<70: continue
+                  ctr=['mom5','mom20']+(['margin5'] if 'margin5' in zz else []); X=np.column_stack([np.ones(len(zz))]+[zz[c].to_numpy(float) for c in ctr]); bx=np.linalg.lstsq(X,zz[sig].to_numpy(float),rcond=None)[0]; by=np.linalg.lstsq(X,zz[f'fwd{h}'].to_numpy(float),rcond=None)[0]; ic=float(spearmanr(zz[sig].to_numpy(float)-X@bx,zz[f'fwd{h}'].to_numpy(float)-X@by).statistic); by[sig] if False else None; byrec={'code':code,'horizon':h,'part':part,'n':len(zz),'partial_rank_ic':round(ic,4)}; by[sig] if False else None; globals()['by'][sig].append(byrec)
+          passing=[]; total_tests=0
+          for sig,rs in by.items():
+            total_tests+=len(rs)
+            if not rs: res['signals'][sig]={'tests':0,'passed':False}; continue
+            e=[r['partial_rank_ic'] for r in rs if r['part']=='early']; l=[r['partial_rank_ic'] for r in rs if r['part']=='late']; a=[r['partial_rank_ic'] for r in rs]; me=float(np.median(e)); ml=float(np.median(l)); ma=float(np.median(a)); cons=max(sum(x>0 for x in a),sum(x<0 for x in a))/len(a); ok=np.sign(me)==np.sign(ml) and abs(me)>=.03 and abs(ml)>=.03 and abs(ma)>=.045 and cons>=.70; res['signals'][sig]={'tests':len(rs),'early_median_ic':round(me,4),'late_median_ic':round(ml,4),'overall_median_ic':round(ma,4),'sign_consistency':round(cons,4),'passed':bool(ok)}; passing += [sig] if ok else []
+          res['passing_signals']=passing
+          res['research_interpretation']='DATA_UNAVAILABLE_INCONCLUSIVE' if total_tests==0 else ('ROBUST_CONTINUOUS_CONTRACT_INCREMENT' if passing else 'STAGE1_NOT_ROBUST_TO_ROLL_AND_TIME_SPLIT')
+          res['production_boundary']='No direct decision integration. Basis needs contract/expiry-aware PIT validation; OI may be separately promoted only after source/semantics robustness.'
+          OUT.write_text(json.dumps(res,ensure_ascii=False,indent=2)+'\n'); print(json.dumps({'interpretation':res['research_interpretation'],'passing':passing,'tests':total_tests,'quality':res['data_quality']},ensure_ascii=False))
+          PY
+      - name: Commit result
+        run: |
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"; git add research/backtests/index_futures_lead_robustness_validation.json; git commit -m "research: rerun futures robustness with independent ETF source" || exit 0; git push origin HEAD:research/leading-indicators-20260827
