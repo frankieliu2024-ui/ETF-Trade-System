@@ -1,0 +1,50 @@
+name: IPO base stock signal integration temp
+
+on:
+  push:
+    branches:
+      - research/ipo-base-stock-signals-final-20260827
+    paths:
+      - scripts/build_research_execution_bridge.py
+      - research/backtests/ipo_base_stock_specific_signal_conclusion.json
+      - .github/workflows/ipo-base-stock-signal-integration-temp.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/ipo-base-stock-signals-final-20260827
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build research execution bridge
+        run: python scripts/build_research_execution_bridge.py
+      - name: Assert robust stock-specific mapping and no auto trade
+        run: |
+          python - <<'PY'
+          import json
+          s=json.load(open('data/state/research_execution_summary.json',encoding='utf-8'))
+          r=json.load(open('data/state/research_context.json',encoding='utf-8'))
+          d=json.load(open('data/state/decision_context.json',encoding='utf-8'))
+          assert s['automatic_trade'] is False and s['trade_signal'] is None
+          by={x['code']:x for x in s['ipo_base_stock_evidence']}
+          catl=by['300750']; fii=by['601138']
+          assert catl['validated_stock_specific_signal_status']=='VALIDATED_RESEARCH_SIGNAL_AVAILABLE'
+          assert [x['signal_id'] for x in catl['validated_stock_specific_signals']]==['OVERSOLD_REVERSAL']
+          assert catl['stock_specific_signal_current_completed_bar_matches']==[]
+          assert fii['validated_stock_specific_signal_status']=='NO_STABLE_INCREMENTAL_SIGNAL_AFTER_ROBUSTNESS'
+          assert fii['validated_stock_specific_signals']==[]
+          assert fii['stock_specific_signal_current_completed_bar_matches']==[]
+          assert r['ipo_base_stock_research']['automatic_trade'] is False
+          assert d['ipo_base_stock_evidence']==s['ipo_base_stock_evidence']
+          assert all(x['automatic_trade'] is False and x['trade_signal'] is None for x in s['ipo_base_stock_evidence'])
+          print(json.dumps({'CATL':catl['validated_stock_specific_signal_status'],'CATL_signals':[x['signal_id'] for x in catl['validated_stock_specific_signals']],'FII':fii['validated_stock_specific_signal_status'],'current_matches':{'300750':catl['stock_specific_signal_current_completed_bar_matches'],'601138':fii['stock_specific_signal_current_completed_bar_matches']},'automatic_trade':s['automatic_trade']},ensure_ascii=False))
+          PY
+      - name: Run research integration checks
+        run: python scripts/check_research_integration.py
