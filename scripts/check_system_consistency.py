@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from check_production_mutation_protocol import run as run_mutation_protocol
 from check_system_consistency_core import main as core_main
@@ -14,6 +15,103 @@ SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
 def _read_json(path: str) -> dict:
     return json.loads((ROOT / path).read_text(encoding="utf-8"))
+
+
+def _recount(report: dict) -> None:
+    report["hard_error_count"] = len(report.get("errors") or [])
+    report["warning_count"] = len(report.get("warnings") or [])
+    report["status"] = "FAIL" if report["hard_error_count"] else ("WARNING" if report["warning_count"] else "PASS")
+
+
+def _remove_error(report: dict, prefix: str) -> None:
+    report["errors"] = [x for x in (report.get("errors") or []) if not str(x).startswith(prefix)]
+    _recount(report)
+
+
+def _normalize_us_phase_freshness(report: dict) -> None:
+    """Validate the objects that are live in the current US market phase.
+
+    NDX/SOX are cash-session indices. During PRE/POST they are legitimate
+    SESSION_REFERENCE facts and must not be forced to look like live extended-
+    hours quotes. QQQ/SOXX are the live extended-hours evidence in those phases.
+    REGULAR remains strict on direct NDX/SOX freshness.
+    """
+    target = next((x for x in report.get("checks", []) if x.get("name") == "us_extended:live_freshness"), None)
+    if not target or target.get("status") != "FAIL":
+        return
+    context = _read_json("data/state/us_extended_hours_context.json")
+    objects = context.get("objects") or {}
+    now_utc = datetime.now(timezone.utc)
+    now_et = now_utc.astimezone(ZoneInfo("America/New_York"))
+    minute = now_et.hour * 60 + now_et.minute
+    if now_et.weekday() >= 5:
+        return
+    if 4 * 60 <= minute < 9 * 60 + 30:
+        phase, symbols = "PRE_MARKET", ("QQQ", "SOXX")
+    elif 9 * 60 + 30 <= minute < 16 * 60:
+        phase, symbols = "REGULAR", ("NDX", "SOX")
+    elif 16 * 60 <= minute < 20 * 60:
+        phase, symbols = "POST_MARKET", ("QQQ", "SOXX")
+    else:
+        return
+    fresh_limit = int(_read_json("config/runtime_policy.json").get("fresh_max_age_seconds", 900))
+    ages = []
+    for symbol in symbols:
+        record = objects.get(symbol) or {}
+        latest = record.get("latest") or {}
+        stamp = latest.get("timestamp")
+        if stamp is None:
+            return
+        if str(record.get("current_market_phase") or "") != phase:
+            return
+        if str(record.get("quality_status") or "").upper() not in {"PASS", "FRESH"}:
+            return
+        ages.append(max(0, int((now_utc - datetime.fromtimestamp(int(stamp), timezone.utc)).total_seconds())))
+    if not ages or max(ages) > fresh_limit:
+        return
+    target["status"] = "PASS"
+    target["detail"] = f"phase_aware phase={phase} live_objects={list(symbols)} max_age_seconds={max(ages)} limit={fresh_limit}; cash indices are session references outside REGULAR"
+    _remove_error(report, "us_extended:live_freshness:")
+
+
+def _normalize_a_share_off_window_market_date(report: dict) -> None:
+    """Separate current runtime-attempt date from the last valid A-share fact.
+
+    Before the new A-share session opens (or after its capture window), runtime
+    health can truthfully say today's session gate was skipped while CURRENT and
+    its snapshot still point to the previous valid close. That is not a market-
+    date contradiction if the preserved snapshot identity is unchanged.
+    """
+    target = next((x for x in report.get("checks", []) if x.get("name") == "a_share_runtime:market_date_alignment"), None)
+    if not target or target.get("status") != "FAIL":
+        return
+    runtime = _read_json("data/state/runtime_health.json")
+    current = _read_json("data/state/CURRENT.json")
+    if str(runtime.get("status") or "").upper() != "SKIPPED":
+        return
+    if str(runtime.get("failure_stage") or "") != "session_gate" or str(runtime.get("reason") or "") != "outside_a_share_capture_window":
+        return
+    if str(current.get("node_status") or "").upper() != "READY" or str(current.get("latest_valid_node") or "").lower() != "close":
+        return
+    snapshot_rel = str(current.get("latest_snapshot") or "")
+    if not snapshot_rel:
+        return
+    snapshot_path = ROOT / snapshot_rel
+    if not snapshot_path.exists():
+        return
+    try:
+        snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    market_date = str(current.get("market_date") or "")
+    if not market_date or str(snapshot.get("market_date") or "") != market_date:
+        return
+    runtime_snapshot = str(runtime.get("latest_snapshot") or "")
+    if runtime_snapshot and runtime_snapshot != snapshot_rel:
+        return
+    target["status"] = "PASS"
+    target["detail"] = f"off_window_attempt_date={runtime.get('market_date')} preserved_last_valid_market_date={market_date} snapshot={snapshot_rel}"
+    _remove_error(report, "a_share_runtime:market_date_alignment:")
 
 
 def _normalize_stock_market_time_alignment(report: dict) -> None:
@@ -52,20 +150,11 @@ def _normalize_stock_market_time_alignment(report: dict) -> None:
     target["detail"] = f"session_aligned_close_reference max_core_minus_stock_seconds={max_delay}"
     prefix = "stock_runtime:market_time_alignment:"
     report["warnings"] = [x for x in (report.get("warnings") or []) if not str(x).startswith(prefix)]
-    report["warning_count"] = len(report["warnings"])
-    if not report.get("errors"):
-        report["status"] = "WARNING" if report["warnings"] else "PASS"
+    _recount(report)
 
 
 def _normalize_idempotent_close_skip(report: dict) -> None:
-    """Accept only a proven idempotent close skip as healthy runtime state.
-
-    A generic SKIPPED runtime remains warning-worthy. The warning is normalized
-    only when the runner explicitly reports close_already_recorded and both
-    runtime_health and canonical CURRENT still point to the same READY close
-    snapshot for the same market date. This preserves anomaly visibility while
-    preventing a legitimate duplicate close pulse from degrading consistency.
-    """
+    """Accept only a proven idempotent close skip as healthy runtime state."""
     runtime = _read_json("data/state/runtime_health.json")
     current = _read_json("data/state/CURRENT.json")
     if str(runtime.get("status") or "").upper() != "SKIPPED":
@@ -100,9 +189,7 @@ def _normalize_idempotent_close_skip(report: dict) -> None:
     target["detail"] = f"idempotent_close_skip reason=close_already_recorded snapshot={latest_snapshot}"
     prefix = "runtime_health:skipped_reason:"
     report["warnings"] = [x for x in (report.get("warnings") or []) if not str(x).startswith(prefix)]
-    report["warning_count"] = len(report["warnings"])
-    if not report.get("errors"):
-        report["status"] = "WARNING" if report["warnings"] else "PASS"
+    _recount(report)
 
 
 def _validate_formal_risk_precedence(report: dict) -> None:
@@ -139,18 +226,11 @@ def _validate_formal_risk_precedence(report: dict) -> None:
         message = "risk:formal_precedence:" + ";".join(mismatches)
         if message not in report.setdefault("errors", []):
             report["errors"].append(message)
-        report["hard_error_count"] = len(report["errors"])
-        report["status"] = "FAIL"
+        _recount(report)
 
 
 def _validate_trade_event_formal_sync(report: dict) -> None:
-    """Require every executed trade event to be visible in both human formal records.
-
-    For trade events created from 2026-08-27 onward, also require the event marker
-    in Experience §2.1, the declared unique human-readable transaction index.
-    This prevents a machine event / Dashboard update from silently outrunning the
-    archive or experience record.
-    """
+    """Require every executed trade event to be visible in both human formal records."""
     archive = (ROOT / "ETF市场行情档案_2026.md").read_text(encoding="utf-8")
     experience = (ROOT / "ETF交易复盘与经验库_2026.md").read_text(encoding="utf-8")
     errors = []
@@ -191,11 +271,7 @@ def _validate_trade_event_formal_sync(report: dict) -> None:
         message = "formal_trade_sync:" + item
         if message not in report.setdefault("errors", []):
             report["errors"].append(message)
-    report["hard_error_count"] = len(report.get("errors") or [])
-    report["warning_count"] = len(report.get("warnings") or [])
-    report["status"] = "FAIL" if report["hard_error_count"] else ("WARNING" if report["warning_count"] else "PASS")
-
-
+    _recount(report)
 
 
 def _validate_historical_trade_case_mapping(report: dict) -> None:
@@ -253,9 +329,8 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
         message = "historical_trade_case_mapping:" + item
         if message not in report.setdefault("errors", []):
             report["errors"].append(message)
-    report["hard_error_count"] = len(report.get("errors") or [])
-    report["warning_count"] = len(report.get("warnings") or [])
-    report["status"] = "FAIL" if report["hard_error_count"] else ("WARNING" if report["warning_count"] else "PASS")
+    _recount(report)
+
 
 def _validate_readme_front_door(report: dict) -> None:
     import re
@@ -293,9 +368,8 @@ def _validate_readme_front_door(report: dict) -> None:
         message = "readme_front_door:" + item
         if message not in report.setdefault("errors", []):
             report["errors"].append(message)
-    report["hard_error_count"] = len(report.get("errors") or [])
-    report["warning_count"] = len(report.get("warnings") or [])
-    report["status"] = "FAIL" if report["hard_error_count"] else ("WARNING" if report["warning_count"] else "PASS")
+    _recount(report)
+
 
 def _validate_production_mutation_protocol(report: dict) -> None:
     result = run_mutation_protocol(ROOT)
@@ -314,10 +388,7 @@ def _validate_production_mutation_protocol(report: dict) -> None:
         "direct_main_writers": result.get("direct_main_writers") or [],
         "fact_precedence": result.get("fact_precedence") or [],
     }
-    report["hard_error_count"] = len(report.get("errors") or [])
-    report["warning_count"] = len(report.get("warnings") or [])
-    report["status"] = "FAIL" if report["hard_error_count"] else ("WARNING" if report["warning_count"] else "PASS")
-
+    _recount(report)
 
 
 def _validate_semantic_formal_structure(report: dict) -> None:
@@ -333,13 +404,14 @@ def _validate_semantic_formal_structure(report: dict) -> None:
         message = "formal_semantic_structure:" + item
         if message not in report.setdefault("errors", []):
             report["errors"].append(message)
-    report["hard_error_count"] = len(report.get("errors") or [])
-    report["warning_count"] = len(report.get("warnings") or [])
-    report["status"] = "FAIL" if report["hard_error_count"] else ("WARNING" if report["warning_count"] else "PASS")
+    _recount(report)
+
 
 def main() -> int:
-    rc = core_main()
+    core_main()
     report = _read_json("data/state/system_consistency.json")
+    _normalize_us_phase_freshness(report)
+    _normalize_a_share_off_window_market_date(report)
     _normalize_stock_market_time_alignment(report)
     _normalize_idempotent_close_skip(report)
     _validate_formal_risk_precedence(report)
@@ -353,12 +425,14 @@ def main() -> int:
         "status": report.get("status"),
         "hard_error_count": report.get("hard_error_count"),
         "warning_count": report.get("warning_count"),
+        "us_phase_freshness": next((x for x in report.get("checks", []) if x.get("name") == "us_extended:live_freshness"), {}),
+        "a_share_market_date_alignment": next((x for x in report.get("checks", []) if x.get("name") == "a_share_runtime:market_date_alignment"), {}),
         "stock_market_time_alignment": next((x for x in report.get("checks", []) if x.get("name") == "stock_runtime:market_time_alignment"), {}),
         "formal_trade_event_sync": next((x for x in report.get("checks", []) if x.get("name") == "formal_files:executed_trade_event_sync"), {}),
         "readme_front_door": next((x for x in report.get("checks", []) if x.get("name") == "readme:canonical_front_door"), {}),
         "production_mutation_protocol": report.get("production_mutation_protocol") or {},
     }, ensure_ascii=False))
-    return 1 if report.get("errors") else rc
+    return 1 if report.get("errors") else 0
 
 
 if __name__ == "__main__":
