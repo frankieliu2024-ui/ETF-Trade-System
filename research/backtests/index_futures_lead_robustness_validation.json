@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "mode": "RESEARCH_ONLY_INDEX_FUTURES_ROBUSTNESS",
+  "decision_eligible": false,
+  "trade_signal": null,
+  "master_override": false,
+  "pit": "T facts lagged to next ETF trading day",
+  "continuous_contract_limitation": "Still continuous-contract based; this stage sharply excludes roll-sensitive windows and demands time-split persistence. Passing does not by itself authorize production.",
+  "data_quality": {
+    "IF": {
+      "rows": 2332,
+      "strict_clean_rows": 1407,
+      "excluded_pct": 39.67
+    },
+    "IC": {
+      "rows": 2332,
+      "strict_clean_rows": 1355,
+      "excluded_pct": 41.9
+    },
+    "IM": {
+      "rows": 994,
+      "strict_clean_rows": 556,
+      "excluded_pct": 44.06
+    },
+    "561980": {
+      "error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+    },
+    "588000": {
+      "error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+    },
+    "159781": {
+      "error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+    },
+    "159992": {
+      "error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+    },
+    "515880": {
+      "error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+    },
+    "159326": {
+      "error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+    }
+  },
+  "signals": {
+    "IF_basis_change_5d": {
+      "tests": 0,
+      "passed": false
+    },
+    "IC_basis_change_5d": {
+      "tests": 0,
+      "passed": false
+    },
+    "IC_oi_change_1d": {
+      "tests": 0,
+      "passed": false
+    },
+    "IM_basis_change_5d": {
+      "tests": 0,
+      "passed": false
+    }
+  },
+  "research_interpretation": "STAGE1_NOT_ROBUST_TO_ROLL_AND_TIME_SPLIT",
+  "passing_signals": [],
+  "production_boundary": "Even passing signals remain research-only until contract-level expiry-aware history validates basis semantics; OI signal may advance independently if its source semantics are direct and PIT-safe."
+}
