@@ -1,0 +1,51 @@
+name: One-off fix CASE and README sync
+on:
+  push:
+    paths:
+      - ".github/workflows/oneoff-fix-case-readme-sync.yml"
+permissions:
+  contents: write
+concurrency:
+  group: production-main-writer
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Synchronize latest main before mutation
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+      - name: Apply CASE and README consistency repair
+        run: python scripts/oneoff_fix_case_readme_sync.py
+      - name: Validate focused repair
+        run: |
+          python -m py_compile scripts/check_system_consistency.py scripts/oneoff_fix_case_readme_sync.py
+          python scripts/check_system_consistency.py
+      - name: Commit production repair
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ETF交易复盘与经验库_2026.md ETF_SYSTEM_INDEX.md scripts/check_system_consistency.py data/state/system_consistency.json
+          if git diff --cached --quiet; then
+            echo "No repair diff to commit"
+            exit 0
+          fi
+          git commit -m "fix: require formal CASE and canonical README front door"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "Push raced with another main writer; retrying against latest main"
+            git fetch origin main
+            git rebase origin/main
+            sleep $((attempt * 2))
+          done
+          exit 1
