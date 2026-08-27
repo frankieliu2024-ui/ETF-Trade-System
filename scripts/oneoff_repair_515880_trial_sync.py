@@ -1,0 +1,105 @@
+from pathlib import Path
+import json
+
+ROOT = Path(__file__).resolve().parents[1]
+
+# Metadata/reference alignment only; no trading-rule change.
+master = ROOT / 'ETF规则_MASTER.md'
+s = master.read_text(encoding='utf-8').replace('《ETF与市场监测数据接口使用规范 V1.7》', '《ETF与市场监测数据接口使用规范 V1.10》')
+master.write_text(s, encoding='utf-8')
+
+dash = ROOT / 'ETF当前状态_DASHBOARD.md'
+s = dash.read_text(encoding='utf-8').replace('## ETF策略风险口径（V2.2.16）', '## ETF策略风险口径（V2.2.18）')
+dash.write_text(s, encoding='utf-8')
+
+exp = ROOT / 'ETF交易复盘与经验库_2026.md'
+s = exp.read_text(encoding='utf-8')
+s = s.replace('> 版本：ETF波段交易系统 V2.2.16  ', '> 版本：ETF波段交易系统 V2.2.18  ', 1)
+s = s.replace('《ETF与市场监测数据接口使用规范 V1.7》', '《ETF与市场监测数据接口使用规范 V1.10》')
+s = s.replace('> 更新时点：2026-08-26（已纳入中国银河证券2026-07-13至2026-08-25对账单事实、两笔8月25日ETF卖出费用确认及8月26日正式收盘复盘）  ', '> 更新时点：2026-08-27（已纳入中国银河证券2026-07-13至2026-08-25对账单事实、8月25日两笔ETF卖出费用确认、8月26日正式收盘复盘，以及8月27日通信ETF（515880）Trial真实买入成交；本次买入费用待确认）  ', 1)
+old = '本节是历史证券成交的唯一人类可读索引，依据中国银河证券对账单与已归档正式成交索引维护。统计区间为2026-07-13至2026-08-25，共26笔证券交易：ETF 23笔、个股3笔。成交额为成交本金；资金发生额包含已确认费用。2026-08-25恒生科技ETF（513180）与半导体设备ETF（561980）两笔卖出费用均已确认，各5.00元；截至2026-08-26累计已确认ETF费用120.01元，无待确认ETF费用。'
+new = '本节是历史证券成交的唯一人类可读索引，依据中国银河证券对账单、已归档正式成交索引与用户确认真实成交事件维护。统计区间为2026-07-13至2026-08-27，共27笔证券交易：ETF 24笔、个股3笔。成交额为成交本金；资金发生额在费用已确认时包含实际费用。2026-08-25恒生科技ETF（513180）与半导体设备ETF（561980）两笔卖出费用均已确认，各5.00元；截至2026-08-27累计已确认ETF费用120.01元，通信ETF（515880）本次Trial买入费用待确认，因此该笔资金发生额暂按成交本金列示并明确费用未闭环。'
+if old not in s:
+    raise SystemExit('experience transaction summary marker not found')
+s = s.replace(old, new, 1)
+anchor = '|2026-08-25 11:22:34|半导体设备ETF（561980）|561980|卖出|13,000|0.663|8,619.00|5.00|8,614.00|CASE-20260818-01降低风险；等量撤回Confirm新增风险归因，费用已确认|'
+row = '|2026-08-27 10:08:43|通信ETF（515880）|515880|买入|7,400|0.671|4,965.40|待确认|−4,965.40（未含待确认费用）|2026-08-27 Trial；关联决策20260827_095649_515880_trial_5000；真实成交已执行| <!-- TRADE_EVENT:20260827_100843_515880_buy -->'
+if 'TRADE_EVENT:20260827_100843_515880_buy' not in s:
+    if anchor not in s:
+        raise SystemExit('experience index insertion anchor not found')
+    s = s.replace(anchor, anchor + '\n' + row, 1)
+case_start, case_end = '<!-- AUTO_CASE_INTAKE_START -->', '<!-- AUTO_CASE_INTAKE_END -->'
+a, b = s.index(case_start), s.index(case_end, s.index(case_start))
+case_block = '''<!-- AUTO_CASE_INTAKE_START -->
+20260825_100518｜- 已归入CASE-20260817-01｜2026-08-25T10:02:57+08:00｜恒生科技ETF（513180）｜SELL 8,200份｜生命周期：全部退出并关闭｜已完成T+0判断/执行质量初评，后续只跟踪T+1/T+3反事实和资金用途。
+20260825_112516｜- 已归入CASE-20260818-01｜2026-08-25T11:22:34+08:00｜半导体设备ETF（561980）｜SELL 13,000份｜生命周期：降低风险、剩余51,900份继续持仓管理｜已完成T+0判断/执行质量初评，后续跟踪T+1/T+3和资金再利用。
+20260827_100843_515880_buy｜- 待复盘CASE｜2026-08-27T10:08:43+08:00｜通信ETF（515880）｜BUY 7,400份｜生命周期：Trial｜成交价0.671元、成交本金4,965.40元；关联09:56:49正式Trial决策；费用待确认；仅登记真实成交与执行事实，判断质量、Trial验证结果及后续生命周期结论留待盘后/后续节点形成。
+<!-- AUTO_CASE_INTAKE_END -->'''
+s = s[:a] + case_block + s[b + len(case_end):]
+exp.write_text(s, encoding='utf-8')
+
+arc = ROOT / 'ETF市场行情档案_2026.md'
+s = arc.read_text(encoding='utf-8')
+s = s.replace('> 版本：ETF波段交易系统 V2.2.16  ', '> 版本：ETF波段交易系统 V2.2.18  ', 1)
+s = s.replace('《ETF与市场监测数据接口使用规范 V1.7》', '《ETF与市场监测数据接口使用规范 V1.10》')
+s = s.replace('> 更新时点：2026-08-26（已纳入8月24—26云端行情/账户增量、8月25两笔ETF卖出与费用闭环，并同步当前腾讯/同花顺/东方财富/Yahoo对象级主备体系）  ', '> 更新时点：2026-08-27（已纳入8月24—27云端行情/账户增量、8月25两笔ETF卖出与费用闭环、8月27通信ETF（515880）Trial真实买入成交，并同步V1.10当前对象级provider体系）  ', 1)
+old_provider = '|纳斯达克100指数（NDX）、费城半导体指数（SOX）、日经225指数（N225）、韩国综合指数（KOSPI）、台湾加权指数（TWII）|Yahoo Chart API|仅使用各对象已验证直连/明确代理策略|\n|恒生科技指数（HSTECH）|东方财富 `124.HSTECH`|Yahoo `HSTECH.HK` → 同花顺 `HS2083` → 恒生科技ETF（513180）代理|'
+new_provider = '|纳斯达克100指数（NDX）、费城半导体指数（SOX）|Yahoo Chart API|按对象配置的已验证直接备源/明确代理|\n|日经225指数（N225）|东方财富 `push2delay:100.N225`|东方财富同家族另一endpoint → Yahoo延迟交叉核对 → 日经ETF（513520）代理；同家族endpoint不计独立第二provider|\n|韩国综合指数（KOSPI）|Naver Finance `KOSPI`|东方财富 `push2delay:100.KS11` → 东方财富同家族另一endpoint → Yahoo延迟交叉核对|\n|台湾加权指数（TWII）|台湾证券交易所MIS `tse_t00.tw`|东方财富 `push2delay:100.TWII` → 东方财富同家族另一endpoint → Yahoo延迟交叉核对|\n|恒生科技指数（HSTECH）|以 `config/market/provider_priority.json` 当前对象级顺序为准|同花顺 `HS2083`、Yahoo `HSTECH.HK`、东方财富 `124.HSTECH`、恒生科技ETF（513180）代理按当前运行选择与质量门禁使用|'
+if old_provider in s:
+    s = s.replace(old_provider, new_provider, 1)
+trade_start, trade_end = '<!-- AUTO_TRADE_EVENTS_START -->', '<!-- AUTO_TRADE_EVENTS_END -->'
+a, b = s.index(trade_start), s.index(trade_end, s.index(trade_start))
+trade_block = '''<!-- AUTO_TRADE_EVENTS_START -->
+20260825_100518｜- 2026-08-25T10:02:57+08:00：恒生科技ETF（513180）SELL 8,200份，成交价0.574元，成交本金4,706.80元；来源：BROKER_TRADE_SCREENSHOT_USER_CONFIRMED。
+20260825_112516｜- 2026-08-25T11:22:34+08:00：半导体设备ETF（561980）SELL 13,000份，成交价0.663元，成交本金8,619.00元；来源：BROKER_TRADE_SCREENSHOT_USER_CONFIRMED。
+20260827_100843_515880_buy｜- 2026-08-27T10:08:43+08:00：通信ETF（515880）BUY 7,400份，成交价0.671元，成交本金4,965.40元；交易费用待确认；来源：BROKER_TRADE_SCREENSHOT_20260827_100843_USER_CONFIRMED。
+<!-- AUTO_TRADE_EVENTS_END -->'''
+s = s[:a] + trade_block + s[b + len(trade_end):]
+arc.write_text(s, encoding='utf-8')
+
+# Make state-sync replay self-healing for the archive and CASE intake blocks.
+p = ROOT / 'scripts/process_state_sync_request.py'
+s = p.read_text(encoding='utf-8')
+old_writes = '''            ARCHIVE.write_text(append_managed_line(ARCHIVE.read_text(encoding="utf-8"), TRADE_START, TRADE_END, f"- {event['confirmed_at_beijing']}：{event.get('name')}（{event.get('code')}）{event.get('side')} {event.get('quantity')}份/股，成交价{event.get('price')}，金额{event.get('amount')}；来源：{event.get('source')}。"), encoding="utf-8")
+            EXPERIENCE.write_text(append_managed_line(EXPERIENCE.read_text(encoding="utf-8"), CASE_START, CASE_END, f"- 待复盘CASE｜{event['confirmed_at_beijing']}｜{event.get('name')}（{event.get('code')}）｜{event.get('side')} {event.get('quantity')}份/股｜生命周期：{event.get('lifecycle') or '待确认'}｜仅登记真实成交，复盘结论留待盘后形成。"), encoding="utf-8")
+            trade_event_recorded = True
+        account["formal_action"] ='''
+new_writes = '''            trade_event_recorded = True
+        # Always reconcile event-backed human-readable records, including idempotent replay.
+        # This repairs a missing archive/CASE line without creating a second trade event.
+        archive_line = f"- {event['confirmed_at_beijing']}：{event.get('name')}（{event.get('code')}）{event.get('side')} {int(event.get('quantity') or 0):,}份/股，成交价{event.get('price')}，成交本金{float(event.get('amount') or 0):,.2f}元；来源：{event.get('source')}。"
+        case_line = f"- 待复盘CASE｜{event['confirmed_at_beijing']}｜{event.get('name')}（{event.get('code')}）｜{event.get('side')} {int(event.get('quantity') or 0):,}份/股｜生命周期：{event.get('lifecycle') or '待确认'}｜仅登记真实成交，复盘结论留待盘后形成。"
+        ARCHIVE.write_text(upsert_managed_line(ARCHIVE.read_text(encoding="utf-8"), TRADE_START, TRADE_END, event_id, archive_line), encoding="utf-8")
+        EXPERIENCE.write_text(upsert_managed_line(EXPERIENCE.read_text(encoding="utf-8"), CASE_START, CASE_END, event_id, case_line), encoding="utf-8")
+        account["formal_action"] ='''
+if old_writes not in s:
+    raise SystemExit('state sync append-only trade writes marker not found')
+s = s.replace(old_writes, new_writes, 1)
+p.write_text(s, encoding='utf-8')
+
+# Explicit consistency check for machine trade event -> human-readable formal records.
+check = ROOT / 'scripts/check_trade_event_formal_sync.py'
+check.write_text('''from pathlib import Path\nimport json, sys\nROOT=Path(__file__).resolve().parents[1]\narc=(ROOT/'ETF市场行情档案_2026.md').read_text(encoding='utf-8')\nexp=(ROOT/'ETF交易复盘与经验库_2026.md').read_text(encoding='utf-8')\nerrors=[]\ncount=0\nfor path in sorted((ROOT/'events/trades').glob('*.json')):\n    e=json.loads(path.read_text(encoding='utf-8'))\n    if str(e.get('execution_status','')).upper()!='EXECUTED': continue\n    eid=str(e.get('event_id') or '')\n    if not eid: continue\n    count += 1\n    if f'{eid}｜' not in arc: errors.append(f'{eid}: missing keyed archive trade fact')\n    if f'{eid}｜' not in exp: errors.append(f'{eid}: missing keyed experience CASE intake')\nif (ROOT/'events/trades/20260827_100843_515880_buy.json').exists() and 'TRADE_EVENT:20260827_100843_515880_buy' not in exp:\n    errors.append('20260827_100843_515880_buy: missing human-readable transaction-index row')\nif errors:\n    print(json.dumps({'status':'FAIL','errors':errors},ensure_ascii=False)); sys.exit(1)\nprint(json.dumps({'status':'PASS','executed_trade_events_checked':count},ensure_ascii=False))\n''', encoding='utf-8')
+
+wf = ROOT / '.github/workflows/system-consistency.yml'
+s = wf.read_text(encoding='utf-8')
+old = '''          python scripts/check_market_state_consistency.py
+          rc3=$?
+          if [ "$rc1" -ne 0 ] || [ "$rc2" -ne 0 ] || [ "$rc3" -ne 0 ]; then
+            exit 1
+          fi
+'''
+new = '''          python scripts/check_market_state_consistency.py
+          rc3=$?
+          python scripts/check_trade_event_formal_sync.py
+          rc4=$?
+          if [ "$rc1" -ne 0 ] || [ "$rc2" -ne 0 ] || [ "$rc3" -ne 0 ] || [ "$rc4" -ne 0 ]; then
+            exit 1
+          fi
+'''
+if old not in s:
+    raise SystemExit('system consistency validation marker not found')
+s = s.replace(old, new, 1)
+wf.write_text(s, encoding='utf-8')
+
+print(json.dumps({'ok': True, 'repair': '515880 Trial full formal sync'} , ensure_ascii=False))
