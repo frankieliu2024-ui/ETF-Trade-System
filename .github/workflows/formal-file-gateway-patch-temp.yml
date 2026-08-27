@@ -1,0 +1,36 @@
+name: formal-file-gateway-patch-temp
+on:
+  push:
+    branches:
+      - maintenance/formal-file-mutation-gateway-20260827
+    paths:
+      - "scripts/apply_formal_gateway_patch_temp.py"
+permissions:
+  contents: write
+concurrency:
+  group: formal-file-gateway-patch-temp
+  cancel-in-progress: false
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Apply deterministic source transformation
+        run: python scripts/apply_formal_gateway_patch_temp.py
+      - name: Compile transformed modules
+        run: python -m py_compile scripts/formal_file_mutation_gateway.py scripts/process_state_sync_request.py scripts/sync_formal_files.py scripts/apply_trade_fact_correction.py
+      - name: Commit transformed stable sources
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/process_state_sync_request.py scripts/sync_formal_files.py scripts/apply_trade_fact_correction.py
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "ops: route formal fact writes through canonical gateway"
+          git push origin HEAD:maintenance/formal-file-mutation-gateway-20260827
