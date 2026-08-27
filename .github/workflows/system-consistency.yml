@@ -137,7 +137,9 @@ jobs:
           rc1=$?
           python scripts/check_research_integration.py
           rc2=$?
-          if [ "$rc1" -ne 0 ] || [ "$rc2" -ne 0 ]; then
+          python scripts/check_market_state_consistency.py
+          rc3=$?
+          if [ "$rc1" -ne 0 ] || [ "$rc2" -ne 0 ] || [ "$rc3" -ne 0 ]; then
             exit 1
           fi
       - name: Reconcile ETF ledger and prepare maintenance diagnostics
