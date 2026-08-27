@@ -6,9 +6,9 @@ on:
     # UTC / Beijing time.
     # 23:00-23:50 UTC previous day = Beijing 07:00-07:50.
     - cron: "*/10 23 * * 0-4"
-    # 00:00-07:50 UTC = Beijing 08:00-15:50, covering Asia sessions.
+    # 00:00-07:50 UTC = Beijing 08:00-15:50, covering Asia-Pacific sessions.
     - cron: "*/10 0-7 * * 1-5"
-    # 08:00-08:30 UTC = Beijing 16:00-16:30, covering Hong Kong close summary.
+    # 08:00-08:30 UTC = Beijing 16:00-16:30, covering APAC close after Hong Kong.
     - cron: "0,10,20,30 8 * * 1-5"
 
 permissions:
@@ -48,23 +48,19 @@ jobs:
         run: |
           python scripts/check_system_consistency.py
           git checkout -- data/state/system_consistency.json || true
-      - name: Preserve previous Asia pulse for sudden-move comparison
+      - name: Preserve previous APAC pulse for sudden-move comparison
         run: |
           [ -f data/state/overseas_context.json ] && cp data/state/overseas_context.json /tmp/overseas_context_prev.json || true
-      - name: Refresh formal overseas and Asia index context
+      - name: Refresh formal overseas and Asia-Pacific index context
         run: python scripts/build_overseas_context.py
       - name: Refresh US extended-hours context
         run: python scripts/build_us_extended_hours_context.py
-      - name: Send aggregated Japan-Korea-Taiwan open/close summary when due
-        id: asia_summary_notify
+      - name: Send value-driven APAC opening signal or fixed close summary when due
+        id: apac_summary_notify
         continue-on-error: true
-        run: python scripts/send_regional_session_summary.py --market asia
-      - name: Send Hong Kong open/close summary when due
-        id: hk_summary_notify
-        continue-on-error: true
-        run: python scripts/send_regional_session_summary.py --market hk
-      - name: Send Asia and Hong Kong extreme/sudden move alert when due
-        id: asia_shock_notify
+        run: python scripts/send_regional_session_summary.py --market apac
+      - name: Send APAC extreme/sudden move alert when due
+        id: apac_shock_notify
         continue-on-error: true
         env:
           PREVIOUS_CONTEXT_PATH: /tmp/overseas_context_prev.json
@@ -80,7 +76,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Persist only files owned by the overseas pulse plus unified notification state.
           git add data/state/overseas_context.json data/state/us_extended_hours_context.json data/state/query_context.json data/state/overseas_runtime_health.json data/state/notification_center.json
           if git diff --cached --quiet; then
             exit 0
@@ -88,8 +83,8 @@ jobs:
           git commit -m "data: refresh overseas pulse and notifications"
           git pull --rebase origin main
           git push origin HEAD:main
-      - name: Surface Asia notification delivery failure without blocking market data
-        if: ${{ steps.asia_summary_notify.outcome == 'failure' || steps.hk_summary_notify.outcome == 'failure' || steps.asia_shock_notify.outcome == 'failure' }}
+      - name: Surface APAC notification delivery failure without blocking market data
+        if: ${{ steps.apac_summary_notify.outcome == 'failure' || steps.apac_shock_notify.outcome == 'failure' }}
         run: |
-          echo "Asia/Hong Kong market notification failed; overseas market-data refresh remains valid."
+          echo "APAC market notification failed; overseas market-data refresh remains valid."
           exit 1
