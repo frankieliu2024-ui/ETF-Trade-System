@@ -15,6 +15,7 @@ SUPPORTED_WORKFLOWS = {
     "ETF system consistency",
     "ETF runtime self-healing watchdog",
     "Overseas pre-open pulse",
+    "US extended-hours pulse",
 }
 
 # Automatic rollback is deliberately limited to maintenance infrastructure.
@@ -40,9 +41,13 @@ FORBIDDEN_PREFIXES = (
     "data/market/",
 )
 
+# These failures normally mean the workflow obtained facts successfully but did
+# not persist them because Git/GitHub state moved concurrently. Retry once before
+# escalating; an isolated persistence failure is not itself a user-facing system blockage.
 TRANSIENT_STEP_HINTS = (
     "checkout",
     "persist",
+    "commit",
     "push",
     "rebase",
     "setup-python",
