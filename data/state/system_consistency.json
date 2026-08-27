@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-27T03:47:39Z",
-  "generated_at_beijing": "2026-08-27T11:47:39+08:00",
+  "generated_at": "2026-08-27T04:04:42Z",
+  "generated_at_beijing": "2026-08-27T12:04:42+08:00",
   "repository": {
-    "head_sha": "95434fdb97c788a0178ec40e47916402745cfdc6",
-    "github_sha": "95434fdb97c788a0178ec40e47916402745cfdc6",
-    "github_run_id": "33037403121",
+    "head_sha": "55a7fa141b3720ad5884fd66128ef4293dfe9bf8",
+    "github_sha": "55a7fa141b3720ad5884fd66128ef4293dfe9bf8",
+    "github_run_id": "33038279080",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "95434fdb97c788a0178ec40e47916402745cfdc6",
-    "workflow_sha": "95434fdb97c788a0178ec40e47916402745cfdc6",
+    "checked_commit": "55a7fa141b3720ad5884fd66128ef4293dfe9bf8",
+    "workflow_sha": "55a7fa141b3720ad5884fd66128ef4293dfe9bf8",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
@@ -20,7 +20,7 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.013s\n\nOK\n"
+      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.021s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -235,12 +235,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=95434fdb97c788a0178ec40e47916402745cfdc6"
+      "detail": "HEAD=55a7fa141b3720ad5884fd66128ef4293dfe9bf8"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=95434fdb97c788a0178ec40e47916402745cfdc6 GITHUB_SHA=95434fdb97c788a0178ec40e47916402745cfdc6"
+      "detail": "HEAD=55a7fa141b3720ad5884fd66128ef4293dfe9bf8 GITHUB_SHA=55a7fa141b3720ad5884fd66128ef4293dfe9bf8"
     },
     {
       "name": "git:critical_files_tracked",
@@ -670,7 +670,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=23:47 max_age_seconds=13660 limit=900"
+      "detail": "active=False phase=00:04 max_age_seconds=14683 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -785,12 +785,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=4971"
+      "detail": "declared=STALE expected=STALE age_seconds=5994"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=4971"
+      "detail": "declared=STALE expected=STALE age_seconds=5994"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -830,7 +830,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-27T03:47:38Z market=2026-08-27T10:24:47+08:00"
+      "detail": "context=2026-08-27T04:04:41Z market=2026-08-27T10:24:47+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1391,6 +1391,146 @@
       "name": "mutation_family:A_SHARE_CORE_SNAPSHOT:.github/workflows/opening-auction-current-fallback.yml",
       "status": "PASS",
       "detail": "shared writer family uses concurrency token etf-market-snapshot-${{ github.ref }}"
+    },
+    {
+      "name": "state_contract:data/state/CURRENT.json:registered",
+      "status": "PASS",
+      "detail": "class=CANONICAL_MARKET_STATE builder=scripts/cloud_runner_snapshot.py"
+    },
+    {
+      "name": "state_contract:data/state/CURRENT.json:builder:.github/workflows/market-snapshot.yml",
+      "status": "PASS",
+      "detail": "registered writer invokes canonical builder scripts/cloud_runner_snapshot.py"
+    },
+    {
+      "name": "state_contract:data/state/CURRENT.json:staging:.github/workflows/market-snapshot.yml",
+      "status": "PASS",
+      "detail": "registered writer persists data/state/CURRENT.json"
+    },
+    {
+      "name": "state_contract:data/state/CURRENT.json:builder:.github/workflows/opening-auction-current-fallback.yml",
+      "status": "PASS",
+      "detail": "registered writer invokes canonical builder scripts/cloud_runner_snapshot.py"
+    },
+    {
+      "name": "state_contract:data/state/CURRENT.json:staging:.github/workflows/opening-auction-current-fallback.yml",
+      "status": "PASS",
+      "detail": "registered writer persists data/state/CURRENT.json"
+    },
+    {
+      "name": "state_contract:data/state/CURRENT.json:bounded_repair:.github/workflows/self-healing-watchdog.yml:wired",
+      "status": "PASS",
+      "detail": "bounded repair writer uses scripts/runtime_self_heal.py and persists data/state/CURRENT.json"
+    },
+    {
+      "name": "state_contract:data/state/CURRENT.json:bounded_repair:.github/workflows/self-healing-watchdog.yml:narrow",
+      "status": "PASS",
+      "detail": "bounded CURRENT repair mutates rules_version only"
+    },
+    {
+      "name": "state_contract:data/state/runtime_health.json:registered",
+      "status": "PASS",
+      "detail": "class=CANONICAL_A_SHARE_RUNTIME_HEALTH builder=scripts/cloud_runner_snapshot.py"
+    },
+    {
+      "name": "state_contract:data/state/runtime_health.json:builder:.github/workflows/market-snapshot.yml",
+      "status": "PASS",
+      "detail": "registered writer invokes canonical builder scripts/cloud_runner_snapshot.py"
+    },
+    {
+      "name": "state_contract:data/state/runtime_health.json:staging:.github/workflows/market-snapshot.yml",
+      "status": "PASS",
+      "detail": "registered writer persists data/state/runtime_health.json"
+    },
+    {
+      "name": "state_contract:data/state/runtime_health.json:builder:.github/workflows/opening-auction-current-fallback.yml",
+      "status": "PASS",
+      "detail": "registered writer invokes canonical builder scripts/cloud_runner_snapshot.py"
+    },
+    {
+      "name": "state_contract:data/state/runtime_health.json:staging:.github/workflows/opening-auction-current-fallback.yml",
+      "status": "PASS",
+      "detail": "registered writer persists data/state/runtime_health.json"
+    },
+    {
+      "name": "state_contract:data/state/decision_context.json:registered",
+      "status": "PASS",
+      "detail": "class=DERIVED_REBUILDABLE_STATE builder=scripts/build_state_context.py"
+    },
+    {
+      "name": "state_contract:data/state/decision_context.json:builder:.github/workflows/market-snapshot.yml",
+      "status": "PASS",
+      "detail": "registered writer invokes canonical builder scripts/build_state_context.py"
+    },
+    {
+      "name": "state_contract:data/state/decision_context.json:staging:.github/workflows/market-snapshot.yml",
+      "status": "PASS",
+      "detail": "registered writer persists data/state/decision_context.json"
+    },
+    {
+      "name": "state_contract:data/state/decision_context.json:builder:.github/workflows/opening-auction-current-fallback.yml",
+      "status": "PASS",
+      "detail": "registered writer invokes canonical builder scripts/build_state_context.py"
+    },
+    {
+      "name": "state_contract:data/state/decision_context.json:staging:.github/workflows/opening-auction-current-fallback.yml",
+      "status": "PASS",
+      "detail": "registered writer persists data/state/decision_context.json"
+    },
+    {
+      "name": "state_contract:data/state/decision_context.json:builder:.github/workflows/self-healing-watchdog.yml",
+      "status": "PASS",
+      "detail": "registered writer invokes canonical builder scripts/build_state_context.py"
+    },
+    {
+      "name": "state_contract:data/state/decision_context.json:staging:.github/workflows/self-healing-watchdog.yml",
+      "status": "PASS",
+      "detail": "registered writer persists data/state/decision_context.json"
+    },
+    {
+      "name": "state_contract:data/state/query_context.json:registered",
+      "status": "PASS",
+      "detail": "class=DERIVED_REBUILDABLE_STATE builder=scripts/build_query_context.py"
+    },
+    {
+      "name": "state_contract:data/state/query_context.json:builder:.github/workflows/market-snapshot.yml",
+      "status": "PASS",
+      "detail": "registered writer invokes canonical builder scripts/build_query_context.py"
+    },
+    {
+      "name": "state_contract:data/state/query_context.json:staging:.github/workflows/market-snapshot.yml",
+      "status": "PASS",
+      "detail": "registered writer persists data/state/query_context.json"
+    },
+    {
+      "name": "state_contract:data/state/query_context.json:builder:.github/workflows/opening-auction-current-fallback.yml",
+      "status": "PASS",
+      "detail": "registered writer invokes canonical builder scripts/build_query_context.py"
+    },
+    {
+      "name": "state_contract:data/state/query_context.json:staging:.github/workflows/opening-auction-current-fallback.yml",
+      "status": "PASS",
+      "detail": "registered writer persists data/state/query_context.json"
+    },
+    {
+      "name": "state_contract:data/state/query_context.json:builder:.github/workflows/overseas-preopen-pulse.yml",
+      "status": "PASS",
+      "detail": "registered writer invokes canonical builder scripts/build_query_context.py"
+    },
+    {
+      "name": "state_contract:data/state/query_context.json:staging:.github/workflows/overseas-preopen-pulse.yml",
+      "status": "PASS",
+      "detail": "registered writer persists data/state/query_context.json"
+    },
+    {
+      "name": "state_contract:data/state/query_context.json:builder:.github/workflows/self-healing-watchdog.yml",
+      "status": "PASS",
+      "detail": "registered writer invokes canonical builder scripts/build_query_context.py"
+    },
+    {
+      "name": "state_contract:data/state/query_context.json:staging:.github/workflows/self-healing-watchdog.yml",
+      "status": "PASS",
+      "detail": "registered writer persists data/state/query_context.json"
     },
     {
       "name": "research:decision_context_consumes_evidence",
