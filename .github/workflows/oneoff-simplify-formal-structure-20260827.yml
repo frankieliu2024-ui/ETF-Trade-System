@@ -1,0 +1,83 @@
+name: One-off simplify formal structure 20260827
+on:
+  push:
+    paths:
+      - ".github/workflows/oneoff-simplify-formal-structure-20260827.yml"
+permissions:
+  contents: write
+concurrency:
+  group: production-main-writer
+  cancel-in-progress: false
+jobs:
+  simplify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Synchronize latest main
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+      - name: Simplify semantic placement runtime
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          # 1) Low-level gateway: support one explicit semantic insertion anchor.
+          p=Path('scripts/formal_file_mutation_gateway.py')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('''    insert_after_heading: bool | None = None,\n) -> str:\n''','''    insert_after_heading: bool | None = None,\n    before_heading: str | None = None,\n) -> str:\n''',1)
+          old='''    if after_heading:\n        lines = text.splitlines()\n        pos = 1 if lines and lines[0].startswith("#") else 0\n        lines[pos:pos] = ["", managed, ""]\n        return "\\n".join(lines).rstrip() + "\\n"\n    return text.rstrip() + "\\n\\n" + managed + "\\n"\n'''
+          new='''    if after_heading:\n        lines = text.splitlines()\n        pos = 1 if lines and lines[0].startswith("#") else 0\n        lines[pos:pos] = ["", managed, ""]\n        return "\\n".join(lines).rstrip() + "\\n"\n    if before_heading:\n        if before_heading not in text:\n            raise ValueError(f"semantic anchor missing: {before_heading}")\n        pos = text.index(before_heading)\n        return text[:pos].rstrip() + "\\n\\n" + managed + "\\n\\n" + text[pos:].lstrip()\n    return text.rstrip() + "\\n\\n" + managed + "\\n"\n'''
+          if old not in s: raise RuntimeError('replace_managed_block anchor not found')
+          s=s.replace(old,new,1)
+          s=s.replace('''def upsert_managed_line(text: str, start: str, end: str, key: str, line: str) -> str:\n''','''def upsert_managed_line(text: str, start: str, end: str, key: str, line: str, *, before_heading: str | None = None) -> str:\n''',1)
+          old='''    return text.rstrip() + f"\\n\\n{start}\\n{tagged}\\n{end}\\n"\n'''
+          new='''    managed = f"{start}\\n{tagged}\\n{end}"\n    if before_heading:\n        if before_heading not in text:\n            raise ValueError(f"semantic anchor missing: {before_heading}")\n        pos = text.index(before_heading)\n        return text[:pos].rstrip() + "\\n\\n" + managed + "\\n\\n" + text[pos:].lstrip()\n    return text.rstrip() + "\\n\\n" + managed + "\\n"\n'''
+          if old not in s: raise RuntimeError('upsert fallback anchor not found')
+          s=s.replace(old,new,1)
+          s=s.replace('''def upsert_formal_line(root: Path, filename: str, start: str, end: str, key: str, line: str) -> bool:\n    return mutate_formal_text(root, filename, lambda text: upsert_managed_line(text, start, end, key, line))\n''','''def upsert_formal_line(root: Path, filename: str, start: str, end: str, key: str, line: str, *, before_heading: str | None = None) -> bool:\n    return mutate_formal_text(root, filename, lambda text: upsert_managed_line(text, start, end, key, line, before_heading=before_heading))\n''',1)
+          p.write_text(s,encoding='utf-8')
+
+          # 2) Writers declare the semantic anchor once, at creation time.
+          p=Path('scripts/process_state_sync_request.py')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('upsert_formal_line(ROOT, ARCHIVE.name, REVIEW_ARCHIVE_START, REVIEW_ARCHIVE_END, market_date, archive_entry)', 'upsert_formal_line(ROOT, ARCHIVE.name, REVIEW_ARCHIVE_START, REVIEW_ARCHIVE_END, market_date, archive_entry, before_heading="## 6. 历史Excel与专项数据来源")')
+          s=s.replace('upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry)', 'upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry, before_heading="## 3. 历史研究与专项回测")')
+          s=s.replace('upsert_formal_line(ROOT, ARCHIVE.name, TRADE_START, TRADE_END, event_id, archive_line)', 'upsert_formal_line(ROOT, ARCHIVE.name, TRADE_START, TRADE_END, event_id, archive_line, before_heading="## 6. 历史Excel与专项数据来源")')
+          s=s.replace('upsert_formal_line(ROOT, EXPERIENCE.name, CASE_START, CASE_END, event_id, case_line)', 'upsert_formal_line(ROOT, EXPERIENCE.name, CASE_START, CASE_END, event_id, case_line, before_heading="## 3. 历史研究与专项回测")')
+          p.write_text(s,encoding='utf-8')
+
+          # 3) Account sync: place archive block directly; remove unconditional whole-file normalizer.
+          p=Path('scripts/sync_formal_files.py')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('\nfrom formal_document_structure import normalize_files\n','\n')
+          s=s.replace('replace_block(existing_archive, START_ARCHIVE, END_ARCHIVE, build_archive_fact_block(account))', 'replace_block(existing_archive, START_ARCHIVE, END_ARCHIVE, build_archive_fact_block(account), before_heading="## 6. 历史Excel与专项数据来源")')
+          s=s.replace('''    # Canonical semantic placement is part of the same fact-maintenance transaction:\n    # no formal fact may remain merely appended at the document tail.\n    structure_sync = normalize_files(root)\n''','')
+          s=s.replace('''        "current_account_reference_changed": current_changed,\n        "formal_structure_changed": structure_sync.get("changed", []),\n''','''        "current_account_reference_changed": current_changed,\n''')
+          p.write_text(s,encoding='utf-8')
+
+          # 4) Permanent structure module becomes validation-only. Historical repair logic was one-off.
+          Path('scripts/formal_document_structure.py').write_text('''from __future__ import annotations\n\n"""Lightweight semantic validator for human-readable formal fact files.\n\nWriters place managed blocks at their canonical anchors. This module only guards\nagainst regression; it does not rewrite files or repair history during runtime.\n"""\n\nimport re\nfrom pathlib import Path\n\nEXPERIENCE = "ETF交易复盘与经验库_2026.md"\nARCHIVE = "ETF市场行情档案_2026.md"\nDASHBOARD = "ETF当前状态_DASHBOARD.md"\n\n\ndef _between(text: str, start: str, end: str) -> str:\n    if start not in text or end not in text:\n        return ""\n    a = text.index(start)\n    b = text.index(end, a)\n    return text[a:b]\n\n\ndef _block_inside(text: str, section: str, start: str, end: str) -> bool:\n    return start not in text or (start in section and end in section)\n\n\ndef validate_files(root: Path) -> list[str]:\n    errors: list[str] = []\n    exp = (root / EXPERIENCE).read_text(encoding="utf-8")\n    arc = (root / ARCHIVE).read_text(encoding="utf-8")\n    dash = (root / DASHBOARD).read_text(encoding="utf-8")\n\n    exp_top = re.findall(r"^## ([0-6])\\. ", exp, re.MULTILINE)\n    if exp_top != list("0123456"):\n        errors.append(f"experience_top_level_order={exp_top}")\n\n    ch2 = _between(exp, "## 2. 真实交易CASE", "## 3. 历史研究与专项回测")\n    nums = re.findall(r"^### (2\\.\\d+)\\b", ch2, re.MULTILINE)\n    if len(nums) != len(set(nums)):\n        errors.append("experience_duplicate_chapter2_numbers")\n    cases = re.findall(r"^### (2\\.\\d+) (CASE-(\\d{8})-(\\d{2}))[:：]", ch2, re.MULTILINE)\n    case_ids = [x[1] for x in cases]\n    if case_ids != sorted(case_ids):\n        errors.append(f"experience_case_order={case_ids}")\n    expected = [f"2.{i}" for i in range(3, 3 + len(cases))]\n    if [x[0] for x in cases] != expected:\n        errors.append("experience_case_section_numbers")\n    contrib = re.search(r"^### (2\\.\\d+) CASE系统贡献索引", ch2, re.MULTILINE)\n    if not contrib or contrib.group(1) != f"2.{3 + len(cases)}":\n        errors.append("experience_contribution_index")\n    for start, end, name in (("<!-- AUTO_CASE_INTAKE_START -->","<!-- AUTO_CASE_INTAKE_END -->","case_intake"),("<!-- AUTO_POST_CLOSE_REVIEW_CASES_START -->","<!-- AUTO_POST_CLOSE_REVIEW_CASES_END -->","post_close_cases")):\n        if not _block_inside(exp, ch2, start, end):\n            errors.append(f"experience_managed_block_outside_ch2={name}")\n\n    ch3 = _between(exp, "## 3. 历史研究与专项回测", "## 4. OBS观察")\n    all_research = re.findall(r"^### (2026-\\d{2}-\\d{2}[^\\n]*(?:专项|勾稽修正)[^\\n]*)", exp, re.MULTILINE)\n    in_ch3 = re.findall(r"^### (2026-\\d{2}-\\d{2}[^\\n]*(?:专项|勾稽修正)[^\\n]*)", ch3, re.MULTILINE)\n    if all_research != in_ch3:\n        errors.append("experience_research_sections_outside_ch3")\n\n    arc5 = _between(arc, "## 5. 历史行情、成交与账户快照", "## 6. 历史Excel与专项数据来源")\n    for start, end, name in (("<!-- AUTO_POST_CLOSE_REVIEW_FACTS_START -->","<!-- AUTO_POST_CLOSE_REVIEW_FACTS_END -->","post_close_facts"),("<!-- AUTO_TRADE_EVENTS_START -->","<!-- AUTO_TRADE_EVENTS_END -->","trade_events"),("<!-- AUTO_ACCOUNT_FACT_SYNC_START -->","<!-- AUTO_ACCOUNT_FACT_SYNC_END -->","account_facts")):\n        if not _block_inside(arc, arc5, start, end):\n            errors.append(f"archive_managed_block_outside_ch5={name}")\n\n    exp6 = exp[exp.index("## 6. 版本维护记录"):] if "## 6. 版本维护记录" in exp else ""\n    arc7 = arc[arc.index("## 7. 数据维护规则"):] if "## 7. 数据维护规则" in arc else ""\n    if "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->" in exp and "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->" not in exp6:\n        errors.append("experience_trade_corrections_outside_ch6")\n    if "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->" in arc and "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->" not in arc7:\n        errors.append("archive_trade_corrections_outside_ch7")\n    if "<!-- AUTO_STATE_SYNC_START -->" in dash and "## ETF策略风险口径" in dash and dash.index("<!-- AUTO_STATE_SYNC_START -->") > dash.index("## ETF策略风险口径"):\n        errors.append("dashboard_state_sync_not_front_loaded")\n    return errors\n''', encoding='utf-8')
+          PY
+      - name: Validate simplified path
+        run: |
+          python -m py_compile scripts/formal_file_mutation_gateway.py scripts/process_state_sync_request.py scripts/sync_formal_files.py scripts/formal_document_structure.py scripts/check_system_consistency.py
+          python - <<'PY'
+          from pathlib import Path
+          from scripts.formal_document_structure import validate_files
+          errors=validate_files(Path('.').resolve())
+          assert not errors, errors
+          print('semantic structure validation PASS')
+          PY
+      - name: Commit simplification
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/formal_file_mutation_gateway.py scripts/process_state_sync_request.py scripts/sync_formal_files.py scripts/formal_document_structure.py
+          git commit -m "maintenance: simplify formal structure enforcement"
+          git push origin HEAD:main
