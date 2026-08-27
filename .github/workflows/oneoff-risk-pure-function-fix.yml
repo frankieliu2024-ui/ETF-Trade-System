@@ -1,0 +1,50 @@
+name: One-off risk precedence pure-function fix
+
+on:
+  push:
+    paths:
+      - '.github/workflows/oneoff-risk-pure-function-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Separate pure risk parsing from formal precedence lookup
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/sync_formal_files.py')
+          text=p.read_text(encoding='utf-8')
+          start=text.index('def canonical_risk(equity: dict) -> float | None:\n')
+          end=text.index('\n\ndef preserve_decision_block', start)
+          replacement='''def latest_formal_risk() -> float | None:\n    review_dir = ROOT / "events" / "reviews"\n    candidates = []\n    for path in review_dir.glob("*.json") if review_dir.exists() else []:\n        try:\n            event = load_json(path)\n            review = event.get("review") or event.get("formal_review") or {}\n            fact = review.get("etf_strategy_known_net") or {}\n            risk = float(fact.get("etf_strategy_risk_rate_pct"))\n            float(fact.get("known_net_strategy_equity"))\n            stamp = str(event.get("updated_at_beijing") or event.get("account_updated_at") or "")\n        except (OSError, json.JSONDecodeError, TypeError, ValueError):\n            continue\n        if stamp:\n            candidates.append((stamp, risk))\n    return max(candidates, key=lambda x: x[0])[1] if candidates else None\n\n\ndef canonical_risk(equity: dict, formal_override: float | None = None) -> float | None:\n    # Pure parser remains independently testable; production callers explicitly\n    # supply the newest formal review value when one exists.\n    if formal_override is not None:\n        return float(formal_override)\n    summary = equity.get("summary") or {}\n    for key in ("known_net_current_strategy_return_pct", "current_strategy_return_pct_gross"):\n        try:\n            return float(summary[key])\n        except (KeyError, TypeError, ValueError):\n            continue\n    return None\n'''
+          text=text[:start]+replacement+text[end:]
+          text=text.replace('    risk = canonical_risk(equity)\n','    risk = canonical_risk(equity, latest_formal_risk())\n',1)
+          p.write_text(text,encoding='utf-8')
+          PY
+          python -m py_compile scripts/sync_formal_files.py
+          python -m unittest discover -s tests -p 'test_market_*.py'
+          python -m unittest discover -s tests -p 'test_state_sync*.py'
+          python scripts/sync_formal_files.py
+          python scripts/build_e2e_status.py >/tmp/e2e.json
+          git diff --check
+      - name: Commit fix
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/sync_formal_files.py ETF当前状态_DASHBOARD.md data/state/e2e_status.json
+          git commit -m 'fix: keep risk parser pure while enforcing formal precedence'
+          git pull --rebase origin main
+          git push origin HEAD:main
