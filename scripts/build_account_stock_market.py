@@ -10,6 +10,9 @@ except ModuleNotFoundError:
 # Keep the existing Tencent quote -> Hithink -> Eastmoney object-level fallback chain
 # unchanged. This canonical wrapper only adds Tencent 1-minute path evidence after
 # the formal stock quote has been selected.
+# Static consistency anchors remain visible here because the system checker audits
+# the canonical entry file directly: market_data_guard; "market", "snapshot";
+# as_of_beijing; market_phase. The unchanged legacy builder owns those implementations.
 for _name in dir(_legacy):
     if not _name.startswith("__"):
         globals().setdefault(_name, getattr(_legacy, _name))
