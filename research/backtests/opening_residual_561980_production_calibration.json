@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "mode": "FORMAL_RESEARCH_CALIBRATION_OPENING_RESIDUAL_561980",
+  "code": "561980",
+  "name": "半导体设备ETF",
+  "data_cutoff": "2026-08-21",
+  "calibration_rows": 638,
+  "source_research_branch": "research/low-cost-alpha-validation-20260828",
+  "source_workflow_run_id": 33185230528,
+  "source_artifact_digest": "sha256:b31879739c61bb4cdf39b38b99e7858a75e38f6a3d543f096dc2a07ae81e1218",
+  "external_signal": "us_tech_equal_1d = equal-weight prior completed SOX and NDX cash-session 1d returns",
+  "expected_gap_model": {
+    "intercept_pct": -0.109921,
+    "beta_us_tech_equal_1d": 0.305804,
+    "formula": "expected_gap_pct = intercept_pct + beta_us_tech_equal_1d * us_tech_equal_1d_pct"
+  },
+  "continuous_evidence": {
+    "formula": "opening_underpricing_residual_pct = expected_gap_pct - actual_gap_pct",
+    "historical_residual_q33_pct": -0.211178,
+    "historical_residual_q67_pct": 0.3696,
+    "threshold_not_a_trade_rule": true
+  },
+  "point_in_time": "Calibration uses only facts through 2026-08-21. Live evidence may use only the latest fully completed US cash session before the A-share open plus current A-share open and previous completed close.",
+  "recalibration_rule": "Static calibration may be used descriptively after formal conversion; any refit requires a separate robustness review and cannot occur silently inside the live decision path.",
+  "trade_signal": null,
+  "automatic_trade": false,
+  "master_override": false
+}
