@@ -141,7 +141,36 @@ def _future_time_error(event: dict) -> str:
     return ""
 
 
+def _refine_reversal_user_title(event: dict) -> dict:
+    """Keep the event family stable while making the user-facing path semantics precise.
+
+    REVERSAL is an internal notification family for a sufficiently large excursion
+    followed by a material giveback/recovery. If price is still on the same side of
+    the previous close, the visible title should say giveback/recovery rather than
+    imply that the day direction has already crossed through the previous close.
+    """
+    ctx = event.get("confirmation_context") or {}
+    if str(ctx.get("event_category") or "") != "REVERSAL":
+        return event
+    title = str(event.get("title") or "")
+    if "日内方向明显反转" not in title:
+        return event
+    day = number(ctx.get("day_change_pct"))
+    direction = str(ctx.get("direction") or "")
+    replacement = ""
+    if direction == "DOWN" and day is not None and day >= 0:
+        replacement = "冲高明显回吐"
+    elif direction == "UP" and day is not None and day <= 0:
+        replacement = "下探明显修复"
+    if not replacement:
+        return event
+    event = dict(event)
+    event["title"] = title.replace("日内方向明显反转", replacement)
+    return event
+
+
 def _normalize_user_title(event: dict) -> dict:
+    event = _refine_reversal_user_title(event)
     title = str(event.get("title") or "")
     if title.startswith("【异动提醒】"):
         event = dict(event)
