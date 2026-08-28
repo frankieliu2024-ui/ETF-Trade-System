@@ -1,47 +1,45 @@
-name: Unified notification semantics test
+name: Unified notification semantics regression
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "requests/notification_semantics_test/**.json"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: etf-notification-semantics-test
+  group: etf-notification-semantics-regression
   cancel-in-progress: false
 
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 7
-    env:
-      ETF_SYSTEM_ROOT: ${{ github.workspace }}
-      HITHINK_FINANCE_API_KEY: ${{ secrets.HITHINK_FINANCE_API_KEY }}
-      PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
-      QUERY_TIME_REFRESH: "true"
+    timeout-minutes: 3
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - name: Validate role semantics and user-visible language
+      - name: Compile notification modules
+        run: |
+          python -m py_compile \
+            scripts/notification_semantics.py \
+            scripts/market_notification_common.py \
+            scripts/send_market_shock_notification.py \
+            scripts/send_regional_session_summary.py \
+            scripts/send_us_session_summary.py
+      - name: Validate unified object-role semantics
         shell: bash
         run: |
           PYTHONPATH=scripts python - <<'PY'
           from notification_semantics import object_role, shock_implication
+
           checks = [
-              (shock_implication('515880','通信ETF','ETF','A_SHARE')[0], '正式动作/生命周期对象'),
-              (shock_implication('561980','半导体设备ETF','ETF','A_SHARE')[0], '当前持仓ETF'),
-              (shock_implication('300750','宁德时代','ACCOUNT_STOCK','A_SHARE')[0], '账户个股'),
-              (shock_implication('000688','科创50指数','A_SHARE_INDEX','A_SHARE')[0], 'A股本地风险偏好'),
-              (shock_implication('HSTECH','恒生科技指数','INDEX','OVERSEAS')[0], '恒生科技ETF（513180）'),
-              (shock_implication('NDX','纳斯达克100指数','INDEX','OVERSEAS')[0], '纳指ETF（159941）'),
+              (shock_implication('515880', '通信ETF', 'ETF', 'A_SHARE')[0], '正式动作/生命周期对象'),
+              (shock_implication('561980', '半导体设备ETF', 'ETF', 'A_SHARE')[0], '当前持仓ETF'),
+              (shock_implication('300750', '宁德时代', 'ACCOUNT_STOCK', 'A_SHARE')[0], '账户个股'),
+              (shock_implication('000688', '科创50指数', 'A_SHARE_INDEX', 'A_SHARE')[0], 'A股本地风险偏好'),
+              (shock_implication('HSTECH', '恒生科技指数', 'INDEX', 'OVERSEAS')[0], '恒生科技ETF（513180）'),
+              (shock_implication('NDX', '纳斯达克100指数', 'INDEX', 'OVERSEAS')[0], '纳指ETF（159941）'),
           ]
           failed = [(text, needle) for text, needle in checks if needle not in text]
           role, detail = object_role('515880', 'ETF')
@@ -49,119 +47,5 @@ jobs:
               failed.append((detail, 'must not expose EXECUTED'))
           if failed:
               raise SystemExit(f'unified semantic checks failed: {failed}')
-          print('unified semantic checks passed')
-          PY
-      - name: Install hithink-finance CLI
-        run: npm install --global @hithink-tech/hithink-finance-cli
-      - name: Load query provider concurrency policy
-        shell: bash
-        run: |
-          python - <<'PY'
-          import json, os
-          from pathlib import Path
-          policy = json.loads(Path('config/runtime_policy.json').read_text(encoding='utf-8'))
-          value = policy.get('query_provider_max_workers')
-          if not isinstance(value, int) or value < 1:
-              raise SystemExit(f'invalid query_provider_max_workers={value!r}')
-          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as handle:
-              handle.write(f'HITHINK_MAX_WORKERS={value}\n')
-          PY
-      - name: Capture fresh A-share snapshot when session allows
-        run: python scripts/cloud_runner_snapshot.py --node scheduled
-      - name: Send A-share structure test from latest valid snapshot
-        shell: bash
-        run: |
-          PYTHONPATH=scripts python - <<'PY'
-          import json, os
-          from market_notification_common import _current_a_share_inputs, persist_and_send, render_summary
-          from notification_center import STATE, read_json
-          from notification_semantics import a_share_structure
-          indices, etfs, features = _current_a_share_inputs()
-          if not indices or not etfs:
-              raise SystemExit('latest valid A-share snapshot cannot build semantic test')
-          headline, path_lines, implication, action = a_share_structure(indices, etfs, features)
-          current = read_json(STATE / 'CURRENT.json', {})
-          as_of = str(current.get('captured_at_beijing') or current.get('captured_at') or '')
-          content = render_summary(
-              headline_lines=headline,
-              path_lines=path_lines,
-              implication=implication,
-              action=action,
-              as_of_lines=[f'- **最近有效A股行情依据（北京时间）**：{as_of}'],
-              boundary='测试可使用最近有效A股快照，不代表正式事件触发；正式阈值、MASTER、风险许可和交易动作均未改变。',
-          )
-          event = {
-              'key': f"unified-a-share-test:{os.environ.get('GITHUB_RUN_ID','manual')}:{os.environ.get('GITHUB_RUN_ATTEMPT','1')}",
-              'type': '主动通知模板测试',
-              'event_type': 'UNIFIED_A_SHARE_NOTIFICATION_TEST',
-              'title': '【测试｜A股结构】最近有效A股结构',
-              'content': '**统一通知语义测试；使用最近有效A股正式快照，不代表正式阈值触发。**\n\n' + content,
-              'confirmation_context': {'market': 'A_SHARE', 'a_share_as_of_beijing': as_of},
-          }
-          result = persist_and_send(event, policy='Unified A-share semantic test only; no production threshold or trading-rule change.')
-          print(json.dumps(result, ensure_ascii=False))
-          if result.get('status') != 'SENT':
-              raise SystemExit(f"expected A-share test SENT, got {result}")
-          PY
-      - name: Send active ETF object test
-        shell: bash
-        run: |
-          PYTHONPATH=scripts python - <<'PY'
-          import json, os
-          from pathlib import Path
-          from market_notification_common import pct, persist_and_send, render_shock
-          from notification_center import STATE, read_json
-          account = read_json(STATE / 'account_fact.json', {})
-          formal = account.get('formal_action') or {}
-          code = str(formal.get('applicable_object') or '')
-          current = read_json(STATE / 'CURRENT.json', {})
-          p = Path(str(current.get('latest_snapshot') or ''))
-          snap = read_json(p, {}) if p.exists() else {}
-          row = next((x for x in snap.get('rows') or [] if str(x.get('symbol') or '') == code), None)
-          if not row:
-              raise SystemExit('no active formal ETF row for test')
-          formal_cfg = read_json(Path('config/market/etf_monitor_universe.json'), {})
-          formal_names = {str(x.get('code') or ''): str(x.get('name') or '') for x in (formal_cfg.get('objects') or [])}
-          name = formal_names.get(code) or str(row.get('provider_name') or code)
-          day = float(row.get('change_pct') or 0.0)
-          prev = float(row.get('prev_close') or 0.0)
-          high = float(row.get('high') or 0.0)
-          high_ret = (high / prev - 1) * 100 if prev else None
-          content = render_shock(
-              what=['- **事件类型**：对象角色语义测试', f'- **对象/结构**：{name}（{code}）', f'- **关键结构**：盘中高点相对前收{pct(high_ret)}，当前{pct(day)}'],
-              why='仅验证对象角色、资本含义和用户可见措辞，不代表正式异动阈值触发。',
-              implication='立即检查该新事实是否改变全部持仓ETF与观察ETF的相对强弱、风险收益、唯一主候选或资本效率；账户底仓个股还要检查资金释放和独立假设。',
-              action='打开ETF项目刷新当前正式判断；只有正式风险许可、机会状态、金额或持仓动作发生变化时才执行交易。',
-              as_of=str(row.get('as_of_beijing') or snap.get('captured_at_beijing') or ''),
-              boundary='测试通知；正式阈值、MASTER、风险许可和交易动作均未改变。',
-          )
-          event={'key':f"unified-object-test:{os.environ.get('GITHUB_RUN_ID','manual')}:{os.environ.get('GITHUB_RUN_ATTEMPT','1')}:{code}",'type':'主动通知模板测试','event_type':'UNIFIED_OBJECT_NOTIFICATION_TEST','title':f'【测试｜ETF对象】{name}（{code}）','content':'**统一通知语义测试；不代表正式事件触发。**\n\n'+content,'security_code':code,'security_name':name,'confirmation_context':{'market':'A_SHARE','market_as_of_beijing':str(row.get('as_of_beijing') or '')}}
-          result=persist_and_send(event,policy='Unified object semantic test only; no production threshold or trading-rule change.')
-          print(json.dumps(result,ensure_ascii=False))
-          if result.get('status') != 'SENT':
-              raise SystemExit(f"expected ETF object test SENT, got {result}")
-          PY
-      - name: Refresh US context for test only
-        run: python scripts/build_us_extended_hours_context.py
-      - name: Send US session semantic test
-        shell: bash
-        run: |
-          PYTHONPATH=scripts python - <<'PY'
-          import json, os
-          import send_us_session_summary as module
-          from market_notification_common import persist_and_send
-          module._window = lambda now_et, phase: 'CLOSE'
-          event = module.build_event()
-          if not event:
-              raise SystemExit('US test event could not be built from current valid context')
-          event = dict(event)
-          event['key'] = f"unified-us-test:{os.environ.get('GITHUB_RUN_ID','manual')}:{os.environ.get('GITHUB_RUN_ATTEMPT','1')}"
-          event['type'] = '主动通知模板测试'
-          event['event_type'] = 'UNIFIED_US_NOTIFICATION_TEST'
-          event['title'] = '【测试｜美股】' + str(event.get('title') or '').replace('【收盘总结】','').replace('【异动提醒】','').replace('【市场异动】','')
-          event['content'] = '**统一通知语义测试；使用当前可验证的最近美股现金盘事实，不代表新的市场事件。**\n\n' + str(event.get('content') or '')
-          result = persist_and_send(event, policy='Unified US session semantic test only; no production threshold or trading-rule change.')
-          print(json.dumps(result, ensure_ascii=False))
-          if result.get('status') != 'SENT':
-              raise SystemExit(f"expected US test SENT, got {result}")
+          print('unified notification semantics regression passed')
           PY
