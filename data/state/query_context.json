@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-28T07:57:04Z",
-  "generated_at_beijing": "2026-08-28T15:57:04+08:00",
+  "generated_at": "2026-08-28T07:59:02Z",
+  "generated_at_beijing": "2026-08-28T15:59:02+08:00",
   "market_date": "2026-08-28",
   "latest_valid_node": "close",
   "current": {
@@ -100,7 +100,7 @@
     }
   },
   "decision_context": {
-    "generated_at": "2026-08-28T07:57:00Z",
+    "generated_at": "2026-08-28T07:58:58Z",
     "rules_version": "V2.2.18",
     "market_date": "2026-08-28",
     "latest_node": "close",
@@ -853,7 +853,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 7.874,
-      "age_seconds": 2662
+      "age_seconds": 2780
     },
     "freshness_at_context_build": {
       "status": "STALE",
@@ -869,7 +869,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 7.874,
-      "age_seconds": 2662
+      "age_seconds": 2780
     },
     "data_quality_summary": {
       "pass_count": 14,
@@ -883,14 +883,14 @@
       "source": "latest_snapshot_rows"
     },
     "etf_strategy_risk_metrics": {
-      "etf_strategy_risk_pct": -6.18,
-      "risk_source": "events/reviews/2026-08-27.json",
-      "risk_source_updated_at": "2026-08-28T08:11:00+08:00",
+      "etf_strategy_risk_pct": -7.09,
+      "risk_source": "events/reviews/2026-08-28.json",
+      "risk_source_updated_at": "2026-08-28T15:58:52+08:00",
       "reconstruction_risk_pct": -8.3,
       "etf_holding_unrealized_pct": -6.73,
       "etf_drawdown_from_high_pct": -8.3,
       "equity_data_quality": "FORMAL_REVIEW_PRIMARY; RECONSTRUCTION_AUXILIARY",
-      "strategy_equity_known_net": 187632.19,
+      "strategy_equity_known_net": 185816.89,
       "high_watermark": 200000,
       "fee_status": "ALL_RECORDED_TRADE_FEES_CONFIRMED",
       "interpretation": "唯一ETF策略风险率决定风险区间；最新正式review/Dashboard高于历史重构。持仓浮盈亏率与高水位回撤率只解释持仓压力和近期改善/恶化。",
@@ -921,7 +921,7 @@
       "account_fact_time": "2026-08-28T14:18:00+08:00",
       "market_snapshot_time": "2026-08-28T15:12:38+08:00",
       "market_phase": "POST_CLOSE_GRACE",
-      "context_generated_time": "2026-08-28T07:57:00Z",
+      "context_generated_time": "2026-08-28T07:58:58Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
@@ -948,7 +948,7 @@
       "read_only": true
     },
     "market_quote_router": {
-      "generated_at_beijing": "2026-08-28T15:57:00+08:00",
+      "generated_at_beijing": "2026-08-28T15:58:58+08:00",
       "refresh_mode": "CACHED_STATE",
       "refresh_failures": [],
       "route_version": "V1.1",
@@ -1512,7 +1512,7 @@
     },
     "decision_trigger": {
       "schema_version": "1.0",
-      "generated_at": "2026-08-28T15:12:52+08:00",
+      "generated_at": "2026-08-28T15:58:58+08:00",
       "status": "NO_NEW_TRIGGER",
       "trigger_type": "",
       "triggered_at": "",
@@ -1520,7 +1520,7 @@
       "previous_decision_id": "20260827_095649_515880_trial_5000",
       "evidence_change": "",
       "evidence_time": "2026-08-28T15:12:38+08:00",
-      "e2e_status": "READY",
+      "e2e_status": "BLOCKED",
       "requires_formal_reassessment": false,
       "pending_trigger": false,
       "idempotency_key": "",
@@ -1531,9 +1531,9 @@
     },
     "capital_efficiency_ranking": {
       "schema_version": "1.0",
-      "generated_at": "2026-08-28T15:12:52+08:00",
+      "generated_at": "2026-08-28T15:58:58+08:00",
       "as_of": "2026-08-28T15:12:38+08:00",
-      "e2e_status": "READY",
+      "e2e_status": "BLOCKED",
       "risk_zone": "RISK_OBSERVATION",
       "top_candidate": "现金",
       "next_unit_capital_use": "现金/持仓/观察候选按原MASTER链人工比较；本结果不生成金额。",
@@ -1543,92 +1543,112 @@
           "code": null,
           "category": "CASH",
           "eligibility": "AVAILABLE",
-          "reason": "等待价值与风险缓冲可直接参与比较；不自动等同于低效率。"
+          "reason": "E2E BLOCKED；只保留现金观察，不输出正式金额或份额。"
         },
         {
-          "display_name": "159326",
-          "code": "159326",
-          "category": "OBSERVED_ETF",
-          "eligibility": "OBSERVATION_COMPARISON",
-          "reason": "进入相对比较但仍需验证Trial/Confirm最小证据与失效条件。",
+          "display_name": "159781",
+          "code": "159781",
+          "category": "HELD_ETF",
+          "eligibility": "HOLDING_COMPARISON",
+          "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
           "comparison_basis": [
-            "价格优势",
-            "结构/修复",
-            "相对强弱",
-            "组合相关性",
-            "资本占用效率"
+            "当前价格与结构",
+            "持仓压力",
+            "相关性",
+            "可释放资本"
           ],
-          "action_boundary": "排名第一不自动升级为唯一主候选"
+          "action_boundary": "仍需MASTER正式判断"
+        },
+        {
+          "display_name": "159941",
+          "code": "159941",
+          "category": "HELD_ETF",
+          "eligibility": "HOLDING_COMPARISON",
+          "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
+          "comparison_basis": [
+            "当前价格与结构",
+            "持仓压力",
+            "相关性",
+            "可释放资本"
+          ],
+          "action_boundary": "仍需MASTER正式判断"
+        },
+        {
+          "display_name": "515880",
+          "code": "515880",
+          "category": "HELD_ETF",
+          "eligibility": "HOLDING_COMPARISON",
+          "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
+          "comparison_basis": [
+            "当前价格与结构",
+            "持仓压力",
+            "相关性",
+            "可释放资本"
+          ],
+          "action_boundary": "仍需MASTER正式判断"
+        },
+        {
+          "display_name": "561980",
+          "code": "561980",
+          "category": "HELD_ETF",
+          "eligibility": "HOLDING_COMPARISON",
+          "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
+          "comparison_basis": [
+            "当前价格与结构",
+            "持仓压力",
+            "相关性",
+            "可释放资本"
+          ],
+          "action_boundary": "仍需MASTER正式判断"
+        },
+        {
+          "display_name": "588000",
+          "code": "588000",
+          "category": "HELD_ETF",
+          "eligibility": "HOLDING_COMPARISON",
+          "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
+          "comparison_basis": [
+            "当前价格与结构",
+            "持仓压力",
+            "相关性",
+            "可释放资本"
+          ],
+          "action_boundary": "仍需MASTER正式判断"
+        }
+      ],
+      "excluded_candidates": [
+        {
+          "display_name": "159326",
+          "reason": "E2E_BLOCKED"
         },
         {
           "display_name": "159561",
-          "code": "159561",
-          "category": "OBSERVED_ETF",
-          "eligibility": "OBSERVATION_COMPARISON",
-          "reason": "进入相对比较但仍需验证Trial/Confirm最小证据与失效条件。",
-          "comparison_basis": [
-            "价格优势",
-            "结构/修复",
-            "相对强弱",
-            "组合相关性",
-            "资本占用效率"
-          ],
-          "action_boundary": "排名第一不自动升级为唯一主候选"
+          "reason": "E2E_BLOCKED"
         },
         {
           "display_name": "159992",
-          "code": "159992",
-          "category": "OBSERVED_ETF",
-          "eligibility": "OBSERVATION_COMPARISON",
-          "reason": "进入相对比较但仍需验证Trial/Confirm最小证据与失效条件。",
-          "comparison_basis": [
-            "价格优势",
-            "结构/修复",
-            "相对强弱",
-            "组合相关性",
-            "资本占用效率"
-          ],
-          "action_boundary": "排名第一不自动升级为唯一主候选"
+          "reason": "E2E_BLOCKED"
         },
         {
           "display_name": "513180",
-          "code": "513180",
-          "category": "OBSERVED_ETF",
-          "eligibility": "OBSERVATION_COMPARISON",
-          "reason": "进入相对比较但仍需验证Trial/Confirm最小证据与失效条件。",
-          "comparison_basis": [
-            "价格优势",
-            "结构/修复",
-            "相对强弱",
-            "组合相关性",
-            "资本占用效率"
-          ],
-          "action_boundary": "排名第一不自动升级为唯一主候选"
+          "reason": "E2E_BLOCKED"
         },
         {
           "display_name": "513520",
-          "code": "513520",
-          "category": "OBSERVED_ETF",
-          "eligibility": "OBSERVATION_COMPARISON",
-          "reason": "进入相对比较但仍需验证Trial/Confirm最小证据与失效条件。",
-          "comparison_basis": [
-            "价格优势",
-            "结构/修复",
-            "相对强弱",
-            "组合相关性",
-            "资本占用效率"
-          ],
-          "action_boundary": "排名第一不自动升级为唯一主候选"
+          "reason": "E2E_BLOCKED"
+        },
+        {
+          "display_name": "518880",
+          "reason": "E2E_BLOCKED"
         }
       ],
-      "excluded_candidates": [],
       "key_reason": "两阶段：先做E2E、风险扩张、质量和可执行性硬过滤，再保留少量定性比较对象；不生成综合资本效率分数。",
       "previous_top_candidate": "现金",
       "read_only": true,
       "safety_boundary": "资本排序不替代唯一主候选，不自动生成Trial、Confirm、金额、卖出份额或订单。"
     },
     "intraday_path_features": {
-      "generated_at": "2026-08-28T07:12:48Z",
+      "generated_at": "2026-08-28T07:58:52Z",
       "market_date": "2026-08-28",
       "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
       "read_only": true,
@@ -2655,7 +2675,7 @@
       ],
       "skfolio_risk_evidence": {
         "schema_version": "1.0",
-        "generated_at": "2026-08-28T07:12:51Z",
+        "generated_at": "2026-08-28T07:58:58Z",
         "status": "READY",
         "mode": "SKFOLIO_VALIDATED_RISK_EVIDENCE",
         "validation_basis": {
@@ -2880,14 +2900,14 @@
     "read_only": true
   },
   "etf_strategy_risk_metrics": {
-    "etf_strategy_risk_pct": -6.18,
-    "risk_source": "events/reviews/2026-08-27.json",
-    "risk_source_updated_at": "2026-08-28T08:11:00+08:00",
+    "etf_strategy_risk_pct": -7.09,
+    "risk_source": "events/reviews/2026-08-28.json",
+    "risk_source_updated_at": "2026-08-28T15:58:52+08:00",
     "reconstruction_risk_pct": -8.3,
     "etf_holding_unrealized_pct": -6.73,
     "etf_drawdown_from_high_pct": -8.3,
     "equity_data_quality": "FORMAL_REVIEW_PRIMARY; RECONSTRUCTION_AUXILIARY",
-    "strategy_equity_known_net": 187632.19,
+    "strategy_equity_known_net": 185816.89,
     "high_watermark": 200000,
     "fee_status": "ALL_RECORDED_TRADE_FEES_CONFIRMED",
     "interpretation": "唯一ETF策略风险率决定风险区间；最新正式review/Dashboard高于历史重构。持仓浮盈亏率与高水位回撤率只解释持仓压力和近期改善/恶化。",
@@ -2908,7 +2928,7 @@
     "account_fact_time": "2026-08-28T14:18:00+08:00",
     "market_snapshot_time": "2026-08-28T15:12:38+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-08-28T07:57:00Z",
+    "context_generated_time": "2026-08-28T07:58:58Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -2998,7 +3018,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "STALE",
-        "age_seconds": 2662,
+        "age_seconds": 2780,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -3016,7 +3036,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 7.874,
-        "age_seconds": 2662
+        "age_seconds": 2780
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新判断为“时点正常／存在延迟／时点过旧”。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -3057,7 +3077,7 @@
     }
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-08-28T15:57:00+08:00",
+    "generated_at_beijing": "2026-08-28T15:58:58+08:00",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
     "refresh_failures": [],
     "route_version": "V1.1",
@@ -3069,16 +3089,16 @@
         "symbol": "HSTECH",
         "canonical_object": "HSTECH",
         "name": "恒生科技指数",
-        "latest_price": 4604.06,
+        "latest_price": 4603.62,
         "open": 4580.98,
         "high": 4649.15,
         "low": 4580.98,
         "prev_close": 4620.29,
-        "volume": 1538277712,
-        "amount": 49865280000.0,
-        "turnover": 49865280000.0,
-        "data_time_beijing": "2026-08-28T15:57:00+08:00",
-        "data_time_local": "2026-08-28T15:57:00+08:00",
+        "volume": 1548589552,
+        "amount": 50212858624.0,
+        "turnover": 50212858624.0,
+        "data_time_beijing": "2026-08-28T15:59:00+08:00",
+        "data_time_local": "2026-08-28T15:59:00+08:00",
         "market_phase": "REGULAR",
         "market_status_cn": "港股交易中",
         "data_nature_cn": "实时交易行情",
@@ -3758,11 +3778,11 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 7.874,
-    "age_seconds": 2662
+    "age_seconds": 2780
   },
   "freshness_at_context_build": {
     "status": "STALE",
-    "age_seconds": 2662,
+    "age_seconds": 2780,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
