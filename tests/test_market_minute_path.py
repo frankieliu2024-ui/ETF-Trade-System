@@ -59,8 +59,9 @@ class TencentMinuteObjectFallbackTest(unittest.TestCase):
             "mode": "DISCRETE",
             "status": "READY",
             "features": [
-                {"symbol": "AAA", "path_change_pct": 1.0, "sampling": {"coverage": "MEDIUM"}},
-                {"symbol": "BBB", "path_change_pct": 2.0, "sampling": {"coverage": "MEDIUM"}},
+                {"symbol": "IDX", "asset_class": "A_SHARE_INDEX", "path_change_pct": 0.5},
+                {"symbol": "AAA", "asset_class": "ETF", "path_change_pct": 1.0, "sampling": {"coverage": "MEDIUM"}},
+                {"symbol": "BBB", "asset_class": "ETF", "path_change_pct": 2.0, "sampling": {"coverage": "MEDIUM"}},
             ],
         }
         minute = {
@@ -87,12 +88,38 @@ class TencentMinuteObjectFallbackTest(unittest.TestCase):
         self.assertEqual(selected["production_selection"]["selected_source"], "HYBRID_OBJECT_LEVEL")
         self.assertEqual(by_symbol["AAA"]["production_source"], "TENCENT_1M")
         self.assertEqual(by_symbol["BBB"]["production_source"], "DISCRETE_SNAPSHOT_PATH")
+        self.assertEqual(by_symbol["IDX"]["path_role"], "PRODUCTION_NATIVE_DISCRETE_EVIDENCE")
+        self.assertNotIn("fallback_reason", by_symbol["IDX"])
         self.assertEqual(diag["minute_selected_count"], 1)
         self.assertEqual(diag["fallback_count"], 1)
         self.assertEqual(diag["fallback_symbols"], ["BBB"])
+        self.assertEqual(diag["native_discrete_symbols"], ["IDX"])
+
+    def test_all_target_etfs_on_minute_with_native_index_reports_tencent(self):
+        discrete = {
+            "status": "READY",
+            "features": [
+                {"symbol": "IDX", "asset_class": "A_SHARE_INDEX"},
+                {"symbol": "AAA", "asset_class": "ETF"},
+            ],
+        }
+        minute = {
+            "status": "READY",
+            "coverage_ratio": 1.0,
+            "quality_summary": {"formal_gate_pass": True, "production_usable_ratio": 1.0},
+            "features": [{
+                "symbol": "AAA", "status": "READY", "item_quality_pass": True, "freshness_pass": True,
+                "sampling": {"continuity_pass": True}, "quote_alignment": {"pass": True}, "point_in_time": {"pass": True},
+            }],
+        }
+        with patch.object(state_context, "build_intraday_path_features", return_value=discrete), patch.object(state_context, "build_minute_path_features", return_value=minute):
+            selected, diag = state_context.select_intraday_path_features(ROOT)
+        self.assertEqual(selected["production_selection"]["selected_source"], "TENCENT_1M")
+        self.assertEqual(diag["fallback_count"], 0)
+        self.assertEqual(diag["native_discrete_count"], 1)
 
     def test_systemic_minute_failure_preserves_discrete_path(self):
-        discrete = {"schema_version": "1.0", "mode": "DISCRETE", "status": "READY", "features": [{"symbol": "AAA", "path_change_pct": 1.0}]}
+        discrete = {"schema_version": "1.0", "mode": "DISCRETE", "status": "READY", "features": [{"symbol": "AAA", "asset_class": "ETF", "path_change_pct": 1.0}]}
         with patch.object(state_context, "build_intraday_path_features", return_value=discrete), patch.object(state_context, "build_minute_path_features", side_effect=RuntimeError("provider down")):
             selected, diag = state_context.select_intraday_path_features(ROOT)
         self.assertEqual(selected["production_selection"]["selected_source"], "DISCRETE_SNAPSHOT_PATH")
