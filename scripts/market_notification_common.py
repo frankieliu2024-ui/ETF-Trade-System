@@ -23,6 +23,50 @@ NOTIFICATION_STATE = STATE / "notification_center.json"
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def _formal_etf_aliases() -> tuple[dict[str, str], dict[tuple[str, str], str]]:
+    """Return formal ETF names and current provider aliases for user-visible text."""
+    cfg = read_json(ROOT / "config/market/etf_monitor_universe.json", {})
+    formal = {
+        str(x.get("code") or ""): str(x.get("name") or "")
+        for x in (cfg.get("objects") or [])
+        if str(x.get("code") or "") and str(x.get("name") or "")
+    }
+    aliases: dict[tuple[str, str], str] = {}
+    current = read_json(STATE / "CURRENT.json", {})
+    snapshot_path = ROOT / str(current.get("latest_snapshot") or "")
+    snapshot = read_json(snapshot_path, {}) if snapshot_path.exists() else {}
+    for row in snapshot.get("rows") or []:
+        code = str(row.get("symbol") or "")
+        provider = str(row.get("provider_name") or "").strip()
+        if code in formal and provider and provider != formal[code]:
+            aliases[(provider, code)] = formal[code]
+    return formal, aliases
+
+
+def _normalize_user_visible_text(value: Any) -> str:
+    text = str(value or "")
+    text = re.sub(
+        r"(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})(?:\.\d+)?\+08:00",
+        r"\1 \2",
+        text,
+    )
+    _formal, aliases = _formal_etf_aliases()
+    for (provider, code), formal_name in aliases.items():
+        text = text.replace(f"{provider}（{code}）", f"{formal_name}（{code}）")
+    return text
+
+
+def _normalize_user_visible_event(event: dict) -> dict:
+    event = dict(event)
+    event["title"] = _normalize_user_visible_text(event.get("title"))
+    event["content"] = _normalize_user_visible_text(event.get("content"))
+    formal, _aliases = _formal_etf_aliases()
+    code = str(event.get("security_code") or "")
+    if code in formal:
+        event["security_name"] = formal[code]
+    return event
+
+
 def number(value: Any) -> float | None:
     try:
         return float(value)
@@ -104,8 +148,6 @@ def render_summary(*, headline_lines: list[str], path_lines: list[str], implicat
             if indices and etfs:
                 headline_lines, path_lines, implication, action = a_share_structure(indices, etfs, features)
         except Exception as exc:
-            # Notification rendering must fail soft: keep the producer's valid
-            # Point-in-Time facts if semantic compression cannot be built.
             print(f"notification semantic fallback: {exc}")
 
     path = "\n".join(path_lines[:3]) if path_lines else "- 当前没有额外路径事实需要展开。"
@@ -174,9 +216,12 @@ def _decision_readable_implication(what: list[str], implication: str, action: st
 
 def render_shock(*, what: list[str], why: str, implication: str, action: str, as_of: str, boundary: str) -> str:
     implication, action = _decision_readable_implication(what, implication, action)
+    display_what = list(what[:5])
+    if any("关键结构" in line and "当前" in line for line in display_what):
+        display_what = [line for line in display_what if "当日涨跌" not in line and "当前涨跌" not in line]
     return (
         "### 核心结论\n"
-        + "\n".join(what[:5])
+        + "\n".join(display_what)
         + "\n\n**判断**："
         + why
         + "\n\n### 对ETF系统的影响\n"
@@ -245,6 +290,7 @@ def _normalize_user_title(event: dict) -> dict:
 
 
 def persist_and_send(event: dict, *, policy: str) -> dict:
+    event = _normalize_user_visible_event(event)
     event = _normalize_user_title(event)
     future_error = _future_time_error(event)
     if future_error:
