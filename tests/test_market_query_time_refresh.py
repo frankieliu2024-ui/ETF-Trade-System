@@ -26,13 +26,13 @@ class QueryTimeRefreshTests(unittest.TestCase):
         }), encoding="utf-8")
         return root
 
-    def test_fresh_cache_does_not_call_provider(self):
+    def test_explicit_force_refresh_calls_provider_even_with_fresh_cache(self):
         root = self._root("2026-08-25T00:29:00+08:00")
         now = datetime.fromisoformat("2026-08-25T00:30:00+08:00")
-        with patch("scripts.query_time_market_refresh.refresh_market_quotes") as refresh:
+        with patch("scripts.query_time_market_refresh.refresh_market_quotes", return_value={"quotes": [], "failures": []}) as refresh:
             result = build_market_quote_context(root, now=now, force_refresh=True, requested_symbols=["NDX"])
-        refresh.assert_not_called()
-        self.assertEqual(result["refresh_mode"], "CACHED_STATE")
+        refresh.assert_called_once_with(root, ["NDX"], now)
+        self.assertEqual(result["refresh_mode"], "QUERY_TIME_IMMEDIATE_REFRESH")
 
     def test_stale_cache_calls_provider_and_prefers_new_quote(self):
         root = self._root("2026-08-24T23:00:00+08:00")
