@@ -128,6 +128,18 @@ def compact_contribution_audit(audit: dict) -> dict:
     }
 
 
+def _minute_item_usable(item: dict | None) -> bool:
+    return bool(
+        item
+        and item.get("status") == "READY"
+        and item.get("item_quality_pass") is True
+        and item.get("freshness_pass") is True
+        and (item.get("sampling") or {}).get("continuity_pass") is True
+        and (item.get("quote_alignment") or {}).get("pass") is True
+        and (item.get("point_in_time") or {}).get("pass") is True
+    )
+
+
 def select_intraday_path_features(root: Path) -> tuple[dict, dict]:
     discrete = build_intraday_path_features(root)
     minute = None
@@ -138,43 +150,83 @@ def select_intraday_path_features(root: Path) -> tuple[dict, dict]:
         minute_error = str(exc)[-1000:]
 
     quality = (minute or {}).get("quality_summary") or {}
-    minute_ready = bool(
-        minute
-        and minute.get("status") == "READY"
-        and minute.get("coverage_ratio") == 1.0
-        and quality.get("formal_gate_pass") is True
-    )
-    if minute_ready:
-        selected = {
-            **minute,
-            "mode": "TENCENT_1M_ETF_PATH_PRODUCTION_EVIDENCE",
-            "production_selection": {
-                "selected_source": "TENCENT_1M",
-                "fallback_source": "DISCRETE_SNAPSHOT_PATH",
-                "selection_reason": "minute_quality_gate_pass",
-                "formal_latest_price_source_unchanged": True,
-                "decision_boundary": "分钟源仅增强日内路径、极值时序和成交承接证据；正式最新价继续由quote router决定，不产生风险许可、金额或交易动作。",
-            },
-        }
+    minute_by_symbol = {str(x.get("symbol")): x for x in ((minute or {}).get("features") or []) if x.get("symbol")}
+    merged = []
+    minute_symbols = []
+    fallback_symbols = []
+    fallback_reasons = {}
+
+    for discrete_item in (discrete.get("features") or []):
+        symbol = str(discrete_item.get("symbol") or "")
+        minute_item = minute_by_symbol.get(symbol)
+        if _minute_item_usable(minute_item):
+            merged.append({
+                **minute_item,
+                "production_source": "TENCENT_1M",
+                "path_role": "PRODUCTION_STRUCTURE_EVIDENCE",
+            })
+            minute_symbols.append(symbol)
+        else:
+            reason = "minute_missing"
+            if minute_item:
+                reason = minute_item.get("error") or "minute_item_quality_gate_failed"
+            merged.append({
+                **discrete_item,
+                "production_source": "DISCRETE_SNAPSHOT_PATH",
+                "path_role": "PRODUCTION_STRUCTURE_EVIDENCE_FALLBACK",
+                "fallback_reason": reason,
+            })
+            fallback_symbols.append(symbol)
+            fallback_reasons[symbol] = reason
+
+    total = len(merged)
+    if total and len(minute_symbols) == total:
+        selected_source = "TENCENT_1M"
+        mode = "TENCENT_1M_ETF_PATH_PRODUCTION_EVIDENCE"
+    elif minute_symbols:
+        selected_source = "HYBRID_OBJECT_LEVEL"
+        mode = "HYBRID_TENCENT_1M_WITH_DISCRETE_OBJECT_FALLBACK"
     else:
-        selected = {
-            **discrete,
-            "production_selection": {
-                "selected_source": "DISCRETE_SNAPSHOT_PATH",
-                "preferred_source": "TENCENT_1M",
-                "selection_reason": "minute_unavailable_or_quality_gate_failed",
-                "minute_status": (minute or {}).get("status") if minute else "ERROR",
-                "minute_coverage_ratio": (minute or {}).get("coverage_ratio") if minute else None,
-                "minute_quality_summary": quality,
-                "minute_error": minute_error,
-                "formal_latest_price_source_unchanged": True,
-                "decision_boundary": "腾讯分钟证据不可用或质量门不通过时自动回退既有离散路径，不阻断正式决策。",
-            },
-        }
+        selected_source = "DISCRETE_SNAPSHOT_PATH"
+        mode = discrete.get("mode") or "DISCRETE_SNAPSHOT_PATH"
+
+    selected = {
+        **discrete,
+        "schema_version": "1.2",
+        "mode": mode,
+        "status": "READY" if merged else discrete.get("status"),
+        "features": merged,
+        "production_selection": {
+            "selected_source": selected_source,
+            "preferred_source": "TENCENT_1M",
+            "fallback_source": "DISCRETE_SNAPSHOT_PATH",
+            "selection_mode": "PER_ETF_OBJECT",
+            "minute_selected_count": len(minute_symbols),
+            "fallback_count": len(fallback_symbols),
+            "minute_selected_symbols": minute_symbols,
+            "fallback_symbols": fallback_symbols,
+            "fallback_reasons": fallback_reasons,
+            "formal_latest_price_source_unchanged": True,
+            "decision_boundary": "分钟源仅增强日内路径、极值时序和成交承接证据；单对象失败只回退该ETF，正式最新价继续由quote router决定。",
+        },
+        "minute_validation_evidence": {
+            "status": (minute or {}).get("status") if minute else "ERROR",
+            "coverage_ratio": (minute or {}).get("coverage_ratio") if minute else None,
+            "formal_gate_pass": quality.get("formal_gate_pass"),
+            "production_usable_ratio": quality.get("production_usable_ratio"),
+            "quality_summary": quality,
+            "error": minute_error,
+            "role": "VALIDATION_PROVENANCE_ONLY_NOT_PRODUCTION_PERMISSION",
+        },
+    }
     diagnostics = {
-        "selected_source": (selected.get("production_selection") or {}).get("selected_source"),
+        "selected_source": selected_source,
+        "minute_selected_count": len(minute_symbols),
+        "fallback_count": len(fallback_symbols),
+        "fallback_symbols": fallback_symbols,
         "minute_status": (minute or {}).get("status") if minute else "ERROR",
         "minute_coverage_ratio": (minute or {}).get("coverage_ratio") if minute else None,
+        "minute_production_usable_ratio": quality.get("production_usable_ratio"),
         "minute_formal_gate_pass": quality.get("formal_gate_pass"),
         "minute_error": minute_error,
         "discrete_status": discrete.get("status"),
@@ -264,7 +316,6 @@ def main() -> None:
         },
     })
 
-    # Phase 4 is a deterministic downstream state build; it does not call providers or create actions.
     phase4 = build_phase4_automation(ROOT)
     candidate = build_dashboard_candidate(ROOT)
     context = build_decision_context(ROOT)
@@ -296,20 +347,9 @@ def main() -> None:
         "market_level_analysis": market_regime.get("status") in {"READY", "DEGRADED"} and bool(market_regime.get("indices")),
         "candidate_selection_contract": bool(context.get("candidate_selection_contract")),
         "market_structure_context": market_structure.get("status") == "READY" and bool(market_structure.get("items")),
-        "historical_position_and_trend": all(
-            (x.get("historical_context") or {}).get("historical_zone")
-            and (x.get("historical_context") or {}).get("trend_state")
-            for x in (market_structure.get("items") or [])
-        ),
-        "intraday_path_and_extreme_sequence": all(
-            (x.get("intraday_context") or {}).get("morphology")
-            and (x.get("intraday_context") or {}).get("extreme_sequence")
-            for x in (market_structure.get("items") or [])
-        ),
-        "time_normalized_turnover_acceptance": all(
-            (x.get("turnover_acceptance_context") or {}).get("status") in {"READY", "DEGRADED"}
-            for x in (market_structure.get("items") or [])
-        ),
+        "historical_position_and_trend": all((x.get("historical_context") or {}).get("historical_zone") and (x.get("historical_context") or {}).get("trend_state") for x in (market_structure.get("items") or [])),
+        "intraday_path_and_extreme_sequence": all((x.get("intraday_context") or {}).get("morphology") and (x.get("intraday_context") or {}).get("extreme_sequence") for x in (market_structure.get("items") or [])),
+        "time_normalized_turnover_acceptance": all((x.get("turnover_acceptance_context") or {}).get("status") in {"READY", "DEGRADED"} for x in (market_structure.get("items") or [])),
     }
     context["formal_intraday_response_contract"] = {
         "schema_version": "1.1",
@@ -329,12 +369,7 @@ def main() -> None:
             "上证与创业板的风格差异和风险偏好",
             "海外/亚洲信息仅在时点有效且与当前假设相关时使用，并说明是否与A股反馈背离",
         ],
-        "required_candidate_evidence": [
-            "historical_position_and_trend",
-            "intraday_path_and_extreme_sequence",
-            "time_normalized_turnover_acceptance",
-            "risk_reward_or_capital_efficiency",
-        ],
+        "required_candidate_evidence": ["historical_position_and_trend", "intraday_path_and_extreme_sequence", "time_normalized_turnover_acceptance", "risk_reward_or_capital_efficiency"],
         "missing_evidence_rule": "任一必需证据缺失时必须显式标记MISSING或DEGRADED并说明影响，不得静默跳过后直接维持或生成主候选。",
         "previous_candidate_rule": "previous_main_candidate只作连续性参考，不得自动继承；每个正式盘中节点必须重新进入统一比较。若继续保留上一主候选，必须说明本节点的新结构证据为何独立支持继续保留。",
         "cross_section_rule": "当日涨幅、横截面名次和相对指数强弱只能验证候选，不得产生主候选。",
@@ -349,6 +384,7 @@ def main() -> None:
         "required_context_present": required_context_present,
         "note": "该状态只证明机器上下文已具备市场层+标的层正式盘中分析所需结构，不等于ChatGPT已实际消费；正式回复仍必须遵守formal_intraday_response_contract。",
     }
+    context["intraday_path_production_selection"] = path_features.get("production_selection") or {}
     atomic_json_write(ROOT / "data" / "state" / "dashboard_update_candidate.json", candidate)
     atomic_json_write(ROOT / "data" / "state" / "decision_context.json", context)
     research_execution_summary = build_research_execution_bridge(ROOT)
@@ -358,8 +394,12 @@ def main() -> None:
         "intraday_path_status": path_features.get("status"),
         "intraday_path_feature_count": len(path_features.get("features") or []),
         "intraday_path_selected_source": path_selection.get("selected_source"),
+        "intraday_path_minute_selected_count": path_selection.get("minute_selected_count"),
+        "intraday_path_fallback_count": path_selection.get("fallback_count"),
+        "intraday_path_fallback_symbols": path_selection.get("fallback_symbols"),
         "minute_path_status": path_selection.get("minute_status"),
         "minute_path_coverage_ratio": path_selection.get("minute_coverage_ratio"),
+        "minute_path_production_usable_ratio": path_selection.get("minute_production_usable_ratio"),
         "minute_path_formal_gate_pass": path_selection.get("minute_formal_gate_pass"),
         "market_regime_status": market_regime.get("status"),
         "market_structure_status": market_structure.get("status"),
