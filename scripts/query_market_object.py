@@ -98,6 +98,45 @@ def _asset_type(quote_type: str) -> str:
     return {"ETF": "ETF", "INDEX": "INDEX", "EQUITY": "STOCK", "MUTUALFUND": "FUND"}.get(str(quote_type).upper(), "STOCK")
 
 
+def normalize_input(requested: str) -> tuple[str, str, str, str]:
+    """Backward-compatible lightweight normalizer; quote acquisition is not performed here."""
+    raw = str(requested).strip()
+    alias = ALIASES.get(raw.upper()) or ALIASES.get(raw)
+    if alias:
+        code, provider_symbol, market, name, _asset_type_value = alias
+        return code, provider_symbol, market, name
+    upper = raw.upper().replace(".SS", ".SH")
+    market = _market_from_symbol(upper)
+    if upper.endswith((".SH", ".SZ")):
+        return upper.split(".")[0], upper, "CN", raw
+    return upper, upper, market, raw
+
+
+def format_quote(row: dict, obj: dict, data_time_beijing: str, quality_status: str, _age_seconds: object, source_type: str) -> dict:
+    """Backward-compatible result formatter retained for existing callers/tests."""
+    return {
+        "object_name": obj.get("name") or obj.get("code"),
+        "object_code": obj.get("code"),
+        "asset_type": obj.get("asset_type", "STOCK"),
+        "market": display_market(str(obj.get("market") or "")),
+        "market_code": obj.get("market"),
+        "data_time_beijing": data_time_beijing,
+        "price": row.get("close", row.get("latest_price")),
+        "change": row.get("change"),
+        "open": row.get("open"),
+        "high": row.get("high"),
+        "low": row.get("low"),
+        "volume": row.get("volume"),
+        "turnover": row.get("amount", row.get("turnover")),
+        "provider": row.get("provider", row.get("source", "")),
+        "freshness": row.get("freshness", "UNKNOWN"),
+        "quality_status": quality_status,
+        "source_type": source_type,
+        "direct_quote": row.get("direct_quote", True),
+        "failure_reason": "",
+    }
+
+
 def monitored_catalog(root: Path) -> dict[str, dict]:
     result: dict[str, dict] = {}
     universe = load_json(root / "config/market/etf_monitor_universe.json", {})
