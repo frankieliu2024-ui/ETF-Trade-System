@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-28T00:52:49Z",
-  "generated_at_beijing": "2026-08-28T08:52:49+08:00",
+  "generated_at": "2026-08-28T02:06:41Z",
+  "generated_at_beijing": "2026-08-28T10:06:41+08:00",
   "repository": {
-    "head_sha": "1e4eae15c375b61de07a462de00fab5d69bcdb40",
-    "github_sha": "1e4eae15c375b61de07a462de00fab5d69bcdb40",
-    "github_run_id": "33131090642",
+    "head_sha": "f71476ed4d904c26cbb1b5c927eb5a19e5a06bb1",
+    "github_sha": "f71476ed4d904c26cbb1b5c927eb5a19e5a06bb1",
+    "github_run_id": "33134880954",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "1e4eae15c375b61de07a462de00fab5d69bcdb40",
-    "workflow_sha": "1e4eae15c375b61de07a462de00fab5d69bcdb40",
+    "checked_commit": "f71476ed4d904c26cbb1b5c927eb5a19e5a06bb1",
+    "workflow_sha": "f71476ed4d904c26cbb1b5c927eb5a19e5a06bb1",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
@@ -20,7 +20,7 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.017s\n\nOK\n"
+      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.023s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -235,12 +235,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=1e4eae15c375b61de07a462de00fab5d69bcdb40"
+      "detail": "HEAD=f71476ed4d904c26cbb1b5c927eb5a19e5a06bb1"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=1e4eae15c375b61de07a462de00fab5d69bcdb40 GITHUB_SHA=1e4eae15c375b61de07a462de00fab5d69bcdb40"
+      "detail": "HEAD=f71476ed4d904c26cbb1b5c927eb5a19e5a06bb1 GITHUB_SHA=f71476ed4d904c26cbb1b5c927eb5a19e5a06bb1"
     },
     {
       "name": "git:critical_files_tracked",
@@ -670,7 +670,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=20:52 max_age_seconds=13069 limit=900"
+      "detail": "active=False phase=22:06 max_age_seconds=17501 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -785,22 +785,22 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=63153"
+      "detail": "declared=FRESH expected=FRESH age_seconds=199"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=63153"
+      "detail": "declared=FRESH expected=FRESH age_seconds=199"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
       "status": "PASS",
-      "detail": "query=STALE decision=STALE"
+      "detail": "query=FRESH decision=FRESH"
     },
     {
       "name": "dynamic_freshness:current_snapshot_boundary",
       "status": "PASS",
-      "detail": "CURRENT snapshot_status=PASS; context_status=STALE; CURRENT is not required to age-transition automatically"
+      "detail": "CURRENT snapshot_status=PASS; context_status=FRESH; CURRENT is not required to age-transition automatically"
     },
     {
       "name": "decision:coverage_summary",
@@ -825,12 +825,12 @@
     {
       "name": "decision:query_decision_current_aligned",
       "status": "PASS",
-      "detail": "query=data/market/snapshots/2026-08-27_152016.json decision=data/market/snapshots/2026-08-27_152016.json"
+      "detail": "query=data/market/snapshots/2026-08-28_100321.json decision=data/market/snapshots/2026-08-28_100321.json"
     },
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-28T00:52:49Z market=2026-08-27T15:20:16+08:00"
+      "detail": "context=2026-08-28T02:06:40Z market=2026-08-28T10:03:21+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -900,7 +900,7 @@
     {
       "name": "phase4:e2e_state_present",
       "status": "PASS",
-      "detail": "status=BLOCKED"
+      "detail": "status=READY"
     },
     {
       "name": "notification:managed_schema",
@@ -920,27 +920,27 @@
     {
       "name": "runtime_health:structured",
       "status": "PASS",
-      "detail": "status=SKIPPED"
+      "detail": "status=PASS"
     },
     {
-      "name": "runtime_health:skipped_reason",
+      "name": "runtime_health:pass_requires_snapshot",
       "status": "PASS",
-      "detail": "failure_stage=session_gate reason=outside_a_share_capture_window"
+      "detail": "runtime_snapshot=data/market/snapshots/2026-08-28_100321.json current_snapshot=data/market/snapshots/2026-08-28_100321.json"
     },
     {
       "name": "a_share_runtime:live_state_available",
       "status": "PASS",
-      "detail": "runtime_status=SKIPPED current_snapshot=data/market/snapshots/2026-08-27_152016.json"
+      "detail": "runtime_status=PASS current_snapshot=data/market/snapshots/2026-08-28_100321.json"
     },
     {
       "name": "a_share_runtime:current_ready",
       "status": "PASS",
-      "detail": "market_date=2026-08-27 node=close status=READY"
+      "detail": "market_date=2026-08-28 node=live status=READY"
     },
     {
       "name": "a_share_runtime:snapshot_exists",
       "status": "PASS",
-      "detail": "path=data/market/snapshots/2026-08-27_152016.json"
+      "detail": "path=data/market/snapshots/2026-08-28_100321.json"
     },
     {
       "name": "a_share_runtime:snapshot_count",
@@ -950,7 +950,7 @@
     {
       "name": "a_share_runtime:market_date_alignment",
       "status": "PASS",
-      "detail": "off_window_attempt_date=2026-08-28 preserved_last_valid_market_date=2026-08-27 snapshot=data/market/snapshots/2026-08-27_152016.json"
+      "detail": "snapshot=2026-08-28 current=2026-08-28 health=2026-08-28 query_only=False"
     },
     {
       "name": "a_share_runtime:etf_complete",
@@ -965,7 +965,7 @@
     {
       "name": "a_share_runtime:beijing_capture",
       "status": "PASS",
-      "detail": "captured_at_beijing=2026-08-27T15:20:16+08:00 timezone=Asia/Shanghai"
+      "detail": "captured_at_beijing=2026-08-28T10:03:21+08:00 timezone=Asia/Shanghai"
     },
     {
       "name": "stock_runtime:dynamic_account_membership",
@@ -980,7 +980,7 @@
     {
       "name": "stock_runtime:market_time_alignment",
       "status": "PASS",
-      "detail": "max_core_minus_stock_seconds=1"
+      "detail": "max_core_minus_stock_seconds=-3"
     },
     {
       "name": "overseas_runtime:structured",
