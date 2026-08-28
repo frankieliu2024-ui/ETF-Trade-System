@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-28T04:47:21Z",
-  "generated_at_beijing": "2026-08-28T12:47:21+08:00",
+  "generated_at": "2026-08-28T05:28:14Z",
+  "generated_at_beijing": "2026-08-28T13:28:14+08:00",
   "repository": {
-    "head_sha": "4ba98bff70ebac4db1a2b82d7a866937d340e7d0",
-    "github_sha": "4ba98bff70ebac4db1a2b82d7a866937d340e7d0",
-    "github_run_id": "33142813441",
+    "head_sha": "29450389a4c8f9131b2980c07b150732516490b9",
+    "github_sha": "29450389a4c8f9131b2980c07b150732516490b9",
+    "github_run_id": "33144845473",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "4ba98bff70ebac4db1a2b82d7a866937d340e7d0",
-    "workflow_sha": "4ba98bff70ebac4db1a2b82d7a866937d340e7d0",
+    "checked_commit": "29450389a4c8f9131b2980c07b150732516490b9",
+    "workflow_sha": "29450389a4c8f9131b2980c07b150732516490b9",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "PASS",
+  "status": "WARNING",
   "hard_error_count": 0,
-  "warning_count": 0,
+  "warning_count": 1,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "..............................\n----------------------------------------------------------------------\nRan 30 tests in 0.022s\n\nOK\n"
+      "detail": "..............................\n----------------------------------------------------------------------\nRan 30 tests in 0.032s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -235,12 +235,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=4ba98bff70ebac4db1a2b82d7a866937d340e7d0"
+      "detail": "HEAD=29450389a4c8f9131b2980c07b150732516490b9"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=4ba98bff70ebac4db1a2b82d7a866937d340e7d0 GITHUB_SHA=4ba98bff70ebac4db1a2b82d7a866937d340e7d0"
+      "detail": "HEAD=29450389a4c8f9131b2980c07b150732516490b9 GITHUB_SHA=29450389a4c8f9131b2980c07b150732516490b9"
     },
     {
       "name": "git:critical_files_tracked",
@@ -670,7 +670,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=00:47 max_age_seconds=27141 limit=900"
+      "detail": "active=False phase=01:28 max_age_seconds=29594 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -785,12 +785,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=1655"
+      "detail": "declared=STALE expected=STALE age_seconds=4107"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=1655"
+      "detail": "declared=STALE expected=STALE age_seconds=4107"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -830,7 +830,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-28T04:47:21Z market=2026-08-28T12:19:46+08:00"
+      "detail": "context=2026-08-28T05:28:13Z market=2026-08-28T12:19:46+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -920,17 +920,17 @@
     {
       "name": "runtime_health:structured",
       "status": "PASS",
-      "detail": "status=PASS"
+      "detail": "status=SKIPPED"
     },
     {
-      "name": "runtime_health:pass_requires_snapshot",
-      "status": "PASS",
-      "detail": "runtime_snapshot=data/market/snapshots/2026-08-28_121946.json current_snapshot=data/market/snapshots/2026-08-28_121946.json"
+      "name": "runtime_health:skipped_reason",
+      "status": "WARNING",
+      "detail": "failure_stage= reason=morning_close_already_recorded"
     },
     {
       "name": "a_share_runtime:live_state_available",
       "status": "PASS",
-      "detail": "runtime_status=PASS current_snapshot=data/market/snapshots/2026-08-28_121946.json"
+      "detail": "runtime_status=SKIPPED current_snapshot=data/market/snapshots/2026-08-28_121946.json"
     },
     {
       "name": "a_share_runtime:current_ready",
@@ -950,7 +950,7 @@
     {
       "name": "a_share_runtime:market_date_alignment",
       "status": "PASS",
-      "detail": "snapshot=2026-08-28 current=2026-08-28 health=2026-08-28 query_only=False"
+      "detail": "snapshot=2026-08-28 current=2026-08-28 health=2026-08-28 query_only=True"
     },
     {
       "name": "a_share_runtime:etf_complete",
@@ -1714,7 +1714,9 @@
     }
   ],
   "errors": [],
-  "warnings": [],
+  "warnings": [
+    "runtime_health:skipped_reason: failure_stage= reason=morning_close_already_recorded"
+  ],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
   "production_mutation_protocol": {
     "status": "PASS",
