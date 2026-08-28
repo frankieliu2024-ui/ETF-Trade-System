@@ -99,7 +99,9 @@
 
 ## 盘中快速回复与异步维护
 
-用户回复优先于文档维护。ChatGPT收到券商截图或正式盘中检查请求时，固定按以下顺序执行：
+用户回复优先于文档维护。ChatGPT收到券商截图或正式盘中检查请求时，固定按以下顺序执行。
+
+**盘中正式分析强制快速路径**：凡用户提出“盘中分析”“当前判断”“最新行情”“现在行情”或其他需要当前交易时点事实的正式请求，必须先按**请求发生时的北京时间**重新判定 `interaction_scenario`，不得沿用上一条消息、上一张截图或上一分析节点的时段。若当前为 `INTRADAY`，则在任何大范围GitHub资料扫描之前立即创建 `requests/live_snapshot/*.json` 查询时补采；补采等待期间只读取形成本次判断的最小必要事实：MASTER中相关规则、最新 `account_fact.json`、聚合 `decision_context.json`。除非三者之间存在冲突或某项具体证据确实可能改变风险许可、机会、金额或卖出动作，否则不得在首次正式回复前串行展开Dashboard全文、经验库、行情档案、`review_context`、`market_delta`、full consistency、维护状态或其他已被 `decision_context` 聚合的重复信息。新 `CURRENT` 在 `runtime_policy.json` 的短等待预算内到达即优先使用并立即形成最小充分判断；补采超时或失败才按现有freshness规则降级回退，并必须明确标注。首次正式回复只等待会改变当次交易判断的必要输入，其余状态持久化、派生上下文重建、文档维护和一致性审计继续异步完成，不得阻塞用户回复。该规则只约束读取和等待顺序，不新增workflow、checker、provider调用体系或平行decision bundle，不改变MASTER交易规则和生产行情链。
 
 1. 先从截图确认当次账户、持仓、现金和成交事实，并确定 `interaction_scenario`；
 2. 需要当前市场行情时立即通过 `requests/live_snapshot/*.json` 触发查询时补采，查询时行情优先于最近生产快照；午间和收盘后则使用对应已结束A股时段的正式快照，不把请求时间冒充行情时间；
