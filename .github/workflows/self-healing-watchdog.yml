@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - "scripts/runtime_self_heal.py"
+      - "scripts/production_health_guard.py"
       - "config/runtime_policy.json"
       - ".github/workflows/self-healing-watchdog.yml"
       - ".github/workflows/us-extended-hours-pulse.yml"
@@ -156,6 +157,11 @@ jobs:
           fi
           gh workflow run us-extended-hours-pulse.yml --ref main
           echo "Dispatched canonical US pulse because dedicated heartbeat was stale."
+
+      - name: Run read-only comprehensive production health aggregate
+        shell: bash
+        run: |
+          python scripts/production_health_guard.py
 
       - name: Rebuild derived contexts safely
         if: ${{ steps.assess.outputs.action == 'REBUILD_DERIVED_CONTEXTS' }}
