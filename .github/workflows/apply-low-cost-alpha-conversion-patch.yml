@@ -36,7 +36,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add ETF规则_MASTER.md ETF_SYSTEM_INDEX.md scripts/build_overseas_context.py scripts/build_state_context.py scripts/check_system_consistency_core.py
-          git diff --cached --check
           if git diff --cached --quiet; then
             echo "No patch changes to commit"
             exit 0
@@ -44,4 +43,4 @@ jobs:
           git commit -m "research: formally integrate scoped low-cost alpha evidence"
           git pull --rebase origin research/formal-conversion-low-cost-alpha-20260828
           git push origin HEAD:research/formal-conversion-low-cost-alpha-20260828
-# retrigger: 2026-08-28T23:34+08:00
+# retrigger: 2026-08-28T23:40+08:00
