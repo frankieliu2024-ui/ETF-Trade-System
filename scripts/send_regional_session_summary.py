@@ -31,6 +31,13 @@ APAC_SPECS = [
     ("HSTECH", "恒生科技指数（HSTECH）"),
 ]
 
+# Only explicit transmission relationships are named in user-facing APAC alerts.
+# The mapping supplies context, not trading permission.
+APAC_DIRECT_ETF = {
+    "N225": ("513520", "日经ETF（513520）"),
+    "HSTECH": ("513180", "恒生科技ETF（513180）"),
+}
+
 
 def _minute_now() -> int:
     dt = datetime.now(BEIJING)
@@ -238,6 +245,122 @@ def _a_share_reference(today: str) -> tuple[list[str], str]:
     return lines, max(times) if times else str(snapshot.get("captured_at_beijing") or "")
 
 
+def _a_share_feedback(today: str) -> tuple[str, dict[str, dict], str]:
+    current = read_json(CURRENT, {})
+    if str(current.get("market_date") or "") != today:
+        return "A股当日同步数据不可用", {}, ""
+    snapshot_path = ROOT / str(current.get("latest_snapshot") or "")
+    if not snapshot_path.exists():
+        return "A股当日同步数据不可用", {}, ""
+    snapshot = read_json(snapshot_path, {})
+    rows = [x for x in (snapshot.get("rows") or []) if x.get("quality_status") == "PASS"]
+    row_map = {str(x.get("symbol") or ""): x for x in rows}
+    index_names = {"000001": "上证指数（000001）", "000688": "科创50指数（000688）", "399006": "创业板指（399006）"}
+    parts = []
+    times = []
+    for code in ("000001", "000688", "399006"):
+        row = row_map.get(code)
+        if not row:
+            continue
+        parts.append(f"{index_names[code]}{pct(number(row.get('change_pct')))}")
+        if row.get("as_of_beijing"):
+            times.append(str(row.get("as_of_beijing")))
+    return ("、".join(parts) if parts else "A股核心指数同步数据不可用"), row_map, (max(times) if times else str(snapshot.get("captured_at_beijing") or ""))
+
+
+def _apac_lead_path(open_gap: float, current_ret: float | None) -> str:
+    if current_ret is None:
+        return f"实际开盘较前收{pct(open_gap)}，当前涨跌不可用，暂不能判断跳空是否延续。"
+    improvement = current_ret - open_gap
+    if open_gap < 0:
+        if current_ret >= 0:
+            state = "负面跳空已基本收复并回到前收上方"
+        elif improvement >= 0.6:
+            state = "负面跳空明显收窄"
+        elif improvement <= -0.4:
+            state = "低开后继续走弱，开盘冲击扩大"
+        else:
+            state = "低开后仍维持偏弱，开盘冲击尚未解除"
+        return f"低开{pct(open_gap)}后当前{pct(current_ret)}，{state}。"
+    if current_ret <= 0:
+        state = "正面跳空已基本回吐并跌回前收下方"
+    elif improvement <= -0.6:
+        state = "高开优势明显收窄"
+    elif improvement >= 0.4:
+        state = "高开后继续强化，开盘冲击扩大"
+    else:
+        state = "高开后仍保持偏强，开盘优势尚在"
+    return f"高开{pct(open_gap)}后当前{pct(current_ret)}，{state}。"
+
+
+def _apac_cross_market_line(selected: list[tuple[str, str, dict, dict]], lead_code: str) -> str:
+    peers = []
+    for code, label, obj, _ in selected:
+        if code == lead_code:
+            continue
+        ret = _apac_return(obj)
+        if ret is not None:
+            peers.append((ret, label))
+    if not peers:
+        return "其他亚太主要市场当前缺少足够可比数据。"
+    peers.sort(reverse=True)
+    return "其他市场对照：" + "、".join(f"{label}{pct(ret)}" for ret, label in peers) + "。"
+
+
+def _apac_quality_line(selected: list[tuple[str, str, dict, dict]], objects: dict, today: str) -> str:
+    same_day = []
+    for code, label in APAC_SPECS:
+        obj = objects.get(code) or {}
+        latest = obj.get("latest") or {}
+        if str(latest.get("market_date_local") or "") == today and latest.get("as_of_beijing"):
+            same_day.append((label, str(obj.get("quality_status") or "UNKNOWN"), str(obj.get("freshness_status") or "")))
+    degraded = [label for label, quality, freshness in same_day if quality != "PASS" or freshness in {"DELAYED", "STALE", "MISSING"}]
+    base = f"覆盖{len(same_day)}/4；触发判断使用PASS对象{len(selected)}/4"
+    if degraded:
+        return base + "；数据受限/延迟：" + "、".join(degraded) + "。"
+    return base + "；当前未发现需单列的数据质量降级。"
+
+
+def _apac_open_implication(lead_code: str, lead_label: str, lead_open_gap: float, lead_current: float | None, tone: str, today: str) -> tuple[str, str]:
+    a_share_text, row_map, a_time = _a_share_feedback(today)
+    if lead_open_gap < 0 and lead_current is not None and lead_current >= -0.2:
+        external = f"外部结构：{lead_label}低开冲击已经明显修复，当前不能把开盘负面跳空继续解释为新的区域风险强化。"
+    elif lead_open_gap > 0 and lead_current is not None and lead_current <= 0.2:
+        external = f"外部结构：{lead_label}高开优势已经明显回吐，当前不能把开盘正面跳空继续解释为新的区域风险强化。"
+    else:
+        external = f"外部结构：{lead_label}的实际开盘异常仍需结合当前{pct(lead_current)}和区域判断“{tone}”继续验证是否延续。"
+
+    local = f"本地传导：A股同步反馈为{a_share_text}；外部信号只有被A股自身价格结构接受，才可能改变当前ETF判断。"
+    direct = APAC_DIRECT_ETF.get(lead_code)
+    if direct:
+        etf_code, etf_label = direct
+        row = row_map.get(etf_code)
+        etf_ret = number(row.get("change_pct")) if row else None
+        etf_text = pct(etf_ret) if etf_ret is not None else "当前数据不可用"
+        etf = f"ETF自身反馈：直接相关的{etf_label}当前{etf_text}；该外部事件只作为其观察证据，不能绕过ETF自身结构、相对强弱、风险收益和资本效率。"
+    else:
+        etf = "ETF自身反馈：当前没有需要机械绑定的直接监测ETF，区域指数变化只进入跨市场证据层。"
+    opportunity = "机会判断：本通知不生成Trial/Confirm或卖出动作；只有外部结构、本地传导和ETF自身反馈共同改变正式判断时，才进入交易链。"
+    return external + "\n\n" + local + "\n\n" + etf + "\n\n" + opportunity, a_time
+
+
+def _render_apac_open(*, headline_lines: list[str], path_lines: list[str], implication: str, action: str, as_of_lines: list[str], boundary: str) -> str:
+    return (
+        "### 核心结论\n"
+        + "\n".join(headline_lines)
+        + "\n\n### 关键路径\n"
+        + "\n".join(path_lines)
+        + "\n\n### 对ETF系统的影响\n"
+        + implication
+        + "\n\n### 当前动作\n**"
+        + action
+        + "**\n\n### 数据与边界\n"
+        + "\n".join(as_of_lines)
+        + "\n"
+        + f"- **边界**：{boundary}"
+    )
+
+
 def _latest_primary_apac(today: str) -> dict | None:
     state = read_json(NOTIFICATION_STATE, {})
     for item in reversed(state.get("notifications") or []):
@@ -289,19 +412,38 @@ def _apac_event() -> dict | None:
         _, lead_code, lead_label, lead_open_gap = max(candidates, key=lambda x: x[0])
         direction = "UP" if lead_open_gap > 0 else "DOWN"
         tone = _apac_tone(selected)
-        headline, path_lines, times, _ = _apac_lines(selected, mark_hk_live=True)
-        lead_current = _apac_return(objects.get(lead_code) or {})
-        headline = [f"- **触发对象**：{lead_label}", f"- **实际开盘较前收**：{pct(lead_open_gap)}", f"- **当前较前收**：{pct(lead_current)}", f"- **当前区域判断**：{tone}", f"- **当日已取得有效行情市场数**：{len(selected)}/4"] + headline
+        lead_obj = objects.get(lead_code) or {}
+        lead_latest = lead_obj.get("latest") or {}
+        lead_current = _apac_return(lead_obj)
+        times = [str(latest.get("as_of_beijing")) for _, _, _, latest in selected if latest.get("as_of_beijing")]
+        path_lines = [
+            f"- **触发对象**：{_apac_lead_path(lead_open_gap, lead_current)}",
+            f"- **区域对照**：{_apac_cross_market_line(selected, lead_code)}",
+        ]
+        implication, a_time = _apac_open_implication(lead_code, lead_label, lead_open_gap, lead_current, tone, today)
+        headline = [
+            "- **节点**：亚太错位开盘异常",
+            f"- **触发对象**：{lead_label}",
+            f"- **实际开盘较前收**：{pct(lead_open_gap)}",
+            f"- **当前较前收**：{pct(lead_current)}",
+            f"- **区域结构**：{tone}",
+            f"- **数据质量**：{_apac_quality_line(selected, objects, today)}",
+        ]
         title = f"【异动提醒】{lead_label}实际开盘出现异常跳空"
-        content = render_summary(
-            headline_lines=["- **节点**：亚太错位开盘异常"] + headline,
+        content = _render_apac_open(
+            headline_lines=headline,
             path_lines=path_lines,
-            implication="亚太市场并不同步开盘；任一先开市场的实际开盘异常都可成为A股盘前/早盘证据，并持续验证其他市场及A股是否共振、减弱或背离。",
-            action="把该实际开盘异常纳入最近A股决策节点；开盘后的普通累计涨跌继续由统一异动引擎按快速重定价、极端波动、方向反转或显著分化判断。",
-            as_of_lines=[f"- **各市场最新有效时点上限**：{max(times) if times else '未提供'}", f"- **通知生成**：{now().strftime('%Y-%m-%d %H:%M:%S')}"],
-            boundary="亚太开盘不逢开必报；约0.8%的门槛只检查实际开盘价相对前收，不能用后续盘中累计涨跌替代开盘跳空。",
+            implication=implication,
+            action="把该事件纳入最近A股正式节点复核；不因单一海外/区域指数跳空机械买卖，重点看A股是否接受以及直接相关ETF自身反馈。",
+            as_of_lines=[
+                f"- **触发对象行情时点（北京时间）**：{lead_latest.get('as_of_beijing') or '未提供'}",
+                f"- **亚太对象最新有效时点上限**：{max(times) if times else '未提供'}",
+                f"- **A股同步参考时点**：{a_time or '未提供'}",
+                f"- **通知生成**：{now().strftime('%Y-%m-%d %H:%M:%S')}",
+            ],
+            boundary="约0.8%的门槛只检查实际开盘价相对前收；开盘后的累计涨跌不回填成开盘异常。覆盖数量与数据质量分开表达，DEGRADED/延迟对象不得被包装成全部实时FRESH。",
         )
-        return {"key": f"apac-open-signal:{today}:{lead_code}:{direction}", "type": "市场有价值事件", "event_type": "APAC_OPEN_SIGNAL", "title": title, "content": content, "source": "overseas_context", "security_code": lead_code, "security_name": lead_label.split("（")[0], "user_severity": "需要关注", "user_action": "纳入最近A股节点验证区域共振或背离，不机械交易", "confirmation_context": {"market_date": today, "session_node": "OPEN_SIGNAL", "lead_code": lead_code, "lead_open_gap_pct": lead_open_gap, "lead_change_pct": lead_current, "tone": tone, "market_as_of_beijing": max(times) if times else ""}}
+        return {"key": f"apac-open-signal:{today}:{lead_code}:{direction}", "type": "市场有价值事件", "event_type": "APAC_OPEN_SIGNAL", "title": title, "content": content, "source": "overseas_context+CURRENT", "security_code": lead_code, "security_name": lead_label.split("（")[0], "user_severity": "需要关注", "user_action": "纳入最近A股节点，检查本地传导和直接相关ETF自身反馈，不机械交易", "confirmation_context": {"market_date": today, "session_node": "OPEN_SIGNAL", "lead_code": lead_code, "lead_open_gap_pct": lead_open_gap, "lead_change_pct": lead_current, "tone": tone, "market_as_of_beijing": lead_latest.get("as_of_beijing") or (max(times) if times else ""), "a_share_as_of_beijing": a_time}}
 
     # Primary APAC close remains most valuable while A-share is still trading,
     # but may be recovered until Hong Kong close if GitHub/provider was delayed.
@@ -350,7 +492,7 @@ def main() -> int:
     if not event:
         print(json.dumps({"status": "NO_NOTIFICATION_NEEDED"}, ensure_ascii=False))
         return 0
-    result = persist_and_send(event, policy="开盘仅推有价值结构，但实际session事实允许在同日有效恢复；A股固定收盘允许延迟补发；亚太主要收盘优先服务A股尾盘、错过窄窗口后仍可恢复。阈值适度放宽，Point-in-Time与去重保持。")
+    result = persist_and_send(event, policy="开盘仅推有价值结构，但实际session事实允许在同日有效恢复；A股固定收盘允许延迟补发；亚太开盘通知优先表达触发对象关键路径、本地传导、直接相关ETF反馈及数据质量；亚太主要收盘优先服务A股尾盘、错过窄窗口后仍可恢复。阈值适度放宽，Point-in-Time与去重保持。")
     print(json.dumps(result, ensure_ascii=False))
     return 1 if result.get("status") == "CREATED" else 0
 
