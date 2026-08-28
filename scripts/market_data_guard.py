@@ -76,15 +76,24 @@ def validate_market_row(
         return False, "missing provider timestamp"
     now_dt = now or datetime.now(timezone.utc)
     provider_dt = datetime.fromtimestamp(ts_ms / 1000, timezone.utc)
-    if market_date and provider_dt.astimezone(now_dt.tzinfo or timezone.utc).date().isoformat() != market_date:
+    beijing = ZoneInfo("Asia/Shanghai")
+    provider_bj = provider_dt.astimezone(beijing)
+    now_bj = now_dt.astimezone(beijing)
+    if market_date and provider_bj.date().isoformat() != market_date:
         return False, f"wrong provider date: {provider_dt.isoformat()}"
     policy = runtime_policy or {}
     fresh_max = int(policy.get("fresh_max_age_seconds", 900))
     degraded_max = int(policy.get("degraded_max_age_seconds", 1500))
     age = max(0.0, (now_dt - provider_dt).total_seconds())
-    if age > degraded_max:
-        return False, f"stale provider timestamp age={age:.1f}s"
     phase = str(row.get("market_phase") or "")
+    provider_minute = provider_bj.hour * 60 + provider_bj.minute
+    midday_reference = (
+        phase == "MIDDAY_BREAK"
+        and provider_bj.date() == now_bj.date()
+        and 9 * 60 + 30 <= provider_minute <= 11 * 60 + 30
+    )
+    if age > degraded_max and not midday_reference:
+        return False, f"stale provider timestamp age={age:.1f}s"
     missing_fields = [
         key for key in ("open", "high", "low", "close", "prev_close")
         if row.get(key) in (None, "", "-")
@@ -122,9 +131,11 @@ def validate_market_row(
     if direct_only and ("proxy" in str(row.get("provider", "")).lower() or "proxy" in str(row.get("quality_status", "")).lower()):
         return False, "direct-only object cannot pass with proxy data"
     row["provider_timestamp_ms"] = ts_ms
-    row["as_of_beijing"] = provider_dt.astimezone(ZoneInfo("Asia/Shanghai")).isoformat(timespec="seconds")
+    row["as_of_beijing"] = provider_bj.isoformat(timespec="seconds")
     row["freshness_at_validation_seconds"] = round(age, 3)
-    row["freshness_status"] = "FRESH" if age <= fresh_max else "DEGRADED"
+    row["freshness_status"] = "SESSION_REFERENCE" if midday_reference else ("FRESH" if age <= fresh_max else "DEGRADED")
+    if midday_reference:
+        row["freshness_semantics"] = "A_SHARE_MORNING_SESSION_REFERENCE_DURING_MIDDAY_BREAK"
     return True, ""
 
 
