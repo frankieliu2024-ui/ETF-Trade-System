@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.3",
+  "schema_version": "1.4",
   "scope": "TENCENT_ETF_1M_REAL_INTRADAY_VALIDATION",
   "timezone": "Asia/Shanghai",
   "evidence_contract": {
@@ -44,6 +44,18 @@
     "quote_alignment_max_abs_diff_pct": 0.25,
     "quote_comparable_max_seconds": 90,
     "github_actions_stability_required": true
+  },
+  "point_in_time_semantics": {
+    "rule": "生产与验证只能消费不晚于同时抓取腾讯quote provider timestamp的分钟点；晚于quote时点的分钟标签视为CURRENT_OPEN_OR_FUTURE_BUCKET，不得用于路径极值、斜率、新鲜度或正式结构解释。",
+    "future_bucket_action": "EXCLUDE_FROM_USABLE_PATH_AND_RECORD_DIAGNOSTIC",
+    "freshness_reference": "SIMULTANEOUS_TENCENT_QUOTE_TIMESTAMP_WHEN_AVAILABLE_ELSE_LOCAL_CAPTURE_TIME"
+  },
+  "production_object_fallback": {
+    "mode": "PER_ETF_OBJECT",
+    "minute_item_required": ["status=READY", "freshness_pass=true", "sampling.continuity_pass=true", "quote_alignment.pass=true", "point_in_time_pass=true"],
+    "failure_action": "ONLY_FAILED_ETF_FALLS_BACK_TO_DISCRETE_SNAPSHOT_PATH",
+    "systemic_failure_action": "ALL_OBJECTS_MAY_FALL_BACK_WHEN_MINUTE_SOURCE_OR_QUOTE_BATCH_IS_SYSTEMICALLY_UNAVAILABLE",
+    "formal_validation_boundary": "对象级生产fallback不得改变shadow正式验证的11只ETF全覆盖、全质量门通过要求。"
   },
   "quote_alignment_semantics": "活动盘中不得用数分钟前的CURRENT快照作为硬性分钟价一致性门槛；shadow脚本应同时抓取腾讯quote endpoint并以provider timestamp判断是否可比。CURRENT仅保留为上下文参照，正式最新价仍由quote router决定。",
   "decision_levels": {
