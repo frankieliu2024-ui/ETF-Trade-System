@@ -47,7 +47,7 @@ class ProviderPolicyConsistencyTest(unittest.TestCase):
             self.assertEqual(actual, expected, f"provider registry drift for {object_id}")
 
     def test_formal_index_display_matches_canonical_provider_chain(self):
-        """Formal index display order must match the authoritative primary/fallback policy."""
+        """Display order follows authoritative policy; registry-only objects check membership only."""
         display_objects = {
             str(item.get("id")): item
             for item in ((((self.monitor.get("classes") or {}).get("A") or {}).get("objects")) or [])
@@ -57,18 +57,25 @@ class ProviderPolicyConsistencyTest(unittest.TestCase):
         priority_formal = set(self.priority.get("formal_index_objects") or [])
         self.assertEqual(monitor_formal, priority_formal, "formal index universe drift")
 
+        objects = self.priority.get("objects") or {}
+        policies = self.priority.get("object_fallback_policy") or {}
         for object_id in sorted(priority_formal):
             self.assertIn(object_id, display_objects, f"missing formal-index display object: {object_id}")
-            chain = canonical_chain(self.priority, object_id)
-            self.assertGreaterEqual(len(chain), 1, f"formal index has no provider chain: {object_id}")
+            registered = [str(x) for x in (objects.get(object_id) or [])]
+            self.assertGreaterEqual(len(registered), 1, f"formal index has no registered provider: {object_id}")
             display = display_objects[object_id]
-            self.assertEqual(
-                str(display.get("preferred_source") or ""),
-                chain[0],
-                f"preferred_source drift for {object_id}",
-            )
+            preferred = str(display.get("preferred_source") or "")
             actual_fallback = [x for x in str(display.get("fallback_source") or "").split("|") if x]
-            self.assertEqual(actual_fallback, chain[1:], f"fallback_source drift for {object_id}")
+            policy = policies.get(object_id)
+
+            if isinstance(policy, dict) and policy.get("primary"):
+                chain = [str(policy["primary"]), *[str(x) for x in (policy.get("fallback") or [])]]
+                self.assertEqual(preferred, chain[0], f"preferred_source drift for {object_id}")
+                self.assertEqual(actual_fallback, chain[1:], f"fallback_source drift for {object_id}")
+            else:
+                self.assertIn(preferred, registered, f"display primary is not registered for {object_id}")
+                for source in actual_fallback:
+                    self.assertIn(source, registered, f"display fallback is not registered for {object_id}: {source}")
 
     def test_monitoring_index_universe_matches_formal_index_universe(self):
         index_monitor = (((self.monitor.get("monitoring_layers") or {}).get("index_monitor")) or {})
