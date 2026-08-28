@@ -1,0 +1,43 @@
+name: Low-cost alpha validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/low-cost-alpha-validation-20260828
+    paths:
+      - "scripts/run_low_cost_alpha_batch1.py"
+      - ".github/workflows/low-cost-alpha-validation.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-low-cost-alpha-validation
+  cancel-in-progress: true
+
+jobs:
+  batch1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install research dependencies
+        run: python -m pip install --upgrade pip numpy pandas requests
+      - name: Compile
+        run: python -m py_compile scripts/run_low_cost_alpha_batch1.py
+      - name: Run batch 1-4 research-only validation
+        working-directory: scripts
+        run: python run_low_cost_alpha_batch1.py
+      - name: Upload research evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: low-cost-alpha-validation-${{ github.run_id }}
+          path: research/backtests/low_cost_alpha_batch1_validation.json
+          if-no-files-found: error
+          retention-days: 14
