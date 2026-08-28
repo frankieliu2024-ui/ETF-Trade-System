@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-28T07:54:59Z",
-  "generated_at_beijing": "2026-08-28T15:54:59+08:00",
+  "generated_at": "2026-08-28T07:57:03Z",
+  "generated_at_beijing": "2026-08-28T15:57:03+08:00",
   "repository": {
-    "head_sha": "587ca78909e6558c174e8c354c48893280cee396",
-    "github_sha": "587ca78909e6558c174e8c354c48893280cee396",
-    "github_run_id": "33153237871",
+    "head_sha": "3673b73e5768c1bceb6d641a6e4d4f6a5d66ceee",
+    "github_sha": "3673b73e5768c1bceb6d641a6e4d4f6a5d66ceee",
+    "github_run_id": "33153370306",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "587ca78909e6558c174e8c354c48893280cee396",
-    "workflow_sha": "587ca78909e6558c174e8c354c48893280cee396",
+    "checked_commit": "3673b73e5768c1bceb6d641a6e4d4f6a5d66ceee",
+    "workflow_sha": "3673b73e5768c1bceb6d641a6e4d4f6a5d66ceee",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
@@ -20,7 +20,7 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "FAIL",
-      "detail": ")\nEvery formal object policy must equal the provider chain declared for that object.\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_provider_display_sync.py\", line 41, in test_object_policy_matches_declared_object_chain\n    self.assertEqual(actual, expected, f\"provider chain drift for {object_id}\")\nAssertionError: Lists differ: ['hithink-finance:HS2083', 'yahoo_chart_api[57 chars]180'] != ['eastmoney_push2:124.HSTECH', 'yahoo_chart[57 chars]180']\n\nFirst differing element 0:\n'hithink-finance:HS2083'\n'eastmoney_push2:124.HSTECH'\n\n- ['hithink-finance:HS2083',\n+ ['eastmoney_push2:124.HSTECH',\n   'yahoo_chart_api:HSTECH.HK',\n-  'eastmoney_push2:124.HSTECH',\n+  'hithink-finance:HS2083',\n   'ETF_PROXY_513180'] : provider chain drift for HSTECH\n\n----------------------------------------------------------------------\nRan 44 tests in 0.040s\n\nFAILED (failures=2)\n"
+      "detail": "========================================\nFAIL: test_formal_index_display_matches_canonical_provider_chain (test_market_provider_display_sync.ProviderPolicyConsistencyTest.test_formal_index_display_matches_canonical_provider_chain)\nFormal index display order must match the authoritative primary/fallback policy.\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_provider_display_sync.py\", line 71, in test_formal_index_display_matches_canonical_provider_chain\n    self.assertEqual(actual_fallback, chain[1:], f\"fallback_source drift for {object_id}\")\nAssertionError: Lists differ: [] != ['ETF_PROXY_SOXQ']\n\nSecond list contains 1 additional elements.\nFirst extra element 0:\n'ETF_PROXY_SOXQ'\n\n- []\n+ ['ETF_PROXY_SOXQ'] : fallback_source drift for SOX\n\n----------------------------------------------------------------------\nRan 44 tests in 0.025s\n\nFAILED (failures=1)\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -235,12 +235,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=587ca78909e6558c174e8c354c48893280cee396"
+      "detail": "HEAD=3673b73e5768c1bceb6d641a6e4d4f6a5d66ceee"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=587ca78909e6558c174e8c354c48893280cee396 GITHUB_SHA=587ca78909e6558c174e8c354c48893280cee396"
+      "detail": "HEAD=3673b73e5768c1bceb6d641a6e4d4f6a5d66ceee GITHUB_SHA=3673b73e5768c1bceb6d641a6e4d4f6a5d66ceee"
     },
     {
       "name": "git:critical_files_tracked",
@@ -670,7 +670,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=03:54 max_age_seconds=38399 limit=900"
+      "detail": "active=False phase=03:57 max_age_seconds=38523 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -785,12 +785,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=2540"
+      "detail": "declared=STALE expected=STALE age_seconds=2665"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=2540"
+      "detail": "declared=STALE expected=STALE age_seconds=2664"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -830,7 +830,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-28T07:54:58Z market=2026-08-28T15:12:38+08:00"
+      "detail": "context=2026-08-28T07:57:02Z market=2026-08-28T15:12:38+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1714,7 +1714,7 @@
     }
   ],
   "errors": [
-    "tests:market_data_and_quote_router: )\nEvery formal object policy must equal the provider chain declared for that object.\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_provider_display_sync.py\", line 41, in test_object_policy_matches_declared_object_chain\n    self.assertEqual(actual, expected, f\"provider chain drift for {object_id}\")\nAssertionError: Lists differ: ['hithink-finance:HS2083', 'yahoo_chart_api[57 chars]180'] != ['eastmoney_push2:124.HSTECH', 'yahoo_chart[57 chars]180']\n\nFirst differing element 0:\n'hithink-finance:HS2083'\n'eastmoney_push2:124.HSTECH'\n\n- ['hithink-finance:HS2083',\n+ ['eastmoney_push2:124.HSTECH',\n   'yahoo_chart_api:HSTECH.HK',\n-  'eastmoney_push2:124.HSTECH',\n+  'hithink-finance:HS2083',\n   'ETF_PROXY_513180'] : provider chain drift for HSTECH\n\n----------------------------------------------------------------------\nRan 44 tests in 0.040s\n\nFAILED (failures=2)\n"
+    "tests:market_data_and_quote_router: ========================================\nFAIL: test_formal_index_display_matches_canonical_provider_chain (test_market_provider_display_sync.ProviderPolicyConsistencyTest.test_formal_index_display_matches_canonical_provider_chain)\nFormal index display order must match the authoritative primary/fallback policy.\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_provider_display_sync.py\", line 71, in test_formal_index_display_matches_canonical_provider_chain\n    self.assertEqual(actual_fallback, chain[1:], f\"fallback_source drift for {object_id}\")\nAssertionError: Lists differ: [] != ['ETF_PROXY_SOXQ']\n\nSecond list contains 1 additional elements.\nFirst extra element 0:\n'ETF_PROXY_SOXQ'\n\n- []\n+ ['ETF_PROXY_SOXQ'] : fallback_source drift for SOX\n\n----------------------------------------------------------------------\nRan 44 tests in 0.025s\n\nFAILED (failures=1)\n"
   ],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
