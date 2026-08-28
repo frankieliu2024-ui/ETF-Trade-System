@@ -97,9 +97,6 @@ EASTMONEY_FALLBACK_INDICES = load_eastmoney_fallback_indices()
 RETRY_LIMIT = int(os.environ.get("HITHINK_RETRY_LIMIT", POLICY["provider_retry_limit"]))
 TIMEOUT_SECONDS = int(os.environ.get("HITHINK_TIMEOUT_SECONDS", POLICY["provider_timeout_seconds"]))
 MAX_WORKERS = int(os.environ.get("HITHINK_MAX_WORKERS", POLICY["provider_max_workers"]))
-
-# Run-local circuit breaker: bypass a transiently unavailable primary for the
-# remainder of this run, without persisting a provider disable decision.
 PRIMARY_RUN_BYPASS = threading.Event()
 CLOSE_GRACE_SECONDS = int(POLICY.get("close_grace_seconds", 900))
 
@@ -124,12 +121,12 @@ def provider_as_of_beijing(timestamp_ms: object) -> str:
 
 def a_share_market_phase(captured_dt: datetime) -> str:
     minute = captured_dt.hour * 60 + captured_dt.minute
-    # 09:25-09:29 is still pre-continuous trading. A delayed scheduled runner
-    # may capture the final opening-auction result here; keep auction semantics.
     if 9 * 60 + 15 <= minute < 9 * 60 + 30:
         return "OPENING_CALL_AUCTION"
     if 9 * 60 + 30 <= minute <= 11 * 60 + 30:
         return "CONTINUOUS_MORNING"
+    if 11 * 60 + 30 < minute < 13 * 60:
+        return "MIDDAY_BREAK"
     if 13 * 60 <= minute < 14 * 60 + 57:
         return "CONTINUOUS_AFTERNOON"
     if 14 * 60 + 57 <= minute <= 15 * 60:
@@ -145,22 +142,30 @@ def in_a_share_capture_window(captured_dt: datetime) -> bool:
     minute = captured_dt.hour * 60 + captured_dt.minute
     opening_auction = 9 * 60 + 15 <= minute < 9 * 60 + 30
     morning = 9 * 60 + 30 <= minute <= 11 * 60 + 30
+    midday_reference = 11 * 60 + 30 < minute < 13 * 60
     afternoon = 13 * 60 <= minute <= 15 * 60
     close_grace_end = 15 * 60 + max(1, CLOSE_GRACE_SECONDS // 60)
     close_grace = 15 * 60 < minute <= close_grace_end
-    return opening_auction or morning or afternoon or close_grace
+    return opening_auction or morning or midday_reference or afternoon or close_grace
 
 
 def resolve_scheduled_node(captured_dt: datetime) -> str:
     minute = captured_dt.hour * 60 + captured_dt.minute
     if 9 * 60 + 15 <= minute < 9 * 60 + 30:
         return "auction"
+    if 11 * 60 + 30 < minute < 13 * 60:
+        return "1130"
     return "close" if minute >= 15 * 60 else "live"
 
 
 def close_already_recorded(market_date: str) -> bool:
     current = read_current(ROOT)
     return current.get("market_date") == market_date and current.get("latest_valid_node") == "close" and current.get("node_status") == "READY"
+
+
+def morning_close_already_recorded(market_date: str) -> bool:
+    current = read_current(ROOT)
+    return current.get("market_date") == market_date and current.get("latest_valid_node") == "1130" and current.get("node_status") == "READY"
 
 
 def cli_path() -> str:
@@ -231,7 +236,7 @@ def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, pr
         and provider_ts not in (None, "")
     )
     no_trade_partial = (
-        market_phase in {"CONTINUOUS_MORNING", "CONTINUOUS_AFTERNOON", "CLOSING_CALL_AUCTION"}
+        market_phase in {"CONTINUOUS_MORNING", "MIDDAY_BREAK", "CONTINUOUS_AFTERNOON", "CLOSING_CALL_AUCTION"}
         and bool(missing)
         and set(missing).issubset({"open_price", "high_price", "low_price", "volume", "turnover"})
         and item.get("last_price") is not None
@@ -257,7 +262,8 @@ def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, pr
         if explicit_halt
         else ("OPENING_CALL_AUCTION阶段provider尚未形成完整日内OHLC；保留最新价、昨收、成交量、成交额和provider时点，禁止用旧OHLC补齐。"
         if auction_partial
-        else ("交易中provider仅返回最新价和昨收，未产生可用新成交量/OHLC；保留事实并标记为延迟/无新成交，不用旧OHLC补齐。" if no_trade_partial else ("OPENING_CALL_AUCTION阶段仅按集合竞价时点快照解释，不与连续竞价最新成交语义混用。" if market_phase == "OPENING_CALL_AUCTION" else "")))
+        else ("MIDDAY_BREAK仅表示上午交易已结束后的最后有效事实；保留真实provider上午时点，不按午间可成交行情解释。" if market_phase == "MIDDAY_BREAK"
+        else ("交易中provider仅返回最新价和昨收，未产生可用新成交量/OHLC；保留事实并标记为延迟/无新成交，不用旧OHLC补齐。" if no_trade_partial else ("OPENING_CALL_AUCTION阶段仅按集合竞价时点快照解释，不与连续竞价最新成交语义混用。" if market_phase == "OPENING_CALL_AUCTION" else ""))))
     )
     return {
         "asset_class": asset_class, "symbol": code, "thscode": thscode,
@@ -275,7 +281,7 @@ def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, pr
         "quality_status": quality_status,
         "semantic_note": semantic_note,
         "trading_status": item.get("trading_status", "TRADING"),
-        "tradable": item.get("tradable", True),
+        "tradable": False if market_phase == "MIDDAY_BREAK" else item.get("tradable", True),
         "provider_status_code": item.get("provider_status_code", ""),
     }
 
@@ -287,6 +293,11 @@ def eastmoney_timestamp_ms(value: object) -> int:
     if number < 10_000_000_000:
         number *= 1000
     return int(number)
+
+
+def _midday_provider_reference_ok(provider_dt: datetime, now_dt: datetime, market_phase: str) -> bool:
+    minute = provider_dt.hour * 60 + provider_dt.minute
+    return market_phase == "MIDDAY_BREAK" and provider_dt.date() == now_dt.date() and 9 * 60 + 30 <= minute <= 11 * 60 + 30
 
 
 def fetch_eastmoney_index(code: str, thscode: str, market_phase: str) -> dict:
@@ -306,7 +317,7 @@ def fetch_eastmoney_index(code: str, thscode: str, market_phase: str) -> dict:
     provider_ts = eastmoney_timestamp_ms(data.get("f86"))
     provider_dt = datetime.fromtimestamp(provider_ts / 1000, tz=SHANGHAI)
     now_dt = now_shanghai()
-    if provider_dt.date() != now_dt.date() or abs((now_dt - provider_dt).total_seconds()) > max(60, int(POLICY["degraded_max_age_seconds"])):
+    if provider_dt.date() != now_dt.date() or (abs((now_dt - provider_dt).total_seconds()) > max(60, int(POLICY["degraded_max_age_seconds"])) and not _midday_provider_reference_ok(provider_dt, now_dt, market_phase)):
         raise RuntimeError(f"Eastmoney index {code} provider timestamp is stale: {provider_dt.isoformat()}")
     item = {**fields, "price_change_ratio_pct": ((fields["last_price"] / fields["prev_price"]) - 1) * 100 if fields["prev_price"] else None}
     candidate = row("A_SHARE_INDEX", code, thscode, item, now_dt.isoformat(timespec="seconds"), provider_ts, market_phase, provider="eastmoney_push2", provider_primary="hithink-finance", fallback_used=True, fallback_reason="hithink-finance index snapshot unavailable or invalid; verified direct Eastmoney quote") | {"provider_symbol": f"{'1' if thscode.endswith('.SH') else '0'}.{code}", "provider_timestamp_field": "f86", "volume_raw": data.get("f47"), "volume_unit_raw": "hand", "volume_unit": "share", "amount_raw": data.get("f48"), "amount_unit": "CNY", "provider_name": str(data.get("f58", ""))}
@@ -324,30 +335,15 @@ def failed_index_row(code: str, thscode: str, error: str, market_phase: str) -> 
 def fetch_tencent_a_share(asset_class: str, code: str, thscode: str, market_phase: str) -> dict:
     quote = fetch_tencent_quotes([thscode], timeout=min(TIMEOUT_SECONDS, 10))[str(thscode).upper()]
     received = now_shanghai()
-    candidate = row(
-        asset_class, code, thscode, quote, received.isoformat(timespec="seconds"),
-        quote["provider_timestamp_ms"], market_phase,
-        provider="tencent_qq", provider_primary="tencent_qq",
-    )
+    candidate = row(asset_class, code, thscode, quote, received.isoformat(timespec="seconds"), quote["provider_timestamp_ms"], market_phase, provider="tencent_qq", provider_primary="tencent_qq")
     candidate.update({
-        "provider_symbol": quote["provider_symbol"],
-        "provider_timestamp_field": "Tencent field 30",
-        "volume_raw": quote.get("volume"),
-        "volume_unit": "share",
-        "amount_raw": quote.get("turnover"),
-        "amount_unit": "CNY",
-        "provider_name": quote.get("name"),
-        "provider_price_change_amount": quote.get("provider_price_change_amount"),
-        "provider_price_change_ratio_pct": quote.get("provider_price_change_ratio_pct"),
-        "change_pct_source": quote.get("change_pct_source"),
-        "provider_field_31_semantics": quote.get("provider_field_31_semantics"),
-        "provider_field_32_semantics": quote.get("provider_field_32_semantics"),
+        "provider_symbol": quote["provider_symbol"], "provider_timestamp_field": "Tencent field 30",
+        "volume_raw": quote.get("volume"), "volume_unit": "share", "amount_raw": quote.get("turnover"), "amount_unit": "CNY",
+        "provider_name": quote.get("name"), "provider_price_change_amount": quote.get("provider_price_change_amount"),
+        "provider_price_change_ratio_pct": quote.get("provider_price_change_ratio_pct"), "change_pct_source": quote.get("change_pct_source"),
+        "provider_field_31_semantics": quote.get("provider_field_31_semantics"), "provider_field_32_semantics": quote.get("provider_field_32_semantics"),
     })
-    ok, reason = validate_market_row(
-        candidate, code, expected_name=quote.get("name"),
-        market_date=received.date().isoformat(),
-        now=received.astimezone(UTC), runtime_policy=POLICY,
-    )
+    ok, reason = validate_market_row(candidate, code, expected_name=quote.get("name"), market_date=received.date().isoformat(), now=received.astimezone(UTC), runtime_policy=POLICY)
     if not ok:
         raise RuntimeError(f"Tencent {thscode} quality guard: {reason}")
     return candidate
@@ -356,12 +352,7 @@ def fetch_tencent_a_share(asset_class: str, code: str, thscode: str, market_phas
 def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
     if code not in EASTMONEY_FALLBACK_ETFS:
         raise RuntimeError(f"Eastmoney ETF fallback is not enabled for {code}")
-    params = {
-        "secid": f"{'1' if thscode.endswith('.SH') else '0'}.{code}",
-        "fltt": "2",
-        "invt": "2",
-        "fields": "f43,f44,f45,f46,f47,f48,f57,f58,f60,f86,f124",
-    }
+    params = {"secid": f"{'1' if thscode.endswith('.SH') else '0'}.{code}", "fltt": "2", "invt": "2", "fields": "f43,f44,f45,f46,f47,f48,f57,f58,f60,f86,f124"}
     url = "https://push2.eastmoney.com/api/qt/stock/get?" + urllib.parse.urlencode(params)
     request = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.15"})
     with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
@@ -374,54 +365,25 @@ def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
         raise RuntimeError(f"Eastmoney {code} missing security name")
     volume_raw = data.get("f47")
     amount_raw = data.get("f48")
-    fields = {
-        "open_price": data.get("f46"),
-        "high_price": data.get("f44"),
-        "low_price": data.get("f45"),
-        "last_price": data.get("f43"),
-        "prev_price": data.get("f60"),
-        "volume": int(float(volume_raw) * 100) if volume_raw not in (None, "", "-") else None,
-        "turnover": amount_raw,
-    }
+    fields = {"open_price": data.get("f46"), "high_price": data.get("f44"), "low_price": data.get("f45"), "last_price": data.get("f43"), "prev_price": data.get("f60"), "volume": int(float(volume_raw) * 100) if volume_raw not in (None, "", "-") else None, "turnover": amount_raw}
     provider_ts = eastmoney_timestamp_ms(data.get("f86"))
-    no_trade_partial = (
-        fields["last_price"] not in (None, "", "-")
-        and fields["prev_price"] not in (None, "", "-")
-        and provider_ts > 0
-        and all(fields[key] in (None, "", "-") for key in ("open_price", "high_price", "low_price", "volume", "turnover"))
-    )
+    no_trade_partial = fields["last_price"] not in (None, "", "-") and fields["prev_price"] not in (None, "", "-") and provider_ts > 0 and all(fields[key] in (None, "", "-") for key in ("open_price", "high_price", "low_price", "volume", "turnover"))
     if any(value in (None, "", "-") for value in fields.values()) and not no_trade_partial:
         raise RuntimeError(f"Eastmoney {code} missing direct ETF fields")
     if fields["volume"] not in (None, "", "-") and fields["volume"] < 0 or amount_raw not in (None, "", "-") and float(amount_raw) < 0:
         raise RuntimeError(f"Eastmoney {code} has negative volume or amount")
-    provider_ts = eastmoney_timestamp_ms(data.get("f86"))
     provider_dt = datetime.fromtimestamp(provider_ts / 1000, tz=SHANGHAI)
     now_dt = now_shanghai()
     if provider_dt.date() != now_dt.date():
         raise RuntimeError(f"Eastmoney {code} provider date is stale: {provider_dt.isoformat()}")
-    if abs((now_dt - provider_dt).total_seconds()) > max(60, int(POLICY["degraded_max_age_seconds"])):
+    if abs((now_dt - provider_dt).total_seconds()) > max(60, int(POLICY["degraded_max_age_seconds"])) and not _midday_provider_reference_ok(provider_dt, now_dt, market_phase):
         raise RuntimeError(f"Eastmoney {code} provider timestamp is stale: {provider_dt.isoformat()}")
     if not no_trade_partial and (fields["high_price"] < max(fields["open_price"], fields["last_price"]) or fields["low_price"] > min(fields["open_price"], fields["last_price"])):
         raise RuntimeError(f"Eastmoney {code} failed OHLC relationship")
-    item = {
-        **fields,
-        "price_change_ratio_pct": ((fields["last_price"] / fields["prev_price"]) - 1) * 100 if fields["prev_price"] else None,
-    }
-    candidate = row(
-        "ETF", code, thscode, item, now_dt.isoformat(timespec="seconds"), provider_ts, market_phase,
-        provider="eastmoney_push2", provider_primary="tencent_qq",
-        fallback_used=True,
-        fallback_reason="Tencent primary and Hithink fallback unavailable; verified direct Eastmoney push2 ETF quote",
-    ) | {
-        "provider_http_status": status_code,
-        "provider_symbol": f"{'1' if thscode.endswith('.SH') else '0'}.{code}",
-        "provider_name": str(data.get("f58")),
-        "provider_timestamp_field": "f86",
-        "volume_raw": data.get("f47"),
-        "volume_unit_raw": "hand",
-        "volume_unit": "share",
-        "amount_raw": data.get("f48"),
-        "amount_unit": "CNY",
+    item = {**fields, "price_change_ratio_pct": ((fields["last_price"] / fields["prev_price"]) - 1) * 100 if fields["prev_price"] else None}
+    candidate = row("ETF", code, thscode, item, now_dt.isoformat(timespec="seconds"), provider_ts, market_phase, provider="eastmoney_push2", provider_primary="tencent_qq", fallback_used=True, fallback_reason="Tencent primary and Hithink fallback unavailable; verified direct Eastmoney push2 ETF quote") | {
+        "provider_http_status": status_code, "provider_symbol": f"{'1' if thscode.endswith('.SH') else '0'}.{code}", "provider_name": str(data.get("f58")),
+        "provider_timestamp_field": "f86", "volume_raw": data.get("f47"), "volume_unit_raw": "hand", "volume_unit": "share", "amount_raw": data.get("f48"), "amount_unit": "CNY",
     }
     ok, reason = validate_market_row(candidate, code, expected_name=candidate.get("provider_name"), market_date=now_dt.date().isoformat(), now=now_dt.astimezone(UTC), runtime_policy=POLICY)
     if not ok:
@@ -430,20 +392,13 @@ def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
 
 
 def fetch_etf_market_snapshot(cli: str, run_dir: Path, code: str, thscode: str, market_phase: str) -> dict:
-    """Use the direct market endpoint when the fund endpoint does not cover an ETF."""
     obj = run_json(cli, ["market", "snapshot", "--thscodes", thscode], run_dir / f"ETF_{code}_market.json")
     items = obj.get("data", {}).get("item") or []
     exact = [item for item in items if str(item.get("thscode") or "") == thscode]
     if len(exact) != 1:
         raise RuntimeError(f"expected one direct market row for {code}, got {len(exact)}")
     received = now_shanghai()
-    candidate = row(
-        "ETF", code, thscode, exact[0], received.isoformat(timespec="seconds"),
-        obj.get("data", {}).get("timestamp"), market_phase,
-        provider="hithink-finance-market", provider_primary="hithink-finance",
-        fallback_used=True,
-        fallback_reason="fund snapshot unsupported; verified direct Hithink market snapshot",
-    )
+    candidate = row("ETF", code, thscode, exact[0], received.isoformat(timespec="seconds"), obj.get("data", {}).get("timestamp"), market_phase, provider="hithink-finance-market", provider_primary="hithink-finance", fallback_used=True, fallback_reason="fund snapshot unsupported; verified direct Hithink market snapshot")
     ok, reason = validate_market_row(candidate, code, market_date=received.date().isoformat(), now=received.astimezone(UTC), runtime_policy=POLICY)
     if not ok:
         raise RuntimeError(f"{code} direct market quality guard: {reason}")
@@ -456,7 +411,6 @@ def fetch_etf_with_fallback(cli: str, run_dir: Path, code: str, thscode: str) ->
         return fetch_tencent_a_share("ETF", code, thscode, a_share_market_phase(now_shanghai()))
     except Exception as error:
         tencent_error = error
-
     hithink_fund_error = RuntimeError("hithink-finance fund endpoint not attempted")
     if not PRIMARY_RUN_BYPASS.is_set():
         try:
@@ -465,34 +419,18 @@ def fetch_etf_with_fallback(cli: str, run_dir: Path, code: str, thscode: str) ->
             hithink_fund_error = error
     else:
         hithink_fund_error = RuntimeError("hithink-finance fund endpoint bypassed after a transient failure earlier in this run")
-
-    # The market snapshot endpoint is an independently validated direct endpoint
-    # within the same Hithink provider family. A fund-endpoint coverage failure
-    # must not prevent this object-level direct fallback from being attempted.
     hithink_market_error = RuntimeError("hithink-finance market endpoint not attempted")
     try:
-        return fetch_etf_market_snapshot(
-            cli, run_dir, code, thscode, a_share_market_phase(now_shanghai())
-        )
+        return fetch_etf_market_snapshot(cli, run_dir, code, thscode, a_share_market_phase(now_shanghai()))
     except Exception as error:
         hithink_market_error = error
-
     if code in EASTMONEY_FALLBACK_ETFS:
         try:
             return fetch_eastmoney_etf(code, thscode, a_share_market_phase(now_shanghai()))
         except Exception as fallback_error:
-            raise RuntimeError(
-                f"Tencent primary failed: {tencent_error}; "
-                f"Hithink fund fallback failed: {hithink_fund_error}; "
-                f"Hithink market fallback failed: {hithink_market_error}; "
-                f"Eastmoney fallback failed: {fallback_error}"
-            ) from fallback_error
+            raise RuntimeError(f"Tencent primary failed: {tencent_error}; Hithink fund fallback failed: {hithink_fund_error}; Hithink market fallback failed: {hithink_market_error}; Eastmoney fallback failed: {fallback_error}") from fallback_error
+    raise RuntimeError(f"Tencent primary failed: {tencent_error}; Hithink fund fallback failed: {hithink_fund_error}; Hithink market fallback failed: {hithink_market_error}")
 
-    raise RuntimeError(
-        f"Tencent primary failed: {tencent_error}; "
-        f"Hithink fund fallback failed: {hithink_fund_error}; "
-        f"Hithink market fallback failed: {hithink_market_error}"
-    )
 
 def fetch_etf(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
     obj = run_json(cli, ["fund", "snapshot", "--thscode", thscode], run_dir / f"ETF_{code}.json")
@@ -509,34 +447,7 @@ def fetch_etf(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
 
 def failed_etf_row(code: str, thscode: str, error: str, market_phase: str) -> dict:
     captured = now_shanghai().isoformat(timespec="seconds")
-    return {
-        "asset_class": "ETF",
-        "symbol": code,
-        "thscode": thscode,
-        "open": None,
-        "high": None,
-        "low": None,
-        "close": None,
-        "prev_close": None,
-        "change_pct": None,
-        "volume": None,
-        "amount": None,
-        "provider": "hithink-finance",
-        "provider_primary": "hithink-finance",
-        "provider_used": "hithink-finance",
-        "fallback_used": False,
-        "fallback_reason": "",
-        "provider_timestamp_ms": None,
-        "as_of_beijing": "",
-        "captured_at": captured,
-        "captured_at_beijing": captured,
-        "timezone": "Asia/Shanghai",
-        "market_phase": market_phase,
-        "quality_status": "FAILED",
-        "error": error[-500:],
-        "failure_class": classify_provider_failure(error),
-        "semantic_note": "该对象provider请求失败；未使用旧行情、代理或伪造OHLC补齐。"
-    }
+    return {"asset_class": "ETF", "symbol": code, "thscode": thscode, "open": None, "high": None, "low": None, "close": None, "prev_close": None, "change_pct": None, "volume": None, "amount": None, "provider": "hithink-finance", "provider_primary": "hithink-finance", "provider_used": "hithink-finance", "fallback_used": False, "fallback_reason": "", "provider_timestamp_ms": None, "as_of_beijing": "", "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai", "market_phase": market_phase, "quality_status": "FAILED", "error": error[-500:], "failure_class": classify_provider_failure(error), "semantic_note": "该对象provider请求失败；未使用旧行情、代理或伪造OHLC补齐。"}
 
 
 def is_newer_than_current(captured_dt: datetime) -> bool:
@@ -553,7 +464,6 @@ def is_newer_than_current(captured_dt: datetime) -> bool:
     return captured_dt > previous.astimezone(SHANGHAI)
 
 
-
 def retry_failed_snapshot() -> int:
     current = read_current(ROOT)
     latest_snapshot = str(current.get("latest_snapshot") or "")
@@ -561,10 +471,7 @@ def retry_failed_snapshot() -> int:
     if not latest_snapshot or not snapshot_path.exists():
         raise RuntimeError("cannot quick-retry without a current snapshot")
     snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
-    failed_rows = [
-        row for row in (snapshot.get("rows") or [])
-        if row.get("asset_class") == "ETF" and str(row.get("quality_status") or "").upper() in {"FAILED", "FAIL"}
-    ]
+    failed_rows = [row for row in (snapshot.get("rows") or []) if row.get("asset_class") == "ETF" and str(row.get("quality_status") or "").upper() in {"FAILED", "FAIL"}]
     if not failed_rows:
         print(json.dumps({"ok": True, "quick_retry": False, "reason": "no_failed_etf_objects"}, ensure_ascii=False))
         return 0
@@ -604,6 +511,7 @@ def retry_failed_snapshot() -> int:
     print(json.dumps({"ok": True, "quick_retry": True, "objects": sorted(replacements), "quality_status": quality, "captured_at_beijing": captured, "acquisition_seconds": elapsed}, ensure_ascii=False))
     return 0
 
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--node", default="manual", choices=sorted(NODES))
@@ -627,25 +535,21 @@ def main() -> int:
         return 0
 
     node = resolve_scheduled_node(run_started_dt) if args.node == "scheduled" else args.node
-    # Query-time/manual callers use a generic live label. During 09:15-09:29,
-    # normalize that label to the formal opening-auction node so CURRENT.node,
-    # snapshot.node and market_phase cannot disagree semantically.
     if market_phase == "OPENING_CALL_AUCTION" and node in {"live", "manual"}:
         node = "auction"
+    if market_phase == "MIDDAY_BREAK" and node in {"live", "manual"}:
+        node = "1130"
     planned_time = PLANNED_TIMES.get(node, "")
+
+    if args.node == "scheduled" and node == "1130" and morning_close_already_recorded(market_date):
+        current = read_current(ROOT)
+        write_runtime_health({"status": "SKIPPED", "reason": "morning_close_already_recorded", "market_date": market_date, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "market_phase": market_phase, "latest_snapshot": current.get("latest_snapshot", ""), "provider_as_of": (current.get("data_freshness") or {}).get("provider_as_of", "")})
+        print(json.dumps({"ok": True, "skipped": True, "reason": "morning_close_already_recorded", "market_date": market_date, "latest_snapshot": current.get("latest_snapshot", "")}, ensure_ascii=False))
+        return 0
 
     if args.node == "scheduled" and node == "close" and close_already_recorded(market_date):
         current = read_current(ROOT)
-        write_runtime_health({
-            "status": "SKIPPED",
-            "reason": "close_already_recorded",
-            "market_date": market_date,
-            "run_started_at": run_started_at,
-            "capture_started_at_beijing": capture_started_at,
-            "market_phase": market_phase,
-            "latest_snapshot": current.get("latest_snapshot", ""),
-            "provider_as_of": (current.get("data_freshness") or {}).get("captured_at_beijing", ""),
-        })
+        write_runtime_health({"status": "SKIPPED", "reason": "close_already_recorded", "market_date": market_date, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "market_phase": market_phase, "latest_snapshot": current.get("latest_snapshot", ""), "provider_as_of": (current.get("data_freshness") or {}).get("captured_at_beijing", "")})
         print(json.dumps({"ok": True, "skipped": True, "reason": "close_already_recorded", "market_date": market_date, "latest_snapshot": current.get("latest_snapshot", "")}, ensure_ascii=False))
         return 0
 
@@ -666,7 +570,7 @@ def main() -> int:
             code, thscode = futures[future]
             try:
                 rows.append(future.result())
-            except Exception as error:  # noqa: BLE001 - preserve object-level provider failure
+            except Exception as error:
                 failed = failed_etf_row(code, thscode, str(error), a_share_market_phase(now_shanghai()))
                 rows.append(failed)
                 print(json.dumps({"object_failure": failed}, ensure_ascii=False))
@@ -699,16 +603,7 @@ def main() -> int:
     providers_used = sorted({str(item.get("provider_used") or item.get("provider") or "") for item in rows if item.get("provider_used") or item.get("provider")})
     fallback_rows = [item for item in rows if item.get("fallback_used") is True]
     failed_rows = [item for item in rows if str(item.get("quality_status") or "").upper() in {"FAILED", "FAIL"}]
-    coverage = {
-        "planned_count": len(rows),
-        "primary_success_count": sum(1 for item in rows if item.get("fallback_used") is not True and str(item.get("quality_status") or "").upper() not in {"FAILED", "FAIL"}),
-        "fallback_success_count": len(fallback_rows),
-        "failed_count": len(failed_rows),
-        "failed_objects": [str(item.get("symbol") or "") for item in failed_rows],
-        "single_source_risk": ["000001"] if any(str(item.get("symbol")) == "000001" and item.get("quality_status") != "PASS" for item in rows) else [],
-        "auto_healed": bool(fallback_rows),
-        "status": "AUTO_HEALED" if fallback_rows and not failed_rows else ("DEGRADED" if failed_rows else "PASS"),
-    }
+    coverage = {"planned_count": len(rows), "primary_success_count": sum(1 for item in rows if item.get("fallback_used") is not True and str(item.get("quality_status") or "").upper() not in {"FAILED", "FAIL"}), "fallback_success_count": len(fallback_rows), "failed_count": len(failed_rows), "failed_objects": [str(item.get("symbol") or "") for item in failed_rows], "single_source_risk": ["000001"] if any(str(item.get("symbol")) == "000001" and item.get("quality_status") != "PASS" for item in rows) else [], "auto_healed": bool(fallback_rows), "status": "AUTO_HEALED" if fallback_rows and not failed_rows else ("DEGRADED" if failed_rows else "PASS")}
     snapshot_provider = providers_used[0] if len(providers_used) == 1 else "mixed"
     runtime_status = "AUTO_HEALED" if coverage["auto_healed"] and not failed_rows else ("DEGRADED" if failed_rows else "PASS")
     acquisition_seconds = round(time.monotonic() - run_started_monotonic, 3)
@@ -726,14 +621,12 @@ def main() -> int:
         print(json.dumps({"ok": True, "skipped": True, "reason": "newer_current_already_exists", "captured_at_beijing": captured}, ensure_ascii=False))
         return 0
 
+    semantic_scope = "MIDDAY_BREAK仅用于上午11:30已结束交易时段的最终参考事实；保留真实provider时点，不按午间可成交价格或连续竞价解释。" if market_phase == "MIDDAY_BREAK" else "集合竞价脉冲只按集合竞价信息解释；连续竞价脉冲才按盘中成交语义解释。"
     snapshot = {
         "market_date": market_date, "node": node, "planned_time": planned_time,
-        "market_phase": market_phase,
-        "actual_run_time": captured, "workflow_run_id": os.environ.get("GITHUB_RUN_ID", ""),
-        "capture_started_at_beijing": capture_started_at,
-        "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai", "provider": snapshot_provider,
-        "quality_status": overall_quality, "count": len(rows), "etf_universe_count": len(ETF),
-        "semantic_scope": "集合竞价脉冲只按集合竞价信息解释；连续竞价脉冲才按盘中成交语义解释。",
+        "market_phase": market_phase, "actual_run_time": captured, "workflow_run_id": os.environ.get("GITHUB_RUN_ID", ""),
+        "capture_started_at_beijing": capture_started_at, "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai", "provider": snapshot_provider,
+        "quality_status": overall_quality, "count": len(rows), "etf_universe_count": len(ETF), "semantic_scope": semantic_scope,
         "runtime": {"acquisition_seconds": acquisition_seconds, "target_cadence_seconds": POLICY["target_cadence_seconds"], "provider_timeout_seconds": TIMEOUT_SECONDS, "provider_retry_limit": RETRY_LIMIT, "provider_max_workers": MAX_WORKERS, "close_grace_seconds": CLOSE_GRACE_SECONDS, "analysis_coverage": coverage},
         "rows": rows,
     }
@@ -743,10 +636,12 @@ def main() -> int:
     temp.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
     temp.replace(target)
 
-    capture_mode = "OPENING_AUCTION_PULSE" if market_phase == "OPENING_CALL_AUCTION" else ("CLOSE" if node == "close" else "INTRADAY_PULSE")
-    update_current(root=ROOT, market_date=market_date, node=node, captured_at=captured, latest_snapshot=str(target.relative_to(ROOT)).replace("\\", "/"), snapshot_commit=os.environ.get("GITHUB_SHA", ""), node_status=("READY" if overall_quality == "PASS" else "DEGRADED"), data_freshness={"status": overall_quality, "provider": snapshot_provider, "count": len(rows), "etf_universe_count": len(ETF), "capture_mode": capture_mode, "market_phase": market_phase, "captured_at": captured, "captured_at_beijing": captured, "target_cadence_seconds": POLICY["target_cadence_seconds"], "fresh_max_age_seconds": POLICY["fresh_max_age_seconds"], "degraded_max_age_seconds": POLICY["degraded_max_age_seconds"], "acquisition_seconds": acquisition_seconds})
-    write_runtime_health({"status": runtime_status, "quality_status": overall_quality, "market_date": market_date, "node": node, "market_phase": market_phase, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "captured_at": captured, "captured_at_beijing": captured, "acquisition_seconds": acquisition_seconds, "count": len(rows), "latest_snapshot": str(target.relative_to(ROOT)).replace("\\", "/"), "analysis_coverage": coverage})
-    print(json.dumps({"ok": True, "snapshot": str(target), "count": len(rows), "market_date": market_date, "node": node, "market_phase": market_phase, "captured_at_beijing": captured, "acquisition_seconds": acquisition_seconds, "etf_universe_count": len(ETF)}, ensure_ascii=False))
+    capture_mode = "OPENING_AUCTION_PULSE" if market_phase == "OPENING_CALL_AUCTION" else ("MIDDAY_REVIEW_REFERENCE" if node == "1130" else ("CLOSE" if node == "close" else "INTRADAY_PULSE"))
+    provider_times = [str(item.get("as_of_beijing") or "") for item in rows if item.get("as_of_beijing")]
+    provider_as_of = max(provider_times) if provider_times else ""
+    update_current(root=ROOT, market_date=market_date, node=node, captured_at=captured, latest_snapshot=str(target.relative_to(ROOT)).replace("\\", "/"), snapshot_commit=os.environ.get("GITHUB_SHA", ""), node_status=("READY" if overall_quality == "PASS" else "DEGRADED"), data_freshness={"status": overall_quality, "provider": snapshot_provider, "count": len(rows), "etf_universe_count": len(ETF), "capture_mode": capture_mode, "market_phase": market_phase, "captured_at": captured, "captured_at_beijing": captured, "provider_as_of": provider_as_of, "target_cadence_seconds": POLICY["target_cadence_seconds"], "fresh_max_age_seconds": POLICY["fresh_max_age_seconds"], "degraded_max_age_seconds": POLICY["degraded_max_age_seconds"], "acquisition_seconds": acquisition_seconds})
+    write_runtime_health({"status": runtime_status, "quality_status": overall_quality, "market_date": market_date, "node": node, "market_phase": market_phase, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "captured_at": captured, "captured_at_beijing": captured, "provider_as_of": provider_as_of, "acquisition_seconds": acquisition_seconds, "count": len(rows), "latest_snapshot": str(target.relative_to(ROOT)).replace("\\", "/"), "analysis_coverage": coverage})
+    print(json.dumps({"ok": True, "snapshot": str(target), "count": len(rows), "market_date": market_date, "node": node, "market_phase": market_phase, "captured_at_beijing": captured, "provider_as_of": provider_as_of, "acquisition_seconds": acquisition_seconds, "etf_universe_count": len(ETF)}, ensure_ascii=False))
     return 0
 
 
