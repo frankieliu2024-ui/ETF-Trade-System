@@ -19,8 +19,14 @@ from zoneinfo import ZoneInfo
 
 try:
     from market_quote_router import build_market_quote_context
+    from market_data_guard import validate_market_row
 except ModuleNotFoundError:
     from scripts.market_quote_router import build_market_quote_context
+    from scripts.market_data_guard import validate_market_row
+
+# validate_market_row remains the shared provider-quality contract. Explicit queries
+# delegate quote acquisition and validation to build_market_quote_context instead of
+# creating a second direct quote/guard path here.
 
 BEIJING = ZoneInfo("Asia/Shanghai")
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
