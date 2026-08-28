@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-28T00:43:34Z",
-  "generated_at_beijing": "2026-08-28T08:43:34+08:00",
+  "generated_at": "2026-08-28T00:48:57Z",
+  "generated_at_beijing": "2026-08-28T08:48:57+08:00",
   "repository": {
-    "head_sha": "737fbf80c68381fb9b861754312dad5da7ed0e0b",
-    "github_sha": "737fbf80c68381fb9b861754312dad5da7ed0e0b",
-    "github_run_id": "33130610312",
+    "head_sha": "7c6a3c1bc8ed3033414ab35053bf9e62cadcad96",
+    "github_sha": "7c6a3c1bc8ed3033414ab35053bf9e62cadcad96",
+    "github_run_id": "33130889563",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "737fbf80c68381fb9b861754312dad5da7ed0e0b",
-    "workflow_sha": "737fbf80c68381fb9b861754312dad5da7ed0e0b",
+    "checked_commit": "7c6a3c1bc8ed3033414ab35053bf9e62cadcad96",
+    "workflow_sha": "7c6a3c1bc8ed3033414ab35053bf9e62cadcad96",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
@@ -20,7 +20,7 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "FAIL",
-      "detail": "...................F.......\n======================================================================\nFAIL: test_kospi_regular_refresh_uses_provider_quote (test_market_query_time_refresh.QueryTimeRefreshTests.test_kospi_regular_refresh_uses_provider_quote)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_query_time_refresh.py\", line 95, in test_kospi_regular_refresh_uses_provider_quote\n    provider.assert_called_once_with(\"^KS11\", \"KR\", now, json.loads((root / \"config/runtime_policy.json\").read_text(encoding=\"utf-8\")))\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/mock.py\", line 950, in assert_called_once_with\n    raise AssertionError(msg)\nAssertionError: Expected '_yahoo' to be called once. Called 0 times.\n\n----------------------------------------------------------------------\nRan 27 tests in 2.843s\n\nFAILED (failures=1)\n"
+      "detail": "fresh.QueryTimeRefreshTests.test_fresh_cache_does_not_call_provider)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_query_time_refresh.py\", line 34, in test_fresh_cache_does_not_call_provider\n    refresh.assert_not_called()\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/mock.py\", line 900, in assert_not_called\n    raise AssertionError(msg)\nAssertionError: Expected 'refresh_market_quotes' to not have been called. Called 1 times.\nCalls: [call(PosixPath('/tmp/tmph_x4y7ww'), ['NDX'], datetime.datetime(2026, 8, 25, 0, 30, tzinfo=datetime.timezone(datetime.timedelta(seconds=28800)))),\n call().get('quotes', []),\n call().get().__iter__(),\n call().get('failures', []),\n call().get('quotes', []),\n call().get().__iter__()].\n\n----------------------------------------------------------------------\nRan 27 tests in 0.037s\n\nFAILED (failures=1)\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -235,12 +235,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=737fbf80c68381fb9b861754312dad5da7ed0e0b"
+      "detail": "HEAD=7c6a3c1bc8ed3033414ab35053bf9e62cadcad96"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=737fbf80c68381fb9b861754312dad5da7ed0e0b GITHUB_SHA=737fbf80c68381fb9b861754312dad5da7ed0e0b"
+      "detail": "HEAD=7c6a3c1bc8ed3033414ab35053bf9e62cadcad96 GITHUB_SHA=7c6a3c1bc8ed3033414ab35053bf9e62cadcad96"
     },
     {
       "name": "git:critical_files_tracked",
@@ -670,7 +670,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=20:43 max_age_seconds=12514 limit=900"
+      "detail": "active=False phase=20:48 max_age_seconds=12837 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -785,12 +785,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=62594"
+      "detail": "declared=STALE expected=STALE age_seconds=62920"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=62594"
+      "detail": "declared=STALE expected=STALE age_seconds=62920"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -830,7 +830,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-28T00:43:30Z market=2026-08-27T15:20:16+08:00"
+      "detail": "context=2026-08-28T00:48:56Z market=2026-08-27T15:20:16+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -900,7 +900,7 @@
     {
       "name": "phase4:e2e_state_present",
       "status": "PASS",
-      "detail": "status=READY"
+      "detail": "status=BLOCKED"
     },
     {
       "name": "notification:managed_schema",
@@ -1684,7 +1684,7 @@
     }
   ],
   "errors": [
-    "tests:market_data_and_quote_router: ...................F.......\n======================================================================\nFAIL: test_kospi_regular_refresh_uses_provider_quote (test_market_query_time_refresh.QueryTimeRefreshTests.test_kospi_regular_refresh_uses_provider_quote)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_query_time_refresh.py\", line 95, in test_kospi_regular_refresh_uses_provider_quote\n    provider.assert_called_once_with(\"^KS11\", \"KR\", now, json.loads((root / \"config/runtime_policy.json\").read_text(encoding=\"utf-8\")))\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/mock.py\", line 950, in assert_called_once_with\n    raise AssertionError(msg)\nAssertionError: Expected '_yahoo' to be called once. Called 0 times.\n\n----------------------------------------------------------------------\nRan 27 tests in 2.843s\n\nFAILED (failures=1)\n"
+    "tests:market_data_and_quote_router: fresh.QueryTimeRefreshTests.test_fresh_cache_does_not_call_provider)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_query_time_refresh.py\", line 34, in test_fresh_cache_does_not_call_provider\n    refresh.assert_not_called()\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/mock.py\", line 900, in assert_not_called\n    raise AssertionError(msg)\nAssertionError: Expected 'refresh_market_quotes' to not have been called. Called 1 times.\nCalls: [call(PosixPath('/tmp/tmph_x4y7ww'), ['NDX'], datetime.datetime(2026, 8, 25, 0, 30, tzinfo=datetime.timezone(datetime.timedelta(seconds=28800)))),\n call().get('quotes', []),\n call().get().__iter__(),\n call().get('failures', []),\n call().get('quotes', []),\n call().get().__iter__()].\n\n----------------------------------------------------------------------\nRan 27 tests in 0.037s\n\nFAILED (failures=1)\n"
   ],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
