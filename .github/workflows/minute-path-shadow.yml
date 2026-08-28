@@ -10,6 +10,7 @@ on:
     # Primary logical nodes: Beijing 10:30, 13:45, 14:30, 14:55 on weekdays.
     # Each node also has one nearby recovery cron. Primary/recovery runs are the same logical node and must be de-duplicated by planned_node_beijing.
     # Recovery runs exist only to reduce GitHub schedule best-effort misses; they do not add production-path work.
+    # A path-scoped push may be used as an immediate live provider probe; it remains supplemental evidence and never counts as a scheduled logical node.
     - cron: "26 2 * * 1-5"   # 10:26 recovery for logical 10:30
     - cron: "30 2 * * 1-5"   # 10:30 primary
     - cron: "41 5 * * 1-5"   # 13:41 recovery for logical 13:45
