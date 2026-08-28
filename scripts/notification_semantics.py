@@ -6,6 +6,7 @@ from notification_center import STATE, read_json
 from market_notification_common import number, pct, pct_change, range_position
 
 ACCOUNT_FACT = STATE / "account_fact.json"
+SNAPSHOTS = STATE.parent / "market" / "snapshots"
 
 
 def _account_context() -> dict:
@@ -38,6 +39,47 @@ def _label(row: dict) -> str:
     name = str(row.get("provider_name") or row.get("name") or row.get("symbol") or row.get("code") or "对象")
     code = str(row.get("symbol") or row.get("code") or "")
     return f"{name}（{code}）" if code and code not in name else name
+
+
+def _latest_intraday_row(code: str) -> tuple[str, dict] | None:
+    """Return the latest same-day valid pre-close snapshot row for one ETF.
+
+    This is descriptive evidence only. It does not create a lifecycle or trading
+    decision; it lets the fixed close summary state what changed since the most
+    recent valid intraday machine node instead of only reporting a close rank.
+    """
+    current = read_json(STATE / "CURRENT.json", {})
+    market_date = str(current.get("market_date") or "")
+    if not market_date or not SNAPSHOTS.exists():
+        return None
+    candidates: list[tuple[str, dict]] = []
+    for path in SNAPSHOTS.glob(f"{market_date}_*.json"):
+        snapshot = read_json(path, {})
+        if str(snapshot.get("node") or "").lower() == "close":
+            continue
+        captured = str(snapshot.get("captured_at_beijing") or snapshot.get("captured_at") or "")
+        if not captured:
+            continue
+        try:
+            clock = captured.split("T", 1)[1][:5]
+        except IndexError:
+            continue
+        if clock >= "15:00":
+            continue
+        row = next(
+            (
+                x
+                for x in (snapshot.get("rows") or [])
+                if str(x.get("symbol") or "") == str(code)
+                and x.get("asset_class") == "ETF"
+                and x.get("quality_status") == "PASS"
+                and number(x.get("change_pct")) is not None
+            ),
+            None,
+        )
+        if row is not None:
+            candidates.append((captured, row))
+    return max(candidates, key=lambda x: x[0]) if candidates else None
 
 
 def object_role(code: str, asset_class: str = "") -> tuple[str, str]:
@@ -128,14 +170,33 @@ def a_share_structure(indices: dict[str, dict], etfs: list[dict], features: dict
     formal_code = str(formal.get("applicable_object") or "") if str(formal.get("validity") or "") == "ACTIVE" else ""
     formal_row = etf_map.get(formal_code) if formal_code else None
 
-    details = []
-    if formal_row is not None and number(formal_row.get("change_pct")) is not None:
-        details.append(f"当前{_formal_detail(formal)}对象{_label(formal_row)}{pct(number(formal_row.get('change_pct')))}")
     weakest = min(held_rows, key=lambda x: float(x.get("change_pct") or 0)) if held_rows else None
     strongest = max(held_rows, key=lambda x: float(x.get("change_pct") or 0)) if held_rows else None
+    details = []
+    if formal_row is not None and number(formal_row.get("change_pct")) is not None:
+        formal_ret = number(formal_row.get("change_pct"))
+        formal_text = f"当前{_formal_detail(formal)}对象{_label(formal_row)}收盘{pct(formal_ret)}"
+        previous = _latest_intraday_row(formal_code)
+        if previous is not None:
+            previous_time, previous_row = previous
+            previous_ret = number(previous_row.get("change_pct"))
+            if formal_ret is not None and previous_ret is not None:
+                formal_text += f"，较最近盘中有效节点（{previous_time[11:16]}）{formal_ret - previous_ret:+.2f}个百分点"
+        if weakest is not None and str(weakest.get("symbol") or "") != formal_code:
+            weak_ret = number(weakest.get("change_pct"))
+            if formal_ret is not None and weak_ret is not None:
+                spread = formal_ret - weak_ret
+                if spread > 0:
+                    formal_text += f"，仍强于{_label(weakest)}{spread:.2f}个百分点"
+                elif spread < 0:
+                    formal_text += f"，弱于{_label(weakest)}{abs(spread):.2f}个百分点"
+        details.append(formal_text)
     if weakest is not None and str(weakest.get("symbol")) != formal_code:
         details.append(f"持仓中偏弱的是{_label(weakest)}{pct(number(weakest.get('change_pct')))}")
-    if strongest is not None and weakest is not None and str(strongest.get("symbol")) != str(weakest.get("symbol")) and str(strongest.get("symbol")) != formal_code:
+    # When an active Trial/Confirm/formal object exists, its own evolution and
+    # closest relevant comparison outrank a generic cross-market "strongest"
+    # holding. This avoids diluting the current hypothesis with ranking noise.
+    if formal_row is None and strongest is not None and weakest is not None and str(strongest.get("symbol")) != str(weakest.get("symbol")):
         details.append(f"持仓中相对较强的是{_label(strongest)}{pct(number(strongest.get('change_pct')))}")
     if details:
         headline.append("- **ETF自身反馈**：" + "；".join(details) + "。")
@@ -153,7 +214,10 @@ def a_share_structure(indices: dict[str, dict], etfs: list[dict], features: dict
         path_summary = "；".join(path_parts[:2]) + "；而" + path_parts[-1] + "。强势主要集中在科技成长方向，需要继续验证ETF层是否同步接受。"
     else:
         path_summary = "；".join(path_parts) + "。"
-    path_lines = ["- " + path_summary]
+    path_lines = []
+    if formal_row is not None:
+        path_lines.append("- **当前正式对象路径**：" + compact_path(formal_row, features.get(formal_code), include_current=True) + "。")
+    path_lines.append("- " + path_summary)
 
     focus = []
     if formal_row is not None:

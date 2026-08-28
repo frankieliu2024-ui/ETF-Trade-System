@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.0",
-  "mode": "MARKET_LEVEL_REGIME_CONTEXT",
+  "schema_version": "1.1",
+  "mode": "MARKET_LEVEL_REGIME_CONTEXT_WITH_TENCENT_1M_INDEX_PATH",
   "status": "READY",
   "market_date": "2026-08-28",
   "as_of_beijing": "2026-08-28T15:12:38+08:00",
@@ -17,7 +17,9 @@
       "recent_slope_pct_per_10m": -0.0082,
       "recovery_from_path_low_pct": 0.0053,
       "retreat_from_path_high_pct": -0.348,
-      "sampling_coverage": "MEDIUM"
+      "sampling_coverage": "MEDIUM",
+      "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
+      "minute_selection_reason": "quote_price_alignment_failed"
     },
     {
       "display_name": "创业板指（399006）",
@@ -30,7 +32,18 @@
       "recent_slope_pct_per_10m": 0.0082,
       "recovery_from_path_low_pct": 0.012,
       "retreat_from_path_high_pct": -2.5603,
-      "sampling_coverage": "MEDIUM"
+      "sampling_coverage": "MEDIUM",
+      "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
+      "minute_selection_reason": "quote_price_alignment_failed"
+    },
+    {
+      "display_name": "科创50指数（000688）",
+      "code": "000688",
+      "as_of_beijing": "2026-08-28T15:12:00+08:00",
+      "price": 1662.15,
+      "change_pct": -1.8500366110021926,
+      "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
+      "minute_selection_reason": "quote_price_alignment_failed"
     }
   ],
   "etf_breadth": {
@@ -54,6 +67,7 @@
     "required_dimensions": [
       "上证指数（000001）日内位置与路径",
       "创业板指（399006）日内位置与路径",
+      "科创50指数（000688）日内位置与路径",
       "ETF全集上涨/下跌宽度与中位收益",
       "上证与创业板的风格差异",
       "必要时结合海外/亚洲反馈，但不得用陈旧海外数据替代A股自身反馈"
@@ -61,5 +75,20 @@
     "forbidden_shortcut": "只分析持仓和观察ETF、跳过市场层后直接形成主候选或金额动作"
   },
   "decision_boundary": "本文件只描述市场环境、指数路径、ETF宽度与风格，不直接生成风险许可、Trial/Confirm、金额或买卖动作。",
-  "read_only": true
+  "read_only": true,
+  "minute_path_integration": {
+    "status": "DEGRADED_WITH_OBJECT_FALLBACK",
+    "target_count": 3,
+    "selected_count": 0,
+    "selected_codes": [],
+    "fallback_codes": [
+      "000001",
+      "000688",
+      "399006"
+    ],
+    "source": "tencent_qq minute/query",
+    "formal_latest_price_source_unchanged": true,
+    "regime_classification_logic_unchanged": true,
+    "decision_boundary": "腾讯分钟仅增强指数日内路径与ETF最近10分钟边际承接；正式最新价仍由quote router/CURRENT决定，不产生风险许可、Trial/Confirm、金额或买卖动作。"
+  }
 }

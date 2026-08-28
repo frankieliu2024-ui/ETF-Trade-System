@@ -110,9 +110,9 @@
       "yahoo_chart_api"
     ],
     "HSTECH": [
-      "hithink-finance:HS2083",
-      "yahoo_chart_api:HSTECH.HK",
       "eastmoney_push2:124.HSTECH",
+      "yahoo_chart_api:HSTECH.HK",
+      "hithink-finance:HS2083",
       "ETF_PROXY_513180"
     ],
     "QQQ_EXTENDED": [
@@ -442,7 +442,7 @@
   },
   "notes": {
     "a_share_index_000001": "Eastmoney secid=1.000001映射为个股而非上证指数，暂不作为直接fallback；腾讯主源失败时仅走同花顺直接指数备源。",
-    "hstech": "东方财富124.HSTECH已在真实交易时段验证为低延迟直接行情，正式提升为主源。objects字段保留历史审计枚举顺序；实际主备权威以object_fallback_policy.primary及build_overseas_context configured_primary为准；513180仅为最后代理。",
+    "hstech": "东方财富124.HSTECH已在真实交易时段验证为低延迟直接行情，正式提升为主源。objects字段与object_fallback_policy保持同一正式主备顺序；513180仅为最后代理。",
     "etf_fallback": "ETF生产意图为腾讯→同花顺→东方财富；运行代码必须与本对象级政策保持一致。",
     "tencent_a_share_industry": "查询时A股产业链个股正式启用腾讯主源；不建立固定个股池，仍由当前ETF/行业假设动态发现。",
     "a_share_index_000688": "科创50指数（000688）正式纳入指数层；腾讯sh000688已完成直接映射验证，为生产主源；同花顺000688.SH作为A股指数直接备源。东方财富映射未完成对象级验证前不加入fallback。",

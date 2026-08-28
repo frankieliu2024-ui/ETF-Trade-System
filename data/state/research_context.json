@@ -1,6 +1,6 @@
 {
   "status": "READY",
-  "generated_at": "2026-08-28T07:12:51Z",
+  "generated_at": "2026-08-28T07:58:58Z",
   "market_date": "2026-08-28",
   "daily_feature_count": 11,
   "relative_strength_count": 11,
@@ -11,8 +11,8 @@
   "decision_boundary": "研究层向当前决策提供经过归纳的市场、ETF与打新底仓研究证据，可直接改变候选比较、风险收益、持仓/卖出、金额及资金来源/去向判断；不得绕过MASTER生成交易动作或自动交易。",
   "current_decision_use": "正式盘中先读市场层，再统一比较现金、持仓/观察ETF与当前打新底仓；研究结论先归纳后进入执行判断，正式决策只记录真正改变机会、持有/卖出、金额或资金来源/去向的research_evidence_used。",
   "market_regime_context": {
-    "schema_version": "1.0",
-    "mode": "MARKET_LEVEL_REGIME_CONTEXT",
+    "schema_version": "1.1",
+    "mode": "MARKET_LEVEL_REGIME_CONTEXT_WITH_TENCENT_1M_INDEX_PATH",
     "status": "READY",
     "market_date": "2026-08-28",
     "as_of_beijing": "2026-08-28T15:12:38+08:00",
@@ -29,7 +29,9 @@
         "recent_slope_pct_per_10m": -0.0082,
         "recovery_from_path_low_pct": 0.0053,
         "retreat_from_path_high_pct": -0.348,
-        "sampling_coverage": "MEDIUM"
+        "sampling_coverage": "MEDIUM",
+        "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
+        "minute_selection_reason": "quote_price_alignment_failed"
       },
       {
         "display_name": "创业板指（399006）",
@@ -42,7 +44,18 @@
         "recent_slope_pct_per_10m": 0.0082,
         "recovery_from_path_low_pct": 0.012,
         "retreat_from_path_high_pct": -2.5603,
-        "sampling_coverage": "MEDIUM"
+        "sampling_coverage": "MEDIUM",
+        "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
+        "minute_selection_reason": "quote_price_alignment_failed"
+      },
+      {
+        "display_name": "科创50指数（000688）",
+        "code": "000688",
+        "as_of_beijing": "2026-08-28T15:12:00+08:00",
+        "price": 1662.15,
+        "change_pct": -1.8500366110021926,
+        "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
+        "minute_selection_reason": "quote_price_alignment_failed"
       }
     ],
     "etf_breadth": {
@@ -66,6 +79,7 @@
       "required_dimensions": [
         "上证指数（000001）日内位置与路径",
         "创业板指（399006）日内位置与路径",
+        "科创50指数（000688）日内位置与路径",
         "ETF全集上涨/下跌宽度与中位收益",
         "上证与创业板的风格差异",
         "必要时结合海外/亚洲反馈，但不得用陈旧海外数据替代A股自身反馈"
@@ -73,7 +87,22 @@
       "forbidden_shortcut": "只分析持仓和观察ETF、跳过市场层后直接形成主候选或金额动作"
     },
     "decision_boundary": "本文件只描述市场环境、指数路径、ETF宽度与风格，不直接生成风险许可、Trial/Confirm、金额或买卖动作。",
-    "read_only": true
+    "read_only": true,
+    "minute_path_integration": {
+      "status": "DEGRADED_WITH_OBJECT_FALLBACK",
+      "target_count": 3,
+      "selected_count": 0,
+      "selected_codes": [],
+      "fallback_codes": [
+        "000001",
+        "000688",
+        "399006"
+      ],
+      "source": "tencent_qq minute/query",
+      "formal_latest_price_source_unchanged": true,
+      "regime_classification_logic_unchanged": true,
+      "decision_boundary": "腾讯分钟仅增强指数日内路径与ETF最近10分钟边际承接；正式最新价仍由quote router/CURRENT决定，不产生风险许可、Trial/Confirm、金额或买卖动作。"
+    }
   },
   "candidate_selection_contract": {
     "rule": "当日涨幅、横截面排名和相对指数强弱只能验证候选，禁止单独生成唯一主候选。",
@@ -86,7 +115,7 @@
     ],
     "history_rule": "必须同时解释历史高/中/低位置与趋势状态；位置不等于趋势。历史不可用时明确降级，不得猜测。",
     "intraday_rule": "必须结合高低点出现先后、低点后修复、高点后回撤和采样覆盖区分高位震荡、V型修复候选、冲高回落、低位弱势；MEDIUM或更低采样不得把候选形态表述为已确认。",
-    "turnover_rule": "成交承接优先使用按交易时间进度归一化的当前成交额相对近20日平均全天成交额，不以累计成交额绝对值直接判定放量。",
+    "turnover_rule": "成交承接保留两种互补时间尺度：20日时间归一化成交进度回答当日整体活跃度；腾讯1分钟构造的最近10分钟相对前10分钟回答边际参与变化。两者不得机械合成总分，也不得单独产生交易动作。",
     "evidence_reading_order": [
       "假设/相关性",
       "历史价格位置与趋势",
@@ -110,8 +139,8 @@
   "optimization_principle": "不打造完美交易系统；复杂度只有在改善事前收益效率、风险边界、执行质量或复盘学习时才保留。长期未改变任何正式决策且无独立风险/复盘价值的研究模块才进入删除审查。",
   "validated_evidence_summary": {
     "market_regime": {
-      "schema_version": "1.0",
-      "mode": "MARKET_LEVEL_REGIME_CONTEXT",
+      "schema_version": "1.1",
+      "mode": "MARKET_LEVEL_REGIME_CONTEXT_WITH_TENCENT_1M_INDEX_PATH",
       "status": "READY",
       "market_date": "2026-08-28",
       "as_of_beijing": "2026-08-28T15:12:38+08:00",
@@ -128,7 +157,9 @@
           "recent_slope_pct_per_10m": -0.0082,
           "recovery_from_path_low_pct": 0.0053,
           "retreat_from_path_high_pct": -0.348,
-          "sampling_coverage": "MEDIUM"
+          "sampling_coverage": "MEDIUM",
+          "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
+          "minute_selection_reason": "quote_price_alignment_failed"
         },
         {
           "display_name": "创业板指（399006）",
@@ -141,7 +172,18 @@
           "recent_slope_pct_per_10m": 0.0082,
           "recovery_from_path_low_pct": 0.012,
           "retreat_from_path_high_pct": -2.5603,
-          "sampling_coverage": "MEDIUM"
+          "sampling_coverage": "MEDIUM",
+          "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
+          "minute_selection_reason": "quote_price_alignment_failed"
+        },
+        {
+          "display_name": "科创50指数（000688）",
+          "code": "000688",
+          "as_of_beijing": "2026-08-28T15:12:00+08:00",
+          "price": 1662.15,
+          "change_pct": -1.8500366110021926,
+          "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
+          "minute_selection_reason": "quote_price_alignment_failed"
         }
       ],
       "etf_breadth": {
@@ -165,6 +207,7 @@
         "required_dimensions": [
           "上证指数（000001）日内位置与路径",
           "创业板指（399006）日内位置与路径",
+          "科创50指数（000688）日内位置与路径",
           "ETF全集上涨/下跌宽度与中位收益",
           "上证与创业板的风格差异",
           "必要时结合海外/亚洲反馈，但不得用陈旧海外数据替代A股自身反馈"
@@ -172,15 +215,30 @@
         "forbidden_shortcut": "只分析持仓和观察ETF、跳过市场层后直接形成主候选或金额动作"
       },
       "decision_boundary": "本文件只描述市场环境、指数路径、ETF宽度与风格，不直接生成风险许可、Trial/Confirm、金额或买卖动作。",
-      "read_only": true
+      "read_only": true,
+      "minute_path_integration": {
+        "status": "DEGRADED_WITH_OBJECT_FALLBACK",
+        "target_count": 3,
+        "selected_count": 0,
+        "selected_codes": [],
+        "fallback_codes": [
+          "000001",
+          "000688",
+          "399006"
+        ],
+        "source": "tencent_qq minute/query",
+        "formal_latest_price_source_unchanged": true,
+        "regime_classification_logic_unchanged": true,
+        "decision_boundary": "腾讯分钟仅增强指数日内路径与ETF最近10分钟边际承接；正式最新价仍由quote router/CURRENT决定，不产生风险许可、Trial/Confirm、金额或买卖动作。"
+      }
     },
     "market_structure": {
-      "schema_version": "1.1",
-      "generated_at": "2026-08-28T07:12:51Z",
+      "schema_version": "1.2",
+      "generated_at": "2026-08-28T07:58:58Z",
       "market_date": "2026-08-28",
       "as_of_beijing": "2026-08-28T15:12:38+08:00",
       "source_snapshot": "data/market/snapshots/2026-08-28_151238.json",
-      "mode": "HISTORICAL_TREND_PLUS_INTRADAY_SEQUENCE_PLUS_TURNOVER_CONTEXT",
+      "mode": "HISTORICAL_TREND_PLUS_INTRADAY_SEQUENCE_PLUS_TWO_HORIZON_TURNOVER_CONTEXT",
       "status": "READY",
       "read_only": true,
       "candidate_selection_contract": {
@@ -194,7 +252,7 @@
         ],
         "history_rule": "必须同时解释历史高/中/低位置与趋势状态；位置不等于趋势。历史不可用时明确降级，不得猜测。",
         "intraday_rule": "必须结合高低点出现先后、低点后修复、高点后回撤和采样覆盖区分高位震荡、V型修复候选、冲高回落、低位弱势；MEDIUM或更低采样不得把候选形态表述为已确认。",
-        "turnover_rule": "成交承接优先使用按交易时间进度归一化的当前成交额相对近20日平均全天成交额，不以累计成交额绝对值直接判定放量。",
+        "turnover_rule": "成交承接保留两种互补时间尺度：20日时间归一化成交进度回答当日整体活跃度；腾讯1分钟构造的最近10分钟相对前10分钟回答边际参与变化。两者不得机械合成总分，也不得单独产生交易动作。",
         "evidence_reading_order": [
           "假设/相关性",
           "历史价格位置与趋势",
@@ -282,9 +340,27 @@
             "pace_interpretation_cn": "成交进度明显慢于近20日常态",
             "acceptance_behavior": "LOW_VOLUME_DECLINE",
             "acceptance_interpretation_cn": "偏缩量回落",
-            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。"
+            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
+            "recent_10m_marginal_acceptance": {
+              "status": "READY",
+              "window_end_beijing": "2026-08-28T15:00:00+08:00",
+              "recent_10m_price_change_pct": -0.2878,
+              "recent_10m_amount_delta": 15656474.0,
+              "recent_10m_volume_delta": 225791.0,
+              "prior_10m_price_change_pct": -0.2869,
+              "prior_10m_amount_delta": 15680176.0,
+              "prior_10m_volume_delta": 225487.0,
+              "amount_expansion_ratio": 0.9985,
+              "volume_expansion_ratio": 1.0013,
+              "amount_relation": "CONTRACTED_VS_PRIOR_10M",
+              "recent_price_direction": "DOWN",
+              "interpretation_cn": "最近10分钟-0.29%、成交额为前10分钟1.00倍，回落但成交参与收缩，抛压扩散有限。",
+              "source": "tencent_qq minute/query",
+              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
+              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+            }
           },
-          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内更接近冲高回落/高位回撤；成交侧偏缩量回落。",
+          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内更接近冲高回落/高位回撤；成交侧偏缩量回落；最近10分钟-0.29%、成交额为前10分钟1.00倍，回落但成交参与收缩，抛压扩散有限。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR"
         },
         {
@@ -360,9 +436,27 @@
             "pace_interpretation_cn": "成交进度明显慢于近20日常态",
             "acceptance_behavior": "LOW_VOLUME_DECLINE",
             "acceptance_interpretation_cn": "偏缩量回落",
-            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。"
+            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
+            "recent_10m_marginal_acceptance": {
+              "status": "READY",
+              "window_end_beijing": "2026-08-28T15:00:00+08:00",
+              "recent_10m_price_change_pct": -0.1138,
+              "recent_10m_amount_delta": 285027756.32,
+              "recent_10m_volume_delta": 1623475.0,
+              "prior_10m_price_change_pct": -0.3401,
+              "prior_10m_amount_delta": 278692904.78,
+              "prior_10m_volume_delta": 1583117.0,
+              "amount_expansion_ratio": 1.0227,
+              "volume_expansion_ratio": 1.0255,
+              "amount_relation": "EXPANDED_VS_PRIOR_10M",
+              "recent_price_direction": "DOWN",
+              "interpretation_cn": "最近10分钟-0.11%、成交额为前10分钟1.02倍，回落且成交参与扩张，短线抛压更实。",
+              "source": "tencent_qq minute/query",
+              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
+              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+            }
           },
-          "combined_interpretation_cn": "下跌发生在历史低位区；近期趋势结构混合，尚不能定义为单边趋势，赔率可能改善但承接仍弱；日内更接近冲高回落/高位回撤；成交侧偏缩量回落。",
+          "combined_interpretation_cn": "下跌发生在历史低位区；近期趋势结构混合，尚不能定义为单边趋势，赔率可能改善但承接仍弱；日内更接近冲高回落/高位回撤；成交侧偏缩量回落；最近10分钟-0.11%、成交额为前10分钟1.02倍，回落且成交参与扩张，短线抛压更实。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR"
         },
         {
@@ -438,9 +532,27 @@
             "pace_interpretation_cn": "成交进度接近近20日常态",
             "acceptance_behavior": "TURNOVER_NEUTRAL",
             "acceptance_interpretation_cn": "成交承接暂未形成明显异常",
-            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。"
+            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
+            "recent_10m_marginal_acceptance": {
+              "status": "READY",
+              "window_end_beijing": "2026-08-28T15:00:00+08:00",
+              "recent_10m_price_change_pct": 0.0924,
+              "recent_10m_amount_delta": 24302469.59,
+              "recent_10m_volume_delta": 224628.0,
+              "prior_10m_price_change_pct": -0.2765,
+              "prior_10m_amount_delta": 29893186.58,
+              "prior_10m_volume_delta": 275907.0,
+              "amount_expansion_ratio": 0.813,
+              "volume_expansion_ratio": 0.8141,
+              "amount_relation": "CONTRACTED_VS_PRIOR_10M",
+              "recent_price_direction": "UP",
+              "interpretation_cn": "最近10分钟+0.09%、成交额为前10分钟0.81倍，上涨但成交参与收缩，跟随度有限。",
+              "source": "tencent_qq minute/query",
+              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
+              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+            }
           },
-          "combined_interpretation_cn": "下跌发生在历史低位区；近期趋势结构混合，尚不能定义为单边趋势，赔率可能改善但承接仍弱；日内更接近冲高回落/高位回撤；成交侧成交承接暂未形成明显异常。",
+          "combined_interpretation_cn": "下跌发生在历史低位区；近期趋势结构混合，尚不能定义为单边趋势，赔率可能改善但承接仍弱；日内更接近冲高回落/高位回撤；成交侧成交承接暂未形成明显异常；最近10分钟+0.09%、成交额为前10分钟0.81倍，上涨但成交参与收缩，跟随度有限。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR"
         },
         {
@@ -516,9 +628,27 @@
             "pace_interpretation_cn": "成交进度明显慢于近20日常态",
             "acceptance_behavior": "LOW_VOLUME_DECLINE",
             "acceptance_interpretation_cn": "偏缩量回落",
-            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。"
+            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
+            "recent_10m_marginal_acceptance": {
+              "status": "READY",
+              "window_end_beijing": "2026-08-28T15:00:00+08:00",
+              "recent_10m_price_change_pct": 0.0602,
+              "recent_10m_amount_delta": 51226308.01,
+              "recent_10m_volume_delta": 308643.0,
+              "prior_10m_price_change_pct": -0.0602,
+              "prior_10m_amount_delta": 36320986.01,
+              "prior_10m_volume_delta": 218705.0,
+              "amount_expansion_ratio": 1.4104,
+              "volume_expansion_ratio": 1.4112,
+              "amount_relation": "EXPANDED_VS_PRIOR_10M",
+              "recent_price_direction": "UP",
+              "interpretation_cn": "最近10分钟+0.06%、成交额为前10分钟1.41倍，上涨且成交参与扩张，短线承接增强。",
+              "source": "tencent_qq minute/query",
+              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
+              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+            }
           },
-          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内更接近冲高回落/高位回撤；成交侧偏缩量回落。",
+          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内更接近冲高回落/高位回撤；成交侧偏缩量回落；最近10分钟+0.06%、成交额为前10分钟1.41倍，上涨且成交参与扩张，短线承接增强。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR"
         },
         {
@@ -594,9 +724,27 @@
             "pace_interpretation_cn": "成交进度明显慢于近20日常态",
             "acceptance_behavior": "LOW_VOLUME_DECLINE",
             "acceptance_interpretation_cn": "偏缩量回落",
-            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。"
+            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
+            "recent_10m_marginal_acceptance": {
+              "status": "READY",
+              "window_end_beijing": "2026-08-28T15:00:00+08:00",
+              "recent_10m_price_change_pct": 0.0,
+              "recent_10m_amount_delta": 58911601.0,
+              "recent_10m_volume_delta": 1014935.0,
+              "prior_10m_price_change_pct": 0.0,
+              "prior_10m_amount_delta": 119781280.01,
+              "prior_10m_volume_delta": 2061689.0,
+              "amount_expansion_ratio": 0.4918,
+              "volume_expansion_ratio": 0.4923,
+              "amount_relation": "CONTRACTED_VS_PRIOR_10M",
+              "recent_price_direction": "FLAT",
+              "interpretation_cn": "最近10分钟+0.00%、成交额为前10分钟0.49倍，价格变化有限且成交参与收缩，交易兴趣下降。",
+              "source": "tencent_qq minute/query",
+              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
+              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+            }
           },
-          "combined_interpretation_cn": "当前位于历史中位区；近期高点与低点同步下移，偏下降趋势；日内更接近冲高回落/高位回撤；成交侧偏缩量回落。",
+          "combined_interpretation_cn": "当前位于历史中位区；近期高点与低点同步下移，偏下降趋势；日内更接近冲高回落/高位回撤；成交侧偏缩量回落；最近10分钟+0.00%、成交额为前10分钟0.49倍，价格变化有限且成交参与收缩，交易兴趣下降。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR"
         },
         {
@@ -672,9 +820,27 @@
             "pace_interpretation_cn": "成交进度明显慢于近20日常态",
             "acceptance_behavior": "LOW_VOLUME_RISE",
             "acceptance_interpretation_cn": "偏缩量上涨，承接强度仍需验证",
-            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。"
+            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
+            "recent_10m_marginal_acceptance": {
+              "status": "READY",
+              "window_end_beijing": "2026-08-28T15:00:00+08:00",
+              "recent_10m_price_change_pct": 0.0,
+              "recent_10m_amount_delta": 6636835.4,
+              "recent_10m_volume_delta": 47741.0,
+              "prior_10m_price_change_pct": 0.0,
+              "prior_10m_amount_delta": 5974974.5,
+              "prior_10m_volume_delta": 42997.0,
+              "amount_expansion_ratio": 1.1108,
+              "volume_expansion_ratio": 1.1103,
+              "amount_relation": "EXPANDED_VS_PRIOR_10M",
+              "recent_price_direction": "FLAT",
+              "interpretation_cn": "最近10分钟+0.00%、成交额为前10分钟1.11倍，价格变化有限但成交参与扩张，换手活跃。",
+              "source": "tencent_qq minute/query",
+              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
+              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+            }
           },
-          "combined_interpretation_cn": "上涨发生在历史高位区；近期趋势结构混合，尚不能定义为单边趋势；日内处于当日区间中部或结构尚未确认；成交侧偏缩量上涨，承接强度仍需验证。",
+          "combined_interpretation_cn": "上涨发生在历史高位区；近期趋势结构混合，尚不能定义为单边趋势；日内处于当日区间中部或结构尚未确认；成交侧偏缩量上涨，承接强度仍需验证；最近10分钟+0.00%、成交额为前10分钟1.11倍，价格变化有限但成交参与扩张，换手活跃。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR"
         },
         {
@@ -750,9 +916,27 @@
             "pace_interpretation_cn": "成交进度接近近20日常态",
             "acceptance_behavior": "TURNOVER_NEUTRAL",
             "acceptance_interpretation_cn": "成交承接暂未形成明显异常",
-            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。"
+            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
+            "recent_10m_marginal_acceptance": {
+              "status": "READY",
+              "window_end_beijing": "2026-08-28T15:00:00+08:00",
+              "recent_10m_price_change_pct": -0.0438,
+              "recent_10m_amount_delta": 16447367.0,
+              "recent_10m_volume_delta": 72139.0,
+              "prior_10m_price_change_pct": -0.1313,
+              "prior_10m_amount_delta": 13227385.0,
+              "prior_10m_volume_delta": 57958.0,
+              "amount_expansion_ratio": 1.2434,
+              "volume_expansion_ratio": 1.2447,
+              "amount_relation": "EXPANDED_VS_PRIOR_10M",
+              "recent_price_direction": "DOWN",
+              "interpretation_cn": "最近10分钟-0.04%、成交额为前10分钟1.24倍，回落且成交参与扩张，短线抛压更实。",
+              "source": "tencent_qq minute/query",
+              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
+              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+            }
           },
-          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内更接近冲高回落/高位回撤；成交侧成交承接暂未形成明显异常。",
+          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内更接近冲高回落/高位回撤；成交侧成交承接暂未形成明显异常；最近10分钟-0.04%、成交额为前10分钟1.24倍，回落且成交参与扩张，短线抛压更实。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR"
         },
         {
@@ -830,9 +1014,27 @@
             "pace_interpretation_cn": "成交进度接近近20日常态",
             "acceptance_behavior": "TURNOVER_NEUTRAL",
             "acceptance_interpretation_cn": "成交承接暂未形成明显异常",
-            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。"
+            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
+            "recent_10m_marginal_acceptance": {
+              "status": "READY",
+              "window_end_beijing": "2026-08-28T15:00:00+08:00",
+              "recent_10m_price_change_pct": 0.2221,
+              "recent_10m_amount_delta": 429966112.19,
+              "recent_10m_volume_delta": 454305.0,
+              "prior_10m_price_change_pct": 0.2971,
+              "prior_10m_amount_delta": 289377416.06,
+              "prior_10m_volume_delta": 306697.0,
+              "amount_expansion_ratio": 1.4858,
+              "volume_expansion_ratio": 1.4813,
+              "amount_relation": "EXPANDED_VS_PRIOR_10M",
+              "recent_price_direction": "UP",
+              "interpretation_cn": "最近10分钟+0.22%、成交额为前10分钟1.49倍，上涨且成交参与扩张，短线承接增强。",
+              "source": "tencent_qq minute/query",
+              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
+              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+            }
           },
-          "combined_interpretation_cn": "上涨发生在历史高位区；近期高点与低点同步抬升，偏上升趋势；日内存在低点修复/V型反转候选；成交侧成交承接暂未形成明显异常。",
+          "combined_interpretation_cn": "上涨发生在历史高位区；近期高点与低点同步抬升，偏上升趋势；日内存在低点修复/V型反转候选；成交侧成交承接暂未形成明显异常；最近10分钟+0.22%、成交额为前10分钟1.49倍，上涨且成交参与扩张，短线承接增强。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR"
         },
         {
@@ -908,9 +1110,27 @@
             "pace_interpretation_cn": "成交进度明显慢于近20日常态",
             "acceptance_behavior": "LOW_VOLUME_DECLINE",
             "acceptance_interpretation_cn": "偏缩量回落",
-            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。"
+            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
+            "recent_10m_marginal_acceptance": {
+              "status": "READY",
+              "window_end_beijing": "2026-08-28T15:00:00+08:00",
+              "recent_10m_price_change_pct": 0.0,
+              "recent_10m_amount_delta": 33762589.1,
+              "recent_10m_volume_delta": 391725.0,
+              "prior_10m_price_change_pct": -0.2315,
+              "prior_10m_amount_delta": 22758736.39,
+              "prior_10m_volume_delta": 263845.0,
+              "amount_expansion_ratio": 1.4835,
+              "volume_expansion_ratio": 1.4847,
+              "amount_relation": "EXPANDED_VS_PRIOR_10M",
+              "recent_price_direction": "FLAT",
+              "interpretation_cn": "最近10分钟+0.00%、成交额为前10分钟1.48倍，价格变化有限但成交参与扩张，换手活跃。",
+              "source": "tencent_qq minute/query",
+              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
+              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+            }
           },
-          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内更接近冲高回落/高位回撤；成交侧偏缩量回落。",
+          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内更接近冲高回落/高位回撤；成交侧偏缩量回落；最近10分钟+0.00%、成交额为前10分钟1.48倍，价格变化有限但成交参与扩张，换手活跃。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR"
         },
         {
@@ -986,9 +1206,27 @@
             "pace_interpretation_cn": "成交进度接近近20日常态",
             "acceptance_behavior": "TURNOVER_NEUTRAL",
             "acceptance_interpretation_cn": "成交承接暂未形成明显异常",
-            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。"
+            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
+            "recent_10m_marginal_acceptance": {
+              "status": "READY",
+              "window_end_beijing": "2026-08-28T15:00:00+08:00",
+              "recent_10m_price_change_pct": 0.0,
+              "recent_10m_amount_delta": 232891404.63,
+              "recent_10m_volume_delta": 3486790.0,
+              "prior_10m_price_change_pct": -0.5952,
+              "prior_10m_amount_delta": 174634544.0,
+              "prior_10m_volume_delta": 2607400.0,
+              "amount_expansion_ratio": 1.3336,
+              "volume_expansion_ratio": 1.3373,
+              "amount_relation": "EXPANDED_VS_PRIOR_10M",
+              "recent_price_direction": "FLAT",
+              "interpretation_cn": "最近10分钟+0.00%、成交额为前10分钟1.33倍，价格变化有限但成交参与扩张，换手活跃。",
+              "source": "tencent_qq minute/query",
+              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
+              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+            }
           },
-          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内更接近冲高回落/高位回撤；成交侧成交承接暂未形成明显异常。",
+          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内更接近冲高回落/高位回撤；成交侧成交承接暂未形成明显异常；最近10分钟+0.00%、成交额为前10分钟1.33倍，价格变化有限但成交参与扩张，换手活跃。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR"
         },
         {
@@ -1064,13 +1302,55 @@
             "pace_interpretation_cn": "成交进度接近近20日常态",
             "acceptance_behavior": "TURNOVER_NEUTRAL",
             "acceptance_interpretation_cn": "成交承接暂未形成明显异常",
-            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。"
+            "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
+            "recent_10m_marginal_acceptance": {
+              "status": "READY",
+              "window_end_beijing": "2026-08-28T15:00:00+08:00",
+              "recent_10m_price_change_pct": -0.0596,
+              "recent_10m_amount_delta": 16362148.61,
+              "recent_10m_volume_delta": 97521.0,
+              "prior_10m_price_change_pct": -0.1784,
+              "prior_10m_amount_delta": 18771206.0,
+              "prior_10m_volume_delta": 111769.0,
+              "amount_expansion_ratio": 0.8717,
+              "volume_expansion_ratio": 0.8725,
+              "amount_relation": "CONTRACTED_VS_PRIOR_10M",
+              "recent_price_direction": "DOWN",
+              "interpretation_cn": "最近10分钟-0.06%、成交额为前10分钟0.87倍，回落但成交参与收缩，抛压扩散有限。",
+              "source": "tencent_qq minute/query",
+              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
+              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+            }
           },
-          "combined_interpretation_cn": "下跌发生在历史低位区；近期趋势结构混合，尚不能定义为单边趋势，赔率可能改善但承接仍弱；日内更接近冲高回落/高位回撤；成交侧成交承接暂未形成明显异常。",
+          "combined_interpretation_cn": "下跌发生在历史低位区；近期趋势结构混合，尚不能定义为单边趋势，赔率可能改善但承接仍弱；日内更接近冲高回落/高位回撤；成交侧成交承接暂未形成明显异常；最近10分钟-0.06%、成交额为前10分钟0.87倍，回落但成交参与收缩，抛压扩散有限。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR"
         }
       ],
-      "decision_boundary": "本文件只提供历史位置与趋势、日内路径时序及时间归一化成交承接的客观解释，不自动生成风险许可、Trial/Confirm、金额或买卖动作。"
+      "decision_boundary": "本文件只提供历史位置与趋势、日内路径时序及时间归一化成交承接的客观解释，不自动生成风险许可、Trial/Confirm、金额或买卖动作。",
+      "minute_acceptance_integration": {
+        "status": "READY",
+        "target_count": 11,
+        "ready_count": 11,
+        "ready_codes": [
+          "561980",
+          "588000",
+          "159781",
+          "159941",
+          "513180",
+          "159561",
+          "513520",
+          "518880",
+          "159992",
+          "515880",
+          "159326"
+        ],
+        "fallback_codes": [],
+        "base_20d_time_normalized_turnover_preserved": true,
+        "minute_10m_role": "最近10分钟 vs 紧邻前10分钟，用于描述资金参与边际增强/减弱",
+        "no_composite_score": true,
+        "no_trade_signal": true,
+        "decision_boundary": "腾讯分钟仅增强指数日内路径与ETF最近10分钟边际承接；正式最新价仍由quote router/CURRENT决定，不产生风险许可、Trial/Confirm、金额或买卖动作。"
+      }
     },
     "skfolio_risk": {
       "status": "READY",
@@ -1548,7 +1828,7 @@
   },
   "research_execution_summary": {
     "schema_version": "1.0",
-    "generated_at": "2026-08-28T07:12:52Z",
+    "generated_at": "2026-08-28T07:58:58Z",
     "mode": "RESEARCH_TO_EXECUTION_READ_ONLY_BRIDGE",
     "read_only": true,
     "use_in_current_decision": true,

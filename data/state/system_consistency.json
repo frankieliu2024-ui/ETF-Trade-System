@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-28T07:46:29Z",
-  "generated_at_beijing": "2026-08-28T15:46:29+08:00",
+  "generated_at": "2026-08-28T08:01:54Z",
+  "generated_at_beijing": "2026-08-28T16:01:54+08:00",
   "repository": {
-    "head_sha": "eb9687bd99a57605af7f40b332c64e1b5faff4cc",
-    "github_sha": "eb9687bd99a57605af7f40b332c64e1b5faff4cc",
-    "github_run_id": "33152701304",
+    "head_sha": "be87af5a1b2d277d09f028a8e3f84b5cf406ea88",
+    "github_sha": "be87af5a1b2d277d09f028a8e3f84b5cf406ea88",
+    "github_run_id": "33153688961",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "eb9687bd99a57605af7f40b332c64e1b5faff4cc",
-    "workflow_sha": "eb9687bd99a57605af7f40b332c64e1b5faff4cc",
+    "checked_commit": "be87af5a1b2d277d09f028a8e3f84b5cf406ea88",
+    "workflow_sha": "be87af5a1b2d277d09f028a8e3f84b5cf406ea88",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
@@ -19,8 +19,8 @@
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
-      "status": "FAIL",
-      "detail": ")\nEvery formal object policy must equal the provider chain declared for that object.\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_provider_display_sync.py\", line 41, in test_object_policy_matches_declared_object_chain\n    self.assertEqual(actual, expected, f\"provider chain drift for {object_id}\")\nAssertionError: Lists differ: ['hithink-finance:HS2083', 'yahoo_chart_api[57 chars]180'] != ['eastmoney_push2:124.HSTECH', 'yahoo_chart[57 chars]180']\n\nFirst differing element 0:\n'hithink-finance:HS2083'\n'eastmoney_push2:124.HSTECH'\n\n- ['hithink-finance:HS2083',\n+ ['eastmoney_push2:124.HSTECH',\n   'yahoo_chart_api:HSTECH.HK',\n-  'eastmoney_push2:124.HSTECH',\n+  'hithink-finance:HS2083',\n   'ETF_PROXY_513180'] : provider chain drift for HSTECH\n\n----------------------------------------------------------------------\nRan 44 tests in 0.034s\n\nFAILED (failures=2)\n"
+      "status": "PASS",
+      "detail": "............................................\n----------------------------------------------------------------------\nRan 44 tests in 0.033s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -235,12 +235,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=eb9687bd99a57605af7f40b332c64e1b5faff4cc"
+      "detail": "HEAD=be87af5a1b2d277d09f028a8e3f84b5cf406ea88"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=eb9687bd99a57605af7f40b332c64e1b5faff4cc GITHUB_SHA=eb9687bd99a57605af7f40b332c64e1b5faff4cc"
+      "detail": "HEAD=be87af5a1b2d277d09f028a8e3f84b5cf406ea88 GITHUB_SHA=be87af5a1b2d277d09f028a8e3f84b5cf406ea88"
     },
     {
       "name": "git:critical_files_tracked",
@@ -250,7 +250,7 @@
     {
       "name": "git:working_tree_clean_before_check",
       "status": "PASS",
-      "detail": "generated_state_dirty=20 unexpected=[]"
+      "detail": "generated_state_dirty=19 unexpected=[]"
     },
     {
       "name": "index_entry:ETF规则_MASTER.md",
@@ -415,7 +415,7 @@
     {
       "name": "providers:hstech_sources_registered",
       "status": "PASS",
-      "detail": "registered=['hithink-finance:HS2083', 'yahoo_chart_api:HSTECH.HK', 'eastmoney_push2:124.HSTECH', 'ETF_PROXY_513180']"
+      "detail": "registered=['eastmoney_push2:124.HSTECH', 'yahoo_chart_api:HSTECH.HK', 'hithink-finance:HS2083', 'ETF_PROXY_513180']"
     },
     {
       "name": "providers:hstech_primary_fallback_policy",
@@ -670,7 +670,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=03:46 max_age_seconds=37889 limit=900"
+      "detail": "phase_aware phase=PRE_MARKET live_objects=['QQQ', 'SOXX'] max_age_seconds=39 limit=900; cash indices are session references outside REGULAR"
     },
     {
       "name": "session_gate:calendar_read",
@@ -785,12 +785,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=2030"
+      "detail": "declared=STALE expected=STALE age_seconds=2956"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=2030"
+      "detail": "declared=STALE expected=STALE age_seconds=2956"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -830,7 +830,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-28T07:46:28Z market=2026-08-28T15:12:38+08:00"
+      "detail": "context=2026-08-28T08:01:54Z market=2026-08-28T15:12:38+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -900,7 +900,7 @@
     {
       "name": "phase4:e2e_state_present",
       "status": "PASS",
-      "detail": "status=READY"
+      "detail": "status=BLOCKED"
     },
     {
       "name": "notification:managed_schema",
@@ -1014,8 +1014,8 @@
     },
     {
       "name": "risk:formal_precedence",
-      "status": "PASS",
-      "detail": "formal=-6.1839 source=events/reviews/2026-08-27.json dashboard/e2e aligned"
+      "status": "FAIL",
+      "detail": "formal=-7.0916 source=events/reviews/2026-08-28.json e2e=-6.18"
     },
     {
       "name": "formal_files:executed_trade_event_sync",
@@ -1714,7 +1714,7 @@
     }
   ],
   "errors": [
-    "tests:market_data_and_quote_router: )\nEvery formal object policy must equal the provider chain declared for that object.\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_provider_display_sync.py\", line 41, in test_object_policy_matches_declared_object_chain\n    self.assertEqual(actual, expected, f\"provider chain drift for {object_id}\")\nAssertionError: Lists differ: ['hithink-finance:HS2083', 'yahoo_chart_api[57 chars]180'] != ['eastmoney_push2:124.HSTECH', 'yahoo_chart[57 chars]180']\n\nFirst differing element 0:\n'hithink-finance:HS2083'\n'eastmoney_push2:124.HSTECH'\n\n- ['hithink-finance:HS2083',\n+ ['eastmoney_push2:124.HSTECH',\n   'yahoo_chart_api:HSTECH.HK',\n-  'eastmoney_push2:124.HSTECH',\n+  'hithink-finance:HS2083',\n   'ETF_PROXY_513180'] : provider chain drift for HSTECH\n\n----------------------------------------------------------------------\nRan 44 tests in 0.034s\n\nFAILED (failures=2)\n"
+    "risk:formal_precedence:e2e=-6.18"
   ],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
