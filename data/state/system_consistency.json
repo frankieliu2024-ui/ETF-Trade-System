@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-28T08:00:01Z",
-  "generated_at_beijing": "2026-08-28T16:00:01+08:00",
+  "generated_at": "2026-08-28T08:01:54Z",
+  "generated_at_beijing": "2026-08-28T16:01:54+08:00",
   "repository": {
-    "head_sha": "139c00792833718ff6df3ecc5f126bd1250ca63c",
-    "github_sha": "139c00792833718ff6df3ecc5f126bd1250ca63c",
-    "github_run_id": "33153515212",
+    "head_sha": "be87af5a1b2d277d09f028a8e3f84b5cf406ea88",
+    "github_sha": "be87af5a1b2d277d09f028a8e3f84b5cf406ea88",
+    "github_run_id": "33153688961",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "139c00792833718ff6df3ecc5f126bd1250ca63c",
-    "workflow_sha": "139c00792833718ff6df3ecc5f126bd1250ca63c",
+    "checked_commit": "be87af5a1b2d277d09f028a8e3f84b5cf406ea88",
+    "workflow_sha": "be87af5a1b2d277d09f028a8e3f84b5cf406ea88",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
@@ -20,7 +20,7 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "............................................\n----------------------------------------------------------------------\nRan 44 tests in 0.045s\n\nOK\n"
+      "detail": "............................................\n----------------------------------------------------------------------\nRan 44 tests in 0.033s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -235,12 +235,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=139c00792833718ff6df3ecc5f126bd1250ca63c"
+      "detail": "HEAD=be87af5a1b2d277d09f028a8e3f84b5cf406ea88"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=139c00792833718ff6df3ecc5f126bd1250ca63c GITHUB_SHA=139c00792833718ff6df3ecc5f126bd1250ca63c"
+      "detail": "HEAD=be87af5a1b2d277d09f028a8e3f84b5cf406ea88 GITHUB_SHA=be87af5a1b2d277d09f028a8e3f84b5cf406ea88"
     },
     {
       "name": "git:critical_files_tracked",
@@ -250,7 +250,7 @@
     {
       "name": "git:working_tree_clean_before_check",
       "status": "PASS",
-      "detail": "generated_state_dirty=20 unexpected=[]"
+      "detail": "generated_state_dirty=19 unexpected=[]"
     },
     {
       "name": "index_entry:ETF规则_MASTER.md",
@@ -669,8 +669,8 @@
     },
     {
       "name": "us_extended:live_freshness",
-      "status": "FAIL",
-      "detail": "active=True phase=04:00 max_age_seconds=38701 limit=900"
+      "status": "PASS",
+      "detail": "phase_aware phase=PRE_MARKET live_objects=['QQQ', 'SOXX'] max_age_seconds=39 limit=900; cash indices are session references outside REGULAR"
     },
     {
       "name": "session_gate:calendar_read",
@@ -785,12 +785,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=2843"
+      "detail": "declared=STALE expected=STALE age_seconds=2956"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=2842"
+      "detail": "declared=STALE expected=STALE age_seconds=2956"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -830,7 +830,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-28T08:00:00Z market=2026-08-28T15:12:38+08:00"
+      "detail": "context=2026-08-28T08:01:54Z market=2026-08-28T15:12:38+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -900,7 +900,7 @@
     {
       "name": "phase4:e2e_state_present",
       "status": "PASS",
-      "detail": "status=READY"
+      "detail": "status=BLOCKED"
     },
     {
       "name": "notification:managed_schema",
@@ -1014,8 +1014,8 @@
     },
     {
       "name": "risk:formal_precedence",
-      "status": "PASS",
-      "detail": "formal=-6.1839 source=events/reviews/2026-08-27.json dashboard/e2e aligned"
+      "status": "FAIL",
+      "detail": "formal=-7.0916 source=events/reviews/2026-08-28.json e2e=-6.18"
     },
     {
       "name": "formal_files:executed_trade_event_sync",
@@ -1714,7 +1714,7 @@
     }
   ],
   "errors": [
-    "us_extended:live_freshness: active=True phase=04:00 max_age_seconds=38701 limit=900"
+    "risk:formal_precedence:e2e=-6.18"
   ],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
