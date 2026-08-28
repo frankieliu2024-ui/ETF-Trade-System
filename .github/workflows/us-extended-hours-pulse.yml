@@ -58,13 +58,13 @@ jobs:
       - name: Send US regular-session open/close summary when due
         id: us_summary_notify
         continue-on-error: true
-        run: python scripts/send_us_session_summary.py
+        run: python scripts/run_guarded_notification.py us
       - name: Send US monitored-object value event when due
         id: us_shock_notify
         continue-on-error: true
         env:
           PREVIOUS_CONTEXT_PATH: /tmp/us_extended_hours_context_prev.json
-        run: python scripts/send_market_shock_notification.py --market us
+        run: python scripts/run_guarded_notification.py shock --market us
       - name: Record dedicated US pulse heartbeat
         if: always()
         shell: bash
