@@ -1,17 +1,14 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
-from statistics import median
 
-ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
-
-
-def load_json(path: Path, default=None):
-    if not path.exists():
-        return {} if default is None else default
-    return json.loads(path.read_text(encoding="utf-8"))
+try:
+    from build_market_regime_context_legacy import ROOT, build as _legacy_build, load_json
+    from minute_context_production import build as _minute_build
+except ModuleNotFoundError:
+    from scripts.build_market_regime_context_legacy import ROOT, build as _legacy_build, load_json
+    from scripts.minute_context_production import build as _minute_build
 
 
 def _f(value):
@@ -21,114 +18,101 @@ def _f(value):
         return None
 
 
+def _range_position(price, low, high):
+    p, lo, hi = _f(price), _f(low), _f(high)
+    if p is None or lo is None or hi is None or hi == lo:
+        return None
+    return round((p - lo) / (hi - lo), 4)
+
+
+def _apply_minute_path(item: dict, feature: dict) -> None:
+    item.update({
+        "day_range_position": _range_position(item.get("price"), feature.get("path_low"), feature.get("path_high")),
+        "path_change_pct": _f(feature.get("path_change_pct")),
+        "recent_slope_pct_per_10m": _f(feature.get("recent_slope_pct_per_10m")),
+        "recovery_from_path_low_pct": _f(feature.get("recovery_from_path_low_pct")),
+        "retreat_from_path_high_pct": _f(feature.get("retreat_from_path_high_pct")),
+        "sampling_coverage": "HIGH",
+        "path_low": feature.get("path_low"),
+        "path_low_as_of_beijing": feature.get("path_low_as_of_beijing"),
+        "path_high": feature.get("path_high"),
+        "path_high_as_of_beijing": feature.get("path_high_as_of_beijing"),
+        "minute_path_source": "TENCENT_1M",
+        "minute_latest_as_of_beijing": feature.get("latest_as_of_beijing"),
+        "minute_sample_count": feature.get("sample_count"),
+        "minute_point_in_time": feature.get("point_in_time"),
+        "minute_quote_alignment": feature.get("quote_alignment"),
+        "minute_selection_reason": feature.get("production_selection_reason"),
+    })
+
+
 def build(root: Path | None = None) -> dict:
     root = root or ROOT
+    base = _legacy_build(root)
+    try:
+        minute = _minute_build(root)
+    except Exception as exc:
+        base["minute_path_integration"] = {
+            "status": "FALLBACK",
+            "selected_count": 0,
+            "target_count": 3,
+            "error": str(exc)[-500:],
+            "formal_latest_price_source_unchanged": True,
+        }
+        return base
+
     current = load_json(root / "data/state/CURRENT.json")
     snapshot_path = root / str(current.get("latest_snapshot") or "")
     snapshot = load_json(snapshot_path) if snapshot_path.exists() else {}
-    path_features = load_json(root / "data/state/intraday_path_features.json")
-    feature_map = {str(x.get("symbol")): x for x in (path_features.get("features") or [])}
     rows = {str(x.get("symbol")): x for x in (snapshot.get("rows") or []) if x.get("quality_status") == "PASS"}
-
-    index_items = []
-    for code, name in (("000001", "上证指数"), ("399006", "创业板指")):
-        row = rows.get(code) or {}
-        feat = feature_map.get(code) or {}
-        if not row:
+    item_map = {str(x.get("code")): x for x in (base.get("indices") or [])}
+    names = {"000001": "上证指数", "399006": "创业板指", "000688": "科创50指数"}
+    selected, fallback = [], []
+    for feature in minute.get("index_items") or []:
+        code = str(feature.get("symbol") or "")
+        if code not in names:
             continue
-        index_items.append({
-            "display_name": f"{name}（{code}）",
-            "code": code,
-            "as_of_beijing": row.get("as_of_beijing"),
-            "price": row.get("close"),
-            "change_pct": _f(row.get("change_pct")),
-            "day_range_position": _f(feat.get("latest_day_range_position")),
-            "path_change_pct": _f(feat.get("path_change_pct")),
-            "recent_slope_pct_per_10m": _f(feat.get("recent_slope_pct_per_10m")),
-            "recovery_from_path_low_pct": _f(feat.get("recovery_from_path_low_pct")),
-            "retreat_from_path_high_pct": _f(feat.get("retreat_from_path_high_pct")),
-            "sampling_coverage": (feat.get("sampling") or {}).get("coverage"),
-        })
+        row = rows.get(code) or {}
+        item = item_map.get(code)
+        if item is None and row:
+            item = {
+                "display_name": f"{names[code]}（{code}）",
+                "code": code,
+                "as_of_beijing": row.get("as_of_beijing"),
+                "price": row.get("close"),
+                "change_pct": _f(row.get("change_pct")),
+            }
+            base.setdefault("indices", []).append(item)
+            item_map[code] = item
+        if item is None:
+            fallback.append(code)
+            continue
+        if feature.get("production_usable") is True:
+            _apply_minute_path(item, feature)
+            selected.append(code)
+        else:
+            item["minute_path_source"] = "DISCRETE_SNAPSHOT_PATH_FALLBACK"
+            item["minute_selection_reason"] = feature.get("production_selection_reason")
+            fallback.append(code)
 
-    etf_rows = [x for x in rows.values() if x.get("asset_class") == "ETF"]
-    returns = [_f(x.get("change_pct")) for x in etf_rows]
-    returns = [x for x in returns if x is not None]
-    positive = sum(1 for x in returns if x > 0)
-    negative = sum(1 for x in returns if x < 0)
-    flat = len(returns) - positive - negative
-    breadth = {
-        "etf_count": len(returns),
-        "positive_count": positive,
-        "negative_count": negative,
-        "flat_count": flat,
-        "positive_share": round(positive / len(returns), 4) if returns else None,
-        "median_return_pct": round(median(returns), 4) if returns else None,
-        "breadth_state": (
-            "BROAD_RISK_ON" if returns and positive / len(returns) >= 0.7
-            else "BROAD_RISK_OFF" if returns and negative / len(returns) >= 0.7
-            else "MIXED_BREADTH"
-        ),
+    base["schema_version"] = "1.1"
+    base["mode"] = "MARKET_LEVEL_REGIME_CONTEXT_WITH_TENCENT_1M_INDEX_PATH"
+    base["minute_path_integration"] = {
+        "status": "READY" if len(selected) == 3 else "DEGRADED_WITH_OBJECT_FALLBACK",
+        "target_count": 3,
+        "selected_count": len(selected),
+        "selected_codes": selected,
+        "fallback_codes": fallback,
+        "source": "tencent_qq minute/query",
+        "formal_latest_price_source_unchanged": True,
+        "regime_classification_logic_unchanged": True,
+        "decision_boundary": minute.get("decision_boundary"),
     }
-
-    sh = next((x for x in index_items if x.get("code") == "000001"), {})
-    cyb = next((x for x in index_items if x.get("code") == "399006"), {})
-    sh_ret = _f(sh.get("change_pct"))
-    cyb_ret = _f(cyb.get("change_pct"))
-    style_spread = round(cyb_ret - sh_ret, 4) if sh_ret is not None and cyb_ret is not None else None
-    if style_spread is None:
-        style_state = "UNKNOWN"
-    elif style_spread >= 0.5:
-        style_state = "GROWTH_OUTPERFORMS"
-    elif style_spread <= -0.5:
-        style_state = "LARGE_CAP_OUTPERFORMS"
-    else:
-        style_state = "BALANCED"
-
-    if breadth["breadth_state"] == "BROAD_RISK_ON" and sh_ret is not None and cyb_ret is not None and sh_ret > 0 and cyb_ret > 0:
-        regime = "BROAD_REPAIR_OR_RISK_ON"
-        regime_cn = "指数与ETF宽度同步偏强，市场更接近广泛修复/风险偏好改善"
-    elif breadth["breadth_state"] == "BROAD_RISK_OFF" and sh_ret is not None and cyb_ret is not None and sh_ret < 0 and cyb_ret < 0:
-        regime = "BROAD_RISK_OFF"
-        regime_cn = "指数与ETF宽度同步偏弱，市场更接近广泛风险收缩"
-    else:
-        regime = "MIXED_OR_STRUCTURAL"
-        regime_cn = "指数与ETF宽度并非同向极端，市场更接近结构性分化/震荡"
-
-    return {
-        "schema_version": "1.0",
-        "mode": "MARKET_LEVEL_REGIME_CONTEXT",
-        "status": "READY" if len(index_items) == 2 and bool(returns) else "DEGRADED",
-        "market_date": snapshot.get("market_date") or current.get("market_date"),
-        "as_of_beijing": snapshot.get("captured_at_beijing") or current.get("captured_at"),
-        "source_snapshot": current.get("latest_snapshot", ""),
-        "indices": index_items,
-        "etf_breadth": breadth,
-        "style_context": {
-            "chinext_minus_shanghai_pct_points": style_spread,
-            "state": style_state,
-            "interpretation_cn": {
-                "GROWTH_OUTPERFORMS": "成长风险偏好明显强于大盘",
-                "LARGE_CAP_OUTPERFORMS": "大盘/低波方向明显强于成长",
-                "BALANCED": "上证与创业板差异有限，风格暂不极端",
-                "UNKNOWN": "风格证据不足",
-            }[style_state],
-        },
-        "market_regime": regime,
-        "market_regime_interpretation_cn": regime_cn,
-        "analysis_contract": {
-            "rule": "正式盘中决策必须先完成市场层分析，再进入账户、持仓、观察ETF和现金的统一比较。",
-            "required_dimensions": [
-                "上证指数（000001）日内位置与路径",
-                "创业板指（399006）日内位置与路径",
-                "ETF全集上涨/下跌宽度与中位收益",
-                "上证与创业板的风格差异",
-                "必要时结合海外/亚洲反馈，但不得用陈旧海外数据替代A股自身反馈",
-            ],
-            "forbidden_shortcut": "只分析持仓和观察ETF、跳过市场层后直接形成主候选或金额动作",
-        },
-        "decision_boundary": "本文件只描述市场环境、指数路径、ETF宽度与风格，不直接生成风险许可、Trial/Confirm、金额或买卖动作。",
-        "read_only": True,
-    }
+    required = (base.get("analysis_contract") or {}).get("required_dimensions") or []
+    k50 = "科创50指数（000688）日内位置与路径"
+    if k50 not in required:
+        required.insert(2, k50)
+    return base
 
 
 if __name__ == "__main__":
