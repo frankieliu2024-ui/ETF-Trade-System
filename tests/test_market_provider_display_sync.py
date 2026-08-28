@@ -4,6 +4,8 @@ import json
 import unittest
 from pathlib import Path
 
+from scripts import production_health_guard as production_health
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -109,9 +111,6 @@ class ProviderPolicyConsistencyTest(unittest.TestCase):
         priority_scopes = set((self.priority.get("tencent_expansion_policy") or {}).get("production_enabled") or [])
         self.assertEqual(monitor_scopes, priority_scopes, "Tencent production scope drift")
 
-        # Query-time A-share industry stocks are a formal dynamic scope and must
-        # retain an explicit production policy. Candidate/shadow overseas scopes
-        # are intentionally not hardened here.
         dynamic = self.priority.get("dynamic_scope_policy") or {}
         query_scope = dynamic.get("A_SHARE_QUERY_TIME_INDUSTRY_STOCK") or {}
         self.assertEqual(str(query_scope.get("primary") or ""), "tencent_qq")
@@ -161,6 +160,43 @@ class ProviderPolicyConsistencyTest(unittest.TestCase):
             self.assertIn(path, index, f"system index must route normative domain: {path}")
         self.assertIn("本索引只负责路由", index)
         self.assertIn("不再新增新的“唯一规范性规则来源”", index)
+
+    def test_production_health_consistency_coverage_uses_canonical_trigger_semantics(self):
+        patterns = production_health.consistency_push_patterns()
+        self.assertIn("scripts/**", patterns)
+        self.assertIn("config/market/**", patterns)
+        self.assertIn(".github/workflows/**", patterns)
+
+        level, coverage, paths = production_health.classify_consistency_coverage(
+            "PASS",
+            "validated",
+            "current",
+            ["data/state/e2e_status.json", "data/state/us_pulse_runtime_health.json"],
+            patterns,
+        )
+        self.assertEqual((level, coverage, paths), ("PASS", "STATE_ONLY_ADVANCE", []))
+
+        level, coverage, paths = production_health.classify_consistency_coverage(
+            "PASS",
+            "validated",
+            "current",
+            ["data/state/e2e_status.json", "scripts/production_health_guard.py"],
+            patterns,
+        )
+        self.assertEqual(level, "ATTENTION")
+        self.assertEqual(coverage, "REVALIDATION_REQUIRED")
+        self.assertEqual(paths, ["scripts/production_health_guard.py"])
+
+    def test_production_health_consistency_coverage_handles_exact_head_and_fail(self):
+        patterns = production_health.consistency_push_patterns()
+        self.assertEqual(
+            production_health.classify_consistency_coverage("PASS", "same", "same", [], patterns),
+            ("PASS", "CURRENT_HEAD", []),
+        )
+        self.assertEqual(
+            production_health.classify_consistency_coverage("FAIL", "old", "new", [], patterns),
+            ("BLOCKED", "CONSISTENCY_FAIL", []),
+        )
 
 
 if __name__ == "__main__":
