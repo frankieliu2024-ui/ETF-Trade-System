@@ -1,33 +1,35 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-28T07:52:40+08:00",
+  "generated_at": "2026-08-28T08:14:49+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33127767831,
+  "run_id": 33129061970,
   "run_attempt": 1,
-  "head_sha": "c8cde865ec47975c4b8a1f0c10073d0c135729aa",
-  "main_head_sha": "db80041b7c59134c1e3a585cfda02c7aabc71093",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "f3e0bf641fb32bf44b85f08521c46c710cc7c4d8",
+  "main_head_sha": "d6a1c650c23f6ba41418327259946482752401b7",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 17
+      "step": "Persist consistency and maintenance state",
+      "number": 14
     }
   ],
   "changed_files": [
-    "scripts/check_system_consistency.py"
+    "data/state/account_fact.json"
   ],
-  "commit_message": "fix: make consistency phase-aware across US and A-share sessions",
+  "commit_message": "fix: reconcile Aug 27 broker cash and communication ETF trade",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "ESCALATE_WITH_DIAGNOSTIC",
-  "reason": "automatic action stopped at safety boundary",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
-    "forbidden_path_touched": false,
+    "forbidden_path_touched": true,
     "bot_or_revert_commit": false,
+    "user_notification_authority": false,
+    "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
     "may_modify_account_fact": false,
     "may_change_provider_policy": false,
