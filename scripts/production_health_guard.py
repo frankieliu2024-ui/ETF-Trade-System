@@ -85,12 +85,12 @@ def main() -> int:
     checks: list[dict[str, Any]] = []
 
     consistency_status = str(consistency.get("status") or "UNKNOWN")
+    consistency_level = "PASS" if consistency_status == "PASS" else ("BLOCKED" if consistency_status == "FAIL" else "ATTENTION")
     add_check(
         checks,
         "full_system_consistency",
-        "PASS" if consistency_status == "PASS" else "BLOCKED",
+        consistency_level,
         f"status={consistency_status}; generated_at={consistency.get('generated_at_beijing') or consistency.get('generated_at') or 'unknown'}",
-        user_action=consistency_status == "FAIL",
     )
 
     runtime_status = str(runtime.get("status") or runtime.get("quality_status") or "UNKNOWN")
@@ -125,7 +125,7 @@ def main() -> int:
     maintenance_status = str(maintenance.get("status") or "UNKNOWN")
     reconciliation_status = str((maintenance.get("reconciliation") or {}).get("status") or "UNKNOWN")
     maintenance_block = maintenance_status == "FAIL" or reconciliation_status == "FAIL"
-    add_check(checks, "maintenance_and_account_reconciliation", "BLOCKED" if maintenance_block else ("PASS" if maintenance_status == "PASS" and reconciliation_status == "PASS" else "ATTENTION"), f"maintenance={maintenance_status}; reconciliation={reconciliation_status}", user_action=maintenance_block)
+    add_check(checks, "maintenance_and_account_reconciliation", "BLOCKED" if maintenance_block else ("PASS" if maintenance_status == "PASS" and reconciliation_status == "PASS" else "ATTENTION"), f"maintenance={maintenance_status}; reconciliation={reconciliation_status}")
 
     account_status = str(account.get("status") or "UNKNOWN")
     actionable_count = int(execution.get("actionable_count") or 0)
@@ -135,7 +135,7 @@ def main() -> int:
 
     e2e_status = str(e2e.get("status") or "UNKNOWN")
     blockers = list(e2e.get("blockers") or [])
-    add_check(checks, "end_to_end_readiness", "PASS" if e2e_status == "READY" else ("BLOCKED" if e2e_status == "BLOCKED" else "ATTENTION"), f"status={e2e_status}; blockers={blockers}", user_action=e2e_status == "BLOCKED")
+    add_check(checks, "end_to_end_readiness", "PASS" if e2e_status == "READY" else ("BLOCKED" if e2e_status == "BLOCKED" else "ATTENTION"), f"status={e2e_status}; blockers={blockers}")
 
     event = current_user_action_event()
     if event:
@@ -156,7 +156,7 @@ def main() -> int:
         "user_action_required": user_action_required,
         "market_activity": windows,
         "checks": checks,
-        "notification_boundary": "This guard never sends PushPlus directly. User-action notifications continue through the existing guarded notification center triggered after the watchdog run.",
+        "notification_boundary": "This guard never sends PushPlus directly. User-action notifications continue through the existing guarded notification center triggered after the watchdog run. Consistency/maintenance/E2E anomalies do not by themselves gain notification rights before existing self-healing escalation rules are satisfied.",
         "mutation_boundary": "Read-only: no market refresh, no workflow dispatch, no state persistence, no MASTER/provider/trading-rule/account-fact change.",
     }
     print(json.dumps(result, ensure_ascii=False, indent=2))
