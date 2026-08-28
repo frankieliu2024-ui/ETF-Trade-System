@@ -1,0 +1,40 @@
+name: Historical market breadth data qualification PoC
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/historical_market_breadth_poc.py"
+      - ".github/workflows/historical-market-breadth-poc.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-historical-market-breadth-poc
+  cancel-in-progress: true
+
+jobs:
+  poc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install BaoStock
+        run: python -m pip install --upgrade pip baostock
+      - name: Compile PoC
+        run: python -m py_compile scripts/historical_market_breadth_poc.py
+      - name: Run historical breadth data qualification
+        run: python scripts/historical_market_breadth_poc.py
+      - name: Upload PoC evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-market-breadth-poc-${{ github.run_id }}
+          path: data/state/historical_market_breadth_poc.json
+          if-no-files-found: error
+          retention-days: 14
