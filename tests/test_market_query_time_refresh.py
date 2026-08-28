@@ -85,16 +85,40 @@ class QueryTimeRefreshTests(unittest.TestCase):
         self.assertEqual(result["quotes"][0]["latest_price"], 1.234)
         self.assertEqual(cli.call_count, 2)
         self.assertEqual(cli.call_args_list[1].args[1], ["market", "snapshot", "--thscodes", "159941.SZ"])
-    def test_kospi_regular_refresh_uses_provider_quote(self):
+
+    def test_kospi_regular_refresh_uses_formal_naver_chain(self):
         root = self._root("2026-08-26T07:00:00+08:00")
         now = datetime.fromisoformat("2026-08-26T10:15:00+09:00")
-        fresh = {"symbol": "^KS11", "market": "KR", "latest_price": 6781.33, "data_time_beijing": "2026-08-26T10:14:50+08:00", "data_time_local": "2026-08-26T10:14:50+09:00", "market_phase": "REGULAR", "market_status_cn": "韩股交易中", "data_nature_cn": "实时交易行情", "freshness": "FRESH", "source": "yahoo_chart_api"}
-        with patch("scripts.query_time_market_refresh._yahoo", return_value=fresh) as provider:
+        record = {
+            "object": "KOSPI",
+            "name": "韩国综合指数",
+            "provider": "naver_finance",
+            "provider_timestamp_field": "localTradedAt",
+            "quality_status": "PASS",
+            "latest": {
+                "open": 6770.0,
+                "high": 6790.0,
+                "low": 6760.0,
+                "close": 6781.33,
+                "volume": 1000,
+                "amount": 2000,
+                "previous_close": 6750.0,
+                "as_of_beijing": "2026-08-26T09:14:50+08:00",
+                "as_of_local": "2026-08-26T10:14:50+09:00",
+            },
+        }
+        summary = {"provider": "naver_finance:KOSPI", "freshness_status": "FRESH", "stable_for_10m_pulse": True}
+        with patch("scripts.query_time_market_refresh.fetch_naver_kospi", return_value=record) as provider, \
+             patch("scripts.query_time_market_refresh.provider_attempt", return_value=summary), \
+             patch("scripts.query_time_market_refresh._yahoo") as generic_yahoo:
             from scripts.query_time_market_refresh import refresh_market_quotes
             result = refresh_market_quotes(root, ["KOSPI"], now)
-        provider.assert_called_once_with("^KS11", "KR", now, json.loads((root / "config/runtime_policy.json").read_text(encoding="utf-8")))
+        provider.assert_called_once()
+        generic_yahoo.assert_not_called()
         self.assertEqual(result["quotes"][0]["latest_price"], 6781.33)
         self.assertEqual(result["quotes"][0]["market_status_cn"], "韩股交易中")
+        self.assertEqual(result["quotes"][0]["source"], "naver_finance:KOSPI")
+        self.assertEqual(result["quotes"][0]["refresh_source"], "QUERY_TIME_FORMAL_PROVIDER_CHAIN")
 
 
 if __name__ == "__main__":
