@@ -53,7 +53,10 @@ jobs:
           python - <<'PY'
           import os
           import sys
-          import scripts.send_regional_session_summary as module
+          from pathlib import Path
+
+          sys.path.insert(0, str(Path.cwd() / 'scripts'))
+          import send_regional_session_summary as module
 
           module.A_SHARE_OPEN_INDEX_ABS_PCT = 0.0
           module.A_SHARE_OPEN_ETF_ABS_PCT = 0.0
