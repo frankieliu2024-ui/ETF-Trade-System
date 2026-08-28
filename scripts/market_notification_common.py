@@ -21,6 +21,7 @@ from notification_center import (
 
 NOTIFICATION_STATE = STATE / "notification_center.json"
 ROOT = Path(__file__).resolve().parents[1]
+APAC_LATE_HK_MIN_DELTA_PCT = 0.8
 
 
 def _formal_etf_aliases() -> tuple[dict[str, str], dict[tuple[str, str], str]]:
@@ -259,6 +260,31 @@ def _future_time_error(event: dict) -> str:
     return ""
 
 
+def _late_apac_update_error(event: dict) -> str:
+    """Reject false HK-late updates caused only by data-coverage/tone drift.
+
+    The 16:00+ APAC add-on is intentionally narrow: a missing primary summary may
+    be recovered, otherwise the already-closed Japan/Korea/Taiwan facts cannot
+    create a new regional direction by disappearing from the comparable set.
+    A user-visible late update therefore requires a real HSTECH move of at least
+    the production attention threshold from the primary APAC close.
+    """
+    if str(event.get("event_type") or "") != "APAC_SESSION_SUMMARY":
+        return ""
+    ctx = event.get("confirmation_context") or {}
+    if str(ctx.get("session_node") or "") != "HK_LATE_UPDATE":
+        return ""
+    title = str(event.get("title") or "")
+    if "主总结兜底" in title:
+        return ""
+    delta = number(ctx.get("hstech_change_since_primary_pct"))
+    if delta is None:
+        return "HK_LATE_UPDATE has no comparable HSTECH delta; coverage/tone drift is not material market change"
+    if abs(delta) < APAC_LATE_HK_MIN_DELTA_PCT:
+        return f"HK_LATE_UPDATE HSTECH delta {delta:+.2f}% is below {APAC_LATE_HK_MIN_DELTA_PCT:.2f}% materiality threshold"
+    return ""
+
+
 def _refine_reversal_user_title(event: dict) -> dict:
     ctx = event.get("confirmation_context") or {}
     if str(ctx.get("event_category") or "") != "REVERSAL":
@@ -292,6 +318,9 @@ def _normalize_user_title(event: dict) -> dict:
 def persist_and_send(event: dict, *, policy: str) -> dict:
     event = _normalize_user_visible_event(event)
     event = _normalize_user_title(event)
+    materiality_error = _late_apac_update_error(event)
+    if materiality_error:
+        return {"status": "REJECTED_NO_MATERIAL_APAC_CHANGE", "detail": materiality_error, "title": event.get("title")}
     future_error = _future_time_error(event)
     if future_error:
         return {"status": "REJECTED_FUTURE_MARKET_TIME", "detail": future_error, "title": event.get("title")}
