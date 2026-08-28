@@ -11,6 +11,23 @@
     "research_and_shadow_validation_do_not_write_main",
     "formal_fact_documents_use_one_low_level_mutation_gateway"
   ],
+  "change_admission": {
+    "default": "DO_NOT_MUTATE_UNLESS_CHANGE_VALUE_IS_CLEAR",
+    "rules": [
+      "diagnose_root_cause_before_mutation; error_location_is_not_root_cause",
+      "immediate_mutation_is_allowed_only_when_current_market_or_timing_facts_for_formal_judgment_are_wrong_or_unavailable, account_trade_cash_or_formal_facts_are_wrong_or_unclosed, or a_canonical_production_chain_is_broken_and_cannot_recover_through_existing_mechanisms",
+      "when_existing_fallback_self_healing_or_retry_has_correctly_degraded_or_closed_the_incident, default_to_observe; a_single_cron_delay_provider_fallback_transient_push_conflict_notification_failure_or_already_closed_self_heal_is_not_by_itself_a_reason_to_mutate_production",
+      "every_bug_fix_must_validate_the_original_failure_case, adjacent_state_or_session_boundaries, and the previously_normal_case",
+      "after_a_non_emergency_production_semantic_change_is_integrated, prefer_one_natural_production_cycle_before_stacking_another_semantic_change; only_a_current_trade_account_market_fact_or_canonical_runtime_failure_may_interrupt_this_observation"
+    ],
+    "decision_outcomes": [
+      "FIX_NOW",
+      "OBSERVE",
+      "DO_NOT_FIX"
+    ],
+    "decision_rule": "如果不能证明现在修改的生产收益高于不修改，默认不修改；该默认只限制维护变更，不阻止影响正式交易判断、账户/成交事实、行情事实或canonical生产运行的真实故障及时恢复。",
+    "execution_boundary": "用户提出修复要求不自动等于允许修改生产；ChatGPT/Codex在生产变更前必须先完成问题事实、canonical owner、根因、当前影响、现有恢复是否充分和修改必要性的判断。FIX_NOW进入现有最小修复链；OBSERVE/DO_NOT_FIX不创建生产修改。"
+  },
   "writer_requirements": {
     "require_concurrency_group": true,
     "require_latest_main_sync_before_push": true,
