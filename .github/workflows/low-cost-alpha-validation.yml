@@ -8,6 +8,7 @@ on:
     paths:
       - "scripts/run_low_cost_alpha_batch1.py"
       - "scripts/run_low_cost_alpha_batch1_regime_recheck.py"
+      - "scripts/run_margin_feedback_interaction.py"
       - ".github/workflows/low-cost-alpha-validation.yml"
 
 permissions:
@@ -18,9 +19,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  batch1:
+  validation:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
     steps:
@@ -29,14 +30,17 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install research dependencies
-        run: python -m pip install --upgrade pip numpy pandas requests
+        run: python -m pip install --upgrade pip numpy pandas requests akshare
       - name: Compile
-        run: python -m py_compile scripts/run_low_cost_alpha_batch1.py scripts/run_low_cost_alpha_batch1_regime_recheck.py
-      - name: Run batch 1-4 research-only validation
+        run: python -m py_compile scripts/run_low_cost_alpha_batch1.py scripts/run_low_cost_alpha_batch1_regime_recheck.py scripts/run_margin_feedback_interaction.py
+      - name: Run hypotheses 1-4
         working-directory: scripts
         run: |
           python run_low_cost_alpha_batch1.py
           python run_low_cost_alpha_batch1_regime_recheck.py
+      - name: Run hypothesis 5 margin interaction
+        working-directory: scripts
+        run: python run_margin_feedback_interaction.py
       - name: Upload research evidence
         uses: actions/upload-artifact@v4
         with:
@@ -44,5 +48,6 @@ jobs:
           path: |
             research/backtests/low_cost_alpha_batch1_validation.json
             research/backtests/low_cost_alpha_batch1_regime_recheck.json
+            research/backtests/margin_feedback_interaction_validation.json
           if-no-files-found: error
           retention-days: 14
