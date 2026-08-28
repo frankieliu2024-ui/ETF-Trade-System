@@ -64,17 +64,17 @@ jobs:
       - name: Backstop US regular-session open/close summary from refreshed context
         id: us_summary_notify
         continue-on-error: true
-        run: python scripts/send_us_session_summary.py
+        run: python scripts/run_guarded_notification.py us
       - name: Send value-driven APAC opening signal or fixed close summary when due
         id: apac_summary_notify
         continue-on-error: true
-        run: python scripts/send_regional_session_summary.py --market apac
+        run: python scripts/run_guarded_notification.py regional --market apac
       - name: Send APAC monitored-object value event when due
         id: apac_shock_notify
         continue-on-error: true
         env:
           PREVIOUS_CONTEXT_PATH: /tmp/overseas_context_prev.json
-        run: python scripts/send_market_shock_notification.py --market asia
+        run: python scripts/run_guarded_notification.py shock --market asia
       - name: Record overseas pulse runtime health
         if: always()
         run: python scripts/build_overseas_runtime_health.py
