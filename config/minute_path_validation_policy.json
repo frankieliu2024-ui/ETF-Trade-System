@@ -17,10 +17,11 @@
   "logical_shadow_nodes": [
     {"planned_node_beijing": "10:30", "session": "MORNING", "primary_cron": "30 2 * * 1-5", "recovery_cron": "26 2 * * 1-5"},
     {"planned_node_beijing": "13:45", "session": "AFTERNOON", "primary_cron": "45 5 * * 1-5", "recovery_cron": "41 5 * * 1-5"},
+    {"planned_node_beijing": "14:15", "session": "AFTERNOON", "primary_cron": "15 6 * * 1-5", "recovery_cron": "11 6 * * 1-5"},
     {"planned_node_beijing": "14:30", "session": "AFTERNOON", "primary_cron": "30 6 * * 1-5", "recovery_cron": "26 6 * * 1-5"},
     {"planned_node_beijing": "14:55", "session": "AFTERNOON", "primary_cron": "55 6 * * 1-5", "recovery_cron": "51 6 * * 1-5"}
   ],
-  "scheduled_shadow_nodes_beijing": ["10:30", "13:45", "14:30", "14:55"],
+  "scheduled_shadow_nodes_beijing": ["10:30", "13:45", "14:15", "14:30", "14:55"],
   "schedule_reliability_rule": "GitHub schedule属于best-effort。每个逻辑节点允许一个邻近recovery cron；primary与recovery都映射到同一planned_node_beijing，只能按逻辑节点去重后计数，不能把同一节点两次成功当成两个有效节点。recovery cron仅增强验证调度可靠性，不进入生产行情主链。",
   "minimum_valid_nodes": 2,
   "session_coverage_requirement": "NOT_REQUIRED_AFTER_PROVIDER_CAUSE_EXCLUDED",
@@ -51,6 +52,6 @@
     "FAIL": "任一关键质量项不合格，或修复后的下午节点仍出现明显滞后、缺分钟、quote不一致、artifact缺失或Actions执行不稳定。不得判定正式通过，不推进正式接入。",
     "EVIDENCE_INSUFFICIENT": "逻辑scheduled节点未按计划产生或artifact缺失时，归类为证据不足/调度链问题，不得误判腾讯分钟源本身失败。若已排除provider问题，可继续修复执行链并用后续不同逻辑节点补足最少2个有效样本。"
   },
-  "ten_minute_pulse_rule": "四个逻辑节点不是机械硬条件。首次正式接入阶段只允许评估10分钟正式脉冲降职责、不降频；即使下午两个有效节点已足以通过分钟源正式验证，也至少继续观察若干完整交易日后再单独评估降频。不得直接删除，必须保留正式状态锚点、provider健康检查和fallback。",
+  "ten_minute_pulse_rule": "五个逻辑节点不是机械硬条件。首次正式接入阶段只允许评估10分钟正式脉冲降职责、不降频；即使下午两个有效节点已足以通过分钟源正式验证，也至少继续观察若干完整交易日后再单独评估降频。不得直接删除，必须保留正式状态锚点、provider健康检查和fallback。",
   "integration_boundary": "分钟源仅增强日内路径、极值时序与成交承接证据；正式最新价仍由quote router决定；不修改MASTER、Trial/Confirm或交易权限。"
 }
