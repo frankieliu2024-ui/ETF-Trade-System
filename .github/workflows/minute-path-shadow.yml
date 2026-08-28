@@ -6,6 +6,7 @@ on:
     paths:
       - "scripts/build_minute_path_features.py"
       - "scripts/probe_index_minute_acceptance.py"
+      - "scripts/validate_minute_context_integration.py"
       - "config/minute_path_validation_policy.json"
       - ".github/workflows/minute-path-shadow.yml"
   schedule:
@@ -55,17 +56,20 @@ jobs:
             *) echo "VALIDATION_SCHEDULE=$RAW_VALIDATION_SCHEDULE" >> "$GITHUB_ENV" ;;
           esac
       - name: Compile minute-path modules
-        run: python -m py_compile scripts/build_minute_path_features.py scripts/probe_index_minute_acceptance.py
+        run: python -m py_compile scripts/build_minute_path_features.py scripts/probe_index_minute_acceptance.py scripts/validate_minute_context_integration.py
       - name: Build Tencent 1-minute ETF path shadow evidence
         run: python scripts/build_minute_path_features.py
       - name: Build Tencent index-minute and 10m acceptance PoC
         run: python scripts/probe_index_minute_acceptance.py
-      - name: Upload shadow and PoC evidence
+      - name: Validate minute evidence against current formal contexts
+        run: python scripts/validate_minute_context_integration.py
+      - name: Upload shadow, PoC and integration validation evidence
         uses: actions/upload-artifact@v4
         with:
           name: minute-path-shadow-${{ github.run_id }}
           path: |
             data/state/minute_path_features.json
             data/state/minute_index_acceptance_poc.json
+            data/state/minute_context_integration_validation.json
           if-no-files-found: error
           retention-days: 14
