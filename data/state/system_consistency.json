@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-28T09:07:53Z",
-  "generated_at_beijing": "2026-08-28T17:07:53+08:00",
+  "generated_at": "2026-08-28T09:09:38Z",
+  "generated_at_beijing": "2026-08-28T17:09:38+08:00",
   "repository": {
-    "head_sha": "9bfe986b6acc2de9395145ce7667b73c9aab122b",
-    "github_sha": "9bfe986b6acc2de9395145ce7667b73c9aab122b",
-    "github_run_id": "33158070827",
+    "head_sha": "c6b4889baffd41680686436c646bc635a9a97146",
+    "github_sha": "c6b4889baffd41680686436c646bc635a9a97146",
+    "github_run_id": "33158190815",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "9bfe986b6acc2de9395145ce7667b73c9aab122b",
-    "workflow_sha": "9bfe986b6acc2de9395145ce7667b73c9aab122b",
+    "checked_commit": "c6b4889baffd41680686436c646bc635a9a97146",
+    "workflow_sha": "c6b4889baffd41680686436c646bc635a9a97146",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "FAIL",
-  "hard_error_count": 1,
+  "status": "PASS",
+  "hard_error_count": 0,
   "warning_count": 0,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
-      "status": "FAIL",
-      "detail": "时再读取MASTER全文。\\n3. 盘前/盘中查询：按全天截图路由执行；需要当前行情时先执行查询时即时补采，失败、超时或尚未完成时才回退最近有效快照，并检查北京时间数据时点和新鲜度；海外对象逐一读取as_of与market phase。\\n4. 午间复盘：A股使用11:30上午收盘，其他市场按各自最新有效时点；形成下午第一观察条件和资本用途判断。\\n5. 盘后维护：15:00后当天首次最终账户截图默认进入正式收盘复盘；读取账户事实、review context及四文件，按需维护Dashboard、行情档案、经验库，MASTER默认不改；维护结束后再次执行一致性检查。\\n\\n## 写入边界\\n\\n自动程序可以生成行情、状态、审计、运行健康、一致性结果和上下文；可以在已确认账户事实和ChatGPT已形成正式决议/复盘的边界内维护Dashboard机器管理区块及真实成交、正式复盘事实入口；不得自动写MASTER、不得自行扩大交易权限、不得自动下单。数据规范可在明确的数据架构或运行边界维护时更新，但每次更新必须通过系统一致性检查。\\n\\n### 账户事实正式文件维护（V1.0）\\n\\n- 入口：已确认的账户事实状态同步请求，经 `scripts/process_state_sync_request.py` 处理后调用 `scripts/sync_formal_files.py`。\\n- 范围：幂等更新 `ETF当前状态_DASHBOARD.md`、`ETF交易复盘与经验库_2026.md` 和 `ETF市场行情档案_2026.md` 的客观事实区块；手续费确认可增量关闭对应成交索引的待确认字段。\\n- 边界：`account_fact.json` 是事实源；模块不得写入 `ETF规则_MASTER.md`，不得生成交易权限、金额、买卖动作或新的生命周期；文档维护失败不得改变已确认账户事实和核心行情快照。\\n- 验收：`tests/test_market_formal_file_sync.py` 覆盖幂等、动作别名、千分位数量和不臆造费用。\\n'\n\n----------------------------------------------------------------------\nRan 67 tests in 0.038s\n\nFAILED (failures=1)\n"
+      "status": "PASS",
+      "detail": "...................................................................\n----------------------------------------------------------------------\nRan 67 tests in 0.039s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -235,12 +235,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=9bfe986b6acc2de9395145ce7667b73c9aab122b"
+      "detail": "HEAD=c6b4889baffd41680686436c646bc635a9a97146"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=9bfe986b6acc2de9395145ce7667b73c9aab122b GITHUB_SHA=9bfe986b6acc2de9395145ce7667b73c9aab122b"
+      "detail": "HEAD=c6b4889baffd41680686436c646bc635a9a97146 GITHUB_SHA=c6b4889baffd41680686436c646bc635a9a97146"
     },
     {
       "name": "git:critical_files_tracked",
@@ -670,7 +670,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "phase_aware phase=PRE_MARKET live_objects=['QQQ', 'SOXX'] max_age_seconds=169 limit=900; cash indices are session references outside REGULAR"
+      "detail": "phase_aware phase=PRE_MARKET live_objects=['QQQ', 'SOXX'] max_age_seconds=24 limit=900; cash indices are session references outside REGULAR"
     },
     {
       "name": "session_gate:calendar_read",
@@ -785,12 +785,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=6914"
+      "detail": "declared=STALE expected=STALE age_seconds=7019"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=6914"
+      "detail": "declared=STALE expected=STALE age_seconds=7019"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -830,7 +830,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-28T09:07:52Z market=2026-08-28T15:12:38+08:00"
+      "detail": "context=2026-08-28T09:09:37Z market=2026-08-28T15:12:38+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1713,9 +1713,7 @@
       "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
     }
   ],
-  "errors": [
-    "tests:market_data_and_quote_router: 时再读取MASTER全文。\\n3. 盘前/盘中查询：按全天截图路由执行；需要当前行情时先执行查询时即时补采，失败、超时或尚未完成时才回退最近有效快照，并检查北京时间数据时点和新鲜度；海外对象逐一读取as_of与market phase。\\n4. 午间复盘：A股使用11:30上午收盘，其他市场按各自最新有效时点；形成下午第一观察条件和资本用途判断。\\n5. 盘后维护：15:00后当天首次最终账户截图默认进入正式收盘复盘；读取账户事实、review context及四文件，按需维护Dashboard、行情档案、经验库，MASTER默认不改；维护结束后再次执行一致性检查。\\n\\n## 写入边界\\n\\n自动程序可以生成行情、状态、审计、运行健康、一致性结果和上下文；可以在已确认账户事实和ChatGPT已形成正式决议/复盘的边界内维护Dashboard机器管理区块及真实成交、正式复盘事实入口；不得自动写MASTER、不得自行扩大交易权限、不得自动下单。数据规范可在明确的数据架构或运行边界维护时更新，但每次更新必须通过系统一致性检查。\\n\\n### 账户事实正式文件维护（V1.0）\\n\\n- 入口：已确认的账户事实状态同步请求，经 `scripts/process_state_sync_request.py` 处理后调用 `scripts/sync_formal_files.py`。\\n- 范围：幂等更新 `ETF当前状态_DASHBOARD.md`、`ETF交易复盘与经验库_2026.md` 和 `ETF市场行情档案_2026.md` 的客观事实区块；手续费确认可增量关闭对应成交索引的待确认字段。\\n- 边界：`account_fact.json` 是事实源；模块不得写入 `ETF规则_MASTER.md`，不得生成交易权限、金额、买卖动作或新的生命周期；文档维护失败不得改变已确认账户事实和核心行情快照。\\n- 验收：`tests/test_market_formal_file_sync.py` 覆盖幂等、动作别名、千分位数量和不臆造费用。\\n'\n\n----------------------------------------------------------------------\nRan 67 tests in 0.038s\n\nFAILED (failures=1)\n"
-  ],
+  "errors": [],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
   "production_mutation_protocol": {
