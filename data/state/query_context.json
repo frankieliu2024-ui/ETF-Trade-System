@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-28T10:48:59Z",
-  "generated_at_beijing": "2026-08-28T18:48:59+08:00",
+  "generated_at": "2026-08-28T11:03:35Z",
+  "generated_at_beijing": "2026-08-28T19:03:35+08:00",
   "market_date": "2026-08-28",
   "latest_valid_node": "close",
   "current": {
@@ -100,7 +100,7 @@
     }
   },
   "decision_context": {
-    "generated_at": "2026-08-28T10:48:58Z",
+    "generated_at": "2026-08-28T11:03:35Z",
     "rules_version": "V2.2.18",
     "market_date": "2026-08-28",
     "latest_node": "close",
@@ -853,7 +853,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 7.874,
-      "age_seconds": 12980
+      "age_seconds": 13857
     },
     "freshness_at_context_build": {
       "status": "STALE",
@@ -869,7 +869,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 7.874,
-      "age_seconds": 12980
+      "age_seconds": 13857
     },
     "data_quality_summary": {
       "pass_count": 14,
@@ -921,7 +921,7 @@
       "account_fact_time": "2026-08-28T14:18:00+08:00",
       "market_snapshot_time": "2026-08-28T15:12:38+08:00",
       "market_phase": "POST_CLOSE_GRACE",
-      "context_generated_time": "2026-08-28T10:48:58Z",
+      "context_generated_time": "2026-08-28T11:03:35Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
@@ -948,7 +948,7 @@
       "read_only": true
     },
     "market_quote_router": {
-      "generated_at_beijing": "2026-08-28T18:48:58+08:00",
+      "generated_at_beijing": "2026-08-28T19:03:35+08:00",
       "refresh_mode": "CACHED_STATE",
       "refresh_failures": [],
       "route_version": "V1.1",
@@ -1337,8 +1337,8 @@
           "market_status_cn": "美股盘前",
           "data_nature_cn": "盘前行情（附最近正式收盘基准）",
           "source": "yahoo_chart_api",
-          "freshness": "FRESH",
-          "freshness_cn": "时点正常",
+          "freshness": "DEGRADED",
+          "freshness_cn": "存在延迟",
           "quality_status": "FRESH",
           "quality_status_cn": "状态待确认",
           "direct_quote": false,
@@ -1363,8 +1363,8 @@
           "market_status_cn": "美股盘前",
           "data_nature_cn": "盘前行情（附最近正式收盘基准）",
           "source": "yahoo_chart_api",
-          "freshness": "FRESH",
-          "freshness_cn": "时点正常",
+          "freshness": "DEGRADED",
+          "freshness_cn": "存在延迟",
           "quality_status": "FRESH",
           "quality_status_cn": "状态待确认",
           "direct_quote": false,
@@ -2928,7 +2928,7 @@
     "account_fact_time": "2026-08-28T14:18:00+08:00",
     "market_snapshot_time": "2026-08-28T15:12:38+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-08-28T10:48:58Z",
+    "context_generated_time": "2026-08-28T11:03:35Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -3018,7 +3018,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "STALE",
-        "age_seconds": 12980,
+        "age_seconds": 13857,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -3036,7 +3036,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 7.874,
-        "age_seconds": 12980
+        "age_seconds": 13857
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新判断为“时点正常／存在延迟／时点过旧”。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -3077,36 +3077,68 @@
     }
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-08-28T18:48:58+08:00",
+    "generated_at_beijing": "2026-08-28T19:03:35+08:00",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-    "refresh_failures": [],
+    "refresh_failures": [
+      {
+        "symbol": "NDX",
+        "error": "NDX active-market immediate refresh rejected non-FRESH provider result: PREVIOUS_SESSION_REFERENCE"
+      },
+      {
+        "symbol": "SOX",
+        "error": "SOX active-market immediate refresh rejected non-FRESH provider result: PREVIOUS_SESSION_REFERENCE"
+      }
+    ],
     "route_version": "V1.1",
     "query_entry": "market_quote_router",
     "quotes": [
       {
-        "market": "KR",
-        "market_name": "韩国",
-        "symbol": "000660.KS",
-        "name": "000660.KS",
-        "latest_price": 1663000.0,
-        "open": 1665500.0,
-        "high": 1667000.0,
-        "low": 1662000.0,
-        "prev_close": 1729625.0,
-        "volume": 52682,
+        "market": "US",
+        "market_name": "美国",
+        "symbol": "QQQ",
+        "name": "QQQ",
+        "latest_price": 719.7487,
+        "open": 719.7487,
+        "high": 719.7487,
+        "low": 719.7487,
+        "prev_close": 711.37,
+        "volume": 0,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-08-28T14:15:00+08:00",
-        "data_time_local": "2026-08-28T15:15:00+09:00",
-        "market_phase": "OFF_SESSION",
-        "market_status_cn": "韩股收盘",
-        "data_nature_cn": "最近有效交易时段行情（查询时直取）",
+        "data_time_beijing": "2026-08-28T19:03:25+08:00",
+        "data_time_local": "2026-08-28T07:03:25-04:00",
+        "market_phase": "PRE_MARKET",
+        "market_status_cn": "美股盘前",
+        "data_nature_cn": "盘前行情（附最近正式收盘基准）",
         "source": "yahoo_chart_api",
-        "freshness": "SESSION_REFERENCE",
+        "freshness": "FRESH",
         "quality_status": "PASS",
         "direct_quote": true,
-        "refresh_source": "QUERY_TIME_PROVIDER_SESSION_REFERENCE",
-        "session_reference_rule": "Explicit non-active-market queries return the latest timestamped provider session reference and never label it as live."
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "US",
+        "market_name": "美国",
+        "symbol": "SOXX",
+        "name": "SOXX",
+        "latest_price": 521.94,
+        "open": 521.94,
+        "high": 521.94,
+        "low": 521.94,
+        "prev_close": 515.4,
+        "volume": 0,
+        "amount": null,
+        "turnover": null,
+        "data_time_beijing": "2026-08-28T19:03:30+08:00",
+        "data_time_local": "2026-08-28T07:03:30-04:00",
+        "market_phase": "PRE_MARKET",
+        "market_status_cn": "美股盘前",
+        "data_nature_cn": "盘前行情（附最近正式收盘基准）",
+        "source": "yahoo_chart_api",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
       },
       {
         "market": "CN",
@@ -3491,8 +3523,8 @@
         "market_status_cn": "美股盘前",
         "data_nature_cn": "盘前行情（附最近正式收盘基准）",
         "source": "yahoo_chart_api",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "DEGRADED",
+        "freshness_cn": "存在延迟",
         "quality_status": "FRESH",
         "quality_status_cn": "状态待确认",
         "direct_quote": false,
@@ -3517,8 +3549,8 @@
         "market_status_cn": "美股盘前",
         "data_nature_cn": "盘前行情（附最近正式收盘基准）",
         "source": "yahoo_chart_api",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "DEGRADED",
+        "freshness_cn": "存在延迟",
         "quality_status": "FRESH",
         "quality_status_cn": "状态待确认",
         "direct_quote": false,
@@ -3802,11 +3834,11 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 7.874,
-    "age_seconds": 12980
+    "age_seconds": 13857
   },
   "freshness_at_context_build": {
     "status": "STALE",
-    "age_seconds": 12980,
+    "age_seconds": 13857,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
