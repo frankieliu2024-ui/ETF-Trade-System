@@ -67,14 +67,14 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("family", choices=["center", "regional", "shock", "us"])
     parser.add_argument("--mode", choices=["event", "close", "close-test", "channel-test"], default="event")
-    parser.add_argument("--market", choices=["a-share", "asia", "us"])
+    parser.add_argument("--market", choices=["a-share", "apac", "asia", "us"])
     args = parser.parse_args()
 
     if args.family == "center":
         return _run_center(args.mode)
     if args.family == "regional":
-        if args.market not in {"a-share", "asia"}:
-            parser.error("regional requires --market a-share|asia")
+        if args.market not in {"a-share", "apac"}:
+            parser.error("regional requires --market a-share|apac")
         return _run_regional(args.market)
     if args.family == "shock":
         if args.market not in {"a-share", "asia", "us"}:
