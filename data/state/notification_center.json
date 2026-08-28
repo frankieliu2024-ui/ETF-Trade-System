@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-08-28T10:08:34+08:00",
+  "updated_at": "2026-08-28T10:35:58+08:00",
   "last_status": "SENT",
-  "last_type": "A_SHARE_OPEN_VALUE_ALERT",
-  "last_title": "【市场异动】A股开盘/上午结构出现有价值变化",
+  "last_type": "MARKET_VALUE_ALERT",
+  "last_title": "【市场异动】创业板指（399006）日内方向明显反转",
   "notifications": [
     {
       "notification_id": "notification_0000000000004d625bdd",
@@ -625,6 +625,43 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-08-28T10:08:34+08:00"
+    },
+    {
+      "notification_id": "notification_bc461ee117ca2080412e",
+      "event_type": "MARKET_VALUE_ALERT",
+      "source_event_id": "market-value:a-share:2026-08-28:399006:DOWN:REVERSAL:10:2",
+      "related_decision_id": "",
+      "security_code": "399006",
+      "security_name": "创业板指",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-08-28T10:35:57+08:00",
+      "sent_at": "2026-08-28T10:35:58+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-08-30T10:35:57+08:00",
+      "title": "【市场异动】创业板指（399006）日内方向明显反转",
+      "content": "### 核心结论\n- **事件类型**：方向反转\n- **对象/结构**：创业板指（399006）\n- **当日涨跌**：+0.24%\n- **最近脉冲变化**：-0.80%\n- **关键结构**：盘中一度较前收+1.39%，当前回落至+0.24%\n\n**判断**：行情先形成足够大的单向日内幅度，随后大幅回吐或修复，原先的单向市场解释可能已经失效。\n\n### 对ETF系统的影响\n立即检查该新事实是否改变全部持仓ETF与观察ETF的相对强弱、风险收益、唯一主候选或资本效率；账户底仓个股还要检查资金释放和独立假设。\n\n### 当前动作\n**打开ETF项目刷新当前正式判断；只有正式风险许可、机会状态、金额或持仓动作发生变化时才执行交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-08-28T10:35:30+08:00\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "confirmation_context": {
+        "market": "A_SHARE",
+        "market_date": "2026-08-28",
+        "direction": "DOWN",
+        "event_category": "REVERSAL",
+        "asset_class": "A_SHARE_INDEX",
+        "day_change_pct": 0.24443260828883595,
+        "sudden_change_pct": -0.7994529758682534,
+        "interval_minutes": 27.716666666666665,
+        "event_magnitude_pct": 1.3854060201246687,
+        "market_as_of_beijing": "2026-08-28T10:35:30+08:00"
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-08-28T10:35:58+08:00"
     }
   ],
   "recent": [
@@ -987,6 +1024,24 @@
       },
       "notification_id": "notification_b5eff025f212afbaa808",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:a-share:2026-08-28:399006:DOWN:REVERSAL:10:2",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】创业板指（399006）日内方向明显反转",
+      "content": "### 核心结论\n- **事件类型**：方向反转\n- **对象/结构**：创业板指（399006）\n- **当日涨跌**：+0.24%\n- **最近脉冲变化**：-0.80%\n- **关键结构**：盘中一度较前收+1.39%，当前回落至+0.24%\n\n**判断**：行情先形成足够大的单向日内幅度，随后大幅回吐或修复，原先的单向市场解释可能已经失效。\n\n### 对ETF系统的影响\n立即检查该新事实是否改变全部持仓ETF与观察ETF的相对强弱、风险收益、唯一主候选或资本效率；账户底仓个股还要检查资金释放和独立假设。\n\n### 当前动作\n**打开ETF项目刷新当前正式判断；只有正式风险许可、机会状态、金额或持仓动作发生变化时才执行交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-08-28T10:35:30+08:00\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "status": "SENT",
+      "attempted_at": "2026-08-28T10:35:58+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_bc461ee117ca2080412e",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [
@@ -994,6 +1049,6 @@
     "notification_4e91f89a855e842bed11",
     "notification_f83b586317c43ad14c04"
   ],
-  "policy": "开盘仅推有价值结构，但实际session事实允许在同日有效恢复；A股固定收盘允许延迟补发；亚太主要收盘优先服务A股尾盘、错过窄窗口后仍可恢复。阈值适度放宽，Point-in-Time与去重保持。",
+  "policy": "主动通知按新事实的决策价值判断，不按市场分类；当前事件族为开盘异常、快速重定价、极端波动、方向反转、显著分化。阈值适度放宽，重复控制依靠事件合并、冷却和实质升级识别；已管理候选不得阻塞其他未管理候选。",
   "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
