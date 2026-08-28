@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-28T00:15:34Z",
-  "generated_at_beijing": "2026-08-28T08:15:34+08:00",
+  "generated_at": "2026-08-28T00:43:34Z",
+  "generated_at_beijing": "2026-08-28T08:43:34+08:00",
   "repository": {
-    "head_sha": "a59f402e436ce0fdffdce0c3615026896793b8a8",
-    "github_sha": "a59f402e436ce0fdffdce0c3615026896793b8a8",
-    "github_run_id": "33129116517",
+    "head_sha": "737fbf80c68381fb9b861754312dad5da7ed0e0b",
+    "github_sha": "737fbf80c68381fb9b861754312dad5da7ed0e0b",
+    "github_run_id": "33130610312",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "a59f402e436ce0fdffdce0c3615026896793b8a8",
-    "workflow_sha": "a59f402e436ce0fdffdce0c3615026896793b8a8",
+    "checked_commit": "737fbf80c68381fb9b861754312dad5da7ed0e0b",
+    "workflow_sha": "737fbf80c68381fb9b861754312dad5da7ed0e0b",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "PASS",
-  "hard_error_count": 0,
+  "status": "FAIL",
+  "hard_error_count": 1,
   "warning_count": 0,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
-      "status": "PASS",
-      "detail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 0.014s\n\nOK\n"
+      "status": "FAIL",
+      "detail": "...................F.......\n======================================================================\nFAIL: test_kospi_regular_refresh_uses_provider_quote (test_market_query_time_refresh.QueryTimeRefreshTests.test_kospi_regular_refresh_uses_provider_quote)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_query_time_refresh.py\", line 95, in test_kospi_regular_refresh_uses_provider_quote\n    provider.assert_called_once_with(\"^KS11\", \"KR\", now, json.loads((root / \"config/runtime_policy.json\").read_text(encoding=\"utf-8\")))\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/mock.py\", line 950, in assert_called_once_with\n    raise AssertionError(msg)\nAssertionError: Expected '_yahoo' to be called once. Called 0 times.\n\n----------------------------------------------------------------------\nRan 27 tests in 2.843s\n\nFAILED (failures=1)\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -235,12 +235,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=a59f402e436ce0fdffdce0c3615026896793b8a8"
+      "detail": "HEAD=737fbf80c68381fb9b861754312dad5da7ed0e0b"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=a59f402e436ce0fdffdce0c3615026896793b8a8 GITHUB_SHA=a59f402e436ce0fdffdce0c3615026896793b8a8"
+      "detail": "HEAD=737fbf80c68381fb9b861754312dad5da7ed0e0b GITHUB_SHA=737fbf80c68381fb9b861754312dad5da7ed0e0b"
     },
     {
       "name": "git:critical_files_tracked",
@@ -670,7 +670,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=20:15 max_age_seconds=10834 limit=900"
+      "detail": "active=False phase=20:43 max_age_seconds=12514 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -785,12 +785,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=60917"
+      "detail": "declared=STALE expected=STALE age_seconds=62594"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=60917"
+      "detail": "declared=STALE expected=STALE age_seconds=62594"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -830,7 +830,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-28T00:15:33Z market=2026-08-27T15:20:16+08:00"
+      "detail": "context=2026-08-28T00:43:30Z market=2026-08-27T15:20:16+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1000,12 +1000,12 @@
     {
       "name": "overseas_runtime:N225:same_day_bar",
       "status": "PASS",
-      "detail": "quality=PASS as_of_beijing=2026-08-28T08:00:38+08:00"
+      "detail": "quality=PASS as_of_beijing=2026-08-28T08:38:40+08:00"
     },
     {
       "name": "overseas_runtime:KOSPI:same_day_bar",
       "status": "PASS",
-      "detail": "quality=PASS as_of_beijing=2026-08-28T08:00:51+08:00"
+      "detail": "quality=PASS as_of_beijing=2026-08-28T08:38:44+08:00"
     },
     {
       "name": "account_fact:current_availability",
@@ -1683,7 +1683,9 @@
       "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
     }
   ],
-  "errors": [],
+  "errors": [
+    "tests:market_data_and_quote_router: ...................F.......\n======================================================================\nFAIL: test_kospi_regular_refresh_uses_provider_quote (test_market_query_time_refresh.QueryTimeRefreshTests.test_kospi_regular_refresh_uses_provider_quote)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_query_time_refresh.py\", line 95, in test_kospi_regular_refresh_uses_provider_quote\n    provider.assert_called_once_with(\"^KS11\", \"KR\", now, json.loads((root / \"config/runtime_policy.json\").read_text(encoding=\"utf-8\")))\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/mock.py\", line 950, in assert_called_once_with\n    raise AssertionError(msg)\nAssertionError: Expected '_yahoo' to be called once. Called 0 times.\n\n----------------------------------------------------------------------\nRan 27 tests in 2.843s\n\nFAILED (failures=1)\n"
+  ],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
   "production_mutation_protocol": {
