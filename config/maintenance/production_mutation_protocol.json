@@ -18,7 +18,13 @@
       "immediate_mutation_is_allowed_only_when_current_market_or_timing_facts_for_formal_judgment_are_wrong_or_unavailable, account_trade_cash_or_formal_facts_are_wrong_or_unclosed, or a_canonical_production_chain_is_broken_and_cannot_recover_through_existing_mechanisms",
       "when_existing_fallback_self_healing_or_retry_has_correctly_degraded_or_closed_the_incident, default_to_observe; a_single_cron_delay_provider_fallback_transient_push_conflict_notification_failure_or_already_closed_self_heal_is_not_by_itself_a_reason_to_mutate_production",
       "every_bug_fix_must_validate_the_original_failure_case, adjacent_state_or_session_boundaries, and the previously_normal_case",
-      "after_a_non_emergency_production_semantic_change_is_integrated, prefer_one_natural_production_cycle_before_stacking_another_semantic_change; only_a_current_trade_account_market_fact_or_canonical_runtime_failure_may_interrupt_this_observation"
+      "after_a_non_emergency_production_semantic_change_is_integrated, prefer_one_natural_production_cycle_before_stacking_another_semantic_change; only_a_current_trade_account_market_fact_or_canonical_runtime_failure_may_interrupt_this_observation",
+      "minimum_fix_means_the_smallest_root_cause_complete_fix_not_the_smallest_diff; do_not_leave_known_adjacent_breakpoints_or_shift_the_same_defect_downstream",
+      "fix_shared_fact_or_state_semantics_at_the_highest_valid_canonical_owner; do_not_compensate_for_one_upstream_defect_with_multiple_downstream_exceptions_fallbacks_or_special_cases",
+      "if_a_second_production_patch_is_requested_for_the_same_root_cause_or_for_a_gap_created_or_missed_by_the_first_patch, stop_local_patching_and_repeat_full_root_cause_analysis_across_input_owner_state_transition_downstream_consumers_and_adjacent_sessions_before_more_mutation",
+      "a_bug_fix_must_preserve_unaffected_contracts; do_not_bundle_unrelated_changes_to_schedule_frequency_thresholds_provider_priority_check_scope_permissions_trading_rules_or_other_semantics_unless_they_are_part_of_the_same_proven_root_cause",
+      "during_a_share_continuous_trading_only_FIX_NOW_may_change_production_scripts_configs_workflows_or_data_standards; OBSERVE_and_DO_NOT_FIX_wait_for_a_noncritical_window_while_market_account_trade_closure_and_canonical_self_healing_continue_normally",
+      "treat_multiple_symptoms_from_one_root_cause_as_one_repair_unit; prohibit_symptom_level_patch_chains_that_mask_or_route_around_the_upstream_defect"
     ],
     "decision_outcomes": [
       "FIX_NOW",
@@ -26,7 +32,8 @@
       "DO_NOT_FIX"
     ],
     "decision_rule": "如果不能证明现在修改的生产收益高于不修改，默认不修改；该默认只限制维护变更，不阻止影响正式交易判断、账户/成交事实、行情事实或canonical生产运行的真实故障及时恢复。",
-    "execution_boundary": "用户提出修复要求不自动等于允许修改生产；ChatGPT/Codex在生产变更前必须先完成问题事实、canonical owner、根因、当前影响、现有恢复是否充分和修改必要性的判断。FIX_NOW进入现有最小修复链；OBSERVE/DO_NOT_FIX不创建生产修改。"
+    "execution_boundary": "用户提出修复要求不自动等于允许修改生产；ChatGPT/Codex在生产变更前必须先完成问题事实、canonical owner、根因、当前影响、现有恢复是否充分和修改必要性的判断。FIX_NOW进入现有最小根因完整修复链；OBSERVE/DO_NOT_FIX不创建生产修改。",
+    "maintenance_rule_freeze": "本change_admission已完成当前生产期所需的最小规则闭环；除非未来出现重复且实质影响生产、且现有规则无法覆盖的新型维护失效模式，否则不继续扩充维护规则。"
   },
   "writer_requirements": {
     "require_concurrency_group": true,
