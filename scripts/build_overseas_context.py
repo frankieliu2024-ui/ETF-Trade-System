@@ -128,12 +128,17 @@ def latest_valid_row(payload: dict, symbol: str, timezone_name: str) -> dict:
         ts = int(timestamps[idx])
         dt_utc = datetime.fromtimestamp(ts, timezone.utc)
         dt_local = dt_utc.astimezone(zone)
-        meta = result.get("meta", {})
-        previous_close = meta.get("chartPreviousClose")
-        if previous_close is None:
-            previous_close = meta.get("previousClose")
-        if previous_close is None:
-            previous_close = meta.get("regularMarketPreviousClose")
+        previous_close = None
+        close_values = quote.get("close") or []
+        latest_market_date = dt_local.date()
+        for j in range(idx - 1, -1, -1):
+            if j >= len(timestamps):
+                continue
+            bar_date = datetime.fromtimestamp(int(timestamps[j]), timezone.utc).astimezone(zone).date()
+            candidate = close_values[j] if j < len(close_values) else None
+            if bar_date < latest_market_date and candidate is not None:
+                previous_close = candidate
+                break
         row.update({
             "volume": ((quote.get("volume") or [None])[idx] if idx < len(quote.get("volume") or []) else None),
             "previous_close": previous_close,
