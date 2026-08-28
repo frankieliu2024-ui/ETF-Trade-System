@@ -15,6 +15,7 @@ BEIJING = ZoneInfo("Asia/Shanghai")
 COOLDOWN_MINUTES = 30
 UPGRADE_MIN_ABS_PCT = 0.50
 UPGRADE_RELATIVE = 0.35
+SUMMARY_ABSORB_MINUTES = 2
 
 # Attention thresholds only. They do not create MASTER trading rules.
 # This revision deliberately prefers a modest amount of extra attention noise
@@ -76,8 +77,43 @@ def _candidate_magnitude(c: dict) -> float:
     return max(vals, default=0.0)
 
 
+def _covered_by_recent_session_summary(event: dict, state: dict) -> bool:
+    """Suppress only same-fact APAC divergence immediately covered by a close summary.
+
+    This is intentionally narrow: no global cooldown and no cross-market suppression.
+    A later divergence remains eligible once it is no longer the same close-node fact.
+    """
+    ctx = event.get("confirmation_context") or {}
+    if str(ctx.get("event_category") or "") != "DIVERGENCE":
+        return False
+    if str(event.get("security_code") or "") != "APAC_DIVERGENCE":
+        return False
+    if str(ctx.get("market") or "") != "ASIA":
+        return False
+    market_date = str(ctx.get("market_date") or "")
+    if not market_date:
+        return False
+
+    for item in reversed(state.get("notifications") or []):
+        if str(item.get("event_type") or "") != "APAC_SESSION_SUMMARY":
+            continue
+        prior_ctx = item.get("confirmation_context") or {}
+        if str(prior_ctx.get("market_date") or "") != market_date:
+            continue
+        if "分化" not in str(prior_ctx.get("tone") or ""):
+            continue
+        stamp = parse_notification_time(item.get("sent_at") or item.get("created_at"))
+        if stamp and timedelta(0) <= now() - stamp <= timedelta(minutes=SUMMARY_ABSORB_MINUTES):
+            return True
+        return False
+    return False
+
+
 def _recent_duplicate(event: dict) -> bool:
     state = read_json(STATE / "notification_center.json", {})
+    if _covered_by_recent_session_summary(event, state):
+        return True
+
     code = str(event.get("security_code") or "")
     new_ctx = event.get("confirmation_context") or {}
     direction = str(new_ctx.get("direction") or "")
