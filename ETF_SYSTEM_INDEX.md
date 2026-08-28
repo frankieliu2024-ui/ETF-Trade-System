@@ -47,6 +47,8 @@
 
 `PASS`表示结构一致；`WARNING`表示账户事实缺失等正常状态；`FAIL`表示硬冲突，必须先修复。`.github/workflows/system-consistency.yml` 在相关维护推送main后自动运行并持久化结果；高频行情workflow不再在provider采集前重复执行完整一致性检查，以避免阻塞行情主链。
 
+完整系统检查的唯一人工/维护入口为 `.github/workflows/system-consistency.yml`。该入口统一编排结构一致性、研究集成、市场状态、账户/维护对账和E2E可用性检查；producer本地质量检查、`runtime_health`／self-healing 和 workflow failure diagnosis 保持各自在线职责，不由full consistency重复执行或串入高频行情关键路径。统一的是检查入口与结果解释，不合并实时生产链；运行异常由其唯一owner处理，避免重复检查、循环触发和额外延迟。
+
 ## 运行读取路径
 
 - 基础数据规范：`ETF与市场监测数据接口使用规范.md`
