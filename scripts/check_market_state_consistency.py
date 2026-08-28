@@ -36,20 +36,20 @@ runtime_phase = str(runtime.get('market_phase') or '')
 runtime_status = str(runtime.get('status') or '')
 runtime_reason = str(runtime.get('reason') or '')
 runtime_failure_stage = str(runtime.get('failure_stage') or '')
-# Outside the A-share capture window, runtime_health describes the current
-# collection attempt date/phase (SKIPPED), while CURRENT/snapshot intentionally
-# retain the last valid formal close. Attempt metadata and canonical market fact
-# therefore need not share market_date or market_phase. The preserved snapshot
-# identity is still required above, so this cannot hide a changed market fact.
-post_session_skip = (
+# When the session gate intentionally skips an A-share collection attempt outside
+# an active capture window (for example the lunch break or after close),
+# runtime_health describes that *attempt*, while CURRENT/snapshot intentionally
+# retain the last valid market fact. Their date/phase therefore need not match.
+# We still require runtime_health.latest_snapshot == CURRENT.latest_snapshot above,
+# so this exception cannot hide a different or silently replaced canonical fact.
+capture_window_skip = (
     runtime_status == 'SKIPPED'
     and runtime_failure_stage == 'session_gate'
     and runtime_reason == 'outside_a_share_capture_window'
-    and str(current.get('latest_valid_node') or '') == 'close'
 )
-if str(runtime.get('market_date') or '') != str(current.get('market_date') or '') and not post_session_skip:
+if str(runtime.get('market_date') or '') != str(current.get('market_date') or '') and not capture_window_skip:
     fail('runtime_health.market_date != CURRENT.market_date')
-if runtime_phase != phase and not post_session_skip:
+if runtime_phase != phase and not capture_window_skip:
     fail('runtime_health.market_phase != snapshot.market_phase')
 
 node = str(snapshot.get('node') or '')
@@ -97,8 +97,9 @@ print(json.dumps({
     'market_date': current.get('market_date'),
     'node': node,
     'market_phase': phase,
-    'runtime_phase_semantics': 'POST_SESSION_SKIPPED_LAST_VALID_CLOSE_RETAINED' if post_session_skip else 'ALIGNED',
-    'runtime_attempt_date': runtime.get('market_date') if post_session_skip else None,
+    'runtime_phase_semantics': 'SESSION_GATE_SKIPPED_LAST_VALID_SNAPSHOT_RETAINED' if capture_window_skip else 'ALIGNED',
+    'runtime_attempt_date': runtime.get('market_date') if capture_window_skip else None,
+    'runtime_attempt_phase': runtime_phase if capture_window_skip else None,
     'snapshot': snapshot_rel,
     'rows': len(rows),
     'failed_objects': failed,
