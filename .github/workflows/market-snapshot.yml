@@ -15,7 +15,6 @@ on:
   push:
     paths:
       - "requests/live_snapshot/**.json"
-      - "requests/a_share_notification_test/**.json"
       - "scripts/cloud_runner_snapshot.py"
       - "scripts/query_time_market_refresh.py"
       - "scripts/tencent_quote.py"
@@ -43,7 +42,6 @@ jobs:
       HITHINK_RETRY_LIMIT: "2"
       HITHINK_TIMEOUT_SECONDS: "25"
       QUERY_TIME_REFRESH: ${{ github.event_name == 'push' && 'true' || 'false' }}
-      PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -51,17 +49,6 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-      - name: Detect isolated A-share notification template test request
-        id: a_share_notification_test
-        if: ${{ github.event_name == 'push' }}
-        shell: bash
-        run: |
-          force_test=false
-          git diff --name-only HEAD^ HEAD > /tmp/changed_files.txt || true
-          if grep -Eq '^requests/a_share_notification_test/[^/]+\.json$' /tmp/changed_files.txt; then
-            force_test=true
-          fi
-          echo "force_test=$force_test" >> "$GITHUB_OUTPUT"
       - name: Check exchange calendar and capture window
         id: session_gate
         run: python scripts/runtime_session_gate.py
@@ -128,6 +115,9 @@ jobs:
           print(f"provider concurrency: {key}={value}")
       - name: Run data-only snapshot
         id: capture
+        # Scheduled pulses and user requests share the same phase-aware producer.
+        # `scheduled` is resolved by cloud_runner_snapshot.py into auction/live/close
+        # from the actual A-share market phase, avoiding generic live labels after close.
         if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
         env:
           NODE_LABEL: ${{ github.event_name == 'push' && 'scheduled' || (github.event.inputs.node || 'scheduled') }}
@@ -138,40 +128,6 @@ jobs:
           else
             python scripts/cloud_runner_snapshot.py --node "$NODE_LABEL"
           fi
-      - name: Send isolated A-share notification template test from fresh snapshot
-        id: a_share_template_test
-        if: ${{ steps.capture.outcome == 'success' && steps.a_share_notification_test.outputs.force_test == 'true' }}
-        continue-on-error: true
-        shell: bash
-        run: |
-          python - <<'PY'
-          import os
-          import sys
-          import scripts.send_regional_session_summary as module
-
-          module.A_SHARE_OPEN_INDEX_ABS_PCT = 0.0
-          module.A_SHARE_OPEN_ETF_ABS_PCT = 0.0
-          module.A_SHARE_OPEN_ETF_SPREAD_PCT = 0.0
-          original = module._a_share_event
-
-          def test_event():
-              event = original()
-              if not event:
-                  return None
-              event = dict(event)
-              event["key"] = f"a-share-template-test:{os.environ.get('GITHUB_SHA', 'manual')}"
-              event["type"] = "主动通知模板测试"
-              event["event_type"] = "A_SHARE_NOTIFICATION_TEMPLATE_TEST"
-              title = str(event.get("title") or "")
-              title = title.replace("【异动提醒】", "").replace("【市场异动】", "")
-              event["title"] = "【测试｜A股】" + title
-              event["content"] = "**本条为A股通知模板验证：使用刚完成的即时补采行情，允许未达到正式通知阈值的当前事实生成测试通知；不代表正式事件触发。**\n\n" + str(event.get("content") or "")
-              return event
-
-          module._a_share_event = test_event
-          sys.argv = ["send_regional_session_summary.py", "--market", "a-share"]
-          raise SystemExit(module.main())
-          PY
       - name: Normalize runtime health observability
         if: ${{ steps.capture.outcome == 'success' && steps.session_gate.outputs.should_capture == 'true' }}
         shell: bash
@@ -229,6 +185,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Consistency is persisted by its own workflow; excluding it prevents a
+          # concurrent audit write from conflicting with the market-data commit.
           git checkout -- data/state/system_consistency.json
           git add -A -- data/market/snapshots data/state
           git reset -- data/state/system_consistency.json
@@ -257,25 +215,149 @@ jobs:
           fi
       - name: Quick retry failed core objects after initial publish
         id: quick_retry
+        # A user request gets the first publishable PASS/DEGRADED/FAILED result
+        # immediately. Slow repair remains a scheduled, post-publish activity.
         if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
-        continue-on-error: true
-        run: python scripts/query_time_market_refresh.py --quick-retry
-      - name: Post-publish refresh downstream state
-        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
-        continue-on-error: true
+        run: python scripts/cloud_runner_snapshot.py --retry-failed
+      - name: Process optional broker/dashboard state sync
+        id: state_sync
+        if: ${{ github.event_name == 'push' && github.event.inputs.probe_only != 'true' }}
+        shell: bash
         run: |
-          python scripts/build_intraday_path_features.py
-          python scripts/build_market_delta.py
-          python scripts/build_query_context.py
-          python scripts/build_decision_context.py
-      - name: Commit downstream state
+          processed=false
+          files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
+          for f in $files; do
+            if python - "$f" <<'PY'
+          import json, sys
+          data = json.load(open(sys.argv[1], encoding='utf-8'))
+          keys = ('account_fact','formal_decision','trade_event','formal_review','interaction_scenario')
+          raise SystemExit(0 if any(k in data for k in keys) else 1)
+          PY
+            then
+              python scripts/refresh_gate.py --guard-request "$f"
+              python scripts/process_state_sync_request.py "$f"
+              processed=true
+            fi
+          done
+          echo "processed=$processed" >> "$GITHUB_OUTPUT"
+      - name: Build objective intraday market delta
         if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
-        continue-on-error: true
+        run: python scripts/build_market_delta.py
+      - name: Refresh overseas and Asia index context
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/build_overseas_context.py
+      - name: Build dynamic stock context from current account
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/build_stock_context.py
+      - name: Collect current account-stock market facts
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/build_account_stock_market.py
+      - name: Build E2E usability state
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/build_e2e_status.py
+
+      - name: Build state context and candidates
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/build_state_context.py
+      - name: Build on-demand query context
+        if: ${{ (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "${{ steps.snapshot_result.outputs.snapshot_written }}" != "true" ]; then
+            REQUEST_SYMBOLS=$(python - <<'PY'
+          import json, os, subprocess
+          files = subprocess.check_output(
+              ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", os.environ["GITHUB_SHA"], "--", "requests/live_snapshot/"],
+              text=True,
+          ).splitlines()
+          symbols = []
+          for name in files:
+              try:
+                  obj = json.loads(open(name, encoding="utf-8").read())
+              except (OSError, json.JSONDecodeError):
+                  continue
+              for value in obj.get("symbols") or []:
+                  value = str(value).strip()
+                  if value and value not in symbols:
+                      symbols.append(value)
+          print(",".join(symbols))
+          PY
+            )
+            if [ -n "$REQUEST_SYMBOLS" ]; then
+              python scripts/build_query_context.py --force-refresh --symbols "$REQUEST_SYMBOLS"
+            else
+              python scripts/build_query_context.py --force-refresh
+            fi
+          else
+            python scripts/build_query_context.py
+          fi
+          python scripts/refresh_gate.py --annotate-contexts
+      - name: Build post-market review context
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/build_post_market_review.py
+      - name: Commit downstream runtime/data artifacts
+        if: ${{ always() && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success' || steps.state_sync.outputs.processed == 'true') }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/state 2>/dev/null || true
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m "data: refresh downstream market state"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          # Finalize runtime health from the post-retry snapshot, not the initial capture result.
+          python - <<'PY'
+          import json, os
+          from datetime import datetime
+          from pathlib import Path
+          health_path = Path('data/state/runtime_health.json')
+          if os.environ.get('GITHUB_EVENT_NAME') == 'push':
+              raise SystemExit(0)
+          if health_path.exists():
+              health = json.loads(health_path.read_text(encoding='utf-8'))
+              snapshot_path = Path(str(health.get('latest_snapshot') or ''))
+              if snapshot_path.exists():
+                  snapshot = json.loads(snapshot_path.read_text(encoding='utf-8'))
+                  if str(snapshot.get('workflow_run_id', '')) == str(__import__('os').environ.get('GITHUB_RUN_ID', '')):
+                      quality = str(snapshot.get('quality_status') or '')
+                      if quality in {'PASS', 'DEGRADED'}:
+                          provider_times = [row.get('as_of_beijing') for row in (snapshot.get('rows') or []) if row.get('as_of_beijing')]
+                          health['status'] = quality
+                          health['quality_status'] = quality
+                          health['market_date'] = snapshot.get('market_date', health.get('market_date', ''))
+                          health['node'] = snapshot.get('node', health.get('node', 'live'))
+                          health['market_phase'] = snapshot.get('market_phase', health.get('market_phase', ''))
+                          health['captured_at'] = snapshot.get('captured_at', health.get('captured_at', ''))
+                          health['captured_at_beijing'] = snapshot.get('captured_at_beijing', health.get('captured_at_beijing', ''))
+                          health['provider_as_of'] = max(provider_times) if provider_times else health.get('provider_as_of', '')
+                          health['count'] = snapshot.get('count', health.get('count', 0))
+                          health['latest_snapshot'] = str(snapshot_path).replace('\\\\', '/')
+                          health['failure_stage'] = '' if quality == 'PASS' else health.get('failure_stage', '')
+                          health_path.write_text(json.dumps(health, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          # system_consistency is owned by the dedicated audit workflow and may
+          # change concurrently; keep it out of this data commit.
+          git checkout -- data/state/system_consistency.json
+          git add -A -- data/market/snapshots data/state post_market_review events ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
+          git reset -- data/state/system_consistency.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          mkdir -p /tmp/etf-downstream-publish
+          git diff --cached --name-only -z > /tmp/etf-downstream-files
+          while IFS= read -r -d '' file; do
+            mkdir -p "/tmp/etf-downstream-publish/$(dirname "$file")"
+            cp "$file" "/tmp/etf-downstream-publish/$file"
+          done < /tmp/etf-downstream-files
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            while IFS= read -r -d '' file; do
+              mkdir -p "$(dirname "$file")"
+              cp "/tmp/etf-downstream-publish/$file" "$file"
+            done < /tmp/etf-downstream-files
+            git add -A -- data/market/snapshots data/state post_market_review events ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
+            git reset -- data/state/system_consistency.json
+            if git diff --cached --quiet; then
+              exit 0
+            fi
+            git commit -m "data: record downstream market contexts and state sync"
+            if git push origin HEAD:main; then
+              break
+            fi
+            if [ "$attempt" = "3" ]; then exit 1; fi
+          done
