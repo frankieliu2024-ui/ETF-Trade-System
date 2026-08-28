@@ -7,11 +7,17 @@ on:
       - "scripts/build_minute_path_features.py"
       - ".github/workflows/minute-path-shadow.yml"
   schedule:
-    # Beijing 10:30, 13:45, 14:30, 14:55 on weekdays. Scheduled runs are the formal validation evidence; push/dispatch runs are supplemental only.
-    - cron: "30 2 * * 1-5"
-    - cron: "45 5 * * 1-5"
-    - cron: "30 6 * * 1-5"
-    - cron: "55 6 * * 1-5"
+    # Primary logical nodes: Beijing 10:30, 13:45, 14:30, 14:55 on weekdays.
+    # Each node also has one nearby recovery cron. Primary/recovery runs are the same logical node and must be de-duplicated by planned_node_beijing.
+    # Recovery runs exist only to reduce GitHub schedule best-effort misses; they do not add production-path work.
+    - cron: "26 2 * * 1-5"   # 10:26 recovery for logical 10:30
+    - cron: "30 2 * * 1-5"   # 10:30 primary
+    - cron: "41 5 * * 1-5"   # 13:41 recovery for logical 13:45
+    - cron: "45 5 * * 1-5"   # 13:45 primary
+    - cron: "26 6 * * 1-5"   # 14:26 recovery for logical 14:30
+    - cron: "30 6 * * 1-5"   # 14:30 primary
+    - cron: "51 6 * * 1-5"   # 14:51 recovery for logical 14:55
+    - cron: "55 6 * * 1-5"   # 14:55 primary
 
 permissions:
   contents: read
@@ -26,12 +32,22 @@ jobs:
     timeout-minutes: 3
     env:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
-      VALIDATION_SCHEDULE: ${{ github.event.schedule }}
+      RAW_VALIDATION_SCHEDULE: ${{ github.event.schedule }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Resolve logical validation node
+        shell: bash
+        run: |
+          case "$RAW_VALIDATION_SCHEDULE" in
+            "26 2 * * 1-5") echo "VALIDATION_SCHEDULE=30 2 * * 1-5" >> "$GITHUB_ENV" ;;
+            "41 5 * * 1-5") echo "VALIDATION_SCHEDULE=45 5 * * 1-5" >> "$GITHUB_ENV" ;;
+            "26 6 * * 1-5") echo "VALIDATION_SCHEDULE=30 6 * * 1-5" >> "$GITHUB_ENV" ;;
+            "51 6 * * 1-5") echo "VALIDATION_SCHEDULE=55 6 * * 1-5" >> "$GITHUB_ENV" ;;
+            *) echo "VALIDATION_SCHEDULE=$RAW_VALIDATION_SCHEDULE" >> "$GITHUB_ENV" ;;
+          esac
       - name: Compile minute-path module
         run: python -m py_compile scripts/build_minute_path_features.py
       - name: Build Tencent 1-minute ETF path shadow evidence
