@@ -271,12 +271,10 @@ def _query_refresh_needed(root: Path, symbols: list[str], now: datetime, policy:
         candidates = [x for x in candidates if x[0] in requested]
     if not candidates:
         return True
-    active = False
     for symbol, timestamp in candidates:
         market = "CN" if symbol.isdigit() else ("US" if symbol in {"NDX", "SOX", "QQQ", "SOXX"} else _market_for_overseas(symbol, {}))
         phase = market_phase(market, now=now)
         if phase in {"REGULAR", "OPENING_AUCTION", "PRE_MARKET", "POST_MARKET"}:
-            active = True
             if not timestamp:
                 return True
             try:
@@ -291,7 +289,7 @@ def _query_refresh_needed(root: Path, symbols: list[str], now: datetime, policy:
 
 
 def build_market_quote_context(root: Path | str, now: datetime | None = None, *, force_refresh: bool = False, requested_symbols: list[str] | None = None) -> dict[str, Any]:
-    """Build the single routed quote view from already-produced state; no network calls."""
+    """Build the routed quote view; explicit query-time requests call providers before state fallback."""
     root = Path(root)
     query_time = now or datetime.now(BEIJING)
     if query_time.tzinfo is None:
@@ -303,13 +301,14 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
     extended = _read_json(root, "data/state/us_extended_hours_context.json", {})
     quotes: list[dict[str, Any]] = []
 
-    should_refresh = force_refresh and _query_refresh_needed(root, requested_symbols or [], query_time, policy)
+    explicit_symbols = [str(x).strip() for x in (requested_symbols or []) if str(x).strip()]
+    should_refresh = force_refresh and (bool(explicit_symbols) or _query_refresh_needed(root, [], query_time, policy))
     if should_refresh:
         try:
             from scripts.query_time_market_refresh import refresh_market_quotes
         except ModuleNotFoundError:
             from query_time_market_refresh import refresh_market_quotes
-        refreshed = refresh_market_quotes(root, requested_symbols or [], query_time)
+        refreshed = refresh_market_quotes(root, explicit_symbols, query_time)
         for quote in refreshed.get("quotes", []):
             if isinstance(quote, dict):
                 quotes.append(quote)
@@ -348,11 +347,11 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
         "generated_at_beijing": query_time.astimezone(BEIJING).isoformat(timespec="seconds"),
         "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH" if should_refresh else "CACHED_STATE",
         "refresh_failures": refresh_failures,
-        "route_version": "V1.0",
+        "route_version": "V1.1",
         "query_entry": "market_quote_router",
         "quotes": quotes,
         "markets": {market: {"phase": market_phase(market, query_time), "market_status_cn": display_market_status(market, market_phase(market, query_time))} for market in MARKET_ZONES},
-        "selection_rule": "交易中返回最新实时；盘前返回盘前行情并附最近正式收盘；盘后返回盘后行情并附当日正式收盘；休市返回最近正式收盘。",
+        "selection_rule": "显式查询时先调用当前provider；补采失败的对象才回退最近有效状态。交易中返回最新实时；盘前返回盘前行情并附最近正式收盘；盘后返回盘后行情并附当日正式收盘；休市返回最近正式收盘。",
         "user_display_rule": "用户展示只使用中文市场状态和数据性质，不直接输出内部英文状态码。",
         "decision_boundary": "路由只提供事实与时点，不生成风险许可、Trial、Confirm、金额、卖出或其他交易动作。",
         "source_state_paths": ["data/state/CURRENT.json", "data/state/overseas_context.json", "data/state/us_extended_hours_context.json"],
