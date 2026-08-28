@@ -128,8 +128,16 @@ def latest_valid_row(payload: dict, symbol: str, timezone_name: str) -> dict:
         ts = int(timestamps[idx])
         dt_utc = datetime.fromtimestamp(ts, timezone.utc)
         dt_local = dt_utc.astimezone(zone)
+        previous_close = None
+        close_values = quote.get("close") or []
+        for j in range(idx - 1, -1, -1):
+            candidate = close_values[j] if j < len(close_values) else None
+            if candidate is not None:
+                previous_close = candidate
+                break
         row.update({
             "volume": ((quote.get("volume") or [None])[idx] if idx < len(quote.get("volume") or []) else None),
+            "previous_close": previous_close,
             "timestamp": ts,
             "as_of_utc": dt_utc.isoformat(timespec="seconds").replace("+00:00", "Z"),
             "as_of_local": dt_local.isoformat(timespec="seconds"),
