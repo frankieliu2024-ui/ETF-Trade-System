@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import fnmatch
 import json
 import os
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -10,6 +12,7 @@ from zoneinfo import ZoneInfo
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STATE = ROOT / "data" / "state"
 POLICY = ROOT / "config" / "runtime_policy.json"
+CONSISTENCY_WORKFLOW = ROOT / ".github" / "workflows" / "system-consistency.yml"
 BJ = ZoneInfo("Asia/Shanghai")
 ET = ZoneInfo("America/New_York")
 
@@ -65,6 +68,153 @@ def current_user_action_event() -> dict[str, Any] | None:
         return None
 
 
+def consistency_push_patterns() -> list[str]:
+    """Read full-consistency production trigger semantics from its canonical workflow.
+
+    The health guard deliberately does not maintain a second hard-coded path list.
+    """
+    try:
+        lines = CONSISTENCY_WORKFLOW.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+
+    in_push = False
+    in_paths = False
+    patterns: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        indent = len(line) - len(line.lstrip(" "))
+        if indent == 2 and stripped == "push:":
+            in_push = True
+            in_paths = False
+            continue
+        if in_push and indent == 2 and stripped and stripped != "push:":
+            break
+        if not in_push:
+            continue
+        if indent == 4 and stripped == "paths:":
+            in_paths = True
+            continue
+        if not in_paths:
+            continue
+        if indent == 6 and stripped.startswith("- "):
+            value = stripped[2:].strip().strip('"').strip("'")
+            if value:
+                patterns.append(value)
+            continue
+        if stripped and not stripped.startswith("#") and indent <= 4:
+            in_paths = False
+    return patterns
+
+
+def current_head() -> str | None:
+    try:
+        proc = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return proc.stdout.strip() if proc.returncode == 0 and proc.stdout.strip() else None
+
+
+def changed_files_since(base: str, head: str) -> tuple[list[str] | None, str]:
+    """Return changed paths, preferring local git and falling back to one GitHub compare call.
+
+    Watchdog checkout is intentionally shallow. The API fallback avoids increasing every
+    watchdog checkout to full history merely to validate coverage.
+    """
+    try:
+        proc = subprocess.run(
+            ["git", "diff", "--name-only", f"{base}..{head}"],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=8,
+        )
+        if proc.returncode == 0:
+            return [x.strip() for x in proc.stdout.splitlines() if x.strip()], "LOCAL_GIT"
+    except (OSError, subprocess.SubprocessError):
+        pass
+
+    repo = str(os.environ.get("GITHUB_REPOSITORY") or "").strip()
+    if not repo:
+        return None, "UNVERIFIABLE_NO_REPOSITORY"
+    try:
+        proc = subprocess.run(
+            ["gh", "api", f"repos/{repo}/compare/{base}...{head}", "--jq", ".files[].filename"],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None, "UNVERIFIABLE_COMPARE_ERROR"
+    if proc.returncode != 0:
+        return None, "UNVERIFIABLE_COMPARE_ERROR"
+    return [x.strip() for x in proc.stdout.splitlines() if x.strip()], "GITHUB_COMPARE"
+
+
+def classify_consistency_coverage(
+    consistency_status: str,
+    checked_commit: str | None,
+    head: str | None,
+    changed_files: list[str] | None,
+    patterns: list[str],
+) -> tuple[str, str, list[str]]:
+    """Classify whether the latest consistency result still covers current production definition."""
+    if consistency_status == "FAIL":
+        return "BLOCKED", "CONSISTENCY_FAIL", []
+    if consistency_status != "PASS":
+        return "ATTENTION", "CONSISTENCY_NOT_PASS", []
+    if not checked_commit or not head:
+        return "ATTENTION", "COVERAGE_UNVERIFIABLE", []
+    if checked_commit == head:
+        return "PASS", "CURRENT_HEAD", []
+    if changed_files is None or not patterns:
+        return "ATTENTION", "COVERAGE_UNVERIFIABLE", []
+
+    triggering = sorted(
+        path for path in changed_files if any(fnmatch.fnmatch(path, pattern) for pattern in patterns)
+    )
+    if triggering:
+        return "ATTENTION", "REVALIDATION_REQUIRED", triggering
+    return "PASS", "STATE_ONLY_ADVANCE", []
+
+
+def consistency_coverage(consistency: dict[str, Any]) -> tuple[str, str]:
+    status = str(consistency.get("status") or "UNKNOWN")
+    checked_commit = str(
+        ((consistency.get("commit_audit") or {}).get("checked_commit"))
+        or ((consistency.get("repository") or {}).get("head_sha"))
+        or ""
+    ).strip()
+    head = current_head()
+    changed: list[str] | None = [] if checked_commit and head and checked_commit == head else None
+    source = "NOT_NEEDED"
+    if checked_commit and head and checked_commit != head:
+        changed, source = changed_files_since(checked_commit, head)
+    patterns = consistency_push_patterns()
+    level, coverage, triggering = classify_consistency_coverage(status, checked_commit, head, changed, patterns)
+    detail = (
+        f"status={status}; coverage={coverage}; checked_commit={checked_commit or 'unknown'}; "
+        f"current_head={head or 'unknown'}; compare_source={source}; changed_count="
+        f"{len(changed) if changed is not None else 'unknown'}"
+    )
+    if triggering:
+        preview = ",".join(triggering[:5])
+        detail += f"; revalidation_paths={preview}"
+        if len(triggering) > 5:
+            detail += f"(+{len(triggering) - 5})"
+    return level, detail
+
+
 def main() -> int:
     now_utc = datetime.now(timezone.utc)
     now_bj = now_utc.astimezone(BJ)
@@ -84,14 +234,8 @@ def main() -> int:
 
     checks: list[dict[str, Any]] = []
 
-    consistency_status = str(consistency.get("status") or "UNKNOWN")
-    consistency_level = "PASS" if consistency_status == "PASS" else ("BLOCKED" if consistency_status == "FAIL" else "ATTENTION")
-    add_check(
-        checks,
-        "full_system_consistency",
-        consistency_level,
-        f"status={consistency_status}; generated_at={consistency.get('generated_at_beijing') or consistency.get('generated_at') or 'unknown'}",
-    )
+    consistency_level, consistency_detail = consistency_coverage(consistency)
+    add_check(checks, "full_system_consistency", consistency_level, consistency_detail)
 
     runtime_status = str(runtime.get("status") or runtime.get("quality_status") or "UNKNOWN")
     runtime_age = age_seconds(now_utc, runtime.get("finished_at") or runtime.get("captured_at") or runtime.get("generated_at"))
@@ -149,7 +293,7 @@ def main() -> int:
     overall = "BLOCKED" if blocked else ("ATTENTION" if attention else "PASS")
 
     result = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "mode": "READ_ONLY_PRODUCTION_HEALTH_AGGREGATE",
         "checked_at": now_bj.isoformat(timespec="seconds"),
         "status": overall,
