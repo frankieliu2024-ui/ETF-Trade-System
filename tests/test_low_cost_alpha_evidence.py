@@ -67,7 +67,7 @@ class LowCostAlphaEvidenceTests(unittest.TestCase):
 
     def test_yahoo_daily_row_exposes_previous_complete_close(self):
         payload = {"chart": {"result": [{
-            "meta": {"timezone": "America/New_York"},
+            "meta": {"timezone": "America/New_York", "chartPreviousClose": 101.0},
             "timestamp": [1787601600, 1787688000],
             "indicators": {"quote": [{
                 "open": [100.0, 102.0], "high": [103.0, 105.0], "low": [99.0, 101.0],
