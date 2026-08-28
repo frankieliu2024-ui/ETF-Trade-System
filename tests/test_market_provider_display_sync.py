@@ -161,6 +161,22 @@ class ProviderPolicyConsistencyTest(unittest.TestCase):
         self.assertIn("本索引只负责路由", index)
         self.assertIn("不再新增新的“唯一规范性规则来源”", index)
 
+    def test_user_visible_language_gate_is_normative(self):
+        """Formal user replies must translate internal machine vocabulary into business language."""
+        data_spec = (ROOT / "ETF与市场监测数据接口使用规范.md").read_text(encoding="utf-8")
+        self.assertIn("用户可见语言门禁（强制）", data_spec)
+        self.assertIn("机器语言与用户语言必须分层", data_spec)
+        self.assertIn("`PRE_MARKET`→“美股盘前”", data_spec)
+        self.assertIn("`REGULAR`→“美股常规交易时段”", data_spec)
+        self.assertIn("`POST_MARKET`→“美股盘后”", data_spec)
+        self.assertIn("`Known-net`不得直接作为用户可见口径名", data_spec)
+        self.assertIn("已确认费用口径下的ETF策略权益", data_spec)
+        self.assertIn("`canonical CURRENT`统一表达为“当前正式行情”", data_spec)
+        self.assertIn("`decision_context`统一表达为“当前决策证据”", data_spec)
+        self.assertIn("用户可见正式回复不得直接堆叠内部字段名", data_spec)
+        self.assertIn("只有用户明确要求技术审计", data_spec)
+        self.assertIn("Trial／Confirm", data_spec)
+
     def test_production_health_consistency_coverage_uses_canonical_trigger_semantics(self):
         patterns = production_health.consistency_push_patterns()
         self.assertIn("scripts/**", patterns)
