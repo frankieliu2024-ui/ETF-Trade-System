@@ -70,8 +70,9 @@ def rolling_regime(df,fwd):
         if len(cells)==3 and sum((x["mean"] or 0)>0.002 for x in cells)>=2 and mean([x["mean"] for x in cells])>0.002:rh.append(h)
     for h in (10,20):
         cells=[x for x in mm if x["h"]==h and x["high"]["n"]>=8 and x["lower"]["n"]>=8]
-        if len(cells)>=2 and sum((x["high"]["mean"] or 0)>0.002 for x in cells)>=2 and sum((x["high_minus_lower"] or 0)>0 for x in cells)>=2:mh.append(h)
-    return {"weak_market_resilience":{"status":"PASS" if len(rh)>=2 else "NO_STABLE_INCREMENT","passing_horizons":rh,"fold_results":rr},"dispersion_conditioned_migration":{"status":"PASS" if mh else "NO_STABLE_INCREMENT","passing_horizons":mh,"fold_results":mm},"diagnostics":dict(diag),"pit":"60-trading-day rolling thresholds use only dates before signal D."}
+        jointly_good=sum((x["high"]["mean"] or 0)>0.002 and (x["high_minus_lower"] or 0)>0 for x in cells)
+        if len(cells)>=2 and jointly_good>=2:mh.append(h)
+    return {"weak_market_resilience":{"status":"PASS" if len(rh)>=2 else "NO_STABLE_INCREMENT","passing_horizons":rh,"fold_results":rr},"dispersion_conditioned_migration":{"status":"PASS" if mh else "NO_STABLE_INCREMENT","passing_horizons":mh,"fold_results":mm,"gate":"At least two folds at the same horizon must simultaneously show positive high-dispersion migration spread (>0.2%) and improvement versus lower-dispersion migration."},"diagnostics":dict(diag),"pit":"60-trading-day rolling thresholds use only dates before signal D."}
 
 
 def opening_target(df):
@@ -156,5 +157,5 @@ def margin_by_etf():
 def main():
     df,dates,fwd=b1.load_panel();out={"mode":"RESEARCH_ONLY_LOW_COST_ALPHA_STAGE2","rolling_regime_recheck":rolling_regime(df,fwd),"opening_residual_561980":opening_target(df),"effort_result_incremental_control":effort_controls(df,fwd),"margin_expansion_feedback_by_etf":margin_by_etf(),"decision_eligible":False,"trade_signal":None,"master_override":False,"production_context_integration":False,"boundary":"Focused robustness only; no result is automatically converted into formal execution evidence."}
     OUT.parent.mkdir(parents=True,exist_ok=True);OUT.write_text(json.dumps(out,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-    print(json.dumps({k:v.get("status") for k,v in out.items() if isinstance(v,dict) and "status" in v},ensure_ascii=False));return 0
+    print(json.dumps({"weak_market_resilience":out["rolling_regime_recheck"]["weak_market_resilience"]["status"],"dispersion_conditioned_migration":out["rolling_regime_recheck"]["dispersion_conditioned_migration"]["status"],"opening_residual_561980":out["opening_residual_561980"]["status"],"effort_result_incremental_control":out["effort_result_incremental_control"]["status"],"margin_expansion_feedback_by_etf":out["margin_expansion_feedback_by_etf"]["status"]},ensure_ascii=False));return 0
 if __name__=="__main__":raise SystemExit(main())
