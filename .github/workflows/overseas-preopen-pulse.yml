@@ -2,6 +2,14 @@ name: Overseas pre-open pulse
 
 on:
   workflow_dispatch:
+  # During the overlapping A-share/APAC session, a newly published canonical
+  # A-share CURRENT is an independent, event-driven wake-up for the same APAC
+  # workflow. This reduces reliance on GitHub schedule punctuality without
+  # creating a second market-data, event, dedupe, or PushPlus implementation.
+  push:
+    branches: [main]
+    paths:
+      - "data/state/CURRENT.json"
   schedule:
     # UTC / Beijing time.
     # 20:15/20:30 UTC = Beijing 04:15/04:30. Independent schedule backstop for
