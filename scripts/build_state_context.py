@@ -15,6 +15,7 @@ from build_execution_quality import build as build_execution_quality
 from build_skfolio_risk_evidence import build as build_skfolio_risk_evidence
 from build_etf_share_flow_evidence import build as build_etf_share_flow_evidence
 from build_margin_financing_evidence import build as build_margin_financing_evidence
+from build_low_cost_alpha_evidence import build as build_low_cost_alpha_evidence
 from build_active_return_evidence import build as build_active_return_evidence
 from build_research_contribution_audit import build as build_research_contribution_audit
 from build_research_execution_bridge import build as build_research_execution_bridge
@@ -276,6 +277,9 @@ def main() -> None:
     atomic_json_write(ROOT / "data" / "state" / "margin_financing_evidence.json", margin_financing)
     margin_financing_summary = compact_margin_financing(margin_financing)
 
+    low_cost_alpha = build_low_cost_alpha_evidence(ROOT)
+    atomic_json_write(ROOT / "data" / "state" / "low_cost_alpha_evidence.json", low_cost_alpha)
+
     active_return = build_active_return_evidence(ROOT)
     atomic_json_write(ROOT / "data" / "state" / "active_return_evidence.json", active_return)
 
@@ -306,6 +310,9 @@ def main() -> None:
             "skfolio_risk": skfolio_summary,
             "etf_share_flow": share_flow_summary,
             "margin_financing": margin_financing_summary,
+            "opening_residual_561980": low_cost_alpha.get("opening_residual_561980") or {},
+            "selling_exhaustion": low_cost_alpha.get("selling_exhaustion") or {},
+            "margin_feedback_interaction": low_cost_alpha.get("margin_feedback_interaction") or {},
             "active_return": active_return,
         },
         "research_contribution_audit": contribution_summary,
@@ -320,6 +327,8 @@ def main() -> None:
             "skfolio_risk_evidence": "data/state/skfolio_risk_evidence.json",
             "etf_share_flow_evidence": "data/state/etf_share_flow_evidence.json",
             "margin_financing_evidence": "data/state/margin_financing_evidence.json",
+            "low_cost_alpha_evidence": "data/state/low_cost_alpha_evidence.json",
+            "low_cost_alpha_conversion_review": "research/backtests/low_cost_alpha_formal_conversion_review.json",
             "active_return_evidence": "data/state/active_return_evidence.json",
             "research_contribution_audit": "data/state/research_contribution_audit.json",
             "historical_backfill_status": "data/state/historical_backfill_status.json",

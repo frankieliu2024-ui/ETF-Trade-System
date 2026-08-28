@@ -17,7 +17,7 @@ SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
 FORMAL_FILES = ["ETF规则_MASTER.md", "ETF当前状态_DASHBOARD.md", "ETF交易复盘与经验库_2026.md", "ETF市场行情档案_2026.md"]
 CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/overseas_runtime_health.json", "data/state/account_fact.json", "data/state/us_extended_hours_context.json", "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json", "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json"]
-CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_stock_context.py", "scripts/build_account_stock_market.py", "scripts/market_data_guard.py", "tests/test_market_data_guard.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_query_context.py", "scripts/market_quote_router.py", "scripts/sync_formal_files.py", "scripts/query_market_object.py", "config/market/market_quote_router.json", "tests/test_market_quote_router.py", "scripts/build_post_market_review.py", ".github/workflows/market-snapshot.yml", ".github/workflows/on-demand-market-data.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
+CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_stock_context.py", "scripts/build_account_stock_market.py", "scripts/market_data_guard.py", "tests/test_market_data_guard.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_low_cost_alpha_evidence.py", "scripts/build_query_context.py", "scripts/market_quote_router.py", "scripts/sync_formal_files.py", "scripts/query_market_object.py", "config/market/market_quote_router.json", "tests/test_market_quote_router.py", "scripts/build_post_market_review.py", ".github/workflows/market-snapshot.yml", ".github/workflows/on-demand-market-data.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
 EXPECTED_INDICES = {"000001.SH", "399006.SZ", "000688.SH", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
 REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api", "eastmoney_push2"}
 
@@ -100,7 +100,7 @@ def main() -> int:
     test_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "discover", "-s", "tests", "-p", "test_market*.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:market_data_and_quote_router", test_proc.returncode == 0, (test_proc.stdout + test_proc.stderr)[-1000:])
 
-    compile_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "py_compile", "scripts/market_data_guard.py", "scripts/market_quote_router.py", "scripts/cloud_runner_snapshot.py", "scripts/build_account_stock_market.py", "scripts/build_overseas_context.py", "scripts/build_overseas_runtime_health.py", "scripts/build_query_context.py", "scripts/build_post_market_review.py", "scripts/state_manager.py", "scripts/process_state_sync_request.py", "scripts/sync_formal_files.py", "scripts/query_market_object.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+    compile_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "py_compile", "scripts/market_data_guard.py", "scripts/market_quote_router.py", "scripts/cloud_runner_snapshot.py", "scripts/build_account_stock_market.py", "scripts/build_overseas_context.py", "scripts/build_overseas_runtime_health.py", "scripts/build_low_cost_alpha_evidence.py", "scripts/build_query_context.py", "scripts/build_post_market_review.py", "scripts/state_manager.py", "scripts/process_state_sync_request.py", "scripts/sync_formal_files.py", "scripts/query_market_object.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:runtime_modules_compile", compile_proc.returncode == 0, (compile_proc.stdout + compile_proc.stderr)[-1000:])
 
     for path in FORMAL_FILES:
@@ -112,6 +112,9 @@ def main() -> int:
         "skfolio_risk": "组合风险研究证据",
         "active_return": "主动收益／资本迁移研究证据",
         "ipo_base_stock_specific": "宁德时代（300750）超跌反转专项证据",
+        "opening_residual_561980": "半导体设备ETF（561980）海外开盘定价残差证据",
+        "selling_exhaustion": "缩量下跌但收离低点证据",
+        "margin_feedback_interaction": "融资扩张×ETF相对反馈证据",
     }
     for evidence_id, marker in research_registry_markers.items():
         check(f"research_registry:{evidence_id}", marker in master_text, f"MASTER registry contains {marker}", warning=True)
@@ -119,7 +122,7 @@ def main() -> int:
     if bridge_path.exists():
         bridge_state = read_json("data/state/research_execution_summary.json")
         runtime_ids = {str(x.get("evidence_id")) for x in ((bridge_state.get("conclusion_digest") or {}).get("runtime_validated_evidence") or []) if isinstance(x, dict) and x.get("use_in_current_decision")}
-        for evidence_id in ("margin_financing", "skfolio_risk", "active_return"):
+        for evidence_id in ("margin_financing", "skfolio_risk", "active_return", "opening_residual_561980", "selling_exhaustion", "margin_feedback_interaction"):
             if evidence_id in runtime_ids:
                 marker = research_registry_markers[evidence_id]
                 check(f"research_registry_drift:{evidence_id}", marker in master_text, f"runtime evidence {evidence_id} is registered in MASTER", warning=True)

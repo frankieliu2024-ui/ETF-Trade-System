@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0",
+  "mode": "FORMAL_RESEARCH_CONVERSION_REVIEW_LOW_COST_ALPHA",
+  "review_date": "2026-08-28",
+  "source_research_branch": "research/low-cost-alpha-validation-20260828",
+  "source_stage2_run_id": 33184196003,
+  "source_stage2_head_sha": "b8aa638720ed98c3fcc0f7949aacf7804481e7d9",
+  "source_stage2_artifact_id": 9691012627,
+  "source_stage2_artifact_digest": "sha256:f7e2a5d56df2af06242f41f49184f44e945d862213d250cfb73f31929649f9f2",
+  "source_calibration_run_id": 33185230528,
+  "review_framework": ["data_quality", "sample_sufficiency", "logic_stability", "execution_translatability", "risk_non_increase", "point_in_time"],
+  "overall_status": "PASS_WITH_SCOPED_CONVERSION",
+  "decision_eligible": true,
+  "production_context_integration": true,
+  "use_as_decision_evidence": true,
+  "can_generate_decision_independently": false,
+  "automatic_trade": false,
+  "trade_signal": null,
+  "trial_confirm": null,
+  "portfolio_target": null,
+  "master_override": false,
+  "accepted_evidence": [
+    {
+      "evidence_id": "opening_residual_561980",
+      "display_name": "半导体设备ETF（561980）海外开盘定价残差证据",
+      "status": "CONVERT_WITH_SCOPE_LIMIT",
+      "data_quality": "PASS",
+      "sample_sufficiency": "PASS_638_CALIBRATION_ROWS",
+      "logic_stability": "PASS_WITH_SINGLE_OBJECT_SELECTION_CAUTION",
+      "execution_translatability": "PASS_CONTINUOUS_RESIDUAL_NO_TRADE_THRESHOLD",
+      "risk_non_increase": "PASS_EVIDENCE_ONLY",
+      "point_in_time": "PASS",
+      "validated_horizons": ["same_day", "1d_from_open", "3d_from_open"],
+      "scope": ["561980"],
+      "formal_use": "At the A-share open, compare actual opening gap with the fixed historical transmission estimate from the latest fully completed SOX/NDX cash session; use the signed residual only as a strengthening/weakening input to the existing opportunity and risk-return judgment.",
+      "boundary": "Positive residual means relative underpricing versus the historical transmission estimate, not a buy trigger. No cross-ETF generalization. The fixed calibration cannot be silently refit in production.",
+      "primary_uncertainty": "Single-object selection after broader cross-market screening creates extra selection-bias risk; use lower confidence than the cross-sectional selling-exhaustion evidence."
+    },
+    {
+      "evidence_id": "selling_exhaustion",
+      "display_name": "缩量下跌但收离低点证据",
+      "status": "CONVERT",
+      "data_quality": "PASS",
+      "sample_sufficiency": "PASS_MULTI_FOLD_MULTI_ETF",
+      "logic_stability": "PASS_3D_AND_5D_INCREMENTAL_EFFECT_ACROSS_FOLDS",
+      "execution_translatability": "PASS_COMPLETE_DAILY_BAR_ONLY",
+      "risk_non_increase": "PASS_EVIDENCE_ONLY",
+      "point_in_time": "PASS",
+      "validated_horizons": [3, 5],
+      "scope": "ETF_LAYER",
+      "formal_use": "Use a completed daily bar showing a decline, low volume relative to the ETF's prior 20-day average and the historical low-volume regime, while closing materially off the daily low, as evidence that selling pressure may be exhausting; combine with trend, intraday path, acceptance and risk-reward.",
+      "boundary": "This is a selling-exhaustion candidate, not proof of reversal and not a mechanical buy signal. High-volume demand/close-high did not retain incremental information after matched controls and is not converted."
+    },
+    {
+      "evidence_id": "margin_feedback_interaction",
+      "display_name": "融资扩张×ETF相对反馈证据",
+      "status": "CONVERT_WITH_ETF_HETEROGENEITY",
+      "data_quality": "PASS_370_OFFICIAL_COMPLETE_MARGIN_DAYS",
+      "sample_sufficiency": "PASS",
+      "logic_stability": "PASS_IN_MARGIN_EXPANSION_ONLY",
+      "execution_translatability": "PASS_REUSES_EXISTING_MARGIN_EVIDENCE_AND_PRIOR_DAY_ETF_RELATIVE_RETURN",
+      "risk_non_increase": "PASS_EVIDENCE_ONLY",
+      "point_in_time": "PASS_T_MARGIN_FACTS_FROM_T_PLUS_1",
+      "validated_horizons": [3, 5],
+      "scope": ["561980", "588000", "159781", "159992", "159326"],
+      "most_stable_object": "588000",
+      "excluded_object": "515880",
+      "formal_use": "When the already validated 5-day margin-balance evidence is expanding, use the prior completed day's ETF return relative to the same-day ETF-universe median as a conditional persistence input for the validated ETF set.",
+      "boundary": "Margin contraction only means this interaction is inactive; it is not a bearish signal. Do not mechanically buy relative winners. 588000 has the cleanest cross-fold result; other converted ETFs retain heterogeneous confidence."
+    }
+  ],
+  "rejected_evidence": [
+    {
+      "evidence_id": "weak_market_resilience",
+      "status": "NO_STABLE_INCREMENT",
+      "reason": "After replacing the initial over-tight event definition with 60-trading-day rolling PIT thresholds, weak-market resilience did not retain stable 3/5/10-day incremental information across folds.",
+      "decision_eligible": false
+    },
+    {
+      "evidence_id": "dispersion_conditioned_migration",
+      "status": "NO_STABLE_INCREMENT",
+      "reason": "After tightening the gate so positive high-dispersion migration and improvement versus lower dispersion must occur in the same folds, the apparent pass disappeared.",
+      "decision_eligible": false
+    }
+  ],
+  "conclusion": "Three scoped evidence families pass MASTER 8.1 formal conversion review: 561980 opening-pricing residual as lower-confidence single-object continuous evidence; completed-bar selling-exhaustion evidence as the strongest cross-sectional result; and margin-expansion-conditioned ETF relative feedback for the validated ETF subset, strongest in 588000. Weak-market resilience and dispersion-conditioned migration remain research-only/rejected. None can independently generate risk permission, Trial/Confirm, amount, sell quantity or orders.",
+  "review_boundary": "Conversion authorizes evidence consumption only through the existing research execution bridge and existing buy/sell chains. It creates no new lifecycle, permission, score, amount tier or automatic trading path."
+}
