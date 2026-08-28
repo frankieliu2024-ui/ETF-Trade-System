@@ -180,6 +180,23 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
         self.assertNotIn("run: python scripts/send_market_shock_notification.py", us)
         self.assertNotIn("run: python scripts/send_us_session_summary.py", us)
 
+    def test_notification_rule_source_governance_is_single_and_explicit(self):
+        spec = (ROOT / "docs/ETF主动通知体系.md").read_text(encoding="utf-8")
+        index = (ROOT / "ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
+        impl_readme = (ROOT / "notifications/README.md").read_text(encoding="utf-8")
+
+        self.assertIn("唯一规范性规则来源", spec)
+        self.assertIn("运行事实以当前 `main` 的脚本、配置和状态为准；规则解释以本文为准", spec)
+        self.assertIn("若实现与本文冲突，视为实现漂移", spec)
+        self.assertIn("所有声称“发生变化 / 实质变化 / 升级 / 失效 / 恢复”的主动通知", spec)
+        self.assertIn("scripts/notification_materiality_guard.py", spec)
+        self.assertIn("scripts/run_guarded_notification.py", spec)
+        self.assertIn("docs/ETF主动通知体系.md", index)
+        self.assertIn("唯一人类可读规范", index)
+        self.assertIn("唯一规范性规则来源", impl_readme)
+        self.assertNotIn("唯一人类可读运行规范为", impl_readme)
+        self.assertIn("不得反向覆盖规范", impl_readme)
+
 
 if __name__ == "__main__":
     unittest.main()
