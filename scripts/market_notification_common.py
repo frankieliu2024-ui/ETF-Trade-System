@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import os
+import re
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any
 
 from notification_center import (
@@ -18,6 +20,7 @@ from notification_center import (
 )
 
 NOTIFICATION_STATE = STATE / "notification_center.json"
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def number(value: Any) -> float | None:
@@ -68,16 +71,47 @@ def ohlc_path_phrase(open_: float | None, high: float | None, low: float | None,
     )
 
 
-def render_summary(*, headline_lines: list[str], path_lines: list[str], implication: str, action: str, as_of_lines: list[str], boundary: str) -> str:
-    """Unified user-facing structure for market/session summaries.
+def _current_a_share_inputs() -> tuple[dict[str, dict], list[dict], dict[str, dict]]:
+    current = read_json(STATE / "CURRENT.json", {})
+    snapshot_path = ROOT / str(current.get("latest_snapshot") or "")
+    snapshot = read_json(snapshot_path, {}) if snapshot_path.exists() else {}
+    rows = [x for x in (snapshot.get("rows") or []) if x.get("quality_status") == "PASS"]
+    indices = {str(x.get("symbol") or ""): x for x in rows if x.get("asset_class") == "A_SHARE_INDEX"}
+    etfs = [x for x in rows if x.get("asset_class") == "ETF" and number(x.get("change_pct")) is not None]
+    path_data = read_json(STATE / "intraday_path_features.json", {})
+    features = {str(x.get("symbol") or ""): x for x in (path_data.get("features") or [])}
+    return indices, etfs, features
 
-    Data producers may remain market-specific, but user-visible semantics do not:
-    conclusion -> meaningful path -> ETF-system impact -> current action -> data/boundary.
+
+def _is_a_share_session_summary(headline_lines: list[str]) -> bool:
+    joined = " ".join(headline_lines)
+    return "开盘/上午有价值信号" in joined or "15:00正式收盘" in joined
+
+
+def render_summary(*, headline_lines: list[str], path_lines: list[str], implication: str, action: str, as_of_lines: list[str], boundary: str) -> str:
+    """One user semantics for all session summaries.
+
+    Producers still own data acquisition and event qualification. This layer owns
+    what the user reads. For A-share session summaries it deliberately rebuilds
+    the text from current market/account facts so old field-heavy producers cannot
+    leak a machine-style report into PushPlus.
     """
-    path = "\n".join(path_lines) if path_lines else "- 当前没有额外路径事实需要展开。"
+    if _is_a_share_session_summary(headline_lines):
+        try:
+            from notification_semantics import a_share_structure
+
+            indices, etfs, features = _current_a_share_inputs()
+            if indices and etfs:
+                headline_lines, path_lines, implication, action = a_share_structure(indices, etfs, features)
+        except Exception as exc:
+            # Notification rendering must fail soft: keep the producer's valid
+            # Point-in-Time facts if semantic compression cannot be built.
+            print(f"notification semantic fallback: {exc}")
+
+    path = "\n".join(path_lines[:3]) if path_lines else "- 当前没有额外路径事实需要展开。"
     return (
         "### 核心结论\n"
-        + "\n".join(headline_lines)
+        + "\n".join(headline_lines[:5])
         + "\n\n### 关键路径\n"
         + path
         + "\n\n### 对ETF系统的影响\n"
@@ -91,63 +125,58 @@ def render_summary(*, headline_lines: list[str], path_lines: list[str], implicat
     )
 
 
-def _decision_readable_implication(what: list[str], implication: str) -> str:
-    """Turn generic market boilerplate into object-aware ETF decision relevance.
+def _extract_object(what: list[str]) -> tuple[str, str, str, str]:
+    joined = " ".join(what)
+    object_line = next((x for x in what if "对象/结构" in x or "触发对象" in x), joined)
+    clean = re.sub(r"^[-*\s]+", "", object_line)
+    clean = re.sub(r"\*+", "", clean)
+    clean = clean.split("：", 1)[-1].strip()
+    match = re.search(r"（([A-Za-z0-9_]+)）", clean)
+    code = match.group(1) if match else ""
+    name = clean.split("（", 1)[0].strip() if clean else ""
+    if "ETF" in clean:
+        asset = "ETF"
+    elif "指数" in clean or code in {"NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}:
+        asset = "A_SHARE_INDEX" if code.isdigit() and len(code) == 6 else "INDEX"
+    elif code.isdigit() and len(code) == 6:
+        asset = "ACCOUNT_STOCK"
+    else:
+        asset = "OTHER"
+    market = "A_SHARE" if code.isdigit() and len(code) == 6 or code.startswith("A_SHARE_") else "OVERSEAS"
+    return code, name, asset, market
 
-    This is deliberately centralized so A-share indices, all monitored ETFs,
-    account/conditional stocks, APAC objects and US objects share one user
-    semantics while their acquisition/workflow routes remain independent.
-    """
+
+def _decision_readable_implication(what: list[str], implication: str, action: str) -> tuple[str, str]:
+    """Central semantic gate for index/ETF/stock/overseas market alerts."""
     joined = " ".join(what)
     text = implication.strip()
+    act = action.strip()
+    should_override = (
+        text.startswith("立即检查该新事实是否改变全部持仓ETF与观察ETF")
+        or text.startswith("把本次新事实作为结构证据")
+        or "相关ETF自身反馈、候选比较或下一节点准备" in text
+    )
+    if should_override:
+        try:
+            from notification_semantics import shock_implication
 
-    # A-share unified event engine currently passes this generic sentence for
-    # indices, ETFs and account/conditional stocks. Resolve it by object role.
-    if text.startswith("立即检查该新事实是否改变全部持仓ETF与观察ETF"):
-        if "ETF" in joined:
-            return (
-                "这是ETF自身结构变化，不是泛化市场提示。优先复核该ETF相对全部持仓/观察ETF的强弱是否改变，"
-                "当前Trial或持仓假设是否被削弱，以及继续占用下一单位资本是否仍有效率；"
-                "只有这些结论改变时，才影响唯一主候选、金额或持仓动作。"
-            )
-        if "指数" in joined:
-            return (
-                "这是A股本地风险偏好/风格结构证据。先判断变化是否扩散到监测ETF，再比较哪些持仓/观察ETF的"
-                "承接和相对强弱真正发生变化；指数异动本身不直接生成买卖动作。"
-            )
-        return (
-            "这是账户底仓或条件个股的资金/产业传导证据。优先复核其独立假设、资金释放价值以及是否改变ETF资本比较；"
-            "个股单一波动不直接生成ETF买卖动作。"
-        )
+            code, name, asset, market = _extract_object(what)
+            if name:
+                return shock_implication(code, name, asset, market)
+        except Exception as exc:
+            print(f"shock semantic fallback: {exc}")
 
-    # Overseas/US/Asia unified value-event engine passes this generic sentence.
-    if text.startswith("把本次新事实作为结构证据"):
-        direct = ""
-        if "恒生科技指数" in joined or "HSTECH" in joined:
-            direct = "直接相关的恒生科技ETF（513180）"
-        elif "日经225指数" in joined or "N225" in joined:
-            direct = "直接相关的日经ETF（513520）"
-        elif any(x in joined for x in ("纳斯达克100", "NDX", "费城半导体", "SOX", "QQQ", "SOXX")):
-            direct = "A股科技持仓/观察ETF以及纳指ETF（159941）"
-        target = direct or "相关持仓/观察ETF"
-        return (
-            f"这是海外/区域结构证据，先看A股本地价格是否接受或背离，再复核{target}的自身反馈、"
-            "当前主候选和边际资本效率；若海外与A股反馈背离，以A股自身反馈为主。"
-        )
-
-    # Keep already-specific producer text, while removing the old HSTECH-only
-    # appendage if it leaked into a non-HSTECH alert.
     if "HSTECH" not in joined and "恒生科技指数" not in joined:
         text = text.replace("；恒生科技指数（HSTECH）事件还要直接复核恒生科技ETF（513180）的自身反馈", "")
         text = text.replace("恒生科技指数（HSTECH）事件还要直接复核恒生科技ETF（513180）的自身反馈。", "")
-    return text.strip()
+    return text.strip(), act
 
 
 def render_shock(*, what: list[str], why: str, implication: str, action: str, as_of: str, boundary: str) -> str:
-    implication = _decision_readable_implication(what, implication)
+    implication, action = _decision_readable_implication(what, implication, action)
     return (
         "### 核心结论\n"
-        + "\n".join(what)
+        + "\n".join(what[:5])
         + "\n\n**判断**："
         + why
         + "\n\n### 对ETF系统的影响\n"
@@ -186,7 +215,6 @@ def _future_time_error(event: dict) -> str:
 
 
 def _refine_reversal_user_title(event: dict) -> dict:
-    """Keep event family stable while making visible path semantics precise."""
     ctx = event.get("confirmation_context") or {}
     if str(ctx.get("event_category") or "") != "REVERSAL":
         return event
