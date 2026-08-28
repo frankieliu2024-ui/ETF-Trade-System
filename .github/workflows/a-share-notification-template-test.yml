@@ -30,6 +30,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Validate unified semantics across object roles
+        shell: bash
+        run: |
+          PYTHONPATH=scripts python - <<'PY'
+          from notification_semantics import shock_implication
+          checks = [
+              (shock_implication('515880','通信ETF','ETF','A_SHARE')[0], '正式动作'),
+              (shock_implication('561980','半导体设备ETF','ETF','A_SHARE')[0], '当前持仓ETF'),
+              (shock_implication('300750','宁德时代','ACCOUNT_STOCK','A_SHARE')[0], '账户个股'),
+              (shock_implication('000688','科创50指数','A_SHARE_INDEX','A_SHARE')[0], 'A股本地风险偏好'),
+              (shock_implication('HSTECH','恒生科技指数','INDEX','OVERSEAS')[0], '恒生科技ETF（513180）'),
+              (shock_implication('NDX','纳斯达克100指数','INDEX','OVERSEAS')[0], '纳指ETF（159941）'),
+          ]
+          failed = [(text, needle) for text, needle in checks if needle not in text]
+          if failed:
+              raise SystemExit(f'unified semantic checks failed: {failed}')
+          print('unified semantic checks passed for A-share index/ETF/stock, Asia and US roles')
+          PY
       - name: Install hithink-finance CLI
         run: npm install --global @hithink-tech/hithink-finance-cli
       - name: Load query provider concurrency policy
@@ -54,15 +72,12 @@ jobs:
           import os
           import sys
           from pathlib import Path
-
           sys.path.insert(0, str(Path.cwd() / 'scripts'))
           import send_regional_session_summary as module
-
           module.A_SHARE_OPEN_INDEX_ABS_PCT = 0.0
           module.A_SHARE_OPEN_ETF_ABS_PCT = 0.0
           module.A_SHARE_OPEN_ETF_SPREAD_PCT = 0.0
           original = module._a_share_event
-
           def test_event():
               event = original()
               if not event:
@@ -71,12 +86,10 @@ jobs:
               event['key'] = f"a-share-template-test:{os.environ.get('GITHUB_SHA', 'manual')}"
               event['type'] = '主动通知模板测试'
               event['event_type'] = 'A_SHARE_NOTIFICATION_TEMPLATE_TEST'
-              title = str(event.get('title') or '')
-              title = title.replace('【异动提醒】', '').replace('【市场异动】', '')
+              title = str(event.get('title') or '').replace('【异动提醒】', '').replace('【市场异动】', '')
               event['title'] = '【测试｜A股结构】' + title
               event['content'] = '**本条为统一通知语义测试：使用本次即时采集的最新A股行情；允许未达到正式阈值的事实生成测试通知，不代表正式事件触发。**\n\n' + str(event.get('content') or '')
               return event
-
           module._a_share_event = test_event
           sys.argv = ['send_regional_session_summary.py', '--market', 'a-share']
           raise SystemExit(module.main())
@@ -87,11 +100,9 @@ jobs:
           python - <<'PY'
           import json, os, sys
           from pathlib import Path
-
           sys.path.insert(0, str(Path.cwd() / 'scripts'))
           from market_notification_common import pct, persist_and_send, render_shock
           from notification_center import STATE, read_json
-
           account = read_json(STATE / 'account_fact.json', {})
           formal = account.get('formal_action') or {}
           code = str(formal.get('applicable_object') or '')
@@ -110,30 +121,9 @@ jobs:
           prev = float(row.get('prev_close') or 0.0)
           high = float(row.get('high') or 0.0)
           high_ret = (high / prev - 1) * 100 if prev else None
-          what = [
-              '- **事件类型**：对象角色语义测试',
-              f'- **对象/结构**：{name}（{code}）',
-              f'- **当前涨跌**：{pct(day)}',
-              f'- **关键结构**：盘中高点相对前收{pct(high_ret)}，当前{pct(day)}',
-          ]
-          content = render_shock(
-              what=what,
-              why='本次只验证统一语义层是否能根据当前账户事实识别对象角色，不代表正式异动阈值被触发。',
-              implication='立即检查该新事实是否改变全部持仓ETF与观察ETF的相对强弱、风险收益、唯一主候选或资本效率；账户底仓个股还要检查资金释放和独立假设。',
-              action='打开ETF项目刷新当前正式判断；只有正式风险许可、机会状态、金额或持仓动作发生变化时才执行交易。',
-              as_of=str(row.get('as_of_beijing') or snapshot.get('captured_at_beijing') or ''),
-              boundary='测试通知；正式阈值、MASTER、风险许可和交易动作均未改变。',
-          )
-          event = {
-              'key': f"object-semantic-test:{os.environ.get('GITHUB_SHA','manual')}:{code}",
-              'type': '主动通知模板测试',
-              'event_type': 'OBJECT_NOTIFICATION_SEMANTIC_TEST',
-              'title': f'【测试｜对象】{name}（{code}）统一语义验证',
-              'content': '**本条为对象级统一通知语义测试，不代表正式事件触发。**\n\n' + content,
-              'security_code': code,
-              'security_name': name,
-              'confirmation_context': {'market': 'A_SHARE', 'market_as_of_beijing': str(row.get('as_of_beijing') or '')},
-          }
+          what = ['- **事件类型**：对象角色语义测试', f'- **对象/结构**：{name}（{code}）', f'- **当前涨跌**：{pct(day)}', f'- **关键结构**：盘中高点相对前收{pct(high_ret)}，当前{pct(day)}']
+          content = render_shock(what=what, why='本次只验证统一语义层是否能根据当前账户事实识别对象角色，不代表正式异动阈值被触发。', implication='立即检查该新事实是否改变全部持仓ETF与观察ETF的相对强弱、风险收益、唯一主候选或资本效率；账户底仓个股还要检查资金释放和独立假设。', action='打开ETF项目刷新当前正式判断；只有正式风险许可、机会状态、金额或持仓动作发生变化时才执行交易。', as_of=str(row.get('as_of_beijing') or snapshot.get('captured_at_beijing') or ''), boundary='测试通知；正式阈值、MASTER、风险许可和交易动作均未改变。')
+          event = {'key': f"object-semantic-test:{os.environ.get('GITHUB_SHA','manual')}:{code}", 'type': '主动通知模板测试', 'event_type': 'OBJECT_NOTIFICATION_SEMANTIC_TEST', 'title': f'【测试｜对象】{name}（{code}）统一语义验证', 'content': '**本条为对象级统一通知语义测试，不代表正式事件触发。**\n\n' + content, 'security_code': code, 'security_name': name, 'confirmation_context': {'market': 'A_SHARE', 'market_as_of_beijing': str(row.get('as_of_beijing') or '')}}
           result = persist_and_send(event, policy='Test unified object-aware notification semantics only; formal thresholds and trading rules remain unchanged.')
           print(json.dumps(result, ensure_ascii=False))
           raise SystemExit(1 if result.get('status') == 'CREATED' else 0)
