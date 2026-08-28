@@ -119,7 +119,7 @@ class QueryTimeRefreshTests(unittest.TestCase):
         self.assertEqual(quote["source"], "tencent_qq")
         self.assertEqual(quote["freshness"], "SESSION_REFERENCE")
         self.assertEqual(quote["minute_path_source"], "TENCENT_1M")
-        self.assertEqual(quote["refresh_source"], "QUERY_TIME_PROVIDER_SAME_DAY_SESSION_REFERENCE")
+        self.assertEqual(quote["refresh_source"], "QUERY_TIME_PROVIDER_SESSION_REFERENCE")
         provider.assert_called_once_with(["688981.SH"], timeout=10)
         self.assertEqual(minute_builder.call_args.args[2], "2026-08-28")
         self.assertEqual(minute_builder.call_args.args[3], "OFF_SESSION")
