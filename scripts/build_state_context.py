@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 from build_intraday_path_features import build as build_intraday_path_features
+from build_minute_path_features import build as build_minute_path_features
 from build_market_regime_context import build as build_market_regime_context
 from build_market_structure_context import build as build_market_structure_context
 from build_research_features import build as build_research_features
@@ -127,8 +128,62 @@ def compact_contribution_audit(audit: dict) -> dict:
     }
 
 
+def select_intraday_path_features(root: Path) -> tuple[dict, dict]:
+    discrete = build_intraday_path_features(root)
+    minute = None
+    minute_error = None
+    try:
+        minute = build_minute_path_features(root)
+    except Exception as exc:
+        minute_error = str(exc)[-1000:]
+
+    quality = (minute or {}).get("quality_summary") or {}
+    minute_ready = bool(
+        minute
+        and minute.get("status") == "READY"
+        and minute.get("coverage_ratio") == 1.0
+        and quality.get("formal_gate_pass") is True
+    )
+    if minute_ready:
+        selected = {
+            **minute,
+            "mode": "TENCENT_1M_ETF_PATH_PRODUCTION_EVIDENCE",
+            "production_selection": {
+                "selected_source": "TENCENT_1M",
+                "fallback_source": "DISCRETE_SNAPSHOT_PATH",
+                "selection_reason": "minute_quality_gate_pass",
+                "formal_latest_price_source_unchanged": True,
+                "decision_boundary": "分钟源仅增强日内路径、极值时序和成交承接证据；正式最新价继续由quote router决定，不产生风险许可、金额或交易动作。",
+            },
+        }
+    else:
+        selected = {
+            **discrete,
+            "production_selection": {
+                "selected_source": "DISCRETE_SNAPSHOT_PATH",
+                "preferred_source": "TENCENT_1M",
+                "selection_reason": "minute_unavailable_or_quality_gate_failed",
+                "minute_status": (minute or {}).get("status") if minute else "ERROR",
+                "minute_coverage_ratio": (minute or {}).get("coverage_ratio") if minute else None,
+                "minute_quality_summary": quality,
+                "minute_error": minute_error,
+                "formal_latest_price_source_unchanged": True,
+                "decision_boundary": "腾讯分钟证据不可用或质量门不通过时自动回退既有离散路径，不阻断正式决策。",
+            },
+        }
+    diagnostics = {
+        "selected_source": (selected.get("production_selection") or {}).get("selected_source"),
+        "minute_status": (minute or {}).get("status") if minute else "ERROR",
+        "minute_coverage_ratio": (minute or {}).get("coverage_ratio") if minute else None,
+        "minute_formal_gate_pass": quality.get("formal_gate_pass"),
+        "minute_error": minute_error,
+        "discrete_status": discrete.get("status"),
+    }
+    return selected, diagnostics
+
+
 def main() -> None:
-    path_features = build_intraday_path_features(ROOT)
+    path_features, path_selection = select_intraday_path_features(ROOT)
     atomic_json_write(ROOT / "data" / "state" / "intraday_path_features.json", path_features)
 
     market_regime = build_market_regime_context(ROOT)
@@ -302,6 +357,10 @@ def main() -> None:
         "account_fact_status": context["account_fact_status"],
         "intraday_path_status": path_features.get("status"),
         "intraday_path_feature_count": len(path_features.get("features") or []),
+        "intraday_path_selected_source": path_selection.get("selected_source"),
+        "minute_path_status": path_selection.get("minute_status"),
+        "minute_path_coverage_ratio": path_selection.get("minute_coverage_ratio"),
+        "minute_path_formal_gate_pass": path_selection.get("minute_formal_gate_pass"),
         "market_regime_status": market_regime.get("status"),
         "market_structure_status": market_structure.get("status"),
         "market_structure_item_count": len(market_structure.get("items") or []),
