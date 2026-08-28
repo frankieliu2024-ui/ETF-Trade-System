@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 from notification_center import STATE, read_json
 from market_notification_common import number, pct, pct_change, range_position
 
-ROOT = Path(__file__).resolve().parents[1]
 ACCOUNT_FACT = STATE / "account_fact.json"
 
 
@@ -15,8 +13,31 @@ def _account_context() -> dict:
     positions = data.get("positions") or []
     held_etfs = {str(x.get("code") or ""): x for x in positions if str(x.get("asset_type") or "").upper() == "ETF"}
     held_stocks = {str(x.get("code") or ""): x for x in positions if str(x.get("asset_type") or "").upper() == "STOCK"}
-    formal = data.get("formal_action") or {}
-    return {"held_etfs": held_etfs, "held_stocks": held_stocks, "formal": formal}
+    return {"data": data, "held_etfs": held_etfs, "held_stocks": held_stocks, "formal": data.get("formal_action") or {}}
+
+
+def _formal_detail(formal: dict) -> str:
+    lifecycle = str(formal.get("lifecycle") or "").strip()
+    if "：" in lifecycle:
+        lifecycle = lifecycle.rsplit("：", 1)[-1].strip()
+    elif ":" in lifecycle:
+        lifecycle = lifecycle.rsplit(":", 1)[-1].strip()
+    status = str(formal.get("execution_status") or "").strip().upper()
+    if status == "EXECUTED":
+        status_text = "已执行"
+    elif status in {"PENDING", "PENDING_EXECUTION"}:
+        status_text = "待执行"
+    elif status:
+        status_text = "状态已记录"
+    else:
+        status_text = ""
+    return "，".join(x for x in (lifecycle, status_text) if x) or "当前正式动作对象"
+
+
+def _label(row: dict) -> str:
+    name = str(row.get("provider_name") or row.get("name") or row.get("symbol") or row.get("code") or "对象")
+    code = str(row.get("symbol") or row.get("code") or "")
+    return f"{name}（{code}）" if code and code not in name else name
 
 
 def object_role(code: str, asset_class: str = "") -> tuple[str, str]:
@@ -25,10 +46,7 @@ def object_role(code: str, asset_class: str = "") -> tuple[str, str]:
     asset = str(asset_class or "").upper()
     formal = ctx["formal"]
     if code and str(formal.get("applicable_object") or "") == code and str(formal.get("validity") or "") == "ACTIVE":
-        lifecycle = str(formal.get("lifecycle") or "").strip()
-        status = str(formal.get("execution_status") or "").strip()
-        detail = lifecycle + (f"，{status}" if status else "")
-        return "ACTIVE_FORMAL_OBJECT", detail
+        return "ACTIVE_FORMAL_OBJECT", _formal_detail(formal)
     if code in ctx["held_etfs"]:
         return "HELD_ETF", "当前持仓ETF"
     if code in ctx["held_stocks"]:
@@ -40,10 +58,8 @@ def object_role(code: str, asset_class: str = "") -> tuple[str, str]:
     return "OTHER", "监测对象"
 
 
-def compact_path(row: dict, feature: dict | None = None) -> str:
-    name = str(row.get("provider_name") or row.get("symbol") or "对象")
-    code = str(row.get("symbol") or "")
-    label = f"{name}（{code}）" if code and code not in name else name
+def compact_path(row: dict, feature: dict | None = None, *, include_current: bool = False) -> str:
+    label = _label(row)
     day = number(row.get("change_pct"))
     open_ = number(row.get("open"))
     high = number(row.get("high"))
@@ -55,12 +71,8 @@ def compact_path(row: dict, feature: dict | None = None) -> str:
     gap = pct_change(open_, prev)
     pos = range_position(close, high, low)
     from_open = pct_change(close, open_)
-    if feature:
-        recovery = number(feature.get("recovery_from_path_low_pct"))
-        retreat = number(feature.get("retreat_from_path_high_pct"))
-    else:
-        recovery = pct_change(close, low)
-        retreat = pct_change(close, high)
+    recovery = number((feature or {}).get("recovery_from_path_low_pct")) if feature else pct_change(close, low)
+    retreat = number((feature or {}).get("retreat_from_path_high_pct")) if feature else pct_change(close, high)
 
     if gap is not None and gap <= -0.5 and day is not None and day >= -0.1:
         phrase = f"低开{pct(gap)}后基本收复"
@@ -76,7 +88,7 @@ def compact_path(row: dict, feature: dict | None = None) -> str:
         phrase = "当前接近日内高位，强势尚未明显回吐"
     else:
         phrase = "当前处于日内区间中部，方向尚未形成新的强化"
-    return f"{label}{phrase}（当前{pct(day)}）"
+    return f"{label}{phrase}" + (f"（当前{pct(day)}）" if include_current else "")
 
 
 def a_share_structure(indices: dict[str, dict], etfs: list[dict], features: dict[str, dict]) -> tuple[list[str], list[str], str, str]:
@@ -101,30 +113,30 @@ def a_share_structure(indices: dict[str, dict], etfs: list[dict], features: dict
         structure = "指数整体震荡，风格分化有限"
 
     headline = [f"- **市场结构**：{structure}。"]
-    vals = []
+    index_values = []
     for code, row in (("000001", sh), ("000688", star), ("399006", cyb)):
         if row and number(row.get("change_pct")) is not None:
-            name = str(row.get("provider_name") or code)
-            vals.append(f"{name}（{code}）{pct(number(row.get('change_pct')))}")
-    if vals:
-        headline.append("- **指数反馈**：" + "，".join(vals) + "。")
+            index_values.append(f"{_label(row)}{pct(number(row.get('change_pct')))}")
+    if index_values:
+        headline.append("- **指数反馈**：" + "，".join(index_values) + "。")
 
     ctx = _account_context()
     held = ctx["held_etfs"]
     etf_map = {str(x.get("symbol") or ""): x for x in etfs}
     held_rows = [etf_map[c] for c in held if c in etf_map and number(etf_map[c].get("change_pct")) is not None]
-    trial_code = str(ctx["formal"].get("applicable_object") or "") if str(ctx["formal"].get("validity") or "") == "ACTIVE" else ""
-    trial_row = etf_map.get(trial_code) if trial_code else None
+    formal = ctx["formal"]
+    formal_code = str(formal.get("applicable_object") or "") if str(formal.get("validity") or "") == "ACTIVE" else ""
+    formal_row = etf_map.get(formal_code) if formal_code else None
+
     details = []
-    if trial_row is not None and number(trial_row.get("change_pct")) is not None:
-        details.append(f"当前正式动作对象{trial_row.get('provider_name') or trial_code}（{trial_code}）{pct(number(trial_row.get('change_pct')))}")
-    if held_rows:
-        weakest = min(held_rows, key=lambda x: float(x.get("change_pct") or 0))
-        strongest = max(held_rows, key=lambda x: float(x.get("change_pct") or 0))
-        if not trial_row or str(weakest.get("symbol")) != trial_code:
-            details.append(f"持仓中偏弱的是{weakest.get('provider_name') or weakest.get('symbol')}（{weakest.get('symbol')}）{pct(number(weakest.get('change_pct')))}")
-        if str(strongest.get("symbol")) != str(weakest.get("symbol")) and (not trial_row or str(strongest.get("symbol")) != trial_code):
-            details.append(f"持仓中相对较强的是{strongest.get('provider_name') or strongest.get('symbol')}（{strongest.get('symbol')}）{pct(number(strongest.get('change_pct')))}")
+    if formal_row is not None and number(formal_row.get("change_pct")) is not None:
+        details.append(f"当前{_formal_detail(formal)}对象{_label(formal_row)}{pct(number(formal_row.get('change_pct')))}")
+    weakest = min(held_rows, key=lambda x: float(x.get("change_pct") or 0)) if held_rows else None
+    strongest = max(held_rows, key=lambda x: float(x.get("change_pct") or 0)) if held_rows else None
+    if weakest is not None and str(weakest.get("symbol")) != formal_code:
+        details.append(f"持仓中偏弱的是{_label(weakest)}{pct(number(weakest.get('change_pct')))}")
+    if strongest is not None and weakest is not None and str(strongest.get("symbol")) != str(weakest.get("symbol")) and str(strongest.get("symbol")) != formal_code:
+        details.append(f"持仓中相对较强的是{_label(strongest)}{pct(number(strongest.get('change_pct')))}")
     if details:
         headline.append("- **ETF自身反馈**：" + "；".join(details) + "。")
 
@@ -144,16 +156,21 @@ def a_share_structure(indices: dict[str, dict], etfs: list[dict], features: dict
     path_lines = ["- " + path_summary]
 
     focus = []
-    if trial_row is not None:
-        focus.append(f"优先复核{trial_row.get('provider_name') or trial_code}（{trial_code}）既有正式假设是否继续成立")
-    if held_rows:
-        weakest = min(held_rows, key=lambda x: float(x.get("change_pct") or 0))
-        focus.append(f"比较{weakest.get('provider_name') or weakest.get('symbol')}（{weakest.get('symbol')}）等持仓继续占用资本的边际效率")
+    if formal_row is not None:
+        focus.append(f"优先复核{_label(formal_row)}既有{_formal_detail(formal)}假设是否继续成立")
+    if weakest is not None:
+        focus.append(f"比较{_label(weakest)}等持仓继续占用资本的边际效率")
     implication = (
         f"{structure}。" + ("；".join(focus) + "。" if focus else "需要重新比较持仓/观察ETF的相对强弱和资本效率。")
         + "跨市场ETF的相对涨幅只用于解释不同风险因子，不替代A股自身反馈，也不等同资本效率排名。"
     )
-    action = "不因该通知机械交易；先完成当前持仓、观察ETF及正式动作对象的相对强弱/风险收益复核，只有风险许可、机会状态、金额或卖出动作发生变化时才执行。"
+    if formal_row is not None:
+        action = f"不因通知机械交易；优先复核{_label(formal_row)}当前{_formal_detail(formal)}假设"
+        if weakest is not None and str(weakest.get("symbol")) != formal_code:
+            action += f"，同时比较{_label(weakest)}的资本占用效率"
+        action += "；只有正式机会、金额或卖出动作改变时执行。"
+    else:
+        action = "不因通知机械交易；先复核当前持仓/观察ETF的相对强弱和风险收益，只有正式机会、金额或卖出动作改变时执行。"
     return headline, path_lines, implication, action
 
 
@@ -162,17 +179,20 @@ def shock_implication(code: str, name: str, asset_class: str, market: str) -> tu
     label = f"{name}（{code}）" if code and code not in name else name
     if market == "A_SHARE":
         if role == "ACTIVE_FORMAL_OBJECT":
-            implication = f"{label}是当前正式动作/生命周期对象（{detail}）。这次异动直接压力测试其既有假设；优先判断相对其他持仓/观察ETF的强弱是否失效，以及新增或继续占用资本是否仍有效率。"
-            action = "不因价格波动机械加减仓；立即复核该对象既有假设、相对强弱和风险收益，只有正式持仓动作或机会/金额判断改变时执行。"
+            implication = f"{label}是当前正式动作/生命周期对象（{detail}）。本次异动直接压力测试既有假设；优先判断相对其他持仓/观察ETF的强弱是否失效，以及继续占用或新增资本是否仍有效率。"
+            if "Trial" in detail:
+                action = f"继续验证{label}当前Trial，不因单次价格波动机械卖出或追加；重点复核相对强弱、假设有效性和边际资本效率，只有正式机会、金额或卖出动作改变时执行。"
+            else:
+                action = f"继续按{label}当前生命周期验证，不因单次价格波动机械交易；只有正式机会、金额或卖出动作改变时执行。"
         elif role == "HELD_ETF":
-            implication = f"{label}是当前持仓ETF。这次异动直接影响其持仓风险收益和资本占用效率，应与其他持仓/观察ETF重新比较，而不是只看绝对涨跌。"
+            implication = f"{label}是当前持仓ETF。本次异动直接影响其持仓风险收益和资本占用效率，应与其他持仓/观察ETF重新比较，而不是只看绝对涨跌。"
             action = "先复核持仓假设和边际资本效率；没有正式卖出动作或独立新机会通过完整链时，不机械交易。"
         elif role == "MONITORED_ETF":
-            implication = f"{label}是监测ETF。这次异动提高其注意力优先级，但只有相对强弱、风险收益和独立机会假设共同改善，才可能升级为主候选或Trial/Confirm机会。"
+            implication = f"{label}是监测ETF。本次异动提高其注意力优先级，但只有相对强弱、风险收益和独立机会假设共同改善，才可能升级为主候选或Trial/Confirm机会。"
             action = "提高观察优先级但不直接交易；等待正式机会判断形成。"
         elif role == "ACCOUNT_STOCK":
-            implication = f"{label}是账户个股。这次异动先影响其独立假设和资金释放价值，并可能通过产业链影响相关ETF；不能仅凭个股涨跌改动ETF仓位。"
-            action = "复核个股独立假设、资金释放价值及产业传导；只有正式持仓/资本再配置判断改变时执行。"
+            implication = f"{label}是账户个股。本次异动先影响其独立假设和资金释放价值，并可能通过产业链影响相关ETF；不能仅凭个股涨跌改动ETF仓位。"
+            action = "复核个股独立假设、资金释放价值及产业传导；只有正式持仓或资本再配置判断改变时执行。"
         else:
             implication = f"{label}代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。"
             action = "先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。"
