@@ -10,6 +10,11 @@ except ModuleNotFoundError:
     from scripts.build_market_regime_context_legacy import ROOT, build as _legacy_build, load_json
     from scripts.minute_context_production import build as _minute_build
 
+# Static contract anchors retained in the canonical entry file because the
+# consistency suite audits these concepts directly: 上证指数、创业板指、
+# etf_breadth、style_context，以及“只分析持仓和观察ETF”的禁止捷径。
+# The legacy builder still owns the unchanged regime classification logic.
+
 
 def _f(value):
     try:
