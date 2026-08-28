@@ -1,27 +1,27 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-28T11:02:57+08:00",
+  "generated_at": "2026-08-28T11:03:30+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "Overseas pre-open pulse",
-  "run_id": 33137622478,
-  "run_attempt": 2,
-  "head_sha": "62e3f44db3146e34670df5be50f9bc05e898c4db",
-  "main_head_sha": "f33369403b5d77bda0f689ccc9880075ecdd7f18",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "run_id": 33137734499,
+  "run_attempt": 1,
+  "head_sha": "f33369403b5d77bda0f689ccc9880075ecdd7f18",
+  "main_head_sha": "ee3d9e6e8ce38af07a07a83a2c26da983806dad6",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
       "job": "overseas",
-      "step": "Surface market notification delivery failure without blocking market data",
-      "number": 18
+      "step": "Commit overseas contexts, notifications and runtime health",
+      "number": 17
     }
   ],
   "changed_files": [
-    "requests/notification_test/20260828_1054_apac_template.json"
+    "requests/apac_notification_test/20260828_1105_template_validation.json"
   ],
-  "commit_message": "test: request live APAC notification template validation",
+  "commit_message": "test: trigger isolated APAC template validation",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
