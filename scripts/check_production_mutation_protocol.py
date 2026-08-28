@@ -113,6 +113,58 @@ def run(root: Path = ROOT) -> dict:
             "direct main writer does not force-push main",
         )
 
+    # Production reliability is a separate runtime responsibility, but the
+    # consistency gate must ensure that its control-plane wiring still exists.
+    # These checks are static only: they do not call providers, query Actions,
+    # or execute watchdog recovery paths.
+    self_heal_workflow_rel = ".github/workflows/self-healing-watchdog.yml"
+    failure_guard_workflow_rel = ".github/workflows/workflow-failure-guard.yml"
+    self_heal_script_rel = "scripts/runtime_self_heal.py"
+    failure_guard_script_rel = "scripts/workflow_failure_guard.py"
+    self_heal_workflow = workflow_texts.get(self_heal_workflow_rel, "")
+    failure_guard_workflow = workflow_texts.get(failure_guard_workflow_rel, "")
+    self_heal_script_path = root / self_heal_script_rel
+    failure_guard_script_path = root / failure_guard_script_rel
+    self_heal_script = self_heal_script_path.read_text(encoding="utf-8") if self_heal_script_path.exists() else ""
+    failure_guard_script = failure_guard_script_path.read_text(encoding="utf-8") if failure_guard_script_path.exists() else ""
+    protected_workflows = (
+        "ETF system consistency",
+        "ETF runtime self-healing watchdog",
+        "Overseas pre-open pulse",
+        "US extended-hours pulse",
+    )
+
+    check(
+        "reliability:self_healing_wired",
+        bool(self_heal_workflow and self_heal_script and "python scripts/runtime_self_heal.py --assess" in self_heal_workflow),
+        "self-healing watchdog exists and assesses runtime through the canonical runtime_self_heal.py",
+    )
+    check(
+        "reliability:canonical_snapshot_recovery",
+        bool(self_heal_workflow and "gh workflow run market-snapshot.yml --ref main" in self_heal_workflow),
+        "stale A-share recovery redispatches the canonical market-snapshot workflow",
+    )
+    check(
+        "reliability:cross_market_heartbeat_wired",
+        bool(
+            self_heal_workflow
+            and "gh workflow run overseas-preopen-pulse.yml --ref main" in self_heal_workflow
+            and "gh workflow run us-extended-hours-pulse.yml --ref main" in self_heal_workflow
+        ),
+        "stale APAC/US heartbeats redispatch their canonical production pulse workflows",
+    )
+    check(
+        "reliability:failure_guard_wired",
+        bool(
+            failure_guard_workflow
+            and failure_guard_script
+            and "python scripts/workflow_failure_guard.py" in failure_guard_workflow
+            and all(name in failure_guard_workflow for name in protected_workflows)
+            and all(name in failure_guard_script for name in protected_workflows)
+        ),
+        "workflow failure guard exists, invokes the canonical classifier, and covers all four core reliability workflows",
+    )
+
     check("mutation_protocol:direct_writers_discovered", bool(writer_rows), f"writers={writer_rows}")
 
     single_owner = cfg.get("single_owner_files") or {}
