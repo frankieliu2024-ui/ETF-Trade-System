@@ -134,6 +134,34 @@ class ProviderPolicyConsistencyTest(unittest.TestCase):
                 f"US extended-hours primary drift for {object_id}: {chain[0]}",
             )
 
+    def test_normative_domain_sources_and_machine_fact_boundary(self):
+        """Governance must reduce ambiguity without turning dynamic facts into Markdown authority."""
+        data_spec = (ROOT / "ETF与市场监测数据接口使用规范.md").read_text(encoding="utf-8")
+        mutation_spec = (ROOT / "docs/生产变更与并发写入协议_V1.0.md").read_text(encoding="utf-8")
+        notification_spec = (ROOT / "docs/ETF主动通知体系.md").read_text(encoding="utf-8")
+        query_note = (ROOT / "docs/市场行情查询路由与全球时点规则_V1.0.md").read_text(encoding="utf-8")
+        index = (ROOT / "ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
+
+        self.assertIn("数据与市场监测域的唯一规范性规则来源", data_spec)
+        self.assertIn("规则语义与动态运行事实严格分离", data_spec)
+        self.assertIn("config/market/provider_priority.json", data_spec)
+        self.assertIn("config/market/etf_monitor_universe.json", data_spec)
+        self.assertIn("config/runtime_policy.json", data_spec)
+        self.assertIn("生产变更、状态写入与并发治理域的唯一规范性规则来源", mutation_spec)
+        self.assertIn("运行事实以当前 `main` 的实际workflow、脚本和状态为准", mutation_spec)
+        self.assertIn("唯一规范性规则来源", notification_spec)
+        self.assertNotIn("唯一规范性规则来源", query_note)
+
+        for path in (
+            "ETF规则_MASTER.md",
+            "ETF与市场监测数据接口使用规范.md",
+            "docs/ETF主动通知体系.md",
+            "docs/生产变更与并发写入协议_V1.0.md",
+        ):
+            self.assertIn(path, index, f"system index must route normative domain: {path}")
+        self.assertIn("本索引只负责路由", index)
+        self.assertIn("不再新增新的“唯一规范性规则来源”", index)
+
 
 if __name__ == "__main__":
     unittest.main()
