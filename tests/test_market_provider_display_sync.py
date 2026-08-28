@@ -26,8 +26,14 @@ class ProviderPolicyConsistencyTest(unittest.TestCase):
         self.priority = load_json("config/market/provider_priority.json")
         self.universe = load_json("config/market/etf_monitor_universe.json")
 
-    def test_object_policy_matches_declared_object_chain(self):
-        """Every formal object policy must equal the provider chain declared for that object."""
+    def test_object_policy_matches_declared_provider_registry(self):
+        """Every policy must use exactly the providers registered for that object.
+
+        `object_fallback_policy` is the sole authority for primary/fallback order.
+        `objects` is a provider registry and therefore must match membership, not
+        duplicate priority ordering. This prevents missing/extra providers without
+        creating a second priority source that can itself drift.
+        """
         objects = self.priority.get("objects") or {}
         policies = self.priority.get("object_fallback_policy") or {}
         self.assertGreaterEqual(len(policies), 1, "no object fallback policies configured")
@@ -36,12 +42,12 @@ class ProviderPolicyConsistencyTest(unittest.TestCase):
             self.assertIn(object_id, objects, f"policy object missing from provider objects: {object_id}")
             self.assertIsInstance(policy, dict, f"invalid provider policy for {object_id}")
             self.assertTrue(policy.get("primary"), f"missing primary provider for {object_id}")
-            expected = [str(policy["primary"]), *[str(x) for x in (policy.get("fallback") or [])]]
-            actual = [str(x) for x in (objects.get(object_id) or [])]
-            self.assertEqual(actual, expected, f"provider chain drift for {object_id}")
+            expected = {str(policy["primary"]), *[str(x) for x in (policy.get("fallback") or [])]}
+            actual = {str(x) for x in (objects.get(object_id) or [])}
+            self.assertEqual(actual, expected, f"provider registry drift for {object_id}")
 
     def test_formal_index_display_matches_canonical_provider_chain(self):
-        """All formal indices, including objects without fallback policy, must match canonical provider data."""
+        """Formal index display order must match the authoritative primary/fallback policy."""
         display_objects = {
             str(item.get("id")): item
             for item in ((((self.monitor.get("classes") or {}).get("A") or {}).get("objects")) or [])
