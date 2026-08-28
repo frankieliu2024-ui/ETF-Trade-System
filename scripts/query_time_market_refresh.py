@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 
 try:
@@ -27,8 +28,26 @@ def _stock_thscode(symbol: str) -> str:
     return f"{raw}.SH" if raw.startswith(("5", "6")) else f"{raw}.SZ"
 
 
+def _is_stock_minute_target(symbol: str, root) -> bool:
+    raw = str(symbol).upper().replace(".SH", "").replace(".SZ", "")
+    if raw in {"000001", "399006", "000688"}:
+        return False
+    try:
+        universe = json.loads((root / "config/market/etf_monitor_universe.json").read_text(encoding="utf-8"))
+        etf_codes = {str(x.get("code") or "") for x in (universe.get("objects") or [])}
+        if raw in etf_codes:
+            return False
+    except Exception:
+        # On incomplete query/test roots, fund-like codes remain excluded by prefix.
+        if raw.startswith(("159", "5")):
+            return False
+    return raw.isdigit() and len(raw) == 6
+
+
 def _a_share(symbol: str, root, now, policy: dict) -> dict:
     quote = _original_a_share(symbol, root, now, policy)
+    if not _is_stock_minute_target(symbol, root):
+        return quote
     code = str(symbol).upper().replace(".SH", "").replace(".SZ", "")
     quote["code"] = code
     quote["thscode"] = _stock_thscode(symbol)
@@ -47,10 +66,27 @@ def _a_share(symbol: str, root, now, policy: dict) -> dict:
     return quote
 
 
-# Patch only the A-share query-time provider function. The legacy router retains
-# all overseas/session/fallback behavior and resolves this global at execution.
-_legacy._a_share = _a_share
-refresh_market_quotes = _legacy.refresh_market_quotes
+def _sync_patchable_globals() -> None:
+    # Existing tests and callers patch the canonical module. Mirror those public
+    # dependency names into the legacy implementation before each call so the
+    # wrapper remains behaviorally transparent outside the A-share minute overlay.
+    names = (
+        "market_phase", "display_market_status", "fetch_tencent_quotes", "shutil", "_cli_json",
+        "fetch_naver_kospi", "fetch_twse_taiex", "fetch_eastmoney_index",
+        "fetch_hstech_eastmoney", "fetch_hstech_hithink", "fetch_formal_yahoo",
+        "provider_attempt", "select_hstech_candidate", "_yahoo", "_eastmoney_etf", "_request_json",
+    )
+    for name in names:
+        if name in globals():
+            setattr(_legacy, name, globals()[name])
+    _legacy._a_share = _a_share
+
+
+def refresh_market_quotes(root, requested_symbols: list[str], now):
+    _sync_patchable_globals()
+    return _legacy.refresh_market_quotes(root, requested_symbols, now)
+
+
 main = getattr(_legacy, "main", None)
 
 
