@@ -1,5 +1,5 @@
 {
-  "version": "1.6",
+  "version": "1.7",
   "timezone": "Asia/Shanghai",
   "target_cadence_seconds": 600,
   "fresh_max_age_seconds": 900,
@@ -44,7 +44,7 @@
         "start": "09:30",
         "end": "11:30",
         "scenario": "INTRADAY",
-        "default_action": "上午盘中决策；先触发查询时即时补采并在短等待预算内优先使用新CURRENT，补采未及时完成时才允许回退最近FRESH快照"
+        "default_action": "上午盘中决策；先触发查询时即时补采并在短等待预算内优先使用新CURRENT，只等待形成当前决策必需的数据，不等待Dashboard、档案、复盘上下文或一致性审计等下游维护完成"
       },
       {
         "start": "11:31",
@@ -56,7 +56,7 @@
         "start": "13:00",
         "end": "14:59",
         "scenario": "INTRADAY",
-        "default_action": "下午盘中决策；先触发查询时即时补采并在短等待预算内优先使用新CURRENT，补采未及时完成时才允许回退最近FRESH快照"
+        "default_action": "下午盘中决策；先触发查询时即时补采并在短等待预算内优先使用新CURRENT，只等待形成当前决策必需的数据，不等待Dashboard、档案、复盘上下文或一致性审计等下游维护完成"
       },
       {
         "start": "15:00",
@@ -78,8 +78,9 @@
     "CLOSE_GRACE": "15:00计划任务允许在30分钟宽限窗口内补采收盘快照，覆盖GitHub Actions常见分钟级调度延迟；该窗口只用于已结束A股交易时段的最终收盘事实，不扩展连续竞价语义。",
     "ACCOUNT_FACT": "账户事实按事件驱动延续：上一交易日已核实账户在没有新成交、资金划转、公司行为导致持仓变化或其他已确认账户变化时继续有效，不因跨自然日或交易日自动失效。发生任一账户变化事件后必须刷新事实；不得在已知发生变化后继续沿用旧账户。",
     "INTERACTION_ROUTING": "券商截图按北京时间自动路由；真实成交事件优先于时段路由。盘前、集合竞价、连续竞价、午间、收盘后分别进入对应分析；15:00后当天首次最终账户截图默认触发正式收盘复盘，同日重复截图只做差异维护。",
-    "INTERACTIVE_DECISION_FRESHNESS": "连续竞价中的正式交易判断默认要求行情年龄不超过5分钟。收到用户盘中截图或正式盘中请求后先触发即时补采，并最多短等20秒优先读取新CURRENT；只有补采未完成或失败时，才允许回退5至15分钟内的最近FRESH快照，并必须明确标注为降级依据。超过15分钟不得用于当前正式交易判断。",
-    "EXPLICIT_LATEST_QUERY": "用户明确要求‘最新/当前/现在行情’时必须先创建query-time live_snapshot请求，并要求使用不早于该请求时点的新CURRENT；即使旧快照仍处于普通FRESH窗口，也不得直接作为‘最新行情’返回。只有用户明确授权回退时才允许使用请求前快照。"
+    "INTERACTIVE_DECISION_FRESHNESS": "连续竞价中的正式交易判断默认要求行情年龄不超过5分钟。收到用户盘中截图或正式盘中请求后先触发即时补采，并最多短等20秒优先读取新CURRENT；只有补采未完成或失败时，才允许回退5至15分钟内的最近FRESH快照，并必须明确标注为降级依据。超过15分钟不得用于当前正式交易判断。盘中回复只等待形成当次风险许可、机会、金额或卖出动作所必需的数据；账户/Dashboard持久化、行情档案、market delta、post-market review、system consistency等不改变本次动作的维护不得阻塞用户回复。",
+    "EXPLICIT_LATEST_QUERY": "用户明确要求‘最新/当前/现在行情’时必须先创建query-time live_snapshot请求，并要求使用不早于该请求时点的新CURRENT；即使旧快照仍处于普通FRESH窗口，也不得直接作为‘最新行情’返回。只有用户明确授权回退时才允许使用请求前快照。",
+    "INTRADAY_REPLY_PRIORITY": "盘中用户交互以决策时效优先。先取得足以形成当前正式判断的最小必要事实并回复；非阻塞的数据持久化、Dashboard/档案更新、派生上下文重建和一致性审计可由已触发的GitHub工作流继续完成，不要求在回复前等待全链结束。若新行情或关键账户事实本身是形成动作的必要条件，则仍必须在最小时延预算内等待，不得以速度替代Point-in-Time完整性。"
   },
   "self_healing": {
     "enabled": true,
@@ -124,7 +125,17 @@
     "prefer_new_current_after_refresh": true,
     "fallback_must_be_explicitly_labeled": true,
     "formal_decision_over_fallback_allowed": true,
-    "rule": "盘中用户截图/正式盘中请求先触发查询时即时补采；短等待预算内若新CURRENT可用则必须优先使用。仅当补采未及时完成或失败时，允许使用年龄>5分钟且<=15分钟的最近FRESH快照，并明确标注降级。年龄>15分钟不得形成当前正式交易判断。明确要求‘最新/当前/现在行情’属于更严格的EXPLICIT_LATEST查询，必须使用请求后的新CURRENT，默认不允许回退请求前快照。"
+    "reply_priority": "DECISION_FIRST",
+    "wait_only_for_decision_blocking_inputs": true,
+    "do_not_wait_for_downstream_maintenance": [
+      "ACCOUNT_FACT_PERSISTENCE_AFTER_FACT_IS_ALREADY_READ",
+      "DASHBOARD_REFRESH",
+      "MARKET_ARCHIVE_UPDATE",
+      "MARKET_DELTA_REBUILD",
+      "POST_MARKET_REVIEW_CONTEXT",
+      "SYSTEM_CONSISTENCY_AUDIT"
+    ],
+    "rule": "盘中用户截图/正式盘中请求先触发查询时即时补采；短等待预算内若新CURRENT可用则必须优先使用。仅当补采未及时完成或失败时，允许使用年龄>5分钟且<=15分钟的最近FRESH快照，并明确标注降级。年龄>15分钟不得形成当前正式交易判断。明确要求‘最新/当前/现在行情’属于更严格的EXPLICIT_LATEST查询，必须使用请求后的新CURRENT，默认不允许回退请求前快照。回复只等待会改变当次风险许可、机会、金额或卖出动作的必要输入；其余已触发的云端维护不阻塞回复。"
   },
   "state_coherence": {
     "sync_current_account_reference_after_account_update": true,
