@@ -274,33 +274,32 @@ def _apac_event() -> dict | None:
     if not selected:
         return None
 
-    # APAC opening facts stay recoverable through the morning instead of being
-    # tied to a narrow first-pulse window. Different markets may open later; the
-    # actual opening gap remains the primary fact.
+    # Actual APAC opening-gap facts remain recoverable through the morning.
+    # Intraday cumulative moves after a normal open belong to the unified
+    # five-category market-event engine; they must not be relabeled as opening
+    # anomalies merely because the current return later crosses this threshold.
     if 8 * 60 <= minute <= 11 * 60 + 30:
-        candidates: list[tuple[float, str, str, float, float | None]] = []
+        candidates: list[tuple[float, str, str, float]] = []
         for code, label, obj, _ in selected:
             open_gap = _apac_open_gap(obj)
-            current_ret = _apac_return(obj)
-            trigger = open_gap if open_gap is not None and abs(open_gap) >= APAC_OPEN_SIGNAL_ABS_PCT else current_ret
-            if trigger is not None and abs(trigger) >= APAC_OPEN_SIGNAL_ABS_PCT:
-                candidates.append((abs(trigger), code, label, trigger, open_gap))
+            if open_gap is not None and abs(open_gap) >= APAC_OPEN_SIGNAL_ABS_PCT:
+                candidates.append((abs(open_gap), code, label, open_gap))
         if not candidates:
             return None
-        _, lead_code, lead_label, lead_ret, lead_open_gap = max(candidates, key=lambda x: x[0])
-        direction = "UP" if lead_ret > 0 else "DOWN"
+        _, lead_code, lead_label, lead_open_gap = max(candidates, key=lambda x: x[0])
+        direction = "UP" if lead_open_gap > 0 else "DOWN"
         tone = _apac_tone(selected)
         headline, path_lines, times, _ = _apac_lines(selected, mark_hk_live=True)
         lead_current = _apac_return(objects.get(lead_code) or {})
         headline = [f"- **触发对象**：{lead_label}", f"- **实际开盘较前收**：{pct(lead_open_gap)}", f"- **当前较前收**：{pct(lead_current)}", f"- **当前区域判断**：{tone}", f"- **当日已取得有效行情市场数**：{len(selected)}/4"] + headline
-        title = f"【异动提醒】{lead_label}开盘出现有价值变化"
+        title = f"【异动提醒】{lead_label}实际开盘出现异常跳空"
         content = render_summary(
-            headline_lines=["- **节点**：亚太错位开盘/上午价值信号"] + headline,
+            headline_lines=["- **节点**：亚太错位开盘异常"] + headline,
             path_lines=path_lines,
             implication="亚太市场并不同步开盘；任一先开市场的实际开盘异常都可成为A股盘前/早盘证据，并持续验证其他市场及A股是否共振、减弱或背离。",
-            action="把该信号纳入最近A股决策节点；其他亚太市场随后给出相反反馈时更新区域判断。",
+            action="把该实际开盘异常纳入最近A股决策节点；开盘后的普通累计涨跌继续由统一异动引擎按快速重定价、极端波动、方向反转或显著分化判断。",
             as_of_lines=[f"- **各市场最新有效时点上限**：{max(times) if times else '未提供'}", f"- **通知生成**：{now().strftime('%Y-%m-%d %H:%M:%S')}"],
-            boundary="亚太开盘不逢开必报；恢复窗口延长到上午，约0.8%的门槛仅控制注意力。",
+            boundary="亚太开盘不逢开必报；约0.8%的门槛只检查实际开盘价相对前收，不能用后续盘中累计涨跌替代开盘跳空。",
         )
         return {"key": f"apac-open-signal:{today}:{lead_code}:{direction}", "type": "市场有价值事件", "event_type": "APAC_OPEN_SIGNAL", "title": title, "content": content, "source": "overseas_context", "security_code": lead_code, "security_name": lead_label.split("（")[0], "user_severity": "需要关注", "user_action": "纳入最近A股节点验证区域共振或背离，不机械交易", "confirmation_context": {"market_date": today, "session_node": "OPEN_SIGNAL", "lead_code": lead_code, "lead_open_gap_pct": lead_open_gap, "lead_change_pct": lead_current, "tone": tone, "market_as_of_beijing": max(times) if times else ""}}
 
