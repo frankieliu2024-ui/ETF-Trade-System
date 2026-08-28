@@ -1,0 +1,80 @@
+name: A-share notification template test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "requests/a_share_notification_test/**.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-a-share-notification-template-test
+  cancel-in-progress: false
+
+jobs:
+  test-template:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+      HITHINK_FINANCE_API_KEY: ${{ secrets.HITHINK_FINANCE_API_KEY }}
+      PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+      QUERY_TIME_REFRESH: "true"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install hithink-finance CLI
+        run: npm install --global @hithink-tech/hithink-finance-cli
+      - name: Load query provider concurrency policy
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          policy = json.loads(Path('config/runtime_policy.json').read_text(encoding='utf-8'))
+          value = policy.get('query_provider_max_workers')
+          if not isinstance(value, int) or value < 1:
+              raise SystemExit(f'invalid query_provider_max_workers={value!r}')
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as handle:
+              handle.write(f'HITHINK_MAX_WORKERS={value}\n')
+          PY
+      - name: Capture fresh A-share snapshot for test only
+        run: python scripts/cloud_runner_snapshot.py --node scheduled
+      - name: Send current A-share template below threshold for test only
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          import sys
+          import scripts.send_regional_session_summary as module
+
+          module.A_SHARE_OPEN_INDEX_ABS_PCT = 0.0
+          module.A_SHARE_OPEN_ETF_ABS_PCT = 0.0
+          module.A_SHARE_OPEN_ETF_SPREAD_PCT = 0.0
+          original = module._a_share_event
+
+          def test_event():
+              event = original()
+              if not event:
+                  return None
+              event = dict(event)
+              event['key'] = f"a-share-template-test:{os.environ.get('GITHUB_SHA', 'manual')}"
+              event['type'] = '主动通知模板测试'
+              event['event_type'] = 'A_SHARE_NOTIFICATION_TEMPLATE_TEST'
+              title = str(event.get('title') or '')
+              title = title.replace('【异动提醒】', '').replace('【市场异动】', '')
+              event['title'] = '【测试｜A股】' + title
+              event['content'] = '**本条为A股通知模板验证：使用本次测试即时采集的最新行情；允许未达到正式通知阈值的当前事实生成测试通知，不代表正式事件触发。**\n\n' + str(event.get('content') or '')
+              return event
+
+          module._a_share_event = test_event
+          sys.argv = ['send_regional_session_summary.py', '--market', 'a-share']
+          raise SystemExit(module.main())
+          PY
