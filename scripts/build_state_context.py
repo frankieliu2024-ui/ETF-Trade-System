@@ -155,9 +155,19 @@ def select_intraday_path_features(root: Path) -> tuple[dict, dict]:
     minute_symbols = []
     fallback_symbols = []
     fallback_reasons = {}
+    native_discrete_symbols = []
 
     for discrete_item in (discrete.get("features") or []):
         symbol = str(discrete_item.get("symbol") or "")
+        if str(discrete_item.get("asset_class") or "").upper() != "ETF":
+            merged.append({
+                **discrete_item,
+                "production_source": "DISCRETE_SNAPSHOT_PATH",
+                "path_role": "PRODUCTION_NATIVE_DISCRETE_EVIDENCE",
+            })
+            native_discrete_symbols.append(symbol)
+            continue
+
         minute_item = minute_by_symbol.get(symbol)
         if _minute_item_usable(minute_item):
             merged.append({
@@ -179,8 +189,8 @@ def select_intraday_path_features(root: Path) -> tuple[dict, dict]:
             fallback_symbols.append(symbol)
             fallback_reasons[symbol] = reason
 
-    total = len(merged)
-    if total and len(minute_symbols) == total:
+    etf_total = len(minute_symbols) + len(fallback_symbols)
+    if etf_total and len(minute_symbols) == etf_total:
         selected_source = "TENCENT_1M"
         mode = "TENCENT_1M_ETF_PATH_PRODUCTION_EVIDENCE"
     elif minute_symbols:
@@ -203,11 +213,13 @@ def select_intraday_path_features(root: Path) -> tuple[dict, dict]:
             "selection_mode": "PER_ETF_OBJECT",
             "minute_selected_count": len(minute_symbols),
             "fallback_count": len(fallback_symbols),
+            "native_discrete_count": len(native_discrete_symbols),
             "minute_selected_symbols": minute_symbols,
             "fallback_symbols": fallback_symbols,
+            "native_discrete_symbols": native_discrete_symbols,
             "fallback_reasons": fallback_reasons,
             "formal_latest_price_source_unchanged": True,
-            "decision_boundary": "分钟源仅增强日内路径、极值时序和成交承接证据；单对象失败只回退该ETF，正式最新价继续由quote router决定。",
+            "decision_boundary": "腾讯分钟源只参与ETF日内结构；ETF单对象失败只回退该ETF。指数等非ETF对象继续使用其原生离散路径，不计入ETF fallback。正式最新价继续由quote router决定。",
         },
         "minute_validation_evidence": {
             "status": (minute or {}).get("status") if minute else "ERROR",
@@ -223,7 +235,9 @@ def select_intraday_path_features(root: Path) -> tuple[dict, dict]:
         "selected_source": selected_source,
         "minute_selected_count": len(minute_symbols),
         "fallback_count": len(fallback_symbols),
+        "native_discrete_count": len(native_discrete_symbols),
         "fallback_symbols": fallback_symbols,
+        "native_discrete_symbols": native_discrete_symbols,
         "minute_status": (minute or {}).get("status") if minute else "ERROR",
         "minute_coverage_ratio": (minute or {}).get("coverage_ratio") if minute else None,
         "minute_production_usable_ratio": quality.get("production_usable_ratio"),
