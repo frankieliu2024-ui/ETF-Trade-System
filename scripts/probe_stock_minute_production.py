@@ -33,7 +33,6 @@ def _continuity(points: list[dict]) -> tuple[bool, list[int]]:
     gaps: list[int] = []
     for a, b in zip(points, points[1:]):
         delta = int((b["dt"] - a["dt"]).total_seconds() // 60)
-        # Morning close -> afternoon open is the expected A-share lunch break.
         if a["dt"].strftime("%H%M") == "1130" and b["dt"].strftime("%H%M") == "1300":
             continue
         if delta != 1:
@@ -91,12 +90,7 @@ def build(root: Path = ROOT) -> dict:
                 "excluded_after_quote_count": excluded,
                 "continuity": {"pass": continuity_pass, "unexpected_gap_minutes": gap_minutes},
                 "point_in_time": {"pass": point_in_time_pass},
-                "quote_alignment": {
-                    "minute_price": minute_price,
-                    "quote_price": quote_price,
-                    "absolute_price_deviation_pct": round(price_dev, 6) if price_dev is not None else None,
-                    "pass": terminal_price_pass,
-                },
+                "quote_alignment": {"minute_price": minute_price, "quote_price": quote_price, "absolute_price_deviation_pct": round(price_dev, 6) if price_dev is not None else None, "pass": terminal_price_pass},
                 "cumulative_field_semantics_probe": {
                     "minute_cum_volume_raw": minute_volume,
                     "quote_volume": quote_volume,
@@ -130,7 +124,18 @@ def main() -> None:
     payload = build(ROOT)
     target = ROOT / "data/state/stock_minute_production_poc.json"
     target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({"ok": True, "target_count": payload["target_count"], "core_pass_count": payload["core_pass_count"], "all_core_pass": payload["all_core_pass"]}, ensure_ascii=False))
+    summary = []
+    for item in payload.get("items") or []:
+        sem = item.get("cumulative_field_semantics_probe") or {}
+        summary.append({
+            "code": item.get("code"), "status": item.get("status"), "sample_count": item.get("sample_count"),
+            "latest": item.get("latest_as_of_beijing"), "quote_as_of": item.get("quote_as_of_beijing"),
+            "price_deviation_pct": (item.get("quote_alignment") or {}).get("absolute_price_deviation_pct"),
+            "volume_ratio": sem.get("minute_to_quote_volume_ratio"), "amount_ratio": sem.get("minute_to_quote_amount_ratio"),
+            "minute_volume_raw": sem.get("minute_cum_volume_raw"), "quote_volume": sem.get("quote_volume"),
+            "minute_amount_raw": sem.get("minute_cum_amount_raw"), "quote_turnover": sem.get("quote_turnover"),
+        })
+    print(json.dumps({"ok": True, "target_count": payload["target_count"], "core_pass_count": payload["core_pass_count"], "all_core_pass": payload["all_core_pass"], "items": summary}, ensure_ascii=False))
 
 
 if __name__ == "__main__":
