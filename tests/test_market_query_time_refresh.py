@@ -86,6 +86,73 @@ class QueryTimeRefreshTests(unittest.TestCase):
         self.assertEqual(cli.call_count, 2)
         self.assertEqual(cli.call_args_list[1].args[1], ["market", "snapshot", "--thscodes", "159941.SZ"])
 
+    def test_explicit_post_close_stock_uses_same_day_tencent_quote_and_minute_overlay(self):
+        from scripts.query_time_market_refresh import refresh_market_quotes
+
+        root = self._root("2026-08-28T15:00:00+08:00")
+        now = datetime.fromisoformat("2026-08-28T18:15:00+08:00")
+        provider_time = datetime.fromisoformat("2026-08-28T15:00:03+08:00")
+        tencent = {
+            "688981.SH": {
+                "name": "中芯国际",
+                "last_price": 128.88,
+                "open_price": 126.0,
+                "high_price": 131.2,
+                "low_price": 125.5,
+                "prev_price": 126.9,
+                "volume": 12345600,
+                "turnover": 1590000000.0,
+                "provider_symbol": "sh688981",
+                "provider_timestamp_ms": int(provider_time.timestamp() * 1000),
+            }
+        }
+        minute = {"status": "READY", "production_usable": True, "production_selection_reason": "same_day_terminal_path_price_aligned"}
+        with patch("scripts.query_time_market_refresh.fetch_tencent_quotes", return_value=tencent) as provider, \
+             patch("scripts.query_time_market_refresh.build_stock_minute_feature", return_value=minute) as minute_builder:
+            result = refresh_market_quotes(root, ["688981.SH"], now)
+
+        self.assertEqual(result["failures"], [])
+        self.assertEqual(len(result["quotes"]), 1)
+        quote = result["quotes"][0]
+        self.assertEqual(quote["name"], "中芯国际")
+        self.assertEqual(quote["latest_price"], 128.88)
+        self.assertEqual(quote["source"], "tencent_qq")
+        self.assertEqual(quote["freshness"], "SESSION_REFERENCE")
+        self.assertEqual(quote["minute_path_source"], "TENCENT_1M")
+        self.assertEqual(quote["refresh_source"], "QUERY_TIME_PROVIDER_SAME_DAY_SESSION_REFERENCE")
+        provider.assert_called_once_with(["688981.SH"], timeout=10)
+        self.assertEqual(minute_builder.call_args.args[2], "2026-08-28")
+        self.assertEqual(minute_builder.call_args.args[3], "OFF_SESSION")
+
+    def test_explicit_post_close_stock_rejects_previous_session_tencent_quote(self):
+        from scripts.query_time_market_refresh import refresh_market_quotes
+
+        root = self._root("2026-08-31T08:00:00+08:00")
+        now = datetime.fromisoformat("2026-08-31T08:30:00+08:00")
+        provider_time = datetime.fromisoformat("2026-08-28T15:00:03+08:00")
+        tencent = {
+            "688981.SH": {
+                "name": "中芯国际",
+                "last_price": 128.88,
+                "open_price": 126.0,
+                "high_price": 131.2,
+                "low_price": 125.5,
+                "prev_price": 126.9,
+                "volume": 12345600,
+                "turnover": 1590000000.0,
+                "provider_symbol": "sh688981",
+                "provider_timestamp_ms": int(provider_time.timestamp() * 1000),
+            }
+        }
+        with patch("scripts.query_time_market_refresh.fetch_tencent_quotes", return_value=tencent), \
+             patch("scripts.query_time_market_refresh.build_stock_minute_feature") as minute_builder:
+            result = refresh_market_quotes(root, ["688981.SH"], now)
+
+        self.assertEqual(result["quotes"], [])
+        self.assertEqual(result["failures"][0]["symbol"], "688981.SH")
+        self.assertIn("not a same-day session reference", result["failures"][0]["error"])
+        minute_builder.assert_not_called()
+
     def test_kospi_regular_refresh_uses_formal_naver_chain(self):
         root = self._root("2026-08-26T07:00:00+08:00")
         now = datetime.fromisoformat("2026-08-26T10:15:00+09:00")
