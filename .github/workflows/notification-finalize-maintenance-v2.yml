@@ -1,0 +1,44 @@
+name: Notification finalization maintenance v2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "requests/notification_finalize_v2/**.json"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: etf-notification-finalize-maintenance-v2
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Rebase before maintenance
+        run: |
+          git fetch origin main
+          git rebase origin/main
+      - name: Apply patch
+        run: python scripts/_notification_finalize_patch.py
+      - name: Validate Python syntax
+        run: python -m py_compile scripts/market_notification_common.py scripts/notification_semantics.py scripts/_notification_finalize_patch.py
+      - name: Commit maintenance and remove one-shot artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -f .github/workflows/notification-finalize-maintenance.yml || true
+          git rm -f .github/workflows/notification-finalize-maintenance-v2.yml
+          git rm -f scripts/_notification_finalize_patch.py
+          git rm -f requests/notification_finalize/*.json || true
+          git rm -f requests/notification_finalize_v2/*.json || true
+          git add scripts/market_notification_common.py .github/workflows/notification-semantics-test.yml
+          git commit -m "fix: finalize unified notification display and test assertions"
+          git pull --rebase origin main
+          git push origin HEAD:main
