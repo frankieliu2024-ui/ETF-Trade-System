@@ -15,15 +15,20 @@
 
 仓库首页 `README.md` 只承担导航和运行说明，不复制正式系统版本号、provider优先级或其他容易随生产状态变化的事实；当前正式版本只从 `ETF规则_MASTER.md` 读取。README导航完整性和禁止硬编码版本由系统一致性检查维护。
 
-## 一级目录基础数据规范
+## 领域规范与机器事实边界
 
-`ETF与市场监测数据接口使用规范.md` 是数据与云端运行的基础规范，负责三层监测结构、多数据源、盘前/盘中脉冲、新鲜度、交易日历、强制数据时点、质量验收、跨市场时间对齐、故障降级和维护一致性。它不是第五个交易规则文件，不产生风险许可、Trial／Confirm、金额、卖出或其他交易权限。
+系统只保留四个有明确独立职责的规范性规则域，不继续为了治理形式新增平行规则文件：
 
-补充查询技术说明：`docs/市场行情查询路由与全球时点规则_V1.0.md` 定义用户查询时的市场、时区、阶段和数据选择说明；唯一实现入口为 `scripts/market_quote_router.py`，配置为 `config/market/market_quote_router.json`；查询时 provider 补采统一由 `scripts/query_time_market_refresh.py` 执行，成功结果先直返本次查询，再异步持久化。它不是交易规则，也不替代上述正式数据规范。 单对象查询统一入口为 `scripts/query_market_object.py`：正式监测对象返回 `SYSTEM_MONITORED`，用户明确指定但未纳入监测池的对象返回 `USER_REQUESTED`；扩展查询结果只写入现有 `query_context.json` 查询区域，不改变机器监测全集。
+- **交易域**：`ETF规则_MASTER.md` 是唯一交易规则来源；
+- **数据与市场监测域**：`ETF与市场监测数据接口使用规范.md` 是唯一规范性规则来源，定义数据资格、时点、market phase、质量、provider降级、代理、三层监测和新鲜度等稳定语义；当前provider顺序、ETF全集、runtime参数、交易日历和状态仍以对应机器配置与最新有效状态为准；
+- **主动通知域**：`docs/ETF主动通知体系.md` 是唯一规范性规则来源，定义通知资格、事件语义、用户标题、固定节点、可比事实门、去重和Point-in-Time边界；
+- **生产变更与并发治理域**：`docs/生产变更与并发写入协议_V1.0.md` 是唯一规范性规则来源，定义writer ownership、latest-main、并发、状态持久化、mutation gateway和组合验收边界。
 
-主动通知运行说明：`docs/ETF主动通知体系.md` 是 PushPlus 主动通知的唯一人类可读规范，定义通知价值原则、监测对象、五类市场事件、一级标题、固定总结节点、正式机会/账户/系统通知条件、去重与 Point-in-Time 边界；它不是交易规则，不得产生风险许可、生命周期、金额或买卖动作。`notifications/README.md` 仅保留实现目录入口，不复制整套规范。
+本索引只负责路由，不复制上述领域规则。运行事实以当前 `main` 的配置、脚本、workflow和状态为准；任何实现与所属领域规范冲突时，视为实现漂移并修复实现，不得让代码反向创造新的规则。除非未来出现真正独立、已实际产生规则分散并会影响交易收益效率或风险边界的生产领域，否则原则上不再新增新的“唯一规范性规则来源”。
 
-任何涉及三层监测对象、provider优先级、ETF运行全集、交易日历、脉冲参数、跨市场时点、状态文件、脚本、workflow或代码提交的更新，都必须同步复核该规范并执行系统一致性检查。
+补充查询技术说明：`docs/市场行情查询路由与全球时点规则_V1.0.md` 定义用户查询时的市场、时区、阶段和数据选择说明；唯一实现入口为 `scripts/market_quote_router.py`，配置为 `config/market/market_quote_router.json`；查询时 provider 补采统一由 `scripts/query_time_market_refresh.py` 执行，成功结果先直返本次查询，再异步持久化。它不是独立规范性规则源，也不替代数据与市场监测规范。单对象查询统一入口为 `scripts/query_market_object.py`：正式监测对象返回 `SYSTEM_MONITORED`，用户明确指定但未纳入监测池的对象返回 `USER_REQUESTED`；扩展查询结果只写入现有 `query_context.json` 查询区域，不改变机器监测全集。
+
+任何涉及三层监测对象、provider优先级、ETF运行全集、交易日历、脉冲参数、跨市场时点、状态文件、脚本、workflow或代码提交的更新，都必须按所属领域复核对应规范并执行系统一致性检查；不把full consistency重新串入高频生产前置链。
 
 ## 三层市场监测结构
 
@@ -37,9 +42,11 @@
 
 一致性检查是相关更新维护后的基础操作，不只是文本口径检查。至少覆盖：
 
-- 四个正式文件、README导航与数据规范；
+- 四个正式文件、README导航与领域规范；
 - 三层监测对象、provider、ETF全集、交易日历、runtime参数；
 - workflow → session gate → provider → snapshot → CURRENT/runtime_health → downstream context → commit 的运行链；
+- 生产writer ownership、latest-main、mutation gateway和状态持久化边界；
+- 主动通知正式入口、可比事实门与用户通知规则；
 - 关键文件是否被Git跟踪、当前HEAD/GITHUB_SHA、工作树是否存在未提交关键修改；
 - 强制北京时间数据字段与跨市场阶段字段；
 - 美股现金盘、POST_MARKET、PRE_MARKET是否被正确分离；
@@ -51,8 +58,11 @@
 
 ## 运行读取路径
 
-- 基础数据规范：`ETF与市场监测数据接口使用规范.md`
+- 交易规则：`ETF规则_MASTER.md`
+- 数据与市场监测规范：`ETF与市场监测数据接口使用规范.md`
 - 主动通知规范：`docs/ETF主动通知体系.md`
+- 生产变更与并发治理规范：`docs/生产变更与并发写入协议_V1.0.md`
+- 查询路由技术说明：`docs/市场行情查询路由与全球时点规则_V1.0.md`
 - A股官方交易日历：`config/market/a_share_trading_calendar_2026.json`
 - 状态：`data/state/CURRENT.json`、`data/state/account_fact.json`、`data/state/runtime_health.json`
 - 系统一致性：`data/state/system_consistency.json`、`scripts/check_system_consistency.py`
@@ -171,7 +181,7 @@ FRESH/DEGRADED/STALE必须按真实数据时点重新计算，不能按cron计�
 
 ## 读取场景
 
-1. ChatGPT规则读取：本索引 → `system_consistency.json` → MASTER；涉及数据时同时读数据规范。
+1. ChatGPT规则读取：本索引 → `system_consistency.json` → MASTER；涉及数据时同时读数据与市场监测规范。
 2. 当前状态：一致性、数据规范、交易日历、CURRENT、runtime health、ETF全集、`overseas_context.json`、`us_extended_hours_context.json`、动态个股层，再读Dashboard；盘中快速路径可先读取 `decision_context.json`，其中已包含最新日内路径特征，规则版本/hash或具体条款需要核实时再读取MASTER全文。
 3. 盘前/盘中查询：按全天截图路由执行；需要当前行情时先执行查询时即时补采，失败、超时或尚未完成时才回退最近有效快照，并检查北京时间数据时点和新鲜度；海外对象逐一读取as_of与market phase。
 4. 午间复盘：A股使用11:30上午收盘，其他市场按各自最新有效时点；形成下午第一观察条件和资本用途判断。
