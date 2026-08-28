@@ -92,11 +92,6 @@ jobs:
           Path('data/state/us_pulse_runtime_health.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
           print(json.dumps(payload, ensure_ascii=False))
           PY
-      - name: Run system consistency live audit
-        continue-on-error: true
-        run: |
-          python scripts/check_system_consistency.py
-          git checkout -- data/state/system_consistency.json || true
       - name: Commit US extended-hours context
         run: |
           git config user.name "github-actions[bot]"
