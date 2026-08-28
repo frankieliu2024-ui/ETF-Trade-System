@@ -84,6 +84,9 @@ def _recent_duplicate(event: dict) -> bool:
     category = str(new_ctx.get("event_category") or "")
     market_date = str(new_ctx.get("market_date") or "")
     new_mag = abs(number(new_ctx.get("event_magnitude_pct")) or 0.0)
+    new_level = number(new_ctx.get("day_change_pct"))
+    if new_level is None:
+        new_level = number(new_ctx.get("phase_metric_change_pct"))
 
     for item in reversed(state.get("notifications") or []):
         if str(item.get("event_type") or "") not in {"MARKET_SHOCK_ALERT", "MARKET_VALUE_ALERT"}:
@@ -96,6 +99,9 @@ def _recent_duplicate(event: dict) -> bool:
         old_category = str(ctx.get("event_category") or ctx.get("shock_severity") or "")
         old_market_date = str(ctx.get("market_date") or "")
         old_mag = abs(number(ctx.get("event_magnitude_pct")) or number(ctx.get("day_change_pct")) or number(ctx.get("phase_metric_change_pct")) or 0.0)
+        old_level = number(ctx.get("day_change_pct"))
+        if old_level is None:
+            old_level = number(ctx.get("phase_metric_change_pct"))
 
         # Different event families are allowed to represent a genuine evolution
         # such as SUDDEN -> EXTREME or EXTREME -> REVERSAL.
@@ -104,6 +110,23 @@ def _recent_duplicate(event: dict) -> bool:
 
         same_day = bool(market_date and old_market_date == market_date)
         if same_day and category in {"EXTREME", "REVERSAL", "DIVERGENCE"}:
+            # A reversal can materially worsen even when the intraday peak/trough
+            # that created the event does not expand. Compare the current level
+            # with the level shown in the last notification so deterioration is
+            # treated as a genuine upgrade rather than a duplicate.
+            if category == "REVERSAL" and new_level is not None and old_level is not None:
+                if direction == "DOWN":
+                    level_progress = old_level - new_level
+                    crossed_zero = old_level > 0 >= new_level
+                elif direction == "UP":
+                    level_progress = new_level - old_level
+                    crossed_zero = old_level < 0 <= new_level
+                else:
+                    level_progress = 0.0
+                    crossed_zero = False
+                if level_progress >= UPGRADE_MIN_ABS_PCT or (crossed_zero and level_progress > 0):
+                    return False
+
             upgrade_needed = max(UPGRADE_MIN_ABS_PCT, old_mag * UPGRADE_RELATIVE)
             if new_mag >= old_mag + upgrade_needed:
                 return False
