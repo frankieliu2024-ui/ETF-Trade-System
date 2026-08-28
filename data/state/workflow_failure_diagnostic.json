@@ -1,27 +1,27 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-28T08:49:12+08:00",
+  "generated_at": "2026-08-28T11:01:37+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 33130889563,
+  "workflow_name": "Overseas pre-open pulse",
+  "run_id": 33137622478,
   "run_attempt": 1,
-  "head_sha": "7c6a3c1bc8ed3033414ab35053bf9e62cadcad96",
-  "main_head_sha": "aee15f9644718f53fc193e44f8c25906f040c6f5",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "62e3f44db3146e34670df5be50f9bc05e898c4db",
+  "main_head_sha": "d440ef0beb7a08957ef695a132162a481e5560d8",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
+      "job": "overseas",
+      "step": "Commit overseas contexts, notifications and runtime health",
       "number": 17
     }
   ],
   "changed_files": [
-    "scripts/market_quote_router.py"
+    "requests/notification_test/20260828_1054_apac_template.json"
   ],
-  "commit_message": "fix: force explicit query-time provider refresh",
+  "commit_message": "test: request live APAC notification template validation",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
