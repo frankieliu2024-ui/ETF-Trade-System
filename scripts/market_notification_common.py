@@ -69,35 +69,82 @@ def ohlc_path_phrase(open_: float | None, high: float | None, low: float | None,
 
 
 def render_summary(*, headline_lines: list[str], path_lines: list[str], implication: str, action: str, as_of_lines: list[str], boundary: str) -> str:
+    """Unified user-facing structure for market/session summaries.
+
+    Data producers may remain market-specific, but user-visible semantics do not:
+    conclusion -> meaningful path -> ETF-system impact -> current action -> data/boundary.
+    """
+    path = "\n".join(path_lines) if path_lines else "- 当前没有额外路径事实需要展开。"
     return (
-        "### 发生了什么\n"
+        "### 核心结论\n"
         + "\n".join(headline_lines)
-        + "\n\n### 日内路径\n"
-        + "\n".join(path_lines)
-        + "\n\n### 对ETF系统的启示\n"
+        + "\n\n### 关键路径\n"
+        + path
+        + "\n\n### 对ETF系统的影响\n"
         + implication
-        + "\n\n### 现在怎么做\n**"
+        + "\n\n### 当前动作\n**"
         + action
-        + "**\n\n### 数据时点（北京时间）\n"
+        + "**\n\n### 数据与边界\n"
         + "\n".join(as_of_lines)
-        + "\n\n### 解释边界\n"
-        + boundary
+        + "\n"
+        + f"- **边界**：{boundary}"
     )
 
 
-def _clean_market_implication(what: list[str], implication: str) -> str:
-    """Remove object-specific boilerplate when it does not belong to this alert."""
+def _decision_readable_implication(what: list[str], implication: str) -> str:
+    """Turn generic market boilerplate into object-aware ETF decision relevance.
+
+    This is deliberately centralized so A-share indices, all monitored ETFs,
+    account/conditional stocks, APAC objects and US objects share one user
+    semantics while their acquisition/workflow routes remain independent.
+    """
     joined = " ".join(what)
+    text = implication.strip()
+
+    # A-share unified event engine currently passes this generic sentence for
+    # indices, ETFs and account/conditional stocks. Resolve it by object role.
+    if text.startswith("立即检查该新事实是否改变全部持仓ETF与观察ETF"):
+        if "ETF" in joined:
+            return (
+                "这是ETF自身结构变化，不是泛化市场提示。优先复核该ETF相对全部持仓/观察ETF的强弱是否改变，"
+                "当前Trial或持仓假设是否被削弱，以及继续占用下一单位资本是否仍有效率；"
+                "只有这些结论改变时，才影响唯一主候选、金额或持仓动作。"
+            )
+        if "指数" in joined:
+            return (
+                "这是A股本地风险偏好/风格结构证据。先判断变化是否扩散到监测ETF，再比较哪些持仓/观察ETF的"
+                "承接和相对强弱真正发生变化；指数异动本身不直接生成买卖动作。"
+            )
+        return (
+            "这是账户底仓或条件个股的资金/产业传导证据。优先复核其独立假设、资金释放价值以及是否改变ETF资本比较；"
+            "个股单一波动不直接生成ETF买卖动作。"
+        )
+
+    # Overseas/US/Asia unified value-event engine passes this generic sentence.
+    if text.startswith("把本次新事实作为结构证据"):
+        direct = ""
+        if "恒生科技指数" in joined or "HSTECH" in joined:
+            direct = "直接相关的恒生科技ETF（513180）"
+        elif "日经225指数" in joined or "N225" in joined:
+            direct = "直接相关的日经ETF（513520）"
+        elif any(x in joined for x in ("纳斯达克100", "NDX", "费城半导体", "SOX", "QQQ", "SOXX")):
+            direct = "A股科技持仓/观察ETF以及纳指ETF（159941）"
+        target = direct or "相关持仓/观察ETF"
+        return (
+            f"这是海外/区域结构证据，先看A股本地价格是否接受或背离，再复核{target}的自身反馈、"
+            "当前主候选和边际资本效率；若海外与A股反馈背离，以A股自身反馈为主。"
+        )
+
+    # Keep already-specific producer text, while removing the old HSTECH-only
+    # appendage if it leaked into a non-HSTECH alert.
     if "HSTECH" not in joined and "恒生科技指数" not in joined:
-        implication = implication.replace("；恒生科技指数（HSTECH）事件还要直接复核恒生科技ETF（513180）的自身反馈", "")
-        implication = implication.replace("恒生科技指数（HSTECH）事件还要直接复核恒生科技ETF（513180）的自身反馈。", "")
-    return implication.strip()
+        text = text.replace("；恒生科技指数（HSTECH）事件还要直接复核恒生科技ETF（513180）的自身反馈", "")
+        text = text.replace("恒生科技指数（HSTECH）事件还要直接复核恒生科技ETF（513180）的自身反馈。", "")
+    return text.strip()
 
 
 def render_shock(*, what: list[str], why: str, implication: str, action: str, as_of: str, boundary: str) -> str:
-    implication = _clean_market_implication(what, implication)
-    # Market alerts should be decision-readable, not a generic monitoring report.
-    # Put the actual event first, then the decision relevance and next action.
+    implication = _decision_readable_implication(what, implication)
     return (
         "### 核心结论\n"
         + "\n".join(what)
@@ -127,9 +174,6 @@ def _parse_time(value: Any) -> datetime | None:
 
 def _future_time_error(event: dict) -> str:
     ctx = event.get("confirmation_context") or {}
-    # Market/provider facts may never be newer than the actual notification
-    # generation time. A two-minute tolerance covers clock skew without allowing
-    # screenshots such as "22:24 generated / 22:44 market data" to be sent.
     for key in (
         "market_as_of_beijing",
         "provider_observed_as_of_beijing",
@@ -142,13 +186,7 @@ def _future_time_error(event: dict) -> str:
 
 
 def _refine_reversal_user_title(event: dict) -> dict:
-    """Keep the event family stable while making the user-facing path semantics precise.
-
-    REVERSAL is an internal notification family for a sufficiently large excursion
-    followed by a material giveback/recovery. If price is still on the same side of
-    the previous close, the visible title should say giveback/recovery rather than
-    imply that the day direction has already crossed through the previous close.
-    """
+    """Keep event family stable while making visible path semantics precise."""
     ctx = event.get("confirmation_context") or {}
     if str(ctx.get("event_category") or "") != "REVERSAL":
         return event
