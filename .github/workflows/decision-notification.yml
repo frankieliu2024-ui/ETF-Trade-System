@@ -73,7 +73,7 @@ jobs:
         id: a_share_summary_notify
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot' }}
         continue-on-error: true
-        run: python scripts/send_regional_session_summary.py --market a-share
+        run: python scripts/run_guarded_notification.py regional --market a-share
 
       # A-share is only the data source route here. The event engine evaluates
       # every currently monitored index/ETF/account stock by attention value;
@@ -82,28 +82,28 @@ jobs:
         id: a_share_shock_notify
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot' }}
         continue-on-error: true
-        run: python scripts/send_market_shock_notification.py --market a-share
+        run: python scripts/run_guarded_notification.py shock --market a-share
 
       - name: Send safe notification-channel test
         id: test_notify
         if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.test_notification == 'true') || (github.event_name == 'push' && steps.push_kind.outputs.test == 'true') }}
         continue-on-error: true
-        run: python scripts/notification_center.py --mode channel-test
+        run: python scripts/run_guarded_notification.py center --mode channel-test
 
       # Event-driven notifications have no A-share-session or night-time gate.
-      # The notification center itself is the value gate: only material formal
-      # decisions, user confirmations or real system blockers may reach PushPlus.
+      # The shared evidence guard rejects label/coverage-only changes before the
+      # notification center can reach PushPlus.
       - name: Send material user-action notification
         id: event_notify
         if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && steps.push_kind.outputs.decision == 'true') }}
         continue-on-error: true
-        run: python scripts/notification_center.py --mode event
+        run: python scripts/run_guarded_notification.py center --mode event
 
       - name: Send conditional A-share trading-day post-close account reminder
         id: close_notify
         if: ${{ github.event_name == 'schedule' }}
         continue-on-error: true
-        run: python scripts/notification_center.py --mode close
+        run: python scripts/run_guarded_notification.py center --mode close
 
       - name: Persist unified notification and execution-reconciliation state
         if: ${{ always() }}
