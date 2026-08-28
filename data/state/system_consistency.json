@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-28T10:37:46Z",
-  "generated_at_beijing": "2026-08-28T18:37:46+08:00",
+  "generated_at": "2026-08-28T10:41:20Z",
+  "generated_at_beijing": "2026-08-28T18:41:20+08:00",
   "repository": {
-    "head_sha": "9f783e79a58001b6b1a3105748fe3c70d5d89321",
-    "github_sha": "9f783e79a58001b6b1a3105748fe3c70d5d89321",
-    "github_run_id": "33164059582",
+    "head_sha": "e0508bd767dc43f44e980538a43ce7881ae87bbf",
+    "github_sha": "e0508bd767dc43f44e980538a43ce7881ae87bbf",
+    "github_run_id": "33164281487",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "9f783e79a58001b6b1a3105748fe3c70d5d89321",
-    "workflow_sha": "9f783e79a58001b6b1a3105748fe3c70d5d89321",
+    "checked_commit": "e0508bd767dc43f44e980538a43ce7881ae87bbf",
+    "workflow_sha": "e0508bd767dc43f44e980538a43ce7881ae87bbf",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
@@ -20,7 +20,7 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "FAIL",
-      "detail": "==============================\nFAIL: test_explicit_post_close_stock_uses_same_day_tencent_quote_and_minute_overlay (test_market_query_time_refresh.QueryTimeRefreshTests.test_explicit_post_close_stock_uses_same_day_tencent_quote_and_minute_overlay)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_query_time_refresh.py\", line 122, in test_explicit_post_close_stock_uses_same_day_tencent_quote_and_minute_overlay\n    self.assertEqual(quote[\"refresh_source\"], \"QUERY_TIME_PROVIDER_SAME_DAY_SESSION_REFERENCE\")\nAssertionError: 'QUERY_TIME_PROVIDER_SESSION_REFERENCE' != 'QUERY_TIME_PROVIDER_SAME_DAY_SESSION_REFERENCE'\n- QUERY_TIME_PROVIDER_SESSION_REFERENCE\n+ QUERY_TIME_PROVIDER_SAME_DAY_SESSION_REFERENCE\n?                      +++++++++\n\n\n----------------------------------------------------------------------\nRan 76 tests in 0.037s\n\nFAILED (failures=1, errors=1)\n"
+      "detail": "_object)\n----------------------------------------------------------------------\nImportError: Failed to import test module: test_market_query_object\nTraceback (most recent call last):\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/loader.py\", line 419, in _find_test_path\n    module = self._get_module_from_name(name)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/loader.py\", line 362, in _get_module_from_name\n    __import__(name)\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_query_object.py\", line 8, in <module>\n    from query_market_object import format_quote, normalize_input, resolve_object\nImportError: cannot import name 'format_quote' from 'query_market_object' (/home/runner/work/ETF-Trade-System/ETF-Trade-System/scripts/query_market_object.py)\n\n\n----------------------------------------------------------------------\nRan 76 tests in 0.034s\n\nFAILED (errors=1)\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -235,12 +235,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=9f783e79a58001b6b1a3105748fe3c70d5d89321"
+      "detail": "HEAD=e0508bd767dc43f44e980538a43ce7881ae87bbf"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=9f783e79a58001b6b1a3105748fe3c70d5d89321 GITHUB_SHA=9f783e79a58001b6b1a3105748fe3c70d5d89321"
+      "detail": "HEAD=e0508bd767dc43f44e980538a43ce7881ae87bbf GITHUB_SHA=e0508bd767dc43f44e980538a43ce7881ae87bbf"
     },
     {
       "name": "git:critical_files_tracked",
@@ -670,7 +670,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "phase_aware phase=PRE_MARKET live_objects=['QQQ', 'SOXX'] max_age_seconds=81 limit=900; cash indices are session references outside REGULAR"
+      "detail": "phase_aware phase=PRE_MARKET live_objects=['QQQ', 'SOXX'] max_age_seconds=295 limit=900; cash indices are session references outside REGULAR"
     },
     {
       "name": "session_gate:calendar_read",
@@ -785,12 +785,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=12307"
+      "detail": "declared=STALE expected=STALE age_seconds=12522"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=12307"
+      "detail": "declared=STALE expected=STALE age_seconds=12521"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -830,7 +830,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-28T10:37:45Z market=2026-08-28T15:12:38+08:00"
+      "detail": "context=2026-08-28T10:41:19Z market=2026-08-28T15:12:38+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1714,7 +1714,7 @@
     }
   ],
   "errors": [
-    "tests:market_data_and_quote_router: ==============================\nFAIL: test_explicit_post_close_stock_uses_same_day_tencent_quote_and_minute_overlay (test_market_query_time_refresh.QueryTimeRefreshTests.test_explicit_post_close_stock_uses_same_day_tencent_quote_and_minute_overlay)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_query_time_refresh.py\", line 122, in test_explicit_post_close_stock_uses_same_day_tencent_quote_and_minute_overlay\n    self.assertEqual(quote[\"refresh_source\"], \"QUERY_TIME_PROVIDER_SAME_DAY_SESSION_REFERENCE\")\nAssertionError: 'QUERY_TIME_PROVIDER_SESSION_REFERENCE' != 'QUERY_TIME_PROVIDER_SAME_DAY_SESSION_REFERENCE'\n- QUERY_TIME_PROVIDER_SESSION_REFERENCE\n+ QUERY_TIME_PROVIDER_SAME_DAY_SESSION_REFERENCE\n?                      +++++++++\n\n\n----------------------------------------------------------------------\nRan 76 tests in 0.037s\n\nFAILED (failures=1, errors=1)\n",
+    "tests:market_data_and_quote_router: _object)\n----------------------------------------------------------------------\nImportError: Failed to import test module: test_market_query_object\nTraceback (most recent call last):\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/loader.py\", line 419, in _find_test_path\n    module = self._get_module_from_name(name)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/loader.py\", line 362, in _get_module_from_name\n    __import__(name)\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_query_object.py\", line 8, in <module>\n    from query_market_object import format_quote, normalize_input, resolve_object\nImportError: cannot import name 'format_quote' from 'query_market_object' (/home/runner/work/ETF-Trade-System/ETF-Trade-System/scripts/query_market_object.py)\n\n\n----------------------------------------------------------------------\nRan 76 tests in 0.034s\n\nFAILED (errors=1)\n",
     "query_entry:shared_guard_router: query entry uses shared quality guard and router"
   ],
   "warnings": [],
