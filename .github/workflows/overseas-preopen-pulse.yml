@@ -10,7 +10,7 @@ on:
     branches: [main]
     paths:
       - "data/state/CURRENT.json"
-      - "requests/notification_test/**.json"
+      - "requests/apac_notification_test/**.json"
   schedule:
     # UTC / Beijing time.
     # 20:15/20:30 UTC = Beijing 04:15/04:30. Independent schedule backstop for
@@ -55,7 +55,7 @@ jobs:
           node-version: "20"
       - name: Install hithink-finance CLI
         run: npm install --global @hithink-tech/hithink-finance-cli
-      - name: Detect isolated notification template test request
+      - name: Detect isolated APAC notification template test request
         id: notification_test
         shell: bash
         run: |
@@ -63,7 +63,7 @@ jobs:
           if [ "${{ github.event_name }}" = "push" ]; then
             before="${{ github.event.before }}"
             after="${{ github.sha }}"
-            if [ -n "$before" ] && git diff --name-only "$before" "$after" | grep -q '^requests/notification_test/.*\.json$'; then
+            if [ -n "$before" ] && git diff --name-only "$before" "$after" | grep -q '^requests/apac_notification_test/.*\.json$'; then
               force_test=true
             fi
           fi
@@ -113,7 +113,7 @@ jobs:
               title = str(event.get("title") or "")
               title = title.replace("【异动提醒】", "").replace("【市场异动】", "")
               event["title"] = "【测试】" + title
-              event["content"] = "**本条为模板验证：允许未达到正式通知阈值的当前行情生成测试通知，不代表正式事件触发。**\n\n" + str(event.get("content") or "")
+              event["content"] = "**本条为亚太主动通知模板验证：允许未达到正式通知阈值的当前行情生成测试通知，不代表正式事件触发。**\n\n" + str(event.get("content") or "")
               return event
 
           module._apac_event = test_event
