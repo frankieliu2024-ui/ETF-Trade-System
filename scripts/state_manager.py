@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -64,10 +65,6 @@ def read_json(path: Path, fallback: Any) -> Any:
     try:
         return json.loads(raw)
     except json.JSONDecodeError as exc:
-        # Recover only known runtime_health concurrent-write buffers. Older
-        # writers could leave two complete JSON documents concatenated; use
-        # the last complete document so downstream context can continue while
-        # the owning workflow rewrites the file atomically.
         if raw.endswith("\\n"):
             return json.loads(raw[:-2] + "\n")
         if path.name == "runtime_health.json" and "Extra data" in str(exc):
@@ -210,7 +207,6 @@ def evaluate_context_freshness(root: Path, current: dict[str, Any]) -> dict[str,
 
 
 def build_research_evidence_summary(root: Path) -> dict[str, Any]:
-    """Aggregate current and changed research evidence without creating trade signals."""
     research = read_json(root / "data" / "state" / "research_context.json", {"status": "MISSING", "read_only": True})
     relative = read_json(root / "data" / "state" / "relative_strength.json", {"items": [], "read_only": True})
     delta = read_json(root / "data" / "state" / "research_evidence_delta.json", {"items": [], "read_only": True})
@@ -250,7 +246,6 @@ def build_research_evidence_summary(root: Path) -> dict[str, Any]:
     }
 
 
-
 def _snapshot_rows(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
     rows = snapshot.get("rows") if isinstance(snapshot, dict) else []
     return [x for x in (rows or []) if isinstance(x, dict)]
@@ -273,6 +268,7 @@ def build_data_quality_summary(snapshot: dict[str, Any]) -> dict[str, Any]:
 def build_analysis_coverage(root: Path, snapshot: dict[str, Any], account: dict[str, Any], quality: dict[str, Any]) -> dict[str, Any]:
     universe = read_json(root / "config" / "market" / "etf_monitor_universe.json", {})
     etfs = {str(x.get("code")) for x in universe.get("objects", []) if x.get("code")}
+    expected_indices = {"000001", "000688", "399006"}
     rows = _snapshot_rows(snapshot)
     by_code = {str(x.get("symbol") or ""): x for x in rows}
     stocks_ctx = read_json(root / "data" / "state" / "stock_market_context.json", {})
@@ -281,7 +277,7 @@ def build_analysis_coverage(root: Path, snapshot: dict[str, Any], account: dict[
     stocks = {str(x.get("code")) for x in positions if x.get("asset_type") == "STOCK" and float(x.get("quantity") or 0) > 0}
     def usable(row): return bool(row) and str(row.get("quality_status") or row.get("status") or "").upper() not in {"FAILED", "FAIL"}
     observed = etfs - held
-    missing = sorted((etfs | {"000001", "399006"}) - set(by_code))
+    missing = sorted((etfs | expected_indices) - set(by_code))
     status = "INCOMPLETE" if missing else ("DEGRADED" if quality["failed_count"] or quality["degraded_count"] or quality["stale_count"] else "COMPLETE")
     stock_objects = stocks_ctx.get("objects") or {}
     core_rows = [x for x in rows if x.get("asset_class") in {"ETF", "A_SHARE_INDEX"}]
@@ -290,7 +286,7 @@ def build_analysis_coverage(root: Path, snapshot: dict[str, Any], account: dict[
     core_degraded = sum(str(x.get("quality_status") or "").upper() in {"DEGRADED", "PARTIAL"} for x in core_rows)
     account_stock_pass = sum(str((stock_objects.get(x) or {}).get("quality_status") or "").upper() == "PASS" for x in stocks)
     account_stock_failed = sum(str((stock_objects.get(x) or {}).get("quality_status") or "").upper() in {"FAILED", "FAIL"} for x in stocks)
-    return {"indices_total": 2, "indices_available": sum(usable(x) for x in rows if x.get("asset_class") == "A_SHARE_INDEX"), "held_etfs_total": len(held), "held_etfs_available": sum(usable(by_code.get(x)) for x in held), "observed_etfs_total": len(observed), "observed_etfs_available": sum(usable(by_code.get(x)) for x in observed), "account_stocks_total": len(stocks), "account_stocks_available": sum(str((stock_objects.get(x) or {}).get("quality_status") or "").upper() in {"PASS", "DEGRADED"} for x in stocks), "core_market_pass": core_pass, "core_market_failed": core_failed, "core_market_degraded": core_degraded, "account_stock_market_pass": account_stock_pass, "account_stock_market_failed": account_stock_failed, "cash_available": account.get("cash") is not None, "failed_objects": quality["failed_objects"], "degraded_objects": quality["degraded_objects"] + quality["stale_objects"], "missing_objects": missing, "coverage_status": status, "read_only": True}
+    return {"indices_total": len(expected_indices), "indices_available": sum(usable(x) for x in rows if x.get("asset_class") == "A_SHARE_INDEX"), "held_etfs_total": len(held), "held_etfs_available": sum(usable(by_code.get(x)) for x in held), "observed_etfs_total": len(observed), "observed_etfs_available": sum(usable(by_code.get(x)) for x in observed), "account_stocks_total": len(stocks), "account_stocks_available": sum(str((stock_objects.get(x) or {}).get("quality_status") or "").upper() in {"PASS", "DEGRADED"} for x in stocks), "core_market_pass": core_pass, "core_market_failed": core_failed, "core_market_degraded": core_degraded, "account_stock_market_pass": account_stock_pass, "account_stock_market_failed": account_stock_failed, "cash_available": account.get("cash") is not None, "failed_objects": quality["failed_objects"], "degraded_objects": quality["degraded_objects"] + quality["stale_objects"], "missing_objects": missing, "coverage_status": status, "read_only": True}
 
 
 def build_scheduled_pulse_health(root: Path, current: dict[str, Any]) -> dict[str, Any]:
@@ -313,34 +309,98 @@ def build_formal_action_summary(account: dict[str, Any]) -> dict[str, Any]:
     return {**value, "read_only": True}
 
 
-def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
-    """Build the compact risk summary used by decision/query contexts.
+def _parse_beijing_time(value: object) -> datetime | None:
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone(timedelta(hours=8)))
+    return dt.astimezone(timezone(timedelta(hours=8)))
 
-    Only etf_strategy_risk_pct defines the formal risk interval. The other
-    two percentages are explanatory facts and must not become permissions.
+
+def _latest_formal_review_risk(root: Path) -> dict[str, Any]:
+    directory = root / "events" / "reviews"
+    candidates: list[tuple[datetime, dict[str, Any]]] = []
+    if directory.exists():
+        for path in directory.glob("*.json"):
+            event = read_json(path, {})
+            review = event.get("review") or event.get("formal_review") or {}
+            fact = review.get("etf_strategy_known_net") or {}
+            try:
+                risk = float(fact.get("etf_strategy_risk_rate_pct"))
+            except (TypeError, ValueError):
+                continue
+            updated = _parse_beijing_time(event.get("updated_at_beijing") or event.get("account_updated_at"))
+            if updated is None:
+                continue
+            equity = fact.get("known_net_strategy_equity")
+            try:
+                equity = float(equity) if equity is not None else None
+            except (TypeError, ValueError):
+                equity = None
+            candidates.append((updated, {"risk_pct": risk, "equity": equity, "updated_at": updated.isoformat(timespec="seconds"), "market_date": event.get("market_date") or review.get("market_date"), "source": str(path.relative_to(root)).replace("\\", "/")}))
+    return max(candidates, key=lambda x: x[0])[1] if candidates else {}
+
+
+def _dashboard_risk_metric(root: Path) -> tuple[float | None, str]:
+    path = root / "ETF当前状态_DASHBOARD.md"
+    if not path.exists():
+        return None, ""
+    text = path.read_text(encoding="utf-8")
+    match = re.search(r"\|ETF策略风险率\|约?\s*([+-]?\d+(?:\.\d+)?)%", text)
+    if not match:
+        return None, ""
+    updated = re.search(r">\s*更新时间：([^\n]+)", text)
+    return float(match.group(1)), (updated.group(1).strip() if updated else "")
+
+
+def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
+    """Use the latest formal review/Dashboard for the sole formal risk interval.
+
+    The ETF equity reconstruction remains auxiliary because it can lag the latest
+    confirmed account/review state. It must never overwrite a newer formal risk fact.
     """
     equity = read_json(root / "data" / "state" / "etf_strategy_equity.json", {})
     summary = equity.get("summary") or {}
     account = read_account_fact(root)
-    etf_float = sum(
-        float(p.get("holding_pnl") or 0)
-        for p in (account.get("positions") or [])
-        if p.get("asset_type") == "ETF"
-    )
+    etf_float = sum(float(p.get("holding_pnl") or 0) for p in (account.get("positions") or []) if p.get("asset_type") == "ETF")
     capital = float(summary.get("starting_etf_strategy_capital") or 200000)
-    known_net = summary.get("known_net_current_strategy_return_pct")
-    if known_net is None:
-        pnl = summary.get("known_net_current_cumulative_pnl")
-        known_net = (float(pnl) / capital * 100.0) if pnl is not None else None
+    reconstruction_risk = summary.get("known_net_current_strategy_return_pct")
+    formal = _latest_formal_review_risk(root)
+    dashboard_risk, dashboard_updated = _dashboard_risk_metric(root)
+    if formal.get("risk_pct") is not None:
+        risk_pct = round(float(formal["risk_pct"]), 2)
+        risk_source = formal.get("source")
+        risk_source_updated_at = formal.get("updated_at")
+        strategy_equity = formal.get("equity") if formal.get("equity") is not None else summary.get("known_net_current_strategy_equity")
+        risk_data_quality = "FORMAL_REVIEW_PRIMARY; RECONSTRUCTION_AUXILIARY"
+    elif dashboard_risk is not None:
+        risk_pct = round(float(dashboard_risk), 2)
+        risk_source = "ETF当前状态_DASHBOARD.md"
+        risk_source_updated_at = dashboard_updated
+        strategy_equity = summary.get("known_net_current_strategy_equity")
+        risk_data_quality = "FORMAL_DASHBOARD_PRIMARY; RECONSTRUCTION_AUXILIARY"
+    else:
+        risk_pct = reconstruction_risk
+        risk_source = "data/state/etf_strategy_equity.json"
+        risk_source_updated_at = equity.get("generated_at")
+        strategy_equity = summary.get("known_net_current_strategy_equity")
+        risk_data_quality = summary.get("known_net_equity_data_quality") or summary.get("equity_coverage_status")
     return {
-        "etf_strategy_risk_pct": known_net,
+        "etf_strategy_risk_pct": risk_pct,
+        "risk_source": risk_source,
+        "risk_source_updated_at": risk_source_updated_at,
+        "reconstruction_risk_pct": reconstruction_risk,
         "etf_holding_unrealized_pct": round(etf_float / capital * 100.0, 2),
         "etf_drawdown_from_high_pct": summary.get("known_net_current_drawdown_pct"),
-        "equity_data_quality": summary.get("known_net_equity_data_quality") or summary.get("equity_coverage_status"),
-        "strategy_equity_known_net": summary.get("known_net_current_strategy_equity"),
+        "equity_data_quality": risk_data_quality,
+        "strategy_equity_known_net": strategy_equity,
         "high_watermark": summary.get("known_net_high_watermark", capital),
         "fee_status": summary.get("fee_status", ""),
-        "interpretation": "唯一ETF策略风险率决定风险区间；持仓浮盈亏率与高水位回撤率只解释持仓压力和近期改善/恶化。",
+        "interpretation": "唯一ETF策略风险率决定风险区间；最新正式review/Dashboard高于历史重构。持仓浮盈亏率与高水位回撤率只解释持仓压力和近期改善/恶化。",
         "read_only": True,
     }
 
@@ -355,7 +415,7 @@ def build_decision_context(root: Path | None = None) -> dict[str, Any]:
     generated = now_utc()
     quality = build_data_quality_summary(snapshot)
     return {
-        "generated_at": generated, "rules_version": "V2.2.16", "market_date": current.get("market_date", ""), "latest_node": current.get("latest_valid_node", ""), "current": current, "latest_snapshot": snapshot, "data_status": effective, "freshness_at_context_build": effective,
+        "generated_at": generated, "rules_version": str(current.get("rules_version") or ""), "market_date": current.get("market_date", ""), "latest_node": current.get("latest_valid_node", ""), "current": current, "latest_snapshot": snapshot, "data_status": effective, "freshness_at_context_build": effective,
         "data_quality_summary": quality, "etf_strategy_risk_metrics": build_etf_strategy_risk_metrics(root), "analysis_coverage": build_analysis_coverage(root, snapshot, account, quality), "point_in_time": build_point_in_time_summary(current, account, snapshot, generated), "scheduled_pulse_health": build_scheduled_pulse_health(root, current), "formal_action": build_formal_action_summary(account),
         "market_quote_router": build_market_quote_context(root),
         "decision_trigger": read_json(root / "data" / "state" / "decision_trigger.json", {"status": "NOT_BUILT", "requires_formal_reassessment": False, "read_only": True}),
