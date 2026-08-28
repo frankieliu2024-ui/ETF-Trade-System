@@ -21,13 +21,12 @@ def set_output(key: str, value: str) -> None:
 
 
 def market_phase(minute: int, close_grace_minutes: int = 15) -> str:
-    # 09:25-09:29 is the post-auction/pre-continuous static window. A delayed
-    # GitHub Actions runner may still capture the final opening-auction result
-    # there, but it must not be interpreted as continuous-trading execution.
     if 9 * 60 + 15 <= minute < 9 * 60 + 30:
         return "OPENING_CALL_AUCTION"
     if 9 * 60 + 30 <= minute <= 11 * 60 + 30:
         return "CONTINUOUS_MORNING"
+    if 11 * 60 + 30 < minute < 13 * 60:
+        return "MIDDAY_BREAK"
     if 13 * 60 <= minute < 14 * 60 + 57:
         return "CONTINUOUS_AFTERNOON"
     if 14 * 60 + 57 <= minute <= 15 * 60:
@@ -59,16 +58,15 @@ def main() -> int:
     else:
         in_opening_auction = 9 * 60 + 15 <= minute < 9 * 60 + 30
         in_morning = 9 * 60 + 30 <= minute <= 11 * 60 + 30
+        in_midday_recovery = 11 * 60 + 30 < minute < 13 * 60
         in_afternoon = 13 * 60 <= minute <= 15 * 60
         in_close_grace = 15 * 60 < minute <= 15 * 60 + close_grace_minutes
-        should_capture = in_opening_auction or in_morning or in_afternoon or in_close_grace
-        reason = "capture_window" if should_capture else "outside_capture_window"
+        should_capture = in_opening_auction or in_morning or in_midday_recovery or in_afternoon or in_close_grace
+        reason = "midday_morning_close_recovery" if in_midday_recovery else ("capture_window" if should_capture else "outside_capture_window")
 
     query_time_refresh = os.environ.get("QUERY_TIME_REFRESH", "").lower() == "true"
     if query_time_refresh and event_name == "push":
-        # User-time refresh is a separate query path. It must not turn a
-        # non-A-share session into a full A-share snapshot capture.
-        reason = "query_time_refresh_separate_global_path"
+        reason = "query_time_refresh_midday_reference" if phase == "MIDDAY_BREAK" else "query_time_refresh_separate_global_path"
     elif event_name == "workflow_dispatch":
         reason = "manual_dispatch_capture_window" if should_capture else f"manual_dispatch_{reason}"
 
