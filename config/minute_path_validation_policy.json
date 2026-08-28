@@ -17,11 +17,11 @@
   "logical_shadow_nodes": [
     {"planned_node_beijing": "10:30", "session": "MORNING", "primary_cron": "30 2 * * 1-5", "recovery_cron": "26 2 * * 1-5"},
     {"planned_node_beijing": "13:45", "session": "AFTERNOON", "primary_cron": "45 5 * * 1-5", "recovery_cron": "41 5 * * 1-5"},
-    {"planned_node_beijing": "14:15", "session": "AFTERNOON", "primary_cron": "15 6 * * 1-5", "recovery_cron": "11 6 * * 1-5"},
+    {"planned_node_beijing": "14:20", "session": "AFTERNOON", "primary_cron": "20 6 * * 1-5", "recovery_cron": "16 6 * * 1-5"},
     {"planned_node_beijing": "14:30", "session": "AFTERNOON", "primary_cron": "30 6 * * 1-5", "recovery_cron": "26 6 * * 1-5"},
     {"planned_node_beijing": "14:55", "session": "AFTERNOON", "primary_cron": "55 6 * * 1-5", "recovery_cron": "51 6 * * 1-5"}
   ],
-  "scheduled_shadow_nodes_beijing": ["10:30", "13:45", "14:15", "14:30", "14:55"],
+  "scheduled_shadow_nodes_beijing": ["10:30", "13:45", "14:20", "14:30", "14:55"],
   "schedule_reliability_rule": "GitHub schedule属于best-effort。每个逻辑节点允许一个邻近recovery cron；primary与recovery都映射到同一planned_node_beijing，只能按逻辑节点去重后计数，不能把同一节点两次成功当成两个有效节点。recovery cron仅增强验证调度可靠性，不进入生产行情主链。",
   "minimum_valid_nodes": 2,
   "session_coverage_requirement": "NOT_REQUIRED_AFTER_PROVIDER_CAUSE_EXCLUDED",
