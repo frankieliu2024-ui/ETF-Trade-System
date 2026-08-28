@@ -93,7 +93,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: ${{ steps.session_gate.outputs.should_capture == 'true' || github.event_name == 'push' }}
         with:
-          node-version: "20"
+          node-version: "22"
       - name: Install hithink-finance CLI
         if: ${{ steps.session_gate.outputs.should_capture == 'true' || github.event_name == 'push' }}
         run: npm install --global @hithink-tech/hithink-finance-cli
