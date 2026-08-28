@@ -13,6 +13,7 @@ ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1
 STATE = ROOT / "data" / "state"
 POLICY = ROOT / "config" / "runtime_policy.json"
 CONSISTENCY_WORKFLOW = ROOT / ".github" / "workflows" / "system-consistency.yml"
+SYSTEM_INDEX = ROOT / "ETF_SYSTEM_INDEX.md"
 BJ = ZoneInfo("Asia/Shanghai")
 ET = ZoneInfo("America/New_York")
 
@@ -68,15 +69,36 @@ def current_user_action_event() -> dict[str, Any] | None:
         return None
 
 
-def consistency_push_patterns() -> list[str]:
-    """Read full-consistency production trigger semantics from its canonical workflow.
+def normative_rule_paths() -> list[str]:
+    """Read the four normative domain paths from the canonical system index."""
+    try:
+        lines = SYSTEM_INDEX.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    paths: list[str] = []
+    for line in lines:
+        if not line.startswith("- **") or "唯一" not in line:
+            continue
+        pieces = line.split("`")
+        for value in pieces[1::2]:
+            value = value.strip()
+            if value.endswith(".md") and value not in paths:
+                paths.append(value)
+                break
+    return paths
 
-    The health guard deliberately does not maintain a second hard-coded path list.
+
+def consistency_push_patterns() -> list[str]:
+    """Read canonical revalidation semantics without maintaining a second path list.
+
+    Machine trigger paths come from the full-consistency workflow. Normative rule
+    sources additionally come from ETF_SYSTEM_INDEX.md so a rule-only change can
+    never be mistaken for harmless state advancement.
     """
     try:
         lines = CONSISTENCY_WORKFLOW.read_text(encoding="utf-8").splitlines()
     except OSError:
-        return []
+        lines = []
 
     in_push = False
     in_paths = False
@@ -99,11 +121,15 @@ def consistency_push_patterns() -> list[str]:
             continue
         if indent == 6 and stripped.startswith("- "):
             value = stripped[2:].strip().strip('"').strip("'")
-            if value:
+            if value and value not in patterns:
                 patterns.append(value)
             continue
         if stripped and not stripped.startswith("#") and indent <= 4:
             in_paths = False
+
+    for path in normative_rule_paths():
+        if path not in patterns:
+            patterns.append(path)
     return patterns
 
 
