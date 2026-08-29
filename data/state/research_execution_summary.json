@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.0",
-  "generated_at": "2026-08-28T07:58:58Z",
+  "schema_version": "1.1",
+  "generated_at": "2026-08-29T12:01:38Z",
   "mode": "RESEARCH_TO_EXECUTION_READ_ONLY_BRIDGE",
   "read_only": true,
   "use_in_current_decision": true,
@@ -9,7 +9,7 @@
   "trade_signal": null,
   "research_conclusions_must_be_synthesized": true,
   "conclusion_digest": {
-    "rule": "研究结论先归纳为可执行证据摘要，再进入正式判断；研究结论可以改变风险收益、候选比较、持有/卖出、金额与资金来源/去向，但不能单独生成订单或自动交易。",
+    "rule": "研究结论先归纳为可执行证据摘要，再进入正式判断；研究结论可以改变风险收益、候选比较、持有/卖出、金额与资金来源/去向，但不能单独生成订单或自动交易。静态正式结论负责资格与历史验证，当前状态敏感证据必须读取动态证据对象。",
     "runtime_validated_evidence": [
       {
         "evidence_id": "market_regime",
@@ -57,6 +57,33 @@
         "trade_signal": null
       },
       {
+        "evidence_id": "opening_residual_561980",
+        "status": "READY",
+        "use_in_current_decision": true,
+        "decision_eligible": false,
+        "use_as_decision_evidence": true,
+        "can_generate_decision_independently": false,
+        "trade_signal": null
+      },
+      {
+        "evidence_id": "selling_exhaustion",
+        "status": "READY",
+        "use_in_current_decision": true,
+        "decision_eligible": false,
+        "use_as_decision_evidence": true,
+        "can_generate_decision_independently": false,
+        "trade_signal": null
+      },
+      {
+        "evidence_id": "margin_feedback_interaction",
+        "status": "READY",
+        "use_in_current_decision": true,
+        "decision_eligible": false,
+        "use_as_decision_evidence": true,
+        "can_generate_decision_independently": false,
+        "trade_signal": null
+      },
+      {
         "evidence_id": "active_return",
         "status": "READY",
         "use_in_current_decision": true,
@@ -64,14 +91,85 @@
         "use_as_decision_evidence": true,
         "can_generate_decision_independently": false,
         "trade_signal": null
+      },
+      {
+        "evidence_id": "component_lead_561980_3d",
+        "status": "DEGRADED",
+        "use_in_current_decision": false,
+        "decision_eligible": true,
+        "use_as_decision_evidence": false,
+        "can_generate_decision_independently": false,
+        "trade_signal": null
+      },
+      {
+        "evidence_id": "if_ic_basis_5d",
+        "status": "DEGRADED",
+        "use_in_current_decision": false,
+        "decision_eligible": null,
+        "use_as_decision_evidence": false,
+        "can_generate_decision_independently": false,
+        "trade_signal": null
+      },
+      {
+        "evidence_id": "ipo_base_stock_oversold_reversal_300750",
+        "status": "READY",
+        "use_in_current_decision": true,
+        "decision_eligible": null,
+        "use_as_decision_evidence": true,
+        "can_generate_decision_independently": false,
+        "trade_signal": null
       }
     ],
     "execution_eligible_backtest_conclusions": [
+      {
+        "source": "research/backtests/561980_component_lead_formal_conclusion.json",
+        "mode": "FORMAL_561980_COMPONENT_LEAD_CONCLUSION",
+        "research_interpretation": "PASS_MASTER_8_1_FORMAL_CONVERSION",
+        "conclusion": null,
+        "decision_eligible": true,
+        "use_as_decision_evidence": true,
+        "can_generate_decision_independently": false,
+        "production_context_integration": true,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/index_futures_if_ic_basis_formal_conclusion.json",
+        "mode": "FORMAL_IF_IC_5D_BASIS_RESEARCH_CONCLUSION",
+        "research_interpretation": "FORMALLY_CONVERTED_IF_IC_5D_BASIS_EVIDENCE",
+        "conclusion": "IF 5日基差变化与IC 5日基差变化已分别通过逐合约到期日校正后的稳定性验证和MASTER 8.1正式研究转化审查。IF为主证据，IC为稳定裕量较弱的补充证据；两者仅作为完整机会、持仓风险收益、金额和统一资本比较的辅助证据，不具备独立交易权限。",
+        "decision_eligible": true,
+        "use_as_decision_evidence": true,
+        "can_generate_decision_independently": false,
+        "production_context_integration": true,
+        "trade_signal": null
+      },
       {
         "source": "research/backtests/ipo_base_stock_specific_signal_conclusion.json",
         "mode": "IPO_BASE_STOCK_SPECIFIC_SIGNAL_FINAL_CONCLUSION",
         "research_interpretation": "ONE_ROBUST_STOCK_SPECIFIC_SIGNAL_AFTER_YEARLY_VALIDATION",
         "conclusion": "宁德时代（300750）的超跌反转研究信号通过固定PIT初筛与2024、2025、2026YTD年度分段稳健性复核，可作为只读执行证据；宁德时代（300750）与工业富联（601138）的60日放量突破初筛信号均因2026YTD出现明显反向失效而不进入正式执行证据。研究时点两只股票均未在2026-08-26完整日线触发最终保留的稳健信号。",
+        "decision_eligible": true,
+        "use_as_decision_evidence": true,
+        "can_generate_decision_independently": false,
+        "production_context_integration": true,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/low_cost_alpha_formal_conversion_review.json",
+        "mode": "FORMAL_RESEARCH_CONVERSION_REVIEW_LOW_COST_ALPHA",
+        "research_interpretation": null,
+        "conclusion": "Three scoped evidence families pass MASTER 8.1 formal conversion review: 561980 opening-pricing residual as lower-confidence single-object continuous evidence; completed-bar selling-exhaustion evidence as the strongest cross-sectional result; and margin-expansion-conditioned ETF relative feedback for the validated ETF subset, strongest in 588000. Weak-market resilience and dispersion-conditioned migration remain research-only/rejected. None can independently generate risk permission, Trial/Confirm, amount, sell quantity or orders.",
+        "decision_eligible": true,
+        "use_as_decision_evidence": true,
+        "can_generate_decision_independently": false,
+        "production_context_integration": true,
+        "trade_signal": null
+      },
+      {
+        "source": "research/backtests/participation_structure_formal_conclusion.json",
+        "mode": "FORMAL_EVIDENCE_CONCLUSION",
+        "research_interpretation": "完整收盘后，成交参与相对自身前20个完整交易日常态扩大，且价格已经形成20日突破或真实站回20日均线时，可增强已有结构证据；成交参与扩大本身不构成独立机会。",
+        "conclusion": "QUALIFIED_FOR_FORMAL_INTEGRATION_AFTER_MASTER_REGISTRATION",
         "decision_eligible": true,
         "use_as_decision_evidence": true,
         "can_generate_decision_independently": false,
@@ -271,9 +369,389 @@
     "automatic_promotion": false,
     "semantic_contract": {
       "use_as_decision_evidence": "可进入完整判断",
-      "can_generate_decision_independently": "是否可独立形成交易决议；研究证据固定为false"
+      "can_generate_decision_independently": "是否可独立形成交易决议；研究证据固定为false",
+      "static_conclusion_vs_dynamic_evidence": "静态结论只证明资格；涉及当前触发、增强或削弱的证据必须使用formal_dynamic_evidence中的动态状态，不得沿用研究日的current_*字段"
     },
     "trade_signal": null
+  },
+  "formal_dynamic_evidence": {
+    "margin_financing": {
+      "status": "READY",
+      "mode": "VALIDATED_MARGIN_FINANCING_EVIDENCE",
+      "use_in_current_decision": true,
+      "fact_latest_date": "2026-08-25",
+      "provider": "Eastmoney aggregate margin daily trade",
+      "primary_evidence": {
+        "name": "融资余额5日变化",
+        "signal": "margin_balance_5d_change_lag1",
+        "value_pct": -1.5912,
+        "state": "CONTRACTING",
+        "role": "PRIMARY"
+      },
+      "secondary_evidence": {
+        "name": "融资买入5日均值相对20日均值",
+        "signal": "margin_buy_5d_vs20_lag1",
+        "value_pct": -14.674,
+        "state": "CONTRACTING",
+        "role": "SECONDARY"
+      },
+      "applies_to": [
+        {
+          "code": "561980",
+          "name": "半导体设备ETF",
+          "display_name": "半导体设备ETF（561980）"
+        },
+        {
+          "code": "588000",
+          "name": "科创50ETF",
+          "display_name": "科创50ETF（588000）"
+        },
+        {
+          "code": "159781",
+          "name": "科创创业ETF",
+          "display_name": "科创创业ETF（159781）"
+        },
+        {
+          "code": "159992",
+          "name": "创新药ETF",
+          "display_name": "创新药ETF（159992）"
+        },
+        {
+          "code": "515880",
+          "name": "通信ETF",
+          "display_name": "通信ETF（515880）"
+        },
+        {
+          "code": "159326",
+          "name": "电网设备ETF",
+          "display_name": "电网设备ETF（159326）"
+        }
+      ],
+      "validated_reference": {
+        "stage1": "research/backtests/market_breadth_margin_stage1_validation.json",
+        "final": "research/backtests/margin_share_control_validation.json",
+        "result": "PROMISING_MARGIN_INCREMENT_BEYOND_SHARE_FLOW",
+        "controls": [
+          "mom5_lag1",
+          "mom20_lag1",
+          "reverse_share_change_5d_lag1"
+        ],
+        "primary_signal": "margin_balance_5d_change_lag1",
+        "secondary_signal": "margin_buy_5d_vs20_lag1"
+      },
+      "interpretation_rule": "作为A股风险资产ETF的市场级杠杆资金证据：融资余额5日变化为主证据，融资买入5日/20日加速度为辅助证据。只能与ETF自身结构、相对强弱、份额变化、生命周期、风险收益和替代机会共同参与机会比较；不得单独产生风险许可、Trial/Confirm、金额、降低风险或退出动作。",
+      "decision_eligible": false,
+      "use_as_decision_evidence": true,
+      "can_generate_decision_independently": false,
+      "trade_signal": null,
+      "trial_confirm": null,
+      "portfolio_target": null
+    },
+    "opening_residual_561980": {
+      "evidence_id": "opening_residual_561980",
+      "display_name": "半导体设备ETF（561980）海外开盘定价残差证据",
+      "status": "READY",
+      "use_in_current_decision": true,
+      "use_as_decision_evidence": true,
+      "decision_eligible": false,
+      "can_generate_decision_independently": false,
+      "trade_signal": null,
+      "scope": [
+        "561980"
+      ],
+      "calibration_cutoff": "2026-08-21",
+      "interpretation_rule": "正残差表示实际A股开盘相对历史SOX/NDX传导估计更低定价，负残差表示相对更高定价；仅参与半导体设备ETF机会强弱和风险收益判断，不是买入阈值。",
+      "a_share_market_date": "2026-08-28",
+      "us_tech_equal_1d_pct": -2.0826,
+      "ndx_1d_pct": -0.7014,
+      "sox_1d_pct": -3.4637,
+      "actual_open_gap_pct": -0.1406,
+      "expected_open_gap_pct": -0.7468,
+      "opening_underpricing_residual_pct": -0.6061,
+      "historical_residual_zone": "RICHLY_PRICED_TAIL",
+      "threshold_not_a_trade_rule": true
+    },
+    "selling_exhaustion": {
+      "evidence_id": "selling_exhaustion",
+      "display_name": "缩量下跌但收离低点证据",
+      "status": "READY",
+      "use_in_current_decision": true,
+      "use_as_decision_evidence": true,
+      "decision_eligible": false,
+      "can_generate_decision_independently": false,
+      "trade_signal": null,
+      "completed_bar_date": "2026-08-28",
+      "historical_low_volume_q33": 0.7958,
+      "items": [
+        {
+          "code": "159326",
+          "name": "电网设备ETF",
+          "display_name": "电网设备ETF（159326）",
+          "close_return_pct": -0.9445,
+          "volume_ratio_vs_prior20d": 0.769,
+          "historical_low_volume_q33": 0.7958,
+          "close_location": 0.125,
+          "pattern_match": false
+        },
+        {
+          "code": "159561",
+          "name": "德国ETF",
+          "display_name": "德国ETF（159561）",
+          "close_return_pct": 0.2886,
+          "volume_ratio_vs_prior20d": 0.7136,
+          "historical_low_volume_q33": 0.7958,
+          "close_location": 0.6,
+          "pattern_match": false
+        },
+        {
+          "code": "159781",
+          "name": "科创创业ETF",
+          "display_name": "科创创业ETF（159781）",
+          "close_return_pct": -1.5455,
+          "volume_ratio_vs_prior20d": 0.8232,
+          "historical_low_volume_q33": 0.7958,
+          "close_location": 0.0833,
+          "pattern_match": false
+        },
+        {
+          "code": "159941",
+          "name": "纳指ETF",
+          "display_name": "纳指ETF（159941）",
+          "close_return_pct": -0.1203,
+          "volume_ratio_vs_prior20d": 0.5318,
+          "historical_low_volume_q33": 0.7958,
+          "close_location": 0.1667,
+          "pattern_match": false
+        },
+        {
+          "code": "159992",
+          "name": "创新药ETF",
+          "display_name": "创新药ETF（159992）",
+          "close_return_pct": -1.4857,
+          "volume_ratio_vs_prior20d": 0.5154,
+          "historical_low_volume_q33": 0.7958,
+          "close_location": 0.1429,
+          "pattern_match": false
+        },
+        {
+          "code": "513180",
+          "name": "恒生科技ETF",
+          "display_name": "恒生科技ETF（513180）",
+          "close_return_pct": -0.3431,
+          "volume_ratio_vs_prior20d": 0.6545,
+          "historical_low_volume_q33": 0.7958,
+          "close_location": 0.5556,
+          "pattern_match": true
+        },
+        {
+          "code": "513520",
+          "name": "日经ETF",
+          "display_name": "日经ETF（513520）",
+          "close_return_pct": -0.2188,
+          "volume_ratio_vs_prior20d": 0.7632,
+          "historical_low_volume_q33": 0.7958,
+          "close_location": 0.0385,
+          "pattern_match": false
+        },
+        {
+          "code": "515880",
+          "name": "通信ETF",
+          "display_name": "通信ETF（515880）",
+          "close_return_pct": -1.4749,
+          "volume_ratio_vs_prior20d": 0.7616,
+          "historical_low_volume_q33": 0.7958,
+          "close_location": 0.0357,
+          "pattern_match": false
+        },
+        {
+          "code": "518880",
+          "name": "黄金ETF",
+          "display_name": "黄金ETF（518880）",
+          "close_return_pct": 0.307,
+          "volume_ratio_vs_prior20d": 0.7937,
+          "historical_low_volume_q33": 0.7958,
+          "close_location": 1.0,
+          "pattern_match": false
+        },
+        {
+          "code": "561980",
+          "name": "半导体设备ETF",
+          "display_name": "半导体设备ETF（561980）",
+          "close_return_pct": -2.5316,
+          "volume_ratio_vs_prior20d": 0.5681,
+          "historical_low_volume_q33": 0.7958,
+          "close_location": 0.0417,
+          "pattern_match": false
+        },
+        {
+          "code": "588000",
+          "name": "科创50ETF",
+          "display_name": "科创50ETF（588000）",
+          "close_return_pct": -1.7897,
+          "volume_ratio_vs_prior20d": 0.6299,
+          "historical_low_volume_q33": 0.7958,
+          "close_location": 0.0377,
+          "pattern_match": false
+        }
+      ],
+      "matched_codes": [
+        "513180"
+      ],
+      "interpretation_rule": "完整日线下，下跌、成交量处于历史低量环境且收盘明显离开日内低点，只表示抛压衰竭候选；必须与趋势、日内路径、承接、相对强弱和风险收益共同判断，不等于反转或买入。"
+    },
+    "margin_feedback_interaction": {
+      "evidence_id": "margin_feedback_interaction",
+      "display_name": "融资扩张×ETF相对反馈证据",
+      "status": "READY",
+      "use_in_current_decision": true,
+      "use_as_decision_evidence": true,
+      "decision_eligible": false,
+      "can_generate_decision_independently": false,
+      "trade_signal": null,
+      "margin_fact_latest_date": "2026-08-25",
+      "margin_5d_state": "CONTRACTING",
+      "etf_feedback_date": "2026-08-27",
+      "etf_universe_median_return_pct": 0.8065,
+      "items": [
+        {
+          "code": "159326",
+          "name": "电网设备ETF",
+          "display_name": "电网设备ETF（159326）",
+          "prior_day_return_pct": 0.6536,
+          "relative_to_etf_universe_median_pct_points": -0.1529,
+          "relative_feedback": "NOT_STRONGER",
+          "conditional_support_active": false,
+          "evidence_strength": "SUPPORTED_HETEROGENEOUS"
+        },
+        {
+          "code": "159781",
+          "name": "科创创业ETF",
+          "display_name": "科创创业ETF（159781）",
+          "prior_day_return_pct": 2.4209,
+          "relative_to_etf_universe_median_pct_points": 1.6144,
+          "relative_feedback": "STRONGER",
+          "conditional_support_active": false,
+          "evidence_strength": "SUPPORTED_HETEROGENEOUS"
+        },
+        {
+          "code": "159992",
+          "name": "创新药ETF",
+          "display_name": "创新药ETF（159992）",
+          "prior_day_return_pct": 0.8065,
+          "relative_to_etf_universe_median_pct_points": 0.0,
+          "relative_feedback": "NOT_STRONGER",
+          "conditional_support_active": false,
+          "evidence_strength": "SUPPORTED_HETEROGENEOUS"
+        },
+        {
+          "code": "561980",
+          "name": "半导体设备ETF",
+          "display_name": "半导体设备ETF（561980）",
+          "prior_day_return_pct": 3.6443,
+          "relative_to_etf_universe_median_pct_points": 2.8378,
+          "relative_feedback": "STRONGER",
+          "conditional_support_active": false,
+          "evidence_strength": "SUPPORTED_HETEROGENEOUS"
+        },
+        {
+          "code": "588000",
+          "name": "科创50ETF",
+          "display_name": "科创50ETF（588000）",
+          "prior_day_return_pct": 3.8931,
+          "relative_to_etf_universe_median_pct_points": 3.0866,
+          "relative_feedback": "STRONGER",
+          "conditional_support_active": false,
+          "evidence_strength": "MOST_STABLE"
+        }
+      ],
+      "active_support_codes": [],
+      "interpretation_rule": "只有融资余额5日状态为EXPANDING时，前一完整交易日相对ETF池更强才作为3—5日持续性的条件增强证据；融资非扩张只表示本交互不激活，不形成反向看空；不得机械买强。"
+    },
+    "if_ic_basis_5d": {
+      "schema_version": "1.2",
+      "generated_at": "2026-08-29T12:01:25Z",
+      "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
+      "evidence_id": "if_ic_basis_5d",
+      "display_name": "IF／IC 5日基差变化证据",
+      "read_only": true,
+      "use_as_decision_evidence": true,
+      "can_generate_decision_independently": false,
+      "automatic_trade": false,
+      "trade_signal": null,
+      "applies_to_etf_codes": [
+        "561980",
+        "588000",
+        "159781",
+        "159992",
+        "515880",
+        "159326"
+      ],
+      "research_source": "research/backtests/index_futures_if_ic_basis_formal_conclusion.json",
+      "status": "DEGRADED",
+      "use_in_current_decision": false,
+      "decision_market_date": "2026-08-28",
+      "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-08-27:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
+    },
+    "ipo_base_stock_oversold_reversal_300750": {
+      "schema_version": "1.1",
+      "generated_at": "2026-08-29T12:01:37Z",
+      "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
+      "evidence_id": "ipo_base_stock_oversold_reversal_300750",
+      "display_name": "宁德时代（300750）超跌反转专项证据",
+      "scope": [
+        "300750"
+      ],
+      "read_only": true,
+      "use_as_decision_evidence": true,
+      "can_generate_decision_independently": false,
+      "automatic_trade": false,
+      "trade_signal": null,
+      "definition": "最新完整日线：过去5个交易日累计跌幅不高于-8%，且收盘价低于20日均线；参数来自已完成正式转化的固定研究定义，不在运行期重估。",
+      "research_source": "research/backtests/ipo_base_stock_specific_signal_conclusion.json",
+      "status": "READY",
+      "use_in_current_decision": true,
+      "provider": "TENCENT_IFZQ",
+      "provider_fallback_errors": [
+        "eastmoney:RemoteDisconnected:Remote end closed connection without response"
+      ],
+      "completed_bar_date": "2026-08-27",
+      "close": 373.0,
+      "close_5_sessions_ago": 385.0,
+      "return_5d_pct": -3.1169,
+      "ma20": 390.2049,
+      "below_ma20": true,
+      "pattern_match": false,
+      "direction": "INACTIVE",
+      "interpretation_rule": "pattern_match=true只表示已验证的超跌反转研究条件当前成立，可增强宁德时代持有价值/新增候选/资本比较；不得直接生成风险许可、Trial/Confirm、金额、卖出份额或订单。",
+      "static_current_match_ignored": true
+    },
+    "component_lead_561980_3d": {
+      "schema_version": "1.0",
+      "mode": "FORMAL_561980_COMPONENT_LEAD_EVIDENCE",
+      "evidence_id": "component_lead_561980_3d",
+      "display_name": "半导体设备ETF（561980）核心成分3日相对领先证据",
+      "status": "DEGRADED",
+      "use_in_current_decision": false,
+      "use_as_decision_evidence": false,
+      "decision_eligible": true,
+      "can_generate_decision_independently": false,
+      "automatic_trade": false,
+      "trade_signal": null,
+      "scope": [
+        "561980"
+      ],
+      "decision_market_date": "2026-08-31",
+      "price_cutoff_market_date": "2026-08-28",
+      "reason": "official PCF unavailable: RuntimeError: official PCF invalid: code=0 rows=0",
+      "failure_policy": "关键PCF或完整价格输入不可验证时不沿用旧动态值，不形成方向性证据。",
+      "reviewed_current_top5": [
+        "002371",
+        "300604",
+        "300666",
+        "300346",
+        "002409"
+      ]
+    }
   },
   "portfolio_exposure": {
     "ipo_base_stock_market_value": 69120.0,
@@ -305,7 +783,8 @@
           "display_name": "超跌反转",
           "direction": "POSITIVE",
           "definition": "5个交易日跌幅不高于-8%，且收盘价低于20日均线；仅在完整日线形成后判定",
-          "current_completed_bar_match": false,
+          "current_completed_bar_match": null,
+          "static_current_match_ignored": true,
           "primary_validation": {
             "5d": {
               "n": 17,
@@ -350,6 +829,39 @@
           "trade_signal": null
         }
       ],
+      "dynamic_stock_specific_signal": {
+        "schema_version": "1.1",
+        "generated_at": "2026-08-29T12:01:37Z",
+        "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
+        "evidence_id": "ipo_base_stock_oversold_reversal_300750",
+        "display_name": "宁德时代（300750）超跌反转专项证据",
+        "scope": [
+          "300750"
+        ],
+        "read_only": true,
+        "use_as_decision_evidence": true,
+        "can_generate_decision_independently": false,
+        "automatic_trade": false,
+        "trade_signal": null,
+        "definition": "最新完整日线：过去5个交易日累计跌幅不高于-8%，且收盘价低于20日均线；参数来自已完成正式转化的固定研究定义，不在运行期重估。",
+        "research_source": "research/backtests/ipo_base_stock_specific_signal_conclusion.json",
+        "status": "READY",
+        "use_in_current_decision": true,
+        "provider": "TENCENT_IFZQ",
+        "provider_fallback_errors": [
+          "eastmoney:RemoteDisconnected:Remote end closed connection without response"
+        ],
+        "completed_bar_date": "2026-08-27",
+        "close": 373.0,
+        "close_5_sessions_ago": 385.0,
+        "return_5d_pct": -3.1169,
+        "ma20": 390.2049,
+        "below_ma20": true,
+        "pattern_match": false,
+        "direction": "INACTIVE",
+        "interpretation_rule": "pattern_match=true只表示已验证的超跌反转研究条件当前成立，可增强宁德时代持有价值/新增候选/资本比较；不得直接生成风险许可、Trial/Confirm、金额、卖出份额或订单。",
+        "static_current_match_ignored": true
+      },
       "rejected_stock_specific_signals_after_robustness": [
         {
           "signal_id": "VOLUME_BREAKOUT_60D",
@@ -389,6 +901,7 @@
       "research_scope": "CURRENT_FACT_CAPITAL_ROLE_AND_MATCHED_VALIDATED_RESEARCH",
       "validated_stock_specific_signal_status": "NO_STABLE_INCREMENTAL_SIGNAL_AFTER_ROBUSTNESS",
       "validated_stock_specific_signals": [],
+      "dynamic_stock_specific_signal": {},
       "rejected_stock_specific_signals_after_robustness": [
         {
           "signal_id": "VOLUME_BREAKOUT_60D",
@@ -425,6 +938,35 @@
       "trade_signal": null
     }
   ],
+  "etf_object_evidence": {
+    "component_lead_561980_3d": {
+      "schema_version": "1.0",
+      "mode": "FORMAL_561980_COMPONENT_LEAD_EVIDENCE",
+      "evidence_id": "component_lead_561980_3d",
+      "display_name": "半导体设备ETF（561980）核心成分3日相对领先证据",
+      "status": "DEGRADED",
+      "use_in_current_decision": false,
+      "use_as_decision_evidence": false,
+      "decision_eligible": true,
+      "can_generate_decision_independently": false,
+      "automatic_trade": false,
+      "trade_signal": null,
+      "scope": [
+        "561980"
+      ],
+      "decision_market_date": "2026-08-31",
+      "price_cutoff_market_date": "2026-08-28",
+      "reason": "official PCF unavailable: RuntimeError: official PCF invalid: code=0 rows=0",
+      "failure_policy": "关键PCF或完整价格输入不可验证时不沿用旧动态值，不形成方向性证据。",
+      "reviewed_current_top5": [
+        "002371",
+        "300604",
+        "300666",
+        "300346",
+        "002409"
+      ]
+    }
+  },
   "execution_bridge": {
     "direct_execution_contribution": true,
     "allowed_effects": [
