@@ -1,10 +1,10 @@
 {
-  "schema_version": "1.4",
+  "schema_version": "1.5",
   "mode": "PRODUCTION_MUTATION_PROTOCOL",
-  "purpose": "允许并行诊断与计算，但对共享生产状态实行隔离实施、latest-main重放、文件所有权和串行集成约束。",
+  "purpose": "允许并行诊断、研究、实现和测试；对共享生产状态实行价值/残余风险准入、隔离实施、latest-main重放、文件所有权和串行集成约束。",
   "normative_contract": {
     "source": "docs/生产变更与并发写入协议_V1.0.md",
-    "version": "V1.6",
+    "version": "V1.7",
     "machine_role": "EXECUTABLE_MIRROR_NOT_RULE_SOURCE"
   },
   "principles": [
@@ -17,41 +17,34 @@
     "formal_fact_documents_use_one_low_level_mutation_gateway"
   ],
   "change_admission": {
-    "default": "DO_NOT_MUTATE_UNLESS_CHANGE_VALUE_IS_CLEAR",
-    "rule_ids": [
-      "CA01",
-      "CA02",
-      "CA03",
-      "CA04",
-      "CA05",
-      "CA06",
-      "CA07",
-      "CA08",
-      "CA09",
-      "CA10",
-      "CA11"
-    ],
-    "rules": [
-      "diagnose_root_cause_before_mutation; error_location_is_not_root_cause",
-      "immediate_mutation_is_allowed_only_when_current_market_or_timing_facts_for_formal_judgment_are_wrong_or_unavailable, account_trade_cash_or_formal_facts_are_wrong_or_unclosed, or a_canonical_production_chain_is_broken_and_cannot_recover_through_existing_mechanisms",
-      "when_existing_fallback_self_healing_or_retry_has_correctly_degraded_or_closed_the_incident, default_to_observe; a_single_cron_delay_provider_fallback_transient_push_conflict_notification_failure_or_already_closed_self_heal_is_not_by_itself_a_reason_to_mutate_production",
-      "every_bug_fix_must_validate_the_original_failure_case, adjacent_state_or_session_boundaries, and the_previously_normal_case",
-      "after_a_non_emergency_production_semantic_change_is_integrated, prefer_one_natural_production_cycle_before_stacking_another_semantic_change; only_a_current_trade_account_market_fact_or_canonical_runtime_failure_may_interrupt_this_observation",
-      "minimum_fix_means_the_smallest_root_cause_complete_fix_not_the_smallest_diff; do_not_leave_known_adjacent_breakpoints_or_shift_the_same_defect_downstream",
-      "fix_shared_fact_or_state_semantics_at_the_highest_valid_canonical_owner; do_not_compensate_for_one_upstream_defect_with_multiple_downstream_exceptions_fallbacks_or_special_cases",
-      "if_a_second_production_patch_is_requested_for_the_same_root_cause_or_for_a_gap_created_or_missed_by_the_first_patch, stop_local_patching_and_repeat_full_root_cause_analysis_across_input_owner_state_transition_downstream_consumers_and_adjacent_sessions_before_more_mutation",
-      "a_bug_fix_must_preserve_unaffected_contracts; do_not_bundle_unrelated_changes_to_schedule_frequency_thresholds_provider_priority_check_scope_permissions_trading_rules_or_other_semantics_unless_they_are_part_of_the_same_proven_root_cause",
-      "during_a_share_continuous_trading_only_FIX_NOW_may_change_production_scripts_configs_workflows_or_data_standards; OBSERVE_and_DO_NOT_FIX_wait_for_a_noncritical_window_while_market_account_trade_closure_and_canonical_self_healing_continue_normally",
-      "treat_multiple_symptoms_from_one_root_cause_as_one_repair_unit; prohibit_symptom_level_patch_chains_that_mask_or_route_around_the_upstream_defect"
-    ],
+    "default": "DO_NOT_CHANGE_UNLESS_VALUE_AND_READINESS_ARE_CLEAR",
+    "governance_principles": {
+      "decision_and_timing": "decide whether the change has clear net value and whether any critical residual risk still requires future evidence; closed-market pre-open midday-break post-close and holiday windows may be valid maintenance windows; a real production exposure window is required only when the residual risk cannot be closed before merge",
+      "root_cause_complete_repair": "diagnose root cause first; repair at the highest lawful canonical owner; minimum fix means the smallest root-cause-complete fix; same-root-cause symptoms form one repair unit; a repeated patch for the same root cause triggers renewed end-to-end diagnosis",
+      "scope_and_validation": "preserve unrelated contracts; validate original failure adjacent state or session boundaries and the previously normal case; research production integration must validate PIT object scope automatic data failure degradation execution bridge consumption and anti-drift",
+      "serialized_integration_and_residual_risk_observation": "parallel research diagnosis implementation and tests are allowed; independent production changes integrate serially on latest main; after each merge complete main full consistency and E2E; do not impose a calendar wait unless unresolved residual risk specifically requires a real production exposure window"
+    },
+    "legacy_ca_mapping": {
+      "CA01": "root_cause_complete_repair",
+      "CA02": "decision_and_timing",
+      "CA03": "decision_and_timing",
+      "CA04": "scope_and_validation",
+      "CA05": "serialized_integration_and_residual_risk_observation",
+      "CA06": "root_cause_complete_repair",
+      "CA07": "root_cause_complete_repair",
+      "CA08": "root_cause_complete_repair",
+      "CA09": "scope_and_validation",
+      "CA10": "decision_and_timing",
+      "CA11": "root_cause_complete_repair"
+    },
     "decision_outcomes": [
-      "FIX_NOW",
+      "EXECUTE_NOW",
       "OBSERVE",
-      "DO_NOT_FIX"
+      "DO_NOT_CHANGE"
     ],
-    "decision_rule": "如果不能证明现在修改的生产收益高于不修改，默认不修改；该默认只限制维护变更，不阻止影响正式交易判断、账户/成交事实、行情事实或canonical生产运行的真实故障及时恢复。",
-    "execution_boundary": "用户提出修复要求不自动等于允许修改生产；ChatGPT/Codex在生产变更前必须先完成问题事实、canonical owner、根因、当前影响、现有恢复是否充分和修改必要性的判断。FIX_NOW进入现有最小根因完整修复链；OBSERVE/DO_NOT_FIX不创建生产修改。",
-    "maintenance_rule_freeze": "本change_admission已完成当前生产期所需的最小规则闭环；除非未来出现重复且实质影响生产、且现有规则无法覆盖的新型维护失效模式，否则不继续扩充维护规则。"
+    "decision_rule": "先判断变化是否有清晰净收益，再判断是否仍有必须等待的新信息。价值和实现/验证均充分且无关键残余风险需要未来真实生产暴露时为EXECUTE_NOW；存在明确且必须通过后续真实生产运行或未完成验证才能回答的问题时为OBSERVE；净收益不足、已有机制充分、已满足/替代或复杂度收益不成立时为DO_NOT_CHANGE。",
+    "execution_boundary": "用户提出修复、优化或执行不自动等于EXECUTE_NOW。ChatGPT/Codex必须先完成问题事实、canonical owner、根因、当前影响、既有恢复是否充分、实现成熟度和残余风险判断。EXECUTE_NOW进入既有latest-main隔离实施与组合验收链；OBSERVE必须记录具体阻塞和解除条件；DO_NOT_CHANGE不创建生产修改。A股连续交易期间仅执行影响当前交易判断、账户/成交/行情事实或canonical runtime恢复的必要生产修改，其他EXECUTE_NOW事项移至非关键窗口执行。",
+    "maintenance_rule_freeze": "长期治理只保留四条上位原则和少量硬工程合同；旧CA01-CA11仅作为审计兼容映射，不再作为日常平级入口，不继续新增CA12/CA13等规则。新失效模式优先归并到现有原则并强化测试，只有现有原则确实无法覆盖且问题重复、实质影响生产时才调整规范。"
   },
   "writer_requirements": {
     "require_concurrency_group": true,
@@ -163,11 +156,11 @@
     "最新main上的正式源文件 > 旧分支生成的动态状态"
   ],
   "integration_sequence": [
-    "analyze_in_parallel",
+    "analyze_research_and_test_in_parallel",
     "implement_in_isolation",
-    "merge_one_change",
-    "wait_for_latest_main_consistency",
-    "rebase_or_replay_next_change_on_latest_main",
-    "run_combined_end_to_end_validation"
+    "evaluate_value_and_residual_risk",
+    "integrate_one_change_on_latest_main",
+    "run_full_consistency_and_e2e",
+    "re_evaluate_next_change_against_latest_main"
   ]
 }
