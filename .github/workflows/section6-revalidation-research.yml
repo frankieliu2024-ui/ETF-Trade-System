@@ -7,6 +7,7 @@ on:
       - 'research/backtests/revalidate_section6_baselines.py'
       - 'research/backtests/analyze_section6_baseline_stability.py'
       - 'research/backtests/analyze_section6_component_ablation.py'
+      - 'research/backtests/analyze_section6_conditional_increment.py'
       - 'research/reports/**'
       - '.github/workflows/section6-revalidation-research.yml'
   workflow_dispatch:
@@ -30,6 +31,8 @@ jobs:
         run: python research/backtests/analyze_section6_baseline_stability.py
       - name: Run component ablation and regime screen
         run: python research/backtests/analyze_section6_component_ablation.py
+      - name: Run conditional increment screen
+        run: python research/backtests/analyze_section6_conditional_increment.py
       - name: Show generated reports
         run: |
           cat research/reports/generated/section6_revalidation/section6_baseline_revalidation.md
@@ -37,6 +40,8 @@ jobs:
           cat research/reports/generated/section6_revalidation/section6_baseline_stability.md
           printf '\n\n'
           cat research/reports/generated/section6_revalidation/section6_component_ablation.md
+          printf '\n\n'
+          cat research/reports/generated/section6_revalidation/section6_conditional_increment.md
       - name: Upload research artifact
         uses: actions/upload-artifact@v4
         with:
