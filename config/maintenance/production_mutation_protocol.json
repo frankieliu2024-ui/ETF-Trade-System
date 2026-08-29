@@ -1,7 +1,12 @@
 {
-  "schema_version": "1.3",
+  "schema_version": "1.4",
   "mode": "PRODUCTION_MUTATION_PROTOCOL",
   "purpose": "允许并行诊断与计算，但对共享生产状态实行隔离实施、latest-main重放、文件所有权和串行集成约束。",
+  "normative_contract": {
+    "source": "docs/生产变更与并发写入协议_V1.0.md",
+    "version": "V1.6",
+    "machine_role": "EXECUTABLE_MIRROR_NOT_RULE_SOURCE"
+  },
   "principles": [
     "parallel_diagnosis_is_allowed",
     "implementation_isolated_by_branch_or_workflow",
@@ -13,11 +18,24 @@
   ],
   "change_admission": {
     "default": "DO_NOT_MUTATE_UNLESS_CHANGE_VALUE_IS_CLEAR",
+    "rule_ids": [
+      "CA01",
+      "CA02",
+      "CA03",
+      "CA04",
+      "CA05",
+      "CA06",
+      "CA07",
+      "CA08",
+      "CA09",
+      "CA10",
+      "CA11"
+    ],
     "rules": [
       "diagnose_root_cause_before_mutation; error_location_is_not_root_cause",
       "immediate_mutation_is_allowed_only_when_current_market_or_timing_facts_for_formal_judgment_are_wrong_or_unavailable, account_trade_cash_or_formal_facts_are_wrong_or_unclosed, or a_canonical_production_chain_is_broken_and_cannot_recover_through_existing_mechanisms",
       "when_existing_fallback_self_healing_or_retry_has_correctly_degraded_or_closed_the_incident, default_to_observe; a_single_cron_delay_provider_fallback_transient_push_conflict_notification_failure_or_already_closed_self_heal_is_not_by_itself_a_reason_to_mutate_production",
-      "every_bug_fix_must_validate_the_original_failure_case, adjacent_state_or_session_boundaries, and the previously_normal_case",
+      "every_bug_fix_must_validate_the_original_failure_case, adjacent_state_or_session_boundaries, and the_previously_normal_case",
       "after_a_non_emergency_production_semantic_change_is_integrated, prefer_one_natural_production_cycle_before_stacking_another_semantic_change; only_a_current_trade_account_market_fact_or_canonical_runtime_failure_may_interrupt_this_observation",
       "minimum_fix_means_the_smallest_root_cause_complete_fix_not_the_smallest_diff; do_not_leave_known_adjacent_breakpoints_or_shift_the_same_defect_downstream",
       "fix_shared_fact_or_state_semantics_at_the_highest_valid_canonical_owner; do_not_compensate_for_one_upstream_defect_with_multiple_downstream_exceptions_fallbacks_or_special_cases",
