@@ -1,32 +1,30 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-29T10:54:01+08:00",
+  "generated_at": "2026-08-30T07:18:01+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 33230055015,
+  "workflow_name": "ETF system consistency",
+  "run_id": 33280611568,
   "run_attempt": 1,
-  "head_sha": "b15a4a60a30c712a5a43dd9dba6f062276cbaca9",
-  "main_head_sha": "b15a4a60a30c712a5a43dd9dba6f062276cbaca9",
+  "head_sha": "26b2375ddaea5a9501cdf11c4b3a9bb24a3e0a31",
+  "main_head_sha": "98b99b1c6588eb92b1bc91bc000cd377447309be",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "watchdog",
-      "step": "Run read-only comprehensive production health aggregate",
-      "number": 8
+      "job": "consistency",
+      "step": "Enforce hard consistency result",
+      "number": 17
     }
   ],
   "changed_files": [
-    "ETF_SYSTEM_INDEX.md",
-    "scripts/production_health_guard.py",
-    "tests/test_market_provider_display_sync.py"
+    "tests/test_market_phase4_no_mechanical_hard_gates.py"
   ],
-  "commit_message": "fix: 完成规范重构验收合同闭环",
+  "commit_message": "test: guard phase4 against mechanical hard gates",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": true,
+    "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
