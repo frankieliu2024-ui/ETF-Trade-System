@@ -10,28 +10,13 @@ on:
       - "scripts/validate_minute_context_integration.py"
       - "config/minute_path_validation_policy.json"
       - ".github/workflows/minute-path-shadow.yml"
-  schedule:
-    # Primary logical nodes: Beijing 10:30, 13:45, 14:20, 14:30, 14:55 on weekdays.
-    # Each node also has one nearby recovery cron. Primary/recovery runs are the same logical node and must be de-duplicated by planned_node_beijing.
-    # Recovery runs exist only to reduce GitHub schedule best-effort misses; they do not add production-path work.
-    # A path-scoped push may be used as an immediate live provider probe; it remains supplemental evidence and never counts as a scheduled logical node.
-    - cron: "26 2 * * 1-5"   # 10:26 recovery for logical 10:30
-    - cron: "30 2 * * 1-5"   # 10:30 primary
-    - cron: "41 5 * * 1-5"   # 13:41 recovery for logical 13:45
-    - cron: "45 5 * * 1-5"   # 13:45 primary
-    - cron: "16 6 * * 1-5"   # 14:16 recovery for logical 14:20
-    - cron: "20 6 * * 1-5"   # 14:20 primary
-    - cron: "26 6 * * 1-5"   # 14:26 recovery for logical 14:30
-    - cron: "30 6 * * 1-5"   # 14:30 primary
-    - cron: "51 6 * * 1-5"   # 14:51 recovery for logical 14:55
-    - cron: "55 6 * * 1-5"   # 14:55 primary
 
 permissions:
   contents: read
 
 concurrency:
   group: etf-minute-path-shadow
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   validate:
@@ -39,23 +24,11 @@ jobs:
     timeout-minutes: 3
     env:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
-      RAW_VALIDATION_SCHEDULE: ${{ github.event.schedule }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-      - name: Resolve logical validation node
-        shell: bash
-        run: |
-          case "$RAW_VALIDATION_SCHEDULE" in
-            "26 2 * * 1-5") echo "VALIDATION_SCHEDULE=30 2 * * 1-5" >> "$GITHUB_ENV" ;;
-            "41 5 * * 1-5") echo "VALIDATION_SCHEDULE=45 5 * * 1-5" >> "$GITHUB_ENV" ;;
-            "16 6 * * 1-5") echo "VALIDATION_SCHEDULE=20 6 * * 1-5" >> "$GITHUB_ENV" ;;
-            "26 6 * * 1-5") echo "VALIDATION_SCHEDULE=30 6 * * 1-5" >> "$GITHUB_ENV" ;;
-            "51 6 * * 1-5") echo "VALIDATION_SCHEDULE=55 6 * * 1-5" >> "$GITHUB_ENV" ;;
-            *) echo "VALIDATION_SCHEDULE=$RAW_VALIDATION_SCHEDULE" >> "$GITHUB_ENV" ;;
-          esac
       - name: Compile minute-path modules
         run: python -m py_compile scripts/build_minute_path_features.py scripts/probe_index_minute_acceptance.py scripts/probe_stock_minute_production.py scripts/validate_minute_context_integration.py
       - name: Build Tencent 1-minute ETF path shadow evidence
@@ -77,3 +50,8 @@ jobs:
             data/state/minute_context_integration_validation.json
           if-no-files-found: error
           retention-days: 14
+
+# This workflow is now validation-on-change/manual only. The minute path has a
+# formal object-level production gate and fallback in build_state_context.py;
+# repeated weekday shadow cron no longer provides enough incremental value to
+# justify ten scheduled attempts per day.
