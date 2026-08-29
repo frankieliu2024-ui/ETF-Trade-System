@@ -1,12 +1,19 @@
 from __future__ import annotations
 
+import sys
 import unittest
 from datetime import datetime, timezone
+from pathlib import Path
 from unittest.mock import patch
 
-import scripts.send_market_shock_notification as shock
-import scripts.send_us_session_summary as us
-from scripts.session_notification_semantics import us_session_structure
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = ROOT / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
+import send_market_shock_notification as shock
+import send_us_session_summary as us
+from session_notification_semantics import us_session_structure
 
 
 class UsNotificationPresentationTests(unittest.TestCase):
@@ -91,6 +98,35 @@ class UsNotificationPresentationTests(unittest.TestCase):
         fake_now = datetime(2026, 8, 28, 14, 17, 21, tzinfo=timezone.utc)
         with patch.object(shock._legacy, "read_json", return_value=state), patch.object(shock._legacy, "now", return_value=fake_now):
             self.assertTrue(shock._covered_by_recent_us_open(event))
+
+    def test_divergence_upgrade_uses_spread_magnitude(self):
+        event = {
+            "security_code": "US_TECH_DIVERGENCE",
+            "confirmation_context": {
+                "market": "US",
+                "market_date": "2026-08-28",
+                "direction": "DIVERGED",
+                "event_category": "DIVERGENCE",
+                "event_magnitude_pct": 2.64,
+            },
+        }
+        old_state = {
+            "notifications": [
+                {
+                    "event_type": "MARKET_VALUE_ALERT",
+                    "security_code": "US_TECH_DIVERGENCE",
+                    "confirmation_context": {
+                        "market_date": "2026-08-28",
+                        "direction": "DIVERGED",
+                        "event_category": "DIVERGENCE",
+                        "event_magnitude_pct": 1.82,
+                    },
+                }
+            ]
+        }
+        with patch.object(shock._legacy, "read_json", return_value=old_state):
+            self.assertAlmostEqual(shock._recent_same_family_level(event), 1.82)
+            self.assertAlmostEqual(shock._comparison_level(event["confirmation_context"], "DIVERGENCE"), 2.64)
 
 
 if __name__ == "__main__":
