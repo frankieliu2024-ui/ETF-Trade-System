@@ -7,9 +7,13 @@ from pathlib import Path
 try:
     from state_manager import atomic_json_write, now_utc, read_json
     from build_561980_component_lead_evidence import build as build_561980_component_lead_evidence
+    from build_if_ic_basis_evidence import build as build_if_ic_basis_evidence
+    from build_300750_oversold_reversal_evidence import build as build_300750_oversold_reversal_evidence
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, now_utc, read_json
     from scripts.build_561980_component_lead_evidence import build as build_561980_component_lead_evidence
+    from scripts.build_if_ic_basis_evidence import build as build_if_ic_basis_evidence
+    from scripts.build_300750_oversold_reversal_evidence import build as build_300750_oversold_reversal_evidence
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 OUTPUT = ROOT / "data/state/research_execution_summary.json"
@@ -69,12 +73,16 @@ def _research_conclusion_digest(root: Path, research_context: dict) -> dict:
             research_only.append(item)
 
     return {
-        "rule": "研究结论先归纳为可执行证据摘要，再进入正式判断；研究结论可以改变风险收益、候选比较、持有/卖出、金额与资金来源/去向，但不能单独生成订单或自动交易。",
+        "rule": "研究结论先归纳为可执行证据摘要，再进入正式判断；研究结论可以改变风险收益、候选比较、持有/卖出、金额与资金来源/去向，但不能单独生成订单或自动交易。静态正式结论负责资格与历史验证，当前状态敏感证据必须读取动态证据对象。",
         "runtime_validated_evidence": runtime,
         "execution_eligible_backtest_conclusions": execution_eligible,
         "research_only_backtest_conclusions": research_only,
         "automatic_promotion": False,
-        "semantic_contract": {"use_as_decision_evidence": "可进入完整判断", "can_generate_decision_independently": "是否可独立形成交易决议；研究证据固定为false"},
+        "semantic_contract": {
+            "use_as_decision_evidence": "可进入完整判断",
+            "can_generate_decision_independently": "是否可独立形成交易决议；研究证据固定为false",
+            "static_conclusion_vs_dynamic_evidence": "静态结论只证明资格；涉及当前触发、增强或削弱的证据必须使用formal_dynamic_evidence中的动态状态，不得沿用研究日的current_*字段",
+        },
         "trade_signal": None,
     }
 
@@ -99,7 +107,8 @@ def _stock_specific_signal_map(root: Path) -> dict[str, dict]:
                 "display_name": signal.get("display_name"),
                 "direction": signal.get("direction"),
                 "definition": signal.get("definition"),
-                "current_completed_bar_match": bool(signal.get("current_completed_bar_match", False)),
+                "current_completed_bar_match": None,
+                "static_current_match_ignored": True,
                 "primary_validation": signal.get("primary_validation"),
                 "yearly_robustness": signal.get("yearly_robustness"),
                 "use_as_decision_evidence": True,
@@ -111,9 +120,10 @@ def _stock_specific_signal_map(root: Path) -> dict[str, dict]:
             "status": stock.get("validated_stock_specific_signal_status") or ("VALIDATED_RESEARCH_SIGNAL_AVAILABLE" if validated else "NO_STABLE_INCREMENTAL_SIGNAL_AFTER_ROBUSTNESS"),
             "validated_signals": validated,
             "rejected_after_robustness": stock.get("rejected_after_robustness") or [],
-            "current_completed_bar_matches": stock.get("current_completed_bar_matches") or [],
+            "current_completed_bar_matches": [],
             "source": "research/backtests/ipo_base_stock_specific_signal_conclusion.json",
             "data_cutoff": obj.get("data_cutoff"),
+            "static_current_fields_are_historical_audit_only": True,
             "automatic_trade": False,
             "trade_signal": None,
         }
@@ -130,11 +140,38 @@ def build(root: Path | None = None) -> dict:
     stock_signal_map = _stock_specific_signal_map(root)
 
     component_lead = build_561980_component_lead_evidence(root)
+    if_ic_basis = build_if_ic_basis_evidence(root)
+    oversold_300750 = build_300750_oversold_reversal_evidence(root)
     atomic_json_write(root / "data/state/561980_component_lead_evidence.json", component_lead)
-    research_context.setdefault("validated_evidence_summary", {})["component_lead_561980_3d"] = component_lead
-    research_context.setdefault("paths", {})["component_lead_561980_3d"] = "data/state/561980_component_lead_evidence.json"
-    decision_context.setdefault("research_evidence", {})["component_lead_561980_3d"] = component_lead
+    atomic_json_write(root / "data/state/if_ic_basis_5d_evidence.json", if_ic_basis)
+    atomic_json_write(root / "data/state/300750_oversold_reversal_evidence.json", oversold_300750)
+
+    validated_summary = research_context.setdefault("validated_evidence_summary", {})
+    validated_summary["component_lead_561980_3d"] = component_lead
+    validated_summary["if_ic_basis_5d"] = if_ic_basis
+    validated_summary["ipo_base_stock_oversold_reversal_300750"] = oversold_300750
+    paths = research_context.setdefault("paths", {})
+    paths["component_lead_561980_3d"] = "data/state/561980_component_lead_evidence.json"
+    paths["if_ic_basis_5d"] = "data/state/if_ic_basis_5d_evidence.json"
+    paths["ipo_base_stock_oversold_reversal_300750"] = "data/state/300750_oversold_reversal_evidence.json"
+
+    decision_research = decision_context.setdefault("research_evidence", {})
+    decision_research["component_lead_561980_3d"] = component_lead
+    decision_research["if_ic_basis_5d"] = if_ic_basis
+    decision_research["ipo_base_stock_oversold_reversal_300750"] = oversold_300750
     decision_context["component_lead_561980_file"] = "data/state/561980_component_lead_evidence.json"
+    decision_context["if_ic_basis_5d_file"] = "data/state/if_ic_basis_5d_evidence.json"
+    decision_context["ipo_base_stock_oversold_reversal_300750_file"] = "data/state/300750_oversold_reversal_evidence.json"
+
+    dynamic_formal_evidence = {
+        "margin_financing": validated_summary.get("margin_financing") or {},
+        "opening_residual_561980": validated_summary.get("opening_residual_561980") or {},
+        "selling_exhaustion": validated_summary.get("selling_exhaustion") or {},
+        "margin_feedback_interaction": validated_summary.get("margin_feedback_interaction") or {},
+        "if_ic_basis_5d": if_ic_basis,
+        "ipo_base_stock_oversold_reversal_300750": oversold_300750,
+        "component_lead_561980_3d": component_lead,
+    }
 
     positions = {str(x.get("code") or ""): x for x in (account.get("positions") or []) if isinstance(x, dict) and x.get("code")}
     market_objects = stock_market.get("objects") or {}
@@ -150,6 +187,10 @@ def build(root: Path | None = None) -> dict:
         pos = positions.get(code) or {}
         market = market_objects.get(code) or {}
         stock_research = stock_signal_map.get(code) or {}
+        dynamic_stock_signal = oversold_300750 if code == "300750" else {}
+        current_matches = []
+        if code == "300750" and dynamic_stock_signal.get("status") == "READY" and dynamic_stock_signal.get("pattern_match") is True:
+            current_matches = ["OVERSOLD_REVERSAL"]
         mv = _num(pos.get("market_value"))
         if mv is None:
             mv = _num(item.get("market_value"))
@@ -173,8 +214,9 @@ def build(root: Path | None = None) -> dict:
             "research_scope": "CURRENT_FACT_CAPITAL_ROLE_AND_MATCHED_VALIDATED_RESEARCH",
             "validated_stock_specific_signal_status": stock_research.get("status") or ("NO_MATCHED_VALIDATED_SIGNAL" if not research_context.get("ipo_base_stock_research") else "SEE_RESEARCH_CONTEXT"),
             "validated_stock_specific_signals": stock_research.get("validated_signals") or [],
+            "dynamic_stock_specific_signal": dynamic_stock_signal,
             "rejected_stock_specific_signals_after_robustness": stock_research.get("rejected_after_robustness") or [],
-            "stock_specific_signal_current_completed_bar_matches": stock_research.get("current_completed_bar_matches") or [],
+            "stock_specific_signal_current_completed_bar_matches": current_matches,
             "stock_specific_research_source": stock_research.get("source"),
             "stock_specific_research_data_cutoff": stock_research.get("data_cutoff"),
             "decision_effects_allowed": ["持有价值和风险收益复核", "是否作为新增资本候选", "是否作为ETF或其他机会的可释放资金来源", "卖出后资金进入现金还是独立成立的新机会"],
@@ -190,7 +232,7 @@ def build(root: Path | None = None) -> dict:
         "account_total_asset": _round(total_asset, 2),
     }
     summary = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "generated_at": now_utc(),
         "mode": "RESEARCH_TO_EXECUTION_READ_ONLY_BRIDGE",
         "read_only": True,
@@ -200,6 +242,7 @@ def build(root: Path | None = None) -> dict:
         "trade_signal": None,
         "research_conclusions_must_be_synthesized": True,
         "conclusion_digest": digest,
+        "formal_dynamic_evidence": dynamic_formal_evidence,
         "portfolio_exposure": portfolio,
         "ipo_base_stock_evidence": stock_evidence,
         "etf_object_evidence": {
@@ -217,6 +260,7 @@ def build(root: Path | None = None) -> dict:
     }
 
     research_context["research_execution_summary"] = summary
+    research_context["formal_dynamic_evidence"] = dynamic_formal_evidence
     research_context["ipo_base_stock_research"] = {
         "status": "READY" if stock_signal_map else "NO_VALIDATED_STOCK_SPECIFIC_RESEARCH",
         "source": "research/backtests/ipo_base_stock_specific_signal_conclusion.json" if stock_signal_map else None,
@@ -227,9 +271,10 @@ def build(root: Path | None = None) -> dict:
     research_context["ipo_base_stock_research_coverage"] = {
         "status": "READY" if stock_evidence else "NO_CURRENT_IPO_BASE_STOCK",
         "object_count": len(stock_evidence),
-        "rule": "研究层覆盖当前已确认打新底仓；有匹配的验证研究时与当前行情/账户事实合并，没有匹配研究时不得伪造买卖信号。",
+        "rule": "研究层覆盖当前已确认打新底仓；有匹配的验证研究时与当前行情/账户事实合并，没有匹配研究时不得伪造买卖信号。当前触发状态必须来自动态证据，不得沿用静态研究结论中的历史current_*字段。",
     }
     decision_context.setdefault("research_evidence", {})["research_execution_summary"] = summary
+    decision_context["formal_dynamic_research_evidence"] = dynamic_formal_evidence
     decision_context["ipo_base_stock_evidence"] = stock_evidence
     decision_context["research_execution_summary_file"] = "data/state/research_execution_summary.json"
     decision_context["unified_capital_reallocation_contract"] = summary["execution_bridge"]
@@ -243,6 +288,7 @@ def build(root: Path | None = None) -> dict:
 def main() -> None:
     summary = build(ROOT)
     component = (summary.get("etf_object_evidence") or {}).get("component_lead_561980_3d") or {}
+    dynamic = summary.get("formal_dynamic_evidence") or {}
     print(json.dumps({
         "ok": True,
         "mode": summary.get("mode"),
@@ -250,6 +296,9 @@ def main() -> None:
         "ipo_base_stock_share_of_total_asset_pct": (summary.get("portfolio_exposure") or {}).get("ipo_base_stock_share_of_total_asset_pct"),
         "component_lead_561980_status": component.get("status"),
         "component_lead_561980_value": component.get("leader_minus_etf_3d_lag1_pct_points"),
+        "if_ic_basis_status": (dynamic.get("if_ic_basis_5d") or {}).get("status"),
+        "oversold_300750_status": (dynamic.get("ipo_base_stock_oversold_reversal_300750") or {}).get("status"),
+        "oversold_300750_match": (dynamic.get("ipo_base_stock_oversold_reversal_300750") or {}).get("pattern_match"),
         "automatic_trade": summary.get("automatic_trade"),
     }, ensure_ascii=False))
 
