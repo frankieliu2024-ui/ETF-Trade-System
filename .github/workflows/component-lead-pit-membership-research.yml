@@ -24,7 +24,7 @@ jobs:
         run: python -m pip install --disable-pip-version-check pandas requests
       - name: Compile research script
         run: python -m py_compile research/backtests/audit_pit_membership_capability.py
-      - name: Audit historical membership snapshots and disclosure-date candidates
+      - name: Audit holdings snapshots and fund-report publication API
         run: |
           mkdir -p /tmp/pit-membership
           python research/backtests/audit_pit_membership_capability.py --out /tmp/pit-membership
