@@ -15,6 +15,17 @@ class Phase4NoMechanicalHardGatesTest(unittest.TestCase):
         self.assertTrue(phase4._enhanced_risk_review(-10.5))
         self.assertNotEqual(phase4._risk_zone(-10.5), "RISK_CONTROL_REVIEW")
 
+    def test_minus_8_boundary_changes_review_context_not_execution_permission(self) -> None:
+        above = phase4._risk_zone(-7.99)
+        below = phase4._risk_zone(-8.01)
+        self.assertEqual(above, "RISK_OBSERVATION")
+        self.assertEqual(below, "RISK_CONTROL")
+        self.assertEqual(phase4._execution_constraints("READY"), [])
+        self.assertIn("MASTER_MINUS_5_RISK_REVIEW_BOUNDARY", phase4._risk_review_context(above, False))
+        self.assertIn("MASTER_MINUS_8_RISK_REVIEW_BOUNDARY", phase4._risk_review_context(below, False))
+        self.assertNotIn("MASTER_RISK_OBSERVATION_PERMISSION_APPLIES", phase4._execution_constraints("READY"))
+        self.assertNotIn("MASTER_RISK_CONTROL_PERMISSION_APPLIES", phase4._execution_constraints("READY"))
+
     def test_risk_control_and_e2e_blocked_do_not_delete_comparison_universe(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -49,6 +60,7 @@ class Phase4NoMechanicalHardGatesTest(unittest.TestCase):
                 phase4.ROOT = old_root
 
         self.assertEqual(ranking["risk_zone"], "RISK_CONTROL")
+        self.assertEqual(ranking["risk_zone_semantics"], "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION")
         self.assertTrue(ranking["enhanced_risk_review_required"])
         self.assertIsNone(ranking["top_candidate"])
         self.assertEqual(ranking["candidate_selection_status"], "REQUIRES_MASTER_DECISION")
@@ -61,7 +73,19 @@ class Phase4NoMechanicalHardGatesTest(unittest.TestCase):
         self.assertEqual(by_code["333333"]["data_availability"], "UNAVAILABLE")
         self.assertEqual(by_code["222222"]["category"], "OBSERVED_ETF")
         self.assertIn("E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT", by_code["222222"]["execution_constraints"])
-        self.assertIn("MASTER_RISK_CONTROL_PERMISSION_APPLIES", by_code["222222"]["execution_constraints"])
+        self.assertIn("MASTER_MINUS_8_RISK_REVIEW_BOUNDARY", by_code["222222"]["risk_review_context"])
+        self.assertNotIn("MASTER_RISK_CONTROL_PERMISSION_APPLIES", by_code["222222"]["execution_constraints"])
+
+    def test_risk_boundary_crossing_only_requests_reassessment(self) -> None:
+        current = {"captured_at": "2026-08-28T10:00:00+08:00"}
+        account = {"positions": [], "formal_action": {}}
+        e2e = {"status": "READY", "components": {"risk": {"etf_strategy_risk_pct": -8.01}}}
+        prior = {"risk_zone": "RISK_OBSERVATION", "pending_trigger": False}
+        trigger = phase4._build_trigger(current, account, e2e, {}, prior, {}, {})
+        self.assertEqual(trigger["trigger_type"], "RISK_BOUNDARY_CROSSED")
+        self.assertTrue(trigger["requires_formal_reassessment"])
+        self.assertEqual(trigger["risk_zone_semantics"], "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION")
+        self.assertIn("formal permission must be re-decided by MASTER", trigger["evidence_change"])
 
     def test_event_driven_account_carry_forward_is_default(self) -> None:
         current = {"market_date": "2026-08-28"}
