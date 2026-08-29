@@ -49,6 +49,23 @@ def fetch_month(ym:str,a:pd.Timestamp,b:pd.Timestamp):
         except Exception as e:last=e
     raise RuntimeError(f"CFFEX archive fetch failed {ym}: {type(last).__name__}: {last}")
 
+def expiry_for_contract(contract:str, observed_days:pd.DatetimeIndex, sample_end:pd.Timestamp)->tuple[pd.Timestamp,str]:
+    y,m=contract_month(contract); nominal=third_friday(y,m)
+    # For an expiry already observable inside the research sample, use the
+    # actual CFFEX trading calendar in the downloaded archive to apply the
+    # published holiday/non-trading-day forward-shift rule.
+    if nominal<=sample_end:
+        candidates=observed_days[(observed_days>=nominal)&(observed_days.year==y)&(observed_days.month==m)]
+        if len(candidates):
+            actual=candidates[0]
+            return actual,"OBSERVED_RULE_DATE" if actual==nominal else "OBSERVED_RULE_SHIFT"
+        raise RuntimeError(f"cannot resolve historical expiry trading day for {contract} from observed CFFEX calendar")
+    # CFFEX archives can contain far-dated listed contracts whose expiry lies
+    # after the research end date. Their nominal third-Friday expiry is already
+    # a point-in-time contract rule fact; do not falsely require a future
+    # trading day to exist inside the historical sample.
+    return nominal,"RULE_NOMINAL_AFTER_SAMPLE"
+
 def fetch_futures(start:str,end:str)->pd.DataFrame:
     parts=[]; a=pd.Timestamp(start); b=pd.Timestamp(end); months=list(month_keys(start,end))
     with ThreadPoolExecutor(max_workers=8) as ex:
@@ -58,14 +75,13 @@ def fetch_futures(start:str,end:str)->pd.DataFrame:
     if not parts:raise RuntimeError("no CFFEX contract history returned from monthly archives")
     f=pd.concat(parts,ignore_index=True).drop_duplicates(["trade_date","product","contract"])
     for c in ["close","settlement","volume","open_interest"]:f[c]=pd.to_numeric(f[c],errors="coerce")
-    f=f.dropna(subset=["close","settlement","volume","open_interest"]); all_days=pd.DatetimeIndex(sorted(f["trade_date"].unique())); expiries={}
-    for contract in sorted(f["contract"].unique()):
-        try:y,m=contract_month(contract)
-        except ValueError:continue
-        nominal=third_friday(y,m); candidates=all_days[(all_days>=nominal)&(all_days.year==y)&(all_days.month==m)]
-        if len(candidates):expiries[contract]=candidates[0]
-    f["expiry_date"]=f["contract"].map(expiries); missing=sorted(f.loc[f.expiry_date.isna(),"contract"].unique().tolist())
-    if missing:raise RuntimeError(f"expiry mapping missing for contracts: {missing[:20]}")
+    f=f.dropna(subset=["close","settlement","volume","open_interest"]); observed_days=pd.DatetimeIndex(sorted(f["trade_date"].unique()))
+    mapping={}
+    for contract in sorted(f["contract"].unique()): mapping[contract]=expiry_for_contract(contract,observed_days,b)
+    f["expiry_date"]=f["contract"].map(lambda c:mapping[c][0]); f["expiry_date_source"]=f["contract"].map(lambda c:mapping[c][1])
+    if (f["expiry_date"]<f["trade_date"]).any():
+        bad=f.loc[f["expiry_date"]<f["trade_date"],["trade_date","contract","expiry_date"]].head(20).to_dict("records")
+        raise RuntimeError(f"post-expiry futures rows detected: {bad}")
     return f.sort_values(["trade_date","product","contract"])
 
 def fetch_spot(start:str,end:str)->pd.DataFrame:
@@ -79,6 +95,6 @@ def fetch_spot(start:str,end:str)->pd.DataFrame:
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--start",default="20240101"); ap.add_argument("--end",default="20260828"); ap.add_argument("--out",type=Path,required=True); a=ap.parse_args(); a.out.mkdir(parents=True,exist_ok=True)
     f=fetch_futures(a.start,a.end); s=fetch_spot(a.start,a.end); f.to_csv(a.out/"cffex_contract_daily.csv",index=False); s.to_csv(a.out/"cffex_spot_daily.csv",index=False)
-    q={"mode":"RESEARCH_ONLY_CFFEX_EXPIRY_AWARE_INPUTS","source":"CFFEX official monthly history archive; spot via AKShare Eastmoney index history","start":a.start,"end":a.end,"futures_rows":len(f),"spot_rows":len(s),"contracts":{p:int(f[f.product==p].contract.nunique()) for p in PRODUCTS},"date_range":{p:[f[f.product==p].trade_date.min().date().isoformat(),f[f.product==p].trade_date.max().date().isoformat()] for p in PRODUCTS},"expiry_rule":"published third-Friday rule, shifted to first CFFEX trading day on/after nominal date when needed","production_context_integration":False,"trade_signal":None}
+    q={"mode":"RESEARCH_ONLY_CFFEX_EXPIRY_AWARE_INPUTS","source":"CFFEX official monthly history archive; spot via AKShare Eastmoney index history","start":a.start,"end":a.end,"futures_rows":len(f),"spot_rows":len(s),"contracts":{p:int(f[f.product==p].contract.nunique()) for p in PRODUCTS},"date_range":{p:[f[f.product==p].trade_date.min().date().isoformat(),f[f.product==p].trade_date.max().date().isoformat()] for p in PRODUCTS},"expiry_date_source_counts":{k:int(v) for k,v in f.drop_duplicates("contract")["expiry_date_source"].value_counts().to_dict().items()},"expiry_rule":"published third-Friday rule; historical expiries use observed CFFEX trading-day shift when required; contracts expiring after sample end keep nominal rule date without future-data lookahead","production_context_integration":False,"trade_signal":None}
     (a.out/"input_qa.json").write_text(json.dumps(q,ensure_ascii=False,indent=2)+"\n",encoding="utf-8"); print(json.dumps(q,ensure_ascii=False))
 if __name__=="__main__":raise SystemExit(main())
