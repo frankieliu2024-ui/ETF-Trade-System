@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "mode": "RESEARCH_ONLY_561980_INDEX_REBALANCE_PIT_FINAL_CONCLUSION",
+  "object": {
+    "code": "561980",
+    "name": "半导体设备ETF",
+    "underlying_index": "中证半导体产业指数",
+    "index_code": "931865"
+  },
+  "research_interpretation": "PASS_561980_INDEX_REBALANCE_PIT",
+  "signal": "leader_minus_etf_3d_lag1",
+  "definition": "使用当日开盘前已公开的招商基金561980官方PCF所确认的指数复制篮子；在每次真实成分变化或931865定期调样生效日，以PCF的tdAmount对篮子排序锁定Top5，直至下一成分变化/定期调样。交易日D的信号只使用D-1及更早收盘价，衡量Top5过去3日平均收益减561980自身过去3日收益。",
+  "point_in_time": "PCF为D日开盘前公开事实；D日成员可用于D日判断，但所有价格特征只使用D-1及更早收盘；ETF未来收益从D日开盘开始计算。",
+  "data_quality": {
+    "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
+    "pcf_dates_requested": 645,
+    "pcf_dates_ok": 645,
+    "pcf_coverage": 1.0,
+    "component_count": 40,
+    "observed_nonregular_component_changes": 0,
+    "regular_effective_dates": [
+      "2023-12-18",
+      "2024-06-17",
+      "2024-12-16",
+      "2025-06-16",
+      "2025-12-15",
+      "2026-06-15"
+    ],
+    "price_source": "Tencent IFZQ qfq daily kline",
+    "margin_source": "SSE+SZSE official",
+    "margin_rows_complete": 616,
+    "validation_panel_rows": 623
+  },
+  "rebalance_top5": [
+    {"effective_date":"2023-12-18","top5":["002371","300604","002436","300346","002409"]},
+    {"effective_date":"2024-06-17","top5":["002371","300346","300604","002436","002409"]},
+    {"effective_date":"2024-12-16","top5":["002371","300346","300604","002436","002409"]},
+    {"effective_date":"2025-06-16","top5":["002371","300346","300604","300666","002409"]},
+    {"effective_date":"2025-12-15","top5":["002371","300604","300346","301611","300666"]},
+    {"effective_date":"2026-06-15","top5":["002371","300604","300666","300346","002409"]}
+  ],
+  "base_control_validation": {
+    "controls": ["mom5_lag1", "mom20_lag1"],
+    "horizon_partial_rank_ic": {"1d":0.0568,"3d":0.0182,"5d":0.0541},
+    "median_partial_rank_ic": 0.0541,
+    "early_median_ic": 0.0265,
+    "late_median_ic": 0.0643,
+    "annual_median_ic": {"2024":0.0852,"2025":-0.0868,"2026":0.0755},
+    "positive_years": 2,
+    "supported": true
+  },
+  "margin_control_validation": {
+    "controls": ["mom5_lag1", "mom20_lag1", "margin_balance_5d_change_lag1"],
+    "horizon_partial_rank_ic": {"1d":0.0568,"3d":0.0181,"5d":0.0542},
+    "median_partial_rank_ic": 0.0542,
+    "early_median_ic": 0.0426,
+    "late_median_ic": 0.0768,
+    "annual_median_ic": {"2024":0.1052,"2025":-0.0745,"2026":0.0865},
+    "positive_years": 2,
+    "supported": true
+  },
+  "comparison_with_issue_61": "季度报告PIT口径下median partial rank IC约0.1024；改成逐交易日官方PCF校验真实成员并按真实定期调样生效日锁定Top5后降至约0.054，但仍超过预注册0.03门槛，且前后半段均为正、三年中两年为正，加入官方融资余额5日变化控制后仍通过。因此原效应被成分后视偏差高估了一部分，但没有被其完全解释。",
+  "research_boundary": "本结论仅说明561980的该对象级3日相对领先证据具备进入MASTER 8.1正式研究转化审查的资格；当前仍research-only，不进入decision_context，不单独产生风险许可、Trial/Confirm、金额、卖出份额或订单。",
+  "decision_eligible": false,
+  "production_context_integration": false,
+  "can_generate_decision_independently": false,
+  "trade_signal": null
+}
