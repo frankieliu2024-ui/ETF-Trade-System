@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import errno
 import io
 import json
 import math
@@ -62,6 +63,29 @@ def _http(url: str, timeout: int) -> bytes:
     return urlopen(Request(url, headers={"User-Agent": UA, "Accept": "*/*"}), timeout=timeout).read()
 
 
+def _host_network_unreachable(exc: BaseException) -> bool:
+    """Return true only for connection-level failures that make same-host fallbacks redundant.
+
+    HTTP/path/data errors and ordinary timeouts deliberately return false so the official
+    monthly CFFEX archive remains available as a real fallback when the host itself is reachable.
+    """
+    current: object | None = exc
+    seen: set[int] = set()
+    unreachable_errnos = {errno.ENETDOWN, errno.ENETUNREACH, errno.EHOSTUNREACH}
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        if isinstance(current, OSError) and getattr(current, "errno", None) in unreachable_errnos:
+            return True
+        text = str(current).lower()
+        if "network is unreachable" in text or "no route to host" in text:
+            return True
+        reason = getattr(current, "reason", None)
+        if reason is current:
+            break
+        current = reason
+    return False
+
+
 def _parse_cffex(raw: bytes, d: date) -> list[dict]:
     reader = csv.reader(io.StringIO(raw.decode("gb2312", errors="ignore")))
     next(reader, None)
@@ -121,7 +145,9 @@ def _fetch_futures(start: date, end: date, calendar: dict) -> tuple[list[dict], 
     """Bounded official fetch: probe one daily file; if unavailable, jump to monthly archive.
 
     We need only six same-contract observations. Repeatedly timing out on every historical
-    day provides no extra information once the official daily endpoint is unavailable.
+    day provides no extra information once the official daily endpoint is unavailable. If the
+    probe proves the CFFEX host is network-unreachable, same-host monthly retries are skipped;
+    HTTP/path/data failures still retain the official monthly archive fallback.
     """
     days = _trading_days(start, end, calendar)
     if not days:
@@ -147,6 +173,8 @@ def _fetch_futures(start: date, end: date, calendar: dict) -> tuple[list[dict], 
             return sorted(uniq.values(), key=lambda x: (x["trade_date"], x["product"], x["contract"])), "CFFEX_OFFICIAL_DAILY_CSV", errors
     except Exception as exc:
         errors.append(f"daily_probe {probe}:{type(exc).__name__}:{exc}")
+        if _host_network_unreachable(exc):
+            raise RuntimeError(errors[-1] + "; cffex_host_network_unreachable: same-host monthly fallback skipped") from exc
 
     rows = []
     for ym in _month_keys(start, end):
