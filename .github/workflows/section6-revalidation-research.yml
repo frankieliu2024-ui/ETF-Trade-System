@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'research/backtests/revalidate_section6_baselines.py'
+      - 'research/backtests/analyze_section6_baseline_stability.py'
       - 'research/reports/**'
       - '.github/workflows/section6-revalidation-research.yml'
   workflow_dispatch:
@@ -24,8 +25,13 @@ jobs:
           python-version: '3.11'
       - name: Run frozen 6.2 baseline revalidation
         run: python research/backtests/revalidate_section6_baselines.py
-      - name: Show generated report
-        run: cat research/reports/generated/section6_revalidation/section6_baseline_revalidation.md
+      - name: Run T+5 stability and incremental screen
+        run: python research/backtests/analyze_section6_baseline_stability.py
+      - name: Show generated reports
+        run: |
+          cat research/reports/generated/section6_revalidation/section6_baseline_revalidation.md
+          printf '\n\n'
+          cat research/reports/generated/section6_revalidation/section6_baseline_stability.md
       - name: Upload research artifact
         uses: actions/upload-artifact@v4
         with:
