@@ -1,0 +1,37 @@
+name: Section6 Evidence Revalidation Research
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'research/backtests/revalidate_section6_baselines.py'
+      - 'research/reports/**'
+      - '.github/workflows/section6-revalidation-research.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  section6-baseline:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'research/section6-evidence-revalidation-20260829'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Run frozen 6.2 baseline revalidation
+        run: python research/backtests/revalidate_section6_baselines.py
+      - name: Show generated report
+        run: cat research/reports/generated/section6_revalidation/section6_baseline_revalidation.md
+      - name: Upload research artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: section6-baseline-revalidation
+          path: research/reports/generated/section6_revalidation/
+          if-no-files-found: error
+
+# Research-only workflow. It has read-only repository permission, does not commit,
+# does not write main, and does not create trading permissions or runtime state.
