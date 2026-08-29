@@ -2,7 +2,6 @@
 from __future__ import annotations
 import argparse, json, re, time, zipfile
 from calendar import monthcalendar, FRIDAY
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import BytesIO, StringIO
 from pathlib import Path
 import pandas as pd
@@ -33,9 +32,9 @@ def parse_daily_csv(raw:bytes,date:str)->pd.DataFrame:
 
 def fetch_month(ym:str,a:pd.Timestamp,b:pd.Timestamp):
     url=f"http://www.cffex.com.cn/sj/historysj/{ym}/zip/{ym}.zip"; last=None
-    for _ in range(2):
+    for attempt in range(5):
         try:
-            r=requests.get(url,headers=HEAD,timeout=12); r.raise_for_status(); out=[]
+            r=requests.get(url,headers=HEAD,timeout=20); r.raise_for_status(); out=[]
             with zipfile.ZipFile(BytesIO(r.content)) as z:
                 for name in z.namelist():
                     m=re.fullmatch(r"(\d{8})_1\.csv",name.split("/")[-1])
@@ -45,7 +44,8 @@ def fetch_month(ym:str,a:pd.Timestamp,b:pd.Timestamp):
                     q=parse_daily_csv(z.read(name),m.group(1))
                     if not q.empty:out.append(q)
             return ym,out
-        except Exception as e:last=e
+        except Exception as e:
+            last=e; time.sleep(1.5*(attempt+1))
     raise RuntimeError(f"CFFEX archive fetch failed {ym}: {type(last).__name__}: {last}")
 
 def expiry_for_contract(contract:str, observed_days:pd.DatetimeIndex, sample_end:pd.Timestamp)->tuple[pd.Timestamp,str]:
@@ -59,10 +59,11 @@ def expiry_for_contract(contract:str, observed_days:pd.DatetimeIndex, sample_end
 
 def fetch_futures(start:str,end:str)->pd.DataFrame:
     parts=[]; a=pd.Timestamp(start); b=pd.Timestamp(end)
-    with ThreadPoolExecutor(max_workers=8) as ex:
-        fs={ex.submit(fetch_month,ym,a,b):ym for ym in month_keys(start,end)}
-        for future in as_completed(fs):
-            ym,out=future.result(); parts.extend(out); print(f"fetched {ym}: {sum(len(x) for x in out)} rows",flush=True)
+    # CFFEX monthly archives intermittently reset concurrent GitHub-runner
+    # connections. Fetch sequentially with bounded retries so a single month
+    # does not invalidate an otherwise complete research input set.
+    for ym in month_keys(start,end):
+        key,out=fetch_month(ym,a,b); parts.extend(out); print(f"fetched {key}: {sum(len(x) for x in out)} rows",flush=True)
     if not parts:raise RuntimeError("no CFFEX contract history returned from monthly archives")
     f=pd.concat(parts,ignore_index=True).drop_duplicates(["trade_date","product","contract"])
     for c in ["close","settlement","volume","open_interest"]:f[c]=pd.to_numeric(f[c],errors="coerce")
@@ -126,6 +127,6 @@ def fetch_spot(start:str,end:str)->pd.DataFrame:
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--start",default="20240101"); ap.add_argument("--end",default="20260828"); ap.add_argument("--out",type=Path,required=True); a=ap.parse_args(); a.out.mkdir(parents=True,exist_ok=True)
     f=fetch_futures(a.start,a.end); s=fetch_spot(a.start,a.end); f.to_csv(a.out/"cffex_contract_daily.csv",index=False); s.to_csv(a.out/"cffex_spot_daily.csv",index=False)
-    q={"mode":"RESEARCH_ONLY_CFFEX_EXPIRY_AWARE_INPUTS","source":"CFFEX official monthly history archive; spot uses retried Eastmoney push2his with Tencent IFZQ and Yahoo Chart object-level fallbacks","start":a.start,"end":a.end,"futures_rows":len(f),"spot_rows":len(s),"contracts":{p:int(f.loc[f["product"].eq(p),"contract"].nunique()) for p in PRODUCTS},"date_range":{p:[f.loc[f["product"].eq(p),"trade_date"].min().date().isoformat(),f.loc[f["product"].eq(p),"trade_date"].max().date().isoformat()] for p in PRODUCTS},"spot_sources":{p:sorted(s.loc[s["product"].eq(p),"spot_source"].unique().tolist()) for p in PRODUCTS},"expiry_date_source_counts":{k:int(v) for k,v in f.drop_duplicates("contract")["expiry_date_source"].value_counts().to_dict().items()},"expiry_rule":"published third-Friday rule; historical expiries use observed CFFEX trading-day shift when required; contracts expiring after sample end keep nominal rule date without future-data lookahead","production_context_integration":False,"trade_signal":None}
+    q={"mode":"RESEARCH_ONLY_CFFEX_EXPIRY_AWARE_INPUTS","source":"CFFEX official monthly history archive fetched sequentially with bounded retries; spot uses retried Eastmoney push2his with Tencent IFZQ and Yahoo Chart object-level fallbacks","start":a.start,"end":a.end,"futures_rows":len(f),"spot_rows":len(s),"contracts":{p:int(f.loc[f["product"].eq(p),"contract"].nunique()) for p in PRODUCTS},"date_range":{p:[f.loc[f["product"].eq(p),"trade_date"].min().date().isoformat(),f.loc[f["product"].eq(p),"trade_date"].max().date().isoformat()] for p in PRODUCTS},"spot_sources":{p:sorted(s.loc[s["product"].eq(p),"spot_source"].unique().tolist()) for p in PRODUCTS},"expiry_date_source_counts":{k:int(v) for k,v in f.drop_duplicates("contract")["expiry_date_source"].value_counts().to_dict().items()},"expiry_rule":"published third-Friday rule; historical expiries use observed CFFEX trading-day shift when required; contracts expiring after sample end keep nominal rule date without future-data lookahead","production_context_integration":False,"trade_signal":None}
     (a.out/"input_qa.json").write_text(json.dumps(q,ensure_ascii=False,indent=2)+"\n",encoding="utf-8"); print(json.dumps(q,ensure_ascii=False))
 if __name__=="__main__":raise SystemExit(main())
