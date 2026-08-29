@@ -88,6 +88,20 @@ def fetch_spot_eastmoney(code:str,start:str,end:str)->pd.DataFrame:
             last=e; time.sleep(1.0+attempt)
     raise RuntimeError(f"Eastmoney spot failed for {code}: {type(last).__name__}: {last}")
 
+def fetch_spot_tencent(code:str,start:str,end:str)->pd.DataFrame:
+    symbol=f"sh{code}"
+    url="https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
+    params={"param":f"{symbol},day,{pd.Timestamp(start).strftime('%Y-%m-%d')},{pd.Timestamp(end).strftime('%Y-%m-%d')},1000,qfq"}
+    r=requests.get(url,params=params,headers=HEAD,timeout=15); r.raise_for_status(); data=((r.json().get("data") or {}).get(symbol) or {})
+    kl=data.get("qfqday") or data.get("day") or []
+    if not kl:raise RuntimeError(f"Tencent spot empty for {symbol}")
+    rows=[]
+    for p in kl:
+        if len(p)>=3:rows.append({"trade_date":pd.Timestamp(p[0]),"spot_close":pd.to_numeric(p[2],errors="coerce")})
+    x=pd.DataFrame(rows).dropna()
+    a,b=pd.Timestamp(start),pd.Timestamp(end); x=x[(x["trade_date"]>=a)&(x["trade_date"]<=b)]
+    x["spot_source"]="tencent_ifzq_kline"; return x
+
 def fetch_spot_yahoo(symbol:str,start:str,end:str)->pd.DataFrame:
     p1=int(pd.Timestamp(start,tz="Asia/Shanghai").tz_convert("UTC").timestamp()); p2=int((pd.Timestamp(end,tz="Asia/Shanghai")+pd.Timedelta(days=2)).tz_convert("UTC").timestamp())
     url=f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"; r=requests.get(url,params={"period1":p1,"period2":p2,"interval":"1d","events":"history"},headers=HEAD,timeout=15); r.raise_for_status(); result=((r.json().get("chart") or {}).get("result") or [])
@@ -97,7 +111,7 @@ def fetch_spot_yahoo(symbol:str,start:str,end:str)->pd.DataFrame:
 
 def fetch_one_spot(product:str,code:str,start:str,end:str)->pd.DataFrame:
     errors=[]
-    for fn,arg in ((fetch_spot_eastmoney,code),(fetch_spot_yahoo,YAHOO[product])):
+    for fn,arg in ((fetch_spot_eastmoney,code),(fetch_spot_tencent,code),(fetch_spot_yahoo,YAHOO[product])):
         try:
             x=fn(arg,start,end)
             if len(x)<100:raise RuntimeError(f"insufficient rows {len(x)}")
@@ -106,15 +120,12 @@ def fetch_one_spot(product:str,code:str,start:str,end:str)->pd.DataFrame:
     raise RuntimeError(f"all spot sources failed for {product}/{code}: {' | '.join(errors)}")
 
 def fetch_spot(start:str,end:str)->pd.DataFrame:
-    # Serialize the three small requests: Eastmoney intermittently closes
-    # concurrent connections from GitHub-hosted runners, while sequential
-    # retries are stable and keep the source contract unchanged.
     rows=[fetch_one_spot(p,c,start,end) for p,c in PRODUCTS.items()]
     return pd.concat(rows,ignore_index=True).drop_duplicates(["trade_date","product"]).sort_values(["trade_date","product"])
 
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--start",default="20240101"); ap.add_argument("--end",default="20260828"); ap.add_argument("--out",type=Path,required=True); a=ap.parse_args(); a.out.mkdir(parents=True,exist_ok=True)
     f=fetch_futures(a.start,a.end); s=fetch_spot(a.start,a.end); f.to_csv(a.out/"cffex_contract_daily.csv",index=False); s.to_csv(a.out/"cffex_spot_daily.csv",index=False)
-    q={"mode":"RESEARCH_ONLY_CFFEX_EXPIRY_AWARE_INPUTS","source":"CFFEX official monthly history archive; spot uses retried Eastmoney push2his with Yahoo Chart fallback","start":a.start,"end":a.end,"futures_rows":len(f),"spot_rows":len(s),"contracts":{p:int(f.loc[f["product"].eq(p),"contract"].nunique()) for p in PRODUCTS},"date_range":{p:[f.loc[f["product"].eq(p),"trade_date"].min().date().isoformat(),f.loc[f["product"].eq(p),"trade_date"].max().date().isoformat()] for p in PRODUCTS},"spot_sources":{p:sorted(s.loc[s["product"].eq(p),"spot_source"].unique().tolist()) for p in PRODUCTS},"expiry_date_source_counts":{k:int(v) for k,v in f.drop_duplicates("contract")["expiry_date_source"].value_counts().to_dict().items()},"expiry_rule":"published third-Friday rule; historical expiries use observed CFFEX trading-day shift when required; contracts expiring after sample end keep nominal rule date without future-data lookahead","production_context_integration":False,"trade_signal":None}
+    q={"mode":"RESEARCH_ONLY_CFFEX_EXPIRY_AWARE_INPUTS","source":"CFFEX official monthly history archive; spot uses retried Eastmoney push2his with Tencent IFZQ and Yahoo Chart object-level fallbacks","start":a.start,"end":a.end,"futures_rows":len(f),"spot_rows":len(s),"contracts":{p:int(f.loc[f["product"].eq(p),"contract"].nunique()) for p in PRODUCTS},"date_range":{p:[f.loc[f["product"].eq(p),"trade_date"].min().date().isoformat(),f.loc[f["product"].eq(p),"trade_date"].max().date().isoformat()] for p in PRODUCTS},"spot_sources":{p:sorted(s.loc[s["product"].eq(p),"spot_source"].unique().tolist()) for p in PRODUCTS},"expiry_date_source_counts":{k:int(v) for k,v in f.drop_duplicates("contract")["expiry_date_source"].value_counts().to_dict().items()},"expiry_rule":"published third-Friday rule; historical expiries use observed CFFEX trading-day shift when required; contracts expiring after sample end keep nominal rule date without future-data lookahead","production_context_integration":False,"trade_signal":None}
     (a.out/"input_qa.json").write_text(json.dumps(q,ensure_ascii=False,indent=2)+"\n",encoding="utf-8"); print(json.dumps(q,ensure_ascii=False))
 if __name__=="__main__":raise SystemExit(main())
