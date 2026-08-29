@@ -47,11 +47,37 @@ def _path_phrase(obj: dict, *, node: str) -> str:
     return "日内路径未形成比最终涨跌更强的新结论"
 
 
+def _implication_lines(tone: str) -> str:
+    if tone in {"明显偏强", "偏强"}:
+        return (
+            "- **外部含义**：美股科技风险偏好提供正向背景。\n"
+            "- **本地验证**：下一A股节点先确认本地科技方向是否接受该外部信号。\n"
+            "- **资本比较**：重点复核纳指ETF（159941）、通信/科创/半导体风险篮子的自身反馈与边际资本效率。"
+        )
+    if tone in {"明显偏弱", "偏弱"}:
+        return (
+            "- **外部含义**：美股科技风险偏好转弱，提高A股高相关科技篮子的风险复核优先级。\n"
+            "- **本地验证**：先检查A股自身承接是否同步减弱。\n"
+            "- **资本比较**：只有本地反馈也转弱，才进一步影响持仓风险收益与资本配置。"
+        )
+    if tone == "明显分化":
+        return (
+            "- **外部含义**：海外内部已不能用单一科技方向概括。\n"
+            "- **本地验证**：下一A股节点分别验证宽科技与半导体链反馈。\n"
+            "- **边界**：不得把一个海外指数的强弱直接外推到全部科技ETF。"
+        )
+    return (
+        "- **外部含义**：海外科技结构尚不足以单独改变A股判断。\n"
+        "- **本地验证**：作为下一A股节点背景证据保存。\n"
+        "- **边界**：若海外与A股反馈背离，以A股自身反馈为主。"
+    )
+
+
 def us_session_structure(*, tech: dict, semi: dict, tech_label: str, semi_label: str, direct: bool, node: str) -> tuple[list[str], list[str], str, str, str]:
     tech_change = number(tech.get("regular_session_change_vs_previous_close_pct"))
     semi_change = number(semi.get("regular_session_change_vs_previous_close_pct"))
     tone = _us_tone(tech_change, semi_change)
-    basis = "NDX/SOX直接指数" if direct else "直接指数不可用，降级为QQQ/SOXX代理"
+    basis = "纳斯达克100指数（NDX）/费城半导体指数（SOX）直接指数" if direct else "直接指数不可用，降级为纳指100ETF代理（QQQ）/半导体ETF代理（SOXX）"
     spread = (semi_change - tech_change) if tech_change is not None and semi_change is not None else None
 
     if tone in {"明显偏强", "偏强"}:
@@ -64,18 +90,17 @@ def us_session_structure(*, tech: dict, semi: dict, tech_label: str, semi_label:
         structure = "美股科技结构相对平稳"
 
     headline = [f"- **外部结构**：{structure}。"]
-    headline.append(f"- **指数反馈**：{tech_label}{pct(tech_change)}，{semi_label}{pct(semi_change)}" + (f"，两者相差约{abs(spread):.2f}个百分点。" if spread is not None and abs(spread) >= 0.75 else "。"))
+    headline.append(f"- **宽科技**：{tech_label}{pct(tech_change)}。")
+    headline.append(f"- **半导体**：{semi_label}{pct(semi_change)}。")
+    if spread is not None and abs(spread) >= 0.75:
+        headline.append(f"- **结构差**：两者相差约{abs(spread):.2f}个百分点。")
     headline.append(f"- **数据口径**：{basis}。")
 
-    path_lines = [f"- **{tech_label}**：{_path_phrase(tech, node=node)}；**{semi_label}**：{_path_phrase(semi, node=node)}。"]
+    path_lines = [
+        f"- **{tech_label}**：{_path_phrase(tech, node=node)}。",
+        f"- **{semi_label}**：{_path_phrase(semi, node=node)}。",
+    ]
 
-    if tone in {"明显偏强", "偏强"}:
-        implication = "外部科技风险偏好提供正向背景，但仍需下一A股节点验证本地科技方向是否接受；重点复核纳指ETF（159941）、通信/科创/半导体风险篮子的自身反馈和边际资本效率。"
-    elif tone in {"明显偏弱", "偏弱"}:
-        implication = "外部科技风险偏好转弱，提高A股高相关科技篮子的风险复核优先级；只有A股自身承接也同步减弱时，才会进一步影响持仓风险收益与资本配置。"
-    elif tone == "明显分化":
-        implication = "海外内部已经不能用单一科技方向概括；下一A股节点需分别验证宽科技与半导体链反馈，不能把一个海外指数的强弱直接外推到全部科技ETF。"
-    else:
-        implication = "海外科技结构尚不足以单独改变A股判断，作为下一A股节点背景证据保存；若与A股反馈背离，以A股自身反馈为主。"
-    action = "纳入下一A股正式节点复核；先看本地传导，再看相关ETF自身反馈和资本效率，不因海外单一信号机械交易。"
+    implication = _implication_lines(tone)
+    action = "纳入下一A股正式节点复核：先看本地传导，再看相关ETF自身反馈和资本效率；不因海外单一信号机械交易。"
     return headline, path_lines, implication, action, tone
