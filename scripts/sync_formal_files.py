@@ -16,6 +16,7 @@ import os
 from datetime import timezone, timedelta
 from pathlib import Path
 
+from confirmed_trade_facts import effective_confirmed_fee_fact
 from formal_file_mutation_gateway import (
     replace_managed_block as replace_block,
     write_formal_text_if_changed,
@@ -39,7 +40,6 @@ def money(value) -> str:
         return f"{float(value):,.2f}元"
     except (TypeError, ValueError):
         return "—"
-
 
 
 def display_name(position: dict) -> str:
@@ -92,7 +92,7 @@ def preserve_decision_block(existing: str) -> str:
     return block[start:end].strip()
 
 
-def build_dashboard_block(account: dict, equity: dict, existing: str) -> str:
+def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path = ROOT) -> str:
     positions = account.get("positions") or []
     etfs = [p for p in positions if p.get("asset_type") == "ETF"]
     stocks = [p for p in positions if p.get("asset_type") == "STOCK"]
@@ -105,7 +105,9 @@ def build_dashboard_block(account: dict, equity: dict, existing: str) -> str:
         if str(t.get("fee_status", "")).upper() in {"PENDING", "PENDING_CONFIRMATION", "UNKNOWN"}
     ]
     pending = bool(summary.get("unknown_fee_flag", True) or pending_fee_trades)
-    known_fees = summary.get("known_fees")
+    fee_fact = effective_confirmed_fee_fact(root, equity.get("trades") or [])
+    known_fees = fee_fact["effective_confirmed_fee_sum"]
+    overlay_fees = fee_fact["executed_event_confirmed_fee_sum"]
     confirmed_account_fees = sum(float(t.get("fee") or 0) for t in (account.get("trades") or []) if str(t.get("fee_status", "")).upper() == "CONFIRMED")
     lines = [
         "## 云端实时状态（自动同步）", "",
@@ -121,8 +123,8 @@ def build_dashboard_block(account: dict, equity: dict, existing: str) -> str:
         f"|当日盈亏|{money(account.get('daily_pnl'))}（{float(account.get('daily_pnl_pct') or 0):+.2f}%）|",
         f"|账户总风险暴露率|约{exposure:.2f}%|",
         f"|ETF策略风险率|约{risk:.2f}%（Known-net；唯一决定风险区间）|" if risk is not None else "|ETF策略风险率|当前辅助权益状态缺失，保留最近有效值|",
-        f"|累计已知ETF费用（权益状态）|{money(known_fees)}；待确认费用状态：{'存在' if pending else '无'}|",
-        f"|账户事实内已确认费用记录合计|{money(confirmed_account_fees)}（仅统计account_fact中明确标记CONFIRMED的记录；不代表当前最新一笔成交费用）|",
+        f"|累计已知ETF费用（有效事实）|{money(known_fees)}；已执行成交overlay {money(overlay_fees)}；待确认费用状态：{'存在' if pending else '无'}|",
+        f"|账户事实内已确认费用记录合计|{money(confirmed_account_fees)}（仅统计account_fact中明确标记CONFIRMED的记录；不代表历史累计ETF费用）|",
         "", "### 当前持仓事实", "",
         "|标的|数量|成本|现价|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|",
     ]
@@ -240,7 +242,7 @@ def sync_formal_files(root: Path = ROOT, account: dict | None = None) -> dict:
     experience_path = root / "ETF交易复盘与经验库_2026.md"
 
     existing_dash = dash_path.read_text(encoding="utf-8")
-    new_dash = replace_block(existing_dash, START_DASH, END_DASH, build_dashboard_block(account, equity, existing_dash), after_heading=True)
+    new_dash = replace_block(existing_dash, START_DASH, END_DASH, build_dashboard_block(account, equity, existing_dash, root), after_heading=True)
     dash_changed = new_dash != existing_dash
     if dash_changed:
         write_formal_text_if_changed(root, dash_path.name, new_dash)
