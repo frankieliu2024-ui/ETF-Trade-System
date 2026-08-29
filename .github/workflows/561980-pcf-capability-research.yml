@@ -7,6 +7,7 @@ on:
     paths:
       - 'research/backtests/audit_561980_pcf_sources.py'
       - 'research/backtests/probe_561980_pcf_api.py'
+      - 'research/backtests/run_561980_index_rebalance_pit_validation.py'
       - '.github/workflows/561980-pcf-capability-research.yml'
   workflow_dispatch:
 
@@ -22,20 +23,23 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install dependencies
-        run: python -m pip install --disable-pip-version-check requests gmssl
+        run: python -m pip install --disable-pip-version-check pandas numpy requests gmssl akshare
       - name: Compile research scripts
         run: |
           python -m py_compile research/backtests/audit_561980_pcf_sources.py
           python -m py_compile research/backtests/probe_561980_pcf_api.py
+          python -m py_compile research/backtests/run_561980_index_rebalance_pit_validation.py
       - name: Audit official 561980 PCF source
         run: |
           mkdir -p /tmp/561980-pcf-audit
           python research/backtests/audit_561980_pcf_sources.py --out /tmp/561980-pcf-audit
       - name: Probe encrypted historical PCF API
         run: python research/backtests/probe_561980_pcf_api.py --out /tmp/561980-pcf-audit
-      - name: Upload audit artifact
+      - name: Run exact PCF rebalance PIT validation
+        run: python research/backtests/run_561980_index_rebalance_pit_validation.py --out /tmp/561980-pcf-audit
+      - name: Upload research artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 561980-pcf-source-audit
+          name: 561980-index-rebalance-pit-results
           path: /tmp/561980-pcf-audit
           retention-days: 14
