@@ -143,6 +143,60 @@ def main() -> int:
     if isinstance(candidates, dict):
         check("research:runtime_master_candidates_no_auto_update", candidates.get("read_only") is True and candidates.get("automatic_master_update") is False, "research MASTER candidate feed must remain read-only with automatic update disabled")
 
+    component = load("data/state/561980_component_lead_evidence.json", None)
+    check(
+        "research:561980_component_lead_runtime_state",
+        isinstance(component, dict) and component.get("status") in {"READY", "DEGRADED"},
+        f"status={(component or {}).get('status') if isinstance(component, dict) else 'MISSING'} reason={(component or {}).get('reason') if isinstance(component, dict) else None}",
+    )
+    if isinstance(component, dict):
+        status = component.get("status")
+        common_ok = (
+            component.get("decision_eligible") is True
+            and component.get("can_generate_decision_independently") is False
+            and component.get("automatic_trade") is False
+            and component.get("trade_signal") is None
+            and component.get("scope") == ["561980"]
+        )
+        check(
+            "research:561980_component_lead_no_independent_trade",
+            common_ok,
+            f"status={status} scope={component.get('scope')} decision_eligible={component.get('decision_eligible')} automatic_trade={component.get('automatic_trade')}",
+        )
+        if status == "READY":
+            top5 = component.get("top5") or []
+            decision_date = str(component.get("decision_market_date") or "")
+            cutoff = str(component.get("price_cutoff_market_date") or "")
+            value = component.get("leader_minus_etf_3d_lag1_pct_points")
+            check(
+                "research:561980_component_lead_ready_contract",
+                component.get("use_in_current_decision") is True
+                and len(top5) == 5
+                and bool(decision_date and cutoff and cutoff < decision_date)
+                and isinstance(value, (int, float)),
+                f"status=READY decision_date={decision_date} cutoff={cutoff} top5={[x.get('code') for x in top5 if isinstance(x, dict)]} value={value}",
+            )
+        elif status == "DEGRADED":
+            check(
+                "research:561980_component_lead_degraded_contract",
+                component.get("use_in_current_decision") is False
+                and "leader_minus_etf_3d_lag1_pct_points" not in component
+                and bool(component.get("reason")),
+                f"status=DEGRADED use={component.get('use_in_current_decision')} reason={component.get('reason')}",
+            )
+
+    if isinstance(execution_summary, dict):
+        bridged = ((execution_summary.get("etf_object_evidence") or {}).get("component_lead_561980_3d"))
+        check(
+            "research:561980_component_lead_execution_bridge",
+            isinstance(component, dict)
+            and isinstance(bridged, dict)
+            and bridged.get("status") == component.get("status")
+            and bridged.get("use_in_current_decision") == component.get("use_in_current_decision")
+            and bridged.get("trade_signal") is None,
+            f"state_status={(component or {}).get('status') if isinstance(component, dict) else None} bridge_status={(bridged or {}).get('status') if isinstance(bridged, dict) else None}",
+        )
+
     report["checks"] = checks
     report["errors"] = errors
     report["warnings"] = warnings
