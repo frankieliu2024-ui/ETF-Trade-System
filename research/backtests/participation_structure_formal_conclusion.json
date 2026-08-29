@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "mode": "FORMAL_EVIDENCE_CONCLUSION",
+  "evidence_id": "participation_expansion_with_positive_structure",
+  "display_name": "成交参与扩大 × 有效价格结构确认",
+  "research_interpretation": "完整收盘后，成交参与相对自身前20个完整交易日常态扩大，且价格已经形成20日突破或真实站回20日均线时，可增强已有结构证据；成交参与扩大本身不构成独立机会。",
+  "conclusion": "QUALIFIED_FOR_FORMAL_INTEGRATION_AFTER_MASTER_REGISTRATION",
+  "decision_eligible": true,
+  "production_context_integration": true,
+  "pit_boundary": "仅使用T日完整收盘及T日前可见日线；不得把完整收盘定义前视到T日盘中。",
+  "dynamic_owner": "data/state/market_structure_context.json#formal_c2_dynamic_evidence",
+  "reviewed_research_group": {
+    "participation_ratio_vs_prior_20d": 1.2,
+    "role": "research_coarse_group_not_independent_trade_threshold"
+  },
+  "allowed_effects": [
+    "增强已有突破或真实修复结构的机会强弱判断",
+    "参与Confirm证据完整性复核",
+    "参与持仓风险收益与下一单位资本比较"
+  ],
+  "forbidden_effects": [
+    "独立产生风险许可",
+    "独立产生Trial或Confirm",
+    "独立产生金额",
+    "独立产生卖出份额",
+    "自动下单",
+    "把成交扩大解释为净流入"
+  ],
+  "failure_contract": "动态输入不可验证时DEGRADED并省略增强方向，不沿用旧active状态。",
+  "can_generate_decision_independently": false,
+  "automatic_trade": false,
+  "trade_signal": null,
+  "research_source": "research/backtests/section6_c2_participation_structure_formal_conversion_review.json"
+}
