@@ -32,12 +32,12 @@ def _daily_rows(root: Path, code: str, market_date: str, limit: int = 25) -> lis
         return rows
     for path in sorted(base.glob("*.json"), reverse=True):
         obj = _load_json(path)
-        date = str(obj.get("market_date") or "")
-        if not date or date > market_date or str(obj.get("quality_status") or "").upper() != "PASS":
+        day = str(obj.get("market_date") or "")
+        if not day or day > market_date or str(obj.get("quality_status") or "").upper() != "PASS":
             continue
         row = next((x for x in (obj.get("features") or []) if str(x.get("code") or "") == code), None)
         if row and _num(row.get("close")) is not None and _num(row.get("amount")) is not None:
-            rows.append({"market_date": date, **row})
+            rows.append({"market_date": day, **row})
             if len(rows) >= limit:
                 break
     rows.reverse()
@@ -62,26 +62,28 @@ def _c2_evidence(root: Path, item: dict, market_date: str) -> dict:
     base = {
         "evidence_id": "participation_expansion_with_positive_structure",
         "display_name": "成交参与扩大 × 有效价格结构确认",
-        "completed_bar_date": market_date or None,
+        "decision_market_date": market_date or None,
+        "completed_bar_date": None,
         "use_as_decision_evidence": False,
         "can_generate_decision_independently": False,
         "automatic_trade": False,
         "trade_signal": None,
         "formal_role": "只增强已经存在的突破／真实修复结构，不单独生成风险许可、Trial／Confirm、金额、卖出份额或订单。",
-        "pit_boundary": "仅使用完整T日收盘及T日前已存在日线；完整收盘定义不得前视到T日盘中。",
+        "pit_boundary": "使用不晚于决策时点的最近完整T日收盘及T日前已存在日线；T+1盘中继续使用T日已完成证据，不把T+1未完成日线前视为收盘事实。",
         "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。",
-        "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用上一交易日的active状态。",
+        "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
     }
-    if len(rows) < 21 or str(rows[-1].get("market_date") or "") != market_date:
-        return {**base, "status": "DEGRADED", "reason": "latest complete daily feature or 20-day prior history unavailable", "enhancement_active": None}
+    if len(rows) < 21:
+        return {**base, "status": "DEGRADED", "reason": "latest completed daily feature or 20-day prior history unavailable", "enhancement_active": None}
 
     i = len(rows) - 1
     current = rows[i]
+    completed_bar_date = str(current.get("market_date") or "")
     prior20 = rows[i - 20:i]
     amounts = [_num(x.get("amount")) for x in prior20]
     current_amount = _num(current.get("amount"))
     if current_amount is None or any(v in (None, 0.0) for v in amounts):
-        return {**base, "status": "DEGRADED", "reason": "amount history unavailable", "enhancement_active": None}
+        return {**base, "completed_bar_date": completed_bar_date or None, "status": "DEGRADED", "reason": "amount history unavailable", "enhancement_active": None}
     avg20 = sum(amounts) / 20.0
     amount_ratio = current_amount / avg20 if avg20 else None
 
@@ -91,7 +93,7 @@ def _c2_evidence(root: Path, item: dict, market_date: str) -> dict:
     prev_ma20 = _sma_close(rows, i - 1, 20)
     prior20_closes = [_num(x.get("close")) for x in rows[i - 20:i]]
     if current_close is None or prev_close is None or ma20 is None or prev_ma20 is None or any(v is None for v in prior20_closes):
-        return {**base, "status": "DEGRADED", "reason": "price structure history unavailable", "enhancement_active": None}
+        return {**base, "completed_bar_date": completed_bar_date or None, "status": "DEGRADED", "reason": "price structure history unavailable", "enhancement_active": None}
 
     breakout20 = current_close > max(prior20_closes)
     true_recovery20 = prev_close < prev_ma20 and current_close >= ma20
@@ -104,7 +106,7 @@ def _c2_evidence(root: Path, item: dict, market_date: str) -> dict:
         **base,
         "status": "READY",
         "use_as_decision_evidence": True,
-        "completed_bar_date": str(current.get("market_date") or market_date),
+        "completed_bar_date": completed_bar_date,
         "amount": round(current_amount, 4),
         "prior_20d_average_amount": round(avg20, 4),
         "participation_ratio_vs_prior_20d": round(amount_ratio, 4) if amount_ratio is not None else None,
@@ -116,9 +118,9 @@ def _c2_evidence(root: Path, item: dict, market_date: str) -> dict:
         "enhancement_active": enhancement_active,
         "direction": "ENHANCE" if enhancement_active else "NOT_ACTIVE",
         "interpretation_cn": (
-            "完整收盘后成交参与扩大且已有突破／真实修复结构，作为结构确认增强证据。"
+            "最近完整收盘的成交参与扩大且已有突破／真实修复结构，作为结构确认增强证据。"
             if enhancement_active else
-            "当前完整收盘未同时满足成交参与扩大与有效结构确认，不激活该增强证据；不形成反向看空。"
+            "最近完整收盘未同时满足成交参与扩大与有效结构确认，不激活该增强证据；不形成反向看空。"
         ),
         "source": "events/research/daily_features + market_structure_context",
     }
@@ -126,13 +128,15 @@ def _c2_evidence(root: Path, item: dict, market_date: str) -> dict:
 
 def _attach_c2(root: Path, base: dict) -> None:
     market_date = str(base.get("market_date") or "")
-    ready, degraded, active = [], [], []
+    ready, degraded, active, completed_dates = [], [], [], []
     for item in base.get("items") or []:
         evidence = _c2_evidence(root, item, market_date)
         item["participation_structure_confirmation"] = evidence
         code = str(item.get("code") or "")
         if evidence.get("status") == "READY":
             ready.append(code)
+            if evidence.get("completed_bar_date"):
+                completed_dates.append(str(evidence.get("completed_bar_date")))
             if evidence.get("enhancement_active") is True:
                 active.append(code)
         else:
@@ -141,7 +145,8 @@ def _attach_c2(root: Path, base: dict) -> None:
         "evidence_id": "participation_expansion_with_positive_structure",
         "display_name": "成交参与扩大 × 有效价格结构确认",
         "status": "READY" if ready and not degraded else ("DEGRADED_WITH_OBJECT_FALLBACK" if ready else "DEGRADED"),
-        "completed_bar_date": market_date or None,
+        "decision_market_date": market_date or None,
+        "latest_completed_bar_date": max(completed_dates) if completed_dates else None,
         "ready_codes": ready,
         "degraded_codes": degraded,
         "active_codes": active,
@@ -152,7 +157,7 @@ def _attach_c2(root: Path, base: dict) -> None:
         "trade_signal": None,
         "dynamic_owner": "data/state/market_structure_context.json",
         "research_source": "research/backtests/section6_c2_participation_structure_formal_conversion_review.json",
-        "decision_boundary": "完整收盘后只作为已有突破／真实修复结构的确认增强；研究1.2倍分组不升级为独立机械买卖阈值；失败不沿用旧方向。",
+        "decision_boundary": "最近完整收盘只作为已有突破／真实修复结构的确认增强；研究1.2倍分组不升级为独立机械买卖阈值；失败不沿用无法重建的旧方向。",
     }
 
 
@@ -226,7 +231,7 @@ def build(root: Path = ROOT) -> dict:
         "decision_boundary": minute.get("decision_boundary"),
     }
     contract = base.get("candidate_selection_contract") or {}
-    contract["turnover_rule"] = "成交承接保留两种互补时间尺度：20日时间归一化成交进度回答当日整体活跃度；腾讯1分钟构造的最近10分钟相对前10分钟回答边际参与变化。两者不得机械合成总分，也不得单独产生交易动作。完整收盘后，成交参与扩大只有与已存在的突破／真实修复结构同时出现时才作为C2确认增强。"
+    contract["turnover_rule"] = "成交承接保留两种互补时间尺度：20日时间归一化成交进度回答当日整体活跃度；腾讯1分钟构造的最近10分钟相对前10分钟回答边际参与变化。两者不得机械合成总分，也不得单独产生交易动作。最近完整收盘的成交参与扩大只有与已存在的突破／真实修复结构同时出现时才作为C2确认增强。"
     base["candidate_selection_contract"] = contract
     return base
 
