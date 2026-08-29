@@ -1,0 +1,36 @@
+name: component lead PIT membership research
+
+on:
+  push:
+    branches:
+      - research/component-lead-pit-membership-20260829
+    paths:
+      - 'research/backtests/audit_pit_membership_capability.py'
+      - '.github/workflows/component-lead-pit-membership-research.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capability-audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pandas requests
+      - name: Compile research script
+        run: python -m py_compile research/backtests/audit_pit_membership_capability.py
+      - name: Audit historical membership snapshot capability
+        run: |
+          mkdir -p /tmp/pit-membership
+          python research/backtests/audit_pit_membership_capability.py --out /tmp/pit-membership
+      - name: Upload capability artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: component-lead-pit-membership-capability
+          path: /tmp/pit-membership
+          retention-days: 14
