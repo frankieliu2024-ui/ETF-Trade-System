@@ -66,7 +66,11 @@ class MasterFormalIndexContractTests(unittest.TestCase):
 
     def test_known_regression_missing_star50_is_detected(self):
         master_text = MASTER.read_text(encoding="utf-8")
-        broken = master_text.replace("、科创50指数（000688.SH）", "").replace("、科创50指数", "")
+        # Simulate the historical defect, removing both the formal-list token and
+        # any descriptive mention inside the same canonical paragraph. The test is
+        # about the detector's ability to reject a MASTER that no longer declares
+        # STAR50, not about punctuation around one particular sentence.
+        broken = master_text.replace("科创50指数", "已删除指数").replace("000688.SH", "REMOVED.STAR50")
         self.assertNotIn("000688.SH", _master_indices(broken))
         self.assertNotEqual(_master_indices(broken), EXPECTED_INDICES)
 
