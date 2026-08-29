@@ -68,9 +68,10 @@ permissions:
 
 concurrency:
   # PR prechecks must never queue behind or delay the production consistency
-  # lane. Production keeps its existing single serialized group.
+  # lane. Within one PR, a newer head supersedes the stale precheck; production
+  # keeps its existing serialized lane and is never cancelled by this rule.
   group: ${{ github.event_name == 'pull_request' && format('etf-system-consistency-pr-{0}', github.event.pull_request.number) || 'etf-system-consistency' }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   consistency:
