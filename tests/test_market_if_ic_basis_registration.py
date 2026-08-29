@@ -20,7 +20,11 @@ class IfIcBasisFormalRegistrationTest(unittest.TestCase):
         conclusion = json.loads(FORMAL_CONCLUSION.read_text(encoding="utf-8"))
 
         self.assertIn("IF／IC 5日基差变化证据", master)
-        self.assertIn("IF为主证据、IC为稳定裕量较弱的补充证据", master)
+        # Section 6.4 is now a concise unified evidence catalog. Preserve the
+        # substantive role contract (IF primary, IC supplementary) without
+        # coupling this guard to one historical sentence about stability margin.
+        self.assertIn("IF为主", master)
+        self.assertIn("IC为补充", master)
         self.assertNotIn("股指期货IF／IC／IM基差与OI仍需逐合约、到期日明确的最终验证", master)
 
         self.assertTrue(conclusion["decision_eligible"])
