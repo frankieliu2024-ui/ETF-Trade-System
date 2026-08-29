@@ -69,7 +69,7 @@ def account_gate_status(current: dict, account: dict, policy: dict) -> dict:
     market_date = current.get("market_date", "")
     updated = parse_time(account.get("updated_at", ""))
     updated_market_date = updated.astimezone(SHANGHAI).date().isoformat() if updated else ""
-    same_day_required = bool(policy.get("account_fact_same_market_date_required", True))
+    same_day_required = bool(policy.get("account_fact_same_market_date_required", False))
     same_day = bool(market_date and updated_market_date == market_date)
     usable = raw_valid and (same_day or not same_day_required)
     reason = "OK" if usable else ("ACCOUNT_NOT_VALID" if not raw_valid else "ACCOUNT_FACT_NOT_CURRENT_MARKET_DATE")
@@ -118,10 +118,10 @@ def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict)
             "trading_day_rule": "每次当前查询先读取A股官方交易日历，区分正常交易日前/盘中/盘后、周末与交易所休市。",
             "consistency_rule": "正式分析前读取system_consistency.json；硬FAIL先处理系统冲突。",
             "data_standard_rule": "行情来源、质量、查询时补采优先级、盘前/盘中脉冲、新鲜度、跨市场时点和降级边界以一级目录数据规范为基础。",
-            "etf_rule": "ETF机器采集以etf_monitor_universe.json为唯一运行清单；持仓/观察身份由Dashboard和当日账户事实解释。",
+            "etf_rule": "ETF机器采集以etf_monitor_universe.json为唯一运行清单；持仓/观察身份由Dashboard和账户事实解释。",
             "overseas_rule": "正式海外/亚洲指数必须检查NDX、SOX、N225、KOSPI、TWII、HSTECH；北京时间08:00起已有日韩市场脉冲，不能等A股9:30才开始读取海外。",
             "us_extended_hours_rule": "美国信息分三段解释：上一正式现金盘（NDX/SOX）、POST_MARKET（QQQ/SOXX及条件个股）、下一交易日PRE_MARKET。A股早盘前可能获得上一美股盘后信息；下一美股PRE_MARKET通常在北京时间A股收盘后开始，主要形成下一A股交易日的前置信号。扩展时段不得等同正式指数确认。",
-            "stock_rule": "第三层默认个股由当日账户事实动态生成；产业链个股按查询主题动态发现。",
+            "stock_rule": "第三层默认个股由当前有效账户事实动态生成；产业链个股按查询主题动态发现。",
             "rule": "正式当前查询优先补采当前可得行情，再使用最近有效状态补充连续性；数据不足时明确不足。",
         },
         "runtime_resilience": {"target_cadence_seconds": policy.get("target_cadence_seconds", 600), "fresh_max_age_seconds": policy.get("fresh_max_age_seconds", 900), "degraded_max_age_seconds": policy.get("degraded_max_age_seconds", 1500), "close_grace_seconds": policy.get("close_grace_seconds", 900), "principle": "查询时立即补采优先；常规10分钟只是生产目标。补采失败才回退最近有效状态，并按查询时刻重新判定新鲜度。"},
