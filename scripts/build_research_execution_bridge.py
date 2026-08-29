@@ -6,8 +6,10 @@ from pathlib import Path
 
 try:
     from state_manager import atomic_json_write, now_utc, read_json
+    from build_561980_component_lead_evidence import build as build_561980_component_lead_evidence
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, now_utc, read_json
+    from scripts.build_561980_component_lead_evidence import build as build_561980_component_lead_evidence
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 OUTPUT = ROOT / "data/state/research_execution_summary.json"
@@ -127,6 +129,13 @@ def build(root: Path | None = None) -> dict:
     stock_market = read_json(root / "data/state/stock_market_context.json", {})
     stock_signal_map = _stock_specific_signal_map(root)
 
+    component_lead = build_561980_component_lead_evidence(root)
+    atomic_json_write(root / "data/state/561980_component_lead_evidence.json", component_lead)
+    research_context.setdefault("validated_evidence_summary", {})["component_lead_561980_3d"] = component_lead
+    research_context.setdefault("paths", {})["component_lead_561980_3d"] = "data/state/561980_component_lead_evidence.json"
+    decision_context.setdefault("research_evidence", {})["component_lead_561980_3d"] = component_lead
+    decision_context["component_lead_561980_file"] = "data/state/561980_component_lead_evidence.json"
+
     positions = {str(x.get("code") or ""): x for x in (account.get("positions") or []) if isinstance(x, dict) and x.get("code")}
     market_objects = stock_market.get("objects") or {}
     total_asset = _num(account.get("total_asset"))
@@ -193,6 +202,9 @@ def build(root: Path | None = None) -> dict:
         "conclusion_digest": digest,
         "portfolio_exposure": portfolio,
         "ipo_base_stock_evidence": stock_evidence,
+        "etf_object_evidence": {
+            "component_lead_561980_3d": component_lead,
+        },
         "execution_bridge": {
             "direct_execution_contribution": True,
             "allowed_effects": ["改变候选比较和机会强弱", "改变持仓风险收益和卖出判断", "改变新增金额判断", "改变资金来源选择", "改变卖出资金去向选择"],
@@ -230,7 +242,16 @@ def build(root: Path | None = None) -> dict:
 
 def main() -> None:
     summary = build(ROOT)
-    print(json.dumps({"ok": True, "mode": summary.get("mode"), "ipo_base_stock_count": len(summary.get("ipo_base_stock_evidence") or []), "ipo_base_stock_share_of_total_asset_pct": (summary.get("portfolio_exposure") or {}).get("ipo_base_stock_share_of_total_asset_pct"), "automatic_trade": summary.get("automatic_trade")}, ensure_ascii=False))
+    component = (summary.get("etf_object_evidence") or {}).get("component_lead_561980_3d") or {}
+    print(json.dumps({
+        "ok": True,
+        "mode": summary.get("mode"),
+        "ipo_base_stock_count": len(summary.get("ipo_base_stock_evidence") or []),
+        "ipo_base_stock_share_of_total_asset_pct": (summary.get("portfolio_exposure") or {}).get("ipo_base_stock_share_of_total_asset_pct"),
+        "component_lead_561980_status": component.get("status"),
+        "component_lead_561980_value": component.get("leader_minus_etf_3d_lag1_pct_points"),
+        "automatic_trade": summary.get("automatic_trade"),
+    }, ensure_ascii=False))
 
 
 if __name__ == "__main__":
