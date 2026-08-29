@@ -25,7 +25,7 @@ class WorkflowFailureGuardPrHeadTests(unittest.TestCase):
 
     def test_normalization_uses_verified_commit_and_preserves_packet_fallback(self):
         text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("ok('git', 'cat-file', '-e', f'{head}^{commit}')", text)
+        self.assertIn("ok('git', 'cat-file', '-e', f'{head}^{{commit}}')", text)
         self.assertIn("out('git', 'rev-parse', '--verify', f'{head}^')", text)
         self.assertIn("or data.get('commit_message')", text)
         self.assertIn("or data.get('commit_author')", text)
