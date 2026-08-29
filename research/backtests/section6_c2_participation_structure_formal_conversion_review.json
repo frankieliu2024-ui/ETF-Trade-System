@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "mode": "MASTER_8_1_FORMAL_CONVERSION_REVIEW",
+  "review_date": "2026-08-29",
+  "evidence_id": "participation_expansion_with_positive_structure",
+  "display_name": "成交参与扩大 × 有效价格结构确认",
+  "research_scope": "2024-01-02至2026-08-28正式ETF运行对象PIT日线面板",
+  "definition_reviewed": {
+    "participation": "T日成交额 / T日前20个完整交易日平均成交额 >= 1.2，仅作为研究粗分组；正式语义优先保留成交参与扩大而非机械固定阈值",
+    "positive_structure": "T日20日收盘突破，或前一日收盘低于前一日MA20且T日收盘重新站上T日MA20",
+    "future_label": "T收盘到T+5收盘，仅用于研究评价"
+  },
+  "point_in_time": {
+    "status": "PASS",
+    "notes": "全部输入在T日完整收盘后可见；研究标签不使用T+1及以后信息。盘中使用时不得把完整收盘定义前视到T日盘中。"
+  },
+  "data_quality": {
+    "status": "PASS",
+    "panel_rows": 6835,
+    "object_count": 11,
+    "signal_count": 721
+  },
+  "stability": {
+    "status": "PASS",
+    "t5_relative_to_pool_mean_pct_points": 1.1095,
+    "by_year": {
+      "2024": 0.9837,
+      "2025": 1.3213,
+      "2026": 0.9038
+    },
+    "notes": "三个年份方向一致；对象层存在差异，跨市场ETF不得无条件外推。"
+  },
+  "incremental_validation": {
+    "status": "PASS",
+    "overlap_with_any_old_6_2_positive_signal": 0.4591,
+    "non_old_subset_count": 390,
+    "non_old_subset_t5_relative_to_pool_mean_pct_points": 1.2398,
+    "notes": "剔除健康突破/放量修复/整理突破/科技风险偏好改善后仍保留明显增量。"
+  },
+  "execution_transformability": {
+    "status": "PASS_WITH_BOUNDARY",
+    "formal_use": "只能作为已存在突破/真实修复结构的增强确认，参与机会强弱、Confirm证据完整性、持仓风险收益和资本比较。",
+    "forbidden": [
+      "单独生成风险许可",
+      "单独生成Trial或Confirm",
+      "单独决定金额",
+      "单独生成卖出份额",
+      "自动下单",
+      "把成交放大解释为净流入"
+    ]
+  },
+  "risk_boundary": {
+    "status": "PASS",
+    "notes": "不扩大风险许可和金额权限，只提高结构证据的解释质量；失败或不可用时省略该增强证据，不沿用旧方向。"
+  },
+  "review_outcome": "QUALIFIED_FOR_FORMAL_INTEGRATION",
+  "decision_eligible_after_master_registration": true,
+  "production_context_integration_before_master_registration": false,
+  "can_generate_decision_independently": false,
+  "trade_signal": null,
+  "next_step": "在latest-main正式规则重构中登记到统一已验证证据目录，并复用现有market_structure/成交参与数据，不新建独立workflow或评分。"
+}
