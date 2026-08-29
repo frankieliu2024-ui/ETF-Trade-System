@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "mode": "FORMAL_IF_IC_5D_BASIS_RESEARCH_CONCLUSION",
+  "generated_for": "2026-08-29 formal research conversion",
+  "research_review_issue": 59,
+  "source_research_issue": 58,
+  "decision_eligible": true,
+  "production_context_integration": true,
+  "use_as_decision_evidence": true,
+  "can_generate_decision_independently": false,
+  "trade_signal": null,
+  "automatic_trade": false,
+  "master_override": false,
+  "research_interpretation": "FORMALLY_CONVERTED_IF_IC_5D_BASIS_EVIDENCE",
+  "conclusion": "IF 5日基差变化与IC 5日基差变化已分别通过逐合约到期日校正后的稳定性验证和MASTER 8.1正式研究转化审查。IF为主证据，IC为稳定裕量较弱的补充证据；两者仅作为完整机会、持仓风险收益、金额和统一资本比较的辅助证据，不具备独立交易权限。",
+  "validated_signals": [
+    {
+      "signal_id": "IF_basis_change_5d",
+      "display_name": "IF 5日基差变化",
+      "role": "PRIMARY",
+      "decision_eligible": true,
+      "can_generate_decision_independently": false,
+      "trade_signal": null
+    },
+    {
+      "signal_id": "IC_basis_change_5d",
+      "display_name": "IC 5日基差变化",
+      "role": "SUPPLEMENTARY",
+      "decision_eligible": true,
+      "can_generate_decision_independently": false,
+      "trade_signal": null
+    }
+  ],
+  "applies_to_etf_codes": ["561980", "588000", "159781", "159992", "515880", "159326"],
+  "point_in_time_rule": "仅使用完整T日收盘已经可见的逐合约期指、对应现货指数及合约选择事实，从T+1进入正式判断；5日变化必须先在同一真实合约内部计算，再按非前视近月/PIT主力口径选择，禁止跨换月拼接制造虚假基差变化。",
+  "usage_boundary": {
+    "allowed_effects": ["机会强弱", "持仓风险收益", "金额判断", "统一资本比较"],
+    "forbidden_independent_outputs": ["风险许可", "Trial", "Confirm", "金额档", "卖出份额", "订单"],
+    "interpretation": "基差增强或走弱只作为增强/削弱证据；必须与ETF自身价格结构、相对强弱、成交承接、生命周期和风险收益联合判断，不形成机械看多、看空或卖出阈值。"
+  },
+  "rejected_or_research_only": [
+    {
+      "signal_id": "IM_basis_change_5d",
+      "reason": "expiry-aware validation did not satisfy preregistered stability threshold"
+    },
+    {
+      "signal_id": "IC_oi_change_1d",
+      "reason": "expiry-aware validation did not satisfy preregistered support threshold"
+    }
+  ],
+  "validation_reference": {
+    "issue_58_final_workflow_run": 33232316767,
+    "issue_58_final_research_grade": "PARTIAL_SUPPORT",
+    "issue_59_review": "IF and IC 5d basis each passed MASTER 8.1 review",
+    "sample_window": "2024-01-02..2026-08-28",
+    "validated_etfs": ["561980", "588000", "159781", "159992", "515880", "159326"]
+  }
+}
