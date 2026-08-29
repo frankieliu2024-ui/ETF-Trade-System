@@ -7,6 +7,13 @@ from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+from confirmed_trade_facts import (
+    effective_confirmed_fee_fact,
+    latest_formal_review_confirmed_fees,
+    trade_signature,
+    unintegrated_executed_trade_events,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 TZ = timezone(timedelta(hours=8))
 STATE = ROOT / "data" / "state"
@@ -54,36 +61,11 @@ def reconcile() -> dict:
     summary = equity.get("summary") or {}
     trades = equity.get("trades") or []
 
-    # Position reconciliation must include user-confirmed executed trade events
-    # even when the slower historical equity reconstruction has not yet been
-    # rebuilt. Actual fills outrank the auxiliary reconstruction. Exact trade
-    # signatures prevent already-integrated event trades from being counted twice.
-    def trade_signature(t: dict) -> tuple:
-        stamp = str(t.get("datetime") or t.get("confirmed_at_beijing") or t.get("trade_time") or "")
-        stamp = stamp.replace("T", " ")[:19]
-        return (
-            str(t.get("code") or ""),
-            str(t.get("side") or t.get("action") or "").upper(),
-            float(t.get("quantity") or 0),
-            round(float(t.get("price") or 0), 6),
-            stamp,
-        )
-
-    trades_for_positions = list(trades)
-    known_signatures = {trade_signature(t) for t in trades_for_positions}
-    events_dir = ROOT / "events" / "trades"
-    executed_event_overlay_count = 0
-    if events_dir.exists():
-        for path in sorted(events_dir.glob("*.json")):
-            event = read_json(path, {}) or {}
-            if str(event.get("execution_status") or "").upper() != "EXECUTED":
-                continue
-            sig = trade_signature(event)
-            if not sig[0] or sig in known_signatures:
-                continue
-            trades_for_positions.append(event)
-            known_signatures.add(sig)
-            executed_event_overlay_count += 1
+    # Actual executed trade events outrank the slower auxiliary equity
+    # reconstruction. The same exact-signature overlay is used for both
+    # positions and confirmed fees so one fact cannot advance without the other.
+    overlay_events = unintegrated_executed_trade_events(ROOT, trades)
+    trades_for_positions = [*trades, *overlay_events]
 
     ledger_qty: dict[str, float] = defaultdict(float)
     for t in trades_for_positions:
@@ -91,9 +73,10 @@ def reconcile() -> dict:
         qty = float(t.get("quantity") or 0)
         if not code:
             continue
-        if str(t.get("side") or "").upper() == "BUY":
+        side = str(t.get("side") or t.get("action") or "").upper()
+        if side == "BUY":
             ledger_qty[code] += qty
-        elif str(t.get("side") or "").upper() == "SELL":
+        elif side == "SELL":
             ledger_qty[code] -= qty
 
     account_qty: dict[str, float] = {}
@@ -112,9 +95,16 @@ def reconcile() -> dict:
         quantity_ok &= ok
         quantity_checks.append({"code": code, "ledger_quantity": ledger, "account_quantity": broker, "difference": diff, "status": "PASS" if ok else "FAIL"})
 
-    confirmed_fee_sum = rounded(sum(float(t.get("fee_amount") or 0) for t in trades if str(t.get("fee_status") or "").upper() == "CONFIRMED"), 2)
+    fee_fact = effective_confirmed_fee_fact(ROOT, trades)
+    reconstructed_fee_sum = rounded(fee_fact["reconstructed_confirmed_fee_sum"], 2)
+    effective_fee_sum = rounded(fee_fact["effective_confirmed_fee_sum"], 2)
     summary_known_fees = rounded(summary.get("known_fees") or 0, 2)
-    fee_ok = abs(confirmed_fee_sum - summary_known_fees) < 0.011
+    auxiliary_fee_ok = abs(reconstructed_fee_sum - summary_known_fees) < 0.011
+
+    formal_fee_fact = latest_formal_review_confirmed_fees(ROOT)
+    formal_review_fee = rounded(formal_fee_fact["confirmed_etf_fees"], 2) if formal_fee_fact else None
+    formal_review_fee_ok = formal_review_fee is None or abs(effective_fee_sum - formal_review_fee) < 0.011
+    fee_ok = auxiliary_fee_ok and formal_review_fee_ok
 
     strategy_cash = float(summary.get("strategy_cash_current") or 0)
     etf_mv = float(summary.get("current_etf_market_value") or 0)
@@ -128,10 +118,22 @@ def reconcile() -> dict:
         "status": "PASS" if overall else "FAIL",
         "trade_count": len(trades),
         "trade_count_matches_summary": trade_count_ok,
-        "executed_trade_event_overlay_count": executed_event_overlay_count,
+        "executed_trade_event_overlay_count": len(overlay_events),
         "position_ledger_basis": "AUXILIARY_EQUITY_RECONSTRUCTION_PLUS_EXECUTED_TRADE_EVENTS",
         "position_reconciliation": {"status": "PASS" if quantity_ok else "FAIL", "checks": quantity_checks},
-        "known_fee_reconciliation": {"status": "PASS" if fee_ok else "FAIL", "confirmed_trade_fee_sum": confirmed_fee_sum, "summary_known_fees": summary_known_fees, "difference": rounded(confirmed_fee_sum - summary_known_fees, 2)},
+        "known_fee_reconciliation": {
+            "status": "PASS" if fee_ok else "FAIL",
+            "auxiliary_reconstructed_confirmed_fee_sum": reconstructed_fee_sum,
+            "auxiliary_summary_known_fees": summary_known_fees,
+            "auxiliary_difference": rounded(reconstructed_fee_sum - summary_known_fees, 2),
+            "executed_event_overlay_count": int(fee_fact["executed_event_overlay_count"]),
+            "executed_event_confirmed_fee_sum": rounded(fee_fact["executed_event_confirmed_fee_sum"], 2),
+            "effective_confirmed_fee_sum": effective_fee_sum,
+            "formal_review_confirmed_fees": formal_review_fee,
+            "formal_review_source": formal_fee_fact.get("source") if formal_fee_fact else None,
+            "formal_review_difference": rounded(effective_fee_sum - formal_review_fee, 2) if formal_review_fee is not None else None,
+            "basis": "AUXILIARY_RECONSTRUCTION_PLUS_DEDUPED_EXECUTED_EVENT_OVERLAY_CROSSCHECKED_WITH_LATEST_FORMAL_REVIEW",
+        },
         "gross_equity_reconciliation": {"status": "PASS" if equity_ok else "FAIL", "strategy_cash": strategy_cash, "current_etf_market_value": etf_mv, "reported_gross_equity": gross_equity, "difference": equity_diff},
     }
 
