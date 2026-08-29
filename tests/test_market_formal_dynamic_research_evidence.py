@@ -118,6 +118,34 @@ class FormalDynamicResearchEvidenceTest(unittest.TestCase):
             self.assertIn(token, bridge)
         self.assertIn('"current_completed_bar_match": None', bridge)
 
+    def test_generated_dynamic_state_contract_after_context_build(self):
+        basis_path = ROOT / "data/state/if_ic_basis_5d_evidence.json"
+        oversold_path = ROOT / "data/state/300750_oversold_reversal_evidence.json"
+        summary_path = ROOT / "data/state/research_execution_summary.json"
+        if not (basis_path.exists() and oversold_path.exists() and summary_path.exists()):
+            self.skipTest("generated dynamic states are created by canonical context build before system acceptance")
+
+        basis_state = json.loads(basis_path.read_text(encoding="utf-8"))
+        oversold_state = json.loads(oversold_path.read_text(encoding="utf-8"))
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        dynamic = summary.get("formal_dynamic_evidence") or {}
+
+        for state in (basis_state, oversold_state):
+            self.assertIn(state.get("status"), {"READY", "DEGRADED", "BLOCKED"})
+            self.assertIsNone(state.get("trade_signal"))
+            self.assertFalse(state.get("can_generate_decision_independently"))
+            if state.get("status") != "READY":
+                self.assertFalse(state.get("use_in_current_decision"))
+                self.assertTrue(state.get("reason"))
+        self.assertEqual((dynamic.get("if_ic_basis_5d") or {}).get("status"), basis_state.get("status"))
+        self.assertEqual((dynamic.get("ipo_base_stock_oversold_reversal_300750") or {}).get("status"), oversold_state.get("status"))
+        print(json.dumps({
+            "formal_dynamic_acceptance": {
+                "if_ic_basis_5d": {"status": basis_state.get("status"), "fact_latest_date": basis_state.get("fact_latest_date"), "reason": basis_state.get("reason")},
+                "300750_oversold_reversal": {"status": oversold_state.get("status"), "completed_bar_date": oversold_state.get("completed_bar_date"), "pattern_match": oversold_state.get("pattern_match"), "reason": oversold_state.get("reason")},
+            }
+        }, ensure_ascii=False))
+
 
 if __name__ == "__main__":
     unittest.main()
