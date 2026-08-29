@@ -58,23 +58,17 @@ class FormalDynamicResearchEvidenceTest(unittest.TestCase):
         rows = []
         for product, contract in (("IF", "IF2609"), ("IC", "IC2609")):
             for i, d in enumerate(dates):
-                rows.append({
-                    "trade_date": d,
-                    "product": product,
-                    "contract": contract,
-                    "close": 1000.0 + i * 2.0,
-                    "settlement": 1000.0 + i * 2.0,
-                    "volume": 1000 + i,
-                    "open_interest": 5000 + i,
-                })
+                rows.append({"trade_date": d, "product": product, "contract": contract, "close": 1000.0 + i * 2.0, "volume": 1000 + i, "open_interest": 5000 + i})
         spots = {d: 1000.0 for d in dates}
         with mock.patch.object(basis, "_decision_market_date", return_value=date(2026, 8, 31)), \
-             mock.patch.object(basis, "_fetch_futures", return_value=rows), \
-             mock.patch.object(basis, "_fetch_spot", side_effect=lambda code, start, end: spots):
+             mock.patch.object(basis, "_fetch_futures", return_value=(rows, "CFFEX_OFFICIAL_DAILY_CSV", [])), \
+             mock.patch.object(basis, "_fetch_spot", side_effect=lambda code, start, end: (spots, "TENCENT_IFZQ", ["eastmoney down"])):
             out = basis.build(root)
         self.assertEqual(out["status"], "READY")
         self.assertTrue(out["use_in_current_decision"])
         self.assertEqual(out["fact_latest_date"], "2026-08-28")
+        self.assertEqual(out["provider"]["futures"], "CFFEX_OFFICIAL_DAILY_CSV")
+        self.assertEqual(out["provider"]["spot"]["IF"], "TENCENT_IFZQ")
         self.assertEqual(out["products"]["IF"]["near"]["contract"], "IF2609")
         self.assertEqual(out["products"]["IC"]["pit_main"]["contract"], "IC2609")
         self.assertGreater(out["products"]["IF"]["near"]["basis_change_5d_pct_points"], 0)
@@ -95,26 +89,29 @@ class FormalDynamicResearchEvidenceTest(unittest.TestCase):
         root = self.make_root()
         closes = [100.0] * 15 + [110.0, 108.0, 105.0, 101.0, 98.0, 95.0]
         bars = [{"date": f"2026-08-{i+1:02d}", "close": c} for i, c in enumerate(closes)]
-        with mock.patch.object(oversold, "_fetch_daily_bars", return_value=bars), \
+        with mock.patch.object(oversold, "_fetch_daily_bars", return_value=(bars, "TENCENT_IFZQ", ["eastmoney down"])), \
              mock.patch.object(oversold, "_latest_completed_date", return_value=bars[-1]["date"]):
             out = oversold.build(root)
         self.assertEqual(out["status"], "READY")
         self.assertTrue(out["use_in_current_decision"])
         self.assertTrue(out["pattern_match"])
+        self.assertEqual(out["provider"], "TENCENT_IFZQ")
         self.assertTrue(out["static_current_match_ignored"])
         self.assertIsNone(out["trade_signal"])
         self.assertFalse(out["can_generate_decision_independently"])
 
+    def test_300750_all_provider_failure_degrades_without_static_match(self):
+        root = self.make_root()
+        with mock.patch.object(oversold, "_fetch_daily_bars", side_effect=RuntimeError("all providers down")):
+            out = oversold.build(root)
+        self.assertEqual(out["status"], "DEGRADED")
+        self.assertFalse(out["use_in_current_decision"])
+        self.assertNotIn("pattern_match", out)
+        self.assertIsNone(out["trade_signal"])
+
     def test_bridge_ignores_static_current_match_and_exposes_dynamic_map(self):
         bridge = (ROOT / "scripts/build_research_execution_bridge.py").read_text(encoding="utf-8")
-        for token in [
-            "formal_dynamic_evidence",
-            "if_ic_basis_5d",
-            "ipo_base_stock_oversold_reversal_300750",
-            "static_current_match_ignored",
-            "build_if_ic_basis_evidence",
-            "build_300750_oversold_reversal_evidence",
-        ]:
+        for token in ["formal_dynamic_evidence", "if_ic_basis_5d", "ipo_base_stock_oversold_reversal_300750", "static_current_match_ignored", "build_if_ic_basis_evidence", "build_300750_oversold_reversal_evidence"]:
             self.assertIn(token, bridge)
         self.assertIn('"current_completed_bar_match": None', bridge)
 
@@ -124,12 +121,10 @@ class FormalDynamicResearchEvidenceTest(unittest.TestCase):
         summary_path = ROOT / "data/state/research_execution_summary.json"
         if not (basis_path.exists() and oversold_path.exists() and summary_path.exists()):
             self.skipTest("generated dynamic states are created by canonical context build before system acceptance")
-
         basis_state = json.loads(basis_path.read_text(encoding="utf-8"))
         oversold_state = json.loads(oversold_path.read_text(encoding="utf-8"))
         summary = json.loads(summary_path.read_text(encoding="utf-8"))
         dynamic = summary.get("formal_dynamic_evidence") or {}
-
         for state in (basis_state, oversold_state):
             self.assertIn(state.get("status"), {"READY", "DEGRADED", "BLOCKED"})
             self.assertIsNone(state.get("trade_signal"))
@@ -139,12 +134,6 @@ class FormalDynamicResearchEvidenceTest(unittest.TestCase):
                 self.assertTrue(state.get("reason"))
         self.assertEqual((dynamic.get("if_ic_basis_5d") or {}).get("status"), basis_state.get("status"))
         self.assertEqual((dynamic.get("ipo_base_stock_oversold_reversal_300750") or {}).get("status"), oversold_state.get("status"))
-        print(json.dumps({
-            "formal_dynamic_acceptance": {
-                "if_ic_basis_5d": {"status": basis_state.get("status"), "fact_latest_date": basis_state.get("fact_latest_date"), "reason": basis_state.get("reason")},
-                "300750_oversold_reversal": {"status": oversold_state.get("status"), "completed_bar_date": oversold_state.get("completed_bar_date"), "pattern_match": oversold_state.get("pattern_match"), "reason": oversold_state.get("reason")},
-            }
-        }, ensure_ascii=False))
 
 
 if __name__ == "__main__":
