@@ -90,16 +90,21 @@ def run(root: Path = ROOT) -> dict:
     cfg = _read_json(config_path)
     doc_text = normative_doc_path.read_text(encoding="utf-8")
 
-    # Governance SSOT guard. This closes the historical gap where stable change
-    # admission semantics were added to the machine config without being present
-    # in the document that declares itself the unique normative source.
+    # Governance SSOT guard. Validate the compact long-term principles and keep
+    # legacy CA identifiers audit-only rather than making rule count a contract.
     normative = cfg.get("normative_contract") or {}
     admission = cfg.get("change_admission") or {}
-    rule_ids = [str(x) for x in admission.get("rule_ids") or []]
-    rules = [str(x) for x in admission.get("rules") or []]
+    governance_principles = admission.get("governance_principles") or {}
+    legacy_mapping = admission.get("legacy_ca_mapping") or {}
     outcomes = [str(x) for x in admission.get("decision_outcomes") or []]
-    expected_rule_ids = [f"CA{i:02d}" for i in range(1, 12)]
-    expected_outcomes = ["FIX_NOW", "OBSERVE", "DO_NOT_FIX"]
+    expected_principles = {
+        "decision_and_timing",
+        "root_cause_complete_repair",
+        "scope_and_validation",
+        "serialized_integration_and_residual_risk_observation",
+    }
+    expected_outcomes = ["EXECUTE_NOW", "OBSERVE", "DO_NOT_CHANGE"]
+    expected_legacy = {f"CA{i:02d}" for i in range(1, 12)}
 
     check(
         "governance_ssot:normative_source",
@@ -117,16 +122,18 @@ def run(root: Path = ROOT) -> dict:
         bool(version) and f"生产变更与并发写入协议 {version}" in doc_text,
         f"config_version={version}",
     )
+    actual_principles = set(str(x) for x in governance_principles)
     check(
-        "governance_ssot:rule_id_contract",
-        rule_ids == expected_rule_ids and len(rule_ids) == len(rules),
-        f"rule_ids={rule_ids} rules={len(rules)} expected={expected_rule_ids}",
+        "governance_ssot:compact_principle_contract",
+        actual_principles == expected_principles and all(str(governance_principles.get(x) or "").strip() for x in expected_principles),
+        f"principles={sorted(actual_principles)} expected={sorted(expected_principles)}",
     )
-    missing_doc_ids = [rule_id for rule_id in rule_ids if rule_id not in doc_text]
     check(
-        "governance_ssot:all_machine_rules_registered_in_doc",
-        not missing_doc_ids,
-        f"missing_doc_rule_ids={missing_doc_ids}",
+        "governance_ssot:legacy_ca_is_audit_only",
+        set(str(x) for x in legacy_mapping) == expected_legacy
+        and all(str(v) in expected_principles for v in legacy_mapping.values())
+        and "只作为审计兼容映射" in doc_text,
+        f"legacy_keys={sorted(str(x) for x in legacy_mapping)}",
     )
     check(
         "governance_ssot:decision_outcomes",
@@ -135,17 +142,17 @@ def run(root: Path = ROOT) -> dict:
     )
     required_doc_markers = (
         "机器可执行镜像",
-        "用户提出“修复”“优化”或“执行”不自动等于生产修改授权",
-        "维护规则冻结",
-        "最小根因完整修复",
-        "一个自然生产周期",
-        "A股连续交易期间",
+        "用户提出“修复”“优化”或“执行”不自动等于`EXECUTE_NOW`",
+        "根因完整修复",
+        "休市、周末、盘前、午间休市和盘后都可以是生产维护窗口",
+        "与该风险匹配的一次真实生产暴露窗口",
+        "不得继续新增CA12、CA13",
         "问题闭环要求",
     )
     check(
         "governance_ssot:stable_semantics_present",
         all(marker in doc_text for marker in required_doc_markers),
-        "unique normative document contains the stable change-admission and closure semantics",
+        "unique normative document contains compact admission, residual-risk observation and closure semantics",
     )
 
     requirements = cfg.get("writer_requirements") or {}
@@ -367,7 +374,7 @@ def run(root: Path = ROOT) -> dict:
                 )
 
     return {
-        "schema_version": "1.4",
+        "schema_version": "1.5",
         "mode": "PRODUCTION_MUTATION_PROTOCOL_CHECK",
         "status": "FAIL" if errors else ("WARNING" if warnings else "PASS"),
         "errors": errors,
@@ -375,7 +382,9 @@ def run(root: Path = ROOT) -> dict:
         "checks": checks,
         "direct_main_writers": writer_rows,
         "normative_contract": normative,
-        "change_admission_rule_ids": rule_ids,
+        "change_admission_principles": sorted(actual_principles),
+        "change_admission_outcomes": outcomes,
+        "legacy_ca_mapping": legacy_mapping,
         "formal_file_mutation_contract": formal,
         "nonproduction_validation_workflows": cfg.get("nonproduction_validation_workflows") or {},
         "state_file_contracts": cfg.get("state_file_contracts") or {},
