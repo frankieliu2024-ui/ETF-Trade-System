@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-29T02:49:18Z",
-  "generated_at_beijing": "2026-08-29T10:49:18+08:00",
+  "generated_at": "2026-08-29T03:08:11Z",
+  "generated_at_beijing": "2026-08-29T11:08:11+08:00",
   "market_date": "2026-08-28",
   "latest_valid_node": "close",
   "current": {
@@ -84,7 +84,7 @@
     },
     "needs_account_update": false,
     "last_trade_event_id": "20260827_100843_515880_buy",
-    "rules_version": "V2.2.22",
+    "rules_version": "V2.2.24",
     "generated_at": "2026-08-28T07:12:38Z",
     "account_fact_reference_synced_at": "2026-08-27T10:09:00+08:00",
     "account_fact_path": "data/state/account_fact.json",
@@ -100,8 +100,8 @@
     }
   },
   "decision_context": {
-    "generated_at": "2026-08-29T02:49:18Z",
-    "rules_version": "V2.2.22",
+    "generated_at": "2026-08-29T03:08:11Z",
+    "rules_version": "V2.2.24",
     "market_date": "2026-08-28",
     "latest_node": "close",
     "current": {
@@ -185,7 +185,7 @@
       },
       "needs_account_update": false,
       "last_trade_event_id": "20260827_100843_515880_buy",
-      "rules_version": "V2.2.22",
+      "rules_version": "V2.2.24",
       "generated_at": "2026-08-28T07:12:38Z",
       "account_fact_reference_synced_at": "2026-08-27T10:09:00+08:00",
       "account_fact_path": "data/state/account_fact.json",
@@ -853,7 +853,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 7.874,
-      "age_seconds": 70600
+      "age_seconds": 71733
     },
     "freshness_at_context_build": {
       "status": "STALE",
@@ -869,7 +869,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 7.874,
-      "age_seconds": 70600
+      "age_seconds": 71733
     },
     "data_quality_summary": {
       "pass_count": 14,
@@ -921,7 +921,7 @@
       "account_fact_time": "2026-08-28T14:18:00+08:00",
       "market_snapshot_time": "2026-08-28T15:12:38+08:00",
       "market_phase": "POST_CLOSE_GRACE",
-      "context_generated_time": "2026-08-29T02:49:18Z",
+      "context_generated_time": "2026-08-29T03:08:11Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
@@ -950,7 +950,7 @@
       "read_only": true
     },
     "market_quote_router": {
-      "generated_at_beijing": "2026-08-29T10:49:18+08:00",
+      "generated_at_beijing": "2026-08-29T11:08:11+08:00",
       "refresh_mode": "CACHED_STATE",
       "refresh_failures": [],
       "route_version": "V1.1",
@@ -1514,7 +1514,7 @@
     },
     "decision_trigger": {
       "schema_version": "1.0",
-      "generated_at": "2026-08-28T15:58:58+08:00",
+      "generated_at": "2026-08-29T11:08:11+08:00",
       "status": "NO_NEW_TRIGGER",
       "trigger_type": "",
       "triggered_at": "",
@@ -1522,7 +1522,7 @@
       "previous_decision_id": "20260827_095649_515880_trial_5000",
       "evidence_change": "",
       "evidence_time": "2026-08-28T15:12:38+08:00",
-      "e2e_status": "BLOCKED",
+      "e2e_status": "READY",
       "requires_formal_reassessment": false,
       "pending_trigger": false,
       "idempotency_key": "",
@@ -1533,9 +1533,9 @@
     },
     "capital_efficiency_ranking": {
       "schema_version": "1.0",
-      "generated_at": "2026-08-28T15:58:58+08:00",
+      "generated_at": "2026-08-29T11:08:11+08:00",
       "as_of": "2026-08-28T15:12:38+08:00",
-      "e2e_status": "BLOCKED",
+      "e2e_status": "READY",
       "risk_zone": "RISK_OBSERVATION",
       "top_candidate": "现金",
       "next_unit_capital_use": "现金/持仓/观察候选按原MASTER链人工比较；本结果不生成金额。",
@@ -1545,112 +1545,92 @@
           "code": null,
           "category": "CASH",
           "eligibility": "AVAILABLE",
-          "reason": "E2E BLOCKED；只保留现金观察，不输出正式金额或份额。"
+          "reason": "等待价值与风险缓冲可直接参与比较；不自动等同于低效率。"
         },
-        {
-          "display_name": "159781",
-          "code": "159781",
-          "category": "HELD_ETF",
-          "eligibility": "HOLDING_COMPARISON",
-          "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
-          "comparison_basis": [
-            "当前价格与结构",
-            "持仓压力",
-            "相关性",
-            "可释放资本"
-          ],
-          "action_boundary": "仍需MASTER正式判断"
-        },
-        {
-          "display_name": "159941",
-          "code": "159941",
-          "category": "HELD_ETF",
-          "eligibility": "HOLDING_COMPARISON",
-          "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
-          "comparison_basis": [
-            "当前价格与结构",
-            "持仓压力",
-            "相关性",
-            "可释放资本"
-          ],
-          "action_boundary": "仍需MASTER正式判断"
-        },
-        {
-          "display_name": "515880",
-          "code": "515880",
-          "category": "HELD_ETF",
-          "eligibility": "HOLDING_COMPARISON",
-          "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
-          "comparison_basis": [
-            "当前价格与结构",
-            "持仓压力",
-            "相关性",
-            "可释放资本"
-          ],
-          "action_boundary": "仍需MASTER正式判断"
-        },
-        {
-          "display_name": "561980",
-          "code": "561980",
-          "category": "HELD_ETF",
-          "eligibility": "HOLDING_COMPARISON",
-          "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
-          "comparison_basis": [
-            "当前价格与结构",
-            "持仓压力",
-            "相关性",
-            "可释放资本"
-          ],
-          "action_boundary": "仍需MASTER正式判断"
-        },
-        {
-          "display_name": "588000",
-          "code": "588000",
-          "category": "HELD_ETF",
-          "eligibility": "HOLDING_COMPARISON",
-          "reason": "当前持仓资本用途；不因排序自动生成卖出或回补动作。",
-          "comparison_basis": [
-            "当前价格与结构",
-            "持仓压力",
-            "相关性",
-            "可释放资本"
-          ],
-          "action_boundary": "仍需MASTER正式判断"
-        }
-      ],
-      "excluded_candidates": [
         {
           "display_name": "159326",
-          "reason": "E2E_BLOCKED"
+          "code": "159326",
+          "category": "OBSERVED_ETF",
+          "eligibility": "OBSERVATION_COMPARISON",
+          "reason": "进入相对比较但仍需验证Trial/Confirm最小证据与失效条件。",
+          "comparison_basis": [
+            "价格优势",
+            "结构/修复",
+            "相对强弱",
+            "组合相关性",
+            "资本占用效率"
+          ],
+          "action_boundary": "排名第一不自动升级为唯一主候选"
         },
         {
           "display_name": "159561",
-          "reason": "E2E_BLOCKED"
+          "code": "159561",
+          "category": "OBSERVED_ETF",
+          "eligibility": "OBSERVATION_COMPARISON",
+          "reason": "进入相对比较但仍需验证Trial/Confirm最小证据与失效条件。",
+          "comparison_basis": [
+            "价格优势",
+            "结构/修复",
+            "相对强弱",
+            "组合相关性",
+            "资本占用效率"
+          ],
+          "action_boundary": "排名第一不自动升级为唯一主候选"
         },
         {
           "display_name": "159992",
-          "reason": "E2E_BLOCKED"
+          "code": "159992",
+          "category": "OBSERVED_ETF",
+          "eligibility": "OBSERVATION_COMPARISON",
+          "reason": "进入相对比较但仍需验证Trial/Confirm最小证据与失效条件。",
+          "comparison_basis": [
+            "价格优势",
+            "结构/修复",
+            "相对强弱",
+            "组合相关性",
+            "资本占用效率"
+          ],
+          "action_boundary": "排名第一不自动升级为唯一主候选"
         },
         {
           "display_name": "513180",
-          "reason": "E2E_BLOCKED"
+          "code": "513180",
+          "category": "OBSERVED_ETF",
+          "eligibility": "OBSERVATION_COMPARISON",
+          "reason": "进入相对比较但仍需验证Trial/Confirm最小证据与失效条件。",
+          "comparison_basis": [
+            "价格优势",
+            "结构/修复",
+            "相对强弱",
+            "组合相关性",
+            "资本占用效率"
+          ],
+          "action_boundary": "排名第一不自动升级为唯一主候选"
         },
         {
           "display_name": "513520",
-          "reason": "E2E_BLOCKED"
-        },
-        {
-          "display_name": "518880",
-          "reason": "E2E_BLOCKED"
+          "code": "513520",
+          "category": "OBSERVED_ETF",
+          "eligibility": "OBSERVATION_COMPARISON",
+          "reason": "进入相对比较但仍需验证Trial/Confirm最小证据与失效条件。",
+          "comparison_basis": [
+            "价格优势",
+            "结构/修复",
+            "相对强弱",
+            "组合相关性",
+            "资本占用效率"
+          ],
+          "action_boundary": "排名第一不自动升级为唯一主候选"
         }
       ],
+      "excluded_candidates": [],
       "key_reason": "两阶段：先做E2E、风险扩张、质量和可执行性硬过滤，再保留少量定性比较对象；不生成综合资本效率分数。",
       "previous_top_candidate": "现金",
       "read_only": true,
       "safety_boundary": "资本排序不替代唯一主候选，不自动生成Trial、Confirm、金额、卖出份额或订单。"
     },
     "intraday_path_features": {
-      "generated_at": "2026-08-28T17:20:47Z",
+      "generated_at": "2026-08-29T03:08:03Z",
       "market_date": "2026-08-28",
       "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
       "read_only": true,
@@ -2363,7 +2343,7 @@
       "status": "READY",
       "market_date": "2026-08-28",
       "as_of_beijing": "2026-08-28T15:12:38+08:00",
-      "evidence_time_semantics": "CURRENT_DATE_LATEST",
+      "evidence_time_semantics": "PREVIOUS_OR_HISTORICAL",
       "prior_research_as_of_beijing": "2026-08-28T14:58:30+08:00",
       "etf_evidence": [
         {
@@ -2677,7 +2657,7 @@
       ],
       "skfolio_risk_evidence": {
         "schema_version": "1.0",
-        "generated_at": "2026-08-28T07:58:58Z",
+        "generated_at": "2026-08-29T03:08:10Z",
         "status": "READY",
         "mode": "SKFOLIO_VALIDATED_RISK_EVIDENCE",
         "validation_basis": {
@@ -2930,7 +2910,7 @@
     "account_fact_time": "2026-08-28T14:18:00+08:00",
     "market_snapshot_time": "2026-08-28T15:12:38+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-08-29T02:49:18Z",
+    "context_generated_time": "2026-08-29T03:08:11Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -3022,7 +3002,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "STALE",
-        "age_seconds": 70600,
+        "age_seconds": 71733,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -3040,7 +3020,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 7.874,
-        "age_seconds": 70600
+        "age_seconds": 71733
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新判断为“时点正常／存在延迟／时点过旧”。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -3065,7 +3045,7 @@
     }
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-08-29T10:49:18+08:00",
+    "generated_at_beijing": "2026-08-29T11:08:11+08:00",
     "refresh_mode": "CACHED_STATE",
     "refresh_failures": [],
     "route_version": "V1.1",
@@ -3765,11 +3745,11 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 7.874,
-    "age_seconds": 70600
+    "age_seconds": 71733
   },
   "freshness_at_context_build": {
     "status": "STALE",
-    "age_seconds": 70600,
+    "age_seconds": 71733,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -3831,13 +3811,13 @@
     "failure_stage": "session_gate",
     "reason": "outside_a_share_capture_window"
   },
-  "system_consistency_status": "FAIL",
-  "system_consistency_hard_errors": 1,
+  "system_consistency_status": "PASS",
+  "system_consistency_hard_errors": 0,
   "etf_universe_count": 11,
   "overseas_context_status": "PASS",
-  "overseas_generated_at_beijing": "2026-08-29T10:49:05+08:00",
+  "overseas_generated_at_beijing": "2026-08-29T10:53:45+08:00",
   "us_extended_hours_status": "PASS",
-  "us_extended_hours_generated_at_beijing": "2026-08-29T10:49:17+08:00",
+  "us_extended_hours_generated_at_beijing": "2026-08-29T10:53:57+08:00",
   "stock_context_status": "VALID",
   "stock_market_context_status": "PASS",
   "stock_role_confirmation_needed": false,
