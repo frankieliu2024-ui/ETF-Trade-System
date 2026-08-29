@@ -16,12 +16,6 @@ sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import run_market_breadth_margin_stage1 as base
-try:
-    import run_market_breadth_margin_stage1_v2 as margin_v2
-    FETCH_MARGIN = margin_v2.fetch_margin_with_fallback
-except Exception:
-    FETCH_MARGIN = base.fetch_margin
-
 import audit_pit_membership_capability as membership
 
 TARGETS = ["561980", "588000", "515880", "159326"]
@@ -106,8 +100,7 @@ def pit_top5(mapping: pd.DataFrame, code: str, d: pd.Timestamp) -> tuple[list[st
 
 
 def aligned_close(prices: dict[str, pd.DataFrame], code: str, dates: pd.DatetimeIndex) -> pd.Series:
-    x = prices[code].set_index("date")["close"].reindex(dates).ffill(limit=5)
-    return x
+    return prices[code].set_index("date")["close"].reindex(dates).ffill(limit=5)
 
 
 def build_signal_panel(etf_panel: pd.DataFrame, holdings: pd.DataFrame, mapping: pd.DataFrame, prices: dict[str, pd.DataFrame], mode: str) -> pd.DataFrame:
@@ -117,7 +110,7 @@ def build_signal_panel(etf_panel: pd.DataFrame, holdings: pd.DataFrame, mapping:
         if e.empty:
             continue
         dates = pd.DatetimeIndex(e.date)
-        stock_series = {c: aligned_close(prices, c, dates) for c in prices if c not in TARGETS}
+        stock_series = {c: aligned_close(prices, c, dates) for c in prices}
         static = current_top5(holdings, code)
         for i, d in enumerate(dates):
             if i < 21:
@@ -174,10 +167,8 @@ def metric(df: pd.DataFrame, sig: str, label: str, controls: list[str], minobs: 
     return {"n": int(len(x)), "ic": r4(ic)}
 
 
-def summarize(panel: pd.DataFrame, mode: str, margin_cov: dict) -> dict:
+def summarize(panel: pd.DataFrame, mode: str) -> dict:
     controls = ["mom5_lag1", "mom20_lag1"]
-    if "margin_balance_5d_change_lag1" in panel and panel.margin_balance_5d_change_lag1.notna().sum() >= 100:
-        controls.append("margin_balance_5d_change_lag1")
     out = {}
     for code in TARGETS:
         e = panel[panel.code == code].sort_values("date")
@@ -211,8 +202,7 @@ def summarize(panel: pd.DataFrame, mode: str, margin_cov: dict) -> dict:
             lm = float(np.median(lv)) if lv else np.nan
             positive_years = sum(v is not None and v > 0 for v in annual.values())
             available_years = sum(v is not None for v in annual.values())
-            year_gate = positive_years >= 2 if available_years >= 2 else False
-            supported = bool(len(fv) == 3 and median_ic > 0.03 and sign_consistency >= 2 / 3 and em > 0 and lm > 0 and year_gate)
+            supported = bool(len(fv) == 3 and median_ic > 0.03 and sign_consistency >= 2 / 3 and em > 0 and lm > 0 and available_years >= 2 and positive_years >= 2)
             sigs[sig] = {
                 "full_by_horizon": full,
                 "median_partial_rank_ic": r4(median_ic),
@@ -242,7 +232,6 @@ def summarize(panel: pd.DataFrame, mode: str, margin_cov: dict) -> dict:
     return {
         "selection_mode": mode,
         "controls": controls,
-        "margin_coverage": margin_cov,
         "objects": out,
         "supported_objects": supported_objects,
         "research_interpretation": grade,
@@ -259,13 +248,6 @@ def main() -> int:
 
     holdings, mapping, membership_meta = build_membership()
     etf = base.local_panel(args.start, args.end, TARGETS)
-    trading_dates = pd.DatetimeIndex(sorted(etf.date.unique()))
-    margin_cov = {"status": "UNAVAILABLE"}
-    try:
-        m, margin_cov = FETCH_MARGIN(trading_dates, args.start, args.end)
-        etf = etf.merge(m, left_on="date", right_index=True, how="left")
-    except Exception as exc:
-        margin_cov = {"status": "UNAVAILABLE", "error": f"{type(exc).__name__}: {exc}"[:300]}
 
     all_leaders = sorted(set(holdings.loc[holdings["rank"] <= 5, "holding_code"].astype(str)))
     prices = {}
@@ -283,14 +265,16 @@ def main() -> int:
     static_panel = etf.merge(static_sig, on=["date", "code"], how="inner")
     pit_panel = etf.merge(pit_sig, on=["date", "code"], how="inner")
 
-    static_result = summarize(static_panel, "STATIC_CURRENT_TOP5", margin_cov)
-    pit_result = summarize(pit_panel, "PIT_LAST_PUBLISHED_QUARTER_TOP5", margin_cov)
+    static_result = summarize(static_panel, "STATIC_CURRENT_TOP5")
+    pit_result = summarize(pit_panel, "PIT_LAST_PUBLISHED_QUARTER_TOP5")
 
     payload = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "mode": "RESEARCH_ONLY_COMPONENT_LEAD_PIT_MEMBERSHIP_VALIDATION",
         "objective": "Test whether component-lead increment survives replacing the fixed 2026Q2 top-five basket with the latest actually published quarterly top-five holdings available at each historical date.",
         "point_in_time": "For ETF trading date D, membership uses only a quarter report with publish_date < D; leader closes use no later than D-1; forward ETF return starts at D open.",
+        "controls": ["mom5_lag1", "mom20_lag1"],
+        "control_note": "Primary PIT-vs-static test intentionally matches original Stage1 controls. Margin is deferred to a secondary check only if PIT support survives, so the constituent-bias question is not blocked by an unrelated slow margin-history path.",
         "pre_registered_support_rule": "Per ETF/signal: median partial rank IC across 1/3/5d > 0.03, >=2/3 horizons positive, early and late medians positive, and >=2 positive annual medians. Overall PASS requires >=2 supported ETFs and at least one of 561980/588000; one supported ETF => PARTIAL; none => NO_STABLE_INCREMENT.",
         "membership_meta": membership_meta,
         "price_source": "Tencent IFZQ qfq daily kline",
