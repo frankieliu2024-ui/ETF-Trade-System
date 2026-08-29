@@ -11,6 +11,7 @@ on:
       - 'research/backtests/analyze_section6_tech_object_concentration.py'
       - 'research/backtests/analyze_section6_consecutive_risk_discriminator.py'
       - 'research/backtests/analyze_section6_new_evidence_stage_c.py'
+      - 'research/backtests/analyze_section6_stage_e_validation.py'
       - 'research/reports/**'
       - '.github/workflows/section6-revalidation-research.yml'
   workflow_dispatch:
@@ -42,6 +43,8 @@ jobs:
         run: python research/backtests/analyze_section6_consecutive_risk_discriminator.py
       - name: Run stage C cloud-era new evidence screen
         run: python research/backtests/analyze_section6_new_evidence_stage_c.py
+      - name: Run stage E stability and dedup validation
+        run: python research/backtests/analyze_section6_stage_e_validation.py
       - name: Show generated reports
         run: |
           cat research/reports/generated/section6_revalidation/section6_baseline_revalidation.md
@@ -57,6 +60,8 @@ jobs:
           cat research/reports/generated/section6_revalidation/section6_consecutive_risk_discriminator.md
           printf '\n\n'
           cat research/reports/generated/section6_revalidation/section6_stage_c_new_evidence.md
+          printf '\n\n'
+          cat research/reports/generated/section6_revalidation/section6_stage_e_validation.md
       - name: Upload research artifact
         uses: actions/upload-artifact@v4
         with:
