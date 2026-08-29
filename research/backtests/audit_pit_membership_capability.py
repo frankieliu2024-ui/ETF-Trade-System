@@ -17,14 +17,15 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 ETF-Trade-System research capability audit",
     "Referer": "https://fundf10.eastmoney.com/",
 }
-BASE = "https://fundf10.eastmoney.com/FundArchivesDatas.aspx"
+ARCHIVE_BASE = "https://fundf10.eastmoney.com/FundArchivesDatas.aspx"
+ANN_API = "https://api.fund.eastmoney.com/f10/JJGG"
 
 
-def get(params: dict, attempts: int = 4) -> requests.Response:
+def request(url: str, params: dict, attempts: int = 4) -> requests.Response:
     last = None
     for attempt in range(attempts):
         try:
-            r = requests.get(BASE, params=params, headers=HEADERS, timeout=25)
+            r = requests.get(url, params=params, headers=HEADERS, timeout=25)
             r.raise_for_status()
             return r
         except Exception as exc:
@@ -34,15 +35,8 @@ def get(params: dict, attempts: int = 4) -> requests.Response:
 
 
 def fetch_holdings(code: str, year: int) -> tuple[pd.DataFrame, dict]:
-    params = {
-        "type": "jjcc",
-        "code": code,
-        "topline": "200",
-        "year": str(year),
-        "month": "",
-        "rt": "0.0",
-    }
-    r = get(params)
+    params = {"type": "jjcc", "code": code, "topline": "200", "year": str(year), "month": "", "rt": "0.0"}
+    r = request(ARCHIVE_BASE, params)
     text = r.text
     quarter_labels = re.findall(r"(20\d{2}年(?:1季度|2季度|3季度|4季度|中报|年报))", text)
     codes = re.findall(r">\s*(\d{6})\s*<", text)
@@ -65,31 +59,49 @@ def clean_text(raw: str) -> str:
     x = re.sub(r"<script.*?</script>", " ", x, flags=re.I | re.S)
     x = re.sub(r"<style.*?</style>", " ", x, flags=re.I | re.S)
     x = re.sub(r"<[^>]+>", " ", x)
-    x = x.replace("\\/", "/").replace("\\\"", '"')
     return re.sub(r"\s+", " ", x)
 
 
-def fetch_announcements(code: str) -> tuple[list[dict], dict]:
-    hits: list[dict] = []
+def flatten_json(obj, prefix="") -> list[tuple[str, str]]:
+    out = []
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            out.extend(flatten_json(v, f"{prefix}.{k}" if prefix else str(k)))
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            out.extend(flatten_json(v, f"{prefix}[{i}]"))
+    elif obj is not None:
+        out.append((prefix, str(obj)))
+    return out
+
+
+def fetch_announcements_api(code: str) -> tuple[list[dict], dict]:
+    hits = []
     total_bytes = 0
     pages_ok = 0
-    for page in range(1, 9):
-        r = get({"type": "jjgg", "code": code, "page": str(page), "per": "100", "rt": "0.0"})
+    sample_keys = []
+    for page in range(1, 8):
+        r = request(ANN_API, {"fundcode": code, "pageIndex": str(page), "pageSize": "100", "type": "0"})
         pages_ok += 1
         total_bytes += len(r.content)
-        plain = clean_text(r.text)
-        # Capture report-related text around a visible disclosure date. This is a
-        # capability audit: exact report-to-holdings mapping is validated later.
-        for m in re.finditer(r"(20(?:24|25|26)[-/.年]\d{1,2}[-/.月]\d{1,2}日?)", plain):
-            left = max(0, m.start() - 180)
-            right = min(len(plain), m.end() + 180)
-            snippet = plain[left:right]
-            if re.search(r"季度报告|中期报告|半年度报告|年度报告|基金报告", snippet):
-                hits.append({"fund_code": code, "page": page, "date_token": m.group(1), "snippet": snippet[:380]})
-        # Empty or repeated tail pages usually become very small; no need to hammer endpoint.
-        if len(r.content) < 500:
+        try:
+            obj = r.json()
+        except Exception as exc:
+            raise RuntimeError(f"announcement API non-JSON for {code}: {exc}; body={r.text[:120]}")
+        flat = flatten_json(obj)
+        if page == 1:
+            sample_keys = sorted({k.split(".")[-1].split("[")[0] for k, _ in flat})[:80]
+        values = [v for _, v in flat]
+        joined = " | ".join(values)
+        # Search the flattened response for report titles and nearby 2024-2026 dates.
+        for m in re.finditer(r"(?:季度报告|中期报告|半年度报告|年度报告)", joined):
+            snippet = joined[max(0, m.start()-220): min(len(joined), m.end()+220)]
+            dates = re.findall(r"20(?:24|25|26)[-/.]\d{1,2}[-/.]\d{1,2}(?:[ T]\d{2}:\d{2}:\d{2})?", snippet)
+            if dates:
+                hits.append({"fund_code": code, "page": page, "date_token": dates[0], "snippet": snippet[:420], "source": "api.fund.eastmoney.com/f10/JJGG"})
+        # Detect empty result structures without assuming a fixed schema.
+        if len(r.content) < 80 or not flat:
             break
-    # Deduplicate exact repeated snippets caused by pagination artifacts.
     uniq = []
     seen = set()
     for h in hits:
@@ -97,14 +109,31 @@ def fetch_announcements(code: str) -> tuple[list[dict], dict]:
         if key not in seen:
             seen.add(key)
             uniq.append(h)
-    meta = {
+    return uniq, {
         "fund_code": code,
         "pages_ok": pages_ok,
         "response_bytes": total_bytes,
         "report_date_candidate_count": len(uniq),
+        "sample_json_keys": sample_keys,
+        "endpoint": "api.fund.eastmoney.com/f10/JJGG",
+    }
+
+
+def fetch_announcements_legacy(code: str) -> tuple[list[dict], dict]:
+    hits = []
+    r = request(ARCHIVE_BASE, {"type": "jjgg", "code": code, "page": "1", "per": "100", "rt": "0.0"})
+    plain = clean_text(r.text)
+    for m in re.finditer(r"(20(?:24|25|26)[-/.年]\d{1,2}[-/.月]\d{1,2}日?)", plain):
+        snippet = plain[max(0, m.start()-180): min(len(plain), m.end()+180)]
+        if re.search(r"季度报告|中期报告|半年度报告|年度报告|基金报告", snippet):
+            hits.append({"fund_code": code, "page": 1, "date_token": m.group(1), "snippet": snippet[:380], "source": "legacy_jjgg"})
+    return hits, {
+        "fund_code": code,
+        "pages_ok": 1,
+        "response_bytes": len(r.content),
+        "report_date_candidate_count": len(hits),
         "endpoint": "fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjgg",
     }
-    return uniq, meta
 
 
 def main() -> int:
@@ -131,15 +160,23 @@ def main() -> int:
                 errors.append(err)
                 print(json.dumps(err, ensure_ascii=False), flush=True)
 
+        api_ok = False
         try:
-            rows, meta = fetch_announcements(code)
+            rows, meta = fetch_announcements_api(code)
             announcement_rows.extend(rows)
             announcement_meta.append(meta)
+            api_ok = bool(rows)
             print(json.dumps(meta, ensure_ascii=False), flush=True)
         except Exception as exc:
-            err = {"stage": "announcements", "fund_code": code, "error": f"{type(exc).__name__}: {exc}"[:500]}
-            errors.append(err)
-            print(json.dumps(err, ensure_ascii=False), flush=True)
+            errors.append({"stage": "announcements_api", "fund_code": code, "error": f"{type(exc).__name__}: {exc}"[:500]})
+        if not api_ok:
+            try:
+                rows, meta = fetch_announcements_legacy(code)
+                announcement_rows.extend(rows)
+                announcement_meta.append(meta)
+                print(json.dumps(meta, ensure_ascii=False), flush=True)
+            except Exception as exc:
+                errors.append({"stage": "announcements_legacy", "fund_code": code, "error": f"{type(exc).__name__}: {exc}"[:500]})
 
     holdings = pd.concat(all_rows, ignore_index=True) if all_rows else pd.DataFrame(columns=["fund_code", "year", "holding_code"])
     holdings.to_csv(args.out / "historical_holdings_endpoint_probe.csv", index=False)
@@ -147,7 +184,6 @@ def main() -> int:
 
     usable = {code: sum(1 for x in audits if x["fund_code"] == code and x["holding_code_count"] > 0) for code in ETF_CODES}
     announcement_usable = {code: sum(1 for x in announcement_rows if x["fund_code"] == code) for code in ETF_CODES}
-
     payload = {
         "mode": "RESEARCH_ONLY_PIT_MEMBERSHIP_CAPABILITY_AUDIT",
         "production_context_integration": False,
