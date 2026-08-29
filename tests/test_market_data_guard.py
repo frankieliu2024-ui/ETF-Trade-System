@@ -1,7 +1,11 @@
 import unittest
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from scripts.market_data_guard import classify_provider_failure, validate_market_row
+
+
+BEIJING = ZoneInfo("Asia/Shanghai")
 
 
 class MarketDataGuardTests(unittest.TestCase):
@@ -25,7 +29,7 @@ class MarketDataGuardTests(unittest.TestCase):
             "provider": "hithink-finance",
         }
         ok, reason = validate_market_row(
-            row, "399006", market_date=now.date().isoformat(), now=now,
+            row, "399006", market_date=now.astimezone(BEIJING).date().isoformat(), now=now,
             runtime_policy={"fresh_max_age_seconds": 900, "degraded_max_age_seconds": 1500},
         )
         self.assertTrue(ok, reason)
@@ -40,7 +44,12 @@ class MarketDataGuardTests(unittest.TestCase):
             "prev_close": 101, "volume": 10, "amount": 1000,
             "provider": "ETF_PROXY_399006",
         }
-        ok, reason = validate_market_row(row, "399006", market_date=now.date().isoformat(), now=now)
+        ok, reason = validate_market_row(
+            row,
+            "399006",
+            market_date=now.astimezone(BEIJING).date().isoformat(),
+            now=now,
+        )
         self.assertFalse(ok)
         self.assertIn("proxy", reason)
 
