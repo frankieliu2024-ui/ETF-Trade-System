@@ -29,9 +29,10 @@ def _now() -> str:
 
 
 def _risk_zone(value: Any) -> str:
-    """Return only MASTER-authorized stable risk states.
+    """Return descriptive MASTER risk-review zones only.
 
-    -10% is an enhanced-review boundary inside RISK_CONTROL, not a fourth state.
+    The -5%/-8% boundaries trigger review intensity. They do not create trading
+    permission; -10% is an enhanced-review boundary inside RISK_CONTROL.
     """
     try:
         pct = float(value)
@@ -124,7 +125,7 @@ def _build_trigger(current: dict, account: dict, e2e: dict, equity: dict, prior:
         evidence_change = "new confirmed trade event"
     elif prior_zone and zone != prior_zone:
         event_type = "RISK_BOUNDARY_CROSSED"
-        evidence_change = f"{prior_zone}→{zone}"
+        evidence_change = f"{prior_zone}→{zone}; review intensity changed only, formal permission must be re-decided by MASTER"
     elif prior.get("e2e_status") in {"DEGRADED", "BLOCKED"} and e2e_status == "READY" and prior.get("pending_trigger"):
         event_type = "E2E_RECOVERED"
         evidence_change = "E2E recovered to READY with pending trigger"
@@ -137,22 +138,23 @@ def _build_trigger(current: dict, account: dict, e2e: dict, equity: dict, prior:
             evidence_change = "research evidence marked as decision-relevant"
     if not event_type:
         return {
-            "schema_version": "1.1", "generated_at": now, "status": "NO_NEW_TRIGGER",
+            "schema_version": "1.2", "generated_at": now, "status": "NO_NEW_TRIGGER",
             "trigger_type": "", "triggered_at": "", "applicable_object": "",
             "previous_decision_id": str((account.get("formal_action") or {}).get("decision_id") or ""),
             "evidence_change": "", "evidence_time": evidence_time,
             "e2e_status": e2e_status, "requires_formal_reassessment": False,
             "pending_trigger": False, "idempotency_key": "",
             "risk_zone": zone, "enhanced_risk_review_required": _enhanced_risk_review(risk),
+            "risk_zone_semantics": "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION",
             "last_trade_event_id": str(current.get("last_trade_event_id") or ""),
-            "safety_boundary": "确定性识别仅生成重评请求，不生成金额、份额或交易动作。", "read_only": True,
+            "safety_boundary": "确定性识别仅生成重评请求，不生成风险许可、金额、份额或交易动作。", "read_only": True,
         }
     previous_decision = str((account.get("formal_action") or {}).get("decision_id") or "")
     key = "|".join([event_type, applicable, evidence_time[:16], previous_decision, str(current.get("last_trade_event_id") or "")])
     already = key == str(prior.get("idempotency_key") or "")
     blocked = e2e_status == "BLOCKED"
     return {
-        "schema_version": "1.1", "generated_at": now,
+        "schema_version": "1.2", "generated_at": now,
         "status": "ALREADY_RECORDED" if already else ("PENDING" if blocked else "TRIGGERED"),
         "trigger_type": event_type, "triggered_at": "" if already else now,
         "applicable_object": applicable, "previous_decision_id": previous_decision,
@@ -160,23 +162,29 @@ def _build_trigger(current: dict, account: dict, e2e: dict, equity: dict, prior:
         "e2e_status": e2e_status, "requires_formal_reassessment": not already,
         "pending_trigger": True if blocked or (not already and e2e_status in {"READY", "DEGRADED"}) else bool(prior.get("pending_trigger")),
         "idempotency_key": key, "risk_zone": zone, "enhanced_risk_review_required": _enhanced_risk_review(risk),
+        "risk_zone_semantics": "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION",
         "last_trade_event_id": str(current.get("last_trade_event_id") or ""),
         "cooldown_rule": "同一事件类型、对象、证据窗口、上一正式决策不重复生成；普通10分钟行情变化不触发。",
-        "safety_boundary": "确定性识别仅生成重评请求，不生成金额、份额或交易动作。", "read_only": True,
+        "safety_boundary": "确定性识别仅生成重评请求，不生成风险许可、金额、份额或交易动作。", "read_only": True,
     }
 
 
-def _execution_constraints(e2e_status: str, risk_zone: str, enhanced_review: bool) -> list[str]:
+def _execution_constraints(e2e_status: str) -> list[str]:
     constraints = []
     if e2e_status == "BLOCKED":
         constraints.append("E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT")
-    if risk_zone == "RISK_OBSERVATION":
-        constraints.append("MASTER_RISK_OBSERVATION_PERMISSION_APPLIES")
-    elif risk_zone == "RISK_CONTROL":
-        constraints.append("MASTER_RISK_CONTROL_PERMISSION_APPLIES")
-    if enhanced_review:
-        constraints.append("MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY")
     return constraints
+
+
+def _risk_review_context(risk_zone: str, enhanced_review: bool) -> list[str]:
+    context = []
+    if risk_zone == "RISK_OBSERVATION":
+        context.append("MASTER_MINUS_5_RISK_REVIEW_BOUNDARY")
+    elif risk_zone == "RISK_CONTROL":
+        context.append("MASTER_MINUS_8_RISK_REVIEW_BOUNDARY")
+    if enhanced_review:
+        context.append("MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY")
+    return context
 
 
 def _build_ranking(current: dict, account: dict, e2e: dict, equity: dict, prior: dict) -> dict:
@@ -185,6 +193,8 @@ def _build_ranking(current: dict, account: dict, e2e: dict, equity: dict, prior:
     The machine layer enumerates capital uses and data availability. It must not
     remove legal opportunities because of risk/E2E state, create a hidden risk
     state, or preselect cash/a top candidate before the MASTER decision chain.
+    Risk zones are review context only; formal permission is always re-decided
+    by the complete MASTER chain.
     """
     now = _now()
     e2e_status = str(e2e.get("status") or "BLOCKED").upper()
@@ -193,7 +203,8 @@ def _build_ranking(current: dict, account: dict, e2e: dict, equity: dict, prior:
         risk = ((equity.get("summary") or {}).get("known_net_current_strategy_return_pct"))
     risk_zone = _risk_zone(risk)
     enhanced_review = _enhanced_risk_review(risk)
-    constraints = _execution_constraints(e2e_status, risk_zone, enhanced_review)
+    constraints = _execution_constraints(e2e_status)
+    review_context = _risk_review_context(risk_zone, enhanced_review)
 
     latest = str(current.get("latest_snapshot") or "")
     snapshot = _read(ROOT / latest, {}) if latest else {}
@@ -214,6 +225,7 @@ def _build_ranking(current: dict, account: dict, e2e: dict, equity: dict, prior:
         "data_availability": "READY",
         "reason": "等待价值与风险缓冲属于合法资本用途；是否优于其他用途由MASTER完整判断决定。",
         "execution_constraints": constraints,
+        "risk_review_context": review_context,
         "action_boundary": "不自动成为唯一主候选或0元结论",
     }]
 
@@ -237,13 +249,14 @@ def _build_ranking(current: dict, account: dict, e2e: dict, equity: dict, prior:
             "reason": (
                 "当前持仓资本用途，继续比较持有、合法释放与其他用途。"
                 if held else
-                "观察ETF持续参加机会扫描；风险许可只约束实际新增，不删除候选。"
+                "观察ETF持续参加机会扫描；风险复核边界不删除候选，也不自动决定风险许可。"
             ),
             "quantity": position.get("quantity") if held else None,
             "market_value": position.get("market_value") if held else None,
             "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE" if held else None,
             "comparison_basis": ["价格/结构", "承接", "相对反馈", "风险收益", "资本占用效率"],
             "execution_constraints": constraints + ([] if usable else ["CURRENT_MARKET_EVIDENCE_UNAVAILABLE"]),
+            "risk_review_context": review_context,
             "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。",
         })
 
@@ -261,6 +274,7 @@ def _build_ranking(current: dict, account: dict, e2e: dict, equity: dict, prior:
             "quantity": position.get("quantity"), "market_value": position.get("market_value"),
             "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
             "execution_constraints": constraints + ["CURRENT_MARKET_EVIDENCE_UNAVAILABLE"],
+            "risk_review_context": review_context,
             "action_boundary": "不得因行情缺失静默删除持仓。",
         })
 
@@ -276,13 +290,16 @@ def _build_ranking(current: dict, account: dict, e2e: dict, equity: dict, prior:
             "quantity": position.get("quantity"), "market_value": position.get("market_value"),
             "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
             "execution_constraints": constraints,
+            "risk_review_context": review_context,
             "action_boundary": "旧仓卖出与新机会买入必须分别通过各自MASTER完整决策链。",
         })
 
     return {
-        "schema_version": "1.1", "generated_at": now, "as_of": current.get("captured_at") or now,
+        "schema_version": "1.2", "generated_at": now, "as_of": current.get("captured_at") or now,
         "e2e_status": e2e_status, "risk_zone": risk_zone,
+        "risk_zone_semantics": "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION",
         "enhanced_risk_review_required": enhanced_review,
+        "risk_review_context": review_context,
         "top_candidate": None,
         "candidate_selection_status": "REQUIRES_MASTER_DECISION",
         "next_unit_capital_use": "由ChatGPT按MASTER对现金、全部持仓ETF、全部观察ETF、账户个股及可释放资本重新比较；机器不预选唯一主候选。",
@@ -290,11 +307,11 @@ def _build_ranking(current: dict, account: dict, e2e: dict, equity: dict, prior:
         "comparison_universe": comparison,
         "excluded_candidates": [],
         "execution_constraints": constraints,
-        "key_reason": "机器层只枚举完整资本比较全集与数据/执行约束；风险状态、E2E或单对象数据失败不得机械删除合法机会。",
+        "key_reason": "机器层只枚举完整资本比较全集与真实数据/执行约束；风险复核边界只提高复核强度，不自动生成风险许可或删除合法机会。",
         "previous_top_candidate": prior.get("top_candidate"),
         "order_semantics": "ENUMERATION_ONLY_NOT_RANKING",
         "read_only": True,
-        "safety_boundary": "资本比较不替代唯一主候选，不自动生成Trial、Confirm、金额、卖出份额或订单。",
+        "safety_boundary": "资本比较不替代唯一主候选；风险区间不自动生成风险许可；本状态不自动生成Trial、Confirm、金额、卖出份额或订单。",
     }
 
 
