@@ -36,6 +36,20 @@ class ComponentLead561980Test(unittest.TestCase):
         )
         return root
 
+    def test_pcf_crypto_runtime_capability(self):
+        params, headers = mod._encrypted_pcf_params({
+            "startDate": "2026-08-31",
+            "productCode": "561980",
+            "pageNum": 1,
+            "pageSize": 1000,
+            "isPreview": "0",
+        })
+        self.assertEqual(params["encrypted"], "true")
+        self.assertEqual(params["request_id"], mod.ENVELOPE_REQUEST_ID)
+        self.assertGreater(len(params["data"]), 50)
+        self.assertEqual(len(headers["tk-trans-signature"]), 64)
+        self.assertEqual(headers["tk-trans-merchant-key"], "thinkive")
+
     def test_ready_signal_uses_dynamic_pcf_top5_and_d_minus_1_prices(self):
         root = self.make_root()
         pcf = [
