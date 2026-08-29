@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "config/maintenance/production_mutation_protocol.json"
+NORMATIVE_DOC = ROOT / "docs/生产变更与并发写入协议_V1.0.md"
 WORKFLOWS = ROOT / ".github/workflows"
 SCRIPTS = ROOT / "scripts"
 
@@ -15,8 +16,6 @@ def _read_json(path: Path) -> dict:
 
 
 def _is_direct_main_writer(text: str) -> bool:
-    # Require an exact main ref boundary. Without the boundary, HEAD:maintenance/*
-    # is falsely matched by the HEAD:main prefix.
     patterns = (
         r"git\s+push[^\n]*(?:HEAD:main(?=\s|$)|origin\s+main(?=\s|$))",
         r"git\s+push[^\n]*refs/heads/main(?=\s|$)",
@@ -27,9 +26,7 @@ def _is_direct_main_writer(text: str) -> bool:
 def _git_add_mentions(text: str, path: str) -> bool:
     for line in text.splitlines():
         s = line.strip()
-        if not s.startswith("git add"):
-            continue
-        if path in s:
+        if s.startswith("git add") and path in s:
             return True
     return False
 
@@ -72,6 +69,7 @@ def _bounded_current_repair_is_narrow(root: Path, script_path: str) -> bool:
 
 def run(root: Path = ROOT) -> dict:
     config_path = root / CONFIG.relative_to(ROOT)
+    normative_doc_path = root / NORMATIVE_DOC.relative_to(ROOT)
     workflows_dir = root / WORKFLOWS.relative_to(ROOT)
     scripts_dir = root / SCRIPTS.relative_to(ROOT)
     errors: list[str] = []
@@ -85,10 +83,71 @@ def run(root: Path = ROOT) -> dict:
             (warnings if warning else errors).append(f"{name}: {detail}")
 
     check("mutation_protocol:config_exists", config_path.exists(), str(config_path.relative_to(root)))
-    if not config_path.exists():
+    check("mutation_protocol:normative_doc_exists", normative_doc_path.exists(), str(normative_doc_path.relative_to(root)))
+    if not config_path.exists() or not normative_doc_path.exists():
         return {"status": "FAIL", "errors": errors, "warnings": warnings, "checks": checks, "writers": []}
 
     cfg = _read_json(config_path)
+    doc_text = normative_doc_path.read_text(encoding="utf-8")
+
+    # Governance SSOT guard. This closes the historical gap where stable change
+    # admission semantics were added to the machine config without being present
+    # in the document that declares itself the unique normative source.
+    normative = cfg.get("normative_contract") or {}
+    admission = cfg.get("change_admission") or {}
+    rule_ids = [str(x) for x in admission.get("rule_ids") or []]
+    rules = [str(x) for x in admission.get("rules") or []]
+    outcomes = [str(x) for x in admission.get("decision_outcomes") or []]
+    expected_rule_ids = [f"CA{i:02d}" for i in range(1, 12)]
+    expected_outcomes = ["FIX_NOW", "OBSERVE", "DO_NOT_FIX"]
+
+    check(
+        "governance_ssot:normative_source",
+        normative.get("source") == "docs/生产变更与并发写入协议_V1.0.md",
+        f"source={normative.get('source')}",
+    )
+    check(
+        "governance_ssot:machine_role",
+        normative.get("machine_role") == "EXECUTABLE_MIRROR_NOT_RULE_SOURCE",
+        f"machine_role={normative.get('machine_role')}",
+    )
+    version = str(normative.get("version") or "")
+    check(
+        "governance_ssot:version_match",
+        bool(version) and f"生产变更与并发写入协议 {version}" in doc_text,
+        f"config_version={version}",
+    )
+    check(
+        "governance_ssot:rule_id_contract",
+        rule_ids == expected_rule_ids and len(rule_ids) == len(rules),
+        f"rule_ids={rule_ids} rules={len(rules)} expected={expected_rule_ids}",
+    )
+    missing_doc_ids = [rule_id for rule_id in rule_ids if rule_id not in doc_text]
+    check(
+        "governance_ssot:all_machine_rules_registered_in_doc",
+        not missing_doc_ids,
+        f"missing_doc_rule_ids={missing_doc_ids}",
+    )
+    check(
+        "governance_ssot:decision_outcomes",
+        outcomes == expected_outcomes and all(x in doc_text for x in expected_outcomes),
+        f"outcomes={outcomes}",
+    )
+    required_doc_markers = (
+        "机器可执行镜像",
+        "用户提出“修复”“优化”或“执行”不自动等于生产修改授权",
+        "维护规则冻结",
+        "最小根因完整修复",
+        "一个自然生产周期",
+        "A股连续交易期间",
+        "问题闭环要求",
+    )
+    check(
+        "governance_ssot:stable_semantics_present",
+        all(marker in doc_text for marker in required_doc_markers),
+        "unique normative document contains the stable change-admission and closure semantics",
+    )
+
     requirements = cfg.get("writer_requirements") or {}
     sync_markers = [str(x) for x in requirements.get("latest_main_sync_markers") or []]
     writer_rows = []
@@ -113,10 +172,6 @@ def run(root: Path = ROOT) -> dict:
             "direct main writer does not force-push main",
         )
 
-    # Production reliability is a separate runtime responsibility, but the
-    # consistency gate must ensure that its control-plane wiring still exists.
-    # These checks are static only: they do not call providers, query Actions,
-    # or execute watchdog recovery paths.
     self_heal_workflow_rel = ".github/workflows/self-healing-watchdog.yml"
     failure_guard_workflow_rel = ".github/workflows/workflow-failure-guard.yml"
     self_heal_script_rel = "scripts/runtime_self_heal.py"
@@ -312,13 +367,15 @@ def run(root: Path = ROOT) -> dict:
                 )
 
     return {
-        "schema_version": "1.3",
+        "schema_version": "1.4",
         "mode": "PRODUCTION_MUTATION_PROTOCOL_CHECK",
         "status": "FAIL" if errors else ("WARNING" if warnings else "PASS"),
         "errors": errors,
         "warnings": warnings,
         "checks": checks,
         "direct_main_writers": writer_rows,
+        "normative_contract": normative,
+        "change_admission_rule_ids": rule_ids,
         "formal_file_mutation_contract": formal,
         "nonproduction_validation_workflows": cfg.get("nonproduction_validation_workflows") or {},
         "state_file_contracts": cfg.get("state_file_contracts") or {},
