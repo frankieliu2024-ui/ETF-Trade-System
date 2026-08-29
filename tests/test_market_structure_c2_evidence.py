@@ -58,12 +58,25 @@ class ParticipationStructureEvidenceTest(unittest.TestCase):
             self.assertFalse(evidence["enhancement_active"])
             self.assertEqual(evidence["direction"], "NOT_ACTIVE")
 
-    def test_missing_latest_complete_bar_degrades_without_stale_direction(self):
+    def test_next_session_uses_latest_completed_bar_without_intraday_forward_use(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
-            market_date = self._write_panel(root)
-            future_date = (date.fromisoformat(market_date) + timedelta(days=1)).isoformat()
-            evidence = _c2_evidence(root, {"code": "TEST01"}, future_date)
+            completed_date = self._write_panel(root)
+            next_session = (date.fromisoformat(completed_date) + timedelta(days=1)).isoformat()
+            evidence = _c2_evidence(root, {"code": "TEST01"}, next_session)
+            self.assertEqual(evidence["status"], "READY")
+            self.assertEqual(evidence["completed_bar_date"], completed_date)
+            self.assertEqual(evidence["decision_market_date"], next_session)
+            self.assertTrue(evidence["enhancement_active"])
+
+    def test_insufficient_completed_history_degrades_without_direction(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            out = root / "events/research/daily_features"
+            out.mkdir(parents=True, exist_ok=True)
+            payload = {"market_date": "2026-08-28", "quality_status": "PASS", "features": [{"code": "TEST01", "close": 100.0, "amount": 100.0}]}
+            (out / "2026-08-28.json").write_text(json.dumps(payload), encoding="utf-8")
+            evidence = _c2_evidence(root, {"code": "TEST01"}, "2026-08-29")
             self.assertEqual(evidence["status"], "DEGRADED")
             self.assertIsNone(evidence["enhancement_active"])
             self.assertFalse(evidence["use_as_decision_evidence"])
