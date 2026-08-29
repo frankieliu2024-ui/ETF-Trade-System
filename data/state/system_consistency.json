@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-29T07:30:24Z",
-  "generated_at_beijing": "2026-08-29T15:30:24+08:00",
+  "generated_at": "2026-08-29T07:59:22Z",
+  "generated_at_beijing": "2026-08-29T15:59:22+08:00",
   "repository": {
-    "head_sha": "470eb7acc602b469bd29acd1a3922ba8ce9666e0",
-    "github_sha": "470eb7acc602b469bd29acd1a3922ba8ce9666e0",
-    "github_run_id": "33240976921",
+    "head_sha": "f61b023e185dd57e7d3e328f36926cd09c9f20ff",
+    "github_sha": "f61b023e185dd57e7d3e328f36926cd09c9f20ff",
+    "github_run_id": "33242065112",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "470eb7acc602b469bd29acd1a3922ba8ce9666e0",
-    "workflow_sha": "470eb7acc602b469bd29acd1a3922ba8ce9666e0",
+    "checked_commit": "f61b023e185dd57e7d3e328f36926cd09c9f20ff",
+    "workflow_sha": "f61b023e185dd57e7d3e328f36926cd09c9f20ff",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
@@ -20,7 +20,7 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "...............................................................................\n----------------------------------------------------------------------\nRan 79 tests in 0.048s\n\nOK\n"
+      "detail": "...................................................................................\n----------------------------------------------------------------------\nRan 83 tests in 0.040s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -265,12 +265,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=470eb7acc602b469bd29acd1a3922ba8ce9666e0"
+      "detail": "HEAD=f61b023e185dd57e7d3e328f36926cd09c9f20ff"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=470eb7acc602b469bd29acd1a3922ba8ce9666e0 GITHUB_SHA=470eb7acc602b469bd29acd1a3922ba8ce9666e0"
+      "detail": "HEAD=f61b023e185dd57e7d3e328f36926cd09c9f20ff GITHUB_SHA=f61b023e185dd57e7d3e328f36926cd09c9f20ff"
     },
     {
       "name": "git:critical_files_tracked",
@@ -280,7 +280,7 @@
     {
       "name": "git:working_tree_clean_before_check",
       "status": "PASS",
-      "detail": "generated_state_dirty=20 unexpected=[]"
+      "detail": "generated_state_dirty=21 unexpected=[]"
     },
     {
       "name": "index_entry:ETF规则_MASTER.md",
@@ -700,7 +700,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=03:30 max_age_seconds=36924 limit=900"
+      "detail": "active=False phase=03:59 max_age_seconds=38662 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -815,12 +815,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=87465"
+      "detail": "declared=STALE expected=STALE age_seconds=89203"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=87465"
+      "detail": "declared=STALE expected=STALE age_seconds=89202"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -860,7 +860,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-29T07:30:23Z market=2026-08-28T15:12:38+08:00"
+      "detail": "context=2026-08-29T07:59:20Z market=2026-08-28T15:12:38+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1781,6 +1781,26 @@
       "name": "research:runtime_master_candidates_no_auto_update",
       "status": "PASS",
       "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
+    },
+    {
+      "name": "research:561980_component_lead_runtime_state",
+      "status": "PASS",
+      "detail": "status=DEGRADED reason=official PCF unavailable: RuntimeError: official PCF invalid: code=0 rows=0"
+    },
+    {
+      "name": "research:561980_component_lead_no_independent_trade",
+      "status": "PASS",
+      "detail": "status=DEGRADED scope=['561980'] decision_eligible=True automatic_trade=False"
+    },
+    {
+      "name": "research:561980_component_lead_degraded_contract",
+      "status": "PASS",
+      "detail": "status=DEGRADED use=False reason=official PCF unavailable: RuntimeError: official PCF invalid: code=0 rows=0"
+    },
+    {
+      "name": "research:561980_component_lead_execution_bridge",
+      "status": "PASS",
+      "detail": "state_status=DEGRADED bridge_status=DEGRADED"
     }
   ],
   "errors": [],
