@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-29T02:45:41Z",
-  "generated_at_beijing": "2026-08-29T10:45:41+08:00",
+  "generated_at": "2026-08-29T02:54:06Z",
+  "generated_at_beijing": "2026-08-29T10:54:06+08:00",
   "repository": {
-    "head_sha": "25c6f731b0b1c719d188c03da5039727b4b34737",
-    "github_sha": "25c6f731b0b1c719d188c03da5039727b4b34737",
-    "github_run_id": "33229715089",
+    "head_sha": "b15a4a60a30c712a5a43dd9dba6f062276cbaca9",
+    "github_sha": "b15a4a60a30c712a5a43dd9dba6f062276cbaca9",
+    "github_run_id": "33230055018",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "25c6f731b0b1c719d188c03da5039727b4b34737",
-    "workflow_sha": "25c6f731b0b1c719d188c03da5039727b4b34737",
+    "checked_commit": "b15a4a60a30c712a5a43dd9dba6f062276cbaca9",
+    "workflow_sha": "b15a4a60a30c712a5a43dd9dba6f062276cbaca9",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "FAIL",
-  "hard_error_count": 1,
+  "status": "PASS",
+  "hard_error_count": 0,
   "warning_count": 0,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
-      "status": "FAIL",
-      "detail": "盖：\\n\\n- 本文与`production_mutation_protocol.json`的规范来源、版本、`CA01—CA11`规则ID和`FIX_NOW／OBSERVE／DO_NOT_FIX`结果一致；机器镜像不得拥有未登记的准入规则；\\n- 直接push到`main`的workflow具备concurrency、latest-main同步且禁止force push；\\n- 单一所有者文件和A股共享writer family符合登记；\\n- `CURRENT.json`、`runtime_health.json`、`decision_context.json`、`query_context.json`的producer合同和bounded repair正确；\\n- PoC／shadow workflow保持只读并通过Actions artifact留档；\\n- canonical formal-file gateway存在、只允许三份事实文件且明确拒绝MASTER；\\n- 登记业务调用者全部通过gateway写正式事实文件；\\n- 常见正式文件低层写入绕过模式一经发现即FAIL。\\n\\n该检查接入正式`scripts/check_system_consistency.py`。规范文档与机器镜像漂移、正式文件gateway绕过、未登记动态状态writer、canonical builder绕过、PoC／shadow重新取得main写权限、越权修复、未受保护的生产writer、单一所有者冲突或强制推送时，系统一致性必须FAIL，不能继续把当前云端结构视为完整生产状态。\\n\\n问题闭环要求不是“修完代码即结束”。凡发现检查器此前未能发现的结构性缺口，必须同时回答：**缺口何时引入、为何既有门禁没有覆盖、根因属于实现错误还是检查维度缺失、如何增加最小防复发门禁、合并后full consistency与E2E是否通过。** 单次事故不自动扩张规则；只有能够封住同类根因而不引入平行checker、重复状态或额外高频阻塞的门禁才进入生产。\\n'\n\n----------------------------------------------------------------------\nRan 77 tests in 0.048s\n\nFAILED (failures=4)\n"
+      "status": "PASS",
+      "detail": ".............................................................................\n----------------------------------------------------------------------\nRan 77 tests in 0.046s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -265,12 +265,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=25c6f731b0b1c719d188c03da5039727b4b34737"
+      "detail": "HEAD=b15a4a60a30c712a5a43dd9dba6f062276cbaca9"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=25c6f731b0b1c719d188c03da5039727b4b34737 GITHUB_SHA=25c6f731b0b1c719d188c03da5039727b4b34737"
+      "detail": "HEAD=b15a4a60a30c712a5a43dd9dba6f062276cbaca9 GITHUB_SHA=b15a4a60a30c712a5a43dd9dba6f062276cbaca9"
     },
     {
       "name": "git:critical_files_tracked",
@@ -700,7 +700,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=22:45 max_age_seconds=19841 limit=900"
+      "detail": "active=False phase=22:54 max_age_seconds=20346 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -815,12 +815,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=70382"
+      "detail": "declared=STALE expected=STALE age_seconds=70887"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=70382"
+      "detail": "declared=STALE expected=STALE age_seconds=70887"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -860,7 +860,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-29T02:45:40Z market=2026-08-28T15:12:38+08:00"
+      "detail": "context=2026-08-29T02:54:05Z market=2026-08-28T15:12:38+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -930,7 +930,7 @@
     {
       "name": "phase4:e2e_state_present",
       "status": "PASS",
-      "detail": "status=READY"
+      "detail": "status=BLOCKED"
     },
     {
       "name": "notification:managed_schema",
@@ -940,7 +940,7 @@
     {
       "name": "notification:no_duplicate_active_source",
       "status": "PASS",
-      "detail": "active_sources=['formal-change:20260827_095649_515880_trial_5000', 'decision:ACCOUNT_STRUCTURE_CHANGED|total_asset|2026-08-27T10:08|20260827_095649_515880_trial_5000|20260825_112516', 'decision:TRADE_CONFIRMED|20260827_100843_515880_buy|2026-08-27T13:40|20260827_095649_515880_trial_5000|20260827_100843_515880_buy', 'market-shock:a-share:000688:UP:EXTREME:2026082719:0', 'us-session-summary:2026-08-27:OPEN', 'market-value:us:2026-08-27:SOX:UP:EXTREME:23:1', 'system:workflow:33096867945:WORKFLOW_FAILURE_UNCLASSIFIED', 'us-session-summary:2026-08-27:CLOSE', 'a-share-session-summary:2026-08-28:OPEN', 'market-value:a-share:2026-08-28:399006:DOWN:REVERSAL:10:2', 'apac-open-signal:2026-08-28:HSTECH:DOWN', 'market-value:a-share:2026-08-28:515880:DOWN:REVERSAL:11:0', 'market-value:a-share:2026-08-28:601138:DOWN:REVERSAL:13:2', 'market-value:a-share:2026-08-28:515880:DOWN:REVERSAL:14:1', 'market-value:a-share:2026-08-28:399006:DOWN:REVERSAL:14:1', 'apac-session-summary:2026-08-28:PRIMARY_CLOSE', 'market-value:asia:2026-08-28:APAC_DIVERGENCE:DIVERGED:DIVERGENCE:14:3', 'market-value:a-share:2026-08-28:A_SHARE_INDEX_DIVERGENCE:DIVERGED:DIVERGENCE:14:3', 'market-value:a-share:2026-08-28:601138:DOWN:REVERSAL:14:3', 'market-value:a-share:2026-08-28:515880:DOWN:REVERSAL:14:3', 'a-share-session-summary:2026-08-28:CLOSE', 'apac-session-summary:2026-08-28:HK_LATE_UPDATE', 'us-session-summary:2026-08-28:OPEN', 'market-value:us:2026-08-28:SOX:DOWN:EXTREME:22:1', 'market-value:us:2026-08-28:US_TECH_DIVERGENCE:DIVERGED:DIVERGENCE:23:1', 'market-value:us:2026-08-28:SOX:DOWN:EXTREME:01:1', 'market-value:us:2026-08-28:US_TECH_DIVERGENCE:DIVERGED:DIVERGENCE:03:1', 'us-session-summary:2026-08-28:CLOSE']"
+      "detail": "active_sources=['decision:ACCOUNT_STRUCTURE_CHANGED|total_asset|2026-08-27T10:08|20260827_095649_515880_trial_5000|20260825_112516', 'decision:TRADE_CONFIRMED|20260827_100843_515880_buy|2026-08-27T13:40|20260827_095649_515880_trial_5000|20260827_100843_515880_buy', 'market-shock:a-share:000688:UP:EXTREME:2026082719:0', 'us-session-summary:2026-08-27:OPEN', 'market-value:us:2026-08-27:SOX:UP:EXTREME:23:1', 'system:workflow:33096867945:WORKFLOW_FAILURE_UNCLASSIFIED', 'us-session-summary:2026-08-27:CLOSE', 'a-share-session-summary:2026-08-28:OPEN', 'market-value:a-share:2026-08-28:399006:DOWN:REVERSAL:10:2', 'apac-open-signal:2026-08-28:HSTECH:DOWN', 'market-value:a-share:2026-08-28:515880:DOWN:REVERSAL:11:0', 'market-value:a-share:2026-08-28:601138:DOWN:REVERSAL:13:2', 'market-value:a-share:2026-08-28:515880:DOWN:REVERSAL:14:1', 'market-value:a-share:2026-08-28:399006:DOWN:REVERSAL:14:1', 'apac-session-summary:2026-08-28:PRIMARY_CLOSE', 'market-value:asia:2026-08-28:APAC_DIVERGENCE:DIVERGED:DIVERGENCE:14:3', 'market-value:a-share:2026-08-28:A_SHARE_INDEX_DIVERGENCE:DIVERGED:DIVERGENCE:14:3', 'market-value:a-share:2026-08-28:601138:DOWN:REVERSAL:14:3', 'market-value:a-share:2026-08-28:515880:DOWN:REVERSAL:14:3', 'a-share-session-summary:2026-08-28:CLOSE', 'apac-session-summary:2026-08-28:HK_LATE_UPDATE', 'us-session-summary:2026-08-28:OPEN', 'market-value:us:2026-08-28:SOX:DOWN:EXTREME:22:1', 'market-value:us:2026-08-28:US_TECH_DIVERGENCE:DIVERGED:DIVERGENCE:23:1', 'market-value:us:2026-08-28:SOX:DOWN:EXTREME:01:1', 'market-value:us:2026-08-28:US_TECH_DIVERGENCE:DIVERGED:DIVERGENCE:03:1', 'us-session-summary:2026-08-28:CLOSE']"
     },
     {
       "name": "notification:confirmation_entry_syntax",
@@ -1783,9 +1783,7 @@
       "detail": "research MASTER candidate feed must remain read-only with automatic update disabled"
     }
   ],
-  "errors": [
-    "tests:market_data_and_quote_router: 盖：\\n\\n- 本文与`production_mutation_protocol.json`的规范来源、版本、`CA01—CA11`规则ID和`FIX_NOW／OBSERVE／DO_NOT_FIX`结果一致；机器镜像不得拥有未登记的准入规则；\\n- 直接push到`main`的workflow具备concurrency、latest-main同步且禁止force push；\\n- 单一所有者文件和A股共享writer family符合登记；\\n- `CURRENT.json`、`runtime_health.json`、`decision_context.json`、`query_context.json`的producer合同和bounded repair正确；\\n- PoC／shadow workflow保持只读并通过Actions artifact留档；\\n- canonical formal-file gateway存在、只允许三份事实文件且明确拒绝MASTER；\\n- 登记业务调用者全部通过gateway写正式事实文件；\\n- 常见正式文件低层写入绕过模式一经发现即FAIL。\\n\\n该检查接入正式`scripts/check_system_consistency.py`。规范文档与机器镜像漂移、正式文件gateway绕过、未登记动态状态writer、canonical builder绕过、PoC／shadow重新取得main写权限、越权修复、未受保护的生产writer、单一所有者冲突或强制推送时，系统一致性必须FAIL，不能继续把当前云端结构视为完整生产状态。\\n\\n问题闭环要求不是“修完代码即结束”。凡发现检查器此前未能发现的结构性缺口，必须同时回答：**缺口何时引入、为何既有门禁没有覆盖、根因属于实现错误还是检查维度缺失、如何增加最小防复发门禁、合并后full consistency与E2E是否通过。** 单次事故不自动扩张规则；只有能够封住同类根因而不引入平行checker、重复状态或额外高频阻塞的门禁才进入生产。\\n'\n\n----------------------------------------------------------------------\nRan 77 tests in 0.048s\n\nFAILED (failures=4)\n"
-  ],
+  "errors": [],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
   "production_mutation_protocol": {
