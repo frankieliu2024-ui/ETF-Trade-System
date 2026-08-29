@@ -6,6 +6,7 @@ from pathlib import Path
 import requests
 
 INDEX_CODE = "931865"
+INDEX_NAME = "中证半导体产业指数"
 HEAD = {
     "User-Agent": "Mozilla/5.0 ETF-Trade-System research",
     "Accept": "application/json,text/plain,*/*",
@@ -18,12 +19,12 @@ URLS = {
     "top10": f"https://www.csindex.com.cn/csindex-home/index/weight/top10/{INDEX_CODE}",
     "home": "https://www.csindex.com.cn/#/about/news-information",
 }
-
+ANN = "https://www.csindex.com.cn/csindex-home/announcement/queryAnnouncementByVo"
 KEYWORDS = ["调样", "调整", "样本", "rebalance", "adjust", "notice", "announcement", "sample"]
 
 
-def get(url: str):
-    r = requests.get(url, headers=HEAD, timeout=25)
+def get(url: str, **kwargs):
+    r = requests.get(url, headers=HEAD, timeout=25, **kwargs)
     r.raise_for_status()
     return r
 
@@ -39,9 +40,43 @@ def collect_urls(obj):
     return out
 
 
+def response_meta(r):
+    meta={"status":r.status_code,"content_type":r.headers.get("content-type"),"bytes":len(r.content),"body_prefix":r.text[:300]}
+    try:
+        obj=r.json(); meta["json_top_keys"]=list(obj)[:20] if isinstance(obj,dict) else []
+        meta["json"]=obj
+    except Exception:
+        pass
+    return meta
+
+
+def probe_announcements():
+    probes=[]
+    candidates=[
+        {"pageNum":1,"pageSize":100,"title":INDEX_CODE},
+        {"page":1,"rows":100,"title":INDEX_CODE},
+        {"pageNum":1,"pageSize":100,"keyWord":INDEX_CODE},
+        {"page":1,"rows":100,"keyword":INDEX_CODE},
+        {"pageNum":1,"pageSize":100,"title":INDEX_NAME},
+        {"page":1,"rows":100,"title":INDEX_NAME},
+        {"pageNum":1,"pageSize":100,"keyWord":"半导体产业"},
+    ]
+    for payload in candidates:
+        for method in ["GET","POST_JSON","POST_FORM"]:
+            try:
+                if method=="GET": r=requests.get(ANN,params=payload,headers=HEAD,timeout=25)
+                elif method=="POST_JSON": r=requests.post(ANN,json=payload,headers=HEAD,timeout=25)
+                else: r=requests.post(ANN,data=payload,headers=HEAD,timeout=25)
+                m=response_meta(r); m.update({"method":method,"payload":payload})
+                probes.append(m)
+            except Exception as exc:
+                probes.append({"method":method,"payload":payload,"error":f"{type(exc).__name__}: {exc}"[:300]})
+    return probes
+
+
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--out", type=Path, required=True); a=ap.parse_args(); a.out.mkdir(parents=True, exist_ok=True)
-    result={"mode":"RESEARCH_ONLY_931865_REBALANCE_SOURCE_AUDIT","index_code":INDEX_CODE,"production_context_integration":False,"trade_signal":None,"endpoints":{},"candidate_assets":[],"js_keyword_hits":[],"errors":[]}
+    result={"mode":"RESEARCH_ONLY_931865_REBALANCE_SOURCE_AUDIT","index_code":INDEX_CODE,"production_context_integration":False,"trade_signal":None,"endpoints":{},"candidate_assets":[],"js_keyword_hits":[],"announcement_probes":[],"errors":[]}
     for name,url in URLS.items():
         try:
             r=get(url)
@@ -62,20 +97,23 @@ def main():
                     if not s.startswith("http"): continue
                     try:
                         js=get(s).text
-                        hits=[]
-                        for kw in KEYWORDS:
-                            if kw.lower() in js.lower(): hits.append(kw)
+                        hits=[kw for kw in KEYWORDS if kw.lower() in js.lower()]
                         if hits:
-                            paths=sorted(set(re.findall(r'["\']([^"\']*(?:adjust|notice|announcement|sample|rebalance)[^"\']*)["\']',js,re.I)))[:50]
-                            result["js_keyword_hits"].append({"script":s,"keywords":hits,"candidate_paths":paths})
+                            paths=sorted(set(re.findall(r'["\']([^"\']*(?:adjust|notice|announcement|sample|rebalance)[^"\']*)["\']',js,re.I)))[:100]
+                            contexts=[]
+                            for needle in ["/announcement/queryAnnouncementByVo","queryAnnouncementByVonew","announcement-filter-list"]:
+                                pos=js.find(needle)
+                                if pos>=0: contexts.append({"needle":needle,"context":js[max(0,pos-600):pos+900]})
+                            result["js_keyword_hits"].append({"script":s,"keywords":hits,"candidate_paths":paths,"contexts":contexts})
                     except Exception as exc:
                         result["errors"].append({"stage":"script","url":s,"error":f"{type(exc).__name__}: {exc}"[:300]})
             result["endpoints"][name]=meta
         except Exception as exc:
             result["errors"].append({"stage":name,"url":url,"error":f"{type(exc).__name__}: {exc}"[:300]})
+    result["announcement_probes"]=probe_announcements()
     result["candidate_assets"]=sorted(set(result["candidate_assets"]))
     (a.out/"rebalance_source_audit.json").write_text(json.dumps(result,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-    print(json.dumps(result,ensure_ascii=False))
+    print(json.dumps({"index_code":INDEX_CODE,"candidate_assets":result["candidate_assets"],"announcement_probe_count":len(result["announcement_probes"]),"errors":result["errors"]},ensure_ascii=False))
     return 0
 
 if __name__=="__main__": raise SystemExit(main())
