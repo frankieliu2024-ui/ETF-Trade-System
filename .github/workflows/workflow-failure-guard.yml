@@ -43,15 +43,29 @@ jobs:
 
           git fetch origin main --quiet
           MAIN_HEAD=$(git rev-parse origin/main)
-          COMMIT_MESSAGE=$(git show -s --format=%s "$HEAD_SHA" 2>/dev/null || true)
-          COMMIT_AUTHOR=$(git show -s --format='%an <%ae>' "$HEAD_SHA" 2>/dev/null || true)
-          PARENT_SHA=$(git rev-parse "$HEAD_SHA^" 2>/dev/null || true)
-          if [ -n "$PARENT_SHA" ]; then
-            git diff --name-only "$PARENT_SHA" "$HEAD_SHA" > /tmp/changed_files.txt
-          else
-            : > /tmp/changed_files.txt
+
+          # workflow_run may point at a PR/non-main commit that is not present in
+          # the default main checkout. Fetch that exact object when possible,
+          # but never fail the diagnostic workflow merely because GitHub no
+          # longer exposes the source ref/object.
+          if ! git cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
+            git fetch --no-tags --depth=2 origin "$HEAD_SHA" --quiet 2>/dev/null || true
           fi
 
+          COMMIT_MESSAGE=""
+          COMMIT_AUTHOR=""
+          PARENT_SHA=""
+          : > /tmp/changed_files.txt
+          if git cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
+            COMMIT_MESSAGE=$(git show -s --format=%s "$HEAD_SHA" 2>/dev/null || true)
+            COMMIT_AUTHOR=$(git show -s --format='%an <%ae>' "$HEAD_SHA" 2>/dev/null || true)
+            PARENT_SHA=$(git rev-parse --verify "$HEAD_SHA^" 2>/dev/null || true)
+            if [ -n "$PARENT_SHA" ] && git cat-file -e "${PARENT_SHA}^{commit}" 2>/dev/null; then
+              git diff --name-only "$PARENT_SHA" "$HEAD_SHA" > /tmp/changed_files.txt || : > /tmp/changed_files.txt
+            fi
+          fi
+
+          export RUN_ID HEAD_SHA WORKFLOW_NAME RUN_ATTEMPT MAIN_HEAD COMMIT_MESSAGE COMMIT_AUTHOR PARENT_SHA
           gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=100" > /tmp/jobs.json
           python - <<'PY'
           import json, os
@@ -86,15 +100,6 @@ jobs:
           }
           Path('/tmp/workflow_failure_input.json').write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n')
           PY
-        env:
-          RUN_ID: ${{ github.event.workflow_run.id }}
-          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
-          RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
-          MAIN_HEAD: ${{ github.event.workflow_run.head_sha }}
-          PARENT_SHA: ""
-          COMMIT_MESSAGE: ""
-          COMMIT_AUTHOR: ""
 
       - name: Normalize packet against live main and classify
         id: classify
@@ -109,14 +114,18 @@ jobs:
           def out(*args):
               r = subprocess.run(args, capture_output=True, text=True, check=False)
               return r.stdout.strip() if r.returncode == 0 else ''
+          def ok(*args):
+              return subprocess.run(args, capture_output=True, text=True, check=False).returncode == 0
           head = data.get('head_sha') or ''
-          data['main_head_sha'] = out('git', 'rev-parse', 'origin/main')
-          data['parent_sha'] = out('git', 'rev-parse', f'{head}^') or None
-          data['commit_message'] = out('git', 'show', '-s', '--format=%s', head) or None
-          data['commit_author'] = out('git', 'show', '-s', '--format=%an <%ae>', head) or None
-          if data['parent_sha']:
-              changed = out('git', 'diff', '--name-only', data['parent_sha'], head)
-              data['changed_files'] = [x for x in changed.splitlines() if x]
+          data['main_head_sha'] = out('git', 'rev-parse', 'origin/main') or data.get('main_head_sha')
+          if head and ok('git', 'cat-file', '-e', f'{head}^{{commit}}'):
+              parent = out('git', 'rev-parse', '--verify', f'{head}^') or None
+              data['parent_sha'] = parent
+              data['commit_message'] = out('git', 'show', '-s', '--format=%s', head) or data.get('commit_message')
+              data['commit_author'] = out('git', 'show', '-s', '--format=%an <%ae>', head) or data.get('commit_author')
+              if parent and ok('git', 'cat-file', '-e', f'{parent}^{{commit}}'):
+                  changed = out('git', 'diff', '--name-only', parent, head)
+                  data['changed_files'] = [x for x in changed.splitlines() if x]
           p.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
           PY
           python scripts/workflow_failure_guard.py /tmp/workflow_failure_input.json
