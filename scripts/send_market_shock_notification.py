@@ -35,6 +35,15 @@ def _build_a_share_event(*args, **kwargs):
     return event
 
 
+def _comparison_level(ctx: dict, category: str) -> float | None:
+    if category == "DIVERGENCE":
+        return _legacy.number(ctx.get("event_magnitude_pct"))
+    level = _legacy.number(ctx.get("day_change_pct"))
+    if level is None:
+        level = _legacy.number(ctx.get("phase_metric_change_pct"))
+    return level
+
+
 def _recent_same_family_level(event: dict) -> float | None:
     """Return the latest comparable level for an already-sent event family."""
     ctx = event.get("confirmation_context") or {}
@@ -58,10 +67,7 @@ def _recent_same_family_level(event: dict) -> float | None:
             continue
         if str(old.get("market_date") or "") != market_date:
             continue
-        level = _legacy.number(old.get("day_change_pct"))
-        if level is None:
-            level = _legacy.number(old.get("phase_metric_change_pct"))
-        return level
+        return _comparison_level(old, category)
     return None
 
 
@@ -70,13 +76,15 @@ def _build_context_event(*args, **kwargs):
     event = _original_build_context_event(*args, **kwargs)
     ctx = event.get("confirmation_context") or {}
     category = str(ctx.get("event_category") or "")
-    current = _legacy.number(ctx.get("phase_metric_change_pct"))
+    current = _comparison_level(ctx, category)
     previous = _recent_same_family_level(event)
     if previous is None or current is None:
         return event
 
     direction = str(ctx.get("direction") or "")
-    if direction == "DOWN":
+    if category == "DIVERGENCE":
+        progress = current - previous
+    elif direction == "DOWN":
         progress = previous - current
     elif direction == "UP":
         progress = current - previous
@@ -86,17 +94,20 @@ def _build_context_event(*args, **kwargs):
         return event
 
     title = str(event.get("title") or "")
-    if category == "DIVERGENCE":
-        magnitude = _legacy.number(ctx.get("event_magnitude_pct"))
-        if magnitude is not None:
-            event["title"] = f"【异动提醒】美股科技分化进一步扩大至{magnitude:.2f}个百分点" if str(ctx.get("market") or "") == "US" else title
+    if category == "DIVERGENCE" and str(ctx.get("market") or "") == "US":
+        event["title"] = f"【异动提醒】美股科技分化进一步扩大至{current:.2f}个百分点"
     elif category == "EXTREME" and str(ctx.get("market") or "") == "US":
         name = str(event.get("security_name") or event.get("security_code") or "相关对象")
         event["title"] = f"【异动提醒】{name}波动进一步扩大至{_legacy.pct(current)}"
+    else:
+        event["title"] = title
 
     content = str(event.get("content") or "")
     marker = "### 核心结论\n"
-    comparison = f"- **较上一同类通知**：{_legacy.pct(previous)} → {_legacy.pct(current)}，变化{progress:.2f}个百分点。\n"
+    if category == "DIVERGENCE":
+        comparison = f"- **较上一同类通知**：{previous:.2f} → {current:.2f}个百分点，进一步扩大{progress:.2f}个百分点。\n"
+    else:
+        comparison = f"- **较上一同类通知**：{_legacy.pct(previous)} → {_legacy.pct(current)}，变化{progress:.2f}个百分点。\n"
     if marker in content and "较上一同类通知" not in content:
         event["content"] = content.replace(marker, marker + comparison, 1)
     return event
