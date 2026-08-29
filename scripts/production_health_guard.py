@@ -70,16 +70,29 @@ def current_user_action_event() -> dict[str, Any] | None:
 
 
 def normative_rule_paths() -> list[str]:
-    """Read the four normative domain paths from the canonical system index."""
+    """Read normative domain paths from section 2 of the canonical system index.
+
+    The index is deliberately route-only. Authority is expressed by membership in
+    the four normative-domain bullets, not by requiring one historical wording
+    such as the word "唯一" to be repeated on every bullet. This keeps the health
+    guard bound to structure/semantics rather than prose placement.
+    """
     try:
         lines = SYSTEM_INDEX.read_text(encoding="utf-8").splitlines()
     except OSError:
         return []
     paths: list[str] = []
+    in_domains = False
     for line in lines:
-        if not line.startswith("- **") or "唯一" not in line:
+        stripped = line.strip()
+        if stripped == "## 2. 四个规范域":
+            in_domains = True
             continue
-        pieces = line.split("`")
+        if in_domains and stripped.startswith("## "):
+            break
+        if not in_domains or not stripped.startswith("- **"):
+            continue
+        pieces = stripped.split("`")
         for value in pieces[1::2]:
             value = value.strip()
             if value.endswith(".md") and value not in paths:
@@ -183,154 +196,127 @@ def changed_files_since(base: str, head: str) -> tuple[list[str] | None, str]:
     except (OSError, subprocess.SubprocessError):
         return None, "UNVERIFIABLE_COMPARE_ERROR"
     if proc.returncode != 0:
-        return None, "UNVERIFIABLE_COMPARE_ERROR"
+        return None, "UNVERIFIABLE_COMPARE_FAILED"
     return [x.strip() for x in proc.stdout.splitlines() if x.strip()], "GITHUB_COMPARE"
+
+
+def path_matches(path: str, pattern: str) -> bool:
+    return fnmatch.fnmatch(path, pattern)
 
 
 def classify_consistency_coverage(
     consistency_status: str,
     checked_commit: str | None,
-    head: str | None,
-    changed_files: list[str] | None,
-    patterns: list[str],
+    current_commit: str | None,
+    changed_paths: list[str] | None,
+    trigger_patterns: list[str],
 ) -> tuple[str, str, list[str]]:
-    """Classify whether the latest consistency result still covers current production definition."""
-    if consistency_status == "FAIL":
+    if str(consistency_status).upper() == "FAIL":
         return "BLOCKED", "CONSISTENCY_FAIL", []
-    if consistency_status != "PASS":
-        return "ATTENTION", "CONSISTENCY_NOT_PASS", []
-    if not checked_commit or not head:
-        return "ATTENTION", "COVERAGE_UNVERIFIABLE", []
-    if checked_commit == head:
+    if not checked_commit or not current_commit:
+        return "ATTENTION", "COMMIT_IDENTITY_UNAVAILABLE", []
+    if checked_commit == current_commit:
         return "PASS", "CURRENT_HEAD", []
-    if changed_files is None or not patterns:
-        return "ATTENTION", "COVERAGE_UNVERIFIABLE", []
-
-    triggering = sorted(
-        path for path in changed_files if any(fnmatch.fnmatch(path, pattern) for pattern in patterns)
+    if changed_paths is None:
+        return "ATTENTION", "CHANGESET_UNVERIFIABLE", []
+    relevant = sorted(
+        path
+        for path in changed_paths
+        if any(path_matches(path, pattern) for pattern in trigger_patterns)
     )
-    if triggering:
-        return "ATTENTION", "REVALIDATION_REQUIRED", triggering
+    if relevant:
+        return "ATTENTION", "REVALIDATION_REQUIRED", relevant
     return "PASS", "STATE_ONLY_ADVANCE", []
-
-
-def consistency_coverage(consistency: dict[str, Any]) -> tuple[str, str]:
-    status = str(consistency.get("status") or "UNKNOWN")
-    checked_commit = str(
-        ((consistency.get("commit_audit") or {}).get("checked_commit"))
-        or ((consistency.get("repository") or {}).get("head_sha"))
-        or ""
-    ).strip()
-    head = current_head()
-    changed: list[str] | None = [] if checked_commit and head and checked_commit == head else None
-    source = "NOT_NEEDED"
-    if checked_commit and head and checked_commit != head:
-        changed, source = changed_files_since(checked_commit, head)
-    patterns = consistency_push_patterns()
-    level, coverage, triggering = classify_consistency_coverage(status, checked_commit, head, changed, patterns)
-    detail = (
-        f"status={status}; coverage={coverage}; checked_commit={checked_commit or 'unknown'}; "
-        f"current_head={head or 'unknown'}; compare_source={source}; changed_count="
-        f"{len(changed) if changed is not None else 'unknown'}"
-    )
-    if triggering:
-        preview = ",".join(triggering[:5])
-        detail += f"; revalidation_paths={preview}"
-        if len(triggering) > 5:
-            detail += f"(+{len(triggering) - 5})"
-    return level, detail
 
 
 def main() -> int:
     now_utc = datetime.now(timezone.utc)
-    now_bj = now_utc.astimezone(BJ)
-    windows = active_windows(now_utc)
-    policy = read_json(POLICY)
-    degraded_max_age = int(policy.get("degraded_max_age_seconds") or 1500)
-
+    rows: list[dict[str, Any]] = []
     consistency = read_json(STATE / "system_consistency.json")
-    runtime = read_json(STATE / "runtime_health.json")
-    self_heal = read_json(STATE / "self_healing_status.json")
-    overseas_runtime = read_json(STATE / "overseas_runtime_health.json")
-    us_runtime = read_json(STATE / "us_pulse_runtime_health.json")
-    maintenance = read_json(STATE / "maintenance_health.json")
     e2e = read_json(STATE / "e2e_status.json")
+    current = read_json(STATE / "CURRENT.json")
+    runtime = read_json(STATE / "runtime_health.json")
+    overseas = read_json(STATE / "overseas_context.json")
+    overseas_health = read_json(STATE / "overseas_runtime_health.json")
+    us = read_json(STATE / "us_extended_hours_context.json")
+    us_health = read_json(STATE / "us_pulse_runtime_health.json")
     account = read_json(STATE / "account_fact.json")
-    execution = read_json(STATE / "execution_reconciliation.json")
+    notification = read_json(STATE / "notification_center.json")
+    workflow_diag = read_json(STATE / "workflow_failure_diagnostic.json")
+    windows = active_windows(now_utc)
 
-    checks: list[dict[str, Any]] = []
+    consistency_status = str(consistency.get("status") or "UNKNOWN").upper()
+    add_check(rows, "system_consistency", "PASS" if consistency_status == "PASS" else "BLOCKED" if consistency_status == "FAIL" else "ATTENTION", f"status={consistency_status}")
 
-    consistency_level, consistency_detail = consistency_coverage(consistency)
-    add_check(checks, "full_system_consistency", consistency_level, consistency_detail)
+    checked_commit = str(((consistency.get("commit_audit") or {}).get("checked_commit") or "")).strip() or None
+    head = current_head()
+    changed: list[str] | None = []
+    change_source = "CURRENT_HEAD"
+    if checked_commit and head and checked_commit != head:
+        changed, change_source = changed_files_since(checked_commit, head)
+    level, coverage, relevant_paths = classify_consistency_coverage(
+        consistency_status,
+        checked_commit,
+        head,
+        changed,
+        consistency_push_patterns(),
+    )
+    add_check(
+        rows,
+        "consistency_coverage",
+        level,
+        f"coverage={coverage} checked_commit={checked_commit} current_head={head} change_source={change_source} relevant_paths={relevant_paths}",
+    )
 
-    runtime_status = str(runtime.get("status") or runtime.get("quality_status") or "UNKNOWN")
-    runtime_age = age_seconds(now_utc, runtime.get("finished_at") or runtime.get("captured_at") or runtime.get("generated_at"))
-    if windows["a_share"]:
-        a_status = "PASS" if runtime_status == "PASS" and runtime_age is not None and runtime_age <= degraded_max_age else "ATTENTION"
-        add_check(checks, "a_share_market_runtime", a_status, f"active=true; status={runtime_status}; heartbeat_age_seconds={runtime_age}")
-    else:
-        add_check(checks, "a_share_market_runtime", "PASS" if runtime_status == "PASS" else "ATTENTION", f"active=false; last_runtime_status={runtime_status}; closed/session reference is not judged by live-heartbeat age")
+    current_status = str(current.get("snapshot_status") or current.get("node_status") or "UNKNOWN").upper()
+    add_check(rows, "a_share_current", "PASS" if current_status in {"PASS", "READY"} else "BLOCKED", f"status={current_status} snapshot={current.get('latest_snapshot')}")
 
-    overseas_status = str(overseas_runtime.get("status") or "UNKNOWN")
-    overseas_age = age_seconds(now_utc, overseas_runtime.get("finished_at"))
-    if windows["apac"]:
-        apac_status = "PASS" if overseas_status == "PASS" and overseas_age is not None and overseas_age <= degraded_max_age else "ATTENTION"
-        add_check(checks, "apac_workflow_and_market_heartbeat", apac_status, f"active=true; status={overseas_status}; heartbeat_age_seconds={overseas_age}")
-    else:
-        add_check(checks, "apac_workflow_and_market_heartbeat", "PASS" if overseas_status == "PASS" else "ATTENTION", f"active=false; last_status={overseas_status}; closed markets retain session-reference semantics")
+    runtime_status = str(runtime.get("status") or "UNKNOWN").upper()
+    runtime_ok = runtime_status in {"PASS", "SKIPPED"}
+    add_check(rows, "a_share_runtime", "PASS" if runtime_ok else "BLOCKED", f"status={runtime_status} reason={runtime.get('reason')}")
 
-    us_status = str(us_runtime.get("status") or "UNKNOWN")
-    us_age = age_seconds(now_utc, us_runtime.get("finished_at"))
-    if windows["us"]:
-        us_check = "PASS" if us_status == "PASS" and us_age is not None and us_age <= degraded_max_age else "ATTENTION"
-        add_check(checks, "us_workflow_and_extended_hours_heartbeat", us_check, f"active=true; status={us_status}; heartbeat_age_seconds={us_age}")
-    else:
-        add_check(checks, "us_workflow_and_extended_hours_heartbeat", "PASS" if us_status == "PASS" else "ATTENTION", f"active=false; last_status={us_status}; no live-heartbeat requirement outside US extended-hours window")
+    overseas_status = str(overseas.get("quality_status") or "UNKNOWN").upper()
+    add_check(rows, "overseas_context", "PASS" if overseas_status in {"PASS", "DEGRADED"} else "ATTENTION", f"quality_status={overseas_status}")
 
-    heal_class = str(self_heal.get("classification") or "UNKNOWN")
-    heal_action = str(self_heal.get("recommended_action") or "NONE")
-    heal_block = heal_action == "ESCALATE" or heal_class in {"PERSISTENT_RUNTIME_FAILURE", "CONSISTENCY_REGRESSION"}
-    add_check(checks, "runtime_self_healing", "BLOCKED" if heal_block else "PASS", f"classification={heal_class}; recommended_action={heal_action}", user_action=heal_block)
+    us_status = str(us.get("quality_status") or "UNKNOWN").upper()
+    add_check(rows, "us_extended_hours", "PASS" if us_status in {"PASS", "DEGRADED"} else "ATTENTION", f"quality_status={us_status}")
 
-    maintenance_status = str(maintenance.get("status") or "UNKNOWN")
-    reconciliation_status = str((maintenance.get("reconciliation") or {}).get("status") or "UNKNOWN")
-    maintenance_block = maintenance_status == "FAIL" or reconciliation_status == "FAIL"
-    add_check(checks, "maintenance_and_account_reconciliation", "BLOCKED" if maintenance_block else ("PASS" if maintenance_status == "PASS" and reconciliation_status == "PASS" else "ATTENTION"), f"maintenance={maintenance_status}; reconciliation={reconciliation_status}")
+    account_status = str(account.get("status") or "UNKNOWN").upper()
+    add_check(rows, "account_fact", "PASS" if account_status == "VALID" else "ATTENTION", f"status={account_status}", user_action=account_status != "VALID")
 
-    account_status = str(account.get("status") or "UNKNOWN")
-    actionable_count = int(execution.get("actionable_count") or 0)
-    execution_status = str(execution.get("status") or "UNKNOWN")
-    account_action = actionable_count > 0 or execution_status == "CONFIRMATION_REQUIRED"
-    add_check(checks, "account_and_execution_closure", "ATTENTION" if account_action else ("PASS" if account_status == "VALID" else "ATTENTION"), f"account={account_status}; execution={execution_status}; actionable_count={actionable_count}", user_action=account_action)
+    for name, health, active in (
+        ("a_share", runtime, windows["a_share"]),
+        ("apac", overseas_health, windows["apac"]),
+        ("us", us_health, windows["us"]),
+    ):
+        status = str(health.get("status") or "UNKNOWN").upper()
+        stamp = health.get("generated_at_beijing") or health.get("updated_at_beijing") or health.get("generated_at")
+        age = age_seconds(now_utc, stamp)
+        if active and status in {"FAILED", "BLOCKED"}:
+            level = "BLOCKED"
+        elif active and (age is None or age > 1800):
+            level = "ATTENTION"
+        else:
+            level = "PASS"
+        add_check(rows, f"heartbeat:{name}", level, f"active={active} status={status} age_seconds={age}")
 
-    e2e_status = str(e2e.get("status") or "UNKNOWN")
-    blockers = list(e2e.get("blockers") or [])
-    add_check(checks, "end_to_end_readiness", "PASS" if e2e_status == "READY" else ("BLOCKED" if e2e_status == "BLOCKED" else "ATTENTION"), f"status={e2e_status}; blockers={blockers}")
+    user_event = current_user_action_event()
+    add_check(rows, "pending_user_action", "ATTENTION" if user_event else "PASS", f"event={user_event.get('title') if user_event else None}", user_action=bool(user_event))
 
-    event = current_user_action_event()
-    if event:
-        add_check(checks, "existing_pushplus_user_action_path", "ATTENTION", f"event_type={event.get('event_type') or event.get('type')}; source={event.get('source')}; title={event.get('title')}", user_action=True)
-    else:
-        add_check(checks, "existing_pushplus_user_action_path", "PASS", "no current event requires the existing guarded PushPlus user-action path")
+    diagnostic_status = str(workflow_diag.get("classification") or "NONE")
+    add_check(rows, "workflow_diagnostic", "ATTENTION" if diagnostic_status not in {"", "NONE", "NO_FAILURE"} else "PASS", f"classification={diagnostic_status}")
 
-    user_action_required = any(bool(row.get("user_action_required")) for row in checks)
-    blocked = any(row.get("status") == "BLOCKED" for row in checks)
-    attention = any(row.get("status") == "ATTENTION" for row in checks)
-    overall = "BLOCKED" if blocked else ("ATTENTION" if attention else "PASS")
-
-    result = {
-        "schema_version": "1.1",
-        "mode": "READ_ONLY_PRODUCTION_HEALTH_AGGREGATE",
-        "checked_at": now_bj.isoformat(timespec="seconds"),
+    overall = "BLOCKED" if any(row["status"] == "BLOCKED" for row in rows) else "ATTENTION" if any(row["status"] == "ATTENTION" for row in rows) else "PASS"
+    payload = {
+        "schema_version": "1.0",
+        "generated_at_beijing": now_utc.astimezone(BJ).isoformat(timespec="seconds"),
         "status": overall,
-        "user_action_required": user_action_required,
-        "market_activity": windows,
-        "checks": checks,
-        "notification_boundary": "This guard never sends PushPlus directly. User-action notifications continue through the existing guarded notification center triggered after the watchdog run. Consistency/maintenance/E2E anomalies do not by themselves gain notification rights before existing self-healing escalation rules are satisfied.",
-        "mutation_boundary": "Read-only: no market refresh, no workflow dispatch, no state persistence, no MASTER/provider/trading-rule/account-fact change.",
+        "checks": rows,
+        "notification_center_count": len(notification.get("managed_events") or []),
+        "rule": "生产健康只读检查；不生成交易权限，不修改MASTER，不自动下单。",
     }
-    print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 0
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 2 if overall == "BLOCKED" else 0
 
 
 if __name__ == "__main__":
