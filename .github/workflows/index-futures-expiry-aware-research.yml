@@ -1,0 +1,88 @@
+name: IF IC IM expiry-aware research
+
+on:
+  push:
+    branches: [research/index-futures-expiry-aware-20260829]
+    paths:
+      - "research/backtests/fetch_cffex_expiry_aware_inputs.py"
+      - "research/backtests/index_futures_expiry_aware_validation.py"
+      - "research/backtests/evaluate_index_futures_expiry_aware.py"
+      - ".github/workflows/index-futures-expiry-aware-research.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: index-futures-expiry-aware-research
+  cancel-in-progress: true
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install research dependencies
+        run: python -m pip install --disable-pip-version-check pandas numpy requests akshare
+      - name: Compile research scripts
+        run: |
+          python -m py_compile research/backtests/fetch_cffex_expiry_aware_inputs.py
+          python -m py_compile research/backtests/index_futures_expiry_aware_validation.py
+          python -m py_compile research/backtests/evaluate_index_futures_expiry_aware.py
+      - name: Fetch official-exchange-backed contract and spot inputs
+        run: |
+          mkdir -p /tmp/expiry-aware/raw /tmp/expiry-aware/panel /tmp/expiry-aware/result
+          python research/backtests/fetch_cffex_expiry_aware_inputs.py --start 20240101 --end 20260828 --out /tmp/expiry-aware/raw
+      - name: Build contract-local near and PIT-main panels
+        run: |
+          python research/backtests/index_futures_expiry_aware_validation.py \
+            --futures /tmp/expiry-aware/raw/cffex_contract_daily.csv \
+            --spot /tmp/expiry-aware/raw/cffex_spot_daily.csv \
+            --output-dir /tmp/expiry-aware/panel
+      - name: Validate no cross-contract synthetic changes
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          for f in ['index_futures_expiry_aware_near.csv','index_futures_expiry_aware_main.csv']:
+              x=pd.read_csv('/tmp/expiry-aware/panel/'+f)
+              bad=x[x['roll_flag'].astype(str).str.lower().eq('true') & x['basis_close_pct_change_5d'].notna()]
+              # A roll row may have a valid contract-local 5d value if the newly selected contract itself has >=5 prior observations.
+              # The hard condition is that its change equals the value already computed in the underlying contract panel.
+              p=pd.read_csv('/tmp/expiry-aware/panel/index_futures_expiry_aware_contract_panel.csv')
+              j=bad.merge(p[['trade_date','product','contract','basis_close_pct_change_5d']],on=['trade_date','product','contract'],suffixes=('_sel','_panel'))
+              assert ((j['basis_close_pct_change_5d_sel']-j['basis_close_pct_change_5d_panel']).abs()<1e-12).all()
+          print('contract-local anti-roll validation PASS')
+          PY
+      - name: Run expiry-aware incremental validation
+        env:
+          ETF_SYSTEM_ROOT: ${{ github.workspace }}
+        run: |
+          python research/backtests/evaluate_index_futures_expiry_aware.py \
+            --input-dir /tmp/expiry-aware/panel \
+            --output /tmp/expiry-aware/result/index_futures_expiry_aware_final_validation.json \
+            --start 2024-01-01 --end 2026-08-28
+      - name: Build compact research summary
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          p=pathlib.Path('/tmp/expiry-aware/result/index_futures_expiry_aware_final_validation.json')
+          z=json.loads(p.read_text())
+          q=json.loads(pathlib.Path('/tmp/expiry-aware/panel/index_futures_expiry_aware_qa.json').read_text())
+          lines=['# IF/IC/IM逐合约到期日校正研究结果','',f"结论：`{z['research_interpretation']}`",'',f"逐合约面板：{q['panel']['rows']}行；近月{q['near']['rows']}行；PIT主力{q['main']['rows']}行。",'', '原四项信号：']
+          for k,v in z['cross_mode_support'].items(): lines.append(f"- {k}: {'支持' if v else '未通过'}")
+          lines += ['', '本产物仅为research-only，不进入decision_context，不修改MASTER，不产生交易动作。']
+          pathlib.Path('/tmp/expiry-aware/result/summary.md').write_text('\n'.join(lines)+'\n',encoding='utf-8')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: index-futures-expiry-aware-research
+          path: |
+            /tmp/expiry-aware/raw/input_qa.json
+            /tmp/expiry-aware/panel/index_futures_expiry_aware_qa.json
+            /tmp/expiry-aware/result/index_futures_expiry_aware_final_validation.json
+            /tmp/expiry-aware/result/summary.md
+          retention-days: 14
