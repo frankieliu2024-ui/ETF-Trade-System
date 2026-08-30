@@ -4,6 +4,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 MASTER = ROOT / "ETF规则_MASTER.md"
+DASHBOARD = ROOT / "ETF当前状态_DASHBOARD.md"
+SELF_HEAL_WORKFLOW = ROOT / ".github" / "workflows" / "self-healing-watchdog.yml"
 
 
 class MasterNonmechanicalRiskActiveReturnTests(unittest.TestCase):
@@ -19,6 +21,20 @@ class MasterNonmechanicalRiskActiveReturnTests(unittest.TestCase):
         self.assertNotIn("风险率决定基础风险区间和基础权限", text)
         self.assertNotIn("Confirm关闭；恢复条件同时满足时只评估一次5,000元Trial", text)
         self.assertNotIn("禁止普通新增和Confirm；极端修复条件同时满足时只评估一次5,000元Trial", text)
+
+    def test_dashboard_does_not_freeze_old_risk_permission_semantics(self):
+        text = DASHBOARD.read_text(encoding="utf-8")
+        self.assertNotIn("ETF策略风险口径（V2.2.18）", text)
+        self.assertNotIn("风险观察区允许评估Trial但Confirm关闭", text)
+        self.assertIn("Dashboard不根据风险观察区自行关闭Trial或Confirm", text)
+        self.assertIn("当前风险许可与金额边界只读取最新MASTER和正式review", text)
+
+    def test_master_change_wakes_rules_version_self_heal(self):
+        text = SELF_HEAL_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn('- "ETF规则_MASTER.md"', text)
+        self.assertIn("SYNC_RULES_VERSION_METADATA", text)
+        self.assertIn("python scripts/build_state_context.py", text)
+        self.assertIn("python scripts/build_query_context.py", text)
 
     def test_fixed_position_anchors_are_removed(self):
         text = MASTER.read_text(encoding="utf-8")
