@@ -4,7 +4,6 @@ from __future__ import annotations
 import importlib.util
 import json
 from collections import defaultdict
-from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -16,130 +15,97 @@ mod = importlib.util.module_from_spec(spec)
 assert spec and spec.loader
 spec.loader.exec_module(mod)
 
-H = (1, 3, 5, 10)
-OLD = ("healthy_breakout", "volume_recovery", "consolidation_breakout", "tech_risk_appetite")
+H=(1,3,5,10)
+OLD=("healthy_breakout","volume_recovery","consolidation_breakout","tech_risk_appetite")
 
 
-def stat(rows, h, key):
-    vals = [r["future"][h].get(key) for r in rows if h in r.get("future", {}) and r["future"][h].get(key) is not None]
-    return mod.stats(vals)
+def st(rows,h,key):
+    return mod.stats([r["future"][h].get(key) for r in rows if h in r.get("future",{}) and r["future"][h].get(key) is not None])
 
 
-def summary(rows):
-    old = [r for r in rows if any(r.get("signals", {}).get(k) for k in OLD)]
-    clean = [r for r in rows if not any(r.get("signals", {}).get(k) for k in OLD)]
-    years = defaultdict(list)
-    for r in rows:
-        years[r["date"][:4]].append(r)
-    return {
-        "count": len(rows),
-        "horizons": {str(h): {
-            "absolute": stat(rows,h,"return_pct"),
-            "relative": stat(rows,h,"relative_to_pool_median_pct_points"),
-            "mae": stat(rows,h,"mae_pct"),
-            "mfe": stat(rows,h,"mfe_pct"),
-        } for h in H},
-        "by_year": {y: {"count": len(xs), "t5_relative": stat(xs,5,"relative_to_pool_median_pct_points")} for y,xs in sorted(years.items())},
-        "old_6_2_overlap": {"count": len(old), "share": round(len(old)/len(rows),4) if rows else 0.0},
-        "without_old_6_2": {
-            "count": len(clean),
-            "t5_relative": stat(clean,5,"relative_to_pool_median_pct_points"),
-            "t5_mae": stat(clean,5,"mae_pct"),
-            "t5_mfe": stat(clean,5,"mfe_pct"),
-        },
-    }
+def sm(rows):
+    return {"count":len(rows),"h":{str(h):{"rel":st(rows,h,"relative_to_pool_median_pct_points"),"abs":st(rows,h,"return_pct"),"mae":st(rows,h,"mae_pct"),"mfe":st(rows,h,"mfe_pct")} for h in H}}
 
 
 def main():
-    by_code, dates = mod.load_panel()
-    panel = mod.enrich_future(by_code)
-    row_map = {(r["date"], r["code"]): r for r in panel}
-    idx = {}
-    for code, rows in by_code.items():
-        for i, r in enumerate(rows):
-            idx[(r["date"], code)] = (rows, i)
+    by_code,dates=mod.load_panel()
+    panel=mod.enrich_future(by_code)
+    row_map={(r["date"],r["code"]):r for r in panel}
+    idx={}
+    by_date=defaultdict(list)
+    for r in panel: by_date[r["date"]].append(r)
+    for code,rows in by_code.items():
+        for i,r in enumerate(rows): idx[(r["date"],code)]=(rows,i)
 
-    month_dates, quarter_dates = defaultdict(list), defaultdict(list)
-    for d in dates:
-        dt = datetime.fromisoformat(d)
-        month_dates[(dt.year, dt.month)].append(d)
-        quarter_dates[(dt.year, (dt.month-1)//3+1)].append(d)
-    month_last3 = {d for xs in month_dates.values() for d in xs[-3:]}
-    quarter_last3 = {d for xs in quarter_dates.values() for d in xs[-3:]}
+    date_ctx={}
+    for d,rows in by_date.items():
+        vals=[r.get("change_pct") for r in rows if r.get("change_pct") is not None]
+        med=mod.median(vals)
+        pos=sum(v>0 for v in vals)/len(vals) if vals else None
+        date_ctx[d]={"median":med,"positive_share":pos}
 
-    g = defaultdict(list)
+    groups=defaultdict(list)
+    years=defaultdict(lambda: defaultdict(list))
+    objects=defaultdict(lambda: defaultdict(list))
     for r in panel:
-        rows, i = idx[(r["date"], r["code"])]
-        if i < 1:
-            continue
-        prev = rows[i-1]
-        open_ret = mod.pct(r.get("open"), prev.get("close"))
-        clv = r.get("clv")
-        day_ret = r.get("change_pct")
-        prev_ret = prev.get("change_pct")
+        rows,i=idx[(r["date"],r["code"])]
+        if i<1: continue
+        prev=rows[i-1]
+        gap=mod.pct(r.get("open"),prev.get("close"))
+        clv=r.get("clv")
+        if gap is None or gap>-1.0 or clv is None: continue
+        label="strong_recovery" if clv>=0.70 else ("weak_close" if clv<=0.30 else "middle_close")
+        groups[label].append(r)
+        years[label][r["date"][:4]].append(r)
+        objects[label][r["code"]].append(r)
 
-        if open_ret is not None and clv is not None:
-            if open_ret >= 1.0 and clv <= 0.30: g["gap_up_weak_close"].append(r)
-            if open_ret >= 1.0 and clv >= 0.70: g["gap_up_strong_close"].append(r)
-            if open_ret <= -1.0 and clv >= 0.70: g["gap_down_recovery_close"].append(r)
-            if open_ret <= -1.0 and clv <= 0.30: g["gap_down_weak_close"].append(r)
+        ma20=mod.sma_close(rows,i,20,include_current=True)
+        ret20=mod.ret_n(rows,i,20)
+        trend="uptrend" if ret20 is not None and ret20>0 and ma20 is not None and r.get("close") is not None and r["close"]>=ma20 else "non_uptrend"
+        groups[f"{label}__{trend}"].append(r)
 
-        if prev_ret is not None and open_ret is not None and clv is not None:
-            if prev_ret >= 3.0:
-                if open_ret >= 0.5 and clv <= 0.30: g["after_big_up_gap_up_weak_close"].append(r)
-                elif open_ret >= 0.5 and clv >= 0.70: g["after_big_up_gap_up_strong_close"].append(r)
-                elif open_ret <= -0.5 and clv >= 0.70: g["after_big_up_gap_down_repair"].append(r)
-            if prev_ret <= -3.0:
-                if open_ret >= 0.5 and clv >= 0.70: g["after_big_down_gap_up_repair"].append(r)
-                elif open_ret <= -0.5 and clv >= 0.70: g["after_big_down_gap_down_repair"].append(r)
-                elif open_ret <= -0.5 and clv <= 0.30: g["after_big_down_gap_down_weak"].append(r)
+        ctx=date_ctx.get(r["date"],{})
+        breadth=ctx.get("positive_share")
+        if breadth is not None:
+            regime="weak_market" if breadth<=0.35 else ("strong_market" if breadth>=0.65 else "middle_market")
+            groups[f"{label}__{regime}"].append(r)
+        med=ctx.get("median")
+        if med is not None and r.get("change_pct") is not None:
+            rel=r["change_pct"]-med
+            rel_state="relative_leader" if rel>=1.0 else ("relative_laggard" if rel<=-1.0 else "relative_middle")
+            groups[f"{label}__{rel_state}"].append(r)
 
-        if i >= 3 and all((rows[j].get("change_pct") or 0) < 0 for j in range(i-3, i)) and day_ret is not None and clv is not None and day_ret > 0:
-            if clv >= 0.70: g["three_down_first_repair_high_close"].append(r)
-            elif clv <= 0.30: g["three_down_first_repair_weak_close"].append(r)
+        oldhit=any(r.get("signals",{}).get(k) for k in OLD)
+        if not oldhit: groups[f"{label}__without_old6_2"].append(r)
 
-        if r["date"] in month_last3: g["month_end_last3"].append(r)
-        else: g["non_month_end"].append(r)
-        if r["date"] in quarter_last3: g["quarter_end_last3"].append(r)
-        else: g["non_quarter_end"].append(r)
-
-    payload = {
-        "schema_version":"1.0",
-        "mode":"RESEARCH_ONLY_ASHARE_ANCESTRAL_CLOUD_STAGE4",
-        "issue":107,
-        "date_range":[dates[0], dates[-1]],
-        "panel_rows":len(panel),
-        "definitions":{
-            "generic_gap":"open vs previous close >= +1% or <= -1%",
-            "extreme_prior_day":"previous close return >= +3% or <= -3%; next-day gap bucket uses 0.5%",
-            "close_quality":"CLV <=0.30 weak, >=0.70 strong/recovery",
-            "three_down_repair":"three prior negative days followed by positive day",
-            "calendar_end":"last 3 observed trading dates of month/quarter",
-        },
-        "groups":{k:summary(v) for k,v in sorted(g.items())},
-        "decision_boundary":"Research-only PIT study; no trade signal, amount, sell share, MASTER change or production integration.",
+    payload={
+        "schema_version":"1.0","mode":"RESEARCH_ONLY_ASHARE_ANCESTRAL_STAGE5_LOW_GAP_RECOVERY",
+        "issue":107,"date_range":[dates[0],dates[-1]],"panel_rows":len(panel),
+        "definition":"gap <= -1% vs prior close; strong recovery CLV>=0.70, weak close CLV<=0.30; trend/breadth/relative buckets frozen before outcome review",
+        "groups":{k:sm(v) for k,v in sorted(groups.items())},
+        "by_year":{k:{y:sm(v) for y,v in sorted(g.items())} for k,g in years.items()},
+        "by_code":{k:{c:sm(v) for c,v in sorted(g.items())} for k,g in objects.items()},
+        "decision_boundary":"Research-only conditional/dedup validation; no trade rule, amount, sell share, ranking or production integration."
     }
-    OUT.mkdir(parents=True, exist_ok=True)
-    (OUT/"ashare_ancestral_rules_cloud_stage4.json").write_text(json.dumps(payload,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+    OUT.mkdir(parents=True,exist_ok=True)
+    (OUT/"ashare_ancestral_rules_cloud_stage5.json").write_text(json.dumps(payload,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
 
-    labels={
-        "gap_up_weak_close":"高开后弱收盘","gap_up_strong_close":"高开后强收盘","gap_down_recovery_close":"低开后强修复","gap_down_weak_close":"低开后弱收盘",
-        "after_big_up_gap_up_weak_close":"大涨次日高开弱收","after_big_up_gap_up_strong_close":"大涨次日高开强收","after_big_up_gap_down_repair":"大涨次日低开修复",
-        "after_big_down_gap_up_repair":"大跌次日高开修复","after_big_down_gap_down_repair":"大跌次日低开修复","after_big_down_gap_down_weak":"大跌次日低开续弱",
-        "three_down_first_repair_high_close":"连跌后首次高质量修复","three_down_first_repair_weak_close":"连跌后弱修复","month_end_last3":"月末最后3日","non_month_end":"非月末最后3日","quarter_end_last3":"季末最后3日","non_quarter_end":"非季末最后3日"}
-    lines=["# A股祖训云端日线 Stage4：开盘/极端日/连跌修复/月季末","",f"覆盖：{dates[0]} 至 {dates[-1]}；ETF×交易日={len(panel)}。","","|候选|样本|T+1相对池|T+5相对池|T+10相对池|T+5 MAE|T+5 MFE|旧6.2重叠|","|---|---:|---:|---:|---:|---:|---:|---:|"]
-    for key,label in labels.items():
-        z=payload["groups"].get(key,{"count":0,"horizons":{},"old_6_2_overlap":{"share":0}})
-        def v(h,k):
-            x=(z.get("horizons",{}).get(str(h),{}).get(k,{}) or {}).get("mean")
+    keys=["strong_recovery","weak_close","middle_close","strong_recovery__without_old6_2","strong_recovery__uptrend","strong_recovery__non_uptrend","strong_recovery__weak_market","strong_recovery__strong_market","strong_recovery__relative_leader","strong_recovery__relative_laggard"]
+    lines=["# A股祖训Stage5：低开后强修复条件化验证","",f"覆盖：{dates[0]} 至 {dates[-1]}；ETF×交易日={len(panel)}。","","|分组|样本|T+1相对池|T+5相对池|T+10相对池|T+5 MAE|T+5 MFE|","|---|---:|---:|---:|---:|---:|---:|"]
+    for k in keys:
+        z=payload["groups"].get(k,{"count":0,"h":{}})
+        def v(h,key):
+            x=(z.get("h",{}).get(str(h),{}).get(key,{}) or {}).get("mean")
             return "NA" if x is None else f"{x:.3f}%"
-        lines.append(f"|{label}|{z.get('count',0)}|{v(1,'relative')}|{v(5,'relative')}|{v(10,'relative')}|{v(5,'mae')}|{v(5,'mfe')}|{z.get('old_6_2_overlap',{}).get('share',0):.1%}|")
-    lines += ["","判读：只保留低重叠、跨年度方向稳定且能潜在改善Trial/Confirm、金额、卖出份额或资本比较的候选；日K分组不冒充盘中承接。"]
+        lines.append(f"|{k}|{z.get('count',0)}|{v(1,'rel')}|{v(5,'rel')}|{v(10,'rel')}|{v(5,'mae')}|{v(5,'mfe')}|")
+    lines += ["","年度强修复："]
+    for y,z in payload["by_year"].get("strong_recovery",{}).items():
+        x=(z["h"]["5"]["rel"] or {}).get("mean")
+        lines.append(f"- {y}: n={z['count']}, T+5相对ETF池={x}%")
+    lines += ["","判读：只有强修复相对同样低开背景的弱/中性收盘保持稳定增量，并在趋势/市场宽度/相对强弱分层中不过度依赖单一状态，才值得未来做正式转化审查；否则留作普通价格反馈。"]
     text="\n".join(lines)+"\n"
-    (OUT/"ashare_ancestral_rules_cloud_stage4.md").write_text(text,encoding="utf-8")
-    # Existing one-off workflow still cats the stage1 filename; mirror the Stage4 report there for this isolated run only.
+    (OUT/"ashare_ancestral_rules_cloud_stage5.md").write_text(text,encoding="utf-8")
     (OUT/"ashare_ancestral_rules_cloud_stage1.md").write_text(text,encoding="utf-8")
-    print(json.dumps({"ok":True,"stage":4,"groups":{k:len(v) for k,v in g.items()}},ensure_ascii=False))
+    print(json.dumps({"ok":True,"stage":5,"strong":len(groups['strong_recovery']),"weak":len(groups['weak_close'])},ensure_ascii=False))
 
-if __name__ == "__main__":
-    main()
+if __name__=="__main__": main()
