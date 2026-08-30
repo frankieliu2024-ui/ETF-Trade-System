@@ -1,10 +1,10 @@
 {
-  "schema_version": "1.5",
+  "schema_version": "1.6",
   "mode": "PRODUCTION_MUTATION_PROTOCOL",
   "purpose": "允许并行诊断、研究、实现和测试；对共享生产状态实行价值/残余风险准入、隔离实施、latest-main重放、文件所有权和串行集成约束。",
   "normative_contract": {
     "source": "docs/生产变更与并发写入协议_V1.0.md",
-    "version": "V1.7",
+    "version": "V1.8",
     "machine_role": "EXECUTABLE_MIRROR_NOT_RULE_SOURCE"
   },
   "principles": [
@@ -14,7 +14,8 @@
     "dynamic_state_is_rebuilt_from_latest_main",
     "fact_precedence_must_not_depend_on_last_writer_wins",
     "research_and_shadow_validation_do_not_write_main",
-    "formal_fact_documents_use_one_low_level_mutation_gateway"
+    "formal_fact_documents_use_one_low_level_mutation_gateway",
+    "scheduled_review_is_thin_wakeup_over_ssot"
   ],
   "change_admission": {
     "default": "DO_NOT_CHANGE_UNLESS_VALUE_AND_READINESS_ARE_CLEAR",
@@ -44,7 +45,22 @@
     ],
     "decision_rule": "先判断变化是否有清晰净收益，再判断是否仍有必须等待的新信息。价值和实现/验证均充分且无关键残余风险需要未来真实生产暴露时为EXECUTE_NOW；存在明确且必须通过后续真实生产运行或未完成验证才能回答的问题时为OBSERVE；净收益不足、已有机制充分、已满足/替代或复杂度收益不成立时为DO_NOT_CHANGE。",
     "execution_boundary": "用户提出修复、优化或执行不自动等于EXECUTE_NOW。ChatGPT/Codex必须先完成问题事实、canonical owner、根因、当前影响、既有恢复是否充分、实现成熟度和残余风险判断。EXECUTE_NOW进入既有latest-main隔离实施与组合验收链；OBSERVE必须记录具体阻塞和解除条件；DO_NOT_CHANGE不创建生产修改。A股连续交易期间仅执行影响当前交易判断、账户/成交/行情事实或canonical runtime恢复的必要生产修改，其他EXECUTE_NOW事项移至非关键窗口执行。",
-    "maintenance_rule_freeze": "长期治理只保留四条上位原则和少量硬工程合同；旧CA01-CA11仅作为审计兼容映射，不再作为日常平级入口，不继续新增CA12/CA13等规则。新失效模式优先归并到现有原则并强化测试，只有现有原则确实无法覆盖且问题重复、实质影响生产时才调整规范。"
+    "maintenance_rule_freeze": "长期治理只保留四条上位原则和少量硬工程合同；旧CA01-CA11仅作为审计兼容映射，不再作为日常平级入口，不继续新增CA12/CA13等规则。新失效模式优先归并到现有原则并强化测试，只有现有原则确实无法覆盖且问题重复、实质影响生产时才调整规范。",
+    "review_closure_contract": {
+      "recoverable_sources": [
+        "CURRENT_FORMAL_ISSUES_AND_PRS",
+        "CANONICAL_RUNTIME_STATE",
+        "FORMAL_CHANGE_HISTORY"
+      ],
+      "forbid_chat_or_task_prompt_as_only_source": true,
+      "reclassify_against_latest_main": true,
+      "historical_title_or_admission_is_not_current_truth": true,
+      "close_or_reframe_when_original_scope_is_satisfied": true,
+      "scheduled_review_role": "WAKEUP_AND_ANTI_OMISSION_ONLY",
+      "scheduled_review_must_read_current_ssot": true,
+      "forbid_parallel_pending_rule_or_state_store": true,
+      "rule": "待变更、OBSERVE、待激活和待运行态验证事项必须能从当前正式Issue/PR、canonical运行状态或正式变更记录恢复；每次复核按latest main重新分类。定时复核只负责唤醒和防遗漏，不复制稳定治理规则，不新建平行pending状态。"
+    }
   },
   "writer_requirements": {
     "require_concurrency_group": true,
