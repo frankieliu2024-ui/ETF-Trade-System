@@ -114,13 +114,13 @@
     },
     "data/state/decision_trigger.json": {
       "state_class": "DERIVED_REBUILDABLE_STATE",
-      "canonical_builder": "scripts/build_phase4_automation.py via scripts/build_state_context.py",
+      "canonical_builder": "scripts/build_state_context.py",
       "allowed_writers": [".github/workflows/market-snapshot.yml", ".github/workflows/opening-auction-current-fallback.yml", ".github/workflows/self-healing-watchdog.yml"],
-      "rule": "重评触发状态必须由现有Phase4 canonical builder从最新正式事实重建；self-healing调用build_state_context时必须与decision_context同批持久化，禁止保留旧schema或旧规则语义。"
+      "rule": "重评触发状态必须由现有Phase4 builder经build_state_context从最新正式事实重建；self-healing调用build_state_context时必须与decision_context同批持久化，禁止保留旧schema或旧规则语义。"
     },
     "data/state/capital_efficiency_ranking.json": {
       "state_class": "DERIVED_REBUILDABLE_STATE",
-      "canonical_builder": "scripts/build_phase4_automation.py via scripts/build_state_context.py",
+      "canonical_builder": "scripts/build_state_context.py",
       "allowed_writers": [".github/workflows/market-snapshot.yml", ".github/workflows/opening-auction-current-fallback.yml", ".github/workflows/self-healing-watchdog.yml"],
       "rule": "该文件只枚举完整资本比较全集和数据/执行约束，不生成综合分数或机器主候选；self-healing调用build_state_context时必须与decision_context同批持久化。"
     }
