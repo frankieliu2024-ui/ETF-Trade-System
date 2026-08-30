@@ -188,6 +188,11 @@ def build_matrix(price: pd.DataFrame, shares: pd.DataFrame, horizons: list[int],
         "ret_10d_pct": "rank_ret_10d", "ret_20d_pct": "rank_ret_20d",
         "vol_20d_pct": "rank_vol_20d",
     }
+    # Create every rank column up front so sparse early cross-sections remain NaN
+    # instead of failing later when ensemble columns reference a rank not yet eligible.
+    for name in mapping.values():
+        x[name] = np.nan
+
     ranked = []
     for _, g in x.groupby("date", sort=True):
         g = g.copy()
