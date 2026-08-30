@@ -122,7 +122,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
         f"|账户持仓盈亏|{money(account.get('holding_pnl'))}|",
         f"|当日盈亏|{money(account.get('daily_pnl'))}（{float(account.get('daily_pnl_pct') or 0):+.2f}%）|",
         f"|账户总风险暴露率|约{exposure:.2f}%|",
-        f"|ETF策略风险率|约{risk:.2f}%（Known-net；唯一决定风险区间）|" if risk is not None else "|ETF策略风险率|当前辅助权益状态缺失，保留最近有效值|",
+        f"|ETF策略风险率|约{risk:.2f}%（Known-net）|" if risk is not None else "|ETF策略风险率|当前辅助权益状态缺失，保留最近有效值|",
         f"|累计已知ETF费用（有效事实）|{money(known_fees)}；已执行成交overlay {money(overlay_fees)}；待确认费用状态：{'存在' if pending else '无'}|",
         f"|账户事实内已确认费用记录合计|{money(confirmed_account_fees)}（仅统计account_fact中明确标记CONFIRMED的记录；不代表历史累计ETF费用）|",
         "", "### 当前持仓事实", "",
