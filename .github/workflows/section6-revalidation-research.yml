@@ -12,6 +12,7 @@ on:
       - 'research/backtests/analyze_section6_consecutive_risk_discriminator.py'
       - 'research/backtests/analyze_section6_new_evidence_stage_c.py'
       - 'research/backtests/analyze_section6_stage_e_validation.py'
+      - 'research/backtests/analyze_independent_opportunity_capital.py'
       - 'research/reports/**'
       - '.github/workflows/section6-revalidation-research.yml'
   workflow_dispatch:
@@ -67,6 +68,26 @@ jobs:
         with:
           name: section6-baseline-revalidation
           path: research/reports/generated/section6_revalidation/
+          if-no-files-found: error
+
+  independent-opportunity-capital:
+    if: github.event_name == 'pull_request' && github.head_ref == 'research/independent-opportunity-capital-20260830'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Run independent opportunity capital comparison
+        run: python research/backtests/analyze_independent_opportunity_capital.py
+      - name: Show result
+        run: cat research/reports/generated/independent_opportunity_capital/independent_opportunity_capital.json
+      - name: Upload research artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: independent-opportunity-capital
+          path: research/reports/generated/independent_opportunity_capital/
           if-no-files-found: error
 
 # Research-only workflow. It has read-only repository permission, does not commit,
