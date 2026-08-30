@@ -22,6 +22,7 @@ ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1
 BEIJING = ZoneInfo("Asia/Shanghai")
 UA = "ETF-Trade-System minute-path"
 POLICY_PATH = Path("config/minute_path_validation_policy.json")
+LATE_SESSION_REFERENCE_MINUTE = 14 * 60 + 30
 SCHEDULE_NODE_MAP = {
     "30 2 * * 1-5": "10:30",
     "45 5 * * 1-5": "13:45",
@@ -176,6 +177,33 @@ def quote_alignment(latest: dict, quote_row: dict | None, requirements: dict):
     }
 
 
+def late_session_context(points: list[dict]) -> dict:
+    latest = points[-1]
+    latest_minute = latest["dt"].hour * 60 + latest["dt"].minute
+    if latest_minute < LATE_SESSION_REFERENCE_MINUTE:
+        return {
+            "status": "NOT_YET_AVAILABLE",
+            "reference_clock_beijing": "14:30",
+            "move_from_reference_pct": None,
+            "decision_boundary": "14:30前不构造尾盘方向；不得使用未来分钟桶。",
+        }
+    eligible = [x for x in points if x["dt"].hour * 60 + x["dt"].minute >= LATE_SESSION_REFERENCE_MINUTE]
+    if not eligible:
+        return {"status": "DEGRADED", "reference_clock_beijing": "14:30", "move_from_reference_pct": None, "reason": "14:30 minute unavailable"}
+    reference = eligible[0]
+    return {
+        "status": "READY",
+        "reference_clock_beijing": "14:30",
+        "reference_as_of_beijing": reference["dt"].isoformat(timespec="seconds"),
+        "reference_price": reference["price"],
+        "latest_as_of_beijing": latest["dt"].isoformat(timespec="seconds"),
+        "latest_price": latest["price"],
+        "move_from_reference_pct": round4(pct(latest["price"], reference["price"])),
+        "reference_sampling_role": "FIRST_PIT_ELIGIBLE_MINUTE_AT_OR_AFTER_14_30",
+        "decision_boundary": "仅描述14:30后截至当前PIT时点的分钟价格变化；研究分组不得独立生成交易动作。",
+    }
+
+
 def fetch_one(code: str, name: str, thscode: str, market_date: str, formal_row: dict, quote_row: dict | None, requirements: dict):
     if os.environ.get("MINUTE_PATH_FAULT_SYMBOL") == code:
         raise RuntimeError("injected minute-path object failure")
@@ -260,6 +288,7 @@ def fetch_one(code: str, name: str, thscode: str, market_date: str, formal_row: 
         "path_high_as_of_beijing": high["dt"].isoformat(timespec="seconds"),
         "recovery_from_path_low_pct": round4(recovery),
         "retreat_from_path_high_pct": round4(retreat),
+        "late_session_context": late_session_context(points),
         "recent_interval_minutes": round(recent_minutes, 2),
         "recent_move_pct": round4(recent_move),
         "recent_slope_pct_per_10m": round4(slope10),
@@ -282,7 +311,7 @@ def build(root: Path = ROOT):
     requirements = quality_requirements(root)
     execution = {"github_run_id": os.environ.get("GITHUB_RUN_ID"), "github_event_name": event_name, "github_sha": os.environ.get("GITHUB_SHA"), "github_ref": os.environ.get("GITHUB_REF"), "validation_schedule": validation_schedule or None, "planned_node_beijing": SCHEDULE_NODE_MAP.get(validation_schedule, "AD_HOC"), "evidence_class": "SCHEDULED_REAL_INTRADAY" if event_name == "schedule" and validation_schedule in SCHEDULE_NODE_MAP else "SUPPLEMENTAL_AD_HOC"}
     base = {
-        "schema_version": "1.2",
+        "schema_version": "1.3",
         "generated_at": now_utc(),
         "generated_at_beijing": datetime.now(BEIJING).isoformat(timespec="seconds"),
         "market_date": market_date,
@@ -290,7 +319,7 @@ def build(root: Path = ROOT):
         "mode": "TENCENT_1M_ETF_PATH_VALIDATION_EVIDENCE",
         "read_only": True,
         "execution": execution,
-        "decision_boundary": "分钟源只增强ETF日内路径、极值时序和成交承接证据；正式最新价仍由quote router决定。",
+        "decision_boundary": "分钟源只增强ETF日内路径、极值时序、14:30后路径和成交承接证据；正式最新价仍由quote router决定。",
         "fallback_rule": "生产消费按ETF对象级质量门选择；失败对象回退离散路径，不把单对象失败放大为全池失败。",
     }
     if not market_date:

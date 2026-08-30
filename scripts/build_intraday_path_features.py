@@ -20,6 +20,7 @@ FAST_MOVE_MAX_MINUTES = 20.0
 V_RECOVERY_PCT = 1.0
 HIGH_ZONE_POSITION = 0.75
 HIGH_ZONE_SPREAD_PCT = 1.0
+LATE_SESSION_REFERENCE_MINUTE = 14 * 60 + 30
 
 
 def load_json(path: Path) -> dict:
@@ -119,6 +120,42 @@ def path_position(price: float, low: float, high: float) -> float | None:
     if high <= low:
         return None
     return (price - low) / (high - low)
+
+
+def late_session_context(points: list[dict]) -> dict:
+    latest = points[-1]
+    latest_dt = parse_time(latest.get("as_of_beijing", ""))
+    if latest_dt is None or latest_dt.hour * 60 + latest_dt.minute < LATE_SESSION_REFERENCE_MINUTE:
+        return {
+            "status": "NOT_YET_AVAILABLE",
+            "reference_clock_beijing": "14:30",
+            "move_from_reference_pct": None,
+            "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。",
+        }
+    eligible = []
+    for point in points:
+        dt = parse_time(point.get("as_of_beijing", ""))
+        if dt is not None and dt.hour * 60 + dt.minute >= LATE_SESSION_REFERENCE_MINUTE:
+            eligible.append((dt, point))
+    if not eligible:
+        return {
+            "status": "DEGRADED",
+            "reference_clock_beijing": "14:30",
+            "move_from_reference_pct": None,
+            "reason": "no point at or after 14:30",
+        }
+    _, reference = eligible[0]
+    return {
+        "status": "READY",
+        "reference_clock_beijing": "14:30",
+        "reference_as_of_beijing": reference.get("as_of_beijing"),
+        "reference_price": reference.get("price"),
+        "latest_as_of_beijing": latest.get("as_of_beijing"),
+        "latest_price": latest.get("price"),
+        "move_from_reference_pct": round_or_none(pct_change(latest.get("price"), reference.get("price"))),
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。",
+    }
 
 
 def classify(points: list[dict], low_idx: int, high_idx: int, path_low: float, path_high: float) -> list[dict]:
@@ -229,6 +266,7 @@ def feature_for_symbol(symbol: str, points: list[dict], benchmarks: dict[str, li
         "recovery_from_path_low_pct": round_or_none(pct_change(latest["price"], path_low)),
         "retreat_from_path_high_pct": round_or_none(pct_change(latest["price"], path_high)),
         "latest_day_range_position": round_or_none(latest_day_position),
+        "late_session_context": late_session_context(points),
         "recent_interval_minutes": round_or_none(recent_minutes, 2),
         "recent_move_pct": round_or_none(recent_move),
         "recent_slope_pct_per_10m": round_or_none(recent_slope_10m),
@@ -255,7 +293,7 @@ def build(root: Path = ROOT) -> dict:
         "market_date": market_date,
         "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
         "read_only": True,
-        "decision_boundary": "只描述离散行情脉冲形成的日内路径几何、成交增量和相对强弱；结构候选标签不是交易信号，不生成风险许可、机会状态、金额或买卖动作。",
+        "decision_boundary": "只描述离散行情脉冲形成的日内路径几何、成交增量、14:30后已观察路径和相对强弱；结构候选标签不是交易信号，不生成风险许可、机会状态、金额或买卖动作。",
         "label_boundary": "RAPID_RISE/SHARP_DROP/V_RECOVERY/HIGH_ZONE_CONSOLIDATION均为描述性候选标签。必须结合采样覆盖、实际时点、市场阶段及MASTER完整决策链解释。",
     }
     if not items or not by_symbol:

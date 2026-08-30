@@ -40,9 +40,9 @@ def _research_conclusion_digest(root: Path, research_context: dict) -> dict:
         runtime.append({
             "evidence_id": key,
             "status": value.get("status"),
-            "use_in_current_decision": bool(value.get("use_in_current_decision", value.get("status") in {"READY", "DEGRADED"})),
+            "use_in_current_decision": bool(value.get("use_in_current_decision", value.get("status") in {"READY", "DEGRADED", "DEGRADED_WITH_OBJECT_FALLBACK"})),
             "decision_eligible": value.get("decision_eligible"),
-            "use_as_decision_evidence": bool(value.get("use_in_current_decision", value.get("status") in {"READY", "DEGRADED"})),
+            "use_as_decision_evidence": bool(value.get("use_in_current_decision", value.get("status") in {"READY", "DEGRADED", "DEGRADED_WITH_OBJECT_FALLBACK"})),
             "can_generate_decision_independently": False,
             "trade_signal": None,
         })
@@ -134,6 +134,7 @@ def build(root: Path | None = None) -> dict:
     root = root or ROOT
     research_context = read_json(root / "data/state/research_context.json", {})
     decision_context = read_json(root / "data/state/decision_context.json", {})
+    market_structure = read_json(root / "data/state/market_structure_context.json", {})
     account = read_json(root / "data/state/account_fact.json", {})
     stock_context = read_json(root / "data/state/stock_context.json", {})
     stock_market = read_json(root / "data/state/stock_market_context.json", {})
@@ -142,6 +143,18 @@ def build(root: Path | None = None) -> dict:
     component_lead = build_561980_component_lead_evidence(root)
     if_ic_basis = build_if_ic_basis_evidence(root)
     oversold_300750 = build_300750_oversold_reversal_evidence(root)
+    intraday_path_risk = market_structure.get("formal_intraday_path_risk_review") or {
+        "evidence_id": "intraday_path_risk_review",
+        "display_name": "日内路径风险复核",
+        "status": "DEGRADED",
+        "use_in_current_decision": False,
+        "use_as_decision_evidence": False,
+        "can_generate_decision_independently": False,
+        "automatic_trade": False,
+        "trade_signal": None,
+        "reason": "market_structure_context has no current formal intraday path risk review",
+        "dynamic_owner": "data/state/market_structure_context.json",
+    }
     atomic_json_write(root / "data/state/561980_component_lead_evidence.json", component_lead)
     atomic_json_write(root / "data/state/if_ic_basis_5d_evidence.json", if_ic_basis)
     atomic_json_write(root / "data/state/300750_oversold_reversal_evidence.json", oversold_300750)
@@ -150,24 +163,29 @@ def build(root: Path | None = None) -> dict:
     validated_summary["component_lead_561980_3d"] = component_lead
     validated_summary["if_ic_basis_5d"] = if_ic_basis
     validated_summary["ipo_base_stock_oversold_reversal_300750"] = oversold_300750
+    validated_summary["intraday_path_risk_review"] = intraday_path_risk
     paths = research_context.setdefault("paths", {})
     paths["component_lead_561980_3d"] = "data/state/561980_component_lead_evidence.json"
     paths["if_ic_basis_5d"] = "data/state/if_ic_basis_5d_evidence.json"
     paths["ipo_base_stock_oversold_reversal_300750"] = "data/state/300750_oversold_reversal_evidence.json"
+    paths["intraday_path_risk_review"] = "data/state/market_structure_context.json"
 
     decision_research = decision_context.setdefault("research_evidence", {})
     decision_research["component_lead_561980_3d"] = component_lead
     decision_research["if_ic_basis_5d"] = if_ic_basis
     decision_research["ipo_base_stock_oversold_reversal_300750"] = oversold_300750
+    decision_research["intraday_path_risk_review"] = intraday_path_risk
     decision_context["component_lead_561980_file"] = "data/state/561980_component_lead_evidence.json"
     decision_context["if_ic_basis_5d_file"] = "data/state/if_ic_basis_5d_evidence.json"
     decision_context["ipo_base_stock_oversold_reversal_300750_file"] = "data/state/300750_oversold_reversal_evidence.json"
+    decision_context["intraday_path_risk_review_file"] = "data/state/market_structure_context.json"
 
     dynamic_formal_evidence = {
         "margin_financing": validated_summary.get("margin_financing") or {},
         "opening_residual_561980": validated_summary.get("opening_residual_561980") or {},
         "selling_exhaustion": validated_summary.get("selling_exhaustion") or {},
         "margin_feedback_interaction": validated_summary.get("margin_feedback_interaction") or {},
+        "intraday_path_risk_review": intraday_path_risk,
         "if_ic_basis_5d": if_ic_basis,
         "ipo_base_stock_oversold_reversal_300750": oversold_300750,
         "component_lead_561980_3d": component_lead,
@@ -232,7 +250,7 @@ def build(root: Path | None = None) -> dict:
         "account_total_asset": _round(total_asset, 2),
     }
     summary = {
-        "schema_version": "1.1",
+        "schema_version": "1.2",
         "generated_at": now_utc(),
         "mode": "RESEARCH_TO_EXECUTION_READ_ONLY_BRIDGE",
         "read_only": True,
@@ -247,10 +265,15 @@ def build(root: Path | None = None) -> dict:
         "ipo_base_stock_evidence": stock_evidence,
         "etf_object_evidence": {
             "component_lead_561980_3d": component_lead,
+            "intraday_path_risk_review": intraday_path_risk,
         },
         "execution_bridge": {
             "direct_execution_contribution": True,
             "allowed_effects": ["改变候选比较和机会强弱", "改变持仓风险收益和卖出判断", "改变新增金额判断", "改变资金来源选择", "改变卖出资金去向选择"],
+            "intraday_path_risk_rule": "日内路径风险复核可提高继续持有、追加资本和部分资本释放的风险收益复核强度；不得独立生成风险许可、Trial/Confirm、金额、卖出份额、退出或订单。",
+            "strong_surface_rule": "高开守住、午后再加速、高位横住、突破后一定时间仍守住等强势表象只能作为结构/承接证据的一部分，不能独立升级Trial/Confirm或增加金额。",
+            "v_recovery_rule": "V形修复仅表示相对继续走弱的风险/承接改善，不构成独立正收益买入证据。",
+            "relative_strength_rule": "日内相对强弱扩大可用于候选比较，但不得机械买强卖弱或独立形成新增金额。",
             "stock_buy_capital_source_rule": "若打新底仓个股出现独立、可证伪且足以改变决策的明显新增证据，必须比较现金、低效率ETF及其他合法可释放资本；现金不是机械唯一来源，任何ETF卖出仍需独立通过卖出链。",
             "stock_sell_destination_rule": "若打新底仓个股出现足以支持降低风险或退出的证据，必须比较资金进入现金还是已经独立通过完整机会判断的ETF/其他合法机会；不得先卖出再寻找用途，也不得机械轮动。",
             "etf_buy_source_rule": "ETF机会成立而现金不足时，打新底仓只有在其自身继续持有的边际收益效率更低、账户打新/底仓功能不被破坏且卖出决议独立成立时，才可作为资金来源。",
@@ -296,6 +319,8 @@ def main() -> None:
         "ipo_base_stock_share_of_total_asset_pct": (summary.get("portfolio_exposure") or {}).get("ipo_base_stock_share_of_total_asset_pct"),
         "component_lead_561980_status": component.get("status"),
         "component_lead_561980_value": component.get("leader_minus_etf_3d_lag1_pct_points"),
+        "intraday_path_risk_status": (dynamic.get("intraday_path_risk_review") or {}).get("status"),
+        "intraday_path_risk_active_codes": (dynamic.get("intraday_path_risk_review") or {}).get("active_codes"),
         "if_ic_basis_status": (dynamic.get("if_ic_basis_5d") or {}).get("status"),
         "oversold_300750_status": (dynamic.get("ipo_base_stock_oversold_reversal_300750") or {}).get("status"),
         "oversold_300750_match": (dynamic.get("ipo_base_stock_oversold_reversal_300750") or {}).get("pattern_match"),
