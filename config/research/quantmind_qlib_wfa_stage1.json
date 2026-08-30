@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0",
+  "mode": "QUANTMIND_QLIB_STYLE_WFA_STAGE1",
+  "role": "RESEARCH_EVIDENCE_ONLY",
+  "issue": 102,
+  "objective": "Test whether low-complexity supervised cross-sectional ranking adds stable out-of-sample ETF candidate-ranking value beyond the existing momentum and share-momentum baselines.",
+  "external_reference": {
+    "repository": "qusong0627/QuantMind",
+    "usage": "METHOD_REFERENCE_ONLY",
+    "code_vendored": false,
+    "data_source_adopted": false,
+    "execution_or_account_integration": false
+  },
+  "feature_columns": [
+    "rank_neg_share_change_1d",
+    "rank_neg_share_change_3d",
+    "rank_neg_share_change_5d",
+    "rank_ret_1d",
+    "rank_ret_5d",
+    "rank_ret_10d",
+    "rank_ret_20d",
+    "rank_vol_20d"
+  ],
+  "horizons_trading_days": [5, 10],
+  "baseline_scores": [
+    "ret_5d_pct",
+    "ret_20d_pct",
+    "momentum_ensemble",
+    "share_momentum_ensemble"
+  ],
+  "models": {
+    "ridge": {
+      "enabled": true,
+      "alphas": [0.1, 1.0, 10.0],
+      "selection_rule": "Choose alpha using training-only inner validation; never select on the outer test fold."
+    },
+    "lightgbm": {
+      "enabled": true,
+      "optional_dependency": true,
+      "num_leaves": 7,
+      "max_depth": 3,
+      "learning_rate": 0.03,
+      "n_estimators": 120,
+      "min_child_samples": 40,
+      "feature_fraction": 0.8,
+      "bagging_fraction": 0.8,
+      "bagging_freq": 1,
+      "random_state": 20260830
+    }
+  },
+  "outer_walk_forward_folds": [
+    {
+      "name": "fold1",
+      "train_start": "2024-04-01",
+      "train_end": "2025-03-31",
+      "test_start": "2025-04-01",
+      "test_end": "2025-09-30"
+    },
+    {
+      "name": "fold2",
+      "train_start": "2024-04-01",
+      "train_end": "2025-09-30",
+      "test_start": "2025-10-01",
+      "test_end": "2026-03-31"
+    },
+    {
+      "name": "fold3",
+      "train_start": "2024-04-01",
+      "train_end": "2026-03-31",
+      "test_start": "2026-04-01",
+      "test_end": "2026-08-07"
+    }
+  ],
+  "validation": {
+    "minimum_cross_section_size": 7,
+    "top_k": 3,
+    "required_positive_increment_folds_per_horizon": 2,
+    "require_both_horizons_incremental": true,
+    "primary_metric": "mean_rank_ic_increment_vs_best_baseline",
+    "secondary_metrics": [
+      "positive_ic_rate",
+      "top3_forward_return_increment",
+      "top_bottom_spread_increment",
+      "turnover_adjusted_increment"
+    ],
+    "transaction_cost_bps_round_trip": 20,
+    "no_post_hoc_model_selection": true
+  },
+  "point_in_time_rule": "All features must be available by the tested decision close. ETF share facts for trading day T are usable no earlier than T+1 trading day. Training labels must be fully realized by train_end; outer test outcomes must be realized by the dataset end. No static membership backfill, instrument identity feature, future information, lifecycle result or trade outcome is allowed.",
+  "stop_rule": "Stop Issue #102 after Stage1 if neither Ridge nor the bounded LightGBM model delivers stable positive out-of-sample increment versus the best existing baseline across both horizons after realistic turnover cost.",
+  "decision_eligible": false,
+  "trade_signal": null,
+  "trial_confirm": null,
+  "portfolio_target": null,
+  "master_override": false,
+  "production_integration": false
+}
