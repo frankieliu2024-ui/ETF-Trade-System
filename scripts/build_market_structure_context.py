@@ -70,7 +70,7 @@ def _c2_evidence(root: Path, item: dict, market_date: str) -> dict:
         "trade_signal": None,
         "formal_role": "只增强已经存在的突破／真实修复结构，不单独生成风险许可、Trial／Confirm、金额、卖出份额或订单。",
         "pit_boundary": "使用不晚于决策时点的最近完整T日收盘及T日前已存在日线；T+1盘中继续使用T日已完成证据，不把T+1未完成日线前视为收盘事实。",
-        "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。",
+        "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
         "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
     }
     if len(rows) < 21:
@@ -118,7 +118,7 @@ def _c2_evidence(root: Path, item: dict, market_date: str) -> dict:
         "enhancement_active": enhancement_active,
         "direction": "ENHANCE" if enhancement_active else "NOT_ACTIVE",
         "interpretation_cn": (
-            "最近完整收盘的成交参与扩大且已有突破／真实修复结构，作为结构确认增强证据。"
+            "最近完整收盘的成交参与扩大且已有突破／真实修复结构，作为结构确认增强证据；若当日上涨但收盘位置偏弱，不得仅据此解释为派发或机械减仓。"
             if enhancement_active else
             "最近完整收盘未同时满足成交参与扩大与有效结构确认，不激活该增强证据；不形成反向看空。"
         ),
@@ -157,13 +157,152 @@ def _attach_c2(root: Path, base: dict) -> None:
         "trade_signal": None,
         "dynamic_owner": "data/state/market_structure_context.json",
         "research_source": "research/backtests/section6_c2_participation_structure_formal_conversion_review.json",
-        "decision_boundary": "最近完整收盘只作为已有突破／真实修复结构的确认增强；研究1.2倍分组不升级为独立机械买卖阈值；失败不沿用无法重建的旧方向。",
+        "decision_boundary": "最近完整收盘只作为已有突破／真实修复结构的确认增强；研究1.2倍分组不升级为独立机械买卖阈值；放量上涨后的弱收盘本身不视为派发或卖出条件；失败不沿用无法重建的旧方向。",
     }
+
+
+def _path_risk_evidence(item: dict, path: dict, market_date: str) -> dict:
+    code = str(item.get("code") or "")
+    intraday = item.get("intraday_context") or {}
+    sampling = path.get("sampling") or {}
+    coverage = str(sampling.get("coverage") or "").upper()
+    production_source = str(path.get("production_source") or "")
+    late = path.get("late_session_context") or {}
+    tail_move = _num(late.get("move_from_reference_pct"))
+    path_high = _num(path.get("path_high"))
+    latest_price = _num(item.get("price"))
+    current_return = _num(item.get("current_return_pct"))
+    prev_close = None
+    if latest_price is not None and current_return is not None and abs(1.0 + current_return / 100.0) > 1e-12:
+        prev_close = latest_price / (1.0 + current_return / 100.0)
+    high_return = ((path_high / prev_close - 1.0) * 100.0) if path_high is not None and prev_close not in (None, 0.0) else None
+    retreat = _num(path.get("retreat_from_path_high_pct"))
+    day_position = _num(intraday.get("day_range_position"))
+    high_time = str(path.get("path_high_as_of_beijing") or "")
+    latest_time = str(path.get("latest_as_of_beijing") or item.get("as_of_beijing") or "")
+    high_precedes_latest = bool(high_time and latest_time and high_time < latest_time)
+
+    path_quality_usable = bool(path and coverage in {"HIGH", "MEDIUM"})
+    if not path_quality_usable:
+        return {
+            "evidence_id": "intraday_path_risk_review",
+            "display_name": "日内路径风险复核",
+            "status": "DEGRADED",
+            "code": code,
+            "market_date": market_date or None,
+            "use_as_decision_evidence": False,
+            "can_generate_decision_independently": False,
+            "automatic_trade": False,
+            "trade_signal": None,
+            "risk_review_active": None,
+            "reason": "intraday path sampling unavailable or LOW",
+            "dynamic_owner": "data/state/market_structure_context.json",
+            "upstream_owner": "data/state/intraday_path_features.json",
+            "failure_contract": "路径质量不足时不沿用上一节点active状态，只保留DEGRADED。",
+        }
+
+    # These are the fixed research group boundaries used in #107 robustness checks.
+    # They classify a review state only and never become mechanical trading thresholds.
+    tail_rally_group = bool(late.get("status") == "READY" and tail_move is not None and tail_move >= 0.8)
+    spike_reversal_group = bool(
+        high_precedes_latest
+        and high_return is not None and high_return >= 2.0
+        and retreat is not None and retreat <= -1.5
+        and day_position is not None and day_position <= 0.35
+    )
+    active_components = []
+    if tail_rally_group:
+        active_components.append("LATE_SESSION_RALLY_REVIEW")
+    if spike_reversal_group:
+        active_components.append("SPIKE_REVERSAL_NO_RECLAIM_REVIEW")
+    active = bool(active_components)
+    confidence = "HIGH" if production_source == "TENCENT_1M" and coverage == "HIGH" else "MEDIUM"
+    return {
+        "evidence_id": "intraday_path_risk_review",
+        "display_name": "日内路径风险复核",
+        "status": "READY",
+        "code": code,
+        "market_date": market_date or None,
+        "as_of_beijing": latest_time or None,
+        "use_as_decision_evidence": True,
+        "can_generate_decision_independently": False,
+        "automatic_trade": False,
+        "trade_signal": None,
+        "risk_review_active": active,
+        "direction": "INCREASE_RISK_REWARD_REVIEW" if active else "NOT_ACTIVE",
+        "active_components": active_components,
+        "confidence": confidence,
+        "production_source": production_source or "UNKNOWN",
+        "sampling_coverage": coverage,
+        "late_session": late,
+        "path_high_return_vs_prev_close_pct": round(high_return, 4) if high_return is not None else None,
+        "retreat_from_path_high_pct": round(retreat, 4) if retreat is not None else None,
+        "day_range_position": round(day_position, 4) if day_position is not None else None,
+        "research_group_flags": {
+            "late_session_rally_ge_0_8pct": tail_rally_group,
+            "spike_ge_2pct_retreat_le_minus1_5pct_low_close_position": spike_reversal_group,
+        },
+        "interpretation_cn": (
+            "命中已验证的日内路径风险复核分组，应提高对继续持有、追加资本、赢家右尾与部分资本释放的风险收益复核强度；不得由该证据机械卖出、固定比例减仓、退出或禁止新增。"
+            if active else
+            "当前未命中已验证的日内路径风险复核分组；不形成反向看多，也不降低其他风险证据权重。"
+        ),
+        "calibration_boundary": "0.8%、2%、-1.5%和低区间位置仅是#107固定研究粗分组，用于识别复核状态，不是独立交易阈值。",
+        "strong_surface_boundary": "高开守住、午后再加速、高位横住或突破后一定时间仍守住，只能作为结构/承接的一部分，不得独立升级Trial/Confirm或增加金额。",
+        "v_recovery_boundary": "V形修复只表示相对继续走弱的风险/承接改善，不证明正收益机会，不得据此抄底或升级Trial/Confirm。",
+        "relative_strength_boundary": "日内相对强弱扩大只用于候选比较和相对保护解释，不得机械买强卖弱。",
+        "dynamic_owner": "data/state/market_structure_context.json",
+        "upstream_owner": "data/state/intraday_path_features.json",
+        "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+        "failure_contract": "上游路径缺失、LOW采样或对象级分钟质量失败时按现有离散fallback重新计算；仍不足则DEGRADED且不沿用旧active状态。",
+    }
+
+
+def _attach_intraday_path_risk_review(root: Path, base: dict) -> None:
+    path_obj = _load_json(root / "data/state/intraday_path_features.json")
+    path_map = {str(x.get("symbol") or ""): x for x in (path_obj.get("features") or []) if x.get("symbol")}
+    market_date = str(base.get("market_date") or "")
+    ready, degraded, active = [], [], []
+    for item in base.get("items") or []:
+        code = str(item.get("code") or "")
+        evidence = _path_risk_evidence(item, path_map.get(code) or {}, market_date)
+        item["intraday_path_risk_review"] = evidence
+        if evidence.get("status") == "READY":
+            ready.append(code)
+            if evidence.get("risk_review_active") is True:
+                active.append(code)
+        else:
+            degraded.append(code)
+    base["formal_intraday_path_risk_review"] = {
+        "evidence_id": "intraday_path_risk_review",
+        "display_name": "日内路径风险复核",
+        "status": "READY" if ready and not degraded else ("DEGRADED_WITH_OBJECT_FALLBACK" if ready else "DEGRADED"),
+        "market_date": market_date or None,
+        "ready_codes": ready,
+        "degraded_codes": degraded,
+        "active_codes": active,
+        "use_in_current_decision": True,
+        "use_as_decision_evidence": True,
+        "can_generate_decision_independently": False,
+        "automatic_trade": False,
+        "trade_signal": None,
+        "dynamic_owner": "data/state/market_structure_context.json",
+        "upstream_owner": "data/state/intraday_path_features.json",
+        "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+        "decision_boundary": "尾盘拉升与冲高回落未重新站回只提高持仓、追加资本和资本释放的风险收益复核强度；不独立生成风险许可、Trial/Confirm、金额、卖出份额或订单。",
+        "failure_contract": "对象级路径不可用时复用现有分钟→离散fallback；仍无法重建则该对象DEGRADED且不沿用旧方向。",
+    }
+    contract = base.get("candidate_selection_contract") or {}
+    contract["strong_surface_rule"] = "高开守住、午后再加速、高位横住、突破后一定时间仍守住等强势表象只能作为结构/承接证据的一部分，不能独立升级Trial/Confirm或增加金额。"
+    contract["v_recovery_rule"] = "V形修复只说明相对继续走弱有所改善，不是独立正收益买入证据；不得看到V形就抄底或自动升级Trial/Confirm。"
+    contract["relative_strength_rule"] = "日内相对强弱扩大可改善候选比较，但不得机械买强卖弱，也不能单独形成新增资本金额。"
+    base["candidate_selection_contract"] = contract
 
 
 def build(root: Path = ROOT) -> dict:
     base = _legacy_build(root)
     _attach_c2(root, base)
+    _attach_intraday_path_risk_review(root, base)
     try:
         minute = _minute_build(root)
     except Exception as exc:
@@ -216,8 +355,8 @@ def build(root: Path = ROOT) -> dict:
             item["turnover_acceptance_context"] = turnover
             fallback_codes.append(code)
 
-    base["schema_version"] = "1.3"
-    base["mode"] = "UNIFIED_STRUCTURE_WITH_FORMAL_C2_AND_TWO_HORIZON_TURNOVER_CONTEXT"
+    base["schema_version"] = "1.4"
+    base["mode"] = "UNIFIED_STRUCTURE_WITH_FORMAL_C2_INTRADAY_RISK_AND_TWO_HORIZON_TURNOVER_CONTEXT"
     base["minute_acceptance_integration"] = {
         "status": "READY" if not fallback_codes and ready_codes else "DEGRADED_WITH_OBJECT_FALLBACK",
         "target_count": len(base.get("items") or []),
@@ -231,7 +370,7 @@ def build(root: Path = ROOT) -> dict:
         "decision_boundary": minute.get("decision_boundary"),
     }
     contract = base.get("candidate_selection_contract") or {}
-    contract["turnover_rule"] = "成交承接保留两种互补时间尺度：20日时间归一化成交进度回答当日整体活跃度；腾讯1分钟构造的最近10分钟相对前10分钟回答边际参与变化。两者不得机械合成总分，也不得单独产生交易动作。最近完整收盘的成交参与扩大只有与已存在的突破／真实修复结构同时出现时才作为C2确认增强。"
+    contract["turnover_rule"] = "成交承接保留两种互补时间尺度：20日时间归一化成交进度回答当日整体活跃度；腾讯1分钟构造的最近10分钟相对前10分钟回答边际参与变化。两者不得机械合成总分，也不得单独产生交易动作。最近完整收盘的成交参与扩大只有与已存在的突破／真实修复结构同时出现时才作为C2确认增强；放量上涨后的弱收盘本身不得机械解释为派发。"
     base["candidate_selection_contract"] = contract
     return base
 
