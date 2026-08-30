@@ -12,6 +12,9 @@ on:
       - 'research/backtests/analyze_section6_consecutive_risk_discriminator.py'
       - 'research/backtests/analyze_section6_new_evidence_stage_c.py'
       - 'research/backtests/analyze_section6_stage_e_validation.py'
+      - 'research/backtests/build_quantmind_qlib_wfa_dataset.py'
+      - 'research/backtests/run_quantmind_qlib_wfa_stage1.py'
+      - 'config/research/quantmind_qlib_wfa_stage1.json'
       - 'research/reports/**'
       - '.github/workflows/section6-revalidation-research.yml'
   workflow_dispatch:
@@ -67,6 +70,31 @@ jobs:
         with:
           name: section6-baseline-revalidation
           path: research/reports/generated/section6_revalidation/
+          if-no-files-found: error
+
+  quantmind-wfa-stage1:
+    if: github.event_name == 'pull_request' && github.head_ref == 'research/quantmind-qlib-wfa-stage1-20260830'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Install bounded research dependencies
+        run: python -m pip install --disable-pip-version-check numpy pandas requests lightgbm
+      - name: Build PIT-safe official ETF research matrix
+        run: python research/backtests/build_quantmind_qlib_wfa_dataset.py --output /tmp/quantmind_qlib_wfa_stage1.csv
+      - name: Run Ridge and bounded LightGBM walk-forward validation
+        run: python research/backtests/run_quantmind_qlib_wfa_stage1.py --dataset /tmp/quantmind_qlib_wfa_stage1.csv --output /tmp/quantmind_qlib_wfa_stage1_result.json
+      - name: Show Stage1 result
+        run: cat /tmp/quantmind_qlib_wfa_stage1_result.json
+      - name: Upload research artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: quantmind-qlib-wfa-stage1
+          path: |
+            /tmp/quantmind_qlib_wfa_stage1_result.json
           if-no-files-found: error
 
 # Research-only workflow. It has read-only repository permission, does not commit,
