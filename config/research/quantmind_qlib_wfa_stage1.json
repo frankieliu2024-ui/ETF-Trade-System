@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "mode": "QUANTMIND_QLIB_STYLE_WFA_STAGE1",
   "role": "RESEARCH_EVIDENCE_ONLY",
   "issue": 102,
@@ -11,6 +11,8 @@
     "data_source_adopted": false,
     "execution_or_account_integration": false
   },
+  "data_start": "2024-01-01",
+  "data_end": "2026-08-24",
   "feature_columns": [
     "rank_neg_share_change_1d",
     "rank_neg_share_change_3d",
@@ -51,21 +53,21 @@
   "outer_walk_forward_folds": [
     {
       "name": "fold1",
-      "train_start": "2024-04-01",
+      "train_start": "2024-01-01",
       "train_end": "2025-03-31",
       "test_start": "2025-04-01",
       "test_end": "2025-09-30"
     },
     {
       "name": "fold2",
-      "train_start": "2024-04-01",
+      "train_start": "2024-01-01",
       "train_end": "2025-09-30",
       "test_start": "2025-10-01",
       "test_end": "2026-03-31"
     },
     {
       "name": "fold3",
-      "train_start": "2024-04-01",
+      "train_start": "2024-01-01",
       "train_end": "2026-03-31",
       "test_start": "2026-04-01",
       "test_end": "2026-08-07"
@@ -79,15 +81,16 @@
     "primary_metric": "mean_rank_ic_increment_vs_best_baseline",
     "secondary_metrics": [
       "positive_ic_rate",
-      "top3_forward_return_increment",
+      "top_k_forward_return_increment",
       "top_bottom_spread_increment",
-      "turnover_adjusted_increment"
+      "turnover_adjusted_top_k_return_increment"
     ],
     "transaction_cost_bps_round_trip": 20,
-    "no_post_hoc_model_selection": true
+    "no_post_hoc_model_selection": true,
+    "training_label_purge": true
   },
-  "point_in_time_rule": "All features must be available by the tested decision close. ETF share facts for trading day T are usable no earlier than T+1 trading day. Training labels must be fully realized by train_end; outer test outcomes must be realized by the dataset end. No static membership backfill, instrument identity feature, future information, lifecycle result or trade outcome is allowed.",
-  "stop_rule": "Stop Issue #102 after Stage1 if neither Ridge nor the bounded LightGBM model delivers stable positive out-of-sample increment versus the best existing baseline across both horizons after realistic turnover cost.",
+  "point_in_time_rule": "All features must be available by the tested decision close. ETF share facts for trading day T are usable no earlier than T+1 trading day. Training labels must be fully realized by train_end; outer test outcomes must be realized by data_end. No static membership backfill, instrument identity feature, future information, lifecycle result or trade outcome is allowed.",
+  "stop_rule": "Stop Issue #102 after Stage1 if neither Ridge nor the bounded LightGBM model delivers stable positive out-of-sample Rank-IC increment versus the best existing baseline across both horizons and does not preserve positive turnover-adjusted top-k return increment after realistic cost.",
   "decision_eligible": false,
   "trade_signal": null,
   "trial_confirm": null,
