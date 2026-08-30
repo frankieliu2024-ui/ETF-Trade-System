@@ -13,6 +13,7 @@ on:
       - 'research/backtests/analyze_section6_new_evidence_stage_c.py'
       - 'research/backtests/analyze_section6_stage_e_validation.py'
       - 'research/backtests/analyze_ashare_ancestral_rules_cloud_stage1.py'
+      - 'research/backtests/analyze_ashare_ancestral_rules_cloud_stage2.py'
       - 'research/reports/**'
       - '.github/workflows/section6-revalidation-research.yml'
   workflow_dispatch:
@@ -48,6 +49,8 @@ jobs:
         run: python research/backtests/analyze_section6_stage_e_validation.py
       - name: Run A-share ancestral-rule cloud stage1
         run: python research/backtests/analyze_ashare_ancestral_rules_cloud_stage1.py
+      - name: Run A-share ancestral-rule cloud stage2
+        run: python research/backtests/analyze_ashare_ancestral_rules_cloud_stage2.py
       - name: Show generated reports
         run: |
           cat research/reports/generated/section6_revalidation/section6_baseline_revalidation.md
@@ -67,6 +70,8 @@ jobs:
           cat research/reports/generated/section6_revalidation/section6_stage_e_validation.md
           printf '\n\n'
           cat research/reports/generated/section6_revalidation/ashare_ancestral_rules_cloud_stage1.md
+          printf '\n\n'
+          cat research/reports/generated/section6_revalidation/ashare_ancestral_rules_cloud_stage2.md
       - name: Upload research artifact
         uses: actions/upload-artifact@v4
         with:
