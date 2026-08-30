@@ -12,6 +12,7 @@ on:
       - 'research/backtests/analyze_section6_consecutive_risk_discriminator.py'
       - 'research/backtests/analyze_section6_new_evidence_stage_c.py'
       - 'research/backtests/analyze_section6_stage_e_validation.py'
+      - 'research/backtests/analyze_ashare_ancestral_intraday_history.py'
       - 'research/reports/**'
       - '.github/workflows/section6-revalidation-research.yml'
   workflow_dispatch:
@@ -21,9 +22,9 @@ permissions:
 
 jobs:
   section6-baseline:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'research/section6-evidence-revalidation-20260829'
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'research/section6-evidence-revalidation-20260829' || github.head_ref == 'research/ashare-ancestral-intraday-now-20260831'
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -45,6 +46,8 @@ jobs:
         run: python research/backtests/analyze_section6_new_evidence_stage_c.py
       - name: Run stage E stability and dedup validation
         run: python research/backtests/analyze_section6_stage_e_validation.py
+      - name: Run A-share ancestral-rule historical intraday screen
+        run: python research/backtests/analyze_ashare_ancestral_intraday_history.py
       - name: Show generated reports
         run: |
           cat research/reports/generated/section6_revalidation/section6_baseline_revalidation.md
@@ -62,6 +65,8 @@ jobs:
           cat research/reports/generated/section6_revalidation/section6_stage_c_new_evidence.md
           printf '\n\n'
           cat research/reports/generated/section6_revalidation/section6_stage_e_validation.md
+          printf '\n\n'
+          cat research/reports/generated/section6_revalidation/ashare_ancestral_intraday_history.md
       - name: Upload research artifact
         uses: actions/upload-artifact@v4
         with:
