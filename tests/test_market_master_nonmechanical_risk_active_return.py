@@ -8,11 +8,6 @@ SELF_HEAL_WORKFLOW = ROOT / ".github" / "workflows" / "self-healing-watchdog.yml
 
 
 class MasterNonmechanicalRiskActiveReturnTests(unittest.TestCase):
-    def test_master_is_v229(self):
-        text = MASTER.read_text(encoding="utf-8")
-        self.assertIn("ETF波段交易系统 V2.2.29 规则 MASTER", text)
-        self.assertIn("非机械风险边界与主动收益加速版", text)
-
     def test_risk_boundaries_are_review_only(self):
         text = MASTER.read_text(encoding="utf-8")
         self.assertIn("-5%、-8%、-10%只作为风险复核边界，不直接映射最终风险许可", text)

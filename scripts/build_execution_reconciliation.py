@@ -64,10 +64,20 @@ def git_previous_account() -> tuple[dict, str]:
 
 
 def parse_money(text: str) -> int | None:
-    for pat, mult in [(r"(10|20|30)\s*[kK]", 1000), (r"(5|10|20|30)\s*,?000\s*元?", 1000)]:
-        m = re.search(pat, text)
-        if m:
-            return int(m.group(1)) * mult
+    patterns = [
+        (r"(?<!\d)(\d+(?:\.\d+)?)\s*[kK](?!\w)", 1000),
+        (r"(?<!\d)([\d,]+(?:\.\d+)?)\s*元", 1),
+    ]
+    for pattern, multiplier in patterns:
+        match = re.search(pattern, text)
+        if not match:
+            continue
+        try:
+            value = float(match.group(1).replace(",", "")) * multiplier
+        except ValueError:
+            continue
+        if value > 0:
+            return int(round(value))
     return None
 
 
@@ -88,10 +98,6 @@ def decision_intents(event: dict) -> list[dict]:
     formal = event.get("formal_decision") or {}
     amount_action = str(formal.get("amount_action") or "")
     lifecycle_text = str(formal.get("lifecycle") or "")
-    risk = str(formal.get("risk_permission") or "")
-    text = " ".join([amount_action, lifecycle_text, risk])
-    if "新增0元" in amount_action:
-        return []
     dt = parse_dt(event.get("decision_time_beijing"))
     base = {
         "decision_id": str(event.get("decision_id") or ""),
@@ -102,11 +108,16 @@ def decision_intents(event: dict) -> list[dict]:
     intents: list[dict] = []
     code = str(event.get("candidate_code") or "")
     name = str(event.get("candidate_name") or "")
-    amount = parse_money(text)
-    if code and "Trial" in text and amount == 5000 and "禁止新增" not in risk:
-        intents.append({**base, "code": code, "name": name, "side": "BUY", "lifecycle": "Trial", "planned_amount_yuan": 5000, "planned_quantity": None})
-    elif code and "Confirm" in text and amount in {10000, 20000, 30000} and "禁止新增" not in risk:
-        intents.append({**base, "code": code, "name": name, "side": "BUY", "lifecycle": "Confirm", "planned_amount_yuan": amount, "planned_quantity": None})
+    amount = parse_money(amount_action)
+
+    # Reconciliation consumes the formal decision as a fact. It does not re-enforce
+    # MASTER amount buckets or risk-permission legality; those belong to the trading
+    # decision layer. Any explicit positive buy amount can therefore be reconciled.
+    lifecycle = "Trial" if "Trial" in lifecycle_text else ("Confirm" if "Confirm" in lifecycle_text else "")
+    buy_word = any(word in amount_action for word in ["买入", "新增", "加仓", "投入"])
+    if code and lifecycle and amount and buy_word:
+        intents.append({**base, "code": code, "name": name, "side": "BUY", "lifecycle": lifecycle, "planned_amount_yuan": amount, "planned_quantity": None})
+
     for sell in extract_sell_intents(amount_action):
         intents.append({**base, **sell, "lifecycle": "EXIT_OR_RISK_REDUCTION", "planned_amount_yuan": None})
     return intents
@@ -125,7 +136,6 @@ def recent_intents() -> list[dict]:
         for intent in decision_intents(event):
             intent["source_event"] = str(path.relative_to(ROOT)).replace("\\", "/")
             intents.append(intent)
-    # Deduplicate same decision/security/direction/lifecycle.
     dedup = {}
     for x in intents:
         key = (x["decision_id"], x["code"], x["side"], x["lifecycle"])
@@ -212,7 +222,6 @@ def build() -> dict:
             continue
 
         if observed_qty <= 0:
-            # A final position snapshot cannot reconstruct an intraday buy-then-sell or sell-then-buy round trip with zero net quantity change.
             continue
 
         row = current_pos.get(code) or previous_pos.get(code) or {}
@@ -259,11 +268,11 @@ def build() -> dict:
         "generated_at": now_text(),
         "status": "CONFIRMATION_REQUIRED" if actionable else ("RECONCILED" if matches else "NO_MATCH"),
         "lookback_days": LOOKBACK_DAYS,
-        "supported_intents": ["Trial买入", "Confirm买入", "明确份额减持/卖出", "全部退出/清仓（仅在事实足够时匹配）"],
+        "supported_intents": ["正式正金额买入", "明确份额减持/卖出", "全部退出/清仓（仅在事实足够时匹配）"],
         "matches": matches,
         "actionable_count": len(actionable),
         "account_fact_updated_at": current.get("updated_at"),
-        "design_rule": "允许交易决策与实际成交异步确认；支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。",
+        "design_rule": "对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。",
         "known_limitation": "仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。",
         "safety_boundary": "不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。",
     }
