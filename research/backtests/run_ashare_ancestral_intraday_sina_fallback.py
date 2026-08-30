@@ -31,9 +31,8 @@ def fetch_sina_5m(code: str):
         "Referer": "https://finance.sina.com.cn/",
         "Accept": "application/json,text/plain,*/*",
     })
-    with urllib.request.urlopen(req, timeout=12) as resp:
+    with urllib.request.urlopen(req, timeout=3) as resp:
         text = resp.read().decode("utf-8", "replace").strip()
-    # Supports either raw JSON array or JSONP-like prefix/suffix.
     m = re.search(r"(\[\s*\{.*\}\s*\])", text, re.S)
     if not m:
         raise RuntimeError("Sina response contains no JSON array")
@@ -55,20 +54,7 @@ def fetch_sina_5m(code: str):
     return bars
 
 
-def fetch_with_fallback(code: str):
-    errors = []
-    try:
-        bars = base.fetch_5m(code)
-        if bars:
-            return bars
-    except Exception as exc:
-        errors.append("eastmoney=" + repr(exc))
-    try:
-        return fetch_sina_5m(code)
-    except Exception as exc:
-        errors.append("sina=" + repr(exc))
-    raise RuntimeError("; ".join(errors))
-
-
-base.fetch_5m = fetch_with_fallback
+# Eastmoney has already failed uniformly from GitHub-hosted runners. Do not retry it
+# in this run; keep the second provider bounded so the research job closes quickly.
+base.fetch_5m = fetch_sina_5m
 base.main()
