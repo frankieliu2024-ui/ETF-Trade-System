@@ -14,6 +14,7 @@ on:
       - 'research/backtests/analyze_section6_stage_e_validation.py'
       - 'research/backtests/analyze_ashare_ancestral_intraday_history.py'
       - 'research/backtests/run_ashare_ancestral_intraday_sina_fallback.py'
+      - 'research/backtests/analyze_ashare_ancestral_intraday_sina15.py'
       - 'research/reports/**'
       - '.github/workflows/section6-revalidation-research.yml'
   workflow_dispatch:
@@ -47,8 +48,8 @@ jobs:
         run: python research/backtests/analyze_section6_new_evidence_stage_c.py
       - name: Run stage E stability and dedup validation
         run: python research/backtests/analyze_section6_stage_e_validation.py
-      - name: Run A-share ancestral-rule historical intraday screen with provider fallback
-        run: python research/backtests/run_ashare_ancestral_intraday_sina_fallback.py
+      - name: Run expanded A-share ancestral-rule 15m history screen
+        run: python research/backtests/analyze_ashare_ancestral_intraday_sina15.py
       - name: Show generated reports
         run: |
           cat research/reports/generated/section6_revalidation/section6_baseline_revalidation.md
@@ -67,7 +68,7 @@ jobs:
           printf '\n\n'
           cat research/reports/generated/section6_revalidation/section6_stage_e_validation.md
           printf '\n\n'
-          cat research/reports/generated/section6_revalidation/ashare_ancestral_intraday_history.md
+          cat research/reports/generated/section6_revalidation/ashare_ancestral_intraday_sina15.md
       - name: Upload research artifact
         uses: actions/upload-artifact@v4
         with:
