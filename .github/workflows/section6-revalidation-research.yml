@@ -4,18 +4,9 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'research/backtests/revalidate_section6_baselines.py'
-      - 'research/backtests/analyze_section6_baseline_stability.py'
-      - 'research/backtests/analyze_section6_component_ablation.py'
-      - 'research/backtests/analyze_section6_conditional_increment.py'
-      - 'research/backtests/analyze_section6_tech_object_concentration.py'
-      - 'research/backtests/analyze_section6_consecutive_risk_discriminator.py'
-      - 'research/backtests/analyze_section6_new_evidence_stage_c.py'
-      - 'research/backtests/analyze_section6_stage_e_validation.py'
-      - 'research/backtests/analyze_ashare_ancestral_intraday_history.py'
-      - 'research/backtests/run_ashare_ancestral_intraday_sina_fallback.py'
+      - 'research/backtests/analyze_ashare_ancestral_intraday_sina15_robustness.py'
       - 'research/backtests/analyze_ashare_ancestral_intraday_sina15.py'
-      - 'research/reports/**'
+      - 'research/backtests/analyze_ashare_ancestral_intraday_history.py'
       - '.github/workflows/section6-revalidation-research.yml'
   workflow_dispatch:
 
@@ -24,56 +15,23 @@ permissions:
 
 jobs:
   section6-baseline:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'research/section6-evidence-revalidation-20260829' || github.head_ref == 'research/ashare-ancestral-intraday-now-20260831'
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'research/ashare-ancestral-intraday-now-20260831'
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      - name: Run frozen 6.2 baseline revalidation
-        run: python research/backtests/revalidate_section6_baselines.py
-      - name: Run T+5 stability and incremental screen
-        run: python research/backtests/analyze_section6_baseline_stability.py
-      - name: Run component ablation and regime screen
-        run: python research/backtests/analyze_section6_component_ablation.py
-      - name: Run conditional increment screen
-        run: python research/backtests/analyze_section6_conditional_increment.py
-      - name: Run tech object concentration check
-        run: python research/backtests/analyze_section6_tech_object_concentration.py
-      - name: Run consecutive-rise T+1 discriminator
-        run: python research/backtests/analyze_section6_consecutive_risk_discriminator.py
-      - name: Run stage C cloud-era new evidence screen
-        run: python research/backtests/analyze_section6_new_evidence_stage_c.py
-      - name: Run stage E stability and dedup validation
-        run: python research/backtests/analyze_section6_stage_e_validation.py
-      - name: Run expanded A-share ancestral-rule 15m history screen
-        run: python research/backtests/analyze_ashare_ancestral_intraday_sina15.py
-      - name: Show generated reports
-        run: |
-          cat research/reports/generated/section6_revalidation/section6_baseline_revalidation.md
-          printf '\n\n'
-          cat research/reports/generated/section6_revalidation/section6_baseline_stability.md
-          printf '\n\n'
-          cat research/reports/generated/section6_revalidation/section6_component_ablation.md
-          printf '\n\n'
-          cat research/reports/generated/section6_revalidation/section6_conditional_increment.md
-          printf '\n\n'
-          cat research/reports/generated/section6_revalidation/section6_tech_object_concentration.md
-          printf '\n\n'
-          cat research/reports/generated/section6_revalidation/section6_consecutive_risk_discriminator.md
-          printf '\n\n'
-          cat research/reports/generated/section6_revalidation/section6_stage_c_new_evidence.md
-          printf '\n\n'
-          cat research/reports/generated/section6_revalidation/section6_stage_e_validation.md
-          printf '\n\n'
-          cat research/reports/generated/section6_revalidation/ashare_ancestral_intraday_sina15.md
+      - name: Run final A-share ancestral-rule 15m robustness
+        run: python research/backtests/analyze_ashare_ancestral_intraday_sina15_robustness.py
+      - name: Show robustness report
+        run: cat research/reports/generated/section6_revalidation/ashare_ancestral_intraday_sina15_robustness.md
       - name: Upload research artifact
         uses: actions/upload-artifact@v4
         with:
-          name: section6-baseline-revalidation
-          path: research/reports/generated/section6_revalidation/
+          name: section6-ancestral-intraday-robustness
+          path: research/reports/generated/section6_revalidation/ashare_ancestral_intraday_sina15_robustness.*
           if-no-files-found: error
 
 # Research-only workflow. It has read-only repository permission, does not commit,
