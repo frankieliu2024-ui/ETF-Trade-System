@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-30T11:18:58Z",
-  "rules_version": "V2.2.29",
+  "generated_at": "2026-08-30T23:36:32Z",
+  "rules_version": "V2.2.30",
   "market_date": "2026-08-28",
   "latest_node": "close",
   "current": {
@@ -84,7 +84,7 @@
     },
     "needs_account_update": false,
     "last_trade_event_id": "20260827_100843_515880_buy",
-    "rules_version": "V2.2.29",
+    "rules_version": "V2.2.30",
     "generated_at": "2026-08-28T07:12:38Z",
     "account_fact_reference_synced_at": "2026-08-27T10:09:00+08:00",
     "account_fact_path": "data/state/account_fact.json",
@@ -752,7 +752,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 7.874,
-    "age_seconds": 187580
+    "age_seconds": 231834
   },
   "freshness_at_context_build": {
     "status": "STALE",
@@ -768,7 +768,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 7.874,
-    "age_seconds": 187580
+    "age_seconds": 231834
   },
   "data_quality_summary": {
     "pass_count": 14,
@@ -820,7 +820,7 @@
     "account_fact_time": "2026-08-28T14:18:00+08:00",
     "market_snapshot_time": "2026-08-28T15:12:38+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-08-30T11:18:58Z",
+    "context_generated_time": "2026-08-30T23:36:32Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -849,7 +849,7 @@
     "read_only": true
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-08-30T19:18:58+08:00",
+    "generated_at_beijing": "2026-08-31T07:36:32+08:00",
     "refresh_mode": "CACHED_STATE",
     "refresh_failures": [],
     "route_version": "V1.1",
@@ -1286,8 +1286,8 @@
         "turnover": null,
         "data_time_beijing": "2026-08-28T14:30:00+08:00",
         "data_time_local": "",
-        "market_phase": "OFF_SESSION",
-        "market_status_cn": "日股收盘",
+        "market_phase": "PRE_OPEN",
+        "market_status_cn": "日股开盘前",
         "data_nature_cn": "最近正式收盘行情",
         "source": "yahoo_chart_api",
         "freshness": "STALE",
@@ -1312,8 +1312,8 @@
         "turnover": null,
         "data_time_beijing": "2026-08-28T14:00:00+08:00",
         "data_time_local": "",
-        "market_phase": "OFF_SESSION",
-        "market_status_cn": "韩股收盘",
+        "market_phase": "PRE_OPEN",
+        "market_status_cn": "韩股开盘前",
         "data_nature_cn": "最近正式收盘行情",
         "source": "yahoo_chart_api",
         "freshness": "STALE",
@@ -1338,8 +1338,8 @@
         "turnover": null,
         "data_time_beijing": "2026-08-28T13:30:00+08:00",
         "data_time_local": "",
-        "market_phase": "OFF_SESSION",
-        "market_status_cn": "台股收盘",
+        "market_phase": "PRE_OPEN",
+        "market_status_cn": "台股开盘前",
         "data_nature_cn": "最近正式收盘行情",
         "source": "yahoo_chart_api",
         "freshness": "STALE",
@@ -1364,8 +1364,8 @@
         "turnover": null,
         "data_time_beijing": "2026-08-28T16:08:54+08:00",
         "data_time_local": "",
-        "market_phase": "OFF_SESSION",
-        "market_status_cn": "港股收盘",
+        "market_phase": "PRE_OPEN",
+        "market_status_cn": "港股开盘前",
         "data_nature_cn": "最近正式收盘行情",
         "source": "eastmoney_push2",
         "freshness": "STALE",
@@ -1382,24 +1382,24 @@
         "market_status_cn": "A股收盘"
       },
       "HK": {
-        "phase": "OFF_SESSION",
-        "market_status_cn": "港股收盘"
+        "phase": "PRE_OPEN",
+        "market_status_cn": "港股开盘前"
       },
       "TW": {
-        "phase": "OFF_SESSION",
-        "market_status_cn": "台股收盘"
+        "phase": "PRE_OPEN",
+        "market_status_cn": "台股开盘前"
       },
       "US": {
         "phase": "OFF_SESSION",
         "market_status_cn": "美股休市中"
       },
       "JP": {
-        "phase": "OFF_SESSION",
-        "market_status_cn": "日股收盘"
+        "phase": "PRE_OPEN",
+        "market_status_cn": "日股开盘前"
       },
       "KR": {
-        "phase": "OFF_SESSION",
-        "market_status_cn": "韩股收盘"
+        "phase": "PRE_OPEN",
+        "market_status_cn": "韩股开盘前"
       }
     },
     "selection_rule": "显式查询时先调用当前provider；补采失败的对象才回退最近有效状态。交易中返回最新实时；盘前返回盘前行情并附最近正式收盘；盘后返回盘后行情并附当日正式收盘；休市返回最近正式收盘。",
@@ -1413,7 +1413,7 @@
   },
   "decision_trigger": {
     "schema_version": "1.2",
-    "generated_at": "2026-08-30T19:18:58+08:00",
+    "generated_at": "2026-08-31T07:36:32+08:00",
     "status": "NO_NEW_TRIGGER",
     "trigger_type": "",
     "triggered_at": "",
@@ -1434,7 +1434,7 @@
   },
   "capital_efficiency_ranking": {
     "schema_version": "1.2",
-    "generated_at": "2026-08-30T19:18:58+08:00",
+    "generated_at": "2026-08-31T07:36:32+08:00",
     "as_of": "2026-08-28T15:12:38+08:00",
     "e2e_status": "READY",
     "risk_zone": "RISK_OBSERVATION",
@@ -2077,11 +2077,11 @@
     "safety_boundary": "资本比较不替代唯一主候选；风险区间不自动生成风险许可；本状态不自动生成Trial、Confirm、金额、卖出份额或订单。"
   },
   "intraday_path_features": {
-    "generated_at": "2026-08-30T11:18:51Z",
+    "generated_at": "2026-08-30T23:36:24Z",
     "market_date": "2026-08-28",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
-    "decision_boundary": "只描述离散行情脉冲形成的日内路径几何、成交增量和相对强弱；结构候选标签不是交易信号，不生成风险许可、机会状态、金额或买卖动作。",
+    "decision_boundary": "只描述离散行情脉冲形成的日内路径几何、成交增量、14:30后已观察路径和相对强弱；结构候选标签不是交易信号，不生成风险许可、机会状态、金额或买卖动作。",
     "label_boundary": "RAPID_RISE/SHARP_DROP/V_RECOVERY/HIGH_ZONE_CONSOLIDATION均为描述性候选标签。必须结合采样覆盖、实际时点、市场阶段及MASTER完整决策链解释。",
     "status": "READY",
     "snapshot_count": 17,
@@ -2104,6 +2104,17 @@
         "recovery_from_path_low_pct": 0.0053,
         "retreat_from_path_high_pct": -0.348,
         "latest_day_range_position": 0.1946,
+        "late_session_context": {
+          "status": "READY",
+          "reference_clock_beijing": "14:30",
+          "reference_as_of_beijing": "2026-08-28T14:36:18+08:00",
+          "reference_price": 3960.77,
+          "latest_as_of_beijing": "2026-08-28T15:12:00+08:00",
+          "latest_price": 3952.18,
+          "move_from_reference_pct": -0.2169,
+          "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+          "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+        },
         "recent_interval_minutes": 13.97,
         "recent_move_pct": -0.0114,
         "recent_slope_pct_per_10m": -0.0082,
@@ -2147,6 +2158,17 @@
         "recovery_from_path_low_pct": 0.0,
         "retreat_from_path_high_pct": -2.7146,
         "latest_day_range_position": 0.0133,
+        "late_session_context": {
+          "status": "READY",
+          "reference_clock_beijing": "14:30",
+          "reference_as_of_beijing": "2026-08-28T14:36:21+08:00",
+          "reference_price": 1671.39,
+          "latest_as_of_beijing": "2026-08-28T15:12:00+08:00",
+          "latest_price": 1662.15,
+          "move_from_reference_pct": -0.5528,
+          "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+          "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+        },
         "recent_interval_minutes": 13.9,
         "recent_move_pct": -0.0024,
         "recent_slope_pct_per_10m": -0.0017,
@@ -2190,6 +2212,17 @@
         "recovery_from_path_low_pct": 0.0596,
         "retreat_from_path_high_pct": -1.1196,
         "latest_day_range_position": 0.125,
+        "late_session_context": {
+          "status": "READY",
+          "reference_clock_beijing": "14:30",
+          "reference_as_of_beijing": "2026-08-28T14:36:15+08:00",
+          "reference_price": 1.683,
+          "latest_as_of_beijing": "2026-08-28T15:12:15+08:00",
+          "latest_price": 1.678,
+          "move_from_reference_pct": -0.2971,
+          "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+          "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+        },
         "recent_interval_minutes": 13.9,
         "recent_move_pct": 0.0,
         "recent_slope_pct_per_10m": 0.0,
@@ -2234,6 +2267,17 @@
         "recovery_from_path_low_pct": 0.1441,
         "retreat_from_path_high_pct": -0.0719,
         "latest_day_range_position": 0.6,
+        "late_session_context": {
+          "status": "READY",
+          "reference_clock_beijing": "14:30",
+          "reference_as_of_beijing": "2026-08-28T14:36:15+08:00",
+          "reference_price": 1.391,
+          "latest_as_of_beijing": "2026-08-28T15:12:30+08:00",
+          "latest_price": 1.39,
+          "move_from_reference_pct": -0.0719,
+          "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+          "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+        },
         "recent_interval_minutes": 14.15,
         "recent_move_pct": 0.0,
         "recent_slope_pct_per_10m": 0.0,
@@ -2278,6 +2322,17 @@
         "recovery_from_path_low_pct": 0.0924,
         "retreat_from_path_high_pct": -2.6079,
         "latest_day_range_position": 0.0833,
+        "late_session_context": {
+          "status": "READY",
+          "reference_clock_beijing": "14:30",
+          "reference_as_of_beijing": "2026-08-28T14:36:12+08:00",
+          "reference_price": 1.086,
+          "latest_as_of_beijing": "2026-08-28T15:12:00+08:00",
+          "latest_price": 1.083,
+          "move_from_reference_pct": -0.2762,
+          "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+          "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+        },
         "recent_interval_minutes": 13.65,
         "recent_move_pct": 0.0924,
         "recent_slope_pct_per_10m": 0.0677,
@@ -2322,6 +2377,17 @@
         "recovery_from_path_low_pct": 0.1206,
         "retreat_from_path_high_pct": -0.5389,
         "latest_day_range_position": 0.1667,
+        "late_session_context": {
+          "status": "READY",
+          "reference_clock_beijing": "14:30",
+          "reference_as_of_beijing": "2026-08-28T14:36:12+08:00",
+          "reference_price": 1.662,
+          "latest_as_of_beijing": "2026-08-28T15:12:15+08:00",
+          "latest_price": 1.661,
+          "move_from_reference_pct": -0.0602,
+          "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+          "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+        },
         "recent_interval_minutes": 13.9,
         "recent_move_pct": 0.0602,
         "recent_slope_pct_per_10m": 0.0433,
@@ -2366,6 +2432,17 @@
         "recovery_from_path_low_pct": 0.1161,
         "retreat_from_path_high_pct": -1.1468,
         "latest_day_range_position": 0.1429,
+        "late_session_context": {
+          "status": "READY",
+          "reference_clock_beijing": "14:30",
+          "reference_as_of_beijing": "2026-08-28T14:36:15+08:00",
+          "reference_price": 0.864,
+          "latest_as_of_beijing": "2026-08-28T15:12:00+08:00",
+          "latest_price": 0.862,
+          "move_from_reference_pct": -0.2315,
+          "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+          "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+        },
         "recent_interval_minutes": 13.65,
         "recent_move_pct": 0.0,
         "recent_slope_pct_per_10m": 0.0,
@@ -2410,6 +2487,17 @@
         "recovery_from_path_low_pct": 0.012,
         "retreat_from_path_high_pct": -2.5603,
         "latest_day_range_position": 0.0135,
+        "late_session_context": {
+          "status": "READY",
+          "reference_clock_beijing": "14:30",
+          "reference_as_of_beijing": "2026-08-28T14:36:18+08:00",
+          "reference_price": 3438.34,
+          "latest_as_of_beijing": "2026-08-28T15:11:39+08:00",
+          "latest_price": 3424.4,
+          "move_from_reference_pct": -0.4054,
+          "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+          "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+        },
         "recent_interval_minutes": 14.6,
         "recent_move_pct": 0.012,
         "recent_slope_pct_per_10m": 0.0082,
@@ -2453,6 +2541,17 @@
         "recovery_from_path_low_pct": 0.1724,
         "retreat_from_path_high_pct": -0.6838,
         "latest_day_range_position": 0.5556,
+        "late_session_context": {
+          "status": "READY",
+          "reference_clock_beijing": "14:30",
+          "reference_as_of_beijing": "2026-08-28T14:36:15+08:00",
+          "reference_price": 0.582,
+          "latest_as_of_beijing": "2026-08-28T15:12:30+08:00",
+          "latest_price": 0.581,
+          "move_from_reference_pct": -0.1718,
+          "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+          "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+        },
         "recent_interval_minutes": 14.1,
         "recent_move_pct": 0.0,
         "recent_slope_pct_per_10m": 0.0,
@@ -2497,6 +2596,17 @@
         "recovery_from_path_low_pct": 0.0439,
         "retreat_from_path_high_pct": -0.9126,
         "latest_day_range_position": 0.0385,
+        "late_session_context": {
+          "status": "READY",
+          "reference_clock_beijing": "14:30",
+          "reference_as_of_beijing": "2026-08-28T14:36:17+08:00",
+          "reference_price": 2.288,
+          "latest_as_of_beijing": "2026-08-28T15:12:30+08:00",
+          "latest_price": 2.28,
+          "move_from_reference_pct": -0.3497,
+          "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+          "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+        },
         "recent_interval_minutes": 14.12,
         "recent_move_pct": 0.0,
         "recent_slope_pct_per_10m": 0.0,
@@ -2541,6 +2651,17 @@
         "recovery_from_path_low_pct": 0.0,
         "retreat_from_path_high_pct": -3.3285,
         "latest_day_range_position": 0.0357,
+        "late_session_context": {
+          "status": "READY",
+          "reference_clock_beijing": "14:30",
+          "reference_as_of_beijing": "2026-08-28T14:36:16+08:00",
+          "reference_price": 0.672,
+          "latest_as_of_beijing": "2026-08-28T15:12:31+08:00",
+          "latest_price": 0.668,
+          "move_from_reference_pct": -0.5952,
+          "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+          "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+        },
         "recent_interval_minutes": 14.1,
         "recent_move_pct": 0.0,
         "recent_slope_pct_per_10m": 0.0,
@@ -2585,6 +2706,17 @@
         "recovery_from_path_low_pct": 0.755,
         "retreat_from_path_high_pct": 0.0,
         "latest_day_range_position": 1.0,
+        "late_session_context": {
+          "status": "READY",
+          "reference_clock_beijing": "14:30",
+          "reference_as_of_beijing": "2026-08-28T14:36:15+08:00",
+          "reference_price": 9.427,
+          "latest_as_of_beijing": "2026-08-28T15:12:30+08:00",
+          "latest_price": 9.475,
+          "move_from_reference_pct": 0.5092,
+          "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+          "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+        },
         "recent_interval_minutes": 14.1,
         "recent_move_pct": 0.0211,
         "recent_slope_pct_per_10m": 0.015,
@@ -2642,6 +2774,17 @@
         "recovery_from_path_low_pct": 0.0,
         "retreat_from_path_high_pct": -2.805,
         "latest_day_range_position": 0.0417,
+        "late_session_context": {
+          "status": "READY",
+          "reference_clock_beijing": "14:30",
+          "reference_as_of_beijing": "2026-08-28T14:36:13+08:00",
+          "reference_price": 0.698,
+          "latest_as_of_beijing": "2026-08-28T15:12:28+08:00",
+          "latest_price": 0.693,
+          "move_from_reference_pct": -0.7163,
+          "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+          "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+        },
         "recent_interval_minutes": 14.1,
         "recent_move_pct": 0.0,
         "recent_slope_pct_per_10m": 0.0,
@@ -2686,6 +2829,17 @@
         "recovery_from_path_low_pct": 0.057,
         "retreat_from_path_high_pct": -2.5527,
         "latest_day_range_position": 0.0377,
+        "late_session_context": {
+          "status": "READY",
+          "reference_clock_beijing": "14:30",
+          "reference_as_of_beijing": "2026-08-28T14:36:14+08:00",
+          "reference_price": 1.764,
+          "latest_as_of_beijing": "2026-08-28T15:12:28+08:00",
+          "latest_price": 1.756,
+          "move_from_reference_pct": -0.4535,
+          "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+          "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+        },
         "recent_interval_minutes": 14.08,
         "recent_move_pct": 0.057,
         "recent_slope_pct_per_10m": 0.0405,
@@ -3262,12 +3416,12 @@
       }
     },
     "market_structure_context": {
-      "schema_version": "1.3",
-      "generated_at": "2026-08-30T11:18:58Z",
+      "schema_version": "1.4",
+      "generated_at": "2026-08-30T23:36:32Z",
       "market_date": "2026-08-28",
       "as_of_beijing": "2026-08-28T15:12:38+08:00",
       "source_snapshot": "data/market/snapshots/2026-08-28_151238.json",
-      "mode": "UNIFIED_STRUCTURE_WITH_FORMAL_C2_AND_TWO_HORIZON_TURNOVER_CONTEXT",
+      "mode": "UNIFIED_STRUCTURE_WITH_FORMAL_C2_INTRADAY_RISK_AND_TWO_HORIZON_TURNOVER_CONTEXT",
       "status": "READY",
       "read_only": true,
       "candidate_selection_contract": {
@@ -3281,7 +3435,7 @@
         ],
         "history_rule": "必须同时解释历史高/中/低位置与趋势状态；位置不等于趋势。历史不可用时明确降级，不得猜测。",
         "intraday_rule": "必须结合高低点出现先后、低点后修复、高点后回撤和采样覆盖区分高位震荡、V型修复候选、冲高回落、低位弱势；MEDIUM或更低采样不得把候选形态表述为已确认。",
-        "turnover_rule": "成交承接保留两种互补时间尺度：20日时间归一化成交进度回答当日整体活跃度；腾讯1分钟构造的最近10分钟相对前10分钟回答边际参与变化。两者不得机械合成总分，也不得单独产生交易动作。最近完整收盘的成交参与扩大只有与已存在的突破／真实修复结构同时出现时才作为C2确认增强。",
+        "turnover_rule": "成交承接保留两种互补时间尺度：20日时间归一化成交进度回答当日整体活跃度；腾讯1分钟构造的最近10分钟相对前10分钟回答边际参与变化。两者不得机械合成总分，也不得单独产生交易动作。最近完整收盘的成交参与扩大只有与已存在的突破／真实修复结构同时出现时才作为C2确认增强；放量上涨后的弱收盘本身不得机械解释为派发。",
         "evidence_reading_order": [
           "假设/相关性",
           "历史价格位置与趋势",
@@ -3293,7 +3447,10 @@
         ],
         "cross_section_rule": "正式决策表达优先使用相对指数/ETF池中位数的差值解释强弱；横截面名次仅供后台研究，不得作为主候选理由。",
         "forbidden_shortcut": "先按涨幅或横截面名次筛选候选、再补充理由",
-        "no_composite_score": "禁止把历史位置、趋势、日内形态、成交承接和横截面重新合成为机械总分。"
+        "no_composite_score": "禁止把历史位置、趋势、日内形态、成交承接和横截面重新合成为机械总分。",
+        "strong_surface_rule": "高开守住、午后再加速、高位横住、突破后一定时间仍守住等强势表象只能作为结构/承接证据的一部分，不能独立升级Trial/Confirm或增加金额。",
+        "v_recovery_rule": "V形修复只说明相对继续走弱有所改善，不是独立正收益买入证据；不得看到V形就抄底或自动升级Trial/Confirm。",
+        "relative_strength_rule": "日内相对强弱扩大可改善候选比较，但不得机械买强卖弱，也不能单独形成新增资本金额。"
       },
       "items": [
         {
@@ -3402,7 +3559,7 @@
             "trade_signal": null,
             "formal_role": "只增强已经存在的突破／真实修复结构，不单独生成风险许可、Trial／Confirm、金额、卖出份额或订单。",
             "pit_boundary": "使用不晚于决策时点的最近完整T日收盘及T日前已存在日线；T+1盘中继续使用T日已完成证据，不把T+1未完成日线前视为收盘事实。",
-            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。",
+            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
             "amount": 273060000.0,
@@ -3417,6 +3574,51 @@
             "direction": "NOT_ACTIVE",
             "interpretation_cn": "最近完整收盘未同时满足成交参与扩大与有效结构确认，不激活该增强证据；不形成反向看空。",
             "source": "events/research/daily_features + market_structure_context"
+          },
+          "intraday_path_risk_review": {
+            "evidence_id": "intraday_path_risk_review",
+            "display_name": "日内路径风险复核",
+            "status": "READY",
+            "code": "561980",
+            "market_date": "2026-08-28",
+            "as_of_beijing": "2026-08-28T15:12:28+08:00",
+            "use_as_decision_evidence": true,
+            "can_generate_decision_independently": false,
+            "automatic_trade": false,
+            "trade_signal": null,
+            "risk_review_active": false,
+            "direction": "NOT_ACTIVE",
+            "active_components": [],
+            "confidence": "MEDIUM",
+            "production_source": "DISCRETE_SNAPSHOT_PATH",
+            "sampling_coverage": "MEDIUM",
+            "late_session": {
+              "status": "READY",
+              "reference_clock_beijing": "14:30",
+              "reference_as_of_beijing": "2026-08-28T14:36:13+08:00",
+              "reference_price": 0.698,
+              "latest_as_of_beijing": "2026-08-28T15:12:28+08:00",
+              "latest_price": 0.693,
+              "move_from_reference_pct": -0.7163,
+              "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+              "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+            },
+            "path_high_return_vs_prev_close_pct": 0.2813,
+            "retreat_from_path_high_pct": -2.805,
+            "day_range_position": 0.0417,
+            "research_group_flags": {
+              "late_session_rally_ge_0_8pct": false,
+              "spike_ge_2pct_retreat_le_minus1_5pct_low_close_position": false
+            },
+            "interpretation_cn": "当前未命中已验证的日内路径风险复核分组；不形成反向看多，也不降低其他风险证据权重。",
+            "calibration_boundary": "0.8%、2%、-1.5%和低区间位置仅是#107固定研究粗分组，用于识别复核状态，不是独立交易阈值。",
+            "strong_surface_boundary": "高开守住、午后再加速、高位横住或突破后一定时间仍守住，只能作为结构/承接的一部分，不得独立升级Trial/Confirm或增加金额。",
+            "v_recovery_boundary": "V形修复只表示相对继续走弱的风险/承接改善，不证明正收益机会，不得据此抄底或升级Trial/Confirm。",
+            "relative_strength_boundary": "日内相对强弱扩大只用于候选比较和相对保护解释，不得机械买强卖弱。",
+            "dynamic_owner": "data/state/market_structure_context.json",
+            "upstream_owner": "data/state/intraday_path_features.json",
+            "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+            "failure_contract": "上游路径缺失、LOW采样或对象级分钟质量失败时按现有离散fallback重新计算；仍不足则DEGRADED且不沿用旧active状态。"
           }
         },
         {
@@ -3525,7 +3727,7 @@
             "trade_signal": null,
             "formal_role": "只增强已经存在的突破／真实修复结构，不单独生成风险许可、Trial／Confirm、金额、卖出份额或订单。",
             "pit_boundary": "使用不晚于决策时点的最近完整T日收盘及T日前已存在日线；T+1盘中继续使用T日已完成证据，不把T+1未完成日线前视为收盘事实。",
-            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。",
+            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
             "amount": 4903060000.0,
@@ -3540,6 +3742,51 @@
             "direction": "NOT_ACTIVE",
             "interpretation_cn": "最近完整收盘未同时满足成交参与扩大与有效结构确认，不激活该增强证据；不形成反向看空。",
             "source": "events/research/daily_features + market_structure_context"
+          },
+          "intraday_path_risk_review": {
+            "evidence_id": "intraday_path_risk_review",
+            "display_name": "日内路径风险复核",
+            "status": "READY",
+            "code": "588000",
+            "market_date": "2026-08-28",
+            "as_of_beijing": "2026-08-28T15:12:28+08:00",
+            "use_as_decision_evidence": true,
+            "can_generate_decision_independently": false,
+            "automatic_trade": false,
+            "trade_signal": null,
+            "risk_review_active": false,
+            "direction": "NOT_ACTIVE",
+            "active_components": [],
+            "confidence": "MEDIUM",
+            "production_source": "DISCRETE_SNAPSHOT_PATH",
+            "sampling_coverage": "MEDIUM",
+            "late_session": {
+              "status": "READY",
+              "reference_clock_beijing": "14:30",
+              "reference_as_of_beijing": "2026-08-28T14:36:14+08:00",
+              "reference_price": 1.764,
+              "latest_as_of_beijing": "2026-08-28T15:12:28+08:00",
+              "latest_price": 1.756,
+              "move_from_reference_pct": -0.4535,
+              "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+              "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+            },
+            "path_high_return_vs_prev_close_pct": 0.783,
+            "retreat_from_path_high_pct": -2.5527,
+            "day_range_position": 0.0377,
+            "research_group_flags": {
+              "late_session_rally_ge_0_8pct": false,
+              "spike_ge_2pct_retreat_le_minus1_5pct_low_close_position": false
+            },
+            "interpretation_cn": "当前未命中已验证的日内路径风险复核分组；不形成反向看多，也不降低其他风险证据权重。",
+            "calibration_boundary": "0.8%、2%、-1.5%和低区间位置仅是#107固定研究粗分组，用于识别复核状态，不是独立交易阈值。",
+            "strong_surface_boundary": "高开守住、午后再加速、高位横住或突破后一定时间仍守住，只能作为结构/承接的一部分，不得独立升级Trial/Confirm或增加金额。",
+            "v_recovery_boundary": "V形修复只表示相对继续走弱的风险/承接改善，不证明正收益机会，不得据此抄底或升级Trial/Confirm。",
+            "relative_strength_boundary": "日内相对强弱扩大只用于候选比较和相对保护解释，不得机械买强卖弱。",
+            "dynamic_owner": "data/state/market_structure_context.json",
+            "upstream_owner": "data/state/intraday_path_features.json",
+            "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+            "failure_contract": "上游路径缺失、LOW采样或对象级分钟质量失败时按现有离散fallback重新计算；仍不足则DEGRADED且不沿用旧active状态。"
           }
         },
         {
@@ -3648,7 +3895,7 @@
             "trade_signal": null,
             "formal_role": "只增强已经存在的突破／真实修复结构，不单独生成风险许可、Trial／Confirm、金额、卖出份额或订单。",
             "pit_boundary": "使用不晚于决策时点的最近完整T日收盘及T日前已存在日线；T+1盘中继续使用T日已完成证据，不把T+1未完成日线前视为收盘事实。",
-            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。",
+            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
             "amount": 447030000.0,
@@ -3663,6 +3910,51 @@
             "direction": "NOT_ACTIVE",
             "interpretation_cn": "最近完整收盘未同时满足成交参与扩大与有效结构确认，不激活该增强证据；不形成反向看空。",
             "source": "events/research/daily_features + market_structure_context"
+          },
+          "intraday_path_risk_review": {
+            "evidence_id": "intraday_path_risk_review",
+            "display_name": "日内路径风险复核",
+            "status": "READY",
+            "code": "159781",
+            "market_date": "2026-08-28",
+            "as_of_beijing": "2026-08-28T15:12:00+08:00",
+            "use_as_decision_evidence": true,
+            "can_generate_decision_independently": false,
+            "automatic_trade": false,
+            "trade_signal": null,
+            "risk_review_active": false,
+            "direction": "NOT_ACTIVE",
+            "active_components": [],
+            "confidence": "MEDIUM",
+            "production_source": "DISCRETE_SNAPSHOT_PATH",
+            "sampling_coverage": "MEDIUM",
+            "late_session": {
+              "status": "READY",
+              "reference_clock_beijing": "14:30",
+              "reference_as_of_beijing": "2026-08-28T14:36:12+08:00",
+              "reference_price": 1.086,
+              "latest_as_of_beijing": "2026-08-28T15:12:00+08:00",
+              "latest_price": 1.083,
+              "move_from_reference_pct": -0.2762,
+              "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+              "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+            },
+            "path_high_return_vs_prev_close_pct": 1.0909,
+            "retreat_from_path_high_pct": -2.6079,
+            "day_range_position": 0.0833,
+            "research_group_flags": {
+              "late_session_rally_ge_0_8pct": false,
+              "spike_ge_2pct_retreat_le_minus1_5pct_low_close_position": false
+            },
+            "interpretation_cn": "当前未命中已验证的日内路径风险复核分组；不形成反向看多，也不降低其他风险证据权重。",
+            "calibration_boundary": "0.8%、2%、-1.5%和低区间位置仅是#107固定研究粗分组，用于识别复核状态，不是独立交易阈值。",
+            "strong_surface_boundary": "高开守住、午后再加速、高位横住或突破后一定时间仍守住，只能作为结构/承接的一部分，不得独立升级Trial/Confirm或增加金额。",
+            "v_recovery_boundary": "V形修复只表示相对继续走弱的风险/承接改善，不证明正收益机会，不得据此抄底或升级Trial/Confirm。",
+            "relative_strength_boundary": "日内相对强弱扩大只用于候选比较和相对保护解释，不得机械买强卖弱。",
+            "dynamic_owner": "data/state/market_structure_context.json",
+            "upstream_owner": "data/state/intraday_path_features.json",
+            "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+            "failure_contract": "上游路径缺失、LOW采样或对象级分钟质量失败时按现有离散fallback重新计算；仍不足则DEGRADED且不沿用旧active状态。"
           }
         },
         {
@@ -3771,7 +4063,7 @@
             "trade_signal": null,
             "formal_role": "只增强已经存在的突破／真实修复结构，不单独生成风险许可、Trial／Confirm、金额、卖出份额或订单。",
             "pit_boundary": "使用不晚于决策时点的最近完整T日收盘及T日前已存在日线；T+1盘中继续使用T日已完成证据，不把T+1未完成日线前视为收盘事实。",
-            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。",
+            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
             "amount": 555260000.0,
@@ -3786,6 +4078,51 @@
             "direction": "NOT_ACTIVE",
             "interpretation_cn": "最近完整收盘未同时满足成交参与扩大与有效结构确认，不激活该增强证据；不形成反向看空。",
             "source": "events/research/daily_features + market_structure_context"
+          },
+          "intraday_path_risk_review": {
+            "evidence_id": "intraday_path_risk_review",
+            "display_name": "日内路径风险复核",
+            "status": "READY",
+            "code": "159941",
+            "market_date": "2026-08-28",
+            "as_of_beijing": "2026-08-28T15:12:15+08:00",
+            "use_as_decision_evidence": true,
+            "can_generate_decision_independently": false,
+            "automatic_trade": false,
+            "trade_signal": null,
+            "risk_review_active": false,
+            "direction": "NOT_ACTIVE",
+            "active_components": [],
+            "confidence": "MEDIUM",
+            "production_source": "DISCRETE_SNAPSHOT_PATH",
+            "sampling_coverage": "MEDIUM",
+            "late_session": {
+              "status": "READY",
+              "reference_clock_beijing": "14:30",
+              "reference_as_of_beijing": "2026-08-28T14:36:12+08:00",
+              "reference_price": 1.662,
+              "latest_as_of_beijing": "2026-08-28T15:12:15+08:00",
+              "latest_price": 1.661,
+              "move_from_reference_pct": -0.0602,
+              "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+              "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+            },
+            "path_high_return_vs_prev_close_pct": 0.4209,
+            "retreat_from_path_high_pct": -0.5389,
+            "day_range_position": 0.1667,
+            "research_group_flags": {
+              "late_session_rally_ge_0_8pct": false,
+              "spike_ge_2pct_retreat_le_minus1_5pct_low_close_position": false
+            },
+            "interpretation_cn": "当前未命中已验证的日内路径风险复核分组；不形成反向看多，也不降低其他风险证据权重。",
+            "calibration_boundary": "0.8%、2%、-1.5%和低区间位置仅是#107固定研究粗分组，用于识别复核状态，不是独立交易阈值。",
+            "strong_surface_boundary": "高开守住、午后再加速、高位横住或突破后一定时间仍守住，只能作为结构/承接的一部分，不得独立升级Trial/Confirm或增加金额。",
+            "v_recovery_boundary": "V形修复只表示相对继续走弱的风险/承接改善，不证明正收益机会，不得据此抄底或升级Trial/Confirm。",
+            "relative_strength_boundary": "日内相对强弱扩大只用于候选比较和相对保护解释，不得机械买强卖弱。",
+            "dynamic_owner": "data/state/market_structure_context.json",
+            "upstream_owner": "data/state/intraday_path_features.json",
+            "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+            "failure_contract": "上游路径缺失、LOW采样或对象级分钟质量失败时按现有离散fallback重新计算；仍不足则DEGRADED且不沿用旧active状态。"
           }
         },
         {
@@ -3894,7 +4231,7 @@
             "trade_signal": null,
             "formal_role": "只增强已经存在的突破／真实修复结构，不单独生成风险许可、Trial／Confirm、金额、卖出份额或订单。",
             "pit_boundary": "使用不晚于决策时点的最近完整T日收盘及T日前已存在日线；T+1盘中继续使用T日已完成证据，不把T+1未完成日线前视为收盘事实。",
-            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。",
+            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
             "amount": 1484070000.0,
@@ -3909,6 +4246,51 @@
             "direction": "NOT_ACTIVE",
             "interpretation_cn": "最近完整收盘未同时满足成交参与扩大与有效结构确认，不激活该增强证据；不形成反向看空。",
             "source": "events/research/daily_features + market_structure_context"
+          },
+          "intraday_path_risk_review": {
+            "evidence_id": "intraday_path_risk_review",
+            "display_name": "日内路径风险复核",
+            "status": "READY",
+            "code": "513180",
+            "market_date": "2026-08-28",
+            "as_of_beijing": "2026-08-28T15:12:30+08:00",
+            "use_as_decision_evidence": true,
+            "can_generate_decision_independently": false,
+            "automatic_trade": false,
+            "trade_signal": null,
+            "risk_review_active": false,
+            "direction": "NOT_ACTIVE",
+            "active_components": [],
+            "confidence": "MEDIUM",
+            "production_source": "DISCRETE_SNAPSHOT_PATH",
+            "sampling_coverage": "MEDIUM",
+            "late_session": {
+              "status": "READY",
+              "reference_clock_beijing": "14:30",
+              "reference_as_of_beijing": "2026-08-28T14:36:15+08:00",
+              "reference_price": 0.582,
+              "latest_as_of_beijing": "2026-08-28T15:12:30+08:00",
+              "latest_price": 0.581,
+              "move_from_reference_pct": -0.1718,
+              "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+              "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+            },
+            "path_high_return_vs_prev_close_pct": 0.343,
+            "retreat_from_path_high_pct": -0.6838,
+            "day_range_position": 0.5556,
+            "research_group_flags": {
+              "late_session_rally_ge_0_8pct": false,
+              "spike_ge_2pct_retreat_le_minus1_5pct_low_close_position": false
+            },
+            "interpretation_cn": "当前未命中已验证的日内路径风险复核分组；不形成反向看多，也不降低其他风险证据权重。",
+            "calibration_boundary": "0.8%、2%、-1.5%和低区间位置仅是#107固定研究粗分组，用于识别复核状态，不是独立交易阈值。",
+            "strong_surface_boundary": "高开守住、午后再加速、高位横住或突破后一定时间仍守住，只能作为结构/承接的一部分，不得独立升级Trial/Confirm或增加金额。",
+            "v_recovery_boundary": "V形修复只表示相对继续走弱的风险/承接改善，不证明正收益机会，不得据此抄底或升级Trial/Confirm。",
+            "relative_strength_boundary": "日内相对强弱扩大只用于候选比较和相对保护解释，不得机械买强卖弱。",
+            "dynamic_owner": "data/state/market_structure_context.json",
+            "upstream_owner": "data/state/intraday_path_features.json",
+            "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+            "failure_contract": "上游路径缺失、LOW采样或对象级分钟质量失败时按现有离散fallback重新计算；仍不足则DEGRADED且不沿用旧active状态。"
           }
         },
         {
@@ -4017,7 +4399,7 @@
             "trade_signal": null,
             "formal_role": "只增强已经存在的突破／真实修复结构，不单独生成风险许可、Trial／Confirm、金额、卖出份额或订单。",
             "pit_boundary": "使用不晚于决策时点的最近完整T日收盘及T日前已存在日线；T+1盘中继续使用T日已完成证据，不把T+1未完成日线前视为收盘事实。",
-            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。",
+            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
             "amount": 60620000.0,
@@ -4032,6 +4414,51 @@
             "direction": "NOT_ACTIVE",
             "interpretation_cn": "最近完整收盘未同时满足成交参与扩大与有效结构确认，不激活该增强证据；不形成反向看空。",
             "source": "events/research/daily_features + market_structure_context"
+          },
+          "intraday_path_risk_review": {
+            "evidence_id": "intraday_path_risk_review",
+            "display_name": "日内路径风险复核",
+            "status": "READY",
+            "code": "159561",
+            "market_date": "2026-08-28",
+            "as_of_beijing": "2026-08-28T15:12:30+08:00",
+            "use_as_decision_evidence": true,
+            "can_generate_decision_independently": false,
+            "automatic_trade": false,
+            "trade_signal": null,
+            "risk_review_active": false,
+            "direction": "NOT_ACTIVE",
+            "active_components": [],
+            "confidence": "MEDIUM",
+            "production_source": "DISCRETE_SNAPSHOT_PATH",
+            "sampling_coverage": "MEDIUM",
+            "late_session": {
+              "status": "READY",
+              "reference_clock_beijing": "14:30",
+              "reference_as_of_beijing": "2026-08-28T14:36:15+08:00",
+              "reference_price": 1.391,
+              "latest_as_of_beijing": "2026-08-28T15:12:30+08:00",
+              "latest_price": 1.39,
+              "move_from_reference_pct": -0.0719,
+              "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+              "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+            },
+            "path_high_return_vs_prev_close_pct": 0.3608,
+            "retreat_from_path_high_pct": -0.0719,
+            "day_range_position": 0.6,
+            "research_group_flags": {
+              "late_session_rally_ge_0_8pct": false,
+              "spike_ge_2pct_retreat_le_minus1_5pct_low_close_position": false
+            },
+            "interpretation_cn": "当前未命中已验证的日内路径风险复核分组；不形成反向看多，也不降低其他风险证据权重。",
+            "calibration_boundary": "0.8%、2%、-1.5%和低区间位置仅是#107固定研究粗分组，用于识别复核状态，不是独立交易阈值。",
+            "strong_surface_boundary": "高开守住、午后再加速、高位横住或突破后一定时间仍守住，只能作为结构/承接的一部分，不得独立升级Trial/Confirm或增加金额。",
+            "v_recovery_boundary": "V形修复只表示相对继续走弱的风险/承接改善，不证明正收益机会，不得据此抄底或升级Trial/Confirm。",
+            "relative_strength_boundary": "日内相对强弱扩大只用于候选比较和相对保护解释，不得机械买强卖弱。",
+            "dynamic_owner": "data/state/market_structure_context.json",
+            "upstream_owner": "data/state/intraday_path_features.json",
+            "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+            "failure_contract": "上游路径缺失、LOW采样或对象级分钟质量失败时按现有离散fallback重新计算；仍不足则DEGRADED且不沿用旧active状态。"
           }
         },
         {
@@ -4140,7 +4567,7 @@
             "trade_signal": null,
             "formal_role": "只增强已经存在的突破／真实修复结构，不单独生成风险许可、Trial／Confirm、金额、卖出份额或订单。",
             "pit_boundary": "使用不晚于决策时点的最近完整T日收盘及T日前已存在日线；T+1盘中继续使用T日已完成证据，不把T+1未完成日线前视为收盘事实。",
-            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。",
+            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
             "amount": 259150000.0,
@@ -4155,6 +4582,51 @@
             "direction": "NOT_ACTIVE",
             "interpretation_cn": "最近完整收盘未同时满足成交参与扩大与有效结构确认，不激活该增强证据；不形成反向看空。",
             "source": "events/research/daily_features + market_structure_context"
+          },
+          "intraday_path_risk_review": {
+            "evidence_id": "intraday_path_risk_review",
+            "display_name": "日内路径风险复核",
+            "status": "READY",
+            "code": "513520",
+            "market_date": "2026-08-28",
+            "as_of_beijing": "2026-08-28T15:12:30+08:00",
+            "use_as_decision_evidence": true,
+            "can_generate_decision_independently": false,
+            "automatic_trade": false,
+            "trade_signal": null,
+            "risk_review_active": false,
+            "direction": "NOT_ACTIVE",
+            "active_components": [],
+            "confidence": "MEDIUM",
+            "production_source": "DISCRETE_SNAPSHOT_PATH",
+            "sampling_coverage": "MEDIUM",
+            "late_session": {
+              "status": "READY",
+              "reference_clock_beijing": "14:30",
+              "reference_as_of_beijing": "2026-08-28T14:36:17+08:00",
+              "reference_price": 2.288,
+              "latest_as_of_beijing": "2026-08-28T15:12:30+08:00",
+              "latest_price": 2.28,
+              "move_from_reference_pct": -0.3497,
+              "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+              "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+            },
+            "path_high_return_vs_prev_close_pct": 0.7002,
+            "retreat_from_path_high_pct": -0.9126,
+            "day_range_position": 0.0385,
+            "research_group_flags": {
+              "late_session_rally_ge_0_8pct": false,
+              "spike_ge_2pct_retreat_le_minus1_5pct_low_close_position": false
+            },
+            "interpretation_cn": "当前未命中已验证的日内路径风险复核分组；不形成反向看多，也不降低其他风险证据权重。",
+            "calibration_boundary": "0.8%、2%、-1.5%和低区间位置仅是#107固定研究粗分组，用于识别复核状态，不是独立交易阈值。",
+            "strong_surface_boundary": "高开守住、午后再加速、高位横住或突破后一定时间仍守住，只能作为结构/承接的一部分，不得独立升级Trial/Confirm或增加金额。",
+            "v_recovery_boundary": "V形修复只表示相对继续走弱的风险/承接改善，不证明正收益机会，不得据此抄底或升级Trial/Confirm。",
+            "relative_strength_boundary": "日内相对强弱扩大只用于候选比较和相对保护解释，不得机械买强卖弱。",
+            "dynamic_owner": "data/state/market_structure_context.json",
+            "upstream_owner": "data/state/intraday_path_features.json",
+            "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+            "failure_contract": "上游路径缺失、LOW采样或对象级分钟质量失败时按现有离散fallback重新计算；仍不足则DEGRADED且不沿用旧active状态。"
           }
         },
         {
@@ -4265,7 +4737,7 @@
             "trade_signal": null,
             "formal_role": "只增强已经存在的突破／真实修复结构，不单独生成风险许可、Trial／Confirm、金额、卖出份额或订单。",
             "pit_boundary": "使用不晚于决策时点的最近完整T日收盘及T日前已存在日线；T+1盘中继续使用T日已完成证据，不把T+1未完成日线前视为收盘事实。",
-            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。",
+            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
             "amount": 4462700000.0,
@@ -4280,6 +4752,51 @@
             "direction": "NOT_ACTIVE",
             "interpretation_cn": "最近完整收盘未同时满足成交参与扩大与有效结构确认，不激活该增强证据；不形成反向看空。",
             "source": "events/research/daily_features + market_structure_context"
+          },
+          "intraday_path_risk_review": {
+            "evidence_id": "intraday_path_risk_review",
+            "display_name": "日内路径风险复核",
+            "status": "READY",
+            "code": "518880",
+            "market_date": "2026-08-28",
+            "as_of_beijing": "2026-08-28T15:12:30+08:00",
+            "use_as_decision_evidence": true,
+            "can_generate_decision_independently": false,
+            "automatic_trade": false,
+            "trade_signal": null,
+            "risk_review_active": false,
+            "direction": "NOT_ACTIVE",
+            "active_components": [],
+            "confidence": "MEDIUM",
+            "production_source": "DISCRETE_SNAPSHOT_PATH",
+            "sampling_coverage": "MEDIUM",
+            "late_session": {
+              "status": "READY",
+              "reference_clock_beijing": "14:30",
+              "reference_as_of_beijing": "2026-08-28T14:36:15+08:00",
+              "reference_price": 9.427,
+              "latest_as_of_beijing": "2026-08-28T15:12:30+08:00",
+              "latest_price": 9.475,
+              "move_from_reference_pct": 0.5092,
+              "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+              "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+            },
+            "path_high_return_vs_prev_close_pct": 0.307,
+            "retreat_from_path_high_pct": 0.0,
+            "day_range_position": 1.0,
+            "research_group_flags": {
+              "late_session_rally_ge_0_8pct": false,
+              "spike_ge_2pct_retreat_le_minus1_5pct_low_close_position": false
+            },
+            "interpretation_cn": "当前未命中已验证的日内路径风险复核分组；不形成反向看多，也不降低其他风险证据权重。",
+            "calibration_boundary": "0.8%、2%、-1.5%和低区间位置仅是#107固定研究粗分组，用于识别复核状态，不是独立交易阈值。",
+            "strong_surface_boundary": "高开守住、午后再加速、高位横住或突破后一定时间仍守住，只能作为结构/承接的一部分，不得独立升级Trial/Confirm或增加金额。",
+            "v_recovery_boundary": "V形修复只表示相对继续走弱的风险/承接改善，不证明正收益机会，不得据此抄底或升级Trial/Confirm。",
+            "relative_strength_boundary": "日内相对强弱扩大只用于候选比较和相对保护解释，不得机械买强卖弱。",
+            "dynamic_owner": "data/state/market_structure_context.json",
+            "upstream_owner": "data/state/intraday_path_features.json",
+            "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+            "failure_contract": "上游路径缺失、LOW采样或对象级分钟质量失败时按现有离散fallback重新计算；仍不足则DEGRADED且不沿用旧active状态。"
           }
         },
         {
@@ -4388,7 +4905,7 @@
             "trade_signal": null,
             "formal_role": "只增强已经存在的突破／真实修复结构，不单独生成风险许可、Trial／Confirm、金额、卖出份额或订单。",
             "pit_boundary": "使用不晚于决策时点的最近完整T日收盘及T日前已存在日线；T+1盘中继续使用T日已完成证据，不把T+1未完成日线前视为收盘事实。",
-            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。",
+            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
             "amount": 619250000.0,
@@ -4403,6 +4920,51 @@
             "direction": "NOT_ACTIVE",
             "interpretation_cn": "最近完整收盘未同时满足成交参与扩大与有效结构确认，不激活该增强证据；不形成反向看空。",
             "source": "events/research/daily_features + market_structure_context"
+          },
+          "intraday_path_risk_review": {
+            "evidence_id": "intraday_path_risk_review",
+            "display_name": "日内路径风险复核",
+            "status": "READY",
+            "code": "159992",
+            "market_date": "2026-08-28",
+            "as_of_beijing": "2026-08-28T15:12:00+08:00",
+            "use_as_decision_evidence": true,
+            "can_generate_decision_independently": false,
+            "automatic_trade": false,
+            "trade_signal": null,
+            "risk_review_active": false,
+            "direction": "NOT_ACTIVE",
+            "active_components": [],
+            "confidence": "MEDIUM",
+            "production_source": "DISCRETE_SNAPSHOT_PATH",
+            "sampling_coverage": "MEDIUM",
+            "late_session": {
+              "status": "READY",
+              "reference_clock_beijing": "14:30",
+              "reference_as_of_beijing": "2026-08-28T14:36:15+08:00",
+              "reference_price": 0.864,
+              "latest_as_of_beijing": "2026-08-28T15:12:00+08:00",
+              "latest_price": 0.862,
+              "move_from_reference_pct": -0.2315,
+              "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+              "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+            },
+            "path_high_return_vs_prev_close_pct": -0.3428,
+            "retreat_from_path_high_pct": -1.1468,
+            "day_range_position": 0.1429,
+            "research_group_flags": {
+              "late_session_rally_ge_0_8pct": false,
+              "spike_ge_2pct_retreat_le_minus1_5pct_low_close_position": false
+            },
+            "interpretation_cn": "当前未命中已验证的日内路径风险复核分组；不形成反向看多，也不降低其他风险证据权重。",
+            "calibration_boundary": "0.8%、2%、-1.5%和低区间位置仅是#107固定研究粗分组，用于识别复核状态，不是独立交易阈值。",
+            "strong_surface_boundary": "高开守住、午后再加速、高位横住或突破后一定时间仍守住，只能作为结构/承接的一部分，不得独立升级Trial/Confirm或增加金额。",
+            "v_recovery_boundary": "V形修复只表示相对继续走弱的风险/承接改善，不证明正收益机会，不得据此抄底或升级Trial/Confirm。",
+            "relative_strength_boundary": "日内相对强弱扩大只用于候选比较和相对保护解释，不得机械买强卖弱。",
+            "dynamic_owner": "data/state/market_structure_context.json",
+            "upstream_owner": "data/state/intraday_path_features.json",
+            "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+            "failure_contract": "上游路径缺失、LOW采样或对象级分钟质量失败时按现有离散fallback重新计算；仍不足则DEGRADED且不沿用旧active状态。"
           }
         },
         {
@@ -4511,7 +5073,7 @@
             "trade_signal": null,
             "formal_role": "只增强已经存在的突破／真实修复结构，不单独生成风险许可、Trial／Confirm、金额、卖出份额或订单。",
             "pit_boundary": "使用不晚于决策时点的最近完整T日收盘及T日前已存在日线；T+1盘中继续使用T日已完成证据，不把T+1未完成日线前视为收盘事实。",
-            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。",
+            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
             "amount": 3189530000.0,
@@ -4526,6 +5088,51 @@
             "direction": "NOT_ACTIVE",
             "interpretation_cn": "最近完整收盘未同时满足成交参与扩大与有效结构确认，不激活该增强证据；不形成反向看空。",
             "source": "events/research/daily_features + market_structure_context"
+          },
+          "intraday_path_risk_review": {
+            "evidence_id": "intraday_path_risk_review",
+            "display_name": "日内路径风险复核",
+            "status": "READY",
+            "code": "515880",
+            "market_date": "2026-08-28",
+            "as_of_beijing": "2026-08-28T15:12:31+08:00",
+            "use_as_decision_evidence": true,
+            "can_generate_decision_independently": false,
+            "automatic_trade": false,
+            "trade_signal": null,
+            "risk_review_active": false,
+            "direction": "NOT_ACTIVE",
+            "active_components": [],
+            "confidence": "MEDIUM",
+            "production_source": "DISCRETE_SNAPSHOT_PATH",
+            "sampling_coverage": "MEDIUM",
+            "late_session": {
+              "status": "READY",
+              "reference_clock_beijing": "14:30",
+              "reference_as_of_beijing": "2026-08-28T14:36:16+08:00",
+              "reference_price": 0.672,
+              "latest_as_of_beijing": "2026-08-28T15:12:31+08:00",
+              "latest_price": 0.668,
+              "move_from_reference_pct": -0.5952,
+              "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+              "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+            },
+            "path_high_return_vs_prev_close_pct": 1.9174,
+            "retreat_from_path_high_pct": -3.3285,
+            "day_range_position": 0.0357,
+            "research_group_flags": {
+              "late_session_rally_ge_0_8pct": false,
+              "spike_ge_2pct_retreat_le_minus1_5pct_low_close_position": false
+            },
+            "interpretation_cn": "当前未命中已验证的日内路径风险复核分组；不形成反向看多，也不降低其他风险证据权重。",
+            "calibration_boundary": "0.8%、2%、-1.5%和低区间位置仅是#107固定研究粗分组，用于识别复核状态，不是独立交易阈值。",
+            "strong_surface_boundary": "高开守住、午后再加速、高位横住或突破后一定时间仍守住，只能作为结构/承接的一部分，不得独立升级Trial/Confirm或增加金额。",
+            "v_recovery_boundary": "V形修复只表示相对继续走弱的风险/承接改善，不证明正收益机会，不得据此抄底或升级Trial/Confirm。",
+            "relative_strength_boundary": "日内相对强弱扩大只用于候选比较和相对保护解释，不得机械买强卖弱。",
+            "dynamic_owner": "data/state/market_structure_context.json",
+            "upstream_owner": "data/state/intraday_path_features.json",
+            "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+            "failure_contract": "上游路径缺失、LOW采样或对象级分钟质量失败时按现有离散fallback重新计算；仍不足则DEGRADED且不沿用旧active状态。"
           }
         },
         {
@@ -4634,7 +5241,7 @@
             "trade_signal": null,
             "formal_role": "只增强已经存在的突破／真实修复结构，不单独生成风险许可、Trial／Confirm、金额、卖出份额或订单。",
             "pit_boundary": "使用不晚于决策时点的最近完整T日收盘及T日前已存在日线；T+1盘中继续使用T日已完成证据，不把T+1未完成日线前视为收盘事实。",
-            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。",
+            "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
             "amount": 600800000.0,
@@ -4649,6 +5256,51 @@
             "direction": "NOT_ACTIVE",
             "interpretation_cn": "最近完整收盘未同时满足成交参与扩大与有效结构确认，不激活该增强证据；不形成反向看空。",
             "source": "events/research/daily_features + market_structure_context"
+          },
+          "intraday_path_risk_review": {
+            "evidence_id": "intraday_path_risk_review",
+            "display_name": "日内路径风险复核",
+            "status": "READY",
+            "code": "159326",
+            "market_date": "2026-08-28",
+            "as_of_beijing": "2026-08-28T15:12:15+08:00",
+            "use_as_decision_evidence": true,
+            "can_generate_decision_independently": false,
+            "automatic_trade": false,
+            "trade_signal": null,
+            "risk_review_active": false,
+            "direction": "NOT_ACTIVE",
+            "active_components": [],
+            "confidence": "MEDIUM",
+            "production_source": "DISCRETE_SNAPSHOT_PATH",
+            "sampling_coverage": "MEDIUM",
+            "late_session": {
+              "status": "READY",
+              "reference_clock_beijing": "14:30",
+              "reference_as_of_beijing": "2026-08-28T14:36:15+08:00",
+              "reference_price": 1.683,
+              "latest_as_of_beijing": "2026-08-28T15:12:15+08:00",
+              "latest_price": 1.678,
+              "move_from_reference_pct": -0.2971,
+              "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+              "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
+            },
+            "path_high_return_vs_prev_close_pct": 0.1771,
+            "retreat_from_path_high_pct": -1.1196,
+            "day_range_position": 0.125,
+            "research_group_flags": {
+              "late_session_rally_ge_0_8pct": false,
+              "spike_ge_2pct_retreat_le_minus1_5pct_low_close_position": false
+            },
+            "interpretation_cn": "当前未命中已验证的日内路径风险复核分组；不形成反向看多，也不降低其他风险证据权重。",
+            "calibration_boundary": "0.8%、2%、-1.5%和低区间位置仅是#107固定研究粗分组，用于识别复核状态，不是独立交易阈值。",
+            "strong_surface_boundary": "高开守住、午后再加速、高位横住或突破后一定时间仍守住，只能作为结构/承接的一部分，不得独立升级Trial/Confirm或增加金额。",
+            "v_recovery_boundary": "V形修复只表示相对继续走弱的风险/承接改善，不证明正收益机会，不得据此抄底或升级Trial/Confirm。",
+            "relative_strength_boundary": "日内相对强弱扩大只用于候选比较和相对保护解释，不得机械买强卖弱。",
+            "dynamic_owner": "data/state/market_structure_context.json",
+            "upstream_owner": "data/state/intraday_path_features.json",
+            "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+            "failure_contract": "上游路径缺失、LOW采样或对象级分钟质量失败时按现有离散fallback重新计算；仍不足则DEGRADED且不沿用旧active状态。"
           }
         }
       ],
@@ -4681,7 +5333,38 @@
         "trade_signal": null,
         "dynamic_owner": "data/state/market_structure_context.json",
         "research_source": "research/backtests/section6_c2_participation_structure_formal_conversion_review.json",
-        "decision_boundary": "最近完整收盘只作为已有突破／真实修复结构的确认增强；研究1.2倍分组不升级为独立机械买卖阈值；失败不沿用无法重建的旧方向。"
+        "decision_boundary": "最近完整收盘只作为已有突破／真实修复结构的确认增强；研究1.2倍分组不升级为独立机械买卖阈值；放量上涨后的弱收盘本身不视为派发或卖出条件；失败不沿用无法重建的旧方向。"
+      },
+      "formal_intraday_path_risk_review": {
+        "evidence_id": "intraday_path_risk_review",
+        "display_name": "日内路径风险复核",
+        "status": "READY",
+        "market_date": "2026-08-28",
+        "ready_codes": [
+          "561980",
+          "588000",
+          "159781",
+          "159941",
+          "513180",
+          "159561",
+          "513520",
+          "518880",
+          "159992",
+          "515880",
+          "159326"
+        ],
+        "degraded_codes": [],
+        "active_codes": [],
+        "use_in_current_decision": true,
+        "use_as_decision_evidence": true,
+        "can_generate_decision_independently": false,
+        "automatic_trade": false,
+        "trade_signal": null,
+        "dynamic_owner": "data/state/market_structure_context.json",
+        "upstream_owner": "data/state/intraday_path_features.json",
+        "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+        "decision_boundary": "尾盘拉升与冲高回落未重新站回只提高持仓、追加资本和资本释放的风险收益复核强度；不独立生成风险许可、Trial/Confirm、金额、卖出份额或订单。",
+        "failure_contract": "对象级路径不可用时复用现有分钟→离散fallback；仍无法重建则该对象DEGRADED且不沿用旧方向。"
       },
       "minute_acceptance_integration": {
         "status": "READY",
@@ -5110,9 +5793,9 @@
       "mode": "FORMAL_561980_COMPONENT_LEAD_EVIDENCE",
       "evidence_id": "component_lead_561980_3d",
       "display_name": "半导体设备ETF（561980）核心成分3日相对领先证据",
-      "status": "DEGRADED",
-      "use_in_current_decision": false,
-      "use_as_decision_evidence": false,
+      "status": "READY",
+      "use_in_current_decision": true,
+      "use_as_decision_evidence": true,
       "decision_eligible": true,
       "can_generate_decision_independently": false,
       "automatic_trade": false,
@@ -5122,19 +5805,63 @@
       ],
       "decision_market_date": "2026-08-31",
       "price_cutoff_market_date": "2026-08-28",
-      "reason": "official PCF unavailable: RuntimeError: official PCF invalid: code=0 rows=0",
-      "failure_policy": "关键PCF或完整价格输入不可验证时不沿用旧动态值，不形成方向性证据。",
-      "reviewed_current_top5": [
-        "002371",
-        "300604",
-        "300666",
-        "300346",
-        "002409"
-      ]
+      "return_window_start": "2026-08-25",
+      "return_window_end": "2026-08-28",
+      "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
+      "pcf_component_count": 40,
+      "top5": [
+        {
+          "code": "002371",
+          "name": "北方华创",
+          "td_amount": 488257.0,
+          "cash_flag": "1",
+          "ann_date": "2026-08-31",
+          "three_day_return_pct": -0.4126
+        },
+        {
+          "code": "300604",
+          "name": "长川科技",
+          "td_amount": 249399.0,
+          "cash_flag": "1",
+          "ann_date": "2026-08-31",
+          "three_day_return_pct": 5.1172
+        },
+        {
+          "code": "300666",
+          "name": "江丰电子",
+          "td_amount": 47964.0,
+          "cash_flag": "1",
+          "ann_date": "2026-08-31",
+          "three_day_return_pct": 1.8344
+        },
+        {
+          "code": "002409",
+          "name": "雅克科技",
+          "td_amount": 42618.0,
+          "cash_flag": "1",
+          "ann_date": "2026-08-31",
+          "three_day_return_pct": 3.5498
+        },
+        {
+          "code": "300346",
+          "name": "南大光电",
+          "td_amount": 38962.0,
+          "cash_flag": "1",
+          "ann_date": "2026-08-31",
+          "three_day_return_pct": 1.2921
+        }
+      ],
+      "top5_three_day_average_return_pct": 2.2762,
+      "etf_three_day_return_pct": 2.6667,
+      "leader_minus_etf_3d_lag1_pct_points": -0.3905,
+      "evidence_direction": "WEAKEN",
+      "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
+      "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
+      "formal_conclusion": "research/backtests/561980_component_lead_formal_conclusion.json"
     },
     "if_ic_basis_5d": {
       "schema_version": "1.2",
-      "generated_at": "2026-08-30T11:19:00Z",
+      "generated_at": "2026-08-30T23:36:39Z",
       "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
       "evidence_id": "if_ic_basis_5d",
       "display_name": "IF／IC 5日基差变化证据",
@@ -5154,12 +5881,12 @@
       "research_source": "research/backtests/index_futures_if_ic_basis_formal_conclusion.json",
       "status": "DEGRADED",
       "use_in_current_decision": false,
-      "decision_market_date": "2026-08-28",
-      "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-08-27:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
+      "decision_market_date": "2026-08-31",
+      "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-08-28:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
     },
     "ipo_base_stock_oversold_reversal_300750": {
       "schema_version": "1.1",
-      "generated_at": "2026-08-30T11:19:12Z",
+      "generated_at": "2026-08-30T23:36:51Z",
       "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
       "evidence_id": "ipo_base_stock_oversold_reversal_300750",
       "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -5190,9 +5917,40 @@
       "interpretation_rule": "pattern_match=true只表示已验证的超跌反转研究条件当前成立，可增强宁德时代持有价值/新增候选/资本比较；不得直接生成风险许可、Trial/Confirm、金额、卖出份额或订单。",
       "static_current_match_ignored": true
     },
+    "intraday_path_risk_review": {
+      "evidence_id": "intraday_path_risk_review",
+      "display_name": "日内路径风险复核",
+      "status": "READY",
+      "market_date": "2026-08-28",
+      "ready_codes": [
+        "561980",
+        "588000",
+        "159781",
+        "159941",
+        "513180",
+        "159561",
+        "513520",
+        "518880",
+        "159992",
+        "515880",
+        "159326"
+      ],
+      "degraded_codes": [],
+      "active_codes": [],
+      "use_in_current_decision": true,
+      "use_as_decision_evidence": true,
+      "can_generate_decision_independently": false,
+      "automatic_trade": false,
+      "trade_signal": null,
+      "dynamic_owner": "data/state/market_structure_context.json",
+      "upstream_owner": "data/state/intraday_path_features.json",
+      "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+      "decision_boundary": "尾盘拉升与冲高回落未重新站回只提高持仓、追加资本和资本释放的风险收益复核强度；不独立生成风险许可、Trial/Confirm、金额、卖出份额或订单。",
+      "failure_contract": "对象级路径不可用时复用现有分钟→离散fallback；仍无法重建则该对象DEGRADED且不沿用旧方向。"
+    },
     "research_execution_summary": {
-      "schema_version": "1.1",
-      "generated_at": "2026-08-30T11:19:14Z",
+      "schema_version": "1.2",
+      "generated_at": "2026-08-30T23:36:53Z",
       "mode": "RESEARCH_TO_EXECUTION_READ_ONLY_BRIDGE",
       "read_only": true,
       "use_in_current_decision": true,
@@ -5286,10 +6044,10 @@
           },
           {
             "evidence_id": "component_lead_561980_3d",
-            "status": "DEGRADED",
-            "use_in_current_decision": false,
+            "status": "READY",
+            "use_in_current_decision": true,
             "decision_eligible": true,
-            "use_as_decision_evidence": false,
+            "use_as_decision_evidence": true,
             "can_generate_decision_independently": false,
             "trade_signal": null
           },
@@ -5310,6 +6068,15 @@
             "use_as_decision_evidence": true,
             "can_generate_decision_independently": false,
             "trade_signal": null
+          },
+          {
+            "evidence_id": "intraday_path_risk_review",
+            "status": "READY",
+            "use_in_current_decision": true,
+            "decision_eligible": null,
+            "use_as_decision_evidence": true,
+            "can_generate_decision_independently": false,
+            "trade_signal": null
           }
         ],
         "execution_eligible_backtest_conclusions": [
@@ -5318,6 +6085,17 @@
             "mode": "FORMAL_561980_COMPONENT_LEAD_CONCLUSION",
             "research_interpretation": "PASS_MASTER_8_1_FORMAL_CONVERSION",
             "conclusion": null,
+            "decision_eligible": true,
+            "use_as_decision_evidence": true,
+            "can_generate_decision_independently": false,
+            "production_context_integration": true,
+            "trade_signal": null
+          },
+          {
+            "source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+            "mode": "FORMAL_ASHARE_ANCESTRAL_CAPITAL_EVIDENCE_CONVERSION_REVIEW",
+            "research_interpretation": "PASS_MASTER_8_1_FORMAL_CONVERSION_WITH_MERGE_AND_SEMANTIC_DEDUP",
+            "conclusion": "A股祖训云端再研究中具有明确或比较明确资本决策价值的结果已完成MASTER 8.1审查：尾盘拉升与冲高回落且无法重新站回合并为一个日内路径风险复核家族；放量上涨但弱收盘、连续上涨后弱收盘、V形修复、日内相对强弱扩大分别并入既有成交参与/赢家右尾、连续上涨风险复核、日内路径基础语义和资本比较语义；高开守住、午后再加速、高位横住、突破后一定时间仍守住等强势表象统一登记为不得独立升级Trial/Confirm或金额的使用边界。黑色星期四与不稳定日内候选不进入动态正式证据。所有通过项均不能独立生成风险许可、Trial/Confirm、金额、卖出份额或订单。",
             "decision_eligible": true,
             "use_as_decision_evidence": true,
             "can_generate_decision_independently": false,
@@ -5859,9 +6637,40 @@
           "active_support_codes": [],
           "interpretation_rule": "只有融资余额5日状态为EXPANDING时，前一完整交易日相对ETF池更强才作为3—5日持续性的条件增强证据；融资非扩张只表示本交互不激活，不形成反向看空；不得机械买强。"
         },
+        "intraday_path_risk_review": {
+          "evidence_id": "intraday_path_risk_review",
+          "display_name": "日内路径风险复核",
+          "status": "READY",
+          "market_date": "2026-08-28",
+          "ready_codes": [
+            "561980",
+            "588000",
+            "159781",
+            "159941",
+            "513180",
+            "159561",
+            "513520",
+            "518880",
+            "159992",
+            "515880",
+            "159326"
+          ],
+          "degraded_codes": [],
+          "active_codes": [],
+          "use_in_current_decision": true,
+          "use_as_decision_evidence": true,
+          "can_generate_decision_independently": false,
+          "automatic_trade": false,
+          "trade_signal": null,
+          "dynamic_owner": "data/state/market_structure_context.json",
+          "upstream_owner": "data/state/intraday_path_features.json",
+          "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+          "decision_boundary": "尾盘拉升与冲高回落未重新站回只提高持仓、追加资本和资本释放的风险收益复核强度；不独立生成风险许可、Trial/Confirm、金额、卖出份额或订单。",
+          "failure_contract": "对象级路径不可用时复用现有分钟→离散fallback；仍无法重建则该对象DEGRADED且不沿用旧方向。"
+        },
         "if_ic_basis_5d": {
           "schema_version": "1.2",
-          "generated_at": "2026-08-30T11:19:00Z",
+          "generated_at": "2026-08-30T23:36:39Z",
           "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
           "evidence_id": "if_ic_basis_5d",
           "display_name": "IF／IC 5日基差变化证据",
@@ -5881,12 +6690,12 @@
           "research_source": "research/backtests/index_futures_if_ic_basis_formal_conclusion.json",
           "status": "DEGRADED",
           "use_in_current_decision": false,
-          "decision_market_date": "2026-08-28",
-          "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-08-27:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
+          "decision_market_date": "2026-08-31",
+          "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-08-28:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
         },
         "ipo_base_stock_oversold_reversal_300750": {
           "schema_version": "1.1",
-          "generated_at": "2026-08-30T11:19:12Z",
+          "generated_at": "2026-08-30T23:36:51Z",
           "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
           "evidence_id": "ipo_base_stock_oversold_reversal_300750",
           "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -5922,9 +6731,9 @@
           "mode": "FORMAL_561980_COMPONENT_LEAD_EVIDENCE",
           "evidence_id": "component_lead_561980_3d",
           "display_name": "半导体设备ETF（561980）核心成分3日相对领先证据",
-          "status": "DEGRADED",
-          "use_in_current_decision": false,
-          "use_as_decision_evidence": false,
+          "status": "READY",
+          "use_in_current_decision": true,
+          "use_as_decision_evidence": true,
           "decision_eligible": true,
           "can_generate_decision_independently": false,
           "automatic_trade": false,
@@ -5934,15 +6743,59 @@
           ],
           "decision_market_date": "2026-08-31",
           "price_cutoff_market_date": "2026-08-28",
-          "reason": "official PCF unavailable: RuntimeError: official PCF invalid: code=0 rows=0",
-          "failure_policy": "关键PCF或完整价格输入不可验证时不沿用旧动态值，不形成方向性证据。",
-          "reviewed_current_top5": [
-            "002371",
-            "300604",
-            "300666",
-            "300346",
-            "002409"
-          ]
+          "return_window_start": "2026-08-25",
+          "return_window_end": "2026-08-28",
+          "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
+          "pcf_component_count": 40,
+          "top5": [
+            {
+              "code": "002371",
+              "name": "北方华创",
+              "td_amount": 488257.0,
+              "cash_flag": "1",
+              "ann_date": "2026-08-31",
+              "three_day_return_pct": -0.4126
+            },
+            {
+              "code": "300604",
+              "name": "长川科技",
+              "td_amount": 249399.0,
+              "cash_flag": "1",
+              "ann_date": "2026-08-31",
+              "three_day_return_pct": 5.1172
+            },
+            {
+              "code": "300666",
+              "name": "江丰电子",
+              "td_amount": 47964.0,
+              "cash_flag": "1",
+              "ann_date": "2026-08-31",
+              "three_day_return_pct": 1.8344
+            },
+            {
+              "code": "002409",
+              "name": "雅克科技",
+              "td_amount": 42618.0,
+              "cash_flag": "1",
+              "ann_date": "2026-08-31",
+              "three_day_return_pct": 3.5498
+            },
+            {
+              "code": "300346",
+              "name": "南大光电",
+              "td_amount": 38962.0,
+              "cash_flag": "1",
+              "ann_date": "2026-08-31",
+              "three_day_return_pct": 1.2921
+            }
+          ],
+          "top5_three_day_average_return_pct": 2.2762,
+          "etf_three_day_return_pct": 2.6667,
+          "leader_minus_etf_3d_lag1_pct_points": -0.3905,
+          "evidence_direction": "WEAKEN",
+          "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
+          "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
+          "formal_conclusion": "research/backtests/561980_component_lead_formal_conclusion.json"
         }
       },
       "portfolio_exposure": {
@@ -6023,7 +6876,7 @@
           ],
           "dynamic_stock_specific_signal": {
             "schema_version": "1.1",
-            "generated_at": "2026-08-30T11:19:12Z",
+            "generated_at": "2026-08-30T23:36:51Z",
             "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
             "evidence_id": "ipo_base_stock_oversold_reversal_300750",
             "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -6136,9 +6989,9 @@
           "mode": "FORMAL_561980_COMPONENT_LEAD_EVIDENCE",
           "evidence_id": "component_lead_561980_3d",
           "display_name": "半导体设备ETF（561980）核心成分3日相对领先证据",
-          "status": "DEGRADED",
-          "use_in_current_decision": false,
-          "use_as_decision_evidence": false,
+          "status": "READY",
+          "use_in_current_decision": true,
+          "use_as_decision_evidence": true,
           "decision_eligible": true,
           "can_generate_decision_independently": false,
           "automatic_trade": false,
@@ -6148,15 +7001,90 @@
           ],
           "decision_market_date": "2026-08-31",
           "price_cutoff_market_date": "2026-08-28",
-          "reason": "official PCF unavailable: RuntimeError: official PCF invalid: code=0 rows=0",
-          "failure_policy": "关键PCF或完整价格输入不可验证时不沿用旧动态值，不形成方向性证据。",
-          "reviewed_current_top5": [
-            "002371",
-            "300604",
-            "300666",
-            "300346",
-            "002409"
-          ]
+          "return_window_start": "2026-08-25",
+          "return_window_end": "2026-08-28",
+          "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
+          "pcf_component_count": 40,
+          "top5": [
+            {
+              "code": "002371",
+              "name": "北方华创",
+              "td_amount": 488257.0,
+              "cash_flag": "1",
+              "ann_date": "2026-08-31",
+              "three_day_return_pct": -0.4126
+            },
+            {
+              "code": "300604",
+              "name": "长川科技",
+              "td_amount": 249399.0,
+              "cash_flag": "1",
+              "ann_date": "2026-08-31",
+              "three_day_return_pct": 5.1172
+            },
+            {
+              "code": "300666",
+              "name": "江丰电子",
+              "td_amount": 47964.0,
+              "cash_flag": "1",
+              "ann_date": "2026-08-31",
+              "three_day_return_pct": 1.8344
+            },
+            {
+              "code": "002409",
+              "name": "雅克科技",
+              "td_amount": 42618.0,
+              "cash_flag": "1",
+              "ann_date": "2026-08-31",
+              "three_day_return_pct": 3.5498
+            },
+            {
+              "code": "300346",
+              "name": "南大光电",
+              "td_amount": 38962.0,
+              "cash_flag": "1",
+              "ann_date": "2026-08-31",
+              "three_day_return_pct": 1.2921
+            }
+          ],
+          "top5_three_day_average_return_pct": 2.2762,
+          "etf_three_day_return_pct": 2.6667,
+          "leader_minus_etf_3d_lag1_pct_points": -0.3905,
+          "evidence_direction": "WEAKEN",
+          "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
+          "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
+          "formal_conclusion": "research/backtests/561980_component_lead_formal_conclusion.json"
+        },
+        "intraday_path_risk_review": {
+          "evidence_id": "intraday_path_risk_review",
+          "display_name": "日内路径风险复核",
+          "status": "READY",
+          "market_date": "2026-08-28",
+          "ready_codes": [
+            "561980",
+            "588000",
+            "159781",
+            "159941",
+            "513180",
+            "159561",
+            "513520",
+            "518880",
+            "159992",
+            "515880",
+            "159326"
+          ],
+          "degraded_codes": [],
+          "active_codes": [],
+          "use_in_current_decision": true,
+          "use_as_decision_evidence": true,
+          "can_generate_decision_independently": false,
+          "automatic_trade": false,
+          "trade_signal": null,
+          "dynamic_owner": "data/state/market_structure_context.json",
+          "upstream_owner": "data/state/intraday_path_features.json",
+          "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+          "decision_boundary": "尾盘拉升与冲高回落未重新站回只提高持仓、追加资本和资本释放的风险收益复核强度；不独立生成风险许可、Trial/Confirm、金额、卖出份额或订单。",
+          "failure_contract": "对象级路径不可用时复用现有分钟→离散fallback；仍无法重建则该对象DEGRADED且不沿用旧方向。"
         }
       },
       "execution_bridge": {
@@ -6168,6 +7096,10 @@
           "改变资金来源选择",
           "改变卖出资金去向选择"
         ],
+        "intraday_path_risk_rule": "日内路径风险复核可提高继续持有、追加资本和部分资本释放的风险收益复核强度；不得独立生成风险许可、Trial/Confirm、金额、卖出份额、退出或订单。",
+        "strong_surface_rule": "高开守住、午后再加速、高位横住、突破后一定时间仍守住等强势表象只能作为结构/承接证据的一部分，不能独立升级Trial/Confirm或增加金额。",
+        "v_recovery_rule": "V形修复仅表示相对继续走弱的风险/承接改善，不构成独立正收益买入证据。",
+        "relative_strength_rule": "日内相对强弱扩大可用于候选比较，但不得机械买强卖弱或独立形成新增金额。",
         "stock_buy_capital_source_rule": "若打新底仓个股出现独立、可证伪且足以改变决策的明显新增证据，必须比较现金、低效率ETF及其他合法可释放资本；现金不是机械唯一来源，任何ETF卖出仍需独立通过卖出链。",
         "stock_sell_destination_rule": "若打新底仓个股出现足以支持降低风险或退出的证据，必须比较资金进入现金还是已经独立通过完整机会判断的ETF/其他合法机会；不得先卖出再寻找用途，也不得机械轮动。",
         "etf_buy_source_rule": "ETF机会成立而现金不足时，打新底仓只有在其自身继续持有的边际收益效率更低、账户打新/底仓功能不被破坏且卖出决议独立成立时，才可作为资金来源。",
@@ -6297,7 +7229,7 @@
     ],
     "history_rule": "必须同时解释历史高/中/低位置与趋势状态；位置不等于趋势。历史不可用时明确降级，不得猜测。",
     "intraday_rule": "必须结合高低点出现先后、低点后修复、高点后回撤和采样覆盖区分高位震荡、V型修复候选、冲高回落、低位弱势；MEDIUM或更低采样不得把候选形态表述为已确认。",
-    "turnover_rule": "成交承接保留两种互补时间尺度：20日时间归一化成交进度回答当日整体活跃度；腾讯1分钟构造的最近10分钟相对前10分钟回答边际参与变化。两者不得机械合成总分，也不得单独产生交易动作。最近完整收盘的成交参与扩大只有与已存在的突破／真实修复结构同时出现时才作为C2确认增强。",
+    "turnover_rule": "成交承接保留两种互补时间尺度：20日时间归一化成交进度回答当日整体活跃度；腾讯1分钟构造的最近10分钟相对前10分钟回答边际参与变化。两者不得机械合成总分，也不得单独产生交易动作。最近完整收盘的成交参与扩大只有与已存在的突破／真实修复结构同时出现时才作为C2确认增强；放量上涨后的弱收盘本身不得机械解释为派发。",
     "evidence_reading_order": [
       "假设/相关性",
       "历史价格位置与趋势",
@@ -6309,7 +7241,10 @@
     ],
     "cross_section_rule": "正式决策表达优先使用相对指数/ETF池中位数的差值解释强弱；横截面名次仅供后台研究，不得作为主候选理由。",
     "forbidden_shortcut": "先按涨幅或横截面名次筛选候选、再补充理由",
-    "no_composite_score": "禁止把历史位置、趋势、日内形态、成交承接和横截面重新合成为机械总分。"
+    "no_composite_score": "禁止把历史位置、趋势、日内形态、成交承接和横截面重新合成为机械总分。",
+    "strong_surface_rule": "高开守住、午后再加速、高位横住、突破后一定时间仍守住等强势表象只能作为结构/承接证据的一部分，不能独立升级Trial/Confirm或增加金额。",
+    "v_recovery_rule": "V形修复只说明相对继续走弱有所改善，不是独立正收益买入证据；不得看到V形就抄底或自动升级Trial/Confirm。",
+    "relative_strength_rule": "日内相对强弱扩大可改善候选比较，但不得机械买强卖弱，也不能单独形成新增资本金额。"
   },
   "market_regime_context_file": "data/state/market_regime_context.json",
   "market_structure_context_file": "data/state/market_structure_context.json",
@@ -6320,7 +7255,7 @@
   "research_contribution_audit_file": "data/state/research_contribution_audit.json",
   "research_master_candidates": {
     "schema_version": "1.0",
-    "generated_at": "2026-08-30T11:18:58Z",
+    "generated_at": "2026-08-30T23:36:32Z",
     "mode": "RESEARCH_TO_MASTER_MAINTENANCE_FEED",
     "read_only": true,
     "automatic_master_update": false,
@@ -6350,7 +7285,7 @@
   },
   "execution_quality": {
     "schema_version": "1.1",
-    "generated_at": "2026-08-30T11:18:58Z",
+    "generated_at": "2026-08-30T23:36:32Z",
     "mode": "DECISION_EXECUTION_ATTRIBUTION",
     "read_only": true,
     "trade_event_count": 3,
@@ -6517,6 +7452,7 @@
   "component_lead_561980_file": "data/state/561980_component_lead_evidence.json",
   "if_ic_basis_5d_file": "data/state/if_ic_basis_5d_evidence.json",
   "ipo_base_stock_oversold_reversal_300750_file": "data/state/300750_oversold_reversal_evidence.json",
+  "intraday_path_risk_review_file": "data/state/market_structure_context.json",
   "formal_dynamic_research_evidence": {
     "margin_financing": {
       "status": "READY",
@@ -6810,9 +7746,40 @@
       "active_support_codes": [],
       "interpretation_rule": "只有融资余额5日状态为EXPANDING时，前一完整交易日相对ETF池更强才作为3—5日持续性的条件增强证据；融资非扩张只表示本交互不激活，不形成反向看空；不得机械买强。"
     },
+    "intraday_path_risk_review": {
+      "evidence_id": "intraday_path_risk_review",
+      "display_name": "日内路径风险复核",
+      "status": "READY",
+      "market_date": "2026-08-28",
+      "ready_codes": [
+        "561980",
+        "588000",
+        "159781",
+        "159941",
+        "513180",
+        "159561",
+        "513520",
+        "518880",
+        "159992",
+        "515880",
+        "159326"
+      ],
+      "degraded_codes": [],
+      "active_codes": [],
+      "use_in_current_decision": true,
+      "use_as_decision_evidence": true,
+      "can_generate_decision_independently": false,
+      "automatic_trade": false,
+      "trade_signal": null,
+      "dynamic_owner": "data/state/market_structure_context.json",
+      "upstream_owner": "data/state/intraday_path_features.json",
+      "research_source": "research/backtests/ashare_ancestral_capital_evidence_formal_conversion.json",
+      "decision_boundary": "尾盘拉升与冲高回落未重新站回只提高持仓、追加资本和资本释放的风险收益复核强度；不独立生成风险许可、Trial/Confirm、金额、卖出份额或订单。",
+      "failure_contract": "对象级路径不可用时复用现有分钟→离散fallback；仍无法重建则该对象DEGRADED且不沿用旧方向。"
+    },
     "if_ic_basis_5d": {
       "schema_version": "1.2",
-      "generated_at": "2026-08-30T11:19:00Z",
+      "generated_at": "2026-08-30T23:36:39Z",
       "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
       "evidence_id": "if_ic_basis_5d",
       "display_name": "IF／IC 5日基差变化证据",
@@ -6832,12 +7799,12 @@
       "research_source": "research/backtests/index_futures_if_ic_basis_formal_conclusion.json",
       "status": "DEGRADED",
       "use_in_current_decision": false,
-      "decision_market_date": "2026-08-28",
-      "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-08-27:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
+      "decision_market_date": "2026-08-31",
+      "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-08-28:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
     },
     "ipo_base_stock_oversold_reversal_300750": {
       "schema_version": "1.1",
-      "generated_at": "2026-08-30T11:19:12Z",
+      "generated_at": "2026-08-30T23:36:51Z",
       "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
       "evidence_id": "ipo_base_stock_oversold_reversal_300750",
       "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -6873,9 +7840,9 @@
       "mode": "FORMAL_561980_COMPONENT_LEAD_EVIDENCE",
       "evidence_id": "component_lead_561980_3d",
       "display_name": "半导体设备ETF（561980）核心成分3日相对领先证据",
-      "status": "DEGRADED",
-      "use_in_current_decision": false,
-      "use_as_decision_evidence": false,
+      "status": "READY",
+      "use_in_current_decision": true,
+      "use_as_decision_evidence": true,
       "decision_eligible": true,
       "can_generate_decision_independently": false,
       "automatic_trade": false,
@@ -6885,15 +7852,59 @@
       ],
       "decision_market_date": "2026-08-31",
       "price_cutoff_market_date": "2026-08-28",
-      "reason": "official PCF unavailable: RuntimeError: official PCF invalid: code=0 rows=0",
-      "failure_policy": "关键PCF或完整价格输入不可验证时不沿用旧动态值，不形成方向性证据。",
-      "reviewed_current_top5": [
-        "002371",
-        "300604",
-        "300666",
-        "300346",
-        "002409"
-      ]
+      "return_window_start": "2026-08-25",
+      "return_window_end": "2026-08-28",
+      "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
+      "pcf_component_count": 40,
+      "top5": [
+        {
+          "code": "002371",
+          "name": "北方华创",
+          "td_amount": 488257.0,
+          "cash_flag": "1",
+          "ann_date": "2026-08-31",
+          "three_day_return_pct": -0.4126
+        },
+        {
+          "code": "300604",
+          "name": "长川科技",
+          "td_amount": 249399.0,
+          "cash_flag": "1",
+          "ann_date": "2026-08-31",
+          "three_day_return_pct": 5.1172
+        },
+        {
+          "code": "300666",
+          "name": "江丰电子",
+          "td_amount": 47964.0,
+          "cash_flag": "1",
+          "ann_date": "2026-08-31",
+          "three_day_return_pct": 1.8344
+        },
+        {
+          "code": "002409",
+          "name": "雅克科技",
+          "td_amount": 42618.0,
+          "cash_flag": "1",
+          "ann_date": "2026-08-31",
+          "three_day_return_pct": 3.5498
+        },
+        {
+          "code": "300346",
+          "name": "南大光电",
+          "td_amount": 38962.0,
+          "cash_flag": "1",
+          "ann_date": "2026-08-31",
+          "three_day_return_pct": 1.2921
+        }
+      ],
+      "top5_three_day_average_return_pct": 2.2762,
+      "etf_three_day_return_pct": 2.6667,
+      "leader_minus_etf_3d_lag1_pct_points": -0.3905,
+      "evidence_direction": "WEAKEN",
+      "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
+      "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
+      "formal_conclusion": "research/backtests/561980_component_lead_formal_conclusion.json"
     }
   },
   "ipo_base_stock_evidence": [
@@ -6968,7 +7979,7 @@
       ],
       "dynamic_stock_specific_signal": {
         "schema_version": "1.1",
-        "generated_at": "2026-08-30T11:19:12Z",
+        "generated_at": "2026-08-30T23:36:51Z",
         "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
         "evidence_id": "ipo_base_stock_oversold_reversal_300750",
         "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -7085,26 +8096,13 @@
       "改变资金来源选择",
       "改变卖出资金去向选择"
     ],
+    "intraday_path_risk_rule": "日内路径风险复核可提高继续持有、追加资本和部分资本释放的风险收益复核强度；不得独立生成风险许可、Trial/Confirm、金额、卖出份额、退出或订单。",
+    "strong_surface_rule": "高开守住、午后再加速、高位横住、突破后一定时间仍守住等强势表象只能作为结构/承接证据的一部分，不能独立升级Trial/Confirm或增加金额。",
+    "v_recovery_rule": "V形修复仅表示相对继续走弱的风险/承接改善，不构成独立正收益买入证据。",
+    "relative_strength_rule": "日内相对强弱扩大可用于候选比较，但不得机械买强卖弱或独立形成新增金额。",
     "stock_buy_capital_source_rule": "若打新底仓个股出现独立、可证伪且足以改变决策的明显新增证据，必须比较现金、低效率ETF及其他合法可释放资本；现金不是机械唯一来源，任何ETF卖出仍需独立通过卖出链。",
     "stock_sell_destination_rule": "若打新底仓个股出现足以支持降低风险或退出的证据，必须比较资金进入现金还是已经独立通过完整机会判断的ETF/其他合法机会；不得先卖出再寻找用途，也不得机械轮动。",
     "etf_buy_source_rule": "ETF机会成立而现金不足时，打新底仓只有在其自身继续持有的边际收益效率更低、账户打新/底仓功能不被破坏且卖出决议独立成立时，才可作为资金来源。",
     "separate_decisions_rule": "旧资产卖出与新资产买入始终分别决议；研究层只改变证据和比较结果，不自动联动两笔交易。"
-  },
-  "refresh_gate": {
-    "status": "READY",
-    "formal_analysis_allowed": true,
-    "formal_decision_persist_allowed": true,
-    "fallback_allowed": false,
-    "query_intent": "EXPLICIT_LATEST",
-    "request_file": "requests/live_snapshot/20260826_1453_broker_screenshot_intraday.json",
-    "request_id": "20260826_1453_broker_screenshot_intraday",
-    "requested_at_beijing": "2026-08-26T14:53:00+08:00",
-    "requested_market_time": "2026-08-26T14:53:00+08:00",
-    "current_snapshot_time": "2026-08-28T15:12:38+08:00",
-    "resolved_snapshot_time": "2026-08-28T15:12:38+08:00",
-    "latest_snapshot": "data/market/snapshots/2026-08-28_151238.json",
-    "failure_reason": "",
-    "rule": "EXPLICIT_LATEST或wait_for_refresh请求必须等本次请求之后且不早于requested_market_time的新CURRENT发布后才可称为最新/当前行情；请求前即使仍处普通FRESH窗口，也不得冒充本次最新查询结果。仅非EXPLICIT_LATEST且用户明确授权时可回退旧快照。"
-  },
-  "formal_analysis_allowed": true
+  }
 }
