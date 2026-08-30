@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0",
+  "mode": "FORMAL_ASHARE_ANCESTRAL_CAPITAL_EVIDENCE_CONVERSION_REVIEW",
+  "review_date": "2026-08-31",
+  "source_issue": 107,
+  "conversion_issue": 110,
+  "research_interpretation": "PASS_MASTER_8_1_FORMAL_CONVERSION_WITH_MERGE_AND_SEMANTIC_DEDUP",
+  "conclusion": "A股祖训云端再研究中具有明确或比较明确资本决策价值的结果已完成MASTER 8.1审查：尾盘拉升与冲高回落且无法重新站回合并为一个日内路径风险复核家族；放量上涨但弱收盘、连续上涨后弱收盘、V形修复、日内相对强弱扩大分别并入既有成交参与/赢家右尾、连续上涨风险复核、日内路径基础语义和资本比较语义；高开守住、午后再加速、高位横住、突破后一定时间仍守住等强势表象统一登记为不得独立升级Trial/Confirm或金额的使用边界。黑色星期四与不稳定日内候选不进入动态正式证据。所有通过项均不能独立生成风险许可、Trial/Confirm、金额、卖出份额或订单。",
+  "decision_eligible": true,
+  "use_as_decision_evidence": true,
+  "can_generate_decision_independently": false,
+  "production_context_integration": true,
+  "automatic_trade": false,
+  "trade_signal": null,
+  "research_basis": {
+    "daily_pit_range": ["2024-01-02", "2026-08-28"],
+    "daily_panel_rows": 6835,
+    "intraday_provider_role": "SINA_15M_RESEARCH_ONLY_NOT_PRODUCTION_PROVIDER",
+    "intraday_robustness_days": 69,
+    "intraday_object_coverage": "10/11 objects in final robustness rerun",
+    "method": ["fixed thresholds before robustness rerun", "date-level aggregation", "first-half/second-half stability", "object concentration check", "paired-background comparison"]
+  },
+  "formal_families": {
+    "intraday_path_risk_review": {
+      "status": "PASS_STATIC_QUALIFICATION",
+      "components": {
+        "late_session_rally": {"events": 49, "dates": 19, "objects": 6, "t5_relative_date_level_pp": -4.58, "half_split_pp": [-5.29, -3.85]},
+        "spike_reversal_no_reclaim": {"events": 38, "dates": 19, "objects": 8, "t5_relative_date_level_pp": -3.36, "half_split_direction": "NEGATIVE_BOTH"}
+      },
+      "dynamic_owner": "data/state/market_structure_context.json",
+      "upstream_owner": "data/state/intraday_path_features.json",
+      "allowed_effects": ["increase holding risk-reward review priority", "weaken interpretation of late-session strength as continuation", "increase review of additional capital", "increase review of partial capital release"],
+      "forbidden_effects": ["automatic sell", "fixed sell ratio", "automatic exit", "automatic ban on new capital", "automatic Trial/Confirm change"]
+    }
+  },
+  "merged_boundaries": {
+    "volume_expand_weak_close": "Weak close after an up day with expanded participation is not mechanical distribution or sell evidence; merge into participation/price structure and winner-right-tail boundary.",
+    "three_up_weak_close": "A weak close after consecutive rises does not automatically strengthen reduction/exit; merge into consecutive-rise risk review.",
+    "v_recovery": "V recovery is relative risk/acceptance improvement versus continued weakening, not an independent positive-return entry signal.",
+    "relative_strength_expand": "Intraday relative-strength expansion improves candidate comparison versus fading, but is not an independent positive-return buy signal and cannot justify mechanical buy-strong/sell-weak.",
+    "strong_surface_not_confirmation": "Gap-hold, afternoon re-acceleration, high-zone hold and time-based breakout hold are only components of structure/acceptance; none can independently upgrade Trial/Confirm or amount."
+  },
+  "negative_or_rejected": {
+    "black_thursday": "NO_DYNAMIC_REGISTRATION; only short T+1 weakness, no stable T+3/T+5/T+10 negative effect.",
+    "unstable_intraday": ["high_gap_fast_pullback", "high_gap_fill", "early_strong_pm_weak", "tail_selloff", "breakout_fail_60m"]
+  },
+  "production_cost_review": {
+    "result": "PASS_LOW_INCREMENTAL_COST",
+    "rule": "Reuse existing Tencent 1m/discrete intraday path owner, market_structure_context, research_execution_summary and decision_context. Do not add provider, minute warehouse, workflow, checker or parallel state. Historical Sina data remains research-only."
+  }
+}
