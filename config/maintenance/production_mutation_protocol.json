@@ -38,20 +38,12 @@
       "CA10": "decision_and_timing",
       "CA11": "root_cause_complete_repair"
     },
-    "decision_outcomes": [
-      "EXECUTE_NOW",
-      "OBSERVE",
-      "DO_NOT_CHANGE"
-    ],
+    "decision_outcomes": ["EXECUTE_NOW", "OBSERVE", "DO_NOT_CHANGE"],
     "decision_rule": "先判断变化是否有清晰净收益，再判断是否仍有必须等待的新信息。价值和实现/验证均充分且无关键残余风险需要未来真实生产暴露时为EXECUTE_NOW；存在明确且必须通过后续真实生产运行或未完成验证才能回答的问题时为OBSERVE；净收益不足、已有机制充分、已满足/替代或复杂度收益不成立时为DO_NOT_CHANGE。",
     "execution_boundary": "用户提出修复、优化或执行不自动等于EXECUTE_NOW。ChatGPT/Codex必须先完成问题事实、canonical owner、根因、当前影响、既有恢复是否充分、实现成熟度和残余风险判断。EXECUTE_NOW进入既有latest-main隔离实施与组合验收链；OBSERVE必须记录具体阻塞和解除条件；DO_NOT_CHANGE不创建生产修改。A股连续交易期间仅执行影响当前交易判断、账户/成交/行情事实或canonical runtime恢复的必要生产修改，其他EXECUTE_NOW事项移至非关键窗口执行。",
     "maintenance_rule_freeze": "长期治理只保留四条上位原则和少量硬工程合同；旧CA01-CA11仅作为审计兼容映射，不再作为日常平级入口，不继续新增CA12/CA13等规则。新失效模式优先归并到现有原则并强化测试，只有现有原则确实无法覆盖且问题重复、实质影响生产时才调整规范。",
     "review_closure_contract": {
-      "recoverable_sources": [
-        "CURRENT_FORMAL_ISSUES_AND_PRS",
-        "CANONICAL_RUNTIME_STATE",
-        "FORMAL_CHANGE_HISTORY"
-      ],
+      "recoverable_sources": ["CURRENT_FORMAL_ISSUES_AND_PRS", "CANONICAL_RUNTIME_STATE", "FORMAL_CHANGE_HISTORY"],
       "forbid_chat_or_task_prompt_as_only_source": true,
       "reclassify_against_latest_main": true,
       "historical_title_or_admission_is_not_current_truth": true,
@@ -66,11 +58,7 @@
     "require_concurrency_group": true,
     "require_latest_main_sync_before_push": true,
     "forbid_force_push_to_main": true,
-    "latest_main_sync_markers": [
-      "git pull --rebase origin main",
-      "git reset --hard origin/main",
-      "git rebase origin/main"
-    ]
+    "latest_main_sync_markers": ["git pull --rebase origin main", "git reset --hard origin/main", "git rebase origin/main"]
   },
   "single_owner_files": {
     "data/state/system_consistency.json": ".github/workflows/system-consistency.yml",
@@ -78,89 +66,63 @@
   },
   "formal_file_mutation_contract": {
     "canonical_gateway": "scripts/formal_file_mutation_gateway.py",
-    "allowed_fact_files": [
-      "ETF当前状态_DASHBOARD.md",
-      "ETF市场行情档案_2026.md",
-      "ETF交易复盘与经验库_2026.md"
-    ],
+    "allowed_fact_files": ["ETF当前状态_DASHBOARD.md", "ETF市场行情档案_2026.md", "ETF交易复盘与经验库_2026.md"],
     "forbidden_rule_file": "ETF规则_MASTER.md",
-    "registered_callers": [
-      "scripts/sync_formal_files.py",
-      "scripts/process_state_sync_request.py",
-      "scripts/apply_trade_fact_correction.py"
-    ],
+    "registered_callers": ["scripts/sync_formal_files.py", "scripts/process_state_sync_request.py", "scripts/apply_trade_fact_correction.py"],
     "rule": "业务脚本可以分别负责账户同步、成交/复盘事件和已确认费用纠错，但对三份人类可读正式事实文件的低层managed-block/upsert/write必须统一经过canonical gateway；gateway绝不允许写MASTER。"
   },
   "shared_writer_families": [
     {
       "family_id": "A_SHARE_CORE_SNAPSHOT",
-      "members": [
-        ".github/workflows/market-snapshot.yml",
-        ".github/workflows/opening-auction-current-fallback.yml"
-      ],
+      "members": [".github/workflows/market-snapshot.yml", ".github/workflows/opening-auction-current-fallback.yml"],
       "required_concurrency_token": "etf-market-snapshot-${{ github.ref }}",
       "reason": "两条链使用同一A股核心producer并可能写CURRENT/runtime及快照，必须共享串行队列。"
     }
   ],
   "nonproduction_validation_workflows": {
-    ".github/workflows/akshare-capability-poc.yml": {
-      "artifact_path": "data/state/akshare_poc.json",
-      "rule": "PoC结果仅作为短期验证证据，不持久化main。"
-    },
-    ".github/workflows/minute-source-poc.yml": {
-      "artifact_path": "data/state/minute_source_poc.json",
-      "rule": "分钟源能力验证只保留Actions artifact；正式启用必须另走生产转化。"
-    },
-    ".github/workflows/minute-path-shadow.yml": {
-      "artifact_path": "data/state/minute_path_features.json",
-      "rule": "shadow输出不属于正式decision context；只做短期artifact留档，不直接写main。"
-    }
+    ".github/workflows/akshare-capability-poc.yml": {"artifact_path": "data/state/akshare_poc.json", "rule": "PoC结果仅作为短期验证证据，不持久化main。"},
+    ".github/workflows/minute-source-poc.yml": {"artifact_path": "data/state/minute_source_poc.json", "rule": "分钟源能力验证只保留Actions artifact；正式启用必须另走生产转化。"},
+    ".github/workflows/minute-path-shadow.yml": {"artifact_path": "data/state/minute_path_features.json", "rule": "shadow输出不属于正式decision context；只做短期artifact留档，不直接写main。"}
   },
   "state_file_contracts": {
     "data/state/CURRENT.json": {
       "state_class": "CANONICAL_MARKET_STATE",
       "canonical_builder": "scripts/cloud_runner_snapshot.py",
-      "canonical_writers": [
-        ".github/workflows/market-snapshot.yml",
-        ".github/workflows/opening-auction-current-fallback.yml"
-      ],
+      "canonical_writers": [".github/workflows/market-snapshot.yml", ".github/workflows/opening-auction-current-fallback.yml"],
       "bounded_repair_writers": {
-        ".github/workflows/self-healing-watchdog.yml": {
-          "required_script": "scripts/runtime_self_heal.py",
-          "allowed_mutation": "CURRENT.rules_version only when MASTER metadata drift is detected"
-        }
+        ".github/workflows/self-healing-watchdog.yml": {"required_script": "scripts/runtime_self_heal.py", "allowed_mutation": "CURRENT.rules_version only when MASTER metadata drift is detected"}
       },
       "rule": "行情价格、时点、快照指针和market phase只能来自canonical snapshot producer；自愈不得重建行情事实。"
     },
     "data/state/runtime_health.json": {
       "state_class": "CANONICAL_A_SHARE_RUNTIME_HEALTH",
       "canonical_builder": "scripts/cloud_runner_snapshot.py",
-      "canonical_writers": [
-        ".github/workflows/market-snapshot.yml",
-        ".github/workflows/opening-auction-current-fallback.yml"
-      ],
+      "canonical_writers": [".github/workflows/market-snapshot.yml", ".github/workflows/opening-auction-current-fallback.yml"],
       "rule": "A股runtime health随canonical snapshot producer生成；海外、通知、研究和一致性workflow不得持久化该文件。"
     },
     "data/state/decision_context.json": {
       "state_class": "DERIVED_REBUILDABLE_STATE",
       "canonical_builder": "scripts/build_state_context.py",
-      "allowed_writers": [
-        ".github/workflows/market-snapshot.yml",
-        ".github/workflows/opening-auction-current-fallback.yml",
-        ".github/workflows/self-healing-watchdog.yml"
-      ],
+      "allowed_writers": [".github/workflows/market-snapshot.yml", ".github/workflows/opening-auction-current-fallback.yml", ".github/workflows/self-healing-watchdog.yml"],
       "rule": "允许多个受控入口触发，但所有持久化版本必须由同一个canonical builder从当时最新正式事实重建，不允许workflow手工拼接。"
     },
     "data/state/query_context.json": {
       "state_class": "DERIVED_REBUILDABLE_STATE",
       "canonical_builder": "scripts/build_query_context.py",
-      "allowed_writers": [
-        ".github/workflows/market-snapshot.yml",
-        ".github/workflows/opening-auction-current-fallback.yml",
-        ".github/workflows/overseas-preopen-pulse.yml",
-        ".github/workflows/self-healing-watchdog.yml"
-      ],
+      "allowed_writers": [".github/workflows/market-snapshot.yml", ".github/workflows/opening-auction-current-fallback.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/self-healing-watchdog.yml"],
       "rule": "允许A股核心、海外刷新和自愈重建，但所有持久化版本必须调用同一个canonical builder；system-consistency只可临时重建用于审计，不应把query_context作为自身owned state提交。"
+    },
+    "data/state/decision_trigger.json": {
+      "state_class": "DERIVED_REBUILDABLE_STATE",
+      "canonical_builder": "scripts/build_phase4_automation.py via scripts/build_state_context.py",
+      "allowed_writers": [".github/workflows/market-snapshot.yml", ".github/workflows/opening-auction-current-fallback.yml", ".github/workflows/self-healing-watchdog.yml"],
+      "rule": "重评触发状态必须由现有Phase4 canonical builder从最新正式事实重建；self-healing调用build_state_context时必须与decision_context同批持久化，禁止保留旧schema或旧规则语义。"
+    },
+    "data/state/capital_efficiency_ranking.json": {
+      "state_class": "DERIVED_REBUILDABLE_STATE",
+      "canonical_builder": "scripts/build_phase4_automation.py via scripts/build_state_context.py",
+      "allowed_writers": [".github/workflows/market-snapshot.yml", ".github/workflows/opening-auction-current-fallback.yml", ".github/workflows/self-healing-watchdog.yml"],
+      "rule": "该文件只枚举完整资本比较全集和数据/执行约束，不生成综合分数或机器主候选；self-healing调用build_state_context时必须与decision_context同批持久化。"
     }
   },
   "fact_precedence": [
@@ -171,12 +133,5 @@
     "真实provider时点 > workflow计划时间",
     "最新main上的正式源文件 > 旧分支生成的动态状态"
   ],
-  "integration_sequence": [
-    "analyze_research_and_test_in_parallel",
-    "implement_in_isolation",
-    "evaluate_value_and_residual_risk",
-    "integrate_one_change_on_latest_main",
-    "run_full_consistency_and_e2e",
-    "re_evaluate_next_change_against_latest_main"
-  ]
+  "integration_sequence": ["analyze_research_and_test_in_parallel", "implement_in_isolation", "evaluate_value_and_residual_risk", "integrate_one_change_on_latest_main", "run_full_consistency_and_e2e", "re_evaluate_next_change_against_latest_main"]
 }
