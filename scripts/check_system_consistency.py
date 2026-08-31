@@ -229,6 +229,40 @@ def _validate_formal_risk_precedence(report: dict) -> None:
         _recount(report)
 
 
+def _validate_post_close_review_contract(report: dict) -> None:
+    """Do not report a ready close context as complete without its canonical review."""
+    try:
+        context = _read_json("post_market_review/post_market_review_event.json")
+    except (OSError, json.JSONDecodeError):
+        return
+    if not context.get("market_close") or str(context.get("status") or "").upper() != "READY_FOR_REVIEW":
+        return
+    market_date = str(context.get("market_date") or "")
+    review_path = ROOT / "events" / "reviews" / f"{market_date}.json"
+    closure_path = ROOT / "data" / "state" / f"close_review_closure_{market_date}.json"
+    review = _read_json(f"events/reviews/{market_date}.json") if review_path.exists() else {}
+    closure = _read_json(f"data/state/close_review_closure_{market_date}.json") if closure_path.exists() else {}
+    errors = []
+    if review.get("event_type") != "FORMAL_POST_CLOSE_REVIEW" or not isinstance(review.get("review"), dict):
+        errors.append(f"missing_or_invalid_review=events/reviews/{market_date}.json")
+    if closure.get("status") != "CLOSED" or closure.get("formal_review_path") != f"events/reviews/{market_date}.json":
+        errors.append(f"missing_or_invalid_closure=data/state/close_review_closure_{market_date}.json")
+    current = _read_json("data/state/CURRENT.json")
+    pointer = current.get("close_review_closure") or {}
+    if pointer.get("market_date") != market_date or pointer.get("formal_review_path") != f"events/reviews/{market_date}.json":
+        errors.append("CURRENT.close_review_closure_is_stale")
+    report.setdefault("checks", []).append({
+        "name": "review:post_close_canonical_chain",
+        "status": "FAIL" if errors else "PASS",
+        "detail": "canonical post-close review, closure and CURRENT pointer are aligned" if not errors else "; ".join(errors),
+    })
+    for item in errors:
+        message = "post_close_review:" + item
+        if message not in report.setdefault("errors", []):
+            report["errors"].append(message)
+    _recount(report)
+
+
 def _validate_trade_event_formal_sync(report: dict) -> None:
     """Require every executed trade event to be visible in both human formal records."""
     archive = (ROOT / "ETF市场行情档案_2026.md").read_text(encoding="utf-8")
@@ -415,6 +449,7 @@ def main() -> int:
     _normalize_stock_market_time_alignment(report)
     _normalize_idempotent_close_skip(report)
     _validate_formal_risk_precedence(report)
+    _validate_post_close_review_contract(report)
     _validate_trade_event_formal_sync(report)
     _validate_historical_trade_case_mapping(report)
     _validate_semantic_formal_structure(report)
@@ -437,3 +472,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
