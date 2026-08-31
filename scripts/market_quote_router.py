@@ -344,7 +344,8 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
     decision_freshness = evaluate_interactive_decision_freshness(current, decision_request_time, query_time, policy)
     # Any formal intraday request must attempt the existing query-time refresh,
     # even when the cached CURRENT is still inside the ordinary FRESH window.
-    should_refresh = (force_refresh or has_decision_request) and (bool(explicit_symbols) or _query_refresh_needed(root, [], query_time, policy) or has_decision_request or decision_freshness["refresh_required"])
+    has_usable_post_request_current = has_decision_request and decision_freshness["formal_decision_allowed"]
+    should_refresh = ((force_refresh and not has_decision_request) or (has_decision_request and not has_usable_post_request_current)) and (bool(explicit_symbols) or _query_refresh_needed(root, [], query_time, policy) or has_decision_request or decision_freshness["refresh_required"])
     if should_refresh:
         try:
             from scripts.query_time_market_refresh import refresh_market_quotes

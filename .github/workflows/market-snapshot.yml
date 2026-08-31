@@ -262,8 +262,10 @@ jobs:
       - name: Build on-demand query context
         if: ${{ (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: |
+          REQUEST_FILE=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | head -n 1)
+          REQUEST_ARGS=()
+          if [ -n "$REQUEST_FILE" ]; then REQUEST_ARGS+=(--request-file "$REQUEST_FILE"); fi
           if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "${{ steps.snapshot_result.outputs.snapshot_written }}" != "true" ]; then
-            REQUEST_FILE=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | head -n 1)
             REQUEST_SYMBOLS=$(python - <<'PY'
           import json, os, subprocess
           files = subprocess.check_output(
@@ -283,15 +285,13 @@ jobs:
           print(",".join(symbols))
           PY
             )
-            REQUEST_ARGS=()
-            if [ -n "$REQUEST_FILE" ]; then REQUEST_ARGS+=(--request-file "$REQUEST_FILE"); fi
             if [ -n "$REQUEST_SYMBOLS" ]; then
               python scripts/build_query_context.py --force-refresh --symbols "$REQUEST_SYMBOLS" "${REQUEST_ARGS[@]}"
             else
               python scripts/build_query_context.py --force-refresh "${REQUEST_ARGS[@]}"
             fi
           else
-            python scripts/build_query_context.py
+            python scripts/build_query_context.py "${REQUEST_ARGS[@]}"
           fi
           python scripts/refresh_gate.py --annotate-contexts
       - name: Build post-market review context
