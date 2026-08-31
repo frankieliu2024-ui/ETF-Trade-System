@@ -472,6 +472,10 @@ def main() -> int:
             check("a_share_runtime:beijing_capture", bool(snapshot.get("captured_at_beijing")) and snapshot.get("timezone") == "Asia/Shanghai", f"captured_at_beijing={snapshot.get('captured_at_beijing')} timezone={snapshot.get('timezone')}")
 
     account = read_json("data/state/account_fact.json")
+    current_account = current.get("account_fact") or {}
+    mirror_keys = ("status", "updated_at", "source")
+    mirror_ok = all(str(current_account.get(key) or "") == str(account.get(key) or "") for key in mirror_keys)
+    check("state_coherence:current_account_mirror", mirror_ok, f"current={current_account} canonical={{k: account.get(k) for k in mirror_keys}}")
     expected_account_stocks = {
         str(position.get("code", "")) for position in (account.get("positions") or [])
         if isinstance(position, dict) and str(position.get("asset_type", "")).upper() == "STOCK" and float(position.get("quantity") or 0) > 0
