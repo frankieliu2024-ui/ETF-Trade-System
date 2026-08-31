@@ -18,7 +18,7 @@ class KOSPIPreviousCloseTests(unittest.TestCase):
             "compareToPreviousClosePriceRaw": "119.63",
             "compareToPreviousPrice": {"name": "RISING"},
         }
-        self.assertAlmostEqual(derive_previous_close(row), 6808.21, places=6)
+        self.assertAlmostEqual(derive_naver_kospi_previous_close(row), 6808.21, places=6)
 
     def test_unknown_direction_does_not_fabricate_previous_close(self):
         row = {
