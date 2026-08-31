@@ -316,6 +316,117 @@ def _normalize_user_title(event: dict) -> dict:
     return event
 
 
+SUMMARY_ABSORB_MINUTES = 5
+AGGREGATION_WINDOW_MINUTES = 5
+MARKET_EVENT_TYPES = {"MARKET_SHOCK_ALERT", "MARKET_VALUE_ALERT", "APAC_OPEN_SIGNAL"}
+PROTECTED_EVENT_TYPES = {"FORMAL_DECISION_MATERIAL_CHANGE", "ACCOUNT_FACT_CONFIRMATION", "PENDING_EXECUTION_CONFIRMATION", "交易判断", "风险许可", "持仓动作", "Trial机会", "Confirm机会", "机会失效"}
+MERGEABLE_CATEGORIES = {"SUDDEN", "EXTREME", "REVERSAL"}
+
+
+def _market_context(event: dict) -> dict:
+    return event.get("confirmation_context") or {}
+
+
+def _market_fact_key(event: dict) -> str:
+    ctx = _market_context(event)
+    explicit = str(ctx.get("fact_key") or event.get("fact_key") or "")
+    if explicit:
+        return explicit
+    return "|".join(str(ctx.get(k) or event.get(k) or "") for k in ("market_date", "security_code", "event_category", "direction"))
+
+
+def _is_protected_event(event: dict) -> bool:
+    event_type = str(event.get("event_type") or event.get("type") or "")
+    title = str(event.get("title") or "")
+    return event_type in PROTECTED_EVENT_TYPES or any(title.startswith(f"【{x}") for x in ("Trial机会", "Confirm机会", "机会失效", "持仓动作", "风险许可"))
+
+
+def _event_magnitude(event: dict) -> float | None:
+    ctx = _market_context(event)
+    for key in ("event_magnitude_pct", "day_change_pct", "phase_metric_change_pct", "sudden_change_pct"):
+        value = number(ctx.get(key))
+        if value is not None:
+            return abs(value)
+    return None
+
+
+def _is_material_upgrade(event: dict, prior: dict) -> bool:
+    current, old = _event_magnitude(event), _event_magnitude(prior)
+    return current is not None and old is not None and current >= old + max(0.5, old * 0.35)
+
+
+def _summary_covers_event(summary: dict, event: dict) -> bool:
+    if _is_protected_event(event):
+        return False
+    sctx, ectx = _market_context(summary), _market_context(event)
+    if str(sctx.get("market_date") or "") != str(ectx.get("market_date") or "") or _is_material_upgrade(event, summary):
+        return False
+    fact_key = _market_fact_key(event)
+    if fact_key and fact_key in {str(x) for x in (sctx.get("covered_fact_keys") or [])}:
+        return True
+    code = str(event.get("security_code") or ectx.get("security_code") or "")
+    name = str(event.get("security_name") or ectx.get("security_name") or "")
+    text = f"{summary.get('title') or ''} {summary.get('content') or ''}"
+    return bool(code and (code in text or (name and name in text))) and str(ectx.get("event_category") or "") == "REVERSAL" and any(word in text for word in ("修复", "反转", "V形", "回吐"))
+
+
+def _find_recent_summary_absorption(items: list[dict], event: dict) -> dict | None:
+    if _is_protected_event(event):
+        return None
+    stamp = parse_notification_time(event.get("created_at") or event.get("sent_at")) or now()
+    for item in reversed(items):
+        if str(item.get("event_type") or "") not in {"A_SHARE_SESSION_SUMMARY", "APAC_SESSION_SUMMARY", "US_SESSION_SUMMARY"}:
+            continue
+        prior_stamp = parse_notification_time(item.get("sent_at") or item.get("created_at"))
+        if not prior_stamp or not (timedelta(0) <= stamp - prior_stamp <= timedelta(minutes=SUMMARY_ABSORB_MINUTES)):
+            continue
+        if _summary_covers_event(item, event):
+            return item
+    return None
+
+
+def _find_aggregate_target(items: list[dict], event: dict) -> dict | None:
+    if _is_protected_event(event):
+        return None
+    ctx = _market_context(event)
+    category, code = str(ctx.get("event_category") or ""), str(event.get("security_code") or ctx.get("security_code") or "")
+    direction, market_date = str(ctx.get("direction") or ""), str(ctx.get("market_date") or "")
+    if category not in MERGEABLE_CATEGORIES or not code or not market_date:
+        return None
+    current_stamp = parse_notification_time(event.get("created_at")) or now()
+    for item in reversed(items):
+        if str(item.get("event_type") or "") not in MARKET_EVENT_TYPES or str(item.get("security_code") or "") != code:
+            continue
+        old = _market_context(item)
+        if str(old.get("market_date") or "") != market_date or str(old.get("direction") or "") != direction:
+            continue
+        old_category = str(old.get("event_category") or "")
+        if old_category == category or old_category not in MERGEABLE_CATEGORIES:
+            continue
+        prior_stamp = parse_notification_time(item.get("sent_at") or item.get("created_at"))
+        if prior_stamp and timedelta(0) <= current_stamp - prior_stamp <= timedelta(minutes=AGGREGATION_WINDOW_MINUTES) and not _is_material_upgrade(event, item):
+            return item
+    return None
+
+
+def _absorb_or_aggregate(notifications: list[dict], event: dict) -> tuple[str, dict] | None:
+    summary = _find_recent_summary_absorption(notifications, event)
+    if summary:
+        return "ABSORBED_BY_SUMMARY", summary
+    target = _find_aggregate_target(notifications, event)
+    if target:
+        ctx = dict(target.get("confirmation_context") or {})
+        tags = list(ctx.get("event_tags") or [])
+        for value in (ctx.get("event_category"), _market_context(event).get("event_category")):
+            if value and value not in tags:
+                tags.append(value)
+        ctx["event_tags"] = tags
+        ctx["aggregation_status"] = "MERGED_SAME_OBJECT_CONTINUOUS_FACT"
+        target["confirmation_context"] = ctx
+        return "AGGREGATED_INTO_EXISTING", target
+    return None
+
+
 def persist_and_send(event: dict, *, policy: str) -> dict:
     event = _normalize_user_visible_event(event)
     event = _normalize_user_title(event)
@@ -331,6 +442,14 @@ def persist_and_send(event: dict, *, policy: str) -> dict:
     if not raw_items:
         raw_items = [normalize_notification(x, x) for x in (state.get("recent") or [])]
     notifications = expire_notifications(raw_items)
+    aggregate_result = _absorb_or_aggregate(notifications, event)
+    if aggregate_result:
+        status, target = aggregate_result
+        if status == "AGGREGATED_INTO_EXISTING":
+            stamp = now().isoformat(timespec="seconds")
+            state.update({"schema_version": "2.2", "updated_at": stamp, "last_status": status, "last_type": target.get("event_type"), "last_title": target.get("title"), "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": policy})
+            write_json(NOTIFICATION_STATE, state)
+        return {"status": status, "notification_id": target.get("notification_id"), "event_tags": (target.get("confirmation_context") or {}).get("event_tags", [])}
     existing = find_existing_notification(notifications, event)
     if existing and existing.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED"}:
         return {"status": "ALREADY_MANAGED", "notification_id": existing.get("notification_id")}
