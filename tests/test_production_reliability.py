@@ -67,6 +67,17 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
             saved = json.loads(state_file.read_text(encoding="utf-8"))
             self.assertEqual(saved["notifications"][0]["response"]["error"], "timeout")
 
+    def test_notification_center_main_persists_missing_token(self):
+        with tempfile.TemporaryDirectory() as td:
+            import scripts.notification_center as center
+            state_file = Path(td) / "notification_center.json"
+            event = {"key": "center-event", "event_type": "SYSTEM_EVENT", "title": "系统异常", "content": "失败", "source": "test"}
+            with patch.object(center, "STATE", Path(td)), patch.dict(os.environ, {}, clear=True), patch.object(center, "choose_event", return_value=event):
+                with patch("sys.argv", ["notification_center.py", "--mode", "event"]):
+                    self.assertEqual(center.main(), 1)
+            saved = json.loads(state_file.read_text(encoding="utf-8"))
+            self.assertEqual(saved["notifications"][0]["lifecycle_status"], "FAILED")
+
 
 if __name__ == "__main__":
     unittest.main()
