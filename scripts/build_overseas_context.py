@@ -278,6 +278,32 @@ def fetch_yahoo(object_id: str, spec: dict, generated_utc: datetime) -> dict:
     }
 
 
+def derive_naver_kospi_previous_close(row: dict) -> float | None:
+    """Derive previous close from Naver's current close, signed change and direction."""
+    def number(value):
+        if value in (None, "", "-"):
+            return None
+        try:
+            return float(str(value).replace(",", ""))
+        except (TypeError, ValueError):
+            return None
+
+    close = number(row.get("closePriceRaw", row.get("closePrice")))
+    change = number(row.get("compareToPreviousClosePriceRaw", row.get("compareToPreviousClosePrice")))
+    direction = str((row.get("compareToPreviousPrice") or {}).get("name") or "").upper()
+    if close is None or change is None:
+        return None
+    if direction == "RISING":
+        previous = close - abs(change)
+    elif direction == "FALLING":
+        previous = close + abs(change)
+    elif direction in {"UNCHANGED", "SAME", "FLAT"}:
+        previous = close
+    else:
+        return None
+    return round(previous, 8) if previous > 0 else None
+
+
 def fetch_naver_kospi(generated_utc: datetime) -> dict:
     url = "https://polling.finance.naver.com/api/realtime/domestic/index/KOSPI"
     req = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.16"})
@@ -314,6 +340,7 @@ def fetch_naver_kospi(generated_utc: datetime) -> dict:
         "market_date_local": local.date().isoformat(),
         "provider_timezone": "Asia/Seoul",
         "symbol": "KOSPI",
+        "previous_close": derive_naver_kospi_previous_close(data),
     }
     phase = market_phase("Asia/Seoul", generated_utc)
     return {
@@ -323,8 +350,11 @@ def fetch_naver_kospi(generated_utc: datetime) -> dict:
         "market_phase_at_generation": phase,
         "time_relation_to_a_share": time_relation("KOSPI", latest, phase, generated_utc),
         "quality_status": validate_latest(latest), "latest": latest,
+        "previous_close_reference": latest.get("previous_close"),
+        "previous_close_reference_source": "naver_finance:compareToPreviousClosePrice",
+        "previous_close_reference_market_date": latest.get("market_date_local"),
         "display_time_rule": "正式输出优先显示latest.as_of_beijing（北京时间）；同时保留韩国本地交易时点。",
-        "decision_note": "Naver Finance公开实时指数JSON；使用localTradedAt作为provider时点，作为韩国综合指数直连备源。",
+        "decision_note": "Naver Finance公开实时指数JSON；使用localTradedAt和compareToPreviousClosePrice推导previous_close，不使用当前日开盘价替代。",
     }
 
 
