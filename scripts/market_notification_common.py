@@ -336,12 +336,19 @@ def persist_and_send(event: dict, *, policy: str) -> dict:
     item = normalize_notification(event, existing)
     token = os.environ.get("PUSHPLUS_TOKEN", "").strip()
     if not token:
-        return {"status": "SKIPPED_NO_SECRET", "notification_id": item.get("notification_id")}
+        stamp = now().isoformat(timespec="seconds")
+        item["last_attempted_at"] = stamp
+        item["response"] = {"error": "PUSHPLUS_TOKEN missing"}
+        item["lifecycle_status"] = "FAILED"
+        notifications.append(item)
+        state.update({"schema_version": "2.2", "updated_at": stamp, "last_status": "FAILED", "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": policy})
+        write_json(NOTIFICATION_STATE, state)
+        return {"status": "FAILED", "notification_id": item.get("notification_id"), "response": item["response"]}
     ok, response = send(token, item["title"], item["content"])
     stamp = now().isoformat(timespec="seconds")
     item["last_attempted_at"] = stamp
     item["response"] = response
-    item["lifecycle_status"] = "SENT" if ok else "CREATED"
+    item["lifecycle_status"] = "SENT" if ok else "FAILED"
     item["sent_at"] = stamp if ok else item.get("sent_at")
     if existing:
         notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]

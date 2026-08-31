@@ -160,7 +160,18 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         if int(position.get("quantity") or 0) > 0 and code not in seen_system_codes:
             system_objects.append({"object_code": code, "object_name": position.get("name") or code, "source_type": "SYSTEM_MONITORED"})
             seen_system_codes.add(code)
-    market_quote = build_market_quote_context(root, force_refresh=force_refresh, requested_symbols=requested_symbols)
+    request_time = None
+    live_dir = root / "requests" / "live_snapshot"
+    if live_dir.exists():
+        request_times = []
+        for path in live_dir.glob("*.json"):
+            request = read_json(path, {})
+            stamp = parse_time(request.get("requested_at_beijing") or request.get("request_time"))
+            if stamp:
+                request_times.append(stamp)
+        if request_times:
+            request_time = max(request_times)
+    market_quote = build_market_quote_context(root, force_refresh=force_refresh, requested_symbols=requested_symbols, decision_request_time=request_time)
     return {
         "generated_at": now_utc(), "generated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
         "market_date": current.get("market_date", ""), "latest_valid_node": current.get("latest_valid_node", ""),
@@ -175,6 +186,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         "market_quote_router": market_quote,
         "system_objects": system_objects, "user_requested_objects": [],
         "canonical_files": CANONICAL_FILES, "data_status": {**(current.get("data_freshness") or {}), **freshness}, "freshness_at_context_build": freshness,
+        "interactive_decision_freshness": market_quote.get("decision_freshness", {}),
         "trading_day_status": trading_day_status, "runtime_health": runtime_health,
         "system_consistency_status": consistency.get("status", "MISSING"), "system_consistency_hard_errors": consistency.get("hard_error_count", None),
         "etf_universe_count": len(etf_universe.get("objects") or []), "overseas_context_status": overseas_context.get("quality_status", "MISSING"),
