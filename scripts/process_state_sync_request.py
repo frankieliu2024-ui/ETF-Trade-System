@@ -110,6 +110,19 @@ def display_name(p: dict) -> str:
     return f"{p.get('name', '')}（{p.get('code', '')}）"
 
 
+def sync_current_account_mirror(root: Path, account: dict) -> None:
+    """Keep CURRENT's account summary aligned with canonical account_fact."""
+    current_path = root / "data" / "state" / "CURRENT.json"
+    current = load_json(current_path) if current_path.exists() else {}
+    current["account_fact"] = {
+        key: account.get(key, "")
+        for key in ("status", "updated_at", "source")
+    }
+    current["needs_account_update"] = account.get("status") != "VALID"
+    atomic_json_write(current_path, current)
+
+
+
 def build_dashboard_block(account: dict, decision: dict | None, request: dict) -> str:
     positions = account.get("positions") or []
     etfs = [p for p in positions if p.get("asset_type") == "ETF"]
@@ -661,6 +674,7 @@ def main() -> int:
         account["formal_action"] = {**(account.get("formal_action") or {}), "execution_status": "EXECUTED", "execution_fact_ref": f"events/trades/{event_id}.json", "last_executed_event_id": event_id}
         atomic_json_write(ACCOUNT, account)
         write_trade_review_required(event)
+    sync_current_account_mirror(ROOT, account)
     review_recorded, review_idempotent = record_post_close_review(account, request)
     # Keep the three human-readable fact documents synchronized even when the
     # request only confirms a fee/account snapshot and creates no new trade event.

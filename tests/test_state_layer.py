@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.process_state_sync_request import account_fact_is_older, is_broker_screenshot_request, merge_account_fact
+from scripts.process_state_sync_request import account_fact_is_older, is_broker_screenshot_request, merge_account_fact, sync_current_account_mirror
 from scripts import build_e2e_status as e2e
 
 from scripts.state_manager import (
@@ -83,6 +83,15 @@ class StateLayerTests(unittest.TestCase):
         self.assertFalse(context["dashboard_summary"]["automatic_overwrite"])
         self.assertTrue(context["needs_account_screenshot"])
 
+
+
+    def test_account_sync_updates_current_account_mirror(self) -> None:
+        account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00", "source": "BROKER_SCREENSHOT_20260831"}
+        sync_current_account_mirror(self.root, account)
+        current = read_current(self.root)
+        self.assertEqual(current["account_fact"]["updated_at"], account["updated_at"])
+        self.assertEqual(current["account_fact"]["source"], account["source"])
+        self.assertFalse(current["needs_account_update"])
 
     def test_broker_snapshot_merge_carries_forward_canonical_history(self) -> None:
         prior = {
