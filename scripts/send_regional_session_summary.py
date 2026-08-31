@@ -452,7 +452,8 @@ def _apac_event() -> dict | None:
         headline, path_lines, times, hstech_ret = _apac_lines(selected, mark_hk_live=True)
         a_lines, a_time = _a_share_reference(today)
         headline = [f"- **区域判断**：{tone}", f"- **当日有效覆盖**：{len(selected)}/4", "- **时点语义**：日本/韩国/台湾已进入收盘结果；香港仍可能在交易"] + headline + a_lines
-        title = f"【收盘总结】亚太主要市场收盘，A股参考：{tone}"
+        subjects = "、".join(label for _, label, _, _ in selected[:3]) or "日韩台"
+        title = f"【收盘总结】{subjects}收盘结构，A股参考：{tone}"
         content = render_summary(
             headline_lines=["- **节点**：日韩台主要市场收盘后"] + headline,
             path_lines=path_lines,

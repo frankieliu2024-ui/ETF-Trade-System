@@ -13,6 +13,7 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import notification_materiality_guard as guard
+import market_notification_common as notification_common
 
 
 class NotificationMaterialityGuardTests(unittest.TestCase):
@@ -228,6 +229,83 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
         with patch.object(semantics, "_account_context", return_value={"held_etfs": {}, "held_stocks": {}, "formal": formal}):
             headline, _, _, _ = semantics.a_share_structure(indices, etfs, {}, is_close=True)
         self.assertIn("收盘", " ".join(headline))
+
+
+class NotificationAggregationTests(unittest.TestCase):
+    @staticmethod
+    def _event(code, name, category, direction="UP", stamp="2026-08-31T13:20:00+08:00", magnitude=2.0, event_type="MARKET_VALUE_ALERT"):
+        return {
+            "event_type": event_type,
+            "security_code": code,
+            "security_name": name,
+            "created_at": stamp,
+            "sent_at": stamp,
+            "title": f"【市场异动】{name}{category}",
+            "content": f"{name}（{code}）当前涨跌 {magnitude:+.2f}%",
+            "confirmation_context": {
+                "market_date": "2026-08-31",
+                "security_code": code,
+                "security_name": name,
+                "event_category": category,
+                "direction": direction,
+                "event_magnitude_pct": magnitude,
+            },
+        }
+
+    def test_same_object_continuous_events_merge_and_keep_tags(self):
+        first = self._event("N225", "日经225指数", "SUDDEN", magnitude=1.2, stamp="2026-08-31T10:00:00+08:00")
+        second = self._event("N225", "日经225指数", "EXTREME", magnitude=1.4, stamp="2026-08-31T10:04:00+08:00")
+        result = notification_common._absorb_or_aggregate([first], second)
+        self.assertIsNotNone(result)
+        self.assertEqual(result[0], "AGGREGATED_INTO_EXISTING")
+        self.assertEqual(result[1]["confirmation_context"]["event_tags"], ["SUDDEN", "EXTREME"])
+
+    def test_summary_absorbs_same_fact_but_not_independent_gold(self):
+        summary = {
+            "event_type": "A_SHARE_SESSION_SUMMARY",
+            "created_at": "2026-08-31T15:02:00+08:00",
+            "sent_at": "2026-08-31T15:02:00+08:00",
+            "title": "【收盘总结】科创50日内V形修复",
+            "content": "科创50（000688）从低点修复至高位。",
+            "confirmation_context": {
+                "market_date": "2026-08-31",
+                "covered_fact_keys": ["2026-08-31|000688|REVERSAL|UP"],
+            },
+        }
+        reversal = self._event("000688", "科创50", "REVERSAL", stamp="2026-08-31T15:03:00+08:00")
+        gold = self._event("518880", "黄金ETF", "EXTREME", direction="DOWN", stamp="2026-08-31T15:03:00+08:00", magnitude=4.2)
+        self.assertEqual(notification_common._absorb_or_aggregate([summary], reversal)[0], "ABSORBED_BY_SUMMARY")
+        self.assertIsNone(notification_common._absorb_or_aggregate([summary], gold))
+
+    def test_protected_trial_is_never_absorbed(self):
+        summary = {
+            "event_type": "A_SHARE_SESSION_SUMMARY",
+            "created_at": "2026-08-31T15:02:00+08:00",
+            "sent_at": "2026-08-31T15:02:00+08:00",
+            "title": "【收盘总结】科创50结构修复",
+            "content": "科创50（000688）修复。",
+            "confirmation_context": {"market_date": "2026-08-31", "covered_fact_keys": ["2026-08-31|515880|REVERSAL|UP"]},
+        }
+        trial = self._event("515880", "通信ETF", "REVERSAL", stamp="2026-08-31T15:03:00+08:00", event_type="Trial机会")
+        self.assertIsNone(notification_common._absorb_or_aggregate([summary], trial))
+
+    def test_material_upgrade_reopens_after_summary_or_aggregation(self):
+        summary = {
+            "event_type": "A_SHARE_SESSION_SUMMARY",
+            "created_at": "2026-08-31T15:02:00+08:00",
+            "sent_at": "2026-08-31T15:02:00+08:00",
+            "title": "【收盘总结】科创50日内V形修复",
+            "content": "科创50（000688）修复。",
+            "confirmation_context": {"market_date": "2026-08-31", "covered_fact_keys": ["2026-08-31|000688|REVERSAL|UP"], "covered_event_magnitude_pct": 2.0},
+        }
+        upgrade = self._event("000688", "科创50", "REVERSAL", stamp="2026-08-31T15:04:00+08:00", magnitude=5.0)
+        self.assertIsNone(notification_common._absorb_or_aggregate([summary], upgrade))
+
+    def test_apac_summary_title_names_objects_directly(self):
+        source = Path(__file__).resolve().parents[1] / "scripts" / "send_regional_session_summary.py"
+        text = source.read_text(encoding="utf-8")
+        self.assertIn('subjects = "、".join(label for _, label, _, _ in selected[:3])', text)
+        self.assertNotIn("title = f\"【收盘总结】亚太主要市场收盘", text)
 
 
 if __name__ == "__main__":
