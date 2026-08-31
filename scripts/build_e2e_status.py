@@ -77,9 +77,31 @@ def market_component(current: dict) -> dict:
     }
 
 
+def latest_broker_screenshot_request() -> tuple[Path | None, dict]:
+    directory = ROOT / "requests" / "live_snapshot"
+    candidates = []
+    for path in directory.glob("*.json"):
+        request = read_json(path)
+        source = str(request.get("source") or "").upper()
+        scenario = str(request.get("interaction_scenario") or "").upper()
+        if source != "CHATGPT_USER_BROKER_SCREENSHOT" and scenario != "BROKER_SCREENSHOT_SYNC":
+            continue
+        stamp = parse_time(request.get("request_time_beijing") or request.get("requested_at_beijing") or request.get("request_time"))
+        if stamp:
+            candidates.append((stamp, path, request))
+    if not candidates:
+        return None, {}
+    _, path, request = max(candidates, key=lambda item: item[0])
+    return path, request
+
+
+
 def account_component(account: dict, current: dict) -> dict:
     status_raw = str(account.get("status") or "UNKNOWN").upper()
     account_time = parse_time(account.get("updated_at"))
+    broker_path, broker_request = latest_broker_screenshot_request()
+    request_time = parse_time(broker_request.get("request_time_beijing") or broker_request.get("requested_at_beijing") or broker_request.get("request_time"))
+    ingress_pending = bool(broker_path and request_time and (account_time is None or request_time > account_time))
     audit_events = account.get("account_change_events_after_confirmed_at") or []
     pending_events = []
     for event in audit_events:
@@ -91,6 +113,24 @@ def account_component(account: dict, current: dict) -> dict:
         pending_events.append(event)
 
     needs_update = bool(current.get("needs_account_update")) or bool(pending_events)
+    if ingress_pending:
+        status = "BLOCKED"
+        reason = "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request is newer than canonical account_fact"
+        return {
+            "status": status,
+            "reason": reason,
+            "updated_at": account.get("updated_at"),
+            "source": account.get("source"),
+            "pending_change_events": pending_events,
+            "historical_audit_event_count": len(audit_events),
+            "pending_broker_request": {
+                "path": str(broker_path.relative_to(ROOT)).replace("\\", "/"),
+                "request_id": broker_request.get("request_id"),
+                "request_time": request_time.isoformat(timespec="seconds"),
+                "has_account_fact": isinstance(broker_request.get("account_fact"), dict),
+                "status": "ACCOUNT_SYNC_NOT_PERFORMED",
+            },
+        }
     if status_raw == "VALID" and not needs_update:
         status = "READY"
         reason = "confirmed account facts remain valid; historical audit deltas are not pending updates"
