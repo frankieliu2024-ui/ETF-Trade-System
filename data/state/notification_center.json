@@ -1,36 +1,10 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-08-31T14:57:58+08:00",
+  "updated_at": "2026-08-31T15:02:28+08:00",
   "last_status": "SENT",
   "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】日经225指数（N225）日内方向明显反转",
+  "last_title": "【市场异动】科创50（000688）日内方向明显反转",
   "notifications": [
-    {
-      "notification_id": "notification_0000000000004d625bdd",
-      "event_type": "CHANNEL_TEST",
-      "source_event_id": "channel-test:2026-08-25T22:27:19+08:00",
-      "related_decision_id": "",
-      "security_code": "",
-      "security_name": "",
-      "user_severity": "",
-      "user_action": "",
-      "lifecycle_status": "ARCHIVED",
-      "created_at": "2026-08-25T22:27:20+08:00",
-      "sent_at": "2026-08-25T22:27:20+08:00",
-      "confirmed_at": null,
-      "archived_at": "2026-08-25T22:27:20+08:00",
-      "expires_at": "2026-08-27T22:27:20+08:00",
-      "title": "ETF系统通知中心测试",
-      "content": "通知中心已经可以主动联系你。正式运行时，只推送需要你关注、确认或决策的事项。",
-      "source": "manual_test",
-      "confirmation_context": {},
-      "response": {
-        "http_status": 200,
-        "pushplus_code": 200,
-        "pushplus_message": "执行成功"
-      },
-      "last_attempted_at": "2026-08-25T22:27:20+08:00"
-    },
     {
       "notification_id": "notification_b3e988fbf8abb6d3e8a8",
       "event_type": "系统异常",
@@ -1671,27 +1645,78 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-08-31T14:35:06+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "channel-test:2026-08-25T22:27:19+08:00",
-      "type": "CHANNEL_TEST",
-      "title": "ETF系统通知中心测试",
-      "content": "通知中心已经可以主动联系你。正式运行时，只推送需要你关注、确认或决策的事项。",
-      "source": "manual_test",
-      "user_severity": "",
-      "user_action": "",
-      "status": "ARCHIVED",
-      "attempted_at": "2026-08-25T22:27:20+08:00",
+      "notification_id": "notification_baff8942ef5069af1a7c",
+      "event_type": "A_SHARE_SESSION_SUMMARY",
+      "source_event_id": "a-share-session-summary:2026-08-31:CLOSE",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "user_severity": "需要关注",
+      "user_action": "查看结构摘要；正式交易动作以MASTER完整决策链为准",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-08-31T15:02:26+08:00",
+      "sent_at": "2026-08-31T15:02:27+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-02T15:02:26+08:00",
+      "title": "【收盘总结】A股全天结构与ETF强弱",
+      "content": "### 核心结论\n- **市场结构**：科技成长整体偏强。\n- **指数反馈**：上证指数（000001）+0.86%，科创50（000688）+1.34%，创业板指（399006）+0.42%。\n- **ETF自身反馈**：当前Trial，已执行对象通信ETF（515880）收盘+0.60%，较最近盘中有效节点（14:58）+0.00个百分点，仍强于纳指ETF（159941）1.08个百分点；持仓中偏弱的是纳指ETF（159941）-0.48%。\n\n### 关键路径\n- **当前正式对象路径**：通信ETF（515880）低开-2.99%后基本收复（当前+0.60%）。\n- 科创50（000688）低开-2.34%后基本收复；创业板指（399006）低开-1.68%后基本收复；上证指数（000001）低开-0.65%后基本收复。\n\n### 对ETF系统的影响\n科技成长整体偏强。优先复核通信ETF（515880）既有Trial，已执行假设是否继续成立；比较纳指ETF（159941）等持仓继续占用资本的边际效率。跨市场ETF的相对涨幅只用于解释不同风险因子，不替代A股自身反馈，也不等同资本效率排名。\n\n### 当前动作\n**不因通知机械交易；优先复核通信ETF（515880）当前Trial，已执行假设，同时比较纳指ETF（159941）的资本占用效率；只有正式机会、金额或卖出动作改变时执行。**\n\n### 数据与边界\n- **价格有效时点**：2026-08-31 15:00:00\n- **provider补查/观测上限**：2026-08-31 15:01:05\n- **通知生成**：2026-08-31 15:02:26\n- **边界**：只要同日verified close仍可追溯，固定收盘总结允许延迟补发；必须明确15:00价格有效时点，不能伪装成晚间新行情。",
+      "source": "CURRENT+intraday_path_features",
+      "confirmation_context": {
+        "market_date": "2026-08-31",
+        "session_node": "CLOSE",
+        "market_as_of_beijing": "2026-08-31 15:00:00",
+        "provider_observed_as_of_beijing": "2026-08-31T15:01:05+08:00",
+        "value_reason": "固定收盘总结"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_0000000000004d625bdd",
-      "lifecycle_status": "ARCHIVED"
+      "last_attempted_at": "2026-08-31T15:02:27+08:00"
     },
+    {
+      "notification_id": "notification_ebcf40da2d459725fb14",
+      "event_type": "MARKET_VALUE_ALERT",
+      "source_event_id": "market-value:a-share:2026-08-31:000688:UP:REVERSAL:15:0",
+      "related_decision_id": "",
+      "security_code": "000688",
+      "security_name": "科创50",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-08-31T15:02:27+08:00",
+      "sent_at": "2026-08-31T15:02:28+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-02T15:02:27+08:00",
+      "title": "【市场异动】科创50（000688）日内方向明显反转",
+      "content": "### 核心结论\n- **事件类型**：方向反转\n- **对象/结构**：科创50（000688）\n- **最近脉冲变化**：+0.14%\n- **关键结构**：盘中一度较前收-2.51%，当前修复至+1.34%\n\n**判断**：行情先形成足够大的单向日内幅度，随后大幅回吐或修复，原先的单向市场解释可能已经失效。\n\n### 对ETF系统的影响\n科创50（000688）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-08-31 15:01:03\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "confirmation_context": {
+        "market": "A_SHARE",
+        "market_date": "2026-08-31",
+        "direction": "UP",
+        "event_category": "REVERSAL",
+        "asset_class": "A_SHARE_INDEX",
+        "day_change_pct": 1.3380260505971187,
+        "sudden_change_pct": 0.1361393496225105,
+        "interval_minutes": 2.8333333333333335,
+        "event_magnitude_pct": 2.514213518635511,
+        "market_as_of_beijing": "2026-08-31T15:01:03+08:00"
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-08-31T15:02:28+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "system:workflow:32867470397:WORKFLOW_FAILURE_UNCLASSIFIED",
       "type": "系统异常",
@@ -2554,6 +2579,42 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_6ac59d4812a8ebf7c4df",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "a-share-session-summary:2026-08-31:CLOSE",
+      "type": "A_SHARE_SESSION_SUMMARY",
+      "title": "【收盘总结】A股全天结构与ETF强弱",
+      "content": "### 核心结论\n- **市场结构**：科技成长整体偏强。\n- **指数反馈**：上证指数（000001）+0.86%，科创50（000688）+1.34%，创业板指（399006）+0.42%。\n- **ETF自身反馈**：当前Trial，已执行对象通信ETF（515880）收盘+0.60%，较最近盘中有效节点（14:58）+0.00个百分点，仍强于纳指ETF（159941）1.08个百分点；持仓中偏弱的是纳指ETF（159941）-0.48%。\n\n### 关键路径\n- **当前正式对象路径**：通信ETF（515880）低开-2.99%后基本收复（当前+0.60%）。\n- 科创50（000688）低开-2.34%后基本收复；创业板指（399006）低开-1.68%后基本收复；上证指数（000001）低开-0.65%后基本收复。\n\n### 对ETF系统的影响\n科技成长整体偏强。优先复核通信ETF（515880）既有Trial，已执行假设是否继续成立；比较纳指ETF（159941）等持仓继续占用资本的边际效率。跨市场ETF的相对涨幅只用于解释不同风险因子，不替代A股自身反馈，也不等同资本效率排名。\n\n### 当前动作\n**不因通知机械交易；优先复核通信ETF（515880）当前Trial，已执行假设，同时比较纳指ETF（159941）的资本占用效率；只有正式机会、金额或卖出动作改变时执行。**\n\n### 数据与边界\n- **价格有效时点**：2026-08-31 15:00:00\n- **provider补查/观测上限**：2026-08-31 15:01:05\n- **通知生成**：2026-08-31 15:02:26\n- **边界**：只要同日verified close仍可追溯，固定收盘总结允许延迟补发；必须明确15:00价格有效时点，不能伪装成晚间新行情。",
+      "source": "CURRENT+intraday_path_features",
+      "user_severity": "需要关注",
+      "user_action": "查看结构摘要；正式交易动作以MASTER完整决策链为准",
+      "status": "SENT",
+      "attempted_at": "2026-08-31T15:02:27+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_baff8942ef5069af1a7c",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:a-share:2026-08-31:000688:UP:REVERSAL:15:0",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】科创50（000688）日内方向明显反转",
+      "content": "### 核心结论\n- **事件类型**：方向反转\n- **对象/结构**：科创50（000688）\n- **最近脉冲变化**：+0.14%\n- **关键结构**：盘中一度较前收-2.51%，当前修复至+1.34%\n\n**判断**：行情先形成足够大的单向日内幅度，随后大幅回吐或修复，原先的单向市场解释可能已经失效。\n\n### 对ETF系统的影响\n科创50（000688）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-08-31 15:01:03\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "status": "SENT",
+      "attempted_at": "2026-08-31T15:02:28+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_ebcf40da2d459725fb14",
       "lifecycle_status": "SENT"
     }
   ],
