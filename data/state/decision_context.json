@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-31T13:58:21Z",
+  "generated_at": "2026-08-31T23:22:18Z",
   "rules_version": "V2.2.30",
   "market_date": "2026-08-31",
   "latest_node": "close",
@@ -89,8 +89,8 @@
     },
     "account_fact": {
       "status": "VALID",
-      "updated_at": "2026-08-31T15:12:00+08:00",
-      "source": "BROKER_SCREENSHOT_20260831_1512_USER_PROVIDED"
+      "updated_at": "2026-09-01T07:15:00+08:00",
+      "source": "BROKER_SCREENSHOT_20260901_0715_USER_PROVIDED"
     },
     "needs_account_update": false,
     "last_trade_event_id": "20260827_100843_515880_buy",
@@ -98,9 +98,9 @@
     "generated_at": "2026-08-31T07:01:10Z",
     "account_fact_reference_synced_at": "2026-08-27T10:09:00+08:00",
     "account_fact_path": "data/state/account_fact.json",
-    "account_fact_updated_at": "2026-08-31T15:12:00+08:00",
+    "account_fact_updated_at": "2026-09-01T07:15:00+08:00",
     "account_fact_status": "VALID",
-    "account_fact_source": "BROKER_SCREENSHOT_20260831_1512_USER_PROVIDED",
+    "account_fact_source": "BROKER_SCREENSHOT_20260901_0715_USER_PROVIDED",
     "close_review_closure": {
       "status": "CLOSED",
       "market_date": "2026-08-31",
@@ -762,7 +762,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 10.393,
-    "age_seconds": 25031
+    "age_seconds": 58868
   },
   "freshness_at_context_build": {
     "status": "STALE",
@@ -778,7 +778,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 10.393,
-    "age_seconds": 25031
+    "age_seconds": 58868
   },
   "data_quality_summary": {
     "pass_count": 14,
@@ -827,17 +827,17 @@
     "read_only": true
   },
   "point_in_time": {
-    "account_fact_time": "2026-08-31T15:12:00+08:00",
+    "account_fact_time": "2026-09-01T07:15:00+08:00",
     "market_snapshot_time": "2026-08-31T15:01:10+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-08-31T13:58:21Z",
+    "context_generated_time": "2026-08-31T23:22:18Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
   "scheduled_pulse_health": {
     "expected_slots": [],
     "observed_slots": [
-      "cron:*/10 2-3,5-6 * * 1-5"
+      "cron:0,10 7 * * 1-5"
     ],
     "missing_slots": [],
     "status": "UNKNOWN",
@@ -859,7 +859,7 @@
     "read_only": true
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-08-31T21:58:21+08:00",
+    "generated_at_beijing": "2026-09-01T07:22:18+08:00",
     "refresh_mode": "CACHED_STATE",
     "refresh_failures": [],
     "decision_freshness": {
@@ -868,8 +868,8 @@
       "captured_at": "2026-08-31T07:01:10+00:00",
       "provider_as_of": "2026-08-31T07:01:05+00:00",
       "effective_as_of": "2026-08-31T07:01:05+00:00",
-      "request_time": "2026-08-31T13:58:21.383173+00:00",
-      "age_seconds": 25036,
+      "request_time": "2026-08-31T23:22:18.225345+00:00",
+      "age_seconds": 58873,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -1248,9 +1248,9 @@
       {
         "market": "US",
         "market_name": "美国",
-        "symbol": "^NDX",
+        "symbol": "NDX",
         "name": "纳斯达克100指数",
-        "latest_price": 29433.427734375,
+        "latest_price": 716.9,
         "open": null,
         "high": null,
         "low": null,
@@ -1258,25 +1258,25 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-08-29T04:00:00+08:00",
+        "data_time_beijing": "2026-09-01T05:52:52+08:00",
         "data_time_local": "",
-        "market_phase": "REGULAR",
-        "market_status_cn": "美股交易中",
-        "data_nature_cn": "实时交易行情",
+        "market_phase": "POST_MARKET",
+        "market_status_cn": "美股盘后",
+        "data_nature_cn": "盘后行情（附当日正式收盘）",
         "source": "yahoo_chart_api",
         "freshness": "STALE",
         "freshness_cn": "时点过旧",
-        "quality_status": "PASS",
-        "quality_status_cn": "数据可用",
-        "direct_quote": true,
-        "route_rule": "返回正式现金盘最新实时行情"
+        "quality_status": "FRESH",
+        "quality_status_cn": "状态待确认",
+        "direct_quote": false,
+        "route_rule": "返回扩展时段行情，并保留最近正式收盘作为基准"
       },
       {
         "market": "US",
         "market_name": "美国",
-        "symbol": "^SOX",
+        "symbol": "SOX",
         "name": "费城半导体指数",
-        "latest_price": 11469.662109375,
+        "latest_price": 511.1244,
         "open": null,
         "high": null,
         "low": null,
@@ -1284,25 +1284,25 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-08-29T04:00:00+08:00",
+        "data_time_beijing": "2026-09-01T05:52:53+08:00",
         "data_time_local": "",
-        "market_phase": "REGULAR",
-        "market_status_cn": "美股交易中",
-        "data_nature_cn": "实时交易行情",
+        "market_phase": "POST_MARKET",
+        "market_status_cn": "美股盘后",
+        "data_nature_cn": "盘后行情（附当日正式收盘）",
         "source": "yahoo_chart_api",
         "freshness": "STALE",
         "freshness_cn": "时点过旧",
-        "quality_status": "PASS",
-        "quality_status_cn": "数据可用",
-        "direct_quote": true,
-        "route_rule": "返回正式现金盘最新实时行情"
+        "quality_status": "FRESH",
+        "quality_status_cn": "状态待确认",
+        "direct_quote": false,
+        "route_rule": "返回扩展时段行情，并保留最近正式收盘作为基准"
       },
       {
         "market": "JP",
         "market_name": "日本",
-        "symbol": "100.N225",
+        "symbol": "^N225",
         "name": "日经225指数",
-        "latest_price": 66311.93,
+        "latest_price": 66311.9296875,
         "open": null,
         "high": null,
         "low": null,
@@ -1312,10 +1312,10 @@
         "turnover": null,
         "data_time_beijing": "2026-08-31T14:30:00+08:00",
         "data_time_local": "",
-        "market_phase": "OFF_SESSION",
-        "market_status_cn": "日股收盘",
+        "market_phase": "PRE_OPEN",
+        "market_status_cn": "日股开盘前",
         "data_nature_cn": "最近正式收盘行情",
-        "source": "eastmoney_push2",
+        "source": "yahoo_chart_api",
         "freshness": "STALE",
         "freshness_cn": "时点过旧",
         "quality_status": "PASS",
@@ -1326,9 +1326,9 @@
       {
         "market": "KR",
         "market_name": "韩国",
-        "symbol": "KOSPI",
+        "symbol": "^KS11",
         "name": "韩国综合指数",
-        "latest_price": 6820.02,
+        "latest_price": 6820.02001953125,
         "open": null,
         "high": null,
         "low": null,
@@ -1336,12 +1336,12 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-08-31T17:59:00+08:00",
+        "data_time_beijing": "2026-08-31T14:00:00+08:00",
         "data_time_local": "",
-        "market_phase": "OFF_SESSION",
-        "market_status_cn": "韩股收盘",
+        "market_phase": "PRE_OPEN",
+        "market_status_cn": "韩股开盘前",
         "data_nature_cn": "最近正式收盘行情",
-        "source": "naver_finance",
+        "source": "yahoo_chart_api",
         "freshness": "STALE",
         "freshness_cn": "时点过旧",
         "quality_status": "PASS",
@@ -1352,9 +1352,9 @@
       {
         "market": "TW",
         "market_name": "中国台湾",
-        "symbol": "tse_t00.tw",
+        "symbol": "^TWII",
         "name": "台湾加权指数",
-        "latest_price": 46128.47,
+        "latest_price": 46128.46875,
         "open": null,
         "high": null,
         "low": null,
@@ -1362,12 +1362,12 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-08-31T13:33:00+08:00",
+        "data_time_beijing": "2026-08-31T13:30:00+08:00",
         "data_time_local": "",
-        "market_phase": "OFF_SESSION",
-        "market_status_cn": "台股收盘",
+        "market_phase": "PRE_OPEN",
+        "market_status_cn": "台股开盘前",
         "data_nature_cn": "最近正式收盘行情",
-        "source": "twse_mis",
+        "source": "yahoo_chart_api",
         "freshness": "STALE",
         "freshness_cn": "时点过旧",
         "quality_status": "PASS",
@@ -1390,8 +1390,8 @@
         "turnover": null,
         "data_time_beijing": "2026-08-31T16:09:08+08:00",
         "data_time_local": "",
-        "market_phase": "OFF_SESSION",
-        "market_status_cn": "港股收盘",
+        "market_phase": "PRE_OPEN",
+        "market_status_cn": "港股开盘前",
         "data_nature_cn": "最近正式收盘行情",
         "source": "eastmoney_push2",
         "freshness": "STALE",
@@ -1408,24 +1408,24 @@
         "market_status_cn": "A股收盘"
       },
       "HK": {
-        "phase": "OFF_SESSION",
-        "market_status_cn": "港股收盘"
+        "phase": "PRE_OPEN",
+        "market_status_cn": "港股开盘前"
       },
       "TW": {
-        "phase": "OFF_SESSION",
-        "market_status_cn": "台股收盘"
+        "phase": "PRE_OPEN",
+        "market_status_cn": "台股开盘前"
       },
       "US": {
-        "phase": "REGULAR",
-        "market_status_cn": "美股交易中"
+        "phase": "POST_MARKET",
+        "market_status_cn": "美股盘后"
       },
       "JP": {
-        "phase": "OFF_SESSION",
-        "market_status_cn": "日股收盘"
+        "phase": "PRE_OPEN",
+        "market_status_cn": "日股开盘前"
       },
       "KR": {
-        "phase": "OFF_SESSION",
-        "market_status_cn": "韩股收盘"
+        "phase": "PRE_OPEN",
+        "market_status_cn": "韩股开盘前"
       }
     },
     "selection_rule": "显式查询时先调用当前provider；补采失败的对象才回退最近有效状态。交易中返回最新实时；盘前返回盘前行情并附最近正式收盘；盘后返回盘后行情并附当日正式收盘；休市返回最近正式收盘。",
@@ -1439,7 +1439,7 @@
   },
   "decision_trigger": {
     "schema_version": "1.2",
-    "generated_at": "2026-08-31T21:58:21+08:00",
+    "generated_at": "2026-09-01T07:22:18+08:00",
     "status": "NO_NEW_TRIGGER",
     "trigger_type": "",
     "triggered_at": "",
@@ -1460,7 +1460,7 @@
   },
   "capital_efficiency_ranking": {
     "schema_version": "1.2",
-    "generated_at": "2026-08-31T21:58:21+08:00",
+    "generated_at": "2026-09-01T07:22:18+08:00",
     "as_of": "2026-08-31T15:01:10+08:00",
     "e2e_status": "READY",
     "risk_zone": "RISK_OBSERVATION",
@@ -2103,7 +2103,7 @@
     "safety_boundary": "资本比较不替代唯一主候选；风险区间不自动生成风险许可；本状态不自动生成Trial、Confirm、金额、卖出份额或订单。"
   },
   "intraday_path_features": {
-    "generated_at": "2026-08-31T13:58:15Z",
+    "generated_at": "2026-08-31T23:22:12Z",
     "market_date": "2026-08-31",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -3105,7 +3105,7 @@
     "status": "READY",
     "market_date": "2026-08-31",
     "as_of_beijing": "2026-08-31T15:01:10+08:00",
-    "evidence_time_semantics": "CURRENT_DATE_LATEST",
+    "evidence_time_semantics": "PREVIOUS_OR_HISTORICAL",
     "prior_research_as_of_beijing": "2026-08-31T14:58:20+08:00",
     "etf_evidence": [
       {
@@ -3578,7 +3578,7 @@
     },
     "market_structure_context": {
       "schema_version": "1.4",
-      "generated_at": "2026-08-31T13:58:20Z",
+      "generated_at": "2026-08-31T23:22:17Z",
       "market_date": "2026-08-31",
       "as_of_beijing": "2026-08-31T15:01:10+08:00",
       "source_snapshot": "data/market/snapshots/2026-08-31_150110.json",
@@ -5983,65 +5983,65 @@
       "scope": [
         "561980"
       ],
-      "decision_market_date": "2026-08-31",
-      "price_cutoff_market_date": "2026-08-28",
-      "return_window_start": "2026-08-25",
-      "return_window_end": "2026-08-28",
+      "decision_market_date": "2026-09-01",
+      "price_cutoff_market_date": "2026-08-31",
+      "return_window_start": "2026-08-26",
+      "return_window_end": "2026-08-31",
       "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
       "pcf_component_count": 40,
       "top5": [
         {
           "code": "002371",
           "name": "北方华创",
-          "td_amount": 488257.0,
+          "td_amount": 489853.0,
           "cash_flag": "1",
-          "ann_date": "2026-08-31",
-          "three_day_return_pct": -0.4126
+          "ann_date": "2026-09-01",
+          "three_day_return_pct": -0.1299
         },
         {
           "code": "300604",
           "name": "长川科技",
-          "td_amount": 249399.0,
+          "td_amount": 251127.0,
           "cash_flag": "1",
-          "ann_date": "2026-08-31",
-          "three_day_return_pct": 5.1172
+          "ann_date": "2026-09-01",
+          "three_day_return_pct": 1.0246
         },
         {
           "code": "300666",
           "name": "江丰电子",
-          "td_amount": 47964.0,
+          "td_amount": 48816.0,
           "cash_flag": "1",
-          "ann_date": "2026-08-31",
-          "three_day_return_pct": 1.8344
+          "ann_date": "2026-09-01",
+          "three_day_return_pct": 3.4851
         },
         {
           "code": "002409",
           "name": "雅克科技",
-          "td_amount": 42618.0,
+          "td_amount": 42711.0,
           "cash_flag": "1",
-          "ann_date": "2026-08-31",
-          "three_day_return_pct": 3.5498
+          "ann_date": "2026-09-01",
+          "three_day_return_pct": 5.2799
         },
         {
           "code": "300346",
           "name": "南大光电",
-          "td_amount": 38962.0,
+          "td_amount": 39109.0,
           "cash_flag": "1",
-          "ann_date": "2026-08-31",
-          "three_day_return_pct": 1.2921
+          "ann_date": "2026-09-01",
+          "three_day_return_pct": 2.5702
         }
       ],
-      "top5_three_day_average_return_pct": 2.2762,
-      "etf_three_day_return_pct": 2.6667,
-      "leader_minus_etf_3d_lag1_pct_points": -0.3905,
-      "evidence_direction": "WEAKEN",
+      "top5_three_day_average_return_pct": 2.446,
+      "etf_three_day_return_pct": 1.895,
+      "leader_minus_etf_3d_lag1_pct_points": 0.551,
+      "evidence_direction": "STRENGTHEN",
       "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
       "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
       "formal_conclusion": "research/backtests/561980_component_lead_formal_conclusion.json"
     },
     "if_ic_basis_5d": {
       "schema_version": "1.2",
-      "generated_at": "2026-08-31T13:58:27Z",
+      "generated_at": "2026-08-31T23:22:23Z",
       "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
       "evidence_id": "if_ic_basis_5d",
       "display_name": "IF／IC 5日基差变化证据",
@@ -6061,12 +6061,12 @@
       "research_source": "research/backtests/index_futures_if_ic_basis_formal_conclusion.json",
       "status": "DEGRADED",
       "use_in_current_decision": false,
-      "decision_market_date": "2026-08-31",
-      "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-08-28:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
+      "decision_market_date": "2026-09-01",
+      "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-08-31:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
     },
     "ipo_base_stock_oversold_reversal_300750": {
       "schema_version": "1.1",
-      "generated_at": "2026-08-31T13:58:39Z",
+      "generated_at": "2026-08-31T23:22:35Z",
       "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
       "evidence_id": "ipo_base_stock_oversold_reversal_300750",
       "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -6082,15 +6082,13 @@
       "research_source": "research/backtests/ipo_base_stock_specific_signal_conclusion.json",
       "status": "READY",
       "use_in_current_decision": true,
-      "provider": "TENCENT_IFZQ",
-      "provider_fallback_errors": [
-        "eastmoney:RemoteDisconnected:Remote end closed connection without response"
-      ],
+      "provider": "EASTMONEY_PUSH2HIS",
+      "provider_fallback_errors": [],
       "completed_bar_date": "2026-08-28",
       "close": 368.5,
       "close_5_sessions_ago": 391.15,
       "return_5d_pct": -5.7906,
-      "ma20": 388.935,
+      "ma20": 389.2855,
       "below_ma20": true,
       "pattern_match": false,
       "direction": "INACTIVE",
@@ -6130,7 +6128,7 @@
     },
     "research_execution_summary": {
       "schema_version": "1.2",
-      "generated_at": "2026-08-31T13:58:41Z",
+      "generated_at": "2026-08-31T23:22:37Z",
       "mode": "RESEARCH_TO_EXECUTION_READ_ONLY_BRIDGE",
       "read_only": true,
       "use_in_current_decision": true,
@@ -6612,12 +6610,12 @@
           "calibration_cutoff": "2026-08-21",
           "interpretation_rule": "正残差表示实际A股开盘相对历史SOX/NDX传导估计更低定价，负残差表示相对更高定价；仅参与半导体设备ETF机会强弱和风险收益判断，不是买入阈值。",
           "a_share_market_date": "2026-08-31",
-          "us_tech_equal_1d_pct": -2.0826,
-          "ndx_1d_pct": -0.7014,
-          "sox_1d_pct": -3.4637,
+          "us_tech_equal_1d_pct": -0.2012,
+          "ndx_1d_pct": -0.3242,
+          "sox_1d_pct": -0.0783,
           "actual_open_gap_pct": -2.3088,
-          "expected_open_gap_pct": -0.7468,
-          "opening_underpricing_residual_pct": 1.562,
+          "expected_open_gap_pct": -0.1715,
+          "opening_underpricing_residual_pct": 2.1373,
           "historical_residual_zone": "UNDERPRICED_TAIL",
           "threshold_not_a_trade_rule": true
         },
@@ -6852,7 +6850,7 @@
         },
         "if_ic_basis_5d": {
           "schema_version": "1.2",
-          "generated_at": "2026-08-31T13:58:27Z",
+          "generated_at": "2026-08-31T23:22:23Z",
           "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
           "evidence_id": "if_ic_basis_5d",
           "display_name": "IF／IC 5日基差变化证据",
@@ -6872,12 +6870,12 @@
           "research_source": "research/backtests/index_futures_if_ic_basis_formal_conclusion.json",
           "status": "DEGRADED",
           "use_in_current_decision": false,
-          "decision_market_date": "2026-08-31",
-          "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-08-28:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
+          "decision_market_date": "2026-09-01",
+          "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-08-31:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
         },
         "ipo_base_stock_oversold_reversal_300750": {
           "schema_version": "1.1",
-          "generated_at": "2026-08-31T13:58:39Z",
+          "generated_at": "2026-08-31T23:22:35Z",
           "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
           "evidence_id": "ipo_base_stock_oversold_reversal_300750",
           "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -6893,15 +6891,13 @@
           "research_source": "research/backtests/ipo_base_stock_specific_signal_conclusion.json",
           "status": "READY",
           "use_in_current_decision": true,
-          "provider": "TENCENT_IFZQ",
-          "provider_fallback_errors": [
-            "eastmoney:RemoteDisconnected:Remote end closed connection without response"
-          ],
+          "provider": "EASTMONEY_PUSH2HIS",
+          "provider_fallback_errors": [],
           "completed_bar_date": "2026-08-28",
           "close": 368.5,
           "close_5_sessions_ago": 391.15,
           "return_5d_pct": -5.7906,
-          "ma20": 388.935,
+          "ma20": 389.2855,
           "below_ma20": true,
           "pattern_match": false,
           "direction": "INACTIVE",
@@ -6923,58 +6919,58 @@
           "scope": [
             "561980"
           ],
-          "decision_market_date": "2026-08-31",
-          "price_cutoff_market_date": "2026-08-28",
-          "return_window_start": "2026-08-25",
-          "return_window_end": "2026-08-28",
+          "decision_market_date": "2026-09-01",
+          "price_cutoff_market_date": "2026-08-31",
+          "return_window_start": "2026-08-26",
+          "return_window_end": "2026-08-31",
           "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
           "pcf_component_count": 40,
           "top5": [
             {
               "code": "002371",
               "name": "北方华创",
-              "td_amount": 488257.0,
+              "td_amount": 489853.0,
               "cash_flag": "1",
-              "ann_date": "2026-08-31",
-              "three_day_return_pct": -0.4126
+              "ann_date": "2026-09-01",
+              "three_day_return_pct": -0.1299
             },
             {
               "code": "300604",
               "name": "长川科技",
-              "td_amount": 249399.0,
+              "td_amount": 251127.0,
               "cash_flag": "1",
-              "ann_date": "2026-08-31",
-              "three_day_return_pct": 5.1172
+              "ann_date": "2026-09-01",
+              "three_day_return_pct": 1.0246
             },
             {
               "code": "300666",
               "name": "江丰电子",
-              "td_amount": 47964.0,
+              "td_amount": 48816.0,
               "cash_flag": "1",
-              "ann_date": "2026-08-31",
-              "three_day_return_pct": 1.8344
+              "ann_date": "2026-09-01",
+              "three_day_return_pct": 3.4851
             },
             {
               "code": "002409",
               "name": "雅克科技",
-              "td_amount": 42618.0,
+              "td_amount": 42711.0,
               "cash_flag": "1",
-              "ann_date": "2026-08-31",
-              "three_day_return_pct": 3.5498
+              "ann_date": "2026-09-01",
+              "three_day_return_pct": 5.2799
             },
             {
               "code": "300346",
               "name": "南大光电",
-              "td_amount": 38962.0,
+              "td_amount": 39109.0,
               "cash_flag": "1",
-              "ann_date": "2026-08-31",
-              "three_day_return_pct": 1.2921
+              "ann_date": "2026-09-01",
+              "three_day_return_pct": 2.5702
             }
           ],
-          "top5_three_day_average_return_pct": 2.2762,
-          "etf_three_day_return_pct": 2.6667,
-          "leader_minus_etf_3d_lag1_pct_points": -0.3905,
-          "evidence_direction": "WEAKEN",
+          "top5_three_day_average_return_pct": 2.446,
+          "etf_three_day_return_pct": 1.895,
+          "leader_minus_etf_3d_lag1_pct_points": 0.551,
+          "evidence_direction": "STRENGTHEN",
           "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
           "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
           "formal_conclusion": "research/backtests/561980_component_lead_formal_conclusion.json"
@@ -7058,7 +7054,7 @@
           ],
           "dynamic_stock_specific_signal": {
             "schema_version": "1.1",
-            "generated_at": "2026-08-31T13:58:39Z",
+            "generated_at": "2026-08-31T23:22:35Z",
             "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
             "evidence_id": "ipo_base_stock_oversold_reversal_300750",
             "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -7074,15 +7070,13 @@
             "research_source": "research/backtests/ipo_base_stock_specific_signal_conclusion.json",
             "status": "READY",
             "use_in_current_decision": true,
-            "provider": "TENCENT_IFZQ",
-            "provider_fallback_errors": [
-              "eastmoney:RemoteDisconnected:Remote end closed connection without response"
-            ],
+            "provider": "EASTMONEY_PUSH2HIS",
+            "provider_fallback_errors": [],
             "completed_bar_date": "2026-08-28",
             "close": 368.5,
             "close_5_sessions_ago": 391.15,
             "return_5d_pct": -5.7906,
-            "ma20": 388.935,
+            "ma20": 389.2855,
             "below_ma20": true,
             "pattern_match": false,
             "direction": "INACTIVE",
@@ -7181,58 +7175,58 @@
           "scope": [
             "561980"
           ],
-          "decision_market_date": "2026-08-31",
-          "price_cutoff_market_date": "2026-08-28",
-          "return_window_start": "2026-08-25",
-          "return_window_end": "2026-08-28",
+          "decision_market_date": "2026-09-01",
+          "price_cutoff_market_date": "2026-08-31",
+          "return_window_start": "2026-08-26",
+          "return_window_end": "2026-08-31",
           "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
           "pcf_component_count": 40,
           "top5": [
             {
               "code": "002371",
               "name": "北方华创",
-              "td_amount": 488257.0,
+              "td_amount": 489853.0,
               "cash_flag": "1",
-              "ann_date": "2026-08-31",
-              "three_day_return_pct": -0.4126
+              "ann_date": "2026-09-01",
+              "three_day_return_pct": -0.1299
             },
             {
               "code": "300604",
               "name": "长川科技",
-              "td_amount": 249399.0,
+              "td_amount": 251127.0,
               "cash_flag": "1",
-              "ann_date": "2026-08-31",
-              "three_day_return_pct": 5.1172
+              "ann_date": "2026-09-01",
+              "three_day_return_pct": 1.0246
             },
             {
               "code": "300666",
               "name": "江丰电子",
-              "td_amount": 47964.0,
+              "td_amount": 48816.0,
               "cash_flag": "1",
-              "ann_date": "2026-08-31",
-              "three_day_return_pct": 1.8344
+              "ann_date": "2026-09-01",
+              "three_day_return_pct": 3.4851
             },
             {
               "code": "002409",
               "name": "雅克科技",
-              "td_amount": 42618.0,
+              "td_amount": 42711.0,
               "cash_flag": "1",
-              "ann_date": "2026-08-31",
-              "three_day_return_pct": 3.5498
+              "ann_date": "2026-09-01",
+              "three_day_return_pct": 5.2799
             },
             {
               "code": "300346",
               "name": "南大光电",
-              "td_amount": 38962.0,
+              "td_amount": 39109.0,
               "cash_flag": "1",
-              "ann_date": "2026-08-31",
-              "three_day_return_pct": 1.2921
+              "ann_date": "2026-09-01",
+              "three_day_return_pct": 2.5702
             }
           ],
-          "top5_three_day_average_return_pct": 2.2762,
-          "etf_three_day_return_pct": 2.6667,
-          "leader_minus_etf_3d_lag1_pct_points": -0.3905,
-          "evidence_direction": "WEAKEN",
+          "top5_three_day_average_return_pct": 2.446,
+          "etf_three_day_return_pct": 1.895,
+          "leader_minus_etf_3d_lag1_pct_points": 0.551,
+          "evidence_direction": "STRENGTHEN",
           "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
           "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
           "formal_conclusion": "research/backtests/561980_component_lead_formal_conclusion.json"
@@ -7437,7 +7431,7 @@
   "research_contribution_audit_file": "data/state/research_contribution_audit.json",
   "research_master_candidates": {
     "schema_version": "1.0",
-    "generated_at": "2026-08-31T13:58:21Z",
+    "generated_at": "2026-08-31T23:22:18Z",
     "mode": "RESEARCH_TO_MASTER_MAINTENANCE_FEED",
     "read_only": true,
     "automatic_master_update": false,
@@ -7467,7 +7461,7 @@
   },
   "execution_quality": {
     "schema_version": "1.1",
-    "generated_at": "2026-08-31T13:58:20Z",
+    "generated_at": "2026-08-31T23:22:17Z",
     "mode": "DECISION_EXECUTION_ATTRIBUTION",
     "read_only": true,
     "trade_event_count": 3,
@@ -7723,12 +7717,12 @@
       "calibration_cutoff": "2026-08-21",
       "interpretation_rule": "正残差表示实际A股开盘相对历史SOX/NDX传导估计更低定价，负残差表示相对更高定价；仅参与半导体设备ETF机会强弱和风险收益判断，不是买入阈值。",
       "a_share_market_date": "2026-08-31",
-      "us_tech_equal_1d_pct": -2.0826,
-      "ndx_1d_pct": -0.7014,
-      "sox_1d_pct": -3.4637,
+      "us_tech_equal_1d_pct": -0.2012,
+      "ndx_1d_pct": -0.3242,
+      "sox_1d_pct": -0.0783,
       "actual_open_gap_pct": -2.3088,
-      "expected_open_gap_pct": -0.7468,
-      "opening_underpricing_residual_pct": 1.562,
+      "expected_open_gap_pct": -0.1715,
+      "opening_underpricing_residual_pct": 2.1373,
       "historical_residual_zone": "UNDERPRICED_TAIL",
       "threshold_not_a_trade_rule": true
     },
@@ -7963,7 +7957,7 @@
     },
     "if_ic_basis_5d": {
       "schema_version": "1.2",
-      "generated_at": "2026-08-31T13:58:27Z",
+      "generated_at": "2026-08-31T23:22:23Z",
       "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
       "evidence_id": "if_ic_basis_5d",
       "display_name": "IF／IC 5日基差变化证据",
@@ -7983,12 +7977,12 @@
       "research_source": "research/backtests/index_futures_if_ic_basis_formal_conclusion.json",
       "status": "DEGRADED",
       "use_in_current_decision": false,
-      "decision_market_date": "2026-08-31",
-      "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-08-28:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
+      "decision_market_date": "2026-09-01",
+      "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-08-31:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
     },
     "ipo_base_stock_oversold_reversal_300750": {
       "schema_version": "1.1",
-      "generated_at": "2026-08-31T13:58:39Z",
+      "generated_at": "2026-08-31T23:22:35Z",
       "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
       "evidence_id": "ipo_base_stock_oversold_reversal_300750",
       "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -8004,15 +7998,13 @@
       "research_source": "research/backtests/ipo_base_stock_specific_signal_conclusion.json",
       "status": "READY",
       "use_in_current_decision": true,
-      "provider": "TENCENT_IFZQ",
-      "provider_fallback_errors": [
-        "eastmoney:RemoteDisconnected:Remote end closed connection without response"
-      ],
+      "provider": "EASTMONEY_PUSH2HIS",
+      "provider_fallback_errors": [],
       "completed_bar_date": "2026-08-28",
       "close": 368.5,
       "close_5_sessions_ago": 391.15,
       "return_5d_pct": -5.7906,
-      "ma20": 388.935,
+      "ma20": 389.2855,
       "below_ma20": true,
       "pattern_match": false,
       "direction": "INACTIVE",
@@ -8034,58 +8026,58 @@
       "scope": [
         "561980"
       ],
-      "decision_market_date": "2026-08-31",
-      "price_cutoff_market_date": "2026-08-28",
-      "return_window_start": "2026-08-25",
-      "return_window_end": "2026-08-28",
+      "decision_market_date": "2026-09-01",
+      "price_cutoff_market_date": "2026-08-31",
+      "return_window_start": "2026-08-26",
+      "return_window_end": "2026-08-31",
       "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
       "pcf_component_count": 40,
       "top5": [
         {
           "code": "002371",
           "name": "北方华创",
-          "td_amount": 488257.0,
+          "td_amount": 489853.0,
           "cash_flag": "1",
-          "ann_date": "2026-08-31",
-          "three_day_return_pct": -0.4126
+          "ann_date": "2026-09-01",
+          "three_day_return_pct": -0.1299
         },
         {
           "code": "300604",
           "name": "长川科技",
-          "td_amount": 249399.0,
+          "td_amount": 251127.0,
           "cash_flag": "1",
-          "ann_date": "2026-08-31",
-          "three_day_return_pct": 5.1172
+          "ann_date": "2026-09-01",
+          "three_day_return_pct": 1.0246
         },
         {
           "code": "300666",
           "name": "江丰电子",
-          "td_amount": 47964.0,
+          "td_amount": 48816.0,
           "cash_flag": "1",
-          "ann_date": "2026-08-31",
-          "three_day_return_pct": 1.8344
+          "ann_date": "2026-09-01",
+          "three_day_return_pct": 3.4851
         },
         {
           "code": "002409",
           "name": "雅克科技",
-          "td_amount": 42618.0,
+          "td_amount": 42711.0,
           "cash_flag": "1",
-          "ann_date": "2026-08-31",
-          "three_day_return_pct": 3.5498
+          "ann_date": "2026-09-01",
+          "three_day_return_pct": 5.2799
         },
         {
           "code": "300346",
           "name": "南大光电",
-          "td_amount": 38962.0,
+          "td_amount": 39109.0,
           "cash_flag": "1",
-          "ann_date": "2026-08-31",
-          "three_day_return_pct": 1.2921
+          "ann_date": "2026-09-01",
+          "three_day_return_pct": 2.5702
         }
       ],
-      "top5_three_day_average_return_pct": 2.2762,
-      "etf_three_day_return_pct": 2.6667,
-      "leader_minus_etf_3d_lag1_pct_points": -0.3905,
-      "evidence_direction": "WEAKEN",
+      "top5_three_day_average_return_pct": 2.446,
+      "etf_three_day_return_pct": 1.895,
+      "leader_minus_etf_3d_lag1_pct_points": 0.551,
+      "evidence_direction": "STRENGTHEN",
       "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
       "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
       "formal_conclusion": "research/backtests/561980_component_lead_formal_conclusion.json"
@@ -8163,7 +8155,7 @@
       ],
       "dynamic_stock_specific_signal": {
         "schema_version": "1.1",
-        "generated_at": "2026-08-31T13:58:39Z",
+        "generated_at": "2026-08-31T23:22:35Z",
         "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
         "evidence_id": "ipo_base_stock_oversold_reversal_300750",
         "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -8179,15 +8171,13 @@
         "research_source": "research/backtests/ipo_base_stock_specific_signal_conclusion.json",
         "status": "READY",
         "use_in_current_decision": true,
-        "provider": "TENCENT_IFZQ",
-        "provider_fallback_errors": [
-          "eastmoney:RemoteDisconnected:Remote end closed connection without response"
-        ],
+        "provider": "EASTMONEY_PUSH2HIS",
+        "provider_fallback_errors": [],
         "completed_bar_date": "2026-08-28",
         "close": 368.5,
         "close_5_sessions_ago": 391.15,
         "return_5d_pct": -5.7906,
-        "ma20": 388.935,
+        "ma20": 389.2855,
         "below_ma20": true,
         "pattern_match": false,
         "direction": "INACTIVE",

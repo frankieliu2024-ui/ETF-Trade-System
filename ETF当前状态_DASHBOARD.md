@@ -3,8 +3,8 @@
 <!-- AUTO_STATE_SYNC_START -->
 ## 云端实时状态（自动同步）
 
-> 更新时间：2026-08-31T15:12:00+08:00  
-> 来源：BROKER_SCREENSHOT_20260831_1512_USER_PROVIDED  
+> 更新时间：2026-09-01T07:15:00+08:00  
+> 来源：BROKER_SCREENSHOT_20260901_0715_USER_PROVIDED  
 > 场景：ACCOUNT_FACT_MAINTENANCE  
 > 本区块只同步已确认账户事实与既有正式决策；自动程序不得自行推导交易权限或下单。
 
