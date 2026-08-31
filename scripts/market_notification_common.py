@@ -340,6 +340,7 @@ def persist_and_send(event: dict, *, policy: str) -> dict:
         item["last_attempted_at"] = stamp
         item["response"] = {"error": "PUSHPLUS_TOKEN missing"}
         item["lifecycle_status"] = "FAILED"
+        notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
         notifications.append(item)
         state.update({"schema_version": "2.2", "updated_at": stamp, "last_status": "FAILED", "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": policy})
         write_json(NOTIFICATION_STATE, state)
@@ -367,3 +368,4 @@ def persist_and_send(event: dict, *, policy: str) -> dict:
     })
     write_json(NOTIFICATION_STATE, state)
     return {"status": item["lifecycle_status"], "notification_id": item["notification_id"], "title": item["title"], "response": response}
+

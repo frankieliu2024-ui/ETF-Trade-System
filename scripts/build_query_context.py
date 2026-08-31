@@ -128,7 +128,7 @@ def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict)
     }
 
 
-def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: list[str] | None = None) -> dict:
+def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: list[str] | None = None, request_file: str | None = None) -> dict:
     current = read_current(root)
     account = read_account_fact(root)
     decision = build_decision_context(root)
@@ -161,8 +161,11 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
             system_objects.append({"object_code": code, "object_name": position.get("name") or code, "source_type": "SYSTEM_MONITORED"})
             seen_system_codes.add(code)
     request_time = None
+    if request_file:
+        request = read_json((root / request_file).resolve(), {})
+        request_time = parse_time(request.get("requested_at_beijing") or request.get("request_time"))
     live_dir = root / "requests" / "live_snapshot"
-    if live_dir.exists():
+    if request_time is None and live_dir.exists():
         request_times = []
         for path in live_dir.glob("*.json"):
             request = read_json(path, {})
@@ -203,12 +206,14 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--force-refresh", action="store_true")
     parser.add_argument("--symbols", default="")
+    parser.add_argument("--request-file", default="", help="explicit live_snapshot request payload for this analysis")
     args = parser.parse_args()
     symbols = [x.strip() for x in args.symbols.split(",") if x.strip()]
-    context = build(ROOT, force_refresh=args.force_refresh, requested_symbols=symbols)
+    context = build(ROOT, force_refresh=args.force_refresh, requested_symbols=symbols, request_file=args.request_file or None)
     atomic_json_write(ROOT / "data" / "state" / "query_context.json", context)
     print(json.dumps({"ok": True, "generated_at_beijing": context["generated_at_beijing"], "market_date": context["market_date"], "latest_valid_node": context["latest_valid_node"], "system_consistency_status": context["system_consistency_status"], "candidate_trading_day": context["trading_day_status"]["is_candidate_trading_day"], "etf_universe_count": context["etf_universe_count"], "account_fact_status": context["account_fact_status"], "account_usable": context["account_gate"]["can_use_current_account_fact"], "freshness": context["freshness_at_context_build"]["status"], "overseas_context_status": context["overseas_context_status"], "us_extended_hours_status": context["us_extended_hours_status"], "stock_context_status": context["stock_context_status"], "stock_market_context_status": context["stock_market_context_status"], "read_plan_mode": context["decision_read_plan"]["mode"]}, ensure_ascii=False))
 
 
 if __name__ == "__main__":
     main()
+

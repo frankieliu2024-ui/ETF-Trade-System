@@ -623,6 +623,7 @@ def main() -> int:
         item["last_attempted_at"] = stamp
         item["response"] = {"error": "PUSHPLUS_TOKEN missing"}
         item["lifecycle_status"] = "FAILED"
+        notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
         notifications.append(item)
         state.update({"schema_version": "2.2", "updated_at": stamp, "last_status": "FAILED", "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "FAILED", "notification_id": item["notification_id"], "lifecycle_status": "FAILED"}, ensure_ascii=False)); return 1
     ok, response = send(token, item["title"], item["content"]); stamp = now().isoformat(timespec="seconds"); item["last_attempted_at"] = stamp; item["response"] = response
@@ -635,3 +636,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

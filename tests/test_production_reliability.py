@@ -25,13 +25,20 @@ class CurrentDecisionFreshnessTests(unittest.TestCase):
     def test_pass_current_at_1049_is_consumable(self):
         current = {"captured_at": "2026-08-31T10:49:20+08:00", "provider_as_of": "2026-08-31T10:49:18+08:00", "quality_status": "PASS"}
         gate = evaluate_interactive_decision_freshness(current, self.NOW, self.NOW, self.POLICY)
-        self.assertEqual(gate["status"], "DIRECT")
-        self.assertTrue(gate["formal_decision_allowed"])
+        self.assertEqual(gate["status"], "DEGRADED")
+        self.assertTrue(gate["fallback_allowed"])
+        self.assertFalse(gate["formal_decision_allowed"])
 
     def test_refresh_failure_cannot_silently_use_pre_request_current(self):
         current = {"captured_at": "2026-08-31T10:43:20+08:00", "provider_as_of": "2026-08-31T10:43:18+08:00", "quality_status": "PASS"}
         gate = evaluate_interactive_decision_freshness(current, self.NOW, self.NOW, self.POLICY)
         self.assertTrue(gate["fallback_allowed"])
+        self.assertFalse(gate["formal_decision_allowed"])
+        self.assertTrue(gate["refresh_required"])
+
+    def test_pre_request_fresh_current_still_requires_refresh_attempt(self):
+        current = {"captured_at": "2026-08-31T10:49:20+08:00", "provider_as_of": "2026-08-31T10:49:18+08:00", "quality_status": "PASS"}
+        gate = evaluate_interactive_decision_freshness(current, self.NOW, self.NOW, self.POLICY)
         self.assertFalse(gate["formal_decision_allowed"])
         self.assertTrue(gate["refresh_required"])
 
@@ -47,6 +54,10 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
                 self.assertEqual(first["status"], "FAILED")
                 saved = json.loads(state_file.read_text(encoding="utf-8"))
                 self.assertEqual(saved["notifications"][0]["lifecycle_status"], "FAILED")
+                second = notifications.persist_and_send(event, policy="test")
+                self.assertEqual(second["status"], "FAILED")
+                saved = json.loads(state_file.read_text(encoding="utf-8"))
+                self.assertEqual(len([x for x in saved["notifications"] if x["notification_id"] == first["notification_id"]]), 1)
 
     def test_successful_duplicate_is_deduped(self):
         with tempfile.TemporaryDirectory() as td:
@@ -81,3 +92,4 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

@@ -208,9 +208,7 @@ def evaluate_interactive_decision_freshness(current: dict[str, Any], request_tim
     age = None if effective is None else max(0, int((now.astimezone(timezone.utc) - effective).total_seconds()))
     post_request = bool(effective and effective >= request_time.astimezone(timezone.utc))
     quality = str(current.get("quality_status") or freshness.get("quality_status") or "UNKNOWN").upper()
-    # Ordinary intraday requests may consume a snapshot captured shortly before
-    # the request. Explicit-latest requests are separately protected by refresh_gate.
-    direct = quality == "PASS" and age is not None and age <= preferred
+    direct = quality == "PASS" and age is not None and age <= preferred and post_request
     fallback_allowed = quality == "PASS" and age is not None and age <= fallback
     return {"status": "DIRECT" if direct else ("DEGRADED" if fallback_allowed else "REFRESH_REQUIRED"),
             "quality_status": quality, "captured_at": captured.isoformat() if captured else "",
@@ -344,7 +342,9 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
     has_decision_request = decision_request_time is not None
     decision_request_time = decision_request_time or query_time
     decision_freshness = evaluate_interactive_decision_freshness(current, decision_request_time, query_time, policy)
-    should_refresh = (force_refresh or (has_decision_request and decision_freshness["refresh_required"])) and (bool(explicit_symbols) or _query_refresh_needed(root, [], query_time, policy) or decision_freshness["refresh_required"])
+    # Any formal intraday request must attempt the existing query-time refresh,
+    # even when the cached CURRENT is still inside the ordinary FRESH window.
+    should_refresh = (force_refresh or has_decision_request) and (bool(explicit_symbols) or _query_refresh_needed(root, [], query_time, policy) or has_decision_request or decision_freshness["refresh_required"])
     if should_refresh:
         try:
             from scripts.query_time_market_refresh import refresh_market_quotes
@@ -356,6 +356,15 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
                 quotes.append(quote)
         refresh_failures = refreshed.get("failures", [])
         refreshed_symbols = {str(x.get("symbol", "")).upper() for x in refreshed.get("quotes", []) if isinstance(x, dict)}
+        resolved = [q for q in refreshed.get("quotes", []) if isinstance(q, dict) and str(q.get("quality_status", "PASS")).upper() == "PASS"]
+        resolved_times = [_parse_timestamp(q.get("data_time_beijing") or q.get("as_of_beijing")) for q in resolved]
+        resolved_times = [x for x in resolved_times if x]
+        if resolved_times:
+            resolved_at = max(resolved_times)
+            decision_freshness["resolved_as_of"] = resolved_at.isoformat()
+            decision_freshness["resolved_post_request"] = resolved_at >= decision_request_time.astimezone(timezone.utc)
+            decision_freshness["formal_decision_allowed"] = bool(decision_freshness["resolved_post_request"] and max(0, int((query_time.astimezone(timezone.utc) - resolved_at).total_seconds())) <= decision_freshness["preferred_max_age_seconds"])
+            decision_freshness["status"] = "DIRECT" if decision_freshness["formal_decision_allowed"] else "REFRESH_REQUIRED"
     else:
         refresh_failures = []
         refreshed_symbols = set()
@@ -399,3 +408,4 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
         "decision_boundary": "路由只提供事实与时点，不生成风险许可、Trial、Confirm、金额、卖出或其他交易动作。",
         "source_state_paths": ["data/state/CURRENT.json", "data/state/overseas_context.json", "data/state/us_extended_hours_context.json"],
     }
+

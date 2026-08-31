@@ -34,6 +34,15 @@ class QueryTimeRefreshTests(unittest.TestCase):
         refresh.assert_called_once_with(root, ["NDX"], now)
         self.assertEqual(result["refresh_mode"], "QUERY_TIME_IMMEDIATE_REFRESH")
 
+    def test_formal_decision_request_refreshes_even_when_cached_quote_is_fresh(self):
+        root = self._root("2026-08-25T00:29:00+08:00")
+        now = datetime.fromisoformat("2026-08-25T00:30:00+08:00")
+        request_time = datetime.fromisoformat("2026-08-25T00:29:30+08:00")
+        with patch("scripts.query_time_market_refresh.refresh_market_quotes", return_value={"quotes": [], "failures": []}) as refresh:
+            result = build_market_quote_context(root, now=now, decision_request_time=request_time)
+        refresh.assert_called_once_with(root, [], now)
+        self.assertEqual(result["refresh_mode"], "QUERY_TIME_IMMEDIATE_REFRESH")
+
     def test_stale_cache_calls_provider_and_prefers_new_quote(self):
         root = self._root("2026-08-24T23:00:00+08:00")
         now = datetime.fromisoformat("2026-08-25T00:30:00+08:00")
@@ -190,3 +199,4 @@ class QueryTimeRefreshTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
