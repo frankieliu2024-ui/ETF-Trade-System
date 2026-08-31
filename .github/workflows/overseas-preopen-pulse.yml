@@ -70,6 +70,8 @@ jobs:
           [ -f data/state/overseas_context.json ] && cp data/state/overseas_context.json /tmp/overseas_context_prev.json || true
       - name: Refresh formal overseas and Asia-Pacific index context
         run: python scripts/build_overseas_context.py
+      - name: Enrich missing KOSPI previous-close reference from the same Naver source
+        run: python scripts/enrich_overseas_previous_close.py
       - name: Refresh US extended-hours context
         run: python scripts/build_us_extended_hours_context.py
       - name: Backstop US regular-session open/close summary from refreshed context
