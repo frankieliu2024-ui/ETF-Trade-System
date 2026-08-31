@@ -147,7 +147,8 @@ def render_summary(*, headline_lines: list[str], path_lines: list[str], implicat
 
             indices, etfs, features = _current_a_share_inputs()
             if indices and etfs:
-                headline_lines, path_lines, implication, action = a_share_structure(indices, etfs, features)
+                is_close = any("15:00正式收盘" in line for line in headline_lines)
+            headline_lines, path_lines, implication, action = a_share_structure(indices, etfs, features, is_close=is_close)
         except Exception as exc:
             print(f"notification semantic fallback: {exc}")
 
