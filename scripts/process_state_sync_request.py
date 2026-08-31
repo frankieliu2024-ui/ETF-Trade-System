@@ -295,7 +295,23 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     prior = load_json(event_path) if event_path.exists() else {}
     if prior.get("fingerprint") == fingerprint:
         return True, True
+    incoming_time = parse_time(
+        review.get("reviewed_at_beijing")
+        or review.get("updated_at_beijing")
+        or request.get("requested_at_beijing")
+        or request.get("request_time_beijing")
+        or account.get("updated_at")
+    )
+    prior_time = parse_time(
+        prior.get("reviewed_at_beijing")
+        or prior.get("updated_at_beijing")
+        or prior.get("account_updated_at")
+    )
+    if prior_time and incoming_time and incoming_time < prior_time:
+        return True, True
+    review_time = (incoming_time or datetime.now(SHANGHAI)).isoformat(timespec="seconds")
     event = {"event_type": "FORMAL_POST_CLOSE_REVIEW", "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "review": review, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
+    event["reviewed_at_beijing"] = review_time
     event_path.parent.mkdir(parents=True, exist_ok=True)
     atomic_json_write(event_path, event)
     archive_entry = str(review.get("archive_entry") or "").strip()
@@ -304,7 +320,45 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     experience_entry = str(review.get("experience_entry") or "").strip()
     if experience_entry:
         upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry, before_heading="## 3. 历史研究与专项回测")
+    record_close_review_closure(account, request, review, event)
     return True, False
+
+
+def record_close_review_closure(account: dict, request: dict, review: dict, event: dict) -> None:
+    """Persist the completed review chain without creating a second review store."""
+    market_date = str(event.get("market_date") or "")
+    if not market_date:
+        return
+    closure_path = ROOT / "data" / "state" / f"close_review_closure_{market_date}.json"
+    snapshot = review.get("data_time") or {}
+    closure = {
+        "schema_version": "1.0", "market_date": market_date,
+        "chain": ["market_close", "account", "formal_review", "archive", "experience", "dashboard", "risk"],
+        "account_fact_updated_at": account.get("updated_at", ""),
+        "close_snapshot": snapshot.get("close_snapshot") or review.get("close_snapshot", ""),
+        "formal_review_path": f"events/reviews/{market_date}.json",
+        "dashboard_path": "ETF当前状态_DASHBOARD.md", "archive_path": "ETF市场行情档案_2026.md",
+        "experience_path": "ETF交易复盘与经验库_2026.md",
+        "case_id": review.get("case_id") or "", "case_mode": review.get("case_mode") or "CONTINUATION_NO_NEW_CASE",
+        "known_net_equity": (review.get("etf_strategy_known_net") or {}).get("known_net_strategy_equity"),
+        "risk_rate_pct": (review.get("etf_strategy_known_net") or {}).get("etf_strategy_risk_rate_pct"),
+        "status": "CLOSED", "reviewed_at_beijing": event.get("reviewed_at_beijing", ""),
+        "request_id": request.get("request_id", ""),
+        "note": "Formal post-close review is canonicalized from the request-scoped review payload; no trade or permission is inferred.",
+    }
+    prior = load_json(closure_path) if closure_path.exists() else {}
+    if prior == closure:
+        return
+    atomic_json_write(closure_path, closure)
+    current_path = ROOT / "data" / "state" / "CURRENT.json"
+    if current_path.exists():
+        current = load_json(current_path)
+        current["close_review_closure"] = {
+            "status": "CLOSED", "market_date": market_date,
+            "path": str(closure_path.relative_to(ROOT)).replace("\\", "/"),
+            "formal_review_path": f"events/reviews/{market_date}.json", "case_id": closure.get("case_id", ""),
+        }
+        atomic_json_write(current_path, current)
 
 
 def execution_attribution(trade: dict, linked_decision_id: str) -> dict:
@@ -686,3 +740,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
