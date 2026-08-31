@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-08-30T23:37:06Z",
-  "generated_at_beijing": "2026-08-31T07:37:06+08:00",
+  "generated_at": "2026-08-31T00:47:12Z",
+  "generated_at_beijing": "2026-08-31T08:47:12+08:00",
   "repository": {
-    "head_sha": "815071bc21c533c0b6d3118e9c85d9df005abdf4",
-    "github_sha": "815071bc21c533c0b6d3118e9c85d9df005abdf4",
-    "github_run_id": "33342251770",
+    "head_sha": "864c33fb2120f795c636692a6ee0a597f4915e85",
+    "github_sha": "864c33fb2120f795c636692a6ee0a597f4915e85",
+    "github_run_id": "33345566148",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "815071bc21c533c0b6d3118e9c85d9df005abdf4",
-    "workflow_sha": "815071bc21c533c0b6d3118e9c85d9df005abdf4",
+    "checked_commit": "864c33fb2120f795c636692a6ee0a597f4915e85",
+    "workflow_sha": "864c33fb2120f795c636692a6ee0a597f4915e85",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
-  "status": "PASS",
-  "hard_error_count": 0,
+  "status": "FAIL",
+  "hard_error_count": 4,
   "warning_count": 0,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-08-28:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-08-27\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n.........................................................................................................................\n----------------------------------------------------------------------\nRan 121 tests in 0.098s\n\nOK\n"
+      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-08-28:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-08-27\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n.........................................................................................................................\n----------------------------------------------------------------------\nRan 121 tests in 0.063s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -265,12 +265,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=815071bc21c533c0b6d3118e9c85d9df005abdf4"
+      "detail": "HEAD=864c33fb2120f795c636692a6ee0a597f4915e85"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=815071bc21c533c0b6d3118e9c85d9df005abdf4 GITHUB_SHA=815071bc21c533c0b6d3118e9c85d9df005abdf4"
+      "detail": "HEAD=864c33fb2120f795c636692a6ee0a597f4915e85 GITHUB_SHA=864c33fb2120f795c636692a6ee0a597f4915e85"
     },
     {
       "name": "git:critical_files_tracked",
@@ -644,7 +644,7 @@
     },
     {
       "name": "scheduled_target_cadence_600s",
-      "status": "PASS",
+      "status": "FAIL",
       "detail": "scheduled market workflows target ten-minute cadence"
     },
     {
@@ -700,7 +700,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=19:37 max_age_seconds=181326 limit=900"
+      "detail": "active=False phase=20:47 max_age_seconds=185532 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -764,17 +764,17 @@
     },
     {
       "name": "workflow:us_postmarket_0700_start",
-      "status": "PASS",
+      "status": "FAIL",
       "detail": "Beijing 07:00-07:50 prior-US post-market tail scheduled"
     },
     {
       "name": "workflow:overseas_0800_start",
-      "status": "PASS",
+      "status": "FAIL",
       "detail": "Beijing 08:00-15:50 overseas pulses scheduled"
     },
     {
       "name": "workflow:overseas_asia_10m",
-      "status": "PASS",
+      "status": "FAIL",
       "detail": "Beijing 08:00-15:50 Asia pulses scheduled every ten minutes"
     },
     {
@@ -815,12 +815,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=231867"
+      "detail": "declared=STALE expected=STALE age_seconds=236074"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=231846"
+      "detail": "declared=STALE expected=STALE age_seconds=236053"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -860,7 +860,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-30T23:36:44Z market=2026-08-28T15:12:38+08:00"
+      "detail": "context=2026-08-31T00:46:51Z market=2026-08-28T15:12:38+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1883,7 +1883,12 @@
       "detail": "state_status=READY bridge_status=READY"
     }
   ],
-  "errors": [],
+  "errors": [
+    "scheduled_target_cadence_600s: scheduled market workflows target ten-minute cadence",
+    "workflow:us_postmarket_0700_start: Beijing 07:00-07:50 prior-US post-market tail scheduled",
+    "workflow:overseas_0800_start: Beijing 08:00-15:50 overseas pulses scheduled",
+    "workflow:overseas_asia_10m: Beijing 08:00-15:50 Asia pulses scheduled every ten minutes"
+  ],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
   "production_mutation_protocol": {
