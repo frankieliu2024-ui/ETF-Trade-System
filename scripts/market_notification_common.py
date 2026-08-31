@@ -344,7 +344,7 @@ def _is_protected_event(event: dict) -> bool:
 
 def _event_magnitude(event: dict) -> float | None:
     ctx = _market_context(event)
-    for key in ("event_magnitude_pct", "day_change_pct", "phase_metric_change_pct", "sudden_change_pct"):
+    for key in ("event_magnitude_pct", "covered_event_magnitude_pct", "day_change_pct", "phase_metric_change_pct", "sudden_change_pct"):
         value = number(ctx.get(key))
         if value is not None:
             return abs(value)
