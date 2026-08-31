@@ -103,12 +103,14 @@ def write_formal_text_if_changed(root: Path, filename: str, new_text: str) -> bo
 
 def mutate_formal_text(root: Path, filename: str, transform: Callable[[str], str]) -> bool:
     path = resolve_formal_fact_path(root, filename)
-    prior = path.read_text(encoding="utf-8")
+    raw = path.read_bytes()
+    newline = b"\r\n" if b"\r\n" in raw else b"\n"
+    prior = raw.decode("utf-8").replace("\r\n", "\n")
     updated = transform(prior)
     if updated == prior:
         return False
     tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(updated, encoding="utf-8")
+    tmp.write_bytes(updated.replace("\n", "\r\n" if newline == b"\r\n" else "\n").encode("utf-8"))
     tmp.replace(path)
     return True
 
@@ -131,3 +133,4 @@ def replace_formal_block(
 
 def upsert_formal_line(root: Path, filename: str, start: str, end: str, key: str, line: str, *, before_heading: str | None = None) -> bool:
     return mutate_formal_text(root, filename, lambda text: upsert_managed_line(text, start, end, key, line, before_heading=before_heading))
+
