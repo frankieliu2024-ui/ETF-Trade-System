@@ -15,16 +15,23 @@ on:
     # 20:15/20:30 UTC = Beijing 04:15/04:30. Independent schedule backstop for
     # the fixed US cash-session close summary if the dedicated US pulse misses.
     - cron: "15,30 20 * * 1-5"
-    # APAC schedules intentionally avoid the start of the UTC hour. GitHub
-    # documents that scheduled events can be delayed or dropped under high load,
-    # especially at hour boundaries. The explicit +2 minute offset also changes
-    # the cron registration after the 2026-08-31 missed APAC wake-up incident.
-    # 23:02-23:52 UTC previous day = Beijing 07:02-07:52.
-    - cron: "2,12,22,32,42,52 23 * * 0-4"
-    # 00:02-07:52 UTC = Beijing 08:02-15:52, covering Asia-Pacific sessions.
-    - cron: "2,12,22,32,42,52 0-7 * * 1-5"
-    # 08:02-08:32 UTC = Beijing 16:02-16:32, covering APAC close after Hong Kong.
-    - cron: "2,12,22,32 8 * * 1-5"
+    # Primary APAC ten-minute cadence retained as the canonical schedule contract.
+    # 23:00-23:50 UTC previous day = Beijing 07:00-07:50.
+    - cron: "*/10 23 * * 0-4"
+    # 00:00-07:50 UTC = Beijing 08:00-15:50, covering Asia-Pacific sessions.
+    - cron: "*/10 0-7 * * 1-5"
+    # 08:00-08:30 UTC = Beijing 16:00-16:30, covering APAC close after Hong Kong.
+    - cron: "0,10,20,30 8 * * 1-5"
+    # Staggered reliability backstop after the 2026-08-31 missed KOSPI wake-up.
+    # Same canonical workflow, same provider/event/dedupe/PushPlus chain; no
+    # parallel state or notification implementation. Twenty-minute cadence limits
+    # extra load while avoiding the UTC hour boundary and primary cron minute.
+    # Beijing 07:02/07:22/07:42.
+    - cron: "2,22,42 23 * * 0-4"
+    # Beijing 08:02-15:42 every twenty minutes.
+    - cron: "2,22,42 0-7 * * 1-5"
+    # Beijing 16:02/16:22 APAC close-tail backstop.
+    - cron: "2,22 8 * * 1-5"
 
 permissions:
   contents: write
