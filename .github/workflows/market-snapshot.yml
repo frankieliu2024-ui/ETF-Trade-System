@@ -231,7 +231,10 @@ jobs:
           import json, sys
           data = json.load(open(sys.argv[1], encoding='utf-8'))
           keys = ('account_fact','formal_decision','trade_event','formal_review','interaction_scenario')
-          raise SystemExit(0 if any(k in data for k in keys) else 1)
+          source = str(data.get('source') or '').upper()
+          scenario = str(data.get('interaction_scenario') or '').upper()
+          broker_request = source == 'CHATGPT_USER_BROKER_SCREENSHOT' or scenario == 'BROKER_SCREENSHOT_SYNC'
+          raise SystemExit(0 if any(k in data for k in keys) or broker_request else 1)
           PY
             then
               python scripts/refresh_gate.py --guard-request "$f"

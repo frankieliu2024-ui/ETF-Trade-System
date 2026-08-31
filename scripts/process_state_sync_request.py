@@ -538,6 +538,34 @@ def write_trade_review_required(event: dict) -> None:
     })
 
 
+def is_broker_screenshot_request(request: dict) -> bool:
+    return (
+        str(request.get("source") or "").upper() == "CHATGPT_USER_BROKER_SCREENSHOT"
+        or str(request.get("interaction_scenario") or "").upper() == "BROKER_SCREENSHOT_SYNC"
+    )
+
+
+def merge_account_fact(prior: dict, supplied: dict) -> dict:
+    """Merge a screenshot's confirmed fields without erasing canonical history."""
+    merged = json.loads(json.dumps(prior or {}))
+    for key, value in (supplied or {}).items():
+        if value is not None:
+            merged[key] = json.loads(json.dumps(value))
+    for key in ("formal_action", "orders", "trades", "fee_facts", "account_reconciliation",
+                "account_change_events_after_confirmed_at", "lifecycle", "confirmed_trades",
+                "formal_decision", "reconciliation_metadata"):
+        if key not in merged and key in (prior or {}):
+            merged[key] = json.loads(json.dumps(prior[key]))
+    return merged
+
+
+def account_fact_is_older(prior: dict, supplied: dict) -> bool:
+    old_time = parse_time(prior.get("updated_at"))
+    new_time = parse_time(supplied.get("updated_at"))
+    return bool(old_time and new_time and new_time < old_time)
+
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("request_path")
@@ -549,21 +577,37 @@ def main() -> int:
     trade = request.get("trade_event")
     prior_account = load_json(ACCOUNT) if ACCOUNT.exists() else {}
     supplied_account = request.get("account_fact")
+    account_sync_status = "NOT_APPLICABLE"
     if not supplied_account and isinstance(trade, dict):
         supplied_account = _apply_trade_to_account(prior_account, trade)
-    if supplied_account:
-        supplied_account = json.loads(json.dumps(supplied_account))
-        if "formal_action" not in supplied_account and prior_account.get("formal_action"):
-            supplied_account["formal_action"] = prior_account["formal_action"]
+    if is_broker_screenshot_request(request) and not isinstance(supplied_account, dict) and not isinstance(trade, dict):
+        result = {
+            "ok": False,
+            "request_id": request.get("request_id"),
+            "interaction_scenario": request.get("interaction_scenario"),
+            "status": "NO_ACCOUNT_FACT",
+            "account_sync_status": "ACCOUNT_SYNC_NOT_PERFORMED",
+            "dashboard_updated": False,
+            "detail": "Broker screenshot request has no request-scoped account_fact; market success must not be treated as account sync success.",
+        }
+        print(json.dumps(result, ensure_ascii=False))
+        return 0
+    if isinstance(supplied_account, dict):
+        supplied_account = merge_account_fact(prior_account, supplied_account)
         supplied_account.setdefault("status", "VALID")
         supplied_account.setdefault("validity_mode", "EVENT_DRIVEN_CARRY_FORWARD")
-        supplied_account.setdefault("orders", [])
-        supplied_account.setdefault("trades", [])
-        prior_events = prior_account.get("account_change_events_after_confirmed_at") or []
-        new_events = _account_change_events(prior_account, supplied_account, request, trade)
-        known = {str(x.get("idempotency_key") or x.get("event_id") or "") for x in prior_events}
-        supplied_account["account_change_events_after_confirmed_at"] = prior_events + [x for x in new_events if str(x.get("idempotency_key")) not in known]
-        atomic_json_write(ACCOUNT, supplied_account)
+        if account_fact_is_older(prior_account, supplied_account):
+            account_sync_status = "STALE_ACCOUNT_FACT_IGNORED"
+        else:
+            prior_events = prior_account.get("account_change_events_after_confirmed_at") or []
+            new_events = _account_change_events(prior_account, supplied_account, request, trade)
+            known = {str(x.get("idempotency_key") or x.get("event_id") or "") for x in prior_events}
+            supplied_account["account_change_events_after_confirmed_at"] = prior_events + [x for x in new_events if str(x.get("idempotency_key")) not in known]
+            if supplied_account == prior_account:
+                account_sync_status = "ACCOUNT_SYNC_IDEMPOTENT_NOOP"
+            else:
+                account_sync_status = "ACCOUNT_FACT_UPDATED"
+                atomic_json_write(ACCOUNT, supplied_account)
     account = load_json(ACCOUNT)
     latest_trade_event_id = _latest_trade_event_id()
     if latest_trade_event_id:
@@ -621,7 +665,7 @@ def main() -> int:
     # Keep the three human-readable fact documents synchronized even when the
     # request only confirms a fee/account snapshot and creates no new trade event.
     formal_files_sync = sync_formal_files(ROOT, account)
-    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "formal_files_sync": formal_files_sync}
+    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "formal_files_sync": formal_files_sync, "account_sync_status": account_sync_status}
     print(json.dumps(result, ensure_ascii=False))
     return 0
 

@@ -5,6 +5,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from scripts.process_state_sync_request import account_fact_is_older, is_broker_screenshot_request, merge_account_fact
+from scripts import build_e2e_status as e2e
+
 from scripts.state_manager import (
     StateConflictError,
     append_event,
@@ -79,6 +82,53 @@ class StateLayerTests(unittest.TestCase):
         self.assertIn("market_date", context)
         self.assertFalse(context["dashboard_summary"]["automatic_overwrite"])
         self.assertTrue(context["needs_account_screenshot"])
+
+
+    def test_broker_snapshot_merge_carries_forward_canonical_history(self) -> None:
+        prior = {
+            "status": "VALID",
+            "updated_at": "2026-08-28T14:18:00+08:00",
+            "source": "BROKER_SCREENSHOT_20260828",
+            "total_asset": 100.0,
+            "positions": [{"code": "515880", "quantity": 10}],
+            "trades": [{"event_id": "trade-1"}],
+            "formal_action": {"decision_id": "decision-1", "execution_status": "EXECUTED"},
+            "fee_facts": [{"fee": 5.0}],
+            "account_change_events_after_confirmed_at": [{"idempotency_key": "event-1"}],
+        }
+        incoming = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00", "source": "BROKER_SCREENSHOT_20260831", "total_asset": 110.0, "positions": [{"code": "515880", "quantity": 11}]}
+        merged = merge_account_fact(prior, incoming)
+        self.assertEqual(merged["total_asset"], 110.0)
+        self.assertEqual(merged["trades"], prior["trades"])
+        self.assertEqual(merged["formal_action"], prior["formal_action"])
+        self.assertEqual(merged["fee_facts"], prior["fee_facts"])
+        self.assertEqual(merged["account_change_events_after_confirmed_at"], prior["account_change_events_after_confirmed_at"])
+
+    def test_older_broker_snapshot_cannot_replace_newer_account(self) -> None:
+        prior = {"updated_at": "2026-08-31T15:12:00+08:00"}
+        incoming = {"updated_at": "2026-08-31T14:01:00+08:00"}
+        self.assertTrue(account_fact_is_older(prior, incoming))
+
+    def test_broker_request_without_account_fact_is_explicit(self) -> None:
+        self.assertTrue(is_broker_screenshot_request({"source": "CHATGPT_USER_BROKER_SCREENSHOT"}))
+        self.assertTrue(is_broker_screenshot_request({"interaction_scenario": "BROKER_SCREENSHOT_SYNC"}))
+        self.assertFalse(is_broker_screenshot_request({"interaction_scenario": "FORMAL_INTRADAY_ANALYSIS"}))
+
+    def test_e2e_blocks_new_unprocessed_broker_request(self) -> None:
+        request_dir = self.root / "requests" / "live_snapshot"
+        request_dir.mkdir(parents=True)
+        (request_dir / "20260831_1513_broker.json").write_text(json.dumps({
+            "request_id": "broker-1513",
+            "request_time_beijing": "2026-08-31T15:13:00+08:00",
+            "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+            "interaction_scenario": "BROKER_SCREENSHOT_SYNC",
+        }), encoding="utf-8")
+        account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00", "source": "BROKER_SCREENSHOT_20260831"}
+        current = {"needs_account_update": False}
+        with patch.object(e2e, "ROOT", self.root):
+            result = e2e.account_component(account, current)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertIn("ACCOUNT_SYNC_NOT_PERFORMED", result["reason"])
 
     def test_conflict_stops_overwrite(self) -> None:
         path = self.root / "data" / "state" / "conflict.json"
