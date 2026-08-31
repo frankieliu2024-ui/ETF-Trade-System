@@ -296,7 +296,7 @@ class NotificationAggregationTests(unittest.TestCase):
             "sent_at": "2026-08-31T15:02:00+08:00",
             "title": "【收盘总结】科创50日内V形修复",
             "content": "科创50（000688）修复。",
-            "confirmation_context": {"market_date": "2026-08-31", "covered_fact_keys": ["2026-08-31|000688|REVERSAL|UP"]},
+            "confirmation_context": {"market_date": "2026-08-31", "covered_fact_keys": ["2026-08-31|000688|REVERSAL|UP"], "covered_event_magnitude_pct": 2.0},
         }
         upgrade = self._event("000688", "科创50", "REVERSAL", stamp="2026-08-31T15:04:00+08:00", magnitude=5.0)
         self.assertIsNone(notification_common._absorb_or_aggregate([summary], upgrade))
