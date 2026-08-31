@@ -133,7 +133,7 @@ def compact_path(row: dict, feature: dict | None = None, *, include_current: boo
     return f"{label}{phrase}" + (f"（当前{pct(day)}）" if include_current else "")
 
 
-def a_share_structure(indices: dict[str, dict], etfs: list[dict], features: dict[str, dict]) -> tuple[list[str], list[str], str, str]:
+def a_share_structure(indices: dict[str, dict], etfs: list[dict], features: dict[str, dict], *, is_close: bool = False) -> tuple[list[str], list[str], str, str]:
     sh = indices.get("000001") or {}
     star = indices.get("000688") or {}
     cyb = indices.get("399006") or {}
@@ -175,7 +175,8 @@ def a_share_structure(indices: dict[str, dict], etfs: list[dict], features: dict
     details = []
     if formal_row is not None and number(formal_row.get("change_pct")) is not None:
         formal_ret = number(formal_row.get("change_pct"))
-        formal_text = f"当前{_formal_detail(formal)}对象{_label(formal_row)}收盘{pct(formal_ret)}"
+        phase_word = "收盘" if is_close else "当前"
+        formal_text = f"{phase_word}{_formal_detail(formal)}对象{_label(formal_row)}{phase_word}{pct(formal_ret)}"
         previous = _latest_intraday_row(formal_code)
         if previous is not None:
             previous_time, previous_row = previous
