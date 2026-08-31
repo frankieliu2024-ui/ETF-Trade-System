@@ -1,27 +1,29 @@
 {
-  "status": "PASS",
+  "status": "DEGRADED",
   "pulse_success": true,
   "hard_error_count": 0,
-  "warning_count": 0,
+  "warning_count": 1,
   "hard_errors": [],
-  "warnings": [],
-  "scheduled_for": "workflow_dispatch",
-  "trigger": "workflow_dispatch",
-  "started_at": "2026-08-31T00:51:23Z",
-  "provider_as_of": "2026-08-31T08:51:13+08:00",
+  "warnings": [
+    "HSTECH: quality=DEGRADED error="
+  ],
+  "scheduled_for": "2,22,42 0-7 * * 1-5",
+  "trigger": "schedule",
+  "started_at": "2026-08-31T06:31:00Z",
+  "provider_as_of": "2026-08-31T14:30:00+08:00",
   "provider_as_of_by_object": {
     "NDX": "2026-08-29T04:00:00+08:00",
     "SOX": "2026-08-29T04:00:00+08:00",
-    "N225": "2026-08-31T08:50:34+08:00",
-    "KOSPI": "2026-08-31T08:51:13+08:00",
-    "TWII": "2026-08-28T13:30:00+08:00",
-    "HSTECH": "2026-08-28T16:05:00+08:00"
+    "N225": "2026-08-31T14:30:00+08:00",
+    "KOSPI": "2026-08-31T14:30:00+08:00",
+    "TWII": "2026-08-31T13:33:00+08:00",
+    "HSTECH": "2026-08-31T14:14:48+08:00"
   },
-  "finished_at": "2026-08-31T00:51:23Z",
-  "commit_sha": "40c906cb49f5decc1ec23d3c3d44638632f1a3cc",
-  "run_id": "33345778655",
+  "finished_at": "2026-08-31T06:31:00Z",
+  "commit_sha": "400097e413658466de1baa359bcc4e8b3887ac2a",
+  "run_id": "33364482834",
   "market_date_beijing": "2026-08-31",
-  "overseas_quality_status": "PASS",
+  "overseas_quality_status": "DEGRADED",
   "us_extended_hours_status": "PASS",
   "objects": {
     "NDX": {
@@ -30,9 +32,9 @@
       "market_date_local": "2026-08-28",
       "provider": "yahoo_chart_api",
       "symbol": "^NDX",
-      "market_phase": "CLOSED_NON_TRADING_DAY",
+      "market_phase": "PRE_OPEN",
       "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 3171.2,
+      "delay_minutes": 3510.88,
       "error": ""
     },
     "SOX": {
@@ -41,53 +43,53 @@
       "market_date_local": "2026-08-28",
       "provider": "yahoo_chart_api",
       "symbol": "^SOX",
-      "market_phase": "CLOSED_NON_TRADING_DAY",
+      "market_phase": "PRE_OPEN",
       "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 3171.2,
+      "delay_minutes": 3510.88,
       "error": ""
     },
     "N225": {
       "quality_status": "PASS",
-      "as_of_beijing": "2026-08-31T08:50:34+08:00",
+      "as_of_beijing": "2026-08-31T14:30:00+08:00",
       "market_date_local": "2026-08-31",
       "provider": "eastmoney_push2",
       "symbol": "100.N225",
-      "market_phase": "OPEN",
-      "freshness_status": "FRESH",
-      "delay_minutes": 0.63,
+      "market_phase": "CLOSED",
+      "freshness_status": "SESSION_REFERENCE",
+      "delay_minutes": 0.88,
       "error": ""
     },
     "KOSPI": {
       "quality_status": "PASS",
-      "as_of_beijing": "2026-08-31T08:51:13+08:00",
+      "as_of_beijing": "2026-08-31T14:30:00+08:00",
       "market_date_local": "2026-08-31",
       "provider": "naver_finance",
       "symbol": "KOSPI",
-      "market_phase": "OPEN",
-      "freshness_status": "FRESH",
-      "delay_minutes": 0.0,
+      "market_phase": "CLOSED",
+      "freshness_status": "SESSION_REFERENCE",
+      "delay_minutes": 0.88,
       "error": ""
     },
     "TWII": {
       "quality_status": "PASS",
-      "as_of_beijing": "2026-08-28T13:30:00+08:00",
-      "market_date_local": "2026-08-28",
-      "provider": "yahoo_chart_api",
-      "symbol": "^TWII",
-      "market_phase": "PRE_OPEN",
-      "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 4041.2,
+      "as_of_beijing": "2026-08-31T13:33:00+08:00",
+      "market_date_local": "2026-08-31",
+      "provider": "twse_mis",
+      "symbol": "tse_t00.tw",
+      "market_phase": "CLOSED",
+      "freshness_status": "SESSION_REFERENCE",
+      "delay_minutes": 57.88,
       "error": ""
     },
     "HSTECH": {
-      "quality_status": "PASS",
-      "as_of_beijing": "2026-08-28T16:05:00+08:00",
-      "market_date_local": "2026-08-28",
+      "quality_status": "DEGRADED",
+      "as_of_beijing": "2026-08-31T14:14:48+08:00",
+      "market_date_local": "2026-08-31",
       "provider": "yahoo_chart_api",
       "symbol": "HSTECH.HK",
-      "market_phase": "PRE_OPEN",
-      "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 3886.2,
+      "market_phase": "OPEN",
+      "freshness_status": "DELAYED",
+      "delay_minutes": 16.08,
       "error": ""
     }
   },
@@ -103,7 +105,7 @@
     "yahoo_chart_api:HSTECH.HK": {
       "status": "ACTIVE",
       "consecutive_failures": 0,
-      "last_success_at": "2026-08-31T00:51:11+00:00"
+      "last_success_at": "2026-08-31T06:30:52+00:00"
     },
     "eastmoney_push2:124.HSTECH": {
       "status": "ACTIVE",
