@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-31T14:01:58Z",
-  "generated_at_beijing": "2026-08-31T22:01:58+08:00",
+  "generated_at": "2026-08-31T23:37:02Z",
+  "generated_at_beijing": "2026-09-01T07:37:02+08:00",
   "repository": {
-    "head_sha": "be24470b58536e16273ae4b19f9df6b2a4990c8a",
-    "github_sha": "be24470b58536e16273ae4b19f9df6b2a4990c8a",
-    "github_run_id": "33400191870",
+    "head_sha": "5fb363e0eb8da1400437cc8882653dbd957d2516",
+    "github_sha": "5fb363e0eb8da1400437cc8882653dbd957d2516",
+    "github_run_id": "33451368230",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "be24470b58536e16273ae4b19f9df6b2a4990c8a",
-    "workflow_sha": "be24470b58536e16273ae4b19f9df6b2a4990c8a",
+    "checked_commit": "5fb363e0eb8da1400437cc8882653dbd957d2516",
+    "workflow_sha": "5fb363e0eb8da1400437cc8882653dbd957d2516",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
@@ -20,7 +20,7 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-08-28:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-08-28\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n.......................................................................................................................................\n----------------------------------------------------------------------\nRan 135 tests in 0.099s\n\nOK\n"
+      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-08-31:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-08-28\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n.......................................................................................................................................\n----------------------------------------------------------------------\nRan 135 tests in 0.066s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -265,12 +265,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=be24470b58536e16273ae4b19f9df6b2a4990c8a"
+      "detail": "HEAD=5fb363e0eb8da1400437cc8882653dbd957d2516"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=be24470b58536e16273ae4b19f9df6b2a4990c8a GITHUB_SHA=be24470b58536e16273ae4b19f9df6b2a4990c8a"
+      "detail": "HEAD=5fb363e0eb8da1400437cc8882653dbd957d2516 GITHUB_SHA=5fb363e0eb8da1400437cc8882653dbd957d2516"
     },
     {
       "name": "git:critical_files_tracked",
@@ -595,7 +595,7 @@
     {
       "name": "trading_calendar:coverage",
       "status": "PASS",
-      "detail": "today=2026-08-31 coverage=2026-01-01..2026-12-31"
+      "detail": "today=2026-09-01 coverage=2026-01-01..2026-12-31"
     },
     {
       "name": "trading_calendar:official_source",
@@ -700,7 +700,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=True phase=10:01 max_age_seconds=36 limit=900"
+      "detail": "phase_aware phase=POST_MARKET live_objects=['QQQ', 'SOXX'] max_age_seconds=52 limit=900; cash indices are session references outside REGULAR"
     },
     {
       "name": "session_gate:calendar_read",
@@ -815,12 +815,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=25247"
+      "detail": "declared=STALE expected=STALE age_seconds=59750"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=25226"
+      "detail": "declared=STALE expected=STALE age_seconds=59730"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -860,7 +860,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-08-31T14:01:36Z market=2026-08-31T15:01:10+08:00"
+      "detail": "context=2026-08-31T23:36:40Z market=2026-08-31T15:01:10+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -940,7 +940,7 @@
     {
       "name": "notification:no_duplicate_active_source",
       "status": "PASS",
-      "detail": "active_sources=['a-share-session-summary:2026-08-31:OPEN', 'market-value:a-share:2026-08-31:518880:DOWN:EXTREME:10:2', 'market-value:a-share:2026-08-31:513520:UP:REVERSAL:13:1', 'market-value:a-share:2026-08-31:515880:UP:REVERSAL:13:1', 'market-value:a-share:2026-08-31:000688:UP:REVERSAL:13:2', 'market-value:a-share:2026-08-31:588000:UP:REVERSAL:13:3', 'market-value:a-share:2026-08-31:515880:UP:REVERSAL:14:0', 'market-value:asia:2026-08-31:KOSPI:UP:REVERSAL:14:2', 'apac-session-summary:2026-08-31:PRIMARY_CLOSE', 'market-value:asia:2026-08-31:N225:UP:REVERSAL:14:2', 'a-share-session-summary:2026-08-31:CLOSE', 'market-value:a-share:2026-08-31:000688:UP:REVERSAL:15:0']"
+      "detail": "active_sources=['a-share-session-summary:2026-08-31:OPEN', 'market-value:a-share:2026-08-31:518880:DOWN:EXTREME:10:2', 'market-value:a-share:2026-08-31:513520:UP:REVERSAL:13:1', 'market-value:a-share:2026-08-31:515880:UP:REVERSAL:13:1', 'market-value:a-share:2026-08-31:000688:UP:REVERSAL:13:2', 'market-value:a-share:2026-08-31:588000:UP:REVERSAL:13:3', 'market-value:a-share:2026-08-31:515880:UP:REVERSAL:14:0', 'market-value:asia:2026-08-31:KOSPI:UP:REVERSAL:14:2', 'apac-session-summary:2026-08-31:PRIMARY_CLOSE', 'market-value:asia:2026-08-31:N225:UP:REVERSAL:14:2', 'a-share-session-summary:2026-08-31:CLOSE', 'market-value:a-share:2026-08-31:000688:UP:REVERSAL:15:0', 'market-value:asia:2026-08-31:HSTECH:UP:REVERSAL:22:1', 'us-session-summary:2026-08-31:CLOSE', 'market-value:us:2026-08-31:SOXX:DOWN:EXTREME:05:1']"
     },
     {
       "name": "notification:confirmation_entry_syntax",
@@ -1000,7 +1000,7 @@
     {
       "name": "state_coherence:current_account_mirror",
       "status": "PASS",
-      "detail": "current={'status': 'VALID', 'updated_at': '2026-08-31T15:12:00+08:00', 'source': 'BROKER_SCREENSHOT_20260831_1512_USER_PROVIDED'} canonical={k: account.get(k) for k in mirror_keys}"
+      "detail": "current={'status': 'VALID', 'updated_at': '2026-09-01T07:15:00+08:00', 'source': 'BROKER_SCREENSHOT_20260901_0715_USER_PROVIDED'} canonical={k: account.get(k) for k in mirror_keys}"
     },
     {
       "name": "stock_runtime:dynamic_account_membership",
@@ -1020,7 +1020,7 @@
     {
       "name": "overseas_runtime:structured",
       "status": "PASS",
-      "detail": "status=PASS"
+      "detail": "status=DEGRADED"
     },
     {
       "name": "overseas_runtime:pulse_success",
@@ -1040,7 +1040,7 @@
     {
       "name": "overseas_runtime:KOSPI:same_day_bar",
       "status": "PASS",
-      "detail": "quality=PASS as_of_beijing=2026-08-31T14:34:00+08:00"
+      "detail": "quality=PASS as_of_beijing=2026-08-31T14:00:00+08:00"
     },
     {
       "name": "account_fact:current_availability",
@@ -1885,7 +1885,7 @@
     {
       "name": "research:561980_component_lead_ready_contract",
       "status": "PASS",
-      "detail": "status=READY decision_date=2026-08-31 cutoff=2026-08-28 top5=['002371', '300604', '300666', '002409', '300346'] value=-0.3905"
+      "detail": "status=READY decision_date=2026-09-01 cutoff=2026-08-31 top5=['002371', '300604', '300666', '002409', '300346'] value=0.551"
     },
     {
       "name": "research:561980_component_lead_execution_bridge",
