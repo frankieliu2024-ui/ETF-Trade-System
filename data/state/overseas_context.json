@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-31T06:58:50Z",
-  "generated_at_beijing": "2026-08-31T14:58:22+08:00",
+  "generated_at": "2026-08-31T07:01:18Z",
+  "generated_at_beijing": "2026-08-31T15:01:12+08:00",
   "display_timezone": "Asia/Shanghai",
   "a_share_reference_timezone": "Asia/Shanghai",
   "scope": "FORMAL_OVERSEAS_AND_ASIA_INDEX_LAYER",
@@ -63,7 +63,7 @@
           "provider_timestamp_field": "chart.timestamp",
           "as_of_beijing": "2026-08-29T04:00:00+08:00",
           "market_phase": "PRE_OPEN",
-          "delay_minutes": 3538.38
+          "delay_minutes": 3541.21
         }
       ],
       "direct_source_chain": [
@@ -72,7 +72,7 @@
       ],
       "configured_primary": "yahoo_chart_api",
       "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 3538.38,
+      "delay_minutes": 3541.21,
       "stable_for_pulse": false,
       "quality_status_cn": "数据可用",
       "freshness_status_cn": "上一交易时段参考"
@@ -108,7 +108,7 @@
       "decision_note": "不同市场非同一时点，不得把上一收盘、盘中和当日收盘混为同步信号。",
       "selection_basis": "configured_primary_yahoo_valid_for_current_market_phase",
       "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 3538.38,
+      "delay_minutes": 3541.21,
       "stable_for_pulse": false,
       "quality_status_cn": "数据可用",
       "freshness_status_cn": "上一交易时段参考"
@@ -120,7 +120,7 @@
       "provider": "eastmoney_push2",
       "provider_result": "HTTP 200",
       "provider_timestamp_field": "f86",
-      "provider_endpoint": "push2.eastmoney.com",
+      "provider_endpoint": "push2delay.eastmoney.com",
       "symbol": "100.N225",
       "market_timezone": "Asia/Tokyo",
       "market_phase_at_generation": "CLOSED",
@@ -144,22 +144,11 @@
       },
       "display_time_rule": "正式输出优先显示latest.as_of_beijing（北京时间）；同时保留本地市场时区和market_phase。",
       "decision_note": "东方财富对象级直接行情；按当前对象级正式主备策略使用，并始终以provider自身时间戳通过质量门禁。",
-      "selected_provider_id": "eastmoney_push2:100.N225",
+      "selected_provider_id": "eastmoney_push2delay:100.N225",
       "selection_basis": "validated_live_priority_first_usable_direct_source",
       "provider_attempts": [
         {
           "provider": "eastmoney_push2delay:100.N225",
-          "result": "FAILED",
-          "http_or_cli_result": "<urlopen error _ssl.c:999: The handshake operation timed out>",
-          "quality_status": "FAILED",
-          "freshness_status": "MISSING",
-          "stable_for_10m_pulse": false,
-          "as_of_beijing": "",
-          "market_phase": "CLOSED",
-          "delay_minutes": null
-        },
-        {
-          "provider": "eastmoney_push2:100.N225",
           "result": "PASS",
           "http_or_cli_result": "HTTP 200",
           "quality_status": "PASS",
@@ -175,7 +164,7 @@
           "provider_timestamp_field": "f86",
           "as_of_beijing": "2026-08-31T14:30:00+08:00",
           "market_phase": "CLOSED",
-          "delay_minutes": 28.38
+          "delay_minutes": 31.21
         }
       ],
       "direct_source_chain": [
@@ -185,7 +174,7 @@
       ],
       "configured_primary": "eastmoney_push2delay:100.N225",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 28.38,
+      "delay_minutes": 31.21,
       "stable_for_pulse": true,
       "quality_status_cn": "数据可用",
       "freshness_status_cn": "已结束交易时段参考"
@@ -209,10 +198,10 @@
         "close": 6820.02,
         "volume": 351571000.0,
         "amount": 26035272000000.0,
-        "timestamp": 1788159480,
-        "as_of_utc": "2026-08-31T06:58:00Z",
-        "as_of_local": "2026-08-31T15:58:00+09:00",
-        "as_of_beijing": "2026-08-31T14:58:00+08:00",
+        "timestamp": 1788159660,
+        "as_of_utc": "2026-08-31T07:01:00Z",
+        "as_of_local": "2026-08-31T16:01:00+09:00",
+        "as_of_beijing": "2026-08-31T15:01:00+08:00",
         "market_date_local": "2026-08-31",
         "provider_timezone": "Asia/Seoul",
         "symbol": "KOSPI"
@@ -235,11 +224,11 @@
           "high": 6820.1,
           "low": 6547.76,
           "close": 6820.02,
-          "provider_timestamp": 1788159480,
+          "provider_timestamp": 1788159660,
           "provider_timestamp_field": "localTradedAt",
-          "as_of_beijing": "2026-08-31T14:58:00+08:00",
+          "as_of_beijing": "2026-08-31T15:01:00+08:00",
           "market_phase": "CLOSED",
-          "delay_minutes": 0.38
+          "delay_minutes": 0.21
         }
       ],
       "direct_source_chain": [
@@ -250,7 +239,7 @@
       ],
       "configured_primary": "naver_finance:KOSPI",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 0.38,
+      "delay_minutes": 0.21,
       "stable_for_pulse": true,
       "quality_status_cn": "数据可用",
       "freshness_status_cn": "已结束交易时段参考"
@@ -304,7 +293,7 @@
           "provider_timestamp_field": "tlong",
           "as_of_beijing": "2026-08-31T13:33:00+08:00",
           "market_phase": "CLOSED",
-          "delay_minutes": 85.38
+          "delay_minutes": 88.21
         }
       ],
       "direct_source_chain": [
@@ -315,7 +304,7 @@
       ],
       "configured_primary": "twse_mis:tse_t00.tw",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 85.38,
+      "delay_minutes": 88.21,
       "stable_for_pulse": true,
       "quality_status_cn": "数据可用",
       "freshness_status_cn": "已结束交易时段参考"
@@ -337,14 +326,14 @@
         "open": 4585.61,
         "high": 4630.7,
         "low": 4531.22,
-        "close": 4620.31,
-        "volume": 1124220880,
-        "amount": 52498374912.0,
+        "close": 4615.9,
+        "volume": 1136071552,
+        "amount": 52807950592.0,
         "previous_close": 4605.15,
-        "timestamp": 1788159528,
-        "as_of_utc": "2026-08-31T06:58:48Z",
-        "as_of_local": "2026-08-31T14:58:48+08:00",
-        "as_of_beijing": "2026-08-31T14:58:48+08:00",
+        "timestamp": 1788159676,
+        "as_of_utc": "2026-08-31T07:01:16Z",
+        "as_of_local": "2026-08-31T15:01:16+08:00",
+        "as_of_beijing": "2026-08-31T15:01:16+08:00",
         "market_date_local": "2026-08-31",
         "provider_timezone": "Asia/Hong_Kong",
         "symbol": "124.HSTECH"
@@ -362,14 +351,14 @@
           "freshness_status": "FRESH",
           "stable_for_10m_pulse": true,
           "symbol": "124.HSTECH",
-          "latest_price": 4620.31,
+          "latest_price": 4615.9,
           "open": 4585.61,
           "high": 4630.7,
           "low": 4531.22,
-          "close": 4620.31,
-          "provider_timestamp": 1788159528,
+          "close": 4615.9,
+          "provider_timestamp": 1788159676,
           "provider_timestamp_field": "f86",
-          "as_of_beijing": "2026-08-31T14:58:48+08:00",
+          "as_of_beijing": "2026-08-31T15:01:16+08:00",
           "market_phase": "OPEN",
           "delay_minutes": 0.0
         },
@@ -381,16 +370,16 @@
           "freshness_status": "DELAYED",
           "stable_for_10m_pulse": false,
           "symbol": "HSTECH.HK",
-          "latest_price": 4620.0400390625,
-          "open": 4620.0400390625,
-          "high": 4620.0400390625,
-          "low": 4620.0400390625,
-          "close": 4620.0400390625,
-          "provider_timestamp": 1788158626,
+          "latest_price": 4622.3798828125,
+          "open": 4622.3798828125,
+          "high": 4622.3798828125,
+          "low": 4622.3798828125,
+          "close": 4622.3798828125,
+          "provider_timestamp": 1788158776,
           "provider_timestamp_field": "chart.timestamp",
-          "as_of_beijing": "2026-08-31T14:43:46+08:00",
+          "as_of_beijing": "2026-08-31T14:46:16+08:00",
           "market_phase": "OPEN",
-          "delay_minutes": 14.61
+          "delay_minutes": 14.95
         },
         {
           "provider": "hithink-finance:HS2083",
@@ -406,8 +395,8 @@
       ],
       "source_comparison": {
         "comparable": false,
-        "time_gap_minutes": 15.03,
-        "price_gap_pct": 0.0058,
+        "time_gap_minutes": 15.0,
+        "price_gap_pct": 0.1404,
         "reason": "timestamps_not_aligned"
       },
       "direct_source_chain": [
@@ -438,12 +427,12 @@
     "yahoo_chart_api:HSTECH.HK": {
       "status": "ACTIVE",
       "consecutive_failures": 0,
-      "last_success_at": "2026-08-31T06:58:22+00:00"
+      "last_success_at": "2026-08-31T07:01:12+00:00"
     },
     "eastmoney_push2:124.HSTECH": {
       "status": "ACTIVE",
       "consecutive_failures": 0,
-      "last_success_at": "2026-08-31T06:58:22+00:00",
+      "last_success_at": "2026-08-31T07:01:12+00:00",
       "failure_class": "UNKNOWN",
       "bypass_date": "2026-08-31"
     }
