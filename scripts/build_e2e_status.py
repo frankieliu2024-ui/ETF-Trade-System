@@ -19,6 +19,8 @@ FILES = {
 }
 DASHBOARD = ROOT / "ETF当前状态_DASHBOARD.md"
 OUT = STATE / "e2e_status.json"
+POST_MARKET_REVIEW = ROOT / "post_market_review" / "post_market_review_event.json"
+REVIEW_DIR = ROOT / "events" / "reviews"
 
 
 def read_json(path: Path) -> dict:
@@ -256,6 +258,33 @@ def risk_component(equity: dict, dashboard: str, current: dict) -> dict:
     }
 
 
+def close_review_component(current: dict) -> dict:
+    """Require a canonical review once the formal close context is ready."""
+    event = read_json(POST_MARKET_REVIEW)
+    if not event or not event.get("market_close"):
+        return {"status": "READY", "reason": "no formal close review is currently required"}
+    market_date = str(event.get("market_date") or current.get("market_date") or "")
+    review_path = REVIEW_DIR / f"{market_date}.json"
+    closure_path = STATE / f"close_review_closure_{market_date}.json"
+    review = read_json(review_path)
+    closure = read_json(closure_path)
+    complete = (
+        review.get("event_type") == "FORMAL_POST_CLOSE_REVIEW"
+        and isinstance(review.get("review"), dict)
+        and closure.get("status") == "CLOSED"
+        and closure.get("formal_review_path") == f"events/reviews/{market_date}.json"
+    )
+    if not complete and str(event.get("status") or "").upper() == "READY_FOR_REVIEW":
+        return {
+            "status": "BLOCKED",
+            "reason": "FORMAL_POST_CLOSE_REVIEW_NOT_CANONICALIZED",
+            "market_date": market_date,
+            "review_path": f"events/reviews/{market_date}.json",
+            "closure_path": f"data/state/close_review_closure_{market_date}.json",
+        }
+    return {"status": "READY" if complete else "DEGRADED", "reason": "canonical close review chain is complete" if complete else "close review context is not complete", "market_date": market_date}
+
+
 def context_component(query: dict, decision: dict) -> dict:
     query_ok = bool(query)
     decision_ok = bool(decision)
@@ -292,6 +321,7 @@ def main() -> int:
         "market": market_component(data["current"]),
         "account": account_component(data["account"], data["current"]),
         "risk": risk_component(data["equity"], dashboard, data["current"]),
+        "close_review": close_review_component(data["current"]),
         "decision_context": context_component(data["query"], data["decision"]),
         "maintenance": maintenance_component(data["maintenance"]),
     }
@@ -325,3 +355,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
