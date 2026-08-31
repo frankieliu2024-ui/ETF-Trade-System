@@ -34,6 +34,29 @@ class QueryTimeRefreshTests(unittest.TestCase):
         refresh.assert_called_once_with(root, ["NDX"], now)
         self.assertEqual(result["refresh_mode"], "QUERY_TIME_IMMEDIATE_REFRESH")
 
+    def test_formal_decision_request_refreshes_even_when_cached_quote_is_fresh(self):
+        root = self._root("2026-08-25T00:29:00+08:00")
+        now = datetime.fromisoformat("2026-08-25T00:30:00+08:00")
+        request_time = datetime.fromisoformat("2026-08-25T00:29:30+08:00")
+        with patch("scripts.query_time_market_refresh.refresh_market_quotes", return_value={"quotes": [], "failures": []}) as refresh:
+            result = build_market_quote_context(root, now=now, decision_request_time=request_time)
+        refresh.assert_called_once_with(root, [], now)
+        self.assertEqual(result["refresh_mode"], "QUERY_TIME_IMMEDIATE_REFRESH")
+
+    def test_post_request_pass_current_is_consumed_without_second_refresh(self):
+        root = self._root("2026-08-25T00:50:30+08:00")
+        (root / "data/state/CURRENT.json").write_text(json.dumps({
+            "latest_snapshot": "", "captured_at": "2026-08-25T00:50:30+08:00",
+            "provider_as_of": "2026-08-25T00:50:28+08:00", "quality_status": "PASS"
+        }), encoding="utf-8")
+        now = datetime.fromisoformat("2026-08-25T00:50:45+08:00")
+        request_time = datetime.fromisoformat("2026-08-25T00:50:00+08:00")
+        with patch("scripts.query_time_market_refresh.refresh_market_quotes") as refresh:
+            result = build_market_quote_context(root, now=now, decision_request_time=request_time)
+        refresh.assert_not_called()
+        self.assertEqual(result["refresh_mode"], "CACHED_STATE")
+        self.assertTrue(result["decision_freshness"]["formal_decision_allowed"])
+
     def test_stale_cache_calls_provider_and_prefers_new_quote(self):
         root = self._root("2026-08-24T23:00:00+08:00")
         now = datetime.fromisoformat("2026-08-25T00:30:00+08:00")
@@ -190,3 +213,4 @@ class QueryTimeRefreshTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

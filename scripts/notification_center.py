@@ -71,13 +71,15 @@ def send(token: str, title: str, content: str) -> tuple[bool, dict]:
     payload = json.dumps({"token": token, "title": title, "content": content, "template": "markdown", "channel": "wechat"}, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(PUSHPLUS_URL, data=payload, headers={"Content-Type": "application/json", "User-Agent": "ETF-Trade-System/1.0"}, method="POST")
     try:
-        with urllib.request.urlopen(req, timeout=15) as response:
+        pushplus_policy = read_json(ROOT / "config" / "runtime_policy.json", {})
+        timeout = float(os.environ.get("PUSHPLUS_TIMEOUT_SECONDS", pushplus_policy.get("pushplus_timeout_seconds", 15)))
+        with urllib.request.urlopen(req, timeout=timeout) as response:
             raw = response.read().decode("utf-8", errors="replace")
             try:
                 body = json.loads(raw)
             except json.JSONDecodeError:
                 body = {"raw": raw[:500]}
-            ok = int(body.get("code", 0) or 0) == 200
+            ok = response.status == 200 and int(body.get("code", 0) or 0) == 200
             return ok, {"http_status": response.status, "pushplus_code": body.get("code"), "pushplus_message": body.get("msg")}
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
         return False, {"error": type(exc).__name__, "message": str(exc)[:300]}
@@ -617,9 +619,15 @@ def main() -> int:
         print(json.dumps({"status": "EXPIRED_REQUIRES_NEW_EVENT", "notification_id": existing.get("notification_id")}, ensure_ascii=False)); return 0
     item = normalize_notification(event, existing); item["lifecycle_status"] = "CREATED"; item["created_at"] = item.get("created_at") or now().isoformat(timespec="seconds")
     if not token:
-        state.update({"schema_version": "2.2", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "SKIPPED_NO_SECRET", "notification_id": item["notification_id"], "lifecycle_status": "CREATED"}, ensure_ascii=False)); return 0
+        stamp = now().isoformat(timespec="seconds")
+        item["last_attempted_at"] = stamp
+        item["response"] = {"error": "PUSHPLUS_TOKEN missing"}
+        item["lifecycle_status"] = "FAILED"
+        notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
+        notifications.append(item)
+        state.update({"schema_version": "2.2", "updated_at": stamp, "last_status": "FAILED", "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "FAILED", "notification_id": item["notification_id"], "lifecycle_status": "FAILED"}, ensure_ascii=False)); return 1
     ok, response = send(token, item["title"], item["content"]); stamp = now().isoformat(timespec="seconds"); item["last_attempted_at"] = stamp; item["response"] = response
-    item["lifecycle_status"] = "WAITING_CONFIRMATION" if ok and item["event_type"] in {"PENDING_EXECUTION_CONFIRMATION", "成交确认", "账户确认", "ACCOUNT_FACT_CONFIRMATION", "收盘账户"} else ("SENT" if ok else "CREATED"); item["sent_at"] = stamp if ok else item.get("sent_at")
+    item["lifecycle_status"] = "WAITING_CONFIRMATION" if ok and item["event_type"] in {"PENDING_EXECUTION_CONFIRMATION", "成交确认", "账户确认", "ACCOUNT_FACT_CONFIRMATION", "收盘账户"} else ("SENT" if ok else "FAILED"); item["sent_at"] = stamp if ok else item.get("sent_at")
     if existing: notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
     notifications.append(item)
     state = {"schema_version": "2.2", "updated_at": stamp, "last_status": item["lifecycle_status"], "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。", "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"}
@@ -628,3 +636,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
