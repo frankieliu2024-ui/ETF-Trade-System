@@ -1,27 +1,37 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-31T18:48:10+08:00",
+  "generated_at": "2026-08-31T22:02:01+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 33383980549,
+  "workflow_name": "Overseas pre-open pulse",
+  "run_id": 33400191867,
   "run_attempt": 1,
-  "head_sha": "c15fd85b64b5d837a82b6dffc374fc35fbce245a",
-  "main_head_sha": "8d6520f9095e60604d346255b820d31dfa3d0123",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "be24470b58536e16273ae4b19f9df6b2a4990c8a",
+  "main_head_sha": "14b9c6de42bd4b1253e275e05fbd1d1276be9db8",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 17
+      "job": "overseas",
+      "step": "Commit overseas contexts, notifications and runtime health",
+      "number": 15
     }
   ],
   "changed_files": [
-    "scripts/market_notification_common.py"
+    "\"ETF\\344\\272\\244\\346\\230\\223\\345\\244\\215\\347\\233\\230\\344\\270\\216\\347\\273\\217\\351\\252\\214\\345\\272\\223_2026.md\"",
+    "\"ETF\\345\\270\\202\\345\\234\\272\\350\\241\\214\\346\\203\\205\\346\\241\\243\\346\\241\\210_2026.md\"",
+    "data/state/CURRENT.json",
+    "data/state/close_review_closure_2026-08-31.json",
+    "events/reviews/2026-08-31.json",
+    "requests/live_snapshot/20260831_152000_formal_close_review_recovery.json",
+    "scripts/build_e2e_status.py",
+    "scripts/check_system_consistency.py",
+    "scripts/formal_file_mutation_gateway.py",
+    "scripts/process_state_sync_request.py",
+    "tests/test_post_close_review_canonical.py"
   ],
-  "commit_message": "#120: import notification timestamp parser for aggregation gate",
+  "commit_message": "fix: canonicalize formal post-close review chain (#128)",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
