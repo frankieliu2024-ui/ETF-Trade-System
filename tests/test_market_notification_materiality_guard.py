@@ -199,5 +199,36 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
         self.assertIn("不得反向覆盖规范", impl_readme)
 
 
+    def test_intraday_summary_uses_current_not_close(self):
+        import notification_semantics as semantics
+
+        indices = {
+            "000001": {"symbol": "000001", "provider_name": "上证指数", "change_pct": -1.0},
+            "000688": {"symbol": "000688", "provider_name": "科创50", "change_pct": -2.0},
+            "399006": {"symbol": "399006", "provider_name": "创业板指", "change_pct": -1.0},
+        }
+        etfs = [{"symbol": "515880", "provider_name": "通信ETF", "change_pct": -1.5}]
+        formal = {"validity": "ACTIVE", "applicable_object": "515880", "lifecycle": "Trial"}
+        with patch.object(semantics, "_account_context", return_value={"held_etfs": {}, "held_stocks": {}, "formal": formal}):
+            headline, _, _, _ = semantics.a_share_structure(indices, etfs, {}, is_close=False)
+        text = " ".join(headline)
+        self.assertIn("当前", text)
+        self.assertNotIn("收盘", text)
+
+    def test_close_summary_retains_close_wording(self):
+        import notification_semantics as semantics
+
+        indices = {
+            "000001": {"symbol": "000001", "provider_name": "上证指数", "change_pct": -1.0},
+            "000688": {"symbol": "000688", "provider_name": "科创50", "change_pct": -2.0},
+            "399006": {"symbol": "399006", "provider_name": "创业板指", "change_pct": -1.0},
+        }
+        etfs = [{"symbol": "515880", "provider_name": "通信ETF", "change_pct": -1.5}]
+        formal = {"validity": "ACTIVE", "applicable_object": "515880", "lifecycle": "Trial"}
+        with patch.object(semantics, "_account_context", return_value={"held_etfs": {}, "held_stocks": {}, "formal": formal}):
+            headline, _, _, _ = semantics.a_share_structure(indices, etfs, {}, is_close=True)
+        self.assertIn("收盘", " ".join(headline))
+
+
 if __name__ == "__main__":
     unittest.main()
