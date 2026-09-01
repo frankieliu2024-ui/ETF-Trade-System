@@ -3,6 +3,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from research_artifact_contract import (
+    completed_artifacts,
+    load_artifact,
+    validate_completed_artifact,
+    validate_report_against_artifact,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "data/state/system_consistency.json"
 
@@ -43,6 +50,42 @@ def main() -> int:
     execution_bridge = text("scripts/build_research_execution_bridge.py")
     backfill = text("scripts/backfill_research_daily_history.py")
     backfill_workflow = text(".github/workflows/research-backfill.yml")
+    stage1_path = ROOT / "research/backtests/etf_t_swing_stage1_validation.json"
+    stage1 = load_artifact(stage1_path)
+    artifact_errors = validate_completed_artifact(stage1_path)
+    check(
+        "research:completed_artifact_integrity",
+        not artifact_errors,
+        "; ".join(artifact_errors) or "completed research artifact has semantic metadata, coverage, results and provenance",
+    )
+    report_text = text("research/reports/ETF反复做T与波段专项研究.md")
+    report_errors = validate_report_against_artifact(report_text, stage1) if not artifact_errors else ["artifact invalid"]
+    check(
+        "research:report_artifact_no_drift",
+        not report_errors,
+        "; ".join(report_errors) or "research report headlines and scope agree with the artifact",
+    )
+    archive_text = text("ETF交易复盘与经验库_2026.md")
+    archive_marker = "AUTO_COMPLETED_RESEARCH_ARCHIVE_START"
+    archive_ok = bool(stage1.get("research_id")) and stage1.get("research_id") in archive_text and archive_marker in archive_text
+    check(
+        "research:completed_archive_registered",
+        archive_ok,
+        "completed research must have an idempotent formal experience-library index",
+    )
+    check(
+        "research:archive_is_not_master_conversion",
+        "RESEARCH_ONLY" in archive_text and "ETF规则_MASTER.md" not in archive_text,
+        "experience archive remains distinct from MASTER conversion and permissions",
+    )
+    for artifact_path in completed_artifacts(ROOT):
+        artifact = load_artifact(artifact_path)
+        research_id = artifact.get("research_id")
+        check(
+            f"research:archive:{research_id}",
+            bool(research_id and research_id in archive_text),
+            f"completed artifact {artifact_path.relative_to(ROOT)} must be represented in the formal experience library",
+        )
 
     check(
         "research:decision_context_consumes_evidence",

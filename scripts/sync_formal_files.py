@@ -21,6 +21,7 @@ from formal_file_mutation_gateway import (
     replace_managed_block as replace_block,
     write_formal_text_if_changed,
 )
+from research_artifact_contract import archive_completed_research
 
 
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
@@ -262,12 +263,14 @@ def sync_formal_files(root: Path = ROOT, account: dict | None = None) -> dict:
         write_formal_text_if_changed(root, experience_path.name, new_experience)
 
     current_changed = sync_current_account_reference(root, account)
+    research_archive_changed = archive_completed_research(root)
     return {
         "dashboard_changed": dash_changed,
         "archive_changed": archive_changed,
         "experience_changed": experience_changed,
         "experience_fee_rows_updated": experience_updates,
         "current_account_reference_changed": current_changed,
+        "completed_research_archive_changed": research_archive_changed,
     }
 
 
