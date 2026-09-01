@@ -75,6 +75,26 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
         self.assertEqual(len(merged["notifications"]), 1)
         self.assertEqual(merged["notifications"][0]["lifecycle_status"], "SENT")
 
+    def test_notification_family_absorbs_same_category_over_multiple_runs(self):
+        from scripts import market_notification_common as common
+        items = [{"event_type": "MARKET_VALUE_ALERT", "security_code": "APAC_DIVERGENCE", "created_at": "2026-09-01T09:48:00+08:00", "sent_at": "2026-09-01T09:48:00+08:00", "confirmation_context": {"market": "ASIA", "market_date": "2026-09-01", "session": "DAY", "event_category": "DIVERGENCE", "direction": "DIVERGED", "event_magnitude_pct": 1.89, "source_fact_id": "fact-0948", "event_family_id": "ASIA:2026-09-01:DAY:APAC_DIVERGENCE:DIVERGENCE:DIVERGED", "family_peak_magnitude_pct": 1.89}}]
+        event = {"event_type": "MARKET_VALUE_ALERT", "security_code": "APAC_DIVERGENCE", "confirmation_context": {"market": "ASIA", "market_date": "2026-09-01", "session": "DAY", "event_category": "DIVERGENCE", "direction": "DIVERGED", "event_magnitude_pct": 2.41, "source_fact_id": "fact-1023"}, "created_at": "2026-09-01T10:23:00+08:00"}
+        self.assertIsNotNone(common._find_aggregate_target(items, event))
+
+    def test_divergence_material_upgrade_uses_highest_sent_baseline(self):
+        from scripts import market_notification_common as common
+        prior = {"event_type": "MARKET_VALUE_ALERT", "security_code": "APAC_DIVERGENCE", "confirmation_context": {"market": "ASIA", "market_date": "2026-09-01", "session": "DAY", "event_category": "DIVERGENCE", "direction": "DIVERGED", "event_magnitude_pct": 2.41, "family_peak_magnitude_pct": 2.41}}
+        event = {"event_type": "MARKET_VALUE_ALERT", "security_code": "APAC_DIVERGENCE", "confirmation_context": {"market": "ASIA", "market_date": "2026-09-01", "session": "DAY", "event_category": "DIVERGENCE", "direction": "DIVERGED", "event_magnitude_pct": 2.47}}
+        self.assertFalse(common._is_material_upgrade(event, prior))
+        event["confirmation_context"]["event_magnitude_pct"] = 3.30
+        self.assertTrue(common._is_material_upgrade(event, prior))
+
+    def test_reversal_same_family_small_recovery_is_absorbed(self):
+        from scripts import market_notification_common as common
+        items = [{"event_type": "MARKET_VALUE_ALERT", "security_code": "KOSPI", "sent_at": "2026-09-01T09:41:00+08:00", "confirmation_context": {"market": "ASIA", "market_date": "2026-09-01", "session": "DAY", "event_category": "REVERSAL", "direction": "UP", "event_magnitude_pct": 1.28, "family_peak_magnitude_pct": 1.28}}]
+        event = {"event_type": "MARKET_VALUE_ALERT", "security_code": "KOSPI", "confirmation_context": {"market": "ASIA", "market_date": "2026-09-01", "session": "DAY", "event_category": "REVERSAL", "direction": "UP", "event_magnitude_pct": 0.18}}
+        self.assertIsNotNone(common._find_aggregate_target(items, event))
+
     def test_hstech_rerun_keeps_one_sent_fact_identity(self):
         from scripts.merge_notification_state import merge_notification_state
         fact = "market-value:asia:2026-08-31:HSTECH:UP:REVERSAL:2026-08-31T16:09:08+08:00"

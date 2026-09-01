@@ -120,12 +120,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main
           git reset --hard origin/main
-          if [ -f /tmp/etf-notification-state/data/state/notification_center.json ]; then
-            python scripts/merge_notification_state.py \
-              --base data/state/notification_center.json \
-              --incoming /tmp/etf-notification-state/data/state/notification_center.json \
-              --output data/state/notification_center.json
-          fi
+          [ -f /tmp/etf-notification-state/data/state/notification_center.json ] && cp /tmp/etf-notification-state/data/state/notification_center.json data/state/notification_center.json || true
           [ -f /tmp/etf-notification-state/data/state/execution_reconciliation.json ] && cp /tmp/etf-notification-state/data/state/execution_reconciliation.json data/state/execution_reconciliation.json || true
           git add data/state/notification_center.json data/state/execution_reconciliation.json 2>/dev/null || true
           if git diff --cached --quiet; then
@@ -139,4 +134,3 @@ jobs:
         run: |
           echo "User notification delivery failed; ETF market/data/trading-decision workflows remain unaffected."
           exit 1
-

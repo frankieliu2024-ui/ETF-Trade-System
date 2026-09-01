@@ -213,6 +213,11 @@ def _build_a_share_event(c: dict, *, market_date: str, snapshot: dict, interval_
     label = name if code.startswith("A_SHARE_") else f"{name}（{code}）"
     as_of = str(row.get("as_of_beijing") or snapshot.get("captured_at_beijing") or "")
     magnitude = _candidate_magnitude(c)
+    try:
+        from notification_semantics import shock_implication
+    except ModuleNotFoundError:
+        from scripts.notification_semantics import shock_implication
+    implication, action = shock_implication(code, name, str(c.get("asset") or ""), "A_SHARE")
     what = [f"- **事件类型**：{CATEGORY_LABEL[category]}", f"- **对象/结构**：{label}"]
     if day is not None:
         what.append(f"- **当日涨跌**：{pct(day)}")
@@ -228,8 +233,8 @@ def _build_a_share_event(c: dict, *, market_date: str, snapshot: dict, interval_
         "content": render_shock(
             what=what,
             why=_why(category),
-            implication="立即检查该新事实是否改变全部持仓ETF与观察ETF的相对强弱、风险收益、唯一主候选或资本效率；账户底仓个股还要检查资金释放和独立假设。",
-            action="打开ETF项目刷新当前正式判断；只有正式风险许可、机会状态、金额或持仓动作发生变化时才执行交易。",
+            implication=implication,
+            action=action,
             as_of=as_of or "未提供",
             boundary="本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
         ),

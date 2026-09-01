@@ -60,6 +60,33 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
         }
         self.assertEqual(guard.notification_evidence_error(event), "")
 
+    def test_a_share_role_text_is_local_not_overseas(self):
+        from scripts.notification_semantics import shock_implication
+        with patch("scripts.notification_semantics._account_context", return_value={"data": {}, "held_etfs": {}, "held_stocks": {}, "formal": {}}):
+            implication, _action = shock_implication("000688", "科创50", "A_SHARE_INDEX", "A_SHARE")
+        self.assertIn("A股本地风险偏好", implication)
+        self.assertNotIn("海外/区域结构证据", implication)
+
+    def test_overseas_role_text_keeps_external_transmission(self):
+        from scripts.notification_semantics import shock_implication
+        with patch("scripts.notification_semantics._account_context", return_value={"data": {}, "held_etfs": {}, "held_stocks": {}, "formal": {}}):
+            implication, _action = shock_implication("HSTECH", "恒生科技指数", "INDEX", "ASIA")
+        self.assertIn("海外/区域结构证据", implication)
+
+    def test_etf_and_account_stock_roles_are_not_index_roles(self):
+        from scripts.notification_semantics import shock_implication
+        with patch("scripts.notification_semantics._account_context", return_value={"data": {}, "held_etfs": {"515880": {}}, "held_stocks": {"300750": {}}, "formal": {}}):
+            etf_text, _ = shock_implication("515880", "通信ETF", "ETF", "A_SHARE")
+            stock_text, _ = shock_implication("300750", "宁德时代", "ACCOUNT_STOCK", "A_SHARE")
+        self.assertIn("当前持仓ETF", etf_text)
+        self.assertIn("账户个股", stock_text)
+
+    def test_us_proxy_role_keeps_external_transmission(self):
+        from scripts.notification_semantics import shock_implication
+        with patch("scripts.notification_semantics._account_context", return_value={"data": {}, "held_etfs": {}, "held_stocks": {}, "formal": {}}):
+            text_value, _ = shock_implication("SOXX", "半导体ETF代理", "ETF", "US")
+        self.assertIn("海外/区域结构证据", text_value)
+
     def test_fixed_session_summary_is_not_misclassified_as_change(self):
         event = {
             "event_type": "A_SHARE_SESSION_SUMMARY",
