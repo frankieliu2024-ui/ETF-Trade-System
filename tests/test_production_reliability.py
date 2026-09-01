@@ -44,6 +44,59 @@ class CurrentDecisionFreshnessTests(unittest.TestCase):
 
 
 class PushPlusNotificationClosureTests(unittest.TestCase):
+    def test_notification_state_merge_preserves_concurrent_runner_events(self):
+        from scripts.merge_notification_state import merge_notification_state
+        base = {"notifications": [{"notification_id": "a", "source_event_id": "a", "lifecycle_status": "SENT"}]}
+        incoming = {"notifications": [{"notification_id": "b", "source_event_id": "b", "lifecycle_status": "SENT"}]}
+        merged = merge_notification_state(base, incoming)
+        self.assertEqual({x["notification_id"] for x in merged["notifications"]}, {"a", "b"})
+
+    def test_stale_market_fact_cannot_enter_live_notification_channel(self):
+        with tempfile.TemporaryDirectory() as td:
+            event = {
+                "key": "hstech-stale-fact",
+                "event_type": "MARKET_VALUE_ALERT",
+                "title": "【市场异动】恒生科技指数（HSTECH）日内方向明显反转",
+                "content": "旧事实",
+                "source": "market_delta",
+                "security_code": "HSTECH",
+                "confirmation_context": {
+                    "market_date": "2026-08-31",
+                    "event_category": "REVERSAL",
+                    "direction": "UP",
+                    "event_magnitude_pct": 1.7,
+                    "day_change_pct": 0.32,
+                    "market_as_of_beijing": "2026-08-31T16:09:08+08:00",
+                },
+            }
+            with patch.object(notifications, "NOTIFICATION_STATE", Path(td) / "notification_center.json"), patch.object(notifications, "STATE", Path(td)), patch.object(notifications, "now", return_value=datetime.fromisoformat("2026-08-31T22:01:00+08:00")):
+                result = notifications.persist_and_send(event, policy="test")
+            self.assertEqual(result["status"], "REJECTED_STALE_MARKET_EVENT")
+
+    def test_post_cutoff_market_fact_is_explicit_increment(self):
+        event = {
+            "event_type": "MARKET_VALUE_ALERT",
+            "title": "【市场异动】半导体ETF代理（SOXX）出现极端波动",
+            "content": "新增事实",
+            "security_code": "SOXX",
+            "confirmation_context": {
+                "market_date": "2026-09-01",
+                "event_category": "EXTREME",
+                "direction": "DOWN",
+                "event_magnitude_pct": 2.75,
+                "market_as_of_beijing": "2026-09-01T05:17:23+08:00",
+            },
+        }
+        summary = {
+            "event_type": "US_SESSION_SUMMARY",
+            "created_at": "2026-09-01T05:18:45+08:00",
+            "sent_at": "2026-09-01T05:18:46+08:00",
+            "confirmation_context": {"market_as_of_beijing": "2026-09-01T05:15:00+08:00"},
+        }
+        out = notifications._annotate_summary_increment(event, [summary])
+        self.assertEqual(out["confirmation_context"]["summary_relation"], "NEW_FACT_AFTER_SUMMARY_CUTOFF")
+        self.assertIn("新增事实", out["content"])
+
     def test_missing_token_is_persisted_as_failure(self):
         with tempfile.TemporaryDirectory() as td:
             state_dir = Path(td)
@@ -92,4 +145,5 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 

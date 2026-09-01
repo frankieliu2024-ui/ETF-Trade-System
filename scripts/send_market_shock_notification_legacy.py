@@ -221,7 +221,7 @@ def _build_a_share_event(c: dict, *, market_date: str, snapshot: dict, interval_
     if c.get("extra"):
         what.append(f"- **关键结构**：{c['extra']}")
     return {
-        "key": f"market-value:a-share:{market_date}:{code}:{direction}:{category}:{dt.strftime('%H')}:{dt.minute // 15}",
+        "key": f"market-value:a-share:{market_date}:{code}:{direction}:{category}:{as_of}",
         "type": "市场有价值事件",
         "event_type": "MARKET_VALUE_ALERT",
         "title": _event_title(label, category, day=day, sudden=sudden, interval_min=interval_min),
@@ -249,6 +249,7 @@ def _build_a_share_event(c: dict, *, market_date: str, snapshot: dict, interval_
             "interval_minutes": interval_min,
             "event_magnitude_pct": magnitude,
             "market_as_of_beijing": as_of,
+            "source_fact_id": f"{market_date}:{code}:{category}:{direction}:{as_of}",
         },
     }
 
@@ -364,7 +365,7 @@ def _build_context_event(c: dict, *, source: str, current_path: Path, current: d
         what.append(f"- **关键结构**：{c['extra']}")
     dt = datetime.now(BEIJING)
     return {
-        "key": f"market-value:{source}:{market_date}:{code}:{direction}:{category}:{dt.strftime('%H')}:{dt.minute // 15}",
+        "key": f"market-value:{source}:{market_date}:{code}:{direction}:{category}:{as_of}",
         "type": "市场有价值事件",
         "event_type": "MARKET_VALUE_ALERT",
         "title": _event_title(label, category, day=day, sudden=sudden, interval_min=minutes),
@@ -381,7 +382,7 @@ def _build_context_event(c: dict, *, source: str, current_path: Path, current: d
         "security_name": label.split("（")[0],
         "user_severity": "需要关注",
         "user_action": "纳入最近A股决策节点重新验证，不机械交易",
-        "confirmation_context": {"market": source.upper(), "market_date": market_date, "direction": direction, "event_category": category, "phase_metric_change_pct": day, "sudden_change_pct": sudden, "event_magnitude_pct": magnitude, "market_as_of_beijing": as_of},
+        "confirmation_context": {"market": source.upper(), "market_date": market_date, "direction": direction, "event_category": category, "phase_metric_change_pct": day, "sudden_change_pct": sudden, "event_magnitude_pct": magnitude, "market_as_of_beijing": as_of, "source_fact_id": f"{market_date}:{code}:{category}:{direction}:{as_of}", "session": str(c.get("session") or "")},
     }
 
 
@@ -420,6 +421,11 @@ def _context_candidate(source: str) -> dict | None:
         phase = ""
         if source == "us":
             phase = str(obj.get("current_market_phase") or "")
+            if is_proxy_us and phase in {"PRE_MARKET", "POST_MARKET"}:
+                # Proxy discovery is valid only from a contemporaneous bar in
+                # the same extended session with an explicit cash-close basis.
+                if str(obj.get("freshness_status") or "") != "FRESH" or str(latest.get("session") or "") != phase or number(obj.get("extended_change_vs_regular_close_pct")) is None:
+                    continue
             # During REGULAR, direct cash indices own the core-index semantics.
             # Skip their ETF proxies when both direct indices are healthy.
             if phase == "REGULAR" and direct_us_available and is_proxy_us:
@@ -521,3 +527,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
