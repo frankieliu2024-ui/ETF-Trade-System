@@ -512,6 +512,17 @@ def retry_failed_snapshot() -> int:
     return 0
 
 
+def scheduled_close_recovery_intent(run_started_dt: datetime, market_date: str) -> bool:
+    """Allow only a real same-day close schedule to survive delayed dispatch."""
+    return (
+        os.environ.get("GITHUB_EVENT_NAME", "") == "schedule"
+        and os.environ.get("SCHEDULED_CRON", "").strip() == "0,10 7 * * 1-5"
+        and run_started_dt.weekday() < 5
+        and run_started_dt.date().isoformat() == market_date
+        and run_started_dt.hour * 60 + run_started_dt.minute >= 15 * 60
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--node", default="manual", choices=sorted(NODES))
@@ -529,7 +540,8 @@ def main() -> int:
     market_date = run_started_dt.date().isoformat()
     market_phase = a_share_market_phase(run_started_dt)
 
-    if args.node == "scheduled" and not args.probe_only and not in_a_share_capture_window(run_started_dt):
+    scheduled_close_recovery = scheduled_close_recovery_intent(run_started_dt, market_date)
+    if args.node == "scheduled" and not args.probe_only and not scheduled_close_recovery and not in_a_share_capture_window(run_started_dt):
         write_runtime_health({"status": "SKIPPED", "reason": "outside_a_share_capture_window", "market_date": market_date, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "market_phase": market_phase})
         print(json.dumps({"ok": True, "skipped": True, "reason": "outside_a_share_capture_window", "market_date": market_date, "capture_started_at_beijing": capture_started_at}, ensure_ascii=False))
         return 0

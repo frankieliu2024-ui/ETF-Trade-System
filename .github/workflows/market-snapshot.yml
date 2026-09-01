@@ -317,7 +317,7 @@ jobs:
           if health_path.exists():
               health = json.loads(health_path.read_text(encoding='utf-8'))
               snapshot_path = Path(str(health.get('latest_snapshot') or ''))
-              if snapshot_path.exists():
+              if snapshot_path.is_file():
                   snapshot = json.loads(snapshot_path.read_text(encoding='utf-8'))
                   if str(snapshot.get('workflow_run_id', '')) == str(__import__('os').environ.get('GITHUB_RUN_ID', '')):
                       quality = str(snapshot.get('quality_status') or '')
