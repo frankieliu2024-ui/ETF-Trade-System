@@ -12,7 +12,6 @@ on:
       - ".github/workflows/system-consistency.yml"
       - "scripts/check_system_consistency.py"
       - "scripts/check_system_consistency_core.py"
-      - "scripts/rules_version.py"
       - "scripts/check_research_integration.py"
       - "scripts/check_market_state_consistency.py"
       - "scripts/check_production_mutation_protocol.py"
@@ -168,6 +167,7 @@ jobs:
         run: |
           python scripts/build_state_context.py
           python scripts/build_query_context.py
+          python scripts/build_post_market_review.py
       - name: Validate formal files, data standard, monitoring layers and runtime wiring
         id: consistency
         continue-on-error: true
