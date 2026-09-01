@@ -72,7 +72,7 @@ class FormalFileMutationGatewayTests(unittest.TestCase):
             self.assertTrue(write_formal_text_if_changed(root, name, changed))
             result = (root / name).read_text(encoding="utf-8")
             self.assertIn("更新时点：2026-08-31", result)
-            self.assertFalse(write_formal_text_if_changed(root, name, changed))
+            self.assertFalse(write_formal_text_if_changed(root, name, result))
 
     def test_metadata_does_not_change_without_content_change(self):
         with tempfile.TemporaryDirectory() as td:
@@ -87,7 +87,9 @@ class FormalFileMutationGatewayTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             name = "ETF市场行情档案_2026.md"
-            (root / name).write_bytes(b"> 更新时点：2026-08-27\\r\\n前置\\r\\n")
+            (root / name).write_bytes(
+                "> 更新时点：2026-08-27\\r\\n前置\\r\\n".encode("utf-8")
+            )
             write_formal_text_if_changed(root, name, "> 更新时点：2026-08-31\\n前置\\n2026-08-31｜事实\\n")
             raw = (root / name).read_bytes()
             self.assertIn(b"\\r\\n", raw)
