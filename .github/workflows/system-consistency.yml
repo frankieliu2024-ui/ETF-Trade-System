@@ -171,6 +171,9 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
+          from scripts.rules_version import parse_master_release
+          master = Path("ETF规则_MASTER.md").read_text(encoding="utf-8")
+          print({"release": parse_master_release(master), "review_keys": sorted(payload.keys()) if False else []})
           payload = json.loads(Path("data/state/review_context.json").read_text(encoding="utf-8"))
           if payload.get("rules_version") != "V2.2.31":
               raise SystemExit(f"review_context rules_version missing or stale: {payload.get('rules_version')!r}")
