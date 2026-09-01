@@ -624,7 +624,7 @@ def main() -> int:
     semantic_scope = "MIDDAY_BREAK仅用于上午11:30已结束交易时段的最终参考事实；保留真实provider时点，不按午间可成交价格或连续竞价解释。" if market_phase == "MIDDAY_BREAK" else "集合竞价脉冲只按集合竞价信息解释；连续竞价脉冲才按盘中成交语义解释。"
     snapshot = {
         "market_date": market_date, "node": node, "planned_time": planned_time,
-        "market_phase": market_phase, "actual_run_time": captured, "workflow_run_id": os.environ.get("GITHUB_RUN_ID", ""),
+        "market_phase": market_phase, "effective_market_time_beijing": f"{market_date}T15:00:00+08:00" if node == "close" and scheduled_close_recovery else "", "provider_observed_at_beijing": captured, "actual_run_time": captured, "workflow_run_id": os.environ.get("GITHUB_RUN_ID", ""),
         "capture_started_at_beijing": capture_started_at, "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai", "provider": snapshot_provider,
         "quality_status": overall_quality, "count": len(rows), "etf_universe_count": len(ETF), "semantic_scope": semantic_scope,
         "runtime": {"acquisition_seconds": acquisition_seconds, "target_cadence_seconds": POLICY["target_cadence_seconds"], "provider_timeout_seconds": TIMEOUT_SECONDS, "provider_retry_limit": RETRY_LIMIT, "provider_max_workers": MAX_WORKERS, "close_grace_seconds": CLOSE_GRACE_SECONDS, "analysis_coverage": coverage},

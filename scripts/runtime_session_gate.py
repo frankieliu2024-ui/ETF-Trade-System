@@ -40,6 +40,8 @@ def main() -> int:
     now = datetime.now(SHANGHAI)
     date_text = now.date().isoformat()
     event_name = os.environ.get("GITHUB_EVENT_NAME", "")
+    scheduled_cron = os.environ.get("SCHEDULED_CRON", "").strip()
+    scheduled_close_intent = event_name == "schedule" and scheduled_cron == "0,10 7 * * 1-5"
     policy = load_json(ROOT / "config" / "runtime_policy.json")
     calendar = load_json(ROOT / "config" / "market" / "a_share_trading_calendar_2026.json")
 
@@ -63,6 +65,11 @@ def main() -> int:
         in_close_grace = 15 * 60 < minute <= 15 * 60 + close_grace_minutes
         should_capture = in_opening_auction or in_morning or in_midday_recovery or in_afternoon or in_close_grace
         reason = "midday_morning_close_recovery" if in_midday_recovery else ("capture_window" if should_capture else "outside_capture_window")
+
+    if scheduled_close_intent and should_capture is False and minute >= 15 * 60 and date_text not in set(calendar.get("closed_dates") or []):
+        should_capture = True
+        phase = "POST_CLOSE_RECOVERY"
+        reason = "delayed_scheduled_close_recovery"
 
     query_time_refresh = os.environ.get("QUERY_TIME_REFRESH", "").lower() == "true"
     if query_time_refresh and event_name == "push":
