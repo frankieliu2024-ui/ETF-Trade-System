@@ -12,6 +12,7 @@ on:
       - ".github/workflows/system-consistency.yml"
       - "scripts/check_system_consistency.py"
       - "scripts/check_system_consistency_core.py"
+      - "scripts/rules_version.py"
       - "scripts/check_research_integration.py"
       - "scripts/check_market_state_consistency.py"
       - "scripts/check_production_mutation_protocol.py"
@@ -266,3 +267,4 @@ jobs:
       - name: Enforce maintenance reconciliation result
         if: ${{ steps.maintenance_guard.outcome == 'failure' }}
         run: exit 1
+
