@@ -44,7 +44,7 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
                 report = {"errors": [], "warnings": [], "checks": []}
                 consistency._validate_trade_event_formal_sync(report)
                 self.assertEqual(report["checks"][-1]["status"], "FAIL")
-                self.assertIn("trade-1:formal_case_mapping", report["errors"])
+                self.assertIn("formal_trade_sync:trade-1:formal_case_mapping", report["errors"])
                 experience.write_text("### CASE-20260901-01：review\ntrade-1｜- 已归入CASE-20260901-01｜2026-09-01T15:10:00+08:00｜\nTRADE_EVENT:trade-1\n", encoding="utf-8")
                 report = {"errors": [], "warnings": [], "checks": []}
                 consistency._validate_trade_event_formal_sync(report)
