@@ -139,6 +139,7 @@ def build(root: Path = ROOT) -> dict:
     }
     review = {
         "generated_at": now_utc(),
+        "rules_version": current_rule_version(root) or decision.get("rules_version", ""),
         "market_date": current.get("market_date", ""),
         "review_key": current.get("market_date", ""),
         "market_close": market_close,
