@@ -1,74 +1,69 @@
 {
-  "generated_at": "2026-09-01T10:25:42Z",
-  "generated_at_beijing": "2026-09-01T18:25:42+08:00",
+  "generated_at": "2026-09-01T11:07:38Z",
+  "generated_at_beijing": "2026-09-01T19:07:38+08:00",
   "repository": {
-    "head_sha": "a8a5db7f33aee81bafc2f08152c1240e150dd3b9",
-    "github_sha": "a8a5db7f33aee81bafc2f08152c1240e150dd3b9",
-    "github_run_id": "33497272792",
+    "head_sha": "a52978dd5760fcc156354ffce9c16ba627bc61a9",
+    "github_sha": "a52978dd5760fcc156354ffce9c16ba627bc61a9",
+    "github_run_id": "33500746934",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "a8a5db7f33aee81bafc2f08152c1240e150dd3b9",
-    "workflow_sha": "a8a5db7f33aee81bafc2f08152c1240e150dd3b9",
+    "checked_commit": "a52978dd5760fcc156354ffce9c16ba627bc61a9",
+    "workflow_sha": "a52978dd5760fcc156354ffce9c16ba627bc61a9",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "semantic_freshness": {
-    "base": "95d23280f099df36079d0b4f29aaf22904b64870",
-    "head": "a8a5db7f33aee81bafc2f08152c1240e150dd3b9",
+    "base": "a8a5db7f33aee81bafc2f08152c1240e150dd3b9",
+    "head": "a52978dd5760fcc156354ffce9c16ba627bc61a9",
     "changed_paths": [
+      ".github/workflows/system-consistency.yml",
+      "ETF交易复盘与经验库_2026.md",
       "data/state/e2e_status.json",
-      "data/state/execution_reconciliation.json",
       "data/state/last_known_good.json",
       "data/state/maintenance_diagnostic.json",
       "data/state/maintenance_health.json",
-      "data/state/notification_center.json",
       "data/state/overseas_context.json",
-      "data/state/query_context.json",
-      "data/state/restricted_rollback_plan.json",
       "data/state/system_consistency.json",
       "data/state/us_extended_hours_context.json",
-      "data/state/us_pulse_runtime_health.json",
-      "data/state/workflow_failure_diagnostic.json",
-      "research/backtests/analyze_etf_intraday_sina.py",
-      "research/backtests/analyze_etf_t_swing.py",
-      "research/backtests/etf_t_swing_intraday_sina.json",
       "research/backtests/etf_t_swing_stage1_validation.json",
       "research/reports/ETF反复做T与波段专项研究.md",
-      "tests/test_market_etf_t_swing.py"
+      "scripts/check_research_integration.py",
+      "scripts/check_system_consistency_core.py",
+      "scripts/research_artifact_contract.py",
+      "scripts/sync_formal_files.py",
+      "tests/test_research_artifact_contract.py"
     ],
     "categories": {
       "STABLE_PRODUCTION_CHANGE": [
-        "tests/test_market_etf_t_swing.py"
+        ".github/workflows/system-consistency.yml",
+        "scripts/check_research_integration.py",
+        "scripts/check_system_consistency_core.py",
+        "scripts/research_artifact_contract.py",
+        "scripts/sync_formal_files.py",
+        "tests/test_research_artifact_contract.py"
       ],
       "DYNAMIC_RUNTIME_FACT": [
         "data/state/e2e_status.json",
-        "data/state/execution_reconciliation.json",
         "data/state/last_known_good.json",
         "data/state/maintenance_diagnostic.json",
         "data/state/maintenance_health.json",
-        "data/state/notification_center.json",
         "data/state/overseas_context.json",
-        "data/state/query_context.json",
-        "data/state/restricted_rollback_plan.json",
         "data/state/system_consistency.json",
-        "data/state/us_extended_hours_context.json",
-        "data/state/us_pulse_runtime_health.json",
-        "data/state/workflow_failure_diagnostic.json"
+        "data/state/us_extended_hours_context.json"
       ],
-      "FORMAL_FACT_MUTATION": [],
+      "FORMAL_FACT_MUTATION": [
+        "ETF交易复盘与经验库_2026.md"
+      ],
       "REQUEST_OR_TRIGGER_FACT": [],
       "UNKNOWN": [
-        "research/backtests/analyze_etf_intraday_sina.py",
-        "research/backtests/analyze_etf_t_swing.py",
-        "research/backtests/etf_t_swing_intraday_sina.json",
         "research/backtests/etf_t_swing_stage1_validation.json",
         "research/reports/ETF反复做T与波段专项研究.md"
       ]
     },
     "decision": "REPLAY_REQUIRED",
-    "validated_commit": "95d23280f099df36079d0b4f29aaf22904b64870",
-    "current_head": "a8a5db7f33aee81bafc2f08152c1240e150dd3b9",
+    "validated_commit": "a8a5db7f33aee81bafc2f08152c1240e150dd3b9",
+    "current_head": "a52978dd5760fcc156354ffce9c16ba627bc61a9",
     "head_advanced": true,
     "stable_contract_freshness": "REVIEW_REQUIRED",
     "runtime_fact_freshness": "CURRENT"
@@ -80,7 +75,7 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-08-31:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-08-31\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n....................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 180 tests in 0.116s\n\nOK\n"
+      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-08-31:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-08-31\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n....................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 180 tests in 0.183s\n\nOK\n"
     },
     {
       "name": "tests:opening_current_self_healing",
@@ -90,7 +85,12 @@
     {
       "name": "tests:semantic_latest_main",
       "status": "PASS",
-      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.146s\n\nOK\n"
+      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.136s\n\nOK\n"
+    },
+    {
+      "name": "tests:research_artifact_contract",
+      "status": "PASS",
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.677s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -370,17 +370,17 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=a8a5db7f33aee81bafc2f08152c1240e150dd3b9"
+      "detail": "HEAD=a52978dd5760fcc156354ffce9c16ba627bc61a9"
     },
     {
       "name": "git:semantic_latest_main",
       "status": "PASS",
-      "detail": "{\"base\": \"95d23280f099df36079d0b4f29aaf22904b64870\", \"head\": \"a8a5db7f33aee81bafc2f08152c1240e150dd3b9\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/execution_reconciliation.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/overseas_context.json\", \"data/state/query_context.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\", \"data/state/us_pulse_runtime_health.json\", \"data/state/workflow_failure_diagnostic.json\", \"research/backtests/analyze_etf_intraday_sina.py\", \"research/backtests/analyze_etf_t_swing.py\", \"research/backtests/etf_t_swing_intraday_sina.json\", \"research/backtests/etf_t_swing_stage1_validation.json\", \"research/reports/ETF反复做T与波段专项研究.md\", \"tests/test_market_etf_t_swing.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"tests/test_market_etf_t_swing.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_reconciliation.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/overseas_context.json\", \"data/state/query_context.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\", \"data/state/us_pulse_runtime_health.json\", \"data/state/workflow_failure_diagnostic.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": [\"research/backtests/analyze_etf_intraday_sina.py\", \"research/backtests/analyze_etf_t_swing.py\", \"research/backtests/etf_t_swing_intraday_sina.json\", \"research/backtests/etf_t_swing_stage1_validation.json\", \"research/reports/ETF反复做T与波段专项研究.md\"]}, \"decision\": \"REPLAY_REQUIRED\"}"
+      "detail": "{\"base\": \"a8a5db7f33aee81bafc2f08152c1240e150dd3b9\", \"head\": \"a52978dd5760fcc156354ffce9c16ba627bc61a9\", \"changed_paths\": [\".github/workflows/system-consistency.yml\", \"ETF交易复盘与经验库_2026.md\", \"data/state/e2e_status.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/overseas_context.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\", \"research/backtests/etf_t_swing_stage1_validation.json\", \"research/reports/ETF反复做T与波段专项研究.md\", \"scripts/check_research_integration.py\", \"scripts/check_system_consistency_core.py\", \"scripts/research_artifact_contract.py\", \"scripts/sync_formal_files.py\", \"tests/test_research_artifact_contract.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\".github/workflows/system-consistency.yml\", \"scripts/check_research_integration.py\", \"scripts/check_system_consistency_core.py\", \"scripts/research_artifact_contract.py\", \"scripts/sync_formal_files.py\", \"tests/test_research_artifact_contract.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/overseas_context.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\"], \"FORMAL_FACT_MUTATION\": [\"ETF交易复盘与经验库_2026.md\"], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": [\"research/backtests/etf_t_swing_stage1_validation.json\", \"research/reports/ETF反复做T与波段专项研究.md\"]}, \"decision\": \"REPLAY_REQUIRED\"}"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=a8a5db7f33aee81bafc2f08152c1240e150dd3b9 GITHUB_SHA=a8a5db7f33aee81bafc2f08152c1240e150dd3b9"
+      "detail": "HEAD=a52978dd5760fcc156354ffce9c16ba627bc61a9 GITHUB_SHA=a52978dd5760fcc156354ffce9c16ba627bc61a9"
     },
     {
       "name": "git:critical_files_tracked",
@@ -810,7 +810,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "phase_aware phase=PRE_MARKET live_objects=['QQQ', 'SOXX'] max_age_seconds=72 limit=900; cash indices are session references outside REGULAR"
+      "detail": "phase_aware phase=PRE_MARKET live_objects=['QQQ', 'SOXX'] max_age_seconds=50 limit=900; cash indices are session references outside REGULAR"
     },
     {
       "name": "session_gate:calendar_read",
@@ -955,12 +955,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=12751"
+      "detail": "declared=STALE expected=STALE age_seconds=15266"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=12730"
+      "detail": "declared=STALE expected=STALE age_seconds=15244"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -1000,7 +1000,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-09-01T10:25:19Z market=2026-09-01T14:53:09+08:00"
+      "detail": "context=2026-09-01T11:07:13Z market=2026-09-01T14:53:09+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1936,6 +1936,31 @@
       "name": "state_contract:data/state/capital_efficiency_ranking.json:staging:.github/workflows/self-healing-watchdog.yml",
       "status": "PASS",
       "detail": "registered writer persists data/state/capital_efficiency_ranking.json"
+    },
+    {
+      "name": "research:completed_artifact_integrity",
+      "status": "PASS",
+      "detail": "completed research artifact has semantic metadata, coverage, results and provenance"
+    },
+    {
+      "name": "research:report_artifact_no_drift",
+      "status": "PASS",
+      "detail": "research report headlines and scope agree with the artifact"
+    },
+    {
+      "name": "research:completed_archive_registered",
+      "status": "PASS",
+      "detail": "completed research must have an idempotent formal experience-library index"
+    },
+    {
+      "name": "research:archive_is_not_master_conversion",
+      "status": "PASS",
+      "detail": "experience archive remains distinct from MASTER conversion and permissions"
+    },
+    {
+      "name": "research:archive:etf_t_swing_stage1",
+      "status": "PASS",
+      "detail": "completed artifact research/backtests/etf_t_swing_stage1_validation.json must be represented in the formal experience library"
     },
     {
       "name": "research:decision_context_consumes_evidence",
