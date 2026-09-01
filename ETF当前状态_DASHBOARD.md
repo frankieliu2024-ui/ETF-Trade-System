@@ -40,7 +40,7 @@
 最近一次正式决策未随本次账户维护请求提供；脚本不自行推断。
 ### 当前交易生命周期
 
-- 通信ETF（515880）：ACTIVE_TRIAL，起始交易日2026-08-27，当前T+3，下一节点TRADE_MANDATORY_LIFECYCLE_NODE:T+3；今日必须形成T+3正式决议。
+- 通信ETF（515880）：ACTIVE_TRIAL，起始交易日2026-08-27，当前T+3，下一节点TRADE_MANDATORY_LIFECYCLE_NODE:T+3；今日必须形成T+3正式决议（系统仅暴露节点，不自动生成动作）。
 <!-- AUTO_STATE_SYNC_END -->
 
 ## 当前状态使用边界
