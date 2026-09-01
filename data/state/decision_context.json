@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-31T23:22:18Z",
-  "rules_version": "V2.2.30",
+  "generated_at": "2026-09-01T01:12:59Z",
+  "rules_version": "V2.2.31",
   "market_date": "2026-08-31",
   "latest_node": "close",
   "current": {
@@ -90,11 +90,15 @@
     "account_fact": {
       "status": "VALID",
       "updated_at": "2026-09-01T07:15:00+08:00",
-      "source": "BROKER_SCREENSHOT_20260901_0715_USER_PROVIDED"
+      "source": "BROKER_SCREENSHOT_20260901_0715_USER_PROVIDED",
+      "cash": 10349.47,
+      "reserved_cash_for_settlement": 8000,
+      "deployable_cash": 2349.47,
+      "settlement_constraint_status": "RESERVED"
     },
     "needs_account_update": false,
     "last_trade_event_id": "20260827_100843_515880_buy",
-    "rules_version": "V2.2.30",
+    "rules_version": "V2.2.31",
     "generated_at": "2026-08-31T07:01:10Z",
     "account_fact_reference_synced_at": "2026-08-27T10:09:00+08:00",
     "account_fact_path": "data/state/account_fact.json",
@@ -107,7 +111,23 @@
       "path": "data/state/close_review_closure_2026-08-31.json",
       "formal_review_path": "events/reviews/2026-08-31.json",
       "case_id": "CASE-20260827-01"
-    }
+    },
+    "settlement_obligations": [
+      {
+        "obligation_type": "IPO_ALLOTMENT_PAYMENT",
+        "security_name": "电科思仪",
+        "security_code": "301689",
+        "quantity": 500,
+        "subscription_price": 16,
+        "required_cash": 8000,
+        "payment_deadline_beijing": "2026-09-01T16:00:00+08:00",
+        "status": "PENDING_PAYMENT",
+        "source": "BROKER_IPO_ALLOTMENT_SCREENSHOT_AND_SMS_20260901_USER_PROVIDED",
+        "pit_timestamp": "2026-09-01T07:15:00+08:00"
+      }
+    ],
+    "reserved_cash_for_settlement": 8000,
+    "deployable_cash": 2349.47
   },
   "latest_snapshot": {
     "market_date": "2026-08-31",
@@ -762,7 +782,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 10.393,
-    "age_seconds": 58868
+    "age_seconds": 65509
   },
   "freshness_at_context_build": {
     "status": "STALE",
@@ -778,7 +798,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 10.393,
-    "age_seconds": 58868
+    "age_seconds": 65509
   },
   "data_quality_summary": {
     "pass_count": 14,
@@ -790,6 +810,30 @@
     "stale_objects": [],
     "read_only": true,
     "source": "latest_snapshot_rows"
+  },
+  "account_funding": {
+    "cash": 10349.47,
+    "reserved_cash_for_settlement": 8000,
+    "deployable_cash": 2349.47,
+    "settlement_obligations": [
+      {
+        "obligation_type": "IPO_ALLOTMENT_PAYMENT",
+        "security_name": "电科思仪",
+        "security_code": "301689",
+        "quantity": 500,
+        "subscription_price": 16,
+        "required_cash": 8000,
+        "payment_deadline_beijing": "2026-09-01T16:00:00+08:00",
+        "status": "PENDING_PAYMENT",
+        "cash_must_remain_available": true,
+        "source": "BROKER_IPO_ALLOTMENT_SCREENSHOT_AND_SMS_20260901_USER_PROVIDED",
+        "pit_timestamp": "2026-09-01T07:15:00+08:00"
+      }
+    ],
+    "settlement_constraint_status": "RESERVED",
+    "settlement_cash_shortfall": 0,
+    "funding_rule": "正式金额判断只使用canonical deployable_cash；锁定待结算资金不得用于Trial或Confirm。",
+    "read_only": true
   },
   "etf_strategy_risk_metrics": {
     "etf_strategy_risk_pct": -6.8,
@@ -830,7 +874,7 @@
     "account_fact_time": "2026-09-01T07:15:00+08:00",
     "market_snapshot_time": "2026-08-31T15:01:10+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-08-31T23:22:18Z",
+    "context_generated_time": "2026-09-01T01:12:59Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -859,7 +903,7 @@
     "read_only": true
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-09-01T07:22:18+08:00",
+    "generated_at_beijing": "2026-09-01T09:12:59+08:00",
     "refresh_mode": "CACHED_STATE",
     "refresh_failures": [],
     "decision_freshness": {
@@ -868,8 +912,8 @@
       "captured_at": "2026-08-31T07:01:10+00:00",
       "provider_as_of": "2026-08-31T07:01:05+00:00",
       "effective_as_of": "2026-08-31T07:01:05+00:00",
-      "request_time": "2026-08-31T23:22:18.225345+00:00",
-      "age_seconds": 58873,
+      "request_time": "2026-09-01T01:12:59.716210+00:00",
+      "age_seconds": 65514,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -1248,9 +1292,9 @@
       {
         "market": "US",
         "market_name": "美国",
-        "symbol": "NDX",
+        "symbol": "^NDX",
         "name": "纳斯达克100指数",
-        "latest_price": 716.9,
+        "latest_price": 29456.97265625,
         "open": null,
         "high": null,
         "low": null,
@@ -1258,66 +1302,66 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-09-01T05:52:52+08:00",
+        "data_time_beijing": "2026-09-01T04:00:00+08:00",
         "data_time_local": "",
-        "market_phase": "POST_MARKET",
-        "market_status_cn": "美股盘后",
-        "data_nature_cn": "盘后行情（附当日正式收盘）",
-        "source": "yahoo_chart_api",
-        "freshness": "STALE",
-        "freshness_cn": "时点过旧",
-        "quality_status": "FRESH",
-        "quality_status_cn": "状态待确认",
-        "direct_quote": false,
-        "route_rule": "返回扩展时段行情，并保留最近正式收盘作为基准"
-      },
-      {
-        "market": "US",
-        "market_name": "美国",
-        "symbol": "SOX",
-        "name": "费城半导体指数",
-        "latest_price": 511.1244,
-        "open": null,
-        "high": null,
-        "low": null,
-        "prev_close": null,
-        "volume": null,
-        "amount": null,
-        "turnover": null,
-        "data_time_beijing": "2026-09-01T05:52:53+08:00",
-        "data_time_local": "",
-        "market_phase": "POST_MARKET",
-        "market_status_cn": "美股盘后",
-        "data_nature_cn": "盘后行情（附当日正式收盘）",
-        "source": "yahoo_chart_api",
-        "freshness": "STALE",
-        "freshness_cn": "时点过旧",
-        "quality_status": "FRESH",
-        "quality_status_cn": "状态待确认",
-        "direct_quote": false,
-        "route_rule": "返回扩展时段行情，并保留最近正式收盘作为基准"
-      },
-      {
-        "market": "JP",
-        "market_name": "日本",
-        "symbol": "^N225",
-        "name": "日经225指数",
-        "latest_price": 66311.9296875,
-        "open": null,
-        "high": null,
-        "low": null,
-        "prev_close": null,
-        "volume": null,
-        "amount": null,
-        "turnover": null,
-        "data_time_beijing": "2026-08-31T14:30:00+08:00",
-        "data_time_local": "",
-        "market_phase": "PRE_OPEN",
-        "market_status_cn": "日股开盘前",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "美股休市中",
         "data_nature_cn": "最近正式收盘行情",
         "source": "yahoo_chart_api",
         "freshness": "STALE",
         "freshness_cn": "时点过旧",
+        "quality_status": "PASS",
+        "quality_status_cn": "数据可用",
+        "direct_quote": true,
+        "route_rule": "返回最近正式收盘行情"
+      },
+      {
+        "market": "US",
+        "market_name": "美国",
+        "symbol": "^SOX",
+        "name": "费城半导体指数",
+        "latest_price": 11535.05078125,
+        "open": null,
+        "high": null,
+        "low": null,
+        "prev_close": null,
+        "volume": null,
+        "amount": null,
+        "turnover": null,
+        "data_time_beijing": "2026-09-01T04:00:00+08:00",
+        "data_time_local": "",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "美股休市中",
+        "data_nature_cn": "最近正式收盘行情",
+        "source": "yahoo_chart_api",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
+        "quality_status": "PASS",
+        "quality_status_cn": "数据可用",
+        "direct_quote": true,
+        "route_rule": "返回最近正式收盘行情"
+      },
+      {
+        "market": "JP",
+        "market_name": "日本",
+        "symbol": "100.N225",
+        "name": "日经225指数",
+        "latest_price": 65953.93,
+        "open": null,
+        "high": null,
+        "low": null,
+        "prev_close": null,
+        "volume": null,
+        "amount": null,
+        "turnover": null,
+        "data_time_beijing": "2026-09-01T08:55:20+08:00",
+        "data_time_local": "",
+        "market_phase": "REGULAR",
+        "market_status_cn": "日股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "eastmoney_push2",
+        "freshness": "DEGRADED",
+        "freshness_cn": "存在延迟",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -1326,9 +1370,9 @@
       {
         "market": "KR",
         "market_name": "韩国",
-        "symbol": "^KS11",
+        "symbol": "KOSPI",
         "name": "韩国综合指数",
-        "latest_price": 6820.02001953125,
+        "latest_price": 6787.26,
         "open": null,
         "high": null,
         "low": null,
@@ -1336,14 +1380,14 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-08-31T14:00:00+08:00",
+        "data_time_beijing": "2026-09-01T08:55:53+08:00",
         "data_time_local": "",
-        "market_phase": "PRE_OPEN",
-        "market_status_cn": "韩股开盘前",
-        "data_nature_cn": "最近正式收盘行情",
-        "source": "yahoo_chart_api",
-        "freshness": "STALE",
-        "freshness_cn": "时点过旧",
+        "market_phase": "REGULAR",
+        "market_status_cn": "韩股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "naver_finance",
+        "freshness": "DEGRADED",
+        "freshness_cn": "存在延迟",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -1364,9 +1408,9 @@
         "turnover": null,
         "data_time_beijing": "2026-08-31T13:30:00+08:00",
         "data_time_local": "",
-        "market_phase": "PRE_OPEN",
-        "market_status_cn": "台股开盘前",
-        "data_nature_cn": "最近正式收盘行情",
+        "market_phase": "REGULAR",
+        "market_status_cn": "台股交易中",
+        "data_nature_cn": "实时交易行情",
         "source": "yahoo_chart_api",
         "freshness": "STALE",
         "freshness_cn": "时点过旧",
@@ -1412,20 +1456,20 @@
         "market_status_cn": "港股开盘前"
       },
       "TW": {
-        "phase": "PRE_OPEN",
-        "market_status_cn": "台股开盘前"
+        "phase": "REGULAR",
+        "market_status_cn": "台股交易中"
       },
       "US": {
-        "phase": "POST_MARKET",
-        "market_status_cn": "美股盘后"
+        "phase": "OFF_SESSION",
+        "market_status_cn": "美股休市中"
       },
       "JP": {
-        "phase": "PRE_OPEN",
-        "market_status_cn": "日股开盘前"
+        "phase": "REGULAR",
+        "market_status_cn": "日股交易中"
       },
       "KR": {
-        "phase": "PRE_OPEN",
-        "market_status_cn": "韩股开盘前"
+        "phase": "REGULAR",
+        "market_status_cn": "韩股交易中"
       }
     },
     "selection_rule": "显式查询时先调用当前provider；补采失败的对象才回退最近有效状态。交易中返回最新实时；盘前返回盘前行情并附最近正式收盘；盘后返回盘后行情并附当日正式收盘；休市返回最近正式收盘。",
@@ -1439,7 +1483,7 @@
   },
   "decision_trigger": {
     "schema_version": "1.2",
-    "generated_at": "2026-09-01T07:22:18+08:00",
+    "generated_at": "2026-09-01T09:12:59+08:00",
     "status": "NO_NEW_TRIGGER",
     "trigger_type": "",
     "triggered_at": "",
@@ -1460,7 +1504,7 @@
   },
   "capital_efficiency_ranking": {
     "schema_version": "1.2",
-    "generated_at": "2026-09-01T07:22:18+08:00",
+    "generated_at": "2026-09-01T09:12:59+08:00",
     "as_of": "2026-08-31T15:01:10+08:00",
     "e2e_status": "READY",
     "risk_zone": "RISK_OBSERVATION",
@@ -1758,7 +1802,7 @@
         "data_availability": "ACCOUNT_FACT_READY",
         "reason": "账户个股属于当前资本用途，参与下一单位资本与可释放资本比较；不因ETF机会自动卖出。",
         "quantity": 100,
-        "market_value": 36355.0,
+        "market_value": 36355,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "execution_constraints": [],
         "risk_review_context": [
@@ -1774,7 +1818,7 @@
         "data_availability": "ACCOUNT_FACT_READY",
         "reason": "账户个股属于当前资本用途，参与下一单位资本与可释放资本比较；不因ETF机会自动卖出。",
         "quantity": 500,
-        "market_value": 32420.0,
+        "market_value": 32420,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "execution_constraints": [],
         "risk_review_context": [
@@ -2069,7 +2113,7 @@
         "data_availability": "ACCOUNT_FACT_READY",
         "reason": "账户个股属于当前资本用途，参与下一单位资本与可释放资本比较；不因ETF机会自动卖出。",
         "quantity": 100,
-        "market_value": 36355.0,
+        "market_value": 36355,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "execution_constraints": [],
         "risk_review_context": [
@@ -2085,7 +2129,7 @@
         "data_availability": "ACCOUNT_FACT_READY",
         "reason": "账户个股属于当前资本用途，参与下一单位资本与可释放资本比较；不因ETF机会自动卖出。",
         "quantity": 500,
-        "market_value": 32420.0,
+        "market_value": 32420,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "execution_constraints": [],
         "risk_review_context": [
@@ -2103,7 +2147,7 @@
     "safety_boundary": "资本比较不替代唯一主候选；风险区间不自动生成风险许可；本状态不自动生成Trial、Confirm、金额、卖出份额或订单。"
   },
   "intraday_path_features": {
-    "generated_at": "2026-08-31T23:22:12Z",
+    "generated_at": "2026-09-01T01:12:53Z",
     "market_date": "2026-08-31",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -2305,7 +2349,7 @@
         ],
         "production_source": "DISCRETE_SNAPSHOT_PATH",
         "path_role": "PRODUCTION_STRUCTURE_EVIDENCE_FALLBACK",
-        "fallback_reason": "minute_item_quality_gate_failed"
+        "fallback_reason": "no same-day A-share minute points"
       },
       {
         "symbol": "159561",
@@ -2360,7 +2404,7 @@
         "structure_candidates": [],
         "production_source": "DISCRETE_SNAPSHOT_PATH",
         "path_role": "PRODUCTION_STRUCTURE_EVIDENCE_FALLBACK",
-        "fallback_reason": "minute_item_quality_gate_failed"
+        "fallback_reason": "no same-day A-share minute points"
       },
       {
         "symbol": "159781",
@@ -2425,7 +2469,7 @@
         ],
         "production_source": "DISCRETE_SNAPSHOT_PATH",
         "path_role": "PRODUCTION_STRUCTURE_EVIDENCE_FALLBACK",
-        "fallback_reason": "minute_item_quality_gate_failed"
+        "fallback_reason": "no same-day A-share minute points"
       },
       {
         "symbol": "159941",
@@ -2493,7 +2537,7 @@
         ],
         "production_source": "DISCRETE_SNAPSHOT_PATH",
         "path_role": "PRODUCTION_STRUCTURE_EVIDENCE_FALLBACK",
-        "fallback_reason": "minute_item_quality_gate_failed"
+        "fallback_reason": "no same-day A-share minute points"
       },
       {
         "symbol": "159992",
@@ -2558,7 +2602,7 @@
         ],
         "production_source": "DISCRETE_SNAPSHOT_PATH",
         "path_role": "PRODUCTION_STRUCTURE_EVIDENCE_FALLBACK",
-        "fallback_reason": "minute_item_quality_gate_failed"
+        "fallback_reason": "no same-day A-share minute points"
       },
       {
         "symbol": "399006",
@@ -2687,7 +2731,7 @@
         ],
         "production_source": "DISCRETE_SNAPSHOT_PATH",
         "path_role": "PRODUCTION_STRUCTURE_EVIDENCE_FALLBACK",
-        "fallback_reason": "minute_item_quality_gate_failed"
+        "fallback_reason": "no same-day A-share minute points"
       },
       {
         "symbol": "513520",
@@ -2764,7 +2808,7 @@
         ],
         "production_source": "DISCRETE_SNAPSHOT_PATH",
         "path_role": "PRODUCTION_STRUCTURE_EVIDENCE_FALLBACK",
-        "fallback_reason": "minute_item_quality_gate_failed"
+        "fallback_reason": "no same-day A-share minute points"
       },
       {
         "symbol": "515880",
@@ -2829,7 +2873,7 @@
         ],
         "production_source": "DISCRETE_SNAPSHOT_PATH",
         "path_role": "PRODUCTION_STRUCTURE_EVIDENCE_FALLBACK",
-        "fallback_reason": "minute_item_quality_gate_failed"
+        "fallback_reason": "no same-day A-share minute points"
       },
       {
         "symbol": "518880",
@@ -2897,7 +2941,7 @@
         ],
         "production_source": "DISCRETE_SNAPSHOT_PATH",
         "path_role": "PRODUCTION_STRUCTURE_EVIDENCE_FALLBACK",
-        "fallback_reason": "minute_item_quality_gate_failed"
+        "fallback_reason": "no same-day A-share minute points"
       },
       {
         "symbol": "561980",
@@ -2962,7 +3006,7 @@
         ],
         "production_source": "DISCRETE_SNAPSHOT_PATH",
         "path_role": "PRODUCTION_STRUCTURE_EVIDENCE_FALLBACK",
-        "fallback_reason": "minute_item_quality_gate_failed"
+        "fallback_reason": "no same-day A-share minute points"
       },
       {
         "symbol": "588000",
@@ -3027,7 +3071,7 @@
         ],
         "production_source": "DISCRETE_SNAPSHOT_PATH",
         "path_role": "PRODUCTION_STRUCTURE_EVIDENCE_FALLBACK",
-        "fallback_reason": "minute_item_quality_gate_failed"
+        "fallback_reason": "no same-day A-share minute points"
       }
     ],
     "schema_version": "1.2",
@@ -3059,32 +3103,32 @@
         "399006"
       ],
       "fallback_reasons": {
-        "159326": "minute_item_quality_gate_failed",
-        "159561": "minute_item_quality_gate_failed",
-        "159781": "minute_item_quality_gate_failed",
-        "159941": "minute_item_quality_gate_failed",
-        "159992": "minute_item_quality_gate_failed",
-        "513180": "minute_item_quality_gate_failed",
-        "513520": "minute_item_quality_gate_failed",
-        "515880": "minute_item_quality_gate_failed",
-        "518880": "minute_item_quality_gate_failed",
-        "561980": "minute_item_quality_gate_failed",
-        "588000": "minute_item_quality_gate_failed"
+        "159326": "no same-day A-share minute points",
+        "159561": "no same-day A-share minute points",
+        "159781": "no same-day A-share minute points",
+        "159941": "no same-day A-share minute points",
+        "159992": "no same-day A-share minute points",
+        "513180": "no same-day A-share minute points",
+        "513520": "no same-day A-share minute points",
+        "515880": "no same-day A-share minute points",
+        "518880": "no same-day A-share minute points",
+        "561980": "no same-day A-share minute points",
+        "588000": "no same-day A-share minute points"
       },
       "formal_latest_price_source_unchanged": true,
       "decision_boundary": "腾讯分钟源只参与ETF日内结构；ETF单对象失败只回退该ETF。指数等非ETF对象继续使用其原生离散路径，不计入ETF fallback。正式最新价继续由quote router决定。"
     },
     "minute_validation_evidence": {
       "status": "FAILED",
-      "coverage_ratio": 1.0,
+      "coverage_ratio": 0.0,
       "formal_gate_pass": false,
       "production_usable_ratio": 0.0,
       "quality_summary": {
-        "coverage_pass": true,
+        "coverage_pass": false,
         "freshness_pass": false,
-        "continuity_pass": true,
+        "continuity_pass": false,
         "quote_alignment_pass": false,
-        "point_in_time_pass": true,
+        "point_in_time_pass": false,
         "formal_gate_pass": false,
         "production_usable_count": 0,
         "production_usable_ratio": 0.0,
@@ -3503,7 +3547,7 @@
           "retreat_from_path_high_pct": 0.0,
           "sampling_coverage": "MEDIUM",
           "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
-          "minute_selection_reason": "quote_price_alignment_failed"
+          "minute_selection_reason": "exception"
         },
         {
           "display_name": "创业板指（399006）",
@@ -3518,7 +3562,7 @@
           "retreat_from_path_high_pct": 0.0,
           "sampling_coverage": "MEDIUM",
           "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
-          "minute_selection_reason": "quote_price_alignment_failed"
+          "minute_selection_reason": "exception"
         },
         {
           "display_name": "科创50指数（000688）",
@@ -3527,7 +3571,7 @@
           "price": 1684.39,
           "change_pct": 1.3380260505971187,
           "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
-          "minute_selection_reason": "quote_price_alignment_failed"
+          "minute_selection_reason": "exception"
         }
       ],
       "etf_breadth": {
@@ -3578,7 +3622,7 @@
     },
     "market_structure_context": {
       "schema_version": "1.4",
-      "generated_at": "2026-08-31T23:22:17Z",
+      "generated_at": "2026-09-01T01:12:59Z",
       "market_date": "2026-08-31",
       "as_of_beijing": "2026-08-31T15:01:10+08:00",
       "source_snapshot": "data/market/snapshots/2026-08-31_150110.json",
@@ -3691,25 +3735,12 @@
             "acceptance_interpretation_cn": "偏缩量上涨，承接强度仍需验证",
             "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
             "recent_10m_marginal_acceptance": {
-              "status": "READY",
-              "window_end_beijing": "2026-08-31T15:00:00+08:00",
-              "recent_10m_price_change_pct": 0.0,
-              "recent_10m_amount_delta": 11296144.98,
-              "recent_10m_volume_delta": 161661.0,
-              "prior_10m_price_change_pct": 0.0,
-              "prior_10m_amount_delta": 5190860.98,
-              "prior_10m_volume_delta": 74269.0,
-              "amount_expansion_ratio": 2.1762,
-              "volume_expansion_ratio": 2.1767,
-              "amount_relation": "EXPANDED_VS_PRIOR_10M",
-              "recent_price_direction": "FLAT",
-              "interpretation_cn": "最近10分钟+0.00%、成交额为前10分钟2.18倍，价格变化有限但成交参与扩张，换手活跃。",
-              "source": "tencent_qq minute/query",
-              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
-              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+              "status": "MISSING",
+              "interpretation_cn": "分钟级边际承接不可用，继续使用原20日时间归一化成交承接。",
+              "role": "FALLBACK_TO_BASE_TURNOVER_CONTEXT"
             }
           },
-          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内存在低点修复/V型反转候选；成交侧偏缩量上涨，承接强度仍需验证；最近10分钟+0.00%、成交额为前10分钟2.18倍，价格变化有限但成交参与扩张，换手活跃。",
+          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内存在低点修复/V型反转候选；成交侧偏缩量上涨，承接强度仍需验证。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR",
           "participation_structure_confirmation": {
             "evidence_id": "participation_expansion_with_positive_structure",
@@ -3861,25 +3892,12 @@
             "acceptance_interpretation_cn": "偏缩量上涨，承接强度仍需验证",
             "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
             "recent_10m_marginal_acceptance": {
-              "status": "READY",
-              "window_end_beijing": "2026-08-31T15:00:00+08:00",
-              "recent_10m_price_change_pct": 0.1127,
-              "recent_10m_amount_delta": 191229411.83,
-              "recent_10m_volume_delta": 1077059.0,
-              "prior_10m_price_change_pct": 0.0,
-              "prior_10m_amount_delta": 171204698.8,
-              "prior_10m_volume_delta": 964915.0,
-              "amount_expansion_ratio": 1.117,
-              "volume_expansion_ratio": 1.1162,
-              "amount_relation": "EXPANDED_VS_PRIOR_10M",
-              "recent_price_direction": "UP",
-              "interpretation_cn": "最近10分钟+0.11%、成交额为前10分钟1.12倍，上涨且成交参与扩张，短线承接增强。",
-              "source": "tencent_qq minute/query",
-              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
-              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+              "status": "MISSING",
+              "interpretation_cn": "分钟级边际承接不可用，继续使用原20日时间归一化成交承接。",
+              "role": "FALLBACK_TO_BASE_TURNOVER_CONTEXT"
             }
           },
-          "combined_interpretation_cn": "上涨发生在历史低位区；近期趋势结构混合，尚不能定义为单边趋势，需验证是否从反弹升级为趋势；日内存在低点修复/V型反转候选；成交侧偏缩量上涨，承接强度仍需验证；最近10分钟+0.11%、成交额为前10分钟1.12倍，上涨且成交参与扩张，短线承接增强。",
+          "combined_interpretation_cn": "上涨发生在历史低位区；近期趋势结构混合，尚不能定义为单边趋势，需验证是否从反弹升级为趋势；日内存在低点修复/V型反转候选；成交侧偏缩量上涨，承接强度仍需验证。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR",
           "participation_structure_confirmation": {
             "evidence_id": "participation_expansion_with_positive_structure",
@@ -4031,25 +4049,12 @@
             "acceptance_interpretation_cn": "成交承接暂未形成明显异常",
             "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
             "recent_10m_marginal_acceptance": {
-              "status": "READY",
-              "window_end_beijing": "2026-08-31T15:00:00+08:00",
-              "recent_10m_price_change_pct": 0.0923,
-              "recent_10m_amount_delta": 15673348.41,
-              "recent_10m_volume_delta": 144475.0,
-              "prior_10m_price_change_pct": 0.0,
-              "prior_10m_amount_delta": 106975657.97,
-              "prior_10m_volume_delta": 987323.0,
-              "amount_expansion_ratio": 0.1465,
-              "volume_expansion_ratio": 0.1463,
-              "amount_relation": "CONTRACTED_VS_PRIOR_10M",
-              "recent_price_direction": "UP",
-              "interpretation_cn": "最近10分钟+0.09%、成交额为前10分钟0.15倍，上涨但成交参与收缩，跟随度有限。",
-              "source": "tencent_qq minute/query",
-              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
-              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+              "status": "MISSING",
+              "interpretation_cn": "分钟级边际承接不可用，继续使用原20日时间归一化成交承接。",
+              "role": "FALLBACK_TO_BASE_TURNOVER_CONTEXT"
             }
           },
-          "combined_interpretation_cn": "上涨发生在历史低位区；近期趋势结构混合，尚不能定义为单边趋势，需验证是否从反弹升级为趋势；日内存在低点修复/V型反转候选；成交侧成交承接暂未形成明显异常；最近10分钟+0.09%、成交额为前10分钟0.15倍，上涨但成交参与收缩，跟随度有限。",
+          "combined_interpretation_cn": "上涨发生在历史低位区；近期趋势结构混合，尚不能定义为单边趋势，需验证是否从反弹升级为趋势；日内存在低点修复/V型反转候选；成交侧成交承接暂未形成明显异常。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR",
           "participation_structure_confirmation": {
             "evidence_id": "participation_expansion_with_positive_structure",
@@ -4201,25 +4206,12 @@
             "acceptance_interpretation_cn": "偏缩量回落",
             "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
             "recent_10m_marginal_acceptance": {
-              "status": "READY",
-              "window_end_beijing": "2026-08-31T15:00:00+08:00",
-              "recent_10m_price_change_pct": -0.0605,
-              "recent_10m_amount_delta": 45054812.31,
-              "recent_10m_volume_delta": 272406.0,
-              "prior_10m_price_change_pct": -0.1208,
-              "prior_10m_amount_delta": 32049569.23,
-              "prior_10m_volume_delta": 193666.0,
-              "amount_expansion_ratio": 1.4058,
-              "volume_expansion_ratio": 1.4066,
-              "amount_relation": "EXPANDED_VS_PRIOR_10M",
-              "recent_price_direction": "DOWN",
-              "interpretation_cn": "最近10分钟-0.06%、成交额为前10分钟1.41倍，回落且成交参与扩张，短线抛压更实。",
-              "source": "tencent_qq minute/query",
-              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
-              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+              "status": "MISSING",
+              "interpretation_cn": "分钟级边际承接不可用，继续使用原20日时间归一化成交承接。",
+              "role": "FALLBACK_TO_BASE_TURNOVER_CONTEXT"
             }
           },
-          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内处于当日区间中部或结构尚未确认；成交侧偏缩量回落；最近10分钟-0.06%、成交额为前10分钟1.41倍，回落且成交参与扩张，短线抛压更实。",
+          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内处于当日区间中部或结构尚未确认；成交侧偏缩量回落。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR",
           "participation_structure_confirmation": {
             "evidence_id": "participation_expansion_with_positive_structure",
@@ -4371,25 +4363,12 @@
             "acceptance_interpretation_cn": "成交承接暂未形成明显异常",
             "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
             "recent_10m_marginal_acceptance": {
-              "status": "READY",
-              "window_end_beijing": "2026-08-31T15:00:00+08:00",
-              "recent_10m_price_change_pct": 0.0,
-              "recent_10m_amount_delta": 92134326.01,
-              "recent_10m_volume_delta": 1582530.0,
-              "prior_10m_price_change_pct": 0.0,
-              "prior_10m_amount_delta": 133185767.0,
-              "prior_10m_volume_delta": 2288512.0,
-              "amount_expansion_ratio": 0.6918,
-              "volume_expansion_ratio": 0.6915,
-              "amount_relation": "CONTRACTED_VS_PRIOR_10M",
-              "recent_price_direction": "FLAT",
-              "interpretation_cn": "最近10分钟+0.00%、成交额为前10分钟0.69倍，价格变化有限且成交参与收缩，交易兴趣下降。",
-              "source": "tencent_qq minute/query",
-              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
-              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+              "status": "MISSING",
+              "interpretation_cn": "分钟级边际承接不可用，继续使用原20日时间归一化成交承接。",
+              "role": "FALLBACK_TO_BASE_TURNOVER_CONTEXT"
             }
           },
-          "combined_interpretation_cn": "当前位于历史中位区；近期高点与低点同步下移，偏下降趋势；日内存在低点修复/V型反转候选；成交侧成交承接暂未形成明显异常；最近10分钟+0.00%、成交额为前10分钟0.69倍，价格变化有限且成交参与收缩，交易兴趣下降。",
+          "combined_interpretation_cn": "当前位于历史中位区；近期高点与低点同步下移，偏下降趋势；日内存在低点修复/V型反转候选；成交侧成交承接暂未形成明显异常。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR",
           "participation_structure_confirmation": {
             "evidence_id": "participation_expansion_with_positive_structure",
@@ -4539,25 +4518,12 @@
             "acceptance_interpretation_cn": "成交承接暂未形成明显异常",
             "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
             "recent_10m_marginal_acceptance": {
-              "status": "READY",
-              "window_end_beijing": "2026-08-31T15:00:00+08:00",
-              "recent_10m_price_change_pct": 0.1445,
-              "recent_10m_amount_delta": 19827810.33,
-              "recent_10m_volume_delta": 142932.0,
-              "prior_10m_price_change_pct": 0.0,
-              "prior_10m_amount_delta": 3308772.1,
-              "prior_10m_volume_delta": 23899.0,
-              "amount_expansion_ratio": 5.9925,
-              "volume_expansion_ratio": 5.9807,
-              "amount_relation": "EXPANDED_VS_PRIOR_10M",
-              "recent_price_direction": "UP",
-              "interpretation_cn": "最近10分钟+0.14%、成交额为前10分钟5.99倍，上涨且成交参与扩张，短线承接增强。",
-              "source": "tencent_qq minute/query",
-              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
-              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+              "status": "MISSING",
+              "interpretation_cn": "分钟级边际承接不可用，继续使用原20日时间归一化成交承接。",
+              "role": "FALLBACK_TO_BASE_TURNOVER_CONTEXT"
             }
           },
-          "combined_interpretation_cn": "回落发生在历史高位区；历史高位区仍维持正向趋势，偏高位延续，需区分健康整理与趋势破坏；日内处于当日区间中部或结构尚未确认；成交侧成交承接暂未形成明显异常；最近10分钟+0.14%、成交额为前10分钟5.99倍，上涨且成交参与扩张，短线承接增强。",
+          "combined_interpretation_cn": "回落发生在历史高位区；历史高位区仍维持正向趋势，偏高位延续，需区分健康整理与趋势破坏；日内处于当日区间中部或结构尚未确认；成交侧成交承接暂未形成明显异常。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR",
           "participation_structure_confirmation": {
             "evidence_id": "participation_expansion_with_positive_structure",
@@ -4710,25 +4676,12 @@
             "acceptance_interpretation_cn": "偏缩量回落",
             "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
             "recent_10m_marginal_acceptance": {
-              "status": "READY",
-              "window_end_beijing": "2026-08-31T15:00:00+08:00",
-              "recent_10m_price_change_pct": -0.1318,
-              "recent_10m_amount_delta": 12523834.0,
-              "recent_10m_volume_delta": 55047.0,
-              "prior_10m_price_change_pct": 0.0439,
-              "prior_10m_amount_delta": 4272285.0,
-              "prior_10m_volume_delta": 18766.0,
-              "amount_expansion_ratio": 2.9314,
-              "volume_expansion_ratio": 2.9333,
-              "amount_relation": "EXPANDED_VS_PRIOR_10M",
-              "recent_price_direction": "DOWN",
-              "interpretation_cn": "最近10分钟-0.13%、成交额为前10分钟2.93倍，回落且成交参与扩张，短线抛压更实。",
-              "source": "tencent_qq minute/query",
-              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
-              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+              "status": "MISSING",
+              "interpretation_cn": "分钟级边际承接不可用，继续使用原20日时间归一化成交承接。",
+              "role": "FALLBACK_TO_BASE_TURNOVER_CONTEXT"
             }
           },
-          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内存在低点修复/V型反转候选；成交侧偏缩量回落；最近10分钟-0.13%、成交额为前10分钟2.93倍，回落且成交参与扩张，短线抛压更实。",
+          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内存在低点修复/V型反转候选；成交侧偏缩量回落。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR",
           "participation_structure_confirmation": {
             "evidence_id": "participation_expansion_with_positive_structure",
@@ -4880,25 +4833,12 @@
             "acceptance_interpretation_cn": "成交承接暂未形成明显异常",
             "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
             "recent_10m_marginal_acceptance": {
-              "status": "READY",
-              "window_end_beijing": "2026-08-31T15:00:00+08:00",
-              "recent_10m_price_change_pct": -0.0219,
-              "recent_10m_amount_delta": 263619722.01,
-              "recent_10m_volume_delta": 288608.0,
-              "prior_10m_price_change_pct": 0.0328,
-              "prior_10m_amount_delta": 295617649.02,
-              "prior_10m_volume_delta": 323585.0,
-              "amount_expansion_ratio": 0.8918,
-              "volume_expansion_ratio": 0.8919,
-              "amount_relation": "CONTRACTED_VS_PRIOR_10M",
-              "recent_price_direction": "DOWN",
-              "interpretation_cn": "最近10分钟-0.02%、成交额为前10分钟0.89倍，回落但成交参与收缩，抛压扩散有限。",
-              "source": "tencent_qq minute/query",
-              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
-              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+              "status": "MISSING",
+              "interpretation_cn": "分钟级边际承接不可用，继续使用原20日时间归一化成交承接。",
+              "role": "FALLBACK_TO_BASE_TURNOVER_CONTEXT"
             }
           },
-          "combined_interpretation_cn": "当前位于历史中位区；近期高点与低点同步抬升，偏上升趋势；日内存在低点修复/V型反转候选；成交侧成交承接暂未形成明显异常；最近10分钟-0.02%、成交额为前10分钟0.89倍，回落但成交参与收缩，抛压扩散有限。",
+          "combined_interpretation_cn": "当前位于历史中位区；近期高点与低点同步抬升，偏上升趋势；日内存在低点修复/V型反转候选；成交侧成交承接暂未形成明显异常。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR",
           "participation_structure_confirmation": {
             "evidence_id": "participation_expansion_with_positive_structure",
@@ -5050,25 +4990,12 @@
             "acceptance_interpretation_cn": "成交承接暂未形成明显异常",
             "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
             "recent_10m_marginal_acceptance": {
-              "status": "READY",
-              "window_end_beijing": "2026-08-31T15:00:00+08:00",
-              "recent_10m_price_change_pct": -0.2353,
-              "recent_10m_amount_delta": 49136543.1,
-              "recent_10m_volume_delta": 578957.0,
-              "prior_10m_price_change_pct": 0.1178,
-              "prior_10m_amount_delta": 23046296.6,
-              "prior_10m_volume_delta": 271408.0,
-              "amount_expansion_ratio": 2.1321,
-              "volume_expansion_ratio": 2.1332,
-              "amount_relation": "EXPANDED_VS_PRIOR_10M",
-              "recent_price_direction": "DOWN",
-              "interpretation_cn": "最近10分钟-0.24%、成交额为前10分钟2.13倍，回落且成交参与扩张，短线抛压更实。",
-              "source": "tencent_qq minute/query",
-              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
-              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+              "status": "MISSING",
+              "interpretation_cn": "分钟级边际承接不可用，继续使用原20日时间归一化成交承接。",
+              "role": "FALLBACK_TO_BASE_TURNOVER_CONTEXT"
             }
           },
-          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内存在低点修复/V型反转候选；成交侧成交承接暂未形成明显异常；最近10分钟-0.24%、成交额为前10分钟2.13倍，回落且成交参与扩张，短线抛压更实。",
+          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内存在低点修复/V型反转候选；成交侧成交承接暂未形成明显异常。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR",
           "participation_structure_confirmation": {
             "evidence_id": "participation_expansion_with_positive_structure",
@@ -5220,25 +5147,12 @@
             "acceptance_interpretation_cn": "偏缩量上涨，承接强度仍需验证",
             "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
             "recent_10m_marginal_acceptance": {
-              "status": "READY",
-              "window_end_beijing": "2026-08-31T15:00:00+08:00",
-              "recent_10m_price_change_pct": 0.0,
-              "recent_10m_amount_delta": 145882075.24,
-              "recent_10m_volume_delta": 2171529.0,
-              "prior_10m_price_change_pct": 0.149,
-              "prior_10m_amount_delta": 110933772.95,
-              "prior_10m_volume_delta": 1652763.0,
-              "amount_expansion_ratio": 1.315,
-              "volume_expansion_ratio": 1.3139,
-              "amount_relation": "EXPANDED_VS_PRIOR_10M",
-              "recent_price_direction": "FLAT",
-              "interpretation_cn": "最近10分钟+0.00%、成交额为前10分钟1.31倍，价格变化有限但成交参与扩张，换手活跃。",
-              "source": "tencent_qq minute/query",
-              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
-              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+              "status": "MISSING",
+              "interpretation_cn": "分钟级边际承接不可用，继续使用原20日时间归一化成交承接。",
+              "role": "FALLBACK_TO_BASE_TURNOVER_CONTEXT"
             }
           },
-          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内存在低点修复/V型反转候选；成交侧偏缩量上涨，承接强度仍需验证；最近10分钟+0.00%、成交额为前10分钟1.31倍，价格变化有限但成交参与扩张，换手活跃。",
+          "combined_interpretation_cn": "当前位于历史中位区；近期趋势结构混合，尚不能定义为单边趋势；日内存在低点修复/V型反转候选；成交侧偏缩量上涨，承接强度仍需验证。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR",
           "participation_structure_confirmation": {
             "evidence_id": "participation_expansion_with_positive_structure",
@@ -5390,25 +5304,12 @@
             "acceptance_interpretation_cn": "偏缩量回落",
             "method_note": "用当前累计成交额除以近20日平均全天成交额，再按A股连续竞价已进行时间比例归一化；仅作轻量承接证据，不替代分钟量价。",
             "recent_10m_marginal_acceptance": {
-              "status": "READY",
-              "window_end_beijing": "2026-08-31T15:00:00+08:00",
-              "recent_10m_price_change_pct": -0.0598,
-              "recent_10m_amount_delta": 10907435.89,
-              "recent_10m_volume_delta": 65289.0,
-              "prior_10m_price_change_pct": 0.0,
-              "prior_10m_amount_delta": 16120716.28,
-              "prior_10m_volume_delta": 96504.0,
-              "amount_expansion_ratio": 0.6766,
-              "volume_expansion_ratio": 0.6765,
-              "amount_relation": "CONTRACTED_VS_PRIOR_10M",
-              "recent_price_direction": "DOWN",
-              "interpretation_cn": "最近10分钟-0.06%、成交额为前10分钟0.68倍，回落但成交参与收缩，抛压扩散有限。",
-              "source": "tencent_qq minute/query",
-              "role": "SECOND_HORIZON_MARGINAL_ACCEPTANCE_EVIDENCE",
-              "decision_boundary": "仅描述最近10分钟价格方向及成交额/量相对前10分钟是否扩张；不设买卖阈值、不形成评分、不独立产生Trial/Confirm或卖出动作。"
+              "status": "MISSING",
+              "interpretation_cn": "分钟级边际承接不可用，继续使用原20日时间归一化成交承接。",
+              "role": "FALLBACK_TO_BASE_TURNOVER_CONTEXT"
             }
           },
-          "combined_interpretation_cn": "下跌发生在历史低位区；近期趋势结构混合，尚不能定义为单边趋势，赔率可能改善但承接仍弱；日内存在低点修复/V型反转候选；成交侧偏缩量回落；最近10分钟-0.06%、成交额为前10分钟0.68倍，回落但成交参与收缩，抛压扩散有限。",
+          "combined_interpretation_cn": "下跌发生在历史低位区；近期趋势结构混合，尚不能定义为单边趋势，赔率可能改善但承接仍弱；日内存在低点修复/V型反转候选；成交侧偏缩量回落。",
           "selection_role_of_current_return": "VALIDATION_ONLY_NOT_CANDIDATE_GENERATOR",
           "participation_structure_confirmation": {
             "evidence_id": "participation_expansion_with_positive_structure",
@@ -5547,10 +5448,11 @@
         "failure_contract": "对象级路径不可用时复用现有分钟→离散fallback；仍无法重建则该对象DEGRADED且不沿用旧方向。"
       },
       "minute_acceptance_integration": {
-        "status": "READY",
+        "status": "DEGRADED_WITH_OBJECT_FALLBACK",
         "target_count": 11,
-        "ready_count": 11,
-        "ready_codes": [
+        "ready_count": 0,
+        "ready_codes": [],
+        "fallback_codes": [
           "561980",
           "588000",
           "159781",
@@ -5563,7 +5465,6 @@
           "515880",
           "159326"
         ],
-        "fallback_codes": [],
         "base_20d_time_normalized_turnover_preserved": true,
         "minute_10m_role": "最近10分钟 vs 紧邻前10分钟，用于描述资金参与边际增强/减弱",
         "no_composite_score": true,
@@ -6041,7 +5942,7 @@
     },
     "if_ic_basis_5d": {
       "schema_version": "1.2",
-      "generated_at": "2026-08-31T23:22:23Z",
+      "generated_at": "2026-09-01T01:13:05Z",
       "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
       "evidence_id": "if_ic_basis_5d",
       "display_name": "IF／IC 5日基差变化证据",
@@ -6066,7 +5967,7 @@
     },
     "ipo_base_stock_oversold_reversal_300750": {
       "schema_version": "1.1",
-      "generated_at": "2026-08-31T23:22:35Z",
+      "generated_at": "2026-09-01T01:13:17Z",
       "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
       "evidence_id": "ipo_base_stock_oversold_reversal_300750",
       "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -6128,7 +6029,7 @@
     },
     "research_execution_summary": {
       "schema_version": "1.2",
-      "generated_at": "2026-08-31T23:22:37Z",
+      "generated_at": "2026-09-01T01:13:19Z",
       "mode": "RESEARCH_TO_EXECUTION_READ_ONLY_BRIDGE",
       "read_only": true,
       "use_in_current_decision": true,
@@ -6610,12 +6511,12 @@
           "calibration_cutoff": "2026-08-21",
           "interpretation_rule": "正残差表示实际A股开盘相对历史SOX/NDX传导估计更低定价，负残差表示相对更高定价；仅参与半导体设备ETF机会强弱和风险收益判断，不是买入阈值。",
           "a_share_market_date": "2026-08-31",
-          "us_tech_equal_1d_pct": -0.2012,
-          "ndx_1d_pct": -0.3242,
-          "sox_1d_pct": -0.0783,
+          "us_tech_equal_1d_pct": 0.3365,
+          "ndx_1d_pct": 0.091,
+          "sox_1d_pct": 0.582,
           "actual_open_gap_pct": -2.3088,
-          "expected_open_gap_pct": -0.1715,
-          "opening_underpricing_residual_pct": 2.1373,
+          "expected_open_gap_pct": -0.007,
+          "opening_underpricing_residual_pct": 2.3018,
           "historical_residual_zone": "UNDERPRICED_TAIL",
           "threshold_not_a_trade_rule": true
         },
@@ -6850,7 +6751,7 @@
         },
         "if_ic_basis_5d": {
           "schema_version": "1.2",
-          "generated_at": "2026-08-31T23:22:23Z",
+          "generated_at": "2026-09-01T01:13:05Z",
           "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
           "evidence_id": "if_ic_basis_5d",
           "display_name": "IF／IC 5日基差变化证据",
@@ -6875,7 +6776,7 @@
         },
         "ipo_base_stock_oversold_reversal_300750": {
           "schema_version": "1.1",
-          "generated_at": "2026-08-31T23:22:35Z",
+          "generated_at": "2026-09-01T01:13:17Z",
           "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
           "evidence_id": "ipo_base_stock_oversold_reversal_300750",
           "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -7054,7 +6955,7 @@
           ],
           "dynamic_stock_specific_signal": {
             "schema_version": "1.1",
-            "generated_at": "2026-08-31T23:22:35Z",
+            "generated_at": "2026-09-01T01:13:17Z",
             "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
             "evidence_id": "ipo_base_stock_oversold_reversal_300750",
             "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -7321,7 +7222,7 @@
         "retreat_from_path_high_pct": 0.0,
         "sampling_coverage": "MEDIUM",
         "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
-        "minute_selection_reason": "quote_price_alignment_failed"
+        "minute_selection_reason": "exception"
       },
       {
         "display_name": "创业板指（399006）",
@@ -7336,7 +7237,7 @@
         "retreat_from_path_high_pct": 0.0,
         "sampling_coverage": "MEDIUM",
         "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
-        "minute_selection_reason": "quote_price_alignment_failed"
+        "minute_selection_reason": "exception"
       },
       {
         "display_name": "科创50指数（000688）",
@@ -7345,7 +7246,7 @@
         "price": 1684.39,
         "change_pct": 1.3380260505971187,
         "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
-        "minute_selection_reason": "quote_price_alignment_failed"
+        "minute_selection_reason": "exception"
       }
     ],
     "etf_breadth": {
@@ -7431,7 +7332,7 @@
   "research_contribution_audit_file": "data/state/research_contribution_audit.json",
   "research_master_candidates": {
     "schema_version": "1.0",
-    "generated_at": "2026-08-31T23:22:18Z",
+    "generated_at": "2026-09-01T01:12:59Z",
     "mode": "RESEARCH_TO_MASTER_MAINTENANCE_FEED",
     "read_only": true,
     "automatic_master_update": false,
@@ -7461,7 +7362,7 @@
   },
   "execution_quality": {
     "schema_version": "1.1",
-    "generated_at": "2026-08-31T23:22:17Z",
+    "generated_at": "2026-09-01T01:12:59Z",
     "mode": "DECISION_EXECUTION_ATTRIBUTION",
     "read_only": true,
     "trade_event_count": 3,
@@ -7610,17 +7511,17 @@
       "399006"
     ],
     "fallback_reasons": {
-      "159326": "minute_item_quality_gate_failed",
-      "159561": "minute_item_quality_gate_failed",
-      "159781": "minute_item_quality_gate_failed",
-      "159941": "minute_item_quality_gate_failed",
-      "159992": "minute_item_quality_gate_failed",
-      "513180": "minute_item_quality_gate_failed",
-      "513520": "minute_item_quality_gate_failed",
-      "515880": "minute_item_quality_gate_failed",
-      "518880": "minute_item_quality_gate_failed",
-      "561980": "minute_item_quality_gate_failed",
-      "588000": "minute_item_quality_gate_failed"
+      "159326": "no same-day A-share minute points",
+      "159561": "no same-day A-share minute points",
+      "159781": "no same-day A-share minute points",
+      "159941": "no same-day A-share minute points",
+      "159992": "no same-day A-share minute points",
+      "513180": "no same-day A-share minute points",
+      "513520": "no same-day A-share minute points",
+      "515880": "no same-day A-share minute points",
+      "518880": "no same-day A-share minute points",
+      "561980": "no same-day A-share minute points",
+      "588000": "no same-day A-share minute points"
     },
     "formal_latest_price_source_unchanged": true,
     "decision_boundary": "腾讯分钟源只参与ETF日内结构；ETF单对象失败只回退该ETF。指数等非ETF对象继续使用其原生离散路径，不计入ETF fallback。正式最新价继续由quote router决定。"
@@ -7717,12 +7618,12 @@
       "calibration_cutoff": "2026-08-21",
       "interpretation_rule": "正残差表示实际A股开盘相对历史SOX/NDX传导估计更低定价，负残差表示相对更高定价；仅参与半导体设备ETF机会强弱和风险收益判断，不是买入阈值。",
       "a_share_market_date": "2026-08-31",
-      "us_tech_equal_1d_pct": -0.2012,
-      "ndx_1d_pct": -0.3242,
-      "sox_1d_pct": -0.0783,
+      "us_tech_equal_1d_pct": 0.3365,
+      "ndx_1d_pct": 0.091,
+      "sox_1d_pct": 0.582,
       "actual_open_gap_pct": -2.3088,
-      "expected_open_gap_pct": -0.1715,
-      "opening_underpricing_residual_pct": 2.1373,
+      "expected_open_gap_pct": -0.007,
+      "opening_underpricing_residual_pct": 2.3018,
       "historical_residual_zone": "UNDERPRICED_TAIL",
       "threshold_not_a_trade_rule": true
     },
@@ -7957,7 +7858,7 @@
     },
     "if_ic_basis_5d": {
       "schema_version": "1.2",
-      "generated_at": "2026-08-31T23:22:23Z",
+      "generated_at": "2026-09-01T01:13:05Z",
       "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
       "evidence_id": "if_ic_basis_5d",
       "display_name": "IF／IC 5日基差变化证据",
@@ -7982,7 +7883,7 @@
     },
     "ipo_base_stock_oversold_reversal_300750": {
       "schema_version": "1.1",
-      "generated_at": "2026-08-31T23:22:35Z",
+      "generated_at": "2026-09-01T01:13:17Z",
       "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
       "evidence_id": "ipo_base_stock_oversold_reversal_300750",
       "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -8155,7 +8056,7 @@
       ],
       "dynamic_stock_specific_signal": {
         "schema_version": "1.1",
-        "generated_at": "2026-08-31T23:22:35Z",
+        "generated_at": "2026-09-01T01:13:17Z",
         "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
         "evidence_id": "ipo_base_stock_oversold_reversal_300750",
         "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -8278,22 +8179,5 @@
     "stock_sell_destination_rule": "若打新底仓个股出现足以支持降低风险或退出的证据，必须比较资金进入现金还是已经独立通过完整机会判断的ETF/其他合法机会；不得先卖出再寻找用途，也不得机械轮动。",
     "etf_buy_source_rule": "ETF机会成立而现金不足时，打新底仓只有在其自身继续持有的边际收益效率更低、账户打新/底仓功能不被破坏且卖出决议独立成立时，才可作为资金来源。",
     "separate_decisions_rule": "旧资产卖出与新资产买入始终分别决议；研究层只改变证据和比较结果，不自动联动两笔交易。"
-  },
-  "refresh_gate": {
-    "status": "READY",
-    "formal_analysis_allowed": true,
-    "formal_decision_persist_allowed": true,
-    "fallback_allowed": false,
-    "query_intent": "EXPLICIT_LATEST",
-    "request_file": "requests/live_snapshot/20260826_1453_broker_screenshot_intraday.json",
-    "request_id": "20260826_1453_broker_screenshot_intraday",
-    "requested_at_beijing": "2026-08-26T14:53:00+08:00",
-    "requested_market_time": "2026-08-26T14:53:00+08:00",
-    "current_snapshot_time": "2026-08-31T15:01:10+08:00",
-    "resolved_snapshot_time": "2026-08-31T15:01:10+08:00",
-    "latest_snapshot": "data/market/snapshots/2026-08-31_150110.json",
-    "failure_reason": "",
-    "rule": "EXPLICIT_LATEST或wait_for_refresh请求必须等本次请求之后且不早于requested_market_time的新CURRENT发布后才可称为最新/当前行情；请求前即使仍处普通FRESH窗口，也不得冒充本次最新查询结果。仅非EXPLICIT_LATEST且用户明确授权时可回退旧快照。"
-  },
-  "formal_analysis_allowed": true
+  }
 }
