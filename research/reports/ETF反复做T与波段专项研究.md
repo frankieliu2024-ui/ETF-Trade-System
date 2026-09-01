@@ -17,7 +17,7 @@ canonical `events/research/daily_features` 约646个交易日，正式11只全�
 
 ## 历史15m日内层
 
-已从旧记录和 artifact 核实新浪路径，并实际即时请求公开历史 K 线接口。provider 为 `SINA_15M_RESEARCH_ONLY_NOT_PRODUCTION_PROVIDER`；artifact 9734210770（run 33318592790）仍未过期但不含原始 bars。当前恢复结果为 11/11 对象、每只 1023 根 15m bar、65—71 个交易日。该脚本不创建 provider、分钟仓库、workflow 或 production state。
+已从旧记录和 artifact 核实新浪路径，并实际即时请求公开历史 K 线接口。provider 为 `SINA_15M_RESEARCH_ONLY_NOT_PRODUCTION_PROVIDER`；artifact 9734210770（run 33318592790）仍未过期但不含原始 bars。当前恢复结果为 11/11 对象、每只 1023 根 15m bar、64—71 个交易日（因最新交易日窗口变化而异）。该脚本不创建 provider、分钟仓库、workflow 或 production state。
 
 日内模型使用 completed bar close signal -> next bar open execution；不使用同一 bar high/low 内部顺序。mobile 初始 invested，release 后才能 rebuy；自然条件未触发时按预注册日终固定收盘规则强制回补，避免现金跨日免费重置；T+1 不允许当天新买份额再卖出；费用、right-tail 和 wrong-rebuy 均单独记录。no-trend-filter、trend-filter、multiple-cycles 对照已运行，hold 1/2/4/8 bars 与 rest-of-day 已运行。
 
