@@ -2,7 +2,6 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-
 from scripts.semantic_latest_main import classify_delta, classify_path
 
 
