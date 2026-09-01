@@ -271,10 +271,10 @@ def _market_event_staleness_error(event: dict) -> str:
     if str(event.get("event_type") or "") not in MARKET_EVENT_TYPES:
         return ""
     ctx = _market_context(event)
-    if str(ctx.get("notification_mode") or "").upper() in {"RECOVERY", "BACKFILL"}:
-        return ""
     observed = _parse_time(ctx.get("market_as_of_beijing") or ctx.get("provider_observed_as_of_beijing") or ctx.get("event_time_beijing"))
     if not observed:
+        return "market event has no auditable observation time; live notification is rejected"
+    if str(ctx.get("notification_mode") or "").upper() in {"RECOVERY", "BACKFILL"}:
         return ""
     policy = read_json(ROOT / "config" / "runtime_policy.json", {})
     max_age = int(policy.get("stale_after_seconds", policy.get("degraded_max_age_seconds", 1500)))
@@ -490,7 +490,8 @@ def persist_and_send(event: dict, *, policy: str) -> dict:
     notifications = expire_notifications(raw_items)
     stale_error = _market_event_staleness_error(event)
     if stale_error:
-        return {"status": "REJECTED_STALE_MARKET_EVENT", "detail": stale_error, "title": event.get("title")}
+        status = "REJECTED_UNAUDITABLE_MARKET_EVENT" if "no auditable observation time" in stale_error else "REJECTED_STALE_MARKET_EVENT"
+        return {"status": status, "detail": stale_error, "title": event.get("title")}
     event = _annotate_summary_increment(event, notifications)
     aggregate_result = _absorb_or_aggregate(notifications, event)
     if aggregate_result:

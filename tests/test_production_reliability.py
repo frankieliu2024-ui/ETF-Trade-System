@@ -51,6 +51,47 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
         merged = merge_notification_state(base, incoming)
         self.assertEqual({x["notification_id"] for x in merged["notifications"]}, {"a", "b"})
 
+    def test_notification_state_merge_preserves_newer_sent_state(self):
+        from scripts.merge_notification_state import merge_notification_state
+        base = {"updated_at": "2026-09-01T10:05:00+08:00", "notifications": [{"notification_id": "a", "source_event_id": "fact", "lifecycle_status": "SENT", "sent_at": "2026-09-01T10:05:00+08:00", "response": {"pushplus_code": 200}}]}
+        incoming = {"updated_at": "2026-09-01T10:01:00+08:00", "notifications": [{"notification_id": "a", "source_event_id": "fact", "lifecycle_status": "FAILED", "last_attempted_at": "2026-09-01T10:01:00+08:00"}]}
+        merged = merge_notification_state(base, incoming)
+        self.assertEqual(len(merged["notifications"]), 1)
+        self.assertEqual(merged["notifications"][0]["lifecycle_status"], "SENT")
+        self.assertEqual(merged["notifications"][0]["response"]["pushplus_code"], 200)
+
+    def test_notification_state_merge_accepts_newer_successful_attempt(self):
+        from scripts.merge_notification_state import merge_notification_state
+        base = {"notifications": [{"notification_id": "a", "source_event_id": "fact", "lifecycle_status": "CREATED", "created_at": "2026-09-01T10:01:00+08:00"}]}
+        incoming = {"notifications": [{"notification_id": "a", "source_event_id": "fact", "lifecycle_status": "SENT", "last_attempted_at": "2026-09-01T10:05:00+08:00", "sent_at": "2026-09-01T10:05:00+08:00"}]}
+        merged = merge_notification_state(base, incoming)
+        self.assertEqual(merged["notifications"][0]["lifecycle_status"], "SENT")
+
+    def test_notification_state_merge_deduplicates_shared_source_fact(self):
+        from scripts.merge_notification_state import merge_notification_state
+        base = {"notifications": [{"notification_id": "runner-a", "source_event_id": "fact-1", "key": "old-key", "lifecycle_status": "SENT"}]}
+        incoming = {"notifications": [{"notification_id": "runner-b", "source_event_id": "fact-1", "key": "new-key", "lifecycle_status": "CREATED"}]}
+        merged = merge_notification_state(base, incoming)
+        self.assertEqual(len(merged["notifications"]), 1)
+        self.assertEqual(merged["notifications"][0]["lifecycle_status"], "SENT")
+
+    def test_hstech_rerun_keeps_one_sent_fact_identity(self):
+        from scripts.merge_notification_state import merge_notification_state
+        fact = "market-value:asia:2026-08-31:HSTECH:UP:REVERSAL:2026-08-31T16:09:08+08:00"
+        merged = merge_notification_state(
+            {"notifications": [{"notification_id": "stable", "source_event_id": fact, "lifecycle_status": "SENT", "sent_at": "2026-08-31T22:01:47+08:00"}]},
+            {"notifications": [{"notification_id": "stable", "source_event_id": fact, "lifecycle_status": "CREATED", "created_at": "2026-08-31T21:59:00+08:00"}]},
+        )
+        self.assertEqual(len(merged["notifications"]), 1)
+        self.assertEqual(merged["notifications"][0]["lifecycle_status"], "SENT")
+
+    def test_missing_market_observation_time_fails_closed(self):
+        with tempfile.TemporaryDirectory() as td:
+            event = {"key": "missing-time", "event_type": "MARKET_VALUE_ALERT", "title": "市场异动", "content": "无时点", "confirmation_context": {"market_date": "2026-09-01", "event_category": "EXTREME"}}
+            with patch.object(notifications, "NOTIFICATION_STATE", Path(td) / "notification_center.json"), patch.object(notifications, "STATE", Path(td)):
+                result = notifications.persist_and_send(event, policy="test")
+            self.assertEqual(result["status"], "REJECTED_UNAUDITABLE_MARKET_EVENT")
+
     def test_stale_market_fact_cannot_enter_live_notification_channel(self):
         with tempfile.TemporaryDirectory() as td:
             event = {
