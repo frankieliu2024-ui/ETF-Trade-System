@@ -1,39 +1,34 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-01T10:49:12+08:00",
+  "generated_at": "2026-09-01T10:58:29+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 33463878107,
+  "workflow_name": "Overseas pre-open pulse",
+  "run_id": 33464453330,
   "run_attempt": 1,
-  "head_sha": "4472860c76906e6dc1370d49c9930f4f4efb0604",
-  "main_head_sha": "1f614653bfce75f9509546b93bd9399d79acd4ce",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "57613cd751b789469ac770bbfd7a1555ea5246e3",
+  "main_head_sha": "84bf07c608213d22bb134707c0cd7ec6e2446eaf",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 17
+      "job": "overseas",
+      "step": "Commit overseas contexts, notifications and runtime health",
+      "number": 15
     }
   ],
   "changed_files": [
-    "\"docs/ETF\\344\\270\\273\\345\\212\\250\\351\\200\\232\\347\\237\\245\\344\\275\\223\\347\\263\\273.md\"",
-    ".github/workflows/decision-notification.yml",
-    "scripts/market_notification_common.py",
-    "scripts/merge_notification_state.py",
-    "scripts/send_market_shock_notification_legacy.py",
-    "tests/test_market_notification_materiality_guard.py",
-    "tests/test_production_reliability.py"
+    "data/state/execution_reconciliation.json",
+    "data/state/notification_center.json"
   ],
-  "commit_message": "fix: close notification event identity and replay gaps",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "commit_message": "state: record notification and execution reconciliation",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
