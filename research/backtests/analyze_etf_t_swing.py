@@ -215,7 +215,7 @@ def main():
         "research_id": "etf_t_swing_stage1",
         "generated_at": date.today().isoformat(),
         "status": "PASS_WITH_RESEARCH_BOUNDARY",
-        "latest_main_sha": "493a712d6c54f29f9080f99908041e44c3cf2911",
+        "latest_main_sha": "f00b0d7f5e56d257552fc514db948c56cf96fb1d",
         "method": {"signal": "close D only; 20d mean deviation and 5d momentum guard", "execution": "open D+1; close after 1/2/3/5/10 trading days", "cost_round_trip": ["10bp", "20bp", "30bp"], "pit": True, "intraday": "NOT_EXECUTED_NO_HISTORICAL_MINUTE_COVERAGE", "production_universe_mutated": False},
         "data_audit": {"daily_feature_days": len(list(DAILY.glob("*.json"))), "current_formal_count": len(current), "external_candidates_scanned": len(candidates), "external_deep_research_count": len(external_results), "external_limitations": "Only 159687 exists outside the formal panel in the on-disk extract; it has 24 observations and is research-only. This is not a claim of exhaustive current-market coverage."},
         "current_11": results,
