@@ -165,6 +165,10 @@ class EtfTSwingContractTest(unittest.TestCase):
         self.assertTrue(all(not e["unclosed_at_day_end"] for e in out["events"]))
         self.assertTrue(any(e.get("forced_eod_rebuy") for e in out["events"]))
 
+    def test_generated_stage_artifact_is_valid_json(self):
+        artifact = ROOT / "research/backtests/etf_t_swing_stage1_validation.json"
+        self.assertIsInstance(json.loads(artifact.read_text(encoding="utf-8")), dict)
+
     def test_t1_multiple_cycles_cannot_resell_same_day_inventory(self):
         out = intraday.run_day(self.intraday_rows(), hold=1, cost=0.0, multiple=True, allow_same_day_resale=False)
         for a, b in zip(out["events"], out["events"][1:]):
