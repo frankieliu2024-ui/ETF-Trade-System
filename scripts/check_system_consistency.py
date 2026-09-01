@@ -259,8 +259,19 @@ def _validate_post_close_review_contract(report: dict) -> None:
     _recount(report)
 
 
+def _case_mapping_required(current: dict, event: dict) -> bool:
+    """Require final CASE ownership only when the trade's review node is due."""
+    phase = str((current.get("data_freshness") or {}).get("market_phase") or current.get("market_phase") or "").upper()
+    node = str(current.get("latest_valid_node") or "").lower()
+    if "POST_CLOSE" in phase or phase in {"CLOSED", "CLOSE", "OUTSIDE_SESSION"} or node in {"close", "1500"}:
+        return True
+    event_date = str(event.get("confirmed_at_beijing") or event.get("executed_at_beijing") or event.get("event_id") or "")[:10]
+    current_date = str(current.get("market_date") or "")
+    return not current_date or not event_date or event_date != current_date
+
+
 def _validate_trade_event_formal_sync(report: dict) -> None:
-    """Require every executed trade event to be visible in both human formal records."""
+    """Require formal visibility, with lifecycle-aware final CASE timing."""
     archive = (ROOT / "ETF市场行情档案_2026.md").read_text(encoding="utf-8")
     experience = (ROOT / "ETF交易复盘与经验库_2026.md").read_text(encoding="utf-8")
     errors = []
@@ -287,10 +298,11 @@ def _validate_trade_event_formal_sync(report: dict) -> None:
                 errors.append(f"{event_id}:experience_transaction_index")
             import re
             mapping = re.search(rf"^{re.escape(event_id)}｜- 已归入(CASE-\d{{8}}-\d{{2}})｜", experience, re.MULTILINE)
-            if not mapping:
-                errors.append(f"{event_id}:formal_case_mapping")
-            elif mapping.group(1) not in experience or f"### " not in experience[:experience.find(mapping.group(1)) + 4]:
-                errors.append(f"{event_id}:formal_case_section")
+            if _case_mapping_required(_read_json("data/state/CURRENT.json"), event):
+                if not mapping:
+                    errors.append(f"{event_id}:formal_case_mapping")
+                elif mapping.group(1) not in experience or f"### " not in experience[:experience.find(mapping.group(1)) + 4]:
+                    errors.append(f"{event_id}:formal_case_section")
     status = "FAIL" if errors else "PASS"
     report.setdefault("checks", []).append({
         "name": "formal_files:executed_trade_event_sync",
@@ -333,7 +345,14 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
     for cols in rows:
         dt, name, code, side, qty, price, principal, fee, cashflow, remark = cols[:10]
         case_ids = sorted(set(re.findall(r"CASE-\d{8}-\d{2}", remark)))
-        if len(case_ids) != 1:
+        if len(case_ids) == 0 and not _case_mapping_required(
+            _read_json("data/state/CURRENT.json"),
+            {"event_id": f"{dt}:{code}", "confirmed_at_beijing": dt},
+        ):
+            # Same-day intraday transaction-index rows may remain pending until
+            # the formal post-close review node.
+            pass
+        elif len(case_ids) != 1:
             errors.append(f"{dt}:{code}:case_count={len(case_ids)}")
         elif case_ids[0] not in headings:
             errors.append(f"{dt}:{code}:missing_case_heading={case_ids[0]}")
