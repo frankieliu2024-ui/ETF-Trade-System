@@ -1,9 +1,12 @@
 import unittest
+import json
+from pathlib import Path
 
 from scripts.historical_market_fact_recovery import (
     RecoveryClass,
     assess_recovery,
     build_provenance,
+    assess_snapshot_document,
     should_replace_current,
 )
 
@@ -16,6 +19,14 @@ def row(symbol, date="2026-08-31", **extra):
 
 
 class HistoricalMarketFactRecoveryTests(unittest.TestCase):
+    def test_real_canonical_close_snapshot_is_replayable(self):
+        path = Path(__file__).parents[1] / "data/market/snapshots/2026-08-31_150110.json"
+        snapshot = json.loads(path.read_text(encoding="utf-8"))
+        symbols = [row["thscode"] for row in snapshot["rows"]]
+        result = assess_snapshot_document(snapshot, required_symbols=symbols, target_node="close")
+        self.assertEqual(result.classification, RecoveryClass.RECOVERABLE_EXACT)
+        self.assertEqual(result.coverage, 14)
+
     def test_complete_daily_bar_is_eod_equivalent_not_exact(self):
         result = assess_recovery(
             target_market_date="2026-08-31", target_node="close", required_symbols=SYMBOLS,
@@ -68,3 +79,4 @@ class HistoricalMarketFactRecoveryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

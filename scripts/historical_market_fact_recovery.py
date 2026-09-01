@@ -151,3 +151,24 @@ def should_replace_current(existing: dict[str, Any], candidate: dict[str, Any]) 
         return False
     return True
 
+
+def assess_snapshot_document(
+    snapshot: dict[str, Any], *, required_symbols: Iterable[str], target_node: str
+) -> RecoveryAssessment:
+    """Assess an existing canonical snapshot as a replayable historical fact."""
+    target_date = str(snapshot.get("market_date") or "")
+    rows = []
+    for source in snapshot.get("rows") or []:
+        rows.append({**source, "symbol": source.get("thscode") or source.get("symbol"), "date": target_date})
+    kind = "EXACT_INTRADAY" if snapshot.get("node") == target_node and all(
+        row.get("provider_timestamp_ms") is not None for row in rows
+    ) else "DAILY_BAR"
+    return assess_recovery(
+        target_market_date=target_date,
+        target_node=target_node,
+        required_symbols=required_symbols,
+        rows=rows,
+        evidence_kind=kind,
+        original_provider_observation_available=kind == "EXACT_INTRADAY",
+    )
+
