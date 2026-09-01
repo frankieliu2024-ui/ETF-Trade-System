@@ -12,7 +12,7 @@ from typing import Any
 
 VERSION_RE = r"V\d+\.\d+\.\d+"
 HEADING_RE = re.compile(rf"^# ETF波段交易系统 (?P<version>{VERSION_RE}) 规则 MASTER\s*$")
-POSITION_RE = re.compile(rf"^> 定位：(?P<version>{VERSION_RE})\b")
+POSITION_RE = re.compile(rf"^> 定位：(?P<version>{VERSION_RE})(?=[^0-9.]|$)")
 DATE_RE = re.compile(r"^> 更新日期：(?P<date>\d{4}-\d{2}-\d{2})")
 TABLE_RE = re.compile(rf"^\|(?P<version>{VERSION_RE})\|(?P<position>[^|]+)\|(?P<status>[^|]+)\|\s*$")
 
