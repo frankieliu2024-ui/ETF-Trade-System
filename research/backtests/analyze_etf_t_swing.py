@@ -73,7 +73,7 @@ def max_drawdown(values):
     return worst
 
 
-def summary(values, trades, turnover, winner_loss, wrong_rebuy):
+def summary(values, trades, turnover, winner_loss, wrong_rebuy, events=None, initial_exposure=None, initial_mobile_state=None):
     end = values[-1] if values else 1.0
     return {
         "net_return": end - 1.0,
@@ -83,59 +83,102 @@ def summary(values, trades, turnover, winner_loss, wrong_rebuy):
         "net_per_turnover": (end - 1.0) / turnover if turnover else 0.0,
         "winner_right_tail_loss": winner_loss,
         "wrong_rebuy_loss": wrong_rebuy,
+        "events": events or [],
+        "initial_total_exposure": initial_exposure,
+        "initial_mobile_state": initial_mobile_state,
     }
 
 
-def run_strategy(rows, threshold=DEFAULT_THRESHOLD, hold=DEFAULT_HOLD, mobile=DEFAULT_MOBILE, cost=0.002, mode="core_mobile"):
+def transition_mobile(state, action):
+    """Pure inventory state machine; mobile is never both shares and cash."""
+    if action == "release":
+        if state != "MOBILE_INVESTED":
+            raise ValueError("cannot release mobile cash")
+        return "MOBILE_CASH"
+    if action == "rebuy":
+        if state != "MOBILE_CASH":
+            raise ValueError("cannot rebuy invested mobile")
+        return "MOBILE_INVESTED"
+    raise ValueError("unknown mobile action")
+
+
+def run_strategy(rows, threshold=DEFAULT_THRESHOLD, hold=DEFAULT_HOLD, mobile=DEFAULT_MOBILE, cost=0.002, mode="core_mobile", family="trend_filter"):
     dates = sorted(rows)
     if len(dates) < 30:
         return {"status": "INSUFFICIENT_EVIDENCE", "observations": len(dates)}
     closes = [rows[d]["close"] for d in dates]
     opens = [rows[d]["open"] for d in dates]
-    core_w = 0.0 if mode == "full_swing" else (1.0 - mobile if mode == "core_mobile" else 0.70)
-    tactical_w = 1.0 - core_w if mode != "beta_control" else 0.0
-    beta_cash = 0.30 if mode == "beta_control" else 0.0
-    core = 1.0
-    tactical_cash = tactical_w
-    active = None
+    if mode == "beta_control":
+        core_w, mobile_w = 0.70, 0.0
+    elif mode == "full_swing":
+        core_w, mobile_w = 0.0, 1.0
+    else:
+        core_w, mobile_w = 1.0 - mobile, mobile
+    first = closes[0]
+    core_units = core_w / first
+    mobile_units = mobile_w / first
+    mobile_cash = 0.0
+    mobile_state = "MOBILE_INVESTED" if mobile_w else "NONE"
+    initial_mobile_state = mobile_state
+    initial_exposure = core_units * first + mobile_units * first + mobile_cash
+    pending = None
     equity = []
     trades = 0
     turnover = 0.0
     winner_loss = 0.0
     wrong_rebuy = 0.0
+    rebuy_anchor = None
+    events = []
     for i, d in enumerate(dates):
-        # Mark the core at close-to-close; the first observation is the base.
-        if i:
-            core *= closes[i] / closes[i - 1]
-        if active and i >= active["exit_i"]:
-            exit_price = closes[i]
-            gross = exit_price / active["entry_price"] - 1.0
-            net = gross - cost
-            tactical_cash *= 1.0 + net
-            turnover += 2.0 * tactical_w
-            if gross < 0:
-                wrong_rebuy += -gross * tactical_w
-            active = None
-        # Signal is close D, execution starts at open D+1. Historical highs/lows
-        # are intentionally not consulted for fill ordering.
-        if active is None and i >= 20 and i + 1 < len(dates):
-            ma = sum(closes[i - 20:i]) / 20.0  # strictly before D close
+        if pending and i == pending["exec_i"] and mobile_state != "NONE":
+            px = opens[i]
+            if pending["action"] == "release" and mobile_state == "MOBILE_INVESTED":
+                value = mobile_units * px
+                fee = value * cost / 2.0
+                mobile_cash += value - fee
+                mobile_units = 0.0
+                mobile_state = transition_mobile(mobile_state, "release")
+                rebuy_anchor = None
+                trades += 1; turnover += value
+                events.append({"date": d, "exec_i": i, "action": "release", "price": px, "fee": fee, "mobile_state": mobile_state, "cash_after": mobile_cash})
+            elif pending["action"] == "rebuy" and mobile_state == "MOBILE_CASH":
+                fee = mobile_cash * cost / 2.0
+                mobile_units = max(0.0, (mobile_cash - fee) / px)
+                mobile_cash = 0.0
+                mobile_state = transition_mobile(mobile_state, "rebuy")
+                rebuy_anchor = {"exec_i": i, "price": px}
+                trades += 1; turnover += mobile_units * px
+                events.append({"date": d, "exec_i": i, "action": "rebuy", "price": px, "fee": fee, "mobile_state": mobile_state, "mobile_units": mobile_units})
+            pending = None
+        total = core_units * closes[i] + mobile_units * closes[i] + mobile_cash
+        equity.append(total)
+        # Signal at close D; action can only execute at open D+1.
+        if i >= 20 and i + 1 < len(dates) and mobile_state != "NONE":
+            ma = sum(closes[i - 20:i]) / 20.0
             deviation = closes[i] / ma - 1.0
             mom5 = closes[i] / closes[i - 5] - 1.0
-            # Downside mean-reversion only; strong positive momentum is a
-            # winner/right-tail guard and blocks selling into acceleration.
-            if deviation <= -threshold and mom5 < threshold:
-                entry_i = i + 1
-                active = {"entry_price": opens[entry_i] * (1.0 + cost / 2.0), "exit_i": min(entry_i + hold - 1, len(dates) - 1)}
-                trades += 1
-                if closes[i] > closes[i - 1] if i else False:
-                    winner_loss += tactical_w * max(0.0, closes[i] / closes[i - 1] - 1.0)
-        marked_tactical = tactical_cash
-        if active:
-            marked_tactical = tactical_cash * (closes[i] / active["entry_price"])
-        total = core_w * core + (marked_tactical if tactical_w else beta_cash)
-        equity.append(total)
-    return summary(equity, trades, turnover, winner_loss, wrong_rebuy)
+            vol = math.sqrt(sum((closes[k] / closes[k - 1] - 1.0) ** 2 for k in range(i - 19, i + 1)) / 20)
+            effective = threshold if family in {"fixed", "mean_deviation", "no_trend_filter", "trend_filter"} else threshold * max(vol / 0.02, 0.5)
+            trend_guard = family == "trend_filter"
+            release_ok = deviation >= effective and (not trend_guard or mom5 <= threshold)
+            rebuy_ok = deviation <= -effective and mom5 < threshold
+            if mobile_state == "MOBILE_INVESTED" and release_ok:
+                pending = {"exec_i": i + 1, "action": "release", "signal_date": d}
+            elif mobile_state == "MOBILE_CASH" and rebuy_ok:
+                pending = {"exec_i": i + 1, "action": "rebuy", "signal_date": d}
+        if mobile_state == "MOBILE_CASH" and i > 20:
+            # Opportunity loss is measured only after release, against holding
+            # the mobile inventory throughout the same interval.
+            last_release = next((e for e in reversed(events) if e["action"] == "release"), None)
+            if last_release:
+                winner_loss = max(winner_loss, mobile_w * max(0.0, closes[i] / last_release["price"] - 1.0))
+        if mobile_state == "MOBILE_INVESTED" and rebuy_anchor and i > rebuy_anchor["exec_i"]:
+            wrong_rebuy = max(wrong_rebuy, mobile_w * max(0.0, 1.0 - closes[i] / rebuy_anchor["price"]))
+    if mobile_state == "MOBILE_CASH" and events:
+        # A final open position in cash is still a valid release; no artificial
+        # end-of-sample rebuy is invented.
+        pass
+    return summary(equity, trades, turnover, winner_loss, wrong_rebuy, events, initial_exposure, initial_mobile_state)
 
 
 def buy_hold(rows):
@@ -169,15 +212,28 @@ def features(rows):
 def evaluate(code, rows, name):
     bh = buy_hold(rows)
     current_codes = {str(x["code"]) for x in json.loads(UNIVERSE.read_text(encoding="utf-8"))["objects"]}
-    base = {"code": code, "name": name, "category": "existing_formal" if code in current_codes else "external_candidate"}
+    base = {
+        "code": code,
+        "name": name,
+        "category": "existing_formal" if code in current_codes else "external_candidate",
+        "listed_date": "UNKNOWN_CANONICAL_PANEL_FIELD",
+        "etf_type": "UNKNOWN_CANONICAL_PANEL_FIELD",
+        "t0_t1": "UNKNOWN_REQUIRES_PIT_INSTRUMENT_METADATA",
+        "liquidity_proxy": "amount_and_daily_range_only",
+        "sample_length_penalty": "none" if len(rows) >= 200 else "SHORT_SAMPLE",
+    }
     base.update(features(rows))
     base["buy_and_hold"] = bh
     base["strategies"] = {}
     for c in COSTS:
         key = f"{int(c*10000)}bp"
         base["strategies"][key] = {
-            "core_mobile": run_strategy(rows, cost=c, mode="core_mobile"),
-            "full_swing": run_strategy(rows, cost=c, mobile=1.0, mode="full_swing"),
+            "core_mobile": run_strategy(rows, cost=c, mode="core_mobile", family="trend_filter"),
+            "fixed_release_rebuy": run_strategy(rows, cost=c, mode="core_mobile", family="fixed"),
+            "volatility_release_rebuy": run_strategy(rows, cost=c, mode="core_mobile", family="volatility"),
+            "mean_deviation_release_rebuy": run_strategy(rows, cost=c, mode="core_mobile", family="mean_deviation"),
+            "no_trend_filter": run_strategy(rows, cost=c, mode="core_mobile", family="no_trend_filter"),
+            "full_swing": run_strategy(rows, cost=c, mobile=1.0, mode="full_swing", family="trend_filter"),
             "beta_control": run_strategy(rows, cost=c, mode="beta_control"),
         }
     base["parameter_sensitivity"] = {
@@ -188,7 +244,13 @@ def evaluate(code, rows, name):
     base["yearly"] = {}
     for y in ("2024", "2025", "2026"):
         yr = {d: rows[d] for d in rows if d.startswith(y)}
-        base["yearly"][y] = run_strategy(yr, cost=0.002, mode="core_mobile") if len(yr) >= 30 else {"status": "INSUFFICIENT_EVIDENCE", "observations": len(yr)}
+        if len(yr) >= 30:
+            strat = run_strategy(yr, cost=0.002, mode="core_mobile", family="trend_filter")
+            strat["relative_to_buy_and_hold_alpha"] = strat["net_return"] - buy_hold(yr)["net_return"]
+            base["yearly"][y] = strat
+        else:
+            base["yearly"][y] = {"status": "INSUFFICIENT_EVIDENCE", "observations": len(yr)}
+    base["accounting_contract"] = {"initial_total_etf_exposure": 1.0, "initial_core_exposure": 1.0 - DEFAULT_MOBILE, "initial_mobile_exposure": DEFAULT_MOBILE, "mobile_initial_state": "MOBILE_INVESTED", "no_leverage": True}
     base["regime_note"] = "Regime labels require PIT market_structure_context; this panel supports only a conservative trend guard. No regime claim is made for unavailable fields."
     base["qualification"] = "RESEARCH_ONLY" if len(rows) < 200 else "CONDITIONAL"
     return base
@@ -214,15 +276,16 @@ def main():
     out = {
         "research_id": "etf_t_swing_stage1",
         "generated_at": date.today().isoformat(),
-        "status": "PASS_WITH_RESEARCH_BOUNDARY",
+        "status": "RESEARCH_COMPLETE_EXTERNAL_MARKET_SCREEN_INCOMPLETE_DATA_LIMITATION",
         "latest_main_sha": "f00b0d7f5e56d257552fc514db948c56cf96fb1d",
         "method": {"signal": "close D only; 20d mean deviation and 5d momentum guard", "execution": "open D+1; close after 1/2/3/5/10 trading days", "cost_round_trip": ["10bp", "20bp", "30bp"], "pit": True, "intraday": "NOT_EXECUTED_NO_HISTORICAL_MINUTE_COVERAGE", "production_universe_mutated": False},
         "data_audit": {"daily_feature_days": len(list(DAILY.glob("*.json"))), "current_formal_count": len(current), "external_candidates_scanned": len(candidates), "external_deep_research_count": len(external_results), "external_limitations": "Only 159687 exists outside the formal panel in the on-disk extract; it has 24 observations and is research-only. This is not a claim of exhaustive current-market coverage."},
         "current_11": results,
         "external_candidate_screen": external_results,
         "walk_forward": {"calibration": "2024", "validation": "2025", "final_holdout": "2026 YTD", "selection_rule": "pre-registered 2% / 3d / 25% mobile; no in-sample best-single-point promotion"},
-        "hypotheses": {"H1_588000": "INSUFFICIENT_EVIDENCE", "H2_561980": "INSUFFICIENT_EVIDENCE", "H3_159781": "INSUFFICIENT_EVIDENCE"},
+        "hypotheses": {"H1_588000": "REJECTED", "H2_561980": "INSUFFICIENT_EVIDENCE", "H3_159781": "REJECTED"},
         "master_8_1": {"status": "RESEARCH_ONLY", "reason": "execution translatability, historical minute coverage, and cross-year holdout evidence do not meet formal conversion threshold"},
+        "overall_qualification": "FAIL_RESEARCH_ONLY",
     }
     Path(args.output).write_text(json.dumps(out, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8")
     print(json.dumps({"output": args.output, "current_11": len(results), "external_candidates": len(candidates)}, ensure_ascii=False))

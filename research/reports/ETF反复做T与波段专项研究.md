@@ -1,47 +1,53 @@
-# ETF反复做T／波段资本效率专项研究（Stage 1）
+# ETF反复做T与波段资本效率专项研究（Stage 1 修正版）
 
-## 结论先行
+## 结论
 
-本阶段结论为 `FAIL / RESEARCH_ONLY`：在当前可审计的 2024-01-02 至 2026-08-28 日线 PIT 面板中，预注册的“收盘 D 信号、开盘 D+1 执行、20 日偏离、5 日趋势过滤、3 日持有、25%机动仓”没有击败同一 ETF 的 buy-and-hold。严格日内 T 没有足够历史分钟覆盖，不能用日线 high/low 代替成交顺序，因此不作有效性结论。
+本次研究已按新的 inventory/release/rebuy 定义重跑正式 11 只 ETF，但资格仍为 `FAIL / RESEARCH_ONLY`：预注册的 2% 偏离、5 日趋势保护、D 收盘信号、D+1 开盘执行、3 日持有、25% mobile，在 10/20/30bp 成本下没有形成跨年份稳定的相对 buy-and-hold 净 alpha。
 
-20bp round-trip 下，现有 11 只 ETF 的 core+mobile 研究收益前三为：515880 通信 ETF 219.94%、561980 半导体设备 ETF 208.13%、159781 科创创业 ETF 98.78%；对应 buy-and-hold 分别为 288.76%、259.16%、120.91%。这说明累计收益主要来自持有的 beta／趋势暴露，机动交易反而产生相对损失，不能称为稳定 alpha。所有结果都必须结合回撤、卖飞和错误回补损失阅读。
+核心修正是：此前实现把 mobile 建模成“75% ETF 核心仓 + 25% 初始闲置现金、下跌时择时买入”；本版本建模为“初始 100% ETF 暴露，其中 core 与 mobile 都已持有”，并用 `MOBILE_INVESTED → MOBILE_CASH → MOBILE_INVESTED` 状态机约束释放与回补。释放只出售已持有 mobile，回补只使用释放后的现金，不增仓、不杠杆；buy-and-hold 也从 100% ETF 暴露起步。
 
-## 数据审计与方法
+## 数据与方法
 
-唯一复用的历史研究面板是 `events/research/daily_features/<market_date>.json`：646 个交易日、现有正式 11 只 ETF，字段包括 OHLC、volume、amount 和历史形成的研究特征。159326 只有 479 个观测，159561 只有 564 个观测；均按上市后样本计算，不向前填充。面板的 `intraday_path` 在历史回补中为 `NOT_AVAILABLE_DAILY_BACKFILL`，故日内 T 标为证据不足。
+输入为 canonical `events/research/daily_features/*.json`，646 个交易日，正式 universe 精确 11 只；159326、159561 的样本分别为 479、564 个观测，其余正式对象为上市后真实样本。信号使用 D 收盘时可见的过去 20 日均值/偏离、5 日动量和历史波动，最早在 D+1 开盘成交；没有用 high/low 伪造日内先后。历史分钟、bid/ask、逐日制度标签、溢折价和可审计 intraday_path 不足，因此严格日内 T 不执行。
 
-信号只读到收盘 D 已形成的 close 序列；20 日均值使用 D 以前的 20 个收盘，5 日动量只作趋势加速保护；交易最早在 D+1 开盘，退出在 1/2/3/5/10 个交易日后的收盘。没有使用未来数据，也没有使用日线 high/low 伪造盘中先后。固定阈值扫描为 1%、1.5%、2%、2.5%、3%、4%，机动仓扫描为 10%、20%、25%、30%、40%、50%，成本为 10/20/30bp round-trip。
+扫描为 10/20/30bp round-trip、1/1.5/2/2.5/3/4% 阈值、1/2/3/5/10 日持有期和 10/20/25/30/40/50% mobile。walk-forward 固定为 2024 calibration、2025 validation、2026 YTD holdout；默认 2%/3 日/25% 为预注册参数，holdout 不参与调参。beta-control 为 70% ETF+30%永久现金且零策略交易。所有结果写入 `research/backtests/etf_t_swing_stage1_validation.json`。
 
-比较组包括 buy-and-hold、core+mobile、full swing 和固定 70% beta-control。beta-control 保留 30%现金，因此回撤下降不能被误称为 alpha。walk-forward 账面划分为 2024 calibration、2025 validation、2026 YTD holdout；最终默认参数预先固定为 2%／3日／25%，没有从单一最优点反推正式权限。
+## 正式 11 只：20bp 修正结果
 
-## 现有 11 只扫描
+下表为 trend-filter core+mobile；alpha 是策略净收益减同一对象 buy-and-hold。
 
-20bp 下，按 core+mobile 净收益排序的前三为 515880、561980、159781；但三者相对 buy-and-hold 的净增益分别为 -68.82、-51.03、-22.13 个百分点。588000 为 75.69% 对 97.18%，159781 为 98.78% 对 120.91%，561980 为 208.13% 对 259.16%。因此 H1（588000 是最优反复波段工具）为 `REJECTED`，H2（561980 的高振幅／趋势导致机械做 T 劣于 588000）为 `INSUFFICIENT_EVIDENCE`，H3（159781 在高 beta 与趋势风险间优于 561980）为 `REJECTED`。拒绝或不足均只表示本研究设计下未通过，不是对未来收益的保证。
+|代码|名称|观察数|B&H|core+mobile|alpha|交易/换手|right-tail|wrong-rebuy|
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+|515880|通信ETF|646|298.22%|235.79%|-62.43pp|25/8.24|31.74%|7.21%|
+|561980|半导体设备ETF|646|260.21%|212.84%|-47.37pp|20/6.02|15.74%|4.86%|
+|159781|科创创业ETF|646|124.02%|103.03%|-20.98pp|20/6.27|18.21%|5.26%|
+|588000|科创50ETF|646|98.42%|75.21%|-23.21pp|16/4.15|13.20%|4.31%|
+|518880|黄金ETF|646|95.41%|74.86%|-20.55pp|15/4.34|8.05%|3.99%|
+|513520|日经ETF|646|72.57%|64.72%|-7.84pp|19/6.37|10.11%|3.97%|
+|159941|纳指ETF|646|82.11%|63.24%|-18.87pp|13/3.43|8.30%|5.48%|
+|159326|电网设备ETF|479|69.89%|52.30%|-17.59pp|11/3.12|11.73%|5.89%|
+|159561|德国ETF|564|38.91%|41.34%|+2.43pp|17/5.45|14.19%|3.20%|
+|513180|恒生科技ETF|646|16.33%|17.65%|+1.32pp|20/6.67|5.69%|4.70%|
+|159992|创新药ETF|646|4.05%|6.42%|+2.37pp|24/6.11|5.50%|3.58%|
 
-最不适合“长期反复 T”的对象是 513180 恒生科技 ETF：20bp core+mobile 仅 7.55%，buy-and-hold 为 16.13%，且交易 73 次、换手 36.5 倍、回撤 -35.11%。低收益与高摩擦同时存在。
+按 20bp core+mobile 绝对净收益前三为 515880、561980、159781；按相对 B&H alpha 则为 159561、159992、513180，但仅为单样本窗口的轻微正值，不能称稳定 alpha。重点对象按绝对实现收益重排为 515880、561980、159781；按择时增量为 159561、159992、513180。588000 未成为最优。最不适合长期机械反复 T 的对象重新判为 515880：绝对收益高来自强 beta/趋势，但相对 B&H 损失最大、right-tail 损失也最大。
 
-### 成本敏感性（现有池最高的 20bp 默认结果）
+## 成本、mobile、周期与损失
 
-10bp、20bp、30bp 下第一名均为 515880，core+mobile 净收益分别为 222.70%、219.94%、217.42%；成本提高并没有改变结论方向，但三者仍低于其 288.76% buy-and-hold。成本并非把一个真实正 alpha 吞掉，而是进一步削弱本已落后的交易组合。
+10/20/30bp 下绝对净收益前三均为 515880、561980、159781；成本提高只会进一步降低结果。以 588000 为例，10/20/25/30/40/50% mobile 的 20bp 净收益为 89.13%/79.85%/75.21%/70.56%/61.28%/51.99%，相对 B&H 全部为负；20—30%是风险暴露折中而不是稳定 alpha 区间。full swing 更脆弱，beta-control 无策略交易，不能把其降 beta 结果冒充 alpha。
 
-### 机动仓与策略结构
+现有日线样本不支持日内 T；1/2/3/5/10 日仅作为隔日/短波段对照。偶尔的正 alpha 来自释放后回补的均值回归，但没有稳定覆盖交易费用、wrong-rebuy 和趋势上涨期间的 right-tail opportunity loss。right-tail 只在 release→rebuy 区间计量，wrong-rebuy 只在真实 rebuy 之后计量。应在真实突破、趋势加速、持续相对强势和承接改善时关闭/缩小卖出型 T，在弱势未确认修复时延迟回补。
 
-以 588000 为例，20bp core+mobile 在 10%／20%／25%／30%／40%／50% 机动仓时净收益为 88.58%／79.98%／75.69%／71.39%／62.79%／54.19%，均低于 97.18% buy-and-hold；25%—30%只是回撤与交易暴露的折中区间，不是稳定 alpha 区间。full swing 在 588000 仅 11.21%，远逊于 core+mobile；但它回撤、winner/right-tail 与错误回补损失更集中。综合来看 core+mobile 优于 full swing 的资本保留能力成立，优于 buy-and-hold 的净增益不成立。
+分年 relative-to-buy-and-hold alpha 已写入 JSON。以 588000 为例，2024/2025/2026 YTD 约为 -2.0pp/-11.0pp/-3.0pp，三年均不支持正向时间外增量。
 
-## winner/right-tail、错误回补与状态边界
+## 假设、制度与外部候选
 
-趋势加速、持续相对强势和真实突破时应关闭或缩小卖出型 T；高波动下跌但未出现承接确认时应延迟回补。当前日线面板没有完整 PIT 的市场 regime 标签，因此不能诚实地量化“哪一状态贡献最大”的因果结论，只能把趋势过滤作为保守防错门。20bp 默认下 588000 的 winner/right-tail 损失约 7.72%（按机动资本归一化），错误回补损失约 19.98%；561980 分别约 7.98%／21.11%；159781 约 6.33%／15.32%。损失结构显示反复交易的主要风险是卖飞和在弱势中重新买回，而不是手续费单独造成。
+H1（588000 是最优反复波段工具）=`REJECTED`；H2（561980 的高振幅/趋势使机械 T 劣于 588000）=`INSUFFICIENT_EVIDENCE`；H3（159781 优于 561980）=`REJECTED`。跨境/QDII、商品和境内 ETF 的 T+0/T+1、时差、NAV 偏离、额度和开盘停牌没有逐日 PIT 标签，不能声称 T+0 提高了可实现净收益。
 
-## 全市场候选筛选
+仓库可审计输入之外仅识别到 159687 一个候选，24 个观测（2026-07-13 至 2026-08-13），深度结果为 `INSUFFICIENT_EVIDENCE`。状态为 `EXTERNAL_MARKET_SCREEN_INCOMPLETE_DATA_LIMITATION`，不是全市场筛选完成；不能声称没有新 ETF 击败现有最佳，也不建议把 159687 加入观察池。正式 universe、Dashboard、MASTER 均未修改。
 
-候选发现扫描了本仓库现有研究数据中正式 11 只之外的全部可识别代码，共 1 只：159687。它只有 24 个观测（2026-07-13 至 2026-08-13），虽有约 3.58 亿元近 20 日平均成交额和 1.99%平均日振幅，但历史过短，所有深度策略结果均为 `INSUFFICIENT_EVIDENCE`。这不是对 A 股全市场当前 ETF 的穷尽性声明：本仓库没有提供可审计的全市场历史价格目录，外部网络数据也没有被拼接进 PIT 面板。因而没有新 ETF 能够在相同样本、成本、信号和 holdout 标准下击败现有最佳对象；159687 不建议加入观察池，也不得写入正式 universe。
+## MASTER 8.1、验收与残余风险
 
-T+0/T+1：现有数据未提供可审计的历史分钟路径、成交制度逐日标签、溢折价和海外时差联动，不能声称 T+0 提高了可实现净收益；日内机会数量、overnight gap 和溢折价风险无法在该数据边界内完成公平估计。
+`data_quality`、PIT 日线逻辑和可复现性满足研究级要求；159687 样本不足，`logic_stability`、`incremental_value`、`execution_translatability`、`benefit/cost` 和 `risk_non_increase` 未满足正式转化门槛。因此 MASTER 8.1=`RESEARCH_ONLY`，不生成 conversion review，不增加交易权限。残余 blocker 为全市场历史面板、分钟/盘口与 T+0 制度数据缺失，以及 Windows 本地 OpenSSL/SM4 环境门可能失败；Ubuntu canonical gate 必须以 PR 最新 head 的真实 CI 为准。
 
-## MASTER 8.1 审查
-
-`data_quality` 与 PIT 日线信号满足研究级要求；`sample_sufficiency` 对现有池大多满足、159687 不满足；`logic_stability`、`incremental_value`、`execution_translatability` 和 `benefit/cost` 未形成正向时间外证据；`production_availability` 不满足严格日内／制度层验证；`risk_non_increase` 不满足，因为卖飞和错误回补未被稳定压低。因此 MASTER 8.1 结论为 `RESEARCH_ONLY`，不生成 formal conversion review，不修改 MASTER，不修改 Dashboard 或生产 ETF universe，不新增交易权限。
-
-## 可复现入口与残余风险
-
-运行 `python research/backtests/analyze_etf_t_swing.py` 生成 `research/backtests/etf_t_swing_stage1_validation.json`。测试覆盖 no-lookahead、成本扣除、beta-control、正式 universe 不变和日内证据边界。残余风险包括：缺少历史分钟和 bid/ask、外部 ETF 全市场目录不完整、跨境 ETF 制度与溢折价未能逐日 PIT 对齐、2026 YTD holdout 尚短，以及当前分支基线的云端 main 同步受网络限制而保留了明确的远端 SHA 记录。
+复现：`python research/backtests/analyze_etf_t_swing.py`。测试覆盖状态转移、初始 100% 暴露、无杠杆、资本守恒、实际 release/rebuy leg 成本、PIT/no-lookahead、right-tail/wrong-rebuy、beta-control、正式 universe 不变、外部候选不改生产名单和日内数据边界。

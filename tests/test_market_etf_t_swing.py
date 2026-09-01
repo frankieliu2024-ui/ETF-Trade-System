@@ -12,6 +12,13 @@ class EtfTSwingContractTest(unittest.TestCase):
     def rows(self):
         return {f"2024-01-{i:02d}": {"open": 100 + i, "high": 101 + i, "low": 99 + i, "close": 100 + i} for i in range(1, 40)}
 
+    def oscillating_rows(self):
+        out = {}
+        for i in range(1, 90):
+            px = 100 if i < 25 else (105 if i % 8 in (0, 1) else 95 if i % 8 in (4, 5) else 100)
+            out[f"2024-{(i - 1) // 28 + 1:02d}-{(i - 1) % 28 + 1:02d}"] = {"open": px, "high": px + 1, "low": px - 1, "close": px}
+        return out
+
     def test_no_lookahead_signal_can_only_start_next_open(self):
         out = mod.run_strategy(self.rows(), threshold=0.01, hold=1, cost=0.0)
         self.assertGreaterEqual(out["trades"], 0)
@@ -34,6 +41,73 @@ class EtfTSwingContractTest(unittest.TestCase):
 
     def test_intraday_is_not_claimed(self):
         self.assertEqual(mod.features(self.rows())["intraday_coverage"], "NOT_AVAILABLE")
+
+    def test_initial_core_plus_mobile_exposure_equals_100_percent(self):
+        out = mod.evaluate("TEST", self.rows(), "test")
+        self.assertEqual(out["accounting_contract"]["initial_total_etf_exposure"], 1.0)
+        run = mod.run_strategy(self.rows(), mobile=0.25, cost=0.0)
+        self.assertAlmostEqual(run["initial_total_exposure"], 1.0)
+
+    def test_mobile_starts_invested_not_cash(self):
+        self.assertEqual(mod.transition_mobile("MOBILE_INVESTED", "release"), "MOBILE_CASH")
+        self.assertEqual(mod.run_strategy(self.rows(), mobile=0.25)["initial_mobile_state"], "MOBILE_INVESTED")
+
+    def test_release_and_rebuy_state_transitions(self):
+        self.assertEqual(mod.transition_mobile("MOBILE_CASH", "rebuy"), "MOBILE_INVESTED")
+
+    def test_cannot_rebuy_when_mobile_already_invested(self):
+        with self.assertRaises(ValueError):
+            mod.transition_mobile("MOBILE_INVESTED", "rebuy")
+
+    def test_cannot_release_when_mobile_already_cash(self):
+        with self.assertRaises(ValueError):
+            mod.transition_mobile("MOBILE_CASH", "release")
+
+    def test_no_leverage_created(self):
+        out = mod.run_strategy(self.rows(), mobile=0.25, cost=0.0)
+        self.assertAlmostEqual(out["initial_total_exposure"], 1.0)
+        self.assertEqual(out["initial_mobile_state"], "MOBILE_INVESTED")
+
+    def test_transaction_count_matches_position_changes(self):
+        out = mod.run_strategy(self.rows(), mobile=0.25, cost=0.0)
+        self.assertEqual(out["trades"], len(out["events"]))
+
+    def test_beta_control_has_zero_strategy_trades(self):
+        self.assertEqual(mod.run_strategy(self.rows(), mode="beta_control")["trades"], 0)
+
+    def test_costs_apply_on_release_rebuy_legs(self):
+        rows = self.rows()
+        free = mod.run_strategy(rows, cost=0.0)
+        costly = mod.run_strategy(rows, cost=0.003)
+        self.assertLessEqual(costly["net_return"], free["net_return"])
+
+    def test_buy_hold_and_core_mobile_same_initial_exposure(self):
+        run = mod.run_strategy(self.rows(), mobile=0.25, cost=0.0)
+        self.assertAlmostEqual(run["initial_total_exposure"], 1.0)
+        self.assertEqual(mod.buy_hold(self.rows())["trades"], 0)
+
+    def test_release_rebuy_events_are_real_state_transitions(self):
+        out = mod.run_strategy(self.oscillating_rows(), threshold=0.02, cost=0.0, family="fixed")
+        self.assertGreaterEqual(out["trades"], 2)
+        for a, b in zip(out["events"], out["events"][1:]):
+            self.assertNotEqual(a["action"], b["action"])
+            self.assertGreater(b["exec_i"], a["exec_i"])
+
+    def test_right_tail_and_wrong_rebuy_are_scoped_to_their_legs(self):
+        out = mod.run_strategy(self.oscillating_rows(), threshold=0.02, cost=0.0, family="fixed")
+        releases = [e for e in out["events"] if e["action"] == "release"]
+        rebuys = [e for e in out["events"] if e["action"] == "rebuy"]
+        self.assertTrue(releases and rebuys)
+        self.assertGreaterEqual(out["winner_right_tail_loss"], 0.0)
+        self.assertGreaterEqual(out["wrong_rebuy_loss"], 0.0)
+
+    def test_pit_future_append_does_not_rewrite_prior_events(self):
+        rows = self.oscillating_rows()
+        early_keys = sorted(rows)[:55]
+        early = {k: rows[k] for k in early_keys}
+        a = mod.run_strategy(early, threshold=0.02, cost=0.0, family="fixed")["events"]
+        b = mod.run_strategy(rows, threshold=0.02, cost=0.0, family="fixed")["events"]
+        self.assertEqual([(e["date"], e["action"]) for e in a], [(e["date"], e["action"]) for e in b if e["exec_i"] < len(early_keys)])
 
 
 if __name__ == "__main__":
