@@ -10,6 +10,11 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+try:
+    from rules_version import parse_master_release
+except ModuleNotFoundError:
+    from scripts.rules_version import parse_master_release
+
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "data" / "state" / "system_consistency.json"
 DATA_STANDARD = "ETF与市场监测数据接口使用规范.md"
@@ -17,7 +22,7 @@ SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
 FORMAL_FILES = ["ETF规则_MASTER.md", "ETF当前状态_DASHBOARD.md", "ETF交易复盘与经验库_2026.md", "ETF市场行情档案_2026.md"]
 CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/overseas_runtime_health.json", "data/state/account_fact.json", "data/state/us_extended_hours_context.json", "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json", "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json"]
-CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_stock_context.py", "scripts/build_account_stock_market.py", "scripts/market_data_guard.py", "tests/test_market_data_guard.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_low_cost_alpha_evidence.py", "scripts/build_query_context.py", "scripts/market_quote_router.py", "scripts/sync_formal_files.py", "scripts/query_market_object.py", "config/market/market_quote_router.json", "tests/test_market_quote_router.py", "scripts/build_post_market_review.py", ".github/workflows/market-snapshot.yml", ".github/workflows/on-demand-market-data.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
+CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/rules_version.py", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_stock_context.py", "scripts/build_account_stock_market.py", "scripts/market_data_guard.py", "tests/test_market_data_guard.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_low_cost_alpha_evidence.py", "scripts/build_query_context.py", "scripts/market_quote_router.py", "scripts/sync_formal_files.py", "scripts/query_market_object.py", "config/market/market_quote_router.json", "tests/test_market_quote_router.py", "scripts/build_post_market_review.py", ".github/workflows/market-snapshot.yml", ".github/workflows/on-demand-market-data.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
 EXPECTED_INDICES = {"000001.SH", "399006.SZ", "000688.SH", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
 REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api", "eastmoney_push2"}
 
@@ -100,13 +105,24 @@ def main() -> int:
     test_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "discover", "-s", "tests", "-p", "test_market*.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:market_data_and_quote_router", test_proc.returncode == 0, (test_proc.stdout + test_proc.stderr)[-1000:])
 
-    compile_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "py_compile", "scripts/market_data_guard.py", "scripts/market_quote_router.py", "scripts/cloud_runner_snapshot.py", "scripts/build_account_stock_market.py", "scripts/build_overseas_context.py", "scripts/build_overseas_runtime_health.py", "scripts/build_low_cost_alpha_evidence.py", "scripts/build_query_context.py", "scripts/build_post_market_review.py", "scripts/state_manager.py", "scripts/process_state_sync_request.py", "scripts/sync_formal_files.py", "scripts/query_market_object.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+    compile_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "py_compile", "scripts/rules_version.py", "scripts/market_data_guard.py", "scripts/market_quote_router.py", "scripts/cloud_runner_snapshot.py", "scripts/build_account_stock_market.py", "scripts/build_overseas_context.py", "scripts/build_overseas_runtime_health.py", "scripts/build_low_cost_alpha_evidence.py", "scripts/build_query_context.py", "scripts/build_post_market_review.py", "scripts/state_manager.py", "scripts/process_state_sync_request.py", "scripts/sync_formal_files.py", "scripts/query_market_object.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:runtime_modules_compile", compile_proc.returncode == 0, (compile_proc.stdout + compile_proc.stderr)[-1000:])
 
     for path in FORMAL_FILES:
         check(f"formal_file:{path}", (ROOT / path).exists(), "exists" if (ROOT / path).exists() else "missing")
 
     master_text = read_text("ETF规则_MASTER.md")
+    release = parse_master_release(master_text)
+    release_errors = "; ".join(release.get("errors") or []) or "canonical MASTER release metadata is coherent"
+    check("rules_release:canonical_parser", bool(release.get("ok")), release_errors)
+    master_version = release.get("version")
+    check("rules_release:heading_positioning", bool(master_version) and release.get("positioning_version") == master_version, f"heading={master_version} positioning={release.get('positioning_version')}")
+    check("rules_release:single_current_row", len([row for row in release.get("table_rows", []) if "当前" in str(row.get("status") or "")]) == 1, "version table has exactly one current row")
+    check("rules_release:previous_history", bool(release.get("previous_version_present")), f"previous={release.get('previous_version')}")
+    check("rules_release:current_description", bool(release.get("current_description_present")), f"version={master_version}")
+    if master_version == "V2.2.31":
+        check("rules_release:V2.2.31_date", release.get("update_date") == "2026-09-01", f"update_date={release.get('update_date')}")
+    check("rules_release:pass_semantics", "生产一致性合同" in read_text("ETF_SYSTEM_INDEX.md"), "PASS is scoped to registered production contracts")
     research_registry_markers = {
         "margin_financing": "融资余额5日变化",
         "skfolio_risk": "组合风险研究证据",
@@ -381,6 +397,17 @@ def main() -> int:
     runtime_health = read_json("data/state/runtime_health.json")
     query_context = read_json("data/state/query_context.json")
     decision_context = read_json("data/state/decision_context.json")
+    review_context = read_json("data/state/review_context.json")
+    self_healing_status = read_json("data/state/self_healing_status.json")
+    current = read_json("data/state/CURRENT.json")
+    check("rules_release:current", current.get("rules_version") == master_version, f"MASTER={master_version} CURRENT={current.get('rules_version')}")
+    check("rules_release:decision_context", decision_context.get("rules_version") == master_version, f"decision={decision_context.get('rules_version')} MASTER={master_version}")
+    check("rules_release:query_context", query_context.get("rules_version") == master_version and (query_context.get("decision_context") or {}).get("rules_version") == master_version, f"query={query_context.get('rules_version')} nested={(query_context.get('decision_context') or {}).get('rules_version')}")
+    check("rules_release:review_context", review_context.get("rules_version") == master_version, f"review={review_context.get('rules_version')} MASTER={master_version}")
+    check("rules_release:self_healing_master", self_healing_status.get("master_rules_version") == master_version, f"self_healing_master={self_healing_status.get('master_rules_version')} MASTER={master_version}")
+    check("rules_release:self_healing_current", self_healing_status.get("current_rules_version") == current.get("rules_version"), f"self_healing_current={self_healing_status.get('current_rules_version')} CURRENT={current.get('rules_version')}")
+    if master_version and current.get("rules_version") != master_version:
+        check("rules_release:self_healing_not_false_healthy", str(self_healing_status.get("classification") or "").upper() != "HEALTHY", f"classification={self_healing_status.get('classification')}")
     query_freshness = context_freshness(query_context)
     decision_freshness = context_freshness(decision_context)
     query_expected = expected_freshness_status(query_freshness["age_seconds"], runtime)
@@ -549,3 +576,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
