@@ -60,6 +60,83 @@ def parse_time(text: object) -> datetime | None:
     return dt.astimezone(SHANGHAI)
 
 
+
+def _settlement_obligation_key(item: dict) -> str:
+    explicit = str(item.get("obligation_id") or item.get("idempotency_key") or "").strip()
+    if explicit:
+        return explicit
+    return "|".join(str(item.get(k) or "") for k in ("obligation_type", "security_code", "required_cash", "deadline", "payment_deadline_beijing"))
+
+
+def _settlement_status(item: dict) -> str:
+    return str(item.get("status") or "").upper().replace("-", "_").replace(" ", "_")
+
+
+def _canonicalize_settlement_account(account: dict) -> dict:
+    """Derive settlement cash from confirmed obligations; request derived values are hints only."""
+    obligations = account.get("settlement_obligations")
+    if obligations is None:
+        obligations = []
+    if not isinstance(obligations, list):
+        raise ValueError("settlement_obligations must be a list")
+    normalized = []
+    for raw in obligations:
+        if not isinstance(raw, dict):
+            continue
+        item = json.loads(json.dumps(raw))
+        item["status"] = _settlement_status(item) or "PENDING"
+        item.setdefault("pit_timestamp", item.get("updated_at") or account.get("updated_at") or "")
+        item.setdefault("source", account.get("source") or "ACCOUNT_FACT")
+        item.setdefault("obligation_type", "SETTLEMENT")
+        normalized.append(item)
+    account["settlement_obligations"] = normalized
+    active = {"PENDING", "PENDING_PAYMENT", "DEADLINE_PASSED_UNCONFIRMED", "UNCONFIRMED_DEADLINE_PASSED"}
+    reserved = round(sum(safe_float(x.get("required_cash")) or 0.0 for x in normalized if _settlement_status(x) in active), 2)
+    cash = safe_float(account.get("cash"))
+    account["reserved_cash_for_settlement"] = reserved
+    account["deployable_cash"] = round(max((cash or 0.0) - reserved, 0.0), 2) if cash is not None else None
+    account["settlement_cash_shortfall"] = round(max(reserved - (cash or 0.0), 0.0), 2) if cash is not None else None
+    if reserved and cash is not None and cash < reserved:
+        account["settlement_constraint_status"] = "INSUFFICIENT_CASH"
+    elif any(_settlement_status(x) in {"DEADLINE_PASSED_UNCONFIRMED", "UNCONFIRMED_DEADLINE_PASSED"} for x in normalized):
+        account["settlement_constraint_status"] = "DEADLINE_PASSED_UNCONFIRMED"
+    elif reserved:
+        account["settlement_constraint_status"] = "RESERVED"
+    else:
+        account["settlement_constraint_status"] = "NONE"
+    return account
+
+
+def _merge_settlement_obligations(prior: dict, supplied: dict) -> list[dict]:
+    prior_items = prior.get("settlement_obligations") or []
+    incoming_items = supplied.get("settlement_obligations")
+    if incoming_items is None:
+        return json.loads(json.dumps(prior_items))
+    by_key = {_settlement_obligation_key(x): json.loads(json.dumps(x)) for x in prior_items if isinstance(x, dict)}
+    rank = {"PENDING": 1, "PENDING_PAYMENT": 1, "DEADLINE_PASSED_UNCONFIRMED": 2, "UNCONFIRMED_DEADLINE_PASSED": 2, "SETTLED": 3, "CANCELLED": 3, "RELEASED": 3}
+    for item in incoming_items:
+        if not isinstance(item, dict):
+            continue
+        key = _settlement_obligation_key(item)
+        old = by_key.get(key)
+        old_status, new_status = _settlement_status(old or {}), _settlement_status(item)
+        if old and rank.get(old_status, 0) > rank.get(new_status, 0):
+            continue
+        merged = json.loads(json.dumps(old or {}))
+        for field, value in item.items():
+            if value is not None:
+                merged[field] = json.loads(json.dumps(value))
+        by_key[key] = merged
+    return list(by_key.values())
+
+
+def _annotate_confirmed_ipo_origins(account: dict) -> None:
+    confirmed = {str(x.get("security_code") or "") for x in (account.get("settlement_obligations") or []) if _settlement_status(x) in {"SETTLED", "CANCELLED", "RELEASED"} and str(x.get("obligation_type") or "").upper() == "IPO_ALLOTMENT_PAYMENT"}
+    for position in account.get("positions") or []:
+        if str(position.get("code") or "") in confirmed:
+            position["origin"] = "IPO_ALLOTMENT_ORIGIN"
+            position["origin_fact"] = "confirmed_settlement_obligation"
+
 def latest_formal_risk_fact() -> dict:
     review_dir = ROOT / "events" / "reviews"
     candidates = []
@@ -116,8 +193,15 @@ def sync_current_account_mirror(root: Path, account: dict) -> None:
     current = load_json(current_path) if current_path.exists() else {}
     current["account_fact"] = {
         key: account.get(key, "")
-        for key in ("status", "updated_at", "source")
+        for key in (
+            "status", "updated_at", "source", "cash",
+            "reserved_cash_for_settlement", "deployable_cash",
+            "settlement_constraint_status",
+        )
     }
+    current["settlement_obligations"] = account.get("settlement_obligations") or []
+    current["reserved_cash_for_settlement"] = account.get("reserved_cash_for_settlement", 0)
+    current["deployable_cash"] = account.get("deployable_cash")
     current["needs_account_update"] = account.get("status") != "VALID"
     atomic_json_write(current_path, current)
 
@@ -613,16 +697,19 @@ def is_broker_screenshot_request(request: dict) -> bool:
 
 
 def merge_account_fact(prior: dict, supplied: dict) -> dict:
-    """Merge a screenshot's confirmed fields without erasing canonical history."""
+    """Merge confirmed screenshot facts and derive settlement cash canonically."""
     merged = json.loads(json.dumps(prior or {}))
     for key, value in (supplied or {}).items():
-        if value is not None:
+        if key != "settlement_obligations" and value is not None:
             merged[key] = json.loads(json.dumps(value))
+    merged["settlement_obligations"] = _merge_settlement_obligations(prior or {}, supplied or {})
     for key in ("formal_action", "orders", "trades", "fee_facts", "account_reconciliation",
                 "account_change_events_after_confirmed_at", "lifecycle", "confirmed_trades",
                 "formal_decision", "reconciliation_metadata"):
         if key not in merged and key in (prior or {}):
             merged[key] = json.loads(json.dumps(prior[key]))
+    _canonicalize_settlement_account(merged)
+    _annotate_confirmed_ipo_origins(merged)
     return merged
 
 
