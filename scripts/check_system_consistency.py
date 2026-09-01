@@ -345,7 +345,14 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
     for cols in rows:
         dt, name, code, side, qty, price, principal, fee, cashflow, remark = cols[:10]
         case_ids = sorted(set(re.findall(r"CASE-\d{8}-\d{2}", remark)))
-        if len(case_ids) != 1:
+        if len(case_ids) == 0 and not _case_mapping_required(
+            _read_json("data/state/CURRENT.json"),
+            {"event_id": f"{dt}:{code}", "confirmed_at_beijing": dt},
+        ):
+            # Same-day intraday transaction-index rows may remain pending until
+            # the formal post-close review node.
+            pass
+        elif len(case_ids) != 1:
             errors.append(f"{dt}:{code}:case_count={len(case_ids)}")
         elif case_ids[0] not in headings:
             errors.append(f"{dt}:{code}:missing_case_heading={case_ids[0]}")

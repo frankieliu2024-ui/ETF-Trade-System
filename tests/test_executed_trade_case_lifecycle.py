@@ -50,6 +50,37 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
                 consistency._validate_trade_event_formal_sync(report)
                 self.assertEqual(report["checks"][-1]["status"], "PASS")
 
+    def test_historical_index_pending_row_is_allowed_intraday_but_not_post_close(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "ETF市场行情档案_2026.md").write_text("", encoding="utf-8")
+            experience = root / "ETF交易复盘与经验库_2026.md"
+            experience.write_text(
+                "### 2.1 2026-07-13以来完整证券成交索引\n"
+                "共1笔证券交易：ETF 1笔、个股0笔\n"
+                "|2026-09-01 14:40:01|测试ETF|561980|卖出|1|1|1|0|1|待复盘CASE|\n"
+                "### 2.2 银证转账与非交易现金流水\n",
+                encoding="utf-8",
+            )
+            state_dir = root / "data" / "state"
+            state_dir.mkdir(parents=True)
+            current_path = state_dir / "CURRENT.json"
+            current_path.write_text(json.dumps({
+                "market_date": "2026-09-01", "latest_valid_node": "live",
+                "data_freshness": {"market_phase": "CONTINUOUS_AFTERNOON"},
+            }), encoding="utf-8")
+            with patch.object(consistency, "ROOT", root):
+                report = {"errors": [], "warnings": [], "checks": []}
+                consistency._validate_historical_trade_case_mapping(report)
+                self.assertEqual(report["checks"][-1]["status"], "PASS")
+                current_path.write_text(json.dumps({
+                    "market_date": "2026-09-01", "latest_valid_node": "close",
+                    "data_freshness": {"market_phase": "POST_CLOSE_GRACE"},
+                }), encoding="utf-8")
+                report = {"errors": [], "warnings": [], "checks": []}
+                consistency._validate_historical_trade_case_mapping(report)
+                self.assertEqual(report["checks"][-1]["status"], "FAIL")
+
 
 if __name__ == "__main__":
     unittest.main()
