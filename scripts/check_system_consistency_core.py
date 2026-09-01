@@ -111,6 +111,8 @@ def main() -> int:
     check("tests:opening_current_self_healing", opening_proc.returncode == 0, (opening_proc.stdout + opening_proc.stderr)[-1000:])
     semantic_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_semantic_latest_main"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:semantic_latest_main", semantic_proc.returncode == 0, (semantic_proc.stdout + semantic_proc.stderr)[-1000:])
+    lifecycle_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_lifecycle_state"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+    check("tests:lifecycle_state", lifecycle_proc.returncode == 0, (lifecycle_proc.stdout + lifecycle_proc.stderr)[-1000:])
 
     compile_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "py_compile", "scripts/rules_version.py", "scripts/market_data_guard.py", "scripts/market_quote_router.py", "scripts/cloud_runner_snapshot.py", "scripts/build_account_stock_market.py", "scripts/build_overseas_context.py", "scripts/build_overseas_runtime_health.py", "scripts/build_low_cost_alpha_evidence.py", "scripts/build_query_context.py", "scripts/build_post_market_review.py", "scripts/state_manager.py", "scripts/process_state_sync_request.py", "scripts/sync_formal_files.py", "scripts/query_market_object.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:runtime_modules_compile", compile_proc.returncode == 0, (compile_proc.stdout + compile_proc.stderr)[-1000:])
