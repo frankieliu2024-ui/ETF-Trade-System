@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
+
+try:
+    from rules_version import parse_master_release_file
+except ModuleNotFoundError:
+    from scripts.rules_version import parse_master_release_file
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY_PATH = ROOT / "config" / "runtime_policy.json"
@@ -69,12 +73,8 @@ def current_capture_time(current: dict) -> datetime | None:
 
 
 def master_version() -> str | None:
-    try:
-        text = MASTER_PATH.read_text(encoding="utf-8")
-    except OSError:
-        return None
-    match = re.search(r"V\d+\.\d+\.\d+", text)
-    return match.group(0) if match else None
+    release = parse_master_release_file(MASTER_PATH)
+    return release.get("version") if release.get("ok") else None
 
 
 def valid_json(path: Path) -> bool:
@@ -124,7 +124,11 @@ def assess(now: datetime | None = None) -> dict:
     action = "NONE"
     reason = "runtime state is within self-healing bounds"
 
-    if not enabled:
+    if master_ver is None:
+        classification, action, reason = "RULES_VERSION_METADATA_INVALID", "ESCALATE", "MASTER current release metadata cannot be parsed safely"
+    elif not current_ver or master_ver != current_ver:
+        classification, action, reason = "RULES_VERSION_METADATA_DRIFT", "SYNC_RULES_VERSION_METADATA", f"MASTER={master_ver}, CURRENT={current_ver}"
+    elif not enabled:
         classification, action, reason = "DISABLED", "NONE", "self-healing disabled by runtime policy"
     elif consistency_status == "FAIL":
         classification, action, reason = "CONSISTENCY_REGRESSION", "ESCALATE", "system consistency has a hard failure; automatic code/rule repair is forbidden"
@@ -139,9 +143,6 @@ def assess(now: datetime | None = None) -> dict:
             classification, action, reason = "SCHEDULE_MISSED_OR_STALE", "REFRESH_SNAPSHOT", f"capture age={age_seconds!r}s, health={health_status}, threshold={trigger_age}s"
     elif not valid_json(QUERY_CONTEXT_PATH) or not valid_json(DECISION_CONTEXT_PATH):
         classification, action, reason = "DERIVED_CONTEXT_INVALID", "REBUILD_DERIVED_CONTEXTS", "query_context or decision_context is missing/invalid JSON"
-    elif master_ver and current_ver and master_ver != current_ver:
-        classification, action, reason = "RULES_VERSION_METADATA_DRIFT", "SYNC_RULES_VERSION_METADATA", f"MASTER={master_ver}, CURRENT={current_ver}"
-
     return {
         "schema_version": "1.0",
         "checked_at": now.isoformat(timespec="seconds"),
@@ -183,6 +184,9 @@ def repair_safe(status: dict, now: datetime | None = None) -> dict:
             atomic_write_json(CURRENT_PATH, current)
             repaired.append("CURRENT.rules_version")
     status["safe_repairs_applied"] = repaired
+    if repaired:
+        status["derived_contexts_rebuild_required"] = True
+        status["derived_contexts_rebuild_reason"] = "CURRENT.rules_version changed; rebuild through the existing state/query context producers"
     status["last_safe_repair_at"] = now.isoformat(timespec="seconds") if repaired else status.get("last_safe_repair_at")
     return status
 
@@ -216,3 +220,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
