@@ -15,8 +15,10 @@ on:
       - "scripts/check_research_integration.py"
       - "scripts/check_market_state_consistency.py"
       - "scripts/check_production_mutation_protocol.py"
+      - "scripts/semantic_latest_main.py"
       - "scripts/runtime_self_heal.py"
       - "tests/test_opening_current_self_healing.py"
+      - "tests/test_semantic_latest_main.py"
       - "scripts/formal_document_structure.py"
       - "scripts/maintenance_guard.py"
       - "scripts/build_e2e_status.py"
@@ -90,10 +92,18 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 2
+          fetch-depth: 0
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Validate semantic latest-main freshness
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          git fetch --no-tags origin main
+          python scripts/semantic_latest_main.py \
+            --base "${GITHUB_BASE_SHA}" \
+            --head "$(git rev-parse origin/main)"
       - name: Validate OpenSSL SM4 runtime dependency
         shell: bash
         run: |

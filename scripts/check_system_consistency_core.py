@@ -14,6 +14,10 @@ try:
     from rules_version import parse_master_release
 except ModuleNotFoundError:
     from scripts.rules_version import parse_master_release
+try:
+    from semantic_latest_main import classify_delta
+except ModuleNotFoundError:
+    from scripts.semantic_latest_main import classify_delta
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "data" / "state" / "system_consistency.json"
@@ -22,7 +26,7 @@ SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
 FORMAL_FILES = ["ETF规则_MASTER.md", "ETF当前状态_DASHBOARD.md", "ETF交易复盘与经验库_2026.md", "ETF市场行情档案_2026.md"]
 CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/overseas_runtime_health.json", "data/state/account_fact.json", "data/state/us_extended_hours_context.json", "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json", "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json"]
-CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/rules_version.py", "scripts/check_system_consistency.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_stock_context.py", "scripts/build_account_stock_market.py", "scripts/market_data_guard.py", "tests/test_market_data_guard.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_low_cost_alpha_evidence.py", "scripts/build_query_context.py", "scripts/market_quote_router.py", "scripts/sync_formal_files.py", "scripts/query_market_object.py", "config/market/market_quote_router.json", "tests/test_market_quote_router.py", "scripts/build_post_market_review.py", ".github/workflows/market-snapshot.yml", ".github/workflows/on-demand-market-data.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
+CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/rules_version.py", "scripts/check_system_consistency.py", "scripts/check_system_consistency_core.py", "scripts/semantic_latest_main.py", "tests/test_semantic_latest_main.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_stock_context.py", "scripts/build_account_stock_market.py", "scripts/market_data_guard.py", "tests/test_market_data_guard.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_low_cost_alpha_evidence.py", "scripts/build_query_context.py", "scripts/market_quote_router.py", "scripts/sync_formal_files.py", "scripts/query_market_object.py", "config/market/market_quote_router.json", "tests/test_market_quote_router.py", "scripts/build_post_market_review.py", ".github/workflows/market-snapshot.yml", ".github/workflows/on-demand-market-data.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
 EXPECTED_INDICES = {"000001.SH", "399006.SZ", "000688.SH", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
 REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api", "eastmoney_push2"}
 
@@ -106,6 +110,8 @@ def main() -> int:
     check("tests:market_data_and_quote_router", test_proc.returncode == 0, (test_proc.stdout + test_proc.stderr)[-1000:])
     opening_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_opening_current_self_healing"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:opening_current_self_healing", opening_proc.returncode == 0, (opening_proc.stdout + opening_proc.stderr)[-1000:])
+    semantic_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_semantic_latest_main"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+    check("tests:semantic_latest_main", semantic_proc.returncode == 0, (semantic_proc.stdout + semantic_proc.stderr)[-1000:])
 
     compile_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "py_compile", "scripts/rules_version.py", "scripts/market_data_guard.py", "scripts/market_quote_router.py", "scripts/cloud_runner_snapshot.py", "scripts/build_account_stock_market.py", "scripts/build_overseas_context.py", "scripts/build_overseas_runtime_health.py", "scripts/build_low_cost_alpha_evidence.py", "scripts/build_query_context.py", "scripts/build_post_market_review.py", "scripts/state_manager.py", "scripts/process_state_sync_request.py", "scripts/sync_formal_files.py", "scripts/query_market_object.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:runtime_modules_compile", compile_proc.returncode == 0, (compile_proc.stdout + compile_proc.stderr)[-1000:])
@@ -177,6 +183,17 @@ def main() -> int:
     rc, head_sha = run_git("rev-parse", "HEAD")
     check("git:head_commit", rc == 0 and bool(re.fullmatch(r"[0-9a-f]{40}", head_sha)), f"HEAD={head_sha or 'UNAVAILABLE'}")
     github_sha = os.environ.get("GITHUB_SHA", "")
+    try:
+        prior_report = read_json("data/state/system_consistency.json")
+    except (FileNotFoundError, json.JSONDecodeError):
+        prior_report = {}
+    validated_commit = (prior_report.get("commit_audit") or {}).get("checked_commit") or head_sha
+    semantic_base = os.environ.get("GITHUB_BASE_SHA") or validated_commit
+    try:
+        semantic_freshness = classify_delta(ROOT, semantic_base, head_sha)
+    except RuntimeError as exc:
+        semantic_freshness = {"base": semantic_base, "head": head_sha, "decision": "STALE", "error": str(exc)}
+    check("git:semantic_latest_main", semantic_freshness.get("decision") != "STALE", json.dumps(semantic_freshness, ensure_ascii=False))
     if github_sha:
         check("git:workflow_sha_matches_head", head_sha == github_sha, f"HEAD={head_sha} GITHUB_SHA={github_sha}")
     rc, tracked = run_git("-c", "core.quotePath=false", "ls-files")
@@ -565,6 +582,14 @@ def main() -> int:
             "workflow_sha": github_sha,
             "persisted_state_commit": "",
             "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。",
+        },
+        "semantic_freshness": {
+            **semantic_freshness,
+            "validated_commit": validated_commit,
+            "current_head": head_sha,
+            "head_advanced": validated_commit != head_sha,
+            "stable_contract_freshness": "VALID" if semantic_freshness.get("decision") == "SEMANTICALLY_FRESH" else "REVIEW_REQUIRED",
+            "runtime_fact_freshness": "ADVANCED" if semantic_freshness.get("decision") == "SEMANTICALLY_FRESH" and validated_commit != head_sha else "CURRENT",
         },
         "status": "FAIL" if errors else ("WARNING" if warnings else "PASS"),
         "hard_error_count": len(errors), "warning_count": len(warnings), "checks": checks, "errors": errors, "warnings": warnings,
