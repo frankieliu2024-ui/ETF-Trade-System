@@ -130,6 +130,7 @@ def build(root: Path = ROOT) -> dict:
         "status": status,
         "same_day_review_idempotent": True,
         "generated_at": now_utc(),
+        "rules_version": decision.get("rules_version", ""),
         "context_file": "data/state/review_context.json",
         "market_quote_router": build_market_quote_context(root),
         "prohibited_outputs": ["trade_amount", "buy_action", "sell_action", "order"],
@@ -175,3 +176,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
