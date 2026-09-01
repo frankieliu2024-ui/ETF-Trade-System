@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-09-01T04:24:37Z",
-  "generated_at_beijing": "2026-09-01T12:24:37+08:00",
+  "generated_at": "2026-09-01T04:59:18Z",
+  "generated_at_beijing": "2026-09-01T12:59:18+08:00",
   "repository": {
-    "head_sha": "4211dd5e45aa56bd6dec33db1ff2bdd09898642e",
-    "github_sha": "4211dd5e45aa56bd6dec33db1ff2bdd09898642e",
-    "github_run_id": "33469663153",
+    "head_sha": "562552d31433721f0c5676f56cf4e3a7f8f14ce9",
+    "github_sha": "562552d31433721f0c5676f56cf4e3a7f8f14ce9",
+    "github_run_id": "33471733019",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "4211dd5e45aa56bd6dec33db1ff2bdd09898642e",
-    "workflow_sha": "4211dd5e45aa56bd6dec33db1ff2bdd09898642e",
+    "checked_commit": "562552d31433721f0c5676f56cf4e3a7f8f14ce9",
+    "workflow_sha": "562552d31433721f0c5676f56cf4e3a7f8f14ce9",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
@@ -20,7 +20,7 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-08-31:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-08-31\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n..............................................................................................................................................\n----------------------------------------------------------------------\nRan 142 tests in 0.067s\n\nOK\n"
+      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-08-31:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-08-31\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n.....................................................................................................................................................\n----------------------------------------------------------------------\nRan 149 tests in 0.093s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -46,6 +46,41 @@
       "name": "formal_file:ETF市场行情档案_2026.md",
       "status": "PASS",
       "detail": "exists"
+    },
+    {
+      "name": "rules_release:canonical_parser",
+      "status": "PASS",
+      "detail": "canonical MASTER release metadata is coherent"
+    },
+    {
+      "name": "rules_release:heading_positioning",
+      "status": "PASS",
+      "detail": "heading=V2.2.31 positioning=V2.2.31"
+    },
+    {
+      "name": "rules_release:single_current_row",
+      "status": "PASS",
+      "detail": "version table has exactly one current row"
+    },
+    {
+      "name": "rules_release:previous_history",
+      "status": "PASS",
+      "detail": "previous=V2.2.30"
+    },
+    {
+      "name": "rules_release:current_description",
+      "status": "PASS",
+      "detail": "version=V2.2.31"
+    },
+    {
+      "name": "rules_release:V2.2.31_date",
+      "status": "PASS",
+      "detail": "update_date=2026-09-01"
+    },
+    {
+      "name": "rules_release:pass_semantics",
+      "status": "PASS",
+      "detail": "PASS is scoped to registered production contracts"
     },
     {
       "name": "research_registry:margin_financing",
@@ -265,12 +300,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=4211dd5e45aa56bd6dec33db1ff2bdd09898642e"
+      "detail": "HEAD=562552d31433721f0c5676f56cf4e3a7f8f14ce9"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=4211dd5e45aa56bd6dec33db1ff2bdd09898642e GITHUB_SHA=4211dd5e45aa56bd6dec33db1ff2bdd09898642e"
+      "detail": "HEAD=562552d31433721f0c5676f56cf4e3a7f8f14ce9 GITHUB_SHA=562552d31433721f0c5676f56cf4e3a7f8f14ce9"
     },
     {
       "name": "git:critical_files_tracked",
@@ -280,7 +315,7 @@
     {
       "name": "git:working_tree_clean_before_check",
       "status": "PASS",
-      "detail": "generated_state_dirty=21 unexpected=[]"
+      "detail": "generated_state_dirty=22 unexpected=[]"
     },
     {
       "name": "index_entry:ETF规则_MASTER.md",
@@ -700,7 +735,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=00:24 max_age_seconds=25777 limit=900"
+      "detail": "active=False phase=00:59 max_age_seconds=27858 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -813,14 +848,44 @@
       "detail": "consistency workflow validates only; it does not duplicate production recovery"
     },
     {
+      "name": "rules_release:current",
+      "status": "PASS",
+      "detail": "MASTER=V2.2.31 CURRENT=V2.2.31"
+    },
+    {
+      "name": "rules_release:decision_context",
+      "status": "PASS",
+      "detail": "decision=V2.2.31 MASTER=V2.2.31"
+    },
+    {
+      "name": "rules_release:query_context",
+      "status": "PASS",
+      "detail": "query=V2.2.31 nested=V2.2.31"
+    },
+    {
+      "name": "rules_release:review_context",
+      "status": "PASS",
+      "detail": "review=V2.2.31 MASTER=V2.2.31"
+    },
+    {
+      "name": "rules_release:self_healing_master",
+      "status": "PASS",
+      "detail": "self_healing_master=V2.2.31 MASTER=V2.2.31"
+    },
+    {
+      "name": "rules_release:self_healing_current",
+      "status": "PASS",
+      "detail": "self_healing_current=V2.2.31 CURRENT=V2.2.31"
+    },
+    {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=4203"
+      "detail": "declared=STALE expected=STALE age_seconds=6245"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=4183"
+      "detail": "declared=STALE expected=STALE age_seconds=6225"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -860,7 +925,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-09-01T04:24:13Z market=2026-09-01T11:14:30+08:00"
+      "detail": "context=2026-09-01T04:58:15Z market=2026-09-01T11:14:30+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
