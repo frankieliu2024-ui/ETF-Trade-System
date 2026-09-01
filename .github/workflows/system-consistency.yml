@@ -97,6 +97,8 @@ jobs:
       - name: Validate OpenSSL SM4 runtime dependency
         shell: bash
         run: |
+          sudo apt-get update
+          sudo apt-get install -y openssl
           command -v openssl
           openssl version -a
           openssl enc -list | grep -E '(^|[[:space:]])-sm4-ecb([[:space:]]|$)'
@@ -274,3 +276,4 @@ jobs:
       - name: Enforce maintenance reconciliation result
         if: ${{ steps.maintenance_guard.outcome == 'failure' }}
         run: exit 1
+
