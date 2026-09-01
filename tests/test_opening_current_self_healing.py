@@ -38,7 +38,11 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         }
 
         def fake_load(path: Path, default=None):
-            normalized = path.as_posix()\n            for key, value in values.items():\n                if normalized.endswith(key):\n                    return value\n            return default
+            normalized = path.as_posix()
+            for key, value in values.items():
+                if normalized.endswith(key):
+                    return value
+            return default
 
         with (
             mock.patch.object(runtime_self_heal, "load_json", side_effect=fake_load),
