@@ -1,4 +1,4 @@
-"""Deterministic, read-only validation for historical market-fact recovery.
+"""Deterministic, read-only validation for historical market-fact recovery.\n\nThe module never performs a provider fetch or persistence side effect.
 
 This module does not write CURRENT or manufacture an intraday observation.  It
 classifies evidence before the existing market-data writer is allowed to
