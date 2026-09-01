@@ -36,7 +36,7 @@ def classify_path(path: str) -> str:
 
 def _changed_paths(root: Path, base: str, head: str) -> list[str]:
     proc = subprocess.run(
-        ["git", "diff", "--name-only", f"{base}..{head}"],
+        ["git", "-c", "core.quotePath=false", "diff", "--name-only", f"{base}..{head}"],
         cwd=root,
         text=True,
         encoding="utf-8",
