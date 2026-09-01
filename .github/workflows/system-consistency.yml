@@ -99,10 +99,12 @@ jobs:
       - name: Validate semantic latest-main freshness
         if: github.event_name == 'pull_request'
         shell: bash
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           git fetch --no-tags origin main
           python scripts/semantic_latest_main.py \
-            --base "${GITHUB_BASE_SHA}" \
+            --base "${PR_BASE_SHA}" \
             --head "$(git rev-parse origin/main)"
       - name: Validate OpenSSL SM4 runtime dependency
         shell: bash
