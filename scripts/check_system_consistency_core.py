@@ -483,9 +483,9 @@ def main() -> int:
     expected_deployable = round(max(float(cash) - expected_reserved, 0), 2) if cash is not None else None
     settlement_ok = (
         float(account.get("reserved_cash_for_settlement", 0) or 0) == expected_reserved
-        and (account.get("deployable_cash") == expected_deployable or float(account.get("deployable_cash")) == expected_deployable)
+        and ((account.get("deployable_cash") is None and expected_deployable is None) or (account.get("deployable_cash") is not None and float(account.get("deployable_cash")) == expected_deployable))
         and float(current.get("reserved_cash_for_settlement", 0) or 0) == expected_reserved
-        and (current.get("deployable_cash") == expected_deployable or float(current.get("deployable_cash")) == expected_deployable)
+        and ((current.get("deployable_cash") is None and expected_deployable is None) or (current.get("deployable_cash") is not None and float(current.get("deployable_cash")) == expected_deployable))
     )
     check("state_coherence:settlement_cash_derivation", settlement_ok, f"reserved={account.get('reserved_cash_for_settlement')} expected={expected_reserved} deployable={account.get('deployable_cash')} expected={expected_deployable}")
     expected_account_stocks = {
