@@ -104,6 +104,8 @@ def main() -> int:
 
     test_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "discover", "-s", "tests", "-p", "test_market*.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:market_data_and_quote_router", test_proc.returncode == 0, (test_proc.stdout + test_proc.stderr)[-1000:])
+    opening_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_opening_current_self_healing"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+    check("tests:opening_current_self_healing", opening_proc.returncode == 0, (opening_proc.stdout + opening_proc.stderr)[-1000:])
 
     compile_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "py_compile", "scripts/rules_version.py", "scripts/market_data_guard.py", "scripts/market_quote_router.py", "scripts/cloud_runner_snapshot.py", "scripts/build_account_stock_market.py", "scripts/build_overseas_context.py", "scripts/build_overseas_runtime_health.py", "scripts/build_low_cost_alpha_evidence.py", "scripts/build_query_context.py", "scripts/build_post_market_review.py", "scripts/state_manager.py", "scripts/process_state_sync_request.py", "scripts/sync_formal_files.py", "scripts/query_market_object.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:runtime_modules_compile", compile_proc.returncode == 0, (compile_proc.stdout + compile_proc.stderr)[-1000:])
@@ -576,4 +578,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
