@@ -73,7 +73,7 @@ def max_drawdown(values):
     return worst
 
 
-def summary(values, trades, turnover, winner_loss, wrong_rebuy, events=None, initial_exposure=None, initial_mobile_state=None):
+def summary(values, trades, turnover, winner_loss, wrong_rebuy, events=None, initial_exposure=None, initial_mobile_state=None, right_episodes=None, wrong_episodes=None):
     end = values[-1] if values else 1.0
     return {
         "net_return": end - 1.0,
@@ -86,6 +86,8 @@ def summary(values, trades, turnover, winner_loss, wrong_rebuy, events=None, ini
         "events": events or [],
         "initial_total_exposure": initial_exposure,
         "initial_mobile_state": initial_mobile_state,
+        "right_tail_episode_metrics": episode_metrics(right_episodes or []),
+        "wrong_rebuy_episode_metrics": episode_metrics(wrong_episodes or []),
     }
 
 
@@ -100,6 +102,17 @@ def transition_mobile(state, action):
             raise ValueError("cannot rebuy invested mobile")
         return "MOBILE_INVESTED"
     raise ValueError("unknown mobile action")
+
+
+def episode_metrics(values):
+    losses = [float(x.get("loss", 0.0)) for x in values]
+    return {
+        "episodes": len(losses),
+        "max_single_episode_loss": max(losses, default=0.0),
+        "mean_episode_loss": sum(losses) / len(losses) if losses else 0.0,
+        "median_episode_loss": sorted(losses)[len(losses) // 2] if losses else 0.0,
+        "cumulative_portfolio_drag": sum(losses),
+    }
 
 
 def run_strategy(rows, threshold=DEFAULT_THRESHOLD, hold=DEFAULT_HOLD, mobile=DEFAULT_MOBILE, cost=0.002, mode="core_mobile", family="trend_filter"):
@@ -128,6 +141,11 @@ def run_strategy(rows, threshold=DEFAULT_THRESHOLD, hold=DEFAULT_HOLD, mobile=DE
     winner_loss = 0.0
     wrong_rebuy = 0.0
     rebuy_anchor = None
+    cash_since_i = None
+    right_episode = None
+    right_episodes = []
+    wrong_episode = None
+    wrong_episodes = []
     events = []
     for i, d in enumerate(dates):
         if pending and i == pending["exec_i"] and mobile_state != "NONE":
@@ -138,17 +156,23 @@ def run_strategy(rows, threshold=DEFAULT_THRESHOLD, hold=DEFAULT_HOLD, mobile=DE
                 mobile_cash += value - fee
                 mobile_units = 0.0
                 mobile_state = transition_mobile(mobile_state, "release")
+                cash_since_i = i
+                right_episode = {"loss": 0.0, "release_i": i}
                 rebuy_anchor = None
                 trades += 1; turnover += value
-                events.append({"date": d, "exec_i": i, "action": "release", "price": px, "fee": fee, "mobile_state": mobile_state, "cash_after": mobile_cash})
+                events.append({"date": d, "signal_date": pending["signal_date"], "signal_time": pending["signal_date"] + "T15:00:00+08:00", "execution_time": d + "T09:30:00+08:00", "exec_i": i, "action": "release", "price": px, "fee": fee, "mobile_state": mobile_state, "cash_after": mobile_cash})
             elif pending["action"] == "rebuy" and mobile_state == "MOBILE_CASH":
                 fee = mobile_cash * cost / 2.0
                 mobile_units = max(0.0, (mobile_cash - fee) / px)
                 mobile_cash = 0.0
                 mobile_state = transition_mobile(mobile_state, "rebuy")
                 rebuy_anchor = {"exec_i": i, "price": px}
+                if right_episode is not None:
+                    right_episodes.append(right_episode)
+                    right_episode = None
+                cash_since_i = None
                 trades += 1; turnover += mobile_units * px
-                events.append({"date": d, "exec_i": i, "action": "rebuy", "price": px, "fee": fee, "mobile_state": mobile_state, "mobile_units": mobile_units})
+                events.append({"date": d, "signal_date": pending["signal_date"], "signal_time": pending["signal_date"] + "T15:00:00+08:00", "execution_time": d + "T09:30:00+08:00", "exec_i": i, "action": "rebuy", "price": px, "fee": fee, "mobile_state": mobile_state, "mobile_units": mobile_units, "holding_cash_bars": i - (cash_since_i if cash_since_i is not None else i), "completed_cycle": True})
             pending = None
         total = core_units * closes[i] + mobile_units * closes[i] + mobile_cash
         equity.append(total)
@@ -164,21 +188,42 @@ def run_strategy(rows, threshold=DEFAULT_THRESHOLD, hold=DEFAULT_HOLD, mobile=DE
             rebuy_ok = deviation <= -effective and mom5 < threshold
             if mobile_state == "MOBILE_INVESTED" and release_ok:
                 pending = {"exec_i": i + 1, "action": "release", "signal_date": d}
-            elif mobile_state == "MOBILE_CASH" and rebuy_ok:
+            elif mobile_state == "MOBILE_CASH" and rebuy_ok and cash_since_i is not None and i - cash_since_i >= hold:
                 pending = {"exec_i": i + 1, "action": "rebuy", "signal_date": d}
         if mobile_state == "MOBILE_CASH" and i > 20:
             # Opportunity loss is measured only after release, against holding
             # the mobile inventory throughout the same interval.
             last_release = next((e for e in reversed(events) if e["action"] == "release"), None)
             if last_release:
-                winner_loss = max(winner_loss, mobile_w * max(0.0, closes[i] / last_release["price"] - 1.0))
+                loss = mobile_w * max(0.0, closes[i] / last_release["price"] - 1.0)
+                winner_loss = max(winner_loss, loss)
+                if right_episode is not None:
+                    right_episode["loss"] = max(right_episode["loss"], loss)
         if mobile_state == "MOBILE_INVESTED" and rebuy_anchor and i > rebuy_anchor["exec_i"]:
-            wrong_rebuy = max(wrong_rebuy, mobile_w * max(0.0, 1.0 - closes[i] / rebuy_anchor["price"]))
+            loss = mobile_w * max(0.0, 1.0 - closes[i] / rebuy_anchor["price"])
+            wrong_rebuy = max(wrong_rebuy, loss)
+            if wrong_episode is None:
+                wrong_episode = {"loss": 0.0, "rebuy_i": rebuy_anchor["exec_i"]}
+            wrong_episode["loss"] = max(wrong_episode["loss"], loss)
+        if mobile_state == "MOBILE_CASH" and right_episode is not None:
+            right_episode["end_i"] = i
+        if mobile_state == "MOBILE_INVESTED" and wrong_episode is not None:
+            wrong_episodes.append(wrong_episode)
+            wrong_episode = None
     if mobile_state == "MOBILE_CASH" and events:
         # A final open position in cash is still a valid release; no artificial
         # end-of-sample rebuy is invented.
         pass
-    return summary(equity, trades, turnover, winner_loss, wrong_rebuy, events, initial_exposure, initial_mobile_state)
+    if right_episode is not None:
+        right_episodes.append(right_episode)
+    if wrong_episode is not None:
+        wrong_episodes.append(wrong_episode)
+    for event in events:
+        if event["action"] == "release":
+            event.update({"release_signal_time": event["signal_time"], "release_execution_time": event["execution_time"], "release_price": event["price"], "transaction_cost": event["fee"], "unclosed_at_day_end": mobile_state == "MOBILE_CASH"})
+        else:
+            event.update({"rebuy_signal_time": event["signal_time"], "rebuy_execution_time": event["execution_time"], "rebuy_price": event["price"], "transaction_cost": event["fee"], "unclosed_at_day_end": False})
+    return summary(equity, trades, turnover, winner_loss, wrong_rebuy, events, initial_exposure, initial_mobile_state, right_episodes, wrong_episodes)
 
 
 def buy_hold(rows):
@@ -278,8 +323,9 @@ def main():
         "generated_at": date.today().isoformat(),
         "status": "RESEARCH_COMPLETE_EXTERNAL_MARKET_SCREEN_INCOMPLETE_DATA_LIMITATION",
         "latest_main_sha": "f00b0d7f5e56d257552fc514db948c56cf96fb1d",
-        "method": {"signal": "close D only; 20d mean deviation and 5d momentum guard", "execution": "open D+1; close after 1/2/3/5/10 trading days", "cost_round_trip": ["10bp", "20bp", "30bp"], "pit": True, "intraday": "NOT_EXECUTED_NO_HISTORICAL_MINUTE_COVERAGE", "production_universe_mutated": False},
+        "method": {"signal": "close D only; 20d mean deviation and 5d momentum guard", "execution": "open D+1; close after 1/2/3/5/10 trading days", "cost_round_trip": ["10bp", "20bp", "30bp"], "pit": True, "intraday": "HISTORICAL_15M_ARTIFACT_NOT_RETRIEVABLE_CURRENT_ENV", "production_universe_mutated": False},
         "data_audit": {"daily_feature_days": len(list(DAILY.glob("*.json"))), "current_formal_count": len(current), "external_candidates_scanned": len(candidates), "external_deep_research_count": len(external_results), "external_limitations": "Only 159687 exists outside the formal panel in the on-disk extract; it has 24 observations and is research-only. This is not a claim of exhaustive current-market coverage."},
+        "historical_intraday_audit": {"prior_recorded_provider": "SINA_15M_RESEARCH_ONLY_NOT_PRODUCTION_PROVIDER", "prior_recorded_robustness_days": 69, "prior_recorded_object_coverage": "10/11", "current_artifact_status": "NOT_PRESENT_IN_CHECKOUT_OR_RETRIEVABLE_ACTIONS_ARTIFACT", "current_executable_chain": "TENCENT_1M_PRODUCTION_STRUCTURE_EVIDENCE_OR_AKSHARE_EASTMONEY_POC", "historical_15m_backtest_executed_in_this_run": False, "reason": "Repository retains the prior conversion summary and artifact-only workflow contracts, but no historical Sina 15m rows/cache or artifact identifier is available; AkShare is not installed locally and its existing PoC is current-date 1m, not a 69-day historical 15m source.", "coverage": "UNAVAILABLE_FOR_REPRODUCTION", "production_provider_added": False},
         "current_11": results,
         "external_candidate_screen": external_results,
         "walk_forward": {"calibration": "2024", "validation": "2025", "final_holdout": "2026 YTD", "selection_rule": "pre-registered 2% / 3d / 25% mobile; no in-sample best-single-point promotion"},

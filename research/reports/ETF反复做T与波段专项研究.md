@@ -38,6 +38,12 @@
 
 现有日线样本不支持日内 T；1/2/3/5/10 日仅作为隔日/短波段对照。偶尔的正 alpha 来自释放后回补的均值回归，但没有稳定覆盖交易费用、wrong-rebuy 和趋势上涨期间的 right-tail opportunity loss。right-tail 只在 release→rebuy 区间计量，wrong-rebuy 只在真实 rebuy 之后计量。应在真实突破、趋势加速、持续相对强势和承接改善时关闭/缩小卖出型 T，在弱势未确认修复时延迟回补。
 
+## 历史15分钟能力复核
+
+仓库确实保留历史分时能力的治理与研究线索：`ashare_ancestral_capital_evidence_formal_conversion.json` 记录 `SINA_15M_RESEARCH_ONLY_NOT_PRODUCTION_PROVIDER`、69 个稳健性交易日和 10/11 对象覆盖；但该结果只引用了 Actions artifact，当前 checkout 没有对应的 Sina 15分钟原始行、缓存、脚本或 artifact id，无法在本轮重新取得并审计。当时的生产/研究边界明确禁止把 Sina 升格为生产 provider。
+
+当前可复用的实际链是 `scripts/build_minute_path_features.py` / `scripts/minute_source_capability_poc.py` 的腾讯1分钟路径和 `scripts/akshare_capability_poc.py` 的 AkShare/Eastmoney research PoC；前者是当前日内结构证据，后者需要安装 AkShare且只验证当前日期1分钟路径。本环境实测未安装 AkShare，因此没有伪造 69 日15分钟回测，也没有把当前离散/1分钟快照改写成历史15分钟样本。故本报告只完成 Layer 1 日线研究；Layer 2 历史15分钟回测仍为 `INCOMPLETE_DATA_LIMITATION`，没有成本后日内 alpha 结论。
+
 分年 relative-to-buy-and-hold alpha 已写入 JSON。以 588000 为例，2024/2025/2026 YTD 约为 -2.0pp/-11.0pp/-3.0pp，三年均不支持正向时间外增量。
 
 ## 假设、制度与外部候选

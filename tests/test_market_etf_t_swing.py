@@ -109,6 +109,27 @@ class EtfTSwingContractTest(unittest.TestCase):
         b = mod.run_strategy(rows, threshold=0.02, cost=0.0, family="fixed")["events"]
         self.assertEqual([(e["date"], e["action"]) for e in a], [(e["date"], e["action"]) for e in b if e["exec_i"] < len(early_keys)])
 
+    def test_hold_parameter_changes_actual_trade_path(self):
+        short = mod.run_strategy(self.oscillating_rows(), threshold=0.02, hold=1, cost=0.0, family="fixed")
+        long = mod.run_strategy(self.oscillating_rows(), threshold=0.02, hold=10, cost=0.0, family="fixed")
+        self.assertTrue(short["events"] != long["events"] or short["net_return"] != long["net_return"])
+
+    def test_hold_1d_and_10d_are_not_identical(self):
+        a = mod.run_strategy(self.oscillating_rows(), hold=1, cost=0.002, family="fixed")
+        b = mod.run_strategy(self.oscillating_rows(), hold=10, cost=0.002, family="fixed")
+        self.assertNotEqual((a["trades"], a["net_return"]), (b["trades"], b["net_return"]))
+
+    def test_strategy_families_have_distinct_logic(self):
+        fixed = mod.run_strategy(self.oscillating_rows(), family="fixed", cost=0.0)
+        vol = mod.run_strategy(self.oscillating_rows(), family="volatility", cost=0.0)
+        trend = mod.run_strategy(self.oscillating_rows(), family="trend_filter", cost=0.0)
+        self.assertTrue((fixed["trades"], fixed["net_return"]) != (vol["trades"], vol["net_return"]) or (vol["trades"], vol["net_return"]) != (trend["trades"], trend["net_return"]))
+
+    def test_episode_metrics_include_max_mean_median_and_cumulative(self):
+        out = mod.run_strategy(self.oscillating_rows(), family="fixed", cost=0.0)
+        for key in ("right_tail_episode_metrics", "wrong_rebuy_episode_metrics"):
+            self.assertTrue({"max_single_episode_loss", "mean_episode_loss", "median_episode_loss", "cumulative_portfolio_drag"} <= set(out[key]))
+
 
 if __name__ == "__main__":
     unittest.main()
