@@ -179,6 +179,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         "generated_at": now_utc(), "generated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
         "market_date": current.get("market_date", ""), "latest_valid_node": current.get("latest_valid_node", ""),
         "rules_version": decision.get("rules_version", ""), "current": current, "decision_context": decision,
+        "lifecycle_projection": decision.get("lifecycle_projection", {}),
         "analysis_coverage": decision.get("analysis_coverage", {}),
         "etf_strategy_risk_metrics": decision.get("etf_strategy_risk_metrics", {}),
         "data_quality_summary": decision.get("data_quality_summary", {}),

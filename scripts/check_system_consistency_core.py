@@ -451,8 +451,15 @@ def main() -> int:
     check("scheduled_pulse:observable", all(key in pulse for key in ("expected_slots", "observed_slots", "missing_slots", "status")), f"status={pulse.get('status', 'MISSING')}", warning=True)
     action = decision_context.get("formal_action") or {}
     check("formal_action:execution_boundary", action.get("execution_status") in {"UNKNOWN", "PENDING", "EXECUTED", "SUPERSEDED"} or not action, f"execution_status={action.get('execution_status', 'MISSING')}")
+    lifecycle = decision_context.get("lifecycle_projection") or {}
+    check("lifecycle:projection_present", lifecycle.get("status") == "READY" and isinstance(lifecycle.get("active_lifecycles"), list), f"status={lifecycle.get('status', 'MISSING')}")
+    for item in lifecycle.get("active_lifecycles") or []:
+        complete = all(item.get(key) not in (None, "") for key in ("source_decision_id", "source_trade_event_id", "hypothesis_id", "start_market_date", "current_t_plus", "mandatory_decision_market_date", "next_lifecycle_node"))
+        check("lifecycle:source_and_clock", complete, f"code={item.get('security_code')} source_decision={item.get('source_decision_id')} source_trade={item.get('source_trade_event_id')}")
+        if item.get("decision_due"):
+            check("lifecycle:due_exposed", item.get("next_lifecycle_node") == "TRADE_MANDATORY_LIFECYCLE_NODE:T+3", f"code={item.get('security_code')} due={item.get('decision_due')}")
 
-    for script_path in ("scripts/build_phase4_automation.py", "scripts/process_state_sync_request.py", "scripts/build_state_context.py", "scripts/build_query_context.py", "scripts/notification_center.py", "scripts/confirm_execution_reconciliation.py"):
+    for script_path in ("scripts/build_phase4_automation.py", "scripts/process_state_sync_request.py", "scripts/build_state_context.py", "scripts/build_query_context.py", "scripts/build_post_market_review.py", "scripts/lifecycle_state.py", "scripts/notification_center.py", "scripts/confirm_execution_reconciliation.py"):
         try:
             ast.parse((ROOT / script_path).read_text(encoding="utf-8"))
             check(f"python:syntax:{script_path}", True, "AST parse passed")
@@ -602,4 +609,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

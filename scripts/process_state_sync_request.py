@@ -18,6 +18,10 @@ from formal_file_mutation_gateway import (
     upsert_managed_line,
     write_formal_text_if_changed,
 )
+try:
+    from lifecycle_state import build_lifecycle_projection
+except ModuleNotFoundError:
+    from scripts.lifecycle_state import build_lifecycle_projection
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
@@ -236,6 +240,14 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
     else:
         lines += ["", "最近一次正式决策未随本次同步请求提供；脚本不自行推断，保留人工/ChatGPT正式决议。"]
     lines += ["", f"同步请求：`{request.get('request_id','')}`。"]
+    lifecycle = build_lifecycle_projection(ROOT)
+    lines += ["", "### 当前交易生命周期", ""]
+    if lifecycle.get("active_lifecycles"):
+        for item in lifecycle["active_lifecycles"]:
+            due = "；今日必须形成T+3正式决议" if item.get("decision_due") else ""
+            lines.append(f"- {item.get('security_name') or item.get('security_code')}（{item.get('security_code')}）：{item.get('lifecycle_status')}，起始交易日{item.get('start_market_date')}，当前T+{item.get('current_t_plus')}，下一节点{item.get('next_lifecycle_node')}{due}。")
+    else:
+        lines.append("- 当前没有可由正式决策与真实成交事实恢复的未关闭Trial生命周期。")
     return "\n".join(lines)
 
 
@@ -701,6 +713,14 @@ def merge_account_fact(prior: dict, supplied: dict) -> dict:
     for key, value in (supplied or {}).items():
         if key != "settlement_obligations" and value is not None:
             merged[key] = json.loads(json.dumps(value))
+    # An ordinary screenshot is a partial observation.  Empty history-shaped
+    # defaults from an ingress adapter must not erase canonical trade,
+    # decision, fee, lifecycle, or reconciliation facts.
+    for key in ("formal_action", "orders", "trades", "fee_facts", "account_reconciliation",
+                "account_change_events_after_confirmed_at", "lifecycle", "confirmed_trades",
+                "formal_decision", "reconciliation_metadata"):
+        if key in (prior or {}) and (key not in (supplied or {}) or supplied.get(key) in (None, [], {})):
+            merged[key] = json.loads(json.dumps(prior[key]))
     merged["settlement_obligations"] = _merge_settlement_obligations(prior or {}, supplied or {})
     for key in ("formal_action", "orders", "trades", "fee_facts", "account_reconciliation",
                 "account_change_events_after_confirmed_at", "lifecycle", "confirmed_trades",
@@ -786,8 +806,6 @@ def main() -> int:
         if not same_executed_decision:
             account["formal_action"] = {"action": decision.get("action") or decision.get("amount_action") or "", "quantity": decision.get("quantity"), "decision_id": decision_id, "decision_time": decision.get("decision_time") or decision.get("data_as_of_beijing") or datetime.now(SHANGHAI).isoformat(timespec="seconds"), "source": "CHATGPT_FORMAL_DECISION", "lifecycle": decision.get("lifecycle"), "applicable_object": decision.get("candidate_code") or decision.get("code") or "", "validity": "ACTIVE", "execution_status": "PENDING"}
             atomic_json_write(ACCOUNT, account)
-    dashboard = replace_block(DASHBOARD.read_text(encoding="utf-8"), START, END, build_dashboard_block(account, request.get("formal_decision"), request), insert_after_heading=True)
-    write_formal_text_if_changed(ROOT, DASHBOARD.name, dashboard)
     trade_event_recorded = False
     if trade:
         confirmed_at = trade.get("confirmed_at_beijing") or account.get("updated_at")
@@ -816,6 +834,11 @@ def main() -> int:
         write_trade_review_required(event)
     sync_current_account_mirror(ROOT, account)
     review_recorded, review_idempotent = record_post_close_review(account, request)
+    # Render after event/review persistence so a newly confirmed execution is
+    # visible in the same canonical dashboard update, rather than one request
+    # behind the machine facts.
+    dashboard = replace_block(DASHBOARD.read_text(encoding="utf-8"), START, END, build_dashboard_block(account, request.get("formal_decision"), request), insert_after_heading=True)
+    write_formal_text_if_changed(ROOT, DASHBOARD.name, dashboard)
     # Keep the three human-readable fact documents synchronized even when the
     # request only confirms a fee/account snapshot and creates no new trade event.
     formal_files_sync = sync_formal_files(ROOT, account)
@@ -826,4 +849,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
