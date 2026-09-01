@@ -786,8 +786,6 @@ def main() -> int:
         if not same_executed_decision:
             account["formal_action"] = {"action": decision.get("action") or decision.get("amount_action") or "", "quantity": decision.get("quantity"), "decision_id": decision_id, "decision_time": decision.get("decision_time") or decision.get("data_as_of_beijing") or datetime.now(SHANGHAI).isoformat(timespec="seconds"), "source": "CHATGPT_FORMAL_DECISION", "lifecycle": decision.get("lifecycle"), "applicable_object": decision.get("candidate_code") or decision.get("code") or "", "validity": "ACTIVE", "execution_status": "PENDING"}
             atomic_json_write(ACCOUNT, account)
-    dashboard = replace_block(DASHBOARD.read_text(encoding="utf-8"), START, END, build_dashboard_block(account, request.get("formal_decision"), request), insert_after_heading=True)
-    write_formal_text_if_changed(ROOT, DASHBOARD.name, dashboard)
     trade_event_recorded = False
     if trade:
         confirmed_at = trade.get("confirmed_at_beijing") or account.get("updated_at")
@@ -826,4 +824,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
