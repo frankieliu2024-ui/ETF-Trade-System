@@ -57,6 +57,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
                 "captured_at": "2026-08-31T15:01:10+08:00",
                 "latest_valid_node": "close",
                 "node_status": "READY",
+                "rules_version": "V2.2.31",
             },
             now=datetime.fromisoformat("2026-09-01T09:27:00+08:00"),
         )
@@ -72,6 +73,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
                 "captured_at": "2026-09-01T09:25:00+08:00",
                 "latest_valid_node": "auction",
                 "node_status": "READY",
+                "rules_version": "V2.2.31",
             },
             now=datetime.fromisoformat("2026-09-01T09:27:00+08:00"),
         )
@@ -86,6 +88,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
                 "captured_at": "2026-08-31T15:01:10+08:00",
                 "latest_valid_node": "close",
                 "node_status": "READY",
+                "rules_version": "V2.2.31",
             },
             now=datetime.fromisoformat("2026-09-05T09:27:00+08:00"),
         )
@@ -111,6 +114,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
             "captured_at": "2026-08-31T15:01:10+08:00",
             "latest_valid_node": "close",
             "node_status": "READY",
+            "rules_version": "V2.2.31",
         }
         with mock.patch.object(runtime_self_heal, "atomic_write_json") as write:
             status = self._assess(current=current, now=datetime.fromisoformat("2026-09-01T09:27:00+08:00"))
