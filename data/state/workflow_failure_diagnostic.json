@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-01T11:32:14+08:00",
+  "generated_at": "2026-09-01T11:38:13+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33466516277,
+  "run_id": 33466867979,
   "run_attempt": 1,
-  "head_sha": "1958d0db5cd09b0a6a8f6b1ffa9c61e54cf2e816",
-  "main_head_sha": "46be2d2ab78714ff93746bce6aa138b1826e7038",
+  "head_sha": "9a03149ee2937271847614ddfc256532603a34ff",
+  "main_head_sha": "0cd5c3f4c959e3eae58f350019eddbf0611f534d",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,15 +16,17 @@
     }
   ],
   "changed_files": [
-    "\"docs/ETF\\344\\270\\273\\345\\212\\250\\351\\200\\232\\347\\237\\245\\344\\275\\223\\347\\263\\273.md\"",
-    ".github/workflows/decision-notification.yml",
+    "data/state/execution_reconciliation.json",
+    "data/state/notification_center.json",
+    "data/state/restricted_rollback_plan.json",
+    "data/state/workflow_failure_diagnostic.json",
     "scripts/market_notification_common.py",
     "scripts/merge_notification_state.py",
     "scripts/send_market_shock_notification_legacy.py",
     "tests/test_market_notification_materiality_guard.py",
     "tests/test_production_reliability.py"
   ],
-  "commit_message": "fix: unify notification event family lifecycle",
+  "commit_message": "fix: coalesce notification event families and route object roles",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
