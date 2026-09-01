@@ -1,39 +1,14 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-09-01T09:49:33+08:00",
-  "status": "RECONCILED",
+  "generated_at": "2026-09-01T10:23:23+08:00",
+  "status": "NO_MATCH",
   "lookback_days": 5,
   "supported_intents": [
     "正式正金额买入",
     "明确份额减持/卖出",
     "全部退出/清仓（仅在事实足够时匹配）"
   ],
-  "matches": [
-    {
-      "status": "CONFIRMED_BY_TRADE_EVENT",
-      "requires_user_confirmation": false,
-      "intent": {
-        "decision_id": "20260827_095649_515880_trial_5000",
-        "decision_time": "2026-08-27T09:56:49+08:00",
-        "decision_market_date": "2026-08-27",
-        "source_event": "events/decisions/20260827_095649_515880_trial_5000.json",
-        "code": "515880",
-        "name": "通信ETF",
-        "side": "BUY",
-        "lifecycle": "Trial",
-        "planned_amount_yuan": 5000,
-        "planned_quantity": null
-      },
-      "trade_event_ids": [
-        "20260827_100843_515880_buy"
-      ],
-      "fill_status": "FULL_OR_ROUNDING_MATCH",
-      "fill_ratio": 0.9931,
-      "execution_date": "2026-08-27",
-      "confirmation_date": "2026-08-27",
-      "lifecycle_t_date": "2026-08-27"
-    }
-  ],
+  "matches": [],
   "actionable_count": 0,
   "account_fact_updated_at": "2026-09-01T07:15:00+08:00",
   "design_rule": "对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。",
