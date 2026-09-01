@@ -6,6 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "research/backtests"))
 import analyze_etf_t_swing as mod  # noqa: E402
+import analyze_etf_intraday_sina as intraday  # noqa: E402
 
 
 class EtfTSwingContractTest(unittest.TestCase):
@@ -129,6 +130,34 @@ class EtfTSwingContractTest(unittest.TestCase):
         out = mod.run_strategy(self.oscillating_rows(), family="fixed", cost=0.0)
         for key in ("right_tail_episode_metrics", "wrong_rebuy_episode_metrics"):
             self.assertTrue({"max_single_episode_loss", "mean_episode_loss", "median_episode_loss", "cumulative_portfolio_drag"} <= set(out[key]))
+
+    def intraday_rows(self):
+        rows = []
+        for i in range(24):
+            px = 100.0 + (5 if 8 <= i <= 10 else -4 if 16 <= i <= 18 else 0)
+            rows.append({"timestamp": f"2026-08-31T{9 + (i * 15) // 60:02d}:{(30 + i * 15) % 60:02d}:00", "open": px, "high": px + 1, "low": px - 1, "close": px, "volume": 1000, "amount": px * 1000})
+        return rows
+
+    def test_intraday_signal_close_then_next_bar_open(self):
+        out = intraday.run_day(self.intraday_rows(), hold=1, cost=0.0)
+        for event in out["events"]:
+            self.assertGreater(event["release_execution_time"], event["release_signal_time"])
+
+    def test_intraday_horizon_changes_path(self):
+        a = intraday.run_day(self.intraday_rows(), hold=1, cost=0.002)
+        b = intraday.run_day(self.intraday_rows(), hold=8, cost=0.002)
+        self.assertNotEqual((a["trades"], a["net_return"]), (b["trades"], b["net_return"]))
+
+    def test_intraday_no_same_bar_high_low_order(self):
+        out = intraday.run_day(self.intraday_rows(), hold=1, cost=0.002)
+        for event in out["events"]:
+            self.assertNotEqual(event["release_signal_time"], event["release_execution_time"])
+
+    def test_intraday_costs_both_legs_and_unclosed_explicit(self):
+        free = intraday.run_day(self.intraday_rows(), hold=1, cost=0.0)
+        costly = intraday.run_day(self.intraday_rows(), hold=1, cost=0.003)
+        self.assertLessEqual(costly["net_return"], free["net_return"])
+        self.assertTrue(all("unclosed_at_day_end" in e for e in costly["events"]))
 
 
 if __name__ == "__main__":

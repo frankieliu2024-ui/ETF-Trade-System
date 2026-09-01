@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 UNIVERSE = ROOT / "config/market/etf_monitor_universe.json"
 DAILY = ROOT / "events/research/daily_features"
 OUT = ROOT / "research/backtests/etf_t_swing_stage1_validation.json"
+INTRADAY = ROOT / "research/backtests/etf_t_swing_intraday_sina.json"
 
 THRESHOLDS = (0.01, 0.015, 0.02, 0.025, 0.03, 0.04)
 HOLDS = (1, 2, 3, 5, 10)
@@ -318,16 +319,18 @@ def main():
         results.append(evaluate(code, all_rows.get(code, {}), obj["name"]))
     candidates = [code for code in sorted(set(all_rows) - {str(x["code"]) for x in current})]
     external_results = [evaluate(code, all_rows[code], "外部候选") for code in candidates]
+    intraday = json.loads(INTRADAY.read_text(encoding="utf-8")) if INTRADAY.exists() else {"coverage": {"historical_15m_backtest_executed": False}}
     out = {
         "research_id": "etf_t_swing_stage1",
         "generated_at": date.today().isoformat(),
         "status": "RESEARCH_COMPLETE_EXTERNAL_MARKET_SCREEN_INCOMPLETE_DATA_LIMITATION",
         "latest_main_sha": "f00b0d7f5e56d257552fc514db948c56cf96fb1d",
-        "method": {"signal": "close D only; 20d mean deviation and 5d momentum guard", "execution": "open D+1; close after 1/2/3/5/10 trading days", "cost_round_trip": ["10bp", "20bp", "30bp"], "pit": True, "intraday": "HISTORICAL_15M_ARTIFACT_NOT_RETRIEVABLE_CURRENT_ENV", "production_universe_mutated": False},
+        "method": {"signal": "close D only; 20d mean deviation and 5d momentum guard", "execution": "open D+1; close after 1/2/3/5/10 trading days", "cost_round_trip": ["10bp", "20bp", "30bp"], "pit": True, "intraday": "SINA_15M_RESEARCH_ONLY_RUNTIME_RECOVERY", "production_universe_mutated": False},
         "data_audit": {"daily_feature_days": len(list(DAILY.glob("*.json"))), "current_formal_count": len(current), "external_candidates_scanned": len(candidates), "external_deep_research_count": len(external_results), "external_limitations": "Only 159687 exists outside the formal panel in the on-disk extract; it has 24 observations and is research-only. This is not a claim of exhaustive current-market coverage."},
-        "historical_intraday_audit": {"prior_recorded_provider": "SINA_15M_RESEARCH_ONLY_NOT_PRODUCTION_PROVIDER", "prior_recorded_robustness_days": 69, "prior_recorded_object_coverage": "10/11", "current_artifact_status": "NOT_PRESENT_IN_CHECKOUT_OR_RETRIEVABLE_ACTIONS_ARTIFACT", "current_executable_chain": "TENCENT_1M_PRODUCTION_STRUCTURE_EVIDENCE_OR_AKSHARE_EASTMONEY_POC", "historical_15m_backtest_executed_in_this_run": False, "reason": "Repository retains the prior conversion summary and artifact-only workflow contracts, but no historical Sina 15m rows/cache or artifact identifier is available; AkShare is not installed locally and its existing PoC is current-date 1m, not a 69-day historical 15m source.", "coverage": "UNAVAILABLE_FOR_REPRODUCTION", "production_provider_added": False},
+        "historical_intraday_audit": {"prior_recorded_provider": "SINA_15M_RESEARCH_ONLY_NOT_PRODUCTION_PROVIDER", "prior_recorded_robustness_days": 69, "prior_recorded_object_coverage": "10/11", "actions_artifact": {"run_id": 33318592790, "artifact_id": 9734210770, "expired": False, "contains_raw_15m_bars": False}, "current_recovery": intraday.get("coverage", {}), "historical_15m_backtest_executed_in_this_run": bool(intraday.get("coverage", {}).get("historical_15m_backtest_executed")), "reason": "Sina public historical K-line JSONP was re-requested at runtime in research-only mode; no persistent minute warehouse or production provider was added.", "provider": intraday.get("provider"), "production_provider_added": False},
         "current_11": results,
         "external_candidate_screen": external_results,
+        "intraday_15m_research": intraday,
         "walk_forward": {"calibration": "2024", "validation": "2025", "final_holdout": "2026 YTD", "selection_rule": "pre-registered 2% / 3d / 25% mobile; no in-sample best-single-point promotion"},
         "hypotheses": {"H1_588000": "REJECTED", "H2_561980": "INSUFFICIENT_EVIDENCE", "H3_159781": "REJECTED"},
         "master_8_1": {"status": "RESEARCH_ONLY", "reason": "execution translatability, historical minute coverage, and cross-year holdout evidence do not meet formal conversion threshold"},
