@@ -115,6 +115,8 @@ def account_component(account: dict, current: dict) -> dict:
         pending_events.append(event)
 
     needs_update = bool(current.get("needs_account_update")) or bool(pending_events)
+    settlement_status = str(account.get("settlement_constraint_status") or "NONE").upper()
+    settlement_blocked = settlement_status in {"INSUFFICIENT_CASH", "DEADLINE_PASSED_UNCONFIRMED", "UNCONFIRMED_DEADLINE_PASSED"}
     if ingress_pending:
         status = "BLOCKED"
         reason = "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request is newer than canonical account_fact"
@@ -133,7 +135,10 @@ def account_component(account: dict, current: dict) -> dict:
                 "status": "ACCOUNT_SYNC_NOT_PERFORMED",
             },
         }
-    if status_raw == "VALID" and not needs_update:
+    if status_raw == "VALID" and settlement_blocked:
+        status = "DEGRADED"
+        reason = f"SETTLEMENT_CONSTRAINT:{settlement_status}; deployable cash must be used for funding decisions"
+    elif status_raw == "VALID" and not needs_update:
         status = "READY"
         reason = "confirmed account facts remain valid; historical audit deltas are not pending updates"
     elif status_raw == "VALID":
@@ -149,6 +154,10 @@ def account_component(account: dict, current: dict) -> dict:
         "source": account.get("source"),
         "pending_change_events": pending_events,
         "historical_audit_event_count": len(audit_events),
+        "cash": account.get("cash"),
+        "reserved_cash_for_settlement": account.get("reserved_cash_for_settlement", 0),
+        "deployable_cash": account.get("deployable_cash"),
+        "settlement_constraint_status": settlement_status,
     }
 
 
