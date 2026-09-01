@@ -123,7 +123,14 @@ def update_current(*, root: Path | None = None, market_date: str, node: str, cap
         current.update({"market_date": market_date, "latest_valid_node": node, "captured_at": captured_at, "latest_snapshot": latest_snapshot, "snapshot_commit": snapshot_commit})
     current["node_status"] = node_status
     current["data_freshness"] = data_freshness or current.get("data_freshness", {})
-    current["account_fact"] = {k: account.get(k, "") for k in ("status", "updated_at", "source")}
+    current["account_fact"] = {k: account.get(k, "") for k in (
+        "status", "updated_at", "source", "cash",
+        "reserved_cash_for_settlement", "deployable_cash",
+        "settlement_constraint_status",
+    )}
+    current["settlement_obligations"] = account.get("settlement_obligations") or []
+    current["reserved_cash_for_settlement"] = account.get("reserved_cash_for_settlement", 0)
+    current["deployable_cash"] = account.get("deployable_cash")
     current["needs_account_update"] = account["status"] != "VALID"
     master = root / "ETF规则_MASTER.md"
     if master.exists():
