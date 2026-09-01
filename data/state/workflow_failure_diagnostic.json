@@ -1,41 +1,35 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-01T08:52:58+08:00",
+  "generated_at": "2026-09-01T09:48:15+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 33456491076,
+  "workflow_name": "Overseas pre-open pulse",
+  "run_id": 33460019691,
   "run_attempt": 1,
-  "head_sha": "7c2a279ba9ec0099baec4b24bf526020e9300ac8",
-  "main_head_sha": "9ba45f962e96efd2e1c9cd6414fc46dd219a37dd",
-  "classification": "DETERMINISTIC_MAINTENANCE_REGRESSION",
+  "head_sha": "2cac7d45ac30065ef371c1c0f82887dd1eb6e877",
+  "main_head_sha": "1f1e7306bf56bd0eba1e256a11087157a168d034",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "watchdog",
-      "step": "Repair deterministic metadata drift",
-      "number": 10
+      "job": "overseas",
+      "step": "Commit overseas contexts, notifications and runtime health",
+      "number": 15
     }
   ],
   "changed_files": [
-    "\"ETF\\350\\247\\204\\345\\210\\231_MASTER.md\"",
+    "data/market/snapshots/2026-09-01_094529.json",
     "data/state/CURRENT.json",
-    "data/state/account_fact.json",
-    "scripts/build_e2e_status.py",
-    "scripts/check_system_consistency_core.py",
-    "scripts/process_state_sync_request.py",
-    "scripts/state_manager.py",
-    "scripts/sync_formal_files.py",
-    "tests/test_settlement_obligations.py"
+    "data/state/runtime_health.json"
   ],
-  "commit_message": "Merge #138: canonical settlement cash and IPO evidence",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "commit_message": "data: publish core market snapshot",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": true,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
