@@ -570,4 +570,3 @@ def persist_and_send(event: dict, *, policy: str) -> dict:
     write_json(NOTIFICATION_STATE, state)
     return {"status": item["lifecycle_status"], "notification_id": item["notification_id"], "title": item["title"], "response": response}
 
-
