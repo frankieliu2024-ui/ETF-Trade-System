@@ -12,6 +12,10 @@ try:
     from market_quote_router import build_market_quote_context
 except ModuleNotFoundError:
     from scripts.market_quote_router import build_market_quote_context
+try:
+    from rules_version import current_rule_version
+except ModuleNotFoundError:
+    from scripts.rules_version import current_rule_version
 
 
 VALID_NODE_STATUS = {"READY", "DEGRADED", "BLOCKED", "NON_TRADING_DAY"}
@@ -132,10 +136,9 @@ def update_current(*, root: Path | None = None, market_date: str, node: str, cap
     current["reserved_cash_for_settlement"] = account.get("reserved_cash_for_settlement", 0)
     current["deployable_cash"] = account.get("deployable_cash")
     current["needs_account_update"] = account["status"] != "VALID"
-    master = root / "ETF规则_MASTER.md"
-    if master.exists():
-        first = master.read_text(encoding="utf-8").splitlines()[0] if master.stat().st_size else ""
-        current["rules_version"] = next((x for x in first.split() if x.startswith("V") and x[1:2].isdigit()), current.get("rules_version", ""))
+    version = current_rule_version(root)
+    if version:
+        current["rules_version"] = version
     formal_action = account.get("formal_action") or {}
     if str(formal_action.get("execution_status") or "").upper() == "EXECUTED" and formal_action.get("last_executed_event_id"):
         current["last_trade_event_id"] = str(formal_action.get("last_executed_event_id"))
@@ -437,7 +440,7 @@ def build_decision_context(root: Path | None = None) -> dict[str, Any]:
     generated = now_utc()
     quality = build_data_quality_summary(snapshot)
     return {
-        "generated_at": generated, "rules_version": str(current.get("rules_version") or ""), "market_date": current.get("market_date", ""), "latest_node": current.get("latest_valid_node", ""), "current": current, "latest_snapshot": snapshot, "data_status": effective, "freshness_at_context_build": effective,
+        "generated_at": generated, "rules_version": current_rule_version(root) or str(current.get("rules_version") or ""), "market_date": current.get("market_date", ""), "latest_node": current.get("latest_valid_node", ""), "current": current, "latest_snapshot": snapshot, "data_status": effective, "freshness_at_context_build": effective,
         "data_quality_summary": quality, "account_funding": build_account_funding_summary(account), "etf_strategy_risk_metrics": build_etf_strategy_risk_metrics(root), "analysis_coverage": build_analysis_coverage(root, snapshot, account, quality), "point_in_time": build_point_in_time_summary(current, account, snapshot, generated), "scheduled_pulse_health": build_scheduled_pulse_health(root, current), "formal_action": build_formal_action_summary(account),
         "market_quote_router": build_market_quote_context(root),
         "decision_trigger": read_json(root / "data" / "state" / "decision_trigger.json", {"status": "NOT_BUILT", "requires_formal_reassessment": False, "read_only": True}),
@@ -448,3 +451,4 @@ def build_decision_context(root: Path | None = None) -> dict[str, Any]:
         "dashboard_source": str(dashboard.relative_to(root)).replace("\\", "/"), "dashboard_summary": {"maintenance_mode": "candidate_only", "automatic_overwrite": False, "automatic_trade_output": False}, "account_fact_status": account["status"], "needs_account_screenshot": account["status"] != "VALID",
         "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。日内路径、研究证据及证据变化必须参与完整MASTER判断，但单独均不是交易信号。",
     }
+
