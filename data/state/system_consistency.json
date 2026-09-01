@@ -1,17 +1,66 @@
 {
-  "generated_at": "2026-09-01T07:33:17Z",
-  "generated_at_beijing": "2026-09-01T15:33:17+08:00",
+  "generated_at": "2026-09-01T07:51:58Z",
+  "generated_at_beijing": "2026-09-01T15:51:58+08:00",
   "repository": {
-    "head_sha": "e72d016883f9d8eb2b374c98b2eba15c781c4d25",
-    "github_sha": "e72d016883f9d8eb2b374c98b2eba15c781c4d25",
-    "github_run_id": "33482538032",
+    "head_sha": "f6a4bf75e393f1298ebd2137adad373aa8fe9ee8",
+    "github_sha": "f6a4bf75e393f1298ebd2137adad373aa8fe9ee8",
+    "github_run_id": "33484113491",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "e72d016883f9d8eb2b374c98b2eba15c781c4d25",
-    "workflow_sha": "e72d016883f9d8eb2b374c98b2eba15c781c4d25",
+    "checked_commit": "f6a4bf75e393f1298ebd2137adad373aa8fe9ee8",
+    "workflow_sha": "f6a4bf75e393f1298ebd2137adad373aa8fe9ee8",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
+  },
+  "semantic_freshness": {
+    "base": "e72d016883f9d8eb2b374c98b2eba15c781c4d25",
+    "head": "f6a4bf75e393f1298ebd2137adad373aa8fe9ee8",
+    "changed_paths": [
+      ".github/workflows/system-consistency.yml",
+      "data/state/e2e_status.json",
+      "data/state/execution_reconciliation.json",
+      "data/state/last_known_good.json",
+      "data/state/maintenance_diagnostic.json",
+      "data/state/maintenance_health.json",
+      "data/state/notification_center.json",
+      "data/state/overseas_context.json",
+      "data/state/runtime_health.json",
+      "data/state/system_consistency.json",
+      "data/state/us_extended_hours_context.json",
+      "scripts/check_system_consistency_core.py",
+      "scripts/semantic_latest_main.py",
+      "tests/test_semantic_latest_main.py"
+    ],
+    "categories": {
+      "STABLE_PRODUCTION_CHANGE": [
+        ".github/workflows/system-consistency.yml",
+        "scripts/check_system_consistency_core.py",
+        "scripts/semantic_latest_main.py",
+        "tests/test_semantic_latest_main.py"
+      ],
+      "DYNAMIC_RUNTIME_FACT": [
+        "data/state/e2e_status.json",
+        "data/state/execution_reconciliation.json",
+        "data/state/last_known_good.json",
+        "data/state/maintenance_diagnostic.json",
+        "data/state/maintenance_health.json",
+        "data/state/notification_center.json",
+        "data/state/overseas_context.json",
+        "data/state/runtime_health.json",
+        "data/state/system_consistency.json",
+        "data/state/us_extended_hours_context.json"
+      ],
+      "FORMAL_FACT_MUTATION": [],
+      "REQUEST_OR_TRIGGER_FACT": [],
+      "UNKNOWN": []
+    },
+    "decision": "REPLAY_REQUIRED",
+    "validated_commit": "e72d016883f9d8eb2b374c98b2eba15c781c4d25",
+    "current_head": "f6a4bf75e393f1298ebd2137adad373aa8fe9ee8",
+    "head_advanced": true,
+    "stable_contract_freshness": "REVIEW_REQUIRED",
+    "runtime_fact_freshness": "CURRENT"
   },
   "status": "PASS",
   "hard_error_count": 0,
@@ -20,12 +69,17 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-08-31:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-08-31\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n.....................................................................................................................................................\n----------------------------------------------------------------------\nRan 149 tests in 0.127s\n\nOK\n"
+      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-08-31:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-08-31\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n.....................................................................................................................................................\n----------------------------------------------------------------------\nRan 149 tests in 0.093s\n\nOK\n"
     },
     {
       "name": "tests:opening_current_self_healing",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.004s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.003s\n\nOK\n"
+    },
+    {
+      "name": "tests:semantic_latest_main",
+      "status": "PASS",
+      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.131s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -305,12 +359,17 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=e72d016883f9d8eb2b374c98b2eba15c781c4d25"
+      "detail": "HEAD=f6a4bf75e393f1298ebd2137adad373aa8fe9ee8"
+    },
+    {
+      "name": "git:semantic_latest_main",
+      "status": "PASS",
+      "detail": "{\"base\": \"e72d016883f9d8eb2b374c98b2eba15c781c4d25\", \"head\": \"f6a4bf75e393f1298ebd2137adad373aa8fe9ee8\", \"changed_paths\": [\".github/workflows/system-consistency.yml\", \"data/state/e2e_status.json\", \"data/state/execution_reconciliation.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/overseas_context.json\", \"data/state/runtime_health.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\", \"scripts/check_system_consistency_core.py\", \"scripts/semantic_latest_main.py\", \"tests/test_semantic_latest_main.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\".github/workflows/system-consistency.yml\", \"scripts/check_system_consistency_core.py\", \"scripts/semantic_latest_main.py\", \"tests/test_semantic_latest_main.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_reconciliation.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/overseas_context.json\", \"data/state/runtime_health.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\"}"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=e72d016883f9d8eb2b374c98b2eba15c781c4d25 GITHUB_SHA=e72d016883f9d8eb2b374c98b2eba15c781c4d25"
+      "detail": "HEAD=f6a4bf75e393f1298ebd2137adad373aa8fe9ee8 GITHUB_SHA=f6a4bf75e393f1298ebd2137adad373aa8fe9ee8"
     },
     {
       "name": "git:critical_files_tracked",
@@ -740,7 +799,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=03:33 max_age_seconds=37097 limit=900"
+      "detail": "active=False phase=03:51 max_age_seconds=38218 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -885,12 +944,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=2367"
+      "detail": "declared=STALE expected=STALE age_seconds=3526"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=2348"
+      "detail": "declared=STALE expected=STALE age_seconds=3504"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -930,7 +989,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-09-01T07:32:17Z market=2026-09-01T14:53:09+08:00"
+      "detail": "context=2026-09-01T07:51:33Z market=2026-09-01T14:53:09+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -940,7 +999,7 @@
     {
       "name": "scheduled_pulse:observable",
       "status": "PASS",
-      "detail": "status=WARNING"
+      "detail": "status=UNKNOWN"
     },
     {
       "name": "formal_action:execution_boundary",
@@ -1020,17 +1079,17 @@
     {
       "name": "runtime_health:structured",
       "status": "PASS",
-      "detail": "status=PASS"
+      "detail": "status=SKIPPED"
     },
     {
-      "name": "runtime_health:pass_requires_snapshot",
+      "name": "runtime_health:skipped_reason",
       "status": "PASS",
-      "detail": "runtime_snapshot=data/market/snapshots/2026-09-01_145309.json current_snapshot=data/market/snapshots/2026-09-01_145309.json"
+      "detail": "failure_stage=session_gate reason=outside_a_share_capture_window"
     },
     {
       "name": "a_share_runtime:live_state_available",
       "status": "PASS",
-      "detail": "runtime_status=PASS current_snapshot=data/market/snapshots/2026-09-01_145309.json"
+      "detail": "runtime_status=SKIPPED current_snapshot=data/market/snapshots/2026-09-01_145309.json"
     },
     {
       "name": "a_share_runtime:current_ready",
