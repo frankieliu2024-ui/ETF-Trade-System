@@ -94,6 +94,12 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Validate OpenSSL SM4 runtime dependency
+        shell: bash
+        run: |
+          command -v openssl
+          openssl version -a
+          openssl enc -list | grep -E '(^|[[:space:]])-sm4-ecb([[:space:]]|$)'
       - name: Refresh formal overseas and Asia index context for pre-market readiness
         shell: bash
         run: |
