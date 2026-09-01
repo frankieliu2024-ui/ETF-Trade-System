@@ -118,7 +118,9 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
         "", "|项目|最新事实|", "|-|-|",
         f"|总资产|{money(account.get('total_asset'))}|",
         f"|股票市值|{money(account.get('stock_market_value'))}|",
-        f"|可用资金|{money(account.get('cash'))}|",
+        f"|账面现金|{money(account.get('cash'))}|",
+        f"|待结算锁定资金|{money(account.get('reserved_cash_for_settlement', 0))}|",
+        f"|可部署现金|{money(account.get('deployable_cash'))}|",
         f"|账户持仓盈亏|{money(account.get('holding_pnl'))}|",
         f"|当日盈亏|{money(account.get('daily_pnl'))}（{float(account.get('daily_pnl_pct') or 0):+.2f}%）|",
         f"|账户总风险暴露率|约{exposure:.2f}%|",
@@ -205,7 +207,7 @@ def build_archive_fact_block(account: dict) -> str:
         "### 账户事实增量维护（仅客观事实）",
         f"- 账户事实确认时间：{account.get('updated_at', '')}",
         f"- 来源：{account.get('source', '')}",
-        f"- 总资产：{money(account.get('total_asset'))}；可用资金：{money(account.get('cash'))}；"
+        f"- 总资产：{money(account.get('total_asset'))}；账面现金：{money(account.get('cash'))}；待结算锁定：{money(account.get('reserved_cash_for_settlement', 0))}；可部署现金：{money(account.get('deployable_cash'))}；"
         f"持仓数量沿用最新确认账户事实。",
         *trade_lines,
         "- 本区块不生成交易权限、买卖建议或MASTER修改；未确认费用不写入已知费用。",
