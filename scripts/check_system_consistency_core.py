@@ -476,6 +476,18 @@ def main() -> int:
     mirror_keys = ("status", "updated_at", "source")
     mirror_ok = all(str(current_account.get(key) or "") == str(account.get(key) or "") for key in mirror_keys)
     check("state_coherence:current_account_mirror", mirror_ok, f"current={current_account} canonical={{k: account.get(k) for k in mirror_keys}}")
+    active_statuses = {"PENDING", "PENDING_PAYMENT", "DEADLINE_PASSED_UNCONFIRMED", "UNCONFIRMED_DEADLINE_PASSED"}
+    obligations = account.get("settlement_obligations") or []
+    expected_reserved = round(sum(float(item.get("required_cash") or 0) for item in obligations if str(item.get("status") or "").upper().replace("-", "_").replace(" ", "_") in active_statuses), 2)
+    cash = account.get("cash")
+    expected_deployable = round(max(float(cash) - expected_reserved, 0), 2) if cash is not None else None
+    settlement_ok = (
+        float(account.get("reserved_cash_for_settlement", 0) or 0) == expected_reserved
+        and (account.get("deployable_cash") == expected_deployable or float(account.get("deployable_cash")) == expected_deployable)
+        and float(current.get("reserved_cash_for_settlement", 0) or 0) == expected_reserved
+        and (current.get("deployable_cash") == expected_deployable or float(current.get("deployable_cash")) == expected_deployable)
+    )
+    check("state_coherence:settlement_cash_derivation", settlement_ok, f"reserved={account.get('reserved_cash_for_settlement')} expected={expected_reserved} deployable={account.get('deployable_cash')} expected={expected_deployable}")
     expected_account_stocks = {
         str(position.get("code", "")) for position in (account.get("positions") or [])
         if isinstance(position, dict) and str(position.get("asset_type", "")).upper() == "STOCK" and float(position.get("quantity") or 0) > 0
