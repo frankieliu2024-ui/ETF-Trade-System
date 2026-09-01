@@ -1,31 +1,32 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-01T14:46:21+08:00",
+  "generated_at": "2026-09-01T14:49:37+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33479020665,
+  "run_id": 33479173934,
   "run_attempt": 1,
-  "head_sha": "aa73c9f7f0d6a0e2bf78979a971cc5d40fb795b6",
-  "main_head_sha": "35eff3c0454cdff46dc1e5aca733fcd2e9063fbe",
+  "head_sha": "2350856f9808fac4b2add9b66ad378f0ce0efbec",
+  "main_head_sha": "e5e19a92db0c11a1bd86153794e9271b52b7515f",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "Validate semantic latest-main freshness",
-      "number": 4
+      "step": "Enforce hard consistency result",
+      "number": 19
     }
   ],
   "changed_files": [
-    ".github/workflows/system-consistency.yml"
+    "scripts/semantic_latest_main.py",
+    "tests/test_semantic_latest_main.py"
   ],
-  "commit_message": "fix: pass pull request base to freshness gate",
+  "commit_message": "fix: preserve unicode paths in main freshness audit",
   "commit_author": "Codex <codex@openai.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
-    "changes_confined_to_auto_rollback_allowlist": true,
+    "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
     "user_notification_authority": false,
