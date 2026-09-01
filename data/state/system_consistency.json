@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-09-01T00:31:30Z",
-  "generated_at_beijing": "2026-09-01T08:31:30+08:00",
+  "generated_at": "2026-09-01T00:52:55Z",
+  "generated_at_beijing": "2026-09-01T08:52:55+08:00",
   "repository": {
-    "head_sha": "1d92035ffd64d50573e1ba547c808f4dc5a07530",
-    "github_sha": "1d92035ffd64d50573e1ba547c808f4dc5a07530",
-    "github_run_id": "33455048183",
+    "head_sha": "7c2a279ba9ec0099baec4b24bf526020e9300ac8",
+    "github_sha": "7c2a279ba9ec0099baec4b24bf526020e9300ac8",
+    "github_run_id": "33456491014",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "1d92035ffd64d50573e1ba547c808f4dc5a07530",
-    "workflow_sha": "1d92035ffd64d50573e1ba547c808f4dc5a07530",
+    "checked_commit": "7c2a279ba9ec0099baec4b24bf526020e9300ac8",
+    "workflow_sha": "7c2a279ba9ec0099baec4b24bf526020e9300ac8",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
@@ -20,7 +20,7 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-08-31:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-08-28\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n.......................................................................................................................................\n----------------------------------------------------------------------\nRan 135 tests in 0.088s\n\nOK\n"
+      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-08-31:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-08-28\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n.......................................................................................................................................\n----------------------------------------------------------------------\nRan 135 tests in 0.082s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -265,12 +265,12 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=1d92035ffd64d50573e1ba547c808f4dc5a07530"
+      "detail": "HEAD=7c2a279ba9ec0099baec4b24bf526020e9300ac8"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=1d92035ffd64d50573e1ba547c808f4dc5a07530 GITHUB_SHA=1d92035ffd64d50573e1ba547c808f4dc5a07530"
+      "detail": "HEAD=7c2a279ba9ec0099baec4b24bf526020e9300ac8 GITHUB_SHA=7c2a279ba9ec0099baec4b24bf526020e9300ac8"
     },
     {
       "name": "git:critical_files_tracked",
@@ -700,7 +700,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=20:31 max_age_seconds=11790 limit=900"
+      "detail": "active=False phase=20:52 max_age_seconds=13075 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -815,12 +815,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=63017"
+      "detail": "declared=STALE expected=STALE age_seconds=64303"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=62996"
+      "detail": "declared=STALE expected=STALE age_seconds=64283"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -860,7 +860,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-09-01T00:31:06Z market=2026-08-31T15:01:10+08:00"
+      "detail": "context=2026-09-01T00:52:33Z market=2026-08-31T15:01:10+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1000,7 +1000,12 @@
     {
       "name": "state_coherence:current_account_mirror",
       "status": "PASS",
-      "detail": "current={'status': 'VALID', 'updated_at': '2026-09-01T07:15:00+08:00', 'source': 'BROKER_SCREENSHOT_20260901_0715_USER_PROVIDED'} canonical={k: account.get(k) for k in mirror_keys}"
+      "detail": "current={'status': 'VALID', 'updated_at': '2026-09-01T07:15:00+08:00', 'source': 'BROKER_SCREENSHOT_20260901_0715_USER_PROVIDED', 'cash': 10349.47, 'reserved_cash_for_settlement': 8000, 'deployable_cash': 2349.47, 'settlement_constraint_status': 'RESERVED'} canonical={k: account.get(k) for k in mirror_keys}"
+    },
+    {
+      "name": "state_coherence:settlement_cash_derivation",
+      "status": "PASS",
+      "detail": "reserved=8000 expected=8000.0 deployable=2349.47 expected=2349.47"
     },
     {
       "name": "stock_runtime:dynamic_account_membership",
