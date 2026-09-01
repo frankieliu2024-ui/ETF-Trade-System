@@ -405,6 +405,21 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
     }
 
 
+
+
+def build_account_funding_summary(account: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "cash": account.get("cash"),
+        "reserved_cash_for_settlement": account.get("reserved_cash_for_settlement", 0),
+        "deployable_cash": account.get("deployable_cash"),
+        "settlement_obligations": account.get("settlement_obligations") or [],
+        "settlement_constraint_status": account.get("settlement_constraint_status", "NONE"),
+        "settlement_cash_shortfall": account.get("settlement_cash_shortfall"),
+        "funding_rule": "正式金额判断只使用canonical deployable_cash；锁定待结算资金不得用于Trial或Confirm。",
+        "read_only": True,
+    }
+
+
 def build_decision_context(root: Path | None = None) -> dict[str, Any]:
     root = root or root_from_env()
     current, account = read_current(root), read_account_fact(root)
@@ -416,7 +431,7 @@ def build_decision_context(root: Path | None = None) -> dict[str, Any]:
     quality = build_data_quality_summary(snapshot)
     return {
         "generated_at": generated, "rules_version": str(current.get("rules_version") or ""), "market_date": current.get("market_date", ""), "latest_node": current.get("latest_valid_node", ""), "current": current, "latest_snapshot": snapshot, "data_status": effective, "freshness_at_context_build": effective,
-        "data_quality_summary": quality, "etf_strategy_risk_metrics": build_etf_strategy_risk_metrics(root), "analysis_coverage": build_analysis_coverage(root, snapshot, account, quality), "point_in_time": build_point_in_time_summary(current, account, snapshot, generated), "scheduled_pulse_health": build_scheduled_pulse_health(root, current), "formal_action": build_formal_action_summary(account),
+        "data_quality_summary": quality, "account_funding": build_account_funding_summary(account), "etf_strategy_risk_metrics": build_etf_strategy_risk_metrics(root), "analysis_coverage": build_analysis_coverage(root, snapshot, account, quality), "point_in_time": build_point_in_time_summary(current, account, snapshot, generated), "scheduled_pulse_health": build_scheduled_pulse_health(root, current), "formal_action": build_formal_action_summary(account),
         "market_quote_router": build_market_quote_context(root),
         "decision_trigger": read_json(root / "data" / "state" / "decision_trigger.json", {"status": "NOT_BUILT", "requires_formal_reassessment": False, "read_only": True}),
         "capital_efficiency_ranking": read_json(root / "data" / "state" / "capital_efficiency_ranking.json", {"status": "NOT_BUILT", "ordered_candidates": [], "read_only": True}),
