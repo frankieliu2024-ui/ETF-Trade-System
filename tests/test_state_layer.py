@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from scripts.process_state_sync_request import account_fact_is_older, is_broker_screenshot_request, merge_account_fact, sync_current_account_mirror
