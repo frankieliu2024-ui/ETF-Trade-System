@@ -159,6 +159,18 @@ class EtfTSwingContractTest(unittest.TestCase):
         self.assertLessEqual(costly["net_return"], free["net_return"])
         self.assertTrue(all("unclosed_at_day_end" in e for e in costly["events"]))
 
+    def test_intraday_unclosed_mobile_is_forced_rebuy_at_eod(self):
+        out = intraday.run_day(self.intraday_rows(), hold=999, cost=0.002)
+        self.assertTrue(out["events"])
+        self.assertTrue(all(not e["unclosed_at_day_end"] for e in out["events"]))
+        self.assertTrue(any(e.get("forced_eod_rebuy") for e in out["events"]))
+
+    def test_t1_multiple_cycles_cannot_resell_same_day_inventory(self):
+        out = intraday.run_day(self.intraday_rows(), hold=1, cost=0.0, multiple=True, allow_same_day_resale=False)
+        for a, b in zip(out["events"], out["events"][1:]):
+            if a.get("rebuy_execution_time") and b.get("release_execution_time"):
+                self.assertNotEqual(a["rebuy_execution_time"][:10], b["release_execution_time"][:10])
+
 
 if __name__ == "__main__":
     unittest.main()

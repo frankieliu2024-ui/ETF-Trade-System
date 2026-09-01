@@ -53,7 +53,7 @@ def median(xs):
     return xs[len(xs) // 2] if xs else 0.0
 
 
-def run_day(rows, hold, cost, threshold=0.01, trend_guard=False, multiple=False):
+def run_day(rows, hold, cost, threshold=0.01, trend_guard=False, multiple=False, allow_same_day_resale=False):
     if len(rows) < 12:
         return {"status": "INSUFFICIENT_EVIDENCE", "observations": len(rows)}
     first = rows[0]["open"]
@@ -62,6 +62,8 @@ def run_day(rows, hold, cost, threshold=0.01, trend_guard=False, multiple=False)
     cash = 0.0
     state = "MOBILE_INVESTED"
     release = None
+    release_event = None
+    resale_locked_date = None
     events, turnover = [], 0.0
     right, wrong = [], []
     i = 8
@@ -70,7 +72,8 @@ def run_day(rows, hold, cost, threshold=0.01, trend_guard=False, multiple=False)
         mean = sum(x["close"] for x in rows[max(0, i - 8):i]) / min(8, i)
         dev = r["close"] / mean - 1.0
         action = None
-        if state == "MOBILE_INVESTED" and dev >= threshold and (not trend_guard or r["close"] <= rows[i - 3]["close"] * (1 + threshold)):
+        r_date = r.get("date") or r["timestamp"][:10]
+        if state == "MOBILE_INVESTED" and dev >= threshold and (allow_same_day_resale or resale_locked_date != r_date) and (not trend_guard or r["close"] <= rows[i - 3]["close"] * (1 + threshold)):
             action = "release"
         elif state == "MOBILE_CASH" and i - release["i"] >= hold and dev <= -threshold:
             action = "rebuy"
@@ -86,6 +89,7 @@ def run_day(rows, hold, cost, threshold=0.01, trend_guard=False, multiple=False)
                 release = {"i": i + 1, "price": px, "time": ex["timestamp"], "loss": 0.0}
                 turnover += value
                 events.append({"release_signal_time": r["timestamp"], "release_execution_time": ex["timestamp"], "release_price": px, "transaction_cost": fee, "completed_cycle": False})
+                release_event = events[-1]
             else:
                 fee = cash * cost / 2
                 mobile_units = max(0.0, (cash - fee) / px)
@@ -98,6 +102,7 @@ def run_day(rows, hold, cost, threshold=0.01, trend_guard=False, multiple=False)
                 release["right_tail_loss"] = release["loss"]
                 release["holding_bars"] = i + 1 - release["i"]
                 release["completed_cycle"] = True
+                resale_locked_date = ex.get("date") or ex["timestamp"][:10]
                 events[-1].update({"rebuy_signal_time": r["timestamp"], "rebuy_execution_time": ex["timestamp"], "rebuy_price": px, "gross_spread": release["gross_spread"], "net_spread": release["net_spread"], "holding_cash_bars": release["holding_bars"], "right_tail_loss": release["right_tail_loss"], "completed_cycle": True})
                 turnover += mobile_units * px
                 release = None
@@ -110,12 +115,30 @@ def run_day(rows, hold, cost, threshold=0.01, trend_guard=False, multiple=False)
             release["loss"] = max(release["loss"], loss)
         i += 1
     if state == "MOBILE_CASH" and release:
-        release["unclosed_at_day_end"] = True
-        events[-1]["unclosed_at_day_end"] = True
+        # Strict intraday semantics: every day closes the released mobile
+        # inventory at the final bar close. This is a pre-fixed executable
+        # fallback, so no cash silently resets overnight.
+        ex = rows[-1]
+        px = ex["close"]
+        fee = cash * cost / 2
+        mobile_units = max(0.0, (cash - fee) / px)
+        turnover += mobile_units * px
+        release["rebuy_time"], release["rebuy_price"] = ex["timestamp"], px
+        release["transaction_cost"] = release.get("transaction_cost", 0.0) + fee
+        release["gross_spread"] = release["price"] / px - 1.0
+        release["net_spread"] = release["gross_spread"] - cost
+        release["right_tail_loss"] = release["loss"]
+        release["holding_bars"] = len(rows) - release["i"]
+        release["completed_cycle"] = True
+        release["forced_eod_rebuy"] = True
+        release_event.update({"rebuy_signal_time": ex["timestamp"], "rebuy_execution_time": ex["timestamp"], "rebuy_price": px, "gross_spread": release["gross_spread"], "net_spread": release["net_spread"], "holding_cash_bars": release["holding_bars"], "right_tail_loss": release["right_tail_loss"], "completed_cycle": True, "forced_eod_rebuy": True, "unclosed_at_day_end": False})
+        cash = 0.0
+        state = "MOBILE_INVESTED"
+        release = None
     for e in events:
         e.setdefault("unclosed_at_day_end", False)
-        if "loss" not in e and e.get("completed_cycle") is not True:
-            e["right_tail_loss"] = release.get("loss", 0.0) if release else 0.0
+        if "loss" not in e and "right_tail_loss" not in e and e.get("completed_cycle") is not True:
+            e["right_tail_loss"] = 0.0
     for e in events:
         if e.get("completed_cycle"):
             after = [x["close"] for x in rows if x["timestamp"] >= e["rebuy_execution_time"]]

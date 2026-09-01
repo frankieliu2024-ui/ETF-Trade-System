@@ -19,9 +19,9 @@ canonical `events/research/daily_features` 约646个交易日，正式11只全�
 
 已从旧记录和 artifact 核实新浪路径，并实际即时请求公开历史 K 线接口。provider 为 `SINA_15M_RESEARCH_ONLY_NOT_PRODUCTION_PROVIDER`；artifact 9734210770（run 33318592790）仍未过期但不含原始 bars。当前恢复结果为 11/11 对象、每只 1023 根 15m bar、65—71 个交易日。该脚本不创建 provider、分钟仓库、workflow 或 production state。
 
-日内模型使用 completed bar close signal -> next bar open execution；不使用同一 bar high/low 内部顺序。mobile 初始 invested，release 后才能 rebuy；T+1 不允许当天新买份额再卖出；未回补、费用、right-tail 和 wrong-rebuy 均单独记录。no-trend-filter、trend-filter、multiple-cycles 对照已运行，hold 1/2/4/8 bars 与 rest-of-day 已运行。
+日内模型使用 completed bar close signal -> next bar open execution；不使用同一 bar high/low 内部顺序。mobile 初始 invested，release 后才能 rebuy；自然条件未触发时按预注册日终固定收盘规则强制回补，避免现金跨日免费重置；T+1 不允许当天新买份额再卖出；费用、right-tail 和 wrong-rebuy 均单独记录。no-trend-filter、trend-filter、multiple-cycles 对照已运行，hold 1/2/4/8 bars 与 rest-of-day 已运行。
 
-hold=4 bars 的逐日平均相对 B&H alpha（百分点）在 20bp 下为：561980 -0.020pp、588000 -0.032pp、159781 -0.012pp、515880 -0.025pp；10/20/30bp 均未产生稳定正 alpha。多次 T 增加换手和未回补风险，未显示可兑现优势。逐日 T+0/T+1 制度元数据不足，不能宣称 T+0 有额外价值；跨境 ETF 还存在时差、溢折价、底层休市风险。
+hold=4 bars 的逐日平均相对 B&H alpha（百分点）在 20bp 下为：561980 -0.032pp、588000 -0.042pp、159781 -0.022pp、515880 -0.035pp；10/20/30bp 均未产生稳定正 alpha。严格日内层对每个 release 执行日终固定收盘回补，因此 unclosed_cycles=0，回补两腿费用均计入；T+1 multiple-cycle 版本禁止回补当日再次 release。多次 T 仍未显示可兑现优势。逐日 T+0/T+1 制度元数据不足，不能宣称 T+0 有额外价值；跨境 ETF 还存在时差、溢折价、底层休市风险。
 
 ## 两层交叉结论
 
