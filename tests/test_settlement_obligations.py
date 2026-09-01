@@ -39,4 +39,9 @@ class SettlementObligationTests(unittest.TestCase):
         prior=acct(trades=[{"event_id":"t1"}],formal_action={"action":"hold"},fee_facts=[{"fee":1}],reconciliation_metadata={"status":"RECONCILED"})
         got=merge_account_fact(prior,acct())
         for key in ("trades","formal_action","fee_facts","reconciliation_metadata"): self.assertEqual(got[key],prior[key])
+    def test_dashboard_contract_names_all_three_cash_values(self):
+        dashboard = "|账面现金|10,349.47元|\\n|待结算锁定资金|8,000.00元|\\n|可部署现金|2,349.47元|"
+        for label in ("账面现金", "待结算锁定资金", "可部署现金"):
+            self.assertIn(label, dashboard)
+
 if __name__=="__main__": unittest.main()
