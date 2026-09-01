@@ -6,9 +6,11 @@ from pathlib import Path
 
 try:
     from state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current
+    from rules_version import current_rule_version
     from market_quote_router import build_market_quote_context
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current
+    from scripts.rules_version import current_rule_version
     from scripts.market_quote_router import build_market_quote_context
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
@@ -130,6 +132,7 @@ def build(root: Path = ROOT) -> dict:
         "status": status,
         "same_day_review_idempotent": True,
         "generated_at": now_utc(),
+        "rules_version": current_rule_version(root) or decision.get("rules_version", ""),
         "context_file": "data/state/review_context.json",
         "market_quote_router": build_market_quote_context(root),
         "prohibited_outputs": ["trade_amount", "buy_action", "sell_action", "order"],
@@ -175,3 +178,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

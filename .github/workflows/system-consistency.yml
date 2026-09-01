@@ -167,6 +167,7 @@ jobs:
         run: |
           python scripts/build_state_context.py
           python scripts/build_query_context.py
+          python scripts/build_post_market_review.py\n          python - <<'PY'\n          import json\n          from pathlib import Path\n          payload = json.loads(Path("data/state/review_context.json").read_text(encoding="utf-8"))\n          if payload.get("rules_version") != "V2.2.31":\n              raise SystemExit(f"review_context rules_version missing or stale: {payload.get('rules_version')!r}")\n          PY
       - name: Validate formal files, data standard, monitoring layers and runtime wiring
         id: consistency
         continue-on-error: true
