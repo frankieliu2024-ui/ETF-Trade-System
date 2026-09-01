@@ -96,10 +96,27 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
     def test_opening_recovery_keeps_canonical_producer_and_safety_boundary(self):
         workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
         snapshot = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        fallback = (ROOT / ".github/workflows/opening-auction-current-fallback.yml").read_text(encoding="utf-8")
         self.assertIn('steps.assess.outputs.action == \'REFRESH_SNAPSHOT\'', workflow)
         self.assertIn("gh workflow run market-snapshot.yml --ref main", workflow)
         self.assertIn("Publish core snapshot and CURRENT immediately", snapshot)
+        self.assertIn("etf-market-snapshot-${{ github.ref }}", snapshot)
+        self.assertIn("etf-market-snapshot-${{ github.ref }}", fallback)
+        self.assertIn("newer_current_already_exists", (ROOT / "scripts/cloud_runner_snapshot.py").read_text(encoding="utf-8"))
         self.assertNotIn("may_auto_trade", workflow)
+
+    def test_assessment_does_not_claim_recovery_without_watchdog_execution(self):
+        current = {
+            "market_date": "2026-08-31",
+            "captured_at": "2026-08-31T15:01:10+08:00",
+            "latest_valid_node": "close",
+            "node_status": "READY",
+        }
+        with mock.patch.object(runtime_self_heal, "atomic_write_json") as write:
+            status = self._assess(current=current, now=datetime.fromisoformat("2026-09-01T09:27:00+08:00"))
+        write.assert_not_called()
+        self.assertEqual(status["recommended_action"], "REFRESH_SNAPSHOT")
+        self.assertNotIn("recovered", status["reason"].lower())
 
 if __name__ == "__main__":
     unittest.main()
