@@ -4,6 +4,10 @@ import json
 import re
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+try:
+    from lifecycle_state import build_lifecycle_projection
+except ModuleNotFoundError:
+    from scripts.lifecycle_state import build_lifecycle_projection
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE = ROOT / "data" / "state"
@@ -282,6 +286,22 @@ def context_component(query: dict, decision: dict) -> dict:
     return {"status": status, "reason": reason, "query_context": query_ok, "decision_context": decision_ok}
 
 
+def lifecycle_component(current: dict) -> dict:
+    projection = build_lifecycle_projection(ROOT)
+    if projection.get("status") != "READY":
+        return {"status": "BLOCKED", "reason": "lifecycle projection unavailable"}
+    due = projection.get("decision_due_count", 0)
+    return {
+        "status": "READY",
+        "reason": f"canonical lifecycle projection available; mandatory_due={due}",
+        "active_trial_count": projection.get("active_trial_count", 0),
+        "decision_due_count": due,
+        "overdue_count": projection.get("overdue_count", 0),
+        "next_mandatory_node": projection.get("next_mandatory_node", ""),
+        "source": "formal decision + executed trade facts",
+    }
+
+
 def close_review_component(current: dict) -> dict:
     """Require a canonical review once the formal close context is ready."""
     event = read_json(POST_MARKET_REVIEW)
@@ -327,6 +347,7 @@ def main() -> int:
         "risk": risk_component(data["equity"], dashboard, data["current"]),
         "close_review": close_review_component(data["current"]),
         "decision_context": context_component(data["query"], data["decision"]),
+        "lifecycle": lifecycle_component(data["current"]),
         "maintenance": maintenance_component(data["maintenance"]),
     }
 

@@ -8,10 +8,12 @@ try:
     from state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current
     from rules_version import current_rule_version
     from market_quote_router import build_market_quote_context
+    from lifecycle_state import build_lifecycle_projection
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current
     from scripts.rules_version import current_rule_version
     from scripts.market_quote_router import build_market_quote_context
+    from scripts.lifecycle_state import build_lifecycle_projection
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 CLOSE_NODES = {"1500", "close"}
@@ -163,6 +165,7 @@ def build(root: Path = ROOT) -> dict:
         "waiting_for_user_screenshot": waiting,
         "formal_review_generated": formal_review_generated,
         "formal_review_allowed": bool(market_close and data_complete and not waiting),
+        "lifecycle_projection": decision.get("lifecycle_projection") or build_lifecycle_projection(root),
         "same_day_review_idempotent": True,
         "review_boundary": "15:00后当天首次最终账户截图默认触发正式收盘复盘。A股显式close节点必须把15:00价格有效时点与provider后续查询/观察时间分离；provider时间晚于15:00不等于发生了盘后成交。账户事实只能来自用户或券商确认；重复截图如无账户/成交变化只做差异更新，不重复制造CASE。",
     }
