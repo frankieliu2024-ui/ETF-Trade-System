@@ -1,36 +1,10 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-01T22:35:30+08:00",
+  "updated_at": "2026-09-02T04:57:39+08:00",
   "last_status": "SENT",
-  "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】费城半导体指数（SOX）出现极端波动 -2.95%",
+  "last_type": "US_SESSION_SUMMARY",
+  "last_title": "【收盘总结】美股科技结构明显偏弱",
   "notifications": [
-    {
-      "notification_id": "notification_caa6018a9fd3c42c3df0",
-      "event_type": "系统异常",
-      "source_event_id": "system:workflow:33096867945:WORKFLOW_FAILURE_UNCLASSIFIED",
-      "related_decision_id": "",
-      "security_code": "",
-      "security_name": "",
-      "user_severity": "需要关注",
-      "user_action": "暂时无需手工修改数据；如后续影响行情、账户或交易判断，系统会升级通知。",
-      "lifecycle_status": "EXPIRED",
-      "created_at": "2026-08-28T01:09:46+08:00",
-      "sent_at": "2026-08-28T01:09:47+08:00",
-      "confirmed_at": null,
-      "archived_at": "2026-08-30T07:18:15+08:00",
-      "expires_at": "2026-08-30T01:09:46+08:00",
-      "title": "【真实运行异常｜需要关注】Overseas pre-open pulse失败",
-      "content": "发生了什么：Overseas pre-open pulse运行失败（Run 33096867945）。\n\n具体失败：overseas / Commit overseas contexts, notifications and runtime health。\n\n影响：后台维护任务失败，但当前诊断没有证据表明券商账户或持仓被改动。\n\n涉及变更：data/state/us_extended_hours_context.json、data/state/us_pulse_runtime_health.json。\n\n你现在需要做什么：暂时无需手工修改数据；如后续影响行情、账户或交易判断，系统会升级通知。\n\n系统为什么没有自动修：自动处理触及安全边界，因此停止自动修改。诊断分类：WORKFLOW_FAILURE_UNCLASSIFIED。",
-      "source": "workflow_failure_diagnostic",
-      "confirmation_context": {},
-      "response": {
-        "http_status": 200,
-        "pushplus_code": 200,
-        "pushplus_message": "执行成功"
-      },
-      "last_attempted_at": "2026-08-28T01:09:47+08:00"
-    },
     {
       "notification_id": "notification_b499ff41f2a4f223f59e",
       "event_type": "US_SESSION_SUMMARY",
@@ -1787,27 +1761,47 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-01T22:28:16+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "system:workflow:33096867945:WORKFLOW_FAILURE_UNCLASSIFIED",
-      "type": "系统异常",
-      "title": "【真实运行异常｜需要关注】Overseas pre-open pulse失败",
-      "content": "发生了什么：Overseas pre-open pulse运行失败（Run 33096867945）。\n\n具体失败：overseas / Commit overseas contexts, notifications and runtime health。\n\n影响：后台维护任务失败，但当前诊断没有证据表明券商账户或持仓被改动。\n\n涉及变更：data/state/us_extended_hours_context.json、data/state/us_pulse_runtime_health.json。\n\n你现在需要做什么：暂时无需手工修改数据；如后续影响行情、账户或交易判断，系统会升级通知。\n\n系统为什么没有自动修：自动处理触及安全边界，因此停止自动修改。诊断分类：WORKFLOW_FAILURE_UNCLASSIFIED。",
-      "source": "workflow_failure_diagnostic",
+      "notification_id": "notification_712227f56fa2057350ed",
+      "event_type": "US_SESSION_SUMMARY",
+      "source_event_id": "us-session-summary:2026-09-01:CLOSE",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
       "user_severity": "需要关注",
-      "user_action": "暂时无需手工修改数据；如后续影响行情、账户或交易判断，系统会升级通知。",
-      "status": "EXPIRED",
-      "attempted_at": "2026-08-28T01:09:47+08:00",
+      "user_action": "纳入下一A股交易节点复核，无需机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-02T04:57:38+08:00",
+      "sent_at": "2026-09-02T04:57:39+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-04T04:57:38+08:00",
+      "title": "【收盘总结】美股科技结构明显偏弱",
+      "content": "### 核心结论\n- **外部结构**：美股科技风险偏好偏弱。\n- **宽科技**：纳斯达克100指数（NDX）-1.28%。\n- **半导体**：费城半导体指数（SOX）-2.15%。\n- **结构差**：两者相差约0.87个百分点。\n- **数据口径**：纳斯达克100指数（NDX）/费城半导体指数（SOX）直接指数。\n\n### 关键路径\n- **纳斯达克100指数（NDX）**：早段与尾段方向相反，日内结构存在明显修复或回吐。\n- **费城半导体指数（SOX）**：日内路径未形成比最终涨跌更强的新结论。\n\n### 对ETF系统的影响\n- **外部含义**：美股科技风险偏好转弱，提高A股高相关科技篮子的风险复核优先级。\n- **本地验证**：先检查A股自身承接是否同步减弱。\n- **资本比较**：只有本地反馈也转弱，才进一步影响持仓风险收益与资本配置。\n\n### 当前动作\n**纳入下一A股正式节点复核：先看本地传导，再看相关ETF自身反馈和资本效率；不因海外单一信号机械交易。**\n\n### 数据与边界\n- **美股现金盘收盘时点（北京时间）**：2026-09-02 04:00:00\n- **本次复核数据时点（北京时间）**：2026-09-02 04:55:00\n- **通知生成（北京时间）**：2026-09-02 04:57:38\n- **边界**：美股常规交易时段（现金盘）优先使用纳斯达克100指数（NDX）和费城半导体指数（SOX）直接指数；盘前、盘后仅作前置信号。海外结构必须经过A股本地传导和ETF自身反馈后才能进入机会判断。",
+      "source": "us_extended_hours_context",
+      "confirmation_context": {
+        "us_market_date": "2026-09-01",
+        "session_node": "CLOSE",
+        "direct_cash_indices_used": true,
+        "tech_open_gap_pct": -1.3332089485229903,
+        "semi_open_gap_pct": -2.0669188252830373,
+        "tech_change_pct": -1.2795,
+        "semi_change_pct": -2.1475,
+        "market_as_of_beijing": "2026-09-02T04:55:00+08:00",
+        "cash_close_as_of_beijing": "2026-09-02 04:00:00",
+        "generated_at_beijing": "2026-09-02 04:57:38",
+        "event_family_id": "::CLOSE:::"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_caa6018a9fd3c42c3df0",
-      "lifecycle_status": "EXPIRED"
-    },
+      "last_attempted_at": "2026-09-02T04:57:39+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "us-session-summary:2026-08-27:CLOSE",
       "type": "US_SESSION_SUMMARY",
@@ -2689,9 +2683,27 @@
       },
       "notification_id": "notification_c6540c02f2d6c40c7f12",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "us-session-summary:2026-09-01:CLOSE",
+      "type": "US_SESSION_SUMMARY",
+      "title": "【收盘总结】美股科技结构明显偏弱",
+      "content": "### 核心结论\n- **外部结构**：美股科技风险偏好偏弱。\n- **宽科技**：纳斯达克100指数（NDX）-1.28%。\n- **半导体**：费城半导体指数（SOX）-2.15%。\n- **结构差**：两者相差约0.87个百分点。\n- **数据口径**：纳斯达克100指数（NDX）/费城半导体指数（SOX）直接指数。\n\n### 关键路径\n- **纳斯达克100指数（NDX）**：早段与尾段方向相反，日内结构存在明显修复或回吐。\n- **费城半导体指数（SOX）**：日内路径未形成比最终涨跌更强的新结论。\n\n### 对ETF系统的影响\n- **外部含义**：美股科技风险偏好转弱，提高A股高相关科技篮子的风险复核优先级。\n- **本地验证**：先检查A股自身承接是否同步减弱。\n- **资本比较**：只有本地反馈也转弱，才进一步影响持仓风险收益与资本配置。\n\n### 当前动作\n**纳入下一A股正式节点复核：先看本地传导，再看相关ETF自身反馈和资本效率；不因海外单一信号机械交易。**\n\n### 数据与边界\n- **美股现金盘收盘时点（北京时间）**：2026-09-02 04:00:00\n- **本次复核数据时点（北京时间）**：2026-09-02 04:55:00\n- **通知生成（北京时间）**：2026-09-02 04:57:38\n- **边界**：美股常规交易时段（现金盘）优先使用纳斯达克100指数（NDX）和费城半导体指数（SOX）直接指数；盘前、盘后仅作前置信号。海外结构必须经过A股本地传导和ETF自身反馈后才能进入机会判断。",
+      "source": "us_extended_hours_context",
+      "user_severity": "需要关注",
+      "user_action": "纳入下一A股交易节点复核，无需机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-09-02T04:57:39+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_712227f56fa2057350ed",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [],
-  "policy": "主动通知按新事实的决策价值判断，不按市场分类；当前事件族为开盘异常、快速重定价、极端波动、方向反转、显著分化。阈值适度放宽，重复控制依靠事件合并、冷却和实质升级识别；已管理候选不得阻塞其他未管理候选。",
+  "policy": "US session summary reports material opening structure and fixed cash close; market-specific data routing may differ, but user-visible semantics stay aligned with the unified ETF notification system.",
   "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
