@@ -46,6 +46,10 @@ class SemanticLatestMainTests(unittest.TestCase):
         root, commits = self._repo([{"data/state/CURRENT.json": "old"}, {"unregistered.json": "unknown"}])
         self.assertEqual(classify_delta(root, commits[0], commits[1])["decision"], "REPLAY_REQUIRED")
 
+    def test_formal_or_request_movement_requires_review_but_not_automatic_replay(self):
+        root, commits = self._repo([{"data/state/CURRENT.json": "old"}, {"events/research/x.json": "fact", "requests/live_snapshot/x.json": "request"}])
+        self.assertEqual(classify_delta(root, commits[0], commits[1])["decision"], "REVIEW_REQUIRED")
+
 
 if __name__ == "__main__":
     unittest.main()

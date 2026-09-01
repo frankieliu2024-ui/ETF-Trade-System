@@ -62,7 +62,7 @@ def classify_delta(root: Path, base: str, head: str) -> dict:
         decision = "SEMANTICALLY_FRESH"
     elif present <= {"DYNAMIC_RUNTIME_FACT"}:
         decision = "SEMANTICALLY_FRESH"
-    elif "UNKNOWN" in present or "STABLE_PRODUCTION_CHANGE" in present or "FORMAL_FACT_MUTATION" in present:
+    elif "UNKNOWN" in present or "STABLE_PRODUCTION_CHANGE" in present:
         decision = "REPLAY_REQUIRED"
     else:
         decision = "REVIEW_REQUIRED"
@@ -83,7 +83,7 @@ def main() -> int:
     args = parser.parse_args()
     result = classify_delta(Path(args.root), args.base, args.head)
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 0 if result["decision"] == "SEMANTICALLY_FRESH" else 2
+    return 2 if result["decision"] == "REPLAY_REQUIRED" else 0
 
 
 if __name__ == "__main__":
