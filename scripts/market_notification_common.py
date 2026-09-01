@@ -262,6 +262,51 @@ def _future_time_error(event: dict) -> str:
     return ""
 
 
+def _market_event_staleness_error(event: dict) -> str:
+    """Reject old market facts from the live-event channel.
+
+    Replay/recovery is still possible, but it must opt in explicitly so an old
+    snapshot cannot look like a newly observed market move.
+    """
+    if str(event.get("event_type") or "") not in MARKET_EVENT_TYPES:
+        return ""
+    ctx = _market_context(event)
+    observed = _parse_time(ctx.get("market_as_of_beijing") or ctx.get("provider_observed_as_of_beijing") or ctx.get("event_time_beijing"))
+    if not observed:
+        return "market event has no auditable observation time; live notification is rejected"
+    if str(ctx.get("notification_mode") or "").upper() in {"RECOVERY", "BACKFILL"}:
+        return ""
+    policy = read_json(ROOT / "config" / "runtime_policy.json", {})
+    max_age = int(policy.get("stale_after_seconds", policy.get("degraded_max_age_seconds", 1500)))
+    age = (now() - observed).total_seconds()
+    if age > max_age:
+        return f"market fact is {int(age)} seconds old; live notification requires explicit recovery mode"
+    return ""
+
+
+def _annotate_summary_increment(event: dict, notifications: list[dict]) -> dict:
+    """Make a post-cutoff fact explicit instead of presenting two conflicting claims."""
+    if str(event.get("event_type") or "") not in MARKET_EVENT_TYPES or _is_protected_event(event):
+        return event
+    event_time = _parse_time(_market_context(event).get("market_as_of_beijing"))
+    if not event_time:
+        return event
+    for summary in reversed(notifications):
+        if str(summary.get("event_type") or "") not in {"A_SHARE_SESSION_SUMMARY", "APAC_SESSION_SUMMARY", "US_SESSION_SUMMARY"}:
+            continue
+        sctx = _market_context(summary)
+        cutoff = _parse_time(sctx.get("market_as_of_beijing"))
+        sent = _parse_time(summary.get("sent_at") or summary.get("created_at"))
+        if cutoff and sent and cutoff < event_time <= sent + timedelta(minutes=SUMMARY_ABSORB_MINUTES):
+            event = dict(event)
+            ctx = dict(_market_context(event))
+            ctx["summary_relation"] = "NEW_FACT_AFTER_SUMMARY_CUTOFF"
+            event["confirmation_context"] = ctx
+            event["content"] = str(event.get("content") or "") + f"\n\n> 这是收盘总结数据截止{cutoff.isoformat(timespec='seconds')}后的新增事实；不否定此前总结，仅作为增量变化展示。"
+            return event
+    return event
+
+
 def _late_apac_update_error(event: dict) -> str:
     """Reject false HK-late updates caused only by data-coverage/tone drift.
 
@@ -321,7 +366,7 @@ SUMMARY_ABSORB_MINUTES = 5
 AGGREGATION_WINDOW_MINUTES = 5
 MARKET_EVENT_TYPES = {"MARKET_SHOCK_ALERT", "MARKET_VALUE_ALERT", "APAC_OPEN_SIGNAL"}
 PROTECTED_EVENT_TYPES = {"FORMAL_DECISION_MATERIAL_CHANGE", "ACCOUNT_FACT_CONFIRMATION", "PENDING_EXECUTION_CONFIRMATION", "交易判断", "风险许可", "持仓动作", "Trial机会", "Confirm机会", "机会失效"}
-MERGEABLE_CATEGORIES = {"SUDDEN", "EXTREME", "REVERSAL"}
+MERGEABLE_CATEGORIES = {"SUDDEN", "EXTREME", "REVERSAL", "DIVERGENCE"}
 
 
 def _market_context(event: dict) -> dict:
@@ -336,6 +381,18 @@ def _market_fact_key(event: dict) -> str:
     return "|".join(str(ctx.get(k) or event.get(k) or "") for k in ("market_date", "security_code", "event_category", "direction"))
 
 
+def _event_family_id(event: dict) -> str:
+    """Identify a continuing user-facing event family, not one quote fact."""
+    ctx = _market_context(event)
+    market = str(ctx.get("market") or event.get("market") or "")
+    date = str(ctx.get("market_date") or event.get("market_date") or "")
+    session = str(ctx.get("session") or ctx.get("market_phase") or ctx.get("session_node") or market)
+    code = str(event.get("security_code") or ctx.get("security_code") or "")
+    category = str(ctx.get("event_category") or "")
+    direction = str(ctx.get("direction") or "")
+    return ":".join((market, date, session, code, category, direction))
+
+
 def _is_protected_event(event: dict) -> bool:
     event_type = str(event.get("event_type") or event.get("type") or "")
     title = str(event.get("title") or "")
@@ -344,7 +401,7 @@ def _is_protected_event(event: dict) -> bool:
 
 def _event_magnitude(event: dict) -> float | None:
     ctx = _market_context(event)
-    for key in ("event_magnitude_pct", "covered_event_magnitude_pct", "day_change_pct", "phase_metric_change_pct", "sudden_change_pct"):
+    for key in ("family_peak_magnitude_pct", "event_magnitude_pct", "covered_event_magnitude_pct", "day_change_pct", "phase_metric_change_pct", "sudden_change_pct"):
         value = number(ctx.get(key))
         if value is not None:
             return abs(value)
@@ -394,6 +451,7 @@ def _find_aggregate_target(items: list[dict], event: dict) -> dict | None:
     direction, market_date = str(ctx.get("direction") or ""), str(ctx.get("market_date") or "")
     if category not in MERGEABLE_CATEGORIES or not code or not market_date:
         return None
+    family_id = str(ctx.get("event_family_id") or _event_family_id(event))
     current_stamp = parse_notification_time(event.get("created_at")) or now()
     for item in reversed(items):
         if str(item.get("event_type") or "") not in MARKET_EVENT_TYPES or str(item.get("security_code") or "") != code:
@@ -402,8 +460,13 @@ def _find_aggregate_target(items: list[dict], event: dict) -> dict | None:
         if str(old.get("market_date") or "") != market_date or str(old.get("direction") or "") != direction:
             continue
         old_category = str(old.get("event_category") or "")
-        if old_category == category or old_category not in MERGEABLE_CATEGORIES:
+        old_family_id = str(old.get("event_family_id") or _event_family_id(item))
+        if old_category not in MERGEABLE_CATEGORIES:
             continue
+        if old_category == category:
+            if old_family_id != family_id or _is_material_upgrade(event, item):
+                continue
+            return item
         prior_stamp = parse_notification_time(item.get("sent_at") or item.get("created_at"))
         if prior_stamp and timedelta(0) <= current_stamp - prior_stamp <= timedelta(minutes=AGGREGATION_WINDOW_MINUTES) and not _is_material_upgrade(event, item):
             return item
@@ -423,6 +486,16 @@ def _absorb_or_aggregate(notifications: list[dict], event: dict) -> tuple[str, d
                 tags.append(value)
         ctx["event_tags"] = tags
         ctx["aggregation_status"] = "MERGED_SAME_OBJECT_CONTINUOUS_FACT"
+        ctx["event_family_id"] = str(ctx.get("event_family_id") or _event_family_id(target))
+        source_fact = str(_market_context(event).get("source_fact_id") or _market_fact_key(event))
+        source_facts = list(ctx.get("source_fact_ids") or [])
+        if source_fact and source_fact not in source_facts:
+            source_facts.append(source_fact)
+        ctx["source_fact_ids"] = source_facts
+        current_magnitude = _event_magnitude(event)
+        peak = _event_magnitude(target)
+        if current_magnitude is not None:
+            ctx["family_peak_magnitude_pct"] = max(current_magnitude, peak or current_magnitude)
         target["confirmation_context"] = ctx
         return "AGGREGATED_INTO_EXISTING", target
     return None
@@ -431,6 +504,8 @@ def _absorb_or_aggregate(notifications: list[dict], event: dict) -> tuple[str, d
 def persist_and_send(event: dict, *, policy: str) -> dict:
     event = _normalize_user_visible_event(event)
     event = _normalize_user_title(event)
+    event["confirmation_context"] = dict(_market_context(event))
+    event["confirmation_context"]["event_family_id"] = _event_family_id(event)
     materiality_error = _late_apac_update_error(event)
     if materiality_error:
         return {"status": "REJECTED_NO_MATERIAL_APAC_CHANGE", "detail": materiality_error, "title": event.get("title")}
@@ -443,6 +518,11 @@ def persist_and_send(event: dict, *, policy: str) -> dict:
     if not raw_items:
         raw_items = [normalize_notification(x, x) for x in (state.get("recent") or [])]
     notifications = expire_notifications(raw_items)
+    stale_error = _market_event_staleness_error(event)
+    if stale_error:
+        status = "REJECTED_UNAUDITABLE_MARKET_EVENT" if "no auditable observation time" in stale_error else "REJECTED_STALE_MARKET_EVENT"
+        return {"status": status, "detail": stale_error, "title": event.get("title")}
+    event = _annotate_summary_increment(event, notifications)
     aggregate_result = _absorb_or_aggregate(notifications, event)
     if aggregate_result:
         status, target = aggregate_result

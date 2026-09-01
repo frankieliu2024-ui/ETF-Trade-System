@@ -44,6 +44,120 @@ class CurrentDecisionFreshnessTests(unittest.TestCase):
 
 
 class PushPlusNotificationClosureTests(unittest.TestCase):
+    def test_notification_state_merge_preserves_concurrent_runner_events(self):
+        from scripts.merge_notification_state import merge_notification_state
+        base = {"notifications": [{"notification_id": "a", "source_event_id": "a", "lifecycle_status": "SENT"}]}
+        incoming = {"notifications": [{"notification_id": "b", "source_event_id": "b", "lifecycle_status": "SENT"}]}
+        merged = merge_notification_state(base, incoming)
+        self.assertEqual({x["notification_id"] for x in merged["notifications"]}, {"a", "b"})
+
+    def test_notification_state_merge_preserves_newer_sent_state(self):
+        from scripts.merge_notification_state import merge_notification_state
+        base = {"updated_at": "2026-09-01T10:05:00+08:00", "notifications": [{"notification_id": "a", "source_event_id": "fact", "lifecycle_status": "SENT", "sent_at": "2026-09-01T10:05:00+08:00", "response": {"pushplus_code": 200}}]}
+        incoming = {"updated_at": "2026-09-01T10:01:00+08:00", "notifications": [{"notification_id": "a", "source_event_id": "fact", "lifecycle_status": "FAILED", "last_attempted_at": "2026-09-01T10:01:00+08:00"}]}
+        merged = merge_notification_state(base, incoming)
+        self.assertEqual(len(merged["notifications"]), 1)
+        self.assertEqual(merged["notifications"][0]["lifecycle_status"], "SENT")
+        self.assertEqual(merged["notifications"][0]["response"]["pushplus_code"], 200)
+
+    def test_notification_state_merge_accepts_newer_successful_attempt(self):
+        from scripts.merge_notification_state import merge_notification_state
+        base = {"notifications": [{"notification_id": "a", "source_event_id": "fact", "lifecycle_status": "CREATED", "created_at": "2026-09-01T10:01:00+08:00"}]}
+        incoming = {"notifications": [{"notification_id": "a", "source_event_id": "fact", "lifecycle_status": "SENT", "last_attempted_at": "2026-09-01T10:05:00+08:00", "sent_at": "2026-09-01T10:05:00+08:00"}]}
+        merged = merge_notification_state(base, incoming)
+        self.assertEqual(merged["notifications"][0]["lifecycle_status"], "SENT")
+
+    def test_notification_state_merge_deduplicates_shared_source_fact(self):
+        from scripts.merge_notification_state import merge_notification_state
+        base = {"notifications": [{"notification_id": "runner-a", "source_event_id": "fact-1", "key": "old-key", "lifecycle_status": "SENT"}]}
+        incoming = {"notifications": [{"notification_id": "runner-b", "source_event_id": "fact-1", "key": "new-key", "lifecycle_status": "CREATED"}]}
+        merged = merge_notification_state(base, incoming)
+        self.assertEqual(len(merged["notifications"]), 1)
+        self.assertEqual(merged["notifications"][0]["lifecycle_status"], "SENT")
+
+    def test_notification_family_absorbs_same_category_over_multiple_runs(self):
+        from scripts import market_notification_common as common
+        items = [{"event_type": "MARKET_VALUE_ALERT", "security_code": "APAC_DIVERGENCE", "created_at": "2026-09-01T09:48:00+08:00", "sent_at": "2026-09-01T09:48:00+08:00", "confirmation_context": {"market": "ASIA", "market_date": "2026-09-01", "session": "DAY", "event_category": "DIVERGENCE", "direction": "DIVERGED", "event_magnitude_pct": 1.89, "source_fact_id": "fact-0948", "event_family_id": "ASIA:2026-09-01:DAY:APAC_DIVERGENCE:DIVERGENCE:DIVERGED", "family_peak_magnitude_pct": 1.89}}]
+        event = {"event_type": "MARKET_VALUE_ALERT", "security_code": "APAC_DIVERGENCE", "confirmation_context": {"market": "ASIA", "market_date": "2026-09-01", "session": "DAY", "event_category": "DIVERGENCE", "direction": "DIVERGED", "event_magnitude_pct": 2.41, "source_fact_id": "fact-1023"}, "created_at": "2026-09-01T10:23:00+08:00"}
+        self.assertIsNotNone(common._find_aggregate_target(items, event))
+
+    def test_divergence_material_upgrade_uses_highest_sent_baseline(self):
+        from scripts import market_notification_common as common
+        prior = {"event_type": "MARKET_VALUE_ALERT", "security_code": "APAC_DIVERGENCE", "confirmation_context": {"market": "ASIA", "market_date": "2026-09-01", "session": "DAY", "event_category": "DIVERGENCE", "direction": "DIVERGED", "event_magnitude_pct": 2.41, "family_peak_magnitude_pct": 2.41}}
+        event = {"event_type": "MARKET_VALUE_ALERT", "security_code": "APAC_DIVERGENCE", "confirmation_context": {"market": "ASIA", "market_date": "2026-09-01", "session": "DAY", "event_category": "DIVERGENCE", "direction": "DIVERGED", "event_magnitude_pct": 2.47}}
+        self.assertFalse(common._is_material_upgrade(event, prior))
+        event["confirmation_context"]["event_magnitude_pct"] = 3.30
+        self.assertTrue(common._is_material_upgrade(event, prior))
+
+    def test_reversal_same_family_small_recovery_is_absorbed(self):
+        from scripts import market_notification_common as common
+        items = [{"event_type": "MARKET_VALUE_ALERT", "security_code": "KOSPI", "sent_at": "2026-09-01T09:41:00+08:00", "confirmation_context": {"market": "ASIA", "market_date": "2026-09-01", "session": "DAY", "event_category": "REVERSAL", "direction": "UP", "event_magnitude_pct": 1.28, "family_peak_magnitude_pct": 1.28}}]
+        event = {"event_type": "MARKET_VALUE_ALERT", "security_code": "KOSPI", "confirmation_context": {"market": "ASIA", "market_date": "2026-09-01", "session": "DAY", "event_category": "REVERSAL", "direction": "UP", "event_magnitude_pct": 0.18}}
+        self.assertIsNotNone(common._find_aggregate_target(items, event))
+
+    def test_hstech_rerun_keeps_one_sent_fact_identity(self):
+        from scripts.merge_notification_state import merge_notification_state
+        fact = "market-value:asia:2026-08-31:HSTECH:UP:REVERSAL:2026-08-31T16:09:08+08:00"
+        merged = merge_notification_state(
+            {"notifications": [{"notification_id": "stable", "source_event_id": fact, "lifecycle_status": "SENT", "sent_at": "2026-08-31T22:01:47+08:00"}]},
+            {"notifications": [{"notification_id": "stable", "source_event_id": fact, "lifecycle_status": "CREATED", "created_at": "2026-08-31T21:59:00+08:00"}]},
+        )
+        self.assertEqual(len(merged["notifications"]), 1)
+        self.assertEqual(merged["notifications"][0]["lifecycle_status"], "SENT")
+
+    def test_missing_market_observation_time_fails_closed(self):
+        with tempfile.TemporaryDirectory() as td:
+            event = {"key": "missing-time", "event_type": "MARKET_VALUE_ALERT", "title": "市场异动", "content": "无时点", "confirmation_context": {"market_date": "2026-09-01", "event_category": "EXTREME"}}
+            with patch.object(notifications, "NOTIFICATION_STATE", Path(td) / "notification_center.json"), patch.object(notifications, "STATE", Path(td)):
+                result = notifications.persist_and_send(event, policy="test")
+            self.assertEqual(result["status"], "REJECTED_UNAUDITABLE_MARKET_EVENT")
+
+    def test_stale_market_fact_cannot_enter_live_notification_channel(self):
+        with tempfile.TemporaryDirectory() as td:
+            event = {
+                "key": "hstech-stale-fact",
+                "event_type": "MARKET_VALUE_ALERT",
+                "title": "【市场异动】恒生科技指数（HSTECH）日内方向明显反转",
+                "content": "旧事实",
+                "source": "market_delta",
+                "security_code": "HSTECH",
+                "confirmation_context": {
+                    "market_date": "2026-08-31",
+                    "event_category": "REVERSAL",
+                    "direction": "UP",
+                    "event_magnitude_pct": 1.7,
+                    "day_change_pct": 0.32,
+                    "market_as_of_beijing": "2026-08-31T16:09:08+08:00",
+                },
+            }
+            with patch.object(notifications, "NOTIFICATION_STATE", Path(td) / "notification_center.json"), patch.object(notifications, "STATE", Path(td)), patch.object(notifications, "now", return_value=datetime.fromisoformat("2026-08-31T22:01:00+08:00")):
+                result = notifications.persist_and_send(event, policy="test")
+            self.assertEqual(result["status"], "REJECTED_STALE_MARKET_EVENT")
+
+    def test_post_cutoff_market_fact_is_explicit_increment(self):
+        event = {
+            "event_type": "MARKET_VALUE_ALERT",
+            "title": "【市场异动】半导体ETF代理（SOXX）出现极端波动",
+            "content": "新增事实",
+            "security_code": "SOXX",
+            "confirmation_context": {
+                "market_date": "2026-09-01",
+                "event_category": "EXTREME",
+                "direction": "DOWN",
+                "event_magnitude_pct": 2.75,
+                "market_as_of_beijing": "2026-09-01T05:17:23+08:00",
+            },
+        }
+        summary = {
+            "event_type": "US_SESSION_SUMMARY",
+            "created_at": "2026-09-01T05:18:45+08:00",
+            "sent_at": "2026-09-01T05:18:46+08:00",
+            "confirmation_context": {"market_as_of_beijing": "2026-09-01T05:15:00+08:00"},
+        }
+        out = notifications._annotate_summary_increment(event, [summary])
+        self.assertEqual(out["confirmation_context"]["summary_relation"], "NEW_FACT_AFTER_SUMMARY_CUTOFF")
+        self.assertIn("新增事实", out["content"])
+
     def test_missing_token_is_persisted_as_failure(self):
         with tempfile.TemporaryDirectory() as td:
             state_dir = Path(td)

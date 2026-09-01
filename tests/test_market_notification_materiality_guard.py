@@ -60,6 +60,33 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
         }
         self.assertEqual(guard.notification_evidence_error(event), "")
 
+    def test_a_share_role_text_is_local_not_overseas(self):
+        from scripts.notification_semantics import shock_implication
+        with patch("scripts.notification_semantics._account_context", return_value={"data": {}, "held_etfs": {}, "held_stocks": {}, "formal": {}}):
+            implication, _action = shock_implication("000688", "科创50", "A_SHARE_INDEX", "A_SHARE")
+        self.assertIn("A股本地风险偏好", implication)
+        self.assertNotIn("海外/区域结构证据", implication)
+
+    def test_overseas_role_text_keeps_external_transmission(self):
+        from scripts.notification_semantics import shock_implication
+        with patch("scripts.notification_semantics._account_context", return_value={"data": {}, "held_etfs": {}, "held_stocks": {}, "formal": {}}):
+            implication, _action = shock_implication("HSTECH", "恒生科技指数", "INDEX", "ASIA")
+        self.assertIn("海外/区域结构证据", implication)
+
+    def test_etf_and_account_stock_roles_are_not_index_roles(self):
+        from scripts.notification_semantics import shock_implication
+        with patch("scripts.notification_semantics._account_context", return_value={"data": {}, "held_etfs": {"515880": {}}, "held_stocks": {"300750": {}}, "formal": {}}):
+            etf_text, _ = shock_implication("515880", "通信ETF", "ETF", "A_SHARE")
+            stock_text, _ = shock_implication("300750", "宁德时代", "ACCOUNT_STOCK", "A_SHARE")
+        self.assertIn("当前持仓ETF", etf_text)
+        self.assertIn("账户个股", stock_text)
+
+    def test_us_proxy_role_keeps_external_transmission(self):
+        from scripts.notification_semantics import shock_implication
+        with patch("scripts.notification_semantics._account_context", return_value={"data": {}, "held_etfs": {}, "held_stocks": {}, "formal": {}}):
+            text_value, _ = shock_implication("SOXX", "半导体ETF代理", "ETF", "US")
+        self.assertIn("海外/区域结构证据", text_value)
+
     def test_fixed_session_summary_is_not_misclassified_as_change(self):
         event = {
             "event_type": "A_SHARE_SESSION_SUMMARY",
@@ -181,6 +208,11 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
         self.assertNotIn("run: python scripts/send_market_shock_notification.py", us)
         self.assertNotIn("run: python scripts/send_us_session_summary.py", us)
 
+    def test_notification_state_persistence_merges_after_main_refresh(self):
+        decision = (ROOT / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
+        self.assertIn("merge_notification_state.py", decision)
+        self.assertNotIn("cp /tmp/etf-notification-state/data/state/notification_center.json data/state/notification_center.json", decision)
+
     def test_notification_rule_source_governance_is_single_and_explicit(self):
         spec = (ROOT / "docs/ETF主动通知体系.md").read_text(encoding="utf-8")
         index = (ROOT / "ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
@@ -232,6 +264,15 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
 
 
 class NotificationAggregationTests(unittest.TestCase):
+    def test_same_fact_key_is_stable_across_notification_runs(self):
+        from scripts import send_market_shock_notification_legacy as legacy
+        c = {"category": "REVERSAL", "code": "HSTECH", "day": 0.32, "event_magnitude_pct": 1.61, "sudden": 0.0, "direction": "UP", "name": "恒生科技指数", "latest": {"as_of_beijing": "2026-08-31T16:09:08+08:00"}}
+        current_path = legacy.ROOT / "data/state/overseas_context.json"
+        first = legacy._build_context_event(c, source="asia", current_path=current_path, current={}, labels={}, metric_labels={}, market_dates={"HSTECH": "2026-08-31"}, today_bj="2026-08-31")
+        second = legacy._build_context_event(c, source="asia", current_path=current_path, current={}, labels={}, metric_labels={}, market_dates={"HSTECH": "2026-08-31"}, today_bj="2026-08-31")
+        self.assertEqual(first["key"], second["key"])
+        self.assertIn("16:09:08", first["key"])
+
     @staticmethod
     def _event(code, name, category, direction="UP", stamp="2026-08-31T13:20:00+08:00", magnitude=2.0, event_type="MARKET_VALUE_ALERT"):
         return {
