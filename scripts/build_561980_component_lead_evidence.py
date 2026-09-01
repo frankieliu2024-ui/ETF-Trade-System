@@ -39,14 +39,17 @@ def _sm3_hex(data: bytes) -> str:
 def _sm4_encrypt_pkcs7(raw: bytes, key: bytes) -> bytes:
     pad = 16 - (len(raw) % 16)
     padded = raw + bytes([pad]) * pad
-    proc = subprocess.run(
-        ["openssl", "enc", "-sm4-ecb", "-K", key.hex(), "-nopad"],
-        input=padded,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-        timeout=10,
-    )
+    try:
+        proc = subprocess.run(
+            ["openssl", "enc", "-sm4-ecb", "-K", key.hex(), "-nopad"],
+            input=padded,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=10,
+        )
+    except (FileNotFoundError, OSError) as exc:
+        raise RuntimeError(f"openssl binary unavailable: {type(exc).__name__}: {exc}") from exc
     if proc.returncode != 0 or not proc.stdout:
         raise RuntimeError("openssl sm4 unavailable: " + proc.stderr.decode("utf-8", "ignore")[-300:])
     return proc.stdout
