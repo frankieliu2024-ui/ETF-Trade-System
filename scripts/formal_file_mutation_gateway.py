@@ -8,6 +8,7 @@ research conclusions. MASTER is intentionally outside the allowed target set.
 """
 
 from pathlib import Path
+import re
 from typing import Callable
 
 ALLOWED_FORMAL_FACT_FILES = frozenset(
@@ -18,6 +19,19 @@ ALLOWED_FORMAL_FACT_FILES = frozenset(
     }
 )
 FORBIDDEN_RULE_FILE = "ETF规则_MASTER.md"
+_UPDATE_LINE = re.compile(r"(^> 更新时点：)\d{4}-\d{2}-\d{2}(?P<tail>.*)$", re.MULTILINE)
+_FACT_DATE = re.compile(r"(?<!\d)(20\d{2}-\d{2}-\d{2})(?!\d)")
+
+
+def _sync_last_fact_update_metadata(text: str) -> str:
+    match = _UPDATE_LINE.search(text)
+    if not match:
+        return text
+    dates = _FACT_DATE.findall(text)
+    if not dates:
+        return text
+    latest = max(dates)
+    return _UPDATE_LINE.sub(lambda m: f"{m.group(1)}{latest}{m.group('tail')}", text, count=1)
 
 
 def resolve_formal_fact_path(root: Path, filename: str) -> Path:
@@ -92,11 +106,15 @@ def upsert_managed_line(text: str, start: str, end: str, key: str, line: str, *,
 
 def write_formal_text_if_changed(root: Path, filename: str, new_text: str) -> bool:
     path = resolve_formal_fact_path(root, filename)
-    prior = path.read_text(encoding="utf-8")
-    if prior == new_text:
+    raw = path.read_bytes()
+    newline = b"\\r\\n" if b"\\r\\n" in raw else b"\\n"
+    prior = raw.decode("utf-8").replace("\\r\\n", "\\n")
+    candidate = new_text.replace("\\r\\n", "\\n")
+    if prior == candidate:
         return False
+    updated = _sync_last_fact_update_metadata(candidate)
     tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(new_text, encoding="utf-8")
+    tmp.write_bytes(updated.replace("\\n", "\\r\\n" if newline == b"\\r\\n" else "\\n").encode("utf-8"))
     tmp.replace(path)
     return True
 

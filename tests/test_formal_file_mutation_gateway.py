@@ -62,5 +62,37 @@ class FormalFileMutationGatewayTests(unittest.TestCase):
             self.assertEqual((root / name).read_text(encoding="utf-8"), "new\n")
 
 
+    def test_metadata_follows_real_fact_changes_and_is_idempotent(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            name = "ETF交易复盘与经验库_2026.md"
+            old = "> 更新时点：2026-08-27（说明）\\n2026-08-28｜既有事实\\n"
+            (root / name).write_text(old, encoding="utf-8")
+            changed = old.replace("2026-08-28｜既有事实", "2026-08-31｜正式review")
+            self.assertTrue(write_formal_text_if_changed(root, name, changed))
+            result = (root / name).read_text(encoding="utf-8")
+            self.assertIn("更新时点：2026-08-31", result)
+            self.assertFalse(write_formal_text_if_changed(root, name, changed))
+
+    def test_metadata_does_not_change_without_content_change(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            name = "ETF市场行情档案_2026.md"
+            text = "> 更新时点：2026-08-27（说明）\\n2026-08-28｜事实\\n"
+            (root / name).write_text(text, encoding="utf-8")
+            self.assertFalse(write_formal_text_if_changed(root, name, text))
+            self.assertEqual((root / name).read_text(encoding="utf-8"), text)
+
+    def test_crlf_write_preserves_newline_style(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            name = "ETF市场行情档案_2026.md"
+            (root / name).write_bytes(b"> 更新时点：2026-08-27\\r\\n前置\\r\\n")
+            write_formal_text_if_changed(root, name, "> 更新时点：2026-08-31\\n前置\\n2026-08-31｜事实\\n")
+            raw = (root / name).read_bytes()
+            self.assertIn(b"\\r\\n", raw)
+            self.assertNotIn(b"\\r\\r\\n", raw)
+
+
 if __name__ == "__main__":
     unittest.main()
