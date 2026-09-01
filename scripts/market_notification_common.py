@@ -262,6 +262,51 @@ def _future_time_error(event: dict) -> str:
     return ""
 
 
+def _market_event_staleness_error(event: dict) -> str:
+    """Reject old market facts from the live-event channel.
+
+    Replay/recovery is still possible, but it must opt in explicitly so an old
+    snapshot cannot look like a newly observed market move.
+    """
+    if str(event.get("event_type") or "") not in MARKET_EVENT_TYPES:
+        return ""
+    ctx = _market_context(event)
+    if str(ctx.get("notification_mode") or "").upper() in {"RECOVERY", "BACKFILL"}:
+        return ""
+    observed = _parse_time(ctx.get("market_as_of_beijing") or ctx.get("provider_observed_as_of_beijing") or ctx.get("event_time_beijing"))
+    if not observed:
+        return ""
+    policy = read_json(ROOT / "config" / "runtime_policy.json", {})
+    max_age = int(policy.get("stale_after_seconds", policy.get("degraded_max_age_seconds", 1500)))
+    age = (now() - observed).total_seconds()
+    if age > max_age:
+        return f"market fact is {int(age)} seconds old; live notification requires explicit recovery mode"
+    return ""
+
+
+def _annotate_summary_increment(event: dict, notifications: list[dict]) -> dict:
+    """Make a post-cutoff fact explicit instead of presenting two conflicting claims."""
+    if str(event.get("event_type") or "") not in MARKET_EVENT_TYPES or _is_protected_event(event):
+        return event
+    event_time = _parse_time(_market_context(event).get("market_as_of_beijing"))
+    if not event_time:
+        return event
+    for summary in reversed(notifications):
+        if str(summary.get("event_type") or "") not in {"A_SHARE_SESSION_SUMMARY", "APAC_SESSION_SUMMARY", "US_SESSION_SUMMARY"}:
+            continue
+        sctx = _market_context(summary)
+        cutoff = _parse_time(sctx.get("market_as_of_beijing"))
+        sent = _parse_time(summary.get("sent_at") or summary.get("created_at"))
+        if cutoff and sent and cutoff < event_time <= sent + timedelta(minutes=SUMMARY_ABSORB_MINUTES):
+            event = dict(event)
+            ctx = dict(_market_context(event))
+            ctx["summary_relation"] = "NEW_FACT_AFTER_SUMMARY_CUTOFF"
+            event["confirmation_context"] = ctx
+            event["content"] = str(event.get("content") or "") + f"\n\n> 这是收盘总结数据截止{cutoff.isoformat(timespec='seconds')}后的新增事实；不否定此前总结，仅作为增量变化展示。"
+            return event
+    return event
+
+
 def _late_apac_update_error(event: dict) -> str:
     """Reject false HK-late updates caused only by data-coverage/tone drift.
 
@@ -443,6 +488,10 @@ def persist_and_send(event: dict, *, policy: str) -> dict:
     if not raw_items:
         raw_items = [normalize_notification(x, x) for x in (state.get("recent") or [])]
     notifications = expire_notifications(raw_items)
+    stale_error = _market_event_staleness_error(event)
+    if stale_error:
+        return {"status": "REJECTED_STALE_MARKET_EVENT", "detail": stale_error, "title": event.get("title")}
+    event = _annotate_summary_increment(event, notifications)
     aggregate_result = _absorb_or_aggregate(notifications, event)
     if aggregate_result:
         status, target = aggregate_result
@@ -489,4 +538,5 @@ def persist_and_send(event: dict, *, policy: str) -> dict:
     })
     write_json(NOTIFICATION_STATE, state)
     return {"status": item["lifecycle_status"], "notification_id": item["notification_id"], "title": item["title"], "response": response}
+
 

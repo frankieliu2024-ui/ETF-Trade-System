@@ -181,6 +181,11 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
         self.assertNotIn("run: python scripts/send_market_shock_notification.py", us)
         self.assertNotIn("run: python scripts/send_us_session_summary.py", us)
 
+    def test_notification_state_persistence_merges_after_main_refresh(self):
+        decision = (ROOT / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
+        self.assertIn("merge_notification_state.py", decision)
+        self.assertNotIn("cp /tmp/etf-notification-state/data/state/notification_center.json data/state/notification_center.json", decision)
+
     def test_notification_rule_source_governance_is_single_and_explicit(self):
         spec = (ROOT / "docs/ETF主动通知体系.md").read_text(encoding="utf-8")
         index = (ROOT / "ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
@@ -232,6 +237,15 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
 
 
 class NotificationAggregationTests(unittest.TestCase):
+    def test_same_fact_key_is_stable_across_notification_runs(self):
+        from scripts import send_market_shock_notification_legacy as legacy
+        c = {"category": "REVERSAL", "code": "HSTECH", "day": 0.32, "event_magnitude_pct": 1.61, "sudden": 0.0, "direction": "UP", "name": "恒生科技指数", "latest": {"as_of_beijing": "2026-08-31T16:09:08+08:00"}}
+        current_path = legacy.ROOT / "data/state/overseas_context.json"
+        first = legacy._build_context_event(c, source="asia", current_path=current_path, current={}, labels={}, metric_labels={}, market_dates={"HSTECH": "2026-08-31"}, today_bj="2026-08-31")
+        second = legacy._build_context_event(c, source="asia", current_path=current_path, current={}, labels={}, metric_labels={}, market_dates={"HSTECH": "2026-08-31"}, today_bj="2026-08-31")
+        self.assertEqual(first["key"], second["key"])
+        self.assertIn("16:09:08", first["key"])
+
     @staticmethod
     def _event(code, name, category, direction="UP", stamp="2026-08-31T13:20:00+08:00", magnitude=2.0, event_type="MARKET_VALUE_ALERT"):
         return {
@@ -310,3 +324,4 @@ class NotificationAggregationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
