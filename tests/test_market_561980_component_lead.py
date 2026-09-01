@@ -50,6 +50,11 @@ class ComponentLead561980Test(unittest.TestCase):
         self.assertEqual(len(headers["tk-trans-signature"]), 64)
         self.assertEqual(headers["tk-trans-merchant-key"], "thinkive")
 
+    def test_pcf_crypto_missing_openssl_is_explicit(self):
+        with mock.patch.object(mod.subprocess, "run", side_effect=FileNotFoundError("openssl")):
+            with self.assertRaisesRegex(RuntimeError, "openssl binary unavailable"):
+                mod._encrypted_pcf_params({"productCode": "561980"})
+
     def test_ready_signal_uses_dynamic_pcf_top5_and_d_minus_1_prices(self):
         root = self.make_root()
         pcf = [
