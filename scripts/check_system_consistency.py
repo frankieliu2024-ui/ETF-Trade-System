@@ -349,7 +349,7 @@ def _has_valid_terminal_for_trade_row(trade_date: str, code: str) -> bool:
         if str(event.get("execution_status") or "").upper() != "EXECUTED":
             continue
         event_date = str(event.get("execution_date") or event.get("confirmed_at_beijing") or "")[:10]
-        if event_date != trade_date or str(event.get("code") or "") != code:
+        if event_date != trade_date[:10] or str(event.get("code") or "") != code:
             continue
         event_id = str(event.get("event_id") or "")
         if event_id and _valid_unrecoverable_review_terminal(event_id, event):
