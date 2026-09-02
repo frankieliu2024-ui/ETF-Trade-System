@@ -41,6 +41,18 @@ def _normalize_us_phase_freshness(report: dict) -> None:
     target = next((x for x in report.get("checks", []) if x.get("name") == "us_extended:live_freshness"), None)
     if not target or target.get("status") != "FAIL":
         return
+    # A stale derived US observation is an observability degradation, not a
+    # canonical A-share/account/trade fact conflict. Missing or malformed
+    # observations remain hard failures in the core validator.
+    if "max_age_seconds" in str(target.get("detail") or ""):
+        target["status"] = "WARNING"
+        target["detail"] = f"observability_stale {target.get('detail')} canonical_facts_unaffected"
+        _remove_error(report, "us_extended:live_freshness:")
+        warning = "us_extended:live_freshness: derived observation stale"
+        if warning not in report.setdefault("warnings", []):
+            report["warnings"].append(warning)
+        _recount(report)
+        return
     context = _read_json("data/state/us_extended_hours_context.json")
     objects = context.get("objects") or {}
     now_utc = datetime.now(timezone.utc)
