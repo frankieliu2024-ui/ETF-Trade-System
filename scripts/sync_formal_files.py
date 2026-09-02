@@ -79,21 +79,57 @@ def canonical_risk(equity: dict, formal_override: float | None = None) -> float 
     return None
 
 
-def normalize_dashboard_projection(text: str) -> str:
-    """Remove the legacy duplicate current ETF role projection."""
+def normalize_dashboard_projection(text: str, root: Path = ROOT, account: dict | None = None) -> str:
+    """Keep Dashboard a current projection, excluding historical correction logs."""
     replacement = "|ETF层当前结构|当前持仓与观察角色仅以上方‘云端实时状态（自动同步）’中的canonical account projection为准；本区块不再复制当前角色列表。|"
     lines = text.splitlines()
-    changed = False
+    cleaned = []
+    in_corrections = False
+    for line in lines:
+        if line == "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->":
+            in_corrections = True
+            continue
+        if line == "<!-- AUTO_TRADE_FACT_CORRECTIONS_END -->":
+            in_corrections = False
+            continue
+        if not in_corrections:
+            cleaned.append(line)
+    lines = cleaned
     for index, line in enumerate(lines):
         if "|ETF层当前结构|" in line:
-            if line != replacement:
-                lines[index] = replacement
-                changed = True
+            lines[index] = replacement
             break
-    if not changed:
-        return text
-    return "\n".join(lines) + ("\n" if text.endswith("\n") else "")
-
+    heading = "### 下一关键节点"
+    if heading in lines:
+        start = lines.index(heading)
+        end = len(lines)
+        for index in range(start + 1, len(lines)):
+            if lines[index].startswith("## ") and lines[index] != heading:
+                end = index
+                break
+        today = str((account or {}).get("updated_at") or "")[:10]
+        next_day = "待由交易日历确定"
+        try:
+            calendar = load_json(root / "config/market/a_share_trading_calendar_2026.json")
+            closed = set(calendar.get("closed_dates") or [])
+            from datetime import date, timedelta
+            cursor = date.fromisoformat(today) if today else date.today()
+            for _ in range(370):
+                cursor += timedelta(days=1)
+                candidate = cursor.isoformat()
+                if cursor.weekday() < 5 and candidate not in closed:
+                    next_day = candidate
+                    break
+        except (OSError, ValueError, TypeError, json.JSONDecodeError):
+            pass
+        lines[start:end] = [
+            heading, "",
+            f"- 下一A股交易日：{next_day}；优先复核当前ACTIVE_TRIAL与正式行情/账户事实。",
+            "- 已关闭Trial仅在下一可执行节点独立评估降低风险或退出；本投影不生成订单。",
+            "- 当前无待处理结算现金约束。",
+        ]
+    result = "\\n".join(lines)
+    return result + ("\\n" if text.endswith("\\n") else "")
 
 def preserve_decision_block(existing: str) -> str:
     if START_DASH not in existing or END_DASH not in existing:
@@ -262,7 +298,7 @@ def sync_formal_files(root: Path = ROOT, account: dict | None = None) -> dict:
 
     existing_dash = dash_path.read_text(encoding="utf-8")
     new_dash = replace_block(existing_dash, START_DASH, END_DASH, build_dashboard_block(account, equity, existing_dash, root), after_heading=True)
-    new_dash = normalize_dashboard_projection(new_dash)
+    new_dash = normalize_dashboard_projection(new_dash, root, account)
     dash_changed = new_dash != existing_dash
     if dash_changed:
         write_formal_text_if_changed(root, dash_path.name, new_dash)

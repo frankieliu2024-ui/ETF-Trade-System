@@ -79,6 +79,33 @@ def parse_time(text: object) -> datetime | None:
 
 
 
+def latest_formal_review_decision(root: Path) -> dict:
+    """Return the latest canonical post-close review as a display projection."""
+    review_dir = root / "events" / "reviews"
+    candidates = []
+    for path in review_dir.glob("*.json") if review_dir.exists() else []:
+        try:
+            event = load_json(path)
+            review = event.get("review") or event.get("formal_review") or {}
+            stamp = parse_time(review.get("reviewed_at_beijing") or event.get("updated_at_beijing") or event.get("account_updated_at"))
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+            continue
+        if not stamp or not isinstance(review, dict):
+            continue
+        lifecycle = review.get("lifecycle")
+        if isinstance(lifecycle, dict):
+            lifecycle = "；".join(f"{key}：{value}" for key, value in lifecycle.items())
+        candidates.append((stamp, {
+            "risk_permission": review.get("risk_permission") or "未提供",
+            "lifecycle": lifecycle or "未提供",
+            "main_candidate": review.get("main_candidate") or "无新的主候选。",
+            "amount_action": review.get("action") or review.get("amount_action") or "未提供",
+            "decisive_reason": review.get("zero_amount_decisive_reason") or review.get("decisive_reason") or "未提供",
+            "data_as_of_beijing": (review.get("data_time") or {}).get("a_share_effective_close_beijing") or review.get("reviewed_at_beijing") or "未提供",
+        }))
+    return max(candidates, key=lambda item: item[0])[1] if candidates else {}
+
+
 def _settlement_obligation_key(item: dict) -> str:
     economic_fields = (
         "obligation_type", "security_code", "quantity", "subscription_price", "required_cash"
@@ -988,7 +1015,7 @@ def main() -> int:
     # Render after event/review persistence so a newly confirmed execution is
     # visible in the same canonical dashboard update, rather than one request
     # behind the machine facts.
-    dashboard = replace_block(DASHBOARD.read_text(encoding="utf-8"), START, END, build_dashboard_block(account, request.get("formal_decision"), request), insert_after_heading=True)
+    dashboard = replace_block(DASHBOARD.read_text(encoding="utf-8"), START, END, build_dashboard_block(account, latest_formal_review_decision(ROOT) or request.get("formal_decision"), request), insert_after_heading=True)
     write_formal_text_if_changed(ROOT, DASHBOARD.name, dashboard)
     # Keep the three human-readable fact documents synchronized even when the
     # request only confirms a fee/account snapshot and creates no new trade event.
