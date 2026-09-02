@@ -1,25 +1,26 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-02T12:35:07+08:00",
+  "generated_at": "2026-09-02T12:36:55+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33591253611,
+  "run_id": 33591385717,
   "run_attempt": 1,
-  "head_sha": "9179d0306beb74a8fa24c9b09fe5b900fb982c9b",
-  "main_head_sha": "a14c5dc692569c29f9b5baaa47cfa17b7b4fc7aa",
+  "head_sha": "f650ee2fb5c3fe496bc8e091e2ba93a58692c0d4",
+  "main_head_sha": "92614aafb26a006d77123e670b0e796e1cabea8e",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 13
+      "step": "Enforce hard consistency result",
+      "number": 19
     }
   ],
   "changed_files": [
-    "scripts/check_system_consistency.py"
+    "data/state/execution_reconciliation.json",
+    "data/state/notification_center.json"
   ],
-  "commit_message": "fix: consume canonical terminal review state in trade index gate",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "state: record notification and execution reconciliation",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
@@ -27,7 +28,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
