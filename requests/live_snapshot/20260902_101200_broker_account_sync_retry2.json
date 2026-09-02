@@ -1,0 +1,48 @@
+{
+  "request_id": "20260902_101200_broker_account_sync_retry2",
+  "requested_at_beijing": "2026-09-02T10:12:00+08:00",
+  "interaction_scenario": "BROKER_SCREENSHOT_SYNC",
+  "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+  "reason": "Persist the user's 2026-09-02 10:12 broker holdings screenshot as the latest account fact. The screenshot now shows 电科思仪（301689） as a 500-share position at cost 16.000 with market value 8000.000 and zero available quantity, confirming that the previously settled IPO allotment has registered into holdings. Broker displayed funds balance and available cash are both 11197.47, so the prior 8000 settlement reservation must remain released; do not re-create a pending settlement obligation. Preserve the prior confirmed SETTLED obligation and treat this screenshot as the latest broker position/account fact. No new buy/sell execution is shown in today's buy/sell columns.",
+  "account_fact": {
+    "status": "VALID",
+    "updated_at": "2026-09-02T10:12:00+08:00",
+    "source": "BROKER_SCREENSHOT_20260902_1012_USER_PROVIDED",
+    "last_confirmed_market_date": "2026-09-02",
+    "total_asset": 179914.27,
+    "stock_market_value": 160716.80,
+    "cash": 11197.47,
+    "holding_pnl": -19822.50,
+    "daily_pnl": -3586.60,
+    "daily_pnl_pct": -1.95,
+    "positions": [
+      {"asset_type":"STOCK","name":"宁德时代","code":"300750","quantity":100,"cost":393.781,"last_price":348.850,"market_value":34885.00,"holding_pnl":-4493.07,"holding_pnl_pct":-11.41},
+      {"asset_type":"STOCK","name":"工业富联","code":"601138","quantity":500,"cost":58.054,"last_price":61.520,"market_value":30760.00,"holding_pnl":1732.78,"holding_pnl_pct":5.97},
+      {"asset_type":"ETF","name":"半导体设备ETF","code":"561980","quantity":38900,"cost":0.847,"last_price":0.663,"market_value":25790.70,"holding_pnl":-7174.20,"holding_pnl_pct":-21.76},
+      {"asset_type":"ETF","name":"科创50ETF","code":"588000","quantity":14100,"cost":2.099,"last_price":1.701,"market_value":23984.10,"holding_pnl":-5610.31,"holding_pnl_pct":-18.96},
+      {"asset_type":"ETF","name":"纳指ETF","code":"159941","quantity":12200,"cost":1.626,"last_price":1.665,"market_value":20313.00,"holding_pnl":476.40,"holding_pnl_pct":2.40},
+      {"asset_type":"ETF","name":"科创创业ETF","code":"159781","quantity":19500,"cost":1.269,"last_price":1.037,"market_value":20221.50,"holding_pnl":-4527.10,"holding_pnl_pct":-18.29},
+      {"asset_type":"ETF","name":"通信ETF","code":"515880","quantity":7400,"cost":0.672,"last_price":0.641,"market_value":4743.40,"holding_pnl":-227.00,"holding_pnl_pct":-4.57},
+      {"asset_type":"STOCK","name":"电科思仪","code":"301689","quantity":500,"cost":16.000,"last_price":0.000,"market_value":8000.00,"holding_pnl":0.00,"holding_pnl_pct":0.00,"available_quantity":0,"origin":"IPO_ALLOTMENT_ORIGIN"}
+    ],
+    "settlement_obligations": [
+      {
+        "obligation_type": "IPO_ALLOTMENT_PAYMENT",
+        "security_name": "电科思仪",
+        "security_code": "301689",
+        "quantity": 500,
+        "subscription_price": 16.0,
+        "required_cash": 8000.0,
+        "payment_deadline_beijing": "2026-09-01T16:00:00+08:00",
+        "status": "SETTLED",
+        "cash_must_remain_available": false,
+        "settled_at_beijing": "2026-09-01T20:44:22+08:00",
+        "settlement_evidence": "BROKER_HOLDINGS_SCREEN_20260902_1012: 301689 holding registered, 500 shares at cost 16.000, market value 8000.000, available quantity 0",
+        "source": "BROKER_SCREENSHOT_20260902_1012_USER_PROVIDED",
+        "pit_timestamp": "2026-09-02T10:12:00+08:00"
+      }
+    ],
+    "validity_mode": "EVENT_DRIVEN_CARRY_FORWARD"
+  }
+}
+
