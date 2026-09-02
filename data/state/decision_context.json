@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-02T15:20:14Z",
+  "generated_at": "2026-09-02T15:26:53Z",
   "rules_version": "V2.2.31",
   "market_date": "2026-09-02",
   "latest_node": "close",
@@ -638,7 +638,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 24.594,
-    "age_seconds": 11846
+    "age_seconds": 12245
   },
   "freshness_at_context_build": {
     "status": "STALE",
@@ -654,7 +654,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 24.594,
-    "age_seconds": 11846
+    "age_seconds": 12245
   },
   "data_quality_summary": {
     "pass_count": 14,
@@ -734,7 +734,7 @@
     "account_fact_time": "2026-09-02T21:05:00+08:00",
     "market_snapshot_time": "2026-09-02T20:02:48+08:00",
     "market_phase": "OUTSIDE_SESSION",
-    "context_generated_time": "2026-09-02T15:20:14Z",
+    "context_generated_time": "2026-09-02T15:26:53Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -754,14 +754,14 @@
     "decision_id": "20260902_220000_515880_trial_resolution",
     "decision_time": "2026-09-02T22:00:00+08:00",
     "source": "CHATGPT_FORMAL_DECISION",
-    "lifecycle": "通信ETF（515880）：Trial不转Confirm；原Trial假设关闭；转入持仓管理并在下一可执行节点进行降低风险/退出评估；真实卖出尚未决议。",
+    "lifecycle": "通信ETF（515880）：原交易假设未转确认，已关闭；转入持仓管理并在下一可执行节点进行降低风险/退出评估；真实卖出尚未决议。",
     "applicable_object": "515880",
     "validity": "ACTIVE",
     "execution_status": "PENDING",
     "read_only": true
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-09-02T23:20:14+08:00",
+    "generated_at_beijing": "2026-09-02T23:26:53+08:00",
     "refresh_mode": "CACHED_STATE",
     "refresh_failures": [],
     "decision_freshness": {
@@ -770,8 +770,8 @@
       "captured_at": "2026-09-02T12:02:48+00:00",
       "provider_as_of": "2026-09-02T12:02:48+00:00",
       "effective_as_of": "2026-09-02T12:02:48+00:00",
-      "request_time": "2026-09-02T15:20:14.997474+00:00",
-      "age_seconds": 11846,
+      "request_time": "2026-09-02T15:26:53.435514+00:00",
+      "age_seconds": 12245,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -1385,31 +1385,12 @@
         "next_lifecycle_node": "TRADE_MANDATORY_LIFECYCLE_NODE:T+3",
         "resolution": null,
         "execution_status": "EXECUTED"
-      },
-      {
-        "source_decision_id": "20260902_220000_515880_trial_resolution",
-        "source_trade_event_id": "20260827_100843_515880_buy",
-        "hypothesis_id": "HYP_515880_20260827_ial_5000",
-        "security_code": "515880",
-        "security_name": "通信ETF",
-        "lifecycle": "Trial",
-        "lifecycle_status": "ACTIVE_TRIAL",
-        "hypothesis_status": "OPEN",
-        "start_market_date": "2026-08-27",
-        "current_market_date": "2026-09-02",
-        "current_t_plus": 4,
-        "mandatory_decision_market_date": "2026-09-01",
-        "decision_due": true,
-        "overdue": true,
-        "next_lifecycle_node": "TRADE_MANDATORY_LIFECYCLE_NODE:T+3",
-        "resolution": null,
-        "execution_status": "EXECUTED"
       }
     ],
-    "active_trial_count": 2,
-    "decision_due_count": 1,
-    "overdue_count": 1,
-    "next_mandatory_node": "2026-09-01",
+    "active_trial_count": 1,
+    "decision_due_count": 0,
+    "overdue_count": 0,
+    "next_mandatory_node": "",
     "calendar_path": "config/market/a_share_trading_calendar_2026.json",
     "decision_boundary": "只从正式决策与真实成交事实恢复已建立的Trial生命周期；不从聊天、持仓代码或研究观察节点推导交易动作。",
     "node_semantics": "TRADE_MANDATORY_LIFECYCLE_NODE与RESEARCH/REVIEW_OBSERVATION_NODE分离；T+3只表示必须形成正式决议，不生成订单。",
@@ -1417,7 +1398,7 @@
   },
   "decision_trigger": {
     "schema_version": "1.2",
-    "generated_at": "2026-09-02T23:20:14+08:00",
+    "generated_at": "2026-09-02T23:26:53+08:00",
     "status": "NO_NEW_TRIGGER",
     "trigger_type": "",
     "triggered_at": "",
@@ -1438,7 +1419,7 @@
   },
   "capital_efficiency_ranking": {
     "schema_version": "1.2",
-    "generated_at": "2026-09-02T23:20:14+08:00",
+    "generated_at": "2026-09-02T23:26:53+08:00",
     "as_of": "2026-09-02T20:02:48+08:00",
     "e2e_status": "DEGRADED",
     "risk_zone": "RISK_CONTROL",
@@ -2113,7 +2094,7 @@
     "safety_boundary": "资本比较不替代唯一主候选；风险区间不自动生成风险许可；本状态不自动生成Trial、Confirm、金额、卖出份额或订单。"
   },
   "intraday_path_features": {
-    "generated_at": "2026-09-02T15:20:09Z",
+    "generated_at": "2026-09-02T15:26:46Z",
     "market_date": "2026-09-02",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -3473,7 +3454,7 @@
     },
     "market_structure_context": {
       "schema_version": "1.4",
-      "generated_at": "2026-09-02T15:20:14Z",
+      "generated_at": "2026-09-02T15:26:52Z",
       "market_date": "2026-09-02",
       "as_of_beijing": "2026-09-02T20:02:48+08:00",
       "source_snapshot": "data/market/snapshots/2026-09-02_200248.json",
@@ -5941,7 +5922,7 @@
     },
     "if_ic_basis_5d": {
       "schema_version": "1.2",
-      "generated_at": "2026-09-02T15:20:20Z",
+      "generated_at": "2026-09-02T15:27:00Z",
       "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
       "evidence_id": "if_ic_basis_5d",
       "display_name": "IF／IC 5日基差变化证据",
@@ -5966,7 +5947,7 @@
     },
     "ipo_base_stock_oversold_reversal_300750": {
       "schema_version": "1.1",
-      "generated_at": "2026-09-02T15:20:37Z",
+      "generated_at": "2026-09-02T15:27:13Z",
       "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
       "evidence_id": "ipo_base_stock_oversold_reversal_300750",
       "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -6030,7 +6011,7 @@
     },
     "research_execution_summary": {
       "schema_version": "1.2",
-      "generated_at": "2026-09-02T15:20:38Z",
+      "generated_at": "2026-09-02T15:27:15Z",
       "mode": "RESEARCH_TO_EXECUTION_READ_ONLY_BRIDGE",
       "read_only": true,
       "use_in_current_decision": true,
@@ -6750,7 +6731,7 @@
         },
         "if_ic_basis_5d": {
           "schema_version": "1.2",
-          "generated_at": "2026-09-02T15:20:20Z",
+          "generated_at": "2026-09-02T15:27:00Z",
           "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
           "evidence_id": "if_ic_basis_5d",
           "display_name": "IF／IC 5日基差变化证据",
@@ -6775,7 +6756,7 @@
         },
         "ipo_base_stock_oversold_reversal_300750": {
           "schema_version": "1.1",
-          "generated_at": "2026-09-02T15:20:37Z",
+          "generated_at": "2026-09-02T15:27:13Z",
           "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
           "evidence_id": "ipo_base_stock_oversold_reversal_300750",
           "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -6956,7 +6937,7 @@
           ],
           "dynamic_stock_specific_signal": {
             "schema_version": "1.1",
-            "generated_at": "2026-09-02T15:20:37Z",
+            "generated_at": "2026-09-02T15:27:13Z",
             "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
             "evidence_id": "ipo_base_stock_oversold_reversal_300750",
             "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -7335,7 +7316,7 @@
   "research_contribution_audit_file": "data/state/research_contribution_audit.json",
   "research_master_candidates": {
     "schema_version": "1.0",
-    "generated_at": "2026-09-02T15:20:14Z",
+    "generated_at": "2026-09-02T15:26:53Z",
     "mode": "RESEARCH_TO_MASTER_MAINTENANCE_FEED",
     "read_only": true,
     "automatic_master_update": false,
@@ -7365,7 +7346,7 @@
   },
   "execution_quality": {
     "schema_version": "1.1",
-    "generated_at": "2026-09-02T15:20:14Z",
+    "generated_at": "2026-09-02T15:26:52Z",
     "mode": "DECISION_EXECUTION_ATTRIBUTION",
     "read_only": true,
     "trade_event_count": 5,
@@ -7918,7 +7899,7 @@
     },
     "if_ic_basis_5d": {
       "schema_version": "1.2",
-      "generated_at": "2026-09-02T15:20:20Z",
+      "generated_at": "2026-09-02T15:27:00Z",
       "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
       "evidence_id": "if_ic_basis_5d",
       "display_name": "IF／IC 5日基差变化证据",
@@ -7943,7 +7924,7 @@
     },
     "ipo_base_stock_oversold_reversal_300750": {
       "schema_version": "1.1",
-      "generated_at": "2026-09-02T15:20:37Z",
+      "generated_at": "2026-09-02T15:27:13Z",
       "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
       "evidence_id": "ipo_base_stock_oversold_reversal_300750",
       "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -8118,7 +8099,7 @@
       ],
       "dynamic_stock_specific_signal": {
         "schema_version": "1.1",
-        "generated_at": "2026-09-02T15:20:37Z",
+        "generated_at": "2026-09-02T15:27:13Z",
         "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
         "evidence_id": "ipo_base_stock_oversold_reversal_300750",
         "display_name": "宁德时代（300750）超跌反转专项证据",
