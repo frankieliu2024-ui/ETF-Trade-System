@@ -6,6 +6,7 @@ Writers place managed blocks at their canonical anchors. This module only guards
 against regression; it does not rewrite files or repair history during runtime.
 """
 
+import json
 import re
 from pathlib import Path
 
@@ -73,4 +74,18 @@ def validate_files(root: Path) -> list[str]:
         errors.append("archive_trade_corrections_outside_ch7")
     if "<!-- AUTO_STATE_SYNC_START -->" in dash and "## ETF策略风险口径" in dash and dash.index("<!-- AUTO_STATE_SYNC_START -->") > dash.index("## ETF策略风险口径"):
         errors.append("dashboard_state_sync_not_front_loaded")
+    try:
+        account = json.loads((root / "data/state/account_fact.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        account = {}
+    auto_dash = _between(dash, "<!-- AUTO_STATE_SYNC_START -->", "<!-- AUTO_STATE_SYNC_END -->")
+    current_structure = next((line for line in dash.splitlines() if line.startswith("|ETF层当前结构|")), "")
+    for position in account.get("positions") or []:
+        if position.get("asset_type") != "ETF" or not position.get("code"):
+            continue
+        code = str(position["code"])
+        if code not in auto_dash:
+            errors.append(f"dashboard_current_holding_missing={code}")
+        if current_structure and "观察ETF" in current_structure and code in current_structure:
+            errors.append(f"dashboard_holding_observation_conflict={code}")
     return errors
