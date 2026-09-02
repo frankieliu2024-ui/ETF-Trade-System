@@ -10,6 +10,9 @@ on:
     branches: [main]
     paths:
       - "data/state/CURRENT.json"
+      # A GLOBAL request is a wake-up for every existing market-domain
+      # producer.  The overseas workflow remains the sole APAC owner.
+      - "requests/live_snapshot/**global*.json"
   schedule:
     # UTC / Beijing time.
     # 20:15/20:30 UTC = Beijing 04:15/04:30. Independent schedule backstop for
