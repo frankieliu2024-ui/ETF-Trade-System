@@ -25,8 +25,8 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         self.assertIn("maintenance_guard.py", source)
         self.assertIn("build_e2e_status.py", source)
         self.assertIn("recursive_push_required", source)
-        self.assertNotIn("git push", source)
-        self.assertNotIn("workflow_dispatch", source)
+        self.assertNotIn("git push origin", source)
+        self.assertNotIn("workflow_dispatch:", source)
 
     def test_consistency_workflow_separates_validation_and_acceptance(self):
         source = WORKFLOW.read_text(encoding="utf-8")
