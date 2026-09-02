@@ -91,10 +91,13 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
             trade_dir.mkdir(parents=True)
             decision_id = "20260902_141753_trade_159326"
             (decision_dir / f"{decision_id}.json").write_text(json.dumps({
+                "event_type": "FORMAL_DECISION",
                 "decision_id": decision_id,
-                "decision_time": "2026-09-02T14:21:31+08:00",
-                "candidate": {"code": "159326"},
-                "formal_decision": {"action": "BUY", "amount_action": "买入3000份，成交价1.651元，成交金额4953元"},
+                "market_date": "2026-09-02",
+                "decision_time_beijing": "2026-09-02T14:21:31+08:00",
+                "candidate_code": "159326",
+                "candidate_name": "电网设备ETF",
+                "formal_decision": {"lifecycle": "Trial已执行", "amount_action": "买入3000份，成交价1.651元，成交金额4953元"},
             }), encoding="utf-8")
             event_id = "20260902_141753_trade_159326"
             (trade_dir / f"{event_id}.json").write_text(json.dumps({
@@ -103,7 +106,7 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
                 "side": "BUY",
                 "quantity": 3000,
                 "price": 1.651,
-                "amount_yuan": 4953.0,
+                "amount": 4953.0,
                 "executed_at_beijing": "2026-09-02T14:17:53+08:00",
                 "linked_decision_id": decision_id,
                 "execution_status": "EXECUTED",
@@ -111,9 +114,9 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
             with patch.object(reconciliation, "ROOT", root):
                 result = reconciliation.build()
             self.assertEqual(result["status"], "RECONCILED")
-            self.assertEqual(result["actionable_confirmation_count"], 0)
-            match = next(item for item in result["matches"] if item["event_id"] == event_id)
-            self.assertEqual(match["match_type"], "CONFIRMED_BY_TRADE_EVENT")
+            self.assertEqual(result["actionable_count"], 0)
+            match = next(item for item in result["matches"] if event_id in item["trade_event_ids"])
+            self.assertEqual(match["status"], "CONFIRMED_BY_TRADE_EVENT")
 
 
 if __name__ == "__main__":
