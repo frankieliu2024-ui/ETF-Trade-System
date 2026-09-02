@@ -69,7 +69,14 @@ def _settlement_obligation_key(item: dict) -> str:
     explicit = str(item.get("obligation_id") or item.get("idempotency_key") or "").strip()
     if explicit:
         return explicit
-    return "|".join(str(item.get(k) or "") for k in ("obligation_type", "security_code", "required_cash", "deadline", "payment_deadline_beijing"))
+    # Deadline labels are attributes of one obligation, not its identity.  The
+    # broker and ingress adapters have historically called the same deadline
+    # either `deadline` or `payment_deadline_beijing`; including both fields
+    # made one IPO payment split into two logical obligations.  Keep the
+    # fallback identity tied to the obligation's economic fact instead.
+    return "|".join(str(item.get(k) or "") for k in (
+        "obligation_type", "security_code", "quantity", "subscription_price", "required_cash"
+    ))
 
 
 def _settlement_status(item: dict) -> str:
