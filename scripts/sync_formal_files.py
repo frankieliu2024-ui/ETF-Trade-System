@@ -85,7 +85,7 @@ def normalize_dashboard_projection(text: str) -> str:
     lines = text.splitlines()
     changed = False
     for index, line in enumerate(lines):
-        if line.startswith("|ETF层当前结构|"):
+        if "|ETF层当前结构|" in line:
             if line != replacement:
                 lines[index] = replacement
                 changed = True
