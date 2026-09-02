@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-02T20:03:43+08:00",
-  "last_status": "SENT",
-  "last_type": "A_SHARE_SESSION_SUMMARY",
-  "last_title": "【收盘总结】A股全天结构与ETF强弱",
+  "updated_at": "2026-09-02T20:07:39+08:00",
+  "last_status": "WAITING_CONFIRMATION",
+  "last_type": "收盘账户",
+  "last_title": "【收盘账户｜需确认】请到ETF交易复盘上传收盘截图",
   "notifications": [
     {
       "notification_id": "notification_13af309aad0ae05734bf",
@@ -2009,6 +2009,32 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-02T20:03:43+08:00"
+    },
+    {
+      "notification_id": "notification_93d959b6287e608fbe8a",
+      "event_type": "收盘账户",
+      "source_event_id": "close-account:2026-09-02",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "user_severity": "需要操作",
+      "user_action": "到ChatGPT ETF项目的「ETF交易复盘」聊天窗口上传收盘截图或确认无变化",
+      "lifecycle_status": "WAITING_CONFIRMATION",
+      "created_at": "2026-09-02T20:07:38+08:00",
+      "sent_at": "2026-09-02T20:07:39+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-04T20:07:38+08:00",
+      "title": "【收盘账户｜需确认】请到ETF交易复盘上传收盘截图",
+      "content": "今天是A股交易日，系统尚未取得15:00之后可确认的最终账户事实。\n\n### 你需要做\n请把**15:00收盘后的券商持仓/账户截图**上传到 **ChatGPT → ETF项目 →「ETF交易复盘」聊天窗口**。\n\n如果收盘后账户没有任何变化，也可以直接在该窗口回复：**收盘账户无变化**。",
+      "source": "account_fact",
+      "confirmation_context": {},
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-09-02T20:07:39+08:00"
     }
   ],
   "recent": [
@@ -3019,13 +3045,32 @@
       },
       "notification_id": "notification_999648eaa1bac7295f7c",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "close-account:2026-09-02",
+      "type": "收盘账户",
+      "title": "【收盘账户｜需确认】请到ETF交易复盘上传收盘截图",
+      "content": "今天是A股交易日，系统尚未取得15:00之后可确认的最终账户事实。\n\n### 你需要做\n请把**15:00收盘后的券商持仓/账户截图**上传到 **ChatGPT → ETF项目 →「ETF交易复盘」聊天窗口**。\n\n如果收盘后账户没有任何变化，也可以直接在该窗口回复：**收盘账户无变化**。",
+      "source": "account_fact",
+      "user_severity": "需要操作",
+      "user_action": "到ChatGPT ETF项目的「ETF交易复盘」聊天窗口上传收盘截图或确认无变化",
+      "status": "WAITING_CONFIRMATION",
+      "attempted_at": "2026-09-02T20:07:39+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_93d959b6287e608fbe8a",
+      "lifecycle_status": "WAITING_CONFIRMATION"
     }
   ],
   "pending_questions": [
     "notification_6bfe320c96f8e2f37b81",
     "notification_b11fda60a3556ae7a086",
-    "notification_3a372df5e79c8b5e20ef"
+    "notification_3a372df5e79c8b5e20ef",
+    "notification_93d959b6287e608fbe8a"
   ],
-  "policy": "开盘仅推有价值结构，但实际session事实允许在同日有效恢复；A股固定收盘允许延迟补发；亚太开盘通知优先表达触发对象关键路径、本地传导、直接相关ETF反馈及数据质量；亚太主要收盘优先服务A股尾盘、错过窄窗口后仍可恢复。阈值适度放宽，Point-in-Time与去重保持。",
-  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
+  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
+  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
 }
