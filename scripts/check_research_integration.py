@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from research_artifact_contract import (
@@ -11,7 +12,7 @@ from research_artifact_contract import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-REPORT = ROOT / "data/state/system_consistency.json"
+REPORT = Path(os.environ.get("ETF_CONSISTENCY_REPORT_PATH", str(ROOT / "data/state/system_consistency.json"))).resolve()
 
 
 def text(path: str) -> str:
@@ -30,7 +31,10 @@ def load(path: str, fallback):
 
 
 def main() -> int:
-    report = load("data/state/system_consistency.json", {})
+    try:
+        report = json.loads(REPORT.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        report = {}
     checks = list(report.get("checks") or [])
     errors = list(report.get("errors") or [])
     warnings = list(report.get("warnings") or [])
