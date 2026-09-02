@@ -1,31 +1,37 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-02T12:38:27+08:00",
+  "generated_at": "2026-09-02T12:43:03+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33591454896,
+  "run_id": 33591776185,
   "run_attempt": 1,
-  "head_sha": "5ad725cf10c8095214a002e8ea9be954a71df8e2",
-  "main_head_sha": "63b39b4fe98e0aaaa496a7aec9552c3d112e7c16",
+  "head_sha": "8238303ffad22511c0129c2be7f7b5a3df2f007d",
+  "main_head_sha": "c90f652ce67ef62d0bdb9652bd1e1a4a9772eeec",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 13
+      "step": "Enforce hard consistency result",
+      "number": 20
     }
   ],
   "changed_files": [
-    ".github/workflows/system-consistency.yml"
+    ".github/workflows/system-consistency.yml",
+    "scripts/check_system_consistency.py",
+    "scripts/check_system_consistency_core.py",
+    "scripts/historical_market_fact_recovery.py",
+    "scripts/process_state_sync_request.py",
+    "scripts/review_prerequisite_lifecycle.py",
+    "tests/test_review_prerequisite_lifecycle.py"
   ],
-  "commit_message": "ci: pass candidate status through diagnostic environment",
+  "commit_message": "fix: terminate unrecoverable post-close review lifecycle safely (#188)",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
-    "changes_confined_to_auto_rollback_allowlist": true,
+    "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
     "user_notification_authority": false,
