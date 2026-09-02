@@ -18,7 +18,7 @@ trade｜- 已归入CASE-20260713-01
 <!-- AUTO_CASE_INTAKE_END -->
 ### 2.17 CASE详细记录
 <!-- AUTO_CASE_DETAILS_START -->
-#### CASE-20260902-01：新CASE
+### CASE-20260902-01：新CASE
 <!-- AUTO_CASE_DETAILS_END -->
 ## 3. 历史研究与专项回测
 ## 4. OBS观察
