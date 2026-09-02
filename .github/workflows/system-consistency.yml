@@ -284,6 +284,14 @@ jobs:
           export ETF_SYSTEM_ROOT="$candidate"
           export PYTHONPATH="$candidate/scripts:$candidate"
           python scripts/process_state_sync_request.py requests/live_snapshot/candidate_unrecoverable_review.json
+          # The replay intentionally creates ephemeral formal evidence. Commit only
+          # that candidate snapshot inside the disposable copy so the existing
+          # clean-worktree contract can validate the candidate without touching PR/main.
+          git config user.name "candidate-replay"
+          git config user.email "candidate-replay@localhost"
+          git add -A
+          git commit -m "candidate: ephemeral unrecoverable review replay"
+          unset GITHUB_SHA
           python scripts/check_system_consistency.py
           python scripts/maintenance_guard.py
           python scripts/build_e2e_status.py
