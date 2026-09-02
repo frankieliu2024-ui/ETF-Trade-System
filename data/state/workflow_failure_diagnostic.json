@@ -1,24 +1,31 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-02T20:22:37+08:00",
+  "generated_at": "2026-09-02T20:26:17+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33629517820,
+  "run_id": 33629814229,
   "run_attempt": 1,
-  "head_sha": "b54ee6c2c3f7a03b0af36d052524f66db0853ae5",
-  "main_head_sha": "f5b2d1f03550dc8a541b64bb37cd2a50d5c797af",
+  "head_sha": "805ce5234aa9aad78dad10b2ffe841b21806a0de",
+  "main_head_sha": "28e9dd7381f739e9436691d09cd9262ce7588e2e",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 6
+      "step": "Enforce hard consistency result",
+      "number": 8
+    },
+    {
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 7
     }
   ],
   "changed_files": [
-    "scripts/state_manager.py"
+    "scripts/build_e2e_status.py",
+    "scripts/state_manager.py",
+    "tests/test_market_risk_metric_guard.py"
   ],
-  "commit_message": "fix: remove dashboard risk fallback from state manager",
+  "commit_message": "fix: remove dashboard as machine risk fallback",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
