@@ -276,7 +276,7 @@ jobs:
           }
           request_path = root / "requests/live_snapshot/candidate_unrecoverable_review.json"
           request_path.parent.mkdir(parents=True, exist_ok=True)
-          request_path.write_text(json.dumps(request, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
+          request_path.write_text(json.dumps(request, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           print(json.dumps({"candidate": "CANDIDATE_POST_REPLAY_STATE", "classification": assessment.classification.value, "evidence": str(evidence_path.relative_to(root))}, ensure_ascii=False))
           PY
           cd "$candidate"
