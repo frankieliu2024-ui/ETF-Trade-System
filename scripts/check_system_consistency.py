@@ -47,14 +47,24 @@ def _normalize_us_phase_freshness(report: dict) -> None:
     now_et = now_utc.astimezone(ZoneInfo("America/New_York"))
     minute = now_et.hour * 60 + now_et.minute
     if now_et.weekday() >= 5:
-        return
-    if 4 * 60 <= minute < 9 * 60 + 30:
+        phase = "OUTSIDE_SESSION"
+        symbols = ()
+    elif 4 * 60 <= minute < 9 * 60 + 30:
         phase, symbols = "PRE_MARKET", ("QQQ", "SOXX")
     elif 9 * 60 + 30 <= minute < 16 * 60:
         phase, symbols = "REGULAR", ("NDX", "SOX")
     elif 16 * 60 <= minute < 20 * 60:
         phase, symbols = "POST_MARKET", ("QQQ", "SOXX")
     else:
+        phase, symbols = "OUTSIDE_SESSION", ()
+    if phase == "OUTSIDE_SESSION":
+        target["status"] = "WARNING"
+        target["detail"] = f"off_window_observability_stale local_time={now_et.strftime('%H:%M')} active_market_facts_not_blocked"
+        _remove_error(report, "us_extended:live_freshness:")
+        warning = "us_extended:live_freshness: off-window observability stale"
+        if warning not in report.setdefault("warnings", []):
+            report["warnings"].append(warning)
+        _recount(report)
         return
     fresh_limit = int(_read_json("config/runtime_policy.json").get("fresh_max_age_seconds", 900))
     ages = []
