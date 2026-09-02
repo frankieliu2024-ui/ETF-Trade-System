@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-02T11:12:01+08:00",
+  "generated_at": "2026-09-02T12:03:34+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33586003895,
+  "run_id": 33589265808,
   "run_attempt": 1,
-  "head_sha": "24e652a269340b01845f0974d99a2d1acde710d5",
-  "main_head_sha": "2043a24f9fe1b68d31fb14744088a7fc173736e9",
+  "head_sha": "27643925061501633bd675e39d6f1058d7a706ad",
+  "main_head_sha": "3f5a9e66f180faea9b44dce33ce902ca19d70172",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,9 +16,15 @@
     }
   ],
   "changed_files": [
-    "scripts/notification_center.py"
+    ".github/workflows/system-consistency.yml",
+    "scripts/check_system_consistency.py",
+    "scripts/check_system_consistency_core.py",
+    "scripts/historical_market_fact_recovery.py",
+    "scripts/process_state_sync_request.py",
+    "scripts/review_prerequisite_lifecycle.py",
+    "tests/test_review_prerequisite_lifecycle.py"
   ],
-  "commit_message": "chore: restore notification module byte layout",
+  "commit_message": "fix: terminate unrecoverable post-close review lifecycle safely",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
