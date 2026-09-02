@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from scripts import build_execution_reconciliation as reconciliation
 from scripts import check_system_consistency as consistency
 
 
