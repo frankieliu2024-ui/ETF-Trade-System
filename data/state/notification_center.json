@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-02T09:32:54+08:00",
-  "last_status": "WAITING_CONFIRMATION",
-  "last_type": "ACCOUNT_FACT_CONFIRMATION",
-  "last_title": "【账户变化｜需确认】发现未解释的持仓/资金变化",
+  "updated_at": "2026-09-02T09:38:34+08:00",
+  "last_status": "SENT",
+  "last_type": "A_SHARE_OPEN_VALUE_ALERT",
+  "last_title": "【市场异动】A股开盘/上午结构出现有价值变化",
   "notifications": [
     {
       "notification_id": "notification_c1025fb109bf44fb9d1c",
@@ -1828,6 +1828,39 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-02T08:52:34+08:00"
+    },
+    {
+      "notification_id": "notification_16ba1c68f58264588278",
+      "event_type": "A_SHARE_OPEN_VALUE_ALERT",
+      "source_event_id": "a-share-session-summary:2026-09-02:OPEN",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "user_severity": "需要关注",
+      "user_action": "查看结构摘要；正式交易动作以MASTER完整决策链为准",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-02T09:38:33+08:00",
+      "sent_at": "2026-09-02T09:38:33+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-04T09:38:33+08:00",
+      "title": "【市场异动】A股开盘/上午结构出现有价值变化",
+      "content": "### 核心结论\n- **市场结构**：宽基相对稳定，科技成长明显偏弱。\n- **指数反馈**：上证指数（000001）-0.98%，科创50（000688）-1.46%，创业板指（399006）-1.97%。\n- **ETF自身反馈**：持仓中偏弱的是半导体设备ETF（561980）-2.06%；持仓中相对较强的是纳指ETF（159941）+0.00%。\n\n### 关键路径\n- 科创50（000688）当前处于日内区间中部，方向尚未形成新的强化；创业板指（399006）当前处于日内区间中部，方向尚未形成新的强化；而上证指数（000001）开盘后继续走弱，目前接近日内低位。这更像科技成长局部降温，而不是全市场同步风险释放。\n\n### 对ETF系统的影响\n宽基相对稳定，科技成长明显偏弱。比较半导体设备ETF（561980）等持仓继续占用资本的边际效率。跨市场ETF的相对涨幅只用于解释不同风险因子，不替代A股自身反馈，也不等同资本效率排名。\n\n### 当前动作\n**不因通知机械交易；先复核当前持仓/观察ETF的相对强弱和风险收益，只有正式机会、金额或卖出动作改变时执行。**\n\n### 数据与边界\n- **A股行情依据**：2026-09-02 09:37:15\n- **通知生成**：2026-09-02 09:38:33\n- **边界**：A股开盘不逢开必报；恢复窗口延长到上午收盘，约0.8%/1.5%/2个百分点仅控制注意力。",
+      "source": "CURRENT+intraday_path_features",
+      "confirmation_context": {
+        "market_date": "2026-09-02",
+        "session_node": "OPEN",
+        "market_as_of_beijing": "2026-09-02T09:37:15+08:00",
+        "provider_observed_as_of_beijing": "2026-09-02T09:37:15+08:00",
+        "value_reason": "核心指数实际开盘相对前收最大跳空约1.46%",
+        "event_family_id": ":2026-09-02:OPEN:::"
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-09-02T09:38:33+08:00"
     }
   ],
   "recent": [
@@ -2748,11 +2781,29 @@
       },
       "notification_id": "notification_6bfe320c96f8e2f37b81",
       "lifecycle_status": "WAITING_CONFIRMATION"
+    },
+    {
+      "key": "a-share-session-summary:2026-09-02:OPEN",
+      "type": "A_SHARE_OPEN_VALUE_ALERT",
+      "title": "【市场异动】A股开盘/上午结构出现有价值变化",
+      "content": "### 核心结论\n- **市场结构**：宽基相对稳定，科技成长明显偏弱。\n- **指数反馈**：上证指数（000001）-0.98%，科创50（000688）-1.46%，创业板指（399006）-1.97%。\n- **ETF自身反馈**：持仓中偏弱的是半导体设备ETF（561980）-2.06%；持仓中相对较强的是纳指ETF（159941）+0.00%。\n\n### 关键路径\n- 科创50（000688）当前处于日内区间中部，方向尚未形成新的强化；创业板指（399006）当前处于日内区间中部，方向尚未形成新的强化；而上证指数（000001）开盘后继续走弱，目前接近日内低位。这更像科技成长局部降温，而不是全市场同步风险释放。\n\n### 对ETF系统的影响\n宽基相对稳定，科技成长明显偏弱。比较半导体设备ETF（561980）等持仓继续占用资本的边际效率。跨市场ETF的相对涨幅只用于解释不同风险因子，不替代A股自身反馈，也不等同资本效率排名。\n\n### 当前动作\n**不因通知机械交易；先复核当前持仓/观察ETF的相对强弱和风险收益，只有正式机会、金额或卖出动作改变时执行。**\n\n### 数据与边界\n- **A股行情依据**：2026-09-02 09:37:15\n- **通知生成**：2026-09-02 09:38:33\n- **边界**：A股开盘不逢开必报；恢复窗口延长到上午收盘，约0.8%/1.5%/2个百分点仅控制注意力。",
+      "source": "CURRENT+intraday_path_features",
+      "user_severity": "需要关注",
+      "user_action": "查看结构摘要；正式交易动作以MASTER完整决策链为准",
+      "status": "SENT",
+      "attempted_at": "2026-09-02T09:38:33+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_16ba1c68f58264588278",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [
     "notification_6bfe320c96f8e2f37b81"
   ],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
-  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
+  "policy": "开盘仅推有价值结构，但实际session事实允许在同日有效恢复；A股固定收盘允许延迟补发；亚太开盘通知优先表达触发对象关键路径、本地传导、直接相关ETF反馈及数据质量；亚太主要收盘优先服务A股尾盘、错过窄窗口后仍可恢复。阈值适度放宽，Point-in-Time与去重保持。",
+  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
