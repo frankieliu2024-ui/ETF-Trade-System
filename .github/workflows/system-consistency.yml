@@ -355,11 +355,32 @@ jobs:
         shell: bash
         run: |
           set +e
-          python scripts/check_system_consistency.py
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ -d "$RUNNER_TEMP/etf-candidate-\${{ github.event.pull_request.number }}" ]; then
+            validation_root="$RUNNER_TEMP/etf-candidate-\${{ github.event.pull_request.number }}"
+            echo "validating PR gates against ephemeral candidate post-replay tree: $validation_root"
+          else
+            validation_root="$PWD"
+          fi
+          (
+            cd "$validation_root"
+            export ETF_SYSTEM_ROOT="$validation_root"
+            export PYTHONPATH="$validation_root/scripts:$validation_root"
+            python scripts/check_system_consistency.py
+          )
           rc1=$?
-          python scripts/check_research_integration.py
+          (
+            cd "$validation_root"
+            export ETF_SYSTEM_ROOT="$validation_root"
+            export PYTHONPATH="$validation_root/scripts:$validation_root"
+            python scripts/check_research_integration.py
+          )
           rc2=$?
-          python scripts/check_market_state_consistency.py
+          (
+            cd "$validation_root"
+            export ETF_SYSTEM_ROOT="$validation_root"
+            export PYTHONPATH="$validation_root/scripts:$validation_root"
+            python scripts/check_market_state_consistency.py
+          )
           rc3=$?
           if [ "$rc1" -ne 0 ] || [ "$rc2" -ne 0 ] || [ "$rc3" -ne 0 ]; then
             exit 1
