@@ -1,24 +1,30 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-02T22:05:01+08:00",
+  "generated_at": "2026-09-02T22:05:52+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33639701692,
+  "run_id": 33639714249,
   "run_attempt": 1,
-  "head_sha": "7a2775afaa47053a837d75c13445d5d926ebaa72",
-  "main_head_sha": "0656d659ef6a23eb1aa378e7972cc6f2a17397f5",
+  "head_sha": "0656d659ef6a23eb1aa378e7972cc6f2a17397f5",
+  "main_head_sha": "28a7f671a22bf60c420f6bca046e1e0a2e01582d",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "Validate semantic latest-main freshness",
-      "number": 4
+      "step": "Enforce hard consistency result",
+      "number": 8
+    },
+    {
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 7
     }
   ],
   "changed_files": [
+    "scripts/build_execution_reconciliation.py",
     "tests/test_executed_trade_case_lifecycle.py"
   ],
-  "commit_message": "test: cover explicit planned principal parsing",
+  "commit_message": "fix: correct planned principal parsing in reconciliation",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
