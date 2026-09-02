@@ -19,7 +19,7 @@ except ModuleNotFoundError:
     from scripts.semantic_latest_main import classify_delta
 
 ROOT = Path(__file__).resolve().parents[1]
-REPORT = ROOT / "data" / "state" / "system_consistency.json"
+REPORT = Path(os.environ.get("ETF_CONSISTENCY_REPORT_PATH", str(ROOT / "data" / "state" / "system_consistency.json"))).resolve()
 DATA_STANDARD = "ETF与市场监测数据接口使用规范.md"
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 

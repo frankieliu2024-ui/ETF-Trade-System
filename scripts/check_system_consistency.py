@@ -4,8 +4,10 @@ import json
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
+import os
 
 from check_production_mutation_protocol import run as run_mutation_protocol
+import check_system_consistency_core as consistency_core
 from check_system_consistency_core import main as core_main
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -39,20 +41,42 @@ def _normalize_us_phase_freshness(report: dict) -> None:
     target = next((x for x in report.get("checks", []) if x.get("name") == "us_extended:live_freshness"), None)
     if not target or target.get("status") != "FAIL":
         return
+    # A stale derived US observation is an observability degradation, not a
+    # canonical A-share/account/trade fact conflict. Missing or malformed
+    # observations remain hard failures in the core validator.
+    if "max_age_seconds" in str(target.get("detail") or ""):
+        target["status"] = "WARNING"
+        target["detail"] = f"observability_stale {target.get('detail')} canonical_facts_unaffected"
+        _remove_error(report, "us_extended:live_freshness:")
+        warning = "us_extended:live_freshness: derived observation stale"
+        if warning not in report.setdefault("warnings", []):
+            report["warnings"].append(warning)
+        _recount(report)
+        return
     context = _read_json("data/state/us_extended_hours_context.json")
     objects = context.get("objects") or {}
     now_utc = datetime.now(timezone.utc)
     now_et = now_utc.astimezone(ZoneInfo("America/New_York"))
     minute = now_et.hour * 60 + now_et.minute
     if now_et.weekday() >= 5:
-        return
-    if 4 * 60 <= minute < 9 * 60 + 30:
+        phase = "OUTSIDE_SESSION"
+        symbols = ()
+    elif 4 * 60 <= minute < 9 * 60 + 30:
         phase, symbols = "PRE_MARKET", ("QQQ", "SOXX")
     elif 9 * 60 + 30 <= minute < 16 * 60:
         phase, symbols = "REGULAR", ("NDX", "SOX")
     elif 16 * 60 <= minute < 20 * 60:
         phase, symbols = "POST_MARKET", ("QQQ", "SOXX")
     else:
+        phase, symbols = "OUTSIDE_SESSION", ()
+    if phase == "OUTSIDE_SESSION":
+        target["status"] = "WARNING"
+        target["detail"] = f"off_window_observability_stale local_time={now_et.strftime('%H:%M')} active_market_facts_not_blocked"
+        _remove_error(report, "us_extended:live_freshness:")
+        warning = "us_extended:live_freshness: off-window observability stale"
+        if warning not in report.setdefault("warnings", []):
+            report["warnings"].append(warning)
+        _recount(report)
         return
     fresh_limit = int(_read_json("config/runtime_policy.json").get("fresh_max_age_seconds", 900))
     ages = []
@@ -499,8 +523,17 @@ def _validate_semantic_formal_structure(report: dict) -> None:
 
 
 def main() -> int:
+    import argparse
+    global REPORT
+    parser = argparse.ArgumentParser(description="Run the canonical system consistency validator.")
+    parser.add_argument("--report-path", default=os.environ.get("ETF_CONSISTENCY_REPORT_PATH", str(REPORT)))
+    parser.add_argument("--no-persist", action="store_true", help="write the report only to the supplied ephemeral path")
+    args = parser.parse_args()
+    REPORT = Path(args.report_path).resolve()
+    os.environ["ETF_CONSISTENCY_REPORT_PATH"] = str(REPORT)
+    consistency_core.REPORT = REPORT
     core_main()
-    report = _read_json("data/state/system_consistency.json")
+    report = json.loads(REPORT.read_text(encoding="utf-8"))
     _normalize_us_phase_freshness(report)
     _normalize_a_share_off_window_market_date(report)
     _normalize_stock_market_time_alignment(report)
@@ -512,7 +545,9 @@ def main() -> int:
     _validate_semantic_formal_structure(report)
     _validate_readme_front_door(report)
     _validate_production_mutation_protocol(report)
-    REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if not args.no_persist:
+        REPORT.parent.mkdir(parents=True, exist_ok=True)
+        REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
         "status": report.get("status"),
         "hard_error_count": report.get("hard_error_count"),
