@@ -514,7 +514,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         upsert_formal_line(ROOT, ARCHIVE.name, REVIEW_ARCHIVE_START, REVIEW_ARCHIVE_END, market_date, archive_entry, before_heading="## 6. 历史Excel与专项数据来源")
     experience_entry = str(review.get("experience_entry") or "").strip()
     if experience_entry:
-        if str(review.get("case_mode") or "").upper() == "NEW_CASE_FROM_EXECUTED_TRADE" and str(review.get("case_id") or "").strip():
+        case_mode = str(review.get("case_mode") or "").upper()\n        if case_mode.startswith("NEW_CASE_FROM_EXECUTED_") and str(review.get("case_id") or "").strip():
             case_entry = experience_entry
             if case_entry.startswith("### "):
                 case_entry = "#### " + case_entry[4:]
