@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-02T15:03:06Z",
+  "generated_at": "2026-09-02T15:18:23Z",
   "rules_version": "V2.2.31",
   "market_date": "2026-09-02",
   "review_key": "2026-09-02",
@@ -199,7 +199,7 @@
     "deployable_cash": 6239.47
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-09-02T23:03:06+08:00",
+    "generated_at_beijing": "2026-09-02T23:18:23+08:00",
     "refresh_mode": "CACHED_STATE",
     "refresh_failures": [],
     "decision_freshness": {
@@ -208,8 +208,8 @@
       "captured_at": "2026-09-02T12:02:48+00:00",
       "provider_as_of": "2026-09-02T12:02:48+00:00",
       "effective_as_of": "2026-09-02T12:02:48+00:00",
-      "request_time": "2026-09-02T15:03:06.412570+00:00",
-      "age_seconds": 10818,
+      "request_time": "2026-09-02T15:18:23.809559+00:00",
+      "age_seconds": 11735,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -801,16 +801,20 @@
         "security_code": "515880",
         "security_name": "通信ETF",
         "lifecycle": "Trial",
-        "lifecycle_status": "ACTIVE_TRIAL",
-        "hypothesis_status": "OPEN",
+        "lifecycle_status": "RESOLVED",
+        "hypothesis_status": "FAILED_EXIT_EVALUATION",
         "start_market_date": "2026-08-27",
         "current_market_date": "2026-09-02",
         "current_t_plus": 4,
         "mandatory_decision_market_date": "2026-09-01",
-        "decision_due": true,
-        "overdue": true,
-        "next_lifecycle_node": "TRADE_MANDATORY_LIFECYCLE_NODE:T+3",
-        "resolution": null,
+        "decision_due": false,
+        "overdue": false,
+        "next_lifecycle_node": "RESOLVED",
+        "resolution": {
+          "status": "FAILED_EXIT_EVALUATION",
+          "decision_id": "20260902_220000_515880_trial_resolution",
+          "decision_time_beijing": "2026-09-02T22:00:00+08:00"
+        },
         "execution_status": "EXECUTED"
       },
       {
@@ -828,6 +832,25 @@
         "mandatory_decision_market_date": "2026-09-07",
         "decision_due": false,
         "overdue": false,
+        "next_lifecycle_node": "TRADE_MANDATORY_LIFECYCLE_NODE:T+3",
+        "resolution": null,
+        "execution_status": "EXECUTED"
+      },
+      {
+        "source_decision_id": "20260902_220000_515880_trial_resolution",
+        "source_trade_event_id": "20260827_100843_515880_buy",
+        "hypothesis_id": "HYP_515880_20260827_ial_5000",
+        "security_code": "515880",
+        "security_name": "通信ETF",
+        "lifecycle": "Trial",
+        "lifecycle_status": "ACTIVE_TRIAL",
+        "hypothesis_status": "OPEN",
+        "start_market_date": "2026-08-27",
+        "current_market_date": "2026-09-02",
+        "current_t_plus": 4,
+        "mandatory_decision_market_date": "2026-09-01",
+        "decision_due": true,
+        "overdue": true,
         "next_lifecycle_node": "TRADE_MANDATORY_LIFECYCLE_NODE:T+3",
         "resolution": null,
         "execution_status": "EXECUTED"
