@@ -83,7 +83,7 @@ def validate_files(root: Path) -> list[str]:
     except (OSError, json.JSONDecodeError):
         account = {}
     auto_dash = _between(dash, "<!-- AUTO_STATE_SYNC_START -->", "<!-- AUTO_STATE_SYNC_END -->")
-    current_structure = next((line for line in dash.splitlines() if line.startswith("|ETF层当前结构|")), "")
+    current_structure = next((line for line in dash.splitlines() if "|ETF层当前结构|" in line), "")
     current_etf_codes = {
         str(position.get("code"))
         for position in account.get("positions") or []
