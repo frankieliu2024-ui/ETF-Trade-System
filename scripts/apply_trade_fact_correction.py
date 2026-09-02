@@ -46,6 +46,33 @@ def safe_float(value: Any) -> float | None:
         return None
 
 
+def equity_row_from_event(event: dict, fee: float) -> dict:
+    """Project an already-recorded event when the auxiliary ledger lags it."""
+    stamp = str(event.get("confirmed_at_beijing") or event.get("execution_at") or "")
+    stamp = stamp.replace("T", " ")[:19]
+    side = str(event.get("side") or event.get("action") or "").upper()
+    gross = safe_float(event.get("amount"))
+    row = {
+        "datetime": stamp,
+        "name": event.get("name"),
+        "code": event.get("code"),
+        "side": side,
+        "quantity": event.get("quantity"),
+        "price": event.get("price"),
+        "gross_amount": gross,
+        "source": f"events/trades/{event.get('event_id')}.json",
+        "source_confidence": event.get("source_confidence") or event.get("source"),
+        "entered_events_trades": True,
+        "duplicate_check": f"unique_event_id_{event.get('event_id')}",
+        "realized_pnl": None,
+        "fee_amount": round(fee, 2),
+        "fee_status": "CONFIRMED",
+    }
+    if gross is not None:
+        row["cash_flow_amount"] = round(gross - fee, 2) if side == "SELL" else round(-(gross + fee), 2) if side == "BUY" else None
+    return row
+
+
 
 def pending_fee_count(trades: list[dict]) -> int:
     return sum(1 for t in trades if str(t.get("fee_status") or "").upper() != "CONFIRMED")
@@ -131,15 +158,21 @@ def main() -> int:
     trades = equity.get("trades") or []
     source_ref = f"events/trades/{event_id}.json"
     matches = [t for t in trades if str(t.get("source") or "") == source_ref or str(t.get("duplicate_check") or "") == f"unique_event_id_{event_id}"]
-    if len(matches) != 1:
+    if len(matches) > 1:
         raise RuntimeError("strategy equity does not contain exactly one matching trade; refuse partial correction")
-    row = matches[0]
-    row["fee_amount"] = round(fee, 2)
-    row["fee_status"] = "CONFIRMED"
-    gross = safe_float(row.get("gross_amount"))
-    if gross is not None:
-        side = str(row.get("side") or "").upper()
-        row["cash_flow_amount"] = round(gross - fee, 2) if side == "SELL" else round(-(gross + fee), 2) if side == "BUY" else row.get("cash_flow_amount")
+    if matches:
+        row = matches[0]
+        row["fee_amount"] = round(fee, 2)
+        row["fee_status"] = "CONFIRMED"
+        gross = safe_float(row.get("gross_amount"))
+        if gross is not None:
+            side = str(row.get("side") or "").upper()
+            row["cash_flow_amount"] = round(gross - fee, 2) if side == "SELL" else round(-(gross + fee), 2) if side == "BUY" else row.get("cash_flow_amount")
+    else:
+        # The event is authoritative.  A lagging auxiliary reconstruction must
+        # converge by adding exactly this event, never by creating a new event.
+        equity.setdefault("trades", []).append(equity_row_from_event(event, fee))
+        equity.setdefault("summary", {})["trade_count"] = len(equity["trades"])
     rebuild_known_net(equity)
     equity["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
     write_json(EQUITY, equity)
@@ -185,3 +218,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

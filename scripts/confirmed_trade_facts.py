@@ -73,7 +73,7 @@ def effective_confirmed_fee_fact(root: Path, reconstructed_trades: list[dict]) -
 
 def latest_formal_review_confirmed_fees(root: Path) -> dict | None:
     review_dir = root / "events" / "reviews"
-    candidates: list[tuple[str, float, str]] = []
+    candidates: list[tuple[str, float | None, str]] = []
     for path in review_dir.glob("*.json") if review_dir.exists() else []:
         event = read_json(path, {}) or {}
         review = event.get("review") or event.get("formal_review") or {}
@@ -81,7 +81,7 @@ def latest_formal_review_confirmed_fees(root: Path) -> dict | None:
         try:
             fee = float(fact.get("confirmed_etf_fees"))
         except (TypeError, ValueError):
-            continue
+            fee = None
         stamp = str(
             event.get("updated_at_beijing")
             or event.get("account_updated_at")
@@ -92,4 +92,7 @@ def latest_formal_review_confirmed_fees(root: Path) -> dict | None:
     if not candidates:
         return None
     stamp, fee, source = max(candidates, key=lambda x: x[0])
+    if fee is None:
+        return None
     return {"confirmed_etf_fees": round(fee, 2), "source": source, "stamp": stamp}
+
