@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from sync_formal_files import build_archive_fact_block, canonical_risk, replace_block, update_experience
+from sync_formal_files import build_archive_fact_block, canonical_risk, normalize_dashboard_projection, replace_block, update_experience
 
 
 class FormalFileSyncTests(unittest.TestCase):
@@ -43,6 +43,12 @@ class FormalFileSyncTests(unittest.TestCase):
         block = build_archive_fact_block(account)
         self.assertIn("未新增已确认费用", block)
         self.assertNotIn("5.00元", block)
+
+    def test_legacy_current_structure_is_neutralized(self):
+        text = "|ETF层当前结构|持仓ETF：旧持仓；观察ETF：电网设备ETF（159326）|\n"
+        normalized = normalize_dashboard_projection(text)
+        self.assertIn("canonical account projection", normalized)
+        self.assertNotIn("观察ETF：电网设备ETF（159326）", normalized)
 
     def test_risk_reads_maintained_known_net_only(self):
         self.assertEqual(canonical_risk({"summary": {"known_net_current_strategy_return_pct": -8.3}}), -8.3)

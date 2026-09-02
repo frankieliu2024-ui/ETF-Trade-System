@@ -270,7 +270,11 @@ def main() -> int:
     check("etf_universe:no_duplicates", len(universe_codes) == len(objects), f"objects={len(objects)} unique_codes={len(universe_codes)}")
     check("etf_universe:thscode_complete", all(universe_thscodes) and len(universe_thscodes) == len(objects), "all objects have thscode")
     dashboard_codes = codes_from_dashboard(read_text("ETF当前状态_DASHBOARD.md"))
-    check("etf_universe:dashboard_match", dashboard_codes == universe_codes, f"dashboard={sorted(dashboard_codes)} runtime={sorted(universe_codes)}")
+    check(
+        "etf_universe:dashboard_not_ssot",
+        not dashboard_codes,
+        f"legacy_static_current_role_codes={sorted(dashboard_codes)}; canonical universe remains config/market/etf_monitor_universe.json",
+    )
 
     master = read_text("ETF规则_MASTER.md")
     check("master:three_layers", "云端市场监测固定为三层" in master, "three-layer rule present")

@@ -6,6 +6,7 @@ Writers place managed blocks at their canonical anchors. This module only guards
 against regression; it does not rewrite files or repair history during runtime.
 """
 
+import json
 import re
 from pathlib import Path
 
@@ -73,4 +74,24 @@ def validate_files(root: Path) -> list[str]:
         errors.append("archive_trade_corrections_outside_ch7")
     if "<!-- AUTO_STATE_SYNC_START -->" in dash and "## ETF策略风险口径" in dash and dash.index("<!-- AUTO_STATE_SYNC_START -->") > dash.index("## ETF策略风险口径"):
         errors.append("dashboard_state_sync_not_front_loaded")
+
+    # The canonical account projection is the only current holding source. A
+    # legacy static role line is not an ETF-universe SSOT and must not duplicate
+    # or contradict the managed account block.
+    try:
+        account = json.loads((root / "data/state/account_fact.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        account = {}
+    auto_dash = _between(dash, "<!-- AUTO_STATE_SYNC_START -->", "<!-- AUTO_STATE_SYNC_END -->")
+    current_structure = next((line for line in dash.splitlines() if "|ETF层当前结构|" in line), "")
+    current_etf_codes = {
+        str(position.get("code"))
+        for position in account.get("positions") or []
+        if position.get("asset_type") == "ETF" and position.get("code")
+    }
+    for code in sorted(current_etf_codes):
+        if code not in auto_dash:
+            errors.append(f"dashboard_current_holding_missing={code}")
+    if re.search(r"（\d{6}）", current_structure):
+        errors.append("dashboard_duplicate_current_role_projection")
     return errors
