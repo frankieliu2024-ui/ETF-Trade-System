@@ -189,7 +189,21 @@ def build() -> dict:
 
     for intent in intents:
         code = intent["code"]
-        linked = [t for t in relevant_trades(intent) if str(t.get("linked_decision_id") or "") == intent["decision_id"]]
+        # An exact decision link is canonical attribution even when the
+        # broker execution timestamp precedes the later-recorded decision
+        # timestamp. Keep only the bounded lookback, but do not require
+        # execution_time >= decision_time for an exact linked event.
+        decision_dt = parse_dt(intent.get("decision_time"))
+        linked = []
+        for trade in trades_for_code(code):
+            if str(trade.get("side") or "").upper() != intent["side"]:
+                continue
+            if str(trade.get("linked_decision_id") or "") != intent["decision_id"]:
+                continue
+            trade_dt = parse_dt(trade.get("executed_at_beijing") or trade.get("confirmed_at_beijing"))
+            if decision_dt and trade_dt and abs(trade_dt - decision_dt) > timedelta(days=LOOKBACK_DAYS):
+                continue
+            linked.append(trade)
         unlinked = [t for t in relevant_trades(intent) if str(t.get("linked_decision_id") or "") != intent["decision_id"]]
         if linked:
             actual_qty = sum(float(t.get("quantity") or 0) for t in linked)
