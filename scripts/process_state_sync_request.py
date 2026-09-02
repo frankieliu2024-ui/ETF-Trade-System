@@ -66,17 +66,17 @@ def parse_time(text: object) -> datetime | None:
 
 
 def _settlement_obligation_key(item: dict) -> str:
-    explicit = str(item.get("obligation_id") or item.get("idempotency_key") or "").strip()
-    if explicit:
-        return explicit
-    # Deadline labels are attributes of one obligation, not its identity.  The
-    # broker and ingress adapters have historically called the same deadline
-    # either `deadline` or `payment_deadline_beijing`; including both fields
-    # made one IPO payment split into two logical obligations.  Keep the
-    # fallback identity tied to the obligation's economic fact instead.
-    return "|".join(str(item.get(k) or "") for k in (
+    # Economic identity is authoritative for settlement obligations.  Ingress
+    # adapters may assign different ids to the same broker obligation across
+    # PENDING and SETTLED observations; treating those ids as primary would
+    # preserve duplicate reservations during an otherwise valid replay.
+    economic = "|".join(str(item.get(k) or "") for k in (
         "obligation_type", "security_code", "quantity", "subscription_price", "required_cash"
     ))
+    if economic.strip("|"):
+        return "economic:" + economic
+    explicit = str(item.get("obligation_id") or item.get("idempotency_key") or "").strip()
+    return "explicit:" + explicit
 
 
 def _settlement_status(item: dict) -> str:
@@ -856,3 +856,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
