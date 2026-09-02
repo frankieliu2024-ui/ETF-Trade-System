@@ -398,6 +398,8 @@ def _meaningful_unreconciled_account_changes(account: dict) -> list[dict]:
         amount_delta = event.get("amount_delta")
         if obj in ignored_mark_to_market:
             continue
+        if str(event.get("reconciliation_status") or "").upper() == "RECONCILED_BY_KNOWN_IPO_REGISTRATION":
+            continue
         if code and isinstance(qty_delta, (int, float)) and abs(float(qty_delta)) > 0:
             rows.append(event)
             continue
@@ -437,7 +439,7 @@ def account_confirmation_event() -> dict | None:
     if not details:
         return None
 
-    title = "【账户变化｜需确认】发现未解释的持仓/资金变化"
+    title = "【账户确认】发现未解释的持仓/资金变化"
     content = (
         "### 发生了什么\n"
         + "\n".join(details)

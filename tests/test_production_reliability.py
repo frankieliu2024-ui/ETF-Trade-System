@@ -44,6 +44,39 @@ class CurrentDecisionFreshnessTests(unittest.TestCase):
 
 
 class PushPlusNotificationClosureTests(unittest.TestCase):
+    def test_canonical_known_ipo_attribution_is_consumed_without_reinference(self):
+        from scripts import notification_center as center
+        account = {
+            "positions": [{"code": "301689", "quantity": 500, "cost": 16.0}],
+            "settlement_obligations": [{
+                "obligation_type": "IPO_ALLOTMENT_PAYMENT", "security_code": "301689",
+                "quantity": 500, "subscription_price": 16, "required_cash": 8000,
+                "status": "SETTLED",
+            }],
+            "account_change_events_after_confirmed_at": [{
+                "event_id": "ipo-registration", "code": "301689", "quantity_before": 0,
+                "quantity_after": 500, "quantity_delta": 500,
+                "reconciliation_status": "RECONCILED_BY_KNOWN_IPO_REGISTRATION",
+                "event_time": "2026-09-02T10:12:00+08:00",
+            }],
+        }
+        self.assertEqual(center._meaningful_unreconciled_account_changes(account), [])
+
+    def test_unknown_position_still_uses_ssot_account_confirmation_title(self):
+        from scripts import notification_center as center
+        account = {"positions": [], "settlement_obligations": [], "account_change_events_after_confirmed_at": [{
+            "event_id": "unknown-position", "event_time": "2026-09-02T10:12:00+08:00",
+            "object": "未知ETF", "code": "999999", "quantity_before": 0, "quantity_after": 100,
+            "quantity_delta": 100, "reconciliation_status": "UNRECONCILED_ACCOUNT_CHANGE",
+        }]}
+        with tempfile.TemporaryDirectory() as td:
+            state = Path(td)
+            (state / "account_fact.json").write_text(json.dumps(account, ensure_ascii=False), encoding="utf-8")
+            with patch.object(center, "STATE", state), patch.object(center, "now", return_value=datetime.fromisoformat("2026-09-02T10:13:00+08:00")):
+                event = center.account_confirmation_event()
+        self.assertIsNotNone(event)
+        self.assertEqual(event["title"], "【账户确认】发现未解释的持仓/资金变化")
+
     def test_notification_state_merge_preserves_concurrent_runner_events(self):
         from scripts.merge_notification_state import merge_notification_state
         base = {"notifications": [{"notification_id": "a", "source_event_id": "a", "lifecycle_status": "SENT"}]}
