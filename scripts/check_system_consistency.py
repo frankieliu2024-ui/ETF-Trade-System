@@ -545,9 +545,12 @@ def main() -> int:
     _validate_semantic_formal_structure(report)
     _validate_readme_front_door(report)
     _validate_production_mutation_protocol(report)
-    if not args.no_persist:
-        REPORT.parent.mkdir(parents=True, exist_ok=True)
-        REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    # --no-persist means the caller must provide an ephemeral report path;
+    # the normalized report still has to be materialized there for downstream
+    # validators. The production default path remains unchanged when the flag
+    # is absent.
+    REPORT.parent.mkdir(parents=True, exist_ok=True)
+    REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
         "status": report.get("status"),
         "hard_error_count": report.get("hard_error_count"),
