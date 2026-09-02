@@ -195,6 +195,17 @@ jobs:
             python scripts/apply_trade_fact_correction.py "$f" || rc=$?
             [ "$rc" -ne 0 ] && break
           done < /tmp/trade_fact_correction_requests.txt
+          if [ "$rc" -eq 0 ]; then
+            paths=""
+            while IFS= read -r f; do
+              [ -z "$f" ] && continue
+              event_id=$(python -c 'import json,sys; print(json.load(open(sys.argv[1],encoding="utf-8")).get("trade_event_id",""))' "$f")
+              [ -z "$event_id" ] && continue
+              [ -n "$paths" ] && paths="$paths,"
+              paths="${paths}events/trades/${event_id}.json"
+            done < /tmp/trade_fact_correction_requests.txt
+            echo "ETF_ALLOWED_DIRTY_PATHS=$paths" >> "$GITHUB_ENV"
+          fi
           exit "$rc"
       - name: Refresh decision and query context
         id: refresh_context
