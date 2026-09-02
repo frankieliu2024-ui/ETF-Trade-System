@@ -32,6 +32,8 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         source = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("--no-persist --report-path", source)
         self.assertIn("production_acceptance:", source)
+        self.assertIn("ETF_CONSISTENCY_REPORT_PATH", source)
+        self.assertIn("diff-tree --no-commit-id --name-only -m -r", source)
         self.assertIn("run_production_acceptance.py", source)
         self.assertNotIn("Refresh formal overseas and Asia index context", source)
         self.assertNotIn("Run requested research historical backfill", source)
