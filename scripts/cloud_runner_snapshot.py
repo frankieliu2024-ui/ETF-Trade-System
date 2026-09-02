@@ -513,10 +513,21 @@ def retry_failed_snapshot() -> int:
 
 
 def scheduled_close_recovery_intent(run_started_dt: datetime, market_date: str) -> bool:
-    """Allow only a real same-day close schedule to survive delayed dispatch."""
+    """Allow a real same-day close schedule after the producer reaches 15:00.
+
+    The session gate may mark a 14:57-15:00 scheduled pulse as a close intent
+    and the workflow waits for the exchange boundary. This flag is an
+    ephemeral handoff of that canonical intent; it is never enabled for
+    workflow_dispatch or a user request.
+    """
+    event_name = os.environ.get("GITHUB_EVENT_NAME", "")
+    scheduled_cron = os.environ.get("SCHEDULED_CRON", "").strip()
+    handed_off_intent = os.environ.get("SCHEDULED_CLOSE_INTENT", "").lower() == "true"
+    exact_close_intent = scheduled_cron == "0,10 7 * * 1-5"
     return (
-        os.environ.get("GITHUB_EVENT_NAME", "") == "schedule"
-        and os.environ.get("SCHEDULED_CRON", "").strip() == "0,10 7 * * 1-5"
+        event_name == "schedule"
+        and bool(scheduled_cron)
+        and (handed_off_intent or exact_close_intent)
         and run_started_dt.weekday() < 5
         and run_started_dt.date().isoformat() == market_date
         and run_started_dt.hour * 60 + run_started_dt.minute >= 15 * 60
