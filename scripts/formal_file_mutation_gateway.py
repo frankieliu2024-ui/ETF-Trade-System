@@ -87,12 +87,23 @@ def append_managed_line(text: str, start: str, end: str, line: str) -> str:
 
 
 def upsert_managed_line(text: str, start: str, end: str, key: str, line: str, *, before_heading: str | None = None) -> str:
-    tagged = f"{key}｜{line}"
+    """Upsert a dated fact line, or a canonical Markdown heading entry.
+
+    CASE entries are formal projection headings, not dated key/value lines.
+    Preserve the heading at column zero so formal validation can recognize the
+    projection without making the formal file a second machine fact owner.
+    """
+    heading_entry = line.lstrip().startswith("### ")
+    tagged = line if heading_entry else f"{key}｜{line}"
     if start in text and end in text:
         a = text.index(start) + len(start)
         b = text.index(end, a)
         rows = [x for x in text[a:b].strip().splitlines() if x.strip()]
-        rows = [x for x in rows if not x.startswith(f"{key}｜")]
+        if heading_entry:
+            marker = line.lstrip().split("：", 1)[0].split(":", 1)[0]
+            rows = [x for x in rows if marker not in x]
+        else:
+            rows = [x for x in rows if not x.startswith(f"{key}｜")]
         rows.append(tagged)
         return text[:a] + "\n" + "\n".join(rows) + "\n" + text[b:]
     managed = f"{start}\n{tagged}\n{end}"
