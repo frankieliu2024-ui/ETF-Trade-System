@@ -294,7 +294,22 @@ jobs:
           git commit -m "candidate: ephemeral unrecoverable review replay"
           test -z "$(git status --porcelain --untracked-files=all)"
           unset GITHUB_SHA
-          python scripts/check_system_consistency.py
+          set +e
+          python scripts/check_system_consistency.py > "$candidate/consistency-wrapper.log" 2>&1
+          consistency_rc=$?
+          cat "$candidate/consistency-wrapper.log"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("data/state/system_consistency.json").read_text(encoding="utf-8"))
+          failed = [item for item in report.get("checks", []) if item.get("status") == "FAIL"]
+          print(json.dumps({
+              "candidate_wrapper_rc": ${consistency_rc},
+              "candidate_errors": report.get("errors") or [],
+              "candidate_failed_checks": failed,
+          }, ensure_ascii=False))
+          PY
+          test "$consistency_rc" -eq 0
           python scripts/maintenance_guard.py
           python scripts/build_e2e_status.py
           python - <<'PY'
