@@ -1,38 +1,36 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-02T20:30:58+08:00",
+  "generated_at": "2026-09-02T20:42:25+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 33630235899,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 33631386479,
   "run_attempt": 1,
-  "head_sha": "762cbbc7f8f5be90b7518e54ee39f4f001322db6",
-  "main_head_sha": "d421f1df6cc77dd8ffd71d045f0132cf221582ef",
+  "head_sha": "2754f87f8611d7fb01eb50c9c8109be90b43881c",
+  "main_head_sha": "2754f87f8611d7fb01eb50c9c8109be90b43881c",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
+      "job": "watchdog",
+      "step": "Run read-only comprehensive production health aggregate",
       "number": 8
-    },
-    {
-      "job": "production_acceptance",
-      "step": "Enforce production acceptance",
-      "number": 7
     }
   ],
   "changed_files": [
-    "scripts/build_e2e_status.py"
+    "data/state/overseas_context.json",
+    "data/state/overseas_runtime_health.json",
+    "data/state/query_context.json",
+    "data/state/us_extended_hours_context.json"
   ],
-  "commit_message": "fix: complete dashboard risk fallback removal",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "data: refresh overseas pulse and notifications",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": false,
+    "head_is_current_main": true,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
