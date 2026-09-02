@@ -10,7 +10,7 @@
   "side": "BUY",
   "quantity": 3000,
   "price": 1.651,
-  "amount": 4953.0,
+  "amount": 4953,
   "lifecycle": null,
   "source": "BROKER_TRADE_SCREENSHOT_USER_CONFIRMED",
   "source_confidence": null,
@@ -25,7 +25,10 @@
     "execution_price": 1.651,
     "execution_price_vs_decision_pct": 0.1213,
     "adverse_execution_cost_pct": 0.1213,
-    "decision_to_execution_seconds": -218.0,
-    "method_note": "正的adverse_execution_cost_pct表示相对正式决策价格出现不利执行偏差；买入价更高或卖出价更低均为正。该指标分离判断质量与执行质量，不改变交易权限。"
+    "decision_to_execution_seconds": null,
+    "method_note": "正的adverse_execution_cost_pct表示相对正式决策价格出现不利执行偏差；本笔用户确认正式动作先于成交，但无可争议的精确发令秒数，因此不伪造延迟，不使用canonical recorded_at计算。",
+    "decision_effective_ordering": "BEFORE_EXECUTION",
+    "timing_quality": "USER_CONFIRMED_BOUNDED",
+    "timing_status": "BOUNDED_BEFORE_EXECUTION"
   }
 }
