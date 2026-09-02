@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -48,20 +47,63 @@ def canonical(value: Any) -> str:
 def atomic_json_write(path: Path, value: Any, expected_sha256: str | None = None) -> str:
     path.parent.mkdir(parents=True, exist_ok=True)
     if expected_sha256 is not None:
-        current = hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else ""
-        if current != expected_sha256:
-            raise StateConflictError(f"write conflict: {path}")
-    temp = path.with_suffix(path.suffix + ".tmp")
-    temp.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    temp.replace(path)
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+        current = hashlib.sha256(path.read_bytes()).hexdigest() if path.existdef build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
+    """Build risk metrics from canonical review facts or a fresh reconstruction.
 
-
-def default_current() -> dict[str, Any]:
+    Dashboard text is a human-readable projection and is never a machine risk source.
+    """
+    equity = read_json(root / "data" / "state" / "etf_strategy_equity.json", {})
+    summary = equity.get("summary") or {}
+    account = read_account_fact(root)
+    etf_float = sum(float(p.get("holding_pnl") or 0) for p in (account.get("positions") or []) if p.get("asset_type") == "ETF")
+    capital = float(summary.get("starting_etf_strategy_capital") or 200000)
+    reconstruction_risk = summary.get("known_net_current_strategy_return_pct")
+    reconstruction_as_of = str(equity.get("as_of_transaction_date") or summary.get("as_of_transaction_date") or "")
+    current = read_json(root / "data" / "state" / "CURRENT.json", {})
+    current_market_date = str(current.get("market_date") or "")
+    reconstruction_fresh = bool(
+        reconstruction_risk is not None
+        and reconstruction_as_of
+        and current_market_date
+        and reconstruction_as_of >= current_market_date
+    )
+    formal = _latest_formal_review_risk(root)
+    if formal.get("risk_pct") is not None:
+        risk_pct = round(float(formal["risk_pct"]), 2)
+        risk_source = formal.get("source")
+        risk_source_updated_at = formal.get("updated_at")
+        strategy_equity = formal.get("equity") if formal.get("equity") is not None else summary.get("known_net_current_strategy_equity")
+        risk_data_quality = "FORMAL_REVIEW_PRIMARY; RECONSTRUCTION_AUXILIARY"
+    elif reconstruction_fresh:
+        risk_pct = round(float(reconstruction_risk), 2)
+        risk_source = "data/state/etf_strategy_equity.json"
+        risk_source_updated_at = equity.get("generated_at")
+        strategy_equity = summary.get("known_net_current_strategy_equity")
+        risk_data_quality = summary.get("known_net_equity_data_quality") or summary.get("equity_coverage_status")
+    else:
+        risk_pct = None
+        risk_source = "data/state/etf_strategy_equity.json" if reconstruction_risk is not None else ""
+        risk_source_updated_at = equity.get("generated_at") if reconstruction_risk is not None else ""
+        strategy_equity = summary.get("known_net_current_strategy_equity")
+        risk_data_quality = "STALE_OR_UNAVAILABLE_RECONSTRUCTION" if reconstruction_risk is not None else "RISK_FACT_UNAVAILABLE"
     return {
-        "market_date": "", "latest_valid_node": "", "captured_at": "", "node_status": "NON_TRADING_DAY",
-        "latest_snapshot": "", "snapshot_commit": "", "superseded_nodes": [], "data_freshness": {},
-        "account_fact": {"status": "MISSING", "updated_at": "", "source": ""}, "needs_account_update": True,
+        "etf_strategy_risk_pct": risk_pct,
+        "risk_source": risk_source,
+        "risk_source_updated_at": risk_source_updated_at,
+        "reconstruction_risk_pct": reconstruction_risk,
+        "reconstruction_as_of_transaction_date": reconstruction_as_of,
+        "reconstruction_fresh_for_market_date": reconstruction_fresh,
+        "etf_holding_unrealized_pct": round(etf_float / capital * 100.0, 2),
+        "etf_drawdown_from_high_pct": summary.get("known_net_current_drawdown_pct"),
+        "equity_data_quality": risk_data_quality,
+        "strategy_equity_known_net": strategy_equity,
+        "high_watermark": summary.get("known_net_high_watermark", capital),
+        "fee_status": summary.get("fee_status", ""),
+        "interpretation": "唯一ETF策略风险率决定风险区间；正式review优先，合格且新鲜的canonical reconstruction仅在无正式review时使用；Dashboard仅作人类projection。持仓浮盈亏率与高水位回撤率只解释持仓压力和近期改善/恶化。",
+        "read_only": True,
+    }
+
+ate": True,
         "last_trade_event_id": "", "rules_version": "", "generated_at": "",
     }
 
@@ -357,18 +399,6 @@ def _latest_formal_review_risk(root: Path) -> dict[str, Any]:
                 equity = None
             candidates.append((updated, {"risk_pct": risk, "equity": equity, "updated_at": updated.isoformat(timespec="seconds"), "market_date": event.get("market_date") or review.get("market_date"), "source": str(path.relative_to(root)).replace("\\", "/")}))
     return max(candidates, key=lambda x: x[0])[1] if candidates else {}
-
-
-def _dashboard_risk_metric(root: Path) -> tuple[float | None, str]:
-    path = root / "ETF当前状态_DASHBOARD.md"
-    if not path.exists():
-        return None, ""
-    text = path.read_text(encoding="utf-8")
-    match = re.search(r"\|ETF策略风险率\|约?\s*([+-]?\d+(?:\.\d+)?)%", text)
-    if not match:
-        return None, ""
-    updated = re.search(r">\s*更新时间：([^\n]+)", text)
-    return float(match.group(1)), (updated.group(1).strip() if updated else "")
 
 
 def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
