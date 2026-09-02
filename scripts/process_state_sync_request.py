@@ -80,17 +80,32 @@ def parse_time(text: object) -> datetime | None:
 
 
 def _settlement_obligation_key(item: dict) -> str:
+    economic_fields = (
+        "obligation_type", "security_code", "quantity", "subscription_price", "required_cash"
+    )
+
+    def normalized_value(key: str) -> str:
+        value = item.get(key)
+        if key in {"quantity", "subscription_price", "required_cash"}:
+            number = safe_float(value)
+            if number is not None:
+                return format(number, ".12g")
+        return str(value or "").strip()
+
+    economic_values = [normalized_value(key) for key in economic_fields]
+    # Economic identity is authoritative only when every field required to
+    # distinguish an obligation is present. Partial records must retain an
+    # explicit ingress identity instead of being merged by a weak key.
+    if all(economic_values):
+        return "economic:" + "|".join(economic_values)
+
     explicit = str(item.get("obligation_id") or item.get("idempotency_key") or "").strip()
     if explicit:
-        return explicit
-    # Deadline labels are attributes of one obligation, not its identity.  The
-    # broker and ingress adapters have historically called the same deadline
-    # either `deadline` or `payment_deadline_beijing`; including both fields
-    # made one IPO payment split into two logical obligations.  Keep the
-    # fallback identity tied to the obligation's economic fact instead.
-    return "|".join(str(item.get(k) or "") for k in (
-        "obligation_type", "security_code", "quantity", "subscription_price", "required_cash"
-    ))
+        return "explicit:" + explicit
+
+    # Keep incomplete records addressable without colliding with a complete
+    # economic obligation.
+    return "unidentified:" + "|".join(economic_values)
 
 
 def _settlement_status(item: dict) -> str:

@@ -36,6 +36,28 @@ class SettlementObligationTests(unittest.TestCase):
         self.assertEqual(len(merged["settlement_obligations"]), 1)
         self.assertEqual(merged["settlement_obligations"][0]["status"], "SETTLED")
         self.assertEqual(merged["reserved_cash_for_settlement"], 0.0)
+
+    def test_incomplete_economic_identity_uses_explicit_fallback(self):
+        first = ipo("PENDING_PAYMENT")
+        first.pop("required_cash")
+        first["obligation_id"] = "ingress-a"
+        second = dict(first)
+        second["obligation_id"] = "ingress-b"
+        merged = merge_account_fact({}, acct(obligations=[first, second]))
+        self.assertEqual(len(merged["settlement_obligations"]), 2)
+
+    def test_complete_economic_identity_has_priority_over_ingress_id(self):
+        first = dict(ipo("PENDING_PAYMENT"), obligation_id="ingress-a")
+        second = dict(ipo("SETTLED"), idempotency_key="ingress-b")
+        merged = merge_account_fact({}, acct(obligations=[first, second]))
+        self.assertEqual(len(merged["settlement_obligations"]), 1)
+        self.assertEqual(merged["settlement_obligations"][0]["status"], "SETTLED")
+
+    def test_distinct_complete_economic_identity_does_not_merge(self):
+        different_quantity = dict(ipo(), quantity=501)
+        different_cash = dict(ipo(), required_cash=8016)
+        merged = merge_account_fact({}, acct(obligations=[ipo(), different_quantity, different_cash]))
+        self.assertEqual(len(merged["settlement_obligations"]), 3)
     def test_explicit_constraints(self):
         low=merge_account_fact({},acct(cash=5000,obligations=[ipo()]))
         self.assertEqual(low["settlement_constraint_status"],"INSUFFICIENT_CASH")
