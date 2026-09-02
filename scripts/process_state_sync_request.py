@@ -889,7 +889,9 @@ def main() -> int:
         if account_fact_is_older(prior_account, supplied_account):
             account_sync_status = "STALE_ACCOUNT_FACT_IGNORED"
         else:
-            prior_events = prior_account.get("account_change_events_after_confirmed_at") or []
+            # Use the canonicalized event history returned by merge_account_fact:
+            # it may have upgraded a previously unresolved IPO registration.
+            prior_events = supplied_account.get("account_change_events_after_confirmed_at") or []
             new_events = _account_change_events(prior_account, supplied_account, request, trade)
             known = {str(x.get("idempotency_key") or x.get("event_id") or "") for x in prior_events}
             supplied_account["account_change_events_after_confirmed_at"] = prior_events + [x for x in new_events if str(x.get("idempotency_key")) not in known]
