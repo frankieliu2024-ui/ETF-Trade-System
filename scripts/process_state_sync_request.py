@@ -70,7 +70,15 @@ def _settlement_obligation_key(item: dict) -> str:
     # adapters may assign different ids to the same broker obligation across
     # PENDING and SETTLED observations; treating those ids as primary would
     # preserve duplicate reservations during an otherwise valid replay.
-    economic = "|".join(str(item.get(k) or "") for k in (
+    def identity_value(key: str) -> str:
+        value = item.get(key)
+        if key in {"quantity", "subscription_price", "required_cash"}:
+            number = safe_float(value)
+            if number is not None:
+                return format(number, ".12g")
+        return str(value or "").strip()
+
+    economic = "|".join(identity_value(k) for k in (
         "obligation_type", "security_code", "quantity", "subscription_price", "required_cash"
     ))
     if economic.strip("|"):
