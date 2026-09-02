@@ -1,9 +1,15 @@
 import tempfile
 import unittest
 from pathlib import Path
+import sys
 from unittest.mock import patch
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+
 from scripts import check_system_consistency_core as core
+from scripts import apply_trade_fact_correction as correction
+from scripts import confirmed_trade_facts
 from scripts import process_state_sync_request as sync
 
 
@@ -78,6 +84,33 @@ class TradeFactCorrectionContractTests(unittest.TestCase):
             self.assertIn("|5.00|-4,970.40|", text)
             self.assertNotIn("待确认费用", text)
 
+    def test_lagging_auxiliary_equity_can_project_event_without_new_trade(self):
+        event = {
+            "event_id": "event-1", "confirmed_at_beijing": "2026-09-02T14:40:00+08:00",
+            "name": "半导体设备ETF", "code": "561980", "side": "SELL",
+            "quantity": 13000, "price": 0.681, "amount": 8853,
+        }
+        row = correction.equity_row_from_event(event, 5)
+        self.assertEqual(row["source"], "events/trades/event-1.json")
+        self.assertEqual(row["fee_status"], "CONFIRMED")
+        self.assertEqual(row["cash_flow_amount"], 8848)
+
+    def test_latest_unavailable_review_does_not_fallback_to_older_fee_total(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            review_dir = root / "events/reviews"
+            review_dir.mkdir(parents=True)
+            (review_dir / "2026-08-31.json").write_text(
+                '{"updated_at_beijing":"2026-08-31T21:00:00+08:00","review":{"etf_strategy_known_net":{"confirmed_etf_fees":125.01}}}',
+                encoding="utf-8",
+            )
+            (review_dir / "2026-09-01.json").write_text(
+                '{"event_type":"FORMAL_POST_CLOSE_REVIEW_UNAVAILABLE","updated_at_beijing":"2026-09-02T12:44:52+08:00"}',
+                encoding="utf-8",
+            )
+            self.assertIsNone(confirmed_trade_facts.latest_formal_review_confirmed_fees(root))
+
 
 if __name__ == "__main__":
     unittest.main()
+
