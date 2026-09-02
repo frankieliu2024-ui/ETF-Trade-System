@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import re
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 try:
@@ -21,7 +20,6 @@ FILES = {
     "decision": STATE / "decision_context.json",
     "maintenance": STATE / "maintenance_health.json",
 }
-DASHBOARD = ROOT / "ETF当前状态_DASHBOARD.md"
 OUT = STATE / "e2e_status.json"
 POST_MARKET_REVIEW = ROOT / "post_market_review" / "post_market_review_event.json"
 REVIEW_DIR = ROOT / "events" / "reviews"
@@ -33,13 +31,6 @@ def read_json(path: Path) -> dict:
         return data if isinstance(data, dict) else {}
     except (OSError, json.JSONDecodeError):
         return {}
-
-
-def read_text(path: Path) -> str:
-    try:
-        return path.read_text(encoding="utf-8")
-    except OSError:
-        return ""
 
 
 def parse_time(value: object) -> datetime | None:
@@ -165,16 +156,6 @@ def account_component(account: dict, current: dict) -> dict:
     }
 
 
-def dashboard_risk_metric(dashboard: str) -> tuple[float | None, str]:
-    if not dashboard:
-        return None, ""
-    match = re.search(r"\|ETF策略风险率\|约?\s*([+-]?\d+(?:\.\d+)?)%", dashboard)
-    if not match:
-        return None, ""
-    updated = re.search(r">\s*更新时间：([^\n]+)", dashboard)
-    return float(match.group(1)), (updated.group(1).strip() if updated else "")
-
-
 def latest_formal_review_risk() -> dict:
     directory = ROOT / "events" / "reviews"
     candidates = []
@@ -195,12 +176,11 @@ def latest_formal_review_risk() -> dict:
     return max(candidates, key=lambda x: x[0])[1] if candidates else {}
 
 
-def risk_component(equity: dict, dashboard: str, current: dict) -> dict:
-    dashboard_pct, dashboard_updated = dashboard_risk_metric(dashboard)
+def risk_component(equity: dict, current: dict) -> dict:
     summary = equity.get("summary") or {}
     reconstruction_pct = summary.get("known_net_current_strategy_return_pct")
     reconstruction_generated = equity.get("generated_at")
-    reconstruction_as_of = str(equity.get("as_of_transaction_date") or "")
+    reconstruction_as_of = str(equity.get("as_of_transaction_date") or summary.get("as_of_transaction_date") or "")
     market_date = str(current.get("market_date") or "")
     reconstruction_fresh_for_market = bool(
         reconstruction_as_of and market_date and reconstruction_as_of >= market_date
@@ -209,40 +189,23 @@ def risk_component(equity: dict, dashboard: str, current: dict) -> dict:
     formal_review = latest_formal_review_risk()
     formal_review_pct = formal_review.get("risk_pct")
     if formal_review_pct is not None:
-        dashboard_matches = dashboard_pct is not None and abs(float(dashboard_pct) - float(formal_review_pct)) <= 0.03
         return {
             "status": "READY",
-            "reason": "latest formal post-close risk fact is authoritative; Dashboard is reconciled or automatically bypassed if transiently regressed",
+            "reason": "latest formal post-close risk fact is authoritative; Dashboard is projection-only",
             "etf_strategy_risk_pct": round(float(formal_review_pct), 2),
             "source": formal_review.get("source"),
             "source_updated_at": formal_review.get("updated_at"),
             "formal_review_market_date": formal_review.get("market_date"),
-            "dashboard_risk_pct": dashboard_pct,
-            "dashboard_matches_formal_review": dashboard_matches,
-            "dashboard_updated_at": dashboard_updated,
             "reconstruction_risk_pct": reconstruction_pct,
             "reconstruction_generated_at": reconstruction_generated,
             "reconstruction_as_of_transaction_date": reconstruction_as_of,
             "reconstruction_fresh_for_market_date": reconstruction_fresh_for_market,
-            "data_quality": "FORMAL_REVIEW_PRIMARY; DASHBOARD_RECONCILED; RECONSTRUCTION_AUXILIARY",
-        }
-    if dashboard_pct is not None:
-        return {
-            "status": "READY",
-            "reason": "formal ETF strategy risk metric is available from the current Dashboard",
-            "etf_strategy_risk_pct": dashboard_pct,
-            "source": "ETF当前状态_DASHBOARD.md",
-            "source_updated_at": dashboard_updated,
-            "reconstruction_risk_pct": reconstruction_pct,
-            "reconstruction_generated_at": reconstruction_generated,
-            "reconstruction_as_of_transaction_date": reconstruction_as_of,
-            "reconstruction_fresh_for_market_date": reconstruction_fresh_for_market,
-            "data_quality": "FORMAL_DASHBOARD_CURRENT; RECONSTRUCTION_IS_AUXILIARY",
+            "data_quality": "FORMAL_REVIEW_PRIMARY; DASHBOARD_PROJECTION_ONLY",
         }
     if reconstruction_pct is not None and reconstruction_fresh_for_market:
         return {
             "status": "READY",
-            "reason": "formal ETF strategy risk metric is available from a current reconstruction",
+            "reason": "formal ETF strategy risk metric is available from a fresh canonical reconstruction",
             "etf_strategy_risk_pct": reconstruction_pct,
             "source": "data/state/etf_strategy_equity.json",
             "source_updated_at": reconstruction_generated,
@@ -253,7 +216,7 @@ def risk_component(equity: dict, dashboard: str, current: dict) -> dict:
     if reconstruction_pct is not None:
         return {
             "status": "DEGRADED",
-            "reason": "ETF strategy equity reconstruction is stale for the current market date and cannot be treated as the current formal risk metric",
+            "reason": "ETF strategy equity reconstruction is stale for the current market date and Dashboard cannot be used as a fallback",
             "etf_strategy_risk_pct": None,
             "source": "data/state/etf_strategy_equity.json",
             "stale_reconstruction_risk_pct": reconstruction_pct,
@@ -264,13 +227,11 @@ def risk_component(equity: dict, dashboard: str, current: dict) -> dict:
         }
     return {
         "status": "BLOCKED",
-        "reason": "formal ETF strategy risk metric is unavailable",
+        "reason": "formal ETF strategy risk metric is unavailable and Dashboard is projection-only",
         "etf_strategy_risk_pct": None,
         "source": "",
         "data_quality": summary.get("known_net_equity_data_quality"),
     }
-
-
 def context_component(query: dict, decision: dict) -> dict:
     query_ok = bool(query)
     decision_ok = bool(decision)
@@ -354,7 +315,7 @@ def main() -> int:
     components = {
         "market": market_component(data["current"]),
         "account": account_component(data["account"], data["current"]),
-        "risk": risk_component(data["equity"], dashboard, data["current"]),
+        "risk": risk_component(data["equity"], data["current"]),
         "close_review": close_review_component(data["current"]),
         "decision_context": context_component(data["query"], data["decision"]),
         "lifecycle": lifecycle_component(data["current"]),
