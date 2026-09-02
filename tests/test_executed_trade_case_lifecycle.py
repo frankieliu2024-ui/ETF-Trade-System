@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from scripts import check_system_consistency as consistency
+from scripts import build_execution_reconciliation as reconciliation
 
 
 class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
