@@ -52,6 +52,27 @@ class FormalFileMutationGatewayTests(unittest.TestCase):
         self.assertNotIn("K｜old", twice)
         self.assertIn("X｜stay", twice)
 
+    def test_case_heading_is_not_prefixed_and_replaces_malformed_entry(self):
+        base = "# T\n<!-- S -->\n2026-09-02｜### CASE-20260902-01：old\nX｜stay\n<!-- E -->\n"
+        once = upsert_managed_line(
+            base,
+            "<!-- S -->",
+            "<!-- E -->",
+            "2026-09-02",
+            "### CASE-20260902-01：new",
+        )
+        twice = upsert_managed_line(
+            once,
+            "<!-- S -->",
+            "<!-- E -->",
+            "2026-09-02",
+            "### CASE-20260902-01：new",
+        )
+        self.assertEqual(once, twice)
+        self.assertIn("### CASE-20260902-01：new", twice)
+        self.assertNotIn("2026-09-02｜### CASE-20260902-01", twice)
+        self.assertIn("X｜stay", twice)
+
     def test_atomic_write_reports_change_only_once(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
