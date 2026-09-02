@@ -298,13 +298,15 @@ jobs:
           python scripts/check_system_consistency.py > "$candidate/consistency-wrapper.log" 2>&1
           consistency_rc=$?
           cat "$candidate/consistency-wrapper.log"
+          export CANDIDATE_CONSISTENCY_RC="$consistency_rc"
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
           report = json.loads(Path("data/state/system_consistency.json").read_text(encoding="utf-8"))
           failed = [item for item in report.get("checks", []) if item.get("status") == "FAIL"]
           print(json.dumps({
-              "candidate_wrapper_rc": ${consistency_rc},
+              "candidate_wrapper_rc": int(os.environ["CANDIDATE_CONSISTENCY_RC"]),
               "candidate_errors": report.get("errors") or [],
               "candidate_failed_checks": failed,
           }, ensure_ascii=False))
