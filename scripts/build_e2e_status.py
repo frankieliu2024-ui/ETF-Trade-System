@@ -311,7 +311,6 @@ def maintenance_component(maintenance: dict) -> dict:
 
 def main() -> int:
     data = {name: read_json(path) for name, path in FILES.items()}
-    dashboard = read_text(DASHBOARD)
     components = {
         "market": market_component(data["current"]),
         "account": account_component(data["account"], data["current"]),
