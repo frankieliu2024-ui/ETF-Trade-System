@@ -1,47 +1,32 @@
 {
-  "schema_version": "2.0",
+  "schema_version": "1.0",
+  "generated_at": "2026-09-02T14:55:10Z",
   "decision_id": "20260825_1451_formal_intraday_decision",
   "market_date": "2026-08-25",
   "candidate_code": "159992",
   "candidate_name": "创新药ETF",
-  "display_name": "创新药ETF（159992）",
-  "action_class": "SELL",
   "price_at_decision": 0.867,
-  "research_evidence_used": [],
-  "horizons": {
-    "T_plus_1": {
-      "status": "MATURED",
-      "market_date": "2026-08-26",
-      "candidate_close_return_pct": 0.1153,
-      "etf_universe_median_return_pct": 0.4848,
-      "relative_to_etf_universe_median_pct_points": -0.3695,
-      "decision_direction_adjusted_return_pct": -0.1153,
-      "decision_direction_adjusted_relative_pct_points": 0.3695,
-      "interpretation": "BUY后上涨为正；SELL后继续下跌为正。相对值用于避免把全市场共同涨跌误记为研究贡献。"
-    },
-    "T_plus_3": {
-      "status": "MATURED",
-      "market_date": "2026-08-28",
-      "candidate_close_return_pct": -0.5767,
-      "etf_universe_median_return_pct": 1.0174,
-      "relative_to_etf_universe_median_pct_points": -1.5941,
-      "decision_direction_adjusted_return_pct": 0.5767,
-      "decision_direction_adjusted_relative_pct_points": 1.5941,
-      "interpretation": "BUY后上涨为正；SELL后继续下跌为正。相对值用于避免把全市场共同涨跌误记为研究贡献。"
-    },
-    "T_plus_5": {
-      "status": "MATURED",
-      "market_date": "2026-09-01",
-      "candidate_close_return_pct": -2.1915,
-      "etf_universe_median_return_pct": 0.1763,
-      "relative_to_etf_universe_median_pct_points": -2.3678,
-      "decision_direction_adjusted_return_pct": 2.1915,
-      "decision_direction_adjusted_relative_pct_points": 2.3678,
-      "interpretation": "BUY后上涨为正；SELL后继续下跌为正。相对值用于避免把全市场共同涨跌误记为研究贡献。"
-    }
+  "formal_decision": {
+    "risk_permission": "禁止新增",
+    "lifecycle": "半导体设备ETF（561980）持有；科创50ETF（588000）持有；科创创业ETF（159781）持有；纳指ETF（159941）持有。",
+    "main_candidate": "创新药ETF（159992）—观察机会。",
+    "candidate_code": "159992",
+    "candidate_name": "创新药ETF",
+    "amount_action": "新增0元；现有四只ETF继续持有；不回补半导体设备ETF（561980）上午卖出的13,000份；14:50节点不追加减持，现金继续保留，15:00收盘复核。",
+    "decisive_reason": "按14:50最新行情重估ETF策略风险率约-8.20%，仍处风险控制区；创业板指约-1.03%，高相关科技篮子仍偏弱，半导体设备ETF（561980）约-1.75%且横截面居后。创新药ETF（159992）约+2.00%为当前ETF横截面最强，但尚不足以满足风险控制区极端修复Trial的完整入口，因此新增为0元；同时现有持仓尚无新证据证明交易假设已确认失效或必须在14:50机械减仓。",
+    "data_as_of_beijing": "2026-08-25T14:50:07+08:00",
+    "price_at_decision": 0.867,
+    "price_as_of_beijing": "2026-08-25T14:49:59+08:00"
   },
-  "linked_trades": [],
+  "results": {
+    "decision_day_close_return_pct": 0.1153,
+    "T_plus_1_close_return_pct": 0.1153,
+    "T_plus_3_close_return_pct": -0.5767,
+    "T_plus_5_close_return_pct": -2.1915
+  },
+  "MFE_through_T_plus_5_pct_excluding_decision_day": 1.8454,
+  "MAE_through_T_plus_5_pct_excluding_decision_day": -3.4602,
+  "method_note": "T+N按后续已记录A股交易日顺序计算；为避免使用决策前的当日高低点，MFE/MAE排除决策当日。",
   "read_only": true,
-  "method_note": "严格使用决策日之后已经形成的交易日日线事实；T+1/T+3/T+5未到时保持PENDING，不用未来信息补值。ETF全集相对结果使用决策时点comparison_snapshot中的各ETF价格作为统一起点。",
-  "decision_boundary": "结果只用于判断质量、执行质量和研究贡献复盘；不自动修改MASTER、不生成交易动作、不把相关性解释为因果。"
+  "decision_boundary": "结果归因仅用于复盘与研究，不自动修改MASTER或产生新交易动作。"
 }

@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-09-02T22:28:23+08:00",
-  "status": "BLOCKED",
+  "generated_at": "2026-09-02T22:55:04+08:00",
+  "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
@@ -27,10 +27,10 @@
     "risk": {
       "status": "READY",
       "reason": "latest formal post-close risk fact is authoritative; Dashboard is projection-only",
-      "etf_strategy_risk_pct": -6.8,
-      "source": "events/reviews/2026-08-31.json",
-      "source_updated_at": "2026-08-31T21:51:19+08:00",
-      "formal_review_market_date": "2026-08-31",
+      "etf_strategy_risk_pct": -8.1,
+      "source": "events/reviews/2026-09-02.json",
+      "source_updated_at": "2026-09-02T22:55:04+08:00",
+      "formal_review_market_date": "2026-09-02",
       "reconstruction_risk_pct": -8.31,
       "reconstruction_generated_at": "2026-09-02T08:08:16Z",
       "reconstruction_as_of_transaction_date": "",
@@ -38,11 +38,9 @@
       "data_quality": "FORMAL_REVIEW_PRIMARY; DASHBOARD_PROJECTION_ONLY"
     },
     "close_review": {
-      "status": "BLOCKED",
-      "reason": "FORMAL_POST_CLOSE_REVIEW_NOT_CANONICALIZED",
-      "market_date": "2026-09-02",
-      "review_path": "events/reviews/2026-09-02.json",
-      "closure_path": "data/state/close_review_closure_2026-09-02.json"
+      "status": "READY",
+      "reason": "canonical close review chain is complete",
+      "market_date": "2026-09-02"
     },
     "decision_context": {
       "status": "READY",
@@ -65,9 +63,7 @@
       "checked_at": "2026-09-02T22:28:23+08:00"
     }
   },
-  "blockers": [
-    "close_review"
-  ],
+  "blockers": [],
   "degradations": [
     "maintenance"
   ],

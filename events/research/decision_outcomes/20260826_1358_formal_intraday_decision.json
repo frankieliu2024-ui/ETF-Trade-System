@@ -1,47 +1,32 @@
 {
-  "schema_version": "2.0",
+  "schema_version": "1.0",
+  "generated_at": "2026-09-02T14:55:10Z",
   "decision_id": "20260826_1358_formal_intraday_decision",
   "market_date": "2026-08-26",
   "candidate_code": "159326",
   "candidate_name": "电网设备ETF",
-  "display_name": "电网设备ETF（159326）",
-  "action_class": "OBSERVE_OR_HOLD",
   "price_at_decision": 1.685,
-  "research_evidence_used": [],
-  "horizons": {
-    "T_plus_1": {
-      "status": "MATURED",
-      "market_date": "2026-08-27",
-      "candidate_close_return_pct": 0.5341,
-      "etf_universe_median_return_pct": 0.7879,
-      "relative_to_etf_universe_median_pct_points": -0.2538,
-      "decision_direction_adjusted_return_pct": null,
-      "decision_direction_adjusted_relative_pct_points": null,
-      "interpretation": "观察/持有类决策不计算方向调整收益。"
-    },
-    "T_plus_3": {
-      "status": "MATURED",
-      "market_date": "2026-08-31",
-      "candidate_close_return_pct": -0.8902,
-      "etf_universe_median_return_pct": 0.1818,
-      "relative_to_etf_universe_median_pct_points": -1.072,
-      "decision_direction_adjusted_return_pct": null,
-      "decision_direction_adjusted_relative_pct_points": null,
-      "interpretation": "观察/持有类决策不计算方向调整收益。"
-    },
-    "T_plus_5": {
-      "status": "MATURED",
-      "market_date": "2026-09-02",
-      "candidate_close_return_pct": -2.4332,
-      "etf_universe_median_return_pct": -2.5685,
-      "relative_to_etf_universe_median_pct_points": 0.1353,
-      "decision_direction_adjusted_return_pct": null,
-      "decision_direction_adjusted_relative_pct_points": null,
-      "interpretation": "观察/持有类决策不计算方向调整收益。"
-    }
+  "formal_decision": {
+    "decision_id": "20260826_1358_formal_intraday_decision",
+    "data_as_of_beijing": "2026-08-26T13:58:00+08:00",
+    "risk_permission": "允许Trial；Confirm关闭",
+    "lifecycle": "半导体设备ETF（561980）持有；科创50ETF（588000）持有；科创创业ETF（159781）持有；纳指ETF（159941）持有。",
+    "main_candidate": "电网设备ETF（159326）—观察机会",
+    "candidate_code": "159326",
+    "candidate_name": "电网设备ETF",
+    "amount_action": "新增0元；现有四只ETF继续持有；现金保留，14:30节点复核。",
+    "decisive_reason": "按13:58券商持仓市值与已确认ETF策略账估算，ETF策略Known-net风险率仍位于风险观察区，允许评估单次5,000元Trial但Confirm关闭；13:45机器快照质量PASS，电网设备ETF（159326）保持相对独立强势但尚未形成足够完整的结构与承接证据，当前高相关科技持仓已明显修复，不因单日反弹追补同风险因子，因此本节点新增0元。",
+    "action": "新增0元；现有四只ETF继续持有；现金保留，14:30节点复核。"
   },
-  "linked_trades": [],
+  "results": {
+    "decision_day_close_return_pct": -0.1187,
+    "T_plus_1_close_return_pct": 0.5341,
+    "T_plus_3_close_return_pct": -0.8902,
+    "T_plus_5_close_return_pct": -2.4332
+  },
+  "MFE_through_T_plus_5_pct_excluding_decision_day": 0.8309,
+  "MAE_through_T_plus_5_pct_excluding_decision_day": -3.6202,
+  "method_note": "T+N按后续已记录A股交易日顺序计算；为避免使用决策前的当日高低点，MFE/MAE排除决策当日。",
   "read_only": true,
-  "method_note": "严格使用决策日之后已经形成的交易日日线事实；T+1/T+3/T+5未到时保持PENDING，不用未来信息补值。ETF全集相对结果使用决策时点comparison_snapshot中的各ETF价格作为统一起点。",
-  "decision_boundary": "结果只用于判断质量、执行质量和研究贡献复盘；不自动修改MASTER、不生成交易动作、不把相关性解释为因果。"
+  "decision_boundary": "结果归因仅用于复盘与研究，不自动修改MASTER或产生新交易动作。"
 }

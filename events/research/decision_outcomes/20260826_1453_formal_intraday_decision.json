@@ -1,67 +1,45 @@
 {
-  "schema_version": "2.0",
+  "schema_version": "1.0",
+  "generated_at": "2026-09-02T14:55:10Z",
   "decision_id": "20260826_1453_formal_intraday_decision",
   "market_date": "2026-08-26",
   "candidate_code": "518880",
   "candidate_name": "黄金ETF",
-  "display_name": "黄金ETF（518880）",
-  "action_class": "OBSERVE_OR_HOLD",
   "price_at_decision": 9.527,
-  "research_evidence_used": [
-    {
-      "evidence_id": "market_structure_context:518880",
-      "change": "黄金ETF（518880）处于历史高位区且近期高低点同步抬升，但日内先高后低、接近冲高回落。",
-      "decision_effect": "使其成为唯一观察主候选，但不升级Trial。"
-    },
-    {
-      "evidence_id": "skfolio_risk_evidence:high_corr_cluster",
-      "change": "半导体设备ETF（561980）、科创50ETF（588000）、科创创业ETF（159781）构成高相关风险簇，约占ETF账户权重80%。",
-      "decision_effect": "提高低相关收益来源的比较优先级，但不绕过风险许可。"
-    }
-  ],
-  "horizons": {
-    "T_plus_1": {
-      "status": "MATURED",
-      "market_date": "2026-08-27",
-      "candidate_close_return_pct": -0.8502,
-      "etf_universe_median_return_pct": 0.6904,
-      "relative_to_etf_universe_median_pct_points": -1.5406,
-      "decision_direction_adjusted_return_pct": null,
-      "decision_direction_adjusted_relative_pct_points": null,
-      "interpretation": "观察/持有类决策不计算方向调整收益。"
-    },
-    "T_plus_3": {
-      "status": "MATURED",
-      "market_date": "2026-08-31",
-      "candidate_close_return_pct": -4.1146,
-      "etf_universe_median_return_pct": 0.3621,
-      "relative_to_etf_universe_median_pct_points": -4.4767,
-      "decision_direction_adjusted_return_pct": null,
-      "decision_direction_adjusted_relative_pct_points": null,
-      "interpretation": "观察/持有类决策不计算方向调整收益。"
-    },
-    "T_plus_5": {
-      "status": "MATURED",
-      "market_date": "2026-09-02",
-      "candidate_close_return_pct": -6.5603,
-      "etf_universe_median_return_pct": -2.6239,
-      "relative_to_etf_universe_median_pct_points": -3.9364,
-      "decision_direction_adjusted_return_pct": null,
-      "decision_direction_adjusted_relative_pct_points": null,
-      "interpretation": "观察/持有类决策不计算方向调整收益。"
-    }
+  "formal_decision": {
+    "decision_id": "20260826_1453_formal_intraday_decision",
+    "risk_permission": "禁止新增",
+    "lifecycle": "半导体设备ETF（561980）持有；科创50ETF（588000）持有；科创创业ETF（159781）持有；纳指ETF（159941）持有。",
+    "main_candidate": "黄金ETF（518880）—观察机会",
+    "candidate_code": "518880",
+    "candidate_name": "黄金ETF",
+    "amount_action": "新增0元；四只ETF继续持有；可用资金15,319.87元保留，等待15:00正式收盘复核。",
+    "decisive_reason": "ETF策略风险率约-8.30%，仍处风险控制区，普通新增被禁止。重新统一比较后，黄金ETF（518880）因低相关收益来源且历史高位区仍为上升趋势，优于仅靠当日涨幅的候选进入观察；但其日内更接近冲高回落，风险收益尚不足以升级。科技持仓与电网设备ETF（159326）多数仍是下降/混合趋势中的缩量上涨，承接证据不足。",
+    "data_as_of_beijing": "2026-08-26T14:48:57+08:00",
+    "price_at_decision": 9.527,
+    "price_as_of_beijing": "2026-08-26T14:48:52+08:00",
+    "research_evidence_used": [
+      {
+        "evidence_id": "market_structure_context:518880",
+        "change": "黄金ETF（518880）处于历史高位区且近期高低点同步抬升，但日内先高后低、接近冲高回落。",
+        "decision_effect": "使其成为唯一观察主候选，但不升级Trial。"
+      },
+      {
+        "evidence_id": "skfolio_risk_evidence:high_corr_cluster",
+        "change": "半导体设备ETF（561980）、科创50ETF（588000）、科创创业ETF（159781）构成高相关风险簇，约占ETF账户权重80%。",
+        "decision_effect": "提高低相关收益来源的比较优先级，但不绕过风险许可。"
+      }
+    ]
   },
-  "linked_trades": [
-    {
-      "event_id": "20260902_141753_trade_159326",
-      "confirmed_at_beijing": "2026-09-02T14:17:53+08:00",
-      "side": "BUY",
-      "quantity": 3000,
-      "price": 1.651,
-      "pit_link_status": "AUTO_PRIOR_MATCH"
-    }
-  ],
+  "results": {
+    "decision_day_close_return_pct": -0.105,
+    "T_plus_1_close_return_pct": -0.8502,
+    "T_plus_3_close_return_pct": -4.1146,
+    "T_plus_5_close_return_pct": -6.5603
+  },
+  "MFE_through_T_plus_5_pct_excluding_decision_day": 0.1365,
+  "MAE_through_T_plus_5_pct_excluding_decision_day": -7.2846,
+  "method_note": "T+N按后续已记录A股交易日顺序计算；为避免使用决策前的当日高低点，MFE/MAE排除决策当日。",
   "read_only": true,
-  "method_note": "严格使用决策日之后已经形成的交易日日线事实；T+1/T+3/T+5未到时保持PENDING，不用未来信息补值。ETF全集相对结果使用决策时点comparison_snapshot中的各ETF价格作为统一起点。",
-  "decision_boundary": "结果只用于判断质量、执行质量和研究贡献复盘；不自动修改MASTER、不生成交易动作、不把相关性解释为因果。"
+  "decision_boundary": "结果归因仅用于复盘与研究，不自动修改MASTER或产生新交易动作。"
 }
