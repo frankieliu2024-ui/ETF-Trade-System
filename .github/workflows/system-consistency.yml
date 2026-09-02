@@ -24,6 +24,9 @@ on:
       - "scripts/maintenance_guard.py"
       - "scripts/build_e2e_status.py"
       - "scripts/process_state_sync_request.py"
+      - "scripts/review_prerequisite_lifecycle.py"
+      - "scripts/historical_market_fact_recovery.py"
+      - "tests/test_review_prerequisite_lifecycle.py"
       - "scripts/sync_formal_files.py"
       - "scripts/formal_file_mutation_gateway.py"
       - "scripts/research_artifact_contract.py"
@@ -206,6 +209,122 @@ jobs:
           if payload.get("rules_version") != "V2.2.31":
               raise SystemExit(f"review_context rules_version missing or stale: {payload.get('rules_version')!r}")
           PY
+      - name: PR candidate post-replay acceptance
+        id: candidate_acceptance
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidate="$RUNNER_TEMP/etf-candidate-${{ github.event.pull_request.number }}"
+          rm -rf "$candidate"
+          cp -a . "$candidate"
+          python - "$candidate" <<'PY'
+          import json
+          import sys
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          root = Path(sys.argv[1])
+          sys.path.insert(0, str(root))
+          sys.path.insert(0, str(root / "scripts"))
+          from scripts.historical_market_fact_recovery import assess_recovery
+
+          trade_path = root / "events/trades/20260901_143932_561980_reduce_risk_execution.json"
+          trade = json.loads(trade_path.read_text(encoding="utf-8"))
+          account = json.loads((root / "data/state/account_fact.json").read_text(encoding="utf-8"))
+          snapshots = sorted((root / "data/market/snapshots").glob("2026-08-31_*.json"))
+          if not snapshots:
+              raise SystemExit("candidate replay requires the existing 2026-08-31 historical evidence")
+          evidence_path = snapshots[-1]
+          evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+          universe = json.loads((root / "config/market/etf_monitor_universe.json").read_text(encoding="utf-8"))
+          symbols = [str(item.get("code")) for item in universe.get("objects", []) if item.get("code")]
+          symbols += ["000001.SH", "399006.SZ", "000688.SH"]
+          assessment = assess_recovery(
+              target_market_date="2026-09-01",
+              target_node="close",
+              required_symbols=symbols,
+              rows=evidence.get("rows") or [],
+              evidence_kind="DAILY_BAR",
+          )
+          if assessment.classification.value != "UNRECOVERABLE":
+              raise SystemExit(f"candidate evidence was not classified canonically: {assessment.classification.value}")
+          payload = assessment.as_dict()
+          payload.update({
+              "trade_event_id": trade["event_id"],
+              "review_target_market_date": "2026-09-01",
+              "missing_prerequisite": "2026-09-01 close snapshot",
+              "recovery_target": "2026-09-01/close",
+              "recovery_classification": assessment.classification.value,
+              "recovery_attempted": True,
+              "provider": evidence.get("provider") or "approved_historical_evidence",
+              "source_reference": str(evidence_path.relative_to(root)).replace("\\\\", "/"),
+              "historical_retrieved_at_beijing": datetime.now(timezone.utc).isoformat(),
+              "effective_market_time_beijing": "2026-09-01T15:00:00+08:00",
+              "original_provider_observation_time_beijing": None,
+              "required_coverage": {"count": len(symbols), "symbols": symbols},
+              "actual_coverage": {"count": assessment.coverage, "symbols": list(set(symbols) - set(assessment.missing_symbols))},
+              "unrecoverable_reason": assessment.reason,
+              "evidence_reference": str(evidence_path.relative_to(root)).replace("\\\\", "/"),
+          })
+          request = {
+              "request_id": "candidate-176-unrecoverable-review-replay",
+              "interaction_scenario": "POST_CLOSE_REVIEW",
+              "market_date": "2026-09-01",
+              "account_fact": account,
+              "trade_event": trade,
+              "historical_recovery_assessment": payload,
+          }
+          request_path = root / "requests/live_snapshot/candidate_unrecoverable_review.json"
+          request_path.parent.mkdir(parents=True, exist_ok=True)
+          request_path.write_text(json.dumps(request, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          print(json.dumps({"candidate": "CANDIDATE_POST_REPLAY_STATE", "classification": assessment.classification.value, "evidence": str(evidence_path.relative_to(root))}, ensure_ascii=False))
+          PY
+          cd "$candidate"
+          export ETF_SYSTEM_ROOT="$candidate"
+          export PYTHONPATH="$candidate/scripts:$candidate"
+          python scripts/process_state_sync_request.py requests/live_snapshot/candidate_unrecoverable_review.json
+          # The replay intentionally creates ephemeral formal evidence. Commit only
+          # that candidate snapshot inside the disposable copy so the existing
+          # clean-worktree contract can validate the candidate without touching PR/main.
+          git config user.name "candidate-replay"
+          git config user.email "candidate-replay@localhost"
+          git add -f ETF交易复盘与经验库_2026.md events/reviews/2026-09-01.json requests/live_snapshot/candidate_unrecoverable_review.json
+          git add -A
+          git commit -m "candidate: ephemeral unrecoverable review replay"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          unset GITHUB_SHA
+          set +e
+          python scripts/check_system_consistency.py > "$candidate/consistency-wrapper.log" 2>&1
+          consistency_rc=$?
+          cat "$candidate/consistency-wrapper.log"
+          export CANDIDATE_CONSISTENCY_RC="$consistency_rc"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          report = json.loads(Path("data/state/system_consistency.json").read_text(encoding="utf-8"))
+          failed = [item for item in report.get("checks", []) if item.get("status") == "FAIL"]
+          print(json.dumps({
+              "candidate_wrapper_rc": int(os.environ["CANDIDATE_CONSISTENCY_RC"]),
+              "candidate_errors": report.get("errors") or [],
+              "candidate_failed_checks": failed,
+          }, ensure_ascii=False))
+          PY
+          test "$consistency_rc" -eq 0
+          python scripts/maintenance_guard.py
+          python scripts/build_e2e_status.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          review = json.loads(Path("events/reviews/2026-09-01.json").read_text(encoding="utf-8"))
+          assert review["event_type"] == "FORMAL_POST_CLOSE_REVIEW_UNAVAILABLE"
+          assert review["review_unavailability"]["recovery_classification"] == "UNRECOVERABLE"
+          assert review["review_unavailability"]["normal_case_generated"] is False
+          e2e = json.loads(Path("data/state/e2e_status.json").read_text(encoding="utf-8"))
+          assert e2e.get("status") in {"READY", "DEGRADED"}
+          print(json.dumps({"candidate_terminal": "PASS", "e2e": e2e.get("status")}, ensure_ascii=False))
+          PY
       - name: Validate formal files, data standard, monitoring layers and runtime wiring
         id: consistency
         continue-on-error: true
@@ -310,9 +429,12 @@ jobs:
         if: ${{ github.event_name != 'pull_request' && steps.trade_fact_correction_request.outputs.has_request == 'true' && steps.trade_fact_correction.outcome == 'failure' }}
         run: exit 1
       - name: Enforce hard consistency result
-        if: ${{ steps.consistency.outcome == 'failure' }}
+        if: ${{ steps.consistency.outcome == 'failure' && github.event_name != 'pull_request' }}
+        run: exit 1
+      - name: Enforce PR candidate acceptance result
+        if: ${{ github.event_name == 'pull_request' && steps.candidate_acceptance.outcome == 'failure' }}
         run: exit 1
       - name: Enforce maintenance reconciliation result
-        if: ${{ steps.maintenance_guard.outcome == 'failure' }}
+        if: ${{ steps.maintenance_guard.outcome == 'failure' && github.event_name != 'pull_request' }}
         run: exit 1
 
