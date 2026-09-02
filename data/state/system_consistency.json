@@ -1,21 +1,21 @@
 {
-  "generated_at": "2026-09-02T13:41:42Z",
-  "generated_at_beijing": "2026-09-02T21:41:42+08:00",
+  "generated_at": "2026-09-02T14:05:36Z",
+  "generated_at_beijing": "2026-09-02T22:05:36+08:00",
   "repository": {
-    "head_sha": "249aaf1e36999e50ef0ecf5065fe4702d09cc35e",
-    "github_sha": "249aaf1e36999e50ef0ecf5065fe4702d09cc35e",
-    "github_run_id": "33637097306",
+    "head_sha": "0656d659ef6a23eb1aa378e7972cc6f2a17397f5",
+    "github_sha": "0656d659ef6a23eb1aa378e7972cc6f2a17397f5",
+    "github_run_id": "33639714249",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "249aaf1e36999e50ef0ecf5065fe4702d09cc35e",
-    "workflow_sha": "249aaf1e36999e50ef0ecf5065fe4702d09cc35e",
+    "checked_commit": "0656d659ef6a23eb1aa378e7972cc6f2a17397f5",
+    "workflow_sha": "0656d659ef6a23eb1aa378e7972cc6f2a17397f5",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "semantic_freshness": {
-    "base": "ed6f1f0ef1246b9438abfced5aa7af7ee421a8e9",
-    "head": "249aaf1e36999e50ef0ecf5065fe4702d09cc35e",
+    "base": "249aaf1e36999e50ef0ecf5065fe4702d09cc35e",
+    "head": "0656d659ef6a23eb1aa378e7972cc6f2a17397f5",
     "changed_paths": [
       "data/state/e2e_status.json",
       "data/state/execution_reconciliation.json",
@@ -24,13 +24,13 @@
       "data/state/notification_center.json",
       "data/state/restricted_rollback_plan.json",
       "data/state/system_consistency.json",
-      "data/state/us_extended_hours_context.json",
-      "data/state/us_pulse_runtime_health.json",
       "data/state/workflow_failure_diagnostic.json",
+      "scripts/build_execution_reconciliation.py",
       "tests/test_executed_trade_case_lifecycle.py"
     ],
     "categories": {
       "STABLE_PRODUCTION_CHANGE": [
+        "scripts/build_execution_reconciliation.py",
         "tests/test_executed_trade_case_lifecycle.py"
       ],
       "DYNAMIC_RUNTIME_FACT": [
@@ -41,8 +41,6 @@
         "data/state/notification_center.json",
         "data/state/restricted_rollback_plan.json",
         "data/state/system_consistency.json",
-        "data/state/us_extended_hours_context.json",
-        "data/state/us_pulse_runtime_health.json",
         "data/state/workflow_failure_diagnostic.json"
       ],
       "FORMAL_FACT_MUTATION": [],
@@ -50,20 +48,20 @@
       "UNKNOWN": []
     },
     "decision": "REPLAY_REQUIRED",
-    "validated_commit": "ed6f1f0ef1246b9438abfced5aa7af7ee421a8e9",
-    "current_head": "249aaf1e36999e50ef0ecf5065fe4702d09cc35e",
+    "validated_commit": "249aaf1e36999e50ef0ecf5065fe4702d09cc35e",
+    "current_head": "0656d659ef6a23eb1aa378e7972cc6f2a17397f5",
     "head_advanced": true,
     "stable_contract_freshness": "REVIEW_REQUIRED",
     "runtime_fact_freshness": "CURRENT"
   },
   "status": "FAIL",
-  "hard_error_count": 5,
-  "warning_count": 2,
+  "hard_error_count": 6,
+  "warning_count": 3,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-01:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-01\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n...................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 195 tests in 0.238s\n\nOK\n"
+      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-01:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-01\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n...................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 195 tests in 0.313s\n\nOK\n"
     },
     {
       "name": "tests:opening_current_self_healing",
@@ -73,17 +71,17 @@
     {
       "name": "tests:semantic_latest_main",
       "status": "PASS",
-      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 1.819s\n\nOK\n"
+      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.129s\n\nOK\n"
     },
     {
       "name": "tests:research_artifact_contract",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.740s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.689s\n\nOK\n"
     },
     {
       "name": "tests:lifecycle_state",
       "status": "PASS",
-      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.004s\n\nOK\n"
+      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.007s\n\nOK\n"
     },
     {
       "name": "tests:historical_market_fact_recovery",
@@ -92,23 +90,23 @@
     },
     {
       "name": "tests:executed_trade_case_lifecycle",
-      "status": "PASS",
-      "detail": "_trade_159326\", \"decision_time\": \"2026-09-02T14:21:31+08:00\", \"decision_market_date\": \"2026-09-02\", \"source_event\": \"events/decisions/20260902_141753_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 2, \"planned_quantity\": null}, \"trade_event_ids\": [\"20260902_141753_trade_159326\"], \"fill_status\": \"OVER_EXECUTION_OR_MULTIPLE_OPERATIONS\", \"fill_ratio\": 2476.5, \"execution_date\": \"2026-09-02\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-09-02\"}], \"actionable_count\": 0, \"account_fact_updated_at\": \"2026-09-02T21:05:00+08:00\", \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n......\n----------------------------------------------------------------------\nRan 6 tests in 0.381s\n\nOK\n"
+      "status": "FAIL",
+      "detail": "loader.py\", line 232, in loadTestsFromNames\n    suites = [self.loadTestsFromName(name, module) for name in names]\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/loader.py\", line 232, in <listcomp>\n    suites = [self.loadTestsFromName(name, module) for name in names]\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/loader.py\", line 162, in loadTestsFromName\n    module = __import__(module_name)\n             ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_executed_trade_case_lifecycle.py\", line 7, in <module>\n    from scripts import build_execution_reconciliation as reconciliation\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/scripts/build_execution_reconciliation.py\", line 72\n    ]    for pattern, multiplier in patterns:\n         ^^^\nSyntaxError: invalid syntax\n"
     },
     {
       "name": "tests:settlement_obligations",
       "status": "PASS",
-      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.002s\n\nOK\n"
+      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.003s\n\nOK\n"
     },
     {
       "name": "tests:formal_file_mutation_gateway",
       "status": "PASS",
-      "detail": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.990s\n\nOK\n"
+      "detail": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.003s\n\nOK\n"
     },
     {
       "name": "tests:post_close_review_canonical",
       "status": "PASS",
-      "detail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.198s\n\nOK\n"
+      "detail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.006s\n\nOK\n"
     },
     {
       "name": "tests:review_prerequisite_lifecycle",
@@ -118,7 +116,7 @@
     {
       "name": "tests:production_reliability",
       "status": "PASS",
-      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n.....................\n----------------------------------------------------------------------\nRan 21 tests in 0.013s\n\nOK\n"
+      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n.....................\n----------------------------------------------------------------------\nRan 21 tests in 0.014s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -398,17 +396,17 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=249aaf1e36999e50ef0ecf5065fe4702d09cc35e"
+      "detail": "HEAD=0656d659ef6a23eb1aa378e7972cc6f2a17397f5"
     },
     {
       "name": "git:semantic_latest_main",
       "status": "PASS",
-      "detail": "{\"base\": \"ed6f1f0ef1246b9438abfced5aa7af7ee421a8e9\", \"head\": \"249aaf1e36999e50ef0ecf5065fe4702d09cc35e\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\", \"data/state/us_pulse_runtime_health.json\", \"data/state/workflow_failure_diagnostic.json\", \"tests/test_executed_trade_case_lifecycle.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"tests/test_executed_trade_case_lifecycle.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\", \"data/state/us_pulse_runtime_health.json\", \"data/state/workflow_failure_diagnostic.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\"}"
+      "detail": "{\"base\": \"249aaf1e36999e50ef0ecf5065fe4702d09cc35e\", \"head\": \"0656d659ef6a23eb1aa378e7972cc6f2a17397f5\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\", \"scripts/build_execution_reconciliation.py\", \"tests/test_executed_trade_case_lifecycle.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"scripts/build_execution_reconciliation.py\", \"tests/test_executed_trade_case_lifecycle.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\"}"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=249aaf1e36999e50ef0ecf5065fe4702d09cc35e GITHUB_SHA=249aaf1e36999e50ef0ecf5065fe4702d09cc35e"
+      "detail": "HEAD=0656d659ef6a23eb1aa378e7972cc6f2a17397f5 GITHUB_SHA=0656d659ef6a23eb1aa378e7972cc6f2a17397f5"
     },
     {
       "name": "git:critical_files_tracked",
@@ -418,7 +416,7 @@
     {
       "name": "git:working_tree_clean_before_check",
       "status": "PASS",
-      "detail": "generated_state_dirty=1 unexpected=[]"
+      "detail": "clean"
     },
     {
       "name": "index_entry:ETF规则_MASTER.md",
@@ -837,8 +835,8 @@
     },
     {
       "name": "us_extended:live_freshness",
-      "status": "PASS",
-      "detail": "active=True phase=09:41 max_age_seconds=542 limit=900"
+      "status": "WARNING",
+      "detail": "observability_stale active=True phase=10:05 max_age_seconds=1976 limit=900 canonical_facts_unaffected"
     },
     {
       "name": "session_gate:calendar_read",
@@ -1972,6 +1970,7 @@
     }
   ],
   "errors": [
+    "tests:executed_trade_case_lifecycle: loader.py\", line 232, in loadTestsFromNames\n    suites = [self.loadTestsFromName(name, module) for name in names]\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/loader.py\", line 232, in <listcomp>\n    suites = [self.loadTestsFromName(name, module) for name in names]\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/loader.py\", line 162, in loadTestsFromName\n    module = __import__(module_name)\n             ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_executed_trade_case_lifecycle.py\", line 7, in <module>\n    from scripts import build_execution_reconciliation as reconciliation\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/scripts/build_execution_reconciliation.py\", line 72\n    ]    for pattern, multiplier in patterns:\n         ^^^\nSyntaxError: invalid syntax\n",
     "post_close_review:missing_or_invalid_review=events/reviews/2026-09-02.json",
     "post_close_review:missing_or_invalid_closure=data/state/close_review_closure_2026-09-02.json",
     "post_close_review:CURRENT.close_review_closure_is_stale",
@@ -1980,7 +1979,8 @@
   ],
   "warnings": [
     "providers:account_stock_fallback_policy: account stocks without direct fallback=['301689']",
-    "stock_runtime:market_complete: codes=['300750', '601138'] status=PASS"
+    "stock_runtime:market_complete: codes=['300750', '601138'] status=PASS",
+    "us_extended:live_freshness: derived observation stale"
   ],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
   "production_mutation_protocol": {
