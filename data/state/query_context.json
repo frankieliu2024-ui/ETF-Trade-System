@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-02T07:00:22Z",
-  "generated_at_beijing": "2026-09-02T15:00:22+08:00",
+  "generated_at": "2026-09-02T07:03:44Z",
+  "generated_at_beijing": "2026-09-02T15:03:44+08:00",
   "market_date": "2026-09-02",
   "latest_valid_node": "live",
   "rules_version": "V2.2.31",
@@ -154,7 +154,7 @@
     "deployable_cash": 6238.47
   },
   "decision_context": {
-    "generated_at": "2026-09-02T07:00:16Z",
+    "generated_at": "2026-09-02T07:03:41Z",
     "rules_version": "V2.2.31",
     "market_date": "2026-09-02",
     "latest_node": "live",
@@ -962,7 +962,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 12.441,
-      "age_seconds": 43
+      "age_seconds": 248
     },
     "freshness_at_context_build": {
       "status": "FRESH",
@@ -978,7 +978,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 12.441,
-      "age_seconds": 43
+      "age_seconds": 248
     },
     "data_quality_summary": {
       "pass_count": 14,
@@ -1056,7 +1056,7 @@
       "account_fact_time": "2026-09-02T14:44:00+08:00",
       "market_snapshot_time": "2026-09-02T14:59:33+08:00",
       "market_phase": "CLOSING_CALL_AUCTION",
-      "context_generated_time": "2026-09-02T07:00:16Z",
+      "context_generated_time": "2026-09-02T07:03:41Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
@@ -1092,7 +1092,7 @@
       "read_only": true
     },
     "market_quote_router": {
-      "generated_at_beijing": "2026-09-02T15:00:16+08:00",
+      "generated_at_beijing": "2026-09-02T15:03:41+08:00",
       "refresh_mode": "CACHED_STATE",
       "refresh_failures": [],
       "decision_freshness": {
@@ -1101,8 +1101,8 @@
         "captured_at": "2026-09-02T06:59:33+00:00",
         "provider_as_of": "2026-09-02T06:59:27+00:00",
         "effective_as_of": "2026-09-02T06:59:27+00:00",
-        "request_time": "2026-09-02T07:00:16.385429+00:00",
-        "age_seconds": 49,
+        "request_time": "2026-09-02T07:03:41.054142+00:00",
+        "age_seconds": 254,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -1569,7 +1569,7 @@
           "volume": null,
           "amount": null,
           "turnover": null,
-          "data_time_beijing": "2026-09-02T14:59:00+08:00",
+          "data_time_beijing": "2026-09-02T15:03:00+08:00",
           "data_time_local": "",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "韩股收盘",
@@ -1613,7 +1613,7 @@
           "market_name": "中国香港",
           "symbol": "124.HSTECH",
           "name": "恒生科技指数",
-          "latest_price": 4515.76,
+          "latest_price": 4519.38,
           "open": null,
           "high": null,
           "low": null,
@@ -1621,7 +1621,7 @@
           "volume": null,
           "amount": null,
           "turnover": null,
-          "data_time_beijing": "2026-09-02T14:59:40+08:00",
+          "data_time_beijing": "2026-09-02T15:03:36+08:00",
           "data_time_local": "",
           "market_phase": "REGULAR",
           "market_status_cn": "港股交易中",
@@ -4333,7 +4333,7 @@
     "account_fact_time": "2026-09-02T14:44:00+08:00",
     "market_snapshot_time": "2026-09-02T14:59:33+08:00",
     "market_phase": "CLOSING_CALL_AUCTION",
-    "context_generated_time": "2026-09-02T07:00:16Z",
+    "context_generated_time": "2026-09-02T07:03:41Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -4432,7 +4432,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "FRESH",
-        "age_seconds": 43,
+        "age_seconds": 248,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -4450,7 +4450,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 12.441,
-        "age_seconds": 43
+        "age_seconds": 248
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新判断为“时点正常／存在延迟／时点过旧”。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -4472,26 +4472,10 @@
       "degraded_max_age_seconds": 1500,
       "close_grace_seconds": 1800,
       "principle": "查询时立即补采优先；常规10分钟只是生产目标。补采失败才回退最近有效状态，并按查询时刻重新判定新鲜度。"
-    },
-    "refresh_gate": {
-      "status": "READY",
-      "formal_analysis_allowed": true,
-      "formal_decision_persist_allowed": true,
-      "fallback_allowed": false,
-      "query_intent": "EXPLICIT_LATEST",
-      "request_file": "requests/live_snapshot/20260901_0928_opening_current_recovery.json",
-      "request_id": "20260901_0928_opening_current_recovery",
-      "requested_at_beijing": "2026-09-01T09:28:00+08:00",
-      "requested_market_time": "2026-09-01T09:28:00+08:00",
-      "current_snapshot_time": "2026-09-02T14:59:33+08:00",
-      "resolved_snapshot_time": "2026-09-02T14:59:33+08:00",
-      "latest_snapshot": "data/market/snapshots/2026-09-02_145933.json",
-      "failure_reason": "",
-      "rule": "EXPLICIT_LATEST或wait_for_refresh请求必须等本次请求之后且不早于requested_market_time的新CURRENT发布后才可称为最新/当前行情；请求前即使仍处普通FRESH窗口，也不得冒充本次最新查询结果。仅非EXPLICIT_LATEST且用户明确授权时可回退旧快照。"
     }
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-09-02T15:00:16+08:00",
+    "generated_at_beijing": "2026-09-02T15:03:41+08:00",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
     "refresh_failures": [],
     "decision_freshness": {
@@ -4501,7 +4485,7 @@
       "provider_as_of": "2026-09-02T06:59:27+00:00",
       "effective_as_of": "2026-09-02T06:59:27+00:00",
       "request_time": "2026-09-02T06:44:00+00:00",
-      "age_seconds": 49,
+      "age_seconds": 254,
       "post_request": true,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -4509,7 +4493,7 @@
       "refresh_required": true,
       "fallback_allowed": false,
       "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required",
-      "resolved_as_of": "2026-09-02T07:00:18+00:00",
+      "resolved_as_of": "2026-09-02T07:03:42+00:00",
       "resolved_post_request": true
     },
     "route_version": "V1.1",
@@ -4521,16 +4505,16 @@
         "symbol": "HSTECH",
         "canonical_object": "HSTECH",
         "name": "恒生科技指数",
-        "latest_price": 4518.62,
+        "latest_price": 4519.47,
         "open": 4532.22,
         "high": 4532.22,
         "low": 4460.13,
         "prev_close": 4550.88,
-        "volume": 958637328,
-        "amount": 41481586432.0,
-        "turnover": 41481586432.0,
-        "data_time_beijing": "2026-09-02T15:00:18+08:00",
-        "data_time_local": "2026-09-02T15:00:18+08:00",
+        "volume": 968369808,
+        "amount": 41802557952.0,
+        "turnover": 41802557952.0,
+        "data_time_beijing": "2026-09-02T15:03:42+08:00",
+        "data_time_local": "2026-09-02T15:03:42+08:00",
         "market_phase": "REGULAR",
         "market_status_cn": "港股交易中",
         "data_nature_cn": "实时交易行情",
@@ -4997,7 +4981,7 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-09-02T14:59:00+08:00",
+        "data_time_beijing": "2026-09-02T15:03:00+08:00",
         "data_time_local": "",
         "market_phase": "OFF_SESSION",
         "market_status_cn": "韩股收盘",
@@ -5215,11 +5199,11 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 12.441,
-    "age_seconds": 43
+    "age_seconds": 248
   },
   "freshness_at_context_build": {
     "status": "FRESH",
-    "age_seconds": 43,
+    "age_seconds": 248,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -5230,7 +5214,7 @@
     "provider_as_of": "2026-09-02T06:59:27+00:00",
     "effective_as_of": "2026-09-02T06:59:27+00:00",
     "request_time": "2026-09-02T06:44:00+00:00",
-    "age_seconds": 49,
+    "age_seconds": 254,
     "post_request": true,
     "preferred_max_age_seconds": 300,
     "fallback_max_age_seconds": 900,
@@ -5238,7 +5222,7 @@
     "refresh_required": true,
     "fallback_allowed": false,
     "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required",
-    "resolved_as_of": "2026-09-02T07:00:18+00:00",
+    "resolved_as_of": "2026-09-02T07:03:42+00:00",
     "resolved_post_request": true
   },
   "trading_day_status": {
@@ -5302,9 +5286,9 @@
   "system_consistency_hard_errors": 1,
   "etf_universe_count": 11,
   "overseas_context_status": "PASS",
-  "overseas_generated_at_beijing": "2026-09-02T14:59:35+08:00",
+  "overseas_generated_at_beijing": "2026-09-02T15:03:33+08:00",
   "us_extended_hours_status": "PASS",
-  "us_extended_hours_generated_at_beijing": "2026-09-02T14:49:35+08:00",
+  "us_extended_hours_generated_at_beijing": "2026-09-02T15:03:38+08:00",
   "stock_context_status": "VALID",
   "stock_market_context_status": "PASS",
   "stock_role_confirmation_needed": true,
@@ -5322,22 +5306,5 @@
   },
   "needs_account_screenshot": false,
   "read_only": true,
-  "interaction_boundary": "用户主动查询时先核对一致性与交易日历，再按‘查询时立即补采 → 最近一次有效快照 → 明确降级/缺失’获取行情；正式输出必须标注北京时间真实数据时点，并区分美股现金盘、盘后和盘前。",
-  "refresh_gate": {
-    "status": "READY",
-    "formal_analysis_allowed": true,
-    "formal_decision_persist_allowed": true,
-    "fallback_allowed": false,
-    "query_intent": "EXPLICIT_LATEST",
-    "request_file": "requests/live_snapshot/20260901_0928_opening_current_recovery.json",
-    "request_id": "20260901_0928_opening_current_recovery",
-    "requested_at_beijing": "2026-09-01T09:28:00+08:00",
-    "requested_market_time": "2026-09-01T09:28:00+08:00",
-    "current_snapshot_time": "2026-09-02T14:59:33+08:00",
-    "resolved_snapshot_time": "2026-09-02T14:59:33+08:00",
-    "latest_snapshot": "data/market/snapshots/2026-09-02_145933.json",
-    "failure_reason": "",
-    "rule": "EXPLICIT_LATEST或wait_for_refresh请求必须等本次请求之后且不早于requested_market_time的新CURRENT发布后才可称为最新/当前行情；请求前即使仍处普通FRESH窗口，也不得冒充本次最新查询结果。仅非EXPLICIT_LATEST且用户明确授权时可回退旧快照。"
-  },
-  "formal_analysis_allowed": true
+  "interaction_boundary": "用户主动查询时先核对一致性与交易日历，再按‘查询时立即补采 → 最近一次有效快照 → 明确降级/缺失’获取行情；正式输出必须标注北京时间真实数据时点，并区分美股现金盘、盘后和盘前。"
 }
