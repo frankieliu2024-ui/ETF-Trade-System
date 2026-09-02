@@ -20,6 +20,23 @@ def set_output(key: str, value: str) -> None:
             f.write(f"{key}={value}\n")
 
 
+def scheduled_close_boundary_intent(now: datetime, event_name: str, scheduled_cron: str) -> bool:
+    """Recognize a real scheduled pulse that reached the A-share close boundary.
+
+    GitHub may dispatch the ten-minute active-session pulse at 14:59 while the
+    explicit 15:00/15:10 cron is delayed or absent.  The pulse is a close
+    candidate only at the exchange close boundary; the producer must wait until
+    15:00 before querying and publishing the close fact.
+    """
+    minute = now.hour * 60 + now.minute
+    return (
+        event_name == "schedule"
+        and bool(scheduled_cron)
+        and now.weekday() < 5
+        and 14 * 60 + 57 <= minute <= 15 * 60
+    )
+
+
 def market_phase(minute: int, close_grace_minutes: int = 15) -> str:
     if 9 * 60 + 15 <= minute < 9 * 60 + 30:
         return "OPENING_CALL_AUCTION"
@@ -41,7 +58,11 @@ def main() -> int:
     date_text = now.date().isoformat()
     event_name = os.environ.get("GITHUB_EVENT_NAME", "")
     scheduled_cron = os.environ.get("SCHEDULED_CRON", "").strip()
-    scheduled_close_intent = event_name == "schedule" and scheduled_cron == "0,10 7 * * 1-5"
+    scheduled_close_intent = (
+        event_name == "schedule"
+        and scheduled_cron == "0,10 7 * * 1-5"
+    )
+    boundary_close_intent = scheduled_close_boundary_intent(now, event_name, scheduled_cron)
     policy = load_json(ROOT / "config" / "runtime_policy.json")
     calendar = load_json(ROOT / "config" / "market" / "a_share_trading_calendar_2026.json")
 
@@ -71,6 +92,11 @@ def main() -> int:
         phase = "POST_CLOSE_RECOVERY"
         reason = "delayed_scheduled_close_recovery"
 
+    close_intent = bool(scheduled_close_intent or boundary_close_intent)
+    wait_for_close_boundary_seconds = 0
+    if boundary_close_intent and minute < 15 * 60:
+        wait_for_close_boundary_seconds = 15 * 60 - (now.hour * 60 * 60 + now.minute * 60 + now.second)
+
     query_time_refresh = os.environ.get("QUERY_TIME_REFRESH", "").lower() == "true"
     if query_time_refresh and event_name == "push":
         reason = "query_time_refresh_midday_reference" if phase == "MIDDAY_BREAK" else "query_time_refresh_separate_global_path"
@@ -81,7 +107,9 @@ def main() -> int:
     set_output("reason", reason)
     set_output("market_date", date_text)
     set_output("market_phase", phase)
-    print(json.dumps({"should_capture": should_capture, "reason": reason, "market_date": date_text, "market_phase": phase, "captured_at_beijing": now.isoformat(timespec="seconds")}, ensure_ascii=False))
+    set_output("close_intent", "true" if close_intent else "false")
+    set_output("wait_for_close_boundary_seconds", str(max(0, wait_for_close_boundary_seconds)))
+    print(json.dumps({"should_capture": should_capture, "reason": reason, "market_date": date_text, "market_phase": phase, "close_intent": close_intent, "wait_for_close_boundary_seconds": max(0, wait_for_close_boundary_seconds), "captured_at_beijing": now.isoformat(timespec="seconds")}, ensure_ascii=False))
     return 0
 
 

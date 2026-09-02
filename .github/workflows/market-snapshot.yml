@@ -123,7 +123,13 @@ jobs:
         env:
           NODE_LABEL: ${{ github.event_name == 'push' && 'scheduled' || (github.event.inputs.node || 'scheduled') }}
           PROBE_ONLY: ${{ github.event.inputs.probe_only || 'false' }}
+          SCHEDULED_CLOSE_INTENT: ${{ steps.session_gate.outputs.close_intent }}
+          WAIT_FOR_CLOSE_BOUNDARY_SECONDS: ${{ steps.session_gate.outputs.wait_for_close_boundary_seconds }}
         run: |
+          if [ "${WAIT_FOR_CLOSE_BOUNDARY_SECONDS:-0}" -gt 0 ]; then
+            echo "scheduled close intent received; waiting ${WAIT_FOR_CLOSE_BOUNDARY_SECONDS}s for 15:00 boundary"
+            sleep "$WAIT_FOR_CLOSE_BOUNDARY_SECONDS"
+          fi
           if [ "$PROBE_ONLY" = "true" ]; then
             python scripts/cloud_runner_snapshot.py --node "$NODE_LABEL" --probe-only
           else
