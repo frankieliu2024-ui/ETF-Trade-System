@@ -74,7 +74,6 @@ on:
       - "requests/research_backfill/*.json"
       - "requests/trade_fact_correction/*.json"
       - "data/state/account_fact.json"
-      - "data/state/CURRENT.json"
       # Runtime health files are owned by their canonical producer/watchdog
       # chains and are not source facts for full-system validation. Abnormal
       # A-share runtime is handled by the self-healing watchdog; overseas pulse
@@ -140,95 +139,6 @@ jobs:
           command -v openssl
           openssl version -a
           openssl enc -list | grep -E '(^|[[:space:]])-sm4-ecb([[:space:]]|$)'
-      - name: Refresh formal overseas and Asia index context for pre-market readiness
-        shell: bash
-        run: |
-          python scripts/build_overseas_context.py
-      - name: Refresh US extended-hours context for point-in-time audit
-        shell: bash
-        run: |
-          python scripts/build_us_extended_hours_context.py
-      - name: Detect research backfill request
-        id: backfill_request
-        if: ${{ github.event_name != 'pull_request' }}
-        shell: bash
-        run: |
-          files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/research_backfill/*.json' || true)
-          if [ -n "$files" ]; then
-            echo "has_request=true" >> "$GITHUB_OUTPUT"
-            printf '%s\n' "$files" > /tmp/research_backfill_requests.txt
-          else
-            echo "has_request=false" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Detect trade fact correction request
-        id: trade_fact_correction_request
-        if: ${{ github.event_name != 'pull_request' }}
-        shell: bash
-        run: |
-          files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/trade_fact_correction/*.json' || true)
-          if [ -n "$files" ]; then
-            echo "has_request=true" >> "$GITHUB_OUTPUT"
-            printf '%s\n' "$files" > /tmp/trade_fact_correction_requests.txt
-          else
-            echo "has_request=false" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Run requested research historical backfill
-        id: backfill
-        if: ${{ github.event_name != 'pull_request' && steps.backfill_request.outputs.has_request == 'true' }}
-        continue-on-error: true
-        shell: bash
-        run: |
-          python -m pip install --disable-pip-version-check pandas
-          rc=0
-          while IFS= read -r f; do
-            [ -z "$f" ] && continue
-            python scripts/backfill_research_daily_history.py "$f" || rc=$?
-            [ "$rc" -ne 0 ] && break
-          done < /tmp/research_backfill_requests.txt
-          exit "$rc"
-      - name: Apply confirmed trade fact correction
-        id: trade_fact_correction
-        if: ${{ github.event_name != 'pull_request' && steps.trade_fact_correction_request.outputs.has_request == 'true' }}
-        continue-on-error: true
-        shell: bash
-        run: |
-          rc=0
-          while IFS= read -r f; do
-            [ -z "$f" ] && continue
-            python scripts/apply_trade_fact_correction.py "$f" || rc=$?
-            [ "$rc" -ne 0 ] && break
-          done < /tmp/trade_fact_correction_requests.txt
-          if [ "$rc" -eq 0 ]; then
-            paths=""
-            while IFS= read -r f; do
-              [ -z "$f" ] && continue
-              event_id=$(python -c 'import json,sys; print(json.load(open(sys.argv[1],encoding="utf-8")).get("trade_event_id",""))' "$f")
-              [ -z "$event_id" ] && continue
-              [ -n "$paths" ] && paths="$paths,"
-              paths="${paths}events/trades/${event_id}.json"
-            done < /tmp/trade_fact_correction_requests.txt
-            # A successful correction owns the exact downstream projections it regenerates.
-            # Keep this allow-list narrow so unrelated dirty state remains fail-closed.
-            if [ -n "$paths" ]; then
-              paths="$paths,ETF当前状态_DASHBOARD.md,ETF市场行情档案_2026.md,ETF交易复盘与经验库_2026.md,data/state/etf_strategy_equity.json,data/state/trade_fact_correction_receipt.json"
-            fi
-            echo "ETF_ALLOWED_DIRTY_PATHS=$paths" >> "$GITHUB_ENV"
-          fi
-          exit "$rc"
-      - name: Refresh decision and query context
-        id: refresh_context
-        shell: bash
-        run: |
-          python scripts/build_state_context.py
-          python scripts/build_query_context.py
-          python scripts/build_post_market_review.py
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          payload = json.loads(Path("data/state/review_context.json").read_text(encoding="utf-8"))
-          if payload.get("rules_version") != "V2.2.31":
-              raise SystemExit(f"review_context rules_version missing or stale: {payload.get('rules_version')!r}")
-          PY
       - name: PR candidate post-replay acceptance
         id: candidate_acceptance
         if: github.event_name == 'pull_request'
@@ -366,7 +276,7 @@ jobs:
             cd "$validation_root"
             export ETF_SYSTEM_ROOT="$validation_root"
             export PYTHONPATH="$validation_root/scripts:$validation_root"
-            python scripts/check_system_consistency.py
+            python scripts/check_system_consistency.py --no-persist --report-path "$RUNNER_TEMP/system_consistency.json"
           )
           rc1=$?
           (
@@ -386,102 +296,82 @@ jobs:
           if [ "$rc1" -ne 0 ] || [ "$rc2" -ne 0 ] || [ "$rc3" -ne 0 ]; then
             exit 1
           fi
-      - name: Reconcile ETF ledger and prepare maintenance diagnostics
-        id: maintenance_guard
-        continue-on-error: true
-        shell: bash
-        run: |
-          python scripts/maintenance_guard.py
-      - name: Build top-level end-to-end readiness
-        id: e2e_status
-        if: ${{ always() }}
-        shell: bash
-        run: |
-          python scripts/build_e2e_status.py
-      - name: Persist consistency and maintenance state
-        if: ${{ always() && github.event_name != 'pull_request' }}
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          # Preserve only files owned by this validation run, then rebase the
-          # worktree to latest main before committing. This avoids conflicts
-          # when another state-only workflow advances main concurrently.
-          mkdir -p /tmp/etf-owned-state/data/state
-          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json data/state/us_extended_hours_context.json data/state/overseas_context.json; do
-            if [ -f "$f" ]; then
-              mkdir -p "/tmp/etf-owned-state/$(dirname "$f")"
-              cp "$f" "/tmp/etf-owned-state/$f"
-            fi
-          done
-          if [ "${{ steps.backfill_request.outputs.has_request }}" = "true" ]; then
-            mkdir -p /tmp/etf-owned-state/backfill
-            cp -r data/state/historical_backfill_status.json data/state/historical_position_research.json research/reports events/research/daily_features /tmp/etf-owned-state/backfill/ 2>/dev/null || true
-          fi
-          if [ "${{ steps.trade_fact_correction_request.outputs.has_request }}" = "true" ] && [ "${{ steps.trade_fact_correction.outcome }}" != "failure" ]; then
-            mkdir -p /tmp/etf-owned-state/trade-correction/events/trades /tmp/etf-owned-state/trade-correction/data/state
-            cp ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md /tmp/etf-owned-state/trade-correction/
-            cp data/state/etf_strategy_equity.json data/state/trade_fact_correction_receipt.json /tmp/etf-owned-state/trade-correction/data/state/ 2>/dev/null || true
-            while IFS= read -r f; do
-              [ -z "$f" ] && continue
-              event_id=$(python -c 'import json,sys; print(json.load(open(sys.argv[1],encoding="utf-8")).get("trade_event_id",""))' "$f")
-              [ -z "$event_id" ] || cp "events/trades/$event_id.json" /tmp/etf-owned-state/trade-correction/events/trades/
-            done < /tmp/trade_fact_correction_requests.txt
-          fi
-
-          git fetch origin main
-          git reset --hard origin/main
-          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json data/state/us_extended_hours_context.json data/state/overseas_context.json; do
-            if [ -f "/tmp/etf-owned-state/$f" ]; then
-              mkdir -p "$(dirname "$f")"
-              cp "/tmp/etf-owned-state/$f" "$f"
-              git add "$f"
-            fi
-          done
-
-          if [ "${{ steps.backfill_request.outputs.has_request }}" = "true" ]; then
-            # Historical backfill remains owned by this workflow; existing
-            # backfill persistence behavior is intentionally unchanged.
-            git add data/state/historical_backfill_status.json data/state/historical_position_research.json research/reports events/research/daily_features 2>/dev/null || true
-            git add -f -- data/market/audit/research_backfill 2>/dev/null || true
-          fi
-          if [ "${{ steps.trade_fact_correction_request.outputs.has_request }}" = "true" ] && [ "${{ steps.trade_fact_correction.outcome }}" != "failure" ]; then
-            cp /tmp/etf-owned-state/trade-correction/ETF当前状态_DASHBOARD.md .
-            cp /tmp/etf-owned-state/trade-correction/ETF市场行情档案_2026.md .
-            cp /tmp/etf-owned-state/trade-correction/ETF交易复盘与经验库_2026.md .
-            cp /tmp/etf-owned-state/trade-correction/data/state/etf_strategy_equity.json data/state/
-            cp /tmp/etf-owned-state/trade-correction/data/state/trade_fact_correction_receipt.json data/state/ 2>/dev/null || true
-            cp /tmp/etf-owned-state/trade-correction/events/trades/*.json events/trades/ 2>/dev/null || true
-            git add ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md data/state/etf_strategy_equity.json data/state/trade_fact_correction_receipt.json events/trades 2>/dev/null || true
-          fi
-
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          if [ "${{ steps.trade_fact_correction_request.outputs.has_request }}" = "true" ] && [ "${{ steps.trade_fact_correction.outcome }}" != "failure" ]; then
-            msg="state: backfill confirmed trade fee facts"
-          elif [ "${{ steps.backfill_request.outputs.has_request }}" = "true" ]; then
-            msg="research: backfill ETF daily evidence"
-          else
-            msg="state: refresh consistency maintenance and e2e readiness"
-          fi
-          git commit -m "$msg"
-          git push origin HEAD:main
-      - name: Enforce research backfill result
-        if: ${{ github.event_name != 'pull_request' && steps.backfill_request.outputs.has_request == 'true' && steps.backfill.outcome == 'failure' }}
-        run: exit 1
-      - name: Enforce trade fact correction result
-        if: ${{ github.event_name != 'pull_request' && steps.trade_fact_correction_request.outputs.has_request == 'true' && steps.trade_fact_correction.outcome == 'failure' }}
-        run: exit 1
       - name: Enforce hard consistency result
         if: ${{ steps.consistency.outcome == 'failure' && github.event_name != 'pull_request' }}
         run: exit 1
       - name: Enforce PR candidate acceptance result
         if: ${{ github.event_name == 'pull_request' && steps.candidate_acceptance.outcome == 'failure' }}
         run: exit 1
-      - name: Enforce maintenance reconciliation result
-        if: ${{ steps.maintenance_guard.outcome == 'failure' && github.event_name != 'pull_request' }}
+      - name: Upload pure consistency report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: system-consistency-${{ github.run_id }}
+          path: ${{ runner.temp }}/system_consistency.json
+          if-no-files-found: ignore
+
+  production_acceptance:
+    if: ${{ always() && github.event_name != 'pull_request' }}
+    needs: consistency
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      HITHINK_FINANCE_API_KEY: ${{ secrets.HITHINK_FINANCE_API_KEY }}
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Detect mutation requiring combination acceptance
+        id: acceptance_scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" || true)
+          if printf '%s\n' "$changed" | grep -Eq '^(ETF规则_MASTER.md|ETF当前状态_DASHBOARD.md|ETF市场行情档案_2026.md|ETF交易复盘与经验库_2026.md|ETF与市场监测数据接口使用规范.md|ETF_SYSTEM_INDEX.md|config/|scripts/|.github/workflows/|data/state/account_fact.json|events/trades/|events/reviews/|requests/trade_fact_correction/|requests/research_backfill/)'; then
+            echo "required=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "required=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Run canonical post-write acceptance
+        id: acceptance
+        if: steps.acceptance_scope.outputs.required == 'true'
+        continue-on-error: true
+        shell: bash
+        run: |
+          python scripts/run_production_acceptance.py --mutation-sha "$GITHUB_SHA"
+      - name: Persist acceptance result
+        if: ${{ always() && steps.acceptance_scope.outputs.required == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          owned="$RUNNER_TEMP/etf-acceptance-state"
+          mkdir -p "$owned/data/state"
+          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json; do
+            if [ -f "$f" ]; then
+              cp "$f" "$owned/$f"
+            fi
+          done
+          git fetch --no-tags origin main
+          git reset --hard origin/main
+          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json; do
+            if [ -f "$owned/$f" ]; then
+              cp "$owned/$f" "$f"
+              git add "$f"
+            fi
+          done
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "state: persist production acceptance"
+          git push origin HEAD:main
+      - name: Enforce production acceptance
+        if: ${{ always() && steps.acceptance_scope.outputs.required == 'true' && steps.acceptance.outcome == 'failure' }}
         run: exit 1
 
 
