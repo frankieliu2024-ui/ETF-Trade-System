@@ -502,11 +502,11 @@ def _validate_semantic_formal_structure(report: dict) -> None:
 
 def main() -> int:
     import argparse
+    global REPORT
     parser = argparse.ArgumentParser(description="Run the canonical system consistency validator.")
     parser.add_argument("--report-path", default=os.environ.get("ETF_CONSISTENCY_REPORT_PATH", str(REPORT)))
     parser.add_argument("--no-persist", action="store_true", help="write the report only to the supplied ephemeral path")
     args = parser.parse_args()
-    global REPORT
     REPORT = Path(args.report_path).resolve()
     os.environ["ETF_CONSISTENCY_REPORT_PATH"] = str(REPORT)
     consistency_core.REPORT = REPORT
