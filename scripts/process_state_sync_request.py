@@ -740,33 +740,59 @@ def sync_experience_transaction_index(event: dict) -> None:
         raise RuntimeError("experience transaction-index boundary missing")
 
     marker = f"TRADE_EVENT:{event_id}"
-    if marker not in text:
-        confirmed = str(event.get("confirmed_at_beijing") or "")
-        dt = confirmed.replace("T", " ")[:19]
-        name = str(event.get("name") or event.get("code") or "")
-        code = str(event.get("code") or "")
-        side = str(event.get("side") or "").upper()
-        side_cn = "买入" if side in {"BUY", "B", "买入", "买"} else "卖出" if side in {"SELL", "S", "卖出", "卖"} else side
-        qty = int(float(event.get("quantity") or 0))
-        price = float(event.get("price") or 0)
-        gross = float(event.get("amount") or price * qty)
-        fee = safe_float(event.get("fee_amount"))
-        fee_status = str(event.get("fee_status") or "").upper()
-        fee_confirmed = fee is not None and fee_status in {"CONFIRMED", "KNOWN", "FINAL"}
-        fee_text = f"{fee:.2f}" if fee_confirmed else "待确认"
-        if side_cn == "买入":
-            cash = -(gross + (fee or 0 if fee_confirmed else 0))
-        elif side_cn == "卖出":
-            cash = gross - (fee or 0 if fee_confirmed else 0)
-        else:
-            cash = 0.0
-        cash_text = f"{cash:,.2f}" if fee_confirmed else f"{cash:,.2f}（未含待确认费用）"
-        lifecycle = str(event.get("lifecycle") or "待确认")
-        linked = str(event.get("linked_decision_id") or "")
-        note = lifecycle + (f"；关联决策{linked}" if linked else "") + "；真实成交已执行"
-        row = f"|{dt}|{name}（{code}）|{code}|{side_cn}|{qty:,}|{price:.3f}|{gross:,.2f}|{fee_text}|{cash_text}|{note}| <!-- {marker} -->"
+    confirmed = str(event.get("confirmed_at_beijing") or "")
+    dt = confirmed.replace("T", " ")[:19]
+    name = str(event.get("name") or event.get("code") or "")
+    code = str(event.get("code") or "")
+    side = str(event.get("side") or "").upper()
+    side_cn = "买入" if side in {"BUY", "B", "买入", "买"} else "卖出" if side in {"SELL", "S", "卖出", "卖"} else side
+    qty = int(float(event.get("quantity") or 0))
+    price = float(event.get("price") or 0)
+    gross = float(event.get("amount") or price * qty)
+    # Older confirmed trade events use the canonical ``fee`` field while
+    # correction-enriched events use ``fee_amount``.  Treat both as the same
+    # trade-fact fee; a confirmed status still remains mandatory.
+    fee = safe_float(event.get("fee_amount", event.get("fee")))
+    fee_status = str(event.get("fee_status") or "").upper()
+    fee_confirmed = fee is not None and fee_status in {"CONFIRMED", "KNOWN", "FINAL"}
+    fee_text = f"{fee:.2f}" if fee_confirmed else "待确认"
+    if side_cn == "买入":
+        cash = -(gross + (fee if fee_confirmed and fee is not None else 0))
+    elif side_cn == "卖出":
+        cash = gross - (fee if fee_confirmed and fee is not None else 0)
+    else:
+        cash = 0.0
+    cash_text = f"{cash:,.2f}" if fee_confirmed else f"{cash:,.2f}（未含待确认费用）"
+    lifecycle = str(event.get("lifecycle") or "待确认")
+    linked = str(event.get("linked_decision_id") or "")
+    note = lifecycle + (f"；关联决策{linked}" if linked else "") + "；真实成交已执行"
+    row = f"|{dt}|{name}（{code}）|{code}|{side_cn}|{qty:,}|{price:.3f}|{gross:,.2f}|{fee_text}|{cash_text}|{note}| <!-- {marker} -->"
+
+    table_start = text.index("|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|")
+    table_end = text.index(section_end, table_start)
+    table = text[table_start:table_end]
+    lines = table.splitlines()
+    replacement_index = None
+    for index, line in enumerate(lines):
+        if marker in line:
+            replacement_index = index
+            break
+    if replacement_index is None:
+        # Older managed rows may predate TRADE_EVENT markers.  Match the
+        # immutable trade identity before appending, so a fee correction repairs
+        # that row instead of creating a duplicate transaction.
+        identity = f"|{dt}|{name}（{code}）|{code}|{side_cn}|{qty:,}|{price:.3f}|{gross:,.2f}|"
+        for index, line in enumerate(lines):
+            if line.startswith(identity):
+                replacement_index = index
+                break
+    if replacement_index is None:
         idx = text.index(section_end)
         text = text[:idx].rstrip() + "\n" + row + "\n" + text[idx:]
+    else:
+        lines[replacement_index] = row
+        updated_table = "\n".join(lines)
+        text = text[:table_start] + updated_table + text[table_end:]
 
     # Recompute the unique index counts from the actual table instead of carrying
     # a hand-maintained number that can lag a newly confirmed fill.

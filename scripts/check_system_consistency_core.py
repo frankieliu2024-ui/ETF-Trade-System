@@ -46,6 +46,20 @@ def run_git(*args: str) -> tuple[int, str]:
     return completed.returncode, (completed.stdout or completed.stderr).strip()
 
 
+def unexpected_dirty_paths(dirty_lines: list[str], owned_mutations: tuple[str, ...] = ()) -> list[str]:
+    """Return dirty paths not owned by generated state or this mutation request."""
+    allowed_dirty_prefixes = ("data/state/", "events/research/")
+    normalized_owned = tuple(path.replace("\\", "/") for path in owned_mutations)
+    return [
+        line for line in dirty_lines
+        if not (
+            line[2:].strip().startswith(allowed_dirty_prefixes)
+            or line[2:].strip().startswith("data/state/dashboard_update_candidate.json")
+            or line[2:].strip() in normalized_owned
+        )
+    ]
+
+
 def codes_from_dashboard(text: str) -> set[str]:
     match = re.search(r"\|ETF层当前结构\|(.*?)\|\n", text)
     return set(re.findall(r"（(\d{6})）", match.group(1))) if match else set()
@@ -219,8 +233,12 @@ def main() -> int:
     check("git:critical_files_tracked", not missing_tracked, f"missing_tracked={missing_tracked}")
     rc, dirty = run_git("status", "--porcelain", "--untracked-files=all")
     dirty_lines = [line for line in dirty.splitlines() if line.strip()]
-    allowed_dirty_prefixes = ("data/state/", "events/research/")
-    unexpected_dirty = [line for line in dirty_lines if not (line[2:].strip().startswith(allowed_dirty_prefixes) or line[2:].strip().startswith("data/state/dashboard_update_candidate.json"))]
+    owned_mutations = tuple(
+        item.strip().replace("\\", "/")
+        for item in os.environ.get("ETF_ALLOWED_DIRTY_PATHS", "").split(",")
+        if item.strip()
+    )
+    unexpected_dirty = unexpected_dirty_paths(dirty_lines, owned_mutations)
     check("git:working_tree_clean_before_check", rc == 0 and not unexpected_dirty, "clean" if not dirty_lines else f"generated_state_dirty={len(dirty_lines)} unexpected={unexpected_dirty[:20]}")
 
     index_text = read_text("ETF_SYSTEM_INDEX.md")

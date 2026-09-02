@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from formal_file_mutation_gateway import upsert_formal_line
+from process_state_sync_request import sync_experience_transaction_index
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STATE = ROOT / "data" / "state"
@@ -142,6 +143,11 @@ def main() -> int:
     rebuild_known_net(equity)
     equity["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
     write_json(EQUITY, equity)
+
+    # Reconcile the canonical transaction index by the existing trade event.
+    # This updates both marker-based rows and legacy rows that predate the
+    # TRADE_EVENT marker; it never creates a second trade or CASE.
+    sync_experience_transaction_index(event)
 
     target = f"{event.get('name') or ''}（{event.get('code') or ''}）"
     correction_key = f"FEE_{event_id}"
