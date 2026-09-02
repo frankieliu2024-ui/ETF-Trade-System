@@ -326,17 +326,19 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-      - name: Detect mutation requiring combination acceptance
+      - name: Classify mutation for combination acceptance
         id: acceptance_scope
         shell: bash
         run: |
           set -euo pipefail
-          changed=$(git diff-tree --no-commit-id --name-only -m -r "$GITHUB_SHA" || true)
-          if printf '%s\n' "$changed" | grep -Eq '^(ETF规则_MASTER.md|ETF当前状态_DASHBOARD.md|ETF市场行情档案_2026.md|ETF交易复盘与经验库_2026.md|ETF与市场监测数据接口使用规范.md|ETF_SYSTEM_INDEX.md|config/|scripts/|.github/workflows/|data/state/account_fact.json|events/trades/|events/reviews/|requests/trade_fact_correction/|requests/research_backfill/)'; then
-            echo "required=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "required=false" >> "$GITHUB_OUTPUT"
-          fi
+          git diff-tree --no-commit-id --name-only -m -r "$GITHUB_SHA" | python scripts/acceptance_scope.py --stdin | tee "$RUNNER_TEMP/acceptance_scope.json"
+          python - "$RUNNER_TEMP/acceptance_scope.json" <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import sys
+          scope = json.load(open(sys.argv[1], encoding="utf-8"))
+          print(f"required={'true' if scope['required'] else 'false'}")
+          print(f"classes={','.join(scope['classes'])}")
+          PY
       - name: Run canonical post-write acceptance
         id: acceptance
         if: steps.acceptance_scope.outputs.required == 'true'
