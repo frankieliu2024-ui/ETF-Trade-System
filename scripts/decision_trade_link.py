@@ -59,7 +59,7 @@ def resolve_link(root: Path, trade: dict, requested_id: str = "") -> tuple[str, 
         event = _load(path) if path.exists() else {}
         decision_time = _effective_time(event)
         recorded_time = _time(event.get("recorded_at_beijing"))
-        if event and _decision_mentions_trade(event):
+        if event and _decision_mentions_trade(event, trade):
             if decision_time and decision_time <= trade_time:
                 return requested_id, event, "EXPLICIT_PIT_VALID"
             if (
