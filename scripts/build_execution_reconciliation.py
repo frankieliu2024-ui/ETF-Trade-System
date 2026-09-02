@@ -65,10 +65,11 @@ def git_previous_account() -> tuple[dict, str]:
 
 def parse_money(text: str) -> int | None:
     patterns = [
+        # Prefer explicitly labelled principal/amount over an earlier price.
+        (r"成交(?:金额|本金)\s*[:：]?\s*([\d,]+(?:\.\d+)?)\s*元", 1),
         (r"(?<!\d)(\d+(?:\.\d+)?)\s*[kK](?!\w)", 1000),
         (r"(?<!\d)([\d,]+(?:\.\d+)?)\s*元", 1),
-    ]
-    for pattern, multiplier in patterns:
+    ]    for pattern, multiplier in patterns:
         match = re.search(pattern, text)
         if not match:
             continue
