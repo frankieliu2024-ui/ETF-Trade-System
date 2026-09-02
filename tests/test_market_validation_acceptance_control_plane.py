@@ -9,6 +9,7 @@ from scripts.acceptance_scope import (
     DERIVED_STATE_ONLY,
     FORMAL_PROJECTION_MUTATION,
     STABLE_CODE_OR_WORKFLOW_CHANGE,
+    UNKNOWN,
     classify_paths,
 )
 from scripts.build_e2e_status import maintenance_component
@@ -70,6 +71,10 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         self.assertFalse(derived["required"])
         self.assertEqual(derived["classes"], [DERIVED_STATE_ONLY])
 
+        unknown = classify_paths(["new/canonical_fact.json"])
+        self.assertTrue(unknown["required"])
+        self.assertEqual(unknown["classes"], [UNKNOWN])
+
     def test_maintenance_only_block_does_not_block_e2e(self):
         self.assertEqual(
             maintenance_component({"status": "FAIL", "system_consistency_status": "WARNING",
@@ -89,6 +94,7 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
                                     "reconciliation": {"status": "FAIL"}})["status"],
             "BLOCKED",
         )
+
     def test_workflow_does_not_add_a_second_state_store(self):
         source = WORKFLOW.read_text(encoding="utf-8")
         self.assertEqual(source.count("system_consistency.json"), 6)
