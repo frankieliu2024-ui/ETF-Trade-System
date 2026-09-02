@@ -1,29 +1,31 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-02T12:06:51+08:00",
+  "generated_at": "2026-09-02T12:13:27+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33589469406,
+  "run_id": 33589894441,
   "run_attempt": 1,
-  "head_sha": "a6e43c1b57802e824549273eb1dec14b760f5e24",
-  "main_head_sha": "50b7af05311020b4b8dab33e47a606daafe33673",
+  "head_sha": "8c62a23e36699252f68d90adbbb71a72a1c8fd82",
+  "main_head_sha": "79d32fdcff05bef571e3ea442024042955c10811",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 19
+      "step": "PR candidate post-replay acceptance",
+      "number": 13
     }
   ],
-  "changed_files": [],
-  "commit_message": "chore: deduplicate lifecycle compile contract",
+  "changed_files": [
+    ".github/workflows/system-consistency.yml"
+  ],
+  "commit_message": "ci: add isolated post-replay acceptance for PR lifecycle fix",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
-    "changes_confined_to_auto_rollback_allowlist": false,
+    "changes_confined_to_auto_rollback_allowlist": true,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
     "user_notification_authority": false,
