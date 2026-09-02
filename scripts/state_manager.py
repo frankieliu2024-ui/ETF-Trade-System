@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -359,23 +358,10 @@ def _latest_formal_review_risk(root: Path) -> dict[str, Any]:
     return max(candidates, key=lambda x: x[0])[1] if candidates else {}
 
 
-def _dashboard_risk_metric(root: Path) -> tuple[float | None, str]:
-    path = root / "ETF当前状态_DASHBOARD.md"
-    if not path.exists():
-        return None, ""
-    text = path.read_text(encoding="utf-8")
-    match = re.search(r"\|ETF策略风险率\|约?\s*([+-]?\d+(?:\.\d+)?)%", text)
-    if not match:
-        return None, ""
-    updated = re.search(r">\s*更新时间：([^\n]+)", text)
-    return float(match.group(1)), (updated.group(1).strip() if updated else "")
-
-
 def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
-    """Use the latest formal review/Dashboard for the sole formal risk interval.
+    """Build risk metrics from canonical review facts or a fresh reconstruction.
 
-    The ETF equity reconstruction remains auxiliary because it can lag the latest
-    confirmed account/review state. It must never overwrite a newer formal risk fact.
+    Dashboard text is a human-readable projection and is never a machine risk source.
     """
     equity = read_json(root / "data" / "state" / "etf_strategy_equity.json", {})
     summary = equity.get("summary") or {}
@@ -383,38 +369,48 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
     etf_float = sum(float(p.get("holding_pnl") or 0) for p in (account.get("positions") or []) if p.get("asset_type") == "ETF")
     capital = float(summary.get("starting_etf_strategy_capital") or 200000)
     reconstruction_risk = summary.get("known_net_current_strategy_return_pct")
+    reconstruction_as_of = str(equity.get("as_of_transaction_date") or summary.get("as_of_transaction_date") or "")
+    current = read_json(root / "data" / "state" / "CURRENT.json", {})
+    current_market_date = str(current.get("market_date") or "")
+    reconstruction_fresh = bool(
+        reconstruction_risk is not None
+        and reconstruction_as_of
+        and current_market_date
+        and reconstruction_as_of >= current_market_date
+    )
     formal = _latest_formal_review_risk(root)
-    dashboard_risk, dashboard_updated = _dashboard_risk_metric(root)
     if formal.get("risk_pct") is not None:
         risk_pct = round(float(formal["risk_pct"]), 2)
         risk_source = formal.get("source")
         risk_source_updated_at = formal.get("updated_at")
         strategy_equity = formal.get("equity") if formal.get("equity") is not None else summary.get("known_net_current_strategy_equity")
         risk_data_quality = "FORMAL_REVIEW_PRIMARY; RECONSTRUCTION_AUXILIARY"
-    elif dashboard_risk is not None:
-        risk_pct = round(float(dashboard_risk), 2)
-        risk_source = "ETF当前状态_DASHBOARD.md"
-        risk_source_updated_at = dashboard_updated
-        strategy_equity = summary.get("known_net_current_strategy_equity")
-        risk_data_quality = "FORMAL_DASHBOARD_PRIMARY; RECONSTRUCTION_AUXILIARY"
-    else:
-        risk_pct = reconstruction_risk
+    elif reconstruction_fresh:
+        risk_pct = round(float(reconstruction_risk), 2)
         risk_source = "data/state/etf_strategy_equity.json"
         risk_source_updated_at = equity.get("generated_at")
         strategy_equity = summary.get("known_net_current_strategy_equity")
         risk_data_quality = summary.get("known_net_equity_data_quality") or summary.get("equity_coverage_status")
+    else:
+        risk_pct = None
+        risk_source = "data/state/etf_strategy_equity.json" if reconstruction_risk is not None else ""
+        risk_source_updated_at = equity.get("generated_at") if reconstruction_risk is not None else ""
+        strategy_equity = summary.get("known_net_current_strategy_equity")
+        risk_data_quality = "STALE_OR_UNAVAILABLE_RECONSTRUCTION" if reconstruction_risk is not None else "RISK_FACT_UNAVAILABLE"
     return {
         "etf_strategy_risk_pct": risk_pct,
         "risk_source": risk_source,
         "risk_source_updated_at": risk_source_updated_at,
         "reconstruction_risk_pct": reconstruction_risk,
+        "reconstruction_as_of_transaction_date": reconstruction_as_of,
+        "reconstruction_fresh_for_market_date": reconstruction_fresh,
         "etf_holding_unrealized_pct": round(etf_float / capital * 100.0, 2),
         "etf_drawdown_from_high_pct": summary.get("known_net_current_drawdown_pct"),
         "equity_data_quality": risk_data_quality,
         "strategy_equity_known_net": strategy_equity,
         "high_watermark": summary.get("known_net_high_watermark", capital),
         "fee_status": summary.get("fee_status", ""),
-        "interpretation": "唯一ETF策略风险率决定风险区间；最新正式review/Dashboard高于历史重构。持仓浮盈亏率与高水位回撤率只解释持仓压力和近期改善/恶化。",
+        "interpretation": "唯一ETF策略风险率决定风险区间；正式review优先，合格且新鲜的canonical reconstruction仅在无正式review时使用；Dashboard仅作人类projection。持仓浮盈亏率与高水位回撤率只解释持仓压力和近期改善/恶化。",
         "read_only": True,
     }
 
