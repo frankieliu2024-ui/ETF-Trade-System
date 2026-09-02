@@ -42,7 +42,7 @@ def validate_files(root: Path) -> list[str]:
 
     static_cases = re.findall(r"^### 2\.\d+ (CASE-(\d{8})-(\d{2}))[:：]", ch2, re.MULTILINE)
     detail = _between(ch2, "<!-- AUTO_CASE_DETAILS_START -->", "<!-- AUTO_CASE_DETAILS_END -->")
-    detail_cases = re.findall(r"^#### (CASE-(\d{8})-(\d{2}))[:：]", detail, re.MULTILINE)
+    detail_cases = re.findall(r"^### (CASE-(\d{8})-(\d{2}))[:：]", detail, re.MULTILINE)
     case_ids = [x[0] for x in static_cases] + [x[0] for x in detail_cases]
     if len(case_ids) != len(set(case_ids)):
         errors.append("experience_duplicate_case_identity")
