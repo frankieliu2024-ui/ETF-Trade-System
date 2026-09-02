@@ -603,6 +603,7 @@ def _account_change_events(prior: dict, current: dict, request: dict, trade: dic
             and ((delta > 0 and confirmed_side in {"BUY", "B", "买入", "买"})
                  or (delta < 0 and confirmed_side in {"SELL", "S", "卖出", "卖"}))
         )
+        known_ipo = _is_known_ipo_registration(current, code, delta, after)
         key_body = {"event_type": event_type, "code": code, "delta": delta, "event_time": event_time}
         key = "account_change_" + hashlib.sha256(json.dumps(key_body, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:20]
         events.append({
@@ -611,7 +612,11 @@ def _account_change_events(prior: dict, current: dict, request: dict, trade: dic
             "code": code, "quantity_before": before, "quantity_after": after,
             "quantity_delta": delta,
             "change_summary": ("买入/新增持仓" if delta > 0 else "卖出/减少持仓"),
-            "reconciliation_status": "RECONCILED_BY_CONFIRMED_TRADE" if explained else "UNRECONCILED_ACCOUNT_CHANGE",
+            "reconciliation_status": (
+                "RECONCILED_BY_CONFIRMED_TRADE" if explained
+                else "RECONCILED_BY_KNOWN_IPO_REGISTRATION" if known_ipo
+                else "UNRECONCILED_ACCOUNT_CHANGE"
+            ),
             "source": str(current.get("source") or request.get("source") or "USER_CONFIRMED"),
             "read_only": True,
         })
@@ -631,6 +636,46 @@ def _account_change_events(prior: dict, current: dict, request: dict, trade: dic
             "read_only": True,
         })
     return events
+
+
+def _is_known_ipo_registration(account: dict, code: str, delta: float, after: float) -> bool:
+    """Attribute a new position to one exact settled IPO obligation."""
+    if delta <= 0 or after <= 0:
+        return False
+    positions = [p for p in account.get("positions") or [] if str(p.get("code") or "") == code]
+    obligations = [
+        o for o in account.get("settlement_obligations") or []
+        if str(o.get("status") or "").upper() == "SETTLED"
+        and str(o.get("obligation_type") or "").upper() == "IPO_ALLOTMENT_PAYMENT"
+        and str(o.get("security_code") or "") == code
+    ]
+    if len(positions) != 1 or len(obligations) != 1:
+        return False
+    position, obligation = positions[0], obligations[0]
+    quantity = safe_float(position.get("quantity"))
+    price = safe_float(obligation.get("subscription_price"))
+    cost = safe_float(position.get("cost"))
+    required_cash = safe_float(obligation.get("required_cash"))
+    if None in (quantity, price, cost, required_cash):
+        return False
+    return (
+        abs(quantity - after) <= 1e-8
+        and price > 0
+        and abs(cost - price) <= max(0.01, price * 0.0001)
+        and abs(required_cash - after * price) <= 0.01
+    )
+
+
+def _reconcile_known_ipo_events(account: dict) -> None:
+    """Upgrade matching historical deltas without re-emitting notifications."""
+    for event in account.get("account_change_events_after_confirmed_at") or []:
+        if str(event.get("reconciliation_status") or "").upper() != "UNRECONCILED_ACCOUNT_CHANGE":
+            continue
+        code = str(event.get("code") or "").strip()
+        delta = safe_float(event.get("quantity_delta"))
+        after = safe_float(event.get("quantity_after"))
+        if code and delta is not None and after is not None and _is_known_ipo_registration(account, code, delta, after):
+            event["reconciliation_status"] = "RECONCILED_BY_KNOWN_IPO_REGISTRATION"
 
 
 def _apply_trade_to_account(prior: dict, trade: dict) -> dict:
@@ -800,6 +845,7 @@ def merge_account_fact(prior: dict, supplied: dict) -> dict:
             merged[key] = json.loads(json.dumps(prior[key]))
     _canonicalize_settlement_account(merged)
     _annotate_confirmed_ipo_origins(merged)
+    _reconcile_known_ipo_events(merged)
     return merged
 
 
