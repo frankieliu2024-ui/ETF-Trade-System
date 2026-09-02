@@ -289,8 +289,10 @@ jobs:
           # clean-worktree contract can validate the candidate without touching PR/main.
           git config user.name "candidate-replay"
           git config user.email "candidate-replay@localhost"
+          git add -f ETF交易复盘与经验库_2026.md events/reviews/2026-09-01.json requests/live_snapshot/candidate_unrecoverable_review.json
           git add -A
           git commit -m "candidate: ephemeral unrecoverable review replay"
+          test -z "$(git status --porcelain --untracked-files=all)"
           unset GITHUB_SHA
           python scripts/check_system_consistency.py
           python scripts/maintenance_guard.py
