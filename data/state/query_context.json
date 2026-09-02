@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-02T07:03:44Z",
-  "generated_at_beijing": "2026-09-02T15:03:44+08:00",
+  "generated_at": "2026-09-02T07:09:08Z",
+  "generated_at_beijing": "2026-09-02T15:09:08+08:00",
   "market_date": "2026-09-02",
   "latest_valid_node": "live",
   "rules_version": "V2.2.31",
@@ -154,7 +154,7 @@
     "deployable_cash": 6238.47
   },
   "decision_context": {
-    "generated_at": "2026-09-02T07:03:41Z",
+    "generated_at": "2026-09-02T07:08:46Z",
     "rules_version": "V2.2.31",
     "market_date": "2026-09-02",
     "latest_node": "live",
@@ -962,7 +962,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 12.441,
-      "age_seconds": 248
+      "age_seconds": 553
     },
     "freshness_at_context_build": {
       "status": "FRESH",
@@ -978,7 +978,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 12.441,
-      "age_seconds": 248
+      "age_seconds": 553
     },
     "data_quality_summary": {
       "pass_count": 14,
@@ -1056,7 +1056,7 @@
       "account_fact_time": "2026-09-02T14:44:00+08:00",
       "market_snapshot_time": "2026-09-02T14:59:33+08:00",
       "market_phase": "CLOSING_CALL_AUCTION",
-      "context_generated_time": "2026-09-02T07:03:41Z",
+      "context_generated_time": "2026-09-02T07:08:46Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
@@ -1092,7 +1092,7 @@
       "read_only": true
     },
     "market_quote_router": {
-      "generated_at_beijing": "2026-09-02T15:03:41+08:00",
+      "generated_at_beijing": "2026-09-02T15:08:46+08:00",
       "refresh_mode": "CACHED_STATE",
       "refresh_failures": [],
       "decision_freshness": {
@@ -1101,8 +1101,8 @@
         "captured_at": "2026-09-02T06:59:33+00:00",
         "provider_as_of": "2026-09-02T06:59:27+00:00",
         "effective_as_of": "2026-09-02T06:59:27+00:00",
-        "request_time": "2026-09-02T07:03:41.054142+00:00",
-        "age_seconds": 254,
+        "request_time": "2026-09-02T07:08:46.799880+00:00",
+        "age_seconds": 559,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -1569,7 +1569,7 @@
           "volume": null,
           "amount": null,
           "turnover": null,
-          "data_time_beijing": "2026-09-02T15:03:00+08:00",
+          "data_time_beijing": "2026-09-02T15:08:00+08:00",
           "data_time_local": "",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "韩股收盘",
@@ -1613,7 +1613,7 @@
           "market_name": "中国香港",
           "symbol": "124.HSTECH",
           "name": "恒生科技指数",
-          "latest_price": 4519.38,
+          "latest_price": 4519.21,
           "open": null,
           "high": null,
           "low": null,
@@ -1621,7 +1621,7 @@
           "volume": null,
           "amount": null,
           "turnover": null,
-          "data_time_beijing": "2026-09-02T15:03:36+08:00",
+          "data_time_beijing": "2026-09-02T15:08:44+08:00",
           "data_time_local": "",
           "market_phase": "REGULAR",
           "market_status_cn": "港股交易中",
@@ -4333,7 +4333,7 @@
     "account_fact_time": "2026-09-02T14:44:00+08:00",
     "market_snapshot_time": "2026-09-02T14:59:33+08:00",
     "market_phase": "CLOSING_CALL_AUCTION",
-    "context_generated_time": "2026-09-02T07:03:41Z",
+    "context_generated_time": "2026-09-02T07:08:46Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -4432,7 +4432,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "FRESH",
-        "age_seconds": 248,
+        "age_seconds": 553,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -4450,7 +4450,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 12.441,
-        "age_seconds": 248
+        "age_seconds": 553
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新判断为“时点正常／存在延迟／时点过旧”。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -4475,57 +4475,33 @@
     }
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-09-02T15:03:41+08:00",
+    "generated_at_beijing": "2026-09-02T15:08:46+08:00",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-    "refresh_failures": [],
+    "refresh_failures": [
+      {
+        "symbol": "HSTECH",
+        "error": "HSTECH query-time direct chain has no fresh usable quote; eastmoney_push2:124.HSTECH: <urlopen error _ssl.c:999: The handshake operation timed out> | hithink-finance:HS2083: \"validation\",\"message\":\"Unknown thscode: HS2083\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"04ddf852ad2f42b088a774910f8570af\"},\"meta\":{\"cli_version\":\"0.1.7\",\"schema_version\":\"1\"}}\n"
+      }
+    ],
     "decision_freshness": {
-      "status": "DIRECT",
+      "status": "REFRESH_REQUIRED",
       "quality_status": "UNKNOWN",
       "captured_at": "2026-09-02T06:59:33+00:00",
       "provider_as_of": "2026-09-02T06:59:27+00:00",
       "effective_as_of": "2026-09-02T06:59:27+00:00",
       "request_time": "2026-09-02T06:44:00+00:00",
-      "age_seconds": 254,
+      "age_seconds": 559,
       "post_request": true,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
-      "formal_decision_allowed": true,
+      "formal_decision_allowed": false,
       "refresh_required": true,
       "fallback_allowed": false,
-      "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required",
-      "resolved_as_of": "2026-09-02T07:03:42+00:00",
-      "resolved_post_request": true
+      "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required"
     },
     "route_version": "V1.1",
     "query_entry": "market_quote_router",
     "quotes": [
-      {
-        "market": "HK",
-        "market_name": "中国香港",
-        "symbol": "HSTECH",
-        "canonical_object": "HSTECH",
-        "name": "恒生科技指数",
-        "latest_price": 4519.47,
-        "open": 4532.22,
-        "high": 4532.22,
-        "low": 4460.13,
-        "prev_close": 4550.88,
-        "volume": 968369808,
-        "amount": 41802557952.0,
-        "turnover": 41802557952.0,
-        "data_time_beijing": "2026-09-02T15:03:42+08:00",
-        "data_time_local": "2026-09-02T15:03:42+08:00",
-        "market_phase": "REGULAR",
-        "market_status_cn": "港股交易中",
-        "data_nature_cn": "实时交易行情",
-        "source": "eastmoney_push2:124.HSTECH",
-        "freshness": "FRESH",
-        "quality_status": "PASS",
-        "direct_quote": true,
-        "refresh_source": "QUERY_TIME_FORMAL_PROVIDER_CHAIN",
-        "provider_timestamp_field": "f86",
-        "refresh_contract": "ACTIVE_MARKET_REQUIRES_FRESH_PROVIDER_TIMESTAMP"
-      },
       {
         "market": "CN",
         "market_name": "中国大陆",
@@ -4981,7 +4957,7 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-09-02T15:03:00+08:00",
+        "data_time_beijing": "2026-09-02T15:08:00+08:00",
         "data_time_local": "",
         "market_phase": "OFF_SESSION",
         "market_status_cn": "韩股收盘",
@@ -5015,6 +4991,32 @@
         "source": "twse_mis",
         "freshness": "STALE",
         "freshness_cn": "时点过旧",
+        "quality_status": "PASS",
+        "quality_status_cn": "数据可用",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
+        "market": "HK",
+        "market_name": "中国香港",
+        "symbol": "124.HSTECH",
+        "name": "恒生科技指数",
+        "latest_price": 4519.21,
+        "open": null,
+        "high": null,
+        "low": null,
+        "prev_close": null,
+        "volume": null,
+        "amount": null,
+        "turnover": null,
+        "data_time_beijing": "2026-09-02T15:08:44+08:00",
+        "data_time_local": "",
+        "market_phase": "REGULAR",
+        "market_status_cn": "港股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "eastmoney_push2",
+        "freshness": "FRESH",
+        "freshness_cn": "时点正常",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -5199,31 +5201,29 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 12.441,
-    "age_seconds": 248
+    "age_seconds": 553
   },
   "freshness_at_context_build": {
     "status": "FRESH",
-    "age_seconds": 248,
+    "age_seconds": 553,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
   "interactive_decision_freshness": {
-    "status": "DIRECT",
+    "status": "REFRESH_REQUIRED",
     "quality_status": "UNKNOWN",
     "captured_at": "2026-09-02T06:59:33+00:00",
     "provider_as_of": "2026-09-02T06:59:27+00:00",
     "effective_as_of": "2026-09-02T06:59:27+00:00",
     "request_time": "2026-09-02T06:44:00+00:00",
-    "age_seconds": 254,
+    "age_seconds": 559,
     "post_request": true,
     "preferred_max_age_seconds": 300,
     "fallback_max_age_seconds": 900,
-    "formal_decision_allowed": true,
+    "formal_decision_allowed": false,
     "refresh_required": true,
     "fallback_allowed": false,
-    "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required",
-    "resolved_as_of": "2026-09-02T07:03:42+00:00",
-    "resolved_post_request": true
+    "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required"
   },
   "trading_day_status": {
     "market_date": "2026-09-02",
@@ -5286,9 +5286,9 @@
   "system_consistency_hard_errors": 1,
   "etf_universe_count": 11,
   "overseas_context_status": "PASS",
-  "overseas_generated_at_beijing": "2026-09-02T15:03:33+08:00",
+  "overseas_generated_at_beijing": "2026-09-02T15:08:40+08:00",
   "us_extended_hours_status": "PASS",
-  "us_extended_hours_generated_at_beijing": "2026-09-02T15:03:38+08:00",
+  "us_extended_hours_generated_at_beijing": "2026-09-02T15:08:46+08:00",
   "stock_context_status": "VALID",
   "stock_market_context_status": "PASS",
   "stock_role_confirmation_needed": true,
