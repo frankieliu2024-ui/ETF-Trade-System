@@ -4,11 +4,11 @@
   "read_only": true,
   "rule": "只统计正式决策中显式记录的research_evidence_used；最多3项。结果归因按T+1/T+3/T+5自然成熟，不事后补写历史研究贡献，不把共同市场涨跌误记为单一研究的功劳。",
   "decision_attribution": {
-    "total_decisions": 16,
+    "total_decisions": 17,
     "explicit_attribution_or_none": 1,
-    "explicit_coverage_ratio": 0.0625,
+    "explicit_coverage_ratio": 0.0588,
     "status_counts": {
-      "NOT_RECORDED": 15,
+      "NOT_RECORDED": 16,
       "EXPLICIT": 1
     },
     "mature_explicit_research_decisions": 1,
@@ -16,8 +16,8 @@
     "effectiveness_interpretation": "方向调整收益仅表示使用该研究证据的决策随后表现如何，不证明该证据单独造成结果。样本不足时不得据此修改规则。"
   },
   "trade_attribution": {
-    "total_trades": 4,
-    "attributed_trade_count": 0,
+    "total_trades": 5,
+    "attributed_trade_count": 1,
     "explicit_no_research_trade_count": 0,
     "legacy_or_unlinked_trade_count": 4,
     "pit_link_rule": "成交只能归到成交时点之前或同时、对象与动作匹配的正式决策。"
@@ -27,6 +27,28 @@
     "skfolio_risk_evidence:high_corr_cluster": 1
   },
   "recent_trades": [
+    {
+      "event_id": "20260902_141753_trade_159326",
+      "confirmed_at_beijing": "2026-09-02T14:17:53+08:00",
+      "display_name": "电网设备ETF（159326）",
+      "side": "BUY",
+      "quantity": 3000,
+      "linked_decision_id": "20260826_1453_formal_intraday_decision",
+      "pit_link_status": "AUTO_PRIOR_MATCH",
+      "research_attribution_status": "EXPLICIT",
+      "research_evidence_used": [
+        {
+          "evidence_id": "market_structure_context:518880",
+          "change": "黄金ETF（518880）处于历史高位区且近期高低点同步抬升，但日内先高后低、接近冲高回落。",
+          "decision_effect": "使其成为唯一观察主候选，但不升级Trial。"
+        },
+        {
+          "evidence_id": "skfolio_risk_evidence:high_corr_cluster",
+          "change": "半导体设备ETF（561980）、科创50ETF（588000）、科创创业ETF（159781）构成高相关风险簇，约占ETF账户权重80%。",
+          "decision_effect": "提高低相关收益来源的比较优先级，但不绕过风险许可。"
+        }
+      ]
+    },
     {
       "event_id": "20260901_143932_561980_reduce_risk_execution",
       "confirmed_at_beijing": "2026-09-01T14:40:01+08:00",
