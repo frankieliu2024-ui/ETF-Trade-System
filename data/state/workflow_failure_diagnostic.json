@@ -1,24 +1,32 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-03T00:38:13+08:00",
+  "generated_at": "2026-09-03T00:42:21+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33656066459,
+  "run_id": 33656447487,
   "run_attempt": 1,
-  "head_sha": "700e88ed06e9c0e7df7bb01e832cbcd816a5a1d3",
-  "main_head_sha": "790e3bb3559c4a719ad193745ddf30ff891bd445",
+  "head_sha": "7c1dc095b65b1343a24f8bdb516297cf6a7b76dc",
+  "main_head_sha": "5ebf99ca613cb1f9019741905c51197b8b63bc2b",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 6
+      "step": "Enforce hard consistency result",
+      "number": 8
+    },
+    {
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 7
     }
   ],
   "changed_files": [
-    "scripts/process_state_sync_request.py"
+    "\"ETF\\344\\272\\244\\346\\230\\223\\345\\244\\215\\347\\233\\230\\344\\270\\216\\347\\273\\217\\351\\252\\214\\345\\272\\223_2026.md\"",
+    "scripts/formal_document_structure.py",
+    "scripts/process_state_sync_request.py",
+    "tests/test_formal_knowledge_structure.py"
   ],
-  "commit_message": "route all executed-trade CASE reviews to CASE details",
+  "commit_message": "Merge pull request #230 from frankieliu2024-ui/codex/20260903-formal-knowledge-layer",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
