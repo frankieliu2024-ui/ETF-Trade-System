@@ -73,6 +73,33 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
         self.assertTrue(center._is_known_ipo_registration(event, account))
         event["quantity_delta"] = 499
         self.assertFalse(center._is_known_ipo_registration(event, account))
+
+    def test_unknown_position_change_still_uses_ssot_account_confirmation_title(self):
+        from scripts import notification_center as center
+        account = {
+            "positions": [],
+            "settlement_obligations": [],
+            "account_change_events_after_confirmed_at": [{
+                "event_id": "unknown-position", "event_time": "2026-09-02T10:12:00+08:00",
+                "object": "未知ETF", "code": "999999", "quantity_before": 0,
+                "quantity_after": 100, "quantity_delta": 100,
+                "reconciliation_status": "UNRECONCILED_ACCOUNT_CHANGE",
+            }],
+        }
+        # Exercise the public builder with its canonical state input.
+        with tempfile.TemporaryDirectory() as td:
+            state = Path(td)
+            (state / "account_fact.json").write_text(json.dumps(account, ensure_ascii=False), encoding="utf-8")
+            with patch.object(center, "STATE", state), patch.object(center, "now", return_value=datetime.fromisoformat("2026-09-02T10:13:00+08:00")):
+                event = center.account_confirmation_event()
+        self.assertIsNotNone(event)
+        self.assertEqual(event["title"], "【账户确认】发现未解释的持仓/资金变化")
+
+    def test_divergence_weakening_159_to_156_is_absorbed(self):
+        from scripts import market_notification_common as common
+        prior = {"event_type": "MARKET_VALUE_ALERT", "security_code": "APAC_DIVERGENCE", "sent_at": "2026-09-02T10:18:00+08:00", "confirmation_context": {"market": "ASIA", "market_date": "2026-09-02", "session": "DAY", "event_category": "DIVERGENCE", "direction": "DIVERGED", "event_magnitude_pct": 1.59, "family_peak_magnitude_pct": 1.59}}
+        event = {"event_type": "MARKET_VALUE_ALERT", "security_code": "APAC_DIVERGENCE", "created_at": "2026-09-02T10:19:00+08:00", "confirmation_context": {"market": "ASIA", "market_date": "2026-09-02", "session": "DAY", "event_category": "DIVERGENCE", "direction": "DIVERGED", "event_magnitude_pct": 1.56}}
+        self.assertIsNotNone(common._find_aggregate_target([prior], event))
     def test_notification_state_merge_preserves_concurrent_runner_events(self):
         from scripts.merge_notification_state import merge_notification_state
         base = {"notifications": [{"notification_id": "a", "source_event_id": "a", "lifecycle_status": "SENT"}]}
