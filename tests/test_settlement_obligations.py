@@ -36,6 +36,17 @@ class SettlementObligationTests(unittest.TestCase):
         self.assertEqual(len(merged["settlement_obligations"]), 1)
         self.assertEqual(merged["settlement_obligations"][0]["status"], "SETTLED")
         self.assertEqual(merged["reserved_cash_for_settlement"], 0.0)
+    def test_different_ingress_ids_still_merge_same_economic_obligation(self):
+        pending = ipo("PENDING_PAYMENT")
+        pending["obligation_id"] = "broker-pending-1"
+        settled = ipo("SETTLED")
+        settled["idempotency_key"] = "broker-settled-2"
+        merged = merge_account_fact({}, acct(obligations=[pending]))
+        merged = merge_account_fact(merged, acct(obligations=[settled], updated_at="2026-09-02T08:50:00+08:00"))
+        self.assertEqual(len(merged["settlement_obligations"]), 1)
+        self.assertEqual(merged["settlement_obligations"][0]["status"], "SETTLED")
+        self.assertEqual(merged["reserved_cash_for_settlement"], 0.0)
+
     def test_explicit_constraints(self):
         low=merge_account_fact({},acct(cash=5000,obligations=[ipo()]))
         self.assertEqual(low["settlement_constraint_status"],"INSUFFICIENT_CASH")
