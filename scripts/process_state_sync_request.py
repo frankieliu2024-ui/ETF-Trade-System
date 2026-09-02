@@ -402,7 +402,7 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     lifecycle = str(decision.get("lifecycle") or "")
     hypothesis_closed = "退出" in lifecycle or str(decision.get("hypothesis_status") or "").upper() == "CLOSED"
     comparison = build_comparison_snapshot(snapshot) if snapshot else {"items": [], "interpretation_rule": "决策时点无可用历史快照，不使用未来数据补齐。"}
-    event = {"event_type": "FORMAL_DECISION", "decision_id": decision_id, "fingerprint": fingerprint, "market_date": market_date, "decision_time_beijing": decision_time, "interaction_scenario": request.get("interaction_scenario"), "candidate_code": code, "candidate_name": name, "hypothesis_id": hypothesis_id, "hypothesis_link_status": hypothesis_link_status, "hypothesis_closed": hypothesis_closed, "price_at_decision": price_at_decision, "price_as_of_beijing": price_as_of, "price_source_snapshot": snapshot_rel, "price_source": price_source, "point_in_time_status": pit_status, "comparison_snapshot": comparison, "formal_decision": decision, "read_only_research_event": True, "decision_boundary": "只保存ChatGPT已经形成的正式决策和决策时点可见证据。禁止使用决策时点之后的行情回填价格或比较快照；研究留痕用于验证候选选择、假设生命周期、判断与执行质量，不自行推导交易权限。", "recorded_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
+    event = {"event_type": "FORMAL_DECISION", "decision_id": decision_id, "fingerprint": fingerprint, "market_date": market_date, "decision_time_beijing": decision_time, "decision_effective_at_beijing": str(decision.get("decision_effective_at_beijing") or decision.get("issued_at_beijing") or ""), "decision_effective_ordering": str(decision.get("decision_effective_ordering") or ""), "timing_quality": str(decision.get("timing_quality") or ""), "timing_provenance": str(decision.get("timing_provenance") or ""), "interaction_scenario": request.get("interaction_scenario"), "candidate_code": code, "candidate_name": name, "hypothesis_id": hypothesis_id, "hypothesis_link_status": hypothesis_link_status, "hypothesis_closed": hypothesis_closed, "price_at_decision": price_at_decision, "price_as_of_beijing": price_as_of, "price_source_snapshot": snapshot_rel, "price_source": price_source, "point_in_time_status": pit_status, "comparison_snapshot": comparison, "formal_decision": decision, "read_only_research_event": True, "decision_boundary": "只保存ChatGPT已经形成的正式决策和决策时点可见证据。禁止使用决策时点之后的行情回填价格或比较快照；研究留痕用于验证候选选择、假设生命周期、判断与执行质量，不自行推导交易权限。", "recorded_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
     event_path = ROOT / "events/decisions" / f"{decision_id}.json"
     event_path.parent.mkdir(parents=True, exist_ok=True)
     if event_path.exists():
@@ -541,10 +541,13 @@ def execution_attribution(trade: dict, linked_decision_id: str) -> dict:
     is_buy = side in {"BUY", "B", "买", "买入"} or "买" in side
     is_sell = side in {"SELL", "S", "卖", "卖出"} or "卖" in side
     adverse = diff_pct if is_buy else (-diff_pct if is_sell and diff_pct is not None else None)
-    dt0 = parse_time(decision.get("decision_time_beijing"))
+    dt0 = parse_time(decision.get("decision_effective_at_beijing") or decision.get("issued_at_beijing") or decision.get("decision_time_beijing"))
     dt1 = parse_time(trade.get("confirmed_at_beijing"))
     delay = round((dt1 - dt0).total_seconds(), 1) if dt0 and dt1 else None
-    return {"status": "READY" if dprice is not None and eprice is not None else "PARTIAL", "decision_id": linked_decision_id, "hypothesis_id": decision.get("hypothesis_id"), "decision_price": dprice, "execution_price": eprice, "execution_price_vs_decision_pct": diff_pct, "adverse_execution_cost_pct": adverse, "decision_to_execution_seconds": delay, "method_note": "正的adverse_execution_cost_pct表示相对正式决策价格出现不利执行偏差；买入价更高或卖出价更低均为正。该指标分离判断质量与执行质量，不改变交易权限。"}
+    ordering = str(decision.get("decision_effective_ordering") or "").upper()
+    timing_quality = str(decision.get("timing_quality") or "").upper()
+    bounded_before_execution = ordering == "BEFORE_EXECUTION" and timing_quality in {"USER_CONFIRMED_BOUNDED", "USER_CONFIRMED"}
+    return {"status": "READY" if dprice is not None and eprice is not None and (delay is None or delay >= 0 or bounded_before_execution) else "PARTIAL", "decision_id": linked_decision_id, "hypothesis_id": decision.get("hypothesis_id"), "decision_price": dprice, "execution_price": eprice, "execution_price_vs_decision_pct": diff_pct, "adverse_execution_cost_pct": adverse, "decision_to_execution_seconds": delay if delay is None or delay >= 0 else None, "decision_effective_ordering": decision.get("decision_effective_ordering"), "timing_quality": decision.get("timing_quality"), "timing_status": "EXACT" if delay is not None and delay >= 0 else "BOUNDED_BEFORE_EXECUTION" if bounded_before_execution else "UNAVAILABLE", "method_note": "正的adverse_execution_cost_pct表示相对正式决策价格出现不利执行偏差；买入价更高或卖出价更低均为正。该指标分离判断质量与执行质量，不改变交易权限。"}
 
 
 
