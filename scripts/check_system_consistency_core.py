@@ -117,6 +117,8 @@ def main() -> int:
     check("tests:research_artifact_contract", research_contract_proc.returncode == 0, (research_contract_proc.stdout + research_contract_proc.stderr)[-1000:])
     lifecycle_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_lifecycle_state"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:lifecycle_state", lifecycle_proc.returncode == 0, (lifecycle_proc.stdout + lifecycle_proc.stderr)[-1000:])
+    historical_recovery_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_historical_market_fact_recovery"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+    check("tests:historical_market_fact_recovery", historical_recovery_proc.returncode == 0, (historical_recovery_proc.stdout + historical_recovery_proc.stderr)[-1000:])
     for module, label in (
         ("tests.test_executed_trade_case_lifecycle", "executed_trade_case_lifecycle"),
         ("tests.test_settlement_obligations", "settlement_obligations"),
