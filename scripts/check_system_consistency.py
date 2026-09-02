@@ -511,7 +511,7 @@ def main() -> int:
     os.environ["ETF_CONSISTENCY_REPORT_PATH"] = str(REPORT)
     consistency_core.REPORT = REPORT
     core_main()
-    report = _read_json("data/state/system_consistency.json")
+    report = json.loads(REPORT.read_text(encoding="utf-8"))
     _normalize_us_phase_freshness(report)
     _normalize_a_share_off_window_market_date(report)
     _normalize_stock_market_time_alignment(report)
