@@ -207,6 +207,11 @@ jobs:
               [ -n "$paths" ] && paths="$paths,"
               paths="${paths}events/trades/${event_id}.json"
             done < /tmp/trade_fact_correction_requests.txt
+            # A successful correction owns the exact downstream projections it regenerates.
+            # Keep this allow-list narrow so unrelated dirty state remains fail-closed.
+            if [ -n "$paths" ]; then
+              paths="$paths,ETF当前状态_DASHBOARD.md,ETF市场行情档案_2026.md,ETF交易复盘与经验库_2026.md,data/state/etf_strategy_equity.json,data/state/trade_fact_correction_receipt.json"
+            fi
             echo "ETF_ALLOWED_DIRTY_PATHS=$paths" >> "$GITHUB_ENV"
           fi
           exit "$rc"
