@@ -4,8 +4,10 @@ import json
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
+import os
 
 from check_production_mutation_protocol import run as run_mutation_protocol
+import check_system_consistency_core as consistency_core
 from check_system_consistency_core import main as core_main
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -499,6 +501,15 @@ def _validate_semantic_formal_structure(report: dict) -> None:
 
 
 def main() -> int:
+    import argparse
+    parser = argparse.ArgumentParser(description="Run the canonical system consistency validator.")
+    parser.add_argument("--report-path", default=os.environ.get("ETF_CONSISTENCY_REPORT_PATH", str(REPORT)))
+    parser.add_argument("--no-persist", action="store_true", help="write the report only to the supplied ephemeral path")
+    args = parser.parse_args()
+    global REPORT
+    REPORT = Path(args.report_path).resolve()
+    os.environ["ETF_CONSISTENCY_REPORT_PATH"] = str(REPORT)
+    consistency_core.REPORT = REPORT
     core_main()
     report = _read_json("data/state/system_consistency.json")
     _normalize_us_phase_freshness(report)
@@ -512,7 +523,9 @@ def main() -> int:
     _validate_semantic_formal_structure(report)
     _validate_readme_front_door(report)
     _validate_production_mutation_protocol(report)
-    REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if not args.no_persist:
+        REPORT.parent.mkdir(parents=True, exist_ok=True)
+        REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
         "status": report.get("status"),
         "hard_error_count": report.get("hard_error_count"),
