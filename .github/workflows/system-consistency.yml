@@ -355,8 +355,9 @@ jobs:
         shell: bash
         run: |
           set +e
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ -d "$RUNNER_TEMP/etf-candidate-\${{ github.event.pull_request.number }}" ]; then
-            validation_root="$RUNNER_TEMP/etf-candidate-\${{ github.event.pull_request.number }}"
+          candidate_root="$RUNNER_TEMP/etf-candidate-$(python -c 'import json,os; print(json.load(open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8"))["number"])')"
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ -d "$candidate_root" ]; then
+            validation_root="$candidate_root"
             echo "validating PR gates against ephemeral candidate post-replay tree: $validation_root"
           else
             validation_root="$PWD"
