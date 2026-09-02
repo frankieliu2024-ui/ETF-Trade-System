@@ -1,24 +1,30 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-02T21:31:52+08:00",
+  "generated_at": "2026-09-02T21:33:19+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33636199169,
+  "run_id": 33636318232,
   "run_attempt": 1,
-  "head_sha": "fefea18be34e8304a979e193276c3b15a3a4d88d",
-  "main_head_sha": "9ce6a92d072cefd3414747353ded302eccd5ecea",
+  "head_sha": "ed6f1f0ef1246b9438abfced5aa7af7ee421a8e9",
+  "main_head_sha": "ce150de8893c6ef209dc6f576f8ec450d5ba8027",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 6
+      "step": "Enforce hard consistency result",
+      "number": 8
+    },
+    {
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 7
     }
   ],
   "changed_files": [
+    "scripts/build_execution_reconciliation.py",
     "tests/test_executed_trade_case_lifecycle.py"
   ],
-  "commit_message": "test: add exact linked trade ordering regression on latest main",
+  "commit_message": "fix: honor exact linked trade before decision timestamp",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
