@@ -1,24 +1,24 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-09-02T13:14:38+08:00",
-  "status": "BLOCKED",
+  "generated_at": "2026-09-02T13:29:58+08:00",
+  "status": "READY",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
     "market": {
       "status": "READY",
       "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-09-02_131428.json",
-      "captured_at": "2026-09-02T13:14:28+08:00",
-      "market_phase": "CONTINUOUS_AFTERNOON"
+      "snapshot": "data/market/snapshots/2026-09-02_124450.json",
+      "captured_at": "2026-09-02T12:44:50+08:00",
+      "market_phase": "MIDDAY_BREAK"
     },
     "account": {
       "status": "READY",
       "reason": "confirmed account facts remain valid; historical audit deltas are not pending updates",
-      "updated_at": "2026-09-02T13:10:00+08:00",
-      "source": "BROKER_SCREENSHOT_20260902_1310_USER_PROVIDED",
+      "updated_at": "2026-09-02T10:12:00+08:00",
+      "source": "BROKER_SCREENSHOT_20260902_1012_USER_PROVIDED",
       "pending_change_events": [],
-      "historical_audit_event_count": 22,
+      "historical_audit_event_count": 21,
       "cash": 11197.47,
       "reserved_cash_for_settlement": 0,
       "deployable_cash": 11197.47,
@@ -33,7 +33,7 @@
       "formal_review_market_date": "2026-08-31",
       "dashboard_risk_pct": -6.8,
       "dashboard_matches_formal_review": true,
-      "dashboard_updated_at": "2026-09-02T13:10:00+08:00",
+      "dashboard_updated_at": "2026-09-02T10:12:00+08:00",
       "reconstruction_risk_pct": -8.3,
       "reconstruction_generated_at": "2026-08-25T17:20:54Z",
       "reconstruction_as_of_transaction_date": "",
@@ -61,14 +61,12 @@
       "source": "formal decision + executed trade facts"
     },
     "maintenance": {
-      "status": "BLOCKED",
-      "reason": "maintenance status=FAIL",
-      "checked_at": "2026-09-02T13:10:18+08:00"
+      "status": "READY",
+      "reason": "maintenance guard passed",
+      "checked_at": "2026-09-02T13:29:58+08:00"
     }
   },
-  "blockers": [
-    "maintenance"
-  ],
+  "blockers": [],
   "degradations": [],
   "safety_boundary": "This state does not create or modify risk permission, Trial/Confirm rules, amounts, sell rules, or execution authority."
 }
