@@ -69,6 +69,7 @@
 - 动态个股角色：`data/state/asset_roles.json`、`data/state/stock_context.json`、`data/state/stock_market_context.json`
 - 研究执行桥：`data/state/research_execution_summary.json`
 - 查询时补采请求：`requests/live_snapshot/*.json`
+- 历史行情事实恢复合同：`scripts/historical_market_fact_recovery.py`（只读评估；正式写入仍归现有market-data writer）
 - A股行情workflow：`.github/workflows/market-snapshot.yml`
 - 海外盘前workflow：`.github/workflows/overseas-preopen-pulse.yml`
 - 正式事实低层写入：`scripts/formal_file_mutation_gateway.py`
@@ -82,4 +83,3 @@ INDEX只负责回答“去哪里读”，不得重新定义以下内容：正式
 系统一致性检查必须验证正式文件入口、规范域入口、关键机器配置／状态、三层监测、研究登记、writer ownership、生产治理镜像、workflow链和E2E可用性。`PASS`表示本报告登记的生产一致性合同已实际通过，不代表系统已被全面证明没有未覆盖错误；`WARNING`表示可解释的降级；`FAIL`表示硬冲突，不能把当前云端结构视为完整生产状态。
 
 任何实现与所属唯一规范冲突时，应修复实现或规范镜像漂移；不得让INDEX、配置、脚本或历史聊天反向创造新的规则。README同样只承担导航和运行说明，不复制正式版本号、provider优先级或其他易变事实。
-
