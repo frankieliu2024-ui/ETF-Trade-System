@@ -200,7 +200,7 @@ def main() -> int:
         "fee_amount": round(fee, 2),
         "trade_event_updated": not already_confirmed_same,
         "equity_updated": True,
-        "dashboard_updated": True,
+        "dashboard_updated": False,
         "archive_updated": True,
         "experience_updated": True,
         "master_updated": False,
