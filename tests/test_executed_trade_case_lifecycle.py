@@ -82,6 +82,12 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
                 consistency._validate_historical_trade_case_mapping(report)
                 self.assertEqual(report["checks"][-1]["status"], "FAIL")
 
+    def test_planned_amount_prefers_explicit_principal_over_price(self):
+        self.assertEqual(
+            reconciliation.parse_money("以1.651元买入3000份，成交本金4953元"),
+            4953,
+        )
+
     def test_exact_linked_trade_before_formal_decision_is_reconciled(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
