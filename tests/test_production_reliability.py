@@ -44,6 +44,35 @@ class CurrentDecisionFreshnessTests(unittest.TestCase):
 
 
 class PushPlusNotificationClosureTests(unittest.TestCase):
+    def test_settled_ipo_registration_is_not_an_unexplained_account_change(self):
+        from scripts import notification_center as center
+        account = {
+            "positions": [{"code": "301689", "quantity": 500, "cost": 16.0}],
+            "settlement_obligations": [{
+                "obligation_type": "IPO_ALLOTMENT_PAYMENT", "security_code": "301689",
+                "quantity": 500, "subscription_price": 16, "required_cash": 8000,
+                "status": "SETTLED",
+            }],
+            "account_change_events_after_confirmed_at": [{
+                "event_id": "ipo-registration", "event_time": "2026-09-02T10:12:00+08:00",
+                "object": "电科思仪", "code": "301689", "quantity_before": 0,
+                "quantity_after": 500, "quantity_delta": 500,
+                "reconciliation_status": "UNRECONCILED_ACCOUNT_CHANGE",
+            }],
+        }
+        with patch.object(center, "now", return_value=datetime.fromisoformat("2026-09-02T10:13:00+08:00")):
+            self.assertEqual(center._meaningful_unreconciled_account_changes(account), [])
+
+    def test_settled_ipo_registration_helper_requires_exact_economic_match(self):
+        from scripts import notification_center as center
+        account = {
+            "positions": [{"code": "301689", "quantity": 500, "cost": 16.0}],
+            "settlement_obligations": [{"obligation_type": "IPO_ALLOTMENT_PAYMENT", "security_code": "301689", "subscription_price": 16, "required_cash": 8000, "status": "SETTLED"}],
+        }
+        event = {"code": "301689", "quantity_after": 500, "quantity_delta": 500}
+        self.assertTrue(center._is_known_ipo_registration(event, account))
+        event["quantity_delta"] = 499
+        self.assertFalse(center._is_known_ipo_registration(event, account))
     def test_notification_state_merge_preserves_concurrent_runner_events(self):
         from scripts.merge_notification_state import merge_notification_state
         base = {"notifications": [{"notification_id": "a", "source_event_id": "a", "lifecycle_status": "SENT"}]}
@@ -206,4 +235,5 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 

@@ -398,12 +398,46 @@ def _meaningful_unreconciled_account_changes(account: dict) -> list[dict]:
         amount_delta = event.get("amount_delta")
         if obj in ignored_mark_to_market:
             continue
+        if _is_known_ipo_registration(event, account):
+            continue
         if code and isinstance(qty_delta, (int, float)) and abs(float(qty_delta)) > 0:
             rows.append(event)
             continue
         if obj == "cash" and isinstance(amount_delta, (int, float)) and abs(float(amount_delta)) >= MIN_UNEXPLAINED_CASH_DELTA_YUAN:
             rows.append(event)
     return rows
+
+
+def _is_known_ipo_registration(event: dict, account: dict) -> bool:
+    """Treat a uniquely matched settled IPO allotment as a known account fact."""
+    code = str(event.get("code") or "").strip()
+    quantity_delta = event.get("quantity_delta")
+    if not code or not isinstance(quantity_delta, (int, float)) or float(quantity_delta) <= 0:
+        return False
+    after = float(event.get("quantity_after") or 0)
+    if after <= 0 or abs(float(quantity_delta) - after) > 1e-9:
+        return False
+    positions = [x for x in (account.get("positions") or []) if str(x.get("code") or "") == code]
+    obligations = [
+        x for x in (account.get("settlement_obligations") or [])
+        if str(x.get("status") or "").upper() == "SETTLED"
+        and str(x.get("obligation_type") or "").upper() == "IPO_ALLOTMENT_PAYMENT"
+        and str(x.get("security_code") or "") == code
+    ]
+    if len(positions) != 1 or len(obligations) != 1:
+        return False
+    position = positions[0]
+    obligation = obligations[0]
+    position_qty = float(position.get("quantity") or 0)
+    price = float(obligation.get("subscription_price") or 0)
+    cost = float(position.get("cost") or 0)
+    required_cash = float(obligation.get("required_cash") or 0)
+    return (
+        abs(position_qty - after) <= 1e-9
+        and price > 0
+        and abs(cost - price) <= max(0.01, price * 0.0001)
+        and abs(required_cash - after * price) <= 0.01
+    )
 
 
 def account_confirmation_event() -> dict | None:
@@ -437,7 +471,7 @@ def account_confirmation_event() -> dict | None:
     if not details:
         return None
 
-    title = "【账户变化｜需确认】发现未解释的持仓/资金变化"
+    title = "【账户确认】发现未解释的持仓/资金变化"
     content = (
         "### 发生了什么\n"
         + "\n".join(details)
@@ -636,4 +670,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
