@@ -73,14 +73,17 @@ class ReviewPrerequisiteLifecycleTests(unittest.TestCase):
         self.assertFalse(ok)
 
     def test_future_valid_recovery_reopens_normal_path(self):
-        event = build_unrecoverable_review_event(
+        terminal = build_unrecoverable_review_event(
             assessment(), request_id="request-1", created_at_beijing="2026-09-02T12:01:00+08:00"
         )
-        self.assertFalse(is_valid_unrecoverable_review_event(event, "trade-1"))
-        self.assertFalse(is_valid_unrecoverable_review_event(
-            {"event_type": "FORMAL_POST_CLOSE_REVIEW", "review": {"market_date": "2026-09-01"}},
-            "trade-1",
-        ))
+        self.assertTrue(is_valid_unrecoverable_review_event(terminal, "trade-1"))
+        # A later canonical normal-review projection replaces the terminal event.
+        normal = {
+            "event_type": "FORMAL_POST_CLOSE_REVIEW",
+            "market_date": "2026-09-01",
+            "review": {"market_date": "2026-09-01"},
+        }
+        self.assertFalse(is_valid_unrecoverable_review_event(normal, "trade-1"))
 
     def test_replay_is_deterministic(self):
         first = build_unrecoverable_review_event(
