@@ -36,6 +36,11 @@ def _decision_mentions_trade(event: dict, trade: dict) -> bool:
     return True
 
 
+def _effective_time(event: dict) -> datetime | None:
+    """Return the business-effective decision time, when it is exact."""
+    return _time(event.get("decision_effective_at_beijing") or event.get("issued_at_beijing") or event.get("decision_time_beijing"))
+
+
 def resolve_link(root: Path, trade: dict, requested_id: str = "") -> tuple[str, dict, str]:
     """Return a decision no later than the confirmed trade time.
 
