@@ -1,24 +1,29 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-02T22:16:40+08:00",
+  "generated_at": "2026-09-02T22:21:04+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33640745106,
+  "run_id": 33641352984,
   "run_attempt": 1,
-  "head_sha": "4123c73a95dcfb87100decb34696038ca3263734",
-  "main_head_sha": "ed660a3d7e64ebd0e62063a499e86ad7d496eb0c",
+  "head_sha": "c4a5eab730c38f16e124c1ad0b42e551eab1b721",
+  "main_head_sha": "abab63a731c15d54f4fbdb6c633dc14684464524",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 6
+      "step": "Enforce hard consistency result",
+      "number": 8
+    },
+    {
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 7
     }
   ],
   "changed_files": [
-    "tests/test_decision_temporal_semantics.py"
+    "scripts/build_execution_reconciliation.py"
   ],
-  "commit_message": "add decision temporal semantics regression tests",
+  "commit_message": "fix parser syntax in planned principal reconciliation",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
