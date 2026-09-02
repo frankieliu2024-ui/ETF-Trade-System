@@ -51,6 +51,8 @@ REVIEW_ARCHIVE_START = "<!-- AUTO_POST_CLOSE_REVIEW_FACTS_START -->"
 REVIEW_ARCHIVE_END = "<!-- AUTO_POST_CLOSE_REVIEW_FACTS_END -->"
 REVIEW_EXPERIENCE_START = "<!-- AUTO_POST_CLOSE_REVIEW_CASES_START -->"
 REVIEW_EXPERIENCE_END = "<!-- AUTO_POST_CLOSE_REVIEW_CASES_END -->"
+CASE_DETAILS_START = "<!-- AUTO_CASE_DETAILS_START -->"
+CASE_DETAILS_END = "<!-- AUTO_CASE_DETAILS_END -->"
 REVIEW_UNAVAILABLE_START = "<!-- AUTO_REVIEW_PREREQUISITE_UNAVAILABLE_START -->"
 REVIEW_UNAVAILABLE_END = "<!-- AUTO_REVIEW_PREREQUISITE_UNAVAILABLE_END -->"
 
@@ -470,7 +472,7 @@ def record_unrecoverable_review_prerequisite(account: dict, request: dict, trade
         REVIEW_UNAVAILABLE_END,
         event_id,
         terminal_experience_line(assessment),
-        before_heading="## 3. 历史研究与专项回测",
+        before_heading="## 6. 版本维护记录",
     )
     return True, False
 
@@ -512,7 +514,14 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         upsert_formal_line(ROOT, ARCHIVE.name, REVIEW_ARCHIVE_START, REVIEW_ARCHIVE_END, market_date, archive_entry, before_heading="## 6. 历史Excel与专项数据来源")
     experience_entry = str(review.get("experience_entry") or "").strip()
     if experience_entry:
-        upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry, before_heading="## 3. 历史研究与专项回测")
+        case_mode = str(review.get("case_mode") or "").upper()
+        if case_mode.startswith("NEW_CASE_FROM_EXECUTED_") and str(review.get("case_id") or "").strip():
+            case_entry = experience_entry
+            if case_entry.startswith("### "):
+                case_entry = "#### " + case_entry[4:]
+            upsert_managed_line(ROOT, EXPERIENCE.name, CASE_DETAILS_START, CASE_DETAILS_END, str(review.get("case_id")), case_entry, before_heading="## 3. 历史研究与专项回测")
+        else:
+            upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry, before_heading="## 5. 研究与经验转化")
     record_close_review_closure(account, request, review, event)
     return True, False
 

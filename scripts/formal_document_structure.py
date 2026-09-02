@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-"""Lightweight semantic validator for human-readable formal fact files.
+"""Semantic ownership validator for the formal human-readable fact files.
 
-Writers place managed blocks at their canonical anchors. This module only guards
-against regression; it does not rewrite files or repair history during runtime.
+The validator protects section ownership and stable CASE identity. It does not
+derive business facts, rewrite files, or require historical chapter renumbering.
 """
 
 import json
@@ -23,7 +23,7 @@ def _between(text: str, start: str, end: str) -> str:
     return text[a:b]
 
 
-def _block_inside(text: str, section: str, start: str, end: str) -> bool:
+def _inside(text: str, section: str, start: str, end: str) -> bool:
     return start not in text or (start in section and end in section)
 
 
@@ -33,27 +33,31 @@ def validate_files(root: Path) -> list[str]:
     arc = (root / ARCHIVE).read_text(encoding="utf-8")
     dash = (root / DASHBOARD).read_text(encoding="utf-8")
 
-    exp_top = re.findall(r"^## ([0-6])\. ", exp, re.MULTILINE)
-    if exp_top != list("0123456"):
-        errors.append(f"experience_top_level_order={exp_top}")
+    if re.findall(r"^## ([0-6])\. ", exp, re.MULTILINE) != list("0123456"):
+        errors.append("experience_top_level_order")
 
     ch2 = _between(exp, "## 2. 真实交易CASE", "## 3. 历史研究与专项回测")
-    nums = re.findall(r"^### (2\.\d+)\b", ch2, re.MULTILINE)
-    if len(nums) != len(set(nums)):
-        errors.append("experience_duplicate_chapter2_numbers")
-    cases = re.findall(r"^### (2\.\d+) (CASE-(\d{8})-(\d{2}))[:：]", ch2, re.MULTILINE)
-    case_ids = [x[1] for x in cases]
+    ch4 = _between(exp, "## 4. OBS观察", "## 5. 研究与经验转化")
+    ch6 = exp[exp.index("## 6. 版本维护记录"):] if "## 6. 版本维护记录" in exp else ""
+
+    static_cases = re.findall(r"^### 2\.\d+ (CASE-(\d{8})-(\d{2}))[:：]", ch2, re.MULTILINE)
+    detail = _between(ch2, "<!-- AUTO_CASE_DETAILS_START -->", "<!-- AUTO_CASE_DETAILS_END -->")
+    detail_cases = re.findall(r"^#### (CASE-(\d{8})-(\d{2}))[:：]", detail, re.MULTILINE)
+    case_ids = [x[0] for x in static_cases] + [x[0] for x in detail_cases]
+    if len(case_ids) != len(set(case_ids)):
+        errors.append("experience_duplicate_case_identity")
     if case_ids != sorted(case_ids):
         errors.append(f"experience_case_order={case_ids}")
-    expected = [f"2.{i}" for i in range(3, 3 + len(cases))]
-    if [x[0] for x in cases] != expected:
-        errors.append("experience_case_section_numbers")
-    contrib = re.search(r"^### (2\.\d+) CASE系统贡献索引", ch2, re.MULTILINE)
-    if not contrib or contrib.group(1) != f"2.{3 + len(cases)}":
-        errors.append("experience_contribution_index")
-    for start, end, name in (("<!-- AUTO_CASE_INTAKE_START -->","<!-- AUTO_CASE_INTAKE_END -->","case_intake"),("<!-- AUTO_POST_CLOSE_REVIEW_CASES_START -->","<!-- AUTO_POST_CLOSE_REVIEW_CASES_END -->","post_close_cases")):
-        if not _block_inside(exp, ch2, start, end):
-            errors.append(f"experience_managed_block_outside_ch2={name}")
+    if detail_cases and not _inside(ch2, ch2, "<!-- AUTO_CASE_DETAILS_START -->", "<!-- AUTO_CASE_DETAILS_END -->"):
+        errors.append("case_details_not_in_ch2")
+    if not _inside(exp, ch2, "<!-- AUTO_CASE_INTAKE_START -->", "<!-- AUTO_CASE_INTAKE_END -->"):
+        errors.append("case_intake_not_in_ch2")
+    if not _inside(exp, ch4, "<!-- AUTO_POST_CLOSE_REVIEW_CASES_START -->", "<!-- AUTO_POST_CLOSE_REVIEW_CASES_END -->"):
+        errors.append("post_close_reviews_not_in_ch4")
+    if not _inside(exp, ch6, "<!-- AUTO_REVIEW_PREREQUISITE_UNAVAILABLE_START -->", "<!-- AUTO_REVIEW_PREREQUISITE_UNAVAILABLE_END -->"):
+        errors.append("unavailable_reviews_not_in_ch6")
+    if "CASE系统贡献索引" in ch2:
+        errors.append("manual_case_contribution_index_present")
 
     ch3 = _between(exp, "## 3. 历史研究与专项回测", "## 4. OBS观察")
     all_research = re.findall(r"^### (2026-\d{2}-\d{2}[^\n]*(?:专项|勾稽修正)[^\n]*)", exp, re.MULTILINE)
@@ -62,22 +66,23 @@ def validate_files(root: Path) -> list[str]:
         errors.append("experience_research_sections_outside_ch3")
 
     arc5 = _between(arc, "## 5. 历史行情、成交与账户快照", "## 6. 历史Excel与专项数据来源")
-    for start, end, name in (("<!-- AUTO_POST_CLOSE_REVIEW_FACTS_START -->","<!-- AUTO_POST_CLOSE_REVIEW_FACTS_END -->","post_close_facts"),("<!-- AUTO_TRADE_EVENTS_START -->","<!-- AUTO_TRADE_EVENTS_END -->","trade_events"),("<!-- AUTO_ACCOUNT_FACT_SYNC_START -->","<!-- AUTO_ACCOUNT_FACT_SYNC_END -->","account_facts")):
-        if not _block_inside(arc, arc5, start, end):
+    for start, end, name in (
+        ("<!-- AUTO_POST_CLOSE_REVIEW_FACTS_START -->","<!-- AUTO_POST_CLOSE_REVIEW_FACTS_END -->","post_close_facts"),
+        ("<!-- AUTO_TRADE_EVENTS_START -->","<!-- AUTO_TRADE_EVENTS_END -->","trade_events"),
+        ("<!-- AUTO_ACCOUNT_FACT_SYNC_START -->","<!-- AUTO_ACCOUNT_FACT_SYNC_END -->","account_facts"),
+    ):
+        if not _inside(arc, arc5, start, end):
             errors.append(f"archive_managed_block_outside_ch5={name}")
 
-    exp6 = exp[exp.index("## 6. 版本维护记录"):] if "## 6. 版本维护记录" in exp else ""
     arc7 = arc[arc.index("## 7. 数据维护规则"):] if "## 7. 数据维护规则" in arc else ""
-    if "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->" in exp and "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->" not in exp6:
+    if "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->" in exp and "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->" not in ch6:
         errors.append("experience_trade_corrections_outside_ch6")
     if "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->" in arc and "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->" not in arc7:
         errors.append("archive_trade_corrections_outside_ch7")
+
     if "<!-- AUTO_STATE_SYNC_START -->" in dash and "## ETF策略风险口径" in dash and dash.index("<!-- AUTO_STATE_SYNC_START -->") > dash.index("## ETF策略风险口径"):
         errors.append("dashboard_state_sync_not_front_loaded")
 
-    # The canonical account projection is the only current holding source. A
-    # legacy static role line is not an ETF-universe SSOT and must not duplicate
-    # or contradict the managed account block.
     try:
         account = json.loads((root / "data/state/account_fact.json").read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
