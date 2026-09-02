@@ -1,36 +1,33 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-02T20:42:25+08:00",
+  "generated_at": "2026-09-02T21:20:29+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 33631386479,
+  "workflow_name": "ETF system consistency",
+  "run_id": 33635062864,
   "run_attempt": 1,
-  "head_sha": "2754f87f8611d7fb01eb50c9c8109be90b43881c",
-  "main_head_sha": "2754f87f8611d7fb01eb50c9c8109be90b43881c",
+  "head_sha": "70dba871477f5ce971ed8bb9c8776c6b1b9cc951",
+  "main_head_sha": "834502c9fbad9399f24da0278b282d249f3213c2",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "watchdog",
-      "step": "Run read-only comprehensive production health aggregate",
-      "number": 8
+      "job": "consistency",
+      "step": "PR candidate post-replay acceptance",
+      "number": 6
     }
   ],
   "changed_files": [
-    "data/state/overseas_context.json",
-    "data/state/overseas_runtime_health.json",
-    "data/state/query_context.json",
-    "data/state/us_extended_hours_context.json"
+    "tests/test_execution_reconciliation.py"
   ],
-  "commit_message": "data: refresh overseas pulse and notifications",
-  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "commit_message": "test: keep reconciliation regression in existing suite",
+  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": true,
+    "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": true,
+    "bot_or_revert_commit": false,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
