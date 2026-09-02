@@ -304,6 +304,10 @@ jobs:
           export ETF_SYSTEM_ROOT="$candidate"
           export PYTHONPATH="$candidate/scripts:$candidate"
           python scripts/process_state_sync_request.py requests/live_snapshot/candidate_unrecoverable_review.json
+          # Re-run the existing formal projection owner in the ephemeral candidate
+          # tree so candidate acceptance validates the same writer path that will
+          # publish the neutralized Dashboard projection after merge.
+          python scripts/sync_formal_files.py
           # The replay intentionally creates ephemeral formal evidence. Commit only
           # that candidate snapshot inside the disposable copy so the existing
           # clean-worktree contract can validate the candidate without touching PR/main.
