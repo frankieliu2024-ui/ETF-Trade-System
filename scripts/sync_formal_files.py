@@ -79,6 +79,22 @@ def canonical_risk(equity: dict, formal_override: float | None = None) -> float 
     return None
 
 
+def normalize_dashboard_projection(text: str) -> str:
+    """Remove the legacy duplicate current ETF role projection."""
+    replacement = "|ETF层当前结构|当前持仓与观察角色仅以上方‘云端实时状态（自动同步）’中的canonical account projection为准；本区块不再复制当前角色列表。|"
+    lines = text.splitlines()
+    changed = False
+    for index, line in enumerate(lines):
+        if line.startswith("|ETF层当前结构|"):
+            if line != replacement:
+                lines[index] = replacement
+                changed = True
+            break
+    if not changed:
+        return text
+    return "\n".join(lines) + ("\n" if text.endswith("\n") else "")
+
+
 def preserve_decision_block(existing: str) -> str:
     if START_DASH not in existing or END_DASH not in existing:
         return ""
@@ -246,6 +262,7 @@ def sync_formal_files(root: Path = ROOT, account: dict | None = None) -> dict:
 
     existing_dash = dash_path.read_text(encoding="utf-8")
     new_dash = replace_block(existing_dash, START_DASH, END_DASH, build_dashboard_block(account, equity, existing_dash, root), after_heading=True)
+    new_dash = normalize_dashboard_projection(new_dash)
     dash_changed = new_dash != existing_dash
     if dash_changed:
         write_formal_text_if_changed(root, dash_path.name, new_dash)
