@@ -43,7 +43,7 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
 
     def test_workflow_does_not_add_a_second_state_store(self):
         source = WORKFLOW.read_text(encoding="utf-8")
-        self.assertEqual(source.count("system_consistency.json"), 5)
+        self.assertEqual(source.count("system_consistency.json"), 6)
         self.assertEqual(source.count("maintenance_health.json"), 2)
         self.assertEqual(source.count("e2e_status.json"), 3)
 
