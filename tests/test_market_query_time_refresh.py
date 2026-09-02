@@ -9,6 +9,11 @@ from scripts.market_quote_router import build_market_quote_context
 
 
 class QueryTimeRefreshTests(unittest.TestCase):
+    def test_global_request_wakes_canonical_overseas_producer(self):
+        workflow = (Path(__file__).parents[1] / ".github/workflows/overseas-preopen-pulse.yml").read_text(encoding="utf-8")
+        self.assertIn('"requests/live_snapshot/**global*.json"', workflow)
+        self.assertIn("build_overseas_context.py", workflow)
+
     def _root(self, timestamp: str):
         root = Path(tempfile.mkdtemp())
         (root / "data/state").mkdir(parents=True)
