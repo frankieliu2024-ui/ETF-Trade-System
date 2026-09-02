@@ -63,9 +63,12 @@ def build(root: Path = ROOT) -> dict:
         is_buy = side in {"BUY", "B", "买", "买入"} or "买" in side
         is_sell = side in {"SELL", "S", "卖", "卖出"} or "卖" in side
         adverse = diff_pct if is_buy else (-diff_pct if is_sell and diff_pct is not None else None)
-        t0 = parse_time(decision.get("decision_time_beijing"))
+        t0 = parse_time(decision.get("decision_effective_at_beijing") or decision.get("issued_at_beijing") or decision.get("decision_time_beijing"))
         t1 = parse_time(trade.get("confirmed_at_beijing"))
         delay = (t1 - t0).total_seconds() if t0 and t1 else None
+        ordering = str(decision.get("decision_effective_ordering") or "").upper()
+        timing_quality = str(decision.get("timing_quality") or "").upper()
+        bounded_before_execution = ordering == "BEFORE_EXECUTION" and timing_quality in {"USER_CONFIRMED_BOUNDED", "USER_CONFIRMED"}
 
         items.append({
             "trade_event_id": trade.get("event_id") or path.stem,
@@ -77,12 +80,17 @@ def build(root: Path = ROOT) -> dict:
             "name": trade.get("name") or decision.get("candidate_name"),
             "side": trade.get("side"),
             "decision_time_beijing": decision.get("decision_time_beijing"),
+            "decision_effective_at_beijing": decision.get("decision_effective_at_beijing") or decision.get("issued_at_beijing"),
+            "recorded_at_beijing": decision.get("recorded_at_beijing"),
+            "decision_effective_ordering": decision.get("decision_effective_ordering"),
+            "timing_quality": decision.get("timing_quality"),
+            "timing_status": "EXACT" if delay is not None and delay >= 0 else "BOUNDED_BEFORE_EXECUTION" if bounded_before_execution else "UNAVAILABLE",
             "execution_time_beijing": trade.get("confirmed_at_beijing"),
             "decision_price": decision_price,
             "execution_price": execution_price,
             "decision_to_execution_seconds": round(delay, 1) if delay is not None and delay >= 0 else None,
             "adverse_execution_cost_pct": round(adverse, 4) if adverse is not None else None,
-            "status": "READY" if decision_price is not None and execution_price is not None and delay is not None and delay >= 0 else "PARTIAL",
+            "status": "READY" if decision_price is not None and execution_price is not None and ((delay is not None and delay >= 0) or bounded_before_execution) else "PARTIAL",
         })
 
     adverse = [safe_float(x.get("adverse_execution_cost_pct")) for x in items]
@@ -103,7 +111,7 @@ def build(root: Path = ROOT) -> dict:
         "delay_sample_count": len(delays),
         "mean_decision_to_execution_seconds": round(mean(delays), 1) if delays else None,
         "items": items,
-        "interpretation_rule": "成交只能归因到成交时点之前或同时的正式决策。决策后的确认事件不得反向链接到成交；判断质量与执行质量分开评价。",
+        "interpretation_rule": "成交只能归因到业务有效时间不晚于成交、或有明确用户确认有界先后关系的正式决策。canonical recorded_at可晚于成交，不用于制造负延迟；判断质量与执行质量分开评价。",
         "optimization_principle": "只分析能够帮助减少可避免执行损失或提高资本实现效率的差异；不追求零滑点、零延迟或完美执行。",
     }
 
