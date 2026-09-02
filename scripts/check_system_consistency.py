@@ -338,6 +338,25 @@ def _validate_trade_event_formal_sync(report: dict) -> None:
     _recount(report)
 
 
+def _has_valid_terminal_for_trade_row(trade_date: str, code: str) -> bool:
+    """Let the historical index consume the same canonical terminal lifecycle fact."""
+    trade_dir = ROOT / "events" / "trades"
+    for path in sorted(trade_dir.glob("*.json")) if trade_dir.exists() else []:
+        try:
+            event = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if str(event.get("execution_status") or "").upper() != "EXECUTED":
+            continue
+        event_date = str(event.get("execution_date") or event.get("confirmed_at_beijing") or "")[:10]
+        if event_date != trade_date or str(event.get("code") or "") != code:
+            continue
+        event_id = str(event.get("event_id") or "")
+        if event_id and _valid_unrecoverable_review_terminal(event_id, event):
+            return True
+    return False
+
+
 def _validate_historical_trade_case_mapping(report: dict) -> None:
     """Require every canonical securities trade-index row to have exactly one valid CASE owner."""
     import re
@@ -367,12 +386,13 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
     for cols in rows:
         dt, name, code, side, qty, price, principal, fee, cashflow, remark = cols[:10]
         case_ids = sorted(set(re.findall(r"CASE-\d{8}-\d{2}", remark)))
-        if len(case_ids) == 0 and not _case_mapping_required(
+        terminal = _has_valid_terminal_for_trade_row(dt, code)
+        if len(case_ids) == 0 and (terminal or not _case_mapping_required(
             _read_json("data/state/CURRENT.json"),
             {"event_id": f"{dt}:{code}", "confirmed_at_beijing": dt},
-        ):
-            # Same-day intraday transaction-index rows may remain pending until
-            # the formal post-close review node.
+        )):
+            # Same-day intraday rows may remain pending; an evidence-backed
+            # terminal review projection is also a valid non-CASE outcome.
             pass
         elif len(case_ids) != 1:
             errors.append(f"{dt}:{code}:case_count={len(case_ids)}")
