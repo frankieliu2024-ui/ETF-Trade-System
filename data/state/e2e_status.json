@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-09-02T14:50:21+08:00",
+  "generated_at": "2026-09-02T14:59:45+08:00",
   "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -8,24 +8,21 @@
     "market": {
       "status": "READY",
       "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-09-02_142129.json",
-      "captured_at": "2026-09-02T14:21:29+08:00",
-      "market_phase": "CONTINUOUS_AFTERNOON"
+      "snapshot": "data/market/snapshots/2026-09-02_145933.json",
+      "captured_at": "2026-09-02T14:59:33+08:00",
+      "market_phase": "CLOSING_CALL_AUCTION"
     },
     "account": {
-      "status": "BLOCKED",
-      "reason": "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request is newer than canonical account_fact",
-      "updated_at": "2026-09-02T14:17:53+08:00",
-      "source": "BROKER_SCREENSHOT_20260902_141753_USER_CONFIRMED",
+      "status": "READY",
+      "reason": "confirmed account facts remain valid; historical audit deltas are not pending updates",
+      "updated_at": "2026-09-02T14:44:00+08:00",
+      "source": "BROKER_SCREENSHOT_20260902_1444_USER_PROVIDED",
       "pending_change_events": [],
-      "historical_audit_event_count": 26,
-      "pending_broker_request": {
-        "path": "requests/live_snapshot/20260902_144400_broker_account_sync.json",
-        "request_id": "20260902_144400_broker_account_sync",
-        "request_time": "2026-09-02T14:44:00+08:00",
-        "has_account_fact": true,
-        "status": "ACCOUNT_SYNC_NOT_PERFORMED"
-      }
+      "historical_audit_event_count": 28,
+      "cash": 6238.47,
+      "reserved_cash_for_settlement": 0,
+      "deployable_cash": 6238.47,
+      "settlement_constraint_status": "NONE"
     },
     "risk": {
       "status": "READY",
@@ -36,7 +33,7 @@
       "formal_review_market_date": "2026-08-31",
       "dashboard_risk_pct": -6.8,
       "dashboard_matches_formal_review": true,
-      "dashboard_updated_at": "2026-09-02T14:17:53+08:00",
+      "dashboard_updated_at": "2026-09-02T14:44:00+08:00",
       "reconstruction_risk_pct": -8.3,
       "reconstruction_generated_at": "2026-08-25T17:20:54Z",
       "reconstruction_as_of_transaction_date": "",
@@ -70,7 +67,6 @@
     }
   },
   "blockers": [
-    "account",
     "maintenance"
   ],
   "degradations": [],
