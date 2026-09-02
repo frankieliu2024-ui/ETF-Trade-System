@@ -1,7 +1,98 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-02T09:33:34+08:00",
-  "classification": "NONE",
-  "requires_codex_or_manual_review": false,
-  "reason": "all maintenance gates passed"
+  "generated_at": "2026-09-02T12:36:35+08:00",
+  "classification": "MAINTENANCE_GUARD_FAILURE",
+  "requires_codex_or_manual_review": true,
+  "head_sha": "f650ee2fb5c3fe496bc8e091e2ba93a58692c0d4",
+  "system_consistency": {
+    "status": "FAIL",
+    "hard_error_count": 2,
+    "warning_count": 2,
+    "run_id": "33591385717"
+  },
+  "self_healing": {
+    "classification": "SAME_DAY_CURRENT_MISSING",
+    "recommended_action": "REFRESH_SNAPSHOT",
+    "reason": "market_date='2026-09-01', expected=2026-09-02"
+  },
+  "runtime": {
+    "status": "PASS",
+    "latest_snapshot": "data/market/snapshots/2026-09-02_101453.json",
+    "captured_at": "2026-09-02T10:14:53+08:00"
+  },
+  "reconciliation": {
+    "status": "PASS",
+    "trade_count": 23,
+    "trade_count_matches_summary": true,
+    "executed_trade_event_overlay_count": 2,
+    "position_ledger_basis": "AUXILIARY_EQUITY_RECONSTRUCTION_PLUS_EXECUTED_TRADE_EVENTS",
+    "position_reconciliation": {
+      "status": "PASS",
+      "checks": [
+        {
+          "code": "159781",
+          "ledger_quantity": 19500.0,
+          "account_quantity": 19500.0,
+          "difference": 0.0,
+          "status": "PASS"
+        },
+        {
+          "code": "159941",
+          "ledger_quantity": 12200.0,
+          "account_quantity": 12200.0,
+          "difference": 0.0,
+          "status": "PASS"
+        },
+        {
+          "code": "513180",
+          "ledger_quantity": 0.0,
+          "account_quantity": 0.0,
+          "difference": 0.0,
+          "status": "PASS"
+        },
+        {
+          "code": "515880",
+          "ledger_quantity": 7400.0,
+          "account_quantity": 7400.0,
+          "difference": 0.0,
+          "status": "PASS"
+        },
+        {
+          "code": "561980",
+          "ledger_quantity": 38900.0,
+          "account_quantity": 38900.0,
+          "difference": 0.0,
+          "status": "PASS"
+        },
+        {
+          "code": "588000",
+          "ledger_quantity": 14100.0,
+          "account_quantity": 14100.0,
+          "difference": 0.0,
+          "status": "PASS"
+        }
+      ]
+    },
+    "known_fee_reconciliation": {
+      "status": "PASS",
+      "auxiliary_reconstructed_confirmed_fee_sum": 120.01,
+      "auxiliary_summary_known_fees": 120.01,
+      "auxiliary_difference": 0.0,
+      "executed_event_overlay_count": 2,
+      "executed_event_confirmed_fee_sum": 5.0,
+      "effective_confirmed_fee_sum": 125.01,
+      "formal_review_confirmed_fees": 125.01,
+      "formal_review_source": "events/reviews/2026-08-28.json",
+      "formal_review_difference": 0.0,
+      "basis": "AUXILIARY_RECONSTRUCTION_PLUS_DEDUPED_EXECUTED_EVENT_OVERLAY_CROSSCHECKED_WITH_LATEST_FORMAL_REVIEW"
+    },
+    "gross_equity_reconciliation": {
+      "status": "PASS",
+      "strategy_cash": 83855.1,
+      "current_etf_market_value": 99657.4,
+      "reported_gross_equity": 183512.5,
+      "difference": 0.0
+    }
+  },
+  "safety_boundary": "No automatic MASTER/provider/trading-rule/account-fact change and no AI direct patch to main."
 }
