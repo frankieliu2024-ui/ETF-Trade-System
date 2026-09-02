@@ -1,34 +1,47 @@
 {
-  "schema_version": "1.0",
-  "generated_at": "2026-09-02T14:55:10Z",
+  "schema_version": "2.0",
   "decision_id": "20260826_1332_formal_intraday_decision",
   "market_date": "2026-08-26",
   "candidate_code": "561980",
   "candidate_name": "半导体设备ETF",
+  "display_name": "半导体设备ETF（561980）",
+  "action_class": "OBSERVE_OR_HOLD",
   "price_at_decision": 0.688,
-  "formal_decision": {
-    "decision_id": "20260826_1332_formal_intraday_decision",
-    "data_as_of_beijing": "2026-08-26T13:26:29+08:00",
-    "risk_permission": "允许Trial",
-    "lifecycle": "半导体设备ETF（561980）持有管理；科创50ETF（588000）持有管理；科创创业ETF（159781）持有管理；纳指ETF（159941）持有管理。",
-    "main_candidate": "半导体设备ETF（561980）—观察机会",
-    "candidate_code": "561980",
-    "candidate_name": "半导体设备ETF",
-    "opportunity_status": "观察机会",
-    "amount_action": "新增0元；半导体设备ETF（561980）、科创50ETF（588000）、科创创业ETF（159781）、纳指ETF（159941）继续持有；现金15,319.87元继续保留。",
-    "action": "新增0元；现有四只ETF继续持有。",
-    "quantity": null,
-    "decisive_reason": "最强候选仍属于现有高度相关科技持仓，当前尚没有足够独立的新价格证据证明再投入5,000元的边际资本效率优于保留现金。"
+  "research_evidence_used": [],
+  "horizons": {
+    "T_plus_1": {
+      "status": "MATURED",
+      "market_date": "2026-08-27",
+      "candidate_close_return_pct": 3.343,
+      "etf_universe_median_return_pct": 0.9102,
+      "relative_to_etf_universe_median_pct_points": 2.4328,
+      "decision_direction_adjusted_return_pct": null,
+      "decision_direction_adjusted_relative_pct_points": null,
+      "interpretation": "观察/持有类决策不计算方向调整收益。"
+    },
+    "T_plus_3": {
+      "status": "MATURED",
+      "market_date": "2026-08-31",
+      "candidate_close_return_pct": 1.5988,
+      "etf_universe_median_return_pct": 0.2169,
+      "relative_to_etf_universe_median_pct_points": 1.3819,
+      "decision_direction_adjusted_return_pct": null,
+      "decision_direction_adjusted_relative_pct_points": null,
+      "interpretation": "观察/持有类决策不计算方向调整收益。"
+    },
+    "T_plus_5": {
+      "status": "MATURED",
+      "market_date": "2026-09-02",
+      "candidate_close_return_pct": -2.907,
+      "etf_universe_median_return_pct": -2.735,
+      "relative_to_etf_universe_median_pct_points": -0.172,
+      "decision_direction_adjusted_return_pct": null,
+      "decision_direction_adjusted_relative_pct_points": null,
+      "interpretation": "观察/持有类决策不计算方向调整收益。"
+    }
   },
-  "results": {
-    "decision_day_close_return_pct": -0.2907,
-    "T_plus_1_close_return_pct": 3.343,
-    "T_plus_3_close_return_pct": 1.5988,
-    "T_plus_5_close_return_pct": -2.907
-  },
-  "MFE_through_T_plus_5_pct_excluding_decision_day": 4.0698,
-  "MAE_through_T_plus_5_pct_excluding_decision_day": -3.9244,
-  "method_note": "T+N按后续已记录A股交易日顺序计算；为避免使用决策前的当日高低点，MFE/MAE排除决策当日。",
+  "linked_trades": [],
   "read_only": true,
-  "decision_boundary": "结果归因仅用于复盘与研究，不自动修改MASTER或产生新交易动作。"
+  "method_note": "严格使用决策日之后已经形成的交易日日线事实；T+1/T+3/T+5未到时保持PENDING，不用未来信息补值。ETF全集相对结果使用决策时点comparison_snapshot中的各ETF价格作为统一起点。",
+  "decision_boundary": "结果只用于判断质量、执行质量和研究贡献复盘；不自动修改MASTER、不生成交易动作、不把相关性解释为因果。"
 }

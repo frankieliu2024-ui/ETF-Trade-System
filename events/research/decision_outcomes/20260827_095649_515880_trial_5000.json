@@ -1,36 +1,50 @@
 {
-  "schema_version": "1.0",
-  "generated_at": "2026-09-02T14:55:10Z",
+  "schema_version": "2.0",
   "decision_id": "20260827_095649_515880_trial_5000",
   "market_date": "2026-08-27",
   "candidate_code": "515880",
   "candidate_name": "通信ETF",
+  "display_name": "通信ETF（515880）",
+  "action_class": "BUY",
   "price_at_decision": 0.673,
-  "formal_decision": {
-    "decision_id": "20260827_095649_515880_trial_5000",
-    "risk_permission": "允许Trial",
-    "lifecycle": "通信ETF（515880）：Trial",
-    "main_candidate": "通信ETF（515880）｜Trial机会",
-    "opportunity_status": "Trial机会",
-    "candidate_code": "515880",
-    "candidate_name": "通信ETF",
-    "side": "BUY",
-    "action": "Trial买入5,000元",
-    "amount_yuan": 5000,
-    "amount_action": "通信ETF（515880）：Trial买入5,000元；使用现有现金；由用户人工下单。",
-    "decisive_reason": "A股科创成长已形成正向本地反馈，通信ETF（515880）显著跑赢主要成长指数并延续至日内高位，满足风险观察区一次5,000元Trial的信息购买条件。",
-    "data_as_of_beijing": "2026-08-27T09:56:49+08:00",
-    "account_as_of_beijing": "2026-08-26T16:01:00+08:00",
-    "execution_authority": "USER_MANUAL_ONLY"
+  "research_evidence_used": [],
+  "horizons": {
+    "T_plus_1": {
+      "status": "MATURED",
+      "market_date": "2026-08-28",
+      "candidate_close_return_pct": -0.7429,
+      "etf_universe_median_return_pct": -0.1718,
+      "relative_to_etf_universe_median_pct_points": -0.5711,
+      "decision_direction_adjusted_return_pct": -0.7429,
+      "decision_direction_adjusted_relative_pct_points": -0.5711,
+      "interpretation": "BUY后上涨为正；SELL后继续下跌为正。相对值用于避免把全市场共同涨跌误记为研究贡献。"
+    },
+    "T_plus_3": {
+      "status": "MATURED",
+      "market_date": "2026-09-01",
+      "candidate_close_return_pct": -1.6345,
+      "etf_universe_median_return_pct": -1.4409,
+      "relative_to_etf_universe_median_pct_points": -0.1936,
+      "decision_direction_adjusted_return_pct": -1.6345,
+      "decision_direction_adjusted_relative_pct_points": -0.1936,
+      "interpretation": "BUY后上涨为正；SELL后继续下跌为正。相对值用于避免把全市场共同涨跌误记为研究贡献。"
+    },
+    "T_plus_5": {
+      "status": "PENDING",
+      "target_trading_day_index": 5
+    }
   },
-  "results": {
-    "decision_day_close_return_pct": 0.7429,
-    "T_plus_1_close_return_pct": -0.7429,
-    "T_plus_3_close_return_pct": -1.6345
-  },
-  "MFE_through_T_plus_5_pct_excluding_decision_day": 3.2689,
-  "MAE_through_T_plus_5_pct_excluding_decision_day": -5.052,
-  "method_note": "T+N按后续已记录A股交易日顺序计算；为避免使用决策前的当日高低点，MFE/MAE排除决策当日。",
+  "linked_trades": [
+    {
+      "event_id": "20260827_100843_515880_buy",
+      "confirmed_at_beijing": "2026-08-27T10:08:43+08:00",
+      "side": "BUY",
+      "quantity": 7400,
+      "price": 0.671,
+      "pit_link_status": "EXPLICIT_PIT_VALID"
+    }
+  ],
   "read_only": true,
-  "decision_boundary": "结果归因仅用于复盘与研究，不自动修改MASTER或产生新交易动作。"
+  "method_note": "严格使用决策日之后已经形成的交易日日线事实；T+1/T+3/T+5未到时保持PENDING，不用未来信息补值。ETF全集相对结果使用决策时点comparison_snapshot中的各ETF价格作为统一起点。",
+  "decision_boundary": "结果只用于判断质量、执行质量和研究贡献复盘；不自动修改MASTER、不生成交易动作、不把相关性解释为因果。"
 }
