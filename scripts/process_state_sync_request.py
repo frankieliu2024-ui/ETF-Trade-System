@@ -515,12 +515,12 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     experience_entry = str(review.get("experience_entry") or "").strip()
     if experience_entry:
         if str(review.get("case_mode") or "").upper() == "NEW_CASE_FROM_EXECUTED_TRADE" and str(review.get("case_id") or "").strip():
-        case_entry = experience_entry
-        if case_entry.startswith("### "):
-            case_entry = "#### " + case_entry[4:]
-        upsert_managed_line(ROOT, EXPERIENCE.name, CASE_DETAILS_START, CASE_DETAILS_END, str(review.get("case_id")), case_entry, before_heading="## 3. 历史研究与专项回测")
-    else:
-        upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry, before_heading="## 5. 研究与经验转化")
+            case_entry = experience_entry
+            if case_entry.startswith("### "):
+                case_entry = "#### " + case_entry[4:]
+            upsert_managed_line(ROOT, EXPERIENCE.name, CASE_DETAILS_START, CASE_DETAILS_END, str(review.get("case_id")), case_entry, before_heading="## 3. 历史研究与专项回测")
+        else:
+            upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry, before_heading="## 5. 研究与经验转化")
     record_close_review_closure(account, request, review, event)
     return True, False
 
