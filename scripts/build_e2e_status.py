@@ -332,9 +332,19 @@ def maintenance_component(maintenance: dict) -> dict:
     elif raw in {"WARN", "DEGRADED"}:
         status = "DEGRADED"
         reason = f"maintenance status={raw}"
+    elif raw == "FAIL":
+        consistency = str(maintenance.get("system_consistency_status") or "").upper()
+        hard_errors = int((maintenance.get("system_consistency") or {}).get("hard_error_count") or 0)
+        reconciliation = str((maintenance.get("reconciliation") or {}).get("status") or "").upper()
+        if (consistency == "FAIL" and hard_errors > 0) or reconciliation == "FAIL":
+            status = "BLOCKED"
+            reason = "maintenance blocker reflects a canonical consistency or reconciliation failure"
+        else:
+            status = "DEGRADED"
+            reason = "maintenance-only block; formal analysis capability remains separately evaluated"
     else:
-        status = "BLOCKED"
-        reason = f"maintenance status={raw}"
+        status = "DEGRADED"
+        reason = f"maintenance status={raw}; capability must be evaluated from canonical inputs"
     return {"status": status, "reason": reason, "checked_at": maintenance.get("checked_at")}
 
 

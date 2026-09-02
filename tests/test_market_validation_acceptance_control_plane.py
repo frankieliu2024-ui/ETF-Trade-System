@@ -4,6 +4,15 @@ import ast
 from pathlib import Path
 import unittest
 
+from scripts.acceptance_scope import (
+    ACCOUNT_FACT_MUTATION,
+    DERIVED_STATE_ONLY,
+    FORMAL_PROJECTION_MUTATION,
+    STABLE_CODE_OR_WORKFLOW_CHANGE,
+    classify_paths,
+)
+from scripts.build_e2e_status import maintenance_component
+
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github" / "workflows" / "system-consistency.yml"
@@ -41,6 +50,45 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         self.assertNotIn("Refresh decision and query context", source)
         self.assertNotIn('      - "data/state/CURRENT.json"', source)
 
+    def test_acceptance_scope_is_class_based(self):
+        formal = classify_paths(["ETF当前状态_DASHBOARD.md"])
+        self.assertTrue(formal["required"])
+        self.assertEqual(formal["classes"], [FORMAL_PROJECTION_MUTATION])
+
+        pulse = classify_paths(["data/state/CURRENT.json", "data/market/snapshots/latest.json"])
+        self.assertFalse(pulse["required"])
+        self.assertIn("ORDINARY_MARKET_PULSE", pulse["classes"])
+
+        stable = classify_paths(["scripts/build_e2e_status.py"])
+        self.assertTrue(stable["required"])
+        self.assertEqual(stable["classes"], [STABLE_CODE_OR_WORKFLOW_CHANGE])
+
+        account = classify_paths(["data/state/account_fact.json"])
+        self.assertEqual(account["classes"], [ACCOUNT_FACT_MUTATION])
+
+        derived = classify_paths(["data/state/query_context.json"])
+        self.assertFalse(derived["required"])
+        self.assertEqual(derived["classes"], [DERIVED_STATE_ONLY])
+
+    def test_maintenance_only_block_does_not_block_e2e(self):
+        self.assertEqual(
+            maintenance_component({"status": "FAIL", "system_consistency_status": "WARNING",
+                                    "system_consistency": {"hard_error_count": 0},
+                                    "reconciliation": {"status": "PASS"}})["status"],
+            "DEGRADED",
+        )
+        self.assertEqual(
+            maintenance_component({"status": "FAIL", "system_consistency_status": "FAIL",
+                                    "system_consistency": {"hard_error_count": 1},
+                                    "reconciliation": {"status": "PASS"}})["status"],
+            "BLOCKED",
+        )
+        self.assertEqual(
+            maintenance_component({"status": "FAIL", "system_consistency_status": "WARNING",
+                                    "system_consistency": {"hard_error_count": 0},
+                                    "reconciliation": {"status": "FAIL"}})["status"],
+            "BLOCKED",
+        )
     def test_workflow_does_not_add_a_second_state_store(self):
         source = WORKFLOW.read_text(encoding="utf-8")
         self.assertEqual(source.count("system_consistency.json"), 6)
