@@ -57,14 +57,23 @@ def resolve_link(root: Path, trade: dict, requested_id: str = "") -> tuple[str, 
     if requested_id:
         path = decision_dir / f"{requested_id}.json"
         event = _load(path) if path.exists() else {}
-        decision_time = _time(event.get("decision_time_beijing"))
-        if event and decision_time and decision_time <= trade_time and _decision_mentions_trade(event, trade):
-            return requested_id, event, "EXPLICIT_PIT_VALID"
+        decision_time = _effective_time(event)
+        recorded_time = _time(event.get("recorded_at_beijing"))
+        if event and _decision_mentions_trade(event, trade):
+            if decision_time and decision_time <= trade_time:
+                return requested_id, event, "EXPLICIT_PIT_VALID"
+            if (
+                recorded_time
+                and recorded_time >= trade_time
+                and str(event.get("decision_effective_ordering") or "").upper() == "BEFORE_EXECUTION"
+                and str(event.get("timing_quality") or "").upper() in {"USER_CONFIRMED_BOUNDED", "USER_CONFIRMED"}
+            ):
+                return requested_id, event, "EXPLICIT_ASYNC_CANONICALIZATION"
 
     candidates: list[tuple[datetime, str, dict]] = []
     for path in decision_dir.glob("*.json"):
         event = _load(path)
-        decision_time = _time(event.get("decision_time_beijing"))
+        decision_time = _effective_time(event)
         if decision_time is None or decision_time > trade_time:
             continue
         if not _decision_mentions_trade(event, trade):
