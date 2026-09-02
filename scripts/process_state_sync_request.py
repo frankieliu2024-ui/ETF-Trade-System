@@ -22,6 +22,18 @@ try:
     from lifecycle_state import build_lifecycle_projection
 except ModuleNotFoundError:
     from scripts.lifecycle_state import build_lifecycle_projection
+try:
+    from review_prerequisite_lifecycle import (
+        build_unrecoverable_review_event,
+        terminal_experience_line,
+        validate_unrecoverable_assessment,
+    )
+except ModuleNotFoundError:
+    from scripts.review_prerequisite_lifecycle import (
+        build_unrecoverable_review_event,
+        terminal_experience_line,
+        validate_unrecoverable_assessment,
+    )
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
@@ -39,6 +51,8 @@ REVIEW_ARCHIVE_START = "<!-- AUTO_POST_CLOSE_REVIEW_FACTS_START -->"
 REVIEW_ARCHIVE_END = "<!-- AUTO_POST_CLOSE_REVIEW_FACTS_END -->"
 REVIEW_EXPERIENCE_START = "<!-- AUTO_POST_CLOSE_REVIEW_CASES_START -->"
 REVIEW_EXPERIENCE_END = "<!-- AUTO_POST_CLOSE_REVIEW_CASES_END -->"
+REVIEW_UNAVAILABLE_START = "<!-- AUTO_REVIEW_PREREQUISITE_UNAVAILABLE_START -->"
+REVIEW_UNAVAILABLE_END = "<!-- AUTO_REVIEW_PREREQUISITE_UNAVAILABLE_END -->"
 
 
 def load_json(path: Path) -> dict:
@@ -382,6 +396,41 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
             return True, decision_id
     atomic_json_write(event_path, event)
     return True, decision_id
+
+
+def record_unrecoverable_review_prerequisite(account: dict, request: dict, trade_event: dict) -> tuple[bool, bool]:
+    """Project an evidence-backed terminal review state, never a normal CASE."""
+    assessment = request.get("historical_recovery_assessment")
+    if request.get("interaction_scenario") != "POST_CLOSE_REVIEW" or not assessment:
+        return False, False
+    event_id = str(trade_event.get("event_id") or "")
+    ok, reason = validate_unrecoverable_assessment(assessment, event_id)
+    if not ok:
+        raise ValueError(f"invalid unrecoverable review prerequisite: {reason}")
+    market_date = str(assessment["review_target_market_date"])
+    event_path = ROOT / "events" / "reviews" / f"{market_date}.json"
+    prior = load_json(event_path) if event_path.exists() else {}
+    if prior.get("event_type") == "FORMAL_POST_CLOSE_REVIEW":
+        raise RuntimeError("normal formal review already exists; cannot overwrite with terminal state")
+    event = build_unrecoverable_review_event(
+        assessment,
+        request_id=str(request.get("request_id") or ""),
+        created_at_beijing=datetime.now(SHANGHAI).isoformat(timespec="seconds"),
+    )
+    if prior == event:
+        return True, True
+    event_path.parent.mkdir(parents=True, exist_ok=True)
+    atomic_json_write(event_path, event)
+    upsert_formal_line(
+        ROOT,
+        EXPERIENCE.name,
+        REVIEW_UNAVAILABLE_START,
+        REVIEW_UNAVAILABLE_END,
+        event_id,
+        terminal_experience_line(assessment),
+        before_heading="## 3. 历史研究与专项回测",
+    )
+    return True, False
 
 
 def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
@@ -841,6 +890,9 @@ def main() -> int:
         write_trade_review_required(event)
     sync_current_account_mirror(ROOT, account)
     review_recorded, review_idempotent = record_post_close_review(account, request)
+    unavailable_recorded, unavailable_idempotent = (False, False)
+    if trade:
+        unavailable_recorded, unavailable_idempotent = record_unrecoverable_review_prerequisite(account, request, event)
     # Render after event/review persistence so a newly confirmed execution is
     # visible in the same canonical dashboard update, rather than one request
     # behind the machine facts.
@@ -849,7 +901,7 @@ def main() -> int:
     # Keep the three human-readable fact documents synchronized even when the
     # request only confirms a fee/account snapshot and creates no new trade event.
     formal_files_sync = sync_formal_files(ROOT, account)
-    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "formal_files_sync": formal_files_sync, "account_sync_status": account_sync_status}
+    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "review_prerequisite_unavailable_recorded": unavailable_recorded, "review_prerequisite_unavailable_idempotent_noop": unavailable_idempotent, "formal_files_sync": formal_files_sync, "account_sync_status": account_sync_status}
     print(json.dumps(result, ensure_ascii=False))
     return 0
 

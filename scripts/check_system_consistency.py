@@ -270,6 +270,25 @@ def _case_mapping_required(current: dict, event: dict) -> bool:
     return not current_date or not event_date or event_date != current_date
 
 
+def _valid_unrecoverable_review_terminal(event_id: str, event: dict) -> bool:
+    """Accept only the canonical lifecycle terminal projection, never a free-form flag."""
+    market_date = str(event.get("execution_date") or event.get("confirmed_at_beijing") or "")[:10]
+    if not market_date:
+        return False
+    path = ROOT / "events" / "reviews" / f"{market_date}.json"
+    if not path.exists():
+        return False
+    try:
+        from review_prerequisite_lifecycle import is_valid_unrecoverable_review_event
+    except ModuleNotFoundError:
+        from scripts.review_prerequisite_lifecycle import is_valid_unrecoverable_review_event
+    try:
+        review_event = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    return is_valid_unrecoverable_review_event(review_event, event_id)
+
+
 def _validate_trade_event_formal_sync(report: dict) -> None:
     """Require formal visibility, with lifecycle-aware final CASE timing."""
     archive = (ROOT / "ETF市场行情档案_2026.md").read_text(encoding="utf-8")
@@ -299,9 +318,12 @@ def _validate_trade_event_formal_sync(report: dict) -> None:
             import re
             mapping = re.search(rf"^{re.escape(event_id)}｜- 已归入(CASE-\d{{8}}-\d{{2}})｜", experience, re.MULTILINE)
             if _case_mapping_required(_read_json("data/state/CURRENT.json"), event):
-                if not mapping:
+                terminal = _valid_unrecoverable_review_terminal(event_id, event)
+                if not mapping and not terminal:
                     errors.append(f"{event_id}:formal_case_mapping")
-                elif mapping.group(1) not in experience or f"### " not in experience[:experience.find(mapping.group(1)) + 4]:
+                elif mapping and terminal:
+                    errors.append(f"{event_id}:normal_case_conflicts_with_unrecoverable_terminal")
+                elif mapping and mapping.group(1) not in experience or (mapping and f"### " not in experience[:experience.find(mapping.group(1)) + 4]):
                     errors.append(f"{event_id}:formal_case_section")
     status = "FAIL" if errors else "PASS"
     report.setdefault("checks", []).append({
