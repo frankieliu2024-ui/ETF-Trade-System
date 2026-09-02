@@ -1,0 +1,84 @@
+{
+  "request_id": "20260902_formal_post_close_review_chatgpt_replay_after_temporal_fix",
+  "requested_by": "chatgpt",
+  "requested_at_beijing": "2026-09-02T22:00:00+08:00",
+  "interaction_scenario": "POST_CLOSE_REVIEW",
+  "market_date": "2026-09-02",
+  "source": "CHATGPT_FORMAL_POST_CLOSE_REVIEW",
+  "formal_review": {
+    "market_date": "2026-09-02",
+    "review_version": "V2.2.31_CLOSE_REVIEW",
+    "reviewed_at_beijing": "2026-09-02T22:00:00+08:00",
+    "data_time": {
+      "a_share_effective_close_beijing": "2026-09-02T15:00:00+08:00",
+      "close_snapshot": "data/market/snapshots/2026-09-02_200248.json",
+      "broker_account_confirmed_at_beijing": "2026-09-02T21:05:00+08:00",
+      "close_time_semantics": "VERIFIED_SESSION_CLOSE",
+      "account_time_semantics": "LATEST_VALID_BROKER_POST_CLOSE_FACT"
+    },
+    "market_environment": {
+      "regime": "BROAD_GROWTH_WEAKNESS_WITH_OBJECT_LEVEL_RELATIVE_STRENGTH",
+      "interpretation": "上证指数约-0.97%，科创50指数约-1.82%，创业板指约-2.39%；成长风险偏好整体偏弱，但电网设备ETF（159326）收盘约-0.66%，仍保持明显相对强度。"
+    },
+    "risk_permission": "允许Trial",
+    "risk_state": "风险控制复核区",
+    "etf_strategy_known_net": {
+      "known_net_strategy_equity": 183798.59,
+      "known_net_cumulative_pnl": -16201.41,
+      "etf_strategy_risk_rate_pct": -8.1007,
+      "calculation_note": "使用现有ETF策略账已确认strategy_cash_current=83855.10元、known_fees=125.01元，并以2026-09-02 15:00 verified close对当前6只ETF持仓重新标记，ETF收盘市值合计100068.50元。该数值由本次formal review形成正式close risk fact，canonicalization后应由既有builder重新勾稽。"
+    },
+    "account_close": {
+      "latest_broker_fact_total_asset": 180036.97,
+      "latest_broker_fact_market_value": 173797.5,
+      "cash": 6239.47,
+      "deployable_cash": 6239.47,
+      "latest_broker_fact_at_beijing": "2026-09-02T21:05:00+08:00",
+      "new_trade_today": true,
+      "last_trade_event_id": "20260902_141753_trade_159326"
+    },
+    "main_candidate": "电网设备ETF（159326）",
+    "lifecycle": {
+      "电网设备ETF（159326）": "Trial继续成立；T+0；进入持仓观察；本次不Confirm、不退出",
+      "通信ETF（515880）": "Trial不转Confirm；原Trial假设关闭；转入持仓管理并在下一可执行节点进行降低风险/退出评估",
+      "半导体设备ETF（561980）": "持有管理",
+      "科创50ETF（588000）": "持有管理",
+      "科创创业ETF（159781）": "持有管理",
+      "纳指ETF（159941）": "持有管理"
+    },
+    "trial_resolution": {
+      "159326": {
+        "source_trial_decision_id": "20260902_141753_trade_159326",
+        "resolution": "TRIAL_CONTINUES",
+        "hypothesis_status": "OPEN",
+        "next_state": "T_PLUS_3_MANDATORY_DECISION_PENDING",
+        "reason": "收盘1.644元虽略低于1.651元执行价，但日内相对强度仍保持；相对创业板约+1.73个百分点，低点后恢复约0.98%，尚不足以Confirm，也未出现需要立即关闭Trial的证据。"
+      },
+      "515880": {
+        "source_trial_decision_id": "20260827_095649_515880_trial_5000",
+        "resolution": "TRIAL_FAILED_NO_CONFIRM",
+        "hypothesis_status": "CLOSED",
+        "next_state": "HOLDING_MANAGEMENT_EXIT_OR_RISK_REDUCTION_EVALUATION",
+        "reason": "T+3 mandatory decision node已逾期；截至2026-09-02收盘没有形成足以支持Confirm的增量证据，且当前价0.648元低于0.671元Trial成交价。关闭Trial假设不等于自动卖出，真实卖出仍需下一可执行节点独立通过MASTER卖出链。"
+      }
+    },
+    "action": "盘后不新增交易。电网设备ETF（159326）3,000份Trial继续持有观察；通信ETF（515880）Trial不转Confirm并关闭原Trial假设，下一可执行节点优先评估降低风险/退出；其余ETF维持持仓管理。",
+    "new_amount": 0,
+    "zero_amount_decisive_reason": "A股已经收盘，本节点只完成正式复盘与生命周期闭环，不存在合法即时执行窗口。",
+    "case_id": "CASE-20260902-01",
+    "case_mode": "NEW_CASE_FROM_EXECUTED_TRIAL",
+    "case_mapping": {
+      "trade_event_id": "20260902_141753_trade_159326",
+      "decision_id": "20260902_141753_trade_159326",
+      "case_id": "CASE-20260902-01",
+      "security_code": "159326",
+      "security_name": "电网设备ETF",
+      "case_status": "OPEN_TRIAL",
+      "mapping_reason": "2026-09-02新独立159326 Trial及真实成交，不与通信ETF既有CASE合并。"
+    },
+    "archive_entry": "2026-09-02｜A股15:00正式收盘：上证约-0.97%、科创50约-1.82%、创业板约-2.39%；电网设备ETF（159326）收盘1.644元、约-0.66%，仍保持明显相对强度。21:05券商账户总资产180036.97元、现金6239.47元；当日确认159326于14:17:53以1.651元买入3000份、成交本金4953元。",
+    "experience_entry": "### CASE-20260902-01：电网设备ETF（159326）Trial执行复盘｜2026-09-02｜159326 Trial于14:17:53真实成交3000份、1.651元、4953元；收盘1.644元，Trial假设继续但不Confirm；已归入CASE-20260902-01｜TRADE_EVENT:20260902_141753_trade_159326｜同时通信ETF（515880）T+3决议补齐：Trial不转Confirm，原Trial假设关闭，下一可执行节点独立评估降低风险/退出。",
+    "review_boundary": "本review只形成ChatGPT基于MASTER和2026-09-02正式收盘/账户/成交事实已经完成的正式盘后判断。canonical程序不得自行新增交易权限、金额、卖出份额或订单。"
+  },
+  "replay_of": "20260902_formal_post_close_review_chatgpt"
+}
