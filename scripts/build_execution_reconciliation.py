@@ -117,7 +117,7 @@ def decision_intents(event: dict) -> list[dict]:
     # the amount/action text; otherwise a sell decision with a different
     # candidate must not manufacture a buy intent.
     lifecycle = "Trial" if "Trial" in lifecycle_text else ("Confirm" if "Confirm" in lifecycle_text else "")
-    explicit_buy_pattern = r"([^；;，,。\\n]{1,30}?)（(\\d{6})）([^；;。\\n]{0,100})"
+    explicit_buy_pattern = r"([^；;，,。\n]{1,30}?)（(\d{6})）([^；;。\n]{0,100})"
     for match in re.finditer(explicit_buy_pattern, amount_action):
         buy_name, buy_code, buy_tail = match.group(1).strip(), match.group(2), match.group(3)
         if "新增买入0元" in buy_tail or "买入0元" in buy_tail:
@@ -125,7 +125,7 @@ def decision_intents(event: dict) -> list[dict]:
         if not any(word in buy_tail for word in ["买入", "新增", "加仓", "投入"]):
             continue
         buy_amount = parse_money(buy_tail)
-        quantity_match = re.search(r"([\\d,]+)\\s*份", buy_tail)
+        quantity_match = re.search(r"([\d,]+)\s*份", buy_tail)
         if buy_amount is None and quantity_match is None:
             continue
         if not lifecycle:
