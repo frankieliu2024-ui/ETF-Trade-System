@@ -30,7 +30,7 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
             root = Path(tmp)
             (root / "ETF市场行情档案_2026.md").write_text("trade-1｜archive\n", encoding="utf-8")
             experience = root / "ETF交易复盘与经验库_2026.md"
-            experience.write_text("trade-1｜- 待复盘CASE｜2026-09-01T14:40:01+08:00｜\nTRADE_EVENT:trade-1\n", encoding="utf-8")
+            experience.write_text("### 2.3 CASE-20260901-01：review\nTRADE_EVENT:trade-1\n", encoding="utf-8")
             trade_dir = root / "events" / "trades"
             trade_dir.mkdir(parents=True)
             (trade_dir / "trade-1.json").write_text(json.dumps({"event_id": "trade-1", "execution_status": "EXECUTED", "confirmed_at_beijing": "2026-09-01T14:40:01+08:00"}), encoding="utf-8")
