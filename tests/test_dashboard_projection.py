@@ -79,5 +79,12 @@ class DashboardProjectionTests(unittest.TestCase):
         self.assertEqual(once, twice)
         self.assertNotIn("\\n", twice)
 
+    def test_current_dashboard_is_real_multiline_markdown(self):
+        dashboard = (ROOT / "ETF当前状态_DASHBOARD.md").read_text(encoding="utf-8")
+        self.assertGreater(len(dashboard.splitlines()), 1)
+        self.assertNotIn("\\\\n", dashboard)
+        self.assertIn("# ETF当前状态_DASHBOARD", dashboard.splitlines())
+        self.assertIn("## 云端实时状态（自动同步）", dashboard.splitlines())
+
 if __name__ == "__main__":
     unittest.main()
