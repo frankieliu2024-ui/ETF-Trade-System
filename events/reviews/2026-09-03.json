@@ -103,9 +103,27 @@
       ]
     },
     "archive_entry": "2026-09-03｜A股15:00正式收盘事实：14/14对象完整，close contract=VERIFIED_SESSION_CLOSE；收盘快照data/market/snapshots/2026-09-03_150312.json。11:21:20账户事实现金6469.62元；通信ETF（515880）09:47:55 SELL 7,400份@0.648，黄金ETF（518880）11:21:20 BUY 500份@9.109；成交事实分别关联既有决策。",
-    "experience_entry": "### CASE-20260903-01：黄金ETF（518880）Trial执行收盘复盘\n2026-09-03｜黄金ETF（518880）BUY 500份@9.109，成交本金4,554.50元；Trial继续观察，不Confirm；真实成交与正式收盘反馈已纳入本CASE。\n20260903_112104_518880_trial_execution｜- 已归入CASE-20260903-01｜黄金ETF（518880）新独立Trial，真实成交与正式收盘复盘已闭环。\n20260903_094725_515880_exit_execution｜- 已归入CASE-20260827-01｜通信ETF（515880）既有Trial生命周期更新，退出已执行，不新建CASE。\n20260902_141753_trade_159326｜- 已归入CASE-20260902-01｜电网设备ETF（159326）既有Trial延续更新，不新建CASE。",
+    "experience_entry": "### CASE-20260903-01：黄金ETF（518880）Trial执行收盘复盘\n\n- 背景／生命周期：2026-09-03正式盘中判断将黄金ETF（518880）从观察推进为有限风险Trial；11:21:04实际买入500份，收盘后继续ACTIVE_TRIAL，不Confirm。\n- 关键证据：决策参考价约9.072元；决策时点的正式横截面与日内路径证据支持其相对强势。收盘反馈仅用于后续验证，不倒灌为事前证据。\n- 执行：2026-09-03 11:21:04 BUY 500份，成交价9.109元，成交本金4,554.50元；执行事实与decision/trade event精确关联。\n- 结果：正式收盘时间15:00，Trial继续观察；本节点不新增交易，不Confirm。\n- 判断质量：有限风险信息购买边界已执行；Trial结果与后续持续性待T+节点验证。\n- 执行质量：决策参考价约9.072元，成交价9.109元，约0.4078%的不利执行偏差；该指标只评价执行，不改变生命周期或交易权限。\n- 风险收益质量：组合低相关/独立收益来源的假设仍待验证；不得因单日相对强势自动升级Confirm。\n- 资本使用效率：本次Trial已使用有限新增资本；收盘节点新增金额为0元，继续保留现金。\n- 最终结果／反事实：黄金Trial合法成立并保持ACTIVE_TRIAL；没有足够证据证明若无该交易必然更优，不作事后最优推断。\n- 经验：真实Trial成交应进入连续验证，但单笔结果不改变MASTER规则。",
     "review_boundary": "本review仅canonicalize产品侧已形成的正式盘后判断；不得自行新增交易权限、金额、份额、订单或Confirm结论。risk_permission使用MASTER允许值；risk_state与execution_admission分开记录。",
-    "canonicalization_replay": "final_replay_after_main_writer_fix"
+    "canonicalization_replay": "final_replay_after_main_writer_fix",
+    "case_review": {
+      "case_id": "CASE-20260903-01",
+      "security_code": "518880",
+      "review_type": "NEW_CASE_FROM_EXECUTED_TRIAL",
+      "sections": [
+        "背景／生命周期",
+        "关键证据",
+        "执行",
+        "结果",
+        "判断质量",
+        "执行质量",
+        "风险收益质量",
+        "资本使用效率",
+        "最终结果／反事实",
+        "经验"
+      ],
+      "mapping_scope": "CASE_REVIEW_ONLY; CASE_MAPPING remains in review.case_mapping"
+    }
   },
   "updated_at_beijing": "2026-09-03T15:49:06+08:00",
   "reviewed_at_beijing": "2026-09-03T15:55:00+08:00"
