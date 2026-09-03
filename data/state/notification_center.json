@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-03T12:51:53+08:00",
-  "last_status": "WAITING_CONFIRMATION",
-  "last_type": "PENDING_EXECUTION_CONFIRMATION",
-  "last_title": "发现黄金ETF（518880）已有成交，请确认对应哪笔决策",
+  "updated_at": "2026-09-03T13:05:05+08:00",
+  "last_status": "SENT",
+  "last_type": "MARKET_VALUE_ALERT",
+  "last_title": "【市场异动】创业板指（399006）冲高明显回吐",
   "notifications": [
     {
       "notification_id": "notification_4b68605874c20f0655b7",
@@ -1848,6 +1848,45 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-03T11:24:24+08:00"
+    },
+    {
+      "notification_id": "notification_ef4e19fe262409f0b913",
+      "event_type": "MARKET_VALUE_ALERT",
+      "source_event_id": "market-value:a-share:2026-09-03:399006:DOWN:REVERSAL:2026-09-03T13:03:33+08:00",
+      "related_decision_id": "",
+      "security_code": "399006",
+      "security_name": "创业板指",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-03T13:05:04+08:00",
+      "sent_at": "2026-09-03T13:05:05+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-05T13:05:04+08:00",
+      "title": "【市场异动】创业板指（399006）冲高明显回吐",
+      "content": "### 核心结论\n- **事件类型**：方向反转\n- **对象/结构**：创业板指（399006）\n- **最近脉冲变化**：-0.37%\n- **关键结构**：盘中一度较前收+1.33%，当前回落至+0.06%\n\n**判断**：行情先形成足够大的单向日内幅度，随后大幅回吐或修复，原先的单向市场解释可能已经失效。\n\n### 对ETF系统的影响\n创业板指（399006）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-03 13:03:33\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "confirmation_context": {
+        "market": "A_SHARE",
+        "market_date": "2026-09-03",
+        "direction": "DOWN",
+        "event_category": "REVERSAL",
+        "asset_class": "A_SHARE_INDEX",
+        "day_change_pct": 0.05736299301983827,
+        "sudden_change_pct": -0.3691836203756127,
+        "interval_minutes": 12.733333333333333,
+        "event_magnitude_pct": 1.3287080646330107,
+        "market_as_of_beijing": "2026-09-03T13:03:33+08:00",
+        "source_fact_id": "2026-09-03:399006:REVERSAL:DOWN:2026-09-03T13:03:33+08:00",
+        "event_family_id": "A_SHARE:2026-09-03:A_SHARE:399006:REVERSAL:DOWN"
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-09-03T13:05:05+08:00"
     }
   ],
   "recent": [
@@ -2786,6 +2825,24 @@
       },
       "notification_id": "notification_cb5dfde86aa9141b1de0",
       "lifecycle_status": "WAITING_CONFIRMATION"
+    },
+    {
+      "key": "market-value:a-share:2026-09-03:399006:DOWN:REVERSAL:2026-09-03T13:03:33+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】创业板指（399006）冲高明显回吐",
+      "content": "### 核心结论\n- **事件类型**：方向反转\n- **对象/结构**：创业板指（399006）\n- **最近脉冲变化**：-0.37%\n- **关键结构**：盘中一度较前收+1.33%，当前回落至+0.06%\n\n**判断**：行情先形成足够大的单向日内幅度，随后大幅回吐或修复，原先的单向市场解释可能已经失效。\n\n### 对ETF系统的影响\n创业板指（399006）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-03 13:03:33\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "status": "SENT",
+      "attempted_at": "2026-09-03T13:05:05+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_ef4e19fe262409f0b913",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [
@@ -2795,6 +2852,6 @@
     "notification_93d959b6287e608fbe8a",
     "notification_cb5dfde86aa9141b1de0"
   ],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
-  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
+  "policy": "主动通知按新事实的决策价值判断，不按市场分类；当前事件族为开盘异常、快速重定价、极端波动、方向反转、显著分化。阈值适度放宽，重复控制依靠事件合并、冷却和实质升级识别；已管理候选不得阻塞其他未管理候选。",
+  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
