@@ -237,6 +237,70 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
             self.assertEqual(saved["notifications"][0]["lifecycle_status"], "FAILED")
 
 
+
+class PendingNotificationRevalidationTests(unittest.TestCase):
+    NOW = datetime.fromisoformat("2026-09-03T14:00:00+08:00")
+
+    def _run(self, items, recon=None, closure=None):
+        import scripts.notification_center as center
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            state = root / "data" / "state"
+            state.mkdir(parents=True)
+            if recon is not None:
+                (state / "execution_reconciliation.json").write_text(
+                    json.dumps(recon), encoding="utf-8"
+                )
+            if closure is not None:
+                (state / "close_review_closure_2026-09-02.json").write_text(
+                    json.dumps(closure), encoding="utf-8"
+                )
+            with patch.object(center, "STATE", state), patch.object(center, "now", return_value=self.NOW):
+                return center.revalidate_pending_notifications(items)
+
+    def test_reconciled_execution_archives_stale_prompt(self):
+        item = {"notification_id": "n159326", "event_type": "PENDING_EXECUTION_CONFIRMATION",
+                "security_code": "159326", "lifecycle_status": "WAITING_CONFIRMATION"}
+        recon = {"status": "RECONCILED", "matches": [{"intent": {"code": "159326"},
+                    "requires_user_confirmation": False}]}
+        result = self._run([item], recon=recon)
+        self.assertEqual(result[0]["lifecycle_status"], "ARCHIVED")
+        self.assertIn("reconciliation", result[0]["revalidation_reason"])
+
+    def test_newer_decision_archives_old_attribution_prompt(self):
+        item = {"notification_id": "n518880", "event_type": "PENDING_EXECUTION_CONFIRMATION",
+                "related_decision_id": "old-decision", "security_code": "518880",
+                "lifecycle_status": "WAITING_CONFIRMATION"}
+        recon = {"status": "RECONCILED", "matches": [{"intent": {
+                    "code": "518880", "decision_id": "new-decision"},
+                    "requires_user_confirmation": False}]}
+        result = self._run([item], recon=recon)
+        self.assertEqual(result[0]["lifecycle_status"], "ARCHIVED")
+
+    def test_close_closure_archives_old_close_prompt(self):
+        item = {"notification_id": "nclose", "event_type": "收盘账户",
+                "source_event_id": "close-account:2026-09-02",
+                "lifecycle_status": "WAITING_CONFIRMATION"}
+        result = self._run([item], closure={"status": "CLOSED"})
+        self.assertEqual(result[0]["lifecycle_status"], "ARCHIVED")
+
+    def test_unreconciled_account_prompt_remains_pending(self):
+        item = {"notification_id": "naccount", "event_type": "ACCOUNT_FACT_CONFIRMATION",
+                "source_event_id": "account-change:2026-09-02T08:50:00+08:00:x",
+                "lifecycle_status": "WAITING_CONFIRMATION"}
+        result = self._run([item], recon={"status": "RECONCILED", "matches": []})
+        self.assertEqual(result[0]["lifecycle_status"], "WAITING_CONFIRMATION")
+
+    def test_revalidation_is_idempotent(self):
+        item = {"notification_id": "n159326", "event_type": "PENDING_EXECUTION_CONFIRMATION",
+                "security_code": "159326", "lifecycle_status": "WAITING_CONFIRMATION"}
+        recon = {"status": "RECONCILED", "matches": [{"intent": {"code": "159326"},
+                    "requires_user_confirmation": False}]}
+        first = self._run([item], recon=recon)
+        second = self._run(first, recon=recon)
+        self.assertEqual(first, second)
+
+
 if __name__ == "__main__":
     unittest.main()
 
