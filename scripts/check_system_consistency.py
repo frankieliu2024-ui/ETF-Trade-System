@@ -315,28 +315,31 @@ def _valid_unrecoverable_review_terminal(event_id: str, event: dict) -> bool:
 
 
 def _canonical_case_mappings() -> dict[str, list[dict]]:
-    """Read trade-to-CASE ownership from canonical review/event facts only."""
+    """Read trade-to-CASE ownership from canonical review facts only."""
     mappings: dict[str, list[dict]] = {}
     review_dir = ROOT / "events" / "reviews"
     if not review_dir.exists():
         return mappings
+
+    def add(trade_event_id: str, decision_id: str, case_id: str, security_code: str,
+            case_status: str = "", mapping_reason: str = "") -> None:
+        entry = {"trade_event_id": trade_event_id, "decision_id": decision_id,
+                 "case_id": case_id, "security_code": security_code,
+                 "case_status": case_status, "mapping_reason": mapping_reason}
+        bucket = mappings.setdefault(trade_event_id, [])
+        identity_keys = ("trade_event_id", "decision_id", "case_id", "security_code")
+        identity = tuple(entry[key] for key in identity_keys)
+        if not any(tuple(item.get(key, "") for key in identity_keys) == identity for item in bucket):
+            bucket.append(entry)
 
     def visit(node: object) -> None:
         if isinstance(node, dict):
             trade_event_id = str(node.get("trade_event_id") or "")
             case_id = str(node.get("case_id") or "")
             if trade_event_id and case_id:
-                entry = {
-                    "trade_event_id": trade_event_id,
-                    "decision_id": str(node.get("decision_id") or ""),
-                    "case_id": case_id,
-                    "security_code": str(node.get("security_code") or ""),
-                    "case_status": str(node.get("case_status") or ""),
-                    "mapping_reason": str(node.get("mapping_reason") or ""),
-                }
-                bucket = mappings.setdefault(trade_event_id, [])
-                if entry not in bucket:
-                    bucket.append(entry)
+                add(trade_event_id, str(node.get("decision_id") or ""), case_id,
+                    str(node.get("security_code") or ""), str(node.get("case_status") or ""),
+                    str(node.get("mapping_reason") or ""))
             for value in node.values():
                 visit(value)
         elif isinstance(node, list):
@@ -345,11 +348,31 @@ def _canonical_case_mappings() -> dict[str, list[dict]]:
 
     for path in sorted(review_dir.glob("*.json")):
         try:
-            visit(json.loads(path.read_text(encoding="utf-8")))
+            review_event = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
+        visit(review_event)
+        review = review_event.get("review") if isinstance(review_event, dict) else None
+        if not isinstance(review, dict):
+            continue
+        case_id = str(review.get("case_id") or "")
+        match = re.search(r"(\d{6})", str(review.get("main_candidate") or ""))
+        if not case_id or not match:
+            continue
+        code = match.group(1)
+        review_date = str(review_event.get("market_date") or path.stem)
+        trade_dir = ROOT / "events" / "trades"
+        for trade_path in sorted(trade_dir.glob("*.json")) if trade_dir.exists() else []:
+            try:
+                trade = json.loads(trade_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            trade_event_id = str(trade.get("event_id") or "")
+            trade_date = str(trade.get("confirmed_at_beijing") or trade.get("executed_at_beijing") or "")[:10]
+            if trade_event_id and str(trade.get("code") or "") == code and trade_date and trade_date <= review_date:
+                add(trade_event_id, str(trade.get("linked_decision_id") or ""), case_id, code,
+                    str(review.get("case_mode") or ""), "canonical review case owner")
     return mappings
-
 
 def _validate_canonical_case_mapping(event: dict, mappings: dict[str, list[dict]]) -> str | None:
     event_id = str(event.get("event_id") or "")
@@ -396,9 +419,9 @@ def _validate_trade_event_formal_sync(report: dict) -> None:
                 mapping_error = _validate_canonical_case_mapping(event, mappings)
                 if mapping_error and not terminal:
                     errors.append(f"{event_id}:{mapping_error}")
-                elif mapping_error and terminal:
+                elif mapping_error and terminal and (mappings.get(event_id) or []):
                     errors.append(f"{event_id}:normal_case_conflicts_with_unrecoverable_terminal")
-                elif not re.search(rf"^###\s+.*?{re.escape(mappings[event_id][0]['case_id'])}[:：]", experience, re.MULTILINE):
+                elif not mapping_error and not re.search(rf"^###\\s+.*?{re.escape(mappings[event_id][0]['case_id'])}[:：]", experience, re.MULTILINE):
                     errors.append(f"{event_id}:formal_case_section")
     status = "FAIL" if errors else "PASS"
     report.setdefault("checks", []).append({
