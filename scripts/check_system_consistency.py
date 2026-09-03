@@ -313,10 +313,63 @@ def _valid_unrecoverable_review_terminal(event_id: str, event: dict) -> bool:
     return is_valid_unrecoverable_review_event(review_event, event_id)
 
 
+def _canonical_case_mappings() -> dict[str, list[dict]]:
+    """Read trade-to-CASE ownership from canonical review/event facts only."""
+    mappings: dict[str, list[dict]] = {}
+    review_dir = ROOT / "events" / "reviews"
+    if not review_dir.exists():
+        return mappings
+
+    def visit(node: object) -> None:
+        if isinstance(node, dict):
+            trade_event_id = str(node.get("trade_event_id") or "")
+            case_id = str(node.get("case_id") or "")
+            if trade_event_id and case_id:
+                entry = {
+                    "trade_event_id": trade_event_id,
+                    "decision_id": str(node.get("decision_id") or ""),
+                    "case_id": case_id,
+                    "security_code": str(node.get("security_code") or ""),
+                    "case_status": str(node.get("case_status") or ""),
+                    "mapping_reason": str(node.get("mapping_reason") or ""),
+                }
+                bucket = mappings.setdefault(trade_event_id, [])
+                if entry not in bucket:
+                    bucket.append(entry)
+            for value in node.values():
+                visit(value)
+        elif isinstance(node, list):
+            for value in node:
+                visit(value)
+
+    for path in sorted(review_dir.glob("*.json")):
+        try:
+            visit(json.loads(path.read_text(encoding="utf-8")))
+        except (OSError, json.JSONDecodeError):
+            continue
+    return mappings
+
+
+def _validate_canonical_case_mapping(event: dict, mappings: dict[str, list[dict]]) -> str | None:
+    event_id = str(event.get("event_id") or "")
+    candidates = mappings.get(event_id) or []
+    if len(candidates) != 1:
+        return f"formal_case_mapping_count={len(candidates)}"
+    mapping = candidates[0]
+    code = str(event.get("code") or "")
+    if mapping.get("security_code") and mapping["security_code"] != code:
+        return f"formal_case_mapping_security_code={mapping['security_code']}"
+    linked_decision = str(event.get("linked_decision_id") or "")
+    if mapping.get("decision_id") and linked_decision and mapping["decision_id"] != linked_decision:
+        return f"formal_case_mapping_decision_id={mapping['decision_id']}"
+    return None
+
+
 def _validate_trade_event_formal_sync(report: dict) -> None:
-    """Require formal visibility, with lifecycle-aware final CASE timing."""
+    """Validate trade visibility from canonical mapping facts, not Experience routing text."""
     archive = (ROOT / "ETF市场行情档案_2026.md").read_text(encoding="utf-8")
     experience = (ROOT / "ETF交易复盘与经验库_2026.md").read_text(encoding="utf-8")
+    mappings = _canonical_case_mappings()
     errors = []
     checked = 0
     trade_dir = ROOT / "events" / "trades"
@@ -333,21 +386,18 @@ def _validate_trade_event_formal_sync(report: dict) -> None:
         checked += 1
         if f"{event_id}｜" not in archive:
             errors.append(f"{event_id}:archive")
-        if f"{event_id}｜" not in experience:
-            errors.append(f"{event_id}:experience_case_intake")
         confirmed = str(event.get("confirmed_at_beijing") or "")[:10]
         if confirmed >= "2026-08-27":
             if f"TRADE_EVENT:{event_id}" not in experience:
                 errors.append(f"{event_id}:experience_transaction_index")
-            import re
-            mapping = re.search(rf"^{re.escape(event_id)}｜- 已归入(CASE-\d{{8}}-\d{{2}})｜", experience, re.MULTILINE)
             if _case_mapping_required(_read_json("data/state/CURRENT.json"), event):
                 terminal = _valid_unrecoverable_review_terminal(event_id, event)
-                if not mapping and not terminal:
-                    errors.append(f"{event_id}:formal_case_mapping")
-                elif mapping and terminal:
+                mapping_error = _validate_canonical_case_mapping(event, mappings)
+                if mapping_error and not terminal:
+                    errors.append(f"{event_id}:{mapping_error}")
+                elif mapping_error and terminal:
                     errors.append(f"{event_id}:normal_case_conflicts_with_unrecoverable_terminal")
-                elif mapping and mapping.group(1) not in experience or (mapping and f"### " not in experience[:experience.find(mapping.group(1)) + 4]):
+                elif not re.search(rf"^###\s+.*?{re.escape(mappings[event_id][0]['case_id'])}[:：]", experience, re.MULTILINE):
                     errors.append(f"{event_id}:formal_case_section")
     status = "FAIL" if errors else "PASS"
     report.setdefault("checks", []).append({
