@@ -517,7 +517,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         case_mode = str(review.get("case_mode") or "").upper()
         if case_mode.startswith("NEW_CASE_FROM_EXECUTED_") and str(review.get("case_id") or "").strip():
             case_entry = experience_entry
-            upsert_managed_line(ROOT, EXPERIENCE.name, CASE_DETAILS_START, CASE_DETAILS_END, str(review.get("case_id")), case_entry, before_heading="## 3. 历史研究与专项回测")
+            upsert_formal_line(ROOT, EXPERIENCE.name, CASE_DETAILS_START, CASE_DETAILS_END, str(review.get("case_id")), case_entry, before_heading="## 3. 历史研究与专项回测")
         else:
             upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry, before_heading="## 5. 研究与经验转化")
     record_close_review_closure(account, request, review, event)
