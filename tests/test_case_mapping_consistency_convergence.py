@@ -89,6 +89,83 @@ class CaseMappingConsistencyConvergenceTests(unittest.TestCase):
         mappings = {"trade-1": [{"decision_id": "decision-1", "case_id": "CASE-20260903-01", "security_code": "518880"}]}
         self.assertIsNone(consistency._validate_canonical_case_mapping(event, mappings))
 
+
+    def _run_historical_mapping(self, row, *, current_date="2026-09-04", node="close", phase="POST_CLOSE_GRACE", trade_events=None, reviews=None):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "ETF市场行情档案_2026.md").write_text("", encoding="utf-8")
+            experience = root / "ETF交易复盘与经验库_2026.md"
+            experience.write_text(
+                "### 2.1 2026-07-13以来完整证券成交索引\n"
+                "共1笔证券交易：ETF 1笔、个股0笔\n"
+                + row + "\n"
+                "### 2.2 银证转账与非交易现金流水\n"
+                encoding="utf-8",
+            )
+            state = root / "data" / "state"
+            state.mkdir(parents=True)
+            (state / "CURRENT.json").write_text(json.dumps({
+                "market_date": current_date,
+                "latest_valid_node": node,
+                "data_freshness": {"market_phase": phase},
+            }), encoding="utf-8")
+            for rel, payload in (trade_events or []):
+                path = root / "events" / "trades" / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps(payload), encoding="utf-8")
+            for rel, payload in (reviews or []):
+                path = root / "events" / "reviews" / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps(payload), encoding="utf-8")
+            with patch.object(consistency, "ROOT", root):
+                report = {"errors": [], "warnings": [], "checks": []}
+                consistency._validate_historical_trade_case_mapping(report)
+                return report
+
+    def test_legacy_index_row_with_one_case_passes_full_validator(self):
+        report = self._run_historical_mapping(
+            "|2026-07-13 09:36:14|测试ETF|159941|买入|1|1|1|0|1|CASE-20260713-01 初始组合建立|"
+        )
+        self.assertEqual(report["checks"][-1]["status"], "PASS")
+        self.assertEqual(report["errors"], [])
+
+    def test_legacy_index_row_without_case_fails_full_validator(self):
+        report = self._run_historical_mapping(
+            "|2026-07-13 09:36:14|测试ETF|159941|买入|1|1|1|0|1|待补充|"
+        )
+        self.assertIn("historical_trade_case_mapping:2026-07-13 09:36:14:159941:case_count=0", report["errors"])
+
+    def test_legacy_index_row_with_multiple_cases_fails_full_validator(self):
+        report = self._run_historical_mapping(
+            "|2026-07-13 09:36:14|测试ETF|159941|买入|1|1|1|0|1|CASE-20260713-01；CASE-20260716-01|"
+        )
+        self.assertIn("historical_trade_case_mapping:2026-07-13 09:36:14:159941:case_count=2", report["errors"])
+
+    def test_post_boundary_row_without_event_fails_even_with_index_case(self):
+        report = self._run_historical_mapping(
+            "|2026-08-27 10:08:43|测试ETF|515880|买入|1|1|1|0|1|CASE-20260827-01|"
+        )
+        self.assertIn("historical_trade_case_mapping:2026-08-27 10:08:43:515880:missing_formal_trade_event", report["errors"])
+
+    def test_event_backed_index_case_conflict_fails_full_validator(self):
+        event_id = "20260903_112104_518880_trial_execution"
+        report = self._run_historical_mapping(
+            "|2026-09-03 11:21:20|测试ETF|518880|买入|1|1|1|0|1|CASE-20260902-01|",
+            trade_events=[(f"{event_id}.json", {
+                "event_id": event_id,
+                "confirmed_at_beijing": "2026-09-03T11:21:20+08:00",
+                "code": "518880",
+            })],
+            reviews=[("2026-09-03.json", {
+                "market_date": "2026-09-03",
+                "review": {
+                    "case_id": "CASE-20260903-01",
+                    "main_candidate": "黄金ETF（518880）",
+                },
+            })],
+        )
+        self.assertIn("historical_trade_case_mapping:2026-09-03 11:21:20:518880:index_case_conflict=CASE-20260902-01 canonical=CASE-20260903-01", report["errors"])
+
     def test_opportunity_titles_are_simplified_without_changing_status_logic(self):
         fixed = datetime(2026, 9, 3, 10, 0, tzinfo=timezone.utc)
         previous = {
