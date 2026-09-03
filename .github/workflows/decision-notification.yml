@@ -17,6 +17,7 @@ on:
     paths:
       - "events/decisions/*.json"
       - "requests/notification_test/*.json"
+      - "requests/report_delivery/*.json"
   schedule:
     # Dedicated close-account reminder envelope: Beijing 15:20 Monday-Friday.
     # notification_center.py checks the formal A-share trading calendar;
@@ -95,7 +96,7 @@ jobs:
       # notification center can reach PushPlus.
       - name: Send material user-action notification
         id: event_notify
-        if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && steps.push_kind.outputs.decision == 'true') }}
+        if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.report == 'true')) }}
         continue-on-error: true
         run: python scripts/run_guarded_notification.py center --mode event
 
