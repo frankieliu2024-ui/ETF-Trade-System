@@ -100,7 +100,6 @@ class CaseMappingConsistencyConvergenceTests(unittest.TestCase):
                 "共1笔证券交易：ETF 1笔、个股0笔\n"
                 + row + "\n"
                 "### 2.2 银证转账与非交易现金流水\n"
-                + ("\n".join(reviews or []) or ""),
                 encoding="utf-8",
             )
             state = root / "data" / "state"
