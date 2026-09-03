@@ -501,7 +501,15 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
                     continue
                 event_code = str(event.get("code") or "")
                 event_stamp = str(event.get("confirmed_at_beijing") or event.get("executed_at_beijing") or event.get("event_id") or "")
-                if event_code == code and event_stamp[:10] == dt[:10]:
+                if (
+                    event_code == code
+                    and event_stamp[:10] == dt[:10]
+                    and event_stamp[:10] >= HISTORICAL_TRADE_EVENT_EFFECTIVE_DATE
+                ):
+                    # Retrospectively recorded pre-boundary execution facts do
+                    # not turn a legacy transaction row into an event-backed
+                    # CASE mapping. The formal event mechanism starts at the
+                    # same boundary used by executed-trade formal synchronization.
                     event_ids.append(str(event.get("event_id") or path.stem))
         index_case_ids = _explicit_index_case_ids(_remark)
         case_ids = sorted({
