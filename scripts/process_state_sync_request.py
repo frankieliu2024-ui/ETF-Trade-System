@@ -477,6 +477,47 @@ def record_unrecoverable_review_prerequisite(account: dict, request: dict, trade
     return True, False
 
 
+def sync_experience_case_mapping_index(review: dict) -> None:
+    """Project canonical review trade→CASE mappings into the transaction index."""
+    mappings = []
+
+    def collect(value):
+        if isinstance(value, dict):
+            if value.get("trade_event_id") and value.get("case_id"):
+                mappings.append((str(value["trade_event_id"]), str(value["case_id"])))
+            for child in value.values():
+                collect(child)
+        elif isinstance(value, list):
+            for child in value:
+                collect(child)
+
+    collect(review.get("case_mapping") or {})
+    if not mappings or not EXPERIENCE.exists():
+        return
+    text = EXPERIENCE.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    changed = False
+    for index, line in enumerate(lines):
+        if not line.startswith("|2026-") or "TRADE_EVENT:" not in line:
+            continue
+        for event_id, case_id in mappings:
+            if f"TRADE_EVENT:{event_id}" not in line:
+                continue
+            parts = line.strip().strip("|").split("|")
+            if len(parts) < 10:
+                continue
+            remark = parts[9].strip()
+            if case_id not in remark:
+                parts[9] = f"{case_id}；{remark}" if remark else case_id
+                suffix = f" <!-- TRADE_EVENT:{event_id} -->"
+                lines[index] = "|" + "|".join(parts) + suffix
+                changed = True
+            break
+    if changed:
+        newline = "\n".join(lines) + ("\n" if text.endswith("\n") else "")
+        write_formal_text_if_changed(ROOT, EXPERIENCE.name, newline)
+
+
 def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     review = request.get("formal_review")
     if request.get("interaction_scenario") != "POST_CLOSE_REVIEW" or not review:
@@ -489,6 +530,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     event_path = ROOT / "events" / "reviews" / f"{market_date}.json"
     prior = load_json(event_path) if event_path.exists() else {}
     if prior.get("fingerprint") == fingerprint:
+        sync_experience_case_mapping_index(review)
         return True, True
     incoming_time = parse_time(
         review.get("reviewed_at_beijing")
@@ -520,6 +562,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
             upsert_formal_line(ROOT, EXPERIENCE.name, CASE_DETAILS_START, CASE_DETAILS_END, str(review.get("case_id")), case_entry, before_heading="## 3. 历史研究与专项回测")
         else:
             upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry, before_heading="## 5. 研究与经验转化")
+    sync_experience_case_mapping_index(review)
     record_close_review_closure(account, request, review, event)
     return True, False
 
