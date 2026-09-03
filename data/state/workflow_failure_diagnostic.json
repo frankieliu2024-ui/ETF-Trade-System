@@ -1,39 +1,34 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-03T20:44:07+08:00",
+  "generated_at": "2026-09-03T20:45:21+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 33756713182,
-  "run_attempt": 2,
-  "head_sha": "27fcf6af4756424d10235d6591dc06742b9e3efd",
-  "main_head_sha": "9f88df4df8ee7ed7eb46994efe0d35138a9f9f2d",
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 33756989262,
+  "run_attempt": 1,
+  "head_sha": "85e71dd3721d96571226eedc378a48f7266700b0",
+  "main_head_sha": "85e71dd3721d96571226eedc378a48f7266700b0",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
+      "job": "watchdog",
+      "step": "Run read-only comprehensive production health aggregate",
       "number": 8
-    },
-    {
-      "job": "production_acceptance",
-      "step": "Enforce production acceptance",
-      "number": 7
     }
   ],
   "changed_files": [
-    ".github/workflows/decision-notification.yml",
-    "tests/test_notification_workflow_structure.py"
+    "data/state/execution_reconciliation.json",
+    "data/state/notification_center.json"
   ],
-  "commit_message": "fix: classify REPORT push by triggering commit (#270)",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "state: record notification and execution reconciliation",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": false,
+    "head_is_current_main": true,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
