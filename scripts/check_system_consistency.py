@@ -492,7 +492,7 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
                     continue
                 event_code = str(event.get("code") or "")
                 event_stamp = str(event.get("confirmed_at_beijing") or event.get("executed_at_beijing") or event.get("event_id") or "")
-                if event_code == code and event_stamp[:10] == dt:
+                if event_code == code and event_stamp[:10] == dt[:10]:
                     event_ids.append(str(event.get("event_id") or path.stem))
         case_ids = sorted({
             str(mapping.get("case_id") or "")
