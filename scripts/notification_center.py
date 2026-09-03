@@ -602,12 +602,53 @@ def compact_recent(item: dict) -> dict:
     return {"key": item.get("source_event_id"), "type": item.get("event_type"), "title": item.get("title"), "content": item.get("content"), "source": item.get("source"), "user_severity": item.get("user_severity"), "user_action": item.get("user_action"), "status": "SENT" if item.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION"} else item.get("lifecycle_status"), "attempted_at": item.get("last_attempted_at") or item.get("sent_at") or item.get("created_at"), "response": item.get("response") or {}, "notification_id": item.get("notification_id"), "lifecycle_status": item.get("lifecycle_status")}
 
 
+def revalidate_pending_notifications(notifications: list[dict]) -> list[dict]:
+    """Archive pending prompts superseded by canonical facts.
+
+    Revalidation is evidence-driven and preserves the record for audit; it is
+    separate from TTL expiry and never invents or modifies business facts.
+    """
+    reconciliation = read_json(STATE / "execution_reconciliation.json", {})
+    matches = reconciliation.get("matches") or []
+    recon_reconciled = str(reconciliation.get("status") or "").upper() == "RECONCILED"
+    for item in notifications:
+        if str(item.get("lifecycle_status") or "").upper() != "WAITING_CONFIRMATION":
+            continue
+        event_type = str(item.get("event_type") or "")
+        reason = ""
+        if event_type == "PENDING_EXECUTION_CONFIRMATION":
+            code = str(item.get("security_code") or "")
+            code_matches = [
+                match for match in matches
+                if str((match.get("intent") or {}).get("code") or "") == code
+            ]
+            if (
+                recon_reconciled
+                and code_matches
+                and all(not bool(match.get("requires_user_confirmation")) for match in code_matches)
+            ):
+                reason = "canonical execution reconciliation no longer requires confirmation"
+        elif event_type == "收盘账户":
+            source = str(item.get("source_event_id") or "")
+            market_date = source.split(":", 1)[1] if source.startswith("close-account:") else ""
+            closure = read_json(STATE / f"close_review_closure_{market_date}.json", {})
+            if market_date and str(closure.get("status") or "").upper() == "CLOSED":
+                reason = f"canonical close review closure completed for {market_date}"
+        if reason:
+            stamp = now().isoformat(timespec="seconds")
+            item["lifecycle_status"] = "ARCHIVED"
+            item["archived_at"] = item.get("archived_at") or stamp
+            item["revalidation_reason"] = reason
+    return notifications
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(); parser.add_argument("--mode", choices=["event", "close", "close-test", "channel-test"], default="event"); args = parser.parse_args()
     token = os.environ.get("PUSHPLUS_TOKEN", "").strip(); state_path = STATE / "notification_center.json"; state = read_json(state_path, {"schema_version": "1.0", "recent": []})
     raw_items = list(state.get("notifications") or [])
     if not raw_items: raw_items = [normalize_notification(x, x) for x in (state.get("recent") or [])]
     notifications = expire_notifications(raw_items)
+    notifications = revalidate_pending_notifications(notifications)
     if args.mode == "channel-test":
         event = {"key": f"channel-test:{now().isoformat(timespec='seconds')}", "type": "测试", "title": "【测试】ETF系统通知中心", "content": "这是一条通知通道测试，不代表真实行情、账户、交易或系统故障。\n\n你现在需要做什么：无需操作。收到即表示 GitHub → PushPlus → 微信通道正常。", "source": "manual_test", "event_type": "CHANNEL_TEST", "user_severity": "测试", "user_action": "无需操作"}
     else:
