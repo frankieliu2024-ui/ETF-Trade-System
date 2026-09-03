@@ -274,6 +274,15 @@ class NotificationDecisionIdentityTests(unittest.TestCase):
                     "requires_user_confirmation": True}]
         self.assertEqual(self._run(item, matches)["lifecycle_status"], "WAITING_CONFIRMATION")
 
+    def test_exact_decision_with_mismatched_object_stays_pending(self):
+        item = {"notification_id": "mismatch", "event_type": "PENDING_EXECUTION_CONFIRMATION",
+                "related_decision_id": "d1", "security_code": "518880",
+                "confirmation_context": {"side": "BUY"},
+                "lifecycle_status": "WAITING_CONFIRMATION"}
+        matches = [{"intent": {"decision_id": "d1", "code": "515880", "side": "SELL"},
+                    "requires_user_confirmation": False}]
+        self.assertEqual(self._run(item, matches)["lifecycle_status"], "WAITING_CONFIRMATION")
+
     def test_unique_legacy_fallback_archives(self):
         item = {"notification_id": "legacy", "event_type": "PENDING_EXECUTION_CONFIRMATION",
                 "security_code": "159326",
