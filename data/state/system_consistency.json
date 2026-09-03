@@ -1,21 +1,21 @@
 {
-  "generated_at": "2026-09-03T10:53:51Z",
-  "generated_at_beijing": "2026-09-03T18:53:51+08:00",
+  "generated_at": "2026-09-03T10:57:34Z",
+  "generated_at_beijing": "2026-09-03T18:57:34+08:00",
   "repository": {
-    "head_sha": "c522789e7fc29d77c9fee283c9c1267fe1e02983",
-    "github_sha": "c522789e7fc29d77c9fee283c9c1267fe1e02983",
-    "github_run_id": "33746695451",
+    "head_sha": "0f26a548713778d4076c7f156f4980ed8977b383",
+    "github_sha": "0f26a548713778d4076c7f156f4980ed8977b383",
+    "github_run_id": "33747030197",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "c522789e7fc29d77c9fee283c9c1267fe1e02983",
-    "workflow_sha": "c522789e7fc29d77c9fee283c9c1267fe1e02983",
+    "checked_commit": "0f26a548713778d4076c7f156f4980ed8977b383",
+    "workflow_sha": "0f26a548713778d4076c7f156f4980ed8977b383",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "semantic_freshness": {
-    "base": "84f17ed9ab323f2f071dbd8b926b526676354511",
-    "head": "c522789e7fc29d77c9fee283c9c1267fe1e02983",
+    "base": "c522789e7fc29d77c9fee283c9c1267fe1e02983",
+    "head": "0f26a548713778d4076c7f156f4980ed8977b383",
     "changed_paths": [
       "data/state/e2e_status.json",
       "data/state/execution_reconciliation.json",
@@ -25,11 +25,11 @@
       "data/state/restricted_rollback_plan.json",
       "data/state/system_consistency.json",
       "data/state/workflow_failure_diagnostic.json",
-      "tests/test_executed_trade_case_lifecycle.py"
+      "scripts/check_system_consistency.py"
     ],
     "categories": {
       "STABLE_PRODUCTION_CHANGE": [
-        "tests/test_executed_trade_case_lifecycle.py"
+        "scripts/check_system_consistency.py"
       ],
       "DYNAMIC_RUNTIME_FACT": [
         "data/state/e2e_status.json",
@@ -46,40 +46,40 @@
       "UNKNOWN": []
     },
     "decision": "REPLAY_REQUIRED",
-    "validated_commit": "84f17ed9ab323f2f071dbd8b926b526676354511",
-    "current_head": "c522789e7fc29d77c9fee283c9c1267fe1e02983",
+    "validated_commit": "c522789e7fc29d77c9fee283c9c1267fe1e02983",
+    "current_head": "0f26a548713778d4076c7f156f4980ed8977b383",
     "head_advanced": true,
     "stable_contract_freshness": "REVIEW_REQUIRED",
     "runtime_fact_freshness": "CURRENT"
   },
   "status": "FAIL",
-  "hard_error_count": 30,
+  "hard_error_count": 26,
   "warning_count": 3,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-02:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-02\",\"provider\":\"EASTMONEY_PUSH2HIS\",\"pattern_match\":true,\"reason\":null}}\n...................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 195 tests in 0.278s\n\nOK\n"
+      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-02:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-02\",\"provider\":\"EASTMONEY_PUSH2HIS\",\"pattern_match\":true,\"reason\":null}}\n...................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 195 tests in 0.240s\n\nOK\n"
     },
     {
       "name": "tests:opening_current_self_healing",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.004s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.003s\n\nOK\n"
     },
     {
       "name": "tests:semantic_latest_main",
       "status": "PASS",
-      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.207s\n\nOK\n"
+      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.157s\n\nOK\n"
     },
     {
       "name": "tests:research_artifact_contract",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.730s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.685s\n\nOK\n"
     },
     {
       "name": "tests:lifecycle_state",
       "status": "PASS",
-      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.007s\n\nOK\n"
+      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.006s\n\nOK\n"
     },
     {
       "name": "tests:historical_market_fact_recovery",
@@ -89,7 +89,7 @@
     {
       "name": "tests:executed_trade_case_lifecycle",
       "status": "PASS",
-      "detail": "60902_141753_trade_159326\", \"decision_time\": \"2026-09-02T14:21:31+08:00\", \"decision_market_date\": \"2026-09-02\", \"source_event\": \"events/decisions/20260902_141753_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260902_141753_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-09-02\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-09-02\"}], \"actionable_count\": 0, \"account_fact_updated_at\": \"2026-09-03T11:21:20+08:00\", \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n.........\n----------------------------------------------------------------------\nRan 9 tests in 0.012s\n\nOK\n"
+      "detail": "60902_141753_trade_159326\", \"decision_time\": \"2026-09-02T14:21:31+08:00\", \"decision_market_date\": \"2026-09-02\", \"source_event\": \"events/decisions/20260902_141753_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260902_141753_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-09-02\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-09-02\"}], \"actionable_count\": 0, \"account_fact_updated_at\": \"2026-09-03T11:21:20+08:00\", \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n.........\n----------------------------------------------------------------------\nRan 9 tests in 0.011s\n\nOK\n"
     },
     {
       "name": "tests:settlement_obligations",
@@ -394,17 +394,17 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=c522789e7fc29d77c9fee283c9c1267fe1e02983"
+      "detail": "HEAD=0f26a548713778d4076c7f156f4980ed8977b383"
     },
     {
       "name": "git:semantic_latest_main",
       "status": "PASS",
-      "detail": "{\"base\": \"84f17ed9ab323f2f071dbd8b926b526676354511\", \"head\": \"c522789e7fc29d77c9fee283c9c1267fe1e02983\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\", \"tests/test_executed_trade_case_lifecycle.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"tests/test_executed_trade_case_lifecycle.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\"}"
+      "detail": "{\"base\": \"c522789e7fc29d77c9fee283c9c1267fe1e02983\", \"head\": \"0f26a548713778d4076c7f156f4980ed8977b383\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\", \"scripts/check_system_consistency.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"scripts/check_system_consistency.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\"}"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=c522789e7fc29d77c9fee283c9c1267fe1e02983 GITHUB_SHA=c522789e7fc29d77c9fee283c9c1267fe1e02983"
+      "detail": "HEAD=0f26a548713778d4076c7f156f4980ed8977b383 GITHUB_SHA=0f26a548713778d4076c7f156f4980ed8977b383"
     },
     {
       "name": "git:critical_files_tracked",
@@ -834,7 +834,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "WARNING",
-      "detail": "observability_stale active=True phase=06:53 max_age_seconds=49131 limit=900 canonical_facts_unaffected"
+      "detail": "observability_stale active=True phase=06:57 max_age_seconds=49354 limit=900 canonical_facts_unaffected"
     },
     {
       "name": "session_gate:calendar_read",
@@ -1269,7 +1269,7 @@
     {
       "name": "formal_files:historical_trade_case_mapping",
       "status": "FAIL",
-      "detail": "trade_rows=31 etf=28 stock=3 missing=['2026-07-13 09:36:14:159941:case_count=0', '2026-07-13 09:36:28:588000:case_count=0', '2026-07-13 09:36:43:159781:case_count=0', '2026-07-13 09:37:04:561980:case_count=0', '2026-07-14 13:27:05:159941:case_count=0', '2026-07-14 13:27:38:159781:case_count=0', '2026-07-14 13:28:05:588000:case_count=0', '2026-07-14 13:28:15:561980:case_count=0', '2026-07-15 13:30:57:588000:case_count=0', '2026-07-15 13:31:15:159781:case_count=0', '2026-07-15 14:36:53:561980:case_count=0', '2026-07-16 10:31:19:561980:case_count=0', '2026-07-16 14:55:19:561980:case_count=0', '2026-07-20 14:35:51:561980:case_count=0', '2026-07-23 13:00:09:561980:case_count=0', '2026-07-23 13:01:51:588000:case_count=0', '2026-07-28 09:31:36:300750:case_count=0', '2026-07-28 09:32:24:601138:case_count=0', '2026-08-04 13:34:46:561980:case_count=0', '2026-08-13 13:00:00:159781:case_count=0', '2026-08-13 13:00:00:159941:case_count=0', '2026-08-13 13:00:03:601138:case_count=0', '2026-08-17 10:47:19:513180:case_count=0', '2026-08-18 14:35:39:561980:case_count=0', '2026-08-25 10:02:57:513180:case_count=0', '2026-08-25 11:22:34:561980:case_count=0', '2026-08-27 10:08:43:515880:case_count=0', '2026-09-02 14:17:53:159326:case_count=0', '2026-09-03 09:47:55:515880:case_count=0', '2026-09-03 11:21:20:518880:case_count=0']"
+      "detail": "trade_rows=31 etf=28 stock=3 missing=['2026-07-13 09:36:14:159941:case_count=0', '2026-07-13 09:36:28:588000:case_count=0', '2026-07-13 09:36:43:159781:case_count=0', '2026-07-13 09:37:04:561980:case_count=0', '2026-07-14 13:27:05:159941:case_count=0', '2026-07-14 13:27:38:159781:case_count=0', '2026-07-14 13:28:05:588000:case_count=0', '2026-07-14 13:28:15:561980:case_count=0', '2026-07-15 13:30:57:588000:case_count=0', '2026-07-15 13:31:15:159781:case_count=0', '2026-07-15 14:36:53:561980:case_count=0', '2026-07-16 10:31:19:561980:case_count=0', '2026-07-16 14:55:19:561980:case_count=0', '2026-07-20 14:35:51:561980:case_count=0', '2026-07-23 13:00:09:561980:case_count=0', '2026-07-23 13:01:51:588000:case_count=0', '2026-07-28 09:31:36:300750:case_count=0', '2026-07-28 09:32:24:601138:case_count=0', '2026-08-04 13:34:46:561980:case_count=0', '2026-08-13 13:00:00:159781:case_count=0', '2026-08-13 13:00:00:159941:case_count=0', '2026-08-13 13:00:03:601138:case_count=0', '2026-08-17 10:47:19:513180:case_count=0', '2026-08-18 14:35:39:561980:case_count=0', '2026-08-25 10:02:57:513180:case_count=0', '2026-08-25 11:22:34:561980:case_count=0']"
     },
     {
       "name": "formal_files:semantic_structure",
@@ -1998,11 +1998,7 @@
     "historical_trade_case_mapping:2026-08-17 10:47:19:513180:case_count=0",
     "historical_trade_case_mapping:2026-08-18 14:35:39:561980:case_count=0",
     "historical_trade_case_mapping:2026-08-25 10:02:57:513180:case_count=0",
-    "historical_trade_case_mapping:2026-08-25 11:22:34:561980:case_count=0",
-    "historical_trade_case_mapping:2026-08-27 10:08:43:515880:case_count=0",
-    "historical_trade_case_mapping:2026-09-02 14:17:53:159326:case_count=0",
-    "historical_trade_case_mapping:2026-09-03 09:47:55:515880:case_count=0",
-    "historical_trade_case_mapping:2026-09-03 11:21:20:518880:case_count=0"
+    "historical_trade_case_mapping:2026-08-25 11:22:34:561980:case_count=0"
   ],
   "warnings": [
     "providers:account_stock_fallback_policy: account stocks without direct fallback=['301689']",
