@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-03T11:19:34+08:00",
-  "last_status": "SENT",
-  "last_type": "A_SHARE_OPEN_VALUE_ALERT",
-  "last_title": "【市场异动】A股开盘/上午结构出现有价值变化",
+  "updated_at": "2026-09-03T11:24:24+08:00",
+  "last_status": "WAITING_CONFIRMATION",
+  "last_type": "PENDING_EXECUTION_CONFIRMATION",
+  "last_title": "发现黄金ETF（518880）已有成交，请确认对应哪笔决策",
   "notifications": [
     {
       "notification_id": "notification_4b68605874c20f0655b7",
@@ -1812,6 +1812,42 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-03T09:44:09+08:00"
+    },
+    {
+      "notification_id": "notification_cb5dfde86aa9141b1de0",
+      "event_type": "PENDING_EXECUTION_CONFIRMATION",
+      "source_event_id": "execution-confirm:20260903_094725_515880_exit_execution:518880:UNLINKED_TRADE_REQUIRES_ATTRIBUTION:2026-09-03:",
+      "related_decision_id": "20260903_094725_515880_exit_execution",
+      "security_code": "518880",
+      "security_name": "黄金ETF",
+      "user_severity": "需要操作",
+      "user_action": "确认成交或补充成交明细",
+      "lifecycle_status": "WAITING_CONFIRMATION",
+      "created_at": "2026-09-03T11:24:23+08:00",
+      "sent_at": "2026-09-03T11:24:24+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-05T11:24:23+08:00",
+      "title": "发现黄金ETF（518880）已有成交，请确认对应哪笔决策",
+      "content": "系统发现黄金ETF（518880）已有同方向成交，但还没有明确归因到2026-09-03的Trial决策。\n\n建议：请确认这笔成交是否属于该决策，以及实际交易日。",
+      "source": "execution_reconciliation",
+      "confirmation_context": {
+        "decision_id": "20260903_094725_515880_exit_execution",
+        "security_code": "518880",
+        "security_name": "黄金ETF",
+        "side": "BUY",
+        "lifecycle": "Trial",
+        "quantity": null,
+        "approx_amount_yuan": null,
+        "suggested_execution_date": "2026-09-03",
+        "lifecycle_t_date": "2026-09-03"
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-09-03T11:24:24+08:00"
     }
   ],
   "recent": [
@@ -2732,14 +2768,33 @@
       },
       "notification_id": "notification_8e229557335fe1b9859f",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "execution-confirm:20260903_094725_515880_exit_execution:518880:UNLINKED_TRADE_REQUIRES_ATTRIBUTION:2026-09-03:",
+      "type": "PENDING_EXECUTION_CONFIRMATION",
+      "title": "发现黄金ETF（518880）已有成交，请确认对应哪笔决策",
+      "content": "系统发现黄金ETF（518880）已有同方向成交，但还没有明确归因到2026-09-03的Trial决策。\n\n建议：请确认这笔成交是否属于该决策，以及实际交易日。",
+      "source": "execution_reconciliation",
+      "user_severity": "需要操作",
+      "user_action": "确认成交或补充成交明细",
+      "status": "WAITING_CONFIRMATION",
+      "attempted_at": "2026-09-03T11:24:24+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_cb5dfde86aa9141b1de0",
+      "lifecycle_status": "WAITING_CONFIRMATION"
     }
   ],
   "pending_questions": [
     "notification_6bfe320c96f8e2f37b81",
     "notification_b11fda60a3556ae7a086",
     "notification_3a372df5e79c8b5e20ef",
-    "notification_93d959b6287e608fbe8a"
+    "notification_93d959b6287e608fbe8a",
+    "notification_cb5dfde86aa9141b1de0"
   ],
-  "policy": "开盘仅推有价值结构，但实际session事实允许在同日有效恢复；A股固定收盘允许延迟补发；亚太开盘通知优先表达触发对象关键路径、本地传导、直接相关ETF反馈及数据质量；亚太主要收盘优先服务A股尾盘、错过窄窗口后仍可恢复。阈值适度放宽，Point-in-Time与去重保持。",
-  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
+  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
+  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
 }
