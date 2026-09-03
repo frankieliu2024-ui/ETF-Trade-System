@@ -520,6 +520,32 @@ def sync_experience_case_mapping_index(review: dict) -> None:
 
 
 
+def _purge_case_mapping_rows() -> None:
+    """Remove legacy routing rows from the human CASE managed block."""
+    text = EXPERIENCE.read_text(encoding="utf-8")
+    start, end = text.find(CASE_DETAILS_START), text.find(CASE_DETAILS_END)
+    if start < 0 or end < start:
+        return
+    body_start = start + len(CASE_DETAILS_START)
+    block = text[body_start:end]
+    kept = []
+    for line in block.splitlines():
+        stripped = line.strip()
+        if (
+            re.match(r"^\\d{8}[_-]", stripped)
+            or stripped.startswith("2026-") and "｜" in stripped
+            or "TRADE_EVENT:" in stripped
+            or "已归入CASE" in stripped
+            or "待复盘CASE" in stripped
+        ):
+            continue
+        kept.append(line)
+    cleaned = "\n".join(kept).strip("\n")
+    updated = text[:body_start] + "\n" + cleaned + "\n" + text[end:]
+    write_formal_text_if_changed(ROOT, EXPERIENCE.name, updated)
+
+
+
 def _case_detail_projection_entry(case_entry: str, case_id: str) -> str:
     """Return a stable human CASE heading while keeping the machine anchor hidden."""
     text = EXPERIENCE.read_text(encoding="utf-8")
@@ -585,6 +611,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     archive_entry = str(review.get("archive_entry") or "").strip()
     if archive_entry:
         upsert_formal_line(ROOT, ARCHIVE.name, REVIEW_ARCHIVE_START, REVIEW_ARCHIVE_END, market_date, archive_entry, before_heading="## 6. 历史Excel与专项数据来源")
+    _purge_case_mapping_rows()
     experience_entry = str(review.get("experience_entry") or "").strip()
     if experience_entry:
         case_mode = str(review.get("case_mode") or "").upper()
