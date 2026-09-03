@@ -80,7 +80,7 @@ def canonical_risk(equity: dict, formal_override: float | None = None) -> float 
 
 
 def normalize_dashboard_projection(text: str, root: Path = ROOT, account: dict | None = None) -> str:
-    """Keep Dashboard a current projection, excluding historical correction logs."""
+    """Keep Dashboard a current projection and repair legacy newline serialization."""
     replacement = "|ETF层当前结构|当前持仓与观察角色仅以上方‘云端实时状态（自动同步）’中的canonical account projection为准；本区块不再复制当前角色列表。|"
     # Recover legacy Dashboard blobs that persisted the two-character\\n sequence.
     # The projection is human-readable text; normalization then emits real newlines.
