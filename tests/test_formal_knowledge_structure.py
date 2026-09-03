@@ -12,13 +12,11 @@ def test_formal_knowledge_sections_use_semantic_owners(tmp_path: Path):
 ### 2.1 交易索引
 ### 2.2 现金
 ### 2.3 CASE-20260713-01：历史
-### 2.16 CASE目录与映射
 <!-- AUTO_CASE_INTAKE_START -->
 trade｜- 已归入CASE-20260713-01
 <!-- AUTO_CASE_INTAKE_END -->
-### 2.17 CASE详细记录
 <!-- AUTO_CASE_DETAILS_START -->
-### CASE-20260902-01：新CASE
+### 2.16 CASE-20260902-01：新CASE
 <!-- AUTO_CASE_DETAILS_END -->
 ## 3. 历史研究与专项回测
 ## 4. OBS观察
@@ -69,3 +67,10 @@ def test_manual_contribution_index_is_rejected(tmp_path: Path):
     path = tmp_path / "ETF交易复盘与经验库_2026.md"
     path.write_text(path.read_text(encoding="utf-8").replace("### 2.16 CASE目录与映射", "### 2.16 CASE系统贡献索引"), encoding="utf-8")
     assert "manual_case_contribution_index_present" in validate_files(tmp_path)
+
+
+def test_case_sequence_has_no_technical_navigation_headings():
+    text = Path("ETF交易复盘与经验库_2026.md").read_text(encoding="utf-8")
+    assert "### 2.16 CASE目录与映射" not in text
+    assert "### 2.17 CASE详细记录" not in text
+    assert "### 2.16 CASE-20260902-01：" in text
