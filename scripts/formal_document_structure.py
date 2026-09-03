@@ -40,24 +40,30 @@ def validate_files(root: Path) -> list[str]:
     ch4 = _between(exp, "## 4. OBS观察", "## 5. 研究与经验转化")
     ch6 = exp[exp.index("## 6. 版本维护记录"):] if "## 6. 版本维护记录" in exp else ""
 
-    static_cases = re.findall(r"^### 2\.\d+ (CASE-(\d{8})-(\d{2}))[:：]", ch2, re.MULTILINE)
-    detail = _between(ch2, "<!-- AUTO_CASE_DETAILS_START -->", "<!-- AUTO_CASE_DETAILS_END -->")
-    detail_cases = re.findall(r"^### (CASE-(\d{8})-(\d{2}))[:：]", detail, re.MULTILINE)
-    case_ids = [x[0] for x in static_cases] + [x[0] for x in detail_cases]
+    case_lines = re.findall(r"^### (2\\.\\d+) (CASE-(\\d{8})-(\\d{2}))[:：]", ch2, re.MULTILINE)
+    raw_case_lines = re.findall(r"^### (?:2\\.\\d+ )?(CASE-(\\d{8})-(\\d{2}))[:：]", ch2, re.MULTILINE)
+    if len(raw_case_lines) != len(case_lines):
+        errors.append("case_heading_must_have_human_ordinal")
+    ordinals = [int(item[0].split(".")[1]) for item in case_lines]
+    case_ids = [item[1] for item in case_lines]
     if len(case_ids) != len(set(case_ids)):
         errors.append("experience_duplicate_case_identity")
+    if ordinals != sorted(ordinals) or len(ordinals) != len(set(ordinals)):
+        errors.append("experience_case_ordinal_order")
     if case_ids != sorted(case_ids):
         errors.append(f"experience_case_order={case_ids}")
-    if detail_cases and not _inside(ch2, ch2, "<!-- AUTO_CASE_DETAILS_START -->", "<!-- AUTO_CASE_DETAILS_END -->"):
-        errors.append("case_details_not_in_ch2")
+    detail = _between(ch2, "<!-- AUTO_CASE_DETAILS_START -->", "<!-- AUTO_CASE_DETAILS_END -->")
+    detail_ids = re.findall(r"^### (2\\.\\d+) (CASE-(\\d{8})-(\\d{2}))[:：]", detail, re.MULTILINE)
+    if any(item[1] not in case_ids for item in detail_ids):
+        errors.append("case_detail_identity_missing_from_sequence")
     if not _inside(exp, ch2, "<!-- AUTO_CASE_INTAKE_START -->", "<!-- AUTO_CASE_INTAKE_END -->"):
         errors.append("case_intake_not_in_ch2")
     if not _inside(exp, ch4, "<!-- AUTO_POST_CLOSE_REVIEW_CASES_START -->", "<!-- AUTO_POST_CLOSE_REVIEW_CASES_END -->"):
         errors.append("post_close_reviews_not_in_ch4")
     if not _inside(exp, ch6, "<!-- AUTO_REVIEW_PREREQUISITE_UNAVAILABLE_START -->", "<!-- AUTO_REVIEW_PREREQUISITE_UNAVAILABLE_END -->"):
         errors.append("unavailable_reviews_not_in_ch6")
-    if "CASE系统贡献索引" in ch2:
-        errors.append("manual_case_contribution_index_present")
+    if "CASE目录与映射" in ch2 or "CASE详细记录" in ch2:
+        errors.append("technical_case_navigation_heading_present")
 
     ch3 = _between(exp, "## 3. 历史研究与专项回测", "## 4. OBS观察")
     all_research = re.findall(r"^### (2026-\d{2}-\d{2}[^\n]*(?:专项|勾稽修正)[^\n]*)", exp, re.MULTILINE)
