@@ -421,7 +421,7 @@ def _validate_trade_event_formal_sync(report: dict) -> None:
                     errors.append(f"{event_id}:{mapping_error}")
                 elif mapping_error and terminal and (mappings.get(event_id) or []):
                     errors.append(f"{event_id}:normal_case_conflicts_with_unrecoverable_terminal")
-                elif not mapping_error and not re.search(rf"^###\\s+.*?{re.escape(mappings[event_id][0]['case_id'])}[:：]", experience, re.MULTILINE):
+                elif not mapping_error and not re.search(rf"^###\s+.*?{re.escape(mappings[event_id][0]['case_id'])}[:：]", experience, re.MULTILINE):
                     errors.append(f"{event_id}:formal_case_section")
     status = "FAIL" if errors else "PASS"
     report.setdefault("checks", []).append({
