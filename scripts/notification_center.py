@@ -315,7 +315,7 @@ def formal_decision_change_event() -> dict | None:
         severity = "需要操作"
         user_action = "打开ChatGPT的ETF项目，在当前交易沟通会话核对正式卖出份额/退出动作，并由你人工执行"
     elif status in {"Trial机会", "Confirm机会"} and opportunity_changed:
-        title = f"【{status}｜需决策】{target}"
+        title = f"【{status}】{target}"
         severity = "需要操作"
         user_action = "打开ChatGPT的ETF项目查看正式金额与失效条件，再决定是否人工执行"
     elif risk_changed:
@@ -323,7 +323,7 @@ def formal_decision_change_event() -> dict | None:
         severity = "需要关注" if risk_permission != "禁止新增" else "需要操作"
         user_action = "打开ChatGPT的ETF项目，按最新风险许可查看当前正式交易判断"
     elif status == "观察机会":
-        title = f"【观察机会｜无需下单】{target}"
+        title = f"【观察机会】{target}"
         severity = "需要关注"
         user_action = "无需下单；等待后续是否升级为Trial/Confirm或失效"
     elif status == "无机会":
