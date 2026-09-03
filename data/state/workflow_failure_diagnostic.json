@@ -1,24 +1,29 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-03T15:46:20+08:00",
+  "generated_at": "2026-09-03T15:49:43+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33729767600,
+  "run_id": 33730022043,
   "run_attempt": 1,
-  "head_sha": "d9e7fdd331cc901707d70c18d3adadcd72756a0c",
-  "main_head_sha": "c090320abc288106179a1b2f53a64d983ff8de8e",
+  "head_sha": "3bc3ba9e3fbc5ae63d7b65579bb088f40a44c65a",
+  "main_head_sha": "b15d9690a17e2e723761dfce553461ace6d31405",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 6
+      "step": "Enforce hard consistency result",
+      "number": 8
+    },
+    {
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 7
     }
   ],
   "changed_files": [
-    "requests/live_snapshot/20260903_formal_post_close_review_chatgpt_replay.json"
+    "scripts/process_state_sync_request.py"
   ],
-  "commit_message": "input: replay formal post-close review after writer repair",
+  "commit_message": "fix: complete canonical post-close CASE writer",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
