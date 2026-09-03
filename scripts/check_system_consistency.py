@@ -525,9 +525,16 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
                 errors.append(f"{dt}:{code}:index_case_conflict={index_case_ids[0]} canonical={case_ids[0]}")
             elif not any(case_ids[0] in line for line in experience.splitlines() if line.startswith("### ")):
                 errors.append(f"{dt}:{code}:missing_case_heading={case_ids[0]}")
+        elif not _case_mapping_required(
+            _read_json("data/state/CURRENT.json"),
+            {"event_id": f"{dt}:{code}", "confirmed_at_beijing": dt},
+        ):
+            # Same-day intraday rows remain pending until their review node is due.
+            pass
         elif dt[:10] >= HISTORICAL_TRADE_EVENT_EFFECTIVE_DATE:
             # After the formal event mechanism boundary, missing event evidence
-            # is a real gap; the index fallback is intentionally not allowed.
+            # is a real gap once the review node is due; the index fallback is
+            # intentionally not allowed.
             errors.append(f"{dt}:{code}:missing_formal_trade_event")
         elif len(index_case_ids) != 1:
             # Pre-boundary rows may use the formal transaction index only when
