@@ -1,30 +1,27 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-03T00:48:33+08:00",
+  "generated_at": "2026-09-03T09:43:36+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 33657087986,
+  "workflow_name": "Overseas pre-open pulse",
+  "run_id": 33704737010,
   "run_attempt": 1,
-  "head_sha": "0a25b28e14273961de2800fcfd71b487a92f43aa",
-  "main_head_sha": "58e0defcac88ead09a56ff25b4426cdef7872f45",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "6ccc7f4bb5e9915730df6f63ff1ab0bc7f8bff58",
+  "main_head_sha": "63b35270afedd576ecb018d59f7b264b5f409eb1",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 8
+      "job": "overseas",
+      "step": "Commit overseas contexts, notifications and runtime health",
+      "number": 15
     }
   ],
   "changed_files": [
-    "\"ETF\\344\\272\\244\\346\\230\\223\\345\\244\\215\\347\\233\\230\\344\\270\\216\\347\\273\\217\\351\\252\\214\\345\\272\\223_2026.md\"",
-    "scripts/formal_document_structure.py",
-    "scripts/process_state_sync_request.py",
-    "tests/test_formal_knowledge_structure.py"
+    "requests/live_snapshot/20260903_094100_global_intraday_chatgpt.json"
   ],
-  "commit_message": "Merge pull request #231 from frankieliu2024-ui/codex/20260903-formal-knowledge-layer-corrective",
+  "commit_message": "trigger query-time market refresh for 2026-09-03 09:41 intraday analysis",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
