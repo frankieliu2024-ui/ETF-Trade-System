@@ -237,6 +237,78 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
             self.assertEqual(saved["notifications"][0]["lifecycle_status"], "FAILED")
 
 
+
+class NotificationDecisionIdentityTests(unittest.TestCase):
+    NOW = datetime.fromisoformat("2026-09-03T14:00:00+08:00")
+
+    def _run(self, items, matches):
+        import scripts.notification_center as center
+        with tempfile.TemporaryDirectory() as td:
+            state = Path(td)
+            (state / "execution_reconciliation.json").write_text(
+                json.dumps({"status": "RECONCILED", "matches": matches}),
+                encoding="utf-8",
+            )
+            with patch.object(center, "STATE", state), patch.object(
+                center, "now", return_value=self.NOW
+            ):
+                return center.revalidate_pending_notifications(items)
+
+    def test_same_code_newer_decision_does_not_archive_old_prompt(self):
+        item = {"notification_id": "old", "event_type": "PENDING_EXECUTION_CONFIRMATION",
+                "related_decision_id": "decision-old", "security_code": "518880",
+                "lifecycle_status": "WAITING_CONFIRMATION"}
+        matches = [{"intent": {"decision_id": "decision-new", "code": "518880"},
+                    "requires_user_confirmation": False}]
+        self.assertEqual(self._run([item], matches)[0]["lifecycle_status"],
+                         "WAITING_CONFIRMATION")
+
+    def test_exact_reconciled_decision_archives(self):
+        item = {"notification_id": "exact", "event_type": "PENDING_EXECUTION_CONFIRMATION",
+                "related_decision_id": "decision-1", "security_code": "159326",
+                "lifecycle_status": "WAITING_CONFIRMATION"}
+        matches = [{"intent": {"decision_id": "decision-1", "code": "159326"},
+                    "requires_user_confirmation": False}]
+        self.assertEqual(self._run([item], matches)[0]["lifecycle_status"], "ARCHIVED")
+
+    def test_exact_confirmation_required_is_kept(self):
+        item = {"notification_id": "pending", "event_type": "PENDING_EXECUTION_CONFIRMATION",
+                "related_decision_id": "decision-1", "security_code": "159326",
+                "lifecycle_status": "WAITING_CONFIRMATION"}
+        matches = [{"intent": {"decision_id": "decision-1", "code": "159326"},
+                    "requires_user_confirmation": True}]
+        self.assertEqual(self._run([item], matches)[0]["lifecycle_status"],
+                         "WAITING_CONFIRMATION")
+
+    def test_unique_legacy_identity_can_archive(self):
+        item = {"notification_id": "legacy", "event_type": "PENDING_EXECUTION_CONFIRMATION",
+                "security_code": "159326",
+                "confirmation_context": {"side": "BUY", "lifecycle": "Trial",
+                    "suggested_execution_date": "2026-09-02"},
+                "lifecycle_status": "WAITING_CONFIRMATION"}
+        matches = [{"intent": {"code": "159326", "side": "BUY", "lifecycle": "Trial"},
+                    "execution_date": "2026-09-02", "requires_user_confirmation": False}]
+        self.assertEqual(self._run([item], matches)[0]["lifecycle_status"], "ARCHIVED")
+
+    def test_ambiguous_legacy_identity_is_fail_safe(self):
+        item = {"notification_id": "ambiguous", "event_type": "PENDING_EXECUTION_CONFIRMATION",
+                "security_code": "159326",
+                "confirmation_context": {"side": "BUY", "lifecycle": "Trial"},
+                "lifecycle_status": "WAITING_CONFIRMATION"}
+        matches = [{"intent": {"code": "159326", "side": "BUY", "lifecycle": "Trial"},
+                    "requires_user_confirmation": False},
+                   {"intent": {"code": "159326", "side": "BUY", "lifecycle": "Trial"},
+                    "requires_user_confirmation": False}]
+        self.assertEqual(self._run([item], matches)[0]["lifecycle_status"],
+                         "WAITING_CONFIRMATION")
+
+    def test_account_confirmation_is_preserved(self):
+        item = {"notification_id": "account", "event_type": "ACCOUNT_FACT_CONFIRMATION",
+                "lifecycle_status": "WAITING_CONFIRMATION"}
+        self.assertEqual(self._run([item], [])[0]["lifecycle_status"],
+                         "WAITING_CONFIRMATION")
+
+
 if __name__ == "__main__":
     unittest.main()
 
