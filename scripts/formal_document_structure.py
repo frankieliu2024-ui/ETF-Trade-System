@@ -40,16 +40,20 @@ def validate_files(root: Path) -> list[str]:
     ch4 = _between(exp, "## 4. OBS观察", "## 5. 研究与经验转化")
     ch6 = exp[exp.index("## 6. 版本维护记录"):] if "## 6. 版本维护记录" in exp else ""
 
-    static_cases = re.findall(r"^### 2\.\d+ (CASE-(\d{8})-(\d{2}))[:：]", ch2, re.MULTILINE)
-    detail = _between(ch2, "<!-- AUTO_CASE_DETAILS_START -->", "<!-- AUTO_CASE_DETAILS_END -->")
-    detail_cases = re.findall(r"^### (CASE-(\d{8})-(\d{2}))[:：]", detail, re.MULTILINE)
-    case_ids = [x[0] for x in static_cases] + [x[0] for x in detail_cases]
+    case_lines = re.findall(r"^### (2\.\d+) (CASE-(\d{8})-(\d{2}))[:：]", ch2, re.MULTILINE)
+    raw_case_headings = re.findall(r"^### (?:2\.\d+ )?(CASE-(\d{8})-(\d{2}))[:：]", ch2, re.MULTILINE)
+    if len(raw_case_headings) != len(case_lines):
+        errors.append("case_heading_must_have_human_ordinal")
+    ordinals = [int(item[0].split(".")[1]) for item in case_lines]
+    case_ids = [item[1] for item in case_lines]
     if len(case_ids) != len(set(case_ids)):
         errors.append("experience_duplicate_case_identity")
+    if ordinals != sorted(ordinals) or len(ordinals) != len(set(ordinals)):
+        errors.append("experience_case_ordinal_order")
     if case_ids != sorted(case_ids):
         errors.append(f"experience_case_order={case_ids}")
-    if detail_cases and not _inside(ch2, ch2, "<!-- AUTO_CASE_DETAILS_START -->", "<!-- AUTO_CASE_DETAILS_END -->"):
-        errors.append("case_details_not_in_ch2")
+    if "CASE目录与映射" in ch2 or "CASE详细记录" in ch2:
+        errors.append("technical_case_navigation_heading_present")
     if not _inside(exp, ch2, "<!-- AUTO_CASE_INTAKE_START -->", "<!-- AUTO_CASE_INTAKE_END -->"):
         errors.append("case_intake_not_in_ch2")
     if not _inside(exp, ch4, "<!-- AUTO_POST_CLOSE_REVIEW_CASES_START -->", "<!-- AUTO_POST_CLOSE_REVIEW_CASES_END -->"):
