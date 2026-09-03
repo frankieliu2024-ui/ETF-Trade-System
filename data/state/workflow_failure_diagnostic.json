@@ -1,34 +1,39 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-03T10:25:56+08:00",
+  "generated_at": "2026-09-03T12:17:56+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "Overseas pre-open pulse",
-  "run_id": 33707556511,
+  "workflow_name": "ETF system consistency",
+  "run_id": 33714477510,
   "run_attempt": 1,
-  "head_sha": "2971b4576fa271bb450ff7dcdb6b56c0f27472a6",
-  "main_head_sha": "57b2d1461bff97dbf3083d2e333738415b90d1ee",
-  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
+  "head_sha": "defb505ebd59e81493da587f7cdf0ede6724e03a",
+  "main_head_sha": "e75b2e1f7cfd6688166b2afdb324757dc4d9d93d",
+  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "overseas",
-      "step": "Commit overseas contexts, notifications and runtime health",
-      "number": 15
+      "job": "consistency",
+      "step": "Enforce hard consistency result",
+      "number": 8
+    },
+    {
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 7
     }
   ],
   "changed_files": [
-    "data/state/execution_reconciliation.json",
-    "data/state/notification_center.json"
+    "scripts/build_execution_reconciliation.py",
+    "tests/test_executed_trade_case_lifecycle.py"
   ],
-  "commit_message": "state: record notification and execution reconciliation",
-  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
-  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
-  "reason": "failure is classified as transient/persistence and this is the first attempt",
+  "commit_message": "fix: bind reconciliation buy intents to executed objects (#234)",
+  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
+  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": true,
+    "bot_or_revert_commit": false,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
