@@ -182,3 +182,21 @@ PushPlus微信渠道存在平台层展示模板：ETF系统通过API传入的业
 固定收盘或盘中总结仅在同一市场日期、短时间窗口内明确覆盖同一事实且没有实质升级时吸收后续重复异动；新的价格事实、风险变化、机会变化或资本效率变化必须重新通知。聚合与吸收都必须复用现有 notification center 记录，保留事件标签和可审计上下文，不得通过提高阈值、每日数量上限或静默丢弃事件来降噪。
 
 用户可见标题和核心结论优先直述真正改变判断的指数、ETF、个股或当前 Trial/Confirm；只有多个市场构成不可拆分的共同结构事实时，才使用区域级概括。盘前、盘中、午间与收盘的时点措辞仍遵循对应 market phase 语义。
+
+
+## 10. 统一双通道与固定报告投递
+
+通知只有两个顶层语义通道，二者共享同一条 delivery plane：
+
+- **INTERRUPT**：新事实足以改变用户当前注意力或行动，包括市场异动、观察/Trial/Confirm机会、机会失效、持仓动作、风险许可、成交确认、账户确认、系统阻塞和判断恢复。既有可比事实、正式决策 provenance、去重、冷却和 material-upgrade 门槛继续有效；默认 delivery mode 为 **COMPACT**。
+- **REPORT**：固定正式分析节点已经完成，结果需要完整送达，包括 A 股/亚太/美股收盘总结、ETF 日/周复盘和 ETF 正式变更复核。默认 delivery mode 为 **FULL_REPORT**；标题由报告类型统一生成，例如“【交易复盘】ETF日复盘｜…”、“【交易复盘】ETF周度复盘｜…”和“【系统复核】ETF正式变更复核｜…”。
+
+两种通道都必须进入同一个 notification_center，再由唯一 guarded sender 投递到 PushPlus，并写入同一份 notification history/state。REPORT 不创建第二通知中心、第二 sender、第二 token owner 或报告专用数据库；统一 sender 负责遵守真实 transport 长度限制的确定性截断。
+
+### REPORT_DELIVERY_REQUEST 合同
+
+固定报告只接受已经完成的正式报告，不重新分析，也不拥有 formal reasoning 或交易权限。请求至少包含：schema_version、channel=REPORT、report_type、report_id、task_id、task_run_id、generated_at、effective_market_date、source_actor、source_reference、title、summary、full_content、content_hash、idempotency_key、delivery_mode=FULL_REPORT 和 no_trade_authority=true。
+
+canonical notification intake 必须校验报告类型、来源身份、任务/运行身份、正文哈希和幂等键；重复幂等键不得重复投递。REPORT 请求只能创建 delivery event，不能修改 MASTER、risk permission、lifecycle、formal decision、account、trade、CASE 或订单。无效请求拒绝进入 delivery plane。
+
+产品侧固定任务完成正式输出后，分别提交 ETF_TRADE_REVIEW 或 ETF_SYSTEM_REVIEW 的 REPORT_DELIVERY_REQUEST；GitHub 只转发已完成内容，正式判断仍由产品侧任务与现有 canonical decision/review intake 负责。
