@@ -1,3 +1,4 @@
+import re
 import json
 import tempfile
 import unittest
@@ -45,7 +46,7 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
                 report = {"errors": [], "warnings": [], "checks": []}
                 consistency._validate_trade_event_formal_sync(report)
                 self.assertEqual(report["checks"][-1]["status"], "FAIL")
-                self.assertIn("formal_trade_sync:trade-1:formal_case_mapping", report["errors"])
+                self.assertIn("formal_trade_sync:trade-1:formal_case_mapping_count=0", report["errors"])
                 experience.write_text("### 2.3 CASE-20260901-01：review\nTRADE_EVENT:trade-1\n", encoding="utf-8")
                 reviews = root / "events" / "reviews"
                 reviews.mkdir(parents=True)
