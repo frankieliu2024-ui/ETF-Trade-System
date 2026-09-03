@@ -477,6 +477,20 @@ def record_unrecoverable_review_prerequisite(account: dict, request: dict, trade
     return True, False
 
 
+def _case_detail_projection_entry(case_entry: str, case_id: str) -> str:
+    text = EXPERIENCE.read_text(encoding="utf-8")
+    existing = re.search(rf"^### (2\\.\\d+) {re.escape(case_id)}[:：]", text, re.MULTILINE)
+    ordinal = int(existing.group(1).split(".")[1]) if existing else 0
+    if ordinal == 0:
+        ordinals = [int(value) for value in re.findall(r"^### 2\\.(\\d+) CASE-", text, re.MULTILINE)]
+        ordinal = max(ordinals, default=2) + 1
+    body = case_entry.strip()
+    body = re.sub(r"^### (?:2\\.\\d+ )?", "", body, count=1)
+    if not body.startswith(case_id):
+        body = f"{case_id}：{body}"
+    return f"### 2.{ordinal} {body}"
+
+
 def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     review = request.get("formal_review")
     if request.get("interaction_scenario") != "POST_CLOSE_REVIEW" or not review:
@@ -516,7 +530,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     if experience_entry:
         case_mode = str(review.get("case_mode") or "").upper()
         if case_mode.startswith("NEW_CASE_FROM_EXECUTED_") and str(review.get("case_id") or "").strip():
-            case_entry = experience_entry
+            case_entry = _case_detail_projection_entry(experience_entry, str(review.get("case_id")))
             upsert_managed_line(ROOT, EXPERIENCE.name, CASE_DETAILS_START, CASE_DETAILS_END, str(review.get("case_id")), case_entry, before_heading="## 3. 历史研究与专项回测")
         else:
             upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry, before_heading="## 5. 研究与经验转化")
