@@ -22,6 +22,43 @@ ACCOUNT_EVENT_MAX_AGE_MINUTES = 30
 MIN_UNEXPLAINED_CASH_DELTA_YUAN = 10.0
 TRADING_CALENDAR = ROOT / "config" / "market" / "a_share_trading_calendar_2026.json"
 
+REPORT_TYPES = {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}
+REPORT_REQUEST_DIR = ROOT / "requests" / "report_delivery"
+
+def validate_report_delivery_request(request: dict) -> tuple[bool, str]:
+    """Validate a completed formal report before shared delivery."""
+    required = ("schema_version", "channel", "report_type", "report_id", "task_id", "task_run_id",
+                "generated_at", "effective_market_date", "source_actor", "source_reference",
+                "title", "summary", "full_content", "content_hash", "idempotency_key")
+    missing = [key for key in required if not str(request.get(key) or "").strip()]
+    if missing: return False, "missing:" + ",".join(missing)
+    if request.get("channel") != "REPORT": return False, "channel_must_be_REPORT"
+    if request.get("report_type") not in REPORT_TYPES: return False, "unsupported_report_type"
+    if request.get("delivery_mode", "FULL_REPORT") != "FULL_REPORT": return False, "delivery_mode_must_be_FULL_REPORT"
+    if request.get("no_trade_authority") is not True: return False, "no_trade_authority_must_be_true"
+    expected_hash = hashlib.sha256(str(request.get("full_content")).encode("utf-8")).hexdigest()
+    if str(request.get("content_hash")) != expected_hash: return False, "content_hash_mismatch"
+    return True, ""
+
+def report_delivery_event() -> dict | None:
+    if not REPORT_REQUEST_DIR.exists(): return None
+    candidates = []
+    for path in sorted(REPORT_REQUEST_DIR.glob("*.json")):
+        request = read_json(path, {})
+        valid, _ = validate_report_delivery_request(request)
+        if valid: candidates.append(request)
+    if not candidates: return None
+    request = candidates[-1]
+    key = str(request["idempotency_key"])
+    return {"key": f"report-delivery:{key}", "source_event_id": f"report-delivery:{key}",
+            "event_type": "REPORT_DELIVERY_REQUEST", "notification_channel": "REPORT",
+            "delivery_mode": "FULL_REPORT", "type": "正式报告", "title": str(request["title"]),
+            "content": str(request["full_content"]), "source": str(request["source_reference"]),
+            "user_severity": "正式报告", "user_action": "阅读已完成的正式ETF报告；无需交易操作",
+            "report_type": str(request["report_type"]), "report_id": str(request["report_id"]),
+            "task_id": str(request["task_id"]), "task_run_id": str(request["task_run_id"]),
+            "idempotency_key": key, "no_trade_authority": True}
+
 
 def read_json(path: Path, default: Any) -> Any:
     try:
@@ -543,7 +580,7 @@ def close_account_event(force: bool = False) -> dict | None:
 def choose_event(mode: str) -> dict | None:
     if mode == "close": return close_account_event()
     if mode == "close-test": return close_account_event(force=True)
-    for builder in (execution_confirmation_event, formal_decision_change_event, account_confirmation_event, system_event, decision_event):
+    for builder in (execution_confirmation_event, formal_decision_change_event, account_confirmation_event, system_event, decision_event, report_delivery_event):
         event = builder()
         if event: return event
     return None
@@ -563,7 +600,7 @@ def normalize_notification(event: dict, record: dict | None = None) -> dict:
     record = record or {}
     created = str(record.get("created_at") or event.get("created_at") or now().isoformat(timespec="seconds"))
     context = event.get("confirmation_context") or {}
-    return {"notification_id": str(record.get("notification_id") or event.get("notification_id") or notification_id_for(event)), "event_type": str(record.get("event_type") or event.get("event_type") or event.get("type") or "SYSTEM_EVENT"), "source_event_id": str(record.get("source_event_id") or event.get("source_event_id") or event.get("key") or ""), "related_decision_id": str(record.get("related_decision_id") or event.get("related_decision_id") or context.get("decision_id") or ""), "security_code": str(record.get("security_code") or event.get("security_code") or context.get("security_code") or ""), "security_name": str(record.get("security_name") or event.get("security_name") or context.get("security_name") or ""), "user_severity": str(record.get("user_severity") or event.get("user_severity") or ""), "user_action": str(record.get("user_action") or event.get("user_action") or ""), "lifecycle_status": str(record.get("lifecycle_status") or record.get("status") or "CREATED"), "created_at": created, "sent_at": record.get("sent_at"), "confirmed_at": record.get("confirmed_at"), "archived_at": record.get("archived_at"), "expires_at": record.get("expires_at") or ((parse_notification_time(created) + timedelta(days=NOTIFICATION_TTL_DAYS)).isoformat(timespec="seconds") if parse_notification_time(created) else None), "title": str(record.get("title") or event.get("title") or ""), "content": str(record.get("content") or event.get("content") or ""), "source": str(record.get("source") or event.get("source") or ""), "confirmation_context": context or record.get("confirmation_context") or {}, "response": record.get("response") or {}, "last_attempted_at": record.get("last_attempted_at") or record.get("attempted_at")}
+    return {"notification_id": str(record.get("notification_id") or event.get("notification_id") or notification_id_for(event)), "event_type": str(record.get("event_type") or event.get("event_type") or event.get("type") or "SYSTEM_EVENT"), "notification_channel": str(record.get("notification_channel") or event.get("notification_channel") or ("REPORT" if event.get("event_type") == "REPORT_DELIVERY_REQUEST" else "INTERRUPT")), "delivery_mode": str(record.get("delivery_mode") or event.get("delivery_mode") or ("FULL_REPORT" if event.get("event_type") == "REPORT_DELIVERY_REQUEST" else "COMPACT")), "source_event_id": str(record.get("source_event_id") or event.get("source_event_id") or event.get("key") or ""), "related_decision_id": str(record.get("related_decision_id") or event.get("related_decision_id") or context.get("decision_id") or ""), "security_code": str(record.get("security_code") or event.get("security_code") or context.get("security_code") or ""), "security_name": str(record.get("security_name") or event.get("security_name") or context.get("security_name") or ""), "user_severity": str(record.get("user_severity") or event.get("user_severity") or ""), "user_action": str(record.get("user_action") or event.get("user_action") or ""), "lifecycle_status": str(record.get("lifecycle_status") or record.get("status") or "CREATED"), "created_at": created, "sent_at": record.get("sent_at"), "confirmed_at": record.get("confirmed_at"), "archived_at": record.get("archived_at"), "expires_at": record.get("expires_at") or ((parse_notification_time(created) + timedelta(days=NOTIFICATION_TTL_DAYS)).isoformat(timespec="seconds") if parse_notification_time(created) else None), "title": str(record.get("title") or event.get("title") or ""), "content": str(record.get("content") or event.get("content") or ""), "source": str(record.get("source") or event.get("source") or ""), "confirmation_context": context or record.get("confirmation_context") or {}, "response": record.get("response") or {}, "last_attempted_at": record.get("last_attempted_at") or record.get("attempted_at")}
 
 
 def expire_notifications(items: list[dict]) -> list[dict]:
