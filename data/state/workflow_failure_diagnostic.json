@@ -1,31 +1,24 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-03T15:13:34+08:00",
+  "generated_at": "2026-09-03T15:19:37+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33726928482,
+  "run_id": 33727453923,
   "run_attempt": 1,
-  "head_sha": "1261acce8c09146102aad557ba7de6c16fb49d2a",
-  "main_head_sha": "8138a5f9062a561451fa25370bbe266db4c9ac8c",
+  "head_sha": "4c7845802f6f21553b5523f39e26b66094a75663",
+  "main_head_sha": "bfeee2af7a6c9d97ace63c80b8c12c810cc2ea9a",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 8
-    },
-    {
-      "job": "production_acceptance",
-      "step": "Enforce production acceptance",
-      "number": 7
+      "step": "PR candidate post-replay acceptance",
+      "number": 6
     }
   ],
   "changed_files": [
-    "scripts/merge_notification_state.py",
-    "scripts/notification_center.py",
     "tests/test_production_reliability.py"
   ],
-  "commit_message": "fix: make pending notification revalidation identity-safe",
+  "commit_message": "test: keep mismatched exact notification pending",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
