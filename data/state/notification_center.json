@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-03T13:58:11+08:00",
+  "updated_at": "2026-09-03T15:04:08+08:00",
   "last_status": "SENT",
-  "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】韩国综合指数（KOSPI）日内方向明显反转",
+  "last_type": "A_SHARE_SESSION_SUMMARY",
+  "last_title": "【收盘总结】A股全天结构与ETF强弱",
   "notifications": [
     {
       "notification_id": "notification_06169e378037cac51a82",
@@ -1784,6 +1784,39 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-03T13:58:11+08:00"
+    },
+    {
+      "notification_id": "notification_d77c8c0267a2b094d850",
+      "event_type": "A_SHARE_SESSION_SUMMARY",
+      "source_event_id": "a-share-session-summary:2026-09-03:CLOSE",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "user_severity": "需要关注",
+      "user_action": "查看结构摘要；正式交易动作以MASTER完整决策链为准",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-03T15:04:07+08:00",
+      "sent_at": "2026-09-03T15:04:08+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-05T15:04:07+08:00",
+      "title": "【收盘总结】A股全天结构与ETF强弱",
+      "content": "### 核心结论\n- **市场结构**：指数整体震荡，风格分化有限。\n- **指数反馈**：上证指数（000001）+0.02%，科创50（000688）-0.40%，创业板指（399006）+0.01%。\n- **ETF自身反馈**：持仓中偏弱的是半导体设备ETF（561980）-0.90%；持仓中相对较强的是黄金ETF（518880）+2.28%。\n\n### 关键路径\n- 科创50（000688）高开+1.05%后明显回吐；创业板指（399006）高开+0.90%后明显回吐；上证指数（000001）当前处于日内区间中部，方向尚未形成新的强化。\n\n### 对ETF系统的影响\n指数整体震荡，风格分化有限。比较半导体设备ETF（561980）等持仓继续占用资本的边际效率。跨市场ETF的相对涨幅只用于解释不同风险因子，不替代A股自身反馈，也不等同资本效率排名。\n\n### 当前动作\n**不因通知机械交易；先复核当前持仓/观察ETF的相对强弱和风险收益，只有正式机会、金额或卖出动作改变时执行。**\n\n### 数据与边界\n- **价格有效时点**：2026-09-03 15:00:00\n- **provider补查/观测上限**：2026-09-03 15:03:07\n- **通知生成**：2026-09-03 15:04:07\n- **边界**：只要同日verified close仍可追溯，固定收盘总结允许延迟补发；必须明确15:00价格有效时点，不能伪装成晚间新行情。",
+      "source": "CURRENT+intraday_path_features",
+      "confirmation_context": {
+        "market_date": "2026-09-03",
+        "session_node": "CLOSE",
+        "market_as_of_beijing": "2026-09-03 15:00:00",
+        "provider_observed_as_of_beijing": "2026-09-03T15:03:07+08:00",
+        "value_reason": "固定收盘总结",
+        "event_family_id": ":2026-09-03:CLOSE:::"
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-09-03T15:04:08+08:00"
     }
   ],
   "recent": [
@@ -2245,7 +2278,7 @@
       "source": "account_fact",
       "user_severity": "需要操作",
       "user_action": "确认是否有实际成交/资金划转；无则上传账户截图",
-      "status": "SENT",
+      "status": "WAITING_CONFIRMATION",
       "attempted_at": "2026-09-02T08:52:34+08:00",
       "response": {
         "http_status": 200,
@@ -2299,7 +2332,7 @@
       "source": "account_fact",
       "user_severity": "需要操作",
       "user_action": "确认是否有实际成交/资金划转；无则上传账户截图",
-      "status": "SENT",
+      "status": "WAITING_CONFIRMATION",
       "attempted_at": "2026-09-02T10:16:02+08:00",
       "response": {
         "http_status": 200,
@@ -2371,7 +2404,7 @@
       "source": "execution_reconciliation",
       "user_severity": "需要操作",
       "user_action": "确认成交或补充成交明细",
-      "status": "SENT",
+      "status": "WAITING_CONFIRMATION",
       "attempted_at": "2026-09-02T14:22:48+08:00",
       "response": {
         "http_status": 200,
@@ -2533,7 +2566,7 @@
       "source": "account_fact",
       "user_severity": "需要操作",
       "user_action": "到ChatGPT ETF项目的「ETF交易复盘」聊天窗口上传收盘截图或确认无变化",
-      "status": "SENT",
+      "status": "WAITING_CONFIRMATION",
       "attempted_at": "2026-09-02T20:07:39+08:00",
       "response": {
         "http_status": 200,
@@ -2623,7 +2656,7 @@
       "source": "execution_reconciliation",
       "user_severity": "需要操作",
       "user_action": "确认成交或补充成交明细",
-      "status": "SENT",
+      "status": "WAITING_CONFIRMATION",
       "attempted_at": "2026-09-03T11:24:24+08:00",
       "response": {
         "http_status": 200,
@@ -2686,6 +2719,24 @@
       },
       "notification_id": "notification_b52f17c13720c0b834a2",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "a-share-session-summary:2026-09-03:CLOSE",
+      "type": "A_SHARE_SESSION_SUMMARY",
+      "title": "【收盘总结】A股全天结构与ETF强弱",
+      "content": "### 核心结论\n- **市场结构**：指数整体震荡，风格分化有限。\n- **指数反馈**：上证指数（000001）+0.02%，科创50（000688）-0.40%，创业板指（399006）+0.01%。\n- **ETF自身反馈**：持仓中偏弱的是半导体设备ETF（561980）-0.90%；持仓中相对较强的是黄金ETF（518880）+2.28%。\n\n### 关键路径\n- 科创50（000688）高开+1.05%后明显回吐；创业板指（399006）高开+0.90%后明显回吐；上证指数（000001）当前处于日内区间中部，方向尚未形成新的强化。\n\n### 对ETF系统的影响\n指数整体震荡，风格分化有限。比较半导体设备ETF（561980）等持仓继续占用资本的边际效率。跨市场ETF的相对涨幅只用于解释不同风险因子，不替代A股自身反馈，也不等同资本效率排名。\n\n### 当前动作\n**不因通知机械交易；先复核当前持仓/观察ETF的相对强弱和风险收益，只有正式机会、金额或卖出动作改变时执行。**\n\n### 数据与边界\n- **价格有效时点**：2026-09-03 15:00:00\n- **provider补查/观测上限**：2026-09-03 15:03:07\n- **通知生成**：2026-09-03 15:04:07\n- **边界**：只要同日verified close仍可追溯，固定收盘总结允许延迟补发；必须明确15:00价格有效时点，不能伪装成晚间新行情。",
+      "source": "CURRENT+intraday_path_features",
+      "user_severity": "需要关注",
+      "user_action": "查看结构摘要；正式交易动作以MASTER完整决策链为准",
+      "status": "SENT",
+      "attempted_at": "2026-09-03T15:04:08+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_d77c8c0267a2b094d850",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [
@@ -2695,6 +2746,6 @@
     "notification_93d959b6287e608fbe8a",
     "notification_cb5dfde86aa9141b1de0"
   ],
-  "policy": "主动通知按新事实的决策价值判断，不按市场分类；当前事件族为开盘异常、快速重定价、极端波动、方向反转、显著分化。阈值适度放宽，重复控制依靠事件合并、冷却和实质升级识别；已管理候选不得阻塞其他未管理候选。",
+  "policy": "开盘仅推有价值结构，但实际session事实允许在同日有效恢复；A股固定收盘允许延迟补发；亚太开盘通知优先表达触发对象关键路径、本地传导、直接相关ETF反馈及数据质量；亚太主要收盘优先服务A股尾盘、错过窄窗口后仍可恢复。阈值适度放宽，Point-in-Time与去重保持。",
   "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
