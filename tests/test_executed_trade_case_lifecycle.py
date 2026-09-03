@@ -128,5 +128,40 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
             self.assertEqual(match["status"], "CONFIRMED_BY_TRADE_EVENT")
 
 
+    def test_candidate_does_not_create_buy_for_explicit_sell_decision(self):
+        event = {
+            "event_type": "FORMAL_DECISION",
+            "decision_id": "sell-decision",
+            "market_date": "2026-09-03",
+            "decision_time_beijing": "2026-09-03T09:42:59+08:00",
+            "candidate_code": "518880",
+            "candidate_name": "黄金ETF",
+            "formal_decision": {
+                "lifecycle": "Trial观察候选",
+                "amount_action": "通信ETF（515880）已卖出全部7,400份，成交金额4,795.20元；新增买入0元。",
+            },
+        }
+        intents = reconciliation.decision_intents(event)
+        self.assertEqual([(x["code"], x["side"]) for x in intents], [("515880", "SELL")])
+
+    def test_explicit_buy_object_creates_buy_intent(self):
+        event = {
+            "event_type": "FORMAL_DECISION",
+            "decision_id": "buy-decision",
+            "market_date": "2026-09-03",
+            "decision_time_beijing": "2026-09-03T11:17:54+08:00",
+            "candidate_code": "518880",
+            "candidate_name": "黄金ETF",
+            "formal_decision": {
+                "lifecycle": "黄金ETF进入Trial",
+                "amount_action": "黄金ETF（518880）于11:21:04以9.109元买入500份，成交本金4,554.50元。",
+            },
+        }
+        intents = reconciliation.decision_intents(event)
+        self.assertEqual(len(intents), 1)
+        self.assertEqual(intents[0]["code"], "518880")
+        self.assertEqual(intents[0]["side"], "BUY")
+        self.assertEqual(intents[0]["planned_amount_yuan"], 4554)
+
 if __name__ == "__main__":
     unittest.main()
