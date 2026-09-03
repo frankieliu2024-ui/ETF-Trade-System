@@ -85,13 +85,16 @@ def resolve_link(root: Path, trade: dict, requested_id: str = "") -> tuple[str, 
 
 
 def decision_price_for_trade(event: dict, trade: dict):
-    price = event.get("price_at_decision")
-    try:
-        if price is not None:
-            return float(price)
-    except (TypeError, ValueError):
-        pass
+    # The top-level decision price is only valid for the decision candidate.
+    # For a different executed object, use that object's PIT comparison price.
     code = str(trade.get("code") or "")
+    if str(event.get("candidate_code") or "") == code:
+        price = event.get("price_at_decision")
+        try:
+            if price is not None:
+                return float(price)
+        except (TypeError, ValueError):
+            pass
     for row in ((event.get("comparison_snapshot") or {}).get("items") or []):
         if str(row.get("code") or "") == code:
             try:
