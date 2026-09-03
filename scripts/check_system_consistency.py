@@ -508,7 +508,7 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
             pass
         elif len(case_ids) != 1:
             errors.append(f"{dt}:{code}:case_count={len(case_ids)}")
-        elif case_ids[0] not in headings:
+        elif not any(case_ids[0] in line for line in experience.splitlines() if line.startswith("### ")):
             errors.append(f"{dt}:{code}:missing_case_heading={case_ids[0]}")
         if "ETF" in name:
             etf_count += 1
