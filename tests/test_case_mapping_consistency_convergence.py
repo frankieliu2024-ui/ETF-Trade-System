@@ -72,6 +72,23 @@ class CaseMappingConsistencyConvergenceTests(unittest.TestCase):
             "formal_case_mapping_security_code=515880",
         )
 
+
+    def test_legacy_explicit_single_case_without_event_is_accepted(self):
+        self.assertEqual(consistency._explicit_index_case_ids(
+            "CASE-20260713-01 初始组合建立"
+        ), ["CASE-20260713-01"])
+
+    def test_legacy_missing_or_multiple_case_fails_closed(self):
+        self.assertEqual(consistency._explicit_index_case_ids("待补充"), [])
+        self.assertEqual(consistency._explicit_index_case_ids(
+            "CASE-20260713-01；CASE-20260716-01"
+        ), ["CASE-20260713-01", "CASE-20260716-01"])
+
+    def test_event_backed_index_conflict_is_not_overridden_by_index(self):
+        event = {"event_id": "trade-1", "code": "518880", "linked_decision_id": "decision-1"}
+        mappings = {"trade-1": [{"decision_id": "decision-1", "case_id": "CASE-20260903-01", "security_code": "518880"}]}
+        self.assertIsNone(consistency._validate_canonical_case_mapping(event, mappings))
+
     def test_opportunity_titles_are_simplified_without_changing_status_logic(self):
         fixed = datetime(2026, 9, 3, 10, 0, tzinfo=timezone.utc)
         previous = {
