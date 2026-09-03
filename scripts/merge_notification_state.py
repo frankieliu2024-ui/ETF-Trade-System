@@ -6,6 +6,11 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+try:
+    from notification_center import revalidate_pending_notifications
+except ImportError:
+    from scripts.notification_center import revalidate_pending_notifications
+
 
 def _load(path: Path) -> dict:
     try:
@@ -106,7 +111,8 @@ def merge_notification_state(base: dict, incoming: dict) -> dict:
         {"key": x.get("source_event_id"), "type": x.get("event_type"), "title": x.get("title"), "content": x.get("content"), "source": x.get("source"), "user_severity": x.get("user_severity"), "user_action": x.get("user_action"), "status": x.get("lifecycle_status"), "attempted_at": x.get("last_attempted_at") or x.get("sent_at") or x.get("created_at"), "response": x.get("response") or {}, "notification_id": x.get("notification_id"), "lifecycle_status": x.get("lifecycle_status")}
         for x in items[-200:]
     ]
-    result["pending_questions"] = [x.get("notification_id") for x in items if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]
+    result["notifications"] = revalidate_pending_notifications(result["notifications"])
+    result["pending_questions"] = [x.get("notification_id") for x in result["notifications"] if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]
     return result
 
 
