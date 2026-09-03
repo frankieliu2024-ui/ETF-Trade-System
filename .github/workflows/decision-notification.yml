@@ -64,12 +64,36 @@ jobs:
           else
             echo "test=false" >> "$GITHUB_OUTPUT"
           fi
-          if grep -Eq '^requests/report_delivery/[^/]+\.json$' /tmp/changed_files.txt; then
+          mapfile -t report_paths < <(grep -E '^requests/report_delivery/[^/]+\.json$' /tmp/changed_files.txt || true)
+          if [ "${#report_paths[@]}" -eq 1 ]; then
             echo "report=true" >> "$GITHUB_OUTPUT"
+            echo "report_path=${report_paths[0]}" >> "$GITHUB_OUTPUT"
+          elif [ "${#report_paths[@]}" -gt 1 ]; then
+            echo "Ambiguous REPORT push: expected exactly one report request, found ${#report_paths[@]}" >&2
+            printf '%s\n' "${report_paths[@]}" >&2
+            exit 1
           else
             echo "report=false" >> "$GITHUB_OUTPUT"
+            echo "report_path=" >> "$GITHUB_OUTPUT"
           fi
           cat /tmp/changed_files.txt
+
+      # notification_center.py historically scans the full report request directory.
+      # For a REPORT push, make the disposable checkout expose only the request that
+      # triggered this commit so an older lexicographically-later report cannot be
+      # selected. The canonical repository is untouched; persistence resets to
+      # origin/main before writing unified notification state.
+      - name: Isolate pushed report delivery request
+        if: ${{ github.event_name == 'push' && steps.push_kind.outputs.report == 'true' }}
+        shell: bash
+        env:
+          REPORT_PATH: ${{ steps.push_kind.outputs.report_path }}
+        run: |
+          test -n "$REPORT_PATH"
+          test -f "$REPORT_PATH"
+          find requests/report_delivery -maxdepth 1 -type f -name '*.json' ! -path "$REPORT_PATH" -delete
+          test "$(find requests/report_delivery -maxdepth 1 -type f -name '*.json' | wc -l)" -eq 1
+          test -f "$REPORT_PATH"
 
       - name: Build delayed execution reconciliation
         if: ${{ github.event_name == 'workflow_run' }}
