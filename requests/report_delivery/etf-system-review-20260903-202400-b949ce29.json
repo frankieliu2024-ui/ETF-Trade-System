@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "channel": "REPORT",
+  "report_type": "ETF_SYSTEM_REVIEW",
+  "report_id": "etf-system-review-20260903-202400-b949ce29",
+  "task_id": "ETF正式变更复核",
+  "task_run_id": "ETF正式变更复核-20260903T202400+0800-d6e9db4dda",
+  "generated_at": "2026-09-03T20:24:00+08:00",
+  "effective_market_date": "2026-09-03",
+  "source_actor": "ChatGPT",
+  "source_reference": "product-task:ETF正式变更复核",
+  "title": "【系统复核】ETF正式变更复核｜2026-09-03",
+  "summary": "ETF正式变更复核已完成",
+  "full_content": "【本次结论】ETF生产系统当前“正式分析可用，但维护验收不正常”；必须处理的新事项是 #268：system_consistency 现为 FAIL，26个 hard error 已确认来自历史成交CASE映射检查器的确定性误判，当前不应继续把系统写成正常。\n\n【发生了什么】第一，18:57 最新正式 system_consistency 从此前可用状态降为 FAIL：26个 hard error、3个 warning；但 E2E 为 DEGRADED 而非 BLOCKED，行情、账户、决策上下文、生命周期和收盘复盘仍全部 READY。第二，26个 hard error 已收敛到同一根因：历史成交索引本身已经明确写有 CASE 归属，但当前检查器只先查找 events/trades 事件文件再取得CASE映射；较早历史成交没有对应trade-event文件，因此被错误判成 case_count=0。第三，本轮已建立 #268 作为唯一根因修复事项，当前开放PR仍为0。\n\n【系统现在是否正常】不是完全正常。当前正式行情已形成2026-09-03收盘节点，账户现金和可部署现金均为6,469.62元，生命周期无逾期，正式分析能力仍可用；但 system_consistency=FAIL、maintenance=DEGRADED，因此生产维护验收没有闭环。这个FAIL目前不是账户、成交、行情或交易判断事实错误，而是CASE一致性门禁自身对旧历史数据结构的误判。\n\n【ETF生产系统未闭环事项】第一优先级是 #268。问题不需要等待新行情或真实生产暴露，属于确定性维护缺陷：修复时应让“历史索引已有唯一正式CASE、但没有trade-event文件”的旧成交合法通过，同时继续对存在trade-event的成交执行更强canonical映射检查；不能通过删除历史成交、伪造trade-event或整体放松门禁来消除报错。下一步应按latest main隔离实施、增加回归测试、PR预检、expected-head merge，再以main full consistency + E2E确认26个假阳性消失且真实CASE缺口仍会被拦截。\n\n#141 继续保留，但本轮没有新的可执行仓库内根因：此前已证明开盘阶段存在GitHub schedule不派发的真实失败域，而query-time/canonical producer可以恢复；除非发现仓库内可修触发根因或获得真正独立于同一schedule失败域的合法恢复入口，否则不增加cron或第二条行情链。#176继续等待一个合法、真正可恢复的历史行情CASE完成生产验收；#60仍等待CFFEX正式runtime恢复真实IF/IC数据或出现经验证的独立可靠来源，现阶段不增加provider/retry/workflow复杂度。\n\n【本次实际动作】本轮创建 Issue #268，记录当前26个hard error的根因、修复边界和验收条件；未创建或合并PR，未修改ETF生产代码、规则、交易权限、账户事实或行情事实，也未新增workflow、checker或平行状态。\n\n【下次重点】第一，推进 #268 的latest-main隔离修复并恢复 system_consistency；第二，修复合并后确认 E2E maintenance 从 DEGRADED 恢复，再重新评估其余长期观察项。\n\n置信度：高\n最可能出错的地方：目前可以高置信确认26个hard error都集中在历史成交CASE映射门禁，且大量旧索引行已有明确CASE但缺少trade-event文件；但最终最小实现仍需在隔离分支测试“有event时优先canonical映射、无event的legacy行才使用正式索引CASE”这一强弱事实边界，避免把真实冲突一起放过。",
+  "content_hash": "675abcad4b0d2eb8e6c8b52d55405cb27137cb07d1c8c40691e32e8b742380fc",
+  "idempotency_key": "ETF正式变更复核:ETF正式变更复核-20260903T202400+0800-d6e9db4dda",
+  "delivery_mode": "FULL_REPORT",
+  "no_trade_authority": true
+}
