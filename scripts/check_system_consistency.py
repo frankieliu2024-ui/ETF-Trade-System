@@ -455,6 +455,15 @@ def _has_valid_terminal_for_trade_row(trade_date: str, code: str) -> bool:
     return False
 
 
+HISTORICAL_TRADE_EVENT_EFFECTIVE_DATE = "2026-08-27"
+CASE_ID_PATTERN = re.compile(r"(?<![A-Za-z0-9])CASE-\d{8}-\d{2}(?![A-Za-z0-9])")
+
+
+def _explicit_index_case_ids(remark: str) -> list[str]:
+    """Parse only explicit, uniquely identifiable CASE owners from the formal index."""
+    return sorted(set(CASE_ID_PATTERN.findall(str(remark or ""))))
+
+
 def _validate_historical_trade_case_mapping(report: dict) -> None:
     """Require every canonical securities trade-index row to have exactly one canonical CASE owner."""
     experience = (ROOT / "ETF交易复盘与经验库_2026.md").read_text(encoding="utf-8")
@@ -492,8 +501,17 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
                     continue
                 event_code = str(event.get("code") or "")
                 event_stamp = str(event.get("confirmed_at_beijing") or event.get("executed_at_beijing") or event.get("event_id") or "")
-                if event_code == code and event_stamp[:10] == dt[:10]:
+                if (
+                    event_code == code
+                    and event_stamp[:10] == dt[:10]
+                    and event_stamp[:10] >= HISTORICAL_TRADE_EVENT_EFFECTIVE_DATE
+                ):
+                    # Retrospectively recorded pre-boundary execution facts do
+                    # not turn a legacy transaction row into an event-backed
+                    # CASE mapping. The formal event mechanism starts at the
+                    # same boundary used by executed-trade formal synchronization.
                     event_ids.append(str(event.get("event_id") or path.stem))
+        index_case_ids = _explicit_index_case_ids(_remark)
         case_ids = sorted({
             str(mapping.get("case_id") or "")
             for event_id in event_ids
@@ -501,15 +519,37 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
             if mapping.get("case_id")
         })
         terminal = _has_valid_terminal_for_trade_row(dt, code)
-        if len(case_ids) == 0 and (terminal or not _case_mapping_required(
+        if event_ids:
+            # Formal trade-event/review facts are stronger than index prose.  An
+            # index CASE is still checked when present, so stale/conflicting text
+            # cannot silently coexist with the event-backed owner.
+            if len(case_ids) == 0 and terminal and not index_case_ids:
+                pass
+            elif len(case_ids) != 1:
+                errors.append(f"{dt}:{code}:case_count={len(case_ids)}")
+            elif len(index_case_ids) > 1:
+                errors.append(f"{dt}:{code}:index_case_count={len(index_case_ids)}")
+            elif index_case_ids and index_case_ids[0] != case_ids[0]:
+                errors.append(f"{dt}:{code}:index_case_conflict={index_case_ids[0]} canonical={case_ids[0]}")
+            elif not any(case_ids[0] in line for line in experience.splitlines() if line.startswith("### ")):
+                errors.append(f"{dt}:{code}:missing_case_heading={case_ids[0]}")
+        elif not _case_mapping_required(
             _read_json("data/state/CURRENT.json"),
             {"event_id": f"{dt}:{code}", "confirmed_at_beijing": dt},
-        )):
+        ):
+            # Same-day intraday rows remain pending until their review node is due.
             pass
-        elif len(case_ids) != 1:
-            errors.append(f"{dt}:{code}:case_count={len(case_ids)}")
-        elif not any(case_ids[0] in line for line in experience.splitlines() if line.startswith("### ")):
-            errors.append(f"{dt}:{code}:missing_case_heading={case_ids[0]}")
+        elif dt[:10] >= HISTORICAL_TRADE_EVENT_EFFECTIVE_DATE:
+            # After the formal event mechanism boundary, missing event evidence
+            # is a real gap once the review node is due; the index fallback is
+            # intentionally not allowed.
+            errors.append(f"{dt}:{code}:missing_formal_trade_event")
+        elif len(index_case_ids) != 1:
+            # Pre-boundary rows may use the formal transaction index only when
+            # exactly one explicit CASE owner is present.
+            errors.append(f"{dt}:{code}:case_count={len(index_case_ids)}")
+        elif not any(index_case_ids[0] in line for line in experience.splitlines() if line.startswith("### ")):
+            errors.append(f"{dt}:{code}:missing_case_heading={index_case_ids[0]}")
         if "ETF" in name:
             etf_count += 1
         else:
