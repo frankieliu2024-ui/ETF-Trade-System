@@ -62,5 +62,17 @@ class DashboardProjectionTests(unittest.TestCase):
         self.assertNotIn("upsert_formal_line(ROOT, DASHBOARD", source)
 
 
+    def test_normalize_repairs_legacy_literal_newlines_and_is_idempotent(self):
+        legacy = "# ETF当前状态_DASHBOARD\\n\\n## 云端实时状态（自动同步）\\n\\n|项目|最新事实|\\n|-|-|\\n|现金|11028.67元|\\n\\n## 当前状态使用边界\\n"
+        result = normalize_dashboard_projection(legacy)
+        self.assertGreater(len(result.splitlines()), 1)
+        self.assertNotIn("\\\\n", result)
+        self.assertEqual(result.splitlines()[0], "# ETF当前状态_DASHBOARD")
+        self.assertEqual(result.splitlines()[2], "## 云端实时状态（自动同步）")
+        self.assertIn("|项目|最新事实|", result.splitlines())
+        self.assertIn("## 当前状态使用边界", result.splitlines())
+        self.assertEqual(normalize_dashboard_projection(result), result)
+
+
 if __name__ == "__main__":
     unittest.main()
