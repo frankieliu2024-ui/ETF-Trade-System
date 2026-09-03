@@ -112,14 +112,33 @@ def decision_intents(event: dict) -> list[dict]:
     name = str(event.get("candidate_name") or "")
     amount = parse_money(amount_action)
 
-    # Reconciliation consumes the formal decision as a fact. It does not re-enforce
-    # MASTER amount buckets or risk-permission legality; those belong to the trading
-    # decision layer. Any explicit positive buy amount can therefore be reconciled.
+    # Candidate fields describe selection/observation, not necessarily an
+    # executed object. A BUY intent must be bound to an explicit object in
+    # the amount/action text; otherwise a sell decision with a different
+    # candidate must not manufacture a buy intent.
     lifecycle = "Trial" if "Trial" in lifecycle_text else ("Confirm" if "Confirm" in lifecycle_text else "")
-    buy_word = any(word in amount_action for word in ["买入", "新增", "加仓", "投入"])
-    if code and lifecycle and amount and buy_word:
-        intents.append({**base, "code": code, "name": name, "side": "BUY", "lifecycle": lifecycle, "planned_amount_yuan": amount, "planned_quantity": None})
-
+    explicit_buy_pattern = r"([^；;，,。\\n]{1,30}?)（(\\d{6})）([^；;。\\n]{0,100})"
+    for match in re.finditer(explicit_buy_pattern, amount_action):
+        buy_name, buy_code, buy_tail = match.group(1).strip(), match.group(2), match.group(3)
+        if "新增买入0元" in buy_tail or "买入0元" in buy_tail:
+            continue
+        if not any(word in buy_tail for word in ["买入", "新增", "加仓", "投入"]):
+            continue
+        buy_amount = parse_money(buy_tail)
+        quantity_match = re.search(r"([\\d,]+)\\s*份", buy_tail)
+        if buy_amount is None and quantity_match is None:
+            continue
+        if not lifecycle:
+            continue
+        intents.append({
+            **base,
+            "code": buy_code,
+            "name": buy_name,
+            "side": "BUY",
+            "lifecycle": lifecycle,
+            "planned_amount_yuan": buy_amount,
+            "planned_quantity": int(quantity_match.group(1).replace(",", "")) if quantity_match else None,
+        })
     for sell in extract_sell_intents(amount_action):
         intents.append({**base, **sell, "lifecycle": "EXIT_OR_RISK_REDUCTION", "planned_amount_yuan": None})
     return intents
