@@ -82,6 +82,10 @@ def canonical_risk(equity: dict, formal_override: float | None = None) -> float 
 def normalize_dashboard_projection(text: str, root: Path = ROOT, account: dict | None = None) -> str:
     """Keep Dashboard a current projection, excluding historical correction logs."""
     replacement = "|ETF层当前结构|当前持仓与观察角色仅以上方‘云端实时状态（自动同步）’中的canonical account projection为准；本区块不再复制当前角色列表。|"
+    # Recover legacy Dashboard blobs that persisted the two-character\\n sequence.
+    # The projection is human-readable text; normalization then emits real newlines.
+    if "\\n" in text:
+        text = text.replace("\\n", "\n")
     lines = text.splitlines()
     cleaned = []
     in_corrections = False
@@ -128,8 +132,8 @@ def normalize_dashboard_projection(text: str, root: Path = ROOT, account: dict |
             "- 已关闭Trial仅在下一可执行节点独立评估降低风险或退出；本投影不生成订单。",
             "- 当前无待处理结算现金约束。",
         ]
-    result = "\\n".join(lines)
-    return result + ("\\n" if text.endswith("\\n") else "")
+    result = "\n".join(lines)
+    return result + ("\n" if text.endswith("\n") else "")
 
 def preserve_decision_block(existing: str) -> str:
     if START_DASH not in existing or END_DASH not in existing:
