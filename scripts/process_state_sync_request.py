@@ -479,6 +479,7 @@ def record_unrecoverable_review_prerequisite(account: dict, request: dict, trade
 
 def sync_experience_case_mapping_index(review: dict) -> None:
     """Project canonical review trade→CASE mappings into the transaction index."""
+    # Review mappings are the canonical owner; the transaction index is only a human projection.
     mappings = []
 
     def collect(value):
