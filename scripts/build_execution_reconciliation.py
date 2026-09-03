@@ -143,11 +143,11 @@ def decision_intents(event: dict) -> list[dict]:
     # security object at all, a positive candidate-bound buy phrase remains
     # safe for exact-linked legacy decisions. If another object is explicit,
     # candidate fields never manufacture a BUY intent.
-    explicit_objects = list(re.finditer(r"([^；;，,。\\n]{1,30}?)（(\\d{6})）([^；;。\\n]{0,100})", amount_action))
+    explicit_objects = list(re.finditer(explicit_buy_pattern, amount_action))
     has_explicit_sell = bool(extract_sell_intents(amount_action))
     if not explicit_objects and not has_explicit_sell and lifecycle and any(word in amount_action for word in ["买入", "新增", "加仓", "投入"]):
         if "新增买入0元" not in amount_action and "买入0元" not in amount_action:
-            quantity_match = re.search(r"([\\d,]+)\\s*份", amount_action)
+            quantity_match = re.search(r"([\d,]+)\s*份", amount_action)
             buy_amount = parse_money(amount_action)
             if (buy_amount is not None or quantity_match is not None) and code:
                 intents.append({
