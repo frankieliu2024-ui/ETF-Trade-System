@@ -174,5 +174,31 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
         self.assertEqual(intents[0]["side"], "BUY")
         self.assertEqual(intents[0]["planned_amount_yuan"], 4554)
 
+
+    def test_issue_268_legacy_case_row_passes_at_post_close(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "ETF市场行情档案_2026.md").write_text("", encoding="utf-8")
+            (root / "ETF交易复盘与经验库_2026.md").write_text(
+                "### 2.1 2026-07-13以来完整证券成交索引\n"
+                "共1笔证券交易：ETF 1笔、个股0笔\n"
+                "|2026-07-13 09:36:14|测试ETF|159941|买入|1|1|1|0|1|CASE-20260713-01 初始组合建立|\n"
+                "### 2.2 银证转账与非交易现金流水\n"
+                "### 2.1 CASE-20260713-01：legacy\n",
+                encoding="utf-8",
+            )
+            state = root / "data" / "state"
+            state.mkdir(parents=True)
+            (state / "CURRENT.json").write_text(json.dumps({
+                "market_date": "2026-09-04",
+                "latest_valid_node": "close",
+                "data_freshness": {"market_phase": "POST_CLOSE_GRACE"},
+            }), encoding="utf-8")
+            with patch.object(consistency, "ROOT", root):
+                report = {"errors": [], "warnings": [], "checks": []}
+                consistency._validate_historical_trade_case_mapping(report)
+            self.assertEqual(report["checks"][-1]["status"], "PASS")
+            self.assertEqual(report["errors"], [])
+
 if __name__ == "__main__":
     unittest.main()
