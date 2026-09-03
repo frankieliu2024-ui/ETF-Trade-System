@@ -432,9 +432,7 @@ def _has_valid_terminal_for_trade_row(trade_date: str, code: str) -> bool:
 
 
 def _validate_historical_trade_case_mapping(report: dict) -> None:
-    """Require every canonical securities trade-index row to have exactly one valid CASE owner."""
-    import re
-
+    """Require every canonical securities trade-index row to have exactly one canonical CASE owner."""
     experience = (ROOT / "ETF交易复盘与经验库_2026.md").read_text(encoding="utf-8")
     start_token = "### 2.1 2026-07-13以来完整证券成交索引"
     end_token = "### 2.2 银证转账与非交易现金流水"
@@ -455,18 +453,34 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
             continue
         rows.append(cols)
     headings = set(re.findall(r"^###\s+.*?(CASE-\d{8}-\d{2})[:：]", experience, re.MULTILINE))
+    mappings = _canonical_case_mappings()
     etf_count = 0
     stock_count = 0
     for cols in rows:
-        dt, name, code, side, qty, price, principal, fee, cashflow, remark = cols[:10]
-        case_ids = sorted(set(re.findall(r"CASE-\d{8}-\d{2}", remark)))
+        dt, name, code, side, qty, price, principal, fee, cashflow, _remark = cols[:10]
+        event_ids = []
+        trade_dir = ROOT / "events" / "trades"
+        if trade_dir.exists():
+            for path in sorted(trade_dir.glob("*.json")):
+                try:
+                    event = json.loads(path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    continue
+                event_code = str(event.get("code") or "")
+                event_stamp = str(event.get("confirmed_at_beijing") or event.get("executed_at_beijing") or event.get("event_id") or "")
+                if event_code == code and event_stamp[:10] == dt:
+                    event_ids.append(str(event.get("event_id") or path.stem))
+        case_ids = sorted({
+            str(mapping.get("case_id") or "")
+            for event_id in event_ids
+            for mapping in (mappings.get(event_id) or [])
+            if mapping.get("case_id")
+        })
         terminal = _has_valid_terminal_for_trade_row(dt, code)
         if len(case_ids) == 0 and (terminal or not _case_mapping_required(
             _read_json("data/state/CURRENT.json"),
             {"event_id": f"{dt}:{code}", "confirmed_at_beijing": dt},
         )):
-            # Same-day intraday rows may remain pending; an evidence-backed
-            # terminal review projection is also a valid non-CASE outcome.
             pass
         elif len(case_ids) != 1:
             errors.append(f"{dt}:{code}:case_count={len(case_ids)}")
@@ -495,7 +509,6 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
         if message not in report.setdefault("errors", []):
             report["errors"].append(message)
     _recount(report)
-
 
 def _validate_readme_front_door(report: dict) -> None:
     import re
