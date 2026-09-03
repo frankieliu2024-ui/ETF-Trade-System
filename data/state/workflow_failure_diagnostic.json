@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-03T09:44:35+08:00",
+  "generated_at": "2026-09-03T10:25:56+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "Overseas pre-open pulse",
-  "run_id": 33704737010,
-  "run_attempt": 2,
-  "head_sha": "6ccc7f4bb5e9915730df6f63ff1ab0bc7f8bff58",
-  "main_head_sha": "5624cb7ac365a9075761fe902b5c288a12ad006d",
+  "run_id": 33707556511,
+  "run_attempt": 1,
+  "head_sha": "2971b4576fa271bb450ff7dcdb6b56c0f27472a6",
+  "main_head_sha": "57b2d1461bff97dbf3083d2e333738415b90d1ee",
   "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
@@ -16,18 +16,19 @@
     }
   ],
   "changed_files": [
-    "requests/live_snapshot/20260903_094100_global_intraday_chatgpt.json"
+    "data/state/execution_reconciliation.json",
+    "data/state/notification_center.json"
   ],
-  "commit_message": "trigger query-time market refresh for 2026-09-03 09:41 intraday analysis",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "commit_message": "state: record notification and execution reconciliation",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
