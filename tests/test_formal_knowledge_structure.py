@@ -76,3 +76,11 @@ def test_case_sequence_uses_stable_identity_and_appends_without_renumbering(tmp_
     assert "CASE目录与映射" not in text
     assert "CASE详细记录" not in text
     assert "### 2.16 CASE-20260902-01：" in text
+
+
+def test_case_review_projection_drops_mapping_rows_and_preserves_sections():
+    from scripts.process_state_sync_request import _case_detail_projection_entry
+    sample = "### CASE-20260903-01：黄金ETF\n- 背景／生命周期：x\n20260903_foo｜- 已归入CASE-20260903-01｜mapping"
+    projected = _case_detail_projection_entry(sample, "CASE-20260903-01")
+    assert "背景／生命周期" in projected
+    assert "20260903_foo｜- 已归入CASE-20260903-01" not in projected
