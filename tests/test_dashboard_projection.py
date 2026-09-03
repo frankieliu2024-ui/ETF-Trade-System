@@ -63,21 +63,21 @@ class DashboardProjectionTests(unittest.TestCase):
 
 
     def test_legacy_literal_newlines_are_recovered_as_real_markdown(self):
-        legacy = "# ETF当前状态_DASHBOARD\\\\n\\\\n## 云端实时状态（自动同步）\\\\n\\\\n|标的|数量|\\\\n|-|-|\\\\n|黄金ETF（518880）|500|\\\\n\\\\n## 当前状态使用边界\\\\n\\\\n### 下一关键节点\\\\n- 下一A股交易日：2026-09-04"
+        legacy = "# ETF当前状态_DASHBOARD\\n\\n## 云端实时状态（自动同步）\\n\\n|标的|数量|\\n|-|-|\\n|黄金ETF（518880）|500|\\n\\n## 当前状态使用边界\\n\\n### 下一关键节点\\n- 下一A股交易日：2026-09-04"
         result = normalize_dashboard_projection(legacy, Path("."), {"updated_at": "2026-09-03T11:21:20+08:00"})
         self.assertGreater(len(result.splitlines()), 1)
-        self.assertNotIn("\\\\n", result)
+        self.assertNotIn("\\n", result)
         self.assertEqual(result.splitlines()[0], "# ETF当前状态_DASHBOARD")
         self.assertIn("## 云端实时状态（自动同步）", result.splitlines())
         self.assertIn("|标的|数量|", result.splitlines())
         self.assertIn("## 当前状态使用边界", result.splitlines())
 
     def test_dashboard_newline_normalization_is_idempotent(self):
-        legacy = "# ETF当前状态_DASHBOARD\\\\n\\\\n## 云端实时状态（自动同步）\\\\n\\\\n### 当前持仓事实"
+        legacy = "# ETF当前状态_DASHBOARD\\n\\n## 云端实时状态（自动同步）\\n\\n### 当前持仓事实"
         once = normalize_dashboard_projection(legacy, Path("."), {"updated_at": "2026-09-03T11:21:20+08:00"})
         twice = normalize_dashboard_projection(once, Path("."), {"updated_at": "2026-09-03T11:21:20+08:00"})
         self.assertEqual(once, twice)
-        self.assertNotIn("\\\\n", twice)
+        self.assertNotIn("\\n", twice)
 
 if __name__ == "__main__":
     unittest.main()
