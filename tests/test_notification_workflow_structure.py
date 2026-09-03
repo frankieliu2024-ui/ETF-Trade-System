@@ -26,8 +26,12 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         for name in names:
             self.assertEqual(self.text.count(f"- name: {name}"), 1, name)
 
-    def test_push_routes_bind_report_to_exact_changed_request(self):
+    def test_push_routes_bind_report_to_triggering_push_identity(self):
         self.assertIn('requests/report_delivery/*.json', self.text)
+        self.assertIn('PUSH_BEFORE: ${{ github.event.before }}', self.text)
+        self.assertIn('PUSH_AFTER: ${{ github.sha }}', self.text)
+        self.assertIn('git diff --name-only "$PUSH_BEFORE" "$PUSH_AFTER" > /tmp/changed_files.txt', self.text)
+        self.assertNotIn('git diff --name-only HEAD^ HEAD > /tmp/changed_files.txt', self.text)
         self.assertIn(r"grep -E '^requests/report_delivery/[^/]+\.json$'", self.text)
         self.assertIn('echo "report=true" >> "$GITHUB_OUTPUT"', self.text)
         self.assertIn('echo "report_path=${report_paths[0]}" >> "$GITHUB_OUTPUT"', self.text)
