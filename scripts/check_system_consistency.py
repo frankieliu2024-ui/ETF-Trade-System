@@ -456,7 +456,7 @@ def _has_valid_terminal_for_trade_row(trade_date: str, code: str) -> bool:
 
 
 HISTORICAL_TRADE_EVENT_EFFECTIVE_DATE = "2026-08-27"
-CASE_ID_PATTERN = re.compile(r"\bCASE-\d{8}-\d{2}\b")
+CASE_ID_PATTERN = re.compile(r"(?<![A-Za-z0-9])CASE-\d{8}-\d{2}(?![A-Za-z0-9])")
 
 
 def _explicit_index_case_ids(remark: str) -> list[str]:
