@@ -1,0 +1,112 @@
+{
+  "request_id": "20260903_formal_post_close_review_chatgpt_quality_replay",
+  "requested_by": "codex_execution_quality_closure",
+  "requested_at_beijing": "2026-09-03T16:15:00+08:00",
+  "interaction_scenario": "POST_CLOSE_REVIEW",
+  "market_date": "2026-09-03",
+  "source": "PRODUCT_SIDE_FORMAL_REVIEW",
+  "formal_review": {
+    "market_date": "2026-09-03",
+    "review_version": "V2.2.31_CLOSE_REVIEW",
+    "reviewed_at_beijing": "2026-09-03T15:55:00+08:00",
+    "review_timing_provenance": "PRODUCT_SIDE_FORMAL_REVIEW_INGRESS_TIME; product decision message timestamp not supplied",
+    "data_time": {
+      "a_share_effective_close_beijing": "2026-09-03T15:00:00+08:00",
+      "close_snapshot": "data/market/snapshots/2026-09-03_150312.json",
+      "broker_account_confirmed_at_beijing": "2026-09-03T11:21:20+08:00",
+      "close_time_semantics": "VERIFIED_SESSION_CLOSE",
+      "account_time_semantics": "EVENT_DRIVEN_CARRY_FORWARD"
+    },
+    "market_environment": {
+      "regime": "BROAD_GROWTH_WEAKNESS_WITH_OBJECT_LEVEL_RELATIVE_STRENGTH",
+      "interpretation": "2026-09-03 verified close; 14/14 objects complete and market quality PASS."
+    },
+    "risk_permission": "禁止新增",
+    "risk_state": "风险控制复核",
+    "execution_admission": "BLOCKED_BY_CURRENT_PRODUCTION_CONSISTENCY",
+    "etf_strategy_known_net": {
+      "source": "latest canonical formal risk fact retained; 2026-09-03 product payload supplied no new numeric strategy-risk fact",
+      "risk_value_policy": "do not overwrite prior canonical numeric risk with an absent value"
+    },
+    "account_close": {
+      "latest_broker_fact_total_asset": 181297.82,
+      "latest_broker_fact_market_value": 174827.2,
+      "cash": 6469.62,
+      "deployable_cash": 6469.62,
+      "latest_broker_fact_at_beijing": "2026-09-03T11:21:20+08:00",
+      "new_trade_today": true,
+      "last_trade_event_id": "20260903_112104_518880_trial_execution"
+    },
+    "main_candidate": "保留现金（当前无新的ETF主候选）",
+    "lifecycle": {
+      "电网设备ETF（159326）": "ACTIVE_TRIAL；继续观察；本节点不Confirm",
+      "黄金ETF（518880）": "ACTIVE_TRIAL；2026-09-03 BUY 500已执行；继续观察；不Confirm",
+      "通信ETF（515880）": "RESOLVED；2026-09-03 SELL 7,400已执行；退出完成；不再计入ACTIVE_TRIAL"
+    },
+    "trial_resolution": {
+      "159326": {
+        "source_trial_decision_id": "20260902_141753_trade_159326",
+        "resolution": "TRIAL_CONTINUES",
+        "hypothesis_status": "OPEN",
+        "next_state": "T_PLUS_3_MANDATORY_DECISION_PENDING",
+        "reason": "收盘反馈不足以形成Confirm，本节点继续Trial观察。"
+      },
+      "515880": {
+        "source_trial_decision_id": "20260827_095649_515880_trial_5000",
+        "resolution": "TRIAL_FAILED_NO_CONFIRM",
+        "hypothesis_status": "CLOSED",
+        "next_state": "HOLDING_MANAGEMENT_EXIT_OR_RISK_REDUCTION_EVALUATION",
+        "reason": "原Trial已关闭，2026-09-03 SELL 7,400全部退出；不自动生成新的卖出动作。"
+      },
+      "518880": {
+        "source_trial_decision_id": "20260903_112104_518880_trial_execution",
+        "resolution": "TRIAL_CONTINUES",
+        "hypothesis_status": "OPEN",
+        "next_state": "T_PLUS_3_MANDATORY_DECISION_PENDING",
+        "reason": "今日Trial已执行，收盘反馈用于后续验证，尚不足以Confirm。"
+      }
+    },
+    "action": "A股已收盘，本节点不新增交易；保留现金。159326与518880维持ACTIVE_TRIAL观察，515880已RESOLVED退出。",
+    "amount_action": "新增金额0元；不生成任何新订单。",
+    "new_amount": 0,
+    "zero_amount_decisive_reason": "两个新方向均处于Trial信息购买阶段，本节点没有足够证据增加第三笔边际风险资本；当前production consistency尚未完整闭合，因此不新增正式交易权限。首要原因不是现金不足。",
+    "case_id": "CASE-20260903-01",
+    "case_mode": "NEW_CASE_FROM_EXECUTED_TRIAL",
+    "case_mapping": {
+      "primary": {
+        "trade_event_id": "20260903_112104_518880_trial_execution",
+        "decision_id": "20260903_112104_518880_trial_execution",
+        "case_id": "CASE-20260903-01",
+        "security_code": "518880",
+        "security_name": "黄金ETF",
+        "case_status": "OPEN_TRIAL",
+        "mapping_reason": "2026-09-03新独立黄金ETF Trial及真实成交，形成独立CASE。"
+      },
+      "existing_case_updates": [
+        {
+          "trade_event_id": "20260903_094725_515880_exit_execution",
+          "decision_id": "20260903_094725_515880_exit_execution",
+          "case_id": "CASE-20260827-01",
+          "security_code": "515880",
+          "security_name": "通信ETF",
+          "case_status": "RESOLVED",
+          "mapping_reason": "既有515880 Trial CASE生命周期更新，不新建CASE。"
+        },
+        {
+          "trade_event_id": "20260902_141753_trade_159326",
+          "decision_id": "20260902_141753_trade_159326",
+          "case_id": "CASE-20260902-01",
+          "security_code": "159326",
+          "security_name": "电网设备ETF",
+          "case_status": "OPEN_TRIAL",
+          "mapping_reason": "既有159326 CASE延续更新，不新建CASE。"
+        }
+      ]
+    },
+    "archive_entry": "2026-09-03｜A股15:00正式收盘事实：14/14对象完整，close contract=VERIFIED_SESSION_CLOSE；收盘快照data/market/snapshots/2026-09-03_150312.json。11:21:20账户事实现金6469.62元；通信ETF（515880）09:47:55 SELL 7,400份@0.648，黄金ETF（518880）11:21:20 BUY 500份@9.109；成交事实分别关联既有决策。",
+    "experience_entry": "### CASE-20260903-01：黄金ETF（518880）Trial执行收盘复盘\n2026-09-03｜黄金ETF（518880）BUY 500份@9.109，成交本金4,554.50元；Trial继续观察，不Confirm；真实成交与正式收盘反馈已纳入本CASE。\n20260903_112104_518880_trial_execution｜- 已归入CASE-20260903-01｜黄金ETF（518880）新独立Trial，真实成交与正式收盘复盘已闭环。\n20260903_094725_515880_exit_execution｜- 已归入CASE-20260827-01｜通信ETF（515880）既有Trial生命周期更新，退出已执行，不新建CASE。\n20260902_141753_trade_159326｜- 已归入CASE-20260902-01｜电网设备ETF（159326）既有Trial延续更新，不新建CASE。",
+    "review_boundary": "本review仅canonicalize产品侧已形成的正式盘后判断；不得自行新增交易权限、金额、份额、订单或Confirm结论。risk_permission使用MASTER允许值；risk_state与execution_admission分开记录。",
+    "canonicalization_replay": "final_replay_after_main_writer_fix"
+  },
+  "canonicalization_replay": "post_execution_quality_fix_state_context_rebuild"
+}
