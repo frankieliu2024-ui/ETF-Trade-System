@@ -602,6 +602,22 @@ def compact_recent(item: dict) -> dict:
     return {"key": item.get("source_event_id"), "type": item.get("event_type"), "title": item.get("title"), "content": item.get("content"), "source": item.get("source"), "user_severity": item.get("user_severity"), "user_action": item.get("user_action"), "status": "SENT" if item.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION"} else item.get("lifecycle_status"), "attempted_at": item.get("last_attempted_at") or item.get("sent_at") or item.get("created_at"), "response": item.get("response") or {}, "notification_id": item.get("notification_id"), "lifecycle_status": item.get("lifecycle_status")}
 
 
+def _notification_matches_intent(item: dict, match: dict) -> bool:
+    """Require exact decision identity plus the notification's object/action identity."""
+    intent = match.get("intent") or {}
+    context = item.get("confirmation_context") or {}
+    item_code = str(item.get("security_code") or context.get("security_code") or "")
+    item_side = str(context.get("side") or "")
+    item_lifecycle = str(context.get("lifecycle") or "")
+    if item_code and str(intent.get("code") or "") != item_code:
+        return False
+    if item_side and str(intent.get("side") or "") != item_side:
+        return False
+    if item_lifecycle and str(intent.get("lifecycle") or "") != item_lifecycle:
+        return False
+    return True
+
+
 def revalidate_pending_notifications(notifications: list[dict]) -> list[dict]:
     """Revalidate pending prompts against canonical facts using exact identity first."""
     reconciliation = read_json(STATE / "execution_reconciliation.json", {})
@@ -616,7 +632,7 @@ def revalidate_pending_notifications(notifications: list[dict]) -> list[dict]:
             related_decision_id = str(item.get("related_decision_id") or context.get("decision_id") or "")
             exact = [match for match in matches if str((match.get("intent") or {}).get("decision_id") or "") == related_decision_id] if related_decision_id else []
             if related_decision_id:
-                if len(exact) == 1 and not bool(exact[0].get("requires_user_confirmation")):
+                if len(exact) == 1 and _notification_matches_intent(item, exact[0]) and not bool(exact[0].get("requires_user_confirmation")):
                     reason = "exact related decision is canonically reconciled; confirmation is no longer required"
             else:
                 code = str(item.get("security_code") or context.get("security_code") or "")
