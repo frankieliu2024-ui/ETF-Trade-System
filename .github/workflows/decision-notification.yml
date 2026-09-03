@@ -52,8 +52,16 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         id: push_kind
         shell: bash
+        env:
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.sha }}
         run: |
-          git diff --name-only HEAD^ HEAD > /tmp/changed_files.txt || true
+          # The checkout intentionally tracks latest main and may advance beyond the
+          # commit that triggered this workflow. Always classify the triggering push
+          # itself rather than HEAD^..HEAD from a later dynamic-state commit.
+          git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_BEFORE"
+          git cat-file -e "$PUSH_AFTER^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_AFTER"
+          git diff --name-only "$PUSH_BEFORE" "$PUSH_AFTER" > /tmp/changed_files.txt
           if grep -Eq '^events/decisions/[^/]+\.json$' /tmp/changed_files.txt; then
             echo "decision=true" >> "$GITHUB_OUTPUT"
           else
