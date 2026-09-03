@@ -537,7 +537,14 @@ def _case_detail_projection_entry(case_entry: str, case_id: str) -> str:
         ]
         ordinal = max(ordinals, default=2) + 1
     body = case_entry.strip()
-    body = re.sub(r"^### (?:2\.\d+ )?", "", body, count=1)
+    body_lines = body.splitlines()
+    # CASE_MAPPING rows are audit metadata, never CASE_REVIEW prose.
+    body_lines = [
+        line for line in body_lines
+        if not re.match(r"^\\d{8}[_-].*｜- 已归入CASE-", line.strip())
+    ]
+    body = "\\n".join(body_lines).strip()
+    body = re.sub(r"^### (?:2\\.\\d+ )?", "", body, count=1)
     if not body.startswith(case_id):
         body = f"{case_id}：{body}"
     return f"### 2.{ordinal} {body}"
