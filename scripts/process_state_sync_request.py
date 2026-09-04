@@ -936,7 +936,8 @@ def _case_ids_from_existing_experience_for_trade(event: dict, text: str, table_s
         section = text[match.start():end]
         exact_identity = (
             code and code in section and side_cn and side_cn in section
-            and str(qty) in section and f"{price:.3f}" in section
+            and (f"{qty:,}" in section or str(qty) in section)
+            and f"{price:.3f}" in section
             and trade_date and trade_date in section
         )
         if (marker and marker in section) or (linked and linked in section) or exact_identity:
