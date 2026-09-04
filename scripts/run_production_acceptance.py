@@ -19,7 +19,6 @@ ROOT = Path(__file__).resolve().parents[1]
 CONSISTENCY = ROOT / "data" / "state" / "system_consistency.json"
 MAINTENANCE = ROOT / "data" / "state" / "maintenance_health.json"
 E2E = ROOT / "data" / "state" / "e2e_status.json"
-EXECUTION_QUALITY = ROOT / "data" / "state" / "execution_quality.json"
 
 
 def run(command: list[str]) -> int:
