@@ -365,14 +365,14 @@ jobs:
           # checkout identity, never the triggering commit's stale SHA.
           git fetch --no-tags origin main
           git reset --hard origin/main
-          echo "GITHUB_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "ETF_ACCEPTANCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Classify mutation for combination acceptance
         id: acceptance_scope
         shell: bash
         run: |
           set -euo pipefail
-          git diff-tree --no-commit-id --name-only -m -r "$GITHUB_SHA" | python scripts/acceptance_scope.py --stdin | tee "$RUNNER_TEMP/acceptance_scope.json"
+          git diff-tree --no-commit-id --name-only -m -r "$ETF_ACCEPTANCE_SHA" | python scripts/acceptance_scope.py --stdin | tee "$RUNNER_TEMP/acceptance_scope.json"
           python - "$RUNNER_TEMP/acceptance_scope.json" <<'PY' >> "$GITHUB_OUTPUT"
           import json
           import sys
@@ -386,7 +386,7 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          python scripts/run_production_acceptance.py --mutation-sha "$GITHUB_SHA"
+          python scripts/run_production_acceptance.py --mutation-sha "$ETF_ACCEPTANCE_SHA"
       - name: Persist acceptance result
         if: ${{ always() && steps.acceptance_scope.outputs.required == 'true' }}
         shell: bash
