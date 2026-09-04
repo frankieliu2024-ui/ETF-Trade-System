@@ -6,6 +6,7 @@ from pathlib import Path
 
 from scripts.decision_trade_link import decision_price_for_trade, resolve_link
 from scripts import process_state_sync_request as state_sync
+from scripts.lifecycle_state import build_lifecycle_projection
 
 
 class ExecutionAttributionObjectSelectionTests(unittest.TestCase):
@@ -98,6 +99,32 @@ class ExecutionAttributionObjectSelectionTests(unittest.TestCase):
             {"code": "515880", "side": "SELL", "decision_price": 0.651}
         ]
         self.assertEqual(decision_price_for_trade(decision, {"code": "515880"}), 0.651)
+
+
+    def test_lifecycle_does_not_attach_exit_a_to_trial_candidate_b(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "events" / "decisions").mkdir(parents=True)
+            (root / "events" / "trades").mkdir(parents=True)
+            (root / "config" / "market").mkdir(parents=True)
+            (root / "data" / "state").mkdir(parents=True)
+            (root / "config" / "market" / "a_share_trading_calendar_2026.json").write_text(
+                json.dumps({"closed_dates": []}), encoding="utf-8"
+            )
+            (root / "data" / "state" / "CURRENT.json").write_text(
+                json.dumps({"market_date": "2026-09-04"}), encoding="utf-8"
+            )
+            decision = self._decision()
+            (root / "events" / "decisions" / "decision-ab.json").write_text(
+                json.dumps(decision), encoding="utf-8"
+            )
+            (root / "events" / "trades" / "exit-a.json").write_text(json.dumps({
+                "event_id": "exit-a", "linked_decision_id": "decision-ab",
+                "code": "515880", "execution_status": "EXECUTED",
+                "execution_date": "2026-09-03",
+            }), encoding="utf-8")
+            projection = build_lifecycle_projection(root)
+            self.assertEqual(projection["active_lifecycles"], [])
 
 
 if __name__ == "__main__":
