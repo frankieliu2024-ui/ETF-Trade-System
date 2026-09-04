@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-04T19:18:31+08:00",
+  "updated_at": "2026-09-04T19:44:17+08:00",
   "last_status": "SENT",
-  "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】美股科技内部结构出现显著分化",
+  "last_type": "CHANNEL_TEST",
+  "last_title": "【测试】ETF系统通知中心",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -2192,6 +2192,34 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-04T19:17:43+08:00"
+    },
+    {
+      "notification_id": "notification_318d3beff1e31706cbc5",
+      "event_type": "CHANNEL_TEST",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "channel-test:2026-09-04T19:44:17+08:00",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "user_severity": "测试",
+      "user_action": "无需操作",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-04T19:44:17+08:00",
+      "sent_at": "2026-09-04T19:44:17+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-06T19:44:17+08:00",
+      "title": "【测试】ETF系统通知中心",
+      "content": "这是一条通知通道测试，不代表真实行情、账户、交易或系统故障。\n\n你现在需要做什么：无需操作。收到即表示 GitHub → PushPlus → 微信通道正常。",
+      "source": "manual_test",
+      "confirmation_context": {},
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-09-04T19:44:17+08:00"
     }
   ],
   "recent": [
@@ -3238,9 +3266,27 @@
       },
       "notification_id": "notification_1f5906ac8409099cc3e1",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "channel-test:2026-09-04T19:44:17+08:00",
+      "type": "CHANNEL_TEST",
+      "title": "【测试】ETF系统通知中心",
+      "content": "这是一条通知通道测试，不代表真实行情、账户、交易或系统故障。\n\n你现在需要做什么：无需操作。收到即表示 GitHub → PushPlus → 微信通道正常。",
+      "source": "manual_test",
+      "user_severity": "测试",
+      "user_action": "无需操作",
+      "status": "SENT",
+      "attempted_at": "2026-09-04T19:44:17+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_318d3beff1e31706cbc5",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [],
-  "policy": "主动通知按新事实的决策价值判断，不按市场分类；当前事件族为开盘异常、快速重定价、极端波动、方向反转、显著分化。阈值适度放宽，重复控制依靠事件合并、冷却和实质升级识别；已管理候选不得阻塞其他未管理候选。",
-  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
+  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
+  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
 }
