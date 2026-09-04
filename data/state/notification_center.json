@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-04T13:58:29+08:00",
-  "last_status": "AGGREGATED_INTO_EXISTING",
+  "updated_at": "2026-09-04T15:07:41+08:00",
+  "last_status": "SENT",
   "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】创业板指（399006）冲高明显回吐",
+  "last_title": "【市场异动】科创50（000688）出现极端波动 -2.10%",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -1979,6 +1979,83 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-04T13:52:12+08:00"
+    },
+    {
+      "notification_id": "notification_b6bf75d92a8f35497603",
+      "event_type": "A_SHARE_SESSION_SUMMARY",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "a-share-session-summary:2026-09-04:CLOSE",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "user_severity": "需要关注",
+      "user_action": "查看结构摘要；正式交易动作以MASTER完整决策链为准",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-04T15:07:38+08:00",
+      "sent_at": "2026-09-04T15:07:39+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-06T15:07:38+08:00",
+      "title": "【收盘总结】A股全天结构与ETF强弱",
+      "content": "### 核心结论\n- **市场结构**：宽基相对稳定，科技成长明显偏弱。\n- **指数反馈**：上证指数（000001）-0.30%，科创50（000688）-2.10%，创业板指（399006）-0.78%。\n\n### 关键路径\n- 科创50（000688）高开+1.04%后明显回吐；创业板指（399006）高开+0.97%后明显回吐；而上证指数（000001）开盘后继续走弱，目前接近日内低位。这更像科技成长局部降温，而不是全市场同步风险释放。\n\n### 对ETF系统的影响\n宽基相对稳定，科技成长明显偏弱。需要重新比较持仓/观察ETF的相对强弱和资本效率。跨市场ETF的相对涨幅只用于解释不同风险因子，不替代A股自身反馈，也不等同资本效率排名。\n\n### 当前动作\n**不因通知机械交易；先复核当前持仓/观察ETF的相对强弱和风险收益，只有正式机会、金额或卖出动作改变时执行。**\n\n### 数据与边界\n- **价格有效时点**：2026-09-04 15:00:00\n- **provider补查/观测上限**：2026-09-04 15:06:29\n- **通知生成**：2026-09-04 15:07:38\n- **边界**：只要同日verified close仍可追溯，固定收盘总结允许延迟补发；必须明确15:00价格有效时点，不能伪装成晚间新行情。",
+      "source": "CURRENT+intraday_path_features",
+      "confirmation_context": {
+        "market_date": "2026-09-04",
+        "session_node": "CLOSE",
+        "market_as_of_beijing": "2026-09-04 15:00:00",
+        "provider_observed_as_of_beijing": "2026-09-04T15:06:29+08:00",
+        "value_reason": "固定收盘总结",
+        "event_family_id": ":2026-09-04:CLOSE:::"
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-09-04T15:07:39+08:00"
+    },
+    {
+      "notification_id": "notification_bf7e447c9e98991425a1",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:a-share:2026-09-04:000688:DOWN:EXTREME:2026-09-04T15:06:00+08:00",
+      "related_decision_id": "",
+      "security_code": "000688",
+      "security_name": "科创50",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-04T15:07:39+08:00",
+      "sent_at": "2026-09-04T15:07:41+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-06T15:07:39+08:00",
+      "title": "【市场异动】科创50（000688）出现极端波动 -2.10%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：科创50（000688）\n- **当日涨跌**：-2.10%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n科创50（000688）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-04 15:06:00\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。\n\n> 这是收盘总结数据截止2026-09-04T15:00:00+08:00后的新增事实；不否定此前总结，仅作为增量变化展示。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "confirmation_context": {
+        "market": "A_SHARE",
+        "market_date": "2026-09-04",
+        "direction": "DOWN",
+        "event_category": "EXTREME",
+        "asset_class": "A_SHARE_INDEX",
+        "day_change_pct": -2.0984750212578507,
+        "sudden_change_pct": null,
+        "interval_minutes": 74.23333333333333,
+        "event_magnitude_pct": 2.0984750212578507,
+        "market_as_of_beijing": "2026-09-04T15:06:00+08:00",
+        "source_fact_id": "2026-09-04:000688:EXTREME:DOWN:2026-09-04T15:06:00+08:00",
+        "event_family_id": "A_SHARE:2026-09-04:A_SHARE:000688:EXTREME:DOWN",
+        "summary_relation": "NEW_FACT_AFTER_SUMMARY_CUTOFF"
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-09-04T15:07:41+08:00"
     }
   ],
   "recent": [
@@ -2916,6 +2993,42 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_77deba2f55136b7f4ba7",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "a-share-session-summary:2026-09-04:CLOSE",
+      "type": "A_SHARE_SESSION_SUMMARY",
+      "title": "【收盘总结】A股全天结构与ETF强弱",
+      "content": "### 核心结论\n- **市场结构**：宽基相对稳定，科技成长明显偏弱。\n- **指数反馈**：上证指数（000001）-0.30%，科创50（000688）-2.10%，创业板指（399006）-0.78%。\n\n### 关键路径\n- 科创50（000688）高开+1.04%后明显回吐；创业板指（399006）高开+0.97%后明显回吐；而上证指数（000001）开盘后继续走弱，目前接近日内低位。这更像科技成长局部降温，而不是全市场同步风险释放。\n\n### 对ETF系统的影响\n宽基相对稳定，科技成长明显偏弱。需要重新比较持仓/观察ETF的相对强弱和资本效率。跨市场ETF的相对涨幅只用于解释不同风险因子，不替代A股自身反馈，也不等同资本效率排名。\n\n### 当前动作\n**不因通知机械交易；先复核当前持仓/观察ETF的相对强弱和风险收益，只有正式机会、金额或卖出动作改变时执行。**\n\n### 数据与边界\n- **价格有效时点**：2026-09-04 15:00:00\n- **provider补查/观测上限**：2026-09-04 15:06:29\n- **通知生成**：2026-09-04 15:07:38\n- **边界**：只要同日verified close仍可追溯，固定收盘总结允许延迟补发；必须明确15:00价格有效时点，不能伪装成晚间新行情。",
+      "source": "CURRENT+intraday_path_features",
+      "user_severity": "需要关注",
+      "user_action": "查看结构摘要；正式交易动作以MASTER完整决策链为准",
+      "status": "SENT",
+      "attempted_at": "2026-09-04T15:07:39+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_b6bf75d92a8f35497603",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:a-share:2026-09-04:000688:DOWN:EXTREME:2026-09-04T15:06:00+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】科创50（000688）出现极端波动 -2.10%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：科创50（000688）\n- **当日涨跌**：-2.10%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n科创50（000688）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-04 15:06:00\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。\n\n> 这是收盘总结数据截止2026-09-04T15:00:00+08:00后的新增事实；不否定此前总结，仅作为增量变化展示。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "status": "SENT",
+      "attempted_at": "2026-09-04T15:07:41+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_bf7e447c9e98991425a1",
       "lifecycle_status": "SENT"
     }
   ],
