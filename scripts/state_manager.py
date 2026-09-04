@@ -285,9 +285,13 @@ def build_analysis_coverage(root: Path, snapshot: dict[str, Any], account: dict[
     rows = _snapshot_rows(snapshot)
     by_code = {str(x.get("symbol") or ""): x for x in rows}
     stocks_ctx = read_json(root / "data" / "state" / "stock_market_context.json", {})
-    positions = account.get("positions") or []
-    held = {str(x.get("code")) for x in positions if x.get("asset_type") == "ETF" and float(x.get("quantity") or 0) > 0}
-    stocks = {str(x.get("code")) for x in positions if x.get("asset_type") == "STOCK" and float(x.get("quantity") or 0) > 0}
+    try:
+        from build_stock_context import active_account_asset_codes
+    except ModuleNotFoundError:
+        from scripts.build_stock_context import active_account_asset_codes
+    memberships = active_account_asset_codes(root, account)
+    held = memberships["etf"]
+    stocks = memberships["stocks"]
     def usable(row): return bool(row) and str(row.get("quality_status") or row.get("status") or "").upper() not in {"FAILED", "FAIL"}
     observed = etfs - held
     missing = sorted((etfs | expected_indices) - set(by_code))
