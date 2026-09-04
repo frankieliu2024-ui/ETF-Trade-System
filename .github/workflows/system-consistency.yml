@@ -214,6 +214,13 @@ jobs:
           cd "$candidate"
           export ETF_SYSTEM_ROOT="$candidate"
           export PYTHONPATH="$candidate/scripts:$candidate"
+          # Reconcile all existing correction requests only inside the disposable
+          # candidate tree; PR prechecks never mutate the source checkout.
+          shopt -s nullglob
+          correction_requests=(requests/trade_fact_correction/*.json)
+          for request in "${correction_requests[@]}"; do
+            python scripts/apply_trade_fact_correction.py "$request"
+          done
           python scripts/process_state_sync_request.py requests/live_snapshot/candidate_unrecoverable_review.json
           # Re-run the existing formal projection owner in the ephemeral candidate
           # tree so candidate acceptance validates the same writer path that will
@@ -327,6 +334,28 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Consume pending trade-fact corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          correction_requests=(requests/trade_fact_correction/*.json)
+          if [ "${#correction_requests[@]}" -eq 0 ]; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --no-tags origin main
+          git reset --hard origin/main
+          for request in "${correction_requests[@]}"; do
+            python scripts/apply_trade_fact_correction.py "$request"
+          done
+          git add events/trades data/state/etf_strategy_equity.json data/state/trade_fact_correction_receipt.json ETF交易复盘与经验库_2026.md ETF市场行情档案_2026.md ETF当前状态_DASHBOARD.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "state: consume trade fact corrections"
+          git push origin HEAD:main
       - name: Classify mutation for combination acceptance
         id: acceptance_scope
         shell: bash
