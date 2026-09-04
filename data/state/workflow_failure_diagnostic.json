@@ -1,33 +1,31 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-04T17:58:40+08:00",
+  "generated_at": "2026-09-04T21:52:06+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33860855516,
+  "run_id": 33880307025,
   "run_attempt": 1,
-  "head_sha": "b1f84a5d35eb5305a1fe534d7ab7c9ce93c8f21b",
-  "main_head_sha": "acad6ef4631b6bb38b3e7878c3cd1068ecb7d725",
+  "head_sha": "b74a3aaad78f01253dda47053f01b4544efe0874",
+  "main_head_sha": "a8b4137e35c54a903015efe2eb6d0ba985ea530b",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "production_acceptance",
-      "step": "Enforce production acceptance",
-      "number": 9
+      "job": "consistency",
+      "step": "Enforce hard consistency result",
+      "number": 8
     }
   ],
   "changed_files": [
-    "scripts/maintenance_guard.py",
-    "scripts/run_production_acceptance.py",
-    "tests/test_production_acceptance_report_persistence.py"
+    ".github/workflows/system-consistency.yml"
   ],
-  "commit_message": "Merge PR #316: converge recovery acceptance on validated consistency handoff",
+  "commit_message": "ci: cover production acceptance script changes (replacement for #285)",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
-    "changes_confined_to_auto_rollback_allowlist": false,
+    "changes_confined_to_auto_rollback_allowlist": true,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
     "user_notification_authority": false,
