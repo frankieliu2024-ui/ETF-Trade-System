@@ -28,7 +28,7 @@ CONSISTENCY = STATE / "system_consistency.json"
 
 
 def consistency_path() -> Path:
-    """Return this acceptance's validated report, or canonical state by default."""
+    """Use the validated acceptance report when handed off; otherwise canonical state."""
     return Path(os.environ.get("ETF_CONSISTENCY_REPORT_PATH", str(CONSISTENCY)))
 SELF_HEAL = STATE / "self_healing_status.json"
 RUNTIME_HEALTH = STATE / "runtime_health.json"
