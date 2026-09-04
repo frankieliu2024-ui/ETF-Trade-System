@@ -1,737 +1,620 @@
-from __future__ import annotations
-
-import argparse
-import hashlib
-import json
-import os
-import urllib.error
-import urllib.request
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
-from typing import Any
-
-ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
-STATE = ROOT / "data" / "state"
-TZ = timezone(timedelta(hours=8))
-PUSHPLUS_URL = "https://www.pushplus.plus/send"
-HISTORY_LIMIT = 50
-OPPORTUNITY_STATUSES = {"æ— æœºä¼š", "è§‚å¯Ÿæœºä¼š", "Trialæœºä¼š", "Confirmæœºä¼š"}
-RISK_PERMISSIONS = ("ç¦æ­¢æ–°å¢ž", "å…è®¸Confirm", "å…è®¸Trial")
-FORMAL_EVENT_MAX_AGE_MINUTES = 45
-ACCOUNT_EVENT_MAX_AGE_MINUTES = 30
-MIN_UNEXPLAINED_CASH_DELTA_YUAN = 10.0
-TRADING_CALENDAR = ROOT / "config" / "market" / "a_share_trading_calendar_2026.json"
-
-REPORT_TYPES = {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}
-REPORT_REQUEST_DIR = ROOT / "requests" / "report_delivery"
-
-def validate_report_delivery_request(request: dict) -> tuple[bool, str]:
-    """Validate a completed formal report before shared delivery."""
-    required = ("schema_version", "channel", "report_type", "report_id", "task_id", "task_run_id",
-                "generated_at", "effective_market_date", "source_actor", "source_reference",
-                "title", "summary", "full_content", "content_hash", "idempotency_key")
-    missing = [key for key in required if not str(request.get(key) or "").strip()]
-    if missing: return False, "missing:" + ",".join(missing)
-    if request.get("channel") != "REPORT": return False, "channel_must_be_REPORT"
-    if request.get("report_type") not in REPORT_TYPES: return False, "unsupported_report_type"
-    if request.get("delivery_mode", "FULL_REPORT") != "FULL_REPORT": return False, "delivery_mode_must_be_FULL_REPORT"
-    if request.get("no_trade_authority") is not True: return False, "no_trade_authority_must_be_true"
-    expected_hash = hashlib.sha256(str(request.get("full_content")).encode("utf-8")).hexdigest()
-    if str(request.get("content_hash")) != expected_hash: return False, "content_hash_mismatch"
-    return True, ""
-
-def report_delivery_event() -> dict | None:
-    if not REPORT_REQUEST_DIR.exists(): return None
-    candidates = []
-    for path in sorted(REPORT_REQUEST_DIR.glob("*.json")):
-        request = read_json(path, {})
-        valid, _ = validate_report_delivery_request(request)
-        if valid: candidates.append(request)
-    if not candidates: return None
-    request = candidates[-1]
-    key = str(request["idempotency_key"])
-    return {"key": f"report-delivery:{key}", "source_event_id": f"report-delivery:{key}",
-            "event_type": "REPORT_DELIVERY_REQUEST", "notification_channel": "REPORT",
-            "delivery_mode": "FULL_REPORT", "type": "æ­£å¼æŠ¥å‘Š", "title": str(request["title"]),
-            "content": str(request["full_content"]), "source": str(request["source_reference"]),
-            "user_severity": "æ­£å¼æŠ¥å‘Š", "user_action": "é˜…è¯»å·²å®Œæˆçš„æ­£å¼ETFæŠ¥å‘Šï¼›æ— éœ€äº¤æ˜“æ“ä½œ",
-            "report_type": str(request["report_type"]), "report_id": str(request["report_id"]),
-            "task_id": str(request["task_id"]), "task_run_id": str(request["task_run_id"]),
-            "idempotency_key": key, "no_trade_authority": True}
-
-
-def read_json(path: Path, default: Any) -> Any:
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return default
-
-
-def write_json(path: Path, value: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    tmp.replace(path)
-
-
-def now() -> datetime:
-    return datetime.now(TZ)
-
-
-def parse_notification_time(value: Any) -> datetime | None:
-    if not value:
-        return None
-    try:
-        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=TZ)
-    return dt.astimezone(TZ)
-
-
-def human_time(value: Any, *, include_date: bool = True) -> str:
-    dt = parse_notification_time(value)
-    if not dt:
-        return "æœªæä¾›"
-    return dt.strftime("%Y-%m-%d %H:%M:%S") if include_date else dt.strftime("%H:%M:%S")
-
-
-def minutes_between(later: Any, earlier: Any) -> float | None:
-    a, b = parse_notification_time(later), parse_notification_time(earlier)
-    if not a or not b:
-        return None
-    return max(0.0, (a - b).total_seconds() / 60.0)
-
-
-def send(token: str, title: str, content: str) -> tuple[bool, dict]:
-    payload = json.dumps({"token": token, "title": title, "content": content, "template": "markdown", "channel": "wechat"}, ensure_ascii=False).encode("utf-8")
-    req = urllib.request.Request(PUSHPLUS_URL, data=payload, headers={"Content-Type": "application/json", "User-Agent": "ETF-Trade-System/1.0"}, method="POST")
-    try:
-        pushplus_policy = read_json(ROOT / "config" / "runtime_policy.json", {})
-        timeout = float(os.environ.get("PUSHPLUS_TIMEOUT_SECONDS", pushplus_policy.get("pushplus_timeout_seconds", 15)))
-        with urllib.request.urlopen(req, timeout=timeout) as response:
-            raw = response.read().decode("utf-8", errors="replace")
-            try:
-                body = json.loads(raw)
-            except json.JSONDecodeError:
-                body = {"raw": raw[:500]}
-            ok = response.status == 200 and int(body.get("code", 0) or 0) == 200
-            return ok, {"http_status": response.status, "pushplus_code": body.get("code"), "pushplus_message": body.get("msg")}
-    except (urllib.error.URLError, TimeoutError, OSError) as exc:
-        return False, {"error": type(exc).__name__, "message": str(exc)[:300]}
-
-
-def display_from_code(code: str, account: dict) -> str:
-    for p in account.get("positions") or []:
-        if str(p.get("code") or "") == code:
-            name = str(p.get("name") or "")
-            return f"{name}ï¼ˆ{code}ï¼‰" if name else code
-    return code or "ç›¸å…³äº¤æ˜“å¯¹è±¡"
-
-
-def trade_display(event_id: str) -> str:
-    event = read_json(ROOT / "events" / "trades" / f"{event_id}.json", {}) if event_id else {}
-    name = str(event.get("name") or event.get("security_name") or "")
-    code = str(event.get("code") or event.get("security_code") or event.get("symbol") or "")
-    return f"{name}ï¼ˆ{code}ï¼‰" if name and code else (name or code or "ç›¸å…³äº¤æ˜“å¯¹è±¡")
-
-
-def is_a_share_trading_day(dt: datetime) -> bool:
-    local = dt.astimezone(TZ)
-    if local.weekday() >= 5:
-        return False
-    calendar = read_json(TRADING_CALENDAR, {})
-    date_text = local.date().isoformat()
-    coverage_start = str(calendar.get("coverage_start") or "")
-    coverage_end = str(calendar.get("coverage_end") or "")
-    if not coverage_start or not coverage_end or not (coverage_start <= date_text <= coverage_end):
-        return False
-    return date_text not in set(calendar.get("closed_dates") or [])
-
-
-def execution_confirmation_event() -> dict | None:
-    recon = read_json(STATE / "execution_reconciliation.json", {})
-    if str(recon.get("status") or "") != "CONFIRMATION_REQUIRED":
-        return None
-    matches = [x for x in (recon.get("matches") or []) if x.get("requires_user_confirmation")]
-    if not matches:
-        return None
-    match = matches[0]
-    intent = match.get("intent") or {}
-    code, name = str(intent.get("code") or ""), str(intent.get("name") or "")
-    target = f"{name}ï¼ˆ{code}ï¼‰" if name and code else (code or "ç›¸å…³ETF")
-    lifecycle = str(intent.get("lifecycle") or "äº¤æ˜“")
-    side = str(intent.get("side") or "")
-    date = str(match.get("suggested_execution_date") or intent.get("decision_market_date") or "")
-    status = str(match.get("status") or "")
-    observed = match.get("observed_account_change") or {}
-    qty = observed.get("directional_quantity")
-    action = "ä¹°å…¥" if side == "BUY" else "å–å‡º/å‡æŒ"
-    size_text = ""
-    if isinstance(qty, (int, float)) and qty > 0:
-        size_text = f"ï¼Œè´¦æˆ·å‡€å˜åŒ–çº¦{int(qty):,}ä»½"
-
-    if status == "MULTIPLE_OPERATIONS_REQUIRE_DETAIL":
-        title = f"{target}å¯èƒ½æœ‰å¤šæ¬¡æ“ä½œï¼Œéœ€è¦è¡¥å……æˆäº¤æ˜Žç»†"
-        content = f"ç³»ç»Ÿå‘çŽ°{target}ä¸Žæ­¤å‰{lifecycle}å†³ç­–æœ‰å…³ï¼Œä½†çŽ°æœ‰æŒä»“å˜åŒ–æ— æ³•å”¯ä¸€è¿˜åŽŸå®žé™…æˆäº¤è¿‡ç¨‹ã€‚\n\nå»ºè®®ï¼šè¯·ä¸Šä¼ åˆ¸å•†æˆäº¤æ˜Žç»†æˆ–å‘Šè¯‰æˆ‘å®žé™…ä¹°å–ç¬”æ•°ã€æ•°é‡å’Œäº¤æ˜“æ—¥ã€‚ç³»ç»Ÿä¸ä¼šæ ¹æ®æœ€ç»ˆæŒä»“çŒœæµ‹æˆäº¤åŽ†å²ã€‚"
-    elif status == "PARTIAL_EXECUTION_REQUIRES_CONFIRMATION" or str(match.get("fill_status") or "") == "PARTIAL_EXECUTION":
-        title = f"{target}å¯èƒ½åªæ‰§è¡Œäº†éƒ¨åˆ†{lifecycle}ï¼Œè¯·ç¡®è®¤"
-        content = f"æœ€æ–°è´¦æˆ·ä¿¡æ¯æ˜¾ç¤º{target}{size_text}ï¼Œä¸Ž{date or 'æ­¤å‰'}çš„{lifecycle}{action}æ–¹å‘ä¸€è‡´ï¼Œä½†è§„æ¨¡æ›´åƒéƒ¨åˆ†æˆäº¤ã€‚\n\nå»ºè®®ï¼šè¯·ç¡®è®¤å®žé™…æˆäº¤æ•°é‡/é‡‘é¢å’Œäº¤æ˜“æ—¥ï¼›ç³»ç»Ÿä¼šæŒ‰çœŸå®žæˆäº¤è®°å½•ï¼Œä¸ä¼šæŠŠéƒ¨åˆ†æˆäº¤è®°æˆå…¨éƒ¨æ‰§è¡Œã€‚"
-    elif status == "UNLINKED_TRADE_REQUIRES_ATTRIBUTION":
-        title = f"å‘çŽ°{target}å·²æœ‰æˆäº¤ï¼Œè¯·ç¡®è®¤å¯¹åº”å“ªç¬”å†³ç­–"
-        content = f"ç³»ç»Ÿå‘çŽ°{target}å·²æœ‰åŒæ–¹å‘æˆäº¤ï¼Œä½†è¿˜æ²¡æœ‰æ˜Žç¡®å½’å› åˆ°{date or 'æ­¤å‰'}çš„{lifecycle}å†³ç­–ã€‚\n\nå»ºè®®ï¼šè¯·ç¡®è®¤è¿™ç¬”æˆäº¤æ˜¯å¦å±žäºŽè¯¥å†³ç­–ï¼Œä»¥åŠå®žé™…äº¤æ˜“æ—¥ã€‚"
-    else:
-        title = f"å‘çŽ°{target}å¯èƒ½å·²æ‰§è¡Œ{lifecycle}ï¼Œè¯·ç¡®è®¤"
-        content = f"æœ€æ–°è´¦æˆ·ä¿¡æ¯æ˜¾ç¤º{target}{size_text}ï¼Œä¸Ž{date or 'æ­¤å‰'}çš„{lifecycle}{action}å†³ç­–ç›¸ç¬¦ã€‚\n\nå»ºè®®ï¼šè¯·ç¡®è®¤æ˜¯å¦æŒ‰è¯¥å†³ç­–æ‰§è¡Œï¼Œä»¥åŠå®žé™…äº¤æ˜“æ—¥ã€‚ç³»ç»Ÿä¼šæŠŠäº¤æ˜“æ—¥ä¸Žæˆªå›¾/ç¡®è®¤æ—¥æœŸåˆ†å¼€è®°å½•ã€‚"
-    key = f"execution-confirm:{intent.get('decision_id','')}:{code}:{status}:{date}:{qty or ''}"
-    return {"key": key, "type": "æˆäº¤ç¡®è®¤", "title": title, "content": content, "source": "execution_reconciliation", "event_type": "PENDING_EXECUTION_CONFIRMATION", "related_decision_id": str(intent.get("decision_id") or ""), "security_code": code, "security_name": name, "user_severity": "éœ€è¦æ“ä½œ", "user_action": "ç¡®è®¤æˆäº¤æˆ–è¡¥å……æˆäº¤æ˜Žç»†", "confirmation_context": {"decision_id": str(intent.get("decision_id") or ""), "security_code": code, "security_name": name, "side": side, "lifecycle": lifecycle, "quantity": qty, "approx_amount_yuan": observed.get("approx_amount_yuan"), "suggested_execution_date": date, "lifecycle_t_date": match.get("suggested_lifecycle_t_date") or date}}
-
-
-def _normalize_opportunity_status(decision: dict) -> str:
-    status = str(decision.get("opportunity_status") or "").strip()
-    if status in OPPORTUNITY_STATUSES:
-        return status
-    main_candidate = str(decision.get("main_candidate") or "")
-    for candidate in ("Confirmæœºä¼š", "Trialæœºä¼š", "è§‚å¯Ÿæœºä¼š", "æ— æœºä¼š"):
-        if candidate in main_candidate:
-            return candidate
-    if "æ— æ–°çš„ä¸»å€™é€‰" in main_candidate:
-        return "æ— æœºä¼š"
-    return ""
-
-
-def _normalize_risk_permission(value: Any) -> str:
-    text = str(value or "").strip()
-    for status in RISK_PERMISSIONS:
-        if status in text:
-            return status
-    return text
-
-
-def _formal_decision_events() -> list[dict]:
-    directory = ROOT / "events" / "decisions"
-    rows: list[dict] = []
-    for path in directory.glob("*.json") if directory.exists() else []:
-        event = read_json(path, {})
-        if str(event.get("event_type") or "") != "FORMAL_DECISION":
-            continue
-        decision = event.get("formal_decision") or {}
-        event = dict(event)
-        event["_opportunity_status"] = _normalize_opportunity_status(decision)
-        rows.append(event)
-    rows.sort(key=lambda x: str(x.get("decision_time_beijing") or x.get("recorded_at_beijing") or ""))
-    return rows
-
-
-def _target_for(event: dict) -> tuple[str, str, str]:
-    decision = event.get("formal_decision") or {}
-    code = str(event.get("candidate_code") or decision.get("candidate_code") or "")
-    name = str(event.get("candidate_name") or decision.get("candidate_name") or "")
-    target = f"{name}ï¼ˆ{code}ï¼‰" if name and code else str(decision.get("main_candidate") or code or "å½“å‰ä¸»å€™é€‰")
-    return code, name, target
-
-
-def _material_holding_action(text: str) -> bool:
-    value = str(text or "")
-    return any(term in value for term in ("å…¨éƒ¨é€€å‡º", "é™ä½Žé£Žé™©", "æ˜Žç¡®åˆæ³•ä»½é¢"))
-
-
-def _compact_amount_action(text: str) -> str:
-    value = str(text or "æœªæä¾›")
-    if "æ–°å¢ž0å…ƒ" in value and not _material_holding_action(value) and "å–å‡º" not in value:
-        return "æ–°å¢ž0å…ƒï¼›çŽ°æœ‰æŒä»“ç»´æŒï¼›çŽ°é‡‘ä¿ç•™ã€‚"
-    return value
-
-
-def _formal_market_as_of(event: dict) -> str:
-    comparison = event.get("comparison_snapshot") or {}
-    return str(comparison.get("as_of_beijing") or event.get("price_as_of_beijing") or "")
-
-
-def _formal_account_as_of(event: dict, decision: dict) -> str:
-    return str(decision.get("account_as_of_beijing") or event.get("account_as_of_beijing") or "")
-
-
-def formal_decision_change_event() -> dict | None:
-    events = _formal_decision_events()
-    if not events:
-        return None
-    latest = events[-1]
-    decision = latest.get("formal_decision") or {}
-    decision_time_raw = latest.get("decision_time_beijing") or decision.get("data_as_of_beijing")
-    decision_time = parse_notification_time(decision_time_raw)
-    if not decision_time or now() - decision_time > timedelta(minutes=FORMAL_EVENT_MAX_AGE_MINUTES):
-        return None
-
-    previous = events[-2] if len(events) > 1 else {}
-    previous_decision = previous.get("formal_decision") or {}
-    status = str(latest.get("_opportunity_status") or "")
-    previous_status = str(previous.get("_opportunity_status") or "")
-    code, name, target = _target_for(latest)
-    previous_code, _, previous_target = _target_for(previous) if previous else ("", "", "")
-    risk_permission = _normalize_risk_permission(decision.get("risk_permission"))
-    previous_risk = _normalize_risk_permission(previous_decision.get("risk_permission"))
-    amount_action = str(decision.get("amount_action") or decision.get("action") or "")
-    previous_amount_action = str(previous_decision.get("amount_action") or previous_decision.get("action") or "")
-
-    candidate_changed = bool(code and previous_code and code != previous_code)
-    opportunity_level_changed = bool(status and previous_status and status != previous_status)
-    opportunity_changed = bool(status) and (opportunity_level_changed or candidate_changed)
-    risk_changed = bool(risk_permission and previous_risk and risk_permission != previous_risk)
-    holding_action_now = _material_holding_action(amount_action)
-    holding_action_changed = holding_action_now and amount_action != previous_amount_action
-
-    if not (opportunity_changed or risk_changed or holding_action_changed):
-        return None
-
-    decision_id = str(latest.get("decision_id") or decision.get("decision_id") or "")
-    decisive_reason = str(decision.get("decisive_reason") or "æœªæä¾›")
-    action_summary = _compact_amount_action(amount_action)
-    market_as_of_raw = _formal_market_as_of(latest)
-    account_as_of_raw = _formal_account_as_of(latest, decision)
-    notification_generated = now()
-    market_age = minutes_between(decision_time_raw, market_as_of_raw)
-
-    change_lines: list[str] = []
-    if candidate_changed:
-        change_lines.append(f"- **ä¸»å€™é€‰**ï¼š{previous_target} â†’ {target}")
-    if opportunity_level_changed:
-        change_lines.append(f"- **æœºä¼šçŠ¶æ€**ï¼š{previous_status} â†’ {status}")
-    elif opportunity_changed:
-        change_lines.append(f"- **æœºä¼šçŠ¶æ€**ï¼š{status}ï¼ˆçŠ¶æ€ä¸å˜ï¼Œä¸»å€™é€‰å‘ç”Ÿåˆ‡æ¢ï¼‰")
-    if risk_changed:
-        change_lines.append(f"- **é£Žé™©è®¸å¯**ï¼š{previous_risk} â†’ {risk_permission}")
-    elif risk_permission:
-        change_lines.append(f"- **é£Žé™©è®¸å¯**ï¼š{risk_permission}ï¼ˆæœªå˜åŒ–ï¼‰")
-    if holding_action_changed:
-        change_lines.append(f"- **æŒä»“åŠ¨ä½œ**ï¼š{action_summary}")
-
-    actionable = holding_action_changed or (status in {"Trialæœºä¼š", "Confirmæœºä¼š"} and opportunity_changed) or risk_permission == "ç¦æ­¢æ–°å¢ž"
-    stale_action_warning = actionable and market_age is not None and market_age > 10
-
-    if holding_action_changed:
-        title = "ã€æŒä»“åŠ¨ä½œï½œéœ€å¤„ç†ã€‘ETFæŒä»“éœ€è¦é™ä½Žé£Žé™©/é€€å‡º"
-        severity = "éœ€è¦æ“ä½œ"
-        user_action = "æ‰“å¼€ChatGPTçš„ETFé¡¹ç›®ï¼Œåœ¨å½“å‰äº¤æ˜“æ²Ÿé€šä¼šè¯æ ¸å¯¹æ­£å¼å–å‡ºä»½é¢/é€€å‡ºåŠ¨ä½œï¼Œå¹¶ç”±ä½ äººå·¥æ‰§è¡Œ"
-    elif status in {"Trialæœºä¼š", "Confirmæœºä¼š"} and opportunity_changed:
-        title = f"ã€{status}ã€‘{target}"
-        severity = "éœ€è¦æ“ä½œ"
-        user_action = "æ‰“å¼€ChatGPTçš„ETFé¡¹ç›®æŸ¥çœ‹æ­£å¼é‡‘é¢ä¸Žå¤±æ•ˆæ¡ä»¶ï¼Œå†å†³å®šæ˜¯å¦äººå·¥æ‰§è¡Œ"
-    elif risk_changed:
-        title = f"ã€é£Žé™©è®¸å¯å˜åŒ–ã€‘{previous_risk} â†’ {risk_permission}"
-        severity = "éœ€è¦å…³æ³¨" if risk_permission != "ç¦æ­¢æ–°å¢ž" else "éœ€è¦æ“ä½œ"
-        user_action = "æ‰“å¼€ChatGPTçš„ETFé¡¹ç›®ï¼ŒæŒ‰æœ€æ–°é£Žé™©è®¸å¯æŸ¥çœ‹å½“å‰æ­£å¼äº¤æ˜“åˆ¤æ–­"
-    elif status == "è§‚å¯Ÿæœºä¼š":
-        title = f"ã€è§‚å¯Ÿæœºä¼šã€‘{target}"
-        severity = "éœ€è¦å…³æ³¨"
-        user_action = "æ— éœ€ä¸‹å•ï¼›ç­‰å¾…åŽç»­æ˜¯å¦å‡çº§ä¸ºTrial/Confirmæˆ–å¤±æ•ˆ"
-    elif status == "æ— æœºä¼š":
-        title = f"ã€æœºä¼šå˜åŒ–ã€‘{previous_target or target}å½“å‰æ— æœºä¼š"
-        severity = "éœ€è¦å…³æ³¨"
-        user_action = "æ— éœ€è¿½å•ï¼›ä»¥æœ€æ–°æ­£å¼åˆ¤æ–­ä¸ºå‡†"
-    else:
-        title = f"ã€æ­£å¼å†³ç­–å˜åŒ–ã€‘{target}"
-        severity = "éœ€è¦å…³æ³¨"
-        user_action = "æ‰“å¼€ChatGPTçš„ETFé¡¹ç›®æŸ¥çœ‹æœ€æ–°æ­£å¼åˆ¤æ–­"
-
-    if stale_action_warning:
-        user_action = "è¯¥åˆ¤æ–­ä½¿ç”¨çš„Aè‚¡è¡Œæƒ…è·åˆ¤æ–­æ—¶ç‚¹è¶…è¿‡10åˆ†é’Ÿï¼›è¯·å…ˆæ‰“å¼€ChatGPTçš„ETFé¡¹ç›®åˆ·æ–°æœ€æ–°è¡Œæƒ…ï¼Œå†å†³å®šæ˜¯å¦äººå·¥æ‰§è¡Œ"
-
-    timing_lines = [
-        f"- **åˆ¤æ–­æ—¶ç‚¹**ï¼š{human_time(decision_time_raw)}",
-        f"- **è¡Œæƒ…ä¾æ®**ï¼š{human_time(market_as_of_raw)}" if market_as_of_raw else "- **è¡Œæƒ…ä¾æ®**ï¼šæœªå•ç‹¬è®°å½•",
-    ]
-    if market_age is not None:
-        timing_lines.append(f"- **è¡Œæƒ…è·åˆ¤æ–­**ï¼šçº¦{market_age:.0f}åˆ†é’Ÿ")
-    if account_as_of_raw:
-        timing_lines.append(f"- **è´¦æˆ·ä¾æ®**ï¼š{human_time(account_as_of_raw)}")
-    timing_lines.append(f"- **é€šçŸ¥ç”Ÿæˆ**ï¼š{notification_generated.strftime('%Y-%m-%d %H:%M:%S')}")
-
-    content = (
-        "### å‘ç”Ÿäº†ä»€ä¹ˆ\n"
-        + "\n".join(change_lines)
-        + f"\n\n### çŽ°åœ¨æ€Žä¹ˆåš\n**{user_action}**\n\n"
-        + f"### å½“å‰åŠ¨ä½œ\n{action_summary or 'æœªæä¾›'}\n\n"
-        + f"### ä¸ºä»€ä¹ˆ\n{decisive_reason}\n\n"
-        + "### æ—¶é—´ä¿¡æ¯ï¼ˆåŒ—äº¬æ—¶é—´ï¼‰\n"
-        + "\n".join(timing_lines)
-        + "\n\n> å¾®ä¿¡æ¶ˆæ¯é¡¶éƒ¨æ˜¾ç¤ºçš„æ˜¯å®žé™…å‘é€æ—¶é—´ï¼›é€šçŸ¥åªè½¬å‘å·²ç»å½¢æˆçš„æ­£å¼ETFåˆ¤æ–­ï¼Œä¸ä¼šè‡ªåŠ¨ä¸‹å•ã€‚"
-    )
-
-    return {
-        "key": f"formal-change:{decision_id}",
-        "type": "æ­£å¼å†³ç­–å˜åŒ–",
-        "event_type": "FORMAL_DECISION_MATERIAL_CHANGE",
-        "title": title,
-        "content": content,
-        "source": "formal_decision_event",
-        "related_decision_id": decision_id,
-        "security_code": code,
-        "security_name": name,
-        "user_severity": severity,
-        "user_action": user_action,
-        "confirmation_context": {
-            "decision_id": decision_id,
-            "security_code": code,
-            "security_name": name,
-            "opportunity_status": status,
-            "previous_opportunity_status": previous_status,
-            "previous_security_code": previous_code,
-            "risk_permission": risk_permission,
-            "previous_risk_permission": previous_risk,
-            "holding_action_changed": holding_action_changed,
-            "decision_time_beijing": str(decision_time_raw or ""),
-            "market_as_of_beijing": market_as_of_raw,
-            "account_as_of_beijing": account_as_of_raw,
-            "market_age_minutes_at_decision": market_age,
-        },
-    }
-
-
-def decision_event() -> dict | None:
-    trigger = read_json(STATE / "decision_trigger.json", {})
-    if not trigger.get("requires_formal_reassessment") or str(trigger.get("status") or "") not in {"TRIGGERED", "ALREADY_RECORDED"}:
-        return None
-    key = str(trigger.get("idempotency_key") or "")
-    if not key:
-        return None
-    account = read_json(STATE / "account_fact.json", {})
-    event_type, applicable = str(trigger.get("trigger_type") or ""), str(trigger.get("applicable_object") or "")
-    # Account changes have one canonical notification path only.  The dedicated
-    # account_confirmation_event() applies freshness, materiality and exact-delta
-    # checks; routing the same change through decision_event() creates duplicate,
-    # generic alerts such as mark-to-market total_asset moves.
-    if event_type == "ACCOUNT_STRUCTURE_CHANGED":
-        return None
-    if event_type == "TRADE_CONFIRMED":
-        target = trade_display(applicable); title = f"{target}æˆäº¤åŽéœ€è¦é‡æ–°è¯„ä¼°"; content = f"{target}çš„æˆäº¤å·²ç»ç¡®è®¤ï¼Œè´¦æˆ·æŒä»“æˆ–çŽ°é‡‘ç»“æž„å‘ç”Ÿå˜åŒ–ã€‚\n\nå»ºè®®ï¼šçŽ°åœ¨é‡æ–°æ£€æŸ¥æŒä»“ã€èµ„é‡‘å’Œä¸‹ä¸€æ­¥äº¤æ˜“å®‰æŽ’ã€‚"
-    elif event_type == "RISK_BOUNDARY_CROSSED":
-        title = "ETFç­–ç•¥é£Žé™©çŠ¶æ€å‘ç”Ÿå˜åŒ–"; content = "ETFç­–ç•¥é£Žé™©çŠ¶æ€å·²è·¨è¿‡å…³é”®åŒºé—´ï¼Œè¿™å¯èƒ½æ”¹å˜æ–°å¢žäº¤æ˜“çš„å¯ç”¨ç©ºé—´ã€‚\n\nå»ºè®®ï¼šçŽ°åœ¨é‡æ–°è¯„ä¼°é£Žé™©è®¸å¯å’Œå½“å‰äº¤æ˜“è®¡åˆ’ã€‚"
-    elif event_type == "E2E_RECOVERED":
-        title = "æ­¤å‰æš‚ç¼“çš„äº¤æ˜“åˆ¤æ–­çŽ°åœ¨å¯ä»¥ç»§ç»­"; content = "æ­¤å‰å› ä¸ºå…³é”®è¡Œæƒ…ã€è´¦æˆ·æˆ–å†³ç­–ä¿¡æ¯ä¸å®Œæ•´è€Œæš‚ç¼“çš„äº¤æ˜“åˆ¤æ–­ï¼ŒçŽ°åœ¨æ‰€éœ€ä¿¡æ¯å·²ç»è¡¥é½ã€‚\n\nå»ºè®®ï¼šé‡æ–°å¤„ç†ä¹‹å‰å°šæœªå®Œæˆçš„äº¤æ˜“åˆ¤æ–­ã€‚"
-    else:
-        target = display_from_code(applicable, account); title = f"{target}å‡ºçŽ°å€¼å¾—é‡æ–°è¯„ä¼°çš„æ–°å˜åŒ–"; content = f"{target}å‡ºçŽ°äº†å¯èƒ½æ”¹å˜åŽŸäº¤æ˜“åˆ¤æ–­çš„æ–°å¸‚åœºæˆ–ç ”ç©¶è¯æ®ã€‚\n\nå»ºè®®ï¼šçŽ°åœ¨é‡æ–°æ£€æŸ¥è¯¥æ ‡çš„çš„æœºä¼šã€æŒä»“æˆ–é£Žé™©æ”¶ç›Šåˆ¤æ–­ã€‚"
-    return {"key": f"decision:{key}", "type": "äº¤æ˜“åˆ¤æ–­", "title": title, "content": content, "source": "decision_trigger", "user_severity": "éœ€è¦å…³æ³¨", "user_action": "é‡æ–°è¯„ä¼°äº¤æ˜“è®¡åˆ’"}
-
-
-def _meaningful_unreconciled_account_changes(account: dict) -> list[dict]:
-    """Return only account deltas that can represent a real user/account action.
-
-    Mark-to-market fields such as total_asset, market value and floating P/L move
-    whenever prices move and must never be presented as unexplained trades.
-    """
-    rows: list[dict] = []
-    ignored_mark_to_market = {"total_asset", "stock_market_value", "market_value", "holding_pnl", "daily_pnl", "daily_pnl_pct"}
-    for event in account.get("account_change_events_after_confirmed_at") or []:
-        if str(event.get("reconciliation_status") or "").upper() != "UNRECONCILED_ACCOUNT_CHANGE":
-            continue
-        event_time = parse_notification_time(event.get("event_time") or event.get("occurred_at"))
-        if not event_time or now() - event_time > timedelta(minutes=ACCOUNT_EVENT_MAX_AGE_MINUTES):
-            continue
-        obj = str(event.get("object") or "").strip()
-        code = str(event.get("code") or "").strip()
-        qty_delta = event.get("quantity_delta")
-        amount_delta = event.get("amount_delta")
-        if obj in ignored_mark_to_market:
-            continue
-        if str(event.get("reconciliation_status") or "").upper() == "RECONCILED_BY_KNOWN_IPO_REGISTRATION":
-            continue
-        if code and isinstance(qty_delta, (int, float)) and abs(float(qty_delta)) > 0:
-            rows.append(event)
-            continue
-        if obj == "cash" and isinstance(amount_delta, (int, float)) and abs(float(amount_delta)) >= MIN_UNEXPLAINED_CASH_DELTA_YUAN:
-            rows.append(event)
-    return rows
-
-
-def account_confirmation_event() -> dict | None:
-    account = read_json(STATE / "account_fact.json", {})
-    unresolved = _meaningful_unreconciled_account_changes(account)
-    if not unresolved:
-        return None
-
-    # One broker screenshot may produce both a position and cash delta. Group the
-    # latest timestamp into one user message instead of sending one alert per field.
-    latest_time = max(str(e.get("event_time") or e.get("occurred_at") or "") for e in unresolved)
-    group = [e for e in unresolved if str(e.get("event_time") or e.get("occurred_at") or "") == latest_time]
-    event_ids = sorted(str(e.get("event_id") or e.get("idempotency_key") or "") for e in group)
-    digest = hashlib.sha256("|".join(event_ids).encode("utf-8")).hexdigest()[:12]
-
-    details: list[str] = []
-    for event in group:
-        code = str(event.get("code") or "")
-        if code:
-            target = display_from_code(code, account)
-            before = event.get("quantity_before")
-            after = event.get("quantity_after")
-            delta = event.get("quantity_delta")
-            details.append(f"- **{target}æŒä»“æ•°é‡**ï¼š{before:g} â†’ {after:g}ï¼ˆå˜åŒ–{float(delta):+g}ï¼‰")
-        elif str(event.get("object") or "") == "cash":
-            before = float(event.get("amount_before") or 0)
-            after = float(event.get("amount_after") or 0)
-            delta = float(event.get("amount_delta") or 0)
-            details.append(f"- **å¯ç”¨èµ„é‡‘**ï¼š{before:,.2f}å…ƒ â†’ {after:,.2f}å…ƒï¼ˆå˜åŒ–{delta:+,.2f}å…ƒï¼‰")
-
-    if not details:
-        return None
-
-    title = "ã€è´¦æˆ·ç¡®è®¤ã€‘å‘çŽ°æœªè§£é‡Šçš„æŒä»“/èµ„é‡‘å˜åŒ–"
-    content = (
-        "### å‘ç”Ÿäº†ä»€ä¹ˆ\n"
-        + "\n".join(details)
-        + "\n\nè¿™äº›å˜åŒ–ç›®å‰**æ²¡æœ‰å¯¹åº”åˆ°å·²ç¡®è®¤æˆäº¤ã€èµ„é‡‘åˆ’è½¬æˆ–å…¶ä»–å·²çŸ¥è´¦æˆ·äº‹ä»¶**ã€‚\n\n"
-        + "### ä½ éœ€è¦åšä»€ä¹ˆ\n"
-        + "å¦‚æžœä½ åˆšåˆšæœ‰å®žé™…ä¹°å–æˆ–èµ„é‡‘åˆ’è½¬ï¼Œè¯·åœ¨ ChatGPT â†’ ETFé¡¹ç›® â†’ å½“å‰äº¤æ˜“æ²Ÿé€šçª—å£å‘Šè¯‰æˆ‘ï¼›å¦‚æžœæ²¡æœ‰ï¼Œè¯·ä¸Šä¼ å½“å‰åˆ¸å•†è´¦æˆ·æˆªå›¾æ ¸å¯¹ã€‚\n\n"
-        + f"### è´¦æˆ·äº‹å®žæ—¶ç‚¹ï¼ˆåŒ—äº¬æ—¶é—´ï¼‰\n{human_time(latest_time)}\n\n"
-        + "> ä»…ä»·æ ¼æ¶¨è·Œé€ æˆçš„æ€»èµ„äº§ã€å¸‚å€¼å’Œæµ®åŠ¨ç›ˆäºå˜åŒ–ä¸ä¼šè§¦å‘æ­¤é€šçŸ¥ã€‚"
-    )
-    return {
-        "key": f"account-change:{latest_time}:{digest}",
-        "type": "è´¦æˆ·ç¡®è®¤",
-        "event_type": "ACCOUNT_FACT_CONFIRMATION",
-        "title": title,
-        "content": content,
-        "source": "account_fact",
-        "user_severity": "éœ€è¦æ“ä½œ",
-        "user_action": "ç¡®è®¤æ˜¯å¦æœ‰å®žé™…æˆäº¤/èµ„é‡‘åˆ’è½¬ï¼›æ— åˆ™ä¸Šä¼ è´¦æˆ·æˆªå›¾",
-        "confirmation_context": {"account_event_ids": event_ids, "account_event_time_beijing": latest_time},
-    }
-
-
-def failed_steps_text(diag: dict) -> str:
-    parts = []
-    for row in diag.get("failed_steps") or []:
-        step = str(row.get("step") or "").strip()
-        job = str(row.get("job") or "").strip()
-        if step:
-            parts.append(f"{job + ' / ' if job else ''}{step}")
-    return "ï¼›".join(parts[:3]) or "æœªæä¾›å…·ä½“å¤±è´¥æ­¥éª¤"
-
-
-def system_event() -> dict | None:
-    heal = read_json(STATE / "self_healing_status.json", {})
-    classification, action = str(heal.get("classification") or ""), str(heal.get("recommended_action") or "")
-    if action == "ESCALATE" or classification in {"PERSISTENT_RUNTIME_FAILURE", "CONSISTENCY_REGRESSION"}:
-        system_consistency = str(heal.get("system_consistency_status") or "æœªçŸ¥")
-        runtime_health = str(heal.get("runtime_health_status") or "æœªçŸ¥")
-        title = "ã€çœŸå®žè¿è¡Œå¼‚å¸¸ï½œå½±å“äº¤æ˜“åˆ¤æ–­ã€‘ETFç³»ç»Ÿè¿è¡ŒçŠ¶æ€å¼‚å¸¸"
-        content = (
-            f"å‘ç”Ÿäº†ä»€ä¹ˆï¼šç³»ç»Ÿè¿è¡ŒçŠ¶æ€è¿žç»­å¼‚å¸¸ï¼Œè‡ªåŠ¨ä¿®å¤å·²åˆ°è¾¾å®‰å…¨è¾¹ç•Œã€‚\n\n"
-            f"å½“å‰å·²çŸ¥ï¼šä¸€è‡´æ€§æ£€æŸ¥={system_consistency}ï¼›è¡Œæƒ…è¿è¡ŒçŠ¶æ€={runtime_health}ã€‚\n\n"
-            "å½±å“ï¼šåœ¨æ¢å¤å‰ï¼Œè¡Œæƒ…æˆ–äº¤æ˜“åˆ¤æ–­çš„å¯é æ€§å¯èƒ½å—å½±å“ã€‚\n\n"
-            "ä½ çŽ°åœ¨éœ€è¦åšä»€ä¹ˆï¼šæš‚ç¼“ä¾æ®ç³»ç»Ÿæ‰§è¡Œæ–°çš„ä¹°å…¥/å–å‡ºåˆ¤æ–­ï¼›å·²æœ‰åˆ¸å•†æŒä»“ä¸ä¼šè¢«ç³»ç»Ÿè‡ªåŠ¨ä¿®æ”¹ã€‚\n\n"
-            "ç³»ç»Ÿä¸‹ä¸€æ­¥ï¼šç»§ç»­æŒ‰æ—¢æœ‰å®‰å…¨æœºåˆ¶æ£€æŸ¥æ¢å¤ï¼›æ¢å¤åŽå¦‚æœ‰å¾…å¤„ç†äº¤æ˜“åˆ¤æ–­ï¼Œä¼šå†æ¬¡é€šçŸ¥ã€‚"
-        )
-        return {"key": f"system:selfheal:{classification}:{heal.get('checked_at') or heal.get('updated_at') or ''}", "type": "ç³»ç»Ÿå¼‚å¸¸", "title": title, "content": content, "source": "self_healing_status", "user_severity": "å½±å“äº¤æ˜“åˆ¤æ–­", "user_action": "æš‚ç¼“ä¾æ®ç³»ç»Ÿåšæ–°äº¤æ˜“åˆ¤æ–­"}
-
-    diag = read_json(STATE / "workflow_failure_diagnostic.json", {})
-    if str(diag.get("recommended_action") or "") != "ESCALATE_WITH_DIAGNOSTIC":
-        return None
-    safety = diag.get("safety") or {}
-    head_sha = str(diag.get("head_sha") or "")
-    main_head_sha = str(diag.get("main_head_sha") or "")
-    head_is_current_main = bool(safety.get("head_is_current_main"))
-    if (head_sha and main_head_sha and head_sha != main_head_sha) or not head_is_current_main:
-        return None
-    workflow = str(diag.get("workflow_name") or "åŽå°ä»»åŠ¡")
-    run_id = str(diag.get("run_id") or "æœªçŸ¥")
-    classification = str(diag.get("classification") or "æœªçŸ¥")
-    steps = failed_steps_text(diag)
-    changed_files = [str(x) for x in (diag.get("changed_files") or []) if x]
-    changed_text = "ã€".join(changed_files[:3]) if changed_files else "æ— æ˜Žç¡®ä¸šåŠ¡æ•°æ®æ–‡ä»¶å˜æ›´"
-    if workflow == "ETF market snapshot":
-        severity = "å½±å“äº¤æ˜“åˆ¤æ–­"; action_text = "æš‚ç¼“ä¾æ®ç³»ç»Ÿåšæ–°çš„äº¤æ˜“åˆ¤æ–­ï¼Œç­‰å¾…è¡Œæƒ…é‡‡é›†æ¢å¤ã€‚"; impact = "è¡Œæƒ…é‡‡é›†ä»»åŠ¡å¤±è´¥ï¼Œæœ€æ–°ETF/æŒ‡æ•°è¡Œæƒ…å¯èƒ½ä¸å®Œæ•´ï¼›è´¦æˆ·äº‹å®žä¸ä¼šå› æ­¤è¢«è‡ªåŠ¨ä¿®æ”¹ã€‚"
-    elif workflow == "ETF system consistency":
-        severity = "éœ€è¦å…³æ³¨"; action_text = "æš‚æ—¶æ— éœ€æ‰‹å·¥ä¿®å¤ï¼›å¦‚æžœä½ æ­£å‡†å¤‡ä¾èµ–ç³»ç»Ÿåšäº¤æ˜“åˆ¤æ–­ï¼Œè¯·å…ˆç­‰å¾…ä¸‹ä¸€è½®ä¸€è‡´æ€§æ£€æŸ¥ç»“æžœã€‚"; impact = "ç³»ç»Ÿä¸€è‡´æ€§æ£€æŸ¥å¤±è´¥ï¼Œè¯´æ˜ŽæŸé¡¹çŠ¶æ€æˆ–æ ¡éªŒæœªé€šè¿‡ï¼›ä¸ä»£è¡¨åˆ¸å•†è´¦æˆ·æˆ–å®žé™…æŒä»“å‘ç”Ÿå˜åŒ–ã€‚"
-    else:
-        severity = "éœ€è¦å…³æ³¨"; action_text = "æš‚æ—¶æ— éœ€æ‰‹å·¥ä¿®æ”¹æ•°æ®ï¼›å¦‚åŽç»­å½±å“è¡Œæƒ…ã€è´¦æˆ·æˆ–äº¤æ˜“åˆ¤æ–­ï¼Œç³»ç»Ÿä¼šå‡çº§é€šçŸ¥ã€‚"; impact = "åŽå°ç»´æŠ¤ä»»åŠ¡å¤±è´¥ï¼Œä½†å½“å‰è¯Šæ–­æ²¡æœ‰è¯æ®è¡¨æ˜Žåˆ¸å•†è´¦æˆ·æˆ–æŒä»“è¢«æ”¹åŠ¨ã€‚"
-    title = f"ã€çœŸå®žè¿è¡Œå¼‚å¸¸ï½œ{severity}ã€‘{workflow}å¤±è´¥"
-    content = f"å‘ç”Ÿäº†ä»€ä¹ˆï¼š{workflow}è¿è¡Œå¤±è´¥ï¼ˆRun {run_id}ï¼‰ã€‚\n\nå…·ä½“å¤±è´¥ï¼š{steps}ã€‚\n\nå½±å“ï¼š{impact}\n\næ¶‰åŠå˜æ›´ï¼š{changed_text}ã€‚\n\nä½ çŽ°åœ¨éœ€è¦åšä»€ä¹ˆï¼š{action_text}\n\nç³»ç»Ÿä¸ºä»€ä¹ˆæ²¡æœ‰è‡ªåŠ¨ä¿®ï¼šè‡ªåŠ¨å¤„ç†è§¦åŠå®‰å…¨è¾¹ç•Œï¼Œå› æ­¤åœæ­¢è‡ªåŠ¨ä¿®æ”¹ã€‚è¯Šæ–­åˆ†ç±»ï¼š{classification}ã€‚"
-    return {"key": f"system:workflow:{run_id}:{classification}", "type": "ç³»ç»Ÿå¼‚å¸¸", "title": title, "content": content, "source": "workflow_failure_diagnostic", "user_severity": severity, "user_action": action_text}
-
-
-def close_account_event(force: bool = False) -> dict | None:
-    current, account = read_json(STATE / "CURRENT.json", {}), read_json(STATE / "account_fact.json", {})
-    dt = now()
-    if not force and (not is_a_share_trading_day(dt) or dt.hour < 15):
-        return None
-    market_date = str(current.get("market_date") or "")
-    if not market_date or market_date != dt.date().isoformat():
-        return None
-    updated, confirmed_date = str(account.get("updated_at") or ""), str(account.get("last_confirmed_market_date") or "")
-    final_confirmed = False
-    if confirmed_date == market_date and updated:
-        try:
-            final_confirmed = datetime.fromisoformat(updated).astimezone(TZ).hour >= 15
-        except ValueError:
-            pass
-    if final_confirmed:
-        return None
-    content = (
-        "ä»Šå¤©æ˜¯Aè‚¡äº¤æ˜“æ—¥ï¼Œç³»ç»Ÿå°šæœªå–å¾—15:00ä¹‹åŽå¯ç¡®è®¤çš„æœ€ç»ˆè´¦æˆ·äº‹å®žã€‚\n\n"
-        "### ä½ éœ€è¦åš\n"
-        "è¯·æŠŠ**15:00æ”¶ç›˜åŽçš„åˆ¸å•†æŒä»“/è´¦æˆ·æˆªå›¾**ä¸Šä¼ åˆ° **ChatGPT â†’ ETFé¡¹ç›® â†’ã€ŒETFäº¤æ˜“å¤ç›˜ã€èŠå¤©çª—å£**ã€‚\n\n"
-        "å¦‚æžœæ”¶ç›˜åŽè´¦æˆ·æ²¡æœ‰ä»»ä½•å˜åŒ–ï¼Œä¹Ÿå¯ä»¥ç›´æŽ¥åœ¨è¯¥çª—å£å›žå¤ï¼š**æ”¶ç›˜è´¦æˆ·æ— å˜åŒ–**ã€‚"
-    )
-    return {"key": f"close-account:{market_date}", "type": "æ”¶ç›˜è´¦æˆ·", "title": "ã€æ”¶ç›˜è´¦æˆ·ï½œéœ€ç¡®è®¤ã€‘è¯·åˆ°ETFäº¤æ˜“å¤ç›˜ä¸Šä¼ æ”¶ç›˜æˆªå›¾", "content": content, "source": "account_fact", "user_severity": "éœ€è¦æ“ä½œ", "user_action": "åˆ°ChatGPT ETFé¡¹ç›®çš„ã€ŒETFäº¤æ˜“å¤ç›˜ã€èŠå¤©çª—å£ä¸Šä¼ æ”¶ç›˜æˆªå›¾æˆ–ç¡®è®¤æ— å˜åŒ–"}
-
-
-def choose_event(mode: str) -> dict | None:
-    if mode == "close": return close_account_event()
-    if mode == "close-test": return close_account_event(force=True)
-    for builder in (execution_confirmation_event, formal_decision_change_event, account_confirmation_event, system_event, decision_event, report_delivery_event):
-        event = builder()
-        if event: return event
-    return None
-
-
-LIFECYCLE_STATUSES = {"CREATED", "SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED", "EXPIRED"}
-USER_ACTION_TYPES = {"æˆäº¤ç¡®è®¤", "è´¦æˆ·ç¡®è®¤", "æ”¶ç›˜è´¦æˆ·", "äº¤æ˜“åˆ¤æ–­", "æ­£å¼å†³ç­–å˜åŒ–", "ç³»ç»Ÿå¼‚å¸¸"}
-NOTIFICATION_TTL_DAYS = 2
-
-
-def notification_id_for(event: dict) -> str:
-    source = str(event.get("source_event_id") or event.get("key") or "")
-    return "notification_" + hashlib.sha256(source.encode("utf-8")).hexdigest()[:20]
-
-
-def normalize_notification(event: dict, record: dict | None = None) -> dict:
-    record = record or {}
-    created = str(record.get("created_at") or event.get("created_at") or now().isoformat(timespec="seconds"))
-    context = event.get("confirmation_context") or {}
-    return {"notification_id": str(record.get("notification_id") or event.get("notification_id") or notification_id_for(event)), "event_type": str(record.get("event_type") or event.get("event_type") or event.get("type") or "SYSTEM_EVENT"), "notification_channel": str(record.get("notification_channel") or event.get("notification_channel") or ("REPORT" if event.get("event_type") == "REPORT_DELIVERY_REQUEST" else "INTERRUPT")), "delivery_mode": str(record.get("delivery_mode") or event.get("delivery_mode") or ("FULL_REPORT" if event.get("event_type") == "REPORT_DELIVERY_REQUEST" else "COMPACT")), "source_event_id": str(record.get("source_event_id") or event.get("source_event_id") or event.get("key") or ""), "related_decision_id": str(record.get("related_decision_id") or event.get("related_decision_id") or context.get("decision_id") or ""), "security_code": str(record.get("security_code") or event.get("security_code") or context.get("security_code") or ""), "security_name": str(record.get("security_name") or event.get("security_name") or context.get("security_name") or ""), "user_severity": str(record.get("user_severity") or event.get("user_severity") or ""), "user_action": str(record.get("user_action") or event.get("user_action") or ""), "lifecycle_status": str(record.get("lifecycle_status") or record.get("status") or "CREATED"), "created_at": created, "sent_at": record.get("sent_at"), "confirmed_at": record.get("confirmed_at"), "archived_at": record.get("archived_at"), "expires_at": record.get("expires_at") or ((parse_notification_time(created) + timedelta(days=NOTIFICATION_TTL_DAYS)).isoformat(timespec="seconds") if parse_notification_time(created) else None), "title": str(record.get("title") or event.get("title") or ""), "content": str(record.get("content") or event.get("content") or ""), "source": str(record.get("source") or event.get("source") or ""), "confirmation_context": context or record.get("confirmation_context") or {}, "response": record.get("response") or {}, "last_attempted_at": record.get("last_attempted_at") or record.get("attempted_at")}
-
-
-def expire_notifications(items: list[dict]) -> list[dict]:
-    current = now(); out = []
-    for raw in items:
-        item = normalize_notification(raw, raw)
-        status = str(item.get("lifecycle_status") or "")
-        expiry = parse_notification_time(item.get("expires_at"))
-        if status in {"SENT", "WAITING_CONFIRMATION"} and expiry and current >= expiry:
-            item["lifecycle_status"] = "EXPIRED"; item["archived_at"] = item.get("archived_at") or current.isoformat(timespec="seconds")
-        out.append(item)
-    return out
-
-
-def find_existing_notification(items: list[dict], event: dict) -> dict | None:
-    source = str(event.get("source_event_id") or event.get("key") or "")
-    nid = str(event.get("notification_id") or "")
-    related_decision_id = str(event.get("related_decision_id") or (event.get("confirmation_context") or {}).get("decision_id") or "")
-    event_type = str(event.get("event_type") or "")
-    event_account_ids = set((event.get("confirmation_context") or {}).get("account_event_ids") or [])
-    for item in items:
-        if nid and str(item.get("notification_id") or "") == nid:
-            return item
-        if source and str(item.get("source_event_id") or "") == source:
-            return item
-        if event_type == "FORMAL_DECISION_MATERIAL_CHANGE" and related_decision_id and str(item.get("related_decision_id") or "") == related_decision_id:
-            return item
-        if event_type == "ACCOUNT_FACT_CONFIRMATION" and event_account_ids:
-            item_ids = set((item.get("confirmation_context") or {}).get("account_event_ids") or [])
-            if event_account_ids & item_ids:
-                return item
-    return None
-
-
-def compact_recent(item: dict) -> dict:
-    return {"key": item.get("source_event_id"), "type": item.get("event_type"), "title": item.get("title"), "content": item.get("content"), "source": item.get("source"), "user_severity": item.get("user_severity"), "user_action": item.get("user_action"), "status": "SENT" if item.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION"} else item.get("lifecycle_status"), "attempted_at": item.get("last_attempted_at") or item.get("sent_at") or item.get("created_at"), "response": item.get("response") or {}, "notification_id": item.get("notification_id"), "lifecycle_status": item.get("lifecycle_status")}
-
-
-def _notification_matches_intent(item: dict, match: dict) -> bool:
-    """Require exact decision identity plus the notification's object/action identity."""
-    intent = match.get("intent") or {}
-    context = item.get("confirmation_context") or {}
-    item_code = str(item.get("security_code") or context.get("security_code") or "")
-    item_side = str(context.get("side") or "")
-    item_lifecycle = str(context.get("lifecycle") or "")
-    if item_code and str(intent.get("code") or "") != item_code:
-        return False
-    if item_side and str(intent.get("side") or "") != item_side:
-        return False
-    if item_lifecycle and str(intent.get("lifecycle") or "") != item_lifecycle:
-        return False
-    return True
-
-
-def revalidate_pending_notifications(notifications: list[dict]) -> list[dict]:
-    """Revalidate pending prompts against canonical facts using exact identity first."""
-    reconciliation = read_json(STATE / "execution_reconciliation.json", {})
-    matches = reconciliation.get("matches") or []
-    for item in notifications:
-        if str(item.get("lifecycle_status") or "").upper() != "WAITING_CONFIRMATION":
-            continue
-        event_type = str(item.get("event_type") or "")
-        reason = ""
-        if event_type == "PENDING_EXECUTION_CONFIRMATION":
-            context = item.get("confirmation_context") or {}
-            related_decision_id = str(item.get("related_decision_id") or context.get("decision_id") or "")
-            exact = [match for match in matches if str((match.get("intent") or {}).get("decision_id") or "") == related_decision_id] if related_decision_id else []
-            if related_decision_id:
-                if len(exact) == 1 and _notification_matches_intent(item, exact[0]) and not bool(exact[0].get("requires_user_confirmation")):
-                    reason = "exact related decision is canonically reconciled; confirmation is no longer required"
-            else:
-                code = str(item.get("security_code") or context.get("security_code") or "")
-                side = str(context.get("side") or "")
-                lifecycle = str(context.get("lifecycle") or "")
-                date = str(context.get("suggested_execution_date") or context.get("execution_date") or "")
-                candidates = [match for match in matches
-                              if str((match.get("intent") or {}).get("code") or "") == code
-                              and (not side or str((match.get("intent") or {}).get("side") or "") == side)
-                              and (not lifecycle or str((match.get("intent") or {}).get("lifecycle") or "") == lifecycle)
-                              and (not date or str(match.get("execution_date") or "") == date)]
-                if len(candidates) == 1 and not bool(candidates[0].get("requires_user_confirmation")):
-                    reason = "unique constrained legacy execution identity is reconciled"
-        elif event_type == "æ”¶ç›˜è´¦æˆ·":
-            source = str(item.get("source_event_id") or "")
-            market_date = source.split(":", 1)[1] if source.startswith("close-account:") else ""
-            closure = read_json(STATE / f"close_review_closure_{market_date}.json", {})
-            if market_date and str(closure.get("status") or "").upper() == "CLOSED":
-                reason = f"canonical close review closure completed for {market_date}"
-        if reason:
-            stamp = now().isoformat(timespec="seconds")
-            item["lifecycle_status"] = "ARCHIVED"
-            item["archived_at"] = item.get("archived_at") or stamp
-            item["revalidation_reason"] = reason
-    return notifications
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser(); parser.add_argument("--mode", choices=["event", "close", "close-test", "channel-test"], default="event"); args = parser.parse_args()
-    token = os.environ.get("PUSHPLUS_TOKEN", "").strip(); state_path = STATE / "notification_center.json"; state = read_json(state_path, {"schema_version": "1.0", "recent": []})
-    raw_items = list(state.get("notifications") or [])
-    if not raw_items: raw_items = [normalize_notification(x, x) for x in (state.get("recent") or [])]
-    notifications = expire_notifications(raw_items)
-    notifications = revalidate_pending_notifications(notifications)
-    if args.mode == "channel-test":
-        event = {"key": f"channel-test:{now().isoformat(timespec='seconds')}", "type": "æµ‹è¯•", "title": "ã€æµ‹è¯•ã€‘ETFç³»ç»Ÿé€šçŸ¥ä¸­å¿ƒ", "content": "è¿™æ˜¯ä¸€æ¡é€šçŸ¥é€šé“æµ‹è¯•ï¼Œä¸ä»£è¡¨çœŸå®žè¡Œæƒ…ã€è´¦æˆ·ã€äº¤æ˜“æˆ–ç³»ç»Ÿæ•…éšœã€‚\n\nä½ çŽ°åœ¨éœ€è¦åšä»€ä¹ˆï¼šæ— éœ€æ“ä½œã€‚æ”¶åˆ°å³è¡¨ç¤º GitHub â†’ PushPlus â†’ å¾®ä¿¡é€šé“æ­£å¸¸ã€‚", "source": "manual_test", "event_type": "CHANNEL_TEST", "user_severity": "æµ‹è¯•", "user_action": "æ— éœ€æ“ä½œ"}
-    else:
-        event = choose_event(args.mode)
-    if not event:
-        state.update({"schema_version": "2.2", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "NO_NOTIFICATION_NEEDED"}, ensure_ascii=False)); return 0
-    existing = find_existing_notification(notifications, event)
-    if existing and existing.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED"}:
-        state.update({"schema_version": "2.2", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "ALREADY_MANAGED", "notification_id": existing.get("notification_id"), "lifecycle_status": existing.get("lifecycle_status")}, ensure_ascii=False)); return 0
-    if existing and existing.get("lifecycle_status") == "EXPIRED":
-        print(json.dumps({"status": "EXPIRED_REQUIRES_NEW_EVENT", "notification_id": existing.get("notification_id")}, ensure_ascii=False)); return 0
-    item = normalize_notification(event, existing); item["lifecycle_status"] = "CREATED"; item["created_at"] = item.get("created_at") or now().isoformat(timespec="seconds")
-    if not token:
-        stamp = now().isoformat(timespec="seconds")
-        item["last_attempted_at"] = stamp
-        item["response"] = {"error": "PUSHPLUS_TOKEN missing"}
-        item["lifecycle_status"] = "FAILED"
-        notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
-        notifications.append(item)
-        state.update({"schema_version": "2.2", "updated_at": stamp, "last_status": "FAILED", "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "FAILED", "notification_id": item["notification_id"], "lifecycle_status": "FAILED"}, ensure_ascii=False)); return 1
-    ok, response = send(token, item["title"], item["content"]); stamp = now().isoformat(timespec="seconds"); item["last_attempted_at"] = stamp; item["response"] = response
-    item["lifecycle_status"] = "WAITING_CONFIRMATION" if ok and item["event_type"] in {"PENDING_EXECUTION_CONFIRMATION", "æˆäº¤ç¡®è®¤", "è´¦æˆ·ç¡®è®¤", "ACCOUNT_FACT_CONFIRMATION", "æ”¶ç›˜è´¦æˆ·"} else ("SENT" if ok else "FAILED"); item["sent_at"] = stamp if ok else item.get("sent_at")
-    if existing: notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
-    notifications.append(item)
-    state = {"schema_version": "2.2", "updated_at": stamp, "last_status": item["lifecycle_status"], "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": "åªæŽ¨é€ä¼šæ”¹å˜ç”¨æˆ·å…³æ³¨ã€é£Žé™©è®¸å¯ã€æœºä¼šçŠ¶æ€ã€æŒä»“åŠ¨ä½œã€æ‰§è¡Œç¡®è®¤æˆ–ç³»ç»Ÿå¯é æ€§çš„å®žè´¨äº‹ä»¶ï¼›æ€»èµ„äº§/å¸‚å€¼/æµ®åŠ¨ç›ˆäºç­‰çº¯ç›¯å¸‚å˜åŒ–ä¸ä½œä¸ºè´¦æˆ·å¼‚å¸¸ï¼›åŒä¸€å®žè´¨è´¦æˆ·äº‹ä»¶å’ŒåŒä¸€æ­£å¼decision_idä¸å¾—é‡å¤æŽ¨é€ï¼›æ”¶ç›˜è´¦æˆ·æé†’ä»…åœ¨Aè‚¡äº¤æ˜“æ—¥è§¦å‘ã€‚", "safety_boundary": "é€šçŸ¥ä¸­å¿ƒåªè½¬å‘å·²æœ‰æ­£å¼åˆ¤æ–­ï¼Œä¸ç”Ÿæˆäº¤æ˜“åŠ¨ä½œï¼Œä¸ä¿®æ”¹MASTERã€é£Žé™©è®¸å¯ã€é‡‘é¢æˆ–å–å‡ºä»½é¢ï¼›æ­£å¼æˆäº¤åªèƒ½ç”±ç”¨æˆ·ç¡®è®¤å…¥å£æäº¤ã€‚"}
-    write_json(state_path, state); print(json.dumps(item, ensure_ascii=False)); return 0 if ok else 1
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
-
+1ëa¡Ñ1qêmŠ‰ËŠw¶Š‰Üz{^®œ¬±©•§r«×œ…ªõÑÈZ¯]Màšžz-r‰ïz»Z®¦z{h•Ð¡j¼"¶Ú–çŸ¢´^¦VœzÚ-Ê—’ÊË^˜(Z¬&§ž‹\¢{Þ®ÛÚ–ç­¢Ü©y,¬µé‚…ªÄ®º+JÚâž	®²ÖÞ{œ¶\¨ç!j¶œµêå¢xœ›ÛH×Ù]\™W×È[\Ü[››Ý][ÛœÃBƒBš[\Ü\™Ü\œÙCBš[\Ü\ÚXƒBš[\ÜœÛÛƒBš[\ÜÜÃBš[\Ü\›X‹™\œ›ÜƒBš[\Ü\›X‹œ™\]Y\ÝB™œ›ÛH]][YH[\Ü]][YK[YY[K[Y^›Û™CB™œ›ÛH]Xˆ[\Ü]B™œ›ÛH\[™È[\Ü[žCBƒB”“ÓÕH]
+ÜË™[š\›Û‹™Ù]
+‘U—ÔÖTÕSWÔ“ÓÕ‹]
+×Ùš[W×ÊKœ™\ÛÛ™J
+Kœ\™[ÖÌWJJKœ™\ÛÛ™J
+CB”ÕUHH“ÓÕÈ™]HˆÈœÝ]HƒB•ˆH[Y^›Û™J[YY[JÝ\œÏN
+JCB”TÒT×ÕT“HšÎ‹ËÝÝÝËœ\Ú\Ëœ\ËÜÙ[™ƒB’TÕÔ–WÓSRUHLB“ÔÔ•S’UWÔÕUTÑTÈHÈ¹¥è9§.¹/&ˆ‹º)à¹kçù§.¹/&ˆ‹•šX[9§.¹/&ˆ‹ÛÛ™š\›y§.¹/&ˆŸCB”’TÒ×ÔT“RTÔÒSÓ”ÈH
+¹é y«h¹¥¬9h§ˆ‹¹a`z+®ÛÛ™š\›H‹¹a`z+®šX[ŠCB‘“Ô“PSÑU‘S•ÓPVÐQÑWÓRS•UTÈHCBPÐÓÕS•ÑU‘S•ÓPVÐQÑWÓRS•UTÈHÌB“RS—ÕS‘VRS‘QÐÐTÒÑSWÖUPSˆHLŒB•QS‘×ÐÐSS‘TˆH“ÓÕÈ˜ÛÛ™šYÈˆÈ›X\šÙ]ˆÈ˜WÜÚ\™WÝ˜Y[™×ØØ[[™\—ÌŒ‹šœÛÛˆƒBƒB”‘TÔ•ÕTTÈHÈ‘U—ÕQWÔ‘U’QUÈ‹‘U—ÔÖTÕSWÔ‘U’QUÈŸB”‘TÔ•Ô‘TUQTÕÑTˆH“ÓÕÈœ™\]Y\ÝÈˆÈœ™\ÜÙ[]™\žH‚‚ÐS“Ó’PÐSÕSTUWÑSRSQTÈHÂˆ“PT’ÑUÔÒÐÒ×ÐST•Žˆ¹n ¹g.¹o ¹bª‹ˆ“PT’ÑUÕSQWÐST•Žˆ¹n ¹g.¹o ¹bª‹ˆTP×ÓÔS—ÔÒQÓSŽˆ¹n ¹g.¹o ¹bª‹ˆWÔÒT‘WÔÑTÔÒSÓ—ÔÕSSPT–HŽˆ¹¥-¹ææ9 .ùîäÈ‹ˆTP×ÔÑTÔÒSÓ—ÔÕSSPT–HŽˆ¹¥-¹ææ9 .ùîäÈ‹ˆ•T×ÔÑTÔÒSÓ—ÔÕSSPT–HŽˆ¹¥-¹ææ9 .ùîäÈ‹ˆ”S‘S‘×ÑVPÕUSÓ—ÐÓÓ‘’T“PUSÓˆŽˆ¹¢$9.©9èkº+©‹ˆPÐÓÕS•ÑPÕÐÓÓ‘’T“PUSÓˆŽˆº-)¹¢-ùèkº+©‹ˆ‘L‘WÔ‘PÓÕ‘T‘QŽˆ¹b)9¥«y h¹i#H‹ˆ”ÖTÕSWÑU‘S•Žˆ¹ìîùîçúf.ùhgˆ‹ˆ‘“Ô“PSÑPÒTÒSÓ—ÓPUT’PSÐÒS‘ÑHŽˆ¹«hùo#ùa¬ùëe¹cæ9c%ˆ‹ˆÒS“‘SÕTÕŽˆ¹ìîùîçúf.ùhgˆ‹ŸBÐS“Ó’PÐSÕSTUWÕTTÈHÂˆ¹¥-¹ææ:-)¹¢-ÈŽˆ¹¥-¹ææ:-)¹¢-È‹ˆ¹ìîùîçùo ¹n.Žˆ¹ìîùîçúf.ùhgˆ‹ŸBÐS“Ó’PÐSÓÔÔ•S’UWÑSRSQTÈHÈ¹¥è9§.¹/&ˆ‹º)à¹kçù§.¹/&ˆ‹•šX[9§.¹/&ˆ‹ÛÛ™š\›y§.¹/&ˆŸB‚‚™YˆØ[›ÛšXØ[Ý[\]WÙ˜[Z[J]™[ˆXÝ
+HOˆÝˆ›Û™N‚ˆˆˆ”™\ÛÛ™H]™\žH[\œ\ÈÛ™H™YÚ\Ý\™Y\Ù\‹Y˜XÚ[™È[\]H˜[Z[Kˆˆˆ‚ˆ]™[Ý\HHÝŠ]™[™Ù]
+™]™[Ý\HŠHÜˆˆŠBˆYˆ]™[Ý\HOH”‘TÔ•ÑSU‘T–WÔ‘TUQTÕŽ‚ˆ™]\›ˆ”‘TÔ•‚ˆYˆ]™[Ý\HOH‘“Ô“PSÑPÒTÒSÓ—ÓPUT’PSÐÒS‘ÑHŽ‚ˆÛÛ^H]™[™Ù]
+˜ÛÛ™š\›X][Û—ØÛÛ^ŠHÜˆßBˆÝ]\ÈHÝŠÛÛ^™Ù]
+›ÜÜ[š]WÜÝ]\ÈŠHÜˆˆŠBˆ™]š[Ý\×ÜÝ]\ÈHÝŠÛÛ^™Ù]
+œ™]š[Ý\×ÛÜÜ[š]WÜÝ]\ÈŠHÜˆˆŠBˆYˆ›ÛÛ
+ÛÛ^™Ù]
+šÛ[™×ØXÝ[Û—ØÚ[™ÙYŠJN‚ˆ™]\›ˆ¹£ y.äùbª9/g‚ˆYˆÝ]\ÈOH¹¥è9§.¹/&ˆˆ[™™]š[Ý\×ÜÝ]\È[ˆÈº)à¹kçù§.¹/&ˆ‹•šX[9§.¹/&ˆ‹ÛÛ™š\›y§.¹/&ˆŸN‚ˆ™]\›ˆ¹§.¹/&¹i,y¥b‚ˆYˆÝ]\È[ˆÐS“Ó’PÐSÓÔÔ•S’UWÑSRSQTÎ‚ˆ™]\›ˆÝ]\ÂˆYˆÝŠÛÛ^™Ù]
+œš\Ú×Ü\›Z\ÜÚ[ÛˆŠHÜˆˆŠHOHÝŠÛÛ^™Ù]
+œ™]š[Ý\×Üš\Ú×Ü\›Z\ÜÚ[ÛˆŠHÜˆˆŠN‚ˆ™]\›ˆºhãºfjz+®9cëÈ‚ˆ™]\›ˆ›Û™BˆYˆ]™[Ý\H[ˆÐS“Ó’PÐSÕSTUWÑSRSQTÎ‚ˆ™]\›ˆÐS“Ó’PÐSÕSTUWÑSRSQTÖÙ]™[Ý\WBˆ]™[Ý\HHÝŠ]™[™Ù]
+\HŠHÜˆˆŠBˆ™]\›ˆÐS“Ó’PÐSÕSTUWÕTTË™Ù]
+]™[Ý\JB‚‚™Yˆ™[™\—ØØ[›ÛšXØ[Û›ÝYšXØ][ÛŠ]™[ˆXÝ
+HOˆXÝ‚ˆˆˆ”™[™\ˆÛ™HØ[›ÛšXØ[\Ù\‹Y˜XÚ[™ÈÚÙ[]ÛŽÈ‘TÔ•™[XZ[œÈ[Y›ÜØ\™ˆˆˆ‚ˆ˜[Z[HHØ[›ÛšXØ[Ý[\]WÙ˜[Z[J]™[
+BˆYˆ˜[Z[H\È›Û™N‚ˆ˜Z\ÙH˜[YQ\œ›ÜŠˆ[œÝ\ÜYØ[›ÛšXØ[›ÝYšXØ][Ûˆ]™[Ý\O^Ù]™[™Ù]
+	Ù]™[Ý\IÊH\ŸHŠBˆYˆ˜[Z[HOH”‘TÔ•Ž‚ˆ™]\›ˆXÝ
+]™[
+B‚ˆ™[™\™YHXÝ
+]™[
+BˆÛÛ^HXÝ
+]™[™Ù]
+˜ÛÛ™š\›X][Û—ØÛÛ^ŠHÜˆßJBˆÛÙHHÝŠ]™[™Ù]
+œÙXÝ\š]WØÛÙHŠHÜˆÛÛ^™Ù]
+œÙXÝ\š]WØÛÙHŠHÜˆˆŠBˆ˜[YHHÝŠ]™[™Ù]
+œÙXÝ\š]WÛ˜[YHŠHÜˆÛÛ^™Ù]
+œÙXÝ\š]WÛ˜[YHŠHÜˆˆŠBˆ\™Ù]HˆžÛ˜[Y_{ï"ØÛÙ_{ï"HˆYˆ˜[YH[™ÛÙH[ÙH
+˜[YHÜˆÛÙHÜˆ¹æî9alùkîz,hHŠBˆ™[™\™YÈ[\]WÙ˜[Z[H—HH˜[Z[Bˆ™[™\™YÈ[\]WÝ™\œÚ[Ûˆ—HHÐS“Ó’PÐSÒS•T”•TÕŒH‚‚ˆYˆ˜[Z[HOH¹n ¹g.¹o ¹bªŽ‚ˆ]HHˆ¸à$9n ¹g.¹o ¹bª8à$^Ý\™Ù]H‚ˆ™X\ÛÛˆHÝŠÛÛ^™Ù]
+™]™[ØØ]YÛÜžHŠHÜˆ]™[™Ù]
+\HŠHÜˆ¹n ¹g.¹.¢ùk§¹cäyå'ùcæ9c%ˆŠBˆ›ÙHH
+ˆˆÈÈÈ9kîz,hWžÝ\™Ù]W—ˆÈÈÈ9cäyå'ù.¡¹.à9.bžÜ™X\ÛÛŸxà ——ˆ‚ˆˆˆÈÈÈ9..¹.à9.b9`/9o¥ùalù¬êžÜÝŠ]™[™Ù]
+	ØÛÛ[	ÊHÜˆ	ùodùbcyn ¹g.¹.¢ùk§º/¯¹b,:`&¹çéz-a9¨/8à ‰Ê_W—ˆ‚ˆˆˆÈÈÈ9.¢ùk§¹¥í¹à®{ï"9c%ù.«9¥íºeí;ï"WžÚ[X[—Ý[YJ]™[™Ù]
+	ØÜ™X]YØ]	ÊHÜˆÛÛ^™Ù]
+	ÛX\šÙ]Ø\×ÛÙ—Ø™ZZš[™ÉÊJ_W—ˆ‚ˆˆÈÈÈ9/h:g :) y`f¹.à9.b¹ab9§éyç"ùodùbcy«hùo#ÑU¹b)9¥«{ï&ù§+:`&¹çéy.#y.èú(j9¢$9.©9¢%º!ê¹bª9."ùcexà ˆŠBˆ[Yˆ˜[Z[HOH¹¢$9.©9èkº+©Ž‚ˆ]HHˆ¸à$9¢$9.©9èkº+©8à$^Ý\™Ù]y¢$9.©9.¢ùk§ºg :) yèkº+©‚ˆÝ]\ÈHÝŠ
+]™[™Ù]
+˜ÛÛ™š\›X][Û—ØÛÛ^ŠHÜˆßJK™Ù]
+œÝ]\ÈŠHÜˆˆŠBˆ›ÙHH
+ˆˆÈÈÈ9mì¹cäyå'ùæ¡9¢$9.©9.¢ùk§—žÝ\™Ù]{ï&ù¥®yd${ï&žØÛÛ^™Ù]
+	ÜÚYIÊHÜˆ	ùo¡yèkº+©	ß{ï&È‚ˆˆ¹¥l:aãûï&žØÛÛ^™Ù]
+	Ü]X[]IÊHÜˆ	ùo¡yèkº+©	ß{ï&ù¥éy§'ûï&žØÛÛ^™Ù]
+	ÜÝYÙÙ\ÝYÙ^XÝ][Û—Ù]IÊHÜˆ	ùo¡yèkº+©	ßxà ——ˆ‚ˆˆˆÈÈÈ:g :) z(izod9æ¡9.¢ùk§—žÜÝ]\ÈÜˆ	ù¢$9.©9.#¹«hùo#ùa¬ùëe¹æ¡9kîyn¥9alùìîù.ãyo¡yèkº+©8à ‰ßW—ˆ‚ˆˆÈÈÈ9/h:g :) y`f¹.à9.b¹èkº+©9¥è¹§"y¢$9.©9od¹fè9¢%º(iyaay¢$9.©9¦#¹îá¸à ¹.áyèkº+©9¥è¹§"y¢$9.©9od¹fè;ï#9.#yå'ù¢$9¥¬9.©9¦$ù£!ù.é8à ——ˆ‚ˆˆÈÈÈ:/®yåcº`&¹çéy.#y.èú(j9ìîùîçú!ê¹bª9."ùcey¢%¹¢$9.©8à ˆŠBˆ[Yˆ˜[Z[HOHº-)¹¢-ùèkº+©Ž‚ˆ]HHˆ¸à$:-)¹¢-ùèkº+©8à$^Ý\™Ù]z-)¹¢-ù.¢ùk§ºg :) yèkº+©‚ˆ›ÙHH
+ˆˆÈÈÈ9cäyå'ù.¡¹.à9.bžÜÝŠ]™[™Ù]
+	ØÛÛ[	ÊHÜˆ	ùcäyã¬9l&¹§*º)èúaâ¹æ¡:-)¹¢-ùcæ9c%¸à ‰Ê_W—ˆ‚ˆˆÈÈÈ9/h:g :) y`f¹.à9.b¹èkº+©9¦+ùd)¹kf9g*9k§ºfay¢$9.©9¢%º-a:aäyb$º/k;ï&ùoáz) y¥íº(iyaaz-)¹¢-ù.¢ùk§¸à ——ˆ‚ˆˆˆÈÈÈ:-)¹¢-ù.¢ùk§¹¥í¹à®{ï"9c%ù.«9¥íºeí;ï"WžÚ[X[—Ý[YJÛÛ^™Ù]
+	ØXØÛÝ[Ù]™[Ý[YWØ™ZZš[™ÉÊJ_W—ˆ‚ˆˆÈÈÈ:/®yåcº`&¹çéy.#yå'ù¢$9.©9¦$ùbª9/g;ï#9.gù.#y.èú(j9¢$9.©8à ˆŠBˆ[Yˆ˜[Z[HOH¹¥-¹ææ:-)¹¢-ÈŽ‚ˆ]HH¸à$9¥-¹ææ:-)¹¢-øà$z+íùèkº+©9¥-¹ææ:-)¹¢-ù.¢ùk§ˆ‚ˆ›ÙHH
+ˆÈÈÈ9cäyå'ù.¡¹.à9.bz ¨y.©9¦$ù¥éy¥-¹ææ:-)¹¢-ù.¢ùk§¹l&¹§*ºeëyã«øà ——ˆ‚ˆˆÈÈÈ9/h:g :) y`f¹.à9.b¹."¹/(9¥-¹ææ9d#¹æ¡9b.9eaº-)¹¢-ù¢*¹fï»ï#9¢%¹èkº+©9¥-¹ææ:-)¹¢-ù¥è9cæ9c%¸à ——ˆ‚ˆˆÈÈÈ:/®yåcº/æycê¹¦+ú-)¹¢-ù.¢ùk§¹èkº+©;ï#9.#yå'ù¢$9.©9¦$ù£!ù.é8à ˆŠBˆ[Yˆ˜[Z[HOH¹b)9¥«y h¹i#HŽ‚ˆ]HH¸à$9b)9¥«y h¹i#xà$y«i9bcy¦ ¹ï$ùæ¡9b)9¥«ycëù.éyîéùîëH‚ˆ›ÙHH
+ˆÈÈÈ9cäyå'ù.¡¹.à9.b¹«i9bcyfè9alúe+¹.¢ùk§¹.#z-¬ú #9¦ ¹ï$ùæ¡9b)9¥«ymì¹ h¹i#ycëùi!9ä!¸à ——ˆ‚ˆˆÈÈÈ9/h:g :) y`f¹.à9.bºaãy¥¬9§éyç"ù§ 9¥¬9«hùo#ùb)9¥«ycâ¹am¹i,y¥b9§hy.í¸à ——ˆ‚ˆˆÈÈÈ:/®yåcº`&¹çéy.#y.èú(j9¢$9.©9¢%º!ê¹bª9."ùcexà ˆŠBˆ[Yˆ˜[Z[HOH¹ìîùîçúf.ùhgˆŽ‚ˆ]HH¸à$9ìîùîçúf.ùhg¸à$QU¹ìîùîçúg :) yalù¬ê:/ä:(c9â­¹  H‚ˆ›ÙHH
+ˆˆÈÈÈ9cäyå'ù.¡¹.à9.bžÜÝŠ]™[™Ù]
+	ØÛÛ[	ÊHÜˆ	ùìîùîçú/ä:(c:`aùb,:g :) yalù¬ê9æ¡:f.ùhg¸à ‰Ê_W—ˆ‚ˆˆÈÈÈ9olydãW¹g*9 h¹i#ybc{ï#9.#yn¥9.áy/§y£k¹ìîùîçù`f¹¥¬9æ¡9.©9¦$ùb)9¥«xà ——ˆ‚ˆˆÈÈÈ9/h:g :) y`f¹.à9.b¹¥è:g 9¢bùméy/ë¹¥.yå'ù.©ùâ­¹  {ï&ùëbyo¡yìîùîçù h¹i#y¢%¹£"z`&¹çéz) y¬`º(iyaay.¢ùk§¸à ——ˆ‚ˆˆÈÈÈ:/®yåc¹ìîùîçú`&¹çéy.#y/ë¹¥.z-)¹¢-øà y.#y."ùcexà ˆŠBˆ[Yˆ˜[Z[HOHºhãºfjz+®9cëÈŽ‚ˆ]HH¸à$:hãºfjz+®9cëøà$y«hùo#úhãºfjz+®9cëùcäyå'ùcæ9c%ˆ‚ˆ›ÙHH
+ˆˆÈÈÈ9odùbcy«hùo#ùâ­¹  WžØÛÛ^™Ù]
+	Üš\Ú×Ü\›Z\ÜÚ[Û‰ÊHÜˆ	ù§*¹£ä9/¦ÉßW—ˆ‚ˆˆˆÈÈÈ9cäyå'ù.¡¹.à9.bžÜÝŠ]™[™Ù]
+	ØÛÛ[	ÊHÜˆ	ù«hùo#ùb)9¥«y.+yæ¡:hãºfjz+®9cëùcäyå'ùk§º-*9cæ9c%¸à ‰Ê_W—ˆ‚ˆˆÈÈÈ9/h:g :) y`f¹.à9.b¹£"y§ 9¥¬9«hùo#ùb)9¥«ya¬ùk¦¹¦+ùd)¹.®¹méyi!9ä!¸à ——ˆ‚ˆˆÈÈÈ:/®yåcº`&¹çéy.#y.èú(j9¢$9.©9¢%º!ê¹bª9."ùcexà ˆŠBˆ[Yˆ˜[Z[H[ˆÈº)à¹kçù§.¹/&ˆ‹•šX[9§.¹/&ˆ‹ÛÛ™š\›y§.¹/&ˆ‹¹§.¹/&¹i,y¥b‹¹£ y.äùbª9/gŸN‚ˆ]HHˆ¸à$Ù˜[Z[_xà$^Ý\™Ù]H‚ˆ›ÙHH
+ˆˆÈÈÈ9odùbcy«hùo#ùâ­¹  WžÙ˜[Z[_W—ˆ‚ˆˆˆÈÈÈ9cäyå'ù.¡¹.à9.bžÜÝŠ]™[™Ù]
+	ØÛÛ[	ÊHÜˆ	ù«hùo#ùb)9¥«ycäyå'ùk§º-*9cæ9c%¸à ‰Ê_W—ˆ‚ˆˆÈÈÈ9/h:g :) y`f¹.à9.b¹§éyç"ù«hùo#úaäzh§xà y.ïzh§xà yi,y¥b9§hy.í»ï&ùi ºg 9i!9ä!»ï#9å,yå*9¢-ù.®¹méy¢iú(c8à ——ˆ‚ˆˆÈÈÈ:/®yåcº`&¹çéy.#y.èú(j9¢$9.©;ï#9ìîùîçù.#y/&º!ê¹bª9."ùcexà ˆŠBˆ[Yˆ˜[Z[HOH¹¥-¹ææ9 .ùîäÈŽ‚ˆ]HHˆ¸à$9¥-¹ææ9 .ùîäøà$^Ý\™Ù]H‚ˆ›ÙHH
+ˆˆÈÈÈ9¥-¹ææ:" ¹à®WžÝ\™Ù]W—ˆÈÈÈ9cäyå'ù.¡¹.à9.bžÜÝŠ]™[™Ù]
+	ØÛÛ[	ÊHÜˆ	ù¥-¹ææ9.¢ùk§¹mì¹oh¹¢$8à ‰Ê_W—ˆ‚ˆˆÈÈÈ9/h:g :) y`f¹.à9.bºf!z+îùodùbcy¥-¹ææ9 .ùîäûï&ù§+:`&¹çéy.#yå'ù¢$9.©9¦$ùbª9/g8à ˆŠBˆ[ÙN‚ˆ˜Z\ÙH˜[YQ\œ›ÜŠˆ[š[™YØ[›ÛšXØ[[\]H˜[Z[O^Ù˜[Z[H\ŸHŠBˆ™[™\™Y\]JÈ]HŽˆ]K˜ÛÛ[Žˆ›ÙK\HŽˆ˜[Z[K\Ù\—ØXÝ[ÛˆŽˆÝŠ]™[™Ù]
+\Ù\—ØXÝ[ÛˆŠHÜˆ¹£"z`&¹çéy.+yæ¡9«hùo#ú/®yåc9i!9ä!ˆŠ_JBˆ™]\›ˆ™[™\™YƒB™Yˆ˜[Y]WÜ™\ÜÙ[]™\žWÜ™\]Y\Ý
+™\]Y\ÝˆXÝ
+HOˆ\VØ›ÛÛÝ—NƒBˆˆˆ•˜[Y]HHÛÛ\]Y›Ü›X[™\Ü™Y›Ü™HÚ\™Y[]™\žKˆˆˆƒBˆ™\]Z\™YH
+œØÚ[XWÝ™\œÚ[Ûˆ‹˜Ú[›™[‹œ™\ÜÝ\H‹œ™\ÜÚY‹\Ú×ÚY‹\Ú×Ü[—ÚY‹Bˆ™Ù[™\˜]YØ]‹™Y™™XÝ]™WÛX\šÙ]Ù]H‹œÛÝ\˜ÙWØXÝÜˆ‹œÛÝ\˜ÙWÜ™Y™\™[˜ÙH‹Bˆ]H‹œÝ[[X\žH‹™[ØÛÛ[‹˜ÛÛ[Ú\Ú‹šY[\Ý[˜ÞWÚÙ^HŠCBˆZ\ÜÚ[™ÈHÚÙ^H›ÜˆÙ^H[ˆ™\]Z\™YYˆ›ÝÝŠ™\]Y\Ý™Ù]
+Ù^JHÜˆˆŠKœÝš\
+
+WCBˆYˆZ\ÜÚ[™Îˆ™]\›ˆ˜[ÙK›Z\ÜÚ[™Îˆˆ
+È‹‹š›Ú[ŠZ\ÜÚ[™ÊCBˆYˆ™\]Y\Ý™Ù]
+˜Ú[›™[ŠHOH”‘TÔ•Žˆ™]\›ˆ˜[ÙK˜Ú[›™[Û]\ÝØ™WÔ‘TÔ•ƒBˆYˆ™\]Y\Ý™Ù]
+œ™\ÜÝ\HŠH›Ý[ˆ‘TÔ•ÕTTÎˆ™]\›ˆ˜[ÙK[œÝ\ÜYÜ™\ÜÝ\HƒBˆYˆ™\]Y\Ý™Ù]
+™[]™\žWÛ[ÙH‹‘•SÔ‘TÔ•ŠHOH‘•SÔ‘TÔ•Žˆ™]\›ˆ˜[ÙK™[]™\žWÛ[ÙWÛ]\ÝØ™WÑ•SÔ‘TÔ•ƒBˆYˆ™\]Y\Ý™Ù]
+››×Ý˜YWØ]]Üš]HŠH\È›ÝYNˆ™]\›ˆ˜[ÙK››×Ý˜YWØ]]Üš]WÛ]\ÝØ™WÝYHƒBˆ^XÝYÚ\ÚH\ÚX‹œÚLMŠÝŠ™\]Y\Ý™Ù]
+™[ØÛÛ[ŠJK™[˜ÛÙJ]‹NŠJKš^YÙ\Ý
+
+CBˆYˆÝŠ™\]Y\Ý™Ù]
+˜ÛÛ[Ú\ÚŠJHOH^XÝYÚ\Úˆ™]\›ˆ˜[ÙK˜ÛÛ[Ú\ÚÛZ\ÛX]ÚƒBˆ™]\›ˆYKˆƒBƒB™Yˆ™\ÜÙ[]™\žWÙ]™[
+
+HOˆXÝ›Û™NƒBˆYˆ›Ý‘TÔ•Ô‘TUQTÕÑT‹™^\ÝÊ
+Nˆ™]\›ˆ›Û™CBˆØ[™Y]\ÈH×CBˆ›Üˆ][ˆÛÜY
+‘TÔ•Ô‘TUQTÕÑT‹™ÛØŠŠ‹šœÛÛˆŠJNƒBˆ™\]Y\ÝH™XYÚœÛÛŠ]ßJCBˆ˜[YÈH˜[Y]WÜ™\ÜÙ[]™\žWÜ™\]Y\Ý
+™\]Y\Ý
+CBˆYˆ˜[YˆØ[™Y]\Ë˜\[™
+™\]Y\Ý
+CBˆYˆ›ÝØ[™Y]\Îˆ™]\›ˆ›Û™CBˆ™\]Y\ÝHØ[™Y]\ÖËLWCBˆÙ^HHÝŠ™\]Y\ÝÈšY[\Ý[˜ÞWÚÙ^H—JCBˆ™]\›ˆÈšÙ^HŽˆˆœ™\ÜY[]™\žNžÚÙ^_H‹œÛÝ\˜ÙWÙ]™[ÚYŽˆˆœ™\ÜY[]™\žNžÚÙ^_H‹Bˆ™]™[Ý\HŽˆ”‘TÔ•ÑSU‘T–WÔ‘TUQTÕ‹››ÝYšXØ][Û—ØÚ[›™[Žˆ”‘TÔ•‹Bˆ™[]™\žWÛ[ÙHŽˆ‘•SÔ‘TÔ•‹\HŽˆ¹«hùo#ù¢©ydbˆ‹]HŽˆÝŠ™\]Y\ÝÈ]H—JKBˆ˜ÛÛ[ŽˆÝŠ™\]Y\ÝÈ™[ØÛÛ[—JKœÛÝ\˜ÙHŽˆÝŠ™\]Y\ÝÈœÛÝ\˜ÙWÜ™Y™\™[˜ÙH—JKBˆ\Ù\—ÜÙ]™\š]HŽˆ¹«hùo#ù¢©ydbˆ‹\Ù\—ØXÝ[ÛˆŽˆºf!z+îùmì¹k£9¢$9æ¡9«hùo#ÑU¹¢©ydb»ï&ù¥è:g 9.©9¦$ù¤ãy/g‹Bˆœ™\ÜÝ\HŽˆÝŠ™\]Y\ÝÈœ™\ÜÝ\H—JKœ™\ÜÚYŽˆÝŠ™\]Y\ÝÈœ™\ÜÚY—JKBˆ\Ú×ÚYŽˆÝŠ™\]Y\ÝÈ\Ú×ÚY—JK\Ú×Ü[—ÚYŽˆÝŠ™\]Y\ÝÈ\Ú×Ü[—ÚY—JKBˆšY[\Ý[˜ÞWÚÙ^HŽˆÙ^K››×Ý˜YWØ]]Üš]HŽˆY_CBƒBƒB™Yˆ™XYÚœÛÛŠ]ˆ]Y˜][ˆ[žJHOˆ[žNƒBˆžNƒBˆ™]\›ˆœÛÛ‹›ØYÊ]œ™XYÝ^
+[˜ÛÙ[™ÏH]‹NŠJCBˆ^Ù\
+ÔÑ\œ›Ü‹œÛÛ‹’”ÓÓ‘XÛÙQ\œ›ÜŠNƒBˆ™]\›ˆY˜][BƒBƒB™YˆÜš]WÚœÛÛŠ]ˆ]˜[YNˆ[žJHOˆ›Û™NƒBˆ]œ\™[›ZÙ\Š\™[ÏUYK^\ÝÛÚÏUYJCBˆ\H]Ú]ÜÝY™š^
+]œÝY™š^
+È‹\ŠCBˆ\Üš]WÝ^
+œÛÛ‹™[\Ê˜[YK[œÝ\™WØ\ØÚZOQ˜[ÙK[™[LŠH
+È—ˆ‹[˜ÛÙ[™ÏH]‹NŠCBˆ\œ™\XÙJ]
+CBƒBƒB™Yˆ›ÝÊ
+HOˆ]][YNƒBˆ™]\›ˆ]][YK››ÝÊŠCBƒBƒB™Yˆ\œÙWÛ›ÝYšXØ][Û—Ý[YJ˜[YNˆ[žJHOˆ]][YH›Û™NƒBˆYˆ›Ý˜[YNƒBˆ™]\›ˆ›Û™CBˆžNƒBˆH]][YK™œ›ÛZ\ÛÙ›Ü›X]
+ÝŠ˜[YJKœ™\XÙJ–ˆ‹ŠÌŒŠJCBˆ^Ù\˜[YQ\œ›ÜŽƒBˆ™]\›ˆ›Û™CBˆYˆš[™›È\È›Û™NƒBˆHœ™\XÙJš[™›ÏUŠCBˆ™]\›ˆ˜\Ý[Y^›Û™JŠCBƒBƒB™Yˆ[X[—Ý[YJ˜[YNˆ[žK
+‹[˜ÛYWÙ]Nˆ›ÛÛHYJHOˆÝŽƒBˆH\œÙWÛ›ÝYšXØ][Û—Ý[YJ˜[YJCBˆYˆ›ÝƒBˆ™]\›ˆ¹§*¹£ä9/¦ÈƒBˆ™]\›ˆœÝ™[YJ‰VKI[KIY	R‰SN‰TÈŠHYˆ[˜ÛYWÙ]H[ÙHœÝ™[YJ‰R‰SN‰TÈŠCBƒBƒB™YˆZ[]\×Ø™]ÙY[Š]\Žˆ[žKX\›Y\Žˆ[žJHOˆ›Ø]›Û™NƒBˆKˆH\œÙWÛ›ÝYšXØ][Û—Ý[YJ]\ŠK\œÙWÛ›ÝYšXØ][Û—Ý[YJX\›Y\ŠCBˆYˆ›ÝHÜˆ›ÝŽƒBˆ™]\›ˆ›Û™CBˆ™]\›ˆX^
+Œ
+HHŠKÝ[ÜÙXÛÛ™Ê
+HÈŒŒ
+CBƒBƒB™YˆÙ[™
+ÚÙ[ŽˆÝ‹]NˆÝ‹ÛÛ[ˆÝŠHOˆ\VØ›ÛÛXÝNƒBˆ^[ØYHœÛÛ‹™[\ÊÈÚÙ[ˆŽˆÚÙ[‹]HŽˆ]K˜ÛÛ[ŽˆÛÛ[[\]HŽˆ›X\šÙÝÛˆ‹˜Ú[›™[ŽˆÙXÚ]ŸK[œÝ\™WØ\ØÚZOQ˜[ÙJK™[˜ÛÙJ]‹NŠCBˆ™\HH\›X‹œ™\]Y\Ý”™\]Y\Ý
+TÒT×ÕT“]O\^[ØYXY\œÏ^ÈÛÛ[U\HŽˆ˜\XØ][Û‹ÚœÛÛˆ‹•\Ù\‹PYÙ[Žˆ‘U‹U˜YKTÞ\Ý[KÌKŒŸKY]ÙH”ÔÕŠCBˆžNƒBˆ\Ú\×ÜÛXÞHH™XYÚœÛÛŠ“ÓÕÈ˜ÛÛ™šYÈˆÈœ[[YWÜÛXÞKšœÛÛˆ‹ßJCBˆ[Y[Ý]H›Ø]
+ÜË™[š\›Û‹™Ù]
+”TÒT×ÕSQSÕUÔÑPÓÓ‘È‹\Ú\×ÜÛXÞK™Ù]
+œ\Ú\×Ý[Y[Ý]ÜÙXÛÛ™È‹MJJJCBˆÚ]\›X‹œ™\]Y\Ý\›Ü[Š™\K[Y[Ý]][Y[Ý]
+H\È™\ÜÛœÙNƒBˆ˜]ÈH™\ÜÛœÙKœ™XY
+
+K™XÛÙJ]‹N‹\œ›ÜœÏHœ™\XÙHŠCBˆžNƒBˆ›ÙHHœÛÛ‹›ØYÊ˜]ÊCBˆ^Ù\œÛÛ‹’”ÓÓ‘XÛÙQ\œ›ÜŽƒBˆ›ÙHHÈœ˜]ÈŽˆ˜]ÖÎL_CBˆÚÈH™\ÜÛœÙKœÝ]\ÈOHŒ[™[
+›ÙK™Ù]
+˜ÛÙH‹
+HÜˆ
+HOHŒBˆ™]\›ˆÚËÈšÜÝ]\ÈŽˆ™\ÜÛœÙKœÝ]\Ëœ\Ú\×ØÛÙHŽˆ›ÙK™Ù]
+˜ÛÙHŠKœ\Ú\×ÛY\ÜØYÙHŽˆ›ÙK™Ù]
+›\ÙÈŠ_CBˆ^Ù\
+\›X‹™\œ›Ü‹•T“\œ›Ü‹[Y[Ý]\œ›Ü‹ÔÑ\œ›ÜŠH\È^ÎƒBˆ™]\›ˆ˜[ÙKÈ™\œ›ÜˆŽˆ\J^ÊK—×Û˜[YW×Ë›Y\ÜØYÙHŽˆÝŠ^ÊVÎŒÌ_CBƒBƒB™Yˆ\Ü^WÙœ›ÛWØÛÙJÛÙNˆÝ‹XØÛÝ[ˆXÝ
+HOˆÝŽƒBˆ›Üˆ[ˆXØÛÝ[™Ù]
+œÜÚ][ÛœÈŠHÜˆ×NƒBˆYˆÝŠ™Ù]
+˜ÛÙHŠHÜˆˆŠHOHÛÙNƒBˆ˜[YHHÝŠ™Ù]
+›˜[YHŠHÜˆˆŠCBˆ™]\›ˆˆžÛ˜[Y_{ï"ØÛÙ_{ï"HˆYˆ˜[YH[ÙHÛÙCBˆ™]\›ˆÛÙHÜˆ¹æî9alù.©9¦$ùkîz,hHƒBƒBƒB™Yˆ˜YWÙ\Ü^J]™[ÚYˆÝŠHOˆÝŽƒBˆ]™[H™XYÚœÛÛŠ“ÓÕÈ™]™[ÈˆÈ˜Y\ÈˆÈˆžÙ]™[ÚYKšœÛÛˆ‹ßJHYˆ]™[ÚY[ÙHßCBˆ˜[YHHÝŠ]™[™Ù]
+›˜[YHŠHÜˆ]™[™Ù]
+œÙXÝ\š]WÛ˜[YHŠHÜˆˆŠCBˆÛÙHHÝŠ]™[™Ù]
+˜ÛÙHŠHÜˆ]™[™Ù]
+œÙXÝ\š]WØÛÙHŠHÜˆ]™[™Ù]
+œÞ[X›ÛŠHÜˆˆŠCBˆ™]\›ˆˆžÛ˜[Y_{ï"ØÛÙ_{ï"HˆYˆ˜[YH[™ÛÙH[ÙH
+˜[YHÜˆÛÙHÜˆ¹æî9alù.©9¦$ùkîz,hHŠCBƒBƒB™Yˆ\×ØWÜÚ\™WÝ˜Y[™×Ù^Jˆ]][YJHOˆ›ÛÛƒBˆØØ[H˜\Ý[Y^›Û™JŠCBˆYˆØØ[ÙYZÙ^J
+HHNƒBˆ™]\›ˆ˜[ÙCBˆØ[[™\ˆH™XYÚœÛÛŠQS‘×ÐÐSS‘T‹ßJCBˆ]WÝ^HØØ[™]J
+Kš\ÛÙ›Ü›X]
+
+CBˆÛÝ™\˜YÙWÜÝ\HÝŠØ[[™\‹™Ù]
+˜ÛÝ™\˜YÙWÜÝ\ŠHÜˆˆŠCBˆÛÝ™\˜YÙWÙ[™HÝŠØ[[™\‹™Ù]
+˜ÛÝ™\˜YÙWÙ[™ŠHÜˆˆŠCBˆYˆ›ÝÛÝ™\˜YÙWÜÝ\Üˆ›ÝÛÝ™\˜YÙWÙ[™Üˆ›Ý
+ÛÝ™\˜YÙWÜÝ\H]WÝ^HÛÝ™\˜YÙWÙ[™
+NƒBˆ™]\›ˆ˜[ÙCBˆ™]\›ˆ]WÝ^›Ý[ˆÙ]
+Ø[[™\‹™Ù]
+˜ÛÜÙYÙ]\ÈŠHÜˆ×JCBƒBƒB™Yˆ^XÝ][Û—ØÛÛ™š\›X][Û—Ù]™[
+
+HOˆXÝ›Û™NƒBˆ™XÛÛˆH™XYÚœÛÛŠÕUHÈ™^XÝ][Û—Ü™XÛÛ˜Ú[X][Û‹šœÛÛˆ‹ßJCBˆYˆÝŠ™XÛÛ‹™Ù]
+œÝ]\ÈŠHÜˆˆŠHOHÓÓ‘’T“PUSÓ—Ô‘TURT‘QŽƒBˆ™]\›ˆ›Û™CBˆX]Ú\ÈHÞ›Üˆ[ˆ
+™XÛÛ‹™Ù]
+›X]Ú\ÈŠHÜˆ×JHYˆ™Ù]
+œ™\]Z\™\×Ý\Ù\—ØÛÛ™š\›X][ÛˆŠWCBˆYˆ›ÝX]Ú\ÎƒBˆ™]\›ˆ›Û™CBˆX]ÚHX]Ú\ÖÌCBˆ[[HX]Ú™Ù]
+š[[ŠHÜˆßCBˆÛÙK˜[YHHÝŠ[[™Ù]
+˜ÛÙHŠHÜˆˆŠKÝŠ[[™Ù]
+›˜[YHŠHÜˆˆŠCBˆ\™Ù]HˆžÛ˜[Y_{ï"ØÛÙ_{ï"HˆYˆ˜[YH[™ÛÙH[ÙH
+ÛÙHÜˆ¹æî9alÑUˆŠCBˆY™XÞXÛHHÝŠ[[™Ù]
+›Y™XÞXÛHŠHÜˆ¹.©9¦$ÈŠCBˆÚYHHÝŠ[[™Ù]
+œÚYHŠHÜˆˆŠCBˆ]HHÝŠX]Ú™Ù]
+œÝYÙÙ\ÝYÙ^XÝ][Û—Ù]HŠHÜˆ[[™Ù]
+™XÚ\Ú[Û—ÛX\šÙ]Ù]HŠHÜˆˆŠCBˆÝ]\ÈHÝŠX]Ú™Ù]
+œÝ]\ÈŠHÜˆˆŠCBˆØœÙ\™YHX]Ú™Ù]
+›ØœÙ\™YØXØÛÝ[ØÚ[™ÙHŠHÜˆßCBˆ]HHØœÙ\™Y™Ù]
+™\™XÝ[Û˜[Ü]X[]HŠCBˆXÝ[ÛˆH¹.l9aiHˆYˆÚYHOH•VHˆ[ÙH¹ce¹aî‹ùaãù£ HƒBˆÚ^™WÝ^HˆƒBˆYˆ\Ú[œÝ[˜ÙJ]K
+[›Ø]
+JH[™]HˆƒBˆÚ^™WÝ^Hˆ»ï#:-)¹¢-ùaà9cæ9c%¹î©žÚ[
+]JN‹y.ïHƒBƒBˆYˆÝ]\ÈOH“USTWÓÔTUSÓ”×Ô‘TURT‘WÑURSŽƒBˆ]HHˆžÝ\™Ù]ycëú ïy§"yi&¹«(y¤ãy/g;ï#:g :) z(iyaay¢$9.©9¦#¹îáˆƒBˆÛÛ[Hˆ¹ìîùîçùcäyã¬Ý\™Ù]y.#¹«i9bc^ÛY™XÞXÛ_ya¬ùëe¹§"yalûï#9/a¹ã¬9§"y£ y.äùcæ9c%¹¥è9¬åye+ù. :/æ9c§ùk§ºfay¢$9.©:/áùê"øà ——¹nîº+«»ï&º+íù."¹/(9b.9ea¹¢$9.©9¦#¹îá¹¢%¹dbº+ây¢$yk§ºfay.l9ce¹ë%9¥l8à y¥l:aãùd£9.©9¦$ù¥éxà ¹ìîùîçù.#y/&¹¨.y£k¹§ 9îâ9£ y.äùã'9­bù¢$9.©9c¡¹cì¸à ˆƒBˆ[YˆÝ]\ÈOH”T•PSÑVPÕUSÓ—Ô‘TURT‘T×ÐÓÓ‘’T“PUSÓˆˆÜˆÝŠX]Ú™Ù]
+™š[ÜÝ]\ÈŠHÜˆˆŠHOH”T•PSÑVPÕUSÓˆŽƒBˆ]HHˆžÝ\™Ù]ycëú ïycê¹¢iú(c9.¡º`ê9b!žÛY™XÞXÛ_{ï#:+íùèkº+©ƒBˆÛÛ[Hˆ¹§ 9¥¬:-)¹¢-ù/èy kù¦/¹é.žÝ\™Ù]^ÜÚ^™WÝ^{ï#9.#žÙ]HÜˆ	ù«i9bcIßyæ¡ÛY™XÞXÛ_^ØXÝ[ÛŸy¥®yd$y. :!í;ï#9/aº)á9ª(y¦í9`ãú`ê9b!¹¢$9.©8à ——¹nîº+«»ï&º+íùèkº+©9k§ºfay¢$9.©9¥l:aãËúaäzh§yd£9.©9¦$ù¥é{ï&ùìîùîçù/&¹£"yç'ùk§¹¢$9.©:+¬9oe{ï#9.#y/&¹¢¢º`ê9b!¹¢$9.©:+¬9¢$9aj:`ê9¢iú(c8à ˆƒBˆ[YˆÝ]\ÈOH•S“S’ÑQÕQWÔ‘TURT‘T×ÐU’P•USÓˆŽƒBˆ]HHˆ¹cäyã¬Ý\™Ù]ymì¹§"y¢$9.©;ï#:+íùèkº+©9kîyn¥9dê¹ë%9a¬ùëeˆƒBˆÛÛ[Hˆ¹ìîùîçùcäyã¬Ý\™Ù]ymì¹§"yd#9¥®yd$y¢$9.©;ï#9/aº/æ9¬¨y§"y¦#¹èk¹od¹fè9b,Ù]HÜˆ	ù«i9bcIßyæ¡ÛY™XÞXÛ_ya¬ùëe¸à ——¹nîº+«»ï&º+íùèkº+©:/æyë%9¢$9.©9¦+ùd)¹lg¹.£º+éya¬ùëe»ï#9.éycâ¹k§ºfay.©9¦$ù¥éxà ˆƒBˆ[ÙNƒBˆ]HHˆ¹cäyã¬Ý\™Ù]ycëú ïymì¹¢iú(cÛY™XÞXÛ_{ï#:+íùèkº+©ƒBˆÛÛ[Hˆ¹§ 9¥¬:-)¹¢-ù/èy kù¦/¹é.žÝ\™Ù]^ÜÚ^™WÝ^{ï#9.#žÙ]HÜˆ	ù«i9bcIßyæ¡ÛY™XÞXÛ_^ØXÝ[ÛŸya¬ùëe¹æî9ë)¸à ——¹nîº+«»ï&º+íùèkº+©9¦+ùd)¹£"z+éya¬ùëe¹¢iú(c;ï#9.éycâ¹k§ºfay.©9¦$ù¥éxà ¹ìîùîçù/&¹¢¢¹.©9¦$ù¥éy.#¹¢*¹fï‹ùèkº+©9¥éy§'ùb!¹o :+¬9oexà ˆƒBˆÙ^HHˆ™^XÝ][Û‹XÛÛ™š\›NžÚ[[™Ù]
+	ÙXÚ\Ú[Û—ÚY	Ë	ÉÊ_NžØÛÙ_NžÜÝ]\ßNžÙ]_NžÜ]HÜˆ	ÉßHƒBˆ™]\›ˆÈšÙ^HŽˆÙ^K\HŽˆ¹¢$9.©9èkº+©‹]HŽˆ]K˜ÛÛ[ŽˆÛÛ[œÛÝ\˜ÙHŽˆ™^XÝ][Û—Ü™XÛÛ˜Ú[X][Ûˆ‹™]™[Ý\HŽˆ”S‘S‘×ÑVPÕUSÓ—ÐÓÓ‘’T“PUSÓˆ‹œ™[]YÙXÚ\Ú[Û—ÚYŽˆÝŠ[[™Ù]
+™XÚ\Ú[Û—ÚYŠHÜˆˆŠKœÙXÝ\š]WØÛÙHŽˆÛÙKœÙXÝ\š]WÛ˜[YHŽˆ˜[YK\Ù\—ÜÙ]™\š]HŽˆºg :) y¤ãy/g‹\Ù\—ØXÝ[ÛˆŽˆ¹èkº+©9¢$9.©9¢%º(iyaay¢$9.©9¦#¹îáˆ‹˜ÛÛ™š\›X][Û—ØÛÛ^ŽˆÈ™XÚ\Ú[Û—ÚYŽˆÝŠ[[™Ù]
+™XÚ\Ú[Û—ÚYŠHÜˆˆŠKœÙXÝ\š]WØÛÙHŽˆÛÙKœÙXÝ\š]WÛ˜[YHŽˆ˜[YKœÚYHŽˆÚYK›Y™XÞXÛHŽˆY™XÞXÛKœ]X[]HŽˆ]KœÝ]\ÈŽˆÝ]\Ë˜\›ÞØ[[Ý[Þ]X[ˆŽˆØœÙ\™Y™Ù]
+˜\›ÞØ[[Ý[Þ]X[ˆŠKœÝYÙÙ\ÝYÙ^XÝ][Û—Ù]HŽˆ]K›Y™XÞXÛWÝÙ]HŽˆX]Ú™Ù]
+œÝYÙÙ\ÝYÛY™XÞXÛWÝÙ]HŠHÜˆ]__BƒBƒB™YˆÛ›Ü›X[^™WÛÜÜ[š]WÜÝ]\ÊXÚ\Ú[ÛŽˆXÝ
+HOˆÝŽƒBˆÝ]\ÈHÝŠXÚ\Ú[Û‹™Ù]
+›ÜÜ[š]WÜÝ]\ÈŠHÜˆˆŠKœÝš\
+
+CBˆYˆÝ]\È[ˆÔÔ•S’UWÔÕUTÑTÎƒBˆ™]\›ˆÝ]\ÃBˆXZ[—ØØ[™Y]HHÝŠXÚ\Ú[Û‹™Ù]
+›XZ[—ØØ[™Y]HŠHÜˆˆŠCBˆ›ÜˆØ[™Y]H[ˆ
+ÛÛ™š\›y§.¹/&ˆ‹•šX[9§.¹/&ˆ‹º)à¹kçù§.¹/&ˆ‹¹¥è9§.¹/&ˆŠNƒBˆYˆØ[™Y]H[ˆXZ[—ØØ[™Y]NƒBˆ™]\›ˆØ[™Y]CBˆYˆ¹¥è9¥¬9æ¡9..ù`&z`"Hˆ[ˆXZ[—ØØ[™Y]NƒBˆ™]\›ˆ¹¥è9§.¹/&ˆƒBˆ™]\›ˆˆƒBƒBƒB™YˆÛ›Ü›X[^™WÜš\Ú×Ü\›Z\ÜÚ[ÛŠ˜[YNˆ[žJHOˆÝŽƒBˆ^HÝŠ˜[YHÜˆˆŠKœÝš\
+
+CBˆ›ÜˆÝ]\È[ˆ’TÒ×ÔT“RTÔÒSÓ”ÎƒBˆYˆÝ]\È[ˆ^ƒBˆ™]\›ˆÝ]\ÃBˆ™]\›ˆ^BƒBƒB™YˆÙ›Ü›X[ÙXÚ\Ú[Û—Ù]™[Ê
+HOˆ\ÝÙXÝNƒBˆ\™XÝÜžHH“ÓÕÈ™]™[ÈˆÈ™XÚ\Ú[ÛœÈƒBˆ›ÝÜÎˆ\ÝÙXÝHH×CBˆ›Üˆ][ˆ\™XÝÜžK™ÛØŠŠ‹šœÛÛˆŠHYˆ\™XÝÜžK™^\ÝÊ
+H[ÙH×NƒBˆ]™[H™XYÚœÛÛŠ]ßJCBˆYˆÝŠ]™[™Ù]
+™]™[Ý\HŠHÜˆˆŠHOH‘“Ô“PSÑPÒTÒSÓˆŽƒBˆÛÛ[YCBˆXÚ\Ú[ÛˆH]™[™Ù]
+™›Ü›X[ÙXÚ\Ú[ÛˆŠHÜˆßCBˆ]™[HXÝ
+]™[
+CBˆ]™[È—ÛÜÜ[š]WÜÝ]\È—HHÛ›Ü›X[^™WÛÜÜ[š]WÜÝ]\ÊXÚ\Ú[ÛŠCBˆ›ÝÜË˜\[™
+]™[
+CBˆ›ÝÜËœÛÜ
+Ù^O[[X™HˆÝŠ™Ù]
+™XÚ\Ú[Û—Ý[YWØ™ZZš[™ÈŠHÜˆ™Ù]
+œ™XÛÜ™YØ]Ø™ZZš[™ÈŠHÜˆˆŠJCBˆ™]\›ˆ›ÝÜÃBƒBƒB™YˆÝ\™Ù]Ù›ÜŠ]™[ˆXÝ
+HOˆ\VÜÝ‹Ý‹Ý—NƒBˆXÚ\Ú[ÛˆH]™[™Ù]
+™›Ü›X[ÙXÚ\Ú[ÛˆŠHÜˆßCBˆÛÙHHÝŠ]™[™Ù]
+˜Ø[™Y]WØÛÙHŠHÜˆXÚ\Ú[Û‹™Ù]
+˜Ø[™Y]WØÛÙHŠHÜˆˆŠCBˆ˜[YHHÝŠ]™[™Ù]
+˜Ø[™Y]WÛ˜[YHŠHÜˆXÚ\Ú[Û‹™Ù]
+˜Ø[™Y]WÛ˜[YHŠHÜˆˆŠCBˆ\™Ù]HˆžÛ˜[Y_{ï"ØÛÙ_{ï"HˆYˆ˜[YH[™ÛÙH[ÙHÝŠXÚ\Ú[Û‹™Ù]
+›XZ[—ØØ[™Y]HŠHÜˆÛÙHÜˆ¹odùbcy..ù`&z`"HŠCBˆ™]\›ˆÛÙK˜[YK\™Ù]BƒBƒB™YˆÛX]\šX[ÚÛ[™×ØXÝ[ÛŠ^ˆÝŠHOˆ›ÛÛƒBˆ˜[YHHÝŠ^ÜˆˆŠCBˆ™]\›ˆ[žJ\›H[ˆ˜[YH›Üˆ\›H[ˆ
+¹aj:`ê:` 9aîˆ‹ºfcy/cºhãºfjH‹¹¦#¹èk¹d"9¬åy.ïzh§HŠJCBƒBƒB™YˆØÛÛ\XÝØ[[Ý[ØXÝ[ÛŠ^ˆÝŠHOˆÝŽƒBˆ˜[YHHÝŠ^Üˆ¹§*¹£ä9/¦ÈŠCBˆYˆ¹¥¬9h§Œ9a`Èˆ[ˆ˜[YH[™›ÝÛX]\šX[ÚÛ[™×ØXÝ[ÛŠ˜[YJH[™¹ce¹aîˆˆ›Ý[ˆ˜[YNƒBˆ™]\›ˆ¹¥¬9h§Œ9a`ûï&ùã¬9§"y£ y.äùîí9£ {ï&ùã¬:aäy/çyåfxà ˆƒBˆ™]\›ˆ˜[YCBƒBƒB™YˆÙ›Ü›X[ÛX\šÙ]Ø\×ÛÙŠ]™[ˆXÝ
+HOˆÝŽƒBˆÛÛ\\š\ÛÛˆH]™[™Ù]
+˜ÛÛ\\š\ÛÛ—ÜÛ˜\ÚÝŠHÜˆßCBˆ™]\›ˆÝŠÛÛ\\š\ÛÛ‹™Ù]
+˜\×ÛÙ—Ø™ZZš[™ÈŠHÜˆ]™[™Ù]
+œšXÙWØ\×ÛÙ—Ø™ZZš[™ÈŠHÜˆˆŠCBƒBƒB™YˆÙ›Ü›X[ØXØÛÝ[Ø\×ÛÙŠ]™[ˆXÝXÚ\Ú[ÛŽˆXÝ
+HOˆÝŽƒBˆ™]\›ˆÝŠXÚ\Ú[Û‹™Ù]
+˜XØÛÝ[Ø\×ÛÙ—Ø™ZZš[™ÈŠHÜˆ]™[™Ù]
+˜XØÛÝ[Ø\×ÛÙ—Ø™ZZš[™ÈŠHÜˆˆŠCBƒBƒB™Yˆ›Ü›X[ÙXÚ\Ú[Û—ØÚ[™ÙWÙ]™[
+
+HOˆXÝ›Û™NƒBˆ]™[ÈHÙ›Ü›X[ÙXÚ\Ú[Û—Ù]™[Ê
+CBˆYˆ›Ý]™[ÎƒBˆ™]\›ˆ›Û™CBˆ]\ÝH]™[ÖËLWCBˆXÚ\Ú[ÛˆH]\Ý™Ù]
+™›Ü›X[ÙXÚ\Ú[ÛˆŠHÜˆßCBˆXÚ\Ú[Û—Ý[YWÜ˜]ÈH]\Ý™Ù]
+™XÚ\Ú[Û—Ý[YWØ™ZZš[™ÈŠHÜˆXÚ\Ú[Û‹™Ù]
+™]WØ\×ÛÙ—Ø™ZZš[™ÈŠCBˆXÚ\Ú[Û—Ý[YHH\œÙWÛ›ÝYšXØ][Û—Ý[YJXÚ\Ú[Û—Ý[YWÜ˜]ÊCBˆYˆ›ÝXÚ\Ú[Û—Ý[YHÜˆ›ÝÊ
+HHXÚ\Ú[Û—Ý[YHˆ[YY[JZ[]\ÏQ“Ô“PSÑU‘S•ÓPVÐQÑWÓRS•UTÊNƒBˆ™]\›ˆ›Û™CBƒBˆ™]š[Ý\ÈH]™[ÖËL—HYˆ[Š]™[ÊHˆH[ÙHßCBˆ™]š[Ý\×ÙXÚ\Ú[ÛˆH™]š[Ý\Ë™Ù]
+™›Ü›X[ÙXÚ\Ú[ÛˆŠHÜˆßCBˆÝ]\ÈHÝŠ]\Ý™Ù]
+—ÛÜÜ[š]WÜÝ]\ÈŠHÜˆˆŠCBˆ™]š[Ý\×ÜÝ]\ÈHÝŠ™]š[Ý\Ë™Ù]
+—ÛÜÜ[š]WÜÝ]\ÈŠHÜˆˆŠCBˆÛÙK˜[YK\™Ù]HÝ\™Ù]Ù›ÜŠ]\Ý
+CBˆ™]š[Ý\×ØÛÙKË™]š[Ý\×Ý\™Ù]HÝ\™Ù]Ù›ÜŠ™]š[Ý\ÊHYˆ™]š[Ý\È[ÙH
+ˆ‹ˆ‹ˆŠCBˆš\Ú×Ü\›Z\ÜÚ[ÛˆHÛ›Ü›X[^™WÜš\Ú×Ü\›Z\ÜÚ[ÛŠXÚ\Ú[Û‹™Ù]
+œš\Ú×Ü\›Z\ÜÚ[ÛˆŠJCBˆ™]š[Ý\×Üš\ÚÈHÛ›Ü›X[^™WÜš\Ú×Ü\›Z\ÜÚ[ÛŠ™]š[Ý\×ÙXÚ\Ú[Û‹™Ù]
+œš\Ú×Ü\›Z\ÜÚ[ÛˆŠJCBˆ[[Ý[ØXÝ[ÛˆHÝŠXÚ\Ú[Û‹™Ù]
+˜[[Ý[ØXÝ[ÛˆŠHÜˆXÚ\Ú[Û‹™Ù]
+˜XÝ[ÛˆŠHÜˆˆŠCBˆ™]š[Ý\×Ø[[Ý[ØXÝ[ÛˆHÝŠ™]š[Ý\×ÙXÚ\Ú[Û‹™Ù]
+˜[[Ý[ØXÝ[ÛˆŠHÜˆ™]š[Ý\×ÙXÚ\Ú[Û‹™Ù]
+˜XÝ[ÛˆŠHÜˆˆŠCBƒBˆØ[™Y]WØÚ[™ÙYH›ÛÛ
+ÛÙH[™™]š[Ý\×ØÛÙH[™ÛÙHOH™]š[Ý\×ØÛÙJCBˆÜÜ[š]WÛ]™[ØÚ[™ÙYH›ÛÛ
+Ý]\È[™™]š[Ý\×ÜÝ]\È[™Ý]\ÈOH™]š[Ý\×ÜÝ]\ÊCBˆÜÜ[š]WØÚ[™ÙYH›ÛÛ
+Ý]\ÊH[™
+ÜÜ[š]WÛ]™[ØÚ[™ÙYÜˆØ[™Y]WØÚ[™ÙY
+CBˆš\Ú×ØÚ[™ÙYH›ÛÛ
+š\Ú×Ü\›Z\ÜÚ[Ûˆ[™™]š[Ý\×Üš\ÚÈ[™š\Ú×Ü\›Z\ÜÚ[ÛˆOH™]š[Ý\×Üš\ÚÊCBˆÛ[™×ØXÝ[Û—Û›ÝÈHÛX]\šX[ÚÛ[™×ØXÝ[ÛŠ[[Ý[ØXÝ[ÛŠCBˆÛ[™×ØXÝ[Û—ØÚ[™ÙYHÛ[™×ØXÝ[Û—Û›ÝÈ[™[[Ý[ØXÝ[ÛˆOH™]š[Ý\×Ø[[Ý[ØXÝ[ÛƒBƒBˆYˆ›Ý
+ÜÜ[š]WØÚ[™ÙYÜˆš\Ú×ØÚ[™ÙYÜˆÛ[™×ØXÝ[Û—ØÚ[™ÙY
+NƒBˆ™]\›ˆ›Û™CBƒBˆXÚ\Ú[Û—ÚYHÝŠ]\Ý™Ù]
+™XÚ\Ú[Û—ÚYŠHÜˆXÚ\Ú[Û‹™Ù]
+™XÚ\Ú[Û—ÚYŠHÜˆˆŠCBˆXÚ\Ú]™WÜ™X\ÛÛˆHÝŠXÚ\Ú[Û‹™Ù]
+™XÚ\Ú]™WÜ™X\ÛÛˆŠHÜˆ¹§*¹£ä9/¦ÈŠCBˆXÝ[Û—ÜÝ[[X\žHHØÛÛ\XÝØ[[Ý[ØXÝ[ÛŠ[[Ý[ØXÝ[ÛŠCBˆX\šÙ]Ø\×ÛÙ—Ü˜]ÈHÙ›Ü›X[ÛX\šÙ]Ø\×ÛÙŠ]\Ý
+CBˆXØÛÝ[Ø\×ÛÙ—Ü˜]ÈHÙ›Ü›X[ØXØÛÝ[Ø\×ÛÙŠ]\ÝXÚ\Ú[ÛŠCBˆ›ÝYšXØ][Û—ÙÙ[™\˜]YH›ÝÊ
+CBˆX\šÙ]ØYÙHHZ[]\×Ø™]ÙY[ŠXÚ\Ú[Û—Ý[YWÜ˜]ËX\šÙ]Ø\×ÛÙ—Ü˜]ÊCBƒBˆÚ[™ÙWÛ[™\Îˆ\ÝÜÝ—HH×CBˆYˆØ[™Y]WØÚ[™ÙYƒBˆÚ[™ÙWÛ[™\Ë˜\[™
+ˆ‹H
+Š¹..ù`&z`"JŠ»ï&žÜ™]š[Ý\×Ý\™Ù]H8¡¤ˆÝ\™Ù]HŠCBˆYˆÜÜ[š]WÛ]™[ØÚ[™ÙYƒBˆÚ[™ÙWÛ[™\Ë˜\[™
+ˆ‹H
+Š¹§.¹/&¹â­¹  JŠ»ï&žÜ™]š[Ý\×ÜÝ]\ßH8¡¤ˆÜÝ]\ßHŠCBˆ[YˆÜÜ[š]WØÚ[™ÙYƒBˆÚ[™ÙWÛ[™\Ë˜\[™
+ˆ‹H
+Š¹§.¹/&¹â­¹  JŠ»ï&žÜÝ]\ß{ï"9â­¹  y.#ycæ;ï#9..ù`&z`"ycäyå'ùb!ù£h»ï"HŠCBˆYˆš\Ú×ØÚ[™ÙYƒBˆÚ[™ÙWÛ[™\Ë˜\[™
+ˆ‹H
+Šºhãºfjz+®9cëÊŠ»ï&žÜ™]š[Ý\×Üš\ÚßH8¡¤ˆÜš\Ú×Ü\›Z\ÜÚ[ÛŸHŠCBˆ[Yˆš\Ú×Ü\›Z\ÜÚ[ÛŽƒBˆÚ[™ÙWÛ[™\Ë˜\[™
+ˆ‹H
+Šºhãºfjz+®9cëÊŠ»ï&žÜš\Ú×Ü\›Z\ÜÚ[ÛŸ{ï"9§*¹cæ9c%»ï"HŠCBˆYˆÛ[™×ØXÝ[Û—ØÚ[™ÙYƒBˆÚ[™ÙWÛ[™\Ë˜\[™
+ˆ‹H
+Š¹£ y.äùbª9/g
+Š»ï&žØXÝ[Û—ÜÝ[[X\ž_HŠCBƒBˆXÝ[Û˜X›HHÛ[™×ØXÝ[Û—ØÚ[™ÙYÜˆ
+Ý]\È[ˆÈ•šX[9§.¹/&ˆ‹ÛÛ™š\›y§.¹/&ˆŸH[™ÜÜ[š]WØÚ[™ÙY
+HÜˆš\Ú×Ü\›Z\ÜÚ[ÛˆOH¹é y«h¹¥¬9h§ˆƒBˆÝ[WØXÝ[Û—ÝØ\›š[™ÈHXÝ[Û˜X›H[™X\šÙ]ØYÙH\È›Ý›Û™H[™X\šÙ]ØYÙHˆLBƒBˆYˆÛ[™×ØXÝ[Û—ØÚ[™ÙYƒBˆ]HH¸à$9£ y.äùbª9/g;ïg:g 9i!9ä!¸à$QU¹£ y.äúg :) zfcy/cºhãºfjKú` 9aîˆƒBˆÙ]™\š]HHºg :) y¤ãy/gƒBˆ\Ù\—ØXÝ[ÛˆH¹¢dùo Ú]Ô9æ¡Uºhnyæë»ï#9g*9odùbcy.©9¦$ù¬§ú`&¹/&º+çy¨.9kîy«hùo#ùce¹aî¹.ïzh§Kú` 9aî¹bª9/g;ï#9nm¹å,y/h9.®¹méy¢iú(cƒBˆ[YˆÝ]\È[ˆÈ•šX[9§.¹/&ˆ‹ÛÛ™š\›y§.¹/&ˆŸH[™ÜÜ[š]WØÚ[™ÙYƒBˆ]HHˆ¸à$ÜÝ]\ßxà$^Ý\™Ù]HƒBˆÙ]™\š]HHºg :) y¤ãy/gƒBˆ\Ù\—ØXÝ[ÛˆH¹¢dùo Ú]Ô9æ¡Uºhnyæë¹§éyç"ù«hùo#úaäzh§y.#¹i,y¥b9§hy.í»ï#9a£ya¬ùk¦¹¦+ùd)¹.®¹méy¢iú(cƒBˆ[Yˆš\Ú×ØÚ[™ÙYƒBˆ]HHˆ¸à$:hãºfjz+®9cëùcæ9c%¸à$^Ü™]š[Ý\×Üš\ÚßH8¡¤ˆÜš\Ú×Ü\›Z\ÜÚ[ÛŸHƒBˆÙ]™\š]HHºg :) yalù¬êˆYˆš\Ú×Ü\›Z\ÜÚ[ÛˆOH¹é y«h¹¥¬9h§ˆˆ[ÙHºg :) y¤ãy/gƒBˆ\Ù\—ØXÝ[ÛˆH¹¢dùo Ú]Ô9æ¡Uºhnyæë»ï#9£"y§ 9¥¬:hãºfjz+®9cëù§éyç"ùodùbcy«hùo#ù.©9¦$ùb)9¥«HƒBˆ[YˆÝ]\ÈOHº)à¹kçù§.¹/&ˆŽƒBˆ]HHˆ¸à$:)à¹kçù§.¹/&¸à$^Ý\™Ù]HƒBˆÙ]™\š]HHºg :) yalù¬êƒBˆ\Ù\—ØXÝ[ÛˆH¹¥è:g 9."ùce{ï&ùëbyo¡yd#¹îëy¦+ùd)¹caùî©ù..•šX[ÐÛÛ™š\›y¢%¹i,y¥bƒBˆ[YˆÝ]\ÈOH¹¥è9§.¹/&ˆŽƒBˆ]HHˆ¸à$9§.¹/&¹cæ9c%¸à$^Ü™]š[Ý\×Ý\™Ù]Üˆ\™Ù]yodùbcy¥è9§.¹/&ˆƒBˆÙ]™\š]HHºg :) yalù¬êƒBˆ\Ù\—ØXÝ[ÛˆH¹¥è:g :/ïyce{ï&ù.éy§ 9¥¬9«hùo#ùb)9¥«y..¹aáˆƒBˆ[ÙNƒBˆ]HHˆ¸à$9«hùo#ùa¬ùëe¹cæ9c%¸à$^Ý\™Ù]HƒBˆÙ]™\š]HHºg :) yalù¬êƒBˆ\Ù\—ØXÝ[ÛˆH¹¢dùo Ú]Ô9æ¡Uºhnyæë¹§éyç"ù§ 9¥¬9«hùo#ùb)9¥«HƒBƒBˆYˆÝ[WØXÝ[Û—ÝØ\›š[™ÎƒBˆ\Ù\—ØXÝ[ÛˆHº+éyb)9¥«y/oùå*9æ¡z ¨z(c9 áz-çyb)9¥«y¥í¹à®z-¡z/áÌL9b!ºd§ûï&ú+íùab9¢dùo Ú]Ô9æ¡Uºhnyæë¹b-ù¥¬9§ 9¥¬:(c9 á{ï#9a£ya¬ùk¦¹¦+ùd)¹.®¹méy¢iú(cƒBƒBˆ[Z[™×Û[™\ÈHÃBˆˆ‹H
+Š¹b)9¥«y¥í¹à®JŠ»ï&žÚ[X[—Ý[YJXÚ\Ú[Û—Ý[YWÜ˜]Ê_H‹Bˆˆ‹H
+Šº(c9 áy/§y£kŠŠ»ï&žÚ[X[—Ý[YJX\šÙ]Ø\×ÛÙ—Ü˜]Ê_HˆYˆX\šÙ]Ø\×ÛÙ—Ü˜]È[ÙH‹H
+Šº(c9 áy/§y£kŠŠ»ï&¹§*¹ceyâë:+¬9oeH‹BˆCBˆYˆX\šÙ]ØYÙH\È›Ý›Û™NƒBˆ[Z[™×Û[™\Ë˜\[™
+ˆ‹H
+Šº(c9 áz-çyb)9¥«JŠ»ï&¹î©žÛX\šÙ]ØYÙN‹ŒŸyb!ºd§ÈŠCBˆYˆXØÛÝ[Ø\×ÛÙ—Ü˜]ÎƒBˆ[Z[™×Û[™\Ë˜\[™
+ˆ‹H
+Šº-)¹¢-ù/§y£kŠŠ»ï&žÚ[X[—Ý[YJXØÛÝ[Ø\×ÛÙ—Ü˜]Ê_HŠCBˆ[Z[™×Û[™\Ë˜\[™
+ˆ‹H
+Šº`&¹çéyå'ù¢$
+Š»ï&žÛ›ÝYšXØ][Û—ÙÙ[™\˜]YœÝ™[YJ	ÉVKI[KIY	R‰SN‰TÉÊ_HŠCBƒBˆÛÛ[H
+BˆˆÈÈÈ9cäyå'ù.¡¹.à9.bˆƒBˆ
+È—ˆ‹š›Ú[ŠÚ[™ÙWÛ[™\ÊCBˆ
+Èˆ——ˆÈÈÈ9ã¬9g*9 #¹.b9`f—ŠŠžÝ\Ù\—ØXÝ[ÛŸJŠ——ˆƒBˆ
+ÈˆˆÈÈÈ9odùbcybª9/gžØXÝ[Û—ÜÝ[[X\žHÜˆ	ù§*¹£ä9/¦ÉßW—ˆƒBˆ
+ÈˆˆÈÈÈ9..¹.à9.bžÙXÚ\Ú]™WÜ™X\ÛÛŸW—ˆƒBˆ
+ÈˆÈÈÈ9¥íºeí9/èy kûï"9c%ù.«9¥íºeí;ï"WˆƒBˆ
+È—ˆ‹š›Ú[Š[Z[™×Û[™\ÊCBˆ
+È——ˆ9o«¹/èy­¢9 kúhmº`ê9¦/¹é.¹æ¡9¦+ùk§ºfaycäz` y¥íºeí;ï&ú`&¹çéycêº/k9cäymì¹îãùoh¹¢$9æ¡9«hùo#ÑU¹b)9¥«{ï#9.#y/&º!ê¹bª9."ùcexà ˆƒBˆ
+CBƒBˆ™]\›ˆÃBˆšÙ^HŽˆˆ™›Ü›X[XÚ[™ÙNžÙXÚ\Ú[Û—ÚYH‹Bˆ\HŽˆ¹«hùo#ùa¬ùëe¹cæ9c%ˆ‹Bˆ™]™[Ý\HŽˆ‘“Ô“PSÑPÒTÒSÓ—ÓPUT’PSÐÒS‘ÑH‹Bˆ]HŽˆ]KBˆ˜ÛÛ[ŽˆÛÛ[BˆœÛÝ\˜ÙHŽˆ™›Ü›X[ÙXÚ\Ú[Û—Ù]™[‹Bˆœ™[]YÙXÚ\Ú[Û—ÚYŽˆXÚ\Ú[Û—ÚYBˆœÙXÝ\š]WØÛÙHŽˆÛÙKBˆœÙXÝ\š]WÛ˜[YHŽˆ˜[YKBˆ\Ù\—ÜÙ]™\š]HŽˆÙ]™\š]KBˆ\Ù\—ØXÝ[ÛˆŽˆ\Ù\—ØXÝ[Û‹Bˆ˜ÛÛ™š\›X][Û—ØÛÛ^ŽˆÃBˆ™XÚ\Ú[Û—ÚYŽˆXÚ\Ú[Û—ÚYBˆœÙXÝ\š]WØÛÙHŽˆÛÙKBˆœÙXÝ\š]WÛ˜[YHŽˆ˜[YKBˆ›ÜÜ[š]WÜÝ]\ÈŽˆÝ]\ËBˆœ™]š[Ý\×ÛÜÜ[š]WÜÝ]\ÈŽˆ™]š[Ý\×ÜÝ]\ËBˆœ™]š[Ý\×ÜÙXÝ\š]WØÛÙHŽˆ™]š[Ý\×ØÛÙKBˆœš\Ú×Ü\›Z\ÜÚ[ÛˆŽˆš\Ú×Ü\›Z\ÜÚ[Û‹Bˆœ™]š[Ý\×Üš\Ú×Ü\›Z\ÜÚ[ÛˆŽˆ™]š[Ý\×Üš\ÚËBˆšÛ[™×ØXÝ[Û—ØÚ[™ÙYŽˆÛ[™×ØXÝ[Û—ØÚ[™ÙYBˆ™XÚ\Ú[Û—Ý[YWØ™ZZš[™ÈŽˆÝŠXÚ\Ú[Û—Ý[YWÜ˜]ÈÜˆˆŠKBˆ›X\šÙ]Ø\×ÛÙ—Ø™ZZš[™ÈŽˆX\šÙ]Ø\×ÛÙ—Ü˜]ËBˆ˜XØÛÝ[Ø\×ÛÙ—Ø™ZZš[™ÈŽˆXØÛÝ[Ø\×ÛÙ—Ü˜]ËBˆ›X\šÙ]ØYÙWÛZ[]\×Ø]ÙXÚ\Ú[ÛˆŽˆX\šÙ]ØYÙKBˆKBˆCBƒBƒB™YˆXÚ\Ú[Û—Ù]™[
+
+HOˆXÝ›Û™N‚ˆšYÙÙ\ˆH™XYÚœÛÛŠÕUHÈ™XÚ\Ú[Û—ÝšYÙÙ\‹šœÛÛˆ‹ßJCBˆYˆ›ÝšYÙÙ\‹™Ù]
+œ™\]Z\™\×Ù›Ü›X[Ü™X\ÜÙ\ÜÛY[ŠHÜˆÝŠšYÙÙ\‹™Ù]
+œÝ]\ÈŠHÜˆˆŠH›Ý[ˆÈ•’QÑÑT‘Q‹S‘PQWÔ‘PÓÔ‘QŸNƒBˆ™]\›ˆ›Û™CBˆÙ^HHÝŠšYÙÙ\‹™Ù]
+šY[\Ý[˜ÞWÚÙ^HŠHÜˆˆŠCBˆYˆ›ÝÙ^NƒBˆ™]\›ˆ›Û™CBˆXØÛÝ[H™XYÚœÛÛŠÕUHÈ˜XØÛÝ[Ù˜XÝšœÛÛˆ‹ßJCBˆ]™[Ý\K\XØX›HHÝŠšYÙÙ\‹™Ù]
+šYÙÙ\—Ý\HŠHÜˆˆŠKÝŠšYÙÙ\‹™Ù]
+˜\XØX›WÛØš™XÝŠHÜˆˆŠCBˆÈXØÛÝ[Ú[™Ù\È]™HÛ™HØ[›ÛšXØ[›ÝYšXØ][Ûˆ]Û›KˆHYXØ]YBˆÈXØÛÝ[ØÛÛ™š\›X][Û—Ù]™[
+
+H\Y\Èœ™\Ú™\ÜËX]\šX[]H[™^XÝY[CBˆÈÚXÚÜÎÈ›Ý][™ÈHØ[YHÚ[™ÙH›ÝYÚXÚ\Ú[Û—Ù]™[
+
+HÜ™X]\È\XØ]KBˆÈÙ[™\šXÈ[\ÈÝXÚ\ÈX\šË]Ë[X\šÙ]Ý[Ø\ÜÙ][Ý™\ËƒBˆYˆ]™[Ý\HOHPÐÓÕS•ÔÕ•PÕT‘WÐÒS‘ÑQŽƒBˆ™]\›ˆ›Û™CBˆÈšYÙÙ\ˆ\ÈHÒSˆÚYÛ˜[Û›Kˆ›Ü›X[XÚ\Ú[ÛœË™XÛÛ˜Ú[X][Ûˆ[™ˆÈXØÛÝ[ÛÛ™š\›X][ÛˆÝÛˆHÒUÈ[Z][™ÈHÙXÛÛ™Ù[™\šXÈ˜YH[\ˆÈ\™HÛÝ[\XØ]HHØ[YH\Ù\‹]š\ÚX›H˜XÝˆ™XÛÝ™\žH\ÈHÛ™BˆÈ[™\[™[šYÙÙ\ˆÚ]H\Ý[˜Ý\Ù\ˆ˜[YK‚ˆYˆ]™[Ý\HOH‘L‘WÔ‘PÓÕ‘T‘QŽ‚ˆ™]\›ˆ›Û™Bˆ™]\›ˆÈšÙ^HŽˆˆ™XÚ\Ú[ÛŽžÚÙ^_H‹\HŽˆ¹b)9¥«y h¹i#H‹™]™[Ý\HŽˆ‘L‘WÔ‘PÓÕ‘T‘Q‹]HŽˆˆ‹˜ÛÛ[Žˆˆ‹œÛÝ\˜ÙHŽˆ™XÚ\Ú[Û—ÝšYÙÙ\ˆ‹\Ù\—ÜÙ]™\š]HŽˆºg :) yalù¬ê‹\Ù\—ØXÝ[ÛˆŽˆºaãy¥¬9§éyç"ù§ 9¥¬9«hùo#ùb)9¥«HŸBƒBƒB™YˆÛYX[š[™Ù[Ý[œ™XÛÛ˜Ú[YØXØÛÝ[ØÚ[™Ù\ÊXØÛÝ[ˆXÝ
+HOˆ\ÝÙXÝNƒBˆˆˆ”™]\›ˆÛ›HXØÛÝ[[\È]Ø[ˆ™\™\Ù[H™X[\Ù\‹ØXØÛÝ[XÝ[Û‹ƒBƒBˆX\šË]Ë[X\šÙ]šY[ÈÝXÚ\ÈÝ[Ø\ÜÙ]X\šÙ]˜[YH[™›Ø][™ÈÓ[Ý™CBˆÚ[™]™\ˆšXÙ\È[Ý™H[™]\Ý™]™\ˆ™H™\Ù[Y\È[™^Z[™Y˜Y\ËƒBˆˆˆƒBˆ›ÝÜÎˆ\ÝÙXÝHH×CBˆYÛ›Ü™YÛX\š×Ý×ÛX\šÙ]HÈÝ[Ø\ÜÙ]‹œÝØÚ×ÛX\šÙ]Ý˜[YH‹›X\šÙ]Ý˜[YH‹šÛ[™×Ü›‹™Z[WÜ›‹™Z[WÜ›ÜÝŸCBˆ›Üˆ]™[[ˆXØÛÝ[™Ù]
+˜XØÛÝ[ØÚ[™ÙWÙ]™[×ØY\—ØÛÛ™š\›YYØ]ŠHÜˆ×NƒBˆYˆÝŠ]™[™Ù]
+œ™XÛÛ˜Ú[X][Û—ÜÝ]\ÈŠHÜˆˆŠK\\Š
+HOH•S”‘PÓÓÒSQÐPÐÓÕS•ÐÒS‘ÑHŽƒBˆÛÛ[YCBˆ]™[Ý[YHH\œÙWÛ›ÝYšXØ][Û—Ý[YJ]™[™Ù]
+™]™[Ý[YHŠHÜˆ]™[™Ù]
+›ØØÝ\œ™YØ]ŠJCBˆYˆ›Ý]™[Ý[YHÜˆ›ÝÊ
+HH]™[Ý[YHˆ[YY[JZ[]\ÏPPÐÓÕS•ÑU‘S•ÓPVÐQÑWÓRS•UTÊNƒBˆÛÛ[YCBˆØšˆHÝŠ]™[™Ù]
+›Øš™XÝŠHÜˆˆŠKœÝš\
+
+CBˆÛÙHHÝŠ]™[™Ù]
+˜ÛÙHŠHÜˆˆŠKœÝš\
+
+CBˆ]WÙ[HH]™[™Ù]
+œ]X[]WÙ[HŠCBˆ[[Ý[Ù[HH]™[™Ù]
+˜[[Ý[Ù[HŠCBˆYˆØšˆ[ˆYÛ›Ü™YÛX\š×Ý×ÛX\šÙ]ƒBˆÛÛ[YCBˆYˆÝŠ]™[™Ù]
+œ™XÛÛ˜Ú[X][Û—ÜÝ]\ÈŠHÜˆˆŠK\\Š
+HOH”‘PÓÓÒSQÐ–WÒÓ“ÕÓ—ÒT×Ô‘QÒTÕUSÓˆŽƒBˆÛÛ[YCBˆYˆÛÙH[™\Ú[œÝ[˜ÙJ]WÙ[K
+[›Ø]
+JH[™XœÊ›Ø]
+]WÙ[JJHˆƒBˆ›ÝÜË˜\[™
+]™[
+CBˆÛÛ[YCBˆYˆØšˆOH˜Ø\Úˆ[™\Ú[œÝ[˜ÙJ[[Ý[Ù[K
+[›Ø]
+JH[™XœÊ›Ø]
+[[Ý[Ù[JJHHRS—ÕS‘VRS‘QÐÐTÒÑSWÖUPSŽƒBˆ›ÝÜË˜\[™
+]™[
+CBˆ™]\›ˆ›ÝÜÃBƒBƒB™YˆXØÛÝ[ØÛÛ™š\›X][Û—Ù]™[
+
+HOˆXÝ›Û™NƒBˆXØÛÝ[H™XYÚœÛÛŠÕUHÈ˜XØÛÝ[Ù˜XÝšœÛÛˆ‹ßJCBˆ[œ™\ÛÛ™YHÛYX[š[™Ù[Ý[œ™XÛÛ˜Ú[YØXØÛÝ[ØÚ[™Ù\ÊXØÛÝ[
+CBˆYˆ›Ý[œ™\ÛÛ™YƒBˆ™]\›ˆ›Û™CBƒBˆÈÛ™Hœ›ÚÙ\ˆØÜ™Y[œÚÝX^H›ÙXÙH›ÝHÜÚ][Ûˆ[™Ø\Ú[KˆÜ›Ý\CBˆÈ]\Ý[Y\Ý[\[ÈÛ™H\Ù\ˆY\ÜØYÙH[œÝXYÙˆÙ[™[™ÈÛ™H[\\ˆšY[ƒBˆ]\ÝÝ[YHHX^
+ÝŠK™Ù]
+™]™[Ý[YHŠHÜˆK™Ù]
+›ØØÝ\œ™YØ]ŠHÜˆˆŠH›ÜˆH[ˆ[œ™\ÛÛ™Y
+CBˆÜ›Ý\HÙH›ÜˆH[ˆ[œ™\ÛÛ™YYˆÝŠK™Ù]
+™]™[Ý[YHŠHÜˆK™Ù]
+›ØØÝ\œ™YØ]ŠHÜˆˆŠHOH]\ÝÝ[YWCBˆ]™[ÚYÈHÛÜY
+ÝŠK™Ù]
+™]™[ÚYŠHÜˆK™Ù]
+šY[\Ý[˜ÞWÚÙ^HŠHÜˆˆŠH›ÜˆH[ˆÜ›Ý\
+CBˆYÙ\ÝH\ÚX‹œÚLMŠŸ‹š›Ú[Š]™[ÚYÊK™[˜ÛÙJ]‹NŠJKš^YÙ\Ý
+
+VÎŒL—CBƒBˆ]Z[Îˆ\ÝÜÝ—HH×CBˆ›Üˆ]™[[ˆÜ›Ý\ƒBˆÛÙHHÝŠ]™[™Ù]
+˜ÛÙHŠHÜˆˆŠCBˆYˆÛÙNƒBˆ\™Ù]H\Ü^WÙœ›ÛWØÛÙJÛÙKXØÛÝ[
+CBˆ™Y›Ü™HH]™[™Ù]
+œ]X[]WØ™Y›Ü™HŠCBˆY\ˆH]™[™Ù]
+œ]X[]WØY\ˆŠCBˆ[HH]™[™Ù]
+œ]X[]WÙ[HŠCBˆ]Z[Ë˜\[™
+ˆ‹H
+ŠžÝ\™Ù]y£ y.äù¥l:aãÊŠ»ï&žØ™Y›Ü™N™ßH8¡¤ˆØY\Ž™ß{ï"9cæ9c%žÙ›Ø]
+[JNŠÙß{ï"HŠCBˆ[YˆÝŠ]™[™Ù]
+›Øš™XÝŠHÜˆˆŠHOH˜Ø\ÚŽƒBˆ™Y›Ü™HH›Ø]
+]™[™Ù]
+˜[[Ý[Ø™Y›Ü™HŠHÜˆ
+CBˆY\ˆH›Ø]
+]™[™Ù]
+˜[[Ý[ØY\ˆŠHÜˆ
+CBˆ[HH›Ø]
+]™[™Ù]
+˜[[Ý[Ù[HŠHÜˆ
+CBˆ]Z[Ë˜\[™
+ˆ‹H
+Š¹cëùå*:-a:aäJŠ»ï&žØ™Y›Ü™N‹Œ™Ÿya`È8¡¤ˆØY\Ž‹Œ™Ÿya`ûï"9cæ9c%žÙ[NŠËŒ™Ÿya`ûï"HŠCBƒBˆYˆ›Ý]Z[ÎƒBˆ™]\›ˆ›Û™CBƒBˆ]HH¸à$:-)¹¢-ùèkº+©8à$ycäyã¬9§*º)èúaâ¹æ¡9£ y.äËú-a:aäycæ9c%ˆƒBˆÛÛ[H
+BˆˆÈÈÈ9cäyå'ù.¡¹.à9.bˆƒBˆ
+È—ˆ‹š›Ú[Š]Z[ÊCBˆ
+È——º/æy.¦ùcæ9c%¹æë¹bcJŠ¹¬¨y§"ykîyn¥9b,9mì¹èkº+©9¢$9.©8à z-a:aäyb$º/k9¢%¹am¹.å¹mì¹çéz-)¹¢-ù.¢ù.íŠŠ¸à ——ˆƒBˆ
+ÈˆÈÈÈ9/h:g :) y`f¹.à9.bˆƒBˆ
+È¹i ¹§§9/h9b&¹b&¹§"yk§ºfay.l9ce¹¢%º-a:aäyb$º/k;ï#:+íùg*Ú]Ô8¡¤ˆUºhnyæëˆ8¡¤ˆ9odùbcy.©9¦$ù¬§ú`&¹ê¥ùcèùdbº+ây¢${ï&ùi ¹§§9¬¨y§"{ï#:+íù."¹/(9odùbcyb.9eaº-)¹¢-ù¢*¹fï¹¨.9kîxà ——ˆƒBˆ
+ÈˆˆÈÈÈ:-)¹¢-ù.¢ùk§¹¥í¹à®{ï"9c%ù.«9¥íºeí;ï"WžÚ[X[—Ý[YJ]\ÝÝ[YJ_W—ˆƒBˆ
+Èˆ9.áy.íù¨/9­ª:-ã:`(9¢$9æ¡9 .ú-a9.©øà yn ¹`/9d£9­k¹bª9æâ9.£ùcæ9c%¹.#y/&º)é¹cäy«i:`&¹çéxà ˆƒBˆ
+CBˆ™]\›ˆÃBˆšÙ^HŽˆˆ˜XØÛÝ[XÚ[™ÙNžÛ]\ÝÝ[Y_NžÙYÙ\ÝH‹Bˆ\HŽˆº-)¹¢-ùèkº+©‹Bˆ™]™[Ý\HŽˆPÐÓÕS•ÑPÕÐÓÓ‘’T“PUSÓˆ‹Bˆ]HŽˆ]KBˆ˜ÛÛ[ŽˆÛÛ[BˆœÛÝ\˜ÙHŽˆ˜XØÛÝ[Ù˜XÝ‹Bˆ\Ù\—ÜÙ]™\š]HŽˆºg :) y¤ãy/g‹Bˆ\Ù\—ØXÝ[ÛˆŽˆ¹èkº+©9¦+ùd)¹§"yk§ºfay¢$9.©ú-a:aäyb$º/k;ï&ù¥è9b&y."¹/(:-)¹¢-ù¢*¹fïˆ‹Bˆ˜ÛÛ™š\›X][Û—ØÛÛ^ŽˆÈ˜XØÛÝ[Ù]™[ÚYÈŽˆ]™[ÚYË˜XØÛÝ[Ù]™[Ý[YWØ™ZZš[™ÈŽˆ]\ÝÝ[Y_KBˆCBƒBƒB™Yˆ˜Z[YÜÝ\×Ý^
+XYÎˆXÝ
+HOˆÝŽƒBˆ\ÈH×CBˆ›Üˆ›ÝÈ[ˆXYË™Ù]
+™˜Z[YÜÝ\ÈŠHÜˆ×NƒBˆÝ\HÝŠ›ÝË™Ù]
+œÝ\ŠHÜˆˆŠKœÝš\
+
+CBˆ›ØˆHÝŠ›ÝË™Ù]
+š›ØˆŠHÜˆˆŠKœÝš\
+
+CBˆYˆÝ\ƒBˆ\Ë˜\[™
+ˆžÚ›Øˆ
+È	ÈÈ	ÈYˆ›Øˆ[ÙH	Éß^ÜÝ\HŠCBˆ™]\›ˆ»ï&È‹š›Ú[Š\ÖÎŒ×JHÜˆ¹§*¹£ä9/¦ùamù/dùi,z-)y«izj©ƒBƒBƒB™YˆÞ\Ý[WÙ]™[
+
+HOˆXÝ›Û™NƒBˆX[H™XYÚœÛÛŠÕUHÈœÙ[—ÚX[[™×ÜÝ]\ËšœÛÛˆ‹ßJCBˆÛ\ÜÚYšXØ][Û‹XÝ[ÛˆHÝŠX[™Ù]
+˜Û\ÜÚYšXØ][ÛˆŠHÜˆˆŠKÝŠX[™Ù]
+œ™XÛÛ[Y[™YØXÝ[ÛˆŠHÜˆˆŠCBˆYˆXÝ[ÛˆOH‘TÐÐSUHˆÜˆÛ\ÜÚYšXØ][Ûˆ[ˆÈ”T”ÒTÕS•Ô•S•SQWÑRST‘H‹ÓÓ”ÒTÕSÖWÔ‘QÔ‘TÔÒSÓˆŸNƒBˆÞ\Ý[WØÛÛœÚ\Ý[˜ÞHHÝŠX[™Ù]
+œÞ\Ý[WØÛÛœÚ\Ý[˜ÞWÜÝ]\ÈŠHÜˆ¹§*¹çéHŠCBˆ[[YWÚX[HÝŠX[™Ù]
+œ[[YWÚX[ÜÝ]\ÈŠHÜˆ¹§*¹çéHŠCBˆ]HH¸à$9ç'ùk§º/ä:(c9o ¹n.;ïg9olydãy.©9¦$ùb)9¥«xà$QU¹ìîùîçú/ä:(c9â­¹  yo ¹n.ƒBˆÛÛ[H
+Bˆˆ¹cäyå'ù.¡¹.à9.b;ï&¹ìîùîçú/ä:(c9â­¹  z/ç¹îëyo ¹n.;ï#:!ê¹bª9/ë¹i#ymì¹b,:/¯¹k¢yaj:/®yåc8à ——ˆƒBˆˆ¹odùbcymì¹çé{ï&¹. :!í9 )ù¨à9§éO^ÜÞ\Ý[WØÛÛœÚ\Ý[˜Þ_{ï&ú(c9 áz/ä:(c9â­¹  O^Ü[[YWÚX[xà ——ˆƒBˆ¹olydã{ï&¹g*9 h¹i#ybc{ï#:(c9 áy¢%¹.©9¦$ùb)9¥«yæ¡9cëúgh9 )ùcëú ïycåùolydãxà ——ˆƒBˆ¹/h9ã¬9g*:g :) y`f¹.à9.b;ï&¹¦ ¹ï$ù/§y£k¹ìîùîçù¢iú(c9¥¬9æ¡9.l9aiKùce¹aî¹b)9¥«{ï&ùmì¹§"yb.9ea¹£ y.äù.#y/&º(ªùìîùîçú!ê¹bª9/ë¹¥.xà ——ˆƒBˆ¹ìîùîçù."ù. 9«i{ï&¹îéùîëy£"y¥è¹§"yk¢yaj9§.¹b-¹¨à9§éy h¹i#{ï&ù h¹i#yd#¹i ¹§"yo¡yi!9ä!¹.©9¦$ùb)9¥«{ï#9/&¹a£y«(z`&¹çéxà ˆƒBˆ
+CBˆ™]\›ˆÈšÙ^HŽˆˆœÞ\Ý[NœÙ[šX[žØÛ\ÜÚYšXØ][ÛŸNžÚX[™Ù]
+	ØÚXÚÙYØ]	ÊHÜˆX[™Ù]
+	Ý\]YØ]	ÊHÜˆ	ÉßH‹\HŽˆ¹ìîùîçùo ¹n.‹]HŽˆ]K˜ÛÛ[ŽˆÛÛ[œÛÝ\˜ÙHŽˆœÙ[—ÚX[[™×ÜÝ]\È‹\Ù\—ÜÙ]™\š]HŽˆ¹olydãy.©9¦$ùb)9¥«H‹\Ù\—ØXÝ[ÛˆŽˆ¹¦ ¹ï$ù/§y£k¹ìîùîçù`f¹¥¬9.©9¦$ùb)9¥«HŸCBƒBˆXYÈH™XYÚœÛÛŠÕUHÈÛÜšÙ›Ý×Ù˜Z[\™WÙXYÛ›ÜÝXËšœÛÛˆ‹ßJCBˆYˆÝŠXYË™Ù]
+œ™XÛÛ[Y[™YØXÝ[ÛˆŠHÜˆˆŠHOH‘TÐÐSUWÕÒUÑPQÓ“ÔÕPÈŽƒBˆ™]\›ˆ›Û™CBˆØY™]HHXYË™Ù]
+œØY™]HŠHÜˆßCBˆXYÜÚHHÝŠXYË™Ù]
+šXYÜÚHŠHÜˆˆŠCBˆXZ[—ÚXYÜÚHHÝŠXYË™Ù]
+›XZ[—ÚXYÜÚHŠHÜˆˆŠCBˆXYÚ\×ØÝ\œ™[ÛXZ[ˆH›ÛÛ
+ØY™]K™Ù]
+šXYÚ\×ØÝ\œ™[ÛXZ[ˆŠJCBˆYˆ
+XYÜÚH[™XZ[—ÚXYÜÚH[™XYÜÚHOHXZ[—ÚXYÜÚJHÜˆ›ÝXYÚ\×ØÝ\œ™[ÛXZ[ŽƒBˆ™]\›ˆ›Û™CBˆÛÜšÙ›ÝÈHÝŠXYË™Ù]
+ÛÜšÙ›Ý×Û˜[YHŠHÜˆ¹d#¹cì9.îùb¨HŠCBˆ[—ÚYHÝŠXYË™Ù]
+œ[—ÚYŠHÜˆ¹§*¹çéHŠCBˆÛ\ÜÚYšXØ][ÛˆHÝŠXYË™Ù]
+˜Û\ÜÚYšXØ][ÛˆŠHÜˆ¹§*¹çéHŠCBˆÝ\ÈH˜Z[YÜÝ\×Ý^
+XYÊCBˆÚ[™ÙYÙš[\ÈHÜÝŠ
+H›Üˆ[ˆ
+XYË™Ù]
+˜Ú[™ÙYÙš[\ÈŠHÜˆ×JHYˆCBˆÚ[™ÙYÝ^H¸à H‹š›Ú[ŠÚ[™ÙYÙš[\ÖÎŒ×JHYˆÚ[™ÙYÙš[\È[ÙH¹¥è9¦#¹èk¹.&¹b¨y¥l9£k¹¥¡ù.í¹cæ9¦íƒBˆYˆÛÜšÙ›ÝÈOH‘UˆX\šÙ]Û˜\ÚÝŽƒBˆÙ]™\š]HH¹olydãy.©9¦$ùb)9¥«HŽÈXÝ[Û—Ý^H¹¦ ¹ï$ù/§y£k¹ìîùîçù`f¹¥¬9æ¡9.©9¦$ùb)9¥«{ï#9ëbyo¡z(c9 ázaáúfá¹ h¹i#xà ˆŽÈ[\XÝHº(c9 ázaáúfá¹.îùb¨yi,z-){ï#9§ 9¥¬U‹ù£!ù¥l:(c9 áycëú ïy.#yk£9¥m;ï&ú-)¹¢-ù.¢ùk§¹.#y/&¹fè9«i:(ªú!ê¹bª9/ë¹¥.xà ˆƒBˆ[YˆÛÜšÙ›ÝÈOH‘UˆÞ\Ý[HÛÛœÚ\Ý[˜ÞHŽƒBˆÙ]™\š]HHºg :) yalù¬êŽÈXÝ[Û—Ý^H¹¦ ¹¥í¹¥è:g 9¢bùméy/ë¹i#{ï&ùi ¹§§9/h9«hùaá¹i!ù/§z-e¹ìîùîçù`f¹.©9¦$ùb)9¥«{ï#:+íùab9ëbyo¡y."ù. :/k¹. :!í9 )ù¨à9§éyîäù§§8à ˆŽÈ[\XÝH¹ìîùîçù. :!í9 )ù¨à9§éyi,z-){ï#:+í9¦#¹§ä:hnyâ­¹  y¢%¹¨(zj£9§*º`&º/áûï&ù.#y.èú(j9b.9eaº-)¹¢-ù¢%¹k§ºfay£ y.äùcäyå'ùcæ9c%¸à ˆƒBˆ[ÙNƒBˆÙ]™\š]HHºg :) yalù¬êŽÈXÝ[Û—Ý^H¹¦ ¹¥í¹¥è:g 9¢bùméy/ë¹¥.y¥l9£k»ï&ùi ¹d#¹îëyolydãz(c9 áxà z-)¹¢-ù¢%¹.©9¦$ùb)9¥«{ï#9ìîùîçù/&¹caùî©ú`&¹çéxà ˆŽÈ[\XÝH¹d#¹cì9îí9¢©9.îùb¨yi,z-){ï#9/a¹odùbcz+â¹¥«y¬¨y§"z+ày£kº(j9¦#¹b.9eaº-)¹¢-ù¢%¹£ y.äú(ªù¥.ybª8à ˆƒBˆ]HHˆ¸à$9ç'ùk§º/ä:(c9o ¹n.;ïgÜÙ]™\š]_xà$^ÝÛÜšÙ›Ýßyi,z-)HƒBˆÛÛ[Hˆ¹cäyå'ù.¡¹.à9.b;ï&žÝÛÜšÙ›Ýßz/ä:(c9i,z-){ï"[ˆÜ[—ÚY{ï"xà ——¹amù/dùi,z-){ï&žÜÝ\ßxà ——¹olydã{ï&žÚ[\XÝW—¹­¢ycâ¹cæ9¦í;ï&žØÚ[™ÙYÝ^xà ——¹/h9ã¬9g*:g :) y`f¹.à9.b;ï&žØXÝ[Û—Ý^W—¹ìîùîçù..¹.à9.b9¬¨y§"z!ê¹bª9/ë»ï&º!ê¹bª9i!9ä!º)é¹câ¹k¢yaj:/®yåc;ï#9fè9«i9`g9«hº!ê¹bª9/ë¹¥.xà º+â¹¥«yb!¹ìnûï&žØÛ\ÜÚYšXØ][ÛŸxà ˆƒBˆ™]\›ˆÈšÙ^HŽˆˆœÞ\Ý[NÛÜšÙ›ÝÎžÜ[—ÚYNžØÛ\ÜÚYšXØ][ÛŸH‹\HŽˆ¹ìîùîçùo ¹n.‹]HŽˆ]K˜ÛÛ[ŽˆÛÛ[œÛÝ\˜ÙHŽˆÛÜšÙ›Ý×Ù˜Z[\™WÙXYÛ›ÜÝXÈ‹\Ù\—ÜÙ]™\š]HŽˆÙ]™\š]K\Ù\—ØXÝ[ÛˆŽˆXÝ[Û—Ý^CBƒBƒB™YˆÛÜÙWØXØÛÝ[Ù]™[
+›Ü˜ÙNˆ›ÛÛH˜[ÙJHOˆXÝ›Û™NƒBˆÝ\œ™[XØÛÝ[H™XYÚœÛÛŠÕUHÈÕT”‘S•šœÛÛˆ‹ßJK™XYÚœÛÛŠÕUHÈ˜XØÛÝ[Ù˜XÝšœÛÛˆ‹ßJCBˆH›ÝÊ
+CBˆYˆ›Ý›Ü˜ÙH[™
+›Ý\×ØWÜÚ\™WÝ˜Y[™×Ù^J
+HÜˆšÝ\ˆMJNƒBˆ™]\›ˆ›Û™CBˆX\šÙ]Ù]HHÝŠÝ\œ™[™Ù]
+›X\šÙ]Ù]HŠHÜˆˆŠCBˆYˆ›ÝX\šÙ]Ù]HÜˆX\šÙ]Ù]HOH™]J
+Kš\ÛÙ›Ü›X]
+
+NƒBˆ™]\›ˆ›Û™CBˆ\]YÛÛ™š\›YYÙ]HHÝŠXØÛÝ[™Ù]
+\]YØ]ŠHÜˆˆŠKÝŠXØÛÝ[™Ù]
+›\ÝØÛÛ™š\›YYÛX\šÙ]Ù]HŠHÜˆˆŠCBˆš[˜[ØÛÛ™š\›YYH˜[ÙCBˆYˆÛÛ™š\›YYÙ]HOHX\šÙ]Ù]H[™\]YƒBˆžNƒBˆš[˜[ØÛÛ™š\›YYH]][YK™œ›ÛZ\ÛÙ›Ü›X]
+\]Y
+K˜\Ý[Y^›Û™JŠKšÝ\ˆHMCBˆ^Ù\˜[YQ\œ›ÜŽƒBˆ\ÜÃBˆYˆš[˜[ØÛÛ™š\›YYƒBˆ™]\›ˆ›Û™CBˆÛÛ[H
+Bˆ¹.â¹i*y¦+Ðz ¨y.©9¦$ù¥é{ï#9ìîùîçùl&¹§*¹cå¹o¥ÌMNŒ9.bùd#¹cëùèkº+©9æ¡9§ 9îâ:-)¹¢-ù.¢ùk§¸à ——ˆƒBˆˆÈÈÈ9/h:g :) y`f—ˆƒBˆº+íù¢¢ŠŠŒMNŒ9¥-¹ææ9d#¹æ¡9b.9ea¹£ y.äËú-)¹¢-ù¢*¹fïŠŠ¹."¹/(9b,
+ŠÚ]Ô8¡¤ˆUºhnyæëˆ8¡¤¸à#U¹.©9¦$ùi#yææ8à#z b¹i*yê¥ùcèÊŠ¸à ——ˆƒBˆ¹i ¹§§9¥-¹ææ9d#º-)¹¢-ù¬¨y§"y.îù/eycæ9c%»ï#9.gùcëù.éyæí9£©yg*:+éyê¥ùcèùfç¹i#{ï&ŠŠ¹¥-¹ææ:-)¹¢-ù¥è9cæ9c%ŠŠ¸à ˆƒBˆ
+CBˆ™]\›ˆÈšÙ^HŽˆˆ˜ÛÜÙKXXØÛÝ[žÛX\šÙ]Ù]_H‹\HŽˆ¹¥-¹ææ:-)¹¢-È‹]HŽˆ¸à$9¥-¹ææ:-)¹¢-ûïg:g 9èkº+©8à$z+íùb,U¹.©9¦$ùi#yææ9."¹/(9¥-¹ææ9¢*¹fïˆ‹˜ÛÛ[ŽˆÛÛ[œÛÝ\˜ÙHŽˆ˜XØÛÝ[Ù˜XÝ‹\Ù\—ÜÙ]™\š]HŽˆºg :) y¤ãy/g‹\Ù\—ØXÝ[ÛˆŽˆ¹b,Ú]ÔUºhnyæë¹æ¡8à#U¹.©9¦$ùi#yææ8à#z b¹i*yê¥ùcèù."¹/(9¥-¹ææ9¢*¹fï¹¢%¹èkº+©9¥è9cæ9c%ˆŸCBƒBƒB™YˆÚÛÜÙWÙ]™[
+[ÙNˆÝŠHOˆXÝ›Û™NƒBˆYˆ[ÙHOH˜ÛÜÙHŽˆ™]\›ˆÛÜÙWØXØÛÝ[Ù]™[
+
+CBˆYˆ[ÙHOH˜ÛÜÙK]\ÝŽˆ™]\›ˆÛÜÙWØXØÛÝ[Ù]™[
+›Ü˜ÙOUYJCBˆ›ÜˆZ[\ˆ[ˆ
+^XÝ][Û—ØÛÛ™š\›X][Û—Ù]™[›Ü›X[ÙXÚ\Ú[Û—ØÚ[™ÙWÙ]™[XØÛÝ[ØÛÛ™š\›X][Û—Ù]™[Þ\Ý[WÙ]™[XÚ\Ú[Û—Ù]™[™\ÜÙ[]™\žWÙ]™[
+NƒBˆ]™[HZ[\Š
+CBˆYˆ]™[ˆ™]\›ˆ]™[Bˆ™]\›ˆ›Û™CBƒBƒB“Q‘PÖPÓWÔÕUTÑTÈHÈÔ‘PUQ‹”ÑS•‹•ÐRUS‘×ÐÓÓ‘’T“PUSÓˆ‹ÓÓ‘’T“QQ‹TÒU‘Q‹‘VT‘QŸCB•TÑT—ÐPÕSÓ—ÕTTÈHÈ¹¢$9.©9èkº+©‹º-)¹¢-ùèkº+©‹¹¥-¹ææ:-)¹¢-È‹¹.©9¦$ùb)9¥«H‹¹«hùo#ùa¬ùëe¹cæ9c%ˆ‹¹ìîùîçùo ¹n.ŸCB““ÕQ’PÐUSÓ—ÕÑVTÈHƒBƒBƒB™Yˆ›ÝYšXØ][Û—ÚYÙ›ÜŠ]™[ˆXÝ
+HOˆÝŽƒBˆÛÝ\˜ÙHHÝŠ]™[™Ù]
+œÛÝ\˜ÙWÙ]™[ÚYŠHÜˆ]™[™Ù]
+šÙ^HŠHÜˆˆŠCBˆ™]\›ˆ››ÝYšXØ][Û—Èˆ
+È\ÚX‹œÚLMŠÛÝ\˜ÙK™[˜ÛÙJ]‹NŠJKš^YÙ\Ý
+
+VÎŒŒCBƒBƒB™Yˆ›Ü›X[^™WÛ›ÝYšXØ][ÛŠ]™[ˆXÝ™XÛÜ™ˆXÝ›Û™HH›Û™JHOˆXÝƒBˆ™XÛÜ™H™XÛÜ™ÜˆßCBˆÜ™X]YHÝŠ™XÛÜ™™Ù]
+˜Ü™X]YØ]ŠHÜˆ]™[™Ù]
+˜Ü™X]YØ]ŠHÜˆ›ÝÊ
+Kš\ÛÙ›Ü›X]
+[Y\ÜXÏHœÙXÛÛ™ÈŠJCBˆÛÛ^H]™[™Ù]
+˜ÛÛ™š\›X][Û—ØÛÛ^ŠHÜˆßCBˆ™]\›ˆÈ››ÝYšXØ][Û—ÚYŽˆÝŠ™XÛÜ™™Ù]
+››ÝYšXØ][Û—ÚYŠHÜˆ]™[™Ù]
+››ÝYšXØ][Û—ÚYŠHÜˆ›ÝYšXØ][Û—ÚYÙ›ÜŠ]™[
+JK™]™[Ý\HŽˆÝŠ™XÛÜ™™Ù]
+™]™[Ý\HŠHÜˆ]™[™Ù]
+™]™[Ý\HŠHÜˆ]™[™Ù]
+\HŠHÜˆ”ÖTÕSWÑU‘S•ŠK››ÝYšXØ][Û—ØÚ[›™[ŽˆÝŠ™XÛÜ™™Ù]
+››ÝYšXØ][Û—ØÚ[›™[ŠHÜˆ]™[™Ù]
+››ÝYšXØ][Û—ØÚ[›™[ŠHÜˆ
+”‘TÔ•ˆYˆ]™[™Ù]
+™]™[Ý\HŠHOH”‘TÔ•ÑSU‘T–WÔ‘TUQTÕˆ[ÙH’S•T”•TŠJK™[]™\žWÛ[ÙHŽˆÝŠ™XÛÜ™™Ù]
+™[]™\žWÛ[ÙHŠHÜˆ]™[™Ù]
+™[]™\žWÛ[ÙHŠHÜˆ
+‘•SÔ‘TÔ•ˆYˆ]™[™Ù]
+™]™[Ý\HŠHOH”‘TÔ•ÑSU‘T–WÔ‘TUQTÕˆ[ÙHÓÓTPÕŠJKœÛÝ\˜ÙWÙ]™[ÚYŽˆÝŠ™XÛÜ™™Ù]
+œÛÝ\˜ÙWÙ]™[ÚYŠHÜˆ]™[™Ù]
+œÛÝ\˜ÙWÙ]™[ÚYŠHÜˆ]™[™Ù]
+šÙ^HŠHÜˆˆŠKœ™[]YÙXÚ\Ú[Û—ÚYŽˆÝŠ™XÛÜ™™Ù]
+œ™[]YÙXÚ\Ú[Û—ÚYŠHÜˆ]™[™Ù]
+œ™[]YÙXÚ\Ú[Û—ÚYŠHÜˆÛÛ^™Ù]
+™XÚ\Ú[Û—ÚYŠHÜˆˆŠKœÙXÝ\š]WØÛÙHŽˆÝŠ™XÛÜ™™Ù]
+œÙXÝ\š]WØÛÙHŠHÜˆ]™[™Ù]
+œÙXÝ\š]WØÛÙHŠHÜˆÛÛ^™Ù]
+œÙXÝ\š]WØÛÙHŠHÜˆˆŠKœÙXÝ\š]WÛ˜[YHŽˆÝŠ™XÛÜ™™Ù]
+œÙXÝ\š]WÛ˜[YHŠHÜˆ]™[™Ù]
+œÙXÝ\š]WÛ˜[YHŠHÜˆÛÛ^™Ù]
+œÙXÝ\š]WÛ˜[YHŠHÜˆˆŠK\Ù\—ÜÙ]™\š]HŽˆÝŠ™XÛÜ™™Ù]
+\Ù\—ÜÙ]™\š]HŠHÜˆ]™[™Ù]
+\Ù\—ÜÙ]™\š]HŠHÜˆˆŠK\Ù\—ØXÝ[ÛˆŽˆÝŠ™XÛÜ™™Ù]
+\Ù\—ØXÝ[ÛˆŠHÜˆ]™[™Ù]
+\Ù\—ØXÝ[ÛˆŠHÜˆˆŠK›Y™XÞXÛWÜÝ]\ÈŽˆÝŠ™XÛÜ™™Ù]
+›Y™XÞXÛWÜÝ]\ÈŠHÜˆ™XÛÜ™™Ù]
+œÝ]\ÈŠHÜˆÔ‘PUQŠK˜Ü™X]YØ]ŽˆÜ™X]YœÙ[Ø]Žˆ™XÛÜ™™Ù]
+œÙ[Ø]ŠK˜ÛÛ™š\›YYØ]Žˆ™XÛÜ™™Ù]
+˜ÛÛ™š\›YYØ]ŠK˜\˜Ú]™YØ]Žˆ™XÛÜ™™Ù]
+˜\˜Ú]™YØ]ŠK™^\™\×Ø]Žˆ™XÛÜ™™Ù]
+™^\™\×Ø]ŠHÜˆ
+
+\œÙWÛ›ÝYšXØ][Û—Ý[YJÜ™X]Y
+H
+È[YY[J^\ÏS“ÕQ’PÐUSÓ—ÕÑVTÊJKš\ÛÙ›Ü›X]
+[Y\ÜXÏHœÙXÛÛ™ÈŠHYˆ\œÙWÛ›ÝYšXØ][Û—Ý[YJÜ™X]Y
+H[ÙH›Û™JK]HŽˆÝŠ™XÛÜ™™Ù]
+]HŠHÜˆ]™[™Ù]
+]HŠHÜˆˆŠK˜ÛÛ[ŽˆÝŠ™XÛÜ™™Ù]
+˜ÛÛ[ŠHÜˆ]™[™Ù]
+˜ÛÛ[ŠHÜˆˆŠKœÛÝ\˜ÙHŽˆÝŠ™XÛÜ™™Ù]
+œÛÝ\˜ÙHŠHÜˆ]™[™Ù]
+œÛÝ\˜ÙHŠHÜˆˆŠK˜ÛÛ™š\›X][Û—ØÛÛ^ŽˆÛÛ^Üˆ™XÛÜ™™Ù]
+˜ÛÛ™š\›X][Û—ØÛÛ^ŠHÜˆßKœ™\ÜÛœÙHŽˆ™XÛÜ™™Ù]
+œ™\ÜÛœÙHŠHÜˆßK›\ÝØ][\YØ]Žˆ™XÛÜ™™Ù]
+›\ÝØ][\YØ]ŠHÜˆ™XÛÜ™™Ù]
+˜][\YØ]Š_CBƒBƒB™Yˆ^\™WÛ›ÝYšXØ][ÛœÊ][\Îˆ\ÝÙXÝJHOˆ\ÝÙXÝNƒBˆÝ\œ™[H›ÝÊ
+NÈÝ]H×CBˆ›Üˆ˜]È[ˆ][\ÎƒBˆ][HH›Ü›X[^™WÛ›ÝYšXØ][ÛŠ˜]Ë˜]ÊCBˆÝ]\ÈHÝŠ][K™Ù]
+›Y™XÞXÛWÜÝ]\ÈŠHÜˆˆŠCBˆ^\žHH\œÙWÛ›ÝYšXØ][Û—Ý[YJ][K™Ù]
+™^\™\×Ø]ŠJCBˆYˆÝ]\È[ˆÈ”ÑS•‹•ÐRUS‘×ÐÓÓ‘’T“PUSÓˆŸH[™^\žH[™Ý\œ™[H^\žNƒBˆ][VÈ›Y™XÞXÛWÜÝ]\È—HH‘VT‘QŽÈ][VÈ˜\˜Ú]™YØ]—HH][K™Ù]
+˜\˜Ú]™YØ]ŠHÜˆÝ\œ™[š\ÛÙ›Ü›X]
+[Y\ÜXÏHœÙXÛÛ™ÈŠCBˆÝ]˜\[™
+][JCBˆ™]\›ˆÝ]BƒBƒB™Yˆš[™Ù^\Ý[™×Û›ÝYšXØ][ÛŠ][\Îˆ\ÝÙXÝK]™[ˆXÝ
+HOˆXÝ›Û™NƒBˆÛÝ\˜ÙHHÝŠ]™[™Ù]
+œÛÝ\˜ÙWÙ]™[ÚYŠHÜˆ]™[™Ù]
+šÙ^HŠHÜˆˆŠCBˆšYHÝŠ]™[™Ù]
+››ÝYšXØ][Û—ÚYŠHÜˆˆŠCBˆ™[]YÙXÚ\Ú[Û—ÚYHÝŠ]™[™Ù]
+œ™[]YÙXÚ\Ú[Û—ÚYŠHÜˆ
+]™[™Ù]
+˜ÛÛ™š\›X][Û—ØÛÛ^ŠHÜˆßJK™Ù]
+™XÚ\Ú[Û—ÚYŠHÜˆˆŠCBˆ]™[Ý\HHÝŠ]™[™Ù]
+™]™[Ý\HŠHÜˆˆŠCBˆ]™[ØXØÛÝ[ÚYÈHÙ]
+
+]™[™Ù]
+˜ÛÛ™š\›X][Û—ØÛÛ^ŠHÜˆßJK™Ù]
+˜XØÛÝ[Ù]™[ÚYÈŠHÜˆ×JCBˆ›Üˆ][H[ˆ][\ÎƒBˆYˆšY[™ÝŠ][K™Ù]
+››ÝYšXØ][Û—ÚYŠHÜˆˆŠHOHšYƒBˆ™]\›ˆ][CBˆYˆÛÝ\˜ÙH[™ÝŠ][K™Ù]
+œÛÝ\˜ÙWÙ]™[ÚYŠHÜˆˆŠHOHÛÝ\˜ÙNƒBˆ™]\›ˆ][CBˆYˆ]™[Ý\HOH‘“Ô“PSÑPÒTÒSÓ—ÓPUT’PSÐÒS‘ÑHˆ[™™[]YÙXÚ\Ú[Û—ÚY[™ÝŠ][K™Ù]
+œ™[]YÙXÚ\Ú[Û—ÚYŠHÜˆˆŠHOH™[]YÙXÚ\Ú[Û—ÚYƒBˆ™]\›ˆ][CBˆYˆ]™[Ý\HOHPÐÓÕS•ÑPÕÐÓÓ‘’T“PUSÓˆˆ[™]™[ØXØÛÝ[ÚYÎƒBˆ][WÚYÈHÙ]
+
+][K™Ù]
+˜ÛÛ™š\›X][Û—ØÛÛ^ŠHÜˆßJK™Ù]
+˜XØÛÝ[Ù]™[ÚYÈŠHÜˆ×JCBˆYˆ]™[ØXØÛÝ[ÚYÈ	ˆ][WÚYÎƒBˆ™]\›ˆ][CBˆ™]\›ˆ›Û™CBƒBƒB™YˆÛÛ\XÝÜ™XÙ[
+][NˆXÝ
+HOˆXÝƒBˆ™]\›ˆÈšÙ^HŽˆ][K™Ù]
+œÛÝ\˜ÙWÙ]™[ÚYŠK\HŽˆ][K™Ù]
+™]™[Ý\HŠK]HŽˆ][K™Ù]
+]HŠK˜ÛÛ[Žˆ][K™Ù]
+˜ÛÛ[ŠKœÛÝ\˜ÙHŽˆ][K™Ù]
+œÛÝ\˜ÙHŠK\Ù\—ÜÙ]™\š]HŽˆ][K™Ù]
+\Ù\—ÜÙ]™\š]HŠK\Ù\—ØXÝ[ÛˆŽˆ][K™Ù]
+\Ù\—ØXÝ[ÛˆŠKœÝ]\ÈŽˆ”ÑS•ˆYˆ][K™Ù]
+›Y™XÞXÛWÜÝ]\ÈŠH[ˆÈ”ÑS•‹•ÐRUS‘×ÐÓÓ‘’T“PUSÓˆŸH[ÙH][K™Ù]
+›Y™XÞXÛWÜÝ]\ÈŠK˜][\YØ]Žˆ][K™Ù]
+›\ÝØ][\YØ]ŠHÜˆ][K™Ù]
+œÙ[Ø]ŠHÜˆ][K™Ù]
+˜Ü™X]YØ]ŠKœ™\ÜÛœÙHŽˆ][K™Ù]
+œ™\ÜÛœÙHŠHÜˆßK››ÝYšXØ][Û—ÚYŽˆ][K™Ù]
+››ÝYšXØ][Û—ÚYŠK›Y™XÞXÛWÜÝ]\ÈŽˆ][K™Ù]
+›Y™XÞXÛWÜÝ]\ÈŠ_CBƒBƒB™YˆÛ›ÝYšXØ][Û—ÛX]Ú\×Ú[[
+][NˆXÝX]ÚˆXÝ
+HOˆ›ÛÛ‚ˆˆˆ”™\]Z\™H^XÝXÚ\Ú[ÛˆY[]H\ÈH›ÝYšXØ][Û‰ÜÈØš™XÝØXÝ[ÛˆY[]Kˆˆˆ‚ˆ[[HX]Ú™Ù]
+š[[ŠHÜˆßBˆÛÛ^H][K™Ù]
+˜ÛÛ™š\›X][Û—ØÛÛ^ŠHÜˆßBˆ][WØÛÙHHÝŠ][K™Ù]
+œÙXÝ\š]WØÛÙHŠHÜˆÛÛ^™Ù]
+œÙXÝ\š]WØÛÙHŠHÜˆˆŠBˆ][WÜÚYHHÝŠÛÛ^™Ù]
+œÚYHŠHÜˆˆŠBˆ][WÛY™XÞXÛHHÝŠÛÛ^™Ù]
+›Y™XÞXÛHŠHÜˆˆŠBˆYˆ][WØÛÙH[™ÝŠ[[™Ù]
+˜ÛÙHŠHÜˆˆŠHOH][WØÛÙN‚ˆ™]\›ˆ˜[ÙBˆYˆ][WÜÚYH[™ÝŠ[[™Ù]
+œÚYHŠHÜˆˆŠHOH][WÜÚYN‚ˆ™]\›ˆ˜[ÙBˆYˆ][WÛY™XÞXÛH[™ÝŠ[[™Ù]
+›Y™XÞXÛHŠHÜˆˆŠHOH][WÛY™XÞXÛN‚ˆ™]\›ˆ˜[ÙBˆ™]\›ˆYB‚‚™Yˆ™]˜[Y]WÜ[™[™×Û›ÝYšXØ][ÛœÊ›ÝYšXØ][ÛœÎˆ\ÝÙXÝJHOˆ\ÝÙXÝNƒBˆˆˆ”™]˜[Y]H[™[™È›Û\ÈYØZ[œÝØ[›ÛšXØ[˜XÝÈ\Ú[™È^XÝY[]Hš\œÝˆˆˆƒBˆ™XÛÛ˜Ú[X][ÛˆH™XYÚœÛÛŠÕUHÈ™^XÝ][Û—Ü™XÛÛ˜Ú[X][Û‹šœÛÛˆ‹ßJCBˆX]Ú\ÈH™XÛÛ˜Ú[X][Û‹™Ù]
+›X]Ú\ÈŠHÜˆ×CBˆ›Üˆ][H[ˆ›ÝYšXØ][ÛœÎƒBˆYˆÝŠ][K™Ù]
+›Y™XÞXÛWÜÝ]\ÈŠHÜˆˆŠK\\Š
+HOH•ÐRUS‘×ÐÓÓ‘’T“PUSÓˆŽƒBˆÛÛ[YCBˆ]™[Ý\HHÝŠ][K™Ù]
+™]™[Ý\HŠHÜˆˆŠCBˆ™X\ÛÛˆHˆƒBˆYˆ]™[Ý\HOH”S‘S‘×ÑVPÕUSÓ—ÐÓÓ‘’T“PUSÓˆŽƒBˆÛÛ^H][K™Ù]
+˜ÛÛ™š\›X][Û—ØÛÛ^ŠHÜˆßCBˆ™[]YÙXÚ\Ú[Û—ÚYHÝŠ][K™Ù]
+œ™[]YÙXÚ\Ú[Û—ÚYŠHÜˆÛÛ^™Ù]
+™XÚ\Ú[Û—ÚYŠHÜˆˆŠCBˆ^XÝHÛX]Ú›ÜˆX]Ú[ˆX]Ú\ÈYˆÝŠ
+X]Ú™Ù]
+š[[ŠHÜˆßJK™Ù]
+™XÚ\Ú[Û—ÚYŠHÜˆˆŠHOH™[]YÙXÚ\Ú[Û—ÚYHYˆ™[]YÙXÚ\Ú[Û—ÚY[ÙH×CBˆYˆ™[]YÙXÚ\Ú[Û—ÚYƒBˆYˆ[Š^XÝ
+HOHH[™Û›ÝYšXØ][Û—ÛX]Ú\×Ú[[
+][K^XÝÌJH[™›Ý›ÛÛ
+^XÝÌK™Ù]
+œ™\]Z\™\×Ý\Ù\—ØÛÛ™š\›X][ÛˆŠJNƒBˆ™X\ÛÛˆH™^XÝ™[]YXÚ\Ú[Ûˆ\ÈØ[›ÛšXØ[H™XÛÛ˜Ú[YÈÛÛ™š\›X][Ûˆ\È›ÈÛ™Ù\ˆ™\]Z\™YƒBˆ[ÙNƒBˆÛÙHHÝŠ][K™Ù]
+œÙXÝ\š]WØÛÙHŠHÜˆÛÛ^™Ù]
+œÙXÝ\š]WØÛÙHŠHÜˆˆŠCBˆÚYHHÝŠÛÛ^™Ù]
+œÚYHŠHÜˆˆŠCBˆY™XÞXÛHHÝŠÛÛ^™Ù]
+›Y™XÞXÛHŠHÜˆˆŠCBˆ]HHÝŠÛÛ^™Ù]
+œÝYÙÙ\ÝYÙ^XÝ][Û—Ù]HŠHÜˆÛÛ^™Ù]
+™^XÝ][Û—Ù]HŠHÜˆˆŠCBˆØ[™Y]\ÈHÛX]Ú›ÜˆX]Ú[ˆX]Ú\ÃBˆYˆÝŠ
+X]Ú™Ù]
+š[[ŠHÜˆßJK™Ù]
+˜ÛÙHŠHÜˆˆŠHOHÛÙCBˆ[™
+›ÝÚYHÜˆÝŠ
+X]Ú™Ù]
+š[[ŠHÜˆßJK™Ù]
+œÚYHŠHÜˆˆŠHOHÚYJCBˆ[™
+›ÝY™XÞXÛHÜˆÝŠ
+X]Ú™Ù]
+š[[ŠHÜˆßJK™Ù]
+›Y™XÞXÛHŠHÜˆˆŠHOHY™XÞXÛJCBˆ[™
+›Ý]HÜˆÝŠX]Ú™Ù]
+™^XÝ][Û—Ù]HŠHÜˆˆŠHOH]JWCBˆYˆ[ŠØ[™Y]\ÊHOHH[™›Ý›ÛÛ
+Ø[™Y]\ÖÌK™Ù]
+œ™\]Z\™\×Ý\Ù\—ØÛÛ™š\›X][ÛˆŠJNƒBˆ™X\ÛÛˆH[š\]YHÛÛœÝ˜Z[™YYØXÞH^XÝ][ÛˆY[]H\È™XÛÛ˜Ú[YƒBˆ[Yˆ]™[Ý\HOH¹¥-¹ææ:-)¹¢-ÈŽƒBˆÛÝ\˜ÙHHÝŠ][K™Ù]
+œÛÝ\˜ÙWÙ]™[ÚYŠHÜˆˆŠCBˆX\šÙ]Ù]HHÛÝ\˜ÙKœÜ]
+Žˆ‹JVÌWHYˆÛÝ\˜ÙKœÝ\ÝÚ]
+˜ÛÜÙKXXØÛÝ[ˆŠH[ÙHˆƒBˆÛÜÝ\™HH™XYÚœÛÛŠÕUHÈˆ˜ÛÜÙWÜ™]šY]×ØÛÜÝ\™WÞÛX\šÙ]Ù]_KšœÛÛˆ‹ßJCBˆYˆX\šÙ]Ù]H[™ÝŠÛÜÝ\™K™Ù]
+œÝ]\ÈŠHÜˆˆŠK\\Š
+HOHÓÔÑQŽƒBˆ™X\ÛÛˆHˆ˜Ø[›ÛšXØ[ÛÜÙH™]šY]ÈÛÜÝ\™HÛÛ\]Y›ÜˆÛX\šÙ]Ù]_HƒBˆYˆ™X\ÛÛŽƒBˆÝ[\H›ÝÊ
+Kš\ÛÙ›Ü›X]
+[Y\ÜXÏHœÙXÛÛ™ÈŠCBˆ][VÈ›Y™XÞXÛWÜÝ]\È—HHTÒU‘QƒBˆ][VÈ˜\˜Ú]™YØ]—HH][K™Ù]
+˜\˜Ú]™YØ]ŠHÜˆÝ[\Bˆ][VÈœ™]˜[Y][Û—Ü™X\ÛÛˆ—HH™X\ÛÛƒBˆ™]\›ˆ›ÝYšXØ][ÛœÃBƒBƒB™YˆXZ[Š
+HOˆ[ƒBˆ\œÙ\ˆH\™Ü\œÙK\™Ý[Y[\œÙ\Š
+NÈ\œÙ\‹˜YØ\™Ý[Y[
+‹K[[ÙH‹ÚÚXÙ\ÏVÈ™]™[‹˜ÛÜÙH‹˜ÛÜÙK]\Ý‹˜Ú[›™[]\Ý—KY˜][H™]™[ŠNÈ\™ÜÈH\œÙ\‹œ\œÙWØ\™ÜÊ
+CBˆÚÙ[ˆHÜË™[š\›Û‹™Ù]
+”TÒT×ÕÒÑSˆ‹ˆŠKœÝš\
+
+NÈÝ]WÜ]HÕUHÈ››ÝYšXØ][Û—ØÙ[\‹šœÛÛˆŽÈÝ]HH™XYÚœÛÛŠÝ]WÜ]ÈœØÚ[XWÝ™\œÚ[ÛˆŽˆŒKŒ‹œ™XÙ[Žˆ×_JCBˆ˜]×Ú][\ÈH\Ý
+Ý]K™Ù]
+››ÝYšXØ][ÛœÈŠHÜˆ×JCBˆYˆ›Ý˜]×Ú][\Îˆ˜]×Ú][\ÈHÛ›Ü›X[^™WÛ›ÝYšXØ][ÛŠ
+H›Üˆ[ˆ
+Ý]K™Ù]
+œ™XÙ[ŠHÜˆ×JWCBˆ›ÝYšXØ][ÛœÈH^\™WÛ›ÝYšXØ][ÛœÊ˜]×Ú][\ÊCBˆ›ÝYšXØ][ÛœÈH™]˜[Y]WÜ[™[™×Û›ÝYšXØ][ÛœÊ›ÝYšXØ][ÛœÊCBˆYˆ\™ÜË›[ÙHOH˜Ú[›™[]\ÝŽƒBˆ]™[HÈšÙ^HŽˆˆ˜Ú[›™[]\ÝžÛ›ÝÊ
+Kš\ÛÙ›Ü›X]
+[Y\ÜXÏIÜÙXÛÛ™ÉÊ_H‹\HŽˆ¹­bú+åH‹]HŽˆ¸à$9­bú+åxà$QU¹ìîùîçú`&¹çéy.+yoàÈ‹˜ÛÛ[Žˆº/æy¦+ù. 9§hz`&¹çéz`&º`dù­bú+å{ï#9.#y.èú(j9ç'ùk§º(c9 áxà z-)¹¢-øà y.©9¦$ù¢%¹ìîùîçù¥azf§8à ——¹/h9ã¬9g*:g :) y`f¹.à9.b;ï&¹¥è:g 9¤ãy/g8à ¹¥-¹b,9clú(j9é.ˆÚ]Xˆ8¡¤ˆ\Ú\È8¡¤ˆ9o«¹/èz`&º`dù«hùn.8à ˆ‹œÛÝ\˜ÙHŽˆ›X[X[Ý\Ý‹™]™[Ý\HŽˆÒS“‘SÕTÕ‹\Ù\—ÜÙ]™\š]HŽˆ¹­bú+åH‹\Ù\—ØXÝ[ÛˆŽˆ¹¥è:g 9¤ãy/gŸCBˆ[ÙNƒBˆ]™[HÚÛÜÙWÙ]™[
+\™ÜË›[ÙJBˆYˆ]™[‚ˆžN‚ˆ]™[H™[™\—ØØ[›ÛšXØ[Û›ÝYšXØ][ÛŠ]™[
+Bˆ^Ù\˜[YQ\œ›Üˆ\È^Î‚ˆÝ[\H›ÝÊ
+Kš\ÛÙ›Ü›X]
+[Y\ÜXÏHœÙXÛÛ™ÈŠBˆÝ]K\]JÈœØÚ[XWÝ™\œÚ[ÛˆŽˆŒ‹Œˆ‹\]YØ]ŽˆÝ[\›\ÝÜÝ]\ÈŽˆ”‘R‘PÕQÕS”ÕTÔ•QÑU‘S•‹[œÝ\ÜYÙ]™[Ý\HŽˆÝŠ]™[™Ù]
+™]™[Ý\HŠHÜˆ]™[™Ù]
+\HŠHÜˆˆŠ_JBˆÜš]WÚœÛÛŠÝ]WÜ]Ý]JBˆš[
+œÛÛ‹™[\ÊÈœÝ]\ÈŽˆ”‘R‘PÕQÕS”ÕTÔ•QÑU‘S•‹™]Z[ŽˆÝŠ^Ê_K[œÝ\™WØ\ØÚZOQ˜[ÙJJBˆ™]\›ˆ‚ˆYˆ›Ý]™[ƒBˆÝ]K\]JÈœØÚ[XWÝ™\œÚ[ÛˆŽˆŒ‹Œˆ‹\]YØ]Žˆ›ÝÊ
+Kš\ÛÙ›Ü›X]
+[Y\ÜXÏHœÙXÛÛ™ÈŠK››ÝYšXØ][ÛœÈŽˆ›ÝYšXØ][ÛœËœ™XÙ[ŽˆØÛÛ\XÝÜ™XÙ[
+
+H›Üˆ[ˆ›ÝYšXØ][ÛœÖËRTÕÔ–WÓSRU—WKœ[™[™×Ü]Y\Ý[ÛœÈŽˆÞÈ››ÝYšXØ][Û—ÚY—H›Üˆ[ˆ›ÝYšXØ][ÛœÈYˆ™Ù]
+›Y™XÞXÛWÜÝ]\ÈŠHOH•ÐRUS‘×ÐÓÓ‘’T“PUSÓˆ—_JNÈÜš]WÚœÛÛŠÝ]WÜ]Ý]JNÈš[
+œÛÛ‹™[\ÊÈœÝ]\ÈŽˆ““×Ó“ÕQ’PÐUSÓ—Ó‘QQQŸK[œÝ\™WØ\ØÚZOQ˜[ÙJJNÈ™]\›ˆBˆ^\Ý[™ÈHš[™Ù^\Ý[™×Û›ÝYšXØ][ÛŠ›ÝYšXØ][ÛœË]™[
+CBˆYˆ^\Ý[™È[™^\Ý[™Ë™Ù]
+›Y™XÞXÛWÜÝ]\ÈŠH[ˆÈ”ÑS•‹•ÐRUS‘×ÐÓÓ‘’T“PUSÓˆ‹ÓÓ‘’T“QQ‹TÒU‘QŸNƒBˆÝ]K\]JÈœØÚ[XWÝ™\œÚ[ÛˆŽˆŒ‹Œˆ‹\]YØ]Žˆ›ÝÊ
+Kš\ÛÙ›Ü›X]
+[Y\ÜXÏHœÙXÛÛ™ÈŠK››ÝYšXØ][ÛœÈŽˆ›ÝYšXØ][ÛœËœ™XÙ[ŽˆØÛÛ\XÝÜ™XÙ[
+
+H›Üˆ[ˆ›ÝYšXØ][ÛœÖËRTÕÔ–WÓSRU—WKœ[™[™×Ü]Y\Ý[ÛœÈŽˆÞÈ››ÝYšXØ][Û—ÚY—H›Üˆ[ˆ›ÝYšXØ][ÛœÈYˆ™Ù]
+›Y™XÞXÛWÜÝ]\ÈŠHOH•ÐRUS‘×ÐÓÓ‘’T“PUSÓˆ—_JNÈÜš]WÚœÛÛŠÝ]WÜ]Ý]JNÈš[
+œÛÛ‹™[\ÊÈœÝ]\ÈŽˆS‘PQWÓPSQÑQ‹››ÝYšXØ][Û—ÚYŽˆ^\Ý[™Ë™Ù]
+››ÝYšXØ][Û—ÚYŠK›Y™XÞXÛWÜÝ]\ÈŽˆ^\Ý[™Ë™Ù]
+›Y™XÞXÛWÜÝ]\ÈŠ_K[œÝ\™WØ\ØÚZOQ˜[ÙJJNÈ™]\›ˆBˆYˆ^\Ý[™È[™^\Ý[™Ë™Ù]
+›Y™XÞXÛWÜÝ]\ÈŠHOH‘VT‘QŽƒBˆš[
+œÛÛ‹™[\ÊÈœÝ]\ÈŽˆ‘VT‘QÔ‘TURT‘T×Ó‘U×ÑU‘S•‹››ÝYšXØ][Û—ÚYŽˆ^\Ý[™Ë™Ù]
+››ÝYšXØ][Û—ÚYŠ_K[œÝ\™WØ\ØÚZOQ˜[ÙJJNÈ™]\›ˆBˆ][HH›Ü›X[^™WÛ›ÝYšXØ][ÛŠ]™[^\Ý[™ÊNÈ][VÈ›Y™XÞXÛWÜÝ]\È—HHÔ‘PUQŽÈ][VÈ˜Ü™X]YØ]—HH][K™Ù]
+˜Ü™X]YØ]ŠHÜˆ›ÝÊ
+Kš\ÛÙ›Ü›X]
+[Y\ÜXÏHœÙXÛÛ™ÈŠCBˆYˆ›ÝÚÙ[ŽƒBˆÝ[\H›ÝÊ
+Kš\ÛÙ›Ü›X]
+[Y\ÜXÏHœÙXÛÛ™ÈŠCBˆ][VÈ›\ÝØ][\YØ]—HHÝ[\Bˆ][VÈœ™\ÜÛœÙH—HHÈ™\œ›ÜˆŽˆ”TÒT×ÕÒÑSˆZ\ÜÚ[™ÈŸCBˆ][VÈ›Y™XÞXÛWÜÝ]\È—HH‘RSQƒBˆ›ÝYšXØ][ÛœÈHÞ›Üˆ[ˆ›ÝYšXØ][ÛœÈYˆ™Ù]
+››ÝYšXØ][Û—ÚYŠHOH][VÈ››ÝYšXØ][Û—ÚY—WCBˆ›ÝYšXØ][ÛœË˜\[™
+][JCBˆÝ]K\]JÈœØÚ[XWÝ™\œÚ[ÛˆŽˆŒ‹Œˆ‹\]YØ]ŽˆÝ[\›\ÝÜÝ]\ÈŽˆ‘RSQ‹›\ÝÝ\HŽˆ][VÈ™]™[Ý\H—K›\ÝÝ]HŽˆ][VÈ]H—K››ÝYšXØ][ÛœÈŽˆ›ÝYšXØ][ÛœÖËRTÕÔ–WÓSRU—Kœ™XÙ[ŽˆØÛÛ\XÝÜ™XÙ[
+
+H›Üˆ[ˆ›ÝYšXØ][ÛœÖËRTÕÔ–WÓSRU—WKœ[™[™×Ü]Y\Ý[ÛœÈŽˆÞÈ››ÝYšXØ][Û—ÚY—H›Üˆ[ˆ›ÝYšXØ][ÛœÈYˆ™Ù]
+›Y™XÞXÛWÜÝ]\ÈŠHOH•ÐRUS‘×ÐÓÓ‘’T“PUSÓˆ—_JNÈÜš]WÚœÛÛŠÝ]WÜ]Ý]JNÈš[
+œÛÛ‹™[\ÊÈœÝ]\ÈŽˆ‘RSQ‹››ÝYšXØ][Û—ÚYŽˆ][VÈ››ÝYšXØ][Û—ÚY—K›Y™XÞXÛWÜÝ]\ÈŽˆ‘RSQŸK[œÝ\™WØ\ØÚZOQ˜[ÙJJNÈ™]\›ˆCBˆÚË™\ÜÛœÙHHÙ[™
+ÚÙ[‹][VÈ]H—K][VÈ˜ÛÛ[—JNÈÝ[\H›ÝÊ
+Kš\ÛÙ›Ü›X]
+[Y\ÜXÏHœÙXÛÛ™ÈŠNÈ][VÈ›\ÝØ][\YØ]—HHÝ[\È][VÈœ™\ÜÛœÙH—HH™\ÜÛœÙCBˆ][VÈ›Y™XÞXÛWÜÝ]\È—HH•ÐRUS‘×ÐÓÓ‘’T“PUSÓˆˆYˆÚÈ[™][VÈ™]™[Ý\H—H[ˆÈ”S‘S‘×ÑVPÕUSÓ—ÐÓÓ‘’T“PUSÓˆ‹¹¢$9.©9èkº+©‹º-)¹¢-ùèkº+©‹PÐÓÕS•ÑPÕÐÓÓ‘’T“PUSÓˆ‹¹¥-¹ææ:-)¹¢-ÈŸH[ÙH
+”ÑS•ˆYˆÚÈ[ÙH‘RSQŠNÈ][VÈœÙ[Ø]—HHÝ[\YˆÚÈ[ÙH][K™Ù]
+œÙ[Ø]ŠCBˆYˆ^\Ý[™Îˆ›ÝYšXØ][ÛœÈHÞ›Üˆ[ˆ›ÝYšXØ][ÛœÈYˆ™Ù]
+››ÝYšXØ][Û—ÚYŠHOH][VÈ››ÝYšXØ][Û—ÚY—WCBˆ›ÝYšXØ][ÛœË˜\[™
+][JCBˆÝ]HHÈœØÚ[XWÝ™\œÚ[ÛˆŽˆŒ‹Œˆ‹\]YØ]ŽˆÝ[\›\ÝÜÝ]\ÈŽˆ][VÈ›Y™XÞXÛWÜÝ]\È—K›\ÝÝ\HŽˆ][VÈ™]™[Ý\H—K›\ÝÝ]HŽˆ][VÈ]H—K››ÝYšXØ][ÛœÈŽˆ›ÝYšXØ][ÛœÖËRTÕÔ–WÓSRU—Kœ™XÙ[ŽˆØÛÛ\XÝÜ™XÙ[
+
+H›Üˆ[ˆ›ÝYšXØ][ÛœÖËRTÕÔ–WÓSRU—WKœ[™[™×Ü]Y\Ý[ÛœÈŽˆÞÈ››ÝYšXØ][Û—ÚY—H›Üˆ[ˆ›ÝYšXØ][ÛœÈYˆ™Ù]
+›Y™XÞXÛWÜÝ]\ÈŠHOH•ÐRUS‘×ÐÓÓ‘’T“PUSÓˆ—KœÛXÞHŽˆ¹cê¹£ª:` y/&¹¥.ycæ9å*9¢-ùalù¬ê8à zhãºfjz+®9cëøà y§.¹/&¹â­¹  xà y£ y.äùbª9/g8à y¢iú(c9èkº+©9¢%¹ìîùîçùcëúgh9 )ùæ¡9k§º-*9.¢ù.í»ï&ù .ú-a9.©Ëùn ¹`/ù­k¹bª9æâ9.£ùëbyî«ùæëùn ¹cæ9c%¹.#y/g9..º-)¹¢-ùo ¹n.;ï&ùd#9. 9k§º-*:-)¹¢-ù.¢ù.í¹d£9d#9. 9«hùo#ÙXÚ\Ú[Û—ÚY9.#yo¥úaãyi#y£ª:` {ï&ù¥-¹ææ:-)¹¢-ù£ä:a¤¹.áyg*z ¨y.©9¦$ù¥éz)é¹cäxà ˆ‹œØY™]WØ›Ý[™\žHŽˆº`&¹çéy.+yoàùcêº/k9cäymì¹§"y«hùo#ùb)9¥«{ï#9.#yå'ù¢$9.©9¦$ùbª9/g;ï#9.#y/ë¹¥.SPTÕT¸à zhãºfjz+®9cëøà zaäzh§y¢%¹ce¹aî¹.ïzh§{ï&ù«hùo#ù¢$9.©9cêº ïyå,yå*9¢-ùèkº+©9aiycèù£ä9.©8à ˆŸCBˆÜš]WÚœÛÛŠÝ]WÜ]Ý]JNÈš[
+œÛÛ‹™[\Ê][K[œÝ\™WØ\ØÚZOQ˜[ÙJJNÈ™]\›ˆYˆÚÈ[ÙHCBƒBƒBšYˆ×Û˜[YW×ÈOH—×ÛXZ[—×ÈŽƒBˆ˜Z\ÙHÞ\Ý[Q^]
+XZ[Š
+JCBƒB
