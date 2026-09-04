@@ -1,36 +1,31 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-04T11:27:19+08:00",
+  "generated_at": "2026-09-04T11:32:11+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33833201755,
+  "run_id": 33833506233,
   "run_attempt": 1,
-  "head_sha": "971c6e13b4f7ae078d6b66784f7deb6a4e921423",
-  "main_head_sha": "b51ca20cec383a2a097e66f4db7281ee7589d64a",
+  "head_sha": "d6bbccea0b5b5f7209517b6a0839e1a01b7751f0",
+  "main_head_sha": "0a524ee0c768d202e95041d2a4ada912772a39b9",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 8
-    },
-    {
-      "job": "production_acceptance",
-      "step": "Enforce production acceptance",
-      "number": 8
+      "step": "PR candidate post-replay acceptance",
+      "number": 6
     }
   ],
   "changed_files": [
-    ".github/workflows/market-snapshot.yml"
+    ".github/workflows/system-consistency.yml"
   ],
-  "commit_message": "fix: process live snapshot requests on merge pushes",
+  "commit_message": "fix: block stale acceptance state persistence",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
-    "changes_confined_to_auto_rollback_allowlist": false,
+    "changes_confined_to_auto_rollback_allowlist": true,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
     "user_notification_authority": false,
