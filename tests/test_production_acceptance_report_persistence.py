@@ -1,7 +1,8 @@
 from __future__ import annotations
 import json,tempfile,unittest
 from pathlib import Path
-from scripts.run_production_acceptance import is_complete_consistency_report,persist_consistency_report_if_valid
+from unittest.mock import patch
+from scripts.run_production_acceptance import is_complete_consistency_report,persist_consistency_report_if_valid,run
 def report(status="PASS"): return {"status":status,"hard_error_count":0,"warning_count":0,"checks":[],"errors":[],"warnings":[]}
 class ProductionAcceptanceConsistencyPersistenceTests(unittest.TestCase):
  def test_invalid_report_preserves_existing(self):
@@ -14,6 +15,13 @@ class ProductionAcceptanceConsistencyPersistenceTests(unittest.TestCase):
  def test_valid_replaces_state(self):
   with tempfile.TemporaryDirectory() as tmp:
    p=Path(tmp)/"s.json"; p.write_text("{}",encoding="utf-8"); fresh=report(); self.assertTrue(persist_consistency_report_if_valid(fresh,p)); self.assertEqual(json.loads(p.read_text()),fresh)
+
+ def test_run_propagates_consistency_report_env_override(self):
+  completed=type("Completed",(),{"returncode":0})()
+  with patch("scripts.run_production_acceptance.subprocess.run",return_value=completed) as mocked:
+   self.assertEqual(run(["python","maintenance_guard.py"],{"ETF_CONSISTENCY_REPORT_PATH":"/tmp/fresh.json"}),0)
+   env=mocked.call_args.kwargs["env"]
+   self.assertEqual(env["ETF_CONSISTENCY_REPORT_PATH"],"/tmp/fresh.json")
 
  def test_consistency_handoff_prefers_fresh_report_over_stale_canonical(self):
   with tempfile.TemporaryDirectory() as tmp:

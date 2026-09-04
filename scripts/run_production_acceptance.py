@@ -4,7 +4,10 @@ import argparse, json, os, subprocess, sys, tempfile
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 CONSISTENCY=ROOT/"data/state/system_consistency.json"; MAINTENANCE=ROOT/"data/state/maintenance_health.json"; E2E=ROOT/"data/state/e2e_status.json"
-def run(command): return subprocess.run(command,cwd=ROOT,env=os.environ.copy(),check=False).returncode
+def run(command, env_overrides=None):
+    env=os.environ.copy()
+    if env_overrides: env.update(env_overrides)
+    return subprocess.run(command,cwd=ROOT,env=env,check=False).returncode
 def read_json(path):
     try: value=json.loads(path.read_text(encoding="utf-8"))
     except (OSError,json.JSONDecodeError): return {}
@@ -16,7 +19,7 @@ def is_complete_consistency_report(value):
     return all(isinstance(value.get(key),list) for key in ("checks","errors","warnings"))
 def persist_consistency_report_if_valid(report,target=CONSISTENCY):
     if not is_complete_consistency_report(report): return False
-    target.write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\\n",encoding="utf-8"); return True
+    target.write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8"); return True
 def main():
     parser=argparse.ArgumentParser(); parser.add_argument("--mutation-sha",default=os.environ.get("GITHUB_SHA","")); args=parser.parse_args()
     quality_rc=run([sys.executable,str(ROOT/"scripts/build_execution_quality.py")])
