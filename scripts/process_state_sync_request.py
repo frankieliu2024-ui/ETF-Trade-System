@@ -861,6 +861,89 @@ def _apply_trade_to_account(prior: dict, trade: dict) -> dict:
 
 
 
+
+def _explicit_case_ids_from_text(value: object) -> list[str]:
+    return sorted(set(re.findall(r"CASE-\d{8}-\d{2}", str(value or ""))))
+
+
+def _review_case_ids_for_trade(event: dict) -> list[str]:
+    """Read only existing formal review mappings; never create a CASE mapping."""
+    event_id = str(event.get("event_id") or "").strip()
+    if not event_id:
+        return []
+    found = set()
+    review_dir = ROOT / "events" / "reviews"
+    for path in sorted(review_dir.glob("*.json")) if review_dir.exists() else []:
+        try:
+            payload = load_json(path)
+        except (OSError, ValueError, TypeError):
+            continue
+
+        def walk(value):
+            if isinstance(value, dict):
+                if str(value.get("trade_event_id") or "").strip() == event_id:
+                    case_id = str(value.get("case_id") or "").strip()
+                    if case_id:
+                        found.add(case_id)
+                for child in value.values():
+                    walk(child)
+            elif isinstance(value, list):
+                for child in value:
+                    walk(child)
+
+        walk(payload)
+    return sorted(found)
+
+
+def _case_ids_from_existing_experience_for_trade(event: dict, text: str, table_start: int, table_end: int) -> list[str]:
+    """Recover an already documented CASE owner using exact immutable trade facts."""
+    event_id = str(event.get("event_id") or "").strip()
+    code = str(event.get("code") or "").strip()
+    side = str(event.get("side") or "").upper()
+    side_cn = "买入" if side in {"BUY", "B", "买入", "买"} else "卖出" if side in {"SELL", "S", "卖出", "卖"} else side
+    qty = int(float(event.get("quantity") or 0))
+    price = float(event.get("price") or 0)
+    trade_date = str(event.get("confirmed_at_beijing") or "")[:10]
+    marker = f"TRADE_EVENT:{event_id}" if event_id else ""
+    old_case_ids = []
+    table_text = text[table_start:table_end]
+    for line in table_text.splitlines():
+        if (marker and marker in line) or (
+            trade_date and f"|{trade_date} " in line and f"|{code}|" in line
+            and f"|{side_cn}|" in line and f"|{qty:,}|" in line and f"|{price:.3f}|" in line
+        ):
+            old_case_ids.extend(_explicit_case_ids_from_text(line))
+    if old_case_ids:
+        return sorted(set(old_case_ids))
+
+    # The CASE section is a human-maintained formal owner record.  Consume it
+    # only when it contains either the exact event marker/linked decision, or
+    # all immutable trade facts; code/date alone is intentionally insufficient.
+    linked = str(event.get("linked_decision_id") or "").strip()
+    heading = re.compile(r"^###\s+.*?(CASE-\d{8}-\d{2}).*?$", re.MULTILINE)
+    matches = list(heading.finditer(text))
+    found = set()
+    for index, match in enumerate(matches):
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        section = text[match.start():end]
+        exact_identity = (
+            code and code in section and side_cn and side_cn in section
+            and str(qty) in section and f"{price:.3f}" in section
+            and trade_date and trade_date in section
+        )
+        if (marker and marker in section) or (linked and linked in section) or exact_identity:
+            found.add(match.group(1))
+    return sorted(found)
+
+
+def _case_ids_for_transaction_projection(event: dict, text: str, table_start: int, table_end: int) -> list[str]:
+    """Resolve CASE ownership with strong facts first and no guessing."""
+    review_ids = _review_case_ids_for_trade(event)
+    if review_ids:
+        return review_ids
+    return _case_ids_from_existing_experience_for_trade(event, text, table_start, table_end)
+
+
 def sync_experience_transaction_index(event: dict) -> None:
     """Upsert a confirmed trade into Experience §2.1 and keep its counts aligned.
 
@@ -907,7 +990,15 @@ def sync_experience_transaction_index(event: dict) -> None:
     if lifecycle in {"待确认", "UNKNOWN", "未提供"}:
         lifecycle = ""
     linked = str(event.get("linked_decision_id") or "").strip()
-    note_parts = []
+    # Preserve the strongest already-existing CASE ownership while rewriting
+    # the managed transaction row.  This is projection-only: no CASE is created.
+    table_header = "|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|"
+    projection_table_start = text.index(table_header)
+    projection_table_end = text.index(section_end, projection_table_start)
+    case_ids = _case_ids_for_transaction_projection(
+        event, text, projection_table_start, projection_table_end
+    )
+    note_parts = list(case_ids)
     if lifecycle:
         note_parts.append(lifecycle)
     if linked:
