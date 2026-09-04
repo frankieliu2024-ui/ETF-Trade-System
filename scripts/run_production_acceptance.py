@@ -34,6 +34,28 @@ def read_json(path: Path) -> dict:
     return value if isinstance(value, dict) else {}
 
 
+def valid_consistency_report(report: dict) -> bool:
+    if not isinstance(report, dict):
+        return False
+    if report.get("status") not in {"PASS", "WARNING", "FAIL"}:
+        return False
+    if not isinstance(report.get("checks"), list):
+        return False
+    try:
+        int(report.get("hard_error_count"))
+    except (TypeError, ValueError):
+        return False
+    return True
+
+
+def persist_consistency_report_if_valid(report: dict, target: Path = CONSISTENCY) -> bool:
+    """Persist only a complete canonical report; never erase last-known state on checker failure."""
+    if not valid_consistency_report(report):
+        return False
+    target.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return True
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run canonical post-write production acceptance.")
     parser.add_argument("--mutation-sha", default=os.environ.get("GITHUB_SHA", ""))
@@ -53,10 +75,14 @@ def main() -> int:
             fresh_report_path,
         ])
         fresh_consistency = read_json(Path(fresh_report_path))
-        # Publish the exact final normalized report produced by this invocation
-        # into the local acceptance workspace. Maintenance and E2E consume this
-        # file; neither reads the pre-existing main snapshot.
-        CONSISTENCY.write_text(json.dumps(fresh_consistency, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        # A failed checker can terminate before it creates a valid report. In that
+        # case retain the previous canonical consistency state rather than
+        # replacing it with an empty object, and force acceptance to fail closed.
+        report_persisted = persist_consistency_report_if_valid(fresh_consistency)
+        if not report_persisted:
+            print("invalid or missing fresh consistency report; preserving existing canonical state", file=sys.stderr)
+            if consistency_rc == 0:
+                consistency_rc = 1
     finally:
         try:
             Path(fresh_report_path).unlink()
@@ -80,6 +106,7 @@ def main() -> int:
         "consistency": consistency.get("status"),
         "maintenance": maintenance.get("status"),
         "e2e": e2e.get("status"),
+        "consistency_report_persisted": report_persisted,
         "persisted_paths": [
             "data/state/system_consistency.json",
             "data/state/maintenance_health.json",
