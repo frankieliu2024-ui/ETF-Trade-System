@@ -1,34 +1,45 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-04T10:22:17+08:00",
+  "generated_at": "2026-09-04T10:28:21+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "Overseas pre-open pulse",
-  "run_id": 33829147078,
-  "run_attempt": 2,
-  "head_sha": "7fcd26f57c8e28df64c3ade1fe944e7c8ccfd67d",
-  "main_head_sha": "d8a219da891dbb3807e0e1e18bea229d305ec151",
-  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
+  "workflow_name": "ETF system consistency",
+  "run_id": 33829574270,
+  "run_attempt": 1,
+  "head_sha": "1bcc82ccbef50adc669185afc1257b498dbe257b",
+  "main_head_sha": "f2f1f18a5e5ec5c2f3ec0ba2a27a82b16b827749",
+  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "overseas",
-      "step": "Commit overseas contexts, notifications and runtime health",
-      "number": 15
+      "job": "consistency",
+      "step": "Enforce hard consistency result",
+      "number": 8
+    },
+    {
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 8
     }
   ],
   "changed_files": [
-    "data/state/execution_reconciliation.json",
-    "data/state/notification_center.json"
+    "data/state/execution_quality.json",
+    "data/state/query_context.json",
+    "data/state/review_context.json",
+    "events/trades/20260903_094725_515880_exit_execution.json",
+    "scripts/decision_trade_link.py",
+    "scripts/lifecycle_state.py",
+    "scripts/process_state_sync_request.py",
+    "tests/test_execution_attribution_object_selection.py"
   ],
-  "commit_message": "state: record notification and execution reconciliation",
-  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "commit_message": "Merge pull request #280 from frankieliu2024-ui/codex/issue-274-execution-attribution-object-selection",
+  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
-    "forbidden_path_touched": false,
-    "bot_or_revert_commit": true,
+    "forbidden_path_touched": true,
+    "bot_or_revert_commit": false,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
