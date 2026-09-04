@@ -385,14 +385,14 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           owned="$RUNNER_TEMP/etf-acceptance-state"
           mkdir -p "$owned/data/state"
-          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json; do
+          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json data/state/execution_quality.json; do
             if [ -f "$f" ]; then
               cp "$f" "$owned/$f"
             fi
           done
           git fetch --no-tags origin main
           git reset --hard origin/main
-          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json; do
+          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json data/state/execution_quality.json; do
             if [ -f "$owned/$f" ]; then
               cp "$owned/$f" "$f"
               git add "$f"
