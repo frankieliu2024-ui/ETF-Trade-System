@@ -1,60 +1,48 @@
-from pathlib import Path
-import unittest
-
-
-ROOT = Path(__file__).resolve().parents[1]
-WORKFLOW = ROOT / ".github" / "workflows" / "decision-notification.yml"
-
-
-class NotificationWorkflowStructureTests(unittest.TestCase):
-    def setUp(self):
-        self.text = WORKFLOW.read_text(encoding="utf-8")
-
-    def test_workflow_has_single_canonical_step_for_each_route(self):
-        names = [
-            "Detect push notification kind",
-            "Isolate pushed report delivery request",
-            "Build delayed execution reconciliation",
-            "Send A-share opening value signal or close summary when due",
-            "Send A-share monitored-object value event when due",
-            "Send safe notification-channel test",
-            "Send material user-action notification",
-            "Send conditional A-share trading-day post-close account reminder",
-            "Persist unified notification and execution-reconciliation state",
-            "Surface notification delivery failure without blocking trading system",
-        ]
-        for name in names:
-            self.assertEqual(self.text.count(f"- name: {name}"), 1, name)
-
-    def test_push_routes_bind_report_to_triggering_push_identity(self):
-        self.assertIn('requests/report_delivery/*.json', self.text)
-        self.assertIn('PUSH_BEFORE: ${{ github.event.before }}', self.text)
-        self.assertIn('PUSH_AFTER: ${{ github.sha }}', self.text)
-        self.assertIn('git diff --name-only "$PUSH_BEFORE" "$PUSH_AFTER" > /tmp/changed_files.txt', self.text)
-        self.assertNotIn('git diff --name-only HEAD^ HEAD > /tmp/changed_files.txt', self.text)
-        self.assertIn(r"grep -E '^requests/report_delivery/[^/]+\.json$'", self.text)
-        self.assertIn('echo "report=true" >> "$GITHUB_OUTPUT"', self.text)
-        self.assertIn('echo "report_path=${report_paths[0]}" >> "$GITHUB_OUTPUT"', self.text)
-        self.assertIn('REPORT_PATH: ${{ steps.push_kind.outputs.report_path }}', self.text)
-        self.assertIn("find requests/report_delivery -maxdepth 1 -type f -name '*.json' ! -path \"$REPORT_PATH\" -delete", self.text)
-        self.assertIn('test "$(find requests/report_delivery -maxdepth 1 -type f -name \'*.json\' | wc -l)" -eq 1', self.text)
-        self.assertIn("Ambiguous REPORT push: expected exactly one report request", self.text)
-        self.assertNotIn("/tmp/changed_files.txt; then", self.text)
-        self.assertNotIn("echo report=true", self.text)
-
-    def test_existing_route_commands_remain_present_once(self):
-        commands = [
-            "python scripts/build_execution_reconciliation.py",
-            "python scripts/run_guarded_notification.py regional --market a-share",
-            "python scripts/run_guarded_notification.py shock --market a-share",
-            "python scripts/run_guarded_notification.py center --mode channel-test",
-            "python scripts/run_guarded_notification.py center --mode event",
-            "python scripts/run_guarded_notification.py center --mode close",
-            "python scripts/merge_notification_state.py",
-        ]
-        for command in commands:
-            self.assertEqual(self.text.count(command), 1, command)
-
-
-if __name__ == "__main__":
-    unittest.main()
+1лaЎС1qкmЉ‰ЛЉw¶ІЪоrЫ«zњ¬±©•§r«Чњ…ЄхСИZЇ]Mаљћz-r‰пz»Z®¦z{h•РЎjј"¶Ъ–зџўґ^¦VњzЪ-К—’КЛ^(Z¬&§ћ‹\ў{Ю®ЫЪ–з­ўЬ©y,¬µй‚…ЄД®є+JЪвћ	®ІЦЮ{њ¶\Ёќз!j¶њµкеўxњ›ЫH]X€[\Ьќ]Bљ[\Ьќ[љ]\ЭBѓBѓB”“УХH]
+ЧЩљ[WЧКKњ™\ЫЫ™J
+Kњ\™[ќЦМWCB•УФ’С“ХИH“УХИ‹™Ъ]X€€ИќЫЬљЩ›ЭЬИ€И™XЪ\Ъ[Ы‹[›ЭYљXШ][Ы‹ћ[[ѓBѓBѓBЫ\ЬИ›ЭYљXШ][Ы•ЫЬљЩ›ЭФЭќXЭ\™U\ЭК[љ]\Э•\ЭШ\ЩJNѓB€Y€Щ]\
+Щ[ЉNѓB€Щ[‹ќ^HУФ’С“ХЛњ™XYЭ^
+[ЫЩ[™ПHќ]‹NЉCBѓB€Y€\ЭЭЫЬљЩ›ЭЧЪ\ЧЬЪ[™ЫWШШ[›ЫљXШ[ЬЭ\Щ›Ь—ЩXXЪЬ›Э]JЩ[ЉNѓB€[Y\ИHГB€‘]XЭ\Ъ›ЭYљXШ][Ы€Ъ[™‹B€’\ЫЫ]H\ЪY™\Ьќ[]™\ћH™\]Y\Э‹B€ђќZ[[^YY^XЭ][Ы€™XЫЫЪ[X][Ы€‹B€”Щ[™K\Ъ\™HЬ[љ[™И[YHЪYЫ[Ь€ЫЬЩHЭ[[X\ћHЪ[€YH‹B€”Щ[™K\Ъ\™H[Ыљ]Ь™Y[Шљ™XЭ[YH]™[ќЪ[€YH‹B€”Щ[™ШY™H›ЭYљXШ][Ы‹XЪ[›™[\Э‹B€”Щ[™X]\љX[\Щ\‹XXЭ[Ы€›ЭYљXШ][Ы€‹B€”Щ[™ЫЫ™][Ы[K\Ъ\™HY[™ЛY^HЬЭXЫЬЩHXШЫЭ[ќ™[Z[™\€‹B€”\њЪ\Э[љYљYY›ЭYљXШ][Ы€[™^XЭ][Ы‹\™XЫЫЪ[X][Ы€Э]H‹B€”Э\™XЩH›ЭYљXШ][Ы€[]™\ћHZ[\™HЪ]Э]›ШЪЪ[™ИY[™ИЮ\Э[H‹B€CB€›Ь€[YH[€[Y\ОѓB€Щ[‹\ЬЩ\ќ\]X[
+Щ[‹ќ^ЫЭ[ќ
+€‹H[YN€Ы[Y_HЉKK[YJCBѓB€Y€\ЭЬ\ЪЬ›Э]\ЧШљ[™Ь™\ЬќЭЧЭљYЩЩ\љ[™ЧЬ\ЪЪY[ќ]JЩ[ЉNѓB€Щ[‹\ЬЩ\ќ[Љ	Ь™\]Y\ЭЛЬ™\ЬќЩ[]™\ћKК‹љњЫЫ‰ЛЩ[‹ќ^
+CB€Щ[‹\ЬЩ\ќ[Љ	ФTТР‘Q“Ф‘N€	ЮИЪ]X‹™]™[ќ™Y›Ь™H_IЛЩ[‹ќ^
+CB€Щ[‹\ЬЩ\ќ[Љ	ФTТРQ•TЋ€	ЮИЪ]X‹њЪH_IЛЩ[‹ќ^
+CB€Щ[‹\ЬЩ\ќ[Љ	ЩЪ]Y™€K[[YK[Ы›H‰TТР‘Q“Ф‘H€‰TТРQ•T€€€Э\ШЪ[™ЩYЩљ[\Лќ	ЛЩ[‹ќ^
+CB€Щ[‹\ЬЩ\ќ›Э[Љ	ЩЪ]Y™€K[[YK[Ы›HPQ€PQ€Э\ШЪ[™ЩYЩљ[\Лќ	ЛЩ[‹ќ^
+CB€Щ[‹\ЬЩ\ќ[Љ€™Ь™\QH	Чњ™\]Y\ЭЛЬ™\ЬќЩ[]™\ћKЦЧ‹ЧJЧљњЫЫ‰	И‹Щ[‹ќ^
+CB€Щ[‹\ЬЩ\ќ[Љ	ЩXЪИњ™\Ьќ]ќYH€Џ€‰ТUP—УХUU‰ЛЩ[‹ќ^
+CB€Щ[‹\ЬЩ\ќ[Љ	ЩXЪИњ™\ЬќЬ]IЬ™\ЬќЬ]ЦМ_H€Џ€‰ТUP—УХUU‰ЛЩ[‹ќ^
+CB€Щ[‹\ЬЩ\ќ[Љ	Ф‘TФ•ФU€	ЮИЭ\Лњ\ЪЪЪ[™›Э]]Лњ™\ЬќЬ]_IЛЩ[‹ќ^
+CB€Щ[‹\ЬЩ\ќ[Љ™љ[™™\]Y\ЭЛЬ™\ЬќЩ[]™\ћH[X^\H]\H€[[YH	К‹љњЫЫ‰ИH\]‰‘TФ•ФU€Y[]H‹Щ[‹ќ^
+CB€Щ[‹\ЬЩ\ќ[Љ	Э\Э‰
+љ[™™\]Y\ЭЛЬ™\ЬќЩ[]™\ћH[X^\H]\H€[[YH	К‹љњЫЫ—	ИШИ[
+H€Y\HIЛЩ[‹ќ^
+CB€Щ[‹\ЬЩ\ќ[Љђ[XљYЭ[Э\И‘TФ•\Ъ€^XЭY^XЭHЫ™H™\Ьќ™\]Y\Э‹Щ[‹ќ^
+CB€Щ[‹\ЬЩ\ќ[Љ‹Э\ШЪ[™ЩYЩљ[\ЛќИ[€‹Щ[‹ќ^
+B€Щ[‹\ЬЩ\ќ›Э[Љ™XЪИ™\Ьќ]ќYH‹Щ[‹ќ^
+CBѓB€Y€\ЭЩ^\Э[™ЧЬ›Э]WШЫЫ[X[™ЧЬ™[XZ[—Ь™\Щ[ќЫЫЩJЩ[ЉN‚€ЫЫ[X[™ИHГB€њ]Ы€ШЬљ\ЛШќZ[Щ^XЭ][Ы—Ь™XЫЫЪ[X][Ы‹њH‹B€њ]Ы€ШЬљ\ЛЬќ[—ЩЭX\™YЫ›ЭYљXШ][Ы‹њH™YЪ[Ы[K[X\љЩ]K\Ъ\™H‹B€њ]Ы€ШЬљ\ЛЬќ[—ЩЭX\™YЫ›ЭYљXШ][Ы‹њHЪШЪИK[X\љЩ]K\Ъ\™H‹B€њ]Ы€ШЬљ\ЛЬќ[—ЩЭX\™YЫ›ЭYљXШ][Ы‹њHЩ[ќ\€K[[ЩHЪ[›™[]\Э‹B€њ]Ы€ШЬљ\ЛЬќ[—ЩЭX\™YЫ›ЭYљXШ][Ы‹њHЩ[ќ\€K[[ЩH]™[ќ‹B€њ]Ы€ШЬљ\ЛЬќ[—ЩЭX\™YЫ›ЭYљXШ][Ы‹њHЩ[ќ\€K[[ЩHЫЬЩH‹B€њ]Ы€ШЬљ\ЛЫY\™ЩWЫ›ЭYљXШ][Ы—ЬЭ]KњH‹B€CB€›Ь€ЫЫ[X[™[€ЫЫ[X[™ОѓB€Щ[‹\ЬЩ\ќ\]X[
+Щ[‹ќ^ЫЭ[ќ
+ЫЫ[X[™
+KKЫЫ[X[™
+B‚€Y€\ЭЫЭ™\њЩX\ЧЬ›ЩXЩ\њЧЫЫ›WЬX›\ЪШЫЫќ^
+Щ[ЉN‚€›ЫЭH“УХИ‹™Ъ]X€€ИќЫЬљЩ›ЭЬИ‚€›Ь€[YH[€
+›Э™\њЩX\Л\™[Ь[‹\[ЩKћ[[‹ќ\ЛY^[™YZЭ\њЛ\[ЩKћ[[ЉN‚€^H
+›ЫЭИ[YJKњ™XYЭ^
+[ЫЩ[™ПHќ]‹NЉB€Щ[‹\ЬЩ\ќ›Э[Љ”TТTЧХТСS€‹^
+B€Щ[‹\ЬЩ\ќ›Э[Љњќ[—ЩЭX\™YЫ›ЭYљXШ][Ы‹њH‹^
+B€Щ[‹\ЬЩ\ќ›Э[Љ››ЭYљXШ][Ы—ШЩ[ќ\‹љњЫЫ€‹^
+B€Щ[‹\ЬЩ\ќ[Љ	И“Э™\њЩX\И™K[Ь[€[ЩH‰ЛЩ[‹ќ^
+B€Щ[‹\ЬЩ\ќ[Љ	И•TИ^[™YZЭ\њИ[ЩH‰ЛЩ[‹ќ^
+B€Щ[‹\ЬЩ\ќ[Љ”‘U’SХTЧРУУ•VФU€]KЬЭ]KЫЭ™\њЩX\ЧШЫЫќ^Ь™]љ[Э\ЛљњЫЫ€‹Щ[‹ќ^
+B€Щ[‹\ЬЩ\ќ[ЉњЭ\Л\XЧЬЭ[[X\ћWЫ›ЭYћK›Э]ЫЫYH‹Щ[‹ќ^
+B‚€Y€\ЭЬЪ[™ЫWЫ›ЭYљXШ][Ы—Щ^\›[ЩY™™XЭЫЭЫ™\—Ъ\ЧЫXXЪ[™WШЪXЪЩY
+Щ[ЉN‚€њ›ЫHШЬљ\ЛЪXЪЧЬ›ЩXЭ[Ы—Ы]]][Ы—Ь›ЭШЫЫ[\Ьќќ[‚€™\Э[Hќ[Љ“УХ
+B€Щ[‹\ЬЩ\ќ\]X[
+™\Э[ИњЭ]\И—K”TФИ‹™\Э[™Щ]
+™\њ›ЬњИЉJB€[Y\ИHЮ›Ь€[€™\Э[ИЪXЪЬИ—HY€И›[YH—HOH››ЭYљXШ][Ы—ЫЭЫ™\ЋњЪ[™ЫWЩ^\›[ЩY™™XЭШЫЫ[Z]\€—B€Щ[‹\ЬЩ\ќ\]X[
+[Y\ЦМVИњЭ]\И—K”TФИЉB‚€Y€\ЭЫ›ЭYљXШ][Ы—ЬЭ]WЭ\Щ\ЧЬЪ[™ЫWЫЭЫ™\—ШЫЫќXЭ
+Щ[ЉN‚€[\ЬќњЫЫ‚€ЫЫ™љYИHњЫЫ‹›ШYК
+“УХИЫЫ™љYЛЫXZ[ќ[[ЩKЬ›ЩXЭ[Ы—Ы]]][Ы—Ь›ЭШЫЫљњЫЫ€ЉKњ™XYЭ^
+[ЫЩ[™ПHќ]‹NЉJB€Щ[‹\ЬЩ\ќ\]X[
+ЫЫ™љYЦИњЪ[™ЫWЫЭЫ™\—Щљ[\И—VИ™]KЬЭ]KЫ›ЭYљXШ][Ы—ШЩ[ќ\‹љњЫЫ€—K‹™Ъ]X‹ЭЫЬљЩ›ЭЬЛЩXЪ\Ъ[Ы‹[›ЭYљXШ][Ы‹ћ[[ЉB€њ›ЫHШЬљ\ЛЪXЪЧЬ›ЩXЭ[Ы—Ы]]][Ы—Ь›ЭШЫЫ[\ЬќЭЫЬљЩ›ЭЧЫX^WЬЭYЩB€Щ[‹\ЬЩ\ќќYJЭЫЬљЩ›ЭЧЫX^WЬЭYЩJ™Ъ]Y]KЬЭ]KЫ›ЭYљXШ][Ы—ШЩ[ќ\‹љњЫЫ€‹™]KЬЭ]KЫ›ЭYљXШ][Ы—ШЩ[ќ\‹љњЫЫ€ЉJBѓBѓBљY€ЧЫ[YWЧИOH—ЧЫXZ[—ЧИЋѓB€[љ]\Э›XZ[Љ
+CB

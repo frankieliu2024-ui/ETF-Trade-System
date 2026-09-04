@@ -366,7 +366,7 @@ SUMMARY_ABSORB_MINUTES = 5
 AGGREGATION_WINDOW_MINUTES = 5
 MARKET_EVENT_TYPES = {"MARKET_SHOCK_ALERT", "MARKET_VALUE_ALERT", "APAC_OPEN_SIGNAL"}
 PROTECTED_EVENT_TYPES = {"FORMAL_DECISION_MATERIAL_CHANGE", "ACCOUNT_FACT_CONFIRMATION", "PENDING_EXECUTION_CONFIRMATION", "交易判断", "风险许可", "持仓动作", "Trial机会", "Confirm机会", "机会失效"}
-MERGEABLE_CATEGORIES = {"SUDDEN", "EXTREME", "REVERSAL", "DIVERGENCE"}
+MERGEABLE_CATEGORIES = {"APAC_OPEN_SIGNAL", "SUDDEN", "EXTREME", "REVERSAL", "DIVERGENCE"}
 
 
 def _market_context(event: dict) -> dict:
@@ -381,6 +381,12 @@ def _market_fact_key(event: dict) -> str:
     return "|".join(str(ctx.get(k) or event.get(k) or "") for k in ("market_date", "security_code", "event_category", "direction"))
 
 
+def _event_category(event: dict) -> str:
+    """Return the user-facing market fact family, including opening signals."""
+    ctx = _market_context(event)
+    return str(ctx.get("event_category") or ("APAC_OPEN_SIGNAL" if str(event.get("event_type") or "") == "APAC_OPEN_SIGNAL" else ""))
+
+
 def _event_family_id(event: dict) -> str:
     """Identify a continuing user-facing event family, not one quote fact."""
     ctx = _market_context(event)
@@ -388,7 +394,7 @@ def _event_family_id(event: dict) -> str:
     date = str(ctx.get("market_date") or event.get("market_date") or "")
     session = str(ctx.get("session") or ctx.get("market_phase") or ctx.get("session_node") or market)
     code = str(event.get("security_code") or ctx.get("security_code") or "")
-    category = str(ctx.get("event_category") or "")
+    category = _event_category(event)
     direction = str(ctx.get("direction") or "")
     return ":".join((market, date, session, code, category, direction))
 
@@ -401,7 +407,7 @@ def _is_protected_event(event: dict) -> bool:
 
 def _event_magnitude(event: dict) -> float | None:
     ctx = _market_context(event)
-    for key in ("family_peak_magnitude_pct", "event_magnitude_pct", "covered_event_magnitude_pct", "day_change_pct", "phase_metric_change_pct", "sudden_change_pct"):
+    for key in ("family_peak_magnitude_pct", "event_magnitude_pct", "covered_event_magnitude_pct", "lead_change_pct", "day_change_pct", "phase_metric_change_pct", "sudden_change_pct"):
         value = number(ctx.get(key))
         if value is not None:
             return abs(value)
@@ -447,7 +453,7 @@ def _find_aggregate_target(items: list[dict], event: dict) -> dict | None:
     if _is_protected_event(event):
         return None
     ctx = _market_context(event)
-    category, code = str(ctx.get("event_category") or ""), str(event.get("security_code") or ctx.get("security_code") or "")
+    category, code = _event_category(event), str(event.get("security_code") or ctx.get("security_code") or "")
     direction, market_date = str(ctx.get("direction") or ""), str(ctx.get("market_date") or "")
     if category not in MERGEABLE_CATEGORIES or not code or not market_date:
         return None
@@ -459,7 +465,7 @@ def _find_aggregate_target(items: list[dict], event: dict) -> dict | None:
         old = _market_context(item)
         if str(old.get("market_date") or "") != market_date or str(old.get("direction") or "") != direction:
             continue
-        old_category = str(old.get("event_category") or "")
+        old_category = _event_category(item)
         old_family_id = str(old.get("event_family_id") or _event_family_id(item))
         if old_category not in MERGEABLE_CATEGORIES:
             continue
@@ -468,7 +474,9 @@ def _find_aggregate_target(items: list[dict], event: dict) -> dict | None:
                 continue
             return item
         prior_stamp = parse_notification_time(item.get("sent_at") or item.get("created_at"))
-        if prior_stamp and timedelta(0) <= current_stamp - prior_stamp <= timedelta(minutes=AGGREGATION_WINDOW_MINUTES) and not _is_material_upgrade(event, item):
+        same_apac_open_family = {old_category, category} == {"APAC_OPEN_SIGNAL", "EXTREME"} and str(old.get("market") or "").upper() == "ASIA"
+        within_window = prior_stamp and timedelta(0) <= current_stamp - prior_stamp <= timedelta(minutes=AGGREGATION_WINDOW_MINUTES)
+        if (within_window or same_apac_open_family) and not _is_material_upgrade(event, item):
             return item
     return None
 

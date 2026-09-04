@@ -51,7 +51,6 @@ jobs:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
       HITHINK_FINANCE_API_KEY: ${{ secrets.HITHINK_FINANCE_API_KEY }}
       SCHEDULED_FOR: ${{ github.event.schedule || github.event_name }}
-      PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -70,37 +69,24 @@ jobs:
         run: npm install --global @hithink-tech/hithink-finance-cli
       - name: Preserve previous APAC pulse for sudden-move comparison
         run: |
-          [ -f data/state/overseas_context.json ] && cp data/state/overseas_context.json /tmp/overseas_context_prev.json || true
+          [ -f data/state/overseas_context.json ] && cp data/state/overseas_context.json data/state/overseas_context_previous.json || true
       - name: Refresh formal overseas and Asia-Pacific index context
         run: python scripts/build_overseas_context.py
       - name: Refresh US extended-hours context
         run: python scripts/build_us_extended_hours_context.py
-      - name: Backstop US regular-session open/close summary from refreshed context
-        id: us_summary_notify
-        continue-on-error: true
-        run: python scripts/run_guarded_notification.py us
-      - name: Send value-driven APAC opening signal or fixed close summary when due
-        id: apac_summary_notify
-        continue-on-error: true
-        run: python scripts/run_guarded_notification.py regional --market apac
-      - name: Send APAC monitored-object value event when due
-        id: apac_shock_notify
-        continue-on-error: true
-        env:
-          PREVIOUS_CONTEXT_PATH: /tmp/overseas_context_prev.json
-        run: python scripts/run_guarded_notification.py shock --market asia
       - name: Record overseas pulse runtime health
         if: always()
         run: python scripts/build_overseas_runtime_health.py
       - name: Rebuild on-demand query context
         if: success()
         run: python scripts/build_query_context.py
-      - name: Commit overseas contexts, notifications and runtime health
+      - name: Commit overseas contexts and runtime health
         if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/state/overseas_context.json data/state/us_extended_hours_context.json data/state/query_context.json data/state/overseas_runtime_health.json data/state/notification_center.json
+          git add data/state/overseas_context.json data/state/us_extended_hours_context.json data/state/query_context.json data/state/overseas_runtime_health.json
+          [ -f data/state/overseas_context_previous.json ] && git add data/state/overseas_context_previous.json || true
           if git diff --cached --quiet; then
             exit 0
           fi
@@ -110,8 +96,3 @@ jobs:
           git restore --worktree .
           git pull --rebase origin main
           git push origin HEAD:main
-      - name: Surface market notification delivery failure without blocking market data
-        if: ${{ steps.us_summary_notify.outcome == 'failure' || steps.apac_summary_notify.outcome == 'failure' || steps.apac_shock_notify.outcome == 'failure' }}
-        run: |
-          echo "Market notification delivery failed; refreshed market data remains valid."
-          exit 1
