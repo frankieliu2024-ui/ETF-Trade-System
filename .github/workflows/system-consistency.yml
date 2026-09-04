@@ -356,6 +356,17 @@ jobs:
           fi
           git commit -m "state: consume trade fact corrections"
           git push origin HEAD:main
+      - name: Bind acceptance to post-correction main HEAD
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Correction consumption may publish a new canonical main commit.
+          # All following acceptance and persistence steps must use that exact
+          # checkout identity, never the triggering commit's stale SHA.
+          git fetch --no-tags origin main
+          git reset --hard origin/main
+          echo "GITHUB_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
       - name: Classify mutation for combination acceptance
         id: acceptance_scope
         shell: bash
