@@ -1,58 +1,48 @@
 {
-  "generated_at": "2026-09-04T04:25:09Z",
-  "generated_at_beijing": "2026-09-04T12:25:09+08:00",
+  "generated_at": "2026-09-04T04:27:36Z",
+  "generated_at_beijing": "2026-09-04T12:27:36+08:00",
   "repository": {
-    "head_sha": "23bb2e4990883324ae0f54e8df428a1206c3faea",
-    "github_sha": "5c4396576c0f1ab2dd2669f6f8ca7871d83403e5",
-    "github_run_id": "33836679319",
+    "head_sha": "5c52993da4b63f6b045d645d3f73d233b34593ca",
+    "github_sha": "5c52993da4b63f6b045d645d3f73d233b34593ca",
+    "github_run_id": "33836847142",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "23bb2e4990883324ae0f54e8df428a1206c3faea",
-    "workflow_sha": "5c4396576c0f1ab2dd2669f6f8ca7871d83403e5",
+    "checked_commit": "5c52993da4b63f6b045d645d3f73d233b34593ca",
+    "workflow_sha": "5c52993da4b63f6b045d645d3f73d233b34593ca",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "semantic_freshness": {
-    "base": "292ac41446684510fa627981c973d5158eabed8d",
-    "head": "23bb2e4990883324ae0f54e8df428a1206c3faea",
+    "base": "23bb2e4990883324ae0f54e8df428a1206c3faea",
+    "head": "5c52993da4b63f6b045d645d3f73d233b34593ca",
     "changed_paths": [
+      ".github/workflows/system-consistency.yml",
       "data/state/e2e_status.json",
-      "data/state/etf_strategy_equity.json",
       "data/state/execution_quality.json",
       "data/state/execution_reconciliation.json",
-      "data/state/last_known_good.json",
       "data/state/maintenance_diagnostic.json",
       "data/state/maintenance_health.json",
       "data/state/notification_center.json",
-      "data/state/overseas_context.json",
-      "data/state/overseas_runtime_health.json",
-      "data/state/query_context.json",
       "data/state/restricted_rollback_plan.json",
       "data/state/system_consistency.json",
-      "data/state/us_extended_hours_context.json",
       "data/state/workflow_failure_diagnostic.json",
-      "scripts/apply_trade_fact_correction.py"
+      "scripts/check_system_consistency_core.py"
     ],
     "categories": {
       "STABLE_PRODUCTION_CHANGE": [
-        "scripts/apply_trade_fact_correction.py"
+        ".github/workflows/system-consistency.yml",
+        "scripts/check_system_consistency_core.py"
       ],
       "DYNAMIC_RUNTIME_FACT": [
         "data/state/e2e_status.json",
-        "data/state/etf_strategy_equity.json",
         "data/state/execution_quality.json",
         "data/state/execution_reconciliation.json",
-        "data/state/last_known_good.json",
         "data/state/maintenance_diagnostic.json",
         "data/state/maintenance_health.json",
         "data/state/notification_center.json",
-        "data/state/overseas_context.json",
-        "data/state/overseas_runtime_health.json",
-        "data/state/query_context.json",
         "data/state/restricted_rollback_plan.json",
         "data/state/system_consistency.json",
-        "data/state/us_extended_hours_context.json",
         "data/state/workflow_failure_diagnostic.json"
       ],
       "FORMAL_FACT_MUTATION": [],
@@ -60,40 +50,40 @@
       "UNKNOWN": []
     },
     "decision": "REPLAY_REQUIRED",
-    "validated_commit": "292ac41446684510fa627981c973d5158eabed8d",
-    "current_head": "23bb2e4990883324ae0f54e8df428a1206c3faea",
+    "validated_commit": "23bb2e4990883324ae0f54e8df428a1206c3faea",
+    "current_head": "5c52993da4b63f6b045d645d3f73d233b34593ca",
     "head_advanced": true,
     "stable_contract_freshness": "REVIEW_REQUIRED",
     "runtime_fact_freshness": "CURRENT"
   },
-  "status": "FAIL",
-  "hard_error_count": 1,
+  "status": "WARNING",
+  "hard_error_count": 0,
   "warning_count": 3,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-03:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-03\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n....................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 196 tests in 0.319s\n\nOK\n"
+      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-03:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-03\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n....................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 196 tests in 0.168s\n\nOK\n"
     },
     {
       "name": "tests:opening_current_self_healing",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.003s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.002s\n\nOK\n"
     },
     {
       "name": "tests:semantic_latest_main",
       "status": "PASS",
-      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.101s\n\nOK\n"
+      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.354s\n\nOK\n"
     },
     {
       "name": "tests:research_artifact_contract",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.620s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.460s\n\nOK\n"
     },
     {
       "name": "tests:lifecycle_state",
       "status": "PASS",
-      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.004s\n\nOK\n"
+      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.003s\n\nOK\n"
     },
     {
       "name": "tests:historical_market_fact_recovery",
@@ -103,32 +93,32 @@
     {
       "name": "tests:executed_trade_case_lifecycle",
       "status": "PASS",
-      "detail": "902_141753_trade_159326\", \"decision_time\": \"2026-09-02T14:21:31+08:00\", \"decision_market_date\": \"2026-09-02\", \"source_event\": \"events/decisions/20260902_141753_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260902_141753_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-09-02\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-09-02\"}], \"actionable_count\": 0, \"account_fact_updated_at\": \"2026-09-04T08:54:00+08:00\", \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n..........\n----------------------------------------------------------------------\nRan 10 tests in 0.009s\n\nOK\n"
+      "detail": "902_141753_trade_159326\", \"decision_time\": \"2026-09-02T14:21:31+08:00\", \"decision_market_date\": \"2026-09-02\", \"source_event\": \"events/decisions/20260902_141753_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260902_141753_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-09-02\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-09-02\"}], \"actionable_count\": 0, \"account_fact_updated_at\": \"2026-09-04T08:54:00+08:00\", \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n..........\n----------------------------------------------------------------------\nRan 10 tests in 0.023s\n\nOK\n"
     },
     {
       "name": "tests:settlement_obligations",
       "status": "PASS",
-      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.002s\n\nOK\n"
+      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.001s\n\nOK\n"
     },
     {
       "name": "tests:formal_file_mutation_gateway",
       "status": "PASS",
-      "detail": ".........\n----------------------------------------------------------------------\nRan 9 tests in 0.003s\n\nOK\n"
+      "detail": ".........\n----------------------------------------------------------------------\nRan 9 tests in 0.002s\n\nOK\n"
     },
     {
       "name": "tests:post_close_review_canonical",
       "status": "PASS",
-      "detail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.004s\n\nOK\n"
+      "detail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.035s\n\nOK\n"
     },
     {
       "name": "tests:review_prerequisite_lifecycle",
       "status": "PASS",
-      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.001s\n\nOK\n"
+      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.000s\n\nOK\n"
     },
     {
       "name": "tests:production_reliability",
       "status": "PASS",
-      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n............................\n----------------------------------------------------------------------\nRan 28 tests in 0.016s\n\nOK\n"
+      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n............................\n----------------------------------------------------------------------\nRan 28 tests in 0.011s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -408,17 +398,17 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=23bb2e4990883324ae0f54e8df428a1206c3faea"
+      "detail": "HEAD=5c52993da4b63f6b045d645d3f73d233b34593ca"
     },
     {
       "name": "git:semantic_latest_main",
       "status": "PASS",
-      "detail": "{\"base\": \"292ac41446684510fa627981c973d5158eabed8d\", \"head\": \"23bb2e4990883324ae0f54e8df428a1206c3faea\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/etf_strategy_equity.json\", \"data/state/execution_quality.json\", \"data/state/execution_reconciliation.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/overseas_context.json\", \"data/state/overseas_runtime_health.json\", \"data/state/query_context.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\", \"data/state/workflow_failure_diagnostic.json\", \"scripts/apply_trade_fact_correction.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"scripts/apply_trade_fact_correction.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/etf_strategy_equity.json\", \"data/state/execution_quality.json\", \"data/state/execution_reconciliation.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/overseas_context.json\", \"data/state/overseas_runtime_health.json\", \"data/state/query_context.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\", \"data/state/workflow_failure_diagnostic.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\"}"
+      "detail": "{\"base\": \"23bb2e4990883324ae0f54e8df428a1206c3faea\", \"head\": \"5c52993da4b63f6b045d645d3f73d233b34593ca\", \"changed_paths\": [\".github/workflows/system-consistency.yml\", \"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\", \"scripts/check_system_consistency_core.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\".github/workflows/system-consistency.yml\", \"scripts/check_system_consistency_core.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\"}"
     },
     {
       "name": "git:workflow_sha_matches_head",
-      "status": "FAIL",
-      "detail": "HEAD=23bb2e4990883324ae0f54e8df428a1206c3faea GITHUB_SHA=5c4396576c0f1ab2dd2669f6f8ca7871d83403e5"
+      "status": "PASS",
+      "detail": "HEAD=5c52993da4b63f6b045d645d3f73d233b34593ca GITHUB_SHA=5c52993da4b63f6b045d645d3f73d233b34593ca"
     },
     {
       "name": "git:critical_files_tracked",
@@ -843,7 +833,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=00:25 max_age_seconds=25809 limit=900"
+      "detail": "active=False phase=00:27 max_age_seconds=25956 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -1138,7 +1128,7 @@
     {
       "name": "phase4:e2e_state_present",
       "status": "PASS",
-      "detail": "status=READY"
+      "detail": "status=DEGRADED"
     },
     {
       "name": "notification:managed_schema",
@@ -1986,9 +1976,7 @@
       "detail": "registered writer persists data/state/capital_efficiency_ranking.json"
     }
   ],
-  "errors": [
-    "git:workflow_sha_matches_head: HEAD=23bb2e4990883324ae0f54e8df428a1206c3faea GITHUB_SHA=5c4396576c0f1ab2dd2669f6f8ca7871d83403e5"
-  ],
+  "errors": [],
   "warnings": [
     "providers:account_stock_fallback_policy: account stocks without direct fallback=['301689']",
     "runtime_health:skipped_reason: failure_stage= reason=morning_close_already_recorded",
