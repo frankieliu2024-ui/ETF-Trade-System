@@ -912,7 +912,14 @@ def _case_ids_from_existing_experience_for_trade(event: dict, text: str, table_s
     side_cn = "买入" if side in {"BUY", "B", "买入", "买"} else "卖出" if side in {"SELL", "S", "卖出", "卖"} else side
     qty = int(float(event.get("quantity") or 0))
     price = float(event.get("price") or 0)
-    trade_date = str(event.get("confirmed_at_beijing") or "")[:10]
+    confirmed_at = str(event.get("confirmed_at_beijing") or "")
+    trade_date = confirmed_at[:10]
+    date_time_tokens = {trade_date} if trade_date else set()
+    if len(confirmed_at) >= 19 and confirmed_at[5:7].isdigit() and confirmed_at[8:10].isdigit():
+        month = str(int(confirmed_at[5:7]))
+        day = str(int(confirmed_at[8:10]))
+        clock = confirmed_at[11:19]
+        date_time_tokens.update({f"{month}月{day}日{clock}", f"{confirmed_at[5:7]}月{confirmed_at[8:10]}日{clock}"})
     marker = f"TRADE_EVENT:{event_id}" if event_id else ""
     old_case_ids = []
     table_text = text[table_start:table_end]
@@ -938,7 +945,7 @@ def _case_ids_from_existing_experience_for_trade(event: dict, text: str, table_s
             and side_cn and side_cn in section
             and (f"{qty:,}" in section or str(qty) in section)
             and f"{price:.3f}" in section
-            and trade_date and trade_date in section
+            and any(token in section for token in date_time_tokens)
         )
         if (marker and marker in section) or (linked and linked in section) or exact_identity:
             found.add(match.group(1))
