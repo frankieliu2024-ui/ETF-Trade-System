@@ -1,24 +1,25 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-04T12:25:28+08:00",
+  "generated_at": "2026-09-04T12:27:55+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33836679319,
+  "run_id": 33836847142,
   "run_attempt": 1,
-  "head_sha": "5c4396576c0f1ab2dd2669f6f8ca7871d83403e5",
-  "main_head_sha": "ff8c5bcd8f2c7a52187d078d9d0d3999c94b55f1",
+  "head_sha": "5c52993da4b63f6b045d645d3f73d233b34593ca",
+  "main_head_sha": "31f7697fa0e0270b5f8956e86212a98c6b99e2d2",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "production_acceptance",
-      "step": "Enforce production acceptance",
-      "number": 9
+      "job": "consistency",
+      "step": "Enforce hard consistency result",
+      "number": 8
     }
   ],
   "changed_files": [
-    "scripts/apply_trade_fact_correction.py"
+    ".github/workflows/system-consistency.yml",
+    "scripts/check_system_consistency_core.py"
   ],
-  "commit_message": "Merge PR #305: synchronize canonical ETF fee summary",
+  "commit_message": "Merge PR #306: use explicit post-correction acceptance SHA",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
