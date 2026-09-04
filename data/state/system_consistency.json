@@ -1,22 +1,23 @@
 {
-  "generated_at": "2026-09-04T03:55:31Z",
-  "generated_at_beijing": "2026-09-04T11:55:31+08:00",
+  "generated_at": "2026-09-04T04:02:14Z",
+  "generated_at_beijing": "2026-09-04T12:02:14+08:00",
   "repository": {
-    "head_sha": "12a30061c38b3fcef3ad3947990113b3d686db14",
-    "github_sha": "12a30061c38b3fcef3ad3947990113b3d686db14",
-    "github_run_id": "33834905786",
+    "head_sha": "9dd03d6f9a33447eafd176114d4a5a66af5123c7",
+    "github_sha": "ec239fde82bf0645713bf46b38efce96fdb3f86b",
+    "github_run_id": "33835292694",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "12a30061c38b3fcef3ad3947990113b3d686db14",
-    "workflow_sha": "12a30061c38b3fcef3ad3947990113b3d686db14",
+    "checked_commit": "9dd03d6f9a33447eafd176114d4a5a66af5123c7",
+    "workflow_sha": "ec239fde82bf0645713bf46b38efce96fdb3f86b",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "semantic_freshness": {
-    "base": "128d336acdaa376a2f9d2708fd6b8162419764f8",
-    "head": "12a30061c38b3fcef3ad3947990113b3d686db14",
+    "base": "12a30061c38b3fcef3ad3947990113b3d686db14",
+    "head": "9dd03d6f9a33447eafd176114d4a5a66af5123c7",
     "changed_paths": [
+      "ETF交易复盘与经验库_2026.md",
       "data/state/e2e_status.json",
       "data/state/execution_quality.json",
       "data/state/execution_reconciliation.json",
@@ -26,11 +27,12 @@
       "data/state/restricted_rollback_plan.json",
       "data/state/system_consistency.json",
       "data/state/workflow_failure_diagnostic.json",
-      "requests/trade_fact_correction/20260826_513180_fee5.json",
-      "requests/trade_fact_correction/20260826_561980_fee5.json"
+      "scripts/process_state_sync_request.py"
     ],
     "categories": {
-      "STABLE_PRODUCTION_CHANGE": [],
+      "STABLE_PRODUCTION_CHANGE": [
+        "scripts/process_state_sync_request.py"
+      ],
       "DYNAMIC_RUNTIME_FACT": [
         "data/state/e2e_status.json",
         "data/state/execution_quality.json",
@@ -42,48 +44,47 @@
         "data/state/system_consistency.json",
         "data/state/workflow_failure_diagnostic.json"
       ],
-      "FORMAL_FACT_MUTATION": [],
-      "REQUEST_OR_TRIGGER_FACT": [
-        "requests/trade_fact_correction/20260826_513180_fee5.json",
-        "requests/trade_fact_correction/20260826_561980_fee5.json"
+      "FORMAL_FACT_MUTATION": [
+        "ETF交易复盘与经验库_2026.md"
       ],
+      "REQUEST_OR_TRIGGER_FACT": [],
       "UNKNOWN": []
     },
-    "decision": "REVIEW_REQUIRED",
-    "validated_commit": "128d336acdaa376a2f9d2708fd6b8162419764f8",
-    "current_head": "12a30061c38b3fcef3ad3947990113b3d686db14",
+    "decision": "REPLAY_REQUIRED",
+    "validated_commit": "12a30061c38b3fcef3ad3947990113b3d686db14",
+    "current_head": "9dd03d6f9a33447eafd176114d4a5a66af5123c7",
     "head_advanced": true,
     "stable_contract_freshness": "REVIEW_REQUIRED",
     "runtime_fact_freshness": "CURRENT"
   },
   "status": "FAIL",
-  "hard_error_count": 2,
+  "hard_error_count": 3,
   "warning_count": 2,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-03:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-03\",\"provider\":\"EASTMONEY_PUSH2HIS\",\"pattern_match\":false,\"reason\":null}}\n...................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 195 tests in 0.232s\n\nOK\n"
+      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-03:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-03\",\"provider\":\"EASTMONEY_PUSH2HIS\",\"pattern_match\":false,\"reason\":null}}\n...................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 195 tests in 0.301s\n\nOK\n"
     },
     {
       "name": "tests:opening_current_self_healing",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.006s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.003s\n\nOK\n"
     },
     {
       "name": "tests:semantic_latest_main",
       "status": "PASS",
-      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.177s\n\nOK\n"
+      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.083s\n\nOK\n"
     },
     {
       "name": "tests:research_artifact_contract",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.666s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.556s\n\nOK\n"
     },
     {
       "name": "tests:lifecycle_state",
       "status": "PASS",
-      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.007s\n\nOK\n"
+      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.003s\n\nOK\n"
     },
     {
       "name": "tests:historical_market_fact_recovery",
@@ -93,7 +94,7 @@
     {
       "name": "tests:executed_trade_case_lifecycle",
       "status": "PASS",
-      "detail": "902_141753_trade_159326\", \"decision_time\": \"2026-09-02T14:21:31+08:00\", \"decision_market_date\": \"2026-09-02\", \"source_event\": \"events/decisions/20260902_141753_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260902_141753_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-09-02\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-09-02\"}], \"actionable_count\": 0, \"account_fact_updated_at\": \"2026-09-04T08:54:00+08:00\", \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n..........\n----------------------------------------------------------------------\nRan 10 tests in 0.011s\n\nOK\n"
+      "detail": "902_141753_trade_159326\", \"decision_time\": \"2026-09-02T14:21:31+08:00\", \"decision_market_date\": \"2026-09-02\", \"source_event\": \"events/decisions/20260902_141753_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260902_141753_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-09-02\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-09-02\"}], \"actionable_count\": 0, \"account_fact_updated_at\": \"2026-09-04T08:54:00+08:00\", \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n..........\n----------------------------------------------------------------------\nRan 10 tests in 0.007s\n\nOK\n"
     },
     {
       "name": "tests:settlement_obligations",
@@ -103,22 +104,22 @@
     {
       "name": "tests:formal_file_mutation_gateway",
       "status": "PASS",
-      "detail": ".........\n----------------------------------------------------------------------\nRan 9 tests in 0.003s\n\nOK\n"
+      "detail": ".........\n----------------------------------------------------------------------\nRan 9 tests in 0.065s\n\nOK\n"
     },
     {
       "name": "tests:post_close_review_canonical",
       "status": "PASS",
-      "detail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.006s\n\nOK\n"
+      "detail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.003s\n\nOK\n"
     },
     {
       "name": "tests:review_prerequisite_lifecycle",
       "status": "PASS",
-      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.001s\n\nOK\n"
+      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.000s\n\nOK\n"
     },
     {
       "name": "tests:production_reliability",
       "status": "PASS",
-      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n............................\n----------------------------------------------------------------------\nRan 28 tests in 0.018s\n\nOK\n"
+      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n............................\n----------------------------------------------------------------------\nRan 28 tests in 0.013s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -398,17 +399,17 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=12a30061c38b3fcef3ad3947990113b3d686db14"
+      "detail": "HEAD=9dd03d6f9a33447eafd176114d4a5a66af5123c7"
     },
     {
       "name": "git:semantic_latest_main",
       "status": "PASS",
-      "detail": "{\"base\": \"128d336acdaa376a2f9d2708fd6b8162419764f8\", \"head\": \"12a30061c38b3fcef3ad3947990113b3d686db14\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\", \"requests/trade_fact_correction/20260826_513180_fee5.json\", \"requests/trade_fact_correction/20260826_561980_fee5.json\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [\"requests/trade_fact_correction/20260826_513180_fee5.json\", \"requests/trade_fact_correction/20260826_561980_fee5.json\"], \"UNKNOWN\": []}, \"decision\": \"REVIEW_REQUIRED\"}"
+      "detail": "{\"base\": \"12a30061c38b3fcef3ad3947990113b3d686db14\", \"head\": \"9dd03d6f9a33447eafd176114d4a5a66af5123c7\", \"changed_paths\": [\"ETF交易复盘与经验库_2026.md\", \"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\", \"scripts/process_state_sync_request.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"scripts/process_state_sync_request.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\"], \"FORMAL_FACT_MUTATION\": [\"ETF交易复盘与经验库_2026.md\"], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\"}"
     },
     {
       "name": "git:workflow_sha_matches_head",
-      "status": "PASS",
-      "detail": "HEAD=12a30061c38b3fcef3ad3947990113b3d686db14 GITHUB_SHA=12a30061c38b3fcef3ad3947990113b3d686db14"
+      "status": "FAIL",
+      "detail": "HEAD=9dd03d6f9a33447eafd176114d4a5a66af5123c7 GITHUB_SHA=ec239fde82bf0645713bf46b38efce96fdb3f86b"
     },
     {
       "name": "git:critical_files_tracked",
@@ -833,7 +834,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=23:55 max_age_seconds=24031 limit=900"
+      "detail": "active=False phase=00:02 max_age_seconds=24434 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -1268,7 +1269,7 @@
     {
       "name": "formal_files:historical_trade_case_mapping",
       "status": "FAIL",
-      "detail": "trade_rows=31 etf=28 stock=3 missing=['2026-08-25 10:02:57:513180:case_count=0', '2026-09-01 14:40:01:561980:case_count=0']"
+      "detail": "trade_rows=31 etf=28 stock=3 missing=['2026-08-25 11:22:34:561980:case_count=2', '2026-09-01 14:40:01:561980:case_count=0']"
     },
     {
       "name": "formal_files:semantic_structure",
@@ -1977,7 +1978,8 @@
     }
   ],
   "errors": [
-    "historical_trade_case_mapping:2026-08-25 10:02:57:513180:case_count=0",
+    "git:workflow_sha_matches_head: HEAD=9dd03d6f9a33447eafd176114d4a5a66af5123c7 GITHUB_SHA=ec239fde82bf0645713bf46b38efce96fdb3f86b",
+    "historical_trade_case_mapping:2026-08-25 11:22:34:561980:case_count=2",
     "historical_trade_case_mapping:2026-09-01 14:40:01:561980:case_count=0"
   ],
   "warnings": [
