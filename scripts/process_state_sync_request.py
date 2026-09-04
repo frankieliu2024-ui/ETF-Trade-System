@@ -922,8 +922,6 @@ def _case_ids_from_existing_experience_for_trade(event: dict, text: str, table_s
             and f"|{side_cn}|" in line and f"|{qty:,}|" in line and f"|{price:.3f}|" in line
         ):
             old_case_ids.extend(_explicit_case_ids_from_text(line))
-    if old_case_ids:
-        return sorted(set(old_case_ids))
 
     # The CASE section is a human-maintained formal owner record.  Consume it
     # only when it contains either the exact event marker/linked decision, or
