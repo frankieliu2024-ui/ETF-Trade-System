@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-04T16:32:01+08:00",
+  "updated_at": "2026-09-04T16:35:29+08:00",
   "last_status": "SENT",
   "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【交易复盘】ETF日复盘｜2026-09-04",
+  "last_title": "【系统复核】ETF正式变更复核｜2026-09-04",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -2084,6 +2084,34 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-04T15:40:10+08:00"
+    },
+    {
+      "notification_id": "notification_07f971130d528366a9af",
+      "event_type": "REPORT_DELIVERY_REQUEST",
+      "notification_channel": "REPORT",
+      "delivery_mode": "FULL_REPORT",
+      "source_event_id": "report-delivery:ETF正式变更复核:ETF正式变更复核-20260904T162542+0800-768d0fe9e002",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "user_severity": "正式报告",
+      "user_action": "阅读已完成的正式ETF报告；无需交易操作",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-04T16:35:29+08:00",
+      "sent_at": "2026-09-04T16:35:29+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-06T16:35:29+08:00",
+      "title": "【系统复核】ETF正式变更复核｜2026-09-04",
+      "content": "【本次结论】系统不正常：A股收盘行情和账户事实正常，但生产维护控制面未闭环，当前 E2E 为 BLOCKED。现在必须先修复一致性状态被写空的问题并恢复今日正式收盘复盘链；现有修复还不能直接合并，你无需操作。\n\n【本轮变化】\n1. canonical system_consistency 当前被写成空对象 → 系统已没有有效的一致性验收结果，maintenance 因此被阻断。\n2. 今日15:06正式收盘行情和15:03账户事实都有效，但2026-09-04正式收盘复盘事件与闭环文件仍未形成 → E2E 的 close_review 继续 BLOCKED。\n3. 针对“一致性失败却把空报告覆盖正式状态”的根因修复已经形成，但其最新PR预检仍失败 → 按现行治理不能合并旧候选，必须先在 latest main 上重新闭环（PR #311）。\n\n【仍需处理】\n1. 先恢复一致性控制面。问题已经定位到：生产验收在新报告无效时错误地把 `{}` 持久化为 canonical system_consistency，同时相关治理检查文件存在编码损坏。修复方向有明确净收益，但当前PR预检没有通过，而且 main 已继续前进，因此现在不能合并；只有 latest-main 重放后预检通过、expected-head 合并，并在 main 上重新得到有效非空的一致性结果和正常 maintenance 状态，才算关闭。\n2. 再补齐今日正式收盘复盘闭环。15:38的ETF交易复盘报告已经完成，但 canonical review event 和 closure 仍不存在；在一致性控制面失效时不应由本治理任务伪造正式复盘。等一致性恢复后，应基于已完成的今日复盘事实走现有正式入口完成 canonicalization；若控制面恢复后仍不能形成闭环，再单独按新的生产断点处理。\n3. 通知模板统一改造继续暂停。该变更本身有价值，但当前候选不可直接合并，且独立生产变更必须等前一项恢复并完成组合验收后再基于 latest main 重放（PR #310）。\n\n【系统状态】当前 main 可读取，A股 close snapshot 为 READY、账户事实 VALID，decision context 与 lifecycle 也可用；但 canonical system_consistency 为空，E2E 明确为 BLOCKED，阻塞项是 close_review 与 maintenance。因此当前不能把ETF生产系统写成“正常”，也不能把 BLOCKED 状态当作可正常执行正式金额/份额决策的生产态。\n\n【本次实际动作】本轮未修改ETF生产环境，也未创建、合并或关闭PR/Issue。由于 PR #311 的正式预检失败，本轮没有绕过门禁强行合并，也没有继续串行推进后续独立变更。\n\n【下次重点】\n1. 只看一致性控制面是否在 latest main 上完成根因修复并恢复有效 system_consistency / maintenance。\n2. 控制面恢复后，立即确认2026-09-04正式收盘复盘是否完成 canonicalization，并以 E2E 恢复为准；之后再处理通知模板等后续变更。\n\n置信度：高\n最可能出错的地方：今日正式收盘复盘未 canonicalize 可能主要是当前一致性控制面失效的下游结果，而不是一个独立根因；只有先恢复 #311 所针对的控制面后，才能可靠判断是否还需要为收盘复盘链建立新的独立修复事项。",
+      "source": "product-task:ETF正式变更复核",
+      "confirmation_context": {},
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-09-04T16:35:29+08:00"
     }
   ],
   "recent": [
@@ -3075,6 +3103,24 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_4220f80287d88d1c9c39",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "report-delivery:ETF正式变更复核:ETF正式变更复核-20260904T162542+0800-768d0fe9e002",
+      "type": "REPORT_DELIVERY_REQUEST",
+      "title": "【系统复核】ETF正式变更复核｜2026-09-04",
+      "content": "【本次结论】系统不正常：A股收盘行情和账户事实正常，但生产维护控制面未闭环，当前 E2E 为 BLOCKED。现在必须先修复一致性状态被写空的问题并恢复今日正式收盘复盘链；现有修复还不能直接合并，你无需操作。\n\n【本轮变化】\n1. canonical system_consistency 当前被写成空对象 → 系统已没有有效的一致性验收结果，maintenance 因此被阻断。\n2. 今日15:06正式收盘行情和15:03账户事实都有效，但2026-09-04正式收盘复盘事件与闭环文件仍未形成 → E2E 的 close_review 继续 BLOCKED。\n3. 针对“一致性失败却把空报告覆盖正式状态”的根因修复已经形成，但其最新PR预检仍失败 → 按现行治理不能合并旧候选，必须先在 latest main 上重新闭环（PR #311）。\n\n【仍需处理】\n1. 先恢复一致性控制面。问题已经定位到：生产验收在新报告无效时错误地把 `{}` 持久化为 canonical system_consistency，同时相关治理检查文件存在编码损坏。修复方向有明确净收益，但当前PR预检没有通过，而且 main 已继续前进，因此现在不能合并；只有 latest-main 重放后预检通过、expected-head 合并，并在 main 上重新得到有效非空的一致性结果和正常 maintenance 状态，才算关闭。\n2. 再补齐今日正式收盘复盘闭环。15:38的ETF交易复盘报告已经完成，但 canonical review event 和 closure 仍不存在；在一致性控制面失效时不应由本治理任务伪造正式复盘。等一致性恢复后，应基于已完成的今日复盘事实走现有正式入口完成 canonicalization；若控制面恢复后仍不能形成闭环，再单独按新的生产断点处理。\n3. 通知模板统一改造继续暂停。该变更本身有价值，但当前候选不可直接合并，且独立生产变更必须等前一项恢复并完成组合验收后再基于 latest main 重放（PR #310）。\n\n【系统状态】当前 main 可读取，A股 close snapshot 为 READY、账户事实 VALID，decision context 与 lifecycle 也可用；但 canonical system_consistency 为空，E2E 明确为 BLOCKED，阻塞项是 close_review 与 maintenance。因此当前不能把ETF生产系统写成“正常”，也不能把 BLOCKED 状态当作可正常执行正式金额/份额决策的生产态。\n\n【本次实际动作】本轮未修改ETF生产环境，也未创建、合并或关闭PR/Issue。由于 PR #311 的正式预检失败，本轮没有绕过门禁强行合并，也没有继续串行推进后续独立变更。\n\n【下次重点】\n1. 只看一致性控制面是否在 latest main 上完成根因修复并恢复有效 system_consistency / maintenance。\n2. 控制面恢复后，立即确认2026-09-04正式收盘复盘是否完成 canonicalization，并以 E2E 恢复为准；之后再处理通知模板等后续变更。\n\n置信度：高\n最可能出错的地方：今日正式收盘复盘未 canonicalize 可能主要是当前一致性控制面失效的下游结果，而不是一个独立根因；只有先恢复 #311 所针对的控制面后，才能可靠判断是否还需要为收盘复盘链建立新的独立修复事项。",
+      "source": "product-task:ETF正式变更复核",
+      "user_severity": "正式报告",
+      "user_action": "阅读已完成的正式ETF报告；无需交易操作",
+      "status": "SENT",
+      "attempted_at": "2026-09-04T16:35:29+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_07f971130d528366a9af",
       "lifecycle_status": "SENT"
     }
   ],
