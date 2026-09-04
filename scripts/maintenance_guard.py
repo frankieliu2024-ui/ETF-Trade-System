@@ -25,6 +25,11 @@ STATE = ROOT / "data" / "state"
 EQUITY = STATE / "etf_strategy_equity.json"
 ACCOUNT = STATE / "account_fact.json"
 CONSISTENCY = STATE / "system_consistency.json"
+
+
+def consistency_path() -> Path:
+    """Return this acceptance's validated report, or canonical state by default."""
+    return Path(os.environ.get("ETF_CONSISTENCY_REPORT_PATH", str(CONSISTENCY)))
 SELF_HEAL = STATE / "self_healing_status.json"
 RUNTIME_HEALTH = STATE / "runtime_health.json"
 CURRENT = STATE / "CURRENT.json"
@@ -150,7 +155,7 @@ def reconcile() -> dict:
 
 def main() -> int:
     now = datetime.now(TZ).isoformat(timespec="seconds")
-    consistency = read_json(CONSISTENCY, {}) or {}
+    consistency = read_json(consistency_path(), {}) or {}
     self_heal = read_json(SELF_HEAL, {}) or {}
     runtime = read_json(RUNTIME_HEALTH, {}) or {}
     current = read_json(CURRENT, {}) or {}
