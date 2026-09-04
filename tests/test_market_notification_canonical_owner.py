@@ -4,7 +4,6 @@ import unittest
 from pathlib import Path
 
 from scripts import notification_center as center
-from tests.test_notification_ssot_closeout import NotificationSsotCloseoutTests
 
 
 ROOT = Path(__file__).resolve().parents[1]
