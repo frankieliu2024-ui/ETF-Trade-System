@@ -95,6 +95,13 @@ class TradeFactCorrectionContractTests(unittest.TestCase):
         self.assertEqual(row["fee_status"], "CONFIRMED")
         self.assertEqual(row["cash_flow_amount"], 8848)
 
+    def test_correction_net_cash_is_persisted_on_canonical_event_and_is_idempotent(self):
+        sell = {"side": "SELL", "amount": 4795.20}
+        buy = {"side": "BUY", "amount": 4554.50}
+        self.assertEqual(correction.net_cash_effect(sell, 5.00), 4790.20)
+        self.assertEqual(correction.net_cash_effect(buy, 4.55), -4559.05)
+        self.assertIsNone(correction.net_cash_effect({"side": "BUY"}, 5.00))
+
     def test_latest_unavailable_review_does_not_fallback_to_older_fee_total(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
