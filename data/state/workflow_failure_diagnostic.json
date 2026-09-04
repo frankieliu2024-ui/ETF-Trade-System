@@ -1,31 +1,42 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-04T16:40:30+08:00",
+  "generated_at": "2026-09-04T17:02:40+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33854464021,
+  "run_id": 33856244083,
   "run_attempt": 1,
-  "head_sha": "89e5becb6f785c4a0ba7536ae628ecf264c2d672",
-  "main_head_sha": "d8583326c4d94df56bfd1fa178d58264b6b45d8e",
+  "head_sha": "45fe297ae04433e0adf294752d4ff0ffb1b13c80",
+  "main_head_sha": "f932903954423b8fc19afbf1df6554473f3aab51",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 6
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 9
     }
   ],
   "changed_files": [
-    "scripts/maintenance_guard.py"
+    ".github/workflows/system-consistency.yml",
+    "config/maintenance/production_mutation_protocol.json",
+    "scripts/build_stock_context.py",
+    "scripts/check_production_mutation_protocol.py",
+    "scripts/check_system_consistency_core.py",
+    "scripts/maintenance_guard.py",
+    "scripts/run_production_acceptance.py",
+    "scripts/send_regional_session_summary.py",
+    "scripts/state_manager.py",
+    "tests/test_market_notification_materiality_guard.py",
+    "tests/test_notification_workflow_structure.py",
+    "tests/test_production_acceptance_report_persistence.py"
   ],
-  "commit_message": "fix: reconcile account holdings through canonical asset classifier",
+  "commit_message": "Merge PR #312: replay #311 corrective acceptance on latest main",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
-    "changes_confined_to_auto_rollback_allowlist": true,
+    "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
     "user_notification_authority": false,
