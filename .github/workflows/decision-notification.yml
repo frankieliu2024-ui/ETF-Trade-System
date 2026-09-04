@@ -4,6 +4,8 @@ on:
   workflow_run:
     workflows:
       - "ETF market snapshot"
+      - "Overseas pre-open pulse"
+      - "US extended-hours pulse"
       - "ETF runtime self-healing watchdog"
       - "ETF workflow failure guard"
     types: [completed]
@@ -113,6 +115,34 @@ jobs:
         continue-on-error: true
         run: python scripts/run_guarded_notification.py regional --market a-share
 
+      - name: Send APAC opening value signal or close summary when due
+        id: apac_summary_notify
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Overseas pre-open pulse' }}
+        continue-on-error: true
+        run: python scripts/run_guarded_notification.py regional --market apac
+
+      - name: Send APAC monitored-object value event when due
+        id: apac_shock_notify
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Overseas pre-open pulse' }}
+        continue-on-error: true
+        env:
+          PREVIOUS_CONTEXT_PATH: data/state/overseas_context_previous.json
+        run: python scripts/run_guarded_notification.py shock --market asia
+
+      - name: Send US session summary when due
+        id: us_summary_notify
+        if: ${{ github.event_name == 'workflow_run' && (github.event.workflow_run.name == 'US extended-hours pulse' || github.event.workflow_run.name == 'Overseas pre-open pulse') }}
+        continue-on-error: true
+        run: python scripts/run_guarded_notification.py us
+
+      - name: Send US monitored-object value event when due
+        id: us_shock_notify
+        if: ${{ github.event_name == 'workflow_run' && (github.event.workflow_run.name == 'US extended-hours pulse' || github.event.workflow_run.name == 'Overseas pre-open pulse') }}
+        continue-on-error: true
+        env:
+          PREVIOUS_CONTEXT_PATH: data/state/us_extended_hours_context_previous.json
+        run: python scripts/run_guarded_notification.py shock --market us
+
       # A-share is only the data source route here. The event engine evaluates
       # every currently monitored index/ETF/account stock by attention value;
       # market membership itself never grants or blocks notification eligibility.
@@ -173,7 +203,7 @@ jobs:
           git push origin HEAD:main
 
       - name: Surface notification delivery failure without blocking trading system
-        if: ${{ steps.test_notify.outcome == 'failure' || steps.event_notify.outcome == 'failure' || steps.close_notify.outcome == 'failure' || steps.a_share_summary_notify.outcome == 'failure' || steps.a_share_shock_notify.outcome == 'failure' }}
+        if: ${{ steps.test_notify.outcome == 'failure' || steps.event_notify.outcome == 'failure' || steps.close_notify.outcome == 'failure' || steps.a_share_summary_notify.outcome == 'failure' || steps.a_share_shock_notify.outcome == 'failure' || steps.apac_summary_notify.outcome == 'failure' || steps.apac_shock_notify.outcome == 'failure' || steps.us_summary_notify.outcome == 'failure' || steps.us_shock_notify.outcome == 'failure' }}
         run: |
           echo "User notification delivery failed; ETF market/data/trading-decision workflows remain unaffected."
           exit 1

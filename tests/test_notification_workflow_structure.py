@@ -39,7 +39,7 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertIn("find requests/report_delivery -maxdepth 1 -type f -name '*.json' ! -path \"$REPORT_PATH\" -delete", self.text)
         self.assertIn('test "$(find requests/report_delivery -maxdepth 1 -type f -name \'*.json\' | wc -l)" -eq 1', self.text)
         self.assertIn("Ambiguous REPORT push: expected exactly one report request", self.text)
-        self.assertNotIn("/tmp/changed_files.txt; then", self.text)
+        self.assertIn("/tmp/changed_files.txt; then", self.text)
         self.assertNotIn("echo report=true", self.text)
 
     def test_existing_route_commands_remain_present_once(self):
@@ -54,6 +54,25 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         ]
         for command in commands:
             self.assertEqual(self.text.count(command), 1, command)
+
+    def test_overseas_producers_only_publish_context(self):
+        root = ROOT / ".github" / "workflows"
+        for name in ("overseas-preopen-pulse.yml", "us-extended-hours-pulse.yml"):
+            text = (root / name).read_text(encoding="utf-8")
+            self.assertNotIn("PUSHPLUS_TOKEN", text)
+            self.assertNotIn("run_guarded_notification.py", text)
+            self.assertNotIn("notification_center.json", text)
+        self.assertIn('"Overseas pre-open pulse"', self.text)
+        self.assertIn('"US extended-hours pulse"', self.text)
+        self.assertIn("PREVIOUS_CONTEXT_PATH: data/state/overseas_context_previous.json", self.text)
+        self.assertIn("steps.apac_summary_notify.outcome", self.text)
+
+    def test_single_notification_external_effect_owner_is_machine_checked(self):
+        from scripts.check_production_mutation_protocol import run
+        result = run(ROOT)
+        self.assertEqual(result["status"], "PASS", result.get("errors"))
+        names = [x for x in result["checks"] if x["name"] == "notification_owner:single_external_effect_committer"]
+        self.assertEqual(names[0]["status"], "PASS")
 
 
 if __name__ == "__main__":

@@ -197,8 +197,9 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
         decision = (ROOT / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
         overseas = (ROOT / ".github/workflows/overseas-preopen-pulse.yml").read_text(encoding="utf-8")
         us = (ROOT / ".github/workflows/us-extended-hours-pulse.yml").read_text(encoding="utf-8")
-        for text in (decision, overseas, us):
-            self.assertIn("run_guarded_notification.py", text)
+        self.assertIn("run_guarded_notification.py", decision)
+        for text in (overseas, us):
+            self.assertNotIn("run_guarded_notification.py", text)
         self.assertNotIn("run: python scripts/send_regional_session_summary.py", decision)
         self.assertNotIn("run: python scripts/send_market_shock_notification.py", decision)
         self.assertNotIn("run: python scripts/notification_center.py --mode", decision)
@@ -300,6 +301,57 @@ class NotificationAggregationTests(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertEqual(result[0], "AGGREGATED_INTO_EXISTING")
         self.assertEqual(result[1]["confirmation_context"]["event_tags"], ["SUDDEN", "EXTREME"])
+
+    def test_apac_open_signal_absorbs_same_object_extreme_without_upgrade(self):
+        opening = {
+            "event_type": "APAC_OPEN_SIGNAL",
+            "security_code": "HSTECH",
+            "created_at": "2026-09-04T10:20:00+08:00",
+            "sent_at": "2026-09-04T10:20:00+08:00",
+            "confirmation_context": {
+                "market": "ASIA", "market_date": "2026-09-04", "direction": "UP",
+                "lead_change_pct": 2.69, "session_node": "OPEN_SIGNAL",
+            },
+        }
+        extreme = self._event("HSTECH", "恒生科技指数", "EXTREME", magnitude=2.83, stamp="2026-09-04T10:34:00+08:00")
+        extreme["confirmation_context"].update({"market": "ASIA", "market_date": "2026-09-04", "direction": "UP"})
+        self.assertEqual(notification_common._absorb_or_aggregate([opening], extreme)[0], "AGGREGATED_INTO_EXISTING")
+
+    def test_apac_open_signal_allows_substantive_extreme_upgrade(self):
+        opening = {
+            "event_type": "APAC_OPEN_SIGNAL",
+            "security_code": "HSTECH",
+            "created_at": "2026-09-04T10:20:00+08:00",
+            "sent_at": "2026-09-04T10:20:00+08:00",
+            "confirmation_context": {
+                "market": "ASIA", "market_date": "2026-09-04", "direction": "UP",
+                "lead_change_pct": 2.69, "session_node": "OPEN_SIGNAL",
+            },
+        }
+        extreme = self._event("HSTECH", "恒生科技指数", "EXTREME", magnitude=3.70, stamp="2026-09-04T10:34:00+08:00")
+        extreme["confirmation_context"].update({"market": "ASIA", "market_date": "2026-09-04", "direction": "UP"})
+        self.assertIsNone(notification_common._absorb_or_aggregate([opening], extreme))
+
+    def test_apac_same_day_small_extreme_changes_are_absorbed_for_any_object(self):
+        for code, values in (("KOSPI", (1.65, 1.66)), ("HSTECH", (2.69, 2.64, 2.83))):
+            prior = {
+                "event_type": "MARKET_VALUE_ALERT", "security_code": code,
+                "sent_at": "2026-09-04T10:20:00+08:00",
+                "confirmation_context": {
+                    "market": "ASIA", "market_date": "2026-09-04", "direction": "UP",
+                    "event_category": "EXTREME", "event_magnitude_pct": values[0],
+                },
+            }
+            for index, value in enumerate(values[1:], start=1):
+                event = {
+                    "event_type": "MARKET_VALUE_ALERT", "security_code": code,
+                    "created_at": f"2026-09-04T10:{20 + index:02d}:00+08:00",
+                    "confirmation_context": {
+                        "market": "ASIA", "market_date": "2026-09-04", "direction": "UP",
+                        "event_category": "EXTREME", "event_magnitude_pct": value,
+                    },
+                }
+                self.assertIsNotNone(notification_common._find_aggregate_target([prior], event))
 
     def test_summary_absorbs_same_fact_but_not_independent_gold(self):
         summary = {

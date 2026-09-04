@@ -85,6 +85,12 @@
     ".github/workflows/minute-path-shadow.yml": {"artifact_path": "data/state/minute_path_features.json", "rule": "shadow输出不属于正式decision context；只做短期artifact留档，不直接写main。"}
   },
   "state_file_contracts": {
+    "data/state/notification_center.json": {
+      "state_class": "CANONICAL_NOTIFICATION_STATE",
+      "canonical_builder": "scripts/merge_notification_state.py",
+      "canonical_writers": [".github/workflows/decision-notification.yml"],
+      "rule": "PushPlus and notification state persistence have one external-effect commit authority; market producers may publish facts but cannot send or stage this state file."
+    },
     "data/state/CURRENT.json": {
       "state_class": "CANONICAL_MARKET_STATE",
       "canonical_builder": "scripts/cloud_runner_snapshot.py",

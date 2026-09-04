@@ -229,6 +229,24 @@ def run(root: Path = ROOT) -> dict:
 
     check("mutation_protocol:direct_writers_discovered", bool(writer_rows), f"writers={writer_rows}")
 
+    notification_owner = ".github/workflows/decision-notification.yml"
+    notification_effect_workflows = []
+    for rel, text in workflow_texts.items():
+        has_sender = any(token in text for token in ("PUSHPLUS_TOKEN", "run_guarded_notification.py", "notification_center.py --mode"))
+        if has_sender:
+            notification_effect_workflows.append(rel)
+        if rel != notification_owner:
+            check(
+                f"notification_owner:{rel}:no_external_effect",
+                not has_sender,
+                "market/data producers must not hold PushPlus or notification-center execution authority",
+            )
+    check(
+        "notification_owner:single_external_effect_committer",
+        notification_effect_workflows == [notification_owner],
+        f"notification_effect_workflows={notification_effect_workflows}",
+    )
+
     single_owner = cfg.get("single_owner_files") or {}
     for owned_path, owner in single_owner.items():
         for rel, text in workflow_texts.items():

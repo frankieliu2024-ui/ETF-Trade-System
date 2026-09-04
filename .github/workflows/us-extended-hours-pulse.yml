@@ -37,7 +37,6 @@ jobs:
     env:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
       US_EXTENDED_SYMBOLS: ${{ inputs.symbols || '' }}
-      PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
       EVENT_SCHEDULE: ${{ github.event.schedule || '' }}
     steps:
       - uses: actions/checkout@v5
@@ -52,19 +51,9 @@ jobs:
           python-version: "3.11"
       - name: Preserve previous US pulse for sudden-move comparison
         run: |
-          [ -f data/state/us_extended_hours_context.json ] && cp data/state/us_extended_hours_context.json /tmp/us_extended_hours_context_prev.json || true
+          [ -f data/state/us_extended_hours_context.json ] && cp data/state/us_extended_hours_context.json data/state/us_extended_hours_context_previous.json || true
       - name: Refresh US extended-hours context
         run: python scripts/build_us_extended_hours_context.py
-      - name: Send US regular-session open/close summary when due
-        id: us_summary_notify
-        continue-on-error: true
-        run: python scripts/run_guarded_notification.py us
-      - name: Send US monitored-object value event when due
-        id: us_shock_notify
-        continue-on-error: true
-        env:
-          PREVIOUS_CONTEXT_PATH: /tmp/us_extended_hours_context_prev.json
-        run: python scripts/run_guarded_notification.py shock --market us
       - name: Record dedicated US pulse heartbeat
         if: always()
         shell: bash
@@ -96,7 +85,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/state/us_extended_hours_context.json data/state/us_pulse_runtime_health.json data/state/notification_center.json
+          git add data/state/us_extended_hours_context.json data/state/us_pulse_runtime_health.json
+          [ -f data/state/us_extended_hours_context_previous.json ] && git add data/state/us_extended_hours_context_previous.json || true
           if git diff --cached --quiet; then
             exit 0
           fi
@@ -105,8 +95,3 @@ jobs:
           git pull --rebase origin main
           git stash drop || true
           git push origin HEAD:main
-      - name: Surface US notification delivery failure without blocking market data
-        if: ${{ steps.us_summary_notify.outcome == 'failure' || steps.us_shock_notify.outcome == 'failure' }}
-        run: |
-          echo "US market notification failed; US market-data refresh remains valid."
-          exit 1
