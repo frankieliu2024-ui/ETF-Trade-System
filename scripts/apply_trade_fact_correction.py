@@ -168,9 +168,10 @@ def main() -> int:
     prior_status = str(event.get("fee_status") or "").upper()
     expected_net = net_cash_effect(event, fee)
     prior_net = safe_float(event.get("net_cash_effect") or event.get("cash_flow_amount"))
+    fee_is_current = prior_status == "CONFIRMED" and prior_fee is not None and abs(prior_fee - fee) < 0.005
     net_cash_is_current = expected_net is None or (prior_net is not None and abs(prior_net - expected_net) < 0.005)
-    already_confirmed_same = prior_status == "CONFIRMED" and prior_fee is not None and abs(prior_fee - fee) < 0.005 and net_cash_is_current
-    if prior_status == "CONFIRMED" and prior_fee is not None and not already_confirmed_same:
+    already_confirmed_same = fee_is_current and net_cash_is_current
+    if prior_status == "CONFIRMED" and prior_fee is not None and not fee_is_current:
         raise RuntimeError("existing confirmed fee differs; explicit correction conflict requires manual review")
 
     stamp = str(req.get("requested_at_beijing") or event.get("fee_confirmed_at_beijing") or datetime.now(TZ).isoformat(timespec="seconds"))
