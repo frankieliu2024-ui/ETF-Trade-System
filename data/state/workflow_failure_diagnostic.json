@@ -1,29 +1,24 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-04T12:05:37+08:00",
+  "generated_at": "2026-09-04T12:09:31+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33835460196,
+  "run_id": 33835717587,
   "run_attempt": 1,
-  "head_sha": "56b2cf0353dc1c4241bc04fd70a973761b84e49c",
-  "main_head_sha": "32835f1a75bd63dfdb9535f2f2a85c7d03b36d12",
+  "head_sha": "096390668d5d84b478938d2309c2df9c691da476",
+  "main_head_sha": "56f999bba6fc4449d3c0abf52fc0afcadf590099",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 8
-    },
-    {
-      "job": "production_acceptance",
-      "step": "Enforce production acceptance",
-      "number": 8
+      "step": "PR candidate post-replay acceptance",
+      "number": 6
     }
   ],
   "changed_files": [
     "scripts/process_state_sync_request.py"
   ],
-  "commit_message": "Merge PR #298: require full formal CASE execution timestamp",
+  "commit_message": "fix: preserve request-scoped confirmation time on idempotent replay",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
