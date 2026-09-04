@@ -7,6 +7,11 @@ from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+try:
+    from build_stock_context import active_account_asset_codes
+except ModuleNotFoundError:
+    from scripts.build_stock_context import active_account_asset_codes
+
 from confirmed_trade_facts import (
     effective_confirmed_fee_fact,
     latest_formal_review_confirmed_fees,
@@ -80,9 +85,14 @@ def reconcile() -> dict:
             ledger_qty[code] -= qty
 
     account_qty: dict[str, float] = {}
+    # Account facts intentionally do not require an asset_type field. Reuse the
+    # canonical ETF classifier so reconciliation cannot silently turn live
+    # holdings into zero quantities.
+    etf_codes = active_account_asset_codes(ROOT, account)["etf"]
     for p in account.get("positions") or []:
-        if str(p.get("asset_type") or "").upper() == "ETF":
-            account_qty[str(p.get("code") or "")] = float(p.get("quantity") or 0)
+        code = str(p.get("code") or "")
+        if code in etf_codes:
+            account_qty[code] = float(p.get("quantity") or 0)
 
     all_codes = sorted(set(ledger_qty) | set(account_qty))
     quantity_checks = []

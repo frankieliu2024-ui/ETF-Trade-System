@@ -21,6 +21,10 @@ try:
     from confirmed_trade_facts import canonical_etf_fee_projection
 except ModuleNotFoundError:
     from scripts.confirmed_trade_facts import canonical_etf_fee_projection
+try:
+    from build_stock_context import active_account_asset_codes
+except ModuleNotFoundError:
+    from scripts.build_stock_context import active_account_asset_codes
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = Path(os.environ.get("ETF_CONSISTENCY_REPORT_PATH", str(ROOT / "data" / "state" / "system_consistency.json"))).resolve()
@@ -643,10 +647,7 @@ def main() -> int:
         and ((current.get("deployable_cash") is None and expected_deployable is None) or (current.get("deployable_cash") is not None and float(current.get("deployable_cash")) == expected_deployable))
     )
     check("state_coherence:settlement_cash_derivation", settlement_ok, f"reserved={account.get('reserved_cash_for_settlement')} expected={expected_reserved} deployable={account.get('deployable_cash')} expected={expected_deployable}")
-    expected_account_stocks = {
-        str(position.get("code", "")) for position in (account.get("positions") or [])
-        if isinstance(position, dict) and str(position.get("asset_type", "")).upper() == "STOCK" and float(position.get("quantity") or 0) > 0
-    }
+    expected_account_stocks = active_account_asset_codes(ROOT, account)["stocks"]
     stock_context = read_json("data/state/stock_context.json")
     detected_stocks = {
         str(item.get("code", "")) for item in (stock_context.get("default_stock_layer", {}).get("detected_non_etf_stocks") or [])
