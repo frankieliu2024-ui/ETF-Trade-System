@@ -914,12 +914,14 @@ def _case_ids_from_existing_experience_for_trade(event: dict, text: str, table_s
     price = float(event.get("price") or 0)
     confirmed_at = str(event.get("confirmed_at_beijing") or "")
     trade_date = confirmed_at[:10]
-    date_time_tokens = {trade_date} if trade_date else set()
+    date_time_tokens = set()
     if len(confirmed_at) >= 19 and confirmed_at[5:7].isdigit() and confirmed_at[8:10].isdigit():
         month = str(int(confirmed_at[5:7]))
         day = str(int(confirmed_at[8:10]))
         clock = confirmed_at[11:19]
-        date_time_tokens.update({f"{month}月{day}日{clock}", f"{confirmed_at[5:7]}月{confirmed_at[8:10]}日{clock}"})
+        date_time_tokens.update({f"{month}月{day}日{clock}", f"{confirmed_at[5:7]}月{confirmed_at[8:10]}日{clock}", f"{trade_date} {clock}"})
+    elif trade_date:
+        date_time_tokens.add(trade_date)
     marker = f"TRADE_EVENT:{event_id}" if event_id else ""
     old_case_ids = []
     table_text = text[table_start:table_end]
