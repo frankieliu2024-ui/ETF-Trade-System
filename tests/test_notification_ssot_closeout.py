@@ -34,7 +34,7 @@ class NotificationSsotCloseoutTests(unittest.TestCase):
     def test_document_matches_renderer_and_boundaries(self):
         text = SPEC.read_text(encoding="utf-8")
         for phrase in ("INTERRUPT", "REPORT", "FULL_REPORT", "UNLINKED_TRADE_REQUIRES_ATTRIBUTION",
-                       "decision_trigger", "用户如需交易必须人工核对并下单", "不生成新交易指令"):
+                       "decision_trigger", "不授予交易权限", "不生成新交易指令"):
             self.assertIn(phrase, text)
         representative = [
             ("PENDING_EXECUTION_CONFIRMATION", "成交确认"),
@@ -56,7 +56,7 @@ class NotificationSsotCloseoutTests(unittest.TestCase):
             "security_name": "黄金ETF",
             "confirmation_context": {},
         })
-        self.assertIn("仅确认既有成交归因，不生成新交易指令。", rendered["content"])
+        self.assertIn("仅确认既有成交及其归因，不生成新交易指令。", rendered["content"])
 
 
 if __name__ == "__main__":
