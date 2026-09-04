@@ -574,6 +574,46 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
             report["errors"].append(message)
     _recount(report)
 
+
+def _validate_execution_quality_projection(report: dict) -> None:
+    """Ensure the rebuildable execution-quality state matches canonical trade facts."""
+    quality = _read_json("data/state/execution_quality.json")
+    items = {str(item.get("trade_event_id") or ""): item for item in (quality.get("items") or []) if isinstance(item, dict)}
+    trade_dir = ROOT / "events" / "trades"
+    mismatches = []
+    checked = 0
+    for path in sorted(trade_dir.glob("*.json")) if trade_dir.exists() else []:
+        trade = _read_json(str(path.relative_to(ROOT)))
+        event_id = str(trade.get("event_id") or path.stem)
+        if not event_id or str(trade.get("execution_status") or "").upper() != "EXECUTED":
+            continue
+        checked += 1
+        projected = items.get(event_id)
+        if not projected:
+            mismatches.append(f"{event_id}:missing")
+            continue
+        expected_hypothesis = trade.get("hypothesis_id")
+        if projected.get("hypothesis_id") != expected_hypothesis:
+            mismatches.append(f"{event_id}:hypothesis_id")
+        attribution = trade.get("execution_attribution") or {}
+        for field in ("decision_price", "adverse_execution_cost_pct"):
+            if projected.get(field) != attribution.get(field):
+                mismatches.append(f"{event_id}:{field}")
+        expected_status = attribution.get("status")
+        if expected_status and projected.get("status") != expected_status:
+            mismatches.append(f"{event_id}:status")
+    status = "FAIL" if mismatches else "PASS"
+    report.setdefault("checks", []).append({
+        "name": "state:execution_quality_canonical_alignment",
+        "status": status,
+        "detail": f"executed_events_checked={checked} mismatches={mismatches}",
+    })
+    for item in mismatches:
+        message = "execution_quality:" + item
+        if message not in report.setdefault("errors", []):
+            report["errors"].append(message)
+    _recount(report)
+
 def _validate_readme_front_door(report: dict) -> None:
     import re
 
@@ -670,6 +710,7 @@ def main() -> int:
     _validate_trade_event_formal_sync(report)
     _validate_historical_trade_case_mapping(report)
     _validate_semantic_formal_structure(report)
+    _validate_execution_quality_projection(report)
     _validate_readme_front_door(report)
     _validate_production_mutation_protocol(report)
     # --no-persist means the caller must provide an ephemeral report path;
