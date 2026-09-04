@@ -12,12 +12,14 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CONSISTENCY = ROOT / "data" / "state" / "system_consistency.json"
 MAINTENANCE = ROOT / "data" / "state" / "maintenance_health.json"
 E2E = ROOT / "data" / "state" / "e2e_status.json"
+EXECUTION_QUALITY = ROOT / "data" / "state" / "execution_quality.json"
 
 
 def run(command: list[str]) -> int:
@@ -38,13 +40,29 @@ def main() -> int:
     parser.add_argument("--mutation-sha", default=os.environ.get("GITHUB_SHA", ""))
     args = parser.parse_args()
 
-    report_path = str(CONSISTENCY)
-    consistency_rc = run([
-        sys.executable,
-        str(ROOT / "scripts" / "check_system_consistency.py"),
-        "--report-path",
-        report_path,
-    ])
+    # Rebuild derived execution quality before the fresh consistency gate so
+    # the gate and all downstream consumers see the same canonical trade facts.
+    quality_rc = run([sys.executable, str(ROOT / "scripts" / "build_execution_quality.py")])
+    with tempfile.NamedTemporaryFile(prefix="etf-system-consistency-", suffix=".json", delete=False) as handle:
+        fresh_report_path = handle.name
+    try:
+        consistency_rc = run([
+            sys.executable,
+            str(ROOT / "scripts" / "check_system_consistency.py"),
+            "--no-persist",
+            "--report-path",
+            fresh_report_path,
+        ])
+        fresh_consistency = read_json(Path(fresh_report_path))
+        # Publish the exact final normalized report produced by this invocation
+        # into the local acceptance workspace. Maintenance and E2E consume this
+        # file; neither reads the pre-existing main snapshot.
+        CONSISTENCY.write_text(json.dumps(fresh_consistency, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    finally:
+        try:
+            Path(fresh_report_path).unlink()
+        except OSError:
+            pass
     maintenance_rc = run([sys.executable, str(ROOT / "scripts" / "maintenance_guard.py")])
     e2e_rc = run([sys.executable, str(ROOT / "scripts" / "build_e2e_status.py")])
 
@@ -54,10 +72,11 @@ def main() -> int:
     consistency_ok = consistency.get("status") in {"PASS", "WARNING"} and int(consistency.get("hard_error_count") or 0) == 0
     maintenance_ok = maintenance.get("status") in {"PASS", "WARNING", "DEGRADED"} and maintenance.get("status") != "FAIL"
     e2e_ok = e2e.get("status") in {"READY", "DEGRADED"}
-    accepted = consistency_rc == 0 and maintenance_rc == 0 and e2e_rc == 0 and consistency_ok and maintenance_ok and e2e_ok
+    accepted = quality_rc == 0 and consistency_rc == 0 and maintenance_rc == 0 and e2e_rc == 0 and consistency_ok and maintenance_ok and e2e_ok
 
     print(json.dumps({
         "acceptance": "PASS" if accepted else "FAIL",
+        "quality_rebuild": "PASS" if quality_rc == 0 else "FAIL",
         "mutation_sha": args.mutation_sha,
         "consistency": consistency.get("status"),
         "maintenance": maintenance.get("status"),
