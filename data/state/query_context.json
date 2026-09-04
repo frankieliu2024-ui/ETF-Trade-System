@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-04T07:55:20Z",
-  "generated_at_beijing": "2026-09-04T15:55:20+08:00",
+  "generated_at": "2026-09-04T08:53:25Z",
+  "generated_at_beijing": "2026-09-04T16:53:25+08:00",
   "market_date": "2026-09-04",
   "latest_valid_node": "close",
   "rules_version": "V2.2.31",
@@ -173,10 +173,10 @@
     "account_fact_source": "BROKER_HOLDINGS_SCREENSHOT_20260904_1503_USER_CONFIRMED",
     "close_review_closure": {
       "status": "CLOSED",
-      "market_date": "2026-09-03",
-      "path": "data/state/close_review_closure_2026-09-03.json",
-      "formal_review_path": "events/reviews/2026-09-03.json",
-      "case_id": "CASE-20260903-01"
+      "market_date": "2026-09-04",
+      "path": "data/state/close_review_closure_2026-09-04.json",
+      "formal_review_path": "events/reviews/2026-09-04.json",
+      "case_id": ""
     },
     "settlement_obligations": [
       {
@@ -199,7 +199,7 @@
     "deployable_cash": 6470.62
   },
   "decision_context": {
-    "generated_at": "2026-09-04T07:55:17Z",
+    "generated_at": "2026-09-04T08:53:25Z",
     "rules_version": "V2.2.31",
     "market_date": "2026-09-04",
     "latest_node": "close",
@@ -372,10 +372,10 @@
       "account_fact_source": "BROKER_HOLDINGS_SCREENSHOT_20260904_1503_USER_CONFIRMED",
       "close_review_closure": {
         "status": "CLOSED",
-        "market_date": "2026-09-03",
-        "path": "data/state/close_review_closure_2026-09-03.json",
-        "formal_review_path": "events/reviews/2026-09-03.json",
-        "case_id": "CASE-20260903-01"
+        "market_date": "2026-09-04",
+        "path": "data/state/close_review_closure_2026-09-04.json",
+        "formal_review_path": "events/reviews/2026-09-04.json",
+        "case_id": ""
       },
       "settlement_obligations": [
         {
@@ -1052,7 +1052,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 7.361,
-      "age_seconds": 2922
+      "age_seconds": 6410
     },
     "freshness_at_context_build": {
       "status": "STALE",
@@ -1068,7 +1068,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 7.361,
-      "age_seconds": 2922
+      "age_seconds": 6410
     },
     "data_quality_summary": {
       "pass_count": 14,
@@ -1148,7 +1148,7 @@
       "account_fact_time": "2026-09-04T15:03:00+08:00",
       "market_snapshot_time": "2026-09-04T15:06:35+08:00",
       "market_phase": "POST_CLOSE_GRACE",
-      "context_generated_time": "2026-09-04T07:55:17Z",
+      "context_generated_time": "2026-09-04T08:53:25Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
@@ -1177,7 +1177,7 @@
       "read_only": true
     },
     "market_quote_router": {
-      "generated_at_beijing": "2026-09-04T15:55:17+08:00",
+      "generated_at_beijing": "2026-09-04T16:53:25+08:00",
       "refresh_mode": "CACHED_STATE",
       "refresh_failures": [],
       "decision_freshness": {
@@ -1186,8 +1186,8 @@
         "captured_at": "2026-09-04T07:06:35+00:00",
         "provider_as_of": "2026-09-04T07:06:29+00:00",
         "effective_as_of": "2026-09-04T07:06:29+00:00",
-        "request_time": "2026-09-04T07:55:17.840093+00:00",
-        "age_seconds": 2928,
+        "request_time": "2026-09-04T08:53:25.319976+00:00",
+        "age_seconds": 6416,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -1566,9 +1566,9 @@
         {
           "market": "US",
           "market_name": "美国",
-          "symbol": "^NDX",
+          "symbol": "NDX",
           "name": "纳斯达克100指数",
-          "latest_price": 29482.3203125,
+          "latest_price": 717.03,
           "open": null,
           "high": null,
           "low": null,
@@ -1576,25 +1576,25 @@
           "volume": null,
           "amount": null,
           "turnover": null,
-          "data_time_beijing": "2026-09-04T04:00:00+08:00",
+          "data_time_beijing": "2026-09-04T07:59:58+08:00",
           "data_time_local": "",
-          "market_phase": "OFF_SESSION",
-          "market_status_cn": "美股休市中",
-          "data_nature_cn": "最近正式收盘行情",
+          "market_phase": "PRE_MARKET",
+          "market_status_cn": "美股盘前",
+          "data_nature_cn": "盘前行情（附最近正式收盘基准）",
           "source": "yahoo_chart_api",
           "freshness": "STALE",
           "freshness_cn": "时点过旧",
           "quality_status": "PASS",
           "quality_status_cn": "数据可用",
-          "direct_quote": true,
-          "route_rule": "返回最近正式收盘行情"
+          "direct_quote": false,
+          "route_rule": "返回扩展时段行情，并保留最近正式收盘作为基准"
         },
         {
           "market": "US",
           "market_name": "美国",
-          "symbol": "^SOX",
+          "symbol": "SOX",
           "name": "费城半导体指数",
-          "latest_price": 11352.12890625,
+          "latest_price": 501.8659,
           "open": null,
           "high": null,
           "low": null,
@@ -1602,18 +1602,18 @@
           "volume": null,
           "amount": null,
           "turnover": null,
-          "data_time_beijing": "2026-09-04T04:00:00+08:00",
+          "data_time_beijing": "2026-09-04T07:58:19+08:00",
           "data_time_local": "",
-          "market_phase": "OFF_SESSION",
-          "market_status_cn": "美股休市中",
-          "data_nature_cn": "最近正式收盘行情",
+          "market_phase": "PRE_MARKET",
+          "market_status_cn": "美股盘前",
+          "data_nature_cn": "盘前行情（附最近正式收盘基准）",
           "source": "yahoo_chart_api",
           "freshness": "STALE",
           "freshness_cn": "时点过旧",
           "quality_status": "PASS",
           "quality_status_cn": "数据可用",
-          "direct_quote": true,
-          "route_rule": "返回最近正式收盘行情"
+          "direct_quote": false,
+          "route_rule": "返回扩展时段行情，并保留最近正式收盘作为基准"
         },
         {
           "market": "JP",
@@ -1660,8 +1660,8 @@
           "market_status_cn": "韩股收盘",
           "data_nature_cn": "最近正式收盘行情",
           "source": "naver_finance",
-          "freshness": "FRESH",
-          "freshness_cn": "时点正常",
+          "freshness": "STALE",
+          "freshness_cn": "时点过旧",
           "quality_status": "PASS",
           "quality_status_cn": "数据可用",
           "direct_quote": true,
@@ -1708,12 +1708,12 @@
           "turnover": null,
           "data_time_beijing": "2026-09-04T15:40:14+08:00",
           "data_time_local": "",
-          "market_phase": "REGULAR",
-          "market_status_cn": "港股交易中",
-          "data_nature_cn": "实时交易行情",
+          "market_phase": "OFF_SESSION",
+          "market_status_cn": "港股收盘",
+          "data_nature_cn": "最近正式收盘行情",
           "source": "yahoo_chart_api",
-          "freshness": "DEGRADED",
-          "freshness_cn": "存在延迟",
+          "freshness": "STALE",
+          "freshness_cn": "时点过旧",
           "quality_status": "DEGRADED",
           "quality_status_cn": "数据受限",
           "direct_quote": true,
@@ -1726,16 +1726,16 @@
           "market_status_cn": "A股收盘"
         },
         "HK": {
-          "phase": "REGULAR",
-          "market_status_cn": "港股交易中"
+          "phase": "OFF_SESSION",
+          "market_status_cn": "港股收盘"
         },
         "TW": {
           "phase": "OFF_SESSION",
           "market_status_cn": "台股收盘"
         },
         "US": {
-          "phase": "OFF_SESSION",
-          "market_status_cn": "美股休市中"
+          "phase": "PRE_MARKET",
+          "market_status_cn": "美股盘前"
         },
         "JP": {
           "phase": "OFF_SESSION",
@@ -1856,7 +1856,7 @@
     },
     "decision_trigger": {
       "schema_version": "1.2",
-      "generated_at": "2026-09-04T15:06:52+08:00",
+      "generated_at": "2026-09-04T16:53:05+08:00",
       "status": "NO_NEW_TRIGGER",
       "trigger_type": "",
       "triggered_at": "",
@@ -1864,7 +1864,7 @@
       "previous_decision_id": "20260903_094725_515880_exit_execution",
       "evidence_change": "",
       "evidence_time": "2026-09-04T15:06:35+08:00",
-      "e2e_status": "READY",
+      "e2e_status": "BLOCKED",
       "requires_formal_reassessment": false,
       "pending_trigger": false,
       "idempotency_key": "",
@@ -1877,9 +1877,9 @@
     },
     "capital_efficiency_ranking": {
       "schema_version": "1.2",
-      "generated_at": "2026-09-04T15:06:52+08:00",
+      "generated_at": "2026-09-04T16:53:05+08:00",
       "as_of": "2026-09-04T15:06:35+08:00",
-      "e2e_status": "READY",
+      "e2e_status": "BLOCKED",
       "risk_zone": "RISK_CONTROL",
       "risk_zone_semantics": "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION",
       "enhanced_risk_review_required": false,
@@ -1897,7 +1897,9 @@
           "eligibility": "COMPARISON_AVAILABLE",
           "data_availability": "READY",
           "reason": "等待价值与风险缓冲属于合法资本用途；是否优于其他用途由MASTER完整判断决定。",
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -1921,7 +1923,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -1945,7 +1949,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -1969,7 +1975,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -1993,7 +2001,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2017,7 +2027,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2041,7 +2053,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2065,7 +2079,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2089,7 +2105,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2113,7 +2131,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2137,7 +2157,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2161,7 +2183,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2176,7 +2200,9 @@
           "eligibility": "COMPARISON_AVAILABLE",
           "data_availability": "READY",
           "reason": "等待价值与风险缓冲属于合法资本用途；是否优于其他用途由MASTER完整判断决定。",
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2200,7 +2226,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2224,7 +2252,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2248,7 +2278,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2272,7 +2304,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2296,7 +2330,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2320,7 +2356,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2344,7 +2382,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2368,7 +2408,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2392,7 +2434,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2416,7 +2460,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2440,7 +2486,9 @@
             "风险收益",
             "资本占用效率"
           ],
-          "execution_constraints": [],
+          "execution_constraints": [
+            "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+          ],
           "risk_review_context": [
             "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY"
           ],
@@ -2448,7 +2496,9 @@
         }
       ],
       "excluded_candidates": [],
-      "execution_constraints": [],
+      "execution_constraints": [
+        "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+      ],
       "key_reason": "机器层只枚举完整资本比较全集与真实数据/执行约束；风险复核边界只提高复核强度，不自动生成风险许可或删除合法机会。",
       "previous_top_candidate": null,
       "order_semantics": "ENUMERATION_ONLY_NOT_RANKING",
@@ -2456,7 +2506,7 @@
       "safety_boundary": "资本比较不替代唯一主候选；风险区间不自动生成风险许可；本状态不自动生成Trial、Confirm、金额、卖出份额或订单。"
     },
     "intraday_path_features": {
-      "generated_at": "2026-09-04T07:06:46Z",
+      "generated_at": "2026-09-04T08:53:00Z",
       "market_date": "2026-09-04",
       "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
       "read_only": true,
@@ -3646,7 +3696,7 @@
       ],
       "skfolio_risk_evidence": {
         "schema_version": "1.0",
-        "generated_at": "2026-09-04T07:06:52Z",
+        "generated_at": "2026-09-04T08:53:05Z",
         "status": "DEGRADED",
         "mode": "SKFOLIO_VALIDATED_RISK_EVIDENCE",
         "validation_basis": {
@@ -3952,7 +4002,7 @@
     "account_fact_time": "2026-09-04T15:03:00+08:00",
     "market_snapshot_time": "2026-09-04T15:06:35+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-09-04T07:55:17Z",
+    "context_generated_time": "2026-09-04T08:53:25Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -4044,7 +4094,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "STALE",
-        "age_seconds": 2922,
+        "age_seconds": 6410,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -4062,7 +4112,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 7.361,
-        "age_seconds": 2922
+        "age_seconds": 6410
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新判断为“时点正常／存在延迟／时点过旧”。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -4084,36 +4134,106 @@
       "degraded_max_age_seconds": 1500,
       "close_grace_seconds": 1800,
       "principle": "查询时立即补采优先；常规10分钟只是生产目标。补采失败才回退最近有效状态，并按查询时刻重新判定新鲜度。"
+    },
+    "refresh_gate": {
+      "status": "READY",
+      "formal_analysis_allowed": true,
+      "formal_decision_persist_allowed": true,
+      "fallback_allowed": false,
+      "query_intent": "FORMAL_INTRADAY_DECISION",
+      "request_file": "requests/live_snapshot/20260904_1030_shadow_node_chatgpt.json",
+      "request_id": "20260904_1030_shadow_node_chatgpt",
+      "requested_at_beijing": "2026-09-04T10:30:00+08:00",
+      "requested_market_time": "2026-09-04T10:30:00+08:00",
+      "current_snapshot_time": "2026-09-04T15:06:35+08:00",
+      "resolved_snapshot_time": "2026-09-04T15:06:35+08:00",
+      "latest_snapshot": "data/market/snapshots/2026-09-04_150635.json",
+      "failure_reason": "",
+      "rule": "EXPLICIT_LATEST或wait_for_refresh请求必须等本次请求之后且不早于requested_market_time的新CURRENT发布后才可称为最新/当前行情；请求前即使仍处普通FRESH窗口，也不得冒充本次最新查询结果。仅非EXPLICIT_LATEST且用户明确授权时可回退旧快照。"
     }
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-09-04T15:55:17+08:00",
+    "generated_at_beijing": "2026-09-04T16:53:25+08:00",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
     "refresh_failures": [
       {
-        "symbol": "HSTECH",
-        "error": "HSTECH query-time direct chain has no fresh usable quote; eastmoney_push2:124.HSTECH: HTTP Error 502: Bad Gateway | hithink-finance:HS2083: \"validation\",\"message\":\"Unknown thscode: HS2083\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"b645ff143aba4dc1a028c6633e09f094\"},\"meta\":{\"cli_version\":\"0.1.7\",\"schema_version\":\"1\"}}\n"
+        "symbol": "NDX",
+        "error": "NDX active-market immediate refresh rejected non-FRESH provider result: PREVIOUS_SESSION_REFERENCE"
+      },
+      {
+        "symbol": "SOX",
+        "error": "SOX active-market immediate refresh rejected non-FRESH provider result: PREVIOUS_SESSION_REFERENCE"
       }
     ],
     "decision_freshness": {
-      "status": "REFRESH_REQUIRED",
+      "status": "DIRECT",
       "quality_status": "UNKNOWN",
       "captured_at": "2026-09-04T07:06:35+00:00",
       "provider_as_of": "2026-09-04T07:06:29+00:00",
       "effective_as_of": "2026-09-04T07:06:29+00:00",
-      "request_time": "2026-09-04T07:03:00+00:00",
-      "age_seconds": 2928,
-      "post_request": true,
+      "request_time": "2026-09-04T07:52:00+00:00",
+      "age_seconds": 6416,
+      "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
-      "formal_decision_allowed": false,
+      "formal_decision_allowed": true,
       "refresh_required": true,
       "fallback_allowed": false,
-      "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required"
+      "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required",
+      "resolved_as_of": "2026-09-04T08:53:20+00:00",
+      "resolved_post_request": true
     },
     "route_version": "V1.1",
     "query_entry": "market_quote_router",
     "quotes": [
+      {
+        "market": "US",
+        "market_name": "美国",
+        "symbol": "QQQ",
+        "name": "QQQ",
+        "latest_price": 720.91,
+        "open": 720.91,
+        "high": 720.91,
+        "low": 720.91,
+        "prev_close": 709.24,
+        "volume": 0,
+        "amount": null,
+        "turnover": null,
+        "data_time_beijing": "2026-09-04T16:53:18+08:00",
+        "data_time_local": "2026-09-04T04:53:18-04:00",
+        "market_phase": "PRE_MARKET",
+        "market_status_cn": "美股盘前",
+        "data_nature_cn": "盘前行情（附最近正式收盘基准）",
+        "source": "yahoo_chart_api",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "US",
+        "market_name": "美国",
+        "symbol": "SOXX",
+        "name": "SOXX",
+        "latest_price": 510.69,
+        "open": 510.69,
+        "high": 510.69,
+        "low": 510.69,
+        "prev_close": 501.44,
+        "volume": 0,
+        "amount": null,
+        "turnover": null,
+        "data_time_beijing": "2026-09-04T16:53:20+08:00",
+        "data_time_local": "2026-09-04T04:53:20-04:00",
+        "market_phase": "PRE_MARKET",
+        "market_status_cn": "美股盘前",
+        "data_nature_cn": "盘前行情（附最近正式收盘基准）",
+        "source": "yahoo_chart_api",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
       {
         "market": "CN",
         "market_name": "中国大陆",
@@ -4481,9 +4601,9 @@
       {
         "market": "US",
         "market_name": "美国",
-        "symbol": "^NDX",
+        "symbol": "NDX",
         "name": "纳斯达克100指数",
-        "latest_price": 29482.3203125,
+        "latest_price": 717.03,
         "open": null,
         "high": null,
         "low": null,
@@ -4491,25 +4611,25 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-09-04T04:00:00+08:00",
+        "data_time_beijing": "2026-09-04T07:59:58+08:00",
         "data_time_local": "",
-        "market_phase": "OFF_SESSION",
-        "market_status_cn": "美股休市中",
-        "data_nature_cn": "最近正式收盘行情",
+        "market_phase": "PRE_MARKET",
+        "market_status_cn": "美股盘前",
+        "data_nature_cn": "盘前行情（附最近正式收盘基准）",
         "source": "yahoo_chart_api",
         "freshness": "STALE",
         "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
-        "direct_quote": true,
-        "route_rule": "返回最近正式收盘行情"
+        "direct_quote": false,
+        "route_rule": "返回扩展时段行情，并保留最近正式收盘作为基准"
       },
       {
         "market": "US",
         "market_name": "美国",
-        "symbol": "^SOX",
+        "symbol": "SOX",
         "name": "费城半导体指数",
-        "latest_price": 11352.12890625,
+        "latest_price": 501.8659,
         "open": null,
         "high": null,
         "low": null,
@@ -4517,18 +4637,18 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-09-04T04:00:00+08:00",
+        "data_time_beijing": "2026-09-04T07:58:19+08:00",
         "data_time_local": "",
-        "market_phase": "OFF_SESSION",
-        "market_status_cn": "美股休市中",
-        "data_nature_cn": "最近正式收盘行情",
+        "market_phase": "PRE_MARKET",
+        "market_status_cn": "美股盘前",
+        "data_nature_cn": "盘前行情（附最近正式收盘基准）",
         "source": "yahoo_chart_api",
         "freshness": "STALE",
         "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
-        "direct_quote": true,
-        "route_rule": "返回最近正式收盘行情"
+        "direct_quote": false,
+        "route_rule": "返回扩展时段行情，并保留最近正式收盘作为基准"
       },
       {
         "market": "JP",
@@ -4575,8 +4695,8 @@
         "market_status_cn": "韩股收盘",
         "data_nature_cn": "最近正式收盘行情",
         "source": "naver_finance",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -4623,12 +4743,12 @@
         "turnover": null,
         "data_time_beijing": "2026-09-04T15:40:14+08:00",
         "data_time_local": "",
-        "market_phase": "REGULAR",
-        "market_status_cn": "港股交易中",
-        "data_nature_cn": "实时交易行情",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "港股收盘",
+        "data_nature_cn": "最近正式收盘行情",
         "source": "yahoo_chart_api",
-        "freshness": "DEGRADED",
-        "freshness_cn": "存在延迟",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "DEGRADED",
         "quality_status_cn": "数据受限",
         "direct_quote": true,
@@ -4641,16 +4761,16 @@
         "market_status_cn": "A股收盘"
       },
       "HK": {
-        "phase": "REGULAR",
-        "market_status_cn": "港股交易中"
+        "phase": "OFF_SESSION",
+        "market_status_cn": "港股收盘"
       },
       "TW": {
         "phase": "OFF_SESSION",
         "market_status_cn": "台股收盘"
       },
       "US": {
-        "phase": "OFF_SESSION",
-        "market_status_cn": "美股休市中"
+        "phase": "PRE_MARKET",
+        "market_status_cn": "美股盘前"
       },
       "JP": {
         "phase": "OFF_SESSION",
@@ -4813,29 +4933,31 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 7.361,
-    "age_seconds": 2922
+    "age_seconds": 6410
   },
   "freshness_at_context_build": {
     "status": "STALE",
-    "age_seconds": 2922,
+    "age_seconds": 6410,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
   "interactive_decision_freshness": {
-    "status": "REFRESH_REQUIRED",
+    "status": "DIRECT",
     "quality_status": "UNKNOWN",
     "captured_at": "2026-09-04T07:06:35+00:00",
     "provider_as_of": "2026-09-04T07:06:29+00:00",
     "effective_as_of": "2026-09-04T07:06:29+00:00",
-    "request_time": "2026-09-04T07:03:00+00:00",
-    "age_seconds": 2928,
-    "post_request": true,
+    "request_time": "2026-09-04T07:52:00+00:00",
+    "age_seconds": 6416,
+    "post_request": false,
     "preferred_max_age_seconds": 300,
     "fallback_max_age_seconds": 900,
-    "formal_decision_allowed": false,
+    "formal_decision_allowed": true,
     "refresh_required": true,
     "fallback_allowed": false,
-    "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required"
+    "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required",
+    "resolved_as_of": "2026-09-04T08:53:20+00:00",
+    "resolved_post_request": true
   },
   "trading_day_status": {
     "market_date": "2026-09-04",
@@ -4903,5 +5025,22 @@
   },
   "needs_account_screenshot": false,
   "read_only": true,
-  "interaction_boundary": "用户主动查询时先核对一致性与交易日历，再按‘查询时立即补采 → 最近一次有效快照 → 明确降级/缺失’获取行情；正式输出必须标注北京时间真实数据时点，并区分美股现金盘、盘后和盘前。"
+  "interaction_boundary": "用户主动查询时先核对一致性与交易日历，再按‘查询时立即补采 → 最近一次有效快照 → 明确降级/缺失’获取行情；正式输出必须标注北京时间真实数据时点，并区分美股现金盘、盘后和盘前。",
+  "refresh_gate": {
+    "status": "READY",
+    "formal_analysis_allowed": true,
+    "formal_decision_persist_allowed": true,
+    "fallback_allowed": false,
+    "query_intent": "FORMAL_INTRADAY_DECISION",
+    "request_file": "requests/live_snapshot/20260904_1030_shadow_node_chatgpt.json",
+    "request_id": "20260904_1030_shadow_node_chatgpt",
+    "requested_at_beijing": "2026-09-04T10:30:00+08:00",
+    "requested_market_time": "2026-09-04T10:30:00+08:00",
+    "current_snapshot_time": "2026-09-04T15:06:35+08:00",
+    "resolved_snapshot_time": "2026-09-04T15:06:35+08:00",
+    "latest_snapshot": "data/market/snapshots/2026-09-04_150635.json",
+    "failure_reason": "",
+    "rule": "EXPLICIT_LATEST或wait_for_refresh请求必须等本次请求之后且不早于requested_market_time的新CURRENT发布后才可称为最新/当前行情；请求前即使仍处普通FRESH窗口，也不得冒充本次最新查询结果。仅非EXPLICIT_LATEST且用户明确授权时可回退旧快照。"
+  },
+  "formal_analysis_allowed": true
 }
