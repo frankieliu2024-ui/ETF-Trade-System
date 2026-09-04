@@ -1,21 +1,21 @@
 {
-  "generated_at": "2026-09-04T03:49:40Z",
-  "generated_at_beijing": "2026-09-04T11:49:40+08:00",
+  "generated_at": "2026-09-04T03:53:27Z",
+  "generated_at_beijing": "2026-09-04T11:53:27+08:00",
   "repository": {
-    "head_sha": "6c08dc6f7fd16c8a319ddfedbedb5035e395330a",
-    "github_sha": "019e05cfc71c388663a1a897210e627c4e6683fa",
-    "github_run_id": "33834572443",
+    "head_sha": "128d336acdaa376a2f9d2708fd6b8162419764f8",
+    "github_sha": "af548d43cf7a6e3019eacb95a3521f03e6fb39cf",
+    "github_run_id": "33834792383",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "6c08dc6f7fd16c8a319ddfedbedb5035e395330a",
-    "workflow_sha": "019e05cfc71c388663a1a897210e627c4e6683fa",
+    "checked_commit": "128d336acdaa376a2f9d2708fd6b8162419764f8",
+    "workflow_sha": "af548d43cf7a6e3019eacb95a3521f03e6fb39cf",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "semantic_freshness": {
-    "base": "ee6239df5b79506bed34e6bf7b5c57b54c79b29a",
-    "head": "6c08dc6f7fd16c8a319ddfedbedb5035e395330a",
+    "base": "6c08dc6f7fd16c8a319ddfedbedb5035e395330a",
+    "head": "128d336acdaa376a2f9d2708fd6b8162419764f8",
     "changed_paths": [
       "data/state/e2e_status.json",
       "data/state/execution_quality.json",
@@ -26,11 +26,12 @@
       "data/state/restricted_rollback_plan.json",
       "data/state/system_consistency.json",
       "data/state/workflow_failure_diagnostic.json",
-      "requests/trade_fact_correction/20260826_513180_fee5.json",
-      "requests/trade_fact_correction/20260826_561980_fee5.json"
+      "scripts/process_state_sync_request.py"
     ],
     "categories": {
-      "STABLE_PRODUCTION_CHANGE": [],
+      "STABLE_PRODUCTION_CHANGE": [
+        "scripts/process_state_sync_request.py"
+      ],
       "DYNAMIC_RUNTIME_FACT": [
         "data/state/e2e_status.json",
         "data/state/execution_quality.json",
@@ -43,15 +44,12 @@
         "data/state/workflow_failure_diagnostic.json"
       ],
       "FORMAL_FACT_MUTATION": [],
-      "REQUEST_OR_TRIGGER_FACT": [
-        "requests/trade_fact_correction/20260826_513180_fee5.json",
-        "requests/trade_fact_correction/20260826_561980_fee5.json"
-      ],
+      "REQUEST_OR_TRIGGER_FACT": [],
       "UNKNOWN": []
     },
-    "decision": "REVIEW_REQUIRED",
-    "validated_commit": "ee6239df5b79506bed34e6bf7b5c57b54c79b29a",
-    "current_head": "6c08dc6f7fd16c8a319ddfedbedb5035e395330a",
+    "decision": "REPLAY_REQUIRED",
+    "validated_commit": "6c08dc6f7fd16c8a319ddfedbedb5035e395330a",
+    "current_head": "128d336acdaa376a2f9d2708fd6b8162419764f8",
     "head_advanced": true,
     "stable_contract_freshness": "REVIEW_REQUIRED",
     "runtime_fact_freshness": "CURRENT"
@@ -63,27 +61,27 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-03:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-03\",\"provider\":\"EASTMONEY_PUSH2HIS\",\"pattern_match\":false,\"reason\":null}}\n...................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 195 tests in 0.213s\n\nOK\n"
+      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-03:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-03\",\"provider\":\"EASTMONEY_PUSH2HIS\",\"pattern_match\":false,\"reason\":null}}\n...................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 195 tests in 0.300s\n\nOK\n"
     },
     {
       "name": "tests:opening_current_self_healing",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.005s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.003s\n\nOK\n"
     },
     {
       "name": "tests:semantic_latest_main",
       "status": "PASS",
-      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.106s\n\nOK\n"
+      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.134s\n\nOK\n"
     },
     {
       "name": "tests:research_artifact_contract",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.620s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.648s\n\nOK\n"
     },
     {
       "name": "tests:lifecycle_state",
       "status": "PASS",
-      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.004s\n\nOK\n"
+      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.006s\n\nOK\n"
     },
     {
       "name": "tests:historical_market_fact_recovery",
@@ -93,7 +91,7 @@
     {
       "name": "tests:executed_trade_case_lifecycle",
       "status": "PASS",
-      "detail": "902_141753_trade_159326\", \"decision_time\": \"2026-09-02T14:21:31+08:00\", \"decision_market_date\": \"2026-09-02\", \"source_event\": \"events/decisions/20260902_141753_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260902_141753_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-09-02\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-09-02\"}], \"actionable_count\": 0, \"account_fact_updated_at\": \"2026-09-04T08:54:00+08:00\", \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n..........\n----------------------------------------------------------------------\nRan 10 tests in 0.008s\n\nOK\n"
+      "detail": "902_141753_trade_159326\", \"decision_time\": \"2026-09-02T14:21:31+08:00\", \"decision_market_date\": \"2026-09-02\", \"source_event\": \"events/decisions/20260902_141753_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260902_141753_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-09-02\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-09-02\"}], \"actionable_count\": 0, \"account_fact_updated_at\": \"2026-09-04T08:54:00+08:00\", \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n..........\n----------------------------------------------------------------------\nRan 10 tests in 0.011s\n\nOK\n"
     },
     {
       "name": "tests:settlement_obligations",
@@ -103,22 +101,22 @@
     {
       "name": "tests:formal_file_mutation_gateway",
       "status": "PASS",
-      "detail": ".........\n----------------------------------------------------------------------\nRan 9 tests in 0.002s\n\nOK\n"
+      "detail": ".........\n----------------------------------------------------------------------\nRan 9 tests in 0.003s\n\nOK\n"
     },
     {
       "name": "tests:post_close_review_canonical",
       "status": "PASS",
-      "detail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.004s\n\nOK\n"
+      "detail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.006s\n\nOK\n"
     },
     {
       "name": "tests:review_prerequisite_lifecycle",
       "status": "PASS",
-      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.001s\n\nOK\n"
+      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.000s\n\nOK\n"
     },
     {
       "name": "tests:production_reliability",
       "status": "PASS",
-      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n............................\n----------------------------------------------------------------------\nRan 28 tests in 0.015s\n\nOK\n"
+      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n............................\n----------------------------------------------------------------------\nRan 28 tests in 0.018s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -398,17 +396,17 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=6c08dc6f7fd16c8a319ddfedbedb5035e395330a"
+      "detail": "HEAD=128d336acdaa376a2f9d2708fd6b8162419764f8"
     },
     {
       "name": "git:semantic_latest_main",
       "status": "PASS",
-      "detail": "{\"base\": \"ee6239df5b79506bed34e6bf7b5c57b54c79b29a\", \"head\": \"6c08dc6f7fd16c8a319ddfedbedb5035e395330a\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\", \"requests/trade_fact_correction/20260826_513180_fee5.json\", \"requests/trade_fact_correction/20260826_561980_fee5.json\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [\"requests/trade_fact_correction/20260826_513180_fee5.json\", \"requests/trade_fact_correction/20260826_561980_fee5.json\"], \"UNKNOWN\": []}, \"decision\": \"REVIEW_REQUIRED\"}"
+      "detail": "{\"base\": \"6c08dc6f7fd16c8a319ddfedbedb5035e395330a\", \"head\": \"128d336acdaa376a2f9d2708fd6b8162419764f8\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\", \"scripts/process_state_sync_request.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"scripts/process_state_sync_request.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/execution_reconciliation.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\"}"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "FAIL",
-      "detail": "HEAD=6c08dc6f7fd16c8a319ddfedbedb5035e395330a GITHUB_SHA=019e05cfc71c388663a1a897210e627c4e6683fa"
+      "detail": "HEAD=128d336acdaa376a2f9d2708fd6b8162419764f8 GITHUB_SHA=af548d43cf7a6e3019eacb95a3521f03e6fb39cf"
     },
     {
       "name": "git:critical_files_tracked",
@@ -833,7 +831,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=23:49 max_age_seconds=23680 limit=900"
+      "detail": "active=False phase=23:53 max_age_seconds=23907 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -1977,7 +1975,7 @@
     }
   ],
   "errors": [
-    "git:workflow_sha_matches_head: HEAD=6c08dc6f7fd16c8a319ddfedbedb5035e395330a GITHUB_SHA=019e05cfc71c388663a1a897210e627c4e6683fa",
+    "git:workflow_sha_matches_head: HEAD=128d336acdaa376a2f9d2708fd6b8162419764f8 GITHUB_SHA=af548d43cf7a6e3019eacb95a3521f03e6fb39cf",
     "historical_trade_case_mapping:2026-08-25 10:02:57:513180:case_count=0",
     "historical_trade_case_mapping:2026-09-01 14:40:01:561980:case_count=0"
   ],
