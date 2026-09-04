@@ -1230,11 +1230,21 @@ def main() -> int:
             atomic_json_write(ACCOUNT, account)
     trade_event_recorded = False
     if trade:
-        confirmed_at = trade.get("confirmed_at_beijing") or account.get("updated_at")
+        confirmed_at = trade.get("confirmed_at_beijing") or request.get("requested_at_beijing") or trade.get("executed_at") or account.get("updated_at")
         idempotency_key = _trade_idempotency_key(trade, confirmed_at)
         existing = _find_existing_trade(trade, confirmed_at, idempotency_key)
         if existing:
             event, event_id, trade_event_recorded = existing, str(existing.get("event_id") or ""), True
+            # A request-scoped confirmation time is authoritative for an
+            # idempotent replay.  Never replace an earlier PIT confirmation with
+            # the current account snapshot's updated_at.
+            requested_confirmed_at = str(trade.get("confirmed_at_beijing") or request.get("requested_at_beijing") or trade.get("executed_at") or "").strip()
+            if requested_confirmed_at and str(event.get("confirmed_at_beijing") or "") != requested_confirmed_at:
+                event["confirmed_at_beijing"] = requested_confirmed_at
+                event["execution_date"] = trade.get("market_date") or requested_confirmed_at[:10]
+                event["confirmation_date"] = trade.get("market_date") or requested_confirmed_at[:10]
+                event["idempotency_key"] = _trade_idempotency_key(trade, requested_confirmed_at)
+                atomic_json_write(ROOT / "events" / "trades" / f"{event_id}.json", event)
             # Idempotent fee/account replays must also converge stale attribution
             # written by an older producer; they never create another event.
             linked_decision_id = str(event.get("linked_decision_id") or trade.get("decision_id") or decision_id or "")
