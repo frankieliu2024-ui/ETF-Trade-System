@@ -962,6 +962,10 @@ def sync_experience_transaction_index(event: dict) -> None:
         count=1,
     )
     text = re.sub(r"不属于\d+笔证券交易", f"不属于{total}笔证券交易", text, count=1)
+    table_start = text.index("|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|")
+    table_end = text.index(section_end, table_start)
+    text = _refresh_current_fee_projection(text, table_start, table_end)
+    write_formal_text_if_changed(ROOT, EXPERIENCE.name, text)
 
 
 def _refresh_current_fee_projection(text: str, table_start: int, table_end: int) -> str:
@@ -979,11 +983,6 @@ def _refresh_current_fee_projection(text: str, table_start: int, table_end: int)
     pending = "无" if projection["pending_fee_count"] == 0 else f"{projection['pending_fee_count']}笔"
     sentence = f"截至{last_date}累计已确认ETF费用{projection['effective_confirmed_fee_sum']:.2f}元；待确认费用：{pending}。"
     return re.sub(r"截至.*?。", sentence, text, count=1)
-
-    table_start = text.index("|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|")
-    table_end = text.index(section_end, table_start)
-    text = _refresh_current_fee_projection(text, table_start, table_end)
-    write_formal_text_if_changed(ROOT, EXPERIENCE.name, text)
 
 def write_trade_review_required(event: dict) -> None:
     event_id = str(event.get("event_id") or "")
