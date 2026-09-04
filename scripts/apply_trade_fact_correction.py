@@ -129,6 +129,10 @@ def rebuild_known_net(equity: dict, root: Path | None = None) -> None:
         max_low = prior_max_low
 
     pending = projection["pending_fee_count"] if projection is not None else pending_fee_count(trades)
+    fee_summary = equity.setdefault("fee_summary", {})
+    fee_summary["etf_confirmed_fees"] = confirmed_fees
+    fee_summary["etf_pending_fees"] = pending
+    fee_summary["pending_note"] = "canonical ETF fee projection"
     summary["known_fees"] = confirmed_fees
     summary["unknown_fee_flag"] = pending > 0
     summary["fee_status"] = "ALL_RECORDED_TRADE_FEES_CONFIRMED" if pending == 0 else f"{pending} RECORDED TRADE FEE(S) PENDING_OR_NOT_YET_DISPLAYED"
