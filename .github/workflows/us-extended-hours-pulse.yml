@@ -22,6 +22,11 @@ on:
     - cron: "*/10 8-23 * * 1-5"
     # Standard-time tail crosses UTC midnight on Tue-Sat.
     - cron: "*/10 0-1 * * 2-6"
+    # Staggered reliability backstop for GitHub schedule delay/missed wakes.
+    # Same workflow, same producer/state/notification chain; 20-minute cadence
+    # limits extra load while avoiding the primary cron minute boundary.
+    - cron: "2,22,42 8-23 * * 1-5"
+    - cron: "2,22,42 0-1 * * 2-6"
 
 permissions:
   contents: write
