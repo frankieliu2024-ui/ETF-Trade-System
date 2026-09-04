@@ -156,7 +156,7 @@ def main() -> int:
     if prior_status == "CONFIRMED" and prior_fee is not None and not already_confirmed_same:
         raise RuntimeError("existing confirmed fee differs; explicit correction conflict requires manual review")
 
-    stamp = datetime.now(TZ).isoformat(timespec="seconds")
+    stamp = str(req.get("requested_at_beijing") or event.get("fee_confirmed_at_beijing") or datetime.now(TZ).isoformat(timespec="seconds"))
     if not already_confirmed_same:
         event["fee_amount"] = round(fee, 2)
         event["fee_status"] = "CONFIRMED"
@@ -166,6 +166,7 @@ def main() -> int:
         write_json(event_path, event)
 
     equity = read_json(EQUITY, {}) or {}
+    equity_before = json.dumps(equity, ensure_ascii=False, sort_keys=True)
     trades = equity.get("trades") or []
     source_ref = f"events/trades/{event_id}.json"
     matches = [t for t in trades if str(t.get("source") or "") == source_ref or str(t.get("duplicate_check") or "") == f"unique_event_id_{event_id}"]
@@ -185,8 +186,10 @@ def main() -> int:
         equity.setdefault("trades", []).append(equity_row_from_event(event, fee))
         equity.setdefault("summary", {})["trade_count"] = len(equity["trades"])
     rebuild_known_net(equity, ROOT)
-    equity["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
-    write_json(EQUITY, equity)
+    equity_after = json.dumps(equity, ensure_ascii=False, sort_keys=True)
+    if equity_after != equity_before:
+        equity["generated_at"] = stamp
+        write_json(EQUITY, equity)
 
     # Reconcile the canonical transaction index by the existing trade event.
     # This updates both marker-based rows and legacy rows that predate the
@@ -222,7 +225,8 @@ def main() -> int:
         "safety_boundary": "Only enriches an existing trade with user/broker-confirmed fee metadata; never creates a trade or changes quantity, price, side, execution date, MASTER, risk permission or trading action.",
     }
     receipt_path = STATE / "trade_fact_correction_receipt.json"
-    write_json(receipt_path, receipt)
+    if read_json(receipt_path, {}) != receipt:
+        write_json(receipt_path, receipt)
     print(json.dumps(receipt, ensure_ascii=False))
     return 0
 
