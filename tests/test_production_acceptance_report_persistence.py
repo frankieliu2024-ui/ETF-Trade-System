@@ -15,35 +15,34 @@ class ProductionAcceptanceConsistencyPersistenceTests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as tmp:
    p=Path(tmp)/"s.json"; p.write_text("{}",encoding="utf-8"); fresh=report(); self.assertTrue(persist_consistency_report_if_valid(fresh,p)); self.assertEqual(json.loads(p.read_text()),fresh)
 
-    def test_consistency_handoff_prefers_fresh_report_over_stale_canonical(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            import os
-            from scripts import maintenance_guard
+ def test_consistency_handoff_prefers_fresh_report_over_stale_canonical(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   import os
+   from scripts import maintenance_guard
+   fresh = Path(tmp) / "fresh.json"
+   canonical = Path(tmp) / "canonical.json"
+   fresh_report = report("WARNING")
+   stale_report = report("FAIL")
+   fresh.write_text(json.dumps(fresh_report), encoding="utf-8")
+   canonical.write_text(json.dumps(stale_report), encoding="utf-8")
+   previous = os.environ.get("ETF_CONSISTENCY_REPORT_PATH")
+   os.environ["ETF_CONSISTENCY_REPORT_PATH"] = str(fresh)
+   try:
+    self.assertEqual(maintenance_guard.consistency_path(), fresh)
+    self.assertEqual(maintenance_guard.read_json(maintenance_guard.consistency_path()), fresh_report)
+    self.assertNotEqual(maintenance_guard.read_json(maintenance_guard.consistency_path()), json.loads(canonical.read_text()))
+   finally:
+    if previous is None:
+     os.environ.pop("ETF_CONSISTENCY_REPORT_PATH", None)
+    else:
+     os.environ["ETF_CONSISTENCY_REPORT_PATH"] = previous
 
-            fresh = Path(tmp) / "fresh.json"
-            canonical = Path(tmp) / "canonical.json"
-            fresh_report = report("WARNING")
-            stale_report = report("FAIL")
-            fresh.write_text(json.dumps(fresh_report), encoding="utf-8")
-            canonical.write_text(json.dumps(stale_report), encoding="utf-8")
-            previous = os.environ.get("ETF_CONSISTENCY_REPORT_PATH")
-            os.environ["ETF_CONSISTENCY_REPORT_PATH"] = str(fresh)
-            try:
-                self.assertEqual(maintenance_guard.consistency_path(), fresh)
-                self.assertEqual(maintenance_guard.read_json(maintenance_guard.consistency_path()), fresh_report)
-                self.assertNotEqual(maintenance_guard.read_json(maintenance_guard.consistency_path()), json.loads(canonical.read_text()))
-            finally:
-                if previous is None:
-                    os.environ.pop("ETF_CONSISTENCY_REPORT_PATH", None)
-                else:
-                    os.environ["ETF_CONSISTENCY_REPORT_PATH"] = previous
-
-    def test_invalid_report_preserves_last_known_canonical_state(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            p = Path(tmp) / "s.json"
-            old = report("WARNING")
-            p.write_text(json.dumps(old), encoding="utf-8")
-            self.assertFalse(persist_consistency_report_if_valid({"status": "WARNING"}, p))
-            self.assertEqual(json.loads(p.read_text()), old)
+ def test_invalid_report_preserves_last_known_canonical_state(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   p = Path(tmp) / "s.json"
+   old = report("WARNING")
+   p.write_text(json.dumps(old), encoding="utf-8")
+   self.assertFalse(persist_consistency_report_if_valid({"status": "WARNING"}, p))
+   self.assertEqual(json.loads(p.read_text()), old)
 
 if __name__=="__main__": unittest.main()
