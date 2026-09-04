@@ -17,6 +17,10 @@ from datetime import timezone, timedelta
 from pathlib import Path
 
 from confirmed_trade_facts import effective_confirmed_fee_fact
+try:
+    from build_stock_context import active_account_asset_codes, normalize_code, position_metric
+except ModuleNotFoundError:
+    from scripts.build_stock_context import active_account_asset_codes, normalize_code, position_metric
 from formal_file_mutation_gateway import (
     replace_managed_block as replace_block,
     write_formal_text_if_changed,
@@ -151,8 +155,9 @@ def preserve_decision_block(existing: str) -> str:
 
 def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path = ROOT) -> str:
     positions = account.get("positions") or []
-    etfs = [p for p in positions if p.get("asset_type") == "ETF"]
-    stocks = [p for p in positions if p.get("asset_type") == "STOCK"]
+    membership = active_account_asset_codes(root, account)
+    etfs = [p for p in positions if normalize_code(p.get("code")) in membership["etf"]]
+    stocks = [p for p in positions if normalize_code(p.get("code")) in membership["stocks"]]
     total_asset = float(account.get("total_asset") or 0)
     exposure = float(account.get("stock_market_value") or 0) / total_asset * 100 if total_asset else 0
     risk = canonical_risk(equity, latest_formal_risk())
@@ -190,9 +195,9 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
     for p in positions:
         lines.append(
             f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|"
-            f"{float(p.get('cost') or 0):.3f}|{float(p.get('last_price') or 0):.3f}|"
-            f"{money(p.get('market_value'))}|{money(p.get('holding_pnl'))}"
-            f"（{float(p.get('holding_pnl_pct') or 0):+.2f}%）|"
+            f"{float(p.get('cost') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|"
+            f"{money(p.get('market_value'))}|{money(position_metric(p, 'pnl', 'holding_pnl'))}"
+            f"（{position_metric(p, 'pnl_pct', 'holding_pnl_pct'):+.2f}%）|"
         )
     lines += [
         "", f"持仓ETF：{'、'.join(display_name(p) for p in etfs) or '无'}。",

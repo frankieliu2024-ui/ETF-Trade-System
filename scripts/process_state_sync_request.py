@@ -10,6 +10,10 @@ from pathlib import Path
 from statistics import median
 
 from state_manager import atomic_json_write
+try:
+    from build_stock_context import active_account_asset_codes, normalize_code, position_metric
+except ModuleNotFoundError:
+    from scripts.build_stock_context import active_account_asset_codes, normalize_code, position_metric
 from sync_formal_files import sync_formal_files
 from formal_file_mutation_gateway import (
     append_managed_line,
@@ -277,9 +281,10 @@ def sync_current_account_mirror(root: Path, account: dict) -> None:
 
 def build_dashboard_block(account: dict, decision: dict | None, request: dict) -> str:
     positions = account.get("positions") or []
-    etfs = [p for p in positions if p.get("asset_type") == "ETF"]
-    stocks = [p for p in positions if p.get("asset_type") == "STOCK"]
-    etf_pnl = sum(float(p.get("holding_pnl") or 0) for p in etfs)
+    membership = active_account_asset_codes(ROOT, account)
+    etfs = [p for p in positions if normalize_code(p.get("code")) in membership["etf"]]
+    stocks = [p for p in positions if normalize_code(p.get("code")) in membership["stocks"]]
+    etf_pnl = sum(position_metric(p, "pnl", "holding_pnl") for p in etfs)
     # The formal risk rate is the maintained Known-net strategy return. Broker
     # floating PnL remains a separate holding-pressure fact.
     formal_risk = latest_formal_risk_fact()
@@ -297,7 +302,7 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
     scenario = request.get("interaction_scenario") or "UNSPECIFIED"
     lines = ["## 云端实时状态（自动同步）", "", f"> 更新时间：{account.get('updated_at','')}  ", f"> 来源：{account.get('source','')}  ", f"> 场景：{scenario}  ", "> 本区块只同步已确认账户事实与ChatGPT已形成的正式决策；自动程序不得自行推导交易权限或下单。", "", "|项目|最新事实|", "|-|-|", f"|总资产|{money(account.get('total_asset'))}|", f"|股票市值|{money(account.get('stock_market_value'))}|", f"|可用资金|{money(account.get('cash'))}|", f"|账户持仓盈亏|{money(account.get('holding_pnl'))}|", f"|当日盈亏|{money(account.get('daily_pnl'))}（{float(account.get('daily_pnl_pct') or 0):+.2f}%）|", f"|账户总风险暴露率|约{exposure:.2f}%|", f"|ETF持仓浮动盈亏|{money(etf_pnl)}|", *(([f"|ETF策略Known-net权益|{money(formal_risk_equity)}|"] if formal_risk_equity is not None else [])), f"|ETF策略风险率|约{risk_rate:.2f}%（Known-net；最新正式复盘风险事实优先，旧重建仅在无正式事实时回退）|", "", "### 当前持仓事实", "", "|标的|数量|成本|现价|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|"]
     for p in positions:
-        lines.append(f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|{float(p.get('cost') or 0):.3f}|{float(p.get('last_price') or 0):.3f}|{money(p.get('market_value'))}|{money(p.get('holding_pnl'))}（{float(p.get('holding_pnl_pct') or 0):+.2f}%）|")
+        lines.append(f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|{float(p.get('cost') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|{money(p.get('market_value'))}|{money(position_metric(p, 'pnl', 'holding_pnl'))}（{position_metric(p, 'pnl_pct', 'holding_pnl_pct'):+.2f}%）|")
     lines += ["", f"持仓ETF：{'、'.join(display_name(p) for p in etfs) or '无'}。", f"账户个股：{'、'.join(display_name(p) for p in stocks) or '无'}。"]
     if decision:
         title = "最近一次正式收盘复盘" if scenario == "POST_CLOSE_REVIEW" else "最近一次正式盘中决策"
