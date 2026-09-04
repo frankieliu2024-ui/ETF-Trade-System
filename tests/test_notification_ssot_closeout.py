@@ -34,7 +34,7 @@ class NotificationSsotCloseoutTests(unittest.TestCase):
     def test_document_matches_renderer_and_boundaries(self):
         text = SPEC.read_text(encoding="utf-8")
         for phrase in ("INTERRUPT", "REPORT", "FULL_REPORT", "UNLINKED_TRADE_REQUIRES_ATTRIBUTION",
-                       "decision_trigger", "用户如需交易必须人工核对并下单", "不生成新的交易指令"):
+                       "decision_trigger", "用户如需交易必须人工核对并下单", "不生成新交易指令"):
             self.assertIn(phrase, text)
         representative = [
             ("PENDING_EXECUTION_CONFIRMATION", "成交确认"),
