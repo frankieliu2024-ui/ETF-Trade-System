@@ -1,39 +1,26 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-04T15:16:35+08:00",
+  "generated_at": "2026-09-04T15:24:40+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33847923159,
+  "run_id": 33848542979,
   "run_attempt": 1,
-  "head_sha": "e78a03f3450f718fd66fdf28235bc04512ec6a5f",
-  "main_head_sha": "c2044df6ec08d1254062027a0f18476d8181c6ac",
+  "head_sha": "70b7bb60a082ea9cfe66ba7d396bd25fe2a4a8ef",
+  "main_head_sha": "773c366eb7b93d23d09650519cfdd1801a589925",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 8
-    },
-    {
-      "job": "production_acceptance",
-      "step": "Enforce production acceptance",
-      "number": 9
+      "step": "PR candidate post-replay acceptance",
+      "number": 6
     }
   ],
   "changed_files": [
-    ".github/workflows/decision-notification.yml",
-    ".github/workflows/market-snapshot.yml",
-    ".github/workflows/opening-auction-current-fallback.yml",
-    ".github/workflows/overseas-preopen-pulse.yml",
-    ".github/workflows/us-extended-hours-pulse.yml",
-    "config/maintenance/production_mutation_protocol.json",
     "scripts/check_production_mutation_protocol.py",
-    "scripts/market_notification_common.py",
-    "scripts/send_regional_session_summary.py",
-    "tests/test_market_notification_materiality_guard.py",
-    "tests/test_notification_workflow_structure.py"
+    "scripts/run_production_acceptance.py",
+    "tests/test_production_acceptance_report_persistence.py"
   ],
-  "commit_message": "Merge pull request #308 from frankieliu2024-ui/fix/307-single-notification-committer",
+  "commit_message": "fix: preserve consistency state on acceptance failure",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
