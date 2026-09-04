@@ -1,24 +1,30 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-04T09:49:17+08:00",
+  "generated_at": "2026-09-04T09:52:52+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33827164618,
+  "run_id": 33827354024,
   "run_attempt": 1,
-  "head_sha": "e45cdfe42db5373b66a2bfb7ee2c70da86b4713e",
-  "main_head_sha": "bd73b558a7eac87e1fdb805ccfba42a9b10abe4e",
+  "head_sha": "e9e2902fc135c59f55270d923fb8fbb70e7059aa",
+  "main_head_sha": "93ca9f79812882a176511a36114c373a1a96b9a0",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 6
+      "step": "Enforce hard consistency result",
+      "number": 8
+    },
+    {
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 8
     }
   ],
   "changed_files": [
+    "scripts/apply_trade_fact_correction.py",
     "tests/test_trade_fact_correction_contract.py"
   ],
-  "commit_message": "test: cover canonical net cash correction",
+  "commit_message": "Merge pull request #278 from frankieliu2024-ui/codex/issue-275-event-net-cash-complete",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
