@@ -9,6 +9,7 @@ from typing import Any
 
 from formal_file_mutation_gateway import upsert_formal_line
 from process_state_sync_request import sync_experience_transaction_index
+from confirmed_trade_facts import canonical_etf_fee_projection
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STATE = ROOT / "data" / "state"
@@ -74,14 +75,21 @@ def equity_row_from_event(event: dict, fee: float) -> dict:
 
 
 
-def pending_fee_count(trades: list[dict]) -> int:
+def pending_fee_count(trades: list[dict], root: Path | None = None) -> int:
+    if root is not None:
+        return int(canonical_etf_fee_projection(root, trades)["pending_fee_count"])
     return sum(1 for t in trades if str(t.get("fee_status") or "").upper() != "CONFIRMED")
 
 
-def rebuild_known_net(equity: dict) -> None:
+def rebuild_known_net(equity: dict, root: Path | None = None) -> None:
     trades = equity.get("trades") or []
     summary = equity.setdefault("summary", {})
-    confirmed_fees = round(sum(float(t.get("fee_amount") or 0) for t in trades if str(t.get("fee_status") or "").upper() == "CONFIRMED"), 2)
+    projection = canonical_etf_fee_projection(root, trades) if root is not None else None
+    confirmed_fees = (
+        projection["effective_confirmed_fee_sum"]
+        if projection is not None
+        else round(sum(float(t.get("fee_amount") or 0) for t in trades if str(t.get("fee_status") or "").upper() == "CONFIRMED"), 2)
+    )
     gross_equity = safe_float(summary.get("current_gross_strategy_equity"))
     gross_pnl = safe_float(summary.get("current_cumulative_pnl_gross"))
     start_capital = safe_float(summary.get("starting_etf_strategy_capital")) or 200000.0
@@ -106,7 +114,7 @@ def rebuild_known_net(equity: dict) -> None:
         max_dd_pct = prior_max_dd_pct
         max_low = prior_max_low
 
-    pending = pending_fee_count(trades)
+    pending = projection["pending_fee_count"] if projection is not None else pending_fee_count(trades)
     summary["known_fees"] = confirmed_fees
     summary["unknown_fee_flag"] = pending > 0
     summary["fee_status"] = "ALL_RECORDED_TRADE_FEES_CONFIRMED" if pending == 0 else f"{pending} RECORDED TRADE FEE(S) PENDING_OR_NOT_YET_DISPLAYED"
@@ -120,6 +128,9 @@ def rebuild_known_net(equity: dict) -> None:
     summary["known_net_max_drawdown_pct"] = max_dd_pct
     summary["known_net_max_drawdown_low"] = max_low
     summary["known_net_equity_data_quality"] = "KNOWN_NET_COMPLETE_FOR_RECORDED_TRADE_FEES" if pending == 0 else "KNOWN_NET_PARTIAL_PENDING_RECORDED_TRADE_FEES"
+    if projection is not None:
+        summary["trade_count"] = projection["canonical_trade_count"]
+        summary["known_net_status"] += "; CANONICAL_EVENT_OVERLAYS_INCLUDED"
 
 
 def main() -> int:
@@ -173,7 +184,7 @@ def main() -> int:
         # converge by adding exactly this event, never by creating a new event.
         equity.setdefault("trades", []).append(equity_row_from_event(event, fee))
         equity.setdefault("summary", {})["trade_count"] = len(equity["trades"])
-    rebuild_known_net(equity)
+    rebuild_known_net(equity, ROOT)
     equity["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
     write_json(EQUITY, equity)
 
@@ -200,11 +211,11 @@ def main() -> int:
         "fee_amount": round(fee, 2),
         "trade_event_updated": not already_confirmed_same,
         "equity_updated": True,
-        "dashboard_updated": False,
+        "dashboard_updated": True,
         "archive_updated": True,
         "experience_updated": True,
         "master_updated": False,
-        "pending_fee_count": pending_fee_count(trades),
+        "pending_fee_count": pending_fee_count(trades, ROOT),
         "known_fees": summary.get("known_fees"),
         "known_net_current_strategy_return_pct": summary.get("known_net_current_strategy_return_pct"),
         "applied_at_beijing": stamp,
