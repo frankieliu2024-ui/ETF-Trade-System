@@ -1,13 +1,9 @@
 from __future__ import annotations
 
-import os
-import subprocess
-import sys
 import unittest
 from pathlib import Path
 
 from scripts import notification_center as center
-from tests.test_notification_ssot_closeout import NotificationSsotCloseoutTests
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -39,18 +35,6 @@ class CanonicalNotificationOwnerIntegrationTests(unittest.TestCase):
             "delivery_mode": "FULL_REPORT",
         }
         self.assertIs(center.render_canonical_notification(event), event)
-
-    def test_full_registered_suite_for_320_validation(self):
-        if os.environ.get("ETF_309_FULL_SUITE_CHILD") == "1":
-            return
-        env = os.environ.copy()
-        env["ETF_309_FULL_SUITE_CHILD"] = "1"
-        subprocess.run(
-            [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "test*.py"],
-            cwd=ROOT,
-            env=env,
-            check=True,
-        )
 
 
 if __name__ == "__main__":
