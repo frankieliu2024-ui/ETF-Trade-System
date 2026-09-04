@@ -1,6 +1,7 @@
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from scripts.decision_trade_link import decision_price_for_trade, resolve_link
@@ -48,7 +49,7 @@ class ExecutionAttributionObjectSelectionTests(unittest.TestCase):
                 "price": 0.648,
                 "confirmed_at_beijing": "2026-09-03T09:47:55+08:00",
             }
-            with unittest.mock.patch.object(state_sync, "ROOT", root):
+            with patch.object(state_sync, "ROOT", root):
                 result = state_sync.execution_attribution(trade, "decision-ab")
             self.assertEqual(result["status"], "PARTIAL")
             self.assertIsNone(result["hypothesis_id"])
