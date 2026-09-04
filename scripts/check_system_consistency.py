@@ -576,37 +576,37 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
 
 
 def _validate_execution_quality_projection(report: dict) -> None:
-    """Ensure the rebuildable execution-quality state matches canonical trade facts."""
-    quality = _read_json("data/state/execution_quality.json")
-    items = {str(item.get("trade_event_id") or ""): item for item in (quality.get("items") or []) if isinstance(item, dict)}
-    trade_dir = ROOT / "events" / "trades"
+    """Ensure persisted execution quality equals the current canonical builder output."""
+    persisted = _read_json("data/state/execution_quality.json")
+    try:
+        from build_execution_quality import build as build_execution_quality
+    except ModuleNotFoundError:
+        from scripts.build_execution_quality import build as build_execution_quality
+    expected = build_execution_quality(ROOT)
+    persisted_items = {
+        str(item.get("trade_event_id") or ""): item
+        for item in (persisted.get("items") or [])
+        if isinstance(item, dict)
+    }
+    expected_items = {
+        str(item.get("trade_event_id") or ""): item
+        for item in (expected.get("items") or [])
+        if isinstance(item, dict)
+    }
     mismatches = []
-    checked = 0
-    for path in sorted(trade_dir.glob("*.json")) if trade_dir.exists() else []:
-        trade = _read_json(str(path.relative_to(ROOT)))
-        event_id = str(trade.get("event_id") or path.stem)
-        if not event_id or str(trade.get("execution_status") or "").upper() != "EXECUTED":
-            continue
-        checked += 1
-        projected = items.get(event_id)
-        if not projected:
+    for event_id, expected_item in expected_items.items():
+        actual = persisted_items.get(event_id)
+        if not actual:
             mismatches.append(f"{event_id}:missing")
             continue
-        expected_hypothesis = trade.get("hypothesis_id")
-        if projected.get("hypothesis_id") != expected_hypothesis:
-            mismatches.append(f"{event_id}:hypothesis_id")
-        attribution = trade.get("execution_attribution") or {}
-        for field in ("decision_price", "adverse_execution_cost_pct"):
-            if projected.get(field) != attribution.get(field):
+        for field in ("hypothesis_id", "decision_price", "adverse_execution_cost_pct", "status", "code"):
+            if actual.get(field) != expected_item.get(field):
                 mismatches.append(f"{event_id}:{field}")
-        expected_status = attribution.get("status")
-        if expected_status and projected.get("status") != expected_status:
-            mismatches.append(f"{event_id}:status")
     status = "FAIL" if mismatches else "PASS"
     report.setdefault("checks", []).append({
         "name": "state:execution_quality_canonical_alignment",
         "status": status,
-        "detail": f"executed_events_checked={checked} mismatches={mismatches}",
+        "detail": f"executed_events_checked={len(expected_items)} mismatches={mismatches}",
     })
     for item in mismatches:
         message = "execution_quality:" + item
