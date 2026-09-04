@@ -390,31 +390,23 @@ def formal_decision_change_event() -> dict | None:
 
 
 def decision_event() -> dict | None:
+    """Raw triggers only wake a canonical decision path; they do not duplicate it."""
     trigger = read_json(STATE / "decision_trigger.json", {})
     if not trigger.get("requires_formal_reassessment") or str(trigger.get("status") or "") not in {"TRIGGERED", "ALREADY_RECORDED"}:
         return None
     key = str(trigger.get("idempotency_key") or "")
-    if not key:
+    if not key or str(trigger.get("trigger_type") or "") != "E2E_RECOVERED":
         return None
-    account = read_json(STATE / "account_fact.json", {})
-    event_type, applicable = str(trigger.get("trigger_type") or ""), str(trigger.get("applicable_object") or "")
-    # Account changes have one canonical notification path only.  The dedicated
-    # account_confirmation_event() applies freshness, materiality and exact-delta
-    # checks; routing the same change through decision_event() creates duplicate,
-    # generic alerts such as mark-to-market total_asset moves.
-    if event_type == "ACCOUNT_STRUCTURE_CHANGED":
-        return None
-    if event_type == "TRADE_CONFIRMED":
-        target = trade_display(applicable); title = f"{target}成交后需要重新评估"; content = f"{target}的成交已经确认，账户持仓或现金结构发生变化。\n\n建议：现在重新检查持仓、资金和下一步交易安排。"
-    elif event_type == "RISK_BOUNDARY_CROSSED":
-        title = "ETF策略风险状态发生变化"; content = "ETF策略风险状态已跨过关键区间，这可能改变新增交易的可用空间。\n\n建议：现在重新评估风险许可和当前交易计划。"
-    elif event_type == "E2E_RECOVERED":
-        title = "此前暂缓的交易判断现在可以继续"; content = "此前因为关键行情、账户或决策信息不完整而暂缓的交易判断，现在所需信息已经补齐。\n\n建议：重新处理之前尚未完成的交易判断。"
-    else:
-        target = display_from_code(applicable, account); title = f"{target}出现值得重新评估的新变化"; content = f"{target}出现了可能改变原交易判断的新市场或研究证据。\n\n建议：现在重新检查该标的的机会、持仓或风险收益判断。"
-    return {"key": f"decision:{key}", "type": "交易判断", "title": title, "content": content, "source": "decision_trigger", "user_severity": "需要关注", "user_action": "重新评估交易计划"}
-
-
+    return {
+        "key": f"decision:{key}",
+        "type": "判断恢复",
+        "event_type": "E2E_RECOVERED",
+        "title": "【判断恢复】此前暂缓的正式判断可以继续",
+        "content": "此前暂缓的正式判断所需信息已经恢复；系统将继续沿现有正式判断链处理，不生成新的交易指令。",
+        "source": "decision_trigger",
+        "user_severity": "需要关注",
+        "user_action": "等待或查看后续正式判断；通知本身不代表成交。",
+    }
 def _meaningful_unreconciled_account_changes(account: dict) -> list[dict]:
     """Return only account deltas that can represent a real user/account action.
 
@@ -697,6 +689,114 @@ def revalidate_pending_notifications(notifications: list[dict]) -> list[dict]:
     return notifications
 
 
+CANONICAL_TEMPLATE_FAMILIES = {
+    "PENDING_EXECUTION_CONFIRMATION": "成交确认",
+    "ACCOUNT_FACT_CONFIRMATION": "账户确认",
+    "E2E_RECOVERED": "判断恢复",
+    "SYSTEM_EVENT": "系统阻塞",
+    "CHANNEL_TEST": "测试",
+}
+
+def canonical_template_family(event: dict) -> str | None:
+    event_type = str(event.get("event_type") or event.get("type") or "")
+    if event_type == "REPORT_DELIVERY_REQUEST":
+        return "REPORT"
+    if event_type == "FORMAL_DECISION_MATERIAL_CHANGE":
+        ctx = event.get("confirmation_context") or {}
+        status = str(ctx.get("opportunity_status") or "")
+        previous = str(ctx.get("previous_opportunity_status") or "")
+        if ctx.get("holding_action_changed"):
+            return "持仓动作"
+        if status in {"观察机会", "Trial机会", "Confirm机会"} and status != previous:
+            return status
+        if status == "无机会" and status != previous:
+            return "机会失效"
+        if ctx.get("risk_permission") != ctx.get("previous_risk_permission"):
+            return "风险许可"
+        return "观察机会" if status and status != "无机会" else "机会失效"
+    return CANONICAL_TEMPLATE_FAMILIES.get(event_type)
+
+def _canonical_target(event: dict) -> str:
+    ctx = event.get("confirmation_context") or {}
+    name = str(event.get("security_name") or ctx.get("security_name") or "")
+    code = str(event.get("security_code") or ctx.get("security_code") or "")
+    return f"{name}（{code}）" if name and code else (name or code or "相关对象")
+
+def _canonical_time(event: dict) -> str:
+    ctx = event.get("confirmation_context") or {}
+    value = ctx.get("account_event_time_beijing") or ctx.get("market_as_of_beijing") or ctx.get("decision_time_beijing")
+    return human_time(value) if value else "未单独记录"
+
+def _canonical_boundary(family: str) -> str:
+    if family == "成交确认":
+        return "仅确认既有成交及其归因，不生成新交易指令。"
+    if family in {"观察机会", "Trial机会", "Confirm机会", "机会失效", "持仓动作", "风险许可"}:
+        return "通知只转发已有正式判断；用户如需交易必须人工核对并下单，通知本身不代表成交。"
+    if family in {"系统阻塞", "判断恢复"}:
+        return "系统只报告当前恢复/阻塞边界，不修改MASTER、账户事实或交易权限。"
+    if family == "账户确认":
+        return "仅核对账户事实，不把价格波动或通知发送当作成交。"
+    if family == "收盘账户":
+        return "收盘提醒只请求账户事实确认，不生成交易指令。"
+    return "这是通知通道测试，不代表真实行情、账户、交易或系统故障。"
+
+def render_canonical_notification(event: dict) -> dict | None:
+    family = canonical_template_family(event)
+    if family is None:
+        return None
+    if family == "REPORT":
+        return event
+    rendered = dict(event)
+    rendered["template_family"] = family
+    target = _canonical_target(event)
+    ctx = event.get("confirmation_context") or {}
+    if family == "成交确认":
+        title = f"【成交确认】{target}"
+        body = (
+            f"### 发生了什么\n{target}已有成交事实。\n\n"
+            f"### 成交事实与缺口\n{event.get('content') or '成交归因信息尚未完整。'}\n\n"
+            f"### 你需要做什么\n{event.get('user_action') or '确认既有成交归因'}\n\n"
+            f"> {_canonical_boundary(family)}\n\n### 事实时点（北京时间）\n{_canonical_time(event)}"
+        )
+    elif family == "账户确认":
+        title = "【账户确认】发现未解释的持仓/资金变化"
+        body = (
+            f"### 发生了什么\n{event.get('content') or '发现未解释的账户事实变化。'}\n\n"
+            f"### 你需要做什么\n{event.get('user_action') or '确认是否存在实际成交或资金划转。'}\n\n"
+            f"> {_canonical_boundary(family)}\n\n### 事实时点（北京时间）\n{_canonical_time(event)}"
+        )
+    elif family == "收盘账户":
+        title = "【收盘账户】请确认15:00后的账户事实"
+        body = f"### 发生了什么\n当前交易日收盘账户事实仍需确认。\n\n### 你需要做什么\n请上传15:00收盘后的券商持仓/账户截图，或确认收盘账户无变化。\n\n> {_canonical_boundary(family)}"
+    elif family == "系统阻塞":
+        title = "【系统阻塞】ETF系统当前存在影响判断的运行阻塞"
+        body = f"### 发生了什么\n{event.get('content') or '系统运行状态未达到可依赖条件。'}\n\n### 你需要做什么\n暂缓依据系统执行新的交易判断，等待系统恢复。\n\n> {_canonical_boundary(family)}"
+    elif family == "判断恢复":
+        title = "【判断恢复】此前暂缓的正式判断可以继续"
+        body = f"### 发生了什么\n{event.get('content') or '此前暂缓的正式判断所需信息已经恢复。'}\n\n### 当前边界\n系统可以继续正式判断，但尚未因此生成交易指令。\n\n> {_canonical_boundary(family)}"
+    elif family in {"观察机会", "Trial机会", "Confirm机会", "机会失效", "持仓动作", "风险许可"}:
+        status = str(ctx.get("opportunity_status") or family)
+        previous = str(ctx.get("previous_opportunity_status") or "")
+        risk = str(ctx.get("risk_permission") or "")
+        title = f"【{family}】{target}"
+        body = (
+            f"### 发生了什么\n{target}的正式判断发生变化。\n\n"
+            f"### 当前正式状态\n{previous + ' → ' if previous and previous != status else ''}{status}"
+            f"{f'；风险许可：{risk}' if risk else ''}\n\n"
+            f"### 为什么现在值得关注\n{event.get('content') or '正式决策形成了实质变化。'}\n\n"
+            f"### 你需要做什么\n{event.get('user_action') or '查看最新正式判断。'}\n\n"
+            f"> {_canonical_boundary(family)}\n\n### 事实时点（北京时间）\n{_canonical_time(event)}"
+        )
+    elif family == "测试":
+        title = "【测试】ETF系统通知中心"
+        body = str(event.get("content") or "通知通道测试。")
+    else:
+        return None
+    rendered["title"] = title
+    rendered["content"] = body
+    rendered["type"] = family
+    return rendered
+
 def main() -> int:
     parser = argparse.ArgumentParser(); parser.add_argument("--mode", choices=["event", "close", "close-test", "channel-test"], default="event"); args = parser.parse_args()
     token = os.environ.get("PUSHPLUS_TOKEN", "").strip(); state_path = STATE / "notification_center.json"; state = read_json(state_path, {"schema_version": "1.0", "recent": []})
@@ -708,6 +808,11 @@ def main() -> int:
         event = {"key": f"channel-test:{now().isoformat(timespec='seconds')}", "type": "测试", "title": "【测试】ETF系统通知中心", "content": "这是一条通知通道测试，不代表真实行情、账户、交易或系统故障。\n\n你现在需要做什么：无需操作。收到即表示 GitHub → PushPlus → 微信通道正常。", "source": "manual_test", "event_type": "CHANNEL_TEST", "user_severity": "测试", "user_action": "无需操作"}
     else:
         event = choose_event(args.mode)
+    if event:
+        event = render_canonical_notification(event)
+        if event is None:
+            print(json.dumps({"status": "UNSUPPORTED_EVENT_TYPE", "event_type": "unknown"}, ensure_ascii=False))
+            return 2
     if not event:
         state.update({"schema_version": "2.2", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "NO_NOTIFICATION_NEEDED"}, ensure_ascii=False)); return 0
     existing = find_existing_notification(notifications, event)
