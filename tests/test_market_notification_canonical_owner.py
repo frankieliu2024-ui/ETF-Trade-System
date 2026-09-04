@@ -37,5 +37,6 @@ class CanonicalNotificationOwnerIntegrationTests(unittest.TestCase):
         self.assertIs(center.render_canonical_notification(event), event)
 
 
+# Validation-only touch to trigger the existing PR consistency gate; reverted immediately in the next commit.
 if __name__ == "__main__":
     unittest.main()
