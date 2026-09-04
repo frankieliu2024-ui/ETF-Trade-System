@@ -669,7 +669,13 @@ def execution_attribution(trade: dict, linked_decision_id: str) -> dict:
     if not path.exists():
         return {"status": "LINKED_DECISION_NOT_FOUND"}
     decision = load_json(path)
-    dprice = safe_float(decision.get("price_at_decision"))
+    try:
+        from decision_trade_link import decision_price_for_trade
+    except ModuleNotFoundError:
+        from scripts.decision_trade_link import decision_price_for_trade
+    # Attribute price only to the actual traded object/action.  candidate_code
+    # may describe a simultaneous observation or new opportunity.
+    dprice = safe_float(decision_price_for_trade(decision, trade))
     eprice = safe_float(trade.get("price"))
     diff_pct = pct(eprice, dprice) if dprice not in (None, 0.0) and eprice is not None else None
     side = str(trade.get("side") or "").upper()
@@ -682,7 +688,9 @@ def execution_attribution(trade: dict, linked_decision_id: str) -> dict:
     ordering = str(decision.get("decision_effective_ordering") or "").upper()
     timing_quality = str(decision.get("timing_quality") or "").upper()
     bounded_before_execution = ordering == "BEFORE_EXECUTION" and timing_quality in {"USER_CONFIRMED_BOUNDED", "USER_CONFIRMED"}
-    return {"status": "READY" if dprice is not None and eprice is not None and (delay is None or delay >= 0 or bounded_before_execution) else "PARTIAL", "decision_id": linked_decision_id, "hypothesis_id": decision.get("hypothesis_id"), "decision_price": dprice, "execution_price": eprice, "execution_price_vs_decision_pct": diff_pct, "adverse_execution_cost_pct": adverse, "decision_to_execution_seconds": delay if delay is None or delay >= 0 else None, "decision_effective_ordering": decision.get("decision_effective_ordering"), "timing_quality": decision.get("timing_quality"), "timing_status": "EXACT" if delay is not None and delay >= 0 else "BOUNDED_BEFORE_EXECUTION" if bounded_before_execution else "UNAVAILABLE", "method_note": "正的adverse_execution_cost_pct表示相对正式决策价格出现不利执行偏差；买入价更高或卖出价更低均为正。该指标分离判断质量与执行质量，不改变交易权限。"}
+    candidate_code = str(decision.get("candidate_code") or "").strip()
+    hypothesis_id = decision.get("hypothesis_id") if candidate_code and candidate_code == str(trade.get("code") or "").strip() else None
+    return {"status": "READY" if dprice is not None and eprice is not None and (delay is None or delay >= 0 or bounded_before_execution) else "PARTIAL", "decision_id": linked_decision_id, "hypothesis_id": hypothesis_id, "decision_price": dprice, "execution_price": eprice, "execution_price_vs_decision_pct": diff_pct, "adverse_execution_cost_pct": adverse, "decision_to_execution_seconds": delay if delay is None or delay >= 0 else None, "decision_effective_ordering": decision.get("decision_effective_ordering"), "timing_quality": decision.get("timing_quality"), "timing_status": "EXACT" if delay is not None and delay >= 0 else "BOUNDED_BEFORE_EXECUTION" if bounded_before_execution else "UNAVAILABLE", "method_note": "正的adverse_execution_cost_pct表示相对正式决策价格出现不利执行偏差；买入价更高或卖出价更低均为正。该指标分离判断质量与执行质量，不改变交易权限。"}
 
 
 
