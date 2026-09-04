@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-04T12:13:43+08:00",
+  "generated_at": "2026-09-04T12:17:13+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33835972817,
+  "run_id": 33836195575,
   "run_attempt": 1,
-  "head_sha": "58f7ae4be7fee31871942facfd91b53287a5dd3d",
-  "main_head_sha": "03cf15c552a4433f7966fff760e3723931a9a1b7",
+  "head_sha": "6a2ab1d0e1a2d639a012289fa04d405597b8845c",
+  "main_head_sha": "2e1ffead5e8d8809cbefc8b604e34f330466bf22",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -17,20 +17,20 @@
     {
       "job": "production_acceptance",
       "step": "Enforce production acceptance",
-      "number": 8
+      "number": 9
     }
   ],
   "changed_files": [
-    "tests/test_market_case_mapping_terminal.py"
+    ".github/workflows/system-consistency.yml"
   ],
-  "commit_message": "Merge PR #301: preserve terminal CASE mapping exemption",
+  "commit_message": "Merge PR #302: bind acceptance to post-correction HEAD",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
-    "changes_confined_to_auto_rollback_allowlist": false,
+    "changes_confined_to_auto_rollback_allowlist": true,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
     "user_notification_authority": false,
