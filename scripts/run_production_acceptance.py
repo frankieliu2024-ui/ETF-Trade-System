@@ -28,17 +28,22 @@ def main():
         consistency_rc=run([sys.executable,str(ROOT/"scripts/check_system_consistency.py"),"--no-persist","--report-path",str(fresh_path)])
         fresh=read_json(fresh_path)
         if not is_complete_consistency_report(fresh): report_error="checker did not produce a complete report; canonical state preserved"
-        else: persist_consistency_report_if_valid(fresh,CONSISTENCY)
+        # Keep the validated report ephemeral until maintenance/E2E consume it.
     finally:
-        try: fresh_path.unlink()
-        except OSError: pass
+        pass
     if report_error: maintenance_rc=e2e_rc=1
     else:
-        maintenance_rc=run([sys.executable,str(ROOT/"scripts/maintenance_guard.py")]); e2e_rc=run([sys.executable,str(ROOT/"scripts/build_e2e_status.py")])
+        maintenance_rc=run([sys.executable,str(ROOT/"scripts/maintenance_guard.py")], {"ETF_CONSISTENCY_REPORT_PATH": str(fresh_path)})
+        e2e_rc=run([sys.executable,str(ROOT/"scripts/build_e2e_status.py")])
+        # Persist only after both downstream consumers have seen the same
+        # validated report. Invalid reports never reach this path.
+        persist_consistency_report_if_valid(fresh, CONSISTENCY)
     consistency=read_json(CONSISTENCY); maintenance=read_json(MAINTENANCE); e2e=read_json(E2E)
     consistency_ok=is_complete_consistency_report(consistency) and consistency.get("status") in {"PASS","WARNING"} and consistency.get("hard_error_count")==0
     maintenance_ok=maintenance.get("status") in {"PASS","WARNING","DEGRADED"}; e2e_ok=e2e.get("status") in {"READY","DEGRADED"}
     accepted=all(x==0 for x in (quality_rc,state_rc,query_rc,consistency_rc,maintenance_rc,e2e_rc)) and consistency_ok and maintenance_ok and e2e_ok and not report_error
     print(json.dumps({"acceptance":"PASS" if accepted else "FAIL","quality_rebuild":quality_rc==0,"state_context":state_rc==0,"query_context":query_rc==0,"consistency_report_valid":not report_error,"consistency":consistency.get("status"),"maintenance":maintenance.get("status"),"e2e":e2e.get("status"),"report_error":report_error,"mutation_sha":args.mutation_sha,"recursive_push_required":False},ensure_ascii=False))
+    try: fresh_path.unlink()
+    except OSError: pass
     return 0 if accepted else 1
 if __name__=="__main__": raise SystemExit(main())
