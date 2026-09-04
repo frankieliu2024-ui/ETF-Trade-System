@@ -75,7 +75,7 @@ def build(root: Path = ROOT) -> dict:
             "decision_id": linked,
             "raw_linked_decision_id": requested or None,
             "link_status": link_status,
-            "hypothesis_id": trade.get("hypothesis_id") or decision.get("hypothesis_id"),
+            "hypothesis_id": trade.get("hypothesis_id") or (decision.get("hypothesis_id") if str(trade.get("code") or "") == str(decision.get("candidate_code") or "") else None),
             "code": trade.get("code") or decision.get("candidate_code"),
             "name": trade.get("name") or decision.get("candidate_name"),
             "side": trade.get("side"),
