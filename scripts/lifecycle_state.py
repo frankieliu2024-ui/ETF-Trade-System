@@ -124,7 +124,17 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
     executions = _executions(root)
     trials = []
     for decision in _formal_decisions(root):
-        linked = [x for x in executions if str(x.get("linked_decision_id") or "") == str(decision.get("decision_id") or "") or (x.get("hypothesis_id") and x.get("hypothesis_id") == decision.get("hypothesis_id"))]
+        candidate_code = str(decision.get("candidate_code") or "").strip()
+        linked = [
+            x for x in executions
+            if (
+                (not candidate_code or str(x.get("code") or "").strip() == candidate_code)
+                and (
+                    str(x.get("linked_decision_id") or "") == str(decision.get("decision_id") or "")
+                    or (x.get("hypothesis_id") and x.get("hypothesis_id") == decision.get("hypothesis_id"))
+                )
+            )
+        ]
         if not linked:
             # A decision alone is not a real position lifecycle.
             continue

@@ -85,8 +85,7 @@ def resolve_link(root: Path, trade: dict, requested_id: str = "") -> tuple[str, 
 
 
 def decision_price_for_trade(event: dict, trade: dict):
-    # The top-level decision price is only valid for the decision candidate.
-    # For a different executed object, use that object's PIT comparison price.
+    """Return only an action-object price, never a comparison candidate price."""
     code = str(trade.get("code") or "")
     if str(event.get("candidate_code") or "") == code:
         price = event.get("price_at_decision")
@@ -95,10 +94,24 @@ def decision_price_for_trade(event: dict, trade: dict):
                 return float(price)
         except (TypeError, ValueError):
             pass
-    for row in ((event.get("comparison_snapshot") or {}).get("items") or []):
-        if str(row.get("code") or "") == code:
-            try:
-                return float(row.get("price"))
-            except (TypeError, ValueError):
-                return None
+
+    # A multi-action decision may carry an explicit per-action price.  The
+    # comparison snapshot is evidence for candidate selection, not a traded
+    # object's decision price and must never be used for slippage attribution.
+    formal = event.get("formal_decision") or {}
+    actions = formal.get("actions") or formal.get("action_objects") or []
+    if isinstance(actions, dict):
+        actions = list(actions.values())
+    for action in actions if isinstance(actions, list) else []:
+        if not isinstance(action, dict):
+            continue
+        action_code = str(action.get("code") or action.get("security_code") or "").strip()
+        if action_code != code:
+            continue
+        price = action.get("decision_price") or action.get("price_at_decision") or action.get("price")
+        try:
+            if price is not None:
+                return float(price)
+        except (TypeError, ValueError):
+            pass
     return None
