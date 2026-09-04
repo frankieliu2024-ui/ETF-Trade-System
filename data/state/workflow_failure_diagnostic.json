@@ -1,36 +1,31 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-04T11:08:48+08:00",
+  "generated_at": "2026-09-04T11:22:01+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33832069181,
+  "run_id": 33832897999,
   "run_attempt": 1,
-  "head_sha": "871924e298d0150025b4dde62eda2f5a8ec8c81e",
-  "main_head_sha": "0e28a10118445ba5bc6eb76f0db971d572bb596c",
+  "head_sha": "c25e156803670d3ed879841545a521ac8b3e1827",
+  "main_head_sha": "536d25bf9e7e97d7d4adcace0fe81617b2207893",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 8
-    },
-    {
-      "job": "production_acceptance",
-      "step": "Enforce production acceptance",
-      "number": 8
+      "step": "PR candidate post-replay acceptance",
+      "number": 6
     }
   ],
   "changed_files": [
-    "scripts/check_system_consistency.py"
+    ".github/workflows/system-consistency.yml"
   ],
-  "commit_message": "fix: validate execution quality against canonical rebuild",
+  "commit_message": "ci: cover production acceptance changes in consistency precheck",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
-    "changes_confined_to_auto_rollback_allowlist": false,
+    "changes_confined_to_auto_rollback_allowlist": true,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
     "user_notification_authority": false,
