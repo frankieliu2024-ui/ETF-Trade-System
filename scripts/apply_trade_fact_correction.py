@@ -47,6 +47,21 @@ def safe_float(value: Any) -> float | None:
         return None
 
 
+def net_cash_effect(event: dict, fee: float) -> float | None:
+    """Derive the canonical cash movement from side, gross amount and fee."""
+    gross = safe_float(event.get("amount"))
+    if gross is None:
+        gross = safe_float(event.get("gross_amount"))
+    if gross is None:
+        return None
+    side = str(event.get("side") or event.get("action") or "").upper()
+    if side == "SELL":
+        return round(gross - fee, 2)
+    if side == "BUY":
+        return round(-(gross + fee), 2)
+    return None
+
+
 def equity_row_from_event(event: dict, fee: float) -> dict:
     """Project an already-recorded event when the auxiliary ledger lags it."""
     stamp = str(event.get("confirmed_at_beijing") or event.get("execution_at") or "")
@@ -69,8 +84,7 @@ def equity_row_from_event(event: dict, fee: float) -> dict:
         "fee_amount": round(fee, 2),
         "fee_status": "CONFIRMED",
     }
-    if gross is not None:
-        row["cash_flow_amount"] = round(gross - fee, 2) if side == "SELL" else round(-(gross + fee), 2) if side == "BUY" else None
+    row["cash_flow_amount"] = net_cash_effect(event, fee)
     return row
 
 
@@ -152,8 +166,12 @@ def main() -> int:
         raise RuntimeError("existing trade event not found; correction cannot create a trade")
     prior_fee = safe_float(event.get("fee_amount"))
     prior_status = str(event.get("fee_status") or "").upper()
-    already_confirmed_same = prior_status == "CONFIRMED" and prior_fee is not None and abs(prior_fee - fee) < 0.005
-    if prior_status == "CONFIRMED" and prior_fee is not None and not already_confirmed_same:
+    expected_net = net_cash_effect(event, fee)
+    prior_net = safe_float(event.get("net_cash_effect") or event.get("cash_flow_amount"))
+    fee_is_current = prior_status == "CONFIRMED" and prior_fee is not None and abs(prior_fee - fee) < 0.005
+    net_cash_is_current = expected_net is None or (prior_net is not None and abs(prior_net - expected_net) < 0.005)
+    already_confirmed_same = fee_is_current and net_cash_is_current
+    if prior_status == "CONFIRMED" and prior_fee is not None and not fee_is_current:
         raise RuntimeError("existing confirmed fee differs; explicit correction conflict requires manual review")
 
     stamp = str(req.get("requested_at_beijing") or event.get("fee_confirmed_at_beijing") or datetime.now(TZ).isoformat(timespec="seconds"))
@@ -163,6 +181,9 @@ def main() -> int:
         event["fee_confirmed_at_beijing"] = str(req.get("evidence_time_beijing") or stamp)
         event["fee_source"] = str(req.get("source") or "BROKER_SCREENSHOT_CONFIRMED")
         event["fact_updated_at_beijing"] = stamp
+        if expected_net is not None:
+            event["net_cash_effect"] = expected_net
+            event["cash_flow_amount"] = expected_net
         write_json(event_path, event)
 
     equity = read_json(EQUITY, {}) or {}
@@ -176,10 +197,7 @@ def main() -> int:
         row = matches[0]
         row["fee_amount"] = round(fee, 2)
         row["fee_status"] = "CONFIRMED"
-        gross = safe_float(row.get("gross_amount"))
-        if gross is not None:
-            side = str(row.get("side") or "").upper()
-            row["cash_flow_amount"] = round(gross - fee, 2) if side == "SELL" else round(-(gross + fee), 2) if side == "BUY" else row.get("cash_flow_amount")
+        row["cash_flow_amount"] = net_cash_effect(event, fee)
     else:
         # The event is authoritative.  A lagging auxiliary reconstruction must
         # converge by adding exactly this event, never by creating a new event.
