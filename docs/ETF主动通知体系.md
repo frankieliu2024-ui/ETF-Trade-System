@@ -2,7 +2,7 @@
 
 > 本文是ETF系统主动通知域的**唯一规范性规则来源（Single Source of Truth）**。它不是交易规则，不生成风险许可、生命周期、金额或买卖动作；正式交易权限仍唯一来自 `ETF规则_MASTER.md`。通知脚本、配置、workflow、状态文件和测试只负责实现、运行、记录或验证本文规则，不得独立产生新的通知资格、事件定义、阈值语义、用户标题、去重原则或交易权限。运行事实以当前 `main` 的脚本、配置和状态为准；规则解释以本文为准。若实现与本文冲突，视为实现漂移，必须修复，不得以现有代码反向覆盖本文规则。
 
-最后更新：2026-08-28
+最后更新：2026-09-04
 
 ## 1. 最高原则
 
@@ -164,39 +164,57 @@ PushPlus微信渠道存在平台层展示模板：ETF系统通过API传入的业
 
 ## 10. 维护与验收要求
 
-本文是主动通知域的**唯一规范性规则来源**。任何改变通知对象、五类事件定义、注意力阈值、一级标题、固定总结节点、正式机会/账户/系统通知条件、可比事实门禁、去重/冷却、Point-in-Time边界、调度兜底或PushPlus正文模板的生产修改，都必须先或同时更新本文并执行系统一致性检查。脚本、配置、workflow、状态文件或测试与本文冲突时，冲突本身就是实现漂移；不得以“当前代码就是这样运行”为理由反向修改本文规则。
+本文是主动通知域的**唯一规范性规则来源**。ETF_SYSTEM_INDEX.md只负责路由；ETF规则_MASTER.md仍是唯一交易规则来源。脚本、配置、workflow、状态文件和测试只实现、运行、记录或验证本文，不得创造第二套通知资格、阈值、标题、去重或用户动作规则。
 
-唯一规则不等于把所有技术细节写入本文。provider具体实现、状态字段、函数拆分、workflow内部步骤和运行参数可以继续由config/scripts/state承载；只有当这些技术值改变了通知资格、事件语义、正式阈值、标题、去重/升级、PIT或用户动作边界时，才属于本文必须管理的规范性变化。
+通知规则与运行技术细节分层承载：provider、状态字段、函数拆分、workflow步骤和参数可以由当前代码/config/state维护；但任何改变通知资格、事件语义、一级标题、固定节点、materiality、dedup、PIT或用户动作边界的变更，都必须更新本文并通过系统一致性检查。notifications/README.md仅作实现导航，不复制规范。
 
-系统一致性至少验证：本文存在且被 `ETF_SYSTEM_INDEX.md` 与 `notifications/README.md` 作为唯一通知规范引用；README/INDEX不得复制第二套正式通知规则；正式生产workflow必须通过统一证据门；生产实现不得出现未在本文登记的新一级标题或平行通知资格；固定节点和测试通知不得被变化证据门误伤。
+验收必须覆盖：正式event到canonical family的唯一映射；统一materiality、去重、冷却与实质升级；未知/自由文案fail closed；REPORT原文投递；single committer和single state writer；以及至少一次不放宽正式阈值的生产健康运行。测试成功不能替代生产验证，生产workflow成功也不能替代正文语义验收。
 
-通知生产修改的最低验收链为：**统一语义/规则漂移测试 → 关键对象/跨市场模板测试 → system consistency PASS → 至少一次不放宽正式阈值的生产workflow健康运行**。测试成功不能替代生产运行验证；生产workflow成功也不能替代正文语义验收。
+## 11. 主动通知的聚合、吸收与对象表达
 
-真实运行阶段优先复盘三类CASE：收到但无独立价值的消息；应该收到但遗漏的消息；收到后真正改变注意力/判断/执行质量的消息。当前阶段优先降低系统性漏报，再根据真实噪声反馈收敛，而不是预先把阈值调得过严。实现/模板偏差属于维护问题，除非符合正式CASE定义，否则直接最小修复，不为调试过程机械建立CASE。
+主动通知可以合并同一对象在短时间内连续发生、且具有共同可审计事实链的市场事件；时间接近本身不足以合并。市场日期、对象、方向和事件类别必须建立连续事实关系。独立对象、独立风险以及正式交易判断、Trial、Confirm、机会失效、持仓动作和风险许可不得被普通市场事件吸收。
 
+固定收盘或盘中总结仅在同一市场日期、短时间窗口内明确覆盖同一事实且没有实质升级时吸收后续重复异动；新的价格事实、风险变化、机会变化或资本效率变化必须重新通知。APAC同事实族的OPEN_SIGNAL与后续EXTREME沿同一对象/方向/日期语义判断新增决策价值；未达到现行实质升级门时吸收，达到门槛或发生方向反转时重新通知。聚合与吸收必须保留事件标签和可审计上下文，不得通过提高阈值或静默丢弃独立事件来降噪。
 
-## 主动通知的聚合、吸收与对象表达
+用户可见标题和核心结论优先直述真正改变判断的指数、ETF、个股或当前Trial/Confirm；只有多个市场构成不可拆分的共同结构事实时才使用区域级概括。时点措辞遵循对应market phase。
 
-主动通知可以合并同一对象在短时间内连续发生、且具有共同可审计事实链的市场事件；时间接近本身不足以合并。市场日期、对象、方向和事件类别必须能够建立连续事实关系，独立对象、独立风险以及正式交易判断、Trial、Confirm、机会失效、持仓动作和风险许可不得被普通市场事件吸收。
+## 12. 统一双通道与固定报告投递
 
-固定收盘或盘中总结仅在同一市场日期、短时间窗口内明确覆盖同一事实且没有实质升级时吸收后续重复异动；新的价格事实、风险变化、机会变化或资本效率变化必须重新通知。聚合与吸收都必须复用现有 notification center 记录，保留事件标签和可审计上下文，不得通过提高阈值、每日数量上限或静默丢弃事件来降噪。
+通知只有两个顶层语义通道，二者共享同一个notification center、guarded sender、external-effect committer和notification state：
 
-用户可见标题和核心结论优先直述真正改变判断的指数、ETF、个股或当前 Trial/Confirm；只有多个市场构成不可拆分的共同结构事实时，才使用区域级概括。盘前、盘中、午间与收盘的时点措辞仍遵循对应 market phase 语义。
+- **INTERRUPT**：事件驱动的固定模板通知，覆盖市场异动、观察/Trial/Confirm机会、机会失效、持仓动作、风险许可、成交确认、账户确认、系统阻塞、判断恢复和收盘账户。其资格受正式事实、PIT、materiality、dedup、冷却和实质升级约束；默认delivery mode为**COMPACT**。
+- **REPORT**：固定正式节点完成后的完整报告投递，覆盖ETF_TRADE_REVIEW与ETF_SYSTEM_REVIEW及经SSOT登记的收盘总结。默认delivery mode为**FULL_REPORT**；正式报告正文原样转发，不套用INTERRUPT模板，也不创建第二sender、第二state或第二token owner。
 
+所有用户可见INTERRUPT event必须映射到下列canonical template family，固定模板表示固定一级标题、section skeleton、边界语句与结构化动态槽位，并不把业务动态文字写死：
 
-## 10. 统一双通道与固定报告投递
+- 【市场异动】：对象、变化、为什么重要、事实时点；
+- 【收盘总结】：节点、覆盖事实、当前结构、用户动作/边界；
+- 【观察机会】、【Trial机会】、【Confirm机会】：正式状态、候选、变化原因、用户动作与人工执行边界；
+- 【机会失效】：失效对象、失效原因、下一验证节点与人工边界；
+- 【持仓动作】：对象、合法持仓动作、原因、失效条件与人工执行边界；
+- 【风险许可】：正式风险许可的变化、原因、当前限制与人工边界；
+- 【成交确认】：已发生的成交事实、缺少的归因/确认项和用户动作；UNLINKED_TRADE_REQUIRES_ATTRIBUTION只确认既有成交归因，不生成新交易指令；
+- 【账户确认】：账户事实变化、待核对项、事实时点与确认边界；
+- 【系统阻塞】：阻塞影响、当前恢复边界与用户动作；
+- 【判断恢复】：此前暂停原因、恢复条件和可继续范围，不因此生成新的交易指令；
+- 【收盘账户】：收盘账户事实确认提醒，不生成交易指令。
 
-通知只有两个顶层语义通道，二者共享同一条 delivery plane：
-
-- **INTERRUPT**：新事实足以改变用户当前注意力或行动，包括市场异动、观察/Trial/Confirm机会、机会失效、持仓动作、风险许可、成交确认、账户确认、系统阻塞和判断恢复。既有可比事实、正式决策 provenance、去重、冷却和 material-upgrade 门槛继续有效；默认 delivery mode 为 **COMPACT**。
-- **REPORT**：固定正式分析节点已经完成，结果需要完整送达，包括 A 股/亚太/美股收盘总结、ETF 日/周复盘和 ETF 正式变更复核。默认 delivery mode 为 **FULL_REPORT**；标题统一使用“【交易复盘】”或“【系统复核】”前缀。
-
-两种通道都必须进入同一个 notification_center，再由唯一 guarded sender 投递到 PushPlus，并写入同一份 notification history/state。REPORT 不创建第二通知中心、第二 sender、第二 token owner 或报告专用数据库；统一 sender 负责遵守真实 transport 长度限制的确定性截断。
+测试仅是隔离的通道测试family，不是交易或市场通知资格。未登记event type、自由title/content或未通过统一renderer的INTERRUPT默认拒绝用户投递并留下可审计失败；不得降级成自由文案。生产PushPlus发送权与data/state/notification_center.json正式写权均只属于.github/workflows/decision-notification.yml经scripts/run_guarded_notification.py和现有scripts/notification_center.py/merge_notification_state.py形成的单一提交链；producer只提供结构化事实。
 
 ### REPORT_DELIVERY_REQUEST 合同
 
-固定报告只接受已经完成的正式报告，不重新分析，也不拥有 formal reasoning 或交易权限。请求至少包含：schema_version、channel=REPORT、report_type、report_id、task_id、task_run_id、generated_at、effective_market_date、source_actor、source_reference、title、summary、full_content、content_hash、idempotency_key、delivery_mode=FULL_REPORT 和 no_trade_authority=true。
+REPORT只接受已经完成的正式报告，不重新分析，也不拥有formal reasoning或交易权限。请求至少包含：schema_version、channel=REPORT、report_type、report_id、task_id、task_run_id、generated_at、effective_market_date、source_actor、source_reference、title、summary、full_content、content_hash、idempotency_key、delivery_mode=FULL_REPORT和no_trade_authority=true。
 
-canonical notification intake 必须校验报告类型、来源身份、任务/运行身份、正文哈希和幂等键；重复幂等键不得重复投递。REPORT 请求只能创建 delivery event，不能修改 MASTER、risk permission、lifecycle、formal decision、account、trade、CASE 或订单。无效请求拒绝进入 delivery plane。
+canonical intake校验报告类型、来源身份、任务/运行身份、正文哈希和幂等键；重复幂等键不得重复投递。REPORT请求只能创建delivery event，不能修改MASTER、risk permission、lifecycle、formal decision、account、trade、CASE或订单。产品侧固定任务完成后提交ETF_TRADE_REVIEW或ETF_SYSTEM_REVIEW，GitHub只转发已完成内容。
 
-产品侧固定任务完成正式输出后，分别提交 ETF_TRADE_REVIEW 或 ETF_SYSTEM_REVIEW 的 REPORT_DELIVERY_REQUEST；GitHub 只转发已完成内容，正式判断仍由产品侧任务与现有 canonical decision/review intake 负责。
+### 正式判断与raw trigger边界
+
+观察/Trial/Confirm、机会失效、风险许可和持仓动作等交易语义，只能由可审计的formal-decision material change产生。raw decision_trigger只表达何时需要重新判断，不得为同一事实建立平行交易/风险/机会通知；如E2E_RECOVERED仍具独立用户价值，只映射为【判断恢复】。成交确认、账户确认和系统恢复分别只确认已经发生的事实或恢复边界，不授予交易权限。
+
+### Scheduled Actor边界
+
+Scheduled Task可以形成正式analysis/formal decision；其输出本身不是通知资格。是否产生PushPlus仍由canonical materiality和本通知SSOT决定。Scheduled Task的connector、GitHub request-file能力或产品侧运行细节不在本文冻结，也不形成第二行情链、第二writer或第二transport。
+
+### 维护与验收 owner
+
+实现/运行入口包括：scripts/notification_center.py、scripts/notification_materiality_guard.py、scripts/run_guarded_notification.py、scripts/merge_notification_state.py、.github/workflows/decision-notification.yml，以及负责生产结构化事实的市场/正式决策/账户/成交/system builders。producer不得持有独立不可逆PushPlus发送权；任何新增外部副作用必须先通过本文和生产治理重新准入。
