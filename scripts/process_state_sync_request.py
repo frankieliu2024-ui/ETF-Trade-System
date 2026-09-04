@@ -890,7 +890,9 @@ def sync_experience_transaction_index(event: dict) -> None:
     # Older confirmed trade events use the canonical ``fee`` field while
     # correction-enriched events use ``fee_amount``.  Treat both as the same
     # trade-fact fee; a confirmed status still remains mandatory.
-    fee = safe_float(event.get("fee_amount", event.get("fee")))
+    fee = safe_float(event.get("fee_amount"))
+    if fee is None:
+        fee = safe_float(event.get("fee"))
     fee_status = str(event.get("fee_status") or "").upper()
     fee_confirmed = fee is not None and fee_status in {"CONFIRMED", "KNOWN", "FINAL"}
     fee_text = f"{fee:.2f}" if fee_confirmed else "待确认"
@@ -901,9 +903,17 @@ def sync_experience_transaction_index(event: dict) -> None:
     else:
         cash = 0.0
     cash_text = f"{cash:,.2f}" if fee_confirmed else f"{cash:,.2f}（未含待确认费用）"
-    lifecycle = str(event.get("lifecycle") or "待确认")
-    linked = str(event.get("linked_decision_id") or "")
-    note = lifecycle + (f"；关联决策{linked}" if linked else "") + "；真实成交已执行"
+    lifecycle = str(event.get("lifecycle") or "").strip()
+    if lifecycle in {"待确认", "UNKNOWN", "未提供"}:
+        lifecycle = ""
+    linked = str(event.get("linked_decision_id") or "").strip()
+    note_parts = []
+    if lifecycle:
+        note_parts.append(lifecycle)
+    if linked:
+        note_parts.append(f"关联决策{linked}")
+    note_parts.append("真实成交已执行")
+    note = "；".join(note_parts)
     row = f"|{dt}|{name}（{code}）|{code}|{side_cn}|{qty:,}|{price:.3f}|{gross:,.2f}|{fee_text}|{cash_text}|{note}| <!-- {marker} -->"
 
     table_start = text.index("|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|")
@@ -952,6 +962,27 @@ def sync_experience_transaction_index(event: dict) -> None:
         count=1,
     )
     text = re.sub(r"不属于\d+笔证券交易", f"不属于{total}笔证券交易", text, count=1)
+
+
+def _refresh_current_fee_projection(text: str, table_start: int, table_end: int) -> str:
+    """Project current cumulative ETF fees from canonical facts without rewriting PIT history."""
+    try:
+        from confirmed_trade_facts import canonical_etf_fee_projection
+        equity_path = ROOT / "data" / "state" / "etf_strategy_equity.json"
+        equity = load_json(equity_path) if equity_path.exists() else {}
+        projection = canonical_etf_fee_projection(ROOT, equity.get("trades") or [])
+    except (OSError, ValueError, TypeError, ImportError):
+        return text
+    rows = [line for line in text[table_start:table_end].splitlines() if re.match(r"^\|20\d{2}-\d{2}-\d{2} ", line)]
+    dates = [line.split("|")[1][:10] for line in rows]
+    last_date = max(dates) if dates else ""
+    pending = "无" if projection["pending_fee_count"] == 0 else f"{projection['pending_fee_count']}笔"
+    sentence = f"截至{last_date}累计已确认ETF费用{projection['effective_confirmed_fee_sum']:.2f}元；待确认费用：{pending}。"
+    return re.sub(r"截至.*?。", sentence, text, count=1)
+
+    table_start = text.index("|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|")
+    table_end = text.index(section_end, table_start)
+    text = _refresh_current_fee_projection(text, table_start, table_end)
     write_formal_text_if_changed(ROOT, EXPERIENCE.name, text)
 
 def write_trade_review_required(event: dict) -> None:
