@@ -1,86 +1,48 @@
-from pathlib import Path
-import unittest
-
-
-ROOT = Path(__file__).resolve().parents[1]
-WORKFLOW = ROOT / ".github" / "workflows" / "decision-notification.yml"
-
-
-class NotificationWorkflowStructureTests(unittest.TestCase):
-    def setUp(self):
-        self.text = WORKFLOW.read_text(encoding="utf-8")
-
-    def test_workflow_has_single_canonical_step_for_each_route(self):
-        names = [
-            "Detect push notification kind",
-            "Isolate pushed report delivery request",
-            "Build delayed execution reconciliation",
-            "Send A-share opening value signal or close summary when due",
-            "Send A-share monitored-object value event when due",
-            "Send safe notification-channel test",
-            "Send material user-action notification",
-            "Send conditional A-share trading-day post-close account reminder",
-            "Persist unified notification and execution-reconciliation state",
-            "Surface notification delivery failure without blocking trading system",
-        ]
-        for name in names:
-            self.assertEqual(self.text.count(f"- name: {name}"), 1, name)
-
-    def test_push_routes_bind_report_to_triggering_push_identity(self):
-        self.assertIn('requests/report_delivery/*.json', self.text)
-        self.assertIn('PUSH_BEFORE: ${{ github.event.before }}', self.text)
-        self.assertIn('PUSH_AFTER: ${{ github.sha }}', self.text)
-        self.assertIn('git diff --name-only "$PUSH_BEFORE" "$PUSH_AFTER" > /tmp/changed_files.txt', self.text)
-        self.assertNotIn('git diff --name-only HEAD^ HEAD > /tmp/changed_files.txt', self.text)
-        self.assertIn(r"grep -E '^requests/report_delivery/[^/]+\.json$'", self.text)
-        self.assertIn('echo "report=true" >> "$GITHUB_OUTPUT"', self.text)
-        self.assertIn('echo "report_path=${report_paths[0]}" >> "$GITHUB_OUTPUT"', self.text)
-        self.assertIn('REPORT_PATH: ${{ steps.push_kind.outputs.report_path }}', self.text)
-        self.assertIn("find requests/report_delivery -maxdepth 1 -type f -name '*.json' ! -path \"$REPORT_PATH\" -delete", self.text)
-        self.assertIn('test "$(find requests/report_delivery -maxdepth 1 -type f -name \'*.json\' | wc -l)" -eq 1', self.text)
-        self.assertIn("Ambiguous REPORT push: expected exactly one report request", self.text)
-        self.assertIn("/tmp/changed_files.txt; then", self.text)
-        self.assertNotIn("echo report=true", self.text)
-
-    def test_existing_route_commands_remain_present_once(self):
-        commands = [
-            "python scripts/build_execution_reconciliation.py",
-            "python scripts/run_guarded_notification.py regional --market a-share",
-            "python scripts/run_guarded_notification.py shock --market a-share",
-            "python scripts/run_guarded_notification.py center --mode channel-test",
-            "python scripts/run_guarded_notification.py center --mode event",
-            "python scripts/run_guarded_notification.py center --mode close",
-            "python scripts/merge_notification_state.py",
-        ]
-        for command in commands:
-            self.assertEqual(self.text.count(command), 1, command)
-
-    def test_overseas_producers_only_publish_context(self):
-        root = ROOT / ".github" / "workflows"
-        for name in ("overseas-preopen-pulse.yml", "us-extended-hours-pulse.yml"):
-            text = (root / name).read_text(encoding="utf-8")
-            self.assertNotIn("PUSHPLUS_TOKEN", text)
-            self.assertNotIn("run_guarded_notification.py", text)
-            self.assertNotIn("notification_center.json", text)
-        self.assertIn('"Overseas pre-open pulse"', self.text)
-        self.assertIn('"US extended-hours pulse"', self.text)
-        self.assertIn("PREVIOUS_CONTEXT_PATH: data/state/overseas_context_previous.json", self.text)
-        self.assertIn("steps.apac_summary_notify.outcome", self.text)
-
-    def test_single_notification_external_effect_owner_is_machine_checked(self):
-        from scripts.check_production_mutation_protocol import run
-        result = run(ROOT)
-        self.assertEqual(result["status"], "PASS", result.get("errors"))
-        names = [x for x in result["checks"] if x["name"] == "notification_owner:single_external_effect_committer"]
-        self.assertEqual(names[0]["status"], "PASS")
-
-    def test_notification_state_uses_single_owner_contract(self):
-        import json
-        config = json.loads((ROOT / "config/maintenance/production_mutation_protocol.json").read_text(encoding="utf-8"))
-        self.assertEqual(config["single_owner_files"]["data/state/notification_center.json"], ".github/workflows/decision-notification.yml")
-        from scripts.check_production_mutation_protocol import _workflow_may_stage
-        self.assertTrue(_workflow_may_stage("git add data/state/notification_center.json", "data/state/notification_center.json"))
-
-
-if __name__ == "__main__":
-    unittest.main()
+1ëa¡Ñ1qêmŠ‰ËŠw¶²ÚîrÛ«zœ¬±©•§r«×œ…ªõÑÈZ¯]Màšz-r‰ïz»Z®¦z{h•Ğ¡j¼"¶Ú–çŸ¢´^¦VœzÚ-Ê—’ÊË^˜(Z¬&§‹\¢{Ş®ÛÚ–ç­¢Ü©y,¬µé‚…ªÄ®º+JÚâ	®²ÖŞ{œ¶\¨ç!j¶œµêå¢xœ›ÛH]Xˆ[\Ü]Bš[\Ü[š]\İBƒBƒB”“ÓÕH]
+×Ùš[W×ÊKœ™\ÛÛ™J
+Kœ\™[ÖÌWCB•ÓÔ’Ñ“ÕÈH“ÓÕÈ‹™Ú]XˆˆÈÛÜšÙ›İÜÈˆÈ™XÚ\Ú[Û‹[›İYšXØ][Û‹[[ƒBƒBƒB˜Û\ÜÈ›İYšXØ][Û•ÛÜšÙ›İÔİXİ\™U\İÊ[š]\İ•\İØ\ÙJNƒBˆYˆÙ]\
+Ù[ŠNƒBˆÙ[‹^HÓÔ’Ñ“ÕËœ™XYİ^
+[˜ÛÙ[™ÏH]‹NŠCBƒBˆYˆ\İİÛÜšÙ›İ×Ú\×ÜÚ[™ÛWØØ[›ÛšXØ[Üİ\Ù›Ü—ÙXXÚÜ›İ]JÙ[ŠNƒBˆ˜[Y\ÈHÃBˆ‘]Xİ\Ú›İYšXØ][ÛˆÚ[™‹Bˆ’\ÛÛ]H\ÚY™\Ü[]™\H™\]Y\İ‹BˆZ[[^YY^Xİ][Ûˆ™XÛÛ˜Ú[X][Ûˆ‹Bˆ”Ù[™K\Ú\™HÜ[š[™È˜[YHÚYÛ˜[ÜˆÛÜÙHİ[[X\HÚ[ˆYH‹Bˆ”Ù[™K\Ú\™H[Ûš]Ü™Y[Øš™Xİ˜[YH]™[Ú[ˆYH‹Bˆ”Ù[™ØY™H›İYšXØ][Û‹XÚ[›™[\İ‹Bˆ”Ù[™X]\šX[\Ù\‹XXİ[Ûˆ›İYšXØ][Ûˆ‹Bˆ”Ù[™ÛÛ™][Û˜[K\Ú\™H˜Y[™ËY^HÜİXÛÜÙHXØÛİ[™[Z[™\ˆ‹Bˆ”\œÚ\İ[šYšYY›İYšXØ][Ûˆ[™^Xİ][Û‹\™XÛÛ˜Ú[X][Ûˆİ]H‹Bˆ”İ\™˜XÙH›İYšXØ][Ûˆ[]™\H˜Z[\™HÚ]İ]›ØÚÚ[™È˜Y[™ÈŞ\İ[H‹BˆCBˆ›Üˆ˜[YH[ˆ˜[Y\ÎƒBˆÙ[‹˜\ÜÙ\\]X[
+Ù[‹^˜Ûİ[
+ˆ‹H˜[YNˆÛ˜[Y_HŠKK˜[YJCBƒBˆYˆ\İÜ\ÚÜ›İ]\×Øš[™Ü™\Üİ×İšYÙÙ\š[™×Ü\ÚÚY[]JÙ[ŠNƒBˆÙ[‹˜\ÜÙ\[Š	Ü™\]Y\İËÜ™\ÜÙ[]™\KÊ‹šœÛÛ‰ËÙ[‹^
+CBˆÙ[‹˜\ÜÙ\[Š	ÔTÒĞ‘Q“Ô‘Nˆ	ŞÈÚ]X‹™]™[˜™Y›Ü™H_IËÙ[‹^
+CBˆÙ[‹˜\ÜÙ\[Š	ÔTÒĞQ•Tˆ	ŞÈÚ]X‹œÚH_IËÙ[‹^
+CBˆÙ[‹˜\ÜÙ\[Š	ÙÚ]Y™ˆK[˜[YK[Û›H‰TÒĞ‘Q“Ô‘Hˆ‰TÒĞQ•Tˆˆˆİ\ØÚ[™ÙYÙš[\Ë	ËÙ[‹^
+CBˆÙ[‹˜\ÜÙ\›İ[Š	ÙÚ]Y™ˆK[˜[YK[Û›HPQˆPQˆİ\ØÚ[™ÙYÙš[\Ë	ËÙ[‹^
+CBˆÙ[‹˜\ÜÙ\[Šˆ™Ü™\QH	×œ™\]Y\İËÜ™\ÜÙ[]™\KÖ×‹×J×šœÛÛ‰	È‹Ù[‹^
+CBˆÙ[‹˜\ÜÙ\[Š	ÙXÚÈœ™\Ü]YHˆˆ‰ÒUP—ÓÕUU‰ËÙ[‹^
+CBˆÙ[‹˜\ÜÙ\[Š	ÙXÚÈœ™\ÜÜ]IÜ™\ÜÜ]ÖÌ_Hˆˆ‰ÒUP—ÓÕUU‰ËÙ[‹^
+CBˆÙ[‹˜\ÜÙ\[Š	Ô‘TÔ•ÔUˆ	ŞÈİ\Ëœ\ÚÚÚ[™›İ]]Ëœ™\ÜÜ]_IËÙ[‹^
+CBˆÙ[‹˜\ÜÙ\[Š™š[™™\]Y\İËÜ™\ÜÙ[]™\H[X^\H]\Hˆ[˜[YH	Ê‹šœÛÛ‰ÈH\]‰‘TÔ•ÔUˆY[]H‹Ù[‹^
+CBˆÙ[‹˜\ÜÙ\[Š	İ\İ‰
+š[™™\]Y\İËÜ™\ÜÙ[]™\H[X^\H]\Hˆ[˜[YH	Ê‹šœÛÛ—	ÈØÈ[
+HˆY\HIËÙ[‹^
+CBˆÙ[‹˜\ÜÙ\[Š[XšYİ[İ\È‘TÔ•\Úˆ^XİY^XİHÛ™H™\Ü™\]Y\İ‹Ù[‹^
+CBˆÙ[‹˜\ÜÙ\[Š‹İ\ØÚ[™ÙYÙš[\ËÈ[ˆ‹Ù[‹^
+BˆÙ[‹˜\ÜÙ\›İ[Š™XÚÈ™\Ü]YH‹Ù[‹^
+CBƒBˆYˆ\İÙ^\İ[™×Ü›İ]WØÛÛ[X[™×Ü™[XZ[—Ü™\Ù[ÛÛ˜ÙJÙ[ŠN‚ˆÛÛ[X[™ÈHÃBˆœ]ÛˆØÜš\ËØZ[Ù^Xİ][Û—Ü™XÛÛ˜Ú[X][Û‹œH‹Bˆœ]ÛˆØÜš\ËÜ[—ÙİX\™YÛ›İYšXØ][Û‹œH™YÚ[Û˜[K[X\šÙ]K\Ú\™H‹Bˆœ]ÛˆØÜš\ËÜ[—ÙİX\™YÛ›İYšXØ][Û‹œHÚØÚÈK[X\šÙ]K\Ú\™H‹Bˆœ]ÛˆØÜš\ËÜ[—ÙİX\™YÛ›İYšXØ][Û‹œHÙ[\ˆK[[ÙHÚ[›™[]\İ‹Bˆœ]ÛˆØÜš\ËÜ[—ÙİX\™YÛ›İYšXØ][Û‹œHÙ[\ˆK[[ÙH]™[‹Bˆœ]ÛˆØÜš\ËÜ[—ÙİX\™YÛ›İYšXØ][Û‹œHÙ[\ˆK[[ÙHÛÜÙH‹Bˆœ]ÛˆØÜš\ËÛY\™ÙWÛ›İYšXØ][Û—Üİ]KœH‹BˆCBˆ›ÜˆÛÛ[X[™[ˆÛÛ[X[™ÎƒBˆÙ[‹˜\ÜÙ\\]X[
+Ù[‹^˜Ûİ[
+ÛÛ[X[™
+KKÛÛ[X[™
+B‚ˆYˆ\İÛİ™\œÙX\×Ü›ÙXÙ\œ×ÛÛ›WÜX›\ÚØÛÛ^
+Ù[ŠN‚ˆ›ÛİH“ÓÕÈ‹™Ú]XˆˆÈÛÜšÙ›İÜÈ‚ˆ›Üˆ˜[YH[ˆ
+›İ™\œÙX\Ë\™[Ü[‹\[ÙK[[‹\ËY^[™YZİ\œË\[ÙK[[ŠN‚ˆ^H
+›ÛİÈ˜[YJKœ™XYİ^
+[˜ÛÙ[™ÏH]‹NŠBˆÙ[‹˜\ÜÙ\›İ[Š”TÒT×ÕÒÑSˆ‹^
+BˆÙ[‹˜\ÜÙ\›İ[Šœ[—ÙİX\™YÛ›İYšXØ][Û‹œH‹^
+BˆÙ[‹˜\ÜÙ\›İ[Š››İYšXØ][Û—ØÙ[\‹šœÛÛˆ‹^
+BˆÙ[‹˜\ÜÙ\[Š	È“İ™\œÙX\È™K[Ü[ˆ[ÙH‰ËÙ[‹^
+BˆÙ[‹˜\ÜÙ\[Š	È•TÈ^[™YZİ\œÈ[ÙH‰ËÙ[‹^
+BˆÙ[‹˜\ÜÙ\[Š”‘U’SÕT×ĞÓÓ•VÔUˆ]KÜİ]KÛİ™\œÙX\×ØÛÛ^Ü™]š[İ\ËšœÛÛˆ‹Ù[‹^
+BˆÙ[‹˜\ÜÙ\[Šœİ\Ë˜\X×Üİ[[X\WÛ›İYK›İ]ÛÛYH‹Ù[‹^
+B‚ˆYˆ\İÜÚ[™ÛWÛ›İYšXØ][Û—Ù^\›˜[ÙY™™XİÛİÛ™\—Ú\×ÛXXÚ[™WØÚXÚÙY
+Ù[ŠN‚ˆœ›ÛHØÜš\Ë˜ÚXÚ×Ü›ÙXİ[Û—Û]]][Û—Ü›İØÛÛ[\Ü[‚ˆ™\İ[H[Š“ÓÕ
+BˆÙ[‹˜\ÜÙ\\]X[
+™\İ[Èœİ]\È—K”TÔÈ‹™\İ[™Ù]
+™\œ›ÜœÈŠJBˆ˜[Y\ÈHŞ›Üˆ[ˆ™\İ[È˜ÚXÚÜÈ—HYˆÈ›˜[YH—HOH››İYšXØ][Û—ÛİÛ™\œÚ[™ÛWÙ^\›˜[ÙY™™XİØÛÛ[Z]\ˆ—BˆÙ[‹˜\ÜÙ\\]X[
+˜[Y\ÖÌVÈœİ]\È—K”TÔÈŠB‚ˆYˆ\İÛ›İYšXØ][Û—Üİ]Wİ\Ù\×ÜÚ[™ÛWÛİÛ™\—ØÛÛ˜Xİ
+Ù[ŠN‚ˆ[\ÜœÛÛ‚ˆÛÛ™šYÈHœÛÛ‹›ØYÊ
+“ÓÕÈ˜ÛÛ™šYËÛXZ[[˜[˜ÙKÜ›ÙXİ[Û—Û]]][Û—Ü›İØÛÛšœÛÛˆŠKœ™XYİ^
+[˜ÛÙ[™ÏH]‹NŠJBˆÙ[‹˜\ÜÙ\\]X[
+ÛÛ™šYÖÈœÚ[™ÛWÛİÛ™\—Ùš[\È—VÈ™]KÜİ]KÛ›İYšXØ][Û—ØÙ[\‹šœÛÛˆ—K‹™Ú]X‹İÛÜšÙ›İÜËÙXÚ\Ú[Û‹[›İYšXØ][Û‹[[ŠBˆœ›ÛHØÜš\Ë˜ÚXÚ×Ü›ÙXİ[Û—Û]]][Û—Ü›İØÛÛ[\ÜİÛÜšÙ›İ×ÛX^WÜİYÙBˆÙ[‹˜\ÜÙ\YJİÛÜšÙ›İ×ÛX^WÜİYÙJ™Ú]Y]KÜİ]KÛ›İYšXØ][Û—ØÙ[\‹šœÛÛˆ‹™]KÜİ]KÛ›İYšXØ][Û—ØÙ[\‹šœÛÛˆŠJBƒBƒBšYˆ×Û˜[YW×ÈOH—×ÛXZ[—×ÈƒBˆ[š]\İ›XZ[Š
+CB

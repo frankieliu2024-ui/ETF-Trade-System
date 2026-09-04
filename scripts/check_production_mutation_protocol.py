@@ -1,430 +1,259 @@
-from __future__ import annotations
+1лaЎС1qкmЉ‰ЛЉw¶ћљи¶‡(–њ¬±©•§r«Чњ…ЄхСИZЇ]Mаљћz-r‰пz»Z®¦z{h•РЎjј"¶Ъ–зџўґ^¦VњzЪ-К—’КЛ^(Z¬&§ћ‹\ў{Ю®ЫЪ–з­ўЬ©y,¬µй‚…ЄД®є+JЪвћ	®ІЦЮ{њ¶\Ёќз!j¶њµкеўxњ›ЫHЧЩќ]\™WЧИ[\Ьќ[››Э][ЫњГBѓBљ[\ЬќњЫЫѓBљ[\Ьќ™CB™њ›ЫH]X€[\Ьќ]BѓB”“УХH]
+ЧЩљ[WЧКKњ™\ЫЫ™J
+Kњ\™[ќЦМWCBђУУ‘’QИH“УХИЫЫ™љYЛЫXZ[ќ[[ЩKЬ›ЩXЭ[Ы—Ы]]][Ы—Ь›ЭШЫЫљњЫЫ€ѓB““Ф“PUU‘WСРИH“УХИ™ШЬЛще'щ.©щcж9¦н9.#№nm№cдya¦yaiyccъ+«—ХЊKЊ›YѓB•УФ’С“ХФИH“УХИ‹™Ъ]X‹ЭЫЬљЩ›ЭЬИѓB”РФ’TИH“УХИњШЬљ\ИѓBѓBѓB™Y€Ь™XYЪњЫЫЉ]€]
+HO€XЭѓB€™]\›€њЫЫ‹›ШYК]њ™XYЭ^
+[ЫЩ[™ПHќ]‹NЉJCBѓBѓB™Y€Ъ\ЧЩ\™XЭЫXZ[—ЭЬљ]\Љ^€ЭЉHO€›ЫЫѓB€]\›њИH
+B€€™Ъ]КЬ\ЪЧ——JЉО’PQ›XZ[ЉПWЯ	
+_ЬљYЪ[—КЫXZ[ЉПWЯ	
+JH‹B€€™Ъ]КЬ\ЪЧ——Jњ™YњЛЪXYЛЫXZ[ЉПWЯ	
+H‹B€
+CB€™]\›€[ћJ™KњЩX\Ъ
+^
+H›Ь€[€]\›њКCBѓBѓB™Y€ЩЪ]ШYЫY[ќ[ЫњК^€Э‹]€ЭЉHO€›ЫЫѓB€›Ь€[™H[€^њЬ][™\К
+NѓB€ИH[™KњЭљ\
 
-import json
-import re
-from pathlib import Path
+CB€Y€ЛњЭ\ќЭЪ]
+™Ъ]YЉH[™][€ОѓB€™]\›€ќYCB€™]\›€[ЩCBѓBѓB™Y€Шњ›ШYЬЭ]WШYЭЪ]Э]Щ^Ы\Ъ[ЫЉ^€Э‹]€ЭЉHO€›ЫЫѓB€Y€›Э]њЭ\ќЭЪ]
+™]KЬЭ]KИЉNѓB€™]\›€[ЩCB€њ›ШYH[ЩCB€›Ь€[™H[€^њЬ][™\К
+NѓB€ИH[™KњЭљ\
 
-ROOT = Path(__file__).resolve().parents[1]
-CONFIG = ROOT / "config/maintenance/production_mutation_protocol.json"
-NORMATIVE_DOC = ROOT / "docs/з”џдє§еЏж›ґдёЋе№¶еЏ‘е†™е…ҐеЌЏи®®_V1.0.md"
-WORKFLOWS = ROOT / ".github/workflows"
-SCRIPTS = ROOT / "scripts"
+CB€Y€™K›X]Ъ
+€—™Ъ]Y
+О—КЛPJOКО—КЛKJOЧКЩ]KЬЭ]JО—Я	
+H‹КNѓB€њ›ШYHќYCB€њ™XZГB€Y€™Ъ]YPHKH]KЫX\љЩ]ЬЫ\ЪЭИ]KЬЭ]H€[€ОѓB€њ›ШYHќYCB€њ™XZГB€^ЫYYH[ћJB€ЪЩ[€[€^B€›Ь€ЪЩ[€[€
+B€€™Ъ]™\Щ]KHЬ]H‹B€€™Ъ]ЪXЪЫЭ]KHЬ]H‹B€€™Ъ]™\ЭЬ™HK\ЭYЩYЬ]H‹B€
+CB€
+CB€™]\›€њ›ШY[™›Э^ЫYYBѓBѓB™Y€ЭЫЬљЩ›ЭЧЫX^WЬЭYЩJ^€Э‹]€ЭЉHO€›ЫЫ‚€ИЫЫYHЫЬљЩ›ЭЬИЭYЩH[€[ЭЫ\ЭYЭ]Hљ[H›ЭYЪH›Э[™YЫЬ€И
+›Ь€€[€‹‹ЋИЪ]Y‰€
+K€™X]]\ИH™X[Ьљ]HЫ›HЪ[€B€ИЭЫ™Y]\И™\Щ[ќ[€HЫЬЪ[H™\Щ\ќљ[™ИH^XЪ]\][™€Ињ›ШYXYЪXЪЬИX›Э™K‚€\љXX›WЬЭYЩHH	ЩЪ]Y‰€‰И[€^[™][€^€™]\›€ЩЪ]ШYЫY[ќ[ЫњК^]
+HЬ€Шњ›ШYЬЭ]WШYЭЪ]Э]Щ^Ы\Ъ[ЫЉ^]
+HЬ€\љXX›WЬЭYЩBѓBѓB™Y€Ш›Э[™YШЭ\њ™[ќЬ™\Z\—Ъ\ЧЫ\њ›ЭК›ЫЭ€]ШЬљ\Ь]€ЭЉHO€›ЫЫѓB€]H›ЫЭИШЬљ\Ь]B€Y€›Э]™^\ЭК
+NѓB€™]\›€[ЩCB€^H]њ™XYЭ^
+[ЫЩ[™ПHќ]‹NЉCB€Ьљ]\ИH™K™љ[™[
+€Э\њ™[ќК—ЧК–Ч‰ЧJЧ—‰ЧJКVЧ‰ЧWК—WКЏH‹^
+CB€™]\›€›ЫЫ
+Ьљ]\КH[™Щ]
+Ьљ]\КHOHИњќ[\ЧЭ™\њЪ[Ы€џCBѓBѓB™Y€ќ[Љ›ЫЭ€]H“УХ
+HO€XЭѓB€ЫЫ™љYЧЬ]H›ЫЭИУУ‘’QЛњ™[]]™WЭК“УХ
+CB€›Ь›X]]™WЩШЧЬ]H›ЫЭИ“Ф“PUU‘WСРЛњ™[]]™WЭК“УХ
+CB€ЫЬљЩ›ЭЬЧЩ\€H›ЫЭИУФ’С“ХФЛњ™[]]™WЭК“УХ
+CB€ШЬљ\ЧЩ\€H›ЫЭИРФ’TЛњ™[]]™WЭК“УХ
+CB€\њ›ЬњО€\ЭЬЭ—HHЧCB€Ш\›љ[™ЬО€\ЭЬЭ—HHЧCB€ЪXЪЬО€\ЭЩXЭHHЧCBѓB€Y€ЪXЪК[YN€Э‹ЪО€›ЫЫ]Z[€Э‹Ш\›љ[™О€›ЫЫH[ЩJHO€›Ы™NѓB€Э]\ИH”TФИ€Y€ЪИ[ЩH
+•РT“’S‘И€Y€Ш\›љ[™И[ЩH‘ђRSЉCB€ЪXЪЬЛ\[™
+И›[YHЋ€[YKњЭ]\ИЋ€Э]\Л™]Z[Ћ€]Z[JCB€Y€›ЭЪОѓB€
+Ш\›љ[™ЬИY€Ш\›љ[™И[ЩH\њ›ЬњКK\[™
+€ћЫ[Y_N€Щ]Z[HЉCBѓB€ЪXЪК›]]][Ы—Ь›ЭШЫЫЫЫ™љYЧЩ^\ЭИ‹ЫЫ™љYЧЬ]™^\ЭК
+KЭЉЫЫ™љYЧЬ]њ™[]]™WЭК›ЫЭ
+JJCB€ЪXЪК›]]][Ы—Ь›ЭШЫЫ››Ь›X]]™WЩШЧЩ^\ЭИ‹›Ь›X]]™WЩШЧЬ]™^\ЭК
+KЭЉ›Ь›X]]™WЩШЧЬ]њ™[]]™WЭК›ЫЭ
+JJCB€Y€›ЭЫЫ™љYЧЬ]™^\ЭК
+HЬ€›Э›Ь›X]]™WЩШЧЬ]™^\ЭК
+NѓB€™]\›€ИњЭ]\ИЋ€‘ђRS‹™\њ›ЬњИЋ€\њ›ЬњЛќШ\›љ[™ЬИЋ€Ш\›љ[™ЬЛЪXЪЬИЋ€ЪXЪЬЛќЬљ]\њИЋ€Ч_CBѓB€Щ™ИHЬ™XYЪњЫЫЉЫЫ™љYЧЬ]
+CB€ШЧЭ^H›Ь›X]]™WЩШЧЬ]њ™XYЭ^
+[ЫЩ[™ПHќ]‹NЉCBѓB€ИЫЭ™\›[ЩHФУХЭX\™€[Y]HHЫЫ\XЭЫ™Л]\›Hљ[Ъ\\И[™ЩY\B€ИYШXЮHРHY[ќYљY\њИ]Y][Ы›H]\€[€XZЪ[™Иќ[HЫЭ[ќHЫЫќXЭѓB€›Ь›X]]™HHЩ™Л™Щ]
+››Ь›X]]™WШЫЫќXЭЉHЬ€ЯCB€YZ\ЬЪ[Ы€HЩ™Л™Щ]
+Ъ[™ЩWШYZ\ЬЪ[Ы€ЉHЬ€ЯCB€ЫЭ™\›[ЩWЬљ[Ъ\\ИHYZ\ЬЪ[Ы‹™Щ]
+™ЫЭ™\›[ЩWЬљ[Ъ\\ИЉHЬ€ЯCB€YШXЮWЫX\[™ИHYZ\ЬЪ[Ы‹™Щ]
+›YШXЮWШШWЫX\[™ИЉHЬ€ЯCB€Э]ЫЫY\ИHЬЭЉ
+H›Ь€[€YZ\ЬЪ[Ы‹™Щ]
+™XЪ\Ъ[Ы—ЫЭ]ЫЫY\ИЉHЬ€ЧWCB€^XЭYЬљ[Ъ\\ИHГB€™XЪ\Ъ[Ы—Ш[™Э[Z[™И‹B€њ›ЫЭШШ]\ЩWШЫЫ\]WЬ™\Z\€‹B€њШЫЬWШ[™Э[Y][Ы€‹B€њЩ\љX[^™YЪ[ќYЬ][Ы—Ш[™Ь™\ЪYX[Ьљ\ЪЧЫШњЩ\ќ][Ы€‹B€CB€^XЭYЫЭ]ЫЫY\ИHИ‘VPХUWУ“ХИ‹“Р”СT•‘H‹‘ЧУ“ХРТS‘СH—CB€^XЭYЫYШXЮHHЩ€ђР^ЪNЊ™H€›Ь€H[€[™ЩJKLЉ_CBѓB€ЪXЪКB€™ЫЭ™\›[ЩWЬЬЫЭ››Ь›X]]™WЬЫЭ\ЩH‹B€›Ь›X]]™K™Щ]
+њЫЭ\ЩHЉHOH™ШЬЛще'щ.©щcж9¦н9.#№nm№cдya¦yaiyccъ+«—ХЊKЊ›Y‹B€€њЫЭ\ЩO^Ы›Ь›X]]™K™Щ]
+	ЬЫЭ\ЩIК_H‹B€
+CB€ЪXЪКB€™ЫЭ™\›[ЩWЬЬЫЭ›XXЪ[™WЬ›ЫH‹B€›Ь›X]]™K™Щ]
+›XXЪ[™WЬ›ЫHЉHOH‘VPХUP“WУRT”“Ф—У“ХФ•SWФУХTђСH‹B€€›XXЪ[™WЬ›ЫO^Ы›Ь›X]]™K™Щ]
+	ЫXXЪ[™WЬ›ЫIК_H‹B€
+CB€™\њЪ[Ы€HЭЉ›Ь›X]]™K™Щ]
+ќ™\њЪ[Ы€ЉHЬ€€ЉCB€ЪXЪКB€™ЫЭ™\›[ЩWЬЬЫЭќ™\њЪ[Ы—ЫX]Ъ‹B€›ЫЫ
+™\њЪ[ЫЉH[™€№е'щ.©щcж9¦н9.#№nm№cдya¦yaiyccъ+«€Э™\њЪ[ЫџH€[€ШЧЭ^B€€ЫЫ™љYЧЭ™\њЪ[ЫЏ^Э™\њЪ[ЫџH‹B€
+CB€XЭX[Ьљ[Ъ\\ИHЩ]
+ЭЉ
+H›Ь€[€ЫЭ™\›[ЩWЬљ[Ъ\\КCB€ЪXЪКB€™ЫЭ™\›[ЩWЬЬЫЭЫЫ\XЭЬљ[Ъ\WШЫЫќXЭ‹B€XЭX[Ьљ[Ъ\\ИOH^XЭYЬљ[Ъ\\И[™[
+ЭЉЫЭ™\›[ЩWЬљ[Ъ\\Л™Щ]
+
+HЬ€€ЉKњЭљ\
 
+H›Ь€[€^XЭYЬљ[Ъ\\КKB€€њљ[Ъ\\П^ЬЫЬќY
+XЭX[Ьљ[Ъ\\К_H^XЭY^ЬЫЬќY
+^XЭYЬљ[Ъ\\К_H‹B€
+CB€ЪXЪКB€™ЫЭ™\›[ЩWЬЬЫЭ›YШXЮWШШWЪ\ЧШ]Y]ЫЫ›H‹B€Щ]
+ЭЉ
+H›Ь€[€YШXЮWЫX\[™КHOH^XЭYЫYШXЮCB€[™[
+ЭЉЉH[€^XЭYЬљ[Ъ\\И›Ь€€[€YШXЮWЫX\[™Лќ[Y\К
+JCB€[™№cк№/g9..№kЁz+Ёyao9k®y¦(9l!€[€ШЧЭ^B€€›YШXЮWЪЩ^\П^ЬЫЬќY
+ЭЉ
+H›Ь€[€YШXЮWЫX\[™К_H‹B€
+CB€ЪXЪКB€™ЫЭ™\›[ЩWЬЬЫЭ™XЪ\Ъ[Ы—ЫЭ]ЫЫY\И‹B€Э]ЫЫY\ИOH^XЭYЫЭ]ЫЫY\И[™[
+[€ШЧЭ^›Ь€[€^XЭYЫЭ]ЫЫY\КKB€€›Э]ЫЫY\П^ЫЭ]ЫЫY\ЯH‹B€
+CB€™\]Z\™YЩШЧЫX\љЩ\њИH
+B€№§.№fj9cлщўiъ(c:eg9`гИ‹B€№е*9ў-щЈд9aоё '9/л№i#x 'x '9/&9c%ё 'yў%ё '9ўiъ(c8 'y.#z!к№bЄ9лby.ЈVPХUWУ“ХШ‹B€№Ё.yfи9kЈ9Ґm9/л№i#H‹B€№/$yn ёа ydj9§*ша yжж9bcxа ycb:eн9/$yn №dЈ9жж9d#є`пycлщ.йy¦+ще'щ.©щон9ў©9кҐщcиИ‹B€№.#є+йzhгєfjyc.zacyжЎ9. 9«(yз'щk§№е'щ.©щ¦­:g,№кҐщcиИ‹B€№.#yoҐщойщолyҐ¬9h§ђРLLёа PРLLИ‹B€єeлєh¦:eлyг«ъ) y¬`€‹B€
+CB€ЪXЪКB€™ЫЭ™\›[ЩWЬЬЫЭњЭX›WЬЩ[X[ќXЬЧЬ™\Щ[ќ‹B€[
+X\љЩ\€[€ШЧЭ^›Ь€X\љЩ\€[€™\]Z\™YЩШЧЫX\љЩ\њКKB€ќ[љ\]YH›Ь›X]]™HШЭ[Y[ќЫЫќZ[њИЫЫ\XЭYZ\ЬЪ[Ы‹™\ЪYX[\љ\ЪИШњЩ\ќ][Ы€[™ЫЬЭ\™HЩ[X[ќXЬИ‹B€
+CBѓB€™\]Z\™[Y[ќИHЩ™Л™Щ]
+ќЬљ]\—Ь™\]Z\™[Y[ќИЉHЬ€ЯCB€Ю[ЧЫX\љЩ\њИHЬЭЉ
+H›Ь€[€™\]Z\™[Y[ќЛ™Щ]
+›]\ЭЫXZ[—ЬЮ[ЧЫX\љЩ\њИЉHЬ€ЧWCB€Ьљ]\—Ь›ЭЬИHЧCBѓB€ЫЬљЩ›ЭЧЭ^О€XЭЬЭ‹Э—HHЯCB€›Ь€][€ЫЬќY
+ЫЬљЩ›ЭЬЧЩ\‹™ЫШЉЉ‹ћ[[ЉJNѓB€™[HЭЉ]њ™[]]™WЭК›ЫЭ
+JKњ™\XЩJ—‹‹ИЉCB€^H]њ™XYЭ^
+[ЫЩ[™ПHќ]‹NЉCB€ЫЬљЩ›ЭЧЭ^ЦЬ™[HH^B€Y€›ЭЪ\ЧЩ\™XЭЫXZ[—ЭЬљ]\Љ^
+NѓB€ЫЫќ[ќYCB€Ьљ]\—Ь›ЭЬЛ\[™
+™[
+CB€ЪXЪК€›]]][Ы—ЭЬљ]\ЋћЬ™[NЫЫЭ\њ™[ЮH‹ЫЫЭ\њ™[ЮN€€[€^™\™XЭXZ[€Ьљ]\€\ИЫЫЭ\њ™[ЮHЬ›Э\ЉCB€ЪXЪКB€€›]]][Ы—ЭЬљ]\ЋћЬ™[N›]\ЭЫXZ[—ЬЮ[И‹B€[ћJX\љЩ\€[€^›Ь€X\љЩ\€[€Ю[ЧЫX\љЩ\њКKB€™\™XЭXZ[€Ьљ]\€Ю[Ъ›Ыљ^™\И]\ЭXZ[€™Y›Ь™H›ЩXЭ[Ы€\Ъ‹B€
+CB€ЪXЪКB€€›]]][Ы—ЭЬљ]\ЋћЬ™[N››ЧЩ›ЬЩWЬ\Ъ‹B€›Э™KњЩX\Ъ
+€™Ъ]КЬ\ЪЧ——J‹KY›ЬЩJО‹]Ъ][X\ЩJOЦЧ——JЉО’PQ›XZ[ЉПWЯ	
+_ЬљYЪ[—КЫXZ[ЉПWЯ	
+_™YњЛЪXYЛЫXZ[ЉПWЯ	
+JH‹^
+KB€™\™XЭXZ[€Ьљ]\€Щ\И›Э›ЬЩK\\ЪXZ[€‹B€
+CBѓB€Щ[—ЪX[ЭЫЬљЩ›ЭЧЬ™[H‹™Ъ]X‹ЭЫЬљЩ›ЭЬЛЬЩ[‹ZX[[™Л]Ш]ЪЩЛћ[[ѓB€Z[\™WЩЭX\™ЭЫЬљЩ›ЭЧЬ™[H‹™Ъ]X‹ЭЫЬљЩ›ЭЬЛЭЫЬљЩ›ЭЛYZ[\™KYЭX\™ћ[[ѓB€Щ[—ЪX[ЬШЬљ\Ь™[HњШЬљ\ЛЬќ[ќ[YWЬЩ[—ЪX[њHѓB€Z[\™WЩЭX\™ЬШЬљ\Ь™[HњШЬљ\ЛЭЫЬљЩ›ЭЧЩZ[\™WЩЭX\™њHѓB€Щ[—ЪX[ЭЫЬљЩ›ЭИHЫЬљЩ›ЭЧЭ^Л™Щ]
+Щ[—ЪX[ЭЫЬљЩ›ЭЧЬ™[€ЉCB€Z[\™WЩЭX\™ЭЫЬљЩ›ЭИHЫЬљЩ›ЭЧЭ^Л™Щ]
+Z[\™WЩЭX\™ЭЫЬљЩ›ЭЧЬ™[€ЉCB€Щ[—ЪX[ЬШЬљ\Ь]H›ЫЭИЩ[—ЪX[ЬШЬљ\Ь™[B€Z[\™WЩЭX\™ЬШЬљ\Ь]H›ЫЭИZ[\™WЩЭX\™ЬШЬљ\Ь™[B€Щ[—ЪX[ЬШЬљ\HЩ[—ЪX[ЬШЬљ\Ь]њ™XYЭ^
+[ЫЩ[™ПHќ]‹NЉHY€Щ[—ЪX[ЬШЬљ\Ь]™^\ЭК
+H[ЩH€ѓB€Z[\™WЩЭX\™ЬШЬљ\HZ[\™WЩЭX\™ЬШЬљ\Ь]њ™XYЭ^
+[ЫЩ[™ПHќ]‹NЉHY€Z[\™WЩЭX\™ЬШЬљ\Ь]™^\ЭК
+H[ЩH€ѓB€›ЭXЭYЭЫЬљЩ›ЭЬИH
+B€‘U€Ю\Э[HЫЫњЪ\Э[ЮH‹B€‘U€ќ[ќ[YHЩ[‹ZX[[™ИШ]ЪЩИ‹B€“Э™\њЩX\И™K[Ь[€[ЩH‹B€•TИ^[™YZЭ\њИ[ЩH‹B€
+CBѓB€ЪXЪКB€њ™[XXљ[]NњЩ[—ЪX[[™ЧЭЪ\™Y‹B€›ЫЫ
+Щ[—ЪX[ЭЫЬљЩ›ЭИ[™Щ[—ЪX[ЬШЬљ\[™њ]Ы€ШЬљ\ЛЬќ[ќ[YWЬЩ[—ЪX[њHKX\ЬЩ\ЬИ€[€Щ[—ЪX[ЭЫЬљЩ›ЭКKB€њЩ[‹ZX[[™ИШ]ЪЩИ^\ЭИ[™\ЬЩ\ЬЩ\Иќ[ќ[YH›ЭYЪHШ[›ЫљXШ[ќ[ќ[YWЬЩ[—ЪX[њH‹B€
+CB€ЪXЪКB€њ™[XXљ[]NШ[›ЫљXШ[ЬЫ\ЪЭЬ™XЫЭ™\ћH‹B€›ЫЫ
+Щ[—ЪX[ЭЫЬљЩ›ЭИ[™™ЪЫЬљЩ›ЭИќ[€X\љЩ]\Ы\ЪЭћ[[K\™Y€XZ[€€[€Щ[—ЪX[ЭЫЬљЩ›ЭКKB€њЭ[HK\Ъ\™H™XЫЭ™\ћH™Y\Ь]Ъ\ИHШ[›ЫљXШ[X\љЩ]\Ы\ЪЭЫЬљЩ›ЭИ‹B€
+CB€ЪXЪКB€њ™[XXљ[]NЬ›ЬЬЧЫX\љЩ]ЪX\ќ™X]ЭЪ\™Y‹B€›ЫЫ
+B€Щ[—ЪX[ЭЫЬљЩ›ЭГB€[™™ЪЫЬљЩ›ЭИќ[€Э™\њЩX\Л\™[Ь[‹\[ЩKћ[[K\™Y€XZ[€€[€Щ[—ЪX[ЭЫЬљЩ›ЭГB€[™™ЪЫЬљЩ›ЭИќ[€\ЛY^[™YZЭ\њЛ\[ЩKћ[[K\™Y€XZ[€€[€Щ[—ЪX[ЭЫЬљЩ›ЭГB€
+KB€њЭ[HTPЛХTИX\ќ™X]И™Y\Ь]ЪZ\€Ш[›ЫљXШ[›ЩXЭ[Ы€[ЩHЫЬљЩ›ЭЬИ‹B€
+CB€ЪXЪКB€њ™[XXљ[]N™Z[\™WЩЭX\™ЭЪ\™Y‹B€›ЫЫ
+B€Z[\™WЩЭX\™ЭЫЬљЩ›ЭГB€[™Z[\™WЩЭX\™ЬШЬљ\B€[™њ]Ы€ШЬљ\ЛЭЫЬљЩ›ЭЧЩZ[\™WЩЭX\™њH€[€Z[\™WЩЭX\™ЭЫЬљЩ›ЭГB€[™[
+[YH[€Z[\™WЩЭX\™ЭЫЬљЩ›ЭИ›Ь€[YH[€›ЭXЭYЭЫЬљЩ›ЭЬКCB€[™[
+[YH[€Z[\™WЩЭX\™ЬШЬљ\›Ь€[YH[€›ЭXЭYЭЫЬљЩ›ЭЬКCB€
+KB€ќЫЬљЩ›ЭИZ[\™HЭX\™^\ЭЛ[ќ›ЪЩ\ИHШ[›ЫљXШ[Ы\ЬЪYљY\‹[™ЫЭ™\њИ[›Э\€ЫЬ™H™[XXљ[]HЫЬљЩ›ЭЬИ‹B€
+CBѓB€ЪXЪК›]]][Ы—Ь›ЭШЫЫ™\™XЭЭЬљ]\њЧЩ\ШЫЭ™\™Y‹›ЫЫ
+Ьљ]\—Ь›ЭЬКK€ќЬљ]\њП^ЭЬљ]\—Ь›ЭЬЯHЉB‚€›ЭYљXШ][Ы—ЫЭЫ™\€H‹™Ъ]X‹ЭЫЬљЩ›ЭЬЛЩXЪ\Ъ[Ы‹[›ЭYљXШ][Ы‹ћ[[‚€›ЭYљXШ][Ы—ЩY™™XЭЭЫЬљЩ›ЭЬИHЧB€›Ь€™[^[€ЫЬљЩ›ЭЧЭ^Лљ][\К
+N‚€\ЧЬЩ[™\€H[ћJЪЩ[€[€^›Ь€ЪЩ[€[€
+”TТTЧХТСS€‹њќ[—ЩЭX\™YЫ›ЭYљXШ][Ы‹њH‹››ЭYљXШ][Ы—ШЩ[ќ\‹њHK[[ЩHЉJB€Y€\ЧЬЩ[™\Ћ‚€›ЭYљXШ][Ы—ЩY™™XЭЭЫЬљЩ›ЭЬЛ\[™
+™[
+B€Y€™[OH›ЭYљXШ][Ы—ЫЭЫ™\Ћ‚€ЪXЪК€€››ЭYљXШ][Ы—ЫЭЫ™\ЋћЬ™[N››ЧЩ^\›[ЩY™™XЭ‹€›Э\ЧЬЩ[™\‹€›X\љЩ]Щ]H›ЩXЩ\њИ]\Э›ЭЫ\Ъ\ИЬ€›ЭYљXШ][Ы‹XЩ[ќ\€^XЭ][Ы€]]Ьљ]H‹€
+B€ЪXЪК€››ЭYљXШ][Ы—ЫЭЫ™\ЋњЪ[™ЫWЩ^\›[ЩY™™XЭШЫЫ[Z]\€‹€›ЭYљXШ][Ы—ЩY™™XЭЭЫЬљЩ›ЭЬИOHЫ›ЭYљXШ][Ы—ЫЭЫ™\—K€€››ЭYљXШ][Ы—ЩY™™XЭЭЫЬљЩ›ЭЬП^Ы›ЭYљXШ][Ы—ЩY™™XЭЭЫЬљЩ›ЭЬЯH‹€
+BѓB€Ъ[™ЫWЫЭЫ™\€HЩ™Л™Щ]
+њЪ[™ЫWЫЭЫ™\—Щљ[\ИЉHЬ€ЯCB€›Ь€ЭЫ™YЬ]ЭЫ™\€[€Ъ[™ЫWЫЭЫ™\‹љ][\К
+N‚€›Ь€™[^[€ЫЬљЩ›ЭЧЭ^Лљ][\К
+N‚€Y€ЭЫ™\€OH““ЧРUUУPUPЧХУФ’С“ХИЋѓB€љ[Ы][Ы€HЩЪ]ШYЫY[ќ[ЫњК^ЭЫ™YЬ]
+CB€ЪXЪКB€€›]]][Ы—ЫЭЫ™\ЋћЫЭЫ™YЬ]NћЬ™[H‹B€›Эљ[Ы][Ы‹B€™›Ь›X[Ъ[™ЫK[ЭЫ™\€љ[H\И›Э]]ЫX]XШ[HЭYЩY‹B€
+CB€ЫЫќ[ќYCB€Y€™[OHЭЫ™\Ћ‚€ЪXЪК€€›]]][Ы—ЫЭЫ™\ЋћЫЭЫ™YЬ]NћЬ™[NњЭYЪ[™И‹€ЭЫЬљЩ›ЭЧЫX^WЬЭYЩJ^ЭЫ™YЬ]
+K€њЪ[™ЫK[ЭЫ™\€ЫЬљЩ›ЭИЭYЩ\И]ИЭЫ™Yљ[H‹€
+B€ЫЫќ[ќYB€љ[Ы][Ы€HЭЫЬљЩ›ЭЧЫX^WЬЭYЩJ^ЭЫ™YЬ]
+CB€ЪXЪКB€€›]]][Ы—ЫЭЫ™\ЋћЫЭЫ™YЬ]NћЬ™[H‹B€›Эљ[Ы][Ы‹B€€њЪ[™ЫK[ЭЫ™\€љ[H™[XZ[њИЭЫ™YћHЫЭЫ™\џH‹B€
+CBѓB€›Ь›X[HЩ™Л™Щ]
+™›Ь›X[Щљ[WЫ]]][Ы—ШЫЫќXЭЉHЬ€ЯCB€Ш]]Ш^WЬ™[HЭЉ›Ь›X[™Щ]
+Ш[›ЫљXШ[ЩШ]]Ш^HЉHЬ€€ЉCB€Ш]]Ш^WЬ]H›ЫЭИШ]]Ш^WЬ™[Y€Ш]]Ш^WЬ™[[ЩH]
 
-def _read_json(path: Path) -> dict:
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
-def _is_direct_main_writer(text: str) -> bool:
-    patterns = (
-        r"git\s+push[^\n]*(?:HEAD:main(?=\s|$)|origin\s+main(?=\s|$))",
-        r"git\s+push[^\n]*refs/heads/main(?=\s|$)",
-    )
-    return any(re.search(p, text) for p in patterns)
-
-
-def _git_add_mentions(text: str, path: str) -> bool:
-    for line in text.splitlines():
-        s = line.strip()
-        if s.startswith("git add") and path in s:
-            return True
-    return False
-
-
-def _broad_state_add_without_exclusion(text: str, path: str) -> bool:
-    if not path.startswith("data/state/"):
-        return False
-    broad = False
-    for line in text.splitlines():
-        s = line.strip()
-        if re.match(r"^git add(?:\s+-A)?(?:\s+--)?\s+data/state(?:\s|$)", s):
-            broad = True
-            break
-        if "git add -A -- data/market/snapshots data/state" in s:
-            broad = True
-            break
-    excluded = any(
-        token in text
-        for token in (
-            f"git reset -- {path}",
-            f"git checkout -- {path}",
-            f"git restore --staged {path}",
-        )
-    )
-    return broad and not excluded
-
-
-def _workflow_may_stage(text: str, path: str) -> bool:
-    # Some workflows stage an allowlisted state file through a bounded loop
-    # (`for f in ...; git add "$f"`).  Treat that as a real write only when the
-    # owned path is present in the loop, while preserving the explicit-path and
-    # broad-add checks above.
-    variable_stage = 'git add "$f"' in text and path in text
-    return _git_add_mentions(text, path) or _broad_state_add_without_exclusion(text, path) or variable_stage
-
-
-def _bounded_current_repair_is_narrow(root: Path, script_path: str) -> bool:
-    path = root / script_path
-    if not path.exists():
-        return False
-    text = path.read_text(encoding="utf-8")
-    writes = re.findall(r"current\s*\[\s*[\"']([^\"']+)[\"']\s*\]\s*=", text)
-    return bool(writes) and set(writes) == {"rules_version"}
-
-
-def run(root: Path = ROOT) -> dict:
-    config_path = root / CONFIG.relative_to(ROOT)
-    normative_doc_path = root / NORMATIVE_DOC.relative_to(ROOT)
-    workflows_dir = root / WORKFLOWS.relative_to(ROOT)
-    scripts_dir = root / SCRIPTS.relative_to(ROOT)
-    errors: list[str] = []
-    warnings: list[str] = []
-    checks: list[dict] = []
-
-    def check(name: str, ok: bool, detail: str, warning: bool = False) -> None:
-        status = "PASS" if ok else ("WARNING" if warning else "FAIL")
-        checks.append({"name": name, "status": status, "detail": detail})
-        if not ok:
-            (warnings if warning else errors).append(f"{name}: {detail}")
-
-    check("mutation_protocol:config_exists", config_path.exists(), str(config_path.relative_to(root)))
-    check("mutation_protocol:normative_doc_exists", normative_doc_path.exists(), str(normative_doc_path.relative_to(root)))
-    if not config_path.exists() or not normative_doc_path.exists():
-        return {"status": "FAIL", "errors": errors, "warnings": warnings, "checks": checks, "writers": []}
-
-    cfg = _read_json(config_path)
-    doc_text = normative_doc_path.read_text(encoding="utf-8")
-
-    # Governance SSOT guard. Validate the compact long-term principles and keep
-    # legacy CA identifiers audit-only rather than making rule count a contract.
-    normative = cfg.get("normative_contract") or {}
-    admission = cfg.get("change_admission") or {}
-    governance_principles = admission.get("governance_principles") or {}
-    legacy_mapping = admission.get("legacy_ca_mapping") or {}
-    outcomes = [str(x) for x in admission.get("decision_outcomes") or []]
-    expected_principles = {
-        "decision_and_timing",
-        "root_cause_complete_repair",
-        "scope_and_validation",
-        "serialized_integration_and_residual_risk_observation",
-    }
-    expected_outcomes = ["EXECUTE_NOW", "OBSERVE", "DO_NOT_CHANGE"]
-    expected_legacy = {f"CA{i:02d}" for i in range(1, 12)}
-
-    check(
-        "governance_ssot:normative_source",
-        normative.get("source") == "docs/з”џдє§еЏж›ґдёЋе№¶еЏ‘е†™е…ҐеЌЏи®®_V1.0.md",
-        f"source={normative.get('source')}",
-    )
-    check(
-        "governance_ssot:machine_role",
-        normative.get("machine_role") == "EXECUTABLE_MIRROR_NOT_RULE_SOURCE",
-        f"machine_role={normative.get('machine_role')}",
-    )
-    version = str(normative.get("version") or "")
-    check(
-        "governance_ssot:version_match",
-        bool(version) and f"з”џдє§еЏж›ґдёЋе№¶еЏ‘е†™е…ҐеЌЏи®® {version}" in doc_text,
-        f"config_version={version}",
-    )
-    actual_principles = set(str(x) for x in governance_principles)
-    check(
-        "governance_ssot:compact_principle_contract",
-        actual_principles == expected_principles and all(str(governance_principles.get(x) or "").strip() for x in expected_principles),
-        f"principles={sorted(actual_principles)} expected={sorted(expected_principles)}",
-    )
-    check(
-        "governance_ssot:legacy_ca_is_audit_only",
-        set(str(x) for x in legacy_mapping) == expected_legacy
-        and all(str(v) in expected_principles for v in legacy_mapping.values())
-        and "еЏЄдЅњдёєе®Ўи®Ўе…је®№ж е°„" in doc_text,
-        f"legacy_keys={sorted(str(x) for x in legacy_mapping)}",
-    )
-    check(
-        "governance_ssot:decision_outcomes",
-        outcomes == expected_outcomes and all(x in doc_text for x in expected_outcomes),
-        f"outcomes={outcomes}",
-    )
-    required_doc_markers = (
-        "жњєе™ЁеЏЇж‰§иЎЊй•њеѓЏ",
-        "з”Ёж€·жЏђе‡євЂњдї®е¤ЌвЂќвЂњдјеЊ–вЂќж€–вЂњж‰§иЎЊвЂќдёЌи‡ЄеЉЁз­‰дєЋ`EXECUTE_NOW`",
-        "ж №е› е®Њж•ґдї®е¤Ќ",
-        "дј‘её‚гЂЃе‘Ёжњ«гЂЃз›е‰ЌгЂЃеЌ€й—ґдј‘её‚е’Њз›еђЋйѓЅеЏЇд»ҐжЇз”џдє§з»ґжЉ¤зЄ—еЏЈ",
-        "дёЋиЇҐйЈЋй™©еЊ№й…Ќзљ„дёЂж¬Ўзњџе®ћз”џдє§жљґйњІзЄ—еЏЈ",
-        "дёЌеѕ—з»§з»­ж–°еўћCA12гЂЃCA13",
-        "й—®йўй—­зЋЇи¦Ѓж±‚",
-    )
-    check(
-        "governance_ssot:stable_semantics_present",
-        all(marker in doc_text for marker in required_doc_markers),
-        "unique normative document contains compact admission, residual-risk observation and closure semantics",
-    )
-
-    requirements = cfg.get("writer_requirements") or {}
-    sync_markers = [str(x) for x in requirements.get("latest_main_sync_markers") or []]
-    writer_rows = []
-
-    workflow_texts: dict[str, str] = {}
-    for path in sorted(workflows_dir.glob("*.yml")):
-        rel = str(path.relative_to(root)).replace("\\", "/")
-        text = path.read_text(encoding="utf-8")
-        workflow_texts[rel] = text
-        if not _is_direct_main_writer(text):
-            continue
-        writer_rows.append(rel)
-        check(f"mutation_writer:{rel}:concurrency", "concurrency:" in text, "direct main writer has concurrency group")
-        check(
-            f"mutation_writer:{rel}:latest_main_sync",
-            any(marker in text for marker in sync_markers),
-            "direct main writer synchronizes latest main before production push",
-        )
-        check(
-            f"mutation_writer:{rel}:no_force_push",
-            not re.search(r"git\s+push[^\n]*--force(?:-with-lease)?[^\n]*(?:HEAD:main(?=\s|$)|origin\s+main(?=\s|$)|refs/heads/main(?=\s|$))", text),
-            "direct main writer does not force-push main",
-        )
-
-    self_heal_workflow_rel = ".github/workflows/self-healing-watchdog.yml"
-    failure_guard_workflow_rel = ".github/workflows/workflow-failure-guard.yml"
-    self_heal_script_rel = "scripts/runtime_self_heal.py"
-    failure_guard_script_rel = "scripts/workflow_failure_guard.py"
-    self_heal_workflow = workflow_texts.get(self_heal_workflow_rel, "")
-    failure_guard_workflow = workflow_texts.get(failure_guard_workflow_rel, "")
-    self_heal_script_path = root / self_heal_script_rel
-    failure_guard_script_path = root / failure_guard_script_rel
-    self_heal_script = self_heal_script_path.read_text(encoding="utf-8") if self_heal_script_path.exists() else ""
-    failure_guard_script = failure_guard_script_path.read_text(encoding="utf-8") if failure_guard_script_path.exists() else ""
-    protected_workflows = (
-        "ETF system consistency",
-        "ETF runtime self-healing watchdog",
-        "Overseas pre-open pulse",
-        "US extended-hours pulse",
-    )
-
-    check(
-        "reliability:self_healing_wired",
-        bool(self_heal_workflow and self_heal_script and "python scripts/runtime_self_heal.py --assess" in self_heal_workflow),
-        "self-healing watchdog exists and assesses runtime through the canonical runtime_self_heal.py",
-    )
-    check(
-        "reliability:canonical_snapshot_recovery",
-        bool(self_heal_workflow and "gh workflow run market-snapshot.yml --ref main" in self_heal_workflow),
-        "stale A-share recovery redispatches the canonical market-snapshot workflow",
-    )
-    check(
-        "reliability:cross_market_heartbeat_wired",
-        bool(
-            self_heal_workflow
-            and "gh workflow run overseas-preopen-pulse.yml --ref main" in self_heal_workflow
-            and "gh workflow run us-extended-hours-pulse.yml --ref main" in self_heal_workflow
-        ),
-        "stale APAC/US heartbeats redispatch their canonical production pulse workflows",
-    )
-    check(
-        "reliability:failure_guard_wired",
-        bool(
-            failure_guard_workflow
-            and failure_guard_script
-            and "python scripts/workflow_failure_guard.py" in failure_guard_workflow
-            and all(name in failure_guard_workflow for name in protected_workflows)
-            and all(name in failure_guard_script for name in protected_workflows)
-        ),
-        "workflow failure guard exists, invokes the canonical classifier, and covers all four core reliability workflows",
-    )
-
-    check("mutation_protocol:direct_writers_discovered", bool(writer_rows), f"writers={writer_rows}")
-
-    notification_owner = ".github/workflows/decision-notification.yml"
-    notification_effect_workflows = []
-    for rel, text in workflow_texts.items():
-        has_sender = any(token in text for token in ("PUSHPLUS_TOKEN", "run_guarded_notification.py", "notification_center.py --mode"))
-        if has_sender:
-            notification_effect_workflows.append(rel)
-        if rel != notification_owner:
-            check(
-                f"notification_owner:{rel}:no_external_effect",
-                not has_sender,
-                "market/data producers must not hold PushPlus or notification-center execution authority",
-            )
-    check(
-        "notification_owner:single_external_effect_committer",
-        notification_effect_workflows == [notification_owner],
-        f"notification_effect_workflows={notification_effect_workflows}",
-    )
-
-    single_owner = cfg.get("single_owner_files") or {}
-    for owned_path, owner in single_owner.items():
-        for rel, text in workflow_texts.items():
-            if owner == "NO_AUTOMATIC_WORKFLOW":
-                violation = _git_add_mentions(text, owned_path)
-                check(
-                    f"mutation_owner:{owned_path}:{rel}",
-                    not violation,
-                    "formal single-owner file is not automatically staged",
-                )
-                continue
-            if rel == owner:
-                check(
-                    f"mutation_owner:{owned_path}:{rel}:staging",
-                    _workflow_may_stage(text, owned_path),
-                    "single-owner workflow stages its owned file",
-                )
-                continue
-            violation = _workflow_may_stage(text, owned_path)
-            check(
-                f"mutation_owner:{owned_path}:{rel}",
-                not violation,
-                f"single-owner file remains owned by {owner}",
-            )
-
-    formal = cfg.get("formal_file_mutation_contract") or {}
-    gateway_rel = str(formal.get("canonical_gateway") or "")
-    gateway_path = root / gateway_rel if gateway_rel else Path()
-    allowed_fact_files = [str(x) for x in formal.get("allowed_fact_files") or []]
-    forbidden_rule = str(formal.get("forbidden_rule_file") or "")
-    registered_callers = [str(x) for x in formal.get("registered_callers") or []]
-    gateway_text = gateway_path.read_text(encoding="utf-8") if gateway_rel and gateway_path.exists() else ""
-    check("formal_gateway:exists", bool(gateway_rel and gateway_path.exists()), gateway_rel or "missing canonical gateway")
-    check(
-        "formal_gateway:allowed_fact_files",
-        bool(allowed_fact_files) and all(name in gateway_text for name in allowed_fact_files),
-        f"allowed={allowed_fact_files}",
-    )
-    check(
-        "formal_gateway:master_forbidden",
-        bool(forbidden_rule and forbidden_rule in gateway_text and "raise PermissionError" in gateway_text),
-        f"forbidden={forbidden_rule}",
-    )
-    for caller in registered_callers:
-        path = root / caller
-        text = path.read_text(encoding="utf-8") if path.exists() else ""
-        check(f"formal_gateway:caller:{caller}:exists", path.exists(), "registered formal mutation caller exists")
-        check(
-            f"formal_gateway:caller:{caller}:wired",
-            bool(text) and "formal_file_mutation_gateway" in text,
-            "registered caller uses canonical formal mutation gateway",
-        )
-    bypass_patterns = (
-        r"\bDASHBOARD\.write_text\(",
-        r"\bARCHIVE\.write_text\(",
-        r"\bEXPERIENCE\.write_text\(",
-        r"\bdash_path\.write_text\(",
-        r"\barchive_path\.write_text\(",
-        r"\bexperience_path\.write_text\(",
-    )
-    bypasses: list[str] = []
-    for path in sorted(scripts_dir.glob("*.py")):
-        rel = str(path.relative_to(root)).replace("\\", "/")
-        if rel == gateway_rel:
-            continue
-        text = path.read_text(encoding="utf-8")
-        if any(re.search(pattern, text) for pattern in bypass_patterns):
-            bypasses.append(rel)
-    check(
-        "formal_gateway:no_direct_formal_write_bypass",
-        not bypasses,
-        f"direct_write_bypasses={bypasses}",
-    )
-
-    for family in cfg.get("shared_writer_families") or []:
-        token = str(family.get("required_concurrency_token") or "")
-        family_id = str(family.get("family_id") or "UNKNOWN")
-        for member in family.get("members") or []:
-            text = workflow_texts.get(str(member), "")
-            check(
-                f"mutation_family:{family_id}:{member}",
-                bool(text) and token in text,
-                f"shared writer family uses concurrency token {token}",
-            )
-
-    for rel, contract in (cfg.get("nonproduction_validation_workflows") or {}).items():
-        text = workflow_texts.get(str(rel), "")
-        artifact_path = str((contract or {}).get("artifact_path") or "")
-        check(f"nonproduction_validation:{rel}:exists", bool(text), "registered nonproduction validation workflow exists")
-        check(
-            f"nonproduction_validation:{rel}:no_main_write",
-            bool(text) and not _is_direct_main_writer(text),
-            "PoC/shadow workflow cannot directly write main",
-        )
-        check(
-            f"nonproduction_validation:{rel}:read_only_contents",
-            bool(text) and "contents: read" in text and "contents: write" not in text,
-            "PoC/shadow workflow has read-only repository contents permission",
-        )
-        check(
-            f"nonproduction_validation:{rel}:artifact",
-            bool(text) and "actions/upload-artifact@v4" in text and artifact_path and artifact_path in text,
-            f"validation evidence is uploaded as artifact path={artifact_path}",
-        )
-
-    for state_path, contract in (cfg.get("state_file_contracts") or {}).items():
-        state_class = str(contract.get("state_class") or "UNKNOWN")
-        canonical_builder = str(contract.get("canonical_builder") or "")
-        canonical_writers = [str(x) for x in contract.get("canonical_writers") or []]
-        allowed_writers = [str(x) for x in contract.get("allowed_writers") or []]
-        repair_writers = contract.get("bounded_repair_writers") or {}
-        permitted = set(canonical_writers) | set(allowed_writers) | set(repair_writers)
-
-        check(
-            f"state_contract:{state_path}:registered",
-            bool(state_class and canonical_builder),
-            f"class={state_class} builder={canonical_builder}",
-        )
-        for rel, text in workflow_texts.items():
-            stages = _workflow_may_stage(text, state_path)
-            if stages and rel not in permitted:
-                check(f"state_contract:{state_path}:writer:{rel}", False, f"unregistered production writer for {state_path}")
-        for rel in canonical_writers + allowed_writers:
-            text = workflow_texts.get(rel, "")
-            check(
-                f"state_contract:{state_path}:builder:{rel}",
-                bool(text) and canonical_builder in text,
-                f"registered writer invokes canonical builder {canonical_builder}",
-            )
-            check(
-                f"state_contract:{state_path}:staging:{rel}",
-                bool(text) and _workflow_may_stage(text, state_path),
-                f"registered writer persists {state_path}",
-            )
-        for rel, repair in repair_writers.items():
-            text = workflow_texts.get(str(rel), "")
-            required_script = str((repair or {}).get("required_script") or "")
-            check(
-                f"state_contract:{state_path}:bounded_repair:{rel}:wired",
-                bool(text) and required_script and required_script in text and _workflow_may_stage(text, state_path),
-                f"bounded repair writer uses {required_script} and persists {state_path}",
-            )
-            if state_path == "data/state/CURRENT.json":
-                check(
-                    f"state_contract:{state_path}:bounded_repair:{rel}:narrow",
-                    _bounded_current_repair_is_narrow(root, required_script),
-                    "bounded CURRENT repair mutates rules_version only",
-                )
-
-    return {
-        "schema_version": "1.5",
-        "mode": "PRODUCTION_MUTATION_PROTOCOL_CHECK",
-        "status": "FAIL" if errors else ("WARNING" if warnings else "PASS"),
-        "errors": errors,
-        "warnings": warnings,
-        "checks": checks,
-        "direct_main_writers": writer_rows,
-        "normative_contract": normative,
-        "change_admission_principles": sorted(actual_principles),
-        "change_admission_outcomes": outcomes,
-        "legacy_ca_mapping": legacy_mapping,
-        "formal_file_mutation_contract": formal,
-        "nonproduction_validation_workflows": cfg.get("nonproduction_validation_workflows") or {},
-        "state_file_contracts": cfg.get("state_file_contracts") or {},
-        "fact_precedence": cfg.get("fact_precedence") or [],
-    }
-
-
-def main() -> int:
-    result = run(ROOT)
-    print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 1 if result.get("errors") else 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+CB€[ЭЩYЩXЭЩљ[\ИHЬЭЉ
+H›Ь€[€›Ь›X[™Щ]
+[ЭЩYЩXЭЩљ[\ИЉHЬ€ЧWCB€›ЬљY[—Ьќ[HHЭЉ›Ь›X[™Щ]
+™›ЬљY[—Ьќ[WЩљ[HЉHЬ€€ЉCB€™YЪ\Э\™YШШ[\њИHЬЭЉ
+H›Ь€[€›Ь›X[™Щ]
+њ™YЪ\Э\™YШШ[\њИЉHЬ€ЧWCB€Ш]]Ш^WЭ^HШ]]Ш^WЬ]њ™XYЭ^
+[ЫЩ[™ПHќ]‹NЉHY€Ш]]Ш^WЬ™[[™Ш]]Ш^WЬ]™^\ЭК
+H[ЩH€ѓB€ЪXЪК™›Ь›X[ЩШ]]Ш^N™^\ЭИ‹›ЫЫ
+Ш]]Ш^WЬ™[[™Ш]]Ш^WЬ]™^\ЭК
+JKШ]]Ш^WЬ™[Ь€›Z\ЬЪ[™ИШ[›ЫљXШ[Ш]]Ш^HЉCB€ЪXЪКB€™›Ь›X[ЩШ]]Ш^N[ЭЩYЩXЭЩљ[\И‹B€›ЫЫ
+[ЭЩYЩXЭЩљ[\КH[™[
+[YH[€Ш]]Ш^WЭ^›Ь€[YH[€[ЭЩYЩXЭЩљ[\КKB€€[ЭЩY^Ш[ЭЩYЩXЭЩљ[\ЯH‹B€
+CB€ЪXЪКB€™›Ь›X[ЩШ]]Ш^N›X\Э\—Щ›ЬљY[€‹B€›ЫЫ
+›ЬљY[—Ьќ[H[™›ЬљY[—Ьќ[H[€Ш]]Ш^WЭ^[™њZ\ЩH\›Z\ЬЪ[Ы‘\њ›Ь€€[€Ш]]Ш^WЭ^
+KB€€™›ЬљY[Џ^Щ›ЬљY[—Ьќ[_H‹B€
+CB€›Ь€Ш[\€[€™YЪ\Э\™YШШ[\њОѓB€]H›ЫЭИШ[\ѓB€^H]њ™XYЭ^
+[ЫЩ[™ПHќ]‹NЉHY€]™^\ЭК
+H[ЩH€ѓB€ЪXЪК€™›Ь›X[ЩШ]]Ш^NШ[\ЋћШШ[\џN™^\ЭИ‹]™^\ЭК
+Kњ™YЪ\Э\™Y›Ь›X[]]][Ы€Ш[\€^\ЭИЉCB€ЪXЪКB€€™›Ь›X[ЩШ]]Ш^NШ[\ЋћШШ[\џNќЪ\™Y‹B€›ЫЫ
+^
+H[™™›Ь›X[Щљ[WЫ]]][Ы—ЩШ]]Ш^H€[€^B€њ™YЪ\Э\™YШ[\€\Щ\ИШ[›ЫљXШ[›Ь›X[]]][Ы€Ш]]Ш^H‹B€
+CB€ћ\\ЬЧЬ]\›њИH
+B€€—‘TТ“РT‘ќЬљ]WЭ^
+‹B€€—ђTђТU‘WќЬљ]WЭ^
+‹B€€—‘VT’QSђСWќЬљ]WЭ^
+‹B€€—™\ЪЬ]ќЬљ]WЭ^
+‹B€€—\Ъ]™WЬ]ќЬљ]WЭ^
+‹B€€—™^\љY[ЩWЬ]ќЬљ]WЭ^
+‹B€
+CB€ћ\\ЬЩ\О€\ЭЬЭ—HHЧCB€›Ь€][€ЫЬќY
+ШЬљ\ЧЩ\‹™ЫШЉЉ‹њHЉJNѓB€™[HЭЉ]њ™[]]™WЭК›ЫЭ
+JKњ™\XЩJ—‹‹ИЉCB€Y€™[OHШ]]Ш^WЬ™[ѓB€ЫЫќ[ќYCB€^H]њ™XYЭ^
+[ЫЩ[™ПHќ]‹NЉCB€Y€[ћJ™KњЩX\Ъ
+]\›‹^
+H›Ь€]\›€[€ћ\\ЬЧЬ]\›њКNѓB€ћ\\ЬЩ\Л\[™
+™[
+CB€ЪXЪКB€™›Ь›X[ЩШ]]Ш^N››ЧЩ\™XЭЩ›Ь›X[ЭЬљ]WШћ\\ЬИ‹B€›Эћ\\ЬЩ\ЛB€€™\™XЭЭЬљ]WШћ\\ЬЩ\П^Шћ\\ЬЩ\ЯH‹B€
+CBѓB€›Ь€[Z[H[€Щ™Л™Щ]
+њЪ\™YЭЬљ]\—Щ[Z[Y\ИЉHЬ€ЧNѓB€ЪЩ[€HЭЉ[Z[K™Щ]
+њ™\]Z\™YШЫЫЭ\њ™[ЮWЭЪЩ[€ЉHЬ€€ЉCB€[Z[WЪYHЭЉ[Z[K™Щ]
+™[Z[WЪYЉHЬ€•S’У“ХУ€ЉCB€›Ь€Y[X™\€[€[Z[K™Щ]
+›Y[X™\њИЉHЬ€ЧNѓB€^HЫЬљЩ›ЭЧЭ^Л™Щ]
+ЭЉY[X™\ЉK€ЉCB€ЪXЪКB€€›]]][Ы—Щ[Z[NћЩ[Z[WЪYNћЫY[X™\џH‹B€›ЫЫ
+^
+H[™ЪЩ[€[€^B€€њЪ\™YЬљ]\€[Z[H\Щ\ИЫЫЭ\њ™[ЮHЪЩ[€ЭЪЩ[џH‹B€
+CBѓB€›Ь€™[ЫЫќXЭ[€
+Щ™Л™Щ]
+››Ыњ›ЩXЭ[Ы—Э[Y][Ы—ЭЫЬљЩ›ЭЬИЉHЬ€ЯJKљ][\К
+NѓB€^HЫЬљЩ›ЭЧЭ^Л™Щ]
+ЭЉ™[
+K€ЉCB€\ќYXЭЬ]HЭЉ
+ЫЫќXЭЬ€ЯJK™Щ]
+\ќYXЭЬ]ЉHЬ€€ЉCB€ЪXЪК€››Ыњ›ЩXЭ[Ы—Э[Y][ЫЋћЬ™[N™^\ЭИ‹›ЫЫ
+^
+Kњ™YЪ\Э\™Y›Ыњ›ЩXЭ[Ы€[Y][Ы€ЫЬљЩ›ЭИ^\ЭИЉCB€ЪXЪКB€€››Ыњ›ЩXЭ[Ы—Э[Y][ЫЋћЬ™[N››ЧЫXZ[—ЭЬљ]H‹B€›ЫЫ
+^
+H[™›ЭЪ\ЧЩ\™XЭЫXZ[—ЭЬљ]\Љ^
+KB€”РЛЬЪYЭИЫЬљЩ›ЭИШ[››Э\™XЭHЬљ]HXZ[€‹B€
+CB€ЪXЪКB€€››Ыњ›ЩXЭ[Ы—Э[Y][ЫЋћЬ™[Nњ™XYЫЫ›WШЫЫќ[ќИ‹B€›ЫЫ
+^
+H[™ЫЫќ[ќО€™XY€[€^[™ЫЫќ[ќО€Ьљ]H€›Э[€^B€”РЛЬЪYЭИЫЬљЩ›ЭИ\И™XY[Ы›H™\ЬЪ]ЬћHЫЫќ[ќИ\›Z\ЬЪ[Ы€‹B€
+CB€ЪXЪКB€€››Ыњ›ЩXЭ[Ы—Э[Y][ЫЋћЬ™[N\ќYXЭ‹B€›ЫЫ
+^
+H[™XЭ[ЫњЛЭ\ШYX\ќYXЭЌ€[€^[™\ќYXЭЬ][™\ќYXЭЬ][€^B€€ќ[Y][Ы€]љY[ЩH\И\ШYY\И\ќYXЭ]^Ш\ќYXЭЬ]H‹B€
+CBѓB€›Ь€Э]WЬ]ЫЫќXЭ[€
+Щ™Л™Щ]
+њЭ]WЩљ[WШЫЫќXЭИЉHЬ€ЯJKљ][\К
+NѓB€Э]WШЫ\ЬИHЭЉЫЫќXЭ™Щ]
+њЭ]WШЫ\ЬИЉHЬ€•S’У“ХУ€ЉCB€Ш[›ЫљXШ[ШќZ[\€HЭЉЫЫќXЭ™Щ]
+Ш[›ЫљXШ[ШќZ[\€ЉHЬ€€ЉCB€Ш[›ЫљXШ[ЭЬљ]\њИHЬЭЉ
+H›Ь€[€ЫЫќXЭ™Щ]
+Ш[›ЫљXШ[ЭЬљ]\њИЉHЬ€ЧWCB€[ЭЩYЭЬљ]\њИHЬЭЉ
+H›Ь€[€ЫЫќXЭ™Щ]
+[ЭЩYЭЬљ]\њИЉHЬ€ЧWCB€™\Z\—ЭЬљ]\њИHЫЫќXЭ™Щ]
+›Э[™YЬ™\Z\—ЭЬљ]\њИЉHЬ€ЯCB€\›Z]YHЩ]
+Ш[›ЫљXШ[ЭЬљ]\њКHЩ]
+[ЭЩYЭЬљ]\њКHЩ]
+™\Z\—ЭЬљ]\њКCBѓB€ЪXЪКB€€њЭ]WШЫЫќXЭћЬЭ]WЬ]Nњ™YЪ\Э\™Y‹B€›ЫЫ
+Э]WШЫ\ЬИ[™Ш[›ЫљXШ[ШќZ[\ЉKB€€Ы\ЬП^ЬЭ]WШЫ\ЬЯHќZ[\Џ^ШШ[›ЫљXШ[ШќZ[\џH‹B€
+CB€›Ь€™[^[€ЫЬљЩ›ЭЧЭ^Лљ][\К
+NѓB€ЭYЩ\ИHЭЫЬљЩ›ЭЧЫX^WЬЭYЩJ^Э]WЬ]
+CB€Y€ЭYЩ\И[™™[›Э[€\›Z]YѓB€ЪXЪК€њЭ]WШЫЫќXЭћЬЭ]WЬ]NќЬљ]\ЋћЬ™[H‹[ЩK€ќ[њ™YЪ\Э\™Y›ЩXЭ[Ы€Ьљ]\€›Ь€ЬЭ]WЬ]HЉCB€›Ь€™[[€Ш[›ЫљXШ[ЭЬљ]\њИ
+И[ЭЩYЭЬљ]\њОѓB€^HЫЬљЩ›ЭЧЭ^Л™Щ]
+™[€ЉCB€ЪXЪКB€€њЭ]WШЫЫќXЭћЬЭ]WЬ]NќZ[\ЋћЬ™[H‹B€›ЫЫ
+^
+H[™Ш[›ЫљXШ[ШќZ[\€[€^B€€њ™YЪ\Э\™YЬљ]\€[ќ›ЪЩ\ИШ[›ЫљXШ[ќZ[\€ШШ[›ЫљXШ[ШќZ[\џH‹B€
+CB€ЪXЪКB€€њЭ]WШЫЫќXЭћЬЭ]WЬ]NњЭYЪ[™ОћЬ™[H‹B€›ЫЫ
+^
+H[™ЭЫЬљЩ›ЭЧЫX^WЬЭYЩJ^Э]WЬ]
+KB€€њ™YЪ\Э\™YЬљ]\€\њЪ\ЭИЬЭ]WЬ]H‹B€
+CB€›Ь€™[™\Z\€[€™\Z\—ЭЬљ]\њЛљ][\К
+NѓB€^HЫЬљЩ›ЭЧЭ^Л™Щ]
+ЭЉ™[
+K€ЉCB€™\]Z\™YЬШЬљ\HЭЉ
+™\Z\€Ь€ЯJK™Щ]
+њ™\]Z\™YЬШЬљ\ЉHЬ€€ЉCB€ЪXЪКB€€њЭ]WШЫЫќXЭћЬЭ]WЬ]N›Э[™YЬ™\Z\ЋћЬ™[NќЪ\™Y‹B€›ЫЫ
+^
+H[™™\]Z\™YЬШЬљ\[™™\]Z\™YЬШЬљ\[€^[™ЭЫЬљЩ›ЭЧЫX^WЬЭYЩJ^Э]WЬ]
+KB€€›Э[™Y™\Z\€Ьљ]\€\Щ\ИЬ™\]Z\™YЬШЬљ\H[™\њЪ\ЭИЬЭ]WЬ]H‹B€
+CB€Y€Э]WЬ]OH™]KЬЭ]KРХT”‘S•љњЫЫ€ЋѓB€ЪXЪКB€€њЭ]WШЫЫќXЭћЬЭ]WЬ]N›Э[™YЬ™\Z\ЋћЬ™[N›\њ›ЭИ‹B€Ш›Э[™YШЭ\њ™[ќЬ™\Z\—Ъ\ЧЫ\њ›ЭК›ЫЭ™\]Z\™YЬШЬљ\
+KB€›Э[™YХT”‘S•™\Z\€]]]\Иќ[\ЧЭ™\њЪ[Ы€Ы›H‹B€
+CBѓB€™]\›€ГB€њШЪ[XWЭ™\њЪ[Ы€Ћ€ЊKЌH‹B€›[ЩHЋ€”“СPХSУ—УUUUSУ—Ф“ХРУУРТPТИ‹B€њЭ]\ИЋ€‘ђRS€Y€\њ›ЬњИ[ЩH
+•РT“’S‘И€Y€Ш\›љ[™ЬИ[ЩH”TФИЉKB€™\њ›ЬњИЋ€\њ›ЬњЛB€ќШ\›љ[™ЬИЋ€Ш\›љ[™ЬЛB€ЪXЪЬИЋ€ЪXЪЬЛB€™\™XЭЫXZ[—ЭЬљ]\њИЋ€Ьљ]\—Ь›ЭЬЛB€››Ь›X]]™WШЫЫќXЭЋ€›Ь›X]]™KB€Ъ[™ЩWШYZ\ЬЪ[Ы—Ьљ[Ъ\\ИЋ€ЫЬќY
+XЭX[Ьљ[Ъ\\КKB€Ъ[™ЩWШYZ\ЬЪ[Ы—ЫЭ]ЫЫY\ИЋ€Э]ЫЫY\ЛB€›YШXЮWШШWЫX\[™ИЋ€YШXЮWЫX\[™ЛB€™›Ь›X[Щљ[WЫ]]][Ы—ШЫЫќXЭЋ€›Ь›X[B€››Ыњ›ЩXЭ[Ы—Э[Y][Ы—ЭЫЬљЩ›ЭЬИЋ€Щ™Л™Щ]
+››Ыњ›ЩXЭ[Ы—Э[Y][Ы—ЭЫЬљЩ›ЭЬИЉHЬ€ЯKB€њЭ]WЩљ[WШЫЫќXЭИЋ€Щ™Л™Щ]
+њЭ]WЩљ[WШЫЫќXЭИЉHЬ€ЯKB€™XЭЬ™XЩY[ЩHЋ€Щ™Л™Щ]
+™XЭЬ™XЩY[ЩHЉHЬ€ЧKB€CBѓBѓB™Y€XZ[Љ
+HO€[ќѓB€™\Э[Hќ[Љ“УХ
+CB€љ[ќ
+њЫЫ‹™[\К™\Э[[њЭ\™WШ\ШЪZOQ[ЩK[™[ќLЉJCB€™]\›€HY€™\Э[™Щ]
+™\њ›ЬњИЉH[ЩHBѓBѓBљY€ЧЫ[YWЧИOH—ЧЫXZ[—ЧИЋѓB€Z\ЩHЮ\Э[Q^]
+XZ[Љ
+JCB
