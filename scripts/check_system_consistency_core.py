@@ -15,12 +15,12 @@ except ModuleNotFoundError:
     from scripts.rules_version import parse_master_release
 try:
     from semantic_latest_main import classify_delta
+except ModuleNotFoundError:
+    from scripts.semantic_latest_main import classify_delta
 try:
     from confirmed_trade_facts import canonical_etf_fee_projection
 except ModuleNotFoundError:
     from scripts.confirmed_trade_facts import canonical_etf_fee_projection
-except ModuleNotFoundError:
-    from scripts.semantic_latest_main import classify_delta
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = Path(os.environ.get("ETF_CONSISTENCY_REPORT_PATH", str(ROOT / "data" / "state" / "system_consistency.json"))).resolve()
