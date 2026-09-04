@@ -42,6 +42,7 @@ jobs:
       HITHINK_RETRY_LIMIT: "2"
       HITHINK_TIMEOUT_SECONDS: "25"
       QUERY_TIME_REFRESH: ${{ github.event_name == 'push' && 'true' || 'false' }}
+      EVENT_BEFORE: ${{ github.event.before }}
       SCHEDULED_CRON: ${{ github.event.schedule || '' }}
     steps:
       - uses: actions/checkout@v5
@@ -232,7 +233,11 @@ jobs:
         shell: bash
         run: |
           processed=false
-          files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
+          if [ -n "${EVENT_BEFORE:-}" ] && git cat-file -e "${EVENT_BEFORE}^{commit}" 2>/dev/null; then
+            files=$(git diff --name-only "${EVENT_BEFORE}" "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
+          else
+            files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
+          fi
           for f in $files; do
             if python - "$f" <<'PY'
           import json, sys
