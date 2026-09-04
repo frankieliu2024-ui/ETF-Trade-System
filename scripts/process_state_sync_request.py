@@ -1225,6 +1225,18 @@ def main() -> int:
         existing = _find_existing_trade(trade, confirmed_at, idempotency_key)
         if existing:
             event, event_id, trade_event_recorded = existing, str(existing.get("event_id") or ""), True
+            # Idempotent fee/account replays must also converge stale attribution
+            # written by an older producer; they never create another event.
+            linked_decision_id = str(event.get("linked_decision_id") or trade.get("decision_id") or decision_id or "")
+            refreshed_attribution = execution_attribution(event, linked_decision_id)
+            refreshed_hypothesis = refreshed_attribution.get("hypothesis_id")
+            if (
+                event.get("execution_attribution") != refreshed_attribution
+                or event.get("hypothesis_id") != refreshed_hypothesis
+            ):
+                event["execution_attribution"] = refreshed_attribution
+                event["hypothesis_id"] = refreshed_hypothesis
+                atomic_json_write(ROOT / "events" / "trades" / f"{event_id}.json", event)
         else:
             event_id = str(trade.get("event_id") or request.get("request_id") or datetime.now(SHANGHAI).strftime("%Y%m%d_%H%M%S"))
             linked_decision_id = str(trade.get("decision_id") or decision_id or "")
