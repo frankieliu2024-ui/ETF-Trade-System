@@ -274,7 +274,7 @@ def main() -> int:
 
     rc, head_sha = run_git("rev-parse", "HEAD")
     check("git:head_commit", rc == 0 and bool(re.fullmatch(r"[0-9a-f]{40}", head_sha)), f"HEAD={head_sha or 'UNAVAILABLE'}")
-    github_sha = os.environ.get("GITHUB_SHA", "")
+    github_sha = os.environ.get("ETF_ACCEPTANCE_SHA") or os.environ.get("GITHUB_SHA", "")
     try:
         prior_report = read_json("data/state/system_consistency.json")
     except (FileNotFoundError, json.JSONDecodeError):
