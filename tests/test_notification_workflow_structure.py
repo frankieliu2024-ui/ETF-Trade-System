@@ -74,6 +74,13 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         names = [x for x in result["checks"] if x["name"] == "notification_owner:single_external_effect_committer"]
         self.assertEqual(names[0]["status"], "PASS")
 
+    def test_notification_state_uses_single_owner_contract(self):
+        import json
+        config = json.loads((ROOT / "config/maintenance/production_mutation_protocol.json").read_text(encoding="utf-8"))
+        self.assertEqual(config["single_owner_files"]["data/state/notification_center.json"], ".github/workflows/decision-notification.yml")
+        from scripts.check_production_mutation_protocol import _workflow_may_stage
+        self.assertTrue(_workflow_may_stage("git add data/state/notification_center.json", "data/state/notification_center.json"))
+
 
 if __name__ == "__main__":
     unittest.main()

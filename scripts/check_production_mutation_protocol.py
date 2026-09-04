@@ -55,7 +55,12 @@ def _broad_state_add_without_exclusion(text: str, path: str) -> bool:
 
 
 def _workflow_may_stage(text: str, path: str) -> bool:
-    return _git_add_mentions(text, path) or _broad_state_add_without_exclusion(text, path)
+    # Some workflows stage an allowlisted state file through a bounded loop
+    # (`for f in ...; git add "$f"`).  Treat that as a real write only when the
+    # owned path is present in the loop, while preserving the explicit-path and
+    # broad-add checks above.
+    variable_stage = 'git add "$f"' in text and path in text
+    return _git_add_mentions(text, path) or _broad_state_add_without_exclusion(text, path) or variable_stage
 
 
 def _bounded_current_repair_is_narrow(root: Path, script_path: str) -> bool:
@@ -259,6 +264,11 @@ def run(root: Path = ROOT) -> dict:
                 )
                 continue
             if rel == owner:
+                check(
+                    f"mutation_owner:{owned_path}:{rel}:staging",
+                    _workflow_may_stage(text, owned_path),
+                    "single-owner workflow stages its owned file",
+                )
                 continue
             violation = _workflow_may_stage(text, owned_path)
             check(

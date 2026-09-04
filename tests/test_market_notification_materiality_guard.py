@@ -4,6 +4,7 @@ import json
 import sys
 import tempfile
 import unittest
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
@@ -265,6 +266,37 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
 
 
 class NotificationAggregationTests(unittest.TestCase):
+    def _real_apac_open_event(self):
+        import send_regional_session_summary as producer
+        from unittest.mock import MagicMock
+
+        today = "2026-09-04"
+        objects = {}
+        for code, _label in producer.APAC_SPECS:
+            gap = 2.69 if code == "HSTECH" else 0.1
+            objects[code] = {
+                "quality_status": "PASS",
+                "latest": {
+                    "market_date_local": today,
+                    "as_of_beijing": f"{today}T10:20:00+08:00",
+                    "open": 100.0 + gap,
+                    "close": 100.0 + gap,
+                    "previous_close": 100.0,
+                },
+            }
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            context_path = root / "overseas_context.json"
+            current_path = root / "CURRENT.json"
+            context_path.write_text(json.dumps({"objects": objects}), encoding="utf-8")
+            current_path.write_text(json.dumps({"market_date": today}), encoding="utf-8")
+            clock = MagicMock()
+            clock.now.return_value = datetime.fromisoformat(f"{today}T10:21:00+08:00")
+            with patch.object(producer, "OVERSEAS", context_path), patch.object(producer, "CURRENT", current_path), patch.object(producer, "datetime", clock):
+                event = producer._apac_event()
+        self.assertIsNotNone(event)
+        return event
+
     def test_same_fact_key_is_stable_across_notification_runs(self):
         from scripts import send_market_shock_notification_legacy as legacy
         c = {"category": "REVERSAL", "code": "HSTECH", "day": 0.32, "event_magnitude_pct": 1.61, "sudden": 0.0, "direction": "UP", "name": "恒生科技指数", "latest": {"as_of_beijing": "2026-08-31T16:09:08+08:00"}}
@@ -303,31 +335,13 @@ class NotificationAggregationTests(unittest.TestCase):
         self.assertEqual(result[1]["confirmation_context"]["event_tags"], ["SUDDEN", "EXTREME"])
 
     def test_apac_open_signal_absorbs_same_object_extreme_without_upgrade(self):
-        opening = {
-            "event_type": "APAC_OPEN_SIGNAL",
-            "security_code": "HSTECH",
-            "created_at": "2026-09-04T10:20:00+08:00",
-            "sent_at": "2026-09-04T10:20:00+08:00",
-            "confirmation_context": {
-                "market": "ASIA", "market_date": "2026-09-04", "direction": "UP",
-                "lead_change_pct": 2.69, "session_node": "OPEN_SIGNAL",
-            },
-        }
+        opening = self._real_apac_open_event()
         extreme = self._event("HSTECH", "恒生科技指数", "EXTREME", magnitude=2.83, stamp="2026-09-04T10:34:00+08:00")
         extreme["confirmation_context"].update({"market": "ASIA", "market_date": "2026-09-04", "direction": "UP"})
         self.assertEqual(notification_common._absorb_or_aggregate([opening], extreme)[0], "AGGREGATED_INTO_EXISTING")
 
     def test_apac_open_signal_allows_substantive_extreme_upgrade(self):
-        opening = {
-            "event_type": "APAC_OPEN_SIGNAL",
-            "security_code": "HSTECH",
-            "created_at": "2026-09-04T10:20:00+08:00",
-            "sent_at": "2026-09-04T10:20:00+08:00",
-            "confirmation_context": {
-                "market": "ASIA", "market_date": "2026-09-04", "direction": "UP",
-                "lead_change_pct": 2.69, "session_node": "OPEN_SIGNAL",
-            },
-        }
+        opening = self._real_apac_open_event()
         extreme = self._event("HSTECH", "恒生科技指数", "EXTREME", magnitude=3.70, stamp="2026-09-04T10:34:00+08:00")
         extreme["confirmation_context"].update({"market": "ASIA", "market_date": "2026-09-04", "direction": "UP"})
         self.assertIsNone(notification_common._absorb_or_aggregate([opening], extreme))
