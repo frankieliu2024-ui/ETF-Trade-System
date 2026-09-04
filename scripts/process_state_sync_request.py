@@ -907,6 +907,7 @@ def _case_ids_from_existing_experience_for_trade(event: dict, text: str, table_s
     """Recover an already documented CASE owner using exact immutable trade facts."""
     event_id = str(event.get("event_id") or "").strip()
     code = str(event.get("code") or "").strip()
+    name = str(event.get("name") or "").strip()
     side = str(event.get("side") or "").upper()
     side_cn = "买入" if side in {"BUY", "B", "买入", "买"} else "卖出" if side in {"SELL", "S", "卖出", "卖"} else side
     qty = int(float(event.get("quantity") or 0))
@@ -935,7 +936,8 @@ def _case_ids_from_existing_experience_for_trade(event: dict, text: str, table_s
         end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
         section = text[match.start():end]
         exact_identity = (
-            code and code in section and side_cn and side_cn in section
+            (code and code in section or name and name in section)
+            and side_cn and side_cn in section
             and (f"{qty:,}" in section or str(qty) in section)
             and f"{price:.3f}" in section
             and trade_date and trade_date in section
