@@ -58,7 +58,37 @@ def unintegrated_executed_trade_events(root: Path, reconstructed_trades: list[di
     return overlays
 
 
+def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> list[dict]:
+    """Return the deduplicated ETF fact set: reconstruction plus executed events."""
+    facts: list[dict] = []
+    seen: set[tuple] = set()
+    for trade in list(reconstructed_trades) + unintegrated_executed_trade_events(root, reconstructed_trades):
+        asset_type = str(trade.get("asset_type") or "ETF").upper()
+        if asset_type not in {"ETF", "FUND", ""}:
+            continue
+        signature = trade_signature(trade)
+        if signature in seen:
+            continue
+        seen.add(signature)
+        facts.append(trade)
+    return facts
+
+
+def canonical_etf_fee_projection(root: Path, reconstructed_trades: list[dict]) -> dict:
+    facts = canonical_etf_trade_facts(root, reconstructed_trades)
+    confirmed = round(sum(confirmed_fee_amount(t) for t in facts), 2)
+    pending = [t for t in facts if str(t.get("fee_status") or "").upper() != "CONFIRMED"]
+    return {
+        "effective_confirmed_fee_sum": confirmed,
+        "pending_fee_count": len(pending),
+        "canonical_trade_count": len(facts),
+        "pending_trades": pending,
+        "canonical_trades": facts,
+    }
+
+
 def effective_confirmed_fee_fact(root: Path, reconstructed_trades: list[dict]) -> dict:
+    projection = canonical_etf_fee_projection(root, reconstructed_trades)
     reconstructed = round(sum(confirmed_fee_amount(t) for t in reconstructed_trades), 2)
     overlays = unintegrated_executed_trade_events(root, reconstructed_trades)
     overlay_fee = round(sum(confirmed_fee_amount(t) for t in overlays), 2)
@@ -66,8 +96,10 @@ def effective_confirmed_fee_fact(root: Path, reconstructed_trades: list[dict]) -
         "reconstructed_confirmed_fee_sum": reconstructed,
         "executed_event_overlay_count": len(overlays),
         "executed_event_confirmed_fee_sum": overlay_fee,
-        "effective_confirmed_fee_sum": round(reconstructed + overlay_fee, 2),
+        "effective_confirmed_fee_sum": projection["effective_confirmed_fee_sum"],
         "overlay_events": overlays,
+        "pending_fee_count": projection["pending_fee_count"],
+        "canonical_trade_count": projection["canonical_trade_count"],
     }
 
 
