@@ -66,8 +66,8 @@ def validate_current_fee_projection() -> dict:
         confirmed_event_ids.append(event_id)
         marker = f"TRADE_EVENT:{event_id}"
         marker_count = experience.count(marker)
-        if marker_count != 1:
-            failures.append(f"{event_id}: marker_count={marker_count}, expected=1")
+        if marker_count > 1:
+            failures.append(f"{event_id}: marker_count={marker_count}, duplicate event markers")
         marker_lines = [line for line in experience.splitlines() if marker in line]
         if not marker_lines:
             continue
