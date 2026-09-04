@@ -956,6 +956,21 @@ def _case_ids_from_existing_experience_for_trade(event: dict, text: str, table_s
 
 def _case_ids_for_transaction_projection(event: dict, text: str, table_start: int, table_end: int) -> list[str]:
     """Resolve CASE ownership with strong facts first and no guessing."""
+    event_id = str(event.get("event_id") or "").strip()
+    event_date = str(event.get("execution_date") or event.get("confirmed_at_beijing") or "")[:10]
+    if event_id and event_date:
+        terminal_path = ROOT / "events" / "reviews" / f"{event_date}.json"
+        if terminal_path.exists():
+            try:
+                from review_prerequisite_lifecycle import is_valid_unrecoverable_review_event
+                terminal_review = json.loads(terminal_path.read_text(encoding="utf-8"))
+                if is_valid_unrecoverable_review_event(terminal_review, event_id):
+                    # An unrecoverable review is a canonical terminal lifecycle
+                    # fact, not a normal CASE owner.  Do not project a stale
+                    # CASE from an older transaction-index row.
+                    return []
+            except (OSError, ValueError, TypeError, ImportError):
+                pass
     review_ids = _review_case_ids_for_trade(event)
     if review_ids:
         return review_ids
