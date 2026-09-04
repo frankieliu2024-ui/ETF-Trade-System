@@ -59,6 +59,22 @@ def looks_like_etf(position: dict, code: str, etf_codes: set[str]) -> bool:
     return code in etf_codes or "ETF" in security_type or "ETF" in name.upper()
 
 
+
+
+def active_account_asset_codes(root: Path | None = None, account: dict | None = None) -> dict[str, set[str]]:
+    """Return active membership using this builder's canonical ETF classifier."""
+    root = root or ROOT
+    account = account if account is not None else read_account_fact(root)
+    etf_codes = load_etf_codes()
+    membership = {"etf": set(), "stocks": set()}
+    for position in account.get("positions") or []:
+        if not isinstance(position, dict): continue
+        code = normalize_code(first(position, "code", "symbol", "security_code", "instrument_code"))
+        quantity = numeric(first(position, "quantity", "qty", "position", "shares", "volume"))
+        if not code or quantity is None or quantity <= 0: continue
+        membership["etf" if looks_like_etf(position, code, etf_codes) else "stocks"].add(code)
+    return membership
+
 def build() -> dict:
     account = read_account_fact(ROOT)
     etf_codes = load_etf_codes()

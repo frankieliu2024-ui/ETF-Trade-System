@@ -1,163 +1,419 @@
-1ëa¡Ñ1qêmŠ‰ËŠw¶–+r‚æ«vœ¬±©•§r«×œ…ªõÑÈZ¯]Màšz-r‰ïz»Z®¦z{h•Ğ¡j¼"¶Ú–çŸ¢´^¦VœzÚ-Ê—’ÊË^˜(Z¬&§‹\¢{Ş®ÛÚ–ç­¢Ü©y,¬µé‚…ªÄ®º+JÚâ	®²ÖŞ{œ¶\¨ç!j¶œµêå¢xœ›ÛH×Ù]\™W×È[\Ü[››İ][ÛœÃBƒBš[\ÜœÛÛ‚š[\ÜŞ\Âš[\Ü[\š[Bš[\Ü[š]\İ™œ›ÛH]][YH[\Ü]][YB™œ›ÛH]Xˆ[\Ü]B™œ›ÛH[š]\İ›[ØÚÈ[\Ü]ÚBƒB”“ÓÕH]
-×Ùš[W×ÊKœ™\ÛÛ™J
-Kœ\™[ÖÌWCB”ĞÔ’TÈH“ÓÕÈœØÜš\ÈƒBšYˆİŠĞÔ’TÊH›İ[ˆŞ\Ëœ]ƒBˆŞ\Ëœ]š[œÙ\
-İŠĞÔ’TÊJCBƒBš[\Ü›İYšXØ][Û—ÛX]\šX[]WÙİX\™\ÈİX\™Bš[\ÜX\šÙ]Û›İYšXØ][Û—ØÛÛ[[Ûˆ\È›İYšXØ][Û—ØÛÛ[[ÛƒBƒBƒB˜Û\ÜÈ›İYšXØ][Û“X]\šX[]QİX\™\İÊ[š]\İ•\İØ\ÙJNƒBˆYˆ\İÛX\šÙ]ÛX™[ÛÛ›WØÚ[™ÙWÚ\×Ü™Z™XİY
-Ù[ŠNƒBˆ]™[HÃBˆ™]™[İ\Hˆ“PT’ÑUÕSQWĞST•‹BˆœÙXİ\š]WØÛÙHˆLMN‹Bˆ˜ÛÛ™š\›X][Û—ØÛÛ^ˆÃBˆ™]™[ØØ]YÛÜHˆ”‘U‘T”ĞS‹Bˆ›X\šÙ]Ø\×ÛÙ—Ø™ZZš[™ÈˆŒŒ‹LLMŒŒŒLÊÌŒ‹BˆKBˆCBˆÙ[‹˜\ÜÙ\[Š™^İ\œÚ[Ûˆ‹İX\™››İYšXØ][Û—Ù]šY[˜ÙWÙ\œ›ÜŠ]™[
-JCBƒBˆYˆ\İÛX\šÙ]Ü™]™\œØ[İÚ]Û[Y\šX×Ü]Ú\×Ø[İÙY
-Ù[ŠNƒBˆ]™[HÃBˆ™]™[İ\Hˆ“PT’ÑUÕSQWĞST•‹BˆœÙXİ\š]WØÛÙHˆLMN‹Bˆ˜ÛÛ™š\›X][Û—ØÛÛ^ˆÃBˆ™]™[ØØ]YÛÜHˆ”‘U‘T”ĞS‹Bˆ›X\šÙ]Ø\×ÛÙ—Ø™ZZš[™ÈˆŒŒ‹LLMŒŒŒLÊÌŒ‹Bˆ™]™[ÛXYÛš]YWÜİˆ‹LKBˆ™^WØÚ[™ÙWÜİˆLBˆKBˆCBˆÙ[‹˜\ÜÙ\\]X[
-İX\™››İYšXØ][Û—Ù]šY[˜ÙWÙ\œ›ÜŠ]™[
-KˆŠCBƒBˆYˆ\İØ\X×ØÛİ™\˜YÙWÛÜ—İÛ™WØÚ[™ÙWİÚ]İ]ÚİXÚÙ[WÚ\×Ü™Z™XİY
-Ù[ŠNƒBˆ]™[HÃBˆ™]™[İ\HˆTP×ÔÑTÔÒSÓ—ÔÕSSPT–H‹Bˆ]Hˆ¸à$9¥-¹ææ9 .ùîäøà$y.¦¹i*ºi¦y®+ù¥-¹ææ9d#¹c.¹gçùb)9¥«ycäyå'ùk§º-*9cæ9c%ˆ‹Bˆ˜ÛÛ™š\›X][Û—ØÛÛ^ˆÈœÙ\ÜÚ[Û—Û›ÙHˆ’×ÓUWÕTUHŸKBˆCBˆÙ[‹˜\ÜÙ\[Š››ÈÛÛ\\˜X›HÕPÒ[H‹İX\™››İYšXØ][Û—Ù]šY[˜ÙWÙ\œ›ÜŠ]™[
-JCBƒBˆYˆ\İØ\X×Ü™X[ÚİXÚÛ[İ™WÚ\×Ø[İÙY
-Ù[ŠNƒBˆ]™[HÃBˆ™]™[İ\HˆTP×ÔÑTÔÒSÓ—ÔÕSSPT–H‹Bˆ]Hˆ¸à$9¥-¹ææ9 .ùîäøà$y.¦¹i*ºi¦y®+ù¥-¹ææ9d#¹c.¹gçùb)9¥«ycäyå'ùk§º-*9cæ9c%ˆ‹Bˆ˜ÛÛ™š\›X][Û—ØÛÛ^ˆÃBˆœÙ\ÜÚ[Û—Û›ÙHˆ’×ÓUWÕTUH‹BˆšİXÚØÚ[™ÙWÜÚ[˜ÙWÜš[X\WÜİˆLKBˆKBˆCBˆÙ[‹˜\ÜÙ\\]X[
-İX\™››İYšXØ][Û—Ù]šY[˜ÙWÙ\œ›ÜŠ]™[
-KˆŠCBƒBˆYˆ\İØWÜÚ\™WÜ›ÛWİ^Ú\×ÛØØ[Û›İÛİ™\œÙX\ÊÙ[ŠNƒBˆœ›ÛHØÜš\Ë››İYšXØ][Û—ÜÙ[X[XÜÈ[\ÜÚØÚ×Ú[\XØ][ÛƒBˆÚ]]Ú
-œØÜš\Ë››İYšXØ][Û—ÜÙ[X[XÜË—ØXØÛİ[ØÛÛ^‹™]\›—İ˜[YO^È™]HˆßKš[Ù]œÈˆßKš[ÜİØÚÜÈˆßK™›Ü›X[ˆß_JNƒBˆ[\XØ][Û‹ØXİ[ÛˆHÚØÚ×Ú[\XØ][ÛŠŒ‹¹éäyb&ÍL‹WÔÒT‘WÒS‘V‹WÔÒT‘HŠCBˆÙ[‹˜\ÜÙ\[Šz ¨y§+9g,:hãºfjy`cùioH‹[\XØ][ÛŠCBˆÙ[‹˜\ÜÙ\›İ[Š¹­mùi%‹ùc.¹gçùîäù§¡:+ày£kˆ‹[\XØ][ÛŠCBƒBˆYˆ\İÛİ™\œÙX\×Ü›ÛWİ^ÚÙY\×Ù^\›˜[İ˜[œÛZ\ÜÚ[ÛŠÙ[ŠNƒBˆœ›ÛHØÜš\Ë››İYšXØ][Û—ÜÙ[X[XÜÈ[\ÜÚØÚ×Ú[\XØ][ÛƒBˆÚ]]Ú
-œØÜš\Ë››İYšXØ][Û—ÜÙ[X[XÜË—ØXØÛİ[ØÛÛ^‹™]\›—İ˜[YO^È™]HˆßKš[Ù]œÈˆßKš[ÜİØÚÜÈˆßK™›Ü›X[ˆß_JNƒBˆ[\XØ][Û‹ØXİ[ÛˆHÚØÚ×Ú[\XØ][ÛŠ’ÕPÒ‹¹ d¹å'ùéäy¢ 9£!ù¥l‹’S‘V‹TÒPHŠCBˆÙ[‹˜\ÜÙ\[Š¹­mùi%‹ùc.¹gçùîäù§¡:+ày£kˆ‹[\XØ][ÛŠCBƒBˆYˆ\İÙ]—Ø[™ØXØÛİ[ÜİØÚ×Ü›Û\×Ø\™WÛ›İÚ[™^Ü›Û\ÊÙ[ŠNƒBˆœ›ÛHØÜš\Ë››İYšXØ][Û—ÜÙ[X[XÜÈ[\ÜÚØÚ×Ú[\XØ][ÛƒBˆÚ]]Ú
-œØÜš\Ë››İYšXØ][Û—ÜÙ[X[XÜË—ØXØÛİ[ØÛÛ^‹™]\›—İ˜[YO^È™]HˆßKš[Ù]œÈˆÈLMNˆß_Kš[ÜİØÚÜÈˆÈŒÌÍLˆß_K™›Ü›X[ˆß_JNƒBˆ]—İ^ÈHÚØÚ×Ú[\XØ][ÛŠLMN‹º`&¹/èQUˆ‹‘Uˆ‹WÔÒT‘HŠCBˆİØÚ×İ^ÈHÚØÚ×Ú[\XØ][ÛŠŒÌÍL‹¹k yo­ù¥í¹.èÈ‹PĞÓÕS•ÔÕĞÒÈ‹WÔÒT‘HŠCBˆÙ[‹˜\ÜÙ\[Š¹odùbcy£ y.äÑUˆ‹]—İ^
-CBˆÙ[‹˜\ÜÙ\[Šº-)¹¢-ù.*º ¨H‹İØÚ×İ^
-CBƒBˆYˆ\İİ\×Ü›ŞWÜ›ÛWÚÙY\×Ù^\›˜[İ˜[œÛZ\ÜÚ[ÛŠÙ[ŠNƒBˆœ›ÛHØÜš\Ë››İYšXØ][Û—ÜÙ[X[XÜÈ[\ÜÚØÚ×Ú[\XØ][ÛƒBˆÚ]]Ú
-œØÜš\Ë››İYšXØ][Û—ÜÙ[X[XÜË—ØXØÛİ[ØÛÛ^‹™]\›—İ˜[YO^È™]HˆßKš[Ù]œÈˆßKš[ÜİØÚÜÈˆßK™›Ü›X[ˆß_JNƒBˆ^İ˜[YKÈHÚØÚ×Ú[\XØ][ÛŠ”ÓÖ‹¹cb¹kï9/dÑU¹.èùä!ˆ‹‘Uˆ‹•TÈŠCBˆÙ[‹˜\ÜÙ\[Š¹­mùi%‹ùc.¹gçùîäù§¡:+ày£kˆ‹^İ˜[YJCBƒBˆYˆ\İÙš^YÜÙ\ÜÚ[Û—Üİ[[X\WÚ\×Û›İÛZ\ØÛ\ÜÚYšYYØ\×ØÚ[™ÙJÙ[ŠNƒBˆ]™[HÃBˆ™]™[İ\HˆWÔÒT‘WÔÑTÔÒSÓ—ÔÕSSPT–H‹Bˆ]Hˆ¸à$9¥-¹ææ9 .ùîäøà$Pz ¨yaj9i*yîäù§¡9.#‘U¹o.¹o,H‹Bˆ˜ÛÛ™š\›X][Û—ØÛÛ^ˆÈœÙ\ÜÚ[Û—Û›ÙHˆÓÔÑHŸKBˆCBˆÙ[‹˜\ÜÙ\\]X[
-İX\™››İYšXØ][Û—Ù]šY[˜ÙWÙ\œ›ÜŠ]™[
-KˆŠCBƒBˆYˆ\İÙ›Ü›X[ÙXÚ\Ú[Û—ÛZ\ÜÚ[™×Ü™]š[İ\×Ù˜XİÚ\×Ü™Z™XİY
-Ù[ŠNƒBˆ]™[HÃBˆ™]™[İ\Hˆ‘“Ô“PSÑPÒTÒSÓ—ÓPUT’PSĞÒS‘ÑH‹Bˆœ™[]YÙXÚ\Ú[Û—ÚYˆ™ˆ‹BˆœÙXİ\š]WØÛÙHˆLMN‹Bˆ˜ÛÛ™š\›X][Û—ØÛÛ^ˆÃBˆ™XÚ\Ú[Û—ÚYˆ™ˆ‹Bˆ›ÜÜ[š]WÜİ]\Èˆ•šX[9§.¹/&ˆ‹Bˆœ™]š[İ\×ÛÜÜ[š]WÜİ]\Èˆˆ‹Bˆœš\Ú×Ü\›Z\ÜÚ[Ûˆˆ¹a`z+®šX[‹Bˆœ™]š[İ\×Üš\Ú×Ü\›Z\ÜÚ[Ûˆˆˆ‹BˆKBˆCBˆÙ[‹˜\ÜÙ\[Š˜™Y›Ü™KØY\ˆ‹İX\™››İYšXØ][Û—Ù]šY[˜ÙWÙ\œ›ÜŠ]™[
-JCBƒBˆYˆ\İÙ›Ü›X[ÙXÚ\Ú[Û—Ü™X[Üš\Ú×ØÚ[™ÙWÚ\×Ø[İÙY
-Ù[ŠNƒBˆ]™[HÃBˆ™]™[İ\Hˆ‘“Ô“PSÑPÒTÒSÓ—ÓPUT’PSĞÒS‘ÑH‹Bˆœ™[]YÙXÚ\Ú[Û—ÚYˆ™ˆ‹BˆœÙXİ\š]WØÛÙHˆLMN‹Bˆ˜ÛÛ™š\›X][Û—ØÛÛ^ˆÃBˆ™XÚ\Ú[Û—ÚYˆ™ˆ‹Bˆ›ÜÜ[š]WÜİ]\Èˆº)à¹kçù§.¹/&ˆ‹Bˆœ™]š[İ\×ÛÜÜ[š]WÜİ]\Èˆº)à¹kçù§.¹/&ˆ‹BˆœÙXİ\š]WØÛÙHˆLMN‹Bˆœ™]š[İ\×ÜÙXİ\š]WØÛÙHˆLMN‹Bˆœš\Ú×Ü\›Z\ÜÚ[Ûˆˆ¹é y«h¹¥¬9h§ˆ‹Bˆœ™]š[İ\×Üš\Ú×Ü\›Z\ÜÚ[Ûˆˆ¹a`z+®šX[‹BˆKBˆCBˆÙ[‹˜\ÜÙ\\]X[
-İX\™››İYšXØ][Û—Ù]šY[˜ÙWÙ\œ›ÜŠ]™[
-KˆŠCBƒBˆYˆ\İØXØÛİ[ØÚ[™ÙWÜ™\]Z\™\×Ü™XÛÛ˜Ú[XX›WÙ]™[ÚY×Ø[™İ[YJÙ[ŠNƒBˆ˜YHÈ™]™[İ\HˆPĞÓÕS•ÑPÕĞÓÓ‘’T“PUSÓˆ‹˜ÛÛ™š\›X][Û—ØÛÛ^ˆß_CBˆÙ[‹˜\ÜÙ\[Š™]™[YÈ‹İX\™››İYšXØ][Û—Ù]šY[˜ÙWÙ\œ›ÜŠ˜Y
-JCBˆÛÛÙHÃBˆ™]™[İ\HˆPĞÓÕS•ÑPÕĞÓÓ‘’T“PUSÓˆ‹Bˆ˜ÛÛ™š\›X][Û—ØÛÛ^ˆÃBˆ˜XØÛİ[Ù]™[ÚYÈˆÈ˜XØİLH—KBˆ˜XØÛİ[Ù]™[İ[YWØ™ZZš[™ÈˆŒŒ‹LLMŒNŒ
-ÌŒ‹BˆKBˆCBˆÙ[‹˜\ÜÙ\\]X[
-İX\™››İYšXØ][Û—Ù]šY[˜ÙWÙ\œ›ÜŠÛÛÙ
-KˆŠCBƒBˆYˆ\İÙ^Xİ][Û—ØÛÛ™š\›X][Û—Ü™\]Z\™\×Û[šÙYÙXÚ\Ú[Û—Ø[™ÜÚYJÙ[ŠNƒBˆ˜YHÃBˆ™]™[İ\Hˆ”S‘S‘×ÑVPÕUSÓ—ĞÓÓ‘’T“PUSÓˆ‹BˆœÙXİ\š]WØÛÙHˆLMN‹Bˆ˜ÛÛ™š\›X][Û—ØÛÛ^ˆÈœÙXİ\š]WØÛÙHˆLMN‹œÚYHˆ•VH‹›Y™XŞXÛHˆ•šX[ŸKBˆCBˆÙ[‹˜\ÜÙ\[Š›[šÙYXÚ\Ú[Ûˆ‹İX\™››İYšXØ][Û—Ù]šY[˜ÙWÙ\œ›ÜŠ˜Y
-JCBˆÛÛÙHÃBˆ™]™[İ\Hˆ”S‘S‘×ÑVPÕUSÓ—ĞÓÓ‘’T“PUSÓˆ‹BˆœÙXİ\š]WØÛÙHˆLMN‹Bˆœ™[]YÙXÚ\Ú[Û—ÚYˆ™H‹Bˆ˜ÛÛ™š\›X][Û—ØÛÛ^ˆÃBˆ™XÚ\Ú[Û—ÚYˆ™H‹BˆœÙXİ\š]WØÛÙHˆLMN‹BˆœÚYHˆ•VH‹Bˆ›Y™XŞXÛHˆ•šX[‹BˆKBˆCBˆÙ[‹˜\ÜÙ\\]X[
-İX\™››İYšXØ][Û—Ù]šY[˜ÙWÙ\œ›ÜŠÛÛÙ
-KˆŠCBƒBˆYˆ\İÙÙ[™\šX×ÙXÚ\Ú[Û—İšYÙÙ\—Ü™\]Z\™\×Ù^XÚ]Ù]šY[˜ÙWØÚ[™ÙJÙ[ŠNƒBˆÚ][\š[K•[\Ü˜\Q\™XİÜJ
-H\ÈƒBˆİ]HH]
-
-CBˆšYÙÙ\ˆHÃBˆœİ]\Èˆ•’QÑÑT‘Q‹Bˆœ™\]Z\™\×Ù›Ü›X[Ü™X\ÜÙ\ÜÛY[ˆYKBˆšY[\İ[˜ŞWÚÙ^HˆšÌH‹BˆšYÙÙ\—İ\Hˆ”‘TÑPTÒÑU’QSÑWĞÒS‘ÑQ‹Bˆ™]šY[˜ÙWØÚ[™ÙHˆˆ‹BˆCBˆ
-İ]HÈ™XÚ\Ú[Û—İšYÙÙ\‹šœÛÛˆŠKÜš]Wİ^
-œÛÛ‹™[\ÊšYÙÙ\ŠK[˜ÛÙ[™ÏH]‹NŠCBˆÚ]]Ú›Øš™Xİ
-İX\™”ÕUH‹İ]JNƒBˆ]™[HÈ\Hˆ¹.©9¦$ùb)9¥«H‹œÛİ\˜ÙHˆ™XÚ\Ú[Û—İšYÙÙ\ˆŸCBˆÙ[‹˜\ÜÙ\[Š››È^XÚ]]šY[˜ÙHÚ[™ÙH‹İX\™››İYšXØ][Û—Ù]šY[˜ÙWÙ\œ›ÜŠ]™[
-JCBˆšYÙÙ\–È™]šY[˜ÙWØÚ[™ÙH—HHœ™[]]™Hİ™[™İ]šY[˜ÙHX]\šX[HÚ[™ÙYƒBˆ
-İ]HÈ™XÚ\Ú[Û—İšYÙÙ\‹šœÛÛˆŠKÜš]Wİ^
-œÛÛ‹™[\ÊšYÙÙ\ŠK[˜ÛÙ[™ÏH]‹NŠCBˆÙ[‹˜\ÜÙ\\]X[
-İX\™››İYšXØ][Û—Ù]šY[˜ÙWÙ\œ›ÜŠ]™[
-KˆŠCBƒBˆYˆ\İÜŞ\İ[WÙXYÛ›ÜİX×Û]\İØ™[Û™×İ×Øİ\œ™[ÛXZ[ŠÙ[ŠNƒBˆÚ][\š[K•[\Ü˜\Q\™XİÜJ
-H\ÈƒBˆİ]HH]
-
-CBˆXYÈHÃBˆœ™XÛÛ[Y[™YØXİ[Ûˆˆ‘TĞĞSUWÕÒUÑPQÓ“ÔÕPÈ‹Bˆœ[—ÚYˆŒLŒÈ‹BˆœØY™]HˆÈšXYÚ\×Øİ\œ™[ÛXZ[ˆˆ˜[Ù_KBˆCBˆ
-İ]HÈÛÜšÙ›İ×Ù˜Z[\™WÙXYÛ›ÜİXËšœÛÛˆŠKÜš]Wİ^
-œÛÛ‹™[\ÊXYÊK[˜ÛÙ[™ÏH]‹NŠCBˆÚ]]Ú›Øš™Xİ
-İX\™”ÕUH‹İ]JNƒBˆ]™[HÈ\Hˆ¹ìîùîçùo ¹n.‹œÛİ\˜ÙHˆÛÜšÙ›İ×Ù˜Z[\™WÙXYÛ›ÜİXÈŸCBˆÙ[‹˜\ÜÙ\[Š››İ›Üˆİ\œ™[XZ[ˆ‹İX\™››İYšXØ][Û—Ù]šY[˜ÙWÙ\œ›ÜŠ]™[
-JCBˆXYÖÈœØY™]H—VÈšXYÚ\×Øİ\œ™[ÛXZ[ˆ—HHYCBˆ
-İ]HÈÛÜšÙ›İ×Ù˜Z[\™WÙXYÛ›ÜİXËšœÛÛˆŠKÜš]Wİ^
-œÛÛ‹™[\ÊXYÊK[˜ÛÙ[™ÏH]‹NŠCBˆÙ[‹˜\ÜÙ\\]X[
-İX\™››İYšXØ][Û—Ù]šY[˜ÙWÙ\œ›ÜŠ]™[
-KˆŠCBƒBˆYˆ\İÜ›ÙXİ[Û—Û›İYšXØ][Û—İÛÜšÙ›İÜ×İ\ÙWÙİX\™YÙ[\Ú[
-Ù[ŠNƒBˆXÚ\Ú[ÛˆH
-“ÓÕÈ‹™Ú]X‹İÛÜšÙ›İÜËÙXÚ\Ú[Û‹[›İYšXØ][Û‹[[ŠKœ™XYİ^
-[˜ÛÙ[™ÏH]‹NŠCBˆİ™\œÙX\ÈH
-“ÓÕÈ‹™Ú]X‹İÛÜšÙ›İÜËÛİ™\œÙX\Ë\™[Ü[‹\[ÙK[[ŠKœ™XYİ^
-[˜ÛÙ[™ÏH]‹NŠCBˆ\ÈH
-“ÓÕÈ‹™Ú]X‹İÛÜšÙ›İÜËİ\ËY^[™YZİ\œË\[ÙK[[ŠKœ™XYİ^
-[˜ÛÙ[™ÏH]‹NŠCBˆÙ[‹˜\ÜÙ\[Šœ[—ÙİX\™YÛ›İYšXØ][Û‹œH‹XÚ\Ú[ÛŠBˆ›Üˆ^[ˆ
-İ™\œÙX\Ë\ÊN‚ˆÙ[‹˜\ÜÙ\›İ[Šœ[—ÙİX\™YÛ›İYšXØ][Û‹œH‹^
-BˆÙ[‹˜\ÜÙ\›İ[Šœ[ˆ]ÛˆØÜš\ËÜÙ[™Ü™YÚ[Û˜[ÜÙ\ÜÚ[Û—Üİ[[X\KœH‹XÚ\Ú[ÛŠCBˆÙ[‹˜\ÜÙ\›İ[Šœ[ˆ]ÛˆØÜš\ËÜÙ[™ÛX\šÙ]ÜÚØÚ×Û›İYšXØ][Û‹œH‹XÚ\Ú[ÛŠCBˆÙ[‹˜\ÜÙ\›İ[Šœ[ˆ]ÛˆØÜš\ËÛ›İYšXØ][Û—ØÙ[\‹œHK[[ÙH‹XÚ\Ú[ÛŠCBˆÙ[‹˜\ÜÙ\›İ[Šœ[ˆ]ÛˆØÜš\ËÜÙ[™Ü™YÚ[Û˜[ÜÙ\ÜÚ[Û—Üİ[[X\KœH‹İ™\œÙX\ÊCBˆÙ[‹˜\ÜÙ\›İ[Šœ[ˆ]ÛˆØÜš\ËÜÙ[™ÛX\šÙ]ÜÚØÚ×Û›İYšXØ][Û‹œH‹İ™\œÙX\ÊCBˆÙ[‹˜\ÜÙ\›İ[Šœ[ˆ]ÛˆØÜš\ËÜÙ[™İ\×ÜÙ\ÜÚ[Û—Üİ[[X\KœH‹İ™\œÙX\ÊCBˆÙ[‹˜\ÜÙ\›İ[Šœ[ˆ]ÛˆØÜš\ËÜÙ[™ÛX\šÙ]ÜÚØÚ×Û›İYšXØ][Û‹œH‹\ÊCBˆÙ[‹˜\ÜÙ\›İ[Šœ[ˆ]ÛˆØÜš\ËÜÙ[™İ\×ÜÙ\ÜÚ[Û—Üİ[[X\KœH‹\ÊCBƒBˆYˆ\İÛ›İYšXØ][Û—Üİ]WÜ\œÚ\İ[˜ÙWÛY\™Ù\×ØY\—ÛXZ[—Ü™Yœ™\Ú
-Ù[ŠNƒBˆXÚ\Ú[ÛˆH
-“ÓÕÈ‹™Ú]X‹İÛÜšÙ›İÜËÙXÚ\Ú[Û‹[›İYšXØ][Û‹[[ŠKœ™XYİ^
-[˜ÛÙ[™ÏH]‹NŠCBˆÙ[‹˜\ÜÙ\[Š›Y\™ÙWÛ›İYšXØ][Û—Üİ]KœH‹XÚ\Ú[ÛŠCBˆÙ[‹˜\ÜÙ\›İ[Š˜Üİ\Ù]‹[›İYšXØ][Û‹\İ]KÙ]KÜİ]KÛ›İYšXØ][Û—ØÙ[\‹šœÛÛˆ]KÜİ]KÛ›İYšXØ][Û—ØÙ[\‹šœÛÛˆ‹XÚ\Ú[ÛŠCBƒBˆYˆ\İÛ›İYšXØ][Û—Ü[WÜÛİ\˜ÙWÙÛİ™\›˜[˜ÙWÚ\×ÜÚ[™ÛWØ[™Ù^XÚ]
-Ù[ŠNƒBˆÜXÈH
-“ÓÕÈ™ØÜËÑU¹..ùbª:`&¹çéy/dùìîË›YŠKœ™XYİ^
-[˜ÛÙ[™ÏH]‹NŠCBˆ[™^H
-“ÓÕÈ‘U—ÔÖTÕSWÒS‘V›YŠKœ™XYİ^
-[˜ÛÙ[™ÏH]‹NŠCBˆ[\Ü™XYYHH
-“ÓÕÈ››İYšXØ][ÛœËÔ‘PQQK›YŠKœ™XYİ^
-[˜ÛÙ[™ÏH]‹NŠCBƒBˆÙ[‹˜\ÜÙ\[Š¹e+ù. :)á:# ù )ú)á9b&y§iy®¤‹ÜXÊCBˆÙ[‹˜\ÜÙ\[Šº/ä:(c9.¢ùk§¹.éyodùbcHXZ[˜9æ¡:!&¹§+8à zacyïk¹d£9â­¹  y..¹aá»ï&ú)á9b&z)èúaâ¹.éy§+9¥¡ù..¹aáˆ‹ÜXÊCBˆÙ[‹˜\ÜÙ\[Šº"éyk§¹ã¬9.#¹§+9¥¡ùa¬¹ê {ï#:)á¹..¹k§¹ã¬9¯ ¹éîÈ‹ÜXÊCBˆÙ[‹˜\ÜÙ\[Š¹¢`9§"yhì9éì8 '9cäyå'ùcæ9c%ˆÈ9k§º-*9cæ9c%ˆÈ9caùî©ÈÈ9i,y¥bÈ9 h¹i#x 'yæ¡9..ùbª:`&¹çéH‹ÜXÊCBˆÙ[‹˜\ÜÙ\[ŠœØÜš\ËÛ›İYšXØ][Û—ÛX]\šX[]WÙİX\™œH‹ÜXÊCBˆÙ[‹˜\ÜÙ\[ŠœØÜš\ËÜ[—ÙİX\™YÛ›İYšXØ][Û‹œH‹ÜXÊCBˆÙ[‹˜\ÜÙ\[Š™ØÜËÑU¹..ùbª:`&¹çéy/dùìîË›Y‹[™^
-CBˆÙ[‹˜\ÜÙ\[Š¹..ùbª:`&¹çéygçÈ‹[™^
-CBˆÙ[‹˜\ÜÙ\[Š¹e+ù. :)á:# ù )ú)á9b&y§iy®¤‹[™^
-CBˆÙ[‹˜\ÜÙ\[Š¹e+ù. :)á:# ù )ú)á9b&y§iy®¤‹[\Ü™XYYJCBˆÙ[‹˜\ÜÙ\›İ[Š¹e+ù. 9.®¹ìnùcëú+îú/ä:(c:)á:# ù..ˆ‹[\Ü™XYYJCBˆÙ[‹˜\ÜÙ\[Š¹.#yo¥ùcãyd$z)¡¹æåº)á:# È‹[\Ü™XYYJCBƒBƒBˆYˆ\İÚ[˜Y^WÜİ[[X\Wİ\Ù\×Øİ\œ™[Û›İØÛÜÙJÙ[ŠNƒBˆ[\Ü›İYšXØ][Û—ÜÙ[X[XÜÈ\ÈÙ[X[XÜÃBƒBˆ[™XÙ\ÈHÃBˆŒHˆÈœŞ[X›ÛˆŒH‹œ›İšY\—Û˜[YHˆ¹."º+ày£!ù¥l‹˜Ú[™ÙWÜİˆLKŒKBˆŒˆÈœŞ[X›ÛˆŒ‹œ›İšY\—Û˜[YHˆ¹éäyb&ÍL‹˜Ú[™ÙWÜİˆL‹ŒKBˆŒÎNLˆˆÈœŞ[X›ÛˆŒÎNLˆ‹œ›İšY\—Û˜[YHˆ¹b&ù.&¹§où£!È‹˜Ú[™ÙWÜİˆLKŒKBˆCBˆ]œÈHŞÈœŞ[X›ÛˆLMN‹œ›İšY\—Û˜[YHˆº`&¹/èQUˆ‹˜Ú[™ÙWÜİˆLK_WCBˆ›Ü›X[HÈ˜[Y]HˆPÕU‘H‹˜\XØX›WÛØš™XİˆLMN‹›Y™XŞXÛHˆ•šX[ŸCBˆÚ]]Ú›Øš™Xİ
-Ù[X[XÜË—ØXØÛİ[ØÛÛ^‹™]\›—İ˜[YO^Èš[Ù]œÈˆßKš[ÜİØÚÜÈˆßK™›Ü›X[ˆ›Ü›X[JNƒBˆXY[™KËËÈHÙ[X[XÜË˜WÜÚ\™WÜİXİ\™J[™XÙ\Ë]œËßK\×ØÛÜÙOQ˜[ÙJCBˆ^Hˆ‹š›Ú[ŠXY[™JCBˆÙ[‹˜\ÜÙ\[Š¹odùbcH‹^
-CBˆÙ[‹˜\ÜÙ\›İ[Š¹¥-¹ææ‹^
-CBƒBˆYˆ\İØÛÜÙWÜİ[[X\WÜ™]Z[œ×ØÛÜÙWİÛÜ™[™ÊÙ[ŠNƒBˆ[\Ü›İYšXØ][Û—ÜÙ[X[XÜÈ\ÈÙ[X[XÜÃBƒBˆ[™XÙ\ÈHÃBˆŒHˆÈœŞ[X›ÛˆŒH‹œ›İšY\—Û˜[YHˆ¹."º+ày£!ù¥l‹˜Ú[™ÙWÜİˆLKŒKBˆŒˆÈœŞ[X›ÛˆŒ‹œ›İšY\—Û˜[YHˆ¹éäyb&ÍL‹˜Ú[™ÙWÜİˆL‹ŒKBˆŒÎNLˆˆÈœŞ[X›ÛˆŒÎNLˆ‹œ›İšY\—Û˜[YHˆ¹b&ù.&¹§où£!È‹˜Ú[™ÙWÜİˆLKŒKBˆCBˆ]œÈHŞÈœŞ[X›ÛˆLMN‹œ›İšY\—Û˜[YHˆº`&¹/èQUˆ‹˜Ú[™ÙWÜİˆLK_WCBˆ›Ü›X[HÈ˜[Y]HˆPÕU‘H‹˜\XØX›WÛØš™XİˆLMN‹›Y™XŞXÛHˆ•šX[ŸCBˆÚ]]Ú›Øš™Xİ
-Ù[X[XÜË—ØXØÛİ[ØÛÛ^‹™]\›—İ˜[YO^Èš[Ù]œÈˆßKš[ÜİØÚÜÈˆßK™›Ü›X[ˆ›Ü›X[JNƒBˆXY[™KËËÈHÙ[X[XÜË˜WÜÚ\™WÜİXİ\™J[™XÙ\Ë]œËßK\×ØÛÜÙOUYJCBˆÙ[‹˜\ÜÙ\[Š¹¥-¹ææ‹ˆ‹š›Ú[ŠXY[™JJCBƒBƒB˜Û\ÜÈ›İYšXØ][ÛYÙÜ™YØ][Û•\İÊ[š]\İ•\İØ\ÙJN‚ˆYˆÜ™X[Ø\X×ÛÜ[—Ù]™[
-Ù[ŠN‚ˆ[\ÜÙ[™Ü™YÚ[Û˜[ÜÙ\ÜÚ[Û—Üİ[[X\H\È›ÙXÙ\‚ˆœ›ÛH[š]\İ›[ØÚÈ[\ÜXYÚXÓ[ØÚÂ‚ˆÙ^HHŒŒ‹LKL‚ˆØš™XİÈHßBˆ›ÜˆÛÙKÛX™[[ˆ›ÙXÙ\‹TP×ÔÔPÔÎ‚ˆØ\H‹HYˆÛÙHOH’ÕPÒˆ[ÙHŒBˆØš™XİÖØÛÙWHHÂˆœ]X[]WÜİ]\Èˆ”TÔÈ‹ˆ›]\İˆÂˆ›X\šÙ]Ù]WÛØØ[ˆÙ^Kˆ˜\×ÛÙ—Ø™ZZš[™ÈˆˆİÙ^_ULŒŒŒ
-ÌŒ‹ˆ›Ü[ˆˆLŒ
-ÈØ\ˆ˜ÛÜÙHˆLŒ
-ÈØ\ˆœ™]š[İ\×ØÛÜÙHˆLŒˆKˆBˆÚ][\š[K•[\Ü˜\Q\™XİÜJ
-H\È‚ˆ›ÛİH]
-
-BˆÛÛ^Ü]H›ÛİÈ›İ™\œÙX\×ØÛÛ^šœÛÛˆ‚ˆİ\œ™[Ü]H›ÛİÈÕT”‘S•šœÛÛˆ‚ˆÛÛ^Ü]Üš]Wİ^
-œÛÛ‹™[\ÊÈ›Øš™XİÈˆØš™XİßJK[˜ÛÙ[™ÏH]‹NŠBˆİ\œ™[Ü]Üš]Wİ^
-œÛÛ‹™[\ÊÈ›X\šÙ]Ù]HˆÙ^_JK[˜ÛÙ[™ÏH]‹NŠBˆÛØÚÈHXYÚXÓ[ØÚÊ
-BˆÛØÚË››İËœ™]\›—İ˜[YHH]][YK™œ›ÛZ\ÛÙ›Ü›X]
-ˆİÙ^_ULŒŒNŒ
-ÌŒŠBˆÚ]]Ú›Øš™Xİ
-›ÙXÙ\‹“Õ‘T”ÑPTÈ‹ÛÛ^Ü]
-K]Ú›Øš™Xİ
-›ÙXÙ\‹ÕT”‘S•‹İ\œ™[Ü]
-K]Ú›Øš™Xİ
-›ÙXÙ\‹™]][YH‹ÛØÚÊN‚ˆ]™[H›ÙXÙ\‹—Ø\X×Ù]™[
+from __future__ import annotations
 
-BˆÙ[‹˜\ÜÙ\\Ó›İ›Û™J]™[
-Bˆ™]\›ˆ]™[‚ˆYˆ\İÜØ[YWÙ˜XİÚÙ^WÚ\×ÜİX›WØXÜ›ÜÜ×Û›İYšXØ][Û—Ü[œÊÙ[ŠNƒBˆœ›ÛHØÜš\È[\ÜÙ[™ÛX\šÙ]ÜÚØÚ×Û›İYšXØ][Û—ÛYØXŞH\ÈYØXŞCBˆÈHÈ˜Ø]YÛÜHˆ”‘U‘T”ĞS‹˜ÛÙHˆ’ÕPÒ‹™^HˆŒÌ‹™]™[ÛXYÛš]YWÜİˆKŒKœİY[ˆˆŒ™\™Xİ[Ûˆˆ•T‹›˜[YHˆ¹ d¹å'ùéäy¢ 9£!ù¥l‹›]\İˆÈ˜\×ÛÙ—Ø™ZZš[™ÈˆŒŒ‹LLÌUMŒNŒ
-ÌŒŸ_CBˆİ\œ™[Ü]HYØXŞK”“ÓÕÈ™]KÜİ]KÛİ™\œÙX\×ØÛÛ^šœÛÛˆƒBˆš\œİHYØXŞK—ØZ[ØÛÛ^Ù]™[
-ËÛİ\˜ÙOH˜\ÚXH‹İ\œ™[Ü]Xİ\œ™[Ü]İ\œ™[^ßKX™[Ï^ßKY]šX×ÛX™[Ï^ßKX\šÙ]Ù]\Ï^È’ÕPÒˆŒŒ‹LLÌHŸKÙ^WØšHŒŒ‹LLÌHŠCBˆÙXÛÛ™HYØXŞK—ØZ[ØÛÛ^Ù]™[
-ËÛİ\˜ÙOH˜\ÚXH‹İ\œ™[Ü]Xİ\œ™[Ü]İ\œ™[^ßKX™[Ï^ßKY]šX×ÛX™[Ï^ßKX\šÙ]Ù]\Ï^È’ÕPÒˆŒŒ‹LLÌHŸKÙ^WØšHŒŒ‹LLÌHŠCBˆÙ[‹˜\ÜÙ\\]X[
-š\œİÈšÙ^H—KÙXÛÛ™ÈšÙ^H—JCBˆÙ[‹˜\ÜÙ\[ŠŒMŒNŒ‹š\œİÈšÙ^H—JCBƒBˆİ]XÛY]ÙBˆYˆÙ]™[
-ÛÙK˜[YKØ]YÛÜK\™Xİ[ÛH•T‹İ[\HŒŒ‹LLÌULÎŒŒŒ
-ÌŒ‹XYÛš]YOL‹Œ]™[İ\OH“PT’ÑUÕSQWĞST•ŠNƒBˆ™]\›ˆÃBˆ™]™[İ\Hˆ]™[İ\KBˆœÙXİ\š]WØÛÙHˆÛÙKBˆœÙXİ\š]WÛ˜[YHˆ˜[YKBˆ˜Ü™X]YØ]ˆİ[\BˆœÙ[Ø]ˆİ[\Bˆ]Hˆˆ¸à$9n ¹g.¹o ¹bª8à$^Û˜[Y_^ØØ]YÛÜ_H‹Bˆ˜ÛÛ[ˆˆÛ˜[Y_{ï"ØÛÙ_{ï"yodùbcy­ª:-ãÛXYÛš]YNŠËŒ™ŸIH‹Bˆ˜ÛÛ™š\›X][Û—ØÛÛ^ˆÃBˆ›X\šÙ]Ù]HˆŒŒ‹LLÌH‹BˆœÙXİ\š]WØÛÙHˆÛÙKBˆœÙXİ\š]WÛ˜[YHˆ˜[YKBˆ™]™[ØØ]YÛÜHˆØ]YÛÜKBˆ™\™Xİ[Ûˆˆ\™Xİ[Û‹Bˆ™]™[ÛXYÛš]YWÜİˆXYÛš]YKBˆKBˆCBƒBˆYˆ\İÜØ[YWÛØš™XİØÛÛ[[İ\×Ù]™[×ÛY\™ÙWØ[™ÚÙY\İYÜÊÙ[ŠN‚ˆš\œİHÙ[‹—Ù]™[
-“ŒŒH‹¹¥éyîãÌŒy£!ù¥l‹”ÕQSˆ‹XYÛš]YOLKŒ‹İ[\HŒŒ‹LLÌULŒŒ
-ÌŒŠCBˆÙXÛÛ™HÙ[‹—Ù]™[
-“ŒŒH‹¹¥éyîãÌŒy£!ù¥l‹‘V‘SQH‹XYÛš]YOLKİ[\HŒŒ‹LLÌULŒŒ
-ÌŒŠCBˆ™\İ[H›İYšXØ][Û—ØÛÛ[[Û‹—ØXœÛÜ˜—ÛÜ—ØYÙÜ™YØ]JÙš\œİKÙXÛÛ™
-CBˆÙ[‹˜\ÜÙ\\Ó›İ›Û™J™\İ[
-CBˆÙ[‹˜\ÜÙ\\]X[
-™\İ[ÌKQÑÔ‘QĞUQÒS•×ÑVTÕS‘ÈŠCBˆÙ[‹˜\ÜÙ\\]X[
-™\İ[ÌWVÈ˜ÛÛ™š\›X][Û—ØÛÛ^—VÈ™]™[İYÜÈ—KÈ”ÕQSˆ‹‘V‘SQH—JB‚ˆYˆ\İØ\X×ÛÜ[—ÜÚYÛ˜[ØXœÛÜ˜œ×ÜØ[YWÛØš™XİÙ^™[YWİÚ]İ]İ\Ü˜YJÙ[ŠN‚ˆÜ[š[™ÈHÙ[‹—Ü™X[Ø\X×ÛÜ[—Ù]™[
+import json
+import sys
+import tempfile
+import unittest
+from datetime import datetime
+from pathlib import Path
+from unittest.mock import patch
 
-Bˆ^™[YHHÙ[‹—Ù]™[
-’ÕPÒ‹¹ d¹å'ùéäy¢ 9£!ù¥l‹‘V‘SQH‹XYÛš]YOL‹Ëİ[\HŒŒ‹LKLLŒÍŒ
-ÌŒŠBˆ^™[YVÈ˜ÛÛ™š\›X][Û—ØÛÛ^—K\]JÈ›X\šÙ]ˆTÒPH‹›X\šÙ]Ù]HˆŒŒ‹LKL‹™\™Xİ[Ûˆˆ•TŸJBˆÙ[‹˜\ÜÙ\\]X[
-›İYšXØ][Û—ØÛÛ[[Û‹—ØXœÛÜ˜—ÛÜ—ØYÙÜ™YØ]JÛÜ[š[™×K^™[YJVÌKQÑÔ‘QĞUQÒS•×ÑVTÕS‘ÈŠB‚ˆYˆ\İØ\X×ÛÜ[—ÜÚYÛ˜[Ø[İÜ×ÜİXœİ[]™WÙ^™[YWİ\Ü˜YJÙ[ŠN‚ˆÜ[š[™ÈHÙ[‹—Ü™X[Ø\X×ÛÜ[—Ù]™[
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = ROOT / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
 
-Bˆ^™[YHHÙ[‹—Ù]™[
-’ÕPÒ‹¹ d¹å'ùéäy¢ 9£!ù¥l‹‘V‘SQH‹XYÛš]YOLËÌİ[\HŒŒ‹LKLLŒÍŒ
-ÌŒŠBˆ^™[YVÈ˜ÛÛ™š\›X][Û—ØÛÛ^—K\]JÈ›X\šÙ]ˆTÒPH‹›X\šÙ]Ù]HˆŒŒ‹LKL‹™\™Xİ[Ûˆˆ•TŸJBˆÙ[‹˜\ÜÙ\\Ó›Û™J›İYšXØ][Û—ØÛÛ[[Û‹—ØXœÛÜ˜—ÛÜ—ØYÙÜ™YØ]JÛÜ[š[™×K^™[YJJB‚ˆYˆ\İØ\X×ÜØ[YWÙ^WÜÛX[Ù^™[YWØÚ[™Ù\×Ø\™WØXœÛÜ˜™YÙ›Ü—Ø[WÛØš™Xİ
-Ù[ŠN‚ˆ›ÜˆÛÙK˜[Y\È[ˆ
+import notification_materiality_guard as guard
+import market_notification_common as notification_common
 
-’ÓÔÔH‹
-KKKŠJK
-’ÕPÒ‹
-‹K‹‹ÊJJN‚ˆš[ÜˆHÂˆ™]™[İ\Hˆ“PT’ÑUÕSQWĞST•‹œÙXİ\š]WØÛÙHˆÛÙKˆœÙ[Ø]ˆŒŒ‹LKLLŒŒŒ
-ÌŒ‹ˆ˜ÛÛ™š\›X][Û—ØÛÛ^ˆÂˆ›X\šÙ]ˆTÒPH‹›X\šÙ]Ù]HˆŒŒ‹LKL‹™\™Xİ[Ûˆˆ•T‹ˆ™]™[ØØ]YÛÜHˆ‘V‘SQH‹™]™[ÛXYÛš]YWÜİˆ˜[Y\ÖÌKˆKˆBˆ›Üˆ[™^˜[YH[ˆ[[Y\˜]J˜[Y\ÖÌN—Kİ\LJN‚ˆ]™[HÂˆ™]™[İ\Hˆ“PT’ÑUÕSQWĞST•‹œÙXİ\š]WØÛÙHˆÛÙKˆ˜Ü™X]YØ]ˆˆŒŒ‹LKLLÌŒ
-È[™^Œ™NŒ
-ÌŒ‹ˆ˜ÛÛ™š\›X][Û—ØÛÛ^ˆÂˆ›X\šÙ]ˆTÒPH‹›X\šÙ]Ù]HˆŒŒ‹LKL‹™\™Xİ[Ûˆˆ•T‹ˆ™]™[ØØ]YÛÜHˆ‘V‘SQH‹™]™[ÛXYÛš]YWÜİˆ˜[YKˆKˆBˆÙ[‹˜\ÜÙ\\Ó›İ›Û™J›İYšXØ][Û—ØÛÛ[[Û‹—Ùš[™ØYÙÜ™YØ]Wİ\™Ù]
-Üš[Ü—K]™[
-JBƒBˆYˆ\İÜİ[[X\WØXœÛÜ˜œ×ÜØ[YWÙ˜XİØ]Û›İÚ[™\[™[ÙÛÛ
-Ù[ŠNƒBˆİ[[X\HHÃBˆ™]™[İ\HˆWÔÒT‘WÔÑTÔÒSÓ—ÔÕSSPT–H‹Bˆ˜Ü™X]YØ]ˆŒŒ‹LLÌUMNŒŒ
-ÌŒ‹BˆœÙ[Ø]ˆŒŒ‹LLÌUMNŒŒ
-ÌŒ‹Bˆ]Hˆ¸à$9¥-¹ææ9 .ùîäøà$yéäyb&ÍL9¥éya¡U¹oh¹/ë¹i#H‹Bˆ˜ÛÛ[ˆ¹éäyb&ÍL;ï";ï"y.ã¹/c¹à®y/ë¹i#z!ìújæ9/cxà ˆ‹Bˆ˜ÛÛ™š\›X][Û—ØÛÛ^ˆÃBˆ›X\šÙ]Ù]HˆŒŒ‹LLÌH‹Bˆ˜Ûİ™\™YÙ˜XİÚÙ^\ÈˆÈŒŒ‹LLÌ_‘U‘T”ĞST—KBˆKBˆCBˆ™]™\œØ[HÙ[‹—Ù]™[
-Œ‹¹éäyb&ÍL‹”‘U‘T”ĞS‹İ[\HŒŒ‹LLÌUMNŒÎŒ
-ÌŒŠCBˆÛÛHÙ[‹—Ù]™[
-LN‹ºná:aäQUˆ‹‘V‘SQH‹\™Xİ[ÛH‘ÕÓˆ‹İ[\HŒŒ‹LLÌUMNŒÎŒ
-ÌŒ‹XYÛš]YOMŒŠCBˆÙ[‹˜\ÜÙ\\]X[
-›İYšXØ][Û—ØÛÛ[[Û‹—ØXœÛÜ˜—ÛÜ—ØYÙÜ™YØ]JÜİ[[X\WK™]™\œØ[
-VÌKP”ÓÔ‘QĞ–WÔÕSSPT–HŠCBˆÙ[‹˜\ÜÙ\\Ó›Û™J›İYšXØ][Û—ØÛÛ[[Û‹—ØXœÛÜ˜—ÛÜ—ØYÙÜ™YØ]JÜİ[[X\WKÛÛ
-JCBƒBˆYˆ\İÜ›İXİYİšX[Ú\×Û™]™\—ØXœÛÜ˜™Y
-Ù[ŠNƒBˆİ[[X\HHÃBˆ™]™[İ\HˆWÔÒT‘WÔÑTÔÒSÓ—ÔÕSSPT–H‹Bˆ˜Ü™X]YØ]ˆŒŒ‹LLÌUMNŒŒ
-ÌŒ‹BˆœÙ[Ø]ˆŒŒ‹LLÌUMNŒŒ
-ÌŒ‹Bˆ]Hˆ¸à$9¥-¹ææ9 .ùîäøà$yéäyb&ÍL9îäù§¡9/ë¹i#H‹Bˆ˜ÛÛ[ˆ¹éäyb&ÍL;ï";ï"y/ë¹i#xà ˆ‹Bˆ˜ÛÛ™š\›X][Û—ØÛÛ^ˆÈ›X\šÙ]Ù]HˆŒŒ‹LLÌH‹˜Ûİ™\™YÙ˜XİÚÙ^\ÈˆÈŒŒ‹LLÌ_LMN‘U‘T”ĞST—_KBˆCBˆšX[HÙ[‹—Ù]™[
-LMN‹º`&¹/èQUˆ‹”‘U‘T”ĞS‹İ[\HŒŒ‹LLÌUMNŒÎŒ
-ÌŒ‹]™[İ\OH•šX[9§.¹/&ˆŠCBˆÙ[‹˜\ÜÙ\\Ó›Û™J›İYšXØ][Û—ØÛÛ[[Û‹—ØXœÛÜ˜—ÛÜ—ØYÙÜ™YØ]JÜİ[[X\WKšX[
-JCBƒBˆYˆ\İÛX]\šX[İ\Ü˜YWÜ™[Ü[œ×ØY\—Üİ[[X\WÛÜ—ØYÙÜ™YØ][ÛŠÙ[ŠNƒBˆİ[[X\HHÃBˆ™]™[İ\HˆWÔÒT‘WÔÑTÔÒSÓ—ÔÕSSPT–H‹Bˆ˜Ü™X]YØ]ˆŒŒ‹LLÌUMNŒŒ
-ÌŒ‹BˆœÙ[Ø]ˆŒŒ‹LLÌUMNŒŒ
-ÌŒ‹Bˆ]Hˆ¸à$9¥-¹ææ9 .ùîäøà$yéäyb&ÍL9¥éya¡U¹oh¹/ë¹i#H‹Bˆ˜ÛÛ[ˆ¹éäyb&ÍL;ï";ï"y/ë¹i#xà ˆ‹Bˆ˜ÛÛ™š\›X][Û—ØÛÛ^ˆÈ›X\šÙ]Ù]HˆŒŒ‹LLÌH‹˜Ûİ™\™YÙ˜XİÚÙ^\ÈˆÈŒŒ‹LLÌ_‘U‘T”ĞST—K˜Ûİ™\™YÙ]™[ÛXYÛš]YWÜİˆ‹ŒKBˆCBˆ\Ü˜YHHÙ[‹—Ù]™[
-Œ‹¹éäyb&ÍL‹”‘U‘T”ĞS‹İ[\HŒŒ‹LLÌUMNŒŒ
-ÌŒ‹XYÛš]YOMKŒ
-CBˆÙ[‹˜\ÜÙ\\Ó›Û™J›İYšXØ][Û—ØÛÛ[[Û‹—ØXœÛÜ˜—ÛÜ—ØYÙÜ™YØ]JÜİ[[X\WK\Ü˜YJJCBƒBˆYˆ\İØ\X×Üİ[[X\Wİ]WÛ˜[Y\×ÛØš™Xİ×Ù\™XİJÙ[ŠNƒBˆÛİ\˜ÙHH]
-×Ùš[W×ÊKœ™\ÛÛ™J
-Kœ\™[ÖÌWHÈœØÜš\ÈˆÈœÙ[™Ü™YÚ[Û˜[ÜÙ\ÜÚ[Û—Üİ[[X\KœHƒBˆ^HÛİ\˜ÙKœ™XYİ^
-[˜ÛÙ[™ÏH]‹NŠCBˆÙ[‹˜\ÜÙ\[Š	ÜİXš™XİÈH¸à H‹š›Ú[ŠX™[›ÜˆËX™[ËÈ[ˆÙ[XİYÎŒ×JIË^
-CBˆÙ[‹˜\ÜÙ\›İ[Š]HH—¸à$9¥-¹ææ9 .ùîäøà$y.¦¹i*¹..ú) yn ¹g.¹¥-¹ææ‹^
-CBƒBƒBšYˆ×Û˜[YW×ÈOH—×ÛXZ[—×ÈƒBˆ[š]\İ›XZ[Š
-CB
+
+class NotificationMaterialityGuardTests(unittest.TestCase):
+    def test_market_label_only_change_is_rejected(self):
+        event = {
+            "event_type": "MARKET_VALUE_ALERT",
+            "security_code": "515880",
+            "confirmation_context": {
+                "event_category": "REVERSAL",
+                "market_as_of_beijing": "2026-08-28T14:20:13+08:00",
+            },
+        }
+        self.assertIn("excursion", guard.notification_evidence_error(event))
+
+    def test_market_reversal_with_numeric_path_is_allowed(self):
+        event = {
+            "event_type": "MARKET_VALUE_ALERT",
+            "security_code": "515880",
+            "confirmation_context": {
+                "event_category": "REVERSAL",
+                "market_as_of_beijing": "2026-08-28T14:20:13+08:00",
+                "event_magnitude_pct": 2.51,
+                "day_change_pct": -0.88,
+            },
+        }
+        self.assertEqual(guard.notification_evidence_error(event), "")
+
+    def test_apac_coverage_or_tone_change_without_hstech_delta_is_rejected(self):
+        event = {
+            "event_type": "APAC_SESSION_SUMMARY",
+            "title": "ã€æ”¶ç›˜æ€»ç»“ã€‘äºšå¤ªé¦™æ¸¯æ”¶ç›˜ååŒºåŸŸåˆ¤æ–­å‘ç”Ÿå®è´¨å˜åŒ–",
+            "confirmation_context": {"session_node": "HK_LATE_UPDATE"},
+        }
+        self.assertIn("no comparable HSTECH delta", guard.notification_evidence_error(event))
+
+    def test_apac_real_hstech_move_is_allowed(self):
+        event = {
+            "event_type": "APAC_SESSION_SUMMARY",
+            "title": "ã€æ”¶ç›˜æ€»ç»“ã€‘äºšå¤ªé¦™æ¸¯æ”¶ç›˜ååŒºåŸŸåˆ¤æ–­å‘ç”Ÿå®è´¨å˜åŒ–",
+            "confirmation_context": {
+                "session_node": "HK_LATE_UPDATE",
+                "hstech_change_since_primary_pct": -0.81,
+            },
+        }
+        self.assertEqual(guard.notification_evidence_error(event), "")
+
+    def test_a_share_role_text_is_local_not_overseas(self):
+        from scripts.notification_semantics import shock_implication
+        with patch("scripts.notification_semantics._account_context", return_value={"data": {}, "held_etfs": {}, "held_stocks": {}, "formal": {}}):
+            implication, _action = shock_implication("000688", "ç§‘åˆ›50", "A_SHARE_INDEX", "A_SHARE")
+        self.assertIn("Aè‚¡æœ¬åœ°é£é™©åå¥½", implication)
+        self.assertNotIn("æµ·å¤–/åŒºåŸŸç»“æ„è¯æ®", implication)
+
+    def test_overseas_role_text_keeps_external_transmission(self):
+        from scripts.notification_semantics import shock_implication
+        with patch("scripts.notification_semantics._account_context", return_value={"data": {}, "held_etfs": {}, "held_stocks": {}, "formal": {}}):
+            implication, _action = shock_implication("HSTECH", "æ’ç”Ÿç§‘æŠ€æŒ‡æ•°", "INDEX", "ASIA")
+        self.assertIn("æµ·å¤–/åŒºåŸŸç»“æ„è¯æ®", implication)
+
+    def test_etf_and_account_stock_roles_are_not_index_roles(self):
+        from scripts.notification_semantics import shock_implication
+        with patch("scripts.notification_semantics._account_context", return_value={"data": {}, "held_etfs": {"515880": {}}, "held_stocks": {"300750": {}}, "formal": {}}):
+            etf_text, _ = shock_implication("515880", "é€šä¿¡ETF", "ETF", "A_SHARE")
+            stock_text, _ = shock_implication("300750", "å®å¾·æ—¶ä»£", "ACCOUNT_STOCK", "A_SHARE")
+        self.assertIn("å½“å‰æŒä»“ETF", etf_text)
+        self.assertIn("è´¦æˆ·ä¸ªè‚¡", stock_text)
+
+    def test_us_proxy_role_keeps_external_transmission(self):
+        from scripts.notification_semantics import shock_implication
+        with patch("scripts.notification_semantics._account_context", return_value={"data": {}, "held_etfs": {}, "held_stocks": {}, "formal": {}}):
+            text_value, _ = shock_implication("SOXX", "åŠå¯¼ä½“ETFä»£ç†", "ETF", "US")
+        self.assertIn("æµ·å¤–/åŒºåŸŸç»“æ„è¯æ®", text_value)
+
+    def test_fixed_session_summary_is_not_misclassified_as_change(self):
+        event = {
+            "event_type": "A_SHARE_SESSION_SUMMARY",
+            "title": "ã€æ”¶ç›˜æ€»ç»“ã€‘Aè‚¡å…¨å¤©ç»“æ„ä¸ETFå¼ºå¼±",
+            "confirmation_context": {"session_node": "CLOSE"},
+        }
+        self.assertEqual(guard.notification_evidence_error(event), "")
+
+    def test_formal_decision_missing_previous_fact_is_rejected(self):
+        event = {
+            "event_type": "FORMAL_DECISION_MATERIAL_CHANGE",
+            "related_decision_id": "d2",
+            "security_code": "515880",
+            "confirmation_context": {
+                "decision_id": "d2",
+                "opportunity_status": "Trialæœºä¼š",
+                "previous_opportunity_status": "",
+                "risk_permission": "å…è®¸Trial",
+                "previous_risk_permission": "",
+            },
+        }
+        self.assertIn("before/after", guard.notification_evidence_error(event))
+
+    def test_formal_decision_real_risk_change_is_allowed(self):
+        event = {
+            "event_type": "FORMAL_DECISION_MATERIAL_CHANGE",
+            "related_decision_id": "d2",
+            "security_code": "515880",
+            "confirmation_context": {
+                "decision_id": "d2",
+                "opportunity_status": "è§‚å¯Ÿæœºä¼š",
+                "previous_opportunity_status": "è§‚å¯Ÿæœºä¼š",
+                "security_code": "515880",
+                "previous_security_code": "515880",
+                "risk_permission": "ç¦æ­¢æ–°å¢",
+                "previous_risk_permission": "å…è®¸Trial",
+            },
+        }
+        self.assertEqual(guard.notification_evidence_error(event), "")
+
+    def test_account_change_requires_reconciliable_event_ids_and_time(self):
+        bad = {"event_type": "ACCOUNT_FACT_CONFIRMATION", "confirmation_context": {}}
+        self.assertIn("event ids", guard.notification_evidence_error(bad))
+        good = {
+            "event_type": "ACCOUNT_FACT_CONFIRMATION",
+            "confirmation_context": {
+                "account_event_ids": ["acct-1"],
+                "account_event_time_beijing": "2026-08-28T14:18:00+08:00",
+            },
+        }
+        self.assertEqual(guard.notification_evidence_error(good), "")
+
+    def test_execution_confirmation_requires_linked_decision_and_side(self):
+        bad = {
+            "event_type": "PENDING_EXECUTION_CONFIRMATION",
+            "security_code": "515880",
+            "confirmation_context": {"security_code": "515880", "side": "BUY", "lifecycle": "Trial"},
+        }
+        self.assertIn("linked decision", guard.notification_evidence_error(bad))
+        good = {
+            "event_type": "PENDING_EXECUTION_CONFIRMATION",
+            "security_code": "515880",
+            "related_decision_id": "d1",
+            "confirmation_context": {
+                "decision_id": "d1",
+                "security_code": "515880",
+                "side": "BUY",
+                "lifecycle": "Trial",
+            },
+        }
+        self.assertEqual(guard.notification_evidence_error(good), "")
+
+    def test_generic_decision_trigger_requires_explicit_evidence_change(self):
+        with tempfile.TemporaryDirectory() as td:
+            state = Path(td)
+            trigger = {
+                "status": "TRIGGERED",
+                "requires_formal_reassessment": True,
+                "idempotency_key": "k1",
+                "trigger_type": "RESEARCH_EVIDENCE_CHANGED",
+                "evidence_change": "",
+            }
+            (state / "decision_trigger.json").write_text(json.dumps(trigger), encoding="utf-8")
+            with patch.object(guard, "STATE", state):
+                event = {"type": "äº¤æ˜“åˆ¤æ–­", "source": "decision_trigger"}
+                self.assertIn("no explicit evidence change", guard.notification_evidence_error(event))
+                trigger["evidence_change"] = "relative strength evidence materially changed"
+                (state / "decision_trigger.json").write_text(json.dumps(trigger), encoding="utf-8")
+                self.assertEqual(guard.notification_evidence_error(event), "")
+
+    def test_system_diagnostic_must_belong_to_current_main(self):
+        with tempfile.TemporaryDirectory() as td:
+            state = Path(td)
+            diag = {
+                "recommended_action": "ESCALATE_WITH_DIAGNOSTIC",
+                "run_id": "123",
+                "safety": {"head_is_current_main": False},
+            }
+            (state / "workflow_failure_diagnostic.json").write_text(json.dumps(diag), encoding="utf-8")
+            with patch.object(guard, "STATE", state):
+                event = {"type": "ç³»ç»Ÿå¼‚å¸¸", "source": "workflow_failure_diagnostic"}
+                self.assertIn("not for current main", guard.notification_evidence_error(event))
+                diag["safety"]["head_is_current_main"] = True
+                (state / "workflow_failure_diagnostic.json").write_text(json.dumps(diag), encoding="utf-8")
+                self.assertEqual(guard.notification_evidence_error(event), "")
+
+    def test_production_notification_workflows_use_guarded_entrypoint(self):
+        decision = (ROOT / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
+        overseas = (ROOT / ".github/workflows/overseas-preopen-pulse.yml").read_text(encoding="utf-8")
+        us = (ROOT / ".github/workflows/us-extended-hours-pulse.yml").read_text(encoding="utf-8")
+        self.assertIn("run_guarded_notification.py", decision)
+        for text in (overseas, us):
+            self.assertNotIn("run_guarded_notification.py", text)
+        self.assertNotIn("run: python scripts/send_regional_session_summary.py", decision)
+        self.assertNotIn("run: python scripts/send_market_shock_notification.py", decision)
+        self.assertNotIn("run: python scripts/notification_center.py --mode", decision)
+        self.assertNotIn("run: python scripts/send_regional_session_summary.py", overseas)
+        self.assertNotIn("run: python scripts/send_market_shock_notification.py", overseas)
+        self.assertNotIn("run: python scripts/send_us_session_summary.py", overseas)
+        self.assertNotIn("run: python scripts/send_market_shock_notification.py", us)
+        self.assertNotIn("run: python scripts/send_us_session_summary.py", us)
+
+    def test_notification_state_persistence_merges_after_main_refresh(self):
+        decision = (ROOT / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
+        self.assertIn("merge_notification_state.py", decision)
+        self.assertNotIn("cp /tmp/etf-notification-state/data/state/notification_center.json data/state/notification_center.json", decision)
+
+    def test_notification_rule_source_governance_is_single_and_explicit(self):
+        spec = (ROOT / "docs/ETFä¸»åŠ¨é€šçŸ¥ä½“ç³».md").read_text(encoding="utf-8")
+        index = (ROOT / "ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
+        impl_readme = (ROOT / "notifications/README.md").read_text(encoding="utf-8")
+
+        self.assertIn("å”¯ä¸€è§„èŒƒæ€§è§„åˆ™æ¥æº", spec)
+        self.assertIn("è¿è¡Œäº‹å®ä»¥å½“å‰ `main` çš„è„šæœ¬ã€é…ç½®å’ŒçŠ¶æ€ä¸ºå‡†ï¼›è§„åˆ™è§£é‡Šä»¥æœ¬æ–‡ä¸ºå‡†", spec)
+        self.assertIn("è‹¥å®ç°ä¸æœ¬æ–‡å†²çªï¼Œè§†ä¸ºå®ç°æ¼‚ç§»", spec)
+        self.assertIn("æ‰€æœ‰å£°ç§°â€œå‘ç”Ÿå˜åŒ– / å®è´¨å˜åŒ– / å‡çº§ / å¤±æ•ˆ / æ¢å¤â€çš„ä¸»åŠ¨é€šçŸ¥", spec)
+        self.assertIn("scripts/notification_materiality_guard.py", spec)
+        self.assertIn("scripts/run_guarded_notification.py", spec)
+        self.assertIn("docs/ETFä¸»åŠ¨é€šçŸ¥ä½“ç³».md", index)
+        self.assertIn("ä¸»åŠ¨é€šçŸ¥åŸŸ", index)
+        self.assertIn("å”¯ä¸€è§„èŒƒæ€§è§„åˆ™æ¥æº", index)
+        self.assertIn("å”¯ä¸€è§„èŒƒæ€§è§„åˆ™æ¥æº", impl_readme)
+        self.assertNotIn("å”¯ä¸€äººç±»å¯è¯»è¿è¡Œè§„èŒƒä¸º", impl_readme)
+        self.assertIn("ä¸å¾—åå‘è¦†ç›–è§„èŒƒ", impl_readme)
+
+
+    def test_intraday_summary_uses_current_not_close(self):
+        import notification_semantics as semantics
+
+        indices = {
+            "000001": {"symbol": "000001", "provider_name": "ä¸Šè¯æŒ‡æ•°", "change_pct": -1.0},
+            "000688": {"symbol": "000688", "provider_name": "ç§‘åˆ›50", "change_pct": -2.0},
+            "399006": {"symbol": "399006", "provider_name": "åˆ›ä¸šæ¿æŒ‡", "change_pct": -1.0},
+        }
+        etfs = [{"symbol": "515880", "provider_name": "é€šä¿¡ETF", "change_pct": -1.5}]
+        formal = {"validity": "ACTIVE", "applicable_object": "515880", "lifecycle": "Trial"}
+        with patch.object(semantics, "_account_context", return_value={"held_etfs": {}, "held_stocks": {}, "formal": formal}):
+            headline, _, _, _ = semantics.a_share_structure(indices, etfs, {}, is_close=False)
+        text = " ".join(headline)
+        self.assertIn("å½“å‰", text)
+        self.assertNotIn("æ”¶ç›˜", text)
+
+    def test_close_summary_retains_close_wording(self):
+        import notification_semantics as semantics
+
+        indices = {
+            "000001": {"symbol": "000001", "provider_name": "ä¸Šè¯æŒ‡æ•°", "change_pct": -1.0},
+            "000688": {"symbol": "000688", "provider_name": "ç§‘åˆ›50", "change_pct": -2.0},
+            "399006": {"symbol": "399006", "provider_name": "åˆ›ä¸šæ¿æŒ‡", "change_pct": -1.0},
+        }
+        etfs = [{"symbol": "515880", "provider_name": "é€šä¿¡ETF", "change_pct": -1.5}]
+        formal = {"validity": "ACTIVE", "applicable_object": "515880", "lifecycle": "Trial"}
+        with patch.object(semantics, "_account_context", return_value={"held_etfs": {}, "held_stocks": {}, "formal": formal}):
+            headline, _, _, _ = semantics.a_share_structure(indices, etfs, {}, is_close=True)
+        self.assertIn("æ”¶ç›˜", " ".join(headline))
+
+
+class NotificationAggregationTests(unittest.TestCase):
+    def _real_apac_open_event(self):
+        import send_regional_session_summary as producer
+        from unittest.mock import MagicMock
+
+        today = "2026-09-04"
+        objects = {}
+        for code, _label in producer.APAC_SPECS:
+            gap = 2.69 if code == "HSTECH" else 0.1
+            objects[code] = {
+                "quality_status": "PASS",
+                "latest": {
+                    "market_date_local": today,
+                    "as_of_beijing": f"{today}T10:20:00+08:00",
+                    "open": 100.0 + gap,
+                    "close": 100.0 + gap,
+                    "previous_close": 100.0,
+                },
+            }
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            context_path = root / "overseas_context.json"
+            current_path = root / "CURRENT.json"
+            context_path.write_text(json.dumps({"objects": objects}), encoding="utf-8")
+            current_path.write_text(json.dumps({"market_date": today}), encoding="utf-8")
+            clock = MagicMock()
+            clock.now.return_value = datetime.fromisoformat(f"{today}T10:21:00+08:00")
+            with patch.object(producer, "OVERSEAS", context_path), patch.object(producer, "CURRENT", current_path), patch.object(producer, "datetime", clock):
+                event = producer._apac_event()
+        self.assertIsNotNone(event)
+        return event
+
+    def test_same_fact_key_is_stable_across_notification_runs(self):
+        from scripts import send_market_shock_notification_legacy as legacy
+        c = {"category": "REVERSAL", "code": "HSTECH", "day": 0.32, "event_magnitude_pct": 1.61, "sudden": 0.0, "direction": "UP", "name": "æ’ç”Ÿç§‘æŠ€æŒ‡æ•°", "latest": {"as_of_beijing": "2026-08-31T16:09:08+08:00"}}
+        current_path = legacy.ROOT / "data/state/overseas_context.json"
+        first = legacy._build_context_event(c, source="asia", current_path=current_path, current={}, labels={}, metric_labels={}, market_dates={"HSTECH": "2026-08-31"}, today_bj="2026-08-31")
+        second = legacy._build_context_event(c, source="asia", current_path=current_path, current={}, labels={}, metric_labels={}, market_dates={"HSTECH": "2026-08-31"}, today_bj="2026-08-31")
+        self.assertEqual(first["key"], second["key"])
+        self.assertIn("16:09:08", first["key"])
+
+    @staticmethod
+    def _event(code, name, category, direction="UP", stamp="2026-08-31T13:20:00+08:00", magnitude=2.0, event_type="MARKET_VALUE_ALERT"):
+        return {
+            "event_type": event_type,
+            "security_code": code,
+            "security_name": name,
+            "created_at": stamp,
+            "sent_at": stamp,
+            "title": f"ã€å¸‚åœºå¼‚åŠ¨ã€‘{name}{category}",
+            "content": f"{name}ï¼ˆ{code}ï¼‰å½“å‰æ¶¨è·Œ {magnitude:+.2f}%",
+            "confirmation_context": {
+                "market_date": "2026-08-31",
+                "security_code": code,
+                "security_name": name,
+                "event_category": category,
+                "direction": direction,
+                "event_magnitude_pct": magnitude,
+            },
+        }
+
+    def test_same_object_continuous_events_merge_and_keep_tags(self):
+        first = self._event("N225", "æ—¥ç»225æŒ‡æ•°", "SUDDEN", magnitude=1.2, stamp="2026-08-31T10:00:00+08:00")
+        second = self._event("N225", "æ—¥ç»225æŒ‡æ•°", "EXTREME", magnitude=1.4, stamp="2026-08-31T10:04:00+08:00")
+        result = notification_common._absorb_or_aggregate([first], second)
+        self.assertIsNotNone(result)
+        self.assertEqual(result[0], "AGGREGATED_INTO_EXISTING")
+        self.assertEqual(result[1]["confirmation_context"]["event_tags"], ["SUDDEN", "EXTREME"])
+
+    def test_apac_open_signal_absorbs_same_object_extreme_without_upgrade(self):
+        opening = self._real_apac_open_event()
+        extreme = self._event("HSTECH", "æ’ç”Ÿç§‘æŠ€æŒ‡æ•°", "EXTREME", magnitude=2.83, stamp="2026-09-04T10:34:00+08:00")
+        extreme["confirmation_context"].update({"market": "ASIA", "market_date": "2026-09-04", "direction": "UP"})
+        self.assertEqual(notification_common._absorb_or_aggregate([opening], extreme)[0], "AGGREGATED_INTO_EXISTING")
+
+    def test_apac_open_signal_allows_substantive_extreme_upgrade(self):
+        opening = self._real_apac_open_event()
+        extreme = self._event("HSTECH", "æ’ç”Ÿç§‘æŠ€æŒ‡æ•°", "EXTREME", magnitude=3.70, stamp="2026-09-04T10:34:00+08:00")
+        extreme["confirmation_context"].update({"market": "ASIA", "market_date": "2026-09-04", "direction": "UP"})
+        self.assertIsNone(notification_common._absorb_or_aggregate([opening], extreme))
+
+    def test_apac_same_day_small_extreme_changes_are_absorbed_for_any_object(self):
+        for code, values in (("KOSPI", (1.65, 1.66)), ("HSTECH", (2.69, 2.64, 2.83))):
+            prior = {
+                "event_type": "MARKET_VALUE_ALERT", "security_code": code,
+                "sent_at": "2026-09-04T10:20:00+08:00",
+                "confirmation_context": {
+                    "market": "ASIA", "market_date": "2026-09-04", "direction": "UP",
+                    "event_category": "EXTREME", "event_magnitude_pct": values[0],
+                },
+            }
+            for index, value in enumerate(values[1:], start=1):
+                event = {
+                    "event_type": "MARKET_VALUE_ALERT", "security_code": code,
+                    "created_at": f"2026-09-04T10:{20 + index:02d}:00+08:00",
+                    "confirmation_context": {
+                        "market": "ASIA", "market_date": "2026-09-04", "direction": "UP",
+                        "event_category": "EXTREME", "event_magnitude_pct": value,
+                    },
+                }
+                self.assertIsNotNone(notification_common._find_aggregate_target([prior], event))
+
+    def test_summary_absorbs_same_fact_but_not_independent_gold(self):
+        summary = {
+            "event_type": "A_SHARE_SESSION_SUMMARY",
+            "created_at": "2026-08-31T15:02:00+08:00",
+            "sent_at": "2026-08-31T15:02:00+08:00",
+            "title": "ã€æ”¶ç›˜æ€»ç»“ã€‘ç§‘åˆ›50æ—¥å†…Vå½¢ä¿®å¤",
+            "content": "ç§‘åˆ›50ï¼ˆ000688ï¼‰ä»ä½ç‚¹ä¿®å¤è‡³é«˜ä½ã€‚",
+            "confirmation_context": {
+                "market_date": "2026-08-31",
+                "covered_fact_keys": ["2026-08-31|000688|REVERSAL|UP"],
+            },
+        }
+        reversal = self._event("000688", "ç§‘åˆ›50", "REVERSAL", stamp="2026-08-31T15:03:00+08:00")
+        gold = self._event("518880", "é»„é‡‘ETF", "EXTREME", direction="DOWN", stamp="2026-08-31T15:03:00+08:00", magnitude=4.2)
+        self.assertEqual(notification_common._absorb_or_aggregate([summary], reversal)[0], "ABSORBED_BY_SUMMARY")
+        self.assertIsNone(notification_common._absorb_or_aggregate([summary], gold))
+
+    def test_protected_trial_is_never_absorbed(self):
+        summary = {
+            "event_type": "A_SHARE_SESSION_SUMMARY",
+            "created_at": "2026-08-31T15:02:00+08:00",
+            "sent_at": "2026-08-31T15:02:00+08:00",
+            "title": "ã€æ”¶ç›˜æ€»ç»“ã€‘ç§‘åˆ›50ç»“æ„ä¿®å¤",
+            "content": "ç§‘åˆ›50ï¼ˆ000688ï¼‰ä¿®å¤ã€‚",
+            "confirmation_context": {"market_date": "2026-08-31", "covered_fact_keys": ["2026-08-31|515880|REVERSAL|UP"]},
+        }
+        trial = self._event("515880", "é€šä¿¡ETF", "REVERSAL", stamp="2026-08-31T15:03:00+08:00", event_type="Trialæœºä¼š")
+        self.assertIsNone(notification_common._absorb_or_aggregate([summary], trial))
+
+    def test_material_upgrade_reopens_after_summary_or_aggregation(self):
+        summary = {
+            "event_type": "A_SHARE_SESSION_SUMMARY",
+            "created_at": "2026-08-31T15:02:00+08:00",
+            "sent_at": "2026-08-31T15:02:00+08:00",
+            "title": "ã€æ”¶ç›˜æ€»ç»“ã€‘ç§‘åˆ›50æ—¥å†…Vå½¢ä¿®å¤",
+            "content": "ç§‘åˆ›50ï¼ˆ000688ï¼‰ä¿®å¤ã€‚",
+            "confirmation_context": {"market_date": "2026-08-31", "covered_fact_keys": ["2026-08-31|000688|REVERSAL|UP"], "covered_event_magnitude_pct": 2.0},
+        }
+        upgrade = self._event("000688", "ç§‘åˆ›50", "REVERSAL", stamp="2026-08-31T15:04:00+08:00", magnitude=5.0)
+        self.assertIsNone(notification_common._absorb_or_aggregate([summary], upgrade))
+
+    def test_apac_summary_title_names_objects_directly(self):
+        source = Path(__file__).resolve().parents[1] / "scripts" / "send_regional_session_summary.py"
+        text = source.read_text(encoding="utf-8")
+        self.assertIn('subjects = "ã€".join(label for _, label, _, _ in selected[:3])', text)
+        self.assertNotIn("title = f\"ã€æ”¶ç›˜æ€»ç»“ã€‘äºšå¤ªä¸»è¦å¸‚åœºæ”¶ç›˜", text)
+
+
+if __name__ == "__main__":
+    unittest.main()
