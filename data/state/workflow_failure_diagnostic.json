@@ -1,24 +1,29 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-04T12:09:31+08:00",
+  "generated_at": "2026-09-04T12:10:44+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33835717587,
+  "run_id": 33835767919,
   "run_attempt": 1,
-  "head_sha": "096390668d5d84b478938d2309c2df9c691da476",
-  "main_head_sha": "56f999bba6fc4449d3c0abf52fc0afcadf590099",
+  "head_sha": "792ba4a899f8b664f5c8ec7b1f350a118fec6a0f",
+  "main_head_sha": "a2721a5eeadc42af107a78925892452e7fc5636d",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 6
+      "step": "Enforce hard consistency result",
+      "number": 8
+    },
+    {
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 8
     }
   ],
   "changed_files": [
     "scripts/process_state_sync_request.py"
   ],
-  "commit_message": "fix: preserve request-scoped confirmation time on idempotent replay",
+  "commit_message": "Merge PR #299: preserve request confirmation time on replay",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
