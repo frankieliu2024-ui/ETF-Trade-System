@@ -1,24 +1,29 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-04T12:01:19+08:00",
+  "generated_at": "2026-09-04T12:02:29+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33835240331,
+  "run_id": 33835292694,
   "run_attempt": 1,
-  "head_sha": "0a2bae3bc93e5ab240891069e55513a8a32a1118",
-  "main_head_sha": "ac3dee4b1b04202e05feaa55386cf03624244ffd",
+  "head_sha": "ec239fde82bf0645713bf46b38efce96fdb3f86b",
+  "main_head_sha": "532157e3a3c6d43617da7ba74cfa9fe19c33f86a",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 6
+      "step": "Enforce hard consistency result",
+      "number": 8
+    },
+    {
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 8
     }
   ],
   "changed_files": [
     "scripts/process_state_sync_request.py"
   ],
-  "commit_message": "fix: match formal CASE date-time representation exactly",
+  "commit_message": "Merge PR #297: match formal CASE date-time identity",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
