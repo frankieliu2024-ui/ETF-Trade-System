@@ -392,6 +392,11 @@ jobs:
           done
           git fetch --no-tags origin main
           git reset --hard origin/main
+          current_main_sha=$(git rev-parse origin/main)
+          if [ "$current_main_sha" != "$GITHUB_SHA" ]; then
+            echo "Refusing stale acceptance persistence: GITHUB_SHA=$GITHUB_SHA current_main=$current_main_sha"
+            exit 1
+          fi
           for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json data/state/execution_quality.json; do
             if [ -f "$owned/$f" ]; then
               cp "$owned/$f" "$f"
