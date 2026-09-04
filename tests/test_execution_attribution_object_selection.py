@@ -7,6 +7,7 @@ from pathlib import Path
 from scripts.decision_trade_link import decision_price_for_trade, resolve_link
 from scripts import process_state_sync_request as state_sync
 from scripts.lifecycle_state import build_lifecycle_projection
+from scripts.build_execution_quality import build as build_execution_quality
 
 
 class ExecutionAttributionObjectSelectionTests(unittest.TestCase):
@@ -100,6 +101,25 @@ class ExecutionAttributionObjectSelectionTests(unittest.TestCase):
         ]
         self.assertEqual(decision_price_for_trade(decision, {"code": "515880"}), 0.651)
 
+
+    def test_execution_quality_does_not_fallback_to_candidate_hypothesis_for_other_trade(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "events" / "decisions").mkdir(parents=True)
+            (root / "events" / "trades").mkdir(parents=True)
+            decision = self._decision()
+            (root / "events" / "decisions" / "decision-ab.json").write_text(json.dumps(decision), encoding="utf-8")
+            (root / "events" / "trades" / "exit-a.json").write_text(json.dumps({
+                "event_id": "exit-a", "linked_decision_id": "decision-ab",
+                "code": "515880", "side": "SELL", "price": 0.648,
+                "confirmed_at_beijing": "2026-09-03T09:47:55+08:00",
+            }), encoding="utf-8")
+            result = build_execution_quality(root)
+            item = result["items"][0]
+            self.assertIsNone(item["hypothesis_id"])
+            self.assertIsNone(item["decision_price"])
+            self.assertIsNone(item["adverse_execution_cost_pct"])
+            self.assertEqual(item["status"], "PARTIAL")
 
     def test_lifecycle_does_not_attach_exit_a_to_trial_candidate_b(self):
         with tempfile.TemporaryDirectory() as tmp:
