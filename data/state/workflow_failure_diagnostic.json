@@ -1,34 +1,33 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-04T09:24:13+08:00",
+  "generated_at": "2026-09-04T09:32:50+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33825534413,
+  "run_id": 33826150063,
   "run_attempt": 1,
-  "head_sha": "7d7a9334bf985f75b48ec958513731498b8ed922",
-  "main_head_sha": "7d7a9334bf985f75b48ec958513731498b8ed922",
+  "head_sha": "8eab729d7a5d9858329380c99fe658c1f0a42dc5",
+  "main_head_sha": "b5395683b0eb6c89aed2f943d4ded7dc4c749dc0",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 8
+      "step": "PR candidate post-replay acceptance",
+      "number": 6
     }
   ],
   "changed_files": [
-    "data/state/execution_reconciliation.json",
-    "data/state/notification_center.json"
+    "scripts/check_system_consistency_core.py"
   ],
-  "commit_message": "state: record notification and execution reconciliation",
-  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "commit_message": "check: allow legacy event rows while rejecting duplicate markers",
+  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": true,
+    "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": true,
+    "bot_or_revert_commit": false,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
