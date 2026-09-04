@@ -15,6 +15,10 @@ except ModuleNotFoundError:
     from scripts.rules_version import parse_master_release
 try:
     from semantic_latest_main import classify_delta
+try:
+    from confirmed_trade_facts import canonical_etf_fee_projection
+except ModuleNotFoundError:
+    from scripts.confirmed_trade_facts import canonical_etf_fee_projection
 except ModuleNotFoundError:
     from scripts.semantic_latest_main import classify_delta
 
@@ -28,6 +32,63 @@ CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json
 CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/rules_version.py", "scripts/check_system_consistency.py", "scripts/check_system_consistency_core.py", "scripts/semantic_latest_main.py", "tests/test_semantic_latest_main.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_stock_context.py", "scripts/build_account_stock_market.py", "scripts/market_data_guard.py", "tests/test_market_data_guard.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_low_cost_alpha_evidence.py", "scripts/build_query_context.py", "scripts/market_quote_router.py", "scripts/sync_formal_files.py", "scripts/formal_file_mutation_gateway.py", "tests/test_formal_file_mutation_gateway.py", "scripts/market_notification_common.py", "scripts/merge_notification_state.py", "scripts/notification_center.py", "tests/test_production_reliability.py", "scripts/query_market_object.py", "config/market/market_quote_router.json", "tests/test_market_quote_router.py", "scripts/build_post_market_review.py", "scripts/review_prerequisite_lifecycle.py", "scripts/historical_market_fact_recovery.py", ".github/workflows/market-snapshot.yml", ".github/workflows/on-demand-market-data.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/decision-notification.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
 EXPECTED_INDICES = {"000001.SH", "399006.SZ", "000688.SH", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
 REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api", "eastmoney_push2"}
+
+
+def validate_current_fee_projection() -> dict:
+    """Validate current fee projections against canonical ETF facts and event identities."""
+    experience = read_text("ETF交易复盘与经验库_2026.md")
+    equity = read_json("data/state/etf_strategy_equity.json")
+    projection = canonical_etf_fee_projection(ROOT, equity.get("trades") or [])
+    failures: list[str] = []
+    summary_match = re.search(r"截至(\d{4}-\d{2}-\d{2})累计已确认ETF费用([0-9]+\.[0-9]{2})元；待确认费用：([^。]+)。", experience)
+    if not summary_match:
+        failures.append("current §2.1 cumulative fee summary is missing or unparsable")
+    else:
+        actual_fee = round(float(summary_match.group(2)), 2)
+        expected_pending = "无" if projection["pending_fee_count"] == 0 else f"{projection['pending_fee_count']}笔"
+        if actual_fee != projection["effective_confirmed_fee_sum"]:
+            failures.append(f"summary fee={actual_fee:.2f} expected={projection['effective_confirmed_fee_sum']:.2f}")
+        if summary_match.group(3) != expected_pending:
+            failures.append(f"summary pending={summary_match.group(3)} expected={expected_pending}")
+
+    event_dir = ROOT / "events" / "trades"
+    confirmed_event_ids: list[str] = []
+    for path in sorted(event_dir.glob("*.json")) if event_dir.exists() else []:
+        event = read_json(str(path.relative_to(ROOT)))
+        if str(event.get("execution_status") or "").upper() != "EXECUTED":
+            continue
+        event_id = str(event.get("event_id") or "").strip()
+        if not event_id:
+            continue
+        fee = event.get("fee_amount", event.get("fee"))
+        if str(event.get("fee_status") or "").upper() != "CONFIRMED":
+            continue
+        confirmed_event_ids.append(event_id)
+        marker = f"TRADE_EVENT:{event_id}"
+        marker_count = experience.count(marker)
+        if marker_count > 1:
+            failures.append(f"{event_id}: marker_count={marker_count}, duplicate event markers")
+        marker_lines = [line for line in experience.splitlines() if marker in line]
+        if not marker_lines:
+            continue
+        line = marker_lines[0]
+        try:
+            fee_value = float(fee)
+        except (TypeError, ValueError):
+            failures.append(f"{event_id}: canonical confirmed fee is not numeric")
+            continue
+        if f"|{fee_value:.2f}|" not in line:
+            failures.append(f"{event_id}: projected fee column does not match canonical fee")
+        if "待确认" in line or "未含待确认费用" in line:
+            failures.append(f"{event_id}: confirmed fee row retains pending wording")
+    return {
+        "expected_confirmed_fee": projection["effective_confirmed_fee_sum"],
+        "pending_fee_count": projection["pending_fee_count"],
+        "canonical_trade_count": projection["canonical_trade_count"],
+        "confirmed_event_ids": confirmed_event_ids,
+        "failures": failures,
+        "status": "PASS" if not failures else "FAIL",
+    }
 
 
 def read_text(path: str) -> str:
@@ -352,10 +413,12 @@ def main() -> int:
     dashboard_text = read_text("ETF当前状态_DASHBOARD.md")
     experience_text = read_text("ETF交易复盘与经验库_2026.md")
     archive_text = read_text("ETF市场行情档案_2026.md")
-    fee_closed = "累计已确认ETF费用|120.01元；待确认费用：无" in dashboard_text
-    stale_fee_text = "2026-08-25恒生科技ETF（513180）卖出费用仍待" in experience_text or "|2026-08-25 10:02:57|恒生科技ETF（513180）|513180|卖出|8,200|0.574|4,706.80|待确认|" in experience_text or "卖出费用待券商结算确认" in experience_text
-    check("formal_files:confirmed_fee_closure", not fee_closed or not stale_fee_text, "Dashboard confirmed fee closure is not contradicted by experience CASE/index")
-    check("formal_files:archive_current_provider_roles", all(x in archive_text for x in ["腾讯行情", "东方财富 `124.HSTECH`", "provider_priority.json"]), "market archive records current production provider roles")
+    fee_projection = validate_current_fee_projection()
+    check(
+        "formal_files:confirmed_fee_projection",
+        fee_projection["status"] == "PASS",
+        f"expected_confirmed_fee={fee_projection['expected_confirmed_fee']:.2f} pending={fee_projection['pending_fee_count']} failures={fee_projection['failures']}",
+    )
 
     runtime = read_json("config/runtime_policy.json")
     for key in ["target_cadence_seconds", "fresh_max_age_seconds", "degraded_max_age_seconds", "close_grace_seconds", "provider_timeout_seconds", "provider_retry_limit", "scheduled_provider_max_workers", "query_provider_max_workers"]:
