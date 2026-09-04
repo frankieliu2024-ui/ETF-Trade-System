@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from scripts import check_system_consistency as consistency
 from scripts import notification_center
+from scripts import process_state_sync_request as state_sync
 
 
 class CaseMappingConsistencyConvergenceTests(unittest.TestCase):
@@ -205,6 +206,89 @@ class CaseMappingConsistencyConvergenceTests(unittest.TestCase):
                       Path(notification_center.__file__).read_text(encoding="utf-8"))
         self.assertNotIn('title = f"【观察机会｜无需下单】{target}"',
                          Path(notification_center.__file__).read_text(encoding="utf-8"))
+
+
+    def test_issue_268_real_2026_08_25_rows_retain_existing_case_owner_on_projection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            experience = root / "ETF交易复盘与经验库_2026.md"
+            experience.write_text(
+                "### 2.1 2026-07-13以来完整证券成交索引\n"
+                "|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|\n"
+                "|-|-|-|-|-|-|-|-|-|-|\n"
+                "|2026-08-25 10:02:57|通信ETF（513180）|513180|卖出|8,200|0.574|4,706.80|5.00|4,701.80|关联决策2026-08-25_207443bb40c2；真实成交已执行| <!-- TRADE_EVENT:20260825_100518 -->\n"
+                "|2026-08-25 11:22:34|半导体ETF（561980）|561980|卖出|13,000|0.663|8,619.00|5.00|8,614.00|关联决策2026-08-25_7734ccf57b51；真实成交已执行| <!-- TRADE_EVENT:20260825_112516 -->\n"
+                "### 2.2 银证转账与非交易现金流水\n"
+                "### 2.12 CASE-20260817-01：通信ETF退出\n"
+                "2026-08-25 10:02:57 通信ETF 513180 卖出 8200 0.574\n"
+                "### 2.13 CASE-20260818-01：半导体ETF降风险\n"
+                "2026-08-25 11:22:34 半导体ETF 561980 卖出 13000 0.663\n",
+                encoding="utf-8",
+            )
+            with patch.object(state_sync, "ROOT", root), \
+                 patch.object(state_sync, "EXPERIENCE", experience):
+                for event_id, code, qty, price, decision in (
+                    ("20260825_100518", "513180", 8200, 0.574, "2026-08-25_207443bb40c2"),
+                    ("20260825_112516", "561980", 13000, 0.663, "2026-08-25_7734ccf57b51"),
+                ):
+                    state_sync.sync_experience_transaction_index({
+                        "event_id": event_id,
+                        "confirmed_at_beijing": f"{event_id[:4]}-{event_id[4:6]}-{event_id[6:8]}T{event_id[9:11]}:{event_id[11:13]}:{event_id[13:15]}+08:00",
+                        "name": "通信ETF" if code == "513180" else "半导体ETF",
+                        "code": code,
+                        "side": "SELL",
+                        "quantity": qty,
+                        "price": price,
+                        "amount": price * qty,
+                        "fee": 5,
+                        "fee_status": "CONFIRMED",
+                        "linked_decision_id": decision,
+                    })
+            updated = experience.read_text(encoding="utf-8")
+            self.assertIn("CASE-20260817-01；关联决策2026-08-25_207443bb40c2", updated)
+            self.assertIn("CASE-20260818-01；关联决策2026-08-25_7734ccf57b51", updated)
+            self.assertEqual(updated.count("TRADE_EVENT:20260825_100518"), 1)
+            self.assertEqual(updated.count("TRADE_EVENT:20260825_112516"), 1)
+            report = self._run_historical_mapping(
+                "|2026-08-25 10:02:57|通信ETF|513180|卖出|8200|0.574|4706.80|5.00|4701.80|CASE-20260817-01|"
+            )
+            self.assertEqual(report["errors"], [])
+
+    def test_issue_268_missing_lifecycle_does_not_erase_case_or_create_pending_text(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            experience = root / "ETF交易复盘与经验库_2026.md"
+            experience.write_text(
+                "### 2.1 2026-07-13以来完整证券成交索引\n"
+                "|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|\n"
+                "|-|-|-|-|-|-|-|-|-|-|\n"
+                "|2026-08-25 10:02:57|通信ETF（513180）|513180|卖出|8,200|0.574|4,706.80|待确认|4,706.80（未含待确认费用）|CASE-20260817-01| <!-- TRADE_EVENT:legacy -->\n"
+                "### 2.2 银证转账与非交易现金流水\n"
+                "### 2.12 CASE-20260817-01：通信ETF退出\n"
+                "2026-08-25 10:02:57 通信ETF 513180 卖出 8200 0.574\n",
+                encoding="utf-8",
+            )
+            event = {
+                "event_id": "legacy",
+                "confirmed_at_beijing": "2026-08-25T10:02:57+08:00",
+                "name": "通信ETF",
+                "code": "513180",
+                "side": "SELL",
+                "quantity": 8200,
+                "price": 0.574,
+                "amount": 4706.8,
+                "fee": 5,
+                "fee_status": "CONFIRMED",
+                "lifecycle": "待确认",
+            }
+            with patch.object(state_sync, "ROOT", root), \
+                 patch.object(state_sync, "EXPERIENCE", experience):
+                state_sync.sync_experience_transaction_index(event)
+            line = next(x for x in experience.read_text(encoding="utf-8").splitlines() if "TRADE_EVENT:legacy" in x)
+            self.assertIn("CASE-20260817-01", line)
+            self.assertNotIn("待确认", line)
+            self.assertNotIn("未提供", line)
+
 
 
 if __name__ == "__main__":
