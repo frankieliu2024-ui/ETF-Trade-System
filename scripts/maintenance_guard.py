@@ -99,7 +99,7 @@ def reconcile() -> dict:
     reconstructed_fee_sum = rounded(fee_fact["reconstructed_confirmed_fee_sum"], 2)
     effective_fee_sum = rounded(fee_fact["effective_confirmed_fee_sum"], 2)
     summary_known_fees = rounded(summary.get("known_fees") or 0, 2)
-    auxiliary_fee_ok = abs(reconstructed_fee_sum - summary_known_fees) < 0.011
+    auxiliary_fee_ok = abs(effective_fee_sum - summary_known_fees) < 0.011
 
     formal_fee_fact = latest_formal_review_confirmed_fees(ROOT)
     formal_review_fee = rounded(formal_fee_fact["confirmed_etf_fees"], 2) if formal_fee_fact else None
@@ -112,7 +112,7 @@ def reconcile() -> dict:
     equity_diff = rounded((strategy_cash + etf_mv) - gross_equity, 2)
     equity_ok = abs(equity_diff) < 0.011 and str(summary.get("equity_reconciliation_status") or "").startswith("RECONCILED")
 
-    trade_count_ok = int(summary.get("trade_count") or 0) == len(trades)
+    trade_count_ok = int(summary.get("trade_count") or 0) == len(trades_for_positions)
     overall = quantity_ok and fee_ok and equity_ok and trade_count_ok
     return {
         "status": "PASS" if overall else "FAIL",
@@ -125,7 +125,7 @@ def reconcile() -> dict:
             "status": "PASS" if fee_ok else "FAIL",
             "auxiliary_reconstructed_confirmed_fee_sum": reconstructed_fee_sum,
             "auxiliary_summary_known_fees": summary_known_fees,
-            "auxiliary_difference": rounded(reconstructed_fee_sum - summary_known_fees, 2),
+            "auxiliary_difference": rounded(effective_fee_sum - summary_known_fees, 2),
             "executed_event_overlay_count": int(fee_fact["executed_event_overlay_count"]),
             "executed_event_confirmed_fee_sum": rounded(fee_fact["executed_event_confirmed_fee_sum"], 2),
             "effective_confirmed_fee_sum": effective_fee_sum,
