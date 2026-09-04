@@ -75,6 +75,13 @@ def active_account_asset_codes(root: Path | None = None, account: dict | None = 
         membership["etf" if looks_like_etf(position, code, etf_codes) else "stocks"].add(code)
     return membership
 
+def position_metric(position: dict, current_key: str, legacy_key: str, default: float = 0.0) -> float:
+    """Read current account fields first, retaining explicit legacy compatibility."""
+    value = first(position, current_key, legacy_key)
+    parsed = numeric(value)
+    return default if parsed is None else parsed
+
+
 def build() -> dict:
     account = read_account_fact(ROOT)
     etf_codes = load_etf_codes()
