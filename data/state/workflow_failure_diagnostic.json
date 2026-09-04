@@ -1,24 +1,35 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-04T09:37:12+08:00",
+  "generated_at": "2026-09-04T09:41:48+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33826420700,
+  "run_id": 33826658721,
   "run_attempt": 1,
-  "head_sha": "016fce6ed74fbba9f9fdb8e5b1d7b1e1063ca89b",
-  "main_head_sha": "7f2d54132c98453be42d921313e8eeafc14d4eef",
+  "head_sha": "c0d5dfb47d711ff4d90dc9eb329820305b302a14",
+  "main_head_sha": "b35d6e88f46b92cf2891b6eaef49e91c1d2931fe",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 6
+      "step": "Enforce hard consistency result",
+      "number": 8
+    },
+    {
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 8
     }
   ],
   "changed_files": [
-    "scripts/check_system_consistency_core.py"
+    ".github/workflows/system-consistency.yml",
+    "scripts/apply_trade_fact_correction.py",
+    "scripts/check_system_consistency_core.py",
+    "scripts/confirmed_trade_facts.py",
+    "scripts/maintenance_guard.py",
+    "scripts/process_state_sync_request.py",
+    "tests/test_trade_fact_correction_contract.py"
   ],
-  "commit_message": "fix: restore consistency import fallback syntax",
+  "commit_message": "Merge PR #277: Issue #275 fee projection root-cause repair",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
