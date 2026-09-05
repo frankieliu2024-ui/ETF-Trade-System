@@ -17,7 +17,10 @@ ETF_UNIVERSE_PATH = ROOT / "config" / "market" / "etf_monitor_universe.json"
 
 
 def load_etf_codes(root: Path | None = None) -> set[str]:
-    universe_path = (root or ROOT) / "config" / "market" / "etf_monitor_universe.json"
+    universe_root = root or ROOT
+    universe_path = universe_root / "config" / "market" / "etf_monitor_universe.json"
+    if not universe_path.exists() and universe_root != ROOT:
+        universe_path = ROOT / "config" / "market" / "etf_monitor_universe.json"
     universe = read_json(universe_path, {})
     codes = {
         str(item.get("code", "")).strip()
