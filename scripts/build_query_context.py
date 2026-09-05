@@ -153,6 +153,26 @@ def build_fast_path_latency(request: dict, current: dict, decision: dict, market
     t_refresh = request.get("refresh_started_at_beijing") or request.get("refresh_reused_at_beijing") or ""
     return {"t0": t0, "t_refresh_start_or_reuse": t_refresh, "t_new_current": t_new if freshness.get("resolved_post_request") or freshness.get("post_request") else "", "t_decision_ready": t_decision, "t_reply_or_output_ready": reply_ready, "refresh_start_latency": _duration_seconds(t0, t_refresh), "refresh_duration": _duration_seconds(t_refresh, t_new), "post_current_decision_latency": _duration_seconds(t_new, t_decision), "total_fast_path_latency": _duration_seconds(t0, reply_ready), "measurement_status": "OBSERVED_FIELDS_ONLY; MISSING_TIMESTAMPS_REMAIN_EXPLICIT", "refresh_mode": market_quote.get("refresh_mode") or ""}
 def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: list[str] | None = None, request_file: str | None = None) -> dict:
+    # Only read request identity/time before freshness assurance. All decision
+    # facts and derived context are deliberately loaded after the router returns.
+    request_payload = {}
+    request_time = None
+    if request_file:
+        request_payload = read_json((root / request_file).resolve(), {})
+        request_time = parse_time(request_payload.get("requested_at_beijing") or request_payload.get("request_time"))
+    live_dir = root / "requests" / "live_snapshot"
+    if request_time is None and live_dir.exists():
+        request_times = []
+        for path in live_dir.glob("*.json"):
+            request = read_json(path, {})
+            stamp = parse_time(request.get("requested_at_beijing") or request.get("request_time"))
+            if stamp:
+                request_times.append(stamp)
+        if request_times:
+            request_time = max(request_times)
+    # Freshness assurance is the first decision-critical operation.
+    market_quote = build_market_quote_context(root, force_refresh=force_refresh, requested_symbols=requested_symbols, decision_request_time=request_time)
+    # Re-read canonical facts so formal reasoning consumes the post-refresh snapshot.
     current = read_current(root)
     account = read_account_fact(root)
     policy = read_json(root / CANONICAL_FILES["runtime_policy"], {})
@@ -183,27 +203,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         if int(position.get("quantity") or 0) > 0 and code not in seen_system_codes:
             system_objects.append({"object_code": code, "object_name": position.get("name") or code, "source_type": "SYSTEM_MONITORED"})
             seen_system_codes.add(code)
-    request_time = None
-    if request_file:
-        request = read_json((root / request_file).resolve(), {})
-        request_time = parse_time(request.get("requested_at_beijing") or request.get("request_time"))
-    live_dir = root / "requests" / "live_snapshot"
-    if request_time is None and live_dir.exists():
-        request_times = []
-        for path in live_dir.glob("*.json"):
-            request = read_json(path, {})
-            stamp = parse_time(request.get("requested_at_beijing") or request.get("request_time"))
-            if stamp:
-                request_times.append(stamp)
-        if request_times:
-            request_time = max(request_times)
-    # Freshness assurance is the first decision-critical operation.
-    market_quote = build_market_quote_context(root, force_refresh=force_refresh, requested_symbols=requested_symbols, decision_request_time=request_time)
-    # Re-read canonical facts so formal reasoning consumes the post-refresh snapshot.
-    current = read_current(root)
-    account = read_account_fact(root)
     decision = build_decision_context(root)
-    request_payload = read_json((root / request_file).resolve(), {}) if request_file else {}
     generated_at = datetime.now(SHANGHAI).isoformat(timespec="seconds")
     fact_pack = build_decision_fact_pack(root, request_payload, current, account, decision, market_quote)
     latency = build_fast_path_latency(request_payload, current, decision, market_quote, generated_at)
