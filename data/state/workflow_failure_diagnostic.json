@@ -1,24 +1,24 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-05T12:04:05+08:00",
+  "generated_at": "2026-09-05T12:16:44+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33943496512,
+  "run_id": 33944078386,
   "run_attempt": 1,
-  "head_sha": "5cb3caa5525be4b5ac03adad9421fc7c287297e8",
-  "main_head_sha": "55c8bf51e755e30372fba82705099b64937e07c8",
+  "head_sha": "7cdb9c39847fbebbdc68b145acbd698482e63ef2",
+  "main_head_sha": "def774f190a55a732cfb1d9dea8cd59e916eaaf1",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "production_acceptance",
-      "step": "Enforce production acceptance",
-      "number": 9
+      "job": "consistency",
+      "step": "PR candidate post-replay acceptance",
+      "number": 6
     }
   ],
   "changed_files": [
-    "requests/live_snapshot/20260905_120224_issue335_broker_account_replay.json"
+    "tests/test_state_layer.py"
   ],
-  "commit_message": "request: replay latest broker account fact for issue 335 validation",
+  "commit_message": "test: protect processed broker replay consumption semantics",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
