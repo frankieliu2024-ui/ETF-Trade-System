@@ -1,0 +1,32 @@
+{
+  "request_id": "20260905_120224_issue335_broker_account_replay",
+  "requested_at_beijing": "2026-09-05T12:02:24+08:00",
+  "interaction_scenario": "BROKER_SCREENSHOT_SYNC",
+  "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+  "requested_by": "chatgpt",
+  "reason": "Use the user-provided latest broker holdings screenshot as a request-scoped correction/replay of the existing 2026-09-04 15:03 account snapshot and as real production evidence for Issue #335. The screenshot shows the same nine positions, quantities, costs, prices and cash already represented by the current account_fact, with no new trade or transfer, but its top-level account aggregates are total_asset=179921.82, stock_market_value=173451.20, holding_pnl=-19615.65, daily_pnl=-646.60, daily_pnl_pct=-0.36. Preserve prior confirmed trades, settlement obligations, lifecycle/formal_action and reconciliation metadata through canonical merge. Do not infer a new trade. Broker display time is not a market-provider timestamp. After account sync, allow the existing canonical state producer to rebuild capital-efficiency/state context so Issue #335 can be validated on main.",
+  "account_fact": {
+    "status": "VALID",
+    "updated_at": "2026-09-04T15:03:00+08:00",
+    "source": "BROKER_HOLDINGS_SCREENSHOT_20260904_1503_USER_REPROVIDED_FOR_ISSUE335_VALIDATION",
+    "last_confirmed_market_date": "2026-09-04",
+    "total_asset": 179921.82,
+    "stock_market_value": 173451.20,
+    "cash": 6470.62,
+    "holding_pnl": -19615.65,
+    "daily_pnl": -646.60,
+    "daily_pnl_pct": -0.36,
+    "positions": [
+      {"code":"300750","name":"宁德时代","quantity":100,"available_quantity":100,"cost":393.781,"current_price":351.000,"market_value":35100.00,"pnl":-4278.07,"pnl_pct":-10.864},
+      {"code":"601138","name":"工业富联","quantity":500,"available_quantity":500,"cost":58.054,"current_price":63.690,"market_value":31845.00,"pnl":2817.78,"pnl_pct":9.707},
+      {"code":"561980","name":"半导体设备ETF","quantity":38900,"available_quantity":38900,"cost":0.847,"current_price":0.644,"market_value":25051.60,"pnl":-7913.30,"pnl_pct":-24.005},
+      {"code":"588000","name":"科创50ETF","quantity":14100,"available_quantity":14100,"cost":2.099,"current_price":1.668,"market_value":23518.80,"pnl":-6075.61,"pnl_pct":-20.530},
+      {"code":"159941","name":"纳指ETF","quantity":12200,"available_quantity":12200,"cost":1.626,"current_price":1.664,"market_value":20300.80,"pnl":464.20,"pnl_pct":2.340},
+      {"code":"159781","name":"科创创业ETF","quantity":19500,"available_quantity":19500,"cost":1.269,"current_price":1.032,"market_value":20124.00,"pnl":-4624.60,"pnl_pct":-18.686},
+      {"code":"301689","name":"电科思仪","quantity":500,"available_quantity":500,"cost":16.000,"current_price":16.000,"market_value":8000.00,"pnl":0.00,"pnl_pct":0.000,"origin":"IPO_ALLOTMENT_ORIGIN","origin_fact":"confirmed_settlement_obligation"},
+      {"code":"159326","name":"电网设备ETF","quantity":3000,"available_quantity":3000,"cost":1.653,"current_price":1.643,"market_value":4929.00,"pnl":-29.00,"pnl_pct":-0.585},
+      {"code":"518880","name":"黄金ETF","quantity":500,"available_quantity":500,"cost":9.118,"current_price":9.164,"market_value":4582.00,"pnl":22.95,"pnl_pct":0.503}
+    ],
+    "validity_mode": "EVENT_DRIVEN_CARRY_FORWARD"
+  }
+}
