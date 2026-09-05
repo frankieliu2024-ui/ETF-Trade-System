@@ -93,12 +93,57 @@ def latest_broker_screenshot_request() -> tuple[Path | None, dict]:
 
 
 
+def _same_fact_value(left: object, right: object) -> bool:
+    if isinstance(left, (int, float)) and isinstance(right, (int, float)):
+        return float(left) == float(right)
+    return left == right
+
+
+def _request_account_fact_consumed(request: dict, canonical: dict) -> bool:
+    """Prove a broker request was consumed without using request time as account time."""
+    supplied = request.get("account_fact") if isinstance(request, dict) else None
+    if not isinstance(supplied, dict):
+        return False
+    if supplied.get("updated_at") != canonical.get("updated_at"):
+        return False
+    scalar_keys = (
+        "status", "last_confirmed_market_date", "total_asset", "stock_market_value",
+        "cash", "holding_pnl", "daily_pnl", "daily_pnl_pct", "validity_mode",
+    )
+    for key in scalar_keys:
+        if key in supplied and not _same_fact_value(supplied.get(key), canonical.get(key)):
+            return False
+    supplied_positions = supplied.get("positions")
+    canonical_positions = canonical.get("positions")
+    if not isinstance(supplied_positions, list):
+        return False
+    if isinstance(supplied_positions, list):
+        if not isinstance(canonical_positions, list):
+            return False
+        canonical_by_code = {
+            str(position.get("code") or ""): position
+            for position in canonical_positions
+            if isinstance(position, dict)
+        }
+        for position in supplied_positions:
+            if not isinstance(position, dict):
+                return False
+            code = str(position.get("code") or "")
+            current = canonical_by_code.get(code)
+            if not code or current is None:
+                return False
+            for key, value in position.items():
+                if key not in current or not _same_fact_value(value, current.get(key)):
+                    return False
+    return True
+
+
 def account_component(account: dict, current: dict) -> dict:
     status_raw = str(account.get("status") or "UNKNOWN").upper()
     account_time = parse_time(account.get("updated_at"))
     broker_path, broker_request = latest_broker_screenshot_request()
     request_time = parse_time(broker_request.get("request_time_beijing") or broker_request.get("requested_at_beijing") or broker_request.get("request_time"))
-    ingress_pending = bool(broker_path and request_time and (account_time is None or request_time > account_time))
+    broker_request_consumed = _request_account_fact_consumed(broker_request, account)\n    ingress_pending = bool(broker_path and request_time and not broker_request_consumed and (account_time is None or request_time > account_time))
     audit_events = account.get("account_change_events_after_confirmed_at") or []
     pending_events = []
     for event in audit_events:
@@ -114,7 +159,7 @@ def account_component(account: dict, current: dict) -> dict:
     settlement_blocked = settlement_status in {"INSUFFICIENT_CASH", "DEADLINE_PASSED_UNCONFIRMED", "UNCONFIRMED_DEADLINE_PASSED"}
     if ingress_pending:
         status = "BLOCKED"
-        reason = "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request is newer than canonical account_fact"
+        reason = "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request has not converged into canonical account_fact"
         return {
             "status": status,
             "reason": reason,
