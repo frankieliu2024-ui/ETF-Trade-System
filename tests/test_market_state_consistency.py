@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def load_gate_helpers():
     source = (ROOT / "scripts/check_market_state_consistency.py").read_text(encoding="utf-8")
     tree = ast.parse(source)
-    names = {"capture_window_skip", "idempotent_close_skip", "phase_mismatch_allowed"}
+    names = {"is_capture_window_skip", "is_idempotent_close_skip", "is_phase_mismatch_allowed"}
     functions = [node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name in names]
     namespace = {}
     exec(compile(ast.Module(body=functions, type_ignores=[]), str(ROOT / "scripts/check_market_state_consistency.py"), "exec"), namespace)
@@ -38,8 +38,8 @@ class MarketStateCloseSkipTests(unittest.TestCase):
         self.snapshot = {"market_date": "2026-09-04", "market_phase": "POST_CLOSE_GRACE"}
 
     def test_idempotent_close_skip_allows_retained_phase_difference(self):
-        self.assertTrue(self.helpers["idempotent_close_skip"](self.current, self.runtime, self.snapshot, self.current["latest_snapshot"]))
-        self.assertTrue(self.helpers["phase_mismatch_allowed"](self.current, self.runtime, self.snapshot, self.current["latest_snapshot"]))
+        self.assertTrue(self.helpers["is_idempotent_close_skip"](self.current, self.runtime, self.snapshot, self.current["latest_snapshot"]))
+        self.assertTrue(self.helpers["is_phase_mismatch_allowed"](self.current, self.runtime, self.snapshot, self.current["latest_snapshot"]))
 
     def test_capture_window_skip_remains_allowed(self):
         runtime = dict(self.runtime, reason="outside_a_share_capture_window", failure_stage="session_gate")
