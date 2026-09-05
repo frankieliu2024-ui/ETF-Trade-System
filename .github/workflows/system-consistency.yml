@@ -50,6 +50,19 @@ on:
       - "scripts/merge_notification_state.py"
       - ".github/workflows/decision-notification.yml"
       - "config/maintenance/production_mutation_protocol.json"
+      # All formal facts, requests, normative documentation, and contract tests
+      # are full-acceptance inputs; keep the PR trigger aligned with the
+      # classifier rather than relying on a later manual dispatch.
+      - "ETF规则_MASTER.md"
+      - "ETF_SYSTEM_INDEX.md"
+      - "ETF当前状态_DASHBOARD.md"
+      - "ETF市场行情档案_2026.md"
+      - "ETF交易复盘与经验库_2026.md"
+      - "ETF与市场监测数据接口使用规范.md"
+      - "docs/**"
+      - "events/**"
+      - "requests/**"
+      - "tests/**"
   push:
     branches: [main]
     paths:
@@ -92,6 +105,12 @@ on:
       - "data/market/audit/research_backfill/**"
       - "research/reports/**"
       - "post_market_review/**"
+      # Keep main-side reachability aligned with acceptance_scope.py for
+      # formal facts, requests, normative docs, and contract tests.
+      - "docs/**"
+      - "events/**"
+      - "requests/**"
+      - "tests/**"
   schedule:
     # Pre-market readiness fallback. The dedicated overseas pulse remains the
     # primary collector; these runs prevent a missed/delayed GitHub schedule

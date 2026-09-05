@@ -10,6 +10,7 @@ from scripts.acceptance_scope import (
     FORMAL_PROJECTION_MUTATION,
     STABLE_CODE_OR_WORKFLOW_CHANGE,
     UNKNOWN,
+    classify_path,
     classify_paths,
 )
 from scripts.build_e2e_status import maintenance_component
@@ -94,6 +95,51 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
                                     "reconciliation": {"status": "FAIL"}})["status"],
             "BLOCKED",
         )
+
+    def test_full_acceptance_classes_have_natural_workflow_coverage(self):
+        source = WORKFLOW.read_text(encoding="utf-8")
+        pr_block = source.split("  push:", 1)[0]
+        push_block = source.split("  push:", 1)[1].split("  schedule:", 1)[0]
+
+        # These representatives cover every production path family that the
+        # classifier currently marks as requiring full acceptance. The broad
+        # directory patterns are intentional: they prevent new formal facts,
+        # requests, contract tests, or normative docs from silently losing
+        # their main-side acceptance trigger.
+        representatives = {
+            "ETF规则_MASTER.md",
+            "config/maintenance/production_mutation_protocol.json",
+            "data/state/account_fact.json",
+            "events/trades/example.json",
+            "events/reviews/example.json",
+            "requests/trade_fact_correction/example.json",
+            "requests/research_backfill/example.json",
+            "ETF当前状态_DASHBOARD.md",
+            "scripts/check_system_consistency.py",
+        }
+        for path in representatives:
+            self.assertTrue(classify_path(path) in {
+                "FORMAL_RULE_OR_CONFIG", "ACCOUNT_FACT_MUTATION",
+                "TRADE_FACT_MUTATION", "FORMAL_PROJECTION_MUTATION",
+                "REVIEW_EVENT_MUTATION", "RESEARCH_FORMAL_MUTATION",
+                "STABLE_CODE_OR_WORKFLOW_CHANGE",
+            }, path)
+            self.assertTrue(classify_paths([path])["required"], path)
+
+        for pattern in (
+            '      - "ETF规则_MASTER.md"',
+            '      - "ETF_SYSTEM_INDEX.md"',
+            '      - "ETF当前状态_DASHBOARD.md"',
+            '      - "ETF市场行情档案_2026.md"',
+            '      - "ETF交易复盘与经验库_2026.md"',
+            '      - "ETF与市场监测数据接口使用规范.md"',
+            '      - "docs/**"',
+            '      - "events/**"',
+            '      - "requests/**"',
+            '      - "tests/**"',
+        ):
+            self.assertIn(pattern, pr_block)
+            self.assertIn(pattern, push_block)
 
     def test_workflow_does_not_add_a_second_state_store(self):
         source = WORKFLOW.read_text(encoding="utf-8")
