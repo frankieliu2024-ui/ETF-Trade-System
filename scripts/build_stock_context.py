@@ -16,8 +16,9 @@ OUTPUT_PATH = ROOT / "data" / "state" / "stock_context.json"
 ETF_UNIVERSE_PATH = ROOT / "config" / "market" / "etf_monitor_universe.json"
 
 
-def load_etf_codes() -> set[str]:
-    universe = read_json(ETF_UNIVERSE_PATH, {})
+def load_etf_codes(root: Path | None = None) -> set[str]:
+    universe_path = (root or ROOT) / "config" / "market" / "etf_monitor_universe.json"
+    universe = read_json(universe_path, {})
     codes = {
         str(item.get("code", "")).strip()
         for item in (universe.get("objects") or [])
@@ -65,7 +66,7 @@ def active_account_asset_codes(root: Path | None = None, account: dict | None = 
     """Return active membership using this builder's canonical ETF classifier."""
     root = root or ROOT
     account = account if account is not None else read_account_fact(root)
-    etf_codes = load_etf_codes()
+    etf_codes = load_etf_codes(root)
     membership = {"etf": set(), "stocks": set()}
     for position in account.get("positions") or []:
         if not isinstance(position, dict): continue
