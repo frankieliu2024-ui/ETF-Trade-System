@@ -5,6 +5,11 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any
 
+try:
+    from build_stock_context import active_account_asset_codes
+except ModuleNotFoundError:
+    from scripts.build_stock_context import active_account_asset_codes
+
 TZ = timezone(timedelta(hours=8))
 ROOT = Path(__file__).resolve().parents[1]
 STATE = ROOT / "data" / "state"
@@ -209,14 +214,17 @@ def _build_ranking(current: dict, account: dict, e2e: dict, equity: dict, prior:
     latest = str(current.get("latest_snapshot") or "")
     snapshot = _read(ROOT / latest, {}) if latest else {}
     rows = [x for x in (snapshot.get("rows") or []) if isinstance(x, dict) and x.get("asset_class") == "ETF"]
+    memberships = active_account_asset_codes(ROOT, account)
+    held_etf_codes = memberships["etf"]
+    account_stock_codes = memberships["stocks"]
     held_etf_positions = {
-        str(x.get("code")): x
+        str(x.get("code") or x.get("symbol") or x.get("security_code")): x
         for x in account.get("positions") or []
-        if str(x.get("asset_type") or "").upper() == "ETF" and float(x.get("quantity") or 0) > 0
+        if str(x.get("code") or x.get("symbol") or x.get("security_code")) in held_etf_codes
     }
     held_stock_positions = [
         x for x in account.get("positions") or []
-        if str(x.get("asset_type") or "").upper() == "STOCK" and float(x.get("quantity") or 0) > 0
+        if str(x.get("code") or x.get("symbol") or x.get("security_code")) in account_stock_codes
     ]
 
     comparison = [{

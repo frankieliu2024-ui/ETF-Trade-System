@@ -370,7 +370,16 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
     equity = read_json(root / "data" / "state" / "etf_strategy_equity.json", {})
     summary = equity.get("summary") or {}
     account = read_account_fact(root)
-    etf_float = sum(float(p.get("holding_pnl") or 0) for p in (account.get("positions") or []) if p.get("asset_type") == "ETF")
+    try:
+        from build_stock_context import active_account_asset_codes, normalize_code, position_metric
+    except ModuleNotFoundError:
+        from scripts.build_stock_context import active_account_asset_codes, normalize_code, position_metric
+    memberships = active_account_asset_codes(root, account)
+    etf_float = sum(
+        position_metric(p, "pnl", "holding_pnl")
+        for p in (account.get("positions") or [])
+        if normalize_code(p.get("code") or p.get("symbol") or p.get("security_code")) in memberships["etf"]
+    )
     capital = float(summary.get("starting_etf_strategy_capital") or 200000)
     reconstruction_risk = summary.get("known_net_current_strategy_return_pct")
     reconstruction_as_of = str(equity.get("as_of_transaction_date") or summary.get("as_of_transaction_date") or "")
