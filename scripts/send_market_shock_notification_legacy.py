@@ -340,7 +340,7 @@ def _a_share_candidate() -> dict | None:
             low = min(values, key=lambda x: x[1])
             spread = high[1] - low[1]
             if spread >= limit:
-                candidates.append({"score": _candidate_score("DIVERGENCE", spread / limit), "category": "DIVERGENCE", "code": code, "day": None, "event_magnitude_pct": spread, "sudden": None, "row": {}, "direction": "DIVERGED", "asset": "STRUCTURE", "name": label, "extra": f"领先{high[0]} {pct(high[1])}，落后{low[0]} {pct(low[1])}，差约{spread:.2f}个百分点"})
+                candidates.append({"score": _candidate_score("DIVERGENCE", spread / limit), "category": "DIVERGENCE", "code": code, "day": None, "event_magnitude_pct": spread, "sudden": None, "row": {}, "direction": "DIVERGED", "asset": "STRUCTURE", "name": label, "object_codes": [high[0], low[0]], "fact_family": "A_SHARE_CROSS_SECTION", "extra": f"领先{high[0]} {pct(high[1])}，落后{low[0]} {pct(low[1])}，差约{spread:.2f}个百分点"})
 
     for c in sorted(candidates, key=lambda x: float(x.get("score") or 0), reverse=True):
         event = _build_a_share_event(c, market_date=market_date, snapshot=snapshot, interval_min=interval_min, dt=dt)
@@ -387,7 +387,7 @@ def _build_context_event(c: dict, *, source: str, current_path: Path, current: d
         "security_name": label.split("（")[0],
         "user_severity": "需要关注",
         "user_action": "纳入最近A股决策节点重新验证，不机械交易",
-        "confirmation_context": {"market": source.upper(), "market_date": market_date, "direction": direction, "event_category": category, "phase_metric_change_pct": day, "sudden_change_pct": sudden, "event_magnitude_pct": magnitude, "market_as_of_beijing": as_of, "source_fact_id": f"{market_date}:{code}:{category}:{direction}:{as_of}", "session": str(c.get("session") or "")},
+        "confirmation_context": {"market": source.upper(), "market_date": market_date, "direction": direction, "event_category": category, "fact_family": str(c.get("fact_family") or ""), "object_codes": list(c.get("object_codes") or ([code] if not code.endswith("_DIVERGENCE") else [])), "phase_metric_change_pct": day, "sudden_change_pct": sudden, "event_magnitude_pct": magnitude, "market_as_of_beijing": as_of, "source_fact_id": f"{market_date}:{code}:{category}:{direction}:{as_of}", "session": str(c.get("session") or ("REGULAR" if source == "us" else "SESSION"))},
     }
 
 
@@ -505,7 +505,7 @@ def _context_candidate(source: str) -> dict | None:
         spread = high[1] - low[1]
         if spread >= divergence_limit:
             synthetic_code = "US_TECH_DIVERGENCE" if source == "us" else "APAC_DIVERGENCE"
-            candidates.append({"score": _candidate_score("DIVERGENCE", spread / divergence_limit), "category": "DIVERGENCE", "code": synthetic_code, "day": None, "event_magnitude_pct": spread, "sudden": None, "latest": {}, "direction": "DIVERGED", "name": "美股科技内部结构" if source == "us" else "亚太主要指数结构", "extra": f"领先{labels[high[0]]} {pct(high[1])}，落后{labels[low[0]]} {pct(low[1])}，差约{spread:.2f}个百分点"})
+            candidates.append({"score": _candidate_score("DIVERGENCE", spread / divergence_limit), "category": "DIVERGENCE", "code": synthetic_code, "day": None, "event_magnitude_pct": spread, "sudden": None, "latest": {}, "direction": "DIVERGED", "name": "美股科技内部结构" if source == "us" else "亚太主要指数结构", "object_codes": [high[0], low[0]], "fact_family": "US_SESSION_STRUCTURE" if source == "us" else "APAC_SESSION_STRUCTURE", "extra": f"领先{labels[high[0]]} {pct(high[1])}，落后{labels[low[0]]} {pct(low[1])}，差约{spread:.2f}个百分点"})
 
     for c in sorted(candidates, key=lambda x: float(x.get("score") or 0), reverse=True):
         event = _build_context_event(c, source=source, current_path=current_path, current=current, labels=labels, metric_labels=metric_labels, market_dates=market_dates, today_bj=today_bj)
