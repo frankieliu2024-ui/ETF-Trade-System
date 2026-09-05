@@ -128,10 +128,33 @@ def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict)
     }
 
 
+
+
+def _duration_seconds(start: str, end: str) -> float | None:
+    first, second = parse_time(start), parse_time(end)
+    if first is None or second is None:
+        return None
+    return round(max(0.0, (second - first).total_seconds()), 3)
+
+
+def build_decision_fact_pack(root: Path, request: dict, current: dict, account: dict, decision: dict, market_quote: dict) -> dict:
+    """Expose one request's PIT references without creating another state store."""
+    freshness = market_quote.get("decision_freshness") or {}
+    universe = read_json(root / CANONICAL_FILES["etf_monitor_universe"], {})
+    return {"schema_version": "1.0", "trigger": {"source": request.get("requested_by") or request.get("source") or "INTERACTIVE_QUERY", "request_id": request.get("request_id") or "", "requested_at_beijing": request.get("requested_at_beijing") or request.get("request_time") or ""}, "master": {"version": decision.get("rules_version") or current.get("rules_version") or "", "source": "ETF规则_MASTER.md"}, "account_fact": {"source": account.get("source") or "", "as_of_beijing": account.get("updated_at") or "", "status": account.get("status") or ""}, "current": {"market_date": current.get("market_date") or "", "latest_snapshot": current.get("latest_snapshot") or "", "captured_at_beijing": current.get("captured_at") or (current.get("data_freshness") or {}).get("captured_at_beijing") or "", "provider_as_of_beijing": (current.get("data_freshness") or {}).get("provider_as_of") or "", "provider": (current.get("data_freshness") or {}).get("provider") or ""}, "decision_context": {"generated_at_beijing": decision.get("generated_at_beijing") or decision.get("generated_at") or "", "source": "scripts/state_manager.py::build_decision_context"}, "market_quote": {"mode": market_quote.get("refresh_mode") or "", "decision_freshness": freshness, "quotes_as_of_beijing": sorted({str(q.get("data_time_beijing") or "") for q in (market_quote.get("quotes") or []) if isinstance(q, dict) and q.get("data_time_beijing")}), "source": "scripts/market_quote_router.py"}, "lifecycle": {"source": "decision_context.lifecycle_projection", "reference": "decision_context.lifecycle_projection"}, "etf_universe": {"source": CANONICAL_FILES["etf_monitor_universe"], "version": universe.get("version") or "", "count": len(universe.get("objects") or [])}, "pit_rule": "Formal reasoning consumes only this request-scoped fact set; downstream projections cannot mutate the same PIT decision."}
+
+
+def build_fast_path_latency(request: dict, current: dict, decision: dict, market_quote: dict, reply_ready: str) -> dict:
+    """Report only observed timestamps; missing instrumentation stays explicit."""
+    t0 = request.get("requested_at_beijing") or request.get("request_time") or ""
+    freshness = market_quote.get("decision_freshness") or {}
+    t_new = current.get("captured_at") or (current.get("data_freshness") or {}).get("captured_at_beijing") or ""
+    t_decision = decision.get("generated_at_beijing") or decision.get("generated_at") or ""
+    t_refresh = request.get("refresh_started_at_beijing") or request.get("refresh_reused_at_beijing") or ""
+    return {"t0": t0, "t_refresh_start_or_reuse": t_refresh, "t_new_current": t_new if freshness.get("resolved_post_request") or freshness.get("post_request") else "", "t_decision_ready": t_decision, "t_reply_or_output_ready": reply_ready, "refresh_start_latency": _duration_seconds(t0, t_refresh), "refresh_duration": _duration_seconds(t_refresh, t_new), "post_current_decision_latency": _duration_seconds(t_new, t_decision), "total_fast_path_latency": _duration_seconds(t0, reply_ready), "measurement_status": "OBSERVED_FIELDS_ONLY; MISSING_TIMESTAMPS_REMAIN_EXPLICIT", "refresh_mode": market_quote.get("refresh_mode") or ""}
 def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: list[str] | None = None, request_file: str | None = None) -> dict:
     current = read_current(root)
     account = read_account_fact(root)
-    decision = build_decision_context(root)
     policy = read_json(root / CANONICAL_FILES["runtime_policy"], {})
     runtime_health = read_json(root / CANONICAL_FILES["runtime_health"], {})
     overseas_context = read_json(root / CANONICAL_FILES["overseas_context"], {})
@@ -174,7 +197,16 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
                 request_times.append(stamp)
         if request_times:
             request_time = max(request_times)
+    # Freshness assurance is the first decision-critical operation.
     market_quote = build_market_quote_context(root, force_refresh=force_refresh, requested_symbols=requested_symbols, decision_request_time=request_time)
+    # Re-read canonical facts so formal reasoning consumes the post-refresh snapshot.
+    current = read_current(root)
+    account = read_account_fact(root)
+    decision = build_decision_context(root)
+    request_payload = read_json((root / request_file).resolve(), {}) if request_file else {}
+    generated_at = datetime.now(SHANGHAI).isoformat(timespec="seconds")
+    fact_pack = build_decision_fact_pack(root, request_payload, current, account, decision, market_quote)
+    latency = build_fast_path_latency(request_payload, current, decision, market_quote, generated_at)
     return {
         "generated_at": now_utc(), "generated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
         "market_date": current.get("market_date", ""), "latest_valid_node": current.get("latest_valid_node", ""),
@@ -199,7 +231,10 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         "stock_context_status": stock_context.get("account_fact_status", "MISSING"), "stock_market_context_status": stock_market_context.get("quality_status", "MISSING"),
         "stock_role_confirmation_needed": stock_context.get("needs_role_confirmation", False), "account_fact_status": account["status"], "account_gate": account_gate,
         "needs_account_screenshot": not account_gate["can_use_current_account_fact"], "read_only": True,
-        "interaction_boundary": "用户主动查询时先核对一致性与交易日历，再按‘查询时立即补采 → 最近一次有效快照 → 明确降级/缺失’获取行情；正式输出必须标注北京时间真实数据时点，并区分美股现金盘、盘后和盘前。",
+        "interaction_boundary": "用户主动查询时先进入freshness assurance，再按‘查询时立即补采/复用 → 最近一次有效快照 → 明确降级/缺失’获取行情；正式输出必须标注北京时间真实数据时点，并区分美股现金盘、盘后和盘前。",
+        "decision_fact_pack": fact_pack,
+        "freshness_assurance": {"status": (market_quote.get("decision_freshness") or {}).get("status", "UNKNOWN"), "refresh_mode": market_quote.get("refresh_mode", ""), "decision_request_time": request_time.isoformat() if request_time else "", "decision_request_post_current": (market_quote.get("decision_freshness") or {}).get("post_request", False), "rule": "freshness assurance precedes full decision-context construction; post-refresh CURRENT is re-read before formal decision context construction."},
+        "fast_path_latency": latency,
     }
 
 
