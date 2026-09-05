@@ -47,9 +47,23 @@ capture_window_skip = (
     and runtime_failure_stage == 'session_gate'
     and runtime_reason == 'outside_a_share_capture_window'
 )
-if str(runtime.get('market_date') or '') != str(current.get('market_date') or '') and not capture_window_skip:
+# A close attempt may be skipped after the canonical close fact has already
+# been recorded. This is deliberately narrower than a generic SKIPPED bypass:
+# every identity and date check must still prove that the retained snapshot is
+# the same valid close fact referenced by the attempt.
+idempotent_close_skip = (
+    runtime_status == 'SKIPPED'
+    and runtime_reason == 'close_already_recorded'
+    and str(current.get('node_status') or '').upper() == 'READY'
+    and str(current.get('latest_valid_node') or '').lower() == 'close'
+    and str(runtime.get('market_date') or '') == str(current.get('market_date') or '')
+    and str(runtime.get('latest_snapshot') or '') == snapshot_rel
+    and str(snapshot.get('market_date') or '') == str(current.get('market_date') or '')
+)
+phase_mismatch_allowed = capture_window_skip or idempotent_close_skip
+if str(runtime.get('market_date') or '') != str(current.get('market_date') or '') and not phase_mismatch_allowed:
     fail('runtime_health.market_date != CURRENT.market_date')
-if runtime_phase != phase and not capture_window_skip:
+if runtime_phase != phase and not phase_mismatch_allowed:
     fail('runtime_health.market_phase != snapshot.market_phase')
 
 node = str(snapshot.get('node') or '')
