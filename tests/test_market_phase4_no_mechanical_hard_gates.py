@@ -166,12 +166,7 @@ class Phase4NoMechanicalHardGatesTest(unittest.TestCase):
                 "positions": [{"code": "561980", "quantity": 100, "pnl": -12.5, "holding_pnl": 99.0}]
             }), encoding="utf-8")
             (root / "data/state/CURRENT.json").write_text(json.dumps({"market_date": "2026-09-05"}), encoding="utf-8")
-            old_root = state_manager.ROOT
-            state_manager.ROOT = root
-            try:
-                metrics = state_manager.build_etf_strategy_risk_metrics(root)
-            finally:
-                state_manager.ROOT = old_root
+            metrics = state_manager.build_etf_strategy_risk_metrics(root)
         self.assertAlmostEqual(metrics["etf_holding_unrealized_pct"], -0.00625, places=6)
 
 if __name__ == "__main__":
