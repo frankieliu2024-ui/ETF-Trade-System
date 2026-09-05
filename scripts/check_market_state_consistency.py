@@ -47,9 +47,40 @@ capture_window_skip = (
     and runtime_failure_stage == 'session_gate'
     and runtime_reason == 'outside_a_share_capture_window'
 )
-if str(runtime.get('market_date') or '') != str(current.get('market_date') or '') and not capture_window_skip:
+# A close attempt may be skipped after the canonical close fact has already
+# been recorded. This is deliberately narrower than a generic SKIPPED bypass:
+# every identity and date check must still prove that the retained snapshot is
+# the same valid close fact referenced by the attempt.
+def capture_window_skip(runtime: dict) -> bool:
+    return (
+        str(runtime.get('status') or '') == 'SKIPPED'
+        and str(runtime.get('failure_stage') or '') == 'session_gate'
+        and str(runtime.get('reason') or '') == 'outside_a_share_capture_window'
+    )
+
+
+def idempotent_close_skip(current: dict, runtime: dict, snapshot: dict, snapshot_rel: str) -> bool:
+    return (
+        str(runtime.get('status') or '') == 'SKIPPED'
+        and str(runtime.get('reason') or '') == 'close_already_recorded'
+        and str(current.get('node_status') or '').upper() == 'READY'
+        and str(current.get('latest_valid_node') or '').lower() == 'close'
+        and str(runtime.get('market_date') or '') == str(current.get('market_date') or '')
+        and str(runtime.get('latest_snapshot') or '') == snapshot_rel
+        and str(snapshot.get('market_date') or '') == str(current.get('market_date') or '')
+    )
+
+
+def phase_mismatch_allowed(current: dict, runtime: dict, snapshot: dict, snapshot_rel: str) -> bool:
+    return capture_window_skip(runtime) or idempotent_close_skip(current, runtime, snapshot, snapshot_rel)
+
+
+capture_window_skip = capture_window_skip(runtime)
+idempotent_close_skip = idempotent_close_skip(current, runtime, snapshot, snapshot_rel)
+phase_mismatch_allowed = phase_mismatch_allowed(current, runtime, snapshot, snapshot_rel)
+if str(runtime.get('market_date') or '') != str(current.get('market_date') or '') and not phase_mismatch_allowed:
     fail('runtime_health.market_date != CURRENT.market_date')
-if runtime_phase != phase and not capture_window_skip:
+if runtime_phase != phase and not phase_mismatch_allowed:
     fail('runtime_health.market_phase != snapshot.market_phase')
 
 node = str(snapshot.get('node') or '')
