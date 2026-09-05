@@ -148,5 +148,77 @@ class StateLayerTests(unittest.TestCase):
             atomic_json_write(path, {"version": 2}, expected_sha256=expected)
 
 
+    def _write_broker_request(self, request: dict) -> None:
+        request_dir = self.root / "requests" / "live_snapshot"
+        request_dir.mkdir(parents=True, exist_ok=True)
+        (request_dir / "20260905_120224_broker.json").write_text(
+            json.dumps(request), encoding="utf-8"
+        )
+
+    def test_processed_late_broker_replay_is_not_account_block(self) -> None:
+        account = {
+            "status": "VALID",
+            "updated_at": "2026-09-04T15:03:00+08:00",
+            "source": "CANONICAL_ACCOUNT_FACT",
+            "cash": 100.0,
+            "positions": [{"code": "561980", "quantity": 100, "current_price": 0.644, "pnl": -12.5}],
+        }
+        supplied = {
+            **account,
+            "source": "BROKER_SCREENSHOT_REPLAY",
+        }
+        self._write_broker_request({
+            "request_id": "broker-replay-processed",
+            "requested_at_beijing": "2026-09-05T12:02:24+08:00",
+            "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+            "interaction_scenario": "BROKER_SCREENSHOT_SYNC",
+            "account_fact": supplied,
+        })
+        with patch.object(e2e, "ROOT", self.root):
+            first = e2e.account_component(account, {"needs_account_update": False})
+            second = e2e.account_component(account, {"needs_account_update": False})
+        self.assertEqual(first["status"], "READY")
+        self.assertEqual(second, first)
+        self.assertNotIn("ACCOUNT_SYNC_NOT_PERFORMED", first["reason"])
+
+    def test_newer_changed_broker_fact_still_blocks(self) -> None:
+        account = {
+            "status": "VALID",
+            "updated_at": "2026-09-04T15:03:00+08:00",
+            "source": "CANONICAL_ACCOUNT_FACT",
+            "positions": [{"code": "561980", "quantity": 100}],
+        }
+        self._write_broker_request({
+            "request_id": "broker-replay-new-fact",
+            "requested_at_beijing": "2026-09-05T12:02:24+08:00",
+            "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+            "interaction_scenario": "BROKER_SCREENSHOT_SYNC",
+            "account_fact": {
+                **account,
+                "updated_at": "2026-09-05T12:02:24+08:00",
+                "positions": [{"code": "561980", "quantity": 200}],
+            },
+        })
+        with patch.object(e2e, "ROOT", self.root):
+            result = e2e.account_component(account, {"needs_account_update": False})
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertIn("ACCOUNT_SYNC_NOT_PERFORMED", result["reason"])
+
+    def test_request_without_account_fact_still_blocks(self) -> None:
+        request_dir = self.root / "requests" / "live_snapshot"
+        request_dir.mkdir(parents=True, exist_ok=True)
+        (request_dir / "20260905_120224_missing.json").write_text(json.dumps({
+            "request_id": "broker-missing-fact",
+            "requested_at_beijing": "2026-09-05T12:02:24+08:00",
+            "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+            "interaction_scenario": "BROKER_SCREENSHOT_SYNC",
+        }), encoding="utf-8")
+        account = {"status": "VALID", "updated_at": "2026-09-04T15:03:00+08:00", "positions": []}
+        with patch.object(e2e, "ROOT", self.root):
+            result = e2e.account_component(account, {"needs_account_update": False})
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertIn("ACCOUNT_SYNC_NOT_PERFORMED", result["reason"])
+
+
 if __name__ == "__main__":
     unittest.main()
