@@ -43,11 +43,11 @@ class MarketStateCloseSkipTests(unittest.TestCase):
 
     def test_capture_window_skip_remains_allowed(self):
         runtime = dict(self.runtime, reason="outside_a_share_capture_window", failure_stage="session_gate")
-        self.assertTrue(self.helpers["phase_mismatch_allowed"](self.current, runtime, self.snapshot, self.current["latest_snapshot"]))
+        self.assertTrue(self.helpers["is_phase_mismatch_allowed"](self.current, runtime, self.snapshot, self.current["latest_snapshot"]))
 
     def test_snapshot_identity_mismatch_is_rejected(self):
         runtime = dict(self.runtime, latest_snapshot="data/market/snapshots/other.json")
-        self.assertFalse(self.helpers["idempotent_close_skip"](self.current, runtime, self.snapshot, self.current["latest_snapshot"]))
+        self.assertFalse(self.helpers["is_idempotent_close_skip"](self.current, runtime, self.snapshot, self.current["latest_snapshot"]))
 
     def test_market_date_mismatch_is_rejected(self):
         runtime = dict(self.runtime, market_date="2026-09-03")
