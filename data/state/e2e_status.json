@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-09-05T11:48:37+08:00",
-  "status": "READY",
+  "generated_at": "2026-09-05T12:03:02+08:00",
+  "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
@@ -13,16 +13,19 @@
       "market_phase": "POST_CLOSE_GRACE"
     },
     "account": {
-      "status": "READY",
-      "reason": "confirmed account facts remain valid; historical audit deltas are not pending updates",
+      "status": "BLOCKED",
+      "reason": "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request is newer than canonical account_fact",
       "updated_at": "2026-09-04T15:03:00+08:00",
-      "source": "BROKER_HOLDINGS_SCREENSHOT_20260904_1503_USER_CONFIRMED",
+      "source": "BROKER_HOLDINGS_SCREENSHOT_20260904_1503_USER_REPROVIDED_FOR_ISSUE335_VALIDATION",
       "pending_change_events": [],
-      "historical_audit_event_count": 38,
-      "cash": 6470.62,
-      "reserved_cash_for_settlement": 0,
-      "deployable_cash": 6470.62,
-      "settlement_constraint_status": "NONE"
+      "historical_audit_event_count": 39,
+      "pending_broker_request": {
+        "path": "requests/live_snapshot/20260905_120224_issue335_broker_account_replay.json",
+        "request_id": "20260905_120224_issue335_broker_account_replay",
+        "request_time": "2026-09-05T12:02:24+08:00",
+        "has_account_fact": true,
+        "status": "ACCOUNT_SYNC_NOT_PERFORMED"
+      }
     },
     "risk": {
       "status": "READY",
@@ -63,7 +66,9 @@
       "checked_at": "2026-09-05T11:48:37+08:00"
     }
   },
-  "blockers": [],
+  "blockers": [
+    "account"
+  ],
   "degradations": [],
   "safety_boundary": "This state does not create or modify risk permission, Trial/Confirm rules, amounts, sell rules, or execution authority."
 }
