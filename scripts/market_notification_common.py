@@ -539,7 +539,12 @@ def _find_aggregate_target(items: list[dict], event: dict) -> dict | None:
         old_meta = _fact_metadata(item)
         same_session = bool(old_meta["session"] and old_meta["session"] == metadata["session"])
         within_window = prior_stamp and timedelta(0) <= current_stamp - prior_stamp <= timedelta(minutes=AGGREGATION_WINDOW_MINUTES)
-        if same_session or within_window:
+        exact_object = bool(
+            str(item.get("security_code") or _market_context(item).get("security_code") or "")
+            and str(item.get("security_code") or _market_context(item).get("security_code") or "")
+            == str(event.get("security_code") or _market_context(event).get("security_code") or "")
+        )
+        if same_session or within_window or exact_object:
             return item
     return None
 
