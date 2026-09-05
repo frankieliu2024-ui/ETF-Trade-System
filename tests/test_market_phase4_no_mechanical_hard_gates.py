@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from scripts import build_phase4_automation as phase4
+from scripts import state_manager
 from scripts.build_query_context import account_gate_status
 
 
@@ -31,6 +32,11 @@ class Phase4NoMechanicalHardGatesTest(unittest.TestCase):
             root = Path(tmp)
             snapshot_path = root / "data/market/snapshots/test.json"
             snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+            (root / "config/market").mkdir(parents=True, exist_ok=True)
+            (root / "config/market/etf_monitor_universe.json").write_text(
+                json.dumps({"objects": [{"code": "111111"}, {"code": "222222"}, {"code": "333333"}]}),
+                encoding="utf-8",
+            )
             snapshot_path.write_text(
                 json.dumps(
                     {
@@ -98,3 +104,75 @@ class Phase4NoMechanicalHardGatesTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_canonical_account_schema_completes_capital_comparison(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            snapshot_path = root / "data/market/snapshots/test.json"
+            snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+            (root / "config/market").mkdir(parents=True, exist_ok=True)
+            (root / "config/market/etf_monitor_universe.json").write_text(
+                json.dumps({"objects": [
+                    {"code": "561980"}, {"code": "588000"}, {"code": "159941"},
+                    {"code": "159781"}, {"code": "159326"}, {"code": "518880"},
+                    {"code": "159992"},
+                ]}),
+                encoding="utf-8",
+            )
+            snapshot_path.write_text(json.dumps({"rows": [
+                {"asset_class": "ETF", "symbol": "561980", "name": "半导体设备ETF", "quality_status": "PASS"},
+                {"asset_class": "ETF", "symbol": "159992", "name": "创新药ETF", "quality_status": "PASS"},
+            ]}), encoding="utf-8")
+            account = {"positions": [
+                {"code": "561980", "name": "半导体设备ETF", "quantity": 38900, "current_price": 0.644, "pnl": -7913.30, "holding_pnl": 999.0},
+                {"code": "588000", "name": "科创50ETF", "quantity": 14100, "current_price": 1.668, "pnl": -6075.61},
+                {"code": "159941", "name": "纳指ETF", "quantity": 12200, "current_price": 1.664, "pnl": 464.20},
+                {"code": "159781", "name": "科创创业ETF", "quantity": 19500, "current_price": 1.032, "pnl": -4624.60},
+                {"code": "159326", "name": "电网设备ETF", "quantity": 3000, "current_price": 1.643, "pnl": -29.0},
+                {"code": "518880", "name": "黄金ETF", "quantity": 500, "current_price": 9.164, "pnl": 22.95},
+                {"code": "300750", "name": "宁德时代", "quantity": 100, "current_price": 351.0, "pnl": -4278.07},
+                {"code": "601138", "name": "工业富联", "quantity": 500, "current_price": 63.69, "pnl": 2817.78},
+                {"code": "301689", "name": "电科思仪", "quantity": 500, "current_price": 16.0, "pnl": 0.0},
+            ]}
+            old_root = phase4.ROOT
+            phase4.ROOT = root
+            try:
+                ranking = phase4._build_ranking(
+                    {"latest_snapshot": "data/market/snapshots/test.json", "captured_at": "2026-09-05T09:30:00+08:00"},
+                    account, {"status": "READY", "components": {"risk": {"etf_strategy_risk_pct": -8.1}}},
+                    {}, {},
+                )
+            finally:
+                phase4.ROOT = old_root
+        rows = ranking["comparison_universe"]
+        by_code = {row.get("code"): row for row in rows}
+        self.assertEqual(len(rows), len({row.get("code") for row in rows}))
+        for code in ("561980", "588000", "159941", "159781", "159326", "518880"):
+            self.assertEqual(by_code[code]["category"], "HELD_ETF")
+            self.assertEqual(by_code[code]["eligibility"], "HOLDING_COMPARISON")
+        for code in ("300750", "601138", "301689"):
+            self.assertEqual(by_code[code]["category"], "ACCOUNT_STOCK")
+        self.assertEqual(by_code["159992"]["category"], "OBSERVED_ETF")
+        self.assertIsNone(ranking["top_candidate"])
+        self.assertEqual(ranking["candidate_selection_status"], "REQUIRES_MASTER_DECISION")
+        self.assertFalse(any("score" in str(row).lower() for row in rows))
+
+    def test_state_manager_uses_current_pnl_and_legacy_fallback(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "config/market").mkdir(parents=True, exist_ok=True)
+            (root / "data/state").mkdir(parents=True, exist_ok=True)
+            (root / "config/market/etf_monitor_universe.json").write_text(
+                json.dumps({"objects": [{"code": "561980"}]}), encoding="utf-8"
+            )
+            (root / "data/state/account_fact.json").write_text(json.dumps({
+                "positions": [{"code": "561980", "quantity": 100, "pnl": -12.5, "holding_pnl": 99.0}]
+            }), encoding="utf-8")
+            (root / "data/state/CURRENT.json").write_text(json.dumps({"market_date": "2026-09-05"}), encoding="utf-8")
+            old_root = state_manager.ROOT
+            state_manager.ROOT = root
+            try:
+                metrics = state_manager.build_etf_strategy_risk_metrics(root)
+            finally:
+                state_manager.ROOT = old_root
+        self.assertAlmostEqual(metrics["etf_holding_unrealized_pct"], -0.00625, places=6)
