@@ -40,11 +40,7 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
             events.append("refresh")
             return {
                 "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-                "decision_freshness": {
-                    "status": "DIRECT",
-                    "post_request": True,
-                    "resolved_post_request": True,
-                },
+                "decision_freshness": {"status": "DIRECT", "post_request": True, "resolved_post_request": True},
                 "quotes": [],
             }
 
@@ -63,14 +59,15 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertEqual(result["decision_fact_pack"]["current"]["latest_snapshot"], current["latest_snapshot"])
 
     def test_fact_pack_keeps_request_and_pit_identity(self):
-        pack = query_context.build_decision_fact_pack(
-            Path("."),
-            {"request_id": "r2", "requested_at_beijing": "2026-09-05T10:00:00+08:00", "requested_by": "scheduled"},
-            {"market_date": "2026-09-05", "latest_snapshot": "snap.json", "captured_at": "2026-09-05T10:00:02+08:00"},
-            {"status": "VALID", "updated_at": "2026-09-04T15:03:00+08:00", "source": "account"},
-            {"rules_version": "V2.2.31", "generated_at": "2026-09-05T10:00:03+08:00"},
-            {"refresh_mode": "CACHED_STATE", "decision_freshness": {"status": "DIRECT"}, "quotes": []},
-        )
+        with tempfile.TemporaryDirectory() as directory:
+            pack = query_context.build_decision_fact_pack(
+                Path(directory),
+                {"request_id": "r2", "requested_at_beijing": "2026-09-05T10:00:00+08:00", "requested_by": "scheduled"},
+                {"market_date": "2026-09-05", "latest_snapshot": "snap.json", "captured_at": "2026-09-05T10:00:02+08:00"},
+                {"status": "VALID", "updated_at": "2026-09-04T15:03:00+08:00", "source": "account"},
+                {"rules_version": "V2.2.31", "generated_at": "2026-09-05T10:00:03+08:00"},
+                {"refresh_mode": "CACHED_STATE", "decision_freshness": {"status": "DIRECT"}, "quotes": []},
+            )
         self.assertEqual(pack["trigger"]["source"], "scheduled")
         self.assertEqual(pack["master"]["version"], "V2.2.31")
         self.assertEqual(pack["current"]["latest_snapshot"], "snap.json")
@@ -91,10 +88,7 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
 
     def test_latency_durations_are_non_negative_and_observed(self):
         result = query_context.build_fast_path_latency(
-            {
-                "requested_at_beijing": "2026-09-05T10:00:00+08:00",
-                "refresh_started_at_beijing": "2026-09-05T10:00:01+08:00",
-            },
+            {"requested_at_beijing": "2026-09-05T10:00:00+08:00", "refresh_started_at_beijing": "2026-09-05T10:00:01+08:00"},
             {"captured_at": "2026-09-05T10:00:03+08:00"},
             {"generated_at": "2026-09-05T10:00:04+08:00"},
             {"refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH", "decision_freshness": {"post_request": True}},
