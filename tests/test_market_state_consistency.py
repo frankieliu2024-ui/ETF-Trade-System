@@ -43,31 +43,31 @@ class MarketStateCloseSkipTests(unittest.TestCase):
 
     def test_capture_window_skip_remains_allowed(self):
         runtime = dict(self.runtime, reason="outside_a_share_capture_window", failure_stage="session_gate")
-        self.assertTrue(self.helpers["phase_mismatch_allowed"](self.current, runtime, self.snapshot, self.current["latest_snapshot"]))
+        self.assertTrue(self.helpers["is_phase_mismatch_allowed"](self.current, runtime, self.snapshot, self.current["latest_snapshot"]))
 
     def test_snapshot_identity_mismatch_is_rejected(self):
         runtime = dict(self.runtime, latest_snapshot="data/market/snapshots/other.json")
-        self.assertFalse(self.helpers["idempotent_close_skip"](self.current, runtime, self.snapshot, self.current["latest_snapshot"]))
+        self.assertFalse(self.helpers["is_idempotent_close_skip"](self.current, runtime, self.snapshot, self.current["latest_snapshot"]))
 
     def test_market_date_mismatch_is_rejected(self):
         runtime = dict(self.runtime, market_date="2026-09-03")
-        self.assertFalse(self.helpers["idempotent_close_skip"](self.current, runtime, self.snapshot, self.current["latest_snapshot"]))
+        self.assertFalse(self.helpers["is_idempotent_close_skip"](self.current, runtime, self.snapshot, self.current["latest_snapshot"]))
 
     def test_current_must_be_ready_close(self):
         current = dict(self.current, node_status="READY", latest_valid_node="live")
-        self.assertFalse(self.helpers["idempotent_close_skip"](current, self.runtime, self.snapshot, current["latest_snapshot"]))
+        self.assertFalse(self.helpers["is_idempotent_close_skip"](current, self.runtime, self.snapshot, current["latest_snapshot"]))
 
     def test_normal_active_phase_mismatch_is_rejected(self):
         runtime = dict(self.runtime, status="PASS", reason="", market_phase="OUTSIDE_SESSION")
-        self.assertFalse(self.helpers["phase_mismatch_allowed"](self.current, runtime, self.snapshot, self.current["latest_snapshot"]))
+        self.assertFalse(self.helpers["is_phase_mismatch_allowed"](self.current, runtime, self.snapshot, self.current["latest_snapshot"]))
 
     def test_unknown_skip_reason_is_rejected(self):
         runtime = dict(self.runtime, reason="unknown_skip")
-        self.assertFalse(self.helpers["phase_mismatch_allowed"](self.current, runtime, self.snapshot, self.current["latest_snapshot"]))
+        self.assertFalse(self.helpers["is_phase_mismatch_allowed"](self.current, runtime, self.snapshot, self.current["latest_snapshot"]))
 
     def test_aligned_runtime_passes_idempotent_exception_gate(self):
         runtime = dict(self.runtime, market_phase="POST_CLOSE_GRACE")
-        self.assertTrue(self.helpers["phase_mismatch_allowed"](self.current, runtime, self.snapshot, self.current["latest_snapshot"]))
+        self.assertTrue(self.helpers["is_phase_mismatch_allowed"](self.current, runtime, self.snapshot, self.current["latest_snapshot"]))
 
 
 if __name__ == "__main__":
