@@ -366,7 +366,7 @@ SUMMARY_ABSORB_MINUTES = 5
 AGGREGATION_WINDOW_MINUTES = 5
 MARKET_EVENT_TYPES = {"MARKET_SHOCK_ALERT", "MARKET_VALUE_ALERT", "APAC_OPEN_SIGNAL", "US_OPEN_VALUE_ALERT"}
 PROTECTED_EVENT_TYPES = {"FORMAL_DECISION_MATERIAL_CHANGE", "ACCOUNT_FACT_CONFIRMATION", "PENDING_EXECUTION_CONFIRMATION", "交易判断", "风险许可", "持仓动作", "Trial机会", "Confirm机会", "机会失效"}
-MERGEABLE_CATEGORIES = {"APAC_OPEN_SIGNAL", "SUDDEN", "EXTREME", "REVERSAL", "DIVERGENCE"}
+MERGEABLE_CATEGORIES = {"OPEN_SIGNAL", "APAC_OPEN_SIGNAL", "SUDDEN", "EXTREME", "REVERSAL", "DIVERGENCE"}
 
 
 def _market_context(event: dict) -> dict:
@@ -436,7 +436,10 @@ def _same_user_level_fact(prior: dict, event: dict) -> bool:
         return False
     if old["session"] and new["session"] and old["session"] != new["session"]:
         return False
-    if old["direction"] and new["direction"] and old["direction"] != new["direction"]:
+    if (old["direction"] and new["direction"]
+            and old["direction"] not in {"DIVERGED", "MIXED"}
+            and new["direction"] not in {"DIVERGED", "MIXED"}
+            and old["direction"] != new["direction"]):
         return False
     if old["object_codes"] & new["object_codes"]:
         return True
