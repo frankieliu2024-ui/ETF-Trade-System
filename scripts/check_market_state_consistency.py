@@ -51,7 +51,7 @@ capture_window_skip = (
 # been recorded. This is deliberately narrower than a generic SKIPPED bypass:
 # every identity and date check must still prove that the retained snapshot is
 # the same valid close fact referenced by the attempt.
-def capture_window_skip(runtime: dict) -> bool:
+def is_capture_window_skip(runtime: dict) -> bool:
     return (
         str(runtime.get('status') or '') == 'SKIPPED'
         and str(runtime.get('failure_stage') or '') == 'session_gate'
@@ -59,7 +59,7 @@ def capture_window_skip(runtime: dict) -> bool:
     )
 
 
-def idempotent_close_skip(current: dict, runtime: dict, snapshot: dict, snapshot_rel: str) -> bool:
+def is_idempotent_close_skip(current: dict, runtime: dict, snapshot: dict, snapshot_rel: str) -> bool:
     return (
         str(runtime.get('status') or '') == 'SKIPPED'
         and str(runtime.get('reason') or '') == 'close_already_recorded'
@@ -71,13 +71,13 @@ def idempotent_close_skip(current: dict, runtime: dict, snapshot: dict, snapshot
     )
 
 
-def phase_mismatch_allowed(current: dict, runtime: dict, snapshot: dict, snapshot_rel: str) -> bool:
-    return capture_window_skip(runtime) or idempotent_close_skip(current, runtime, snapshot, snapshot_rel)
+def is_phase_mismatch_allowed(current: dict, runtime: dict, snapshot: dict, snapshot_rel: str) -> bool:
+    return is_capture_window_skip(runtime) or is_idempotent_close_skip(current, runtime, snapshot, snapshot_rel)
 
 
-capture_window_skip = capture_window_skip(runtime)
-idempotent_close_skip = idempotent_close_skip(current, runtime, snapshot, snapshot_rel)
-phase_mismatch_allowed = phase_mismatch_allowed(current, runtime, snapshot, snapshot_rel)
+capture_window_skip_allowed = is_capture_window_skip(runtime)
+idempotent_close_skip_allowed = is_idempotent_close_skip(current, runtime, snapshot, snapshot_rel)
+phase_mismatch_allowed = is_phase_mismatch_allowed(current, runtime, snapshot, snapshot_rel)
 if str(runtime.get('market_date') or '') != str(current.get('market_date') or '') and not phase_mismatch_allowed:
     fail('runtime_health.market_date != CURRENT.market_date')
 if runtime_phase != phase and not phase_mismatch_allowed:
@@ -128,7 +128,7 @@ print(json.dumps({
     'market_date': current.get('market_date'),
     'node': node,
     'market_phase': phase,
-    'runtime_phase_semantics': 'SESSION_GATE_SKIPPED_LAST_VALID_SNAPSHOT_RETAINED' if capture_window_skip else 'ALIGNED',
+    'runtime_phase_semantics': 'SESSION_GATE_SKIPPED_LAST_VALID_SNAPSHOT_RETAINED' if capture_window_skip_allowed else ('IDEMPOTENT_CLOSE_ALREADY_RECORDED' if idempotent_close_skip_allowed else 'ALIGNED'),
     'runtime_attempt_date': runtime.get('market_date') if capture_window_skip else None,
     'runtime_attempt_phase': runtime_phase if capture_window_skip else None,
     'snapshot': snapshot_rel,
