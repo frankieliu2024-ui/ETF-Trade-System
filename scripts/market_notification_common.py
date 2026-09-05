@@ -430,9 +430,20 @@ def _fact_metadata(event: dict) -> dict:
 
 def _same_user_level_fact(prior: dict, event: dict) -> bool:
     old, new = _fact_metadata(prior), _fact_metadata(event)
-    if not old["market"] or old["market"] != new["market"]:
-        return False
+    old_code = str(prior.get("security_code") or (_market_context(prior)).get("security_code") or "")
+    new_code = str(event.get("security_code") or (_market_context(event)).get("security_code") or "")
     if not old["market_date"] or old["market_date"] != new["market_date"]:
+        return False
+    # Preserve compatibility with older canonical events that predate the
+    # explicit market metadata when the primary object identity is exact.
+    if old_code and old_code == new_code:
+        if (old["direction"] and new["direction"]
+                and old["direction"] not in {"DIVERGED", "MIXED"}
+                and new["direction"] not in {"DIVERGED", "MIXED"}
+                and old["direction"] != new["direction"]):
+            return False
+        return True
+    if not old["market"] or old["market"] != new["market"]:
         return False
     if old["session"] and new["session"] and old["session"] != new["session"]:
         return False
