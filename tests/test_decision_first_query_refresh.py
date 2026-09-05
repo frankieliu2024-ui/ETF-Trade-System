@@ -54,7 +54,9 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
             with patch.object(query_context, "read_json", side_effect=fake_read_json),                  patch.object(query_context, "read_current", side_effect=fake_current),                  patch.object(query_context, "read_account_fact", side_effect=fake_account),                  patch.object(query_context, "build_market_quote_context", side_effect=fake_refresh),                  patch.object(query_context, "build_decision_context", side_effect=fake_decision):
                 result = query_context.build(root, request_file="request.json")
 
+        self.assertEqual(events[0], "refresh")
         self.assertLess(events.index("refresh"), events.index("decision"))
+        self.assertLess(events.index("refresh"), events.index("account"))
         self.assertEqual(result["freshness_assurance"]["refresh_mode"], "QUERY_TIME_IMMEDIATE_REFRESH")
         self.assertEqual(result["decision_fact_pack"]["current"]["latest_snapshot"], current["latest_snapshot"])
 
