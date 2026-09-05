@@ -364,7 +364,7 @@ def _normalize_user_title(event: dict) -> dict:
 
 SUMMARY_ABSORB_MINUTES = 5
 AGGREGATION_WINDOW_MINUTES = 5
-MARKET_EVENT_TYPES = {"MARKET_SHOCK_ALERT", "MARKET_VALUE_ALERT", "APAC_OPEN_SIGNAL"}
+MARKET_EVENT_TYPES = {"MARKET_SHOCK_ALERT", "MARKET_VALUE_ALERT", "APAC_OPEN_SIGNAL", "US_OPEN_VALUE_ALERT"}
 PROTECTED_EVENT_TYPES = {"FORMAL_DECISION_MATERIAL_CHANGE", "ACCOUNT_FACT_CONFIRMATION", "PENDING_EXECUTION_CONFIRMATION", "交易判断", "风险许可", "持仓动作", "Trial机会", "Confirm机会", "机会失效"}
 MERGEABLE_CATEGORIES = {"APAC_OPEN_SIGNAL", "SUDDEN", "EXTREME", "REVERSAL", "DIVERGENCE"}
 
@@ -399,6 +399,59 @@ def _event_family_id(event: dict) -> str:
     return ":".join((market, date, session, code, category, direction))
 
 
+def _text_list(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value] if value else []
+    if isinstance(value, (list, tuple, set)):
+        return [str(x) for x in value if str(x)]
+    return []
+
+
+def _fact_metadata(event: dict) -> dict:
+    """Read explicit user-level relationship metadata from the canonical event."""
+    ctx = _market_context(event)
+    market_date = str(ctx.get("market_date") or ctx.get("us_market_date") or event.get("market_date") or "")
+    session = str(ctx.get("session") or ctx.get("market_phase") or ctx.get("session_node") or "")
+    codes = []
+    for key in ("object_codes", "related_object_codes", "comparison_object_codes", "covered_object_codes"):
+        codes.extend(_text_list(ctx.get(key)))
+    primary = str(event.get("security_code") or ctx.get("security_code") or "")
+    if primary and primary not in codes and not primary.endswith("_DIVERGENCE"):
+        codes.append(primary)
+    return {
+        "market": str(ctx.get("market") or event.get("market") or "").upper(),
+        "market_date": market_date,
+        "session": session.upper(),
+        "direction": str(ctx.get("direction") or "").upper(),
+        "fact_family": str(ctx.get("fact_family") or ctx.get("user_fact_family") or "").upper(),
+        "object_codes": set(codes),
+    }
+
+
+def _same_user_level_fact(prior: dict, event: dict) -> bool:
+    old, new = _fact_metadata(prior), _fact_metadata(event)
+    if not old["market"] or old["market"] != new["market"]:
+        return False
+    if not old["market_date"] or old["market_date"] != new["market_date"]:
+        return False
+    if old["session"] and new["session"] and old["session"] != new["session"]:
+        return False
+    if old["direction"] and new["direction"] and old["direction"] != new["direction"]:
+        return False
+    if old["object_codes"] & new["object_codes"]:
+        return True
+    return bool(old["fact_family"] and old["fact_family"] == new["fact_family"]
+                and old["object_codes"] and new["object_codes"]
+                and old["object_codes"] & new["object_codes"])
+
+
+def _summary_covers_object(summary: dict, event: dict) -> bool:
+    old, new = _fact_metadata(summary), _fact_metadata(event)
+    return bool(old["market_date"] == new["market_date"]
+                and old["fact_family"] and old["fact_family"] == new["fact_family"]
+                and old["object_codes"] & new["object_codes"])
+
+
 def _is_protected_event(event: dict) -> bool:
     event_type = str(event.get("event_type") or event.get("type") or "")
     title = str(event.get("title") or "")
@@ -428,6 +481,8 @@ def _summary_covers_event(summary: dict, event: dict) -> bool:
     fact_key = _market_fact_key(event)
     if fact_key and fact_key in {str(x) for x in (sctx.get("covered_fact_keys") or [])}:
         return True
+    if _summary_covers_object(summary, event):
+        return not _is_material_upgrade(event, summary)
     code = str(event.get("security_code") or ectx.get("security_code") or "")
     name = str(event.get("security_name") or ectx.get("security_name") or "")
     text = f"{summary.get('title') or ''} {summary.get('content') or ''}"
@@ -452,31 +507,25 @@ def _find_recent_summary_absorption(items: list[dict], event: dict) -> dict | No
 def _find_aggregate_target(items: list[dict], event: dict) -> dict | None:
     if _is_protected_event(event):
         return None
-    ctx = _market_context(event)
-    category, code = _event_category(event), str(event.get("security_code") or ctx.get("security_code") or "")
-    direction, market_date = str(ctx.get("direction") or ""), str(ctx.get("market_date") or "")
-    if category not in MERGEABLE_CATEGORIES or not code or not market_date:
+    category = _event_category(event)
+    metadata = _fact_metadata(event)
+    if category not in MERGEABLE_CATEGORIES or not metadata["market_date"]:
         return None
-    family_id = str(ctx.get("event_family_id") or _event_family_id(event))
     current_stamp = parse_notification_time(event.get("created_at")) or now()
     for item in reversed(items):
-        if str(item.get("event_type") or "") not in MARKET_EVENT_TYPES or str(item.get("security_code") or "") != code:
+        if str(item.get("event_type") or "") not in MARKET_EVENT_TYPES:
             continue
-        old = _market_context(item)
-        if str(old.get("market_date") or "") != market_date or str(old.get("direction") or "") != direction:
+        if _event_category(item) not in MERGEABLE_CATEGORIES:
             continue
-        old_category = _event_category(item)
-        old_family_id = str(old.get("event_family_id") or _event_family_id(item))
-        if old_category not in MERGEABLE_CATEGORIES:
+        if not _same_user_level_fact(item, event):
             continue
-        if old_category == category:
-            if old_family_id != family_id or _is_material_upgrade(event, item):
-                continue
-            return item
+        if _is_material_upgrade(event, item):
+            continue
         prior_stamp = parse_notification_time(item.get("sent_at") or item.get("created_at"))
-        same_apac_open_family = {old_category, category} == {"APAC_OPEN_SIGNAL", "EXTREME"} and str(old.get("market") or "").upper() == "ASIA"
+        old_meta = _fact_metadata(item)
+        same_session = bool(old_meta["session"] and old_meta["session"] == metadata["session"])
         within_window = prior_stamp and timedelta(0) <= current_stamp - prior_stamp <= timedelta(minutes=AGGREGATION_WINDOW_MINUTES)
-        if (within_window or same_apac_open_family) and not _is_material_upgrade(event, item):
+        if same_session or within_window:
             return item
     return None
 

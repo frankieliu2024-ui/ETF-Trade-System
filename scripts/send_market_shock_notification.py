@@ -113,45 +113,8 @@ def _build_context_event(*args, **kwargs):
     return event
 
 
-def _covered_by_recent_us_open(event: dict) -> bool:
-    """Absorb only the same opening pulse already fully described by the US open alert.
-
-    The fixed/open producer runs before the generic shock producer. If the open
-    alert already states both the opening gap and the current extreme level for
-    the same direct cash index, a second EXTREME alert seconds later adds no new
-    user information. Later material deterioration remains eligible.
-    """
-    ctx = event.get("confirmation_context") or {}
-    if str(ctx.get("market") or "") != "US" or str(ctx.get("event_category") or "") != "EXTREME":
-        return False
-    code = str(event.get("security_code") or "")
-    if code not in {"NDX", "SOX"}:
-        return False
-    market_date = str(ctx.get("market_date") or "")
-    if not market_date:
-        return False
-
-    state = _legacy.read_json(_legacy.STATE / "notification_center.json", {})
-    for item in reversed(state.get("notifications") or []):
-        if str(item.get("event_type") or "") != "US_OPEN_VALUE_ALERT":
-            continue
-        open_ctx = item.get("confirmation_context") or {}
-        if str(open_ctx.get("us_market_date") or "") != market_date:
-            continue
-        stamp = _legacy.parse_notification_time(item.get("sent_at") or item.get("created_at"))
-        if not stamp or not (timedelta(0) <= _legacy.now() - stamp <= timedelta(minutes=_legacy.SUMMARY_ABSORB_MINUTES)):
-            return False
-        level = _legacy.number(open_ctx.get("tech_change_pct" if code == "NDX" else "semi_change_pct"))
-        if level is None or abs(level) < _legacy.THRESHOLDS["us"]["index_extreme"]:
-            return False
-        direction = str(ctx.get("direction") or "")
-        return (direction == "DOWN" and level < 0) or (direction == "UP" and level > 0)
-    return False
-
-
 def _recent_duplicate(event: dict) -> bool:
-    if _covered_by_recent_us_open(event):
-        return True
+    """Use the legacy detector; cross-family aggregation is canonical."""
     return _original_recent_duplicate(event)
 
 
