@@ -143,7 +143,8 @@ def account_component(account: dict, current: dict) -> dict:
     account_time = parse_time(account.get("updated_at"))
     broker_path, broker_request = latest_broker_screenshot_request()
     request_time = parse_time(broker_request.get("request_time_beijing") or broker_request.get("requested_at_beijing") or broker_request.get("request_time"))
-    broker_request_consumed = _request_account_fact_consumed(broker_request, account)\n    ingress_pending = bool(broker_path and request_time and not broker_request_consumed and (account_time is None or request_time > account_time))
+    broker_request_consumed = _request_account_fact_consumed(broker_request, account)
+    ingress_pending = bool(broker_path and request_time and not broker_request_consumed and (account_time is None or request_time > account_time))
     audit_events = account.get("account_change_events_after_confirmed_at") or []
     pending_events = []
     for event in audit_events:
