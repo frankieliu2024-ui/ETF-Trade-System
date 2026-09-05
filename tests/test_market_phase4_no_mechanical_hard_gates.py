@@ -102,9 +102,6 @@ class Phase4NoMechanicalHardGatesTest(unittest.TestCase):
         self.assertFalse(gate["requires_user_broker_screenshot"])
 
 
-if __name__ == "__main__":
-    unittest.main()
-
     def test_canonical_account_schema_completes_capital_comparison(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -176,3 +173,6 @@ if __name__ == "__main__":
             finally:
                 state_manager.ROOT = old_root
         self.assertAlmostEqual(metrics["etf_holding_unrealized_pct"], -0.00625, places=6)
+
+if __name__ == "__main__":
+    unittest.main()
