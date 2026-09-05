@@ -115,6 +115,8 @@ def _request_account_fact_consumed(request: dict, canonical: dict) -> bool:
             return False
     supplied_positions = supplied.get("positions")
     canonical_positions = canonical.get("positions")
+    if not isinstance(supplied_positions, list):
+        return False
     if isinstance(supplied_positions, list):
         if not isinstance(canonical_positions, list):
             return False
