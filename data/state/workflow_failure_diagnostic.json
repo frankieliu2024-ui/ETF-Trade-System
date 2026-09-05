@@ -1,25 +1,30 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-05T10:22:09+08:00",
+  "generated_at": "2026-09-05T10:29:25+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 33938833992,
+  "run_id": 33939149845,
   "run_attempt": 1,
-  "head_sha": "cccb26d101f3808eaf1f842e85ff0884932f9d02",
-  "main_head_sha": "acb007ced3f5b84a13ac366bfb16e9dcd816f86d",
+  "head_sha": "964d13c86da041edf1bfbea8659ab680cb618297",
+  "main_head_sha": "8d516a61ad56b3f55bbd648e3225f839cf36e5df",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
       "step": "Enforce hard consistency result",
       "number": 8
+    },
+    {
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 9
     }
   ],
   "changed_files": [
     "scripts/check_market_state_consistency.py",
     "tests/test_market_state_consistency.py"
   ],
-  "commit_message": "fix: align idempotent close skip market-state semantics (#328)",
+  "commit_message": "fix: correct #328 close-skip gate runtime collision",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
