@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-05T04:03:27Z",
-  "generated_at_beijing": "2026-09-05T12:03:27+08:00",
+  "generated_at": "2026-09-06T13:04:46Z",
+  "generated_at_beijing": "2026-09-06T21:04:46+08:00",
   "market_date": "2026-09-04",
   "latest_valid_node": "close",
   "rules_version": "V2.2.31",
@@ -199,7 +199,7 @@
     "deployable_cash": 6470.62
   },
   "decision_context": {
-    "generated_at": "2026-09-05T04:03:26Z",
+    "generated_at": "2026-09-06T13:04:46Z",
     "rules_version": "V2.2.31",
     "market_date": "2026-09-04",
     "latest_node": "close",
@@ -1052,7 +1052,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 7.361,
-      "age_seconds": 75411
+      "age_seconds": 194291
     },
     "freshness_at_context_build": {
       "status": "STALE",
@@ -1068,7 +1068,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 7.361,
-      "age_seconds": 75411
+      "age_seconds": 194291
     },
     "data_quality_summary": {
       "pass_count": 14,
@@ -1128,7 +1128,7 @@
       "indices_available": 3,
       "held_etfs_total": 6,
       "held_etfs_available": 6,
-      "observed_etfs_total": 5,
+      "observed_etfs_total": 7,
       "observed_etfs_available": 5,
       "account_stocks_total": 3,
       "account_stocks_available": 2,
@@ -1140,15 +1140,18 @@
       "cash_available": true,
       "failed_objects": [],
       "degraded_objects": [],
-      "missing_objects": [],
-      "coverage_status": "COMPLETE",
+      "missing_objects": [
+        "513350",
+        "515220"
+      ],
+      "coverage_status": "INCOMPLETE",
       "read_only": true
     },
     "point_in_time": {
       "account_fact_time": "2026-09-04T15:03:00+08:00",
       "market_snapshot_time": "2026-09-04T15:06:35+08:00",
       "market_phase": "POST_CLOSE_GRACE",
-      "context_generated_time": "2026-09-05T04:03:26Z",
+      "context_generated_time": "2026-09-06T13:04:46Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
@@ -1175,7 +1178,7 @@
       "read_only": true
     },
     "market_quote_router": {
-      "generated_at_beijing": "2026-09-05T12:03:26+08:00",
+      "generated_at_beijing": "2026-09-06T21:04:46+08:00",
       "refresh_mode": "CACHED_STATE",
       "refresh_failures": [],
       "decision_freshness": {
@@ -1184,8 +1187,8 @@
         "captured_at": "2026-09-04T07:06:35+00:00",
         "provider_as_of": "2026-09-04T07:06:29+00:00",
         "effective_as_of": "2026-09-04T07:06:29+00:00",
-        "request_time": "2026-09-05T04:03:26.943341+00:00",
-        "age_seconds": 75417,
+        "request_time": "2026-09-06T13:04:46.086666+00:00",
+        "age_seconds": 194297,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -4061,7 +4064,7 @@
     "indices_available": 3,
     "held_etfs_total": 6,
     "held_etfs_available": 6,
-    "observed_etfs_total": 5,
+    "observed_etfs_total": 7,
     "observed_etfs_available": 5,
     "account_stocks_total": 3,
     "account_stocks_available": 2,
@@ -4073,8 +4076,11 @@
     "cash_available": true,
     "failed_objects": [],
     "degraded_objects": [],
-    "missing_objects": [],
-    "coverage_status": "COMPLETE",
+    "missing_objects": [
+      "513350",
+      "515220"
+    ],
+    "coverage_status": "INCOMPLETE",
     "read_only": true
   },
   "etf_strategy_risk_metrics": {
@@ -4108,7 +4114,7 @@
     "account_fact_time": "2026-09-04T15:03:00+08:00",
     "market_snapshot_time": "2026-09-04T15:06:35+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-09-05T04:03:26Z",
+    "context_generated_time": "2026-09-06T13:04:46Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -4197,7 +4203,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "STALE",
-        "age_seconds": 75411,
+        "age_seconds": 194291,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -4215,7 +4221,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 7.361,
-        "age_seconds": 75411
+        "age_seconds": 194291
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新判断为“时点正常／存在延迟／时点过旧”。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -4256,7 +4262,7 @@
     }
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-09-05T12:03:26+08:00",
+    "generated_at_beijing": "2026-09-06T21:04:45+08:00",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
     "refresh_failures": [],
     "decision_freshness": {
@@ -4266,7 +4272,7 @@
       "provider_as_of": "2026-09-04T07:06:29+00:00",
       "effective_as_of": "2026-09-04T07:06:29+00:00",
       "request_time": "2026-09-05T04:02:24+00:00",
-      "age_seconds": 75417,
+      "age_seconds": 194296,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -4891,6 +4897,16 @@
       "source_type": "SYSTEM_MONITORED"
     },
     {
+      "object_code": "515220",
+      "object_name": "煤炭ETF",
+      "source_type": "SYSTEM_MONITORED"
+    },
+    {
+      "object_code": "513350",
+      "object_name": "标普油气ETF",
+      "source_type": "SYSTEM_MONITORED"
+    },
+    {
       "object_code": "000001.SH",
       "source_type": "SYSTEM_MONITORED"
     },
@@ -4977,11 +4993,11 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 7.361,
-    "age_seconds": 75411
+    "age_seconds": 194291
   },
   "freshness_at_context_build": {
     "status": "STALE",
-    "age_seconds": 75411,
+    "age_seconds": 194291,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -4992,7 +5008,7 @@
     "provider_as_of": "2026-09-04T07:06:29+00:00",
     "effective_as_of": "2026-09-04T07:06:29+00:00",
     "request_time": "2026-09-05T04:02:24+00:00",
-    "age_seconds": 75417,
+    "age_seconds": 194296,
     "post_request": false,
     "preferred_max_age_seconds": 300,
     "fallback_max_age_seconds": 900,
@@ -5002,7 +5018,7 @@
     "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required"
   },
   "trading_day_status": {
-    "market_date": "2026-09-05",
+    "market_date": "2026-09-06",
     "calendar_covered": true,
     "weekend": true,
     "exchange_closed": false,
@@ -5045,11 +5061,11 @@
   },
   "system_consistency_status": "WARNING",
   "system_consistency_hard_errors": 0,
-  "etf_universe_count": 11,
+  "etf_universe_count": 13,
   "overseas_context_status": "PASS",
   "overseas_generated_at_beijing": "2026-09-05T06:21:30+08:00",
   "us_extended_hours_status": "PASS",
-  "us_extended_hours_generated_at_beijing": "2026-09-05T10:21:34+08:00",
+  "us_extended_hours_generated_at_beijing": "2026-09-05T12:14:01+08:00",
   "stock_context_status": "VALID",
   "stock_market_context_status": "PASS",
   "stock_role_confirmation_needed": true,
@@ -5067,7 +5083,97 @@
   },
   "needs_account_screenshot": false,
   "read_only": true,
-  "interaction_boundary": "用户主动查询时先核对一致性与交易日历，再按‘查询时立即补采 → 最近一次有效快照 → 明确降级/缺失’获取行情；正式输出必须标注北京时间真实数据时点，并区分美股现金盘、盘后和盘前。",
+  "interaction_boundary": "用户主动查询时先进入freshness assurance，再按‘查询时立即补采/复用 → 最近一次有效快照 → 明确降级/缺失’获取行情；正式输出必须标注北京时间真实数据时点，并区分美股现金盘、盘后和盘前。",
+  "decision_fact_pack": {
+    "schema_version": "1.0",
+    "trigger": {
+      "source": "INTERACTIVE_QUERY",
+      "request_id": "",
+      "requested_at_beijing": ""
+    },
+    "master": {
+      "version": "V2.2.31",
+      "source": "ETF规则_MASTER.md"
+    },
+    "account_fact": {
+      "source": "BROKER_HOLDINGS_SCREENSHOT_20260904_1503_USER_REPROVIDED_FOR_ISSUE335_VALIDATION",
+      "as_of_beijing": "2026-09-04T15:03:00+08:00",
+      "status": "VALID"
+    },
+    "current": {
+      "market_date": "2026-09-04",
+      "latest_snapshot": "data/market/snapshots/2026-09-04_150635.json",
+      "captured_at_beijing": "2026-09-04T15:06:35+08:00",
+      "provider_as_of_beijing": "2026-09-04T15:06:29+08:00",
+      "provider": "tencent_qq"
+    },
+    "decision_context": {
+      "generated_at_beijing": "2026-09-06T13:04:46Z",
+      "source": "scripts/state_manager.py::build_decision_context"
+    },
+    "market_quote": {
+      "mode": "QUERY_TIME_IMMEDIATE_REFRESH",
+      "decision_freshness": {
+        "status": "REFRESH_REQUIRED",
+        "quality_status": "UNKNOWN",
+        "captured_at": "2026-09-04T07:06:35+00:00",
+        "provider_as_of": "2026-09-04T07:06:29+00:00",
+        "effective_as_of": "2026-09-04T07:06:29+00:00",
+        "request_time": "2026-09-05T04:02:24+00:00",
+        "age_seconds": 194296,
+        "post_request": false,
+        "preferred_max_age_seconds": 300,
+        "fallback_max_age_seconds": 900,
+        "formal_decision_allowed": false,
+        "refresh_required": true,
+        "fallback_allowed": false,
+        "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required"
+      },
+      "quotes_as_of_beijing": [
+        "2026-09-04T13:30:00+08:00",
+        "2026-09-04T14:00:00+08:00",
+        "2026-09-04T14:30:00+08:00",
+        "2026-09-04T15:06:00+08:00",
+        "2026-09-04T15:06:15+08:00",
+        "2026-09-04T15:06:26+08:00",
+        "2026-09-04T15:06:27+08:00",
+        "2026-09-04T15:06:29+08:00",
+        "2026-09-04T16:08:22+08:00",
+        "2026-09-05T04:00:00+08:00"
+      ],
+      "source": "scripts/market_quote_router.py"
+    },
+    "lifecycle": {
+      "source": "decision_context.lifecycle_projection",
+      "reference": "decision_context.lifecycle_projection"
+    },
+    "etf_universe": {
+      "source": "config/market/etf_monitor_universe.json",
+      "version": "V1.1",
+      "count": 13
+    },
+    "pit_rule": "Formal reasoning consumes only this request-scoped fact set; downstream projections cannot mutate the same PIT decision."
+  },
+  "freshness_assurance": {
+    "status": "REFRESH_REQUIRED",
+    "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
+    "decision_request_time": "2026-09-05T04:02:24+00:00",
+    "decision_request_post_current": false,
+    "rule": "freshness assurance precedes full decision-context construction; post-refresh CURRENT is re-read before formal decision context construction."
+  },
+  "fast_path_latency": {
+    "t0": "",
+    "t_refresh_start_or_reuse": "",
+    "t_new_current": "",
+    "t_decision_ready": "2026-09-06T13:04:46Z",
+    "t_reply_or_output_ready": "2026-09-06T21:04:46+08:00",
+    "refresh_start_latency": null,
+    "refresh_duration": null,
+    "post_current_decision_latency": 194291.0,
+    "total_fast_path_latency": null,
+    "measurement_status": "OBSERVED_FIELDS_ONLY; MISSING_TIMESTAMPS_REMAIN_EXPLICIT",
+    "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH"
+  },
   "refresh_gate": {
     "status": "PENDING",
     "formal_analysis_allowed": false,
