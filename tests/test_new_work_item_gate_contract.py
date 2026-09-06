@@ -40,3 +40,14 @@ def test_protocol_documents_state_the_gate_without_a_second_rule_source() -> Non
     assert "NEW_WORK_ITEM_GATE" in doc
     assert "不得使用隐藏综合评分、固定权重或固定次数阈值" in doc
     assert "与该风险匹配的一次真实生产暴露窗口" in doc
+
+
+def test_execution_control_plane_is_executor_agnostic() -> None:
+    doc = (ROOT / "docs/Codex协作执行说明.md").read_text(encoding="utf-8")
+    assert "CHATGPT_CHAT" in doc
+    assert "CHATGPT_WORK" in doc
+    assert "CODEX" in doc
+    assert "执行器选择只影响“由谁执行”" in doc
+    assert "不强制转Codex" in doc
+    assert "BRIEF／PACKET分别由任务复杂度决定，不由执行器决定" in doc
+    assert "不得自动合并" in doc
