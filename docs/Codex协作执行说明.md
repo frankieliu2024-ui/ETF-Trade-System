@@ -33,6 +33,17 @@
 
 复杂任务仍以 GitHub Issue 作为长期记录和恢复入口；`CODEX_EXECUTION_PACKET` 只是本轮执行控制面，不新增第二治理规则源。
 
+### 1.3 ChatGPT 对话中的用户启动指令
+
+只要 ChatGPT 判断“该任务更适合交给 Codex 执行”，除了把完整 `CODEX_EXECUTION_BRIEF` 或 `CODEX_EXECUTION_PACKET` 写入 GitHub Issue 外，**还必须在同一条 ChatGPT 对话回复中明确给用户一段可直接复制发送给 Codex 的短启动指令**。不得只告诉用户“已写入 Issue”“请执行最新 Brief”而省略这段用户侧可复制文本。
+
+用户侧启动指令应尽量短，只负责准确指向 GitHub 中的唯一执行控制面，不重复搬运完整长 Prompt：
+
+- 简单任务：`执行 frankieliu2024-ui/ETF-Trade-System #<issue> 中最新 CODEX_EXECUTION_BRIEF，完整授权执行。`
+- 复杂任务：`执行 frankieliu2024-ui/ETF-Trade-System #<issue> comment <comment_id> 中的 CODEX_EXECUTION_PACKET，完整授权执行。该评论是本轮唯一执行控制面。`
+
+如果本轮还存在必须强调的执行边界，例如“只读研究”“不得合并”“等待前序集成”“必须复用某个历史 comment”，ChatGPT 可在上述短启动指令后追加一小句必要限定；但不得把 Issue 内完整 packet 再次复制到聊天中。用户无需自行从 Issue 中总结或改写 Codex 指令。
+
 ## 2. 执行前置校验
 
 Codex 每次执行必须从执行时 latest `main` 和 `ETF_SYSTEM_INDEX.md` 起跑，并先输出 `LATEST_MAIN_AT_START`。如果本地或任务上下文中的起点不是执行时 GitHub `main` HEAD，必须先重新同步；不得在旧 SHA 上继续执行并把结果称为 latest-main 结论。
@@ -71,7 +82,7 @@ ChatGPT 与【ETF变更复核】后续直接从 GitHub 读取 Issue、PR、CI �
 - 复杂研究、多轮纠偏、跨 Issue 依赖、容易被历史评论污染的任务：明确 comment ID 的 `CODEX_EXECUTION_PACKET`；
 - 如果简单任务在执行中出现两次以上方向性误解、旧版本起跑、跨证据遗漏或同一根因反复返工，应升级为 `CODEX_EXECUTION_PACKET`，不继续追加模糊“最新 Brief”。
 
-ChatGPT 负责判断任务复杂度并选择交接模式；用户不需要自行维护两套协作规则。
+ChatGPT 负责判断任务复杂度并选择交接模式；用户不需要自行维护两套协作规则，也不需要自行从 Issue 中提炼 Codex 启动文本。
 
 ## 5. 边界
 
