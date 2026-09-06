@@ -50,4 +50,4 @@ def test_execution_control_plane_is_executor_agnostic() -> None:
     assert "执行器选择只影响“由谁执行”" in doc
     assert "不强制转Codex" in doc
     assert "BRIEF／PACKET分别由任务复杂度决定，不由执行器决定" in doc
-    assert "不得自动合并" in doc
+    assert "不授予自动合并权限" in doc
