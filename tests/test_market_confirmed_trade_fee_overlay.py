@@ -68,7 +68,7 @@ class ConfirmedTradeFeeOverlayTests(unittest.TestCase):
             self.assertEqual(fact["effective_confirmed_fee_sum"], 5.0)
             self.assertEqual(fact["executed_event_overlay_count"], 0)
 
-    def test_formal_review_fee_mismatch_fails_maintenance_reconciliation(self):
+    def test_formal_review_fee_mismatch_is_non_blocking_warning(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             state = root / "data/state"
@@ -106,7 +106,42 @@ class ConfirmedTradeFeeOverlayTests(unittest.TestCase):
                 maintenance_guard.ROOT, maintenance_guard.EQUITY, maintenance_guard.ACCOUNT = old_root, old_equity, old_account
             self.assertEqual(rec["known_fee_reconciliation"]["effective_confirmed_fee_sum"], 125.01)
             self.assertEqual(rec["known_fee_reconciliation"]["formal_review_confirmed_fees"], 124.01)
-            self.assertEqual(rec["known_fee_reconciliation"]["status"], "FAIL")
+            self.assertEqual(rec["known_fee_reconciliation"]["status"], "WARNING")
+            self.assertFalse(rec["known_fee_reconciliation"]["blocking"])
+            self.assertEqual(rec["status"], "PASS")
+
+    def test_quantity_mismatch_remains_a_hard_reconciliation_failure(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            state = root / "data/state"
+            trade = self.base_trade()
+            self.write_json(
+                state / "etf_strategy_equity.json",
+                {
+                    "summary": {
+                        "trade_count": 1,
+                        "known_fees": 120.01,
+                        "strategy_cash_current": 0,
+                        "current_etf_market_value": 0,
+                        "current_gross_strategy_equity": 0,
+                        "equity_reconciliation_status": "RECONCILED_EXACTLY_GROSS",
+                    },
+                    "trades": [trade],
+                },
+            )
+            self.write_json(
+                state / "account_fact.json",
+                {"positions": [{"code": "561980", "quantity": 99}]},
+            )
+            old_root, old_equity, old_account = maintenance_guard.ROOT, maintenance_guard.EQUITY, maintenance_guard.ACCOUNT
+            try:
+                maintenance_guard.ROOT = root
+                maintenance_guard.EQUITY = state / "etf_strategy_equity.json"
+                maintenance_guard.ACCOUNT = state / "account_fact.json"
+                rec = maintenance_guard.reconcile()
+            finally:
+                maintenance_guard.ROOT, maintenance_guard.EQUITY, maintenance_guard.ACCOUNT = old_root, old_equity, old_account
+            self.assertEqual(rec["position_reconciliation"]["status"], "FAIL")
             self.assertEqual(rec["status"], "FAIL")
 
 
