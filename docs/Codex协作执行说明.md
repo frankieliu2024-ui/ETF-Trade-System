@@ -50,6 +50,8 @@ Codex 每次执行必须从执行时 latest `main` 和 `ETF_SYSTEM_INDEX.md` 起
 
 随后按 INDEX 路由读取所属规范、当前事实、production mutation protocol、canonical owner 及本轮最小充分依赖，再判断准入、根因、范围和实现路径。
 
+创建新的BRIEF/PACKET Issue前，必须先按当前生产治理SSOT完成NEW_WORK_ITEM_GATE，并在ChatGPT对话中给出立项判断和可直接复制的Codex短启动文本。
+
 如果 `CODEX_EXECUTION_PACKET` 明确引用其他 Issue、PR、comment、commit、历史恢复能力或既有成功验证，Codex 必须实际读取并复用这些证据；不能只读取当前 Issue 的局部目录或当前工作树后自行推断“能力不存在”。
 
 ## 3. 执行与回读
