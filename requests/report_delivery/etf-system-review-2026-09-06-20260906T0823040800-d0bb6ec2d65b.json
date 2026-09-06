@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "channel": "REPORT",
+  "report_type": "ETF_SYSTEM_REVIEW",
+  "report_id": "etf-system-review-d0bb6ec2d65b",
+  "task_id": "ETF变更复核",
+  "task_run_id": "etf-change-review-6844178762f94562",
+  "generated_at": "2026-09-06T08:23:04+08:00",
+  "effective_market_date": "2026-09-06",
+  "source_actor": "ChatGPT",
+  "source_reference": "product-task:ETF变更复核",
+  "title": "【系统复核】ETF变更复核｜2026-09-06",
+  "summary": "ETF变更复核已完成",
+  "full_content": "【本次结论】系统正常但有告警：最新生产验收显示0个硬错误，维护状态和系统端到端状态均正常。上一轮之后的正式决策控制链优化已进入main并完成生产验收；当前无须继续修改生产环境，用户无需操作。\n\n【本轮变化】\n1. 正式决策控制链优化已于上一轮后合并，并在17:48完成生产验收 → 当前关键运行链保持可用。\n2. 生产一致性检查仍为WARNING，但0个硬错误、维护状态READY → 这是验收新鲜度提示，不是当前行情、账户或正式判断故障。\n3. 当前开放PR为0；唯一开放治理事项仍是Scheduled Actor偶发GitHub写入阻断的外围风险，本轮没有新增证据改变其分类。\n\n【仍需处理】当前无须修改生产环境。外围写入风险继续只等待真实A股正式节点的可证伪证据；只有再次阻断并实际影响正式判断，或连续真实节点证明稳定可用，才需要升级或关闭。\n\n【系统状态】当前main可用；生产一致性检查WARNING、0个硬错误，维护状态与系统端到端状态均为READY，行情、账户、正式判断链和收盘复盘均可用。\n\n【外围运行事项】Scheduled Actor的GitHub写入能力仍存在偶发阻断风险，但目前未造成ETF生产故障；本轮不新增第二writer、第二transport或额外workflow。\n\n【本次实际动作】本轮未修改ETF生产环境，未创建或合并PR；仅完成latest-main重新分类与状态复核。\n\n【下次重点】\n1. 只在新的稳定生产变更进入main或生产一致性状态恶化时重新评估维护动作。\n2. 只在真实A股正式节点为外围写入风险提供新证据时重新分类。\n\n置信度：高\n最可能出错的地方：当前WARNING的语义新鲜度仍标记为需要复核；虽然17:48生产验收的维护状态和E2E均为READY，但若后续治理事实证明该WARNING对应尚未闭环的稳定合同验收，则需要重新进入生产治理。",
+  "content_hash": "979d1a23e5599864216bb7850af0fbe0263b27f0067080376d845e293119faa7",
+  "idempotency_key": "d462e0a2ea6067c41709de66a2d533fbe74dda5cdc276326c7381e6d57735b01",
+  "delivery_mode": "FULL_REPORT",
+  "no_trade_authority": true
+}
