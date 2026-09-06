@@ -1,93 +1,108 @@
 {
-  "generated_at": "2026-09-06T09:46:47Z",
-  "generated_at_beijing": "2026-09-06T17:46:47+08:00",
+  "generated_at": "2026-09-06T13:45:06Z",
+  "generated_at_beijing": "2026-09-06T21:45:06+08:00",
   "repository": {
-    "head_sha": "54848b89eec496ba73461e2be85cf60329ec3281",
-    "github_sha": "54848b89eec496ba73461e2be85cf60329ec3281",
-    "github_run_id": "34025557695",
+    "head_sha": "427703a9dd65080cea930581b98ce0d1e1dd4636",
+    "github_sha": "427703a9dd65080cea930581b98ce0d1e1dd4636",
+    "github_run_id": "34036980017",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "54848b89eec496ba73461e2be85cf60329ec3281",
-    "workflow_sha": "54848b89eec496ba73461e2be85cf60329ec3281",
+    "checked_commit": "427703a9dd65080cea930581b98ce0d1e1dd4636",
+    "workflow_sha": "427703a9dd65080cea930581b98ce0d1e1dd4636",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "semantic_freshness": {
-    "base": "18f1fd529ff5bbd776784b5760391366ce3f7abb",
-    "head": "54848b89eec496ba73461e2be85cf60329ec3281",
+    "base": "54848b89eec496ba73461e2be85cf60329ec3281",
+    "head": "427703a9dd65080cea930581b98ce0d1e1dd4636",
     "changed_paths": [
-      "ETF与市场监测数据接口使用规范.md",
+      "ETF当前状态_DASHBOARD.md",
+      "config/market/etf_monitor_universe.json",
+      "config/market/provider_priority.json",
       "data/state/e2e_status.json",
       "data/state/execution_quality.json",
+      "data/state/execution_reconciliation.json",
       "data/state/last_known_good.json",
       "data/state/maintenance_diagnostic.json",
       "data/state/maintenance_health.json",
       "data/state/notification_center.json",
+      "data/state/query_context.json",
+      "data/state/restricted_rollback_plan.json",
       "data/state/system_consistency.json",
-      "requests/report_delivery/20260906T133608_9220fa5f9d.json",
-      "requests/report_delivery/etf-system-review-20260906-ce56c6bb77dd.json",
-      "requests/report_delivery/etf-trade-review-2026-09-04-20260906T153057.json",
-      "tests/test_research_historical_data_preflight_contract.py"
+      "data/state/workflow_failure_diagnostic.json",
+      "scripts/check_system_consistency_core.py",
+      "scripts/process_state_sync_request.py",
+      "scripts/sync_formal_files.py",
+      "tests/test_a_share_production_chain.py",
+      "tests/test_dashboard_account_projection.py",
+      "tests/test_market_etf_t_swing.py"
     ],
     "categories": {
       "STABLE_PRODUCTION_CHANGE": [
-        "tests/test_research_historical_data_preflight_contract.py"
+        "config/market/etf_monitor_universe.json",
+        "config/market/provider_priority.json",
+        "scripts/check_system_consistency_core.py",
+        "scripts/process_state_sync_request.py",
+        "scripts/sync_formal_files.py",
+        "tests/test_a_share_production_chain.py",
+        "tests/test_dashboard_account_projection.py",
+        "tests/test_market_etf_t_swing.py"
       ],
       "DYNAMIC_RUNTIME_FACT": [
         "data/state/e2e_status.json",
         "data/state/execution_quality.json",
+        "data/state/execution_reconciliation.json",
         "data/state/last_known_good.json",
         "data/state/maintenance_diagnostic.json",
         "data/state/maintenance_health.json",
         "data/state/notification_center.json",
-        "data/state/system_consistency.json"
+        "data/state/query_context.json",
+        "data/state/restricted_rollback_plan.json",
+        "data/state/system_consistency.json",
+        "data/state/workflow_failure_diagnostic.json"
       ],
       "FORMAL_FACT_MUTATION": [
-        "ETF与市场监测数据接口使用规范.md"
+        "ETF当前状态_DASHBOARD.md"
       ],
-      "REQUEST_OR_TRIGGER_FACT": [
-        "requests/report_delivery/20260906T133608_9220fa5f9d.json",
-        "requests/report_delivery/etf-system-review-20260906-ce56c6bb77dd.json",
-        "requests/report_delivery/etf-trade-review-2026-09-04-20260906T153057.json"
-      ],
+      "REQUEST_OR_TRIGGER_FACT": [],
       "UNKNOWN": []
     },
     "decision": "REPLAY_REQUIRED",
-    "validated_commit": "18f1fd529ff5bbd776784b5760391366ce3f7abb",
-    "current_head": "54848b89eec496ba73461e2be85cf60329ec3281",
+    "validated_commit": "54848b89eec496ba73461e2be85cf60329ec3281",
+    "current_head": "427703a9dd65080cea930581b98ce0d1e1dd4636",
     "head_advanced": true,
     "stable_contract_freshness": "REVIEW_REQUIRED",
     "runtime_fact_freshness": "CURRENT"
   },
-  "status": "WARNING",
-  "hard_error_count": 0,
+  "status": "FAIL",
+  "hard_error_count": 2,
   "warning_count": 1,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-03:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-03\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n.......................................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 215 tests in 0.242s\n\nOK\n"
+      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-03:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-03\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n........................................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 216 tests in 0.157s\n\nOK\n"
     },
     {
       "name": "tests:opening_current_self_healing",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.003s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.002s\n\nOK\n"
     },
     {
       "name": "tests:semantic_latest_main",
       "status": "PASS",
-      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.126s\n\nOK\n"
+      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.227s\n\nOK\n"
     },
     {
       "name": "tests:research_artifact_contract",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.668s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.469s\n\nOK\n"
     },
     {
       "name": "tests:lifecycle_state",
       "status": "PASS",
-      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.007s\n\nOK\n"
+      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.003s\n\nOK\n"
     },
     {
       "name": "tests:historical_market_fact_recovery",
@@ -97,32 +112,32 @@
     {
       "name": "tests:executed_trade_case_lifecycle",
       "status": "PASS",
-      "detail": "902_141753_trade_159326\", \"decision_time\": \"2026-09-02T14:21:31+08:00\", \"decision_market_date\": \"2026-09-02\", \"source_event\": \"events/decisions/20260902_141753_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260902_141753_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-09-02\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-09-02\"}], \"actionable_count\": 0, \"account_fact_updated_at\": \"2026-09-04T15:03:00+08:00\", \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n..........\n----------------------------------------------------------------------\nRan 10 tests in 0.011s\n\nOK\n"
+      "detail": "902_141753_trade_159326\", \"decision_time\": \"2026-09-02T14:21:31+08:00\", \"decision_market_date\": \"2026-09-02\", \"source_event\": \"events/decisions/20260902_141753_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260902_141753_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-09-02\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-09-02\"}], \"actionable_count\": 0, \"account_fact_updated_at\": \"2026-09-04T15:03:00+08:00\", \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n..........\n----------------------------------------------------------------------\nRan 10 tests in 0.811s\n\nOK\n"
     },
     {
       "name": "tests:settlement_obligations",
       "status": "PASS",
-      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.002s\n\nOK\n"
+      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.001s\n\nOK\n"
     },
     {
       "name": "tests:formal_file_mutation_gateway",
       "status": "PASS",
-      "detail": ".........\n----------------------------------------------------------------------\nRan 9 tests in 0.003s\n\nOK\n"
+      "detail": ".........\n----------------------------------------------------------------------\nRan 9 tests in 0.831s\n\nOK\n"
     },
     {
       "name": "tests:post_close_review_canonical",
       "status": "PASS",
-      "detail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.006s\n\nOK\n"
+      "detail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.278s\n\nOK\n"
     },
     {
       "name": "tests:review_prerequisite_lifecycle",
       "status": "PASS",
-      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.001s\n\nOK\n"
+      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.000s\n\nOK\n"
     },
     {
       "name": "tests:production_reliability",
       "status": "PASS",
-      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n............................\n----------------------------------------------------------------------\nRan 28 tests in 0.018s\n\nOK\n"
+      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n............................\n----------------------------------------------------------------------\nRan 28 tests in 0.012s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -397,17 +412,17 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=54848b89eec496ba73461e2be85cf60329ec3281"
+      "detail": "HEAD=427703a9dd65080cea930581b98ce0d1e1dd4636"
     },
     {
       "name": "git:semantic_latest_main",
       "status": "PASS",
-      "detail": "{\"base\": \"18f1fd529ff5bbd776784b5760391366ce3f7abb\", \"head\": \"54848b89eec496ba73461e2be85cf60329ec3281\", \"changed_paths\": [\"ETF与市场监测数据接口使用规范.md\", \"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/system_consistency.json\", \"requests/report_delivery/20260906T133608_9220fa5f9d.json\", \"requests/report_delivery/etf-system-review-20260906-ce56c6bb77dd.json\", \"requests/report_delivery/etf-trade-review-2026-09-04-20260906T153057.json\", \"tests/test_research_historical_data_preflight_contract.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"tests/test_research_historical_data_preflight_contract.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/system_consistency.json\"], \"FORMAL_FACT_MUTATION\": [\"ETF与市场监测数据接口使用规范.md\"], \"REQUEST_OR_TRIGGER_FACT\": [\"requests/report_delivery/20260906T133608_9220fa5f9d.json\", \"requests/report_delivery/etf-system-review-20260906-ce56c6bb77dd.json\", \"requests/report_delivery/etf-trade-review-2026-09-04-20260906T153057.json\"], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\"}"
+      "detail": "{\"base\": \"54848b89eec496ba73461e2be85cf60329ec3281\", \"head\": \"427703a9dd65080cea930581b98ce0d1e1dd4636\", \"changed_paths\": [\"ETF当前状态_DASHBOARD.md\", \"config/market/etf_monitor_universe.json\", \"config/market/provider_priority.json\", \"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/execution_reconciliation.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/query_context.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\", \"scripts/check_system_consistency_core.py\", \"scripts/process_state_sync_request.py\", \"scripts/sync_formal_files.py\", \"tests/test_a_share_production_chain.py\", \"tests/test_dashboard_account_projection.py\", \"tests/test_market_etf_t_swing.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"config/market/etf_monitor_universe.json\", \"config/market/provider_priority.json\", \"scripts/check_system_consistency_core.py\", \"scripts/process_state_sync_request.py\", \"scripts/sync_formal_files.py\", \"tests/test_a_share_production_chain.py\", \"tests/test_dashboard_account_projection.py\", \"tests/test_market_etf_t_swing.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/execution_reconciliation.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/query_context.json\", \"data/state/restricted_rollback_plan.json\", \"data/state/system_consistency.json\", \"data/state/workflow_failure_diagnostic.json\"], \"FORMAL_FACT_MUTATION\": [\"ETF当前状态_DASHBOARD.md\"], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\"}"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=54848b89eec496ba73461e2be85cf60329ec3281 GITHUB_SHA=54848b89eec496ba73461e2be85cf60329ec3281"
+      "detail": "HEAD=427703a9dd65080cea930581b98ce0d1e1dd4636 GITHUB_SHA=427703a9dd65080cea930581b98ce0d1e1dd4636"
     },
     {
       "name": "git:critical_files_tracked",
@@ -482,12 +497,12 @@
     {
       "name": "etf_universe:nonempty",
       "status": "PASS",
-      "detail": "count=11"
+      "detail": "count=13"
     },
     {
       "name": "etf_universe:no_duplicates",
       "status": "PASS",
-      "detail": "objects=11 unique_codes=11"
+      "detail": "objects=13 unique_codes=13"
     },
     {
       "name": "etf_universe:thscode_complete",
@@ -832,7 +847,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=05:46 max_age_seconds=131507 limit=900"
+      "detail": "active=False phase=09:45 max_age_seconds=145806 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -977,12 +992,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=182410"
+      "detail": "declared=STALE expected=STALE age_seconds=196707"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=182393"
+      "detail": "declared=STALE expected=STALE age_seconds=196687"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -997,7 +1012,7 @@
     {
       "name": "decision:coverage_summary",
       "status": "PASS",
-      "detail": "coverage_status=COMPLETE"
+      "detail": "coverage_status=INCOMPLETE"
     },
     {
       "name": "decision:quality_summary",
@@ -1022,7 +1037,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-09-06T09:46:28Z market=2026-09-04T15:06:35+08:00"
+      "detail": "context=2026-09-06T13:44:42Z market=2026-09-04T15:06:35+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1171,8 +1186,8 @@
     },
     {
       "name": "a_share_runtime:snapshot_count",
-      "status": "PASS",
-      "detail": "snapshot_count=14 rows=14 expected=14"
+      "status": "FAIL",
+      "detail": "snapshot_count=14 rows=14 expected=16"
     },
     {
       "name": "a_share_runtime:market_date_alignment",
@@ -1181,8 +1196,8 @@
     },
     {
       "name": "a_share_runtime:etf_complete",
-      "status": "PASS",
-      "detail": "count=11 expected=11"
+      "status": "FAIL",
+      "detail": "count=11 expected=13"
     },
     {
       "name": "a_share_runtime:core_indices_complete",
@@ -2140,7 +2155,10 @@
       "detail": "registered writer persists data/state/capital_efficiency_ranking.json"
     }
   ],
-  "errors": [],
+  "errors": [
+    "a_share_runtime:snapshot_count: snapshot_count=14 rows=14 expected=16",
+    "a_share_runtime:etf_complete: count=11 expected=13"
+  ],
   "warnings": [
     "stock_runtime:market_complete: codes=['300750', '601138'] status=PASS"
   ],
