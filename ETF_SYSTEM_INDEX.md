@@ -46,6 +46,8 @@
 
 先执行生产变更准入判断；用户要求修复不自动等于允许修改。需要修改时必须基于最新`main`隔离实施，不force push，最终执行full consistency与E2E组合验收。
 
+Codex协作交接说明：`docs/Codex协作执行说明.md`。它只负责CODEX_EXECUTION_BRIEF与执行结果的GitHub持久化和回读路由，不复制生产治理或交易规则。
+
 ## 4. 运行事实与配置入口
 
 以下均是运行事实或实现入口，不是新的规则来源：
