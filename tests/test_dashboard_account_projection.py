@@ -35,4 +35,34 @@ class DashboardAccountProjectionTests(unittest.TestCase):
   for p in legacy["positions"]: p["asset_type"]="ETF" if "ETF" in p["name"] else "STOCK"; p["last_price"]=p.pop("current_price"); p["holding_pnl"]=p.pop("pnl"); p["holding_pnl_pct"]=p.pop("pnl_pct")
   with patch.object(formal_sync,"ROOT",self.root): rendered=formal_sync.build_dashboard_block(legacy,self.equity,"",self.root)
   self.assertIn("351.000",rendered); self.assertIn("-4,278.07元",rendered)
+
+ def test_formal_comparison_keeps_event_and_state_channels(self):
+  context = {"as_of_beijing":"2026-09-04T15:06:26+08:00", "items":[
+   {"code":"561980","as_of_beijing":"2026-09-04T15:06:26+08:00","historical_context":{"status":"READY","latest_history_date":"2026-09-03","return_vs_20_sessions_ago_pct":-10.9,"trend_state":"FALLING_TREND","window_20":{"position":0.2}},"turnover_acceptance_context":{"status":"READY","acceptance_behavior":"TURNOVER_NEUTRAL"},"participation_structure_confirmation":{"status":"READY","completed_bar_date":"2026-09-04","participation_ratio_vs_prior_20d":0.88,"enhancement_active":False}},
+  ]}
+  delta = {"items":[{"code":"561980","delta_from_prior_research_node":{"direction":"IMPROVED"}}]}
+  (self.root/"data/state").mkdir(parents=True)
+  (self.root/"data/state/market_structure_context.json").write_text(json.dumps(context),encoding="utf-8")
+  (self.root/"data/state/research_evidence_delta.json").write_text(json.dumps(delta),encoding="utf-8")
+  snapshot={"captured_at_beijing":"2026-09-04T15:06:35+08:00","market_phase":"POST_CLOSE_GRACE","rows":[{"symbol":"561980","quality_status":"PASS","as_of_beijing":"2026-09-04T15:06:35+08:00","close":.644,"change_pct":-2.7}]}
+  with patch.object(process_sync,"ROOT",self.root):
+   out=process_sync.build_comparison_snapshot(snapshot)
+  self.assertEqual(out["etf_count"],1)
+  self.assertEqual(out["state_persistence"]["identity_set"], ["561980","588000","159941","159781","159326","518880"])
+  item=out["state_persistence"]["items"][0]
+  self.assertEqual(item["status"],"READY")
+  self.assertEqual(item["historical"]["trend_state"],"FALLING_TREND")
+  self.assertEqual(item["event_delta"]["delta_from_prior_research_node"]["direction"],"IMPROVED")
+
+ def test_state_projection_is_explicit_for_missing_and_future_context(self):
+  context={"as_of_beijing":"2026-09-04T15:06:40+08:00","items":[{"code":"561980","as_of_beijing":"2026-09-04T15:06:40+08:00","historical_context":{"trend_state":"FUTURE"}}]}
+  (self.root/"data/state").mkdir(parents=True)
+  (self.root/"data/state/market_structure_context.json").write_text(json.dumps(context),encoding="utf-8")
+  (self.root/"data/state/research_evidence_delta.json").write_text(json.dumps({"items":[]}),encoding="utf-8")
+  snapshot={"captured_at_beijing":"2026-09-04T15:06:35+08:00","rows":[]}
+  with patch.object(process_sync,"ROOT",self.root):
+   out=process_sync.build_comparison_snapshot(snapshot)
+  statuses={x["code"]:x["status"] for x in out["state_persistence"]["items"]}
+  self.assertEqual(statuses["561980"],"STALE_OR_UNVERIFIABLE")
+  self.assertEqual(statuses["588000"],"MISSING")
 if __name__=="__main__": unittest.main()

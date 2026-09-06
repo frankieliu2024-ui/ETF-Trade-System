@@ -365,7 +365,71 @@ def build_comparison_snapshot(snapshot: dict) -> dict:
     rank_map = {x["code"]: i + 1 for i, x in enumerate(ranked)}
     for item in items:
         item["descriptive_daily_return_rank"] = rank_map.get(item["code"])
-    return {"as_of_beijing": snapshot.get("captured_at_beijing"), "market_phase": snapshot.get("market_phase"), "etf_count": len(items), "items": items, "interpretation_rule": "保留正式决策时点的全ETF横截面证据，用于以后验证候选选择质量；当日涨跌排名只是描述维度，不是资本效率评分，不生成轮动动作。"}
+    return {"as_of_beijing": snapshot.get("captured_at_beijing"), "market_phase": snapshot.get("market_phase"), "etf_count": len(items), "items": items, "state_persistence": build_state_persistence_projection(snapshot, names), "interpretation_rule": "保留正式决策时点的全ETF横截面证据，用于以后验证候选选择质量；当日涨跌排名只是描述维度，不是资本效率评分，不生成轮动动作。"}
+
+
+def build_state_persistence_projection(snapshot: dict, names: dict[str, str]) -> dict:
+    """Attach existing multi-horizon facts to the formal event without a new state store.
+
+    The event/delta snapshot remains backward compatible.  This projection is a
+    PIT-bounded copy of the existing market-structure context; missing or newer
+    context is explicit and never silently reused as current evidence.
+    """
+    cutoff = parse_time(snapshot.get("captured_at_beijing") or snapshot.get("captured_at"))
+    context_path = ROOT / "data" / "state" / "market_structure_context.json"
+    context = load_json(context_path) if context_path.exists() else {}
+    by_code = {str(item.get("code")): item for item in (context.get("items") or []) if isinstance(item, dict) and item.get("code")}
+    delta_path = ROOT / "data" / "state" / "research_evidence_delta.json"
+    delta = load_json(delta_path) if delta_path.exists() else {}
+    delta_by_code = {str(item.get("code")): item for item in (delta.get("items") or []) if isinstance(item, dict) and item.get("code")}
+    context_as_of = parse_time(context.get("as_of_beijing"))
+    context_is_current = cutoff is not None and context_as_of is not None and context_as_of <= cutoff
+    projection_items = []
+    for code, name in names.items():
+        item = by_code.get(code)
+        item_as_of = parse_time(item.get("as_of_beijing")) if item else None
+        if not item:
+            status = "MISSING"
+        elif cutoff is None or item_as_of is None or item_as_of > cutoff or not context_is_current:
+            status = "STALE_OR_UNVERIFIABLE"
+        else:
+            status = "READY"
+        historical = item.get("historical_context") if status == "READY" else {}
+        turnover = item.get("turnover_acceptance_context") if status == "READY" else {}
+        participation = item.get("participation_structure_confirmation") if status == "READY" else {}
+        projection_items.append({
+            "code": code,
+            "name": name,
+            "status": status,
+            "as_of_beijing": item.get("as_of_beijing") if item else None,
+            "source": "data/state/market_structure_context.json" if item else None,
+            "historical": {
+                "latest_history_date": historical.get("latest_history_date"),
+                "return_vs_5_sessions_ago_pct": historical.get("return_vs_5_sessions_ago_pct"),
+                "return_vs_20_sessions_ago_pct": historical.get("return_vs_20_sessions_ago_pct"),
+                "window_20": historical.get("window_20"),
+                "window_60": historical.get("window_60"),
+                "historical_zone": historical.get("historical_zone"),
+                "trend_state": historical.get("trend_state"),
+                "trend_detail": historical.get("trend_detail"),
+            },
+            "participation": {
+                "status": participation.get("status") or turnover.get("status"),
+                "completed_bar_date": participation.get("completed_bar_date"),
+                "participation_ratio_vs_prior_20d": participation.get("participation_ratio_vs_prior_20d") or turnover.get("time_normalized_amount_pace_ratio"),
+                "acceptance_behavior": participation.get("acceptance_behavior") or turnover.get("acceptance_behavior"),
+                "enhancement_active": participation.get("enhancement_active"),
+            },
+            "event_delta": delta_by_code.get(code, {}) if status == "READY" else {},
+        })
+    return {
+        "as_of_beijing": context.get("as_of_beijing"),
+        "source": "data/state/market_structure_context.json",
+        "pit_cutoff": snapshot.get("captured_at_beijing") or snapshot.get("captured_at"),
+        "identity_set": list(names),
+        "items": projection_items,
+        "interpretation_rule": "STATE/PERSISTENCE保留全监测对象的既有多周期事实；EVENT/DELTA只解释变化优先级，不得删除对象、生成综合分数或单独生成交易动作。缺失/过期状态显式留痕，不静默沿用旧状态。",
+    }
 
 
 def resolve_hypothesis_id(decision: dict, code: str, market_date: str, decision_id: str) -> tuple[str, str]:
