@@ -18,6 +18,28 @@
     "scheduled_review_is_thin_wakeup_over_ssot"
   ],
   "change_admission": {
+  "merged_main_failure_attribution": {
+    "categories": [
+      "INTRODUCED_BY_CURRENT_CHANGE",
+      "PREEXISTING_UNRELATED",
+      "NEW_UNRELATED_DISCOVERY",
+      "ATTRIBUTION_INCONCLUSIVE"
+    ],
+    "closure_requires": [
+      "failure_attribution",
+      "change_specific_acceptance"
+    ],
+    "closure_rule": "change-specific acceptance must pass; introduced or inconclusive attribution cannot close; reliable preexisting or new unrelated attribution does not mechanically block independent closure",
+    "inconclusive_fail_safe": true,
+    "global_fail_no_bypass": true,
+    "orthogonal_to": [
+      "decision_outcomes",
+      "work_concurrency",
+      "production_integration",
+      "priority_semantics"
+    ]
+  },
+
     "default": "DO_NOT_CHANGE_UNLESS_VALUE_AND_READINESS_ARE_CLEAR",
     "governance_principles": {
       "decision_and_timing": "decide whether the change has clear net value and whether any critical residual risk still requires future evidence; closed-market pre-open midday-break post-close and holiday windows may be valid maintenance windows; a real production exposure window is required only when the residual risk cannot be closed before merge",

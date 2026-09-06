@@ -94,6 +94,30 @@ def classify_new_work_item_gate(facts: dict) -> dict:
     }
 
 
+def classify_merged_main_failure(*, global_status: str, change_specific_status: str, attribution: str) -> dict:
+    """Map merged-main evidence to a fail-safe Issue-closure decision."""
+    category = str(attribution or "ATTRIBUTION_INCONCLUSIVE").upper()
+    global_failed = str(global_status or "").upper() in {"FAIL", "DEGRADED"}
+    change_passed = str(change_specific_status or "").upper() in {"PASS", "READY"}
+    categories = {
+        "INTRODUCED_BY_CURRENT_CHANGE",
+        "PREEXISTING_UNRELATED",
+        "NEW_UNRELATED_DISCOVERY",
+        "ATTRIBUTION_INCONCLUSIVE",
+    }
+    if category not in categories:
+        category = "ATTRIBUTION_INCONCLUSIVE"
+    can_close = change_passed and (
+        not global_failed or category in {"PREEXISTING_UNRELATED", "NEW_UNRELATED_DISCOVERY"}
+    ) and category not in {"INTRODUCED_BY_CURRENT_CHANGE", "ATTRIBUTION_INCONCLUSIVE"}
+    return {
+        "attribution": category,
+        "global_failure_preserved": global_failed,
+        "change_specific_acceptance": "PASS" if change_passed else "FAIL",
+        "issue_closure": "CLOSE" if can_close else "DO_NOT_CLOSE",
+    }
+
+
 def run(root: Path = ROOT) -> dict:
     config_path = root / CONFIG.relative_to(ROOT)
     normative_doc_path = root / NORMATIVE_DOC.relative_to(ROOT)
@@ -132,6 +156,39 @@ def run(root: Path = ROOT) -> dict:
     }
     expected_outcomes = ["EXECUTE_NOW", "OBSERVE", "DO_NOT_CHANGE"]
     gate = admission.get("new_work_item_gate") or {}
+    attribution_contract = admission.get("merged_main_failure_attribution") or {}
+    attribution_categories = attribution_contract.get("categories") or []
+    check(
+        "merged_main_failure_attribution:categories",
+        attribution_categories == [
+            "INTRODUCED_BY_CURRENT_CHANGE",
+            "PREEXISTING_UNRELATED",
+            "NEW_UNRELATED_DISCOVERY",
+            "ATTRIBUTION_INCONCLUSIVE",
+        ],
+        "four explicit attribution categories are registered",
+    )
+    check(
+        "merged_main_failure_attribution:closure_contract",
+        set(attribution_contract.get("closure_requires") or {}) == {
+            "failure_attribution",
+            "change_specific_acceptance",
+        }
+        and attribution_contract.get("inconclusive_fail_safe") is True
+        and attribution_contract.get("global_fail_no_bypass") is True,
+        "closure requires attribution and change-specific acceptance with fail-safe/no-bypass boundaries",
+    )
+    check(
+        "merged_main_failure_attribution:orthogonal",
+        set(attribution_contract.get("orthogonal_to") or {}) == {
+            "decision_outcomes",
+            "work_concurrency",
+            "production_integration",
+            "priority_semantics",
+        }
+        and outcomes == ["EXECUTE_NOW", "OBSERVE", "DO_NOT_CHANGE"],
+        "attribution does not add admission or integration states",
+    )
     gate_fields = gate.get("fields") or {}
     gate_outcomes = gate.get("outcomes") or {}
     emergency = gate.get("emergency_fast_path") or {}

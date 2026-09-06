@@ -56,7 +56,7 @@ Codex 每次执行必须从执行时 latest `main` 和 `ETF_SYSTEM_INDEX.md` 起
 
 ## 3. 执行与回读
 
-选定执行器按现行生产治理执行只读研究、隔离实现、测试、PR、CI、latest-main replay 及必要的 merged-main 验收；哪些步骤允许执行、何时允许集成，仍由《生产变更与并发写入协议 V1.8》决定。
+选定执行器按现行生产治理执行只读研究、隔离实现、测试、PR、CI、latest-main replay 及必要的 merged-main 验收； merged-main 失败时，必须回读当前生产治理 SSOT 的 failure attribution 与 Issue closure contract，分别报告全局结果、change-specific acceptance、归因类别和当前 Issue 是否可闭环；哪些步骤允许执行、何时允许集成，仍由《生产变更与并发写入协议 V1.8》决定。
 
 Codex 的结果必须回写同一 Issue 或关联 PR，至少包括：
 
