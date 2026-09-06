@@ -27,6 +27,10 @@ class ProductionAdmissionConcurrencyContractTests(unittest.TestCase):
         self.assertIn("INTEGRATION=WAIT_FOR_PREDECESSOR", source)
         self.assertIn("这不是 `OBSERVE`", source)
         self.assertIn("串行约束适用于共享 main 的正式写入", source)
+        self.assertIn("前序事项的真实暴露或集成等待不得改变后续独立事项的Admission", source)
+        self.assertIn("ADMISSION=EXECUTE_NOW", source)
+        self.assertIn("INTEGRATION=WAIT_FOR_PREDECESSOR", source)
+        self.assertNotIn("下一项独立生产语义才保持", source)
 
     def test_machine_mirror_records_the_same_orthogonal_semantics(self):
         mirror = json.loads(MIRROR.read_text(encoding="utf-8"))
