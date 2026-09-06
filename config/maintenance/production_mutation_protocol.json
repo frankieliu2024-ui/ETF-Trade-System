@@ -39,6 +39,9 @@
       "CA11": "root_cause_complete_repair"
     },
     "decision_outcomes": ["EXECUTE_NOW", "OBSERVE", "DO_NOT_CHANGE"],
+    "work_concurrency": "EXECUTE_NOW permits immediate isolated audit diagnosis implementation testing candidate replay PR and CI preparation when shared production main is not written; an unfinished predecessor does not convert the admission to OBSERVE.",
+    "production_integration": "Independent production changes integrate serially on latest main; a predecessor wait is an integration queue state, not a fourth admission outcome. Merge and merged-main acceptance remain blocked until the predecessor is complete.",
+    "priority_semantics": "Priority controls interruption, resource allocation, and integration order; it does not mechanically freeze independent lower-priority diagnosis implementation or testing.",
     "decision_rule": "先判断变化是否有清晰净收益，再判断是否仍有必须等待的新信息。价值和实现/验证均充分且无关键残余风险需要未来真实生产暴露时为EXECUTE_NOW；存在明确且必须通过后续真实生产运行或未完成验证才能回答的问题时为OBSERVE；净收益不足、已有机制充分、已满足/替代或复杂度收益不成立时为DO_NOT_CHANGE。",
     "execution_boundary": "用户提出修复、优化或执行不自动等于EXECUTE_NOW。ChatGPT/Codex必须先完成问题事实、canonical owner、根因、当前影响、既有恢复是否充分、实现成熟度和残余风险判断。EXECUTE_NOW进入既有latest-main隔离实施与组合验收链；OBSERVE必须记录具体阻塞和解除条件；DO_NOT_CHANGE不创建生产修改。A股连续交易期间仅执行影响当前交易判断、账户/成交/行情事实或canonical runtime恢复的必要生产修改，其他EXECUTE_NOW事项移至非关键窗口执行。",
     "maintenance_rule_freeze": "长期治理只保留四条上位原则和少量硬工程合同；旧CA01-CA11仅作为审计兼容映射，不再作为日常平级入口，不继续新增CA12/CA13等规则。新失效模式优先归并到现有原则并强化测试，只有现有原则确实无法覆盖且问题重复、实质影响生产时才调整规范。",
