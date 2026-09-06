@@ -124,6 +124,17 @@ class StateLayerTests(unittest.TestCase):
         self.assertTrue(is_broker_screenshot_request({"interaction_scenario": "BROKER_SCREENSHOT_SYNC"}))
         self.assertFalse(is_broker_screenshot_request({"interaction_scenario": "FORMAL_INTRADAY_ANALYSIS"}))
 
+    def test_real_20260904_broker_refresh_shape_is_explicitly_classified(self) -> None:
+        request = json.loads(
+            (Path(__file__).resolve().parents[1] / "requests/live_snapshot/20260904_1327_user_screenshot.json").read_text(encoding="utf-8")
+        )
+        self.assertTrue(is_broker_screenshot_request(request))
+
+    def test_stable_fact_type_classifies_broker_without_source_alias(self) -> None:
+        self.assertTrue(is_broker_screenshot_request({"fact_type": "BROKER_ACCOUNT_SNAPSHOT"}))
+        self.assertTrue(is_broker_screenshot_request({"formal_fact_type": "ACCOUNT_FACT_CONFIRMATION"}))
+        self.assertFalse(is_broker_screenshot_request({"fact_type": "MARKET_SNAPSHOT"}))
+
     def test_e2e_blocks_new_unprocessed_broker_request(self) -> None:
         request_dir = self.root / "requests" / "live_snapshot"
         request_dir.mkdir(parents=True)
@@ -218,6 +229,13 @@ class StateLayerTests(unittest.TestCase):
             result = e2e.account_component(account, {"needs_account_update": False})
         self.assertEqual(result["status"], "BLOCKED")
         self.assertIn("ACCOUNT_SYNC_NOT_PERFORMED", result["reason"])
+
+
+    def test_formal_review_explicit_fact_type_uses_canonical_ingress(self) -> None:
+        from scripts.process_state_sync_request import is_formal_review_request
+        self.assertTrue(is_formal_review_request({"formal_fact_type": "FORMAL_POST_CLOSE_REVIEW"}))
+        self.assertTrue(is_formal_review_request({"interaction_scenario": "POST_CLOSE_REVIEW"}))
+        self.assertFalse(is_formal_review_request({"fact_type": "MARKET_SNAPSHOT"}))
 
 
 if __name__ == "__main__":
