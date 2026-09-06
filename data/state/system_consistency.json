@@ -1,39 +1,35 @@
 {
-  "generated_at": "2026-09-06T02:59:09Z",
-  "generated_at_beijing": "2026-09-06T10:59:09+08:00",
+  "generated_at": "2026-09-06T03:03:28Z",
+  "generated_at_beijing": "2026-09-06T11:03:28+08:00",
   "repository": {
-    "head_sha": "2db4feb9cfe22f4923e301aef8a4dfe5e7916bae",
-    "github_sha": "2db4feb9cfe22f4923e301aef8a4dfe5e7916bae",
-    "github_run_id": "34007807124",
+    "head_sha": "428a0ca4d610adacc5fc03274b9c125794a85bfd",
+    "github_sha": "428a0ca4d610adacc5fc03274b9c125794a85bfd",
+    "github_run_id": "34007987045",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "2db4feb9cfe22f4923e301aef8a4dfe5e7916bae",
-    "workflow_sha": "2db4feb9cfe22f4923e301aef8a4dfe5e7916bae",
+    "checked_commit": "428a0ca4d610adacc5fc03274b9c125794a85bfd",
+    "workflow_sha": "428a0ca4d610adacc5fc03274b9c125794a85bfd",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "semantic_freshness": {
-    "base": "4bc7a18012817e6fbd9d2dfb1a1bd136d63d7fa4",
-    "head": "2db4feb9cfe22f4923e301aef8a4dfe5e7916bae",
+    "base": "2db4feb9cfe22f4923e301aef8a4dfe5e7916bae",
+    "head": "428a0ca4d610adacc5fc03274b9c125794a85bfd",
     "changed_paths": [
-      "config/maintenance/production_mutation_protocol.json",
       "data/state/e2e_status.json",
       "data/state/execution_quality.json",
       "data/state/last_known_good.json",
       "data/state/maintenance_diagnostic.json",
       "data/state/maintenance_health.json",
-      "data/state/notification_center.json",
       "data/state/system_consistency.json",
-      "docs/生产变更与并发写入协议_V1.0.md",
-      "requests/report_delivery/etf-system-review-2026-09-06-20260906T0823040800-d0bb6ec2d65b.json",
-      "tests/test_production_admission_concurrency.py"
+      "scripts/maintenance_guard.py",
+      "tests/test_market_confirmed_trade_fee_overlay.py"
     ],
     "categories": {
       "STABLE_PRODUCTION_CHANGE": [
-        "config/maintenance/production_mutation_protocol.json",
-        "docs/生产变更与并发写入协议_V1.0.md",
-        "tests/test_production_admission_concurrency.py"
+        "scripts/maintenance_guard.py",
+        "tests/test_market_confirmed_trade_fee_overlay.py"
       ],
       "DYNAMIC_RUNTIME_FACT": [
         "data/state/e2e_status.json",
@@ -41,50 +37,47 @@
         "data/state/last_known_good.json",
         "data/state/maintenance_diagnostic.json",
         "data/state/maintenance_health.json",
-        "data/state/notification_center.json",
         "data/state/system_consistency.json"
       ],
       "FORMAL_FACT_MUTATION": [],
-      "REQUEST_OR_TRIGGER_FACT": [
-        "requests/report_delivery/etf-system-review-2026-09-06-20260906T0823040800-d0bb6ec2d65b.json"
-      ],
+      "REQUEST_OR_TRIGGER_FACT": [],
       "UNKNOWN": []
     },
     "decision": "REPLAY_REQUIRED",
-    "validated_commit": "4bc7a18012817e6fbd9d2dfb1a1bd136d63d7fa4",
-    "current_head": "2db4feb9cfe22f4923e301aef8a4dfe5e7916bae",
+    "validated_commit": "2db4feb9cfe22f4923e301aef8a4dfe5e7916bae",
+    "current_head": "428a0ca4d610adacc5fc03274b9c125794a85bfd",
     "head_advanced": true,
     "stable_contract_freshness": "REVIEW_REQUIRED",
     "runtime_fact_freshness": "CURRENT"
   },
-  "status": "WARNING",
-  "hard_error_count": 0,
+  "status": "FAIL",
+  "hard_error_count": 1,
   "warning_count": 1,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
-      "status": "PASS",
-      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-03:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-03\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n......................................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 214 tests in 0.245s\n\nOK\n"
+      "status": "FAIL",
+      "detail": "11.16/x64/lib/python3.11/unittest/loader.py\", line 419, in _find_test_path\n    module = self._get_module_from_name(name)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/loader.py\", line 362, in _get_module_from_name\n    __import__(name)\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_confirmed_trade_fee_overlay.py\", line 11, in <module>\n    import maintenance_guard\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/scripts/maintenance_guard.py\", line 140\n    \"status\": \"PASS\" if fee_ok else \"WARNING\",\\n            \"blocking\": False,\\n            \"note\": \"fee attribution mismatch remains visible but cannot block reconciled account/trade/equity state\",\n                                               ^\nSyntaxError: unexpected character after line continuation character\n\n\n----------------------------------------------------------------------\nRan 212 tests in 0.236s\n\nFAILED (errors=1)\n"
     },
     {
       "name": "tests:opening_current_self_healing",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.004s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.003s\n\nOK\n"
     },
     {
       "name": "tests:semantic_latest_main",
       "status": "PASS",
-      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.127s\n\nOK\n"
+      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.138s\n\nOK\n"
     },
     {
       "name": "tests:research_artifact_contract",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.671s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.667s\n\nOK\n"
     },
     {
       "name": "tests:lifecycle_state",
       "status": "PASS",
-      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.007s\n\nOK\n"
+      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.006s\n\nOK\n"
     },
     {
       "name": "tests:historical_market_fact_recovery",
@@ -109,17 +102,17 @@
     {
       "name": "tests:post_close_review_canonical",
       "status": "PASS",
-      "detail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.006s\n\nOK\n"
+      "detail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.005s\n\nOK\n"
     },
     {
       "name": "tests:review_prerequisite_lifecycle",
       "status": "PASS",
-      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.001s\n\nOK\n"
+      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.000s\n\nOK\n"
     },
     {
       "name": "tests:production_reliability",
       "status": "PASS",
-      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n............................\n----------------------------------------------------------------------\nRan 28 tests in 0.018s\n\nOK\n"
+      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n............................\n----------------------------------------------------------------------\nRan 28 tests in 0.019s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -394,17 +387,17 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=2db4feb9cfe22f4923e301aef8a4dfe5e7916bae"
+      "detail": "HEAD=428a0ca4d610adacc5fc03274b9c125794a85bfd"
     },
     {
       "name": "git:semantic_latest_main",
       "status": "PASS",
-      "detail": "{\"base\": \"4bc7a18012817e6fbd9d2dfb1a1bd136d63d7fa4\", \"head\": \"2db4feb9cfe22f4923e301aef8a4dfe5e7916bae\", \"changed_paths\": [\"config/maintenance/production_mutation_protocol.json\", \"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/system_consistency.json\", \"docs/生产变更与并发写入协议_V1.0.md\", \"requests/report_delivery/etf-system-review-2026-09-06-20260906T0823040800-d0bb6ec2d65b.json\", \"tests/test_production_admission_concurrency.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"config/maintenance/production_mutation_protocol.json\", \"docs/生产变更与并发写入协议_V1.0.md\", \"tests/test_production_admission_concurrency.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/system_consistency.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [\"requests/report_delivery/etf-system-review-2026-09-06-20260906T0823040800-d0bb6ec2d65b.json\"], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\"}"
+      "detail": "{\"base\": \"2db4feb9cfe22f4923e301aef8a4dfe5e7916bae\", \"head\": \"428a0ca4d610adacc5fc03274b9c125794a85bfd\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/system_consistency.json\", \"scripts/maintenance_guard.py\", \"tests/test_market_confirmed_trade_fee_overlay.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"scripts/maintenance_guard.py\", \"tests/test_market_confirmed_trade_fee_overlay.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/system_consistency.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\"}"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=2db4feb9cfe22f4923e301aef8a4dfe5e7916bae GITHUB_SHA=2db4feb9cfe22f4923e301aef8a4dfe5e7916bae"
+      "detail": "HEAD=428a0ca4d610adacc5fc03274b9c125794a85bfd GITHUB_SHA=428a0ca4d610adacc5fc03274b9c125794a85bfd"
     },
     {
       "name": "git:critical_files_tracked",
@@ -829,7 +822,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=22:59 max_age_seconds=107049 limit=900"
+      "detail": "active=False phase=23:03 max_age_seconds=107308 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -974,12 +967,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=157951"
+      "detail": "declared=STALE expected=STALE age_seconds=158211"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=157936"
+      "detail": "declared=STALE expected=STALE age_seconds=158195"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -1019,7 +1012,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-09-06T02:58:51Z market=2026-09-04T15:06:35+08:00"
+      "detail": "context=2026-09-06T03:03:10Z market=2026-09-04T15:06:35+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -2137,7 +2130,9 @@
       "detail": "registered writer persists data/state/capital_efficiency_ranking.json"
     }
   ],
-  "errors": [],
+  "errors": [
+    "tests:market_data_and_quote_router: 11.16/x64/lib/python3.11/unittest/loader.py\", line 419, in _find_test_path\n    module = self._get_module_from_name(name)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/unittest/loader.py\", line 362, in _get_module_from_name\n    __import__(name)\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_market_confirmed_trade_fee_overlay.py\", line 11, in <module>\n    import maintenance_guard\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/scripts/maintenance_guard.py\", line 140\n    \"status\": \"PASS\" if fee_ok else \"WARNING\",\\n            \"blocking\": False,\\n            \"note\": \"fee attribution mismatch remains visible but cannot block reconciled account/trade/equity state\",\n                                               ^\nSyntaxError: unexpected character after line continuation character\n\n\n----------------------------------------------------------------------\nRan 212 tests in 0.236s\n\nFAILED (errors=1)\n"
+  ],
   "warnings": [
     "stock_runtime:market_complete: codes=['300750', '601138'] status=PASS"
   ],
