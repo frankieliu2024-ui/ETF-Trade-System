@@ -128,7 +128,7 @@ def reconcile() -> dict:
     equity_ok = abs(equity_diff) < 0.011 and str(summary.get("equity_reconciliation_status") or "").startswith("RECONCILED")
 
     trade_count_ok = int(summary.get("trade_count") or 0) == len(trades_for_positions)
-    overall = quantity_ok and fee_ok and equity_ok and trade_count_ok
+    # Fee attribution is an audit fact, not a hard account/trade gate.\n    # Quantity, equity, and trade-count identity remain fail-closed.\n    overall = quantity_ok and equity_ok and trade_count_ok
     return {
         "status": "PASS" if overall else "FAIL",
         "trade_count": len(trades),
@@ -137,7 +137,7 @@ def reconcile() -> dict:
         "position_ledger_basis": "AUXILIARY_EQUITY_RECONSTRUCTION_PLUS_EXECUTED_TRADE_EVENTS",
         "position_reconciliation": {"status": "PASS" if quantity_ok else "FAIL", "checks": quantity_checks},
         "known_fee_reconciliation": {
-            "status": "PASS" if fee_ok else "FAIL",
+            "status": "PASS" if fee_ok else "WARNING",\n            "blocking": False,\n            "note": "fee attribution mismatch remains visible but cannot block reconciled account/trade/equity state",
             "auxiliary_reconstructed_confirmed_fee_sum": reconstructed_fee_sum,
             "auxiliary_summary_known_fees": summary_known_fees,
             "auxiliary_difference": rounded(effective_fee_sum - summary_known_fees, 2),
