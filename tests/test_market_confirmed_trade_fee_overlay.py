@@ -73,11 +73,12 @@ class ConfirmedTradeFeeOverlayTests(unittest.TestCase):
             root = Path(td)
             state = root / "data/state"
             trade = self.base_trade()
+            trade["side"] = "BUY"
             self.write_json(
                 state / "etf_strategy_equity.json",
                 {
                     "summary": {
-                        "trade_count": 1,
+                        "trade_count": 2,
                         "known_fees": 120.01,
                         "strategy_cash_current": 0,
                         "current_etf_market_value": 0,
@@ -87,7 +88,15 @@ class ConfirmedTradeFeeOverlayTests(unittest.TestCase):
                     "trades": [trade],
                 },
             )
-            self.write_json(state / "account_fact.json", {"positions": []})
+            self.write_json(
+                state / "account_fact.json",
+                {
+                    "positions": [
+                        {"code": "561980", "quantity": 100},
+                        {"code": "515880", "quantity": 7400},
+                    ]
+                },
+            )
             self.write_json(root / "events/trades/new.json", self.overlay_event())
             self.write_json(
                 root / "events/reviews/2026-08-28.json",
