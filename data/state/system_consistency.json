@@ -1,35 +1,38 @@
 {
-  "generated_at": "2026-09-06T03:43:48Z",
-  "generated_at_beijing": "2026-09-06T11:43:48+08:00",
+  "generated_at": "2026-09-06T09:46:47Z",
+  "generated_at_beijing": "2026-09-06T17:46:47+08:00",
   "repository": {
-    "head_sha": "18f1fd529ff5bbd776784b5760391366ce3f7abb",
-    "github_sha": "18f1fd529ff5bbd776784b5760391366ce3f7abb",
-    "github_run_id": "34009685474",
+    "head_sha": "54848b89eec496ba73461e2be85cf60329ec3281",
+    "github_sha": "54848b89eec496ba73461e2be85cf60329ec3281",
+    "github_run_id": "34025557695",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "18f1fd529ff5bbd776784b5760391366ce3f7abb",
-    "workflow_sha": "18f1fd529ff5bbd776784b5760391366ce3f7abb",
+    "checked_commit": "54848b89eec496ba73461e2be85cf60329ec3281",
+    "workflow_sha": "54848b89eec496ba73461e2be85cf60329ec3281",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "semantic_freshness": {
-    "base": "b6d0c80f3446b6288047e5e53a0e72740cb1b5f1",
-    "head": "18f1fd529ff5bbd776784b5760391366ce3f7abb",
+    "base": "18f1fd529ff5bbd776784b5760391366ce3f7abb",
+    "head": "54848b89eec496ba73461e2be85cf60329ec3281",
     "changed_paths": [
+      "ETF与市场监测数据接口使用规范.md",
       "data/state/e2e_status.json",
       "data/state/execution_quality.json",
       "data/state/last_known_good.json",
       "data/state/maintenance_diagnostic.json",
       "data/state/maintenance_health.json",
+      "data/state/notification_center.json",
       "data/state/system_consistency.json",
-      "docs/生产变更与并发写入协议_V1.0.md",
-      "tests/test_production_admission_concurrency.py"
+      "requests/report_delivery/20260906T133608_9220fa5f9d.json",
+      "requests/report_delivery/etf-system-review-20260906-ce56c6bb77dd.json",
+      "requests/report_delivery/etf-trade-review-2026-09-04-20260906T153057.json",
+      "tests/test_research_historical_data_preflight_contract.py"
     ],
     "categories": {
       "STABLE_PRODUCTION_CHANGE": [
-        "docs/生产变更与并发写入协议_V1.0.md",
-        "tests/test_production_admission_concurrency.py"
+        "tests/test_research_historical_data_preflight_contract.py"
       ],
       "DYNAMIC_RUNTIME_FACT": [
         "data/state/e2e_status.json",
@@ -37,15 +40,22 @@
         "data/state/last_known_good.json",
         "data/state/maintenance_diagnostic.json",
         "data/state/maintenance_health.json",
+        "data/state/notification_center.json",
         "data/state/system_consistency.json"
       ],
-      "FORMAL_FACT_MUTATION": [],
-      "REQUEST_OR_TRIGGER_FACT": [],
+      "FORMAL_FACT_MUTATION": [
+        "ETF与市场监测数据接口使用规范.md"
+      ],
+      "REQUEST_OR_TRIGGER_FACT": [
+        "requests/report_delivery/20260906T133608_9220fa5f9d.json",
+        "requests/report_delivery/etf-system-review-20260906-ce56c6bb77dd.json",
+        "requests/report_delivery/etf-trade-review-2026-09-04-20260906T153057.json"
+      ],
       "UNKNOWN": []
     },
     "decision": "REPLAY_REQUIRED",
-    "validated_commit": "b6d0c80f3446b6288047e5e53a0e72740cb1b5f1",
-    "current_head": "18f1fd529ff5bbd776784b5760391366ce3f7abb",
+    "validated_commit": "18f1fd529ff5bbd776784b5760391366ce3f7abb",
+    "current_head": "54848b89eec496ba73461e2be85cf60329ec3281",
     "head_advanced": true,
     "stable_contract_freshness": "REVIEW_REQUIRED",
     "runtime_fact_freshness": "CURRENT"
@@ -57,22 +67,22 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-03:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-03\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n.......................................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 215 tests in 0.243s\n\nOK\n"
+      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-03:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-03\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n.......................................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 215 tests in 0.242s\n\nOK\n"
     },
     {
       "name": "tests:opening_current_self_healing",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.004s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.003s\n\nOK\n"
     },
     {
       "name": "tests:semantic_latest_main",
       "status": "PASS",
-      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.127s\n\nOK\n"
+      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.126s\n\nOK\n"
     },
     {
       "name": "tests:research_artifact_contract",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.673s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.668s\n\nOK\n"
     },
     {
       "name": "tests:lifecycle_state",
@@ -87,12 +97,12 @@
     {
       "name": "tests:executed_trade_case_lifecycle",
       "status": "PASS",
-      "detail": "902_141753_trade_159326\", \"decision_time\": \"2026-09-02T14:21:31+08:00\", \"decision_market_date\": \"2026-09-02\", \"source_event\": \"events/decisions/20260902_141753_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260902_141753_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-09-02\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-09-02\"}], \"actionable_count\": 0, \"account_fact_updated_at\": \"2026-09-04T15:03:00+08:00\", \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n..........\n----------------------------------------------------------------------\nRan 10 tests in 0.012s\n\nOK\n"
+      "detail": "902_141753_trade_159326\", \"decision_time\": \"2026-09-02T14:21:31+08:00\", \"decision_market_date\": \"2026-09-02\", \"source_event\": \"events/decisions/20260902_141753_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260902_141753_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-09-02\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-09-02\"}], \"actionable_count\": 0, \"account_fact_updated_at\": \"2026-09-04T15:03:00+08:00\", \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n..........\n----------------------------------------------------------------------\nRan 10 tests in 0.011s\n\nOK\n"
     },
     {
       "name": "tests:settlement_obligations",
       "status": "PASS",
-      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.003s\n\nOK\n"
+      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.002s\n\nOK\n"
     },
     {
       "name": "tests:formal_file_mutation_gateway",
@@ -387,17 +397,17 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=18f1fd529ff5bbd776784b5760391366ce3f7abb"
+      "detail": "HEAD=54848b89eec496ba73461e2be85cf60329ec3281"
     },
     {
       "name": "git:semantic_latest_main",
       "status": "PASS",
-      "detail": "{\"base\": \"b6d0c80f3446b6288047e5e53a0e72740cb1b5f1\", \"head\": \"18f1fd529ff5bbd776784b5760391366ce3f7abb\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/system_consistency.json\", \"docs/生产变更与并发写入协议_V1.0.md\", \"tests/test_production_admission_concurrency.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"docs/生产变更与并发写入协议_V1.0.md\", \"tests/test_production_admission_concurrency.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/system_consistency.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\"}"
+      "detail": "{\"base\": \"18f1fd529ff5bbd776784b5760391366ce3f7abb\", \"head\": \"54848b89eec496ba73461e2be85cf60329ec3281\", \"changed_paths\": [\"ETF与市场监测数据接口使用规范.md\", \"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/system_consistency.json\", \"requests/report_delivery/20260906T133608_9220fa5f9d.json\", \"requests/report_delivery/etf-system-review-20260906-ce56c6bb77dd.json\", \"requests/report_delivery/etf-trade-review-2026-09-04-20260906T153057.json\", \"tests/test_research_historical_data_preflight_contract.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"tests/test_research_historical_data_preflight_contract.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/system_consistency.json\"], \"FORMAL_FACT_MUTATION\": [\"ETF与市场监测数据接口使用规范.md\"], \"REQUEST_OR_TRIGGER_FACT\": [\"requests/report_delivery/20260906T133608_9220fa5f9d.json\", \"requests/report_delivery/etf-system-review-20260906-ce56c6bb77dd.json\", \"requests/report_delivery/etf-trade-review-2026-09-04-20260906T153057.json\"], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\"}"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=18f1fd529ff5bbd776784b5760391366ce3f7abb GITHUB_SHA=18f1fd529ff5bbd776784b5760391366ce3f7abb"
+      "detail": "HEAD=54848b89eec496ba73461e2be85cf60329ec3281 GITHUB_SHA=54848b89eec496ba73461e2be85cf60329ec3281"
     },
     {
       "name": "git:critical_files_tracked",
@@ -822,7 +832,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=23:43 max_age_seconds=109728 limit=900"
+      "detail": "active=False phase=05:46 max_age_seconds=131507 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -967,12 +977,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=160631"
+      "detail": "declared=STALE expected=STALE age_seconds=182410"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=160616"
+      "detail": "declared=STALE expected=STALE age_seconds=182393"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -1012,7 +1022,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-09-06T03:43:31Z market=2026-09-04T15:06:35+08:00"
+      "detail": "context=2026-09-06T09:46:28Z market=2026-09-04T15:06:35+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1122,12 +1132,12 @@
     {
       "name": "notification:managed_schema",
       "status": "PASS",
-      "detail": "count=69"
+      "detail": "count=72"
     },
     {
       "name": "notification:no_duplicate_active_source",
       "status": "PASS",
-      "detail": "active_sources=['market-value:a-share:2026-09-02:A_SHARE_INDEX_DIVERGENCE:DIVERGED:DIVERGENCE:2026-09-02T13:09:29+08:00', 'market-value:a-share:2026-09-02:561980:UP:REVERSAL:2026-09-02T14:02:05+08:00', 'apac-session-summary:2026-09-02:PRIMARY_CLOSE', 'market-value:asia:2026-09-02:KOSPI:DOWN:EXTREME:2026-09-02T15:03:00+08:00', 'a-share-session-summary:2026-09-02:CLOSE', 'decision:RISK_BOUNDARY_CROSSED||2026-09-02T20:02|20260902_141753_trade_159326|20260902_141753_trade_159326', 'us-session-summary:2026-09-02:CLOSE', 'apac-open-signal:2026-09-03:KOSPI:UP', 'a-share-session-summary:2026-09-03:OPEN', 'market-value:a-share:2026-09-03:399006:DOWN:REVERSAL:2026-09-03T13:03:33+08:00', 'market-value:a-share:2026-09-03:A_SHARE_ETF_DIVERGENCE:DIVERGED:DIVERGENCE:2026-09-03T13:05:05+08:00', 'market-value:asia:2026-09-03:KOSPI:UP:REVERSAL:2026-09-03T13:58:04+08:00', 'a-share-session-summary:2026-09-03:CLOSE', 'apac-session-summary:2026-09-03:PRIMARY_CLOSE', 'market-value:asia:2026-09-03:KOSPI:DOWN:REVERSAL:2026-09-03T15:58:00+08:00', 'report-delivery:ETF交易复盘:ETF交易复盘-20260903T190300+0800', 'report-delivery:ETF正式变更复核:ETF正式变更复核-20260903T202400+0800-d6e9db4dda-delivery-replay-v2', 'market-value:us:2026-09-03:US_TECH_DIVERGENCE:DIVERGED:DIVERGENCE:2026-09-03T21:30:50+08:00', 'us-session-summary:2026-09-03:OPEN', 'market-value:us:2026-09-03:SOX:UP:REVERSAL:2026-09-04T00:40:35+08:00', 'us-session-summary:2026-09-03:CLOSE', 'report-delivery:ETF正式变更复核:ETF正式变更复核-20260904T082703+0800-turn9-9d9f5801', 'apac-open-signal:2026-09-04:KOSPI:UP', 'a-share-session-summary:2026-09-04:OPEN', 'market-value:a-share:2026-09-04:000688:DOWN:REVERSAL:2026-09-04T10:31:51+08:00', 'apac-open-signal:2026-09-04:HSTECH:UP', 'market-value:asia:2026-09-04:HSTECH:UP:EXTREME:2026-09-04T10:34:38+08:00', 'market-value:a-share:2026-09-04:515880:DOWN:REVERSAL:2026-09-04T11:28:32+08:00', 'market-value:asia:2026-09-04:KOSPI:UP:EXTREME:2026-09-04T12:21:47+08:00', 'report-delivery:ETF正式变更复核:ETF正式变更复核-20260904T122600+0800-e48d9db1c113', 'market-value:a-share:2026-09-04:399006:DOWN:REVERSAL:2026-09-04T13:50:48+08:00', 'a-share-session-summary:2026-09-04:CLOSE', 'market-value:a-share:2026-09-04:000688:DOWN:EXTREME:2026-09-04T15:06:00+08:00', 'report-delivery:ETF交易复盘:ETF交易复盘-20260904T153821+0800', 'report-delivery:ETF正式变更复核:ETF正式变更复核-20260904T162542+0800-768d0fe9e002', 'market-value:us:2026-09-04:SOXX:UP:EXTREME:2026-09-04T17:06:09+08:00', 'market-value:us:2026-09-04:US_TECH_DIVERGENCE:DIVERGED:DIVERGENCE:2026-09-04T19:17:26+08:00', 'channel-test:2026-09-04T19:44:17+08:00', 'apac-session-summary:2026-09-04:HK_LATE_UPDATE', 'market-value:us:2026-09-04:SOXX:DOWN:SUDDEN:2026-09-04T20:31:47+08:00', 'us-session-summary:2026-09-04:OPEN', 'market-value:us:2026-09-04:US_TECH_DIVERGENCE:DIVERGED:DIVERGENCE:2026-09-04T22:29:12+08:00', 'market-value:us:2026-09-04:SOX:UP:EXTREME:2026-09-05T00:35:16+08:00', 'us-session-summary:2026-09-04:CLOSE', 'report-delivery:ETF正式变更复核:ETF正式变更复核-20260905T082609+0800-82fc9522e363', 'report-delivery:ETF正式变更复核:ETF正式变更复核-20260905T122500+0800-918e0d1c0380', 'report-delivery:f0362fa5e82229ac3f4cca6a7eb57b40d135193f1ddc042b7711e24ccd6f79d1', 'report-delivery:d462e0a2ea6067c41709de66a2d533fbe74dda5cdc276326c7381e6d57735b01']"
+      "detail": "active_sources=['market-value:a-share:2026-09-02:A_SHARE_INDEX_DIVERGENCE:DIVERGED:DIVERGENCE:2026-09-02T13:09:29+08:00', 'market-value:a-share:2026-09-02:561980:UP:REVERSAL:2026-09-02T14:02:05+08:00', 'apac-session-summary:2026-09-02:PRIMARY_CLOSE', 'market-value:asia:2026-09-02:KOSPI:DOWN:EXTREME:2026-09-02T15:03:00+08:00', 'a-share-session-summary:2026-09-02:CLOSE', 'decision:RISK_BOUNDARY_CROSSED||2026-09-02T20:02|20260902_141753_trade_159326|20260902_141753_trade_159326', 'us-session-summary:2026-09-02:CLOSE', 'apac-open-signal:2026-09-03:KOSPI:UP', 'a-share-session-summary:2026-09-03:OPEN', 'market-value:a-share:2026-09-03:399006:DOWN:REVERSAL:2026-09-03T13:03:33+08:00', 'market-value:a-share:2026-09-03:A_SHARE_ETF_DIVERGENCE:DIVERGED:DIVERGENCE:2026-09-03T13:05:05+08:00', 'market-value:asia:2026-09-03:KOSPI:UP:REVERSAL:2026-09-03T13:58:04+08:00', 'a-share-session-summary:2026-09-03:CLOSE', 'apac-session-summary:2026-09-03:PRIMARY_CLOSE', 'market-value:asia:2026-09-03:KOSPI:DOWN:REVERSAL:2026-09-03T15:58:00+08:00', 'report-delivery:ETF交易复盘:ETF交易复盘-20260903T190300+0800', 'report-delivery:ETF正式变更复核:ETF正式变更复核-20260903T202400+0800-d6e9db4dda-delivery-replay-v2', 'market-value:us:2026-09-03:US_TECH_DIVERGENCE:DIVERGED:DIVERGENCE:2026-09-03T21:30:50+08:00', 'us-session-summary:2026-09-03:OPEN', 'market-value:us:2026-09-03:SOX:UP:REVERSAL:2026-09-04T00:40:35+08:00', 'us-session-summary:2026-09-03:CLOSE', 'report-delivery:ETF正式变更复核:ETF正式变更复核-20260904T082703+0800-turn9-9d9f5801', 'apac-open-signal:2026-09-04:KOSPI:UP', 'a-share-session-summary:2026-09-04:OPEN', 'market-value:a-share:2026-09-04:000688:DOWN:REVERSAL:2026-09-04T10:31:51+08:00', 'apac-open-signal:2026-09-04:HSTECH:UP', 'market-value:asia:2026-09-04:HSTECH:UP:EXTREME:2026-09-04T10:34:38+08:00', 'market-value:a-share:2026-09-04:515880:DOWN:REVERSAL:2026-09-04T11:28:32+08:00', 'market-value:asia:2026-09-04:KOSPI:UP:EXTREME:2026-09-04T12:21:47+08:00', 'report-delivery:ETF正式变更复核:ETF正式变更复核-20260904T122600+0800-e48d9db1c113', 'market-value:a-share:2026-09-04:399006:DOWN:REVERSAL:2026-09-04T13:50:48+08:00', 'a-share-session-summary:2026-09-04:CLOSE', 'market-value:a-share:2026-09-04:000688:DOWN:EXTREME:2026-09-04T15:06:00+08:00', 'report-delivery:ETF交易复盘:ETF交易复盘-20260904T153821+0800', 'report-delivery:ETF正式变更复核:ETF正式变更复核-20260904T162542+0800-768d0fe9e002', 'market-value:us:2026-09-04:SOXX:UP:EXTREME:2026-09-04T17:06:09+08:00', 'market-value:us:2026-09-04:US_TECH_DIVERGENCE:DIVERGED:DIVERGENCE:2026-09-04T19:17:26+08:00', 'channel-test:2026-09-04T19:44:17+08:00', 'apac-session-summary:2026-09-04:HK_LATE_UPDATE', 'market-value:us:2026-09-04:SOXX:DOWN:SUDDEN:2026-09-04T20:31:47+08:00', 'us-session-summary:2026-09-04:OPEN', 'market-value:us:2026-09-04:US_TECH_DIVERGENCE:DIVERGED:DIVERGENCE:2026-09-04T22:29:12+08:00', 'market-value:us:2026-09-04:SOX:UP:EXTREME:2026-09-05T00:35:16+08:00', 'us-session-summary:2026-09-04:CLOSE', 'report-delivery:ETF正式变更复核:ETF正式变更复核-20260905T082609+0800-82fc9522e363', 'report-delivery:ETF正式变更复核:ETF正式变更复核-20260905T122500+0800-918e0d1c0380', 'report-delivery:f0362fa5e82229ac3f4cca6a7eb57b40d135193f1ddc042b7711e24ccd6f79d1', 'report-delivery:d462e0a2ea6067c41709de66a2d533fbe74dda5cdc276326c7381e6d57735b01', 'report-delivery:ETF变更复核:etf-system-review-20260906T133608-a044835a', 'report-delivery:ETF交易复盘:ETF交易复盘-20260906T153057+0800', 'report-delivery:ETF变更复核:run-20260906T162756-35db4c36ad']"
     },
     {
       "name": "notification:confirmation_entry_syntax",
