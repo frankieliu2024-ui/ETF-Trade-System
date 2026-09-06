@@ -25,7 +25,7 @@ class ProductionAdmissionConcurrencyContractTests(unittest.TestCase):
             self.assertIn(outcome, source)
         self.assertIn("四维正交判定：准入、工作、集成与优先级", source)
         self.assertIn("INTEGRATION=WAIT_FOR_PREDECESSOR", source)
-        self.assertIn("这不是 \`OBSERVE\`", source)
+        self.assertIn("这不是 `OBSERVE`", source)
         self.assertIn("串行约束适用于共享 main 的正式写入", source)
 
     def test_machine_mirror_records_the_same_orthogonal_semantics(self):
