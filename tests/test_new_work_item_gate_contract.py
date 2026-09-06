@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.check_production_mutation_protocol import classify_new_work_item_gate, run
+from scripts.check_production_mutation_protocol import classify_merged_main_failure, classify_new_work_item_gate, run
 
 ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs/生产变更与并发写入协议_V1.0.md"
@@ -51,3 +51,45 @@ def test_execution_control_plane_is_executor_agnostic() -> None:
     assert "不强制转Codex" in doc
     assert "BRIEF／PACKET分别由任务复杂度决定，不由执行器决定" in doc
     assert "不授予自动合并权限" in doc
+
+
+def test_merged_main_failure_attribution_closure_is_fail_safe_and_non_bypassing() -> None:
+    introduced = classify_merged_main_failure(
+        global_status="FAIL",
+        change_specific_status="PASS",
+        attribution="INTRODUCED_BY_CURRENT_CHANGE",
+    )
+    assert introduced["global_failure_preserved"] is True
+    assert introduced["issue_closure"] == "DO_NOT_CLOSE"
+
+    preexisting = classify_merged_main_failure(
+        global_status="FAIL",
+        change_specific_status="PASS",
+        attribution="PREEXISTING_UNRELATED",
+    )
+    assert preexisting["global_failure_preserved"] is True
+    assert preexisting["issue_closure"] == "CLOSE"
+
+    new_discovery = classify_merged_main_failure(
+        global_status="DEGRADED",
+        change_specific_status="READY",
+        attribution="NEW_UNRELATED_DISCOVERY",
+    )
+    assert new_discovery["issue_closure"] == "CLOSE"
+
+    inconclusive = classify_merged_main_failure(
+        global_status="PASS",
+        change_specific_status="PASS",
+        attribution="ATTRIBUTION_INCONCLUSIVE",
+    )
+    assert inconclusive["issue_closure"] == "DO_NOT_CLOSE"
+
+
+def test_failure_attribution_contract_does_not_add_admission_or_integration_state() -> None:
+    result = run(ROOT)
+    assert result["status"] == "PASS", result["errors"]
+    assert result["change_admission_outcomes"] == [
+        "EXECUTE_NOW",
+        "OBSERVE",
+        "DO_NOT_CHANGE",
+    ]
