@@ -29,9 +29,11 @@ class DashboardAccountProjectionTests(unittest.TestCase):
    a=formal_sync.build_dashboard_block(self.account,self.equity,"",self.root); b=process_sync.build_dashboard_block(self.account,None,{"interaction_scenario":"ACCOUNT_CONFIRMATION"})
   for rendered in (a,b):
    self.assertIn("351.000",rendered); self.assertIn("-4,278.07元",rendered); self.assertIn("0.644",rendered); self.assertIn("-7,913.30元",rendered); self.assertIn("9.164",rendered); self.assertIn("22.95元",rendered); self.assertNotIn("持仓ETF：无",rendered); self.assertNotIn("账户个股：无",rendered)
+   self.assertIn("观察ETF：", rendered)
  def test_legacy_schema_fallback(self):
   legacy=json.loads(json.dumps(self.account))
   for p in legacy["positions"]: p["asset_type"]="ETF" if "ETF" in p["name"] else "STOCK"; p["last_price"]=p.pop("current_price"); p["holding_pnl"]=p.pop("pnl"); p["holding_pnl_pct"]=p.pop("pnl_pct")
   with patch.object(formal_sync,"ROOT",self.root): rendered=formal_sync.build_dashboard_block(legacy,self.equity,"",self.root)
   self.assertIn("351.000",rendered); self.assertIn("-4,278.07元",rendered)
 if __name__=="__main__": unittest.main()
+

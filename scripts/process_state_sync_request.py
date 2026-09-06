@@ -303,7 +303,10 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
     lines = ["## 云端实时状态（自动同步）", "", f"> 更新时间：{account.get('updated_at','')}  ", f"> 来源：{account.get('source','')}  ", f"> 场景：{scenario}  ", "> 本区块只同步已确认账户事实与ChatGPT已形成的正式决策；自动程序不得自行推导交易权限或下单。", "", "|项目|最新事实|", "|-|-|", f"|总资产|{money(account.get('total_asset'))}|", f"|股票市值|{money(account.get('stock_market_value'))}|", f"|可用资金|{money(account.get('cash'))}|", f"|账户持仓盈亏|{money(account.get('holding_pnl'))}|", f"|当日盈亏|{money(account.get('daily_pnl'))}（{float(account.get('daily_pnl_pct') or 0):+.2f}%）|", f"|账户总风险暴露率|约{exposure:.2f}%|", f"|ETF持仓浮动盈亏|{money(etf_pnl)}|", *(([f"|ETF策略Known-net权益|{money(formal_risk_equity)}|"] if formal_risk_equity is not None else [])), f"|ETF策略风险率|约{risk_rate:.2f}%（Known-net；最新正式复盘风险事实优先，旧重建仅在无正式事实时回退）|", "", "### 当前持仓事实", "", "|标的|数量|成本|现价|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|"]
     for p in positions:
         lines.append(f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|{float(p.get('cost') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|{money(p.get('market_value'))}|{money(position_metric(p, 'pnl', 'holding_pnl'))}（{position_metric(p, 'pnl_pct', 'holding_pnl_pct'):+.2f}%）|")
-    lines += ["", f"持仓ETF：{'、'.join(display_name(p) for p in etfs) or '无'}。", f"账户个股：{'、'.join(display_name(p) for p in stocks) or '无'}。"]
+    universe = load_json(ROOT / "config/market/etf_monitor_universe.json")
+    names = {str(item.get("code")): str(item.get("name") or item.get("code")) for item in (universe.get("objects") or []) if item.get("code")}
+    observed = [f"{name}（{code}）" for code, name in names.items() if code not in membership["etf"]]
+    lines += ["", f"持仓ETF：{'、'.join(display_name(p) for p in etfs) or '无'}。", f"账户个股：{'、'.join(display_name(p) for p in stocks) or '无'}。", f"观察ETF：{'、'.join(observed) or '无'}。"]
     if decision:
         title = "最近一次正式收盘复盘" if scenario == "POST_CLOSE_REVIEW" else "最近一次正式盘中决策"
         lines += ["", f"### {title}", "", f"- 风险许可：{decision.get('risk_permission','未提供')}", f"- 生命周期：{decision.get('lifecycle','未提供')}", f"- 唯一主候选：{decision.get('main_candidate','无新的主候选。')}", f"- 金额与动作：{decision.get('amount_action','未提供')}", f"- 最大风险或0元主因：{decision.get('decisive_reason','未提供')}", f"- 决策数据时点：{decision.get('data_as_of_beijing','未提供')}"]
@@ -1316,3 +1319,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

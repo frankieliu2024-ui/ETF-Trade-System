@@ -199,9 +199,13 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
             f"{money(p.get('market_value'))}|{money(position_metric(p, 'pnl', 'holding_pnl'))}"
             f"（{position_metric(p, 'pnl_pct', 'holding_pnl_pct'):+.2f}%）|"
         )
+    etf_codes = {str(item.get("code")): str(item.get("name") or item.get("code")) for item in (load_json(root / "config/market/etf_monitor_universe.json").get("objects") or []) if item.get("code")}
+    held_codes = membership["etf"]
+    observed = [f"{name}（{code}）" for code, name in etf_codes.items() if code not in held_codes]
     lines += [
         "", f"持仓ETF：{'、'.join(display_name(p) for p in etfs) or '无'}。",
         f"账户个股：{'、'.join(display_name(p) for p in stocks) or '无'}。",
+        f"观察ETF：{'、'.join(observed) or '无'}。",
     ]
     decision = preserve_decision_block(existing)
     if decision:
@@ -348,3 +352,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
