@@ -4,7 +4,9 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "research/backtests"))
+from check_system_consistency_core import canonical_etf_codes, expected_a_share_snapshot_count  # noqa: E402
 import analyze_etf_t_swing as mod  # noqa: E402
 import analyze_etf_intraday_sina as intraday  # noqa: E402
 
@@ -37,8 +39,15 @@ class EtfTSwingContractTest(unittest.TestCase):
 
     def test_external_candidate_is_not_production_universe(self):
         universe = json.loads((ROOT / "config/market/etf_monitor_universe.json").read_text(encoding="utf-8"))
-        self.assertEqual(len(universe["objects"]), 11)
-        self.assertNotIn("159687", {str(x["code"]) for x in universe["objects"]})
+        codes = canonical_etf_codes(universe["objects"])
+        self.assertEqual(len(codes), len(universe["objects"]))
+        self.assertGreater(len(codes), 0)
+        self.assertNotIn("159687", codes)
+
+    def test_snapshot_cardinality_derives_from_canonical_universe(self):
+        for size in (10, 14, 15):
+            objects = [{"code": f"{i:06d}"} for i in range(size)]
+            self.assertEqual(expected_a_share_snapshot_count(objects), size + 3)
 
     def test_intraday_is_not_claimed(self):
         self.assertEqual(mod.features(self.rows())["intraday_coverage"], "NOT_AVAILABLE")
