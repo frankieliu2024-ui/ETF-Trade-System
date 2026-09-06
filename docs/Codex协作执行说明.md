@@ -1,20 +1,20 @@
 # Codex协作执行说明
 
-本文只定义 ChatGPT、Codex 与 GitHub 之间的可恢复任务交接方式，不定义交易规则、数据规则、通知规则或生产变更准入。生产变更仍以《生产变更与并发写入协议 V1.8》为唯一规范来源。
+本文只定义 ChatGPT、执行器与 GitHub 之间的可恢复任务交接方式，不定义交易规则、数据规则、通知规则或生产变更准入。`CODEX_EXECUTION_BRIEF`／`CODEX_EXECUTION_PACKET`是可由不同执行器消费的执行控制面，不因名称含有“Codex”而限定执行器；生产变更仍以《生产变更与并发写入协议 V1.8》为唯一规范来源。
 
 ## 1. 任务入口
 
-当一项事项适合交给 Codex 时，ChatGPT 负责把可恢复、可独立执行的任务指令写入对应 GitHub Issue。用户默认不需要重复搬运长 Prompt。
+当一项事项需要可恢复、可独立执行的任务交接时，ChatGPT 负责把控制面写入对应 GitHub Issue，并按任务复杂度、当前工具能力、工程风险和用户操作成本选择执行器。用户默认不需要重复搬运长 Prompt。
 
 ### 1.1 简单、确定性任务
 
-对于根因、范围、canonical owner 和验证路径已经明确，且不依赖多轮纠偏或跨 Issue 证据的简单任务，使用 `CODEX_EXECUTION_BRIEF` 即可。用户可直接启动：
+对于根因、范围、canonical owner 和验证路径已经明确，且不依赖多轮纠偏或跨 Issue 证据的简单任务，使用 `CODEX_EXECUTION_BRIEF` 即可；BRIEF只描述可恢复执行控制面，不规定必须由哪一种执行器运行。用户可按第1.3节选择执行器后直接启动：
 
 `执行 frankieliu2024-ui/ETF-Trade-System #<issue> 中最新 CODEX_EXECUTION_BRIEF，完整授权执行。`
 
 ### 1.2 复杂任务与多轮纠偏任务
 
-对于专项研究、复杂根因分析、多脚本／workflow 联动、多轮纠偏、跨 Issue 复用证据、容易受旧评论干扰，或结论可能影响生产架构／正式决策消费的任务，必须使用单一 `CODEX_EXECUTION_PACKET` 作为本轮唯一执行控制面。
+对于专项研究、复杂根因分析、多脚本／workflow 联动、多轮纠偏、跨 Issue 复用证据、容易受旧评论干扰，或结论可能影响生产架构／正式决策消费的任务，必须使用单一 `CODEX_EXECUTION_PACKET` 作为本轮唯一执行控制面；PACKET的命名不意味着只能由Codex执行。
 
 `CODEX_EXECUTION_PACKET` 必须写入一个明确的 Issue comment，并至少包含：
 
@@ -35,12 +35,12 @@
 
 ### 1.3 ChatGPT 对话中的用户启动指令
 
-只要 ChatGPT 判断“该任务更适合交给 Codex 执行”，除了把完整 `CODEX_EXECUTION_BRIEF` 或 `CODEX_EXECUTION_PACKET` 写入 GitHub Issue 外，**还必须在同一条 ChatGPT 对话回复中明确给用户一段可直接复制发送给 Codex 的短启动指令**。不得只告诉用户“已写入 Issue”“请执行最新 Brief”而省略这段用户侧可复制文本。
+只要任务需要用户启动或转交执行器，除了把完整 `CODEX_EXECUTION_BRIEF` 或 `CODEX_EXECUTION_PACKET` 写入 GitHub Issue 外，**还必须在同一条 ChatGPT 对话回复中明确给用户一段可直接复制的启动指令，并标明建议执行器**。不得只告诉用户“已写入 Issue”或“下一步交给某执行器”而省略这段用户侧可复制文本。
 
-用户侧启动指令应尽量短，只负责准确指向 GitHub 中的唯一执行控制面，不重复搬运完整长 Prompt：
+用户侧启动指令应尽量短，只负责准确指向 GitHub 中的唯一执行控制面并标明执行器，不重复搬运完整长 Prompt：
 
-- 简单任务：`执行 frankieliu2024-ui/ETF-Trade-System #<issue> 中最新 CODEX_EXECUTION_BRIEF，完整授权执行。`
-- 复杂任务：`执行 frankieliu2024-ui/ETF-Trade-System #<issue> comment <comment_id> 中的 CODEX_EXECUTION_PACKET，完整授权执行。该评论是本轮唯一执行控制面。`
+- 简单任务（建议执行器：`CHATGPT_CHAT` 或 `CHATGPT_WORK`，复杂工程任务可用 `CODEX`）：`建议由<执行器>执行 frankieliu2024-ui/ETF-Trade-System #<issue> 中最新 CODEX_EXECUTION_BRIEF，完整授权执行。`
+- 复杂任务（建议执行器：`CODEX`；若 ChatGPT Work 已具备完整能力也可直接执行）：`建议由<执行器>执行 frankieliu2024-ui/ETF-Trade-System #<issue> comment <comment_id> 中的 CODEX_EXECUTION_PACKET，完整授权执行。该评论是本轮唯一执行控制面。`
 
 如果本轮还存在必须强调的执行边界，例如“只读研究”“不得合并”“等待前序集成”“必须复用某个历史 comment”，ChatGPT 可在上述短启动指令后追加一小句必要限定；但不得把 Issue 内完整 packet 再次复制到聊天中。用户无需自行从 Issue 中总结或改写 Codex 指令。
 
@@ -50,11 +50,13 @@ Codex 每次执行必须从执行时 latest `main` 和 `ETF_SYSTEM_INDEX.md` 起
 
 随后按 INDEX 路由读取所属规范、当前事实、production mutation protocol、canonical owner 及本轮最小充分依赖，再判断准入、根因、范围和实现路径。
 
-如果 `CODEX_EXECUTION_PACKET` 明确引用其他 Issue、PR、comment、commit、历史恢复能力或既有成功验证，Codex 必须实际读取并复用这些证据；不能只读取当前 Issue 的局部目录或当前工作树后自行推断“能力不存在”。
+创建新的BRIEF/PACKET Issue前，必须先按当前生产治理SSOT完成NEW_WORK_ITEM_GATE，并在ChatGPT对话中给出立项判断和可直接复制的Codex短启动文本。
+
+如果 `CODEX_EXECUTION_PACKET` 明确引用其他 Issue、PR、comment、commit、历史恢复能力或既有成功验证，选定执行器必须实际读取并复用这些证据；不能只读取当前 Issue 的局部目录或当前工作树后自行推断“能力不存在”。
 
 ## 3. 执行与回读
 
-Codex 按现行生产治理执行只读研究、隔离实现、测试、PR、CI、latest-main replay 及必要的 merged-main 验收；哪些步骤允许执行、何时允许集成，仍由《生产变更与并发写入协议 V1.8》决定。
+选定执行器按现行生产治理执行只读研究、隔离实现、测试、PR、CI、latest-main replay 及必要的 merged-main 验收；哪些步骤允许执行、何时允许集成，仍由《生产变更与并发写入协议 V1.8》决定。
 
 Codex 的结果必须回写同一 Issue 或关联 PR，至少包括：
 
@@ -78,11 +80,13 @@ ChatGPT 与【ETF变更复核】后续直接从 GitHub 读取 Issue、PR、CI �
 
 默认使用以下分工：
 
-- 简单、确定性、单一根因任务：`CODEX_EXECUTION_BRIEF`；
-- 复杂研究、多轮纠偏、跨 Issue 依赖、容易被历史评论污染的任务：明确 comment ID 的 `CODEX_EXECUTION_PACKET`；
+- `CHATGPT_CHAT`：适合范围清楚、低复杂度、可安全完整执行的任务；
+- `CHATGPT_WORK`：适合可在当前Work能力内完整完成读取、实现、测试、PR、CI／验收的任务，尤其可降低用户切换设备或入口的成本；
+- `CODEX`：优先用于大范围代码搜索、复杂重构、多脚本／workflow联动、深度terminal／本地repo依赖、完整复杂回归等明显更适配的工程任务；
+- BRIEF／PACKET分别由任务复杂度决定，不由执行器决定；复杂任务仍使用明确 comment ID 的 `CODEX_EXECUTION_PACKET`；
 - 如果简单任务在执行中出现两次以上方向性误解、旧版本起跑、跨证据遗漏或同一根因反复返工，应升级为 `CODEX_EXECUTION_PACKET`，不继续追加模糊“最新 Brief”。
 
-ChatGPT 负责判断任务复杂度并选择交接模式；用户不需要自行维护两套协作规则，也不需要自行从 Issue 中提炼 Codex 启动文本。
+ChatGPT 负责判断任务复杂度并选择执行器与交接模式；ChatGPT Chat或Work只要能够安全、完整完成任务即可直接执行，不强制转Codex。用户不需要自行维护两套协作规则，也不需要自行从 Issue 中提炼启动文本。便利性不得覆盖工程质量或能力边界。
 
 ## 5. 边界
 

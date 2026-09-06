@@ -72,6 +72,28 @@ def _bounded_current_repair_is_narrow(root: Path, script_path: str) -> bool:
     return bool(writes) and set(writes) == {"rules_version"}
 
 
+
+
+def classify_new_work_item_gate(facts: dict) -> dict:
+    """Evaluate the pre-issue gate without creating or mutating any GitHub item."""
+    emergency = bool(facts.get("emergency_production_failure"))
+    duplicate = bool(facts.get("duplicate_or_reusable_item"))
+    action_impact = str(facts.get("ACTION_IMPACT") or "INCONCLUSIVE").upper()
+    mechanism = str(facts.get("EXISTING_MECHANISM_INSUFFICIENT") or "INCONCLUSIVE").upper()
+    evidence = str(facts.get("EVIDENCE_QUALITY") or "INCONCLUSIVE").upper()
+    if emergency and not duplicate:
+        return {"NEW_WORK_ITEM_GATE": "PASS", "NEW_ISSUE": "YES", "PRIMARY_REASON": "emergency_fast_path"}
+    if duplicate:
+        return {"NEW_WORK_ITEM_GATE": "FAIL", "NEW_ISSUE": "NO", "PRIMARY_REASON": "reuse_existing_item_or_mechanism"}
+    passed = action_impact == "YES" and mechanism == "YES" and evidence == "SUFFICIENT"
+    return {
+        "NEW_WORK_ITEM_GATE": "PASS" if passed else "FAIL",
+        "NEW_ISSUE": "YES" if passed else "NO",
+        "PRIMARY_REASON": "material_impact_with_insufficient_existing_mechanism_and_sufficient_evidence"
+        if passed else "gate_inputs_do_not_support_independent_issue",
+    }
+
+
 def run(root: Path = ROOT) -> dict:
     config_path = root / CONFIG.relative_to(ROOT)
     normative_doc_path = root / NORMATIVE_DOC.relative_to(ROOT)
@@ -109,6 +131,32 @@ def run(root: Path = ROOT) -> dict:
         "serialized_integration_and_residual_risk_observation",
     }
     expected_outcomes = ["EXECUTE_NOW", "OBSERVE", "DO_NOT_CHANGE"]
+    gate = admission.get("new_work_item_gate") or {}
+    gate_fields = gate.get("fields") or {}
+    gate_outcomes = gate.get("outcomes") or {}
+    emergency = gate.get("emergency_fast_path") or {}
+    prohibitions = [str(x) for x in gate.get("prohibitions") or []]
+    check("new_work_item_gate:fields",
+        set(gate_fields) == {"ACTION_IMPACT", "EXISTING_MECHANISM_INSUFFICIENT", "EVIDENCE_QUALITY"}
+        and gate_fields["ACTION_IMPACT"] == ["YES", "NO", "INCONCLUSIVE"]
+        and gate_fields["EXISTING_MECHANISM_INSUFFICIENT"] == ["YES", "NO", "INCONCLUSIVE"]
+        and gate_fields["EVIDENCE_QUALITY"] == ["SUFFICIENT", "INSUFFICIENT", "INCONCLUSIVE"],
+        "gate exposes the three auditable pre-issue fields")
+    check("new_work_item_gate:outcomes_orthogonal",
+        gate_outcomes.get("NEW_WORK_ITEM_GATE") == ["PASS", "FAIL"]
+        and gate_outcomes.get("NEW_ISSUE") == ["YES", "NO"]
+        and outcomes == expected_outcomes
+        and "admission" in str(gate_outcomes.get("admission_orthogonality") or "").lower(),
+        "gate outcomes do not become production admission outcomes")
+    check("new_work_item_gate:emergency_fast_path",
+        emergency.get("enabled") is True and len(emergency.get("triggers") or []) >= 3,
+        "formal-fact and canonical-runtime emergencies retain a fast path")
+    check("new_work_item_gate:no_hidden_score_or_fixed_threshold",
+        "hidden_composite_score" in prohibitions and "fixed_weights" in prohibitions and "fixed_N_threshold" in prohibitions,
+        "gate prohibits hidden scoring and fixed-count thresholds")
+    check("new_work_item_gate:duplicate_reuse",
+        "reuse" in str(gate.get("duplicate_reuse_contract") or "").lower(),
+        "duplicate/reuse check is explicit before independent Issue creation")
     expected_legacy = {f"CA{i:02d}" for i in range(1, 12)}
 
     check(
