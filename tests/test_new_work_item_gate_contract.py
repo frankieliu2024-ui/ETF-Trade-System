@@ -93,3 +93,16 @@ def test_failure_attribution_contract_does_not_add_admission_or_integration_stat
         "OBSERVE",
         "DO_NOT_CHANGE",
     ]
+
+
+def test_issue_closure_does_not_use_unconditional_main_green_requirement() -> None:
+    protocol = DOC.read_text(encoding="utf-8")
+    mirror = CFG.read_text(encoding="utf-8")
+    handoff = (ROOT / "docs/Codex协作执行说明.md").read_text(encoding="utf-8")
+    obsolete = "合并后main未恢复PASS/READY前，视为同一变更尚未闭环。"
+    assert obsolete not in protocol
+    assert obsolete not in mirror
+    assert obsolete not in handoff
+    assert "是否阻塞当前Issue闭环按归因合同判定" in protocol
+    assert "PREEXISTING_UNRELATED" in protocol
+    assert "ATTRIBUTION_INCONCLUSIVE" in protocol
