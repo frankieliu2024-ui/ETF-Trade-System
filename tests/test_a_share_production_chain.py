@@ -23,7 +23,18 @@ class AShareProductionChainTests(unittest.TestCase):
             for item in json.loads((ROOT / "config/market/etf_monitor_universe.json").read_text(encoding="utf-8"))["objects"]
         }
         self.assertEqual(codes, configured)
-        self.assertEqual(len(codes), 11)
+        self.assertEqual(len(codes), 13)
+        self.assertTrue({"515220", "513350"}.issubset(codes))
+
+    def test_observation_additions_use_verified_direct_provider_contract(self):
+        universe = json.loads((ROOT / "config/market/etf_monitor_universe.json").read_text(encoding="utf-8"))
+        by_code = {str(item["code"]): item for item in universe["objects"]}
+        self.assertEqual(by_code["515220"]["thscode"], "515220.SH")
+        self.assertEqual(by_code["513350"]["thscode"], "513350.SH")
+        priority = json.loads((ROOT / "config/market/provider_priority.json").read_text(encoding="utf-8"))
+        for thscode in ("515220.SH", "513350.SH"):
+            self.assertEqual(priority["objects"][thscode], ["tencent_qq", "hithink_finance", "eastmoney_push2"])
+            self.assertTrue(priority["object_fallback_policy"][thscode]["direct_only"])
 
     def test_dynamic_account_stocks_use_supported_market_snapshot(self):
         stocks = [
