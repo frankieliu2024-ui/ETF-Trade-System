@@ -182,6 +182,11 @@ jobs:
       - name: Dispatch replacement market snapshot
         if: ${{ steps.assess.outputs.action == 'REFRESH_SNAPSHOT' }}
         run: |
+          active=$(gh run list --workflow market-snapshot.yml --limit 5 --json status --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | length')
+          if [ "$active" != "0" ]; then
+            echo "Canonical market snapshot already queued/in progress; no duplicate dispatch."
+            exit 0
+          fi
           gh workflow run market-snapshot.yml --ref main -f node=scheduled -f probe_only=false
           python scripts/runtime_self_heal.py --record-trigger
 
