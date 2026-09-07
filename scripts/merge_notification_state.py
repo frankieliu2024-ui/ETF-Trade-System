@@ -20,11 +20,20 @@ def _load(path: Path) -> dict:
 
 
 def _identity_tokens(item: dict) -> set[str]:
-    return {
+    tokens = {
         str(item.get(name) or "")
         for name in ("notification_id", "source_event_id", "key")
         if str(item.get(name) or "")
     }
+    # Producers may use different source-event ids for the same canonical
+    # quote fact.  Only an explicit source fact identity is safe here.  The
+    # event_family_id describes a continuing fact family and must not collapse
+    # a later material upgrade that is entitled to a second notification.
+    context = item.get("confirmation_context") or {}
+    fact_id = str(context.get("fact_identity") or context.get("source_fact_id") or "")
+    if fact_id:
+        tokens.add("fact:" + fact_id)
+    return tokens
 
 
 def _timestamp(item: dict) -> datetime | None:

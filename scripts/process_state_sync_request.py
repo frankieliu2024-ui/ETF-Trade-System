@@ -45,6 +45,12 @@ DASHBOARD = ROOT / "ETF当前状态_DASHBOARD.md"
 ARCHIVE = ROOT / "ETF市场行情档案_2026.md"
 EXPERIENCE = ROOT / "ETF交易复盘与经验库_2026.md"
 ACCOUNT = ROOT / "data/state/account_fact.json"
+FORMAL_OPPORTUNITY_STATUSES = {"无机会", "观察机会", "Trial机会", "Confirm机会"}
+FORMAL_HOLDING_LIFECYCLES = {"持有管理", "降低风险", "退出"}
+FORMAL_LIFECYCLE_COMPATIBILITY_TERMS = {
+    "观察", "Trial", "Confirm", "持有", "持有管理", "持仓管理", "降低风险", "退出",
+    "ACTIVE_TRIAL", "RESOLVED",
+}
 START = "<!-- AUTO_STATE_SYNC_START -->"
 END = "<!-- AUTO_STATE_SYNC_END -->"
 TRADE_START = "<!-- AUTO_TRADE_EVENTS_START -->"
@@ -398,6 +404,9 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     decision = request.get("formal_decision")
     if not isinstance(decision, dict) or not decision:
         return False, ""
+    contract_error = validate_formal_decision_contract(decision)
+    if contract_error:
+        raise ValueError(f"invalid formal decision contract: {contract_error}")
     current_path = ROOT / "data/state/CURRENT.json"
     current = load_json(current_path) if current_path.exists() else {}
     market_date = str(request.get("market_date") or current.get("market_date") or "")
@@ -448,6 +457,70 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
             return True, decision_id
     atomic_json_write(event_path, event)
     return True, decision_id
+
+
+def validate_formal_decision_contract(decision: dict) -> str:
+    """Validate stable user-facing decision enums before persistence.
+
+    Formal facts are validated at their canonical ingress, rather than repaired
+    later by notification rendering.  This intentionally validates only the
+    existing contract fields and does not infer a transaction or alter MASTER.
+    """
+    opportunity_status = str(decision.get("opportunity_status") or "").strip()
+    if opportunity_status not in FORMAL_OPPORTUNITY_STATUSES:
+        return "opportunity_status must be one of: " + ", ".join(sorted(FORMAL_OPPORTUNITY_STATUSES))
+    risk = decision.get("risk_permission")
+    if risk is not None and str(risk).strip() not in {"禁止新增", "允许Trial", "允许Confirm"}:
+        return "risk_permission is not a registered formal value"
+    lifecycle_error = _validate_formal_lifecycle(decision.get("lifecycle"))
+    if lifecycle_error:
+        return lifecycle_error
+    return ""
+
+
+def _validate_formal_lifecycle(value: object, object_name: str = "lifecycle") -> str:
+    """Validate lifecycle actions without narrowing the existing multi-object schema.
+
+    Current formal decisions use both a single legacy string and a mapping from
+    security name to per-object lifecycle text.  The canonical contract is the
+    action expressed for each object; explanatory text may accompany that
+    action and is retained for compatibility.
+    """
+    if value is None or value == "":
+        return ""
+    if isinstance(value, dict):
+        for security, action in value.items():
+            if not str(security).strip():
+                return f"{object_name} contains an empty object key"
+            error = _validate_formal_lifecycle(action, f"{object_name}[{security}]")
+            if error:
+                return error
+        return ""
+    if not isinstance(value, str):
+        return f"{object_name} must be text or an object-to-lifecycle mapping"
+    text = value.strip()
+    if not text:
+        return ""
+    clauses = [part.strip() for part in text.replace(";", "；").split("；") if part.strip()]
+    current_seen = False
+    for clause in clauses:
+        # Historical Trial/Confirm/exit wording is explanatory only.  It may
+        # follow a current action, but it cannot be the current action itself.
+        historical_exit = "已退出" in clause
+        if "持有并" in clause or "持有且" in clause:
+            return f"{object_name} clause must state the current holding action explicitly: {clause}"
+        current_actions = ("持有管理", "持仓管理", "降低风险", "退出")
+        has_current_action = any(
+            action in clause and not (action == "退出" and historical_exit)
+            for action in current_actions
+        )
+        legacy_hold = "持有" in clause and not has_current_action and "持有并" not in clause and "持有且" not in clause
+        if not has_current_action and current_seen and (historical_exit or any(term in clause for term in ("Trial", "Confirm", "观察", "已关闭", "继续"))):
+            continue
+        if not has_current_action and not legacy_hold:
+            return f"{object_name} clause has no registered lifecycle action: {clause}"
+        current_seen = True
+    return ""
 
 
 def record_unrecoverable_review_prerequisite(account: dict, request: dict, trade_event: dict) -> tuple[bool, bool]:
