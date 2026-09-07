@@ -395,6 +395,7 @@ def build_state_persistence_projection(snapshot: dict, names: dict[str, str]) ->
     delta = load_json(delta_path) if delta_path.exists() else {}
     context_as_of = parse_time(context.get("as_of_beijing"))
     delta_as_of = parse_time(delta.get("as_of_beijing"))
+    context_quality_ready = context.get("status") == "READY" and bool(context.get("items"))
     context_time_valid = bool(cutoff and context_as_of and context_as_of <= cutoff)
     delta_time_valid = bool(cutoff and delta_as_of and delta_as_of <= cutoff)
     by_code = {
@@ -413,7 +414,7 @@ def build_state_persistence_projection(snapshot: dict, names: dict[str, str]) ->
         item_as_of = parse_time(item.get("as_of_beijing")) if item else None
         if not item:
             status = "MISSING"
-        elif not context_time_valid or item_as_of is None or item_as_of > cutoff:
+        elif not context_quality_ready or not context_time_valid or item_as_of is None or item_as_of > cutoff:
             status = "STALE_OR_UNVERIFIABLE"
         else:
             status = "READY"
@@ -441,7 +442,8 @@ def build_state_persistence_projection(snapshot: dict, names: dict[str, str]) ->
                 "completed_bar_date": participation.get("completed_bar_date"),
                 "participation_ratio_vs_prior_20d": (
                     participation.get("participation_ratio_vs_prior_20d")
-                    or turnover.get("time_normalized_amount_pace_ratio")
+                    if participation.get("participation_ratio_vs_prior_20d") is not None
+                    else turnover.get("time_normalized_amount_pace_ratio")
                 ),
                 "acceptance_behavior": (
                     participation.get("acceptance_behavior")
