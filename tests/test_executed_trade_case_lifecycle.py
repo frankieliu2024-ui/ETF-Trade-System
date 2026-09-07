@@ -177,8 +177,22 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
                 "execution_status": "EXECUTED",
             }), encoding="utf-8")
 
-            with patch.object(reconciliation, "ROOT", root), patch.object(
-                reconciliation, "now_text", return_value="2026-09-07T22:01:00+08:00"
+            with patch.object(
+                reconciliation,
+                "ROOT",
+                root,
+            ), patch.object(
+                reconciliation,
+                "STATE",
+                state,
+            ), patch.object(
+                reconciliation,
+                "OUT",
+                state / "execution_reconciliation.json",
+            ), patch.object(
+                reconciliation,
+                "now_text",
+                return_value="2026-09-07T22:01:00+08:00",
             ):
                 result = reconciliation.build()
             stored = json.loads((state / "execution_reconciliation.json").read_text(encoding="utf-8"))
