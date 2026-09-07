@@ -48,7 +48,7 @@ ACCOUNT = ROOT / "data/state/account_fact.json"
 FORMAL_OPPORTUNITY_STATUSES = {"无机会", "观察机会", "Trial机会", "Confirm机会"}
 FORMAL_HOLDING_LIFECYCLES = {"持有管理", "降低风险", "退出"}
 FORMAL_LIFECYCLE_COMPATIBILITY_TERMS = {
-    "观察", "Trial", "Confirm", "持有", "持有管理", "降低风险", "退出",
+    "观察", "Trial", "Confirm", "持有", "持有管理", "持仓管理", "降低风险", "退出",
     "ACTIVE_TRIAL", "RESOLVED",
 }
 START = "<!-- AUTO_STATE_SYNC_START -->"
@@ -502,9 +502,24 @@ def _validate_formal_lifecycle(value: object, object_name: str = "lifecycle") ->
     if not text:
         return ""
     clauses = [part.strip() for part in text.replace(";", "；").split("；") if part.strip()]
+    current_seen = False
     for clause in clauses:
-        if not any(term in clause for term in FORMAL_LIFECYCLE_COMPATIBILITY_TERMS):
+        # Historical Trial/Confirm/exit wording is explanatory only.  It may
+        # follow a current action, but it cannot be the current action itself.
+        historical_exit = "已退出" in clause
+        if "持有并" in clause or "持有且" in clause:
+            return f"{object_name} clause must state the current holding action explicitly: {clause}"
+        current_actions = ("持有管理", "持仓管理", "降低风险", "退出")
+        has_current_action = any(
+            action in clause and not (action == "退出" and historical_exit)
+            for action in current_actions
+        )
+        legacy_hold = "持有" in clause and not has_current_action and "持有并" not in clause and "持有且" not in clause
+        if not has_current_action and current_seen and (historical_exit or any(term in clause for term in ("Trial", "Confirm", "观察", "已关闭", "继续"))):
+            continue
+        if not has_current_action and not legacy_hold:
             return f"{object_name} clause has no registered lifecycle action: {clause}"
+        current_seen = True
     return ""
 
 

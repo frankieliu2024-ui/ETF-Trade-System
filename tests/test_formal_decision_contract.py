@@ -29,11 +29,19 @@ class FormalDecisionContractTests(unittest.TestCase):
             "opportunity_status": "无机会",
             "lifecycle": {
                 "半导体设备ETF（561980）": "持有管理",
-                "黄金ETF（518880）": "持有并继续Trial验证",
-                "通信ETF（515880）": "保持已退出，本节点不重新开启",
+                "黄金ETF（518880）": "持有管理；继续Trial验证",
+                "通信ETF（515880）": "退出；原Trial假设已关闭",
             },
         })
         self.assertEqual(error, "")
+
+    def test_legacy_historical_lifecycle_text_is_rejected_per_object(self):
+        for lifecycle in ("持有并继续Trial验证", "保持已退出，本节点不重新开启"):
+            error = validate_formal_decision_contract({
+                "opportunity_status": "无机会",
+                "lifecycle": {"通信ETF（515880）": lifecycle},
+            })
+            self.assertIn("lifecycle", error)
 
     def test_unregistered_lifecycle_text_is_rejected_per_object(self):
         error = validate_formal_decision_contract({
