@@ -11,9 +11,9 @@ from statistics import median
 
 from state_manager import atomic_json_write
 try:
-    from build_stock_context import active_account_asset_codes, normalize_code, position_metric
+    from build_stock_context import active_account_asset_codes, first, normalize_code, position_metric
 except ModuleNotFoundError:
-    from scripts.build_stock_context import active_account_asset_codes, normalize_code, position_metric
+    from scripts.build_stock_context import active_account_asset_codes, first, normalize_code, position_metric
 from sync_formal_files import sync_formal_files
 from formal_file_mutation_gateway import (
     append_managed_line,
@@ -475,6 +475,9 @@ def validate_formal_decision_contract(decision: dict) -> str:
     lifecycle_error = _validate_formal_lifecycle(decision.get("lifecycle"))
     if lifecycle_error:
         return lifecycle_error
+    lifecycle_error = validate_current_lifecycle_contract(decision.get("lifecycle"), _load_account_for_lifecycle_validation())
+    if lifecycle_error:
+        return lifecycle_error
     return ""
 
 
@@ -520,6 +523,57 @@ def _validate_formal_lifecycle(value: object, object_name: str = "lifecycle") ->
         if not has_current_action and not legacy_hold:
             return f"{object_name} clause has no registered lifecycle action: {clause}"
         current_seen = True
+    return ""
+
+
+def _load_account_for_lifecycle_validation() -> dict:
+    """Load the canonical account fact for current lifecycle validation."""
+    return load_json(ACCOUNT) if ACCOUNT.exists() else {}
+
+
+def _lifecycle_object_code(security: object) -> str:
+    match = re.search(r"(?<!\d)(\d{6})(?!\d)", str(security or ""))
+    return normalize_code(match.group(1)) if match else ""
+
+
+def _is_historical_lifecycle_explanation(text: str) -> bool:
+    return any(marker in text for marker in ("历史", "曾", "来源", "解释", "原", "previous", "historical"))
+
+
+def validate_current_lifecycle_contract(value: object, account: dict, object_name: str = "lifecycle") -> str:
+    """Validate current lifecycle semantics against the canonical account fact.
+
+    Formal decisions and post-close reviews share this ingress contract.  A
+    historical Trial/Confirm mention remains explanatory when explicitly
+    marked as such, but it cannot be the current lifecycle of a held asset.
+    """
+    if not isinstance(value, dict):
+        return ""
+    membership = active_account_asset_codes(ROOT, account or {})
+    held_codes = membership["etf"] | membership["stocks"]
+    position_names = {
+        normalize_code(first(position, "code", "symbol", "security_code", "instrument_code")): str(
+            first(position, "name", "security_name", "instrument_name") or ""
+        )
+        for position in (account or {}).get("positions") or []
+        if isinstance(position, dict)
+    }
+    opportunity_terms = ("观察", "Trial", "Confirm", "观察机会", "Trial机会", "Confirm机会")
+    holding_terms = ("持有管理", "持仓管理", "降低风险", "退出", "持有")
+    for security, action in value.items():
+        text = str(action or "").strip()
+        code = _lifecycle_object_code(security)
+        if not code:
+            security_text = str(security or "")
+            code = next((candidate for candidate, name in position_names.items() if name and name in security_text), "")
+        is_held = code in held_codes
+        historical = _is_historical_lifecycle_explanation(text) or (
+            "继续" in text and any(term in text for term in ("持有管理", "持仓管理", "降低风险", "退出"))
+        )
+        if is_held and any(term in text for term in opportunity_terms) and not historical:
+            return f"{object_name}[{security}] uses opportunity lifecycle for a held asset; current action must be holding management"
+        if not is_held and any(term in text for term in holding_terms) and not historical:
+            return f"{object_name}[{security}] uses holding lifecycle for an unheld asset; current action must be observation or opportunity"
     return ""
 
 
@@ -660,6 +714,9 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     review = request.get("formal_review")
     if request.get("interaction_scenario") != "POST_CLOSE_REVIEW" or not review:
         return False, False
+    lifecycle_error = validate_current_lifecycle_contract(review.get("lifecycle"), account)
+    if lifecycle_error:
+        raise ValueError(f"invalid formal review lifecycle contract: {lifecycle_error}")
     market_date = str(review.get("market_date") or request.get("market_date") or account.get("last_confirmed_market_date") or "")
     if not market_date:
         raise RuntimeError("POST_CLOSE_REVIEW requires market_date")
