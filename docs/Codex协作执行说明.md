@@ -58,6 +58,20 @@ Codex 每次执行必须从执行时 latest `main` 和 `ETF_SYSTEM_INDEX.md` 起
 
 选定执行器按现行生产治理执行只读研究、隔离实现、测试、PR、CI、latest-main replay 及必要的 merged-main 验收； merged-main 失败时，必须回读当前生产治理 SSOT 的 failure attribution 与 Issue closure contract，分别报告全局结果、change-specific acceptance、归因类别和当前 Issue 是否可闭环；哪些步骤允许执行、何时允许集成，仍由《生产变更与并发写入协议 V1.8》决定。
 
+### 3.1 确定性生产集成闭环（ChatGPT编排）
+
+当用户已经明确授权当前事项进入集成，且最终人工复核、latest-main、candidate acceptance、CI 与现行生产治理均允许合并时，如果 merged-main 剩余验收只依赖现有 GitHub Actions／确定性检查，而**不依赖未来真实市场、真实通知或其他必须等待的生产暴露**，ChatGPT 应把下列步骤作为同一次集成闭环连续完成：
+
+`最终人工复核 → 最后一次 latest main／PR head 确认 → 合并 → 读取该稳定 mutation SHA 的 main-side workflow → full consistency／maintenance／账户成交勾稽／E2E → failure attribution → 回写 Issue／PR → 满足关闭条件则关闭 → 一次性向用户报告最终结果`
+
+这里的“同一次闭环”只收紧 ChatGPT 的执行编排，不合并或删除治理阶段。candidate acceptance 仍不能替代 merged-main acceptance；ChatGPT 不得因为候选 CI 已绿而预先宣布生产通过。
+
+若 main-side workflow 已启动且预计可在当前执行中取得确定结果，ChatGPT 不应仅因其暂时为 `queued`／`in_progress` 就提前把“等待复核”重新交给用户；应优先继续读取该 run 至形成可判定结果，再完成归因和关闭判断。现有 workflow 在验收后产生的 state-only 持久化提交不要求递归等待新的同类验收；change-specific acceptance 绑定到实际稳定 mutation SHA，并按现行 failure attribution 判断后续动态状态。
+
+只有当关闭条件本身确实需要下一次真实市场节点、真实 Scheduled Actor、真实通知投递或其他未来生产事实时，才结束本次确定性闭环并明确进入 `OBSERVE`。此时必须写出具体、可证伪的释放条件和下一次有信息价值的真实暴露窗口，不得泛化为“合并后再等等”或“以后再复核”。
+
+本节不得用于新增第二 workflow、第二验收器、Task-to-Task通信、等待状态库或自动合并权限；优先复用当前 main 已有的 CI、production acceptance、Issue／PR 和正式运行事实。是否允许合并、何时允许关闭以及 failure attribution 仍完全服从当前生产治理 SSOT。
+
 Codex 的结果必须回写同一 Issue 或关联 PR，至少包括：
 
 - 实际读取的 latest-main SHA；
