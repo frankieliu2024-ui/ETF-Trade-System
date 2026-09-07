@@ -12,6 +12,8 @@
 
 `执行 frankieliu2024-ui/ETF-Trade-System #<issue> 中最新 CODEX_EXECUTION_BRIEF，完整授权执行。`
 
+“完整授权执行”默认表示：在本事项已准入的 scope 与 canonical owner 不变、候选测试/CI/latest-main 检查通过、无未解决 review blocker、无本次变更新增或无法归因的 hard FAIL，且最新 main 推进已被吸收或按治理规则分类为非阻塞时，执行器可使用当前 PR head 原子合并，并继续完成 merged-main deterministic acceptance、failure attribution、正式结果持久化和可关闭则关闭。该授权不允许 force push，也不把 candidate green 等同于生产闭环。用户明确写出“不得合并”“不自动合并”或等价限制时，以更窄限制为准；若出现 scope 扩大、新独立根因、hard/unattributed FAIL，或关闭依赖未来真实生产暴露，必须停止并回到用户。
+
 ### 1.2 复杂任务与多轮纠偏任务
 
 对于专项研究、复杂根因分析、多脚本／workflow 联动、多轮纠偏、跨 Issue 复用证据、容易受旧评论干扰，或结论可能影响生产架构／正式决策消费的任务，必须使用单一 `CODEX_EXECUTION_PACKET` 作为本轮唯一执行控制面；PACKET的命名不意味着只能由Codex执行。
@@ -78,7 +80,7 @@ Codex 每次执行必须从执行时 latest `main` 和 `ETF_SYSTEM_INDEX.md` 起
 
 ### 3.1 确定性生产集成闭环（ChatGPT编排）
 
-当用户已经明确授权当前事项进入集成，且最终人工复核、latest-main、candidate acceptance、CI 与现行生产治理均允许合并时，如果 merged-main 剩余验收只依赖现有 GitHub Actions／确定性检查，而**不依赖未来真实市场、真实通知或其他必须等待的生产暴露**，ChatGPT 应把下列步骤作为同一次集成闭环连续完成：
+当用户已经明确授权当前事项进入集成（包括满足上述条件的“完整授权执行”），且最终人工复核、latest-main、candidate acceptance、CI 与现行生产治理均允许合并时，如果 merged-main 剩余验收只依赖现有 GitHub Actions／确定性检查，而**不依赖未来真实市场、真实通知或其他必须等待的生产暴露**，ChatGPT 应把下列步骤作为同一次集成闭环连续完成：
 
 `最终人工复核 → 最后一次 latest main／PR head 确认 → 合并 → 读取该稳定 mutation SHA 的 main-side workflow → full consistency／maintenance／账户成交勾稽／E2E → failure attribution → 回写 Issue／PR → 满足关闭条件则关闭 → 一次性向用户报告最终结果`
 
@@ -124,6 +126,6 @@ ChatGPT 负责判断任务复杂度并选择执行器与交接模式；ChatGPT C
 
 Issue 中的完整 brief／packet 是执行输入，Issue／PR 中的结构化结果是执行输出；二者都必须可由 GitHub 恢复。聊天中主动转发的内容可以作为补充，但不能替代 GitHub 正式记录。
 
-生产合并、Issue 关闭和组合验收仍严格服从 V1.8；本说明不授予自动合并权限，不降低任何测试、writer ownership、latest-main、PIT、system consistency 或 E2E 要求。
+生产合并、Issue 关闭和组合验收仍严格服从 V1.8；本说明不授予自动合并权限（无条件合并、绕过 review 或跳过验收的权限），但“完整授权执行”在本说明第3.1节确定性门全部满足时构成条件性合并授权；不降低任何测试、writer ownership、latest-main、PIT、system consistency 或 E2E 要求。
 
 不得因此新增 Task-to-Task 通信、共享聊天状态、平行 workflow、state、writer、provider、decision engine 或第二治理规则源。`CODEX_EXECUTION_PACKET` 只提高执行确定性，不改变交易权限、研究转化标准或生产准入语义。
