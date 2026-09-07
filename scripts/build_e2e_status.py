@@ -7,6 +7,10 @@ try:
     from lifecycle_state import build_lifecycle_projection
 except ModuleNotFoundError:
     from scripts.lifecycle_state import build_lifecycle_projection
+try:
+    from process_state_sync_request import is_broker_screenshot_request
+except ModuleNotFoundError:
+    from scripts.process_state_sync_request import is_broker_screenshot_request
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE = ROOT / "data" / "state"
@@ -79,9 +83,7 @@ def latest_broker_screenshot_request() -> tuple[Path | None, dict]:
     candidates = []
     for path in directory.glob("*.json"):
         request = read_json(path)
-        source = str(request.get("source") or "").upper()
-        scenario = str(request.get("interaction_scenario") or "").upper()
-        if source != "CHATGPT_USER_BROKER_SCREENSHOT" and scenario != "BROKER_SCREENSHOT_SYNC":
+        if not is_broker_screenshot_request(request):
             continue
         stamp = parse_time(request.get("request_time_beijing") or request.get("requested_at_beijing") or request.get("request_time"))
         if stamp:
