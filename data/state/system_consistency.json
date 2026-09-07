@@ -1,41 +1,35 @@
 {
-  "generated_at": "2026-09-07T23:08:12Z",
-  "generated_at_beijing": "2026-09-08T07:08:12+08:00",
+  "generated_at": "2026-09-07T23:25:50Z",
+  "generated_at_beijing": "2026-09-08T07:25:50+08:00",
   "repository": {
-    "head_sha": "d87cdafece85845c193f9991f8f0117e1349f854",
-    "github_sha": "d87cdafece85845c193f9991f8f0117e1349f854",
-    "github_run_id": "34168940207",
+    "head_sha": "b3d1a6b99d31c48fdd6e7d0bb9e3857047ac0890",
+    "github_sha": "b3d1a6b99d31c48fdd6e7d0bb9e3857047ac0890",
+    "github_run_id": "34169941594",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "d87cdafece85845c193f9991f8f0117e1349f854",
-    "workflow_sha": "d87cdafece85845c193f9991f8f0117e1349f854",
+    "checked_commit": "b3d1a6b99d31c48fdd6e7d0bb9e3857047ac0890",
+    "workflow_sha": "b3d1a6b99d31c48fdd6e7d0bb9e3857047ac0890",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "semantic_freshness": {
-    "base": "81e066711e60a33f436d468e7ff88207bf27116e",
-    "head": "d87cdafece85845c193f9991f8f0117e1349f854",
+    "base": "d87cdafece85845c193f9991f8f0117e1349f854",
+    "head": "b3d1a6b99d31c48fdd6e7d0bb9e3857047ac0890",
     "changed_paths": [
       "data/state/e2e_status.json",
       "data/state/execution_quality.json",
       "data/state/last_known_good.json",
       "data/state/maintenance_diagnostic.json",
       "data/state/maintenance_health.json",
-      "data/state/notification_center.json",
-      "data/state/overseas_context.json",
-      "data/state/overseas_context_previous.json",
-      "data/state/overseas_runtime_health.json",
-      "data/state/query_context.json",
       "data/state/system_consistency.json",
-      "data/state/us_extended_hours_context.json",
-      "data/state/us_extended_hours_context_previous.json",
-      "data/state/us_pulse_runtime_health.json",
-      "docs/Codex协作执行说明.md"
+      "scripts/market_notification_common.py",
+      "tests/test_production_reliability.py"
     ],
     "categories": {
       "STABLE_PRODUCTION_CHANGE": [
-        "docs/Codex协作执行说明.md"
+        "scripts/market_notification_common.py",
+        "tests/test_production_reliability.py"
       ],
       "DYNAMIC_RUNTIME_FACT": [
         "data/state/e2e_status.json",
@@ -43,23 +37,15 @@
         "data/state/last_known_good.json",
         "data/state/maintenance_diagnostic.json",
         "data/state/maintenance_health.json",
-        "data/state/notification_center.json",
-        "data/state/overseas_context.json",
-        "data/state/overseas_context_previous.json",
-        "data/state/overseas_runtime_health.json",
-        "data/state/query_context.json",
-        "data/state/system_consistency.json",
-        "data/state/us_extended_hours_context.json",
-        "data/state/us_extended_hours_context_previous.json",
-        "data/state/us_pulse_runtime_health.json"
+        "data/state/system_consistency.json"
       ],
       "FORMAL_FACT_MUTATION": [],
       "REQUEST_OR_TRIGGER_FACT": [],
       "UNKNOWN": []
     },
     "decision": "REPLAY_REQUIRED",
-    "validated_commit": "81e066711e60a33f436d468e7ff88207bf27116e",
-    "current_head": "d87cdafece85845c193f9991f8f0117e1349f854",
+    "validated_commit": "d87cdafece85845c193f9991f8f0117e1349f854",
+    "current_head": "b3d1a6b99d31c48fdd6e7d0bb9e3857047ac0890",
     "head_advanced": true,
     "stable_contract_freshness": "REVIEW_REQUIRED",
     "runtime_fact_freshness": "CURRENT"
@@ -71,27 +57,27 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-07:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-04\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n................................................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 224 tests in 0.262s\n\nOK\n"
+      "detail": "FORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-07:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-04\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n................................................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 224 tests in 0.213s\n\nOK\n"
     },
     {
       "name": "tests:opening_current_self_healing",
       "status": "PASS",
-      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.008s\n\nOK\n"
+      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.007s\n\nOK\n"
     },
     {
       "name": "tests:semantic_latest_main",
       "status": "PASS",
-      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.129s\n\nOK\n"
+      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.292s\n\nOK\n"
     },
     {
       "name": "tests:research_artifact_contract",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.677s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.612s\n\nOK\n"
     },
     {
       "name": "tests:lifecycle_state",
       "status": "PASS",
-      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.007s\n\nOK\n"
+      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.004s\n\nOK\n"
     },
     {
       "name": "tests:historical_market_fact_recovery",
@@ -101,32 +87,32 @@
     {
       "name": "tests:executed_trade_case_lifecycle",
       "status": "PASS",
-      "detail": "count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n............\n----------------------------------------------------------------------\nRan 12 tests in 0.023s\n\nOK\n"
+      "detail": "count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n............\n----------------------------------------------------------------------\nRan 12 tests in 0.181s\n\nOK\n"
     },
     {
       "name": "tests:settlement_obligations",
       "status": "PASS",
-      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.003s\n\nOK\n"
+      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.002s\n\nOK\n"
     },
     {
       "name": "tests:formal_file_mutation_gateway",
       "status": "PASS",
-      "detail": ".........\n----------------------------------------------------------------------\nRan 9 tests in 0.003s\n\nOK\n"
+      "detail": ".........\n----------------------------------------------------------------------\nRan 9 tests in 0.002s\n\nOK\n"
     },
     {
       "name": "tests:post_close_review_canonical",
       "status": "PASS",
-      "detail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.006s\n\nOK\n"
+      "detail": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.003s\n\nOK\n"
     },
     {
       "name": "tests:review_prerequisite_lifecycle",
       "status": "PASS",
-      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.001s\n\nOK\n"
+      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.000s\n\nOK\n"
     },
     {
       "name": "tests:production_reliability",
       "status": "PASS",
-      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n..............................\n----------------------------------------------------------------------\nRan 30 tests in 0.026s\n\nOK\n"
+      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n................................\n----------------------------------------------------------------------\nRan 32 tests in 0.048s\n\nOK\n"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -406,17 +392,17 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=d87cdafece85845c193f9991f8f0117e1349f854"
+      "detail": "HEAD=b3d1a6b99d31c48fdd6e7d0bb9e3857047ac0890"
     },
     {
       "name": "git:semantic_latest_main",
       "status": "PASS",
-      "detail": "{\"base\": \"81e066711e60a33f436d468e7ff88207bf27116e\", \"head\": \"d87cdafece85845c193f9991f8f0117e1349f854\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/overseas_context.json\", \"data/state/overseas_context_previous.json\", \"data/state/overseas_runtime_health.json\", \"data/state/query_context.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\", \"data/state/us_extended_hours_context_previous.json\", \"data/state/us_pulse_runtime_health.json\", \"docs/Codex协作执行说明.md\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"docs/Codex协作执行说明.md\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/overseas_context.json\", \"data/state/overseas_context_previous.json\", \"data/state/overseas_runtime_health.json\", \"data/state/query_context.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\", \"data/state/us_extended_hours_context_previous.json\", \"data/state/us_pulse_runtime_health.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\"}"
+      "detail": "{\"base\": \"d87cdafece85845c193f9991f8f0117e1349f854\", \"head\": \"b3d1a6b99d31c48fdd6e7d0bb9e3857047ac0890\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/system_consistency.json\", \"scripts/market_notification_common.py\", \"tests/test_production_reliability.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"scripts/market_notification_common.py\", \"tests/test_production_reliability.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/system_consistency.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\"}"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=d87cdafece85845c193f9991f8f0117e1349f854 GITHUB_SHA=d87cdafece85845c193f9991f8f0117e1349f854"
+      "detail": "HEAD=b3d1a6b99d31c48fdd6e7d0bb9e3857047ac0890 GITHUB_SHA=b3d1a6b99d31c48fdd6e7d0bb9e3857047ac0890"
     },
     {
       "name": "git:critical_files_tracked",
@@ -841,7 +827,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "WARNING",
-      "detail": "observability_stale active=True phase=19:08 max_age_seconds=265992 limit=900 canonical_facts_unaffected"
+      "detail": "observability_stale active=True phase=19:25 max_age_seconds=267050 limit=900 canonical_facts_unaffected"
     },
     {
       "name": "session_gate:calendar_read",
@@ -986,12 +972,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=57358"
+      "detail": "declared=STALE expected=STALE age_seconds=58416"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=57338"
+      "detail": "declared=STALE expected=STALE age_seconds=58396"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -1031,7 +1017,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-09-07T23:07:49Z market=2026-09-07T15:12:11+08:00"
+      "detail": "context=2026-09-07T23:25:27Z market=2026-09-07T15:12:11+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
