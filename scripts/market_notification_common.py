@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from copy import deepcopy
+
 import os
 import re
 from datetime import datetime, timedelta
@@ -627,6 +629,12 @@ def _absorb_or_aggregate(notifications: list[dict], event: dict) -> tuple[str, d
     return None
 
 
+def _state_without_updated_at(state: dict) -> dict:
+    """Return persisted notification content without the volatile write timestamp."""
+    content = deepcopy(state)
+    content.pop("updated_at", None)
+    return content
+
 def persist_and_send(event: dict, *, policy: str) -> dict:
     event = _normalize_user_visible_event(event)
     event = _normalize_user_title(event)
@@ -653,9 +661,11 @@ def persist_and_send(event: dict, *, policy: str) -> dict:
     if aggregate_result:
         status, target = aggregate_result
         if status == "AGGREGATED_INTO_EXISTING":
+            prior_state = deepcopy(state)
             stamp = now().isoformat(timespec="seconds")
             state.update({"schema_version": "2.2", "updated_at": stamp, "last_status": status, "last_type": target.get("event_type"), "last_title": target.get("title"), "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": policy})
-            write_json(NOTIFICATION_STATE, state)
+            if _state_without_updated_at(state) != _state_without_updated_at(prior_state):
+                write_json(NOTIFICATION_STATE, state)
         return {"status": status, "notification_id": target.get("notification_id"), "event_tags": (target.get("confirmation_context") or {}).get("event_tags", [])}
     existing = find_existing_notification(notifications, event)
     if existing and existing.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED"}:

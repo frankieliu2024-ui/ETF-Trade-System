@@ -377,6 +377,91 @@ class NotificationDecisionIdentityTests(unittest.TestCase):
         self.assertEqual(self._run(item, [])["lifecycle_status"], "WAITING_CONFIRMATION")
 
 
+    def test_repeated_identical_aggregation_is_timestamp_stable(self):
+        target = {
+            "notification_id": "aggregate-stable",
+            "source_event_id": "fact-1",
+            "event_type": "MARKET_VALUE_ALERT",
+            "security_code": "KOSPI",
+            "lifecycle_status": "SENT",
+            "sent_at": "2026-09-07T12:00:00+08:00",
+            "title": "亚太结构",
+            "content": "KOSPI 结构事实",
+            "source": "test",
+            "confirmation_context": {
+                "market": "ASIA", "market_date": "2026-09-07", "session": "DAY",
+                "event_category": "EXTREME", "direction": "UP",
+                "event_magnitude_pct": 2.0, "family_peak_magnitude_pct": 2.0,
+                "source_fact_id": "fact-1", "source_fact_ids": ["fact-1"],
+                "event_tags": ["EXTREME"],
+                "aggregation_status": "MERGED_SAME_OBJECT_CONTINUOUS_FACT",
+                "event_family_id": "ASIA:2026-09-07:DAY:KOSPI:EXTREME:UP",
+            },
+        }
+        event = {
+            "event_type": "MARKET_VALUE_ALERT", "security_code": "KOSPI",
+            "title": "亚太结构", "content": "KOSPI 结构事实", "source": "test",
+            "created_at": "2026-09-07T12:00:30+08:00",
+            "confirmation_context": {
+                "market": "ASIA", "market_date": "2026-09-07", "session": "DAY",
+                "event_category": "EXTREME", "direction": "UP",
+                "event_magnitude_pct": 2.0, "source_fact_id": "fact-1",
+                "market_as_of_beijing": "2026-09-07T12:00:00+08:00",
+            },
+        }
+        with tempfile.TemporaryDirectory() as td:
+            state_file = Path(td) / "notification_center.json"
+            state_file.write_text(json.dumps({
+                "schema_version": "2.2", "updated_at": "2026-09-07T12:00:00+08:00",
+                "last_status": "SENT", "last_type": target["event_type"], "last_title": target["title"],
+                "notifications": [target], "recent": [], "pending_questions": [], "policy": "test",
+            }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            with patch.object(notifications, "NOTIFICATION_STATE", state_file), patch.object(notifications, "STATE", Path(td)), patch.object(notifications, "now", return_value=datetime.fromisoformat("2026-09-07T12:01:00+08:00")):
+                first = notifications.persist_and_send(event, policy="test")
+                self.assertEqual(first["status"], "AGGREGATED_INTO_EXISTING")
+                before = state_file.read_bytes()
+                with patch.object(notifications, "now", return_value=datetime.fromisoformat("2026-09-07T12:02:00+08:00")):
+                    second = notifications.persist_and_send(event, policy="test")
+            self.assertEqual(second["status"], "AGGREGATED_INTO_EXISTING")
+            self.assertEqual(state_file.read_bytes(), before)
+
+    def test_first_material_aggregation_persists_new_fact(self):
+        target = {
+            "notification_id": "aggregate-material", "source_event_id": "fact-1",
+            "event_type": "MARKET_VALUE_ALERT", "security_code": "KOSPI",
+            "lifecycle_status": "SENT", "sent_at": "2026-09-07T12:00:00+08:00",
+            "title": "亚太结构", "content": "KOSPI 结构事实", "source": "test",
+            "confirmation_context": {
+                "market": "ASIA", "market_date": "2026-09-07", "session": "DAY",
+                "event_category": "EXTREME", "direction": "UP",
+                "event_magnitude_pct": 2.0, "family_peak_magnitude_pct": 2.0,
+                "source_fact_id": "fact-1", "source_fact_ids": ["fact-1"],
+                "event_tags": ["EXTREME"],
+                "aggregation_status": "MERGED_SAME_OBJECT_CONTINUOUS_FACT",
+                "event_family_id": "ASIA:2026-09-07:DAY:KOSPI:EXTREME:UP",
+            },
+        }
+        event = {
+            "event_type": "MARKET_VALUE_ALERT", "security_code": "KOSPI",
+            "title": "亚太结构", "content": "KOSPI 结构事实", "source": "test",
+            "created_at": "2026-09-07T12:00:30+08:00",
+            "confirmation_context": {
+                "market": "ASIA", "market_date": "2026-09-07", "session": "DAY",
+                "event_category": "EXTREME", "direction": "UP",
+                "event_magnitude_pct": 2.2, "source_fact_id": "fact-2",
+                "market_as_of_beijing": "2026-09-07T12:00:00+08:00",
+            },
+        }
+        with tempfile.TemporaryDirectory() as td:
+            state_file = Path(td) / "notification_center.json"
+            state_file.write_text(json.dumps({"schema_version": "2.2", "updated_at": "2026-09-07T12:00:00+08:00", "last_status": "SENT", "last_type": target["event_type"], "last_title": target["title"], "notifications": [target], "recent": [], "pending_questions": [], "policy": "test"}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            with patch.object(notifications, "NOTIFICATION_STATE", state_file), patch.object(notifications, "STATE", Path(td)), patch.object(notifications, "now", return_value=datetime.fromisoformat("2026-09-07T12:01:00+08:00")):
+                result = notifications.persist_and_send(event, policy="test")
+            self.assertEqual(result["status"], "AGGREGATED_INTO_EXISTING")
+            saved = json.loads(state_file.read_text(encoding="utf-8"))
+            self.assertIn("fact-2", saved["notifications"][0]["confirmation_context"]["source_fact_ids"])
+
+
 if __name__ == "__main__":
     unittest.main()
 
