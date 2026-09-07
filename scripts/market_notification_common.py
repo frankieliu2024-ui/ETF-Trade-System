@@ -25,6 +25,16 @@ ROOT = Path(__file__).resolve().parents[1]
 APAC_LATE_HK_MIN_DELTA_PCT = 0.8
 
 
+# Internal structure identifiers remain stable audit/dedup facts. These labels
+# are only for the user-visible projection and do not alter event identity.
+_INTERNAL_STRUCTURE_LABELS = {
+    "A_SHARE_ETF_DIVERGENCE": "A股监测ETF横截面",
+    "A_SHARE_INDEX_DIVERGENCE": "A股核心指数",
+    "US_TECH_DIVERGENCE": "美股科技内部结构",
+    "APAC_DIVERGENCE": "亚太主要指数结构",
+}
+
+
 def _formal_etf_aliases() -> tuple[dict[str, str], dict[tuple[str, str], str]]:
     """Return formal ETF names and current provider aliases for user-visible text."""
     cfg = read_json(ROOT / "config/market/etf_monitor_universe.json", {})
@@ -45,6 +55,46 @@ def _formal_etf_aliases() -> tuple[dict[str, str], dict[tuple[str, str], str]]:
     return formal, aliases
 
 
+def _user_visible_code_labels() -> dict[str, str]:
+    formal, _aliases = _formal_etf_aliases()
+    labels = {code: f"{name}（{code}）" for code, name in formal.items()}
+    current = read_json(STATE / "CURRENT.json", {})
+    snapshot_path = ROOT / str(current.get("latest_snapshot") or "")
+    snapshot = read_json(snapshot_path, {}) if snapshot_path.exists() else {}
+    for row in snapshot.get("rows") or []:
+        code = str(row.get("symbol") or "")
+        if not code or code in labels:
+            continue
+        name = str(row.get("provider_name") or row.get("name") or code).strip()
+        labels[code] = name if code in name else f"{name}（{code}）"
+    return labels
+
+
+def _normalize_divergence_structure(text: str, labels: dict[str, str]) -> str:
+    def label(value: str) -> str:
+        raw = str(value).strip()
+        return labels.get(raw, raw)
+
+    text = re.sub(
+        r"领先(?P<left>[^， ]+) (?P<left_pct>[+-]?\d+(?:\.\d+)?%)，落后(?P<right>[^， ]+) (?P<right_pct>[+-]?\d+(?:\.\d+)?%)，差约(?P<spread>\d+(?:\.\d+)?)个百分点",
+        lambda m: (
+            f"横截面两端：{label(m.group('left'))}{m.group('left_pct')}，"
+            f"{label(m.group('right'))}{m.group('right_pct')}，"
+            f"涨跌幅相差{m.group('spread')}个百分点"
+        ),
+        text,
+    )
+    for code, display in sorted(labels.items(), key=lambda item: len(item[0]), reverse=True):
+        text = re.sub(
+            rf"(?<![（(A-Za-z0-9]){re.escape(code)}(?![）)A-Za-z0-9])",
+            display,
+            text,
+        )
+    for token, display in _INTERNAL_STRUCTURE_LABELS.items():
+        text = text.replace(token, display)
+    return text
+
+
 def _normalize_user_visible_text(value: Any) -> str:
     text = str(value or "")
     text = re.sub(
@@ -55,7 +105,7 @@ def _normalize_user_visible_text(value: Any) -> str:
     _formal, aliases = _formal_etf_aliases()
     for (provider, code), formal_name in aliases.items():
         text = text.replace(f"{provider}（{code}）", f"{formal_name}（{code}）")
-    return text
+    return _normalize_divergence_structure(text, _user_visible_code_labels())
 
 
 def _normalize_user_visible_event(event: dict) -> dict:
@@ -67,7 +117,6 @@ def _normalize_user_visible_event(event: dict) -> dict:
     if code in formal:
         event["security_name"] = formal[code]
     return event
-
 
 def number(value: Any) -> float | None:
     try:
