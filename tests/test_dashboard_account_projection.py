@@ -35,4 +35,32 @@ class DashboardAccountProjectionTests(unittest.TestCase):
   for p in legacy["positions"]: p["asset_type"]="ETF" if "ETF" in p["name"] else "STOCK"; p["last_price"]=p.pop("current_price"); p["holding_pnl"]=p.pop("pnl"); p["holding_pnl_pct"]=p.pop("pnl_pct")
   with patch.object(formal_sync,"ROOT",self.root): rendered=formal_sync.build_dashboard_block(legacy,self.equity,"",self.root)
   self.assertIn("351.000",rendered); self.assertIn("-4,278.07元",rendered)
+
+ def test_shared_lifecycle_contract_rejects_opportunity_status_for_held_assets(self):
+  lifecycle={"电网设备ETF（159326）":"Trial，持有", "黄金ETF（518880）":"Trial，持有"}
+  error=process_sync.validate_current_lifecycle_contract(lifecycle,self.account)
+  self.assertIn("opportunity lifecycle for a held asset",error)
+
+ def test_post_close_review_uses_same_lifecycle_contract_before_persistence(self):
+  review={
+   "market_date":"2026-09-07",
+   "lifecycle":{"电网设备ETF（159326）":"Trial", "黄金ETF（518880）":"Trial"},
+  }
+  request={"interaction_scenario":"POST_CLOSE_REVIEW","request_id":"invalid-review","formal_review":review}
+  with patch.object(process_sync,"ROOT",self.root):
+   with self.assertRaisesRegex(ValueError,"invalid formal review lifecycle contract"):
+    process_sync.record_post_close_review(self.account,request)
+  self.assertFalse((self.root/"events/reviews/2026-09-07.json").exists())
+
+ def test_shared_lifecycle_contract_accepts_current_actions_and_historical_explanation(self):
+  review={
+   "market_date":"2026-09-07",
+   "lifecycle":{
+    "电网设备ETF（159326）":"持有管理（历史Trial来源仅作解释）",
+    "黄金ETF（518880）":"降低风险",
+    "通信ETF（515880）":"观察",
+   },
+  }
+  error=process_sync.validate_current_lifecycle_contract(review["lifecycle"],self.account)
+  self.assertEqual(error,"")
 if __name__=="__main__": unittest.main()
