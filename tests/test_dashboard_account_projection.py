@@ -32,7 +32,7 @@ class DashboardAccountProjectionTests(unittest.TestCase):
    self.assertIn("观察ETF：", rendered)
 
  def test_formal_comparison_preserves_event_delta_and_state_persistence_for_buy_and_sell_consumers(self):
-  context = {"as_of_beijing":"2026-09-04T15:06:26+08:00", "items":[
+  context = {"status":"READY", "as_of_beijing":"2026-09-04T15:06:26+08:00", "items":[
    {"code":"561980","as_of_beijing":"2026-09-04T15:06:26+08:00",
     "historical_context":{"latest_history_date":"2026-09-03","trend_state":"FALLING_TREND"},
     "turnover_acceptance_context":{"status":"READY","acceptance_behavior":"TURNOVER_NEUTRAL"},
@@ -58,7 +58,7 @@ class DashboardAccountProjectionTests(unittest.TestCase):
   self.assertIn("不生成轮动动作", out["interpretation_rule"])
 
  def test_state_projection_is_fail_safe_for_missing_stale_and_future_context(self):
-  context={"as_of_beijing":"2026-09-04T15:06:40+08:00","items":[
+  context={"status":"READY","as_of_beijing":"2026-09-04T15:06:40+08:00","items":[
    {"code":"561980","as_of_beijing":"2026-09-04T15:06:40+08:00","historical_context":{"trend_state":"FUTURE"}}
   ]}
   (self.root/"data/state/market_structure_context.json").write_text(json.dumps(context),encoding="utf-8")
@@ -71,6 +71,40 @@ class DashboardAccountProjectionTests(unittest.TestCase):
   self.assertEqual(statuses["588000"],"MISSING")
   self.assertEqual(out["state_persistence"]["status"],"PARTIAL_FAIL_SAFE")
 
+
+ def test_state_projection_is_fail_safe_when_context_is_not_ready_at_legal_pit_time(self):
+  context={"status":"DEGRADED","as_of_beijing":"2026-09-04T15:06:26+08:00","items":[
+   {"code":"561980","as_of_beijing":"2026-09-04T15:06:26+08:00",
+    "historical_context":{"trend_state":"FALLING_TREND"},
+    "turnover_acceptance_context":{"status":"READY"},
+    "participation_structure_confirmation":{"status":"READY","participation_ratio_vs_prior_20d":0.88}}
+  ]}
+  (self.root/"data/state/market_structure_context.json").write_text(json.dumps(context),encoding="utf-8")
+  (self.root/"data/state/research_evidence_delta.json").write_text(json.dumps({"as_of_beijing":"2026-09-04T15:06:26+08:00","items":[]}),encoding="utf-8")
+  snapshot={"captured_at_beijing":"2026-09-04T15:06:35+08:00","rows":[]}
+  with patch.object(process_sync,"ROOT",self.root):
+   out=process_sync.build_comparison_snapshot(snapshot)
+  state=out["state_persistence"]
+  statuses={x["code"]:x["status"] for x in state["items"]}
+  self.assertEqual(statuses["561980"],"STALE_OR_UNVERIFIABLE")
+  self.assertEqual(state["status"],"PARTIAL_FAIL_SAFE")
+  self.assertEqual(state["items"][0]["historical"],{})
+  self.assertEqual(state["items"][0]["participation"]["participation_ratio_vs_prior_20d"],None)
+
+ def test_zero_participation_ratio_is_preserved_over_turnover_fallback(self):
+  context={"status":"READY","as_of_beijing":"2026-09-04T15:06:26+08:00","items":[
+   {"code":"561980","as_of_beijing":"2026-09-04T15:06:26+08:00",
+    "turnover_acceptance_context":{"status":"READY","time_normalized_amount_pace_ratio":0.88},
+    "participation_structure_confirmation":{"status":"READY","participation_ratio_vs_prior_20d":0}}
+  ]}
+  (self.root/"data/state/market_structure_context.json").write_text(json.dumps(context),encoding="utf-8")
+  (self.root/"data/state/research_evidence_delta.json").write_text(json.dumps({"as_of_beijing":"2026-09-04T15:06:26+08:00","items":[]}),encoding="utf-8")
+  snapshot={"captured_at_beijing":"2026-09-04T15:06:35+08:00","rows":[]}
+  with patch.object(process_sync,"ROOT",self.root):
+   out=process_sync.build_comparison_snapshot(snapshot)
+  item=out["state_persistence"]["items"][0]
+  self.assertEqual(item["status"],"READY")
+  self.assertEqual(item["participation"]["participation_ratio_vs_prior_20d"],0)
  def test_legacy_schema_fallback(self):
   legacy=json.loads(json.dumps(self.account))
   for p in legacy["positions"]: p["asset_type"]="ETF" if "ETF" in p["name"] else "STOCK"; p["last_price"]=p.pop("current_price"); p["holding_pnl"]=p.pop("pnl"); p["holding_pnl_pct"]=p.pop("pnl_pct")
