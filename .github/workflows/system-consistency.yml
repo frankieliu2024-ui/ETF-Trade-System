@@ -316,6 +316,9 @@ jobs:
             cd "$validation_root"
             export ETF_SYSTEM_ROOT="$validation_root"
             export PYTHONPATH="$validation_root/scripts:$validation_root"
+            # This subshell is independent: explicitly consume the fresh report
+            # produced above instead of falling back to persisted main state.
+            export ETF_CONSISTENCY_REPORT_PATH="$RUNNER_TEMP/system_consistency.json"
             python scripts/check_research_integration.py
           )
           rc2=$?
