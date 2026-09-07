@@ -94,6 +94,72 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
                 consistency._validate_historical_trade_case_mapping(report)
                 self.assertEqual(report["checks"][-1]["status"], "FAIL")
 
+    def test_repeated_build_preserves_existing_when_only_generated_at_changes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            state = root / "data" / "state"
+            state.mkdir(parents=True)
+            (state / "account_fact.json").write_text("{}", encoding="utf-8")
+            with patch.object(reconciliation, "ROOT", root), patch.object(
+                reconciliation,
+                "now_text",
+                side_effect=["2026-09-07T22:00:00+08:00", "2026-09-07T22:01:00+08:00"],
+            ):
+                first = reconciliation.build()
+                second = reconciliation.build()
+            stored = json.loads((state / "execution_reconciliation.json").read_text(encoding="utf-8"))
+            self.assertEqual(first, second)
+            self.assertEqual(stored["generated_at"], "2026-09-07T22:00:00+08:00")
+
+    def test_material_reconciliation_change_refreshes_generation_time(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            decision_dir = root / "events" / "decisions"
+            trade_dir = root / "events" / "trades"
+            state = root / "data" / "state"
+            decision_dir.mkdir(parents=True)
+            trade_dir.mkdir(parents=True)
+            state.mkdir(parents=True)
+            (state / "account_fact.json").write_text("{}", encoding="utf-8")
+            with patch.object(reconciliation, "ROOT", root), patch.object(
+                reconciliation, "now_text", return_value="2026-09-07T22:00:00+08:00"
+            ):
+                reconciliation.build()
+
+            decision_id = "20260907_220500_trade_159326"
+            decision_time = datetime.now(reconciliation.TZ) - timedelta(minutes=10)
+            (decision_dir / f"{decision_id}.json").write_text(json.dumps({
+                "event_type": "FORMAL_DECISION",
+                "decision_id": decision_id,
+                "market_date": decision_time.date().isoformat(),
+                "decision_time_beijing": decision_time.isoformat(timespec="seconds"),
+                "candidate_code": "159326",
+                "candidate_name": "电网设备ETF",
+                "formal_decision": {
+                    "lifecycle": "Trial已执行",
+                    "amount_action": "买入3000份，成交金额4953元",
+                },
+            }), encoding="utf-8")
+            (trade_dir / f"{decision_id}.json").write_text(json.dumps({
+                "event_id": decision_id,
+                "code": "159326",
+                "side": "BUY",
+                "quantity": 3000,
+                "amount": 4953.0,
+                "executed_at_beijing": decision_time.isoformat(timespec="seconds"),
+                "linked_decision_id": decision_id,
+                "execution_status": "EXECUTED",
+            }), encoding="utf-8")
+
+            with patch.object(reconciliation, "ROOT", root), patch.object(
+                reconciliation, "now_text", return_value="2026-09-07T22:01:00+08:00"
+            ):
+                result = reconciliation.build()
+            stored = json.loads((state / "execution_reconciliation.json").read_text(encoding="utf-8"))
+            self.assertEqual(result["status"], "RECONCILED")
+            self.assertEqual(stored["generated_at"], "2026-09-07T22:01:00+08:00")
+            self.assertEqual(stored["matches"][0]["status"], "CONFIRMED_BY_TRADE_EVENT")
+
     def test_planned_amount_prefers_explicit_principal_over_price(self):
         self.assertEqual(
             reconciliation.parse_money("以1.651元买入3000份，成交本金4953元"),

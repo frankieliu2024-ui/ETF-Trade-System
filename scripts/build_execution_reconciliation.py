@@ -33,6 +33,26 @@ def now_text() -> str:
     return datetime.now(TZ).isoformat(timespec="seconds")
 
 
+def _without_generation_metadata(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: _without_generation_metadata(item)
+            for key, item in value.items()
+            if key != "generated_at"
+        }
+    if isinstance(value, list):
+        return [_without_generation_metadata(item) for item in value]
+    return value
+
+
+def persist_result(result: dict) -> dict:
+    existing = read_json(OUT, None)
+    if isinstance(existing, dict) and _without_generation_metadata(existing) == _without_generation_metadata(result):
+        return existing
+    write_json(OUT, result)
+    return result
+
+
 def parse_dt(value: Any) -> datetime | None:
     if not value:
         return None
@@ -331,9 +351,9 @@ def build() -> dict:
         "known_limitation": "仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。",
         "safety_boundary": "不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。",
     }
-    write_json(OUT, result)
-    print(json.dumps(result, ensure_ascii=False))
-    return result
+    persisted = persist_result(result)
+    print(json.dumps(persisted, ensure_ascii=False))
+    return persisted
 
 
 if __name__ == "__main__":
