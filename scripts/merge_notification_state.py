@@ -20,11 +20,20 @@ def _load(path: Path) -> dict:
 
 
 def _identity_tokens(item: dict) -> set[str]:
-    return {
+    tokens = {
         str(item.get(name) or "")
         for name in ("notification_id", "source_event_id", "key")
         if str(item.get(name) or "")
     }
+    # Producers may use different source-event ids for the same canonical
+    # market fact.  The renderer/common layer records this stable family id so
+    # the single committer can merge runner-local receipts without creating a
+    # second dedupe identity.
+    context = item.get("confirmation_context") or {}
+    family_id = str(context.get("event_family_id") or "")
+    if family_id:
+        tokens.add("family:" + family_id)
+    return tokens
 
 
 def _timestamp(item: dict) -> datetime | None:

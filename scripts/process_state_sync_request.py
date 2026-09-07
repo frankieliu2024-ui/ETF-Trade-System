@@ -45,6 +45,8 @@ DASHBOARD = ROOT / "ETF当前状态_DASHBOARD.md"
 ARCHIVE = ROOT / "ETF市场行情档案_2026.md"
 EXPERIENCE = ROOT / "ETF交易复盘与经验库_2026.md"
 ACCOUNT = ROOT / "data/state/account_fact.json"
+FORMAL_OPPORTUNITY_STATUSES = {"无机会", "观察机会", "Trial机会", "Confirm机会"}
+FORMAL_HOLDING_LIFECYCLES = {"持有管理", "降低风险", "退出"}
 START = "<!-- AUTO_STATE_SYNC_START -->"
 END = "<!-- AUTO_STATE_SYNC_END -->"
 TRADE_START = "<!-- AUTO_TRADE_EVENTS_START -->"
@@ -398,6 +400,9 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     decision = request.get("formal_decision")
     if not isinstance(decision, dict) or not decision:
         return False, ""
+    contract_error = validate_formal_decision_contract(decision)
+    if contract_error:
+        raise ValueError(f"invalid formal decision contract: {contract_error}")
     current_path = ROOT / "data/state/CURRENT.json"
     current = load_json(current_path) if current_path.exists() else {}
     market_date = str(request.get("market_date") or current.get("market_date") or "")
@@ -448,6 +453,30 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
             return True, decision_id
     atomic_json_write(event_path, event)
     return True, decision_id
+
+
+def validate_formal_decision_contract(decision: dict) -> str:
+    """Validate stable user-facing decision enums before persistence.
+
+    Formal facts are validated at their canonical ingress, rather than repaired
+    later by notification rendering.  This intentionally validates only the
+    existing contract fields and does not infer a transaction or alter MASTER.
+    """
+    opportunity_status = str(decision.get("opportunity_status") or "").strip()
+    if opportunity_status not in FORMAL_OPPORTUNITY_STATUSES:
+        return "opportunity_status must be one of: " + ", ".join(sorted(FORMAL_OPPORTUNITY_STATUSES))
+    risk = decision.get("risk_permission")
+    if risk is not None and str(risk).strip() not in {"禁止新增", "允许Trial", "允许Confirm"}:
+        return "risk_permission is not a registered formal value"
+    lifecycle = str(decision.get("lifecycle") or "").strip()
+    if lifecycle in {"持有并继续Trial验证", "保持已退出，本节点不重新开启"}:
+        return "holding lifecycle must use current formal state and keep historical evidence separate"
+    if lifecycle and any(token in lifecycle for token in FORMAL_HOLDING_LIFECYCLES):
+        # Composite lifecycle text is allowed only for non-current explanatory
+        # fields; the current lifecycle field itself must remain one enum.
+        if lifecycle not in FORMAL_HOLDING_LIFECYCLES:
+            return "current holding lifecycle must be 持有管理, 降低风险, or 退出"
+    return ""
 
 
 def record_unrecoverable_review_prerequisite(account: dict, request: dict, trade_event: dict) -> tuple[bool, bool]:
