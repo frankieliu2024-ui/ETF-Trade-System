@@ -215,6 +215,31 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
                 self.assertEqual(notifications.persist_and_send(event, policy="test")["status"], "ALREADY_MANAGED")
             sender.assert_called_once()
 
+    def test_merge_preserves_sent_receipt_across_source_event_ids_in_same_family(self):
+        from scripts.merge_notification_state import merge_notification_state
+
+        sent = {
+            "notification_id": "n-sent",
+            "source_event_id": "producer-a",
+            "event_type": "MARKET_SHOCK_ALERT",
+            "lifecycle_status": "SENT",
+            "sent_at": "2026-09-07T10:24:30+08:00",
+            "confirmation_context": {"event_family_id": "515880:2026-09-07:EXTREME:UP"},
+        }
+        later_runner = {
+            "notification_id": "n-later",
+            "source_event_id": "producer-b",
+            "event_type": "MARKET_SHOCK_ALERT",
+            "lifecycle_status": "CREATED",
+            "created_at": "2026-09-07T10:27:00+08:00",
+            "confirmation_context": {"event_family_id": "515880:2026-09-07:EXTREME:UP"},
+        }
+        merged = merge_notification_state(
+            {"notifications": [sent]}, {"notifications": [later_runner]}
+        )
+        self.assertEqual(len(merged["notifications"]), 1)
+        self.assertEqual(merged["notifications"][0]["lifecycle_status"], "SENT")
+
     def test_pushplus_failure_is_persisted_with_response(self):
         with tempfile.TemporaryDirectory() as td:
             state_file = Path(td) / "notification_center.json"

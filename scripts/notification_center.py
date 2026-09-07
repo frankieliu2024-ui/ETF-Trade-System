@@ -348,16 +348,10 @@ def formal_decision_change_event() -> dict | None:
         timing_lines.append(f"- **账户依据**：{human_time(account_as_of_raw)}")
     timing_lines.append(f"- **通知生成**：{notification_generated.strftime('%Y-%m-%d %H:%M:%S')}")
 
-    content = (
-        "### 发生了什么\n"
-        + "\n".join(change_lines)
-        + f"\n\n### 现在怎么做\n**{user_action}**\n\n"
-        + f"### 当前动作\n{action_summary or '未提供'}\n\n"
-        + f"### 为什么\n{decisive_reason}\n\n"
-        + "### 时间信息（北京时间）\n"
-        + "\n".join(timing_lines)
-        + "\n\n> 微信消息顶部显示的是实际发送时间；通知只转发已经形成的正式ETF判断，不会自动下单。"
-    )
+    # Keep the producer output structured.  The canonical renderer below owns
+    # all user-visible Markdown sections; embedding a pre-rendered body here
+    # would make the renderer wrap the same sections a second time.
+    content = decisive_reason
 
     return {
         "key": f"formal-change:{decision_id}",
@@ -381,6 +375,10 @@ def formal_decision_change_event() -> dict | None:
             "risk_permission": risk_permission,
             "previous_risk_permission": previous_risk,
             "holding_action_changed": holding_action_changed,
+            "change_summary": change_lines,
+            "action_summary": action_summary,
+            "decisive_reason": decisive_reason,
+            "timing_lines": timing_lines,
             "decision_time_beijing": str(decision_time_raw or ""),
             "market_as_of_beijing": market_as_of_raw,
             "account_as_of_beijing": account_as_of_raw,
@@ -695,6 +693,7 @@ CANONICAL_TEMPLATE_FAMILIES = {
     "E2E_RECOVERED": "判断恢复",
     "SYSTEM_EVENT": "系统阻塞",
     "CHANNEL_TEST": "测试",
+    "收盘账户": "收盘账户",
 }
 
 def canonical_template_family(event: dict) -> str | None:
@@ -773,17 +772,30 @@ def render_canonical_notification(event: dict) -> dict | None:
         body = f"### 发生了什么\n{event.get('content') or '系统运行状态未达到可依赖条件。'}\n\n### 你需要做什么\n暂缓依据系统执行新的交易判断，等待系统恢复。\n\n> {_canonical_boundary(family)}"
     elif family == "判断恢复":
         title = "【判断恢复】此前暂缓的正式判断可以继续"
-        body = f"### 发生了什么\n{event.get('content') or '此前暂缓的正式判断所需信息已经恢复。'}\n\n### 当前边界\n系统可以继续正式判断，但尚未因此生成交易指令。\n\n> {_canonical_boundary(family)}"
-    elif family in {"观察机会", "Trial机会", "Confirm机会", "机会失效", "持仓动作", "风险许可"}:
+        body = f"### 发生了什么\n{event.get('content') or '此前暂缓的正式判断所需信息已经恢复。'}\n\n### 当前边界\n系统可以继续正式判断，但不生成新的交易指令。\n\n> {_canonical_boundary(family)}"
+    elif family == "风险许可":
+        previous_risk = str(ctx.get("previous_risk_permission") or "未记录")
+        risk = str(ctx.get("risk_permission") or "未记录")
+        title = f"【风险许可】{previous_risk} → {risk}"
+        change_summary = "\n".join(str(x) for x in (ctx.get("change_summary") or []) if x) or f"风险许可：{previous_risk} → {risk}"
+        body = (
+            f"### 发生了什么\n{change_summary}\n\n"
+            f"### 当前风险许可\n{previous_risk} → {risk}\n\n"
+            f"### 为什么现在值得关注\n{ctx.get('decisive_reason') or event.get('content') or '正式风险许可发生了实质变化。'}\n\n"
+            f"### 你需要做什么\n{event.get('user_action') or '查看最新正式判断，再决定是否人工执行。'}\n\n"
+            f"> {_canonical_boundary(family)}\n\n### 事实时点（北京时间）\n{_canonical_time(event)}"
+        )
+    elif family in {"观察机会", "Trial机会", "Confirm机会", "机会失效", "持仓动作"}:
         status = str(ctx.get("opportunity_status") or family)
         previous = str(ctx.get("previous_opportunity_status") or "")
         risk = str(ctx.get("risk_permission") or "")
         title = f"【{family}】{target}"
+        change_summary = "\n".join(str(x) for x in (ctx.get("change_summary") or []) if x)
         body = (
-            f"### 发生了什么\n{target}的正式判断发生变化。\n\n"
+            f"### 发生了什么\n{change_summary or f'{target}的正式判断发生变化。'}\n\n"
             f"### 当前正式状态\n{previous + ' → ' if previous and previous != status else ''}{status}"
             f"{f'；风险许可：{risk}' if risk else ''}\n\n"
-            f"### 为什么现在值得关注\n{event.get('content') or '正式决策形成了实质变化。'}\n\n"
+            f"### 为什么现在值得关注\n{ctx.get('decisive_reason') or event.get('content') or '正式决策形成了实质变化。'}\n\n"
             f"### 你需要做什么\n{event.get('user_action') or '查看最新正式判断。'}\n\n"
             f"> {_canonical_boundary(family)}\n\n### 事实时点（北京时间）\n{_canonical_time(event)}"
         )
