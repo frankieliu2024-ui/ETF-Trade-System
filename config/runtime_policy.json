@@ -138,8 +138,19 @@
     ],
     "rule": "盘中用户截图/正式盘中请求先触发查询时即时补采；短等待预算内若新CURRENT可用则必须优先使用。仅当补采未及时完成或失败时，允许使用年龄>5分钟且<=15分钟的最近FRESH快照，并明确标注降级。年龄>15分钟不得形成当前正式交易判断。明确要求‘最新/当前/现在行情’属于更严格的EXPLICIT_LATEST查询，必须使用请求后的新CURRENT，默认不允许回退请求前快照。回复只等待会改变当次风险许可、机会、金额或卖出动作的必要输入；其余已触发的云端维护不阻塞回复。"
   },
+  "scheduled_formal_decision": {
+    "enabled": true,
+    "wait_mode": "UNTIL_POST_REQUEST_CURRENT_OR_TERMINAL_REFRESH_FAILURE",
+    "max_wait_seconds": 60,
+    "poll_interval_seconds": 2,
+    "reuse_inflight_refresh": true,
+    "require_final_post_request_recheck": true,
+    "interactive_short_wait_unchanged": true,
+    "rule": "Scheduled正式决策与interactive短等待分离：仅在对应EXPLICIT_LATEST补采已合法在途时有界等待请求后CURRENT；达到终止失败或显式上限即fail closed；正式输出前必须最终复核并消费请求后的CURRENT。该配置是Scheduled Actor读取的仓库合同，不代表平台Task已自动更新。"
+  },
   "state_coherence": {
     "sync_current_account_reference_after_account_update": true,
     "rule": "account_fact.json一旦被状态同步链更新，CURRENT.account_fact引用必须在同一维护链内同步到最新status、updated_at和source，避免核心行情先发布造成短暂旧账户引用长期残留。"
   }
 }
+
