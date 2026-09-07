@@ -96,9 +96,16 @@ jobs:
         if: ${{ steps.session_gate.outputs.should_capture == 'true' || github.event_name == 'push' }}
         with:
           node-version: "22"
-      - name: Install hithink-finance CLI
+      - name: Start optional Hithink fallback CLI bootstrap
         if: ${{ steps.session_gate.outputs.should_capture == 'true' || github.event_name == 'push' }}
-        run: npm install --global @hithink-tech/hithink-finance-cli
+        shell: bash
+        run: |
+          # Tencent is the primary A-share provider. Start the optional
+          # fallback installation in parallel so it cannot delay first core
+          # snapshot acquisition; cloud_runner_snapshot.py waits for it only
+          # if a fallback path is actually needed.
+          npm install --global @hithink-tech/hithink-finance-cli >/tmp/hithink-finance-install.log 2>&1 &
+          echo "HITHINK_CLI_INSTALL_PID=$!" >> "$GITHUB_ENV"
       - name: Load unified provider concurrency policy
         if: ${{ steps.session_gate.outputs.should_capture == 'true' || github.event_name == 'push' }}
         shell: bash
@@ -383,3 +390,4 @@ jobs:
             fi
             if [ "$attempt" = "3" ]; then exit 1; fi
           done
+
