@@ -47,6 +47,10 @@ EXPERIENCE = ROOT / "ETF交易复盘与经验库_2026.md"
 ACCOUNT = ROOT / "data/state/account_fact.json"
 FORMAL_OPPORTUNITY_STATUSES = {"无机会", "观察机会", "Trial机会", "Confirm机会"}
 FORMAL_HOLDING_LIFECYCLES = {"持有管理", "降低风险", "退出"}
+FORMAL_LIFECYCLE_COMPATIBILITY_TERMS = {
+    "观察", "Trial", "Confirm", "持有", "持有管理", "降低风险", "退出",
+    "ACTIVE_TRIAL", "RESOLVED",
+}
 START = "<!-- AUTO_STATE_SYNC_START -->"
 END = "<!-- AUTO_STATE_SYNC_END -->"
 TRADE_START = "<!-- AUTO_TRADE_EVENTS_START -->"
@@ -468,14 +472,39 @@ def validate_formal_decision_contract(decision: dict) -> str:
     risk = decision.get("risk_permission")
     if risk is not None and str(risk).strip() not in {"禁止新增", "允许Trial", "允许Confirm"}:
         return "risk_permission is not a registered formal value"
-    lifecycle = str(decision.get("lifecycle") or "").strip()
-    if lifecycle in {"持有并继续Trial验证", "保持已退出，本节点不重新开启"}:
-        return "holding lifecycle must use current formal state and keep historical evidence separate"
-    if lifecycle and any(token in lifecycle for token in FORMAL_HOLDING_LIFECYCLES):
-        # Composite lifecycle text is allowed only for non-current explanatory
-        # fields; the current lifecycle field itself must remain one enum.
-        if lifecycle not in FORMAL_HOLDING_LIFECYCLES:
-            return "current holding lifecycle must be 持有管理, 降低风险, or 退出"
+    lifecycle_error = _validate_formal_lifecycle(decision.get("lifecycle"))
+    if lifecycle_error:
+        return lifecycle_error
+    return ""
+
+
+def _validate_formal_lifecycle(value: object, object_name: str = "lifecycle") -> str:
+    """Validate lifecycle actions without narrowing the existing multi-object schema.
+
+    Current formal decisions use both a single legacy string and a mapping from
+    security name to per-object lifecycle text.  The canonical contract is the
+    action expressed for each object; explanatory text may accompany that
+    action and is retained for compatibility.
+    """
+    if value is None or value == "":
+        return ""
+    if isinstance(value, dict):
+        for security, action in value.items():
+            if not str(security).strip():
+                return f"{object_name} contains an empty object key"
+            error = _validate_formal_lifecycle(action, f"{object_name}[{security}]")
+            if error:
+                return error
+        return ""
+    if not isinstance(value, str):
+        return f"{object_name} must be text or an object-to-lifecycle mapping"
+    text = value.strip()
+    if not text:
+        return ""
+    clauses = [part.strip() for part in text.replace(";", "；").split("；") if part.strip()]
+    for clause in clauses:
+        if not any(term in clause for term in FORMAL_LIFECYCLE_COMPATIBILITY_TERMS):
+            return f"{object_name} clause has no registered lifecycle action: {clause}"
     return ""
 
 
@@ -1348,3 +1377,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

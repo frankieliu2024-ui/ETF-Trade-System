@@ -26,13 +26,13 @@ def _identity_tokens(item: dict) -> set[str]:
         if str(item.get(name) or "")
     }
     # Producers may use different source-event ids for the same canonical
-    # market fact.  The renderer/common layer records this stable family id so
-    # the single committer can merge runner-local receipts without creating a
-    # second dedupe identity.
+    # quote fact.  Only an explicit source fact identity is safe here.  The
+    # event_family_id describes a continuing fact family and must not collapse
+    # a later material upgrade that is entitled to a second notification.
     context = item.get("confirmation_context") or {}
-    family_id = str(context.get("event_family_id") or "")
-    if family_id:
-        tokens.add("family:" + family_id)
+    fact_id = str(context.get("fact_identity") or context.get("source_fact_id") or "")
+    if fact_id:
+        tokens.add("fact:" + fact_id)
     return tokens
 
 
@@ -138,3 +138,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
