@@ -1,24 +1,30 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-07T16:34:07+08:00",
+  "generated_at": "2026-09-07T17:19:51+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 34101192518,
+  "run_id": 34105255324,
   "run_attempt": 1,
-  "head_sha": "a2c3f730a5f752ab177fc842dd17caf39e06549b",
-  "main_head_sha": "fa0e7ec2be675073d325171f774139b66b6da20d",
+  "head_sha": "e03a9ab7611f3f1e45572e98ca884d590d80a45a",
+  "main_head_sha": "0993b236dfc609d8ca98c23db27b6b4b4060056d",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
       "step": "Enforce hard consistency result",
       "number": 8
+    },
+    {
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 9
     }
   ],
   "changed_files": [
-    "requests/report_delivery/etf-system-review-20260907-c33046969179.json"
+    "scripts/process_state_sync_request.py",
+    "tests/test_dashboard_account_projection.py"
   ],
-  "commit_message": "request: deliver ETF system review 2026-09-07",
+  "commit_message": "fix: enforce canonical current lifecycle at decision and review ingress (#410)",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
