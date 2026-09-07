@@ -309,8 +309,7 @@ def _query_refresh_needed(root: Path, symbols: list[str], now: datetime, policy:
     for key, raw in (overseas.get("objects") or {}).items():
         candidates.append((str(key).upper(), _latest_as_of_beijing(raw)))
     for key, raw in (extended.get("objects") or {}).items():
-        latest = raw.get("latest") if isinstance(raw, dict) else {}
-        candidates.append((str(key).upper(), str(latest.get("as_of_beijing") or "")))
+        candidates.append((str(key).upper(), _latest_as_of_beijing(raw)))
     if requested:
         candidates = [x for x in candidates if x[0] in requested]
     if not candidates:
