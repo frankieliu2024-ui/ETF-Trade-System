@@ -44,6 +44,24 @@
 
 如果本轮还存在必须强调的执行边界，例如“只读研究”“不得合并”“等待前序集成”“必须复用某个历史 comment”，ChatGPT 可在上述短启动指令后追加一小句必要限定；但不得把 Issue 内完整 packet 再次复制到聊天中。用户无需自行从 Issue 中总结或改写 Codex 指令。
 
+### 1.4 GitHub Issue 写入纪律
+
+Chat 中的探索、脑暴、方案比较、临时假设和尚未收敛的优化建议默认不写入 GitHub。`@GitHub` 默认表示基于 current main 与正式 GitHub 事实工作，不自动表示授权把当前讨论写入 Issue。
+
+ChatGPT 可在无需逐次人工确认的情况下，对已有正式事项执行低频、必要的 GitHub 持久化，但仅限以下内容：
+
+- 新增且已确认、会改变当前事项状态或后续执行的生产事实；
+- `ADMISSION`、`INTEGRATION`、closure condition 等治理状态的实质变化；
+- 真正进入独立执行阶段所需的正式 `CODEX_EXECUTION_BRIEF`／`CODEX_EXECUTION_PACKET`；
+- 代码、PR、CI、latest-main replay、merged-main 验收、failure attribution 等正式执行或验证结果；
+- 已经收敛、且不持久化将导致后续执行器无法可靠恢复的正式结论。
+
+没有实质 delta 时，不新增 Issue comment。若变化只是当前状态更新，优先维护 Issue 正文或当前 control surface，不通过连续评论累积重复状态。只有需要保留独立审计事件、正式执行控制面或结构化执行结果时才新增 comment。
+
+新观点、新方案、新架构、scope 扩大或新的独立 Issue 默认先在 Chat 中收敛，并继续服从当前生产治理与 `NEW_WORK_ITEM_GATE`；不得因“可能有用”或用户仅使用 `@GitHub` 就提前正式化。复杂事项进入执行后，仍以一个明确 comment ID 的 `CODEX_EXECUTION_PACKET` 作为本轮唯一执行控制面；未被引用的旧评论仅作历史证据。
+
+这套纪律的目标是保持 GitHub 可恢复而不过度记录：**正式事实和正式执行自动落库；探索和讨论默认留在 Chat。**
+
 ## 2. 执行前置校验
 
 Codex 每次执行必须从执行时 latest `main` 和 `ETF_SYSTEM_INDEX.md` 起跑，并先输出 `LATEST_MAIN_AT_START`。如果本地或任务上下文中的起点不是执行时 GitHub `main` HEAD，必须先重新同步；不得在旧 SHA 上继续执行并把结果称为 latest-main 结论。
