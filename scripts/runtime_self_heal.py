@@ -64,6 +64,32 @@ def in_watch_window(now: datetime) -> bool:
     return (9 * 60 + 15 <= minute <= 11 * 60 + 40) or (13 * 60 <= minute <= 15 * 60 + 15)
 
 
+def expected_a_share_pulse(now: datetime) -> datetime | None:
+    """Return the pulse expected before a formal decision watchdog checkpoint.
+
+    These are the existing market-snapshot cadence points immediately preceding
+    the 10:25/11:25/13:25/14:25 decision nodes.  The watchdog only evaluates
+    them at the corresponding checkpoint; this does not change the producer
+    cadence or the interactive freshness contract.
+    """
+    minute = now.hour * 60 + now.minute
+    expected_by_checkpoint = {
+        10 * 60 + 24: 10 * 60 + 20,
+        11 * 60 + 24: 11 * 60 + 20,
+        13 * 60 + 24: 13 * 60 + 20,
+        14 * 60 + 24: 14 * 60 + 20,
+    }
+    expected_minute = expected_by_checkpoint.get(minute)
+    if expected_minute is None:
+        return None
+    return now.replace(
+        hour=expected_minute // 60,
+        minute=expected_minute % 60,
+        second=0,
+        microsecond=0,
+    )
+
+
 def same_day_current_required(now: datetime, current: dict, calendar: dict) -> bool:
     """Require today's canonical A-share CURRENT during an open session."""
     if not market_open_date(now, calendar):
@@ -131,6 +157,10 @@ def assess(now: datetime | None = None) -> dict:
     same_day_missing = same_day_current_missing(now, current, calendar)
     captured = current_capture_time(current)
     age_seconds = int((now - captured).total_seconds()) if captured else None
+    expected_pulse = expected_a_share_pulse(now) if open_day else None
+    expected_pulse_missing = bool(
+        expected_pulse and (captured is None or captured < expected_pulse)
+    )
     health_status = str(health.get("status") or health.get("quality_status") or "UNKNOWN").upper()
     consistency_status = str(consistency.get("status") or "UNKNOWN").upper()
     master_ver = master_version()
@@ -157,6 +187,15 @@ def assess(now: datetime | None = None) -> dict:
             classification, action, reason = "REPAIR_COOLDOWN", "NONE", f"same-day CURRENT is missing but snapshot refresh is in cooldown ({seconds_since_trigger}s < {min_retrigger}s)"
         else:
             classification, action, reason = "SAME_DAY_CURRENT_MISSING", "REFRESH_SNAPSHOT", f"market_date={current.get('market_date')!r}, expected={now.date().isoformat()}"
+    elif expected_pulse_missing:
+        last_trigger = parse_dt(previous.get("last_snapshot_refresh_trigger_at"))
+        seconds_since_trigger = int((now - last_trigger).total_seconds()) if last_trigger else None
+        if len(attempts) >= max_attempts:
+            classification, action, reason = "PERSISTENT_RUNTIME_FAILURE", "ESCALATE", "expected A-share pulse is missing and snapshot repair is already at the hourly attempt limit"
+        elif seconds_since_trigger is not None and seconds_since_trigger < min_retrigger:
+            classification, action, reason = "REPAIR_COOLDOWN", "NONE", f"expected A-share pulse is missing but snapshot refresh is in cooldown ({seconds_since_trigger}s < {min_retrigger}s)"
+        else:
+            classification, action, reason = "EXPECTED_PULSE_MISSING", "REFRESH_SNAPSHOT", f"expected pulse={expected_pulse.isoformat(timespec='seconds')}, capture={captured.isoformat(timespec='seconds') if captured else None}"
     elif watch_window and (captured is None or age_seconds is None or age_seconds > trigger_age or health_status == "FAILED"):
         last_trigger = parse_dt(previous.get("last_snapshot_refresh_trigger_at"))
         seconds_since_trigger = int((now - last_trigger).total_seconds()) if last_trigger else None
@@ -182,6 +221,8 @@ def assess(now: datetime | None = None) -> dict:
         "same_day_current_missing": same_day_missing,
         "current_capture_at": captured.isoformat(timespec="seconds") if captured else None,
         "current_capture_age_seconds": age_seconds,
+        "expected_pulse_at": expected_pulse.isoformat(timespec="seconds") if expected_pulse else None,
+        "expected_pulse_missing": expected_pulse_missing,
         "runtime_health_status": health_status,
         "system_consistency_status": consistency_status,
         "master_rules_version": master_ver,
