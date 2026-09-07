@@ -28,6 +28,15 @@ class SystemConsistencyCandidatePathTests(unittest.TestCase):
         self.assertIn('if [ -d "$candidate_root" ]; then', text)
         self.assertNotIn('else\n            validation_root="$PWD"', text)
 
+    def test_research_integration_receives_the_same_fresh_report_path(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        research = 'python scripts/check_research_integration.py'
+        handoff = 'export ETF_CONSISTENCY_REPORT_PATH="$RUNNER_TEMP/system_consistency.json"'
+        self.assertGreaterEqual(text.count(handoff), 2)
+        self.assertLess(text.index(handoff), text.index(research))
+        research_block = text[text.index(research) - 500:text.index(research) + len(research)]
+        self.assertIn(handoff, research_block)
+
 
 if __name__ == "__main__":
     unittest.main()
