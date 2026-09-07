@@ -1,27 +1,27 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-07T08:41:25+08:00",
+  "generated_at": "2026-09-07T08:58:07+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 34070566525,
+  "workflow_name": "Overseas pre-open pulse",
+  "run_id": 34071434127,
   "run_attempt": 1,
-  "head_sha": "bc66ffc6baf2b121674ebe148c1b920f09585d56",
-  "main_head_sha": "3594ebb6d20b9f74a1f39b271c24c3c8aea92530",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "8904cd216cbe095ab5a313d682f78f49a69ec76a",
+  "main_head_sha": "bc63b3fdf2610ae724c8b1dcdd847d890174f536",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 8
+      "job": "overseas",
+      "step": "Commit overseas contexts and runtime health",
+      "number": 12
     }
   ],
   "changed_files": [
-    "requests/live_snapshot/20260907_0836_global_apac_notification_recovery.json"
+    "requests/live_snapshot/20260907_0854_global_market_quote_refresh.json"
   ],
-  "commit_message": "request: recover APAC open notification after missed KOSPI move",
+  "commit_message": "data: request global market quote refresh",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
