@@ -155,6 +155,14 @@ def _first_value(*values: Any) -> Any:
     return None
 
 
+def _latest_as_of_beijing(raw: Any) -> str:
+    """Return a dynamic record timestamp without assuming latest is object-shaped."""
+    latest = raw.get("latest") if isinstance(raw, dict) else None
+    if not isinstance(latest, dict):
+        return ""
+    return str(latest.get("as_of_beijing") or "")
+
+
 def _beijing_time(value: Any) -> str:
     if not value:
         return ""
@@ -299,8 +307,7 @@ def _query_refresh_needed(root: Path, symbols: list[str], now: datetime, policy:
     overseas = _read_json(root, "data/state/overseas_context.json", {})
     extended = _read_json(root, "data/state/us_extended_hours_context.json", {})
     for key, raw in (overseas.get("objects") or {}).items():
-        latest = raw.get("latest") if isinstance(raw, dict) else {}
-        candidates.append((str(key).upper(), str(latest.get("as_of_beijing") or "")))
+        candidates.append((str(key).upper(), _latest_as_of_beijing(raw)))
     for key, raw in (extended.get("objects") or {}).items():
         latest = raw.get("latest") if isinstance(raw, dict) else {}
         candidates.append((str(key).upper(), str(latest.get("as_of_beijing") or "")))
