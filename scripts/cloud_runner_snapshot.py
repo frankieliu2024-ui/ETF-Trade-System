@@ -169,6 +169,19 @@ def morning_close_already_recorded(market_date: str) -> bool:
 
 
 def cli_path() -> str:
+    deadline = time.monotonic() + 60.0
+    while True:
+        found = shutil.which("hithink-finance")
+        if found:
+            return found
+        install_pid = os.environ.get("HITHINK_CLI_INSTALL_PID", "").strip()
+        if not install_pid or time.monotonic() >= deadline:
+            break
+        try:
+            os.kill(int(install_pid), 0)
+        except (OSError, ValueError):
+            break
+        time.sleep(0.25)
     found = shutil.which("hithink-finance")
     if found:
         return found
@@ -392,6 +405,7 @@ def fetch_eastmoney_etf(code: str, thscode: str, market_phase: str) -> dict:
 
 
 def fetch_etf_market_snapshot(cli: str, run_dir: Path, code: str, thscode: str, market_phase: str) -> dict:
+    cli = cli or cli_path()
     obj = run_json(cli, ["market", "snapshot", "--thscodes", thscode], run_dir / f"ETF_{code}_market.json")
     items = obj.get("data", {}).get("item") or []
     exact = [item for item in items if str(item.get("thscode") or "") == thscode]
@@ -433,6 +447,7 @@ def fetch_etf_with_fallback(cli: str, run_dir: Path, code: str, thscode: str) ->
 
 
 def fetch_etf(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
+    cli = cli or cli_path()
     obj = run_json(cli, ["fund", "snapshot", "--thscode", thscode], run_dir / f"ETF_{code}.json")
     items = obj.get("data", {}).get("item") or []
     if len(items) != 1:
@@ -478,7 +493,8 @@ def retry_failed_snapshot() -> int:
     started = time.monotonic()
     now_dt = now_shanghai()
     market_phase = a_share_market_phase(now_dt)
-    cli = cli_path()
+    # Tencent is primary; resolve Hithink only if a failed ETF reaches fallback.
+    cli = None
     run_dir = ROOT / "data" / "market" / "raw" / "hithink" / now_dt.date().isoformat() / f"{now_dt:%H%M%S}_quick_retry"
     replacements = {}
     with ThreadPoolExecutor(max_workers=min(max(1, MAX_WORKERS), len(failed_rows))) as pool:
@@ -581,7 +597,8 @@ def main() -> int:
         print(json.dumps({"ok": True, "skipped": True, "reason": "non_trading_weekend", "market_date": market_date}, ensure_ascii=False))
         return 0
 
-    cli = cli_path()
+    # Tencent is primary; resolve Hithink only if a failed ETF/index reaches fallback.
+    cli = None
     run_dir = ROOT / "data" / "market" / "raw" / "hithink" / market_date / f"{run_started_dt:%H%M%S}"
     snapshot_dir = ROOT / "data" / "market" / "snapshots"
     snapshot_dir.mkdir(parents=True, exist_ok=True)
@@ -608,7 +625,7 @@ def main() -> int:
         try:
             if PRIMARY_RUN_BYPASS.is_set():
                 raise RuntimeError("hithink-finance bypassed after a transient failure earlier in this run")
-            obj = run_json(cli, ["index", "snapshot", "--thscodes", thscode], run_dir / f"INDEX_{code}.json")
+            obj = run_json(cli or cli_path(), ["index", "snapshot", "--thscodes", thscode], run_dir / f"INDEX_{code}.json")
             returned = {x.get("thscode"): x for x in (obj.get("data", {}).get("item") or [])}
             if thscode not in returned:
                 raise RuntimeError(f"missing index row for {thscode}")
@@ -678,3 +695,4 @@ if __name__ == "__main__":
             pass
         print(f"cloud runner failed: {exc}", file=sys.stderr)
         raise SystemExit(1)
+

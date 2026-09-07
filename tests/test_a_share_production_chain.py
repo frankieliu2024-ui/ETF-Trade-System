@@ -79,6 +79,26 @@ class AShareProductionChainTests(unittest.TestCase):
         self.assertNotIn("data/state/CURRENT.json", on_demand)
         self.assertFalse((ROOT / ".github/workflows/full-snapshot-recovery.yml").exists())
 
+    def test_core_snapshot_does_not_eagerly_resolve_optional_hithink_cli(self):
+        snapshot = (ROOT / "scripts/cloud_runner_snapshot.py").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        self.assertIn("Start optional Hithink fallback CLI bootstrap", workflow)
+        self.assertIn("HITHINK_CLI_INSTALL_PID", workflow)
+        self.assertIn("Tencent is primary; resolve Hithink only if", snapshot)
+        self.assertGreaterEqual(snapshot.count("cli = None"), 2)
+        self.assertIn("cli = cli or cli_path()", snapshot)
+
+    def test_scheduled_formal_decision_wait_contract_is_separate_from_interactive_budget(self):
+        policy = json.loads((ROOT / "config/runtime_policy.json").read_text(encoding="utf-8"))
+        scheduled = policy["scheduled_formal_decision"]
+        interactive = policy["interactive_decision_freshness"]
+        self.assertEqual(interactive["short_wait_budget_seconds"], 20)
+        self.assertEqual(scheduled["wait_mode"], "UNTIL_POST_REQUEST_CURRENT_OR_TERMINAL_REFRESH_FAILURE")
+        self.assertGreater(scheduled["max_wait_seconds"], interactive["short_wait_budget_seconds"])
+        self.assertTrue(scheduled["reuse_inflight_refresh"])
+        self.assertTrue(scheduled["require_final_post_request_recheck"])
+
 
 if __name__ == "__main__":
     unittest.main()
+
