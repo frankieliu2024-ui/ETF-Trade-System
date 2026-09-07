@@ -74,6 +74,29 @@ class CanonicalNotificationTemplateTests(unittest.TestCase):
             self.assertIn(section, rendered["content"])
         self.assertIn("用户如需交易必须人工核对并下单", rendered["content"])
 
+    def test_risk_permission_uses_before_after_and_does_not_nest_producer_markdown(self):
+        event = self.event(
+            "FORMAL_DECISION_MATERIAL_CHANGE",
+            content="### 发生了什么\n错误的producer markdown不应被重复包裹",
+            confirmation_context={
+                "security_code": "",
+                "security_name": "",
+                "opportunity_status": "观察机会",
+                "previous_opportunity_status": "观察机会",
+                "risk_permission": "允许Trial",
+                "previous_risk_permission": "禁止新增",
+                "change_summary": ["风险许可：禁止新增 → 允许Trial"],
+                "decisive_reason": "数据与结构证据恢复，允许进入Trial评估。",
+                "decision_time_beijing": "2026-09-07T10:25:00+08:00",
+            },
+        )
+        rendered = center.render_canonical_notification(event)
+        self.assertEqual(rendered["title"], "【风险许可】禁止新增 → 允许Trial")
+        self.assertEqual(rendered["content"].count("### 发生了什么"), 1)
+        self.assertIn("### 当前风险许可", rendered["content"])
+        self.assertNotIn("### 当前正式状态", rendered["content"])
+        self.assertNotIn("错误的producer markdown不应被重复包裹", rendered["content"])
+
     def test_raw_risk_trigger_is_not_a_parallel_notification(self):
         self.assertIsNone(center.decision_event())
 

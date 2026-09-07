@@ -215,6 +215,73 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
                 self.assertEqual(notifications.persist_and_send(event, policy="test")["status"], "ALREADY_MANAGED")
             sender.assert_called_once()
 
+    def test_merge_preserves_sent_receipt_for_same_fact_across_source_event_ids(self):
+        from scripts.merge_notification_state import merge_notification_state
+
+        sent = {
+            "notification_id": "n-sent",
+            "source_event_id": "producer-a",
+            "event_type": "MARKET_SHOCK_ALERT",
+            "lifecycle_status": "SENT",
+            "sent_at": "2026-09-07T10:24:30+08:00",
+            "confirmation_context": {
+                "source_fact_id": "fact-515880-1024",
+                "event_family_id": "515880:2026-09-07:EXTREME:UP",
+            },
+        }
+        later_runner = {
+            "notification_id": "n-later",
+            "source_event_id": "producer-b",
+            "event_type": "MARKET_SHOCK_ALERT",
+            "lifecycle_status": "CREATED",
+            "created_at": "2026-09-07T10:27:00+08:00",
+            "confirmation_context": {
+                "source_fact_id": "fact-515880-1024",
+                "event_family_id": "515880:2026-09-07:EXTREME:UP",
+            },
+        }
+        merged = merge_notification_state(
+            {"notifications": [sent]}, {"notifications": [later_runner]}
+        )
+        self.assertEqual(len(merged["notifications"]), 1)
+        self.assertEqual(merged["notifications"][0]["lifecycle_status"], "SENT")
+
+    def test_material_upgrade_in_same_family_keeps_two_sent_receipts(self):
+        from scripts.merge_notification_state import merge_notification_state
+
+        first = {
+            "notification_id": "n-first",
+            "source_event_id": "producer-first",
+            "event_type": "MARKET_SHOCK_ALERT",
+            "lifecycle_status": "SENT",
+            "sent_at": "2026-09-07T10:24:18+08:00",
+            "confirmation_context": {
+                "source_fact_id": "fact-515880-1024",
+                "event_family_id": "515880:2026-09-07:EXTREME:UP",
+                "event_magnitude_pct": 3.91,
+            },
+        }
+        upgrade = {
+            "notification_id": "n-upgrade",
+            "source_event_id": "producer-upgrade",
+            "event_type": "MARKET_SHOCK_ALERT",
+            "lifecycle_status": "SENT",
+            "sent_at": "2026-09-07T10:31:00+08:00",
+            "confirmation_context": {
+                "source_fact_id": "fact-515880-1031",
+                "event_family_id": "515880:2026-09-07:EXTREME:UP",
+                "event_magnitude_pct": 5.50,
+            },
+        }
+        merged = merge_notification_state(
+            {"notifications": [first]}, {"notifications": [upgrade]}
+        )
+        self.assertEqual(len(merged["notifications"]), 2)
+        self.assertEqual(
+            {item["notification_id"] for item in merged["notifications"]},
+            {"n-first", "n-upgrade"},
+        )
+
     def test_pushplus_failure_is_persisted_with_response(self):
         with tempfile.TemporaryDirectory() as td:
             state_file = Path(td) / "notification_center.json"
