@@ -81,6 +81,95 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertEqual(status["classification"], "HEALTHY")
         self.assertEqual(status["recommended_action"], "NONE")
 
+    def test_expected_decision_pulse_missing_triggers_recovery_even_when_age_is_under_threshold(self):
+        status = self._assess(
+            current={
+                "market_date": "2026-09-01",
+                "captured_at": "2026-09-01T10:15:00+08:00",
+                "latest_valid_node": "1010",
+                "node_status": "READY",
+                "rules_version": "V2.2.31",
+            },
+            now=datetime.fromisoformat("2026-09-01T10:24:00+08:00"),
+        )
+        self.assertEqual(status["expected_pulse_at"], "2026-09-01T10:20:00+08:00")
+        self.assertTrue(status["expected_pulse_missing"])
+        self.assertEqual(status["classification"], "EXPECTED_PULSE_MISSING")
+        self.assertEqual(status["recommended_action"], "REFRESH_SNAPSHOT")
+
+    def test_expected_decision_pulse_is_healthy_when_current_has_arrived(self):
+        status = self._assess(
+            current={
+                "market_date": "2026-09-01",
+                "captured_at": "2026-09-01T10:20:00+08:00",
+                "latest_valid_node": "1020",
+                "node_status": "READY",
+                "rules_version": "V2.2.31",
+            },
+            now=datetime.fromisoformat("2026-09-01T10:24:00+08:00"),
+        )
+        self.assertFalse(status["expected_pulse_missing"])
+        self.assertEqual(status["recommended_action"], "NONE")
+
+    def test_midday_and_auction_contracts_are_not_reinterpreted_as_decision_pulses(self):
+        auction = self._assess(
+            current={
+                "market_date": "2026-09-01",
+                "captured_at": "2026-09-01T09:25:00+08:00",
+                "latest_valid_node": "auction",
+                "node_status": "READY",
+                "rules_version": "V2.2.31",
+            },
+            now=datetime.fromisoformat("2026-09-01T09:25:00+08:00"),
+        )
+        midday = self._assess(
+            current={
+                "market_date": "2026-09-01",
+                "captured_at": "2026-09-01T11:30:00+08:00",
+                "latest_valid_node": "close",
+                "node_status": "READY",
+                "rules_version": "V2.2.31",
+            },
+            now=datetime.fromisoformat("2026-09-01T12:25:00+08:00"),
+        )
+        self.assertIsNone(auction["expected_pulse_at"])
+        self.assertIsNone(midday["expected_pulse_at"])
+
+    def test_expected_pulse_recovery_honors_cooldown_and_attempt_limit(self):
+        current = {
+            "market_date": "2026-09-01",
+            "captured_at": "2026-09-01T10:15:00+08:00",
+            "latest_valid_node": "1010",
+            "node_status": "READY",
+            "rules_version": "V2.2.31",
+        }
+        now = datetime.fromisoformat("2026-09-01T10:24:00+08:00")
+        with mock.patch.object(runtime_self_heal, "load_json") as load:
+            def fake_load(path, default=None):
+                if str(path).endswith("runtime_policy.json"):
+                    return {"self_healing": {"enabled": True, "watchdog_trigger_age_seconds": 780, "minimum_retrigger_seconds": 480, "max_snapshot_repair_attempts_per_hour": 2}}
+                if str(path).endswith("a_share_trading_calendar_2026.json"):
+                    return {"closed_dates": []}
+                if str(path).endswith("CURRENT.json"):
+                    return current
+                if str(path).endswith("runtime_health.json"):
+                    return {"status": "PASS"}
+                if str(path).endswith("system_consistency.json"):
+                    return {"status": "PASS"}
+                if str(path).endswith("self_healing_status.json"):
+                    return {"last_snapshot_refresh_trigger_at": "2026-09-01T10:20:00+08:00"}
+                return {}
+            load.side_effect = fake_load
+            with mock.patch.object(runtime_self_heal, "master_version", return_value="V2.2.31"):
+                status = runtime_self_heal.assess(now)
+        self.assertEqual(status["classification"], "REPAIR_COOLDOWN")
+
+    def test_watchdog_deduplicates_inflight_market_snapshot_dispatch(self):
+        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        dispatch = workflow.split("- name: Dispatch replacement market snapshot", 1)[1]
+        self.assertIn("gh run list --workflow market-snapshot.yml", dispatch)
+        self.assertIn('status == "queued" or .status == "in_progress"', dispatch)
+
     def test_closed_day_does_not_trigger_opening_recovery(self):
         status = self._assess(
             current={
