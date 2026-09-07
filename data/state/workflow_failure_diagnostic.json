@@ -1,45 +1,30 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-07T15:42:11+08:00",
+  "generated_at": "2026-09-07T15:44:20+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 34096680023,
+  "run_id": 34096825226,
   "run_attempt": 1,
-  "head_sha": "9853a33a7e7f5e7879f0f131886a482962bceedb",
-  "main_head_sha": "8f239be703509868a497ef67314303cefe7f415c",
+  "head_sha": "89acdf2e3ad5eceaa8626edd5997ea169648940c",
+  "main_head_sha": "4bbad52308e67dc427c5ba64cef96432632e4111",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 6
+      "step": "Enforce hard consistency result",
+      "number": 8
+    },
+    {
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 9
     }
   ],
   "changed_files": [
-    "data/state/300750_oversold_reversal_evidence.json",
-    "data/state/capital_efficiency_ranking.json",
-    "data/state/dashboard_update_candidate.json",
-    "data/state/decision_context.json",
-    "data/state/decision_trigger.json",
-    "data/state/e2e_status.json",
-    "data/state/execution_quality.json",
-    "data/state/if_ic_basis_5d_evidence.json",
-    "data/state/intraday_path_features.json",
-    "data/state/market_structure_context.json",
-    "data/state/notification_center.json",
-    "data/state/provider_metrics.json",
-    "data/state/relative_strength.json",
-    "data/state/research_context.json",
-    "data/state/research_evidence_delta.json",
-    "data/state/research_execution_summary.json",
-    "data/state/research_master_candidates.json",
-    "data/state/skfolio_risk_evidence.json",
-    "events/research/daily_features/2026-09-07.json",
-    "events/research/evidence_snapshots/2026-09-07/20260907_151211_0800.json",
-    "requests/live_snapshot/20260907_153921_post_close_review.json"
+    "requests/report_delivery/etf-trade-review-2026-09-07-20260907T1541390800.json"
   ],
-  "commit_message": "Merge remote-tracking branch 'origin/main' into codex/385-market-clock-liveness",
-  "commit_author": "Codex <codex@openai.local>",
+  "commit_message": "request: deliver 2026-09-07 ETF trade review",
+  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
