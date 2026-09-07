@@ -1,0 +1,63 @@
+{
+  "request_id": "20260907_152100_broker_account_sync_review",
+  "requested_at_beijing": "2026-09-07T15:21:00+08:00",
+  "interaction_scenario": "BROKER_SCREENSHOT_SYNC",
+  "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+  "requested_by": "chatgpt",
+  "reason": "Persist the user's 2026-09-07 post-close broker holdings screenshot as the latest account fact for formal daily review. The screenshot shows unchanged quantities and cash versus the prior confirmed account fact and no new trade evidence; update broker-observed account totals, prices and PnL without inferring any trade or cash transfer. Broker screenshot time is not a market-provider quote timestamp.",
+  "account_fact": {
+    "status": "VALID",
+    "updated_at": "2026-09-07T15:21:00+08:00",
+    "source": "BROKER_HOLDINGS_SCREENSHOT_20260907_1521_USER_PROVIDED",
+    "broker_displayed_at_beijing": "2026-09-07T15:21:00+08:00",
+    "last_confirmed_market_date": "2026-09-07",
+    "total_asset": 182978.32,
+    "stock_market_value": 176507.70,
+    "cash": 6470.62,
+    "holding_pnl": -16559.15,
+    "daily_pnl": 3056.50,
+    "daily_pnl_pct": 1.70,
+    "orders": [],
+    "trades": [
+      {
+        "name": "黄金ETF",
+        "code": "518880",
+        "side": "BUY",
+        "quantity": 500,
+        "price": 9.109,
+        "amount": 4554.5,
+        "executed_at": "2026-09-03T11:21:04+08:00",
+        "source": "BROKER_TRADE_SCREENSHOT_USER_CONFIRMED"
+      }
+    ],
+    "positions": [
+      {"asset_type":"STOCK","name":"宁德时代","code":"300750","quantity":100,"available_quantity":100,"cost":393.781,"last_price":348.200,"market_value":34820.00,"holding_pnl":-4558.07,"holding_pnl_pct":-11.575},
+      {"asset_type":"STOCK","name":"工业富联","code":"601138","quantity":500,"available_quantity":500,"cost":58.054,"last_price":66.570,"market_value":33285.00,"holding_pnl":4257.78,"holding_pnl_pct":14.668},
+      {"asset_type":"ETF","name":"半导体设备ETF","code":"561980","quantity":38900,"available_quantity":38900,"cost":0.847,"last_price":0.664,"market_value":25829.60,"holding_pnl":-7135.30,"holding_pnl_pct":-21.645},
+      {"asset_type":"ETF","name":"科创50ETF","code":"588000","quantity":14100,"available_quantity":14100,"cost":2.099,"last_price":1.705,"market_value":24040.50,"holding_pnl":-5553.91,"holding_pnl_pct":-18.767},
+      {"asset_type":"ETF","name":"科创创业ETF","code":"159781","quantity":19500,"available_quantity":19500,"cost":1.269,"last_price":1.062,"market_value":20709.00,"holding_pnl":-4039.60,"holding_pnl_pct":-16.323},
+      {"asset_type":"ETF","name":"纳指ETF","code":"159941","quantity":12200,"available_quantity":12200,"cost":1.626,"last_price":1.668,"market_value":20349.60,"holding_pnl":513.00,"holding_pnl_pct":2.586},
+      {"asset_type":"STOCK","name":"电科思仪","code":"301689","quantity":500,"available_quantity":500,"cost":16.000,"last_price":16.000,"market_value":8000.00,"holding_pnl":0.00,"holding_pnl_pct":0.000,"origin":"IPO_ALLOTMENT_ORIGIN","origin_fact":"confirmed_settlement_obligation"},
+      {"asset_type":"ETF","name":"电网设备ETF","code":"159326","quantity":3000,"available_quantity":3000,"cost":1.653,"last_price":1.654,"market_value":4962.00,"holding_pnl":4.00,"holding_pnl_pct":0.081},
+      {"asset_type":"ETF","name":"黄金ETF","code":"518880","quantity":500,"available_quantity":500,"cost":9.118,"last_price":9.024,"market_value":4512.00,"holding_pnl":-47.05,"holding_pnl_pct":-1.032}
+    ],
+    "settlement_obligations": [
+      {
+        "obligation_type": "IPO_ALLOTMENT_PAYMENT",
+        "security_name": "电科思仪",
+        "security_code": "301689",
+        "quantity": 500,
+        "subscription_price": 16,
+        "required_cash": 8000,
+        "payment_deadline_beijing": "2026-09-01T16:00:00+08:00",
+        "status": "SETTLED",
+        "cash_must_remain_available": false,
+        "settled_at_beijing": "2026-09-01T20:44:22+08:00",
+        "settlement_evidence": "BROKER_HOLDINGS_SCREEN_20260902_2105: 301689 holding remains registered, 500 shares at cost 16.000",
+        "source": "BROKER_SCREENSHOT_20260902_2105_USER_PROVIDED",
+        "pit_timestamp": "2026-09-02T21:05:00+08:00"
+      }
+    ],
+    "validity_mode": "EVENT_DRIVEN_CARRY_FORWARD"
+  }
+}
