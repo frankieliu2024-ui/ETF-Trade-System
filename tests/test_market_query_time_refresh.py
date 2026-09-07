@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts.market_quote_router import build_market_quote_context
+from scripts.market_quote_router import _query_refresh_needed, build_market_quote_context
 
 
 class QueryTimeRefreshTests(unittest.TestCase):
@@ -219,3 +219,50 @@ class QueryTimeRefreshTests(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
+
+
+class DynamicLatestEvidenceTests(unittest.TestCase):
+    def _root(self, overseas_record, extended_record):
+        root = Path(tempfile.mkdtemp())
+        (root / "data/state").mkdir(parents=True)
+        (root / "config").mkdir(parents=True)
+        (root / "data/state/CURRENT.json").write_text(json.dumps({"latest_snapshot": ""}), encoding="utf-8")
+        (root / "data/state/overseas_context.json").write_text(json.dumps({
+            "objects": {"NDX": overseas_record}
+        }), encoding="utf-8")
+        (root / "data/state/us_extended_hours_context.json").write_text(json.dumps({
+            "objects": {"QQQ": extended_record}
+        }), encoding="utf-8")
+        (root / "config/runtime_policy.json").write_text(json.dumps({
+            "query_time_refresh_preference": {"active_market_max_age_seconds": 300}
+        }), encoding="utf-8")
+        return root
+
+    def _needs_refresh(self, root):
+        return _query_refresh_needed(
+            root,
+            [],
+            datetime.fromisoformat("2026-08-25T00:30:00+08:00"),
+            {"query_time_refresh_preference": {"active_market_max_age_seconds": 300}},
+        )
+
+    def test_normal_latest_dict_remains_fresh_for_both_dynamic_contexts(self):
+        latest = {"as_of_beijing": "2026-08-25T00:29:00+08:00"}
+        root = self._root({"latest": latest}, {"latest": latest})
+        self.assertFalse(self._needs_refresh(root))
+
+    def test_null_latest_is_missing_evidence_and_requests_refresh(self):
+        root = self._root({"latest": None}, {"latest": None})
+        self.assertTrue(self._needs_refresh(root))
+
+    def test_absent_latest_is_missing_evidence_and_requests_refresh(self):
+        root = self._root({}, {})
+        self.assertTrue(self._needs_refresh(root))
+
+    def test_non_dict_latest_is_missing_evidence_and_requests_refresh(self):
+        root = self._root({"latest": ["not", "a", "record"]}, {"latest": "invalid"})
+        self.assertTrue(self._needs_refresh(root))
+
+    def test_missing_timestamp_is_missing_evidence_and_requests_refresh(self):
+        root = self._root({"latest": {}}, {"latest": {"close": 100}})
+        self.assertTrue(self._needs_refresh(root))
