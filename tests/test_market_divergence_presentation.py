@@ -76,6 +76,24 @@ class MarketDivergencePresentationTests(unittest.TestCase):
         self.assertEqual(normalized["security_code"], "US_TECH_DIVERGENCE")
         self.assertEqual(normalized["confirmation_context"], identity)
 
+    @patch.object(
+        common,
+        "_user_visible_code_labels",
+        return_value={"515880": "通信ETF（515880）"},
+    )
+    def test_single_etf_alert_is_normalized_without_touching_identity(self, _labels):
+        event = self.event(
+            code="515880",
+            title="【市场异动】515880出现极端波动",
+            content="对象：515880；当前涨跌：+3.20%。",
+            object_codes=["515880"],
+        )
+        identity = copy.deepcopy(event["confirmation_context"])
+        normalized = common._normalize_user_visible_event(event)
+        self.assertIn("通信ETF（515880）", normalized["title"] + normalized["content"])
+        self.assertEqual(normalized["security_code"], "515880")
+        self.assertEqual(normalized["confirmation_context"], identity)
+
 
 if __name__ == "__main__":
     unittest.main()
