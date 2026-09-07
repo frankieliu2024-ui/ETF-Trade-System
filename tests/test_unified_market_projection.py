@@ -52,6 +52,7 @@ class UnifiedMarketProjectionTests(unittest.TestCase):
                 },
             },
             {"generated_at_beijing": "2026-09-07T08:42:11+08:00", "quality_status": "PASS", "objects": {}},
+            {"status": "STALE"},
         )
         self.assertEqual(out["domains"]["A_SHARE"]["market_date"], "2026-09-04")
         self.assertEqual(out["domains"]["APAC"]["market_date"], "")
@@ -59,6 +60,29 @@ class UnifiedMarketProjectionTests(unittest.TestCase):
         self.assertEqual(objects["KOSPI"]["market_date"], "2026-09-07")
         self.assertEqual(objects["KOSPI"]["freshness_status"], "FRESH")
         self.assertEqual(objects["N225"]["provider_as_of_beijing"], "2026-09-07T08:41:16+08:00")
+
+    def test_quality_and_query_freshness_are_separate(self):
+        out = build_market_domain_projection(
+            self.current, {}, {}, {"status": "STALE"}
+        )
+        self.assertEqual(out["domains"]["A_SHARE"]["quality_status"], "PASS")
+        self.assertEqual(out["domains"]["A_SHARE"]["freshness_status"], "STALE")
+
+    def test_ndx_and_sox_are_us_cash_not_apac(self):
+        overseas = {
+            "generated_at_beijing": "2026-09-07T08:41:54+08:00",
+            "quality_status": "PASS",
+            "objects": {
+                key: {"quality_status": "PASS", "freshness_status": "FRESH", "latest": {"market_date_local": "2026-09-07"}}
+                for key in ("NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH")
+            },
+        }
+        out = build_market_domain_projection(self.current, overseas, {}, {"status": "STALE"})
+        apac = {item["object"] for item in out["domains"]["APAC"]["objects"]}
+        us_cash = {item["object"] for item in out["domains"]["US_CASH_REFERENCE"]["objects"]}
+        self.assertNotIn("NDX", apac)
+        self.assertNotIn("SOX", apac)
+        self.assertEqual(us_cash, {"NDX", "SOX"})
 
     def test_prior_reference_and_us_context_remain_object_scoped(self):
         out = build_market_domain_projection(

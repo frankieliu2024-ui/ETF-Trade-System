@@ -154,9 +154,10 @@ def build_fast_path_latency(request: dict, current: dict, decision: dict, market
     return {"t0": t0, "t_refresh_start_or_reuse": t_refresh, "t_new_current": t_new if freshness.get("resolved_post_request") or freshness.get("post_request") else "", "t_decision_ready": t_decision, "t_reply_or_output_ready": reply_ready, "refresh_start_latency": _duration_seconds(t0, t_refresh), "refresh_duration": _duration_seconds(t_refresh, t_new), "post_current_decision_latency": _duration_seconds(t_new, t_decision), "total_fast_path_latency": _duration_seconds(t0, reply_ready), "measurement_status": "OBSERVED_FIELDS_ONLY; MISSING_TIMESTAMPS_REMAIN_EXPLICIT", "refresh_mode": market_quote.get("refresh_mode") or ""}
 
 
-def build_market_domain_projection(current: dict, overseas: dict, us_extended: dict) -> dict:
+def build_market_domain_projection(current: dict, overseas: dict, us_extended: dict, freshness: dict | None = None) -> dict:
     """Expose domain facts without flattening them into A-share CURRENT semantics."""
     a_freshness = current.get("data_freshness") or {}
+    query_freshness = freshness or {}
     domains = {
         "A_SHARE": {
             "market_date": current.get("market_date") or a_freshness.get("market_date") or "",
@@ -165,11 +166,21 @@ def build_market_domain_projection(current: dict, overseas: dict, us_extended: d
             "provider_as_of_beijing": a_freshness.get("provider_as_of") or "",
             "as_of_beijing": current.get("captured_at") or a_freshness.get("captured_at_beijing") or "",
             "quality_status": a_freshness.get("status") or "MISSING",
-            "freshness_status": a_freshness.get("status") or "MISSING",
+            "freshness_status": query_freshness.get("status") or "STALE",
             "latest_snapshot": current.get("latest_snapshot") or "",
             "objects": [],
         },
         "APAC": {
+            "market_date": "",
+            "market_phase": "MIXED_BY_OBJECT",
+            "provider": "DOMAIN_OBJECT_PROVIDERS",
+            "provider_as_of_beijing": "",
+            "as_of_beijing": overseas.get("generated_at_beijing") or "",
+            "quality_status": overseas.get("quality_status") or "MISSING",
+            "freshness_status": "MIXED_BY_OBJECT",
+            "objects": [],
+        },
+        "US_CASH_REFERENCE": {
             "market_date": "",
             "market_phase": "MIXED_BY_OBJECT",
             "provider": "DOMAIN_OBJECT_PROVIDERS",
@@ -190,11 +201,16 @@ def build_market_domain_projection(current: dict, overseas: dict, us_extended: d
             "objects": [],
         },
     }
+    apac_objects = {"N225", "KOSPI", "TWII", "HSTECH"}
+    us_cash_objects = {"NDX", "SOX"}
     for key, value in (overseas.get("objects") or {}).items():
         if not isinstance(value, dict):
             continue
         latest = value.get("latest") or {}
-        domains["APAC"]["objects"].append({
+        domain = "APAC" if key in apac_objects else "US_CASH_REFERENCE" if key in us_cash_objects else None
+        if domain is None:
+            continue
+        domains[domain]["objects"].append({
             "object": key,
             "market_date": latest.get("market_date_local") or "",
             "market_phase": value.get("market_phase_at_generation") or "",
@@ -260,7 +276,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     etf_universe = read_json(root / CANONICAL_FILES["etf_monitor_universe"], {})
     trading_calendar = read_json(root / CANONICAL_FILES["trading_calendar"], {})
     freshness = evaluate_freshness(current, policy)
-    market_domain_projection = build_market_domain_projection(current, overseas_context, us_extended)
+    market_domain_projection = build_market_domain_projection(current, overseas_context, us_extended, freshness)
     trading_day_status = current_trading_day_status(trading_calendar)
     account_gate = account_gate_status(current, account, policy)
     system_objects = []
