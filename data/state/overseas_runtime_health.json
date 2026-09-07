@@ -1,49 +1,52 @@
 {
-  "status": "PASS",
+  "status": "DEGRADED",
   "pulse_success": true,
   "hard_error_count": 0,
-  "warning_count": 0,
+  "warning_count": 2,
   "hard_errors": [],
-  "warnings": [],
-  "scheduled_for": "*/10 0-7 * * 1-5",
+  "warnings": [
+    "NDX: quality=DEGRADED error=",
+    "SOX: quality=DEGRADED error="
+  ],
+  "scheduled_for": "2,22,42 0-7 * * 1-5",
   "trigger": "schedule",
-  "started_at": "2026-09-07T07:31:29Z",
-  "provider_as_of": "2026-09-07T15:31:08+08:00",
+  "started_at": "2026-09-07T13:34:00Z",
+  "provider_as_of": "2026-09-07T17:59:00+08:00",
   "provider_as_of_by_object": {
     "NDX": "2026-09-05T04:00:00+08:00",
     "SOX": "2026-09-05T04:00:00+08:00",
     "N225": "2026-09-07T14:30:00+08:00",
-    "KOSPI": "2026-09-07T15:31:00+08:00",
+    "KOSPI": "2026-09-07T17:59:00+08:00",
     "TWII": "2026-09-07T13:33:00+08:00",
-    "HSTECH": "2026-09-07T15:31:08+08:00"
+    "HSTECH": "2026-09-07T16:08:40+08:00"
   },
-  "finished_at": "2026-09-07T07:31:29Z",
-  "commit_sha": "3183146a0f7311870c46a7e3b61bbd22a8c6aa01",
-  "run_id": "34095829315",
+  "finished_at": "2026-09-07T13:34:00Z",
+  "commit_sha": "95dab5b91a87281a767f9749b85e3012c97ffce1",
+  "run_id": "34128058834",
   "market_date_beijing": "2026-09-07",
-  "overseas_quality_status": "PASS",
+  "overseas_quality_status": "DEGRADED",
   "us_extended_hours_status": "DEGRADED",
   "objects": {
     "NDX": {
-      "quality_status": "PASS",
+      "quality_status": "DEGRADED",
       "as_of_beijing": "2026-09-05T04:00:00+08:00",
       "market_date_local": "2026-09-04",
       "provider": "yahoo_chart_api",
       "symbol": "^NDX",
-      "market_phase": "PRE_OPEN",
-      "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 3571.07,
+      "market_phase": "OPEN",
+      "freshness_status": "STALE",
+      "delay_minutes": 3933.85,
       "error": ""
     },
     "SOX": {
-      "quality_status": "PASS",
+      "quality_status": "DEGRADED",
       "as_of_beijing": "2026-09-05T04:00:00+08:00",
       "market_date_local": "2026-09-04",
       "provider": "yahoo_chart_api",
       "symbol": "^SOX",
-      "market_phase": "PRE_OPEN",
-      "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 3571.07,
+      "market_phase": "OPEN",
+      "freshness_status": "STALE",
+      "delay_minutes": 3933.85,
       "error": ""
     },
     "N225": {
@@ -54,18 +57,18 @@
       "symbol": "100.N225",
       "market_phase": "CLOSED",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 61.07,
+      "delay_minutes": 423.85,
       "error": ""
     },
     "KOSPI": {
       "quality_status": "PASS",
-      "as_of_beijing": "2026-09-07T15:31:00+08:00",
+      "as_of_beijing": "2026-09-07T17:59:00+08:00",
       "market_date_local": "2026-09-07",
       "provider": "naver_finance",
       "symbol": "KOSPI",
       "market_phase": "CLOSED",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 0.07,
+      "delay_minutes": 214.85,
       "error": ""
     },
     "TWII": {
@@ -76,18 +79,18 @@
       "symbol": "tse_t00.tw",
       "market_phase": "CLOSED",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 118.07,
+      "delay_minutes": 480.85,
       "error": ""
     },
     "HSTECH": {
       "quality_status": "PASS",
-      "as_of_beijing": "2026-09-07T15:31:08+08:00",
+      "as_of_beijing": "2026-09-07T16:08:40+08:00",
       "market_date_local": "2026-09-07",
       "provider": "eastmoney_push2",
       "symbol": "124.HSTECH",
-      "market_phase": "OPEN",
-      "freshness_status": "FRESH",
-      "delay_minutes": 0.0,
+      "market_phase": "CLOSED",
+      "freshness_status": "SESSION_REFERENCE",
+      "delay_minutes": 325.19,
       "error": ""
     }
   },
@@ -103,12 +106,12 @@
     "yahoo_chart_api:HSTECH.HK": {
       "status": "ACTIVE",
       "consecutive_failures": 0,
-      "last_success_at": "2026-09-07T07:31:04+00:00"
+      "last_success_at": "2026-09-07T13:33:51+00:00"
     },
     "eastmoney_push2:124.HSTECH": {
       "status": "ACTIVE",
       "consecutive_failures": 0,
-      "last_success_at": "2026-09-07T07:31:04+00:00",
+      "last_success_at": "2026-09-07T13:33:51+00:00",
       "failure_class": "UNKNOWN",
       "bypass_date": "2026-09-07"
     }
