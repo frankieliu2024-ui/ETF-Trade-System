@@ -2,6 +2,7 @@ import re
 import json
 import tempfile
 import unittest
+from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
 
@@ -107,11 +108,14 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
             decision_dir.mkdir(parents=True)
             trade_dir.mkdir(parents=True)
             decision_id = "20260902_141753_trade_159326"
+            decision_time = datetime.now(reconciliation.TZ) - timedelta(minutes=10)
+            trade_time = decision_time - timedelta(minutes=4)
+            market_date = decision_time.date().isoformat()
             (decision_dir / f"{decision_id}.json").write_text(json.dumps({
                 "event_type": "FORMAL_DECISION",
                 "decision_id": decision_id,
-                "market_date": "2026-09-02",
-                "decision_time_beijing": "2026-09-02T14:21:31+08:00",
+                "market_date": market_date,
+                "decision_time_beijing": decision_time.isoformat(timespec="seconds"),
                 "candidate_code": "159326",
                 "candidate_name": "电网设备ETF",
                 "formal_decision": {
@@ -127,7 +131,7 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
                 "quantity": 3000,
                 "price": 1.651,
                 "amount": 4953.0,
-                "executed_at_beijing": "2026-09-02T14:17:53+08:00",
+                "executed_at_beijing": trade_time.isoformat(timespec="seconds"),
                 "linked_decision_id": decision_id,
                 "execution_status": "EXECUTED",
             }), encoding="utf-8")
@@ -137,7 +141,6 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
             self.assertEqual(result["actionable_count"], 0)
             match = next(item for item in result["matches"] if event_id in item["trade_event_ids"])
             self.assertEqual(match["status"], "CONFIRMED_BY_TRADE_EVENT")
-
 
     def test_candidate_does_not_create_buy_for_explicit_sell_decision(self):
         event = {
@@ -173,7 +176,6 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
         self.assertEqual(intents[0]["code"], "518880")
         self.assertEqual(intents[0]["side"], "BUY")
         self.assertEqual(intents[0]["planned_amount_yuan"], 4554)
-
 
     def test_issue_268_legacy_case_row_passes_at_post_close(self):
         with tempfile.TemporaryDirectory() as tmp:
