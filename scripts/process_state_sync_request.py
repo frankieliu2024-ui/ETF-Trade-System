@@ -1272,10 +1272,34 @@ def write_trade_review_required(event: dict) -> None:
     })
 
 
+def _explicit_fact_type(request: dict) -> str:
+    return str(
+        request.get("formal_fact_type")
+        or request.get("fact_type")
+        or request.get("ingress_intent")
+        or ""
+    ).strip().upper()
+
+
 def is_broker_screenshot_request(request: dict) -> bool:
+    """Recognize broker facts from an explicit contract, with legacy compatibility.
+
+    Free-form provenance remains metadata; it is not the business contract.
+    The historical query-time request is accepted because its stable reason and
+    ChatGPT origin explicitly identify a broker screenshot adoption.
+    """
+    explicit = _explicit_fact_type(request)
+    if explicit in {"BROKER_ACCOUNT_SNAPSHOT", "ACCOUNT_FACT_CONFIRMATION", "BROKER_SCREENSHOT"}:
+        return True
+    if str(request.get("interaction_scenario") or "").strip().upper() == "BROKER_SCREENSHOT_SYNC":
+        return True
+    if str(request.get("source") or "").strip().upper() == "CHATGPT_USER_BROKER_SCREENSHOT":
+        return True
+    reason = str(request.get("reason") or "").strip().upper()
+    requested_by = str(request.get("requested_by") or "").strip().lower()
     return (
-        str(request.get("source") or "").upper() == "CHATGPT_USER_BROKER_SCREENSHOT"
-        or str(request.get("interaction_scenario") or "").upper() == "BROKER_SCREENSHOT_SYNC"
+        requested_by == "chatgpt"
+        and reason == "USER_BROKER_SCREENSHOT_QUERY_TIME_REFRESH"
     )
 
 
