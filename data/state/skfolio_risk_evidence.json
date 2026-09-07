@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-07T07:12:27Z",
-  "status": "DEGRADED",
+  "generated_at": "2026-09-07T07:36:48Z",
+  "status": "READY",
   "mode": "SKFOLIO_VALIDATED_RISK_EVIDENCE",
   "validation_basis": {
     "stage2_status": "PASS",
@@ -22,7 +22,7 @@
   "current_market_date": "2026-09-07",
   "data_alignment": "ALIGNED_WITH_CURRENT_MARKET_DATE",
   "account_fact_status": "VALID",
-  "account_fact_updated_at": "2026-09-04T15:03:00+08:00",
+  "account_fact_updated_at": "2026-09-07T15:21:00+08:00",
   "eligible_etf_count": 11,
   "universe_high_corr_components": [
     {
@@ -115,11 +115,77 @@
     }
   ],
   "current_account": {
-    "etf_weights": {},
-    "high_corr_components": [],
-    "risk_side_release_efficiency": []
+    "etf_weights": {
+      "半导体设备ETF（561980）": 0.2573,
+      "科创50ETF（588000）": 0.2394,
+      "科创创业ETF（159781）": 0.2063,
+      "纳指ETF（159941）": 0.2027,
+      "电网设备ETF（159326）": 0.0494,
+      "黄金ETF（518880）": 0.0449
+    },
+    "high_corr_components": [
+      {
+        "codes": [
+          "159326",
+          "159781",
+          "561980",
+          "588000"
+        ],
+        "assets": [
+          "电网设备ETF（159326）",
+          "科创创业ETF（159781）",
+          "半导体设备ETF（561980）",
+          "科创50ETF（588000）"
+        ],
+        "account_etf_weight_share": 0.7524
+      }
+    ],
+    "risk_side_release_efficiency": [
+      {
+        "code": "561980",
+        "name": "半导体设备ETF",
+        "display_name": "半导体设备ETF（561980）",
+        "risk_side_release_efficiency": 0.5805,
+        "account_etf_weight": 0.2573
+      },
+      {
+        "code": "588000",
+        "name": "科创50ETF",
+        "display_name": "科创50ETF（588000）",
+        "risk_side_release_efficiency": 0.515,
+        "account_etf_weight": 0.2394
+      },
+      {
+        "code": "159781",
+        "name": "科创创业ETF",
+        "display_name": "科创创业ETF（159781）",
+        "risk_side_release_efficiency": 0.4499,
+        "account_etf_weight": 0.2063
+      },
+      {
+        "code": "159326",
+        "name": "电网设备ETF",
+        "display_name": "电网设备ETF（159326）",
+        "risk_side_release_efficiency": 0.2569,
+        "account_etf_weight": 0.0494
+      },
+      {
+        "code": "159941",
+        "name": "纳指ETF",
+        "display_name": "纳指ETF（159941）",
+        "risk_side_release_efficiency": 0.1765,
+        "account_etf_weight": 0.2027
+      },
+      {
+        "code": "518880",
+        "name": "黄金ETF",
+        "display_name": "黄金ETF（518880）",
+        "risk_side_release_efficiency": 0.0861,
+        "account_etf_weight": 0.0449
+      }
+    ]
   },
-  "use_in_current_decision": false,
+  "use_in_current_decision": true,
   "interpretation_rule": "本证据只回答共同风险和风险侧边际资本释放效率；必须与机会假设、生命周期、风险收益、替代机会和资金去向共同判断。不得把风险侧释放排序解释为收益侧卖出顺序。",
   "capital_efficiency_rule": "不得生成综合资本效率总分，不得机械按风险贡献买卖；下一单位资本最有效用途仍由MASTER完整决策链决定。",
   "decision_eligible": false,
