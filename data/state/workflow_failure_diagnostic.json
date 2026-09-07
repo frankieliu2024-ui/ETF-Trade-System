@@ -1,27 +1,32 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-07T10:26:29+08:00",
+  "generated_at": "2026-09-07T11:29:10+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 34076247808,
+  "run_id": 34079704678,
   "run_attempt": 1,
-  "head_sha": "eaed7ef16f728019b018f5793fcdfccc3b3d9bd4",
-  "main_head_sha": "d7540ce857847951ad4c7837e521474725abf3a0",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "87c1cc0f1a29a14abe2e339fdda8420e927c8d1e",
+  "main_head_sha": "5b2b9807f3135d9709b9728962c85124b683c6e2",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
       "job": "consistency",
       "step": "Enforce hard consistency result",
       "number": 8
+    },
+    {
+      "job": "production_acceptance",
+      "step": "Persist acceptance result",
+      "number": 8
     }
   ],
   "changed_files": [
-    "requests/live_snapshot/20260907_1022_etf_formal_decision.json"
+    "requests/live_snapshot/20260907_1127_etf_formal_decision.json"
   ],
-  "commit_message": "Persist 2026-09-07 10:25 ETF formal decision",
+  "commit_message": "request 11:25 ETF formal decision market refresh",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
