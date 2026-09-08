@@ -83,7 +83,7 @@ def expected_a_share_pulse(now: datetime) -> datetime | None:
         # Keep the decision-specific check bounded to the interval before the
         # next existing ten-minute producer cadence point.  Older gaps remain
         # covered by the existing age/recovery contract below.
-        if checkpoint_minute <= minute < expected_minute + 10:
+        if checkpoint_minute <= minute <= expected_minute + 10:
             return now.replace(
                 hour=expected_minute // 60,
                 minute=expected_minute % 60,
