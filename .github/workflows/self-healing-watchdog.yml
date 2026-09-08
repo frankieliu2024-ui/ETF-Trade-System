@@ -2,6 +2,10 @@ name: ETF runtime self-healing watchdog
 
 on:
   workflow_dispatch:
+  # External wake-only ingress for #385. The comment carries no market data;
+  # it only awakens this existing canonical watchdog when the marker matches.
+  issue_comment:
+    types: [created]
   # Existing producer completions are event-driven wake opportunities for the
   # same watchdog. They do not add a producer, state store, or recovery path.
   workflow_run:
@@ -55,6 +59,9 @@ concurrency:
 
 jobs:
   watchdog:
+    # issue_comment is a wake-only external ingress. Restrict it to Issue #385
+    # and the exact prefix so ordinary issue/PR comments cannot run production.
+    if: ${{ github.event_name != 'issue_comment' || (github.event.issue.number == 385 && startsWith(github.event.comment.body, '[ETF_L0_WAKE]')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
