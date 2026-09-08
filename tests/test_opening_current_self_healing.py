@@ -92,7 +92,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
             },
             now=datetime.fromisoformat("2026-09-01T10:24:00+08:00"),
         )
-        self.assertEqual(status["expected_pulse_at"], "2026-09-01T10:20:00+08:00")
+        self.assertEqual(status["expected_pulse_at"], "2026-09-01T10:19:00+08:00")
         self.assertTrue(status["expected_pulse_missing"])
         self.assertEqual(status["classification"], "EXPECTED_PULSE_MISSING")
         self.assertEqual(status["recommended_action"], "REFRESH_SNAPSHOT")
@@ -145,7 +145,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertEqual(status["recommended_action"], "NONE")
 
     def test_all_formal_decision_watchdog_checkpoints_use_their_prior_pulse(self):
-        for checkpoint, pulse in (("10:24", "10:20"), ("11:24", "11:20"), ("13:24", "13:20"), ("14:24", "14:20")):
+        for checkpoint, pulse in (("10:24", "10:19"), ("11:24", "11:19"), ("13:24", "13:19"), ("14:24", "14:19")):
             with self.subTest(checkpoint=checkpoint):
                 now = datetime.fromisoformat(f"2026-09-01T{checkpoint}:00+08:00")
                 status = self._assess(
