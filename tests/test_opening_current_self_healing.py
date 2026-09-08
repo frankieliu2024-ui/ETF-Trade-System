@@ -97,6 +97,39 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertEqual(status["classification"], "EXPECTED_PULSE_MISSING")
         self.assertEqual(status["recommended_action"], "REFRESH_SNAPSHOT")
 
+    def test_late_watchdog_still_evaluates_the_due_decision_pulse(self):
+        for minute in ("10:25", "10:29", "11:25", "13:25", "14:25"):
+            with self.subTest(minute=minute):
+                hour, value = minute.split(":")
+                now = datetime.fromisoformat(f"2026-09-01T{minute}:00+08:00")
+                pulse = f"2026-09-01T{hour}:20:00+08:00"
+                status = self._assess(
+                    current={
+                        "market_date": "2026-09-01",
+                        "captured_at": "2026-09-01T{0}:15:00+08:00".format(hour),
+                        "latest_valid_node": "late",
+                        "node_status": "READY",
+                        "rules_version": "V2.2.31",
+                    },
+                    now=now,
+                )
+                self.assertEqual(status["expected_pulse_at"], pulse)
+                self.assertTrue(status["expected_pulse_missing"])
+                self.assertEqual(status["classification"], "EXPECTED_PULSE_MISSING")
+
+    def test_after_due_window_existing_age_contract_remains_authoritative(self):
+        status = self._assess(
+            current={
+                "market_date": "2026-09-01",
+                "captured_at": "2026-09-01T10:15:00+08:00",
+                "latest_valid_node": "1015",
+                "node_status": "READY",
+                "rules_version": "V2.2.31",
+            },
+            now=datetime.fromisoformat("2026-09-01T10:30:00+08:00"),
+        )
+        self.assertIsNone(status["expected_pulse_at"])
+
     def test_expected_decision_pulse_is_healthy_when_current_has_arrived(self):
         status = self._assess(
             current={
