@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-08T08:26:05+08:00",
+  "updated_at": "2026-09-08T08:56:52+08:00",
   "last_status": "SENT",
-  "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【系统复核】ETF系统复核｜2026-09-08",
+  "last_type": "APAC_OPEN_SIGNAL",
+  "last_title": "【市场异动】日经225指数（N225）实际开盘出现异常跳空",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -3395,6 +3395,56 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-08T08:26:05+08:00"
+    },
+    {
+      "notification_id": "notification_780e9fd80e935d980885",
+      "event_type": "APAC_OPEN_SIGNAL",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "apac-open-signal:2026-09-08:N225:DOWN",
+      "related_decision_id": "",
+      "security_code": "N225",
+      "security_name": "日经225指数",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股节点，检查本地传导和直接相关ETF自身反馈，不机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-08T08:56:51+08:00",
+      "sent_at": "2026-09-08T08:56:52+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-10T08:56:51+08:00",
+      "title": "【市场异动】日经225指数（N225）实际开盘出现异常跳空",
+      "content": "### 核心结论\n- **节点**：亚太错位开盘异常\n- **触发对象**：日经225指数（N225）\n- **实际开盘较前收**：-0.84%\n- **当前较前收**：+0.44%\n- **区域结构**：区域普遍偏强\n- **数据质量**：覆盖2/4；触发判断使用PASS对象2/4；当前未发现需单列的数据质量降级。\n\n### 关键路径\n- **触发对象**：低开-0.84%后当前+0.44%，负面跳空已基本收复并回到前收上方。\n- **区域对照**：其他市场对照：韩国综合指数（KOSPI）+1.40%。\n\n### 对ETF系统的影响\n外部结构：日经225指数（N225）低开冲击已经明显修复，当前不能把开盘负面跳空继续解释为新的区域风险强化。\n\n本地传导：A股同步反馈为A股当日同步数据不可用；外部信号只有被A股自身价格结构接受，才可能改变当前ETF判断。\n\nETF自身反馈：直接相关的日经ETF（513520）当前当前数据不可用；该外部事件只作为其观察证据，不能绕过ETF自身结构、相对强弱、风险收益和资本效率。\n\n机会判断：本通知不生成Trial/Confirm或卖出动作；只有外部结构、本地传导和ETF自身反馈共同改变正式判断时，才进入交易链。\n\n### 当前动作\n**把该事件纳入最近A股正式节点复核；不因单一海外/区域指数跳空机械买卖，重点看A股是否接受以及直接相关ETF自身反馈。**\n\n### 数据与边界\n- **触发对象行情时点（北京时间）**：2026-09-08 08:56:24\n- **亚太对象最新有效时点上限**：2026-09-08 08:56:26\n- **A股同步参考时点**：未提供\n- **通知生成**：2026-09-08 08:56:51\n- **边界**：约0.8%的门槛只检查实际开盘价相对前收；开盘后的累计涨跌不回填成开盘异常。覆盖数量与数据质量分开表达，DEGRADED/延迟对象不得被包装成全部实时FRESH。",
+      "source": "overseas_context+CURRENT",
+      "confirmation_context": {
+        "market": "ASIA",
+        "market_date": "2026-09-08",
+        "direction": "DOWN",
+        "event_category": "APAC_OPEN_SIGNAL",
+        "fact_family": "APAC_OBJECT_DIRECTIONAL_SESSION",
+        "object_codes": [
+          "N225",
+          "KOSPI"
+        ],
+        "source_fact_ids": [
+          "2026-09-08:N225:2026-09-08T08:56:24+08:00",
+          "2026-09-08:KOSPI:2026-09-08T08:56:26+08:00"
+        ],
+        "session_node": "OPEN_SIGNAL",
+        "lead_code": "N225",
+        "lead_open_gap_pct": -0.8375773194634117,
+        "lead_change_pct": 0.4405582905019134,
+        "tone": "区域普遍偏强",
+        "market_as_of_beijing": "2026-09-08T08:56:24+08:00",
+        "a_share_as_of_beijing": "",
+        "event_family_id": "ASIA:2026-09-08:OPEN_SIGNAL:N225:APAC_OPEN_SIGNAL:DOWN"
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-09-08T08:56:52+08:00"
     }
   ],
   "recent": [
@@ -5035,9 +5085,27 @@
       },
       "notification_id": "notification_62f27577326f6631acc2",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "apac-open-signal:2026-09-08:N225:DOWN",
+      "type": "APAC_OPEN_SIGNAL",
+      "title": "【市场异动】日经225指数（N225）实际开盘出现异常跳空",
+      "content": "### 核心结论\n- **节点**：亚太错位开盘异常\n- **触发对象**：日经225指数（N225）\n- **实际开盘较前收**：-0.84%\n- **当前较前收**：+0.44%\n- **区域结构**：区域普遍偏强\n- **数据质量**：覆盖2/4；触发判断使用PASS对象2/4；当前未发现需单列的数据质量降级。\n\n### 关键路径\n- **触发对象**：低开-0.84%后当前+0.44%，负面跳空已基本收复并回到前收上方。\n- **区域对照**：其他市场对照：韩国综合指数（KOSPI）+1.40%。\n\n### 对ETF系统的影响\n外部结构：日经225指数（N225）低开冲击已经明显修复，当前不能把开盘负面跳空继续解释为新的区域风险强化。\n\n本地传导：A股同步反馈为A股当日同步数据不可用；外部信号只有被A股自身价格结构接受，才可能改变当前ETF判断。\n\nETF自身反馈：直接相关的日经ETF（513520）当前当前数据不可用；该外部事件只作为其观察证据，不能绕过ETF自身结构、相对强弱、风险收益和资本效率。\n\n机会判断：本通知不生成Trial/Confirm或卖出动作；只有外部结构、本地传导和ETF自身反馈共同改变正式判断时，才进入交易链。\n\n### 当前动作\n**把该事件纳入最近A股正式节点复核；不因单一海外/区域指数跳空机械买卖，重点看A股是否接受以及直接相关ETF自身反馈。**\n\n### 数据与边界\n- **触发对象行情时点（北京时间）**：2026-09-08 08:56:24\n- **亚太对象最新有效时点上限**：2026-09-08 08:56:26\n- **A股同步参考时点**：未提供\n- **通知生成**：2026-09-08 08:56:51\n- **边界**：约0.8%的门槛只检查实际开盘价相对前收；开盘后的累计涨跌不回填成开盘异常。覆盖数量与数据质量分开表达，DEGRADED/延迟对象不得被包装成全部实时FRESH。",
+      "source": "overseas_context+CURRENT",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股节点，检查本地传导和直接相关ETF自身反馈，不机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-09-08T08:56:52+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_780e9fd80e935d980885",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
-  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
+  "policy": "开盘仅推有价值结构，但实际session事实允许在同日有效恢复；A股固定收盘允许延迟补发；亚太开盘通知优先表达触发对象关键路径、本地传导、直接相关ETF反馈及数据质量；亚太主要收盘优先服务A股尾盘、错过窄窗口后仍可恢复。阈值适度放宽，Point-in-Time与去重保持。",
+  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
