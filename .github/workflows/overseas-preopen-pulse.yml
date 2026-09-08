@@ -51,6 +51,7 @@ jobs:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
       HITHINK_FINANCE_API_KEY: ${{ secrets.HITHINK_FINANCE_API_KEY }}
       SCHEDULED_FOR: ${{ github.event.schedule || github.event_name }}
+      SCHEDULED_CRON: ${{ github.event.schedule || '' }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -62,23 +63,52 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Resolve scheduled pulse slot
+        id: pulse_gate
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          from datetime import datetime, timezone
+          from scripts.scheduled_pulse_slot import resolve_scheduled_pulse
+          pulse = resolve_scheduled_pulse(os.environ.get("SCHEDULED_CRON", ""), datetime.now(timezone.utc), cadence_seconds=600)
+          eligible = os.environ.get("GITHUB_EVENT_NAME") != "schedule" or pulse["eligible"]
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"eligible={'true' if eligible else 'false'}\n")
+              for key, value in pulse.items(): handle.write(f"{key}={' ' if value is None else value}\n")
+          print({"eligible": eligible, **pulse})
+          PY
+
       - uses: actions/setup-node@v4
+        if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
         with:
           node-version: "22"
       - name: Install hithink-finance CLI
+        if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
         run: npm install --global @hithink-tech/hithink-finance-cli
       - name: Preserve previous APAC pulse for sudden-move comparison
+        if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
         run: |
           [ -f data/state/overseas_context.json ] && cp data/state/overseas_context.json data/state/overseas_context_previous.json || true
       - name: Refresh formal overseas and Asia-Pacific index context
+        if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
         run: python scripts/build_overseas_context.py
       - name: Refresh US extended-hours context
+        if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
         run: python scripts/build_us_extended_hours_context.py
       - name: Record overseas pulse runtime health
         if: always()
+        env:
+          SCHEDULED_SLOT_AT: ${{ steps.pulse_gate.outputs.scheduled_slot_at }}
+          SCHEDULE_DELAY_SECONDS: ${{ steps.pulse_gate.outputs.schedule_delay_seconds }}
+          SCHEDULE_DELAY_CLASS: ${{ steps.pulse_gate.outputs.schedule_delay_class }}
+          NATURAL_PULSE_IDENTITY: ${{ steps.pulse_gate.outputs.natural_pulse_identity }}
+          NATURAL_PULSE_IDENTITY_STATUS: ${{ steps.pulse_gate.outputs.natural_pulse_identity_status }}
+          NATURAL_PULSE_ELIGIBLE: ${{ steps.pulse_gate.outputs.natural_pulse_eligible }}
+          PULSE_GATE_ELIGIBLE: ${{ steps.pulse_gate.outputs.eligible }}
         run: python scripts/build_overseas_runtime_health.py
       - name: Rebuild on-demand query context
-        if: success()
+        if: ${{ success() && steps.pulse_gate.outputs.eligible == 'true' }}
         run: python scripts/build_query_context.py
       - name: Commit overseas contexts and runtime health
         if: always()
