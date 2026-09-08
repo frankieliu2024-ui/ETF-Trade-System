@@ -43,6 +43,7 @@ jobs:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
       US_EXTENDED_SYMBOLS: ${{ inputs.symbols || '' }}
       EVENT_SCHEDULE: ${{ github.event.schedule || '' }}
+      SCHEDULED_CRON: ${{ github.event.schedule || '' }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -54,13 +55,39 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Resolve scheduled pulse slot
+        id: pulse_gate
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          from scripts.scheduled_pulse_slot import resolve_scheduled_pulse
+          from datetime import datetime, timezone
+          pulse = resolve_scheduled_pulse(os.environ.get("SCHEDULED_CRON", ""), datetime.now(timezone.utc))
+          eligible = pulse["eligible"] if os.environ.get("GITHUB_EVENT_NAME") == "schedule" else True
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"eligible={'true' if eligible else 'false'}\n")
+              handle.write(f"scheduled_slot_at={pulse.get('scheduled_slot_at') or ''}\n")
+              handle.write(f"schedule_delay_seconds={pulse.get('schedule_delay_seconds') if pulse.get('schedule_delay_seconds') is not None else ''}\n")
+              handle.write(f"schedule_delay_class={pulse.get('schedule_delay_class') or ''}\n")
+              handle.write(f"natural_pulse_identity={pulse.get('natural_pulse_identity') or ''}\n")
+          print({**pulse, "workflow_eligible": eligible})
+          PY
       - name: Preserve previous US pulse for sudden-move comparison
+        if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
         run: |
           [ -f data/state/us_extended_hours_context.json ] && cp data/state/us_extended_hours_context.json data/state/us_extended_hours_context_previous.json || true
       - name: Refresh US extended-hours context
+        if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
         run: python scripts/build_us_extended_hours_context.py
       - name: Record dedicated US pulse heartbeat
         if: always()
+        env:
+          PULSE_ELIGIBLE: ${{ steps.pulse_gate.outputs.eligible }}
+          PULSE_SLOT_AT: ${{ steps.pulse_gate.outputs.scheduled_slot_at }}
+          PULSE_DELAY_SECONDS: ${{ steps.pulse_gate.outputs.schedule_delay_seconds }}
+          PULSE_DELAY_CLASS: ${{ steps.pulse_gate.outputs.schedule_delay_class }}
+          PULSE_IDENTITY: ${{ steps.pulse_gate.outputs.natural_pulse_identity }}
         shell: bash
         run: |
           python - <<'PY'
@@ -72,11 +99,20 @@ jobs:
           now = datetime.now(timezone.utc).isoformat(timespec='seconds').replace('+00:00','Z')
           event_name = os.environ.get('GITHUB_EVENT_NAME','')
           event_schedule = os.environ.get('EVENT_SCHEDULE','')
+          pulse_eligible = os.environ.get('PULSE_ELIGIBLE','true') == 'true'
+          schedule_blocked = event_name == 'schedule' and not pulse_eligible
           payload = {
-              'status': 'PASS' if ctx.get('quality_status') in {'PASS','DEGRADED'} else 'FAILED',
-              'pulse_success': ctx.get('quality_status') in {'PASS','DEGRADED'},
+              'status': 'SKIPPED' if schedule_blocked else ('PASS' if ctx.get('quality_status') in {'PASS','DEGRADED'} else 'FAILED'),
+              'pulse_success': False if schedule_blocked else ctx.get('quality_status') in {'PASS','DEGRADED'},
               'trigger': event_name,
               'scheduled_for': f'cron:{event_schedule}' if event_schedule else event_name,
+              'scheduled_cron': event_schedule,
+              'scheduled_slot_at': os.environ.get('PULSE_SLOT_AT',''),
+              'schedule_delay_seconds': os.environ.get('PULSE_DELAY_SECONDS',''),
+              'schedule_delay_class': os.environ.get('PULSE_DELAY_CLASS','NOT_SCHEDULED'),
+              'natural_pulse_identity': os.environ.get('PULSE_IDENTITY',''),
+              'natural_pulse_eligible': pulse_eligible,
+              'schedule_blocked_as_stale': schedule_blocked,
               'finished_at': now,
               'run_id': os.environ.get('GITHUB_RUN_ID',''),
               'context_generated_at': ctx.get('generated_at',''),
