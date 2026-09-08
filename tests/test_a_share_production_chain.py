@@ -68,6 +68,26 @@ class AShareProductionChainTests(unittest.TestCase):
         self.assertTrue(all(item["quality_status"] == "PASS" for item in result.values()))
         self.assertTrue(all(item["as_of_beijing"].endswith("+08:00") for item in result.values()))
 
+    def test_schedule_identity_rejects_severely_delayed_old_cron_event(self):
+        now = datetime.fromisoformat("2026-09-08T13:55:42+08:00")
+        observation = runtime_session_gate.scheduled_cron_observability("15,20,25,30,40,50 1 * * 1-5", now)
+        self.assertEqual(observation["scheduled_slot_at"], "2026-09-08T09:50:00+08:00")
+        self.assertEqual(observation["schedule_delay_class"], "SEVERELY_DELAYED")
+        self.assertGreaterEqual(observation["schedule_delay_seconds"], 4 * 60 * 60)
+        workflow = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        self.assertIn("SCHEDULED_CRON:", workflow)
+        self.assertIn("9,19,29,39,49,59 2-3,5-6 * * 1-5", workflow)
+        self.assertNotIn("*/10 2-3,5-6 * * 1-5", workflow)
+        self.assertIn("stale_scheduled_pulse", (ROOT / "scripts/runtime_session_gate.py").read_text(encoding="utf-8"))
+
+    def test_shifted_natural_pulse_preserves_decision_freshness_margin(self):
+        now = datetime.fromisoformat("2026-09-08T13:25:00+08:00")
+        observation = runtime_session_gate.scheduled_cron_observability("9,19,29,39,49,59 5-6 * * 1-5", now)
+        self.assertEqual(observation["scheduled_slot_at"], "2026-09-08T13:19:00+08:00")
+        self.assertEqual(observation["schedule_delay_class"], "BOUNDED_DELAY")
+        self.assertLessEqual(observation["schedule_delay_seconds"], 6 * 60)
+        self.assertIn("2026-09-08T13:19:00+08:00", observation["natural_pulse_identity"])
+
     def test_live_snapshot_request_classifier_preserves_single_workflow_semantics(self):
         refresh = {"request_type": "MARKET_QUOTE_REFRESH", "force_refresh": True}
         formal_only = {"formal_decision": {"decision_id": "d1"}}
