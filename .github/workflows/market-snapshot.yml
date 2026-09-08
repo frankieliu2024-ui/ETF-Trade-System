@@ -93,11 +93,11 @@ jobs:
           health_path.write_text(json.dumps(health, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
       - uses: actions/setup-node@v4
-        if: ${{ steps.session_gate.outputs.should_capture == 'true' || github.event_name == 'push' }}
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' || (github.event_name == 'push' && steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY') }}
         with:
           node-version: "22"
       - name: Start optional Hithink fallback CLI bootstrap
-        if: ${{ steps.session_gate.outputs.should_capture == 'true' || github.event_name == 'push' }}
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' || (github.event_name == 'push' && steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY') }}
         shell: bash
         run: |
           # Tencent is the primary A-share provider. Start the optional
@@ -107,7 +107,7 @@ jobs:
           npm install --global @hithink-tech/hithink-finance-cli >/tmp/hithink-finance-install.log 2>&1 &
           echo "HITHINK_CLI_INSTALL_PID=$!" >> "$GITHUB_ENV"
       - name: Load unified provider concurrency policy
-        if: ${{ steps.session_gate.outputs.should_capture == 'true' || github.event_name == 'push' }}
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' || (github.event_name == 'push' && steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY') }}
         shell: bash
         run: |
           python - <<'PY'
@@ -250,12 +250,9 @@ jobs:
           for f in $files; do
             if python - "$f" <<'PY'
           import json, sys
+          from scripts.runtime_session_gate import classify_live_snapshot_request
           data = json.load(open(sys.argv[1], encoding='utf-8'))
-          keys = ('account_fact','formal_decision','trade_event','formal_review','interaction_scenario')
-          source = str(data.get('source') or '').upper()
-          scenario = str(data.get('interaction_scenario') or '').upper()
-          broker_request = source == 'CHATGPT_USER_BROKER_SCREENSHOT' or scenario == 'BROKER_SCREENSHOT_SYNC'
-          raise SystemExit(0 if any(k in data for k in keys) or broker_request else 1)
+          raise SystemExit(0 if classify_live_snapshot_request(data) in {'STATE_SYNC_ONLY', 'HYBRID'} else 1)
           PY
             then
               python scripts/refresh_gate.py --guard-request "$f"
@@ -289,7 +286,7 @@ jobs:
           REQUEST_FILE=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | head -n 1)
           REQUEST_ARGS=()
           if [ -n "$REQUEST_FILE" ]; then REQUEST_ARGS+=(--request-file "$REQUEST_FILE"); fi
-          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "${{ steps.snapshot_result.outputs.snapshot_written }}" != "true" ]; then
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "${{ steps.snapshot_result.outputs.snapshot_written }}" != "true" ] && [ "${{ steps.session_gate.outputs.request_class }}" != "STATE_SYNC_ONLY" ]; then
             REQUEST_SYMBOLS=$(python - <<'PY'
           import json, os, subprocess
           files = subprocess.check_output(

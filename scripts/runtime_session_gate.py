@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import argparse
 import json
 import os
+import subprocess
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -18,6 +20,66 @@ def set_output(key: str, value: str) -> None:
     if output:
         with open(output, "a", encoding="utf-8") as f:
             f.write(f"{key}={value}\n")
+
+
+
+STATE_SYNC_FIELDS = ("account_fact", "formal_decision", "trade_event", "formal_review")
+REFRESH_REQUEST_TYPES = {"MARKET_QUOTE_REFRESH", "QUERY_TIME_REFRESH", "LIVE_SNAPSHOT_REFRESH"}
+EXPLICIT_REFRESH_INTENTS = {"EXPLICIT_LATEST", "MARKET_QUOTE_REFRESH", "QUERY_TIME_REFRESH"}
+
+
+def classify_live_snapshot_request(request: dict) -> str:
+    """Classify one live_snapshot request before any market capture.
+
+    This is a routing classification only. It does not create a producer,
+    state store, transport, decision engine or freshness rule.
+    """
+    source = str(request.get("source") or "").upper()
+    scenario = str(request.get("interaction_scenario") or "").upper()
+    has_state_sync = any(field in request for field in STATE_SYNC_FIELDS)
+    has_state_sync = has_state_sync or source == "CHATGPT_USER_BROKER_SCREENSHOT" or scenario == "BROKER_SCREENSHOT_SYNC"
+    refresh_bearing = bool(
+        request.get("force_refresh") is True
+        or request.get("refresh_required") is True
+        or request.get("require_post_request_snapshot") is True
+        or request.get("wait_for_refresh") is True
+        or str(request.get("request_type") or "").upper() in REFRESH_REQUEST_TYPES
+        or str(request.get("query_intent") or "").upper() in EXPLICIT_REFRESH_INTENTS and not has_state_sync
+    )
+    if has_state_sync and refresh_bearing:
+        return "HYBRID"
+    if has_state_sync:
+        return "STATE_SYNC_ONLY"
+    return "REFRESH_BEARING"
+
+
+def _changed_request_files() -> list[Path]:
+    if os.environ.get("GITHUB_EVENT_NAME") != "push":
+        return []
+    before = os.environ.get("EVENT_BEFORE", "").strip()
+    sha = os.environ.get("GITHUB_SHA", "HEAD").strip()
+    if before and subprocess.run(["git", "cat-file", "-e", f"{before}^{{commit}}"], capture_output=True).returncode == 0:
+        command = ["git", "diff", "--name-only", before, sha, "--", "requests/live_snapshot"]
+    else:
+        command = ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", sha, "--", "requests/live_snapshot"]
+    result = subprocess.run(command, capture_output=True, text=True, check=False)
+    return [ROOT / name.strip() for name in result.stdout.splitlines() if name.strip().endswith(".json")]
+
+
+def _push_request_class() -> str:
+    classes = []
+    for path in _changed_request_files():
+        try:
+            classes.append(classify_live_snapshot_request(json.loads(path.read_text(encoding="utf-8"))))
+        except (OSError, json.JSONDecodeError):
+            continue
+    if not classes:
+        return "NOT_APPLICABLE"
+    if all(item == "STATE_SYNC_ONLY" for item in classes):
+        return "STATE_SYNC_ONLY"
+    if any(item == "HYBRID" for item in classes) or len(set(classes)) > 1:
+        return "HYBRID"
+    return "REFRESH_BEARING"
 
 
 def scheduled_close_boundary_intent(now: datetime, event_name: str, scheduled_cron: str) -> bool:
@@ -57,6 +119,7 @@ def main() -> int:
     now = datetime.now(SHANGHAI)
     date_text = now.date().isoformat()
     event_name = os.environ.get("GITHUB_EVENT_NAME", "")
+    request_class = _push_request_class() if event_name == "push" else "NOT_APPLICABLE"
     scheduled_cron = os.environ.get("SCHEDULED_CRON", "").strip()
     scheduled_close_intent = (
         event_name == "schedule"
@@ -92,6 +155,10 @@ def main() -> int:
         phase = "POST_CLOSE_RECOVERY"
         reason = "delayed_scheduled_close_recovery"
 
+    if event_name == "push" and request_class == "STATE_SYNC_ONLY":
+        should_capture = False
+        reason = "state_sync_only_request"
+
     close_intent = bool(scheduled_close_intent or boundary_close_intent)
     wait_for_close_boundary_seconds = 0
     if boundary_close_intent and minute < 15 * 60:
@@ -104,12 +171,13 @@ def main() -> int:
         reason = "manual_dispatch_capture_window" if should_capture else f"manual_dispatch_{reason}"
 
     set_output("should_capture", "true" if should_capture else "false")
+    set_output("request_class", request_class)
     set_output("reason", reason)
     set_output("market_date", date_text)
     set_output("market_phase", phase)
     set_output("close_intent", "true" if close_intent else "false")
     set_output("wait_for_close_boundary_seconds", str(max(0, wait_for_close_boundary_seconds)))
-    print(json.dumps({"should_capture": should_capture, "reason": reason, "market_date": date_text, "market_phase": phase, "close_intent": close_intent, "wait_for_close_boundary_seconds": max(0, wait_for_close_boundary_seconds), "captured_at_beijing": now.isoformat(timespec="seconds")}, ensure_ascii=False))
+    print(json.dumps({"should_capture": should_capture, "request_class": request_class, "reason": reason, "market_date": date_text, "market_phase": phase, "close_intent": close_intent, "wait_for_close_boundary_seconds": max(0, wait_for_close_boundary_seconds), "captured_at_beijing": now.isoformat(timespec="seconds")}, ensure_ascii=False))
     return 0
 
 
