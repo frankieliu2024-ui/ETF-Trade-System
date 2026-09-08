@@ -250,6 +250,63 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertIn("gh run list --workflow market-snapshot.yml", dispatch)
         self.assertIn('status == "queued" or .status == "in_progress"', dispatch)
 
+    def test_event_wake_sources_are_existing_cross_market_workflows(self):
+        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        trigger = workflow.split("  workflow_run:", 1)[1].split("  push:", 1)[0]
+        expected = {
+            "ETF market snapshot",
+            "ETF opening-auction CURRENT fallback",
+            "Overseas pre-open pulse",
+            "US extended-hours pulse",
+            "ETF system consistency",
+        }
+        self.assertEqual(
+            set(line.strip().strip('"') for line in trigger.splitlines() if line.strip().startswith('- "')),
+            expected,
+        )
+        self.assertIn("types: [completed]", trigger)
+        assess = workflow.split("- name: Assess deterministic runtime health", 1)[1]
+        self.assertTrue(assess.index("python scripts/runtime_self_heal.py --assess") < assess.index("- name: Assess dedicated cross-market pulse heartbeats"))
+        self.assertNotIn("if: ${{ github.event_name == 'workflow_run' }}", assess.split("- name: Assess dedicated cross-market pulse heartbeats", 1)[0])
+
+    def test_event_wake_recovers_after_primary_and_scheduled_watchdog_are_absent(self):
+        # Deterministic model of the observed failure: neither scheduled run
+        # exists, while an existing APAC or consistency completion can wake the
+        # same watchdog. The due-pulse decision remains the canonical assessor.
+        absent_schedules = {
+            "ETF market snapshot": "ABSENT",
+            "ETF runtime self-healing watchdog": "ABSENT",
+        }
+        self.assertEqual(set(absent_schedules.values()), {"ABSENT"})
+        for wake_source in ("Overseas pre-open pulse", "ETF system consistency"):
+            with self.subTest(wake_source=wake_source):
+                status = self._assess(
+                    current={
+                        "market_date": "2026-09-01",
+                        "captured_at": "2026-09-01T10:15:00+08:00",
+                        "latest_valid_node": "1015",
+                        "node_status": "READY",
+                        "rules_version": "V2.2.31",
+                    },
+                    now=datetime.fromisoformat("2026-09-01T10:25:00+08:00"),
+                )
+                self.assertEqual(status["classification"], "EXPECTED_PULSE_MISSING")
+                self.assertEqual(status["recommended_action"], "REFRESH_SNAPSHOT")
+
+        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        dispatch = workflow.split("- name: Dispatch replacement market snapshot", 1)[1]
+        self.assertEqual(dispatch.count("gh workflow run market-snapshot.yml --ref main"), 1)
+        self.assertEqual(dispatch.count("python scripts/runtime_self_heal.py --record-trigger"), 1)
+
+    def test_event_wake_preserves_single_dispatch_for_queued_or_in_progress_snapshot(self):
+        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        dispatch = workflow.split("- name: Dispatch replacement market snapshot", 1)[1]
+        self.assertIn('active=$(gh run list --workflow market-snapshot.yml --limit 5 --json status', dispatch)
+        self.assertIn('select(.status == "queued" or .status == "in_progress")', dispatch)
+        self.assertIn('if [ "$active" != "0" ]; then', dispatch)
+        self.assertIn("no duplicate dispatch", dispatch)
+        self.assertEqual(dispatch.count("gh workflow run market-snapshot.yml --ref main"), 1)
+
     def test_closed_day_does_not_trigger_opening_recovery(self):
         status = self._assess(
             current={
