@@ -74,7 +74,7 @@ class AShareProductionChainTests(unittest.TestCase):
         primary = resolve_scheduled_pulse("*/10 0-7 * * 1-5", datetime.fromisoformat("2026-09-08T14:05:00+08:00"))
         backstop = resolve_scheduled_pulse("2,22,42 0-7 * * 1-5", datetime.fromisoformat("2026-09-08T14:05:00+08:00"))
         self.assertEqual(primary["latest_candidate_slot_at"], "2026-09-08T14:00:00+08:00")
-        self.assertEqual(backstop["scheduled_slot_at"], "2026-09-08T14:02:00+08:00")
+        self.assertEqual(backstop["latest_candidate_slot_at"], "2026-09-08T14:02:00+08:00")
         self.assertEqual(primary["schedule_delay_class"], "AMBIGUOUS")
         self.assertEqual(backstop["schedule_delay_class"], "AMBIGUOUS")
         self.assertEqual(primary["natural_pulse_identity"], "slot:2026-09-08T14:00:00+08:00")
@@ -100,9 +100,9 @@ class AShareProductionChainTests(unittest.TestCase):
     def test_schedule_identity_rejects_severely_delayed_old_cron_event(self):
         now = datetime.fromisoformat("2026-09-08T13:55:42+08:00")
         observation = runtime_session_gate.resolve_scheduled_pulse("15,20,25,30,40,50 1 * * 1-5", now)
-        self.assertEqual(observation["scheduled_slot_at"], "2026-09-08T09:50:00+08:00")
+        self.assertEqual(observation["latest_candidate_slot_at"], "2026-09-08T09:50:00+08:00")
         self.assertEqual(observation["schedule_delay_class"], "AMBIGUOUS")
-        self.assertGreaterEqual(observation["schedule_delay_seconds"], 4 * 60 * 60)
+        self.assertGreaterEqual(observation["candidate_delay_seconds"], 4 * 60 * 60)
         workflow = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
         self.assertIn("SCHEDULED_CRON:", workflow)
         self.assertIn("9,19,29,39,49,59 2-3,5-6 * * 1-5", workflow)
@@ -113,9 +113,9 @@ class AShareProductionChainTests(unittest.TestCase):
     def test_shifted_natural_pulse_preserves_decision_freshness_margin(self):
         now = datetime.fromisoformat("2026-09-08T13:25:00+08:00")
         observation = runtime_session_gate.scheduled_cron_observability("9,19,29,39,49,59 5-6 * * 1-5", now)
-        self.assertEqual(observation["scheduled_slot_at"], "2026-09-08T13:19:00+08:00")
+        self.assertEqual(observation["latest_candidate_slot_at"], "2026-09-08T13:19:00+08:00")
         self.assertEqual(observation["schedule_delay_class"], "AMBIGUOUS")
-        self.assertLessEqual(observation["schedule_delay_seconds"], 6 * 60)
+        self.assertLessEqual(observation["candidate_delay_seconds"], 6 * 60)
         self.assertIn("2026-09-08T13:19:00+08:00", observation["natural_pulse_identity"])
 
     def test_live_snapshot_request_classifier_preserves_single_workflow_semantics(self):
@@ -178,8 +178,8 @@ class AShareProductionChainTests(unittest.TestCase):
     def test_shared_slot_contract_covers_us_primary_and_backstop_without_extra_frequency(self):
         primary = resolve_scheduled_pulse("*/10 8-23 * * 1-5", datetime.fromisoformat("2026-09-08T17:05:00+08:00"))
         backstop = resolve_scheduled_pulse("2,22,42 8-23 * * 1-5", datetime.fromisoformat("2026-09-08T17:05:00+08:00"))
-        self.assertEqual(primary["scheduled_slot_at"], "2026-09-08T17:00:00+08:00")
-        self.assertEqual(backstop["scheduled_slot_at"], "2026-09-08T17:02:00+08:00")
+        self.assertEqual(primary["latest_candidate_slot_at"], "2026-09-08T17:00:00+08:00")
+        self.assertEqual(backstop["latest_candidate_slot_at"], "2026-09-08T17:02:00+08:00")
         self.assertEqual(primary["schedule_delay_class"], "BOUNDED_DELAY")
         self.assertEqual(backstop["schedule_delay_class"], "BOUNDED_DELAY")
         self.assertTrue(primary["eligible"])
@@ -206,6 +206,24 @@ class AShareProductionChainTests(unittest.TestCase):
         event = resolve_scheduled_pulse("", datetime.fromisoformat("2026-09-08T17:05:00+08:00"))
         self.assertEqual(event["schedule_delay_class"], "NOT_SCHEDULED")
         self.assertTrue(event["eligible"])
+
+    def test_repeated_cron_without_occurrence_identity_is_ambiguous_in_all_three_domains(self):
+        cases = (
+            ("A", "9,19,29,39,49,59 5-6 * * 1-5", datetime.fromisoformat("2026-09-08T14:25:00+08:00")),
+            ("APAC", "*/10 0-7 * * 1-5", datetime.fromisoformat("2026-09-08T14:05:00+08:00")),
+            ("US", "*/10 8-23 * * 1-5", datetime.fromisoformat("2026-09-08T17:05:00+08:00")),
+        )
+        for domain, cron, now in cases:
+            with self.subTest(domain=domain):
+                result = resolve_scheduled_pulse(cron, now)
+                self.assertEqual(result["schedule_delay_class"], "AMBIGUOUS")
+                self.assertTrue(result["refresh_eligible"])
+                self.assertTrue(result["eligible"])
+                self.assertFalse(result["natural_pulse_eligible"])
+                self.assertEqual(result["natural_pulse_identity_status"], "AMBIGUOUS")
+                self.assertIsNone(result["natural_pulse_identity"])
+                self.assertIsNone(result["scheduled_slot_at"])
+                self.assertIsNotNone(result["latest_candidate_slot_at"])
 
 
 if __name__ == "__main__":
