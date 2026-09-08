@@ -2,6 +2,16 @@ name: ETF runtime self-healing watchdog
 
 on:
   workflow_dispatch:
+  # Existing producer completions are event-driven wake opportunities for the
+  # same watchdog. They do not add a producer, state store, or recovery path.
+  workflow_run:
+    workflows:
+      - "ETF market snapshot"
+      - "ETF opening-auction CURRENT fallback"
+      - "Overseas pre-open pulse"
+      - "US extended-hours pulse"
+      - "ETF system consistency"
+    types: [completed]
   push:
     branches: [main]
     paths:
