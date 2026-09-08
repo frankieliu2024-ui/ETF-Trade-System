@@ -50,6 +50,13 @@ def _timestamp(item: dict) -> datetime | None:
     return max(parsed) if parsed else None
 
 
+def _state_without_volatile_updated_at(state: dict) -> dict:
+    """Return state content excluding only the volatile top-level write timestamp."""
+    content = dict(state)
+    content.pop("updated_at", None)
+    return content
+
+
 def _status_rank(item: dict) -> int:
     return {
         "CREATED": 1,
@@ -88,6 +95,8 @@ def _merge_same_event(base: dict, incoming: dict) -> dict:
 
 
 def _newer_state(base: dict, incoming: dict) -> dict:
+    if _state_without_volatile_updated_at(base) == _state_without_volatile_updated_at(incoming):
+        return base
     base_time, incoming_time = _timestamp(base), _timestamp(incoming)
     if base_time is None:
         return incoming
