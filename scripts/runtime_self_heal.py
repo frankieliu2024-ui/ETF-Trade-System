@@ -74,16 +74,16 @@ def expected_a_share_pulse(now: datetime) -> datetime | None:
     """
     minute = now.hour * 60 + now.minute
     checkpoint_pulses = (
-        (10 * 60 + 24, 10 * 60 + 20),
-        (11 * 60 + 24, 11 * 60 + 20),
-        (13 * 60 + 24, 13 * 60 + 20),
-        (14 * 60 + 24, 14 * 60 + 20),
+        (10 * 60 + 24, 10 * 60 + 19),
+        (11 * 60 + 24, 11 * 60 + 19),
+        (13 * 60 + 24, 13 * 60 + 19),
+        (14 * 60 + 24, 14 * 60 + 19),
     )
     for checkpoint_minute, expected_minute in checkpoint_pulses:
         # Keep the decision-specific check bounded to the interval before the
         # next existing ten-minute producer cadence point.  Older gaps remain
         # covered by the existing age/recovery contract below.
-        if checkpoint_minute <= minute < expected_minute + 10:
+        if checkpoint_minute <= minute <= expected_minute + 10:
             return now.replace(
                 hour=expected_minute // 60,
                 minute=expected_minute % 60,
