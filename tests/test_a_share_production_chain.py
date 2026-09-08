@@ -188,13 +188,16 @@ class AShareProductionChainTests(unittest.TestCase):
         self.assertIn("steps.pulse_gate.outputs.eligible == 'true'", workflow)
         self.assertIn("us_pulse_runtime_health.json", workflow)
 
-    def test_shared_slot_contract_rejects_severely_delayed_us_primary_and_backstop(self):
-        primary = resolve_scheduled_pulse("*/10 8-23 * * 1-5", datetime.fromisoformat("2026-09-08T20:55:00+08:00"))
-        backstop = resolve_scheduled_pulse("2,22,42 8-23 * * 1-5", datetime.fromisoformat("2026-09-08T20:55:00+08:00"))
-        self.assertEqual(primary["schedule_delay_class"], "SEVERELY_DELAYED")
-        self.assertFalse(primary["eligible"])
+    def test_shared_slot_contract_rejects_severely_delayed_us_backstop_and_old_cron(self):
+        primary = resolve_scheduled_pulse("*/10 8-23 * * 1-5", datetime.fromisoformat("2026-09-08T17:05:00+08:00"))
+        backstop = resolve_scheduled_pulse("2,22,42 8-23 * * 1-5", datetime.fromisoformat("2026-09-08T20:05:00+08:00"))
+        old_cron = resolve_scheduled_pulse("15,20,25,30,40,50 1 * * 1-5", datetime.fromisoformat("2026-09-08T13:55:42+08:00"))
+        self.assertEqual(primary["schedule_delay_class"], "BOUNDED_DELAY")
+        self.assertTrue(primary["eligible"])
         self.assertEqual(backstop["schedule_delay_class"], "SEVERELY_DELAYED")
         self.assertFalse(backstop["eligible"])
+        self.assertEqual(old_cron["schedule_delay_class"], "SEVERELY_DELAYED")
+        self.assertFalse(old_cron["eligible"])
         self.assertIn("SCHEDULED_CRON", (ROOT / ".github/workflows/us-extended-hours-pulse.yml").read_text(encoding="utf-8"))
 
     def test_us_non_schedule_ingress_remains_eligible(self):
