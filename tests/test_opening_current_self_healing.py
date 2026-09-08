@@ -270,9 +270,6 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertNotIn("if: ${{ github.event_name == 'workflow_run' }}", assess.split("- name: Assess dedicated cross-market pulse heartbeats", 1)[0])
 
     def test_event_wake_recovers_after_primary_and_scheduled_watchdog_are_absent(self):
-        # Deterministic model of the observed failure: neither scheduled run
-        # exists, while an existing APAC or consistency completion can wake the
-        # same watchdog. The due-pulse decision remains the canonical assessor.
         absent_schedules = {
             "ETF market snapshot": "ABSENT",
             "ETF runtime self-healing watchdog": "ABSENT",
