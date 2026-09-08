@@ -261,7 +261,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
             "ETF system consistency",
         }
         self.assertEqual(
-            set(line.strip().strip('"') for line in trigger.splitlines() if line.strip().startswith('- "')),
+            set(line.strip().removeprefix("- ").strip('"') for line in trigger.splitlines() if line.strip().startswith('- "')),
             expected,
         )
         self.assertIn("types: [completed]", trigger)
