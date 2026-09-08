@@ -66,11 +66,11 @@ jobs:
           pulse = resolve_scheduled_pulse(os.environ.get("SCHEDULED_CRON", ""), datetime.now(timezone.utc))
           eligible = pulse["eligible"] if os.environ.get("GITHUB_EVENT_NAME") == "schedule" else True
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
-              handle.write(f"eligible={'true' if eligible else 'false'}\\n")
-              handle.write(f"scheduled_slot_at={pulse.get('scheduled_slot_at') or ''}\\n")
-              handle.write(f"schedule_delay_seconds={pulse.get('schedule_delay_seconds') if pulse.get('schedule_delay_seconds') is not None else ''}\\n")
-              handle.write(f"schedule_delay_class={pulse.get('schedule_delay_class') or ''}\\n")
-              handle.write(f"natural_pulse_identity={pulse.get('natural_pulse_identity') or ''}\\n")
+              handle.write(f"eligible={'true' if eligible else 'false'}\n")
+              handle.write(f"scheduled_slot_at={pulse.get('scheduled_slot_at') or ''}\n")
+              handle.write(f"schedule_delay_seconds={pulse.get('schedule_delay_seconds') if pulse.get('schedule_delay_seconds') is not None else ''}\n")
+              handle.write(f"schedule_delay_class={pulse.get('schedule_delay_class') or ''}\n")
+              handle.write(f"natural_pulse_identity={pulse.get('natural_pulse_identity') or ''}\n")
           print({**pulse, "workflow_eligible": eligible})
           PY
       - name: Preserve previous US pulse for sudden-move comparison
