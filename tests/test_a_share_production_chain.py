@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import build_account_stock_market as stock_market  # noqa: E402
+import runtime_session_gate  # noqa: E402
 import build_stock_context as stock_context  # noqa: E402
 
 
@@ -66,6 +67,32 @@ class AShareProductionChainTests(unittest.TestCase):
         self.assertEqual(set(result), {"300750", "601138"})
         self.assertTrue(all(item["quality_status"] == "PASS" for item in result.values()))
         self.assertTrue(all(item["as_of_beijing"].endswith("+08:00") for item in result.values()))
+
+    def test_live_snapshot_request_classifier_preserves_single_workflow_semantics(self):
+        refresh = {"request_type": "MARKET_QUOTE_REFRESH", "force_refresh": True}
+        formal_only = {"formal_decision": {"decision_id": "d1"}}
+        account_only = {"source": "CHATGPT_USER_BROKER_SCREENSHOT", "interaction_scenario": "BROKER_SCREENSHOT_SYNC", "account_fact": {}}
+        trade_only = {"trade_event": {"event_id": "t1"}}
+        review_only = {"formal_review": {"reviewed_at_beijing": "2026-09-08T15:39:00+08:00"}}
+        hybrid = {"formal_decision": {"decision_id": "d1"}, "wait_for_refresh": True, "require_post_request_snapshot": True}
+
+        self.assertEqual(runtime_session_gate.classify_live_snapshot_request(refresh), "REFRESH_BEARING")
+        self.assertEqual(runtime_session_gate.classify_live_snapshot_request(formal_only), "STATE_SYNC_ONLY")
+        self.assertEqual(runtime_session_gate.classify_live_snapshot_request(account_only), "STATE_SYNC_ONLY")
+        self.assertEqual(runtime_session_gate.classify_live_snapshot_request(trade_only), "STATE_SYNC_ONLY")
+        self.assertEqual(runtime_session_gate.classify_live_snapshot_request(review_only), "STATE_SYNC_ONLY")
+        self.assertEqual(runtime_session_gate.classify_live_snapshot_request(hybrid), "HYBRID")
+
+    def test_1325_two_stage_request_does_not_recapture_on_formal_persistence(self):
+        first_refresh = {"query_intent": "EXPLICIT_LATEST", "wait_for_refresh": True, "require_post_request_snapshot": True}
+        second_formal = {"formal_decision": {"decision_id": "20260908_1325"}}
+        self.assertEqual(runtime_session_gate.classify_live_snapshot_request(first_refresh), "REFRESH_BEARING")
+        self.assertEqual(runtime_session_gate.classify_live_snapshot_request(second_formal), "STATE_SYNC_ONLY")
+        workflow = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        self.assertIn("steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY'", workflow)
+        self.assertIn("classify_live_snapshot_request", workflow)
+        self.assertIn("python scripts/process_state_sync_request.py", workflow)
+        self.assertIn("select_point_in_time_snapshot", (ROOT / "scripts/process_state_sync_request.py").read_text(encoding="utf-8"))
 
     def test_scheduled_and_query_requests_share_canonical_snapshot_producer(self):
         production = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
