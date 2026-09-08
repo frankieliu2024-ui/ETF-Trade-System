@@ -67,6 +67,8 @@ jobs:
           NATURAL_PULSE_IDENTITY: ${{ steps.session_gate.outputs.natural_pulse_identity }}
           NATURAL_PULSE_IDENTITY_STATUS: ${{ steps.session_gate.outputs.natural_pulse_identity_status }}
           NATURAL_PULSE_ELIGIBLE: ${{ steps.session_gate.outputs.natural_pulse_eligible }}
+          NATURAL_PULSE_IDENTITY_STATUS: ${{ steps.session_gate.outputs.natural_pulse_identity_status }}
+          NATURAL_PULSE_ELIGIBLE: ${{ steps.session_gate.outputs.natural_pulse_eligible }}
         shell: bash
         run: |
           python - <<'PY'
@@ -95,6 +97,8 @@ jobs:
               'schedule_delay_seconds': delay_seconds,
               'schedule_delay_class': os.environ.get('SCHEDULE_DELAY_CLASS', ''),
               'natural_pulse_identity': os.environ.get('NATURAL_PULSE_IDENTITY') or None,
+              'natural_pulse_identity_status': os.environ.get('NATURAL_PULSE_IDENTITY_STATUS', ''),
+              'natural_pulse_eligible': os.environ.get('NATURAL_PULSE_ELIGIBLE', '') == 'true',
               'natural_pulse_identity_status': os.environ.get('NATURAL_PULSE_IDENTITY_STATUS', ''),
               'natural_pulse_eligible': os.environ.get('NATURAL_PULSE_ELIGIBLE', '') == 'true',
               'trigger_mode': 'QUERY_TIME_PUSH' if os.environ.get('GITHUB_EVENT_NAME') == 'push' else 'SCHEDULE_OR_DISPATCH',
@@ -170,6 +174,8 @@ jobs:
           SCHEDULE_DELAY_SECONDS: ${{ steps.session_gate.outputs.schedule_delay_seconds }}
           SCHEDULE_DELAY_CLASS: ${{ steps.session_gate.outputs.schedule_delay_class }}
           NATURAL_PULSE_IDENTITY: ${{ steps.session_gate.outputs.natural_pulse_identity }}
+          NATURAL_PULSE_IDENTITY_STATUS: ${{ steps.session_gate.outputs.natural_pulse_identity_status }}
+          NATURAL_PULSE_ELIGIBLE: ${{ steps.session_gate.outputs.natural_pulse_eligible }}
         shell: bash
         run: |
           python - <<'PY'
@@ -196,6 +202,8 @@ jobs:
               'schedule_delay_seconds': delay_seconds,
               'schedule_delay_class': os.environ.get('SCHEDULE_DELAY_CLASS', ''),
               'natural_pulse_identity': os.environ.get('NATURAL_PULSE_IDENTITY') or None,
+              'natural_pulse_identity_status': os.environ.get('NATURAL_PULSE_IDENTITY_STATUS', ''),
+              'natural_pulse_eligible': os.environ.get('NATURAL_PULSE_ELIGIBLE', '') == 'true',
               'trigger_mode': 'QUERY_TIME_PUSH' if os.environ.get('GITHUB_EVENT_NAME') == 'push' else 'SCHEDULE_OR_DISPATCH',
               'started_at': data.get('run_started_at', ''),
               'finished_at': data.get('captured_at_beijing', datetime.now(shanghai).isoformat(timespec='seconds')),
