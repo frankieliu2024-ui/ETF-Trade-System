@@ -1,38 +1,33 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-07T22:43:33+08:00",
+  "generated_at": "2026-09-08T10:27:33+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 34134380993,
+  "workflow_name": "Overseas pre-open pulse",
+  "run_id": 34180061908,
   "run_attempt": 1,
-  "head_sha": "ab6c4e17e6dbfd08280c6a1c1f3cba1ff538a0c9",
-  "main_head_sha": "070947f23a315e28836cfce56f931e3a83146282",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "cce2f4a22a3952b7802bc2dc79675ddb12ccfe0e",
+  "main_head_sha": "5f533dc445d42f02cdc78fe9ea94bbe8b5775a09",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 8
-    },
-    {
-      "job": "production_acceptance",
-      "step": "Enforce production acceptance",
-      "number": 9
+      "job": "overseas",
+      "step": "Commit overseas contexts and runtime health",
+      "number": 12
     }
   ],
   "changed_files": [
-    "tests/test_executed_trade_case_lifecycle.py"
+    "data/state/notification_center.json"
   ],
-  "commit_message": "test: correct merged-main reconciliation fixture binding (#421)",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "commit_message": "state: record notification and execution reconciliation",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
