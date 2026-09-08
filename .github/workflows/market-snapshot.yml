@@ -22,8 +22,8 @@ on:
   schedule:
     # Explicit opening-auction pulses, followed by ten-minute pulses in active A-share windows.
     - cron: "15,20,25,30,40,50 1 * * 1-5"
-    - cron: "*/10 2-3,5-6 * * 1-5"
-    - cron: "0,10 7 * * 1-5"
+    - cron: "9,19,29,39,49,59 2-3,5-6 * * 1-5"
+    - cron: "9,19 7 * * 1-5"
 
 permissions:
   contents: write
@@ -60,6 +60,11 @@ jobs:
           SESSION_MARKET_DATE: ${{ steps.session_gate.outputs.market_date }}
           SESSION_MARKET_PHASE: ${{ steps.session_gate.outputs.market_phase }}
           EVENT_SCHEDULE: ${{ github.event.schedule || '' }}
+          SESSION_REASON: ${{ steps.session_gate.outputs.reason }}
+          SCHEDULED_SLOT_AT: ${{ steps.session_gate.outputs.scheduled_slot_at }}
+          SCHEDULE_DELAY_SECONDS: ${{ steps.session_gate.outputs.schedule_delay_seconds }}
+          SCHEDULE_DELAY_CLASS: ${{ steps.session_gate.outputs.schedule_delay_class }}
+          NATURAL_PULSE_IDENTITY: ${{ steps.session_gate.outputs.natural_pulse_identity }}
         shell: bash
         run: |
           python - <<'PY'
@@ -72,12 +77,22 @@ jobs:
           current_path = Path('data/state/CURRENT.json')
           health = json.loads(health_path.read_text(encoding='utf-8')) if health_path.exists() else {}
           current = json.loads(current_path.read_text(encoding='utf-8')) if current_path.exists() else {}
+          delay_text = os.environ.get('SCHEDULE_DELAY_SECONDS', '')
+          try:
+              delay_seconds = int(delay_text) if delay_text else None
+          except ValueError:
+              delay_seconds = None
           health.update({
               'status': 'SKIPPED',
               'quality_status': 'SKIPPED',
-              'reason': 'outside_a_share_capture_window',
+              'reason': os.environ.get('SESSION_REASON') or 'outside_a_share_capture_window',
               'failure_stage': 'session_gate',
               'scheduled_for': 'cron:' + os.environ.get('EVENT_SCHEDULE', '') if os.environ.get('EVENT_SCHEDULE') else ('query_time_push' if os.environ.get('GITHUB_EVENT_NAME') == 'push' else 'workflow_dispatch'),
+              'scheduled_cron': os.environ.get('EVENT_SCHEDULE', ''),
+              'scheduled_slot_at': os.environ.get('SCHEDULED_SLOT_AT') or None,
+              'schedule_delay_seconds': delay_seconds,
+              'schedule_delay_class': os.environ.get('SCHEDULE_DELAY_CLASS', ''),
+              'natural_pulse_identity': os.environ.get('NATURAL_PULSE_IDENTITY') or None,
               'trigger_mode': 'QUERY_TIME_PUSH' if os.environ.get('GITHUB_EVENT_NAME') == 'push' else 'SCHEDULE_OR_DISPATCH',
               'started_at': now,
               'finished_at': now,
@@ -145,6 +160,12 @@ jobs:
           fi
       - name: Normalize runtime health observability
         if: ${{ steps.capture.outcome == 'success' && steps.session_gate.outputs.should_capture == 'true' }}
+        env:
+          EVENT_SCHEDULE: ${{ github.event.schedule || '' }}
+          SCHEDULED_SLOT_AT: ${{ steps.session_gate.outputs.scheduled_slot_at }}
+          SCHEDULE_DELAY_SECONDS: ${{ steps.session_gate.outputs.schedule_delay_seconds }}
+          SCHEDULE_DELAY_CLASS: ${{ steps.session_gate.outputs.schedule_delay_class }}
+          NATURAL_PULSE_IDENTITY: ${{ steps.session_gate.outputs.natural_pulse_identity }}
         shell: bash
         run: |
           python - <<'PY'
@@ -152,6 +173,11 @@ jobs:
           from datetime import datetime, timezone, timedelta
           from pathlib import Path
           shanghai = timezone(timedelta(hours=8), name='Asia/Shanghai')
+          delay_text = os.environ.get('SCHEDULE_DELAY_SECONDS', '')
+          try:
+              delay_seconds = int(delay_text) if delay_text else None
+          except ValueError:
+              delay_seconds = None
           path = Path('data/state/runtime_health.json')
           data = json.loads(path.read_text(encoding='utf-8'))
           snapshot_path = Path(data.get('latest_snapshot', ''))
@@ -161,6 +187,11 @@ jobs:
           market_date = snapshot.get('market_date', data.get('market_date', ''))
           data.update({
               'scheduled_for': 'query_time_push' if os.environ.get('GITHUB_EVENT_NAME') == 'push' else (f'{market_date} {planned}' if planned else f'{market_date} {snapshot.get("node", "")}'),
+              'scheduled_cron': os.environ.get('EVENT_SCHEDULE', ''),
+              'scheduled_slot_at': os.environ.get('SCHEDULED_SLOT_AT') or None,
+              'schedule_delay_seconds': delay_seconds,
+              'schedule_delay_class': os.environ.get('SCHEDULE_DELAY_CLASS', ''),
+              'natural_pulse_identity': os.environ.get('NATURAL_PULSE_IDENTITY') or None,
               'trigger_mode': 'QUERY_TIME_PUSH' if os.environ.get('GITHUB_EVENT_NAME') == 'push' else 'SCHEDULE_OR_DISPATCH',
               'started_at': data.get('run_started_at', ''),
               'finished_at': data.get('captured_at_beijing', datetime.now(shanghai).isoformat(timespec='seconds')),
