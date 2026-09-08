@@ -4,6 +4,8 @@ import argparse
 import json
 import os
 import subprocess
+
+from scheduled_pulse_slot import resolve_scheduled_pulse
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -26,6 +28,9 @@ def set_output(key: str, value: str) -> None:
 STATE_SYNC_FIELDS = ("account_fact", "formal_decision", "trade_event", "formal_review")
 REFRESH_REQUEST_TYPES = {"MARKET_QUOTE_REFRESH", "QUERY_TIME_REFRESH", "LIVE_SNAPSHOT_REFRESH"}
 EXPLICIT_REFRESH_INTENTS = {"EXPLICIT_LATEST", "MARKET_QUOTE_REFRESH", "QUERY_TIME_REFRESH"}
+
+
+scheduled_cron_observability = resolve_scheduled_pulse
 
 
 def classify_live_snapshot_request(request: dict) -> str:
@@ -121,12 +126,13 @@ def main() -> int:
     event_name = os.environ.get("GITHUB_EVENT_NAME", "")
     request_class = _push_request_class() if event_name == "push" else "NOT_APPLICABLE"
     scheduled_cron = os.environ.get("SCHEDULED_CRON", "").strip()
+    policy = load_json(ROOT / "config" / "runtime_policy.json")
+    schedule_observation = resolve_scheduled_pulse(scheduled_cron, now, cadence_seconds=int(policy.get("target_cadence_seconds", 600)))
     scheduled_close_intent = (
         event_name == "schedule"
         and scheduled_cron == "0,10 7 * * 1-5"
     )
     boundary_close_intent = scheduled_close_boundary_intent(now, event_name, scheduled_cron)
-    policy = load_json(ROOT / "config" / "runtime_policy.json")
     calendar = load_json(ROOT / "config" / "market" / "a_share_trading_calendar_2026.json")
 
     start = calendar.get("coverage_start", "")
@@ -150,7 +156,10 @@ def main() -> int:
         should_capture = in_opening_auction or in_morning or in_midday_recovery or in_afternoon or in_close_grace
         reason = "midday_morning_close_recovery" if in_midday_recovery else ("capture_window" if should_capture else "outside_capture_window")
 
-    if scheduled_close_intent and should_capture is False and minute >= 15 * 60 and date_text not in set(calendar.get("closed_dates") or []):
+    if event_name == "schedule" and schedule_observation["schedule_delay_class"] in {"SEVERELY_DELAYED", "UNKNOWN"}:
+        should_capture = False
+        reason = "stale_scheduled_pulse"
+    elif scheduled_close_intent and should_capture is False and minute >= 15 * 60 and date_text not in set(calendar.get("closed_dates") or []):
         should_capture = True
         phase = "POST_CLOSE_RECOVERY"
         reason = "delayed_scheduled_close_recovery"
@@ -177,7 +186,9 @@ def main() -> int:
     set_output("market_phase", phase)
     set_output("close_intent", "true" if close_intent else "false")
     set_output("wait_for_close_boundary_seconds", str(max(0, wait_for_close_boundary_seconds)))
-    print(json.dumps({"should_capture": should_capture, "request_class": request_class, "reason": reason, "market_date": date_text, "market_phase": phase, "close_intent": close_intent, "wait_for_close_boundary_seconds": max(0, wait_for_close_boundary_seconds), "captured_at_beijing": now.isoformat(timespec="seconds")}, ensure_ascii=False))
+    for key, value in schedule_observation.items():
+        set_output(key, "" if value is None else str(value))
+    print(json.dumps({"should_capture": should_capture, "request_class": request_class, "reason": reason, "market_date": date_text, "market_phase": phase, "close_intent": close_intent, "wait_for_close_boundary_seconds": max(0, wait_for_close_boundary_seconds), "captured_at_beijing": now.isoformat(timespec="seconds"), "schedule_observability": schedule_observation}, ensure_ascii=False))
     return 0
 
 
