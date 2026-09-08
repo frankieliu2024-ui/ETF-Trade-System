@@ -84,6 +84,44 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
         merged = merge_notification_state(base, incoming)
         self.assertEqual({x["notification_id"] for x in merged["notifications"]}, {"a", "b"})
 
+    def test_notification_state_merge_ignores_timestamp_only_top_level_update(self):
+        from scripts.merge_notification_state import merge_notification_state
+
+        item = {
+            "notification_id": "aggregate-stable",
+            "source_event_id": "fact-1",
+            "event_type": "MARKET_VALUE_ALERT",
+            "lifecycle_status": "SENT",
+            "sent_at": "2026-09-08T09:07:16+08:00",
+            "confirmation_context": {
+                "source_fact_id": "fact-1",
+                "event_family_id": "ASIA:2026-09-08:SESSION:APAC_DIVERGENCE",
+                "event_tags": ["DIVERGENCE", "EXTREME"],
+            },
+        }
+        base = {
+            "schema_version": "2.2",
+            "updated_at": "2026-09-08T09:07:16+08:00",
+            "last_status": "AGGREGATED_INTO_EXISTING",
+            "last_type": "MARKET_VALUE_ALERT",
+            "last_title": "亚太主要指数结构出现显著分化",
+            "notifications": [item],
+            "recent": [],
+            "pending_questions": [],
+            "policy": "test",
+        }
+        incoming = dict(base)
+        incoming["updated_at"] = "2026-09-08T09:12:54+08:00"
+
+        self.assertEqual(
+            merge_notification_state(base, incoming),
+            merge_notification_state(base, base),
+        )
+        self.assertEqual(
+            merge_notification_state(base, incoming)["updated_at"],
+            base["updated_at"],
+        )
+
     def test_notification_state_merge_preserves_newer_sent_state(self):
         from scripts.merge_notification_state import merge_notification_state
         base = {"updated_at": "2026-09-01T10:05:00+08:00", "notifications": [{"notification_id": "a", "source_event_id": "fact", "lifecycle_status": "SENT", "sent_at": "2026-09-01T10:05:00+08:00", "response": {"pushplus_code": 200}}]}
