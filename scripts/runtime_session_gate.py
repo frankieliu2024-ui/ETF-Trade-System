@@ -28,6 +28,67 @@ REFRESH_REQUEST_TYPES = {"MARKET_QUOTE_REFRESH", "QUERY_TIME_REFRESH", "LIVE_SNA
 EXPLICIT_REFRESH_INTENTS = {"EXPLICIT_LATEST", "MARKET_QUOTE_REFRESH", "QUERY_TIME_REFRESH"}
 
 
+def _expand_cron_field(field: str, minimum: int, maximum: int) -> list[int]:
+    values: set[int] = set()
+    for part in field.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        if "/" in part:
+            base, step_text = part.split("/", 1)
+            step = int(step_text)
+            if base == "*":
+                start, end = minimum, maximum
+            elif "-" in base:
+                start_text, end_text = base.split("-", 1)
+                start, end = int(start_text), int(end_text)
+            else:
+                start = end = int(base)
+            values.update(range(start, end + 1, step))
+        elif "-" in part:
+            start_text, end_text = part.split("-", 1)
+            values.update(range(int(start_text), int(end_text) + 1))
+        elif part == "*":
+            values.update(range(minimum, maximum + 1))
+        else:
+            values.add(int(part))
+    return sorted(value for value in values if minimum <= value <= maximum)
+
+
+def scheduled_cron_observability(scheduled_cron: str, now: datetime, cadence_seconds: int = 600) -> dict:
+    """Attach natural schedule identity and bounded delay to one run."""
+    schedule = str(scheduled_cron or "").strip()
+    base = {"scheduled_cron": schedule, "scheduled_slot_at": None, "schedule_delay_seconds": None, "schedule_delay_class": "NOT_SCHEDULED" if not schedule else "UNKNOWN", "natural_pulse_identity": None}
+    if not schedule:
+        return base
+    try:
+        minute_field, hour_field, _day, _month, dow_field = schedule.split()
+        minutes = _expand_cron_field(minute_field, 0, 59)
+        hours = _expand_cron_field(hour_field, 0, 23)
+        weekdays = _expand_cron_field(dow_field, 0, 7)
+        utc_now = now.astimezone(timezone.utc)
+        candidates: list[datetime] = []
+        for offset in range(0, 2):
+            day = utc_now.date() - timedelta(days=offset)
+            cron_weekday = (day.weekday() + 1) % 7
+            if cron_weekday not in weekdays and not (cron_weekday == 0 and 7 in weekdays):
+                continue
+            for hour in hours:
+                for minute in minutes:
+                    candidate = datetime.combine(day, datetime.min.time(), tzinfo=timezone.utc).replace(hour=hour, minute=minute)
+                    if candidate <= utc_now:
+                        candidates.append(candidate)
+        slot = max(candidates) if candidates else None
+        if slot is None:
+            return base
+        delay = max(0, int((utc_now - slot).total_seconds()))
+        slot_local = slot.astimezone(SHANGHAI)
+        base.update({"scheduled_slot_at": slot_local.isoformat(timespec="seconds"), "schedule_delay_seconds": delay, "schedule_delay_class": "SEVERELY_DELAYED" if delay >= int(cadence_seconds) else "BOUNDED_DELAY", "natural_pulse_identity": f"{schedule}|{slot_local.isoformat(timespec='seconds')}"})
+        return base
+    except (TypeError, ValueError):
+        return base
+
+
 def classify_live_snapshot_request(request: dict) -> str:
     """Classify one live_snapshot request before any market capture.
 
@@ -121,12 +182,13 @@ def main() -> int:
     event_name = os.environ.get("GITHUB_EVENT_NAME", "")
     request_class = _push_request_class() if event_name == "push" else "NOT_APPLICABLE"
     scheduled_cron = os.environ.get("SCHEDULED_CRON", "").strip()
+    policy = load_json(ROOT / "config" / "runtime_policy.json")
+    schedule_observation = scheduled_cron_observability(scheduled_cron, now, cadence_seconds=int(policy.get("target_cadence_seconds", 600)))
     scheduled_close_intent = (
         event_name == "schedule"
         and scheduled_cron == "0,10 7 * * 1-5"
     )
     boundary_close_intent = scheduled_close_boundary_intent(now, event_name, scheduled_cron)
-    policy = load_json(ROOT / "config" / "runtime_policy.json")
     calendar = load_json(ROOT / "config" / "market" / "a_share_trading_calendar_2026.json")
 
     start = calendar.get("coverage_start", "")
@@ -150,7 +212,10 @@ def main() -> int:
         should_capture = in_opening_auction or in_morning or in_midday_recovery or in_afternoon or in_close_grace
         reason = "midday_morning_close_recovery" if in_midday_recovery else ("capture_window" if should_capture else "outside_capture_window")
 
-    if scheduled_close_intent and should_capture is False and minute >= 15 * 60 and date_text not in set(calendar.get("closed_dates") or []):
+    if event_name == "schedule" and schedule_observation["schedule_delay_class"] in {"SEVERELY_DELAYED", "UNKNOWN"}:
+        should_capture = False
+        reason = "stale_scheduled_pulse"
+    elif scheduled_close_intent and should_capture is False and minute >= 15 * 60 and date_text not in set(calendar.get("closed_dates") or []):
         should_capture = True
         phase = "POST_CLOSE_RECOVERY"
         reason = "delayed_scheduled_close_recovery"
@@ -177,7 +242,9 @@ def main() -> int:
     set_output("market_phase", phase)
     set_output("close_intent", "true" if close_intent else "false")
     set_output("wait_for_close_boundary_seconds", str(max(0, wait_for_close_boundary_seconds)))
-    print(json.dumps({"should_capture": should_capture, "request_class": request_class, "reason": reason, "market_date": date_text, "market_phase": phase, "close_intent": close_intent, "wait_for_close_boundary_seconds": max(0, wait_for_close_boundary_seconds), "captured_at_beijing": now.isoformat(timespec="seconds")}, ensure_ascii=False))
+    for key, value in schedule_observation.items():
+        set_output(key, "" if value is None else str(value))
+    print(json.dumps({"should_capture": should_capture, "request_class": request_class, "reason": reason, "market_date": date_text, "market_phase": phase, "close_intent": close_intent, "wait_for_close_boundary_seconds": max(0, wait_for_close_boundary_seconds), "captured_at_beijing": now.isoformat(timespec="seconds"), "schedule_observability": schedule_observation}, ensure_ascii=False))
     return 0
 
 
