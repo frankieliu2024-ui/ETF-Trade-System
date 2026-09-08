@@ -65,29 +65,32 @@ def in_watch_window(now: datetime) -> bool:
 
 
 def expected_a_share_pulse(now: datetime) -> datetime | None:
-    """Return the pulse expected before a formal decision watchdog checkpoint.
+    """Return a due decision pulse without requiring an exact watchdog minute.
 
-    These are the existing market-snapshot cadence points immediately preceding
-    the 10:25/11:25/13:25/14:25 decision nodes.  The watchdog only evaluates
-    them at the corresponding checkpoint; this does not change the producer
-    cadence or the interactive freshness contract.
+    The formal decision checkpoints and their immediately preceding producer
+    pulses are unchanged.  A late workflow-run event or watchdog invocation may
+    still evaluate the same legal pulse window; this does not add cadence or
+    reinterpret other market nodes.
     """
     minute = now.hour * 60 + now.minute
-    expected_by_checkpoint = {
-        10 * 60 + 24: 10 * 60 + 20,
-        11 * 60 + 24: 11 * 60 + 20,
-        13 * 60 + 24: 13 * 60 + 20,
-        14 * 60 + 24: 14 * 60 + 20,
-    }
-    expected_minute = expected_by_checkpoint.get(minute)
-    if expected_minute is None:
-        return None
-    return now.replace(
-        hour=expected_minute // 60,
-        minute=expected_minute % 60,
-        second=0,
-        microsecond=0,
+    checkpoint_pulses = (
+        (10 * 60 + 24, 10 * 60 + 20),
+        (11 * 60 + 24, 11 * 60 + 20),
+        (13 * 60 + 24, 13 * 60 + 20),
+        (14 * 60 + 24, 14 * 60 + 20),
     )
+    for checkpoint_minute, expected_minute in checkpoint_pulses:
+        # Keep the decision-specific check bounded to the interval before the
+        # next existing ten-minute producer cadence point.  Older gaps remain
+        # covered by the existing age/recovery contract below.
+        if checkpoint_minute <= minute < expected_minute + 10:
+            return now.replace(
+                hour=expected_minute // 60,
+                minute=expected_minute % 60,
+                second=0,
+                microsecond=0,
+            )
+    return None
 
 
 def same_day_current_required(now: datetime, current: dict, calendar: dict) -> bool:
