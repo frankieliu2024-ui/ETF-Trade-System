@@ -71,6 +71,8 @@ jobs:
               handle.write(f"schedule_delay_seconds={pulse.get('schedule_delay_seconds') if pulse.get('schedule_delay_seconds') is not None else ''}\n")
               handle.write(f"schedule_delay_class={pulse.get('schedule_delay_class') or ''}\n")
               handle.write(f"natural_pulse_identity={pulse.get('natural_pulse_identity') or ''}\n")
+              handle.write(f"natural_pulse_identity_status={pulse.get('natural_pulse_identity_status') or ''}\n")
+              handle.write(f"natural_pulse_eligible={str(pulse.get('natural_pulse_eligible')).lower()}\n")
           print({**pulse, "workflow_eligible": eligible})
           PY
       - name: Preserve previous US pulse for sudden-move comparison
