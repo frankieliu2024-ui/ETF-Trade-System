@@ -5,6 +5,8 @@ import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from scheduled_pulse_slot import resolve_scheduled_pulse
+
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 BEIJING = timezone(timedelta(hours=8), name="Asia/Shanghai")
 REPORT = ROOT / "data" / "state" / "overseas_runtime_health.json"
@@ -31,6 +33,9 @@ def main() -> int:
     context = load(ROOT / "data" / "state" / "overseas_context.json")
     us_context = load(ROOT / "data" / "state" / "us_extended_hours_context.json")
     now_bj = started.astimezone(BEIJING)
+    policy = load(ROOT / "config" / "runtime_policy.json")
+    pulse = resolve_scheduled_pulse(os.environ.get("SCHEDULED_CRON", ""), now_bj, cadence_seconds=int(policy.get("target_cadence_seconds", 600)))
+    schedule_blocked = os.environ.get("GITHUB_EVENT_NAME") == "schedule" and not pulse["eligible"]
     objects = context.get("objects") or {}
     hard_errors = []
     warnings = []
@@ -72,18 +77,26 @@ def main() -> int:
         if object_id not in ("N225", "KOSPI") and record.get("quality_status") != "PASS":
             warnings.append(f"{object_id}: quality={record.get('quality_status', 'MISSING')} error={record.get('error', '')}")
 
-    status = "FAIL" if hard_errors else ("DEGRADED" if warnings or context.get("quality_status") != "PASS" else "PASS")
+    if schedule_blocked:
+        warnings.append(f"stale_scheduled_pulse: {pulse['natural_pulse_identity'] or pulse['scheduled_cron']}")
+    status = "FAIL" if hard_errors else ("DEGRADED" if warnings or context.get("quality_status") != "PASS" or schedule_blocked else "PASS")
     finished = datetime.now(timezone.utc)
     all_as_of = [parse_time(v) for v in provider_as_of.values() if parse_time(v)]
     top_as_of = max(all_as_of).astimezone(BEIJING).isoformat(timespec="seconds") if all_as_of else ""
     report = {
         "status": status,
-        "pulse_success": not hard_errors and all((objects.get(k) or {}).get("quality_status") in {"PASS", "DEGRADED"} for k in ("N225", "KOSPI")),
+        "pulse_success": not hard_errors and not schedule_blocked and all((objects.get(k) or {}).get("quality_status") in {"PASS", "DEGRADED"} for k in ("N225", "KOSPI")),
         "hard_error_count": len(hard_errors),
         "warning_count": len(warnings),
         "hard_errors": hard_errors,
         "warnings": warnings,
         "scheduled_for": os.environ.get("SCHEDULED_FOR", os.environ.get("GITHUB_EVENT_NAME", "unknown")),
+        "scheduled_cron": pulse["scheduled_cron"],
+        "scheduled_slot_at": pulse["scheduled_slot_at"],
+        "schedule_delay_seconds": pulse["schedule_delay_seconds"],
+        "schedule_delay_class": pulse["schedule_delay_class"],
+        "natural_pulse_identity": pulse["natural_pulse_identity"],
+        "natural_pulse_eligible": pulse["eligible"],
         "trigger": os.environ.get("GITHUB_EVENT_NAME", ""),
         "started_at": started.isoformat(timespec="seconds").replace("+00:00", "Z"),
         "provider_as_of": top_as_of,
