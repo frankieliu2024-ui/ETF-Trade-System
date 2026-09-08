@@ -77,8 +77,10 @@ class AShareProductionChainTests(unittest.TestCase):
         self.assertEqual(backstop["latest_candidate_slot_at"], "2026-09-08T14:02:00+08:00")
         self.assertEqual(primary["schedule_delay_class"], "AMBIGUOUS")
         self.assertEqual(backstop["schedule_delay_class"], "AMBIGUOUS")
-        self.assertEqual(primary["natural_pulse_identity"], "slot:2026-09-08T14:00:00+08:00")
-        self.assertEqual(backstop["natural_pulse_identity"], "slot:2026-09-08T14:02:00+08:00")
+        self.assertIsNone(primary["natural_pulse_identity"])
+        self.assertIsNone(backstop["natural_pulse_identity"])
+        self.assertFalse(primary["natural_pulse_eligible"])
+        self.assertFalse(backstop["natural_pulse_eligible"])
         workflow = (ROOT / ".github/workflows/overseas-preopen-pulse.yml").read_text(encoding="utf-8")
         self.assertIn("id: pulse_gate", workflow)
         self.assertIn("steps.pulse_gate.outputs.eligible == 'true'", workflow)
@@ -116,7 +118,9 @@ class AShareProductionChainTests(unittest.TestCase):
         self.assertEqual(observation["latest_candidate_slot_at"], "2026-09-08T13:19:00+08:00")
         self.assertEqual(observation["schedule_delay_class"], "AMBIGUOUS")
         self.assertLessEqual(observation["candidate_delay_seconds"], 6 * 60)
-        self.assertIn("2026-09-08T13:19:00+08:00", observation["natural_pulse_identity"])
+        self.assertEqual(observation["latest_candidate_slot_at"], "2026-09-08T13:19:00+08:00")
+        self.assertIsNone(observation["natural_pulse_identity"])
+        self.assertFalse(observation["natural_pulse_eligible"])
 
     def test_live_snapshot_request_classifier_preserves_single_workflow_semantics(self):
         refresh = {"request_type": "MARKET_QUOTE_REFRESH", "force_refresh": True}
