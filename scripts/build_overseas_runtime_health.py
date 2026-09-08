@@ -78,7 +78,7 @@ def main() -> int:
             warnings.append(f"{object_id}: quality={record.get('quality_status', 'MISSING')} error={record.get('error', '')}")
 
     if schedule_blocked:
-        warnings.append(f"stale_scheduled_pulse: {pulse["natural_pulse_identity"] or pulse["scheduled_cron"]}")
+        warnings.append(f"stale_scheduled_pulse: {pulse['natural_pulse_identity'] or pulse['scheduled_cron']}")
     status = "FAIL" if hard_errors else ("DEGRADED" if warnings or context.get("quality_status") != "PASS" or schedule_blocked else "PASS")
     finished = datetime.now(timezone.utc)
     all_as_of = [parse_time(v) for v in provider_as_of.values() if parse_time(v)]
