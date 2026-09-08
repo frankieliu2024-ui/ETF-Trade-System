@@ -102,7 +102,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
             with self.subTest(minute=minute):
                 hour, value = minute.split(":")
                 now = datetime.fromisoformat(f"2026-09-01T{minute}:00+08:00")
-                pulse = f"2026-09-01T{hour}:20:00+08:00"
+                pulse = f"2026-09-01T{hour}:19:00+08:00"
                 status = self._assess(
                     current={
                         "market_date": "2026-09-01",
