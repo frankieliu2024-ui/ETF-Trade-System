@@ -324,3 +324,10 @@ GitHub `main` 是云端唯一主版本；本规范位于一级目录：`ETF与�
 - `amount_raw=f48`，统一`amount=f48`，单位为人民币元（`CNY`）。
 - `provider_timestamp=f86`，由其解析`as_of_beijing`；`f124`仅保留作审计参考，不作为默认时间字段。
 - 以上字段仍须通过当日日期、freshness、OHLC关系、非负成交量/成交额和市场阶段检查；不得使用旧行情、代理ETF、指数推算或账户价格补齐。
+
+
+## 应急外部市场证据（仅Formal Decision最终应急资格）
+
+当 current Formal Decision runtime 合同已确认 canonical producer 链 terminal failure 或达到 Actor-level safety cap，且仍不存在合法 decision-critical 事实时，才允许使用现有 `requests/live_snapshot/*.json` ingress 提交 `request_type=EMERGENCY_EXTERNAL_MARKET_EVIDENCE`。该请求是 immutable evidence/state-sync 事实，不是行情 producer 命令，也不得写入或冒充 `CURRENT`、runtime health 或 natural/recovered snapshot。
+
+证据必须包含当前已登记 provider 的 direct source URL、provider/as-of 时间、市场阶段、对象与质量字段，并由现有 `scripts/market_data_guard.py` 和 `scripts/process_state_sync_request.py` 在 canonical ingress 校验。搜索摘要、新闻、基金净值页、无时间戳聚合页、对象错配、未来/过期/错误阶段或未登记 host 均 fail-safe。证据文件身份以现有 ingress commit/request 路径为准；Formal Decision 只能引用通过验证的同一证据及其同源价格，不得与 `consumed_snapshot` 混用。该能力不新增 producer、workflow、state、transport 或交易权限。

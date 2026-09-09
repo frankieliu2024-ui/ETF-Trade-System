@@ -188,6 +188,8 @@ def _formal_decision_matches_requested_refresh(req: dict, gate: dict) -> tuple[b
 
 def guard_request(path: Path) -> int:
     req = load_json(path)
+    if str(req.get("request_type") or "").upper() == "EMERGENCY_EXTERNAL_MARKET_EVIDENCE":
+        return 0
     if not isinstance(req.get("formal_decision"), dict):
         return 0
     if req.get("allow_wait_refresh_fallback") is True and _query_intent(req) != _explicit_latest_intent():
