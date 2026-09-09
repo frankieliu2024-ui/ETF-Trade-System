@@ -1,31 +1,29 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-09T16:47:47+08:00",
+  "generated_at": "2026-09-09T16:48:05+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 34330954653,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 34331076270,
   "run_attempt": 1,
-  "head_sha": "caab33460cdfbd28cffdfcbab387a1b6556089cc",
-  "main_head_sha": "0de7c4a90ae2368e9c21926fdafe0df0a22eafd4",
+  "head_sha": "0de7c4a90ae2368e9c21926fdafe0df0a22eafd4",
+  "main_head_sha": "6ac59254738c1a8f29433235e69da27c652c46c9",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
+      "job": "watchdog",
+      "step": "Run read-only comprehensive production health aggregate",
       "number": 8
-    },
-    {
-      "job": "production_acceptance",
-      "step": "Enforce production acceptance",
-      "number": 9
     }
   ],
   "changed_files": [
-    "scripts/process_state_sync_request.py",
-    "tests/test_post_close_review_canonical.py"
+    "data/state/e2e_status.json",
+    "data/state/execution_quality.json",
+    "data/state/maintenance_diagnostic.json",
+    "data/state/maintenance_health.json",
+    "data/state/system_consistency.json"
   ],
-  "commit_message": "fix: complete idempotent post-close review persistence (#465)",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "state: persist production acceptance",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
@@ -33,7 +31,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
