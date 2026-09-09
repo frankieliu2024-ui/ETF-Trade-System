@@ -23,6 +23,13 @@ MASTER_PATH = ROOT / "ETF规则_MASTER.md"
 STATUS_PATH = ROOT / "data" / "state" / "self_healing_status.json"
 TZ = ZoneInfo("Asia/Shanghai")
 
+# A global hard FAIL remains globally hard. This narrow list only answers a
+# different question: whether the recorded failure is known to be orthogonal to
+# a safe, idempotent canonical market refresh. Unknown failures remain blocking.
+NON_BLOCKING_MARKET_RECOVERY_CONSISTENCY_ERROR_PREFIXES = (
+    "historical_trade_case_mapping:",
+)
+
 
 def load_json(path: Path, default=None):
     if not path.exists():
@@ -68,7 +75,7 @@ def expected_a_share_pulse(now: datetime) -> datetime | None:
     """Return a due decision pulse without requiring an exact watchdog minute.
 
     The formal decision checkpoints and their immediately preceding producer
-    pulses are unchanged.  A late workflow-run event or watchdog invocation may
+    pulses are unchanged. A late workflow-run event or watchdog invocation may
     still evaluate the same legal pulse window; this does not add cadence or
     reinterpret other market nodes.
     """
@@ -81,7 +88,7 @@ def expected_a_share_pulse(now: datetime) -> datetime | None:
     )
     for checkpoint_minute, expected_minute in checkpoint_pulses:
         # Keep the decision-specific check bounded to the interval before the
-        # next existing ten-minute producer cadence point.  Older gaps remain
+        # next existing ten-minute producer cadence point. Older gaps remain
         # covered by the existing age/recovery contract below.
         if checkpoint_minute <= minute <= expected_minute + 10:
             return now.replace(
@@ -139,6 +146,41 @@ def recent_attempts(previous: dict, now: datetime) -> list[str]:
     return result
 
 
+def consistency_market_recovery_gate(consistency: dict) -> dict:
+    """Classify whether a global consistency FAIL blocks safe market recovery.
+
+    The global FAIL is never downgraded. This gate only permits the existing
+    canonical market-refresh path to proceed when every recorded hard error is
+    explicitly known to be outside market production/recovery semantics.
+    Missing/unknown error attribution remains fail-safe and blocking.
+    """
+    status = str(consistency.get("status") or "UNKNOWN").upper()
+    errors = [str(item).strip() for item in (consistency.get("errors") or []) if str(item).strip()]
+    if status != "FAIL":
+        return {
+            "global_status": status,
+            "blocks_market_recovery": False,
+            "classification": "NO_GLOBAL_HARD_FAIL",
+            "errors": errors,
+        }
+    if errors and all(
+        any(error.startswith(prefix) for prefix in NON_BLOCKING_MARKET_RECOVERY_CONSISTENCY_ERROR_PREFIXES)
+        for error in errors
+    ):
+        return {
+            "global_status": status,
+            "blocks_market_recovery": False,
+            "classification": "GLOBAL_FAIL_KNOWN_NONBLOCKING_FOR_MARKET_RECOVERY",
+            "errors": errors,
+        }
+    return {
+        "global_status": status,
+        "blocks_market_recovery": True,
+        "classification": "GLOBAL_FAIL_BLOCKS_MARKET_RECOVERY_FAIL_SAFE",
+        "errors": errors,
+    }
+
+
 def assess(now: datetime | None = None) -> dict:
     now = (now or datetime.now(TZ)).astimezone(TZ)
     policy = load_json(POLICY_PATH, {}) or {}
@@ -147,6 +189,7 @@ def assess(now: datetime | None = None) -> dict:
     current = load_json(CURRENT_PATH, {}) or {}
     health = load_json(RUNTIME_HEALTH_PATH, {}) or {}
     consistency = load_json(CONSISTENCY_PATH, {}) or {}
+    consistency_gate = consistency_market_recovery_gate(consistency)
     previous = previous_status()
     attempts = recent_attempts(previous, now)
 
@@ -179,8 +222,8 @@ def assess(now: datetime | None = None) -> dict:
         classification, action, reason = "RULES_VERSION_METADATA_DRIFT", "SYNC_RULES_VERSION_METADATA", f"MASTER={master_ver}, CURRENT={current_ver}"
     elif not enabled:
         classification, action, reason = "DISABLED", "NONE", "self-healing disabled by runtime policy"
-    elif consistency_status == "FAIL":
-        classification, action, reason = "CONSISTENCY_REGRESSION", "ESCALATE", "system consistency has a hard failure; automatic code/rule repair is forbidden"
+    elif consistency_gate["blocks_market_recovery"]:
+        classification, action, reason = "CONSISTENCY_REGRESSION", "ESCALATE", "system consistency has a hard failure that is not proven orthogonal to canonical market recovery"
     elif same_day_missing:
         last_trigger = parse_dt(previous.get("last_snapshot_refresh_trigger_at"))
         seconds_since_trigger = int((now - last_trigger).total_seconds()) if last_trigger else None
@@ -208,10 +251,12 @@ def assess(now: datetime | None = None) -> dict:
             classification, action, reason = "REPAIR_COOLDOWN", "NONE", f"snapshot refresh is in cooldown ({seconds_since_trigger}s < {min_retrigger}s)"
         else:
             classification, action, reason = "SCHEDULE_MISSED_OR_STALE", "REFRESH_SNAPSHOT", f"capture age={age_seconds!r}s, health={health_status}, threshold={trigger_age}s"
+    elif consistency_status == "FAIL":
+        classification, action, reason = "CONSISTENCY_REGRESSION", "ESCALATE", "global consistency hard failure remains active; no market refresh is currently required"
     elif not valid_json(QUERY_CONTEXT_PATH) or not valid_json(DECISION_CONTEXT_PATH):
         classification, action, reason = "DERIVED_CONTEXT_INVALID", "REBUILD_DERIVED_CONTEXTS", "query_context or decision_context is missing/invalid JSON"
     return {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "checked_at": now.isoformat(timespec="seconds"),
         "mode": "DETERMINISTIC_RUNTIME_SELF_HEALING",
         "enabled": enabled,
@@ -228,6 +273,7 @@ def assess(now: datetime | None = None) -> dict:
         "expected_pulse_missing": expected_pulse_missing,
         "runtime_health_status": health_status,
         "system_consistency_status": consistency_status,
+        "market_recovery_consistency_gate": consistency_gate,
         "master_rules_version": master_ver,
         "current_rules_version": current_ver or None,
         "snapshot_refresh_attempts": attempts,
