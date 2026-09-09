@@ -28,6 +28,7 @@ def set_output(key: str, value: str) -> None:
 
 
 STATE_SYNC_FIELDS = ("account_fact", "formal_decision", "trade_event", "formal_review")
+EVIDENCE_REQUEST_TYPES = {"EMERGENCY_EXTERNAL_MARKET_EVIDENCE"}
 REFRESH_REQUEST_TYPES = {"MARKET_QUOTE_REFRESH", "QUERY_TIME_REFRESH", "LIVE_SNAPSHOT_REFRESH"}
 EXPLICIT_REFRESH_INTENTS = {"EXPLICIT_LATEST", "MARKET_QUOTE_REFRESH", "QUERY_TIME_REFRESH"}
 
@@ -44,6 +45,7 @@ def classify_live_snapshot_request(request: dict) -> str:
     source = str(request.get("source") or "").upper()
     scenario = str(request.get("interaction_scenario") or "").upper()
     has_state_sync = any(field in request for field in STATE_SYNC_FIELDS)
+    has_state_sync = has_state_sync or str(request.get("request_type") or "").upper() in EVIDENCE_REQUEST_TYPES
     has_state_sync = has_state_sync or source == "CHATGPT_USER_BROKER_SCREENSHOT" or scenario == "BROKER_SCREENSHOT_SYNC"
     refresh_bearing = bool(
         request.get("force_refresh") is True

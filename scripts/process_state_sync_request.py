@@ -11,6 +11,10 @@ from statistics import median
 
 from state_manager import atomic_json_write
 try:
+    from emergency_market_evidence import validate_external_market_evidence
+except ModuleNotFoundError:
+    from scripts.emergency_market_evidence import validate_external_market_evidence
+try:
     from build_stock_context import active_account_asset_codes, first, normalize_code, position_metric
 except ModuleNotFoundError:
     from scripts.build_stock_context import active_account_asset_codes, first, normalize_code, position_metric
@@ -590,9 +594,31 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
         or decision.get("consumed_snapshot_path")
         or ""
     )
-    snapshot_rel, snapshot, pit_status = select_point_in_time_snapshot(
-        market_date, decision_time, availability_time=availability_time, consumed_snapshot=consumed_snapshot
-    )
+    external_evidence = None
+    request_type = str(request.get("request_type") or "").upper()
+    external_path = str(request.get("consumed_external_market_evidence") or "").strip()
+    if request_type == "EMERGENCY_EXTERNAL_MARKET_EVIDENCE":
+        if consumed_snapshot:
+            raise ValueError("external evidence and consumed_snapshot are mutually exclusive")
+        external_evidence = validate_external_market_evidence(
+            request, ROOT, decision_time=decision_time,
+            availability_time=availability_time,
+            ingress_path=str(request.get("_ingress_path") or ""),
+        )
+        snapshot_rel = external_evidence["path"]
+        snapshot = {
+            "market_date": external_evidence["market_date"],
+            "captured_at_beijing": external_evidence["retrieved_at_beijing"],
+            "quality_status": "PASS",
+            "rows": external_evidence["rows"],
+        }
+        pit_status = "EXTERNAL_MARKET_EVIDENCE_VALIDATED"
+    elif external_path:
+        raise ValueError("external evidence path requires EMERGENCY_EXTERNAL_MARKET_EVIDENCE request_type")
+    else:
+        snapshot_rel, snapshot, pit_status = select_point_in_time_snapshot(
+            market_date, decision_time, availability_time=availability_time, consumed_snapshot=consumed_snapshot
+        )
     supplied_price = safe_float(decision.get("price_at_decision"))
     supplied_as_of = str(decision.get("price_as_of_beijing") or "")
     supplied_time = parse_time(supplied_as_of)
@@ -607,14 +633,31 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
             price_at_decision = row.get("close")
             price_as_of = str(row.get("as_of_beijing") or "")
             price_source = "POINT_IN_TIME_SNAPSHOT"
-    if supplied_price is not None and not supplied_point_in_time and not price_source:
+    if external_evidence:
+        evidence_row = next(
+            (x for x in external_evidence["rows"]
+             if str(x.get("symbol") or "").split(".")[0] == code.split(".")[0]),
+            None,
+        )
+        if evidence_row is None:
+            raise ValueError("external evidence does not contain formal decision candidate")
+        evidence_price = safe_float(evidence_row.get("close"))
+        evidence_as_of = str(evidence_row.get("provider_as_of_beijing") or "")
+        if supplied_price is not None and (evidence_price is None or abs(supplied_price - evidence_price) > 1e-12):
+            raise ValueError("supplied price does not match external evidence")
+        if supplied_as_of and supplied_as_of != evidence_as_of:
+            raise ValueError("supplied price time does not match external evidence")
+        price_at_decision = evidence_price
+        price_as_of = evidence_as_of
+        price_source = "EMERGENCY_EXTERNAL_MARKET_EVIDENCE"
+    elif supplied_price is not None and not supplied_point_in_time and not price_source:
         pit_status = "SUPPLIED_PRICE_REJECTED_NO_VERIFIABLE_POINT_IN_TIME"
 
     hypothesis_id, hypothesis_link_status = resolve_hypothesis_id(decision, code, market_date, decision_id)
     lifecycle = str(decision.get("lifecycle") or "")
     hypothesis_closed = "退出" in lifecycle or str(decision.get("hypothesis_status") or "").upper() == "CLOSED"
     comparison = build_comparison_snapshot(snapshot) if snapshot else {"items": [], "interpretation_rule": "决策时点无可用历史快照，不使用未来数据补齐。"}
-    event = {"event_type": "FORMAL_DECISION", "decision_id": decision_id, "fingerprint": fingerprint, "market_date": market_date, "decision_time_beijing": decision_time, "decision_effective_at_beijing": str(decision.get("decision_effective_at_beijing") or decision.get("issued_at_beijing") or ""), "decision_effective_ordering": str(decision.get("decision_effective_ordering") or ""), "timing_quality": str(decision.get("timing_quality") or ""), "timing_provenance": str(decision.get("timing_provenance") or ""), "interaction_scenario": request.get("interaction_scenario"), "candidate_code": code, "candidate_name": name, "hypothesis_id": hypothesis_id, "hypothesis_link_status": hypothesis_link_status, "hypothesis_closed": hypothesis_closed, "price_at_decision": price_at_decision, "price_as_of_beijing": price_as_of, "price_source_snapshot": snapshot_rel, "price_source": price_source, "point_in_time_status": pit_status, "comparison_snapshot": comparison, "formal_decision": decision, "read_only_research_event": True, "decision_boundary": "只保存ChatGPT已经形成的正式决策和决策时点可见证据。禁止使用决策时点之后的行情回填价格或比较快照；研究留痕用于验证候选选择、假设生命周期、判断与执行质量，不自行推导交易权限。", "recorded_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
+    event = {"event_type": "FORMAL_DECISION", "decision_id": decision_id, "fingerprint": fingerprint, "market_date": market_date, "decision_time_beijing": decision_time, "decision_effective_at_beijing": str(decision.get("decision_effective_at_beijing") or decision.get("issued_at_beijing") or ""), "decision_effective_ordering": str(decision.get("decision_effective_ordering") or ""), "timing_quality": str(decision.get("timing_quality") or ""), "timing_provenance": str(decision.get("timing_provenance") or ""), "interaction_scenario": request.get("interaction_scenario"), "candidate_code": code, "candidate_name": name, "hypothesis_id": hypothesis_id, "hypothesis_link_status": hypothesis_link_status, "hypothesis_closed": hypothesis_closed, "price_at_decision": price_at_decision, "price_as_of_beijing": price_as_of, "price_source_snapshot": snapshot_rel, "price_source": price_source, "point_in_time_status": pit_status, "comparison_snapshot": comparison, "formal_decision": decision, "read_only_research_event": True, "decision_boundary": "只保存ChatGPT已经形成的正式决策和决策时点可见证据。禁止使用决策时点之后的行情回填价格或比较快照；研究留痕用于验证候选选择、假设生命周期、判断与执行质量，不自行推导交易权限。", "market_evidence_type": "EMERGENCY_EXTERNAL_MARKET_EVIDENCE" if external_evidence else "CANONICAL_SNAPSHOT", "external_evidence_path": external_evidence["path"] if external_evidence else "", "external_evidence_id": external_evidence["evidence_id"] if external_evidence else "", "external_evidence_validation": external_evidence["validation_status"] if external_evidence else "", "recorded_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
     event_path = ROOT / "events/decisions" / f"{decision_id}.json"
     event_path.parent.mkdir(parents=True, exist_ok=True)
     if event_path.exists():
@@ -1555,6 +1598,7 @@ def main() -> int:
     if ROOT not in req_path.parents or not req_path.exists():
         raise RuntimeError("invalid state sync request path")
     request = load_json(req_path)
+    request["_ingress_path"] = str(req_path.relative_to(ROOT)).replace("\\\\", "/")
     trade = request.get("trade_event")
     prior_account = load_json(ACCOUNT) if ACCOUNT.exists() else {}
     supplied_account = request.get("account_fact")

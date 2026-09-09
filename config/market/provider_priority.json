@@ -6,24 +6,38 @@
       "kind": "腾讯证券公开行情接口，当前生产支持A股指数、ETF、账户个股及查询时A股产业链个股实时快照",
       "requires_key": false,
       "role": "primary_for_verified_A_share_realtime_quotes",
-      "adjusted": false
+      "adjusted": false,
+      "approved_direct_hosts": [
+        "qt.gtimg.cn",
+        "web.ifzq.gtimg.cn"
+      ]
     },
     "hithink_finance": {
       "kind": "A股ETF/指数及已覆盖直接指数",
       "requires_key": true,
-      "role": "first_direct_fallback_for_A_share_and_audited_direct_indices"
+      "role": "first_direct_fallback_for_A_share_and_audited_direct_indices",
+      "approved_direct_hosts": [
+        "fuyao.aicubes.cn"
+      ]
     },
     "eastmoney_push2": {
       "kind": "公开行情接口，支持已验证A股ETF/个股/部分指数直接行情；恒生科技指数124.HSTECH为主源；纳斯达克100指数100.NDX100及日经225指数100.N225、韩国综合指数100.KS11、台湾加权指数100.TWII为已确认对象级直接备源",
       "requires_key": false,
       "role": "primary_for_HSTECH_and_verified_direct_fallback_for_A_share_NDX_and_confirmed_asia_indices",
-      "adjusted": false
+      "adjusted": false,
+      "approved_direct_hosts": [
+        "push2.eastmoney.com"
+      ]
     },
     "yahoo_chart_api": {
       "kind": "公开海外与亚洲行情API，支持海外指数及美股扩展时段5分钟级行情",
       "requires_key": false,
       "role": "primary_for_formal_overseas_indices_except_HSTECH_N225_KOSPI_TWII_and_us_extended_hours; delayed_crosscheck_for_N225_KOSPI_TWII",
-      "adjusted": false
+      "adjusted": false,
+      "approved_direct_hosts": [
+        "query1.finance.yahoo.com",
+        "query2.finance.yahoo.com"
+      ]
     },
     "akshare": {
       "kind": "Python多源适配库",
@@ -47,19 +61,28 @@
       "kind": "Naver Finance公开韩国市场行情JSON；当前仅验证韩国综合指数KOSPI实时直连",
       "requires_key": false,
       "role": "primary_for_KOSPI_after_live_parallel_validation_20260827",
-      "adjusted": false
+      "adjusted": false,
+      "approved_direct_hosts": [
+        "polling.finance.naver.com"
+      ]
     },
     "eastmoney_push2delay": {
       "kind": "东方财富push2备用host；对日经225指数（N225）为经开盘并行验证的首选生产endpoint；对韩国综合指数（KOSPI）和台湾加权指数（TWII）作为直接备源；仍属于东方财富同一provider家族，不计作独立第二数据源",
       "requires_key": false,
       "role": "preferred_endpoint_for_N225_and_verified_direct_fallback_for_KOSPI_TWII",
-      "adjusted": false
+      "adjusted": false,
+      "approved_direct_hosts": [
+        "push2delay.eastmoney.com"
+      ]
     },
     "twse_mis": {
       "kind": "台湾证券交易所官方MIS公开即时行情；当前仅验证台湾加权指数（TWII）tse_t00.tw",
       "requires_key": false,
       "role": "primary_for_TWII_after_open_session_parallel_validation_20260827",
-      "adjusted": false
+      "adjusted": false,
+      "approved_direct_hosts": [
+        "mis.twse.com.tw"
+      ]
     }
   },
   "formal_index_objects": [
