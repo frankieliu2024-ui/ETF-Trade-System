@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-09T14:18:14+08:00",
+  "generated_at": "2026-09-09T14:18:55+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 34318434501,
+  "run_id": 34318483762,
   "run_attempt": 1,
-  "head_sha": "0b104069c52a5b20fac50acb02129ffac11e43f7",
-  "main_head_sha": "0b104069c52a5b20fac50acb02129ffac11e43f7",
+  "head_sha": "8003f6aef452abcd54603e210c4d7801bf51cb9d",
+  "main_head_sha": "d05a2abdb356ae27d67be5f5bd89870bd56695f7",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,18 +16,19 @@
     }
   ],
   "changed_files": [
-    "data/state/notification_center.json"
+    "scripts/process_state_sync_request.py",
+    "tests/test_formal_decision_pit_enrichment.py"
   ],
-  "commit_message": "state: record notification and execution reconciliation",
-  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "commit_message": "fix: bind formal decision PIT to consumed snapshot (#457)",
+  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": true,
+    "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": true,
+    "bot_or_revert_commit": false,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
