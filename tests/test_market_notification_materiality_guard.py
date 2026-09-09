@@ -414,6 +414,70 @@ class NotificationAggregationTests(unittest.TestCase):
         self.assertIn('subjects = "、".join(label for _, label, _, _ in selected[:3])', text)
         self.assertNotIn("title = f\"【收盘总结】亚太主要市场收盘", text)
 
+    @staticmethod
+    def _us_event(session="REGULAR"):
+        event = NotificationAggregationTests._event(
+            "US_TECH_DIVERGENCE", "美股科技内部结构", "DIVERGENCE", magnitude=2.0,
+            stamp="2026-09-08T21:30:00+08:00",
+        )
+        event["confirmation_context"].update({
+            "market": "US", "session": session, "object_codes": ["NDX", "SOX"],
+            "fact_family": "US_SESSION_STRUCTURE",
+        })
+        return event
+
+    def test_us_session_boundary_prevents_same_code_aggregation(self):
+        prior = self._us_event("PRE_MARKET")
+        current = self._us_event("REGULAR")
+        self.assertFalse(notification_common._same_user_level_fact(prior, current))
+        self.assertIsNone(notification_common._absorb_or_aggregate([prior], current))
+
+    def test_us_session_boundary_regular_to_post_market_prevents_merge(self):
+        prior = self._us_event("REGULAR")
+        current = self._us_event("POST_MARKET")
+        self.assertFalse(notification_common._same_user_level_fact(prior, current))
+        self.assertIsNone(notification_common._absorb_or_aggregate([prior], current))
+
+    def test_us_same_session_continuous_events_still_aggregate(self):
+        prior = self._us_event("REGULAR")
+        current = self._us_event("REGULAR")
+        current["created_at"] = "2026-09-08T21:34:00+08:00"
+        self.assertTrue(notification_common._same_user_level_fact(prior, current))
+        self.assertEqual(notification_common._absorb_or_aggregate([prior], current)[0], "AGGREGATED_INTO_EXISTING")
+
+    def test_legacy_missing_session_keeps_exact_code_compatibility(self):
+        prior = self._us_event("")
+        current = self._us_event("REGULAR")
+        self.assertTrue(notification_common._same_user_level_fact(prior, current))
+
+    def test_us_divergence_producer_preserves_common_pre_market_session(self):
+        import send_market_shock_notification_legacy as producer
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            objects = {}
+            for code, change in (("NDX", 0.2), ("SOX", 0.1), ("QQQ", 1.2), ("SOXX", -1.2)):
+                objects[code] = {
+                    "quality_status": "PASS",
+                    "current_market_phase": "PRE_MARKET",
+                    "freshness_status": "FRESH",
+                    "extended_change_vs_regular_close_pct": change,
+                    "latest": {
+                        "close": 100.0 + change,
+                        "market_date_local": "2026-09-09",
+                        "as_of_beijing": "2026-09-09T21:20:00+08:00",
+                        "session": "PRE_MARKET",
+                    },
+                }
+            (root / "us_extended_hours_context.json").write_text(
+                json.dumps({"objects": objects}, ensure_ascii=False), encoding="utf-8"
+            )
+            with patch.object(producer, "ROOT", root), patch.object(producer, "STATE", root), patch.object(producer, "_recent_duplicate", return_value=False):
+                event = producer._context_candidate("us")
+        self.assertIsNotNone(event)
+        self.assertEqual(event["security_code"], "US_TECH_DIVERGENCE")
+        self.assertEqual(event["confirmation_context"]["session"], "PRE_MARKET")
+
 
 if __name__ == "__main__":
     unittest.main()

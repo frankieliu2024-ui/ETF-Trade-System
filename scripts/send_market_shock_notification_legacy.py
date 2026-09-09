@@ -387,7 +387,7 @@ def _build_context_event(c: dict, *, source: str, current_path: Path, current: d
         "security_name": label.split("（")[0],
         "user_severity": "需要关注",
         "user_action": "纳入最近A股决策节点重新验证，不机械交易",
-        "confirmation_context": {"market": source.upper(), "market_date": market_date, "direction": direction, "event_category": category, "fact_family": str(c.get("fact_family") or ""), "object_codes": list(c.get("object_codes") or ([code] if not code.endswith("_DIVERGENCE") else [])), "phase_metric_change_pct": day, "sudden_change_pct": sudden, "event_magnitude_pct": magnitude, "market_as_of_beijing": as_of, "source_fact_id": f"{market_date}:{code}:{category}:{direction}:{as_of}", "session": str(c.get("session") or ("REGULAR" if source == "us" else "SESSION"))},
+        "confirmation_context": {"market": source.upper(), "market_date": market_date, "direction": direction, "event_category": category, "fact_family": str(c.get("fact_family") or ""), "object_codes": list(c.get("object_codes") or ([code] if not code.endswith("_DIVERGENCE") else [])), "phase_metric_change_pct": day, "sudden_change_pct": sudden, "event_magnitude_pct": magnitude, "market_as_of_beijing": as_of, "source_fact_id": f"{market_date}:{code}:{category}:{direction}:{as_of}", "session": str(c.get("session") or ("SESSION" if source != "us" else ""))},
     }
 
 
@@ -403,6 +403,7 @@ def _context_candidate(source: str) -> dict | None:
 
     labels: dict[str, str] = {}
     returns: dict[str, float] = {}
+    return_sessions: dict[str, str] = {}
     metric_labels: dict[str, str] = {}
     market_dates: dict[str, str] = {}
     candidates: list[dict] = []
@@ -460,8 +461,10 @@ def _context_candidate(source: str) -> dict | None:
         if day is not None:
             if source != "us" or (phase == "REGULAR" and is_direct_us) or (phase != "REGULAR" and is_proxy_us):
                 returns[code] = day
+                if source == "us":
+                    return_sessions[code] = phase
             if abs(day) >= extreme_limit:
-                candidates.append({"score": _candidate_score("EXTREME", abs(day) / extreme_limit), "category": "EXTREME", "code": code, "day": day, "event_magnitude_pct": abs(day), "sudden": None, "latest": latest, "direction": "UP" if day >= 0 else "DOWN"})
+                candidates.append({"score": _candidate_score("EXTREME", abs(day) / extreme_limit), "category": "EXTREME", "code": code, "day": day, "event_magnitude_pct": abs(day), "sudden": None, "latest": latest, "direction": "UP" if day >= 0 else "DOWN", "session": phase})
 
         prev_obj = previous_objects.get(code) or {}
         prev_latest = prev_obj.get("latest") or {}
@@ -474,7 +477,7 @@ def _context_candidate(source: str) -> dict | None:
             minutes = (t_now - t_prev).total_seconds() / 60.0
             sudden = pct_change(price_now, price_prev)
             if 0 < minutes <= 20 and sudden is not None and abs(sudden) >= sudden_limit:
-                candidates.append({"score": _candidate_score("SUDDEN", abs(sudden) / sudden_limit), "category": "SUDDEN", "code": code, "day": day, "event_magnitude_pct": abs(sudden), "sudden": sudden, "latest": latest, "direction": "UP" if sudden >= 0 else "DOWN", "minutes": minutes})
+                candidates.append({"score": _candidate_score("SUDDEN", abs(sudden) / sudden_limit), "category": "SUDDEN", "code": code, "day": day, "event_magnitude_pct": abs(sudden), "sudden": sudden, "latest": latest, "direction": "UP" if sudden >= 0 else "DOWN", "minutes": minutes, "session": phase})
 
         if source == "asia" and day is not None:
             prev_close = number(latest.get("previous_close")) or number(obj.get("previous_close_reference"))
@@ -494,9 +497,9 @@ def _context_candidate(source: str) -> dict | None:
             excursion = THRESHOLDS["us"]["reversal_excursion"] if is_core_us else THRESHOLDS["us"]["stock_extreme"]
             neutral = 0.4 if is_core_us else 1.0
             if high_ret is not None and high_ret >= excursion and day <= neutral:
-                candidates.append({"score": _candidate_score("REVERSAL", high_ret / excursion), "category": "REVERSAL", "code": code, "day": day, "event_magnitude_pct": high_ret, "sudden": sudden, "latest": latest, "direction": "DOWN", "extra": f"现金盘一度较前收{pct(high_ret)}，当前回落至{pct(day)}"})
+                candidates.append({"score": _candidate_score("REVERSAL", high_ret / excursion), "category": "REVERSAL", "code": code, "day": day, "event_magnitude_pct": high_ret, "sudden": sudden, "latest": latest, "direction": "DOWN", "extra": f"现金盘一度较前收{pct(high_ret)}，当前回落至{pct(day)}", "session": phase})
             if low_ret is not None and low_ret <= -excursion and day >= -neutral:
-                candidates.append({"score": _candidate_score("REVERSAL", abs(low_ret) / excursion), "category": "REVERSAL", "code": code, "day": day, "event_magnitude_pct": abs(low_ret), "sudden": sudden, "latest": latest, "direction": "UP", "extra": f"现金盘一度较前收{pct(low_ret)}，当前修复至{pct(day)}"})
+                candidates.append({"score": _candidate_score("REVERSAL", abs(low_ret) / excursion), "category": "REVERSAL", "code": code, "day": day, "event_magnitude_pct": abs(low_ret), "sudden": sudden, "latest": latest, "direction": "UP", "extra": f"现金盘一度较前收{pct(low_ret)}，当前修复至{pct(day)}", "session": phase})
 
     divergence_limit = THRESHOLDS[source]["divergence"]
     if len(returns) >= 2:
@@ -505,7 +508,10 @@ def _context_candidate(source: str) -> dict | None:
         spread = high[1] - low[1]
         if spread >= divergence_limit:
             synthetic_code = "US_TECH_DIVERGENCE" if source == "us" else "APAC_DIVERGENCE"
-            candidates.append({"score": _candidate_score("DIVERGENCE", spread / divergence_limit), "category": "DIVERGENCE", "code": synthetic_code, "day": None, "event_magnitude_pct": spread, "sudden": None, "latest": {}, "direction": "DIVERGED", "name": "美股科技内部结构" if source == "us" else "亚太主要指数结构", "object_codes": [high[0], low[0]], "fact_family": "US_SESSION_STRUCTURE" if source == "us" else "APAC_SESSION_STRUCTURE", "extra": f"领先{labels[high[0]]} {pct(high[1])}，落后{labels[low[0]]} {pct(low[1])}，差约{spread:.2f}个百分点"})
+            participating = [high[0], low[0]]
+            common_sessions = {return_sessions.get(code, "") for code in participating}
+            if source != "us" or len(common_sessions) == 1 and "" not in common_sessions:
+                candidates.append({"score": _candidate_score("DIVERGENCE", spread / divergence_limit), "category": "DIVERGENCE", "code": synthetic_code, "day": None, "event_magnitude_pct": spread, "sudden": None, "latest": {}, "direction": "DIVERGED", "name": "美股科技内部结构" if source == "us" else "亚太主要指数结构", "object_codes": participating, "fact_family": "US_SESSION_STRUCTURE" if source == "us" else "APAC_SESSION_STRUCTURE", "extra": f"领先{labels[high[0]]} {pct(high[1])}，落后{labels[low[0]]} {pct(low[1])}，差约{spread:.2f}个百分点", "session": next(iter(common_sessions), "") if source == "us" else "SESSION"})
 
     for c in sorted(candidates, key=lambda x: float(x.get("score") or 0), reverse=True):
         event = _build_context_event(c, source=source, current_path=current_path, current=current, labels=labels, metric_labels=metric_labels, market_dates=market_dates, today_bj=today_bj)
