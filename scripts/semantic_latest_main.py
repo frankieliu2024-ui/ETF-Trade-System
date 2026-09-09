@@ -19,6 +19,20 @@ FORMAL_FILES = {
 REQUEST_PREFIXES = ("requests/",)
 DYNAMIC_PREFIXES = ("data/state/", "data/market/snapshots/", "data/market/audit/")
 
+INTEGRATION_ACTIONS = {
+    "SEMANTICALLY_FRESH": "NO_REPLAY_REQUIRED",
+    "REVIEW_REQUIRED": "REVIEW_MAIN_DELTA",
+    "REPLAY_REQUIRED": "REPLAY_REQUIRED",
+}
+
+
+def integration_action(decision: str) -> str:
+    """Map semantic classification to the single integration action contract."""
+    try:
+        return INTEGRATION_ACTIONS[decision]
+    except KeyError as exc:
+        raise ValueError(f"unsupported semantic decision: {decision}") from exc
+
 
 def classify_path(path: str) -> str:
     path = path.replace("\\", "/")
@@ -71,6 +85,7 @@ def classify_delta(root: Path, base: str, head: str) -> dict:
         "changed_paths": paths,
         "categories": categories,
         "decision": decision,
+        "integration_action": integration_action(decision),
     }
 
 
