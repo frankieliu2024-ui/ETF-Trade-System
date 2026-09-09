@@ -60,6 +60,30 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertEqual(restored.count("CASE-20260831-01"), 1)
         self.assertEqual(json.loads(closure_path.read_text(encoding="utf-8"))["status"], "CLOSED")
 
+    def test_case_mapping_normalizes_duplicate_trade_event_marker_idempotently(self):
+        event_id = "BROKER_TRADE_20260909_133021_515220_BUY_3700"
+        marker = f"<!-- TRADE_EVENT:{event_id} -->"
+        mapped_row = "|2026-09-09 13:30:21|煤炭ETF|515220|BUY|3700|1.332|4928.40|EXECUTED|0|" + marker + " " + marker
+        unrelated_row = "|2026-09-08 10:00:00|其他ETF|561980|BUY|100|1.000|100.00|EXECUTED|0|KEEP"
+        self.root.joinpath("ETF交易复盘与经验库_2026.md").write_text(
+            "## 3. 历史研究与专项回测\n"
+            "<!-- AUTO_CASE_DETAILS_START -->\n<!-- AUTO_CASE_DETAILS_END -->\n"
+            "<!-- AUTO_POST_CLOSE_REVIEW_CASES_START -->\n"
+            + mapped_row + "\n" + unrelated_row + "\n"
+            "<!-- AUTO_POST_CLOSE_REVIEW_CASES_END -->\n",
+            encoding="utf-8",
+        )
+        review = {"case_mapping": {"515220": {"trade_event_id": event_id, "case_id": "CASE-20260909-01"}}}
+        sync.sync_experience_case_mapping_index(review)
+        first = self.root.joinpath("ETF交易复盘与经验库_2026.md").read_text(encoding="utf-8")
+        self.assertEqual(first.count(marker), 1)
+        self.assertIn("CASE-20260909-01", first)
+        self.assertIn(unrelated_row, first)
+        sync.sync_experience_case_mapping_index(review)
+        second = self.root.joinpath("ETF交易复盘与经验库_2026.md").read_text(encoding="utf-8")
+        self.assertEqual(second, first)
+        self.assertEqual(second.count(marker), 1)
+
     def test_stale_review_does_not_replace_newer(self):
         account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
         sync.record_post_close_review(account, self.request("2026-08-31T15:30:00+08:00"))
