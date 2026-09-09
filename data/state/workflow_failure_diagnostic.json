@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-09T16:03:44+08:00",
+  "generated_at": "2026-09-09T16:04:43+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 34327030645,
+  "run_id": 34327116763,
   "run_attempt": 1,
-  "head_sha": "bde929ef08b1036f532d99bb9a3b6b9778dc4785",
-  "main_head_sha": "167e25d8a51c3121c19d3bde81a91736a0359e79",
+  "head_sha": "61a4aa8e7fd4726d766f5f19faa373dd964302a6",
+  "main_head_sha": "61a4aa8e7fd4726d766f5f19faa373dd964302a6",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,18 +16,22 @@
     }
   ],
   "changed_files": [
-    "data/state/notification_center.json"
+    "config/runtime_policy.json",
+    "scripts/production_health_guard.py",
+    "scripts/runtime_self_heal.py",
+    "tests/test_market_runtime_recovery_consistency_gate.py",
+    "tests/test_market_scheduled_formal_decision_wait_contract_v2.py"
   ],
-  "commit_message": "state: record notification and execution reconciliation",
-  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "commit_message": "fix: final latest-main replay for #385/#389 contracts (#464)",
+  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": false,
+    "head_is_current_main": true,
     "changes_confined_to_auto_rollback_allowlist": false,
-    "forbidden_path_touched": false,
-    "bot_or_revert_commit": true,
+    "forbidden_path_touched": true,
+    "bot_or_revert_commit": false,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
