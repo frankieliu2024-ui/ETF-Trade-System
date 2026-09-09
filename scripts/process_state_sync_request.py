@@ -811,8 +811,10 @@ def sync_experience_case_mapping_index(review: dict) -> None:
             # Rebuild the matched row from its table fields and append one
             # canonical marker. This repairs historical duplicate markers while
             # keeping the transaction identity and unrelated rows unchanged.
-            without_markers = line.replace(marker, "").rstrip()
-            normalized_parts = without_markers.strip().strip("|").split("|")
+            without_markers = line.replace(marker, "").strip()
+            if without_markers.startswith("|"):
+                without_markers = without_markers[1:]
+            normalized_parts = without_markers.split("|")
             if len(normalized_parts) < 10:
                 continue
             remark = normalized_parts[9].strip()
