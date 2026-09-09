@@ -1,25 +1,26 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-09T15:32:41+08:00",
+  "generated_at": "2026-09-09T15:34:58+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 34324289376,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 34324540020,
   "run_attempt": 1,
-  "head_sha": "754f05c8e98032ff317ce682d94b18a4a88a8e35",
-  "main_head_sha": "3b8715599fefa61737d5082ad9e6221e0f93d1c9",
+  "head_sha": "c542c739627ef0dbec8e542509ea51243e9d29c2",
+  "main_head_sha": "afe2f08476a7f29314621469ac9d3aa2489f58b2",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 6
+      "job": "watchdog",
+      "step": "Run read-only comprehensive production health aggregate",
+      "number": 8
     }
   ],
   "changed_files": [
-    "tests/test_runtime_recovery_consistency_gate.py"
+    "\"ETF\\345\\270\\202\\345\\234\\272\\350\\241\\214\\346\\203\\205\\346\\241\\243\\346\\241\\210_2026.md\"",
+    "events/reviews/2026-09-09.json"
   ],
-  "commit_message": "test: cover global consistency versus market recovery gate",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "data: record downstream market contexts and state sync",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
@@ -27,7 +28,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
