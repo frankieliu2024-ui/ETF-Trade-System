@@ -2,7 +2,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-from scripts.semantic_latest_main import classify_delta, classify_path
+from scripts.semantic_latest_main import classify_delta, classify_path, integration_action
 
 
 class SemanticLatestMainTests(unittest.TestCase):
@@ -33,10 +33,13 @@ class SemanticLatestMainTests(unittest.TestCase):
         root, commits = self._repo([{"data/state/CURRENT.json": "old"}, {"data/state/CURRENT.json": "new"}])
         result = classify_delta(root, commits[0], commits[1])
         self.assertEqual(result["decision"], "SEMANTICALLY_FRESH")
+        self.assertEqual(result["integration_action"], "NO_REPLAY_REQUIRED")
 
     def test_stable_change_requires_replay(self):
         root, commits = self._repo([{"data/state/CURRENT.json": "old"}, {"scripts/x.py": "source"}])
-        self.assertEqual(classify_delta(root, commits[0], commits[1])["decision"], "REPLAY_REQUIRED")
+        result = classify_delta(root, commits[0], commits[1])
+        self.assertEqual(result["decision"], "REPLAY_REQUIRED")
+        self.assertEqual(result["integration_action"], "REPLAY_REQUIRED")
 
     def test_unknown_change_requires_replay(self):
         root, commits = self._repo([{"data/state/CURRENT.json": "old"}, {"new.bin": "unknown"}])
@@ -48,7 +51,9 @@ class SemanticLatestMainTests(unittest.TestCase):
 
     def test_formal_or_request_movement_requires_review_but_not_automatic_replay(self):
         root, commits = self._repo([{"data/state/CURRENT.json": "old"}, {"events/research/x.json": "fact", "requests/live_snapshot/x.json": "request"}])
-        self.assertEqual(classify_delta(root, commits[0], commits[1])["decision"], "REVIEW_REQUIRED")
+        result = classify_delta(root, commits[0], commits[1])
+        self.assertEqual(result["decision"], "REVIEW_REQUIRED")
+        self.assertEqual(result["integration_action"], "REVIEW_MAIN_DELTA")
 
 
 if __name__ == "__main__":
