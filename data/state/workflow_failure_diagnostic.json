@@ -1,33 +1,35 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-09T09:24:30+08:00",
+  "generated_at": "2026-09-09T09:24:45+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 34299006348,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 34299057786,
   "run_attempt": 1,
-  "head_sha": "ab3d0fe352f7f9d6a673ffe7e94a3c63b4efb2b5",
-  "main_head_sha": "c721c6af538eb6c8de1e94a3027420708c76ce78",
+  "head_sha": "c721c6af538eb6c8de1e94a3027420708c76ce78",
+  "main_head_sha": "f8b17869c87e522de2d48870b7d0e6b8c8541315",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
+      "job": "watchdog",
+      "step": "Run read-only comprehensive production health aggregate",
       "number": 8
     }
   ],
   "changed_files": [
-    "requests/live_snapshot/20260909_0923_scheduled_0925.json"
+    "data/market/snapshots/2026-09-09_092406.json",
+    "data/state/CURRENT.json",
+    "data/state/runtime_health.json"
   ],
-  "commit_message": "Request 09:25 scheduled ETF decision snapshot",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "data: publish core market snapshot",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
-    "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "forbidden_path_touched": true,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
