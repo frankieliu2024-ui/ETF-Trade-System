@@ -1,25 +1,25 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-09T15:38:47+08:00",
+  "generated_at": "2026-09-09T15:39:02+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 34324827752,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 34324893947,
   "run_attempt": 1,
-  "head_sha": "3e3e77e45b5584f363b6f5c36b67f17238af0751",
-  "main_head_sha": "92ba6a01569547d700a631f8ae7c0f6508aba4cf",
+  "head_sha": "1d69ae7fbe1052d688b7714452fd22d7aa788a6f",
+  "main_head_sha": "cbb2868f57e03143b0a07aa81022125879bd0df0",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
+      "job": "watchdog",
+      "step": "Run read-only comprehensive production health aggregate",
       "number": 8
     }
   ],
   "changed_files": [
-    "requests/report_delivery/etf-trade-review-2026-09-09-20260909T153500.json"
+    "data/state/notification_center.json"
   ],
-  "commit_message": "report: deliver ETF trade review 2026-09-09",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "state: record notification and execution reconciliation",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
@@ -27,7 +27,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
