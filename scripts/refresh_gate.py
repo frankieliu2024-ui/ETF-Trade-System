@@ -13,6 +13,7 @@ RUNTIME_HEALTH = ROOT / "data" / "state" / "runtime_health.json"
 QUERY_CONTEXT = ROOT / "data" / "state" / "query_context.json"
 DECISION_CONTEXT = ROOT / "data" / "state" / "decision_context.json"
 RUNTIME_POLICY = ROOT / "config" / "runtime_policy.json"
+SCHEDULED_FORMAL_DECISION_INTENT = "SCHEDULED_FORMAL_DECISION"
 
 
 def load_json(path: Path, default=None):
@@ -46,10 +47,18 @@ def _explicit_latest_intent() -> str:
     return str(preference.get("explicit_latest_query_intent") or "EXPLICIT_LATEST").upper()
 
 
+def _query_intent(req: dict) -> str:
+    return str(req.get("query_intent") or req.get("request_kind") or "").upper()
+
+
+def _is_scheduled_formal_decision(req: dict) -> bool:
+    return _query_intent(req) == SCHEDULED_FORMAL_DECISION_INTENT
+
+
 def _requires_wait(req: dict) -> bool:
     if req.get("wait_for_refresh") is True or req.get("require_post_request_snapshot") is True:
         return True
-    intent = str(req.get("query_intent") or req.get("request_kind") or "").upper()
+    intent = _query_intent(req)
     return bool(intent and intent == _explicit_latest_intent())
 
 
@@ -72,7 +81,14 @@ def latest_wait_request() -> tuple[Path | None, dict]:
     return path, req
 
 
-def build_gate() -> dict:
+def _utc_now(now: datetime | None = None) -> datetime:
+    value = now or datetime.now(timezone.utc)
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
+def build_gate(now: datetime | None = None) -> dict:
     path, req = latest_wait_request()
     if not req:
         return {
@@ -87,11 +103,26 @@ def build_gate() -> dict:
     health = load_json(RUNTIME_HEALTH)
     requested = parse_time(req.get("requested_at_beijing"))
     target = parse_time(req.get("requested_market_time") or req.get("requested_at_beijing"))
+    scheduled_formal_decision = _is_scheduled_formal_decision(req)
     threshold_candidates = [x for x in (requested, target) if x is not None]
     threshold = max(threshold_candidates) if threshold_candidates else None
     captured_text = current.get("data_freshness", {}).get("captured_at_beijing") or current.get("captured_at")
     captured = parse_time(captured_text)
-    ready = threshold is not None and captured is not None and captured >= threshold
+
+    checked_at = _utc_now(now)
+    if scheduled_formal_decision:
+        # Scheduled Formal Decision PREWARM is intentionally allowed to acquire
+        # a legal post-request fact before the nominal node.  The consumer may
+        # persist it only after the nominal node has actually arrived.  This is
+        # distinct from EXPLICIT_LATEST, which keeps requested_market_time as a
+        # hard lower bound for the returned fact itself.
+        post_request_snapshot = requested is not None and captured is not None and captured >= requested
+        nominal_node_reached = target is None or checked_at >= target
+        ready = bool(post_request_snapshot and nominal_node_reached)
+    else:
+        post_request_snapshot = requested is not None and captured is not None and captured >= requested
+        nominal_node_reached = True
+        ready = threshold is not None and captured is not None and captured >= threshold
 
     finished = parse_time(health.get("finished_at") or health.get("captured_at_beijing"))
     failed_after_request = (
@@ -102,8 +133,14 @@ def build_gate() -> dict:
         and not ready
     )
     status = "READY" if ready else ("FAILED" if failed_after_request else "PENDING")
-    explicit_latest = str(req.get("query_intent") or req.get("request_kind") or "").upper() == _explicit_latest_intent()
+    explicit_latest = _query_intent(req) == _explicit_latest_intent()
     allow_fallback = req.get("allow_wait_refresh_fallback") is True and not explicit_latest
+    rule = (
+        "SCHEDULED_FORMAL_DECISION允许在名义节点前PREWARM形成请求后的合法CURRENT；只有名义节点实际到达后才允许正式分析/持久化。"
+        "PREWARM事实仍须由Formal Decision按现行PIT/freshness/quality/session合同复核；本规则不放宽EXPLICIT_LATEST。"
+        if scheduled_formal_decision
+        else "EXPLICIT_LATEST或wait_for_refresh请求必须等本次请求之后且不早于requested_market_time的新CURRENT发布后才可称为最新/当前行情；请求前即使仍处普通FRESH窗口，也不得冒充本次最新查询结果。仅非EXPLICIT_LATEST且用户明确授权时可回退旧快照。"
+    )
     return {
         "status": status,
         "formal_analysis_allowed": ready or allow_fallback,
@@ -118,7 +155,9 @@ def build_gate() -> dict:
         "resolved_snapshot_time": captured_text if ready else "",
         "latest_snapshot": current.get("latest_snapshot", ""),
         "failure_reason": health.get("reason", "") if failed_after_request else "",
-        "rule": "EXPLICIT_LATEST或wait_for_refresh请求必须等本次请求之后且不早于requested_market_time的新CURRENT发布后才可称为最新/当前行情；请求前即使仍处普通FRESH窗口，也不得冒充本次最新查询结果。仅非EXPLICIT_LATEST且用户明确授权时可回退旧快照。",
+        "post_request_snapshot": bool(post_request_snapshot),
+        "nominal_node_reached": bool(nominal_node_reached),
+        "rule": rule,
     }
 
 
@@ -129,6 +168,7 @@ def _formal_decision_matches_requested_refresh(req: dict, gate: dict) -> tuple[b
     if not _requires_wait(req):
         return True, "NO_EXPLICIT_REFRESH_REQUIREMENT"
 
+    requested = parse_time(req.get("requested_at_beijing"))
     target = parse_time(req.get("requested_market_time") or req.get("requested_at_beijing"))
     decision_as_of = parse_time(decision.get("data_as_of_beijing"))
     resolved = parse_time(gate.get("resolved_snapshot_time"))
@@ -136,7 +176,10 @@ def _formal_decision_matches_requested_refresh(req: dict, gate: dict) -> tuple[b
         return False, "REQUESTED_MARKET_TIME_INVALID"
     if decision_as_of is None:
         return False, "FORMAL_DECISION_DATA_TIME_MISSING"
-    if decision_as_of < target:
+    alignment_floor = requested if _is_scheduled_formal_decision(req) else target
+    if alignment_floor is None:
+        return False, "REQUESTED_AT_INVALID"
+    if decision_as_of < alignment_floor:
         return False, "FORMAL_DECISION_PREDATES_REQUESTED_REFRESH"
     if resolved is not None and decision_as_of > resolved:
         return False, "FORMAL_DECISION_DATA_TIME_AFTER_RESOLVED_SNAPSHOT"
@@ -147,7 +190,7 @@ def guard_request(path: Path) -> int:
     req = load_json(path)
     if not isinstance(req.get("formal_decision"), dict):
         return 0
-    if req.get("allow_wait_refresh_fallback") is True and str(req.get("query_intent") or "").upper() != _explicit_latest_intent():
+    if req.get("allow_wait_refresh_fallback") is True and _query_intent(req) != _explicit_latest_intent():
         return 0
     gate = build_gate()
     if not gate.get("formal_decision_persist_allowed", True):

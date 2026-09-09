@@ -5,7 +5,10 @@ import json
 import os
 import subprocess
 
-from scheduled_pulse_slot import resolve_scheduled_pulse
+try:
+    from scheduled_pulse_slot import resolve_scheduled_pulse
+except ModuleNotFoundError:
+    from scripts.scheduled_pulse_slot import resolve_scheduled_pulse
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -22,7 +25,6 @@ def set_output(key: str, value: str) -> None:
     if output:
         with open(output, "a", encoding="utf-8") as f:
             f.write(f"{key}={value}\n")
-
 
 
 STATE_SYNC_FIELDS = ("account_fact", "formal_decision", "trade_event", "formal_review")
@@ -91,7 +93,7 @@ def scheduled_close_boundary_intent(now: datetime, event_name: str, scheduled_cr
     """Recognize a real scheduled pulse that reached the A-share close boundary.
 
     GitHub may dispatch the ten-minute active-session pulse at 14:59 while the
-    explicit 15:00/15:10 cron is delayed or absent.  The pulse is a close
+    explicit 15:00/15:10 cron is delayed or absent. The pulse is a close
     candidate only at the exchange close boundary; the producer must wait until
     15:00 before querying and publishing the close fact.
     """
