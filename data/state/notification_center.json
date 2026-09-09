@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-09T20:17:48+08:00",
-  "last_status": "SENT",
-  "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【系统复核】ETF系统复核｜2026-09-09",
+  "updated_at": "2026-09-09T20:22:53+08:00",
+  "last_status": "WAITING_CONFIRMATION",
+  "last_type": "收盘账户",
+  "last_title": "【收盘账户】请确认15:00后的账户事实",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -4401,6 +4401,35 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-09T17:59:09+08:00"
+    },
+    {
+      "notification_id": "notification_8886e4991210a42c4f24",
+      "event_type": "收盘账户",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "close-account:2026-09-09",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "user_severity": "需要操作",
+      "user_action": "到ChatGPT ETF项目的「ETF交易复盘」聊天窗口上传收盘截图或确认无变化",
+      "lifecycle_status": "ARCHIVED",
+      "created_at": "2026-09-09T20:22:52+08:00",
+      "sent_at": "2026-09-09T20:22:53+08:00",
+      "confirmed_at": null,
+      "archived_at": "2026-09-09T20:22:54+08:00",
+      "expires_at": "2026-09-11T20:22:52+08:00",
+      "title": "【收盘账户】请确认15:00后的账户事实",
+      "content": "### 发生了什么\n当前交易日收盘账户事实仍需确认。\n\n### 你需要做什么\n请上传15:00收盘后的券商持仓/账户截图，或确认收盘账户无变化。\n\n> 收盘提醒只请求账户事实确认，不生成交易指令。",
+      "source": "account_fact",
+      "confirmation_context": {},
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-09-09T20:22:53+08:00",
+      "revalidation_reason": "canonical close review closure completed for 2026-09-09"
     }
   ],
   "recent": [
@@ -6491,6 +6520,24 @@
       },
       "notification_id": "notification_526ae4d56af3c97387d8",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "close-account:2026-09-09",
+      "type": "收盘账户",
+      "title": "【收盘账户】请确认15:00后的账户事实",
+      "content": "### 发生了什么\n当前交易日收盘账户事实仍需确认。\n\n### 你需要做什么\n请上传15:00收盘后的券商持仓/账户截图，或确认收盘账户无变化。\n\n> 收盘提醒只请求账户事实确认，不生成交易指令。",
+      "source": "account_fact",
+      "user_severity": "需要操作",
+      "user_action": "到ChatGPT ETF项目的「ETF交易复盘」聊天窗口上传收盘截图或确认无变化",
+      "status": "WAITING_CONFIRMATION",
+      "attempted_at": "2026-09-09T20:22:53+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_8886e4991210a42c4f24",
+      "lifecycle_status": "WAITING_CONFIRMATION"
     }
   ],
   "pending_questions": [],
