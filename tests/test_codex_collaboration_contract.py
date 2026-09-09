@@ -28,6 +28,21 @@ class CodexCollaborationContractTests(unittest.TestCase):
             self.assertIn(marker, text)
         self.assertIn("聊天记录不是唯一交接媒介", text)
 
+    def test_contract_has_one_semantic_integration_state_machine(self):
+        text = CONTRACT.read_text(encoding="utf-8")
+        for marker in (
+            "NO_REPLAY_REQUIRED",
+            "REVIEW_MAIN_DELTA",
+            "REPLAY_REQUIRED",
+            "candidate 证据的复用键",
+            "一个 Issue 同时只保留一个 active integration PR",
+            "PREEXISTING_UNRELATED",
+            "state-only",
+            "queued",
+            "in_progress",
+        ):
+            self.assertIn(marker, text)
+
     def test_contract_does_not_create_governance_or_task_state(self):
         text = CONTRACT.read_text(encoding="utf-8")
         for marker in ("第二治理规则源", "Task-to-Task 通信", "平行 workflow", "state"):
