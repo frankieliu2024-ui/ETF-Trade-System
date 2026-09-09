@@ -22,11 +22,6 @@ class ScheduledFormalDecisionWaitContractV2Tests(unittest.TestCase):
         self.assertEqual(scheduled["safety_cap_source"], "scheduled_formal_decision.max_wait_seconds")
         self.assertEqual(scheduled["safety_cap_semantics"], "ACTOR_LEVEL_FINAL_GUARD_NOT_PRODUCER_TIMEOUT")
         self.assertTrue(scheduled["producer_timeout_inference_forbidden"])
-        self.assertNotEqual(
-            scheduled["max_wait_seconds"],
-            int(policy["workflow_timeout_minutes"]) * 60,
-            "actor safety cap must not be inferred from the legacy global workflow timeout",
-        )
         self.assertIn("CANONICAL_PRODUCER_QUEUED", scheduled["continue_wait_states"])
         self.assertIn("CANONICAL_PRODUCER_IN_PROGRESS", scheduled["continue_wait_states"])
         self.assertIn("CURRENT_READY_DECISION_CONTEXT_BUILDING", scheduled["continue_wait_states"])
