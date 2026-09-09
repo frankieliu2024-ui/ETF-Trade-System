@@ -17,7 +17,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         (self.root / "events/reviews").mkdir(parents=True)
         (self.root / "data/state").mkdir(parents=True)
         (self.root / "ETF市场行情档案_2026.md").write_text("## 6. 历史Excel与专项数据来源\n<!-- AUTO_POST_CLOSE_REVIEW_FACTS_START -->\n<!-- AUTO_POST_CLOSE_REVIEW_FACTS_END -->\n", encoding="utf-8")
-        (self.root / "ETF交易复盘与经验库_2026.md").write_text("## 3. 历史研究与专项回测\n<!-- AUTO_POST_CLOSE_REVIEW_CASES_START -->\n<!-- AUTO_POST_CLOSE_REVIEW_CASES_END -->\n", encoding="utf-8")
+        (self.root / "ETF交易复盘与经验库_2026.md").write_text("## 3. 历史研究与专项回测\n<!-- AUTO_CASE_DETAILS_START -->\\n<!-- AUTO_CASE_DETAILS_END -->\\n<!-- AUTO_POST_CLOSE_REVIEW_CASES_START -->\n<!-- AUTO_POST_CLOSE_REVIEW_CASES_END -->\n", encoding="utf-8")
         (self.root / "data/state/CURRENT.json").write_text("{}\n", encoding="utf-8")
         self.old = (sync.ROOT, sync.ARCHIVE, sync.EXPERIENCE, sync.ACCOUNT)
         sync.ROOT = self.root; sync.ARCHIVE = self.root / "ETF市场行情档案_2026.md"; sync.EXPERIENCE = self.root / "ETF交易复盘与经验库_2026.md"; sync.ACCOUNT = self.root / "data/state/account_fact.json"
@@ -34,6 +34,31 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertEqual(sync.record_post_close_review(account, self.request()), (True, False))
         self.assertEqual(sync.record_post_close_review(account, self.request()), (True, True))
         self.assertEqual(json.loads((self.root / "data/state/close_review_closure_2026-08-31.json").read_text(encoding="utf-8"))["status"], "CLOSED")
+
+    def test_idempotent_partial_new_case_replay_restores_projections_without_event_rewrite(self):
+        account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
+        request = self.request()
+        request["formal_review"].update({
+            "case_id": "CASE-20260831-01",
+            "case_mode": "NEW_CASE_FROM_EXECUTED_TRIAL",
+            "experience_entry": "CASE-20260831-01：已执行Trial复盘，保留正式事实与边界。",
+        })
+        self.assertEqual(sync.record_post_close_review(account, request), (True, False))
+        event_path = self.root / "events/reviews/2026-08-31.json"
+        event_bytes = event_path.read_bytes()
+        case_text = (self.root / "ETF交易复盘与经验库_2026.md").read_text(encoding="utf-8")
+        self.assertEqual(case_text.count("CASE-20260831-01"), 1)
+        closure_path = self.root / "data/state/close_review_closure_2026-08-31.json"
+        closure_path.unlink()
+        (self.root / "ETF交易复盘与经验库_2026.md").write_text(
+            case_text.replace("### 2.1 CASE-20260831-01：已执行Trial复盘，保留正式事实与边界。\\n", ""),
+            encoding="utf-8",
+        )
+        self.assertEqual(sync.record_post_close_review(account, request), (True, True))
+        self.assertEqual(event_path.read_bytes(), event_bytes)
+        restored = (self.root / "ETF交易复盘与经验库_2026.md").read_text(encoding="utf-8")
+        self.assertEqual(restored.count("CASE-20260831-01"), 1)
+        self.assertEqual(json.loads(closure_path.read_text(encoding="utf-8"))["status"], "CLOSED")
 
     def test_stale_review_does_not_replace_newer(self):
         account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
