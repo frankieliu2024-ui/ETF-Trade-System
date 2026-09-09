@@ -183,7 +183,7 @@ PushPlus微信渠道存在平台层展示模板：ETF系统通过API传入的业
 通知只有两个顶层语义通道，二者共享同一个notification center、guarded sender、external-effect committer和notification state：
 
 - **INTERRUPT**：事件驱动的固定模板通知，覆盖市场异动、观察/Trial/Confirm机会、机会失效、持仓动作、风险许可、成交确认、账户确认、系统阻塞、判断恢复和收盘账户。其资格受正式事实、PIT、materiality、dedup、冷却和实质升级约束；默认delivery mode为**COMPACT**。
-- **REPORT**：固定正式节点完成后的完整报告投递，覆盖ETF_TRADE_REVIEW与ETF_SYSTEM_REVIEW及经SSOT登记的收盘总结。默认delivery mode为**FULL_REPORT**；正式报告正文原样转发，不套用INTERRUPT模板，也不创建第二sender、第二state或第二token owner。
+- **REPORT**：固定正式节点完成后的完整报告投递，覆盖ETF_TRADE_REVIEW、ETF_SYSTEM_REVIEW和ETF_FORMAL_DECISION三类已登记Scheduled Actor正式报告。三个Scheduled Actor都是正式结果生产者，不是独立通知系统。默认delivery mode为**FULL_REPORT**；正式报告正文原样转发，不套用INTERRUPT模板，也不创建第二sender、第二state或第二token owner。REPORT与INTERRUPT共享现有发送、状态和transport owner，但资格语义严格分离：REPORT只转发已完成、已冻结的完整正式结果，不能重新分析、产生交易权限或回流生成INTERRUPT。
 
 所有用户可见INTERRUPT event必须映射到下列canonical template family，固定模板表示固定一级标题、section skeleton、边界语句与结构化动态槽位，并不把业务动态文字写死：
 
@@ -205,7 +205,7 @@ PushPlus微信渠道存在平台层展示模板：ETF系统通过API传入的业
 
 REPORT只接受已经完成的正式报告，不重新分析，也不拥有formal reasoning或交易权限。请求至少包含：schema_version、channel=REPORT、report_type、report_id、task_id、task_run_id、generated_at、effective_market_date、source_actor、source_reference、title、summary、full_content、content_hash、idempotency_key、delivery_mode=FULL_REPORT和no_trade_authority=true。
 
-canonical intake校验报告类型、来源身份、任务/运行身份、正文哈希和幂等键；重复幂等键不得重复投递。REPORT请求只能创建delivery event，不能修改MASTER、risk permission、lifecycle、formal decision、account、trade、CASE或订单。产品侧固定任务完成后提交ETF_TRADE_REVIEW或ETF_SYSTEM_REVIEW，GitHub只转发已完成内容。
+canonical intake校验报告类型、来源身份、任务/运行身份、正文哈希和幂等键；重复幂等键不得重复投递。REPORT请求只能创建delivery event，不能修改MASTER、risk permission、lifecycle、formal decision、account、trade、CASE或订单。产品侧固定任务完成后提交ETF_TRADE_REVIEW、ETF_SYSTEM_REVIEW或ETF_FORMAL_DECISION，GitHub只转发已完成内容。正式决策报告必须在其既有业务事实成功持久化、FINAL_CONTENT冻结后才具备REPORT可用性；REPORT投递失败不得改写业务事实成功，业务事实失败也不得伪装成成功报告。REPORT是终态投递输入，不得重新进入INTERRUPT事件生成器；同一正式报告继续由现有幂等键防止重复投递。
 
 ### 正式判断与raw trigger边界
 

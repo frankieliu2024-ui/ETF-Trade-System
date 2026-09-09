@@ -22,7 +22,7 @@ ACCOUNT_EVENT_MAX_AGE_MINUTES = 30
 MIN_UNEXPLAINED_CASH_DELTA_YUAN = 10.0
 TRADING_CALENDAR = ROOT / "config" / "market" / "a_share_trading_calendar_2026.json"
 
-REPORT_TYPES = {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}
+REPORT_TYPES = {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW", "ETF_FORMAL_DECISION"}
 REPORT_REQUEST_DIR = ROOT / "requests" / "report_delivery"
 
 def validate_report_delivery_request(request: dict) -> tuple[bool, str]:
