@@ -875,6 +875,52 @@ def _case_detail_projection_entry(case_entry: str, case_id: str) -> str:
         body = f"{case_id}：{body}"
     return f"### 2.{ordinal} {body}"
 
+def _persist_post_close_review_projections(account: dict, request: dict, review: dict, event: dict) -> None:
+    """Complete all review projections for first write and safe idempotent replay."""
+    market_date = str(event.get("market_date") or review.get("market_date") or "")
+    if not market_date:
+        return
+    archive_entry = str(review.get("archive_entry") or "").strip()
+    if archive_entry:
+        upsert_formal_line(
+            ROOT,
+            ARCHIVE.name,
+            REVIEW_ARCHIVE_START,
+            REVIEW_ARCHIVE_END,
+            market_date,
+            archive_entry,
+            before_heading="## 6. 历史Excel与专项数据来源",
+        )
+    _purge_case_mapping_rows()
+    experience_entry = str(review.get("experience_entry") or "").strip()
+    if experience_entry:
+        case_mode = str(review.get("case_mode") or "").upper()
+        case_id = str(review.get("case_id") or "").strip()
+        if case_mode.startswith("NEW_CASE_FROM_EXECUTED_") and case_id:
+            case_entry = _case_detail_projection_entry(experience_entry, case_id)
+            upsert_formal_line(
+                ROOT,
+                EXPERIENCE.name,
+                CASE_DETAILS_START,
+                CASE_DETAILS_END,
+                case_id,
+                case_entry,
+                before_heading="## 3. 历史研究与专项回测",
+            )
+        else:
+            upsert_formal_line(
+                ROOT,
+                EXPERIENCE.name,
+                REVIEW_EXPERIENCE_START,
+                REVIEW_EXPERIENCE_END,
+                market_date,
+                experience_entry,
+                before_heading="## 5. 研究与经验转化",
+            )
+    sync_experience_case_mapping_index(review)
+    record_close_review_closure(account, request, review, event)
+
+
 def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     review = request.get("formal_review")
     if request.get("interaction_scenario") != "POST_CLOSE_REVIEW" or not review:
@@ -890,7 +936,11 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     event_path = ROOT / "events" / "reviews" / f"{market_date}.json"
     prior = load_json(event_path) if event_path.exists() else {}
     if prior.get("fingerprint") == fingerprint:
-        sync_experience_case_mapping_index(review)
+        # An event fingerprint proves the canonical event is already recorded;
+        # it does not prove that every downstream projection completed. Re-run
+        # the idempotent projection path without rewriting the event itself.
+        persisted_review = prior.get("review") if isinstance(prior.get("review"), dict) else review
+        _persist_post_close_review_projections(account, request, persisted_review, prior)
         return True, True
     incoming_time = parse_time(
         review.get("reviewed_at_beijing")
@@ -911,20 +961,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     event["reviewed_at_beijing"] = review_time
     event_path.parent.mkdir(parents=True, exist_ok=True)
     atomic_json_write(event_path, event)
-    archive_entry = str(review.get("archive_entry") or "").strip()
-    if archive_entry:
-        upsert_formal_line(ROOT, ARCHIVE.name, REVIEW_ARCHIVE_START, REVIEW_ARCHIVE_END, market_date, archive_entry, before_heading="## 6. 历史Excel与专项数据来源")
-    _purge_case_mapping_rows()
-    experience_entry = str(review.get("experience_entry") or "").strip()
-    if experience_entry:
-        case_mode = str(review.get("case_mode") or "").upper()
-        if case_mode.startswith("NEW_CASE_FROM_EXECUTED_") and str(review.get("case_id") or "").strip():
-            case_entry = _case_detail_projection_entry(experience_entry, str(review.get("case_id")))
-            upsert_managed_line(ROOT, EXPERIENCE.name, CASE_DETAILS_START, CASE_DETAILS_END, str(review.get("case_id")), case_entry, before_heading="## 3. 历史研究与专项回测")
-        else:
-            upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry, before_heading="## 5. 研究与经验转化")
-    sync_experience_case_mapping_index(review)
-    record_close_review_closure(account, request, review, event)
+    _persist_post_close_review_projections(account, request, review, event)
     return True, False
 
 
