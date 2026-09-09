@@ -1011,6 +1011,29 @@ def _find_existing_trade(trade: dict, confirmed_at: str, key: str) -> dict | Non
             return prior
     return None
 
+
+def resolve_trade_linked_decision_id(
+    trade: dict,
+    decision_id: str = "",
+    existing_linked_decision_id: str = "",
+) -> str:
+    """Resolve one durable decision association without weakening legacy inputs.
+
+    An already-persisted association wins on replay.  For a new event, an
+    explicit trade-event link is authoritative, followed by the legacy
+    decision_id and same-request formal decision compatibility.
+    """
+    for value in (
+        existing_linked_decision_id,
+        trade.get("linked_decision_id"),
+        trade.get("decision_id"),
+        decision_id,
+    ):
+        resolved = str(value or "").strip()
+        if resolved:
+            return resolved
+    return ""
+
 def _latest_trade_event_id() -> str:
     directory = ROOT / "events" / "trades"
     candidates = []
@@ -1580,16 +1603,24 @@ def main() -> int:
             # A request-scoped confirmation time is authoritative for an
             # idempotent replay.  Never replace an earlier PIT confirmation with
             # the current account snapshot's updated_at.
+            changed = False
             requested_confirmed_at = str(trade.get("confirmed_at_beijing") or request.get("requested_at_beijing") or trade.get("executed_at") or "").strip()
             if requested_confirmed_at and str(event.get("confirmed_at_beijing") or "") != requested_confirmed_at:
                 event["confirmed_at_beijing"] = requested_confirmed_at
                 event["execution_date"] = trade.get("market_date") or requested_confirmed_at[:10]
                 event["confirmation_date"] = trade.get("market_date") or requested_confirmed_at[:10]
                 event["idempotency_key"] = _trade_idempotency_key(trade, requested_confirmed_at)
-                atomic_json_write(ROOT / "events" / "trades" / f"{event_id}.json", event)
-            # Idempotent fee/account replays must also converge stale attribution
-            # written by an older producer; they never create another event.
-            linked_decision_id = str(event.get("linked_decision_id") or trade.get("decision_id") or decision_id or "")
+                changed = True
+            # Idempotent fee/account replays must also converge stale linkage and
+            # attribution written by an older producer; they never create another event.
+            linked_decision_id = resolve_trade_linked_decision_id(
+                trade,
+                decision_id,
+                existing_linked_decision_id=str(event.get("linked_decision_id") or ""),
+            )
+            if not str(event.get("linked_decision_id") or "").strip() and linked_decision_id:
+                event["linked_decision_id"] = linked_decision_id
+                changed = True
             refreshed_attribution = execution_attribution(event, linked_decision_id)
             refreshed_hypothesis = refreshed_attribution.get("hypothesis_id")
             if (
@@ -1598,10 +1629,12 @@ def main() -> int:
             ):
                 event["execution_attribution"] = refreshed_attribution
                 event["hypothesis_id"] = refreshed_hypothesis
+                changed = True
+            if changed:
                 atomic_json_write(ROOT / "events" / "trades" / f"{event_id}.json", event)
         else:
             event_id = str(trade.get("event_id") or request.get("request_id") or datetime.now(SHANGHAI).strftime("%Y%m%d_%H%M%S"))
-            linked_decision_id = str(trade.get("decision_id") or decision_id or "")
+            linked_decision_id = resolve_trade_linked_decision_id(trade, decision_id)
             attribution = execution_attribution({**trade, "confirmed_at_beijing": confirmed_at}, linked_decision_id)
             event = {"event_id": event_id, "idempotency_key": idempotency_key, "confirmed_at_beijing": confirmed_at, "execution_date": trade.get("execution_date") or str(confirmed_at)[:10], "confirmation_date": trade.get("confirmation_date") or str(confirmed_at)[:10], "notification_id": trade.get("notification_id"), "name": trade.get("name"), "code": trade.get("code"), "side": trade.get("side"), "quantity": trade.get("quantity"), "price": trade.get("price"), "amount": trade.get("amount"), "lifecycle": trade.get("lifecycle"), "source": trade.get("source", account.get("source")), "source_confidence": trade.get("source_confidence"), "linked_decision_id": linked_decision_id or None, "hypothesis_id": trade.get("hypothesis_id") or attribution.get("hypothesis_id") or None, "execution_status": "EXECUTED", "execution_attribution": attribution}
             event_path = ROOT / "events" / "trades" / f"{event_id}.json"
