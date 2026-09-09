@@ -39,6 +39,20 @@ REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api", "eastmoney_push2"}
 CORE_A_SHARE_INDEX_CODES = frozenset({"000001.SH", "399006.SZ", "000688.SH"})
 
 
+def workflow_sha_validation(head_sha: str, workflow_sha: str, event_name: str) -> tuple[bool, str]:
+    """Validate immutable workflow identity without rejecting PR replay snapshots.
+
+    Production and non-PR runs must still bind the report to the exact checked
+    out workflow SHA.  A pull-request candidate intentionally validates an
+    ephemeral replay tree, so its HEAD cannot equal the Actions event SHA.
+    """
+    if not workflow_sha:
+        return True, f"workflow_sha_unset event={event_name or 'UNKNOWN'}"
+    if event_name == "pull_request":
+        return True, f"PR candidate snapshot validated head={head_sha} event_sha={workflow_sha}"
+    return head_sha == workflow_sha, f"HEAD={head_sha} GITHUB_SHA={workflow_sha}"
+
+
 def canonical_etf_codes(objects: list[dict]) -> set[str]:
     """Return the ETF identities from the canonical machine universe."""
     return {str(item.get("code", "")) for item in objects if item.get("code")}
@@ -216,6 +230,7 @@ def main() -> int:
         ("tests.test_post_close_review_canonical", "post_close_review_canonical"),
         ("tests.test_review_prerequisite_lifecycle", "review_prerequisite_lifecycle"),
         ("tests.test_production_reliability", "production_reliability"),
+        ("tests.test_workflow_sha_snapshot", "workflow_sha_snapshot"),
     ):
         contract_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", module], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
         check(f"tests:{label}", contract_proc.returncode == 0, (contract_proc.stdout + contract_proc.stderr)[-1000:])
@@ -301,8 +316,12 @@ def main() -> int:
     except RuntimeError as exc:
         semantic_freshness = {"base": semantic_base, "head": head_sha, "decision": "STALE", "error": str(exc)}
     check("git:semantic_latest_main", semantic_freshness.get("decision") != "STALE", json.dumps(semantic_freshness, ensure_ascii=False))
-    if github_sha:
-        check("git:workflow_sha_matches_head", head_sha == github_sha, f"HEAD={head_sha} GITHUB_SHA={github_sha}")
+    workflow_sha_ok, workflow_sha_detail = workflow_sha_validation(
+        head_sha,
+        github_sha,
+        os.environ.get("GITHUB_EVENT_NAME", ""),
+    )
+    check("git:workflow_sha_matches_head", workflow_sha_ok, workflow_sha_detail)
     rc, tracked = run_git("-c", "core.quotePath=false", "ls-files")
     tracked_set = set(tracked.splitlines()) if rc == 0 else set()
     missing_tracked = [p for p in CRITICAL_TRACKED_FILES if p not in tracked_set]
