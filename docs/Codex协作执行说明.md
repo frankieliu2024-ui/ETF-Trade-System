@@ -110,6 +110,22 @@ Codex 的结果必须回写同一 Issue 或关联 PR，至少包括：
 
 ChatGPT 与【ETF变更复核】后续直接从 GitHub 读取 Issue、PR、CI 和 latest main；聊天记录不是唯一交接媒介。
 
+### 3.2 单一集成状态机与证据复用
+
+同一根因事项必须复用同一个 Issue 控制面，并且在任何 replay、rebase 或替代 PR 决策前调用现有 `scripts/semantic_latest_main.py` 的 `integration_action`：
+
+- `NO_REPLAY_REQUIRED`：main 相对 PR base 只有动态运行事实或没有变化；保留现有 PR head 和已通过的 candidate 证据，不创建替代 PR，不重复完整 candidate suite。
+- `REVIEW_MAIN_DELTA`：main 含正式事实或 request 变化；只检查该 delta 是否与当前 stable diff 交互，未证明交互前不得自动 replay，也不得把它当作无变化。
+- `REPLAY_REQUIRED`：main 含 stable production change 或 UNKNOWN 变化；才允许从 latest main 重新隔离重放。
+
+candidate 证据的复用键是：PR head SHA、stable semantic diff 和当前生产治理/合同版本。PR head 未变化且分类为 `NO_REPLAY_REQUIRED` 时，动态 main 提交不使既有 candidate 证据失效；GitHub 若只要求分支技术上追平，优先执行最低成本的 transport 更新，不能借此重建变更或重复无关验收。任何证据复用都不替代最终 merged-main acceptance。
+
+一个 Issue 同时只保留一个 active integration PR。只有 `REPLAY_REQUIRED`、实际 stable/formal interaction，或旧 PR 的 GitHub transport 已不可用时，才允许创建 successor PR；创建 successor 后应关闭旧 PR/分支，避免多个候选继续触发 CI。state-only 的通知、诊断或验收持久化提交按现有 `scripts/acceptance_scope.py` 分类为非递归 acceptance 输入，不重新启动同一变更的 candidate/production acceptance。
+
+一旦用户明确授权合并，且 scope、review、latest-main、candidate、CI 与治理门全部满足，执行器必须在同一执行 episode 内继续读取 merged-main deterministic workflow 到终态，完成 change-specific acceptance、failure attribution、Issue/PR 回写和可关闭判断；不能因 run 暂时 `queued`／`in_progress` 就把确定性收尾交回用户。若归因为 `PREEXISTING_UNRELATED` 或 `NEW_UNRELATED_DISCOVERY`，保持全局失败可见但不得重启当前变更；只有 `INTRODUCED_BY_CURRENT_CHANGE` 或 `ATTRIBUTION_INCONCLUSIVE` 阻塞当前闭环。
+
+本节是现有协作入口的执行合同，不新增 workflow、state store、merge queue、approval bot、第二 classifier 或第二 acceptance engine；合并授权、安全边界、writer ownership、PIT/freshness、system consistency 和 E2E 仍完全服从 V1.8。
+
 ## 4. 选择规则
 
 默认使用以下分工：
