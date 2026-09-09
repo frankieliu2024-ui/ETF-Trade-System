@@ -28,7 +28,9 @@ class MarketLevelAndRefreshContractTest(unittest.TestCase):
         text = (ROOT / "scripts" / "refresh_gate.py").read_text(encoding="utf-8")
         self.assertIn("FORMAL_DECISION_PREDATES_REQUESTED_REFRESH", text)
         self.assertIn("_formal_decision_matches_requested_refresh", text)
-        self.assertIn("decision_as_of < target", text)
+        self.assertIn("alignment_floor = requested if _is_scheduled_formal_decision(req) else target", text)
+        self.assertIn("decision_as_of < alignment_floor", text)
+        self.assertIn("explicit_latest = _query_intent(req) == _explicit_latest_intent()", text)
 
 
 if __name__ == "__main__":
