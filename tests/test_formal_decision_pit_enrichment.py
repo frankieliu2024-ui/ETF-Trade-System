@@ -139,6 +139,56 @@ class FormalDecisionPitEnrichmentTests(unittest.TestCase):
             self.assertEqual(event["price_at_decision"], 1.330)
 
 
+    def test_explicit_consumed_snapshot_wins_over_older_available_snapshot(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._snapshot(
+                root, "112406", "2026-09-09T11:24:06+08:00",
+                "2026-09-09T11:24:00+08:00", 1.342,
+            )
+            afternoon = self._snapshot(
+                root, "132424", "2026-09-09T13:24:24+08:00",
+                "2026-09-09T13:24:21+08:00", 1.330,
+            )
+            (root / "config" / "market").mkdir(parents=True, exist_ok=True)
+            (root / "config" / "market" / "etf_monitor_universe.json").write_text(
+                json.dumps({"objects": [{"code": "515220", "name": "煤炭ETF"}]}),
+                encoding="utf-8",
+            )
+            (root / "events" / "decisions").mkdir(parents=True)
+            request = {
+                "request_id": "decision-1325-explicit",
+                "requested_at_beijing": "2026-09-09T13:25:00+08:00",
+                "persistence_available_at_beijing": "2026-09-09T13:25:00+08:00",
+                "market_date": "2026-09-09",
+                "consumed_snapshot": afternoon,
+                "formal_decision": {
+                    "decision_id": "decision-1325-explicit",
+                    "data_as_of_beijing": "2026-09-09T13:24:21+08:00",
+                    "candidate_code": "515220",
+                    "candidate_name": "煤炭ETF",
+                    "main_candidate": "煤炭ETF（515220）",
+                    "opportunity_status": "Trial机会",
+                    "price_at_decision": 1.330,
+                    "price_as_of_beijing": "2026-09-09T13:24:21+08:00",
+                    "lifecycle": "",
+                },
+            }
+            with patch.object(sync, "ROOT", root):
+                recorded, _ = sync.record_formal_decision(request)
+            event = json.loads(
+                (root / "events" / "decisions" / "decision-1325-explicit.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertTrue(recorded)
+            self.assertEqual(event["price_source_snapshot"], afternoon)
+            self.assertEqual(event["price_source"], "FORMAL_DECISION_SUPPLIED_POINT_IN_TIME")
+            self.assertEqual(event["price_at_decision"], 1.330)
+            self.assertEqual(event["price_as_of_beijing"], "2026-09-09T13:24:21+08:00")
+            self.assertEqual(event["comparison_snapshot"]["as_of_beijing"], "2026-09-09T13:24:24+08:00")
+
+
 if __name__ == "__main__":
     unittest.main()
 

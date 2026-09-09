@@ -596,6 +596,7 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     supplied_price = safe_float(decision.get("price_at_decision"))
     supplied_as_of = str(decision.get("price_as_of_beijing") or "")
     supplied_time = parse_time(supplied_as_of)
+    cutoff = parse_time(decision_time)
     supplied_point_in_time = supplied_price is not None and supplied_time is not None and cutoff is not None and supplied_time <= cutoff
     price_at_decision = supplied_price if supplied_point_in_time else None
     price_as_of = supplied_as_of if supplied_point_in_time else ""
