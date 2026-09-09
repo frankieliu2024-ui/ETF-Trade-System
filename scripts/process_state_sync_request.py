@@ -807,11 +807,20 @@ def sync_experience_case_mapping_index(review: dict) -> None:
             parts = line.strip().strip("|").split("|")
             if len(parts) < 10:
                 continue
-            remark = parts[9].strip()
+            marker = f"<!-- TRADE_EVENT:{event_id} -->"
+            # Rebuild the matched row from its table fields and append one
+            # canonical marker. This repairs historical duplicate markers while
+            # keeping the transaction identity and unrelated rows unchanged.
+            without_markers = line.replace(marker, "").rstrip()
+            normalized_parts = without_markers.strip().strip("|").split("|")
+            if len(normalized_parts) < 10:
+                continue
+            remark = normalized_parts[9].strip()
             if case_id not in remark:
-                parts[9] = f"{case_id}；{remark}" if remark else case_id
-                suffix = f" <!-- TRADE_EVENT:{event_id} -->"
-                lines[index] = "|" + "|".join(parts) + suffix
+                normalized_parts[9] = f"{case_id}；{remark}" if remark else case_id
+            normalized_line = "|" + "|".join(normalized_parts) + f" {marker}"
+            if normalized_line != line:
+                lines[index] = normalized_line
                 changed = True
             break
     if changed:
