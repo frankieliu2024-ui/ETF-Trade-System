@@ -347,7 +347,9 @@ jobs:
           if-no-files-found: ignore
 
   production_acceptance:
-    if: ${{ always() && github.event_name != 'pull_request' }}
+    # Do not allocate a second acceptance runner after the consistency gate
+    # has already failed; successful production paths retain the same acceptance.
+    if: ${{ needs.consistency.result == 'success' && github.event_name != 'pull_request' }}
     needs: consistency
     runs-on: ubuntu-latest
     timeout-minutes: 15
