@@ -330,27 +330,66 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
     return "\n".join(lines)
 
 
-def select_point_in_time_snapshot(market_date: str, decision_time: str) -> tuple[str, dict, str]:
-    cutoff = parse_time(decision_time)
-    if not market_date or cutoff is None:
+def _snapshot_fact_times(snapshot: dict) -> list[datetime]:
+    """Return all provider/row market-fact times carried by a snapshot."""
+    values = []
+    for value in (snapshot.get("provider_as_of"), snapshot.get("provider_as_of_beijing"), snapshot.get("as_of_beijing")):
+        parsed = parse_time(value)
+        if parsed is not None:
+            values.append(parsed)
+    for row in snapshot.get("rows") or []:
+        if not isinstance(row, dict):
+            continue
+        for key in ("as_of_beijing", "provider_as_of_beijing", "provider_timestamp"):
+            parsed = parse_time(row.get(key))
+            if parsed is not None:
+                values.append(parsed)
+    return values
+
+def _snapshot_is_valid_for_decision(market_date: str, snapshot: dict, market_fact_cutoff: datetime, availability_cutoff: datetime) -> tuple[bool, str]:
+    """Validate independent market-fact and snapshot-availability cutoffs."""
+    if snapshot.get("market_date") != market_date or snapshot.get("quality_status") != "PASS":
+        return False, "SNAPSHOT_IDENTITY_OR_QUALITY_INVALID"
+    captured = parse_time(snapshot.get("captured_at_beijing") or snapshot.get("captured_at"))
+    if captured is None or captured > availability_cutoff:
+        return False, "SNAPSHOT_NOT_AVAILABLE_BY_PERSISTENCE_BOUNDARY"
+    if any(value > market_fact_cutoff for value in _snapshot_fact_times(snapshot)):
+        return False, "SNAPSHOT_MARKET_FACT_AFTER_DECISION_CUTOFF"
+    return True, ""
+
+def select_point_in_time_snapshot(market_date: str, decision_time: str, *, availability_time: str = "", consumed_snapshot: str = "") -> tuple[str, dict, str]:
+    """Select a legal snapshot using separate fact and availability clocks."""
+    market_fact_cutoff = parse_time(decision_time)
+    availability_cutoff = parse_time(availability_time) or datetime.now(SHANGHAI)
+    if not market_date or market_fact_cutoff is None:
         return "", {}, "NO_VALID_DECISION_TIME"
     candidates = []
-    for path in sorted((ROOT / "data/market/snapshots").glob(f"{market_date}_*.json")):
+    snapshot_dir = ROOT / "data/market/snapshots"
+    if consumed_snapshot:
+        candidate_path = (ROOT / consumed_snapshot).resolve()
+        if ROOT not in candidate_path.parents or not candidate_path.exists():
+            return "", {}, "CONSUMED_SNAPSHOT_REFERENCE_INVALID"
+        paths = [candidate_path]
+    else:
+        paths = sorted(snapshot_dir.glob(f"{market_date}_*.json"))
+    for path in paths:
         try:
             snap = load_json(path)
         except Exception:
             continue
-        if snap.get("market_date") != market_date or snap.get("quality_status") != "PASS":
+        valid, reason = _snapshot_is_valid_for_decision(market_date, snap, market_fact_cutoff, availability_cutoff)
+        if not valid:
+            if consumed_snapshot:
+                return "", {}, reason
             continue
         captured = parse_time(snap.get("captured_at_beijing") or snap.get("captured_at"))
-        if captured is not None and captured <= cutoff:
+        if captured is not None:
             candidates.append((captured, path, snap))
     if not candidates:
         return "", {}, "NO_PRIOR_SNAPSHOT"
     _, path, snap = max(candidates, key=lambda x: x[0])
-    return str(path.relative_to(ROOT)).replace("\\", "/"), snap, "POINT_IN_TIME_PRIOR_OR_EQUAL"
-
-
+    status = "CONSUMED_SNAPSHOT_VALIDATED" if consumed_snapshot else "POINT_IN_TIME_SNAPSHOT_TWO_CLOCK_VALIDATED"
+    return str(path.relative_to(ROOT)).replace("\\", "/"), snap, status
 def build_comparison_snapshot(snapshot: dict) -> dict:
     universe = load_json(ROOT / "config/market/etf_monitor_universe.json")
     names = {str(x.get("code")): str(x.get("name")) for x in (universe.get("objects") or []) if x.get("code")}
@@ -536,8 +575,24 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     decision_time = str(decision.get("data_as_of_beijing") or "")
     if not decision_time:
         decision_time = datetime.now(SHANGHAI).isoformat(timespec="seconds")
-    cutoff = parse_time(decision_time)
-    snapshot_rel, snapshot, pit_status = select_point_in_time_snapshot(market_date, decision_time)
+    availability_time = str(
+        request.get("persistence_available_at_beijing")
+        or request.get("decision_persisted_at_beijing")
+        or decision.get("issued_at_beijing")
+        or decision.get("decision_effective_at_beijing")
+        or request.get("requested_at_beijing")
+        or ""
+    )
+    consumed_snapshot = str(
+        request.get("consumed_snapshot")
+        or request.get("consumed_snapshot_path")
+        or decision.get("consumed_snapshot")
+        or decision.get("consumed_snapshot_path")
+        or ""
+    )
+    snapshot_rel, snapshot, pit_status = select_point_in_time_snapshot(
+        market_date, decision_time, availability_time=availability_time, consumed_snapshot=consumed_snapshot
+    )
     supplied_price = safe_float(decision.get("price_at_decision"))
     supplied_as_of = str(decision.get("price_as_of_beijing") or "")
     supplied_time = parse_time(supplied_as_of)
