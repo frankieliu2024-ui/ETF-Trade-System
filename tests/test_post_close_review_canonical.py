@@ -17,7 +17,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         (self.root / "events/reviews").mkdir(parents=True)
         (self.root / "data/state").mkdir(parents=True)
         (self.root / "ETF市场行情档案_2026.md").write_text("## 6. 历史Excel与专项数据来源\n<!-- AUTO_POST_CLOSE_REVIEW_FACTS_START -->\n<!-- AUTO_POST_CLOSE_REVIEW_FACTS_END -->\n", encoding="utf-8")
-        (self.root / "ETF交易复盘与经验库_2026.md").write_text("## 3. 历史研究与专项回测\n<!-- AUTO_CASE_DETAILS_START -->\\n<!-- AUTO_CASE_DETAILS_END -->\\n<!-- AUTO_POST_CLOSE_REVIEW_CASES_START -->\n<!-- AUTO_POST_CLOSE_REVIEW_CASES_END -->\n", encoding="utf-8")
+        (self.root / "ETF交易复盘与经验库_2026.md").write_text("## 3. 历史研究与专项回测\n<!-- AUTO_CASE_DETAILS_START -->\n<!-- AUTO_CASE_DETAILS_END -->\n<!-- AUTO_POST_CLOSE_REVIEW_CASES_START -->\n<!-- AUTO_POST_CLOSE_REVIEW_CASES_END -->\n", encoding="utf-8")
         (self.root / "data/state/CURRENT.json").write_text("{}\n", encoding="utf-8")
         self.old = (sync.ROOT, sync.ARCHIVE, sync.EXPERIENCE, sync.ACCOUNT)
         sync.ROOT = self.root; sync.ARCHIVE = self.root / "ETF市场行情档案_2026.md"; sync.EXPERIENCE = self.root / "ETF交易复盘与经验库_2026.md"; sync.ACCOUNT = self.root / "data/state/account_fact.json"
@@ -51,7 +51,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         closure_path = self.root / "data/state/close_review_closure_2026-08-31.json"
         closure_path.unlink()
         (self.root / "ETF交易复盘与经验库_2026.md").write_text(
-            case_text.replace("### 2.1 CASE-20260831-01：已执行Trial复盘，保留正式事实与边界。\\n", ""),
+            case_text.replace("### 2.1 CASE-20260831-01：已执行Trial复盘，保留正式事实与边界。\n", ""),
             encoding="utf-8",
         )
         self.assertEqual(sync.record_post_close_review(account, request), (True, True))
