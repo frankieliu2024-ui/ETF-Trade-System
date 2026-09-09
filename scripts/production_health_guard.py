@@ -243,6 +243,7 @@ def main() -> int:
     account = read_json(STATE / "account_fact.json")
     notification = read_json(STATE / "notification_center.json")
     workflow_diag = read_json(STATE / "workflow_failure_diagnostic.json")
+    self_healing = read_json(STATE / "self_healing_status.json")
     windows = active_windows(now_utc)
 
     consistency_status = str(consistency.get("status") or "UNKNOWN").upper()
@@ -307,15 +308,30 @@ def main() -> int:
     add_check(rows, "workflow_diagnostic", "ATTENTION" if diagnostic_status not in {"", "NONE", "NO_FAILURE"} else "PASS", f"classification={diagnostic_status}")
 
     overall = "BLOCKED" if any(row["status"] == "BLOCKED" for row in rows) else "ATTENTION" if any(row["status"] == "ATTENTION" for row in rows) else "PASS"
+    self_healing_age = age_seconds(now_utc, self_healing.get("checked_at"))
+    safe_recovery_action = str(self_healing.get("recommended_action") or "NONE").upper()
+    safe_recovery_admitted = bool(
+        self_healing_age is not None
+        and self_healing_age <= 120
+        and safe_recovery_action in {"REFRESH_SNAPSHOT", "REBUILD_DERIVED_CONTEXTS", "SYNC_RULES_VERSION_METADATA"}
+    )
     payload = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "generated_at_beijing": now_utc.astimezone(BJ).isoformat(timespec="seconds"),
         "status": overall,
         "checks": rows,
         "notification_center_count": len(notification.get("managed_events") or []),
+        "safe_recovery_gate": {
+            "admitted": safe_recovery_admitted,
+            "action": safe_recovery_action,
+            "assessment_age_seconds": self_healing_age,
+            "rule": "Global BLOCKED status remains visible; a fresh canonical self-healing assessment may keep an already-admitted safe deterministic recovery path executable. Unknown/stale assessments never bypass the guard.",
+        },
         "rule": "生产健康只读检查；不生成交易权限，不修改MASTER，不自动下单。",
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
+    if overall == "BLOCKED" and safe_recovery_admitted:
+        return 0
     return 2 if overall == "BLOCKED" else 0
 
 
