@@ -1,0 +1,148 @@
+name: Temporary #465 branch patch
+
+on:
+  push:
+    branches:
+      - fix/465-post-close-idempotent-recovery
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: fix/465-post-close-idempotent-recovery
+          fetch-depth: 2
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Apply deterministic #465 patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('scripts/process_state_sync_request.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
+              review = request.get("formal_review")
+'''.replace('              ', '')
+          helper = '''def _project_post_close_review_downstream(account: dict, request: dict, review: dict, event: dict, market_date: str) -> None:
+              """Complete all formal review projections idempotently from one canonical event."""
+              archive_entry = str(review.get("archive_entry") or "").strip()
+              if archive_entry:
+                  upsert_formal_line(ROOT, ARCHIVE.name, REVIEW_ARCHIVE_START, REVIEW_ARCHIVE_END, market_date, archive_entry, before_heading="## 6. 历史Excel与专项数据来源")
+              _purge_case_mapping_rows()
+              experience_entry = str(review.get("experience_entry") or "").strip()
+              if experience_entry:
+                  case_mode = str(review.get("case_mode") or "").upper()
+                  case_id = str(review.get("case_id") or "").strip()
+                  if case_mode.startswith("NEW_CASE_FROM_EXECUTED_") and case_id:
+                      case_entry = _case_detail_projection_entry(experience_entry, case_id)
+                      upsert_formal_line(ROOT, EXPERIENCE.name, CASE_DETAILS_START, CASE_DETAILS_END, case_id, case_entry, before_heading="## 3. 历史研究与专项回测")
+                  else:
+                      upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry, before_heading="## 5. 研究与经验转化")
+              sync_experience_case_mapping_index(review)
+              record_close_review_closure(account, request, review, event)
+
+
+          def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
+              review = request.get("formal_review")
+'''.replace('          ', '')
+          if old not in text:
+              raise SystemExit('record_post_close_review anchor missing')
+          text = text.replace(old, helper, 1)
+
+          old_idempotent = '''    if prior.get("fingerprint") == fingerprint:
+              sync_experience_case_mapping_index(review)
+              return True, True
+'''.replace('              ', '')
+          new_idempotent = '''    if prior.get("fingerprint") == fingerprint:
+              _project_post_close_review_downstream(account, request, review, prior, market_date)
+              return True, True
+'''.replace('              ', '')
+          if old_idempotent not in text:
+              raise SystemExit('idempotent branch anchor missing')
+          text = text.replace(old_idempotent, new_idempotent, 1)
+
+          old_tail = '''    atomic_json_write(event_path, event)
+              archive_entry = str(review.get("archive_entry") or "").strip()
+              if archive_entry:
+                  upsert_formal_line(ROOT, ARCHIVE.name, REVIEW_ARCHIVE_START, REVIEW_ARCHIVE_END, market_date, archive_entry, before_heading="## 6. 历史Excel与专项数据来源")
+              _purge_case_mapping_rows()
+              experience_entry = str(review.get("experience_entry") or "").strip()
+              if experience_entry:
+                  case_mode = str(review.get("case_mode") or "").upper()
+                  if case_mode.startswith("NEW_CASE_FROM_EXECUTED_") and str(review.get("case_id") or "").strip():
+                      case_entry = _case_detail_projection_entry(experience_entry, str(review.get("case_id")))
+                      upsert_managed_line(ROOT, EXPERIENCE.name, CASE_DETAILS_START, CASE_DETAILS_END, str(review.get("case_id")), case_entry, before_heading="## 3. 历史研究与专项回测")
+                  else:
+                      upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry, before_heading="## 5. 研究与经验转化")
+              sync_experience_case_mapping_index(review)
+              record_close_review_closure(account, request, review, event)
+              return True, False
+'''.replace('              ', '')
+          new_tail = '''    atomic_json_write(event_path, event)
+              _project_post_close_review_downstream(account, request, review, event, market_date)
+              return True, False
+'''.replace('              ', '')
+          if old_tail not in text:
+              raise SystemExit('post-close downstream tail anchor missing')
+          text = text.replace(old_tail, new_tail, 1)
+          path.write_text(text, encoding='utf-8')
+
+          test_path = Path('tests/test_post_close_review_canonical.py')
+          tests = test_path.read_text(encoding='utf-8')
+          anchor = '''    def test_stale_review_does_not_replace_newer(self):
+'''
+          new_test = '''    def test_new_case_idempotent_replay_repairs_partial_downstream_state(self):
+              account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
+              request = self.request()
+              request["formal_review"].update({
+                  "case_id": "CASE-20260831-01",
+                  "case_mode": "NEW_CASE_FROM_EXECUTED_TRIAL",
+                  "experience_entry": "### CASE-20260831-01：新Trial执行复盘。",
+                  "case_mapping": {"trade_event_id": "TRADE-1", "case_id": "CASE-20260831-01"},
+              })
+              self.assertEqual(sync.record_post_close_review(account, request), (True, False))
+              event_path = self.root / "events/reviews/2026-08-31.json"
+              event_before = event_path.read_text(encoding="utf-8")
+              closure_path = self.root / "data/state/close_review_closure_2026-08-31.json"
+              self.assertTrue(closure_path.exists())
+              closure_path.unlink()
+              experience = self.root / "ETF交易复盘与经验库_2026.md"
+              experience.write_text("## 3. 历史研究与专项回测\\n<!-- AUTO_POST_CLOSE_REVIEW_CASES_START -->\\n<!-- AUTO_POST_CLOSE_REVIEW_CASES_END -->\\n", encoding="utf-8")
+
+              self.assertEqual(sync.record_post_close_review(account, request), (True, True))
+              self.assertEqual(event_path.read_text(encoding="utf-8"), event_before)
+              repaired = experience.read_text(encoding="utf-8")
+              self.assertEqual(repaired.count("CASE-20260831-01"), 1)
+              self.assertEqual(json.loads(closure_path.read_text(encoding="utf-8"))["status"], "CLOSED")
+              current = json.loads((self.root / "data/state/CURRENT.json").read_text(encoding="utf-8"))
+              self.assertEqual(current["close_review_closure"]["case_id"], "CASE-20260831-01")
+
+
+          def test_stale_review_does_not_replace_newer(self):
+'''.replace('          ', '')
+          if anchor not in tests:
+              raise SystemExit('test insertion anchor missing')
+          tests = tests.replace(anchor, new_test, 1)
+          test_path.write_text(tests, encoding='utf-8')
+          PY
+      - name: Run #465 regression and canonical review tests
+        run: |
+          python -m unittest tests.test_post_close_review_canonical tests.test_formal_file_mutation_gateway tests.test_a_share_production_chain
+          python -m py_compile scripts/process_state_sync_request.py scripts/formal_file_mutation_gateway.py
+      - name: Commit branch-only implementation and remove temporary workflow
+        shell: bash
+        run: |
+          rm .github/workflows/tmp-fix-465-branch-patch.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/process_state_sync_request.py tests/test_post_close_review_canonical.py .github/workflows/tmp-fix-465-branch-patch.yml
+          git commit -m "fix: complete idempotent post-close review recovery (#465)"
+          git push origin HEAD:fix/465-post-close-idempotent-recovery
