@@ -140,17 +140,33 @@
   },
   "scheduled_formal_decision": {
     "enabled": true,
+    "wait_contract_version": "2.0",
     "wait_mode": "UNTIL_POST_REQUEST_CURRENT_OR_TERMINAL_REFRESH_FAILURE",
-    "max_wait_seconds": 60,
+    "legacy_wait_mode_compatibility_only": true,
+    "termination_basis": "PRODUCER_STATE_AND_REQUIRED_DECISION_FACTS",
+    "max_wait_seconds": 360,
+    "safety_cap_source": "workflow_timeout_minutes",
     "poll_interval_seconds": 2,
     "reuse_inflight_refresh": true,
+    "continue_wait_states": [
+      "CANONICAL_PRODUCER_QUEUED",
+      "CANONICAL_PRODUCER_IN_PROGRESS",
+      "CURRENT_READY_DECISION_CONTEXT_BUILDING"
+    ],
+    "terminal_failure_states": [
+      "NO_LEGAL_CANONICAL_CHAIN",
+      "CANONICAL_PRODUCER_FAILED",
+      "RUNTIME_ASSURANCE_FAILED",
+      "DECISION_CONTEXT_BUILD_FAILED"
+    ],
+    "required_ready_state": "PIT_CONSISTENT_DECISION_FACTS_READY",
     "require_final_post_request_recheck": true,
+    "require_final_current_and_decision_context_recheck": true,
     "interactive_short_wait_unchanged": true,
-    "rule": "Scheduled正式决策与interactive短等待分离：仅在对应EXPLICIT_LATEST补采已合法在途时有界等待请求后CURRENT；达到终止失败或显式上限即fail closed；正式输出前必须最终复核并消费请求后的CURRENT。该配置是Scheduled Actor读取的仓库合同，不代表平台Task已自动更新。"
+    "rule": "Scheduled正式决策与interactive短等待分离。当前正式拓扑以同一canonical producer/C链的状态和形成交易判断所必需事实为主要终止条件，而不是以固定短秒数为主要门：已有合法READY则直接消费；同一producer queued/in_progress则复用并继续有界等待；CURRENT已形成但同一事实窗口的必要decision context仍在构建时继续等待；只有不存在合法链、producer/runtime/context明确失败，或达到由workflow_timeout_minutes提供的生产级安全上限时才fail closed。正式输出和持久化前必须最终重读CURRENT、decision context与同一事实窗口，禁止新行情配旧决策上下文。max_wait_seconds仅作为与workflow_timeout_minutes一致的最终安全兜底，不得覆盖上述producer-state语义。interactive 20秒Fast Path保持不变。"
   },
   "state_coherence": {
     "sync_current_account_reference_after_account_update": true,
     "rule": "account_fact.json一旦被状态同步链更新，CURRENT.account_fact引用必须在同一维护链内同步到最新status、updated_at和source，避免核心行情先发布造成短暂旧账户引用长期残留。"
   }
 }
-
