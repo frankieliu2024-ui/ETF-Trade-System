@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-09T20:22:53+08:00",
-  "last_status": "WAITING_CONFIRMATION",
-  "last_type": "收盘账户",
-  "last_title": "【收盘账户】请确认15:00后的账户事实",
+  "updated_at": "2026-09-09T20:28:24+08:00",
+  "last_status": "AGGREGATED_INTO_EXISTING",
+  "last_type": "MARKET_VALUE_ALERT",
+  "last_title": "【市场异动】韩国综合指数（KOSPI）出现极端波动 +1.75%",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -4061,9 +4061,10 @@
         ],
         "aggregation_status": "MERGED_SAME_OBJECT_CONTINUOUS_FACT",
         "source_fact_ids": [
-          "2026-09-09:APAC_DIVERGENCE:DIVERGENCE:DIVERGED:2026-09-09T10:43:15+08:00"
+          "2026-09-09:APAC_DIVERGENCE:DIVERGENCE:DIVERGED:2026-09-09T10:43:15+08:00",
+          "2026-09-09:APAC_DIVERGENCE:DIVERGENCE:DIVERGED:2026-09-09T20:28:01+08:00"
         ],
-        "family_peak_magnitude_pct": 2.001812345082965
+        "family_peak_magnitude_pct": 2.1610618173664053
       },
       "response": {
         "http_status": 200,
@@ -6529,7 +6530,7 @@
       "source": "account_fact",
       "user_severity": "需要操作",
       "user_action": "到ChatGPT ETF项目的「ETF交易复盘」聊天窗口上传收盘截图或确认无变化",
-      "status": "WAITING_CONFIRMATION",
+      "status": "ARCHIVED",
       "attempted_at": "2026-09-09T20:22:53+08:00",
       "response": {
         "http_status": 200,
@@ -6537,10 +6538,10 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_8886e4991210a42c4f24",
-      "lifecycle_status": "WAITING_CONFIRMATION"
+      "lifecycle_status": "ARCHIVED"
     }
   ],
   "pending_questions": [],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
+  "policy": "主动通知按新事实的决策价值判断，不按市场分类；当前事件族为开盘异常、快速重定价、极端波动、方向反转、显著分化。阈值适度放宽，重复控制依靠事件合并、冷却和实质升级识别；已管理候选不得阻塞其他未管理候选。",
   "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
 }
