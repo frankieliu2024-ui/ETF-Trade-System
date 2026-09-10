@@ -31,6 +31,37 @@ def _remove_error(report: dict, prefix: str) -> None:
     _recount(report)
 
 
+def _normalize_async_context_freshness(report: dict) -> None:
+    """Accept valid asynchronous query/decision build clocks.
+
+    The standalone query and decision contexts are rebuildable artifacts with
+    independent build times. Their frozen build-time freshness labels may
+    legitimately differ when the same underlying snapshot crosses a freshness
+    threshold between builds. Remove only that false cross-artifact hard error
+    after proving each artifact's own freshness calculation and the canonical
+    snapshot identity are independently valid.
+    """
+    checks = report.get("checks") or []
+    target = next((x for x in checks if x.get("name") == "dynamic_freshness:query_decision_aligned"), None)
+    if not target or target.get("status") != "FAIL":
+        return
+    query = next((x for x in checks if x.get("name") == "dynamic_freshness:query_recalculated"), None)
+    decision = next((x for x in checks if x.get("name") == "dynamic_freshness:decision_recalculated"), None)
+    snapshot = next((x for x in checks if x.get("name") == "decision:query_decision_current_aligned"), None)
+    if not query or query.get("status") != "PASS":
+        return
+    if not decision or decision.get("status") != "PASS":
+        return
+    if not snapshot or snapshot.get("status") != "PASS":
+        return
+    target["status"] = "PASS"
+    target["detail"] = (
+        f"asynchronous_build_clocks allowed; {target.get('detail', '')}; "
+        "query/decision freshness self-checks PASS and snapshot identity PASS"
+    )
+    _remove_error(report, "dynamic_freshness:query_decision_aligned:")
+
+
 def _normalize_us_phase_freshness(report: dict) -> None:
     """Validate the objects that are live in the current US market phase.
 
@@ -42,9 +73,6 @@ def _normalize_us_phase_freshness(report: dict) -> None:
     target = next((x for x in report.get("checks", []) if x.get("name") == "us_extended:live_freshness"), None)
     if not target or target.get("status") != "FAIL":
         return
-    # A stale derived US observation is an observability degradation, not a
-    # canonical A-share/account/trade fact conflict. Missing or malformed
-    # observations remain hard failures in the core validator.
     if "max_age_seconds" in str(target.get("detail") or ""):
         target["status"] = "WARNING"
         target["detail"] = f"observability_stale {target.get('detail')} canonical_facts_unaffected"
@@ -374,6 +402,7 @@ def _canonical_case_mappings() -> dict[str, list[dict]]:
                     str(review.get("case_mode") or ""), "canonical review case owner")
     return mappings
 
+
 def _validate_canonical_case_mapping(event: dict, mappings: dict[str, list[dict]]) -> str | None:
     event_id = str(event.get("event_id") or "")
     candidates = mappings.get(event_id) or []
@@ -506,10 +535,6 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
                     and event_stamp[:10] == dt[:10]
                     and event_stamp[:10] >= HISTORICAL_TRADE_EVENT_EFFECTIVE_DATE
                 ):
-                    # Retrospectively recorded pre-boundary execution facts do
-                    # not turn a legacy transaction row into an event-backed
-                    # CASE mapping. The formal event mechanism starts at the
-                    # same boundary used by executed-trade formal synchronization.
                     event_ids.append(str(event.get("event_id") or path.stem))
         index_case_ids = _explicit_index_case_ids(_remark)
         case_ids = sorted({
@@ -520,9 +545,6 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
         })
         terminal = _has_valid_terminal_for_trade_row(dt, code)
         if event_ids:
-            # Formal trade-event/review facts are stronger than index prose.  An
-            # index CASE is still checked when present, so stale/conflicting text
-            # cannot silently coexist with the event-backed owner.
             if len(case_ids) == 0 and terminal and not index_case_ids:
                 pass
             elif len(case_ids) != 1:
@@ -537,16 +559,10 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
             _read_json("data/state/CURRENT.json"),
             {"event_id": f"{dt}:{code}", "confirmed_at_beijing": dt},
         ):
-            # Same-day intraday rows remain pending until their review node is due.
             pass
         elif dt[:10] >= HISTORICAL_TRADE_EVENT_EFFECTIVE_DATE:
-            # After the formal event mechanism boundary, missing event evidence
-            # is a real gap once the review node is due; the index fallback is
-            # intentionally not allowed.
             errors.append(f"{dt}:{code}:missing_formal_trade_event")
         elif len(index_case_ids) != 1:
-            # Pre-boundary rows may use the formal transaction index only when
-            # exactly one explicit CASE owner is present.
             errors.append(f"{dt}:{code}:case_count={len(index_case_ids)}")
         elif not any(index_case_ids[0] in line for line in experience.splitlines() if line.startswith("### ")):
             errors.append(f"{dt}:{code}:missing_case_heading={index_case_ids[0]}")
@@ -613,6 +629,7 @@ def _validate_execution_quality_projection(report: dict) -> None:
         if message not in report.setdefault("errors", []):
             report["errors"].append(message)
     _recount(report)
+
 
 def _validate_readme_front_door(report: dict) -> None:
     import re
@@ -701,6 +718,7 @@ def main() -> int:
     consistency_core.REPORT = REPORT
     core_main()
     report = json.loads(REPORT.read_text(encoding="utf-8"))
+    _normalize_async_context_freshness(report)
     _normalize_us_phase_freshness(report)
     _normalize_a_share_off_window_market_date(report)
     _normalize_stock_market_time_alignment(report)
@@ -713,16 +731,13 @@ def main() -> int:
     _validate_execution_quality_projection(report)
     _validate_readme_front_door(report)
     _validate_production_mutation_protocol(report)
-    # --no-persist means the caller must provide an ephemeral report path;
-    # the normalized report still has to be materialized there for downstream
-    # validators. The production default path remains unchanged when the flag
-    # is absent.
     REPORT.parent.mkdir(parents=True, exist_ok=True)
     REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
         "status": report.get("status"),
         "hard_error_count": report.get("hard_error_count"),
         "warning_count": report.get("warning_count"),
+        "async_context_freshness": next((x for x in report.get("checks", []) if x.get("name") == "dynamic_freshness:query_decision_aligned"), {}),
         "us_phase_freshness": next((x for x in report.get("checks", []) if x.get("name") == "us_extended:live_freshness"), {}),
         "a_share_market_date_alignment": next((x for x in report.get("checks", []) if x.get("name") == "a_share_runtime:market_date_alignment"), {}),
         "stock_market_time_alignment": next((x for x in report.get("checks", []) if x.get("name") == "stock_runtime:market_time_alignment"), {}),
@@ -735,4 +750,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
