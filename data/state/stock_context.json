@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-10T01:50:07Z",
+  "generated_at": "2026-09-10T02:16:31Z",
   "account_fact_status": "VALID",
   "account_updated_at": "2026-09-10T09:45:00+08:00",
   "default_stock_layer": {
@@ -12,7 +12,9 @@
         "market_value": 33364.0,
         "role": "IPO_BASE_STOCK",
         "role_status": "CONFIRMED",
-        "source": "account_fact.positions"
+        "source": "account_fact.positions",
+        "origin": "",
+        "origin_fact": ""
       },
       {
         "code": "601138",
@@ -21,10 +23,12 @@
         "market_value": 32090.0,
         "role": "IPO_BASE_STOCK",
         "role_status": "CONFIRMED",
-        "source": "account_fact.positions"
+        "source": "account_fact.positions",
+        "origin": "",
+        "origin_fact": ""
       }
     ],
-    "unclassified_stocks": [
+    "ipo_allotment_stocks": [
       {
         "code": "301689",
         "name": "电科思仪",
@@ -32,9 +36,47 @@
         "market_value": 27790.0,
         "role": "UNCLASSIFIED_STOCK",
         "role_status": "UNCONFIRMED",
-        "source": "account_fact.positions"
+        "source": "account_fact.positions",
+        "origin": "IPO_ALLOTMENT_ORIGIN",
+        "origin_fact": "confirmed_settlement_obligation"
       }
     ],
+    "monitored_account_stocks": [
+      {
+        "code": "300750",
+        "name": "宁德时代",
+        "quantity": 100.0,
+        "market_value": 33364.0,
+        "role": "IPO_BASE_STOCK",
+        "role_status": "CONFIRMED",
+        "source": "account_fact.positions",
+        "origin": "",
+        "origin_fact": ""
+      },
+      {
+        "code": "601138",
+        "name": "工业富联",
+        "quantity": 500.0,
+        "market_value": 32090.0,
+        "role": "IPO_BASE_STOCK",
+        "role_status": "CONFIRMED",
+        "source": "account_fact.positions",
+        "origin": "",
+        "origin_fact": ""
+      },
+      {
+        "code": "301689",
+        "name": "电科思仪",
+        "quantity": 500.0,
+        "market_value": 27790.0,
+        "role": "UNCLASSIFIED_STOCK",
+        "role_status": "UNCONFIRMED",
+        "source": "account_fact.positions",
+        "origin": "IPO_ALLOTMENT_ORIGIN",
+        "origin_fact": "confirmed_settlement_obligation"
+      }
+    ],
+    "unclassified_stocks": [],
     "detected_non_etf_stocks": [
       {
         "code": "300750",
@@ -43,7 +85,9 @@
         "market_value": 33364.0,
         "role": "IPO_BASE_STOCK",
         "role_status": "CONFIRMED",
-        "source": "account_fact.positions"
+        "source": "account_fact.positions",
+        "origin": "",
+        "origin_fact": ""
       },
       {
         "code": "601138",
@@ -52,7 +96,9 @@
         "market_value": 32090.0,
         "role": "IPO_BASE_STOCK",
         "role_status": "CONFIRMED",
-        "source": "account_fact.positions"
+        "source": "account_fact.positions",
+        "origin": "",
+        "origin_fact": ""
       },
       {
         "code": "301689",
@@ -61,10 +107,12 @@
         "market_value": 27790.0,
         "role": "UNCLASSIFIED_STOCK",
         "role_status": "UNCONFIRMED",
-        "source": "account_fact.positions"
+        "source": "account_fact.positions",
+        "origin": "IPO_ALLOTMENT_ORIGIN",
+        "origin_fact": "confirmed_settlement_obligation"
       }
     ],
-    "rule": "默认个股监测只来自当前账户实际持有的非ETF个股。已确认IPO_BASE_STOCK进入打新底仓监测；首次出现且角色未确认的个股只提示一次分类，不猜测用途。数量归零后退出当前监测。"
+    "rule": "默认个股监测只来自当前账户实际持有的非ETF个股。已确认IPO_BASE_STOCK及账户事实可追溯的IPO_ALLOTMENT_ORIGIN进入默认监测；真正未知来源的个股只提示一次分类，不猜测用途。数量归零后退出当前监测。"
   },
   "conditional_industry_observation": {
     "mode": "QUERY_TIME_DYNAMIC_DISCOVERY",
@@ -84,6 +132,6 @@
     "current_objects": [],
     "note": "产业链个股由当前ETF/行业假设临时发现和调用，不维护三星、海力士或任何A股/美股公司的固定日常名单。"
   },
-  "needs_role_confirmation": true,
+  "needs_role_confirmation": false,
   "read_only": true
 }
