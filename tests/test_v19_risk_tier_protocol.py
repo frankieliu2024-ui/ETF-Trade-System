@@ -36,6 +36,31 @@ class V19RiskTierTests(unittest.TestCase):
             "TIER_1",
         )
 
+    def test_behavior_semantic_prompt_does_not_remain_tier_zero(self):
+        self.assertEqual(
+            classify_risk_tier(
+                changed_paths=["docs/scheduled-actor-prompt.md"],
+                production_behavior_change=True,
+            ),
+            "TIER_1",
+        )
+        self.assertEqual(
+            classify_risk_tier(
+                changed_paths=["docs/scheduled-actor-prompt.md"],
+                production_behavior_change=True,
+                important_runtime_contract=True,
+            ),
+            "TIER_2",
+        )
+        self.assertEqual(
+            classify_risk_tier(
+                changed_paths=["docs/scheduled-actor-prompt.md"],
+                production_behavior_change=True,
+                pit_or_freshness=True,
+            ),
+            "TIER_3",
+        )
+
     def test_ambiguous_and_high_risk_changes_fail_safe(self):
         self.assertEqual(classify_risk_tier(changed_paths=["UNKNOWN/changed"]), "TIER_3")
         self.assertEqual(
