@@ -1,32 +1,36 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-10T16:03:30+08:00",
+  "generated_at": "2026-09-10T16:54:06+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 34453068662,
+  "run_id": 34456649703,
   "run_attempt": 1,
-  "head_sha": "7bfed4cd963d5ed5b725a76f34babec78d6dc609",
-  "main_head_sha": "7bfed4cd963d5ed5b725a76f34babec78d6dc609",
+  "head_sha": "e3f86a539354d96212b11a55884d7d0861901e83",
+  "main_head_sha": "b76b6091d3865a7c326ac5892fbee60192d94dad",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 8
+      "step": "PR candidate post-replay acceptance",
+      "number": 6
     }
   ],
   "changed_files": [
-    "requests/live_snapshot/20260910_160300_159326_sell_account_closure.json"
+    "config/runtime_policy.json",
+    "scripts/build_e2e_status.py",
+    "scripts/check_system_consistency.py",
+    "scripts/post_close_review_due.py",
+    "tests/test_issue496_review_due_time.py"
   ],
-  "commit_message": "request: close confirmed 159326 sell and 14:42 account fact",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "fix: align scheduled review due-time semantics",
+  "commit_author": "Codex <codex@openai.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": true,
+    "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
-    "forbidden_path_touched": false,
+    "forbidden_path_touched": true,
     "bot_or_revert_commit": false,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
