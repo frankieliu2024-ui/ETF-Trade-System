@@ -60,11 +60,17 @@ def unintegrated_executed_trade_events(root: Path, reconstructed_trades: list[di
 
 def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> list[dict]:
     """Return the deduplicated ETF fact set: reconstruction plus executed events."""
+    universe = read_json(root / "config" / "market" / "etf_monitor_universe.json", {}) or {}
+    universe_codes = {str(item.get("code") or item.get("symbol") or "") for item in (universe.get("symbols") or universe.get("universe") or []) if isinstance(item, dict)}
     facts: list[dict] = []
     seen: set[tuple] = set()
     for trade in list(reconstructed_trades) + unintegrated_executed_trade_events(root, reconstructed_trades):
-        asset_type = str(trade.get("asset_type") or "ETF").upper()
+        asset_type = str(trade.get("asset_type") or "").upper()
+        if not asset_type:
+            asset_type = "ETF" if str(trade.get("code") or "") in universe_codes or "ETF" in str(trade.get("name") or "").upper() else ""
         if asset_type not in {"ETF", "FUND", ""}:
+            continue
+        if not asset_type:
             continue
         signature = trade_signature(trade)
         if signature in seen:

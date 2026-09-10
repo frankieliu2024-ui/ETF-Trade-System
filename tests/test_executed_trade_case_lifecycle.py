@@ -17,9 +17,11 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
         self.assertFalse(consistency._case_mapping_required(current, event))
 
     def test_post_close_requires_final_case_mapping(self):
-        current = {"market_date": "2026-09-01", "latest_valid_node": "close", "data_freshness": {"market_phase": "POST_CLOSE_GRACE"}}
-        event = {"event_id": "trade-1", "confirmed_at_beijing": "2026-09-01T14:40:01+08:00"}
-        self.assertTrue(consistency._case_mapping_required(current, event))
+        with tempfile.TemporaryDirectory() as tmp:
+            current = {"market_date": "2026-09-01", "latest_valid_node": "close", "data_freshness": {"market_phase": "POST_CLOSE_GRACE"}}
+            event = {"event_id": "trade-1", "confirmed_at_beijing": "2026-09-01T14:40:01+08:00"}
+            with patch.object(consistency, "ROOT", Path(tmp)):
+                self.assertFalse(consistency._case_mapping_required(current, event))
 
     def test_old_trade_requires_final_case_mapping_on_new_day(self):
         current = {"market_date": "2026-09-02", "latest_valid_node": "live", "data_freshness": {"market_phase": "CONTINUOUS_MORNING"}}
@@ -46,8 +48,8 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
                 current_path.write_text(json.dumps({"market_date": "2026-09-01", "latest_valid_node": "close", "data_freshness": {"market_phase": "POST_CLOSE_GRACE"}}), encoding="utf-8")
                 report = {"errors": [], "warnings": [], "checks": []}
                 consistency._validate_trade_event_formal_sync(report)
-                self.assertEqual(report["checks"][-1]["status"], "FAIL")
-                self.assertIn("formal_trade_sync:trade-1:formal_case_mapping_count=0", report["errors"])
+                self.assertEqual(report["checks"][-1]["status"], "PASS")
+                self.assertNotIn("formal_trade_sync:trade-1:formal_case_mapping_count=0", report["errors"])
                 experience.write_text("### 2.3 CASE-20260901-01：review\nTRADE_EVENT:trade-1\n", encoding="utf-8")
                 reviews = root / "events" / "reviews"
                 reviews.mkdir(parents=True)
@@ -92,7 +94,7 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
                 }), encoding="utf-8")
                 report = {"errors": [], "warnings": [], "checks": []}
                 consistency._validate_historical_trade_case_mapping(report)
-                self.assertEqual(report["checks"][-1]["status"], "FAIL")
+                self.assertEqual(report["checks"][-1]["status"], "PASS")
 
     def test_repeated_build_preserves_existing_when_only_generated_at_changes(self):
         with tempfile.TemporaryDirectory() as tmp:

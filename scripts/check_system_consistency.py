@@ -314,11 +314,25 @@ def _validate_post_close_review_contract(report: dict) -> None:
 
 def _case_mapping_required(current: dict, event: dict) -> bool:
     """Require final CASE ownership only when the trade's review node is due."""
+    # A completed trade remains a legal pending-review fact until the
+    # canonical post-close review for the same market date exists.  Market
+    # phase alone is not proof that the review producer has completed.
+    event_date = str(event.get("confirmed_at_beijing") or event.get("executed_at_beijing") or event.get("event_id") or "")[:10]
+    if event_date:
+        review_path = ROOT / "events" / "reviews" / f"{event_date}.json"
+        if not review_path.exists():
+            return False
+        try:
+            review = json.loads(review_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            review = {}
+        review_type = str(review.get("event_type") or "").upper()
+        if review_type not in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_POST_CLOSE_REVIEW_UNAVAILABLE"}:
+            return False
     phase = str((current.get("data_freshness") or {}).get("market_phase") or current.get("market_phase") or "").upper()
     node = str(current.get("latest_valid_node") or "").lower()
     if "POST_CLOSE" in phase or phase in {"CLOSED", "CLOSE", "OUTSIDE_SESSION"} or node in {"close", "1500"}:
         return True
-    event_date = str(event.get("confirmed_at_beijing") or event.get("executed_at_beijing") or event.get("event_id") or "")[:10]
     current_date = str(current.get("market_date") or "")
     return not current_date or not event_date or event_date != current_date
 
