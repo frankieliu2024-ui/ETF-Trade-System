@@ -158,7 +158,7 @@ def main() -> int:
         in_afternoon = 13 * 60 <= minute <= 15 * 60
         in_close_grace = 15 * 60 < minute <= 15 * 60 + close_grace_minutes
         should_capture = in_opening_auction or in_morning or in_midday_recovery or in_afternoon or in_close_grace
-        reason = "midday_morning_close_recovery" if in_midday_recovery else ("capture_window" if should_capture else "outside_capture_window")
+        reason = "midday_morning_close_recovery" if in_midday_recovery else ("capture_window" if should_capture else "outside_a_share_capture_window")
 
     if event_name == "schedule" and schedule_observation["schedule_delay_class"] in {"SEVERELY_DELAYED", "UNKNOWN"}:
         should_capture = False
