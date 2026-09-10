@@ -1,18 +1,18 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-10T15:15:36+08:00",
+  "generated_at": "2026-09-10T15:16:02+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF runtime self-healing watchdog",
   "run_id": 34449023063,
-  "run_attempt": 1,
+  "run_attempt": 2,
   "head_sha": "188259d456e37d9af66f595992f480b9badacd89",
-  "main_head_sha": "edfeff9a4201dc3c66bf2415ab89ce2e6dda9bb2",
+  "main_head_sha": "22b5eab07cab7d81dec874c654466b98b099b238",
   "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
       "job": "watchdog",
-      "step": "Escalate persistent or structural failure",
-      "number": 13
+      "step": "Persist bounded self-healing state and deterministic repairs",
+      "number": 12
     }
   ],
   "changed_files": [
@@ -20,8 +20,8 @@
   ],
   "commit_message": "state: record notification and execution reconciliation",
   "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
-  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
-  "reason": "failure is classified as transient/persistence and this is the first attempt",
+  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
+  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
