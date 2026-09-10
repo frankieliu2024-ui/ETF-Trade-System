@@ -5,7 +5,7 @@
     "source": "data/state/account_fact.json",
     "role_memory": "data/state/asset_roles.json",
     "output": "data/state/stock_context.json",
-    "principle": "当前账户实际持有的非ETF个股自动进入个股发现；只有已确认资产角色为IPO_BASE_STOCK的个股进入默认打新底仓监测。新出现但角色未确认的个股标记UNCLASSIFIED_STOCK并要求一次性确认，不从代码或名称猜测用途。",
+    "principle": "当前账户实际持有的非ETF个股自动进入个股发现；已确认资产角色为IPO_BASE_STOCK或账户事实明确origin=IPO_ALLOTMENT_ORIGIN的个股进入默认监测。真正未知来源的个股标记UNCLASSIFIED_STOCK并要求一次性确认，不从代码或名称猜测用途。",
     "remove_rule": "账户持仓数量归零后退出默认持仓个股监测；资产角色记忆可保留用于未来重新出现时核对，但不得据此虚构当前持仓。"
   },
   "conditional_industry_observation": {
