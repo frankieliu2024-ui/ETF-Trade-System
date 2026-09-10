@@ -20,6 +20,7 @@ from build_active_return_evidence import build as build_active_return_evidence
 from build_research_contribution_audit import build as build_research_contribution_audit
 from build_research_execution_bridge import build as build_research_execution_bridge
 from build_phase4_automation import build as build_phase4_automation
+from build_stock_context import build_managed_position_projection
 from state_manager import atomic_json_write, build_dashboard_candidate, build_decision_context
 
 
@@ -342,6 +343,7 @@ def main() -> None:
     phase4 = build_phase4_automation(ROOT)
     candidate = build_dashboard_candidate(ROOT)
     context = build_decision_context(ROOT)
+    context["managed_position_sell_review"] = build_managed_position_projection(ROOT)
     context.setdefault("research_evidence", {})["market_regime_context"] = market_regime
     context["research_evidence"]["market_structure_context"] = market_structure
     context["research_evidence"]["skfolio_risk_evidence"] = skfolio_summary
