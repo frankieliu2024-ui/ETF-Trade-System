@@ -17,7 +17,7 @@ except ModuleNotFoundError:
 try:
     from build_stock_context import active_account_asset_codes, build_managed_position_projection, first, normalize_code, position_metric
 except ModuleNotFoundError:
-    from scripts.build_stock_context import active_account_asset_codes, first, normalize_code, position_metric
+    from scripts.build_stock_context import active_account_asset_codes, build_managed_position_projection, first, normalize_code, position_metric
 from sync_formal_files import sync_formal_files
 from formal_file_mutation_gateway import (
     append_managed_line,
