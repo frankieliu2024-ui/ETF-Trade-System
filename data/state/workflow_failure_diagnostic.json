@@ -1,18 +1,18 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-10T13:50:56+08:00",
+  "generated_at": "2026-09-10T13:51:21+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF runtime self-healing watchdog",
   "run_id": 34442684915,
-  "run_attempt": 1,
+  "run_attempt": 2,
   "head_sha": "0ed8953ec1afb1586f16d16ec6759f8dba430b5c",
-  "main_head_sha": "e2cab860c0292de2b098eaaf3ad029f59ab7c7c8",
+  "main_head_sha": "bc699ec595ceac4fcdca16666eabf20b6a869774",
   "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
       "job": "watchdog",
-      "step": "Escalate persistent or structural failure",
-      "number": 13
+      "step": "Persist bounded self-healing state and deterministic repairs",
+      "number": 12
     }
   ],
   "changed_files": [
@@ -20,8 +20,8 @@
   ],
   "commit_message": "Merge pull request #492 from frankieliu2024-ui/docs/474-report-terminal-semantics",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
-  "reason": "failure is classified as transient/persistence and this is the first attempt",
+  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
+  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
