@@ -262,11 +262,14 @@ def run(root: Path = ROOT) -> dict:
     )
     shadow = {
         "#493": classify_risk_tier(changed_paths=["scripts/process_state_sync_request.py", "data/state/account_fact.json"], account_or_trade_fact=True),
-        "#496": classify_risk_tier(changed_paths=["config/runtime_policy.json", "scripts/post_close_review_due.py", "scripts/check_system_consistency.py"]),
+        "#496": classify_risk_tier(
+            changed_paths=["config/runtime_policy.json", "scripts/post_close_review_due.py", "scripts/check_system_consistency.py"],
+            important_runtime_contract=True,
+        ),
         "TIER_0": classify_risk_tier(changed_paths=["docs/complexity-audit.md", "tests/test_protocol.py"]),
         "TIER_1": classify_risk_tier(changed_paths=["scripts/check_production_mutation_protocol.py", "tests/test_protocol.py"]),
     }
-    check("v19:shadow_classification", shadow == {"#493": "TIER_3", "#496": "TIER_1", "TIER_0": "TIER_0", "TIER_1": "TIER_1"}, f"shadow={shadow}")
+    check("v19:shadow_classification", shadow == {"#493": "TIER_3", "#496": "TIER_2", "TIER_0": "TIER_0", "TIER_1": "TIER_1"}, f"shadow={shadow}")
 
     # Governance SSOT guard. Validate the compact long-term principles and keep
     # legacy CA identifiers audit-only rather than making rule count a contract.
