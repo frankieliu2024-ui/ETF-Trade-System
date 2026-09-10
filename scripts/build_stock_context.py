@@ -94,6 +94,7 @@ def build() -> dict:
     roles = role_memory.get("roles", {}) if isinstance(role_memory, dict) else {}
 
     ipo_base_stocks = []
+    ipo_allotment_stocks = []
     unclassified_stocks = []
     detected_non_etf_stocks = []
 
@@ -119,10 +120,25 @@ def build() -> dict:
             "source": "account_fact.positions",
         }
         detected_non_etf_stocks.append(item)
-        if item["role"] == "IPO_BASE_STOCK" and item["role_status"] == "CONFIRMED":
+        origin = str(first(position, "origin", "origin_type", "source_origin") or "").strip()
+        origin_fact = str(first(position, "origin_fact", "origin_evidence", "source_fact") or "").strip()
+        item["origin"] = origin
+        item["origin_fact"] = origin_fact
+        is_confirmed_ipo_base = item["role"] == "IPO_BASE_STOCK" and item["role_status"] == "CONFIRMED"
+        is_confirmed_ipo_allotment = origin == "IPO_ALLOTMENT_ORIGIN"
+        if is_confirmed_ipo_base:
             ipo_base_stocks.append(item)
+        elif is_confirmed_ipo_allotment:
+            ipo_allotment_stocks.append(item)
         else:
             unclassified_stocks.append(item)
+
+    monitored_account_stocks = []
+    seen_codes = set()
+    for item in ipo_base_stocks + ipo_allotment_stocks:
+        if item["code"] not in seen_codes:
+            monitored_account_stocks.append(item)
+            seen_codes.add(item["code"])
 
     return {
         "generated_at": now_utc(),
@@ -131,9 +147,11 @@ def build() -> dict:
         "default_stock_layer": {
             "mode": "DYNAMIC_FROM_CURRENT_ACCOUNT",
             "ipo_base_stocks": ipo_base_stocks,
+            "ipo_allotment_stocks": ipo_allotment_stocks,
+            "monitored_account_stocks": monitored_account_stocks,
             "unclassified_stocks": unclassified_stocks,
             "detected_non_etf_stocks": detected_non_etf_stocks,
-            "rule": "默认个股监测只来自当前账户实际持有的非ETF个股。已确认IPO_BASE_STOCK进入打新底仓监测；首次出现且角色未确认的个股只提示一次分类，不猜测用途。数量归零后退出当前监测。",
+            "rule": "默认个股监测只来自当前账户实际持有的非ETF个股。已确认IPO_BASE_STOCK及账户事实可追溯的IPO_ALLOTMENT_ORIGIN进入默认监测；真正未知来源的个股只提示一次分类，不猜测用途。数量归零后退出当前监测。",
         },
         "conditional_industry_observation": {
             "mode": "QUERY_TIME_DYNAMIC_DISCOVERY",
@@ -157,6 +175,8 @@ def main() -> None:
         "ok": True,
         "account_fact_status": context["account_fact_status"],
         "ipo_base_count": len(context["default_stock_layer"]["ipo_base_stocks"]),
+        "ipo_allotment_count": len(context["default_stock_layer"]["ipo_allotment_stocks"]),
+        "monitored_account_stock_count": len(context["default_stock_layer"]["monitored_account_stocks"]),
         "unclassified_count": len(context["default_stock_layer"]["unclassified_stocks"]),
     }, ensure_ascii=False))
 

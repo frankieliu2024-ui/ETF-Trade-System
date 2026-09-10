@@ -7,6 +7,8 @@ from unittest.mock import patch
 from scripts import process_state_sync_request as process_sync
 from scripts import sync_formal_files as formal_sync
 from scripts.build_stock_context import active_account_asset_codes
+from scripts import build_stock_context as stock_context_builder
+from scripts import build_account_stock_market_legacy as stock_market_builder
 POSITIONS=[
 {"code":"300750","name":"宁德时代","quantity":100,"cost":393.781,"current_price":351.0,"market_value":35100,"pnl":-4278.07,"pnl_pct":-10.864},
 {"code":"601138","name":"工业富联","quantity":500,"cost":58.054,"current_price":63.69,"market_value":31845,"pnl":2817.78,"pnl_pct":9.707},
@@ -30,6 +32,54 @@ class DashboardAccountProjectionTests(unittest.TestCase):
   for rendered in (a,b):
    self.assertIn("351.000",rendered); self.assertIn("-4,278.07元",rendered); self.assertIn("0.644",rendered); self.assertIn("-7,913.30元",rendered); self.assertIn("9.164",rendered); self.assertIn("22.95元",rendered); self.assertNotIn("持仓ETF：无",rendered); self.assertNotIn("账户个股：无",rendered)
    self.assertIn("观察ETF：", rendered)
+
+ def test_confirmed_ipo_allotment_origin_enters_default_stock_market_chain(self):
+  account={"status":"VALID","positions":[
+   {"asset_type":"STOCK","code":"301689","name":"电科思仪","quantity":500,
+    "origin":"IPO_ALLOTMENT_ORIGIN"},
+   {"asset_type":"STOCK","code":"300750","name":"宁德时代","quantity":100},
+   {"asset_type":"STOCK","code":"601138","name":"工业富联","quantity":500},
+   {"asset_type":"ETF","code":"561980","name":"半导体设备ETF","quantity":38900},
+   {"asset_type":"STOCK","code":"000001","name":"未知个股","quantity":100},
+  ]}
+  roles={"roles":{"601138":{"role":"IPO_BASE_STOCK","status":"CONFIRMED"}}}
+  (self.root/"config/market/stock_monitor_policy.json").write_text("{}",encoding="utf-8")
+  (self.root/"data/state/asset_roles.json").write_text(json.dumps(roles),encoding="utf-8")
+  with patch.object(stock_context_builder,"ROOT",self.root), \
+       patch.object(stock_context_builder,"POLICY_PATH",self.root/"config/market/stock_monitor_policy.json"), \
+       patch.object(stock_context_builder,"ROLE_PATH",self.root/"data/state/asset_roles.json"), \
+       patch.object(stock_context_builder,"read_account_fact",return_value=account):
+   context=stock_context_builder.build()
+  layer=context["default_stock_layer"]
+  self.assertEqual([x["code"] for x in layer["ipo_allotment_stocks"]],["301689"])
+  self.assertEqual([x["code"] for x in layer["ipo_base_stocks"]],["601138"])
+  self.assertEqual({x["code"] for x in layer["monitored_account_stocks"]},{"301689","601138"})
+  self.assertEqual([x["code"] for x in layer["unclassified_stocks"]],["300750","000001"])
+  self.assertTrue(context["needs_role_confirmation"])
+  context_path=self.root/"data/state/stock_context.json"
+  context_path.write_text(json.dumps(context),encoding="utf-8")
+  with patch.object(stock_market_builder,"STOCK_CONTEXT",context_path), \
+       patch.object(stock_market_builder,"fetch_tencent_many",return_value={
+        "301689":{"code":"301689","quality_status":"PASS"},
+        "601138":{"code":"601138","quality_status":"PASS"},
+       }), patch.object(stock_market_builder.shutil,"which",return_value=None):
+   market=stock_market_builder.build()
+  self.assertEqual(set(market["objects"]),{"301689","601138"})
+
+ def test_ipo_allotment_quantity_zero_is_not_monitored(self):
+  account={"status":"VALID","positions":[
+   {"asset_type":"STOCK","code":"301689","name":"电科思仪","quantity":0,
+    "origin":"IPO_ALLOTMENT_ORIGIN"},
+  ]}
+  (self.root/"config/market/stock_monitor_policy.json").write_text("{}",encoding="utf-8")
+  (self.root/"data/state/asset_roles.json").write_text(json.dumps({"roles":{}}),encoding="utf-8")
+  with patch.object(stock_context_builder,"ROOT",self.root), \
+       patch.object(stock_context_builder,"POLICY_PATH",self.root/"config/market/stock_monitor_policy.json"), \
+       patch.object(stock_context_builder,"ROLE_PATH",self.root/"data/state/asset_roles.json"), \
+       patch.object(stock_context_builder,"read_account_fact",return_value=account):
+   layer=stock_context_builder.build()["default_stock_layer"]
+  self.assertEqual(layer["monitored_account_stocks"],[])
+  self.assertEqual(layer["ipo_allotment_stocks"],[])
 
  def test_formal_comparison_preserves_event_delta_and_state_persistence_for_buy_and_sell_consumers(self):
   context = {"status":"READY", "as_of_beijing":"2026-09-04T15:06:26+08:00", "items":[
