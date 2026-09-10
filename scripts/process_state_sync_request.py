@@ -1001,6 +1001,74 @@ def _case_detail_projection_entry(case_entry: str, case_id: str) -> str:
         body = f"{case_id}：{body}"
     return f"### 2.{ordinal} {body}"
 
+
+def _normalize_executed_trade_case_mapping(review: dict, market_date: str) -> dict:
+    """Normalize mapping-required executed trades at the formal review owner.
+
+    Existing CASE ownership is recovered from prior canonical reviews by exact
+    security code. A first-seen executed exit without a lawful CASE is recorded
+    as an explicit canonical ineligibility, never as a fabricated CASE.
+    """
+    normalized = json.loads(json.dumps(review))
+    mapping = normalized.setdefault("case_mapping", {})
+    existing = mapping.setdefault("existing_case_updates", [])
+    ineligible = mapping.setdefault("ineligible_executed_trades", [])
+    mapped_ids = {str(x.get("trade_event_id") or "") for x in existing if isinstance(x, dict)}
+    ineligible_ids = {str(x.get("trade_event_id") or "") for x in ineligible if isinstance(x, dict)}
+    prior_cases = {}
+    review_dir = ROOT / "events" / "reviews"
+    for path in sorted(review_dir.glob("*.json")) if review_dir.exists() else []:
+        try:
+            payload = load_json(path)
+        except (OSError, ValueError, TypeError):
+            continue
+        def walk(value):
+            if isinstance(value, dict):
+                code = str(value.get("security_code") or "")
+                case_id = str(value.get("case_id") or "")
+                if code and case_id:
+                    prior_cases.setdefault(code, (case_id, str(value.get("case_status") or "RESOLVED")))
+                for child in value.values():
+                    walk(child)
+            elif isinstance(value, list):
+                for child in value:
+                    walk(child)
+        walk(payload)
+    trade_dir = ROOT / "events" / "trades"
+    for path in sorted(trade_dir.glob("*.json")) if trade_dir.exists() else []:
+        try:
+            trade = load_json(path)
+        except (OSError, ValueError, TypeError):
+            continue
+        if str(trade.get("execution_status") or "").upper() != "EXECUTED":
+            continue
+        event_id = str(trade.get("event_id") or "")
+        trade_date = str(trade.get("confirmed_at_beijing") or trade.get("executed_at_beijing") or "")[:10]
+        if not event_id or trade_date != market_date or event_id in mapped_ids or event_id in ineligible_ids:
+            continue
+        code = str(trade.get("code") or "")
+        case = prior_cases.get(code)
+        if case:
+            existing.append({
+                "trade_event_id": event_id,
+                "decision_id": str(trade.get("linked_decision_id") or ""),
+                "case_id": case[0],
+                "security_code": code,
+                "case_status": "RESOLVED",
+                "mapping_reason": "正式复盘后将当前executed exit映射至该证券既有CASE；使用authoritative trade event身份。",
+            })
+            mapped_ids.add(event_id)
+        else:
+            ineligible.append({
+                "trade_event_id": event_id,
+                "decision_id": str(trade.get("linked_decision_id") or ""),
+                "security_code": code,
+                "eligibility": "EXPLICIT_CANONICAL_INELIGIBILITY",
+                "reason": "正式复盘已完成，但当前不存在该证券既有CASE，且本次退出不满足既有通用CASE intake语义；不创建新CASE。",
+            })
+            ineligible_ids.add(event_id)
+    return normalized
+
 def _persist_post_close_review_projections(account: dict, request: dict, review: dict, event: dict) -> None:
     """Complete all review projections for first write and safe idempotent replay."""
     market_date = str(event.get("market_date") or review.get("market_date") or "")
@@ -1038,6 +1106,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     market_date = str(review.get("market_date") or request.get("market_date") or account.get("last_confirmed_market_date") or "")
     if not market_date:
         raise RuntimeError("POST_CLOSE_REVIEW requires market_date")
+    review = _normalize_executed_trade_case_mapping(review, market_date)
     payload = {"market_date": market_date, "account_updated_at": account.get("updated_at"), "formal_review": review}
     fingerprint = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
     event_path = ROOT / "events" / "reviews" / f"{market_date}.json"
