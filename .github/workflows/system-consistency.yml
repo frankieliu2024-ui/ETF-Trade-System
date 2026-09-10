@@ -241,6 +241,16 @@ jobs:
           for request in "${correction_requests[@]}"; do
             python scripts/apply_trade_fact_correction.py "$request"
           done
+          # Replay the existing confirmed-trade ingress in chronological order
+          # so candidate acceptance validates the canonical formal projections
+          # and auxiliary reconciliation against the same durable trade facts.
+          for request in \
+            requests/live_snapshot/20260910_1340_user_confirmed_dual_sell.json \
+            requests/live_snapshot/20260910_1341_user_confirmed_301689_sell.json; do
+            if [ -f "$request" ]; then
+              python scripts/process_state_sync_request.py "$request"
+            fi
+          done
           python scripts/process_state_sync_request.py requests/live_snapshot/candidate_unrecoverable_review.json
           # Re-run the existing formal projection owner in the ephemeral candidate
           # tree so candidate acceptance validates the same writer path that will
@@ -446,5 +456,6 @@ jobs:
       - name: Enforce production acceptance
         if: ${{ always() && steps.acceptance_scope.outputs.required == 'true' && steps.acceptance.outcome == 'failure' }}
         run: exit 1
+
 
 
