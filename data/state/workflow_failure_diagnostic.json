@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-10T17:43:49+08:00",
+  "generated_at": "2026-09-10T17:49:31+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 34462184024,
+  "run_id": 34462706901,
   "run_attempt": 1,
-  "head_sha": "58773d1ea9784f64ea616566847daac38cdf3379",
-  "main_head_sha": "e43f9f0dc34a695290a451c743f2eb93a9b8fec2",
+  "head_sha": "b91bad65d30f7e20f6fe6bbabc70836a4d2c9e01",
+  "main_head_sha": "b91bad65d30f7e20f6fe6bbabc70836a4d2c9e01",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,15 +16,24 @@
     }
   ],
   "changed_files": [
-    "requests/report_delivery/20260910T174014_etf_system_review_run10.json"
+    ".github/workflows/market-snapshot.yml",
+    ".github/workflows/system-consistency.yml",
+    "scripts/check_system_consistency.py",
+    "scripts/confirmed_trade_facts.py",
+    "scripts/maintenance_guard.py",
+    "scripts/process_state_sync_request.py",
+    "tests/test_executed_trade_case_lifecycle.py",
+    "tests/test_issue493_successor.py",
+    "tests/test_issue493_trade_replay.py",
+    "tests/test_market_confirmed_trade_fee_overlay.py"
   ],
-  "commit_message": "report: deliver ETF system review 2026-09-10 17:40",
+  "commit_message": "Merge pull request #498 from frankieliu2024-ui/codex/493-latest-main-reconstruction",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": false,
+    "head_is_current_main": true,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
