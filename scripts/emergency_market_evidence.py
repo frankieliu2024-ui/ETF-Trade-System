@@ -14,8 +14,10 @@ except ModuleNotFoundError:
 BEIJING = ZoneInfo("Asia/Shanghai")
 REQUEST_TYPE = "EMERGENCY_EXTERNAL_MARKET_EVIDENCE"
 SOURCE = "CHATGPT_WEB_DIRECT_PROVIDER"
+CONNECTED_SOURCE = "CHATGPT_CONNECTED_MARKET_DATA"
 INGRESS_PREFIX = "requests/live_snapshot/"
-REQUIRED_ROW_FIELDS = ("symbol", "name", "provider", "provider_source_url", "provider_as_of_beijing", "market_phase", "close")
+REQUIRED_ROW_FIELDS = ("symbol", "name", "provider", "provider_as_of_beijing", "market_phase", "close")
+CONNECTED_REQUIRED_ROW_FIELDS = ("symbol", "name", "provider_as_of_beijing", "market_phase", "open", "high", "low", "prev_close", "close", "volume", "amount")
 
 
 def _parse(value):
@@ -60,6 +62,15 @@ def _load_json(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _connected_origin_allowed(router_config, connector_identity, operation):
+    origins = router_config.get("emergency_evidence_origins") or {}
+    source = origins.get(CONNECTED_SOURCE) or {}
+    connector = (source.get("connectors") or {}).get(str(connector_identity or "").strip().lower()) or {}
+    return str(operation or "").strip().lower() in {
+        str(item).strip().lower() for item in (connector.get("operations") or [])
+    }
+
+
 def _classify_evidence_eligibility(row: dict, *, evidence_scope: str) -> dict:
     """Derive use boundaries from the shared validated freshness result.
 
@@ -90,7 +101,8 @@ def validate_external_market_evidence(request, root, *, decision_time, availabil
     """Validate external evidence for the existing state-sync writer."""
     if str(request.get("request_type") or "").upper() != REQUEST_TYPE:
         raise ValueError("EXTERNAL_EVIDENCE_REQUEST_TYPE_REQUIRED")
-    if str(request.get("source") or "").upper() != SOURCE:
+    source = str(request.get("source") or "").upper()
+    if source not in {SOURCE, CONNECTED_SOURCE}:
         raise ValueError("EXTERNAL_EVIDENCE_SOURCE_REQUIRED")
     evidence_id = str(request.get("evidence_id") or request.get("request_id") or "").strip()
     if not evidence_id:
@@ -128,24 +140,40 @@ def validate_external_market_evidence(request, root, *, decision_time, availabil
     if any(_symbol_base(symbol) not in by_symbol for symbol in critical):
         raise ValueError("EXTERNAL_EVIDENCE_DECISION_CRITICAL_OBJECT_MISSING")
     provider_config = _load_json(root / "config" / "market" / "provider_priority.json")
+    router_config = _load_json(root / "config" / "market" / "market_quote_router.json")
     runtime_policy = _load_json(root / "config" / "runtime_policy.json")
+    connector_identity = str(request.get("connector_identity") or "").strip().lower()
+    operation = str(request.get("operation") or "").strip().lower()
+    connected = source == CONNECTED_SOURCE
+    if connected and not _connected_origin_allowed(router_config, connector_identity, operation):
+        raise ValueError("EXTERNAL_EVIDENCE_CONNECTED_ORIGIN_NOT_REGISTERED")
     evidence_scope = str(request.get("evidence_scope") or "FORMAL_DECISION").strip().upper()
     if evidence_scope not in {"FORMAL_DECISION", "OVERSEAS_STRUCTURE_AUXILIARY"}:
         raise ValueError("EXTERNAL_EVIDENCE_SCOPE_INVALID")
     validated_rows = []
     for symbol in critical:
         row = by_symbol[_symbol_base(symbol)]
-        missing = [field for field in REQUIRED_ROW_FIELDS if row.get(field) in (None, "")]
+        required_fields = CONNECTED_REQUIRED_ROW_FIELDS if connected else REQUIRED_ROW_FIELDS
+        missing = [field for field in required_fields if row.get(field) in (None, "")]
         if missing:
             raise ValueError(f"EXTERNAL_EVIDENCE_FIELD_MISSING:{_symbol_base(symbol)}:{','.join(missing)}")
         provider = str(row.get("provider") or "").strip()
-        if not _provider_allowed(provider_config, row.get("symbol") or symbol, provider):
+        if connected:
+            if _provider_base(provider) != connector_identity:
+                raise ValueError(f"EXTERNAL_EVIDENCE_CONNECTED_PROVIDER_MISMATCH:{_symbol_base(symbol)}:{provider}")
+        elif not _provider_allowed(provider_config, row.get("symbol") or symbol, provider):
             raise ValueError(f"EXTERNAL_EVIDENCE_PROVIDER_NOT_REGISTERED:{_symbol_base(symbol)}:{provider}")
-        host = (urlparse(str(row.get("provider_source_url") or "")).hostname or "").lower()
-        if not host or host not in _approved_hosts(provider_config, _provider_base(provider)):
-            raise ValueError(f"EXTERNAL_EVIDENCE_PROVIDER_HOST_INVALID:{_symbol_base(symbol)}:{host}")
-        if str(row.get("source_type") or "DIRECT_PROVIDER").upper() != "DIRECT_PROVIDER":
-            raise ValueError(f"EXTERNAL_EVIDENCE_SOURCE_NOT_DIRECT:{_symbol_base(symbol)}")
+        if connected:
+            if row.get("provider_source_url"):
+                raise ValueError(f"EXTERNAL_EVIDENCE_CONNECTED_URL_FORBIDDEN:{_symbol_base(symbol)}")
+            if str(row.get("source_type") or "CONNECTED_MARKET_DATA").upper() != "CONNECTED_MARKET_DATA":
+                raise ValueError(f"EXTERNAL_EVIDENCE_SOURCE_TYPE_INVALID:{_symbol_base(symbol)}")
+        else:
+            host = (urlparse(str(row.get("provider_source_url") or "")).hostname or "").lower()
+            if not host or host not in _approved_hosts(provider_config, _provider_base(provider)):
+                raise ValueError(f"EXTERNAL_EVIDENCE_PROVIDER_HOST_INVALID:{_symbol_base(symbol)}:{host}")
+            if str(row.get("source_type") or "DIRECT_PROVIDER").upper() != "DIRECT_PROVIDER":
+                raise ValueError(f"EXTERNAL_EVIDENCE_SOURCE_NOT_DIRECT:{_symbol_base(symbol)}")
         if str(row.get("market_phase") or "") != market_phase:
             raise ValueError(f"EXTERNAL_EVIDENCE_PHASE_MISMATCH:{_symbol_base(symbol)}")
         provider_time = _parse(row.get("provider_as_of_beijing"))
@@ -163,6 +191,7 @@ def validate_external_market_evidence(request, root, *, decision_time, availabil
         )
         if not valid:
             raise ValueError(f"EXTERNAL_EVIDENCE_ROW_INVALID:{_symbol_base(symbol)}:{reason}")
+        normalized["connected_market_data"] = connected
         normalized.update(_classify_evidence_eligibility(normalized, evidence_scope=evidence_scope))
         validated_rows.append(normalized)
     decision_eligible = all(
@@ -178,6 +207,9 @@ def validate_external_market_evidence(request, root, *, decision_time, availabil
         "market_phase": market_phase, "retrieved_at_beijing": retrieved_at.isoformat(),
         "available_at_beijing": available_at.isoformat(), "rows": validated_rows,
         "evidence_scope": evidence_scope,
+        "evidence_origin": source,
+        "connector_identity": connector_identity if connected else "",
+        "operation": operation if connected else "",
         "decision_evidence_eligibility": (
             "DECISION_EVIDENCE_ELIGIBLE" if decision_eligible else "FAIL_SAFE"
         ),

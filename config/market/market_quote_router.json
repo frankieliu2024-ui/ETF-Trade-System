@@ -121,6 +121,22 @@
       "OFF_SESSION": "美股休市中"
     }
   },
+  "emergency_evidence_origins": {
+    "CHATGPT_CONNECTED_MARKET_DATA": {
+      "connectors": {
+        "longbridge": {
+          "operations": ["quote"],
+          "scope": "EMERGENCY_EVIDENCE_ONLY",
+          "execution_price_eligibility": false,
+          "normal_provider_priority": false
+        }
+      },
+      "required_provenance": ["connector_identity", "operation"],
+      "required_row_fields": ["symbol", "name", "provider_as_of_beijing", "open", "high", "low", "prev_close", "close", "volume", "amount", "market_phase"],
+      "timestamp_rule": "row_native_provider_timestamp_only",
+      "decision_boundary": "decision_evidence_only;人工执行前必须刷新并重新确认"
+    }
+  },
   "query_entry": "scripts/market_quote_router.py::build_market_quote_context",
   "selection_rule": "交易中返回最新实时；盘前返回盘前行情并附最近正式收盘；盘后返回盘后行情并附当日正式收盘；休市返回最近正式收盘。",
   "user_display_rule": "用户可见市场状态和数据性质必须使用中文；内部phase仅供机器审计。",
