@@ -11,6 +11,67 @@ WORKFLOWS = ROOT / ".github/workflows"
 SCRIPTS = ROOT / "scripts"
 
 
+RISK_TIER_ORDER = {"TIER_0": 0, "TIER_1": 1, "TIER_2": 2, "TIER_3": 3}
+
+
+def classify_risk_tier(
+    *,
+    changed_paths: list[str],
+    canonical_writer_change: bool = False,
+    state_file_change: bool = False,
+    account_or_trade_fact: bool = False,
+    pit_or_freshness: bool = False,
+    master_or_trading_authority: bool = False,
+    writer_ownership: bool = False,
+    workflow_topology: bool = False,
+    irreversible_production_action: bool = False,
+    important_runtime_contract: bool = False,
+    production_behavior_change: bool = False,
+) -> str:
+    """Deterministically classify a mutation; unknown/ambiguous facts fail safe."""
+    paths = {str(p).replace("\\", "/") for p in changed_paths}
+    if any(not p or p.startswith("UNKNOWN/") for p in paths):
+        return "TIER_3"
+    if (
+        account_or_trade_fact
+        or pit_or_freshness
+        or master_or_trading_authority
+        or writer_ownership
+        or workflow_topology
+        or irreversible_production_action
+    ):
+        return "TIER_3"
+    if canonical_writer_change or state_file_change or important_runtime_contract:
+        return "TIER_2"
+    if not paths:
+        return "TIER_3"
+    if all(
+        p.startswith(("docs/", "research/", "tests/"))
+        or p.endswith((".md", ".rst", ".txt"))
+        for p in paths
+    ) and not production_behavior_change:
+        return "TIER_0"
+    if all(
+        not p.startswith(("data/state/", "events/", "requests/"))
+        and not p.startswith(".github/workflows/")
+        and not p.endswith(("ETF规则_MASTER.md",))
+        for p in paths
+    ):
+        return "TIER_1"
+    return "TIER_3"
+
+
+def acceptance_matrix_for_tier(tier: str) -> dict:
+    """Return the minimum machine-readable acceptance envelope."""
+    rows = {
+        "TIER_0": ["docs_or_format_check", "ordinary_ci"],
+        "TIER_1": ["targeted_tests", "relevant_tests", "latest_main_semantic_check", "ci", "compile_or_diff_check"],
+        "TIER_2": ["targeted_tests", "relevant_tests", "latest_main_semantic_check", "ci", "compile_or_diff_check", "owner_protocol_check", "candidate_acceptance"],
+        "TIER_3": ["targeted_tests", "relevant_full_tests", "latest_main_semantic_check", "ci", "owner_protocol_check", "candidate_acceptance", "merged_main_full_consistency", "merged_main_e2e", "failure_attribution", "human_review"],
+    }
+    return {"tier": tier if tier in rows else "TIER_3", "required_gates": rows.get(tier, rows["TIER_3"])}
+
+
 def _read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -140,6 +201,75 @@ def run(root: Path = ROOT) -> dict:
 
     cfg = _read_json(config_path)
     doc_text = normative_doc_path.read_text(encoding="utf-8")
+
+    tier_cfg = cfg.get("risk_tier_classifier") or {}
+    tiers = tier_cfg.get("tiers") or {}
+    classifier = tier_cfg.get("path_classes") or {}
+    evidence_identity = cfg.get("acceptance_evidence_identity") or {}
+    reconstruction = cfg.get("latest_main_reconstruction_rule") or {}
+    stop_rule = cfg.get("root_cause_stop_rule") or {}
+    separation = cfg.get("global_vs_change_acceptance") or {}
+    mirror_reduction = cfg.get("mirror_reduction") or {}
+    expected_tiers = {"TIER_0", "TIER_1", "TIER_2", "TIER_3"}
+    check(
+        "v19:risk_tier_classifier",
+        cfg.get("schema_version") == "1.7"
+        and (cfg.get("normative_contract") or {}).get("version") == "V1.9"
+        and set(tiers) == expected_tiers
+        and tier_cfg.get("unknown_defaults_to") == "TIER_3"
+        and set(classifier) >= {"docs_prompts_display", "single_owner_deterministic_runtime", "canonical_state_or_notification", "account_trade_pit_authority_topology"},
+        "V1.9 four-tier classifier and fail-safe default are registered",
+    )
+    check(
+        "v19:acceptance_matrix",
+        all(set((tiers.get(t) or {}).get("required_gates") or {}) for t in expected_tiers)
+        and "full consistency" in doc_text.lower()
+        and "真实production exposure" in doc_text,
+        "minimum acceptance matrix is tiered and exposure is conditional",
+    )
+    check(
+        "v19:root_cause_stop_rule",
+        set(stop_rule.get("required_matrix") or {}) == {"input_schema", "state_transition", "canonical_owner", "observed_adjacent_breakpoint"}
+        and bool(stop_rule.get("stop_after"))
+        and "unbounded_theoretical_proof" in stop_rule.get("forbid", []),
+        "root-cause-complete has a bounded stopping rule",
+    )
+    check(
+        "v19:latest_main_reconstruction",
+        reconstruction.get("hard_baseline") == "execution_time_latest_main"
+        and set(reconstruction.get("successor_required_only_if") or {}) == {"shared_owner_or_file_conflict", "behavior_semantic_change", "candidate_acceptance_invalidated"}
+        and "dynamic_state_only_change" in reconstruction,
+        "latest-main remains hard while unrelated dynamic movement can reuse evidence",
+    )
+    check(
+        "v19:evidence_identity",
+        set(evidence_identity.get("fields") or {}) == {"pr_head_sha", "stable_semantic_diff", "risk_tier", "canonical_owner_or_changed_file_domain", "protocol_version", "test_ci_evidence_digest"}
+        and bool(evidence_identity.get("reuse_when")),
+        "acceptance evidence identity is machine-readable",
+    )
+    check(
+        "v19:global_change_separation",
+        separation.get("global_hard_severity") == "always_preserved"
+        and separation.get("change_specific_acceptance") == "separate_result"
+        and set(separation.get("unrelated_reliable_global_failure_does_not_default_block") or {}) == {"TIER_0", "TIER_1", "TIER_2"},
+        "global severity and change-specific acceptance are separate",
+    )
+    check(
+        "v19:mirror_reduction",
+        mirror_reduction.get("normative_text_source") == "docs/生产变更与并发写入协议_V1.0.md"
+        and mirror_reduction.get("no_manual_second_rule_set") is True,
+        "machine mirror is limited to checker-consumed semantics",
+    )
+    shadow = {
+        "#493": classify_risk_tier(changed_paths=["scripts/process_state_sync_request.py", "data/state/account_fact.json"], account_or_trade_fact=True),
+        "#496": classify_risk_tier(
+            changed_paths=["config/runtime_policy.json", "scripts/post_close_review_due.py", "scripts/check_system_consistency.py"],
+            important_runtime_contract=True,
+        ),
+        "TIER_0": classify_risk_tier(changed_paths=["docs/complexity-audit.md", "tests/test_protocol.py"]),
+        "TIER_1": classify_risk_tier(changed_paths=["scripts/check_production_mutation_protocol.py", "tests/test_protocol.py"]),
+    }
+    check("v19:shadow_classification", shadow == {"#493": "TIER_3", "#496": "TIER_2", "TIER_0": "TIER_0", "TIER_1": "TIER_1"}, f"shadow={shadow}")
 
     # Governance SSOT guard. Validate the compact long-term principles and keep
     # legacy CA identifiers audit-only rather than making rule count a contract.
