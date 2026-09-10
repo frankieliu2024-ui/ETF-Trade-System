@@ -1,18 +1,18 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-10T13:44:01+08:00",
+  "generated_at": "2026-09-10T13:44:29+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 34442188729,
-  "run_attempt": 2,
-  "head_sha": "6a9b150594d785efb3b18caa11688f48189d5bf9",
-  "main_head_sha": "40ac70b4cae369cf306a57984722a4eba6fb6955",
+  "run_id": 34442251908,
+  "run_attempt": 1,
+  "head_sha": "40ac70b4cae369cf306a57984722a4eba6fb6955",
+  "main_head_sha": "35d59da02dadc37950e2aed3c23f5ff6954293ea",
   "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
       "job": "watchdog",
-      "step": "Persist bounded self-healing state and deterministic repairs",
-      "number": 12
+      "step": "Escalate persistent or structural failure",
+      "number": 13
     }
   ],
   "changed_files": [
@@ -43,14 +43,14 @@
     "data/state/skfolio_risk_evidence.json",
     "events/research/daily_features/2026-09-10.json",
     "events/research/decision_outcomes/20260910_1320_etf_formal_decision.json",
-    "events/research/decision_outcomes/TRADE_COMPLETED_REVIEW_REQUIRED_trade_20260910_133720_515220_sell_3700.json",
+    "events/research/decision_outcomes/TRADE_COMPLETED_REVIEW_REQUIRED_trade_20260910_133746_301689_sell_500.json",
     "events/research/evidence_snapshots/2026-09-10/20260910_132901_0800.json",
-    "events/trades/trade_20260910_133720_515220_sell_3700.json"
+    "events/trades/trade_20260910_133746_301689_sell_500.json"
   ],
   "commit_message": "data: record downstream market contexts and state sync",
   "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
