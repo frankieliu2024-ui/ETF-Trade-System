@@ -1,35 +1,37 @@
 {
-  "status": "PASS",
+  "status": "DEGRADED",
   "pulse_success": true,
   "hard_error_count": 0,
-  "warning_count": 0,
+  "warning_count": 1,
   "hard_errors": [],
-  "warnings": [],
-  "scheduled_for": "workflow_dispatch",
-  "scheduled_cron": "",
+  "warnings": [
+    "ambiguous_scheduled_pulse: occurrence identity unavailable; current refresh is not natural-pulse fulfillment"
+  ],
+  "scheduled_for": "2,22,42 0-7 * * 1-5",
+  "scheduled_cron": "2,22,42 0-7 * * 1-5",
   "scheduled_slot_at": null,
   "schedule_delay_seconds": null,
-  "schedule_delay_class": "NOT_SCHEDULED",
+  "schedule_delay_class": "AMBIGUOUS",
   "natural_pulse_identity": null,
-  "natural_pulse_identity_status": "NOT_SCHEDULED",
-  "latest_candidate_slot_at": null,
-  "candidate_delay_seconds": null,
-  "candidate_delay_class": null,
+  "natural_pulse_identity_status": "AMBIGUOUS",
+  "latest_candidate_slot_at": "2026-09-10T15:22:00+08:00",
+  "candidate_delay_seconds": 464,
+  "candidate_delay_class": "BOUNDED_DELAY",
   "natural_pulse_eligible": false,
-  "trigger": "workflow_dispatch",
-  "started_at": "2026-09-10T07:28:36Z",
-  "provider_as_of": "2026-09-10T15:28:34+08:00",
+  "trigger": "schedule",
+  "started_at": "2026-09-10T07:29:44Z",
+  "provider_as_of": "2026-09-10T15:29:42+08:00",
   "provider_as_of_by_object": {
     "NDX": "2026-09-10T04:00:00+08:00",
     "SOX": "2026-09-10T04:00:00+08:00",
     "N225": "2026-09-10T14:30:00+08:00",
-    "KOSPI": "2026-09-10T15:28:00+08:00",
+    "KOSPI": "2026-09-10T15:29:00+08:00",
     "TWII": "2026-09-10T13:33:00+08:00",
-    "HSTECH": "2026-09-10T15:28:34+08:00"
+    "HSTECH": "2026-09-10T15:29:42+08:00"
   },
-  "finished_at": "2026-09-10T07:28:36Z",
-  "commit_sha": "c766f996e4d983f456ad943102f23e6d46e4a72a",
-  "run_id": "34450094433",
+  "finished_at": "2026-09-10T07:29:44Z",
+  "commit_sha": "db900004fe2f977d6724a7d852213cfdd2de283c",
+  "run_id": "34450199131",
   "market_date_beijing": "2026-09-10",
   "overseas_quality_status": "PASS",
   "us_extended_hours_status": "PASS",
@@ -42,7 +44,7 @@
       "symbol": "^NDX",
       "market_phase": "PRE_OPEN",
       "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 688.49,
+      "delay_minutes": 689.66,
       "error": ""
     },
     "SOX": {
@@ -53,7 +55,7 @@
       "symbol": "^SOX",
       "market_phase": "PRE_OPEN",
       "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 688.49,
+      "delay_minutes": 689.66,
       "error": ""
     },
     "N225": {
@@ -64,18 +66,18 @@
       "symbol": "100.N225",
       "market_phase": "CLOSED",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 58.49,
+      "delay_minutes": 59.66,
       "error": ""
     },
     "KOSPI": {
       "quality_status": "PASS",
-      "as_of_beijing": "2026-09-10T15:28:00+08:00",
+      "as_of_beijing": "2026-09-10T15:29:00+08:00",
       "market_date_local": "2026-09-10",
       "provider": "naver_finance",
       "symbol": "KOSPI",
       "market_phase": "CLOSED",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 0.49,
+      "delay_minutes": 0.66,
       "error": ""
     },
     "TWII": {
@@ -86,12 +88,12 @@
       "symbol": "tse_t00.tw",
       "market_phase": "CLOSED",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 115.49,
+      "delay_minutes": 116.66,
       "error": ""
     },
     "HSTECH": {
       "quality_status": "PASS",
-      "as_of_beijing": "2026-09-10T15:28:34+08:00",
+      "as_of_beijing": "2026-09-10T15:29:42+08:00",
       "market_date_local": "2026-09-10",
       "provider": "eastmoney_push2",
       "symbol": "124.HSTECH",
@@ -113,12 +115,12 @@
     "yahoo_chart_api:HSTECH.HK": {
       "status": "ACTIVE",
       "consecutive_failures": 0,
-      "last_success_at": "2026-09-10T07:28:29+00:00"
+      "last_success_at": "2026-09-10T07:29:39+00:00"
     },
     "eastmoney_push2:124.HSTECH": {
       "status": "ACTIVE",
       "consecutive_failures": 0,
-      "last_success_at": "2026-09-10T07:28:29+00:00",
+      "last_success_at": "2026-09-10T07:29:39+00:00",
       "failure_class": "TRANSIENT",
       "bypass_date": "2026-09-10"
     }
