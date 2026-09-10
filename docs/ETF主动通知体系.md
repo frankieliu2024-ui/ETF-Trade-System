@@ -2,7 +2,7 @@
 
 > 本文是ETF系统主动通知域的**唯一规范性规则来源（Single Source of Truth）**。它不是交易规则，不生成风险许可、生命周期、金额或买卖动作；正式交易权限仍唯一来自 `ETF规则_MASTER.md`。通知脚本、配置、workflow、状态文件和测试只负责实现、运行、记录或验证本文规则，不得独立产生新的通知资格、事件定义、阈值语义、用户标题、去重原则或交易权限。运行事实以当前 `main` 的脚本、配置和状态为准；规则解释以本文为准。若实现与本文冲突，视为实现漂移，必须修复，不得以现有代码反向覆盖本文规则。
 
-最后更新：2026-09-05
+最后更新：2026-09-10
 
 ## 1. 最高原则
 
@@ -183,7 +183,9 @@ PushPlus微信渠道存在平台层展示模板：ETF系统通过API传入的业
 通知只有两个顶层语义通道，二者共享同一个notification center、guarded sender、external-effect committer和notification state：
 
 - **INTERRUPT**：事件驱动的固定模板通知，覆盖市场异动、观察/Trial/Confirm机会、机会失效、持仓动作、风险许可、成交确认、账户确认、系统阻塞、判断恢复和收盘账户。其资格受正式事实、PIT、materiality、dedup、冷却和实质升级约束；默认delivery mode为**COMPACT**。
-- **REPORT**：固定正式节点完成后的完整报告投递，覆盖ETF_TRADE_REVIEW、ETF_SYSTEM_REVIEW和ETF_FORMAL_DECISION三类已登记Scheduled Actor正式报告。三个Scheduled Actor都是正式结果生产者，不是独立通知系统。默认delivery mode为**FULL_REPORT**；正式报告正文原样转发，不套用INTERRUPT模板，也不创建第二sender、第二state或第二token owner。REPORT与INTERRUPT共享现有发送、状态和transport owner，但资格语义严格分离：REPORT只转发已完成、已冻结的完整正式结果，不能重新分析、产生交易权限或回流生成INTERRUPT。
+- **REPORT**：固定正式节点达到合法终态后的完整报告投递，覆盖ETF_TRADE_REVIEW、ETF_SYSTEM_REVIEW和ETF_FORMAL_DECISION三类已登记Scheduled Actor正式报告。三个Scheduled Actor都是正式结果生产者，不是独立通知系统。默认delivery mode为**FULL_REPORT**；正式报告正文原样转发，不套用INTERRUPT模板，也不创建第二sender、第二state或第二token owner。REPORT与INTERRUPT共享现有发送、状态和transport owner，但资格语义严格分离：REPORT只转发已完成、已冻结的完整节点结果，不能重新分析、产生交易权限或回流生成INTERRUPT。`report_type`标识Scheduled Actor/report family，不证明对应业务事实已经成功持久化。
+
+固定Scheduled Actor的**节点终态、业务持久化、REPORT投递**是三个独立层次：节点终态回答本次固定运行是否已经得到可恢复的最终结果；业务持久化只在对应业务合同允许时写入canonical事实；REPORT只负责把已冻结的节点结果完整投递。合法无动作Formal Decision（例如新增0元、卖出0、持有管理或现金为当前最优去向）仍属于Formal Decision，应按既有canonical合同持久化后投递REPORT。若因必要PIT一致事实始终未形成而到达真正`FAIL_CLOSED / NO_FORMAL_DECISION`终态，不得伪造成功Formal Decision持久化，但该节点仍必须冻结明确写明“正式决策：未形成”及具体原因的FINAL_CONTENT，并通过同一个既有`ETF_FORMAL_DECISION` REPORT family投递。普通in-progress/尚未到terminal的评估不得提前生成终态REPORT。成功与fail-closed分支都必须保持同一Scheduled run/node identity的幂等性，每次合法终态至多投递一个REPORT；不得为fail-closed新增第四种report type、第二transport、sender、workflow、state、queue或relay。
 
 所有用户可见INTERRUPT event必须映射到下列canonical template family，固定模板表示固定一级标题、section skeleton、边界语句与结构化动态槽位，并不把业务动态文字写死：
 
@@ -203,9 +205,9 @@ PushPlus微信渠道存在平台层展示模板：ETF系统通过API传入的业
 
 ### REPORT_DELIVERY_REQUEST 合同
 
-REPORT只接受已经完成的正式报告，不重新分析，也不拥有formal reasoning或交易权限。请求至少包含：schema_version、channel=REPORT、report_type、report_id、task_id、task_run_id、generated_at、effective_market_date、source_actor、source_reference、title、summary、full_content、content_hash、idempotency_key、delivery_mode=FULL_REPORT和no_trade_authority=true。
+REPORT只接受已经达到合法终态并冻结的正式节点结果，不重新分析，也不拥有formal reasoning或交易权限。请求至少包含：schema_version、channel=REPORT、report_type、report_id、task_id、task_run_id、generated_at、effective_market_date、source_actor、source_reference、title、summary、full_content、content_hash、idempotency_key、delivery_mode=FULL_REPORT和no_trade_authority=true。
 
-canonical intake校验报告类型、来源身份、任务/运行身份、正文哈希和幂等键；重复幂等键不得重复投递。REPORT请求只能创建delivery event，不能修改MASTER、risk permission、lifecycle、formal decision、account、trade、CASE或订单。产品侧固定任务完成后提交ETF_TRADE_REVIEW、ETF_SYSTEM_REVIEW或ETF_FORMAL_DECISION，GitHub只转发已完成内容。正式决策报告必须在其既有业务事实成功持久化、FINAL_CONTENT冻结后才具备REPORT可用性；REPORT投递失败不得改写业务事实成功，业务事实失败也不得伪装成成功报告。REPORT是终态投递输入，不得重新进入INTERRUPT事件生成器；同一正式报告继续由现有幂等键防止重复投递。
+canonical intake校验报告类型、来源身份、任务/运行身份、正文哈希和幂等键；重复幂等键不得重复投递。REPORT请求只能创建delivery event，不能修改MASTER、risk permission、lifecycle、formal decision、account、trade、CASE或订单。产品侧固定任务达到合法终态后提交ETF_TRADE_REVIEW、ETF_SYSTEM_REVIEW或ETF_FORMAL_DECISION，GitHub只转发已冻结内容。对Formal Decision成功分支，适用的既有业务事实必须先成功持久化或达到current contract定义的等价合法成功终态，再冻结并提交REPORT；对真正FAIL_CLOSED/NO_FORMAL_DECISION分支，不写伪造的成功业务事实，但仍提交准确反映失败终态的同一`ETF_FORMAL_DECISION` REPORT。REPORT投递成功或失败都不得反向改写业务事实是否成功；业务事实失败也不得在正文中伪装为成功。REPORT是终态投递输入，不得重新进入INTERRUPT事件生成器；同一Scheduled run/node继续由现有幂等键防止重复投递。
 
 ### 正式判断与raw trigger边界
 
@@ -215,7 +217,7 @@ canonical intake校验报告类型、来源身份、任务/运行身份、正文
 
 同一Scheduled formal decision如同时产生多个交易语义，原则上只选择一条最需要用户行动的canonical交易通知，其余变化进入同一正文；通知失败不得反向阻塞formal decision、金额、卖出份额或风险许可落盘。无实质变化的节点不伪装成机会、风险或持仓动作变化。
 
-Scheduled Task可以形成正式analysis/formal decision；其输出本身不是通知资格。是否产生PushPlus仍由canonical materiality和本通知SSOT决定。Scheduled Task的connector、GitHub request-file能力或产品侧运行细节不在本文冻结，也不形成第二行情链、第二writer或第二transport。
+Scheduled Task可以形成正式analysis/formal decision；其输出本身不是INTERRUPT通知资格。固定Scheduled Actor达到合法终态后是否形成REPORT，服从本节REPORT完成语义；是否产生事件驱动PushPlus INTERRUPT仍由canonical materiality和本通知SSOT决定。Scheduled Task的connector、GitHub request-file能力或产品侧运行细节不在本文冻结，也不形成第二行情链、第二writer或第二transport。
 
 ### 维护与验收 owner
 
