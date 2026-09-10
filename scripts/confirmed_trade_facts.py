@@ -70,6 +70,7 @@ def _etf_universe_codes(root: Path) -> set[str]:
 
 
 def _is_etf_trade(trade: dict, universe_codes: set[str]) -> bool:
+    """Classify a raw executed event using explicit type first, then canonical ETF universe."""
     asset_type = str(trade.get("asset_type") or "").upper()
     if asset_type in {"ETF", "FUND"}:
         return True
@@ -80,12 +81,33 @@ def _is_etf_trade(trade: dict, universe_codes: set[str]) -> bool:
     return code in universe_codes or "ETF" in name.upper()
 
 
+def _is_reconstructed_etf_trade(trade: dict) -> bool:
+    """The auxiliary reconstruction is already ETF-strategy scoped.
+
+    Historical reconstruction rows often predate explicit asset_type metadata.
+    Preserve those rows as ETF facts unless they explicitly declare a non-ETF
+    asset class; only raw executed-event overlays need universe classification.
+    """
+    asset_type = str(trade.get("asset_type") or "").upper()
+    return not asset_type or asset_type in {"ETF", "FUND"}
+
+
 def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> list[dict]:
     """Return one deduplicated ETF-only fact set for position, fee and count projections."""
     universe_codes = _etf_universe_codes(root)
     facts: list[dict] = []
     seen: set[tuple] = set()
-    for trade in list(reconstructed_trades) + unintegrated_executed_trade_events(root, reconstructed_trades):
+
+    for trade in reconstructed_trades:
+        if not _is_reconstructed_etf_trade(trade):
+            continue
+        signature = trade_signature(trade)
+        if signature in seen:
+            continue
+        seen.add(signature)
+        facts.append(trade)
+
+    for trade in unintegrated_executed_trade_events(root, reconstructed_trades):
         if not _is_etf_trade(trade, universe_codes):
             continue
         signature = trade_signature(trade)
@@ -110,8 +132,7 @@ def canonical_etf_fee_projection(root: Path, reconstructed_trades: list[dict]) -
 
 
 def effective_confirmed_fee_fact(root: Path, reconstructed_trades: list[dict]) -> dict:
-    universe_codes = _etf_universe_codes(root)
-    reconstructed_etf = [t for t in reconstructed_trades if _is_etf_trade(t, universe_codes)]
+    reconstructed_etf = [t for t in reconstructed_trades if _is_reconstructed_etf_trade(t)]
     projection = canonical_etf_fee_projection(root, reconstructed_trades)
     reconstructed_signatures = {trade_signature(t) for t in reconstructed_etf}
     overlays = [
