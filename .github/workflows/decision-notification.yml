@@ -165,7 +165,7 @@ jobs:
         if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.report == 'true')) }}
         continue-on-error: true
         env:
-          # Bind the center to the single report selected from the triggering push.
+          # Bind the single report selected from the triggering push.
           REPORT_DELIVERY_PATH: ${{ steps.push_kind.outputs.report_path }}
         run: python scripts/run_guarded_notification.py center --mode event
 
