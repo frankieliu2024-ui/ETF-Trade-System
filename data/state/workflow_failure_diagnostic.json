@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-10T22:34:18+08:00",
+  "generated_at": "2026-09-10T22:44:41+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 34489855156,
+  "run_id": 34490993361,
   "run_attempt": 1,
-  "head_sha": "d8cea765a07a6710f5d2062250b6d15b4c594bb8",
-  "main_head_sha": "d8cea765a07a6710f5d2062250b6d15b4c594bb8",
+  "head_sha": "a1280082f1fce79cf78d206c3e376efd68dc0220",
+  "main_head_sha": "a1280082f1fce79cf78d206c3e376efd68dc0220",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,10 +16,12 @@
     }
   ],
   "changed_files": [
-    "requests/live_snapshot/20260910_2037_scheduled_post_close_review.json"
+    "data/state/us_extended_hours_context.json",
+    "data/state/us_extended_hours_context_previous.json",
+    "data/state/us_pulse_runtime_health.json"
   ],
-  "commit_message": "replay: reconverge 2026-09-10 formal post-close review",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "data: refresh US extended-hours context",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
@@ -27,7 +29,7 @@
     "head_is_current_main": true,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
