@@ -1,27 +1,33 @@
 {
-  "schema_version": "1.0",
-  "checked_at": "2026-09-09T13:48:40+08:00",
+  "schema_version": "1.1",
+  "checked_at": "2026-09-10T09:25:48+08:00",
   "mode": "DETERMINISTIC_RUNTIME_SELF_HEALING",
   "enabled": true,
-  "classification": "SCHEDULE_MISSED_OR_STALE",
+  "classification": "SAME_DAY_CURRENT_MISSING",
   "recommended_action": "REFRESH_SNAPSHOT",
-  "reason": "capture age=1456s, health=PASS, threshold=780s",
+  "reason": "market_date='2026-09-09', expected=2026-09-10",
   "market_open_date": true,
   "watch_window_active": true,
   "same_day_current_required": true,
-  "same_day_current_missing": false,
-  "current_capture_at": "2026-09-09T13:24:24+08:00",
-  "current_capture_age_seconds": 1456,
+  "same_day_current_missing": true,
+  "current_capture_at": "2026-09-09T15:19:37+08:00",
+  "current_capture_age_seconds": 65171,
   "expected_pulse_at": null,
   "expected_pulse_missing": false,
-  "runtime_health_status": "PASS",
+  "runtime_health_status": "SKIPPED",
   "system_consistency_status": "WARNING",
+  "market_recovery_consistency_gate": {
+    "global_status": "WARNING",
+    "blocks_market_recovery": false,
+    "classification": "NO_GLOBAL_HARD_FAIL",
+    "errors": []
+  },
   "master_rules_version": "V2.2.31",
   "current_rules_version": "V2.2.31",
   "snapshot_refresh_attempts": [
-    "2026-09-09T13:24:05+08:00"
+    "2026-09-10T09:25:48+08:00"
   ],
-  "last_snapshot_refresh_trigger_at": "2026-09-09T13:24:05+08:00",
+  "last_snapshot_refresh_trigger_at": "2026-09-10T09:25:48+08:00",
   "last_safe_repair_at": "2026-09-01T09:12:53+08:00",
   "safety_boundary": {
     "may_modify_master": false,
@@ -29,5 +35,6 @@
     "may_change_provider_policy": false,
     "may_auto_trade": false,
     "may_ai_patch_main": false
-  }
+  },
+  "trigger_recorded": true
 }
