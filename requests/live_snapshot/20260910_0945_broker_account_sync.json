@@ -1,0 +1,75 @@
+{
+  "request_id": "20260910_0945_broker_account_sync",
+  "requested_at_beijing": "2026-09-10T09:45:00+08:00",
+  "interaction_scenario": "BROKER_SCREENSHOT_SYNC",
+  "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+  "requested_by": "chatgpt",
+  "reason": "Persist the user's 2026-09-10 09:45 broker holdings screenshot as the latest account fact. Position quantities are unchanged versus the prior confirmed account fact and there is no new trade or cash-transfer evidence. Update broker-observed account totals, prices and PnL without inferring a trade. The screenshot confirms 电科思仪（301689） remains 500 shares, all 500 available, cost 16.000, current displayed price 55.580 on its listing day. Broker screenshot time is an account-fact time, not a market-provider quote timestamp. Top-level aggregate market value and the sum of displayed row market values may reflect asynchronous broker UI refresh and must be preserved as broker-observed facts rather than force-reconciled.",
+  "account_fact": {
+    "status": "VALID",
+    "updated_at": "2026-09-10T09:45:00+08:00",
+    "source": "BROKER_HOLDINGS_SCREENSHOT_20260910_0945_USER_PROVIDED",
+    "broker_displayed_at_beijing": "2026-09-10T09:45:00+08:00",
+    "last_confirmed_market_date": "2026-09-10",
+    "total_asset": 198118.42,
+    "stock_market_value": 196581.20,
+    "cash": 1537.22,
+    "holding_pnl": -1409.45,
+    "daily_pnl": 18390.30,
+    "daily_pnl_pct": 10.23,
+    "orders": [],
+    "trades": [
+      {
+        "name": "黄金ETF",
+        "code": "518880",
+        "side": "BUY",
+        "quantity": 500,
+        "price": 9.109,
+        "amount": 4554.5,
+        "executed_at": "2026-09-03T11:21:04+08:00",
+        "source": "BROKER_TRADE_SCREENSHOT_USER_CONFIRMED"
+      },
+      {
+        "name": "煤炭ETF",
+        "code": "515220",
+        "side": "BUY",
+        "quantity": 3700,
+        "price": 1.332,
+        "amount": 4928.4,
+        "executed_at": "2026-09-09T13:30:21+08:00",
+        "source": "BROKER_TRADE_SCREENSHOT_USER_CONFIRMED",
+        "linked_decision_id": "20260909_1325_515220_trial_5000"
+      }
+    ],
+    "positions": [
+      {"asset_type":"STOCK","name":"宁德时代","code":"300750","quantity":100,"available_quantity":100,"cost":393.781,"last_price":333.640,"market_value":33364.00,"holding_pnl":-6014.07,"holding_pnl_pct":-15.272},
+      {"asset_type":"STOCK","name":"工业富联","code":"601138","quantity":500,"available_quantity":500,"cost":58.054,"last_price":64.180,"market_value":32090.00,"holding_pnl":3062.78,"holding_pnl_pct":10.552},
+      {"asset_type":"STOCK","name":"电科思仪","code":"301689","quantity":500,"available_quantity":500,"cost":16.000,"last_price":55.580,"market_value":27790.00,"holding_pnl":19790.00,"holding_pnl_pct":247.375,"origin":"IPO_ALLOTMENT_ORIGIN","origin_fact":"confirmed_settlement_obligation"},
+      {"asset_type":"ETF","name":"半导体设备ETF","code":"561980","quantity":38900,"available_quantity":38900,"cost":0.847,"last_price":0.643,"market_value":25012.70,"holding_pnl":-7952.20,"holding_pnl_pct":-24.123},
+      {"asset_type":"ETF","name":"科创50ETF","code":"588000","quantity":14100,"available_quantity":14100,"cost":2.099,"last_price":1.660,"market_value":23406.00,"holding_pnl":-6188.41,"holding_pnl_pct":-20.911},
+      {"asset_type":"ETF","name":"科创创业ETF","code":"159781","quantity":19500,"available_quantity":19500,"cost":1.269,"last_price":1.038,"market_value":20241.00,"holding_pnl":-4507.60,"holding_pnl_pct":-18.214},
+      {"asset_type":"ETF","name":"纳指ETF","code":"159941","quantity":12200,"available_quantity":12200,"cost":1.626,"last_price":1.662,"market_value":20276.40,"holding_pnl":439.80,"holding_pnl_pct":2.217},
+      {"asset_type":"ETF","name":"电网设备ETF","code":"159326","quantity":3000,"available_quantity":3000,"cost":1.653,"last_price":1.646,"market_value":4938.00,"holding_pnl":-20.00,"holding_pnl_pct":-0.404},
+      {"asset_type":"ETF","name":"煤炭ETF","code":"515220","quantity":3700,"available_quantity":3700,"cost":1.333,"last_price":1.336,"market_value":4943.20,"holding_pnl":9.80,"holding_pnl_pct":0.199},
+      {"asset_type":"ETF","name":"黄金ETF","code":"518880","quantity":500,"available_quantity":500,"cost":9.118,"last_price":9.059,"market_value":4529.50,"holding_pnl":-29.55,"holding_pnl_pct":-0.648}
+    ],
+    "settlement_obligations": [
+      {
+        "obligation_type": "IPO_ALLOTMENT_PAYMENT",
+        "security_name": "电科思仪",
+        "security_code": "301689",
+        "quantity": 500,
+        "subscription_price": 16,
+        "required_cash": 8000,
+        "payment_deadline_beijing": "2026-09-01T16:00:00+08:00",
+        "status": "SETTLED",
+        "cash_must_remain_available": false,
+        "settled_at_beijing": "2026-09-01T20:44:22+08:00",
+        "settlement_evidence": "BROKER_HOLDINGS_SCREEN_20260902_2105: 301689 holding remains registered, 500 shares at cost 16.000",
+        "source": "BROKER_SCREENSHOT_20260902_2105_USER_PROVIDED",
+        "pit_timestamp": "2026-09-02T21:05:00+08:00"
+      }
+    ],
+    "validity_mode": "EVENT_DRIVEN_CARRY_FORWARD"
+  }
+}
