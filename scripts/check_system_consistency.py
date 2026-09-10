@@ -525,8 +525,18 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
             event_for_due = {"event_id": event_ids[0], "confirmed_at_beijing": dt}
             if not _case_mapping_required(current, event_for_due):
                 pass
-            elif len(case_ids) == 0 and terminal and not index_case_ids:
-                pass
+            elif len(case_ids) == 0 and not index_case_ids:
+                # A canonical formal review may lawfully declare an executed
+                # exit ineligible for CASE intake. Consume that exact event
+                # disposition without fabricating a CASE; all other unmapped
+                # historical rows remain hard failures.
+                explicit_ineligibilities = _canonical_case_ineligibilities()
+                if any(event_id in explicit_ineligibilities for event_id in event_ids):
+                    pass
+                elif terminal:
+                    pass
+                else:
+                    errors.append(f"{dt}:{code}:case_count=0")
             elif len(case_ids) != 1:
                 errors.append(f"{dt}:{code}:case_count={len(case_ids)}")
             elif len(index_case_ids) > 1:
