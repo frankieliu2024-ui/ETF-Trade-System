@@ -74,6 +74,16 @@ class MarketStateCloseSkipTests(unittest.TestCase):
         runtime = dict(self.runtime, market_phase="POST_CLOSE_GRACE")
         self.assertTrue(self.helpers["is_phase_mismatch_allowed"](self.current, runtime, self.snapshot, self.current["latest_snapshot"]))
 
+    def test_workflow_dispatch_preserves_canonical_outside_window_reason(self):
+        source = (ROOT / "scripts/runtime_session_gate.py").read_text(encoding="utf-8")
+        self.assertIn('reason != "outside_a_share_capture_window"', source)
+        self.assertIn('reason = f"manual_dispatch_{reason}"', source)
+
+    def test_workflow_dispatch_does_not_broaden_phase_exception_for_unknown_reason(self):
+        source = (ROOT / "scripts/runtime_session_gate.py").read_text(encoding="utf-8")
+        self.assertIn('elif reason != "outside_a_share_capture_window":', source)
+        self.assertNotIn('reason = "manual_dispatch_outside_a_share_capture_window"', source)
+
 
 if __name__ == "__main__":
     unittest.main()
