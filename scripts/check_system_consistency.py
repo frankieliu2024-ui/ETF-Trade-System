@@ -374,6 +374,26 @@ def _canonical_case_mappings() -> dict[str, list[dict]]:
     return mappings
 
 
+
+def _canonical_case_ineligibilities() -> dict[str, dict]:
+    """Read explicit canonical review ineligibility, never infer it."""
+    result = {}
+    review_dir = ROOT / "events" / "reviews"
+    for path in sorted(review_dir.glob("*.json")) if review_dir.exists() else []:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        review = payload.get("review") if isinstance(payload, dict) else None
+        mapping = review.get("case_mapping") if isinstance(review, dict) else None
+        for item in (mapping or {}).get("ineligible_executed_trades") or []:
+            if not isinstance(item, dict):
+                continue
+            event_id = str(item.get("trade_event_id") or "")
+            if event_id and item.get("eligibility") == "EXPLICIT_CANONICAL_INELIGIBILITY":
+                result[event_id] = item
+    return result
+
 def _validate_canonical_case_mapping(event: dict, mappings: dict[str, list[dict]]) -> str | None:
     event_id = str(event.get("event_id") or "")
     candidates = mappings.get(event_id) or []
@@ -416,6 +436,9 @@ def _validate_trade_event_formal_sync(report: dict) -> None:
             if _case_mapping_required(_read_json("data/state/CURRENT.json"), event):
                 terminal = _valid_unrecoverable_review_terminal(event_id, event)
                 mapping_error = _validate_canonical_case_mapping(event, mappings)
+                explicit_ineligibility = _canonical_case_ineligibilities().get(event_id)
+                if mapping_error and explicit_ineligibility and not terminal:
+                    continue
                 if mapping_error and not terminal:
                     errors.append(f"{event_id}:{mapping_error}")
                 elif mapping_error and terminal and (mappings.get(event_id) or []):
