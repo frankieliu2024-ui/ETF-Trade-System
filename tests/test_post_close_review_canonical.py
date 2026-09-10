@@ -1,6 +1,7 @@
 import json
 import sys
 import tempfile
+from datetime import datetime
 import unittest
 from pathlib import Path
 
@@ -92,12 +93,36 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertEqual(event["reviewed_at_beijing"], "2026-08-31T15:30:00+08:00")
 
     def test_e2e_blocks_missing_canonical_review(self):
-        event = self.root / "post_market_review/post_market_review_event.json"; event.parent.mkdir()
+        event = self.root / "post_market_review/post_market_review_event.json"
+        event.parent.mkdir()
         event.write_text(json.dumps({"market_close": True, "market_date": "2026-08-31", "status": "READY_FOR_REVIEW"}))
-        old = (build_e2e_status.POST_MARKET_REVIEW, build_e2e_status.REVIEW_DIR, build_e2e_status.STATE)
-        build_e2e_status.POST_MARKET_REVIEW = event; build_e2e_status.REVIEW_DIR = self.root / "events/reviews"; build_e2e_status.STATE = self.root / "data/state"
-        try: result = build_e2e_status.close_review_component({"market_date": "2026-08-31"})
-        finally: build_e2e_status.POST_MARKET_REVIEW, build_e2e_status.REVIEW_DIR, build_e2e_status.STATE = old
+        (self.root / "config").mkdir()
+        (self.root / "config/runtime_policy.json").write_text(
+            json.dumps({"scheduled_trade_review": {"due_time": "20:30"}}),
+            encoding="utf-8",
+        )
+        old = (
+            build_e2e_status.POST_MARKET_REVIEW,
+            build_e2e_status.REVIEW_DIR,
+            build_e2e_status.STATE,
+            build_e2e_status.ROOT,
+        )
+        build_e2e_status.POST_MARKET_REVIEW = event
+        build_e2e_status.REVIEW_DIR = self.root / "events/reviews"
+        build_e2e_status.STATE = self.root / "data/state"
+        build_e2e_status.ROOT = self.root
+        try:
+            result = build_e2e_status.close_review_component(
+                {"market_date": "2026-08-31"},
+                datetime.fromisoformat("2026-08-31T20:31:00+08:00"),
+            )
+        finally:
+            (
+                build_e2e_status.POST_MARKET_REVIEW,
+                build_e2e_status.REVIEW_DIR,
+                build_e2e_status.STATE,
+                build_e2e_status.ROOT,
+            ) = old
         self.assertEqual(result["status"], "BLOCKED")
 
 
