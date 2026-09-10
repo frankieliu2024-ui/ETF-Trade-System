@@ -30,6 +30,27 @@ def load(path: str, fallback):
         return fallback
 
 
+def _pit_contract_present(state_sync: str) -> bool:
+    """Check the current Formal Decision PIT invariant, not legacy source wording."""
+    required_tokens = [
+        "def _snapshot_is_valid_for_decision",
+        "market_fact_cutoff",
+        "availability_cutoff",
+        "SNAPSHOT_MARKET_FACT_AFTER_DECISION_CUTOFF",
+        "SNAPSHOT_NOT_AVAILABLE_BY_PERSISTENCE_BOUNDARY",
+        "def select_point_in_time_snapshot",
+        "consumed_snapshot",
+        "CONSUMED_SNAPSHOT_REFERENCE_INVALID",
+        "CONSUMED_SNAPSHOT_VALIDATED",
+        "POINT_IN_TIME_SNAPSHOT_TWO_CLOCK_VALIDATED",
+        "NO_PRIOR_SNAPSHOT",
+        "cutoff = parse_time(decision_time)",
+        "supplied_time <= cutoff",
+        "build_comparison_snapshot(snapshot)",
+    ]
+    return all(token in state_sync for token in required_tokens)
+
+
 def main() -> int:
     try:
         report = json.loads(REPORT.read_text(encoding="utf-8"))
@@ -143,8 +164,8 @@ def main() -> int:
     )
     check(
         "research:point_in_time_decision_price",
-        all(token in state_sync for token in ["select_point_in_time_snapshot", "captured <= cutoff", "NO_PRIOR_SNAPSHOT", "POINT_IN_TIME_SNAPSHOT"]),
-        "formal decision price and comparison evidence must not use a snapshot after decision time",
+        _pit_contract_present(state_sync),
+        "formal decision PIT must preserve two independent clocks, fail-safe consumed-snapshot identity, decision cutoff validation and same-snapshot comparison evidence",
     )
     check(
         "research:decision_comparison_snapshot",
