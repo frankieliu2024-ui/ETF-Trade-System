@@ -21,9 +21,10 @@ class V19RiskTierTests(unittest.TestCase):
                     "config/runtime_policy.json",
                     "scripts/post_close_review_due.py",
                     "scripts/check_system_consistency.py",
-                ]
+                ],
+                important_runtime_contract=True,
             ),
-            "TIER_1",
+            "TIER_2",
         )
         self.assertEqual(
             classify_risk_tier(changed_paths=["docs/complexity-audit.md", "tests/test_protocol.py"]),
