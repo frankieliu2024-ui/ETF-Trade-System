@@ -214,4 +214,21 @@ class DashboardAccountProjectionTests(unittest.TestCase):
   for p in POSITIONS:
    self.assertIn(f"- {p['name']}（{p['code']}）：",rendered)
 
+
+ def test_1020_pit_case_has_seven_held_etfs_and_three_account_stocks(self):
+  positions=[dict(p) for p in POSITIONS]
+  positions.append({"code":"515220","name":"煤炭ETF","quantity":1000,"current_price":1.2,"pnl":12.0,"pnl_pct":1.0})
+  account=dict(self.account)
+  account["positions"]=positions
+  (self.root/"config/market/etf_monitor_universe.json").write_text(
+   json.dumps({"objects":[{"code":x} for x in ("561980","588000","159941","159781","159326","518880","515220")]},ensure_ascii=False),
+   encoding="utf-8")
+  projection=build_managed_position_projection(self.root,account)
+  self.assertEqual(len(projection["positions"]),10)
+  self.assertEqual(sum(x["asset_class"]=="ETF" for x in projection["positions"]),7)
+  self.assertEqual(sum(x["asset_class"]=="ACCOUNT_STOCK" for x in projection["positions"]),3)
+  lifecycle="\n".join(f"- {p['name']}（{p['code']}）：持有管理；证据：10:20 PIT账户事实；动作：按MASTER复核" for p in positions)
+  with patch.object(process_sync,"ROOT",self.root):
+   self.assertEqual(process_sync.validate_managed_position_lifecycle(lifecycle,account),"")
+
 if __name__=="__main__": unittest.main()
