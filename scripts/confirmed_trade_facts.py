@@ -16,6 +16,8 @@ def trade_signature(trade: dict) -> tuple:
     stamp = str(
         trade.get("datetime")
         or trade.get("confirmed_at_beijing")
+        or trade.get("executed_at_beijing")
+        or trade.get("executed_at")
         or trade.get("trade_time")
         or ""
     ).replace("T", " ")[:19]
@@ -58,19 +60,33 @@ def unintegrated_executed_trade_events(root: Path, reconstructed_trades: list[di
     return overlays
 
 
-def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> list[dict]:
-    """Return the deduplicated ETF fact set: reconstruction plus executed events."""
+def _etf_universe_codes(root: Path) -> set[str]:
     universe = read_json(root / "config" / "market" / "etf_monitor_universe.json", {}) or {}
-    universe_codes = {str(item.get("code") or item.get("symbol") or "") for item in (universe.get("symbols") or universe.get("universe") or []) if isinstance(item, dict)}
+    return {
+        str(item.get("code") or "").strip()
+        for item in (universe.get("objects") or [])
+        if isinstance(item, dict) and item.get("code")
+    }
+
+
+def _is_etf_trade(trade: dict, universe_codes: set[str]) -> bool:
+    asset_type = str(trade.get("asset_type") or "").upper()
+    if asset_type in {"ETF", "FUND"}:
+        return True
+    if asset_type:
+        return False
+    code = str(trade.get("code") or "").strip()
+    name = str(trade.get("name") or "")
+    return code in universe_codes or "ETF" in name.upper()
+
+
+def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> list[dict]:
+    """Return one deduplicated ETF-only fact set for position, fee and count projections."""
+    universe_codes = _etf_universe_codes(root)
     facts: list[dict] = []
     seen: set[tuple] = set()
     for trade in list(reconstructed_trades) + unintegrated_executed_trade_events(root, reconstructed_trades):
-        asset_type = str(trade.get("asset_type") or "").upper()
-        if not asset_type:
-            asset_type = "ETF" if str(trade.get("code") or "") in universe_codes or "ETF" in str(trade.get("name") or "").upper() else ""
-        if asset_type not in {"ETF", "FUND", ""}:
-            continue
-        if not asset_type:
+        if not _is_etf_trade(trade, universe_codes):
             continue
         signature = trade_signature(trade)
         if signature in seen:
@@ -94,9 +110,15 @@ def canonical_etf_fee_projection(root: Path, reconstructed_trades: list[dict]) -
 
 
 def effective_confirmed_fee_fact(root: Path, reconstructed_trades: list[dict]) -> dict:
+    universe_codes = _etf_universe_codes(root)
+    reconstructed_etf = [t for t in reconstructed_trades if _is_etf_trade(t, universe_codes)]
     projection = canonical_etf_fee_projection(root, reconstructed_trades)
-    reconstructed = round(sum(confirmed_fee_amount(t) for t in reconstructed_trades), 2)
-    overlays = unintegrated_executed_trade_events(root, reconstructed_trades)
+    reconstructed_signatures = {trade_signature(t) for t in reconstructed_etf}
+    overlays = [
+        t for t in projection["canonical_trades"]
+        if trade_signature(t) not in reconstructed_signatures
+    ]
+    reconstructed = round(sum(confirmed_fee_amount(t) for t in reconstructed_etf), 2)
     overlay_fee = round(sum(confirmed_fee_amount(t) for t in overlays), 2)
     return {
         "reconstructed_confirmed_fee_sum": reconstructed,
@@ -133,4 +155,3 @@ def latest_formal_review_confirmed_fees(root: Path) -> dict | None:
     if fee is None:
         return None
     return {"confirmed_etf_fees": round(fee, 2), "source": source, "stamp": stamp}
-
