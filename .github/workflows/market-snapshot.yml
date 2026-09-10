@@ -12,6 +12,10 @@ on:
         description: "Fetch and validate without writing a valid node"
         required: true
         default: "false"
+      replay_request:
+        description: "Existing requests/live_snapshot STATE_SYNC_ONLY request to replay from execution-time main"
+        required: false
+        default: ""
   push:
     paths:
       - "requests/live_snapshot/**.json"
@@ -43,6 +47,7 @@ jobs:
       HITHINK_TIMEOUT_SECONDS: "25"
       QUERY_TIME_REFRESH: ${{ github.event_name == 'push' && 'true' || 'false' }}
       EVENT_BEFORE: ${{ github.event.before }}
+      REPLAY_REQUEST: ${{ github.event.inputs.replay_request || '' }}
       SCHEDULED_CRON: ${{ github.event.schedule || '' }}
     steps:
       - uses: actions/checkout@v5
@@ -279,13 +284,17 @@ jobs:
         run: python scripts/cloud_runner_snapshot.py --retry-failed
       - name: Process optional broker/dashboard state sync
         id: state_sync
-        if: ${{ github.event_name == 'push' && github.event.inputs.probe_only != 'true' }}
+        if: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.replay_request != '')) && github.event.inputs.probe_only != 'true' }}
         shell: bash
         run: |
           # Process queued state-sync runs against execution-time main while
           # preserving only the triggering request payload.
           git fetch origin main
-          request_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
+          if [ -n "${REPLAY_REQUEST:-}" ]; then
+            request_files="$REPLAY_REQUEST"
+          else
+            request_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
+          fi
           mkdir -p /tmp/etf-state-sync-requests
           for f in $request_files; do
             mkdir -p "/tmp/etf-state-sync-requests/$(dirname "$f")"
@@ -297,7 +306,26 @@ jobs:
             cp "/tmp/etf-state-sync-requests/$f" "$f"
           done
           processed=false
-          if [ -n "${EVENT_BEFORE:-}" ] && git cat-file -e "${EVENT_BEFORE}^{commit}" 2>/dev/null; then
+          if [ -n "${REPLAY_REQUEST:-}" ]; then
+            python - "$request_files" <<'PY'
+          import json, sys
+          from pathlib import Path
+          path = Path(sys.argv[1])
+          if path.is_absolute() or path.parts[:2] != ("requests", "live_snapshot") or ".." in path.parts or path.suffix != ".json":
+              raise SystemExit("replay_request must be one existing requests/live_snapshot/*.json path")
+          if not path.exists():
+              raise SystemExit("replay_request does not exist in execution-time main")
+          obj = json.loads(path.read_text(encoding="utf-8"))
+          trade = obj.get("trade_event")
+          if str(obj.get("request_type") or "").upper() != "STATE_SYNC_ONLY":
+              raise SystemExit("replay_request must be STATE_SYNC_ONLY")
+          if not isinstance(trade, dict) or str(trade.get("execution_status") or "").upper() != "EXECUTED":
+              raise SystemExit("replay_request must contain an EXECUTED trade_event")
+          PY
+            python scripts/refresh_gate.py --guard-request "$request_files"
+            python scripts/process_state_sync_request.py "$request_files"
+            processed=true
+          elif [ -n "${EVENT_BEFORE:-}" ] && git cat-file -e "${EVENT_BEFORE}^{commit}" 2>/dev/null; then
             files=$(git diff --name-only "${EVENT_BEFORE}" "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
           else
             files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
