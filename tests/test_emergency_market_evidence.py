@@ -163,6 +163,41 @@ class EmergencyMarketEvidenceTests(unittest.TestCase):
             self.assertFalse(event["execution_revalidation_required"])
             self.assertEqual(event["external_evidence_scope"], "FORMAL_DECISION")
 
+    def test_connected_quote_origin_is_decision_only_without_url(self):
+        with TemporaryDirectory() as d:
+            root = self._root(d)
+            req = self._request(root, source="CHATGPT_CONNECTED_MARKET_DATA",
+                                connector_identity="longbridge", operation="quote")
+            row = req["rows"][0]
+            row.pop("provider_source_url")
+            row["source_type"] = "CONNECTED_MARKET_DATA"
+            result = validate_external_market_evidence(
+                req, root,
+                decision_time="2026-09-09T10:25:00+08:00",
+                availability_time="2026-09-09T10:25:10+08:00",
+                ingress_path="requests/live_snapshot/emergency-1.json",
+            )
+            self.assertEqual(result["validation_status"], "PASS")
+            self.assertEqual(result["evidence_origin"], "CHATGPT_CONNECTED_MARKET_DATA")
+            self.assertEqual(result["connector_identity"], "longbridge")
+            self.assertEqual(result["operation"], "quote")
+            self.assertEqual(result["decision_evidence_eligibility"], "DECISION_EVIDENCE_ELIGIBLE")
+            self.assertEqual(result["execution_price_eligibility"], "EXECUTION_PRICE_INELIGIBLE")
+            self.assertTrue(result["execution_revalidation_required"])
+
+    def test_connected_quote_requires_registered_identity_and_operation(self):
+        with TemporaryDirectory() as d:
+            root = self._root(d)
+            req = self._request(root, source="CHATGPT_CONNECTED_MARKET_DATA",
+                                connector_identity="unknown", operation="quote")
+            with self.assertRaisesRegex(ValueError, "ORIGIN_NOT_REGISTERED"):
+                validate_external_market_evidence(
+                    req, root,
+                    decision_time="2026-09-09T10:25:00+08:00",
+                    availability_time="2026-09-09T10:25:10+08:00",
+                    ingress_path="requests/live_snapshot/emergency-1.json",
+                )
+
     def test_existing_request_without_evidence_remains_refresh_bearing(self):
         self.assertEqual(classify_live_snapshot_request({"request_type": "QUERY_TIME_REFRESH"}), "REFRESH_BEARING")
 
