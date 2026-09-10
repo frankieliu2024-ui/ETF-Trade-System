@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-10T22:45:23+08:00",
+  "generated_at": "2026-09-10T23:02:35+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 34491072194,
+  "run_id": 34492925241,
   "run_attempt": 1,
-  "head_sha": "de2d784fbcc86174a0204c1618ed2244f2d0ffea",
-  "main_head_sha": "ded0873ff8a614f8aca893b067ba850ed02a0988",
+  "head_sha": "c9d9ffe8af0c0780be2b424d6aa5007265cf331a",
+  "main_head_sha": "c9d9ffe8af0c0780be2b424d6aa5007265cf331a",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,15 +16,16 @@
     }
   ],
   "changed_files": [
-    "requests/report_delivery/20260910T224200_etf_system_review_run10.json"
+    "scripts/check_system_consistency.py",
+    "tests/test_case_mapping_consistency_convergence.py"
   ],
-  "commit_message": "notify: deliver 2026-09-10 22:42 ETF system review",
+  "commit_message": "fix: historical trade CASE consistency must honor explicit canonical ineligibility (#509)",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": false,
+    "head_is_current_main": true,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
