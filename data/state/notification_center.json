@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-10T10:35:19+08:00",
+  "updated_at": "2026-09-10T10:46:07+08:00",
   "last_status": "SENT",
-  "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【正式决策】ETF正式决策｜2026-09-10 10:20",
+  "last_type": "MARKET_VALUE_ALERT",
+  "last_title": "【市场异动】恒生科技指数（HSTECH）出现极端波动 -2.01%",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -4716,6 +4716,104 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-10T10:26:07+08:00"
+    },
+    {
+      "notification_id": "notification_8db4c24825d0a780a3f7",
+      "event_type": "APAC_OPEN_SIGNAL",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "apac-open-signal:2026-09-10:HSTECH:DOWN",
+      "related_decision_id": "",
+      "security_code": "HSTECH",
+      "security_name": "恒生科技指数",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股节点，检查本地传导和直接相关ETF自身反馈，不机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-10T10:46:05+08:00",
+      "sent_at": "2026-09-10T10:46:06+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-12T10:46:05+08:00",
+      "title": "【市场异动】恒生科技指数（HSTECH）实际开盘出现异常跳空",
+      "content": "### 核心结论\n- **节点**：亚太错位开盘异常\n- **触发对象**：恒生科技指数（HSTECH）\n- **实际开盘较前收**：-1.39%\n- **当前较前收**：-2.01%\n- **区域结构**：区域普遍偏弱\n- **数据质量**：覆盖4/4；触发判断使用PASS对象4/4；当前未发现需单列的数据质量降级。\n\n### 关键路径\n- **触发对象**：低开-1.39%后当前-2.01%，低开后继续走弱，开盘冲击扩大。\n- **区域对照**：其他市场对照：台湾加权指数（TWII）-0.70%、日经225指数（N225）-0.84%、韩国综合指数（KOSPI）-1.06%。\n\n### 对ETF系统的影响\n外部结构：恒生科技指数（HSTECH）的实际开盘异常仍需结合当前-2.01%和区域判断“区域普遍偏弱”继续验证是否延续。\n\n本地传导：A股同步反馈为上证指数（000001）-0.34%、科创50指数（000688）-0.32%、创业板指（399006）-0.20%；外部信号只有被A股自身价格结构接受，才可能改变当前ETF判断。\n\nETF自身反馈：直接相关的恒生科技ETF（513180）当前-1.61%；该外部事件只作为其观察证据，不能绕过ETF自身结构、相对强弱、风险收益和资本效率。\n\n机会判断：本通知不生成Trial/Confirm或卖出动作；只有外部结构、本地传导和ETF自身反馈共同改变正式判断时，才进入交易链。\n\n### 当前动作\n**把该事件纳入最近A股正式节点复核；不因单一海外/区域指数跳空机械买卖，重点看A股是否接受以及直接相关ETF自身反馈。**\n\n### 数据与边界\n- **触发对象行情时点（北京时间）**：2026-09-10 10:45:28\n- **亚太对象最新有效时点上限**：2026-09-10 10:45:28\n- **A股同步参考时点**：2026-09-10 10:34:06\n- **通知生成**：2026-09-10 10:46:05\n- **边界**：约0.8%的门槛只检查实际开盘价相对前收；开盘后的累计涨跌不回填成开盘异常。覆盖数量与数据质量分开表达，DEGRADED/延迟对象不得被包装成全部实时FRESH。",
+      "source": "overseas_context+CURRENT",
+      "confirmation_context": {
+        "market": "ASIA",
+        "market_date": "2026-09-10",
+        "direction": "DOWN",
+        "event_category": "APAC_OPEN_SIGNAL",
+        "fact_family": "APAC_OBJECT_DIRECTIONAL_SESSION",
+        "object_codes": [
+          "N225",
+          "KOSPI",
+          "TWII",
+          "HSTECH"
+        ],
+        "source_fact_ids": [
+          "2026-09-10:N225:2026-09-10T10:30:00+08:00",
+          "2026-09-10:KOSPI:2026-09-10T10:45:26+08:00",
+          "2026-09-10:TWII:2026-09-10T10:45:20+08:00",
+          "2026-09-10:HSTECH:2026-09-10T10:45:28+08:00"
+        ],
+        "session_node": "OPEN_SIGNAL",
+        "lead_code": "HSTECH",
+        "lead_open_gap_pct": -1.3884396227823559,
+        "lead_change_pct": -2.009143162194982,
+        "tone": "区域普遍偏弱",
+        "market_as_of_beijing": "2026-09-10T10:45:28+08:00",
+        "a_share_as_of_beijing": "2026-09-10T10:34:06+08:00",
+        "event_family_id": "ASIA:2026-09-10:OPEN_SIGNAL:HSTECH:APAC_OPEN_SIGNAL:DOWN"
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-09-10T10:46:06+08:00"
+    },
+    {
+      "notification_id": "notification_ec77eda561b15b7fdee4",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:asia:2026-09-10:HSTECH:DOWN:EXTREME:2026-09-10T10:45:28+08:00",
+      "related_decision_id": "",
+      "security_code": "HSTECH",
+      "security_name": "恒生科技指数",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-10T10:46:06+08:00",
+      "sent_at": "2026-09-10T10:46:07+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-12T10:46:06+08:00",
+      "title": "【市场异动】恒生科技指数（HSTECH）出现极端波动 -2.01%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：恒生科技指数（HSTECH）\n- **较前收**：-2.01%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n恒生科技指数（HSTECH）属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核恒生科技ETF（513180）的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-10 10:45:28\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
+      "source": "data/state/overseas_context.json",
+      "confirmation_context": {
+        "market": "ASIA",
+        "market_date": "2026-09-10",
+        "direction": "DOWN",
+        "event_category": "EXTREME",
+        "fact_family": "",
+        "object_codes": [
+          "HSTECH"
+        ],
+        "phase_metric_change_pct": -2.009143162194982,
+        "sudden_change_pct": null,
+        "event_magnitude_pct": 2.009143162194982,
+        "market_as_of_beijing": "2026-09-10T10:45:28+08:00",
+        "source_fact_id": "2026-09-10:HSTECH:EXTREME:DOWN:2026-09-10T10:45:28+08:00",
+        "session": "SESSION",
+        "event_family_id": "ASIA:2026-09-10:SESSION:HSTECH:EXTREME:DOWN"
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-09-10T10:46:07+08:00"
     }
   ],
   "recent": [
@@ -6950,9 +7048,45 @@
       },
       "notification_id": "notification_2b0e9afa0d863dd10e8e",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "apac-open-signal:2026-09-10:HSTECH:DOWN",
+      "type": "APAC_OPEN_SIGNAL",
+      "title": "【市场异动】恒生科技指数（HSTECH）实际开盘出现异常跳空",
+      "content": "### 核心结论\n- **节点**：亚太错位开盘异常\n- **触发对象**：恒生科技指数（HSTECH）\n- **实际开盘较前收**：-1.39%\n- **当前较前收**：-2.01%\n- **区域结构**：区域普遍偏弱\n- **数据质量**：覆盖4/4；触发判断使用PASS对象4/4；当前未发现需单列的数据质量降级。\n\n### 关键路径\n- **触发对象**：低开-1.39%后当前-2.01%，低开后继续走弱，开盘冲击扩大。\n- **区域对照**：其他市场对照：台湾加权指数（TWII）-0.70%、日经225指数（N225）-0.84%、韩国综合指数（KOSPI）-1.06%。\n\n### 对ETF系统的影响\n外部结构：恒生科技指数（HSTECH）的实际开盘异常仍需结合当前-2.01%和区域判断“区域普遍偏弱”继续验证是否延续。\n\n本地传导：A股同步反馈为上证指数（000001）-0.34%、科创50指数（000688）-0.32%、创业板指（399006）-0.20%；外部信号只有被A股自身价格结构接受，才可能改变当前ETF判断。\n\nETF自身反馈：直接相关的恒生科技ETF（513180）当前-1.61%；该外部事件只作为其观察证据，不能绕过ETF自身结构、相对强弱、风险收益和资本效率。\n\n机会判断：本通知不生成Trial/Confirm或卖出动作；只有外部结构、本地传导和ETF自身反馈共同改变正式判断时，才进入交易链。\n\n### 当前动作\n**把该事件纳入最近A股正式节点复核；不因单一海外/区域指数跳空机械买卖，重点看A股是否接受以及直接相关ETF自身反馈。**\n\n### 数据与边界\n- **触发对象行情时点（北京时间）**：2026-09-10 10:45:28\n- **亚太对象最新有效时点上限**：2026-09-10 10:45:28\n- **A股同步参考时点**：2026-09-10 10:34:06\n- **通知生成**：2026-09-10 10:46:05\n- **边界**：约0.8%的门槛只检查实际开盘价相对前收；开盘后的累计涨跌不回填成开盘异常。覆盖数量与数据质量分开表达，DEGRADED/延迟对象不得被包装成全部实时FRESH。",
+      "source": "overseas_context+CURRENT",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股节点，检查本地传导和直接相关ETF自身反馈，不机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-09-10T10:46:06+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_8db4c24825d0a780a3f7",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:asia:2026-09-10:HSTECH:DOWN:EXTREME:2026-09-10T10:45:28+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】恒生科技指数（HSTECH）出现极端波动 -2.01%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：恒生科技指数（HSTECH）\n- **较前收**：-2.01%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n恒生科技指数（HSTECH）属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核恒生科技ETF（513180）的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-10 10:45:28\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
+      "source": "data/state/overseas_context.json",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-09-10T10:46:07+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_ec77eda561b15b7fdee4",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
-  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
+  "policy": "主动通知按新事实的决策价值判断，不按市场分类；当前事件族为开盘异常、快速重定价、极端波动、方向反转、显著分化。阈值适度放宽，重复控制依靠事件合并、冷却和实质升级识别；已管理候选不得阻塞其他未管理候选。",
+  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
