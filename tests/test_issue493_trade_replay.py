@@ -19,11 +19,13 @@ class Issue493TradeReplayTests(unittest.TestCase):
 
     def test_workflow_refreshes_execution_baseline_before_state_sync(self):
         workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
-        marker = "Process optional broker/dashboard state sync"
-        section = workflow[workflow.index(marker):workflow.index("Build objective intraday market delta")]
+        acceptance_workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/system-consistency.yml").read_text(encoding="utf-8")
+        section = workflow
         self.assertIn("git fetch origin main", section)
         self.assertIn("git reset --hard origin/main", section)
         self.assertIn("preserving only the triggering request payload", section)
+        self.assertIn("20260910_1340_user_confirmed_dual_sell.json", acceptance_workflow)
+        self.assertIn("20260910_1341_user_confirmed_301689_sell.json", acceptance_workflow)
 
 
 if __name__ == "__main__":
