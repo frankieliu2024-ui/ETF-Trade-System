@@ -319,8 +319,45 @@ jobs:
           trade = obj.get("trade_event")
           if str(obj.get("request_type") or "").upper() != "STATE_SYNC_ONLY":
               raise SystemExit("replay_request must be STATE_SYNC_ONLY")
-          if not isinstance(trade, dict) or str(trade.get("execution_status") or "").upper() != "EXECUTED":
-              raise SystemExit("replay_request must contain an EXECUTED trade_event")
+          if not isinstance(trade, dict):
+              raise SystemExit("replay_request must contain a trade_event")
+          # Historical durable requests may predate embedded execution_status.
+          # Admission still requires the same canonical EXECUTED event that the
+          # state-sync owner will consume; the request itself is never rewritten.
+          embedded_status = trade.get("execution_status")
+          if embedded_status is not None and str(embedded_status).upper() != "EXECUTED":
+              raise SystemExit("replay_request embedded trade_event is not EXECUTED")
+          event_id = str(trade.get("event_id") or "").strip()
+          if not event_id or any(part in event_id for part in ("/", "\\\\", "..")):
+              raise SystemExit("replay_request trade_event.event_id is invalid")
+          canonical_path = Path("events/trades") / f"{event_id}.json"
+          if canonical_path.parent != Path("events/trades") or not canonical_path.is_file():
+              raise SystemExit("canonical trade event is missing")
+          canonical = json.loads(canonical_path.read_text(encoding="utf-8"))
+          if str(canonical.get("execution_status") or "").upper() != "EXECUTED":
+              raise SystemExit("canonical trade event is not EXECUTED")
+          def text_value(data, key):
+              value = data.get(key)
+              return None if value in (None, "") else str(value).strip().upper()
+          def number_value(data, key):
+              value = data.get(key)
+              return None if value in (None, "") else f"{float(value):.10f}"
+          def time_value(data):
+              for key in ("confirmed_at_beijing", "executed_at", "execution_time", "trade_time"):
+                  value = data.get(key)
+                  if value not in (None, ""):
+                      return str(value).strip()
+              return None
+          for key in ("event_id", "idempotency_key", "code", "side"):
+              if trade.get(key) not in (None, "") and trade.get(key) != canonical.get(key):
+                  raise SystemExit(f"canonical trade event mismatch: {key}")
+          for key in ("quantity", "price"):
+              if number_value(trade, key) != number_value(canonical, key):
+                  raise SystemExit(f"canonical trade event mismatch: {key}")
+          if time_value(trade) is None or time_value(trade) != time_value(canonical):
+              raise SystemExit("canonical trade event mismatch: time")
+          if text_value(trade, "asset_type") and text_value(trade, "asset_type") != text_value(canonical, "asset_type"):
+              raise SystemExit("canonical trade event mismatch: asset_type")
           PY
             python scripts/refresh_gate.py --guard-request "$request_files"
             python scripts/process_state_sync_request.py "$request_files"
