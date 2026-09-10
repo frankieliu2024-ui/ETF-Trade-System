@@ -1,27 +1,31 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-10T11:15:39+08:00",
+  "generated_at": "2026-09-10T11:18:44+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 34432588705,
-  "run_attempt": 2,
-  "head_sha": "64c8758041c5c7490f26c9e358e85944fde364ed",
-  "main_head_sha": "9129550f3305957ef63da4dacebbcb5f7e14da25",
+  "run_id": 34432812267,
+  "run_attempt": 1,
+  "head_sha": "345957ac11a47b6e544fa10948cfa8f297e7d4d5",
+  "main_head_sha": "a0a37f37540b08a8fe5db34d4953c2854495566b",
   "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
       "job": "watchdog",
-      "step": "Persist bounded self-healing state and deterministic repairs",
-      "number": 12
+      "step": "Escalate persistent or structural failure",
+      "number": 13
     }
   ],
   "changed_files": [
-    "data/state/notification_center.json"
+    "data/state/overseas_context.json",
+    "data/state/overseas_context_previous.json",
+    "data/state/overseas_runtime_health.json",
+    "data/state/query_context.json",
+    "data/state/us_extended_hours_context.json"
   ],
-  "commit_message": "state: record notification and execution reconciliation",
+  "commit_message": "data: refresh overseas pulse and notifications",
   "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
