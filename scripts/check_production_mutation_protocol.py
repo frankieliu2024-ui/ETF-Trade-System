@@ -212,7 +212,7 @@ def run(root: Path = ROOT) -> dict:
     check(
         "v19:risk_tier_classifier",
         cfg.get("schema_version") == "1.7"
-        and normative := (cfg.get("normative_contract") or {}).get("version") == "V1.9"
+        and (cfg.get("normative_contract") or {}).get("version") == "V1.9"
         and set(tiers) == expected_tiers
         and tier_cfg.get("unknown_defaults_to") == "TIER_3"
         and set(classifier) >= {"docs_prompts_display", "single_owner_deterministic_runtime", "canonical_state_or_notification", "account_trade_pit_authority_topology"},
