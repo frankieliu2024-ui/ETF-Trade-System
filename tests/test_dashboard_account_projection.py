@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 from scripts import process_state_sync_request as process_sync
 from scripts import sync_formal_files as formal_sync
-from scripts.build_stock_context import active_account_asset_codes
+from scripts.build_stock_context import active_account_asset_codes, build_managed_position_projection
 from scripts import build_stock_context as stock_context_builder
 from scripts import build_account_stock_market_legacy as stock_market_builder
 POSITIONS=[
@@ -188,4 +188,30 @@ class DashboardAccountProjectionTests(unittest.TestCase):
   }
   error=process_sync.validate_current_lifecycle_contract(review["lifecycle"],self.account)
   self.assertEqual(error,"")
+
+ def test_managed_position_projection_includes_all_positive_etfs_and_stocks_without_asset_type(self):
+  projection=build_managed_position_projection(self.root,self.account)
+  rows=projection["positions"]
+  self.assertEqual(len(rows),9)
+  self.assertEqual({x["code"] for x in rows if x["asset_class"]=="ETF"}, {"561980","588000","159941","159781","159326","518880"})
+  self.assertEqual({x["code"] for x in rows if x["asset_class"]=="ACCOUNT_STOCK"}, {"300750","601138","301689"})
+  self.assertEqual(len({x["code"] for x in rows}),9)
+  self.assertEqual(projection["opportunity_scope"],"ETF_UNIVERSE_ONLY")
+
+ def test_managed_position_lifecycle_requires_one_entry_per_current_holding(self):
+  complete={f"{p['name']}（{p['code']}）":"持有管理；证据：当前账户事实；动作：继续管理" for p in POSITIONS}
+  with patch.object(process_sync,"ROOT",self.root):
+   self.assertEqual(process_sync.validate_managed_position_lifecycle(complete,self.account),"")
+   incomplete=dict(list(complete.items())[:-1])
+   error=process_sync.validate_managed_position_lifecycle(incomplete,self.account,"formal_decision.lifecycle")
+  self.assertIn("missing current managed positions",error)
+
+ def test_formal_dashboard_renders_each_managed_position_on_its_own_line(self):
+  lifecycle={f"{p['name']}（{p['code']}）":"持有管理；证据：当前账户事实；动作：继续管理" for p in POSITIONS}
+  decision={"lifecycle":lifecycle,"risk_permission":"保持","main_candidate":"无新的主候选。"}
+  with patch.object(process_sync,"ROOT",self.root):
+   rendered=process_sync.build_dashboard_block(self.account,decision,{"interaction_scenario":"INTRADAY"})
+  for p in POSITIONS:
+   self.assertIn(f"- {p['name']}（{p['code']}）：",rendered)
+
 if __name__=="__main__": unittest.main()
