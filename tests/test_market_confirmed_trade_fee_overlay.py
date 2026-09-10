@@ -31,6 +31,7 @@ class ConfirmedTradeFeeOverlayTests(unittest.TestCase):
         return {
             "confirmed_at_beijing": "2026-08-27T10:08:43+08:00",
             "code": "515880",
+            "asset_type": "ETF",
             "side": "BUY",
             "quantity": 7400,
             "price": 0.671,

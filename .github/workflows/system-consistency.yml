@@ -241,6 +241,22 @@ jobs:
           for request in "${correction_requests[@]}"; do
             python scripts/apply_trade_fact_correction.py "$request"
           done
+          # Replay durable confirmed-trade ingress generically in chronological
+          # order. Incident-specific filenames remain regression fixtures only.
+          trade_requests=()
+          for request in requests/live_snapshot/*.json; do
+            if [ -f "$request" ] && python - "$request" <<'PY'
+          import json, sys
+          obj = json.load(open(sys.argv[1], encoding="utf-8"))
+          trade = obj.get("trade_event")
+          is_durable_state_sync = str(obj.get("request_type") or "").upper() == "STATE_SYNC_ONLY"
+          raise SystemExit(0 if is_durable_state_sync and isinstance(trade, dict) and str(trade.get("execution_status", "EXECUTED")).upper() == "EXECUTED" else 1)
+          PY
+            then trade_requests+=("$request"); fi
+          done
+          printf '%s\n' "${trade_requests[@]}" | sort | while IFS= read -r request; do
+            [ -n "$request" ] && python scripts/process_state_sync_request.py "$request"
+          done
           python scripts/process_state_sync_request.py requests/live_snapshot/candidate_unrecoverable_review.json
           # Re-run the existing formal projection owner in the ephemeral candidate
           # tree so candidate acceptance validates the same writer path that will
