@@ -216,13 +216,13 @@ def fetch_tencent_many(stocks: list[dict]) -> dict[str, dict]:
 
 def build() -> dict:
     stock_context = read_json(STOCK_CONTEXT, {})
-    stocks = stock_context.get("default_stock_layer", {}).get("ipo_base_stocks", []) or []
+    stocks = stock_context.get("default_stock_layer", {}).get("monitored_account_stocks", []) or []
     result = {
         "generated_at": now_utc(),
         "source_stock_context": "data/state/stock_context.json",
         "objects": {},
         "quality_status": "EMPTY" if not stocks else "PASS",
-        "decision_boundary": "仅监测当前账户已确认打新底仓个股的行情事实；不把个股行情单独转化为ETF交易动作。",
+        "decision_boundary": "仅监测当前账户已确认来源的默认个股行情事实；不把个股行情单独转化为ETF交易动作。",
     }
     if not stocks:
         return result
