@@ -15,7 +15,7 @@ try:
 except ModuleNotFoundError:
     from scripts.emergency_market_evidence import validate_external_market_evidence
 try:
-    from build_stock_context import active_account_asset_codes, first, normalize_code, position_metric
+    from build_stock_context import active_account_asset_codes, build_managed_position_projection, first, normalize_code, position_metric
 except ModuleNotFoundError:
     from scripts.build_stock_context import active_account_asset_codes, first, normalize_code, position_metric
 from sync_formal_files import sync_formal_files
@@ -319,7 +319,9 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
     lines += ["", f"持仓ETF：{'、'.join(display_name(p) for p in etfs) or '无'}。", f"账户个股：{'、'.join(display_name(p) for p in stocks) or '无'}。", f"观察ETF：{'、'.join(observed) or '无'}。"]
     if decision:
         title = "最近一次正式收盘复盘" if scenario == "POST_CLOSE_REVIEW" else "最近一次正式盘中决策"
-        lines += ["", f"### {title}", "", f"- 风险许可：{decision.get('risk_permission','未提供')}", f"- 生命周期：{decision.get('lifecycle','未提供')}", f"- 唯一主候选：{decision.get('main_candidate','无新的主候选。')}", f"- 金额与动作：{decision.get('amount_action','未提供')}", f"- 最大风险或0元主因：{decision.get('decisive_reason','未提供')}", f"- 决策数据时点：{decision.get('data_as_of_beijing','未提供')}"]
+        lifecycle_lines = _managed_lifecycle_lines(decision.get("lifecycle"), account)
+        lifecycle_block = ["- 生命周期："] + lifecycle_lines if lifecycle_lines else [f"- 生命周期：{decision.get('lifecycle','未提供')}"]
+        lines += ["", f"### {title}", "", f"- 风险许可：{decision.get('risk_permission','未提供')}", *lifecycle_block, f"- 唯一主候选：{decision.get('main_candidate','无新的主候选。')}", f"- 金额与动作：{decision.get('amount_action','未提供')}", f"- 最大风险或0元主因：{decision.get('decisive_reason','未提供')}", f"- 决策数据时点：{decision.get('data_as_of_beijing','未提供')}"], f"- 唯一主候选：{decision.get('main_candidate','无新的主候选。')}", f"- 金额与动作：{decision.get('amount_action','未提供')}", f"- 最大风险或0元主因：{decision.get('decisive_reason','未提供')}", f"- 决策数据时点：{decision.get('data_as_of_beijing','未提供')}"]
     else:
         lines += ["", "最近一次正式决策未随本次同步请求提供；脚本不自行推断，保留人工/ChatGPT正式决议。"]
     lines += ["", f"同步请求：`{request.get('request_id','')}`。"]
@@ -560,6 +562,11 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     contract_error = validate_formal_decision_contract(decision)
     if contract_error:
         raise ValueError(f"invalid formal decision contract: {contract_error}")
+    account_for_lifecycle = _load_account_for_lifecycle_validation()
+    managed_error = validate_managed_position_lifecycle(decision.get("lifecycle"), account_for_lifecycle, "formal_decision.lifecycle")
+    if managed_error:
+        raise ValueError(f"invalid formal decision managed-position contract: {managed_error}")
+    managed_projection = build_managed_position_projection(ROOT, account_for_lifecycle)
     current_path = ROOT / "data/state/CURRENT.json"
     current = load_json(current_path) if current_path.exists() else {}
     market_date = str(request.get("market_date") or current.get("market_date") or "")
@@ -657,7 +664,7 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     lifecycle = str(decision.get("lifecycle") or "")
     hypothesis_closed = "退出" in lifecycle or str(decision.get("hypothesis_status") or "").upper() == "CLOSED"
     comparison = build_comparison_snapshot(snapshot) if snapshot else {"items": [], "interpretation_rule": "决策时点无可用历史快照，不使用未来数据补齐。"}
-    event = {"event_type": "FORMAL_DECISION", "decision_id": decision_id, "fingerprint": fingerprint, "market_date": market_date, "decision_time_beijing": decision_time, "decision_effective_at_beijing": str(decision.get("decision_effective_at_beijing") or decision.get("issued_at_beijing") or ""), "decision_effective_ordering": str(decision.get("decision_effective_ordering") or ""), "timing_quality": str(decision.get("timing_quality") or ""), "timing_provenance": str(decision.get("timing_provenance") or ""), "interaction_scenario": request.get("interaction_scenario"), "candidate_code": code, "candidate_name": name, "hypothesis_id": hypothesis_id, "hypothesis_link_status": hypothesis_link_status, "hypothesis_closed": hypothesis_closed, "price_at_decision": price_at_decision, "price_as_of_beijing": price_as_of, "price_source_snapshot": snapshot_rel, "price_source": price_source, "point_in_time_status": pit_status, "comparison_snapshot": comparison, "formal_decision": decision, "read_only_research_event": True, "decision_boundary": "只保存ChatGPT已经形成的正式决策和决策时点可见证据。禁止使用决策时点之后的行情回填价格或比较快照；研究留痕用于验证候选选择、假设生命周期、判断与执行质量，不自行推导交易权限。", "market_evidence_type": "EMERGENCY_EXTERNAL_MARKET_EVIDENCE" if external_evidence else "CANONICAL_SNAPSHOT", "external_evidence_path": external_evidence["path"] if external_evidence else "", "external_evidence_id": external_evidence["evidence_id"] if external_evidence else "", "external_evidence_validation": external_evidence["validation_status"] if external_evidence else "",
+    event = {"event_type": "FORMAL_DECISION", "decision_id": decision_id, "fingerprint": fingerprint, "market_date": market_date, "decision_time_beijing": decision_time, "decision_effective_at_beijing": str(decision.get("decision_effective_at_beijing") or decision.get("issued_at_beijing") or ""), "decision_effective_ordering": str(decision.get("decision_effective_ordering") or ""), "timing_quality": str(decision.get("timing_quality") or ""), "timing_provenance": str(decision.get("timing_provenance") or ""), "interaction_scenario": request.get("interaction_scenario"), "candidate_code": code, "candidate_name": name, "hypothesis_id": hypothesis_id, "hypothesis_link_status": hypothesis_link_status, "hypothesis_closed": hypothesis_closed, "price_at_decision": price_at_decision, "price_as_of_beijing": price_as_of, "price_source_snapshot": snapshot_rel, "price_source": price_source, "point_in_time_status": pit_status, "comparison_snapshot": comparison, "formal_decision": decision, "managed_position_sell_review": managed_projection, "read_only_research_event": True, "decision_boundary": "只保存ChatGPT已经形成的正式决策和决策时点可见证据。禁止使用决策时点之后的行情回填价格或比较快照；研究留痕用于验证候选选择、假设生命周期、判断与执行质量，不自行推导交易权限。", "market_evidence_type": "EMERGENCY_EXTERNAL_MARKET_EVIDENCE" if external_evidence else "CANONICAL_SNAPSHOT", "external_evidence_path": external_evidence["path"] if external_evidence else "", "external_evidence_id": external_evidence["evidence_id"] if external_evidence else "", "external_evidence_validation": external_evidence["validation_status"] if external_evidence else "",
         "external_evidence_scope": external_evidence.get("evidence_scope", "") if external_evidence else "",
         "decision_evidence_eligibility": external_evidence.get("decision_evidence_eligibility", "") if external_evidence else "",
         "execution_price_eligibility": external_evidence.get("execution_price_eligibility", "") if external_evidence else "",
@@ -748,7 +755,8 @@ def _validate_formal_lifecycle(value: object, object_name: str = "lifecycle") ->
 
 def _load_account_for_lifecycle_validation() -> dict:
     """Load the canonical account fact for current lifecycle validation."""
-    return load_json(ACCOUNT) if ACCOUNT.exists() else {}
+    account_path = ROOT / "data" / "state" / "account_fact.json"
+    return load_json(account_path) if account_path.exists() else {}
 
 
 def _lifecycle_object_code(security: object) -> str:
@@ -758,6 +766,58 @@ def _lifecycle_object_code(security: object) -> str:
 
 def _is_historical_lifecycle_explanation(text: str) -> bool:
     return any(marker in text for marker in ("历史", "曾", "来源", "解释", "原", "previous", "historical"))
+
+
+def _managed_position_code(key: object, managed: list[dict]) -> str:
+    text = str(key or "")
+    for item in managed:
+        if item["code"] in text or item["name"] in text:
+            return item["code"]
+    return ""
+
+
+def validate_managed_position_lifecycle(value: object, account: dict, object_name: str = "lifecycle") -> str:
+    """Require one explicit lifecycle line/entry for every positive account position."""
+    managed = build_managed_position_projection(ROOT, account or {}).get("positions", [])
+    if not managed:
+        return ""
+    covered: set[str] = set()
+    if isinstance(value, dict):
+        for key in value:
+            code = _managed_position_code(key, managed)
+            if code:
+                covered.add(code)
+    elif isinstance(value, str):
+        lines = [line.strip() for line in value.splitlines() if line.strip()]
+        for line in lines:
+            matches = [item["code"] for item in managed if item["code"] in line]
+            if len(matches) == 1:
+                covered.add(matches[0])
+            elif len(matches) > 1:
+                return f"{object_name} must provide one separate line per managed position"
+    missing = [f"{item['name']}（{item['code']}）" for item in managed if item["code"] not in covered]
+    if missing:
+        return f"{object_name} is missing current managed positions: {', '.join(missing)}"
+    return ""
+
+
+def _managed_lifecycle_lines(value: object, account: dict) -> list[str]:
+    managed = build_managed_position_projection(ROOT, account or {}).get("positions", [])
+    if not managed:
+        return []
+    actions: dict[str, str] = {}
+    if isinstance(value, dict):
+        for key, action in value.items():
+            code = _managed_position_code(key, managed)
+            if code:
+                actions[code] = str(action or "").strip()
+    elif isinstance(value, str):
+        for line in value.splitlines():
+            matches = [item["code"] for item in managed if item["code"] in line]
+            if len(matches) == 1:
+                code = matches[0]
+                actions[code] = line.split("：", 1)[1].strip() if "：" in line else line
+    return [f"- {item['name']}（{item['code']}）：{actions.get(item['code'], '事实不足：未提供本轮持仓动作')}" for item in managed]
 
 
 def validate_current_lifecycle_contract(value: object, account: dict, object_name: str = "lifecycle") -> str:
@@ -970,6 +1030,11 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     lifecycle_error = validate_current_lifecycle_contract(review.get("lifecycle"), account)
     if lifecycle_error:
         raise ValueError(f"invalid formal review lifecycle contract: {lifecycle_error}")
+    review_lifecycle = review.get("holding_actions") or review.get("lifecycle")
+    managed_error = validate_managed_position_lifecycle(review_lifecycle, account, "formal_review.managed_positions")
+    if managed_error:
+        raise ValueError(f"invalid formal review managed-position contract: {managed_error}")
+    managed_projection = build_managed_position_projection(ROOT, account)
     market_date = str(review.get("market_date") or request.get("market_date") or account.get("last_confirmed_market_date") or "")
     if not market_date:
         raise RuntimeError("POST_CLOSE_REVIEW requires market_date")
@@ -997,7 +1062,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     if prior_time and incoming_time and incoming_time < prior_time:
         return True, True
     review_time = (incoming_time or datetime.now(SHANGHAI)).isoformat(timespec="seconds")
-    event = {"event_type": "FORMAL_POST_CLOSE_REVIEW", "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "review": review, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
+    event = {"event_type": "FORMAL_POST_CLOSE_REVIEW", "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "review": review, "managed_position_sell_review": managed_projection, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
     event["reviewed_at_beijing"] = review_time
     event_path.parent.mkdir(parents=True, exist_ok=True)
     atomic_json_write(event_path, event)
