@@ -32,15 +32,6 @@ def _remove_error(report: dict, prefix: str) -> None:
 
 
 def _normalize_async_context_freshness(report: dict) -> None:
-    """Accept valid asynchronous query/decision build clocks.
-
-    The standalone query and decision contexts are rebuildable artifacts with
-    independent build times. Their frozen build-time freshness labels may
-    legitimately differ when the same underlying snapshot crosses a freshness
-    threshold between builds. Remove only that false cross-artifact hard error
-    after proving each artifact's own freshness calculation and the canonical
-    snapshot identity are independently valid.
-    """
     checks = report.get("checks") or []
     target = next((x for x in checks if x.get("name") == "dynamic_freshness:query_decision_aligned"), None)
     if not target or target.get("status") != "FAIL":
@@ -48,28 +39,14 @@ def _normalize_async_context_freshness(report: dict) -> None:
     query = next((x for x in checks if x.get("name") == "dynamic_freshness:query_recalculated"), None)
     decision = next((x for x in checks if x.get("name") == "dynamic_freshness:decision_recalculated"), None)
     snapshot = next((x for x in checks if x.get("name") == "decision:query_decision_current_aligned"), None)
-    if not query or query.get("status") != "PASS":
-        return
-    if not decision or decision.get("status") != "PASS":
-        return
-    if not snapshot or snapshot.get("status") != "PASS":
+    if not query or query.get("status") != "PASS" or not decision or decision.get("status") != "PASS" or not snapshot or snapshot.get("status") != "PASS":
         return
     target["status"] = "PASS"
-    target["detail"] = (
-        f"asynchronous_build_clocks allowed; {target.get('detail', '')}; "
-        "query/decision freshness self-checks PASS and snapshot identity PASS"
-    )
+    target["detail"] = f"asynchronous_build_clocks allowed; {target.get('detail', '')}; query/decision freshness self-checks PASS and snapshot identity PASS"
     _remove_error(report, "dynamic_freshness:query_decision_aligned:")
 
 
 def _normalize_us_phase_freshness(report: dict) -> None:
-    """Validate the objects that are live in the current US market phase.
-
-    NDX/SOX are cash-session indices. During PRE/POST they are legitimate
-    SESSION_REFERENCE facts and must not be forced to look like live extended-
-    hours quotes. QQQ/SOXX are the live extended-hours evidence in those phases.
-    REGULAR remains strict on direct NDX/SOX freshness.
-    """
     target = next((x for x in report.get("checks", []) if x.get("name") == "us_extended:live_freshness"), None)
     if not target or target.get("status") != "FAIL":
         return
@@ -113,11 +90,7 @@ def _normalize_us_phase_freshness(report: dict) -> None:
         record = objects.get(symbol) or {}
         latest = record.get("latest") or {}
         stamp = latest.get("timestamp")
-        if stamp is None:
-            return
-        if str(record.get("current_market_phase") or "") != phase:
-            return
-        if str(record.get("quality_status") or "").upper() not in {"PASS", "FRESH"}:
+        if stamp is None or str(record.get("current_market_phase") or "") != phase or str(record.get("quality_status") or "").upper() not in {"PASS", "FRESH"}:
             return
         ages.append(max(0, int((now_utc - datetime.fromtimestamp(int(stamp), timezone.utc)).total_seconds())))
     if not ages or max(ages) > fresh_limit:
@@ -128,21 +101,12 @@ def _normalize_us_phase_freshness(report: dict) -> None:
 
 
 def _normalize_a_share_off_window_market_date(report: dict) -> None:
-    """Separate current runtime-attempt date from the last valid A-share fact.
-
-    Before the new A-share session opens (or after its capture window), runtime
-    health can truthfully say today's session gate was skipped while CURRENT and
-    its snapshot still point to the previous valid close. That is not a market-
-    date contradiction if the preserved snapshot identity is unchanged.
-    """
     target = next((x for x in report.get("checks", []) if x.get("name") == "a_share_runtime:market_date_alignment"), None)
     if not target or target.get("status") != "FAIL":
         return
     runtime = _read_json("data/state/runtime_health.json")
     current = _read_json("data/state/CURRENT.json")
-    if str(runtime.get("status") or "").upper() != "SKIPPED":
-        return
-    if str(runtime.get("failure_stage") or "") != "session_gate" or str(runtime.get("reason") or "") != "outside_a_share_capture_window":
+    if str(runtime.get("status") or "").upper() != "SKIPPED" or str(runtime.get("failure_stage") or "") != "session_gate" or str(runtime.get("reason") or "") != "outside_a_share_capture_window":
         return
     if str(current.get("node_status") or "").upper() != "READY" or str(current.get("latest_valid_node") or "").lower() != "close":
         return
@@ -168,25 +132,13 @@ def _normalize_a_share_off_window_market_date(report: dict) -> None:
 
 
 def _normalize_stock_market_time_alignment(report: dict) -> None:
-    """Remove only the false post-close stock timing warning.
-
-    The 900-second alignment requirement remains unchanged for active-session
-    comparisons. A larger gap is accepted only when CURRENT is a close node,
-    every account-stock quote is a same-trading-day OUTSIDE_SESSION PASS fact,
-    and therefore the provider timestamp correctly represents the last legal
-    market quote rather than a stale live quote.
-    """
     current = _read_json("data/state/CURRENT.json")
     stock_market = _read_json("data/state/stock_market_context.json")
     if str(current.get("latest_valid_node") or "").lower() != "close":
         return
     market_date = str(current.get("market_date") or "")
     items = [item for item in (stock_market.get("objects") or {}).values() if isinstance(item, dict)]
-    if not market_date or not items:
-        return
-    if not all(str(item.get("quality_status") or "").upper() == "PASS" for item in items):
-        return
-    if not all(str(item.get("market_phase") or "").upper() == "OUTSIDE_SESSION" for item in items):
+    if not market_date or not items or not all(str(item.get("quality_status") or "").upper() == "PASS" for item in items) or not all(str(item.get("market_phase") or "").upper() == "OUTSIDE_SESSION" for item in items):
         return
     try:
         stock_dts = [datetime.fromisoformat(str(item["as_of_beijing"]).replace("Z", "+00:00")) for item in items]
@@ -207,24 +159,15 @@ def _normalize_stock_market_time_alignment(report: dict) -> None:
 
 
 def _normalize_idempotent_close_skip(report: dict) -> None:
-    """Accept only a proven idempotent close skip as healthy runtime state."""
     runtime = _read_json("data/state/runtime_health.json")
     current = _read_json("data/state/CURRENT.json")
-    if str(runtime.get("status") or "").upper() != "SKIPPED":
+    if str(runtime.get("status") or "").upper() != "SKIPPED" or str(runtime.get("reason") or "") != "close_already_recorded":
         return
-    if str(runtime.get("reason") or "") != "close_already_recorded":
-        return
-    if str(current.get("node_status") or "").upper() != "READY":
-        return
-    if str(current.get("latest_valid_node") or "").lower() != "close":
+    if str(current.get("node_status") or "").upper() != "READY" or str(current.get("latest_valid_node") or "").lower() != "close":
         return
     market_date = str(current.get("market_date") or "")
     latest_snapshot = str(current.get("latest_snapshot") or "")
-    if not market_date or not latest_snapshot:
-        return
-    if str(runtime.get("market_date") or "") != market_date:
-        return
-    if str(runtime.get("latest_snapshot") or "") != latest_snapshot:
+    if not market_date or not latest_snapshot or str(runtime.get("market_date") or "") != market_date or str(runtime.get("latest_snapshot") or "") != latest_snapshot:
         return
     snapshot_path = ROOT / latest_snapshot
     if not snapshot_path.exists():
@@ -262,7 +205,7 @@ def _validate_formal_risk_precedence(report: dict) -> None:
         return
     _, formal_risk, source = max(candidates, key=lambda x: x[0])
     dashboard = (ROOT / "ETF当前状态_DASHBOARD.md").read_text(encoding="utf-8")
-    match = __import__("re").search(r"\|ETF策略风险率\|约?\s*([+-]?\d+(?:\.\d+)?)%", dashboard)
+    match = re.search(r"\|ETF策略风险率\|约?\s*([+-]?\d+(?:\.\d+)?)%", dashboard)
     e2e = _read_json("data/state/e2e_status.json")
     e2e_risk = ((e2e.get("components") or {}).get("risk") or {}).get("etf_strategy_risk_pct")
     dashboard_risk = float(match.group(1)) if match else None
@@ -341,14 +284,21 @@ def _validate_post_close_review_contract(report: dict, now=None) -> None:
         report.setdefault("errors", []).extend(f"post_close_review:{x}" for x in errors)
     _recount(report)
 def _case_mapping_required(current: dict, event: dict) -> bool:
-    """Require final CASE ownership only when the trade's review node is due."""
-    phase = str((current.get("data_freshness") or {}).get("market_phase") or current.get("market_phase") or "").upper()
-    node = str(current.get("latest_valid_node") or "").lower()
-    if "POST_CLOSE" in phase or phase in {"CLOSED", "CLOSE", "OUTSIDE_SESSION"} or node in {"close", "1500"}:
-        return True
+    """Require CASE after canonical review completion or once the trade is prior-day."""
     event_date = str(event.get("confirmed_at_beijing") or event.get("executed_at_beijing") or event.get("event_id") or "")[:10]
     current_date = str(current.get("market_date") or "")
-    return not current_date or not event_date or event_date != current_date
+    if not event_date or not current_date:
+        return True
+    if event_date != current_date:
+        return True
+    review_path = ROOT / "events" / "reviews" / f"{event_date}.json"
+    if not review_path.exists():
+        return False
+    try:
+        review = json.loads(review_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    return str(review.get("event_type") or "").upper() in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_POST_CLOSE_REVIEW_UNAVAILABLE"}
 
 
 def _valid_unrecoverable_review_terminal(event_id: str, event: dict) -> bool:
@@ -371,17 +321,13 @@ def _valid_unrecoverable_review_terminal(event_id: str, event: dict) -> bool:
 
 
 def _canonical_case_mappings() -> dict[str, list[dict]]:
-    """Read trade-to-CASE ownership from canonical review facts only."""
     mappings: dict[str, list[dict]] = {}
     review_dir = ROOT / "events" / "reviews"
     if not review_dir.exists():
         return mappings
 
-    def add(trade_event_id: str, decision_id: str, case_id: str, security_code: str,
-            case_status: str = "", mapping_reason: str = "") -> None:
-        entry = {"trade_event_id": trade_event_id, "decision_id": decision_id,
-                 "case_id": case_id, "security_code": security_code,
-                 "case_status": case_status, "mapping_reason": mapping_reason}
+    def add(trade_event_id: str, decision_id: str, case_id: str, security_code: str, case_status: str = "", mapping_reason: str = "") -> None:
+        entry = {"trade_event_id": trade_event_id, "decision_id": decision_id, "case_id": case_id, "security_code": security_code, "case_status": case_status, "mapping_reason": mapping_reason}
         bucket = mappings.setdefault(trade_event_id, [])
         identity_keys = ("trade_event_id", "decision_id", "case_id", "security_code")
         identity = tuple(entry[key] for key in identity_keys)
@@ -393,9 +339,7 @@ def _canonical_case_mappings() -> dict[str, list[dict]]:
             trade_event_id = str(node.get("trade_event_id") or "")
             case_id = str(node.get("case_id") or "")
             if trade_event_id and case_id:
-                add(trade_event_id, str(node.get("decision_id") or ""), case_id,
-                    str(node.get("security_code") or ""), str(node.get("case_status") or ""),
-                    str(node.get("mapping_reason") or ""))
+                add(trade_event_id, str(node.get("decision_id") or ""), case_id, str(node.get("security_code") or ""), str(node.get("case_status") or ""), str(node.get("mapping_reason") or ""))
             for value in node.values():
                 visit(value)
         elif isinstance(node, list):
@@ -426,8 +370,7 @@ def _canonical_case_mappings() -> dict[str, list[dict]]:
             trade_event_id = str(trade.get("event_id") or "")
             trade_date = str(trade.get("confirmed_at_beijing") or trade.get("executed_at_beijing") or "")[:10]
             if trade_event_id and str(trade.get("code") or "") == code and trade_date and trade_date <= review_date:
-                add(trade_event_id, str(trade.get("linked_decision_id") or ""), case_id, code,
-                    str(review.get("case_mode") or ""), "canonical review case owner")
+                add(trade_event_id, str(trade.get("linked_decision_id") or ""), case_id, code, str(review.get("case_mode") or ""), "canonical review case owner")
     return mappings
 
 
@@ -447,7 +390,6 @@ def _validate_canonical_case_mapping(event: dict, mappings: dict[str, list[dict]
 
 
 def _validate_trade_event_formal_sync(report: dict) -> None:
-    """Validate trade visibility from canonical mapping facts, not Experience routing text."""
     archive = (ROOT / "ETF市场行情档案_2026.md").read_text(encoding="utf-8")
     experience = (ROOT / "ETF交易复盘与经验库_2026.md").read_text(encoding="utf-8")
     mappings = _canonical_case_mappings()
@@ -481,11 +423,7 @@ def _validate_trade_event_formal_sync(report: dict) -> None:
                 elif not mapping_error and not re.search(rf"^###\s+.*?{re.escape(mappings[event_id][0]['case_id'])}[:：]", experience, re.MULTILINE):
                     errors.append(f"{event_id}:formal_case_section")
     status = "FAIL" if errors else "PASS"
-    report.setdefault("checks", []).append({
-        "name": "formal_files:executed_trade_event_sync",
-        "status": status,
-        "detail": f"executed_events_checked={checked} missing={errors}",
-    })
+    report.setdefault("checks", []).append({"name": "formal_files:executed_trade_event_sync", "status": status, "detail": f"executed_events_checked={checked} missing={errors}"})
     for item in errors:
         message = "formal_trade_sync:" + item
         if message not in report.setdefault("errors", []):
@@ -494,7 +432,6 @@ def _validate_trade_event_formal_sync(report: dict) -> None:
 
 
 def _has_valid_terminal_for_trade_row(trade_date: str, code: str) -> bool:
-    """Let the historical index consume the same canonical terminal lifecycle fact."""
     trade_dir = ROOT / "events" / "trades"
     for path in sorted(trade_dir.glob("*.json")) if trade_dir.exists() else []:
         try:
@@ -517,12 +454,10 @@ CASE_ID_PATTERN = re.compile(r"(?<![A-Za-z0-9])CASE-\d{8}-\d{2}(?![A-Za-z0-9])")
 
 
 def _explicit_index_case_ids(remark: str) -> list[str]:
-    """Parse only explicit, uniquely identifiable CASE owners from the formal index."""
     return sorted(set(CASE_ID_PATTERN.findall(str(remark or ""))))
 
 
 def _validate_historical_trade_case_mapping(report: dict) -> None:
-    """Require every canonical securities trade-index row to have exactly one canonical CASE owner."""
     experience = (ROOT / "ETF交易复盘与经验库_2026.md").read_text(encoding="utf-8")
     start_token = "### 2.1 2026-07-13以来完整证券成交索引"
     end_token = "### 2.2 银证转账与非交易现金流水"
@@ -542,7 +477,6 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
             errors.append("malformed_row=" + line[:80])
             continue
         rows.append(cols)
-    headings = set(re.findall(r"^###\s+.*?(CASE-\d{8}-\d{2})[:：]", experience, re.MULTILINE))
     mappings = _canonical_case_mappings()
     etf_count = 0
     stock_count = 0
@@ -558,22 +492,17 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
                     continue
                 event_code = str(event.get("code") or "")
                 event_stamp = str(event.get("confirmed_at_beijing") or event.get("executed_at_beijing") or event.get("event_id") or "")
-                if (
-                    event_code == code
-                    and event_stamp[:10] == dt[:10]
-                    and event_stamp[:10] >= HISTORICAL_TRADE_EVENT_EFFECTIVE_DATE
-                ):
+                if event_code == code and event_stamp[:10] == dt[:10] and event_stamp[:10] >= HISTORICAL_TRADE_EVENT_EFFECTIVE_DATE:
                     event_ids.append(str(event.get("event_id") or path.stem))
         index_case_ids = _explicit_index_case_ids(_remark)
-        case_ids = sorted({
-            str(mapping.get("case_id") or "")
-            for event_id in event_ids
-            for mapping in (mappings.get(event_id) or [])
-            if mapping.get("case_id")
-        })
+        case_ids = sorted({str(mapping.get("case_id") or "") for event_id in event_ids for mapping in (mappings.get(event_id) or []) if mapping.get("case_id")})
         terminal = _has_valid_terminal_for_trade_row(dt, code)
+        current = _read_json("data/state/CURRENT.json")
         if event_ids:
-            if len(case_ids) == 0 and terminal and not index_case_ids:
+            event_for_due = {"event_id": event_ids[0], "confirmed_at_beijing": dt}
+            if not _case_mapping_required(current, event_for_due):
+                pass
+            elif len(case_ids) == 0 and terminal and not index_case_ids:
                 pass
             elif len(case_ids) != 1:
                 errors.append(f"{dt}:{code}:case_count={len(case_ids)}")
@@ -583,10 +512,7 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
                 errors.append(f"{dt}:{code}:index_case_conflict={index_case_ids[0]} canonical={case_ids[0]}")
             elif not any(case_ids[0] in line for line in experience.splitlines() if line.startswith("### ")):
                 errors.append(f"{dt}:{code}:missing_case_heading={case_ids[0]}")
-        elif not _case_mapping_required(
-            _read_json("data/state/CURRENT.json"),
-            {"event_id": f"{dt}:{code}", "confirmed_at_beijing": dt},
-        ):
+        elif not _case_mapping_required(current, {"event_id": f"{dt}:{code}", "confirmed_at_beijing": dt}):
             pass
         elif dt[:10] >= HISTORICAL_TRADE_EVENT_EFFECTIVE_DATE:
             errors.append(f"{dt}:{code}:missing_formal_trade_event")
@@ -607,11 +533,7 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
     else:
         errors.append("declared_trade_counts_missing")
     status = "FAIL" if errors else "PASS"
-    report.setdefault("checks", []).append({
-        "name": "formal_files:historical_trade_case_mapping",
-        "status": status,
-        "detail": f"trade_rows={len(rows)} etf={etf_count} stock={stock_count} missing={errors}",
-    })
+    report.setdefault("checks", []).append({"name": "formal_files:historical_trade_case_mapping", "status": status, "detail": f"trade_rows={len(rows)} etf={etf_count} stock={stock_count} missing={errors}"})
     for item in errors:
         message = "historical_trade_case_mapping:" + item
         if message not in report.setdefault("errors", []):
@@ -620,23 +542,14 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
 
 
 def _validate_execution_quality_projection(report: dict) -> None:
-    """Ensure persisted execution quality equals the current canonical builder output."""
     persisted = _read_json("data/state/execution_quality.json")
     try:
         from build_execution_quality import build as build_execution_quality
     except ModuleNotFoundError:
         from scripts.build_execution_quality import build as build_execution_quality
     expected = build_execution_quality(ROOT)
-    persisted_items = {
-        str(item.get("trade_event_id") or ""): item
-        for item in (persisted.get("items") or [])
-        if isinstance(item, dict)
-    }
-    expected_items = {
-        str(item.get("trade_event_id") or ""): item
-        for item in (expected.get("items") or [])
-        if isinstance(item, dict)
-    }
+    persisted_items = {str(item.get("trade_event_id") or ""): item for item in (persisted.get("items") or []) if isinstance(item, dict)}
+    expected_items = {str(item.get("trade_event_id") or ""): item for item in (expected.get("items") or []) if isinstance(item, dict)}
     mismatches = []
     for event_id, expected_item in expected_items.items():
         actual = persisted_items.get(event_id)
@@ -647,11 +560,7 @@ def _validate_execution_quality_projection(report: dict) -> None:
             if actual.get(field) != expected_item.get(field):
                 mismatches.append(f"{event_id}:{field}")
     status = "FAIL" if mismatches else "PASS"
-    report.setdefault("checks", []).append({
-        "name": "state:execution_quality_canonical_alignment",
-        "status": status,
-        "detail": f"executed_events_checked={len(expected_items)} mismatches={mismatches}",
-    })
+    report.setdefault("checks", []).append({"name": "state:execution_quality_canonical_alignment", "status": status, "detail": f"executed_events_checked={len(expected_items)} mismatches={mismatches}"})
     for item in mismatches:
         message = "execution_quality:" + item
         if message not in report.setdefault("errors", []):
@@ -660,37 +569,20 @@ def _validate_execution_quality_projection(report: dict) -> None:
 
 
 def _validate_readme_front_door(report: dict) -> None:
-    import re
-
     path = ROOT / "README.md"
     errors = []
-    if not path.exists():
-        errors.append("missing")
-        readme = ""
-    else:
-        readme = path.read_text(encoding="utf-8")
+    readme = path.read_text(encoding="utf-8") if path.exists() else ""
     first_line = readme.splitlines()[0].strip() if readme.splitlines() else ""
     if first_line != "# ETF Trade System":
         errors.append(f"unexpected_h1={first_line}")
     if re.search(r"ETF Trade System\s+V\d+\.\d+\.\d+", readme, re.IGNORECASE):
         errors.append("hardcoded_system_version")
-    required = [
-        "ETF规则_MASTER.md",
-        "ETF_SYSTEM_INDEX.md",
-        "ETF当前状态_DASHBOARD.md",
-        "ETF交易复盘与经验库_2026.md",
-        "ETF市场行情档案_2026.md",
-        "ETF与市场监测数据接口使用规范.md",
-    ]
+    required = ["ETF规则_MASTER.md", "ETF_SYSTEM_INDEX.md", "ETF当前状态_DASHBOARD.md", "ETF交易复盘与经验库_2026.md", "ETF市场行情档案_2026.md", "ETF与市场监测数据接口使用规范.md"]
     missing_links = [name for name in required if name not in readme]
     if missing_links:
         errors.append("missing_links=" + ",".join(missing_links))
     status = "FAIL" if errors else "PASS"
-    report.setdefault("checks", []).append({
-        "name": "readme:canonical_front_door",
-        "status": status,
-        "detail": "README uses MASTER as sole formal version source" if not errors else ";".join(errors),
-    })
+    report.setdefault("checks", []).append({"name": "readme:canonical_front_door", "status": status, "detail": "README uses MASTER as sole formal version source" if not errors else ";".join(errors)})
     for item in errors:
         message = "readme_front_door:" + item
         if message not in report.setdefault("errors", []):
@@ -710,11 +602,7 @@ def _validate_production_mutation_protocol(report: dict) -> None:
         normalized = "mutation_protocol:" + str(message)
         if normalized not in report.setdefault("warnings", []):
             report["warnings"].append(normalized)
-    report["production_mutation_protocol"] = {
-        "status": result.get("status"),
-        "direct_main_writers": result.get("direct_main_writers") or [],
-        "fact_precedence": result.get("fact_precedence") or [],
-    }
+    report["production_mutation_protocol"] = {"status": result.get("status"), "direct_main_writers": result.get("direct_main_writers") or [], "fact_precedence": result.get("fact_precedence") or []}
     _recount(report)
 
 
@@ -722,11 +610,7 @@ def _validate_semantic_formal_structure(report: dict) -> None:
     from formal_document_structure import validate_files
     errors = validate_files(ROOT)
     status = "FAIL" if errors else "PASS"
-    report.setdefault("checks", []).append({
-        "name": "formal_files:semantic_structure",
-        "status": status,
-        "detail": "semantic chapter/order/managed-block placement valid" if not errors else "; ".join(errors),
-    })
+    report.setdefault("checks", []).append({"name": "formal_files:semantic_structure", "status": status, "detail": "semantic chapter/order/managed-block placement valid" if not errors else "; ".join(errors)})
     for item in errors:
         message = "formal_semantic_structure:" + item
         if message not in report.setdefault("errors", []):
@@ -761,18 +645,7 @@ def main() -> int:
     _validate_production_mutation_protocol(report)
     REPORT.parent.mkdir(parents=True, exist_ok=True)
     REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({
-        "status": report.get("status"),
-        "hard_error_count": report.get("hard_error_count"),
-        "warning_count": report.get("warning_count"),
-        "async_context_freshness": next((x for x in report.get("checks", []) if x.get("name") == "dynamic_freshness:query_decision_aligned"), {}),
-        "us_phase_freshness": next((x for x in report.get("checks", []) if x.get("name") == "us_extended:live_freshness"), {}),
-        "a_share_market_date_alignment": next((x for x in report.get("checks", []) if x.get("name") == "a_share_runtime:market_date_alignment"), {}),
-        "stock_market_time_alignment": next((x for x in report.get("checks", []) if x.get("name") == "stock_runtime:market_time_alignment"), {}),
-        "formal_trade_event_sync": next((x for x in report.get("checks", []) if x.get("name") == "formal_files:executed_trade_event_sync"), {}),
-        "readme_front_door": next((x for x in report.get("checks", []) if x.get("name") == "readme:canonical_front_door"), {}),
-        "production_mutation_protocol": report.get("production_mutation_protocol") or {},
-    }, ensure_ascii=False))
+    print(json.dumps({"status": report.get("status"), "hard_error_count": report.get("hard_error_count"), "warning_count": report.get("warning_count"), "async_context_freshness": next((x for x in report.get("checks", []) if x.get("name") == "dynamic_freshness:query_decision_aligned"), {}), "us_phase_freshness": next((x for x in report.get("checks", []) if x.get("name") == "us_extended:live_freshness"), {}), "a_share_market_date_alignment": next((x for x in report.get("checks", []) if x.get("name") == "a_share_runtime:market_date_alignment"), {}), "stock_market_time_alignment": next((x for x in report.get("checks", []) if x.get("name") == "stock_runtime:market_time_alignment"), {}), "formal_trade_event_sync": next((x for x in report.get("checks", []) if x.get("name") == "formal_files:executed_trade_event_sync"), {}), "readme_front_door": next((x for x in report.get("checks", []) if x.get("name") == "readme:canonical_front_door"), {}), "production_mutation_protocol": report.get("production_mutation_protocol") or {}}, ensure_ascii=False))
     return 1 if report.get("errors") else 0
 
 
