@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-10T22:44:52+08:00",
-  "last_status": "SENT",
-  "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【系统复核】ETF系统复核｜2026-09-10",
+  "updated_at": "2026-09-11T00:40:30+08:00",
+  "last_status": "AGGREGATED_INTO_EXISTING",
+  "last_type": "US_OPEN_VALUE_ALERT",
+  "last_title": "【市场异动】费城半导体指数（SOX）低开-2.40%，当前-2.45%",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -5220,6 +5220,67 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-10T22:44:52+08:00"
+    },
+    {
+      "notification_id": "notification_cc375548699d48b8b17f",
+      "event_type": "US_OPEN_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "us-session-summary:2026-09-10:OPEN",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "user_severity": "需要关注",
+      "user_action": "纳入下一A股交易节点复核，无需机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-11T00:40:29+08:00",
+      "sent_at": "2026-09-11T00:40:30+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-13T00:40:29+08:00",
+      "title": "【市场异动】费城半导体指数（SOX）低开-2.40%，当前-2.45%",
+      "content": "### 核心结论\n- **触发原因**：实际现金盘开盘最大跳空2.40%。\n- **开盘事实｜纳斯达克100指数（NDX）**：实际现金盘开盘相对前收-1.15%。\n- **开盘事实｜费城半导体指数（SOX）**：实际现金盘开盘相对前收-2.40%。\n- **当前进展｜费城半导体指数（SOX）**：相对前收-2.45%，已进入极端波动关注区间。\n- **外部结构**：美股科技风险偏好偏弱。\n\n### 关键路径\n- **纳斯达克100指数（NDX）**：开盘后暂未形成新的强化。\n- **费城半导体指数（SOX）**：开盘后暂未形成新的强化。\n\n### 对ETF系统的影响\n- **外部含义**：美股科技风险偏好转弱，提高A股高相关科技篮子的风险复核优先级。\n- **本地验证**：先检查A股自身承接是否同步减弱。\n- **资本比较**：只有本地反馈也转弱，才进一步影响持仓风险收益与资本配置。\n\n### 当前动作\n**纳入下一A股正式节点复核：先看本地传导，再看相关ETF自身反馈和资本效率；不因海外单一信号机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-11 00:39:14\n- **通知生成（北京时间）**：2026-09-11 00:40:29\n- **边界**：这是海外结构证据，不是A股买卖信号；实际现金盘开盘事实可在同一常规交易时段恢复，但不得把后续累计涨跌伪装成开盘跳空。",
+      "source": "us_extended_hours_context",
+      "confirmation_context": {
+        "market": "US",
+        "market_date": "2026-09-10",
+        "us_market_date": "2026-09-10",
+        "session": "REGULAR",
+        "direction": "DOWN",
+        "event_category": "OPEN_SIGNAL",
+        "fact_family": "US_SESSION_STRUCTURE",
+        "object_codes": [
+          "NDX",
+          "SOX"
+        ],
+        "source_fact_ids": [
+          "2026-09-10:NDX:2026-09-11T00:39:14+08:00",
+          "2026-09-10:SOX:2026-09-11T00:39:14+08:00",
+          "2026-09-10:SOX:EXTREME:DOWN:2026-09-11T00:39:14+08:00"
+        ],
+        "session_node": "OPEN",
+        "direct_cash_indices_used": true,
+        "tech_open_gap_pct": -1.1531667363038234,
+        "semi_open_gap_pct": -2.400569331866098,
+        "tech_change_pct": -0.9524,
+        "semi_change_pct": -2.4517,
+        "market_as_of_beijing": "2026-09-11T00:39:14+08:00",
+        "cash_close_as_of_beijing": "",
+        "generated_at_beijing": "2026-09-11 00:40:29",
+        "event_family_id": "US:2026-09-10:REGULAR::OPEN_SIGNAL:DOWN",
+        "event_tags": [
+          "OPEN_SIGNAL",
+          "EXTREME"
+        ],
+        "aggregation_status": "MERGED_SAME_OBJECT_CONTINUOUS_FACT",
+        "family_peak_magnitude_pct": 2.4517
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-09-11T00:40:30+08:00"
     }
   ],
   "recent": [
@@ -7706,9 +7767,27 @@
       },
       "notification_id": "notification_b4afcf37cffc8f7da475",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "us-session-summary:2026-09-10:OPEN",
+      "type": "US_OPEN_VALUE_ALERT",
+      "title": "【市场异动】费城半导体指数（SOX）低开-2.40%，当前-2.45%",
+      "content": "### 核心结论\n- **触发原因**：实际现金盘开盘最大跳空2.40%。\n- **开盘事实｜纳斯达克100指数（NDX）**：实际现金盘开盘相对前收-1.15%。\n- **开盘事实｜费城半导体指数（SOX）**：实际现金盘开盘相对前收-2.40%。\n- **当前进展｜费城半导体指数（SOX）**：相对前收-2.45%，已进入极端波动关注区间。\n- **外部结构**：美股科技风险偏好偏弱。\n\n### 关键路径\n- **纳斯达克100指数（NDX）**：开盘后暂未形成新的强化。\n- **费城半导体指数（SOX）**：开盘后暂未形成新的强化。\n\n### 对ETF系统的影响\n- **外部含义**：美股科技风险偏好转弱，提高A股高相关科技篮子的风险复核优先级。\n- **本地验证**：先检查A股自身承接是否同步减弱。\n- **资本比较**：只有本地反馈也转弱，才进一步影响持仓风险收益与资本配置。\n\n### 当前动作\n**纳入下一A股正式节点复核：先看本地传导，再看相关ETF自身反馈和资本效率；不因海外单一信号机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-11 00:39:14\n- **通知生成（北京时间）**：2026-09-11 00:40:29\n- **边界**：这是海外结构证据，不是A股买卖信号；实际现金盘开盘事实可在同一常规交易时段恢复，但不得把后续累计涨跌伪装成开盘跳空。",
+      "source": "us_extended_hours_context",
+      "user_severity": "需要关注",
+      "user_action": "纳入下一A股交易节点复核，无需机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-09-11T00:40:30+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_cc375548699d48b8b17f",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
-  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
+  "policy": "主动通知按新事实的决策价值判断，不按市场分类；当前事件族为开盘异常、快速重定价、极端波动、方向反转、显著分化。阈值适度放宽，重复控制依靠事件合并、冷却和实质升级识别；已管理候选不得阻塞其他未管理候选。",
+  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
