@@ -744,7 +744,8 @@ def _validate_formal_lifecycle(value: object, object_name: str = "lifecycle") ->
 
 def _load_account_for_lifecycle_validation() -> dict:
     """Load the canonical account fact for current lifecycle validation."""
-    return load_json(ACCOUNT) if ACCOUNT.exists() else {}
+    account_path = ROOT / "data" / "state" / "account_fact.json"
+    return load_json(account_path) if account_path.exists() else {}
 
 
 def _lifecycle_object_code(security: object) -> str:
