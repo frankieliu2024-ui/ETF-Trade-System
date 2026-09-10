@@ -86,6 +86,52 @@ def position_metric(position: dict, current_key: str, legacy_key: str, default: 
     return default if parsed is None else parsed
 
 
+def build_managed_position_projection(root: Path | None = None, account: dict | None = None) -> dict:
+    """Build the single managed-position set used by sell/lifecycle review.
+
+    Every positive account position is managed.  ETF opportunity discovery remains
+    a separate ETF-universe concern; non-ETF positions are never promoted to
+    opportunity candidates by this projection.
+    """
+    root = root or ROOT
+    account = account if account is not None else read_account_fact(root)
+    etf_codes = load_etf_codes(root)
+    positions = []
+    seen_codes: set[str] = set()
+    for position in account.get("positions") or []:
+        if not isinstance(position, dict):
+            continue
+        code = normalize_code(first(position, "code", "symbol", "security_code", "instrument_code"))
+        quantity = numeric(first(position, "quantity", "qty", "position", "shares", "volume"))
+        if not code or quantity is None or quantity <= 0 or code in seen_codes:
+            continue
+        seen_codes.add(code)
+        is_etf = looks_like_etf(position, code, etf_codes)
+        positions.append({
+            "code": code,
+            "name": str(first(position, "name", "security_name", "instrument_name") or code),
+            "quantity": quantity,
+            "available_quantity": numeric(first(position, "available_quantity", "available_qty")),
+            "asset_class": "ETF" if is_etf else "ACCOUNT_STOCK",
+            "management_scope": "HELD_ETF" if is_etf else "ACCOUNT_STOCK",
+            "role": str(first(position, "role", "asset_role") or ""),
+            "origin": str(first(position, "origin", "origin_type", "source_origin") or ""),
+            "current_price": position_metric(position, "current_price", "last_price"),
+            "market_value": numeric(first(position, "market_value", "value", "position_value")),
+            "pnl": position_metric(position, "pnl", "holding_pnl"),
+            "pnl_pct": position_metric(position, "pnl_pct", "holding_pnl_pct"),
+            "source": "account_fact.positions",
+        })
+    return {
+        "status": str(account.get("status") or "MISSING"),
+        "account_updated_at": str(account.get("updated_at") or ""),
+        "positions": positions,
+        "codes": [item["code"] for item in positions],
+        "opportunity_scope": "ETF_UNIVERSE_ONLY",
+        "decision_boundary": "仅用于当前持仓生命周期、持仓管理、降低风险、退出和资本效率比较；非ETF账户资产不得进入观察/Trial/Confirm候选。",
+    }
+
+
 def build() -> dict:
     account = read_account_fact(ROOT)
     etf_codes = load_etf_codes()
