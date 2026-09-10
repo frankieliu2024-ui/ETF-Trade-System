@@ -225,7 +225,8 @@ def _validate_formal_risk_precedence(report: dict) -> None:
         _recount(report)
 
 
-def _validate_post_close_review_contract(report: dict) -> None:
+def _validate_post_close_review_contract(report: dict, now=None) -> None:
+    """Apply scheduled-review due-time semantics independently of market phase."""
     try:
         context = _read_json("post_market_review/post_market_review_event.json")
     except (OSError, json.JSONDecodeError):
@@ -233,27 +234,55 @@ def _validate_post_close_review_contract(report: dict) -> None:
     if not context.get("market_close") or str(context.get("status") or "").upper() != "READY_FOR_REVIEW":
         return
     market_date = str(context.get("market_date") or "")
+    current = _read_json("data/state/CURRENT.json")
+    try:
+        from post_close_review_due import configured_review_due_time, review_due_state
+    except ModuleNotFoundError:
+        from scripts.post_close_review_due import configured_review_due_time, review_due_state
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    policy = _read_json("config/runtime_policy.json") or {}
+    due = configured_review_due_time(policy)
     review_path = ROOT / "events" / "reviews" / f"{market_date}.json"
     closure_path = ROOT / "data" / "state" / f"close_review_closure_{market_date}.json"
     review = _read_json(f"events/reviews/{market_date}.json") if review_path.exists() else {}
     closure = _read_json(f"data/state/close_review_closure_{market_date}.json") if closure_path.exists() else {}
     errors = []
+    if due is None:
+        errors.append("invalid_or_missing_scheduled_trade_review_due_time")
+        due_state = "INVALID_CONFIG"
+    else:
+        due_state = review_due_state(
+            market_date,
+            str(current.get("market_date") or market_date),
+            now or datetime.now(ZoneInfo("Asia/Shanghai")),
+            due,
+        )
     if review.get("event_type") != "FORMAL_POST_CLOSE_REVIEW" or not isinstance(review.get("review"), dict):
         errors.append(f"missing_or_invalid_review=events/reviews/{market_date}.json")
     if closure.get("status") != "CLOSED" or closure.get("formal_review_path") != f"events/reviews/{market_date}.json":
         errors.append(f"missing_or_invalid_closure=data/state/close_review_closure_{market_date}.json")
-    current = _read_json("data/state/CURRENT.json")
+    if due_state == "NOT_DUE_TODAY":
+        report.setdefault("checks", []).append({
+            "name": "review:post_close_canonical_chain",
+            "status": "PASS",
+            "detail": "review_not_due scheduled_trade_review_due_time="
+                     f"{due} timezone=Asia/Shanghai",
+        })
+        _recount(report)
+        return
     pointer = current.get("close_review_closure") or {}
     if pointer.get("market_date") != market_date or pointer.get("formal_review_path") != f"events/reviews/{market_date}.json":
         errors.append("CURRENT.close_review_closure_is_stale")
-    report.setdefault("checks", []).append({"name": "review:post_close_canonical_chain", "status": "FAIL" if errors else "PASS", "detail": "canonical post-close review, closure and CURRENT pointer are aligned" if not errors else "; ".join(errors)})
-    for item in errors:
-        message = "post_close_review:" + item
-        if message not in report.setdefault("errors", []):
-            report["errors"].append(message)
+    report.setdefault("checks", []).append({
+        "name": "review:post_close_canonical_chain",
+        "status": "FAIL" if errors else "PASS",
+        "detail": "canonical post-close review, closure and CURRENT pointer validated"
+                if not errors else "; ".join(errors),
+    })
+    if errors:
+        report.setdefault("errors", []).extend(f"post_close_review:{x}" for x in errors)
     _recount(report)
-
-
 def _case_mapping_required(current: dict, event: dict) -> bool:
     """Require CASE after canonical review completion or once the trade is prior-day."""
     event_date = str(event.get("confirmed_at_beijing") or event.get("executed_at_beijing") or event.get("event_id") or "")[:10]
@@ -273,6 +302,7 @@ def _case_mapping_required(current: dict, event: dict) -> bool:
 
 
 def _valid_unrecoverable_review_terminal(event_id: str, event: dict) -> bool:
+    """Accept only the canonical lifecycle terminal projection, never a free-form flag."""
     market_date = str(event.get("execution_date") or event.get("confirmed_at_beijing") or "")[:10]
     if not market_date:
         return False
