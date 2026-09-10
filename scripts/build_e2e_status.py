@@ -311,7 +311,7 @@ def lifecycle_component(current: dict) -> dict:
     }
 
 
-def close_review_component(current: dict) -> dict:
+def close_review_component(current: dict, now=None) -> dict:
     """Require a canonical review once the formal close context is ready."""
     event = read_json(POST_MARKET_REVIEW)
     if not event or not event.get("market_close"):
@@ -324,6 +324,19 @@ def close_review_component(current: dict) -> dict:
     complete = (review.get("event_type") == "FORMAL_POST_CLOSE_REVIEW" and isinstance(review.get("review"), dict)
                 and closure.get("status") == "CLOSED"
                 and closure.get("formal_review_path") == f"events/reviews/{market_date}.json")
+    if complete:
+        return {"status": "READY", "reason": "canonical close review chain is complete", "market_date": market_date}
+    try:
+        from post_close_review_due import review_due_state
+    except ModuleNotFoundError:
+        from scripts.post_close_review_due import review_due_state
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    policy = read_json(ROOT / "config" / "runtime_policy.json") or {}
+    due = ((policy.get("scheduled_trade_review") or {}).get("due_time") or "20:30")
+    due_state = review_due_state(market_date, str(current.get("market_date") or market_date), now or datetime.now(ZoneInfo("Asia/Shanghai")), due)
+    if due_state == "NOT_DUE_TODAY" and str(event.get("status") or "").upper() == "READY_FOR_REVIEW":
+        return {"status": "READY", "reason": "scheduled_review_not_due", "scheduled_review_due_time": due, "market_date": market_date}
     if not complete and str(event.get("status") or "").upper() == "READY_FOR_REVIEW":
         return {"status": "BLOCKED", "reason": "FORMAL_POST_CLOSE_REVIEW_NOT_CANONICALIZED",
                 "market_date": market_date, "review_path": f"events/reviews/{market_date}.json",

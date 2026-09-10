@@ -282,7 +282,7 @@ def _validate_formal_risk_precedence(report: dict) -> None:
         _recount(report)
 
 
-def _validate_post_close_review_contract(report: dict) -> None:
+def _validate_post_close_review_contract(report: dict, now=None) -> None:
     """Do not report a ready close context as complete without its canonical review."""
     try:
         context = _read_json("post_market_review/post_market_review_event.json")
@@ -291,6 +291,16 @@ def _validate_post_close_review_contract(report: dict) -> None:
     if not context.get("market_close") or str(context.get("status") or "").upper() != "READY_FOR_REVIEW":
         return
     market_date = str(context.get("market_date") or "")
+    current = _read_json("data/state/CURRENT.json")
+    try:
+        from post_close_review_due import review_due_state
+    except ModuleNotFoundError:
+        from scripts.post_close_review_due import review_due_state
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    policy = _read_json("config/runtime_policy.json") or {}
+    due = ((policy.get("scheduled_trade_review") or {}).get("due_time") or "20:30")
+    due_state = review_due_state(market_date, str(current.get("market_date") or market_date), now or datetime.now(ZoneInfo("Asia/Shanghai")), due)
     review_path = ROOT / "events" / "reviews" / f"{market_date}.json"
     closure_path = ROOT / "data" / "state" / f"close_review_closure_{market_date}.json"
     review = _read_json(f"events/reviews/{market_date}.json") if review_path.exists() else {}
@@ -300,7 +310,10 @@ def _validate_post_close_review_contract(report: dict) -> None:
         errors.append(f"missing_or_invalid_review=events/reviews/{market_date}.json")
     if closure.get("status") != "CLOSED" or closure.get("formal_review_path") != f"events/reviews/{market_date}.json":
         errors.append(f"missing_or_invalid_closure=data/state/close_review_closure_{market_date}.json")
-    current = _read_json("data/state/CURRENT.json")
+    if due_state == "NOT_DUE_TODAY" and not review_path.exists():
+        report.setdefault("checks", []).append({"name": "review:post_close_canonical_chain", "status": "PASS", "detail": f"review_not_due scheduled_trade_review_due_time={due} timezone=Asia/Shanghai"})
+        _recount(report)
+        return
     pointer = current.get("close_review_closure") or {}
     if pointer.get("market_date") != market_date or pointer.get("formal_review_path") != f"events/reviews/{market_date}.json":
         errors.append("CURRENT.close_review_closure_is_stale")
