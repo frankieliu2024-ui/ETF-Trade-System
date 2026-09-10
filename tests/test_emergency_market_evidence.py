@@ -6,6 +6,8 @@ from tempfile import TemporaryDirectory
 
 from scripts.emergency_market_evidence import validate_external_market_evidence
 from scripts.runtime_session_gate import classify_live_snapshot_request
+from scripts import process_state_sync_request as sync
+from unittest.mock import patch
 
 
 class EmergencyMarketEvidenceTests(unittest.TestCase):
@@ -55,6 +57,9 @@ class EmergencyMarketEvidenceTests(unittest.TestCase):
             self.assertEqual(classify_live_snapshot_request(req), "STATE_SYNC_ONLY")
             result = validate_external_market_evidence(req, root, decision_time="2026-09-09T10:25:00+08:00", availability_time="2026-09-09T10:25:10+08:00", ingress_path="requests/live_snapshot/emergency-1.json")
             self.assertEqual(result["validation_status"], "PASS")
+            self.assertEqual(result["decision_evidence_eligibility"], "DECISION_EVIDENCE_ELIGIBLE")
+            self.assertEqual(result["execution_price_eligibility"], "EXECUTION_PRICE_ELIGIBLE")
+            self.assertFalse(result["execution_revalidation_required"])
 
     def test_rejects_wrong_host_and_future_fact(self):
         with TemporaryDirectory() as d:
@@ -88,6 +93,75 @@ class EmergencyMarketEvidenceTests(unittest.TestCase):
             req["evidence_available_at_beijing"] = "2026-09-09T10:25:20+08:00"
             with self.assertRaisesRegex(ValueError, "NOT_AVAILABLE"):
                 validate_external_market_evidence(req, root, decision_time="2026-09-09T10:25:00+08:00", availability_time="2026-09-09T10:25:10+08:00", ingress_path="requests/live_snapshot/emergency-1.json")
+
+    def test_reasonably_delayed_fact_is_decision_only_and_requires_revalidation(self):
+        with TemporaryDirectory() as d:
+            root = self._root(d)
+            req = self._request(root)
+            req["rows"][0]["provider_as_of_beijing"] = "2026-09-09T10:11:00+08:00"
+            result = validate_external_market_evidence(
+                req, root,
+                decision_time="2026-09-09T10:25:00+08:00",
+                availability_time="2026-09-09T10:25:10+08:00",
+                ingress_path="requests/live_snapshot/emergency-1.json",
+            )
+            self.assertEqual(result["rows"][0]["freshness_status"], "DEGRADED")
+            self.assertEqual(result["decision_evidence_eligibility"], "DECISION_EVIDENCE_ELIGIBLE")
+            self.assertEqual(result["execution_price_eligibility"], "EXECUTION_PRICE_INELIGIBLE")
+            self.assertTrue(result["execution_revalidation_required"])
+
+    def test_structure_auxiliary_evidence_cannot_generate_standalone_action(self):
+        with TemporaryDirectory() as d:
+            root = self._root(d)
+            req = self._request(root, evidence_scope="OVERSEAS_STRUCTURE_AUXILIARY")
+            result = validate_external_market_evidence(
+                req, root,
+                decision_time="2026-09-09T10:25:00+08:00",
+                availability_time="2026-09-09T10:25:10+08:00",
+                ingress_path="requests/live_snapshot/emergency-1.json",
+            )
+            self.assertEqual(result["evidence_scope"], "OVERSEAS_STRUCTURE_AUXILIARY")
+            self.assertEqual(result["decision_evidence_eligibility"], "DECISION_EVIDENCE_ELIGIBLE")
+            self.assertFalse(result["standalone_action_allowed"])
+
+    def test_severely_stale_fact_remains_fail_safe(self):
+        with TemporaryDirectory() as d:
+            root = self._root(d)
+            req = self._request(root)
+            req["rows"][0]["provider_as_of_beijing"] = "2026-09-09T09:50:00+08:00"
+            with self.assertRaisesRegex(ValueError, "ROW_INVALID"):
+                validate_external_market_evidence(
+                    req, root,
+                    decision_time="2026-09-09T10:25:00+08:00",
+                    availability_time="2026-09-09T10:25:10+08:00",
+                    ingress_path="requests/live_snapshot/emergency-1.json",
+                )
+
+    def test_persistence_records_both_eligibility_boundaries(self):
+        with TemporaryDirectory() as d:
+            root = self._root(d)
+            req = self._request(root, persistence_available_at_beijing="2026-09-09T10:25:10+08:00")
+            req["formal_decision"] = {
+                "decision_id": "emergency-decision-1",
+                "data_as_of_beijing": "2026-09-09T10:25:00+08:00",
+                "candidate_code": "515220",
+                "candidate_name": "煤炭ETF",
+                "main_candidate": "煤炭ETF（515220）",
+                "opportunity_status": "观察机会",
+                "lifecycle": "",
+            }
+            with patch.object(sync, "ROOT", root):
+                recorded, _ = sync.record_formal_decision(req)
+            self.assertTrue(recorded)
+            event = json.loads(
+                (root / "events" / "decisions" / "emergency-decision-1.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(event["decision_evidence_eligibility"], "DECISION_EVIDENCE_ELIGIBLE")
+            self.assertEqual(event["execution_price_eligibility"], "EXECUTION_PRICE_ELIGIBLE")
+            self.assertFalse(event["execution_revalidation_required"])
+            self.assertEqual(event["external_evidence_scope"], "FORMAL_DECISION")
 
     def test_existing_request_without_evidence_remains_refresh_bearing(self):
         self.assertEqual(classify_live_snapshot_request({"request_type": "QUERY_TIME_REFRESH"}), "REFRESH_BEARING")

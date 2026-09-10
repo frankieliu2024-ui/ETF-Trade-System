@@ -60,6 +60,32 @@ def _load_json(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _classify_evidence_eligibility(row: dict, *, evidence_scope: str) -> dict:
+    """Derive use boundaries from the shared validated freshness result.
+
+    This is not a second freshness/quality rule: validate_market_row remains
+    the sole fact-qualification gate. The derived fields only describe
+    whether an already-valid fact may support a decision or a later human
+    execution re-check.
+    """
+    freshness = str(row.get("freshness_status") or "").upper()
+    source_type = str(row.get("source_type") or "DIRECT_PROVIDER").upper()
+    decision_eligible = freshness in {"FRESH", "DEGRADED"}
+    execution_eligible = freshness == "FRESH" and source_type == "DIRECT_PROVIDER"
+    scope = evidence_scope or "FORMAL_DECISION"
+    return {
+        "decision_evidence_eligibility": (
+            "DECISION_EVIDENCE_ELIGIBLE" if decision_eligible else "FAIL_SAFE"
+        ),
+        "execution_price_eligibility": (
+            "EXECUTION_PRICE_ELIGIBLE" if execution_eligible else "EXECUTION_PRICE_INELIGIBLE"
+        ),
+        "execution_revalidation_required": not execution_eligible,
+        "evidence_scope": scope,
+        "standalone_action_allowed": False if scope == "OVERSEAS_STRUCTURE_AUXILIARY" else None,
+    }
+
+
 def validate_external_market_evidence(request, root, *, decision_time, availability_time, ingress_path=""):
     """Validate external evidence for the existing state-sync writer."""
     if str(request.get("request_type") or "").upper() != REQUEST_TYPE:
@@ -103,6 +129,9 @@ def validate_external_market_evidence(request, root, *, decision_time, availabil
         raise ValueError("EXTERNAL_EVIDENCE_DECISION_CRITICAL_OBJECT_MISSING")
     provider_config = _load_json(root / "config" / "market" / "provider_priority.json")
     runtime_policy = _load_json(root / "config" / "runtime_policy.json")
+    evidence_scope = str(request.get("evidence_scope") or "FORMAL_DECISION").strip().upper()
+    if evidence_scope not in {"FORMAL_DECISION", "OVERSEAS_STRUCTURE_AUXILIARY"}:
+        raise ValueError("EXTERNAL_EVIDENCE_SCOPE_INVALID")
     validated_rows = []
     for symbol in critical:
         row = by_symbol[_symbol_base(symbol)]
@@ -134,10 +163,28 @@ def validate_external_market_evidence(request, root, *, decision_time, availabil
         )
         if not valid:
             raise ValueError(f"EXTERNAL_EVIDENCE_ROW_INVALID:{_symbol_base(symbol)}:{reason}")
+        normalized.update(_classify_evidence_eligibility(normalized, evidence_scope=evidence_scope))
         validated_rows.append(normalized)
+    decision_eligible = all(
+        row.get("decision_evidence_eligibility") == "DECISION_EVIDENCE_ELIGIBLE"
+        for row in validated_rows
+    )
+    execution_eligible = all(
+        row.get("execution_price_eligibility") == "EXECUTION_PRICE_ELIGIBLE"
+        for row in validated_rows
+    )
     return {
         "evidence_id": evidence_id, "path": evidence_path, "market_date": market_date,
         "market_phase": market_phase, "retrieved_at_beijing": retrieved_at.isoformat(),
         "available_at_beijing": available_at.isoformat(), "rows": validated_rows,
+        "evidence_scope": evidence_scope,
+        "decision_evidence_eligibility": (
+            "DECISION_EVIDENCE_ELIGIBLE" if decision_eligible else "FAIL_SAFE"
+        ),
+        "execution_price_eligibility": (
+            "EXECUTION_PRICE_ELIGIBLE" if execution_eligible else "EXECUTION_PRICE_INELIGIBLE"
+        ),
+        "execution_revalidation_required": not execution_eligible,
+        "standalone_action_allowed": False if evidence_scope == "OVERSEAS_STRUCTURE_AUXILIARY" else None,
         "validation_status": "PASS",
     }
