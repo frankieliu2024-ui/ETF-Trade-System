@@ -1,32 +1,37 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-10T17:10:17+08:00",
+  "generated_at": "2026-09-10T17:17:11+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 34459045735,
+  "run_id": 34459723596,
   "run_attempt": 1,
-  "head_sha": "2be3a442c25f1b1e6a5ecba03005c00299667074",
-  "main_head_sha": "cbf3943688f815466674fe668506d9b7a4e37929",
+  "head_sha": "c90cf3a5cb569d28762aff45c0a7712b2cc22838",
+  "main_head_sha": "c90cf3a5cb569d28762aff45c0a7712b2cc22838",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 6
+      "step": "Enforce hard consistency result",
+      "number": 8
     }
   ],
   "changed_files": [
+    "config/runtime_policy.json",
+    "scripts/build_e2e_status.py",
+    "scripts/check_system_consistency.py",
+    "scripts/post_close_review_due.py",
+    "tests/test_issue496_review_due_time.py",
     "tests/test_post_close_review_canonical.py"
   ],
-  "commit_message": "test: import injectable review clock",
+  "commit_message": "Merge PR #497: decouple post-close phase from scheduled review due-time",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": false,
+    "head_is_current_main": true,
     "changes_confined_to_auto_rollback_allowlist": false,
-    "forbidden_path_touched": false,
+    "forbidden_path_touched": true,
     "bot_or_revert_commit": false,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
