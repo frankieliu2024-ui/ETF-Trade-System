@@ -13,10 +13,10 @@ except ModuleNotFoundError:
     from scripts.build_stock_context import active_account_asset_codes
 
 from confirmed_trade_facts import (
+    canonical_etf_trade_facts,
     effective_confirmed_fee_fact,
     latest_formal_review_confirmed_fees,
     trade_signature,
-    unintegrated_executed_trade_events,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -74,8 +74,9 @@ def reconcile() -> dict:
     # Actual executed trade events outrank the slower auxiliary equity
     # reconstruction. The same exact-signature overlay is used for both
     # positions and confirmed fees so one fact cannot advance without the other.
-    overlay_events = unintegrated_executed_trade_events(ROOT, trades)
-    trades_for_positions = [*trades, *overlay_events]
+    trades_for_positions = canonical_etf_trade_facts(ROOT, trades)
+    reconstructed_signatures = {trade_signature(t) for t in trades}
+    overlay_events = [t for t in trades_for_positions if trade_signature(t) not in reconstructed_signatures]
 
     ledger_qty: dict[str, float] = defaultdict(float)
     for t in trades_for_positions:
@@ -133,7 +134,7 @@ def reconcile() -> dict:
     overall = quantity_ok and equity_ok and trade_count_ok
     return {
         "status": "PASS" if overall else "FAIL",
-        "trade_count": len(trades),
+        "trade_count": len(trades_for_positions),
         "trade_count_matches_summary": trade_count_ok,
         "executed_trade_event_overlay_count": len(overlay_events),
         "position_ledger_basis": "AUXILIARY_EQUITY_RECONSTRUCTION_PLUS_EXECUTED_TRADE_EVENTS",
