@@ -1,5 +1,19 @@
 # Codex协作执行说明
 
+## V1.9 治理减法接口
+
+生产变更治理以 `docs/生产变更与并发写入协议_V1.0.md` V1.9 和其机器镜像为唯一来源。本说明只保存执行器交接字段，不复制稳定治理正文。
+
+执行前先按机器镜像对变更进行 Tier 0–3 分类；无法判定时取 Tier 3。Issue/BRIEF/PACKET 只引用 `protocol_version`、`risk_tier`、scope、canonical owner、证据身份和本轮结果，不复制协议条款。
+
+- Tier 0：文档、Prompt、展示、只读审计、研究或artifact-only；不进入生产mutation。
+- Tier 1：单owner、确定性且不改变canonical writer/state/PIT/account/trade/authority/topology；只执行其最小测试、latest-main semantic check与CI。
+- Tier 2：canonical producer/state、通知状态或重要runtime contract；按机器矩阵执行owner check、candidate及必要merged-main验收。
+- Tier 3：账户、成交、PIT/freshness、writer ownership、MASTER/交易权限、并发拓扑或不可逆行为；执行完整矩阵及必要真实production exposure。
+
+latest-main仍是硬要求；只有共享owner/文件冲突、行为语义变化或候选证据失效才重建successor。动态state-only main前进可复用合法 `acceptance_evidence_identity`。global hard FAIL始终保留；change-specific acceptance单独判定，可靠无关失败不自动升级低/中风险事项。root-cause-complete在已证明failure domain与相邻断点的枚举矩阵完成后停止；独立发现另行准入。
+
+
 本文只定义 ChatGPT、执行器与 GitHub 之间的可恢复任务交接方式，不定义交易规则、数据规则、通知规则或生产变更准入。`CODEX_EXECUTION_BRIEF`／`CODEX_EXECUTION_PACKET`是可由不同执行器消费的执行控制面，不因名称含有“Codex”而限定执行器；生产变更仍以《生产变更与并发写入协议 V1.8》为唯一规范来源。
 
 ## 1. 任务入口
