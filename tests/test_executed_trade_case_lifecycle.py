@@ -12,9 +12,11 @@ from scripts import check_system_consistency as consistency
 
 class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
     def test_same_day_intraday_pending_case_is_allowed(self):
-        current = {"market_date": "2026-09-01", "latest_valid_node": "live", "data_freshness": {"market_phase": "CONTINUOUS_AFTERNOON"}}
-        event = {"event_id": "trade-1", "confirmed_at_beijing": "2026-09-01T14:40:01+08:00"}
-        self.assertFalse(consistency._case_mapping_required(current, event))
+        with tempfile.TemporaryDirectory() as tmp:
+            current = {"market_date": "2026-09-01", "latest_valid_node": "live", "data_freshness": {"market_phase": "CONTINUOUS_AFTERNOON"}}
+            event = {"event_id": "trade-1", "confirmed_at_beijing": "2026-09-01T14:40:01+08:00"}
+            with patch.object(consistency, "ROOT", Path(tmp)):
+                self.assertFalse(consistency._case_mapping_required(current, event))
 
     def test_post_close_requires_final_case_mapping(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -50,10 +52,10 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
                 consistency._validate_trade_event_formal_sync(report)
                 self.assertEqual(report["checks"][-1]["status"], "PASS")
                 self.assertNotIn("formal_trade_sync:trade-1:formal_case_mapping_count=0", report["errors"])
-                experience.write_text("### 2.3 CASE-20260901-01：review\nTRADE_EVENT:trade-1\n", encoding="utf-8")
                 reviews = root / "events" / "reviews"
                 reviews.mkdir(parents=True)
                 (reviews / "2026-09-01.json").write_text(json.dumps({
+                    "event_type": "FORMAL_POST_CLOSE_REVIEW",
                     "review": {"case_mapping": {"primary": {
                         "trade_event_id": "trade-1",
                         "decision_id": "decision-1",
@@ -80,18 +82,12 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
             state_dir = root / "data" / "state"
             state_dir.mkdir(parents=True)
             current_path = state_dir / "CURRENT.json"
-            current_path.write_text(json.dumps({
-                "market_date": "2026-09-01", "latest_valid_node": "live",
-                "data_freshness": {"market_phase": "CONTINUOUS_AFTERNOON"},
-            }), encoding="utf-8")
+            current_path.write_text(json.dumps({"market_date": "2026-09-01", "latest_valid_node": "live", "data_freshness": {"market_phase": "CONTINUOUS_AFTERNOON"}}), encoding="utf-8")
             with patch.object(consistency, "ROOT", root):
                 report = {"errors": [], "warnings": [], "checks": []}
                 consistency._validate_historical_trade_case_mapping(report)
                 self.assertEqual(report["checks"][-1]["status"], "PASS")
-                current_path.write_text(json.dumps({
-                    "market_date": "2026-09-01", "latest_valid_node": "close",
-                    "data_freshness": {"market_phase": "POST_CLOSE_GRACE"},
-                }), encoding="utf-8")
+                current_path.write_text(json.dumps({"market_date": "2026-09-01", "latest_valid_node": "close", "data_freshness": {"market_phase": "POST_CLOSE_GRACE"}}), encoding="utf-8")
                 report = {"errors": [], "warnings": [], "checks": []}
                 consistency._validate_historical_trade_case_mapping(report)
                 self.assertEqual(report["checks"][-1]["status"], "PASS")
@@ -102,23 +98,7 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
             state = root / "data" / "state"
             state.mkdir(parents=True)
             (state / "account_fact.json").write_text("{}", encoding="utf-8")
-            with patch.object(
-                reconciliation,
-                "ROOT",
-                root,
-            ), patch.object(
-                reconciliation,
-                "STATE",
-                state,
-            ), patch.object(
-                reconciliation,
-                "OUT",
-                state / "execution_reconciliation.json",
-            ), patch.object(
-                reconciliation,
-                "now_text",
-                side_effect=["2026-09-07T22:00:00+08:00", "2026-09-07T22:01:00+08:00"],
-            ):
+            with patch.object(reconciliation, "ROOT", root), patch.object(reconciliation, "STATE", state), patch.object(reconciliation, "OUT", state / "execution_reconciliation.json"), patch.object(reconciliation, "now_text", side_effect=["2026-09-07T22:00:00+08:00", "2026-09-07T22:01:00+08:00"]):
                 first = reconciliation.build()
                 second = reconciliation.build()
             stored = json.loads((state / "execution_reconciliation.json").read_text(encoding="utf-8"))
@@ -135,67 +115,13 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
             trade_dir.mkdir(parents=True)
             state.mkdir(parents=True)
             (state / "account_fact.json").write_text("{}", encoding="utf-8")
-            with patch.object(
-                reconciliation,
-                "ROOT",
-                root,
-            ), patch.object(
-                reconciliation,
-                "STATE",
-                state,
-            ), patch.object(
-                reconciliation,
-                "OUT",
-                state / "execution_reconciliation.json",
-            ), patch.object(
-                reconciliation,
-                "now_text",
-                return_value="2026-09-07T22:00:00+08:00",
-            ):
+            with patch.object(reconciliation, "ROOT", root), patch.object(reconciliation, "STATE", state), patch.object(reconciliation, "OUT", state / "execution_reconciliation.json"), patch.object(reconciliation, "now_text", return_value="2026-09-07T22:00:00+08:00"):
                 reconciliation.build()
-
             decision_id = "20260907_220500_trade_159326"
             decision_time = datetime.now(reconciliation.TZ) - timedelta(minutes=10)
-            (decision_dir / f"{decision_id}.json").write_text(json.dumps({
-                "event_type": "FORMAL_DECISION",
-                "decision_id": decision_id,
-                "market_date": decision_time.date().isoformat(),
-                "decision_time_beijing": decision_time.isoformat(timespec="seconds"),
-                "candidate_code": "159326",
-                "candidate_name": "电网设备ETF",
-                "formal_decision": {
-                    "lifecycle": "Trial已执行",
-                    "amount_action": "买入3000份，成交金额4953元",
-                },
-            }), encoding="utf-8")
-            (trade_dir / f"{decision_id}.json").write_text(json.dumps({
-                "event_id": decision_id,
-                "code": "159326",
-                "side": "BUY",
-                "quantity": 3000,
-                "amount": 4953.0,
-                "executed_at_beijing": decision_time.isoformat(timespec="seconds"),
-                "linked_decision_id": decision_id,
-                "execution_status": "EXECUTED",
-            }), encoding="utf-8")
-
-            with patch.object(
-                reconciliation,
-                "ROOT",
-                root,
-            ), patch.object(
-                reconciliation,
-                "STATE",
-                state,
-            ), patch.object(
-                reconciliation,
-                "OUT",
-                state / "execution_reconciliation.json",
-            ), patch.object(
-                reconciliation,
-                "now_text",
-                return_value="2026-09-07T22:01:00+08:00",
-            ):
+            (decision_dir / f"{decision_id}.json").write_text(json.dumps({"event_type": "FORMAL_DECISION", "decision_id": decision_id, "market_date": decision_time.date().isoformat(), "decision_time_beijing": decision_time.isoformat(timespec="seconds"), "candidate_code": "159326", "candidate_name": "电网设备ETF", "formal_decision": {"lifecycle": "Trial已执行", "amount_action": "买入3000份，成交金额4953元"}}), encoding="utf-8")
+            (trade_dir / f"{decision_id}.json").write_text(json.dumps({"event_id": decision_id, "code": "159326", "side": "BUY", "quantity": 3000, "amount": 4953.0, "executed_at_beijing": decision_time.isoformat(timespec="seconds"), "linked_decision_id": decision_id, "execution_status": "EXECUTED"}), encoding="utf-8")
+            with patch.object(reconciliation, "ROOT", root), patch.object(reconciliation, "STATE", state), patch.object(reconciliation, "OUT", state / "execution_reconciliation.json"), patch.object(reconciliation, "now_text", return_value="2026-09-07T22:01:00+08:00"):
                 result = reconciliation.build()
             stored = json.loads((state / "execution_reconciliation.json").read_text(encoding="utf-8"))
             self.assertEqual(result["status"], "RECONCILED")
@@ -203,10 +129,7 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
             self.assertEqual(stored["matches"][0]["status"], "CONFIRMED_BY_TRADE_EVENT")
 
     def test_planned_amount_prefers_explicit_principal_over_price(self):
-        self.assertEqual(
-            reconciliation.parse_money("以1.651元买入3000份，成交本金4953元"),
-            4953,
-        )
+        self.assertEqual(reconciliation.parse_money("以1.651元买入3000份，成交本金4953元"), 4953)
 
     def test_exact_linked_trade_before_formal_decision_is_reconciled(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -219,30 +142,9 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
             decision_time = datetime.now(reconciliation.TZ) - timedelta(minutes=10)
             trade_time = decision_time - timedelta(minutes=4)
             market_date = decision_time.date().isoformat()
-            (decision_dir / f"{decision_id}.json").write_text(json.dumps({
-                "event_type": "FORMAL_DECISION",
-                "decision_id": decision_id,
-                "market_date": market_date,
-                "decision_time_beijing": decision_time.isoformat(timespec="seconds"),
-                "candidate_code": "159326",
-                "candidate_name": "电网设备ETF",
-                "formal_decision": {
-                    "lifecycle": "Trial已执行",
-                    "amount_action": "买入3000份，成交价1.651元，成交金额4953元",
-                },
-            }), encoding="utf-8")
+            (decision_dir / f"{decision_id}.json").write_text(json.dumps({"event_type": "FORMAL_DECISION", "decision_id": decision_id, "market_date": market_date, "decision_time_beijing": decision_time.isoformat(timespec="seconds"), "candidate_code": "159326", "candidate_name": "电网设备ETF", "formal_decision": {"lifecycle": "Trial已执行", "amount_action": "买入3000份，成交价1.651元，成交金额4953元"}}), encoding="utf-8")
             event_id = "20260902_141753_trade_159326"
-            (trade_dir / f"{event_id}.json").write_text(json.dumps({
-                "event_id": event_id,
-                "code": "159326",
-                "side": "BUY",
-                "quantity": 3000,
-                "price": 1.651,
-                "amount": 4953.0,
-                "executed_at_beijing": trade_time.isoformat(timespec="seconds"),
-                "linked_decision_id": decision_id,
-                "execution_status": "EXECUTED",
-            }), encoding="utf-8")
+            (trade_dir / f"{event_id}.json").write_text(json.dumps({"event_id": event_id, "code": "159326", "side": "BUY", "quantity": 3000, "price": 1.651, "amount": 4953.0, "executed_at_beijing": trade_time.isoformat(timespec="seconds"), "linked_decision_id": decision_id, "execution_status": "EXECUTED"}), encoding="utf-8")
             with patch.object(reconciliation, "ROOT", root):
                 result = reconciliation.build()
             self.assertEqual(result["status"], "RECONCILED")
@@ -251,34 +153,12 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
             self.assertEqual(match["status"], "CONFIRMED_BY_TRADE_EVENT")
 
     def test_candidate_does_not_create_buy_for_explicit_sell_decision(self):
-        event = {
-            "event_type": "FORMAL_DECISION",
-            "decision_id": "sell-decision",
-            "market_date": "2026-09-03",
-            "decision_time_beijing": "2026-09-03T09:42:59+08:00",
-            "candidate_code": "518880",
-            "candidate_name": "黄金ETF",
-            "formal_decision": {
-                "lifecycle": "Trial观察候选",
-                "amount_action": "通信ETF（515880）已卖出全部7,400份，成交金额4,795.20元；新增买入0元。",
-            },
-        }
+        event = {"event_type": "FORMAL_DECISION", "decision_id": "sell-decision", "market_date": "2026-09-03", "decision_time_beijing": "2026-09-03T09:42:59+08:00", "candidate_code": "518880", "candidate_name": "黄金ETF", "formal_decision": {"lifecycle": "Trial观察候选", "amount_action": "通信ETF（515880）已卖出全部7,400份，成交金额4,795.20元；新增买入0元。"}}
         intents = reconciliation.decision_intents(event)
         self.assertEqual([(x["code"], x["side"]) for x in intents], [("515880", "SELL")])
 
     def test_explicit_buy_object_creates_buy_intent(self):
-        event = {
-            "event_type": "FORMAL_DECISION",
-            "decision_id": "buy-decision",
-            "market_date": "2026-09-03",
-            "decision_time_beijing": "2026-09-03T11:17:54+08:00",
-            "candidate_code": "518880",
-            "candidate_name": "黄金ETF",
-            "formal_decision": {
-                "lifecycle": "黄金ETF进入Trial",
-                "amount_action": "黄金ETF（518880）于11:21:04以9.109元买入500份，成交本金4,554.50元。",
-            },
-        }
+        event = {"event_type": "FORMAL_DECISION", "decision_id": "buy-decision", "market_date": "2026-09-03", "decision_time_beijing": "2026-09-03T11:17:54+08:00", "candidate_code": "518880", "candidate_name": "黄金ETF", "formal_decision": {"lifecycle": "黄金ETF进入Trial", "amount_action": "黄金ETF（518880）于11:21:04以9.109元买入500份，成交本金4,554.50元。"}}
         intents = reconciliation.decision_intents(event)
         self.assertEqual(len(intents), 1)
         self.assertEqual(intents[0]["code"], "518880")
@@ -289,26 +169,35 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "ETF市场行情档案_2026.md").write_text("", encoding="utf-8")
-            (root / "ETF交易复盘与经验库_2026.md").write_text(
-                "### 2.1 2026-07-13以来完整证券成交索引\n"
-                "共1笔证券交易：ETF 1笔、个股0笔\n"
-                "|2026-07-13 09:36:14|测试ETF|159941|买入|1|1|1|0|1|CASE-20260713-01 初始组合建立|\n"
-                "### 2.2 银证转账与非交易现金流水\n"
-                "### 2.1 CASE-20260713-01：legacy\n",
-                encoding="utf-8",
-            )
-            state = root / "data" / "state"
+            (root / "ETF交易复盘与经验库_2026.md").write_text("### 2.1 2026-07-13以来完整证券成交索引\n共1笔证券交易：ETF 1笔、个股0笔\n|2026-07-13 09:36:14|测试ETF|159941|买入|1|1|1|0|1|CASE-20260713-01|\n### 2.2 银证转账与非交易现金流水\n### 2.3 CASE-20260713-01：legacy\n", encoding="utf-8")
+            state = root / "data/state"
             state.mkdir(parents=True)
-            (state / "CURRENT.json").write_text(json.dumps({
-                "market_date": "2026-09-04",
-                "latest_valid_node": "close",
-                "data_freshness": {"market_phase": "POST_CLOSE_GRACE"},
-            }), encoding="utf-8")
+            (state / "CURRENT.json").write_text(json.dumps({"market_date": "2026-08-26", "latest_valid_node": "close", "data_freshness": {"market_phase": "POST_CLOSE_GRACE"}}), encoding="utf-8")
             with patch.object(consistency, "ROOT", root):
                 report = {"errors": [], "warnings": [], "checks": []}
                 consistency._validate_historical_trade_case_mapping(report)
             self.assertEqual(report["checks"][-1]["status"], "PASS")
-            self.assertEqual(report["errors"], [])
+
+    def test_formal_trade_event_requires_case_after_review_exists(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "ETF市场行情档案_2026.md").write_text("trade-1｜archive\n", encoding="utf-8")
+            (root / "ETF交易复盘与经验库_2026.md").write_text("TRADE_EVENT:trade-1\n", encoding="utf-8")
+            trade_dir = root / "events/trades"
+            trade_dir.mkdir(parents=True)
+            (trade_dir / "trade-1.json").write_text(json.dumps({"event_id": "trade-1", "execution_status": "EXECUTED", "confirmed_at_beijing": "2026-09-01T14:40:01+08:00"}), encoding="utf-8")
+            reviews = root / "events/reviews"
+            reviews.mkdir(parents=True)
+            (reviews / "2026-09-01.json").write_text(json.dumps({"event_type": "FORMAL_POST_CLOSE_REVIEW", "review": {}}), encoding="utf-8")
+            state = root / "data/state"
+            state.mkdir(parents=True)
+            (state / "CURRENT.json").write_text(json.dumps({"market_date": "2026-09-01", "latest_valid_node": "close", "data_freshness": {"market_phase": "POST_CLOSE_GRACE"}}), encoding="utf-8")
+            with patch.object(consistency, "ROOT", root):
+                report = {"errors": [], "warnings": [], "checks": []}
+                consistency._validate_trade_event_formal_sync(report)
+            self.assertEqual(report["checks"][-1]["status"], "FAIL")
+            self.assertIn("formal_trade_sync:trade-1:formal_case_mapping_count=0", report["errors"])
+
 
 if __name__ == "__main__":
     unittest.main()
