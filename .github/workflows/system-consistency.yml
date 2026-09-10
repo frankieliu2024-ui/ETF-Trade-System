@@ -248,7 +248,9 @@ jobs:
             if [ -f "$request" ] && python - "$request" <<'PY'
           import json, sys
           obj = json.load(open(sys.argv[1], encoding="utf-8"))
-          raise SystemExit(0 if isinstance(obj.get("trade_event"), dict) and str(obj.get("trade_event", {}).get("execution_status", "EXECUTED")).upper() == "EXECUTED" else 1)
+trade = obj.get("trade_event")
+is_durable_state_sync = str(obj.get("request_type") or "").upper() == "STATE_SYNC_ONLY"
+raise SystemExit(0 if is_durable_state_sync and isinstance(trade, dict) and str(trade.get("execution_status", "EXECUTED")).upper() == "EXECUTED" else 1)
           PY
             then trade_requests+=("$request"); fi
           done
