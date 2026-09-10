@@ -25,6 +25,8 @@ def classify_risk_tier(
     writer_ownership: bool = False,
     workflow_topology: bool = False,
     irreversible_production_action: bool = False,
+    important_runtime_contract: bool = False,
+    production_behavior_change: bool = False,
 ) -> str:
     """Deterministically classify a mutation; unknown/ambiguous facts fail safe."""
     paths = {str(p).replace("\\", "/") for p in changed_paths}
@@ -39,7 +41,7 @@ def classify_risk_tier(
         or irreversible_production_action
     ):
         return "TIER_3"
-    if canonical_writer_change or state_file_change:
+    if canonical_writer_change or state_file_change or important_runtime_contract:
         return "TIER_2"
     if not paths:
         return "TIER_3"
@@ -47,7 +49,7 @@ def classify_risk_tier(
         p.startswith(("docs/", "research/", "tests/"))
         or p.endswith((".md", ".rst", ".txt"))
         for p in paths
-    ):
+    ) and not production_behavior_change:
         return "TIER_0"
     if all(
         not p.startswith(("data/state/", "events/", "requests/"))
