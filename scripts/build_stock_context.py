@@ -125,7 +125,7 @@ def build() -> dict:
         item["origin"] = origin
         item["origin_fact"] = origin_fact
         is_confirmed_ipo_base = item["role"] == "IPO_BASE_STOCK" and item["role_status"] == "CONFIRMED"
-        is_confirmed_ipo_allotment = origin == "IPO_ALLOTMENT_ORIGIN" and bool(origin_fact)
+        is_confirmed_ipo_allotment = origin == "IPO_ALLOTMENT_ORIGIN"
         if is_confirmed_ipo_base:
             ipo_base_stocks.append(item)
         elif is_confirmed_ipo_allotment:
