@@ -282,6 +282,20 @@ jobs:
         if: ${{ github.event_name == 'push' && github.event.inputs.probe_only != 'true' }}
         shell: bash
         run: |
+          # Process queued state-sync runs against execution-time main while
+          # preserving only the triggering request payload.
+          git fetch origin main
+          request_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
+          mkdir -p /tmp/etf-state-sync-requests
+          for f in $request_files; do
+            mkdir -p "/tmp/etf-state-sync-requests/$(dirname "$f")"
+            cp "$f" "/tmp/etf-state-sync-requests/$f"
+          done
+          git reset --hard origin/main
+          for f in $request_files; do
+            mkdir -p "$(dirname "$f")"
+            cp "/tmp/etf-state-sync-requests/$f" "$f"
+          done
           processed=false
           if [ -n "${EVENT_BEFORE:-}" ] && git cat-file -e "${EVENT_BEFORE}^{commit}" 2>/dev/null; then
             files=$(git diff --name-only "${EVENT_BEFORE}" "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
@@ -428,4 +442,5 @@ jobs:
             fi
             if [ "$attempt" = "3" ]; then exit 1; fi
           done
+
 

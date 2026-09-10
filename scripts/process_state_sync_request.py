@@ -1319,6 +1319,15 @@ def _apply_trade_to_account(prior: dict, trade: dict) -> dict:
     if after < -1e-8:
         return account
     position["quantity"] = int(after) if abs(after - round(after)) < 1e-8 else after
+    if sign < 0 and after <= 1e-8:
+        # A fully executed exit must not leave an impossible residual
+        # available quantity. Partial sells retain existing semantics.
+        position["quantity"] = 0
+        position["available_quantity"] = 0
+    elif sign < 0 and position.get("available_quantity") is not None:
+        available = safe_float(position.get("available_quantity"))
+        if available is not None:
+            position["available_quantity"] = max(0, min(after, available - qty))
     if sign > 0 and position.get("cost") in (None, 0, 0.0):
         position["cost"] = safe_float(trade.get("price")) or position.get("cost") or 0
     if position.get("last_price") in (None, 0, 0.0):
@@ -1678,8 +1687,14 @@ def main() -> int:
     trade = request.get("trade_event")
     prior_account = load_json(ACCOUNT) if ACCOUNT.exists() else {}
     supplied_account = request.get("account_fact")
+    confirmed_at = (
+        trade.get("confirmed_at_beijing") or request.get("requested_at_beijing")
+        or trade.get("executed_at") or prior_account.get("updated_at")
+    ) if isinstance(trade, dict) else ""
+    replay_key = _trade_idempotency_key(trade, confirmed_at) if isinstance(trade, dict) else ""
+    existing_trade = _find_existing_trade(trade, confirmed_at, replay_key) if isinstance(trade, dict) else None
     account_sync_status = "NOT_APPLICABLE"
-    if not supplied_account and isinstance(trade, dict):
+    if not supplied_account and isinstance(trade, dict) and existing_trade is None:
         supplied_account = _apply_trade_to_account(prior_account, trade)
     if is_broker_screenshot_request(request) and not isinstance(supplied_account, dict) and not isinstance(trade, dict):
         result = {
@@ -1740,7 +1755,7 @@ def main() -> int:
     if trade:
         confirmed_at = trade.get("confirmed_at_beijing") or request.get("requested_at_beijing") or trade.get("executed_at") or account.get("updated_at")
         idempotency_key = _trade_idempotency_key(trade, confirmed_at)
-        existing = _find_existing_trade(trade, confirmed_at, idempotency_key)
+        existing = existing_trade or _find_existing_trade(trade, confirmed_at, idempotency_key)
         if existing:
             event, event_id, trade_event_recorded = existing, str(existing.get("event_id") or ""), True
             # A request-scoped confirmation time is authoritative for an
@@ -1814,3 +1829,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
