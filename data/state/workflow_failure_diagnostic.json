@@ -1,18 +1,18 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-10T10:03:17+08:00",
+  "generated_at": "2026-09-10T10:03:40+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF runtime self-healing watchdog",
   "run_id": 34427887418,
-  "run_attempt": 1,
+  "run_attempt": 2,
   "head_sha": "d9a97c360b8aca1addb87c56785cd57576ac55f0",
-  "main_head_sha": "0bb9c0677c8db94b33ba22ea142f45bf477083d7",
+  "main_head_sha": "46d8e2e23e13ae1021b480c10b3b9546e0b781f8",
   "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
       "job": "watchdog",
-      "step": "Escalate persistent or structural failure",
-      "number": 13
+      "step": "Persist bounded self-healing state and deterministic repairs",
+      "number": 12
     }
   ],
   "changed_files": [
@@ -24,8 +24,8 @@
   ],
   "commit_message": "fix: include confirmed IPO allotment holdings in stock market chain (#483)",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
-  "reason": "failure is classified as transient/persistence and this is the first attempt",
+  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
+  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
