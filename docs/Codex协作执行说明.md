@@ -13,7 +13,6 @@
 
 latest-main仍是硬要求；只有共享owner/文件冲突、行为语义变化或候选证据失效才重建successor。动态state-only main前进可复用合法 `acceptance_evidence_identity`。global hard FAIL始终保留；change-specific acceptance单独判定，可靠无关失败不自动升级低/中风险事项。root-cause-complete在已证明failure domain与相邻断点的枚举矩阵完成后停止；独立发现另行准入。
 
-
 本文只定义 ChatGPT、执行器与 GitHub 之间的可恢复任务交接方式，不定义交易规则、数据规则、通知规则或生产变更准入。`CODEX_EXECUTION_BRIEF`／`CODEX_EXECUTION_PACKET`是可由不同执行器消费的执行控制面，不因名称含有“Codex”而限定执行器；生产变更仍以《生产变更与并发写入协议 V1.9》为唯一规范来源。
 
 ## 1. 任务入口
@@ -83,6 +82,10 @@ ChatGPT 可在无需逐次人工确认的情况下，对已有正式事项执行
 Codex 每次执行必须从执行时 latest `main` 和 `ETF_SYSTEM_INDEX.md` 起跑，并先输出 `LATEST_MAIN_AT_START`。如果本地或任务上下文中的起点不是执行时 GitHub `main` HEAD，必须先重新同步；不得在旧 SHA 上继续执行并把结果称为 latest-main 结论。
 
 随后按 INDEX 路由读取所属规范、当前事实、production mutation protocol、canonical owner 及本轮最小充分依赖，再判断准入、根因、范围和实现路径。
+
+对于 production incident / maintenance，Issue 或当前 BRIEF/PACKET 在进入实现、生产 mutation 或 PR 之前，必须显式建立系统级 framing：`SYSTEM_GOAL`、`ACTION_IMPACT`、`FAILURE_DOMAIN`、`SHARED_INVARIANTS`、`CANONICAL_OWNER`、`EXISTING_MECHANISM_INSUFFICIENT`、`ADJACENT_BREAKPOINTS`、`SAME_ROOT_OTHER_SYMPTOMS`、`LOCAL_PATCH_REJECTION`、`SYSTEM_LEVEL_SUCCESS_METRIC`、`CLOSURE_PROOF`、`REAL_PRODUCTION_EXPOSURE` 和 `NON_GOALS`。字段可以由 Issue 正文、已引用的正式 comment 或本轮唯一 BRIEF/PACKET 提供，但必须能从同一控制面恢复且不得与 current governance SSOT 冲突。
+
+缺失或实质未解决上述核心 framing 时，只允许继续只读诊断、证据恢复和范围收敛；不得进入实现、生产 mutation、PR 或把 BRIEF/PACKET 标记为可执行。补齐 framing 后仍须按 current V1.9 production mutation protocol 完成风险 Tier、准入、canonical owner、最小根因完整修复和对应验收；本前置条件不复制治理规则、不新增 checker/workflow/state，也不把 Issue template 变成第二 SSOT。
 
 创建新的BRIEF/PACKET Issue前，必须先按当前生产治理SSOT完成NEW_WORK_ITEM_GATE，并在ChatGPT对话中给出立项判断和可直接复制的Codex短启动文本。
 
