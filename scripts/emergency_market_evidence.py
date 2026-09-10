@@ -158,7 +158,10 @@ def validate_external_market_evidence(request, root, *, decision_time, availabil
         if missing:
             raise ValueError(f"EXTERNAL_EVIDENCE_FIELD_MISSING:{_symbol_base(symbol)}:{','.join(missing)}")
         provider = str(row.get("provider") or "").strip()
-        if not _provider_allowed(provider_config, row.get("symbol") or symbol, provider):
+        if connected:
+            if _provider_base(provider) != connector_identity:
+                raise ValueError(f"EXTERNAL_EVIDENCE_CONNECTED_PROVIDER_MISMATCH:{_symbol_base(symbol)}:{provider}")
+        elif not _provider_allowed(provider_config, row.get("symbol") or symbol, provider):
             raise ValueError(f"EXTERNAL_EVIDENCE_PROVIDER_NOT_REGISTERED:{_symbol_base(symbol)}:{provider}")
         if connected:
             if row.get("provider_source_url"):
