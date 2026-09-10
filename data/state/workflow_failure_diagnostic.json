@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-10T19:43:17+08:00",
+  "generated_at": "2026-09-10T19:57:37+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 34472731081,
+  "run_id": 34473995087,
   "run_attempt": 1,
-  "head_sha": "2fb818e129b4a081d238c6459ab3e6b507df6233",
-  "main_head_sha": "2fb818e129b4a081d238c6459ab3e6b507df6233",
+  "head_sha": "514e434bb830b1361951b624dc17207d350c479a",
+  "main_head_sha": "514e434bb830b1361951b624dc17207d350c479a",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,11 +16,12 @@
     }
   ],
   "changed_files": [
-    ".github/workflows/market-snapshot.yml",
-    "tests/test_historical_state_sync_replay_contract.py"
+    "data/state/us_extended_hours_context.json",
+    "data/state/us_extended_hours_context_previous.json",
+    "data/state/us_pulse_runtime_health.json"
   ],
-  "commit_message": "Merge pull request #501 from frankieliu2024-ui/codex/493-recovery-schema-complete",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "data: refresh US extended-hours context",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
@@ -28,7 +29,7 @@
     "head_is_current_main": true,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
