@@ -39,6 +39,44 @@ class ReportDeliveryContractTests(unittest.TestCase):
             self.assertEqual(event["content"], request["full_content"])
             self.assertTrue(event["no_trade_authority"])
 
+    def test_explicit_report_path_wins_over_other_directory_entries(self):
+        selected = self._request("ETF_SYSTEM_REVIEW")
+        other = self._request("ETF_TRADE_REVIEW")
+        with tempfile.TemporaryDirectory() as directory:
+            selected_path = Path(directory) / "selected.json"
+            other_path = Path(directory) / "other.json"
+            selected_path.write_text(json.dumps(selected, ensure_ascii=False), encoding="utf-8")
+            other_path.write_text(json.dumps(other, ensure_ascii=False), encoding="utf-8")
+            with patch.object(notification_center, "REPORT_REQUEST_DIR", Path(directory)), patch.dict(
+                "os.environ", {"REPORT_DELIVERY_PATH": str(selected_path)}
+            ):
+                event = notification_center.report_delivery_event()
+        self.assertEqual(event["report_type"], "ETF_SYSTEM_REVIEW")
+        self.assertEqual(event["idempotency_key"], selected["idempotency_key"])
+
+    def test_explicit_invalid_report_is_audited_as_failure(self):
+        request = self._request("ETF_FORMAL_DECISION")
+        request["content_hash"] = "wrong"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "invalid.json"
+            path.write_text(json.dumps(request, ensure_ascii=False), encoding="utf-8")
+            with patch.dict("os.environ", {"REPORT_DELIVERY_PATH": str(path)}):
+                self.assertEqual(
+                    notification_center.report_delivery_validation_error(),
+                    "invalid_report:content_hash_mismatch",
+                )
+
+    def test_explicit_report_is_prioritized_over_unrelated_interrupt(self):
+        request = self._request("ETF_FORMAL_DECISION")
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "report.json"
+            path.write_text(json.dumps(request, ensure_ascii=False), encoding="utf-8")
+            with patch.dict("os.environ", {"REPORT_DELIVERY_PATH": str(path)}), \
+                 patch.object(notification_center, "execution_confirmation_event", return_value={"key": "interrupt"}):
+                event = notification_center.choose_event("event")
+        self.assertEqual(event["event_type"], "REPORT_DELIVERY_REQUEST")
+        self.assertEqual(event["report_type"], "ETF_FORMAL_DECISION")
+
     def test_unknown_report_type_is_rejected(self):
         request = self._request("ETF_UNKNOWN_REPORT")
         self.assertFalse(notification_center.validate_report_delivery_request(request)[0])
