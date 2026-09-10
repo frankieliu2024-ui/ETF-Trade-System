@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "channel": "REPORT",
+  "report_type": "ETF_SYSTEM_REVIEW",
+  "report_id": "etf-system-review-20260910-1240-run10",
+  "task_id": "ETF变更复核",
+  "task_run_id": "etf-system-review-20260910T1240-run10",
+  "generated_at": "2026-09-10T12:40:00+08:00",
+  "effective_market_date": "2026-09-10",
+  "source_actor": "ChatGPT",
+  "source_reference": "product-task:ETF系统复核",
+  "title": "【系统复核】ETF系统复核｜2026-09-10",
+  "summary": "ETF系统复核已完成：系统可用，上午真实生产验收已回写，剩余重点为正式决策端到端时延与L0完整closure proof。",
+  "full_content": "【复核截止时点】2026-09-10 12:40（北京时间）｜最终读取main：7d47dbd\n\n【本次结论】系统正常但有告警：11:29最新A股行情、09:45账户事实、决策上下文和E2E均READY，上午正式决策已形成合法PIT闭环；当前没有需要立即修改生产环境的硬故障。主要剩余问题已从“正式决策能否完成”收敛为端到端用户可见时延仍偏高及L0控制面完整closure proof尚未全部满足，用户无需操作。\n\n【本轮健康检查】\n1. 11:29正式行情完整覆盖13只ETF和3个核心指数，行情质量PASS；09:45账户事实VALID，现金及结算约束已同步。\n2. E2E在11:29为READY，market/account/close review/decision context/maintenance均无blocker或degradation。\n3. 09:20正式决策实际消费09:26:10附近合法集合竞价快照并完成正式持久化，没有混用旧行情或旧decision context。\n4. 今晨US扩展时段链继续正常刷新；当前未发现新的writer、processor或notification硬故障。\n\n【本轮变化】\n1. 09:20真实正式决策已完成此前等待的生产验收：wait/final-reread正确性获得真实生产支持，但11:20节点用户可见FINAL_CUTOFF约11:28，端到端时延仍需拆分归因。\n2. L0控制面获得新的真实证据：09:20节点在自然pulse不足时由【ETF正式决策】使用现行wake-only入口恢复同一canonical producer/C并完成合法决策；primary wake不足的归因仍被保留。\n3. 当前无开放PR，本轮没有等待前序解除后需要推进的集成候选。\n\n【Production Acceptance】\n1. #389 — INCOMPLETE：09:20真实节点证明合法行情→匹配decision context→正式判断/持久化能够闭环；剩余条件是用后续真实节点拆分平台启动延迟与Task内部时延，并证明端到端有界完成。\n2. #385 — PASS（本轮暴露）/Issue closure仍INCOMPLETE：09:20证明decision-critical节点可由已准入wake-only入口有界保护且不改写primary wake归因；完整多节点、race/dedupe及系统级closure matrix仍需逐项满足。\n3. #460 — INCOMPLETE：上午节点证明corrected wait contract可以跨越CURRENT→decision-context就绪，但尚缺干净的阶段级时延证据，不能据此认定底层context关键路径已无需优化。\n\n【本次实际动作】本轮完成latest-main健康复核和09:20/11:20真实production exposure验收，并已将#389、#385、#460验收结果分别回写其真实owner Issue；未创建/合并PR，未修改代码、配置、MASTER或交易权限，未执行额外refresh/rebuild/retry。未承担L0 wake；decision-critical runtime assurance由【ETF正式决策】按其每次T0/current contract决定是否执行。\n\n【仍需处理】\n1. #389：下一真实正式决策节点需输出可归因的阶段时延，区分Scheduled平台启动延迟、行情/上下文等待、reasoning、持久化和final reread；只有端到端有界完成得到证明才具备关闭条件。\n2. #385：当前production exposure已证明核心保护路径有效，但Issue自身更宽的closure checklist尚未全部满足；应按现有证据矩阵重新核对，不因单次PASS机械关闭。\n3. #460：只有阶段时延证明CURRENT→minimum decision context仍是实质瓶颈时才重新准入生产修改；否则保持OBSERVE，不做高风险context重构。\n\n【下次重点】\n1. 13:20正式决策自然形成后，重点验收端到端stage timing和是否继续保持合法PIT闭环。\n2. 用上午多个真实节点重新核对#385多节点保护、dedupe/race与failure attribution closure条件，能满足的自动闭环，缺证据的明确保留。\n\n下一阶段：保持当前生产实现稳定，优先消费13:20及后续真实正式决策节点的stage timing与多节点保护证据。\n\n下一关注点：系统现在的主要矛盾已经从“正式决策会不会丢节点”转为“正确闭环能否更快、更稳定地完成”，同时不削弱PIT、fail-safe和唯一canonical owner。\n\n置信度：高\n\n最可能出错的地方：当前仓库已经能证明09:20决策正确闭环和11:29系统READY，但缺少Scheduled平台真实T0到各内部阶段的统一机器时间线；因此不能把11:20到11:28的全部延迟都归因于Task内部，也不能据此直接决定#460需要代码优化。",
+  "content_hash": "2493f5d9bb62dba344e801ccd0e1260d452d4194b70b8ddbefb06a5a9ff83ce7",
+  "idempotency_key": "ETF变更复核:etf-system-review-20260910T1240-run10",
+  "delivery_mode": "FULL_REPORT",
+  "no_trade_authority": true
+}
