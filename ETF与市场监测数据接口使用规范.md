@@ -57,8 +57,8 @@ ETF层只使用“持仓ETF + 观察ETF”两种身份。两类均持续获取�
 
 默认个股监测不设固定股票名单。
 
-- 当前打新底仓：从当日 `data/state/account_fact.json` 的实际非ETF持仓动态识别，并结合 `data/state/asset_roles.json` 判断资产角色；确认 `IPO_BASE_STOCK` 后进入默认监测与统一资本比较。
-- 新出现但角色未知的个股：标记 `UNCLASSIFIED_STOCK`，要求一次事实确认，不依据代码、名称或历史持仓自行归类。
+- 默认个股监测：从当日 `data/state/account_fact.json` 的实际非ETF持仓动态识别；已确认资产角色为 `IPO_BASE_STOCK`，或账户事实明确且可追溯的 `origin=IPO_ALLOTMENT_ORIGIN`，进入默认监测与统一资本比较。中签来源是账户来源分类，不把该对象改称为 `IPO_BASE_STOCK`。
+- 新出现且没有已确认角色或来源的个股：标记 `UNCLASSIFIED_STOCK`，要求一次事实确认，不依据代码、名称或历史持仓自行归类。
 - 数量归零：自动退出当前默认个股监测。
 - 条件产业链个股：仅在ETF候选、持仓、行业冲击或产业链传导分析需要时动态调用，可覆盖A股、美股、港股、韩股、台股、日股及其他已核验市场，不维护永久名单。
 
