@@ -24,8 +24,10 @@ class Issue493TradeReplayTests(unittest.TestCase):
         self.assertIn("git fetch origin main", section)
         self.assertIn("git reset --hard origin/main", section)
         self.assertIn("preserving only the triggering request payload", section)
-        self.assertIn("20260910_1340_user_confirmed_dual_sell.json", acceptance_workflow)
-        self.assertIn("20260910_1341_user_confirmed_301689_sell.json", acceptance_workflow)
+        self.assertIn("Replay durable confirmed-trade ingress generically", acceptance_workflow)
+        self.assertIn('request_type") or "").upper() == "STATE_SYNC_ONLY"', acceptance_workflow)
+        self.assertNotIn("20260910_1340_user_confirmed_dual_sell.json", acceptance_workflow)
+        self.assertNotIn("20260910_1341_user_confirmed_301689_sell.json", acceptance_workflow)
 
 
 if __name__ == "__main__":
