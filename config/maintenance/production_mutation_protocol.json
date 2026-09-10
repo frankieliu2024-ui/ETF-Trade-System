@@ -1,11 +1,12 @@
 {
-  "schema_version": "1.6",
+  "schema_version": "1.7",
   "mode": "PRODUCTION_MUTATION_PROTOCOL",
   "purpose": "允许并行诊断、研究、实现和测试；对共享生产状态实行价值/残余风险准入、隔离实施、latest-main重放、文件所有权和串行集成约束。",
   "normative_contract": {
     "source": "docs/生产变更与并发写入协议_V1.0.md",
-    "version": "V1.8",
-    "machine_role": "EXECUTABLE_MIRROR_NOT_RULE_SOURCE"
+    "version": "V1.9",
+    "machine_role": "EXECUTABLE_MIRROR_NOT_RULE_SOURCE",
+    "migration_note": "V1.9 is a governance reduction over V1.8; V1.8 hard safety invariants remain mandatory."
   },
   "principles": [
     "parallel_diagnosis_is_allowed",
@@ -18,28 +19,27 @@
     "scheduled_review_is_thin_wakeup_over_ssot"
   ],
   "change_admission": {
-  "merged_main_failure_attribution": {
-    "categories": [
-      "INTRODUCED_BY_CURRENT_CHANGE",
-      "PREEXISTING_UNRELATED",
-      "NEW_UNRELATED_DISCOVERY",
-      "ATTRIBUTION_INCONCLUSIVE"
-    ],
-    "closure_requires": [
-      "failure_attribution",
-      "change_specific_acceptance"
-    ],
-    "closure_rule": "change-specific acceptance must pass; introduced or inconclusive attribution cannot close; reliable preexisting or new unrelated attribution does not mechanically block independent closure",
-    "inconclusive_fail_safe": true,
-    "global_fail_no_bypass": true,
-    "orthogonal_to": [
-      "decision_outcomes",
-      "work_concurrency",
-      "production_integration",
-      "priority_semantics"
-    ]
-  },
-
+    "merged_main_failure_attribution": {
+      "categories": [
+        "INTRODUCED_BY_CURRENT_CHANGE",
+        "PREEXISTING_UNRELATED",
+        "NEW_UNRELATED_DISCOVERY",
+        "ATTRIBUTION_INCONCLUSIVE"
+      ],
+      "closure_requires": [
+        "failure_attribution",
+        "change_specific_acceptance"
+      ],
+      "closure_rule": "change-specific acceptance must pass; introduced or inconclusive attribution cannot close; reliable preexisting or new unrelated attribution does not mechanically block independent closure",
+      "inconclusive_fail_safe": true,
+      "global_fail_no_bypass": true,
+      "orthogonal_to": [
+        "decision_outcomes",
+        "work_concurrency",
+        "production_integration",
+        "priority_semantics"
+      ]
+    },
     "default": "DO_NOT_CHANGE_UNLESS_VALUE_AND_READINESS_ARE_CLEAR",
     "governance_principles": {
       "decision_and_timing": "decide whether the change has clear net value and whether any critical residual risk still requires future evidence; closed-market pre-open midday-break post-close and holiday windows may be valid maintenance windows; a real production exposure window is required only when the residual risk cannot be closed before merge",
@@ -291,10 +291,160 @@
   ],
   "integration_sequence": [
     "analyze_research_and_test_in_parallel",
+    "classify_risk_tier",
     "implement_in_isolation",
-    "evaluate_value_and_residual_risk",
+    "evaluate_change_specific_residual_risk",
     "integrate_one_change_on_latest_main",
-    "run_full_consistency_and_e2e",
+    "run_only_tier_required_acceptance",
+    "reuse_acceptance_evidence_identity_when_valid",
     "re_evaluate_next_change_against_latest_main"
-  ]
+  ],
+  "risk_tier_classifier": {
+    "version": "V1.9",
+    "unknown_defaults_to": "TIER_3",
+    "tiers": {
+      "TIER_0": {
+        "description": "No production behavior semantics: docs, prompts, presentation, read-only audit, research or artifact-only validation.",
+        "production_write": false,
+        "required_gates": [
+          "docs_or_format_check",
+          "ordinary_ci"
+        ]
+      },
+      "TIER_1": {
+        "description": "Single owner, deterministic change with no canonical writer/state/PIT/account/trade/authority/topology change.",
+        "production_write": false,
+        "required_gates": [
+          "targeted_tests",
+          "relevant_tests",
+          "latest_main_semantic_check",
+          "ci",
+          "compile_or_diff_check"
+        ]
+      },
+      "TIER_2": {
+        "description": "Canonical producer/state, notification state or important runtime contract change without account/trade facts, PIT qualification, MASTER, authority, writer ownership or topology change.",
+        "production_write": true,
+        "required_gates": [
+          "tier_1_gates",
+          "owner_protocol_check",
+          "candidate_acceptance",
+          "merged_main_consistency_or_e2e_when_triggered",
+          "failure_attribution_on_hard_fail"
+        ],
+        "production_exposure": "ONLY_IF_DETERMINISTIC_EVIDENCE_LEAVES_KEY_RESIDUAL_RISK"
+      },
+      "TIER_3": {
+        "description": "Account, trade, PIT/freshness qualification, writer ownership, MASTER/authority, concurrency topology or irreversible production behavior change.",
+        "production_write": true,
+        "required_gates": [
+          "targeted_and_full_tests",
+          "owner_protocol_check",
+          "candidate_acceptance",
+          "merged_main_full_consistency",
+          "merged_main_e2e",
+          "failure_attribution",
+          "human_review"
+        ],
+        "production_exposure": "REQUIRED_WHEN_DETERMINISTIC_EVIDENCE_CANNOT_CLOSE_KEY_RESIDUAL_RISK"
+      }
+    },
+    "escalation_flags": [
+      "canonical_writer_change",
+      "state_file_change",
+      "account_or_trade_fact",
+      "pit_or_freshness",
+      "master_or_trading_authority",
+      "writer_ownership",
+      "workflow_topology",
+      "irreversible_production_action"
+    ],
+    "path_classes": {
+      "docs_prompts_display": "TIER_0",
+      "tests_only": "TIER_0",
+      "single_owner_deterministic_runtime": "TIER_1",
+      "canonical_state_or_notification": "TIER_2",
+      "account_trade_pit_authority_topology": "TIER_3"
+    }
+  },
+  "root_cause_stop_rule": {
+    "scope": "evidence_proven_same_root_cause_failure_domain_and_observed_adjacent_breakpoints",
+    "required_matrix": [
+      "input_schema",
+      "state_transition",
+      "canonical_owner",
+      "observed_adjacent_breakpoint"
+    ],
+    "stop_after": "one enumerated boundary matrix is complete",
+    "forbid": [
+      "unbounded_theoretical_proof",
+      "automatic_inclusion_of_new_independent_failure_domain"
+    ],
+    "independent_discovery_route": "NEW_WORK_ITEM_GATE_OR_EMERGENCY_FAST_PATH"
+  },
+  "latest_main_reconstruction_rule": {
+    "hard_baseline": "execution_time_latest_main",
+    "successor_required_only_if": [
+      "shared_owner_or_file_conflict",
+      "behavior_semantic_change",
+      "candidate_acceptance_invalidated"
+    ],
+    "non_reconstruction_path": [
+      "rebase_or_mergeability_check",
+      "semantic_verification",
+      "reuse_valid_evidence_identity"
+    ],
+    "dynamic_state_only_change": "does_not_by_itself_invalidate_stable_candidate_evidence"
+  },
+  "acceptance_evidence_identity": {
+    "fields": [
+      "pr_head_sha",
+      "stable_semantic_diff",
+      "risk_tier",
+      "canonical_owner_or_changed_file_domain",
+      "protocol_version",
+      "test_ci_evidence_digest"
+    ],
+    "reuse_when": "identity unchanged and no reconstruction trigger",
+    "invalidated_by": [
+      "head_change",
+      "stable_semantic_diff_change",
+      "risk_tier_escalation",
+      "canonical_owner_change",
+      "reconstruction_trigger",
+      "evidence_contract_version_change"
+    ]
+  },
+  "global_vs_change_acceptance": {
+    "global_hard_severity": "always_preserved",
+    "change_specific_acceptance": "separate_result",
+    "unrelated_reliable_global_failure_blocks": [
+      "TIER_3",
+      "ATTRIBUTION_INCONCLUSIVE"
+    ],
+    "unrelated_reliable_global_failure_does_not_default_block": [
+      "TIER_0",
+      "TIER_1",
+      "TIER_2"
+    ],
+    "failure_attribution_required_for": [
+      "TIER_2_ON_HARD_FAIL",
+      "TIER_3",
+      "ATTRIBUTION_INCONCLUSIVE"
+    ]
+  },
+  "mirror_reduction": {
+    "machine_only_semantics": [
+      "risk_tier_classifier",
+      "root_cause_stop_rule",
+      "latest_main_reconstruction_rule",
+      "acceptance_evidence_identity",
+      "global_vs_change_acceptance",
+      "writer_ownership",
+      "state_file_contracts"
+    ],
+    "normative_text_source": "docs/生产变更与并发写入协议_V1.0.md",
+    "issue_brief_packet_rule": "reference_protocol_and_task_fields_only",
+    "no_manual_second_rule_set": true
+  }
 }
