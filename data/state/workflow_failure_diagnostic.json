@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-10T08:36:08+08:00",
+  "generated_at": "2026-09-10T09:06:33+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 34421943916,
+  "run_id": 34424073861,
   "run_attempt": 1,
-  "head_sha": "285e5f82d19b2a5dc96679c2a46b8cef295aecea",
-  "main_head_sha": "26ded4d5fb45b59495c43e9c202ef1e3a1530d32",
+  "head_sha": "e28ebb58c3bf2797fac19db92c98df922cfc7c6b",
+  "main_head_sha": "e28ebb58c3bf2797fac19db92c98df922cfc7c6b",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,15 +16,17 @@
     }
   ],
   "changed_files": [
-    "requests/report_delivery/20260910T0835_etf_system_review_run10.json"
+    ".github/workflows/decision-notification.yml",
+    "scripts/notification_center.py",
+    "tests/test_notification_report_delivery.py"
   ],
-  "commit_message": "request: deliver ETF system review 2026-09-10 08:35",
+  "commit_message": "fix: make Scheduled Actor REPORT delivery deterministic (#481)",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": false,
+    "head_is_current_main": true,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
