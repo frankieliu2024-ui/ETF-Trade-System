@@ -40,13 +40,39 @@ def validate_report_delivery_request(request: dict) -> tuple[bool, str]:
     if str(request.get("content_hash")) != expected_hash: return False, "content_hash_mismatch"
     return True, ""
 
+def _report_delivery_path() -> Path | None:
+    raw_path = os.environ.get("REPORT_DELIVERY_PATH", "").strip()
+    if not raw_path:
+        return None
+    path = Path(raw_path)
+    return path if path.is_absolute() else ROOT / path
+
+
+def report_delivery_validation_error() -> str | None:
+    """Return an auditable validation error for an explicitly triggered REPORT."""
+    path = _report_delivery_path()
+    if path is None:
+        return None
+    if not path.is_file():
+        return "missing_report_path:" + str(path)
+    request = read_json(path, {})
+    valid, reason = validate_report_delivery_request(request)
+    return None if valid else "invalid_report:" + reason
+
+
 def report_delivery_event() -> dict | None:
-    if not REPORT_REQUEST_DIR.exists(): return None
+    explicit_path = _report_delivery_path()
+    paths = [explicit_path] if explicit_path is not None else (
+        sorted(REPORT_REQUEST_DIR.glob("*.json")) if REPORT_REQUEST_DIR.exists() else []
+    )
     candidates = []
-    for path in sorted(REPORT_REQUEST_DIR.glob("*.json")):
+    for path in paths:
+        if path is None:
+            continue
         request = read_json(path, {})
         valid, _ = validate_report_delivery_request(request)
-        if valid: candidates.append(request)
+        if valid:
+            candidates.append(request)
     if not candidates: return None
     request = candidates[-1]
     key = str(request["idempotency_key"])
@@ -58,7 +84,6 @@ def report_delivery_event() -> dict | None:
             "report_type": str(request["report_type"]), "report_id": str(request["report_id"]),
             "task_id": str(request["task_id"]), "task_run_id": str(request["task_run_id"]),
             "idempotency_key": key, "no_trade_authority": True}
-
 
 def read_json(path: Path, default: Any) -> Any:
     try:
@@ -570,11 +595,20 @@ def close_account_event(force: bool = False) -> dict | None:
 def choose_event(mode: str) -> dict | None:
     if mode == "close": return close_account_event()
     if mode == "close-test": return close_account_event(force=True)
-    for builder in (execution_confirmation_event, formal_decision_change_event, account_confirmation_event, system_event, decision_event, report_delivery_event):
+    # An explicitly triggered REPORT must deliver that exact report.
+    # Other workflow_run events retain the existing INTERRUPT precedence.
+    builders = (
+        (report_delivery_event, execution_confirmation_event, formal_decision_change_event,
+         account_confirmation_event, system_event, decision_event)
+        if _report_delivery_path() is not None
+        else
+        (execution_confirmation_event, formal_decision_change_event, account_confirmation_event,
+         system_event, decision_event, report_delivery_event)
+    )
+    for builder in builders:
         event = builder()
         if event: return event
     return None
-
 
 LIFECYCLE_STATUSES = {"CREATED", "SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED", "EXPIRED"}
 USER_ACTION_TYPES = {"成交确认", "账户确认", "收盘账户", "交易判断", "正式决策变化", "系统异常"}
@@ -819,6 +853,23 @@ def main() -> int:
     if args.mode == "channel-test":
         event = {"key": f"channel-test:{now().isoformat(timespec='seconds')}", "type": "测试", "title": "【测试】ETF系统通知中心", "content": "这是一条通知通道测试，不代表真实行情、账户、交易或系统故障。\n\n你现在需要做什么：无需操作。收到即表示 GitHub → PushPlus → 微信通道正常。", "source": "manual_test", "event_type": "CHANNEL_TEST", "user_severity": "测试", "user_action": "无需操作"}
     else:
+        validation_error = report_delivery_validation_error()
+        if validation_error:
+            stamp = now().isoformat(timespec="seconds")
+            state.update({
+                "schema_version": "2.2",
+                "updated_at": stamp,
+                "last_status": "FAILED",
+                "last_type": "REPORT_DELIVERY_REQUEST",
+                "last_error": validation_error,
+                "notifications": notifications[-HISTORY_LIMIT:],
+                "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]],
+                "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"],
+            })
+            write_json(state_path, state)
+            print(json.dumps({"status": "FAILED", "event_type": "REPORT_DELIVERY_REQUEST",
+                              "error": validation_error}, ensure_ascii=False))
+            return 1
         event = choose_event(args.mode)
     if event:
         event = render_canonical_notification(event)
