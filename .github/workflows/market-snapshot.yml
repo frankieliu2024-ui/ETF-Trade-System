@@ -343,21 +343,29 @@ jobs:
               value = data.get(key)
               return None if value in (None, "") else f"{float(value):.10f}"
           def time_value(data):
-              for key in ("confirmed_at_beijing", "executed_at", "execution_time", "trade_time"):
+              for key in ("executed_at_beijing", "executed_at", "execution_time", "trade_time", "confirmed_at_beijing"):
                   value = data.get(key)
                   if value not in (None, ""):
-                      return str(value).strip()
-              return None
+                      return key, str(value).strip()
+              return None, None
+          # Canonical identity is event_id plus trade mechanics and execution time
+          # when both records expose the same semantic time field. Request-only
+          # asset_type/name/source/lifecycle are enrichment; asset classification
+          # remains owned by the canonical ETF universe/account projection.
           for key in ("event_id", "idempotency_key", "code", "side"):
               if trade.get(key) not in (None, "") and trade.get(key) != canonical.get(key):
                   raise SystemExit(f"canonical trade event mismatch: {key}")
           for key in ("quantity", "price"):
               if number_value(trade, key) != number_value(canonical, key):
                   raise SystemExit(f"canonical trade event mismatch: {key}")
-          if time_value(trade) is None or time_value(trade) != time_value(canonical):
+          request_time_key, request_time = time_value(trade)
+          canonical_time_key, canonical_time = time_value(canonical)
+          if request_time is None:
+              raise SystemExit("replay_request trade_event is missing execution time")
+          if request_time_key == canonical_time_key and request_time != canonical_time:
               raise SystemExit("canonical trade event mismatch: time")
-          if text_value(trade, "asset_type") and text_value(trade, "asset_type") != text_value(canonical, "asset_type"):
-              raise SystemExit("canonical trade event mismatch: asset_type")
+          if canonical_time is None:
+              raise SystemExit("canonical trade event is missing execution time")
           PY
             python scripts/refresh_gate.py --guard-request "$request_files"
             python scripts/process_state_sync_request.py "$request_files"
