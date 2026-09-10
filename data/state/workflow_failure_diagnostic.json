@@ -1,36 +1,33 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-10T11:08:35+08:00",
+  "generated_at": "2026-09-10T11:15:16+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 34432146729,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 34432588705,
   "run_attempt": 1,
-  "head_sha": "b4a329b25668fd1f745f3a3b05297bd6a781fb21",
-  "main_head_sha": "b4a329b25668fd1f745f3a3b05297bd6a781fb21",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "64c8758041c5c7490f26c9e358e85944fde364ed",
+  "main_head_sha": "30b972b72e83c2735397995ba007b4792c5d22fc",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 8
+      "job": "watchdog",
+      "step": "Escalate persistent or structural failure",
+      "number": 13
     }
   ],
   "changed_files": [
-    "\"ETF\\344\\270\\216\\345\\270\\202\\345\\234\\272\\347\\233\\221\\346\\265\\213\\346\\225\\260\\346\\215\\256\\346\\216\\245\\345\\217\\243\\344\\275\\277\\347\\224\\250\\350\\247\\204\\350\\214\\203.md\"",
-    "scripts/emergency_market_evidence.py",
-    "scripts/process_state_sync_request.py",
-    "tests/test_emergency_market_evidence.py"
+    "data/state/notification_center.json"
   ],
-  "commit_message": "fix: separate emergency decision and execution evidence eligibility (#485)",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "commit_message": "state: record notification and execution reconciliation",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": true,
+    "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
