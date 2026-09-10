@@ -181,7 +181,12 @@ def main() -> int:
     if query_time_refresh and event_name == "push":
         reason = "query_time_refresh_midday_reference" if phase == "MIDDAY_BREAK" else "query_time_refresh_separate_global_path"
     elif event_name == "workflow_dispatch":
-        reason = "manual_dispatch_capture_window" if should_capture else f"manual_dispatch_{reason}"
+        # Preserve the canonical outside-window enum consumed by downstream
+        # phase-consistency gates; dispatch observability must not rewrite it.
+        if should_capture:
+            reason = "manual_dispatch_capture_window"
+        elif reason != "outside_a_share_capture_window":
+            reason = f"manual_dispatch_{reason}"
 
     set_output("should_capture", "true" if should_capture else "false")
     set_output("request_class", request_class)
