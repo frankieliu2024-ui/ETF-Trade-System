@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "channel": "REPORT",
+  "report_type": "ETF_SYSTEM_REVIEW",
+  "report_id": "etf-system-review-20260910-0835-run10",
+  "task_id": "ETF变更复核",
+  "task_run_id": "etf-system-review-20260910T0835-run10",
+  "generated_at": "2026-09-10T08:35:00+08:00",
+  "effective_market_date": "2026-09-10",
+  "source_actor": "ChatGPT",
+  "source_reference": "product-task:ETF系统复核",
+  "title": "【系统复核】ETF系统复核｜2026-09-10",
+  "summary": "ETF系统复核已完成",
+  "full_content": "【复核截止时点】2026-09-10 08:34（北京时间）｜最终读取main：d17f327\n\n【本次结论】系统正常但有告警：账户、成交、昨日日终正式闭环和今晨海外参考链可用，当前没有新增硬错误；端到端DEGRADED仍来自昨日日终派生维护状态未同步刷新。今天是A股交易日，09:20正式决策仍是#389/#385等事项的下一关键真实验收点，用户无需操作。\n\n【本轮健康检查】\n1. 最新维护检查为PASS，账户与成交数量、现金及总权益勾稽均通过；昨日日终正式复盘链已完整闭环。\n2. 今晨06:34海外/亚洲正式上下文质量PASS；07:54主动通知已成功发送美股收盘总结，通知链当前可用。\n3. 当前system consistency无硬错误；其WARNING主要要求在稳定生产代码变化后做semantic replay，并保留IF/IC外部数据不可达等已知降级。\n4. 08:13一次On-demand market data自然schedule运行成功，证明今晨至少存在正常Actions schedule创建与执行；它不是A股canonical producer，也不能替代09:20正式决策的真实验收。\n\n【本轮变化】\n1. 相比上一轮，今晨出现新的自然schedule成功证据：08:13 On-demand market data完成且无失败；这降低“全局Actions调度不可用”的可能性，但不能关闭#385。\n2. #479仍为当前已准入的应急外部行情证据事项，最新有效控制面要求隔离实现且不得自动合并；当前无开放PR，因此本轮没有可推进的候选集成。\n3. #389仍等待合法post-request refresh/decision真实路径验证；08:34前尚未出现今天09:20正式决策事实，不能提前做production acceptance或关闭。\n\n【本次实际动作】本轮完成latest-main健康复核、今晨workflow事实归因和open Issue/PR有效引用链复核；未执行refresh/rebuild/retry，未修改代码/config/workflow，未创建或合并PR，也没有可合法关闭的production acceptance事项。未承担L0 wake；decision-critical runtime assurance由【ETF正式决策】按其每次T0/current contract决定是否执行。\n\n【仍需处理】\n1. #389：等待今天09:20真实正式决策，closure proof仍要求合法post-request refresh/decision路径实际验证。\n2. #385：今晨08:13仅证明另一schedule workflow正常，不证明A股canonical producer/wake链；仍需下一decision-critical节点证明自然或canonical恢复能够有界保护正式决策。\n3. #479：当前已准入实施但无开放PR；应按其最新CODEX执行控制面继续完成隔离实现/测试/CI，合并后仍需真实terminal-failure production exposure才能关闭。\n\n【下次重点】\n1. 09:20正式决策是否形成“合法行情→匹配上下文→正式判断/持久化”的完整PIT闭环，并据此对#389/#385做PASS/FAIL/INCOMPLETE验收。\n2. #479是否形成新的有效PR/CI结果；若已形成，重新解析successor链并推进latest-main验收。\n\n下一阶段：保持生产基线不变，优先消费09:20自然形成的正式决策事实做production acceptance。\n\n下一关注点：09:20节点能否稳定完成正式判断闭环，以及该真实证据是否足以改变#389/#385的关闭资格。\n\n置信度：高\n\n最可能出错的地方：当前E2E仍引用昨日日终17:01维护DEGRADED，而17:33维护检查已PASS；如果今天新一轮重建后仍持续DEGRADED，就不能继续归因为派生状态滞后。",
+  "content_hash": "989e57895dbc94de6d5a81f68e8d1cf94a19c692f55323118efd40c3fcd68b36",
+  "idempotency_key": "ETF变更复核:etf-system-review-20260910T0835-run10",
+  "delivery_mode": "FULL_REPORT",
+  "no_trade_authority": true
+}
