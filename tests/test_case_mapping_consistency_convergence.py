@@ -91,14 +91,14 @@ class CaseMappingConsistencyConvergenceTests(unittest.TestCase):
         self.assertIsNone(consistency._validate_canonical_case_mapping(event, mappings))
 
 
-    def _run_historical_mapping(self, row, *, current_date="2026-09-04", node="close", phase="POST_CLOSE_GRACE", trade_events=None, reviews=None):
+    def _run_historical_mapping(self, row, *, stock=False, current_date="2026-09-04", node="close", phase="POST_CLOSE_GRACE", trade_events=None, reviews=None):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "ETF市场行情档案_2026.md").write_text("", encoding="utf-8")
             experience = root / "ETF交易复盘与经验库_2026.md"
             experience.write_text(
                 "### 2.1 2026-07-13以来完整证券成交索引\n"
-                "共1笔证券交易：ETF 1笔、个股0笔\n"
+                f"共1笔证券交易：ETF {0 if stock else 1}笔、个股{1 if stock else 0}笔\n"
                 + row + "\n"
                 "### 2.2 银证转账与非交易现金流水\n"
                 encoding="utf-8",
@@ -141,6 +141,57 @@ class CaseMappingConsistencyConvergenceTests(unittest.TestCase):
             "|2026-07-13 09:36:14|测试ETF|159941|买入|1|1|1|0|1|CASE-20260713-01；CASE-20260716-01|"
         )
         self.assertIn("historical_trade_case_mapping:2026-07-13 09:36:14:159941:case_count=2", report["errors"])
+
+    def test_canonical_stock_explicit_ineligibility_passes_without_case(self):
+        event_id = "trade_20260910_133746_301689_sell_500"
+        report = self._run_historical_mapping(
+            "|2026-09-10 13:37:46|测试个股|301689|卖出|500|51.85|25925|0|25925|待复盘|",
+            stock=True,
+            current_date="2026-09-11",
+            trade_events=[(f"{event_id}.json", {
+                "event_id": event_id,
+                "execution_status": "EXECUTED",
+                "confirmed_at_beijing": "2026-09-10T13:37:46+08:00",
+                "code": "301689",
+            })],
+            reviews=[("2026-09-10.json", {
+                "market_date": "2026-09-10",
+                "review": {"case_mapping": {
+                    "ineligible_executed_trades": [{
+                        "trade_event_id": event_id,
+                        "eligibility": "EXPLICIT_CANONICAL_INELIGIBILITY",
+                    }]
+                }},
+            })],
+        )
+        self.assertEqual(report["checks"][-1]["status"], "PASS")
+        self.assertEqual(report["errors"], [])
+
+    def test_canonical_ineligibility_does_not_hide_missing_mapping(self):
+        event_id = "trade-unknown"
+        report = self._run_historical_mapping(
+            "|2026-09-10 13:37:47|测试ETF|561980|卖出|1|1|1|0|1|待复盘|",
+            current_date="2026-09-11",
+            trade_events=[(f"{event_id}.json", {
+                "event_id": event_id,
+                "execution_status": "EXECUTED",
+                "confirmed_at_beijing": "2026-09-10T13:37:47+08:00",
+                "code": "561980",
+            })],
+            reviews=[("2026-09-10.json", {
+                "market_date": "2026-09-10",
+                "review": {"case_mapping": {
+                    "ineligible_executed_trades": [{
+                        "trade_event_id": "different-trade",
+                        "eligibility": "EXPLICIT_CANONICAL_INELIGIBILITY",
+                    }]
+                }},
+            })],
+        )
+        self.assertIn(
+            "historical_trade_case_mapping:2026-09-10 13:37:47:561980:case_count=0",
+            report["errors"],
+        )
 
     def test_post_boundary_row_without_event_fails_even_with_index_case(self):
         report = self._run_historical_mapping(
