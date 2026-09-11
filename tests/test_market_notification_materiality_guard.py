@@ -503,5 +503,13 @@ class NotificationAggregationTests(unittest.TestCase):
         self.assertEqual(len(notification_common.aggregate_candidate_events([event("N225"), event("KOSPI", magnitude=3.0)])), 2)
 
 
+    def test_same_session_does_not_merge_independent_synthetic_objects(self):
+        prior = self._event("US_TECH_DIVERGENCE", "美股科技结构", "DIVERGENCE", stamp="2026-09-11T21:30:00+08:00")
+        prior["confirmation_context"].update({"market": "US", "session": "REGULAR", "object_codes": ["NDX", "SOX"], "fact_family": "US_TECH_STRUCTURE"})
+        current = self._event("US_TECH_DIVERGENCE", "美股科技结构", "DIVERGENCE", stamp="2026-09-11T21:31:00+08:00")
+        current["confirmation_context"].update({"market": "US", "session": "REGULAR", "object_codes": ["N225", "SOX"], "fact_family": "US_TECH_STRUCTURE"})
+        self.assertIsNone(notification_common._find_aggregate_target([prior], current))
+
+
 if __name__ == "__main__":
     unittest.main()
