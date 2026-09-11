@@ -494,6 +494,9 @@ def _same_user_level_fact(prior: dict, event: dict) -> bool:
     # Preserve compatibility with older canonical events that predate the
     # explicit market metadata when the primary object identity is exact.
     if old_code and old_code == new_code:
+        if (old_code.endswith("_DIVERGENCE") and old["object_codes"] and new["object_codes"]
+                and not (old["object_codes"] & new["object_codes"])):
+            return False
         if (old["direction"] and new["direction"]
                 and old["direction"] not in {"DIVERGED", "MIXED"}
                 and new["direction"] not in {"DIVERGED", "MIXED"}
