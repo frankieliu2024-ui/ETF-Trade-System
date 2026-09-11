@@ -443,7 +443,32 @@ def build_account_funding_summary(account: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def build_decision_context(root: Path | None = None) -> dict[str, Any]:
+def build_decision_trace(root: Path, timing: dict[str, str] | None = None) -> dict[str, Any]:
+    """Build observability metadata from the existing canonical market identity."""
+    current = read_current(root)
+    snapshot = str(current.get("latest_snapshot") or "")
+    snapshot_commit = str(current.get("snapshot_commit") or "")
+    market_date = str(current.get("market_date") or "")
+    node = str(current.get("latest_valid_node") or "")
+    identity = "|".join((market_date, node, snapshot, snapshot_commit))
+    trace_id = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:24]
+    metadata = {
+        "trace_id": f"formal-decision:{trace_id}",
+        "market_date": market_date,
+        "market_node": node,
+        "snapshot": snapshot,
+        "snapshot_commit": snapshot_commit,
+        "boundary": "MINIMUM_DECISION_CONTEXT_READY",
+        "decision_required_inputs_ready_at": "",
+        "timing": {},
+    }
+    if timing:
+        metadata["timing"] = dict(timing)
+        metadata["decision_required_inputs_ready_at"] = str(timing.get("decision_required_inputs_ready_at") or "")
+    return metadata
+
+
+def build_decision_context(root: Path | None = None, observability: dict[str, Any] | None = None) -> dict[str, Any]:
     root = root or root_from_env()
     current, account = read_current(root), read_account_fact(root)
     dashboard = root / "ETF当前状态_DASHBOARD.md"
@@ -452,8 +477,9 @@ def build_decision_context(root: Path | None = None) -> dict[str, Any]:
     effective = evaluate_context_freshness(root, current)
     generated = now_utc()
     quality = build_data_quality_summary(snapshot)
+    trace = observability or build_decision_trace(root)
     return {
-        "generated_at": generated, "rules_version": current_rule_version(root) or str(current.get("rules_version") or ""), "market_date": current.get("market_date", ""), "latest_node": current.get("latest_valid_node", ""), "current": current, "latest_snapshot": snapshot, "data_status": effective, "freshness_at_context_build": effective,
+        "observability": trace, "generated_at": generated, "rules_version": current_rule_version(root) or str(current.get("rules_version") or ""), "market_date": current.get("market_date", ""), "latest_node": current.get("latest_valid_node", ""), "current": current, "latest_snapshot": snapshot, "data_status": effective, "freshness_at_context_build": effective,
         "data_quality_summary": quality, "account_funding": build_account_funding_summary(account), "etf_strategy_risk_metrics": build_etf_strategy_risk_metrics(root), "analysis_coverage": build_analysis_coverage(root, snapshot, account, quality), "point_in_time": build_point_in_time_summary(current, account, snapshot, generated), "scheduled_pulse_health": build_scheduled_pulse_health(root, current), "formal_action": build_formal_action_summary(account),
         "market_quote_router": build_market_quote_context(root), "lifecycle_projection": build_lifecycle_projection(root),
         "decision_trigger": read_json(root / "data" / "state" / "decision_trigger.json", {"status": "NOT_BUILT", "requires_formal_reassessment": False, "read_only": True}),
