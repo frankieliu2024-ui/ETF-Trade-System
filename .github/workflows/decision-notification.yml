@@ -14,6 +14,14 @@ on:
         description: "Send one safe PushPlus test notification"
         required: true
         default: "true"
+      recovery_market:
+        description: "Bounded canonical recovery market (empty for ordinary dispatch)"
+        required: false
+        default: ""
+      recovery_source_run_id:
+        description: "Source US pulse run ID for bounded recovery audit"
+        required: false
+        default: ""
   push:
     paths:
       - "events/decisions/*.json"
@@ -138,7 +146,7 @@ jobs:
 
       - name: Send US session summary when due
         id: us_summary_notify
-        if: ${{ github.event_name == 'workflow_run' && (github.event.workflow_run.name == 'US extended-hours pulse' || github.event.workflow_run.name == 'Overseas pre-open pulse') }}
+        if: ${{ (github.event_name == 'workflow_run' && (github.event.workflow_run.name == 'US extended-hours pulse' || github.event.workflow_run.name == 'Overseas pre-open pulse')) || (github.event_name == 'workflow_dispatch' && inputs.recovery_market == 'us') }}
         continue-on-error: true
         run: python scripts/run_guarded_notification.py batch --market us
 
