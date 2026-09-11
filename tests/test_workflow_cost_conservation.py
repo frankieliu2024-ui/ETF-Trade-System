@@ -61,6 +61,20 @@ class WorkflowCostConservationTests(unittest.TestCase):
         self.assertIn("notification_center.json", center)
         self.assertNotIn("PUSHPLUS_TOKEN", guarded)
 
+    def test_real_market_orchestration_batches_before_external_send(self):
+        text = DECISION.read_text(encoding="utf-8")
+        for market in ("a-share", "apac", "us"):
+            self.assertIn(f"run_guarded_notification.py batch --market {market}", text)
+        runner = (ROOT / "scripts" / "run_guarded_notification.py").read_text(encoding="utf-8")
+        self.assertIn("def _batch_event", runner)
+        self.assertIn("constituent_events", runner)
+        self.assertIn("persist_and_send(event", runner)
+        self.assertIn("if: ${{ false }}", text)
+
+    def test_non_success_wake_gate_is_preserved(self):
+        text = DECISION.read_text(encoding="utf-8")
+        self.assertIn("github.event.workflow_run.name != 'ETF workflow failure guard'", text)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'", text)
 
 if __name__ == "__main__":
     unittest.main()
