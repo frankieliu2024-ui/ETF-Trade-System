@@ -39,11 +39,13 @@ jobs:
           import json
           from pathlib import Path
           result = json.loads(Path("critique.json").read_text(encoding="utf-8"))
-          allowed = {"schema_version", "status", "provider", "model", "critique", "evidence_used", "uncertainties", "follow_ups", "production_action", "formal_state_write", "call_count"}
+          allowed = {"schema_version", "status", "provider", "model", "critique", "evidence_used", "uncertainties", "follow_ups", "production_action", "formal_state_write", "call_count", "response_observability"}
           if set(result) - allowed: raise SystemExit("unexpected output field")
           if result.get("formal_state_write") is not False: raise SystemExit("formal state write is prohibited")
           if result.get("production_action") is not None: raise SystemExit("trading action is prohibited")
           summary = {"status": result.get("status"), "provider": result.get("provider"), "model": result.get("model"), "call_count": result.get("call_count", 0), "schema_valid": True, "research_only": True, "formal_state_write": False, "trading_action": False}
+          if result.get("response_observability") is not None:
+              summary["response_observability"] = result["response_observability"]
           with open("${{ github.step_summary }}", "a", encoding="utf-8") as fh:
               fh.write("Manual LLM research critique\n")
               json.dump(summary, fh, ensure_ascii=False, indent=2)
