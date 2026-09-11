@@ -139,6 +139,7 @@ def canonical_etf_fee_projection(root: Path, reconstructed_trades: list[dict]) -
 
 
 def effective_confirmed_fee_fact(root: Path, reconstructed_trades: list[dict]) -> dict:
+    universe_codes = _etf_universe_codes(root)
     reconstructed_etf = [t for t in reconstructed_trades if _is_reconstructed_etf_trade(t, universe_codes)]
     projection = canonical_etf_fee_projection(root, reconstructed_trades)
     reconstructed_signatures = {trade_signature(t) for t in reconstructed_etf}
