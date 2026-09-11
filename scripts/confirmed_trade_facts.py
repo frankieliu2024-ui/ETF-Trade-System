@@ -106,7 +106,7 @@ def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> l
     seen: set[tuple] = set()
 
     for trade in reconstructed_trades:
-        if not _is_reconstructed_etf_trade(trade):
+        if not _is_reconstructed_etf_trade(trade, universe_codes):
             continue
         signature = trade_signature(trade)
         if signature in seen:
@@ -139,7 +139,7 @@ def canonical_etf_fee_projection(root: Path, reconstructed_trades: list[dict]) -
 
 
 def effective_confirmed_fee_fact(root: Path, reconstructed_trades: list[dict]) -> dict:
-    reconstructed_etf = [t for t in reconstructed_trades if _is_reconstructed_etf_trade(t)]
+    reconstructed_etf = [t for t in reconstructed_trades if _is_reconstructed_etf_trade(t, universe_codes)]
     projection = canonical_etf_fee_projection(root, reconstructed_trades)
     reconstructed_signatures = {trade_signature(t) for t in reconstructed_etf}
     overlays = [
