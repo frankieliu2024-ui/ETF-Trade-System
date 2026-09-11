@@ -189,6 +189,15 @@ def _normalize_idempotent_close_skip(report: dict) -> None:
 
 
 def _validate_formal_risk_precedence(report: dict) -> None:
+    equity = _read_json("data/state/etf_strategy_equity.json")
+    summary = equity.get("summary") or {}
+    current_gross = summary.get("current_strategy_return_pct_gross")
+    if current_gross is not None:
+        formal_risk = float(current_gross)
+        source = "data/state/etf_strategy_equity.json::summary.current_strategy_return_pct_gross"
+    else:
+        formal_risk = None
+        source = ""
     review_dir = ROOT / "events" / "reviews"
     candidates = []
     for path in review_dir.glob("*.json") if review_dir.exists() else []:
@@ -201,9 +210,10 @@ def _validate_formal_risk_precedence(report: dict) -> None:
         except (OSError, json.JSONDecodeError, TypeError, ValueError):
             continue
         candidates.append((updated, risk, str(path.relative_to(ROOT))))
-    if not candidates:
+    if formal_risk is None and not candidates:
         return
-    _, formal_risk, source = max(candidates, key=lambda x: x[0])
+    if formal_risk is None:
+        _, formal_risk, source = max(candidates, key=lambda x: x[0])
     dashboard = (ROOT / "ETF当前状态_DASHBOARD.md").read_text(encoding="utf-8")
     match = re.search(r"\|ETF策略风险率\|约?\s*([+-]?\d+(?:\.\d+)?)%", dashboard)
     e2e = _read_json("data/state/e2e_status.json")
@@ -684,3 +694,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
