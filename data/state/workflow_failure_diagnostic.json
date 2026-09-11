@@ -1,29 +1,24 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-11T09:30:03+08:00",
+  "generated_at": "2026-09-11T10:25:36+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 34550883472,
-  "run_attempt": 1,
-  "head_sha": "fa987170b776d815682b6c84dcd71b8f34144168",
-  "main_head_sha": "499a72177d6cf5b43f2eade3964d5de83ce4b782",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "workflow_name": "Overseas pre-open pulse",
+  "run_id": 34554435431,
+  "run_attempt": 2,
+  "head_sha": "a2b8631553b73b6d33afb8207f0d08243db39e34",
+  "main_head_sha": "2f09c371990a8ba752c65a9cfb18571a24af44a4",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "watchdog",
-      "step": "Run read-only comprehensive production health aggregate",
-      "number": 8
+      "job": "overseas",
+      "step": "Commit overseas contexts and runtime health",
+      "number": 13
     }
   ],
   "changed_files": [
-    "data/state/e2e_status.json",
-    "data/state/execution_quality.json",
-    "data/state/last_known_good.json",
-    "data/state/maintenance_diagnostic.json",
-    "data/state/maintenance_health.json",
-    "data/state/system_consistency.json"
+    "data/state/notification_center.json"
   ],
-  "commit_message": "state: persist production acceptance",
+  "commit_message": "state: record notification and execution reconciliation",
   "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
