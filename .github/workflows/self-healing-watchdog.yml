@@ -134,7 +134,38 @@ jobs:
           us_health = load('data/state/us_pulse_runtime_health.json')
           us_stamp = parse(us_health.get('finished_at'))
           us_age = int((now_utc-us_stamp).total_seconds()) if us_stamp else None
-          need_us = us_active and (us_age is None or us_age > threshold)
+
+          # Fresh PRE_MARKET data must not suppress the first REGULAR pulse.
+          def expected_us_phase(et_minute):
+              if 4 * 60 <= et_minute < 9 * 60 + 30:
+                  return "PRE_MARKET"
+              if 9 * 60 + 30 <= et_minute < 16 * 60:
+                  return "REGULAR"
+              if 16 * 60 <= et_minute <= 20 * 60:
+                  return "POST_MARKET"
+              return None
+
+          us_context = load('data/state/us_extended_hours_context.json')
+          expected_phase = expected_us_phase(et_min)
+          objects = us_context.get('objects') or {}
+
+          def object_phase(code):
+              item = objects.get(code) or {}
+              latest = item.get('latest') or {}
+              return str(item.get('market_phase_of_latest') or latest.get('session') or '').upper()
+
+          def object_fresh(code):
+              item = objects.get(code) or {}
+              return str(item.get('freshness_status') or '').upper() == 'FRESH'
+
+          if expected_phase == "REGULAR":
+              phase_ready = all(object_phase(code) == "REGULAR" and object_fresh(code) for code in ("NDX", "SOX"))
+          elif expected_phase in {"PRE_MARKET", "POST_MARKET"}:
+              phase_ready = all(object_phase(code) == expected_phase and object_fresh(code) for code in ("QQQ", "SOXX"))
+          else:
+              phase_ready = True
+
+          need_us = us_active and (us_age is None or us_age > threshold or not phase_ready)
 
           result = {
               'checked_at': now_utc.isoformat(timespec='seconds'),
@@ -175,6 +206,36 @@ jobs:
           fi
           gh workflow run us-extended-hours-pulse.yml --ref main
           echo "Dispatched canonical US pulse because dedicated heartbeat was stale."
+
+      - name: Recover missing US notification batch through canonical workflow
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'US extended-hours pulse' && github.event.workflow_run.conclusion == 'success' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_run_id="${{ github.event.workflow_run.id }}"
+          source_completed_at="${{ github.event.workflow_run.updated_at }}"
+          sleep 10
+          runs_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/decision-notification.yml/runs?per_page=30")"
+          success_count=0
+          while IFS= read -r run_id; do
+            [ -n "$run_id" ] || continue
+            jobs_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs?per_page=100")"
+            if echo "$jobs_json" | jq -e '.jobs[].steps[]? | select(.name == "Send US session summary when due" and .conclusion == "success")' >/dev/null; then
+              success_count=1
+              break
+            fi
+          done < <(echo "$runs_json" | jq -r --arg completed "$source_completed_at" '.workflow_runs[] | select(.created_at >= $completed) | .id')
+          if [ "$success_count" = "1" ]; then
+            echo "Primary US notification batch already executed; no fallback dispatch."
+            exit 0
+          fi
+          active="$(echo "$runs_json" | jq '[.workflow_runs[] | select(.status == "queued" or .status == "in_progress")] | length')"
+          if [ "$active" != "0" ]; then
+            echo "US notification consumer is queued/in progress; no duplicate fallback dispatch."
+            exit 0
+          fi
+          gh workflow run decision-notification.yml --ref main -f recovery_market=us -f recovery_source_run_id="$source_run_id"
+          echo "Dispatched canonical US notification batch fallback for pulse $source_run_id."
 
       - name: Run read-only comprehensive production health aggregate
         shell: bash
