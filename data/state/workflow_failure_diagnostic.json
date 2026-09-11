@@ -1,26 +1,25 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-11T23:27:30+08:00",
+  "generated_at": "2026-09-11T23:50:39+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 34616074338,
+  "run_id": 34618457215,
   "run_attempt": 1,
-  "head_sha": "738f74bca291f23b7864eefc2915671a7c2fc0d1",
-  "main_head_sha": "2ffd3530295016a76ee7ff785c71ccba3a410c1d",
+  "head_sha": "1b6ffead48f59f7cf57921e615cd0aab8da66c07",
+  "main_head_sha": "b816d8e0520c29ed9caccd2be10fc28443781939",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "production_acceptance",
-      "step": "Enforce production acceptance",
-      "number": 9
+      "job": "consistency",
+      "step": "PR candidate post-replay acceptance",
+      "number": 6
     }
   ],
   "changed_files": [
-    ".github/workflows/decision-notification.yml",
-    ".github/workflows/self-healing-watchdog.yml",
-    "tests/test_opening_current_self_healing.py"
+    "scripts/confirmed_trade_facts.py",
+    "tests/test_issue493_successor.py"
   ],
-  "commit_message": "Merge PR #521: bounded US notification failover",
+  "commit_message": "fix: exclude 301689 stock from ETF reconciliation ledger",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
