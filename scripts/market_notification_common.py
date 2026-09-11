@@ -599,7 +599,7 @@ def _find_aggregate_target(items: list[dict], event: dict) -> dict | None:
             and str(item.get("security_code") or _market_context(item).get("security_code") or "")
             == str(event.get("security_code") or _market_context(event).get("security_code") or "")
         )
-        if same_session or within_window or exact_object:
+        if within_window or exact_object:
             return item
     return None
 
