@@ -1,24 +1,25 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-11T22:28:25+08:00",
+  "generated_at": "2026-09-11T23:14:14+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 34610193882,
+  "run_id": 34614744858,
   "run_attempt": 1,
-  "head_sha": "87faca6d2ac70d6e52a6230d1b5141567b871121",
-  "main_head_sha": "188fd19144239754e5f1df22038b62c8c3eeb179",
+  "head_sha": "db17aae865e14500cf60c0100c1fb6651cd7ee3c",
+  "main_head_sha": "223d3135c26ed1640d7c5a00da081cfd8038483d",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 6
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 9
     }
   ],
   "changed_files": [
+    "scripts/market_notification_common.py",
     "tests/test_market_notification_materiality_guard.py"
   ],
-  "commit_message": "test: align notification object fixtures with fact family",
+  "commit_message": "fix: prevent cross-object notification aggregation regression (#520)",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",

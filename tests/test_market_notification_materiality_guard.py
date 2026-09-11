@@ -497,11 +497,18 @@ class NotificationAggregationTests(unittest.TestCase):
     def test_batch_keeps_independent_and_material_upgrade_interrupts(self):
         def event(code, family="REGIONAL", magnitude=2.0):
             return {"event_type": "MARKET_VALUE_ALERT", "source_event_id": code, "security_code": code, "content": code,
-                    "confirmation_context": {"market": "APAC", "market_date": "2026-09-11", "session": "OPEN", "direction": "DOWN", "fact_family": family, "object_codes": ["N225", "KOSPI"], "event_category": "EXTREME", "event_magnitude_pct": magnitude}}
+                    "confirmation_context": {"market": "APAC", "market_date": "2026-09-11", "session": "OPEN", "direction": "DOWN", "fact_family": family, "object_codes": ["N225", "KOSPI"] if family == "REGIONAL" else ["NDX", "SOX"], "event_category": "EXTREME", "event_magnitude_pct": magnitude}}
         self.assertEqual(len(notification_common.aggregate_candidate_events([event("N225"), event("KOSPI")])), 1)
         self.assertEqual(len(notification_common.aggregate_candidate_events([event("N225"), event("SOX", family="US_TECH")])), 2)
         self.assertEqual(len(notification_common.aggregate_candidate_events([event("N225"), event("KOSPI", magnitude=3.0)])), 2)
 
+
+    def test_same_session_does_not_merge_independent_synthetic_objects(self):
+        prior = self._event("US_TECH_DIVERGENCE", "美股科技结构", "DIVERGENCE", stamp="2026-09-11T21:30:00+08:00")
+        prior["confirmation_context"].update({"market": "US", "session": "REGULAR", "object_codes": ["NDX", "SOX"], "fact_family": "US_TECH_STRUCTURE"})
+        current = self._event("US_TECH_DIVERGENCE", "美股科技结构", "DIVERGENCE", stamp="2026-09-11T21:31:00+08:00")
+        current["confirmation_context"].update({"market": "US", "session": "REGULAR", "object_codes": ["N225", "KOSPI"], "fact_family": "US_TECH_STRUCTURE"})
+        self.assertIsNone(notification_common._find_aggregate_target([prior], current))
 
 if __name__ == "__main__":
     unittest.main()
