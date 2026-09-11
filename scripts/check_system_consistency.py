@@ -216,8 +216,15 @@ def _validate_formal_risk_precedence(report: dict) -> None:
         _, formal_risk, source = max(candidates, key=lambda x: x[0])
     dashboard = (ROOT / "ETF当前状态_DASHBOARD.md").read_text(encoding="utf-8")
     match = re.search(r"\|ETF策略风险率\|约?\s*([+-]?\d+(?:\.\d+)?)%", dashboard)
-    e2e = _read_json("data/state/e2e_status.json")
-    e2e_risk = ((e2e.get("components") or {}).get("risk") or {}).get("etf_strategy_risk_pct")
+    # Candidate replay validates the E2E consumer from the current canonical
+    # inputs.  The persisted e2e_status.json may still be a pre-replay cache
+    # (for example -8.1); it is an output, never a current risk source.
+    current = _read_json("data/state/CURRENT.json")
+    try:
+        from build_e2e_status import risk_component
+    except ModuleNotFoundError:
+        from scripts.build_e2e_status import risk_component
+    e2e_risk = risk_component(equity, current).get("etf_strategy_risk_pct")
     dashboard_risk = float(match.group(1)) if match else None
     mismatches = []
     if dashboard_risk is None or abs(dashboard_risk - formal_risk) > 0.03:
