@@ -638,6 +638,43 @@ def _state_without_updated_at(state: dict) -> dict:
     content.pop("updated_at", None)
     return content
 
+def aggregate_candidate_events(events: list[dict]) -> list[dict]:
+    """Return the complete bounded interrupt set using canonical aggregation rules."""
+    groups: list[dict] = []
+    for raw in (event for event in events if event):
+        candidate = normalize_notification(raw, raw)
+        candidate["confirmation_context"] = dict(raw.get("confirmation_context") or {})
+        candidate["content"] = str(raw.get("content") or "")
+        candidate["title"] = str(raw.get("title") or "")
+        candidate["event_type"] = str(raw.get("event_type") or raw.get("type") or "")
+        candidate["security_code"] = str(raw.get("security_code") or "")
+        merged = False
+        for index, target in enumerate(groups):
+            result = _absorb_or_aggregate([target], candidate)
+            if not result:
+                continue
+            status, updated = result
+            if status != "AGGREGATED_INTO_EXISTING":
+                continue
+            ctx = dict(updated.get("confirmation_context") or {})
+            evidence = list(ctx.get("constituent_events") or [])
+            if not evidence:
+                evidence.append({"source_event_id": target.get("source_event_id"),
+                                 "security_code": target.get("security_code"),
+                                 "event_type": target.get("event_type")})
+            evidence.append({"source_event_id": candidate.get("source_event_id"),
+                             "security_code": candidate.get("security_code"),
+                             "event_type": candidate.get("event_type")})
+            ctx["constituent_events"] = evidence
+            updated["confirmation_context"] = ctx
+            updated["content"] = "\\n\\n".join(x for x in (target.get("content"), candidate.get("content")) if x)
+            groups[index] = updated
+            merged = True
+            break
+        if not merged:
+            groups.append(candidate)
+    return groups
+
 def persist_and_send(event: dict, *, policy: str) -> dict:
     event = _normalize_user_visible_event(event)
     event = _normalize_user_title(event)

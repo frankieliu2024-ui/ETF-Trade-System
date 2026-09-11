@@ -479,5 +479,29 @@ class NotificationAggregationTests(unittest.TestCase):
         self.assertEqual(event["confirmation_context"]["session"], "PRE_MARKET")
 
 
+    def test_production_batch_entrypoint_compile_and_one_send(self):
+        import py_compile
+        import run_guarded_notification as runner
+        py_compile.compile(str(ROOT / "scripts" / "run_guarded_notification.py"), doraise=True)
+        def event(code):
+            return {"event_type": "MARKET_VALUE_ALERT", "source_event_id": code, "security_code": code, "content": code,
+                    "confirmation_context": {"market": "APAC", "market_date": "2026-09-11", "session": "OPEN", "direction": "DOWN", "fact_family": "REGIONAL_RISK_OFF", "object_codes": ["N225", "KOSPI"], "event_category": "EXTREME", "event_magnitude_pct": 2.0}}
+        sent = []
+        with patch.object(runner, "_collect_candidates", return_value=[event("N225"), event("KOSPI")]), \
+             patch.object(runner, "notification_evidence_error", return_value=""), \
+             patch("market_notification_common.persist_and_send", side_effect=lambda candidate, policy: sent.append(candidate) or {"status": "SENT"}):
+            self.assertEqual(runner._run_batch("apac"), 0)
+        self.assertEqual(len(sent), 1)
+        self.assertEqual(len(sent[0]["confirmation_context"]["constituent_events"]), 2)
+
+    def test_batch_keeps_independent_and_material_upgrade_interrupts(self):
+        def event(code, family="REGIONAL", magnitude=2.0):
+            return {"event_type": "MARKET_VALUE_ALERT", "source_event_id": code, "security_code": code, "content": code,
+                    "confirmation_context": {"market": "APAC", "market_date": "2026-09-11", "session": "OPEN", "direction": "DOWN", "fact_family": family, "object_codes": ["N225", "KOSPI"], "event_category": "EXTREME", "event_magnitude_pct": magnitude}}
+        self.assertEqual(len(notification_common.aggregate_candidate_events([event("N225"), event("KOSPI")])), 1)
+        self.assertEqual(len(notification_common.aggregate_candidate_events([event("N225"), event("SOX", family="US_TECH")])), 2)
+        self.assertEqual(len(notification_common.aggregate_candidate_events([event("N225"), event("KOSPI", magnitude=3.0)])), 2)
+
+
 if __name__ == "__main__":
     unittest.main()
