@@ -168,12 +168,29 @@ def critique_review(review: dict[str, Any], *, config_path: Path = CONFIG, enabl
 
 
 def build_review_input(review: dict[str, Any]) -> dict[str, Any]:
-    """Allow only review facts; explicitly exclude account/order/action fields."""
+    """Map only research-safe facts from the frozen formal review payload."""
+    source = review.get("review") if isinstance(review.get("review"), dict) else review
     return {
-        "market_date": review.get("market_date", ""),
-        "review_status": review.get("review_status", ""),
-        "daily_market_summary": review.get("daily_market_summary", {}),
-        "dashboard_summary": review.get("dashboard_summary", {}),
-        "lifecycle_projection": review.get("lifecycle_projection", {}),
-        "review_boundary": review.get("review_boundary", ""),
+        "market_date": source.get("market_date", review.get("market_date", "")),
+        "review_version": source.get("review_version", ""),
+        "reviewed_at_beijing": source.get("reviewed_at_beijing", ""),
+        "opportunity_status": source.get("opportunity_status", ""),
+        "main_candidate": source.get("main_candidate", ""),
+        "research_summary": {
+            "today_summary": source.get("today_summary", ""),
+            "judgment_quality": source.get("judgment_quality", ""),
+            "judgment_quality_reason": source.get("judgment_quality_reason", ""),
+            "execution_quality": source.get("execution_quality", ""),
+            "execution_quality_reason": source.get("execution_quality_reason", ""),
+            "capital_efficiency": source.get("capital_efficiency", ""),
+            "capital_efficiency_reason": source.get("capital_efficiency_reason", ""),
+            "next_validation": source.get("next_validation", []),
+            "max_risk": source.get("max_risk", ""),
+            "error_reason": source.get("error_reason", ""),
+            "information_gap": source.get("information_gap", ""),
+            "most_fragile_hypothesis": source.get("most_fragile_hypothesis", ""),
+            "overseas_overestimate": source.get("overseas_overestimate", ""),
+            "overseas_a_share_divergence": source.get("overseas_a_share_divergence", ""),
+        },
+        "review_boundary": source.get("review_boundary", ""),
     }
