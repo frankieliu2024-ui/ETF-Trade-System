@@ -120,44 +120,44 @@ jobs:
         id: a_share_summary_notify
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot' }}
         continue-on-error: true
-        run: python scripts/run_guarded_notification.py regional --market a-share
+        run: python scripts/run_guarded_notification.py batch --market a-share
 
       - name: Send APAC opening value signal or close summary when due
         id: apac_summary_notify
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Overseas pre-open pulse' }}
         continue-on-error: true
-        run: python scripts/run_guarded_notification.py regional --market apac
+        run: python scripts/run_guarded_notification.py batch --market apac
 
       - name: Send APAC monitored-object value event when due
         id: apac_shock_notify
-        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Overseas pre-open pulse' }}
+        if: ${{ false }}
         continue-on-error: true
         env:
           PREVIOUS_CONTEXT_PATH: data/state/overseas_context_previous.json
-        run: python scripts/run_guarded_notification.py shock --market asia
+        run: echo "included in canonical batch"
 
       - name: Send US session summary when due
         id: us_summary_notify
         if: ${{ github.event_name == 'workflow_run' && (github.event.workflow_run.name == 'US extended-hours pulse' || github.event.workflow_run.name == 'Overseas pre-open pulse') }}
         continue-on-error: true
-        run: python scripts/run_guarded_notification.py us
+        run: python scripts/run_guarded_notification.py batch --market us
 
       - name: Send US monitored-object value event when due
         id: us_shock_notify
-        if: ${{ github.event_name == 'workflow_run' && (github.event.workflow_run.name == 'US extended-hours pulse' || github.event.workflow_run.name == 'Overseas pre-open pulse') }}
+        if: ${{ false }}
         continue-on-error: true
         env:
           PREVIOUS_CONTEXT_PATH: data/state/us_extended_hours_context_previous.json
-        run: python scripts/run_guarded_notification.py shock --market us
+        run: echo "included in canonical batch"
 
       # A-share is only the data source route here. The event engine evaluates
       # every currently monitored index/ETF/account stock by attention value;
       # market membership itself never grants or blocks notification eligibility.
       - name: Send A-share monitored-object value event when due
         id: a_share_shock_notify
-        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot' }}
+        if: ${{ false }}
         continue-on-error: true
-        run: python scripts/run_guarded_notification.py shock --market a-share
+        run: echo "included in canonical batch"
 
       - name: Send safe notification-channel test
         id: test_notify
