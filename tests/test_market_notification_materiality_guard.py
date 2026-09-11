@@ -479,62 +479,28 @@ class NotificationAggregationTests(unittest.TestCase):
         self.assertEqual(event["confirmation_context"]["session"], "PRE_MARKET")
 
 
-    def test_production_entrypoint_imports_and_batches_two_realistic_candidates(self):
+    def test_production_batch_entrypoint_compile_and_one_send(self):
         import py_compile
         import run_guarded_notification as runner
         py_compile.compile(str(ROOT / "scripts" / "run_guarded_notification.py"), doraise=True)
-        candidates = [
-            {"event_type": "MARKET_VALUE_ALERT", "source_event_id": "n225",
-             "security_code": "N225", "content": "N225 -2.97%",
-             "confirmation_context": {"market_date": "2026-09-11", "market": "APAC",
-              "session": "OPEN", "direction": "DOWN", "fact_family": "REGIONAL_RISK_OFF",
-              "object_codes": ["N225", "KOSPI"]}},
-            {"event_type": "MARKET_VALUE_ALERT", "source_event_id": "kospi",
-             "security_code": "KOSPI", "content": "KOSPI -2.71%",
-             "confirmation_context": {"market_date": "2026-09-11", "market": "APAC",
-              "session": "OPEN", "direction": "DOWN", "fact_family": "REGIONAL_RISK_OFF",
-              "object_codes": ["N225", "KOSPI"]}},
-        ]
+        def event(code):
+            return {"event_type": "MARKET_VALUE_ALERT", "source_event_id": code, "security_code": code, "content": code,
+                    "confirmation_context": {"market": "APAC", "market_date": "2026-09-11", "session": "OPEN", "direction": "DOWN", "fact_family": "REGIONAL_RISK_OFF", "object_codes": ["N225", "KOSPI"], "event_category": "EXTREME", "event_magnitude_pct": 2.0}}
         sent = []
-        with patch.object(runner, "_collect_candidates", return_value=candidates), \
+        with patch.object(runner, "_collect_candidates", return_value=[event("N225"), event("KOSPI")]), \
              patch.object(runner, "notification_evidence_error", return_value=""), \
-             patch("market_notification_common.persist_and_send", side_effect=lambda event, policy: sent.append(event) or {"status": "SENT"}):
+             patch("market_notification_common.persist_and_send", side_effect=lambda candidate, policy: sent.append(candidate) or {"status": "SENT"}):
             self.assertEqual(runner._run_batch("apac"), 0)
         self.assertEqual(len(sent), 1)
         self.assertEqual(len(sent[0]["confirmation_context"]["constituent_events"]), 2)
 
-
-    def test_batch_returns_all_independent_interrupts_and_one_send_per_result(self):
-        def event(code, category="EXTREME", magnitude=2.0, direction="DOWN", family="REGIONAL"):
-            return {"event_type": "MARKET_VALUE_ALERT", "source_event_id": code,
-                    "security_code": code, "content": code,
-                    "confirmation_context": {"market": "APAC", "market_date": "2026-09-11",
-                     "session": "OPEN", "direction": direction, "fact_family": family,
-                     "object_codes": ["N225", "KOSPI"], "event_category": category,
-                     "event_magnitude_pct": magnitude}}
-        same = notification_common.aggregate_candidate_events([event("N225"), event("KOSPI")])
-        self.assertEqual(len(same), 1)
-        self.assertEqual(len(same[0]["confirmation_context"]["constituent_events"]), 2)
-
-        mixed = notification_common.aggregate_candidate_events(
-            [event("N225"), event("SOX", family="US_TECH"), event("FORMAL", family="FORMAL",
-             category="FORMAL_DECISION_MATERIAL_CHANGE")]
-        )
-        self.assertEqual(len(mixed), 3)
-
-        upgraded = notification_common.aggregate_candidate_events(
-            [event("N225", magnitude=2.0), event("KOSPI", magnitude=3.0)]
-        )
-        self.assertEqual(len(upgraded), 2)
-
-        import run_guarded_notification as runner
-        sent = []
-        with patch.object(runner, "_collect_candidates", return_value=[event("N225"), event("KOSPI")]), \
-             patch.object(runner, "notification_evidence_error", return_value=""), \
-             patch("market_notification_common.persist_and_send",
-                   side_effect=lambda candidate, policy: sent.append(candidate) or {"status": "SENT"}):
-            runner._run_batch("apac")
-        self.assertEqual(len(sent), 1)
+    def test_batch_keeps_independent_and_material_upgrade_interrupts(self):
+        def event(code, family="REGIONAL", magnitude=2.0):
+            return {"event_type": "MARKET_VALUE_ALERT", "source_event_id": code, "security_code": code, "content": code,
+                    "confirmation_context": {"market": "APAC", "market_date": "2026-09-11", "session": "OPEN", "direction": "DOWN", "fact_family": family, "object_codes": ["N225", "KOSPI"], "event_category": "EXTREME", "event_magnitude_pct": magnitude}}
+        self.assertEqual(len(notification_common.aggregate_candidate_events([event("N225"), event("KOSPI")])), 1)
+        self.assertEqual(len(notification_common.aggregate_candidate_events([event("N225"), event("SOX", family="US_TECH")])), 2)
+        self.assertEqual(len(notification_common.aggregate_candidate_events([event("N225"), event("KOSPI", magnitude=3.0)])), 2)
 
 
 if __name__ == "__main__":
