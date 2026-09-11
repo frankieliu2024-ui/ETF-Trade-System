@@ -226,7 +226,7 @@ def latest_formal_review_risk() -> dict:
 
 def risk_component(equity: dict, current: dict) -> dict:
     summary = equity.get("summary") or {}
-    reconstruction_pct = summary.get("known_net_current_strategy_return_pct")
+    reconstruction_pct = summary.get("current_strategy_return_pct_gross", summary.get("known_net_current_strategy_return_pct"))
     reconstruction_generated = equity.get("generated_at")
     reconstruction_as_of = str(equity.get("as_of_transaction_date") or summary.get("as_of_transaction_date") or "")
     market_date = str(current.get("market_date") or "")
@@ -236,7 +236,7 @@ def risk_component(equity: dict, current: dict) -> dict:
 
     formal_review = latest_formal_review_risk()
     formal_review_pct = formal_review.get("risk_pct")
-    if formal_review_pct is not None:
+    if "current_strategy_return_pct_gross" not in summary and formal_review_pct is not None:
         return {
             "status": "READY",
             "reason": "latest formal post-close risk fact is authoritative; Dashboard is projection-only",
@@ -249,6 +249,18 @@ def risk_component(equity: dict, current: dict) -> dict:
             "reconstruction_as_of_transaction_date": reconstruction_as_of,
             "reconstruction_fresh_for_market_date": reconstruction_fresh_for_market,
             "data_quality": "FORMAL_REVIEW_PRIMARY; DASHBOARD_PROJECTION_ONLY",
+        }
+    if "current_strategy_return_pct_gross" not in summary and formal_review.get("risk_pct") is not None:
+        return {
+            "status": "READY",
+            "reason": "historical formal Known-net PIT compatibility evidence; current Gross reconstruction unavailable",
+            "etf_strategy_risk_pct": round(float(formal_review["risk_pct"]), 2),
+            "source": formal_review.get("source"),
+            "source_updated_at": formal_review.get("updated_at"),
+            "formal_review_market_date": formal_review.get("market_date"),
+            "reconstruction_risk_pct": reconstruction_pct,
+            "reconstruction_fresh_for_market_date": reconstruction_fresh_for_market,
+            "data_quality": "HISTORICAL_KNOWN_NET_COMPATIBILITY_ONLY",
         }
     if reconstruction_pct is not None and reconstruction_fresh_for_market:
         return {

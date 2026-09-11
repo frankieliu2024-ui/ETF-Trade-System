@@ -52,21 +52,8 @@ def display_name(position: dict) -> str:
 
 
 def latest_formal_risk() -> float | None:
-    review_dir = ROOT / "events" / "reviews"
-    candidates = []
-    for path in review_dir.glob("*.json") if review_dir.exists() else []:
-        try:
-            event = load_json(path)
-            review = event.get("review") or event.get("formal_review") or {}
-            fact = review.get("etf_strategy_known_net") or {}
-            risk = float(fact.get("etf_strategy_risk_rate_pct"))
-            float(fact.get("known_net_strategy_equity"))
-            stamp = str(event.get("updated_at_beijing") or event.get("account_updated_at") or "")
-        except (OSError, json.JSONDecodeError, TypeError, ValueError):
-            continue
-        if stamp:
-            candidates.append((stamp, risk))
-    return max(candidates, key=lambda x: x[0])[1] if candidates else None
+    # Historical Known-net reviews are PIT compatibility evidence only.
+    return None
 
 
 def canonical_risk(equity: dict, formal_override: float | None = None) -> float | None:
@@ -75,7 +62,7 @@ def canonical_risk(equity: dict, formal_override: float | None = None) -> float 
     if formal_override is not None:
         return float(formal_override)
     summary = equity.get("summary") or {}
-    for key in ("known_net_current_strategy_return_pct", "current_strategy_return_pct_gross"):
+    for key in ("current_strategy_return_pct_gross", "known_net_current_strategy_return_pct"):
         try:
             return float(summary[key])
         except (KeyError, TypeError, ValueError):
