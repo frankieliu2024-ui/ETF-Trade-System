@@ -1,18 +1,18 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-11T10:05:34+08:00",
+  "generated_at": "2026-09-11T10:24:33+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 34553201612,
-  "run_attempt": 2,
-  "head_sha": "7c0187f42f64b7ff590abe8cecf6bf053219f8e4",
-  "main_head_sha": "e4fa49a471505de9c12be384877d03ebe5fc6bff",
+  "workflow_name": "Overseas pre-open pulse",
+  "run_id": 34554435431,
+  "run_attempt": 1,
+  "head_sha": "a2b8631553b73b6d33afb8207f0d08243db39e34",
+  "main_head_sha": "7e585990d156b5e9eb425f00731be536a790f5c2",
   "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "watchdog",
-      "step": "Persist bounded self-healing state and deterministic repairs",
-      "number": 12
+      "job": "overseas",
+      "step": "Commit overseas contexts and runtime health",
+      "number": 13
     }
   ],
   "changed_files": [
@@ -20,8 +20,8 @@
   ],
   "commit_message": "state: record notification and execution reconciliation",
   "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
