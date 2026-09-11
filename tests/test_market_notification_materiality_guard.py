@@ -507,9 +507,8 @@ class NotificationAggregationTests(unittest.TestCase):
         prior = self._event("US_TECH_DIVERGENCE", "美股科技结构", "DIVERGENCE", stamp="2026-09-11T21:30:00+08:00")
         prior["confirmation_context"].update({"market": "US", "session": "REGULAR", "object_codes": ["NDX", "SOX"], "fact_family": "US_TECH_STRUCTURE"})
         current = self._event("US_TECH_DIVERGENCE", "美股科技结构", "DIVERGENCE", stamp="2026-09-11T21:31:00+08:00")
-        current["confirmation_context"].update({"market": "US", "session": "REGULAR", "object_codes": ["N225", "SOX"], "fact_family": "US_TECH_STRUCTURE"})
+        current["confirmation_context"].update({"market": "US", "session": "REGULAR", "object_codes": ["N225", "KOSPI"], "fact_family": "US_TECH_STRUCTURE"})
         self.assertIsNone(notification_common._find_aggregate_target([prior], current))
-
 
 if __name__ == "__main__":
     unittest.main()
