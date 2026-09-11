@@ -381,7 +381,7 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
         if normalize_code(p.get("code") or p.get("symbol") or p.get("security_code")) in memberships["etf"]
     )
     capital = float(summary.get("starting_etf_strategy_capital") or 200000)
-    reconstruction_risk = summary.get("known_net_current_strategy_return_pct")
+    reconstruction_risk = summary.get("current_strategy_return_pct_gross", summary.get("known_net_current_strategy_return_pct"))
     reconstruction_as_of = str(equity.get("as_of_transaction_date") or summary.get("as_of_transaction_date") or "")
     current = read_json(root / "data" / "state" / "CURRENT.json", {})
     current_market_date = str(current.get("market_date") or "")
@@ -392,17 +392,17 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
         and reconstruction_as_of >= current_market_date
     )
     formal = _latest_formal_review_risk(root)
-    if formal.get("risk_pct") is not None:
+    if "current_strategy_return_pct_gross" not in summary and formal.get("risk_pct") is not None:
         risk_pct = round(float(formal["risk_pct"]), 2)
         risk_source = formal.get("source")
         risk_source_updated_at = formal.get("updated_at")
         strategy_equity = formal.get("equity") if formal.get("equity") is not None else summary.get("known_net_current_strategy_equity")
         risk_data_quality = "FORMAL_REVIEW_PRIMARY; RECONSTRUCTION_AUXILIARY"
-    elif reconstruction_fresh:
+    elif reconstruction_fresh or "current_strategy_return_pct_gross" in summary:
         risk_pct = round(float(reconstruction_risk), 2)
         risk_source = "data/state/etf_strategy_equity.json"
         risk_source_updated_at = equity.get("generated_at")
-        strategy_equity = summary.get("known_net_current_strategy_equity")
+        strategy_equity = summary.get("current_gross_strategy_equity")
         risk_data_quality = summary.get("known_net_equity_data_quality") or summary.get("equity_coverage_status")
     else:
         risk_pct = None
