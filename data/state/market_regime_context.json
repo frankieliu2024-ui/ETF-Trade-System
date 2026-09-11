@@ -1,27 +1,67 @@
 {
   "schema_version": "1.1",
   "mode": "MARKET_LEVEL_REGIME_CONTEXT_WITH_TENCENT_1M_INDEX_PATH",
-  "status": "DEGRADED",
+  "status": "READY",
   "market_date": "2026-09-11",
-  "as_of_beijing": "2026-09-11T09:22:37+08:00",
-  "source_snapshot": "data/market/snapshots/2026-09-11_092237.json",
-  "indices": [],
+  "as_of_beijing": "2026-09-11T09:29:39+08:00",
+  "source_snapshot": "data/market/snapshots/2026-09-11_092939.json",
+  "indices": [
+    {
+      "display_name": "上证指数（000001）",
+      "code": "000001",
+      "as_of_beijing": "2026-09-11T09:29:00+08:00",
+      "price": 3910.92,
+      "change_pct": -0.5967873119154143,
+      "day_range_position": null,
+      "path_change_pct": null,
+      "recent_slope_pct_per_10m": null,
+      "recovery_from_path_low_pct": null,
+      "retreat_from_path_high_pct": null,
+      "sampling_coverage": null,
+      "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
+      "minute_selection_reason": "exception"
+    },
+    {
+      "display_name": "创业板指（399006）",
+      "code": "399006",
+      "as_of_beijing": "2026-09-11T09:29:09+08:00",
+      "price": 3310.01,
+      "change_pct": -0.851001371906468,
+      "day_range_position": null,
+      "path_change_pct": null,
+      "recent_slope_pct_per_10m": null,
+      "recovery_from_path_low_pct": null,
+      "retreat_from_path_high_pct": null,
+      "sampling_coverage": null,
+      "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
+      "minute_selection_reason": "exception"
+    },
+    {
+      "display_name": "科创50指数（000688）",
+      "code": "000688",
+      "as_of_beijing": "2026-09-11T09:29:00+08:00",
+      "price": 1548.7,
+      "change_pct": -1.3076560329335574,
+      "minute_path_source": "DISCRETE_SNAPSHOT_PATH_FALLBACK",
+      "minute_selection_reason": "exception"
+    }
+  ],
   "etf_breadth": {
-    "etf_count": 1,
-    "positive_count": 0,
-    "negative_count": 0,
+    "etf_count": 13,
+    "positive_count": 2,
+    "negative_count": 10,
     "flat_count": 1,
-    "positive_share": 0.0,
-    "median_return_pct": 0.0,
-    "breadth_state": "MIXED_BREADTH"
+    "positive_share": 0.1538,
+    "median_return_pct": -1.085,
+    "breadth_state": "BROAD_RISK_OFF"
   },
   "style_context": {
-    "chinext_minus_shanghai_pct_points": null,
-    "state": "UNKNOWN",
-    "interpretation_cn": "风格证据不足"
+    "chinext_minus_shanghai_pct_points": -0.2542,
+    "state": "BALANCED",
+    "interpretation_cn": "上证与创业板差异有限，风格暂不极端"
   },
-  "market_regime": "MIXED_OR_STRUCTURAL",
-  "market_regime_interpretation_cn": "指数与ETF宽度并非同向极端，市场更接近结构性分化/震荡",
+  "market_regime": "BROAD_RISK_OFF",
+  "market_regime_interpretation_cn": "指数与ETF宽度同步偏弱，市场更接近广泛风险收缩",
   "analysis_contract": {
     "rule": "正式盘中决策必须先完成市场层分析，再进入账户、持仓、观察ETF和现金的统一比较。",
     "required_dimensions": [
