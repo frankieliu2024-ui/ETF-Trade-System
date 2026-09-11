@@ -16,9 +16,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("review_json", type=Path)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--enable-once", action="store_true", help="Explicitly enable one manual research call")
     args = parser.parse_args()
     review = json.loads(args.review_json.read_text(encoding="utf-8"))
-    result = critique_review(build_review_input(review))
+    result = critique_review(build_review_input(review), enable_once=args.enable_once)
     encoded = json.dumps(result, ensure_ascii=False, indent=2)
     if args.output:
         args.output.write_text(encoded + "\n", encoding="utf-8")
