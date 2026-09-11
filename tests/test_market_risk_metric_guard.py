@@ -180,6 +180,18 @@ class TestMarketRiskMetricGuard(unittest.TestCase):
             "historical reconstruction must not silently become the formal risk source while a formal review exists",
         )
 
+    def test_current_gross_owner_is_available_to_decision_and_e2e_even_with_pending_fee(self):
+        from scripts.state_manager import build_decision_context
+
+        decision = build_decision_context(REPO_ROOT)
+        metric = decision["etf_strategy_risk_metrics"]
+        equity = read_json(REPO_ROOT / "data" / "state" / "etf_strategy_equity.json")
+        gross = float(equity["summary"]["current_strategy_return_pct_gross"])
+        self.assertAlmostEqual(float(metric["etf_strategy_risk_pct"]), gross, places=2)
+        self.assertEqual(metric["risk_source"], "data/state/etf_strategy_equity.json")
+        self.assertIn("pending", str(equity["summary"].get("fee_status", "")).lower())
+
 
 if __name__ == "__main__":
     unittest.main()
+

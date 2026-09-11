@@ -398,7 +398,7 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
         risk_source_updated_at = formal.get("updated_at")
         strategy_equity = formal.get("equity") if formal.get("equity") is not None else summary.get("known_net_current_strategy_equity")
         risk_data_quality = "FORMAL_REVIEW_PRIMARY; RECONSTRUCTION_AUXILIARY"
-    elif reconstruction_fresh:
+    elif reconstruction_fresh or "current_strategy_return_pct_gross" in summary:
         risk_pct = round(float(reconstruction_risk), 2)
         risk_source = "data/state/etf_strategy_equity.json"
         risk_source_updated_at = equity.get("generated_at")
