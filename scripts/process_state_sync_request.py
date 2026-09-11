@@ -9,7 +9,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from statistics import median
 
-from state_manager import atomic_json_write
+from state_manager import atomic_json_write, build_etf_strategy_risk_metrics
 try:
     from emergency_market_evidence import validate_external_market_evidence
 except ModuleNotFoundError:
@@ -295,22 +295,17 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
     etfs = [p for p in positions if normalize_code(p.get("code")) in membership["etf"]]
     stocks = [p for p in positions if normalize_code(p.get("code")) in membership["stocks"]]
     etf_pnl = sum(position_metric(p, "pnl", "holding_pnl") for p in etfs)
-    # The formal risk rate is the maintained Known-net strategy return. Broker
-    # floating PnL remains a separate holding-pressure fact.
-    formal_risk = latest_formal_risk_fact()
-    risk_rate = safe_float(formal_risk.get("risk_rate_pct"))
+    # Current formal risk is projected from the shared Gross canonical owner.
+    # Review Known-net facts remain historical PIT compatibility evidence only.
+    formal_risk = build_etf_strategy_risk_metrics(ROOT)
+    risk_rate = safe_float(formal_risk.get("etf_strategy_risk_pct"))
     formal_risk_equity = safe_float(formal_risk.get("strategy_equity_known_net"))
-    if risk_rate is None:
-        equity_path = ROOT / "data/state/etf_strategy_equity.json"
-        equity = load_json(equity_path) if equity_path.exists() else {}
-        equity_summary = equity.get("summary") or {}
-        risk_rate = safe_float(equity_summary.get("known_net_current_strategy_return_pct"))
     if risk_rate is None:
         risk_rate = etf_pnl / 200000.0 * 100.0
     total_asset = float(account.get("total_asset") or 0)
     exposure = (float(account.get("stock_market_value") or 0) / total_asset * 100.0) if total_asset else 0.0
     scenario = request.get("interaction_scenario") or "UNSPECIFIED"
-    lines = ["## 云端实时状态（自动同步）", "", f"> 更新时间：{account.get('updated_at','')}  ", f"> 来源：{account.get('source','')}  ", f"> 场景：{scenario}  ", "> 本区块只同步已确认账户事实与ChatGPT已形成的正式决策；自动程序不得自行推导交易权限或下单。", "", "|项目|最新事实|", "|-|-|", f"|总资产|{money(account.get('total_asset'))}|", f"|股票市值|{money(account.get('stock_market_value'))}|", f"|可用资金|{money(account.get('cash'))}|", f"|账户持仓盈亏|{money(account.get('holding_pnl'))}|", f"|当日盈亏|{money(account.get('daily_pnl'))}（{float(account.get('daily_pnl_pct') or 0):+.2f}%）|", f"|账户总风险暴露率|约{exposure:.2f}%|", f"|ETF持仓浮动盈亏|{money(etf_pnl)}|", *(([f"|ETF策略Known-net权益|{money(formal_risk_equity)}|"] if formal_risk_equity is not None else [])), f"|ETF策略风险率|约{risk_rate:.2f}%（Known-net；最新正式复盘风险事实优先，旧重建仅在无正式事实时回退）|", "", "### 当前持仓事实", "", "|标的|数量|成本|现价|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|"]
+    lines = ["## 云端实时状态（自动同步）", "", f"> 更新时间：{account.get('updated_at','')}  ", f"> 来源：{account.get('source','')}  ", f"> 场景：{scenario}  ", "> 本区块只同步已确认账户事实与ChatGPT已形成的正式决策；自动程序不得自行推导交易权限或下单。", "", "|项目|最新事实|", "|-|-|", f"|总资产|{money(account.get('total_asset'))}|", f"|股票市值|{money(account.get('stock_market_value'))}|", f"|可用资金|{money(account.get('cash'))}|", f"|账户持仓盈亏|{money(account.get('holding_pnl'))}|", f"|当日盈亏|{money(account.get('daily_pnl'))}（{float(account.get('daily_pnl_pct') or 0):+.2f}%）|", f"|账户总风险暴露率|约{exposure:.2f}%|", f"|ETF持仓浮动盈亏|{money(etf_pnl)}|", *(([f"|ETF策略Gross权益|{money(formal_risk_equity)}|"] if formal_risk_equity is not None else [])), f"|ETF策略当前正式风险率|约{risk_rate:.2f}%（Gross canonical；Known-net仅作历史兼容）|", "", "### 当前持仓事实", "", "|标的|数量|成本|现价|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|"]
     for p in positions:
         lines.append(f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|{float(p.get('cost') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|{money(p.get('market_value'))}|{money(position_metric(p, 'pnl', 'holding_pnl'))}（{position_metric(p, 'pnl_pct', 'holding_pnl_pct'):+.2f}%）|")
     universe = load_json(ROOT / "config/market/etf_monitor_universe.json")
@@ -1898,4 +1893,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
