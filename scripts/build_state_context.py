@@ -263,7 +263,6 @@ def main() -> None:
 
     market_structure = build_market_structure_context(ROOT)
     timing["market_structure_ready_at"] = now_utc()
-    timing["decision_required_inputs_ready_at"] = now_utc()
     atomic_json_write(ROOT / "data" / "state" / "market_structure_context.json", market_structure)
 
     research = build_research_features(ROOT)
@@ -348,7 +347,7 @@ def main() -> None:
 
     phase4 = build_phase4_automation(ROOT)
     candidate = build_dashboard_candidate(ROOT)
-    timing["full_state_context_complete_at"] = now_utc()
+    timing["full_state_context_observation_at"] = now_utc()
     context = build_decision_context(ROOT, observability=build_decision_trace(ROOT, timing))
     context["managed_position_sell_review"] = build_managed_position_projection(ROOT)
     context.setdefault("research_evidence", {})["market_regime_context"] = market_regime
