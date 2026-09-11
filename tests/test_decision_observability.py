@@ -28,7 +28,7 @@ class DecisionObservabilityTests(unittest.TestCase):
             first = build_decision_trace(root)
             second = build_decision_trace(root)
         self.assertEqual(first["trace_id"], second["trace_id"])
-        self.assertEqual(first["boundary"], "MINIMUM_DECISION_CONTEXT_READY")
+        self.assertEqual(first["boundary"], "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED")
         self.assertEqual(first["snapshot_commit"], "snapshot-1")
 
     def test_timing_metadata_is_business_semantics_neutral(self) -> None:
@@ -41,8 +41,7 @@ class DecisionObservabilityTests(unittest.TestCase):
         with_metadata = copy.deepcopy(decision)
         with_metadata["observability"] = {
             "trace_id": "formal-decision:test",
-            "boundary": "MINIMUM_DECISION_CONTEXT_READY",
-            "decision_required_inputs_ready_at": "2026-09-11T10:24:05Z",
+            "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
             "timing": {"state_builder_started_at": "2026-09-11T10:24:04Z"},
         }
         without_metadata = dict(with_metadata)
