@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 
+import scripts.llm_research_adapter as adapter
 from scripts.llm_research_adapter import _parse_json_content, build_review_input, critique_review
 
 
@@ -188,3 +189,55 @@ def test_json_decode_error_remains_fail_open(tmp_path, monkeypatch):
     result = critique_review({}, config_path=cfg, enable_once=True)
     assert result["status"] == "SKIPPED"
     assert result["uncertainties"] == ["JSONDecodeError"]
+
+class _FakeResponse:
+    status = 200
+    def __init__(self, content, finish_reason="stop"):
+        self._body = json.dumps({"choices": [{"finish_reason": finish_reason, "message": {"content": content}}]}).encode()
+    def __enter__(self): return self
+    def __exit__(self, *args): return False
+    def read(self): return self._body
+
+def _observability_config(tmp_path):
+    cfg = tmp_path / "config.json"
+    cfg.write_text(json.dumps({"enabled": True, "provider": "deepseek", "base_url": "https://example.invalid", "model": "deepseek-chat", "daily_call_limit": 20, "daily_budget_usd": 0.5, "secret_env": "TEST_LLM_KEY", "max_retries": 0, "fail_open": True}), encoding="utf-8")
+    return cfg
+
+def _valid_content():
+    return json.dumps({"critique": "evidence is limited", "evidence_used": ["review facts"], "uncertainties": ["sample"], "follow_ups": ["observe"]})
+
+def test_response_shape_observability_for_bare_json(tmp_path, monkeypatch):
+    cfg = _observability_config(tmp_path)
+    monkeypatch.setenv("TEST_LLM_KEY", "redacted-test-only")
+    monkeypatch.setattr(adapter.urllib.request, "urlopen", lambda *args, **kwargs: _FakeResponse(_valid_content()))
+    result = critique_review({}, config_path=cfg, enable_once=True, observability=True)
+    shape = result["response_observability"]
+    assert result["status"] == "OK"
+    assert shape["http_status"] == 200
+    assert shape["request_success"] is True
+    assert shape["content_empty"] is False
+    assert shape["starts_with_object"] is True
+    assert shape["ends_with_object"] is True
+    assert shape["complete_code_fence"] is False
+    assert "content" not in shape
+
+def test_response_shape_observability_for_code_fence(tmp_path, monkeypatch):
+    cfg = _observability_config(tmp_path)
+    monkeypatch.setenv("TEST_LLM_KEY", "redacted-test-only")
+    monkeypatch.setattr(adapter.urllib.request, "urlopen", lambda *args, **kwargs: _FakeResponse("```\\n" + _valid_content() + "\\n```"))
+    result = critique_review({}, config_path=cfg, enable_once=True, observability=True)
+    assert result["status"] == "OK"
+    assert result["response_observability"]["complete_code_fence"] is True
+
+def test_response_shape_observability_for_truncated_json(tmp_path, monkeypatch):
+    cfg = _observability_config(tmp_path)
+    monkeypatch.setenv("TEST_LLM_KEY", "redacted-test-only")
+    monkeypatch.setattr(adapter.urllib.request, "urlopen", lambda *args, **kwargs: _FakeResponse('{"critique":', "length"))
+    result = critique_review({}, config_path=cfg, enable_once=True, observability=True)
+    shape = result["response_observability"]
+    assert result["status"] == "SKIPPED"
+    assert result["uncertainties"] == ["JSONDecodeError"]
+    assert shape["json_error_type"] == "JSONDecodeError"
+    assert isinstance(shape["json_error_position"], int)
+    assert shape["suspected_max_output_tokens_truncation"] is True
+    assert "content" not in shape
