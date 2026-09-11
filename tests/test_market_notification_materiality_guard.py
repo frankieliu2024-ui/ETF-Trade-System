@@ -497,7 +497,7 @@ class NotificationAggregationTests(unittest.TestCase):
     def test_batch_keeps_independent_and_material_upgrade_interrupts(self):
         def event(code, family="REGIONAL", magnitude=2.0):
             return {"event_type": "MARKET_VALUE_ALERT", "source_event_id": code, "security_code": code, "content": code,
-                    "confirmation_context": {"market": "APAC", "market_date": "2026-09-11", "session": "OPEN", "direction": "DOWN", "fact_family": family, "object_codes": ["N225", "KOSPI"], "event_category": "EXTREME", "event_magnitude_pct": magnitude}}
+                    "confirmation_context": {"market": "APAC", "market_date": "2026-09-11", "session": "OPEN", "direction": "DOWN", "fact_family": family, "object_codes": ["N225", "KOSPI"] if family == "REGIONAL" else ["NDX", "SOX"], "event_category": "EXTREME", "event_magnitude_pct": magnitude}}
         self.assertEqual(len(notification_common.aggregate_candidate_events([event("N225"), event("KOSPI")])), 1)
         self.assertEqual(len(notification_common.aggregate_candidate_events([event("N225"), event("SOX", family="US_TECH")])), 2)
         self.assertEqual(len(notification_common.aggregate_candidate_events([event("N225"), event("KOSPI", magnitude=3.0)])), 2)
