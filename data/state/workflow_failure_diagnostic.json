@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-11T09:29:49+08:00",
+  "generated_at": "2026-09-11T09:30:03+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 34550868795,
+  "run_id": 34550883472,
   "run_attempt": 1,
-  "head_sha": "2ec16a694612cd35871153991c1c7a395e6be3b4",
-  "main_head_sha": "11d057f5ee24cbfd77680358156b0639fb795eea",
+  "head_sha": "fa987170b776d815682b6c84dcd71b8f34144168",
+  "main_head_sha": "499a72177d6cf5b43f2eade3964d5de83ce4b782",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,10 +16,15 @@
     }
   ],
   "changed_files": [
-    "requests/report_delivery/etf-formal-decision-2026-09-11-20260911T092919.json"
+    "data/state/e2e_status.json",
+    "data/state/execution_quality.json",
+    "data/state/last_known_good.json",
+    "data/state/maintenance_diagnostic.json",
+    "data/state/maintenance_health.json",
+    "data/state/system_consistency.json"
   ],
-  "commit_message": "report: submit 2026-09-11 09:20 ETF formal decision result",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "state: persist production acceptance",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
@@ -27,7 +32,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
