@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-11T09:20:05+08:00",
+  "generated_at": "2026-09-11T09:22:26+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 34550184670,
+  "run_id": 34550371462,
   "run_attempt": 1,
-  "head_sha": "dac1624a3fea2681f1a4040c4d45b4dc9ff1f36a",
-  "main_head_sha": "dac1624a3fea2681f1a4040c4d45b4dc9ff1f36a",
+  "head_sha": "c4f171cac69653ac65e93a177e2fe57a61c7a29a",
+  "main_head_sha": "32d6f09b407efecfb609bb031da3b9b97442c6d4",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,19 +16,19 @@
     }
   ],
   "changed_files": [
-    "data/market/snapshots/2026-09-11_091904.json",
-    "data/state/CURRENT.json",
-    "data/state/runtime_health.json"
+    "data/state/us_extended_hours_context.json",
+    "data/state/us_extended_hours_context_previous.json",
+    "data/state/us_pulse_runtime_health.json"
   ],
-  "commit_message": "data: publish core market snapshot",
+  "commit_message": "data: refresh US extended-hours context",
   "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": true,
+    "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
-    "forbidden_path_touched": true,
+    "forbidden_path_touched": false,
     "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
