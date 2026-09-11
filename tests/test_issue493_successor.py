@@ -39,6 +39,13 @@ class Issue493SuccessorTests(unittest.TestCase):
             facts = canonical_etf_trade_facts(root, [{"code": "301689", "side": "SELL", "quantity": 500, "price": 51.85}])
             self.assertEqual(facts, [])
 
+    def test_reconstructed_missing_asset_type_stock_is_not_assumed_to_be_etf(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write_universe(root)
+            facts = canonical_etf_trade_facts(root, [{"code": "301689", "name": "电科思仪", "source": "events/trades/trade_301689.json", "entered_events_trades": True, "side": "SELL", "quantity": 500, "price": 51.85}])
+            self.assertEqual(facts, [])
+
     def test_stock_event_is_excluded_from_etf_fee_projection(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

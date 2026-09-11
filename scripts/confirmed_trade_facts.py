@@ -81,17 +81,24 @@ def _is_etf_trade(trade: dict, universe_codes: set[str]) -> bool:
     return code in universe_codes or "ETF" in name.upper()
 
 
-def _is_reconstructed_etf_trade(trade: dict) -> bool:
-    """The auxiliary reconstruction is already ETF-strategy scoped.
+def _is_reconstructed_etf_trade(trade: dict, universe_codes: set[str]) -> bool:
+    """Classify reconstructed rows while preserving legacy ETF-strategy scope.
 
-    Historical reconstruction rows often predate explicit asset_type metadata.
-    Preserve those rows as ETF facts unless they explicitly declare a non-ETF
-    asset class; only raw executed-event overlays need universe classification.
+    Event-backed rows without asset_type must be checked against the canonical
+    ETF universe; older strategy reconstruction rows remain ETF-scoped.
     """
     asset_type = str(trade.get("asset_type") or "").upper()
-    return not asset_type or asset_type in {"ETF", "FUND"}
-
-
+    if asset_type in {"ETF", "FUND"}:
+        return True
+    if asset_type:
+        return False
+    source = str(trade.get("source") or "")
+    event_backed = bool(trade.get("entered_events_trades")) or source.startswith("events/trades/")
+    if not event_backed:
+        return True
+    code = str(trade.get("code") or "").strip()
+    name = str(trade.get("name") or "")
+    return code in universe_codes or "ETF" in name.upper()
 def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> list[dict]:
     """Return one deduplicated ETF-only fact set for position, fee and count projections."""
     universe_codes = _etf_universe_codes(root)
