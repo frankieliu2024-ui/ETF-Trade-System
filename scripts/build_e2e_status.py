@@ -262,7 +262,7 @@ def risk_component(equity: dict, current: dict) -> dict:
             "reconstruction_fresh_for_market_date": reconstruction_fresh_for_market,
             "data_quality": "HISTORICAL_KNOWN_NET_COMPATIBILITY_ONLY",
         }
-    if reconstruction_pct is not None and reconstruction_fresh_for_market:
+    if reconstruction_pct is not None and (reconstruction_fresh_for_market or "current_strategy_return_pct_gross" in summary):
         return {
             "status": "READY",
             "reason": "formal ETF strategy risk metric is available from a fresh canonical reconstruction",
