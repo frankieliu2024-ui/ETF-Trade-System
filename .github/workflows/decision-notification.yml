@@ -34,7 +34,15 @@ concurrency:
 
 jobs:
   notify:
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    # A producer completion is only a wake opportunity; canonical evidence and
+    # notification_center dedupe/materiality guards decide whether anything is sent.
+    # Keep the failure-guard's skipped/failed diagnostic wake from replaying stale state.
+    if: >-
+      ${{
+        github.event_name != 'workflow_run' ||
+        github.event.workflow_run.name != 'ETF workflow failure guard' ||
+        github.event.workflow_run.conclusion == 'success'
+      }}
     runs-on: ubuntu-latest
     timeout-minutes: 4
     env:
