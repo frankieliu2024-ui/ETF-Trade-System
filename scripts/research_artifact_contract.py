@@ -51,12 +51,15 @@ def validate_completed_artifact(path: Path) -> list[str]:
     audit = artifact.get("data_audit") or {}
     if not isinstance(audit.get("daily_feature_days"), int) or audit["daily_feature_days"] <= 0:
         errors.append("data_audit.daily_feature_days must be positive")
-    if audit.get("current_formal_count") != 11:
-        errors.append("data_audit.current_formal_count must be 11")
+    formal_count = audit.get("current_formal_count")
+    if not isinstance(formal_count, int) or formal_count <= 0:
+        errors.append("data_audit.current_formal_count must be positive")
     rows = artifact.get("current_11")
-    if not isinstance(rows, list) or len(rows) != 11:
-        errors.append("current_11 must contain exactly 11 objects")
-        rows = rows if isinstance(rows, list) else []
+    if not isinstance(rows, list):
+        errors.append("current_11 must be a list")
+        rows = []
+    elif isinstance(formal_count, int) and formal_count > 0 and len(rows) != formal_count:
+        errors.append("current_11 count must match data_audit.current_formal_count")
     for row in rows:
         if not isinstance(row, dict) or not row.get("code") or not row.get("observations"):
             errors.append("each current_11 row needs code and observations")
@@ -123,8 +126,9 @@ def validate_report_against_artifact(report: str, artifact: dict) -> list[str]:
     audit = artifact.get("data_audit") or {}
     if f"{audit.get('daily_feature_days')}个交易日" not in report:
         errors.append("report sample size does not match artifact")
-    if "正式11只" not in report:
-        errors.append("report does not declare the formal 11-object scope")
+    formal_count = audit.get("current_formal_count")
+    if not isinstance(formal_count, int) or formal_count <= 0 or f"正式{formal_count}只" not in report:
+        errors.append("report does not declare the artifact formal-object scope")
     if "FAIL / RESEARCH_ONLY" not in report:
         errors.append("report qualification boundary is missing")
     objects = (artifact.get("headline_results") or {}).get("objects") or {}

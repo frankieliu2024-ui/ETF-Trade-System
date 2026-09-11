@@ -1,3 +1,4 @@
+import copy
 import json
 import shutil
 import tempfile
@@ -19,9 +20,43 @@ REPORT = ROOT / "research/reports/ETF反复做T与波段专项研究.md"
 
 
 class ResearchArtifactContractTest(unittest.TestCase):
-    def test_current_stage1_is_complete_and_provenanced(self):
+    def test_historical_stage1_is_complete_and_provenanced(self):
         self.assertEqual(validate_completed_artifact(ARTIFACT), [])
-        self.assertEqual(len(load_artifact(ARTIFACT)["current_11"]), 11)
+        artifact = load_artifact(ARTIFACT)
+        self.assertEqual(artifact["data_audit"]["current_formal_count"], 11)
+        self.assertEqual(len(artifact["current_11"]), 11)
+
+    def test_dynamic_formal_scope_uses_artifact_count_not_legacy_eleven(self):
+        with tempfile.TemporaryDirectory() as td:
+            artifact = copy.deepcopy(load_artifact(ARTIFACT))
+            rows = artifact["current_11"]
+            while len(rows) < 13:
+                clone = copy.deepcopy(rows[-1])
+                clone["code"] = f"DYN{len(rows) + 1}"
+                rows.append(clone)
+            artifact["data_audit"]["current_formal_count"] = len(rows)
+            path = Path(td) / "dynamic.json"
+            path.write_text(json.dumps(artifact, ensure_ascii=False), encoding="utf-8")
+            self.assertEqual(validate_completed_artifact(path), [])
+
+            historical_report = REPORT.read_text(encoding="utf-8")
+            dynamic_report = historical_report.replace("正式11只", "正式13只")
+            self.assertEqual(validate_report_against_artifact(dynamic_report, artifact), [])
+            self.assertIn(
+                "report does not declare the artifact formal-object scope",
+                validate_report_against_artifact(historical_report, artifact),
+            )
+
+    def test_formal_scope_count_mismatch_fails(self):
+        with tempfile.TemporaryDirectory() as td:
+            artifact = copy.deepcopy(load_artifact(ARTIFACT))
+            artifact["data_audit"]["current_formal_count"] = 12
+            path = Path(td) / "mismatch.json"
+            path.write_text(json.dumps(artifact, ensure_ascii=False), encoding="utf-8")
+            self.assertIn(
+                "current_11 count must match data_audit.current_formal_count",
+                validate_completed_artifact(path),
+            )
 
     def test_empty_artifact_fails_completed_contract(self):
         with tempfile.TemporaryDirectory() as td:
