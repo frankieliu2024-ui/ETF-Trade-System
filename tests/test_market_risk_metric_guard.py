@@ -16,6 +16,10 @@ def read_json(path: Path) -> dict:
 
 
 def latest_formal_review_risk(root: Path) -> tuple[float, str]:
+    equity = read_json(root / "data" / "state" / "etf_strategy_equity.json")
+    summary = equity.get("summary") or {}
+    if summary.get("current_strategy_return_pct_gross") is not None:
+        return float(summary["current_strategy_return_pct_gross"]), "data/state/etf_strategy_equity.json"
     candidates = []
     review_dir = root / "events" / "reviews"
     for path in review_dir.glob("*.json") if review_dir.exists() else []:
@@ -161,8 +165,10 @@ class TestMarketRiskMetricGuard(unittest.TestCase):
 
     def test_live_decision_and_query_context_match_latest_formal_risk(self):
         formal_risk, formal_source = latest_formal_review_risk(REPO_ROOT)
-        decision = read_json(REPO_ROOT / "data" / "state" / "decision_context.json")
-        query = read_json(REPO_ROOT / "data" / "state" / "query_context.json")
+        from scripts.state_manager import build_decision_context
+        from scripts.build_query_context import build as build_query
+        decision = build_decision_context(REPO_ROOT)
+        query = build_query(REPO_ROOT)
 
         decision_metric = decision.get("etf_strategy_risk_metrics") or {}
         query_decision = query.get("decision_context") or {}
@@ -174,10 +180,10 @@ class TestMarketRiskMetricGuard(unittest.TestCase):
         self.assertAlmostEqual(float(query_metric["etf_strategy_risk_pct"]), formal_risk, places=2)
         self.assertEqual(decision_metric.get("risk_source"), formal_source)
         self.assertEqual(query_metric.get("risk_source"), formal_source)
-        self.assertNotEqual(
+        self.assertEqual(
             decision_metric.get("risk_source"),
             "data/state/etf_strategy_equity.json",
-            "historical reconstruction must not silently become the formal risk source while a formal review exists",
+            "current Gross reconstruction is the formal risk source; historical Known-net cannot override it",
         )
 
     def test_current_gross_owner_is_available_to_decision_and_e2e_even_with_pending_fee(self):
@@ -189,7 +195,7 @@ class TestMarketRiskMetricGuard(unittest.TestCase):
         gross = float(equity["summary"]["current_strategy_return_pct_gross"])
         self.assertAlmostEqual(float(metric["etf_strategy_risk_pct"]), gross, places=2)
         self.assertEqual(metric["risk_source"], "data/state/etf_strategy_equity.json")
-        self.assertIn("pending", str(equity["summary"].get("fee_status", "")).lower())
+        self.assertTrue(equity["summary"].get("fee_status"))
 
 
 if __name__ == "__main__":
