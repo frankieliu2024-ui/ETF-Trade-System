@@ -1,44 +1,39 @@
 {
-  "generated_at": "2026-09-11T17:01:51Z",
-  "generated_at_beijing": "2026-09-12T01:01:51+08:00",
+  "generated_at": "2026-09-11T17:30:00Z",
+  "generated_at_beijing": "2026-09-12T01:30:00+08:00",
   "repository": {
-    "head_sha": "4bd2f0ed9b6ed2fa004c18633b92e18afad6f2f5",
-    "github_sha": "4bd2f0ed9b6ed2fa004c18633b92e18afad6f2f5",
-    "github_run_id": "34625252900",
+    "head_sha": "fea8497d5f11e9a4f302f0d17966523c7b181765",
+    "github_sha": "fea8497d5f11e9a4f302f0d17966523c7b181765",
+    "github_run_id": "34627918578",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "4bd2f0ed9b6ed2fa004c18633b92e18afad6f2f5",
-    "workflow_sha": "4bd2f0ed9b6ed2fa004c18633b92e18afad6f2f5",
+    "checked_commit": "fea8497d5f11e9a4f302f0d17966523c7b181765",
+    "workflow_sha": "fea8497d5f11e9a4f302f0d17966523c7b181765",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "semantic_freshness": {
-    "base": "c3b80b64fc515841826daabdd3cb1c60c2334bce",
-    "head": "4bd2f0ed9b6ed2fa004c18633b92e18afad6f2f5",
+    "base": "4bd2f0ed9b6ed2fa004c18633b92e18afad6f2f5",
+    "head": "fea8497d5f11e9a4f302f0d17966523c7b181765",
     "changed_paths": [
-      ".github/workflows/system-consistency.yml",
-      "config/research/llm_research_adapter.json",
+      ".github/workflows/manual-llm-research-critique.yml",
       "data/state/e2e_status.json",
       "data/state/execution_quality.json",
       "data/state/last_known_good.json",
       "data/state/maintenance_diagnostic.json",
       "data/state/maintenance_health.json",
-      "data/state/notification_center.json",
       "data/state/system_consistency.json",
       "data/state/us_extended_hours_context.json",
       "data/state/us_extended_hours_context_previous.json",
       "data/state/us_pulse_runtime_health.json",
       "scripts/llm_research_adapter.py",
-      "scripts/run_review_research_critique.py",
       "tests/test_llm_research_adapter.py"
     ],
     "categories": {
       "STABLE_PRODUCTION_CHANGE": [
-        ".github/workflows/system-consistency.yml",
-        "config/research/llm_research_adapter.json",
+        ".github/workflows/manual-llm-research-critique.yml",
         "scripts/llm_research_adapter.py",
-        "scripts/run_review_research_critique.py",
         "tests/test_llm_research_adapter.py"
       ],
       "DYNAMIC_RUNTIME_FACT": [
@@ -47,7 +42,6 @@
         "data/state/last_known_good.json",
         "data/state/maintenance_diagnostic.json",
         "data/state/maintenance_health.json",
-        "data/state/notification_center.json",
         "data/state/system_consistency.json",
         "data/state/us_extended_hours_context.json",
         "data/state/us_extended_hours_context_previous.json",
@@ -59,35 +53,35 @@
     },
     "decision": "REPLAY_REQUIRED",
     "integration_action": "REPLAY_REQUIRED",
-    "validated_commit": "c3b80b64fc515841826daabdd3cb1c60c2334bce",
-    "current_head": "4bd2f0ed9b6ed2fa004c18633b92e18afad6f2f5",
+    "validated_commit": "4bd2f0ed9b6ed2fa004c18633b92e18afad6f2f5",
+    "current_head": "fea8497d5f11e9a4f302f0d17966523c7b181765",
     "head_advanced": true,
     "stable_contract_freshness": "REVIEW_REQUIRED",
     "runtime_fact_freshness": "CURRENT"
   },
-  "status": "WARNING",
+  "status": "PASS",
   "hard_error_count": 0,
-  "warning_count": 1,
+  "warning_count": 0,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "{\"status\": \"BATCHED\", \"results\": [{\"status\": \"SENT\"}]}\nFORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-10:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-10\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n......................................................................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 246 tests in 0.792s\n\nOK\n"
+      "detail": "{\"status\": \"BATCHED\", \"results\": [{\"status\": \"SENT\"}]}\nFORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-10:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-10\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n......................................................................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 246 tests in 0.673s\n\nOK\n"
     },
     {
       "name": "tests:opening_current_self_healing",
       "status": "PASS",
-      "detail": "...................\n----------------------------------------------------------------------\nRan 19 tests in 0.013s\n\nOK\n"
+      "detail": "...................\n----------------------------------------------------------------------\nRan 19 tests in 0.012s\n\nOK\n"
     },
     {
       "name": "tests:semantic_latest_main",
       "status": "PASS",
-      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.129s\n\nOK\n"
+      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.127s\n\nOK\n"
     },
     {
       "name": "tests:research_artifact_contract",
       "status": "PASS",
-      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 1.380s\n\nOK\n"
+      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 1.369s\n\nOK\n"
     },
     {
       "name": "tests:lifecycle_state",
@@ -107,7 +101,7 @@
     {
       "name": "tests:settlement_obligations",
       "status": "PASS",
-      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.003s\n\nOK\n"
+      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.002s\n\nOK\n"
     },
     {
       "name": "tests:formal_file_mutation_gateway",
@@ -127,7 +121,7 @@
     {
       "name": "tests:production_reliability",
       "status": "PASS",
-      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n.................................\n----------------------------------------------------------------------\nRan 33 tests in 0.031s\n\nOK\n"
+      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n.................................\n----------------------------------------------------------------------\nRan 33 tests in 0.030s\n\nOK\n"
     },
     {
       "name": "tests:workflow_sha_snapshot",
@@ -412,17 +406,17 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=4bd2f0ed9b6ed2fa004c18633b92e18afad6f2f5"
+      "detail": "HEAD=fea8497d5f11e9a4f302f0d17966523c7b181765"
     },
     {
       "name": "git:semantic_latest_main",
       "status": "PASS",
-      "detail": "{\"base\": \"c3b80b64fc515841826daabdd3cb1c60c2334bce\", \"head\": \"4bd2f0ed9b6ed2fa004c18633b92e18afad6f2f5\", \"changed_paths\": [\".github/workflows/system-consistency.yml\", \"config/research/llm_research_adapter.json\", \"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\", \"data/state/us_extended_hours_context_previous.json\", \"data/state/us_pulse_runtime_health.json\", \"scripts/llm_research_adapter.py\", \"scripts/run_review_research_critique.py\", \"tests/test_llm_research_adapter.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\".github/workflows/system-consistency.yml\", \"config/research/llm_research_adapter.json\", \"scripts/llm_research_adapter.py\", \"scripts/run_review_research_critique.py\", \"tests/test_llm_research_adapter.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\", \"data/state/us_extended_hours_context_previous.json\", \"data/state/us_pulse_runtime_health.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\", \"integration_action\": \"REPLAY_REQUIRED\"}"
+      "detail": "{\"base\": \"4bd2f0ed9b6ed2fa004c18633b92e18afad6f2f5\", \"head\": \"fea8497d5f11e9a4f302f0d17966523c7b181765\", \"changed_paths\": [\".github/workflows/manual-llm-research-critique.yml\", \"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\", \"data/state/us_extended_hours_context_previous.json\", \"data/state/us_pulse_runtime_health.json\", \"scripts/llm_research_adapter.py\", \"tests/test_llm_research_adapter.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\".github/workflows/manual-llm-research-critique.yml\", \"scripts/llm_research_adapter.py\", \"tests/test_llm_research_adapter.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\", \"data/state/us_extended_hours_context_previous.json\", \"data/state/us_pulse_runtime_health.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\", \"integration_action\": \"REPLAY_REQUIRED\"}"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=4bd2f0ed9b6ed2fa004c18633b92e18afad6f2f5 GITHUB_SHA=4bd2f0ed9b6ed2fa004c18633b92e18afad6f2f5"
+      "detail": "HEAD=fea8497d5f11e9a4f302f0d17966523c7b181765 GITHUB_SHA=fea8497d5f11e9a4f302f0d17966523c7b181765"
     },
     {
       "name": "git:critical_files_tracked",
@@ -846,8 +840,8 @@
     },
     {
       "name": "us_extended:live_freshness",
-      "status": "WARNING",
-      "detail": "observability_stale active=True phase=13:01 max_age_seconds=998 limit=900 canonical_facts_unaffected"
+      "status": "PASS",
+      "detail": "active=True phase=13:30 max_age_seconds=865 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -992,12 +986,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=35249"
+      "detail": "declared=STALE expected=STALE age_seconds=36938"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=35232"
+      "detail": "declared=STALE expected=STALE age_seconds=36921"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -1037,7 +1031,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-09-11T17:01:30Z market=2026-09-11T15:14:18+08:00"
+      "detail": "context=2026-09-11T17:29:39Z market=2026-09-11T15:14:18+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1605,6 +1599,11 @@
       "detail": "market/data producers must not hold PushPlus or notification-center execution authority"
     },
     {
+      "name": "notification_owner:.github/workflows/manual-llm-research-critique.yml:no_external_effect",
+      "status": "PASS",
+      "detail": "market/data producers must not hold PushPlus or notification-center execution authority"
+    },
+    {
       "name": "notification_owner:.github/workflows/market-snapshot.yml:no_external_effect",
       "status": "PASS",
       "detail": "market/data producers must not hold PushPlus or notification-center execution authority"
@@ -1690,6 +1689,11 @@
       "detail": "single-owner file remains owned by .github/workflows/system-consistency.yml"
     },
     {
+      "name": "mutation_owner:data/state/system_consistency.json:.github/workflows/manual-llm-research-critique.yml",
+      "status": "PASS",
+      "detail": "single-owner file remains owned by .github/workflows/system-consistency.yml"
+    },
+    {
       "name": "mutation_owner:data/state/system_consistency.json:.github/workflows/market-snapshot.yml",
       "status": "PASS",
       "detail": "single-owner file remains owned by .github/workflows/system-consistency.yml"
@@ -1770,6 +1774,11 @@
       "detail": "single-owner workflow stages its owned file"
     },
     {
+      "name": "mutation_owner:data/state/notification_center.json:.github/workflows/manual-llm-research-critique.yml",
+      "status": "PASS",
+      "detail": "single-owner file remains owned by .github/workflows/decision-notification.yml"
+    },
+    {
       "name": "mutation_owner:data/state/notification_center.json:.github/workflows/market-snapshot.yml",
       "status": "PASS",
       "detail": "single-owner file remains owned by .github/workflows/decision-notification.yml"
@@ -1846,6 +1855,11 @@
     },
     {
       "name": "mutation_owner:ETF规则_MASTER.md:.github/workflows/decision-notification.yml",
+      "status": "PASS",
+      "detail": "formal single-owner file is not automatically staged"
+    },
+    {
+      "name": "mutation_owner:ETF规则_MASTER.md:.github/workflows/manual-llm-research-critique.yml",
       "status": "PASS",
       "detail": "formal single-owner file is not automatically staged"
     },
@@ -2246,9 +2260,7 @@
     }
   ],
   "errors": [],
-  "warnings": [
-    "us_extended:live_freshness: derived observation stale"
-  ],
+  "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
   "production_mutation_protocol": {
     "status": "PASS",
