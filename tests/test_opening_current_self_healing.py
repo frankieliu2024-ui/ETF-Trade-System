@@ -345,5 +345,22 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertEqual(status["recommended_action"], "REFRESH_SNAPSHOT")
         self.assertNotIn("recovered", status["reason"].lower())
 
+    def test_bounded_us_failover_is_phase_aware_and_deduplicates_primary(self):
+        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        self.assertIn("expected_us_phase", workflow)
+        self.assertIn('object_phase(code) == "REGULAR"', workflow)
+        self.assertIn("gh run list --workflow us-extended-hours-pulse.yml", workflow)
+        self.assertIn("Recover missing US notification batch through canonical workflow", workflow)
+        self.assertIn("recovery_source_run_id", workflow)
+        self.assertIn("no duplicate fallback dispatch", workflow)
+
+    def test_notification_recovery_reuses_single_guarded_us_batch(self):
+        workflow = (ROOT / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
+        self.assertIn("recovery_market", workflow)
+        self.assertIn("recovery_source_run_id", workflow)
+        self.assertEqual(workflow.count("python scripts/run_guarded_notification.py batch --market us"), 1)
+        self.assertIn("inputs.recovery_market == 'us'", workflow)
+        self.assertNotIn("PUSHPLUS_TOKEN", (ROOT / ".github/workflows/us-extended-hours-pulse.yml").read_text(encoding="utf-8"))
+
 if __name__ == "__main__":
     unittest.main()
