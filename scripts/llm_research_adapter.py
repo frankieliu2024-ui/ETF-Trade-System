@@ -151,7 +151,9 @@ def critique_review(review: dict[str, Any], *, config_path: Path = CONFIG) -> di
     if not api_key:
         return _blocked("secret_unavailable")
     last_error = "provider_unavailable"
-    for attempt in range(cfg.max_retries + 1):
+    single_call = os.environ.get("LLM_SINGLE_CALL", "").lower() in {"1", "true", "yes"}
+    retries = 0 if single_call else cfg.max_retries
+    for attempt in range(retries + 1):
         try:
             result = _request(cfg, api_key, review)
             result["call_count"] = 1

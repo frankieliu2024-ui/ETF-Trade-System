@@ -85,3 +85,18 @@ def test_output_contract_rejects_action_fields(tmp_path, monkeypatch):
     result = critique_review({}, config_path=cfg)
     assert result["status"] == "SKIPPED"
     assert result["uncertainties"] == ["unsafe_configuration"]
+
+
+def test_single_call_mode_disables_retries(tmp_path, monkeypatch):
+    cfg = tmp_path / "config.json"
+    cfg.write_text(json.dumps({"enabled": True, "provider": "deepseek", "base_url": "https://example.invalid", "model": "deepseek-chat", "daily_call_limit": 20, "daily_budget_usd": 0.5, "secret_env": "TEST_LLM_KEY", "max_retries": 2}), encoding="utf-8")
+    calls = {"count": 0}
+    def fake_request(cfg, key, review):
+        calls["count"] += 1
+        raise OSError("test provider failure")
+    monkeypatch.setenv("TEST_LLM_KEY", "redacted-test-only")
+    monkeypatch.setenv("LLM_SINGLE_CALL", "1")
+    monkeypatch.setattr("scripts.llm_research_adapter._request", fake_request)
+    result = critique_review({}, config_path=cfg)
+    assert result["status"] == "SKIPPED"
+    assert calls["count"] == 1

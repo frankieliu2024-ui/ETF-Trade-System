@@ -1,0 +1,58 @@
+name: Manual LLM research critique validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      review_path:
+        description: "Frozen formal review JSON path"
+        required: true
+        default: "events/reviews/2026-09-11.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: manual-llm-research-critique
+  cancel-in-progress: false
+
+jobs:
+  critique:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Run one bounded DeepSeek research critique
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          LLM_SINGLE_CALL: "1"
+        run: |
+          set +x
+          python scripts/run_review_research_critique.py "${{ inputs.review_path }}" > critique.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result = json.loads(Path("critique.json").read_text(encoding="utf-8"))
+          allowed = {"schema_version", "status", "provider", "model", "critique", "evidence_used", "uncertainties", "follow_ups", "production_action", "formal_state_write", "call_count"}
+          if set(result) - allowed: raise SystemExit("unexpected output field")
+          if result.get("formal_state_write") is not False: raise SystemExit("formal state write is prohibited")
+          if result.get("production_action") is not None: raise SystemExit("trading action is prohibited")
+          summary = {"status": result.get("status"), "provider": result.get("provider"), "model": result.get("model"), "call_count": result.get("call_count", 0), "schema_valid": True, "research_only": True, "formal_state_write": False, "trading_action": False}
+          with open("${{ github.step_summary }}", "a", encoding="utf-8") as fh:
+              fh.write("Manual LLM research critique\n")
+              json.dump(summary, fh, ensure_ascii=False, indent=2)
+              fh.write("\n")
+          PY
+      - name: Upload read-only research artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: llm-research-critique
+          path: critique.json
+          if-no-files-found: ignore
