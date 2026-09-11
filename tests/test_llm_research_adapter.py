@@ -119,3 +119,36 @@ def test_enable_once_overrides_only_call_config(tmp_path, monkeypatch):
     result = critique_review({}, config_path=cfg, enable_once=True)
     assert result["status"] == "OK"
     assert result["formal_state_write"] is False
+
+
+def test_frozen_review_nested_mapping_is_nonempty_and_safe():
+    frozen = {
+        "event_type": "FORMAL_POST_CLOSE_REVIEW",
+        "market_date": "2026-09-11",
+        "review": {
+            "market_date": "2026-09-11",
+            "review_version": "V2.2.31_CLOSE_REVIEW",
+            "reviewed_at_beijing": "2026-09-11T20:30:46+08:00",
+            "opportunity_status": "无机会",
+            "main_candidate": "现金",
+            "today_summary": "risk-off review",
+            "judgment_quality": "良好",
+            "judgment_quality_reason": "evidence-based",
+            "execution_quality": "合格",
+            "capital_efficiency": "改善",
+            "next_validation": ["跨日承接"],
+            "max_risk": "共同因子风险",
+            "review_boundary": "read only",
+            "holding_actions": {"ETF": "BUY"},
+            "amount_yuan": 1000,
+            "risk_permission": "允许新增",
+        },
+    }
+    result = build_review_input(frozen)
+    assert result["market_date"] == "2026-09-11"
+    assert result["research_summary"]["today_summary"] == "risk-off review"
+    assert result["research_summary"]["next_validation"] == ["跨日承接"]
+    assert len(json.dumps(result, ensure_ascii=False)) > 100
+    assert "holding_actions" not in result
+    assert "amount_yuan" not in result
+    assert "risk_permission" not in result
