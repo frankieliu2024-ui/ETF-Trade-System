@@ -98,6 +98,16 @@ def _validate_output(obj: Any, cfg: AdapterConfig) -> dict[str, Any]:
     }
 
 
+def _parse_json_content(content: str) -> Any:
+    """Parse provider JSON without guessing at natural-language responses."""
+    text = content.strip()
+    if text.startswith("```json") and text.endswith("```"):
+        lines = text.splitlines()
+        if len(lines) >= 3 and lines[0].strip().lower() == "```json" and lines[-1].strip() == "```":
+            text = "\n".join(lines[1:-1]).strip()
+    return json.loads(text)
+
+
 def _request(cfg: AdapterConfig, api_key: str, review: dict[str, Any]) -> dict[str, Any]:
     system = (
         "You are a research-only critique assistant for an ETF post-market review. "
@@ -128,7 +138,7 @@ def _request(cfg: AdapterConfig, api_key: str, review: dict[str, Any]) -> dict[s
     with urllib.request.urlopen(req, timeout=cfg.timeout_seconds) as response:
         payload = json.loads(response.read().decode("utf-8"))
     content = payload["choices"][0]["message"]["content"]
-    return _validate_output(json.loads(content), cfg)
+    return _validate_output(_parse_json_content(content), cfg)
 
 
 def critique_review(review: dict[str, Any], *, config_path: Path = CONFIG, enable_once: bool = False) -> dict[str, Any]:
