@@ -142,6 +142,38 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Run bounded LLM adapter contract tests
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import tempfile
+          from pathlib import Path
+          from scripts.llm_research_adapter import build_review_input, critique_review
+
+          with tempfile.TemporaryDirectory() as td:
+              cfg = Path(td) / "adapter.json"
+              cfg.write_text(json.dumps({
+                  "enabled": False,
+                  "daily_call_limit": 20,
+                  "daily_budget_usd": 0.50,
+                  "secret_env": "CI_LLM_KEY"
+              }), encoding="utf-8")
+              result = critique_review({"market_date": "2026-09-11"}, config_path=cfg)
+              assert result["status"] == "SKIPPED"
+              assert result["uncertainties"] == ["adapter_disabled"]
+
+              safe = build_review_input({
+                  "market_date": "2026-09-11",
+                  "daily_market_summary": {"latest_valid_node": "1500"},
+                  "account_fact": {"cash": 1},
+                  "trade_action": "BUY"
+              })
+              assert "account_fact" not in safe
+              assert "trade_action" not in safe
+          print("bounded LLM adapter contract: PASS")
+          PY
       - name: Validate semantic latest-main freshness
         if: github.event_name == 'pull_request'
         shell: bash
