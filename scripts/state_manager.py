@@ -458,13 +458,11 @@ def build_decision_trace(root: Path, timing: dict[str, str] | None = None) -> di
         "market_node": node,
         "snapshot": snapshot,
         "snapshot_commit": snapshot_commit,
-        "boundary": "MINIMUM_DECISION_CONTEXT_READY",
-        "decision_required_inputs_ready_at": "",
+        "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
         "timing": {},
     }
     if timing:
         metadata["timing"] = dict(timing)
-        metadata["decision_required_inputs_ready_at"] = str(timing.get("decision_required_inputs_ready_at") or "")
     return metadata
 
 
