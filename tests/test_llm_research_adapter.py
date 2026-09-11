@@ -100,3 +100,22 @@ def test_single_call_mode_disables_retries(tmp_path, monkeypatch):
     result = critique_review({}, config_path=cfg)
     assert result["status"] == "SKIPPED"
     assert calls["count"] == 1
+
+
+def test_enable_once_overrides_only_call_config(tmp_path, monkeypatch):
+    cfg = tmp_path / "config.json"
+    cfg.write_text(json.dumps({
+        "enabled": False, "provider": "deepseek", "base_url": "https://example.invalid",
+        "model": "deepseek-chat", "daily_call_limit": 20, "daily_budget_usd": 0.5,
+        "secret_env": "TEST_LLM_KEY",
+    }), encoding="utf-8")
+    monkeypatch.setenv("TEST_LLM_KEY", "redacted-test-only")
+    monkeypatch.setattr("scripts.llm_research_adapter._request", lambda cfg, key, review: {
+        "schema_version": "1.0", "status": "OK", "provider": cfg.provider,
+        "model": cfg.model, "critique": "ok", "evidence_used": [],
+        "uncertainties": [], "follow_ups": [], "production_action": None,
+        "formal_state_write": False,
+    })
+    result = critique_review({}, config_path=cfg, enable_once=True)
+    assert result["status"] == "OK"
+    assert result["formal_state_write"] is False

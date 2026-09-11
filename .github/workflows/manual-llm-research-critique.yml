@@ -34,7 +34,7 @@ jobs:
           LLM_SINGLE_CALL: "1"
         run: |
           set +x
-          python scripts/run_review_research_critique.py "${{ inputs.review_path }}" > critique.json
+          python scripts/run_review_research_critique.py "${{ inputs.review_path }}" --enable-once > critique.json
           python - <<'PY'
           import json
           from pathlib import Path

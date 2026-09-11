@@ -10,7 +10,7 @@ import os
 import time
 import urllib.error
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -131,8 +131,10 @@ def _request(cfg: AdapterConfig, api_key: str, review: dict[str, Any]) -> dict[s
     return _validate_output(json.loads(content), cfg)
 
 
-def critique_review(review: dict[str, Any], *, config_path: Path = CONFIG) -> dict[str, Any]:
+def critique_review(review: dict[str, Any], *, config_path: Path = CONFIG, enable_once: bool = False) -> dict[str, Any]:
     cfg = load_config(config_path)
+    if enable_once:
+        cfg = replace(cfg, enabled=True)
     if not cfg.enabled:
         return _blocked("adapter_disabled")
     if cfg.persist_formal_state or cfg.allow_trade_action:
