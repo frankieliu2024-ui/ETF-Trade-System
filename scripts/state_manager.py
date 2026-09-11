@@ -381,7 +381,7 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
         if normalize_code(p.get("code") or p.get("symbol") or p.get("security_code")) in memberships["etf"]
     )
     capital = float(summary.get("starting_etf_strategy_capital") or 200000)
-    reconstruction_risk = summary.get("known_net_current_strategy_return_pct")
+    reconstruction_risk = summary.get("current_strategy_return_pct_gross", summary.get("known_net_current_strategy_return_pct"))
     reconstruction_as_of = str(equity.get("as_of_transaction_date") or summary.get("as_of_transaction_date") or "")
     current = read_json(root / "data" / "state" / "CURRENT.json", {})
     current_market_date = str(current.get("market_date") or "")
@@ -392,7 +392,7 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
         and reconstruction_as_of >= current_market_date
     )
     formal = _latest_formal_review_risk(root)
-    if formal.get("risk_pct") is not None:
+    if "current_strategy_return_pct_gross" not in summary and formal.get("risk_pct") is not None:
         risk_pct = round(float(formal["risk_pct"]), 2)
         risk_source = formal.get("source")
         risk_source_updated_at = formal.get("updated_at")
@@ -402,7 +402,7 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
         risk_pct = round(float(reconstruction_risk), 2)
         risk_source = "data/state/etf_strategy_equity.json"
         risk_source_updated_at = equity.get("generated_at")
-        strategy_equity = summary.get("known_net_current_strategy_equity")
+        strategy_equity = summary.get("current_gross_strategy_equity")
         risk_data_quality = summary.get("known_net_equity_data_quality") or summary.get("equity_coverage_status")
     else:
         risk_pct = None
@@ -488,3 +488,4 @@ def build_decision_context(root: Path | None = None, observability: dict[str, An
         "dashboard_source": str(dashboard.relative_to(root)).replace("\\", "/"), "dashboard_summary": {"maintenance_mode": "candidate_only", "automatic_overwrite": False, "automatic_trade_output": False}, "account_fact_status": account["status"], "needs_account_screenshot": account["status"] != "VALID",
         "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。日内路径、研究证据及证据变化必须参与完整MASTER判断，但单独均不是交易信号。",
     }
+
