@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-11T13:49:38+08:00",
-  "last_status": "SENT",
-  "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【正式决策】ETF正式决策｜2026-09-11 13:20",
+  "updated_at": "2026-09-11T13:57:08+08:00",
+  "last_status": "AGGREGATED_INTO_EXISTING",
+  "last_type": "MARKET_VALUE_ALERT",
+  "last_title": "【市场异动】标普油气ETF（513350）日内方向明显反转",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -5968,7 +5968,15 @@
         "source_fact_id": "2026-09-11:513350:REVERSAL:DOWN:2026-09-11T13:20:40+08:00",
         "minute_structure_evidence_used": true,
         "minute_structure_note": "1分钟路径先高后低（低点13:19、高点09:30）；最近10分钟-0.77%，成交额为前10分钟0.71倍，抛压扩散有限",
-        "event_family_id": "A_SHARE:2026-09-11:A_SHARE:513350:REVERSAL:DOWN"
+        "event_family_id": "A_SHARE:2026-09-11:A_SHARE:513350:REVERSAL:DOWN",
+        "event_tags": [
+          "REVERSAL"
+        ],
+        "aggregation_status": "MERGED_SAME_OBJECT_CONTINUOUS_FACT",
+        "source_fact_ids": [
+          "2026-09-11:513350:REVERSAL:DOWN:2026-09-11T13:55:52+08:00"
+        ],
+        "family_peak_magnitude_pct": 3.3922261484099048
       },
       "response": {
         "http_status": 200,
@@ -8835,6 +8843,6 @@
     }
   ],
   "pending_questions": [],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
+  "policy": "canonical bounded market notification batch",
   "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
 }
