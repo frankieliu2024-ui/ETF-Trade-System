@@ -17,6 +17,7 @@ def main() -> int:
     parser.add_argument("review_json", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--enable-once", action="store_true", help="Explicitly enable one manual research call")
+    parser.add_argument("--observability", action="store_true", help="Include redacted provider response-shape metadata")
     args = parser.parse_args()
     review = json.loads(args.review_json.read_text(encoding="utf-8"))
     result = critique_review(build_review_input(review), enable_once=args.enable_once, observability=args.observability)
