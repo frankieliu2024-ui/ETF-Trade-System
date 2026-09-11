@@ -2,7 +2,7 @@ import json
 import os
 from pathlib import Path
 
-from scripts.llm_research_adapter import build_review_input, critique_review
+from scripts.llm_research_adapter import _parse_json_content, build_review_input, critique_review
 
 
 def test_disabled_adapter_is_fail_open(tmp_path):
@@ -152,3 +152,39 @@ def test_frozen_review_nested_mapping_is_nonempty_and_safe():
     assert "holding_actions" not in result
     assert "amount_yuan" not in result
     assert "risk_permission" not in result
+
+
+def test_json_content_parser_accepts_bare_json_and_complete_code_fence():
+    payload = '{"critique":"ok","evidence_used":[],"uncertainties":[],"follow_ups":[]}'
+    assert _parse_json_content(payload)["critique"] == "ok"
+    assert _parse_json_content("```json
+" + payload + "
+```")["critique"] == "ok"
+
+
+def test_invalid_or_truncated_json_is_not_salvaged():
+    for content in ("not json", '{"critique":'):
+        try:
+            _parse_json_content(content)
+        except json.JSONDecodeError:
+            pass
+        else:
+            raise AssertionError("invalid JSON must remain rejected")
+
+
+def test_json_decode_error_remains_fail_open(tmp_path, monkeypatch):
+    cfg = tmp_path / "config.json"
+    cfg.write_text(json.dumps({
+        "enabled": True, "provider": "deepseek", "base_url": "https://example.invalid",
+        "model": "deepseek-chat", "daily_call_limit": 20, "daily_budget_usd": 0.5,
+        "secret_env": "TEST_LLM_KEY", "max_retries": 0,
+    }), encoding="utf-8")
+    monkeypatch.setenv("TEST_LLM_KEY", "redacted-test-only")
+    monkeypatch.setenv("LLM_SINGLE_CALL", "1")
+    monkeypatch.setattr(
+        "scripts.llm_research_adapter._request",
+        lambda cfg, key, review: (_ for _ in ()).throw(json.JSONDecodeError("bad", "", 0)),
+    )
+    result = critique_review({}, config_path=cfg, enable_once=True)
+    assert result["status"] == "SKIPPED"
+    assert result["uncertainties"] == ["JSONDecodeError"]
