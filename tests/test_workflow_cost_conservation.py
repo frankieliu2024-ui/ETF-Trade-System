@@ -32,5 +32,35 @@ class WorkflowCostConservationTests(unittest.TestCase):
         self.assertIn('name: ETF system consistency', CONSISTENCY.read_text(encoding="utf-8"))
 
 
+    def test_notification_wakeup_accepts_market_producer_non_success(self):
+        text = DECISION.read_text(encoding="utf-8")
+        self.assertIn("github.event.workflow_run.name != 'ETF workflow failure guard'", text)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'", text)
+        self.assertNotIn("github.event.workflow_run.conclusion == 'success' }}", text)
+
+        def allowed(name, conclusion):
+            return (
+                name != "ETF workflow failure guard"
+                or conclusion == "success"
+            )
+
+        self.assertTrue(allowed("Overseas pre-open pulse", "failure"))
+        self.assertTrue(allowed("US extended-hours pulse", "cancelled"))
+        self.assertTrue(allowed("ETF market snapshot", "failure"))
+        self.assertFalse(allowed("ETF workflow failure guard", "skipped"))
+        self.assertFalse(allowed("ETF workflow failure guard", "failure"))
+        self.assertTrue(allowed("ETF workflow failure guard", "success"))
+
+    def test_notification_domain_keeps_fact_and_dedupe_guards(self):
+        guarded = (ROOT / "scripts" / "run_guarded_notification.py").read_text(encoding="utf-8")
+        center = (ROOT / "scripts" / "notification_center.py").read_text(encoding="utf-8")
+        self.assertIn("notification_evidence_error(event)", guarded)
+        self.assertIn("find_existing_notification(notifications, event)", center)
+        self.assertIn("ALREADY_MANAGED", center)
+        self.assertIn("NO_NOTIFICATION_NEEDED", center)
+        self.assertIn("notification_center.json", center)
+        self.assertNotIn("PUSHPLUS_TOKEN", guarded)
+
+
 if __name__ == "__main__":
     unittest.main()
