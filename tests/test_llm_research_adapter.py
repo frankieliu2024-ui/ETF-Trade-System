@@ -224,7 +224,7 @@ def test_response_shape_observability_for_bare_json(tmp_path, monkeypatch):
 def test_response_shape_observability_for_code_fence(tmp_path, monkeypatch):
     cfg = _observability_config(tmp_path)
     monkeypatch.setenv("TEST_LLM_KEY", "redacted-test-only")
-    monkeypatch.setattr(adapter.urllib.request, "urlopen", lambda *args, **kwargs: _FakeResponse("```\\n" + _valid_content() + "\\n```"))
+    monkeypatch.setattr(adapter.urllib.request, "urlopen", lambda *args, **kwargs: _FakeResponse("```json\n" + _valid_content() + "\n```"))
     result = critique_review({}, config_path=cfg, enable_once=True, observability=True)
     assert result["status"] == "OK"
     assert result["response_observability"]["complete_code_fence"] is True
