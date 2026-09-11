@@ -21,7 +21,7 @@ from build_research_contribution_audit import build as build_research_contributi
 from build_research_execution_bridge import build as build_research_execution_bridge
 from build_phase4_automation import build as build_phase4_automation
 from build_stock_context import build_managed_position_projection
-from state_manager import atomic_json_write, build_dashboard_candidate, build_decision_context
+from state_manager import atomic_json_write, build_dashboard_candidate, build_decision_context, build_decision_trace, now_utc, read_current
 
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
@@ -251,13 +251,18 @@ def select_intraday_path_features(root: Path) -> tuple[dict, dict]:
 
 
 def main() -> None:
+    timing = {"state_builder_started_at": now_utc()}
+    current = read_current(ROOT)
+    timing["current_published_at"] = str(current.get("captured_at") or "")
     path_features, path_selection = select_intraday_path_features(ROOT)
     atomic_json_write(ROOT / "data" / "state" / "intraday_path_features.json", path_features)
 
     market_regime = build_market_regime_context(ROOT)
+    timing["market_regime_ready_at"] = now_utc()
     atomic_json_write(ROOT / "data" / "state" / "market_regime_context.json", market_regime)
 
     market_structure = build_market_structure_context(ROOT)
+    timing["market_structure_ready_at"] = now_utc()
     atomic_json_write(ROOT / "data" / "state" / "market_structure_context.json", market_structure)
 
     research = build_research_features(ROOT)
@@ -342,7 +347,8 @@ def main() -> None:
 
     phase4 = build_phase4_automation(ROOT)
     candidate = build_dashboard_candidate(ROOT)
-    context = build_decision_context(ROOT)
+    timing["full_state_context_observation_at"] = now_utc()
+    context = build_decision_context(ROOT, observability=build_decision_trace(ROOT, timing))
     context["managed_position_sell_review"] = build_managed_position_projection(ROOT)
     context.setdefault("research_evidence", {})["market_regime_context"] = market_regime
     context["research_evidence"]["market_structure_context"] = market_structure
@@ -411,6 +417,7 @@ def main() -> None:
     }
     context["intraday_path_production_selection"] = path_features.get("production_selection") or {}
     atomic_json_write(ROOT / "data" / "state" / "dashboard_update_candidate.json", candidate)
+    context["observability"]["timing"]["decision_context_written_at"] = now_utc()
     atomic_json_write(ROOT / "data" / "state" / "decision_context.json", context)
     research_execution_summary = build_research_execution_bridge(ROOT)
     print(json.dumps({
