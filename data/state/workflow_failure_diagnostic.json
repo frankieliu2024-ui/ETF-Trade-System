@@ -1,33 +1,33 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-11T14:33:27+08:00",
+  "generated_at": "2026-09-11T15:14:32+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 34570364238,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 34573434581,
   "run_attempt": 1,
-  "head_sha": "1ca3d64c613d56281ee86cf45b5aafb7a607b71d",
-  "main_head_sha": "e5562f21178f93e9f19458a2adb2b025344a94c3",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "b84ecf7e2ad0aef8fe58f270257b852c8cd656b7",
+  "main_head_sha": "be43e9417cd85d614e3db83ee0063daef7dcd7d4",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 8
+      "job": "watchdog",
+      "step": "Persist bounded self-healing state and deterministic repairs",
+      "number": 12
     }
   ],
   "changed_files": [
-    "requests/report_delivery/etf-formal-decision-2026-09-11-20260911T143128.json"
+    "data/state/notification_center.json"
   ],
-  "commit_message": "report: submit 14:20 ETF formal decision",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "commit_message": "state: record notification and execution reconciliation",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
