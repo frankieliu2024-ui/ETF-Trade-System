@@ -293,18 +293,53 @@ def risk_component(equity: dict, current: dict) -> dict:
         "data_quality": summary.get("known_net_equity_data_quality"),
     }
 def context_component(query: dict, decision: dict) -> dict:
+    """Expose business readiness, not merely derived-file existence."""
     query_ok = bool(query)
     decision_ok = bool(decision)
-    if query_ok and decision_ok:
-        status = "READY"
-        reason = "query and decision contexts are available"
-    elif query_ok or decision_ok:
-        status = "DEGRADED"
-        reason = "one derived decision context is missing"
-    else:
-        status = "BLOCKED"
-        reason = "query and decision contexts are unavailable"
-    return {"status": status, "reason": reason, "query_context": query_ok, "decision_context": decision_ok}
+    if not query_ok and not decision_ok:
+        return {
+            "status": "BLOCKED",
+            "reason": "query and decision contexts are unavailable",
+            "query_context": False,
+            "decision_context": False,
+        }
+    if not query_ok or not decision_ok:
+        return {
+            "status": "DEGRADED",
+            "reason": "one derived decision context is missing",
+            "query_context": query_ok,
+            "decision_context": decision_ok,
+        }
+
+    observability = decision.get("observability") or {}
+    boundary = str(observability.get("boundary") or "").strip()
+    completeness = decision.get("formal_intraday_context_completeness") or {}
+    completeness_status = str(completeness.get("status") or "").strip().upper()
+
+    if boundary == "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED":
+        return {
+            "status": "DEGRADED",
+            "reason": "decision context files exist but minimum executable context readiness is not established",
+            "query_context": True,
+            "decision_context": True,
+            "minimum_decision_context": "NOT_ESTABLISHED",
+        }
+    if completeness_status == "DECISION_CONTEXT_INCOMPLETE":
+        return {
+            "status": "DEGRADED",
+            "reason": "formal decision context is incomplete",
+            "query_context": True,
+            "decision_context": True,
+            "minimum_decision_context": "INCOMPLETE",
+        }
+
+    return {
+        "status": "READY",
+        "reason": "query and decision contexts are available with no explicit incomplete-readiness boundary",
+        "query_context": True,
+        "decision_context": True,
+        "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
+    }
 
 
 def lifecycle_component(current: dict) -> dict:
