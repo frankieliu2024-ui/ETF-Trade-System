@@ -1,6 +1,6 @@
 {
   "status": "READY",
-  "generated_at": "2026-09-11T12:38:58Z",
+  "generated_at": "2026-09-12T02:04:16Z",
   "market_date": "2026-09-11",
   "daily_feature_count": 13,
   "relative_strength_count": 13,
@@ -237,7 +237,7 @@
     },
     "market_structure": {
       "schema_version": "1.4",
-      "generated_at": "2026-09-11T12:38:58Z",
+      "generated_at": "2026-09-12T02:04:16Z",
       "market_date": "2026-09-11",
       "as_of_beijing": "2026-09-11T15:14:18+08:00",
       "source_snapshot": "data/market/snapshots/2026-09-11_151418.json",
@@ -2690,12 +2690,12 @@
       "calibration_cutoff": "2026-08-21",
       "interpretation_rule": "正残差表示实际A股开盘相对历史SOX/NDX传导估计更低定价，负残差表示相对更高定价；仅参与半导体设备ETF机会强弱和风险收益判断，不是买入阈值。",
       "a_share_market_date": "2026-09-11",
-      "us_tech_equal_1d_pct": -1.89,
-      "ndx_1d_pct": -1.098,
-      "sox_1d_pct": -2.682,
+      "us_tech_equal_1d_pct": 1.3404,
+      "ndx_1d_pct": 0.8943,
+      "sox_1d_pct": 1.7866,
       "actual_open_gap_pct": -1.5504,
-      "expected_open_gap_pct": -0.6879,
-      "opening_underpricing_residual_pct": 0.8625,
+      "expected_open_gap_pct": 0.3,
+      "opening_underpricing_residual_pct": 1.8504,
       "historical_residual_zone": "UNDERPRICED_TAIL",
       "threshold_not_a_trade_rule": true
     },
@@ -3143,9 +3143,9 @@
       "mode": "FORMAL_561980_COMPONENT_LEAD_EVIDENCE",
       "evidence_id": "component_lead_561980_3d",
       "display_name": "半导体设备ETF（561980）核心成分3日相对领先证据",
-      "status": "READY",
-      "use_in_current_decision": true,
-      "use_as_decision_evidence": true,
+      "status": "DEGRADED",
+      "use_in_current_decision": false,
+      "use_as_decision_evidence": false,
       "decision_eligible": true,
       "can_generate_decision_independently": false,
       "automatic_trade": false,
@@ -3153,65 +3153,21 @@
       "scope": [
         "561980"
       ],
-      "decision_market_date": "2026-09-11",
-      "price_cutoff_market_date": "2026-09-10",
-      "return_window_start": "2026-09-07",
-      "return_window_end": "2026-09-10",
-      "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
-      "pcf_component_count": 40,
-      "top5": [
-        {
-          "code": "002371",
-          "name": "北方华创",
-          "td_amount": 447048.0,
-          "cash_flag": "1",
-          "ann_date": "2026-09-11",
-          "three_day_return_pct": -3.3316
-        },
-        {
-          "code": "300604",
-          "name": "长川科技",
-          "td_amount": 241650.0,
-          "cash_flag": "1",
-          "ann_date": "2026-09-11",
-          "three_day_return_pct": -0.7394
-        },
-        {
-          "code": "300666",
-          "name": "江丰电子",
-          "td_amount": 46740.0,
-          "cash_flag": "1",
-          "ann_date": "2026-09-11",
-          "three_day_return_pct": -2.3197
-        },
-        {
-          "code": "002409",
-          "name": "雅克科技",
-          "td_amount": 40044.0,
-          "cash_flag": "1",
-          "ann_date": "2026-09-11",
-          "three_day_return_pct": 1.8931
-        },
-        {
-          "code": "300346",
-          "name": "南大光电",
-          "td_amount": 36302.0,
-          "cash_flag": "1",
-          "ann_date": "2026-09-11",
-          "three_day_return_pct": 0.0
-        }
-      ],
-      "top5_three_day_average_return_pct": -0.8995,
-      "etf_three_day_return_pct": -2.8614,
-      "leader_minus_etf_3d_lag1_pct_points": 1.9619,
-      "evidence_direction": "STRENGTHEN",
-      "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
-      "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
-      "formal_conclusion": "research/backtests/561980_component_lead_formal_conclusion.json"
+      "decision_market_date": "2026-09-14",
+      "price_cutoff_market_date": "2026-09-11",
+      "reason": "official PCF unavailable: RuntimeError: official PCF invalid: code=0 rows=0",
+      "failure_policy": "关键PCF或完整价格输入不可验证时不沿用旧动态值，不形成方向性证据。",
+      "reviewed_current_top5": [
+        "002371",
+        "300604",
+        "300666",
+        "300346",
+        "002409"
+      ]
     },
     "if_ic_basis_5d": {
       "schema_version": "1.2",
-      "generated_at": "2026-09-11T12:39:04Z",
+      "generated_at": "2026-09-12T02:04:18Z",
       "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
       "evidence_id": "if_ic_basis_5d",
       "display_name": "IF／IC 5日基差变化证据",
@@ -3236,7 +3192,7 @@
     },
     "ipo_base_stock_oversold_reversal_300750": {
       "schema_version": "1.1",
-      "generated_at": "2026-09-11T12:39:17Z",
+      "generated_at": "2026-09-12T02:04:31Z",
       "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
       "evidence_id": "ipo_base_stock_oversold_reversal_300750",
       "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -3304,11 +3260,11 @@
     "mode": "EXPLICIT_RESEARCH_CONTRIBUTION_AND_OUTCOME_AUDIT",
     "rule": "只统计正式决策中显式记录的research_evidence_used；最多3项。结果归因按T+1/T+3/T+5自然成熟，不事后补写历史研究贡献，不把共同市场涨跌误记为单一研究的功劳。",
     "decision_attribution": {
-      "total_decisions": 35,
+      "total_decisions": 36,
       "explicit_attribution_or_none": 1,
-      "explicit_coverage_ratio": 0.0286,
+      "explicit_coverage_ratio": 0.0278,
       "status_counts": {
-        "NOT_RECORDED": 34,
+        "NOT_RECORDED": 35,
         "EXPLICIT": 1
       },
       "mature_explicit_research_decisions": 1,
@@ -3472,7 +3428,7 @@
   },
   "research_execution_summary": {
     "schema_version": "1.2",
-    "generated_at": "2026-09-11T12:39:18Z",
+    "generated_at": "2026-09-12T02:04:34Z",
     "mode": "RESEARCH_TO_EXECUTION_READ_ONLY_BRIDGE",
     "read_only": true,
     "use_in_current_decision": true,
@@ -3566,10 +3522,10 @@
         },
         {
           "evidence_id": "component_lead_561980_3d",
-          "status": "READY",
-          "use_in_current_decision": true,
+          "status": "DEGRADED",
+          "use_in_current_decision": false,
           "decision_eligible": true,
-          "use_as_decision_evidence": true,
+          "use_as_decision_evidence": false,
           "can_generate_decision_independently": false,
           "trade_signal": null
         },
@@ -3954,12 +3910,12 @@
         "calibration_cutoff": "2026-08-21",
         "interpretation_rule": "正残差表示实际A股开盘相对历史SOX/NDX传导估计更低定价，负残差表示相对更高定价；仅参与半导体设备ETF机会强弱和风险收益判断，不是买入阈值。",
         "a_share_market_date": "2026-09-11",
-        "us_tech_equal_1d_pct": -1.89,
-        "ndx_1d_pct": -1.098,
-        "sox_1d_pct": -2.682,
+        "us_tech_equal_1d_pct": 1.3404,
+        "ndx_1d_pct": 0.8943,
+        "sox_1d_pct": 1.7866,
         "actual_open_gap_pct": -1.5504,
-        "expected_open_gap_pct": -0.6879,
-        "opening_underpricing_residual_pct": 0.8625,
+        "expected_open_gap_pct": 0.3,
+        "opening_underpricing_residual_pct": 1.8504,
         "historical_residual_zone": "UNDERPRICED_TAIL",
         "threshold_not_a_trade_rule": true
       },
@@ -4194,7 +4150,7 @@
       },
       "if_ic_basis_5d": {
         "schema_version": "1.2",
-        "generated_at": "2026-09-11T12:39:04Z",
+        "generated_at": "2026-09-12T02:04:18Z",
         "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
         "evidence_id": "if_ic_basis_5d",
         "display_name": "IF／IC 5日基差变化证据",
@@ -4219,7 +4175,7 @@
       },
       "ipo_base_stock_oversold_reversal_300750": {
         "schema_version": "1.1",
-        "generated_at": "2026-09-11T12:39:17Z",
+        "generated_at": "2026-09-12T02:04:31Z",
         "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
         "evidence_id": "ipo_base_stock_oversold_reversal_300750",
         "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -4253,9 +4209,9 @@
         "mode": "FORMAL_561980_COMPONENT_LEAD_EVIDENCE",
         "evidence_id": "component_lead_561980_3d",
         "display_name": "半导体设备ETF（561980）核心成分3日相对领先证据",
-        "status": "READY",
-        "use_in_current_decision": true,
-        "use_as_decision_evidence": true,
+        "status": "DEGRADED",
+        "use_in_current_decision": false,
+        "use_as_decision_evidence": false,
         "decision_eligible": true,
         "can_generate_decision_independently": false,
         "automatic_trade": false,
@@ -4263,61 +4219,17 @@
         "scope": [
           "561980"
         ],
-        "decision_market_date": "2026-09-11",
-        "price_cutoff_market_date": "2026-09-10",
-        "return_window_start": "2026-09-07",
-        "return_window_end": "2026-09-10",
-        "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
-        "pcf_component_count": 40,
-        "top5": [
-          {
-            "code": "002371",
-            "name": "北方华创",
-            "td_amount": 447048.0,
-            "cash_flag": "1",
-            "ann_date": "2026-09-11",
-            "three_day_return_pct": -3.3316
-          },
-          {
-            "code": "300604",
-            "name": "长川科技",
-            "td_amount": 241650.0,
-            "cash_flag": "1",
-            "ann_date": "2026-09-11",
-            "three_day_return_pct": -0.7394
-          },
-          {
-            "code": "300666",
-            "name": "江丰电子",
-            "td_amount": 46740.0,
-            "cash_flag": "1",
-            "ann_date": "2026-09-11",
-            "three_day_return_pct": -2.3197
-          },
-          {
-            "code": "002409",
-            "name": "雅克科技",
-            "td_amount": 40044.0,
-            "cash_flag": "1",
-            "ann_date": "2026-09-11",
-            "three_day_return_pct": 1.8931
-          },
-          {
-            "code": "300346",
-            "name": "南大光电",
-            "td_amount": 36302.0,
-            "cash_flag": "1",
-            "ann_date": "2026-09-11",
-            "three_day_return_pct": 0.0
-          }
-        ],
-        "top5_three_day_average_return_pct": -0.8995,
-        "etf_three_day_return_pct": -2.8614,
-        "leader_minus_etf_3d_lag1_pct_points": 1.9619,
-        "evidence_direction": "STRENGTHEN",
-        "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
-        "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
-        "formal_conclusion": "research/backtests/561980_component_lead_formal_conclusion.json"
+        "decision_market_date": "2026-09-14",
+        "price_cutoff_market_date": "2026-09-11",
+        "reason": "official PCF unavailable: RuntimeError: official PCF invalid: code=0 rows=0",
+        "failure_policy": "关键PCF或完整价格输入不可验证时不沿用旧动态值，不形成方向性证据。",
+        "reviewed_current_top5": [
+          "002371",
+          "300604",
+          "300666",
+          "300346",
+          "002409"
+        ]
       }
     },
     "portfolio_exposure": {
@@ -4398,7 +4310,7 @@
         ],
         "dynamic_stock_specific_signal": {
           "schema_version": "1.1",
-          "generated_at": "2026-09-11T12:39:17Z",
+          "generated_at": "2026-09-12T02:04:31Z",
           "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
           "evidence_id": "ipo_base_stock_oversold_reversal_300750",
           "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -4509,9 +4421,9 @@
         "mode": "FORMAL_561980_COMPONENT_LEAD_EVIDENCE",
         "evidence_id": "component_lead_561980_3d",
         "display_name": "半导体设备ETF（561980）核心成分3日相对领先证据",
-        "status": "READY",
-        "use_in_current_decision": true,
-        "use_as_decision_evidence": true,
+        "status": "DEGRADED",
+        "use_in_current_decision": false,
+        "use_as_decision_evidence": false,
         "decision_eligible": true,
         "can_generate_decision_independently": false,
         "automatic_trade": false,
@@ -4519,61 +4431,17 @@
         "scope": [
           "561980"
         ],
-        "decision_market_date": "2026-09-11",
-        "price_cutoff_market_date": "2026-09-10",
-        "return_window_start": "2026-09-07",
-        "return_window_end": "2026-09-10",
-        "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
-        "pcf_component_count": 40,
-        "top5": [
-          {
-            "code": "002371",
-            "name": "北方华创",
-            "td_amount": 447048.0,
-            "cash_flag": "1",
-            "ann_date": "2026-09-11",
-            "three_day_return_pct": -3.3316
-          },
-          {
-            "code": "300604",
-            "name": "长川科技",
-            "td_amount": 241650.0,
-            "cash_flag": "1",
-            "ann_date": "2026-09-11",
-            "three_day_return_pct": -0.7394
-          },
-          {
-            "code": "300666",
-            "name": "江丰电子",
-            "td_amount": 46740.0,
-            "cash_flag": "1",
-            "ann_date": "2026-09-11",
-            "three_day_return_pct": -2.3197
-          },
-          {
-            "code": "002409",
-            "name": "雅克科技",
-            "td_amount": 40044.0,
-            "cash_flag": "1",
-            "ann_date": "2026-09-11",
-            "three_day_return_pct": 1.8931
-          },
-          {
-            "code": "300346",
-            "name": "南大光电",
-            "td_amount": 36302.0,
-            "cash_flag": "1",
-            "ann_date": "2026-09-11",
-            "three_day_return_pct": 0.0
-          }
-        ],
-        "top5_three_day_average_return_pct": -0.8995,
-        "etf_three_day_return_pct": -2.8614,
-        "leader_minus_etf_3d_lag1_pct_points": 1.9619,
-        "evidence_direction": "STRENGTHEN",
-        "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
-        "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
-        "formal_conclusion": "research/backtests/561980_component_lead_formal_conclusion.json"
+        "decision_market_date": "2026-09-14",
+        "price_cutoff_market_date": "2026-09-11",
+        "reason": "official PCF unavailable: RuntimeError: official PCF invalid: code=0 rows=0",
+        "failure_policy": "关键PCF或完整价格输入不可验证时不沿用旧动态值，不形成方向性证据。",
+        "reviewed_current_top5": [
+          "002371",
+          "300604",
+          "300666",
+          "300346",
+          "002409"
+        ]
       },
       "intraday_path_risk_review": {
         "evidence_id": "intraday_path_risk_review",
@@ -4717,12 +4585,12 @@
       "calibration_cutoff": "2026-08-21",
       "interpretation_rule": "正残差表示实际A股开盘相对历史SOX/NDX传导估计更低定价，负残差表示相对更高定价；仅参与半导体设备ETF机会强弱和风险收益判断，不是买入阈值。",
       "a_share_market_date": "2026-09-11",
-      "us_tech_equal_1d_pct": -1.89,
-      "ndx_1d_pct": -1.098,
-      "sox_1d_pct": -2.682,
+      "us_tech_equal_1d_pct": 1.3404,
+      "ndx_1d_pct": 0.8943,
+      "sox_1d_pct": 1.7866,
       "actual_open_gap_pct": -1.5504,
-      "expected_open_gap_pct": -0.6879,
-      "opening_underpricing_residual_pct": 0.8625,
+      "expected_open_gap_pct": 0.3,
+      "opening_underpricing_residual_pct": 1.8504,
       "historical_residual_zone": "UNDERPRICED_TAIL",
       "threshold_not_a_trade_rule": true
     },
@@ -4957,7 +4825,7 @@
     },
     "if_ic_basis_5d": {
       "schema_version": "1.2",
-      "generated_at": "2026-09-11T12:39:04Z",
+      "generated_at": "2026-09-12T02:04:18Z",
       "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
       "evidence_id": "if_ic_basis_5d",
       "display_name": "IF／IC 5日基差变化证据",
@@ -4982,7 +4850,7 @@
     },
     "ipo_base_stock_oversold_reversal_300750": {
       "schema_version": "1.1",
-      "generated_at": "2026-09-11T12:39:17Z",
+      "generated_at": "2026-09-12T02:04:31Z",
       "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
       "evidence_id": "ipo_base_stock_oversold_reversal_300750",
       "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -5016,9 +4884,9 @@
       "mode": "FORMAL_561980_COMPONENT_LEAD_EVIDENCE",
       "evidence_id": "component_lead_561980_3d",
       "display_name": "半导体设备ETF（561980）核心成分3日相对领先证据",
-      "status": "READY",
-      "use_in_current_decision": true,
-      "use_as_decision_evidence": true,
+      "status": "DEGRADED",
+      "use_in_current_decision": false,
+      "use_as_decision_evidence": false,
       "decision_eligible": true,
       "can_generate_decision_independently": false,
       "automatic_trade": false,
@@ -5026,61 +4894,17 @@
       "scope": [
         "561980"
       ],
-      "decision_market_date": "2026-09-11",
-      "price_cutoff_market_date": "2026-09-10",
-      "return_window_start": "2026-09-07",
-      "return_window_end": "2026-09-10",
-      "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
-      "pcf_component_count": 40,
-      "top5": [
-        {
-          "code": "002371",
-          "name": "北方华创",
-          "td_amount": 447048.0,
-          "cash_flag": "1",
-          "ann_date": "2026-09-11",
-          "three_day_return_pct": -3.3316
-        },
-        {
-          "code": "300604",
-          "name": "长川科技",
-          "td_amount": 241650.0,
-          "cash_flag": "1",
-          "ann_date": "2026-09-11",
-          "three_day_return_pct": -0.7394
-        },
-        {
-          "code": "300666",
-          "name": "江丰电子",
-          "td_amount": 46740.0,
-          "cash_flag": "1",
-          "ann_date": "2026-09-11",
-          "three_day_return_pct": -2.3197
-        },
-        {
-          "code": "002409",
-          "name": "雅克科技",
-          "td_amount": 40044.0,
-          "cash_flag": "1",
-          "ann_date": "2026-09-11",
-          "three_day_return_pct": 1.8931
-        },
-        {
-          "code": "300346",
-          "name": "南大光电",
-          "td_amount": 36302.0,
-          "cash_flag": "1",
-          "ann_date": "2026-09-11",
-          "three_day_return_pct": 0.0
-        }
-      ],
-      "top5_three_day_average_return_pct": -0.8995,
-      "etf_three_day_return_pct": -2.8614,
-      "leader_minus_etf_3d_lag1_pct_points": 1.9619,
-      "evidence_direction": "STRENGTHEN",
-      "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
-      "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
-      "formal_conclusion": "research/backtests/561980_component_lead_formal_conclusion.json"
+      "decision_market_date": "2026-09-14",
+      "price_cutoff_market_date": "2026-09-11",
+      "reason": "official PCF unavailable: RuntimeError: official PCF invalid: code=0 rows=0",
+      "failure_policy": "关键PCF或完整价格输入不可验证时不沿用旧动态值，不形成方向性证据。",
+      "reviewed_current_top5": [
+        "002371",
+        "300604",
+        "300666",
+        "300346",
+        "002409"
+      ]
     }
   },
   "ipo_base_stock_research": {
