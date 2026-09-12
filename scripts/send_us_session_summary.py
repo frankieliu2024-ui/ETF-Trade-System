@@ -50,9 +50,31 @@ def _usable(obj: dict) -> bool:
     return bool(obj) and obj.get("quality_status") in {"PASS", "FRESH"}
 
 
+def _completed_regular_close(obj: dict) -> tuple[str, float, float] | None:
+    market_date = str(obj.get("regular_session_market_date") or "")
+    close = number(obj.get("regular_session_close_reference"))
+    change = number(obj.get("regular_session_change_vs_previous_close_pct"))
+    if not market_date or close is None or change is None:
+        return None
+    return market_date, close, change
+
+
+def _completed_direct_close_pair(ndx: dict, sox: dict) -> bool:
+    if str(ndx.get("current_market_phase") or "") != "POST_MARKET":
+        return False
+    if str(sox.get("current_market_phase") or "") != "POST_MARKET":
+        return False
+    ndx_close = _completed_regular_close(ndx)
+    sox_close = _completed_regular_close(sox)
+    return bool(ndx_close and sox_close and ndx_close[0] == sox_close[0])
+
+
 def _select_cash_pair(objects: dict) -> tuple[dict, dict, str, str, bool] | None:
     ndx, sox = objects.get("NDX") or {}, objects.get("SOX") or {}
-    if _usable(ndx) and _usable(sox):
+    # A completed REGULAR cash close remains a valid session fact during POST_MARKET
+    # even when the direct index's current post-market tick is stale. Current-tick
+    # freshness must not let QQQ/SOXX displace the canonical NDX/SOX close semantics.
+    if _completed_direct_close_pair(ndx, sox) or (_usable(ndx) and _usable(sox)):
         return ndx, sox, "纳斯达克100指数（NDX）", "费城半导体指数（SOX）", True
     qqq, soxx = objects.get("QQQ") or {}, objects.get("SOXX") or {}
     if _usable(qqq) and _usable(soxx):

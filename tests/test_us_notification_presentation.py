@@ -48,6 +48,69 @@ class UsNotificationPresentationTests(unittest.TestCase):
         # 2026-08-28 is during US daylight saving time: 16:00 New York = 04:00 Beijing next day.
         self.assertEqual(us._regular_cash_close_beijing("2026-08-28"), "2026-08-29 04:00:00")
 
+    def test_post_market_close_prefers_completed_direct_indices_even_when_current_ticks_are_stale(self):
+        objects = {
+            "NDX": {
+                "quality_status": "STALE",
+                "current_market_phase": "POST_MARKET",
+                "regular_session_market_date": "2026-09-11",
+                "regular_session_close_reference": 29365.42,
+                "regular_session_change_vs_previous_close_pct": 0.8999,
+            },
+            "SOX": {
+                "quality_status": "STALE",
+                "current_market_phase": "POST_MARKET",
+                "regular_session_market_date": "2026-09-11",
+                "regular_session_close_reference": 11823.36,
+                "regular_session_change_vs_previous_close_pct": 1.8012,
+            },
+            "QQQ": {"quality_status": "FRESH", "current_market_phase": "POST_MARKET"},
+            "SOXX": {"quality_status": "FRESH", "current_market_phase": "POST_MARKET"},
+        }
+        selected = us._select_cash_pair(objects)
+        self.assertIsNotNone(selected)
+        self.assertTrue(selected[4])
+        self.assertIn("NDX", selected[2])
+        self.assertIn("SOX", selected[3])
+
+    def test_post_market_close_falls_back_to_proxies_when_direct_close_fact_is_incomplete(self):
+        objects = {
+            "NDX": {
+                "quality_status": "STALE",
+                "current_market_phase": "POST_MARKET",
+                "regular_session_market_date": "2026-09-11",
+                "regular_session_close_reference": 29365.42,
+                "regular_session_change_vs_previous_close_pct": 0.8999,
+            },
+            "SOX": {
+                "quality_status": "STALE",
+                "current_market_phase": "POST_MARKET",
+                "regular_session_market_date": "2026-09-11",
+                "regular_session_close_reference": None,
+                "regular_session_change_vs_previous_close_pct": 1.8012,
+            },
+            "QQQ": {"quality_status": "FRESH", "current_market_phase": "POST_MARKET"},
+            "SOXX": {"quality_status": "FRESH", "current_market_phase": "POST_MARKET"},
+        }
+        selected = us._select_cash_pair(objects)
+        self.assertIsNotNone(selected)
+        self.assertFalse(selected[4])
+        self.assertIn("QQQ", selected[2])
+        self.assertIn("SOXX", selected[3])
+
+    def test_regular_open_keeps_existing_direct_index_preference(self):
+        objects = {
+            "NDX": {"quality_status": "FRESH", "current_market_phase": "REGULAR"},
+            "SOX": {"quality_status": "PASS", "current_market_phase": "REGULAR"},
+            "QQQ": {"quality_status": "FRESH", "current_market_phase": "REGULAR"},
+            "SOXX": {"quality_status": "FRESH", "current_market_phase": "REGULAR"},
+        }
+        selected = us._select_cash_pair(objects)
+        self.assertIsNotNone(selected)
+        self.assertTrue(selected[4])
+        self.assertIn("NDX", selected[2])
+        self.assertIn("SOX", selected[3])
+
     def test_us_structure_separates_index_path_lines(self):
         tech = {
             "regular_session_change_vs_previous_close_pct": -0.71,
