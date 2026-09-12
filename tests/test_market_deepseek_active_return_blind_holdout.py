@@ -17,15 +17,15 @@ from scripts.validate_deepseek_active_return_blind_holdout import (
 
 
 def _audit_horizon(horizon: dict) -> list:
-    """Encode every field needed to audit the frozen blind gate compactly.
+    """Encode the frozen blind gate inputs compactly.
 
-    Array schema:
-    [horizon, filtered_n, filtered_effect, filtered_positive_rate,
+    Array schema, in frozen 5/10/20-day order:
+    [filtered_n, filtered_effect, filtered_positive_rate,
      baseline_effect, baseline_positive_rate, concentration, gate_pass]
 
-    For active_migration_spread ``effect`` is the mean after the frozen 20bps
-    round-trip cost. For right_tail_holding it is the mean relative return.
-    The hypothesis-level base_evidence identifies which interpretation applies.
+    For H1/H2 ``effect`` is the mean after the frozen 20bps round-trip cost.
+    For H3 it is the mean relative return.  The H1/H2/H3 -> base-evidence
+    mapping and horizon order are frozen by ``test_frozen_contract_is_exact``.
     """
     baseline = horizon.get("baseline") or {}
     filtered = horizon.get("filtered") or {}
@@ -35,7 +35,6 @@ def _audit_horizon(horizon: dict) -> list:
     if concentration is None:
         concentration = horizon.get("max_single_asset_event_share")
     return [
-        horizon.get("horizon"),
         filtered.get("n"),
         filtered_effect,
         filtered.get("positive_rate"),
@@ -50,19 +49,25 @@ def _compact_blind_holdout_result(result: dict) -> dict:
     """Project the immutable blind result into the consistency detail window.
 
     ``check_system_consistency_core`` intentionally retains only the final 1000
-    characters of unittest output.  Keep this marker below 800 UTF-8 bytes so
-    the complete evidence plus unittest trailer survives that canonical owner.
-    This is display-only: it never recomputes, filters, rounds, ranks, or
+    characters of unittest output. Keep this marker below 800 UTF-8 bytes so
+    the complete research evidence plus unittest trailer survives that canonical
+    owner. This is display-only: it never recomputes, filters, rounds, ranks, or
     reinterprets the validator result.
+
+    Hypothesis array schema:
+    [H1/H2/H3, selected_signal_dates, horizons_with_n15, passed_horizons,
+     classification, [5d_gate_inputs, 10d_gate_inputs, 20d_gate_inputs]]
+
+    Coverage is exactly derivable from selected_signal_dates / global n, so it is
+    not duplicated. Production/trading boundary fields remain explicit test
+    assertions below rather than being duplicated into this research marker.
     """
     hypotheses = []
     for hypothesis in result.get("hypotheses") or []:
         hypotheses.append(
             [
-                hypothesis.get("hypothesis_id"),
-                hypothesis.get("base_evidence"),
+                str(hypothesis.get("hypothesis_id") or "").split("_", 1)[0],
                 hypothesis.get("selected_signal_dates"),
-                hypothesis.get("condition_coverage"),
                 hypothesis.get("horizons_with_n15"),
                 hypothesis.get("passed_horizons"),
                 hypothesis.get("classification"),
@@ -70,17 +75,11 @@ def _compact_blind_holdout_result(result: dict) -> dict:
             ]
         )
     return {
-        "v": result.get("schema_version"),
         "s": result.get("status"),
-        "d": result.get("holdout"),
         "n": result.get("holdout_signal_date_count"),
         "p": (result.get("baseline_parity") or {}).get("status"),
         "h": hypotheses,
         "a": result.get("any_blind_supported"),
-        "pi": result.get("production_integration"),
-        "ts": result.get("trade_signal"),
-        "mo": result.get("master_override"),
-        "ds2": result.get("second_deepseek_call"),
     }
 
 
@@ -98,6 +97,10 @@ class DeepSeekActiveReturnBlindHoldoutContractTest(unittest.TestCase):
                 "H3_volatility_regime_gate",
             ],
         )
+        self.assertEqual(
+            [h["base_evidence"] for h in FROZEN_HYPOTHESES],
+            ["active_migration_spread", "active_migration_spread", "right_tail_holding"],
+        )
         self.assertTrue(condition_pass(0.50, "gte", 0.50))
         self.assertTrue(condition_pass(0.02, "gte", 0.02))
         self.assertTrue(condition_pass(0.02, "lte", 0.02))
@@ -112,7 +115,7 @@ class DeepSeekActiveReturnBlindHoldoutContractTest(unittest.TestCase):
         self.assertEqual(result["status"], "PASS", result.get("baseline_parity"))
         self.assertEqual(result["baseline_parity"]["status"], "PASS")
         self.assertEqual(len(result["hypotheses"]), 3)
-        self.assertEqual([h[0] for h in compact["h"]], [h["hypothesis_id"] for h in FROZEN_HYPOTHESES])
+        self.assertEqual([h[0] for h in compact["h"]], ["H1", "H2", "H3"])
         self.assertFalse(result["production_integration"])
         self.assertIsNone(result["trade_signal"])
         self.assertFalse(result["master_override"])
