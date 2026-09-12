@@ -83,6 +83,17 @@ def _compact_blind_holdout_result(result: dict) -> dict:
     }
 
 
+def _compact_single_hypothesis(hypothesis: dict) -> list:
+    """Return one hypothesis' immutable blind-gate evidence for audit recovery."""
+    return [
+        hypothesis.get("selected_signal_dates"),
+        hypothesis.get("horizons_with_n15"),
+        hypothesis.get("passed_horizons"),
+        hypothesis.get("classification"),
+        [_audit_horizon(h) for h in hypothesis.get("horizons") or []],
+    ]
+
+
 class DeepSeekActiveReturnBlindHoldoutContractTest(unittest.TestCase):
     def test_frozen_contract_is_exact(self) -> None:
         self.assertEqual((HOLDOUT_START, HOLDOUT_END), ("2026-01-01", "2026-08-21"))
@@ -111,7 +122,6 @@ class DeepSeekActiveReturnBlindHoldoutContractTest(unittest.TestCase):
         compact = _compact_blind_holdout_result(result)
         marker = "DEEPSEEK_ACTIVE_RETURN_BLIND_HOLDOUT_COMPACT=" + json.dumps(compact, ensure_ascii=False, separators=(",", ":"))
         self.assertLess(len(marker.encode("utf-8")), 800, "compact blind evidence must survive the canonical 1000-char consistency detail window")
-        print(marker)
         self.assertEqual(result["status"], "PASS", result.get("baseline_parity"))
         self.assertEqual(result["baseline_parity"]["status"], "PASS")
         self.assertEqual(len(result["hypotheses"]), 3)
@@ -120,6 +130,18 @@ class DeepSeekActiveReturnBlindHoldoutContractTest(unittest.TestCase):
         self.assertIsNone(result["trade_signal"])
         self.assertFalse(result["master_override"])
         self.assertFalse(result["second_deepseek_call"])
+
+        # Print the full compact result first, then a dedicated H1 audit marker last.
+        # The latter is deliberately small enough to survive the canonical
+        # consistency-detail tail without altering any validation semantics.
+        h1_marker = "DEEPSEEK_ACTIVE_RETURN_BLIND_HOLDOUT_H1=" + json.dumps(
+            _compact_single_hypothesis(result["hypotheses"][0]),
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        self.assertLess(len(h1_marker.encode("utf-8")), 400, "H1 blind evidence must survive the canonical consistency detail window")
+        print(marker)
+        print(h1_marker)
 
 
 if __name__ == "__main__":
