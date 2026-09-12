@@ -16,41 +16,71 @@ from scripts.validate_deepseek_active_return_blind_holdout import (
 )
 
 
-def _compact_blind_holdout_result(result: dict) -> dict:
-    """Project the immutable blind result into a CI-log-safe audit summary.
+def _audit_horizon(horizon: dict) -> list:
+    """Encode every field needed to audit the frozen blind gate compactly.
 
-    This is display-only: it does not recompute, filter, round, rank, or reinterpret
-    any validation result.
+    Array schema:
+    [horizon, filtered_n, filtered_effect, filtered_positive_rate,
+     baseline_effect, baseline_positive_rate, concentration, gate_pass]
+
+    For active_migration_spread ``effect`` is the mean after the frozen 20bps
+    round-trip cost. For right_tail_holding it is the mean relative return.
+    The hypothesis-level base_evidence identifies which interpretation applies.
+    """
+    baseline = horizon.get("baseline") or {}
+    filtered = horizon.get("filtered") or {}
+    filtered_effect = filtered.get("mean_net_after_20bps", filtered.get("mean"))
+    baseline_effect = baseline.get("mean_net_after_20bps", baseline.get("mean"))
+    concentration = horizon.get("max_single_asset_participation_share")
+    if concentration is None:
+        concentration = horizon.get("max_single_asset_event_share")
+    return [
+        horizon.get("horizon"),
+        filtered.get("n"),
+        filtered_effect,
+        filtered.get("positive_rate"),
+        baseline_effect,
+        baseline.get("positive_rate"),
+        concentration,
+        horizon.get("blind_gate_pass"),
+    ]
+
+
+def _compact_blind_holdout_result(result: dict) -> dict:
+    """Project the immutable blind result into the consistency detail window.
+
+    ``check_system_consistency_core`` intentionally retains only the final 1000
+    characters of unittest output.  Keep this marker below 800 UTF-8 bytes so
+    the complete evidence plus unittest trailer survives that canonical owner.
+    This is display-only: it never recomputes, filters, rounds, ranks, or
+    reinterprets the validator result.
     """
     hypotheses = []
     for hypothesis in result.get("hypotheses") or []:
         hypotheses.append(
-            {
-                "hypothesis_id": hypothesis.get("hypothesis_id"),
-                "base_evidence": hypothesis.get("base_evidence"),
-                "condition": hypothesis.get("condition"),
-                "selected_signal_dates": hypothesis.get("selected_signal_dates"),
-                "condition_coverage": hypothesis.get("condition_coverage"),
-                "horizons_with_n15": hypothesis.get("horizons_with_n15"),
-                "passed_horizons": hypothesis.get("passed_horizons"),
-                "classification": hypothesis.get("classification"),
-                "horizons": hypothesis.get("horizons"),
-            }
+            [
+                hypothesis.get("hypothesis_id"),
+                hypothesis.get("base_evidence"),
+                hypothesis.get("selected_signal_dates"),
+                hypothesis.get("condition_coverage"),
+                hypothesis.get("horizons_with_n15"),
+                hypothesis.get("passed_horizons"),
+                hypothesis.get("classification"),
+                [_audit_horizon(h) for h in hypothesis.get("horizons") or []],
+            ]
         )
     return {
-        "schema_version": result.get("schema_version"),
-        "status": result.get("status"),
-        "research_only": result.get("research_only"),
-        "holdout": result.get("holdout"),
-        "holdout_signal_date_count": result.get("holdout_signal_date_count"),
-        "feature_semantics": result.get("feature_semantics"),
-        "baseline_parity_status": (result.get("baseline_parity") or {}).get("status"),
-        "hypotheses": hypotheses,
-        "any_blind_supported": result.get("any_blind_supported"),
-        "production_integration": result.get("production_integration"),
-        "trade_signal": result.get("trade_signal"),
-        "master_override": result.get("master_override"),
-        "second_deepseek_call": result.get("second_deepseek_call"),
+        "v": result.get("schema_version"),
+        "s": result.get("status"),
+        "d": result.get("holdout"),
+        "n": result.get("holdout_signal_date_count"),
+        "p": (result.get("baseline_parity") or {}).get("status"),
+        "h": hypotheses,
+        "a": result.get("any_blind_supported"),
+        "pi": result.get("production_integration"),
+        "ts": result.get("trade_signal"),
+        "mo": result.get("master_override"),
+        "ds2": result.get("second_deepseek_call"),
     }
 
 
@@ -76,11 +106,13 @@ class DeepSeekActiveReturnBlindHoldoutContractTest(unittest.TestCase):
     def test_current_repository_2026_blind_holdout(self) -> None:
         result = run_validation()
         compact = _compact_blind_holdout_result(result)
-        print("DEEPSEEK_ACTIVE_RETURN_BLIND_HOLDOUT_COMPACT=" + json.dumps(compact, ensure_ascii=False, separators=(",", ":")))
+        marker = "DEEPSEEK_ACTIVE_RETURN_BLIND_HOLDOUT_COMPACT=" + json.dumps(compact, ensure_ascii=False, separators=(",", ":"))
+        self.assertLess(len(marker.encode("utf-8")), 800, "compact blind evidence must survive the canonical 1000-char consistency detail window")
+        print(marker)
         self.assertEqual(result["status"], "PASS", result.get("baseline_parity"))
         self.assertEqual(result["baseline_parity"]["status"], "PASS")
         self.assertEqual(len(result["hypotheses"]), 3)
-        self.assertEqual([h["hypothesis_id"] for h in compact["hypotheses"]], [h["hypothesis_id"] for h in FROZEN_HYPOTHESES])
+        self.assertEqual([h[0] for h in compact["h"]], [h["hypothesis_id"] for h in FROZEN_HYPOTHESES])
         self.assertFalse(result["production_integration"])
         self.assertIsNone(result["trade_signal"])
         self.assertFalse(result["master_override"])
