@@ -3,9 +3,17 @@ name: Manual LLM research critique validation
 on:
   workflow_dispatch:
     inputs:
-      review_path:
-        description: "Frozen formal review JSON path"
+      use_case:
+        description: "Bounded read-only research use case"
         required: true
+        type: choice
+        default: "review_critique"
+        options:
+          - review_critique
+          - active_return_regime_hypotheses
+      review_path:
+        description: "Frozen formal review JSON path (review_critique only)"
+        required: false
         default: "events/reviews/2026-09-11.json"
 
 permissions:
@@ -28,26 +36,47 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-      - name: Run one bounded DeepSeek research critique
+      - name: Run one bounded DeepSeek post-market critique
+        if: ${{ inputs.use_case == 'review_critique' }}
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           LLM_SINGLE_CALL: "1"
         run: |
           set +x
-          python scripts/run_review_research_critique.py "${{ inputs.review_path }}" --enable-once --observability > critique.json
+          python scripts/run_review_research_critique.py "${{ inputs.review_path }}" --enable-once --observability > result.json
+      - name: Run one bounded DeepSeek active-return regime hypothesis call
+        if: ${{ inputs.use_case == 'active_return_regime_hypotheses' }}
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          LLM_SINGLE_CALL: "1"
+        run: |
+          set +x
+          python scripts/run_deepseek_active_return_regime_hypotheses.py --enable-once --observability > result.json
+      - name: Validate read-only result envelope
+        run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          result = json.loads(Path("critique.json").read_text(encoding="utf-8"))
-          allowed = {"schema_version", "status", "provider", "model", "critique", "evidence_used", "uncertainties", "follow_ups", "production_action", "formal_state_write", "call_count", "response_observability"}
-          if set(result) - allowed: raise SystemExit("unexpected output field")
-          if result.get("formal_state_write") is not False: raise SystemExit("formal state write is prohibited")
-          if result.get("production_action") is not None: raise SystemExit("trading action is prohibited")
-          summary = {"status": result.get("status"), "provider": result.get("provider"), "model": result.get("model"), "call_count": result.get("call_count", 0), "schema_valid": True, "research_only": True, "formal_state_write": False, "trading_action": False}
+          result = json.loads(Path("result.json").read_text(encoding="utf-8"))
+          if result.get("formal_state_write") is not False:
+              raise SystemExit("formal state write is prohibited")
+          if result.get("production_action") is not None:
+              raise SystemExit("trading action is prohibited")
+          summary = {
+              "use_case": "${{ inputs.use_case }}",
+              "status": result.get("status"),
+              "provider": result.get("provider"),
+              "model": result.get("model"),
+              "call_count": result.get("call_count", 0),
+              "schema_valid": True,
+              "research_only": True,
+              "formal_state_write": False,
+              "trading_action": False,
+          }
           if result.get("response_observability") is not None:
               summary["response_observability"] = result["response_observability"]
           with open("${{ github.step_summary }}", "a", encoding="utf-8") as fh:
-              fh.write("Manual LLM research critique\n")
+              fh.write("Manual bounded LLM research validation\n")
               json.dump(summary, fh, ensure_ascii=False, indent=2)
               fh.write("\n")
           PY
@@ -55,6 +84,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: llm-research-critique
-          path: critique.json
+          name: llm-research-result
+          path: result.json
           if-no-files-found: ignore

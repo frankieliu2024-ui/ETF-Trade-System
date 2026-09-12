@@ -74,6 +74,22 @@ def _blocked(reason: str, response_observability: dict[str, Any] | None = None) 
     return result
 
 
+def _blocked_task(reason: str, response_observability: dict[str, Any] | None = None) -> dict[str, Any]:
+    result = {
+        "schema_version": "1.0",
+        "status": "SKIPPED",
+        "provider": "",
+        "model": "",
+        "result": None,
+        "uncertainties": [reason],
+        "production_action": None,
+        "formal_state_write": False,
+    }
+    if response_observability is not None:
+        result["response_observability"] = response_observability
+    return result
+
+
 def _response_shape(content: Any, *, http_status: int | None, request_success: bool, finish_reason: Any = None) -> dict[str, Any]:
     text = content if isinstance(content, str) else ""
     stripped = text.strip()
@@ -148,22 +164,24 @@ def _parse_json_content(content: str) -> Any:
     return json.loads(text)
 
 
-def _request(cfg: AdapterConfig, api_key: str, review: dict[str, Any], *, observability: bool = False) -> dict[str, Any]:
-    system = (
-        "You are a research-only critique assistant for an ETF post-market review. "
-        "Use only the supplied review facts. Do not invent facts. Do not give buy, sell, "
-        "amount, permission, order, or portfolio instructions. Return JSON only with keys: "
-        "critique (string), evidence_used (array of strings), uncertainties (array of strings), "
-        "follow_ups (array of strings)."
-    )
+def _request_json_task(
+    cfg: AdapterConfig,
+    api_key: str,
+    system_prompt: str,
+    payload: dict[str, Any],
+    validator,
+    *,
+    observability: bool = False,
+) -> dict[str, Any]:
+    """Shared provider request path for strict research-only JSON tasks."""
     body = json.dumps({
         "model": cfg.model,
         "temperature": 0,
         "max_tokens": cfg.max_output_tokens,
         "response_format": {"type": "json_object"},
         "messages": [
-            {"role": "system", "content": system},
-            {"role": "user", "content": json.dumps(review, ensure_ascii=False, separators=(",", ":"))},
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": json.dumps(payload, ensure_ascii=False, separators=(",", ":"))},
         ],
     }).encode("utf-8")
     req = urllib.request.Request(
@@ -178,7 +196,7 @@ def _request(cfg: AdapterConfig, api_key: str, review: dict[str, Any], *, observ
     try:
         with urllib.request.urlopen(req, timeout=cfg.timeout_seconds) as response:
             http_status = getattr(response, "status", None)
-            payload = json.loads(response.read().decode("utf-8"))
+            response_payload = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         if observability:
             setattr(exc, "response_observability", _response_shape("", http_status=exc.code, request_success=False))
@@ -187,8 +205,8 @@ def _request(cfg: AdapterConfig, api_key: str, review: dict[str, Any], *, observ
         if observability:
             setattr(exc, "response_observability", _response_shape("", http_status=None, request_success=False))
         raise
-    finish_reason = payload.get("choices", [{}])[0].get("finish_reason")
-    content = payload["choices"][0]["message"]["content"]
+    finish_reason = response_payload.get("choices", [{}])[0].get("finish_reason")
+    content = response_payload["choices"][0]["message"]["content"]
     shape = _response_shape(content, http_status=http_status, request_success=True, finish_reason=finish_reason) if observability else None
     try:
         parsed = _parse_json_content(content)
@@ -198,10 +216,21 @@ def _request(cfg: AdapterConfig, api_key: str, review: dict[str, Any], *, observ
             shape["json_error_position"] = exc.pos
             setattr(exc, "response_observability", shape)
         raise
-    result = _validate_output(parsed, cfg)
+    result = validator(parsed, cfg)
     if shape is not None:
         result["response_observability"] = shape
     return result
+
+
+def _request(cfg: AdapterConfig, api_key: str, review: dict[str, Any], *, observability: bool = False) -> dict[str, Any]:
+    system = (
+        "You are a research-only critique assistant for an ETF post-market review. "
+        "Use only the supplied review facts. Do not invent facts. Do not give buy, sell, "
+        "amount, permission, order, or portfolio instructions. Return JSON only with keys: "
+        "critique (string), evidence_used (array of strings), uncertainties (array of strings), "
+        "follow_ups (array of strings)."
+    )
+    return _request_json_task(cfg, api_key, system, review, _validate_output, observability=observability)
 
 
 def critique_review(review: dict[str, Any], *, config_path: Path = CONFIG, enable_once: bool = False, observability: bool = False) -> dict[str, Any]:
@@ -214,8 +243,6 @@ def critique_review(review: dict[str, Any], *, config_path: Path = CONFIG, enabl
         return _blocked("unsafe_configuration")
     if cfg.daily_call_limit <= 0 or cfg.daily_budget_usd <= 0:
         return _blocked("cost_guard_zero")
-    # The caller may supply a trusted count from the existing job/orchestration
-    # context. Missing or malformed count fails open and skips the optional call.
     try:
         calls_today = int(os.environ.get("LLM_CALLS_TODAY", "0"))
     except ValueError:
@@ -237,9 +264,61 @@ def critique_review(review: dict[str, Any], *, config_path: Path = CONFIG, enabl
         except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
             last_error = type(exc).__name__
             response_observability = getattr(exc, "response_observability", None)
-            if attempt < cfg.max_retries:
+            if attempt < retries:
                 time.sleep(0.2)
     return _blocked(last_error, response_observability)
+
+
+def run_json_research_task(
+    system_prompt: str,
+    payload: dict[str, Any],
+    validator,
+    *,
+    config_path: Path = CONFIG,
+    enable_once: bool = False,
+    observability: bool = False,
+) -> dict[str, Any]:
+    """Run one bounded schema-validated research-only JSON task.
+
+    This is a shared extension of the existing adapter, not a second LLM engine.
+    It preserves the same secret, budget, single-call, fail-open, no-state-write,
+    and no-trade-action guards as the post-market critique path.
+    """
+    cfg = load_config(config_path)
+    if enable_once:
+        cfg = replace(cfg, enabled=True)
+    if not cfg.enabled:
+        return _blocked_task("adapter_disabled")
+    if cfg.persist_formal_state or cfg.allow_trade_action:
+        return _blocked_task("unsafe_configuration")
+    if cfg.daily_call_limit <= 0 or cfg.daily_budget_usd <= 0:
+        return _blocked_task("cost_guard_zero")
+    try:
+        calls_today = int(os.environ.get("LLM_CALLS_TODAY", "0"))
+    except ValueError:
+        return _blocked_task("invalid_daily_counter")
+    if calls_today >= cfg.daily_call_limit:
+        return _blocked_task("daily_call_limit")
+    api_key = os.environ.get(cfg.secret_env, "")
+    if not api_key:
+        return _blocked_task("secret_unavailable")
+    last_error = "provider_unavailable"
+    response_observability = None
+    single_call = os.environ.get("LLM_SINGLE_CALL", "").lower() in {"1", "true", "yes"}
+    retries = 0 if single_call else cfg.max_retries
+    for attempt in range(retries + 1):
+        try:
+            result = _request_json_task(
+                cfg, api_key, system_prompt, payload, validator, observability=observability
+            )
+            result["call_count"] = 1
+            return result
+        except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
+            last_error = type(exc).__name__
+            response_observability = getattr(exc, "response_observability", None)
+            if attempt < retries:
+                time.sleep(0.2)
+    return _blocked_task(last_error, response_observability)
 
 
 def build_review_input(review: dict[str, Any]) -> dict[str, Any]:
