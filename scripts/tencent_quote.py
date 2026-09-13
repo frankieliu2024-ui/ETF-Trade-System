@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+import json
 import re
 import urllib.parse
 import urllib.request
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 SHANGHAI = ZoneInfo("Asia/Shanghai")
 _SYMBOL_RE = re.compile(r'v_(sh|sz)([0-9]{6})="([^"]*)"')
 # Shanghai index 000001.SH is a verified production Tencent symbol: sh000001.
+_TENCENT_HISTORY_ENDPOINT = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
 
 
 def _number(value: str):
@@ -30,14 +32,170 @@ def _timestamp_ms(value: str) -> int:
     return int(dt.timestamp() * 1000)
 
 
+def _provider_symbol(thscode: str) -> str:
+    code, suffix = str(thscode).upper().split(".", 1)
+    if suffix not in {"SH", "SZ"} or not code.isdigit() or len(code) != 6:
+        raise RuntimeError(f"Tencent unsupported A-share code: {thscode}")
+    return ("sh" if suffix == "SH" else "sz") + code
+
+
+def _as_date(value: date | datetime | str) -> date:
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    return date.fromisoformat(str(value))
+
+
+def _decode_history_payload(raw: str) -> dict:
+    text = raw.strip()
+    if not text:
+        raise RuntimeError("Tencent history returned an empty response")
+    if not text.startswith("{") and "=" in text:
+        text = text.split("=", 1)[1].strip().rstrip(";")
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("Tencent history returned invalid JSON/JSONP") from exc
+    if payload.get("code") not in {0, "0", None}:
+        raise RuntimeError(f"Tencent history business failure: code={payload.get('code')}")
+    return payload
+
+
+def _history_page(
+    *,
+    provider_symbol: str,
+    start_date: date,
+    end_date: date,
+    adjustment: str,
+    count: int,
+    timeout: int,
+) -> list[list]:
+    adjust = str(adjustment).lower().strip()
+    if adjust not in {"none", "qfq"}:
+        raise ValueError("Tencent history adjustment must be 'none' or 'qfq'")
+    param = f"{provider_symbol},day,{start_date.isoformat()},{end_date.isoformat()},{count}"
+    if adjust == "qfq":
+        param += ",qfq"
+    url = _TENCENT_HISTORY_ENDPOINT + "?" + urllib.parse.urlencode({"param": param})
+    request = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "ETF-Trade-System/2.2.31",
+            "Referer": "https://gu.qq.com/",
+            "Accept": "application/json,text/plain,*/*",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        if int(response.status) != 200:
+            raise RuntimeError(f"Tencent history HTTP status {response.status}")
+        raw = response.read().decode("utf-8", "replace")
+    payload = _decode_history_payload(raw)
+    stock = (payload.get("data") or {}).get(provider_symbol) or {}
+    preferred_key = "qfqday" if adjust == "qfq" else "day"
+    rows = stock.get(preferred_key)
+    if rows is None:
+        rows = stock.get("day") or stock.get("qfqday") or []
+    if not isinstance(rows, list):
+        raise RuntimeError(f"Tencent history malformed row collection for {provider_symbol}")
+    return rows
+
+
+def fetch_tencent_daily_history(
+    thscode: str,
+    start: date | datetime | str,
+    end: date | datetime | str,
+    *,
+    adjustment: str = "none",
+    timeout: int = 10,
+    page_size: int = 500,
+) -> tuple[list[dict], dict]:
+    """Read Tencent public daily K-line history without changing production state.
+
+    This is a research/historical-data capability, not a production-provider
+    priority change.  The public Tencent endpoint is unofficial and unversioned,
+    so callers must retain provider identity and validate returned coverage.
+    Pages are requested backwards because the endpoint caps each response.
+    """
+    if page_size < 1 or page_size > 500:
+        raise ValueError("Tencent history page_size must be between 1 and 500")
+    start_date, end_date = _as_date(start), _as_date(end)
+    if end_date < start_date:
+        raise ValueError("end must not be earlier than start")
+    provider_symbol = _provider_symbol(thscode)
+    rows_by_date: dict[str, dict] = {}
+    cursor_end = end_date
+    pages = 0
+    while cursor_end >= start_date:
+        raw_rows = _history_page(
+            provider_symbol=provider_symbol,
+            start_date=start_date,
+            end_date=cursor_end,
+            adjustment=adjustment,
+            count=page_size,
+            timeout=timeout,
+        )
+        pages += 1
+        parsed_dates: list[date] = []
+        for raw in raw_rows:
+            if not isinstance(raw, (list, tuple)) or len(raw) < 6:
+                continue
+            try:
+                market_date = date.fromisoformat(str(raw[0]))
+                opening = float(raw[1])
+                close = float(raw[2])
+                high = float(raw[3])
+                low = float(raw[4])
+                volume = float(raw[5])
+            except (TypeError, ValueError):
+                continue
+            if market_date < start_date or market_date > end_date:
+                continue
+            if low > min(opening, close, high) or high < max(opening, close, low):
+                continue
+            parsed_dates.append(market_date)
+            rows_by_date[market_date.isoformat()] = {
+                "date": market_date.isoformat(),
+                "open": opening,
+                "close": close,
+                "high": high,
+                "low": low,
+                "volume": volume,
+                "amount": None,
+                "provider": "tencent_qq_history",
+                "provider_symbol": provider_symbol,
+                "quality_status": "PASS",
+            }
+        if not parsed_dates:
+            break
+        earliest = min(parsed_dates)
+        if earliest <= start_date:
+            break
+        next_cursor = earliest - timedelta(days=1)
+        if next_cursor >= cursor_end:
+            raise RuntimeError("Tencent history pagination made no progress")
+        cursor_end = next_cursor
+    rows = [rows_by_date[key] for key in sorted(rows_by_date)]
+    meta = {
+        "provider": "tencent_qq_history",
+        "endpoint": _TENCENT_HISTORY_ENDPOINT,
+        "provider_symbol": provider_symbol,
+        "interval": "1d",
+        "adjustment": "前复权 qfq" if adjustment == "qfq" else "腾讯公开K线原始/未复权日线",
+        "requested_start": start_date.isoformat(),
+        "requested_end": end_date.isoformat(),
+        "pages": pages,
+        "rows": len(rows),
+        "retrieved_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
+        "read_only": True,
+        "production_provider_priority_unchanged": True,
+    }
+    return rows, meta
+
+
 def fetch_tencent_quotes(thscodes: list[str], timeout: int = 10) -> dict[str, dict]:
     """Fetch a batch of Shanghai/Shenzhen quotes from Tencent's public quote endpoint."""
-    normalized = []
-    for thscode in thscodes:
-        code, suffix = str(thscode).upper().split(".", 1)
-        if suffix not in {"SH", "SZ"} or not code.isdigit():
-            raise RuntimeError(f"Tencent unsupported A-share code: {thscode}")
-        normalized.append(("sh" if suffix == "SH" else "sz") + code)
+    normalized = [_provider_symbol(thscode) for thscode in thscodes]
     if not normalized:
         return {}
     url = "https://qt.gtimg.cn/q=" + urllib.parse.quote(",".join(normalized), safe=",")
