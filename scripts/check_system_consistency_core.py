@@ -219,6 +219,8 @@ def main() -> int:
     check("tests:semantic_latest_main", semantic_proc.returncode == 0, (semantic_proc.stdout + semantic_proc.stderr)[-1000:])
     research_contract_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_research_artifact_contract"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:research_artifact_contract", research_contract_proc.returncode == 0, (research_contract_proc.stdout + research_contract_proc.stderr)[-1000:])
+    historical_stop_gate_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_research_historical_stop_gate"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+    check("tests:research_historical_stop_gate", historical_stop_gate_proc.returncode == 0, (historical_stop_gate_proc.stdout + historical_stop_gate_proc.stderr)[-1000:])
     lifecycle_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_lifecycle_state"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:lifecycle_state", lifecycle_proc.returncode == 0, (lifecycle_proc.stdout + lifecycle_proc.stderr)[-1000:])
     historical_recovery_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_historical_market_fact_recovery"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
