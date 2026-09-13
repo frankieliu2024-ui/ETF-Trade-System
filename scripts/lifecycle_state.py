@@ -86,8 +86,10 @@ def _executions(root: Path) -> list[dict[str, Any]]:
     return result
 
 
-def _resolution(root: Path, trial: dict[str, Any]) -> dict[str, Any] | None:
+def _resolution(root: Path, trial: dict[str, Any], as_of: date) -> dict[str, Any] | None:
+    """Resolve a Trial from a later, uniquely attributable complete exit."""
     hypothesis = str(trial.get("hypothesis_id") or "")
+    code = str(trial.get("candidate_code") or trial.get("candidate_code") or "").strip()
     decision_time = parse_time(trial.get("decision_time_beijing"))
     candidates = []
     directory = root / "events" / "decisions"
@@ -95,7 +97,8 @@ def _resolution(root: Path, trial: dict[str, Any]) -> dict[str, Any] | None:
         event = _load(path, {})
         if event.get("decision_id") == trial.get("decision_id") or str(event.get("hypothesis_id") or "") != hypothesis:
             continue
-        if decision_time and (parse_time(event.get("decision_time_beijing")) or decision_time) < decision_time:
+        event_time = parse_time(event.get("decision_time_beijing"))
+        if decision_time and (event_time or decision_time) < decision_time:
             continue
         formal = event.get("formal_decision") or {}
         lifecycle = str(formal.get("lifecycle") or "")
@@ -105,13 +108,21 @@ def _resolution(root: Path, trial: dict[str, Any]) -> dict[str, Any] | None:
             status = "CONFIRM_EVALUATION"
         else:
             continue
-        candidates.append((parse_time(event.get("decision_time_beijing")) or datetime.min.replace(tzinfo=SHANGHAI), status, event))
-    chosen = max(candidates, key=lambda x: x[0], default=None)
-    if not chosen:
-        return None
-    _, chosen_status, chosen_event = chosen
-    return {"status": chosen_status, "decision_id": chosen_event.get("decision_id"), "decision_time_beijing": chosen_event.get("decision_time_beijing", "")}
+        candidates.append((event_time or datetime.min.replace(tzinfo=SHANGHAI), status, event))
+    if candidates:
+        _, status, event = max(candidates, key=lambda x: x[0])
+        return {"status": status, "decision_id": event.get("decision_id"), "decision_time_beijing": event.get("decision_time_beijing", "")}
 
+    executions = _executions(root)
+    buys = [x for x in executions if str(x.get("code") or "").strip() == code and str(x.get("side") or x.get("action") or "").upper() == "BUY"]
+    sells = [x for x in executions if str(x.get("code") or "").strip() == code and str(x.get("side") or x.get("action") or "").upper() == "SELL"]
+    start = parse_time(trial.get("decision_time_beijing")) or datetime.min.replace(tzinfo=SHANGHAI)
+    eligible = [x for x in sells if (parse_time(x.get("confirmed_at_beijing") or x.get("executed_at_beijing") or x.get("execution_date")) or datetime.min.replace(tzinfo=SHANGHAI)) >= start]
+    buy_qty = sum(float(x.get("quantity") or 0) for x in buys if (parse_time(x.get("confirmed_at_beijing") or x.get("executed_at_beijing") or x.get("execution_date")) or datetime.min.replace(tzinfo=SHANGHAI)) >= start)
+    sell_qty = sum(float(x.get("quantity") or 0) for x in eligible)
+    if code and eligible and buy_qty > 0 and sell_qty >= buy_qty:
+        return {"status": "RESOLVED", "resolution_reason": "CONFIRMED_COMPLETE_SELL", "resolution_event_ids": [x.get("event_id") for x in eligible], "resolution_time_beijing": max((x.get("confirmed_at_beijing") or x.get("executed_at_beijing") or x.get("execution_date") or "") for x in eligible)}
+    return None
 
 def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None) -> dict[str, Any]:
     calendar = _load(root / "config" / "market" / "a_share_trading_calendar_2026.json", {})
@@ -146,7 +157,7 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
             continue
         t_plus = trading_day_offset(start_date, as_of, calendar)
         mandatory = add_trading_days(start_date, 3, calendar)
-        resolution = _resolution(root, decision)
+        resolution = _resolution(root, decision, as_of)
         resolved = resolution is not None
         trials.append({
             "source_decision_id": decision.get("decision_id"),
