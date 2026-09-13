@@ -14,9 +14,19 @@ from datetime import date
 from pathlib import Path
 
 try:
-    from confirmed_trade_facts import canonical_etf_trade_facts, trade_signature, confirmed_fee_amount
+    from confirmed_trade_facts import (
+        canonical_etf_trade_facts,
+        recover_canonical_etf_trade_facts,
+        trade_signature,
+        confirmed_fee_amount,
+    )
 except ModuleNotFoundError:
-    from scripts.confirmed_trade_facts import canonical_etf_trade_facts, trade_signature, confirmed_fee_amount
+    from scripts.confirmed_trade_facts import (
+        canonical_etf_trade_facts,
+        recover_canonical_etf_trade_facts,
+        trade_signature,
+        confirmed_fee_amount,
+    )
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STARTING_CAPITAL = 200000.0
@@ -65,7 +75,12 @@ def _trade_day(t):
 def replay(root: Path = ROOT, *, price_dir: Path | None = None, cutoff: str | None = None) -> dict:
     state = json.loads((root / "data" / "state" / "etf_strategy_equity.json").read_text(encoding="utf-8"))
     prices = _load_prices(root, price_dir)
-    facts = canonical_etf_trade_facts(root, state.get("trades") or [])
+    reconstructed = state.get("trades") or []
+    summary = state.get("summary") or {}
+    expected_count = int(summary.get("trade_fact_count") or summary.get("trade_count") or 0)
+    facts = canonical_etf_trade_facts(root, reconstructed)
+    if expected_count and len(facts) < expected_count:
+        facts = recover_canonical_etf_trade_facts(root, reconstructed, expected_count)
     facts.sort(key=lambda t: (_stamp(t), trade_signature(t)))
     unique = {trade_signature(t) for t in facts}
     if len(unique) != len(facts):
@@ -128,7 +143,7 @@ def replay(root: Path = ROOT, *, price_dir: Path | None = None, cutoff: str | No
         high = max(high, equity)
         rows.append({"date": day, "cash": round(cash, 2), "market_value": round(market_value, 2), "strategy_equity_gross": equity, "realized_pnl_gross": round(realized, 2), "drawdown_amount": round(equity - high, 2), "drawdown_pct": round((equity / high - 1) * 100, 4), "positions": positions, "quality_status": "COMPLETE"})
     current = rows[-1]
-    return {"schema_version": "1.0-canonical-replay-candidate", "read_only_research": True, "trade_accounting": "FIFO", "replay_start": "2026-07-13", "replay_cutoff": cutoff, "input_source_identity": {"trade_owner": "confirmed_trade_facts.canonical_etf_trade_facts", "price_owner": "events/research/daily_features", "price_semantics": "date-aligned daily close / EOD-equivalent"}, "summary": {"starting_etf_strategy_capital": STARTING_CAPITAL, "current_gross_strategy_equity": current["strategy_equity_gross"], "current_strategy_return_pct_gross": round((current["strategy_equity_gross"] / STARTING_CAPITAL - 1) * 100, 4), "max_drawdown_amount": min(x["drawdown_amount"] for x in rows), "max_drawdown_pct": min(x["drawdown_pct"] for x in rows), "gross_realized_pnl": round(realized, 2), "confirmed_fees_separate": round(fee_total, 2), "pending_fees_do_not_block_gross": True, "trade_fact_count": len(facts), "price_date_count": len(dates), "coverage_status": "COMPLETE"}, "series": rows}
+    return {"schema_version": "1.0-canonical-replay-candidate", "read_only_research": True, "trade_accounting": "FIFO", "replay_start": "2026-07-13", "replay_cutoff": cutoff, "input_source_identity": {"trade_owner": "confirmed_trade_facts.canonical_etf_trade_facts", "price_owner": "events/research/daily_features", "price_semantics": "date-aligned daily close / EOD-equivalent"}, "trades": facts, "summary": {"starting_etf_strategy_capital": STARTING_CAPITAL, "current_gross_strategy_equity": current["strategy_equity_gross"], "current_strategy_return_pct_gross": round((current["strategy_equity_gross"] / STARTING_CAPITAL - 1) * 100, 4), "current_cumulative_pnl_gross": round(current["strategy_equity_gross"] - STARTING_CAPITAL, 2), "max_drawdown_amount": min(x["drawdown_amount"] for x in rows), "max_drawdown_pct": min(x["drawdown_pct"] for x in rows), "gross_realized_pnl": round(realized, 2), "confirmed_fees_separate": round(fee_total, 2), "pending_fees_do_not_block_gross": True, "trade_fact_count": len(facts), "price_date_count": len(dates), "coverage_status": "COMPLETE"}, "series": rows}
 
 
 def main():
