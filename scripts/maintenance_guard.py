@@ -76,8 +76,10 @@ def reconcile() -> dict:
     # Current canonical replay state carries its complete ending position/cash/MV
     # identity in the final COMPLETE series row. Legacy auxiliary states instead
     # carry a top-level trade reconstruction. Support both without creating a
-    # second ledger or weakening the canonical account check.
-    trades_for_positions = canonical_etf_trade_facts(ROOT, [] if canonical_replay else trades)
+    # second ledger or weakening the canonical account check. Canonical replay
+    # also persists the full deduplicated trade identity so future replay and
+    # fee/audit consumers remain self-consistent across persistence cycles.
+    trades_for_positions = canonical_etf_trade_facts(ROOT, trades)
     reconstructed_signatures = {trade_signature(t) for t in trades}
     overlay_events = [t for t in trades_for_positions if trade_signature(t) not in reconstructed_signatures]
 
