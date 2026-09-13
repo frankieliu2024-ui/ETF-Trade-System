@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "checked_at": "2026-09-13T22:11:48+08:00",
+  "checked_at": "2026-09-13T23:14:58+08:00",
   "mode": "DETERMINISTIC_MAINTENANCE_GUARD",
   "status": "PASS",
   "system_consistency_status": "PASS",
@@ -11,18 +11,11 @@
     "status": "PASS",
     "trade_count": 32,
     "trade_count_matches_summary": true,
-    "executed_trade_event_overlay_count": 2,
-    "position_ledger_basis": "AUXILIARY_EQUITY_RECONSTRUCTION_PLUS_EXECUTED_TRADE_EVENTS",
+    "executed_trade_event_overlay_count": 0,
+    "position_ledger_basis": "CANONICAL_REPLAY_FINAL_COMPLETE_POSITION_IDENTITY",
     "position_reconciliation": {
       "status": "PASS",
       "checks": [
-        {
-          "code": "159326",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
         {
           "code": "159781",
           "ledger_quantity": 19500.0,
@@ -34,34 +27,6 @@
           "code": "159941",
           "ledger_quantity": 12200.0,
           "account_quantity": 12200.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "513180",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "515220",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "515880",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "518880",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
           "difference": 0.0,
           "status": "PASS"
         },
@@ -85,11 +50,11 @@
       "status": "PASS",
       "blocking": false,
       "note": "fee attribution mismatch remains visible but cannot block reconciled account/trade/equity state",
-      "auxiliary_reconstructed_confirmed_fee_sum": 154.56,
+      "auxiliary_reconstructed_confirmed_fee_sum": 204.11,
       "auxiliary_summary_known_fees": 159.56,
       "auxiliary_difference": 0.0,
-      "executed_event_overlay_count": 2,
-      "executed_event_confirmed_fee_sum": 5.0,
+      "executed_event_overlay_count": 0,
+      "executed_event_confirmed_fee_sum": 0.0,
       "effective_confirmed_fee_sum": 159.56,
       "formal_review_confirmed_fees": null,
       "formal_review_source": null,
@@ -98,10 +63,12 @@
     },
     "gross_equity_reconciliation": {
       "status": "PASS",
-      "strategy_cash": 83855.1,
-      "current_etf_market_value": 99657.4,
-      "reported_gross_equity": 183512.5,
-      "difference": 0.0
+      "strategy_cash": 92407.8,
+      "current_etf_market_value": 87938.5,
+      "reported_gross_equity": 180346.3,
+      "difference": 0.0,
+      "series_row_difference": 0.0,
+      "canonical_replay_complete": true
     }
   },
   "automatic_actions": {
