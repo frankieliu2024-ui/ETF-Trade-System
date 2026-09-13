@@ -88,7 +88,6 @@ def equity_row_from_event(event: dict, fee: float) -> dict:
     return row
 
 
-
 def pending_fee_count(trades: list[dict], root: Path | None = None) -> int:
     if root is not None:
         return int(canonical_etf_fee_projection(root, trades)["pending_fee_count"])
@@ -105,11 +104,14 @@ def rebuild_known_net(equity: dict, root: Path | None = None) -> None:
         else round(sum(float(t.get("fee_amount") or 0) for t in trades if str(t.get("fee_status") or "").upper() == "CONFIRMED"), 2)
     )
     gross_equity = safe_float(summary.get("current_gross_strategy_equity"))
-    gross_pnl = safe_float(summary.get("current_cumulative_pnl_gross"))
     start_capital = safe_float(summary.get("starting_etf_strategy_capital")) or 200000.0
-    high_watermark = safe_float(summary.get("known_net_high_watermark")) or start_capital
-    if gross_equity is None or gross_pnl is None:
+    gross_pnl = safe_float(summary.get("current_cumulative_pnl_gross"))
+    if gross_equity is None:
         raise RuntimeError("etf_strategy_equity lacks gross basis required for deterministic fee correction")
+    if gross_pnl is None:
+        gross_pnl = round(gross_equity - start_capital, 2)
+        summary["current_cumulative_pnl_gross"] = gross_pnl
+    high_watermark = safe_float(summary.get("known_net_high_watermark")) or start_capital
 
     net_equity = round(gross_equity - confirmed_fees, 2)
     net_pnl = round(gross_pnl - confirmed_fees, 2)
@@ -255,4 +257,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
