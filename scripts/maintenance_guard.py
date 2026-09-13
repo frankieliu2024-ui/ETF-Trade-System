@@ -14,6 +14,7 @@ except ModuleNotFoundError:
 
 from confirmed_trade_facts import (
     canonical_etf_trade_facts,
+    recover_canonical_etf_trade_facts,
     effective_confirmed_fee_fact,
     latest_formal_review_confirmed_fees,
     trade_signature,
@@ -72,14 +73,18 @@ def reconcile() -> dict:
     trades = equity.get("trades") or []
     series = equity.get("series") or []
     canonical_replay = str(equity.get("schema_version") or "").startswith("1.0-canonical-replay") and bool(series)
+    expected_trade_count = int(summary.get("trade_fact_count") or summary.get("trade_count") or 0)
 
     # Current canonical replay state carries its complete ending position/cash/MV
     # identity in the final COMPLETE series row. Legacy auxiliary states instead
     # carry a top-level trade reconstruction. Support both without creating a
-    # second ledger or weakening the canonical account check. Canonical replay
-    # also persists the full deduplicated trade identity so future replay and
-    # fee/audit consumers remain self-consistent across persistence cycles.
+    # second ledger or weakening the canonical account check. During the bounded
+    # migration from the pre-replay state, a declared count deficit may be
+    # recovered from the existing formal Experience transaction index; an exact
+    # count mismatch remains fail-closed.
     trades_for_positions = canonical_etf_trade_facts(ROOT, trades)
+    if expected_trade_count and len(trades_for_positions) < expected_trade_count:
+        trades_for_positions = recover_canonical_etf_trade_facts(ROOT, trades, expected_trade_count)
     reconstructed_signatures = {trade_signature(t) for t in trades}
     overlay_events = [t for t in trades_for_positions if trade_signature(t) not in reconstructed_signatures]
 
@@ -104,9 +109,6 @@ def reconcile() -> dict:
                 ledger_qty[code] -= qty
 
     account_qty: dict[str, float] = {}
-    # Account facts intentionally do not require an asset_type field. Reuse the
-    # canonical ETF classifier so reconciliation cannot silently turn live
-    # holdings into zero quantities.
     etf_codes = active_account_asset_codes(ROOT, account)["etf"]
     for p in account.get("positions") or []:
         code = str(p.get("code") or "")
@@ -143,18 +145,14 @@ def reconcile() -> dict:
         equity_diff = rounded((strategy_cash + etf_mv) - gross_equity, 2)
         row_diff = rounded(row_equity - gross_equity, 2)
         equity_ok = replay_complete and abs(equity_diff) < 0.011 and abs(row_diff) < 0.011
-        expected_trade_count = int(summary.get("trade_fact_count") or 0)
     else:
         strategy_cash = float(summary.get("strategy_cash_current") or 0)
         etf_mv = float(summary.get("current_etf_market_value") or 0)
         equity_diff = rounded((strategy_cash + etf_mv) - gross_equity, 2)
         row_diff = None
         equity_ok = abs(equity_diff) < 0.011 and str(summary.get("equity_reconciliation_status") or "").startswith("RECONCILED")
-        expected_trade_count = int(summary.get("trade_count") or 0)
 
     trade_count_ok = expected_trade_count == len(trades_for_positions)
-    # Fee attribution is an audit fact, not a hard account/trade gate.
-    # Quantity, equity, and trade-count identity remain fail-closed.
     overall = quantity_ok and equity_ok and trade_count_ok
     return {
         "status": "PASS" if overall else "FAIL",
@@ -200,14 +198,8 @@ def main() -> int:
 
     consistency_status = str(consistency.get("status") or "").upper()
     hard_error_count = int(consistency.get("hard_error_count") or 0)
-    # WARNING is an explicit non-fatal runtime state. It must not turn a
-    # reconciled account/ledger into a maintenance FAIL when no hard error
-    # exists; the warning remains visible in system_consistency.json.
     consistency_ok = consistency_status == "PASS" or (consistency_status == "WARNING" and hard_error_count == 0)
     self_heal_class = str(self_heal.get("classification") or "UNKNOWN").upper()
-    # A stale escalation from an older consistency run must not keep today's
-    # otherwise reconciled maintenance gate blocked. Current hard failures are
-    # still handled by the consistency gate above.
     self_heal_checked = str(self_heal.get("checked_at") or "")
     consistency_generated = str(consistency.get("generated_at") or "")
     stale_escalation = bool(self_heal_checked and consistency_generated and self_heal_checked < consistency_generated)
