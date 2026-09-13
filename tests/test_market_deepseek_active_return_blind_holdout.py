@@ -131,17 +131,17 @@ class DeepSeekActiveReturnBlindHoldoutContractTest(unittest.TestCase):
         self.assertFalse(result["master_override"])
         self.assertFalse(result["second_deepseek_call"])
 
-        # Print the full compact result first, then a dedicated H1 audit marker last.
-        # The latter is deliberately small enough to survive the canonical
-        # consistency-detail tail without altering any validation semantics.
-        h1_marker = "DEEPSEEK_ACTIVE_RETURN_BLIND_HOLDOUT_H1=" + json.dumps(
-            _compact_single_hypothesis(result["hypotheses"][0]),
+        # Print the full compact result first, then a dedicated H2 audit marker last.
+        # This changes only the audit projection; validator logic and the frozen
+        # hypotheses/holdout/cost/gates remain untouched.
+        h2_marker = "DEEPSEEK_ACTIVE_RETURN_BLIND_HOLDOUT_H2=" + json.dumps(
+            _compact_single_hypothesis(result["hypotheses"][1]),
             ensure_ascii=False,
             separators=(",", ":"),
         )
-        self.assertLess(len(h1_marker.encode("utf-8")), 400, "H1 blind evidence must survive the canonical consistency detail window")
+        self.assertLess(len(h2_marker.encode("utf-8")), 400, "H2 blind evidence must survive the canonical consistency detail window")
         print(marker)
-        print(h1_marker)
+        print(h2_marker)
 
 
 if __name__ == "__main__":
