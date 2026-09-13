@@ -17,6 +17,10 @@ class ETFReplayContractTests(unittest.TestCase):
                 (root / "events/research/daily_features" / f"{day}.json").write_text(json.dumps({"market_date":day,"features":[{"code":"561980","close":close,"quality_status":"PASS"}]}))
             a=replay(root); b=replay(root)
             self.assertEqual(a,b); self.assertEqual(a["summary"]["starting_etf_strategy_capital"],200000.0); self.assertEqual(a["summary"]["gross_realized_pnl"],8.0); self.assertTrue(a["summary"]["pending_fees_do_not_block_gross"])
+            self.assertEqual(
+                a["summary"]["current_cumulative_pnl_gross"],
+                round(a["summary"]["current_gross_strategy_equity"] - a["summary"]["starting_etf_strategy_capital"], 2),
+            )
 
     def test_missing_lot_fails_closed(self):
         with tempfile.TemporaryDirectory() as td:
