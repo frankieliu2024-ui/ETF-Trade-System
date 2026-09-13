@@ -431,7 +431,7 @@ jobs:
               raise SystemExit("accepted ETF equity replay is incomplete")
           if not s.get("pending_fees_do_not_block_gross", False):
               raise SystemExit("fee boundary missing from gross replay")
-          print(json.dumps({"cutoff": p.get("replay_cutoff"), "trade_facts": s.get("trade_fact_count"), "price_dates": s.get("price_date_count"), "gross_equity": s.get("current_gross_strategy_equity"), "gross_return": s.get("current_strategy_return_pct_gross)}, ensure_ascii=False))
+          print(json.dumps({"cutoff": p.get("replay_cutoff"), "trade_facts": s.get("trade_fact_count"), "price_dates": s.get("price_date_count"), "gross_equity": s.get("current_gross_strategy_equity"), "gross_return": s.get("current_strategy_return_pct_gross")}, ensure_ascii=False))
           PY
           git config user.name "github-actions[bot]"
           git config user.email "41898282+users.noreply.github.com"
