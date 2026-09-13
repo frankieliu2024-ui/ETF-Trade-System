@@ -138,3 +138,64 @@ def validate_report_against_artifact(report: str, artifact: dict) -> list[str]:
         if not re.search(rf"\|\s*{re.escape(code)}\s*\|[^\n]*\|\s*{re.escape(expected)}\s*\|", report):
             errors.append(f"report headline for {code} does not match artifact")
     return errors
+
+
+HISTORICAL_PREFLIGHT_STATUSES = {
+    "CAPABILITY_ABSENT",
+    "CAPABILITY_PRESENT_RUNTIME_UNAVAILABLE",
+    "LEGAL_COVERAGE_INSUFFICIENT",
+    "PIT_INVALID",
+    "SAMPLE_INSUFFICIENT_AFTER_PREFLIGHT",
+    "RECOVERY_AVAILABLE_CONTINUE",
+}
+
+_HISTORICAL_PREFLIGHT_REQUIRED = (
+    "requested_objects",
+    "granularity",
+    "target_period",
+    "capabilities_checked",
+    "entries_attempted_or_consumed",
+    "coverage_result",
+    "common_window_result",
+    "pit_boundary",
+    "evidence_id",
+)
+
+
+def validate_historical_stop_result(result: dict) -> list[str]:
+    """Enforce the preflight-before-stop boundary for research-only results.
+
+    This validates an already-produced result; it never fetches data or writes
+    production state. Non-historical results are outside this contract.
+    """
+    if not isinstance(result, dict):
+        return ["research result must be an object"]
+    stop_reason = result.get("stop_reason")
+    if stop_reason not in {
+        "HISTORICAL_DATA_STOP",
+        "HISTORICAL_DATA_INSUFFICIENT",
+        "HISTORICAL_SAMPLE_INSUFFICIENT",
+        "HISTORICAL_COVERAGE_INSUFFICIENT",
+    }:
+        return []
+    evidence = result.get("historical_data_preflight_evidence")
+    if not isinstance(evidence, dict):
+        return ["historical stop requires HISTORICAL_DATA_PREFLIGHT_EVIDENCE"]
+    errors = []
+    for key in _HISTORICAL_PREFLIGHT_REQUIRED:
+        value = evidence.get(key)
+        if value is None or value == "" or value == []:
+            errors.append(f"preflight evidence missing {key}")
+    status = evidence.get("status")
+    if status not in HISTORICAL_PREFLIGHT_STATUSES:
+        errors.append("preflight evidence has an invalid status")
+    if status == "RECOVERY_AVAILABLE_CONTINUE":
+        errors.append("recovery available cannot be a final historical stop")
+    if result.get("stop_reason_evidence_id") != evidence.get("evidence_id"):
+        errors.append("stop reason must bind the preflight evidence_id")
+    return errors
+
+
+def validate_research_result(result: dict) -> list[str]:
+    """Validate the result-level historical stop gate when applicable."""
+    return validate_historical_stop_result(result)
