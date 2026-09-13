@@ -109,34 +109,38 @@ def fetch_tencent_daily_history(
     adjustment: str = "none",
     timeout: int = 10,
     page_size: int = 500,
+    window_days: int = 366,
 ) -> tuple[list[dict], dict]:
     """Read Tencent public daily K-line history without changing production state.
 
     This is a research/historical-data capability, not a production-provider
-    priority change.  The public Tencent endpoint is unofficial and unversioned,
+    priority change. The public Tencent endpoint is unofficial and unversioned,
     so callers must retain provider identity and validate returned coverage.
-    Pages are requested backwards because the endpoint caps each response.
+    Requests are split into bounded calendar windows so the endpoint's per-call
+    bar cap cannot silently truncate a multi-year research interval.
     """
     if page_size < 1 or page_size > 500:
         raise ValueError("Tencent history page_size must be between 1 and 500")
+    if window_days < 1 or window_days > 366:
+        raise ValueError("Tencent history window_days must be between 1 and 366")
     start_date, end_date = _as_date(start), _as_date(end)
     if end_date < start_date:
         raise ValueError("end must not be earlier than start")
     provider_symbol = _provider_symbol(thscode)
     rows_by_date: dict[str, dict] = {}
-    cursor_end = end_date
+    cursor_start = start_date
     pages = 0
-    while cursor_end >= start_date:
+    while cursor_start <= end_date:
+        cursor_end = min(cursor_start + timedelta(days=window_days - 1), end_date)
         raw_rows = _history_page(
             provider_symbol=provider_symbol,
-            start_date=start_date,
+            start_date=cursor_start,
             end_date=cursor_end,
             adjustment=adjustment,
             count=page_size,
             timeout=timeout,
         )
         pages += 1
-        parsed_dates: list[date] = []
         for raw in raw_rows:
             if not isinstance(raw, (list, tuple)) or len(raw) < 6:
                 continue
@@ -149,11 +153,10 @@ def fetch_tencent_daily_history(
                 volume = float(raw[5])
             except (TypeError, ValueError):
                 continue
-            if market_date < start_date or market_date > end_date:
+            if market_date < cursor_start or market_date > cursor_end:
                 continue
             if low > min(opening, close, high) or high < max(opening, close, low):
                 continue
-            parsed_dates.append(market_date)
             rows_by_date[market_date.isoformat()] = {
                 "date": market_date.isoformat(),
                 "open": opening,
@@ -166,15 +169,7 @@ def fetch_tencent_daily_history(
                 "provider_symbol": provider_symbol,
                 "quality_status": "PASS",
             }
-        if not parsed_dates:
-            break
-        earliest = min(parsed_dates)
-        if earliest <= start_date:
-            break
-        next_cursor = earliest - timedelta(days=1)
-        if next_cursor >= cursor_end:
-            raise RuntimeError("Tencent history pagination made no progress")
-        cursor_end = next_cursor
+        cursor_start = cursor_end + timedelta(days=1)
     rows = [rows_by_date[key] for key in sorted(rows_by_date)]
     meta = {
         "provider": "tencent_qq_history",
@@ -184,6 +179,7 @@ def fetch_tencent_daily_history(
         "adjustment": "前复权 qfq" if adjustment == "qfq" else "腾讯公开K线原始/未复权日线",
         "requested_start": start_date.isoformat(),
         "requested_end": end_date.isoformat(),
+        "window_days": window_days,
         "pages": pages,
         "rows": len(rows),
         "retrieved_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
@@ -210,10 +206,6 @@ def fetch_tencent_quotes(thscodes: list[str], timeout: int = 10) -> dict[str, di
         fields = parsed.get(provider_symbol.upper()) or []
         if len(fields) < 38 or fields[2] != provider_symbol[2:]:
             raise RuntimeError(f"Tencent quote missing or mismatched row for {thscode}")
-        # Tencent's suspended-security row keeps the standard provider timestamp
-        # in field 30 and exposes the non-trading status code "S" in field 40.
-        # Raw production probe on 2026-08-27 confirmed this shape across the
-        # affected ETF; do not infer suspension merely from zero volume.
         suspended = len(fields) > 40 and fields[40].strip().upper() == "S"
         timestamp_ms = _timestamp_ms(fields[30])
         price, prev_close = _number(fields[3]), _number(fields[4])
@@ -227,10 +219,6 @@ def fetch_tencent_quotes(thscodes: list[str], timeout: int = 10) -> dict[str, di
             "low_price": None if suspended else _number(fields[34]),
             "last_price": price,
             "prev_price": prev_close,
-            # Tencent field 31 is the absolute price change; field 32 is the
-            # percentage change. Compute the percentage from the verified last
-            # and previous close so a provider semantic mismatch cannot enter
-            # downstream contexts as a 100x scale error.
             "provider_price_change_amount": _number(fields[31]),
             "provider_price_change_ratio_pct": _number(fields[32]),
             "price_change_ratio_pct": ((price / prev_close) - 1) * 100 if prev_close else None,
