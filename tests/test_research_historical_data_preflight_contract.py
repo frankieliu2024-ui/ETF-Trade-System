@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA_SPEC = ROOT / "ETF与市场监测数据接口使用规范.md"
 RECOVERY = ROOT / "scripts" / "historical_market_fact_recovery.py"
 HISTORY_ENTRY = ROOT / "scripts" / "hithink_etf_data.py"
+TENCENT_HISTORY = ROOT / "scripts" / "tencent_quote.py"
 POOL_FETCH = ROOT / "scripts" / "fetch_v2214_pool_data.py"
 
 
@@ -35,13 +36,18 @@ class ResearchHistoricalDataPreflightContractTest(unittest.TestCase):
 
     def test_existing_research_entry_is_discoverable_without_production_promotion(self):
         history = HISTORY_ENTRY.read_text(encoding="utf-8")
+        tencent = TENCENT_HISTORY.read_text(encoding="utf-8")
         fetch = POOL_FETCH.read_text(encoding="utf-8")
         self.assertIn("def history(", history)
         self.assertIn("interval", history)
+        self.assertIn("def fetch_tencent_daily_history(", tencent)
+        self.assertIn("web.ifzq.gtimg.cn/appstock/app/fqkline/get", tencent)
+        self.assertIn("production_provider_priority_unchanged", tencent)
         self.assertIn("HithinkETFClient", fetch)
         self.assertIn("fetch_hithink", fetch)
         self.assertIn("专项回测", fetch)
         self.assertNotIn("CURRENT.json", fetch)
+        self.assertNotIn("CURRENT.json", tencent)
 
     def test_minute_capability_is_not_implied_by_daily_entry(self):
         text = DATA_SPEC.read_text(encoding="utf-8")
