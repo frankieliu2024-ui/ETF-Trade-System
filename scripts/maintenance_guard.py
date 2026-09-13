@@ -70,25 +70,36 @@ def reconcile() -> dict:
     account = read_json(ACCOUNT, {}) or {}
     summary = equity.get("summary") or {}
     trades = equity.get("trades") or []
+    series = equity.get("series") or []
+    canonical_replay = str(equity.get("schema_version") or "").startswith("1.0-canonical-replay") and bool(series)
 
-    # Actual executed trade events outrank the slower auxiliary equity
-    # reconstruction. The same exact-signature overlay is used for both
-    # positions and confirmed fees so one fact cannot advance without the other.
-    trades_for_positions = canonical_etf_trade_facts(ROOT, trades)
+    # Current canonical replay state carries its complete ending position/cash/MV
+    # identity in the final COMPLETE series row. Legacy auxiliary states instead
+    # carry a top-level trade reconstruction. Support both without creating a
+    # second ledger or weakening the canonical account check.
+    trades_for_positions = canonical_etf_trade_facts(ROOT, [] if canonical_replay else trades)
     reconstructed_signatures = {trade_signature(t) for t in trades}
     overlay_events = [t for t in trades_for_positions if trade_signature(t) not in reconstructed_signatures]
 
     ledger_qty: dict[str, float] = defaultdict(float)
-    for t in trades_for_positions:
-        code = str(t.get("code") or "")
-        qty = float(t.get("quantity") or 0)
-        if not code:
-            continue
-        side = str(t.get("side") or t.get("action") or "").upper()
-        if side == "BUY":
-            ledger_qty[code] += qty
-        elif side == "SELL":
-            ledger_qty[code] -= qty
+    position_basis = "AUXILIARY_EQUITY_RECONSTRUCTION_PLUS_EXECUTED_TRADE_EVENTS"
+    current_replay_row = series[-1] if canonical_replay else {}
+    replay_complete = bool(canonical_replay and str(current_replay_row.get("quality_status") or "").upper() == "COMPLETE")
+    if canonical_replay:
+        position_basis = "CANONICAL_REPLAY_FINAL_COMPLETE_POSITION_IDENTITY"
+        for code, position in (current_replay_row.get("positions") or {}).items():
+            ledger_qty[str(code)] = float((position or {}).get("quantity") or 0)
+    else:
+        for t in trades_for_positions:
+            code = str(t.get("code") or "")
+            qty = float(t.get("quantity") or 0)
+            if not code:
+                continue
+            side = str(t.get("side") or t.get("action") or "").upper()
+            if side == "BUY":
+                ledger_qty[code] += qty
+            elif side == "SELL":
+                ledger_qty[code] -= qty
 
     account_qty: dict[str, float] = {}
     # Account facts intentionally do not require an asset_type field. Reuse the
@@ -122,13 +133,24 @@ def reconcile() -> dict:
     formal_review_fee_ok = formal_review_fee is None or abs(effective_fee_sum - formal_review_fee) < 0.011
     fee_ok = auxiliary_fee_ok and formal_review_fee_ok
 
-    strategy_cash = float(summary.get("strategy_cash_current") or 0)
-    etf_mv = float(summary.get("current_etf_market_value") or 0)
     gross_equity = float(summary.get("current_gross_strategy_equity") or 0)
-    equity_diff = rounded((strategy_cash + etf_mv) - gross_equity, 2)
-    equity_ok = abs(equity_diff) < 0.011 and str(summary.get("equity_reconciliation_status") or "").startswith("RECONCILED")
+    if canonical_replay:
+        strategy_cash = float(current_replay_row.get("cash") or 0)
+        etf_mv = float(current_replay_row.get("market_value") or 0)
+        row_equity = float(current_replay_row.get("strategy_equity_gross") or 0)
+        equity_diff = rounded((strategy_cash + etf_mv) - gross_equity, 2)
+        row_diff = rounded(row_equity - gross_equity, 2)
+        equity_ok = replay_complete and abs(equity_diff) < 0.011 and abs(row_diff) < 0.011
+        expected_trade_count = int(summary.get("trade_fact_count") or 0)
+    else:
+        strategy_cash = float(summary.get("strategy_cash_current") or 0)
+        etf_mv = float(summary.get("current_etf_market_value") or 0)
+        equity_diff = rounded((strategy_cash + etf_mv) - gross_equity, 2)
+        row_diff = None
+        equity_ok = abs(equity_diff) < 0.011 and str(summary.get("equity_reconciliation_status") or "").startswith("RECONCILED")
+        expected_trade_count = int(summary.get("trade_count") or 0)
 
-    trade_count_ok = int(summary.get("trade_count") or 0) == len(trades_for_positions)
+    trade_count_ok = expected_trade_count == len(trades_for_positions)
     # Fee attribution is an audit fact, not a hard account/trade gate.
     # Quantity, equity, and trade-count identity remain fail-closed.
     overall = quantity_ok and equity_ok and trade_count_ok
@@ -137,7 +159,7 @@ def reconcile() -> dict:
         "trade_count": len(trades_for_positions),
         "trade_count_matches_summary": trade_count_ok,
         "executed_trade_event_overlay_count": len(overlay_events),
-        "position_ledger_basis": "AUXILIARY_EQUITY_RECONSTRUCTION_PLUS_EXECUTED_TRADE_EVENTS",
+        "position_ledger_basis": position_basis,
         "position_reconciliation": {"status": "PASS" if quantity_ok else "FAIL", "checks": quantity_checks},
         "known_fee_reconciliation": {
             "status": "PASS" if fee_ok else "WARNING",
@@ -154,7 +176,15 @@ def reconcile() -> dict:
             "formal_review_difference": rounded(effective_fee_sum - formal_review_fee, 2) if formal_review_fee is not None else None,
             "basis": "AUXILIARY_RECONSTRUCTION_PLUS_DEDUPED_EXECUTED_EVENT_OVERLAY_CROSSCHECKED_WITH_LATEST_FORMAL_REVIEW",
         },
-        "gross_equity_reconciliation": {"status": "PASS" if equity_ok else "FAIL", "strategy_cash": strategy_cash, "current_etf_market_value": etf_mv, "reported_gross_equity": gross_equity, "difference": equity_diff},
+        "gross_equity_reconciliation": {
+            "status": "PASS" if equity_ok else "FAIL",
+            "strategy_cash": strategy_cash,
+            "current_etf_market_value": etf_mv,
+            "reported_gross_equity": gross_equity,
+            "difference": equity_diff,
+            "series_row_difference": row_diff,
+            "canonical_replay_complete": replay_complete if canonical_replay else None,
+        },
     }
 
 
