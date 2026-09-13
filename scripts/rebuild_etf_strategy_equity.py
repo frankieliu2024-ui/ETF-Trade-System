@@ -14,9 +14,19 @@ from datetime import date
 from pathlib import Path
 
 try:
-    from confirmed_trade_facts import canonical_etf_trade_facts, trade_signature, confirmed_fee_amount
+    from confirmed_trade_facts import (
+        canonical_etf_trade_facts,
+        recover_canonical_etf_trade_facts,
+        trade_signature,
+        confirmed_fee_amount,
+    )
 except ModuleNotFoundError:
-    from scripts.confirmed_trade_facts import canonical_etf_trade_facts, trade_signature, confirmed_fee_amount
+    from scripts.confirmed_trade_facts import (
+        canonical_etf_trade_facts,
+        recover_canonical_etf_trade_facts,
+        trade_signature,
+        confirmed_fee_amount,
+    )
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STARTING_CAPITAL = 200000.0
@@ -65,7 +75,12 @@ def _trade_day(t):
 def replay(root: Path = ROOT, *, price_dir: Path | None = None, cutoff: str | None = None) -> dict:
     state = json.loads((root / "data" / "state" / "etf_strategy_equity.json").read_text(encoding="utf-8"))
     prices = _load_prices(root, price_dir)
-    facts = canonical_etf_trade_facts(root, state.get("trades") or [])
+    reconstructed = state.get("trades") or []
+    summary = state.get("summary") or {}
+    expected_count = int(summary.get("trade_fact_count") or summary.get("trade_count") or 0)
+    facts = canonical_etf_trade_facts(root, reconstructed)
+    if expected_count and len(facts) < expected_count:
+        facts = recover_canonical_etf_trade_facts(root, reconstructed, expected_count)
     facts.sort(key=lambda t: (_stamp(t), trade_signature(t)))
     unique = {trade_signature(t) for t in facts}
     if len(unique) != len(facts):
