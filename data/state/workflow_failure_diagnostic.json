@@ -1,31 +1,31 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-13T22:21:20+08:00",
+  "generated_at": "2026-09-13T22:25:57+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 34762379656,
+  "run_id": 34762617997,
   "run_attempt": 1,
-  "head_sha": "423effe5b5935e71f0914cff83c7b0d604f4dbb4",
-  "main_head_sha": "52c982e6d09123f16b88c6f50694eccb28c4b483",
+  "head_sha": "b1e12d774941c00a0d9756b0c481717d7612dbc3",
+  "main_head_sha": "5ea8d1ff1acb785cfc06dd3dda030bb4a009d306",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "production_acceptance",
-      "step": "Consume pending trade-fact corrections",
-      "number": 5
+      "job": "consistency",
+      "step": "PR candidate post-replay acceptance",
+      "number": 7
     }
   ],
   "changed_files": [
-    ".github/workflows/system-consistency.yml"
+    "tests/test_etf_strategy_equity_replay.py"
   ],
-  "commit_message": "fix: correct ETF replay acceptance summary syntax",
+  "commit_message": "test: cover gross cumulative pnl replay compatibility",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
-    "changes_confined_to_auto_rollback_allowlist": true,
+    "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
     "user_notification_authority": false,
