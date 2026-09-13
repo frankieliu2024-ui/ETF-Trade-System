@@ -416,6 +416,33 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Persist accepted canonical ETF equity replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          replay="$RUNNER_TEMP/etf-strategy-equity-replay.json"
+          python scripts/rebuild_etf_strategy_equity.py --output "$replay"
+          python - "$replay" <<'PY'
+          import json, sys
+          p = json.load(open(sys.argv[1], encoding="utf-8"))
+          s = p.get("summary") or {}
+          required = ["current_gross_strategy_equity", "current_strategy_return_pct_gross", "trade_fact_count", "price_date_count"]
+          if any(k not in s for k in required) or s.get("coverage_status") != "COMPLETE":
+              raise SystemExit("accepted ETF equity replay is incomplete")
+          if not s.get("pending_fees_do_not_block_gross", False):
+              raise SystemExit("fee boundary missing from gross replay")
+          print(json.dumps({"cutoff": p.get("replay_cutoff"), "trade_facts": s.get("trade_fact_count"), "price_dates": s.get("price_date_count"), "gross_equity": s.get("current_gross_strategy_equity"), "gross_return": s.get("current_strategy_return_pct_gross)}, ensure_ascii=False))
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+users.noreply.github.com"
+          cp "$replay" data/state/etf_strategy_equity.json
+          git add data/state/etf_strategy_equity.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "state: persist accepted canonical ETF equity replay"
+          git push origin HEAD:main
+
       - name: Consume pending trade-fact corrections
         shell: bash
         run: |
