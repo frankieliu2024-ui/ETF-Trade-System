@@ -1,21 +1,21 @@
 {
-  "generated_at": "2026-09-13T07:52:35Z",
-  "generated_at_beijing": "2026-09-13T15:52:35+08:00",
+  "generated_at": "2026-09-13T07:56:39Z",
+  "generated_at_beijing": "2026-09-13T15:56:39+08:00",
   "repository": {
-    "head_sha": "be9cfb48bb6361a1c7f075555fe6a3f3ac5f425e",
-    "github_sha": "be9cfb48bb6361a1c7f075555fe6a3f3ac5f425e",
-    "github_run_id": "34746250185",
+    "head_sha": "8be5adbc7f503c55bb94687f4574d5d632b88870",
+    "github_sha": "8be5adbc7f503c55bb94687f4574d5d632b88870",
+    "github_run_id": "34746415601",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "be9cfb48bb6361a1c7f075555fe6a3f3ac5f425e",
-    "workflow_sha": "be9cfb48bb6361a1c7f075555fe6a3f3ac5f425e",
+    "checked_commit": "8be5adbc7f503c55bb94687f4574d5d632b88870",
+    "workflow_sha": "8be5adbc7f503c55bb94687f4574d5d632b88870",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "semantic_freshness": {
-    "base": "d983d00fc9770b951b48f440c9b22ab5af4fe55e",
-    "head": "be9cfb48bb6361a1c7f075555fe6a3f3ac5f425e",
+    "base": "be9cfb48bb6361a1c7f075555fe6a3f3ac5f425e",
+    "head": "8be5adbc7f503c55bb94687f4574d5d632b88870",
     "changed_paths": [
       "data/state/e2e_status.json",
       "data/state/execution_quality.json",
@@ -25,17 +25,17 @@
       "data/state/notification_center.json",
       "data/state/query_context.json",
       "data/state/system_consistency.json",
-      "requests/report_delivery/etf-system-review-2026-09-12-20260912T180840.json",
-      "requests/report_delivery/etf-system-review-2026-09-12-20260912T210216.json",
-      "requests/report_delivery/etf-system-review-2026-09-13-20260913T080401.json",
-      "requests/report_delivery/etf-system-review-2026-09-13-20260913T120329.json",
-      "scripts/research_artifact_contract.py",
-      "tests/test_research_historical_stop_gate.py"
+      "scripts/check_system_consistency_core.py",
+      "scripts/tencent_quote.py",
+      "tests/test_research_historical_data_preflight_contract.py",
+      "tests/test_tencent_history.py"
     ],
     "categories": {
       "STABLE_PRODUCTION_CHANGE": [
-        "scripts/research_artifact_contract.py",
-        "tests/test_research_historical_stop_gate.py"
+        "scripts/check_system_consistency_core.py",
+        "scripts/tencent_quote.py",
+        "tests/test_research_historical_data_preflight_contract.py",
+        "tests/test_tencent_history.py"
       ],
       "DYNAMIC_RUNTIME_FACT": [
         "data/state/e2e_status.json",
@@ -48,18 +48,13 @@
         "data/state/system_consistency.json"
       ],
       "FORMAL_FACT_MUTATION": [],
-      "REQUEST_OR_TRIGGER_FACT": [
-        "requests/report_delivery/etf-system-review-2026-09-12-20260912T180840.json",
-        "requests/report_delivery/etf-system-review-2026-09-12-20260912T210216.json",
-        "requests/report_delivery/etf-system-review-2026-09-13-20260913T080401.json",
-        "requests/report_delivery/etf-system-review-2026-09-13-20260913T120329.json"
-      ],
+      "REQUEST_OR_TRIGGER_FACT": [],
       "UNKNOWN": []
     },
     "decision": "REPLAY_REQUIRED",
     "integration_action": "REPLAY_REQUIRED",
-    "validated_commit": "d983d00fc9770b951b48f440c9b22ab5af4fe55e",
-    "current_head": "be9cfb48bb6361a1c7f075555fe6a3f3ac5f425e",
+    "validated_commit": "be9cfb48bb6361a1c7f075555fe6a3f3ac5f425e",
+    "current_head": "8be5adbc7f503c55bb94687f4574d5d632b88870",
     "head_advanced": true,
     "stable_contract_freshness": "REVIEW_REQUIRED",
     "runtime_fact_freshness": "CURRENT"
@@ -71,27 +66,32 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "{\"status\": \"BATCHED\", \"results\": [{\"status\": \"SENT\"}]}\nFORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-10:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-10\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n......................................................................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 246 tests in 0.422s\n\nOK\n"
+      "detail": "{\"status\": \"BATCHED\", \"results\": [{\"status\": \"SENT\"}]}\nFORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-10:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-10\",\"provider\":\"TENCENT_IFZQ\",\"pattern_match\":false,\"reason\":null}}\n......................................................................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 246 tests in 0.238s\n\nOK\n"
     },
     {
       "name": "tests:opening_current_self_healing",
       "status": "PASS",
-      "detail": "...................\n----------------------------------------------------------------------\nRan 19 tests in 0.012s\n\nOK\n"
+      "detail": "...................\n----------------------------------------------------------------------\nRan 19 tests in 0.006s\n\nOK\n"
     },
     {
       "name": "tests:semantic_latest_main",
       "status": "PASS",
-      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.127s\n\nOK\n"
+      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.091s\n\nOK\n"
     },
     {
       "name": "tests:research_artifact_contract",
       "status": "PASS",
-      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 1.352s\n\nOK\n"
+      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.830s\n\nOK\n"
+    },
+    {
+      "name": "tests:research_historical_stop_gate",
+      "status": "PASS",
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.000s\n\nOK\n"
     },
     {
       "name": "tests:lifecycle_state",
       "status": "PASS",
-      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.007s\n\nOK\n"
+      "detail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.004s\n\nOK\n"
     },
     {
       "name": "tests:historical_market_fact_recovery",
@@ -101,32 +101,32 @@
     {
       "name": "tests:executed_trade_case_lifecycle",
       "status": "PASS",
-      "detail": "ount\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n.............\n----------------------------------------------------------------------\nRan 13 tests in 0.023s\n\nOK\n"
+      "detail": "ount\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n.............\n----------------------------------------------------------------------\nRan 13 tests in 0.014s\n\nOK\n"
     },
     {
       "name": "tests:settlement_obligations",
       "status": "PASS",
-      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.002s\n\nOK\n"
+      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.001s\n\nOK\n"
     },
     {
       "name": "tests:formal_file_mutation_gateway",
       "status": "PASS",
-      "detail": ".........\n----------------------------------------------------------------------\nRan 9 tests in 0.003s\n\nOK\n"
+      "detail": ".........\n----------------------------------------------------------------------\nRan 9 tests in 0.002s\n\nOK\n"
     },
     {
       "name": "tests:post_close_review_canonical",
       "status": "PASS",
-      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.015s\n\nOK\n"
+      "detail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.008s\n\nOK\n"
     },
     {
       "name": "tests:review_prerequisite_lifecycle",
       "status": "PASS",
-      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.001s\n\nOK\n"
+      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.000s\n\nOK\n"
     },
     {
       "name": "tests:production_reliability",
       "status": "PASS",
-      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n.................................\n----------------------------------------------------------------------\nRan 33 tests in 0.030s\n\nOK\n"
+      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n.................................\n----------------------------------------------------------------------\nRan 33 tests in 0.016s\n\nOK\n"
     },
     {
       "name": "tests:workflow_sha_snapshot",
@@ -411,17 +411,17 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=be9cfb48bb6361a1c7f075555fe6a3f3ac5f425e"
+      "detail": "HEAD=8be5adbc7f503c55bb94687f4574d5d632b88870"
     },
     {
       "name": "git:semantic_latest_main",
       "status": "PASS",
-      "detail": "{\"base\": \"d983d00fc9770b951b48f440c9b22ab5af4fe55e\", \"head\": \"be9cfb48bb6361a1c7f075555fe6a3f3ac5f425e\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/query_context.json\", \"data/state/system_consistency.json\", \"requests/report_delivery/etf-system-review-2026-09-12-20260912T180840.json\", \"requests/report_delivery/etf-system-review-2026-09-12-20260912T210216.json\", \"requests/report_delivery/etf-system-review-2026-09-13-20260913T080401.json\", \"requests/report_delivery/etf-system-review-2026-09-13-20260913T120329.json\", \"scripts/research_artifact_contract.py\", \"tests/test_research_historical_stop_gate.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"scripts/research_artifact_contract.py\", \"tests/test_research_historical_stop_gate.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/query_context.json\", \"data/state/system_consistency.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [\"requests/report_delivery/etf-system-review-2026-09-12-20260912T180840.json\", \"requests/report_delivery/etf-system-review-2026-09-12-20260912T210216.json\", \"requests/report_delivery/etf-system-review-2026-09-13-20260913T080401.json\", \"requests/report_delivery/etf-system-review-2026-09-13-20260913T120329.json\"], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\", \"integration_action\": \"REPLAY_REQUIRED\"}"
+      "detail": "{\"base\": \"be9cfb48bb6361a1c7f075555fe6a3f3ac5f425e\", \"head\": \"8be5adbc7f503c55bb94687f4574d5d632b88870\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/query_context.json\", \"data/state/system_consistency.json\", \"scripts/check_system_consistency_core.py\", \"scripts/tencent_quote.py\", \"tests/test_research_historical_data_preflight_contract.py\", \"tests/test_tencent_history.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"scripts/check_system_consistency_core.py\", \"scripts/tencent_quote.py\", \"tests/test_research_historical_data_preflight_contract.py\", \"tests/test_tencent_history.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/query_context.json\", \"data/state/system_consistency.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\", \"integration_action\": \"REPLAY_REQUIRED\"}"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=be9cfb48bb6361a1c7f075555fe6a3f3ac5f425e GITHUB_SHA=be9cfb48bb6361a1c7f075555fe6a3f3ac5f425e"
+      "detail": "HEAD=8be5adbc7f503c55bb94687f4574d5d632b88870 GITHUB_SHA=8be5adbc7f503c55bb94687f4574d5d632b88870"
     },
     {
       "name": "git:critical_files_tracked",
@@ -846,7 +846,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=03:52 max_age_seconds=124655 limit=900"
+      "detail": "active=False phase=03:56 max_age_seconds=124899 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -991,12 +991,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=175093"
+      "detail": "declared=STALE expected=STALE age_seconds=175339"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=175077"
+      "detail": "declared=STALE expected=STALE age_seconds=175324"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -1036,7 +1036,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-09-13T07:52:15Z market=2026-09-11T15:14:18+08:00"
+      "detail": "context=2026-09-13T07:56:22Z market=2026-09-11T15:14:18+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
