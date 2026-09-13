@@ -16,82 +16,28 @@ from scripts.validate_deepseek_active_return_blind_holdout import (
 )
 
 
-def _audit_horizon(horizon: dict) -> list:
-    """Encode the frozen blind gate inputs compactly.
+def _h2_tail_marker(hypothesis: dict) -> str:
+    """Persist only H2's frozen incremental gate result inside the 1000-char tail.
 
-    Array schema, in frozen 5/10/20-day order:
-    [filtered_n, filtered_effect, filtered_positive_rate,
-     baseline_effect, baseline_positive_rate, concentration, gate_pass]
+    Schema: [classification, passed_horizons,
+      [[filtered_net, baseline_net, filtered_positive_rate,
+        baseline_positive_rate, gate_pass], ... 5/10/20d]]
 
-    For H1/H2 ``effect`` is the mean after the frozen 20bps round-trip cost.
-    For H3 it is the mean relative return.  The H1/H2/H3 -> base-evidence
-    mapping and horizon order are frozen by ``test_frozen_contract_is_exact``.
+    This is projection-only. It does not recalculate or reinterpret the validator.
     """
-    baseline = horizon.get("baseline") or {}
-    filtered = horizon.get("filtered") or {}
-    filtered_effect = filtered.get("mean_net_after_20bps", filtered.get("mean"))
-    baseline_effect = baseline.get("mean_net_after_20bps", baseline.get("mean"))
-    concentration = horizon.get("max_single_asset_participation_share")
-    if concentration is None:
-        concentration = horizon.get("max_single_asset_event_share")
-    return [
-        filtered.get("n"),
-        filtered_effect,
-        filtered.get("positive_rate"),
-        baseline_effect,
-        baseline.get("positive_rate"),
-        concentration,
-        horizon.get("blind_gate_pass"),
-    ]
-
-
-def _compact_blind_holdout_result(result: dict) -> dict:
-    """Project the immutable blind result into the consistency detail window.
-
-    ``check_system_consistency_core`` intentionally retains only the final 1000
-    characters of unittest output. Keep this marker below 800 UTF-8 bytes so
-    the complete research evidence plus unittest trailer survives that canonical
-    owner. This is display-only: it never recomputes, filters, rounds, ranks, or
-    reinterprets the validator result.
-
-    Hypothesis array schema:
-    [H1/H2/H3, selected_signal_dates, horizons_with_n15, passed_horizons,
-     classification, [5d_gate_inputs, 10d_gate_inputs, 20d_gate_inputs]]
-
-    Coverage is exactly derivable from selected_signal_dates / global n, so it is
-    not duplicated. Production/trading boundary fields remain explicit test
-    assertions below rather than being duplicated into this research marker.
-    """
-    hypotheses = []
-    for hypothesis in result.get("hypotheses") or []:
-        hypotheses.append(
-            [
-                str(hypothesis.get("hypothesis_id") or "").split("_", 1)[0],
-                hypothesis.get("selected_signal_dates"),
-                hypothesis.get("horizons_with_n15"),
-                hypothesis.get("passed_horizons"),
-                hypothesis.get("classification"),
-                [_audit_horizon(h) for h in hypothesis.get("horizons") or []],
-            ]
-        )
-    return {
-        "s": result.get("status"),
-        "n": result.get("holdout_signal_date_count"),
-        "p": (result.get("baseline_parity") or {}).get("status"),
-        "h": hypotheses,
-        "a": result.get("any_blind_supported"),
-    }
-
-
-def _compact_single_hypothesis(hypothesis: dict) -> list:
-    """Return one hypothesis' immutable blind-gate evidence for audit recovery."""
-    return [
-        hypothesis.get("selected_signal_dates"),
-        hypothesis.get("horizons_with_n15"),
-        hypothesis.get("passed_horizons"),
-        hypothesis.get("classification"),
-        [_audit_horizon(h) for h in hypothesis.get("horizons") or []],
-    ]
+    rows = []
+    for horizon in hypothesis.get("horizons") or []:
+        baseline = horizon.get("baseline") or {}
+        filtered = horizon.get("filtered") or {}
+        rows.append([
+            filtered.get("mean_net_after_20bps", filtered.get("mean")),
+            baseline.get("mean_net_after_20bps", baseline.get("mean")),
+            filtered.get("positive_rate"),
+            baseline.get("positive_rate"),
+            horizon.get("blind_gate_pass"),
+        ])
+    payload = [hypothesis.get("classification"), hypothesis.get("passed_horizons"), rows]
+    return "H2_BLIND=" + json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
 
 
 class DeepSeekActiveReturnBlindHoldoutContractTest(unittest.TestCase):
@@ -119,28 +65,16 @@ class DeepSeekActiveReturnBlindHoldoutContractTest(unittest.TestCase):
     @unittest.skipUnless(os.environ.get("GITHUB_EVENT_NAME") == "pull_request", "one-time real-data blind evidence runs only on PR")
     def test_current_repository_2026_blind_holdout(self) -> None:
         result = run_validation()
-        compact = _compact_blind_holdout_result(result)
-        marker = "DEEPSEEK_ACTIVE_RETURN_BLIND_HOLDOUT_COMPACT=" + json.dumps(compact, ensure_ascii=False, separators=(",", ":"))
-        self.assertLess(len(marker.encode("utf-8")), 800, "compact blind evidence must survive the canonical 1000-char consistency detail window")
         self.assertEqual(result["status"], "PASS", result.get("baseline_parity"))
         self.assertEqual(result["baseline_parity"]["status"], "PASS")
         self.assertEqual(len(result["hypotheses"]), 3)
-        self.assertEqual([h[0] for h in compact["h"]], ["H1", "H2", "H3"])
         self.assertFalse(result["production_integration"])
         self.assertIsNone(result["trade_signal"])
         self.assertFalse(result["master_override"])
         self.assertFalse(result["second_deepseek_call"])
 
-        # Print the full compact result first, then a dedicated H2 audit marker last.
-        # This changes only the audit projection; validator logic and the frozen
-        # hypotheses/holdout/cost/gates remain untouched.
-        h2_marker = "DEEPSEEK_ACTIVE_RETURN_BLIND_HOLDOUT_H2=" + json.dumps(
-            _compact_single_hypothesis(result["hypotheses"][1]),
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
-        self.assertLess(len(h2_marker.encode("utf-8")), 400, "H2 blind evidence must survive the canonical consistency detail window")
-        print(marker)
+        h2_marker = _h2_tail_marker(result["hypotheses"][1])
+        self.assertLess(len(h2_marker.encode("utf-8")), 240, "H2 marker must survive the canonical consistency detail tail")
         print(h2_marker)
 
 
