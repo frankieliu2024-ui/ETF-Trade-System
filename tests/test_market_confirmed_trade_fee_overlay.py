@@ -154,6 +154,54 @@ class ConfirmedTradeFeeOverlayTests(unittest.TestCase):
             self.assertEqual(rec["position_reconciliation"]["status"], "FAIL")
             self.assertEqual(rec["status"], "FAIL")
 
+    def test_canonical_replay_final_identity_is_reconciled_directly(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            state = root / "data/state"
+            self.write_json(
+                state / "etf_strategy_equity.json",
+                {
+                    "schema_version": "1.0-canonical-replay-candidate",
+                    "summary": {
+                        "trade_fact_count": 0,
+                        "current_gross_strategy_equity": 200.0,
+                        "known_fees": 0.0,
+                    },
+                    "series": [
+                        {
+                            "date": "2026-09-11",
+                            "cash": 50.0,
+                            "market_value": 150.0,
+                            "strategy_equity_gross": 200.0,
+                            "quality_status": "COMPLETE",
+                            "positions": {
+                                "561980": {"quantity": 100.0, "market_value": 150.0}
+                            },
+                        }
+                    ],
+                },
+            )
+            self.write_json(
+                state / "account_fact.json",
+                {"positions": [{"code": "561980", "quantity": 100}]},
+            )
+            self.write_json(
+                root / "config/market/etf_monitor_universe.json",
+                {"objects": [{"code": "561980"}]},
+            )
+            old_root, old_equity, old_account = maintenance_guard.ROOT, maintenance_guard.EQUITY, maintenance_guard.ACCOUNT
+            try:
+                maintenance_guard.ROOT = root
+                maintenance_guard.EQUITY = state / "etf_strategy_equity.json"
+                maintenance_guard.ACCOUNT = state / "account_fact.json"
+                rec = maintenance_guard.reconcile()
+            finally:
+                maintenance_guard.ROOT, maintenance_guard.EQUITY, maintenance_guard.ACCOUNT = old_root, old_equity, old_account
+            self.assertEqual(rec["position_ledger_basis"], "CANONICAL_REPLAY_FINAL_COMPLETE_POSITION_IDENTITY")
+            self.assertEqual(rec["position_reconciliation"]["status"], "PASS")
+            self.assertEqual(rec["gross_equity_reconciliation"]["status"], "PASS")
+            self.assertEqual(rec["status"], "PASS")
+
 
 if __name__ == "__main__":
     unittest.main()
