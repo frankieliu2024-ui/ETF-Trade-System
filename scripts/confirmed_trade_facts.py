@@ -223,8 +223,32 @@ def recover_canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dic
     return recovered
 
 
+def _canonical_replay_declared_trade_count(root: Path) -> int:
+    """Return the persisted canonical replay's declared trade count, if any.
+
+    This is a bounded migration aid for current formal fee projection. A replay
+    state may legitimately carry the accepted complete count before its embedded
+    trade rows have converged. In that exact case the existing formal Experience
+    index is the registered recovery source, and an exact count mismatch remains
+    fail-closed through recover_canonical_etf_trade_facts.
+    """
+    state = read_json(root / "data" / "state" / "etf_strategy_equity.json", {}) or {}
+    if not str(state.get("schema_version") or "").startswith("1.0-canonical-replay"):
+        return 0
+    summary = state.get("summary") or {}
+    try:
+        return int(summary.get("trade_fact_count") or summary.get("trade_count") or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 def canonical_etf_fee_projection(root: Path, reconstructed_trades: list[dict]) -> dict:
     facts = canonical_etf_trade_facts(root, reconstructed_trades)
+    declared_count = _canonical_replay_declared_trade_count(root)
+    recovered_from_formal_index = False
+    if declared_count and len(facts) < declared_count:
+        facts = recover_canonical_etf_trade_facts(root, reconstructed_trades, declared_count)
+        recovered_from_formal_index = True
     confirmed = round(sum(confirmed_fee_amount(t) for t in facts), 2)
     pending = [t for t in facts if str(t.get("fee_status") or "").upper() != "CONFIRMED"]
     return {
@@ -233,6 +257,7 @@ def canonical_etf_fee_projection(root: Path, reconstructed_trades: list[dict]) -
         "canonical_trade_count": len(facts),
         "pending_trades": pending,
         "canonical_trades": facts,
+        "recovered_from_formal_index": recovered_from_formal_index,
     }
 
 

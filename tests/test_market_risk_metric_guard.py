@@ -195,7 +195,7 @@ class TestMarketRiskMetricGuard(unittest.TestCase):
         gross = float(equity["summary"]["current_strategy_return_pct_gross"])
         self.assertAlmostEqual(float(metric["etf_strategy_risk_pct"]), gross, places=2)
         self.assertEqual(metric["risk_source"], "data/state/etf_strategy_equity.json")
-        self.assertTrue(equity["summary"].get("fee_status"))
+        self.assertTrue(equity["summary"].get("pending_fees_do_not_block_gross"))
 
 
 if __name__ == "__main__":
