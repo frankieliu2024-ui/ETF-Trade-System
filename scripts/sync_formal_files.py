@@ -110,8 +110,7 @@ def normalize_dashboard_projection(text: str, root: Path = ROOT, account: dict |
             from datetime import date, timedelta
             cursor = date.fromisoformat(today) if today else date.today()
             for _ in range(370):
-                cursor += timedelta(days=1
-)
+                cursor += timedelta(days=1)
                 candidate = cursor.isoformat()
                 if cursor.weekday() < 5 and candidate not in closed:
                     next_day = candidate
