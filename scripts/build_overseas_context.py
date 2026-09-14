@@ -548,7 +548,6 @@ def build() -> dict:
                     record["provider_attempts"] = [provider_attempt(candidate, selected_provider_id, generated_utc)]
                     record["direct_source_chain"] = [selected_provider_id]
                     record["configured_primary"] = selected_provider_id
-                else:
                 # N225/KOSPI/TWII priorities were promoted after live-session parallel validation on
                 # 2026-08-27. Production selection uses the first fresh, valid direct source.
                 elif object_id in {"N225", "KOSPI", "TWII"}:
