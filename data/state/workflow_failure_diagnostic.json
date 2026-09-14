@@ -1,24 +1,24 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-14T11:18:27+08:00",
+  "generated_at": "2026-09-14T11:19:15+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 34802114871,
-  "run_attempt": 2,
-  "head_sha": "2bec98846c62756c25bee26826b1116d14edc615",
-  "main_head_sha": "f5992352bb3ebce94c3ce51542bfc4048bb49d44",
-  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
+  "workflow_name": "ETF system consistency",
+  "run_id": 34802151085,
+  "run_attempt": 1,
+  "head_sha": "f5992352bb3ebce94c3ce51542bfc4048bb49d44",
+  "main_head_sha": "e8e04f71483e5567ca35c13275ff7aa9514b53ac",
+  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "watchdog",
-      "step": "Persist bounded self-healing state and deterministic repairs",
-      "number": 13
+      "job": "consistency",
+      "step": "Enforce hard consistency result",
+      "number": 9
     }
   ],
   "changed_files": [
-    "requests/live_snapshot/20260914_111534_561980_sell_account_closure.json"
+    "requests/live_snapshot/20260914_1119_scheduled_formal_decision.json"
   ],
-  "commit_message": "state: request 561980 sell account closure",
+  "commit_message": "ops: request 11:20 scheduled formal decision snapshot 2026-09-14",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
@@ -27,7 +27,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": true,
+    "bot_or_revert_commit": false,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
