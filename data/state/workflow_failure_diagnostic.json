@@ -1,33 +1,35 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-14T09:23:08+08:00",
+  "generated_at": "2026-09-14T09:23:25+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 34795679922,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 34795731384,
   "run_attempt": 1,
-  "head_sha": "cce8d5a57b428ffb4592a1e922077543a995a633",
-  "main_head_sha": "5ae2a872fb99002fdf6ea89ff514091ad8481896",
-  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
+  "head_sha": "5ae2a872fb99002fdf6ea89ff514091ad8481896",
+  "main_head_sha": "c58acefdac7f2aee9edaac43b1f8171b262e3669",
+  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "production_acceptance",
-      "step": "Persist accepted canonical ETF equity replay",
-      "number": 4
+      "job": "watchdog",
+      "step": "Run read-only comprehensive production health aggregate",
+      "number": 9
     }
   ],
   "changed_files": [
-    "requests/live_snapshot/20260914_092230_scheduled_formal_decision.json"
+    "data/market/snapshots/2026-09-14_092233.json",
+    "data/state/CURRENT.json",
+    "data/state/runtime_health.json"
   ],
-  "commit_message": "ops: request 09:20 scheduled formal decision snapshot 2026-09-14",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
-  "reason": "failure is classified as transient/persistence and this is the first attempt",
+  "commit_message": "data: publish core market snapshot",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
+  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
-    "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "forbidden_path_touched": true,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
