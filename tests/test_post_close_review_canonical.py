@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import build_e2e_status
+import check_system_consistency
 import process_state_sync_request as sync
 
 
@@ -124,6 +125,207 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
                 build_e2e_status.ROOT,
             ) = old
         self.assertEqual(result["status"], "BLOCKED")
+
+
+    def _write_runtime_policy(self):
+        (self.root / "config").mkdir(exist_ok=True)
+        (self.root / "config/runtime_policy.json").write_text(
+            json.dumps({"scheduled_trade_review": {"due_time": "20:30"}}),
+            encoding="utf-8",
+        )
+
+    def _write_ready_trigger(self, market_date: str, market_close=True, status="READY_FOR_REVIEW"):
+        event = self.root / "post_market_review/post_market_review_event.json"
+        event.parent.mkdir(exist_ok=True)
+        event.write_text(
+            json.dumps({"market_close": market_close, "market_date": market_date, "status": status}),
+            encoding="utf-8",
+        )
+
+    def _write_formal_review_completion(self, market_date: str, event_type="FORMAL_POST_CLOSE_REVIEW", closure_review_path=None, close_snapshot=""):
+        review_dir = self.root / "events/reviews"
+        review_dir.mkdir(parents=True, exist_ok=True)
+        review_dir.joinpath(f"{market_date}.json").write_text(
+            json.dumps({
+                "event_type": event_type,
+                "market_date": market_date,
+                "review": {
+                    "market_date": market_date,
+                    "data_time": {"close_snapshot": close_snapshot},
+                },
+            }),
+            encoding="utf-8",
+        )
+        closure_dir = self.root / "data/state"
+        closure_dir.mkdir(parents=True, exist_ok=True)
+        formal_review_path = closure_review_path or f"events/reviews/{market_date}.json"
+        closure_dir.joinpath(f"close_review_closure_{market_date}.json").write_text(
+            json.dumps({
+                "status": "CLOSED",
+                "market_date": market_date,
+                "formal_review_path": formal_review_path,
+            }),
+            encoding="utf-8",
+        )
+
+    def _set_current_closure(self, market_date: str, status="CLOSED", path=None):
+        current = {
+            "market_date": market_date,
+            "close_review_closure": {
+                "status": status,
+                "market_date": market_date,
+                "formal_review_path": path or f"events/reviews/{market_date}.json",
+            },
+        }
+        (self.root / "data/state/CURRENT.json").write_text(json.dumps(current), encoding="utf-8")
+        return current
+
+    def _with_review_consumers(self, callback):
+        e2e_old = (
+            build_e2e_status.POST_MARKET_REVIEW,
+            build_e2e_status.REVIEW_DIR,
+            build_e2e_status.STATE,
+            build_e2e_status.ROOT,
+        )
+        consistency_old = check_system_consistency.ROOT
+        build_e2e_status.POST_MARKET_REVIEW = self.root / "post_market_review/post_market_review_event.json"
+        build_e2e_status.REVIEW_DIR = self.root / "events/reviews"
+        build_e2e_status.STATE = self.root / "data/state"
+        build_e2e_status.ROOT = self.root
+        check_system_consistency.ROOT = self.root
+        try:
+            return callback()
+        finally:
+            (
+                build_e2e_status.POST_MARKET_REVIEW,
+                build_e2e_status.REVIEW_DIR,
+                build_e2e_status.STATE,
+                build_e2e_status.ROOT,
+            ) = e2e_old
+            check_system_consistency.ROOT = consistency_old
+
+    def _validate_consistency_review(self, now):
+        report = {"checks": [], "errors": [], "warnings": []}
+        check_system_consistency._validate_post_close_review_contract(report, now)
+        return report
+
+    def test_stale_readiness_trigger_with_newer_canonical_completion_converges_consumers(self):
+        self._write_runtime_policy()
+        self._write_ready_trigger("2026-09-13")
+        self._write_formal_review_completion("2026-09-14", close_snapshot="")
+        current = self._set_current_closure("2026-09-14")
+
+        def run():
+            e2e = build_e2e_status.close_review_component(
+                current,
+                datetime.fromisoformat("2026-09-14T20:31:00+08:00"),
+            )
+            consistency = self._validate_consistency_review(datetime.fromisoformat("2026-09-14T20:31:00+08:00"))
+            return e2e, consistency
+
+        e2e, consistency = self._with_review_consumers(run)
+
+        self.assertEqual(e2e["status"], "READY")
+        self.assertEqual(e2e["market_date"], "2026-09-14")
+        self.assertEqual(e2e["formal_review_market_date"], "2026-09-14")
+        self.assertEqual(e2e["market_trigger_market_date"], "2026-09-13")
+        self.assertNotIn("market_close", e2e)
+        self.assertNotIn("VERIFIED_SESSION_CLOSE", json.dumps(e2e))
+        self.assertNotIn("15:00", json.dumps(e2e))
+        self.assertEqual(consistency["checks"][-1]["status"], "PASS")
+        self.assertIn("formal_review_market_date=2026-09-14", consistency["checks"][-1]["detail"])
+        persisted_event = json.loads((self.root / "post_market_review/post_market_review_event.json").read_text(encoding="utf-8"))
+        self.assertEqual(persisted_event["market_date"], "2026-09-13")
+
+    def test_same_date_closed_chain_keeps_existing_consumer_semantics(self):
+        self._write_runtime_policy()
+        self._write_ready_trigger("2026-09-14")
+        self._write_formal_review_completion("2026-09-14")
+        current = self._set_current_closure("2026-09-14")
+
+        def run():
+            return (
+                build_e2e_status.close_review_component(current, datetime.fromisoformat("2026-09-14T20:31:00+08:00")),
+                self._validate_consistency_review(datetime.fromisoformat("2026-09-14T20:31:00+08:00")),
+            )
+
+        e2e, consistency = self._with_review_consumers(run)
+
+        self.assertEqual(e2e["status"], "READY")
+        self.assertEqual(e2e["market_date"], "2026-09-14")
+        self.assertEqual(consistency["checks"][-1]["status"], "PASS")
+
+    def test_not_due_missing_completion_keeps_existing_semantics(self):
+        self._write_runtime_policy()
+        self._write_ready_trigger("2026-09-14")
+        self._set_current_closure("2026-09-14", status="MISSING")
+
+        def run():
+            return (
+                build_e2e_status.close_review_component({"market_date": "2026-09-14"}, datetime.fromisoformat("2026-09-14T19:00:00+08:00")),
+                self._validate_consistency_review(datetime.fromisoformat("2026-09-14T19:00:00+08:00")),
+            )
+
+        e2e, consistency = self._with_review_consumers(run)
+
+        self.assertEqual(e2e["status"], "READY")
+        self.assertEqual(e2e["reason"], "scheduled_review_not_due")
+        self.assertEqual(consistency["checks"][-1]["status"], "PASS")
+        self.assertIn("review_not_due", consistency["checks"][-1]["detail"])
+
+    def test_overdue_missing_completion_still_blocks_and_fails(self):
+        self._write_runtime_policy()
+        self._write_ready_trigger("2026-09-14")
+        self._set_current_closure("2026-09-14", status="MISSING")
+
+        def run():
+            return (
+                build_e2e_status.close_review_component({"market_date": "2026-09-14"}, datetime.fromisoformat("2026-09-14T20:31:00+08:00")),
+                self._validate_consistency_review(datetime.fromisoformat("2026-09-14T20:31:00+08:00")),
+            )
+
+        e2e, consistency = self._with_review_consumers(run)
+
+        self.assertEqual(e2e["status"], "BLOCKED")
+        self.assertEqual(e2e["reason"], "FORMAL_POST_CLOSE_REVIEW_NOT_CANONICALIZED")
+        self.assertEqual(consistency["checks"][-1]["status"], "FAIL")
+        self.assertTrue(any(str(error).startswith("post_close_review:") for error in consistency["errors"]))
+
+    def test_malformed_current_completion_fails_safe_to_event_due_logic(self):
+        self._write_runtime_policy()
+        self._write_ready_trigger("2026-09-14")
+        self._write_formal_review_completion("2026-09-14", closure_review_path="events/reviews/2026-09-13.json")
+        current = self._set_current_closure("2026-09-14")
+
+        def run():
+            return (
+                build_e2e_status.close_review_component(current, datetime.fromisoformat("2026-09-14T20:31:00+08:00")),
+                self._validate_consistency_review(datetime.fromisoformat("2026-09-14T20:31:00+08:00")),
+            )
+
+        e2e, consistency = self._with_review_consumers(run)
+
+        self.assertEqual(e2e["status"], "BLOCKED")
+        self.assertEqual(consistency["checks"][-1]["status"], "FAIL")
+        self.assertIn("missing_or_invalid_closure", consistency["checks"][-1]["detail"])
+
+    def test_non_formal_review_reference_fails_safe_to_event_due_logic(self):
+        self._write_runtime_policy()
+        self._write_ready_trigger("2026-09-14")
+        self._write_formal_review_completion("2026-09-14", event_type="POST_MARKET_REVIEW_REQUIRED")
+        current = self._set_current_closure("2026-09-14")
+
+        def run():
+            return (
+                build_e2e_status.close_review_component(current, datetime.fromisoformat("2026-09-14T20:31:00+08:00")),
+                self._validate_consistency_review(datetime.fromisoformat("2026-09-14T20:31:00+08:00")),
+            )
+
+        e2e, consistency = self._with_review_consumers(run)
+
+        self.assertEqual(e2e["status"], "BLOCKED")
+        self.assertEqual(consistency["checks"][-1]["status"], "FAIL")
+        self.assertIn("missing_or_invalid_review", consistency["checks"][-1]["detail"])
 
 
 if __name__ == "__main__":
