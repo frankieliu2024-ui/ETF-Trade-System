@@ -6,7 +6,17 @@ import unittest
 from unittest.mock import patch
 from pathlib import Path
 
-from scripts.process_state_sync_request import account_fact_is_older, is_broker_screenshot_request, merge_account_fact, sync_current_account_mirror
+from scripts import process_state_sync_request as state_sync
+from scripts.process_state_sync_request import (
+    CANONICAL_INGRESS_FAILED_EXPLICITLY,
+    CANONICAL_INGRESS_NOT_APPLICABLE,
+    CANONICAL_INGRESS_SUBMITTED,
+    account_fact_is_older,
+    canonical_ingress_contract_for_request,
+    is_broker_screenshot_request,
+    merge_account_fact,
+    sync_current_account_mirror,
+)
 from scripts import build_e2e_status as e2e
 
 from scripts.state_manager import (
@@ -233,3 +243,199 @@ class StateLayerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_actor_adopted_broker_fact_has_terminal_ingress_contract():
+    submitted = canonical_ingress_contract_for_request({
+        "_ingress_path": "requests/live_snapshot/20260914_broker_account_snapshot.json",
+        "request_id": "20260914_broker_account_snapshot",
+        "formal_fact_type": "BROKER_ACCOUNT_SNAPSHOT",
+        "account_fact": {"cash": 1},
+    })
+    assert submitted["required"] is True
+    assert submitted["terminal_state"] == CANONICAL_INGRESS_SUBMITTED
+
+    request_id_only = canonical_ingress_contract_for_request({
+        "request_id": "20260914_broker_account_snapshot",
+        "formal_fact_type": "BROKER_ACCOUNT_SNAPSHOT",
+        "account_fact": {"cash": 1},
+    })
+    assert request_id_only["terminal_state"] == CANONICAL_INGRESS_FAILED_EXPLICITLY
+    assert request_id_only["reason"] == "missing_durable_ingress_receipt"
+
+    failed = canonical_ingress_contract_for_request({
+        "_ingress_path": "requests/live_snapshot/20260914_broker_account_snapshot_missing_payload.json",
+        "request_id": "20260914_broker_account_snapshot_missing_payload",
+        "formal_fact_type": "BROKER_ACCOUNT_SNAPSHOT",
+    })
+    assert failed["terminal_state"] == CANONICAL_INGRESS_FAILED_EXPLICITLY
+    assert failed["reason"] == "missing_account_fact"
+
+
+def test_adopted_formal_fact_without_durable_receipt_fails_explicitly():
+    failed = canonical_ingress_contract_for_request({
+        "formal_fact_type": "BROKER_ACCOUNT_SNAPSHOT",
+        "account_fact": {"cash": 1},
+    })
+
+    assert failed["required"] is True
+    assert failed["terminal_state"] == CANONICAL_INGRESS_FAILED_EXPLICITLY
+    assert failed["reason"] == "missing_durable_ingress_receipt"
+
+
+def test_scheduled_review_report_delivery_cannot_substitute_for_canonical_ingress():
+    report_only = canonical_ingress_contract_for_request({
+        "_ingress_path": "requests/live_snapshot/20260914_report_delivery.json",
+        "request_id": "20260914_report_delivery",
+        "channel": "REPORT",
+        "report_type": "ETF_TRADE_REVIEW",
+    })
+    assert report_only["terminal_state"] == CANONICAL_INGRESS_NOT_APPLICABLE
+
+    missing_review_payload = canonical_ingress_contract_for_request({
+        "_ingress_path": "requests/live_snapshot/20260914_scheduled_review.json",
+        "request_id": "20260914_scheduled_review",
+        "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
+        "channel": "REPORT",
+        "report_type": "ETF_TRADE_REVIEW",
+    })
+    assert missing_review_payload["terminal_state"] == CANONICAL_INGRESS_FAILED_EXPLICITLY
+    assert missing_review_payload["reason"] == "report_delivery_is_not_canonical_review_ingress"
+
+
+def test_scheduled_review_formal_payload_reaches_canonical_ingress():
+    submitted = canonical_ingress_contract_for_request({
+        "_ingress_path": "requests/live_snapshot/20260914_scheduled_review.json",
+        "request_id": "20260914_scheduled_review",
+        "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
+        "interaction_scenario": "POST_CLOSE_REVIEW",
+        "formal_review": {"date": "2026-09-14", "summary": "review"},
+    })
+
+    assert submitted["required"] is True
+    assert submitted["terminal_state"] == CANONICAL_INGRESS_SUBMITTED
+
+
+def test_confirmed_trade_and_formal_decision_keep_ingress_success_chain():
+    trade = canonical_ingress_contract_for_request({
+        "_ingress_path": "requests/live_snapshot/20260914_trade.json",
+        "request_id": "20260914_trade",
+        "formal_fact_type": "CONFIRMED_TRADE",
+        "trade_event": {"symbol": "QQQ", "side": "BUY"},
+    })
+    decision = canonical_ingress_contract_for_request({
+        "_ingress_path": "requests/live_snapshot/20260914_decision.json",
+        "request_id": "20260914_decision",
+        "formal_fact_type": "FORMAL_DECISION",
+        "formal_decision": {"decision": "HOLD"},
+    })
+
+    assert trade["terminal_state"] == CANONICAL_INGRESS_SUBMITTED
+    assert decision["terminal_state"] == CANONICAL_INGRESS_SUBMITTED
+
+
+def test_real_20260904_broker_screenshot_replay_fails_explicitly_not_silently():
+    request = json.loads(Path("requests/live_snapshot/20260904_1327_user_screenshot.json").read_text())
+    request["_ingress_path"] = "requests/live_snapshot/20260904_1327_user_screenshot.json"
+
+    contract = canonical_ingress_contract_for_request(request)
+
+    assert contract["required"] is True
+    assert contract["terminal_state"] == CANONICAL_INGRESS_FAILED_EXPLICITLY
+    assert contract["reason"] == "missing_account_fact"
+
+
+def _minimal_valid_account():
+    return {
+        "updated_at": "2026-09-14T15:00:00+08:00",
+        "source": "BROKER_SCREENSHOT",
+        "status": "VALID",
+        "total_asset": 100000,
+        "cash": 100000,
+        "positions": [],
+        "orders": [],
+        "trades": [],
+    }
+
+
+def _run_processor_contract_case(tmp_path, monkeypatch, capsys, request):
+    root = tmp_path
+    request_dir = root / "requests" / "live_snapshot"
+    request_dir.mkdir(parents=True)
+    (root / "data" / "state").mkdir(parents=True)
+    (root / "ETF当前状态_DASHBOARD.md").write_text("dashboard", encoding="utf-8")
+    (root / "data" / "state" / "account_fact.json").write_text(
+        json.dumps(_minimal_valid_account(), ensure_ascii=False),
+        encoding="utf-8",
+    )
+    request_path = request_dir / "case.json"
+    request_path.write_text(json.dumps(request, ensure_ascii=False), encoding="utf-8")
+
+    seen = []
+    original_contract = state_sync.canonical_ingress_contract_for_request
+
+    def capture_contract(payload):
+        seen.append(dict(payload))
+        return original_contract(payload)
+
+    monkeypatch.setattr(state_sync, "ROOT", root)
+    monkeypatch.setattr(state_sync, "ACCOUNT", root / "data" / "state" / "account_fact.json")
+    monkeypatch.setattr(state_sync, "DASHBOARD", root / "ETF当前状态_DASHBOARD.md")
+    monkeypatch.setattr(state_sync, "canonical_ingress_contract_for_request", capture_contract)
+    monkeypatch.setattr(state_sync, "_latest_trade_event_id", lambda: "")
+    monkeypatch.setattr(state_sync, "record_formal_decision", lambda payload: (bool(payload.get("formal_decision")), "decision-1" if payload.get("formal_decision") else ""))
+    monkeypatch.setattr(state_sync, "record_post_close_review", lambda account, payload: (bool(payload.get("formal_review") or payload.get("review")), False))
+    monkeypatch.setattr(state_sync, "record_unrecoverable_review_prerequisite", lambda account, payload, event: (False, False))
+    monkeypatch.setattr(state_sync, "replace_block", lambda text, *args, **kwargs: text)
+    monkeypatch.setattr(state_sync, "build_dashboard_block", lambda *args, **kwargs: "")
+    monkeypatch.setattr(state_sync, "write_formal_text_if_changed", lambda *args, **kwargs: False)
+    monkeypatch.setattr(state_sync, "sync_formal_files", lambda *args, **kwargs: {"ok": True})
+    monkeypatch.setattr(state_sync, "latest_formal_review_decision", lambda root: None)
+    monkeypatch.setattr(state_sync, "_find_existing_trade", lambda *args, **kwargs: ({
+        "event_id": "trade-1",
+        "confirmed_at_beijing": "2026-09-14T10:00:00+08:00",
+        "linked_decision_id": "decision-1",
+    } if request.get("trade_event") else None))
+    monkeypatch.setattr(state_sync, "_latest_trade_event_id", lambda: "")
+    monkeypatch.setattr("sys.argv", ["process_state_sync_request.py", "requests/live_snapshot/case.json"])
+
+    assert state_sync.main() == 0
+    out = json.loads(capsys.readouterr().out)
+
+    assert seen
+    assert seen[0]["_ingress_path"] == "requests/live_snapshot/case.json"
+    assert out["canonical_ingress_state"] == CANONICAL_INGRESS_SUBMITTED
+    return out
+
+
+def test_processor_injects_ingress_path_before_terminal_contract(tmp_path, monkeypatch, capsys):
+    cases = [
+        {
+            "request_id": "broker",
+            "formal_fact_type": "BROKER_ACCOUNT_SNAPSHOT",
+            "account_fact": _minimal_valid_account(),
+        },
+        {
+            "request_id": "review",
+            "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
+            "formal_review": {"date": "2026-09-14", "summary": "review"},
+        },
+        {
+            "request_id": "trade",
+            "formal_fact_type": "CONFIRMED_TRADE",
+            "trade_event": {
+                "event_id": "trade-1",
+                "symbol": "QQQ",
+                "side": "BUY",
+                "confirmed_at_beijing": "2026-09-14T10:00:00+08:00",
+            },
+        },
+        {
+            "request_id": "decision",
+            "formal_fact_type": "FORMAL_DECISION",
+            "formal_decision": {"decision_id": "decision-1", "action": "HOLD"},
+        },
+    ]
+
+    for request in cases:
+        _run_processor_contract_case(tmp_path / request["request_id"], monkeypatch, capsys, request)
