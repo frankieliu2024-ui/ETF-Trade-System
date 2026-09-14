@@ -114,11 +114,21 @@ def _resolution(root: Path, trial: dict[str, Any], as_of: date) -> dict[str, Any
         return {"status": status, "decision_id": event.get("decision_id"), "decision_time_beijing": event.get("decision_time_beijing", "")}
 
     executions = _executions(root)
-    buys = [x for x in executions if str(x.get("code") or "").strip() == code and str(x.get("side") or x.get("action") or "").upper() == "BUY"]
+    buys = [
+        x for x in executions
+        if str(x.get("code") or "").strip() == code
+        and str(x.get("side") or x.get("action") or "").upper() == "BUY"
+        and (
+            str(x.get("linked_decision_id") or "") == str(trial.get("decision_id") or "")
+            or str(x.get("hypothesis_id") or "") == hypothesis
+        )
+    ]
     sells = [x for x in executions if str(x.get("code") or "").strip() == code and str(x.get("side") or x.get("action") or "").upper() == "SELL"]
     start = parse_time(trial.get("decision_time_beijing")) or datetime.min.replace(tzinfo=SHANGHAI)
     eligible = [x for x in sells if (parse_time(x.get("confirmed_at_beijing") or x.get("executed_at_beijing") or x.get("execution_date")) or datetime.min.replace(tzinfo=SHANGHAI)) >= start]
-    buy_qty = sum(float(x.get("quantity") or 0) for x in buys if (parse_time(x.get("confirmed_at_beijing") or x.get("executed_at_beijing") or x.get("execution_date")) or datetime.min.replace(tzinfo=SHANGHAI)) >= start)
+    # The canonical decision may be recorded after an already-linked, user-confirmed
+    # execution.  Attribution identity, not recording time, owns the opening lot.
+    buy_qty = sum(float(x.get("quantity") or 0) for x in buys)
     sell_qty = sum(float(x.get("quantity") or 0) for x in eligible)
     if code and eligible and buy_qty > 0 and sell_qty >= buy_qty:
         return {"status": "RESOLVED", "resolution_reason": "CONFIRMED_COMPLETE_SELL", "resolution_event_ids": [x.get("event_id") for x in eligible], "resolution_time_beijing": max((x.get("confirmed_at_beijing") or x.get("executed_at_beijing") or x.get("execution_date") or "") for x in eligible)}

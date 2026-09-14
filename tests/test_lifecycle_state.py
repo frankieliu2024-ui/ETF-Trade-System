@@ -73,6 +73,35 @@ class LifecycleStateTests(unittest.TestCase):
         self.assertEqual(item["current_t_plus"], 1)
         self.assertEqual(result["next_mandatory_node"], "")
 
+    def test_linked_buy_recorded_before_decision_can_be_resolved_by_complete_sell(self):
+        self.add_trial(decision_date="2026-09-02", trade_date="2026-09-02", hypothesis="H159326")
+        decision = self.root / "events/decisions/H159326.json"
+        value = json.loads(decision.read_text(encoding="utf-8"))
+        value["candidate_code"] = "159326"
+        value["formal_decision"]["lifecycle"] = "电网设备ETF（159326）：Trial"
+        decision.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
+        trade = self.root / "events/trades/H159326.json"
+        buy = json.loads(trade.read_text(encoding="utf-8"))
+        buy.update({"event_id": "buy-159326", "code": "159326", "side": "BUY", "linked_decision_id": "H159326", "hypothesis_id": "H159326", "confirmed_at_beijing": "2026-09-02T09:00:00+08:00", "quantity": 3000})
+        trade.write_text(json.dumps(buy, ensure_ascii=False), encoding="utf-8")
+        write(self.root, "events/trades/sell-159326.json", {
+            "event_id": "sell-159326", "code": "159326", "side": "SELL", "quantity": 3000,
+            "execution_status": "EXECUTED", "execution_date": "2026-09-10",
+            "confirmed_at_beijing": "2026-09-10T14:42:00+08:00",
+        })
+        item = build_lifecycle_projection(self.root, "2026-09-14")["active_lifecycles"][0]
+        self.assertEqual(item["lifecycle_status"], "RESOLVED")
+        self.assertFalse(item["decision_due"])
+
+    def test_partial_sell_does_not_resolve_linked_trial(self):
+        self.add_trial(hypothesis="H-partial")
+        write(self.root, "events/trades/sell-partial.json", {
+            "event_id": "sell-partial", "code": "515880", "side": "SELL", "quantity": 1,
+            "execution_status": "EXECUTED", "execution_date": "2026-08-29",
+        })
+        item = build_lifecycle_projection(self.root, "2026-09-14")["active_lifecycles"][0]
+        self.assertEqual(item["lifecycle_status"], "ACTIVE_TRIAL")
+
 
 if __name__ == "__main__":
     unittest.main()
