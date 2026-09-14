@@ -144,6 +144,30 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     return {"schema_version": "1.0", "trigger": {"source": request.get("requested_by") or request.get("source") or "INTERACTIVE_QUERY", "request_id": request.get("request_id") or "", "requested_at_beijing": request.get("requested_at_beijing") or request.get("request_time") or ""}, "master": {"version": decision.get("rules_version") or current.get("rules_version") or "", "source": "ETF规则_MASTER.md"}, "account_fact": {"source": account.get("source") or "", "as_of_beijing": account.get("updated_at") or "", "status": account.get("status") or ""}, "current": {"market_date": current.get("market_date") or "", "latest_snapshot": current.get("latest_snapshot") or "", "captured_at_beijing": current.get("captured_at") or (current.get("data_freshness") or {}).get("captured_at_beijing") or "", "provider_as_of_beijing": (current.get("data_freshness") or {}).get("provider_as_of") or "", "provider": (current.get("data_freshness") or {}).get("provider") or ""}, "decision_context": {"generated_at_beijing": decision.get("generated_at_beijing") or decision.get("generated_at") or "", "source": "scripts/state_manager.py::build_decision_context"}, "market_quote": {"mode": market_quote.get("refresh_mode") or "", "decision_freshness": freshness, "quotes_as_of_beijing": sorted({str(q.get("data_time_beijing") or "") for q in (market_quote.get("quotes") or []) if isinstance(q, dict) and q.get("data_time_beijing")}), "source": "scripts/market_quote_router.py"}, "lifecycle": {"source": "decision_context.lifecycle_projection", "reference": "decision_context.lifecycle_projection"}, "etf_universe": {"source": CANONICAL_FILES["etf_monitor_universe"], "version": universe.get("version") or "", "count": len(universe.get("objects") or [])}, "pit_rule": "Formal reasoning consumes only this request-scoped fact set; downstream projections cannot mutate the same PIT decision."}
 
 
+def _first_qualified_market_fact(market_quote: dict) -> dict:
+    for quote in market_quote.get("quotes") or []:
+        if not isinstance(quote, dict):
+            continue
+        quality = str(quote.get("quality_status") or quote.get("freshness") or "").upper()
+        as_of = quote.get("data_time_beijing") or quote.get("as_of_beijing") or quote.get("provider_as_of") or ""
+        if as_of and quality not in {"", "MISSING", "STALE", "DATA_UNAVAILABLE", "INVALID"}:
+            identity = (
+                quote.get("identity")
+                or quote.get("quote_identity")
+                or quote.get("object_code")
+                or quote.get("code")
+                or quote.get("symbol")
+                or quote.get("name")
+                or ""
+            )
+            return {
+                "identity": str(identity),
+                "as_of_beijing": as_of,
+                "quality_status": quality,
+            }
+    return {"identity": "UNKNOWN", "as_of_beijing": "UNKNOWN", "quality_status": "UNKNOWN"}
+
+
 def build_fast_path_latency(request: dict, current: dict, decision: dict, market_quote: dict, reply_ready: str) -> dict:
     """Report only observed timestamps; missing instrumentation stays explicit."""
     t0 = request.get("requested_at_beijing") or request.get("request_time") or ""
@@ -151,8 +175,43 @@ def build_fast_path_latency(request: dict, current: dict, decision: dict, market
     t_new = current.get("captured_at") or (current.get("data_freshness") or {}).get("captured_at_beijing") or ""
     t_decision = decision.get("generated_at_beijing") or decision.get("generated_at") or ""
     t_refresh = request.get("refresh_started_at_beijing") or request.get("refresh_reused_at_beijing") or ""
-    return {"t0": t0, "user_request_received": t0, "screenshot_account_fact_available": request.get("screenshot_account_fact_available_at_beijing") or request.get("account_fact_available_at_beijing") or "", "t_refresh_start_or_reuse": t_refresh, "market_refresh_identity": request.get("market_refresh_identity") or request.get("refresh_request_id") or "", "t_new_current": t_new if freshness.get("resolved_post_request") or freshness.get("post_request") else "", "t_minimum_legal_inputs_ready": request.get("minimum_legal_inputs_ready_at_beijing") or t_decision, "t_decision_ready": t_decision, "final_answer_identity": request.get("final_answer_identity") or reply_ready, "t_reply_or_output_ready": reply_ready, "required_account_persistence_identity": request.get("required_account_persistence_identity") or "", "refresh_start_latency": _duration_seconds(t0, t_refresh), "refresh_duration": _duration_seconds(t_refresh, t_new), "post_current_decision_latency": _duration_seconds(t_new, t_decision), "total_fast_path_latency": _duration_seconds(t0, reply_ready), "measurement_status": "OBSERVED_FIELDS_ONLY; MISSING_TIMESTAMPS_REMAIN_EXPLICIT", "trace_metadata_is_non_authoritative": True, "refresh_mode": market_quote.get("refresh_mode") or ""}
-
+    first_market_fact = _first_qualified_market_fact(market_quote)
+    final_identity = request.get("final_answer_identity") or request.get("final_analysis_identity") or reply_ready or "UNKNOWN"
+    return {
+        "t0": t0,
+        "manual_request_identity": request.get("request_id") or request.get("manual_request_identity") or "UNKNOWN",
+        "manual_request_received_at": t0 or "UNKNOWN",
+        "user_request_received": t0,
+        "screenshot_account_fact_available": request.get("screenshot_account_fact_available_at_beijing") or request.get("account_fact_available_at_beijing") or "UNKNOWN",
+        "screenshot_account_fact_available_at": request.get("screenshot_account_fact_available_at_beijing") or request.get("account_fact_available_at_beijing") or "UNKNOWN",
+        "t_refresh_start_or_reuse": t_refresh,
+        "market_refresh_identity": request.get("market_refresh_identity") or request.get("refresh_request_id") or "UNKNOWN",
+        "first_qualified_market_fact_identity": first_market_fact["identity"],
+        "first_qualified_market_fact_as_of": first_market_fact["as_of_beijing"],
+        "first_qualified_market_fact_quality": first_market_fact["quality_status"],
+        "t_new_current": t_new if freshness.get("resolved_post_request") or freshness.get("post_request") else "",
+        "t_minimum_legal_inputs_ready": request.get("minimum_legal_inputs_ready_at_beijing") or t_decision or "UNKNOWN",
+        "minimum_legal_inputs_ready_at": request.get("minimum_legal_inputs_ready_at_beijing") or t_decision or "UNKNOWN",
+        "t_decision_ready": t_decision,
+        "final_answer_identity": final_identity,
+        "final_analysis_identity": final_identity,
+        "t_reply_or_output_ready": reply_ready,
+        "required_account_persistence_identity": request.get("required_account_persistence_identity") or "UNKNOWN",
+        "refresh_start_latency": _duration_seconds(t0, t_refresh),
+        "refresh_duration": _duration_seconds(t_refresh, t_new),
+        "post_current_decision_latency": _duration_seconds(t_new, t_decision),
+        "total_fast_path_latency": _duration_seconds(t0, reply_ready),
+        "measurement_status": "OBSERVED_FIELDS_ONLY; MISSING_TIMESTAMPS_REMAIN_EXPLICIT",
+        "trace_metadata_is_non_authoritative": True,
+        "trace_metadata_is_decision_gate": False,
+        "business_semantics_changed": False,
+        "unobservable_product_phases": [
+            "product_message_received_at",
+            "screenshot_decode_started_at",
+            "final_answer_delivered_at",
+        ],
+        "refresh_mode": market_quote.get("refresh_mode") or "",
+    }
 
 def build_market_domain_projection(current: dict, overseas: dict, us_extended: dict, freshness: dict | None = None) -> dict:
     """Expose domain facts without flattening them into A-share CURRENT semantics."""
