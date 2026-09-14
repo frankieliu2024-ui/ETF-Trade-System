@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-14T19:05:17+08:00",
+  "generated_at": "2026-09-14T19:09:22+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 34836351393,
+  "run_id": 34836705525,
   "run_attempt": 1,
-  "head_sha": "da5eef309cba73d79e2db1ce58b47b055598277b",
-  "main_head_sha": "0ed00866f0f16d4ee7f14af543dd1e71d9273635",
+  "head_sha": "13a644d628d20f0cfc4c8b4e597ddbcea2092cc2",
+  "main_head_sha": "13a644d628d20f0cfc4c8b4e597ddbcea2092cc2",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,19 +16,16 @@
     }
   ],
   "changed_files": [
-    "data/state/overseas_context.json",
-    "data/state/overseas_context_previous.json",
-    "data/state/overseas_runtime_health.json",
-    "data/state/query_context.json",
-    "data/state/us_extended_hours_context.json"
+    "data/state/restricted_rollback_plan.json",
+    "data/state/workflow_failure_diagnostic.json"
   ],
-  "commit_message": "data: refresh overseas pulse and notifications",
+  "commit_message": "state: record workflow failure diagnosis",
   "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": false,
+    "head_is_current_main": true,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": true,
