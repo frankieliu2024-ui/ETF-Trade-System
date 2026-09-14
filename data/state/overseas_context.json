@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-14T08:49:58Z",
-  "generated_at_beijing": "2026-09-14T16:49:52+08:00",
+  "generated_at": "2026-09-14T11:04:45Z",
+  "generated_at_beijing": "2026-09-14T19:04:37+08:00",
   "display_timezone": "Asia/Shanghai",
   "a_share_reference_timezone": "Asia/Shanghai",
   "scope": "FORMAL_OVERSEAS_AND_ASIA_INDEX_LAYER",
@@ -11,6 +11,8 @@
     "SOX",
     "N225",
     "KOSPI",
+    "005930",
+    "000660",
     "TWII",
     "HSTECH"
   ],
@@ -63,7 +65,7 @@
           "provider_timestamp_field": "chart.timestamp",
           "as_of_beijing": "2026-09-12T04:00:00+08:00",
           "market_phase": "PRE_OPEN",
-          "delay_minutes": 3649.87
+          "delay_minutes": 3784.62
         }
       ],
       "direct_source_chain": [
@@ -72,7 +74,7 @@
       ],
       "configured_primary": "yahoo_chart_api",
       "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 3649.87,
+      "delay_minutes": 3784.62,
       "stable_for_pulse": false,
       "quality_status_cn": "数据可用",
       "freshness_status_cn": "上一交易时段参考"
@@ -108,7 +110,7 @@
       "decision_note": "不同市场非同一时点，不得把上一收盘、盘中和当日收盘混为同步信号。",
       "selection_basis": "configured_primary_yahoo_valid_for_current_market_phase",
       "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 3649.87,
+      "delay_minutes": 3784.62,
       "stable_for_pulse": false,
       "quality_status_cn": "数据可用",
       "freshness_status_cn": "上一交易时段参考"
@@ -164,7 +166,7 @@
           "provider_timestamp_field": "f86",
           "as_of_beijing": "2026-09-14T14:30:00+08:00",
           "market_phase": "CLOSED",
-          "delay_minutes": 139.87
+          "delay_minutes": 274.62
         }
       ],
       "direct_source_chain": [
@@ -174,7 +176,7 @@
       ],
       "configured_primary": "eastmoney_push2delay:100.N225",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 139.87,
+      "delay_minutes": 274.62,
       "stable_for_pulse": true,
       "quality_status_cn": "数据可用",
       "freshness_status_cn": "已结束交易时段参考"
@@ -198,10 +200,10 @@
         "close": 6684.37,
         "volume": 274401000.0,
         "amount": 20189246000000.0,
-        "timestamp": 1789370100,
-        "as_of_utc": "2026-09-14T07:15:00Z",
-        "as_of_local": "2026-09-14T16:15:00+09:00",
-        "as_of_beijing": "2026-09-14T15:15:00+08:00",
+        "timestamp": 1789383840,
+        "as_of_utc": "2026-09-14T11:04:00Z",
+        "as_of_local": "2026-09-14T20:04:00+09:00",
+        "as_of_beijing": "2026-09-14T19:04:00+08:00",
         "market_date_local": "2026-09-14",
         "provider_timezone": "Asia/Seoul",
         "symbol": "KOSPI",
@@ -228,11 +230,11 @@
           "high": 6773.97,
           "low": 6654.82,
           "close": 6684.37,
-          "provider_timestamp": 1789370100,
+          "provider_timestamp": 1789383840,
           "provider_timestamp_field": "localTradedAt",
-          "as_of_beijing": "2026-09-14T15:15:00+08:00",
+          "as_of_beijing": "2026-09-14T19:04:00+08:00",
           "market_phase": "CLOSED",
-          "delay_minutes": 94.87
+          "delay_minutes": 0.62
         }
       ],
       "direct_source_chain": [
@@ -243,10 +245,136 @@
       ],
       "configured_primary": "naver_finance:KOSPI",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 94.87,
+      "delay_minutes": 0.62,
       "stable_for_pulse": true,
       "quality_status_cn": "数据可用",
       "freshness_status_cn": "已结束交易时段参考"
+    },
+    "005930": {
+      "object": "005930",
+      "name": "三星电子",
+      "reference_role": "KOREA_STOCK",
+      "asset_class": "STOCK",
+      "provider": "naver_finance",
+      "provider_result": "HTTP 200",
+      "provider_timestamp_field": "localTradedAt",
+      "symbol": "005930",
+      "market_timezone": "Asia/Seoul",
+      "market_phase_at_generation": "POST_MARKET",
+      "quality_status": "PASS",
+      "latest": {
+        "open": 249500.0,
+        "high": 254500.0,
+        "low": 247000.0,
+        "close": 248500.0,
+        "volume": 17757600.0,
+        "amount": 4446573000000.0,
+        "timestamp": 1789383600,
+        "as_of_utc": "2026-09-14T11:00:00Z",
+        "as_of_local": "2026-09-14T20:00:00+09:00",
+        "as_of_beijing": "2026-09-14T19:00:00+08:00",
+        "market_date_local": "2026-09-14",
+        "provider_timezone": "Asia/Seoul",
+        "symbol": "005930",
+        "market_session_type": "afterMarket",
+        "market_status": "CLOSE"
+      },
+      "decision_note": "Naver Finance Korea STOCK direct row; native itemCode/localTradedAt and provider OHLC/volume retained.",
+      "selected_provider_id": "naver_finance:005930",
+      "selection_basis": "validated_live_naver_krx_stock_direct_source",
+      "provider_attempts": [
+        {
+          "provider": "naver_finance:005930",
+          "result": "DEGRADED",
+          "http_or_cli_result": "HTTP 200",
+          "quality_status": "PASS",
+          "freshness_status": "PREVIOUS_SESSION_REFERENCE",
+          "stable_for_10m_pulse": false,
+          "symbol": "005930",
+          "latest_price": 248500.0,
+          "open": 249500.0,
+          "high": 254500.0,
+          "low": 247000.0,
+          "close": 248500.0,
+          "provider_timestamp": 1789383600,
+          "provider_timestamp_field": "localTradedAt",
+          "as_of_beijing": "2026-09-14T19:00:00+08:00",
+          "market_phase": "POST_MARKET",
+          "delay_minutes": 4.62
+        }
+      ],
+      "direct_source_chain": [
+        "naver_finance:005930"
+      ],
+      "configured_primary": "naver_finance:005930",
+      "freshness_status": "PREVIOUS_SESSION_REFERENCE",
+      "delay_minutes": 4.62,
+      "stable_for_pulse": false,
+      "quality_status_cn": "数据可用",
+      "freshness_status_cn": "上一交易时段参考"
+    },
+    "000660": {
+      "object": "000660",
+      "name": "SK海力士",
+      "reference_role": "KOREA_STOCK",
+      "asset_class": "STOCK",
+      "provider": "naver_finance",
+      "provider_result": "HTTP 200",
+      "provider_timestamp_field": "localTradedAt",
+      "symbol": "000660",
+      "market_timezone": "Asia/Seoul",
+      "market_phase_at_generation": "POST_MARKET",
+      "quality_status": "PASS",
+      "latest": {
+        "open": 1707000.0,
+        "high": 1740000.0,
+        "low": 1678000.0,
+        "close": 1683000.0,
+        "volume": 4000232.0,
+        "amount": 6838969000000.0,
+        "timestamp": 1789383600,
+        "as_of_utc": "2026-09-14T11:00:00Z",
+        "as_of_local": "2026-09-14T20:00:00+09:00",
+        "as_of_beijing": "2026-09-14T19:00:00+08:00",
+        "market_date_local": "2026-09-14",
+        "provider_timezone": "Asia/Seoul",
+        "symbol": "000660",
+        "market_session_type": "afterMarket",
+        "market_status": "CLOSE"
+      },
+      "decision_note": "Naver Finance Korea STOCK direct row; native itemCode/localTradedAt and provider OHLC/volume retained.",
+      "selected_provider_id": "naver_finance:000660",
+      "selection_basis": "validated_live_naver_krx_stock_direct_source",
+      "provider_attempts": [
+        {
+          "provider": "naver_finance:000660",
+          "result": "DEGRADED",
+          "http_or_cli_result": "HTTP 200",
+          "quality_status": "PASS",
+          "freshness_status": "PREVIOUS_SESSION_REFERENCE",
+          "stable_for_10m_pulse": false,
+          "symbol": "000660",
+          "latest_price": 1683000.0,
+          "open": 1707000.0,
+          "high": 1740000.0,
+          "low": 1678000.0,
+          "close": 1683000.0,
+          "provider_timestamp": 1789383600,
+          "provider_timestamp_field": "localTradedAt",
+          "as_of_beijing": "2026-09-14T19:00:00+08:00",
+          "market_phase": "POST_MARKET",
+          "delay_minutes": 4.62
+        }
+      ],
+      "direct_source_chain": [
+        "naver_finance:000660"
+      ],
+      "configured_primary": "naver_finance:000660",
+      "freshness_status": "PREVIOUS_SESSION_REFERENCE",
+      "delay_minutes": 4.62,
+      "stable_for_pulse": false,
+      "quality_status_cn": "数据可用",
+      "freshness_status_cn": "上一交易时段参考"
     },
     "TWII": {
       "object": "TWII",
@@ -297,7 +425,7 @@
           "provider_timestamp_field": "tlong",
           "as_of_beijing": "2026-09-14T13:33:00+08:00",
           "market_phase": "CLOSED",
-          "delay_minutes": 196.87
+          "delay_minutes": 331.62
         }
       ],
       "direct_source_chain": [
@@ -308,7 +436,7 @@
       ],
       "configured_primary": "twse_mis:tse_t00.tw",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 196.87,
+      "delay_minutes": 331.62,
       "stable_for_pulse": true,
       "quality_status_cn": "数据可用",
       "freshness_status_cn": "已结束交易时段参考"
@@ -364,7 +492,7 @@
           "provider_timestamp_field": "f86",
           "as_of_beijing": "2026-09-14T16:08:28+08:00",
           "market_phase": "CLOSED",
-          "delay_minutes": 41.4
+          "delay_minutes": 176.15
         },
         {
           "provider": "yahoo_chart_api:HSTECH.HK",
@@ -383,7 +511,7 @@
           "provider_timestamp_field": "chart.timestamp",
           "as_of_beijing": "2026-09-14T16:05:00+08:00",
           "market_phase": "CLOSED",
-          "delay_minutes": 44.87
+          "delay_minutes": 179.62
         },
         {
           "provider": "hithink-finance:HS2083",
@@ -410,7 +538,7 @@
       ],
       "configured_primary": "eastmoney_push2:124.HSTECH",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 41.4,
+      "delay_minutes": 176.15,
       "stable_for_pulse": true,
       "quality_status_cn": "数据可用",
       "freshness_status_cn": "已结束交易时段参考"
@@ -431,12 +559,12 @@
     "yahoo_chart_api:HSTECH.HK": {
       "status": "ACTIVE",
       "consecutive_failures": 0,
-      "last_success_at": "2026-09-14T08:49:52+00:00"
+      "last_success_at": "2026-09-14T11:04:37+00:00"
     },
     "eastmoney_push2:124.HSTECH": {
       "status": "ACTIVE",
       "consecutive_failures": 0,
-      "last_success_at": "2026-09-14T08:49:52+00:00",
+      "last_success_at": "2026-09-14T11:04:37+00:00",
       "failure_class": "UNKNOWN",
       "bypass_date": "2026-09-14"
     }
