@@ -131,7 +131,7 @@ def latest_valid_row(payload: dict, symbol: str, timezone_name: str) -> dict:
         previous_close = None
         close_values = quote.get("close") or []
         latest_market_date = dt_local.date()
-        for j in range(idx - 1, -1):
+        for j in range(idx - 1, -1, -1):
             if j >= len(timestamps):
                 continue
             bar_date = datetime.fromtimestamp(int(timestamps[j]), timezone.utc).astimezone(zone).date()
