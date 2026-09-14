@@ -41,7 +41,7 @@ DISPLAY_STATUS = {
     "HK": {"PRE_OPEN": "港股开盘前", "REGULAR": "港股交易中", "MIDDAY_BREAK": "港股午间休市", "OFF_SESSION": "港股收盘"},
     "TW": {"PRE_OPEN": "台股开盘前", "REGULAR": "台股交易中", "OFF_SESSION": "台股收盘"},
     "JP": {"PRE_OPEN": "日股开盘前", "REGULAR": "日股交易中", "MIDDAY_BREAK": "日股午间休市", "OFF_SESSION": "日股收盘"},
-    "KR": {"PRE_OPEN": "韩股开盘前", "REGULAR": "韩股交易中", "OFF_SESSION": "韩股收盘"},
+    "KR": {"PRE_OPEN": "韩股开盘前", "REGULAR": "韩股交易中", "POST_MARKET": "韩股盘后（仅合资格股票）", "OFF_SESSION": "韩股收盘"},
     "US": {
         "PRE_MARKET": "美股盘前",
         "REGULAR": "美股交易中",
@@ -74,7 +74,7 @@ def _in_window(value: int, start: int, end: int) -> bool:
     return start <= value < end
 
 
-def market_phase(market: str, now: datetime | None = None) -> str:
+def market_phase(market: str, now: datetime | None = None, *, object_type: str = "INDEX") -> str:
     """Return internal phase; user-facing code must use display_market_status()."""
     if market not in MARKET_ZONES:
         return "UNKNOWN"
@@ -107,6 +107,10 @@ def market_phase(market: str, now: datetime | None = None) -> str:
             return "MIDDAY_BREAK"
         return "PRE_OPEN" if minute < 9 * 60 else "OFF_SESSION"
     if market == "KR":
+        # KRX After Market (2026-09-14) is a stock-only extension. KOSPI,
+        # ETFs and ETNs retain the regular index/eligible-object boundary.
+        if object_type.upper() == "STOCK" and _in_window(minute, 16 * 60, 20 * 60):
+            return "POST_MARKET"
         return "REGULAR" if _in_window(minute, 9 * 60, 15 * 60 + 30) else ("PRE_OPEN" if minute < 9 * 60 else "OFF_SESSION")
     if market == "US":
         if _in_window(minute, 4 * 60, 9 * 60 + 30):
@@ -123,8 +127,8 @@ def display_market_status(market: str, phase: str) -> str:
     return DISPLAY_STATUS.get(market, {}).get(phase, "市场状态未知")
 
 
-def route(market: str, phase: str | None = None, now: datetime | None = None) -> MarketQuoteRoute:
-    resolved = phase or market_phase(market, now)
+def route(market: str, phase: str | None = None, now: datetime | None = None, *, object_type: str = "INDEX") -> MarketQuoteRoute:
+    resolved = phase or market_phase(market, now, object_type=object_type)
     if market == "US":
         if resolved == "REGULAR":
             sources = ["overseas_context", "realtime_snapshot"]
@@ -135,6 +139,9 @@ def route(market: str, phase: str | None = None, now: datetime | None = None) ->
         else:
             sources = ["overseas_context", "us_extended_hours_context"]
             rule = "返回最近正式收盘行情"
+    elif market == "KR" and resolved == "POST_MARKET":
+        sources = ["query_time_refresh", "market_snapshot", "market_archive"]
+        rule = "仅合资格韩国股票返回After Market实时行情；KOSPI、ETF/ETN不得继承该阶段"
     else:
         sources = ["overseas_context", "market_snapshot", "market_archive"]
         rule = "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
@@ -240,7 +247,18 @@ def _market_for_overseas(key: str, record: dict[str, Any]) -> str:
         return "JP"
     if timezone_name == "Asia/Seoul" or key == "KOSPI":
         return "KR"
+    if str(key).upper().endswith(".KS"):
+        return "KR"
     return "UNKNOWN"
+
+
+def _object_type_for_market(key: str, record: dict[str, Any]) -> str:
+    """Classify only enough to enforce KRX's object-scoped After Market boundary."""
+    if str(key).upper() == "KOSPI" or str(record.get("reference_role") or "").upper().endswith("INDEX"):
+        return "INDEX"
+    if str(key).upper().endswith(".KS"):
+        return "STOCK"
+    return str(record.get("asset_class") or "INDEX").upper()
 
 
 def _row_quote(row: dict[str, Any], market: str, route_info: MarketQuoteRoute, now: datetime, policy: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -316,7 +334,7 @@ def _query_refresh_needed(root: Path, symbols: list[str], now: datetime, policy:
         return True
     for symbol, timestamp in candidates:
         market = "CN" if symbol.isdigit() else ("US" if symbol in {"NDX", "SOX", "QQQ", "SOXX"} else _market_for_overseas(symbol, {}))
-        phase = market_phase(market, now=now)
+        phase = market_phase(market, now=now, object_type=_object_type_for_market(symbol, {}))
         if phase in {"REGULAR", "OPENING_AUCTION", "PRE_MARKET", "POST_MARKET"}:
             if not timestamp:
                 return True
@@ -395,7 +413,7 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
         market = _market_for_overseas(str(key), raw)
         if market == "UNKNOWN":
             continue
-        info = route(market, now=query_time)
+        info = route(market, now=query_time, object_type=_object_type_for_market(str(key), raw))
         selected = _latest_overseas_record(str(key), market, info.phase, overseas, extended)
         if selected:
             quote = _row_quote({**selected, "symbol": str(selected.get("symbol") or key)}, market, info, query_time, policy)
@@ -415,4 +433,5 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
         "decision_boundary": "路由只提供事实与时点，不生成风险许可、Trial、Confirm、金额、卖出或其他交易动作。",
         "source_state_paths": ["data/state/CURRENT.json", "data/state/overseas_context.json", "data/state/us_extended_hours_context.json"],
     }
+
 
