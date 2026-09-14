@@ -418,9 +418,24 @@ def main() -> int:
     }
 
     statuses = [x["status"] for x in components.values()]
-    if "BLOCKED" in statuses:
+    # Global consistency health is intentionally independent from the ability
+    # to form a Formal Decision.  When the canonical Gross risk, account and
+    # market facts are usable, an unrelated consistency hard failure remains
+    # visible in its own component but must not suppress the full MASTER
+    # decision chain or the independent holding sell chain.  Missing/ambiguous
+    # risk, account, or market facts remain fail-closed.
+    health_only_maintenance_block = (
+        components["maintenance"]["status"] == "BLOCKED"
+        and components["risk"]["status"] == "READY"
+        and components["account"]["status"] == "READY"
+        and components["market"]["status"] == "READY"
+        and str(components["maintenance"].get("reason") or "").startswith(
+            "maintenance blocker reflects a canonical consistency"
+        )
+    )
+    if "BLOCKED" in statuses and not health_only_maintenance_block:
         overall = "BLOCKED"
-    elif "DEGRADED" in statuses:
+    elif "DEGRADED" in statuses or health_only_maintenance_block:
         overall = "DEGRADED"
     else:
         overall = "READY"
