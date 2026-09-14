@@ -102,5 +102,29 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertEqual(result["total_fast_path_latency"], 5.0)
 
 
+    def test_user_intraday_trace_metadata_is_non_authoritative_and_request_scoped(self):
+        result = query_context.build_fast_path_latency(
+            {
+                "request_id": "user-1",
+                "requested_at_beijing": "2026-09-14T11:06:00+08:00",
+                "screenshot_account_fact_available_at_beijing": "2026-09-14T11:06:02+08:00",
+                "refresh_request_id": "refresh-1",
+                "minimum_legal_inputs_ready_at_beijing": "2026-09-14T11:06:08+08:00",
+                "final_answer_identity": "answer-1",
+                "required_account_persistence_identity": "account-sync-1",
+            },
+            {"captured_at": "2026-09-14T11:06:05+08:00"},
+            {"generated_at": "2026-09-14T11:06:08+08:00"},
+            {"refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH", "decision_freshness": {"post_request": True}},
+            "2026-09-14T11:06:10+08:00",
+        )
+        self.assertEqual(result["user_request_received"], "2026-09-14T11:06:00+08:00")
+        self.assertEqual(result["screenshot_account_fact_available"], "2026-09-14T11:06:02+08:00")
+        self.assertEqual(result["market_refresh_identity"], "refresh-1")
+        self.assertEqual(result["final_answer_identity"], "answer-1")
+        self.assertEqual(result["required_account_persistence_identity"], "account-sync-1")
+        self.assertTrue(result["trace_metadata_is_non_authoritative"])
+
+
 if __name__ == "__main__":
     unittest.main()
