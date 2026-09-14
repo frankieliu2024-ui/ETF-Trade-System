@@ -84,14 +84,15 @@ class ReportTransportRetryTests(unittest.TestCase):
         }
         with patch.object(notification_center, "choose_event", return_value=event), \
              patch.object(notification_center, "main", side_effect=[1, 1, 0]) as main_mock, \
-             patch.object(guarded, "_report_retryable_transport_failure", return_value=True), \
+             patch.object(guarded, "_report_retryable_transport_failure", return_value=True) as retry_mock, \
              patch.object(guarded.time, "sleep") as sleep_mock, \
              patch.object(guarded, "notification_evidence_error", return_value=None):
             result = guarded._run_center("event")
         self.assertEqual(result, 0)
         self.assertEqual(main_mock.call_count, 3)
         self.assertEqual([call.args[0] for call in sleep_mock.call_args_list], [2.0, 8.0])
-        self.assertEqual(notification_center.choose_event("event"), event)
+        self.assertEqual(retry_mock.call_count, 2)
+        self.assertTrue(all(call.args[1] is event for call in retry_mock.call_args_list))
 
     def test_report_center_stops_after_bounded_persistent_failure(self):
         event = {
