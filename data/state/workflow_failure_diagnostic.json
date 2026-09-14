@@ -1,37 +1,33 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-14T09:26:29+08:00",
+  "generated_at": "2026-09-14T09:31:15+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 34795902852,
+  "workflow_name": "ETF system consistency",
+  "run_id": 34796112048,
   "run_attempt": 1,
-  "head_sha": "3315e6ac2185283603cbe818f1a1aaeb0d9bcaf2",
-  "main_head_sha": "aa91c1b9e6ecc39c416c2f991801a80223a260c5",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "b72a47ca261c9dbd53a378f2830f3e2594c833f6",
+  "main_head_sha": "a4f48ded017f5dce8c3bd6e6545be56110a7ae7c",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "watchdog",
-      "step": "Run read-only comprehensive production health aggregate",
-      "number": 9
+      "job": "production_acceptance",
+      "step": "Persist accepted canonical ETF equity replay",
+      "number": 4
     }
   ],
   "changed_files": [
-    "data/state/overseas_context.json",
-    "data/state/overseas_context_previous.json",
-    "data/state/overseas_runtime_health.json",
-    "data/state/query_context.json",
-    "data/state/us_extended_hours_context.json"
+    "requests/report_delivery/etf-formal-decision-2026-09-14-20260914T092905.json"
   ],
-  "commit_message": "data: refresh overseas pulse and notifications",
-  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "commit_message": "report: submit 2026-09-14 09:20 ETF formal decision failure",
+  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": true,
+    "bot_or_revert_commit": false,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
