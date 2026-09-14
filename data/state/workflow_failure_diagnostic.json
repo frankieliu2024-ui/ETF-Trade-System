@@ -1,25 +1,25 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-14T20:51:37+08:00",
+  "generated_at": "2026-09-14T20:51:51+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 34845688540,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 34845732199,
   "run_attempt": 1,
-  "head_sha": "db26ab65a2f84c000b7a81aebc50eb52a8258e68",
-  "main_head_sha": "53b0f8b567d0bc5bf74e3107f2e5aeeeff5218ac",
+  "head_sha": "53b0f8b567d0bc5bf74e3107f2e5aeeeff5218ac",
+  "main_head_sha": "d964d1451857cc6b51c519914219c6da5d87695d",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
+      "job": "watchdog",
+      "step": "Run read-only comprehensive production health aggregate",
       "number": 9
     }
   ],
   "changed_files": [
-    "requests/report_delivery/etf-trade-review-2026-09-14-20260914T204300.json"
+    "data/state/notification_center.json"
   ],
-  "commit_message": "report: retry ETF trade review delivery after concurrency cancellation",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "state: record notification and execution reconciliation",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
@@ -27,7 +27,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
