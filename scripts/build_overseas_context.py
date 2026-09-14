@@ -43,6 +43,8 @@ OBJECTS = {
     "SOX": {"name": "费城半导体指数", "symbol": "^SOX", "timezone": "America/New_York", "role": "US_SEMICONDUCTOR"},
     "N225": {"name": "日经225指数", "symbol": "^N225", "timezone": "Asia/Tokyo", "role": "JAPAN_EQUITY"},
     "KOSPI": {"name": "韩国综合指数", "symbol": "^KS11", "timezone": "Asia/Seoul", "role": "KOREA_EQUITY"},
+    "005930": {"name": "三星电子", "symbol": "005930", "timezone": "Asia/Seoul", "role": "KOREA_STOCK", "asset_class": "STOCK"},
+    "000660": {"name": "SK海力士", "symbol": "000660", "timezone": "Asia/Seoul", "role": "KOREA_STOCK", "asset_class": "STOCK"},
     "TWII": {"name": "台湾加权指数", "symbol": "^TWII", "timezone": "Asia/Taipei", "role": "TAIWAN_EQUITY"},
     "HSTECH": {"name": "恒生科技指数", "symbol": "HSTECH.HK", "timezone": "Asia/Hong_Kong", "role": "HK_TECH"},
 }
@@ -304,6 +306,29 @@ def derive_naver_kospi_previous_close(row: dict) -> float | None:
     return round(previous, 8) if previous > 0 else None
 
 
+def fetch_naver_korean_stock(object_id: str, spec: dict, generated_utc: datetime) -> dict:
+    url = f"https://polling.finance.naver.com/api/realtime/domestic/stock/{object_id}"
+    req = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.16"})
+    with urllib.request.urlopen(req, timeout=20) as response:
+        status_code = int(response.status); payload = json.load(response)
+    rows = payload.get("datas") or []
+    if len(rows) != 1: raise RuntimeError(f"Naver {object_id} expected one row, got {len(rows)}")
+    data = rows[0]
+    def num(key):
+        raw = data.get(key + "Raw", data.get(key))
+        if raw in (None, "", "-"): return None
+        return float(str(raw).replace(",", ""))
+    required = {"open": num("openPrice"), "high": num("highPrice"), "low": num("lowPrice"), "close": num("closePrice")}
+    if any(v is None for v in required.values()): raise RuntimeError(f"Naver {object_id} missing OHLC fields")
+    raw_time = data.get("localTradedAt")
+    if not raw_time: raise RuntimeError(f"Naver {object_id} missing localTradedAt")
+    local = datetime.fromisoformat(str(raw_time))
+    if local.tzinfo is None: local = local.replace(tzinfo=ZoneInfo("Asia/Seoul"))
+    dt_utc = local.astimezone(timezone.utc)
+    latest = {**required, "volume": num("accumulatedTradingVolume"), "amount": num("accumulatedTradingValue"), "timestamp": int(dt_utc.timestamp()), "as_of_utc": dt_utc.isoformat(timespec="seconds").replace("+00:00", "Z"), "as_of_local": local.isoformat(timespec="seconds"), "as_of_beijing": dt_utc.astimezone(BEIJING).isoformat(timespec="seconds"), "market_date_local": local.date().isoformat(), "provider_timezone": "Asia/Seoul", "symbol": object_id, "market_session_type": data.get("marketSessionType"), "market_status": data.get("marketStatus")}
+    return {"object": object_id, "name": spec["name"], "reference_role": spec["role"], "asset_class": spec["asset_class"], "provider": "naver_finance", "provider_result": f"HTTP {status_code}", "provider_timestamp_field": "localTradedAt", "symbol": object_id, "market_timezone": "Asia/Seoul", "market_phase_at_generation": "POST_MARKET" if data.get("marketSessionType") == "afterMarket" else market_phase("Asia/Seoul", generated_utc), "quality_status": validate_latest(latest), "latest": latest, "decision_note": "Naver Finance Korea STOCK direct row; native itemCode/localTradedAt and provider OHLC/volume retained."}
+
+
 def fetch_naver_kospi(generated_utc: datetime) -> dict:
     url = "https://polling.finance.naver.com/api/realtime/domestic/index/KOSPI"
     req = urllib.request.Request(url, headers={"User-Agent": "ETF-Trade-System/2.2.16"})
@@ -513,6 +538,17 @@ def build() -> dict:
                 record: dict | None = None
                 selected_provider_id = ""
 
+                if object_id in {"005930", "000660"}:
+                    direct_chain = [(f"naver_finance:{object_id}", lambda: fetch_naver_korean_stock(object_id, spec, generated_utc))]
+                    candidate = direct_chain[0][1]()
+                    record = candidate
+                    selected_provider_id = direct_chain[0][0]
+                    record["selected_provider_id"] = selected_provider_id
+                    record["selection_basis"] = "validated_live_naver_krx_stock_direct_source"
+                    record["provider_attempts"] = [provider_attempt(candidate, selected_provider_id, generated_utc)]
+                    record["direct_source_chain"] = [selected_provider_id]
+                    record["configured_primary"] = selected_provider_id
+                else:
                 # N225/KOSPI/TWII priorities were promoted after live-session parallel validation on
                 # 2026-08-27. Production selection uses the first fresh, valid direct source.
                 if object_id in {"N225", "KOSPI", "TWII"}:
