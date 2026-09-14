@@ -44,7 +44,11 @@
         "REGULAR"
       ],
       "closed_return": "same_day_close",
-      "preopen_return": "previous_trading_day_close"
+      "preopen_return": "previous_trading_day_close",
+      "extended_phase": [
+        "POST_MARKET"
+      ],
+      "extended_phase_scope": "QUALIFIED_KRX_STOCK_ONLY; KOSPI_ETF_ETN_EXCLUDED"
     },
     "UNITED_STATES": {
       "timezone": "America/New_York",
@@ -112,7 +116,8 @@
     "KR": {
       "PRE_OPEN": "韩股开盘前",
       "REGULAR": "韩股交易中",
-      "OFF_SESSION": "韩股收盘"
+      "OFF_SESSION": "韩股收盘",
+      "POST_MARKET": "韩股盘后（仅合资格股票）"
     },
     "US": {
       "PRE_MARKET": "美股盘前",
@@ -125,14 +130,31 @@
     "CHATGPT_CONNECTED_MARKET_DATA": {
       "connectors": {
         "longbridge": {
-          "operations": ["quote"],
+          "operations": [
+            "quote"
+          ],
           "scope": "EMERGENCY_EVIDENCE_ONLY",
           "execution_price_eligibility": false,
           "normal_provider_priority": false
         }
       },
-      "required_provenance": ["connector_identity", "operation"],
-      "required_row_fields": ["symbol", "name", "provider_as_of_beijing", "open", "high", "low", "prev_close", "close", "volume", "amount", "market_phase"],
+      "required_provenance": [
+        "connector_identity",
+        "operation"
+      ],
+      "required_row_fields": [
+        "symbol",
+        "name",
+        "provider_as_of_beijing",
+        "open",
+        "high",
+        "low",
+        "prev_close",
+        "close",
+        "volume",
+        "amount",
+        "market_phase"
+      ],
       "timestamp_rule": "row_native_provider_timestamp_only",
       "decision_boundary": "decision_evidence_only;人工执行前必须刷新并重新确认"
     }
