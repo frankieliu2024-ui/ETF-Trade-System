@@ -3,8 +3,12 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 
 from notification_materiality_guard import notification_evidence_error
+
+
+REPORT_RETRY_DELAYS_SECONDS = (2.0, 8.0)
 
 
 def _guarded_persist(original):
@@ -51,9 +55,39 @@ def _run_batch(market: str) -> int:
     return 1 if any(result.get("status") == "CREATED" for result in results) else 0
 
 
+def _latest_failed_report_response(center, event: dict) -> dict:
+    source = str(event.get("source_event_id") or event.get("key") or "")
+    if not source:
+        return {}
+    state = center.read_json(center.STATE / "notification_center.json", {})
+    candidates = [
+        item for item in (state.get("notifications") or [])
+        if str(item.get("source_event_id") or "") == source
+        and str(item.get("event_type") or "") == "REPORT_DELIVERY_REQUEST"
+        and str(item.get("lifecycle_status") or "").upper() == "FAILED"
+    ]
+    if not candidates:
+        return {}
+    candidates.sort(key=lambda item: str(item.get("last_attempted_at") or item.get("created_at") or ""))
+    return dict(candidates[-1].get("response") or {})
+
+
+def _report_retryable_transport_failure(center, event: dict) -> bool:
+    response = _latest_failed_report_response(center, event)
+    error = str(response.get("error") or "")
+    message = str(response.get("message") or "")
+    lowered = message.lower()
+    if error == "URLError" and "handshake operation timed out" in lowered:
+        return True
+    if error == "HTTPError" and any(f"http error {status}:" in lowered for status in (502, 503, 504)):
+        return True
+    return False
+
+
 def _run_center(mode: str) -> int:
     import notification_center as center
 
+    event = None
     if mode != "channel-test":
         event = center.choose_event(mode)
         error = notification_evidence_error(event)
@@ -63,7 +97,29 @@ def _run_center(mode: str) -> int:
         original_choose = center.choose_event
         center.choose_event = lambda requested: event if requested == mode else original_choose(requested)
     sys.argv = ["notification_center.py", "--mode", mode]
-    return center.main()
+    result = center.main()
+    if (
+        result == 0
+        or mode != "event"
+        or not event
+        or str(event.get("event_type") or "") != "REPORT_DELIVERY_REQUEST"
+    ):
+        return result
+
+    for retry_number, delay in enumerate(REPORT_RETRY_DELAYS_SECONDS, start=1):
+        if not _report_retryable_transport_failure(center, event):
+            break
+        print(json.dumps({
+            "status": "RETRYING_REPORT_DELIVERY",
+            "retry_number": retry_number,
+            "delay_seconds": delay,
+            "source_event_id": event.get("source_event_id") or event.get("key"),
+        }, ensure_ascii=False))
+        time.sleep(delay)
+        result = center.main()
+        if result == 0:
+            break
+    return result
 
 
 def _run_regional(market: str) -> int:
