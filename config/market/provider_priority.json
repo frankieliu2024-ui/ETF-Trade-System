@@ -251,6 +251,12 @@
     "000688.SH": [
       "tencent_qq",
       "hithink_finance"
+    ],
+    "005930": [
+      "naver_finance:005930"
+    ],
+    "000660": [
+      "naver_finance:000660"
     ]
   },
   "object_fallback_policy": {
@@ -500,5 +506,19 @@
     "n225_kospi_redundancy": "2026-08-27真实开盘验证：N225东方财富低延迟endpoint为秒级，Yahoo约15分钟延迟；进一步测试Stooq映射、日经官方HTML、Naver NII@NI225、Google Finance后，仍未获得另一个同时满足秒级/近实时、独立provider、真实可审计时间戳和稳定结构化字段的N225源。Naver页面明确为15分钟延迟，故不提升。KOSPI已由Naver形成独立实时主源。",
     "twii_live_validation": "2026-08-27 09:11-09:12北京时间三轮开盘并行验证：台湾证券交易所官方MIS tse_t00.tw三轮均HTTP 200，provider tlong时点约落后19-22秒，OHLC/昨收完整；东方财富push2delay约29-51秒且同源标准host出现502；Yahoo本轮未形成完整1分钟OHLC。因此TWSE MIS提升为TWII正式主源。"
   },
-  "audit_scope": "对象级主源失败后仅调用已验证直接备源；未验证映射保留SINGLE_SOURCE_RISK，不以代理冒充直连"
+  "audit_scope": "对象级主源失败后仅调用已验证直接备源；未验证映射保留SINGLE_SOURCE_RISK，不以代理冒充直连",
+  "provider_qualification": {
+    "naver_finance_krx_stock": {
+      "status": "QUALIFIED_FOR_VERIFIED_OBJECTS",
+      "objects": [
+        "005930",
+        "000660"
+      ],
+      "native_symbol_field": "itemCode",
+      "market_field": "stockExchangeType.code",
+      "timezone": "Asia/Seoul",
+      "timestamp_field": "localTradedAt",
+      "session_field": "marketSessionType"
+    }
+  }
 }
