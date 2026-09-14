@@ -1,0 +1,51 @@
+{
+  "request_id": "20260914_111534_561980_sell_account_closure",
+  "request_type": "STATE_SYNC_ONLY",
+  "requested_at_beijing": "2026-09-14T11:15:34+08:00",
+  "interaction_scenario": "BROKER_SCREENSHOT_SYNC",
+  "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+  "formal_fact_type": "BROKER_SCREENSHOT",
+  "market_date": "2026-09-14",
+  "reason": "Close the user's confirmed 11:13:20 partial sell of 半导体设备ETF（561980） and the 11:13 broker trade/holdings screenshots. The broker facts confirm 561980=28,900 shares, available cash 48,012.01 yuan, total assets 193,938.91 yuan, displayed market value 145,925.90 yuan, and six remaining positions. This trade followed the user's 11:06 in-chat formal analysis, but no canonical decision event id was persisted before execution; leave linked_decision_id null rather than fabricate linkage. Preserve prior canonical trade events and unrelated account facts; do not infer fees from the cash delta.",
+  "account_fact": {
+    "status": "VALID",
+    "updated_at": "2026-09-14T11:13:35+08:00",
+    "source": "BROKER_TRADE_AND_HOLDINGS_SCREENSHOTS_20260914_1113_USER_CONFIRMED",
+    "broker_displayed_at_beijing": "2026-09-14T11:13:35+08:00",
+    "last_confirmed_market_date": "2026-09-14",
+    "total_asset": 193938.91,
+    "stock_market_value": 145925.90,
+    "cash": 48012.01,
+    "deployable_cash": 48012.01,
+    "reserved_cash_for_settlement": 0,
+    "settlement_constraint_status": "NONE",
+    "holding_pnl": -23338.90,
+    "daily_pnl": -808.60,
+    "daily_pnl_pct": -0.42,
+    "positions": [
+      {"asset_type":"STOCK","name":"宁德时代","code":"300750","quantity":100,"available_quantity":100,"cost":393.781,"last_price":340.940,"market_value":34094.00,"holding_pnl":-5284.07,"holding_pnl_pct":-13.419},
+      {"asset_type":"STOCK","name":"工业富联","code":"601138","quantity":500,"available_quantity":500,"cost":58.054,"last_price":62.010,"market_value":31005.00,"holding_pnl":1977.78,"holding_pnl_pct":6.814},
+      {"asset_type":"ETF","name":"科创50ETF","code":"588000","quantity":14100,"available_quantity":14100,"cost":2.099,"last_price":1.621,"market_value":22856.10,"holding_pnl":-6738.31,"holding_pnl_pct":-22.769},
+      {"asset_type":"ETF","name":"科创创业ETF","code":"159781","quantity":19500,"available_quantity":19500,"cost":1.269,"last_price":1.020,"market_value":19890.00,"holding_pnl":-4858.60,"holding_pnl_pct":-19.632},
+      {"asset_type":"ETF","name":"纳指ETF","code":"159941","quantity":12200,"available_quantity":12200,"cost":1.626,"last_price":1.629,"market_value":19873.80,"holding_pnl":37.20,"holding_pnl_pct":0.188},
+      {"asset_type":"ETF","name":"半导体设备ETF","code":"561980","quantity":28900,"available_quantity":28900,"cost":0.923,"last_price":0.630,"market_value":18207.00,"holding_pnl":-8472.90,"holding_pnl_pct":-31.758}
+    ],
+    "orders": [],
+    "validity_mode": "BROKER_SCREENSHOT_USER_CONFIRMED"
+  },
+  "trade_event": {
+    "event_id": "trade_20260914_111320_561980_sell_10000",
+    "asset_type": "ETF",
+    "name": "半导体设备ETF",
+    "code": "561980",
+    "side": "SELL",
+    "quantity": 10000,
+    "price": 0.629,
+    "amount": 6290.00,
+    "executed_at_beijing": "2026-09-14T11:13:20+08:00",
+    "confirmed_at_beijing": "2026-09-14T11:13:35+08:00",
+    "execution_status": "EXECUTED",
+    "linked_decision_id": null,
+    "source": "BROKER_TRADE_AND_HOLDINGS_SCREENSHOTS_USER_CONFIRMED"
+  }
+}
