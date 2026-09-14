@@ -1,33 +1,30 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-13T23:07:04+08:00",
+  "generated_at": "2026-09-14T08:17:35+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 34764588077,
+  "run_id": 34792183534,
   "run_attempt": 1,
-  "head_sha": "dd6c41dfce2c0b5f067b5c5471a1dcfe3f7f3f92",
-  "main_head_sha": "dd6c41dfce2c0b5f067b5c5471a1dcfe3f7f3f92",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "93c7d2b62e158a4586a1292cb7ee2bf2f170f21e",
+  "main_head_sha": "c4eef242c070d57ea9d7d965b659dbbe1f296510",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 9
+      "job": "production_acceptance",
+      "step": "Persist accepted canonical ETF equity replay",
+      "number": 4
     }
   ],
   "changed_files": [
-    "scripts/confirmed_trade_facts.py",
-    "scripts/rebuild_etf_strategy_equity.py",
-    "tests/test_market_replay_fee_coherence.py",
-    "tests/test_market_risk_metric_guard.py"
+    "requests/report_delivery/etf-system-review-2026-09-14-20260914T081626.json"
   ],
-  "commit_message": "Merge pull request #554 from frankieliu2024-ui/chatgpt/548-final-fee-coherence",
+  "commit_message": "report: submit ETF system review 2026-09-14 08:00",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": true,
+    "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
