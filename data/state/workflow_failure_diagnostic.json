@@ -1,35 +1,37 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-14T17:49:45+08:00",
+  "generated_at": "2026-09-14T17:49:59+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 34829865609,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 34829996097,
   "run_attempt": 1,
-  "head_sha": "e16933b9c5e23933d604a32c148c54ab6e1a5cf2",
-  "main_head_sha": "ec03d740661c7dca4996092cf06ba4acf3a53890",
+  "head_sha": "ec03d740661c7dca4996092cf06ba4acf3a53890",
+  "main_head_sha": "82d33fc4d3e758412ccdcc8d24425add3777c547",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "production_acceptance",
-      "step": "Enforce production acceptance",
-      "number": 10
+      "job": "watchdog",
+      "step": "Run read-only comprehensive production health aggregate",
+      "number": 9
     }
   ],
   "changed_files": [
-    "config/market/market_quote_router.json",
-    "scripts/market_quote_router.py",
-    "tests/test_krx_after_market_routing.py"
+    "data/state/e2e_status.json",
+    "data/state/execution_quality.json",
+    "data/state/maintenance_diagnostic.json",
+    "data/state/maintenance_health.json",
+    "data/state/system_consistency.json"
   ],
-  "commit_message": "fix: scope KRX After Market to eligible stocks",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "state: persist production acceptance",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
-    "forbidden_path_touched": true,
-    "bot_or_revert_commit": false,
+    "forbidden_path_touched": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
