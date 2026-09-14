@@ -1,25 +1,26 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-14T17:39:11+08:00",
+  "generated_at": "2026-09-14T17:39:25+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 34829038488,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 34829096848,
   "run_attempt": 1,
-  "head_sha": "6a96c5494d28ab2270b889bd4839074423fb5302",
-  "main_head_sha": "1e6924662a64194298db2b872786ca9f50392af5",
+  "head_sha": "1e6924662a64194298db2b872786ca9f50392af5",
+  "main_head_sha": "e512592d643c34749ab517b78ea62db8533782b8",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 7
+      "job": "watchdog",
+      "step": "Run read-only comprehensive production health aggregate",
+      "number": 9
     }
   ],
   "changed_files": [
-    "tests/test_krx_after_market_routing.py"
+    "data/state/restricted_rollback_plan.json",
+    "data/state/workflow_failure_diagnostic.json"
   ],
-  "commit_message": "fix: scope KRX After Market to eligible stocks",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "state: record workflow failure diagnosis",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
@@ -27,7 +28,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
