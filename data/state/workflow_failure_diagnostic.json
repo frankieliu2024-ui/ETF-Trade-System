@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-14T16:26:28+08:00",
+  "generated_at": "2026-09-14T16:29:27+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 34822693787,
+  "run_id": 34822945958,
   "run_attempt": 1,
-  "head_sha": "8a677a53fe1d258a88e07f7fdaf190f36553f1be",
-  "main_head_sha": "2b1f198c4d6ce07e5afadec2a01da2d3b260258d",
+  "head_sha": "3b1a11e3c442bb7a9a4a46a85f68cab67e2ecd7c",
+  "main_head_sha": "3b1a11e3c442bb7a9a4a46a85f68cab67e2ecd7c",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,15 +16,16 @@
     }
   ],
   "changed_files": [
-    "data/state/notification_center.json"
+    "data/state/restricted_rollback_plan.json",
+    "data/state/workflow_failure_diagnostic.json"
   ],
-  "commit_message": "state: record notification and execution reconciliation",
+  "commit_message": "state: record workflow failure diagnosis",
   "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": false,
+    "head_is_current_main": true,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": true,
