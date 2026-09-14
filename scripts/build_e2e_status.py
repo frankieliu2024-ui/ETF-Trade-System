@@ -358,16 +358,76 @@ def lifecycle_component(current: dict) -> dict:
     }
 
 
+def _valid_close_review_completion(current: dict) -> dict:
+    reference = current.get("close_review_closure") if isinstance(current, dict) else {}
+    if not isinstance(reference, dict):
+        return {}
+    market_date = str(reference.get("market_date") or "")
+    if not market_date or str(reference.get("status") or "").upper() != "CLOSED":
+        return {}
+    expected_review_path = f"events/reviews/{market_date}.json"
+    formal_review_path = str(reference.get("formal_review_path") or "")
+    if formal_review_path != expected_review_path:
+        return {}
+
+    review = read_json(REVIEW_DIR / f"{market_date}.json")
+    closure = read_json(STATE / f"close_review_closure_{market_date}.json")
+    if review.get("event_type") != "FORMAL_POST_CLOSE_REVIEW":
+        return {}
+    if str(review.get("market_date") or market_date) != market_date:
+        return {}
+    if not isinstance(review.get("review"), dict):
+        return {}
+    if str(closure.get("status") or "").upper() != "CLOSED":
+        return {}
+    if str(closure.get("market_date") or market_date) != market_date:
+        return {}
+    if str(closure.get("formal_review_path") or "") != expected_review_path:
+        return {}
+    return {
+        "market_date": market_date,
+        "formal_review_path": expected_review_path,
+        "closure_path": f"data/state/close_review_closure_{market_date}.json",
+    }
+
+
+def _event_close_review_complete(market_date: str) -> bool:
+    review = read_json(REVIEW_DIR / f"{market_date}.json")
+    closure = read_json(STATE / f"close_review_closure_{market_date}.json")
+    return (
+        review.get("event_type") == "FORMAL_POST_CLOSE_REVIEW"
+        and str(review.get("market_date") or market_date) == market_date
+        and isinstance(review.get("review"), dict)
+        and str(closure.get("status") or "").upper() == "CLOSED"
+        and str(closure.get("market_date") or market_date) == market_date
+        and str(closure.get("formal_review_path") or "") == f"events/reviews/{market_date}.json"
+    )
+
+
 def close_review_component(current: dict, now=None) -> dict:
     """Apply scheduled-review due-time semantics independently of market phase."""
     event = read_json(POST_MARKET_REVIEW)
+    completion = _valid_close_review_completion(current)
+    event_date = str(event.get("market_date") or "") if event else ""
+    if completion and (not event_date or completion["market_date"] >= event_date):
+        result = {
+            "status": "READY",
+            "reason": "canonical close review completion chain is complete",
+            "market_date": completion["market_date"],
+            "formal_review_market_date": completion["market_date"],
+            "formal_review_path": completion["formal_review_path"],
+            "closure_path": completion["closure_path"],
+            "completion_source": "CURRENT.close_review_closure",
+        }
+        if event_date and event_date != completion["market_date"]:
+            result["market_trigger_market_date"] = event_date
+            result["readiness_trigger_status"] = str(event.get("status") or "")
+            result["readiness_trigger_source"] = "post_market_review_event"
+        return result
+
     if not event or not event.get("market_close"):
         return {"status": "READY", "reason": "no formal close review is currently required"}
     market_date = str(event.get("market_date") or current.get("market_date") or "")
-    review_path = REVIEW_DIR / f"{market_date}.json"
-    closure_path = STATE / f"close_review_closure_{market_date}.json"
-    review = read_json(review_path)
-    closure = read_json(closure_path)
     try:
         from post_close_review_due import configured_review_due_time, review_due_state
     except ModuleNotFoundError:
@@ -382,12 +442,7 @@ def close_review_component(current: dict, now=None) -> dict:
             "reason": "INVALID_SCHEDULED_TRADE_REVIEW_DUE_TIME",
             "market_date": market_date,
         }
-    complete = (
-        review.get("event_type") == "FORMAL_POST_CLOSE_REVIEW"
-        and isinstance(review.get("review"), dict)
-        and closure.get("status") == "CLOSED"
-        and closure.get("formal_review_path") == f"events/reviews/{market_date}.json"
-    )
+    complete = _event_close_review_complete(market_date)
     if complete:
         return {"status": "READY", "reason": "canonical close review chain is complete", "market_date": market_date}
     due_state = review_due_state(

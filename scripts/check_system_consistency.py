@@ -242,6 +242,42 @@ def _validate_formal_risk_precedence(report: dict) -> None:
         _recount(report)
 
 
+def _valid_current_close_review_completion(current: dict) -> dict:
+    pointer = current.get("close_review_closure") if isinstance(current, dict) else {}
+    if not isinstance(pointer, dict):
+        return {}
+    market_date = str(pointer.get("market_date") or "")
+    if not market_date or str(pointer.get("status") or "").upper() != "CLOSED":
+        return {}
+    expected_review_path = f"events/reviews/{market_date}.json"
+    if str(pointer.get("formal_review_path") or "") != expected_review_path:
+        return {}
+    review_path = ROOT / expected_review_path
+    closure_rel = f"data/state/close_review_closure_{market_date}.json"
+    closure_path = ROOT / closure_rel
+    if not review_path.exists() or not closure_path.exists():
+        return {}
+    review = _read_json(expected_review_path)
+    closure = _read_json(closure_rel)
+    if review.get("event_type") != "FORMAL_POST_CLOSE_REVIEW":
+        return {}
+    if str(review.get("market_date") or market_date) != market_date:
+        return {}
+    if not isinstance(review.get("review"), dict):
+        return {}
+    if str(closure.get("status") or "").upper() != "CLOSED":
+        return {}
+    if str(closure.get("market_date") or market_date) != market_date:
+        return {}
+    if str(closure.get("formal_review_path") or "") != expected_review_path:
+        return {}
+    return {
+        "market_date": market_date,
+        "formal_review_path": expected_review_path,
+        "closure_path": closure_rel,
+    }
+
+
 def _validate_post_close_review_contract(report: dict, now=None) -> None:
     """Apply scheduled-review due-time semantics independently of market phase."""
     try:
@@ -250,8 +286,26 @@ def _validate_post_close_review_contract(report: dict, now=None) -> None:
         return
     if not context.get("market_close") or str(context.get("status") or "").upper() != "READY_FOR_REVIEW":
         return
-    market_date = str(context.get("market_date") or "")
+
+    event_date = str(context.get("market_date") or "")
     current = _read_json("data/state/CURRENT.json")
+    completion = _valid_current_close_review_completion(current)
+    if completion and (not event_date or completion["market_date"] >= event_date):
+        detail = (
+            "canonical post-close review completion validated "
+            f"formal_review_market_date={completion['market_date']} "
+            f"market_trigger_market_date={event_date or 'NONE'} "
+            "completion_source=CURRENT.close_review_closure"
+        )
+        report.setdefault("checks", []).append({
+            "name": "review:post_close_canonical_chain",
+            "status": "PASS",
+            "detail": detail,
+        })
+        _recount(report)
+        return
+
+    market_date = event_date
     try:
         from post_close_review_due import configured_review_due_time, review_due_state
     except ModuleNotFoundError:
