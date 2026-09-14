@@ -243,6 +243,15 @@ def _market_for_overseas(key: str, record: dict[str, Any]) -> str:
     return "UNKNOWN"
 
 
+
+def _object_type_for_market(key: str, record: dict[str, Any]) -> str:
+    """Classify only enough to enforce KRX's object-scoped After Market boundary."""
+    if str(key).upper() == "KOSPI" or str(record.get("reference_role") or "").upper().endswith("INDEX"):
+        return "INDEX"
+    if str(key).upper().endswith(".KS"):
+        return "STOCK"
+    return str(record.get("asset_class") or "INDEX").upper()
+
 def _row_quote(row: dict[str, Any], market: str, route_info: MarketQuoteRoute, now: datetime, policy: dict[str, Any] | None = None) -> dict[str, Any]:
     timestamp = _first_value(row.get("as_of_beijing"), row.get("provider_timestamp"), row.get("captured_at_beijing"), row.get("captured_at"))
     price = _first_value(row.get("latest"), row.get("last"), row.get("latest_price"), row.get("close"), row.get("price"))
