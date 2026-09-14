@@ -41,7 +41,7 @@ DISPLAY_STATUS = {
     "HK": {"PRE_OPEN": "港股开盘前", "REGULAR": "港股交易中", "MIDDAY_BREAK": "港股午间休市", "OFF_SESSION": "港股收盘"},
     "TW": {"PRE_OPEN": "台股开盘前", "REGULAR": "台股交易中", "OFF_SESSION": "台股收盘"},
     "JP": {"PRE_OPEN": "日股开盘前", "REGULAR": "日股交易中", "MIDDAY_BREAK": "日股午间休市", "OFF_SESSION": "日股收盘"},
-    "KR": {"PRE_OPEN": "韩股开盘前", "REGULAR": "韩股交易中", "OFF_SESSION": "韩股收盘"},
+    "KR": {"PRE_OPEN": "韩股开盘前", "REGULAR": "韩股交易中", "POST_MARKET": "韩股盘后（仅合资格股票）", "OFF_SESSION": "韩股收盘"},
     "US": {
         "PRE_MARKET": "美股盘前",
         "REGULAR": "美股交易中",
@@ -74,7 +74,7 @@ def _in_window(value: int, start: int, end: int) -> bool:
     return start <= value < end
 
 
-def market_phase(market: str, now: datetime | None = None) -> str:
+def market_phase(market: str, now: datetime | None = None, *, object_type: str = "INDEX") -> str:
     """Return internal phase; user-facing code must use display_market_status()."""
     if market not in MARKET_ZONES:
         return "UNKNOWN"
@@ -123,8 +123,8 @@ def display_market_status(market: str, phase: str) -> str:
     return DISPLAY_STATUS.get(market, {}).get(phase, "市场状态未知")
 
 
-def route(market: str, phase: str | None = None, now: datetime | None = None) -> MarketQuoteRoute:
-    resolved = phase or market_phase(market, now)
+def route(market: str, phase: str | None = None, now: datetime | None = None, *, object_type: str = "INDEX") -> MarketQuoteRoute:
+    resolved = phase or market_phase(market, now, object_type=object_type)
     if market == "US":
         if resolved == "REGULAR":
             sources = ["overseas_context", "realtime_snapshot"]
@@ -316,7 +316,7 @@ def _query_refresh_needed(root: Path, symbols: list[str], now: datetime, policy:
         return True
     for symbol, timestamp in candidates:
         market = "CN" if symbol.isdigit() else ("US" if symbol in {"NDX", "SOX", "QQQ", "SOXX"} else _market_for_overseas(symbol, {}))
-        phase = market_phase(market, now=now)
+        phase = market_phase(market, now=now, object_type=_object_type_for_market(symbol, {}))
         if phase in {"REGULAR", "OPENING_AUCTION", "PRE_MARKET", "POST_MARKET"}:
             if not timestamp:
                 return True
@@ -395,7 +395,7 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
         market = _market_for_overseas(str(key), raw)
         if market == "UNKNOWN":
             continue
-        info = route(market, now=query_time)
+        info = route(market, now=query_time, object_type=_object_type_for_market(str(key), raw))
         selected = _latest_overseas_record(str(key), market, info.phase, overseas, extended)
         if selected:
             quote = _row_quote({**selected, "symbol": str(selected.get("symbol") or key)}, market, info, query_time, policy)
