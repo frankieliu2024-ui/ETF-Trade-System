@@ -1,25 +1,25 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-14T12:30:33+08:00",
+  "generated_at": "2026-09-14T12:30:48+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 34806256863,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 34806297626,
   "run_attempt": 1,
-  "head_sha": "154f2387cb57496ce0f96b7826f97a9c26007b4a",
-  "main_head_sha": "dc607b66e5a49362b60c414de1c1324d67169274",
+  "head_sha": "dc607b66e5a49362b60c414de1c1324d67169274",
+  "main_head_sha": "65ca5e81d240b4fcc8c6de370a897d1524d094dd",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
+      "job": "watchdog",
+      "step": "Run read-only comprehensive production health aggregate",
       "number": 9
     }
   ],
   "changed_files": [
-    "requests/report_delivery/etf-formal-decision-20260914T122908+0800.json"
+    "data/state/notification_center.json"
   ],
-  "commit_message": "report: submit 12:20 ETF formal decision failure",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "state: record notification and execution reconciliation",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
@@ -27,7 +27,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
