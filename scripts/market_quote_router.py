@@ -107,7 +107,11 @@ def market_phase(market: str, now: datetime | None = None, *, object_type: str =
             return "MIDDAY_BREAK"
         return "PRE_OPEN" if minute < 9 * 60 else "OFF_SESSION"
     if market == "KR":
-        return "REGULAR" if _in_window(minute, 9 * 60, 15 * 60 + 30) else ("PRE_OPEN" if minute < 9 * 60 else "OFF_SESSION")
+        if _in_window(minute, 9 * 60, 15 * 60 + 30):
+            return "REGULAR"
+        if object_type == "STOCK" and _in_window(minute, 16 * 60, 20 * 60):
+            return "POST_MARKET"
+        return "PRE_OPEN" if minute < 9 * 60 else "OFF_SESSION"
     if market == "US":
         if _in_window(minute, 4 * 60, 9 * 60 + 30):
             return "PRE_MARKET"
