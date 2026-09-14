@@ -617,7 +617,11 @@ def main() -> int:
     notification_state = read_json("data/state/notification_center.json")
     notification_items = notification_state.get("notifications") or []
     required_notification_fields = {"notification_id", "event_type", "source_event_id", "related_decision_id", "security_code", "security_name", "lifecycle_status", "created_at", "sent_at", "confirmed_at", "archived_at"}
-    notification_statuses = {"CREATED", "SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED", "EXPIRED"}
+    # FAILED is a legal terminal delivery outcome produced by the single
+    # notification owner when sending cannot complete.  It remains a hard
+    # consistency-visible state; accepting it here prevents the schema guard
+    # from misclassifying an auditable delivery failure as malformed state.
+    notification_statuses = {"CREATED", "SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED", "EXPIRED", "FAILED"}
     check("notification:managed_schema", isinstance(notification_items, list) and all(required_notification_fields.issubset(set(item)) and item.get("lifecycle_status") in notification_statuses for item in notification_items if isinstance(item, dict)), f"count={len(notification_items)}")
     active_notification_sources = [str(item.get("source_event_id") or "") for item in notification_items if isinstance(item, dict) and item.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION"}]
     check("notification:no_duplicate_active_source", len(active_notification_sources) == len(set(active_notification_sources)), f"active_sources={active_notification_sources}")

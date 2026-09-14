@@ -561,6 +561,12 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     managed_error = validate_managed_position_lifecycle(decision.get("lifecycle"), account_for_lifecycle, "formal_decision.lifecycle")
     if managed_error:
         raise ValueError(f"invalid formal decision managed-position contract: {managed_error}")
+    review_error = validate_managed_position_review_contract(
+        decision.get("managed_position_reviews"), account_for_lifecycle,
+        "formal_decision.managed_position_reviews",
+    )
+    if review_error:
+        raise ValueError(f"invalid formal decision managed-position review contract: {review_error}")
     managed_projection = build_managed_position_projection(ROOT, account_for_lifecycle)
     current_path = ROOT / "data/state/CURRENT.json"
     current = load_json(current_path) if current_path.exists() else {}
@@ -790,6 +796,53 @@ def validate_managed_position_lifecycle(value: object, account: dict, object_nam
                 covered.add(matches[0])
             elif len(matches) > 1:
                 return f"{object_name} must provide one separate line per managed position"
+    missing = [f"{item['name']}（{item['code']}）" for item in managed if item["code"] not in covered]
+    if missing:
+        return f"{object_name} is missing current managed positions: {', '.join(missing)}"
+    return ""
+
+
+def validate_managed_position_review_contract(value: object, account: dict, object_name: str = "managed_position_reviews") -> str:
+    """Validate decision-supplied, per-position review completeness only.
+
+    This is deliberately not an action engine: it checks object coverage and
+    required evidence fields, while leaving every action and conclusion to the
+    Formal Decision actor.
+    """
+    managed = build_managed_position_projection(ROOT, account or {}).get("positions", [])
+    if not managed:
+        return ""
+    if not isinstance(value, list) or not value:
+        return f"{object_name} must be a non-empty list with one entry per managed position"
+    by_code = {item["code"]: item for item in managed}
+    covered: set[str] = set()
+    for index, review in enumerate(value):
+        if not isinstance(review, dict):
+            return f"{object_name}[{index}] must be an object"
+        code = normalize_code(review.get("security_code") or review.get("code") or "")
+        if code not in by_code:
+            return f"{object_name}[{index}] has unknown managed position"
+        if code in covered:
+            return f"{object_name} must cover each managed position exactly once"
+        covered.add(code)
+        required = (
+            "current_action", "holding_state_risk_reward_evidence",
+            "capital_use", "action_changes_now", "next_change_condition",
+        )
+        missing = [key for key in required if key not in review or review[key] in (None, "", [])]
+        if missing:
+            return f"{object_name}[{index}] missing required fields: {', '.join(missing)}"
+        capital_use = review["capital_use"]
+        if not isinstance(capital_use, dict) or not capital_use.get("continued_holding_vs_cash"):
+            return f"{object_name}[{index}].capital_use requires continued_holding_vs_cash"
+        action = str(review["current_action"]).strip()
+        if action in {"降低风险", "退出"}:
+            if review.get("action_changes_now") is not True:
+                return f"{object_name}[{index}] reduce/exit must explicitly change action now"
+            if not review.get("action_detail") or not review.get("capital_destination"):
+                return f"{object_name}[{index}] reduce/exit requires action_detail and capital_destination"
+        elif not isinstance(review["action_changes_now"], bool):
+            return f"{object_name}[{index}].action_changes_now must be boolean"
     missing = [f"{item['name']}（{item['code']}）" for item in managed if item["code"] not in covered]
     if missing:
         return f"{object_name} is missing current managed positions: {', '.join(missing)}"
