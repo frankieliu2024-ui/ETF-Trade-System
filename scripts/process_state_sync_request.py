@@ -49,6 +49,9 @@ DASHBOARD = ROOT / "ETF当前状态_DASHBOARD.md"
 ARCHIVE = ROOT / "ETF市场行情档案_2026.md"
 EXPERIENCE = ROOT / "ETF交易复盘与经验库_2026.md"
 ACCOUNT = ROOT / "data/state/account_fact.json"
+CANONICAL_INGRESS_SUBMITTED = "CANONICAL_INGRESS_SUBMITTED"
+CANONICAL_INGRESS_FAILED_EXPLICITLY = "CANONICAL_INGRESS_FAILED_EXPLICITLY"
+CANONICAL_INGRESS_NOT_APPLICABLE = "CANONICAL_INGRESS_NOT_APPLICABLE"
 FORMAL_OPPORTUNITY_STATUSES = {"无机会", "观察机会", "Trial机会", "Confirm机会"}
 FORMAL_HOLDING_LIFECYCLES = {"持有管理", "降低风险", "退出"}
 FORMAL_LIFECYCLE_COMPATIBILITY_TERMS = {
@@ -1737,6 +1740,106 @@ def _explicit_fact_type(request: dict) -> str:
     ).strip().upper()
 
 
+def canonical_ingress_contract_for_request(request: dict) -> dict:
+    """Return the actor-side terminal canonical ingress contract for formal facts."""
+
+    fact_type = _explicit_fact_type(request)
+    scenario = str(request.get("interaction_scenario") or "").strip().upper()
+    channel = str(request.get("channel") or request.get("delivery_channel") or "").strip().upper()
+    report_type = str(request.get("report_type") or request.get("report_kind") or "").strip().upper()
+
+    is_broker_fact = is_broker_screenshot_request(request)
+    is_review_fact = fact_type in {"FORMAL_POST_CLOSE_REVIEW", "POST_CLOSE_REVIEW"} or scenario == "POST_CLOSE_REVIEW"
+    is_trade_fact = fact_type in {"CONFIRMED_TRADE", "TRADE_EVENT"} or isinstance(request.get("trade_event"), dict)
+    is_decision_fact = fact_type == "FORMAL_DECISION" or isinstance(request.get("formal_decision"), dict)
+    is_report_delivery = channel in {"REPORT", "REPORT_DELIVERY"} or report_type in {"ETF_TRADE_REVIEW", "SCHEDULED_TRADE_REVIEW"}
+
+    if not any([is_broker_fact, is_review_fact, is_trade_fact, is_decision_fact]):
+        return {
+            "required": False,
+            "terminal_state": CANONICAL_INGRESS_NOT_APPLICABLE,
+            "reason": "not_a_formal_fact_ingress_request",
+        }
+
+    receipt = request.get("_ingress_path") or request.get("canonical_request_path") or request.get("request_path")
+    submission_result = request.get("canonical_ingress_result") or request.get("canonical_submission_result")
+    if isinstance(submission_result, dict):
+        result_status = str(submission_result.get("status") or submission_result.get("terminal_state") or "").strip().upper()
+        result_receipt = submission_result.get("receipt") or submission_result.get("receipt_path") or submission_result.get("commit_sha")
+        if result_receipt and result_status in {"SUBMITTED", "SUCCESS", CANONICAL_INGRESS_SUBMITTED}:
+            receipt = result_receipt
+    if not receipt:
+        return {
+            "required": True,
+            "terminal_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
+            "reason": "missing_durable_ingress_receipt",
+        }
+
+    if is_broker_fact:
+        if isinstance(request.get("account_fact"), dict) or isinstance(request.get("trade_event"), dict):
+            return {
+                "required": True,
+                "terminal_state": CANONICAL_INGRESS_SUBMITTED,
+                "reason": "broker_account_fact_request_submitted",
+            }
+        return {
+            "required": True,
+            "terminal_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
+            "reason": "missing_account_fact",
+        }
+
+    if is_review_fact:
+        if isinstance(request.get("formal_review"), dict) or isinstance(request.get("review"), dict):
+            return {
+                "required": True,
+                "terminal_state": CANONICAL_INGRESS_SUBMITTED,
+                "reason": "post_close_review_request_submitted",
+            }
+        if is_report_delivery:
+            return {
+                "required": True,
+                "terminal_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
+                "reason": "report_delivery_is_not_canonical_review_ingress",
+            }
+        return {
+            "required": True,
+            "terminal_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
+            "reason": "missing_formal_review",
+        }
+
+    if is_trade_fact:
+        if isinstance(request.get("trade_event"), dict):
+            return {
+                "required": True,
+                "terminal_state": CANONICAL_INGRESS_SUBMITTED,
+                "reason": "confirmed_trade_request_submitted",
+            }
+        return {
+            "required": True,
+            "terminal_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
+            "reason": "missing_trade_event",
+        }
+
+    if is_decision_fact:
+        if isinstance(request.get("formal_decision"), dict):
+            return {
+                "required": True,
+                "terminal_state": CANONICAL_INGRESS_SUBMITTED,
+                "reason": "formal_decision_request_submitted",
+            }
+        return {
+            "required": True,
+            "terminal_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
+            "reason": "missing_formal_decision",
+        }
+
+    return {
+        "required": False,
+        "terminal_state": CANONICAL_INGRESS_NOT_APPLICABLE,
+        "reason": "not_a_formal_fact_ingress_request",
+    }
+
+
 def is_broker_screenshot_request(request: dict) -> bool:
     """Recognize broker facts from an explicit contract, with legacy compatibility.
 
@@ -1801,6 +1904,7 @@ def main() -> int:
         raise RuntimeError("invalid state sync request path")
     request = load_json(req_path)
     request["_ingress_path"] = str(req_path.relative_to(ROOT)).replace("\\\\", "/")
+    canonical_ingress_contract = canonical_ingress_contract_for_request(request)
     trade = request.get("trade_event")
     prior_account = load_json(ACCOUNT) if ACCOUNT.exists() else {}
     supplied_account = request.get("account_fact")
@@ -1820,11 +1924,27 @@ def main() -> int:
             "interaction_scenario": request.get("interaction_scenario"),
             "status": "NO_ACCOUNT_FACT",
             "account_sync_status": "ACCOUNT_SYNC_NOT_PERFORMED",
+            "canonical_ingress_state": canonical_ingress_contract["terminal_state"],
+            "canonical_ingress_failure_reason": canonical_ingress_contract["reason"],
             "dashboard_updated": False,
             "detail": "Broker screenshot request has no request-scoped account_fact; market success must not be treated as account sync success.",
         }
         print(json.dumps(result, ensure_ascii=False))
         return 0
+    if (
+        canonical_ingress_contract["required"]
+        and canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_FAILED_EXPLICITLY
+        and canonical_ingress_contract["reason"] != "missing_account_fact"
+    ):
+        print(json.dumps({
+            "ok": False,
+            "status": "CANONICAL_INGRESS_FAILED_EXPLICITLY",
+            "canonical_ingress_state": canonical_ingress_contract["terminal_state"],
+            "canonical_ingress_failure_reason": canonical_ingress_contract["reason"],
+            "request": str(req_path.relative_to(ROOT)).replace("\\\\", "/"),
+        }, ensure_ascii=False, indent=2, sort_keys=True))
+        return 0
+
     if isinstance(supplied_account, dict):
         supplied_account = merge_account_fact(prior_account, supplied_account)
         supplied_account.setdefault("status", "VALID")
@@ -1939,7 +2059,7 @@ def main() -> int:
     # Keep the three human-readable fact documents synchronized even when the
     # request only confirms a fee/account snapshot and creates no new trade event.
     formal_files_sync = sync_formal_files(ROOT, account)
-    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "review_prerequisite_unavailable_recorded": unavailable_recorded, "review_prerequisite_unavailable_idempotent_noop": unavailable_idempotent, "formal_files_sync": formal_files_sync, "account_sync_status": account_sync_status}
+    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "review_prerequisite_unavailable_recorded": unavailable_recorded, "review_prerequisite_unavailable_idempotent_noop": unavailable_idempotent, "formal_files_sync": formal_files_sync, "account_sync_status": account_sync_status, "canonical_ingress_state": canonical_ingress_contract["terminal_state"], "canonical_ingress_failure_reason": None if canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_SUBMITTED else canonical_ingress_contract["reason"]}
     print(json.dumps(result, ensure_ascii=False))
     return 0
 
