@@ -43,8 +43,6 @@ OBJECTS = {
     "SOX": {"name": "费城半导体指数", "symbol": "^SOX", "timezone": "America/New_York", "role": "US_SEMICONDUCTOR"},
     "N225": {"name": "日经225指数", "symbol": "^N225", "timezone": "Asia/Tokyo", "role": "JAPAN_EQUITY"},
     "KOSPI": {"name": "韩国综合指数", "symbol": "^KS11", "timezone": "Asia/Seoul", "role": "KOREA_EQUITY"},
-    "005930": {"name": "三星电子", "symbol": "005930", "timezone": "Asia/Seoul", "role": "KOREA_STOCK", "asset_class": "STOCK"},
-    "000660": {"name": "SK海力士", "symbol": "000660", "timezone": "Asia/Seoul", "role": "KOREA_STOCK", "asset_class": "STOCK"},
     "TWII": {"name": "台湾加权指数", "symbol": "^TWII", "timezone": "Asia/Taipei", "role": "TAIWAN_EQUITY"},
     "HSTECH": {"name": "恒生科技指数", "symbol": "HSTECH.HK", "timezone": "Asia/Hong_Kong", "role": "HK_TECH"},
 }
