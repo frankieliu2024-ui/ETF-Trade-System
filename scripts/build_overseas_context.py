@@ -551,7 +551,7 @@ def build() -> dict:
                 else:
                 # N225/KOSPI/TWII priorities were promoted after live-session parallel validation on
                 # 2026-08-27. Production selection uses the first fresh, valid direct source.
-                if object_id in {"N225", "KOSPI", "TWII"}:
+                elif object_id in {"N225", "KOSPI", "TWII"}:
                     secid = EASTMONEY_DIRECT_FALLBACKS.get(object_id)
                     if object_id == "N225":
                         direct_chain = [(f"eastmoney_push2delay:{secid}", lambda: fetch_eastmoney_index(object_id, spec, generated_utc, secid, host="push2delay.eastmoney.com")),(f"eastmoney_push2:{secid}", lambda: fetch_eastmoney_index(object_id, spec, generated_utc, secid, host="push2.eastmoney.com")),("yahoo_chart_api", lambda: fetch_yahoo(object_id, spec, generated_utc))]
