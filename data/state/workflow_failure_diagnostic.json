@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-14T19:53:31+08:00",
+  "generated_at": "2026-09-14T20:31:51+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 34840458661,
+  "run_id": 34843883296,
   "run_attempt": 1,
-  "head_sha": "7603402258ca0a40e108fb971da7491224694e86",
-  "main_head_sha": "a65e302e41e124f8def856bc986621b642a533e6",
+  "head_sha": "57c2e6a80e2ece88f31cac80bc4181a98f65c217",
+  "main_head_sha": "57c2e6a80e2ece88f31cac80bc4181a98f65c217",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,19 +16,19 @@
     }
   ],
   "changed_files": [
-    "scripts/process_state_sync_request.py",
-    "tests/test_state_layer.py"
+    "data/state/restricted_rollback_plan.json",
+    "data/state/workflow_failure_diagnostic.json"
   ],
-  "commit_message": "Fix #346 formal fact canonical ingress terminal contract",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "state: record workflow failure diagnosis",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": false,
+    "head_is_current_main": true,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
