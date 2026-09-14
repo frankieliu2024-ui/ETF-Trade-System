@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-14T09:23:25+08:00",
+  "generated_at": "2026-09-14T09:23:57+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 34795731384,
+  "run_id": 34795763657,
   "run_attempt": 1,
-  "head_sha": "5ae2a872fb99002fdf6ea89ff514091ad8481896",
-  "main_head_sha": "c58acefdac7f2aee9edaac43b1f8171b262e3669",
+  "head_sha": "bddf7fcf20ec337db77c3e9de4e75d727498832d",
+  "main_head_sha": "620e6a14297ef7e11052513c05ac4298c39cea19",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,11 +16,10 @@
     }
   ],
   "changed_files": [
-    "data/market/snapshots/2026-09-14_092233.json",
-    "data/state/CURRENT.json",
-    "data/state/runtime_health.json"
+    "data/state/restricted_rollback_plan.json",
+    "data/state/workflow_failure_diagnostic.json"
   ],
-  "commit_message": "data: publish core market snapshot",
+  "commit_message": "state: record workflow failure diagnosis",
   "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
@@ -28,7 +27,7 @@
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
-    "forbidden_path_touched": true,
+    "forbidden_path_touched": false,
     "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
