@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-14T16:42:11+08:00",
+  "generated_at": "2026-09-14T16:48:29+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 34824022620,
+  "run_id": 34824572353,
   "run_attempt": 1,
-  "head_sha": "733647c0b30e4c8758425d25ab2aeebb5a8e5446",
-  "main_head_sha": "39211654d4299692d54e0a8757914652f61ced6d",
+  "head_sha": "408c1b52080148c25bb98eb96273895b1b9ef6c9",
+  "main_head_sha": "408c1b52080148c25bb98eb96273895b1b9ef6c9",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,19 +16,19 @@
     }
   ],
   "changed_files": [
-    "scripts/build_query_context.py",
-    "tests/test_decision_first_query_refresh.py"
+    "data/state/restricted_rollback_plan.json",
+    "data/state/workflow_failure_diagnostic.json"
   ],
-  "commit_message": "obs: trace user intraday analysis fast path",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "state: record workflow failure diagnosis",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": false,
+    "head_is_current_main": true,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
