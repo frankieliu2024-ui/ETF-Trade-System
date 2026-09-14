@@ -27,6 +27,14 @@ on:
       - "events/decisions/*.json"
       - "requests/notification_test/*.json"
       - "requests/report_delivery/*.json"
+      # Canonical market-state publication is an independent notification wake.
+      # This preserves one notification engine while avoiding a hard dependency
+      # on workflow_run creation after a producer was itself recovered from a
+      # missed Actions wake. Existing evidence/materiality/dedupe guards absorb
+      # duplicate push + workflow_run wake opportunities for the same fact.
+      - "data/state/CURRENT.json"
+      - "data/state/overseas_context.json"
+      - "data/state/us_extended_hours_context.json"
   schedule:
     # Dedicated close-account reminder envelope: Beijing 15:20 Monday-Friday.
     # notification_center.py checks the formal A-share trading calendar;
@@ -42,8 +50,9 @@ concurrency:
 
 jobs:
   notify:
-    # A producer completion is only a wake opportunity; canonical evidence and
-    # notification_center dedupe/materiality guards decide whether anything is sent.
+    # A producer completion or canonical state publication is only a wake
+    # opportunity; canonical evidence and notification_center
+    # dedupe/materiality guards decide whether anything is sent.
     # Keep the failure-guard's skipped/failed diagnostic wake from replaying stale state.
     if: >-
       ${{
@@ -89,6 +98,21 @@ jobs:
           else
             echo "test=false" >> "$GITHUB_OUTPUT"
           fi
+          if grep -Fxq 'data/state/CURRENT.json' /tmp/changed_files.txt; then
+            echo "a_share_market=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "a_share_market=false" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -Fxq 'data/state/overseas_context.json' /tmp/changed_files.txt; then
+            echo "apac_market=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "apac_market=false" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -Fxq 'data/state/us_extended_hours_context.json' /tmp/changed_files.txt; then
+            echo "us_market=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "us_market=false" >> "$GITHUB_OUTPUT"
+          fi
           mapfile -t report_paths < <(grep -E '^requests/report_delivery/[^/]+\.json$' /tmp/changed_files.txt || true)
           if [ "${#report_paths[@]}" -eq 1 ]; then
             echo "report=true" >> "$GITHUB_OUTPUT"
@@ -126,13 +150,13 @@ jobs:
 
       - name: Send A-share opening value signal or close summary when due
         id: a_share_summary_notify
-        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot' }}
+        if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot') || (github.event_name == 'push' && steps.push_kind.outputs.a_share_market == 'true') }}
         continue-on-error: true
         run: python scripts/run_guarded_notification.py batch --market a-share
 
       - name: Send APAC opening value signal or close summary when due
         id: apac_summary_notify
-        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Overseas pre-open pulse' }}
+        if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Overseas pre-open pulse') || (github.event_name == 'push' && steps.push_kind.outputs.apac_market == 'true') }}
         continue-on-error: true
         run: python scripts/run_guarded_notification.py batch --market apac
 
@@ -146,7 +170,7 @@ jobs:
 
       - name: Send US session summary when due
         id: us_summary_notify
-        if: ${{ (github.event_name == 'workflow_run' && (github.event.workflow_run.name == 'US extended-hours pulse' || github.event.workflow_run.name == 'Overseas pre-open pulse')) || (github.event_name == 'workflow_dispatch' && inputs.recovery_market == 'us') }}
+        if: ${{ (github.event_name == 'workflow_run' && (github.event.workflow_run.name == 'US extended-hours pulse' || github.event.workflow_run.name == 'Overseas pre-open pulse')) || (github.event_name == 'workflow_dispatch' && inputs.recovery_market == 'us') || (github.event_name == 'push' && steps.push_kind.outputs.us_market == 'true') }}
         continue-on-error: true
         run: python scripts/run_guarded_notification.py batch --market us
 
