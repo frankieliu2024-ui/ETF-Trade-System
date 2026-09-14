@@ -1,33 +1,33 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-14T19:04:19+08:00",
+  "generated_at": "2026-09-14T19:04:34+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "Overseas pre-open pulse",
-  "run_id": 34836246976,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 34836290457,
   "run_attempt": 1,
-  "head_sha": "5f9d7c2392d425181d9e19bb9adffe9a713fa387",
-  "main_head_sha": "ec4289b39f30dbd769e4f3b77f7ba9d3770ad999",
-  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
+  "head_sha": "ec4289b39f30dbd769e4f3b77f7ba9d3770ad999",
+  "main_head_sha": "5bd78033e8bc594e647643f20644d4fd9b528d4f",
+  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "overseas",
-      "step": "Commit overseas contexts and runtime health",
-      "number": 13
+      "job": "watchdog",
+      "step": "Run read-only comprehensive production health aggregate",
+      "number": 9
     }
   ],
   "changed_files": [
-    "requests/live_snapshot/20260914_1906_global_krx_acceptance_retry.json"
+    "data/state/query_context.json"
   ],
-  "commit_message": "ops: retry KRX after-market acceptance refresh",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
-  "reason": "failure is classified as transient/persistence and this is the first attempt",
+  "commit_message": "data: record downstream market contexts and state sync",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
+  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
