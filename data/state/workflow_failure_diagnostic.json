@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-14T16:41:54+08:00",
+  "generated_at": "2026-09-14T16:42:11+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 34823973581,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 34824022620,
   "run_attempt": 1,
   "head_sha": "733647c0b30e4c8758425d25ab2aeebb5a8e5446",
-  "main_head_sha": "733647c0b30e4c8758425d25ab2aeebb5a8e5446",
+  "main_head_sha": "39211654d4299692d54e0a8757914652f61ced6d",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
+      "job": "watchdog",
+      "step": "Run read-only comprehensive production health aggregate",
       "number": 9
     }
   ],
@@ -25,7 +25,7 @@
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": true,
+    "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
