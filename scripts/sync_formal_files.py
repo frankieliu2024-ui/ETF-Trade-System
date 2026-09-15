@@ -89,9 +89,11 @@ def normalize_dashboard_projection(text: str, root: Path = ROOT, account: dict |
     for line in lines:
         if line == "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->":
             in_corrections = True
+            cleaned.append(line)
             continue
         if line == "<!-- AUTO_TRADE_FACT_CORRECTIONS_END -->":
             in_corrections = False
+            cleaned.append(line)
             continue
         if not in_corrections:
             cleaned.append(line)
