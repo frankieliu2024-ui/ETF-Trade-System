@@ -205,17 +205,6 @@ def _build_outcome(root: Path, event: dict, names: dict[str, str], dates: list[s
             continue
         date, daily, close_reason, close_contract = qualified_dates[h - 1]
         row = _future_row(daily, code) if code else {}
-        if not close_qualified:
-            horizons[key] = {
-                "status": "PENDING",
-                "target_trading_day_index": h,
-                "market_date": date,
-                "maturity_blocked_by": close_reason,
-                "market_phase": daily.get("market_phase"),
-                "as_of_beijing": daily.get("as_of_beijing"),
-                "source_snapshot": daily.get("source_snapshot"),
-            }
-            continue
         candidate_return = _pct(row.get("close"), price0) if row and price0 not in (None, 0.0) else None
         peer_returns = []
         for peer_code, start in starts.items():
