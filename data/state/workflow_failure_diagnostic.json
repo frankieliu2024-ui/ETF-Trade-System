@@ -1,33 +1,31 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-15T21:52:52+08:00",
+  "generated_at": "2026-09-15T22:18:26+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 34977707848,
+  "run_id": 34980653944,
   "run_attempt": 1,
-  "head_sha": "2f61bbabdfecd449a2b077bef87d87722fd87cce",
-  "main_head_sha": "3e49e0d7c65d8c905a8234fe897b232e69813777",
+  "head_sha": "74b6227222a86b512b452e0e4c8239de29e735d5",
+  "main_head_sha": "74b6227222a86b512b452e0e4c8239de29e735d5",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "production_acceptance",
-      "step": "Enforce production acceptance",
-      "number": 10
+      "job": "consistency",
+      "step": "Enforce hard consistency result",
+      "number": 9
     }
   ],
   "changed_files": [
-    "scripts/notification_center.py",
-    "scripts/process_state_sync_request.py",
-    "tests/test_notification_active_report_contract.py",
-    "tests/test_post_close_review_canonical.py"
+    "scripts/maintenance_guard.py",
+    "tests/test_opening_current_self_healing.py"
   ],
-  "commit_message": "fix: complete degraded ETF trade review and REPORT contract (#613)",
+  "commit_message": "fix: reassess expired persistent runtime failures (#614)",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": false,
+    "head_is_current_main": true,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
