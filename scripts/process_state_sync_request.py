@@ -1188,13 +1188,18 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     data_time = dict(review.get("data_time")) if isinstance(review.get("data_time"), dict) else {}
     supplied_close_snapshot = str(data_time.get("close_snapshot") or review.get("close_snapshot") or "").strip()
     canonical_close_snapshot = str(close_contract.get("latest_snapshot") or "").strip()
-    close_verified = (
+    canonical_close_verified = (
         close_contract.get("status") == "VERIFIED_SESSION_CLOSE"
         and close_contract.get("verified_session_close") is True
         and close_contract.get("market_date") == market_date
         and bool(canonical_close_snapshot)
-        and supplied_close_snapshot == canonical_close_snapshot
     )
+    # A present verified close with a mismatched or absent request reference is
+    # a stale/ambiguous input, not a missing-close case. Do not silently turn a
+    # review computed against another snapshot into a degraded formal review.
+    if canonical_close_verified and supplied_close_snapshot != canonical_close_snapshot:
+        return False, False
+    close_verified = canonical_close_verified and supplied_close_snapshot == canonical_close_snapshot
     # Review completion is independent from close-data completeness. Preserve
     # the canonical close contract when available; otherwise persist an explicit
     # degraded review with the missing/invalid evidence boundary. Never invent

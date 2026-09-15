@@ -123,27 +123,54 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertEqual(event["review"]["data_time"]["close_snapshot"], "data/market/snapshots/2026-08-31_150110.json")
         self.assertEqual(closure["status"], "CLOSED")
 
-    def test_midday_or_noncanonical_close_snapshot_fails_closed(self):
+    def test_live_snapshot_and_late_account_degrade_review_without_fake_close(self):
+        account = {"status": "VALID", "updated_at": "2026-08-31T16:18:00+08:00"}
+        live_snapshot = "data/market/snapshots/2026-08-31_144800.json"
+        (self.root / live_snapshot).write_text(json.dumps({
+            "market_date": "2026-08-31", "node": "live", "planned_time": "14:48",
+            "market_phase": "CONTINUOUS_AFTERNOON", "quality_status": "PASS",
+            "rows": [{"quality_status": "PASS", "open": 1, "high": 1, "low": 1, "close": 1, "volume": 1, "amount": 1}],
+        }), encoding="utf-8")
+        current = {"market_date": "2026-08-31", "latest_valid_node": "live", "latest_snapshot": live_snapshot}
+        (self.root / "data/state/CURRENT.json").write_text(json.dumps(current), encoding="utf-8")
+        request = self.request("2026-08-31T20:30:00+08:00")
+        request["formal_review"]["data_time"]["close_snapshot"] = live_snapshot
+        self.assertEqual(sync.record_post_close_review(account, request), (True, False))
+        event = json.loads((self.root / "events/reviews/2026-08-31.json").read_text(encoding="utf-8"))
+        closure = json.loads((self.root / "data/state/close_review_closure_2026-08-31.json").read_text(encoding="utf-8"))
+        self.assertEqual(event["event_type"], "FORMAL_POST_CLOSE_REVIEW")
+        self.assertNotIn("close_snapshot", event["review"]["data_time"])
+        self.assertEqual(event["review"]["data_time"]["close_data_status"], "UNVERIFIED")
+        self.assertIn("VERIFIED_SESSION_CLOSE unavailable", event["review"]["data_time"]["close_data_gap"])
+        self.assertEqual(closure["status"], "CLOSED")
+        self.assertEqual(closure["close_snapshot"], "")
+
+    def test_review_completes_when_no_close_snapshot_exists(self):
+        account = {"status": "VALID", "updated_at": "2026-08-31T16:18:00+08:00"}
+        (self.root / "data/state/CURRENT.json").write_text(json.dumps({
+            "market_date": "2026-08-31", "latest_valid_node": "live", "latest_snapshot": "",
+        }), encoding="utf-8")
+        request = self.request("2026-08-31T20:30:00+08:00")
+        self.assertEqual(sync.record_post_close_review(account, request), (True, False))
+        event = json.loads((self.root / "events/reviews/2026-08-31.json").read_text(encoding="utf-8"))
+        self.assertEqual(event["event_type"], "FORMAL_POST_CLOSE_REVIEW")
+        self.assertEqual(event["review"]["data_time"]["close_data_status"], "UNVERIFIED")
+        self.assertNotIn("close_snapshot", event["review"]["data_time"])
+
+    def test_mismatched_snapshot_is_rejected_when_verified_close_exists(self):
         account = {"status": "VALID", "updated_at": "2026-08-31T12:00:00+08:00"}
         bad_snapshot = "data/market/snapshots/2026-08-31_113000.json"
         (self.root / bad_snapshot).write_text(json.dumps({
             "market_date": "2026-08-31", "node": "live", "planned_time": "11:30",
             "quality_status": "PASS", "rows": [{"quality_status": "PASS", "open": 1, "high": 1, "low": 1, "close": 1, "volume": 1, "amount": 1}],
         }), encoding="utf-8")
-        current = {"market_date": "2026-08-31", "latest_valid_node": "live", "latest_snapshot": bad_snapshot}
+        current = {"market_date": "2026-08-31", "latest_valid_node": "1500", "latest_snapshot": "data/market/snapshots/2026-08-31_150110.json"}
         (self.root / "data/state/CURRENT.json").write_text(json.dumps(current), encoding="utf-8")
         request = self.request("2026-08-31T20:30:00+08:00")
         request["formal_review"]["data_time"]["close_snapshot"] = bad_snapshot
         self.assertEqual(sync.record_post_close_review(account, request), (False, False))
         self.assertFalse((self.root / "events/reviews/2026-08-31.json").exists())
         self.assertFalse((self.root / "data/state/close_review_closure_2026-08-31.json").exists())
-
-        current.update({"latest_valid_node": "1500", "latest_snapshot": "data/market/snapshots/2026-08-31_150110.json"})
-        (self.root / "data/state/CURRENT.json").write_text(json.dumps(current), encoding="utf-8")
-        request = self.request("2026-08-31T20:30:00+08:00")
-        request["formal_review"]["data_time"]["close_snapshot"] = bad_snapshot
-        self.assertEqual(sync.record_post_close_review(account, request), (False, False))
-        self.assertFalse((self.root / "events/reviews/2026-08-31.json").exists())
 
     def test_e2e_blocks_missing_canonical_review(self):
         event = self.root / "post_market_review/post_market_review_event.json"
