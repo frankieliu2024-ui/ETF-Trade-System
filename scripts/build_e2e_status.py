@@ -292,8 +292,9 @@ def risk_component(equity: dict, current: dict) -> dict:
         "source": "",
         "data_quality": summary.get("known_net_equity_data_quality"),
     }
+
 def context_component(query: dict, decision: dict) -> dict:
-    """Expose business readiness, not merely derived-file existence."""
+    """Expose current-product usability while preserving diagnostic observability."""
     query_ok = bool(query)
     decision_ok = bool(decision)
     if not query_ok and not decision_ok:
@@ -316,14 +317,6 @@ def context_component(query: dict, decision: dict) -> dict:
     completeness = decision.get("formal_intraday_context_completeness") or {}
     completeness_status = str(completeness.get("status") or "").strip().upper()
 
-    if boundary == "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED":
-        return {
-            "status": "DEGRADED",
-            "reason": "decision context files exist but minimum executable context readiness is not established",
-            "query_context": True,
-            "decision_context": True,
-            "minimum_decision_context": "NOT_ESTABLISHED",
-        }
     if completeness_status == "DECISION_CONTEXT_INCOMPLETE":
         return {
             "status": "DEGRADED",
@@ -331,14 +324,26 @@ def context_component(query: dict, decision: dict) -> dict:
             "query_context": True,
             "decision_context": True,
             "minimum_decision_context": "INCOMPLETE",
+            "observability_boundary": boundary or None,
+        }
+
+    if boundary == "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED":
+        return {
+            "status": "READY",
+            "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only for the current manual product",
+            "query_context": True,
+            "decision_context": True,
+            "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
+            "observability_boundary": boundary,
         }
 
     return {
         "status": "READY",
-        "reason": "query and decision contexts are available with no explicit incomplete-readiness boundary",
+        "reason": "query and decision contexts are available with no active incompleteness",
         "query_context": True,
         "decision_context": True,
         "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
+        "observability_boundary": boundary or None,
     }
 
 

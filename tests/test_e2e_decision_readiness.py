@@ -6,7 +6,7 @@ from scripts.build_e2e_status import context_component
 
 
 class E2EDecisionReadinessTests(unittest.TestCase):
-    def test_explicit_unestablished_minimum_context_is_not_ready(self):
+    def test_legacy_unestablished_boundary_is_diagnostic_only(self):
         result = context_component(
             {"request_id": "q"},
             {
@@ -15,16 +15,35 @@ class E2EDecisionReadinessTests(unittest.TestCase):
                 }
             },
         )
-        self.assertEqual(result["status"], "DEGRADED")
-        self.assertEqual(result["minimum_decision_context"], "NOT_ESTABLISHED")
+        self.assertEqual(result["status"], "READY")
+        self.assertEqual(result["minimum_decision_context"], "READY_OR_NOT_APPLICABLE")
+        self.assertEqual(
+            result["observability_boundary"],
+            "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
+        )
 
-    def test_incomplete_formal_context_is_not_ready(self):
+    def test_true_incomplete_formal_context_remains_not_ready(self):
         result = context_component(
             {"request_id": "q"},
-            {"formal_intraday_context_completeness": {"status": "DECISION_CONTEXT_INCOMPLETE"}},
+            {
+                "observability": {
+                    "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED"
+                },
+                "formal_intraday_context_completeness": {
+                    "status": "DECISION_CONTEXT_INCOMPLETE"
+                },
+            },
         )
         self.assertEqual(result["status"], "DEGRADED")
         self.assertEqual(result["minimum_decision_context"], "INCOMPLETE")
+
+    def test_one_missing_context_remains_degraded(self):
+        result = context_component({"request_id": "q"}, {})
+        self.assertEqual(result["status"], "DEGRADED")
+
+    def test_both_missing_contexts_remain_blocked(self):
+        result = context_component({}, {})
+        self.assertEqual(result["status"], "BLOCKED")
 
     def test_complete_context_remains_ready(self):
         result = context_component(
