@@ -40,7 +40,10 @@ class DashboardRiskProjectionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             (root / "config/market").mkdir(parents=True)
-            (root / "config/market/etf_monitor_universe.json").write_text('{"objects": []}', encoding="utf-8")
+            (root / "config/market/etf_monitor_universe.json").write_text(
+                '{"objects":[{"code":"588000","name":"科创50ETF"}]}',
+                encoding="utf-8",
+            )
             (root / "events/trades").mkdir(parents=True)
             block = build_dashboard_block(account, equity, "", root)
         self.assertIn("账户事实更新时间：2026-09-14T16:43:00+08:00", block)
