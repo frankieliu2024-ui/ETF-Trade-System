@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from collections.abc import Iterable
 
@@ -51,9 +52,32 @@ FORMAL_FILES = frozenset({
     "ETF交易复盘与经验库_2026.md",
 })
 
+_GIT_OCTAL_ESCAPE = re.compile(r"\\([0-7]{3})")
+
+
+def normalize_git_path(path: str) -> str:
+    """Normalize one path emitted by Git plumbing before classification.
+
+    Git may quote non-ASCII paths and encode their UTF-8 bytes as octal escapes
+    when core.quotePath is enabled.  The production classifier must identify the
+    underlying repository path rather than treating that transport rendering as
+    a new UNKNOWN path class.
+    """
+    value = str(path).strip()
+    if len(value) >= 2 and value[0] == value[-1] == '"':
+        value = value[1:-1]
+        if _GIT_OCTAL_ESCAPE.search(value):
+            raw = _GIT_OCTAL_ESCAPE.sub(lambda match: chr(int(match.group(1), 8)), value)
+            try:
+                value = raw.encode("latin-1").decode("utf-8")
+            except (UnicodeEncodeError, UnicodeDecodeError):
+                value = raw
+        value = value.replace(r"\\", "\\").replace(r'\"', '"')
+    return value.strip().lstrip("./")
+
 
 def classify_path(path: str) -> str:
-    path = path.strip().lstrip("./")
+    path = normalize_git_path(path)
     if path == "ETF规则_MASTER.md" or path.startswith("config/"):
         return FORMAL_RULE_OR_CONFIG
     if path == "data/state/account_fact.json":
@@ -78,7 +102,7 @@ def classify_path(path: str) -> str:
 
 
 def classify_paths(paths: Iterable[str]) -> dict:
-    normalized = sorted({str(path).strip() for path in paths if str(path).strip()})
+    normalized = sorted({normalize_git_path(path) for path in paths if str(path).strip()})
     classes = sorted({classify_path(path) for path in normalized})
     return {
         "required": bool(set(classes) & FULL_ACCEPTANCE_CLASSES),

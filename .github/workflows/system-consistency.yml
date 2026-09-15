@@ -55,9 +55,6 @@ on:
       - "scripts/llm_research_adapter.py"
       - "scripts/run_review_research_critique.py"
       - "config/maintenance/production_mutation_protocol.json"
-      # All formal facts, requests, normative documentation, and contract tests
-      # are full-acceptance inputs; keep the PR trigger aligned with the
-      # classifier rather than relying on a later manual dispatch.
       - "ETF规则_MASTER.md"
       - "ETF_SYSTEM_INDEX.md"
       - "ETF当前状态_DASHBOARD.md"
@@ -96,14 +93,6 @@ on:
       - "requests/research_backfill/*.json"
       - "requests/trade_fact_correction/*.json"
       - "data/state/account_fact.json"
-      # Runtime health files are owned by their canonical producer/watchdog
-      # chains and are not source facts for full-system validation. Abnormal
-      # A-share runtime is handled by the self-healing watchdog; overseas pulse
-      # failures are routed through the shared workflow failure guard.
-      # Rebuildable query/decision/market-delta, stock-monitoring and current
-      # research-summary states are deliberately not full-consistency push
-      # triggers. Their canonical producers own local quality checks; the
-      # account/source/config/formal/research inputs still trigger this gate.
       - "data/state/research_master_candidates.json"
       - "data/state/historical_backfill_status.json"
       - "data/state/historical_position_research.json"
@@ -112,26 +101,18 @@ on:
       - "data/market/audit/research_backfill/**"
       - "research/reports/**"
       - "post_market_review/**"
-      # Keep main-side reachability aligned with acceptance_scope.py for
-      # formal facts, requests, normative docs, and contract tests.
       - "docs/**"
       - "events/**"
       - "requests/**"
       - "tests/**"
   schedule:
-    # Pre-market readiness fallback. The dedicated overseas pulse remains the
-    # primary collector; these runs prevent a missed/delayed GitHub schedule
-    # from leaving formal overseas_context on the previous Beijing date.
-    - cron: "50 23 * * 0-4"   # Beijing 07:50 Mon-Fri
-    - cron: "20,50 0 * * 1-5" # Beijing 08:20 / 08:50 Mon-Fri
+    - cron: "50 23 * * 0-4"
+    - cron: "20,50 0 * * 1-5"
 
 permissions:
   contents: write
 
 concurrency:
-  # PR prechecks must never queue behind or delay the production consistency
-  # lane. Within one PR, a newer head supersedes the stale precheck; production
-  # keeps its existing serialized lane and is never cancelled by this rule.
   group: ${{ github.event_name == 'pull_request' && format('etf-system-consistency-pr-{0}', github.event.pull_request.number) || 'etf-system-consistency' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
@@ -154,29 +135,16 @@ jobs:
         run: |
           python - <<'PY'
           import json
-          import os
           import tempfile
           from pathlib import Path
           from scripts.llm_research_adapter import build_review_input, critique_review
-
           with tempfile.TemporaryDirectory() as td:
               cfg = Path(td) / "adapter.json"
-              cfg.write_text(json.dumps({
-                  "enabled": False,
-                  "daily_call_limit": 20,
-                  "daily_budget_usd": 0.50,
-                  "secret_env": "CI_LLM_KEY"
-              }), encoding="utf-8")
+              cfg.write_text(json.dumps({"enabled": False,"daily_call_limit": 20,"daily_budget_usd": 0.50,"secret_env": "CI_LLM_KEY"}), encoding="utf-8")
               result = critique_review({"market_date": "2026-09-11"}, config_path=cfg)
               assert result["status"] == "SKIPPED"
               assert result["uncertainties"] == ["adapter_disabled"]
-
-              safe = build_review_input({
-                  "market_date": "2026-09-11",
-                  "daily_market_summary": {"latest_valid_node": "1500"},
-                  "account_fact": {"cash": 1},
-                  "trade_action": "BUY"
-              })
+              safe = build_review_input({"market_date": "2026-09-11","daily_market_summary": {"latest_valid_node": "1500"},"account_fact": {"cash": 1},"trade_action": "BUY"})
               assert "account_fact" not in safe
               assert "trade_action" not in safe
           print("bounded LLM adapter contract: PASS")
@@ -188,9 +156,7 @@ jobs:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           git fetch --no-tags origin main
-          python scripts/semantic_latest_main.py \
-            --base "${PR_BASE_SHA}" \
-            --head "$(git rev-parse origin/main)"
+          python scripts/semantic_latest_main.py --base "${PR_BASE_SHA}" --head "$(git rev-parse origin/main)"
       - name: Validate OpenSSL SM4 runtime dependency
         shell: bash
         run: |
@@ -209,104 +175,45 @@ jobs:
           rm -rf "$candidate"
           cp -a . "$candidate"
           python - "$candidate" <<'PY'
-          import json
-          import sys
+          import json,sys
           from datetime import datetime, timezone
           from pathlib import Path
-
-          root = Path(sys.argv[1])
-          sys.path.insert(0, str(root))
-          sys.path.insert(0, str(root / "scripts"))
+          root=Path(sys.argv[1]); sys.path.insert(0,str(root)); sys.path.insert(0,str(root/'scripts'))
           from scripts.historical_market_fact_recovery import assess_recovery
-
-          trade_path = root / "events/trades/20260901_143932_561980_reduce_risk_execution.json"
-          trade = json.loads(trade_path.read_text(encoding="utf-8"))
-          account = json.loads((root / "data/state/account_fact.json").read_text(encoding="utf-8"))
-          snapshots = sorted((root / "data/market/snapshots").glob("2026-08-31_*.json"))
-          if not snapshots:
-              raise SystemExit("candidate replay requires the existing 2026-08-31 historical evidence")
-          evidence_path = snapshots[-1]
-          evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
-          universe = json.loads((root / "config/market/etf_monitor_universe.json").read_text(encoding="utf-8"))
-          symbols = [str(item.get("code")) for item in universe.get("objects", []) if item.get("code")]
-          symbols += ["000001.SH", "399006.SZ", "000688.SH"]
-          assessment = assess_recovery(
-              target_market_date="2026-09-01",
-              target_node="close",
-              required_symbols=symbols,
-              rows=evidence.get("rows") or [],
-              evidence_kind="DAILY_BAR",
-          )
-          if assessment.classification.value != "UNRECOVERABLE":
-              raise SystemExit(f"candidate evidence was not classified canonically: {assessment.classification.value}")
-          payload = assessment.as_dict()
-          payload.update({
-              "trade_event_id": trade["event_id"],
-              "review_target_market_date": "2026-09-01",
-              "missing_prerequisite": "2026-09-01 close snapshot",
-              "recovery_target": "2026-09-01/close",
-              "recovery_classification": assessment.classification.value,
-              "recovery_attempted": True,
-              "provider": evidence.get("provider") or "approved_historical_evidence",
-              "source_reference": str(evidence_path.relative_to(root)).replace("\\\\", "/"),
-              "historical_retrieved_at_beijing": datetime.now(timezone.utc).isoformat(),
-              "effective_market_time_beijing": "2026-09-01T15:00:00+08:00",
-              "original_provider_observation_time_beijing": None,
-              "required_coverage": {"count": len(symbols), "symbols": symbols},
-              "actual_coverage": {"count": assessment.coverage, "symbols": list(set(symbols) - set(assessment.missing_symbols))},
-              "unrecoverable_reason": assessment.reason,
-              "evidence_reference": str(evidence_path.relative_to(root)).replace("\\\\", "/"),
-          })
-          request = {
-              "request_id": "candidate-176-unrecoverable-review-replay",
-              "interaction_scenario": "POST_CLOSE_REVIEW",
-              "market_date": "2026-09-01",
-              "account_fact": account,
-              "trade_event": trade,
-              "historical_recovery_assessment": payload,
-          }
-          request_path = root / "requests/live_snapshot/candidate_unrecoverable_review.json"
-          request_path.parent.mkdir(parents=True, exist_ok=True)
-          request_path.write_text(json.dumps(request, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-          print(json.dumps({"candidate": "CANDIDATE_POST_REPLAY_STATE", "classification": assessment.classification.value, "evidence": str(evidence_path.relative_to(root))}, ensure_ascii=False))
+          trade_path=root/'events/trades/20260901_143932_561980_reduce_risk_execution.json'
+          trade=json.loads(trade_path.read_text(encoding='utf-8'))
+          account=json.loads((root/'data/state/account_fact.json').read_text(encoding='utf-8'))
+          snapshots=sorted((root/'data/market/snapshots').glob('2026-08-31_*.json'))
+          if not snapshots: raise SystemExit('candidate replay requires the existing 2026-08-31 historical evidence')
+          evidence_path=snapshots[-1]; evidence=json.loads(evidence_path.read_text(encoding='utf-8'))
+          universe=json.loads((root/'config/market/etf_monitor_universe.json').read_text(encoding='utf-8'))
+          symbols=[str(item.get('code')) for item in universe.get('objects',[]) if item.get('code')]+['000001.SH','399006.SZ','000688.SH']
+          assessment=assess_recovery(target_market_date='2026-09-01',target_node='close',required_symbols=symbols,rows=evidence.get('rows') or [],evidence_kind='DAILY_BAR')
+          if assessment.classification.value!='UNRECOVERABLE': raise SystemExit(f'candidate evidence was not classified canonically: {assessment.classification.value}')
+          payload=assessment.as_dict(); payload.update({'trade_event_id':trade['event_id'],'review_target_market_date':'2026-09-01','missing_prerequisite':'2026-09-01 close snapshot','recovery_target':'2026-09-01/close','recovery_classification':assessment.classification.value,'recovery_attempted':True,'provider':evidence.get('provider') or 'approved_historical_evidence','source_reference':str(evidence_path.relative_to(root)).replace('\\','/'),'historical_retrieved_at_beijing':datetime.now(timezone.utc).isoformat(),'effective_market_time_beijing':'2026-09-01T15:00:00+08:00','original_provider_observation_time_beijing':None,'required_coverage':{'count':len(symbols),'symbols':symbols},'actual_coverage':{'count':assessment.coverage,'symbols':list(set(symbols)-set(assessment.missing_symbols))},'unrecoverable_reason':assessment.reason,'evidence_reference':str(evidence_path.relative_to(root)).replace('\\','/')})
+          request={'request_id':'candidate-176-unrecoverable-review-replay','interaction_scenario':'POST_CLOSE_REVIEW','market_date':'2026-09-01','account_fact':account,'trade_event':trade,'historical_recovery_assessment':payload}
+          request_path=root/'requests/live_snapshot/candidate_unrecoverable_review.json'; request_path.parent.mkdir(parents=True,exist_ok=True); request_path.write_text(json.dumps(request,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
           PY
           cd "$candidate"
           export ETF_SYSTEM_ROOT="$candidate"
           export PYTHONPATH="$candidate/scripts:$candidate"
-          # Reconcile all existing correction requests only inside the disposable
-          # candidate tree; PR prechecks never mutate the source checkout.
           shopt -s nullglob
           correction_requests=(requests/trade_fact_correction/*.json)
-          for request in "${correction_requests[@]}"; do
-            python scripts/apply_trade_fact_correction.py "$request"
-          done
-          # Replay durable confirmed-trade ingress generically in chronological
-          # order. Incident-specific filenames remain regression fixtures only.
+          for request in "${correction_requests[@]}"; do python scripts/apply_trade_fact_correction.py "$request"; done
           trade_requests=()
           for request in requests/live_snapshot/*.json; do
             if [ -f "$request" ] && python - "$request" <<'PY'
-          import json, sys
-          obj = json.load(open(sys.argv[1], encoding="utf-8"))
-          trade = obj.get("trade_event")
-          is_durable_state_sync = str(obj.get("request_type") or "").upper() == "STATE_SYNC_ONLY"
-          raise SystemExit(0 if is_durable_state_sync and isinstance(trade, dict) and str(trade.get("execution_status", "EXECUTED")).upper() == "EXECUTED" else 1)
+          import json,sys
+          obj=json.load(open(sys.argv[1],encoding='utf-8')); trade=obj.get('trade_event'); ok=str(obj.get('request_type') or '').upper()=='STATE_SYNC_ONLY' and isinstance(trade,dict) and str(trade.get('execution_status','EXECUTED')).upper()=='EXECUTED'; raise SystemExit(0 if ok else 1)
           PY
             then trade_requests+=("$request"); fi
           done
-          printf '%s\n' "${trade_requests[@]}" | sort | while IFS= read -r request; do
-            [ -n "$request" ] && python scripts/process_state_sync_request.py "$request"
-          done
+          printf '%s\n' "${trade_requests[@]}" | sort | while IFS= read -r request; do [ -n "$request" ] && python scripts/process_state_sync_request.py "$request"; done
           python scripts/process_state_sync_request.py requests/live_snapshot/candidate_unrecoverable_review.json
-          # Re-run the existing formal projection owner in the ephemeral candidate
-          # tree so candidate acceptance validates the same writer path that will
-          # publish the neutralized Dashboard projection after merge.
           python scripts/sync_formal_files.py
           python -m unittest tests.test_dashboard_risk_projection tests.test_formal_file_mutation_gateway
           python scripts/build_state_context.py
           python scripts/build_query_context.py
-          # The replay intentionally creates ephemeral formal evidence. Commit only
-          # that candidate snapshot inside the disposable copy so the existing
-          # clean-worktree contract can validate the candidate without touching PR/main.
           git config user.name "candidate-replay"
           git config user.email "candidate-replay@localhost"
           git add -f ETF交易复盘与经验库_2026.md events/reviews/2026-09-01.json requests/live_snapshot/candidate_unrecoverable_review.json
@@ -320,74 +227,30 @@ jobs:
           cat "$candidate/consistency-wrapper.log"
           export CANDIDATE_CONSISTENCY_RC="$consistency_rc"
           python - <<'PY'
-          import json
-          import os
+          import json,os
           from pathlib import Path
-          report = json.loads(Path("data/state/system_consistency.json").read_text(encoding="utf-8"))
-          failed = [item for item in report.get("checks", []) if item.get("status") == "FAIL"]
-          print(json.dumps({
-              "candidate_wrapper_rc": int(os.environ["CANDIDATE_CONSISTENCY_RC"]),
-              "candidate_errors": report.get("errors") or [],
-              "candidate_failed_checks": failed,
-          }, ensure_ascii=False))
+          report=json.loads(Path('data/state/system_consistency.json').read_text(encoding='utf-8'))
+          failed=[item for item in report.get('checks',[]) if item.get('status')=='FAIL']
+          if os.environ.get('CANDIDATE_CONSISTENCY_RC')!='0' or report.get('status')=='FAIL' or int(report.get('hard_error_count') or 0)>0 or failed:
+              raise SystemExit(json.dumps({'candidate_acceptance':'FAIL','report_status':report.get('status'),'hard_error_count':report.get('hard_error_count'),'failed_checks':failed},ensure_ascii=False))
+          print(json.dumps({'candidate_acceptance':'PASS','report_status':report.get('status'),'hard_error_count':report.get('hard_error_count'),'validated_post_replay_commit':(report.get('commit_audit') or {}).get('checked_commit')},ensure_ascii=False))
           PY
-          test "$consistency_rc" -eq 0
-          python scripts/maintenance_guard.py
-          python scripts/build_e2e_status.py
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          review = json.loads(Path("events/reviews/2026-09-01.json").read_text(encoding="utf-8"))
-          assert review["event_type"] == "FORMAL_POST_CLOSE_REVIEW_UNAVAILABLE"
-          assert review["review_unavailability"]["recovery_classification"] == "UNRECOVERABLE"
-          assert review["review_unavailability"]["normal_case_generated"] is False
-          e2e = json.loads(Path("data/state/e2e_status.json").read_text(encoding="utf-8"))
-          assert e2e.get("status") in {"READY", "DEGRADED"}
-          print(json.dumps({"candidate_terminal": "PASS", "e2e": e2e.get("status")}, ensure_ascii=False))
-          PY
+          git reset --hard HEAD
+          git clean -fd
       - name: Validate formal files, data standard, monitoring layers and runtime wiring
         id: consistency
         continue-on-error: true
-        shell: bash
         run: |
           set +e
-          validation_root="$PWD"
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            pr_number="$(python -c 'import json,os; print(json.load(open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8"))["number"])')"
-            candidate_root="$RUNNER_TEMP/etf-candidate-${pr_number}"
-            if [ -d "$candidate_root" ]; then
-              validation_root="$candidate_root"
-              echo "validating PR gates against ephemeral candidate post-replay tree: $validation_root"
-            fi
+          validation_root="$GITHUB_WORKSPACE"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            candidate_root="$RUNNER_TEMP/etf-candidate-${{ github.event.pull_request.number }}"
+            if [ -d "$candidate_root/.git" ]; then validation_root="$candidate_root"; echo "validating PR gates against ephemeral candidate post-replay tree: $validation_root"; fi
           fi
-          (
-            cd "$validation_root"
-            export ETF_SYSTEM_ROOT="$validation_root"
-            export PYTHONPATH="$validation_root/scripts:$validation_root"
-            export ETF_CONSISTENCY_REPORT_PATH="$RUNNER_TEMP/system_consistency.json"
-            python scripts/check_system_consistency.py --no-persist --report-path "$RUNNER_TEMP/system_consistency.json"
-          )
-          rc1=$?
-          (
-            cd "$validation_root"
-            export ETF_SYSTEM_ROOT="$validation_root"
-            export PYTHONPATH="$validation_root/scripts:$validation_root"
-            # This subshell is independent: explicitly consume the fresh report
-            # produced above instead of falling back to persisted main state.
-            export ETF_CONSISTENCY_REPORT_PATH="$RUNNER_TEMP/system_consistency.json"
-            python scripts/check_research_integration.py
-          )
-          rc2=$?
-          (
-            cd "$validation_root"
-            export ETF_SYSTEM_ROOT="$validation_root"
-            export PYTHONPATH="$validation_root/scripts:$validation_root"
-            python scripts/check_market_state_consistency.py
-          )
-          rc3=$?
-          if [ "$rc1" -ne 0 ] || [ "$rc2" -ne 0 ] || [ "$rc3" -ne 0 ]; then
-            exit 1
-          fi
+          ( cd "$validation_root"; export ETF_SYSTEM_ROOT="$validation_root"; export PYTHONPATH="$validation_root/scripts:$validation_root"; export ETF_CONSISTENCY_REPORT_PATH="$RUNNER_TEMP/system_consistency.json"; python scripts/check_system_consistency.py --no-persist --report-path "$RUNNER_TEMP/system_consistency.json" ); rc1=$?
+          ( cd "$validation_root"; export ETF_SYSTEM_ROOT="$validation_root"; export PYTHONPATH="$validation_root/scripts:$validation_root"; export ETF_CONSISTENCY_REPORT_PATH="$RUNNER_TEMP/system_consistency.json"; python scripts/check_research_integration.py ); rc2=$?
+          ( cd "$validation_root"; export ETF_SYSTEM_ROOT="$validation_root"; export PYTHONPATH="$validation_root/scripts:$validation_root"; python scripts/check_market_state_consistency.py ); rc3=$?
+          if [ "$rc1" -ne 0 ] || [ "$rc2" -ne 0 ] || [ "$rc3" -ne 0 ]; then exit 1; fi
       - name: Enforce hard consistency result
         if: ${{ steps.consistency.outcome == 'failure' && github.event_name != 'pull_request' }}
         run: exit 1
@@ -403,8 +266,6 @@ jobs:
           if-no-files-found: ignore
 
   production_acceptance:
-    # Do not allocate a second acceptance runner after the consistency gate
-    # has already failed; successful production paths retain the same acceptance.
     if: ${{ needs.consistency.result == 'success' && github.event_name != 'pull_request' }}
     needs: consistency
     runs-on: ubuntu-latest
@@ -426,72 +287,51 @@ jobs:
           replay="$RUNNER_TEMP/etf-strategy-equity-replay.json"
           python scripts/rebuild_etf_strategy_equity.py --output "$replay"
           python - "$replay" <<'PY'
-          import json, sys
-          p = json.load(open(sys.argv[1], encoding="utf-8"))
-          s = p.get("summary") or {}
-          required = ["current_gross_strategy_equity", "current_strategy_return_pct_gross", "trade_fact_count", "price_date_count"]
-          if any(k not in s for k in required) or s.get("coverage_status") != "COMPLETE":
-              raise SystemExit("accepted ETF equity replay is incomplete")
-          if not s.get("pending_fees_do_not_block_gross", False):
-              raise SystemExit("fee boundary missing from gross replay")
-          print(json.dumps({"cutoff": p.get("replay_cutoff"), "trade_facts": s.get("trade_fact_count"), "price_dates": s.get("price_date_count"), "gross_equity": s.get("current_gross_strategy_equity"), "gross_return": s.get("current_strategy_return_pct_gross")}, ensure_ascii=False))
+          import json,sys
+          p=json.load(open(sys.argv[1],encoding='utf-8')); s=p.get('summary') or {}; required=['current_gross_strategy_equity','current_strategy_return_pct_gross','trade_fact_count','price_date_count']
+          if any(k not in s for k in required) or s.get('coverage_status')!='COMPLETE': raise SystemExit('accepted ETF equity replay is incomplete')
+          if not s.get('pending_fees_do_not_block_gross',False): raise SystemExit('fee boundary missing from gross replay')
           PY
           git config user.name "github-actions[bot]"
           git config user.email "41898282+users.noreply.github.com"
           cp "$replay" data/state/etf_strategy_equity.json
           python scripts/sync_formal_files.py
           git add data/state/etf_strategy_equity.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md data/state/CURRENT.json
-          if git diff --cached --quiet; then
-            exit 0
-          fi
+          if git diff --cached --quiet; then exit 0; fi
           git commit -m "state: persist accepted canonical ETF equity replay"
           git push origin HEAD:main
-
       - name: Consume pending trade-fact corrections
         shell: bash
         run: |
           set -euo pipefail
           shopt -s nullglob
           correction_requests=(requests/trade_fact_correction/*.json)
-          if [ "${#correction_requests[@]}" -eq 0 ]; then
-            exit 0
-          fi
+          if [ "${#correction_requests[@]}" -eq 0 ]; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch --no-tags origin main
           git reset --hard origin/main
-          for request in "${correction_requests[@]}"; do
-            python scripts/apply_trade_fact_correction.py "$request"
-          done
+          for request in "${correction_requests[@]}"; do python scripts/apply_trade_fact_correction.py "$request"; done
           git add events/trades data/state/etf_strategy_equity.json data/state/trade_fact_correction_receipt.json ETF交易复盘与经验库_2026.md ETF市场行情档案_2026.md ETF当前状态_DASHBOARD.md
-          if git diff --cached --quiet; then
-            exit 0
-          fi
+          if git diff --cached --quiet; then exit 0; fi
           git commit -m "state: consume trade fact corrections"
           git push origin HEAD:main
       - name: Bind acceptance to post-correction main HEAD
         shell: bash
         run: |
           set -euo pipefail
-          # Correction consumption may publish a new canonical main commit.
-          # All following acceptance and persistence steps must use that exact
-          # checkout identity, never the triggering commit's stale SHA.
           git fetch --no-tags origin main
           git reset --hard origin/main
           echo "ETF_ACCEPTANCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
-
       - name: Classify mutation for combination acceptance
         id: acceptance_scope
         shell: bash
         run: |
           set -euo pipefail
-          git diff-tree --no-commit-id --name-only -m -r "$ETF_ACCEPTANCE_SHA" | python scripts/acceptance_scope.py --stdin | tee "$RUNNER_TEMP/acceptance_scope.json"
+          git -c core.quotePath=false diff-tree --no-commit-id --name-only -m -r "$ETF_ACCEPTANCE_SHA" | python scripts/acceptance_scope.py --stdin | tee "$RUNNER_TEMP/acceptance_scope.json"
           python - "$RUNNER_TEMP/acceptance_scope.json" <<'PY' >> "$GITHUB_OUTPUT"
-          import json
-          import sys
-          scope = json.load(open(sys.argv[1], encoding="utf-8"))
-          print(f"required={'true' if scope['required'] else 'false'}")
-          print(f"classes={','.join(scope['classes'])}")
+          import json,sys
+          scope=json.load(open(sys.argv[1],encoding='utf-8')); print(f"required={'true' if scope['required'] else 'false'}"); print(f"classes={','.join(scope['classes'])}")
           PY
       - name: Run canonical post-write acceptance
         id: acceptance
@@ -509,25 +349,13 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           owned="$RUNNER_TEMP/etf-acceptance-state"
           mkdir -p "$owned/data/state"
-          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json data/state/execution_quality.json; do
-            if [ -f "$f" ]; then
-              cp "$f" "$owned/$f"
-            fi
-          done
+          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json data/state/execution_quality.json; do if [ -f "$f" ]; then cp "$f" "$owned/$f"; fi; done
           git fetch --no-tags origin main
           git reset --hard origin/main
-          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json data/state/execution_quality.json; do
-            if [ -f "$owned/$f" ]; then
-              cp "$owned/$f" "$f"
-              git add "$f"
-            fi
-          done
-          if git diff --cached --quiet; then
-            exit 0
-          fi
+          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json data/state/execution_quality.json; do if [ -f "$owned/$f" ]; then cp "$owned/$f" "$f"; git add "$f"; fi; done
+          if git diff --cached --quiet; then exit 0; fi
           git commit -m "state: persist production acceptance"
           git push origin HEAD:main
       - name: Enforce production acceptance
         if: ${{ always() && steps.acceptance_scope.outputs.required == 'true' && steps.acceptance.outcome == 'failure' }}
         run: exit 1
-
