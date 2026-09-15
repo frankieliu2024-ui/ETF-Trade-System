@@ -1185,17 +1185,33 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     current_path = ROOT / "data" / "state" / "CURRENT.json"
     current = load_json(current_path) if current_path.exists() else {}
     close_contract = build_close_data_contract(ROOT, current)
-    data_time = review.get("data_time") if isinstance(review.get("data_time"), dict) else {}
+    data_time = dict(review.get("data_time")) if isinstance(review.get("data_time"), dict) else {}
     supplied_close_snapshot = str(data_time.get("close_snapshot") or review.get("close_snapshot") or "").strip()
     canonical_close_snapshot = str(close_contract.get("latest_snapshot") or "").strip()
-    if (
-        close_contract.get("status") != "VERIFIED_SESSION_CLOSE"
-        or close_contract.get("verified_session_close") is not True
-        or close_contract.get("market_date") != market_date
-        or not canonical_close_snapshot
-        or supplied_close_snapshot != canonical_close_snapshot
-    ):
-        return False, False
+    close_verified = (
+        close_contract.get("status") == "VERIFIED_SESSION_CLOSE"
+        and close_contract.get("verified_session_close") is True
+        and close_contract.get("market_date") == market_date
+        and bool(canonical_close_snapshot)
+        and supplied_close_snapshot == canonical_close_snapshot
+    )
+    # Review completion is independent from close-data completeness. Preserve
+    # the canonical close contract when available; otherwise persist an explicit
+    # degraded review with the missing/invalid evidence boundary. Never invent
+    # a close snapshot or promote an intraday fact to 15:00.
+    if close_verified:
+        data_time["close_data_status"] = "VERIFIED_SESSION_CLOSE"
+        data_time["close_snapshot"] = canonical_close_snapshot
+        data_time.pop("close_data_gap", None)
+    else:
+        data_time["close_data_status"] = str(close_contract.get("status") or "UNVERIFIED")
+        data_time["close_data_gap"] = (
+            "VERIFIED_SESSION_CLOSE unavailable for this market date; review completed "
+            "with degraded/incomplete evidence and no inferred close."
+        )
+        data_time.pop("close_snapshot", None)
+    review = dict(review)
+    review["data_time"] = data_time
     lifecycle_error = validate_current_lifecycle_contract(review.get("lifecycle"), account)
     if lifecycle_error:
         raise ValueError(f"invalid formal review lifecycle contract: {lifecycle_error}")
