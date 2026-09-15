@@ -258,6 +258,8 @@ jobs:
           # publish the neutralized Dashboard projection after merge.
           python scripts/sync_formal_files.py
           python -m unittest tests.test_dashboard_risk_projection tests.test_formal_file_mutation_gateway
+                    python -m py_compile scripts/manual_formal_decision_completion.py scripts/process_state_sync_request.py
+          python -m unittest tests.test_manual_formal_decision_completion tests.test_formal_decision_pit_enrichment tests.test_formal_decision_contract tests.test_trade_linked_decision_identity
           python scripts/build_state_context.py
           python scripts/build_query_context.py
           # The replay intentionally creates ephemeral formal evidence. Commit only
