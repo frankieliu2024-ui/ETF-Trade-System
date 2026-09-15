@@ -52,6 +52,14 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         self.assertNotIn("Refresh decision and query context", source)
         self.assertNotIn('      - "data/state/CURRENT.json"', source)
 
+    def test_production_acceptance_does_not_stage_current_state(self):
+        source = WORKFLOW.read_text(encoding="utf-8")
+        acceptance = source.split("  production_acceptance:", 1)[1]
+        self.assertIn("data/state/etf_strategy_equity.json", acceptance)
+        for line in acceptance.splitlines():
+            if line.strip().startswith("git add"):
+                self.assertNotIn("data/state/CURRENT.json", line)
+
     def test_acceptance_scope_is_class_based(self):
         formal = classify_paths(["ETF当前状态_DASHBOARD.md"])
         self.assertTrue(formal["required"])
