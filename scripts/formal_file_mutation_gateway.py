@@ -106,7 +106,9 @@ def _position_pnl_display(position: dict) -> str:
 def _normalize_dashboard(root: Path, text: str) -> str:
     # Dashboard is a current human projection. Historical correction routing
     # rows belong in canonical machine facts / archive, not in the current view.
-    text = _remove_managed_block(text, _DASHBOARD_CORRECTION_START, _DASHBOARD_CORRECTION_END)
+    # Keep the registered managed-block anchors so the formal structure contract
+    # remains stable while its machine-only rows stay hidden from the human view.
+    text = _empty_managed_block(text, _DASHBOARD_CORRECTION_START, _DASHBOARD_CORRECTION_END)
     for machine_value, display_value in _DASHBOARD_DISPLAY_MAP.items():
         text = text.replace(machine_value, display_value)
 
