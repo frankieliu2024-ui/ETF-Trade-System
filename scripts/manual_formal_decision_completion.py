@@ -34,6 +34,8 @@ def build_completion_request(source_request: dict, formal_decision: dict, consum
     if not snapshot:
         raise ValueError("manual completion requires an explicit consumed PIT snapshot")
     envelope_id = _safe_id(completion_request_id or f"{parent_id}__formal_completion")
+    if envelope_id == parent_id:
+        raise ValueError("completion envelope identity must differ from its parent request")
     scenario = str(source_request.get("interaction_scenario") or "").strip()
     if not scenario:
         raise ValueError("source request is missing interaction_scenario")
