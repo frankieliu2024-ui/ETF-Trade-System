@@ -12,7 +12,7 @@ from process_state_sync_request import latest_formal_review_decision
 
 
 class DashboardProjectionTests(unittest.TestCase):
-    def test_normalize_removes_historical_corrections_and_derives_next_day(self):
+    def test_normalize_hides_historical_corrections_but_keeps_registered_anchors_and_derives_next_day(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             calendar = root / "config/market"
@@ -29,7 +29,10 @@ class DashboardProjectionTests(unittest.TestCase):
             result = normalize_dashboard_projection(
                 text, root, {"updated_at": "2026-09-02T21:05:00+08:00"}
             )
-            self.assertNotIn("AUTO_TRADE_FACT_CORRECTIONS", result)
+            self.assertIn(
+                "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->\n<!-- AUTO_TRADE_FACT_CORRECTIONS_END -->",
+                result,
+            )
             self.assertNotIn("FEE_old", result)
             self.assertIn("下一A股交易日：2026-09-04", result)
             self.assertIn("不生成订单", result)
