@@ -129,17 +129,7 @@ def _start_prices(event: dict) -> dict[str, float]:
 def _future_row(daily: dict, code: str) -> dict:
     return next((x for x in (daily.get("features") or []) if str(x.get("code") or "") == code), {})
 
-VERIFIED_CLOSE_STATUSES = {"VERIFIED_SESSION_CLOSE", "COMPLETED_SESSION_CLOSE"}
-
-
-def _embedded_verified_close_contract(daily: dict) -> tuple[bool, str]:
-    contract = daily.get("close_data_contract") or daily.get("close_contract") or {}
-    contract_status = str(contract.get("status") or "").upper()
-    if contract and contract.get("verified_session_close") is True and contract_status in VERIFIED_CLOSE_STATUSES:
-        return True, contract_status
-    if contract:
-        return False, f"UNVERIFIED_CLOSE_CONTRACT:{contract_status or 'MISSING'}"
-    return False, "MISSING_CLOSE_CONTRACT"
+VERIFIED_CLOSE_STATUSES = {"VERIFIED_SESSION_CLOSE"}
 
 
 def _completed_session_close_status(root: Path, daily: dict) -> tuple[bool, str, dict]:
@@ -160,10 +150,7 @@ def _completed_session_close_status(root: Path, daily: dict) -> tuple[bool, str,
             return True, "VERIFIED_SESSION_CLOSE", contract
         return False, f"UNVERIFIED_SESSION_CLOSE:{contract.get('status') or 'MISSING'}", contract
 
-    embedded_ok, embedded_reason = _embedded_verified_close_contract(daily)
-    if embedded_ok:
-        return True, embedded_reason, daily.get("close_data_contract") or daily.get("close_contract") or {}
-    return False, embedded_reason, {}
+    return False, "MISSING_SOURCE_SNAPSHOT", {}
 
 
 
