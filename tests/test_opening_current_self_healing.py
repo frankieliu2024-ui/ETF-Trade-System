@@ -213,8 +213,10 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
                 if str(path).endswith(key):
                     return value
             return default
-        with mock.patch.object(runtime_self_heal, "load_json", side_effect=fake_load), \\
-             mock.patch.object(runtime_self_heal, "master_version", return_value="V2.2.31"):
+        with (
+            mock.patch.object(runtime_self_heal, "load_json", side_effect=fake_load),
+            mock.patch.object(runtime_self_heal, "master_version", return_value="V2.2.31"),
+        ):
             status = runtime_self_heal.assess(now)
         self.assertEqual(status["classification"], "HEALTHY")
         self.assertEqual(status["recommended_action"], "NONE")
