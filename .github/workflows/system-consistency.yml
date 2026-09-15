@@ -268,20 +268,16 @@ jobs:
           request_path = root / "requests/live_snapshot/candidate_unrecoverable_review.json"
           request_path.parent.mkdir(parents=True, exist_ok=True)
           request_path.write_text(json.dumps(request, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-          print(json.dumps({"candidate": "CANDIDATE_POST_REPLAY_STATE", "classification": assessment.classification.value, "evidence": str(evidence_path.relative_to(root))}, ensure_ascii=False))
+          print(json.dumps({"candidate": "CANDIDATE_POST_REPLAY_STATE", "classification": assessment.classification.value,"evidence": str(evidence_path.relative_to(root))}, ensure_ascii=False))
           PY
           cd "$candidate"
           export ETF_SYSTEM_ROOT="$candidate"
           export PYTHONPATH="$candidate/scripts:$candidate"
-          # Reconcile all existing correction requests only inside the disposable
-          # candidate tree; PR prechecks never mutate the source checkout.
           shopt -s nullglob
           correction_requests=(requests/trade_fact_correction/*.json)
           for request in "${correction_requests[@]}"; do
             python scripts/apply_trade_fact_correction.py "$request"
           done
-          # Replay durable confirmed-trade ingress generically in chronological
-          # order. Incident-specific filenames remain regression fixtures only.
           trade_requests=()
           for request in requests/live_snapshot/*.json; do
             if [ -f "$request" ] && python - "$request" <<'PY'
@@ -297,16 +293,10 @@ jobs:
             [ -n "$request" ] && python scripts/process_state_sync_request.py "$request"
           done
           python scripts/process_state_sync_request.py requests/live_snapshot/candidate_unrecoverable_review.json
-          # Re-run the existing formal projection owner in the ephemeral candidate
-          # tree so candidate acceptance validates the same writer path that will
-          # publish the neutralized Dashboard projection after merge.
           python scripts/sync_formal_files.py
           python -m unittest tests.test_dashboard_risk_projection tests.test_formal_file_mutation_gateway
           python scripts/build_state_context.py
           python scripts/build_query_context.py
-          # The replay intentionally creates ephemeral formal evidence. Commit only
-          # that candidate snapshot inside the disposable copy so the existing
-          # clean-worktree contract can validate the candidate without touching PR/main.
           git config user.name "candidate-replay"
           git config user.email "candidate-replay@localhost"
           git add -f ETF交易复盘与经验库_2026.md events/reviews/2026-09-01.json requests/live_snapshot/candidate_unrecoverable_review.json
@@ -372,8 +362,6 @@ jobs:
             cd "$validation_root"
             export ETF_SYSTEM_ROOT="$validation_root"
             export PYTHONPATH="$validation_root/scripts:$validation_root"
-            # This subshell is independent: explicitly consume the fresh report
-            # produced above instead of falling back to persisted main state.
             export ETF_CONSISTENCY_REPORT_PATH="$RUNNER_TEMP/system_consistency.json"
             python scripts/check_research_integration.py
           )
@@ -403,8 +391,6 @@ jobs:
           if-no-files-found: ignore
 
   production_acceptance:
-    # Do not allocate a second acceptance runner after the consistency gate
-    # has already failed; successful production paths retain the same acceptance.
     if: ${{ needs.consistency.result == 'success' && github.event_name != 'pull_request' }}
     needs: consistency
     runs-on: ubuntu-latest
@@ -446,7 +432,6 @@ jobs:
           fi
           git commit -m "state: persist accepted canonical ETF equity replay"
           git push origin HEAD:main
-
       - name: Consume pending trade-fact corrections
         shell: bash
         run: |
@@ -473,19 +458,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Correction consumption may publish a new canonical main commit.
-          # All following acceptance and persistence steps must use that exact
-          # checkout identity, never the triggering commit's stale SHA.
           git fetch --no-tags origin main
           git reset --hard origin/main
           echo "ETF_ACCEPTANCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
-
       - name: Classify mutation for combination acceptance
         id: acceptance_scope
         shell: bash
         run: |
           set -euo pipefail
-          git diff-tree --no-commit-id --name-only -m -r "$ETF_ACCEPTANCE_SHA" | python scripts/acceptance_scope.py --stdin | tee "$RUNNER_TEMP/acceptance_scope.json"
+          git -c core.quotePath=false diff-tree --no-commit-id --name-only -m -r "$ETF_ACCEPTANCE_SHA" | python scripts/acceptance_scope.py --stdin | tee "$RUNNER_TEMP/acceptance_scope.json"
           python - "$RUNNER_TEMP/acceptance_scope.json" <<'PY' >> "$GITHUB_OUTPUT"
           import json
           import sys
@@ -530,4 +511,3 @@ jobs:
       - name: Enforce production acceptance
         if: ${{ always() && steps.acceptance_scope.outputs.required == 'true' && steps.acceptance.outcome == 'failure' }}
         run: exit 1
-
