@@ -204,14 +204,14 @@ jobs:
               "recovery_classification": assessment.classification.value,
               "recovery_attempted": True,
               "provider": evidence.get("provider") or "approved_historical_evidence",
-              "source_reference": str(evidence_path.relative_to(root)).replace("\\", "/"),
+              "source_reference": str(evidence_path.relative_to(root)).replace("\\\\", "/"),
               "historical_retrieved_at_beijing": datetime.now(timezone.utc).isoformat(),
               "effective_market_time_beijing": "2026-09-01T15:00:00+08:00",
               "original_provider_observation_time_beijing": None,
               "required_coverage": {"count": len(symbols), "symbols": symbols},
               "actual_coverage": {"count": assessment.coverage, "symbols": list(set(symbols) - set(assessment.missing_symbols))},
               "unrecoverable_reason": assessment.reason,
-              "evidence_reference": str(evidence_path.relative_to(root)).replace("\\", "/"),
+              "evidence_reference": str(evidence_path.relative_to(root)).replace("\\\\", "/"),
           })
           request = {
               "request_id": "candidate-176-unrecoverable-review-replay",
