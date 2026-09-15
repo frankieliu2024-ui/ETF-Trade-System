@@ -1,27 +1,26 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-15T19:43:10+08:00",
+  "generated_at": "2026-09-15T20:14:59+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 34964190340,
-  "run_attempt": 2,
-  "head_sha": "b9ab781eecd4b3f5d5cfc97c8012f2b3e2e31ab7",
-  "main_head_sha": "b6728f9b8caf56fc0dd86b4fd60d1e158c7fb766",
+  "run_id": 34967598350,
+  "run_attempt": 1,
+  "head_sha": "9b20f2ded6af94bb8cab4d5e9a0b82a650e6b7a1",
+  "main_head_sha": "587151f2d9b56fd9c14eec621275ae3f4f047fa9",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 9
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 10
     }
   ],
   "changed_files": [
     ".github/workflows/system-consistency.yml",
-    "scripts/manual_formal_decision_completion.py",
-    "scripts/process_state_sync_request.py",
-    "tests/test_manual_formal_decision_completion.py"
+    "scripts/notification_materiality_guard.py",
+    "tests/test_market_notification_materiality_guard.py"
   ],
-  "commit_message": "fix: canonicalize manual formal decision identity",
+  "commit_message": "fix: restore notification diagnostic guard ordering (#610)",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
