@@ -1,25 +1,25 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-15T11:01:29+08:00",
+  "generated_at": "2026-09-15T11:01:42+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 34923336733,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 34923388170,
   "run_attempt": 1,
-  "head_sha": "9736e625151a19e5fd79db13b096d17a181e6057",
-  "main_head_sha": "4f35fd3e3ecb71b9b8eb43b9225d185ac9f8fbc6",
+  "head_sha": "4f35fd3e3ecb71b9b8eb43b9225d185ac9f8fbc6",
+  "main_head_sha": "a255b8cb50ec555dd3d1a19237750663bad7e5c4",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 7
+      "job": "watchdog",
+      "step": "Run read-only comprehensive production health aggregate",
+      "number": 9
     }
   ],
   "changed_files": [
-    "tests/test_dashboard_risk_projection.py"
+    "data/state/notification_center.json"
   ],
-  "commit_message": "test: use non-empty canonical ETF universe fixture",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "state: record notification and execution reconciliation",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
@@ -27,7 +27,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
