@@ -44,7 +44,7 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         self.assertIn("--no-persist --report-path", source)
         self.assertIn("production_acceptance:", source)
         self.assertIn("ETF_CONSISTENCY_REPORT_PATH", source)
-        self.assertIn("diff-tree --no-commit-id --name-only -m -r", source)
+        self.assertIn("git -c core.quotePath=false diff-tree --no-commit-id --name-only -m -r", source)
         self.assertIn("run_production_acceptance.py", source)
         self.assertNotIn("Refresh formal overseas and Asia index context", source)
         self.assertNotIn("Run requested research historical backfill", source)
@@ -76,6 +76,13 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         self.assertTrue(unknown["required"])
         self.assertEqual(unknown["classes"], [UNKNOWN])
 
+    def test_acceptance_scope_decodes_git_quoted_utf8_paths(self):
+        quoted = '"ETF\\345\\275\\223\\345\\211\\215\\347\\212\\266\\346\\200\\201_DASHBOARD.md"'
+        formal = classify_paths([quoted])
+        self.assertTrue(formal["required"])
+        self.assertEqual(formal["classes"], [FORMAL_PROJECTION_MUTATION])
+        self.assertEqual(formal["paths"], ["ETF当前状态_DASHBOARD.md"])
+
     def test_maintenance_only_block_does_not_block_e2e(self):
         self.assertEqual(
             maintenance_component({"status": "FAIL", "system_consistency_status": "WARNING",
@@ -101,11 +108,6 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         pr_block = source.split("  push:", 1)[0]
         push_block = source.split("  push:", 1)[1].split("  schedule:", 1)[0]
 
-        # These representatives cover every production path family that the
-        # classifier currently marks as requiring full acceptance. The broad
-        # directory patterns are intentional: they prevent new formal facts,
-        # requests, contract tests, or normative docs from silently losing
-        # their main-side acceptance trigger.
         representatives = {
             "ETF规则_MASTER.md",
             "config/maintenance/production_mutation_protocol.json",

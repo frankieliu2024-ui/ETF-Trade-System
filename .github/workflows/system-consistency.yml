@@ -485,7 +485,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git diff-tree --no-commit-id --name-only -m -r "$ETF_ACCEPTANCE_SHA" | python scripts/acceptance_scope.py --stdin | tee "$RUNNER_TEMP/acceptance_scope.json"
+          git -c core.quotePath=false diff-tree --no-commit-id --name-only -m -r "$ETF_ACCEPTANCE_SHA" | python scripts/acceptance_scope.py --stdin | tee "$RUNNER_TEMP/acceptance_scope.json"
           python - "$RUNNER_TEMP/acceptance_scope.json" <<'PY' >> "$GITHUB_OUTPUT"
           import json
           import sys
