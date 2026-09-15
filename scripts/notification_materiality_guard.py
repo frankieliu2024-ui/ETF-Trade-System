@@ -8,6 +8,7 @@ from typing import Any
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STATE = ROOT / "data" / "state"
 APAC_LATE_HK_MIN_DELTA_PCT = 0.8
+DECISION_CRITICAL_COMPONENTS = {"market", "account", "risk", "decision_context", "lifecycle"}
 
 
 def _number(value: Any) -> float | None:
@@ -22,6 +23,30 @@ def _read_json(path: Path) -> dict:
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return {}
+
+
+def decision_critical_blockage() -> tuple[bool, str]:
+    """Return whether current canonical E2E state blocks formal decision use.
+
+    DEGRADED without blockers, maintenance-only degradation, and global consistency
+    failure alone are not user-facing system blockages. Fail closed when E2E
+    evidence is absent or cannot prove a decision-critical blocker.
+    """
+    e2e = _read_json(STATE / "e2e_status.json")
+    if not e2e:
+        return False, "e2e_status_missing"
+    blockers = [str(x) for x in (e2e.get("blockers") or []) if str(x)]
+    if str(e2e.get("status") or "").upper() == "BLOCKED":
+        return True, "e2e_status_blocked"
+    if blockers:
+        return True, "e2e_blockers_present"
+    components = e2e.get("components") or {}
+    for name in DECISION_CRITICAL_COMPONENTS:
+        raw = components.get(name) or {}
+        status = str(raw.get("status") if isinstance(raw, dict) else raw or "").upper()
+        if status == "BLOCKED":
+            return True, f"critical_component_blocked:{name}"
+    return False, "no_decision_critical_blockage"
 
 
 def _market_value_error(event: dict) -> str:
@@ -135,6 +160,9 @@ def _decision_trigger_error(event: dict) -> str:
 
 
 def _system_error(event: dict) -> str:
+    blocked, reason = decision_critical_blockage()
+    if not blocked:
+        return f"system notification has no current decision-critical blockage: {reason}"
     source = str(event.get("source") or "")
     if source == "self_healing_status":
         state = _read_json(STATE / "self_healing_status.json")

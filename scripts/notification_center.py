@@ -10,6 +10,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from notification_materiality_guard import decision_critical_blockage
+
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STATE = ROOT / "data" / "state"
 TZ = timezone(timedelta(hours=8))
@@ -22,18 +24,19 @@ ACCOUNT_EVENT_MAX_AGE_MINUTES = 30
 MIN_UNEXPLAINED_CASH_DELTA_YUAN = 10.0
 TRADING_CALENDAR = ROOT / "config" / "market" / "a_share_trading_calendar_2026.json"
 
-REPORT_TYPES = {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW", "ETF_FORMAL_DECISION"}
+ACTIVE_REPORT_TYPES = {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}
+HISTORICAL_REPORT_TYPES = {"ETF_FORMAL_DECISION"}
 REPORT_REQUEST_DIR = ROOT / "requests" / "report_delivery"
 
 def validate_report_delivery_request(request: dict) -> tuple[bool, str]:
-    """Validate a completed formal report before shared delivery."""
+    """Validate a completed active formal report before shared delivery."""
     required = ("schema_version", "channel", "report_type", "report_id", "task_id", "task_run_id",
                 "generated_at", "effective_market_date", "source_actor", "source_reference",
                 "title", "summary", "full_content", "content_hash", "idempotency_key")
     missing = [key for key in required if not str(request.get(key) or "").strip()]
     if missing: return False, "missing:" + ",".join(missing)
     if request.get("channel") != "REPORT": return False, "channel_must_be_REPORT"
-    if request.get("report_type") not in REPORT_TYPES: return False, "unsupported_report_type"
+    if request.get("report_type") not in ACTIVE_REPORT_TYPES: return False, "unsupported_report_type"
     if request.get("delivery_mode", "FULL_REPORT") != "FULL_REPORT": return False, "delivery_mode_must_be_FULL_REPORT"
     if request.get("no_trade_authority") is not True: return False, "no_trade_authority_must_be_true"
     expected_hash = hashlib.sha256(str(request.get("full_content")).encode("utf-8")).hexdigest()
@@ -525,6 +528,9 @@ def failed_steps_text(diag: dict) -> str:
 
 
 def system_event() -> dict | None:
+    blocked, _ = decision_critical_blockage()
+    if not blocked:
+        return None
     heal = read_json(STATE / "self_healing_status.json", {})
     classification, action = str(heal.get("classification") or ""), str(heal.get("recommended_action") or "")
     if action == "ESCALATE" or classification in {"PERSISTENT_RUNTIME_FAILURE", "CONSISTENCY_REGRESSION"}:
@@ -729,7 +735,6 @@ CANONICAL_TEMPLATE_FAMILIES = {
     "CHANNEL_TEST": "测试",
     "收盘账户": "收盘账户",
 }
-
 def canonical_template_family(event: dict) -> str | None:
     event_type = str(event.get("event_type") or event.get("type") or "")
     if event_type == "REPORT_DELIVERY_REQUEST":
@@ -748,18 +753,15 @@ def canonical_template_family(event: dict) -> str | None:
             return "风险许可"
         return "观察机会" if status and status != "无机会" else "机会失效"
     return CANONICAL_TEMPLATE_FAMILIES.get(event_type)
-
 def _canonical_target(event: dict) -> str:
     ctx = event.get("confirmation_context") or {}
     name = str(event.get("security_name") or ctx.get("security_name") or "")
     code = str(event.get("security_code") or ctx.get("security_code") or "")
     return f"{name}（{code}）" if name and code else (name or code or "相关对象")
-
 def _canonical_time(event: dict) -> str:
     ctx = event.get("confirmation_context") or {}
     value = ctx.get("account_event_time_beijing") or ctx.get("market_as_of_beijing") or ctx.get("decision_time_beijing")
     return human_time(value) if value else "未单独记录"
-
 def _canonical_boundary(family: str) -> str:
     if family == "成交确认":
         return "仅确认既有成交及其归因，不生成新交易指令。"
@@ -772,7 +774,6 @@ def _canonical_boundary(family: str) -> str:
     if family == "收盘账户":
         return "收盘提醒只请求账户事实确认，不生成交易指令。"
     return "这是通知通道测试，不代表真实行情、账户、交易或系统故障。"
-
 def render_canonical_notification(event: dict) -> dict | None:
     family = canonical_template_family(event)
     if family is None:
@@ -902,4 +903,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
