@@ -12,6 +12,11 @@ try:
 except ModuleNotFoundError:
     from scripts.build_stock_context import active_account_asset_codes
 
+try:
+    from runtime_self_heal import assess as reassess_runtime_health
+except ModuleNotFoundError:
+    from scripts.runtime_self_heal import assess as reassess_runtime_health
+
 from confirmed_trade_facts import (
     canonical_etf_trade_facts,
     recover_canonical_etf_trade_facts,
@@ -191,7 +196,14 @@ def reconcile() -> dict:
 def main() -> int:
     now = datetime.now(TZ).isoformat(timespec="seconds")
     consistency = read_json(consistency_path(), {}) or {}
-    self_heal = read_json(SELF_HEAL, {}) or {}
+    persisted_self_heal = read_json(SELF_HEAL, {}) or {}
+    # Reassess through the canonical self-healing owner at maintenance rebuild
+    # time. This expires a stale PERSISTENT_RUNTIME_FAILURE when its watch
+    # window/trigger is no longer active, while preserving active escalation.
+    self_heal = reassess_runtime_health()
+    self_heal["reassessment_source"] = "runtime_self_heal.assess"
+    if not isinstance(self_heal, dict) or not self_heal:
+        self_heal = persisted_self_heal
     runtime = read_json(RUNTIME_HEALTH, {}) or {}
     current = read_json(CURRENT, {}) or {}
     rec = reconcile()
