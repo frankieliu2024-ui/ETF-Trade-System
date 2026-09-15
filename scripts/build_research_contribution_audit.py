@@ -16,6 +16,11 @@ try:
 except ModuleNotFoundError:
     from scripts.decision_trade_link import resolve_link
 
+try:
+    from build_post_market_review import build_close_data_contract
+except ModuleNotFoundError:
+    from scripts.build_post_market_review import build_close_data_contract
+
 
 def _load(path: Path) -> dict:
     try:
@@ -124,6 +129,43 @@ def _start_prices(event: dict) -> dict[str, float]:
 def _future_row(daily: dict, code: str) -> dict:
     return next((x for x in (daily.get("features") or []) if str(x.get("code") or "") == code), {})
 
+VERIFIED_CLOSE_STATUSES = {"VERIFIED_SESSION_CLOSE", "COMPLETED_SESSION_CLOSE"}
+
+
+def _embedded_verified_close_contract(daily: dict) -> tuple[bool, str]:
+    contract = daily.get("close_data_contract") or daily.get("close_contract") or {}
+    contract_status = str(contract.get("status") or "").upper()
+    if contract and contract.get("verified_session_close") is True and contract_status in VERIFIED_CLOSE_STATUSES:
+        return True, contract_status
+    if contract:
+        return False, f"UNVERIFIED_CLOSE_CONTRACT:{contract_status or 'MISSING'}"
+    return False, "MISSING_CLOSE_CONTRACT"
+
+
+def _completed_session_close_status(root: Path, daily: dict) -> tuple[bool, str, dict]:
+    source_snapshot = str(daily.get("source_snapshot") or "")
+    market_date = str(daily.get("market_date") or "")
+    if source_snapshot:
+        snapshot_path = root / source_snapshot
+        if not snapshot_path.exists():
+            return False, "SOURCE_SNAPSHOT_MISSING", {}
+        snapshot = _load(snapshot_path)
+        current = {
+            "market_date": market_date,
+            "latest_valid_node": snapshot.get("node") or "",
+            "latest_snapshot": source_snapshot,
+        }
+        contract = build_close_data_contract(root, current)
+        if contract.get("verified_session_close") is True and str(contract.get("status") or "").upper() in VERIFIED_CLOSE_STATUSES:
+            return True, "VERIFIED_SESSION_CLOSE", contract
+        return False, f"UNVERIFIED_SESSION_CLOSE:{contract.get('status') or 'MISSING'}", contract
+
+    embedded_ok, embedded_reason = _embedded_verified_close_contract(daily)
+    if embedded_ok:
+        return True, embedded_reason, daily.get("close_data_contract") or daily.get("close_contract") or {}
+    return False, embedded_reason, {}
+
+
 
 def _build_outcome(root: Path, event: dict, names: dict[str, str], dates: list[str], by_date: dict[str, dict], used: list[dict]) -> dict:
     decision_id = str(event.get("decision_id") or "")
@@ -139,12 +181,45 @@ def _build_outcome(root: Path, event: dict, names: dict[str, str], dates: list[s
         if len(later_dates) < h:
             horizons[key] = {"status": "PENDING", "target_trading_day_index": h}
             continue
-        date = later_dates[h - 1]
-        row = _future_row(by_date[date], code) if code else {}
+        qualified_dates: list[tuple[str, dict, str, dict]] = []
+        blocked_dates: list[dict] = []
+        for future_date in later_dates:
+            future_daily = by_date[future_date]
+            ok, reason, contract = _completed_session_close_status(root, future_daily)
+            if ok:
+                qualified_dates.append((future_date, future_daily, reason, contract))
+            else:
+                blocked_dates.append({
+                    "market_date": future_date,
+                    "reason": reason,
+                    "market_phase": future_daily.get("market_phase"),
+                    "source_snapshot": future_daily.get("source_snapshot"),
+                })
+        if len(qualified_dates) < h:
+            horizons[key] = {
+                "status": "PENDING",
+                "target_trading_day_index": h,
+                "maturity_blocked_by": "QUALIFIED_CLOSE_SEQUENCE_INCOMPLETE",
+                "blocked_dates": blocked_dates[:5],
+            }
+            continue
+        date, daily, close_reason, close_contract = qualified_dates[h - 1]
+        row = _future_row(daily, code) if code else {}
+        if not close_qualified:
+            horizons[key] = {
+                "status": "PENDING",
+                "target_trading_day_index": h,
+                "market_date": date,
+                "maturity_blocked_by": close_reason,
+                "market_phase": daily.get("market_phase"),
+                "as_of_beijing": daily.get("as_of_beijing"),
+                "source_snapshot": daily.get("source_snapshot"),
+            }
+            continue
         candidate_return = _pct(row.get("close"), price0) if row and price0 not in (None, 0.0) else None
         peer_returns = []
         for peer_code, start in starts.items():
-            peer = _future_row(by_date[date], peer_code)
+            peer = _future_row(daily, peer_code)
             r = _pct(peer.get("close"), start) if peer else None
             if r is not None:
                 peer_returns.append(r)
@@ -152,9 +227,12 @@ def _build_outcome(root: Path, event: dict, names: dict[str, str], dates: list[s
         relative = round(candidate_return - peer_median, 4) if candidate_return is not None and peer_median is not None else None
         signed = round(direction * candidate_return, 4) if direction and candidate_return is not None else None
         signed_relative = round(direction * relative, 4) if direction and relative is not None else None
+        status = "MATURED" if candidate_return is not None else "DATA_MISSING"
         horizons[key] = {
-            "status": "MATURED" if candidate_return is not None else "DATA_MISSING",
+            "status": status,
             "market_date": date,
+            "close_qualification": close_reason,
+            "close_data_contract": close_contract,
             "candidate_close_return_pct": candidate_return,
             "etf_universe_median_return_pct": peer_median,
             "relative_to_etf_universe_median_pct_points": relative,
@@ -189,7 +267,7 @@ def _build_outcome(root: Path, event: dict, names: dict[str, str], dates: list[s
         "horizons": horizons,
         "linked_trades": linked_trades,
         "read_only": True,
-        "method_note": "严格使用决策日之后已经形成的交易日日线事实；T+1/T+3/T+5未到时保持PENDING，不用未来信息补值。ETF全集相对结果使用决策时点comparison_snapshot中的各ETF价格作为统一起点。",
+        "method_note": "严格使用决策日之后已经形成且具备completed-session close资格的交易日日线事实；T+1/T+3/T+5未到或仅有CONTINUOUS/auction/live/partial事实时保持PENDING，不用未来信息补值。ETF全集相对结果使用决策时点comparison_snapshot中的各ETF价格作为统一起点。",
         "decision_boundary": "结果只用于判断质量、执行质量和研究贡献复盘；不自动修改MASTER、不生成交易动作、不把相关性解释为因果。",
     }
 
