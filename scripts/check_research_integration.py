@@ -70,6 +70,7 @@ def main() -> int:
     research_builder = text("scripts/build_research_features.py")
     evidence_delta = text("scripts/build_research_evidence_delta.py")
     master_feedback = text("scripts/build_research_master_feedback.py")
+    contribution_audit = text("scripts/build_research_contribution_audit.py")
     state_sync = text("scripts/process_state_sync_request.py")
     execution_quality = text("scripts/build_execution_quality.py")
     execution_bridge = text("scripts/build_research_execution_bridge.py")
@@ -134,18 +135,29 @@ def main() -> int:
     )
     check(
         "research:master_feedback_builder",
-        all(token in master_feedback for token in ["RESEARCH_TO_MASTER_MAINTENANCE_FEED", "automatic_master_update", "promotion_gate", '"candidates": []']),
-        "MASTER feedback feed exists and automatic MASTER modification is disabled",
+        all(token in master_feedback for token in ["RESEARCH_TO_MASTER_MAINTENANCE_FEED", "automatic_master_update", "promotion_gate", '"candidates": []', "canonical decision_outcomes schema 2.0"]),
+        "MASTER feedback feed consumes canonical schema 2 outcomes and keeps automatic MASTER modification disabled",
     )
     check(
         "research:state_context_wiring",
-        all(token in state_context for token in ["build_research_features", "build_research_evidence_delta", "build_execution_quality", "build_research_master_feedback", "research_master_candidates.json", "decision_context.json"]),
-        "research evidence, delta, execution attribution and MASTER-feedback artifacts are wired into state context",
+        all(token in state_context for token in ["build_research_features", "build_research_evidence_delta", "build_execution_quality", "research_master_candidates.json", "decision_context.json", "slow-path/on-demand"]),
+        "current state context consumes dynamic research evidence while retrospective attribution and MASTER-feedback inventory stay on the slow path",
+    )
+    check(
+        "research:canonical_outcome_writer",
+        all(token in contribution_audit for token in ["schema_version\": \"2.0", "build_close_data_contract", "VERIFIED_CLOSE_STATUSES = {\"VERIFIED_SESSION_CLOSE\"}", "MISSING_SOURCE_SNAPSHOT", "UNVERIFIED_SESSION_CLOSE", "QUALIFIED_CLOSE_SEQUENCE_INCOMPLETE", "events/research/decision_outcomes"]),
+        "decision outcome canonical writer must use schema 2, reuse the canonical close contract, and fail safe when close proof is missing or unverified",
     )
     check(
         "research:no_trade_authority",
-        all(token in research_builder for token in ["decision_output_generated", "不自动修改MASTER", "不生成风险许可"]),
-        "research builder remains read-only and cannot generate trading authority",
+        all(token in research_builder for token in [
+            "decision_output_generated",
+            "不生成风险许可",
+            "canonical writer: build_research_contribution_audit.py",
+            "Retired production writer",
+            "return 0",
+        ]),
+        "research builder remains read-only, cannot generate trading authority, and does not own decision outcome writes",
     )
     check(
         "research:execution_bridge_wired",

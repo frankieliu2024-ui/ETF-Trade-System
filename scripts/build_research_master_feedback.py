@@ -28,9 +28,12 @@ def build(root: Path = ROOT) -> dict:
     outcomes = [load_json(p, {}) for p in sorted(outcome_dir.glob("*.json"))] if outcome_dir.exists() else []
     daily = [load_json(p, {}) for p in sorted(daily_dir.glob("*.json"))] if daily_dir.exists() else []
 
-    t1 = sum(1 for x in outcomes if (x.get("results") or {}).get("T_plus_1_close_return_pct") is not None)
-    t3 = sum(1 for x in outcomes if (x.get("results") or {}).get("T_plus_3_close_return_pct") is not None)
-    t5 = sum(1 for x in outcomes if (x.get("results") or {}).get("T_plus_5_close_return_pct") is not None)
+    def matured_count(key: str) -> int:
+        return sum(1 for x in outcomes if ((x.get("horizons") or {}).get(key) or {}).get("status") == "MATURED")
+
+    t1 = matured_count("T_plus_1")
+    t3 = matured_count("T_plus_3")
+    t5 = matured_count("T_plus_5")
 
     return {
         "schema_version": "1.0",
@@ -38,7 +41,7 @@ def build(root: Path = ROOT) -> dict:
         "mode": "RESEARCH_TO_MASTER_MAINTENANCE_FEED",
         "read_only": True,
         "automatic_master_update": False,
-        "purpose": "把研究层长期积累组织成MASTER维护输入；不创建隐藏规则、不自动升级统计规律、不产生交易动作。",
+        "purpose": "把研究层长期积累组织成MASTER维护输入；只消费canonical decision_outcomes schema 2.0中已由completed-session close确认成熟的T+1/T+3/T+5；不创建隐藏规则、不自动升级统计规律、不产生交易动作。",
         "current_inventory": {
             "daily_feature_days": len([x for x in daily if x.get("market_date")]),
             "formal_decision_events": len([x for x in decisions if x.get("decision_id")]),
