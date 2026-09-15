@@ -14,7 +14,7 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         names = [
             "Detect push notification kind",
             "Isolate pushed report delivery request",
-            "Build delayed execution reconciliation",
+            "Build execution reconciliation when account or trade facts change",
             "Send A-share opening value signal or close summary when due",
             "Send A-share monitored-object value event when due",
             "Send safe notification-channel test",
@@ -42,11 +42,20 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertIn("/tmp/changed_files.txt; then", self.text)
         self.assertNotIn("echo report=true", self.text)
 
+    def test_account_and_trade_facts_are_direct_wakes_without_self_wake(self):
+        self.assertIn('"data/state/account_fact.json"', self.text)
+        self.assertIn('"events/trades/*.json"', self.text)
+        self.assertNotIn('"data/state/execution_reconciliation.json"', self.text)
+        self.assertIn(r"grep -Eq '^events/trades/[^/]+\.json$'", self.text)
+        self.assertIn("echo \"trade=true\"", self.text)
+        self.assertIn("echo \"account=true\"", self.text)
+        self.assertIn("steps.push_kind.outputs.account == 'true'", self.text)
+        self.assertIn("steps.push_kind.outputs.trade == 'true'", self.text)
+
     def test_existing_route_commands_remain_present_once(self):
         commands = [
             "python scripts/build_execution_reconciliation.py",
-            "python scripts/run_guarded_notification.py regional --market a-share",
-            "python scripts/run_guarded_notification.py shock --market a-share",
+            "python scripts/run_guarded_notification.py batch --market a-share",
             "python scripts/run_guarded_notification.py center --mode channel-test",
             "python scripts/run_guarded_notification.py center --mode event",
             "python scripts/run_guarded_notification.py center --mode close",
