@@ -1,40 +1,14 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-09-15T13:32:02+08:00",
-  "status": "RECONCILED",
+  "generated_at": "2026-09-15T15:07:18+08:00",
+  "status": "NO_MATCH",
   "lookback_days": 5,
   "supported_intents": [
     "正式正金额买入",
     "明确份额减持/卖出",
     "全部退出/清仓（仅在事实足够时匹配）"
   ],
-  "matches": [
-    {
-      "status": "CONFIRMED_BY_TRADE_EVENT",
-      "requires_user_confirmation": false,
-      "intent": {
-        "decision_id": "20260910_1455_etf_formal_decision",
-        "decision_time": "2026-09-10T14:56:33+08:00",
-        "decision_market_date": "2026-09-10",
-        "source_event": "events/decisions/20260910_1455_etf_formal_decision.json",
-        "code": "159326",
-        "name": "电网设备ETF",
-        "side": "SELL",
-        "planned_quantity": 3000,
-        "full_exit": false,
-        "lifecycle": "EXIT_OR_RISK_REDUCTION",
-        "planned_amount_yuan": null
-      },
-      "trade_event_ids": [
-        "trade_20260910_143741_159326_sell_3000"
-      ],
-      "fill_status": "FULL_OR_ROUNDING_MATCH",
-      "fill_ratio": 1.0,
-      "execution_date": "2026-09-10",
-      "confirmation_date": "2026-09-10",
-      "lifecycle_t_date": "2026-09-10"
-    }
-  ],
+  "matches": [],
   "actionable_count": 0,
   "account_fact_updated_at": "2026-09-14T16:43:00+08:00",
   "design_rule": "对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。",
