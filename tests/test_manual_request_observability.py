@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import tempfile
 import sys
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
@@ -47,6 +49,39 @@ class ManualRequestBoundedObservabilityTests(unittest.TestCase):
         self.assertFalse(trace["trace_metadata_is_decision_gate"])
         self.assertFalse(trace["business_semantics_changed"])
 
+    def test_request_file_without_request_id_gets_stable_diagnostic_identity(self):
+        request = {
+            "requested_at_beijing": "2026-09-15T11:21:00+08:00",
+            "scenario": "INTRADAY",
+            "intent": "FORMAL_INTRADAY_ANALYSIS",
+            "source": "CHATGPT_USER_REQUEST_WITH_BROKER_SCREENSHOT",
+            "account_fact_note": "ordinary broker screenshot; no new trade quantities observed",
+            "_request_file": "requests/live_snapshot/20260915_1121_manual_intraday_chat.json",
+        }
+
+        first = build_query_context.build_fast_path_latency(
+            request,
+            {"captured_at": "2026-09-15T11:21:20+08:00"},
+            {"generated_at_beijing": "2026-09-15T11:21:30+08:00"},
+            {"decision_freshness": {"post_request": True}, "quotes": []},
+            "2026-09-15T11:21:40+08:00",
+        )
+        second = build_query_context.build_fast_path_latency(
+            dict(request),
+            {"captured_at": "2026-09-15T11:21:20+08:00"},
+            {"generated_at_beijing": "2026-09-15T11:21:30+08:00"},
+            {"decision_freshness": {"post_request": True}, "quotes": []},
+            "2026-09-15T11:21:40+08:00",
+        )
+
+        self.assertNotEqual(first["manual_request_identity"], "UNKNOWN")
+        self.assertEqual(first["manual_request_identity"], second["manual_request_identity"])
+        self.assertTrue(first["manual_request_identity"].startswith("20260915_1121_manual_intraday_chat-"))
+        self.assertEqual(first["manual_request_received_at"], "2026-09-15T11:21:00+08:00")
+        self.assertTrue(first["trace_metadata_is_non_authoritative"])
+        self.assertFalse(first["trace_metadata_is_decision_gate"])
+        self.assertFalse(first["business_semantics_changed"])
+
     def test_unobservable_product_phases_remain_unknown_not_inferred(self):
         trace = build_query_context.build_fast_path_latency(
             {},
@@ -66,6 +101,40 @@ class ManualRequestBoundedObservabilityTests(unittest.TestCase):
         self.assertEqual(trace["final_answer_identity"], "UNKNOWN")
         self.assertEqual(trace["required_account_persistence_identity"], "UNKNOWN")
         self.assertIn("product_message_received_at", trace["unobservable_product_phases"])
+
+    def test_build_with_request_file_carries_existing_path_into_trace_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            request_path = root / "requests" / "live_snapshot" / "20260915_1121_manual_intraday_chat.json"
+            request_path.parent.mkdir(parents=True)
+            request_path.write_text(
+                '{"requested_at_beijing":"2026-09-15T11:21:00+08:00","source":"CHATGPT_USER_REQUEST_WITH_BROKER_SCREENSHOT"}',
+                encoding="utf-8",
+            )
+            (root / "config" / "market").mkdir(parents=True)
+            (root / "config" / "runtime_policy.json").parent.mkdir(parents=True, exist_ok=True)
+            (root / "config" / "runtime_policy.json").write_text("{}", encoding="utf-8")
+            (root / "data" / "state").mkdir(parents=True)
+
+            with patch.object(build_query_context, "build_market_quote_context", return_value={"decision_freshness": {"post_request": True}, "quotes": []}), \
+                 patch.object(build_query_context, "read_current", return_value={"captured_at": "2026-09-15T11:21:10+08:00"}), \
+                 patch.object(build_query_context, "read_account_fact", return_value={"status": "VALID"}), \
+                 patch.object(build_query_context, "build_decision_context", return_value={"generated_at_beijing": "2026-09-15T11:21:20+08:00"}):
+                context = build_query_context.build(
+                    root,
+                    request_file="requests/live_snapshot/20260915_1121_manual_intraday_chat.json",
+                )
+
+        trace = context["fast_path_latency"]
+        self.assertNotEqual(trace["manual_request_identity"], "UNKNOWN")
+        self.assertEqual(trace["manual_request_received_at"], "2026-09-15T11:21:00+08:00")
+
+    def test_market_snapshot_workflow_preserves_triggering_request_path_after_reset(self):
+        workflow = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
+        self.assertIn("triggering_request_file=", workflow)
+        self.assertIn("TRIGGERING_REQUEST_FILE=", workflow)
+        self.assertIn('REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"', workflow)
+        self.assertIn('python scripts/build_query_context.py --force-refresh --symbols "$REQUEST_SYMBOLS" "${REQUEST_ARGS[@]}"', workflow)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
+import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -137,6 +139,36 @@ def _duration_seconds(start: str, end: str) -> float | None:
     return round(max(0.0, (second - first).total_seconds()), 3)
 
 
+def _stable_manual_request_identity(request: dict) -> str:
+    """Return a deterministic identity for an existing durable manual request.
+
+    The identity is diagnostic-only.  Prefer a request_id already carried by the
+    durable request object; otherwise derive a stable identity from the existing
+    request path plus its observed request timestamp.  Missing inputs remain
+    explicit UNKNOWN rather than being inferred from product-side timing.
+    """
+    explicit = str(request.get("request_id") or request.get("manual_request_identity") or "").strip()
+    if explicit:
+        return explicit
+    request_path = str(
+        request.get("_request_file")
+        or request.get("_ingress_path")
+        or request.get("request_file")
+        or request.get("consumed_external_market_evidence")
+        or ""
+    ).strip()
+    requested_at = str(request.get("requested_at_beijing") or request.get("request_time") or "").strip()
+    if not request_path or not requested_at:
+        return "UNKNOWN"
+    normalized_path = request_path.replace("\\", "/")
+    if normalized_path.startswith("/") or ".." in Path(normalized_path).parts:
+        return "UNKNOWN"
+    digest = hashlib.sha256(f"{normalized_path}|{requested_at}".encode("utf-8")).hexdigest()[:12]
+    stem = Path(normalized_path).stem
+    safe_stem = re.sub(r"[^A-Za-z0-9_.-]+", "_", stem).strip("._-") or "manual_request"
+    return f"{safe_stem}-{digest}"
+
+
 def build_decision_fact_pack(root: Path, request: dict, current: dict, account: dict, decision: dict, market_quote: dict) -> dict:
     """Expose one request's PIT references without creating another state store."""
     freshness = market_quote.get("decision_freshness") or {}
@@ -171,6 +203,7 @@ def _first_qualified_market_fact(market_quote: dict) -> dict:
 def build_fast_path_latency(request: dict, current: dict, decision: dict, market_quote: dict, reply_ready: str) -> dict:
     """Report only observed timestamps; missing instrumentation stays explicit."""
     t0 = request.get("requested_at_beijing") or request.get("request_time") or ""
+    manual_request_identity = _stable_manual_request_identity(request)
     freshness = market_quote.get("decision_freshness") or {}
     t_new = current.get("captured_at") or (current.get("data_freshness") or {}).get("captured_at_beijing") or ""
     t_decision = decision.get("generated_at_beijing") or decision.get("generated_at") or ""
@@ -179,7 +212,7 @@ def build_fast_path_latency(request: dict, current: dict, decision: dict, market
     final_identity = request.get("final_answer_identity") or request.get("final_analysis_identity") or reply_ready or "UNKNOWN"
     return {
         "t0": t0,
-        "manual_request_identity": request.get("request_id") or request.get("manual_request_identity") or "UNKNOWN",
+        "manual_request_identity": manual_request_identity,
         "manual_request_received_at": t0 or "UNKNOWN",
         "user_request_received": t0,
         "screenshot_account_fact_available": request.get("screenshot_account_fact_available_at_beijing") or request.get("account_fact_available_at_beijing") or "UNKNOWN",
@@ -308,7 +341,9 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     request_payload = {}
     request_time = None
     if request_file:
-        request_payload = read_json((root / request_file).resolve(), {})
+        request_path = Path(request_file)
+        request_payload = read_json((root / request_path).resolve(), {})
+        request_payload["_request_file"] = request_path.as_posix()
         request_time = parse_time(request_payload.get("requested_at_beijing") or request_payload.get("request_time"))
     live_dir = root / "requests" / "live_snapshot"
     if request_time is None and live_dir.exists():
