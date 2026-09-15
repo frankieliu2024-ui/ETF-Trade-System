@@ -1,6 +1,6 @@
 {
   "status": "READY",
-  "generated_at": "2026-09-15T09:59:13Z",
+  "generated_at": "2026-09-15T10:18:32Z",
   "market_date": "2026-09-15",
   "daily_feature_count": 13,
   "relative_strength_count": 13,
@@ -237,7 +237,7 @@
     },
     "market_structure": {
       "schema_version": "1.4",
-      "generated_at": "2026-09-15T09:59:12Z",
+      "generated_at": "2026-09-15T10:18:32Z",
       "market_date": "2026-09-15",
       "as_of_beijing": "2026-09-15T14:48:42+08:00",
       "source_snapshot": "data/market/snapshots/2026-09-15_144842.json",
@@ -3125,9 +3125,9 @@
       "mode": "FORMAL_561980_COMPONENT_LEAD_EVIDENCE",
       "evidence_id": "component_lead_561980_3d",
       "display_name": "半导体设备ETF（561980）核心成分3日相对领先证据",
-      "status": "DEGRADED",
-      "use_in_current_decision": false,
-      "use_as_decision_evidence": false,
+      "status": "READY",
+      "use_in_current_decision": true,
+      "use_as_decision_evidence": true,
       "decision_eligible": true,
       "can_generate_decision_independently": false,
       "automatic_trade": false,
@@ -3137,19 +3137,63 @@
       ],
       "decision_market_date": "2026-09-15",
       "price_cutoff_market_date": "2026-09-14",
-      "reason": "official PCF unavailable: RuntimeError: openssl binary unavailable: FileNotFoundError: [WinError 2] 系统找不到指定的文件。",
-      "failure_policy": "关键PCF或完整价格输入不可验证时不沿用旧动态值，不形成方向性证据。",
-      "reviewed_current_top5": [
-        "002371",
-        "300604",
-        "300666",
-        "300346",
-        "002409"
-      ]
+      "return_window_start": "2026-09-09",
+      "return_window_end": "2026-09-14",
+      "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
+      "pcf_component_count": 40,
+      "top5": [
+        {
+          "code": "002371",
+          "name": "北方华创",
+          "td_amount": 438200.0,
+          "cash_flag": "1",
+          "ann_date": "2026-09-15",
+          "three_day_return_pct": -3.1559
+        },
+        {
+          "code": "300604",
+          "name": "长川科技",
+          "td_amount": 228213.0,
+          "cash_flag": "1",
+          "ann_date": "2026-09-15",
+          "three_day_return_pct": -3.6259
+        },
+        {
+          "code": "300666",
+          "name": "江丰电子",
+          "td_amount": 47420.0,
+          "cash_flag": "1",
+          "ann_date": "2026-09-15",
+          "three_day_return_pct": 2.6362
+        },
+        {
+          "code": "002409",
+          "name": "雅克科技",
+          "td_amount": 38556.0,
+          "cash_flag": "1",
+          "ann_date": "2026-09-15",
+          "three_day_return_pct": -2.281
+        },
+        {
+          "code": "300346",
+          "name": "南大光电",
+          "td_amount": 36106.0,
+          "cash_flag": "1",
+          "ann_date": "2026-09-15",
+          "three_day_return_pct": -2.0509
+        }
+      ],
+      "top5_three_day_average_return_pct": -1.6955,
+      "etf_three_day_return_pct": -3.0912,
+      "leader_minus_etf_3d_lag1_pct_points": 1.3957,
+      "evidence_direction": "STRENGTHEN",
+      "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
+      "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
+      "formal_conclusion": "research/backtests/561980_component_lead_formal_conclusion.json"
     },
     "if_ic_basis_5d": {
       "schema_version": "1.2",
-      "generated_at": "2026-09-15T09:59:15Z",
+      "generated_at": "2026-09-15T10:18:38Z",
       "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
       "evidence_id": "if_ic_basis_5d",
       "display_name": "IF／IC 5日基差变化证据",
@@ -3170,11 +3214,11 @@
       "status": "DEGRADED",
       "use_in_current_decision": false,
       "decision_market_date": "2026-09-15",
-      "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-09-14:URLError:<urlopen error [WinError 10054] 远程主机强迫关闭了一个现有的连接。>; monthly 202608:URLError:<urlopen error [WinError 10054] 远程主机强迫关闭了一个现有的连接。>; monthly 202609:URLError:<urlopen error [WinError 10054] 远程主机强迫关闭了一个现有的连接。>"
+      "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-09-14:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
     },
     "ipo_base_stock_oversold_reversal_300750": {
       "schema_version": "1.1",
-      "generated_at": "2026-09-15T09:59:21Z",
+      "generated_at": "2026-09-15T10:18:51Z",
       "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
       "evidence_id": "ipo_base_stock_oversold_reversal_300750",
       "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -3410,7 +3454,7 @@
   },
   "research_execution_summary": {
     "schema_version": "1.2",
-    "generated_at": "2026-09-15T09:59:22Z",
+    "generated_at": "2026-09-15T10:18:53Z",
     "mode": "RESEARCH_TO_EXECUTION_READ_ONLY_BRIDGE",
     "read_only": true,
     "use_in_current_decision": true,
@@ -3504,10 +3548,10 @@
         },
         {
           "evidence_id": "component_lead_561980_3d",
-          "status": "DEGRADED",
-          "use_in_current_decision": false,
+          "status": "READY",
+          "use_in_current_decision": true,
           "decision_eligible": true,
-          "use_as_decision_evidence": false,
+          "use_as_decision_evidence": true,
           "can_generate_decision_independently": false,
           "trade_signal": null
         },
@@ -4130,7 +4174,7 @@
       },
       "if_ic_basis_5d": {
         "schema_version": "1.2",
-        "generated_at": "2026-09-15T09:59:15Z",
+        "generated_at": "2026-09-15T10:18:38Z",
         "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
         "evidence_id": "if_ic_basis_5d",
         "display_name": "IF／IC 5日基差变化证据",
@@ -4151,11 +4195,11 @@
         "status": "DEGRADED",
         "use_in_current_decision": false,
         "decision_market_date": "2026-09-15",
-        "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-09-14:URLError:<urlopen error [WinError 10054] 远程主机强迫关闭了一个现有的连接。>; monthly 202608:URLError:<urlopen error [WinError 10054] 远程主机强迫关闭了一个现有的连接。>; monthly 202609:URLError:<urlopen error [WinError 10054] 远程主机强迫关闭了一个现有的连接。>"
+        "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-09-14:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
       },
       "ipo_base_stock_oversold_reversal_300750": {
         "schema_version": "1.1",
-        "generated_at": "2026-09-15T09:59:21Z",
+        "generated_at": "2026-09-15T10:18:51Z",
         "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
         "evidence_id": "ipo_base_stock_oversold_reversal_300750",
         "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -4189,9 +4233,9 @@
         "mode": "FORMAL_561980_COMPONENT_LEAD_EVIDENCE",
         "evidence_id": "component_lead_561980_3d",
         "display_name": "半导体设备ETF（561980）核心成分3日相对领先证据",
-        "status": "DEGRADED",
-        "use_in_current_decision": false,
-        "use_as_decision_evidence": false,
+        "status": "READY",
+        "use_in_current_decision": true,
+        "use_as_decision_evidence": true,
         "decision_eligible": true,
         "can_generate_decision_independently": false,
         "automatic_trade": false,
@@ -4201,15 +4245,59 @@
         ],
         "decision_market_date": "2026-09-15",
         "price_cutoff_market_date": "2026-09-14",
-        "reason": "official PCF unavailable: RuntimeError: openssl binary unavailable: FileNotFoundError: [WinError 2] 系统找不到指定的文件。",
-        "failure_policy": "关键PCF或完整价格输入不可验证时不沿用旧动态值，不形成方向性证据。",
-        "reviewed_current_top5": [
-          "002371",
-          "300604",
-          "300666",
-          "300346",
-          "002409"
-        ]
+        "return_window_start": "2026-09-09",
+        "return_window_end": "2026-09-14",
+        "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
+        "pcf_component_count": 40,
+        "top5": [
+          {
+            "code": "002371",
+            "name": "北方华创",
+            "td_amount": 438200.0,
+            "cash_flag": "1",
+            "ann_date": "2026-09-15",
+            "three_day_return_pct": -3.1559
+          },
+          {
+            "code": "300604",
+            "name": "长川科技",
+            "td_amount": 228213.0,
+            "cash_flag": "1",
+            "ann_date": "2026-09-15",
+            "three_day_return_pct": -3.6259
+          },
+          {
+            "code": "300666",
+            "name": "江丰电子",
+            "td_amount": 47420.0,
+            "cash_flag": "1",
+            "ann_date": "2026-09-15",
+            "three_day_return_pct": 2.6362
+          },
+          {
+            "code": "002409",
+            "name": "雅克科技",
+            "td_amount": 38556.0,
+            "cash_flag": "1",
+            "ann_date": "2026-09-15",
+            "three_day_return_pct": -2.281
+          },
+          {
+            "code": "300346",
+            "name": "南大光电",
+            "td_amount": 36106.0,
+            "cash_flag": "1",
+            "ann_date": "2026-09-15",
+            "three_day_return_pct": -2.0509
+          }
+        ],
+        "top5_three_day_average_return_pct": -1.6955,
+        "etf_three_day_return_pct": -3.0912,
+        "leader_minus_etf_3d_lag1_pct_points": 1.3957,
+        "evidence_direction": "STRENGTHEN",
+        "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
+        "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
+        "formal_conclusion": "research/backtests/561980_component_lead_formal_conclusion.json"
       }
     },
     "portfolio_exposure": {
@@ -4290,7 +4378,7 @@
         ],
         "dynamic_stock_specific_signal": {
           "schema_version": "1.1",
-          "generated_at": "2026-09-15T09:59:21Z",
+          "generated_at": "2026-09-15T10:18:51Z",
           "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
           "evidence_id": "ipo_base_stock_oversold_reversal_300750",
           "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -4401,9 +4489,9 @@
         "mode": "FORMAL_561980_COMPONENT_LEAD_EVIDENCE",
         "evidence_id": "component_lead_561980_3d",
         "display_name": "半导体设备ETF（561980）核心成分3日相对领先证据",
-        "status": "DEGRADED",
-        "use_in_current_decision": false,
-        "use_as_decision_evidence": false,
+        "status": "READY",
+        "use_in_current_decision": true,
+        "use_as_decision_evidence": true,
         "decision_eligible": true,
         "can_generate_decision_independently": false,
         "automatic_trade": false,
@@ -4413,15 +4501,59 @@
         ],
         "decision_market_date": "2026-09-15",
         "price_cutoff_market_date": "2026-09-14",
-        "reason": "official PCF unavailable: RuntimeError: openssl binary unavailable: FileNotFoundError: [WinError 2] 系统找不到指定的文件。",
-        "failure_policy": "关键PCF或完整价格输入不可验证时不沿用旧动态值，不形成方向性证据。",
-        "reviewed_current_top5": [
-          "002371",
-          "300604",
-          "300666",
-          "300346",
-          "002409"
-        ]
+        "return_window_start": "2026-09-09",
+        "return_window_end": "2026-09-14",
+        "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
+        "pcf_component_count": 40,
+        "top5": [
+          {
+            "code": "002371",
+            "name": "北方华创",
+            "td_amount": 438200.0,
+            "cash_flag": "1",
+            "ann_date": "2026-09-15",
+            "three_day_return_pct": -3.1559
+          },
+          {
+            "code": "300604",
+            "name": "长川科技",
+            "td_amount": 228213.0,
+            "cash_flag": "1",
+            "ann_date": "2026-09-15",
+            "three_day_return_pct": -3.6259
+          },
+          {
+            "code": "300666",
+            "name": "江丰电子",
+            "td_amount": 47420.0,
+            "cash_flag": "1",
+            "ann_date": "2026-09-15",
+            "three_day_return_pct": 2.6362
+          },
+          {
+            "code": "002409",
+            "name": "雅克科技",
+            "td_amount": 38556.0,
+            "cash_flag": "1",
+            "ann_date": "2026-09-15",
+            "three_day_return_pct": -2.281
+          },
+          {
+            "code": "300346",
+            "name": "南大光电",
+            "td_amount": 36106.0,
+            "cash_flag": "1",
+            "ann_date": "2026-09-15",
+            "three_day_return_pct": -2.0509
+          }
+        ],
+        "top5_three_day_average_return_pct": -1.6955,
+        "etf_three_day_return_pct": -3.0912,
+        "leader_minus_etf_3d_lag1_pct_points": 1.3957,
+        "evidence_direction": "STRENGTHEN",
+        "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
+        "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
+        "formal_conclusion": "research/backtests/561980_component_lead_formal_conclusion.json"
       },
       "intraday_path_risk_review": {
         "evidence_id": "intraday_path_risk_review",
@@ -4803,7 +4935,7 @@
     },
     "if_ic_basis_5d": {
       "schema_version": "1.2",
-      "generated_at": "2026-09-15T09:59:15Z",
+      "generated_at": "2026-09-15T10:18:38Z",
       "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
       "evidence_id": "if_ic_basis_5d",
       "display_name": "IF／IC 5日基差变化证据",
@@ -4824,11 +4956,11 @@
       "status": "DEGRADED",
       "use_in_current_decision": false,
       "decision_market_date": "2026-09-15",
-      "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-09-14:URLError:<urlopen error [WinError 10054] 远程主机强迫关闭了一个现有的连接。>; monthly 202608:URLError:<urlopen error [WinError 10054] 远程主机强迫关闭了一个现有的连接。>; monthly 202609:URLError:<urlopen error [WinError 10054] 远程主机强迫关闭了一个现有的连接。>"
+      "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-09-14:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
     },
     "ipo_base_stock_oversold_reversal_300750": {
       "schema_version": "1.1",
-      "generated_at": "2026-09-15T09:59:21Z",
+      "generated_at": "2026-09-15T10:18:51Z",
       "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
       "evidence_id": "ipo_base_stock_oversold_reversal_300750",
       "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -4862,9 +4994,9 @@
       "mode": "FORMAL_561980_COMPONENT_LEAD_EVIDENCE",
       "evidence_id": "component_lead_561980_3d",
       "display_name": "半导体设备ETF（561980）核心成分3日相对领先证据",
-      "status": "DEGRADED",
-      "use_in_current_decision": false,
-      "use_as_decision_evidence": false,
+      "status": "READY",
+      "use_in_current_decision": true,
+      "use_as_decision_evidence": true,
       "decision_eligible": true,
       "can_generate_decision_independently": false,
       "automatic_trade": false,
@@ -4874,15 +5006,59 @@
       ],
       "decision_market_date": "2026-09-15",
       "price_cutoff_market_date": "2026-09-14",
-      "reason": "official PCF unavailable: RuntimeError: openssl binary unavailable: FileNotFoundError: [WinError 2] 系统找不到指定的文件。",
-      "failure_policy": "关键PCF或完整价格输入不可验证时不沿用旧动态值，不形成方向性证据。",
-      "reviewed_current_top5": [
-        "002371",
-        "300604",
-        "300666",
-        "300346",
-        "002409"
-      ]
+      "return_window_start": "2026-09-09",
+      "return_window_end": "2026-09-14",
+      "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
+      "pcf_component_count": 40,
+      "top5": [
+        {
+          "code": "002371",
+          "name": "北方华创",
+          "td_amount": 438200.0,
+          "cash_flag": "1",
+          "ann_date": "2026-09-15",
+          "three_day_return_pct": -3.1559
+        },
+        {
+          "code": "300604",
+          "name": "长川科技",
+          "td_amount": 228213.0,
+          "cash_flag": "1",
+          "ann_date": "2026-09-15",
+          "three_day_return_pct": -3.6259
+        },
+        {
+          "code": "300666",
+          "name": "江丰电子",
+          "td_amount": 47420.0,
+          "cash_flag": "1",
+          "ann_date": "2026-09-15",
+          "three_day_return_pct": 2.6362
+        },
+        {
+          "code": "002409",
+          "name": "雅克科技",
+          "td_amount": 38556.0,
+          "cash_flag": "1",
+          "ann_date": "2026-09-15",
+          "three_day_return_pct": -2.281
+        },
+        {
+          "code": "300346",
+          "name": "南大光电",
+          "td_amount": 36106.0,
+          "cash_flag": "1",
+          "ann_date": "2026-09-15",
+          "three_day_return_pct": -2.0509
+        }
+      ],
+      "top5_three_day_average_return_pct": -1.6955,
+      "etf_three_day_return_pct": -3.0912,
+      "leader_minus_etf_3d_lag1_pct_points": 1.3957,
+      "evidence_direction": "STRENGTHEN",
+      "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
+      "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
+      "formal_conclusion": "research/backtests/561980_component_lead_formal_conclusion.json"
     }
   },
   "ipo_base_stock_research": {
