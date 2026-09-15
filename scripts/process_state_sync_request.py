@@ -590,8 +590,8 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     request_id = str(request.get("request_id") or "").strip()
     is_manual_completion = str(request.get("source") or "").strip() == "CHATGPT_MANUAL_FORMAL_COMPLETION"
     parent_request_id = str(request.get("parent_request_id") or "").strip()
-    if is_manual_completion and not parent_request_id:
-        raise ValueError("manual formal completion requires parent_request_id")
+    if is_manual_completion and (not parent_request_id or not request_id or parent_request_id == request_id):
+        raise ValueError("manual formal completion requires distinct envelope and parent request identities")
     fingerprint_request_id = parent_request_id if is_manual_completion else request_id
     fingerprint = hashlib.sha256(json.dumps({"request_id": fingerprint_request_id, "market_date": market_date, "formal_decision": decision}, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
     decision_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(decision.get("decision_id") or request_id or f"{market_date}_{fingerprint[:12]}"))
@@ -704,7 +704,12 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     if event_path.exists():
         prior = load_json(event_path)
         if is_manual_completion and prior.get("fingerprint") == fingerprint:
-            return True, decision_id
+            if (
+                prior.get("price_source_snapshot") == snapshot_rel
+                and prior.get("point_in_time_status") == pit_status
+            ):
+                return True, decision_id
+            raise ValueError("manual formal decision retry changed its PIT/source snapshot linkage")
         if is_manual_completion:
             raise ValueError("manual formal decision_id is already bound to a different request or decision")
         if prior.get("fingerprint") == fingerprint and prior.get("price_source_snapshot") == snapshot_rel:
