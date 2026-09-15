@@ -79,17 +79,37 @@ def test_canonical_outcome_blocks_intraday_daily_feature_as_close():
             "price_at_decision": 1.0,
             "formal_decision": {"amount_action": "买入561980", "research_evidence_used": []},
         })
+        _write_json(root / "data/market/snapshots/2026-09-14_1413.json", {
+            "market_date": "2026-09-14",
+            "node": "live",
+            "planned_time": "",
+            "market_phase": "CONTINUOUS_AFTERNOON",
+            "quality_status": "PASS",
+            "rows": [{
+                "code": "561980",
+                "quality_status": "PASS",
+                "open": 1.0,
+                "high": 1.12,
+                "low": 0.99,
+                "close": 1.1,
+                "volume": 100,
+                "amount": 1000,
+                "as_of_beijing": "2026-09-14T14:13:41+08:00",
+            }],
+        })
         _write_json(root / "events/research/daily_features/2026-09-14.json", {
             "market_date": "2026-09-14",
             "market_phase": "CONTINUOUS_AFTERNOON",
             "as_of_beijing": "2026-09-14T14:13:41+08:00",
+            "source_snapshot": "data/market/snapshots/2026-09-14_1413.json",
             "features": [{"code": "561980", "close": 1.1}],
         })
         result = contribution_audit.build(root)
         outcome = json.loads((root / "events/research/decision_outcomes/D1.json").read_text(encoding="utf-8"))
         assert result["outcome_files"]["schema_version"] == "2.0"
         assert outcome["horizons"]["T_plus_1"]["status"] == "PENDING"
-        assert outcome["horizons"]["T_plus_1"]["maturity_blocked_by"].startswith("UNQUALIFIED_MARKET_PHASE")
+        assert outcome["horizons"]["T_plus_1"]["maturity_blocked_by"] == "QUALIFIED_CLOSE_SEQUENCE_INCOMPLETE"
+        assert outcome["horizons"]["T_plus_1"]["blocked_dates"][0]["reason"] == "UNVERIFIED_SESSION_CLOSE:UNVERIFIED"
 
 
 def test_canonical_outcome_matures_explicit_verified_1500_session_close():
@@ -210,7 +230,7 @@ def test_missing_close_proof_remains_pending():
         contribution_audit.build(root)
         outcome = json.loads((root / "events/research/decision_outcomes/D1.json").read_text(encoding="utf-8"))
         assert outcome["horizons"]["T_plus_1"]["status"] == "PENDING"
-        assert outcome["horizons"]["T_plus_1"]["blocked_dates"][0]["reason"] == "MISSING_CLOSE_CONTRACT"
+        assert outcome["horizons"]["T_plus_1"]["blocked_dates"][0]["reason"] == "MISSING_SOURCE_SNAPSHOT"
 
 
 def test_degraded_or_incomplete_close_remains_pending():
