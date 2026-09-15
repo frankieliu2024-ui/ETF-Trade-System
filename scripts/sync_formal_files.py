@@ -70,11 +70,17 @@ def canonical_risk(equity: dict, formal_override: float | None = None) -> float 
     return None
 
 
+def canonical_risk_identity(equity: dict) -> dict:
+    return {
+        "source": "data/state/etf_strategy_equity.json::summary.current_strategy_return_pct_gross",
+        "replay_cutoff": str(equity.get("replay_cutoff") or ""),
+        "trade_fact_count": (equity.get("summary") or {}).get("trade_fact_count"),
+    }
+
+
 def normalize_dashboard_projection(text: str, root: Path = ROOT, account: dict | None = None) -> str:
     """Keep Dashboard a current projection and repair legacy newline serialization."""
     replacement = "|ETF层当前结构|当前持仓与观察角色仅以上方‘云端实时状态（自动同步）’中的canonical account projection为准；本区块不再复制当前角色列表。|"
-    # Recover legacy Dashboard blobs that persisted the two-character\\n sequence.
-    # The projection is human-readable text; normalization then emits real newlines.
     if "\\n" in text:
         text = text.replace("\\n", "\n")
     lines = text.splitlines()
@@ -126,6 +132,7 @@ def normalize_dashboard_projection(text: str, root: Path = ROOT, account: dict |
     result = "\n".join(lines)
     return result + ("\n" if text.endswith("\n") else "")
 
+
 def preserve_decision_block(existing: str) -> str:
     if START_DASH not in existing or END_DASH not in existing:
         return ""
@@ -148,6 +155,9 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
     total_asset = float(account.get("total_asset") or 0)
     exposure = float(account.get("stock_market_value") or 0) / total_asset * 100 if total_asset else 0
     risk = canonical_risk(equity, latest_formal_risk())
+    risk_identity = canonical_risk_identity(equity)
+    risk_cutoff = risk_identity["replay_cutoff"] or "UNKNOWN"
+    risk_source = risk_identity["source"]
     summary = equity.get("summary") or {}
     pending_fee_trades = [
         t for t in (account.get("trades") or [])
@@ -160,10 +170,12 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
     confirmed_account_fees = sum(float(t.get("fee") or 0) for t in (account.get("trades") or []) if str(t.get("fee_status", "")).upper() == "CONFIRMED")
     lines = [
         "## 云端实时状态（自动同步）", "",
-        f"> 更新时间：{account.get('updated_at', '')}  ",
-        f"> 来源：{account.get('source', '')}  ",
+        f"> 账户事实更新时间：{account.get('updated_at', '')}  ",
+        f"> 账户事实来源：{account.get('source', '')}  ",
+        f"> ETF策略风险as-of：{risk_cutoff}  ",
+        f"> ETF策略风险来源：{risk_source}  ",
         "> 场景：ACCOUNT_FACT_MAINTENANCE  ",
-        "> 本区块只同步已确认账户事实与既有正式决策；自动程序不得自行推导交易权限或下单。",
+        "> 账户事实与ETF策略风险使用各自canonical provenance；本区块不推导交易权限或下单。",
         "", "|项目|最新事实|", "|-|-|",
         f"|总资产|{money(account.get('total_asset'))}|",
         f"|股票市值|{money(account.get('stock_market_value'))}|",
@@ -173,7 +185,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
         f"|账户持仓盈亏|{money(account.get('holding_pnl'))}|",
         f"|当日盈亏|{money(account.get('daily_pnl'))}（{float(account.get('daily_pnl_pct') or 0):+.2f}%）|",
         f"|账户总风险暴露率|约{exposure:.2f}%|",
-        f"|ETF策略风险率|约{risk:.2f}%（Gross）|" if risk is not None else "|ETF策略风险率|当前辅助权益状态缺失，保留最近有效值|",
+        f"|ETF策略风险率|约{risk:.4f}%（Gross；as-of {risk_cutoff}）|" if risk is not None else "|ETF策略风险率|当前canonical策略权益状态缺失|",
         f"|累计已知ETF费用（有效事实）|{money(known_fees)}；已执行成交overlay {money(overlay_fees)}；待确认费用状态：{'存在' if pending else '无'}|",
         f"|账户事实内已确认费用记录合计|{money(confirmed_account_fees)}（仅统计account_fact中明确标记CONFIRMED的记录；不代表历史累计ETF费用）|",
         "", "### 当前持仓事实", "",
@@ -216,7 +228,7 @@ def update_experience(text: str, account: dict) -> tuple[str, int]:
         action_upper = action.upper()
         action_tokens = {action, "买入" if action_upper in {"BUY", "B"} else "", "卖出" if action_upper in {"SELL", "S"} else ""}
         normalized_quantity = quantity.replace(",", "")
-        normalized_price = f"{float(trade.get('price')):.3f}" if trade.get("price") is not None else price
+        normalized_price = f"{float(trade.get('price')):.3f}" if trade.get('price') is not None else price
         for i, line in enumerate(lines):
             normalized_line = line.replace(",", "")
             action_match = any(token and token in line for token in action_tokens)
@@ -260,8 +272,7 @@ def build_archive_fact_block(account: dict) -> str:
         "### 账户事实增量维护（仅客观事实）",
         f"- 账户事实确认时间：{account.get('updated_at', '')}",
         f"- 来源：{account.get('source', '')}",
-        f"- 总资产：{money(account.get('total_asset'))}；可用资金：{money(account.get('cash'))}；"
-        f"持仓数量沿用最新确认账户事实。",
+        f"- 总资产：{money(account.get('total_asset'))}；可用资金：{money(account.get('cash'))}；持仓数量沿用最新确认账户事实。",
         *trade_lines,
         "- 本区块不生成交易权限、买卖建议或MASTER修改；未确认费用不写入已知费用。",
     ])
