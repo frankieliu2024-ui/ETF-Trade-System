@@ -138,7 +138,7 @@ class FormalFileMutationGatewayTests(unittest.TestCase):
             self.assertIn("  - 缺失盈亏ETF（111111）：事实不足", normalized)
             self.assertIn("唯一主候选：无新的主候选", normalized)
             self.assertNotIn("FEE_old", normalized)
-            self.assertNotIn("AUTO_TRADE_FACT_CORRECTIONS", normalized)
+            self.assertIn("<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->\n<!-- AUTO_TRADE_FACT_CORRECTIONS_END -->", normalized)
 
     def test_experience_projection_empties_case_intake_and_splits_compact_case_heading(self):
         text = (
