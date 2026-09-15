@@ -21,7 +21,7 @@ class SystemConsistencyCandidatePathTests(unittest.TestCase):
         self.assertIn('validation_root="$PWD"', text)
         guard = 'if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then'
         self.assertLess(text.index('validation_root="$PWD"'), text.index(guard))
-        self.assertIn('candidate_root="$RUNNER_TEMP/etf-candidate-${pr_number}"', text.replace('${pr_number}', '__PR_NUMBER__'))
+        self.assertIn('candidate_root="$RUNNER_TEMP/etf-candidate-__PR_NUMBER__"', text.replace('${pr_number}', '__PR_NUMBER__'))
 
     def test_missing_pr_candidate_falls_back_without_cross_pr_reuse(self):
         text = WORKFLOW.read_text(encoding="utf-8")
