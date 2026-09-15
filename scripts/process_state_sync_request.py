@@ -587,8 +587,13 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
         name_match = re.search(rf"([^｜+，,；;]+?)（{re.escape(code)}）", main_candidate)
         if name_match:
             name = name_match.group(1).strip()
-    request_id = str(request.get("request_id") or "")
-    fingerprint = hashlib.sha256(json.dumps({"request_id": request_id, "market_date": market_date, "formal_decision": decision}, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+    request_id = str(request.get("request_id") or "").strip()
+    is_manual_completion = str(request.get("source") or "").strip() == "CHATGPT_MANUAL_FORMAL_COMPLETION"
+    parent_request_id = str(request.get("parent_request_id") or "").strip()
+    if is_manual_completion and (not parent_request_id or not request_id or parent_request_id == request_id):
+        raise ValueError("manual formal completion requires distinct envelope and parent request identities")
+    fingerprint_request_id = parent_request_id if is_manual_completion else request_id
+    fingerprint = hashlib.sha256(json.dumps({"request_id": fingerprint_request_id, "market_date": market_date, "formal_decision": decision}, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
     decision_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(decision.get("decision_id") or request_id or f"{market_date}_{fingerprint[:12]}"))
 
     decision_time = str(decision.get("data_as_of_beijing") or "")
@@ -634,6 +639,16 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
         snapshot_rel, snapshot, pit_status = select_point_in_time_snapshot(
             market_date, decision_time, availability_time=availability_time, consumed_snapshot=consumed_snapshot
         )
+    if is_manual_completion and (
+        not snapshot_rel
+        or pit_status not in {
+            "CONSUMED_SNAPSHOT_VALIDATED",
+            "POINT_IN_TIME_SNAPSHOT_TWO_CLOCK_VALIDATED",
+            "EXTERNAL_MARKET_EVIDENCE_VALIDATED",
+        }
+    ):
+        raise ValueError(f"manual formal decision requires legal PIT/source snapshot: {pit_status}")
+
     supplied_price = safe_float(decision.get("price_at_decision"))
     supplied_as_of = str(decision.get("price_as_of_beijing") or "")
     supplied_time = parse_time(supplied_as_of)
@@ -672,7 +687,7 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     lifecycle = str(decision.get("lifecycle") or "")
     hypothesis_closed = "退出" in lifecycle or str(decision.get("hypothesis_status") or "").upper() == "CLOSED"
     comparison = build_comparison_snapshot(snapshot) if snapshot else {"items": [], "interpretation_rule": "决策时点无可用历史快照，不使用未来数据补齐。"}
-    event = {"event_type": "FORMAL_DECISION", "decision_id": decision_id, "fingerprint": fingerprint, "market_date": market_date, "decision_time_beijing": decision_time, "decision_effective_at_beijing": str(decision.get("decision_effective_at_beijing") or decision.get("issued_at_beijing") or ""), "decision_effective_ordering": str(decision.get("decision_effective_ordering") or ""), "timing_quality": str(decision.get("timing_quality") or ""), "timing_provenance": str(decision.get("timing_provenance") or ""), "interaction_scenario": request.get("interaction_scenario"), "candidate_code": code, "candidate_name": name, "hypothesis_id": hypothesis_id, "hypothesis_link_status": hypothesis_link_status, "hypothesis_closed": hypothesis_closed, "price_at_decision": price_at_decision, "price_as_of_beijing": price_as_of, "price_source_snapshot": snapshot_rel, "price_source": price_source, "point_in_time_status": pit_status, "comparison_snapshot": comparison, "formal_decision": decision, "managed_position_sell_review": managed_projection, "read_only_research_event": True, "decision_boundary": "只保存ChatGPT已经形成的正式决策和决策时点可见证据。禁止使用决策时点之后的行情回填价格或比较快照；研究留痕用于验证候选选择、假设生命周期、判断与执行质量，不自行推导交易权限。", "market_evidence_type": "EMERGENCY_EXTERNAL_MARKET_EVIDENCE" if external_evidence else "CANONICAL_SNAPSHOT", "external_evidence_path": external_evidence["path"] if external_evidence else "", "external_evidence_id": external_evidence["evidence_id"] if external_evidence else "", "external_evidence_validation": external_evidence["validation_status"] if external_evidence else "",
+    event = {"event_type": "FORMAL_DECISION", "decision_id": decision_id, "request_id": request_id, "parent_request_id": parent_request_id or None, "fingerprint": fingerprint, "market_date": market_date, "decision_time_beijing": decision_time, "decision_effective_at_beijing": str(decision.get("decision_effective_at_beijing") or decision.get("issued_at_beijing") or ""), "decision_effective_ordering": str(decision.get("decision_effective_ordering") or ""), "timing_quality": str(decision.get("timing_quality") or ""), "timing_provenance": str(decision.get("timing_provenance") or ""), "interaction_scenario": request.get("interaction_scenario"), "candidate_code": code, "candidate_name": name, "hypothesis_id": hypothesis_id, "hypothesis_link_status": hypothesis_link_status, "hypothesis_closed": hypothesis_closed, "price_at_decision": price_at_decision, "price_as_of_beijing": price_as_of, "price_source_snapshot": snapshot_rel, "price_source": price_source, "point_in_time_status": pit_status, "comparison_snapshot": comparison, "formal_decision": decision, "managed_position_sell_review": managed_projection, "read_only_research_event": True, "decision_boundary": "只保存ChatGPT已经形成的正式决策和决策时点可见证据。禁止使用决策时点之后的行情回填价格或比较快照；研究留痕用于验证候选选择、假设生命周期、判断与执行质量，不自行推导交易权限。", "market_evidence_type": "EMERGENCY_EXTERNAL_MARKET_EVIDENCE" if external_evidence else "CANONICAL_SNAPSHOT", "external_evidence_path": external_evidence["path"] if external_evidence else "", "external_evidence_id": external_evidence["evidence_id"] if external_evidence else "", "external_evidence_validation": external_evidence["validation_status"] if external_evidence else "",
         "external_evidence_scope": external_evidence.get("evidence_scope", "") if external_evidence else "",
         "decision_evidence_eligibility": external_evidence.get("decision_evidence_eligibility", "") if external_evidence else "",
         "execution_price_eligibility": external_evidence.get("execution_price_eligibility", "") if external_evidence else "",
@@ -688,6 +703,15 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     event_path.parent.mkdir(parents=True, exist_ok=True)
     if event_path.exists():
         prior = load_json(event_path)
+        if is_manual_completion and prior.get("fingerprint") == fingerprint:
+            if (
+                prior.get("price_source_snapshot") == snapshot_rel
+                and prior.get("point_in_time_status") == pit_status
+            ):
+                return True, decision_id
+            raise ValueError("manual formal decision retry changed its PIT/source snapshot linkage")
+        if is_manual_completion:
+            raise ValueError("manual formal decision_id is already bound to a different request or decision")
         if prior.get("fingerprint") == fingerprint and prior.get("price_source_snapshot") == snapshot_rel:
             return True, decision_id
     atomic_json_write(event_path, event)
