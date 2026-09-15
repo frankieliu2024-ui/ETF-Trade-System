@@ -160,9 +160,6 @@ def _decision_trigger_error(event: dict) -> str:
 
 
 def _system_error(event: dict) -> str:
-    blocked, reason = decision_critical_blockage()
-    if not blocked:
-        return f"system notification has no current decision-critical blockage: {reason}"
     source = str(event.get("source") or "")
     if source == "self_healing_status":
         state = _read_json(STATE / "self_healing_status.json")
@@ -172,8 +169,7 @@ def _system_error(event: dict) -> str:
             return "self-healing notification has no current escalation evidence"
         if not str(state.get("checked_at") or state.get("updated_at") or ""):
             return "self-healing notification has no diagnostic timestamp"
-        return ""
-    if source == "workflow_failure_diagnostic":
+    elif source == "workflow_failure_diagnostic":
         diag = _read_json(STATE / "workflow_failure_diagnostic.json")
         safety = diag.get("safety") or {}
         if str(diag.get("recommended_action") or "") != "ESCALATE_WITH_DIAGNOSTIC":
@@ -182,8 +178,13 @@ def _system_error(event: dict) -> str:
             return "workflow failure diagnostic is not for current main"
         if not str(diag.get("run_id") or ""):
             return "workflow failure diagnostic has no run id"
-        return ""
-    return "system notification has no recognized diagnostic source"
+    else:
+        return "system notification has no recognized diagnostic source"
+
+    blocked, reason = decision_critical_blockage()
+    if not blocked:
+        return f"system notification has no current decision-critical blockage: {reason}"
+    return ""
 
 
 def notification_evidence_error(event: dict | None) -> str:

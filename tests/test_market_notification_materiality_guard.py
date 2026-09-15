@@ -192,7 +192,64 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
                 self.assertIn("not for current main", guard.notification_evidence_error(event))
                 diag["safety"]["head_is_current_main"] = True
                 (state / "workflow_failure_diagnostic.json").write_text(json.dumps(diag), encoding="utf-8")
+                error = guard.notification_evidence_error(event)
+                self.assertIn("no current decision-critical blockage", error)
+                self.assertIn("e2e_status_missing", error)
+
+    def test_current_main_diagnostic_requires_and_accepts_real_blockage(self):
+        with tempfile.TemporaryDirectory() as td:
+            state = Path(td)
+            diag = {
+                "recommended_action": "ESCALATE_WITH_DIAGNOSTIC",
+                "run_id": "123",
+                "safety": {"head_is_current_main": True},
+            }
+            (state / "workflow_failure_diagnostic.json").write_text(json.dumps(diag), encoding="utf-8")
+            (state / "e2e_status.json").write_text(json.dumps({
+                "status": "BLOCKED",
+                "blockers": ["market unavailable"],
+                "components": {},
+            }), encoding="utf-8")
+            with patch.object(guard, "STATE", state):
+                event = {"type": "系统异常", "source": "workflow_failure_diagnostic"}
                 self.assertEqual(guard.notification_evidence_error(event), "")
+
+    def test_self_healing_source_keeps_escalation_and_timestamp_contract(self):
+        with tempfile.TemporaryDirectory() as td:
+            state = Path(td)
+            status = {
+                "classification": "PERSISTENT_RUNTIME_FAILURE",
+                "recommended_action": "ESCALATE",
+                "checked_at": "2026-09-15T10:00:00+08:00",
+            }
+            (state / "self_healing_status.json").write_text(json.dumps(status), encoding="utf-8")
+            (state / "e2e_status.json").write_text(json.dumps({
+                "status": "BLOCKED",
+                "blockers": ["market unavailable"],
+                "components": {},
+            }), encoding="utf-8")
+            with patch.object(guard, "STATE", state):
+                event = {"type": "系统异常", "source": "self_healing_status"}
+                self.assertEqual(guard.notification_evidence_error(event), "")
+                status["classification"] = "HEALTHY"
+                status["recommended_action"] = "NO_ACTION"
+                (state / "self_healing_status.json").write_text(json.dumps(status), encoding="utf-8")
+                self.assertIn("no current escalation evidence", guard.notification_evidence_error(event))
+                status["classification"] = "PERSISTENT_RUNTIME_FAILURE"
+                status["recommended_action"] = "ESCALATE"
+                status["checked_at"] = ""
+                (state / "self_healing_status.json").write_text(json.dumps(status), encoding="utf-8")
+                self.assertIn("no diagnostic timestamp", guard.notification_evidence_error(event))
+
+    def test_unknown_system_diagnostic_source_fails_closed_before_blockage_lookup(self):
+        with tempfile.TemporaryDirectory() as td:
+            state = Path(td)
+            with patch.object(guard, "STATE", state):
+                event = {"type": "SYSTEM_RUNTIME_BLOCKER", "source": "unregistered_source"}
+                self.assertEqual(
+                    guard.notification_evidence_error(event),
+                    "system notification has no recognized diagnostic source",
+                )
 
     def test_production_notification_workflows_use_guarded_entrypoint(self):
         decision = (ROOT / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
