@@ -256,62 +256,13 @@ def daily_history(root: Path) -> list[dict]:
 
 
 def update_decision_outcomes(root: Path) -> int:
-    decisions = root / DECISION_DIR
-    if not decisions.exists():
-        return 0
-    history = daily_history(root)
-    by_date = {x.get("market_date"): x for x in history}
-    dates = sorted(by_date)
-    count = 0
-    for event_path in sorted(decisions.glob("*.json")):
-        event = load_json(event_path, {})
-        code = str(event.get("candidate_code") or "")
-        decision_date = str(event.get("market_date") or "")
-        price0 = safe_float(event.get("price_at_decision"))
-        if not code or not decision_date or price0 in (None, 0.0):
-            continue
-        later_dates = [d for d in dates if d >= decision_date]
-        results = {}
-        mfe, mae = None, None
-        for idx, date in enumerate(later_dates):
-            daily = by_date[date]
-            row = next((x for x in (daily.get("features") or []) if str(x.get("code")) == code), None)
-            if not row:
-                continue
-            close_ret = pct(row.get("close"), price0)
-            if idx == 0:
-                results["decision_day_close_return_pct"] = round4(close_ret)
-                continue
-            if idx in (1, 3, 5):
-                results[f"T_plus_{idx}_close_return_pct"] = round4(close_ret)
-            hi_ret, lo_ret = pct(row.get("high"), price0), pct(row.get("low"), price0)
-            if hi_ret is not None:
-                mfe = hi_ret if mfe is None else max(mfe, hi_ret)
-            if lo_ret is not None:
-                mae = lo_ret if mae is None else min(mae, lo_ret)
-            if idx >= 5:
-                break
-        outcome = {
-            "schema_version": "1.0",
-            "generated_at": now_utc(),
-            "decision_id": event.get("decision_id") or event_path.stem,
-            "market_date": decision_date,
-            "candidate_code": code,
-            "candidate_name": event.get("candidate_name"),
-            "price_at_decision": price0,
-            "formal_decision": event.get("formal_decision"),
-            "results": results,
-            "MFE_through_T_plus_5_pct_excluding_decision_day": round4(mfe),
-            "MAE_through_T_plus_5_pct_excluding_decision_day": round4(mae),
-            "method_note": "T+N按后续已记录A股交易日顺序计算；为避免使用决策前的当日高低点，MFE/MAE排除决策当日。",
-            "read_only": True,
-            "decision_boundary": "结果归因仅用于复盘与研究，不自动修改MASTER或产生新交易动作。",
-        }
-        out_path = root / OUTCOME_DIR / f"{outcome['decision_id']}.json"
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        atomic_json_write(out_path, outcome)
-        count += 1
-    return count
+    """Retired production writer.
+
+    Canonical decision outcomes are owned by build_research_contribution_audit.py
+    using schema_version 2.0. This builder only maintains current objective
+    research features and must not overwrite events/research/decision_outcomes.
+    """
+    return 0
 
 
 def build(root: Path = ROOT) -> dict:
@@ -350,7 +301,7 @@ def main() -> None:
             "relative_strength": "data/state/relative_strength.json",
             "provider_metrics": "data/state/provider_metrics.json",
             "decision_events": "events/decisions/<decision_id>.json",
-            "decision_outcomes": "events/research/decision_outcomes/<decision_id>.json",
+            "decision_outcomes": "events/research/decision_outcomes/<decision_id>.json (schema 2.0; canonical writer: build_research_contribution_audit.py)",
         },
     })
     print(json.dumps(result, ensure_ascii=False))
