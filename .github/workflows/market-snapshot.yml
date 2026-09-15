@@ -295,6 +295,9 @@ jobs:
           else
             request_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
           fi
+          triggering_request_file=$(printf '%s\n' $request_files | head -n 1)
+          echo "triggering_request_file=$triggering_request_file" >> "$GITHUB_OUTPUT"
+          echo "TRIGGERING_REQUEST_FILE=$triggering_request_file" >> "$GITHUB_ENV"
           mkdir -p /tmp/etf-state-sync-requests
           for f in $request_files; do
             mkdir -p "/tmp/etf-state-sync-requests/$(dirname "$f")"
@@ -411,7 +414,9 @@ jobs:
       - name: Build on-demand query context
         if: ${{ (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: |
-          REQUEST_FILE=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | head -n 1)
+          REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"
+          if [ -z "$REQUEST_FILE" ] && [ -n "${REPLAY_REQUEST:-}" ]; then REQUEST_FILE="$REPLAY_REQUEST"; fi
+          if [ -z "$REQUEST_FILE" ]; then REQUEST_FILE=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | head -n 1); fi
           REQUEST_ARGS=()
           if [ -n "$REQUEST_FILE" ]; then REQUEST_ARGS+=(--request-file "$REQUEST_FILE"); fi
           if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "${{ steps.snapshot_result.outputs.snapshot_written }}" != "true" ] && [ "${{ steps.session_gate.outputs.request_class }}" != "STATE_SYNC_ONLY" ]; then
