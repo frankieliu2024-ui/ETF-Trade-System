@@ -145,7 +145,7 @@ def main() -> int:
     )
     check(
         "research:canonical_outcome_writer",
-        all(token in contribution_audit for token in ["schema_version\": \"2.0", "build_close_data_contract", "UNVERIFIED_SESSION_CLOSE", "QUALIFIED_CLOSE_SEQUENCE_INCOMPLETE", "events/research/decision_outcomes"]),
+        all(token in contribution_audit for token in ["schema_version\": \"2.0", "build_close_data_contract", "VERIFIED_CLOSE_STATUSES = {\"VERIFIED_SESSION_CLOSE\"}", "MISSING_SOURCE_SNAPSHOT", "UNVERIFIED_SESSION_CLOSE", "QUALIFIED_CLOSE_SEQUENCE_INCOMPLETE", "events/research/decision_outcomes"]),
         "decision outcome canonical writer must use schema 2, reuse the canonical close contract, and fail safe when close proof is missing or unverified",
     )
     check(
