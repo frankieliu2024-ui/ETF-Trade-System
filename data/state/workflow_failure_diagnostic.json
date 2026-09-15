@@ -1,26 +1,24 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-15T11:10:12+08:00",
+  "generated_at": "2026-09-15T11:20:25+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 34923929950,
+  "workflow_name": "ETF system consistency",
+  "run_id": 34924542155,
   "run_attempt": 1,
-  "head_sha": "221184c5e3317c84620ad57a1face78d5f4f21d6",
-  "main_head_sha": "b64c4c6a70d17a1de5f1c90a5842226a2ea64c08",
+  "head_sha": "0c5d10921de799a1481815d6ad0026c885119b89",
+  "main_head_sha": "b245867ff7f797ca5dd43ac0567fca1101c97750",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "watchdog",
-      "step": "Run read-only comprehensive production health aggregate",
+      "job": "consistency",
+      "step": "Enforce hard consistency result",
       "number": 9
     }
   ],
   "changed_files": [
-    ".github/workflows/system-consistency.yml",
-    "scripts/sync_formal_files.py",
-    "tests/test_dashboard_risk_projection.py"
+    "requests/live_snapshot/20260915_1119_manual_intraday_chat.json"
   ],
-  "commit_message": "fix: align Dashboard ETF risk projection identity",
+  "commit_message": "Trigger 11:19 intraday snapshot refresh",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
