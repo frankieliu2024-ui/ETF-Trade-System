@@ -42,11 +42,37 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertIn("/tmp/changed_files.txt; then", self.text)
         self.assertNotIn("echo report=true", self.text)
 
+    def test_account_and_trade_canonical_publications_wake_existing_notification_chain(self):
+        self.assertIn('- "data/state/account_fact.json"', self.text)
+        self.assertIn('- "events/trades/*.json"', self.text)
+        self.assertIn(r"grep -Eq '^events/trades/[^/]+\.json$' /tmp/changed_files.txt", self.text)
+        self.assertIn("grep -Fxq 'data/state/account_fact.json' /tmp/changed_files.txt", self.text)
+        self.assertIn('echo "trade=true" >> "$GITHUB_OUTPUT"', self.text)
+        self.assertIn('echo "account=true" >> "$GITHUB_OUTPUT"', self.text)
+        self.assertIn("steps.push_kind.outputs.account == 'true'", self.text)
+        self.assertIn("steps.push_kind.outputs.trade == 'true'", self.text)
+        self.assertNotIn('- "data/state/execution_reconciliation.json"', self.text)
+
+    def test_account_trade_push_reuses_reconciliation_and_event_center(self):
+        reconciliation_condition = (
+            "github.event_name == 'workflow_run' || (github.event_name == 'push' && "
+            "(steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.trade == 'true'))"
+        )
+        event_condition_fragment = (
+            "steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || "
+            "steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true'"
+        )
+        self.assertIn(reconciliation_condition, self.text)
+        self.assertIn(event_condition_fragment, self.text)
+        self.assertEqual(self.text.count("python scripts/build_execution_reconciliation.py"), 1)
+        self.assertEqual(self.text.count("python scripts/run_guarded_notification.py center --mode event"), 1)
+
     def test_existing_route_commands_remain_present_once(self):
         commands = [
             "python scripts/build_execution_reconciliation.py",
-            "python scripts/run_guarded_notification.py regional --market a-share",
-            "python scripts/run_guarded_notification.py shock --market a-share",
+            "python scripts/run_guarded_notification.py batch --market a-share",
+            "python scripts/run_guarded_notification.py batch --market apac",
+            "python scripts/run_guarded_notification.py batch --market us",
             "python scripts/run_guarded_notification.py center --mode channel-test",
             "python scripts/run_guarded_notification.py center --mode event",
             "python scripts/run_guarded_notification.py center --mode close",
