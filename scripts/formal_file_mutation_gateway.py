@@ -247,18 +247,18 @@ def upsert_managed_line(text: str, start: str, end: str, key: str, line: str, *,
 def write_formal_text_if_changed(root: Path, filename: str, new_text: str) -> bool:
     path = resolve_formal_fact_path(root, filename)
     raw = path.read_bytes()
-    newline = b"\r\n" if b"\r\n" in raw else b"\n"
-    prior = raw.decode("utf-8").replace("\r\n", "\n")
+    newline = b"\\r\\n" if b"\\r\\n" in raw else b"\\n"
+    prior = raw.decode("utf-8").replace("\\r\\n", "\\n")
     candidate = normalize_human_readable_projection(
         root,
         filename,
-        new_text.replace("\r\n", "\n"),
+        new_text.replace("\\r\\n", "\\n"),
     )
     if prior == candidate:
         return False
     updated = _sync_last_fact_update_metadata(candidate)
     tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_bytes(updated.replace("\n", "\r\n" if newline == b"\r\n" else "\n").encode("utf-8"))
+    tmp.write_bytes(updated.replace("\\n", "\\r\\n" if newline == b"\\r\\n" else "\\n").encode("utf-8"))
     tmp.replace(path)
     return True
 
