@@ -25,13 +25,15 @@ on:
   push:
     paths:
       - "events/decisions/*.json"
+      - "events/trades/*.json"
       - "requests/notification_test/*.json"
       - "requests/report_delivery/*.json"
-      # Canonical market-state publication is an independent notification wake.
-      # This preserves one notification engine while avoiding a hard dependency
-      # on workflow_run creation after a producer was itself recovered from a
-      # missed Actions wake. Existing evidence/materiality/dedupe guards absorb
-      # duplicate push + workflow_run wake opportunities for the same fact.
+      # Canonical account and market publication are independent notification wakes.
+      # Keep execution_reconciliation.json out of push paths because this workflow
+      # builds and persists that derived state itself; listening to it would create
+      # a self-wake loop. Existing evidence/materiality/dedupe guards absorb
+      # duplicate wake opportunities for the same canonical fact.
+      - "data/state/account_fact.json"
       - "data/state/CURRENT.json"
       - "data/state/overseas_context.json"
       - "data/state/us_extended_hours_context.json"
@@ -93,6 +95,16 @@ jobs:
           else
             echo "decision=false" >> "$GITHUB_OUTPUT"
           fi
+          if grep -Eq '^events/trades/[^/]+\.json$' /tmp/changed_files.txt; then
+            echo "trade=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "trade=false" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -Fxq 'data/state/account_fact.json' /tmp/changed_files.txt; then
+            echo "account=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "account=false" >> "$GITHUB_OUTPUT"
+          fi
           if grep -Eq '^requests/notification_test/[^/]+\.json$' /tmp/changed_files.txt; then
             echo "test=true" >> "$GITHUB_OUTPUT"
           else
@@ -144,8 +156,8 @@ jobs:
           test "$(find requests/report_delivery -maxdepth 1 -type f -name '*.json' | wc -l)" -eq 1
           test -f "$REPORT_PATH"
 
-      - name: Build delayed execution reconciliation
-        if: ${{ github.event_name == 'workflow_run' }}
+      - name: Build execution reconciliation when account or trade facts change
+        if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && (steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.trade == 'true')) }}
         run: python scripts/build_execution_reconciliation.py
 
       - name: Send A-share opening value signal or close summary when due
@@ -202,7 +214,7 @@ jobs:
       # notification center can reach PushPlus.
       - name: Send material user-action notification
         id: event_notify
-        if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.report == 'true')) }}
+        if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.trade == 'true')) }}
         continue-on-error: true
         env:
           # Bind the single report selected from the triggering push.
