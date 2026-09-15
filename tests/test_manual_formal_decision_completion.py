@@ -55,6 +55,13 @@ class ManualCompletionEnvelopeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             completion.build_completion_request({**SOURCE_REQUEST, "source": "SCHEDULED_ACTOR"}, formal_decision(), SNAPSHOT_PATH)
 
+    def test_completion_identity_must_be_distinct_from_parent(self):
+        with self.assertRaises(ValueError):
+            completion.build_completion_request(
+                SOURCE_REQUEST, formal_decision(), SNAPSHOT_PATH,
+                completion_request_id=SOURCE_REQUEST["request_id"],
+            )
+
 
 class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
     def setUp(self):
@@ -137,6 +144,24 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         self.mocks["select_point_in_time_snapshot"].return_value = ("", {}, "NO_PRIOR_SNAPSHOT")
         with self.assertRaises(ValueError):
             state_sync.record_formal_decision(self.request("illegal_pit_envelope"))
+        self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
+
+    def test_retry_with_changed_pit_linkage_fails_closed_without_second_event(self):
+        request = self.request("first_valid_envelope")
+        self.assertTrue(state_sync.record_formal_decision(request)[0])
+        self.mocks["select_point_in_time_snapshot"].return_value = (
+            "data/market/snapshots/2026-09-15_145000.json",
+            self.snapshot,
+            "CONSUMED_SNAPSHOT_VALIDATED",
+        )
+        with self.assertRaisesRegex(ValueError, "changed its PIT/source snapshot linkage"):
+            state_sync.record_formal_decision(self.request("changed_snapshot_retry"))
+        self.assertEqual(len(list((self.root / "events/decisions").glob("*.json"))), 1)
+
+    def test_envelope_identity_must_be_distinct_from_parent_in_canonical_writer(self):
+        request = self.request(SOURCE_REQUEST["request_id"])
+        with self.assertRaisesRegex(ValueError, "distinct envelope and parent"):
+            state_sync.record_formal_decision(request)
         self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
 
     def test_missing_parent_identity_fails_closed_without_event(self):
