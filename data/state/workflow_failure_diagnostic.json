@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-15T19:33:54+08:00",
+  "generated_at": "2026-09-15T19:37:10+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 34963896508,
+  "run_id": 34964190340,
   "run_attempt": 1,
-  "head_sha": "8725b27a934dc03c2fae2e746cdba360315e0107",
-  "main_head_sha": "5aa8c71fba5f01fba59cc25c625778796fadce6b",
+  "head_sha": "b9ab781eecd4b3f5d5cfc97c8012f2b3e2e31ab7",
+  "main_head_sha": "b9ab781eecd4b3f5d5cfc97c8012f2b3e2e31ab7",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,15 +16,18 @@
     }
   ],
   "changed_files": [
-    "requests/report_delivery/etf-system-review-20260915T193000+0800.json"
+    ".github/workflows/system-consistency.yml",
+    "scripts/manual_formal_decision_completion.py",
+    "scripts/process_state_sync_request.py",
+    "tests/test_manual_formal_decision_completion.py"
   ],
-  "commit_message": "report: submit ETF system review 2026-09-15 19:30",
+  "commit_message": "fix: canonicalize manual formal decision identity",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": false,
+    "head_is_current_main": true,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
