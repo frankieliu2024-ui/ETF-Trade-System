@@ -440,7 +440,7 @@ jobs:
           git config user.email "41898282+users.noreply.github.com"
           cp "$replay" data/state/etf_strategy_equity.json
           python scripts/sync_formal_files.py
-          git add data/state/etf_strategy_equity.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md data/state/CURRENT.json
+          git add data/state/etf_strategy_equity.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
           if git diff --cached --quiet; then
             exit 0
           fi
@@ -530,4 +530,3 @@ jobs:
       - name: Enforce production acceptance
         if: ${{ always() && steps.acceptance_scope.outputs.required == 'true' && steps.acceptance.outcome == 'failure' }}
         run: exit 1
-
