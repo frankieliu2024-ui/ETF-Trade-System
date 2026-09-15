@@ -20,7 +20,16 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         (self.root / "data/state").mkdir(parents=True)
         (self.root / "ETF市场行情档案_2026.md").write_text("## 6. 历史Excel与专项数据来源\n<!-- AUTO_POST_CLOSE_REVIEW_FACTS_START -->\n<!-- AUTO_POST_CLOSE_REVIEW_FACTS_END -->\n", encoding="utf-8")
         (self.root / "ETF交易复盘与经验库_2026.md").write_text("## 3. 历史研究与专项回测\n<!-- AUTO_CASE_DETAILS_START -->\n<!-- AUTO_CASE_DETAILS_END -->\n<!-- AUTO_POST_CLOSE_REVIEW_CASES_START -->\n<!-- AUTO_POST_CLOSE_REVIEW_CASES_END -->\n", encoding="utf-8")
-        (self.root / "data/state/CURRENT.json").write_text("{}\n", encoding="utf-8")
+        (self.root / "data/market/snapshots").mkdir(parents=True)
+        close_snapshot = "data/market/snapshots/2026-08-31_150110.json"
+        snapshot_rows = [{"quality_status": "PASS", "open": 1, "high": 1, "low": 1, "close": 1, "volume": 1, "amount": 1}]
+        (self.root / close_snapshot).write_text(json.dumps({
+            "market_date": "2026-08-31", "node": "1500", "planned_time": "15:00",
+            "quality_status": "PASS", "rows": snapshot_rows,
+        }), encoding="utf-8")
+        (self.root / "data/state/CURRENT.json").write_text(json.dumps({
+            "market_date": "2026-08-31", "latest_valid_node": "1500", "latest_snapshot": close_snapshot,
+        }) + "\n", encoding="utf-8")
         self.old = (sync.ROOT, sync.ARCHIVE, sync.EXPERIENCE, sync.ACCOUNT)
         sync.ROOT = self.root; sync.ARCHIVE = self.root / "ETF市场行情档案_2026.md"; sync.EXPERIENCE = self.root / "ETF交易复盘与经验库_2026.md"; sync.ACCOUNT = self.root / "data/state/account_fact.json"
 
@@ -92,6 +101,49 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         sync.record_post_close_review(account, self.request("2026-08-31T15:20:00+08:00"))
         event = json.loads((self.root / "events/reviews/2026-08-31.json").read_text(encoding="utf-8"))
         self.assertEqual(event["reviewed_at_beijing"], "2026-08-31T15:30:00+08:00")
+
+    def test_midday_stage_does_not_consume_same_day_full_day_review_slot(self):
+        account = {"status": "VALID", "updated_at": "2026-08-31T12:00:00+08:00"}
+        stage = self.request("2026-08-31T12:30:00+08:00")
+        stage["market_phase"] = "MIDDAY_BREAK"
+        stage["formal_review"]["review_scope"] = "MORNING_SESSION_STAGE_ONLY"
+        stage["formal_review"]["market_phase"] = "MIDDAY_BREAK"
+        stage["formal_review"]["data_time"]["close_snapshot"] = "data/market/snapshots/2026-08-31_113000.json"
+        self.assertEqual(sync.record_post_close_review(account, stage), (False, False))
+        self.assertFalse((self.root / "events/reviews/2026-08-31.json").exists())
+        self.assertFalse((self.root / "data/state/close_review_closure_2026-08-31.json").exists())
+
+        full_day = self.request("2026-08-31T20:30:00+08:00")
+        full_day["formal_review"]["review_scope"] = "FULL_DAY"
+        self.assertEqual(sync.record_post_close_review(account, full_day), (True, False))
+        self.assertEqual(sync.record_post_close_review(account, full_day), (True, True))
+        event = json.loads((self.root / "events/reviews/2026-08-31.json").read_text(encoding="utf-8"))
+        closure = json.loads((self.root / "data/state/close_review_closure_2026-08-31.json").read_text(encoding="utf-8"))
+        self.assertEqual(event["event_type"], "FORMAL_POST_CLOSE_REVIEW")
+        self.assertEqual(event["review"]["data_time"]["close_snapshot"], "data/market/snapshots/2026-08-31_150110.json")
+        self.assertEqual(closure["status"], "CLOSED")
+
+    def test_midday_or_noncanonical_close_snapshot_fails_closed(self):
+        account = {"status": "VALID", "updated_at": "2026-08-31T12:00:00+08:00"}
+        bad_snapshot = "data/market/snapshots/2026-08-31_113000.json"
+        (self.root / bad_snapshot).write_text(json.dumps({
+            "market_date": "2026-08-31", "node": "live", "planned_time": "11:30",
+            "quality_status": "PASS", "rows": [{"quality_status": "PASS", "open": 1, "high": 1, "low": 1, "close": 1, "volume": 1, "amount": 1}],
+        }), encoding="utf-8")
+        current = {"market_date": "2026-08-31", "latest_valid_node": "live", "latest_snapshot": bad_snapshot}
+        (self.root / "data/state/CURRENT.json").write_text(json.dumps(current), encoding="utf-8")
+        request = self.request("2026-08-31T20:30:00+08:00")
+        request["formal_review"]["data_time"]["close_snapshot"] = bad_snapshot
+        self.assertEqual(sync.record_post_close_review(account, request), (False, False))
+        self.assertFalse((self.root / "events/reviews/2026-08-31.json").exists())
+        self.assertFalse((self.root / "data/state/close_review_closure_2026-08-31.json").exists())
+
+        current.update({"latest_valid_node": "1500", "latest_snapshot": "data/market/snapshots/2026-08-31_150110.json"})
+        (self.root / "data/state/CURRENT.json").write_text(json.dumps(current), encoding="utf-8")
+        request = self.request("2026-08-31T20:30:00+08:00")
+        request["formal_review"]["data_time"]["close_snapshot"] = bad_snapshot
+        self.assertEqual(sync.record_post_close_review(account, request), (False, False))
+        self.assertFalse((self.root / "events/reviews/2026-08-31.json").exists())
 
     def test_e2e_blocks_missing_canonical_review(self):
         event = self.root / "post_market_review/post_market_review_event.json"

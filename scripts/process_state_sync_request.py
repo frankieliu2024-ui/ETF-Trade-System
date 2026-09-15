@@ -31,6 +31,10 @@ try:
 except ModuleNotFoundError:
     from scripts.lifecycle_state import build_lifecycle_projection
 try:
+    from build_post_market_review import build_close_data_contract
+except ModuleNotFoundError:
+    from scripts.build_post_market_review import build_close_data_contract
+try:
     from review_prerequisite_lifecycle import (
         build_unrecoverable_review_event,
         terminal_experience_line,
@@ -1146,6 +1150,28 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     review = request.get("formal_review")
     if request.get("interaction_scenario") != "POST_CLOSE_REVIEW" or not review:
         return False, False
+    review_scope = str(review.get("review_scope") or "").strip().upper()
+    request_phase = str(request.get("market_phase") or request.get("session_stage") or "").strip().upper()
+    review_phase = str(review.get("market_phase") or review.get("session_stage") or "").strip().upper()
+    if review_scope == "MORNING_SESSION_STAGE_ONLY" or "MIDDAY_BREAK" in {request_phase, review_phase}:
+        return False, False
+    market_date = str(review.get("market_date") or request.get("market_date") or account.get("last_confirmed_market_date") or "")
+    if not market_date:
+        raise RuntimeError("POST_CLOSE_REVIEW requires market_date")
+    current_path = ROOT / "data" / "state" / "CURRENT.json"
+    current = load_json(current_path) if current_path.exists() else {}
+    close_contract = build_close_data_contract(ROOT, current)
+    data_time = review.get("data_time") if isinstance(review.get("data_time"), dict) else {}
+    supplied_close_snapshot = str(data_time.get("close_snapshot") or review.get("close_snapshot") or "").strip()
+    canonical_close_snapshot = str(close_contract.get("latest_snapshot") or "").strip()
+    if (
+        close_contract.get("status") != "VERIFIED_SESSION_CLOSE"
+        or close_contract.get("verified_session_close") is not True
+        or close_contract.get("market_date") != market_date
+        or not canonical_close_snapshot
+        or supplied_close_snapshot != canonical_close_snapshot
+    ):
+        return False, False
     lifecycle_error = validate_current_lifecycle_contract(review.get("lifecycle"), account)
     if lifecycle_error:
         raise ValueError(f"invalid formal review lifecycle contract: {lifecycle_error}")
@@ -1154,9 +1180,6 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     if managed_error:
         raise ValueError(f"invalid formal review managed-position contract: {managed_error}")
     managed_projection = build_managed_position_projection(ROOT, account)
-    market_date = str(review.get("market_date") or request.get("market_date") or account.get("last_confirmed_market_date") or "")
-    if not market_date:
-        raise RuntimeError("POST_CLOSE_REVIEW requires market_date")
     review = _normalize_executed_trade_case_mapping(review, market_date)
     payload = {"market_date": market_date, "account_updated_at": account.get("updated_at"), "formal_review": review}
     fingerprint = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
