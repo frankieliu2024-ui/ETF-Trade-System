@@ -43,6 +43,35 @@ def validate_report_delivery_request(request: dict) -> tuple[bool, str]:
     if str(request.get("content_hash")) != expected_hash: return False, "content_hash_mismatch"
     return True, ""
 
+def build_report_delivery_request(*, task_id: str, task_run_id: str, report_id: str,
+                                  effective_market_date: str, title: str, summary: str,
+                                  full_content: str, source_reference: str,
+                                  idempotency_key: str, generated_at: str,
+                                  source_actor: str = "ChatGPT") -> dict:
+    """Build the existing REPORT contract at its canonical delivery owner.
+
+    This is schema construction only: it does not send, persist, or infer review
+    facts. Producers must provide the task/run identity and frozen report body.
+    """
+    body = str(full_content)
+    request = {
+        "schema_version": "1.0", "channel": "REPORT",
+        "report_type": "ETF_TRADE_REVIEW", "report_id": str(report_id),
+        "task_id": str(task_id), "task_run_id": str(task_run_id),
+        "generated_at": str(generated_at),
+        "effective_market_date": str(effective_market_date),
+        "source_actor": str(source_actor), "source_reference": str(source_reference),
+        "title": str(title), "summary": str(summary), "full_content": body,
+        "content_hash": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+        "idempotency_key": str(idempotency_key),
+        "delivery_mode": "FULL_REPORT", "no_trade_authority": True,
+    }
+    valid, reason = validate_report_delivery_request(request)
+    if not valid:
+        raise ValueError("invalid canonical REPORT request: " + reason)
+    return request
+
+
 def _report_delivery_path() -> Path | None:
     raw_path = os.environ.get("REPORT_DELIVERY_PATH", "").strip()
     if not raw_path:
