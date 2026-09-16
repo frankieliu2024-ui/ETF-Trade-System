@@ -1,0 +1,23 @@
+name: Historical canonical backfill (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      manifest_path:
+        description: Repository-relative HISTORICAL_BACKFILL manifest
+        required: true
+        type: string
+      request_id:
+        description: Exact manifest request identity
+        required: true
+        type: string
+permissions:
+  contents: write
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Run fail-closed canonical replay twice
+        run: python scripts/run_historical_backfill.py --manifest "${{ inputs.manifest_path }}" --request-id "${{ inputs.request_id }}"
