@@ -1,33 +1,33 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-16T13:55:14+08:00",
+  "generated_at": "2026-09-16T13:56:12+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 35061398239,
-  "run_attempt": 2,
-  "head_sha": "93d2272ebce1877400772ee63188ab8d8fc95b4d",
-  "main_head_sha": "4aee1a90dde79439c670e09441f00b91f27b13fb",
+  "run_id": 35061454784,
+  "run_attempt": 1,
+  "head_sha": "4aee1a90dde79439c670e09441f00b91f27b13fb",
+  "main_head_sha": "2948b93952a76aa3823dbf020e60709a89d289cd",
   "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
       "job": "watchdog",
-      "step": "Persist bounded self-healing state and deterministic repairs",
-      "number": 13
+      "step": "Escalate persistent or structural failure",
+      "number": 14
     }
   ],
   "changed_files": [
-    "requests/historical_backfill/manifest_20260916_623.json"
+    "data/state/notification_center.json"
   ],
-  "commit_message": "data: order #623 replay manifest deterministically",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "commit_message": "state: record notification and execution reconciliation",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
