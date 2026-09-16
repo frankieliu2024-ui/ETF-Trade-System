@@ -4,7 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from scripts import process_state_sync_request as sync
 from scripts import run_historical_backfill as runner
@@ -102,7 +102,7 @@ class HistoricalBackfillIngressTests(unittest.TestCase):
             self.assertEqual(result["account_sync_status"], "NOT_APPLICABLE")
 
     def test_runner_rejects_not_applicable_even_with_zero_exit(self):
-        completed = unittest.mock.Mock(returncode=0, stdout=json.dumps({
+        completed = Mock(returncode=0, stdout=json.dumps({
             "canonical_ingress_state": "CANONICAL_INGRESS_NOT_APPLICABLE",
             "canonical_ingress_failure_reason": "not_a_formal_fact_ingress_request",
         }), stderr="")
