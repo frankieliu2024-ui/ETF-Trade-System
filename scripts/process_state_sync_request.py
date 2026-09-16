@@ -2110,6 +2110,83 @@ def merge_account_fact(prior: dict, supplied: dict) -> dict:
     return merged
 
 
+def process_historical_backfill_request(request: dict) -> dict:
+    """Persist confirmed historical trade facts without touching current account state."""
+    if str(request.get("ingress_mode") or "").upper() != "HISTORICAL_BACKFILL":
+        raise ValueError("historical backfill mode is required")
+    trades = request.get("historical_trades")
+    if not isinstance(trades, list) or not trades:
+        raise ValueError("historical_trades must be a non-empty list")
+    trade_dir = ROOT / "events" / "trades"
+    trade_dir.mkdir(parents=True, exist_ok=True)
+    created = enriched = 0
+    for raw in trades:
+        if not isinstance(raw, dict):
+            raise ValueError("historical trade must be an object")
+        code, side = str(raw.get("code") or "").strip(), str(raw.get("side") or "").upper()
+        quantity, price = safe_float(raw.get("quantity")), safe_float(raw.get("price"))
+        executed_at = str(raw.get("executed_at") or raw.get("executed_at_beijing") or "").strip()
+        confirmed_at = str(raw.get("confirmed_at_beijing") or "").strip()
+        market_date = str(raw.get("market_date") or executed_at[:10]).strip()
+        if not code or side not in {"BUY", "SELL"} or quantity is None or price is None or not executed_at or not confirmed_at or not market_date:
+            raise ValueError("historical trade core fields are incomplete")
+        event_id = str(raw.get("event_id") or f"HISTORICAL_{market_date}_{code}_{side}_{format(quantity, '.12g')}_{format(price, '.12g')}")
+        key = str(raw.get("idempotency_key") or f"HISTORICAL_BACKFILL|{code}|{side}|{format(quantity, '.12g')}|{format(price, '.12g')}|{executed_at}")
+        path = trade_dir / f"{event_id}.json"
+        existing = load_json(path) if path.exists() else None
+        if existing:
+            for field, expected in {"code": code, "side": side, "quantity": quantity, "price": price, "executed_at": executed_at}.items():
+                if str(existing.get(field)) != str(expected):
+                    raise ValueError(f"historical core mismatch: {event_id}:{field}")
+            changed = False
+            for field, value in {"confirmed_at_beijing": confirmed_at, "market_date": market_date, "account_updated_at": raw.get("account_updated_at"), "source": raw.get("source"), "historical_backfill": True}.items():
+                if value not in (None, "") and existing.get(field) != value:
+                    existing[field] = value
+                    changed = True
+            if changed:
+                atomic_json_write(path, existing)
+                enriched += 1
+            continue
+        event = {
+            "event_id": event_id, "idempotency_key": key, "event_type": "HISTORICAL_BACKFILL_TRADE",
+            "historical_backfill": True, "code": code, "side": side, "quantity": quantity, "price": price,
+            "executed_at": executed_at, "executed_at_beijing": executed_at,
+            "confirmed_at_beijing": confirmed_at, "market_date": market_date,
+            "account_updated_at": raw.get("account_updated_at"), "amount": raw.get("amount"),
+            "fee": raw.get("fee"), "fee_status": raw.get("fee_status"), "name": raw.get("name"),
+            "source": raw.get("source") or "USER_CONFIRMED_HISTORICAL_SCREENSHOT",
+            "source_confidence": raw.get("source_confidence") or "USER_CONFIRMED",
+            "execution_status": "EXECUTED", "replay_semantics": "FACT_ENRICHMENT_ONLY",
+        }
+        atomic_json_write(path, event)
+        created += 1
+    acquisition = request.get("acquisition")
+    if acquisition:
+        if not isinstance(acquisition, dict) or str(acquisition.get("code")) != "301689":
+            raise ValueError("invalid acquisition contract")
+        aid = str(acquisition.get("event_id") or "HISTORICAL_ACQUISITION_20260901_301689_500")
+        apath = trade_dir / f"{aid}.json"
+        if not apath.exists():
+            atomic_json_write(apath, {
+                "event_id": aid, "event_type": "IPO_ALLOTMENT_ACQUISITION",
+                "historical_backfill": True, "asset_type": "STOCK", "code": "301689",
+                "quantity": 500, "price": 16.0, "market_date": "2026-09-01",
+                "executed_at": acquisition.get("executed_at") or "2026-09-01T00:00:00+08:00",
+                "confirmed_at_beijing": acquisition.get("confirmed_at_beijing"),
+                "lot_source": "confirmed_settlement_obligation",
+                "source": acquisition.get("source") or "USER_CONFIRMED_HISTORICAL_SCREENSHOT",
+                "execution_status": "ACQUIRED",
+            })
+            created += 1
+        for path in trade_dir.glob("*301689*SELL*500*.json"):
+            event = load_json(path)
+            if event.get("lot_source_event_id") != aid:
+                event["lot_source_event_id"] = aid
+                event["lot_source_relation"] = "ACQUISITION_TO_SELL"
+                atomic_json_write(path, event)
+                enriched += 1
+    return {"ok": True, "ingress_mode": "HISTORICAL_BACKFILL", "created": created, "metadata_enriched": enriched, "current_account_mutated": False, "current_state_mutated": False}
+
 def account_fact_is_older(prior: dict, supplied: dict) -> bool:
     old_time = parse_time(prior.get("updated_at"))
     new_time = parse_time(supplied.get("updated_at"))
