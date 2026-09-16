@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from sync_formal_files import normalize_dashboard_projection, latest_canonical_formal_decision, format_position_pnl
+from sync_formal_files import normalize_dashboard_projection, latest_canonical_formal_decision, format_position_pnl, build_dashboard_block
 from process_state_sync_request import latest_formal_review_decision
 
 
@@ -67,8 +67,8 @@ class DashboardProjectionTests(unittest.TestCase):
             path.mkdir(parents=True)
             (path / "formal.json").write_text(json.dumps({
                 "event_type": "FORMAL_DECISION",
+                "decision_time_beijing": "2026-09-14T11:20:00+08:00",
                 "formal_decision": {
-                    "decision_time": "2026-09-14T11:20:00+08:00",
                     "risk_permission": "禁止新增",
                     "main_candidate": "现金｜无机会",
                     "data_as_of_beijing": "2026-09-14T11:20:00+08:00",
@@ -80,6 +80,16 @@ class DashboardProjectionTests(unittest.TestCase):
         self.assertIn("-10.00元", format_position_pnl({"pnl": -10, "pnl_pct": -2}))
         self.assertIn("估算", format_position_pnl({"market_value": 90, "cost": 1, "quantity": 100}))
         self.assertEqual(format_position_pnl({"market_value": 90}), "—")
+
+    def test_dashboard_builder_renders_selector_dict_as_markdown(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "config/market").mkdir(parents=True)
+            (root / "config/market/etf_monitor_universe.json").write_text(json.dumps({"objects": []}), encoding="utf-8")
+            account = {"positions": [], "total_asset": 1, "stock_market_value": 0}
+            result = build_dashboard_block(account, {"risk_permission": "禁止新增"}, "", root)
+            self.assertIn("### 最近一次正式盘中决策", result)
+            self.assertNotIn("{'risk_permission'", result)
 
     def test_trade_correction_writer_has_no_dashboard_destination(self):
         source = (ROOT / "scripts/apply_trade_fact_correction.py").read_text(encoding="utf-8")
