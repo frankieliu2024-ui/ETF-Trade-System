@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse, copy, hashlib, json, re, subprocess, sys
 from pathlib import Path
 
+from state_manager import atomic_json_write
+
 ROOT = Path(__file__).resolve().parents[1]
 
 def load(path):
