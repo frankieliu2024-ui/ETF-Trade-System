@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from scripts import process_state_sync_request as sync
+from scripts import run_historical_backfill as runner
 
 
 class HistoricalBackfillIngressTests(unittest.TestCase):
@@ -50,6 +51,37 @@ class HistoricalBackfillIngressTests(unittest.TestCase):
             self.assertEqual(trade["executed_at"], "2026-09-02T14:17:53+08:00")
             self.assertEqual(trade["confirmation_time_semantics"], "CANONICAL_ADOPTION_TIME")
             self.assertNotEqual(trade["executed_at"], trade["confirmed_at_beijing"])
+
+    def _runner_manifest(self, count=37, acquisition=True):
+        return {
+            "ingress_mode": "HISTORICAL_BACKFILL",
+            "request_id": "req-623",
+            "historical_trades": [
+                {"event_id": f"ordinary-{i}", "code": "159326", "side": "BUY",
+                 "quantity": 1, "price": 1.0, "executed_at": "2026-09-01T10:00:00+08:00"}
+                for i in range(count)
+            ],
+            **({"acquisition": {"code": "301689"}} if acquisition else {}),
+        }
+
+    def test_runner_accepts_37_ordinary_plus_one_acquisition(self):
+        trades, acquisition = runner.validate_manifest(self._runner_manifest())
+        self.assertEqual(len(trades), 37)
+        self.assertEqual(acquisition["code"], "301689")
+
+    def test_runner_rejects_38_ordinary_plus_one_acquisition(self):
+        with self.assertRaises(ValueError):
+            runner.validate_manifest(self._runner_manifest(count=38))
+
+    def test_runner_rejects_37_without_acquisition(self):
+        with self.assertRaises(ValueError):
+            runner.validate_manifest(self._runner_manifest(acquisition=False))
+
+    def test_runner_rejects_acquisition_inside_ordinary_trades(self):
+        manifest = self._runner_manifest()
+        manifest["historical_trades"][0]["event_type"] = "IPO_ALLOTMENT_ACQUISITION"
+        with self.assertRaises(ValueError):
+            runner.validate_manifest(manifest)
 
     def test_reliable_historical_confirmation_is_preserved(self):
         with tempfile.TemporaryDirectory() as td:
