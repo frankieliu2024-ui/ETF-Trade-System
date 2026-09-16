@@ -1,27 +1,24 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-16T10:06:53+08:00",
+  "generated_at": "2026-09-16T10:21:45+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 35046653653,
+  "run_id": 35047620285,
   "run_attempt": 1,
-  "head_sha": "f2efab9c43734ad0951734e1cff76e5a8bb5ddee",
-  "main_head_sha": "e25881d5a06e07fddb14428d680f5ca5094a666e",
+  "head_sha": "10920eef606c35c2886f5ae914512477a77491c0",
+  "main_head_sha": "1c5aa2cd5dab9249e3a6cbdea61fa518265f938a",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "consistency",
-      "step": "Validate semantic latest-main freshness",
-      "number": 5
+      "step": "Enforce hard consistency result",
+      "number": 9
     }
   ],
   "changed_files": [
-    "\"ETF\\344\\272\\244\\346\\230\\223\\345\\244\\215\\347\\233\\230\\344\\270\\216\\347\\273\\217\\351\\252\\214\\345\\272\\223_2026.md\"",
-    "scripts/process_state_sync_request.py",
-    "tests/test_dashboard_projection.py",
-    "tests/test_post_close_review_canonical.py"
+    "requests/live_snapshot/manual-intraday-20260916T1020.json"
   ],
-  "commit_message": "fix: project later CASE lifecycle updates canonically",
+  "commit_message": "request intraday snapshot for 10:20 formal analysis",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
