@@ -213,6 +213,52 @@ class HistoricalBackfillIngressTests(unittest.TestCase):
             self.assertTrue(result["ok"])
             self.assertEqual(result["created"], 0)
 
+    def test_missing_execution_time_is_enriched_not_core_conflict(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            d = root / "events/trades"
+            d.mkdir(parents=True)
+            (d / "e.json").write_text(json.dumps({
+                "event_id": "e", "code": "159326", "side": "BUY",
+                "quantity": 1, "price": 1.0,
+            }), encoding="utf-8")
+            req = {"request_id": "req-623-enrich", "ingress_mode": "HISTORICAL_BACKFILL",
+                   "historical_fact_adopted_at": "2026-09-16T13:00:00+08:00",
+                   "historical_trades": [{
+                       "event_id": "e", "code": "159326", "side": "BUY",
+                       "quantity": 1, "price": 1.0,
+                       "executed_at": "2026-09-01T10:00:00+08:00",
+                       "market_date": "2026-09-01", "gross_amount": 1.0,
+                       "fee_amount": 0.01, "fee_status": "CONFIRMED",
+                   }]}
+            with patch.object(sync, "ROOT", root):
+                result = sync.process_historical_backfill_request(req)
+            self.assertEqual(result["created"], 0)
+            got = json.loads((d / "e.json").read_text())
+            self.assertEqual(got["executed_at"], "2026-09-01T10:00:00+08:00")
+            self.assertEqual(got["market_date"], "2026-09-01")
+            self.assertEqual(got["fee_amount"], 0.01)
+
+    def test_conflicting_execution_time_fails_closed(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            d = root / "events/trades"
+            d.mkdir(parents=True)
+            (d / "e.json").write_text(json.dumps({
+                "event_id": "e", "code": "159326", "side": "BUY",
+                "quantity": 1, "price": 1.0,
+                "executed_at": "2026-09-01T10:01:00+08:00",
+            }), encoding="utf-8")
+            req = {"request_id": "req-623-time-conflict", "ingress_mode": "HISTORICAL_BACKFILL",
+                   "historical_trades": [{
+                       "event_id": "e", "code": "159326", "side": "BUY",
+                       "quantity": 1, "price": 1.0,
+                       "executed_at": "2026-09-01T10:00:00+08:00",
+                   }]}
+            with patch.object(sync, "ROOT", root):
+                with self.assertRaises(ValueError):
+                    sync.process_historical_backfill_request(req)
+
     def test_core_mismatch_fails_closed(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
