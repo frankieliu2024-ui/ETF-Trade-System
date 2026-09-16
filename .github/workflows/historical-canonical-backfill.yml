@@ -21,3 +21,23 @@ jobs:
           ref: main
       - name: Run fail-closed canonical replay twice
         run: python scripts/run_historical_backfill.py --manifest "${{ inputs.manifest_path }}" --request-id "${{ inputs.request_id }}"
+      - name: Persist canonical historical trade mutations
+        env:
+          REQUEST_ID: ${{ inputs.request_id }}
+        run: |
+          set -euo pipefail
+          unexpected="$(git status --short --untracked-files=all | awk '$2 !~ /^events\/trades\// {print}')"
+          if [ -n "$unexpected" ]; then
+            echo "unexpected mutation outside events/trades:"
+            echo "$unexpected"
+            exit 1
+          fi
+          git add -- events/trades
+          if git diff --cached --quiet; then
+            echo "No new canonical trade mutations to persist."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "data: persist historical canonical backfill ${REQUEST_ID}"
+          git push origin HEAD:main
