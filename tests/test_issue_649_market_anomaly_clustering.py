@@ -115,7 +115,7 @@ class Issue649MarketAnomalyClusteringTests(unittest.TestCase):
     def test_opportunity_invalidation_and_holding_action_are_not_clustered(self):
         for kind in ("机会失效", "持仓动作", "风险许可"):
             event = self.event(event_type=kind)
-            self.assertEqual(producer._structure_cluster_id(event), "A_SHARE_TECH_GROWTH_EPISODE")
+            self.assertEqual(producer._structure_cluster_id(event), "")
 
     def test_trade_account_system_recovery_paths_are_not_rewritten(self):
         for kind in ("PENDING_EXECUTION_CONFIRMATION", "ACCOUNT_FACT_CONFIRMATION", "SYSTEM_RUNTIME_BLOCKER"):
