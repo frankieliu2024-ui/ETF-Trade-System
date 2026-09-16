@@ -36,7 +36,7 @@ jobs:
           REQUEST_ID: ${{ inputs.request_id }}
         run: |
           set -euo pipefail
-          unexpected="$(git status --short --untracked-files=all | awk '$2 !~ /^(events\/trades\/|ETF市场行情档案_2026\.md|ETF交易复盘与经验库_2026\.md|data\/state\/execution_quality\.json$)/ {print}')"
+          unexpected="$( { git diff --name-only; git ls-files --others --exclude-standard; } | awk '!/^(events\/trades\/|ETF市场行情档案_2026\.md$|ETF交易复盘与经验库_2026\.md$|data\/state\/execution_quality\.json$)/ {print}' )"
           if [ -n "$unexpected" ]; then
             echo "unexpected mutation outside events/trades:"
             echo "$unexpected"
