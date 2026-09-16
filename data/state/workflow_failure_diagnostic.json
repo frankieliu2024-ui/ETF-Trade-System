@@ -1,24 +1,24 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-16T20:40:32+08:00",
+  "generated_at": "2026-09-17T05:09:43+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 35096984820,
-  "run_attempt": 2,
-  "head_sha": "695a1bb5908d16d0024e44d4a8a21ec2fea886c6",
-  "main_head_sha": "867f523016086c0aff38a59736048cb3234ec7df",
-  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
+  "run_id": 35150742722,
+  "run_attempt": 1,
+  "head_sha": "e0d6f9c2880e8b3d038b7f6151cb22d3e2f00cef",
+  "main_head_sha": "ebfcca7da486e1353aa34fa64e9dcb48692fff38",
+  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "production_acceptance",
-      "step": "Persist accepted canonical ETF equity replay",
-      "number": 4
+      "job": "consistency",
+      "step": "PR candidate post-replay acceptance",
+      "number": 7
     }
   ],
   "changed_files": [
-    "requests/report_delivery/etf-trade-review-2026-09-16-full-20260916T203000+0800.json"
+    "tests/test_market_notification_materiality_guard.py"
   ],
-  "commit_message": "report: submit 2026-09-16 full-day ETF trade review",
+  "commit_message": "test: run issue 649 matrix in existing CI entrypoint",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
