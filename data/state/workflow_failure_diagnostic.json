@@ -1,18 +1,18 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-16T13:48:12+08:00",
+  "generated_at": "2026-09-16T13:48:29+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 35060919536,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 35060972108,
   "run_attempt": 1,
   "head_sha": "7f00c078c58f4d8d07f5e012239625105c510ee4",
-  "main_head_sha": "7f00c078c58f4d8d07f5e012239625105c510ee4",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "main_head_sha": "53467e1174546a617b9f9587fa176bbf61838439",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 9
+      "job": "watchdog",
+      "step": "Escalate persistent or structural failure",
+      "number": 14
     }
   ],
   "changed_files": [
@@ -21,11 +21,11 @@
   ],
   "commit_message": "fix: align historical replay runner cardinality with #623 (#627)",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": true,
+    "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
