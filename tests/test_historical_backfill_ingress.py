@@ -101,6 +101,28 @@ class HistoricalBackfillIngressTests(unittest.TestCase):
             self.assertTrue(result["trade_event_recorded"])
             self.assertEqual(result["account_sync_status"], "NOT_APPLICABLE")
 
+    def test_runner_exposes_child_failure_diagnostics(self):
+        completed = Mock(returncode=7, stdout="partial output", stderr="Traceback: secret=hidden")
+        with patch.object(runner.subprocess, "run", return_value=completed):
+            with patch("sys.stderr", new_callable=io.StringIO) as err:
+                with self.assertRaises(SystemExit):
+                    runner._run_ingress(["python", "process_state_sync_request.py", "request.json"])
+        diagnostic = json.loads(err.getvalue())
+        self.assertEqual(diagnostic["historical_ingress_failure"], "SUBPROCESS_FAILED")
+        self.assertEqual(diagnostic["returncode"], 7)
+        self.assertIn("Traceback", diagnostic["stderr"])
+        self.assertNotIn("hidden", diagnostic["stderr"])
+
+    def test_runner_exposes_no_json_diagnostics(self):
+        completed = Mock(returncode=0, stdout="partial output", stderr="owner traceback")
+        with patch.object(runner.subprocess, "run", return_value=completed):
+            with patch("sys.stderr", new_callable=io.StringIO) as err:
+                with self.assertRaises(SystemExit):
+                    runner._run_ingress(["python", "process_state_sync_request.py", "request.json"])
+        diagnostic = json.loads(err.getvalue())
+        self.assertEqual(diagnostic["historical_ingress_failure"], "CANONICAL_JSON_MISSING")
+        self.assertEqual(diagnostic["stderr"], "owner traceback")
+
     def test_runner_extracts_final_json_after_prefix_logs(self):
         payload = {"canonical_ingress_state": "CANONICAL_INGRESS_SUBMITTED"}
         output = "informational log\\nrequest diagnostics\\n" + json.dumps(payload) + "\\n"
