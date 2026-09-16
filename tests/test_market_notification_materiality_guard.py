@@ -569,3 +569,15 @@ class NotificationAggregationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# The existing candidate acceptance command executes this adjacent regression
+# module. Re-export the Issue #649 focused matrix here so CI runs it without a
+# new workflow or production execution path.
+from tests.test_issue_649_market_anomaly_clustering import (  # noqa: E402
+    Issue649MarketAnomalyClusteringTests as _Issue649MarketAnomalyClusteringTests,
+)
+
+
+class Issue649MarketAnomalyClusteringTests(_Issue649MarketAnomalyClusteringTests):
+    pass
