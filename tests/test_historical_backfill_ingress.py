@@ -12,17 +12,17 @@ class HistoricalBackfillIngressTests(unittest.TestCase):
     def _request(self, root):
         return {
             "ingress_mode": "HISTORICAL_BACKFILL",
+            "historical_fact_adopted_at": "2026-09-16T13:00:00+08:00",
+            "source_period": "2026-07-13..2026-09-15",
             "historical_trades": [{
                 "event_id": "historical_20260901_159326_buy",
                 "code": "159326", "side": "BUY", "quantity": 3000, "price": 1.651,
                 "executed_at": "2026-09-02T14:17:53+08:00",
-                "confirmed_at_beijing": "2026-09-16T10:00:00+08:00",
                 "market_date": "2026-09-02", "account_updated_at": "2026-09-16T09:00:00+08:00",
             }],
             "acquisition": {
                 "code": "301689",
-                "confirmed_at_beijing": "2026-09-16T10:00:00+08:00",
-            },
+                            },
         }
 
     def test_backfill_is_idempotent_and_does_not_change_current_state(self):
@@ -46,6 +46,29 @@ class HistoricalBackfillIngressTests(unittest.TestCase):
             self.assertEqual(json.loads((state / "account_fact.json").read_text()), before_account)
             acquisition = json.loads((root / "events/trades/HISTORICAL_ACQUISITION_20260901_301689_500.json").read_text())
             self.assertEqual(acquisition["event_type"], "IPO_ALLOTMENT_ACQUISITION")
+            trade = json.loads((root / "events/trades/historical_20260901_159326_buy.json").read_text())
+            self.assertEqual(trade["executed_at"], "2026-09-02T14:17:53+08:00")
+            self.assertEqual(trade["confirmation_time_semantics"], "CANONICAL_ADOPTION_TIME")
+            self.assertNotEqual(trade["executed_at"], trade["confirmed_at_beijing"])
+
+    def test_reliable_historical_confirmation_is_preserved(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            d = root / "events/trades"
+            d.mkdir(parents=True)
+            existing = {"event_id": "e", "code": "159326", "side": "BUY", "quantity": 1, "price": 1.0,
+                        "executed_at": "2026-09-01T10:00:00+08:00",
+                        "confirmed_at_beijing": "2026-09-02T10:00:00+08:00",
+                        "confirmation_time_semantics": "RELIABLE_HISTORICAL_CONFIRMATION"}
+            (d / "e.json").write_text(json.dumps(existing), encoding="utf-8")
+            req = {"ingress_mode": "HISTORICAL_BACKFILL", "historical_fact_adopted_at": "2026-09-16T13:00:00+08:00",
+                   "historical_trades": [{"event_id": "e", "code": "159326", "side": "BUY", "quantity": 1, "price": 1.0,
+                   "executed_at": "2026-09-01T10:00:00+08:00"}]}
+            with patch.object(sync, "ROOT", root):
+                sync.process_historical_backfill_request(req)
+            got = json.loads((d / "e.json").read_text())
+            self.assertEqual(got["confirmed_at_beijing"], "2026-09-02T10:00:00+08:00")
+            self.assertEqual(got["historical_fact_adopted_at"], "2026-09-16T13:00:00+08:00")
 
     def test_core_mismatch_fails_closed(self):
         with tempfile.TemporaryDirectory() as td:
