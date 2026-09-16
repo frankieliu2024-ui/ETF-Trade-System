@@ -26,6 +26,30 @@ def read_json(path: Path) -> dict[str, Any]:
         return {}
 
 
+def read_notification_state(path: Path) -> tuple[dict[str, Any], str, str, int]:
+    """Read canonical notification state without hiding structural corruption.
+
+    Notification emission remains owned by the existing notification center. This
+    helper only makes that canonical state's readability/schema visible to the
+    production health aggregate.
+    """
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        return {}, "ATTENTION", f"state_unreadable={type(exc).__name__}", 0
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError:
+        return {}, "ATTENTION", "state_malformed_json", 0
+    if not isinstance(value, dict):
+        return {}, "ATTENTION", "state_not_object", 0
+    notifications = value.get("notifications")
+    if not isinstance(notifications, list):
+        return value, "ATTENTION", "notifications_collection_unusable", 0
+    schema_version = str(value.get("schema_version") or "UNKNOWN")
+    return value, "PASS", f"schema_version={schema_version} notifications={len(notifications)}", len(notifications)
+
+
 def parse_time(value: Any) -> datetime | None:
     if not value:
         return None
@@ -241,7 +265,9 @@ def main() -> int:
     us = read_json(STATE / "us_extended_hours_context.json")
     us_health = read_json(STATE / "us_pulse_runtime_health.json")
     account = read_json(STATE / "account_fact.json")
-    notification = read_json(STATE / "notification_center.json")
+    notification, notification_status, notification_detail, notification_count = read_notification_state(
+        STATE / "notification_center.json"
+    )
     workflow_diag = read_json(STATE / "workflow_failure_diagnostic.json")
     self_healing = read_json(STATE / "self_healing_status.json")
     windows = active_windows(now_utc)
@@ -285,6 +311,8 @@ def main() -> int:
     account_status = str(account.get("status") or "UNKNOWN").upper()
     add_check(rows, "account_fact", "PASS" if account_status == "VALID" else "ATTENTION", f"status={account_status}", user_action=account_status != "VALID")
 
+    add_check(rows, "notification_state", notification_status, notification_detail)
+
     for name, health, active in (
         ("a_share", runtime, windows["a_share"]),
         ("apac", overseas_health, windows["apac"]),
@@ -320,7 +348,7 @@ def main() -> int:
         "generated_at_beijing": now_utc.astimezone(BJ).isoformat(timespec="seconds"),
         "status": overall,
         "checks": rows,
-        "notification_center_count": len(notification.get("managed_events") or []),
+        "notification_center_count": notification_count,
         "safe_recovery_gate": {
             "admitted": safe_recovery_admitted,
             "action": safe_recovery_action,
