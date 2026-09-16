@@ -1,6 +1,6 @@
 """One-shot, fail-closed runner for the existing HISTORICAL_BACKFILL ingress."""
 from __future__ import annotations
-import argparse, copy, hashlib, json, subprocess, sys
+import argparse, copy, hashlib, json, re, subprocess, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -27,6 +27,21 @@ def validate_manifest(data):
             raise ValueError("acquisition must not be placed in historical_trades")
     return trades, acquisition
 
+def _diagnostic_text(value, limit=4000):
+    text = str(value or "")
+    text = re.sub(r"(?i)(token|authorization|password|secret)=\\S+", r"\\1=[REDACTED]", text)
+    return text[-limit:]
+
+def _fail_child(stage, completed, detail):
+    print(json.dumps({
+        "historical_ingress_failure": stage,
+        "returncode": completed.returncode,
+        "detail": detail,
+        "stderr": _diagnostic_text(completed.stderr),
+        "stdout": _diagnostic_text(completed.stdout),
+    }, ensure_ascii=False), file=sys.stderr)
+    raise SystemExit(detail)
+
 def _extract_final_json(stdout):
     """Extract the last ingress payload from mixed process/log output."""
     decoder = json.JSONDecoder()
@@ -49,11 +64,14 @@ def _extract_final_json(stdout):
 
 def _run_ingress(proc):
     completed = subprocess.run(proc, cwd=ROOT, text=True, capture_output=True)
-    payload = _extract_final_json(completed.stdout)
+    if completed.returncode != 0:
+        _fail_child("SUBPROCESS_FAILED", completed, f"historical ingress failed with exit code {completed.returncode}")
+    try:
+        payload = _extract_final_json(completed.stdout)
+    except SystemExit as exc:
+        _fail_child("CANONICAL_JSON_MISSING", completed, str(exc))
     state = str(payload.get("canonical_ingress_state") or "").upper()
     reason = str(payload.get("canonical_ingress_failure_reason") or "")
-    if completed.returncode != 0:
-        raise SystemExit(f"historical ingress failed with exit code {completed.returncode}")
     if state == "CANONICAL_INGRESS_NOT_APPLICABLE" or reason == "not_a_formal_fact_ingress_request":
         raise SystemExit("historical ingress was not applicable; refusing false green")
     if state != "CANONICAL_INGRESS_SUBMITTED":
