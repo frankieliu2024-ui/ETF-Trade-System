@@ -27,6 +27,22 @@ def validate_manifest(data):
             raise ValueError("acquisition must not be placed in historical_trades")
     return trades, acquisition
 
+def _run_ingress(proc):
+    completed = subprocess.run(proc, cwd=ROOT, text=True, capture_output=True)
+    try:
+        payload = json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"historical ingress returned non-JSON output: {exc}")
+    state = str(payload.get("canonical_ingress_state") or "").upper()
+    reason = str(payload.get("canonical_ingress_failure_reason") or "")
+    if completed.returncode != 0:
+        raise SystemExit(f"historical ingress failed with exit code {completed.returncode}")
+    if state == "CANONICAL_INGRESS_NOT_APPLICABLE" or reason == "not_a_formal_fact_ingress_request":
+        raise SystemExit("historical ingress was not applicable; refusing false green")
+    if state != "CANONICAL_INGRESS_SUBMITTED":
+        raise SystemExit(f"historical ingress did not submit canonically: {state or 'MISSING_STATE'}")
+    return payload
+
 def main():
     p=argparse.ArgumentParser()
     p.add_argument("--manifest", required=True)
@@ -49,12 +65,8 @@ def main():
         path=ROOT/rel
         before[rel]=digest(path) if path.exists() else None
     proc=[sys.executable,str(ROOT/"scripts/process_state_sync_request.py"),str(manifest.relative_to(ROOT))]
-    first=subprocess.run(proc,cwd=ROOT,text=True,capture_output=True)
-    if first.returncode:
-        print(first.stdout); print(first.stderr,file=sys.stderr); return first.returncode
-    second=subprocess.run(proc,cwd=ROOT,text=True,capture_output=True)
-    if second.returncode:
-        print(second.stdout); print(second.stderr,file=sys.stderr); return second.returncode
+    first = _run_ingress(proc)
+    second = _run_ingress(proc)
     after={rel:digest(ROOT/rel) if (ROOT/rel).exists() else None for rel in before}
     if before != after:
         raise SystemExit("current account/CURRENT mutation detected")
