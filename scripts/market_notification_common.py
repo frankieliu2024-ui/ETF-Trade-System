@@ -448,7 +448,7 @@ def _event_family_id(event: dict) -> str:
     code = str(event.get("security_code") or ctx.get("security_code") or "")
     category = _event_category(event)
     direction = str(ctx.get("direction") or "")
-    return ":".join((market, date, session, code, category, direction))
+    return ":".join((market, date, session, code, category, direction, str(ctx.get("structure_cluster_id") or "")))
 
 
 def _text_list(value: Any) -> list[str]:
@@ -477,6 +477,7 @@ def _fact_metadata(event: dict) -> dict:
         "direction": str(ctx.get("direction") or "").upper(),
         "fact_family": str(ctx.get("fact_family") or ctx.get("user_fact_family") or "").upper(),
         "object_codes": set(codes),
+        "structure_cluster_id": str(ctx.get("structure_cluster_id") or "").upper(),
     }
 
 
@@ -510,6 +511,8 @@ def _same_user_level_fact(prior: dict, event: dict) -> bool:
             and new["direction"] not in {"DIVERGED", "MIXED"}
             and old["direction"] != new["direction"]):
         return False
+    if old["structure_cluster_id"] and old["structure_cluster_id"] == new["structure_cluster_id"]:
+        return True
     if old["object_codes"] & new["object_codes"]:
         return True
     return bool(old["fact_family"] and old["fact_family"] == new["fact_family"]
