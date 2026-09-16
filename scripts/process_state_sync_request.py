@@ -2138,15 +2138,23 @@ def process_historical_backfill_request(request: dict) -> dict:
         if existing:
             for field, expected in {"code": code, "side": side, "quantity": quantity, "price": price, "executed_at": executed_at}.items():
                 actual = existing.get(field)
-                if str(actual) != str(expected):
+                numeric_field = field in {"quantity", "price"}
+                normalized_actual = safe_float(actual) if numeric_field else actual
+                normalized_expected = expected
+                mismatch = (
+                    normalized_actual is None or normalized_actual != normalized_expected
+                    if numeric_field
+                    else str(actual) != str(expected)
+                )
+                if mismatch:
                     source_path = str(request.get("_ingress_path") or "events/trades/" + f"{event_id}.json")
                     detail = (
                         f"historical core mismatch: {event_id}:{field}; "
                         f"existing_value={actual!r}; existing_type={type(actual).__name__}; "
                         f"expected_value={expected!r}; expected_type={type(expected).__name__}; "
                         f"existing_source_path={source_path}; request_id={request.get('request_id')!r}; "
-                        f"normalized_existing={actual!r}; normalized_existing_type={type(actual).__name__}; "
-                        f"normalized_expected={expected!r}; normalized_expected_type={type(expected).__name__}"
+                        f"normalized_existing={normalized_actual!r}; normalized_existing_type={type(normalized_actual).__name__}; "
+                        f"normalized_expected={normalized_expected!r}; normalized_expected_type={type(normalized_expected).__name__}"
                     )
                     raise ValueError(detail)
             changed = False
