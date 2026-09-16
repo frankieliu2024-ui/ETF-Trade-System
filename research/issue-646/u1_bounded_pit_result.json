@@ -1,0 +1,61 @@
+{
+  "schema_version": "issue646.u1.bounded_pit.result.v1",
+  "tier": "Tier-0 research-only",
+  "pit_mode": "BOUNDED_PIT",
+  "source_pr": 648,
+  "source_head": "ea7690ea7a014d1af4c7433d19f359b239676d13",
+  "u0_size": 13,
+  "final_u1_size": 28,
+  "u1_exclusions": [],
+  "identity_coverage": {
+    "provider_identity": "28/28 returned asset_type=etf from hithink historical requests",
+    "name_exchange": "19/28 research manifest classifications; 9/28 mandatory cases require explicit identity evidence before any production use",
+    "listing_dates_proven": 0,
+    "metadata_limitation_count": 28
+  },
+  "history_coverage": {
+    "successful_requests": "28/28 (19 PR648 + 9 PR647)",
+    "extra_candidates": "19/19 rows=415, first_date=2025-01-02, last_date=2026-09-16",
+    "mandatory_cases": "9/9 successful; rows and first dates remain in PR647 logs",
+    "boundary_rule": "earliest_historical_bar; 2025-01-02 is not interpreted as listing date",
+    "raw_series_artifact": false,
+    "adjustment_semantics": "adjust=null; existing client path is non-adjusted/original daily exchange bars"
+  },
+  "feature_results": {
+    "20d_return_relative_strength": "STRICT_METRIC_UNAVAILABLE",
+    "60d_return_relative_strength": "STRICT_METRIC_UNAVAILABLE",
+    "20d_acceleration_vs_prior_20d": "STRICT_METRIC_UNAVAILABLE",
+    "drawdown_recovery": "STRICT_METRIC_UNAVAILABLE",
+    "liquidity_executability": "STRICT_METRIC_UNAVAILABLE",
+    "exposure_category_deduplication": "PROXY_ONLY"
+  },
+  "metric_status": {
+    "opportunity_recall": "STRICT_METRIC_UNAVAILABLE: no historical formal decision/opportunity episode labels in PR648 artifact",
+    "lead_time": "STRICT_METRIC_UNAVAILABLE: no raw daily series artifact",
+    "false_discovery_rate": "STRICT_METRIC_UNAVAILABLE: no candidate formation and outcome labels",
+    "forward_return_distribution": "STRICT_METRIC_UNAVAILABLE: no raw daily series artifact",
+    "diversification": "PROXY_ONLY: U1 adds A-share width/style, sectors, resources, manufacturing and consumer/health exposures; duplicate risk remains within finance/consumer/health",
+    "capital_relevance": "STRICT_METRIC_UNAVAILABLE: no MASTER-governed counterfactual capital comparison"
+  },
+  "mandatory_cases": {
+    "520870": {"pit_eligible": "2025-11-13", "feature_dates": "STRICT_METRIC_UNAVAILABLE", "u0_increment": "not computable"},
+    "513800": {"pit_eligible": "2024-01-02", "feature_dates": "STRICT_METRIC_UNAVAILABLE", "u0_increment": "not computable"},
+    "159687": {"pit_eligible": "2024-01-02", "feature_dates": "STRICT_METRIC_UNAVAILABLE", "u0_increment": "not computable"},
+    "513650": {"pit_eligible": "2024-01-02", "feature_dates": "STRICT_METRIC_UNAVAILABLE", "u0_increment": "not computable"},
+    "513310": {"pit_eligible": "2024-01-02", "feature_dates": "STRICT_METRIC_UNAVAILABLE", "u0_increment": "not computable"},
+    "159577": {"pit_eligible": "2024-02-23", "feature_dates": "STRICT_METRIC_UNAVAILABLE", "u0_increment": "not computable"},
+    "513810": {"pit_eligible": "2024-01-02", "feature_dates": "STRICT_METRIC_UNAVAILABLE", "u0_increment": "not computable"},
+    "513290": {"pit_eligible": "2024-01-02", "feature_dates": "STRICT_METRIC_UNAVAILABLE", "u0_increment": "not computable"},
+    "513360": {"pit_eligible": "2024-01-02", "feature_dates": "STRICT_METRIC_UNAVAILABLE", "u0_increment": "not computable"}
+  },
+  "513350_diagnosis": {
+    "classification": "INCONCLUSIVE",
+    "evidence": "U0 contains 513350 and PR647 proves historical bars; no feature-level replay or formal review linkage artifact is present in PR648, so DATA_GAP vs DISCOVERY_GAP vs CANDIDATE_CONSUMPTION_GAP vs MASTER_CHAIN_NOT_PASSED cannot be distinguished."
+  },
+  "u2_required": "INCONCLUSIVE",
+  "full_security_master_still_required_for": "full-market survivorship-safe PIT universe claims",
+  "production_integration_justified": "NO",
+  "production_mutation_required": "NO",
+  "blocking_evidence_gap": "PR648 Actions exposed request summaries but produced no downloadable raw daily-bar artifact or bounded audit executor; therefore requested date-level discovery and forward-label results cannot be reproduced from current PR contents.",
+  "next_stage": "Add only a research-only raw-series artifact/analysis executor on a new isolated PR, then rerun feature-level bounded PIT audit; do not merge or enter U2."
+}
