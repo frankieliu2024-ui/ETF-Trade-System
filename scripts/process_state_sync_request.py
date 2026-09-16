@@ -2216,6 +2216,17 @@ def main() -> int:
         raise RuntimeError("invalid state sync request path")
     request = load_json(req_path)
     request["_ingress_path"] = str(req_path.relative_to(ROOT)).replace("\\\\", "/")
+    if str(request.get("ingress_mode") or "").upper() == "HISTORICAL_BACKFILL":
+        result = process_historical_backfill_request(request)
+        result.update({
+            "request_id": request.get("request_id"),
+            "trade_event_recorded": True,
+            "account_sync_status": "NOT_APPLICABLE",
+            "canonical_ingress_state": CANONICAL_INGRESS_SUBMITTED,
+            "canonical_ingress_failure_reason": "",
+        })
+        print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+        return 0
     canonical_ingress_contract = canonical_ingress_contract_for_request(request)
     trade = request.get("trade_event")
     prior_account = load_json(ACCOUNT) if ACCOUNT.exists() else {}
