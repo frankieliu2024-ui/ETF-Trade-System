@@ -1,4 +1,5 @@
 import copy
+import io
 import json
 import tempfile
 import unittest
@@ -82,6 +83,32 @@ class HistoricalBackfillIngressTests(unittest.TestCase):
         manifest["historical_trades"][0]["event_type"] = "IPO_ALLOTMENT_ACQUISITION"
         with self.assertRaises(ValueError):
             runner.validate_manifest(manifest)
+
+    def test_main_routes_historical_manifest_to_existing_owner(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "events/trades").mkdir(parents=True)
+            (root / "data/state").mkdir(parents=True)
+            req_path = root / "request.json"
+            request = self._runner_manifest(count=37)
+            req_path.write_text(json.dumps(request), encoding="utf-8")
+            output = io.StringIO()
+            with patch.object(sync, "ROOT", root), patch("sys.argv", ["process_state_sync_request.py", "request.json"]):
+                with patch("sys.stdout", output):
+                    self.assertEqual(sync.main(), 0)
+            result = json.loads(output.getvalue())
+            self.assertEqual(result["canonical_ingress_state"], sync.CANONICAL_INGRESS_SUBMITTED)
+            self.assertTrue(result["trade_event_recorded"])
+            self.assertEqual(result["account_sync_status"], "NOT_APPLICABLE")
+
+    def test_runner_rejects_not_applicable_even_with_zero_exit(self):
+        completed = unittest.mock.Mock(returncode=0, stdout=json.dumps({
+            "canonical_ingress_state": "CANONICAL_INGRESS_NOT_APPLICABLE",
+            "canonical_ingress_failure_reason": "not_a_formal_fact_ingress_request",
+        }), stderr="")
+        with patch.object(runner.subprocess, "run", return_value=completed):
+            with self.assertRaises(SystemExit):
+                runner._run_ingress(["python", "process_state_sync_request.py", "request.json"])
 
     def test_reliable_historical_confirmation_is_preserved(self):
         with tempfile.TemporaryDirectory() as td:
