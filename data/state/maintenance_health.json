@@ -1,48 +1,55 @@
 {
   "schema_version": "1.1",
-  "checked_at": "2026-09-15T21:52:33+08:00",
+  "checked_at": "2026-09-17T06:07:40+08:00",
   "mode": "DETERMINISTIC_MAINTENANCE_GUARD",
   "status": "FAIL",
   "system_consistency_status": "WARNING",
-  "self_healing_classification": "PERSISTENT_RUNTIME_FAILURE",
+  "self_healing_classification": "HEALTHY",
   "runtime_health_status": "SKIPPED",
-  "current_snapshot": "data/market/snapshots/2026-09-15_144842.json",
+  "current_snapshot": "data/market/snapshots/2026-09-16_150044.json",
   "reconciliation": {
-    "status": "PASS",
-    "trade_count": 33,
+    "status": "FAIL",
+    "trade_count": 54,
     "trade_count_matches_summary": true,
     "executed_trade_event_overlay_count": 0,
     "position_ledger_basis": "CANONICAL_REPLAY_FINAL_COMPLETE_POSITION_IDENTITY",
     "position_reconciliation": {
-      "status": "PASS",
+      "status": "FAIL",
       "checks": [
         {
           "code": "159781",
-          "ledger_quantity": 19500.0,
+          "ledger_quantity": 39000.0,
           "account_quantity": 19500.0,
-          "difference": 0.0,
-          "status": "PASS"
+          "difference": -19500.0,
+          "status": "FAIL"
         },
         {
           "code": "159941",
-          "ledger_quantity": 12200.0,
+          "ledger_quantity": 24400.0,
           "account_quantity": 12200.0,
-          "difference": 0.0,
-          "status": "PASS"
+          "difference": -12200.0,
+          "status": "FAIL"
+        },
+        {
+          "code": "513180",
+          "ledger_quantity": 8200.0,
+          "account_quantity": 0.0,
+          "difference": -8200.0,
+          "status": "FAIL"
         },
         {
           "code": "561980",
-          "ledger_quantity": 28900.0,
+          "ledger_quantity": 93800.0,
           "account_quantity": 28900.0,
-          "difference": 0.0,
-          "status": "PASS"
+          "difference": -64900.0,
+          "status": "FAIL"
         },
         {
           "code": "588000",
-          "ledger_quantity": 14100.0,
+          "ledger_quantity": 28200.0,
           "account_quantity": 14100.0,
-          "difference": 0.0,
-          "status": "PASS"
+          "difference": -14100.0,
+          "status": "FAIL"
         }
       ]
     },
@@ -50,12 +57,12 @@
       "status": "PASS",
       "blocking": false,
       "note": "fee attribution mismatch remains visible but cannot block reconciled account/trade/equity state",
-      "auxiliary_reconstructed_confirmed_fee_sum": 204.11,
-      "auxiliary_summary_known_fees": 159.56,
+      "auxiliary_reconstructed_confirmed_fee_sum": 314.12,
+      "auxiliary_summary_known_fees": 269.57,
       "auxiliary_difference": 0.0,
       "executed_event_overlay_count": 0,
       "executed_event_confirmed_fee_sum": 0.0,
-      "effective_confirmed_fee_sum": 159.56,
+      "effective_confirmed_fee_sum": 269.57,
       "formal_review_confirmed_fees": null,
       "formal_review_source": null,
       "formal_review_difference": null,
@@ -63,9 +70,9 @@
     },
     "gross_equity_reconciliation": {
       "status": "PASS",
-      "strategy_cash": 98697.8,
-      "current_etf_market_value": 81362.3,
-      "reported_gross_equity": 180060.1,
+      "strategy_cash": -30772.9,
+      "current_etf_market_value": 196978.2,
+      "reported_gross_equity": 166205.3,
       "difference": 0.0,
       "series_row_difference": 0.0,
       "canonical_replay_complete": true
