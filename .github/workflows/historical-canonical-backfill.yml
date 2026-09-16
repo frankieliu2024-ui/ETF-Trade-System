@@ -1,3 +1,4 @@
+# PR candidate trigger
 name: Historical canonical backfill (manual)
 on:
   workflow_dispatch:
@@ -12,6 +13,11 @@ on:
         type: string
 permissions:
   contents: write
+
+concurrency:
+  group: etf-historical-canonical-backfill-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   replay:
     runs-on: ubuntu-latest
@@ -25,6 +31,8 @@ jobs:
         env:
           REQUEST_ID: ${{ inputs.request_id }}
         run: |
+          git fetch --no-tags origin main
+          git rebase origin/main
           set -euo pipefail
           unexpected="$(git status --short --untracked-files=all | awk '$2 !~ /^events\/trades\// {print}')"
           if [ -n "$unexpected" ]; then
