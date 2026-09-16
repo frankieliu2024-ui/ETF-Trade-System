@@ -1,71 +1,68 @@
 {
-  "generated_at": "2026-09-16T05:31:35Z",
+  "generated_at": "2026-09-16T05:58:44Z",
   "market_date": "2026-09-16",
   "mode": "TENCENT_1M_ETF_PATH_PRODUCTION_EVIDENCE",
   "read_only": true,
   "decision_boundary": "只描述离散行情脉冲形成的日内路径几何、成交增量、14:30后已观察路径和相对强弱；结构候选标签不是交易信号，不生成风险许可、机会状态、金额或买卖动作。",
   "label_boundary": "RAPID_RISE/SHARP_DROP/V_RECOVERY/HIGH_ZONE_CONSOLIDATION均为描述性候选标签。必须结合采样覆盖、实际时点、市场阶段及MASTER完整决策链解释。",
   "status": "READY",
-  "snapshot_count": 14,
+  "snapshot_count": 15,
   "first_snapshot": "data/market/snapshots/2026-09-16_093433.json",
-  "latest_snapshot": "data/market/snapshots/2026-09-16_133124.json",
+  "latest_snapshot": "data/market/snapshots/2026-09-16_135832.json",
   "features": [
     {
       "symbol": "000001",
       "asset_class": "A_SHARE_INDEX",
-      "sample_count": 14,
+      "sample_count": 15,
       "first_as_of_beijing": "2026-09-16T09:34:27+08:00",
-      "latest_as_of_beijing": "2026-09-16T13:31:21+08:00",
+      "latest_as_of_beijing": "2026-09-16T13:58:27+08:00",
       "first_price": 3853.51,
-      "latest_price": 3880.97,
-      "path_change_pct": 0.7126,
+      "latest_price": 3891.64,
+      "path_change_pct": 0.9895,
       "path_low": 3851.76,
       "path_low_as_of_beijing": "2026-09-16T10:21:00+08:00",
-      "path_high": 3886.48,
-      "path_high_as_of_beijing": "2026-09-16T11:41:12+08:00",
-      "recovery_from_path_low_pct": 0.7584,
-      "retreat_from_path_high_pct": -0.1418,
-      "latest_day_range_position": 0.842,
+      "path_high": 3891.64,
+      "path_high_as_of_beijing": "2026-09-16T13:58:27+08:00",
+      "recovery_from_path_low_pct": 1.0354,
+      "retreat_from_path_high_pct": 0.0,
+      "latest_day_range_position": 0.9466,
       "late_session_context": {
         "status": "NOT_YET_AVAILABLE",
         "reference_clock_beijing": "14:30",
         "move_from_reference_pct": null,
         "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
       },
-      "recent_interval_minutes": 10.05,
-      "recent_move_pct": -0.1243,
-      "recent_slope_pct_per_10m": -0.1237,
-      "recent_volume_delta": 1247170400.0,
-      "recent_amount_delta": 24620120000.0,
+      "recent_interval_minutes": 27.1,
+      "recent_move_pct": 0.2749,
+      "recent_slope_pct_per_10m": 0.1015,
+      "recent_volume_delta": 3155132500.0,
+      "recent_amount_delta": 57786870000.0,
       "relative_to_indices": {
         "000001": {
           "latest_relative_change_pct_points": 0.0,
-          "benchmark_change_pct": 0.4319,
-          "benchmark_as_of_beijing": "2026-09-16T13:31:21+08:00"
+          "benchmark_change_pct": 0.708,
+          "benchmark_as_of_beijing": "2026-09-16T13:58:27+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": -1.0687,
-          "benchmark_change_pct": 1.5007,
-          "benchmark_as_of_beijing": "2026-09-16T13:31:18+08:00"
+          "latest_relative_change_pct_points": -1.0734,
+          "benchmark_change_pct": 1.7814,
+          "benchmark_as_of_beijing": "2026-09-16T13:58:27+08:00"
         }
       },
       "sampling": {
         "coverage": "MEDIUM",
-        "median_gap_minutes": 14.65,
+        "median_gap_minutes": 14.7,
         "max_gap_minutes": 86.45,
         "limitation": "离散脉冲只能重建近实时路径；两次采样之间的瞬时拉升/急跌可能遗漏。日内high/low可证明期间发生过极值，但不能单独确定具体分钟形态。"
       },
       "structure_candidates": [
         {
-          "label": "HIGH_ZONE_CONSOLIDATION_CANDIDATE",
+          "label": "V_RECOVERY_CANDIDATE",
           "evidence": {
-            "tail_points": 3,
-            "tail_spread_pct": 0.125,
-            "range_positions": [
-              0.8407,
-              0.9804,
-              0.8413
-            ]
+            "low_as_of_beijing": "2026-09-16T10:21:00+08:00",
+            "recovery_from_path_low_pct": 1.0354,
+            "points_after_low": 10,
+            "latest_range_position": 1.0
           }
         }
       ],
@@ -75,45 +72,45 @@
     {
       "symbol": "000688",
       "asset_class": "A_SHARE_INDEX",
-      "sample_count": 14,
+      "sample_count": 15,
       "first_as_of_beijing": "2026-09-16T09:34:30+08:00",
-      "latest_as_of_beijing": "2026-09-16T13:31:21+08:00",
+      "latest_as_of_beijing": "2026-09-16T13:58:30+08:00",
       "first_price": 1559.49,
-      "latest_price": 1605.46,
-      "path_change_pct": 2.9478,
+      "latest_price": 1612.99,
+      "path_change_pct": 3.4306,
       "path_low": 1559.49,
       "path_low_as_of_beijing": "2026-09-16T09:34:30+08:00",
       "path_high": 1621.75,
       "path_high_as_of_beijing": "2026-09-16T11:41:00+08:00",
-      "recovery_from_path_low_pct": 2.9478,
-      "retreat_from_path_high_pct": -1.0045,
-      "latest_day_range_position": 0.7591,
+      "recovery_from_path_low_pct": 3.4306,
+      "retreat_from_path_high_pct": -0.5402,
+      "latest_day_range_position": 0.8665,
       "late_session_context": {
         "status": "NOT_YET_AVAILABLE",
         "reference_clock_beijing": "14:30",
         "move_from_reference_pct": null,
         "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
       },
-      "recent_interval_minutes": 10.05,
-      "recent_move_pct": -0.2268,
-      "recent_slope_pct_per_10m": -0.2257,
-      "recent_volume_delta": 23548200.0,
-      "recent_amount_delta": 2950910000.0,
+      "recent_interval_minutes": 27.15,
+      "recent_move_pct": 0.469,
+      "recent_slope_pct_per_10m": 0.1728,
+      "recent_volume_delta": 62798900.0,
+      "recent_amount_delta": 6779580000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 3.0153,
-          "benchmark_change_pct": 0.4319,
-          "benchmark_as_of_beijing": "2026-09-16T13:31:21+08:00"
+          "latest_relative_change_pct_points": 3.2244,
+          "benchmark_change_pct": 0.708,
+          "benchmark_as_of_beijing": "2026-09-16T13:58:27+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 1.9466,
-          "benchmark_change_pct": 1.5007,
-          "benchmark_as_of_beijing": "2026-09-16T13:31:18+08:00"
+          "latest_relative_change_pct_points": 2.151,
+          "benchmark_change_pct": 1.7814,
+          "benchmark_as_of_beijing": "2026-09-16T13:58:27+08:00"
         }
       },
       "sampling": {
         "coverage": "MEDIUM",
-        "median_gap_minutes": 14.6,
+        "median_gap_minutes": 14.68,
         "max_gap_minutes": 86.65,
         "limitation": "离散脉冲只能重建近实时路径；两次采样之间的瞬时拉升/急跌可能遗漏。日内high/low可证明期间发生过极值，但不能单独确定具体分钟形态。"
       },
@@ -131,9 +128,9 @@
           "label": "V_RECOVERY_CANDIDATE",
           "evidence": {
             "low_as_of_beijing": "2026-09-16T09:34:30+08:00",
-            "recovery_from_path_low_pct": 2.9478,
-            "points_after_low": 13,
-            "latest_range_position": 0.7384
+            "recovery_from_path_low_pct": 3.4306,
+            "points_after_low": 14,
+            "latest_range_position": 0.8593
           }
         }
       ],
@@ -149,33 +146,33 @@
       "item_quality_pass": true,
       "provider": "tencent_qq",
       "provider_endpoint": "web.ifzq.gtimg.cn/appstock/app/minute/query",
-      "request_seconds": 0.763,
-      "sample_count": 153,
-      "raw_sample_count": 154,
+      "request_seconds": 0.904,
+      "sample_count": 180,
+      "raw_sample_count": 181,
       "first_as_of_beijing": "2026-09-16T09:30:00+08:00",
-      "latest_as_of_beijing": "2026-09-16T13:31:00+08:00",
-      "latest_age_seconds_at_validation": 33.0,
+      "latest_as_of_beijing": "2026-09-16T13:58:00+08:00",
+      "latest_age_seconds_at_validation": 42.0,
       "freshness_pass": true,
       "freshness_max_seconds": 180.0,
       "point_in_time": {
         "pass": true,
         "cutoff_source": "SIMULTANEOUS_TENCENT_QUOTE",
-        "cutoff_as_of_beijing": "2026-09-16T13:31:33+08:00",
+        "cutoff_as_of_beijing": "2026-09-16T13:58:42+08:00",
         "excluded_future_bucket_count": 1,
         "excluded_future_bucket_times": [
-          "2026-09-16T13:32:00+08:00"
+          "2026-09-16T13:59:00+08:00"
         ],
         "rule": "只消费不晚于同时腾讯quote provider timestamp的分钟点；更晚标签视为当前开放或未来分钟桶。"
       },
       "first_price": 1.619,
-      "latest_price": 1.643,
-      "path_change_pct": 1.4824,
+      "latest_price": 1.646,
+      "path_change_pct": 1.6677,
       "path_low": 1.61,
       "path_low_as_of_beijing": "2026-09-16T10:02:00+08:00",
       "path_high": 1.652,
       "path_high_as_of_beijing": "2026-09-16T13:11:00+08:00",
-      "recovery_from_path_low_pct": 2.0497,
-      "retreat_from_path_high_pct": -0.5448,
+      "recovery_from_path_low_pct": 2.236,
+      "retreat_from_path_high_pct": -0.3632,
       "late_session_context": {
         "status": "NOT_YET_AVAILABLE",
         "reference_clock_beijing": "14:30",
@@ -183,25 +180,25 @@
         "decision_boundary": "14:30前不构造尾盘方向；不得使用未来分钟桶。"
       },
       "recent_interval_minutes": 10.0,
-      "recent_move_pct": -0.3034,
-      "recent_slope_pct_per_10m": -0.3034,
-      "recent_volume_delta": 153178.0,
-      "recent_amount_delta": 25177655.6,
+      "recent_move_pct": -0.0607,
+      "recent_slope_pct_per_10m": -0.0607,
+      "recent_volume_delta": 41560.0,
+      "recent_amount_delta": 6846448.9,
       "relative_to_indices": {},
       "formal_snapshot_reference": {
-        "as_of_beijing": "2026-09-16T13:31:18+08:00",
-        "price": 1.642,
-        "minute_time_delta_minutes": 0.3,
+        "as_of_beijing": "2026-09-16T13:58:24+08:00",
+        "price": 1.645,
+        "minute_time_delta_minutes": 0.4,
         "role": "context_only_not_live_alignment_gate"
       },
       "quote_alignment": {
         "status": "PASS",
         "pass": true,
-        "minute_price": 1.643,
-        "quote_price": 1.642,
-        "quote_as_of_beijing": "2026-09-16T13:31:33+08:00",
-        "timestamp_delta_seconds": 33.0,
-        "abs_diff_pct": 0.0609,
+        "minute_price": 1.646,
+        "quote_price": 1.645,
+        "quote_as_of_beijing": "2026-09-16T13:58:42+08:00",
+        "timestamp_delta_seconds": 42.0,
+        "abs_diff_pct": 0.0608,
         "max_abs_diff_pct": 0.25,
         "comparable_max_seconds": 90.0,
         "note": "该校验只确认minute/query与同时腾讯quote的同源一致性；正式最新价仍由quote router决定。"
@@ -231,33 +228,33 @@
       "item_quality_pass": true,
       "provider": "tencent_qq",
       "provider_endpoint": "web.ifzq.gtimg.cn/appstock/app/minute/query",
-      "request_seconds": 0.803,
-      "sample_count": 153,
-      "raw_sample_count": 154,
+      "request_seconds": 1.042,
+      "sample_count": 180,
+      "raw_sample_count": 181,
       "first_as_of_beijing": "2026-09-16T09:30:00+08:00",
-      "latest_as_of_beijing": "2026-09-16T13:31:00+08:00",
-      "latest_age_seconds_at_validation": 30.0,
+      "latest_as_of_beijing": "2026-09-16T13:58:00+08:00",
+      "latest_age_seconds_at_validation": 42.0,
       "freshness_pass": true,
       "freshness_max_seconds": 180.0,
       "point_in_time": {
         "pass": true,
         "cutoff_source": "SIMULTANEOUS_TENCENT_QUOTE",
-        "cutoff_as_of_beijing": "2026-09-16T13:31:30+08:00",
+        "cutoff_as_of_beijing": "2026-09-16T13:58:42+08:00",
         "excluded_future_bucket_count": 1,
         "excluded_future_bucket_times": [
-          "2026-09-16T13:32:00+08:00"
+          "2026-09-16T13:59:00+08:00"
         ],
         "rule": "只消费不晚于同时腾讯quote provider timestamp的分钟点；更晚标签视为当前开放或未来分钟桶。"
       },
       "first_price": 1.321,
-      "latest_price": 1.321,
-      "path_change_pct": 0.0,
+      "latest_price": 1.323,
+      "path_change_pct": 0.1514,
       "path_low": 1.318,
       "path_low_as_of_beijing": "2026-09-16T09:57:00+08:00",
       "path_high": 1.324,
       "path_high_as_of_beijing": "2026-09-16T11:24:00+08:00",
-      "recovery_from_path_low_pct": 0.2276,
-      "retreat_from_path_high_pct": -0.2266,
+      "recovery_from_path_low_pct": 0.3794,
+      "retreat_from_path_high_pct": -0.0755,
       "late_session_context": {
         "status": "NOT_YET_AVAILABLE",
         "reference_clock_beijing": "14:30",
@@ -265,25 +262,25 @@
         "decision_boundary": "14:30前不构造尾盘方向；不得使用未来分钟桶。"
       },
       "recent_interval_minutes": 10.0,
-      "recent_move_pct": -0.1512,
-      "recent_slope_pct_per_10m": -0.1512,
-      "recent_volume_delta": 13025.0,
-      "recent_amount_delta": 1721735.0,
+      "recent_move_pct": 0.0756,
+      "recent_slope_pct_per_10m": 0.0756,
+      "recent_volume_delta": 15903.0,
+      "recent_amount_delta": 2103451.8,
       "relative_to_indices": {},
       "formal_snapshot_reference": {
-        "as_of_beijing": "2026-09-16T13:31:00+08:00",
-        "price": 1.321,
-        "minute_time_delta_minutes": 0.0,
+        "as_of_beijing": "2026-09-16T13:58:21+08:00",
+        "price": 1.323,
+        "minute_time_delta_minutes": 0.35,
         "role": "context_only_not_live_alignment_gate"
       },
       "quote_alignment": {
         "status": "PASS",
         "pass": true,
-        "minute_price": 1.321,
-        "quote_price": 1.322,
-        "quote_as_of_beijing": "2026-09-16T13:31:30+08:00",
-        "timestamp_delta_seconds": 30.0,
-        "abs_diff_pct": 0.0756,
+        "minute_price": 1.323,
+        "quote_price": 1.323,
+        "quote_as_of_beijing": "2026-09-16T13:58:42+08:00",
+        "timestamp_delta_seconds": 42.0,
+        "abs_diff_pct": 0.0,
         "max_abs_diff_pct": 0.25,
         "comparable_max_seconds": 90.0,
         "note": "该校验只确认minute/query与同时腾讯quote的同源一致性；正式最新价仍由quote router决定。"
@@ -300,7 +297,15 @@
         "source_granularity": "1m",
         "limitation": "腾讯minute/query提供每分钟末笔价格及累计成交量/额，不提供分钟OHLC；当前开放/未来分钟桶已按Point-in-Time过滤。"
       },
-      "structure_candidates": [],
+      "structure_candidates": [
+        {
+          "label": "V_RECOVERY_CANDIDATE",
+          "evidence": {
+            "source": "tencent_1m",
+            "recovery_from_path_low_pct": 0.3794
+          }
+        }
+      ],
       "production_source": "TENCENT_1M",
       "path_role": "PRODUCTION_STRUCTURE_EVIDENCE"
     },
@@ -313,33 +318,33 @@
       "item_quality_pass": true,
       "provider": "tencent_qq",
       "provider_endpoint": "web.ifzq.gtimg.cn/appstock/app/minute/query",
-      "request_seconds": 0.816,
-      "sample_count": 153,
-      "raw_sample_count": 154,
+      "request_seconds": 0.962,
+      "sample_count": 180,
+      "raw_sample_count": 181,
       "first_as_of_beijing": "2026-09-16T09:30:00+08:00",
-      "latest_as_of_beijing": "2026-09-16T13:31:00+08:00",
-      "latest_age_seconds_at_validation": 33.0,
+      "latest_as_of_beijing": "2026-09-16T13:58:00+08:00",
+      "latest_age_seconds_at_validation": 42.0,
       "freshness_pass": true,
       "freshness_max_seconds": 180.0,
       "point_in_time": {
         "pass": true,
         "cutoff_source": "SIMULTANEOUS_TENCENT_QUOTE",
-        "cutoff_as_of_beijing": "2026-09-16T13:31:33+08:00",
+        "cutoff_as_of_beijing": "2026-09-16T13:58:42+08:00",
         "excluded_future_bucket_count": 1,
         "excluded_future_bucket_times": [
-          "2026-09-16T13:32:00+08:00"
+          "2026-09-16T13:59:00+08:00"
         ],
         "rule": "只消费不晚于同时腾讯quote provider timestamp的分钟点；更晚标签视为当前开放或未来分钟桶。"
       },
       "first_price": 1.01,
-      "latest_price": 1.04,
-      "path_change_pct": 2.9703,
+      "latest_price": 1.041,
+      "path_change_pct": 3.0693,
       "path_low": 1.01,
       "path_low_as_of_beijing": "2026-09-16T09:30:00+08:00",
       "path_high": 1.051,
       "path_high_as_of_beijing": "2026-09-16T11:27:00+08:00",
-      "recovery_from_path_low_pct": 2.9703,
-      "retreat_from_path_high_pct": -1.0466,
+      "recovery_from_path_low_pct": 3.0693,
+      "retreat_from_path_high_pct": -0.9515,
       "late_session_context": {
         "status": "NOT_YET_AVAILABLE",
         "reference_clock_beijing": "14:30",
@@ -347,25 +352,25 @@
         "decision_boundary": "14:30前不构造尾盘方向；不得使用未来分钟桶。"
       },
       "recent_interval_minutes": 10.0,
-      "recent_move_pct": -0.2876,
-      "recent_slope_pct_per_10m": -0.2876,
-      "recent_volume_delta": 90468.0,
-      "recent_amount_delta": 9404364.4,
+      "recent_move_pct": -0.3828,
+      "recent_slope_pct_per_10m": -0.3828,
+      "recent_volume_delta": 44881.0,
+      "recent_amount_delta": 4683905.1,
       "relative_to_indices": {},
       "formal_snapshot_reference": {
-        "as_of_beijing": "2026-09-16T13:31:15+08:00",
-        "price": 1.039,
-        "minute_time_delta_minutes": 0.25,
+        "as_of_beijing": "2026-09-16T13:58:18+08:00",
+        "price": 1.042,
+        "minute_time_delta_minutes": 0.3,
         "role": "context_only_not_live_alignment_gate"
       },
       "quote_alignment": {
         "status": "PASS",
         "pass": true,
-        "minute_price": 1.04,
-        "quote_price": 1.039,
-        "quote_as_of_beijing": "2026-09-16T13:31:33+08:00",
-        "timestamp_delta_seconds": 33.0,
-        "abs_diff_pct": 0.0962,
+        "minute_price": 1.041,
+        "quote_price": 1.041,
+        "quote_as_of_beijing": "2026-09-16T13:58:42+08:00",
+        "timestamp_delta_seconds": 42.0,
+        "abs_diff_pct": 0.0,
         "max_abs_diff_pct": 0.25,
         "comparable_max_seconds": 90.0,
         "note": "该校验只确认minute/query与同时腾讯quote的同源一致性；正式最新价仍由quote router决定。"
@@ -395,33 +400,33 @@
       "item_quality_pass": true,
       "provider": "tencent_qq",
       "provider_endpoint": "web.ifzq.gtimg.cn/appstock/app/minute/query",
-      "request_seconds": 0.838,
-      "sample_count": 153,
-      "raw_sample_count": 154,
+      "request_seconds": 1.035,
+      "sample_count": 180,
+      "raw_sample_count": 181,
       "first_as_of_beijing": "2026-09-16T09:30:00+08:00",
-      "latest_as_of_beijing": "2026-09-16T13:31:00+08:00",
-      "latest_age_seconds_at_validation": 33.0,
+      "latest_as_of_beijing": "2026-09-16T13:58:00+08:00",
+      "latest_age_seconds_at_validation": 42.0,
       "freshness_pass": true,
       "freshness_max_seconds": 180.0,
       "point_in_time": {
         "pass": true,
         "cutoff_source": "SIMULTANEOUS_TENCENT_QUOTE",
-        "cutoff_as_of_beijing": "2026-09-16T13:31:33+08:00",
+        "cutoff_as_of_beijing": "2026-09-16T13:58:42+08:00",
         "excluded_future_bucket_count": 1,
         "excluded_future_bucket_times": [
-          "2026-09-16T13:32:00+08:00"
+          "2026-09-16T13:59:00+08:00"
         ],
         "rule": "只消费不晚于同时腾讯quote provider timestamp的分钟点；更晚标签视为当前开放或未来分钟桶。"
       },
       "first_price": 1.621,
-      "latest_price": 1.627,
-      "path_change_pct": 0.3701,
+      "latest_price": 1.628,
+      "path_change_pct": 0.4318,
       "path_low": 1.621,
       "path_low_as_of_beijing": "2026-09-16T09:30:00+08:00",
       "path_high": 1.631,
       "path_high_as_of_beijing": "2026-09-16T11:20:00+08:00",
-      "recovery_from_path_low_pct": 0.3701,
-      "retreat_from_path_high_pct": -0.2452,
+      "recovery_from_path_low_pct": 0.4318,
+      "retreat_from_path_high_pct": -0.1839,
       "late_session_context": {
         "status": "NOT_YET_AVAILABLE",
         "reference_clock_beijing": "14:30",
@@ -429,107 +434,25 @@
         "decision_boundary": "14:30前不构造尾盘方向；不得使用未来分钟桶。"
       },
       "recent_interval_minutes": 10.0,
-      "recent_move_pct": -0.1228,
-      "recent_slope_pct_per_10m": -0.1228,
-      "recent_volume_delta": 255435.0,
-      "recent_amount_delta": 41592047.8,
+      "recent_move_pct": 0.0615,
+      "recent_slope_pct_per_10m": 0.0615,
+      "recent_volume_delta": 183158.0,
+      "recent_amount_delta": 29811656.4,
       "relative_to_indices": {},
       "formal_snapshot_reference": {
-        "as_of_beijing": "2026-09-16T13:31:15+08:00",
+        "as_of_beijing": "2026-09-16T13:58:18+08:00",
         "price": 1.628,
-        "minute_time_delta_minutes": 0.25,
-        "role": "context_only_not_live_alignment_gate"
-      },
-      "quote_alignment": {
-        "status": "PASS",
-        "pass": true,
-        "minute_price": 1.627,
-        "quote_price": 1.627,
-        "quote_as_of_beijing": "2026-09-16T13:31:33+08:00",
-        "timestamp_delta_seconds": 33.0,
-        "abs_diff_pct": 0.0,
-        "max_abs_diff_pct": 0.25,
-        "comparable_max_seconds": 90.0,
-        "note": "该校验只确认minute/query与同时腾讯quote的同源一致性；正式最新价仍由quote router决定。"
-      },
-      "sampling": {
-        "coverage": "HIGH",
-        "continuity_pass": true,
-        "duplicate_minute_count": 0,
-        "duplicate_minutes": [],
-        "unexpected_gap_count": 0,
-        "unexpected_gaps": [],
-        "median_gap_minutes": 1.0,
-        "max_gap_minutes": 90.0,
-        "source_granularity": "1m",
-        "limitation": "腾讯minute/query提供每分钟末笔价格及累计成交量/额，不提供分钟OHLC；当前开放/未来分钟桶已按Point-in-Time过滤。"
-      },
-      "structure_candidates": [],
-      "production_source": "TENCENT_1M",
-      "path_role": "PRODUCTION_STRUCTURE_EVIDENCE"
-    },
-    {
-      "symbol": "159992",
-      "name": "创新药ETF",
-      "thscode": "159992.SZ",
-      "asset_class": "ETF",
-      "status": "READY",
-      "item_quality_pass": true,
-      "provider": "tencent_qq",
-      "provider_endpoint": "web.ifzq.gtimg.cn/appstock/app/minute/query",
-      "request_seconds": 0.774,
-      "sample_count": 153,
-      "raw_sample_count": 154,
-      "first_as_of_beijing": "2026-09-16T09:30:00+08:00",
-      "latest_as_of_beijing": "2026-09-16T13:31:00+08:00",
-      "latest_age_seconds_at_validation": 33.0,
-      "freshness_pass": true,
-      "freshness_max_seconds": 180.0,
-      "point_in_time": {
-        "pass": true,
-        "cutoff_source": "SIMULTANEOUS_TENCENT_QUOTE",
-        "cutoff_as_of_beijing": "2026-09-16T13:31:33+08:00",
-        "excluded_future_bucket_count": 1,
-        "excluded_future_bucket_times": [
-          "2026-09-16T13:32:00+08:00"
-        ],
-        "rule": "只消费不晚于同时腾讯quote provider timestamp的分钟点；更晚标签视为当前开放或未来分钟桶。"
-      },
-      "first_price": 0.821,
-      "latest_price": 0.825,
-      "path_change_pct": 0.4872,
-      "path_low": 0.818,
-      "path_low_as_of_beijing": "2026-09-16T09:31:00+08:00",
-      "path_high": 0.831,
-      "path_high_as_of_beijing": "2026-09-16T09:49:00+08:00",
-      "recovery_from_path_low_pct": 0.8557,
-      "retreat_from_path_high_pct": -0.722,
-      "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
-        "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得使用未来分钟桶。"
-      },
-      "recent_interval_minutes": 10.0,
-      "recent_move_pct": 0.0,
-      "recent_slope_pct_per_10m": 0.0,
-      "recent_volume_delta": 97841.0,
-      "recent_amount_delta": 8075221.6,
-      "relative_to_indices": {},
-      "formal_snapshot_reference": {
-        "as_of_beijing": "2026-09-16T13:31:18+08:00",
-        "price": 0.825,
         "minute_time_delta_minutes": 0.3,
         "role": "context_only_not_live_alignment_gate"
       },
       "quote_alignment": {
         "status": "PASS",
         "pass": true,
-        "minute_price": 0.825,
-        "quote_price": 0.824,
-        "quote_as_of_beijing": "2026-09-16T13:31:33+08:00",
-        "timestamp_delta_seconds": 33.0,
-        "abs_diff_pct": 0.1214,
+        "minute_price": 1.628,
+        "quote_price": 1.628,
+        "quote_as_of_beijing": "2026-09-16T13:58:42+08:00",
+        "timestamp_delta_seconds": 42.0,
+        "abs_diff_pct": 0.0,
         "max_abs_diff_pct": 0.25,
         "comparable_max_seconds": 90.0,
         "note": "该校验只确认minute/query与同时腾讯quote的同源一致性；正式最新价仍由quote router决定。"
@@ -551,7 +474,7 @@
           "label": "V_RECOVERY_CANDIDATE",
           "evidence": {
             "source": "tencent_1m",
-            "recovery_from_path_low_pct": 0.8557
+            "recovery_from_path_low_pct": 0.4318
           }
         }
       ],
@@ -559,47 +482,129 @@
       "path_role": "PRODUCTION_STRUCTURE_EVIDENCE"
     },
     {
+      "symbol": "159992",
+      "name": "创新药ETF",
+      "thscode": "159992.SZ",
+      "asset_class": "ETF",
+      "status": "READY",
+      "item_quality_pass": true,
+      "provider": "tencent_qq",
+      "provider_endpoint": "web.ifzq.gtimg.cn/appstock/app/minute/query",
+      "request_seconds": 0.951,
+      "sample_count": 180,
+      "raw_sample_count": 181,
+      "first_as_of_beijing": "2026-09-16T09:30:00+08:00",
+      "latest_as_of_beijing": "2026-09-16T13:58:00+08:00",
+      "latest_age_seconds_at_validation": 42.0,
+      "freshness_pass": true,
+      "freshness_max_seconds": 180.0,
+      "point_in_time": {
+        "pass": true,
+        "cutoff_source": "SIMULTANEOUS_TENCENT_QUOTE",
+        "cutoff_as_of_beijing": "2026-09-16T13:58:42+08:00",
+        "excluded_future_bucket_count": 1,
+        "excluded_future_bucket_times": [
+          "2026-09-16T13:59:00+08:00"
+        ],
+        "rule": "只消费不晚于同时腾讯quote provider timestamp的分钟点；更晚标签视为当前开放或未来分钟桶。"
+      },
+      "first_price": 0.821,
+      "latest_price": 0.826,
+      "path_change_pct": 0.609,
+      "path_low": 0.818,
+      "path_low_as_of_beijing": "2026-09-16T09:31:00+08:00",
+      "path_high": 0.831,
+      "path_high_as_of_beijing": "2026-09-16T09:49:00+08:00",
+      "recovery_from_path_low_pct": 0.978,
+      "retreat_from_path_high_pct": -0.6017,
+      "late_session_context": {
+        "status": "NOT_YET_AVAILABLE",
+        "reference_clock_beijing": "14:30",
+        "move_from_reference_pct": null,
+        "decision_boundary": "14:30前不构造尾盘方向；不得使用未来分钟桶。"
+      },
+      "recent_interval_minutes": 10.0,
+      "recent_move_pct": -0.1209,
+      "recent_slope_pct_per_10m": -0.1209,
+      "recent_volume_delta": 48794.0,
+      "recent_amount_delta": 4031654.5,
+      "relative_to_indices": {},
+      "formal_snapshot_reference": {
+        "as_of_beijing": "2026-09-16T13:58:21+08:00",
+        "price": 0.825,
+        "minute_time_delta_minutes": 0.35,
+        "role": "context_only_not_live_alignment_gate"
+      },
+      "quote_alignment": {
+        "status": "PASS",
+        "pass": true,
+        "minute_price": 0.826,
+        "quote_price": 0.825,
+        "quote_as_of_beijing": "2026-09-16T13:58:42+08:00",
+        "timestamp_delta_seconds": 42.0,
+        "abs_diff_pct": 0.1212,
+        "max_abs_diff_pct": 0.25,
+        "comparable_max_seconds": 90.0,
+        "note": "该校验只确认minute/query与同时腾讯quote的同源一致性；正式最新价仍由quote router决定。"
+      },
+      "sampling": {
+        "coverage": "HIGH",
+        "continuity_pass": true,
+        "duplicate_minute_count": 0,
+        "duplicate_minutes": [],
+        "unexpected_gap_count": 0,
+        "unexpected_gaps": [],
+        "median_gap_minutes": 1.0,
+        "max_gap_minutes": 90.0,
+        "source_granularity": "1m",
+        "limitation": "腾讯minute/query提供每分钟末笔价格及累计成交量/额，不提供分钟OHLC；当前开放/未来分钟桶已按Point-in-Time过滤。"
+      },
+      "structure_candidates": [],
+      "production_source": "TENCENT_1M",
+      "path_role": "PRODUCTION_STRUCTURE_EVIDENCE"
+    },
+    {
       "symbol": "399006",
       "asset_class": "A_SHARE_INDEX",
-      "sample_count": 14,
+      "sample_count": 15,
       "first_as_of_beijing": "2026-09-16T09:34:30+08:00",
-      "latest_as_of_beijing": "2026-09-16T13:31:18+08:00",
+      "latest_as_of_beijing": "2026-09-16T13:58:27+08:00",
       "first_price": 3239.52,
-      "latest_price": 3296.66,
-      "path_change_pct": 1.7638,
+      "latest_price": 3305.78,
+      "path_change_pct": 2.0454,
       "path_low": 3235.38,
       "path_low_as_of_beijing": "2026-09-16T09:49:06+08:00",
       "path_high": 3324.36,
       "path_high_as_of_beijing": "2026-09-16T11:40:42+08:00",
-      "recovery_from_path_low_pct": 1.8941,
-      "retreat_from_path_high_pct": -0.8332,
-      "latest_day_range_position": 0.6922,
+      "recovery_from_path_low_pct": 2.1759,
+      "retreat_from_path_high_pct": -0.5589,
+      "latest_day_range_position": 0.783,
       "late_session_context": {
         "status": "NOT_YET_AVAILABLE",
         "reference_clock_beijing": "14:30",
         "move_from_reference_pct": null,
         "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
       },
-      "recent_interval_minutes": 10.05,
-      "recent_move_pct": -0.4644,
-      "recent_slope_pct_per_10m": -0.4621,
-      "recent_volume_delta": 420498300.0,
-      "recent_amount_delta": 13875200000.0,
+      "recent_interval_minutes": 27.15,
+      "recent_move_pct": 0.2766,
+      "recent_slope_pct_per_10m": 0.1019,
+      "recent_volume_delta": 918918500.0,
+      "recent_amount_delta": 29104910000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 1.0687,
-          "benchmark_change_pct": 0.4319,
-          "benchmark_as_of_beijing": "2026-09-16T13:31:21+08:00"
+          "latest_relative_change_pct_points": 1.0734,
+          "benchmark_change_pct": 0.708,
+          "benchmark_as_of_beijing": "2026-09-16T13:58:27+08:00"
         },
         "399006": {
           "latest_relative_change_pct_points": 0.0,
-          "benchmark_change_pct": 1.5007,
-          "benchmark_as_of_beijing": "2026-09-16T13:31:18+08:00"
+          "benchmark_change_pct": 1.7814,
+          "benchmark_as_of_beijing": "2026-09-16T13:58:27+08:00"
         }
       },
       "sampling": {
         "coverage": "MEDIUM",
-        "median_gap_minutes": 14.6,
+        "median_gap_minutes": 14.68,
         "max_gap_minutes": 86.9,
         "limitation": "离散脉冲只能重建近实时路径；两次采样之间的瞬时拉升/急跌可能遗漏。日内high/low可证明期间发生过极值，但不能单独确定具体分钟形态。"
       },
@@ -608,9 +613,9 @@
           "label": "V_RECOVERY_CANDIDATE",
           "evidence": {
             "low_as_of_beijing": "2026-09-16T09:49:06+08:00",
-            "recovery_from_path_low_pct": 1.8941,
-            "points_after_low": 12,
-            "latest_range_position": 0.6887
+            "recovery_from_path_low_pct": 2.1759,
+            "points_after_low": 13,
+            "latest_range_position": 0.7912
           }
         }
       ],
@@ -626,33 +631,33 @@
       "item_quality_pass": true,
       "provider": "tencent_qq",
       "provider_endpoint": "web.ifzq.gtimg.cn/appstock/app/minute/query",
-      "request_seconds": 0.809,
-      "sample_count": 153,
-      "raw_sample_count": 154,
+      "request_seconds": 1.049,
+      "sample_count": 180,
+      "raw_sample_count": 181,
       "first_as_of_beijing": "2026-09-16T09:30:00+08:00",
-      "latest_as_of_beijing": "2026-09-16T13:31:00+08:00",
-      "latest_age_seconds_at_validation": 33.0,
+      "latest_as_of_beijing": "2026-09-16T13:58:00+08:00",
+      "latest_age_seconds_at_validation": 42.0,
       "freshness_pass": true,
       "freshness_max_seconds": 180.0,
       "point_in_time": {
         "pass": true,
         "cutoff_source": "SIMULTANEOUS_TENCENT_QUOTE",
-        "cutoff_as_of_beijing": "2026-09-16T13:31:33+08:00",
+        "cutoff_as_of_beijing": "2026-09-16T13:58:42+08:00",
         "excluded_future_bucket_count": 1,
         "excluded_future_bucket_times": [
-          "2026-09-16T13:32:00+08:00"
+          "2026-09-16T13:59:00+08:00"
         ],
         "rule": "只消费不晚于同时腾讯quote provider timestamp的分钟点；更晚标签视为当前开放或未来分钟桶。"
       },
       "first_price": 0.544,
-      "latest_price": 0.545,
-      "path_change_pct": 0.1838,
+      "latest_price": 0.546,
+      "path_change_pct": 0.3676,
       "path_low": 0.539,
       "path_low_as_of_beijing": "2026-09-16T09:52:00+08:00",
-      "path_high": 0.546,
-      "path_high_as_of_beijing": "2026-09-16T10:36:00+08:00",
-      "recovery_from_path_low_pct": 1.1132,
-      "retreat_from_path_high_pct": -0.1832,
+      "path_high": 0.547,
+      "path_high_as_of_beijing": "2026-09-16T13:46:00+08:00",
+      "recovery_from_path_low_pct": 1.2987,
+      "retreat_from_path_high_pct": -0.1828,
       "late_session_context": {
         "status": "NOT_YET_AVAILABLE",
         "reference_clock_beijing": "14:30",
@@ -660,25 +665,25 @@
         "decision_boundary": "14:30前不构造尾盘方向；不得使用未来分钟桶。"
       },
       "recent_interval_minutes": 10.0,
-      "recent_move_pct": 0.1838,
-      "recent_slope_pct_per_10m": 0.1838,
-      "recent_volume_delta": 140679.0,
-      "recent_amount_delta": 7662219.0,
+      "recent_move_pct": 0.0,
+      "recent_slope_pct_per_10m": 0.0,
+      "recent_volume_delta": 128333.0,
+      "recent_amount_delta": 7012625.0,
       "relative_to_indices": {},
       "formal_snapshot_reference": {
-        "as_of_beijing": "2026-09-16T13:31:15+08:00",
-        "price": 0.545,
-        "minute_time_delta_minutes": 0.25,
+        "as_of_beijing": "2026-09-16T13:58:18+08:00",
+        "price": 0.546,
+        "minute_time_delta_minutes": 0.3,
         "role": "context_only_not_live_alignment_gate"
       },
       "quote_alignment": {
         "status": "PASS",
         "pass": true,
-        "minute_price": 0.545,
-        "quote_price": 0.545,
-        "quote_as_of_beijing": "2026-09-16T13:31:33+08:00",
-        "timestamp_delta_seconds": 33.0,
-        "abs_diff_pct": 0.0,
+        "minute_price": 0.546,
+        "quote_price": 0.547,
+        "quote_as_of_beijing": "2026-09-16T13:58:42+08:00",
+        "timestamp_delta_seconds": 42.0,
+        "abs_diff_pct": 0.1828,
         "max_abs_diff_pct": 0.25,
         "comparable_max_seconds": 90.0,
         "note": "该校验只确认minute/query与同时腾讯quote的同源一致性；正式最新价仍由quote router决定。"
@@ -700,7 +705,7 @@
           "label": "V_RECOVERY_CANDIDATE",
           "evidence": {
             "source": "tencent_1m",
-            "recovery_from_path_low_pct": 1.1132
+            "recovery_from_path_low_pct": 1.2987
           }
         }
       ],
@@ -716,33 +721,33 @@
       "item_quality_pass": true,
       "provider": "tencent_qq",
       "provider_endpoint": "web.ifzq.gtimg.cn/appstock/app/minute/query",
-      "request_seconds": 0.685,
-      "sample_count": 153,
-      "raw_sample_count": 154,
+      "request_seconds": 0.918,
+      "sample_count": 180,
+      "raw_sample_count": 181,
       "first_as_of_beijing": "2026-09-16T09:30:00+08:00",
-      "latest_as_of_beijing": "2026-09-16T13:31:00+08:00",
-      "latest_age_seconds_at_validation": 34.0,
+      "latest_as_of_beijing": "2026-09-16T13:58:00+08:00",
+      "latest_age_seconds_at_validation": 43.0,
       "freshness_pass": true,
       "freshness_max_seconds": 180.0,
       "point_in_time": {
         "pass": true,
         "cutoff_source": "SIMULTANEOUS_TENCENT_QUOTE",
-        "cutoff_as_of_beijing": "2026-09-16T13:31:34+08:00",
+        "cutoff_as_of_beijing": "2026-09-16T13:58:43+08:00",
         "excluded_future_bucket_count": 1,
         "excluded_future_bucket_times": [
-          "2026-09-16T13:32:00+08:00"
+          "2026-09-16T13:59:00+08:00"
         ],
         "rule": "只消费不晚于同时腾讯quote provider timestamp的分钟点；更晚标签视为当前开放或未来分钟桶。"
       },
       "first_price": 1.417,
-      "latest_price": 1.424,
-      "path_change_pct": 0.494,
+      "latest_price": 1.431,
+      "path_change_pct": 0.988,
       "path_low": 1.417,
       "path_low_as_of_beijing": "2026-09-16T09:30:00+08:00",
-      "path_high": 1.428,
-      "path_high_as_of_beijing": "2026-09-16T10:03:00+08:00",
-      "recovery_from_path_low_pct": 0.494,
-      "retreat_from_path_high_pct": -0.2801,
+      "path_high": 1.435,
+      "path_high_as_of_beijing": "2026-09-16T13:54:00+08:00",
+      "recovery_from_path_low_pct": 0.988,
+      "retreat_from_path_high_pct": -0.2787,
       "late_session_context": {
         "status": "NOT_YET_AVAILABLE",
         "reference_clock_beijing": "14:30",
@@ -750,25 +755,25 @@
         "decision_boundary": "14:30前不构造尾盘方向；不得使用未来分钟桶。"
       },
       "recent_interval_minutes": 10.0,
-      "recent_move_pct": 0.0703,
-      "recent_slope_pct_per_10m": 0.0703,
-      "recent_volume_delta": 87974.0,
-      "recent_amount_delta": 12536231.0,
+      "recent_move_pct": 0.3506,
+      "recent_slope_pct_per_10m": 0.3506,
+      "recent_volume_delta": 381466.0,
+      "recent_amount_delta": 54614738.0,
       "relative_to_indices": {},
       "formal_snapshot_reference": {
-        "as_of_beijing": "2026-09-16T13:31:19+08:00",
-        "price": 1.425,
-        "minute_time_delta_minutes": 0.32,
+        "as_of_beijing": "2026-09-16T13:58:28+08:00",
+        "price": 1.434,
+        "minute_time_delta_minutes": 0.47,
         "role": "context_only_not_live_alignment_gate"
       },
       "quote_alignment": {
         "status": "PASS",
         "pass": true,
-        "minute_price": 1.424,
-        "quote_price": 1.426,
-        "quote_as_of_beijing": "2026-09-16T13:31:34+08:00",
-        "timestamp_delta_seconds": 34.0,
-        "abs_diff_pct": 0.1403,
+        "minute_price": 1.431,
+        "quote_price": 1.434,
+        "quote_as_of_beijing": "2026-09-16T13:58:43+08:00",
+        "timestamp_delta_seconds": 43.0,
+        "abs_diff_pct": 0.2092,
         "max_abs_diff_pct": 0.25,
         "comparable_max_seconds": 90.0,
         "note": "该校验只确认minute/query与同时腾讯quote的同源一致性；正式最新价仍由quote router决定。"
@@ -790,7 +795,7 @@
           "label": "V_RECOVERY_CANDIDATE",
           "evidence": {
             "source": "tencent_1m",
-            "recovery_from_path_low_pct": 0.494
+            "recovery_from_path_low_pct": 0.988
           }
         }
       ],
@@ -806,33 +811,33 @@
       "item_quality_pass": true,
       "provider": "tencent_qq",
       "provider_endpoint": "web.ifzq.gtimg.cn/appstock/app/minute/query",
-      "request_seconds": 0.785,
-      "sample_count": 153,
-      "raw_sample_count": 154,
+      "request_seconds": 0.853,
+      "sample_count": 180,
+      "raw_sample_count": 181,
       "first_as_of_beijing": "2026-09-16T09:30:00+08:00",
-      "latest_as_of_beijing": "2026-09-16T13:31:00+08:00",
-      "latest_age_seconds_at_validation": 35.0,
+      "latest_as_of_beijing": "2026-09-16T13:58:00+08:00",
+      "latest_age_seconds_at_validation": 41.0,
       "freshness_pass": true,
       "freshness_max_seconds": 180.0,
       "point_in_time": {
         "pass": true,
         "cutoff_source": "SIMULTANEOUS_TENCENT_QUOTE",
-        "cutoff_as_of_beijing": "2026-09-16T13:31:35+08:00",
+        "cutoff_as_of_beijing": "2026-09-16T13:58:41+08:00",
         "excluded_future_bucket_count": 1,
         "excluded_future_bucket_times": [
-          "2026-09-16T13:32:00+08:00"
+          "2026-09-16T13:59:00+08:00"
         ],
         "rule": "只消费不晚于同时腾讯quote provider timestamp的分钟点；更晚标签视为当前开放或未来分钟桶。"
       },
       "first_price": 2.227,
-      "latest_price": 2.236,
-      "path_change_pct": 0.4041,
+      "latest_price": 2.24,
+      "path_change_pct": 0.5837,
       "path_low": 2.217,
       "path_low_as_of_beijing": "2026-09-16T09:56:00+08:00",
       "path_high": 2.243,
       "path_high_as_of_beijing": "2026-09-16T11:22:00+08:00",
-      "recovery_from_path_low_pct": 0.857,
-      "retreat_from_path_high_pct": -0.3121,
+      "recovery_from_path_low_pct": 1.0374,
+      "retreat_from_path_high_pct": -0.1337,
       "late_session_context": {
         "status": "NOT_YET_AVAILABLE",
         "reference_clock_beijing": "14:30",
@@ -840,24 +845,24 @@
         "decision_boundary": "14:30前不构造尾盘方向；不得使用未来分钟桶。"
       },
       "recent_interval_minutes": 10.0,
-      "recent_move_pct": -0.0447,
-      "recent_slope_pct_per_10m": -0.0447,
-      "recent_volume_delta": 13305.0,
-      "recent_amount_delta": 2974755.0,
+      "recent_move_pct": 0.0447,
+      "recent_slope_pct_per_10m": 0.0447,
+      "recent_volume_delta": 13017.0,
+      "recent_amount_delta": 2914386.0,
       "relative_to_indices": {},
       "formal_snapshot_reference": {
-        "as_of_beijing": "2026-09-16T13:31:17+08:00",
-        "price": 2.236,
-        "minute_time_delta_minutes": 0.28,
+        "as_of_beijing": "2026-09-16T13:58:20+08:00",
+        "price": 2.24,
+        "minute_time_delta_minutes": 0.33,
         "role": "context_only_not_live_alignment_gate"
       },
       "quote_alignment": {
         "status": "PASS",
         "pass": true,
-        "minute_price": 2.236,
-        "quote_price": 2.236,
-        "quote_as_of_beijing": "2026-09-16T13:31:35+08:00",
-        "timestamp_delta_seconds": 35.0,
+        "minute_price": 2.24,
+        "quote_price": 2.24,
+        "quote_as_of_beijing": "2026-09-16T13:58:41+08:00",
+        "timestamp_delta_seconds": 41.0,
         "abs_diff_pct": 0.0,
         "max_abs_diff_pct": 0.25,
         "comparable_max_seconds": 90.0,
@@ -875,7 +880,15 @@
         "source_granularity": "1m",
         "limitation": "腾讯minute/query提供每分钟末笔价格及累计成交量/额，不提供分钟OHLC；当前开放/未来分钟桶已按Point-in-Time过滤。"
       },
-      "structure_candidates": [],
+      "structure_candidates": [
+        {
+          "label": "V_RECOVERY_CANDIDATE",
+          "evidence": {
+            "source": "tencent_1m",
+            "recovery_from_path_low_pct": 1.0374
+          }
+        }
+      ],
       "production_source": "TENCENT_1M",
       "path_role": "PRODUCTION_STRUCTURE_EVIDENCE"
     },
@@ -888,33 +901,33 @@
       "item_quality_pass": true,
       "provider": "tencent_qq",
       "provider_endpoint": "web.ifzq.gtimg.cn/appstock/app/minute/query",
-      "request_seconds": 0.747,
-      "sample_count": 153,
-      "raw_sample_count": 154,
+      "request_seconds": 0.931,
+      "sample_count": 180,
+      "raw_sample_count": 181,
       "first_as_of_beijing": "2026-09-16T09:30:00+08:00",
-      "latest_as_of_beijing": "2026-09-16T13:31:00+08:00",
-      "latest_age_seconds_at_validation": 34.0,
+      "latest_as_of_beijing": "2026-09-16T13:58:00+08:00",
+      "latest_age_seconds_at_validation": 40.0,
       "freshness_pass": true,
       "freshness_max_seconds": 180.0,
       "point_in_time": {
         "pass": true,
         "cutoff_source": "SIMULTANEOUS_TENCENT_QUOTE",
-        "cutoff_as_of_beijing": "2026-09-16T13:31:34+08:00",
+        "cutoff_as_of_beijing": "2026-09-16T13:58:40+08:00",
         "excluded_future_bucket_count": 1,
         "excluded_future_bucket_times": [
-          "2026-09-16T13:32:00+08:00"
+          "2026-09-16T13:59:00+08:00"
         ],
         "rule": "只消费不晚于同时腾讯quote provider timestamp的分钟点；更晚标签视为当前开放或未来分钟桶。"
       },
       "first_price": 1.266,
-      "latest_price": 1.262,
-      "path_change_pct": -0.316,
+      "latest_price": 1.27,
+      "path_change_pct": 0.316,
       "path_low": 1.251,
       "path_low_as_of_beijing": "2026-09-16T10:56:00+08:00",
       "path_high": 1.273,
       "path_high_as_of_beijing": "2026-09-16T09:31:00+08:00",
-      "recovery_from_path_low_pct": 0.8793,
-      "retreat_from_path_high_pct": -0.8641,
+      "recovery_from_path_low_pct": 1.5188,
+      "retreat_from_path_high_pct": -0.2357,
       "late_session_context": {
         "status": "NOT_YET_AVAILABLE",
         "reference_clock_beijing": "14:30",
@@ -922,25 +935,25 @@
         "decision_boundary": "14:30前不构造尾盘方向；不得使用未来分钟桶。"
       },
       "recent_interval_minutes": 10.0,
-      "recent_move_pct": 0.1587,
-      "recent_slope_pct_per_10m": 0.1587,
-      "recent_volume_delta": 87887.0,
-      "recent_amount_delta": 11085244.0,
+      "recent_move_pct": 0.3953,
+      "recent_slope_pct_per_10m": 0.3953,
+      "recent_volume_delta": 56373.0,
+      "recent_amount_delta": 7144567.0,
       "relative_to_indices": {},
       "formal_snapshot_reference": {
-        "as_of_beijing": "2026-09-16T13:31:19+08:00",
-        "price": 1.261,
-        "minute_time_delta_minutes": 0.32,
+        "as_of_beijing": "2026-09-16T13:58:25+08:00",
+        "price": 1.269,
+        "minute_time_delta_minutes": 0.42,
         "role": "context_only_not_live_alignment_gate"
       },
       "quote_alignment": {
         "status": "PASS",
         "pass": true,
-        "minute_price": 1.262,
-        "quote_price": 1.263,
-        "quote_as_of_beijing": "2026-09-16T13:31:34+08:00",
-        "timestamp_delta_seconds": 34.0,
-        "abs_diff_pct": 0.0792,
+        "minute_price": 1.27,
+        "quote_price": 1.269,
+        "quote_as_of_beijing": "2026-09-16T13:58:40+08:00",
+        "timestamp_delta_seconds": 40.0,
+        "abs_diff_pct": 0.0788,
         "max_abs_diff_pct": 0.25,
         "comparable_max_seconds": 90.0,
         "note": "该校验只确认minute/query与同时腾讯quote的同源一致性；正式最新价仍由quote router决定。"
@@ -970,21 +983,21 @@
       "item_quality_pass": true,
       "provider": "tencent_qq",
       "provider_endpoint": "web.ifzq.gtimg.cn/appstock/app/minute/query",
-      "request_seconds": 0.749,
-      "sample_count": 153,
-      "raw_sample_count": 154,
+      "request_seconds": 0.913,
+      "sample_count": 180,
+      "raw_sample_count": 181,
       "first_as_of_beijing": "2026-09-16T09:30:00+08:00",
-      "latest_as_of_beijing": "2026-09-16T13:31:00+08:00",
-      "latest_age_seconds_at_validation": 32.0,
+      "latest_as_of_beijing": "2026-09-16T13:58:00+08:00",
+      "latest_age_seconds_at_validation": 41.0,
       "freshness_pass": true,
       "freshness_max_seconds": 180.0,
       "point_in_time": {
         "pass": true,
         "cutoff_source": "SIMULTANEOUS_TENCENT_QUOTE",
-        "cutoff_as_of_beijing": "2026-09-16T13:31:32+08:00",
+        "cutoff_as_of_beijing": "2026-09-16T13:58:41+08:00",
         "excluded_future_bucket_count": 1,
         "excluded_future_bucket_times": [
-          "2026-09-16T13:32:00+08:00"
+          "2026-09-16T13:59:00+08:00"
         ],
         "rule": "只消费不晚于同时腾讯quote provider timestamp的分钟点；更晚标签视为当前开放或未来分钟桶。"
       },
@@ -1004,25 +1017,25 @@
         "decision_boundary": "14:30前不构造尾盘方向；不得使用未来分钟桶。"
       },
       "recent_interval_minutes": 10.0,
-      "recent_move_pct": -0.4367,
-      "recent_slope_pct_per_10m": -0.4367,
-      "recent_volume_delta": 1462763.0,
-      "recent_amount_delta": 100062465.0,
+      "recent_move_pct": -0.146,
+      "recent_slope_pct_per_10m": -0.146,
+      "recent_volume_delta": 758169.0,
+      "recent_amount_delta": 51908177.69,
       "relative_to_indices": {},
       "formal_snapshot_reference": {
-        "as_of_beijing": "2026-09-16T13:31:17+08:00",
+        "as_of_beijing": "2026-09-16T13:58:23+08:00",
         "price": 0.683,
-        "minute_time_delta_minutes": 0.28,
+        "minute_time_delta_minutes": 0.38,
         "role": "context_only_not_live_alignment_gate"
       },
       "quote_alignment": {
         "status": "PASS",
         "pass": true,
         "minute_price": 0.684,
-        "quote_price": 0.683,
-        "quote_as_of_beijing": "2026-09-16T13:31:32+08:00",
-        "timestamp_delta_seconds": 32.0,
-        "abs_diff_pct": 0.1464,
+        "quote_price": 0.684,
+        "quote_as_of_beijing": "2026-09-16T13:58:41+08:00",
+        "timestamp_delta_seconds": 41.0,
+        "abs_diff_pct": 0.0,
         "max_abs_diff_pct": 0.25,
         "comparable_max_seconds": 90.0,
         "note": "该校验只确认minute/query与同时腾讯quote的同源一致性；正式最新价仍由quote router决定。"
@@ -1052,33 +1065,33 @@
       "item_quality_pass": true,
       "provider": "tencent_qq",
       "provider_endpoint": "web.ifzq.gtimg.cn/appstock/app/minute/query",
-      "request_seconds": 0.75,
-      "sample_count": 153,
-      "raw_sample_count": 154,
+      "request_seconds": 0.932,
+      "sample_count": 180,
+      "raw_sample_count": 181,
       "first_as_of_beijing": "2026-09-16T09:30:00+08:00",
-      "latest_as_of_beijing": "2026-09-16T13:31:00+08:00",
-      "latest_age_seconds_at_validation": 33.0,
+      "latest_as_of_beijing": "2026-09-16T13:58:00+08:00",
+      "latest_age_seconds_at_validation": 42.0,
       "freshness_pass": true,
       "freshness_max_seconds": 180.0,
       "point_in_time": {
         "pass": true,
         "cutoff_source": "SIMULTANEOUS_TENCENT_QUOTE",
-        "cutoff_as_of_beijing": "2026-09-16T13:31:33+08:00",
+        "cutoff_as_of_beijing": "2026-09-16T13:58:42+08:00",
         "excluded_future_bucket_count": 1,
         "excluded_future_bucket_times": [
-          "2026-09-16T13:32:00+08:00"
+          "2026-09-16T13:59:00+08:00"
         ],
         "rule": "只消费不晚于同时腾讯quote provider timestamp的分钟点；更晚标签视为当前开放或未来分钟桶。"
       },
       "first_price": 8.828,
-      "latest_price": 8.892,
-      "path_change_pct": 0.725,
+      "latest_price": 8.9,
+      "path_change_pct": 0.8156,
       "path_low": 8.805,
       "path_low_as_of_beijing": "2026-09-16T09:58:00+08:00",
       "path_high": 8.922,
       "path_high_as_of_beijing": "2026-09-16T11:22:00+08:00",
-      "recovery_from_path_low_pct": 0.9881,
-      "retreat_from_path_high_pct": -0.3362,
+      "recovery_from_path_low_pct": 1.0789,
+      "retreat_from_path_high_pct": -0.2466,
       "late_session_context": {
         "status": "NOT_YET_AVAILABLE",
         "reference_clock_beijing": "14:30",
@@ -1086,24 +1099,24 @@
         "decision_boundary": "14:30前不构造尾盘方向；不得使用未来分钟桶。"
       },
       "recent_interval_minutes": 10.0,
-      "recent_move_pct": -0.0112,
-      "recent_slope_pct_per_10m": -0.0112,
-      "recent_volume_delta": 140540.0,
-      "recent_amount_delta": 124973114.36,
+      "recent_move_pct": -0.0337,
+      "recent_slope_pct_per_10m": -0.0337,
+      "recent_volume_delta": 133508.0,
+      "recent_amount_delta": 118835330.04,
       "relative_to_indices": {},
       "formal_snapshot_reference": {
-        "as_of_beijing": "2026-09-16T13:31:18+08:00",
-        "price": 8.892,
-        "minute_time_delta_minutes": 0.3,
+        "as_of_beijing": "2026-09-16T13:58:24+08:00",
+        "price": 8.898,
+        "minute_time_delta_minutes": 0.4,
         "role": "context_only_not_live_alignment_gate"
       },
       "quote_alignment": {
         "status": "PASS",
         "pass": true,
-        "minute_price": 8.892,
-        "quote_price": 8.895,
-        "quote_as_of_beijing": "2026-09-16T13:31:33+08:00",
-        "timestamp_delta_seconds": 33.0,
+        "minute_price": 8.9,
+        "quote_price": 8.897,
+        "quote_as_of_beijing": "2026-09-16T13:58:42+08:00",
+        "timestamp_delta_seconds": 42.0,
         "abs_diff_pct": 0.0337,
         "max_abs_diff_pct": 0.25,
         "comparable_max_seconds": 90.0,
@@ -1134,21 +1147,21 @@
       "item_quality_pass": true,
       "provider": "tencent_qq",
       "provider_endpoint": "web.ifzq.gtimg.cn/appstock/app/minute/query",
-      "request_seconds": 0.832,
-      "sample_count": 153,
-      "raw_sample_count": 154,
+      "request_seconds": 1.027,
+      "sample_count": 180,
+      "raw_sample_count": 181,
       "first_as_of_beijing": "2026-09-16T09:30:00+08:00",
-      "latest_as_of_beijing": "2026-09-16T13:31:00+08:00",
-      "latest_age_seconds_at_validation": 34.0,
+      "latest_as_of_beijing": "2026-09-16T13:58:00+08:00",
+      "latest_age_seconds_at_validation": 40.0,
       "freshness_pass": true,
       "freshness_max_seconds": 180.0,
       "point_in_time": {
         "pass": true,
         "cutoff_source": "SIMULTANEOUS_TENCENT_QUOTE",
-        "cutoff_as_of_beijing": "2026-09-16T13:31:34+08:00",
+        "cutoff_as_of_beijing": "2026-09-16T13:58:40+08:00",
         "excluded_future_bucket_count": 1,
         "excluded_future_bucket_times": [
-          "2026-09-16T13:32:00+08:00"
+          "2026-09-16T13:59:00+08:00"
         ],
         "rule": "只消费不晚于同时腾讯quote provider timestamp的分钟点；更晚标签视为当前开放或未来分钟桶。"
       },
@@ -1168,14 +1181,14 @@
         "decision_boundary": "14:30前不构造尾盘方向；不得使用未来分钟桶。"
       },
       "recent_interval_minutes": 10.0,
-      "recent_move_pct": 0.0,
-      "recent_slope_pct_per_10m": 0.0,
-      "recent_volume_delta": 129046.0,
-      "recent_amount_delta": 8711085.0,
+      "recent_move_pct": -0.2946,
+      "recent_slope_pct_per_10m": -0.2946,
+      "recent_volume_delta": 91989.0,
+      "recent_amount_delta": 6237202.0,
       "relative_to_indices": {},
       "formal_snapshot_reference": {
-        "as_of_beijing": "2026-09-16T13:31:16+08:00",
-        "price": 0.675,
+        "as_of_beijing": "2026-09-16T13:58:16+08:00",
+        "price": 0.677,
         "minute_time_delta_minutes": 0.27,
         "role": "context_only_not_live_alignment_gate"
       },
@@ -1183,10 +1196,10 @@
         "status": "PASS",
         "pass": true,
         "minute_price": 0.677,
-        "quote_price": 0.676,
-        "quote_as_of_beijing": "2026-09-16T13:31:34+08:00",
-        "timestamp_delta_seconds": 34.0,
-        "abs_diff_pct": 0.1479,
+        "quote_price": 0.678,
+        "quote_as_of_beijing": "2026-09-16T13:58:40+08:00",
+        "timestamp_delta_seconds": 40.0,
+        "abs_diff_pct": 0.1475,
         "max_abs_diff_pct": 0.25,
         "comparable_max_seconds": 90.0,
         "note": "该校验只确认minute/query与同时腾讯quote的同源一致性；正式最新价仍由quote router决定。"
@@ -1203,15 +1216,7 @@
         "source_granularity": "1m",
         "limitation": "腾讯minute/query提供每分钟末笔价格及累计成交量/额，不提供分钟OHLC；当前开放/未来分钟桶已按Point-in-Time过滤。"
       },
-      "structure_candidates": [
-        {
-          "label": "V_RECOVERY_CANDIDATE",
-          "evidence": {
-            "source": "tencent_1m",
-            "recovery_from_path_low_pct": 4.7988
-          }
-        }
-      ],
+      "structure_candidates": [],
       "production_source": "TENCENT_1M",
       "path_role": "PRODUCTION_STRUCTURE_EVIDENCE"
     },
@@ -1224,33 +1229,33 @@
       "item_quality_pass": true,
       "provider": "tencent_qq",
       "provider_endpoint": "web.ifzq.gtimg.cn/appstock/app/minute/query",
-      "request_seconds": 0.824,
-      "sample_count": 153,
-      "raw_sample_count": 154,
+      "request_seconds": 1.042,
+      "sample_count": 180,
+      "raw_sample_count": 181,
       "first_as_of_beijing": "2026-09-16T09:30:00+08:00",
-      "latest_as_of_beijing": "2026-09-16T13:31:00+08:00",
-      "latest_age_seconds_at_validation": 34.0,
+      "latest_as_of_beijing": "2026-09-16T13:58:00+08:00",
+      "latest_age_seconds_at_validation": 40.0,
       "freshness_pass": true,
       "freshness_max_seconds": 180.0,
       "point_in_time": {
         "pass": true,
         "cutoff_source": "SIMULTANEOUS_TENCENT_QUOTE",
-        "cutoff_as_of_beijing": "2026-09-16T13:31:34+08:00",
+        "cutoff_as_of_beijing": "2026-09-16T13:58:40+08:00",
         "excluded_future_bucket_count": 1,
         "excluded_future_bucket_times": [
-          "2026-09-16T13:32:00+08:00"
+          "2026-09-16T13:59:00+08:00"
         ],
         "rule": "只消费不晚于同时腾讯quote provider timestamp的分钟点；更晚标签视为当前开放或未来分钟桶。"
       },
       "first_price": 1.638,
-      "latest_price": 1.696,
-      "path_change_pct": 3.5409,
+      "latest_price": 1.701,
+      "path_change_pct": 3.8462,
       "path_low": 1.638,
       "path_low_as_of_beijing": "2026-09-16T09:30:00+08:00",
       "path_high": 1.712,
       "path_high_as_of_beijing": "2026-09-16T13:01:00+08:00",
-      "recovery_from_path_low_pct": 3.5409,
-      "retreat_from_path_high_pct": -0.9346,
+      "recovery_from_path_low_pct": 3.8462,
+      "retreat_from_path_high_pct": -0.6425,
       "late_session_context": {
         "status": "NOT_YET_AVAILABLE",
         "reference_clock_beijing": "14:30",
@@ -1258,25 +1263,25 @@
         "decision_boundary": "14:30前不构造尾盘方向；不得使用未来分钟桶。"
       },
       "recent_interval_minutes": 10.0,
-      "recent_move_pct": -0.2353,
-      "recent_slope_pct_per_10m": -0.2353,
-      "recent_volume_delta": 1348985.0,
-      "recent_amount_delta": 228549671.98,
+      "recent_move_pct": -0.2346,
+      "recent_slope_pct_per_10m": -0.2346,
+      "recent_volume_delta": 944415.0,
+      "recent_amount_delta": 160899953.49,
       "relative_to_indices": {},
       "formal_snapshot_reference": {
-        "as_of_beijing": "2026-09-16T13:31:16+08:00",
-        "price": 1.695,
+        "as_of_beijing": "2026-09-16T13:58:16+08:00",
+        "price": 1.702,
         "minute_time_delta_minutes": 0.27,
         "role": "context_only_not_live_alignment_gate"
       },
       "quote_alignment": {
         "status": "PASS",
         "pass": true,
-        "minute_price": 1.696,
-        "quote_price": 1.695,
-        "quote_as_of_beijing": "2026-09-16T13:31:34+08:00",
-        "timestamp_delta_seconds": 34.0,
-        "abs_diff_pct": 0.059,
+        "minute_price": 1.701,
+        "quote_price": 1.702,
+        "quote_as_of_beijing": "2026-09-16T13:58:40+08:00",
+        "timestamp_delta_seconds": 40.0,
+        "abs_diff_pct": 0.0588,
         "max_abs_diff_pct": 0.25,
         "comparable_max_seconds": 90.0,
         "note": "该校验只确认minute/query与同时腾讯quote的同源一致性；正式最新价仍由quote router决定。"
