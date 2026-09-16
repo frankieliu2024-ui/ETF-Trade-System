@@ -165,6 +165,54 @@ class HistoricalBackfillIngressTests(unittest.TestCase):
             self.assertEqual(got["confirmed_at_beijing"], "2026-09-02T10:00:00+08:00")
             self.assertEqual(got["historical_fact_adopted_at"], "2026-09-16T13:00:00+08:00")
 
+
+    def test_historical_core_mismatch_diagnostic_contains_runtime_values(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            d = root / "events/trades"
+            d.mkdir(parents=True)
+            (d / "e.json").write_text(json.dumps({
+                "event_id": "e", "code": "159326", "side": "BUY",
+                "quantity": 8201, "price": 1.0,
+                "executed_at": "2026-09-01T10:00:00+08:00",
+            }), encoding="utf-8")
+            req = {
+                "request_id": "req-623-diagnostic",
+                "ingress_mode": "HISTORICAL_BACKFILL",
+                "_ingress_path": "requests/historical_backfill/manifest_20260916_623.json",
+                "historical_trades": [{
+                    "event_id": "e", "code": "159326", "side": "BUY",
+                    "quantity": 8200, "price": 1.0,
+                    "executed_at": "2026-09-01T10:00:00+08:00",
+                }],
+            }
+            with patch.object(sync, "ROOT", root):
+                with self.assertRaises(ValueError) as ctx:
+                    sync.process_historical_backfill_request(req)
+            message = str(ctx.exception)
+            self.assertIn("existing_value=8201", message)
+            self.assertIn("existing_type=int", message)
+            self.assertIn("expected_value=8200", message)
+            self.assertIn("expected_type=int", message)
+            self.assertIn("existing_source_path=requests/historical_backfill/manifest_20260916_623.json", message)
+            self.assertIn("request_id='req-623-diagnostic'", message)
+
+    def test_historical_core_equal_ints_do_not_mismatch(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            d = root / "events/trades"
+            d.mkdir(parents=True)
+            event = {"event_id": "e", "code": "159326", "side": "BUY",
+                     "quantity": 8200, "price": 1.0,
+                     "executed_at": "2026-09-01T10:00:00+08:00"}
+            (d / "e.json").write_text(json.dumps(event), encoding="utf-8")
+            req = {"request_id": "req-623-equal", "ingress_mode": "HISTORICAL_BACKFILL",
+                   "historical_trades": [event]}
+            with patch.object(sync, "ROOT", root):
+                result = sync.process_historical_backfill_request(req)
+            self.assertTrue(result["ok"])
+            self.assertEqual(result["created"], 0)
+
     def test_core_mismatch_fails_closed(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
