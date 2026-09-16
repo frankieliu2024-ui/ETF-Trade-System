@@ -2220,8 +2220,12 @@ def process_historical_backfill_request(request: dict) -> dict:
                 "execution_status": "ACQUIRED",
             })
             created += 1
-        for path in trade_dir.glob("*301689*SELL*500*.json"):
+        for path in trade_dir.glob("*.json"):
             event = load_json(path)
+            if (str(event.get("code") or "") != "301689"
+                    or str(event.get("side") or "").upper() != "SELL"
+                    or safe_float(event.get("quantity")) != 500.0):
+                continue
             if event.get("lot_source_event_id") != aid:
                 event["lot_source_event_id"] = aid
                 event["lot_source_relation"] = "ACQUISITION_TO_SELL"
