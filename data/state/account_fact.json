@@ -1,18 +1,18 @@
 {
   "status": "VALID",
-  "updated_at": "2026-09-15T16:18:00+08:00",
-  "source": "BROKER_SCREENSHOT_20260915_1618_USER_PROVIDED_REFLECTS_1500_CLOSE",
+  "updated_at": "2026-09-16T11:30:00+08:00",
+  "source": "BROKER_HOLDINGS_SCREENSHOT_20260916_1130_USER_CONFIRMED",
   "fee_fact_updated_at": "2026-08-28T08:11:00+08:00",
   "fee_fact_source": "BROKER_STATEMENT_SCREENSHOT_20260828_USER_CONFIRMED",
   "account_reconciled_at": "2026-08-28T08:11:00+08:00",
   "account_reconciliation_source": "BROKER_ACCOUNT_AND_STATEMENT_SCREENSHOTS_20260828_USER_CONFIRMED",
-  "last_confirmed_market_date": "2026-09-15",
-  "total_asset": 191353.31,
-  "stock_market_value": 143340.3,
-  "cash": 48013.01,
-  "holding_pnl": -25924.5,
-  "daily_pnl": -1605.1,
-  "daily_pnl_pct": -0.83,
+  "last_confirmed_market_date": "2026-09-16",
+  "total_asset": 194519.45,
+  "stock_market_value": 176510.0,
+  "cash": 18008.45,
+  "holding_pnl": -22758.36,
+  "daily_pnl": 3180.7,
+  "daily_pnl_pct": 1.66,
   "orders": [],
   "trades": [
     {
@@ -42,11 +42,13 @@
       "asset_type": "STOCK",
       "name": "宁德时代",
       "code": "300750",
-      "quantity": 100,
+      "quantity": 200,
       "available_quantity": 100,
-      "cost": 393.781,
-      "last_price": 316.36,
-      "market_value": 31636.0
+      "cost": 346.908,
+      "last_price": 304.31,
+      "market_value": 60862.0,
+      "holding_pnl": -8519.63,
+      "holding_pnl_pct": -12.279
     },
     {
       "asset_type": "STOCK",
@@ -55,8 +57,10 @@
       "quantity": 500,
       "available_quantity": 500,
       "cost": 58.054,
-      "last_price": 60.8,
-      "market_value": 30400.0
+      "last_price": 62.72,
+      "market_value": 31360.0,
+      "holding_pnl": 2332.78,
+      "holding_pnl_pct": 8.037
     },
     {
       "asset_type": "ETF",
@@ -65,8 +69,10 @@
       "quantity": 14100,
       "available_quantity": 14100,
       "cost": 2.099,
-      "last_price": 1.638,
-      "market_value": 23095.8
+      "last_price": 1.71,
+      "market_value": 24111.0,
+      "holding_pnl": -5483.41,
+      "holding_pnl_pct": -18.529
     },
     {
       "asset_type": "ETF",
@@ -75,8 +81,10 @@
       "quantity": 19500,
       "available_quantity": 19500,
       "cost": 1.269,
-      "last_price": 1.012,
-      "market_value": 19734.0
+      "last_price": 1.051,
+      "market_value": 20494.5,
+      "holding_pnl": -4254.1,
+      "holding_pnl_pct": -17.189
     },
     {
       "asset_type": "ETF",
@@ -85,8 +93,10 @@
       "quantity": 12200,
       "available_quantity": 12200,
       "cost": 1.626,
-      "last_price": 1.621,
-      "market_value": 19776.2
+      "last_price": 1.63,
+      "market_value": 19886.0,
+      "holding_pnl": 49.4,
+      "holding_pnl_pct": 0.249
     },
     {
       "asset_type": "ETF",
@@ -95,11 +105,13 @@
       "quantity": 28900,
       "available_quantity": 28900,
       "cost": 0.923,
-      "last_price": 0.647,
-      "market_value": 18698.3
+      "last_price": 0.685,
+      "market_value": 19796.5,
+      "holding_pnl": -6883.4,
+      "holding_pnl_pct": -25.8
     }
   ],
-  "validity_mode": "EVENT_DRIVEN_CARRY_FORWARD",
+  "validity_mode": "BROKER_SCREENSHOT_USER_CONFIRMED",
   "formal_action": {
     "action": "确认半导体设备ETF已卖出10,000份并完成账户闭环；本节点无新增卖出动作，不新增ETF；剩余六项持仓持有管理，现金保留。",
     "quantity": null,
@@ -109,7 +121,9 @@
     "lifecycle": "半导体设备ETF（561980）：已完成降低风险10,000份，剩余28,900份持有管理。\n宁德时代（300750）：持有管理。\n工业富联（601138）：持有管理。\n科创50ETF（588000）：持有管理。\n科创创业ETF（159781）：持有管理。\n纳指ETF（159941）：持有管理。",
     "applicable_object": "",
     "validity": "ACTIVE",
-    "execution_status": "PENDING"
+    "execution_status": "EXECUTED",
+    "execution_fact_ref": "events/trades/trade_20260916_102933_300750_buy_100.json",
+    "last_executed_event_id": "trade_20260916_102933_300750_buy_100"
   },
   "account_change_events_after_confirmed_at": [
     {
@@ -1021,6 +1035,49 @@
       "reconciliation_status": "UNRECONCILED_ACCOUNT_CHANGE",
       "source": "BROKER_SCREENSHOT_20260915_1618_USER_PROVIDED_REFLECTS_1500_CLOSE",
       "read_only": true
+    },
+    {
+      "event_id": "account_change_bb256920b8d18332216d",
+      "idempotency_key": "account_change_bb256920b8d18332216d",
+      "event_type": "USER_REPORTED_TRADE",
+      "event_time": "2026-09-16T11:30:00+08:00",
+      "object": "宁德时代（300750）",
+      "code": "300750",
+      "quantity_before": 100.0,
+      "quantity_after": 200.0,
+      "quantity_delta": 100.0,
+      "change_summary": "买入/新增持仓",
+      "reconciliation_status": "RECONCILED_BY_CONFIRMED_TRADE",
+      "source": "BROKER_HOLDINGS_SCREENSHOT_20260916_1130_USER_CONFIRMED",
+      "read_only": true
+    },
+    {
+      "event_id": "account_change_42f7bd402a9e0f5983b3",
+      "idempotency_key": "account_change_42f7bd402a9e0f5983b3",
+      "event_type": "USER_REPORTED_TRADE",
+      "event_time": "2026-09-16T11:30:00+08:00",
+      "object": "cash",
+      "change_summary": "cash变化 -30004.56",
+      "amount_before": 48013.01,
+      "amount_after": 18008.45,
+      "amount_delta": -30004.56,
+      "reconciliation_status": "RECONCILED_BY_CONFIRMED_TRADE",
+      "source": "BROKER_HOLDINGS_SCREENSHOT_20260916_1130_USER_CONFIRMED",
+      "read_only": true
+    },
+    {
+      "event_id": "account_change_d825ebe31ebb6c963357",
+      "idempotency_key": "account_change_d825ebe31ebb6c963357",
+      "event_type": "USER_REPORTED_TRADE",
+      "event_time": "2026-09-16T11:30:00+08:00",
+      "object": "total_asset",
+      "change_summary": "total_asset变化 +3166.14",
+      "amount_before": 191353.31,
+      "amount_after": 194519.45,
+      "amount_delta": 3166.14,
+      "reconciliation_status": "RECONCILED_BY_CONFIRMED_TRADE",
+      "source": "BROKER_HOLDINGS_SCREENSHOT_20260916_1130_USER_CONFIRMED",
+      "read_only": true
     }
   ],
   "settlement_obligations": [
@@ -1042,11 +1099,11 @@
   ],
   "reserved_cash_for_settlement": 0,
   "deployable_cash_before_settlement": 2349.47,
-  "deployable_cash": 48013.01,
+  "deployable_cash": 18008.45,
   "settlement_cash_shortfall": 0.0,
   "settlement_constraint_status": "NONE",
   "account_fact_derivation_note": "Positions/prices/PnL are directly visible in the user-provided post-trade broker screenshot. Cash is derived from prior broker-confirmed cash 11197.47 minus confirmed execution amount 4953.00 and 5.00 fee implied by broker position cost/PnL, yielding 6239.47; total asset is displayed market value 174405.50 plus derived cash. This derived cash must be replaced by a later broker-displayed cash fact if one is provided.",
-  "broker_displayed_at_beijing": "2026-09-14T16:43:00+08:00",
+  "broker_displayed_at_beijing": "2026-09-16T11:30:00+08:00",
   "total_assets": 179921.82,
   "total_market_value": 173451.2,
   "available_cash": 6470.62,
