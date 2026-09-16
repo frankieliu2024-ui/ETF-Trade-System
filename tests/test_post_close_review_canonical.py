@@ -71,6 +71,99 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertEqual(restored.count("CASE-20260831-01"), 1)
         self.assertEqual(json.loads(closure_path.read_text(encoding="utf-8"))["status"], "CLOSED")
 
+    def test_stale_canonical_review_projects_existing_case_updates_idempotently_without_rewriting_pit(self):
+        case_ids = ["CASE-20260902-01", "CASE-20260903-01", "CASE-20260909-01"]
+        codes = ["159326", "518880", "515220"]
+        event_ids = ["exit_159326", "exit_518880", "exit_515220"]
+        details = [
+            "### 2.16 CASE-20260902-01：电网设备ETF Trial执行复盘\n"
+            "- 背景／生命周期：2026-09-02事前形成Trial；历史判断保持原样。\n"
+            "- 关键证据：决策日证据只用于当时判断。\n- 执行：BUY事实见原始记录。\n"
+            "- 结果：当时继续Trial。\n- 判断质量：按当时证据评估。\n- 执行质量：原始成交事实。\n"
+            "- 风险收益质量：等待验证。\n- 资本使用效率：有限试错。\n"
+            "- 最终结果／反事实：当时未能判断。\n- 经验：保留历史边界。",
+            "### 2.17 CASE-20260903-01：黄金ETF Trial执行复盘\n"
+            "- 背景／生命周期：2026-09-03建立Trial。\n- 关键证据：事前证据。\n"
+            "- 执行：BUY事实。\n- 结果：继续持有。\n- 判断质量：待验证。\n"
+            "- 执行质量：按原成交。\n- 风险收益质量：待验证。\n"
+            "- 资本使用效率：有限试错。\n- 最终结果／反事实：当时开放。\n- 经验：不倒灌。",
+            "### 2.18 CASE-20260909-01：煤炭ETF Trial｜2026-09-09真实买入；2026-09-09事前判断；不倒灌后续结果。",
+        ]
+        self.root.joinpath("ETF交易复盘与经验库_2026.md").write_text(
+            "## 3. 历史研究与专项回测\n<!-- AUTO_CASE_DETAILS_START -->\n"
+            + "\n".join(details)
+            + "\n<!-- AUTO_CASE_DETAILS_END -->\n"
+            "<!-- AUTO_POST_CLOSE_REVIEW_CASES_START -->\n<!-- AUTO_POST_CLOSE_REVIEW_CASES_END -->\n",
+            encoding="utf-8",
+        )
+        updates = []
+        trade_dir = self.root / "events/trades"
+        trade_dir.mkdir(parents=True)
+        for case_id, code, event_id in zip(case_ids, codes, event_ids):
+            (trade_dir / f"{event_id}.json").write_text(json.dumps({
+                "event_id": event_id, "code": code, "name": "ETF", "side": "SELL",
+                "quantity": 100, "price": 1.23, "amount": 123.0,
+                "confirmed_at_beijing": "2026-08-31T14:30:00+08:00",
+                "execution_status": "EXECUTED",
+            }), encoding="utf-8")
+            updates.append({
+                "trade_event_id": event_id, "case_id": case_id, "security_code": code,
+                "case_status": "RESOLVED", "mapping_reason": f"{case_id}已全部退出并解决。",
+            })
+        # The canonical review may contain the same case mapping more than once;
+        # projection must still emit one later-known update per CASE/date/field.
+        updates.append(dict(updates[1]))
+
+        request = self.request("2026-08-31T15:20:00+08:00")
+        review = request["formal_review"]
+        review["case_mapping"] = {"existing_case_updates": updates}
+        review["experience_entry"] = "2026-08-31正式复盘确认三个CASE均完成退出。"
+        prior = {
+            "event_type": "FORMAL_POST_CLOSE_REVIEW", "market_date": "2026-08-31",
+            "fingerprint": "canonical-existing-fingerprint", "reviewed_at_beijing": "2026-08-31T15:30:00+08:00",
+            "updated_at_beijing": "2026-08-31T15:31:00+08:00", "review": json.loads(json.dumps(review)),
+        }
+        event_path = self.root / "events/reviews/2026-08-31.json"
+        event_path.write_text(json.dumps(prior, ensure_ascii=False), encoding="utf-8")
+        event_before = event_path.read_bytes()
+        case_path = self.root / "ETF交易复盘与经验库_2026.md"
+        text_before = case_path.read_text(encoding="utf-8")
+
+        self.assertEqual(sync.record_post_close_review({"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}, request), (True, True))
+        first = case_path.read_text(encoding="utf-8")
+        self.assertEqual(event_path.read_bytes(), event_before)
+        self.assertFalse((self.root / "data/state/close_review_closure_2026-08-31.json").exists())
+        self.assertIn("2026-09-02事前形成Trial；历史判断保持原样。", first)
+        self.assertIn("2026-09-09事前判断；不倒灌后续结果。", first)
+        for case_id, event_id in zip(case_ids, event_ids):
+            self.assertIn(f"### 2.{case_ids.index(case_id) + 16} {case_id}：", first)
+            self.assertIn("- 背景／生命周期：", first)
+            self.assertIn("- 关键证据：", first)
+            self.assertIn("- 执行：", first)
+            self.assertIn("- 最终结果／反事实：", first)
+            self.assertIn("后续正式复盘（2026-08-31）", first)
+            self.assertIn(f"trade_event_id={event_id}", first)
+        self.assertIn("2026-09-09事前判断；不倒灌后续结果。", first)
+
+        self.assertEqual(sync.record_post_close_review({"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}, request), (True, True))
+        second = case_path.read_text(encoding="utf-8")
+        self.maxDiff = None
+        self.assertEqual(second, first)
+        self.assertEqual(event_path.read_bytes(), event_before)
+        self.assertEqual(second.count("后续正式复盘（2026-08-31）"), 9)
+        section = second.split("### 2.17 CASE-20260903-01：", 1)[1].split("### 2.18", 1)[0]
+        self.assertEqual(section.count("后续正式复盘（2026-08-31）"), 3)
+
+    def test_new_case_uses_complete_shared_human_template(self):
+        case_entry = sync._case_detail_projection_entry(
+            "### CASE-20260831-01：短模板试验\n20260831_trade｜- 已归入CASE-20260831-01｜routing",
+            "CASE-20260831-01",
+        )
+        for field in sync._CASE_TEMPLATE_FIELDS:
+            self.assertIn(f"- {field}：", case_entry)
+        self.assertNotIn("已归入CASE", case_entry)
+        self.assertIn("信息不足（现有正式复盘未记录该字段）", case_entry)
+
     def test_case_mapping_normalizes_duplicate_trade_event_marker_idempotently(self):
         event_id = "BROKER_TRADE_20260909_133021_515220_BUY_3700"
         marker = f"<!-- TRADE_EVENT:{event_id} -->"

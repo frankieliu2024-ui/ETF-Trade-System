@@ -51,6 +51,82 @@ def display_name(position: dict) -> str:
     return f"{position.get('name', '')}（{position.get('code', '')}）"
 
 
+
+def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
+    """Return the latest canonical FORMAL_DECISION, never a review/stage artifact."""
+    candidates = []
+    for path in (root / "events" / "decisions").glob("*.json"):
+        try:
+            event = load_json(path)
+        except (OSError, json.JSONDecodeError, TypeError):
+            continue
+        if str(event.get("event_type") or "").upper() != "FORMAL_DECISION":
+            continue
+        decision = event.get("formal_decision") or event.get("decision") or {}
+        if not isinstance(decision, dict):
+            continue
+        stamp = event.get("decision_time_beijing") or event.get("decision_effective_at_beijing") or decision.get("decision_time") or decision.get("decision_effective_at_beijing") or event.get("recorded_at_beijing")
+        try:
+            from datetime import datetime
+            parsed = datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=SHANGHAI)
+        except (TypeError, ValueError):
+            continue
+        candidates.append((parsed, str(path), decision))
+    if not candidates:
+        return {}
+    decision = max(candidates, key=lambda item: (item[0], item[1]))[2]
+    lifecycle = decision.get("lifecycle")
+    if isinstance(lifecycle, dict):
+        lifecycle = "；".join(f"{key}：{value}" for key, value in lifecycle.items())
+    return {
+        "risk_permission": decision.get("risk_permission") or "未提供",
+        "lifecycle": lifecycle or "未提供",
+        "main_candidate": decision.get("main_candidate") or decision.get("candidate") or "无新的主候选。",
+        "amount_action": decision.get("amount_action") or decision.get("action") or "未提供",
+        "decisive_reason": decision.get("decisive_reason") or decision.get("zero_amount_decisive_reason") or "未提供",
+        "data_as_of_beijing": decision.get("data_as_of_beijing") or decision.get("data_as_of") or "未提供",
+    }
+
+
+def render_decision_projection(decision: dict) -> str:
+    """Render the selector result using the existing Dashboard markdown contract."""
+    return "\n".join([
+        "### 最近一次正式盘中决策", "",
+        f"- 风险许可：{decision.get('risk_permission', '未提供')}",
+        f"- 生命周期：{decision.get('lifecycle', '未提供')}",
+        f"- 唯一主候选：{decision.get('main_candidate', '无新的主候选。')}",
+        f"- 金额与动作：{decision.get('amount_action', '未提供')}",
+        f"- 最大风险或0元主因：{decision.get('decisive_reason', '未提供')}",
+        f"- 决策数据时点：{decision.get('data_as_of_beijing', '未提供')}",
+    ])
+
+
+def format_position_pnl(position: dict) -> str:
+    """Exact broker P&L, explicit derived estimate, or unknown; never zero fallback."""
+    def num(value):
+        try:
+            return float(value) if value not in (None, "") else None
+        except (TypeError, ValueError):
+            return None
+    exact = next((position.get(k) for k in ("pnl", "holding_pnl") if position.get(k) not in (None, "")), None)
+    exact_pct = next((position.get(k) for k in ("pnl_pct", "holding_pnl_pct") if position.get(k) not in (None, "")), None)
+    estimated = False
+    if exact is None:
+        market_value, cost, quantity = (num(position.get(k)) for k in ("market_value", "cost", "quantity"))
+        if market_value is not None and cost is not None and quantity is not None:
+            exact = market_value - cost * quantity
+            basis = cost * quantity
+            exact_pct = exact / basis * 100 if basis else None
+            estimated = True
+    if exact is None:
+        return "—"
+    suffix = "（估算）" if estimated else ""
+    pct = f"（{float(exact_pct):+.2f}%）" if exact_pct is not None else ""
+    return f"{float(exact):,.2f}元{suffix}{pct}"
+
+
 def latest_formal_risk() -> float | None:
     # Historical Known-net reviews are PIT compatibility evidence only.
     return None
@@ -197,8 +273,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
         lines.append(
             f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|"
             f"{float(p.get('cost') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|"
-            f"{money(p.get('market_value'))}|{money(position_metric(p, 'pnl', 'holding_pnl'))}"
-            f"（{position_metric(p, 'pnl_pct', 'holding_pnl_pct'):+.2f}%）|"
+            f"{money(p.get('market_value'))}|{format_position_pnl(p)}|"
         )
     etf_codes = {str(item.get("code")): str(item.get("name") or item.get("code")) for item in (load_json(root / "config/market/etf_monitor_universe.json").get("objects") or []) if item.get("code")}
     held_codes = membership["etf"]
@@ -208,9 +283,9 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
         f"账户个股：{'、'.join(display_name(p) for p in stocks) or '无'}。",
         f"观察ETF：{'、'.join(observed) or '无'}。",
     ]
-    decision = preserve_decision_block(existing)
+    decision = latest_canonical_formal_decision(root)
     if decision:
-        lines += ["", decision]
+        lines += ["", render_decision_projection(decision)]
     else:
         lines += ["", "最近一次正式决策未随本次账户维护请求提供；脚本不自行推断。"]
     return "\n".join(lines)
