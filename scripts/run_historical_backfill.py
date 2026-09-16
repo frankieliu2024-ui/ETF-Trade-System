@@ -27,12 +27,29 @@ def validate_manifest(data):
             raise ValueError("acquisition must not be placed in historical_trades")
     return trades, acquisition
 
+def _extract_final_json(stdout):
+    """Extract the last ingress payload from mixed process/log output."""
+    decoder = json.JSONDecoder()
+    candidates = []
+    for offset, char in enumerate(stdout):
+        if char != "{":
+            continue
+        try:
+            payload, _end = decoder.raw_decode(stdout[offset:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict):
+            candidates.append(payload)
+    qualified = [payload for payload in candidates if
+                 "canonical_ingress_state" in payload or
+                 "canonical_ingress_failure_reason" in payload]
+    if not qualified:
+        raise SystemExit("historical ingress returned no valid JSON payload")
+    return qualified[-1]
+
 def _run_ingress(proc):
     completed = subprocess.run(proc, cwd=ROOT, text=True, capture_output=True)
-    try:
-        payload = json.loads(completed.stdout)
-    except json.JSONDecodeError as exc:
-        raise SystemExit(f"historical ingress returned non-JSON output: {exc}")
+    payload = _extract_final_json(completed.stdout)
     state = str(payload.get("canonical_ingress_state") or "").upper()
     reason = str(payload.get("canonical_ingress_failure_reason") or "")
     if completed.returncode != 0:
@@ -70,7 +87,7 @@ def main():
     after={rel:digest(ROOT/rel) if (ROOT/rel).exists() else None for rel in before}
     if before != after:
         raise SystemExit("current account/CURRENT mutation detected")
-    print(json.dumps({"status":"PASS","request_id":args.request_id,"first_replay":first.stdout.strip(),"second_replay":second.stdout.strip(),"duplicate_events_created":0,"current_account_unchanged":True},ensure_ascii=False))
+    print(json.dumps({"status":"PASS","request_id":args.request_id,"first_replay":first,"second_replay":second,"duplicate_events_created":0,"current_account_unchanged":True},ensure_ascii=False))
     return 0
 if __name__=="__main__":
     raise SystemExit(main())
