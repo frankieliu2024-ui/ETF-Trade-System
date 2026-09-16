@@ -465,13 +465,13 @@ jobs:
           PY
       - name: Run canonical post-write acceptance
         id: acceptance
-        if: steps.acceptance_scope.outputs.required == 'true'
+        if: ${{ steps.acceptance_scope.outputs.required == 'true' || github.event_name == 'workflow_dispatch' }}
         continue-on-error: true
         shell: bash
         run: |
           python scripts/run_production_acceptance.py --mutation-sha "$ETF_ACCEPTANCE_SHA"
       - name: Persist acceptance result
-        if: ${{ always() && steps.acceptance_scope.outputs.required == 'true' }}
+        if: ${{ always() && (steps.acceptance_scope.outputs.required == 'true' || github.event_name == 'workflow_dispatch') }}
         shell: bash
         run: |
           set -euo pipefail
@@ -500,5 +500,5 @@ jobs:
           git rebase origin/main
           git push origin HEAD:main
       - name: Enforce production acceptance
-        if: ${{ always() && steps.acceptance_scope.outputs.required == 'true' && steps.acceptance.outcome == 'failure' }}
+        if: ${{ always() && (steps.acceptance_scope.outputs.required == 'true' || github.event_name == 'workflow_dispatch') && steps.acceptance.outcome == 'failure' }}
         run: exit 1
