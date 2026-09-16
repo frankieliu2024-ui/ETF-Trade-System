@@ -78,6 +78,32 @@ def _run_ingress(proc):
         raise SystemExit(f"historical ingress did not submit canonically: {state or 'MISSING_STATE'}")
     return payload
 
+
+def project_historical_formal_facts(events):
+    """Project replayed historical facts through existing canonical owners."""
+    from process_state_sync_request import sync_experience_transaction_index
+    from formal_file_mutation_gateway import upsert_formal_line
+    from build_execution_quality import build as build_execution_quality
+    archive_start = "<!-- AUTO_TRADE_EVENTS_START -->"
+    archive_end = "<!-- AUTO_TRADE_EVENTS_END -->"
+    archive = ROOT / "ETF市场行情档案_2026.md"
+    for event in events:
+        if str(event.get("execution_status") or "").upper() != "EXECUTED":
+            continue
+        event_id = str(event.get("event_id") or "")
+        if not event_id:
+            continue
+        day = str(event.get("confirmed_at_beijing") or event.get("executed_at") or "")[:10]
+        name = str(event.get("name") or "")
+        code = str(event.get("code") or "")
+        side = str(event.get("side") or "")
+        qty = event.get("quantity")
+        price = event.get("price")
+        line = f"{event_id}｜{day}｜{name}（{code}）｜{side}｜{qty}｜{price}｜historical canonical trade fact"
+        upsert_formal_line(ROOT, archive.name, archive_start, archive_end, event_id, line, before_heading="## 6. 历史Excel与专项数据来源")
+        sync_experience_transaction_index(event)
+    atomic_json_write(ROOT / "data/state/execution_quality.json", build_execution_quality(ROOT))
+
 def main():
     p=argparse.ArgumentParser()
     p.add_argument("--manifest", required=True)
@@ -102,6 +128,13 @@ def main():
     proc=[sys.executable,str(ROOT/"scripts/process_state_sync_request.py"),str(manifest.relative_to(ROOT))]
     first = _run_ingress(proc)
     second = _run_ingress(proc)
+    project_events = []
+    for event_path in sorted((ROOT / "events" / "trades").glob("*.json")):
+        try:
+            project_events.append(load(event_path))
+        except (OSError, json.JSONDecodeError):
+            continue
+    project_historical_formal_facts(project_events)
     after={rel:digest(ROOT/rel) if (ROOT/rel).exists() else None for rel in before}
     if before != after:
         raise SystemExit("current account/CURRENT mutation detected")
