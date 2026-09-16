@@ -2127,8 +2127,9 @@ def process_historical_backfill_request(request: dict) -> dict:
         quantity, price = safe_float(raw.get("quantity")), safe_float(raw.get("price"))
         executed_at = str(raw.get("executed_at") or raw.get("executed_at_beijing") or "").strip()
         confirmed_at = str(raw.get("confirmed_at_beijing") or "").strip()
+        adoption_at = str(raw.get("historical_fact_adopted_at") or request.get("historical_fact_adopted_at") or datetime.now(SHANGHAI).isoformat(timespec="seconds")).strip()
         market_date = str(raw.get("market_date") or executed_at[:10]).strip()
-        if not code or side not in {"BUY", "SELL"} or quantity is None or price is None or not executed_at or not confirmed_at or not market_date:
+        if not code or side not in {"BUY", "SELL"} or quantity is None or price is None or not executed_at or not adoption_at or not market_date:
             raise ValueError("historical trade core fields are incomplete")
         event_id = str(raw.get("event_id") or f"HISTORICAL_{market_date}_{code}_{side}_{format(quantity, '.12g')}_{format(price, '.12g')}")
         key = str(raw.get("idempotency_key") or f"HISTORICAL_BACKFILL|{code}|{side}|{format(quantity, '.12g')}|{format(price, '.12g')}|{executed_at}")
@@ -2139,7 +2140,11 @@ def process_historical_backfill_request(request: dict) -> dict:
                 if str(existing.get(field)) != str(expected):
                     raise ValueError(f"historical core mismatch: {event_id}:{field}")
             changed = False
-            for field, value in {"confirmed_at_beijing": confirmed_at, "market_date": market_date, "account_updated_at": raw.get("account_updated_at"), "source": raw.get("source"), "historical_backfill": True}.items():
+            if not existing.get("historical_backfill") and confirmed_at:
+                existing["confirmed_at_beijing"] = confirmed_at
+                existing["confirmation_time_semantics"] = "RELIABLE_HISTORICAL_CONFIRMATION"
+                changed = True
+            for field, value in {"historical_fact_adopted_at": adoption_at, "market_date": market_date, "account_updated_at": raw.get("account_updated_at"), "source": raw.get("source"), "source_type": raw.get("source_type") or "user_confirmed_historical_fact", "source_period": request.get("source_period") or "2026-07-13..2026-09-15", "historical_execution_time_preserved": True, "historical_backfill": True}.items():
                 if value not in (None, "") and existing.get(field) != value:
                     existing[field] = value
                     changed = True
@@ -2151,10 +2156,13 @@ def process_historical_backfill_request(request: dict) -> dict:
             "event_id": event_id, "idempotency_key": key, "event_type": "HISTORICAL_BACKFILL_TRADE",
             "historical_backfill": True, "code": code, "side": side, "quantity": quantity, "price": price,
             "executed_at": executed_at, "executed_at_beijing": executed_at,
-            "confirmed_at_beijing": confirmed_at, "market_date": market_date,
+            "confirmed_at_beijing": confirmed_at or adoption_at, "historical_fact_adopted_at": adoption_at, "confirmation_time_semantics": "RELIABLE_HISTORICAL_CONFIRMATION" if confirmed_at else "CANONICAL_ADOPTION_TIME", "market_date": market_date,
             "account_updated_at": raw.get("account_updated_at"), "amount": raw.get("amount"),
             "fee": raw.get("fee"), "fee_status": raw.get("fee_status"), "name": raw.get("name"),
             "source": raw.get("source") or "USER_CONFIRMED_HISTORICAL_SCREENSHOT",
+            "source_type": raw.get("source_type") or "user_confirmed_historical_fact",
+            "source_period": request.get("source_period") or "2026-07-13..2026-09-15",
+            "historical_execution_time_preserved": True,
             "source_confidence": raw.get("source_confidence") or "USER_CONFIRMED",
             "execution_status": "EXECUTED", "replay_semantics": "FACT_ENRICHMENT_ONLY",
         }
@@ -2172,7 +2180,12 @@ def process_historical_backfill_request(request: dict) -> dict:
                 "historical_backfill": True, "asset_type": "STOCK", "code": "301689",
                 "quantity": 500, "price": 16.0, "market_date": "2026-09-01",
                 "executed_at": acquisition.get("executed_at") or "2026-09-01T00:00:00+08:00",
-                "confirmed_at_beijing": acquisition.get("confirmed_at_beijing"),
+                "confirmed_at_beijing": acquisition.get("confirmed_at_beijing") or adoption_at,
+                "historical_fact_adopted_at": adoption_at,
+                "confirmation_time_semantics": "RELIABLE_HISTORICAL_CONFIRMATION" if acquisition.get("confirmed_at_beijing") else "CANONICAL_ADOPTION_TIME",
+                "source_type": acquisition.get("source_type") or "user_confirmed_historical_fact",
+                "source_period": request.get("source_period") or "2026-07-13..2026-09-15",
+                "historical_execution_time_preserved": True,
                 "lot_source": "confirmed_settlement_obligation",
                 "source": acquisition.get("source") or "USER_CONFIRMED_HISTORICAL_SCREENSHOT",
                 "execution_status": "ACQUIRED",
