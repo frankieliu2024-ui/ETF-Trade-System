@@ -85,7 +85,16 @@ class DashboardProjectionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "config/market").mkdir(parents=True)
-            (root / "config/market/etf_monitor_universe.json").write_text(json.dumps({"objects": []}), encoding="utf-8")
+            (root / "config/market/etf_monitor_universe.json").write_text(
+                json.dumps({"objects": [{"code": "510300", "name": "沪深300ETF"}]}), encoding="utf-8"
+            )
+            decision_dir = root / "events/decisions"
+            decision_dir.mkdir(parents=True)
+            (decision_dir / "formal.json").write_text(json.dumps({
+                "event_type": "FORMAL_DECISION",
+                "decision_time_beijing": "2026-09-15T10:00:00+08:00",
+                "formal_decision": {"risk_permission": "禁止新增", "main_candidate": "现金"},
+            }, ensure_ascii=False), encoding="utf-8")
             account = {"positions": [], "total_asset": 1, "stock_market_value": 0}
             result = build_dashboard_block(account, {"risk_permission": "禁止新增"}, "", root)
             self.assertIn("### 最近一次正式盘中决策", result)

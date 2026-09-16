@@ -21,6 +21,7 @@ except ModuleNotFoundError:
 from sync_formal_files import sync_formal_files, latest_canonical_formal_decision, format_position_pnl
 from formal_file_mutation_gateway import (
     append_managed_line,
+    replace_formal_block,
     replace_managed_block as replace_block,
     upsert_formal_line,
     upsert_managed_line,
@@ -1051,8 +1052,22 @@ def _purge_case_mapping_rows() -> None:
 
 
 
+_CASE_TEMPLATE_FIELDS = (
+    "背景／生命周期",
+    "关键证据",
+    "执行",
+    "结果",
+    "判断质量",
+    "执行质量",
+    "风险收益质量",
+    "资本使用效率",
+    "最终结果／反事实",
+    "经验",
+)
+
+
 def _case_detail_projection_entry(case_entry: str, case_id: str) -> str:
-    """Return a stable human CASE heading while keeping the machine anchor hidden."""
+    """Build the shared human CASE template without manufacturing absent facts."""
     text = EXPERIENCE.read_text(encoding="utf-8")
     case_match = re.search(
         rf"^### (2\.\d+) {re.escape(case_id)}[:：]",
@@ -1076,9 +1091,128 @@ def _case_detail_projection_entry(case_entry: str, case_id: str) -> str:
     ]
     body = "\n".join(body_lines).strip()
     body = re.sub(r"^### (?:2\.\d+ )?", "", body, count=1)
-    if not body.startswith(case_id):
-        body = f"{case_id}：{body}"
-    return f"### 2.{ordinal} {body}"
+    if body.startswith(case_id):
+        body = re.sub(rf"^{re.escape(case_id)}[：:]?\s*", "", body, count=1)
+    title = body.splitlines()[0].split("｜", 1)[0].strip() if body else "CASE复盘"
+    title = title or "CASE复盘"
+
+    fields: dict[str, list[str]] = {name: [] for name in _CASE_TEMPLATE_FIELDS}
+    current_field = ""
+    unstructured: list[str] = []
+    for line in body.splitlines():
+        match = re.match(r"^-\s*(背景／生命周期|关键证据|执行|结果|判断质量|执行质量|风险收益质量|资本使用效率|最终结果／反事实|经验)：\s*(.*)$", line.strip())
+        if match:
+            current_field = match.group(1)
+            if match.group(2):
+                fields[current_field].append(match.group(2))
+        elif current_field and line.startswith(("  ", "\t")):
+            fields[current_field].append(line.strip())
+        elif line.strip():
+            unstructured.append(line.strip())
+    if unstructured and not any(fields.values()):
+        fields["背景／生命周期"].append("；".join(unstructured))
+    rendered = [f"### 2.{ordinal} {case_id}：{title}"]
+    for name in _CASE_TEMPLATE_FIELDS:
+        value = "\n".join(fields[name]).strip() or "信息不足（现有正式复盘未记录该字段）"
+        rendered.append(f"- {name}：{value}")
+    return "\n".join(rendered)
+
+
+def _case_lifecycle_update_text(root: Path, case_id: str, review: dict, updates: list[dict]) -> str:
+    market_date = str(review.get("market_date") or "")
+    status = next((str(item.get("case_status") or "").strip() for item in reversed(updates) if item.get("case_status")), "")
+    reason = next((str(item.get("mapping_reason") or "").strip() for item in reversed(updates) if item.get("mapping_reason")), "")
+    trade_lines = []
+    for item in updates:
+        event_id = str(item.get("trade_event_id") or "").strip()
+        if not event_id:
+            continue
+        trade_path = root / "events" / "trades" / f"{event_id}.json"
+        if not trade_path.exists():
+            if str(item.get("case_status") or "").upper() == "RESOLVED":
+                raise ValueError(f"resolved CASE update lacks canonical trade fact: {event_id}")
+            continue
+        trade = load_json(trade_path)
+        if str(trade.get("code") or "") != str(item.get("security_code") or trade.get("code") or ""):
+            raise ValueError(f"CASE update trade identity mismatch: {event_id}")
+        if str(trade.get("execution_status") or "").upper() != "EXECUTED":
+            raise ValueError(f"CASE update trade is not confirmed executed: {event_id}")
+        side = str(trade.get("side") or "").upper()
+        if str(item.get("case_status") or "").upper() == "RESOLVED" and side != "SELL":
+            continue
+        trade_lines.append(
+            f"{trade.get('confirmed_at_beijing') or trade.get('executed_at_beijing') or '时间未记录'} "
+            f"{side or '交易'} {trade.get('quantity', '数量未记录')}份@{trade.get('price', '价格未记录')}元 "
+            f"(trade_event_id={event_id})"
+        )
+    if status.upper() == "RESOLVED" and not trade_lines:
+        raise ValueError(f"resolved CASE update has no canonical executed SELL fact: {case_id}")
+    parts = [f"状态={status or '未提供'}"]
+    if trade_lines:
+        parts.append("正式成交=" + "；".join(trade_lines))
+    if reason:
+        parts.append("复盘映射说明=" + reason)
+    return f"- 后续正式复盘（{market_date}）：" + "；".join(parts)
+
+
+def _append_case_update_field(entry: str, field: str, market_date: str, update_line: str) -> str:
+    marker = f"后续正式复盘（{market_date}）"
+    lines = entry.splitlines()
+    field_prefix = f"- {field}："
+    index = next((i for i, line in enumerate(lines) if line.startswith(field_prefix)), None)
+    if index is None:
+        raise ValueError(f"CASE template missing required field: {field}")
+    section_end = next(
+        (i for i in range(index + 1, len(lines)) if any(lines[i].startswith(f"- {name}：") for name in _CASE_TEMPLATE_FIELDS)),
+        len(lines),
+    )
+    field_lines = lines[index + 1:section_end]
+    update_pattern = re.compile(r"^\s*- 后续正式复盘（(\d{4}-\d{2}-\d{2})）：")
+    other_lines = [line for line in field_lines if not (update_pattern.match(line) and marker in line)]
+    updates = [line for line in field_lines if update_pattern.match(line) and marker not in line]
+    updates.append("  " + update_line)
+    updates.sort(key=lambda line: update_pattern.match(line).group(1))
+    lines[index + 1:section_end] = other_lines + updates
+    return "\n".join(lines)
+
+
+def _persist_existing_case_detail_projections(review: dict) -> None:
+    """Project later canonical CASE lifecycle facts through the formal gateway."""
+    if not EXPERIENCE.exists():
+        return
+    mapping = review.get("case_mapping") if isinstance(review.get("case_mapping"), dict) else {}
+    updates = mapping.get("existing_case_updates") if isinstance(mapping.get("existing_case_updates"), list) else []
+    grouped: dict[str, list[dict]] = {}
+    for item in updates:
+        if not isinstance(item, dict) or not str(item.get("case_id") or "").strip():
+            continue
+        if not str(item.get("case_status") or "").strip():
+            continue
+        grouped.setdefault(str(item["case_id"]).strip(), []).append(item)
+    if not grouped:
+        return
+    text = EXPERIENCE.read_text(encoding="utf-8")
+    start = text.find(CASE_DETAILS_START)
+    end = text.find(CASE_DETAILS_END, start + len(CASE_DETAILS_START)) if start >= 0 else -1
+    if start < 0 or end < 0:
+        raise ValueError("canonical CASE detail managed block is missing")
+    block = text[start + len(CASE_DETAILS_START):end]
+    for case_id, case_updates in grouped.items():
+        match = re.search(rf"^### 2\.(\d+) {re.escape(case_id)}[:：].*$", block, re.MULTILINE)
+        if not match:
+            raise ValueError(f"canonical existing CASE detail not found: {case_id}")
+        next_heading = re.search(r"^### ", block[match.end():], re.MULTILINE)
+        section_end = match.end() + next_heading.start() if next_heading else len(block)
+        section_start = match.start()
+        section = block[section_start:section_end].strip()
+        if not all(re.search(rf"^- {re.escape(field)}：", section, re.MULTILINE) for field in _CASE_TEMPLATE_FIELDS):
+            section = _case_detail_projection_entry(section, case_id)
+        update_line = _case_lifecycle_update_text(ROOT, case_id, review, case_updates)
+        market_date = str(review.get("market_date") or "")
+        for field in ("背景／生命周期", "结果", "最终结果／反事实"):
+            section = _append_case_update_field(section, field, market_date, update_line)
+        block = block[:section_start] + "\n" + section + "\n" + block[section_end:]
+    replace_formal_block(ROOT, EXPERIENCE.name, CASE_DETAILS_START, CASE_DETAILS_END, block.strip())
 
 
 def _normalize_executed_trade_case_mapping(review: dict, market_date: str) -> dict:
@@ -1166,6 +1300,7 @@ def _persist_post_close_review_projections(account: dict, request: dict, review:
             upsert_formal_line(ROOT, EXPERIENCE.name, CASE_DETAILS_START, CASE_DETAILS_END, case_id, case_entry, before_heading="## 3. 历史研究与专项回测")
         else:
             upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry, before_heading="## 5. 研究与经验转化")
+    _persist_existing_case_detail_projections(review)
     sync_experience_case_mapping_index(review)
     record_close_review_closure(account, request, review, event)
 
@@ -1182,6 +1317,29 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     market_date = str(review.get("market_date") or request.get("market_date") or account.get("last_confirmed_market_date") or "")
     if not market_date:
         raise RuntimeError("POST_CLOSE_REVIEW requires market_date")
+    event_path = ROOT / "events" / "reviews" / f"{market_date}.json"
+    prior = load_json(event_path) if event_path.exists() else {}
+    prior_review = prior.get("review") if isinstance(prior.get("review"), dict) else {}
+    incoming_time = parse_time(
+        review.get("reviewed_at_beijing")
+        or review.get("updated_at_beijing")
+        or request.get("requested_at_beijing")
+        or request.get("request_time_beijing")
+        or account.get("updated_at")
+    )
+    prior_time = parse_time(
+        prior.get("reviewed_at_beijing")
+        or prior.get("updated_at_beijing")
+        or prior.get("account_updated_at")
+    )
+    replay_received = parse_time(request.get("requested_at_beijing") or request.get("request_time_beijing"))
+    prior_updated = parse_time(prior.get("updated_at_beijing"))
+    if prior_updated and replay_received and replay_received < prior_updated and review == prior_review:
+        # Exact replay of the already-persisted canonical review: only repair
+        # its CASE human projection. Do not revalidate historical PIT against
+        # today's account, or rewrite the event/closure/current state.
+        _persist_existing_case_detail_projections(prior_review)
+        return True, True
     current_path = ROOT / "data" / "state" / "CURRENT.json"
     current = load_json(current_path) if current_path.exists() else {}
     close_contract = build_close_data_contract(ROOT, current)
@@ -1228,26 +1386,18 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     review = _normalize_executed_trade_case_mapping(review, market_date)
     payload = {"market_date": market_date, "account_updated_at": account.get("updated_at"), "formal_review": review}
     fingerprint = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
-    event_path = ROOT / "events" / "reviews" / f"{market_date}.json"
     prior = load_json(event_path) if event_path.exists() else {}
     if prior.get("fingerprint") == fingerprint:
         # Event existence is not proof that downstream projections completed.
         persisted_review = prior.get("review") if isinstance(prior.get("review"), dict) else review
         _persist_post_close_review_projections(account, request, persisted_review, prior)
         return True, True
-    incoming_time = parse_time(
-        review.get("reviewed_at_beijing")
-        or review.get("updated_at_beijing")
-        or request.get("requested_at_beijing")
-        or request.get("request_time_beijing")
-        or account.get("updated_at")
-    )
-    prior_time = parse_time(
-        prior.get("reviewed_at_beijing")
-        or prior.get("updated_at_beijing")
-        or prior.get("account_updated_at")
-    )
     if prior_time and incoming_time and incoming_time < prior_time:
+        # A stale review cannot replace canonical event/PIT facts, but its
+        # already-canonical lifecycle mapping may still repair human CASE
+        # projections through the same formal-file gateway.
+        prior_review = prior.get("review") if isinstance(prior.get("review"), dict) else {}
+        _persist_existing_case_detail_projections(prior_review)
         return True, True
     review_time = (incoming_time or datetime.now(SHANGHAI)).isoformat(timespec="seconds")
     event = {"event_type": "FORMAL_POST_CLOSE_REVIEW", "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "review": review, "managed_position_sell_review": managed_projection, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
