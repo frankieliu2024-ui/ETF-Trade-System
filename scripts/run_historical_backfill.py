@@ -12,6 +12,21 @@ def load(path):
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
+def validate_manifest(data):
+    """Validate the #623 business cardinality without entering the ingress."""
+    trades = data.get("historical_trades")
+    acquisition = data.get("acquisition")
+    if not isinstance(trades, list) or len(trades) != 37:
+        raise ValueError("manifest must contain exactly 37 ordinary historical trades")
+    if not isinstance(acquisition, dict) or str(acquisition.get("code") or "") != "301689":
+        raise ValueError("manifest must contain exactly one 301689 acquisition")
+    for item in trades:
+        if not isinstance(item, dict):
+            raise ValueError("ordinary historical trade must be an object")
+        if str(item.get("event_type") or "").upper() == "IPO_ALLOTMENT_ACQUISITION":
+            raise ValueError("acquisition must not be placed in historical_trades")
+    return trades, acquisition
+
 def main():
     p=argparse.ArgumentParser()
     p.add_argument("--manifest", required=True)
@@ -25,9 +40,10 @@ def main():
         raise SystemExit("only HISTORICAL_BACKFILL is accepted")
     if str(data.get("request_id") or "") != args.request_id:
         raise SystemExit("request identity mismatch")
-    trades=data.get("historical_trades")
-    if not isinstance(trades,list) or len(trades)!=38:
-        raise SystemExit("manifest must contain exactly 38 historical actions")
+    try:
+        trades, _acquisition = validate_manifest(data)
+    except ValueError as exc:
+        raise SystemExit(str(exc))
     before={}
     for rel in ("data/state/account_fact.json","data/state/CURRENT.json"):
         path=ROOT/rel
