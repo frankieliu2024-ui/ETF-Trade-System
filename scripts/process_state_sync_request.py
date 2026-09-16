@@ -2136,7 +2136,7 @@ def process_historical_backfill_request(request: dict) -> dict:
         path = trade_dir / f"{event_id}.json"
         existing = load_json(path) if path.exists() else None
         if existing:
-            for field, expected in {"code": code, "side": side, "quantity": quantity, "price": price, "executed_at": executed_at}.items():
+            for field, expected in {"code": code, "side": side, "quantity": quantity, "price": price}.items():
                 actual = existing.get(field)
                 numeric_field = field in {"quantity", "price"}
                 normalized_actual = safe_float(actual) if numeric_field else actual
@@ -2157,12 +2157,23 @@ def process_historical_backfill_request(request: dict) -> dict:
                         f"normalized_expected={normalized_expected!r}; normalized_expected_type={type(normalized_expected).__name__}"
                     )
                     raise ValueError(detail)
+            existing_executed_at = existing.get("executed_at") or existing.get("executed_at_beijing")
+            if existing_executed_at and str(existing_executed_at) != executed_at:
+                source_path = str(request.get("_ingress_path") or "events/trades/" + f"{event_id}.json")
+                raise ValueError(
+                    f"historical core mismatch: {event_id}:executed_at; "
+                    f"existing_value={existing_executed_at!r}; existing_type={type(existing_executed_at).__name__}; "
+                    f"expected_value={executed_at!r}; expected_type={type(executed_at).__name__}; "
+                    f"existing_source_path={source_path}; request_id={request.get('request_id')!r}; "
+                    f"normalized_existing={str(existing_executed_at)!r}; normalized_existing_type=str; "
+                    f"normalized_expected={executed_at!r}; normalized_expected_type=str"
+                )
             changed = False
             if not existing.get("historical_backfill") and confirmed_at:
                 existing["confirmed_at_beijing"] = confirmed_at
                 existing["confirmation_time_semantics"] = "RELIABLE_HISTORICAL_CONFIRMATION"
                 changed = True
-            for field, value in {"historical_fact_adopted_at": adoption_at, "market_date": market_date, "account_updated_at": raw.get("account_updated_at"), "source": raw.get("source"), "source_type": raw.get("source_type") or "user_confirmed_historical_fact", "source_period": request.get("source_period") or "2026-07-13..2026-09-15", "historical_execution_time_preserved": True, "historical_backfill": True}.items():
+            for field, value in {"historical_fact_adopted_at": adoption_at, "executed_at": executed_at, "executed_at_beijing": executed_at, "market_date": market_date, "account_updated_at": raw.get("account_updated_at"), "source": raw.get("source"), "source_type": raw.get("source_type") or "user_confirmed_historical_fact", "source_period": request.get("source_period") or "2026-07-13..2026-09-15", "historical_execution_time_preserved": True, "historical_backfill": True}.items():
                 if value not in (None, "") and existing.get(field) != value:
                     existing[field] = value
                     changed = True
