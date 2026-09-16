@@ -101,6 +101,20 @@ class HistoricalBackfillIngressTests(unittest.TestCase):
             self.assertTrue(result["trade_event_recorded"])
             self.assertEqual(result["account_sync_status"], "NOT_APPLICABLE")
 
+    def test_runner_extracts_final_json_after_prefix_logs(self):
+        payload = {"canonical_ingress_state": "CANONICAL_INGRESS_SUBMITTED"}
+        output = "informational log\\nrequest diagnostics\\n" + json.dumps(payload) + "\\n"
+        self.assertEqual(runner._extract_final_json(output), payload)
+
+    def test_runner_accepts_pure_json_output(self):
+        payload = {"canonical_ingress_state": "CANONICAL_INGRESS_SUBMITTED"}
+        self.assertEqual(runner._extract_final_json(json.dumps(payload)), payload)
+
+    def test_runner_rejects_malformed_or_missing_json(self):
+        for output in ("log only\\n", "{not-json}\\n"):
+            with self.assertRaises(SystemExit):
+                runner._extract_final_json(output)
+
     def test_runner_rejects_not_applicable_even_with_zero_exit(self):
         completed = Mock(returncode=0, stdout=json.dumps({
             "canonical_ingress_state": "CANONICAL_INGRESS_NOT_APPLICABLE",
