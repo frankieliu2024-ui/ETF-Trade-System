@@ -65,7 +65,7 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
         decision = event.get("formal_decision") or event.get("decision") or {}
         if not isinstance(decision, dict):
             continue
-        stamp = decision.get("decision_time") or decision.get("decision_effective_at_beijing") or event.get("recorded_at_beijing")
+        stamp = event.get("decision_time_beijing") or event.get("decision_effective_at_beijing") or decision.get("decision_time") or decision.get("decision_effective_at_beijing") or event.get("recorded_at_beijing")
         try:
             from datetime import datetime
             parsed = datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
@@ -88,6 +88,19 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
         "decisive_reason": decision.get("decisive_reason") or decision.get("zero_amount_decisive_reason") or "未提供",
         "data_as_of_beijing": decision.get("data_as_of_beijing") or decision.get("data_as_of") or "未提供",
     }
+
+
+def render_decision_projection(decision: dict) -> str:
+    """Render the selector result using the existing Dashboard markdown contract."""
+    return "\n".join([
+        "### 最近一次正式盘中决策", "",
+        f"- 风险许可：{decision.get('risk_permission', '未提供')}",
+        f"- 生命周期：{decision.get('lifecycle', '未提供')}",
+        f"- 唯一主候选：{decision.get('main_candidate', '无新的主候选。')}",
+        f"- 金额与动作：{decision.get('amount_action', '未提供')}",
+        f"- 最大风险或0元主因：{decision.get('decisive_reason', '未提供')}",
+        f"- 决策数据时点：{decision.get('data_as_of_beijing', '未提供')}",
+    ])
 
 
 def format_position_pnl(position: dict) -> str:
@@ -272,7 +285,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
     ]
     decision = latest_canonical_formal_decision(root)
     if decision:
-        lines += ["", decision]
+        lines += ["", render_decision_projection(decision)]
     else:
         lines += ["", "最近一次正式决策未随本次账户维护请求提供；脚本不自行推断。"]
     return "\n".join(lines)
