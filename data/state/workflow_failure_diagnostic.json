@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-17T06:07:56+08:00",
+  "generated_at": "2026-09-17T06:23:19+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 35155962152,
+  "run_id": 35157280438,
   "run_attempt": 1,
-  "head_sha": "89f3a1dfa70fe573f17252fa823e78638ca7027a",
-  "main_head_sha": "64929908f2519f2d3d89ed6b78ee0a0be9535812",
+  "head_sha": "881598f252a2edc9e5f79f1d166b7b5e7efd9293",
+  "main_head_sha": "2bc0ef658021fe266fdaba441bdfbdaa94f37a31",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,16 +16,17 @@
     }
   ],
   "changed_files": [
-    ".github/workflows/system-consistency.yml"
+    "scripts/production_health_guard.py",
+    "tests/test_market_production_health_coverage.py"
   ],
-  "commit_message": "fix: classify acceptance from triggering commit",
+  "commit_message": "fix: validate canonical notification state in production health (#655)",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
-    "changes_confined_to_auto_rollback_allowlist": true,
+    "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
     "user_notification_authority": false,
