@@ -260,8 +260,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
         lines.append(
             f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|"
             f"{float(p.get('cost') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|"
-            f"{money(p.get('market_value'))}|{money(position_metric(p, 'pnl', 'holding_pnl'))}"
-            f"（{position_metric(p, 'pnl_pct', 'holding_pnl_pct'):+.2f}%）|"
+            f"{money(p.get('market_value'))}|{format_position_pnl(p)}|"
         )
     etf_codes = {str(item.get("code")): str(item.get("name") or item.get("code")) for item in (load_json(root / "config/market/etf_monitor_universe.json").get("objects") or []) if item.get("code")}
     held_codes = membership["etf"]
