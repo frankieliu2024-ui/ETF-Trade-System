@@ -66,6 +66,17 @@ jobs:
           done
           echo "found=$found failed=$failed"
           exit 0
+      - name: Upload sanitized Tier-0 research bars (PR only)
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue646-u1-sanitized-bars
+          path: |
+            data/market/on_demand/datasets/issue646_u1_*.csv
+            data/market/on_demand/results/issue646_u1_*.json
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Persist independent on-demand results
         if: ${{ always() && github.event_name != 'pull_request' }}
         run: |
