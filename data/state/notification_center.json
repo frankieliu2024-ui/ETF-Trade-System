@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-16T09:35:36+08:00",
+  "updated_at": "2026-09-16T09:35:52+08:00",
   "last_status": "SENT",
-  "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【系统复核】ETF系统复核｜2026-09-16 08:00",
+  "last_type": "A_SHARE_OPEN_VALUE_ALERT",
+  "last_title": "【市场异动】A股开盘/上午结构出现有价值变化",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -8365,27 +8365,44 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-16T08:08:41+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "market-value:a-share:2026-08-28:601138:DOWN:REVERSAL:14:3",
-      "type": "MARKET_VALUE_ALERT",
-      "title": "【市场异动】工业富联（601138）冲高明显回吐",
-      "content": "### 核心结论\n- **事件类型**：方向反转\n- **对象/结构**：工业富联（601138）\n- **关键结构**：盘中一度较前收+4.43%，当前回落至+0.38%\n\n**判断**：行情先形成足够大的单向日内幅度，随后大幅回吐或修复，原先的单向市场解释可能已经失效。\n\n### 对ETF系统的影响\n工业富联（601138）是账户个股。本次异动先影响其独立假设和资金释放价值，并可能通过产业链影响相关ETF；不能仅凭个股涨跌改动ETF仓位。\n\n### 当前动作\n**复核个股独立假设、资金释放价值及产业传导；只有正式持仓或资本再配置判断改变时执行。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-08-28 14:55:39\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
-      "source": "market_delta+CURRENT+stock_market_context",
+      "notification_id": "notification_64adaa1c0c5f4d1dcfca",
+      "event_type": "A_SHARE_OPEN_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "a-share-session-summary:2026-09-16:OPEN",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
       "user_severity": "需要关注",
-      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
-      "status": "EXPIRED",
-      "attempted_at": "2026-08-28T14:56:03+08:00",
+      "user_action": "查看结构摘要；正式交易动作以MASTER完整决策链为准",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-16T09:35:51+08:00",
+      "sent_at": "2026-09-16T09:35:52+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-18T09:35:51+08:00",
+      "title": "【市场异动】A股开盘/上午结构出现有价值变化",
+      "content": "### 核心结论\n- **市场结构**：指数整体震荡，风格分化有限。\n- **指数反馈**：上证指数（000001）-0.28%，科创50（000688）+0.49%，创业板指（399006）-0.26%。\n- **ETF自身反馈**：持仓中偏弱的是纳指ETF（159941）+0.00%；持仓中相对较强的是半导体设备ETF（561980）+0.62%。\n\n### 关键路径\n- 科创50（000688）当前接近日内高位，强势尚未明显回吐；创业板指（399006）当前处于日内区间中部，方向尚未形成新的强化；上证指数（000001）当前处于日内区间中部，方向尚未形成新的强化。\n\n### 对ETF系统的影响\n指数整体震荡，风格分化有限。比较纳指ETF（159941）等持仓继续占用资本的边际效率。跨市场ETF的相对涨幅只用于解释不同风险因子，不替代A股自身反馈，也不等同资本效率排名。\n\n### 当前动作\n**不因通知机械交易；先复核当前持仓/观察ETF的相对强弱和风险收益，只有正式机会、金额或卖出动作改变时执行。**\n\n### 数据与边界\n- **A股行情依据**：2026-09-16 09:34:30\n- **通知生成**：2026-09-16 09:35:51\n- **边界**：A股开盘不逢开必报；恢复窗口延长到上午收盘，约0.8%/1.5%/2个百分点仅控制注意力。",
+      "source": "CURRENT+intraday_path_features",
+      "confirmation_context": {
+        "market_date": "2026-09-16",
+        "session_node": "OPEN",
+        "market_as_of_beijing": "2026-09-16T09:34:30+08:00",
+        "provider_observed_as_of_beijing": "2026-09-16T09:34:30+08:00",
+        "value_reason": "监测ETF实际开盘最大绝对跳空约1.58%",
+        "event_family_id": ":2026-09-16:OPEN:::"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_5c64c6d2e41d0f4b1341",
-      "lifecycle_status": "EXPIRED"
-    },
+      "last_attempted_at": "2026-09-16T09:35:52+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "market-value:a-share:2026-08-28:515880:DOWN:REVERSAL:14:3",
       "type": "MARKET_VALUE_ALERT",
@@ -11966,9 +11983,27 @@
       },
       "notification_id": "notification_7e67a9d50f2f37e8ab43",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "a-share-session-summary:2026-09-16:OPEN",
+      "type": "A_SHARE_OPEN_VALUE_ALERT",
+      "title": "【市场异动】A股开盘/上午结构出现有价值变化",
+      "content": "### 核心结论\n- **市场结构**：指数整体震荡，风格分化有限。\n- **指数反馈**：上证指数（000001）-0.28%，科创50（000688）+0.49%，创业板指（399006）-0.26%。\n- **ETF自身反馈**：持仓中偏弱的是纳指ETF（159941）+0.00%；持仓中相对较强的是半导体设备ETF（561980）+0.62%。\n\n### 关键路径\n- 科创50（000688）当前接近日内高位，强势尚未明显回吐；创业板指（399006）当前处于日内区间中部，方向尚未形成新的强化；上证指数（000001）当前处于日内区间中部，方向尚未形成新的强化。\n\n### 对ETF系统的影响\n指数整体震荡，风格分化有限。比较纳指ETF（159941）等持仓继续占用资本的边际效率。跨市场ETF的相对涨幅只用于解释不同风险因子，不替代A股自身反馈，也不等同资本效率排名。\n\n### 当前动作\n**不因通知机械交易；先复核当前持仓/观察ETF的相对强弱和风险收益，只有正式机会、金额或卖出动作改变时执行。**\n\n### 数据与边界\n- **A股行情依据**：2026-09-16 09:34:30\n- **通知生成**：2026-09-16 09:35:51\n- **边界**：A股开盘不逢开必报；恢复窗口延长到上午收盘，约0.8%/1.5%/2个百分点仅控制注意力。",
+      "source": "CURRENT+intraday_path_features",
+      "user_severity": "需要关注",
+      "user_action": "查看结构摘要；正式交易动作以MASTER完整决策链为准",
+      "status": "SENT",
+      "attempted_at": "2026-09-16T09:35:52+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_64adaa1c0c5f4d1dcfca",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
-  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
+  "policy": "canonical bounded market notification batch",
+  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
