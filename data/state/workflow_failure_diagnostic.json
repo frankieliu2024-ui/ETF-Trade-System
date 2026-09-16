@@ -1,24 +1,26 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-16T09:35:50+08:00",
+  "generated_at": "2026-09-16T09:45:33+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 35044606262,
-  "run_attempt": 2,
-  "head_sha": "beabd6afbda48af3431a5793e09d42bc0814da88",
-  "main_head_sha": "f06f173214287478c41e01e41fb99692cce9aad0",
-  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
+  "run_id": 35045273666,
+  "run_attempt": 1,
+  "head_sha": "1fceebddbec14e779116916757234a6787cfd70a",
+  "main_head_sha": "ad1aa46ceb45173b1e125224123a09a1e8e7f6e3",
+  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "production_acceptance",
-      "step": "Persist accepted canonical ETF equity replay",
-      "number": 4
+      "job": "consistency",
+      "step": "Enforce hard consistency result",
+      "number": 9
     }
   ],
   "changed_files": [
-    "requests/live_snapshot/manual-intraday-20260916T0933.json"
+    "config/runtime_policy.json",
+    "tests/test_market_scheduled_formal_decision_wait_contract_v2.py",
+    "tests/test_scheduled_formal_decision_wait_contract_v2.py"
   ],
-  "commit_message": "trigger query-time intraday snapshot for 2026-09-16 09:33",
+  "commit_message": "fix: make interactive ETF analysis wait on decision-blocking facts",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
@@ -26,7 +28,7 @@
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
-    "forbidden_path_touched": false,
+    "forbidden_path_touched": true,
     "bot_or_revert_commit": false,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
