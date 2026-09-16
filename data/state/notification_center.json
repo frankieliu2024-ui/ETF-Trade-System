@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-16T14:46:40+08:00",
+  "updated_at": "2026-09-16T14:47:01+08:00",
   "last_status": "SENT",
   "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】A股监测ETF横截面出现显著分化",
+  "last_title": "【市场异动】标普油气ETF（513350）出现极端波动 +3.08%",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -9014,27 +9014,52 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-16T13:59:51+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "report-delivery:ETF交易复盘:ETF交易复盘-20260903T190300+0800",
-      "type": "REPORT_DELIVERY_REQUEST",
-      "title": "【交易复盘】ETF日复盘｜2026-09-03",
-      "content": "【数据时点（北京时间）】\n\n2026-09-03为A股交易日；正式价格有效时点15:00，close contract=VERIFIED_SESSION_CLOSE，14/14对象完整、行情质量PASS。最新账户事实截至11:21:20，可部署现金6,469.62元。今日正式盘后review已闭环至CASE-20260903-01。运行时最新system_consistency生成于18:57:34，状态FAIL、26个hard error、3个warning，latest-main要求REPLAY_REQUIRED，因此当前云端结构不能视为完整生产状态。 fileciteturn8file0 fileciteturn10file0 fileciteturn11file0\n\n【风险许可】禁止新增。风险区间本身不机械禁止交易，但当前正式review已将execution admission记为BLOCKED_BY_CURRENT_PRODUCTION_CONSISTENCY；在latest-main一致性未恢复前，不扩大交易权限。 fileciteturn7file0 fileciteturn11file0\n\n【生命周期】电网设备ETF（159326）维持ACTIVE_TRIAL、继续观察、本节点不Confirm；黄金ETF（518880）维持ACTIVE_TRIAL，今日500份买入已执行、继续观察、本节点不Confirm；通信ETF（515880）已RESOLVED，今日7,400份全部退出。历史review中的“T_PLUS_3_MANDATORY_DECISION_PENDING”仅恢复当时状态，不采用其旧规则语义；按现行MASTER，后续证据一旦充分应即时重新评估，不机械等待T+3。 fileciteturn7file0 fileciteturn11file0\n\n【唯一主候选】保留现金（当前无新的ETF主候选）。\n\n【金额与动作】新增0元，不生成任何新订单；当前可部署现金6,469.62元。 fileciteturn10file0\n\n【最大风险或0元主因】两个新方向都仍处于Trial信息购买阶段，本节点没有足够证据增加第三笔边际风险资本；同时latest-main生产一致性FAIL进一步阻断新增。首要原因不是现金不足。 fileciteturn11file0\n\n【今日一句话结论】\n\n今天交易层做得基本合格：及时关闭通信ETF（515880）失败Trial，建立黄金ETF（518880）有限Trial，保留电网设备ETF（159326）继续验证，并留下现金选择权；但截至本次运行，生产一致性风险已经高于新增机会判断的重要性，所以正确动作是停止扩张风险资本，而不是继续寻找第三个Trial。\n\n【判断质量】\n\n判断质量较好。通信ETF（515880）没有因既有投入而继续占用资本，黄金ETF（518880）则作为新的低相关假设用有限资本购买信息，电网设备ETF（159326）继续接受跨日验证，三个生命周期被明确区分，没有把单日强弱直接等同于Confirm。正式CASE也只把黄金ETF（518880）新建为CASE-20260903-01，通信退出回写既有CASE，电网延续既有CASE，没有重复建案。 fileciteturn11file0\n\n【执行质量】\n\n黄金ETF（518880）500份成交价9.109元、成交本金4,554.50元；相对约9.072元决策参考价存在约0.4078%的不利执行偏差。绝对金额不大，但这是今天明确存在的资本效率损耗。通信ETF（515880）7,400份退出已经正式闭环，不再计入ACTIVE_TRIAL。 fileciteturn11file0\n\n【资本效率与机会损失】\n\n今天资本效率的核心改善是“关闭失败Trial→建立新独立Trial→仍保留6,469.62元现金”，而不是黄金首日盈亏。这样避免继续让资本服务于已经关闭的通信假设，同时没有把退出资金全部重新投入。当前真正值得警惕的机会损失来自另一侧：如果生产一致性FAIL持续到下一有效交易节点，即便市场证据已经充分，也可能造成无法及时形成正式执行的价格优势损失。该损失目前尚未发生，不能事后假定。\n\n研究执行桥继续只读，不能独立生成交易；当前研究证据即使READY，也不能绕过MASTER和production consistency形成新订单。 fileciteturn13file0\n\n【下一节点优先验证】\n\n第一优先是恢复latest-main生产一致性并确认REPLAY闭环；只有恢复完整生产状态后，才重新比较新增资本。交易层面优先验证黄金ETF（518880）能否真正提供相对于现有科技组合的独立收益，以及电网设备ETF（159326）的相对强度能否继续跨日成立。两者都不得因为已经持有Trial而获得下一单位资本的自动优先权。\n\n当前最大风险：生产一致性FAIL已经成为当前第一风险；组合原有科技成长共同因子集中仍是第二层风险。\n\n判断可能错误原因：当前26个hard error可能存在同源级联，实际经济含义可能小于错误数量本身；如果REPLAY迅速完成并恢复PASS，它对下一交易节点的真实影响可能很短。\n\n信息不足在哪里：存在影响下一正式交易决策的关键系统缺口——需要确认26个hard error的具体构成及恢复结果。正式收盘、账户事实和今日成交本身当前无影响本次复盘结论的关键数据缺口。\n\n哪个假设最可能失效：黄金ETF（518880）能够持续提供低相关独立收益的Trial假设，因为其成立时间最短、证据成熟度最低。\n\n哪个海外信息可能被高估：本次未依赖足以影响决策的海外信息。\n\n是否存在海外与A股反馈背离：本次不依赖海外证据形成风险许可、生命周期或金额，因此不形成有交易意义的海外—A股背离结论。\n\n置信度：高。\n\n最可能出错的地方：把“26个hard error”误解为26个相互独立、都直接影响交易的故障。当前可以高置信度确认的是“latest-main不能视为完整生产状态”，但错误项的独立性和交易经济影响仍需要一致性恢复结果进一步区分。 fileciteturn9file0",
-      "source": "product-task:ETF交易复盘",
-      "user_severity": "正式报告",
-      "user_action": "阅读已完成的正式ETF报告；无需交易操作",
-      "status": "SENT",
-      "attempted_at": "2026-09-03T19:09:00+08:00",
+      "notification_id": "notification_12e903956c23f598dc32",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:a-share:2026-09-16:513350:UP:EXTREME:2026-09-16T14:45:43+08:00",
+      "related_decision_id": "",
+      "security_code": "513350",
+      "security_name": "标普油气ETF",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-16T14:47:00+08:00",
+      "sent_at": "2026-09-16T14:47:01+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-18T14:47:00+08:00",
+      "title": "【市场异动】标普油气ETF（513350）出现极端波动 +3.08%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：标普油气ETF（513350）\n- **当日涨跌**：+3.08%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n标普油气ETF（513350）是监测ETF。本次异动提高其注意力优先级，但只有相对强弱、风险收益和独立机会假设共同改善，才可能升级为主候选或Trial/Confirm机会。\n\n### 当前动作\n**提高观察优先级但不直接交易；等待正式机会判断形成。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-16 14:45:43\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。\n\n- **分钟级结构**：1分钟路径先低后高（低点09:30、高点14:38）；最近10分钟-0.14%，成交额为前10分钟1.36倍，短线抛压更实",
+      "source": "market_delta+CURRENT+stock_market_context+minute_context",
+      "confirmation_context": {
+        "market": "A_SHARE",
+        "market_date": "2026-09-16",
+        "direction": "UP",
+        "event_category": "EXTREME",
+        "asset_class": "ETF",
+        "day_change_pct": 3.08243727598565,
+        "sudden_change_pct": null,
+        "interval_minutes": 24.466666666666665,
+        "event_magnitude_pct": 3.08243727598565,
+        "market_as_of_beijing": "2026-09-16T14:45:43+08:00",
+        "source_fact_id": "2026-09-16:513350:EXTREME:UP:2026-09-16T14:45:43+08:00",
+        "minute_structure_evidence_used": true,
+        "minute_structure_note": "1分钟路径先低后高（低点09:30、高点14:38）；最近10分钟-0.14%，成交额为前10分钟1.36倍，短线抛压更实",
+        "event_family_id": "A_SHARE:2026-09-16:A_SHARE:513350:EXTREME:UP"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_9fad51d33fd40b09ce1a",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-09-16T14:47:01+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "report-delivery:ETF正式变更复核:ETF正式变更复核-20260903T202400+0800-d6e9db4dda-delivery-replay-v2",
       "type": "REPORT_DELIVERY_REQUEST",
@@ -12614,6 +12639,24 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_e81169321c944ad0f78f",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:a-share:2026-09-16:513350:UP:EXTREME:2026-09-16T14:45:43+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】标普油气ETF（513350）出现极端波动 +3.08%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：标普油气ETF（513350）\n- **当日涨跌**：+3.08%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n标普油气ETF（513350）是监测ETF。本次异动提高其注意力优先级，但只有相对强弱、风险收益和独立机会假设共同改善，才可能升级为主候选或Trial/Confirm机会。\n\n### 当前动作\n**提高观察优先级但不直接交易；等待正式机会判断形成。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-16 14:45:43\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。\n\n- **分钟级结构**：1分钟路径先低后高（低点09:30、高点14:38）；最近10分钟-0.14%，成交额为前10分钟1.36倍，短线抛压更实",
+      "source": "market_delta+CURRENT+stock_market_context+minute_context",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "status": "SENT",
+      "attempted_at": "2026-09-16T14:47:01+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_12e903956c23f598dc32",
       "lifecycle_status": "SENT"
     }
   ],
