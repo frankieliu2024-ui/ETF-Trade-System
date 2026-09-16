@@ -53,6 +53,36 @@ class HistoricalBackfillIngressTests(unittest.TestCase):
             self.assertEqual(trade["confirmation_time_semantics"], "CANONICAL_ADOPTION_TIME")
             self.assertNotEqual(trade["executed_at"], trade["confirmed_at_beijing"])
 
+    def test_created_event_replays_without_metadata_enrichment(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            d = root / "events/trades"
+            d.mkdir(parents=True)
+            request = {
+                "request_id": "req-623-stable",
+                "ingress_mode": "HISTORICAL_BACKFILL",
+                "historical_fact_adopted_at": "2026-09-16T13:00:00+08:00",
+                "source_period": "2026-07-13..2026-09-15",
+                "historical_trades": [{
+                    "event_id": "stable-e", "code": "159326", "side": "BUY",
+                    "quantity": 1, "price": 1.234, "gross_amount": 1.234,
+                    "fee_amount": 0.01, "fee_status": "CONFIRMED",
+                    "executed_at": "2026-09-01T10:00:00+08:00",
+                    "market_date": "2026-09-01",
+                }],
+            }
+            with patch.object(sync, "ROOT", root):
+                first = sync.process_historical_backfill_request(request)
+                second = sync.process_historical_backfill_request(request)
+            self.assertEqual(first["created"], 1)
+            self.assertEqual(first["metadata_enriched"], 0)
+            self.assertEqual(second["created"], 0)
+            self.assertEqual(second["metadata_enriched"], 0)
+            got = json.loads((d / "stable-e.json").read_text())
+            self.assertEqual(got["amount"], 1.234)
+            self.assertEqual(got["fee_amount"], 0.01)
+            self.assertEqual(got["fee_status"], "CONFIRMED")
+
     def _runner_manifest(self, count=37, acquisition=True):
         return {
             "ingress_mode": "HISTORICAL_BACKFILL",
