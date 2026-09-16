@@ -1,25 +1,27 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-16T08:47:03+08:00",
+  "generated_at": "2026-09-16T09:24:03+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 35041363761,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 35043894156,
   "run_attempt": 1,
-  "head_sha": "a4ecea66cb354941536bede59fdda43c164c3e45",
-  "main_head_sha": "56214d88273f1883b40f58899d6d3b54bbb679b1",
+  "head_sha": "8dfeaffe0a29396b487eb3e5f5c89b242ce3a3dd",
+  "main_head_sha": "e8ddba59e9d85da4bc3db042ac93149f105c88ee",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 7
+      "job": "watchdog",
+      "step": "Run read-only comprehensive production health aggregate",
+      "number": 9
     }
   ],
   "changed_files": [
-    "scripts/process_state_sync_request.py"
+    "data/state/us_extended_hours_context.json",
+    "data/state/us_extended_hours_context_previous.json",
+    "data/state/us_pulse_runtime_health.json"
   ],
-  "commit_message": "fix: prevent missing position pnl from rendering as zero",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "data: refresh US extended-hours context",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
@@ -27,7 +29,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
