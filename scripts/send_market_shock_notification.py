@@ -53,6 +53,9 @@ def _structure_cluster_id(event: dict) -> str:
     ctx = event.get("confirmation_context") or {}
     code = str(event.get("security_code") or ctx.get("security_code") or "")
     category = str(ctx.get("event_category") or "")
+    event_type = str(event.get("event_type") or event.get("type") or "")
+    if (event_type not in {"MARKET_SHOCK_ALERT", "MARKET_VALUE_ALERT"}):
+        return ""
     if (str(ctx.get("market") or "").upper() == "A_SHARE"
             and code in TECH_GROWTH_EPISODE_CODES
             and category in MARKET_ANOMALY_CATEGORIES):
@@ -160,12 +163,15 @@ def _recent_duplicate(event: dict) -> bool:
         if str(item.get("event_type") or "") not in {"MARKET_SHOCK_ALERT", "MARKET_VALUE_ALERT"}:
             continue
         old = item.get("confirmation_context") or {}
+        old_event = dict(item)
+        old_event["confirmation_context"] = old
+        old_cluster = _structure_cluster_id(old_event)
         if str(old.get("market_date") or "") != market_date or str(old.get("direction") or "") != direction:
             continue
         if str(old.get("event_category") or old.get("shock_severity") or "") != category:
             continue
         if cluster:
-            if str(old.get("structure_cluster_id") or "") != cluster:
+            if old_cluster != cluster and str(item.get("security_code") or "") != code:
                 continue
         elif str(item.get("security_code") or "") != code:
             continue
