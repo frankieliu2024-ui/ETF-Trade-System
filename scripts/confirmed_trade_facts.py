@@ -18,10 +18,13 @@ def read_json(path: Path, default: Any = None) -> Any:
 
 def trade_signature(trade: dict) -> tuple:
     stamp = str(
+        # Historical backfill rows carry both the original execution time and a
+        # later canonical-adoption/confirmation time. Identity must follow the
+        # economic execution, never the time the fact was adopted.
         trade.get("datetime")
-        or trade.get("confirmed_at_beijing")
         or trade.get("executed_at_beijing")
         or trade.get("executed_at")
+        or trade.get("confirmed_at_beijing")
         or trade.get("trade_time")
         or ""
     ).replace("T", " ")[:19]

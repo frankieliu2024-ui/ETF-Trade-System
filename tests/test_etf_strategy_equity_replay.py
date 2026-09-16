@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 
 from scripts.rebuild_etf_strategy_equity import replay
+from scripts.confirmed_trade_facts import canonical_etf_trade_facts, trade_signature
 
 
 class ETFReplayContractTests(unittest.TestCase):
@@ -97,3 +98,74 @@ class ETFReplayContractTests(unittest.TestCase):
             (root / "data/state/etf_strategy_equity.json").write_text(json.dumps({"trades":[{"datetime":"2026-07-13 09:30:00","code":"561980","side":"SELL","quantity":1,"price":1}]}))
             (root / "events/research/daily_features/2026-07-13.json").write_text(json.dumps({"market_date":"2026-07-13","features":[{"code":"561980","close":1,"quality_status":"PASS"}]}))
             with self.assertRaises(ValueError): replay(root)
+
+
+class CanonicalTradeIdentityRegressionTests(unittest.TestCase):
+    def test_historical_adoption_time_does_not_duplicate_execution_fact(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "data/state").mkdir(parents=True)
+            (root / "events/trades").mkdir(parents=True)
+            (root / "events/research/daily_features").mkdir(parents=True)
+            (root / "config/market").mkdir(parents=True)
+            (root / "config/market/etf_monitor_universe.json").write_text(
+                json.dumps({"objects": [{"code": "513180"}]})
+            )
+            original = {
+                "datetime": "2026-08-17 10:47:19",
+                "code": "513180", "side": "BUY", "quantity": 8200,
+                "price": 0.606, "fee_status": "CONFIRMED", "fee_amount": 5,
+            }
+            adopted_event = {
+                "event_id": "historical_20260817104719_513180_BUY_8200",
+                "event_type": "HISTORICAL_BACKFILL_TRADE",
+                "code": "513180", "side": "BUY", "quantity": 8200,
+                "price": 0.606,
+                "executed_at": "2026-08-17T10:47:19+08:00",
+                "confirmed_at_beijing": "2026-09-16T06:00:00Z",
+                "execution_status": "EXECUTED", "fee_status": "CONFIRMED",
+                "fee_amount": 5,
+            }
+            (root / "data/state/etf_strategy_equity.json").write_text(
+                json.dumps({"trades": [original]})
+            )
+            (root / "events/trades/historical.json").write_text(json.dumps(adopted_event))
+            (root / "events/research/daily_features/2026-08-17.json").write_text(
+                json.dumps({"market_date": "2026-08-17", "features": [
+                    {"code": "513180", "close": 0.606, "quality_status": "PASS"}
+                ]})
+            )
+            facts = canonical_etf_trade_facts(root, [original])
+            self.assertEqual(1, len(facts))
+            self.assertEqual(trade_signature(original), trade_signature(adopted_event))
+            self.assertEqual("2026-08-17 10:47:19", trade_signature(adopted_event)[-1])
+
+    def test_repeated_acceptance_replay_keeps_canonical_fact_count_stable(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "data/state").mkdir(parents=True)
+            (root / "events/trades").mkdir(parents=True)
+            (root / "events/research/daily_features").mkdir(parents=True)
+            (root / "config/market").mkdir(parents=True)
+            (root / "config/market/etf_monitor_universe.json").write_text(
+                json.dumps({"objects": [{"code": "513180"}]})
+            )
+            row = {
+                "datetime": "2026-08-17 10:47:19", "code": "513180",
+                "side": "BUY", "quantity": 8200, "price": 0.606,
+                "fee_status": "CONFIRMED", "fee_amount": 5,
+            }
+            event = dict(row)
+            event.update({
+                "datetime": None, "executed_at": "2026-08-17T10:47:19+08:00",
+                "confirmed_at_beijing": "2026-09-16T06:00:00Z",
+                "execution_status": "EXECUTED",
+            })
+            (root / "data/state/etf_strategy_equity.json").write_text(
+                json.dumps({"trades": [row, event]})
+            )
+            first = canonical_etf_trade_facts(root, [row, event])
+            second = canonical_etf_trade_facts(root, first)
+            self.assertEqual(1, len(first))
+            self.assertEqual(1, len(second))
+            self.assertEqual([trade_signature(first[0])], [trade_signature(second[0])])
