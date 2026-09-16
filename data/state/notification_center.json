@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-16T10:06:25+08:00",
+  "updated_at": "2026-09-16T10:06:41+08:00",
   "last_status": "SENT",
   "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】创新药ETF（159992）约15分钟快速重定价 +1.34%",
+  "last_title": "【市场异动】宁德时代（300750）出现极端波动 -4.04%",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -8443,27 +8443,50 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-16T09:50:23+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "a-share-session-summary:2026-08-28:CLOSE",
-      "type": "A_SHARE_SESSION_SUMMARY",
-      "title": "【收盘总结】A股全天结构与ETF强弱",
-      "content": "### 核心结论\n- **市场结构**：宽基相对稳定，科技成长明显偏弱。\n- **指数反馈**：上证指数（000001）-0.11%，科创50（000688）-1.85%，创业板指（399006）-1.41%。\n- **ETF自身反馈**：当前Trial，已执行对象通信ETF（515880）-1.47%；持仓中偏弱的是半导体设备ETF（561980）-2.53%；持仓中相对较强的是纳指ETF（159941）-0.12%。\n\n### 关键路径\n- 科创50（000688）开盘后继续走弱，目前接近日内低位；创业板指（399006）开盘后继续走弱，目前接近日内低位；而上证指数（000001）当前接近日内低位，尚未出现有效修复。这更像科技成长局部降温，而不是全市场同步风险释放。\n\n### 对ETF系统的影响\n宽基相对稳定，科技成长明显偏弱。优先复核通信ETF（515880）既有Trial，已执行假设是否继续成立；比较半导体设备ETF（561980）等持仓继续占用资本的边际效率。跨市场ETF的相对涨幅只用于解释不同风险因子，不替代A股自身反馈，也不等同资本效率排名。\n\n### 当前动作\n**不因通知机械交易；优先复核通信ETF（515880）当前Trial，已执行假设，同时比较半导体设备ETF（561980）的资本占用效率；只有正式机会、金额或卖出动作改变时执行。**\n\n### 数据与边界\n- **价格有效时点**：2026-08-28 15:00:00\n- **provider补查/观测上限**：2026-08-28 15:12:31\n- **通知生成**：2026-08-28 15:33:03\n- **边界**：只要同日verified close仍可追溯，固定收盘总结允许延迟补发；必须明确15:00价格有效时点，不能伪装成晚间新行情。",
-      "source": "CURRENT+intraday_path_features",
+      "notification_id": "notification_9aa196ab063a896b5990",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:a-share:2026-09-16:300750:DOWN:EXTREME:2026-09-16T10:05:33+08:00",
+      "related_decision_id": "",
+      "security_code": "300750",
+      "security_name": "宁德时代",
       "user_severity": "需要关注",
-      "user_action": "查看结构摘要；正式交易动作以MASTER完整决策链为准",
-      "status": "EXPIRED",
-      "attempted_at": "2026-08-28T15:33:04+08:00",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-16T10:06:39+08:00",
+      "sent_at": "2026-09-16T10:06:40+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-18T10:06:39+08:00",
+      "title": "【市场异动】宁德时代（300750）出现极端波动 -4.04%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：宁德时代（300750）\n- **当日涨跌**：-4.04%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n宁德时代（300750）是账户个股。本次异动先影响其独立假设和资金释放价值，并可能通过产业链影响相关ETF；不能仅凭个股涨跌改动ETF仓位。\n\n### 当前动作\n**复核个股独立假设、资金释放价值及产业传导；只有正式持仓或资本再配置判断改变时执行。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-16 10:05:33\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "confirmation_context": {
+        "market": "A_SHARE",
+        "market_date": "2026-09-16",
+        "direction": "DOWN",
+        "event_category": "EXTREME",
+        "asset_class": "ACCOUNT_STOCK",
+        "day_change_pct": -4.036540649892539,
+        "sudden_change_pct": null,
+        "interval_minutes": 16.333333333333332,
+        "event_magnitude_pct": 4.036540649892539,
+        "market_as_of_beijing": "2026-09-16T10:05:33+08:00",
+        "source_fact_id": "2026-09-16:300750:EXTREME:DOWN:2026-09-16T10:05:33+08:00",
+        "event_family_id": "A_SHARE:2026-09-16:A_SHARE:300750:EXTREME:DOWN"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_848688880dfa8d582d8a",
-      "lifecycle_status": "EXPIRED"
-    },
+      "last_attempted_at": "2026-09-16T10:06:40+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "a-share-session-summary:2026-09-02:CLOSE",
       "type": "A_SHARE_SESSION_SUMMARY",
@@ -12043,6 +12066,24 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_d62f90fcf70382a4665e",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:a-share:2026-09-16:300750:DOWN:EXTREME:2026-09-16T10:05:33+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】宁德时代（300750）出现极端波动 -4.04%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：宁德时代（300750）\n- **当日涨跌**：-4.04%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n宁德时代（300750）是账户个股。本次异动先影响其独立假设和资金释放价值，并可能通过产业链影响相关ETF；不能仅凭个股涨跌改动ETF仓位。\n\n### 当前动作\n**复核个股独立假设、资金释放价值及产业传导；只有正式持仓或资本再配置判断改变时执行。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-16 10:05:33\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "status": "SENT",
+      "attempted_at": "2026-09-16T10:06:40+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_9aa196ab063a896b5990",
       "lifecycle_status": "SENT"
     }
   ],
