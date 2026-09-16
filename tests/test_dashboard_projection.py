@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from sync_formal_files import normalize_dashboard_projection
+from sync_formal_files import normalize_dashboard_projection, latest_canonical_formal_decision, format_position_pnl
 from process_state_sync_request import latest_formal_review_decision
 
 
@@ -59,6 +59,27 @@ class DashboardProjectionTests(unittest.TestCase):
             self.assertEqual(result["risk_permission"], "允许Trial")
             self.assertEqual(result["main_candidate"], "电网设备ETF（159326）")
             self.assertIn("515880", result["lifecycle"])
+
+    def test_latest_dashboard_decision_ignores_stage_review(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "events/decisions"
+            path.mkdir(parents=True)
+            (path / "formal.json").write_text(json.dumps({
+                "event_type": "FORMAL_DECISION",
+                "formal_decision": {
+                    "decision_time": "2026-09-14T11:20:00+08:00",
+                    "risk_permission": "禁止新增",
+                    "main_candidate": "现金｜无机会",
+                    "data_as_of_beijing": "2026-09-14T11:20:00+08:00",
+                },
+            }, ensure_ascii=False), encoding="utf-8")
+            self.assertEqual(latest_canonical_formal_decision(root)["risk_permission"], "禁止新增")
+
+    def test_position_pnl_is_exact_estimated_or_unknown(self):
+        self.assertIn("-10.00元", format_position_pnl({"pnl": -10, "pnl_pct": -2}))
+        self.assertIn("估算", format_position_pnl({"market_value": 90, "cost": 1, "quantity": 100}))
+        self.assertEqual(format_position_pnl({"market_value": 90}), "—")
 
     def test_trade_correction_writer_has_no_dashboard_destination(self):
         source = (ROOT / "scripts/apply_trade_fact_correction.py").read_text(encoding="utf-8")
