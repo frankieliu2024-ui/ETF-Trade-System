@@ -206,6 +206,8 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
             "data/state/CURRENT.json": current,
             "data/state/runtime_health.json": {"status": "PASS"},
             "data/state/system_consistency.json": {"status": "PASS"},
+            "data/state/query_context.json": {},
+            "data/state/decision_context.json": {},
             "data/state/self_healing_status.json": {"classification": "PERSISTENT_RUNTIME_FAILURE", "recommended_action": "ESCALATE"},
         }
         def fake_load(path: Path, default=None):
