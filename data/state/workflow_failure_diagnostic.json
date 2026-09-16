@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-16T16:57:09+08:00",
+  "generated_at": "2026-09-16T18:10:27+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 35076567463,
+  "run_id": 35083454056,
   "run_attempt": 1,
-  "head_sha": "ec9c6f32810ec5c059a1ce0693075eab45fe1025",
-  "main_head_sha": "ec9c6f32810ec5c059a1ce0693075eab45fe1025",
+  "head_sha": "42514e3855c996d7c696893a8de2d6a3b51217e0",
+  "main_head_sha": "42514e3855c996d7c696893a8de2d6a3b51217e0",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,11 +16,12 @@
     }
   ],
   "changed_files": [
-    ".github/workflows/historical-canonical-backfill.yml",
-    ".github/workflows/system-consistency.yml"
+    "data/state/us_extended_hours_context.json",
+    "data/state/us_extended_hours_context_previous.json",
+    "data/state/us_pulse_runtime_health.json"
   ],
-  "commit_message": "fix: persist canonical historical backfill mutations (#623)",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "data: refresh US extended-hours context",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
@@ -28,7 +29,7 @@
     "head_is_current_main": true,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
