@@ -18,7 +18,7 @@ try:
     from build_stock_context import active_account_asset_codes, build_managed_position_projection, first, normalize_code, position_metric
 except ModuleNotFoundError:
     from scripts.build_stock_context import active_account_asset_codes, build_managed_position_projection, first, normalize_code, position_metric
-from sync_formal_files import sync_formal_files
+from sync_formal_files import sync_formal_files, latest_canonical_formal_decision, format_position_pnl
 from formal_file_mutation_gateway import (
     append_managed_line,
     replace_managed_block as replace_block,
@@ -2122,7 +2122,7 @@ def main() -> int:
     # Render after event/review persistence so a newly confirmed execution is
     # visible in the same canonical dashboard update, rather than one request
     # behind the machine facts.
-    dashboard = replace_block(DASHBOARD.read_text(encoding="utf-8"), START, END, build_dashboard_block(account, latest_formal_review_decision(ROOT) or request.get("formal_decision"), request), insert_after_heading=True)
+    dashboard = replace_block(DASHBOARD.read_text(encoding="utf-8"), START, END, build_dashboard_block(account, latest_canonical_formal_decision(ROOT) or request.get("formal_decision"), request), insert_after_heading=True)
     write_formal_text_if_changed(ROOT, DASHBOARD.name, dashboard)
     # Keep the three human-readable fact documents synchronized even when the
     # request only confirms a fee/account snapshot and creates no new trade event.
