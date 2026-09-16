@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-16T21:16:54+08:00",
+  "updated_at": "2026-09-17T01:26:22+08:00",
   "last_status": "SENT",
-  "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】半导体ETF代理（SOXX）出现极端波动 +1.51%",
+  "last_type": "US_OPEN_VALUE_ALERT",
+  "last_title": "【市场异动】费城半导体指数（SOX）高开+1.51%",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -9229,27 +9229,63 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-16T21:16:54+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "report-delivery:ETF正式变更复核:ETF正式变更复核-20260904T082703+0800-turn9-9d9f5801",
-      "type": "REPORT_DELIVERY_REQUEST",
-      "title": "【系统复核】ETF正式变更复核｜2026-09-04",
-      "content": "【本次结论】ETF生产系统当前正常可用，本节点没有必须立即修改生产环境的事项；上一轮 #268 已闭环，当前新增治理重点是 #273 的正式生产接入仍需等待今天上午真实 Shadow 节点验收，用户无需操作。\n\n【发生了什么】第一，上一轮的26个历史成交CASE映射 hard error 已全部消除：#268 已完成根因修复并关闭，PR #271/#272 已合并，最新正式 system_consistency 已恢复到 WARNING、0 hard error，E2E 恢复 READY。第二，从该次组合验收提交到当前最新 main，后续15个提交只涉及运行态状态文件，没有新的稳定生产代码变化；当前最新HEAD是08:26左右的通知/执行对账状态提交。第三，新出现的 #273 已把 ChatGPT Scheduled Formal Decision Actor 纳入正式接入治理，但当前仍是 Shadow：上午真实节点完成前不允许写 formal decision，也不允许触发交易决策类 PushPlus。\n\n【系统现在是否正常】正常可用，但不是“全绿无告警”。最新正式 system_consistency=WARNING、hard_error_count=0、warning_count=3；E2E=READY，market、account、decision context、lifecycle、close review、maintenance 全部 READY。当前 CURRENT 是2026-09-03正式 close，账户现金与可部署现金均为6,469.62元、无结算冻结、生命周期无逾期。今天2026-09-04是正常A股交易日，目前08:27仍处盘前，因此 CURRENT 尚停留在上一交易日收盘属于正常时段状态，不构成行情故障。\n\n【ETF生产系统未闭环事项】第一是 #273 的 production promotion。现在不能处理的原因不是代码缺失，而是正式接入仍缺与残余风险匹配的真实 Shadow 证据：今天09:20、10:30、11:30节点需要分别验证自动wake、latest-main读取、必要时refresh→reread、完整latest-MASTER reasoning，以及运行期间出现更新账户/成交/CURRENT/formal decision时能正确重读或判定 superseded。只有上午证据充分，午间再按当时 latest main、system_consistency、E2E 重新准入，才允许进入 formal decision ingress；当前不应提前 promotion，也不应预先增加第二套guard、状态机或sender。\n\n#141 继续等待真正能改变结论的调度可靠性证据：现有事实已经证明 GitHub schedule 可能完全不派发，而query-time recovery与canonical producer本身可以工作；没有发现仓库内可修根因或真正独立失败域的合法恢复入口前，不增加cron或平行行情链。#176继续等待至少一个合法、真正可恢复的历史行情CASE完成正式恢复链验收；#60仍等待CFFEX正式runtime恢复真实IF/IC数据，或出现经验证且独立于当前不可达主机的可靠来源。三者本轮均没有新增足以授权生产修改的事实。\n\n【外围运行事项】#273 当前用于验收的 ChatGPT Scheduled Shadow 本身仍属于外围运行层，不是GitHub canonical production runtime；截至08:27，今天第一个09:20真实Shadow节点尚未发生，因此此刻既不能判定它成功，也不能判定异常。Shadow阶段明确不写 formal decision、不触发决策PushPlus、不自动下单，所以目前不会把ETF生产系统降级；下一次有信息价值的观察点是09:20节点的真实执行结果。\n\n【本次实际动作】本轮没有创建、合并或关闭新的生产PR/Issue，没有修改ETF生产代码、规则、账户/成交/行情事实、交易权限或workflow，也没有新增平行状态。#268 已由此前正式修复流程闭环；当前开放PR为0，本轮对 #273、#141、#176、#60 仅按latest main重新分类，没有为了保存队列增加额外机制。\n\n【下次重点】第一，检查 #273 的09:20 Shadow是否完成 wake→readiness→必要refresh/reread→完整MASTER reasoning，并保持零正式写入；第二，若上午三个节点均通过，再在午间基于当时 latest main 重新判断是否具备 production promotion 资格，而不是按预定时间自动升级。\n\n置信度：高\n最可能出错的地方：最新完整 system_consistency 组合验收时间是2026-09-03 21:20，之后 main 又前进了15个提交；当前比较结果显示这些提交全部属于动态运行状态、没有新的稳定生产代码变化，因此我判断现有组合验收仍能代表稳定合同，但严格意义上最新HEAD并不是刚刚重新跑过一次完整组合验收。",
-      "source": "product-task:ETF正式变更复核",
-      "user_severity": "正式报告",
-      "user_action": "阅读已完成的正式ETF报告；无需交易操作",
-      "status": "SENT",
-      "attempted_at": "2026-09-04T08:30:25+08:00",
+      "notification_id": "notification_b70ce46cd0caae421cfb",
+      "event_type": "US_OPEN_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "us-session-summary:2026-09-16:OPEN",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "user_severity": "需要关注",
+      "user_action": "纳入下一A股交易节点复核，无需机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-17T01:26:20+08:00",
+      "sent_at": "2026-09-17T01:26:22+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-19T01:26:20+08:00",
+      "title": "【市场异动】费城半导体指数（SOX）高开+1.51%",
+      "content": "### 核心结论\n- **触发原因**：实际现金盘开盘最大跳空1.51%。\n- **开盘事实｜费城半导体指数（SOX）**：实际现金盘开盘相对前收+1.51%。\n- **外部结构**：美股科技风险偏好偏强。\n- **宽科技**：纳斯达克100指数（NDX）+0.72%。\n- **半导体**：费城半导体指数（SOX）+1.44%。\n\n### 关键路径\n- **纳斯达克100指数（NDX）**：开盘后暂未形成新的强化。\n- **费城半导体指数（SOX）**：开盘后暂未形成新的强化。\n\n### 对ETF系统的影响\n- **外部含义**：美股科技风险偏好提供正向背景。\n- **本地验证**：下一A股节点先确认本地科技方向是否接受该外部信号。\n- **资本比较**：重点复核纳指ETF（159941）、通信/科创/半导体风险篮子的自身反馈与边际资本效率。\n\n### 当前动作\n**纳入下一A股正式节点复核：先看本地传导，再看相关ETF自身反馈和资本效率；不因海外单一信号机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-17 01:26:02\n- **通知生成（北京时间）**：2026-09-17 01:26:20\n- **边界**：这是海外结构证据，不是A股买卖信号；实际现金盘开盘事实可在同一常规交易时段恢复，但不得把后续累计涨跌伪装成开盘跳空。",
+      "source": "us_extended_hours_context",
+      "confirmation_context": {
+        "market": "US",
+        "market_date": "2026-09-16",
+        "us_market_date": "2026-09-16",
+        "session": "REGULAR",
+        "direction": "UP",
+        "event_category": "OPEN_SIGNAL",
+        "fact_family": "US_SESSION_STRUCTURE",
+        "object_codes": [
+          "NDX",
+          "SOX"
+        ],
+        "source_fact_ids": [
+          "2026-09-16:NDX:2026-09-17T01:26:02+08:00",
+          "2026-09-16:SOX:2026-09-17T01:26:02+08:00"
+        ],
+        "session_node": "OPEN",
+        "direct_cash_indices_used": true,
+        "tech_open_gap_pct": 0.6142608057830623,
+        "semi_open_gap_pct": 1.508358005317323,
+        "tech_change_pct": 0.7184,
+        "semi_change_pct": 1.4391,
+        "market_as_of_beijing": "2026-09-17T01:26:02+08:00",
+        "cash_close_as_of_beijing": "",
+        "generated_at_beijing": "2026-09-17 01:26:20",
+        "event_family_id": "US:2026-09-16:REGULAR::OPEN_SIGNAL:UP"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_595a6ffdd9b7e3544d27",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-09-17T01:26:22+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "apac-open-signal:2026-09-04:KOSPI:UP",
       "type": "APAC_OPEN_SIGNAL",
@@ -12829,6 +12865,24 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_f02e089616391d57d1a0",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "us-session-summary:2026-09-16:OPEN",
+      "type": "US_OPEN_VALUE_ALERT",
+      "title": "【市场异动】费城半导体指数（SOX）高开+1.51%",
+      "content": "### 核心结论\n- **触发原因**：实际现金盘开盘最大跳空1.51%。\n- **开盘事实｜费城半导体指数（SOX）**：实际现金盘开盘相对前收+1.51%。\n- **外部结构**：美股科技风险偏好偏强。\n- **宽科技**：纳斯达克100指数（NDX）+0.72%。\n- **半导体**：费城半导体指数（SOX）+1.44%。\n\n### 关键路径\n- **纳斯达克100指数（NDX）**：开盘后暂未形成新的强化。\n- **费城半导体指数（SOX）**：开盘后暂未形成新的强化。\n\n### 对ETF系统的影响\n- **外部含义**：美股科技风险偏好提供正向背景。\n- **本地验证**：下一A股节点先确认本地科技方向是否接受该外部信号。\n- **资本比较**：重点复核纳指ETF（159941）、通信/科创/半导体风险篮子的自身反馈与边际资本效率。\n\n### 当前动作\n**纳入下一A股正式节点复核：先看本地传导，再看相关ETF自身反馈和资本效率；不因海外单一信号机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-17 01:26:02\n- **通知生成（北京时间）**：2026-09-17 01:26:20\n- **边界**：这是海外结构证据，不是A股买卖信号；实际现金盘开盘事实可在同一常规交易时段恢复，但不得把后续累计涨跌伪装成开盘跳空。",
+      "source": "us_extended_hours_context",
+      "user_severity": "需要关注",
+      "user_action": "纳入下一A股交易节点复核，无需机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-09-17T01:26:22+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_b70ce46cd0caae421cfb",
       "lifecycle_status": "SENT"
     }
   ],
