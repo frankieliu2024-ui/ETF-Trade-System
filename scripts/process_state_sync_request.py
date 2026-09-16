@@ -2173,7 +2173,7 @@ def process_historical_backfill_request(request: dict) -> dict:
                 existing["confirmed_at_beijing"] = confirmed_at
                 existing["confirmation_time_semantics"] = "RELIABLE_HISTORICAL_CONFIRMATION"
                 changed = True
-            for field, value in {"historical_fact_adopted_at": adoption_at, "executed_at": executed_at, "executed_at_beijing": executed_at, "market_date": market_date, "account_updated_at": raw.get("account_updated_at"), "source": raw.get("source"), "source_type": raw.get("source_type") or "user_confirmed_historical_fact", "source_period": request.get("source_period") or "2026-07-13..2026-09-15", "historical_execution_time_preserved": True, "historical_backfill": True}.items():
+            for field, value in {"historical_fact_adopted_at": adoption_at, "executed_at": executed_at, "executed_at_beijing": executed_at, "market_date": market_date, "account_updated_at": raw.get("account_updated_at"), "amount": raw.get("gross_amount"), "fee_amount": raw.get("fee_amount"), "fee": raw.get("fee_amount"), "fee_status": raw.get("fee_status"), "source": raw.get("source"), "source_type": raw.get("source_type") or "user_confirmed_historical_fact", "source_period": request.get("source_period") or "2026-07-13..2026-09-15", "historical_execution_time_preserved": True, "historical_backfill": True}.items():
                 if value not in (None, "") and existing.get(field) != value:
                     existing[field] = value
                     changed = True
