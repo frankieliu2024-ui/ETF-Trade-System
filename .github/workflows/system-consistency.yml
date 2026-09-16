@@ -407,6 +407,12 @@ jobs:
             exit 0
           fi
           git commit -m "state: persist accepted canonical ETF equity replay"
+          # The consistency run can overlap with independent canonical writers
+          # (for example the scheduled trade-review/report-delivery chain). Keep
+          # this owned commit intact, absorb the latest remote main immediately
+          # before publication, and never rely on last-writer-wins semantics.
+          git fetch --no-tags origin main
+          git rebase origin/main
           git push origin HEAD:main
 
       - name: Consume pending trade-fact corrections
@@ -430,6 +436,8 @@ jobs:
             exit 0
           fi
           git commit -m "state: consume trade fact corrections"
+          git fetch --no-tags origin main
+          git rebase origin/main
           git push origin HEAD:main
       - name: Bind acceptance to post-correction main HEAD
         shell: bash
@@ -488,6 +496,8 @@ jobs:
             exit 0
           fi
           git commit -m "state: persist production acceptance"
+          git fetch --no-tags origin main
+          git rebase origin/main
           git push origin HEAD:main
       - name: Enforce production acceptance
         if: ${{ always() && steps.acceptance_scope.outputs.required == 'true' && steps.acceptance.outcome == 'failure' }}
