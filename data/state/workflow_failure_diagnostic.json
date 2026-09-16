@@ -1,18 +1,18 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-16T14:20:50+08:00",
+  "generated_at": "2026-09-16T14:21:04+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 35063224601,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 35063284636,
   "run_attempt": 1,
   "head_sha": "6475ab3a33961895a9dc99612df0dd0098a39b54",
-  "main_head_sha": "6475ab3a33961895a9dc99612df0dd0098a39b54",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "main_head_sha": "fe7b07c5c96f98fee44d9ea6b202358409d9b4f3",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result",
-      "number": 9
+      "job": "watchdog",
+      "step": "Persist bounded self-healing state and deterministic repairs",
+      "number": 13
     }
   ],
   "changed_files": [
@@ -22,11 +22,11 @@
   ],
   "commit_message": "fix: route historical backfill through canonical ingress (#629)",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": true,
+    "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
