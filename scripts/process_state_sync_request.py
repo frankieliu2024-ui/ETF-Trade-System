@@ -1168,10 +1168,14 @@ def _append_case_update_field(entry: str, field: str, market_date: str, update_l
     )
     field_lines = lines[index + 1:section_end]
     update_pattern = re.compile(r"^\s*- 后续正式复盘（(\d{4}-\d{2}-\d{2})）：")
-    other_lines = [line for line in field_lines if not (update_pattern.match(line) and marker in line)]
-    updates = [line for line in field_lines if update_pattern.match(line) and marker not in line]
-    updates.append("  " + update_line)
-    updates.sort(key=lambda line: update_pattern.match(line).group(1))
+    other_lines = [line for line in field_lines if not update_pattern.match(line)]
+    updates_by_date = {}
+    for line in field_lines:
+        match = update_pattern.match(line)
+        if match and marker not in line:
+            updates_by_date[match.group(1)] = line
+    updates_by_date[market_date] = "  " + update_line
+    updates = [updates_by_date[date] for date in sorted(updates_by_date)]
     lines[index + 1:section_end] = other_lines + updates
     return "\n".join(lines)
 

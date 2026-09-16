@@ -110,6 +110,9 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
                 "trade_event_id": event_id, "case_id": case_id, "security_code": code,
                 "case_status": "RESOLVED", "mapping_reason": f"{case_id}已全部退出并解决。",
             })
+        # The canonical review may contain the same case mapping more than once;
+        # projection must still emit one later-known update per CASE/date/field.
+        updates.append(dict(updates[1]))
 
         request = self.request("2026-08-31T15:20:00+08:00")
         review = request["formal_review"]
@@ -148,6 +151,8 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertEqual(second, first)
         self.assertEqual(event_path.read_bytes(), event_before)
         self.assertEqual(second.count("后续正式复盘（2026-08-31）"), 9)
+        section = second.split("### 2.17 CASE-20260903-01：", 1)[1].split("### 2.18", 1)[0]
+        self.assertEqual(section.count("后续正式复盘（2026-08-31）"), 3)
 
     def test_new_case_uses_complete_shared_human_template(self):
         case_entry = sync._case_detail_projection_entry(
