@@ -1731,7 +1731,13 @@ def _case_ids_from_existing_experience_for_trade(event: dict, text: str, table_s
     side_cn = "买入" if side in {"BUY", "B", "买入", "买"} else "卖出" if side in {"SELL", "S", "卖出", "卖"} else side
     qty = int(float(event.get("quantity") or 0))
     price = float(event.get("price") or 0)
-    confirmed_at = str(event.get("confirmed_at_beijing") or "")
+    confirmed_at = str(
+        event.get("executed_at_beijing")
+        or event.get("executed_at")
+        or event.get("trade_time")
+        or event.get("confirmed_at_beijing")
+        or ""
+    )
     trade_date = confirmed_at[:10]
     date_time_tokens = set()
     if len(confirmed_at) >= 19 and confirmed_at[5:7].isdigit() and confirmed_at[8:10].isdigit():
@@ -1776,7 +1782,14 @@ def _case_ids_from_existing_experience_for_trade(event: dict, text: str, table_s
 def _case_ids_for_transaction_projection(event: dict, text: str, table_start: int, table_end: int) -> list[str]:
     """Resolve CASE ownership with strong facts first and no guessing."""
     event_id = str(event.get("event_id") or "").strip()
-    event_date = str(event.get("execution_date") or event.get("confirmed_at_beijing") or "")[:10]
+    event_date = str(
+        event.get("execution_date")
+        or event.get("executed_at_beijing")
+        or event.get("executed_at")
+        or event.get("trade_time")
+        or event.get("confirmed_at_beijing")
+        or ""
+    )[:10]
     if event_id and event_date:
         terminal_path = ROOT / "events" / "reviews" / f"{event_date}.json"
         if terminal_path.exists():
@@ -1814,9 +1827,16 @@ def sync_experience_transaction_index(event: dict) -> None:
 
     marker = f"TRADE_EVENT:{event_id}"
     confirmed = str(event.get("confirmed_at_beijing") or "")
-    dt = confirmed.replace("T", " ")[:19]
-    name = str(event.get("name") or event.get("code") or "")
+    execution_stamp = str(
+        event.get("executed_at_beijing")
+        or event.get("executed_at")
+        or event.get("trade_time")
+        or confirmed
+    )
+    dt = execution_stamp.replace("T", " ")[:19]
     code = str(event.get("code") or "")
+    name = str(event.get("name") or code)
+    name = re.sub(rf"（{re.escape(code)}）$", "", name).strip() if code else name
     side = str(event.get("side") or "").upper()
     side_cn = "买入" if side in {"BUY", "B", "买入", "买"} else "卖出" if side in {"SELL", "S", "卖出", "卖"} else side
     qty = int(float(event.get("quantity") or 0))
@@ -1863,27 +1883,27 @@ def sync_experience_transaction_index(event: dict) -> None:
     table_end = text.index(section_end, table_start)
     table = text[table_start:table_end]
     lines = table.splitlines()
-    replacement_index = None
-    for index, line in enumerate(lines):
-        if marker in line:
-            replacement_index = index
-            break
-    if replacement_index is None:
-        # Older managed rows may predate TRADE_EVENT markers.  Match the
-        # immutable trade identity before appending, so a fee correction repairs
-        # that row instead of creating a duplicate transaction.
-        identity = f"|{dt}|{name}（{code}）|{code}|{side_cn}|{qty:,}|{price:.3f}|{gross:,.2f}|"
-        for index, line in enumerate(lines):
-            if line.startswith(identity):
-                replacement_index = index
-                break
-    if replacement_index is None:
-        idx = text.index(section_end)
-        text = text[:idx].rstrip() + "\n" + row + "\n" + text[idx:]
-    else:
-        lines[replacement_index] = row
+    marker_index = next((index for index, line in enumerate(lines) if marker in line), None)
+    identity = f"|{dt}|{name}（{code}）|{code}|{side_cn}|{qty:,}|{price:.3f}|{gross:,.2f}|"
+    economic_index = next((index for index, line in enumerate(lines) if line.startswith(identity)), None)
+    enrichment_only = str(event.get("replay_semantics") or "").upper() == "FACT_ENRICHMENT_ONLY"
+    if enrichment_only and economic_index is not None:
+        lines[economic_index] = row
+        if marker_index is not None and marker_index != economic_index:
+            del lines[marker_index]
         updated_table = "\n".join(lines)
         text = text[:table_start] + updated_table + text[table_end:]
+    elif marker_index is not None:
+        lines[marker_index] = row
+        updated_table = "\n".join(lines)
+        text = text[:table_start] + updated_table + text[table_end:]
+    elif economic_index is not None:
+        lines[economic_index] = row
+        updated_table = "\n".join(lines)
+        text = text[:table_start] + updated_table + text[table_end:]
+    else:
+        idx = text.index(section_end)
+        text = text[:idx].rstrip() + "\n" + row + "\n" + text[idx:]
 
     # Recompute the unique index counts from the actual table instead of carrying
     # a hand-maintained number that can lag a newly confirmed fill.
