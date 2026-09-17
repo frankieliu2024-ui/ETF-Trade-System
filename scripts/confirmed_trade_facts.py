@@ -17,12 +17,15 @@ def read_json(path: Path, default: Any = None) -> Any:
 
 
 def trade_signature(trade: dict) -> tuple:
+    # Economic trade identity is anchored to execution time. Historical
+    # canonical-adoption/confirmation time is metadata and must not create a
+    # second execution identity for the same broker-confirmed trade.
     stamp = str(
         trade.get("datetime")
-        or trade.get("confirmed_at_beijing")
         or trade.get("executed_at_beijing")
         or trade.get("executed_at")
         or trade.get("trade_time")
+        or trade.get("confirmed_at_beijing")
         or ""
     ).replace("T", " ")[:19]
     return (
@@ -82,7 +85,11 @@ def _is_reconstructed_etf_trade(trade: dict, universe_codes: set[str]) -> bool:
 
     Event-backed rows without asset_type must be checked against the canonical
     ETF universe; older strategy reconstruction rows remain ETF-scoped.
+    FACT_ENRICHMENT_ONLY rows are machine overlays already represented by the
+    underlying economic trade and must never become replay seed executions.
     """
+    if str(trade.get("replay_semantics") or "").upper() == "FACT_ENRICHMENT_ONLY":
+        return False
     asset_type = str(trade.get("asset_type") or "").upper()
     if asset_type in {"ETF", "FUND"}:
         return True
@@ -159,7 +166,7 @@ def experience_etf_trade_index_facts(root: Path) -> list[dict]:
 
 
 def unintegrated_executed_trade_events(root: Path, reconstructed_trades: list[dict]) -> list[dict]:
-    known_signatures = {trade_signature(t) for t in reconstructed_trades}
+    known_signatures = {trade_signature(t) for t in reconstructed_trades if str(t.get("replay_semantics") or "").upper() != "FACT_ENRICHMENT_ONLY"}
     events_dir = root / "events" / "trades"
     overlays: list[dict] = []
     if not events_dir.exists():
