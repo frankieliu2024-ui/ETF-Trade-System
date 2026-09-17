@@ -10,6 +10,7 @@ SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
+from rebuild_etf_strategy_equity import replay  # noqa: E402
 from sync_formal_files import build_dashboard_block, canonical_risk_identity  # noqa: E402
 
 
@@ -61,6 +62,31 @@ class DashboardRiskProjectionTests(unittest.TestCase):
         self.assertEqual(
             identity["source"],
             "data/state/etf_strategy_equity.json::summary.current_strategy_return_pct_gross",
+        )
+
+    def test_issue_656_fresh_canonical_replay_matches_broker_etf_positions(self):
+        """Tier-3 regression: validate the fresh replay output, not stale persisted rows.
+
+        PR candidate acceptance invokes this test only inside its disposable copy
+        after durable ingress replay.  The canonical replay producer remains
+        side-effect free; this test proves what it would publish after merge.
+        """
+        candidate = replay(ROOT)
+        self.assertEqual(candidate["summary"]["trade_fact_count"], 33)
+        positions = candidate["series"][-1]["positions"]
+        actual = {
+            code: int(round(float((positions.get(code) or {}).get("quantity") or 0)))
+            for code in ("159781", "159941", "513180", "561980", "588000")
+        }
+        self.assertEqual(
+            actual,
+            {
+                "159781": 19500,
+                "159941": 12200,
+                "513180": 0,
+                "561980": 28900,
+                "588000": 14100,
+            },
         )
 
 
