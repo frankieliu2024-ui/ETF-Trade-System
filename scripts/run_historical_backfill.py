@@ -95,9 +95,17 @@ def project_historical_formal_facts(events):
         event_id = str(event.get("event_id") or "")
         if not event_id:
             continue
-        day = str(event.get("confirmed_at_beijing") or event.get("executed_at") or "")[:10]
-        name = str(event.get("name") or "")
+        day = str(
+            event.get("executed_at_beijing")
+            or event.get("executed_at")
+            or event.get("trade_time")
+            or event.get("confirmed_at_beijing")
+            or ""
+        )[:10]
         code = str(event.get("code") or "")
+        name = str(event.get("name") or "")
+        if code:
+            name = re.sub(rf"（{re.escape(code)}）$", "", name).strip()
         side = str(event.get("side") or "")
         qty = event.get("quantity")
         price = event.get("price")
