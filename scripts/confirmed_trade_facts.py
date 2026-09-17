@@ -21,9 +21,11 @@ def trade_signature(trade: dict) -> tuple:
         # Historical backfill rows carry both the original execution time and a
         # later canonical-adoption/confirmation time. Identity must follow the
         # economic execution, never the time the fact was adopted.
-        trade.get("datetime")
-        or trade.get("executed_at_beijing")
+        # Prefer the economic execution timestamp carried by historical events.
+        # Persisted overlay rows may also carry adoption time in datetime.
+        trade.get("executed_at_beijing")
         or trade.get("executed_at")
+        or trade.get("datetime")
         or trade.get("confirmed_at_beijing")
         or trade.get("trade_time")
         or ""
