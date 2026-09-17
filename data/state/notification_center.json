@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-17T16:17:10+08:00",
+  "updated_at": "2026-09-17T16:35:36+08:00",
   "last_status": "SENT",
-  "last_type": "APAC_SESSION_SUMMARY",
-  "last_title": "【收盘总结】亚太香港收盘后主总结兜底",
+  "last_type": "MARKET_VALUE_ALERT",
+  "last_title": "【市场异动】半导体ETF代理（SOXX）出现极端波动 +1.53%",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -9597,27 +9597,53 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-17T16:17:10+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "report-delivery:ETF正式变更复核:ETF正式变更复核-20260904T122600+0800-e48d9db1c113",
-      "type": "REPORT_DELIVERY_REQUEST",
-      "title": "【系统复核】ETF正式变更复核｜2026-09-04",
-      "content": "【本次结论】ETF生产系统当前已恢复正常可用；本轮必须处理的组合验收控制面问题已通过 PR #306 闭环，当前没有需要继续立即修改生产环境的事项。#273 的 Scheduled Formal Decision Actor 仍不能 promotion，原因已经从“推理能力”收敛为“无人值守 GitHub mutation 能力未通过”，用户无需操作。\n\n【发生了什么】第一，12:25 最新一致性检查曾出现 `system_consistency=FAIL`、1个 hard error，E2E 因 maintenance 降为 DEGRADED；根因不是行情、账户或正式判断失效，而是 production acceptance 在处理更晚 main 后仍受不可变 `GITHUB_SHA` 约束，导致验收身份与实际 post-correction HEAD 不一致。第二，PR #306 已完成 latest-main PR预检并在午间休市窗口按 expected-head 合并；合并后的 canonical production acceptance 重新生成正式状态，`system_consistency=WARNING`、0 hard error，E2E=`READY`。第三，旧 PR #288 使用了已经被证明不正确的 `GITHUB_SHA` 比较方案，本轮已作为被 #306 替代的旧实现关闭；PR #285 仍开放，但只是CI路径覆盖修复，当前分支已落后，不能直接合并。\n\n【系统现在是否正常】正常可用，但不是“全绿无告警”。12:27 最新 canonical `system_consistency` 为 WARNING、0 hard error、3个 warning；E2E 为 READY，market、account、decision context、lifecycle、close review、maintenance 均为 READY。当前 A股正式节点是9月4日11:30午间节点，11:36:30生成，行情质量 PASS；账户现金和可部署现金均为6,470.62元，无结算冻结，生命周期无逾期。合并 #306 的外层 workflow 总结论显示 failure，是因为同一 workflow 中较早的普通 consistency job 在旧验收身份下失败；随后 production_acceptance job 已成功，并把新的0-hard-error canonical acceptance 持久化到 main，因此当前正式状态以12:27生成的新报告为准。\n\n【ETF生产系统未闭环事项】第一，PR #285 仍有明确但非紧急的净收益：把 `scripts/run_production_acceptance.py` 纳入 system-consistency 的 PR paths，使以后修改该验收脚本时自动进入现有PR预检。现在不能直接处理，是因为该PR仍基于旧 main 且当前不可直接合并；下一步应基于最新 main 重放这一单行变更，再走PR预检和组合验收，不应直接合并旧head。\n\n第二，#273 的 production promotion 继续等待。今天10:30手动 Shadow 已证明 canonical `live_snapshot` 请求可写，10:36也取得严格freshness合同下完整 full-MASTER reasoning PASS；但10:00和约11:18两次无人值守 Scheduled run 都在需要 refresh 时被 connector safety check 阻止 GitHub file mutation，并正确 fail closed。所以下一步不是重复手动reasoning，也不是放宽行情新鲜度，而是等约13:20的一次最小 mutation capability probe，判断无人值守环境是“所有GitHub mutation均被阻止”还是“仅repository contents/file mutation受限”。在这个边界没有解决前，不允许 formal_decision ingress、PushPlus交易决策通知或 production promotion。\n\n#141、#176、#60 本轮分类不变：#141仍只等待真正独立于GitHub schedule失败域的恢复证据或可修内部根因；#176等待一个合法可恢复的历史行情CASE完成正式恢复链验收；#60继续等待CFFEX正式runtime恢复IF/IC数据或出现经验证的独立可靠来源。三者当前都没有支持新增workflow、provider、平行状态或额外复杂度的新证据。\n\n【外围运行事项】#273 当前的 ChatGPT Scheduled Shadow 仍属于外围运行层。无人值守Task无法写 `requests/live_snapshot` 是真实外围能力限制，但它没有破坏 GitHub canonical runtime：上午行情链、账户、decision context和E2E当前均正常。只有在未来把Scheduled Actor正式promotion后，这一mutation能力才会成为生产接入硬门；当前下一次有信息价值的观察条件是13:20 capability probe，而不是继续重复同类refresh写测试。\n\n【本次实际动作】本轮正式合并 PR #306，修改的是 system-consistency workflow 与 consistency core 对 post-correction acceptance SHA 的传递/读取方式；随后 canonical production acceptance 成功持久化，system_consistency恢复0 hard error、E2E恢复READY。本轮同时关闭未合并的旧 PR #288，因为其实现已被 #306 替代。未修改MASTER、交易权限、账户事实、行情事实或自动下单能力；未新增workflow、state store、第二sender或平行行情链。PR #285未合并，等待latest-main重放。\n\n【下次重点】第一，13:20只验证 #273 的无人值守 mutation capability probe，并据结果决定最小handoff是否值得继续；在证据不足前不promotion。第二，在当前 #306 组合验收已经闭环后，重新基于 latest main 处理 PR #285 的单行CI覆盖修复；若预检不通过则停止，不为“保留队列”继续叠加补丁。\n\n置信度：高\n\n最可能出错的地方：#306 合并后的外层 workflow 状态仍显示 failure，容易被误读为“系统仍异常”；但该workflow内部 production_acceptance job 已成功，且随后 main 上新生成的 canonical system_consistency 已是0 hard error、E2E READY。若后续又有新的 stable production commit 在这份12:27验收之后进入 main，则需要按新HEAD重新组合验收，不能继续沿用本轮结论。",
-      "source": "product-task:ETF正式变更复核",
-      "user_severity": "正式报告",
-      "user_action": "阅读已完成的正式ETF报告；无需交易操作",
-      "status": "SENT",
-      "attempted_at": "2026-09-04T12:29:53+08:00",
+      "notification_id": "notification_c5bc14065b0e94d948a9",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:us:2026-09-17:SOXX:UP:EXTREME:2026-09-17T16:35:06+08:00",
+      "related_decision_id": "",
+      "security_code": "SOXX",
+      "security_name": "半导体ETF代理",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-17T16:35:35+08:00",
+      "sent_at": "2026-09-17T16:35:36+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-19T16:35:35+08:00",
+      "title": "【市场异动】半导体ETF代理（SOXX）出现极端波动 +1.53%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：半导体ETF代理（SOXX）\n- **扩展时段较最近现金盘收盘**：+1.53%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n半导体ETF代理（SOXX）属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核纳指ETF（159941）及A股科技风险篮子的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-17 16:35:06\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
+      "source": "data/state/us_extended_hours_context.json",
+      "confirmation_context": {
+        "market": "US",
+        "market_date": "2026-09-17",
+        "direction": "UP",
+        "event_category": "EXTREME",
+        "fact_family": "",
+        "object_codes": [
+          "SOXX"
+        ],
+        "phase_metric_change_pct": 1.5323,
+        "sudden_change_pct": null,
+        "event_magnitude_pct": 1.5323,
+        "market_as_of_beijing": "2026-09-17T16:35:06+08:00",
+        "source_fact_id": "2026-09-17:SOXX:EXTREME:UP:2026-09-17T16:35:06+08:00",
+        "session": "PRE_MARKET",
+        "event_family_id": "US:2026-09-17:PRE_MARKET:SOXX:EXTREME:UP:"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_8f5fd662e76f5ed102d9",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-09-17T16:35:36+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "market-value:a-share:2026-09-04:399006:DOWN:REVERSAL:2026-09-04T13:50:48+08:00",
       "type": "MARKET_VALUE_ALERT",
@@ -13197,6 +13223,24 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_a07268b6380b0b6ed787",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:us:2026-09-17:SOXX:UP:EXTREME:2026-09-17T16:35:06+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】半导体ETF代理（SOXX）出现极端波动 +1.53%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：半导体ETF代理（SOXX）\n- **扩展时段较最近现金盘收盘**：+1.53%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n半导体ETF代理（SOXX）属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核纳指ETF（159941）及A股科技风险篮子的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-17 16:35:06\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
+      "source": "data/state/us_extended_hours_context.json",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-09-17T16:35:36+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_c5bc14065b0e94d948a9",
       "lifecycle_status": "SENT"
     }
   ],
