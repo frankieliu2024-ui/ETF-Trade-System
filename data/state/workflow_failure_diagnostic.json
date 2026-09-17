@@ -1,33 +1,33 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-17T09:45:02+08:00",
+  "generated_at": "2026-09-17T10:49:06+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 35171635886,
+  "workflow_name": "Overseas pre-open pulse",
+  "run_id": 35175784863,
   "run_attempt": 1,
-  "head_sha": "e51283979c4b76af5f15362112863dcaa378b849",
-  "main_head_sha": "7130ce867306a841d45f877ce44e11bdcc946338",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "9b158ca88e2e61e5e1008b82713683b1eb7f69d3",
+  "main_head_sha": "1b8e341a4fc93c1875b82971f2fcc8916ffb095b",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 7
+      "job": "overseas",
+      "step": "Commit overseas contexts and runtime health",
+      "number": 13
     }
   ],
   "changed_files": [
-    "tests/test_issue656_trade_identity.py"
+    "data/state/notification_center.json"
   ],
-  "commit_message": "test: preserve execution identity for recovery projection",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "commit_message": "state: record notification and execution reconciliation",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
