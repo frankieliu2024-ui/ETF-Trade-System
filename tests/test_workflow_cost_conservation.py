@@ -25,6 +25,19 @@ class WorkflowCostConservationTests(unittest.TestCase):
         self.assertIn("needs.consistency.result == 'success'", text)
         self.assertNotIn("if: ${{ always() && github.event_name != 'pull_request' }}", text)
 
+    def test_issue656_prewrite_migration_is_fail_closed_and_incident_bounded(self):
+        text = CONSISTENCY.read_text(encoding="utf-8")
+        self.assertIn("global_prewrite_consistency", text)
+        self.assertIn("FAIL_PRESERVED", text)
+        self.assertIn('allowed = "formal_files:confirmed_fee_projection"', text)
+        self.assertIn('hard_error_count") or 0) != 1', text)
+        self.assertIn('trade_fact_count") or 0) != 33', text)
+        self.assertIn("known_fees != 159.56", text)
+        for code, qty in (("588000", "14100.0"), ("159781", "19500.0"), ("159941", "12200.0"), ("561980", "28900.0"), ("513180", "0.0")):
+            self.assertIn(f'"{code}": {qty}', text)
+        self.assertIn('steps.consistency.outputs.research_rc }}" = "0"', text)
+        self.assertIn('steps.consistency.outputs.market_rc }}" = "0"', text)
+
     def test_cost_changes_do_not_touch_market_or_decision_contracts(self):
         self.assertIn('name: ETF market snapshot', (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8"))
         self.assertIn('name: ETF runtime self-healing watchdog', (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8"))
