@@ -79,7 +79,11 @@ def replay(root: Path = ROOT, *, price_dir: Path | None = None, cutoff: str | No
     summary = state.get("summary") or {}
     expected_count = int(summary.get("trade_fact_count") or summary.get("trade_count") or 0)
     facts = canonical_etf_trade_facts(root, reconstructed)
-    if expected_count and len(facts) < expected_count:
+    # A persisted count can be inflated by pre-fix overlay duplicates. Do not
+    # let that stale count re-add the same economic facts through recovery.
+    raw_signatures = [trade_signature(t) for t in reconstructed]
+    persisted_has_duplicates = len(set(raw_signatures)) != len(raw_signatures)
+    if expected_count and len(facts) < expected_count and not persisted_has_duplicates:
         facts = recover_canonical_etf_trade_facts(root, reconstructed, expected_count)
     facts.sort(key=lambda t: (_stamp(t), trade_signature(t)))
     unique = {trade_signature(t) for t in facts}
