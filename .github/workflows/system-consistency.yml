@@ -362,8 +362,10 @@ jobs:
           # Issue #656 migration boundary: global consistency remains FAIL in the
           # uploaded pre-write report. Only the proven stale formal fee projection
           # may admit the existing canonical writer; research/market failures or
-          # any second consistency failure remain hard blockers.
-          test "${{ steps.consistency.outputs.research_rc }}" = "0"
+          # any second consistency failure remain hard blockers. The research
+          # checker consumes this same fresh report, so its rc inherits the
+          # pre-existing fee FAIL. Independent research failures are rejected
+          # below by the exact failed-check/error-set validation.
           test "${{ steps.consistency.outputs.market_rc }}" = "0"
           test "${{ steps.consistency.outputs.system_rc }}" != "0"
           replay="$RUNNER_TEMP/issue656-prewrite-replay.json"
