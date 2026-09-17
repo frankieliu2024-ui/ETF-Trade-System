@@ -104,6 +104,37 @@ def _is_reconstructed_etf_trade(trade: dict, universe_codes: set[str]) -> bool:
     return code in universe_codes or "ETF" in name.upper()
 
 
+def _economic_trade_core(trade: dict) -> tuple:
+    """Return economic identity without time for bounded adoption-shadow matching."""
+    return (
+        str(trade.get("code") or ""),
+        str(trade.get("side") or trade.get("action") or "").upper(),
+        float(trade.get("quantity") or 0),
+        round(float(trade.get("price") or 0), 6),
+    )
+
+
+def _fact_enrichment_adoption_shadows(root: Path) -> set[tuple]:
+    """Return adoption-time signatures that are metadata shadows, not executions."""
+    events_dir = root / "events" / "trades"
+    shadows: set[tuple] = set()
+    if not events_dir.exists():
+        return shadows
+    for path in sorted(events_dir.glob("*.json")):
+        event = read_json(path, {}) or {}
+        if str(event.get("replay_semantics") or "").upper() != "FACT_ENRICHMENT_ONLY":
+            continue
+        core = _economic_trade_core(event)
+        if not core[0]:
+            continue
+        execution_stamp = trade_signature(event)[-1]
+        for key in ("historical_fact_adopted_at", "confirmed_at_beijing"):
+            stamp = str(event.get(key) or "").replace("T", " ")[:19]
+            if stamp and stamp != execution_stamp:
+                shadows.add(core + (stamp,))
+    return shadows
+
+
 def experience_etf_trade_index_facts(root: Path) -> list[dict]:
     """Parse the existing formal Experience §2.1 trade index for bounded recovery.
 
@@ -186,6 +217,7 @@ def unintegrated_executed_trade_events(root: Path, reconstructed_trades: list[di
 def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> list[dict]:
     """Return one deduplicated ETF-only fact set for position, fee and count projections."""
     universe_codes = _etf_universe_codes(root)
+    adoption_shadows = _fact_enrichment_adoption_shadows(root)
     facts: list[dict] = []
     seen: set[tuple] = set()
 
@@ -193,7 +225,7 @@ def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> l
         if not _is_reconstructed_etf_trade(trade, universe_codes):
             continue
         signature = trade_signature(trade)
-        if signature in seen:
+        if signature in adoption_shadows or signature in seen:
             continue
         seen.add(signature)
         facts.append(trade)
@@ -201,8 +233,10 @@ def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> l
     for trade in unintegrated_executed_trade_events(root, reconstructed_trades):
         if not _is_etf_trade(trade, universe_codes):
             continue
+        if str(trade.get("replay_semantics") or "").upper() == "FACT_ENRICHMENT_ONLY":
+            continue
         signature = trade_signature(trade)
-        if signature in seen:
+        if signature in adoption_shadows or signature in seen:
             continue
         seen.add(signature)
         facts.append(trade)
@@ -215,19 +249,24 @@ def recover_canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dic
     Normal operation uses canonical_etf_trade_facts directly. Recovery is
     allowed only when an existing persisted summary declares a larger expected
     count. Experience §2.1 may fill that exact deficit; event facts are then
-    overlaid/deduplicated. If the exact declared count cannot be restored, fail
-    closed rather than silently shrinking or expanding the strategy history.
+    overlaid/deduplicated. A legacy declared count may contract only by the
+    exact number of proven FACT_ENRICHMENT_ONLY adoption-time shadows.
     """
     current = canonical_etf_trade_facts(root, reconstructed_trades)
     if expected_count <= 0 or len(current) >= expected_count:
         return current
     seed = list(reconstructed_trades) + experience_etf_trade_index_facts(root)
     recovered = canonical_etf_trade_facts(root, seed)
-    if len(recovered) != expected_count:
-        raise ValueError(
-            f"formal ETF trade reconstruction deficit: expected {expected_count}, recovered {len(recovered)}"
-        )
-    return recovered
+    if len(recovered) == expected_count:
+        return recovered
+    adoption_shadows = _fact_enrichment_adoption_shadows(root)
+    shadow_count = len({trade_signature(t) for t in seed if trade_signature(t) in adoption_shadows})
+    if shadow_count and len(recovered) + shadow_count == expected_count:
+        return recovered
+    raise ValueError(
+        f"formal ETF trade reconstruction deficit: expected {expected_count}, "
+        f"recovered {len(recovered)}, adoption_shadows={shadow_count}"
+    )
 
 
 def _canonical_replay_declared_trade_count(root: Path) -> int:
