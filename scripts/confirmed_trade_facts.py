@@ -17,12 +17,19 @@ def read_json(path: Path, default: Any = None) -> Any:
 
 
 def trade_signature(trade: dict) -> tuple:
+    # Trade identity is anchored to the actual execution timestamp.  A later
+    # canonical adoption/confirmation timestamp is metadata about when the
+    # repository accepted the fact and must not turn one historical execution
+    # into a second trade identity.  Reconstructed human-readable rows expose
+    # the execution timestamp as ``datetime``; event-backed rows expose it as
+    # ``executed_at_beijing`` / ``executed_at`` / ``trade_time``.  Only facts
+    # that genuinely have no execution timestamp fall back to confirmation.
     stamp = str(
         trade.get("datetime")
-        or trade.get("confirmed_at_beijing")
         or trade.get("executed_at_beijing")
         or trade.get("executed_at")
         or trade.get("trade_time")
+        or trade.get("confirmed_at_beijing")
         or ""
     ).replace("T", " ")[:19]
     return (
