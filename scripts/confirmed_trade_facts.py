@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
 
 EXPERIENCE_TRADE_INDEX_START = "### 2.1 2026-07-13以来完整证券成交索引"
 EXPERIENCE_TRADE_INDEX_END = "### 2.2 银证转账与非交易现金流水"
+TRADE_EVENT_MARKER_RE = re.compile(r"TRADE_EVENT:([A-Za-z0-9_.-]+)")
 
 
 def read_json(path: Path, default: Any = None) -> Any:
@@ -17,13 +19,10 @@ def read_json(path: Path, default: Any = None) -> Any:
 
 
 def trade_signature(trade: dict) -> tuple:
-    # Trade identity is anchored to the actual execution timestamp.  A later
+    # Trade identity is anchored to the actual execution timestamp. A later
     # canonical adoption/confirmation timestamp is metadata about when the
     # repository accepted the fact and must not turn one historical execution
-    # into a second trade identity.  Reconstructed human-readable rows expose
-    # the execution timestamp as ``datetime``; event-backed rows expose it as
-    # ``executed_at_beijing`` / ``executed_at`` / ``trade_time``.  Only facts
-    # that genuinely have no execution timestamp fall back to confirmation.
+    # into a second trade identity.
     stamp = str(
         trade.get("datetime")
         or trade.get("executed_at_beijing")
@@ -73,7 +72,6 @@ def _etf_universe_codes(root: Path) -> set[str]:
 
 
 def _is_etf_trade(trade: dict, universe_codes: set[str]) -> bool:
-    """Classify a raw executed event using explicit type first, then canonical ETF universe."""
     asset_type = str(trade.get("asset_type") or "").upper()
     if asset_type in {"ETF", "FUND"}:
         return True
@@ -85,11 +83,6 @@ def _is_etf_trade(trade: dict, universe_codes: set[str]) -> bool:
 
 
 def _is_reconstructed_etf_trade(trade: dict, universe_codes: set[str]) -> bool:
-    """Classify reconstructed rows while preserving legacy ETF-strategy scope.
-
-    Event-backed rows without asset_type must be checked against the canonical
-    ETF universe; older strategy reconstruction rows remain ETF-scoped.
-    """
     asset_type = str(trade.get("asset_type") or "").upper()
     if asset_type in {"ETF", "FUND"}:
         return True
@@ -104,14 +97,35 @@ def _is_reconstructed_etf_trade(trade: dict, universe_codes: set[str]) -> bool:
     return code in universe_codes or "ETF" in name.upper()
 
 
-def experience_etf_trade_index_facts(root: Path) -> list[dict]:
-    """Parse the existing formal Experience §2.1 trade index for bounded recovery.
+def _event_execution_stamp(root: Path, remark: str) -> tuple[str | None, str | None]:
+    """Resolve a formal Experience row marker to its event execution time.
 
-    This is not a second trade ledger. The index is already the repository's
-    human-readable historical transaction index. It is used only by callers
-    that detect a persisted reconstruction count deficit and need to recover
-    predecessor rows from current formal facts. Event files remain authoritative
-    for newer machine trade facts and are deduplicated by trade_signature.
+    Historical backfill projection may display canonical adoption time in the
+    human-readable table. The embedded TRADE_EVENT marker binds that row to the
+    machine event, whose execution timestamp remains the economic identity.
+    """
+    match = TRADE_EVENT_MARKER_RE.search(str(remark or ""))
+    if not match:
+        return None, None
+    event_id = match.group(1)
+    event = read_json(root / "events" / "trades" / f"{event_id}.json", {}) or {}
+    stamp = (
+        event.get("executed_at_beijing")
+        or event.get("executed_at")
+        or event.get("trade_time")
+        or event.get("datetime")
+    )
+    if not stamp:
+        return None, event_id
+    return str(stamp).replace("T", " ")[:19], event_id
+
+
+def experience_etf_trade_index_facts(root: Path) -> list[dict]:
+    """Parse formal Experience §2.1 as a bounded recovery projection.
+
+    Event-linked rows use the linked machine event's execution timestamp for
+    trade identity. This prevents a later canonical-adoption display timestamp
+    from being replayed as a second economic trade.
     """
     path = root / "ETF交易复盘与经验库_2026.md"
     try:
@@ -137,9 +151,11 @@ def experience_etf_trade_index_facts(root: Path) -> list[dict]:
         px = _table_number(price)
         if side not in {"BUY", "SELL"} or qty is None or px is None:
             continue
+        event_stamp, event_id = _event_execution_stamp(root, remark)
+        effective_stamp = event_stamp or stamp
         fee_value = _table_number(fee)
         fact = {
-            "datetime": stamp,
+            "datetime": effective_stamp,
             "name": name,
             "code": code,
             "side": side,
@@ -155,6 +171,11 @@ def experience_etf_trade_index_facts(root: Path) -> list[dict]:
             "recovery_only": True,
             "remark": remark,
         }
+        if event_id:
+            fact["linked_trade_event_id"] = event_id
+            fact["display_timestamp"] = stamp
+            if event_stamp:
+                fact["identity_timestamp_source"] = "LINKED_EVENT_EXECUTION_TIME"
         if not _is_etf_trade(fact, universe_codes):
             continue
         signature = trade_signature(fact)
@@ -184,11 +205,9 @@ def unintegrated_executed_trade_events(root: Path, reconstructed_trades: list[di
 
 
 def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> list[dict]:
-    """Return one deduplicated ETF-only fact set for position, fee and count projections."""
     universe_codes = _etf_universe_codes(root)
     facts: list[dict] = []
     seen: set[tuple] = set()
-
     for trade in reconstructed_trades:
         if not _is_reconstructed_etf_trade(trade, universe_codes):
             continue
@@ -197,7 +216,6 @@ def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> l
             continue
         seen.add(signature)
         facts.append(trade)
-
     for trade in unintegrated_executed_trade_events(root, reconstructed_trades):
         if not _is_etf_trade(trade, universe_codes):
             continue
@@ -210,35 +228,17 @@ def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> l
 
 
 def recover_canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict], expected_count: int) -> list[dict]:
-    """Recover a persisted reconstruction deficit from current formal facts.
-
-    Normal operation uses canonical_etf_trade_facts directly. Recovery is
-    allowed only when an existing persisted summary declares a larger expected
-    count. Experience §2.1 may fill that exact deficit; event facts are then
-    overlaid/deduplicated. If the exact declared count cannot be restored, fail
-    closed rather than silently shrinking or expanding the strategy history.
-    """
     current = canonical_etf_trade_facts(root, reconstructed_trades)
     if expected_count <= 0 or len(current) >= expected_count:
         return current
     seed = list(reconstructed_trades) + experience_etf_trade_index_facts(root)
     recovered = canonical_etf_trade_facts(root, seed)
     if len(recovered) != expected_count:
-        raise ValueError(
-            f"formal ETF trade reconstruction deficit: expected {expected_count}, recovered {len(recovered)}"
-        )
+        raise ValueError(f"formal ETF trade reconstruction deficit: expected {expected_count}, recovered {len(recovered)}")
     return recovered
 
 
 def _canonical_replay_declared_trade_count(root: Path) -> int:
-    """Return the persisted canonical replay's declared trade count, if any.
-
-    This is a bounded migration aid for current formal fee projection. A replay
-    state may legitimately carry the accepted complete count before its embedded
-    trade rows have converged. In that exact case the existing formal Experience
-    index is the registered recovery source, and an exact count mismatch remains
-    fail-closed through recover_canonical_etf_trade_facts.
-    """
     state = read_json(root / "data" / "state" / "etf_strategy_equity.json", {}) or {}
     if not str(state.get("schema_version") or "").startswith("1.0-canonical-replay"):
         return 0
@@ -258,14 +258,7 @@ def canonical_etf_fee_projection(root: Path, reconstructed_trades: list[dict]) -
         recovered_from_formal_index = True
     confirmed = round(sum(confirmed_fee_amount(t) for t in facts), 2)
     pending = [t for t in facts if str(t.get("fee_status") or "").upper() != "CONFIRMED"]
-    return {
-        "effective_confirmed_fee_sum": confirmed,
-        "pending_fee_count": len(pending),
-        "canonical_trade_count": len(facts),
-        "pending_trades": pending,
-        "canonical_trades": facts,
-        "recovered_from_formal_index": recovered_from_formal_index,
-    }
+    return {"effective_confirmed_fee_sum": confirmed, "pending_fee_count": len(pending), "canonical_trade_count": len(facts), "pending_trades": pending, "canonical_trades": facts, "recovered_from_formal_index": recovered_from_formal_index}
 
 
 def effective_confirmed_fee_fact(root: Path, reconstructed_trades: list[dict]) -> dict:
@@ -273,21 +266,10 @@ def effective_confirmed_fee_fact(root: Path, reconstructed_trades: list[dict]) -
     reconstructed_etf = [t for t in reconstructed_trades if _is_reconstructed_etf_trade(t, universe_codes)]
     projection = canonical_etf_fee_projection(root, reconstructed_trades)
     reconstructed_signatures = {trade_signature(t) for t in reconstructed_etf}
-    overlays = [
-        t for t in projection["canonical_trades"]
-        if trade_signature(t) not in reconstructed_signatures
-    ]
+    overlays = [t for t in projection["canonical_trades"] if trade_signature(t) not in reconstructed_signatures]
     reconstructed = round(sum(confirmed_fee_amount(t) for t in reconstructed_etf), 2)
     overlay_fee = round(sum(confirmed_fee_amount(t) for t in overlays), 2)
-    return {
-        "reconstructed_confirmed_fee_sum": reconstructed,
-        "executed_event_overlay_count": len(overlays),
-        "executed_event_confirmed_fee_sum": overlay_fee,
-        "effective_confirmed_fee_sum": projection["effective_confirmed_fee_sum"],
-        "overlay_events": overlays,
-        "pending_fee_count": projection["pending_fee_count"],
-        "canonical_trade_count": projection["canonical_trade_count"],
-    }
+    return {"reconstructed_confirmed_fee_sum": reconstructed, "executed_event_overlay_count": len(overlays), "executed_event_confirmed_fee_sum": overlay_fee, "effective_confirmed_fee_sum": projection["effective_confirmed_fee_sum"], "overlay_events": overlays, "pending_fee_count": projection["pending_fee_count"], "canonical_trade_count": projection["canonical_trade_count"]}
 
 
 def latest_formal_review_confirmed_fees(root: Path) -> dict | None:
@@ -301,12 +283,7 @@ def latest_formal_review_confirmed_fees(root: Path) -> dict | None:
             fee = float(fact.get("confirmed_etf_fees"))
         except (TypeError, ValueError):
             fee = None
-        stamp = str(
-            event.get("updated_at_beijing")
-            or event.get("account_updated_at")
-            or review.get("market_date")
-            or path.stem
-        )
+        stamp = str(event.get("updated_at_beijing") or event.get("account_updated_at") or review.get("market_date") or path.stem)
         candidates.append((stamp, fee, str(path.relative_to(root))))
     if not candidates:
         return None
