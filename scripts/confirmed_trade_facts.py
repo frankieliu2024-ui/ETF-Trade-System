@@ -104,6 +104,46 @@ def _is_reconstructed_etf_trade(trade: dict, universe_codes: set[str]) -> bool:
     return code in universe_codes or "ETF" in name.upper()
 
 
+def _economic_trade_core(trade: dict) -> tuple:
+    """Return execution identity without time, used only to identify adoption-time shadows."""
+    return (
+        str(trade.get("code") or ""),
+        str(trade.get("side") or trade.get("action") or "").upper(),
+        float(trade.get("quantity") or 0),
+        round(float(trade.get("price") or 0), 6),
+    )
+
+
+def _fact_enrichment_adoption_shadows(root: Path) -> set[tuple]:
+    """Identify persisted rows that restate a historical trade at adoption time.
+
+    Historical backfill events marked FACT_ENRICHMENT_ONLY preserve the real
+    execution timestamp and may also carry a later canonical adoption time.
+    Older human-readable recovery rows were once appended using that adoption
+    timestamp. Those rows are metadata shadows, not second executions. Restrict
+    the exclusion to the same economic core *and* the event's explicit
+    adoption/confirmation timestamp so a legitimate repeated trade at another
+    time is never collapsed merely because quantity and price match.
+    """
+    events_dir = root / "events" / "trades"
+    shadows: set[tuple] = set()
+    if not events_dir.exists():
+        return shadows
+    for path in sorted(events_dir.glob("*.json")):
+        event = read_json(path, {}) or {}
+        if str(event.get("replay_semantics") or "").upper() != "FACT_ENRICHMENT_ONLY":
+            continue
+        core = _economic_trade_core(event)
+        if not core[0]:
+            continue
+        execution_stamp = trade_signature(event)[-1]
+        for key in ("historical_fact_adopted_at", "confirmed_at_beijing"):
+            stamp = str(event.get(key) or "").replace("T", " ")[:19]
+            if stamp and stamp != execution_stamp:
+                shadows.add(core + (stamp,))
+    return shadows
+
+
 def experience_etf_trade_index_facts(root: Path) -> list[dict]:
     """Parse the existing formal Experience §2.1 trade index for bounded recovery.
 
@@ -186,6 +226,7 @@ def unintegrated_executed_trade_events(root: Path, reconstructed_trades: list[di
 def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> list[dict]:
     """Return one deduplicated ETF-only fact set for position, fee and count projections."""
     universe_codes = _etf_universe_codes(root)
+    adoption_shadows = _fact_enrichment_adoption_shadows(root)
     facts: list[dict] = []
     seen: set[tuple] = set()
 
@@ -193,6 +234,8 @@ def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> l
         if not _is_reconstructed_etf_trade(trade, universe_codes):
             continue
         signature = trade_signature(trade)
+        if signature in adoption_shadows:
+            continue
         if signature in seen:
             continue
         seen.add(signature)
@@ -201,8 +244,10 @@ def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> l
     for trade in unintegrated_executed_trade_events(root, reconstructed_trades):
         if not _is_etf_trade(trade, universe_codes):
             continue
+        if str(trade.get("replay_semantics") or "").upper() == "FACT_ENRICHMENT_ONLY":
+            continue
         signature = trade_signature(trade)
-        if signature in seen:
+        if signature in adoption_shadows or signature in seen:
             continue
         seen.add(signature)
         facts.append(trade)
