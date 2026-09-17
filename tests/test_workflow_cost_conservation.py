@@ -35,7 +35,9 @@ class WorkflowCostConservationTests(unittest.TestCase):
         self.assertIn("known_fees != 159.56", text)
         for code, qty in (("588000", "14100.0"), ("159781", "19500.0"), ("159941", "12200.0"), ("561980", "28900.0"), ("513180", "0.0")):
             self.assertIn(f'"{code}": {qty}', text)
-        self.assertIn('steps.consistency.outputs.research_rc }}" = "0"', text)
+        self.assertNotIn('steps.consistency.outputs.research_rc }}" = "0"', text)
+        self.assertIn("research checker consumes this same fresh report", text)
+        self.assertIn("exact failed-check/error-set validation", text)
         self.assertIn('steps.consistency.outputs.market_rc }}" = "0"', text)
 
     def test_cost_changes_do_not_touch_market_or_decision_contracts(self):
