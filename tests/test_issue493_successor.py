@@ -3,14 +3,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.confirmed_trade_facts import canonical_etf_trade_facts, effective_confirmed_fee_fact
+from scripts.confirmed_trade_facts import canonical_etf_trade_facts, effective_confirmed_fee_fact, trade_signature
 
 
 class Issue493SuccessorTests(unittest.TestCase):
     def write_universe(self, root: Path):
         path = root / "config" / "market" / "etf_monitor_universe.json"
         path.parent.mkdir(parents=True)
-        path.write_text(json.dumps({"objects": [{"code": "515220", "name": "煤炭ETF"}]}), encoding="utf-8")
+        path.write_text(json.dumps({"objects": [{"code": "515220", "name": "煤炭ETF"}, {"code": "159941", "name": "纳指ETF"}]}), encoding="utf-8")
 
     def test_account_stock_event_is_not_projected_into_etf_facts(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -94,6 +94,53 @@ class Issue493SuccessorTests(unittest.TestCase):
             }]
             facts = canonical_etf_trade_facts(root, reconstructed)
             self.assertEqual(len(facts), 1)
+
+    def test_historical_adoption_time_does_not_change_trade_identity(self):
+        reconstructed = {
+            "datetime": "2026-07-14 13:27:05",
+            "code": "159941",
+            "side": "BUY",
+            "quantity": 3100,
+            "price": 1.607,
+        }
+        historical_event = {
+            "event_id": "historical_20260714132705_159941_BUY_3100",
+            "code": "159941",
+            "side": "BUY",
+            "quantity": 3100,
+            "price": 1.607,
+            "executed_at_beijing": "2026-07-14T13:27:05+08:00",
+            "confirmed_at_beijing": "2026-09-16T06:00:00Z",
+            "execution_status": "EXECUTED",
+        }
+        self.assertEqual(trade_signature(reconstructed), trade_signature(historical_event))
+
+    def test_historical_event_overlay_deduplicates_against_reconstructed_execution(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.write_universe(root)
+            events = root / "events" / "trades"
+            events.mkdir(parents=True)
+            (events / "historical.json").write_text(json.dumps({
+                "event_id": "historical_20260714132705_159941_BUY_3100",
+                "code": "159941",
+                "side": "BUY",
+                "quantity": 3100,
+                "price": 1.607,
+                "executed_at_beijing": "2026-07-14T13:27:05+08:00",
+                "confirmed_at_beijing": "2026-09-16T06:00:00Z",
+                "execution_status": "EXECUTED",
+            }), encoding="utf-8")
+            reconstructed = [{
+                "datetime": "2026-07-14 13:27:05",
+                "code": "159941",
+                "side": "BUY",
+                "quantity": 3100,
+                "price": 1.607,
+            }]
+            facts = canonical_etf_trade_facts(root, reconstructed)
+            self.assertEqual(len(facts), 1)
+            self.assertEqual(facts[0]["datetime"], "2026-07-14 13:27:05")
 
 
 if __name__ == "__main__":
