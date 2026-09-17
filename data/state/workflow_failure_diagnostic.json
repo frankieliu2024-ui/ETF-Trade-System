@@ -1,27 +1,27 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-17T13:46:49+08:00",
+  "generated_at": "2026-09-17T16:05:23+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 35186918974,
+  "run_id": 35197736767,
   "run_attempt": 1,
-  "head_sha": "d14a9ccde674068f069f6df28ec378688343f927",
-  "main_head_sha": "a6ea5224daeb3325b7c84240e8c8277be2e5a707",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "81d092f8d183a2fdd6e0a29101031521a56a5dae",
+  "main_head_sha": "1873ce64a6a7e6731aeb2b2c0ebc667e338dedc1",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
       "job": "production_acceptance",
-      "step": "Enforce production acceptance",
-      "number": 10
+      "step": "Persist accepted canonical ETF equity replay",
+      "number": 4
     }
   ],
   "changed_files": [
-    "requests/live_snapshot/20260917_1343_intraday_analysis.json"
+    "requests/live_snapshot/20260917_160300_broker_close_sync.json"
   ],
-  "commit_message": "market: request 2026-09-17 13:43 intraday refresh",
+  "commit_message": "account: ingest 2026-09-17 15:00 broker close screenshot",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
