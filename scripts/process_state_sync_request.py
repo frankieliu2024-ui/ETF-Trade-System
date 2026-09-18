@@ -558,6 +558,48 @@ def resolve_hypothesis_id(decision: dict, code: str, market_date: str, decision_
     return "", "UNRESOLVED"
 
 
+RESEARCH_EVIDENCE_EFFECTS = {
+    "ENHANCE",
+    "WEAKEN",
+    "SUPPORT_HOLD",
+    "SUPPORT_NO_ADD",
+    "SUPPORT_RELEASE_REVIEW",
+    "CONTEXT_ONLY",
+}
+
+
+def validate_research_evidence_used(value: object, object_name: str = "formal_decision.research_evidence_used") -> str:
+    """Validate only explicitly supplied ex-ante research usage facts."""
+    if value is None:
+        return ""
+    if not isinstance(value, list):
+        return f"{object_name} must be a list"
+    if len(value) > 3:
+        return f"{object_name} supports at most 3 evidence items"
+    for index, item in enumerate(value):
+        prefix = f"{object_name}[{index}]"
+        if not isinstance(item, dict):
+            return f"{prefix} must be an object"
+        evidence_id = str(item.get("evidence_id") or "").strip()
+        if not evidence_id:
+            return f"{prefix}.evidence_id is required"
+        effect = str(item.get("decision_effect") or "").strip().upper()
+        if effect not in RESEARCH_EVIDENCE_EFFECTS:
+            return f"{prefix}.decision_effect is not a registered value"
+        if "decisive" in item and not isinstance(item.get("decisive"), bool):
+            return f"{prefix}.decisive must be boolean"
+        security_code = str(item.get("security_code") or "").strip()
+        if security_code and not re.fullmatch(r"\d{6}", security_code):
+            return f"{prefix}.security_code must be a 6-digit code"
+        evidence_as_of = item.get("evidence_as_of_beijing")
+        if evidence_as_of not in (None, "") and parse_time(evidence_as_of) is None:
+            return f"{prefix}.evidence_as_of_beijing must be a valid timestamp"
+        source = item.get("source")
+        if source is not None and not isinstance(source, str):
+            return f"{prefix}.source must be text"
+    return ""
+
+
 def record_formal_decision(request: dict) -> tuple[bool, str]:
     decision = request.get("formal_decision")
     if not isinstance(decision, dict) or not decision:
@@ -565,6 +607,9 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     contract_error = validate_formal_decision_contract(decision)
     if contract_error:
         raise ValueError(f"invalid formal decision contract: {contract_error}")
+    research_error = validate_research_evidence_used(decision.get("research_evidence_used"))
+    if research_error:
+        raise ValueError(f"invalid formal decision research-evidence contract: {research_error}")
     account_for_lifecycle = _load_account_for_lifecycle_validation()
     managed_error = validate_managed_position_lifecycle(decision.get("lifecycle"), account_for_lifecycle, "formal_decision.lifecycle")
     if managed_error:
