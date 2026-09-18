@@ -1,58 +1,64 @@
 {
-  "generated_at": "2026-09-18T00:00:39Z",
-  "generated_at_beijing": "2026-09-18T08:00:39+08:00",
+  "generated_at": "2026-09-18T00:05:33Z",
+  "generated_at_beijing": "2026-09-18T08:05:33+08:00",
   "repository": {
-    "head_sha": "1242d5d951d464ece652e013e45e49f66eb31826",
-    "github_sha": "1242d5d951d464ece652e013e45e49f66eb31826",
-    "github_run_id": "35289221479",
+    "head_sha": "352b0ffa1e479e0e86e9ac98f96e7d511238bc3e",
+    "github_sha": "352b0ffa1e479e0e86e9ac98f96e7d511238bc3e",
+    "github_run_id": "35289586758",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "1242d5d951d464ece652e013e45e49f66eb31826",
-    "workflow_sha": "1242d5d951d464ece652e013e45e49f66eb31826",
+    "checked_commit": "352b0ffa1e479e0e86e9ac98f96e7d511238bc3e",
+    "workflow_sha": "352b0ffa1e479e0e86e9ac98f96e7d511238bc3e",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "semantic_freshness": {
-    "base": "10c9789d0fa383317f207b6160bdad11e89376d9",
-    "head": "1242d5d951d464ece652e013e45e49f66eb31826",
+    "base": "1242d5d951d464ece652e013e45e49f66eb31826",
+    "head": "352b0ffa1e479e0e86e9ac98f96e7d511238bc3e",
     "changed_paths": [
       "data/state/e2e_status.json",
       "data/state/execution_quality.json",
       "data/state/last_known_good.json",
       "data/state/maintenance_diagnostic.json",
       "data/state/maintenance_health.json",
-      "data/state/notification_center.json",
+      "data/state/overseas_context.json",
+      "data/state/overseas_context_previous.json",
+      "data/state/overseas_runtime_health.json",
+      "data/state/query_context.json",
       "data/state/system_consistency.json",
       "data/state/us_extended_hours_context.json",
-      "data/state/us_extended_hours_context_previous.json",
-      "data/state/us_pulse_runtime_health.json",
-      "requests/report_delivery/etf_system_review_20260918_0800.json"
+      "scripts/process_state_sync_request.py",
+      "scripts/run_historical_backfill.py",
+      "tests/test_trade_fact_correction_contract.py"
     ],
     "categories": {
-      "STABLE_PRODUCTION_CHANGE": [],
+      "STABLE_PRODUCTION_CHANGE": [
+        "scripts/process_state_sync_request.py",
+        "scripts/run_historical_backfill.py",
+        "tests/test_trade_fact_correction_contract.py"
+      ],
       "DYNAMIC_RUNTIME_FACT": [
         "data/state/e2e_status.json",
         "data/state/execution_quality.json",
         "data/state/last_known_good.json",
         "data/state/maintenance_diagnostic.json",
         "data/state/maintenance_health.json",
-        "data/state/notification_center.json",
+        "data/state/overseas_context.json",
+        "data/state/overseas_context_previous.json",
+        "data/state/overseas_runtime_health.json",
+        "data/state/query_context.json",
         "data/state/system_consistency.json",
-        "data/state/us_extended_hours_context.json",
-        "data/state/us_extended_hours_context_previous.json",
-        "data/state/us_pulse_runtime_health.json"
+        "data/state/us_extended_hours_context.json"
       ],
       "FORMAL_FACT_MUTATION": [],
-      "REQUEST_OR_TRIGGER_FACT": [
-        "requests/report_delivery/etf_system_review_20260918_0800.json"
-      ],
+      "REQUEST_OR_TRIGGER_FACT": [],
       "UNKNOWN": []
     },
-    "decision": "REVIEW_REQUIRED",
-    "integration_action": "REVIEW_MAIN_DELTA",
-    "validated_commit": "10c9789d0fa383317f207b6160bdad11e89376d9",
-    "current_head": "1242d5d951d464ece652e013e45e49f66eb31826",
+    "decision": "REPLAY_REQUIRED",
+    "integration_action": "REPLAY_REQUIRED",
+    "validated_commit": "1242d5d951d464ece652e013e45e49f66eb31826",
+    "current_head": "352b0ffa1e479e0e86e9ac98f96e7d511238bc3e",
     "head_advanced": true,
     "stable_contract_freshness": "REVIEW_REQUIRED",
     "runtime_fact_freshness": "CURRENT"
@@ -64,7 +70,7 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "e/Python/3.11.16/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp01_t746x'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpxczxpc0g'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp0k3i_xq7'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpvjn4lyj7'>\n  _warnings.warn(warn_message, ResourceWarning)\n....................................................................................................................\n----------------------------------------------------------------------\nRan 302 tests in 1.905s\n\nOK\n"
+      "detail": "e/Python/3.11.16/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpxmmunx0t'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp0ma983zp'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp6wq1lcw_'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmprasbc23u'>\n  _warnings.warn(warn_message, ResourceWarning)\n....................................................................................................................\n----------------------------------------------------------------------\nRan 302 tests in 2.537s\n\nOK\n"
     },
     {
       "name": "tests:opening_current_self_healing",
@@ -74,12 +80,12 @@
     {
       "name": "tests:semantic_latest_main",
       "status": "PASS",
-      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.130s\n\nOK\n"
+      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.122s\n\nOK\n"
     },
     {
       "name": "tests:research_artifact_contract",
       "status": "PASS",
-      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 1.370s\n\nOK\n"
+      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 1.355s\n\nOK\n"
     },
     {
       "name": "tests:research_historical_stop_gate",
@@ -89,7 +95,7 @@
     {
       "name": "tests:lifecycle_state",
       "status": "PASS",
-      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.012s\n\nOK\n"
+      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.011s\n\nOK\n"
     },
     {
       "name": "tests:historical_market_fact_recovery",
@@ -99,17 +105,17 @@
     {
       "name": "tests:executed_trade_case_lifecycle",
       "status": "PASS",
-      "detail": "ount\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n.............\n----------------------------------------------------------------------\nRan 13 tests in 0.023s\n\nOK\n"
+      "detail": "ount\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n.............\n----------------------------------------------------------------------\nRan 13 tests in 0.022s\n\nOK\n"
     },
     {
       "name": "tests:settlement_obligations",
       "status": "PASS",
-      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.003s\n\nOK\n"
+      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.002s\n\nOK\n"
     },
     {
       "name": "tests:formal_file_mutation_gateway",
       "status": "PASS",
-      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.005s\n\nOK\n"
+      "detail": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.009s\n\nOK\n"
     },
     {
       "name": "tests:post_close_review_canonical",
@@ -124,7 +130,7 @@
     {
       "name": "tests:production_reliability",
       "status": "PASS",
-      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n.................................\n----------------------------------------------------------------------\nRan 33 tests in 0.030s\n\nOK\n"
+      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n.................................\n----------------------------------------------------------------------\nRan 33 tests in 0.029s\n\nOK\n"
     },
     {
       "name": "tests:workflow_sha_snapshot",
@@ -409,17 +415,17 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=1242d5d951d464ece652e013e45e49f66eb31826"
+      "detail": "HEAD=352b0ffa1e479e0e86e9ac98f96e7d511238bc3e"
     },
     {
       "name": "git:semantic_latest_main",
       "status": "PASS",
-      "detail": "{\"base\": \"10c9789d0fa383317f207b6160bdad11e89376d9\", \"head\": \"1242d5d951d464ece652e013e45e49f66eb31826\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\", \"data/state/us_extended_hours_context_previous.json\", \"data/state/us_pulse_runtime_health.json\", \"requests/report_delivery/etf_system_review_20260918_0800.json\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\", \"data/state/us_extended_hours_context_previous.json\", \"data/state/us_pulse_runtime_health.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [\"requests/report_delivery/etf_system_review_20260918_0800.json\"], \"UNKNOWN\": []}, \"decision\": \"REVIEW_REQUIRED\", \"integration_action\": \"REVIEW_MAIN_DELTA\"}"
+      "detail": "{\"base\": \"1242d5d951d464ece652e013e45e49f66eb31826\", \"head\": \"352b0ffa1e479e0e86e9ac98f96e7d511238bc3e\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/overseas_context.json\", \"data/state/overseas_context_previous.json\", \"data/state/overseas_runtime_health.json\", \"data/state/query_context.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\", \"scripts/process_state_sync_request.py\", \"scripts/run_historical_backfill.py\", \"tests/test_trade_fact_correction_contract.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"scripts/process_state_sync_request.py\", \"scripts/run_historical_backfill.py\", \"tests/test_trade_fact_correction_contract.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/last_known_good.json\", \"data/state/maintenance_diagnostic.json\", \"data/state/maintenance_health.json\", \"data/state/overseas_context.json\", \"data/state/overseas_context_previous.json\", \"data/state/overseas_runtime_health.json\", \"data/state/query_context.json\", \"data/state/system_consistency.json\", \"data/state/us_extended_hours_context.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\", \"integration_action\": \"REPLAY_REQUIRED\"}"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=1242d5d951d464ece652e013e45e49f66eb31826 GITHUB_SHA=1242d5d951d464ece652e013e45e49f66eb31826"
+      "detail": "HEAD=352b0ffa1e479e0e86e9ac98f96e7d511238bc3e GITHUB_SHA=352b0ffa1e479e0e86e9ac98f96e7d511238bc3e"
     },
     {
       "name": "git:critical_files_tracked",
@@ -844,7 +850,7 @@
     {
       "name": "us_extended:live_freshness",
       "status": "PASS",
-      "detail": "active=False phase=20:00 max_age_seconds=9939 limit=900"
+      "detail": "active=False phase=20:05 max_age_seconds=10233 limit=900"
     },
     {
       "name": "session_gate:calendar_read",
@@ -989,12 +995,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=64395"
+      "detail": "declared=STALE expected=STALE age_seconds=64688"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=STALE expected=STALE age_seconds=64374"
+      "detail": "declared=STALE expected=STALE age_seconds=64665"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -1034,7 +1040,7 @@
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-09-18T00:00:13Z market=2026-09-17T14:07:19+08:00"
+      "detail": "context=2026-09-18T00:05:04Z market=2026-09-17T14:07:19+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1234,7 +1240,7 @@
     {
       "name": "overseas_runtime:structured",
       "status": "PASS",
-      "detail": "status=DEGRADED"
+      "detail": "status=PASS"
     },
     {
       "name": "overseas_runtime:pulse_success",
@@ -1249,12 +1255,12 @@
     {
       "name": "overseas_runtime:N225:same_day_bar",
       "status": "PASS",
-      "detail": "quality=PASS as_of_beijing=2026-09-17T14:30:00+08:00"
+      "detail": "quality=PASS as_of_beijing=2026-09-18T08:01:11+08:00"
     },
     {
       "name": "overseas_runtime:KOSPI:same_day_bar",
       "status": "PASS",
-      "detail": "quality=PASS as_of_beijing=2026-09-17T14:00:00+08:00"
+      "detail": "quality=PASS as_of_beijing=2026-09-18T08:01:19+08:00"
     },
     {
       "name": "account_fact:current_availability",
