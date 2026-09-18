@@ -837,7 +837,6 @@ def canonical_template_family(event: dict) -> str | None:
         return "REPORT"
     if event_type == "FORMAL_DECISION_MATERIAL_CHANGE":
         ctx = event.get("confirmation_context") or {}
-    capital_route_section = f"### 资本去向\n{ctx.get('capital_route')}\n\n" if ctx.get("capital_route") else ""
         status = str(ctx.get("opportunity_status") or "")
         previous = str(ctx.get("previous_opportunity_status") or "")
         if ctx.get("holding_action_changed"):
@@ -881,6 +880,7 @@ def render_canonical_notification(event: dict) -> dict | None:
     rendered["template_family"] = family
     target = _canonical_target(event)
     ctx = event.get("confirmation_context") or {}
+    capital_route_section = f"### 资本去向\n{ctx.get('capital_route')}\n\n" if ctx.get("capital_route") else ""
     if family == "成交确认":
         title = f"【成交确认】{target}"
         body = (
