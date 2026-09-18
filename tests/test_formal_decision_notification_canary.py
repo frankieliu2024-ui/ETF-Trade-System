@@ -147,5 +147,45 @@ class FormalDecisionNotificationCanaryTests(unittest.TestCase):
             self.assertEqual(guard.notification_evidence_error(event), "")
 
 
+    def test_risk_permission_upgrade_without_trade_opportunity_is_action_complete(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            prior = self._event(
+                "d1", "2026-09-18T14:00:00+08:00", "561980", "半导体设备ETF",
+                "无机会", "禁止新增",
+            )
+            latest = self._event(
+                "d2", "2026-09-18T14:10:53+08:00", "561980", "半导体设备ETF",
+                "无机会", "允许Trial", amount_action="",
+            )
+            latest["formal_decision"]["decisive_reason"] = ""
+            latest["formal_decision"]["capital_competition"] = {
+                "next_unit_capital_use": "现金",
+                "new_amount_yuan": 0,
+                "zero_amount_decisive_reason": "风险许可已解除，但当前候选尚未形成完整新增资本证据。",
+                "selected_state_reason": "维持现有组合与现金优于当前候选。",
+                "capital_release_migrations": [],
+            }
+            latest["formal_decision"]["managed_position_reviews"] = [
+                {"next_change_condition": "若科技承接继续增强并形成独立证据，再评估新增。"}
+            ]
+            self._write_events(root, prior, latest)
+            with patch.object(center, "ROOT", root), patch.object(
+                center, "now", return_value=datetime.fromisoformat("2026-09-18T14:11:30+08:00")
+            ):
+                event = center.formal_decision_change_event()
+                rendered = center.render_canonical_notification(event)
+
+            self.assertIsNotNone(event)
+            self.assertEqual(rendered["title"], "【风险许可】禁止新增 → 允许Trial")
+            self.assertIn("新增0元", rendered["content"])
+            self.assertIn("下一单位资本：现金", rendered["content"])
+            self.assertIn("当前无需新增", rendered["content"])
+            self.assertIn("若科技承接继续增强", rendered["content"])
+            self.assertNotIn("未提供", rendered["content"])
+            self.assertNotIn("打开ChatGPT", rendered["content"])
+
+
+
 if __name__ == "__main__":
     unittest.main()
