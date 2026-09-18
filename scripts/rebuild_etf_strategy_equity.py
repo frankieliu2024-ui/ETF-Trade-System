@@ -53,8 +53,7 @@ def _load_prices(root: Path, price_dir: Path | None = None):
         raise ValueError(f"price directory missing: {directory}")
     for path in sorted(directory.glob("*.json")):
         payload = json.loads(path.read_text(encoding="utf-8"))
-        market_date = str(payload.get("market_date") or path.stem)
-        for row in payload.get("features") or []:
+        # A daily-feature document is an eligible replay valuation date only when\n        # its canonical document-level quality is PASS. Row-level PASS cannot\n        # upgrade a partial/DEGRADED intraday document into an EOD-equivalent day.\n        if str(payload.get("quality_status") or "PASS").upper() != "PASS":\n            continue\n        market_date = str(payload.get("market_date") or path.stem)\n        for row in payload.get("features") or []:
             code = str(row.get("code") or "").strip()
             if not code or str(row.get("quality_status") or "PASS").upper() != "PASS":
                 continue
