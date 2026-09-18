@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-18T12:22:10Z",
-  "generated_at_beijing": "2026-09-18T20:22:10+08:00",
+  "generated_at": "2026-09-18T12:31:42Z",
+  "generated_at_beijing": "2026-09-18T20:31:42+08:00",
   "market_date": "2026-09-18",
   "latest_valid_node": "close",
   "rules_version": "V2.2.31",
@@ -393,7 +393,7 @@
       "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
       "timing": {}
     },
-    "generated_at": "2026-09-18T12:22:10Z",
+    "generated_at": "2026-09-18T12:31:42Z",
     "rules_version": "V2.2.31",
     "market_date": "2026-09-18",
     "latest_node": "close",
@@ -1517,7 +1517,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 10.409,
-      "age_seconds": 19043
+      "age_seconds": 19615
     },
     "freshness_at_context_build": {
       "status": "STALE",
@@ -1533,7 +1533,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 10.409,
-      "age_seconds": 19043
+      "age_seconds": 19615
     },
     "data_quality_summary": {
       "pass_count": 16,
@@ -1613,7 +1613,7 @@
       "account_fact_time": "2026-09-18T15:53:00+08:00",
       "market_snapshot_time": "2026-09-18T15:04:47+08:00",
       "market_phase": "POST_CLOSE_GRACE",
-      "context_generated_time": "2026-09-18T12:22:10Z",
+      "context_generated_time": "2026-09-18T12:31:42Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
@@ -1640,7 +1640,7 @@
       "read_only": true
     },
     "market_quote_router": {
-      "generated_at_beijing": "2026-09-18T20:22:10+08:00",
+      "generated_at_beijing": "2026-09-18T20:31:42+08:00",
       "refresh_mode": "CACHED_STATE",
       "refresh_failures": [],
       "decision_freshness": {
@@ -1649,8 +1649,8 @@
         "captured_at": "2026-09-18T07:04:47+00:00",
         "provider_as_of": "2026-09-18T07:04:42+00:00",
         "effective_as_of": "2026-09-18T07:04:42+00:00",
-        "request_time": "2026-09-18T12:22:10.490319+00:00",
-        "age_seconds": 19048,
+        "request_time": "2026-09-18T12:31:42.445824+00:00",
+        "age_seconds": 19620,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -4961,7 +4961,7 @@
     "account_fact_time": "2026-09-18T15:53:00+08:00",
     "market_snapshot_time": "2026-09-18T15:04:47+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-09-18T12:22:10Z",
+    "context_generated_time": "2026-09-18T12:31:42Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -5051,7 +5051,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "STALE",
-        "age_seconds": 19043,
+        "age_seconds": 19615,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -5069,7 +5069,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 10.409,
-        "age_seconds": 19043
+        "age_seconds": 19615
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新判断为“时点正常／存在延迟／时点过旧”。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -5091,10 +5091,28 @@
       "degraded_max_age_seconds": 1500,
       "close_grace_seconds": 1800,
       "principle": "查询时立即补采优先；常规10分钟只是生产目标。补采失败才回退最近有效状态，并按查询时刻重新判定新鲜度。"
+    },
+    "refresh_gate": {
+      "status": "READY",
+      "formal_analysis_allowed": true,
+      "formal_decision_persist_allowed": true,
+      "fallback_allowed": false,
+      "query_intent": "EXPLICIT_LATEST",
+      "request_file": "requests/live_snapshot/20260918_1450_manual_intraday_analysis.json",
+      "request_id": "20260918_1450_manual_intraday_analysis",
+      "requested_at_beijing": "2026-09-18T14:50:00+08:00",
+      "requested_market_time": "2026-09-18T14:50:00+08:00",
+      "current_snapshot_time": "2026-09-18T15:04:47+08:00",
+      "resolved_snapshot_time": "2026-09-18T15:04:47+08:00",
+      "latest_snapshot": "data/market/snapshots/2026-09-18_150447.json",
+      "failure_reason": "",
+      "post_request_snapshot": true,
+      "nominal_node_reached": true,
+      "rule": "EXPLICIT_LATEST或wait_for_refresh请求必须等本次请求之后且不早于requested_market_time的新CURRENT发布后才可称为最新/当前行情；请求前即使仍处普通FRESH窗口，也不得冒充本次最新查询结果。仅非EXPLICIT_LATEST且用户明确授权时可回退旧快照。"
     }
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-09-18T20:22:10+08:00",
+    "generated_at_beijing": "2026-09-18T20:31:41+08:00",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
     "refresh_failures": [
       {
@@ -5112,8 +5130,8 @@
       "captured_at": "2026-09-18T07:04:47+00:00",
       "provider_as_of": "2026-09-18T07:04:42+00:00",
       "effective_as_of": "2026-09-18T07:04:42+00:00",
-      "request_time": "2026-09-18T07:53:00+00:00",
-      "age_seconds": 19048,
+      "request_time": "2026-09-18T12:30:00+00:00",
+      "age_seconds": 19619,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -5121,7 +5139,7 @@
       "refresh_required": true,
       "fallback_allowed": false,
       "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required",
-      "resolved_as_of": "2026-09-18T12:22:07+00:00",
+      "resolved_as_of": "2026-09-18T12:31:36+00:00",
       "resolved_post_request": true
     },
     "route_version": "V1.1",
@@ -5132,16 +5150,16 @@
         "market_name": "美国",
         "symbol": "QQQ",
         "name": "QQQ",
-        "latest_price": 718.0,
-        "open": 718.0,
-        "high": 718.0,
-        "low": 718.0,
+        "latest_price": 717.8468,
+        "open": 717.8468,
+        "high": 717.8468,
+        "low": 717.8468,
         "prev_close": 704.72,
         "volume": 0,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-09-18T20:22:07+08:00",
-        "data_time_local": "2026-09-18T08:22:07-04:00",
+        "data_time_beijing": "2026-09-18T20:31:36+08:00",
+        "data_time_local": "2026-09-18T08:31:36-04:00",
         "market_phase": "PRE_MARKET",
         "market_status_cn": "美股盘前",
         "data_nature_cn": "盘前行情（附最近正式收盘基准）",
@@ -5156,16 +5174,16 @@
         "market_name": "美国",
         "symbol": "SOXX",
         "name": "SOXX",
-        "latest_price": 520.5,
-        "open": 520.5,
-        "high": 520.5,
-        "low": 520.5,
+        "latest_price": 520.5604,
+        "open": 520.5604,
+        "high": 520.5604,
+        "low": 520.5604,
         "prev_close": 502.06,
         "volume": 0,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-09-18T20:22:02+08:00",
-        "data_time_local": "2026-09-18T08:22:02-04:00",
+        "data_time_beijing": "2026-09-18T20:31:21+08:00",
+        "data_time_local": "2026-09-18T08:31:21-04:00",
         "market_phase": "PRE_MARKET",
         "market_status_cn": "美股盘前",
         "data_nature_cn": "盘前行情（附最近正式收盘基准）",
@@ -6082,11 +6100,11 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 10.409,
-    "age_seconds": 19043
+    "age_seconds": 19615
   },
   "freshness_at_context_build": {
     "status": "STALE",
-    "age_seconds": 19043,
+    "age_seconds": 19615,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -6096,8 +6114,8 @@
     "captured_at": "2026-09-18T07:04:47+00:00",
     "provider_as_of": "2026-09-18T07:04:42+00:00",
     "effective_as_of": "2026-09-18T07:04:42+00:00",
-    "request_time": "2026-09-18T07:53:00+00:00",
-    "age_seconds": 19048,
+    "request_time": "2026-09-18T12:30:00+00:00",
+    "age_seconds": 19619,
     "post_request": false,
     "preferred_max_age_seconds": 300,
     "fallback_max_age_seconds": 900,
@@ -6105,7 +6123,7 @@
     "refresh_required": true,
     "fallback_allowed": false,
     "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required",
-    "resolved_as_of": "2026-09-18T12:22:07+00:00",
+    "resolved_as_of": "2026-09-18T12:31:36+00:00",
     "resolved_post_request": true
   },
   "trading_day_status": {
@@ -6186,9 +6204,9 @@
   "decision_fact_pack": {
     "schema_version": "1.0",
     "trigger": {
-      "source": "INTERACTIVE_QUERY",
-      "request_id": "",
-      "requested_at_beijing": ""
+      "source": "CHATGPT_SCHEDULED_REVIEW",
+      "request_id": "20260918_2030_scheduled_trade_review",
+      "requested_at_beijing": "2026-09-18T20:30:00+08:00"
     },
     "master": {
       "version": "V2.2.31",
@@ -6207,7 +6225,7 @@
       "provider": "tencent_qq"
     },
     "decision_context": {
-      "generated_at_beijing": "2026-09-18T12:22:10Z",
+      "generated_at_beijing": "2026-09-18T12:31:42Z",
       "source": "scripts/state_manager.py::build_decision_context"
     },
     "market_quote": {
@@ -6218,8 +6236,8 @@
         "captured_at": "2026-09-18T07:04:47+00:00",
         "provider_as_of": "2026-09-18T07:04:42+00:00",
         "effective_as_of": "2026-09-18T07:04:42+00:00",
-        "request_time": "2026-09-18T07:53:00+00:00",
-        "age_seconds": 19048,
+        "request_time": "2026-09-18T12:30:00+00:00",
+        "age_seconds": 19619,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -6227,7 +6245,7 @@
         "refresh_required": true,
         "fallback_allowed": false,
         "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required",
-        "resolved_as_of": "2026-09-18T12:22:07+00:00",
+        "resolved_as_of": "2026-09-18T12:31:36+00:00",
         "resolved_post_request": true
       },
       "quotes_as_of_beijing": [
@@ -6247,7 +6265,8 @@
         "2026-09-18T19:15:00+08:00",
         "2026-09-18T20:22:02+08:00",
         "2026-09-18T20:22:05+08:00",
-        "2026-09-18T20:22:07+08:00"
+        "2026-09-18T20:31:21+08:00",
+        "2026-09-18T20:31:36+08:00"
       ],
       "source": "scripts/market_quote_router.py"
     },
@@ -6265,34 +6284,34 @@
   "freshness_assurance": {
     "status": "DIRECT",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-    "decision_request_time": "2026-09-18T07:53:00+00:00",
+    "decision_request_time": "2026-09-18T12:30:00+00:00",
     "decision_request_post_current": false,
     "rule": "freshness assurance precedes full decision-context construction; post-refresh CURRENT is re-read before formal decision context construction."
   },
   "fast_path_latency": {
-    "t0": "",
-    "manual_request_identity": "UNKNOWN",
-    "manual_request_received_at": "UNKNOWN",
-    "user_request_received": "",
+    "t0": "2026-09-18T20:30:00+08:00",
+    "manual_request_identity": "20260918_2030_scheduled_trade_review",
+    "manual_request_received_at": "2026-09-18T20:30:00+08:00",
+    "user_request_received": "2026-09-18T20:30:00+08:00",
     "screenshot_account_fact_available": "UNKNOWN",
     "screenshot_account_fact_available_at": "UNKNOWN",
     "t_refresh_start_or_reuse": "",
     "market_refresh_identity": "UNKNOWN",
     "first_qualified_market_fact_identity": "QQQ",
-    "first_qualified_market_fact_as_of": "2026-09-18T20:22:07+08:00",
+    "first_qualified_market_fact_as_of": "2026-09-18T20:31:36+08:00",
     "first_qualified_market_fact_quality": "PASS",
     "t_new_current": "2026-09-18T15:04:47+08:00",
-    "t_minimum_legal_inputs_ready": "2026-09-18T20:22:10+08:00",
-    "minimum_legal_inputs_ready_at": "2026-09-18T20:22:10+08:00",
-    "t_decision_ready": "2026-09-18T12:22:10Z",
-    "final_answer_identity": "2026-09-18T20:22:10+08:00",
-    "final_analysis_identity": "2026-09-18T20:22:10+08:00",
-    "t_reply_or_output_ready": "2026-09-18T20:22:10+08:00",
+    "t_minimum_legal_inputs_ready": "2026-09-18T20:31:42+08:00",
+    "minimum_legal_inputs_ready_at": "2026-09-18T20:31:42+08:00",
+    "t_decision_ready": "2026-09-18T12:31:42Z",
+    "final_answer_identity": "2026-09-18T20:31:42+08:00",
+    "final_analysis_identity": "2026-09-18T20:31:42+08:00",
+    "t_reply_or_output_ready": "2026-09-18T20:31:42+08:00",
     "required_account_persistence_identity": "UNKNOWN",
     "refresh_start_latency": null,
     "refresh_duration": null,
-    "post_current_decision_latency": 19043.0,
-    "total_fast_path_latency": null,
+    "post_current_decision_latency": 19615.0,
+    "total_fast_path_latency": 102.0,
     "measurement_status": "OBSERVED_FIELDS_ONLY; MISSING_TIMESTAMPS_REMAIN_EXPLICIT",
     "trace_metadata_is_non_authoritative": true,
     "trace_metadata_is_decision_gate": false,
@@ -6303,5 +6322,24 @@
       "final_answer_delivered_at"
     ],
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH"
-  }
+  },
+  "refresh_gate": {
+    "status": "READY",
+    "formal_analysis_allowed": true,
+    "formal_decision_persist_allowed": true,
+    "fallback_allowed": false,
+    "query_intent": "EXPLICIT_LATEST",
+    "request_file": "requests/live_snapshot/20260918_1450_manual_intraday_analysis.json",
+    "request_id": "20260918_1450_manual_intraday_analysis",
+    "requested_at_beijing": "2026-09-18T14:50:00+08:00",
+    "requested_market_time": "2026-09-18T14:50:00+08:00",
+    "current_snapshot_time": "2026-09-18T15:04:47+08:00",
+    "resolved_snapshot_time": "2026-09-18T15:04:47+08:00",
+    "latest_snapshot": "data/market/snapshots/2026-09-18_150447.json",
+    "failure_reason": "",
+    "post_request_snapshot": true,
+    "nominal_node_reached": true,
+    "rule": "EXPLICIT_LATEST或wait_for_refresh请求必须等本次请求之后且不早于requested_market_time的新CURRENT发布后才可称为最新/当前行情；请求前即使仍处普通FRESH窗口，也不得冒充本次最新查询结果。仅非EXPLICIT_LATEST且用户明确授权时可回退旧快照。"
+  },
+  "formal_analysis_allowed": true
 }
