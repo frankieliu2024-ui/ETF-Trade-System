@@ -626,6 +626,11 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     )
     if capital_error:
         raise ValueError(f"invalid formal decision capital-competition contract: {capital_error}")
+    consistency_error = validate_formal_decision_cross_field_consistency(
+        decision, account_for_lifecycle, "formal_decision",
+    )
+    if consistency_error:
+        raise ValueError(f"invalid formal decision cross-field consistency: {consistency_error}")
     managed_projection = build_managed_position_projection(ROOT, account_for_lifecycle)
     current_path = ROOT / "data/state/CURRENT.json"
     current = load_json(current_path) if current_path.exists() else {}
@@ -963,6 +968,84 @@ def validate_capital_competition_contract(value: object, account: dict, object_n
             for key in ("source", "amount_or_quantity", "destination", "reason"):
                 if key not in migration or migration[key] in (None, ""):
                     return f"{object_name}.capital_release_migrations[{index}] missing {key}"
+    return ""
+
+
+def validate_formal_decision_cross_field_consistency(
+    decision: object, account: dict, object_name: str = "formal_decision"
+) -> str:
+    """Reject deterministic contradictions across already-required formal-decision fields.
+
+    This validator never chooses an action. It only checks whether decision-supplied
+    capital and per-position conclusions can all be true at the same time.
+    """
+    if not isinstance(decision, dict):
+        return f"{object_name} must be an object"
+    capital = decision.get("capital_competition")
+    reviews = decision.get("managed_position_reviews")
+    if not isinstance(capital, dict):
+        return ""
+    if reviews is None:
+        reviews = []
+    if not isinstance(reviews, list):
+        return ""
+
+    review_by_code = {}
+    for review in reviews:
+        if not isinstance(review, dict):
+            continue
+        code = normalize_code(review.get("security_code") or review.get("code") or "")
+        if code:
+            review_by_code[code] = review
+
+    migrations = capital.get("capital_release_migrations") or []
+    if isinstance(migrations, list) and migrations and capital.get("releasable_capital_reviewed") is not True:
+        return f"{object_name}.capital_competition has release migrations but releasable_capital_reviewed is not true"
+
+    account_positions = {}
+    for position in (account or {}).get("positions") or []:
+        if not isinstance(position, dict):
+            continue
+        code = normalize_code(first(position, "code", "symbol", "security_code", "instrument_code"))
+        if code:
+            account_positions[code] = position
+
+    migration_sources = set()
+    if isinstance(migrations, list):
+        for index, migration in enumerate(migrations):
+            if not isinstance(migration, dict):
+                continue
+            source_text = str(migration.get("source") or "")
+            matches = [
+                code for code in account_positions
+                if code and (code in source_text or str(first(account_positions[code], "name", "security_name") or "") in source_text)
+            ]
+            if len(matches) == 1:
+                migration_sources.add(matches[0])
+            elif len(matches) == 0:
+                normalized = normalize_code(source_text)
+                if normalized:
+                    return f"{object_name}.capital_competition.capital_release_migrations[{index}] source is not a current account asset"
+
+    for code in migration_sources:
+        review = review_by_code.get(code)
+        if review and str(review.get("current_action") or "").strip() in {"持有", "HOLD"}:
+            return f"{object_name}.managed_position_reviews[{code}] cannot HOLD while the same asset funds a capital release migration"
+
+    new_amount = safe_float(capital.get("new_amount_yuan"))
+    states = capital.get("compared_capital_states") or []
+    selected = [
+        state for state in states
+        if isinstance(state, dict) and str(state.get("why_not_selected") or "").strip() in {"已选中", "SELECTED", "selected"}
+    ]
+    if len(selected) > 1:
+        return f"{object_name}.capital_competition compared_capital_states identifies multiple selected states"
+    if len(selected) == 1:
+        selected_cash = safe_float(selected[0].get("remaining_deployable_cash"))
+        post_cash = safe_float(capital.get("post_action_deployable_cash"))
+        if selected_cash is not None and post_cash is not None and abs(selected_cash - post_cash) > 0.01:
+            return f"{object_name}.capital_competition selected state remaining cash conflicts with post_action_deployable_cash"
+
     return ""
 
 
