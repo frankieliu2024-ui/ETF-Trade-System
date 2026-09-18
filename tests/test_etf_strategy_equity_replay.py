@@ -38,6 +38,40 @@ class ETFReplayContractTests(unittest.TestCase):
             self.assertEqual(b["summary"]["current_strategy_return_pct_gross"], a["summary"]["current_strategy_return_pct_gross"])
             self.assertEqual(b["series"], a["series"])
 
+    def test_degraded_partial_daily_feature_does_not_advance_replay_cutoff(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "data/state").mkdir(parents=True)
+            (root / "events/research/daily_features").mkdir(parents=True)
+            (root / "config/market").mkdir(parents=True)
+            (root / "config/market/etf_monitor_universe.json").write_text(json.dumps({"objects":[{"code":"159781"},{"code":"159941"}]}))
+            (root / "data/state/etf_strategy_equity.json").write_text(json.dumps({
+                "trades": [
+                    {"datetime":"2026-09-17 09:30:00","code":"159781","side":"BUY","quantity":100,"price":1.0},
+                    {"datetime":"2026-09-17 09:31:00","code":"159941","side":"BUY","quantity":100,"price":1.5},
+                ]
+            }))
+            (root / "events/research/daily_features/2026-09-17.json").write_text(json.dumps({
+                "market_date":"2026-09-17",
+                "quality_status":"PASS",
+                "features":[
+                    {"code":"159781","close":1.04,"quality_status":"PASS"},
+                    {"code":"159941","close":1.63,"quality_status":"PASS"},
+                ],
+            }))
+            (root / "events/research/daily_features/2026-09-18.json").write_text(json.dumps({
+                "market_date":"2026-09-18",
+                "market_phase":"OPENING_CALL_AUCTION",
+                "quality_status":"DEGRADED",
+                "observed_etf_count":1,
+                "features":[{"code":"159941","close":1.64,"quality_status":"PASS"}],
+            }))
+            result = replay(root)
+            self.assertEqual(result["replay_cutoff"], "2026-09-17")
+            self.assertEqual(result["summary"]["price_date_count"], 1)
+            self.assertEqual(set(result["series"][-1]["positions"]), {"159781", "159941"})
+            self.assertEqual(result["summary"]["coverage_status"], "COMPLETE")
+
     def test_declared_trade_count_recovers_from_formal_experience_index(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
