@@ -128,6 +128,107 @@ class CapitalCompetitionContractTests(unittest.TestCase):
         self.assertIn("held_etf_add_capital_reviews", error)
 
 
+class FormalDecisionCrossFieldConsistencyTests(unittest.TestCase):
+    def account_with_held_etf(self):
+        return {
+            "positions": [
+                {"security_code": "561980", "security_name": "半导体设备ETF", "quantity": 1000}
+            ]
+        }
+
+    def complete_decision_with_held_etf(self):
+        decision = formal_decision()
+        decision["managed_position_reviews"] = [
+            {
+                "security_code": "561980",
+                "current_action": "持有",
+                "holding_state_risk_reward_evidence": "继续占用资本仍合理",
+                "capital_use": {"continued_holding_vs_cash": "继续持有优于释放"},
+                "action_changes_now": False,
+                "next_change_condition": "结构失效时重评",
+            }
+        ]
+        decision["capital_competition"]["held_etf_add_capital_reviews"] = [
+            {
+                "security_code": "561980",
+                "eligible_for_additional_capital_review": True,
+                "conclusion": "不追加",
+                "reason": "完整竞争后现金更优",
+            }
+        ]
+        return decision
+
+    def test_hold_cannot_fund_release_migration(self):
+        decision = self.complete_decision_with_held_etf()
+        decision["capital_competition"]["capital_release_migrations"] = [
+            {
+                "source": "半导体设备ETF（561980）",
+                "amount_or_quantity": "1000份",
+                "destination": "现金",
+                "reason": "释放低效率资本",
+            }
+        ]
+        error = state_sync.validate_formal_decision_cross_field_consistency(
+            decision, self.account_with_held_etf()
+        )
+        self.assertIn("cannot HOLD", error)
+
+    def test_release_migration_requires_releasable_review(self):
+        decision = self.complete_decision_with_held_etf()
+        decision["capital_competition"]["releasable_capital_reviewed"] = False
+        decision["capital_competition"]["capital_release_migrations"] = [
+            {
+                "source": "半导体设备ETF（561980）",
+                "amount_or_quantity": "1000份",
+                "destination": "现金",
+                "reason": "释放低效率资本",
+            }
+        ]
+        error = state_sync.validate_formal_decision_cross_field_consistency(
+            decision, self.account_with_held_etf()
+        )
+        self.assertIn("releasable_capital_reviewed", error)
+
+    def test_selected_state_cash_must_match_post_action_cash(self):
+        decision = formal_decision()
+        decision["capital_competition"]["compared_capital_states"][0]["remaining_deployable_cash"] = 9000.0
+        error = state_sync.validate_formal_decision_cross_field_consistency(
+            decision, {"positions": []}
+        )
+        self.assertIn("conflicts with post_action_deployable_cash", error)
+
+    def test_multiple_selected_states_fail(self):
+        decision = formal_decision()
+        decision["capital_competition"]["compared_capital_states"][1]["why_not_selected"] = "已选中"
+        error = state_sync.validate_formal_decision_cross_field_consistency(
+            decision, {"positions": []}
+        )
+        self.assertIn("multiple selected states", error)
+
+    def test_release_source_must_be_current_account_asset(self):
+        decision = formal_decision()
+        decision["capital_competition"]["capital_release_migrations"] = [
+            {
+                "source": "不存在ETF（999999）",
+                "amount_or_quantity": "1000份",
+                "destination": "现金",
+                "reason": "释放低效率资本",
+            }
+        ]
+        error = state_sync.validate_formal_decision_cross_field_consistency(
+            decision, {"positions": []}
+        )
+        self.assertIn("source is not a current account asset", error)
+
+    def test_consistent_decision_passes(self):
+        self.assertEqual(
+            state_sync.validate_formal_decision_cross_field_consistency(
+                formal_decision(), {"positions": []}
+            ),
+            "",
+        )
+
+
 class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
