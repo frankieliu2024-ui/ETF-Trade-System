@@ -1,32 +1,27 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-18T14:39:11+08:00",
+  "generated_at": "2026-09-18T14:39:36+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 35315745000,
-  "run_attempt": 2,
-  "head_sha": "a42cde2bb55d147ab7f26b63dfd63aa4e06e0c27",
-  "main_head_sha": "4a69f13c6218196667202bfdd618bb63598f2825",
+  "run_id": 35315801910,
+  "run_attempt": 1,
+  "head_sha": "4a69f13c6218196667202bfdd618bb63598f2825",
+  "main_head_sha": "3824ed998c1814d9e4795de183802738ed8136e8",
   "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
       "job": "watchdog",
-      "step": "Persist bounded self-healing state and deterministic repairs",
-      "number": 13
+      "step": "Escalate persistent or structural failure",
+      "number": 14
     }
   ],
   "changed_files": [
-    "data/state/e2e_status.json",
-    "data/state/execution_quality.json",
-    "data/state/last_known_good.json",
-    "data/state/maintenance_diagnostic.json",
-    "data/state/maintenance_health.json",
-    "data/state/system_consistency.json"
+    "data/state/notification_center.json"
   ],
-  "commit_message": "state: persist production acceptance",
+  "commit_message": "state: record notification and execution reconciliation",
   "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
