@@ -81,7 +81,73 @@ def _run_ingress(proc):
     return payload
 
 
-def project_historical_formal_facts(events):
+def _seed_projection_case_annotation(event, case_id):
+    """Restore an already-documented CASE annotation through the formal gateway.
+
+    This is a bounded projection migration only.  The CASE identity comes from
+    the registered historical-backfill manifest, which records the pre-replay
+    formal Experience ownership.  It never mutates the canonical trade event.
+    """
+    if not case_id:
+        return
+    if not re.fullmatch(r"CASE-\\d{8}-\\d{2}", str(case_id)):
+        raise SystemExit(f"invalid projection CASE identity: {case_id}")
+    from formal_file_mutation_gateway import write_formal_text_if_changed
+    experience = ROOT / "ETF交易复盘与经验库_2026.md"
+    text = experience.read_text(encoding="utf-8")
+    section_end = "\n### 2.2 银证转账与非交易现金流水"
+    header = "|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|"
+    start = text.index(header)
+    end = text.index(section_end, start)
+    execution_stamp = str(
+        event.get("executed_at_beijing")
+        or event.get("executed_at")
+        or event.get("trade_time")
+        or event.get("confirmed_at_beijing")
+        or ""
+    ).replace("T", " ")[:19]
+    code = str(event.get("code") or "")
+    side = str(event.get("side") or "").upper()
+    side_cn = "买入" if side in {"BUY", "B", "买入", "买"} else "卖出" if side in {"SELL", "S", "卖出", "卖"} else side
+    qty = int(float(event.get("quantity") or 0))
+    price = float(event.get("price") or 0)
+    matches = []
+    lines = text[start:end].splitlines()
+    for index, line in enumerate(lines):
+        parts = line.split("|")
+        if len(parts) < 11:
+            continue
+        if (
+            parts[1] == execution_stamp
+            and parts[3] == code
+            and parts[4] == side_cn
+            and parts[5].replace(",", "") == str(qty)
+            and parts[6] == f"{price:.3f}"
+        ):
+            matches.append(index)
+    if len(matches) != 1:
+        raise SystemExit(
+            f"projection CASE seed requires exactly one economic row: "
+            f"{execution_stamp}:{code}:matches={len(matches)}"
+        )
+    index = matches[0]
+    existing_cases = re.findall(r"CASE-\\d{8}-\\d{2}", lines[index])
+    if existing_cases:
+        if sorted(set(existing_cases)) != [case_id]:
+            raise SystemExit(
+                f"projection CASE conflict for {execution_stamp}:{code}: "
+                f"{sorted(set(existing_cases))} != {case_id}"
+            )
+        return
+    parts = lines[index].split("|")
+    note = parts[10].strip()
+    parts[10] = f"{case_id}；{note}" if note else case_id
+    lines[index] = "|".join(parts)
+    updated = text[:start] + "\n".join(lines) + text[end:]
+    write_formal_text_if_changed(ROOT, experience.name, updated)
+
+
+def project_historical_formal_facts(events, projection_case_ownership=None):
     """Project replayed historical facts through existing canonical owners."""
     from process_state_sync_request import sync_experience_transaction_index
     from formal_file_mutation_gateway import upsert_formal_line
@@ -89,6 +155,7 @@ def project_historical_formal_facts(events):
     archive_start = "<!-- AUTO_TRADE_EVENTS_START -->"
     archive_end = "<!-- AUTO_TRADE_EVENTS_END -->"
     archive = ROOT / "ETF市场行情档案_2026.md"
+    projection_case_ownership = projection_case_ownership or {}
     for event in events:
         if str(event.get("execution_status") or "").upper() != "EXECUTED":
             continue
@@ -111,6 +178,7 @@ def project_historical_formal_facts(events):
         price = event.get("price")
         line = f"{event_id}｜{day}｜{name}（{code}）｜{side}｜{qty}｜{price}｜historical canonical trade fact"
         upsert_formal_line(ROOT, archive.name, archive_start, archive_end, event_id, line, before_heading="## 6. 历史Excel与专项数据来源")
+        _seed_projection_case_annotation(event, projection_case_ownership.get(event_id))
         sync_experience_transaction_index(event)
     atomic_json_write(ROOT / "data/state/execution_quality.json", build_execution_quality(ROOT))
 
@@ -144,7 +212,17 @@ def main():
             project_events.append(load(event_path))
         except (OSError, json.JSONDecodeError):
             continue
-    project_historical_formal_facts(project_events)
+    projection_case_ownership = data.get("projection_case_ownership") or {}
+    trade_ids = {str(item.get("event_id") or "") for item in trades}
+    if not isinstance(projection_case_ownership, dict):
+        raise SystemExit("projection_case_ownership must be an object")
+    unknown_projection_ids = sorted(set(projection_case_ownership) - trade_ids)
+    if unknown_projection_ids:
+        raise SystemExit(f"projection CASE ownership references unknown trades: {unknown_projection_ids}")
+    for event_id, case_id in projection_case_ownership.items():
+        if not re.fullmatch(r"CASE-\\d{8}-\\d{2}", str(case_id)):
+            raise SystemExit(f"invalid projection CASE ownership: {event_id}={case_id}")
+    project_historical_formal_facts(project_events, projection_case_ownership)
     after={rel:digest(ROOT/rel) if (ROOT/rel).exists() else None for rel in before}
     if before != after:
         raise SystemExit("current account/CURRENT mutation detected")
