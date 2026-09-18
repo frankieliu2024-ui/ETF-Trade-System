@@ -1,26 +1,25 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-18T09:19:46+08:00",
+  "generated_at": "2026-09-18T09:20:00+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 35294246482,
-  "run_attempt": 2,
-  "head_sha": "1adfc2535642bebfbbb03f226a264bedbaa2eac8",
-  "main_head_sha": "935ea39bdfbdf3234bbfb320209dada0999b5824",
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 35294858558,
+  "run_attempt": 1,
+  "head_sha": "935ea39bdfbdf3234bbfb320209dada0999b5824",
+  "main_head_sha": "25153ab3138f7038d184992de357a560facec027",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result or admit bounded replay migration",
+      "job": "watchdog",
+      "step": "Run read-only comprehensive production health aggregate",
       "number": 9
     }
   ],
   "changed_files": [
-    "scripts/process_state_sync_request.py",
-    "tests/test_issue_664_historical_case_projection.py"
+    "data/state/notification_center.json"
   ],
-  "commit_message": "fix: preserve seeded historical CASE ownership (#664)",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "state: record notification and execution reconciliation",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
@@ -28,7 +27,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
