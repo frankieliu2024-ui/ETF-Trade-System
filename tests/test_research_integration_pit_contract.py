@@ -160,6 +160,46 @@ def test_canonical_outcome_matures_explicit_verified_1500_session_close():
         assert outcome["horizons"]["T_plus_1"]["candidate_close_return_pct"] == 10.0
 
 
+
+def test_contribution_audit_carries_only_persisted_ex_ante_research_usage():
+    with _research_root() as td:
+        root = Path(td)
+        _write_json(root / "config/market/etf_monitor_universe.json", {"objects": [{"code": "561980", "name": "半导体设备ETF"}]})
+        persisted = [{
+            "evidence_id": "component_lead_561980_3d",
+            "decision_effect": "WEAKEN",
+            "security_code": "561980",
+            "decisive": False,
+        }]
+        _write_json(root / "events/decisions/D1.json", {
+            "decision_id": "D1",
+            "market_date": "2026-09-13",
+            "candidate_code": "561980",
+            "price_at_decision": 1.0,
+            "formal_decision": {"amount_action": "新增0元", "research_evidence_used": persisted},
+        })
+        # Later/current research state must not be used to reconstruct historical usage.
+        _write_json(root / "data/state/research_execution_summary.json", {
+            "evidence": {
+                "later_only_evidence": {
+                    "evidence_id": "later_only_evidence",
+                    "use_in_current_decision": True,
+                }
+            }
+        })
+        result = contribution_audit.build(root)
+        outcome = json.loads((root / "events/research/decision_outcomes/D1.json").read_text(encoding="utf-8"))
+        assert outcome["research_evidence_used"] == [
+            {
+                "evidence_id": "component_lead_561980_3d",
+                "change": "",
+                "decision_effect": "WEAKEN",
+            }
+        ]
+        assert "later_only_evidence" not in result["evidence_use_counts"]
+        assert result["decision_attribution"]["status_counts"]["EXPLICIT"] == 1
+
+
 def test_master_feedback_counts_schema2_matured_horizons_only():
     with _research_root() as td:
         root = Path(td)
