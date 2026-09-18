@@ -575,6 +575,12 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     )
     if review_error:
         raise ValueError(f"invalid formal decision managed-position review contract: {review_error}")
+    capital_error = validate_capital_competition_contract(
+        decision.get("capital_competition"), account_for_lifecycle,
+        "formal_decision.capital_competition",
+    )
+    if capital_error:
+        raise ValueError(f"invalid formal decision capital-competition contract: {capital_error}")
     managed_projection = build_managed_position_projection(ROOT, account_for_lifecycle)
     current_path = ROOT / "data/state/CURRENT.json"
     current = load_json(current_path) if current_path.exists() else {}
@@ -831,6 +837,87 @@ def validate_managed_position_lifecycle(value: object, account: dict, object_nam
     missing = [f"{item['name']}（{item['code']}）" for item in managed if item["code"] not in covered]
     if missing:
         return f"{object_name} is missing current managed positions: {', '.join(missing)}"
+    return ""
+
+
+def validate_capital_competition_contract(value: object, account: dict, object_name: str = "capital_competition") -> str:
+    """Validate whole-account capital-allocation completion without making the decision."""
+    if not isinstance(value, dict):
+        return f"{object_name} must be an object"
+    required = (
+        "next_unit_capital_use",
+        "full_competition_completed",
+        "releasable_capital_reviewed",
+        "post_action_deployable_cash",
+        "future_opportunity_capacity",
+        "concentration_account_structure_effect",
+        "selected_state_reason",
+        "new_amount_yuan",
+    )
+    missing = [key for key in required if key not in value or value[key] in (None, "", [])]
+    if missing:
+        return f"{object_name} missing required fields: {', '.join(missing)}"
+    if value.get("full_competition_completed") is not True:
+        return f"{object_name}.full_competition_completed must be true"
+    if not isinstance(value.get("releasable_capital_reviewed"), bool):
+        return f"{object_name}.releasable_capital_reviewed must be boolean"
+
+    new_amount = safe_float(value.get("new_amount_yuan"))
+    post_cash = safe_float(value.get("post_action_deployable_cash"))
+    if new_amount is None or new_amount < 0:
+        return f"{object_name}.new_amount_yuan must be a non-negative number"
+    if post_cash is None or post_cash < 0:
+        return f"{object_name}.post_action_deployable_cash must be a non-negative number"
+    if new_amount == 0 and not str(value.get("zero_amount_decisive_reason") or "").strip():
+        return f"{object_name} requires zero_amount_decisive_reason when new_amount_yuan is 0"
+
+    states = value.get("compared_capital_states")
+    if not isinstance(states, list) or len(states) < 2:
+        return f"{object_name}.compared_capital_states must contain at least two executable states"
+    for index, state in enumerate(states):
+        if not isinstance(state, dict):
+            return f"{object_name}.compared_capital_states[{index}] must be an object"
+        for key in ("state_name", "capital_action", "remaining_deployable_cash", "why_not_selected"):
+            if key not in state or state[key] in (None, ""):
+                return f"{object_name}.compared_capital_states[{index}] missing {key}"
+        if safe_float(state.get("remaining_deployable_cash")) is None:
+            return f"{object_name}.compared_capital_states[{index}].remaining_deployable_cash must be numeric"
+
+    membership = active_account_asset_codes(ROOT, account or {})
+    held_etfs = set(membership.get("etf") or set())
+    add_reviews = value.get("held_etf_add_capital_reviews")
+    if held_etfs:
+        if not isinstance(add_reviews, list):
+            return f"{object_name}.held_etf_add_capital_reviews must cover current held ETFs"
+        covered = set()
+        for index, review in enumerate(add_reviews):
+            if not isinstance(review, dict):
+                return f"{object_name}.held_etf_add_capital_reviews[{index}] must be an object"
+            code = normalize_code(review.get("security_code") or review.get("code") or "")
+            if code not in held_etfs:
+                return f"{object_name}.held_etf_add_capital_reviews[{index}] has unknown held ETF"
+            if code in covered:
+                return f"{object_name}.held_etf_add_capital_reviews must cover each held ETF exactly once"
+            covered.add(code)
+            for key in ("eligible_for_additional_capital_review", "conclusion", "reason"):
+                if key not in review or review[key] in (None, ""):
+                    return f"{object_name}.held_etf_add_capital_reviews[{index}] missing {key}"
+            if not isinstance(review.get("eligible_for_additional_capital_review"), bool):
+                return f"{object_name}.held_etf_add_capital_reviews[{index}].eligible_for_additional_capital_review must be boolean"
+        missing_held = sorted(held_etfs - covered)
+        if missing_held:
+            return f"{object_name}.held_etf_add_capital_reviews missing held ETFs: {', '.join(missing_held)}"
+
+    migrations = value.get("capital_release_migrations")
+    if migrations is not None:
+        if not isinstance(migrations, list):
+            return f"{object_name}.capital_release_migrations must be a list"
+        for index, migration in enumerate(migrations):
+            if not isinstance(migration, dict):
+                return f"{object_name}.capital_release_migrations[{index}] must be an object"
+            for key in ("source", "amount_or_quantity", "destination", "reason"):
+                if key not in migration or migration[key] in (None, ""):
+                    return f"{object_name}.capital_release_migrations[{index}] missing {key}"
     return ""
 
 
