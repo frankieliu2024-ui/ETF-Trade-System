@@ -1074,6 +1074,8 @@ def validate_managed_position_review_contract(value: object, account: dict, obje
         covered.add(code)
         required = (
             "current_action", "holding_state_risk_reward_evidence",
+            "holding_thesis_status", "risk_reduction_or_exit_condition",
+            "higher_efficiency_alternative", "capital_occupancy_reason",
             "capital_use", "action_changes_now", "next_change_condition",
         )
         missing = [key for key in required if key not in review or review[key] in (None, "", [])]
