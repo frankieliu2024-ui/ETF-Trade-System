@@ -73,6 +73,8 @@ class CanonicalNotificationTemplateTests(unittest.TestCase):
         for section in ("### 发生了什么", "### 当前正式状态", "### 为什么现在值得关注", "### 你需要做什么"):
             self.assertIn(section, rendered["content"])
         self.assertIn("用户如需交易必须人工核对并下单", rendered["content"])
+        self.assertIn("### 当前正式动作", rendered["content"])
+        self.assertIn("### 下一关注点", rendered["content"])
 
     def test_risk_permission_uses_before_after_and_does_not_nest_producer_markdown(self):
         event = self.event(
@@ -96,6 +98,8 @@ class CanonicalNotificationTemplateTests(unittest.TestCase):
         self.assertIn("### 当前风险许可", rendered["content"])
         self.assertNotIn("### 当前正式状态", rendered["content"])
         self.assertNotIn("错误的producer markdown不应被重复包裹", rendered["content"])
+        self.assertIn("### 当前正式动作", rendered["content"])
+        self.assertIn("### 下一关注点", rendered["content"])
 
     def test_raw_risk_trigger_is_not_a_parallel_notification(self):
         self.assertIsNone(center.decision_event())
