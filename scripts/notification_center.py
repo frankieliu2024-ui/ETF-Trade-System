@@ -309,6 +309,69 @@ def _formal_market_as_of(event: dict) -> str:
 def _formal_account_as_of(event: dict, decision: dict) -> str:
     return str(decision.get("account_as_of_beijing") or event.get("account_as_of_beijing") or "")
 
+def _decision_notification_details(decision: dict, status: str, target: str) -> dict:
+    capital = decision.get("capital_competition") or {}
+    managed = decision.get("managed_position_reviews") or []
+    next_use = str(capital.get("next_unit_capital_use") or "").strip()
+    zero_reason = str(capital.get("zero_amount_decisive_reason") or "").strip()
+    selected_reason = str(capital.get("selected_state_reason") or "").strip()
+    decisive_reason = str(decision.get("decisive_reason") or "").strip() or zero_reason or selected_reason
+
+    new_amount = capital.get("new_amount_yuan")
+    action_text = str(decision.get("amount_action") or decision.get("action") or "").strip()
+    if not action_text and isinstance(new_amount, (int, float)):
+        if float(new_amount) <= 0:
+            action_text = f"新增0元；下一单位资本：{next_use or '现金'}。"
+        else:
+            action_text = f"新增{float(new_amount):,.0f}元；下一单位资本：{next_use or target}。"
+    if not action_text:
+        action_text = "当前正式决策未要求新的交易动作。"
+
+    release_lines = []
+    for item in capital.get("capital_release_migrations") or []:
+        if not isinstance(item, dict):
+            continue
+        source = str(item.get("source") or "").strip()
+        amount_or_quantity = str(item.get("amount_or_quantity") or "").strip()
+        destination = str(item.get("destination") or "").strip()
+        source_text = source + (f"（{amount_or_quantity}）" if source and amount_or_quantity else "")
+        route = " → ".join(x for x in (source_text, destination) if x)
+        if route:
+            release_lines.append(route)
+    capital_route = "；".join(release_lines) or (f"下一单位资本：{next_use}" if next_use else "")
+
+    next_conditions = []
+    for review in managed:
+        if not isinstance(review, dict):
+            continue
+        condition = str(review.get("next_change_condition") or "").strip()
+        if condition and condition not in next_conditions:
+            next_conditions.append(condition)
+        if len(next_conditions) >= 2:
+            break
+    next_validation = "；".join(next_conditions)
+    if not next_validation:
+        next_validation = str(decision.get("next_validation") or decision.get("next_review") or "").strip()
+    if not next_validation:
+        next_validation = "在下一正式复核节点重新判断机会、持仓与资本效率。"
+
+    if status in {"Trial机会", "Confirm机会"}:
+        user_action = f"如准备执行，先核对最新正式判断与金额后由用户人工下单；{action_text}"
+    elif status == "观察机会":
+        user_action = "当前仅进入观察，不下单；等待下一正式复核节点验证条件是否升级。"
+    elif status == "无机会":
+        user_action = f"当前无需新增；{action_text}"
+    else:
+        user_action = action_text
+
+    return {
+        "decisive_reason": decisive_reason or "正式决策发生实质变化，需按当前资本状态重新判断。",
+        "current_action": action_text,
+        "capital_route": capital_route,
+        "next_validation": next_validation,
+        "user_action": user_action,
+    }
+
 
 def formal_decision_change_event() -> dict | None:
     events = _formal_decision_events()
@@ -343,8 +406,9 @@ def formal_decision_change_event() -> dict | None:
         return None
 
     decision_id = str(latest.get("decision_id") or decision.get("decision_id") or "")
-    decisive_reason = str(decision.get("decisive_reason") or "未提供")
-    action_summary = _compact_amount_action(amount_action)
+    details = _decision_notification_details(decision, status, target)
+    decisive_reason = details["decisive_reason"]
+    action_summary = _compact_amount_action(amount_action) if amount_action else details["current_action"]
     market_as_of_raw = _formal_market_as_of(latest)
     account_as_of_raw = _formal_account_as_of(latest, decision)
     notification_generated = now()
@@ -370,27 +434,27 @@ def formal_decision_change_event() -> dict | None:
     if holding_action_changed:
         title = "【持仓动作｜需处理】ETF持仓需要降低风险/退出"
         severity = "需要操作"
-        user_action = "打开ChatGPT的ETF项目，在当前交易沟通会话核对正式卖出份额/退出动作，并由你人工执行"
+        user_action = details["user_action"] if details["user_action"] != details["current_action"] else f"按正式持仓动作人工执行；{details['current_action']}"
     elif status in {"Trial机会", "Confirm机会"} and opportunity_changed:
         title = f"【{status}】{target}"
         severity = "需要操作"
-        user_action = "打开ChatGPT的ETF项目查看正式金额与失效条件，再决定是否人工执行"
+        user_action = details["user_action"]
     elif risk_changed:
         title = f"【风险许可变化】{previous_risk} → {risk_permission}"
         severity = "需要关注" if risk_permission != "禁止新增" else "需要操作"
-        user_action = "打开ChatGPT的ETF项目，按最新风险许可查看当前正式交易判断"
+        user_action = details["user_action"] if status in OPPORTUNITY_STATUSES else details["current_action"]
     elif status == "观察机会":
         title = f"【观察机会】{target}"
         severity = "需要关注"
-        user_action = "无需下单；等待后续是否升级为Trial/Confirm或失效"
+        user_action = details["user_action"]
     elif status == "无机会":
         title = f"【机会变化】{previous_target or target}当前无机会"
         severity = "需要关注"
-        user_action = "无需追单；以最新正式判断为准"
+        user_action = details["user_action"]
     else:
         title = f"【正式决策变化】{target}"
         severity = "需要关注"
-        user_action = "打开ChatGPT的ETF项目查看最新正式判断"
+        user_action = details["user_action"]
 
     if stale_action_warning:
         user_action = "该判断使用的A股行情距判断时点超过10分钟；请先打开ChatGPT的ETF项目刷新最新行情，再决定是否人工执行"
@@ -435,6 +499,9 @@ def formal_decision_change_event() -> dict | None:
             "change_summary": change_lines,
             "action_summary": action_summary,
             "decisive_reason": decisive_reason,
+            "current_action": details["current_action"],
+            "capital_route": details["capital_route"],
+            "next_validation": details["next_validation"],
             "timing_lines": timing_lines,
             "decision_time_beijing": str(decision_time_raw or ""),
             "market_as_of_beijing": market_as_of_raw,
@@ -813,6 +880,7 @@ def render_canonical_notification(event: dict) -> dict | None:
     rendered["template_family"] = family
     target = _canonical_target(event)
     ctx = event.get("confirmation_context") or {}
+    capital_route_section = f"### 资本去向\n{ctx.get('capital_route')}\n\n" if ctx.get("capital_route") else ""
     if family == "成交确认":
         title = f"【成交确认】{target}"
         body = (
@@ -845,8 +913,11 @@ def render_canonical_notification(event: dict) -> dict | None:
         body = (
             f"### 发生了什么\n{change_summary}\n\n"
             f"### 当前风险许可\n{previous_risk} → {risk}\n\n"
-            f"### 为什么现在值得关注\n{ctx.get('decisive_reason') or event.get('content') or '正式风险许可发生了实质变化。'}\n\n"
-            f"### 你需要做什么\n{event.get('user_action') or '查看最新正式判断，再决定是否人工执行。'}\n\n"
+            f"### 为什么现在值得关注\n{ctx.get('decisive_reason') or '正式风险许可发生了实质变化。'}\n\n"
+            f"### 当前正式动作\n{ctx.get('current_action') or '当前正式决策未要求新的交易动作。'}\n\n"
+            f"{capital_route_section}"
+            f"### 你需要做什么\n{event.get('user_action') or '无明确交易动作时无需下单。'}\n\n"
+            f"### 下一关注点\n{ctx.get('next_validation') or '在下一正式复核节点重新判断。'}\n\n"
             f"> {_canonical_boundary(family)}\n\n### 事实时点（北京时间）\n{_canonical_time(event)}"
         )
     elif family in {"观察机会", "Trial机会", "Confirm机会", "机会失效", "持仓动作"}:
@@ -859,8 +930,11 @@ def render_canonical_notification(event: dict) -> dict | None:
             f"### 发生了什么\n{change_summary or f'{target}的正式判断发生变化。'}\n\n"
             f"### 当前正式状态\n{previous + ' → ' if previous and previous != status else ''}{status}"
             f"{f'；风险许可：{risk}' if risk else ''}\n\n"
-            f"### 为什么现在值得关注\n{ctx.get('decisive_reason') or event.get('content') or '正式决策形成了实质变化。'}\n\n"
-            f"### 你需要做什么\n{event.get('user_action') or '查看最新正式判断。'}\n\n"
+            f"### 为什么现在值得关注\n{ctx.get('decisive_reason') or '正式决策形成了实质变化。'}\n\n"
+            f"### 当前正式动作\n{ctx.get('current_action') or '当前正式决策未要求新的交易动作。'}\n\n"
+            f"{capital_route_section}"
+            f"### 你需要做什么\n{event.get('user_action') or '无明确交易动作时无需下单。'}\n\n"
+            f"### 下一关注点\n{ctx.get('next_validation') or '在下一正式复核节点重新判断。'}\n\n"
             f"> {_canonical_boundary(family)}\n\n### 事实时点（北京时间）\n{_canonical_time(event)}"
         )
     elif family == "测试":
