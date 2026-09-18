@@ -19,6 +19,10 @@ class ManagedPositionReviewContractTests(unittest.TestCase):
             "security_code": code,
             "current_action": action,
             "holding_state_risk_reward_evidence": "PIT持仓状态与风险收益证据",
+            "holding_thesis_status": "原持有依据当前仍有效",
+            "risk_reduction_or_exit_condition": "当前未达到降低风险或退出条件",
+            "higher_efficiency_alternative": "当前不存在已经独立成立且效率更高的资本用途",
+            "capital_occupancy_reason": "继续占用资本在当前风险收益与替代用途比较下仍合理",
             "capital_use": {
                 "continued_holding_vs_cash": "继续持有与现金用途比较",
                 "qualified_alternative": "无合格替代机会"},
@@ -48,6 +52,32 @@ class ManagedPositionReviewContractTests(unittest.TestCase):
             error = validate_managed_position_review_contract(
                 [self.review("561980"), self.review("561980")], self.account)
             self.assertIn("exactly once", error)
+
+
+    def test_missing_sell_chain_evidence_fields_are_rejected(self):
+        required_fields = [
+            "holding_thesis_status",
+            "risk_reduction_or_exit_condition",
+            "higher_efficiency_alternative",
+            "capital_occupancy_reason",
+        ]
+        for field in required_fields:
+            item = self.review("561980")
+            item.pop(field)
+            with self.subTest(field=field), patch("process_state_sync_request.ROOT", Path(".")):
+                error = validate_managed_position_review_contract(
+                    [item, self.review("588000")], self.account
+                )
+            self.assertIn(field, error)
+
+    def test_hold_requires_explicit_capital_occupancy_reason(self):
+        item = self.review("561980")
+        item["capital_occupancy_reason"] = ""
+        with patch("process_state_sync_request.ROOT", Path(".")):
+            error = validate_managed_position_review_contract(
+                [item, self.review("588000")], self.account
+            )
+        self.assertIn("capital_occupancy_reason", error)
 
     def test_review_does_not_infer_sell_from_trend(self):
         item = self.review("561980")
