@@ -236,6 +236,45 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             state_sync.record_formal_decision(request)
         self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
 
+
+    def test_research_evidence_used_persists_as_ex_ante_fact(self):
+        request = self.request("research_evidence_envelope")
+        request["formal_decision"]["research_evidence_used"] = [
+            {
+                "evidence_id": "component_lead_561980_3d",
+                "decision_effect": "WEAKEN",
+                "security_code": "561980",
+                "decisive": False,
+                "evidence_as_of_beijing": "2026-09-15T14:40:00+08:00",
+                "source": "data/state/research_execution_summary.json",
+            }
+        ]
+        recorded, decision_id = state_sync.record_formal_decision(request)
+        self.assertTrue(recorded)
+        event = json.loads((self.root / "events/decisions" / f"{decision_id}.json").read_text(encoding="utf-8"))
+        self.assertEqual(
+            event["formal_decision"]["research_evidence_used"],
+            request["formal_decision"]["research_evidence_used"],
+        )
+
+    def test_explicit_no_research_evidence_is_valid(self):
+        request = self.request("no_research_evidence_envelope")
+        request["formal_decision"]["research_evidence_used"] = []
+        recorded, decision_id = state_sync.record_formal_decision(request)
+        self.assertTrue(recorded)
+        event = json.loads((self.root / "events/decisions" / f"{decision_id}.json").read_text(encoding="utf-8"))
+        self.assertEqual(event["formal_decision"]["research_evidence_used"], [])
+
+    def test_malformed_research_evidence_fails_closed(self):
+        request = self.request("bad_research_evidence_envelope")
+        request["formal_decision"]["research_evidence_used"] = [
+            {"evidence_id": "E1", "decision_effect": "AUTO_BUY"}
+        ]
+        with self.assertRaisesRegex(ValueError, "research-evidence contract"):
+            state_sync.record_formal_decision(request)
+        self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
+
+
     def test_missing_formal_conclusion_creates_no_event(self):
         request = self.request("no_conclusion_envelope")
         request.pop("formal_decision")
