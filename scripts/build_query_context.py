@@ -200,7 +200,64 @@ def _first_qualified_market_fact(market_quote: dict) -> dict:
     return {"identity": "UNKNOWN", "as_of_beijing": "UNKNOWN", "quality_status": "UNKNOWN"}
 
 
-def build_fast_path_latency(request: dict, current: dict, decision: dict, market_quote: dict, reply_ready: str) -> dict:
+def _minimum_legal_inputs_ready_at(root: Path, request: dict, current: dict, account: dict, market_quote: dict, observed_at: str) -> str:
+    """Return the earliest repository-observed time when action-determinative inputs are present.
+
+    This is diagnostic/readiness metadata only. It does not authorize a trade,
+    replace formal analysis, or relax any freshness/account/sell-chain contract.
+    """
+    explicit = str(request.get("minimum_legal_inputs_ready_at_beijing") or "").strip()
+    if explicit:
+        return explicit
+
+    freshness = market_quote.get("decision_freshness") or {}
+    post_request_current = bool(freshness.get("resolved_post_request") or freshness.get("post_request"))
+    if not post_request_current:
+        return "UNKNOWN"
+
+    current_time = (
+        str(current.get("captured_at") or "").strip()
+        or str((current.get("data_freshness") or {}).get("captured_at_beijing") or "").strip()
+    )
+    if not current_time:
+        return "UNKNOWN"
+
+    if str(account.get("status") or "").upper() != "VALID":
+        return "UNKNOWN"
+
+    held_stocks = [
+        str(item.get("code") or "").strip()
+        for item in (account.get("positions") or [])
+        if isinstance(item, dict)
+        and str(item.get("asset_type") or "").upper() == "STOCK"
+        and float(item.get("quantity") or 0) > 0
+        and str(item.get("code") or "").strip()
+    ]
+    if held_stocks:
+        stock_ctx = read_json(root / CANONICAL_FILES["stock_market_context"], {})
+        objects = stock_ctx.get("objects") or stock_ctx.get("stocks") or {}
+        if isinstance(objects, list):
+            indexed = {
+                str(item.get("code") or item.get("symbol") or "").strip(): item
+                for item in objects
+                if isinstance(item, dict)
+            }
+        elif isinstance(objects, dict):
+            indexed = objects
+        else:
+            indexed = {}
+        for code in held_stocks:
+            row = indexed.get(code) or {}
+            if str(row.get("quality_status") or "").upper() not in {"PASS", "DEGRADED"}:
+                return "UNKNOWN"
+            as_of = str(row.get("as_of_beijing") or row.get("data_time_beijing") or "").strip()
+            if not as_of:
+                return "UNKNOWN"
+
+    return observed_at or current_time
+
+
+def build_fast_path_latency(request: dict, current: dict, account: dict, decision: dict, market_quote: dict, reply_ready: str, root: Path | None = None) -> dict:
     """Report only observed timestamps; missing instrumentation stays explicit."""
     t0 = request.get("requested_at_beijing") or request.get("request_time") or ""
     manual_request_identity = _stable_manual_request_identity(request)
@@ -210,6 +267,7 @@ def build_fast_path_latency(request: dict, current: dict, decision: dict, market
     t_refresh = request.get("refresh_started_at_beijing") or request.get("refresh_reused_at_beijing") or ""
     first_market_fact = _first_qualified_market_fact(market_quote)
     final_identity = request.get("final_answer_identity") or request.get("final_analysis_identity") or reply_ready or "UNKNOWN"
+    minimum_ready = _minimum_legal_inputs_ready_at(root or ROOT, request, current, account, market_quote, reply_ready)
     return {
         "t0": t0,
         "manual_request_identity": manual_request_identity,
@@ -223,8 +281,8 @@ def build_fast_path_latency(request: dict, current: dict, decision: dict, market
         "first_qualified_market_fact_as_of": first_market_fact["as_of_beijing"],
         "first_qualified_market_fact_quality": first_market_fact["quality_status"],
         "t_new_current": t_new if freshness.get("resolved_post_request") or freshness.get("post_request") else "",
-        "t_minimum_legal_inputs_ready": request.get("minimum_legal_inputs_ready_at_beijing") or t_decision or "UNKNOWN",
-        "minimum_legal_inputs_ready_at": request.get("minimum_legal_inputs_ready_at_beijing") or t_decision or "UNKNOWN",
+        "t_minimum_legal_inputs_ready": minimum_ready,
+        "minimum_legal_inputs_ready_at": minimum_ready,
         "t_decision_ready": t_decision,
         "final_answer_identity": final_identity,
         "final_analysis_identity": final_identity,
@@ -392,7 +450,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     decision = build_decision_context(root)
     generated_at = datetime.now(SHANGHAI).isoformat(timespec="seconds")
     fact_pack = build_decision_fact_pack(root, request_payload, current, account, decision, market_quote)
-    latency = build_fast_path_latency(request_payload, current, decision, market_quote, generated_at)
+    latency = build_fast_path_latency(request_payload, current, account, decision, market_quote, generated_at, root)
     return {
         "generated_at": now_utc(), "generated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
         "market_date": current.get("market_date", ""), "latest_valid_node": current.get("latest_valid_node", ""),
