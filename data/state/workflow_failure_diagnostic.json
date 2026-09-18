@@ -1,33 +1,38 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-18T13:52:49+08:00",
+  "generated_at": "2026-09-18T14:38:43+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 35312495422,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 35315745000,
   "run_attempt": 1,
-  "head_sha": "544dcef016cb9d2f7bcc4418a90a6ebb68e1d2f8",
-  "main_head_sha": "fb22682cb0dbfe3d238440922d1adf1659244d13",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "a42cde2bb55d147ab7f26b63dfd63aa4e06e0c27",
+  "main_head_sha": "7974a99654aed3a65147448da6cf9dc50a6c9ed4",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "PR candidate post-replay acceptance",
-      "number": 7
+      "job": "watchdog",
+      "step": "Escalate persistent or structural failure",
+      "number": 14
     }
   ],
   "changed_files": [
-    "tests/test_manual_formal_decision_completion.py"
+    "data/state/e2e_status.json",
+    "data/state/execution_quality.json",
+    "data/state/last_known_good.json",
+    "data/state/maintenance_diagnostic.json",
+    "data/state/maintenance_health.json",
+    "data/state/system_consistency.json"
   ],
-  "commit_message": "test: cover capital competition completion (#675)",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "commit_message": "state: persist production acceptance",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
