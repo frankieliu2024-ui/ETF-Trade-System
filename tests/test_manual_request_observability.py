@@ -26,6 +26,7 @@ class ManualRequestBoundedObservabilityTests(unittest.TestCase):
                 "required_account_persistence_identity": "requests/live_snapshot/manual-20260914-1.json",
             },
             {"captured_at": "2026-09-14T10:00:20+08:00"},
+            {"status": "VALID", "positions": []},
             {"generated_at_beijing": "2026-09-14T10:00:35+08:00"},
             {
                 "refresh_mode": "QUERY_TIME_REFRESH_FIRST",
@@ -62,6 +63,7 @@ class ManualRequestBoundedObservabilityTests(unittest.TestCase):
         first = build_query_context.build_fast_path_latency(
             request,
             {"captured_at": "2026-09-15T11:21:20+08:00"},
+            {"status": "VALID", "positions": []},
             {"generated_at_beijing": "2026-09-15T11:21:30+08:00"},
             {"decision_freshness": {"post_request": True}, "quotes": []},
             "2026-09-15T11:21:40+08:00",
@@ -69,6 +71,7 @@ class ManualRequestBoundedObservabilityTests(unittest.TestCase):
         second = build_query_context.build_fast_path_latency(
             dict(request),
             {"captured_at": "2026-09-15T11:21:20+08:00"},
+            {"status": "VALID", "positions": []},
             {"generated_at_beijing": "2026-09-15T11:21:30+08:00"},
             {"decision_freshness": {"post_request": True}, "quotes": []},
             "2026-09-15T11:21:40+08:00",
@@ -84,6 +87,7 @@ class ManualRequestBoundedObservabilityTests(unittest.TestCase):
 
     def test_unobservable_product_phases_remain_unknown_not_inferred(self):
         trace = build_query_context.build_fast_path_latency(
+            {},
             {},
             {},
             {},
@@ -128,6 +132,54 @@ class ManualRequestBoundedObservabilityTests(unittest.TestCase):
         trace = context["fast_path_latency"]
         self.assertNotEqual(trace["manual_request_identity"], "UNKNOWN")
         self.assertEqual(trace["manual_request_received_at"], "2026-09-15T11:21:00+08:00")
+
+    def test_minimum_ready_precedes_full_decision_context_when_required_facts_are_present(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "data" / "state").mkdir(parents=True)
+            (root / "data" / "state" / "stock_market_context.json").write_text(
+                '{"objects":{"300750":{"quality_status":"PASS","as_of_beijing":"2026-09-18T14:51:06+08:00"}}}',
+                encoding="utf-8",
+            )
+            trace = build_query_context.build_fast_path_latency(
+                {"request_id":"r1","requested_at_beijing":"2026-09-18T14:50:00+08:00"},
+                {"captured_at":"2026-09-18T14:50:20+08:00"},
+                {"status":"VALID","positions":[{"asset_type":"STOCK","code":"300750","quantity":200}]},
+                {"generated_at_beijing":"2026-09-18T14:55:04+08:00"},
+                {"decision_freshness":{"post_request":True},"quotes":[{"object_code":"000001","data_time_beijing":"2026-09-18T14:50:16+08:00","quality_status":"PASS"}]},
+                "2026-09-18T14:51:07+08:00",
+                root,
+            )
+            self.assertEqual(trace["minimum_legal_inputs_ready_at"], "2026-09-18T14:51:07+08:00")
+            self.assertEqual(trace["t_decision_ready"], "2026-09-18T14:55:04+08:00")
+            self.assertLess(trace["minimum_legal_inputs_ready_at"], trace["t_decision_ready"])
+
+    def test_missing_held_stock_market_fact_keeps_minimum_ready_unknown(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "data" / "state").mkdir(parents=True)
+            (root / "data" / "state" / "stock_market_context.json").write_text('{"objects":{}}', encoding="utf-8")
+            trace = build_query_context.build_fast_path_latency(
+                {"request_id":"r2","requested_at_beijing":"2026-09-18T14:50:00+08:00"},
+                {"captured_at":"2026-09-18T14:50:20+08:00"},
+                {"status":"VALID","positions":[{"asset_type":"STOCK","code":"300750","quantity":200}]},
+                {"generated_at_beijing":"2026-09-18T14:55:04+08:00"},
+                {"decision_freshness":{"post_request":True},"quotes":[{"object_code":"000001","data_time_beijing":"2026-09-18T14:50:16+08:00","quality_status":"PASS"}]},
+                "2026-09-18T14:51:07+08:00",
+                root,
+            )
+            self.assertEqual(trace["minimum_legal_inputs_ready_at"], "UNKNOWN")
+
+    def test_query_context_step_precedes_full_derived_context_steps(self):
+        workflow = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
+        query_pos = workflow.index("- name: Build on-demand query context")
+        e2e_pos = workflow.index("- name: Build E2E usability state")
+        state_pos = workflow.index("- name: Build state context and candidates")
+        review_pos = workflow.index("- name: Build post-market review context")
+        self.assertLess(query_pos, e2e_pos)
+        self.assertLess(query_pos, state_pos)
+        self.assertLess(query_pos, review_pos)
+
 
     def test_market_snapshot_workflow_preserves_triggering_request_path_after_reset(self):
         workflow = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
