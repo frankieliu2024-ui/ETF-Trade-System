@@ -32,6 +32,33 @@ def formal_decision():
         "risk_permission": "禁止新增",
         "lifecycle": "",
         "managed_position_reviews": [],
+        "capital_competition": {
+            "next_unit_capital_use": "保留现金",
+            "full_competition_completed": True,
+            "releasable_capital_reviewed": True,
+            "post_action_deployable_cash": 10000.0,
+            "future_opportunity_capacity": "仍可承载后续Trial/Confirm",
+            "concentration_account_structure_effect": "不增加集中度",
+            "selected_state_reason": "现金优于当前可执行候选",
+            "new_amount_yuan": 0,
+            "zero_amount_decisive_reason": "没有候选在完整资本竞争后优于现金",
+            "compared_capital_states": [
+                {
+                    "state_name": "维持现有组合+现金",
+                    "capital_action": "不新增",
+                    "remaining_deployable_cash": 10000.0,
+                    "why_not_selected": "已选中"
+                },
+                {
+                    "state_name": "半导体设备ETF新增Trial+剩余现金",
+                    "capital_action": "新增5000元",
+                    "remaining_deployable_cash": 5000.0,
+                    "why_not_selected": "风险许可不允许新增"
+                }
+            ],
+            "held_etf_add_capital_reviews": [],
+            "capital_release_migrations": []
+        },
     }
 
 
@@ -61,6 +88,32 @@ class ManualCompletionEnvelopeTests(unittest.TestCase):
                 SOURCE_REQUEST, formal_decision(), SNAPSHOT_PATH,
                 completion_request_id=SOURCE_REQUEST["request_id"],
             )
+
+
+class CapitalCompetitionContractTests(unittest.TestCase):
+    def test_zero_amount_requires_full_competition_reason(self):
+        decision = formal_decision()
+        decision["capital_competition"].pop("zero_amount_decisive_reason")
+        error = state_sync.validate_capital_competition_contract(
+            decision["capital_competition"], {"positions": []}
+        )
+        self.assertIn("zero_amount_decisive_reason", error)
+
+    def test_full_competition_must_be_completed(self):
+        decision = formal_decision()
+        decision["capital_competition"]["full_competition_completed"] = False
+        error = state_sync.validate_capital_competition_contract(
+            decision["capital_competition"], {"positions": []}
+        )
+        self.assertIn("full_competition_completed", error)
+
+    def test_requires_multiple_executable_capital_states(self):
+        decision = formal_decision()
+        decision["capital_competition"]["compared_capital_states"] = decision["capital_competition"]["compared_capital_states"][:1]
+        error = state_sync.validate_capital_competition_contract(
+            decision["capital_competition"], {"positions": []}
+        )
+        self.assertIn("at least two executable states", error)
 
 
 class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
