@@ -1776,12 +1776,30 @@ def _case_ids_from_existing_experience_for_trade(event: dict, text: str, table_s
         )
         if (marker and marker in section) or (linked and linked in section) or exact_identity:
             found.add(match.group(1))
-    return sorted(found)
+    resolved = sorted(set(old_case_ids) | found)
+    if len(resolved) > 1:
+        raise ValueError(
+            f"conflicting existing CASE ownership for {event_id or code}: {resolved}"
+        )
+    return resolved
 
 
 def _case_ids_for_transaction_projection(event: dict, text: str, table_start: int, table_end: int) -> list[str]:
     """Resolve CASE ownership with strong facts first and no guessing."""
     event_id = str(event.get("event_id") or "").strip()
+    # Historical FACT_ENRICHMENT_ONLY replay may preserve an exact CASE
+    # already documented on the economic row. This older formal PIT ownership
+    # must not be erased by later adoption-time ineligibility metadata.
+    # Ordinary events keep terminal-review precedence below.
+    if (
+        bool(event.get("historical_backfill"))
+        and str(event.get("replay_semantics") or "").upper() == "FACT_ENRICHMENT_ONLY"
+    ):
+        preserved = _case_ids_from_existing_experience_for_trade(
+            event, text, table_start, table_end
+        )
+        if preserved:
+            return preserved
     event_date = str(
         event.get("execution_date")
         or event.get("executed_at_beijing")

@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from scripts import run_historical_backfill as runner
+from scripts import process_state_sync_request as syncer
 
 
 class Issue664HistoricalCaseProjectionTests(unittest.TestCase):
@@ -67,6 +68,30 @@ class Issue664HistoricalCaseProjectionTests(unittest.TestCase):
             with patch.object(runner, "ROOT", root):
                 with self.assertRaises(SystemExit):
                     runner._seed_projection_case_annotation(self._event(), "CASE-20260713-01")
+
+    def test_fact_enrichment_preserves_seeded_case_before_later_ineligibility(self):
+        event = self._event() | {
+            "historical_backfill": True,
+            "replay_semantics": "FACT_ENRICHMENT_ONLY",
+        }
+        text = (
+            "|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|\n"
+            "|2026-07-13 09:36:14|纳指ETF（159941）|159941|买入|6,200|1.611|9,988.20|5.00|-9,993.20|CASE-20260713-01；真实成交已执行| "
+            "<!-- TRADE_EVENT:historical_20260713093614_159941_BUY_6200 -->\n"
+        )
+        with patch.object(syncer, "_review_case_ids_for_trade", return_value=[]):
+            resolved = syncer._case_ids_for_transaction_projection(event, text, 0, len(text))
+        self.assertEqual(resolved, ["CASE-20260713-01"])
+
+    def test_existing_case_conflict_fails_closed(self):
+        event = self._event()
+        text = (
+            "|2026-07-13 09:36:14|纳指ETF（159941）|159941|买入|6,200|1.611|9,988.20|5.00|-9,993.20|"
+            "CASE-20260713-01；CASE-20260716-01；真实成交已执行| "
+            "<!-- TRADE_EVENT:historical_20260713093614_159941_BUY_6200 -->\n"
+        )
+        with self.assertRaises(ValueError):
+            syncer._case_ids_from_existing_experience_for_trade(event, text, 0, len(text))
 
 
 if __name__ == "__main__":
