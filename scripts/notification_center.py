@@ -914,7 +914,7 @@ def render_canonical_notification(event: dict) -> dict | None:
             f"### 当前风险许可\n{previous_risk} → {risk}\n\n"
             f"### 为什么现在值得关注\n{ctx.get('decisive_reason') or '正式风险许可发生了实质变化。'}\n\n"
             f"### 当前正式动作\n{ctx.get('current_action') or '当前正式决策未要求新的交易动作。'}\n\n"
-            f"{('### 资本去向\n' + str(ctx.get('capital_route')) + '\n\n') if ctx.get('capital_route') else ''}"
+            ("### 资本去向\n" + str(ctx.get("capital_route")) + "\n\n" if ctx.get("capital_route") else "")
             f"### 你需要做什么\n{event.get('user_action') or '无明确交易动作时无需下单。'}\n\n"
             f"### 下一关注点\n{ctx.get('next_validation') or '在下一正式复核节点重新判断。'}\n\n"
             f"> {_canonical_boundary(family)}\n\n### 事实时点（北京时间）\n{_canonical_time(event)}"
@@ -931,7 +931,7 @@ def render_canonical_notification(event: dict) -> dict | None:
             f"{f'；风险许可：{risk}' if risk else ''}\n\n"
             f"### 为什么现在值得关注\n{ctx.get('decisive_reason') or '正式决策形成了实质变化。'}\n\n"
             f"### 当前正式动作\n{ctx.get('current_action') or '当前正式决策未要求新的交易动作。'}\n\n"
-            f"{('### 资本去向\n' + str(ctx.get('capital_route')) + '\n\n') if ctx.get('capital_route') else ''}"
+            ("### 资本去向\n" + str(ctx.get("capital_route")) + "\n\n" if ctx.get("capital_route") else "")
             f"### 你需要做什么\n{event.get('user_action') or '无明确交易动作时无需下单。'}\n\n"
             f"### 下一关注点\n{ctx.get('next_validation') or '在下一正式复核节点重新判断。'}\n\n"
             f"> {_canonical_boundary(family)}\n\n### 事实时点（北京时间）\n{_canonical_time(event)}"
