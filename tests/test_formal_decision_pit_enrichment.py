@@ -128,6 +128,33 @@ class FormalDecisionPitEnrichmentTests(unittest.TestCase):
                     "main_candidate": "煤炭ETF（515220）",
                     "opportunity_status": "Trial机会",
                     "lifecycle": "",
+                    "capital_competition": {
+                        "next_unit_capital_use": "保留现金",
+                        "full_competition_completed": True,
+                        "releasable_capital_reviewed": True,
+                        "post_action_deployable_cash": 10000.0,
+                        "future_opportunity_capacity": "仍可承载后续Trial/Confirm",
+                        "concentration_account_structure_effect": "不增加集中度",
+                        "selected_state_reason": "现金优于当前可执行候选",
+                        "new_amount_yuan": 0,
+                        "zero_amount_decisive_reason": "完整资本竞争后保留现金",
+                        "compared_capital_states": [
+                            {
+                                "state_name": "维持现有组合+现金",
+                                "capital_action": "不新增",
+                                "remaining_deployable_cash": 10000.0,
+                                "why_not_selected": "已选中"
+                            },
+                            {
+                                "state_name": "候选Trial+剩余现金",
+                                "capital_action": "新增5000元",
+                                "remaining_deployable_cash": 5000.0,
+                                "why_not_selected": "未被当前决策选中"
+                            }
+                        ],
+                        "held_etf_add_capital_reviews": [],
+                        "capital_release_migrations": []
+                    },
                 },
             }
             with patch.object(sync, "ROOT", root):
@@ -172,6 +199,33 @@ class FormalDecisionPitEnrichmentTests(unittest.TestCase):
                     "price_at_decision": 1.330,
                     "price_as_of_beijing": "2026-09-09T13:24:21+08:00",
                     "lifecycle": "",
+                    "capital_competition": {
+                        "next_unit_capital_use": "保留现金",
+                        "full_competition_completed": True,
+                        "releasable_capital_reviewed": True,
+                        "post_action_deployable_cash": 10000.0,
+                        "future_opportunity_capacity": "仍可承载后续Trial/Confirm",
+                        "concentration_account_structure_effect": "不增加集中度",
+                        "selected_state_reason": "现金优于当前可执行候选",
+                        "new_amount_yuan": 0,
+                        "zero_amount_decisive_reason": "完整资本竞争后保留现金",
+                        "compared_capital_states": [
+                            {
+                                "state_name": "维持现有组合+现金",
+                                "capital_action": "不新增",
+                                "remaining_deployable_cash": 10000.0,
+                                "why_not_selected": "已选中"
+                            },
+                            {
+                                "state_name": "候选Trial+剩余现金",
+                                "capital_action": "新增5000元",
+                                "remaining_deployable_cash": 5000.0,
+                                "why_not_selected": "未被当前决策选中"
+                            }
+                        ],
+                        "held_etf_add_capital_reviews": [],
+                        "capital_release_migrations": []
+                    },
                 },
             }
             with patch.object(sync, "ROOT", root):
