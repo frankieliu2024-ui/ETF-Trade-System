@@ -115,6 +115,18 @@ class CapitalCompetitionContractTests(unittest.TestCase):
         )
         self.assertIn("at least two executable states", error)
 
+    def test_held_etf_add_capital_review_is_required_for_every_held_etf(self):
+        decision = formal_decision()
+        account = {
+            "positions": [
+                {"security_code": "561980", "security_name": "半导体设备ETF", "quantity": 1000}
+            ]
+        }
+        error = state_sync.validate_capital_competition_contract(
+            decision["capital_competition"], account
+        )
+        self.assertIn("held_etf_add_capital_reviews", error)
+
 
 class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
     def setUp(self):
