@@ -90,7 +90,7 @@ def _seed_projection_case_annotation(event, case_id):
     """
     if not case_id:
         return
-    if not re.fullmatch(r"CASE-\\d{8}-\\d{2}", str(case_id)):
+    if not re.fullmatch(r"CASE-\d{8}-\d{2}", str(case_id)):
         raise SystemExit(f"invalid projection CASE identity: {case_id}")
     from formal_file_mutation_gateway import write_formal_text_if_changed
     experience = ROOT / "ETF交易复盘与经验库_2026.md"
@@ -131,7 +131,7 @@ def _seed_projection_case_annotation(event, case_id):
             f"{execution_stamp}:{code}:matches={len(matches)}"
         )
     index = matches[0]
-    existing_cases = re.findall(r"CASE-\\d{8}-\\d{2}", lines[index])
+    existing_cases = re.findall(r"CASE-\d{8}-\d{2}", lines[index])
     if existing_cases:
         if sorted(set(existing_cases)) != [case_id]:
             raise SystemExit(
@@ -220,7 +220,7 @@ def main():
     if unknown_projection_ids:
         raise SystemExit(f"projection CASE ownership references unknown trades: {unknown_projection_ids}")
     for event_id, case_id in projection_case_ownership.items():
-        if not re.fullmatch(r"CASE-\\d{8}-\\d{2}", str(case_id)):
+        if not re.fullmatch(r"CASE-\d{8}-\d{2}", str(case_id)):
             raise SystemExit(f"invalid projection CASE ownership: {event_id}={case_id}")
     project_historical_formal_facts(project_events, projection_case_ownership)
     after={rel:digest(ROOT/rel) if (ROOT/rel).exists() else None for rel in before}
