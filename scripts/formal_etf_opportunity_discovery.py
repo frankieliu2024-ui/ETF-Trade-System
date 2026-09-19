@@ -114,6 +114,36 @@ def fetch_daily_history(code: str, market_id: int, end_date: str, limit: int = 9
 
 
 
+def _history_snapshot_path(root: Path, market_date: str) -> Path:
+    return root / "data/market/discovery_history" / f"{market_date}.json"
+
+
+def load_discovery_history_snapshot(root: Path, market_date: str) -> dict[str, list[dict[str, Any]]]:
+    path = _history_snapshot_path(root, market_date)
+    if not path.exists():
+        return {}
+    try:
+        obj = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    if str(obj.get("market_date") or "") != market_date:
+        return {}
+    histories = obj.get("histories") or {}
+    return {str(code): rows for code, rows in histories.items() if isinstance(rows, list) and len(rows) >= MIN_HISTORY}
+
+
+def persist_discovery_history_snapshot(root: Path, market_date: str, histories: dict[str, list[dict[str, Any]]]) -> None:
+    path = _history_snapshot_path(root, market_date)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "schema_version": "1.0",
+        "market_date": market_date,
+        "semantics": "NODE_LOCAL_REUSABLE_COMPLETED_HISTORY_INPUT_NOT_MANAGEMENT_STATE_NOT_TRADE_AUTHORITY",
+        "histories": histories,
+    }
+    path.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
+
+
 def load_validated_history(root: Path, code: str, market_date: str, limit: int = 90) -> list[dict[str, Any]] | None:
     result_dir = root / "data/market/on_demand/results"
     best: tuple[str, Path] | None = None
@@ -310,6 +340,8 @@ def discover_formal_candidates(
     prefiltered = _bounded_prefilter(broad)
     candidates = []
     failures = []
+    node_history = load_discovery_history_snapshot(root, market_date) if history_by_code is None else {}
+    snapshot_dirty = False
     history_attempted = 0
     history_succeeded = 0
     history_reused = 0
@@ -319,17 +351,23 @@ def discover_formal_candidates(
         code = str(row["code"])
         history_attempted += 1
         try:
-            history = (history_by_code or {}).get(code) if history_by_code is not None else None
-            history_source = "INJECTED" if history is not None else None
+            history = (history_by_code or {}).get(code) if history_by_code is not None else node_history.get(code)
+            history_source = "INJECTED" if history_by_code is not None and history is not None else ("DISCOVERY_NODE_HISTORY" if history is not None else None)
+            if history_source == "DISCOVERY_NODE_HISTORY":
+                history_reused += 1
             if history is None:
                 history = load_validated_history(root, code, market_date, 90)
                 history_source = "VALIDATED_EXISTING_HISTORY" if history is not None else None
                 if history is not None:
                     history_reused += 1
+                    node_history[code] = history
+                    snapshot_dirty = True
             if history is None:
                 history_repair_attempted += 1
                 history = fetch_daily_history(code, int(row.get("market_id") or 0), market_date, 90)
                 history_source = "EASTMONEY_BOUNDED_REPAIR"
+                node_history[code] = history
+                snapshot_dirty = True
             history_succeeded += 1
             item = _candidate(row, history, market_date)
             if item:
@@ -345,6 +383,8 @@ def discover_formal_candidates(
                 candidates.append(item)
         except Exception as exc:
             failures.append({"code": code, "error": str(exc)[-300:]})
+    if history_by_code is None and snapshot_dirty:
+        persist_discovery_history_snapshot(root, market_date, node_history)
     elapsed = round(time.monotonic() - started, 3)
     state_priority = {"RECOVERY_BREAKOUT": 0, "TREND_CHANGE": 1, "PERSISTENT_TREND": 2}
     def key(item: dict[str, Any]) -> tuple:
