@@ -484,53 +484,39 @@ def _extend_analysis_coverage_with_discovery(base: dict[str, Any], formal_discov
 
 
 def _extend_capital_comparison_with_discovery(base: dict[str, Any], formal_discovery: dict[str, Any] | None) -> dict[str, Any]:
+    """Expose Discovery as eligibility evidence, never as a final capital competitor.
+
+    Observation identity is a formal-decision result.  The machine layer must not
+    append OBSERVATION_EVALUATION_INPUT into the legal capital universe before
+    the same-node ADMIT/RETAIN/EXIT decision exists.
+    """
     discovery = formal_discovery or {}
     candidates = [x for x in (discovery.get("candidates") or []) if isinstance(x, dict)]
-    # Partial all-market discovery is evidence, not a complete opportunity set.
-    # Do not let a subset of successful history lookups enter formal capital
-    # competition while peer candidates failed qualification at the same node.
-    if str(discovery.get("coverage_status") or "").upper() != "COMPLETE":
-        return {
-            **base,
-            "formal_discovery_included": False,
-            "formal_discovery_candidate_count": 0,
-            "formal_discovery_ingress_status": "BLOCKED_INCOMPLETE_COVERAGE",
-            "formal_discovery_ingress_reason": "全市场Discovery覆盖不完整；部分成功对象不得代表完整全市场机会集进入正式资本竞争。",
-        }
-    if not candidates:
-        return base
-    existing = [x for x in (base.get("comparison_universe") or base.get("ordered_candidates") or []) if isinstance(x, dict)]
-    seen = {str(x.get("code") or "") for x in existing if x.get("code")}
-    appended = []
+    eligibility_inputs = []
     for item in candidates:
         code = str(item.get("code") or "")
-        if not code or code in seen:
+        if not code:
             continue
-        appended.append({
+        eligibility_inputs.append({
             "display_name": item.get("display_name") or f'{item.get("name", code)}（{code}）',
             "code": code,
             "category": "OBSERVATION_EVALUATION_INPUT",
             "eligibility": "OBSERVATION_FULL_EVALUATION",
             "data_availability": "READY" if (item.get("historical_context") or {}).get("status") == "READY" and item.get("formal_quote_status") == "READY" else "DEGRADED",
-            "reason": "广域机会发现形成的本节点Observation资格评估对象；正式决策须先形成ADMIT/RETAIN/EXIT意图，只有本节点合法Observation进入最终资本效率结论。",
-            "management_identity": None,
-            "auto_promote_to_observation": False,
+            "formal_quote_status": item.get("formal_quote_status") or "UNAVAILABLE",
             "discovery_evidence": item,
-            "comparison_basis": item.get("comparison_basis") or ["历史结构", "当前结构", "风险收益", "资本效率"],
-            "action_boundary": "发现不产生观察身份、Trial/Confirm、金额或交易动作；Observation身份与最终资本配置均由完整MASTER正式决策形成。",
+            "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。",
         })
-        seen.add(code)
-    combined = existing + appended
     return {
         **base,
-        "ordered_candidates": combined,
-        "comparison_universe": combined,
-        "next_unit_capital_use": "由ChatGPT按MASTER对现金、全部持仓ETF、全部观察ETF、本节点合格池外发现ETF、账户个股及可释放资本重新比较；机器不预选唯一主候选。",
-        "formal_discovery_included": bool(appended),
-        "formal_discovery_candidate_count": len(appended),
-        "order_semantics": "ENUMERATION_ONLY_NOT_RANKING",
+        "formal_discovery_included": False,
+        "formal_discovery_candidate_count": len(eligibility_inputs),
+        "formal_discovery_ingress_status": "ELIGIBILITY_ONLY",
+        "formal_discovery_coverage_status": discovery.get("coverage_status") or "NOT_REQUESTED",
+        "observation_eligibility_inputs": eligibility_inputs,
+        "next_unit_capital_use": "由ChatGPT按MASTER对现金、全部持仓、本节点ADMIT/RETAIN后的合法Observation及可释放资本完成最终比较；Discovery临时对象不直接进入最终资本竞争。",
+        "order_semantics": "LEGAL_CAPITAL_UNIVERSE_ONLY_NOT_RANKING",
     }
-
 
 def build_decision_context(root: Path | None = None, observability: dict[str, Any] | None = None, formal_discovery: dict[str, Any] | None = None) -> dict[str, Any]:
     root = root or root_from_env()
