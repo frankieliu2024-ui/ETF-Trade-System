@@ -23,9 +23,12 @@ def held_etf_codes(root: Path, account: dict) -> set[str]:
     return {_code(x) for x in active_account_asset_codes(root, account).get("etf", set())}
 
 
-def validate_observation_management(decision: dict, *, held_codes: set[str], monitored_codes: set[str]) -> list[dict]:
+def validate_observation_management(decision: dict, *, held_codes: set[str], monitored_codes: set[str], require_existing_coverage: bool = False) -> list[dict]:
     raw = decision.get("observation_management")
+    existing_observations = {_code(x) for x in monitored_codes} - {_code(x) for x in held_codes}
     if raw in (None, []):
+        if require_existing_coverage and existing_observations:
+            raise ValueError("formal decision must RETAIN or EXIT every current observation ETF")
         return []
     if not isinstance(raw, list):
         raise ValueError("formal_decision.observation_management must be a list")
@@ -42,6 +45,8 @@ def validate_observation_management(decision: dict, *, held_codes: set[str], mon
             raise ValueError(f"invalid observation action for {code}: {action}")
         if action == "ADMIT" and code in held_codes:
             raise ValueError(f"held ETF cannot be admitted as observation: {code}")
+        if action == "ADMIT" and code in monitored_codes:
+            raise ValueError(f"ADMIT requires a node-local non-managed ETF: {code}")
         if action in {"RETAIN", "EXIT"} and code not in monitored_codes:
             raise ValueError(f"{action} requires current continuous-monitor membership: {code}")
         if action in {"ADMIT", "RETAIN"}:
@@ -53,6 +58,11 @@ def validate_observation_management(decision: dict, *, held_codes: set[str], mon
             raise ValueError(f"EXIT {code} requires reason")
         out.append({**item, "code": code, "action": action})
         seen.add(code)
+    if require_existing_coverage:
+        covered_existing = {item["code"] for item in out if item["action"] in {"RETAIN", "EXIT"}}
+        missing = sorted(existing_observations - covered_existing)
+        if missing:
+            raise ValueError("formal decision observation_management missing current observations: " + ", ".join(missing))
     return out
 
 
