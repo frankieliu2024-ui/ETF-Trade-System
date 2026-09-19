@@ -8,6 +8,7 @@ from scripts.semantic_latest_main import classify_delta, classify_path, integrat
 class SemanticLatestMainTests(unittest.TestCase):
     def test_path_ownership_comes_from_existing_domain_boundaries(self):
         self.assertEqual(classify_path("data/state/CURRENT.json"), "DYNAMIC_RUNTIME_FACT")
+        self.assertEqual(classify_path("data/market/discovery_history/2026-09-18.json"), "DYNAMIC_RUNTIME_FACT")
         self.assertEqual(classify_path("requests/live_snapshot/x.json"), "REQUEST_OR_TRIGGER_FACT")
         self.assertEqual(classify_path("scripts/build_query_context.py"), "STABLE_PRODUCTION_CHANGE")
         self.assertEqual(classify_path("ETF当前状态_DASHBOARD.md"), "FORMAL_FACT_MUTATION")
