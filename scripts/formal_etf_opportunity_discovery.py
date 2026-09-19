@@ -265,7 +265,40 @@ def _exposure_key(row: dict[str, Any]) -> str:
     return name or str(row.get("code") or "")
 
 
-def _bounded_prefilter(rows: list[dict[str, Any]], held_codes: set[str] | None = None, market_date: str = "") -> list[dict[str, Any]]:\n    """Return an ordered deep-validation queue, not a Top-N winner list.\n\n    Cheap current-node evidence first allocates information-acquisition priority:\n    newly changing/recovery families precede persistent trend, while one cheap\n    representative per economic label prevents clone-heavy themes from consuming\n    the queue. Date rotation is only the final tie-break inside the same family.\n    """\n    held_codes = {str(x) for x in (held_codes or set())}\n    family_priority = ("TREND_CHANGE", "RECOVERY_BREAKOUT", "PERSISTENT_TREND")\n    buckets: dict[str, dict[str, dict[str, Any]]] = {x: {} for x in family_priority}\n    for row in rows:\n        code = str(row.get("code") or "")\n        if code in held_codes:\n            continue\n        exposure = _exposure_key(row)\n        for family in _potential_families(row):\n            current = buckets[family].get(exposure)\n            if current is None or code < str(current.get("code") or ""):\n                buckets[family][exposure] = row\n\n    queue: list[dict[str, Any]] = []\n    seen_codes: set[str] = set()\n    for family in family_priority:\n        members = list(buckets[family].values())\n        members.sort(key=lambda x: hashlib.sha256(\n            f"{market_date}|{family}|{_exposure_key(x)}".encode("utf-8")\n        ).hexdigest())\n        for item in members:\n            code = str(item.get("code") or "")\n            if code and code not in seen_codes:\n                seen_codes.add(code)\n                queue.append(item)\n    return queue
+def _bounded_prefilter(rows: list[dict[str, Any]], held_codes: set[str] | None = None, market_date: str = "") -> list[dict[str, Any]]:
+    """Return an ordered deep-validation queue, not a Top-N winner list.
+
+    Cheap current-node evidence first allocates information-acquisition priority:
+    newly changing/recovery families precede persistent trend, while one cheap
+    representative per economic label prevents clone-heavy themes from consuming
+    the queue. Date rotation is only the final tie-break inside the same family.
+    """
+    held_codes = {str(x) for x in (held_codes or set())}
+    family_priority = ("TREND_CHANGE", "RECOVERY_BREAKOUT", "PERSISTENT_TREND")
+    buckets: dict[str, dict[str, dict[str, Any]]] = {x: {} for x in family_priority}
+    for row in rows:
+        code = str(row.get("code") or "")
+        if code in held_codes:
+            continue
+        exposure = _exposure_key(row)
+        for family in _potential_families(row):
+            current = buckets[family].get(exposure)
+            if current is None or code < str(current.get("code") or ""):
+                buckets[family][exposure] = row
+
+    queue: list[dict[str, Any]] = []
+    seen_codes: set[str] = set()
+    for family in family_priority:
+        members = list(buckets[family].values())
+        members.sort(key=lambda x: hashlib.sha256(
+            f"{market_date}|{family}|{_exposure_key(x)}".encode("utf-8")
+        ).hexdigest())
+        for item in members:
+            code = str(item.get("code") or "")
+            if code and code not in seen_codes:
+                seen_codes.add(code)
+                queue.append(item)
+    return queue
 
 def _candidate(row: dict[str, Any], history: list[dict[str, Any]], market_date: str) -> dict[str, Any] | None:
     completed = [x for x in history if str(x.get("date") or "") < market_date]
