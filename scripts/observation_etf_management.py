@@ -92,6 +92,20 @@ def project_monitor_universe(root: Path, account: dict, decision: dict) -> tuple
         **universe,
         "objects": list(by_code.values()),
     }
+    # Projection writes must preserve the canonical monitor-universe contract
+    # established on main; decision intent may change membership, not metadata
+    # ownership or descriptive governance fields.
+    try:
+        from check_system_consistency import validate_monitor_universe_contract
+    except (ModuleNotFoundError, ImportError):
+        try:
+            from scripts.check_system_consistency import validate_monitor_universe_contract
+        except (ModuleNotFoundError, ImportError):
+            validate_monitor_universe_contract = None
+    if validate_monitor_universe_contract is not None:
+        error = validate_monitor_universe_contract(projected)
+        if error:
+            raise ValueError(f"projected ETF monitor universe violates canonical contract: {error}")
     changed = projected != universe
     return projected, changed
 
