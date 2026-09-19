@@ -1,0 +1,27 @@
+name: Issue 687 V0 PIT replay
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install pandas
+      - name: Run bounded V0 PIT replay
+        run: |
+          python research/issue-687/evaluate_v0_pit.py \
+            --output /tmp/issue687_v0_pit_result.json \
+            --dataset 159577=data/market/on_demand/datasets/issue687_v0_159577_20230101_20260918.csv --dataset 159687=data/market/on_demand/datasets/issue687_v0_159687_20230101_20260918.csv --dataset 513290=data/market/on_demand/datasets/issue687_v0_513290_20230101_20260918.csv --dataset 513310=data/market/on_demand/datasets/issue687_v0_513310_20230101_20260918.csv --dataset 513360=data/market/on_demand/datasets/issue687_v0_513360_20230101_20260918.csv --dataset 513650=data/market/on_demand/datasets/issue687_v0_513650_20230101_20260918.csv --dataset 513800=data/market/on_demand/datasets/issue687_v0_513800_20230101_20260918.csv --dataset 513810=data/market/on_demand/datasets/issue687_v0_513810_20230101_20260918.csv
+          cat /tmp/issue687_v0_pit_result.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: issue687-v0-pit-result
+          path: /tmp/issue687_v0_pit_result.json
