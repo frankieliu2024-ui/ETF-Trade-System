@@ -189,3 +189,60 @@ def compress_homogeneous_exposure(candidates: list[dict[str, Any]]) -> list[dict
         output.append(item)
     return output
 \n
+
+def discover_state_delta(
+    previous: dict[str, Any] | None,
+    current: dict[str, Any],
+) -> dict[str, Any]:
+    """Compress persistent states into PIT-safe information-change events.
+
+    This is research-only. A delta event is not a management identity, lifecycle
+    state, MASTER decision, or trade signal.
+    """
+    previous_states = set((previous or {}).get("surfaced_states") or [])
+    current_states = set(current.get("surfaced_states") or [])
+    entered = sorted(current_states - previous_states)
+    exited = sorted(previous_states - current_states)
+    return {
+        "code": current.get("code"),
+        "as_of": current.get("as_of"),
+        "entered_states": entered,
+        "exited_states": exited,
+        "material_delta": bool(entered or exited),
+        "worth_full_evaluation": bool(entered),
+        "research_only": True,
+        "management_identity_change": False,
+        "trade_signal": None,
+        "decision_output_generated": False,
+    }
+
+
+def route_discovery_result(
+    discovery: dict[str, Any],
+    *,
+    holding_codes: set[str] | None = None,
+    observation_codes: set[str] | None = None,
+) -> dict[str, Any]:
+    """Route discovery evidence without creating a third formal ETF identity."""
+    code = str(discovery.get("code"))
+    holdings = {str(x) for x in (holding_codes or set())}
+    observations = {str(x) for x in (observation_codes or set())}
+    if code in holdings:
+        route = "HOLDING_DELTA_EVIDENCE"
+        full_evaluation = False
+    elif code in observations:
+        route = "OBSERVATION_DELTA_EVIDENCE"
+        full_evaluation = False
+    else:
+        route = "EPHEMERAL_FULL_EVALUATION_INPUT"
+        full_evaluation = bool(discovery.get("worth_full_evaluation"))
+    return {
+        "code": code,
+        "route": route,
+        "ephemeral": route == "EPHEMERAL_FULL_EVALUATION_INPUT",
+        "full_evaluation_ingress": full_evaluation,
+        "auto_promote_to_observation": False,
+        "management_identity_change": False,
+        "trade_signal": None,
+        "decision_output_generated": False,
+    }
