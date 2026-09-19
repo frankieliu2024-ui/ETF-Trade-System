@@ -271,7 +271,7 @@ class BusinessE2EClosureContractTests(unittest.TestCase):
         # Current-node change/recovery information is allocated before pure
         # persistent-trend evidence; date hash only orders peers within a family.
         first_families = [discovery._potential_families(x) for x in queue[:6]]
-        self.assertTrue(all("TREND_CHANGE" in fam for fam in first_families))
+        self.assertTrue(all("TREND_CHANGE" in fam or "RECOVERY_BREAKOUT" in fam for fam in first_families))
 
         # Injected histories prove the queue can acquire more than the old
         # four-per-family seat count without turning the queue into capital ranking.
