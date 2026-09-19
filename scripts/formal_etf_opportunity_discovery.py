@@ -303,7 +303,7 @@ def discover_formal_candidates(
     candidates.sort(key=key)
     candidates = candidates[:MAX_FORMAL_CANDIDATES]
     return {
-        "schema_version": "1.0", "status": "READY" if broad else "DEGRADED",
+        "schema_version": "1.0", "status": "READY" if broad and not failures else "DEGRADED",
         "generated_at_beijing": generated, "market_date": market_date,
         "source": "EASTMONEY_BROAD_ETF_SPOT_PLUS_OBJECT_DAILY_HISTORY",
         "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
