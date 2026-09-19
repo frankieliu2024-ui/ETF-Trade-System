@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 import math
 import time
@@ -110,6 +111,37 @@ def fetch_daily_history(code: str, market_id: int, end_date: str, limit: int = 9
             "volume": _num(parts[5]), "amount": _num(parts[6]),
         })
     return [x for x in rows if x["date"] and x["close"] is not None]
+
+
+
+def load_validated_history(root: Path, code: str, market_date: str, limit: int = 90) -> list[dict[str, Any]] | None:
+    result_dir = root / "data/market/on_demand/results"
+    best: tuple[str, Path] | None = None
+    for path in result_dir.glob(f"*_{code}_*.json"):
+        try:
+            obj = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if not obj.get("ok") or obj.get("asset_type") != "etf" or obj.get("mode") != "history":
+            continue
+        last_date, dataset = str(obj.get("last_date") or ""), obj.get("dataset")
+        if not dataset or not last_date or last_date >= market_date:
+            continue
+        candidate = root / str(dataset)
+        if candidate.exists() and (best is None or last_date > best[0]):
+            best = (last_date, candidate)
+    if best is None:
+        return None
+    rows: list[dict[str, Any]] = []
+    with best[1].open("r", encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            if str(row.get("date") or "") >= market_date:
+                continue
+            close = _num(row.get("close"))
+            if close is None:
+                continue
+            rows.append({"date": str(row["date"]), "open": _num(row.get("open")), "high": _num(row.get("high")), "low": _num(row.get("low")), "close": close, "volume": _num(row.get("volume")), "amount": _num(row.get("amount"))})
+    return rows[-limit:] if len(rows) >= MIN_HISTORY else None
 
 
 def _ret(closes: list[float], sessions: int) -> float | None:
@@ -283,10 +315,17 @@ def discover_formal_candidates(
         history_attempted += 1
         try:
             history = (history_by_code or {}).get(code) if history_by_code is not None else None
+            history_source = "INJECTED" if history is not None else None
+            if history is None:
+                history = load_validated_history(root, code, market_date, 90)
+                history_source = "VALIDATED_EXISTING_HISTORY" if history is not None else None
             if history is None:
                 history = fetch_daily_history(code, int(row.get("market_id") or 0), market_date, 90)
+                history_source = "EASTMONEY_BOUNDED_REPAIR"
             history_succeeded += 1
             item = _candidate(row, history, market_date)
+            if item:
+                item["history_source"] = history_source
             if item:
                 code = str(item.get("code") or "")
                 item["management_identity"] = "MANAGED" if code in managed_codes else None
