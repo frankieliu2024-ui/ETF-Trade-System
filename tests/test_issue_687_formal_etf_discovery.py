@@ -23,7 +23,7 @@ def history(code_shift: float = 0.0) -> list[dict]:
 
 
 class FormalEtfOpportunityDiscoveryTest(unittest.TestCase):
-    def test_managed_etf_is_not_rediscovered(self) -> None:
+    def test_managed_etf_keeps_identity_overlay_when_discovered(self) -> None:
         spot = [{
             "code": "510300", "name": "300ETF", "market_id": 1, "price": 4.2,
             "change_pct": 1.0, "amount": 100_000_000, "volume_ratio": 1.2,
@@ -33,8 +33,8 @@ class FormalEtfOpportunityDiscoveryTest(unittest.TestCase):
             None, market_date="2026-09-19", managed_codes={"510300"},
             spot_rows=spot, history_by_code={"510300": history()},
         )
-        self.assertEqual(result["candidates"], [])
-        self.assertEqual(result["managed_excluded_count"], 1)
+        self.assertEqual(result["managed_excluded_count"], 0)
+        self.assertEqual(result["candidates"][0]["management_identity"], "MANAGED")
 
     def test_out_of_pool_candidate_gets_evaluation_not_trade_permission(self) -> None:
         spot = [{
@@ -48,8 +48,8 @@ class FormalEtfOpportunityDiscoveryTest(unittest.TestCase):
         )
         self.assertEqual(result["candidate_count"], 1)
         item = result["candidates"][0]
-        self.assertEqual(item["category"], "DISCOVERED_ETF")
-        self.assertEqual(item["eligibility"], "FORMAL_FULL_EVALUATION")
+        self.assertEqual(item["category"], "OBSERVATION_EVALUATION_INPUT")
+        self.assertEqual(item["eligibility"], "OBSERVATION_FULL_EVALUATION")
         self.assertIsNone(item["management_identity"])
         self.assertFalse(item["auto_promote_to_observation"])
         self.assertFalse(item["trial_confirm_permission"])
@@ -88,24 +88,21 @@ class FormalEtfOpportunityDiscoveryTest(unittest.TestCase):
         self.assertEqual(item["formal_quote"]["source"], "tencent_qq")
         self.assertNotEqual(item["formal_quote"]["latest_price"], item["discovery_spot"]["price"])
 
-    def test_capital_comparison_adds_discovery_without_reclassifying_identity(self) -> None:
+    def test_capital_comparison_keeps_discovery_eligibility_only(self) -> None:
         base = {
             "comparison_universe": [{"code": None, "category": "CASH"}],
             "ordered_candidates": [{"code": None, "category": "CASH"}],
             "next_unit_capital_use": "old",
         }
-        formal = {"status": "READY", "candidates": [{
+        formal = {"status": "READY", "coverage_status": "COMPLETE", "candidates": [{
             "code": "588080", "name": "科创50ETF易方达", "display_name": "科创50ETF易方达（588080）",
             "historical_context": {"status": "READY"}, "formal_quote": {"latest_price": 1.4}, "formal_quote_status": "READY",
             "comparison_basis": ["历史结构", "当前结构"],
         }]}
         out = state_manager._extend_capital_comparison_with_discovery(base, formal)
-        item = next(x for x in out["comparison_universe"] if x.get("code") == "588080")
-        self.assertEqual(item["category"], "DISCOVERED_ETF")
-        self.assertEqual(item["eligibility"], "FORMAL_FULL_EVALUATION")
-        self.assertIsNone(item["management_identity"])
-        self.assertFalse(item["auto_promote_to_observation"])
-        self.assertIn("本节点合格池外发现ETF", out["next_unit_capital_use"])
+        self.assertEqual(out["comparison_universe"], base["comparison_universe"])
+        self.assertEqual(out["observation_eligibility_inputs"][0]["code"], "588080")
+        self.assertEqual(out["formal_discovery_ingress_status"], "ELIGIBILITY_ONLY")
 
     def test_existing_managed_object_is_not_duplicated_in_capital_comparison(self) -> None:
         base = {
