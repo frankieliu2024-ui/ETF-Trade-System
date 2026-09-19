@@ -16,7 +16,10 @@ def load_monitor_universe(root: Path) -> dict:
 
 
 def held_etf_codes(root: Path, account: dict) -> set[str]:
-    from build_stock_context import active_account_asset_codes
+    try:
+        from build_stock_context import active_account_asset_codes
+    except ModuleNotFoundError:
+        from scripts.build_stock_context import active_account_asset_codes
     return {_code(x) for x in active_account_asset_codes(root, account).get("etf", set())}
 
 
