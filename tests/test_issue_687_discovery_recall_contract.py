@@ -74,6 +74,42 @@ class DiscoveryRecallContractTests(unittest.TestCase):
         first = queue[0]["_discovery_information_classes"]
         self.assertTrue("NEW_RELATIVE_DIVERGENCE" in first or "STRUCTURAL_CHANGE" in first)
 
+    def test_large_early_class_cannot_starve_later_information_classes(self) -> None:
+        rows = [
+            row(f"51{i:04d}", 2.0, r60=20.0, name=f"相对强势{i}ETF")
+            for i in range(20)
+        ]
+        # Keep the broad median at zero. The large first group is therefore
+        # NEW_RELATIVE_DIVERGENCE, while structural/persistent examples below
+        # are genuinely later-only classes rather than members of that group.
+        rows += [row(f"52{i:04d}", 0.0, r60=0.0, name=f"基准{i}ETF") for i in range(30)]
+        structural = row("530001", 0.5, r60=0.0, name="结构变化ETF")
+        short = row("530002", 2.0, r60=None, name="短历史ETF")
+        persistent = row("530003", 0.0, r60=12.0, name="持续结构ETF")
+        rows += [structural, short, persistent]
+
+        queue = discovery._bounded_prefilter(rows, set(), "2026-09-18")
+        first_twelve = queue[:12]
+        classes = {
+            info_class
+            for item in first_twelve
+            for info_class in item["_discovery_information_classes"]
+        }
+        self.assertIn("NEW_RELATIVE_DIVERGENCE", classes)
+        self.assertIn("STRUCTURAL_CHANGE", classes)
+        self.assertIn("SHORT_HISTORY_CURRENT_CHANGE", classes)
+        self.assertIn("PERSISTENT_STRUCTURE", classes)
+
+    def test_bounded_diversity_does_not_strand_remaining_work(self) -> None:
+        rows = [
+            row(f"51{i:04d}", -0.1, r60=0.0, name=f"相对强势{i}ETF")
+            for i in range(8)
+        ]
+        rows += [row(f"52{i:04d}", -3.0, r60=0.0, name=f"基准{i}ETF") for i in range(8)]
+        queue = discovery._bounded_prefilter(rows, set(), "2026-09-18")
+        self.assertGreaterEqual(len(queue), 8)
+        self.assertEqual(len({item["code"] for item in queue}), len(queue))
+
     def test_discovery_classes_do_not_grant_trade_authority(self) -> None:
         rows = [row("510001", -3.0), row("510002", -2.5), row("513350", -0.2)]
         result = discovery.discover_formal_candidates(

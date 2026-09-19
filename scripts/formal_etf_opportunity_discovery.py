@@ -321,21 +321,53 @@ def _bounded_prefilter(rows: list[dict[str, Any]], held_codes: set[str] | None =
             if current is None or code < str(current.get("code") or ""):
                 buckets[info_class][exposure] = row
 
-    queue: list[dict[str, Any]] = []
-    seen_codes: set[str] = set()
+    ordered: dict[str, list[dict[str, Any]]] = {}
     for info_class in class_priority:
         members = list(buckets[info_class].values())
         members.sort(key=lambda x: hashlib.sha256(
             f"{market_date}|{info_class}|{_exposure_key(x)}".encode("utf-8")
         ).hexdigest())
-        for item in members:
-            code = str(item.get("code") or "")
-            if code and code not in seen_codes:
-                seen_codes.add(code)
-                tagged = dict(item)
-                tagged["_discovery_information_classes"] = _information_classes(item, broad_median)
-                tagged["_broad_return_median_pct"] = broad_median
-                queue.append(tagged)
+        ordered[info_class] = members
+
+    queue: list[dict[str, Any]] = []
+    seen_codes: set[str] = set()
+
+    def append_item(item: dict[str, Any]) -> None:
+        code = str(item.get("code") or "")
+        if not code or code in seen_codes:
+            return
+        seen_codes.add(code)
+        tagged = dict(item)
+        tagged["_discovery_information_classes"] = _information_classes(item, broad_median)
+        tagged["_broad_return_median_pct"] = broad_median
+        queue.append(tagged)
+
+    # The scarce front of the queue must not be monopolized by one information
+    # class merely because that class is earlier in the priority tuple. Give
+    # each non-empty class one deterministic opportunity per round, bounded by
+    # the existing per-family resource cap. This is acquisition fairness only:
+    # it neither scores ETFs nor grants Observation/trade authority.
+    offsets = {info_class: 0 for info_class in class_priority}
+    for _ in range(MAX_OBSERVATION_INPUTS_PER_FAMILY):
+        for info_class in class_priority:
+            members = ordered[info_class]
+            while offsets[info_class] < len(members):
+                item = members[offsets[info_class]]
+                offsets[info_class] += 1
+                before = len(queue)
+                append_item(item)
+                if len(queue) > before:
+                    break
+
+    # Never strand unused validation capacity. Once bounded diversity has been
+    # offered, retain the original class priority and deterministic hash order
+    # for all remaining work.
+    for info_class in class_priority:
+        members = ordered[info_class]
+        while offsets[info_class] < len(members):
+            item = members[offsets[info_class]]
+            offsets[info_class] += 1
+            append_item(item)
     return queue
 
 def _candidate(row: dict[str, Any], history: list[dict[str, Any]], market_date: str) -> dict[str, Any] | None:
