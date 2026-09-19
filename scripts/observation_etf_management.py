@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 VALID_ACTIONS = {"ADMIT", "RETAIN", "EXIT"}
+MAX_OBSERVATION_ETFS = 12
 
 
 def _code(value: Any) -> str:
@@ -97,6 +98,10 @@ def project_monitor_universe(root: Path, account: dict, decision: dict) -> tuple
             if code in held:
                 raise ValueError(f"held ETF cannot exit continuous monitor universe: {code}")
             by_code.pop(code, None)
+
+    projected_observations = set(by_code) - held
+    if len(projected_observations) > MAX_OBSERVATION_ETFS:
+        raise ValueError(f"projected observation ETF count exceeds resource protection max {MAX_OBSERVATION_ETFS}")
 
     projected = {
         **universe,

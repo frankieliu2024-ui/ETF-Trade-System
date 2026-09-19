@@ -10,10 +10,12 @@ from pathlib import Path
 
 try:
     from state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current, read_json
+    from build_stock_context import active_account_asset_codes
     from market_quote_router import build_market_quote_context
     from formal_etf_opportunity_discovery import attach_formal_quotes, discover_formal_candidates
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current, read_json
+    from scripts.build_stock_context import active_account_asset_codes
     from scripts.market_quote_router import build_market_quote_context
     from scripts.formal_etf_opportunity_discovery import attach_formal_quotes, discover_formal_candidates
 
@@ -439,12 +441,14 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         for x in (account.get("positions") or [])
         if x.get("code") or x.get("symbol") or x.get("security_code")
     )
+    held_etf_codes = {str(x) for x in active_account_asset_codes(root, account).get("etf", set())}
     formal_discovery = {"status": "NOT_REQUESTED", "candidates": []}
     if force_refresh or request_file:
         formal_discovery = discover_formal_candidates(
             root,
             market_date=str(current.get("market_date") or trading_day_status.get("market_date") or ""),
             managed_codes=managed_etf_codes,
+            held_codes=held_etf_codes,
         )
         discovered_codes = [str(x.get("code") or "") for x in (formal_discovery.get("candidates") or []) if x.get("code")]
         existing_quote_symbols = {
@@ -491,7 +495,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     for item in formal_discovery.get("candidates") or []:
         code = str(item.get("code") or "").upper()
         if code and code not in seen_system_codes:
-            system_objects.append({"object_code": code, "object_name": item.get("name") or code, "source_type": "NODE_LOCAL_FORMAL_DISCOVERY"})
+            system_objects.append({"object_code": code, "object_name": item.get("name") or code, "source_type": "NODE_LOCAL_OBSERVATION_EVALUATION"})
             seen_system_codes.add(code)
     decision = build_decision_context(root, formal_discovery=formal_discovery)
     generated_at = datetime.now(SHANGHAI).isoformat(timespec="seconds")

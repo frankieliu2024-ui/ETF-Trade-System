@@ -934,7 +934,7 @@ def required_etf_opportunity_reviews(root: Path, account: dict, market_date: str
         if not isinstance(item, dict):
             continue
         category = str(item.get("category") or "").upper()
-        if category not in {"OBSERVED_ETF", "DISCOVERED_ETF"}:
+        if category not in {"OBSERVED_ETF", "OBSERVATION_EVALUATION_INPUT"}:
             continue
         code = normalize_code(item.get("code") or "")
         if code:

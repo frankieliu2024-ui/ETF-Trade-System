@@ -76,5 +76,5 @@
       "thscode": "513350.SH"
     }
   ],
-  "maintenance_rule": "ETF持续采集集合发生变化时：实际持仓变化以canonical账户/成交事实为依据；观察ETF新增/保留/退出必须来自正式决策中的观察管理意图，并由现有canonical state-sync/mutation链投影到本文件及Dashboard后执行scripts/check_system_consistency.py。不得由广域发现脚本、行情producer或Dashboard展示自行授予观察身份；不得只修改文档或只修改采集代码。"
+  "maintenance_rule": "ETF持续采集集合只承载Holding＋Observation两种正式身份。Holding由canonical账户/成交事实决定且不占Observation容量；Observation由每个正式决策节点对全市场非Holding低成本Discovery后的少量对象完成正式评估，再以ADMIT/RETAIN/EXIT意图通过现有canonical state-sync/mutation链动态投影。本节点Observation允许0只，当前资源保护上限12只；不得由Discovery脚本、行情producer、排名或Dashboard自行授予身份，不得建立第三种持久ETF池。"
 }

@@ -509,15 +509,15 @@ def _extend_capital_comparison_with_discovery(base: dict[str, Any], formal_disco
         appended.append({
             "display_name": item.get("display_name") or f'{item.get("name", code)}（{code}）',
             "code": code,
-            "category": "DISCOVERED_ETF",
-            "eligibility": "FORMAL_FULL_EVALUATION",
+            "category": "OBSERVATION_EVALUATION_INPUT",
+            "eligibility": "OBSERVATION_FULL_EVALUATION",
             "data_availability": "READY" if (item.get("historical_context") or {}).get("status") == "READY" and item.get("formal_quote_status") == "READY" else "DEGRADED",
-            "reason": "广域机会发现形成的本节点临时正式评估对象；与现金、全部持仓ETF、全部观察ETF及其他资本用途参加同一次MASTER完整比较。",
+            "reason": "广域机会发现形成的本节点Observation资格评估对象；正式决策须先形成ADMIT/RETAIN/EXIT意图，只有本节点合法Observation进入最终资本效率结论。",
             "management_identity": None,
             "auto_promote_to_observation": False,
             "discovery_evidence": item,
             "comparison_basis": item.get("comparison_basis") or ["历史结构", "当前结构", "风险收益", "资本效率"],
-            "action_boundary": "发现不产生观察身份、Trial/Confirm、金额或交易动作；完整MASTER判断是唯一权限边界。",
+            "action_boundary": "发现不产生观察身份、Trial/Confirm、金额或交易动作；Observation身份与最终资本配置均由完整MASTER正式决策形成。",
         })
         seen.add(code)
     combined = existing + appended

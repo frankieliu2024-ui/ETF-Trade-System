@@ -33,18 +33,18 @@ class BusinessE2EClosureContractTests(unittest.TestCase):
         error = state_sync.validate_capital_competition_contract(
             value,
             {"positions": []},
-            required_etf_opportunities={"513180": "OBSERVED_ETF", "588080": "DISCOVERED_ETF"},
+            required_etf_opportunities={"513180": "OBSERVED_ETF", "588080": "OBSERVATION_EVALUATION_INPUT"},
         )
         self.assertIn("588080", error)
 
         value["etf_opportunity_reviews"].append(
-            {"security_code": "588080", "category": "DISCOVERED_ETF", "opportunity_status": "Trial机会", "conclusion": "进入Trial竞争", "reason": "完整MASTER评估后具备资格"}
+            {"security_code": "588080", "category": "OBSERVATION_EVALUATION_INPUT", "opportunity_status": "Trial机会", "conclusion": "进入Trial竞争", "reason": "完整MASTER评估后具备资格"}
         )
         self.assertEqual(
             state_sync.validate_capital_competition_contract(
                 value,
                 {"positions": []},
-                required_etf_opportunities={"513180": "OBSERVED_ETF", "588080": "DISCOVERED_ETF"},
+                required_etf_opportunities={"513180": "OBSERVED_ETF", "588080": "OBSERVATION_EVALUATION_INPUT"},
             ),
             "",
         )
@@ -59,7 +59,7 @@ class BusinessE2EClosureContractTests(unittest.TestCase):
                         {"code": None, "category": "CASH"},
                         {"code": "561980", "category": "HELD_ETF"},
                         {"code": "513180", "category": "OBSERVED_ETF"},
-                        {"code": "588080", "category": "DISCOVERED_ETF"},
+                        {"code": "588080", "category": "OBSERVATION_EVALUATION_INPUT"},
                         {"code": "300750", "category": "ACCOUNT_STOCK"},
                     ]
                 }
@@ -67,7 +67,7 @@ class BusinessE2EClosureContractTests(unittest.TestCase):
         }), encoding="utf-8")
         self.assertEqual(
             state_sync.required_etf_opportunity_reviews(root, {"positions": []}),
-            {"513180": "OBSERVED_ETF", "588080": "DISCOVERED_ETF"},
+            {"513180": "OBSERVED_ETF", "588080": "OBSERVATION_EVALUATION_INPUT"},
         )
         self.assertEqual(
             state_sync.required_etf_opportunity_reviews(root, {"positions": []}, "2026-09-17"),
@@ -147,13 +147,13 @@ class BusinessE2EClosureContractTests(unittest.TestCase):
         self.assertEqual(result["status"], "READY")
         self.assertEqual([x["code"] for x in result["candidates"]], ["588080"])
         candidate = result["candidates"][0]
-        self.assertEqual(candidate["category"], "DISCOVERED_ETF")
-        self.assertEqual(candidate["eligibility"], "FORMAL_FULL_EVALUATION")
+        self.assertEqual(candidate["category"], "OBSERVATION_EVALUATION_INPUT")
+        self.assertEqual(candidate["eligibility"], "OBSERVATION_FULL_EVALUATION")
         self.assertIsNone(candidate["management_identity"])
         self.assertFalse(candidate["trial_confirm_permission"])
         self.assertFalse(candidate["decision_output_generated"])
 
-        required = {"513180": "OBSERVED_ETF", "588080": "DISCOVERED_ETF"}
+        required = {"513180": "OBSERVED_ETF", "588080": "OBSERVATION_EVALUATION_INPUT"}
         capital = {
             "next_unit_capital_use": "现金",
             "full_competition_completed": True,
@@ -170,7 +170,7 @@ class BusinessE2EClosureContractTests(unittest.TestCase):
             ],
             "etf_opportunity_reviews": [
                 {"security_code": "513180", "category": "OBSERVED_ETF", "opportunity_status": "观察机会", "conclusion": "继续观察", "reason": "跨节点假设仍有信息价值"},
-                {"security_code": "588080", "category": "DISCOVERED_ETF", "opportunity_status": "观察机会", "conclusion": "本节点不部署", "reason": "已进入完整评估但不足以形成合法新增资本动作"},
+                {"security_code": "588080", "category": "OBSERVATION_EVALUATION_INPUT", "opportunity_status": "观察机会", "conclusion": "本节点不部署", "reason": "已进入完整评估但不足以形成合法新增资本动作"},
             ],
         }
         self.assertEqual(

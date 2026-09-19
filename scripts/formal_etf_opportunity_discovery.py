@@ -16,8 +16,8 @@ HISTORY_URL = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
 ETF_FS = "b:MK0021,b:MK0022,b:MK0023,b:MK0024,b:MK0827"
 FIELDS = "f2,f3,f6,f7,f8,f10,f12,f13,f14,f15,f16,f17,f18,f24,f25,f26,f124"
 MIN_AMOUNT = 10_000_000.0
-MAX_PREFILTER_PER_FAMILY = 32
-MAX_FORMAL_CANDIDATES = 12
+MAX_OBSERVATION_INPUTS_PER_FAMILY = 4
+MAX_OBSERVATION_CANDIDATES = 12
 MIN_HISTORY = 65
 
 
@@ -252,15 +252,18 @@ def _potential_families(row: dict[str, Any]) -> list[str]:
     return families
 
 
-def _bounded_prefilter(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _bounded_prefilter(rows: list[dict[str, Any]], held_codes: set[str] | None = None) -> list[dict[str, Any]]:
+    held_codes = {str(x) for x in (held_codes or set())}
     buckets: dict[str, list[dict[str, Any]]] = {x: [] for x in ("PERSISTENT_TREND", "TREND_CHANGE", "RECOVERY_BREAKOUT")}
     for row in rows:
+        if str(row.get("code") or "") in held_codes:
+            continue
         for family in _potential_families(row):
             buckets[family].append(row)
     selected: dict[str, dict[str, Any]] = {}
     for family, members in buckets.items():
         members.sort(key=lambda x: (-(float(x.get("amount") or 0)), str(x.get("code") or "")))
-        for item in members[:MAX_PREFILTER_PER_FAMILY]:
+        for item in members[:MAX_OBSERVATION_INPUTS_PER_FAMILY]:
             selected.setdefault(str(item["code"]), item)
     return list(selected.values())
 
@@ -278,10 +281,10 @@ def _candidate(row: dict[str, Any], history: list[dict[str, Any]], market_date: 
     avg_amount = sum(float(x.get("amount") or 0) for x in completed[-20:]) / min(20, len(completed))
     return {
         "code": row["code"], "name": row["name"], "display_name": f'{row["name"]}（{row["code"]}）',
-        "category": "DISCOVERED_ETF", "eligibility": "FORMAL_FULL_EVALUATION",
+        "category": "OBSERVATION_EVALUATION_INPUT", "eligibility": "OBSERVATION_FULL_EVALUATION",
         "management_identity": None, "auto_promote_to_observation": False,
         "trial_confirm_permission": False, "trade_signal": None, "decision_output_generated": False,
-        "discovery_semantic": "NODE_LOCAL_FORMAL_EVALUATION_INPUT",
+        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
         "entered_states": entered, "surfaced_states": current_states,
         "discovery_spot": {k: row.get(k) for k in (
             "price", "change_pct", "amount", "amplitude_pct", "turnover_pct", "volume_ratio",
@@ -292,7 +295,7 @@ def _candidate(row: dict[str, Any], history: list[dict[str, Any]], market_date: 
             "avg_amount_20": round(avg_amount, 2),
         },
         "comparison_basis": ["历史趋势/状态变化", "当前结构", "成交与可执行性", "风险收益", "资本效率"],
-        "decision_boundary": "仅取得本节点完整MASTER评估资格；发现本身不产生观察身份、Trial/Confirm、金额或交易动作。",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
     }
 
 
@@ -325,6 +328,7 @@ def discover_formal_candidates(
     *,
     market_date: str,
     managed_codes: set[str],
+    held_codes: set[str] | None = None,
     spot_rows: list[dict[str, Any]] | None = None,
     history_by_code: dict[str, list[dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
@@ -337,7 +341,8 @@ def discover_formal_candidates(
             "broad_universe_count": 0, "candidates": [], "error": str(exc)[-500:],
             "decision_boundary": "广域发现失败不删除持仓/观察ETF，也不阻塞其现有正式MASTER链。",
         }
-    prefiltered = _bounded_prefilter(broad)
+    held_codes = {str(x) for x in (held_codes or set())}
+    prefiltered = _bounded_prefilter(broad, held_codes)
     candidates = []
     failures = []
     node_history = load_discovery_history_snapshot(root, market_date) if history_by_code is None else {}
@@ -378,7 +383,7 @@ def discover_formal_candidates(
                 item["discovery_semantic"] = (
                     "NODE_LOCAL_ALL_MARKET_OPPORTUNITY_SIGNAL_FOR_EXISTING_MANAGED_ETF"
                     if code in managed_codes
-                    else "NODE_LOCAL_FORMAL_EVALUATION_INPUT"
+                    else "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT"
                 )
                 candidates.append(item)
         except Exception as exc:
@@ -393,7 +398,7 @@ def discover_formal_candidates(
         amount = float((item.get("historical_context") or {}).get("avg_amount_20") or 0)
         return (priority, -amount, str(item.get("code") or ""))
     candidates.sort(key=key)
-    candidates = candidates[:MAX_FORMAL_CANDIDATES]
+    candidates = candidates[:MAX_OBSERVATION_CANDIDATES]
     return {
         "schema_version": "1.0", "status": "READY" if broad and not failures else "DEGRADED",
         "generated_at_beijing": generated, "market_date": market_date,
@@ -401,6 +406,7 @@ def discover_formal_candidates(
         "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
         "broad_universe_count": len(broad),
         "managed_identity_count": sum(1 for x in broad if x.get("code") in managed_codes),
+        "held_identity_count": sum(1 for x in broad if x.get("code") in held_codes),
         "managed_excluded_count": 0,
         "history_prefilter_count": len(prefiltered), "candidate_count": len(candidates),
         "history_attempted_count": history_attempted, "history_succeeded_count": history_succeeded,
@@ -408,6 +414,7 @@ def discover_formal_candidates(
         "history_failure_count": len(failures), "history_elapsed_seconds": elapsed,
         "coverage_status": "COMPLETE" if not failures else ("UNAVAILABLE" if history_succeeded == 0 else "PARTIAL"),
         "history_failures": failures, "candidates": candidates,
+        "observation_capacity": {"target_typical": "5-10", "allowed_min": 0, "resource_protection_max": MAX_OBSERVATION_CANDIDATES},
         "selection_contract": {
             "all_market_boundary": True,
             "no_gain_ranking": True,
