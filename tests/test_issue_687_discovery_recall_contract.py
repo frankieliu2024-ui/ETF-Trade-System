@@ -76,15 +76,16 @@ class DiscoveryRecallContractTests(unittest.TestCase):
 
     def test_large_early_class_cannot_starve_later_information_classes(self) -> None:
         rows = [
-            row(f"51{i:04d}", -0.1, r60=0.0, name=f"相对强势{i}ETF")
+            row(f"51{i:04d}", 2.0, r60=20.0, name=f"相对强势{i}ETF")
             for i in range(20)
         ]
-        # Make the broad median sufficiently weak so the first group is all
-        # NEW_RELATIVE_DIVERGENCE, then add distinct later-class opportunities.
-        rows += [row(f"52{i:04d}", -3.0, r60=0.0, name=f"基准{i}ETF") for i in range(20)]
-        structural = row("530001", 1.0, r60=0.0, name="结构变化ETF")
-        short = row("530002", 0.2, r60=None, name="短历史ETF")
-        persistent = row("530003", 0.2, r60=12.0, name="持续结构ETF")
+        # Keep the broad median at zero. The large first group is therefore
+        # NEW_RELATIVE_DIVERGENCE, while structural/persistent examples below
+        # are genuinely later-only classes rather than members of that group.
+        rows += [row(f"52{i:04d}", 0.0, r60=0.0, name=f"基准{i}ETF") for i in range(30)]
+        structural = row("530001", 0.5, r60=0.0, name="结构变化ETF")
+        short = row("530002", 2.0, r60=None, name="短历史ETF")
+        persistent = row("530003", 0.0, r60=12.0, name="持续结构ETF")
         rows += [structural, short, persistent]
 
         queue = discovery._bounded_prefilter(rows, set(), "2026-09-18")
