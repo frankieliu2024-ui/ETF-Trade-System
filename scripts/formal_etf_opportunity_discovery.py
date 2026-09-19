@@ -219,7 +219,7 @@ def _candidate(row: dict[str, Any], history: list[dict[str, Any]], market_date: 
         "trial_confirm_permission": False, "trade_signal": None, "decision_output_generated": False,
         "discovery_semantic": "NODE_LOCAL_FORMAL_EVALUATION_INPUT",
         "entered_states": entered, "surfaced_states": current_states,
-        "current_spot": {k: row.get(k) for k in (
+        "discovery_spot": {k: row.get(k) for k in (
             "price", "change_pct", "amount", "amplitude_pct", "turnover_pct", "volume_ratio",
             "high", "low", "open", "prev_close", "return_60d_pct", "return_ytd_pct", "provider_timestamp"
         )},
@@ -230,6 +230,30 @@ def _candidate(row: dict[str, Any], history: list[dict[str, Any]], market_date: 
         "comparison_basis": ["历史趋势/状态变化", "当前结构", "成交与可执行性", "风险收益", "资本效率"],
         "decision_boundary": "仅取得本节点完整MASTER评估资格；发现本身不产生观察身份、Trial/Confirm、金额或交易动作。",
     }
+
+
+
+def attach_formal_quotes(discovery: dict[str, Any], market_quote: dict[str, Any]) -> dict[str, Any]:
+    quotes = {}
+    for quote in market_quote.get("quotes") or []:
+        if not isinstance(quote, dict):
+            continue
+        symbol = str(quote.get("symbol") or quote.get("code") or "").upper().replace(".SH", "").replace(".SZ", "")
+        if symbol:
+            quotes[symbol] = quote
+    candidates = []
+    for item in discovery.get("candidates") or []:
+        code = str(item.get("code") or "").upper()
+        quote = quotes.get(code)
+        quality = str((quote or {}).get("quality_status") or "").upper()
+        usable = bool(quote and quality not in {"", "FAILED", "FAIL", "STALE", "INVALID"})
+        candidates.append({
+            **item,
+            "formal_quote": quote or {},
+            "formal_quote_status": "READY" if usable else "UNAVAILABLE",
+            "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。",
+        })
+    return {**discovery, "candidates": candidates, "formal_quote_coverage": sum(x["formal_quote_status"] == "READY" for x in candidates)}
 
 
 def discover_formal_candidates(
