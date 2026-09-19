@@ -19,6 +19,8 @@ FIELDS = "f2,f3,f6,f7,f8,f10,f12,f13,f14,f15,f16,f17,f18,f24,f25,f26,f124"
 MIN_AMOUNT = 10_000_000.0
 MAX_OBSERVATION_INPUTS_PER_FAMILY = 4
 MAX_OBSERVATION_CANDIDATES = 12
+MAX_HISTORY_SUCCESS_BUDGET = 12
+MAX_HISTORY_ATTEMPT_MULTIPLIER = 3
 MIN_HISTORY = 65
 
 
@@ -263,32 +265,7 @@ def _exposure_key(row: dict[str, Any]) -> str:
     return name or str(row.get("code") or "")
 
 
-def _bounded_prefilter(rows: list[dict[str, Any]], held_codes: set[str] | None = None, market_date: str = "") -> list[dict[str, Any]]:
-    held_codes = {str(x) for x in (held_codes or set())}
-    buckets: dict[str, dict[str, dict[str, Any]]] = {x: {} for x in ("PERSISTENT_TREND", "TREND_CHANGE", "RECOVERY_BREAKOUT")}
-    for row in rows:
-        code = str(row.get("code") or "")
-        if code in held_codes:
-            continue
-        exposure = _exposure_key(row)
-        for family in _potential_families(row):
-            # One representative per cheap economic-exposure label.  Liquidity is
-            # an executability floor only; it does not buy a deep-evaluation seat.
-            current = buckets[family].get(exposure)
-            if current is None or code < str(current.get("code") or ""):
-                buckets[family][exposure] = row
-    selected: dict[str, dict[str, Any]] = {}
-    for family, by_exposure in buckets.items():
-        members = list(by_exposure.values())
-        # Rotate independent exposure representatives by node date so a fixed
-        # code/liquidity ordering cannot become a hidden permanent Top-N.
-        members.sort(key=lambda x: hashlib.sha256(
-            f"{market_date}|{family}|{_exposure_key(x)}".encode("utf-8")
-        ).hexdigest())
-        for item in members[:MAX_OBSERVATION_INPUTS_PER_FAMILY]:
-            selected.setdefault(str(item["code"]), item)
-    return list(selected.values())
-
+def _bounded_prefilter(rows: list[dict[str, Any]], held_codes: set[str] | None = None, market_date: str = "") -> list[dict[str, Any]]:\n    """Return an ordered deep-validation queue, not a Top-N winner list.\n\n    Cheap current-node evidence first allocates information-acquisition priority:\n    newly changing/recovery families precede persistent trend, while one cheap\n    representative per economic label prevents clone-heavy themes from consuming\n    the queue. Date rotation is only the final tie-break inside the same family.\n    """\n    held_codes = {str(x) for x in (held_codes or set())}\n    family_priority = ("TREND_CHANGE", "RECOVERY_BREAKOUT", "PERSISTENT_TREND")\n    buckets: dict[str, dict[str, dict[str, Any]]] = {x: {} for x in family_priority}\n    for row in rows:\n        code = str(row.get("code") or "")\n        if code in held_codes:\n            continue\n        exposure = _exposure_key(row)\n        for family in _potential_families(row):\n            current = buckets[family].get(exposure)\n            if current is None or code < str(current.get("code") or ""):\n                buckets[family][exposure] = row\n\n    queue: list[dict[str, Any]] = []\n    seen_codes: set[str] = set()\n    for family in family_priority:\n        members = list(buckets[family].values())\n        members.sort(key=lambda x: hashlib.sha256(\n            f"{market_date}|{family}|{_exposure_key(x)}".encode("utf-8")\n        ).hexdigest())\n        for item in members:\n            code = str(item.get("code") or "")\n            if code and code not in seen_codes:\n                seen_codes.add(code)\n                queue.append(item)\n    return queue
 
 def _candidate(row: dict[str, Any], history: list[dict[str, Any]], market_date: str) -> dict[str, Any] | None:
     completed = [x for x in history if str(x.get("date") or "") < market_date]
@@ -365,6 +342,7 @@ def discover_formal_candidates(
         }
     held_codes = {str(x) for x in (held_codes or set())}
     prefiltered = _bounded_prefilter(broad, held_codes, market_date)
+    max_history_attempts = min(len(prefiltered), MAX_HISTORY_SUCCESS_BUDGET * MAX_HISTORY_ATTEMPT_MULTIPLIER)
     candidates = []
     failures = []
     node_history = load_discovery_history_snapshot(root, market_date) if history_by_code is None else {}
@@ -375,6 +353,8 @@ def discover_formal_candidates(
     history_repair_attempted = 0
     started = time.monotonic()
     for row in prefiltered:
+        if history_succeeded >= MAX_HISTORY_SUCCESS_BUDGET or history_attempted >= max_history_attempts:
+            break
         code = str(row["code"])
         history_attempted += 1
         try:
@@ -427,6 +407,7 @@ def discover_formal_candidates(
         "held_identity_count": sum(1 for x in broad if x.get("code") in held_codes),
         "managed_excluded_count": 0,
         "history_prefilter_count": len(prefiltered), "candidate_count": len(candidates),
+        "history_success_budget": MAX_HISTORY_SUCCESS_BUDGET, "history_attempt_cap": max_history_attempts,
         "history_attempted_count": history_attempted, "history_succeeded_count": history_succeeded,
         "history_reused_count": history_reused, "history_repair_attempted_count": history_repair_attempted,
         "history_failure_count": len(failures), "history_elapsed_seconds": elapsed,
@@ -437,8 +418,8 @@ def discover_formal_candidates(
             "all_market_boundary": True,
             "no_gain_ranking": True,
             "no_hidden_score": True,
-            "prefilter": "multi-horizon state-family plausibility plus minimum executability; cheap exposure dedup plus date-rotated bounded sampling prevents liquidity/code order from becoming hidden Top-N",
-            "final_ingress": "each successfully evidenced object independently enters Observation eligibility evaluation; provider failure is explicit and does not convert successful peers into legal capital competitors",
+            "prefilter": "multi-horizon state-family plausibility plus minimum executability; cheap exposure dedup; state-change/recovery information value is acquired before persistent-trend evidence; date rotation is tie-break only within the same family",
+            "final_ingress": "history budget counts successful evidence acquisition, with a bounded attempt cap; provider failure is explicit, does not consume a successful-evidence seat, and does not convert successful peers into legal capital competitors",
         },
         "decision_boundary": "发现对象是本节点临时正式评估输入，不是第三种ETF身份；不得自动写观察池、生成Trial/Confirm或交易动作。",
     }
