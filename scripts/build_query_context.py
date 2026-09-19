@@ -11,9 +11,11 @@ from pathlib import Path
 try:
     from state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current, read_json
     from market_quote_router import build_market_quote_context
+    from formal_etf_opportunity_discovery import attach_formal_quotes, discover_formal_candidates
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current, read_json
     from scripts.market_quote_router import build_market_quote_context
+    from scripts.formal_etf_opportunity_discovery import attach_formal_quotes, discover_formal_candidates
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
@@ -120,7 +122,7 @@ def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict)
             "trading_day_rule": "每次当前查询先读取A股官方交易日历，区分正常交易日前/盘中/盘后、周末与交易所休市。",
             "consistency_rule": "正式分析前读取system_consistency.json；硬FAIL先处理系统冲突。",
             "data_standard_rule": "行情来源、质量、查询时补采优先级、盘前/盘中脉冲、新鲜度、跨市场时点和降级边界以一级目录数据规范为基础。",
-            "etf_rule": "ETF机器采集以etf_monitor_universe.json为唯一运行清单；持仓/观察身份由Dashboard和账户事实解释。",
+            "etf_rule": "ETF持续监测以etf_monitor_universe.json为唯一运行清单；持仓/观察身份由Dashboard和账户事实解释。正式查询节点可按MASTER使用广域只读发现，但池外对象必须经现有对象级正式补采后才可进入本节点完整评估，且不得自动写入持续监测清单。",
             "overseas_rule": "正式海外/亚洲指数必须检查NDX、SOX、N225、KOSPI、TWII、HSTECH；北京时间08:00起已有日韩市场脉冲，不能等A股9:30才开始读取海外。",
             "us_extended_hours_rule": "美国信息分三段解释：上一正式现金盘（NDX/SOX）、POST_MARKET（QQQ/SOXX及条件个股）、下一交易日PRE_MARKET。A股早盘前可能获得上一美股盘后信息；下一美股PRE_MARKET通常在北京时间A股收盘后开始，主要形成下一A股交易日的前置信号。扩展时段不得等同正式指数确认。",
             "stock_rule": "第三层默认个股由当前有效账户事实动态生成；产业链个股按查询主题动态发现。",
@@ -431,6 +433,42 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     market_domain_projection = build_market_domain_projection(current, overseas_context, us_extended, freshness)
     trading_day_status = current_trading_day_status(trading_calendar)
     account_gate = account_gate_status(current, account, policy)
+    managed_etf_codes = {str(x.get("code") or "") for x in (etf_universe.get("objects") or []) if x.get("code")}
+    managed_etf_codes.update(
+        str(x.get("code") or x.get("symbol") or x.get("security_code") or "")
+        for x in (account.get("positions") or [])
+        if x.get("code") or x.get("symbol") or x.get("security_code")
+    )
+    formal_discovery = {"status": "NOT_REQUESTED", "candidates": []}
+    if force_refresh or request_file:
+        formal_discovery = discover_formal_candidates(
+            root,
+            market_date=str(current.get("market_date") or trading_day_status.get("market_date") or ""),
+            managed_codes=managed_etf_codes,
+        )
+        discovered_codes = [str(x.get("code") or "") for x in (formal_discovery.get("candidates") or []) if x.get("code")]
+        if discovered_codes:
+            candidate_quote = build_market_quote_context(
+                root,
+                force_refresh=True,
+                requested_symbols=discovered_codes,
+                decision_request_time=None,
+            )
+            formal_discovery = attach_formal_quotes(formal_discovery, candidate_quote)
+            discovered_set = {x.upper() for x in discovered_codes}
+            existing_quote_symbols = {
+                str(x.get("symbol") or x.get("code") or "").upper().replace(".SH", "").replace(".SZ", "")
+                for x in (market_quote.get("quotes") or []) if isinstance(x, dict)
+            }
+            for quote in candidate_quote.get("quotes") or []:
+                symbol = str(quote.get("symbol") or quote.get("code") or "").upper().replace(".SH", "").replace(".SZ", "")
+                if symbol in discovered_set and symbol not in existing_quote_symbols:
+                    market_quote.setdefault("quotes", []).append(quote)
+                    existing_quote_symbols.add(symbol)
+            market_quote.setdefault("refresh_failures", []).extend(
+                x for x in (candidate_quote.get("refresh_failures") or [])
+                if str(x.get("symbol") or "").upper().replace(".SH", "").replace(".SZ", "") in discovered_set
+            )
     system_objects = []
     seen_system_codes = set()
     for item in etf_universe.get("objects") or []:
@@ -447,7 +485,12 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         if int(position.get("quantity") or 0) > 0 and code not in seen_system_codes:
             system_objects.append({"object_code": code, "object_name": position.get("name") or code, "source_type": "SYSTEM_MONITORED"})
             seen_system_codes.add(code)
-    decision = build_decision_context(root)
+    for item in formal_discovery.get("candidates") or []:
+        code = str(item.get("code") or "").upper()
+        if code and code not in seen_system_codes:
+            system_objects.append({"object_code": code, "object_name": item.get("name") or code, "source_type": "NODE_LOCAL_FORMAL_DISCOVERY"})
+            seen_system_codes.add(code)
+    decision = build_decision_context(root, formal_discovery=formal_discovery)
     generated_at = datetime.now(SHANGHAI).isoformat(timespec="seconds")
     fact_pack = build_decision_fact_pack(root, request_payload, current, account, decision, market_quote)
     latency = build_fast_path_latency(request_payload, current, account, decision, market_quote, generated_at, root)
@@ -465,11 +508,12 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         "decision_read_plan": build_read_plan(current, account, policy, freshness),
         "market_quote_router": market_quote,
         "system_objects": system_objects, "user_requested_objects": [], "market_domain_projection": market_domain_projection,
+        "formal_etf_discovery": formal_discovery,
         "canonical_files": CANONICAL_FILES, "data_status": {**(current.get("data_freshness") or {}), **freshness}, "freshness_at_context_build": freshness,
         "interactive_decision_freshness": market_quote.get("decision_freshness", {}),
         "trading_day_status": trading_day_status, "runtime_health": runtime_health,
         "system_consistency_status": consistency.get("status", "MISSING"), "system_consistency_hard_errors": consistency.get("hard_error_count", None),
-        "etf_universe_count": len(etf_universe.get("objects") or []), "overseas_context_status": overseas_context.get("quality_status", "MISSING"),
+        "etf_universe_count": len(etf_universe.get("objects") or []), "formal_discovery_candidate_count": len(formal_discovery.get("candidates") or []), "overseas_context_status": overseas_context.get("quality_status", "MISSING"),
         "overseas_generated_at_beijing": overseas_context.get("generated_at_beijing", ""),
         "us_extended_hours_status": us_extended.get("quality_status", "MISSING"), "us_extended_hours_generated_at_beijing": us_extended.get("generated_at_beijing", ""),
         "stock_context_status": stock_context.get("account_fact_status", "MISSING"), "stock_market_context_status": stock_market_context.get("quality_status", "MISSING"),
