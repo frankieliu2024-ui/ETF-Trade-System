@@ -9,7 +9,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from etf_opportunity_discovery import (\n    compress_homogeneous_exposure,\n    discover_etf,\n    discover_state_delta,\n    route_discovery_result,\n    consolidate_discovery_events,\n)
+from etf_opportunity_discovery import (\n    compress_homogeneous_exposure,\n    discover_etf,\n    discover_state_delta,\n    route_discovery_result,\n    consolidate_discovery_events,\n    build_discovery_bridge_evidence,\n)
 
 
 def series(values):
@@ -139,6 +139,26 @@ class Issue687V0DiscoveryTests(unittest.TestCase):
         self.assertEqual(len(codes), len(set(codes)))
         self.assertFalse(manifest["boundaries"]["can_generate_trade_signal"])
         self.assertFalse(manifest["boundaries"]["can_modify_formal_monitor_universe"])
+
+    def test_bridge_adapter_only_ingresses_ephemeral_entry_events(self):
+        events = [
+            {"code":"A","material_delta":True,"route":"HOLDING_DELTA_EVIDENCE","full_evaluation_ingress":False},
+            {"code":"B","material_delta":True,"route":"EPHEMERAL_FULL_EVALUATION_INPUT","full_evaluation_ingress":True},
+            {"code":"C","material_delta":False,"route":"EPHEMERAL_FULL_EVALUATION_INPUT","full_evaluation_ingress":True},
+        ]
+        evidence = build_discovery_bridge_evidence(events)
+        self.assertEqual(evidence["status"], "READY")
+        self.assertEqual([x["code"] for x in evidence["ephemeral_full_evaluation_inputs"]], ["B"])
+        self.assertFalse(evidence["decision_eligible"])
+        self.assertFalse(evidence["automatic_promotion"])
+        self.assertIsNone(evidence["trade_signal"])
+
+    def test_bridge_adapter_empty_delta_is_not_decision_input(self):
+        evidence = build_discovery_bridge_evidence([])
+        self.assertEqual(evidence["status"], "NO_MATERIAL_DELTA")
+        self.assertFalse(evidence["use_in_current_decision"])
+        self.assertEqual(evidence["ephemeral_full_evaluation_inputs"], [])
+
 
 if __name__ == "__main__":
     unittest.main()
