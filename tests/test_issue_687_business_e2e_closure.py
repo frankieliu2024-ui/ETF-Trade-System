@@ -244,5 +244,44 @@ class BusinessE2EClosureContractTests(unittest.TestCase):
         self.assertEqual(admitted, set())
         self.assertIn("without READY formal quote", error)
 
+    def test_history_failures_do_not_consume_success_budget_and_rotation_is_tie_break_only(self) -> None:
+        from scripts import formal_etf_opportunity_discovery as discovery
+
+        spot = []
+        histories = {}
+        for i in range(18):
+            code = f"51{i:04d}"[-6:]
+            spot.append({
+                "code": code, "name": f"独立主题{i}ETF", "market_id": 1,
+                "price": 1.2, "change_pct": 1.0, "amount": 200000000,
+                "return_60d_pct": 10.0 if i >= 6 else 0.0, "volume_ratio": 1.2,
+            })
+            rows = []
+            for j in range(70):
+                rows.append({
+                    "date": f"2026-06-{(j % 28) + 1:02d}" if j < 28 else (
+                        f"2026-07-{((j-28) % 28) + 1:02d}" if j < 56 else f"2026-09-{(j-56)+1:02d}"
+                    ),
+                    "close": 1.0 + j * 0.003, "amount": 200000000,
+                })
+            histories[code] = rows
+
+        queue = discovery._bounded_prefilter(spot, set(), "2026-09-18")
+        self.assertGreater(len(queue), discovery.MAX_OBSERVATION_INPUTS_PER_FAMILY)
+        # Current-node change/recovery information is allocated before pure
+        # persistent-trend evidence; date hash only orders peers within a family.
+        first_families = [discovery._potential_families(x) for x in queue[:6]]
+        self.assertTrue(all("TREND_CHANGE" in fam or "RECOVERY_BREAKOUT" in fam for fam in first_families))
+
+        # Injected histories prove the queue can acquire more than the old
+        # four-per-family seat count without turning the queue into capital ranking.
+        result = discovery.discover_formal_candidates(
+            Path("."), market_date="2026-09-18", managed_codes=set(),
+            spot_rows=spot, history_by_code=histories,
+        )
+        self.assertEqual(result["history_succeeded_count"], discovery.MAX_HISTORY_SUCCESS_BUDGET)
+        self.assertEqual(result["history_failure_count"], 0)
+        self.assertEqual(result["history_success_budget"], discovery.MAX_HISTORY_SUCCESS_BUDGET)
+
 if __name__ == "__main__":
     unittest.main()
