@@ -9,7 +9,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from etf_opportunity_discovery import (\n    compress_homogeneous_exposure,\n    discover_etf,\n    discover_state_delta,\n    route_discovery_result,\n)
+from etf_opportunity_discovery import (\n    compress_homogeneous_exposure,\n    discover_etf,\n    discover_state_delta,\n    route_discovery_result,\n    consolidate_discovery_events,\n)
 
 
 def series(values):
@@ -95,6 +95,35 @@ class Issue687V0DiscoveryTests(unittest.TestCase):
         self.assertTrue(routed["full_evaluation_ingress"])
         self.assertFalse(routed["management_identity_change"])
         self.assertFalse(routed["auto_promote_to_observation"])
+
+    def test_same_state_same_exposure_is_consolidated_without_score(self):
+        events = [
+            {"code": "A", "as_of": "2026-09-18", "entered_states": ["TREND_CHANGE"], "homogeneous_exposure_cluster": "semiconductor", "route": "EPHEMERAL_FULL_EVALUATION_INPUT", "liquidity_executability_note": {"avg_amount_20": 10}},
+            {"code": "B", "as_of": "2026-09-18", "entered_states": ["TREND_CHANGE"], "homogeneous_exposure_cluster": "semiconductor", "route": "EPHEMERAL_FULL_EVALUATION_INPUT", "liquidity_executability_note": {"avg_amount_20": 20}},
+        ]
+        out = consolidate_discovery_events(events)
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0]["code"], "B")
+        self.assertEqual(out[0]["consolidated_member_codes"], ["A", "B"])
+        self.assertIsNone(out[0]["hidden_score"])
+
+    def test_holding_evidence_is_not_discarded_by_more_liquid_ephemeral_peer(self):
+        events = [
+            {"code": "H", "as_of": "2026-09-18", "entered_states": ["PERSISTENT_TREND"], "homogeneous_exposure_cluster": "tech", "route": "HOLDING_DELTA_EVIDENCE", "liquidity_executability_note": {"avg_amount_20": 10}},
+            {"code": "X", "as_of": "2026-09-18", "entered_states": ["PERSISTENT_TREND"], "homogeneous_exposure_cluster": "tech", "route": "EPHEMERAL_FULL_EVALUATION_INPUT", "liquidity_executability_note": {"avg_amount_20": 100}},
+        ]
+        out = consolidate_discovery_events(events)
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0]["code"], "H")
+        self.assertEqual(out[0]["route"], "HOLDING_DELTA_EVIDENCE")
+
+    def test_different_states_or_exposures_are_not_collapsed(self):
+        events = [
+            {"code": "A", "as_of": "2026-09-18", "entered_states": ["TREND_CHANGE"], "homogeneous_exposure_cluster": "semiconductor"},
+            {"code": "B", "as_of": "2026-09-18", "entered_states": ["RECOVERY_BREAKOUT"], "homogeneous_exposure_cluster": "semiconductor"},
+            {"code": "C", "as_of": "2026-09-18", "entered_states": ["TREND_CHANGE"], "homogeneous_exposure_cluster": "gold"},
+        ]
+        self.assertEqual(len(consolidate_discovery_events(events)), 3)
 
 if __name__ == "__main__":
     unittest.main()
