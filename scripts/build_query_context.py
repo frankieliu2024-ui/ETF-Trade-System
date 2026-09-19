@@ -455,6 +455,20 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
                 decision_request_time=None,
             )
             formal_discovery = attach_formal_quotes(formal_discovery, candidate_quote)
+            discovered_set = {x.upper() for x in discovered_codes}
+            existing_quote_symbols = {
+                str(x.get("symbol") or x.get("code") or "").upper().replace(".SH", "").replace(".SZ", "")
+                for x in (market_quote.get("quotes") or []) if isinstance(x, dict)
+            }
+            for quote in candidate_quote.get("quotes") or []:
+                symbol = str(quote.get("symbol") or quote.get("code") or "").upper().replace(".SH", "").replace(".SZ", "")
+                if symbol in discovered_set and symbol not in existing_quote_symbols:
+                    market_quote.setdefault("quotes", []).append(quote)
+                    existing_quote_symbols.add(symbol)
+            market_quote.setdefault("refresh_failures", []).extend(
+                x for x in (candidate_quote.get("refresh_failures") or [])
+                if str(x.get("symbol") or "").upper().replace(".SH", "").replace(".SZ", "") in discovered_set
+            )
     system_objects = []
     seen_system_codes = set()
     for item in etf_universe.get("objects") or []:
