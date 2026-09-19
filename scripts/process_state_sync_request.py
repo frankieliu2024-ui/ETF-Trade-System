@@ -612,6 +612,9 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     if research_error:
         raise ValueError(f"invalid formal decision research-evidence contract: {research_error}")
     account_for_lifecycle = _load_account_for_lifecycle_validation()
+    current_path = ROOT / "data/state/CURRENT.json"
+    current = load_json(current_path) if current_path.exists() else {}
+    market_date = str(request.get("market_date") or current.get("market_date") or "")
     managed_error = validate_managed_position_lifecycle(decision.get("lifecycle"), account_for_lifecycle, "formal_decision.lifecycle")
     if managed_error:
         raise ValueError(f"invalid formal decision managed-position contract: {managed_error}")
@@ -621,9 +624,11 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     )
     if review_error:
         raise ValueError(f"invalid formal decision managed-position review contract: {review_error}")
+    required_opportunities = required_etf_opportunity_reviews(ROOT, account_for_lifecycle, market_date)
     capital_error = validate_capital_competition_contract(
         decision.get("capital_competition"), account_for_lifecycle,
         "formal_decision.capital_competition",
+        required_etf_opportunities=required_opportunities,
     )
     if capital_error:
         raise ValueError(f"invalid formal decision capital-competition contract: {capital_error}")
@@ -633,17 +638,25 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     if consistency_error:
         raise ValueError(f"invalid formal decision cross-field consistency: {consistency_error}")
     managed_projection = build_managed_position_projection(ROOT, account_for_lifecycle)
-    if decision.get("observation_management") not in (None, []):
-        monitor_path = ROOT / "config/market/etf_monitor_universe.json"
-        if not monitor_path.exists():
-            raise ValueError("observation management requires canonical ETF monitor universe")
+    monitor_path = ROOT / "config/market/etf_monitor_universe.json"
+    if monitor_path.exists():
         monitor_universe = load_json(monitor_path)
         monitored_codes = {str(x.get("code") or "") for x in (monitor_universe.get("objects") or [])}
         held_etfs = set(active_account_asset_codes(ROOT, account_for_lifecycle).get("etf", set()))
-        validate_observation_management(decision, held_codes=held_etfs, monitored_codes=monitored_codes)
-    current_path = ROOT / "data/state/CURRENT.json"
-    current = load_json(current_path) if current_path.exists() else {}
-    market_date = str(request.get("market_date") or current.get("market_date") or "")
+        current_observations = monitored_codes - held_etfs
+    else:
+        monitored_codes = set()
+        held_etfs = set()
+        current_observations = set()
+    if decision.get("observation_management") not in (None, []) or current_observations:
+        if not monitor_path.exists():
+            raise ValueError("observation management requires canonical ETF monitor universe")
+        validate_observation_management(
+            decision,
+            held_codes=held_etfs,
+            monitored_codes=monitored_codes,
+            require_existing_coverage=bool(required_opportunities),
+        )
     main_candidate = str(decision.get("main_candidate") or "")
     explicit_code = str(decision.get("candidate_code") or decision.get("code") or "")
     match = re.search(r"（(\d{6})）", main_candidate) or re.search(r"(?<!\d)(\d{6})(?!\d)", main_candidate)
@@ -899,7 +912,37 @@ def validate_managed_position_lifecycle(value: object, account: dict, object_nam
     return ""
 
 
-def validate_capital_competition_contract(value: object, account: dict, object_name: str = "capital_competition") -> str:
+def required_etf_opportunity_reviews(root: Path, account: dict, market_date: str = "") -> dict[str, str]:
+    """Return the request-node ETF opportunity set that formal completion must cover.
+
+    Current query_context must never be projected backwards onto a historical
+    replay.  Coverage is enforced only when the decision market_date matches
+    the query-context market_date that enumerated the node.
+    """
+    path = root / "data" / "state" / "query_context.json"
+    if not path.exists():
+        return {}
+    context = load_json(path)
+    context_market_date = str(context.get("market_date") or (context.get("current") or {}).get("market_date") or "")
+    if market_date and context_market_date != str(market_date):
+        return {}
+    decision_context = context.get("decision_context") if isinstance(context.get("decision_context"), dict) else context
+    capital = (decision_context or {}).get("capital_efficiency_ranking") or context.get("capital_efficiency_ranking") or {}
+    rows = capital.get("comparison_universe") or capital.get("ordered_candidates") or []
+    required: dict[str, str] = {}
+    for item in rows:
+        if not isinstance(item, dict):
+            continue
+        category = str(item.get("category") or "").upper()
+        if category not in {"OBSERVED_ETF", "DISCOVERED_ETF"}:
+            continue
+        code = normalize_code(item.get("code") or "")
+        if code:
+            required[code] = category
+    return required
+
+
+def validate_capital_competition_contract(value: object, account: dict, object_name: str = "capital_competition", required_etf_opportunities: dict[str, str] | None = None) -> str:
     """Validate whole-account capital-allocation completion without making the decision."""
     if not isinstance(value, dict):
         return f"{object_name} must be an object"
@@ -966,6 +1009,35 @@ def validate_capital_competition_contract(value: object, account: dict, object_n
         missing_held = sorted(held_etfs - covered)
         if missing_held:
             return f"{object_name}.held_etf_add_capital_reviews missing held ETFs: {', '.join(missing_held)}"
+
+    required_etf_opportunities = required_etf_opportunities or {}
+    reviews = value.get("etf_opportunity_reviews")
+    if required_etf_opportunities:
+        if not isinstance(reviews, list):
+            return f"{object_name}.etf_opportunity_reviews must cover all current observation and discovered ETFs"
+        covered: set[str] = set()
+        for index, review in enumerate(reviews):
+            if not isinstance(review, dict):
+                return f"{object_name}.etf_opportunity_reviews[{index}] must be an object"
+            code = normalize_code(review.get("security_code") or review.get("code") or "")
+            if code not in required_etf_opportunities:
+                return f"{object_name}.etf_opportunity_reviews[{index}] has unknown ETF opportunity object"
+            if code in covered:
+                return f"{object_name}.etf_opportunity_reviews must cover each ETF opportunity exactly once"
+            covered.add(code)
+            category = str(review.get("category") or "").upper()
+            if category != required_etf_opportunities[code]:
+                return f"{object_name}.etf_opportunity_reviews[{index}].category conflicts with query context"
+            for key in ("opportunity_status", "conclusion", "reason"):
+                if key not in review or review[key] in (None, ""):
+                    return f"{object_name}.etf_opportunity_reviews[{index}] missing {key}"
+            if str(review.get("opportunity_status") or "").strip() not in FORMAL_OPPORTUNITY_STATUSES:
+                return f"{object_name}.etf_opportunity_reviews[{index}].opportunity_status is not a registered formal value"
+        missing = sorted(set(required_etf_opportunities) - covered)
+        if missing:
+            return f"{object_name}.etf_opportunity_reviews missing ETF opportunities: {', '.join(missing)}"
+    elif reviews not in (None, []):
+        return f"{object_name}.etf_opportunity_reviews supplied but current query context has no observation/discovered ETF requirement"
 
     migrations = value.get("capital_release_migrations")
     if migrations is not None:
