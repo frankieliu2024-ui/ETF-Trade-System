@@ -128,6 +128,7 @@ class FormalDecisionPitEnrichmentTests(unittest.TestCase):
                     "main_candidate": "煤炭ETF（515220）",
                     "opportunity_status": "Trial机会",
                     "lifecycle": "",
+                    "observation_management": [{"action": "RETAIN", "code": "515220", "name": "煤炭ETF", "thscode": "515220.SH", "thesis": "PIT测试中的既有观察身份保持不变", "falsifier": "本测试不评估交易假设", "next_decision_information": "仅验证PIT绑定", "information_value_reason": "保持既有观察管理合同完整"}],
                     "capital_competition": {
                         "next_unit_capital_use": "保留现金",
                         "full_competition_completed": True,
@@ -153,7 +154,8 @@ class FormalDecisionPitEnrichmentTests(unittest.TestCase):
                             }
                         ],
                         "held_etf_add_capital_reviews": [],
-                        "capital_release_migrations": []
+                        "capital_release_migrations": [],
+                        "etf_opportunity_reviews": [{"security_code": "515220", "category": "OBSERVED_ETF", "opportunity_status": "Trial机会", "conclusion": "继续观察", "reason": "本测试仅验证PIT绑定"}]
                     },
                 },
             }
@@ -199,6 +201,7 @@ class FormalDecisionPitEnrichmentTests(unittest.TestCase):
                     "price_at_decision": 1.330,
                     "price_as_of_beijing": "2026-09-09T13:24:21+08:00",
                     "lifecycle": "",
+                    "observation_management": [{"action": "RETAIN", "code": "515220", "name": "煤炭ETF", "thscode": "515220.SH", "thesis": "PIT测试中的既有观察身份保持不变", "falsifier": "本测试不评估交易假设", "next_decision_information": "仅验证PIT绑定", "information_value_reason": "保持既有观察管理合同完整"}],
                     "capital_competition": {
                         "next_unit_capital_use": "保留现金",
                         "full_competition_completed": True,
@@ -224,7 +227,8 @@ class FormalDecisionPitEnrichmentTests(unittest.TestCase):
                             }
                         ],
                         "held_etf_add_capital_reviews": [],
-                        "capital_release_migrations": []
+                        "capital_release_migrations": [],
+                        "etf_opportunity_reviews": [{"security_code": "515220", "category": "OBSERVED_ETF", "opportunity_status": "Trial机会", "conclusion": "继续观察", "reason": "本测试仅验证PIT绑定"}]
                     },
                 },
             }

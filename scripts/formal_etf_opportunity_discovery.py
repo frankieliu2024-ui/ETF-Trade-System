@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import math
 import time
@@ -252,17 +253,38 @@ def _potential_families(row: dict[str, Any]) -> list[str]:
     return families
 
 
-def _bounded_prefilter(rows: list[dict[str, Any]], held_codes: set[str] | None = None) -> list[dict[str, Any]]:
+def _exposure_key(row: dict[str, Any]) -> str:
+    """Cheap clone control: normalize the economic label without a new security master."""
+    name = "".join(str(row.get("name") or "").upper().split())
+    for marker in ("ETF", "LOF"):
+        pos = name.find(marker)
+        if pos >= 0:
+            return name[:pos + len(marker)]
+    return name or str(row.get("code") or "")
+
+
+def _bounded_prefilter(rows: list[dict[str, Any]], held_codes: set[str] | None = None, market_date: str = "") -> list[dict[str, Any]]:
     held_codes = {str(x) for x in (held_codes or set())}
-    buckets: dict[str, list[dict[str, Any]]] = {x: [] for x in ("PERSISTENT_TREND", "TREND_CHANGE", "RECOVERY_BREAKOUT")}
+    buckets: dict[str, dict[str, dict[str, Any]]] = {x: {} for x in ("PERSISTENT_TREND", "TREND_CHANGE", "RECOVERY_BREAKOUT")}
     for row in rows:
-        if str(row.get("code") or "") in held_codes:
+        code = str(row.get("code") or "")
+        if code in held_codes:
             continue
+        exposure = _exposure_key(row)
         for family in _potential_families(row):
-            buckets[family].append(row)
+            # One representative per cheap economic-exposure label.  Liquidity is
+            # an executability floor only; it does not buy a deep-evaluation seat.
+            current = buckets[family].get(exposure)
+            if current is None or code < str(current.get("code") or ""):
+                buckets[family][exposure] = row
     selected: dict[str, dict[str, Any]] = {}
-    for family, members in buckets.items():
-        members.sort(key=lambda x: (-(float(x.get("amount") or 0)), str(x.get("code") or "")))
+    for family, by_exposure in buckets.items():
+        members = list(by_exposure.values())
+        # Rotate independent exposure representatives by node date so a fixed
+        # code/liquidity ordering cannot become a hidden permanent Top-N.
+        members.sort(key=lambda x: hashlib.sha256(
+            f"{market_date}|{family}|{_exposure_key(x)}".encode("utf-8")
+        ).hexdigest())
         for item in members[:MAX_OBSERVATION_INPUTS_PER_FAMILY]:
             selected.setdefault(str(item["code"]), item)
     return list(selected.values())
@@ -342,7 +364,7 @@ def discover_formal_candidates(
             "decision_boundary": "广域发现失败不删除持仓/观察ETF，也不阻塞其现有正式MASTER链。",
         }
     held_codes = {str(x) for x in (held_codes or set())}
-    prefiltered = _bounded_prefilter(broad, held_codes)
+    prefiltered = _bounded_prefilter(broad, held_codes, market_date)
     candidates = []
     failures = []
     node_history = load_discovery_history_snapshot(root, market_date) if history_by_code is None else {}
@@ -391,13 +413,9 @@ def discover_formal_candidates(
     if history_by_code is None and snapshot_dirty:
         persist_discovery_history_snapshot(root, market_date, node_history)
     elapsed = round(time.monotonic() - started, 3)
-    state_priority = {"RECOVERY_BREAKOUT": 0, "TREND_CHANGE": 1, "PERSISTENT_TREND": 2}
-    def key(item: dict[str, Any]) -> tuple:
-        states = item.get("entered_states") or [x.get("state") for x in item.get("surfaced_states") or []]
-        priority = min((state_priority.get(str(x), 9) for x in states), default=9)
-        amount = float((item.get("historical_context") or {}).get("avg_amount_20") or 0)
-        return (priority, -amount, str(item.get("code") or ""))
-    candidates.sort(key=key)
+    # The prefilter already bounds provider work.  Do not re-rank surviving
+    # opportunities by state or liquidity: that would recreate a hidden Top-N.
+    candidates.sort(key=lambda item: str(item.get("code") or ""))
     candidates = candidates[:MAX_OBSERVATION_CANDIDATES]
     return {
         "schema_version": "1.0", "status": "READY" if broad and not failures else "DEGRADED",
@@ -419,8 +437,8 @@ def discover_formal_candidates(
             "all_market_boundary": True,
             "no_gain_ranking": True,
             "no_hidden_score": True,
-            "prefilter": "multi-horizon state-family plausibility plus minimum executability; liquidity only bounds provider work within each state family",
-            "final_ingress": "validated interpretable state evidence; at most a small node-local set enters full formal evaluation",
+            "prefilter": "multi-horizon state-family plausibility plus minimum executability; cheap exposure dedup plus date-rotated bounded sampling prevents liquidity/code order from becoming hidden Top-N",
+            "final_ingress": "each successfully evidenced object independently enters Observation eligibility evaluation; provider failure is explicit and does not convert successful peers into legal capital competitors",
         },
         "decision_boundary": "发现对象是本节点临时正式评估输入，不是第三种ETF身份；不得自动写观察池、生成Trial/Confirm或交易动作。",
     }
