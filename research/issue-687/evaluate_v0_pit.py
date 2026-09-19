@@ -10,7 +10,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from etf_opportunity_discovery import discover_etf
+from etf_opportunity_discovery import discover_etf, discover_state_delta
 
 
 def forward_return(frame: pd.DataFrame, idx: int, sessions: int) -> float | None:
