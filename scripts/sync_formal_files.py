@@ -282,6 +282,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
         "", f"持仓ETF：{'、'.join(display_name(p) for p in etfs) or '无'}。",
         f"账户个股：{'、'.join(display_name(p) for p in stocks) or '无'}。",
         f"观察ETF：{'、'.join(observed) or '无'}。",
+        "观察ETF说明：仅展示经正式决策准入/保留、当前无持仓且仍值得跨节点持续监测的ETF；本节点池外发现对象不会因被发现而自动进入本列表。",
     ]
     decision = latest_canonical_formal_decision(root)
     if decision:
