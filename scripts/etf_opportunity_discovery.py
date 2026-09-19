@@ -131,7 +131,7 @@ def discover_etf(
     base = {
         "code": str(code),
         "name": str(name),
-        "as_of": as_of,
+        "as_of": observed_as_of,\n        "requested_as_of": as_of,\n        "research_only": True,\n        "trade_signal": None,\n        "decision_output_generated": False,
         "formal_universe_overlap": str(code) in (formal_universe or set()),
         "homogeneous_exposure_cluster": homogeneous_cluster,
         "decision_boundary": "WORTH_FULL_EVALUATION is research discovery only; existing MASTER remains the sole decision boundary.",
