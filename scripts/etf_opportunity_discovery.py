@@ -123,15 +123,23 @@ def discover_etf(
     formal_universe: set[str] | None = None,
     homogeneous_cluster: str | None = None,
     cfg: DiscoveryConfig | None = None,
+    as_of: str | None = None,
 ) -> dict[str, Any]:
     """Read-only V0 ETF discovery. It emits evidence, never a trade decision."""
     cfg = cfg or DiscoveryConfig()
     frame = _frame(rows)
-    as_of = frame["date"].iloc[-1].date().isoformat() if not frame.empty else None
+    if as_of is not None:
+        cutoff = pd.Timestamp(as_of)
+        frame = frame.loc[frame["date"] <= cutoff].reset_index(drop=True)
+    observed_as_of = frame["date"].iloc[-1].date().isoformat() if not frame.empty else None
     base = {
         "code": str(code),
         "name": str(name),
-        "as_of": observed_as_of,\n        "requested_as_of": as_of,\n        "research_only": True,\n        "trade_signal": None,\n        "decision_output_generated": False,
+        "as_of": observed_as_of,
+        "requested_as_of": as_of,
+        "research_only": True,
+        "trade_signal": None,
+        "decision_output_generated": False,
         "formal_universe_overlap": str(code) in (formal_universe or set()),
         "homogeneous_exposure_cluster": homogeneous_cluster,
         "decision_boundary": "WORTH_FULL_EVALUATION is research discovery only; existing MASTER remains the sole decision boundary.",
