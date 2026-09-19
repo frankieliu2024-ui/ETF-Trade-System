@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-18T21:20:37+08:00",
+  "generated_at": "2026-09-19T14:53:55+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 35349535754,
+  "run_id": 35427825801,
   "run_attempt": 1,
-  "head_sha": "3c32e2650a3ae960f098b69ad6f0659f2e334847",
-  "main_head_sha": "ac9a153b296b9548982665195697c8c5032b451b",
+  "head_sha": "8ec4b7fdd8afa539ab1664251387a9dc0958a8c3",
+  "main_head_sha": "8ec4b7fdd8afa539ab1664251387a9dc0958a8c3",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,15 +16,16 @@
     }
   ],
   "changed_files": [
-    "requests/live_snapshot/20260918_2030_scheduled_trade_review__canonical_recovery.json"
+    ".github/workflows/on-demand-market-data.yml",
+    "tests/test_issue_687_on_demand_persistence.py"
   ],
-  "commit_message": "Align review recovery request time with original 20:30 PIT",
+  "commit_message": "fix: make on-demand market-data persistence race-safe (#689)",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": false,
+    "head_is_current_main": true,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
