@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -276,17 +277,23 @@ def discover_formal_candidates(
     prefiltered = _bounded_prefilter(broad, managed_codes)
     candidates = []
     failures = []
+    history_attempted = 0
+    history_succeeded = 0
+    started = time.monotonic()
     for row in prefiltered:
         code = str(row["code"])
+        history_attempted += 1
         try:
             history = (history_by_code or {}).get(code) if history_by_code is not None else None
             if history is None:
                 history = fetch_daily_history(code, int(row.get("market_id") or 0), market_date, 90)
+            history_succeeded += 1
             item = _candidate(row, history, market_date)
             if item:
                 candidates.append(item)
         except Exception as exc:
             failures.append({"code": code, "error": str(exc)[-300:]})
+    elapsed = round(time.monotonic() - started, 3)
     state_priority = {"RECOVERY_BREAKOUT": 0, "TREND_CHANGE": 1, "PERSISTENT_TREND": 2}
     def key(item: dict[str, Any]) -> tuple:
         states = item.get("entered_states") or [x.get("state") for x in item.get("surfaced_states") or []]
@@ -302,6 +309,9 @@ def discover_formal_candidates(
         "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
         "broad_universe_count": len(broad), "managed_excluded_count": sum(1 for x in broad if x.get("code") in managed_codes),
         "history_prefilter_count": len(prefiltered), "candidate_count": len(candidates),
+        "history_attempted_count": history_attempted, "history_succeeded_count": history_succeeded,
+        "history_failure_count": len(failures), "history_elapsed_seconds": elapsed,
+        "coverage_status": "COMPLETE" if not failures else ("UNAVAILABLE" if history_succeeded == 0 else "PARTIAL"),
         "history_failures": failures, "candidates": candidates,
         "selection_contract": {
             "all_market_boundary": True,
