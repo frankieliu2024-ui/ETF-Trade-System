@@ -79,6 +79,8 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         repair.assert_not_called()
         self.assertEqual(result["status"], "READY")
         self.assertEqual(result["history_failure_count"], 0)
+        self.assertEqual(result["history_reused_count"], 1)
+        self.assertEqual(result["history_repair_attempted_count"], 0)
         if result["candidates"]:
             self.assertEqual(result["candidates"][0]["history_source"], "VALIDATED_EXISTING_HISTORY")
 
