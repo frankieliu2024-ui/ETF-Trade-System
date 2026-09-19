@@ -78,5 +78,10 @@ jobs:
             exit 0
           fi
           git commit -m "data: persist on-demand market result"
-          git pull --rebase origin main
+          # Another run may have persisted an overlapping result after this
+          # runner checked out. During replay, canonical main wins only on
+          # same-path conflicts; non-overlapping newly generated results stay
+          # in this commit. This keeps the single existing owner idempotent.
+          git fetch origin main
+          git rebase -X ours origin/main
           git push origin HEAD:main
