@@ -17,7 +17,7 @@ FORMAL_FILES = {
     "ETF与市场监测数据接口使用规范.md",
 }
 REQUEST_PREFIXES = ("requests/",)
-DYNAMIC_PREFIXES = ("data/state/", "data/market/snapshots/", "data/market/audit/")
+DYNAMIC_PREFIXES = ("data/state/", "data/market/snapshots/", "data/market/audit/", "data/market/discovery_history/")
 
 INTEGRATION_ACTIONS = {
     "SEMANTICALLY_FRESH": "NO_REPLAY_REQUIRED",
