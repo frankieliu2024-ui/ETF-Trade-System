@@ -65,6 +65,44 @@ class ObservationEtfManagementTest(unittest.TestCase):
         self.assertFalse(changed)
         self.assertEqual({x["code"] for x in projected["objects"]}, {"588000","513180"})
 
+    def test_retain_is_idempotent_membership_projection(self) -> None:
+        root = root_fixture()
+        projected, changed = project_monitor_universe(root, {"positions":[]}, {
+            "observation_management":[{
+                "action":"RETAIN","code":"513180","name":"恒生科技ETF","thscode":"513180.SH",
+                "thesis":"科技风险偏好假设仍有效",
+                "falsifier":"结构同步失效",
+                "next_decision_information":"下一节点反馈",
+                "information_value_reason":"仍可能改变资本配置",
+            }]
+        })
+        self.assertFalse(changed)
+        self.assertEqual({x["code"] for x in projected["objects"]}, {"588000","513180"})
+
+    def test_admit_and_exit_same_decision_project_atomically(self) -> None:
+        root = root_fixture()
+        projected, changed = project_monitor_universe(root, {"positions":[]}, {
+            "observation_management":[
+                {"action":"EXIT","code":"513180","reason":"原交易假设失效"},
+                {"action":"ADMIT","code":"510300","name":"300ETF","thscode":"510300.SH",
+                 "thesis":"宽基假设","falsifier":"宽基结构失效",
+                 "next_decision_information":"下一节点承接",
+                 "information_value_reason":"可能改变资本配置"},
+            ]
+        })
+        self.assertTrue(changed)
+        self.assertEqual({x["code"] for x in projected["objects"]}, {"588000","510300"})
+
+    def test_duplicate_code_intents_fail_closed(self) -> None:
+        with self.assertRaises(ValueError):
+            validate_observation_management(
+                {"observation_management":[
+                    {"action":"EXIT","code":"513180","reason":"失效"},
+                    {"action":"EXIT","code":"513180","reason":"重复"},
+                ]},
+                held_codes=set(), monitored_codes={"513180"},
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
