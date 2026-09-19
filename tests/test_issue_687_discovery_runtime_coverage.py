@@ -1,3 +1,6 @@
+import csv
+import json
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -83,6 +86,36 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         self.assertEqual(result["history_repair_attempted_count"], 0)
         if result["candidates"]:
             self.assertEqual(result["candidates"][0]["history_source"], "VALIDATED_EXISTING_HISTORY")
+
+    def test_market_date_dataset_is_reused_with_market_date_row_filtered(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = discovery.Path(td)
+            result_dir = root / "data/market/on_demand/results"
+            dataset_dir = root / "data/market/on_demand/datasets"
+            result_dir.mkdir(parents=True)
+            dataset_dir.mkdir(parents=True)
+            dataset = dataset_dir / "sample_518880.csv"
+            rows = []
+            start = discovery.datetime(2026, 6, 1)
+            for i in range(110):
+                day = start + discovery.timedelta(days=i)
+                if day.date().isoformat() > "2026-09-18":
+                    break
+                rows.append({"date": day.date().isoformat(), "open": 1, "high": 1, "low": 1, "close": 1 + i / 1000, "volume": 1, "amount": 1})
+            with dataset.open("w", encoding="utf-8", newline="") as handle:
+                writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+                writer.writeheader()
+                writer.writerows(rows)
+            result = {
+                "ok": True, "asset_type": "etf", "mode": "history",
+                "last_date": "2026-09-18",
+                "dataset": "data/market/on_demand/datasets/sample_518880.csv",
+            }
+            (result_dir / "sample_518880_result.json").write_text(json.dumps(result), encoding="utf-8")
+            loaded = discovery.load_validated_history(root, "518880", "2026-09-18", 90)
+        self.assertIsNotNone(loaded)
+        self.assertGreaterEqual(len(loaded), discovery.MIN_HISTORY)
+        self.assertTrue(all(row["date"] < "2026-09-18" for row in loaded))
 
 
 if __name__ == "__main__":
