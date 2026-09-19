@@ -19,6 +19,7 @@ try:
 except ModuleNotFoundError:
     from scripts.build_stock_context import active_account_asset_codes, build_managed_position_projection, first, normalize_code, position_metric
 from sync_formal_files import sync_formal_files, latest_canonical_formal_decision, format_position_pnl
+from observation_etf_management import persist_monitor_universe, validate_observation_management
 from formal_file_mutation_gateway import (
     append_managed_line,
     replace_formal_block,
@@ -632,6 +633,14 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     if consistency_error:
         raise ValueError(f"invalid formal decision cross-field consistency: {consistency_error}")
     managed_projection = build_managed_position_projection(ROOT, account_for_lifecycle)
+    if decision.get("observation_management") not in (None, []):
+        monitor_path = ROOT / "config/market/etf_monitor_universe.json"
+        if not monitor_path.exists():
+            raise ValueError("observation management requires canonical ETF monitor universe")
+        monitor_universe = load_json(monitor_path)
+        monitored_codes = {str(x.get("code") or "") for x in (monitor_universe.get("objects") or [])}
+        held_etfs = set(active_account_asset_codes(ROOT, account_for_lifecycle).get("etf", set()))
+        validate_observation_management(decision, held_codes=held_etfs, monitored_codes=monitored_codes)
     current_path = ROOT / "data/state/CURRENT.json"
     current = load_json(current_path) if current_path.exists() else {}
     market_date = str(request.get("market_date") or current.get("market_date") or "")
@@ -2669,8 +2678,9 @@ def main() -> int:
     write_formal_text_if_changed(ROOT, DASHBOARD.name, dashboard)
     # Keep the three human-readable fact documents synchronized even when the
     # request only confirms a fee/account snapshot and creates no new trade event.
+    observation_universe_changed = persist_monitor_universe(ROOT, account, request.get("formal_decision") or {}) if decision_recorded else False
     formal_files_sync = sync_formal_files(ROOT, account)
-    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "review_prerequisite_unavailable_recorded": unavailable_recorded, "review_prerequisite_unavailable_idempotent_noop": unavailable_idempotent, "formal_files_sync": formal_files_sync, "account_sync_status": account_sync_status, "canonical_ingress_state": canonical_ingress_contract["terminal_state"], "canonical_ingress_failure_reason": None if canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_SUBMITTED else canonical_ingress_contract["reason"]}
+    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "review_prerequisite_unavailable_recorded": unavailable_recorded, "review_prerequisite_unavailable_idempotent_noop": unavailable_idempotent, "formal_files_sync": formal_files_sync, "observation_universe_changed": observation_universe_changed, "account_sync_status": account_sync_status, "canonical_ingress_state": canonical_ingress_contract["terminal_state"], "canonical_ingress_failure_reason": None if canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_SUBMITTED else canonical_ingress_contract["reason"]}
     print(json.dumps(result, ensure_ascii=False))
     return 0
 
