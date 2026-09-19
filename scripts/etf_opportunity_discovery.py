@@ -314,3 +314,33 @@ def consolidate_discovery_events(
             "decision_output_generated": False,
         })
     return passthrough + consolidated
+
+
+def build_discovery_bridge_evidence(events: list[dict[str, Any]]) -> dict[str, Any]:
+    """Package already-routed discovery events for the existing research bridge.
+
+    This adapter creates no lifecycle, management identity, Trial/Confirm, amount,
+    or order. Only out-of-pool entry events are eligible for ephemeral full
+    evaluation; holding/observation events remain attached management evidence.
+    """
+    routed = [x for x in events if x.get("material_delta")]
+    ephemeral = [
+        x for x in routed
+        if x.get("route") == "EPHEMERAL_FULL_EVALUATION_INPUT"
+        and x.get("full_evaluation_ingress") is True
+    ]
+    return {
+        "status": "READY" if routed else "NO_MATERIAL_DELTA",
+        "mode": "ETF_DISCOVERY_EPHEMERAL_RESEARCH_EVIDENCE",
+        "use_in_current_decision": bool(routed),
+        "decision_eligible": False,
+        "use_as_decision_evidence": bool(routed),
+        "can_generate_decision_independently": False,
+        "automatic_promotion": False,
+        "management_identity_change": False,
+        "trade_signal": None,
+        "decision_output_generated": False,
+        "events": routed,
+        "ephemeral_full_evaluation_inputs": ephemeral,
+        "decision_boundary": "Discovery evidence may enter the existing full comparison; existing MASTER alone decides Trial/Confirm, amount, sell action and capital allocation.",
+    }
