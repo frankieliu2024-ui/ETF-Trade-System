@@ -117,6 +117,19 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         self.assertGreaterEqual(len(loaded), discovery.MIN_HISTORY)
         self.assertTrue(all(row["date"] < "2026-09-18" for row in loaded))
 
+    def test_successful_repair_is_reused_on_same_market_date_node(self) -> None:
+        rows = [spot("510001")]
+        with tempfile.TemporaryDirectory() as td:
+            root = discovery.Path(td)
+            with patch.object(discovery, "fetch_daily_history", return_value=history()) as repair:
+                first = discovery.discover_formal_candidates(root, market_date="2026-09-18", managed_codes=set(), spot_rows=rows)
+                second = discovery.discover_formal_candidates(root, market_date="2026-09-18", managed_codes=set(), spot_rows=rows)
+        self.assertEqual(repair.call_count, 1)
+        self.assertEqual(first["history_repair_attempted_count"], 1)
+        self.assertEqual(second["history_repair_attempted_count"], 0)
+        self.assertEqual(second["history_reused_count"], 1)
+        self.assertEqual(second["coverage_status"], "COMPLETE")
+
 
 if __name__ == "__main__":
     unittest.main()
