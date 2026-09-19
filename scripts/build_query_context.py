@@ -11,9 +11,11 @@ from pathlib import Path
 try:
     from state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current, read_json
     from market_quote_router import build_market_quote_context
+    from formal_etf_opportunity_discovery import discover_formal_candidates
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current, read_json
     from scripts.market_quote_router import build_market_quote_context
+    from scripts.formal_etf_opportunity_discovery import discover_formal_candidates
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
@@ -431,6 +433,19 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     market_domain_projection = build_market_domain_projection(current, overseas_context, us_extended, freshness)
     trading_day_status = current_trading_day_status(trading_calendar)
     account_gate = account_gate_status(current, account, policy)
+    managed_etf_codes = {str(x.get("code") or "") for x in (etf_universe.get("objects") or []) if x.get("code")}
+    managed_etf_codes.update(
+        str(x.get("code") or x.get("symbol") or x.get("security_code") or "")
+        for x in (account.get("positions") or [])
+        if x.get("code") or x.get("symbol") or x.get("security_code")
+    )
+    formal_discovery = {"status": "NOT_REQUESTED", "candidates": []}
+    if force_refresh or request_file:
+        formal_discovery = discover_formal_candidates(
+            root,
+            market_date=str(current.get("market_date") or trading_day_status.get("market_date") or ""),
+            managed_codes=managed_etf_codes,
+        )
     system_objects = []
     seen_system_codes = set()
     for item in etf_universe.get("objects") or []:
@@ -447,7 +462,12 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         if int(position.get("quantity") or 0) > 0 and code not in seen_system_codes:
             system_objects.append({"object_code": code, "object_name": position.get("name") or code, "source_type": "SYSTEM_MONITORED"})
             seen_system_codes.add(code)
-    decision = build_decision_context(root)
+    for item in formal_discovery.get("candidates") or []:
+        code = str(item.get("code") or "").upper()
+        if code and code not in seen_system_codes:
+            system_objects.append({"object_code": code, "object_name": item.get("name") or code, "source_type": "NODE_LOCAL_FORMAL_DISCOVERY"})
+            seen_system_codes.add(code)
+    decision = build_decision_context(root, formal_discovery=formal_discovery)
     generated_at = datetime.now(SHANGHAI).isoformat(timespec="seconds")
     fact_pack = build_decision_fact_pack(root, request_payload, current, account, decision, market_quote)
     latency = build_fast_path_latency(request_payload, current, account, decision, market_quote, generated_at, root)
@@ -465,11 +485,12 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         "decision_read_plan": build_read_plan(current, account, policy, freshness),
         "market_quote_router": market_quote,
         "system_objects": system_objects, "user_requested_objects": [], "market_domain_projection": market_domain_projection,
+        "formal_etf_discovery": formal_discovery,
         "canonical_files": CANONICAL_FILES, "data_status": {**(current.get("data_freshness") or {}), **freshness}, "freshness_at_context_build": freshness,
         "interactive_decision_freshness": market_quote.get("decision_freshness", {}),
         "trading_day_status": trading_day_status, "runtime_health": runtime_health,
         "system_consistency_status": consistency.get("status", "MISSING"), "system_consistency_hard_errors": consistency.get("hard_error_count", None),
-        "etf_universe_count": len(etf_universe.get("objects") or []), "overseas_context_status": overseas_context.get("quality_status", "MISSING"),
+        "etf_universe_count": len(etf_universe.get("objects") or []), "formal_discovery_candidate_count": len(formal_discovery.get("candidates") or []), "overseas_context_status": overseas_context.get("quality_status", "MISSING"),
         "overseas_generated_at_beijing": overseas_context.get("generated_at_beijing", ""),
         "us_extended_hours_status": us_extended.get("quality_status", "MISSING"), "us_extended_hours_generated_at_beijing": us_extended.get("generated_at_beijing", ""),
         "stock_context_status": stock_context.get("account_fact_status", "MISSING"), "stock_market_context_status": stock_market_context.get("quality_status", "MISSING"),
