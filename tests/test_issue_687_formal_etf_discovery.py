@@ -73,6 +73,21 @@ class FormalEtfOpportunityDiscoveryTest(unittest.TestCase):
         self.assertTrue(result["selection_contract"]["no_gain_ranking"])
         self.assertNotIn("score", result["candidates"][0])
 
+
+    def test_discovery_quote_is_not_treated_as_formal_quote(self) -> None:
+        formal = {"status": "READY", "candidates": [{
+            "code": "588080", "name": "科创50ETF易方达",
+            "discovery_spot": {"price": 1.4},
+            "historical_context": {"status": "READY"},
+        }]}
+        routed = discovery.attach_formal_quotes(formal, {"quotes": [{
+            "symbol": "588080", "latest_price": 1.401, "quality_status": "PASS", "source": "tencent_qq",
+        }]})
+        item = routed["candidates"][0]
+        self.assertEqual(item["formal_quote_status"], "READY")
+        self.assertEqual(item["formal_quote"]["source"], "tencent_qq")
+        self.assertNotEqual(item["formal_quote"]["latest_price"], item["discovery_spot"]["price"])
+
     def test_capital_comparison_adds_discovery_without_reclassifying_identity(self) -> None:
         base = {
             "comparison_universe": [{"code": None, "category": "CASH"}],
@@ -81,7 +96,7 @@ class FormalEtfOpportunityDiscoveryTest(unittest.TestCase):
         }
         formal = {"status": "READY", "candidates": [{
             "code": "588080", "name": "科创50ETF易方达", "display_name": "科创50ETF易方达（588080）",
-            "historical_context": {"status": "READY"}, "current_spot": {"price": 1.4},
+            "historical_context": {"status": "READY"}, "formal_quote": {"latest_price": 1.4}, "formal_quote_status": "READY",
             "comparison_basis": ["历史结构", "当前结构"],
         }]}
         out = state_manager._extend_capital_comparison_with_discovery(base, formal)
