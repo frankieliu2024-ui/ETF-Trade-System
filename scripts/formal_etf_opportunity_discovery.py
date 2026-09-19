@@ -309,6 +309,8 @@ def discover_formal_candidates(
     failures = []
     history_attempted = 0
     history_succeeded = 0
+    history_reused = 0
+    history_repair_attempted = 0
     started = time.monotonic()
     for row in prefiltered:
         code = str(row["code"])
@@ -359,6 +361,7 @@ def discover_formal_candidates(
         "managed_excluded_count": 0,
         "history_prefilter_count": len(prefiltered), "candidate_count": len(candidates),
         "history_attempted_count": history_attempted, "history_succeeded_count": history_succeeded,
+        "history_reused_count": history_reused, "history_repair_attempted_count": history_repair_attempted,
         "history_failure_count": len(failures), "history_elapsed_seconds": elapsed,
         "coverage_status": "COMPLETE" if not failures else ("UNAVAILABLE" if history_succeeded == 0 else "PARTIAL"),
         "history_failures": failures, "candidates": candidates,
