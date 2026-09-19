@@ -201,5 +201,48 @@ class BusinessE2EClosureContractTests(unittest.TestCase):
         )
 
 
+    def test_discovery_is_eligibility_only_not_final_capital_competitor(self) -> None:
+        from scripts import state_manager
+        base = {"comparison_universe": [{"code": None, "category": "CASH"}, {"code": "561980", "category": "HELD_ETF"}]}
+        discovery = {"coverage_status": "PARTIAL", "candidates": [{
+            "code": "588080", "name": "池外ETF", "historical_context": {"status": "READY"},
+            "formal_quote_status": "READY", "formal_quote": {"latest_price": 1.2},
+        }]}
+        out = state_manager._extend_capital_comparison_with_discovery(base, discovery)
+        self.assertEqual([x.get("code") for x in out["comparison_universe"]], [None, "561980"])
+        self.assertEqual(out["observation_eligibility_inputs"][0]["code"], "588080")
+        self.assertEqual(out["formal_discovery_ingress_status"], "ELIGIBILITY_ONLY")
+
+    def test_eligibility_admit_requires_ready_quote_and_then_becomes_legal_observation(self) -> None:
+        inputs = {
+            "588080": {"code": "588080", "formal_quote_status": "READY"},
+            "588090": {"code": "588090", "formal_quote_status": "UNAVAILABLE"},
+        }
+        admitted, error = state_sync.validate_observation_eligibility_reviews({
+            "observation_eligibility_reviews": [
+                {"code": "588080", "disposition": "ADMIT", "reason": "完整证据支持持续观察"},
+                {"code": "588090", "disposition": "REJECT", "reason": "正式即时行情不可用"},
+            ]
+        }, inputs)
+        self.assertEqual(error, "")
+        self.assertEqual(admitted, {"588080"})
+        required = state_sync.legal_observation_reviews({
+            "observation_management": [
+                {"code": "513180", "action": "EXIT"},
+                {"code": "159992", "action": "RETAIN"},
+                {"code": "588080", "action": "ADMIT"},
+            ]
+        }, {"513180", "159992"}, admitted)
+        self.assertEqual(required, {"159992": "OBSERVED_ETF", "588080": "OBSERVED_ETF"})
+
+    def test_unready_discovery_cannot_be_admitted(self) -> None:
+        admitted, error = state_sync.validate_observation_eligibility_reviews({
+            "observation_eligibility_reviews": [
+                {"code": "588090", "disposition": "ADMIT", "reason": "不应通过"},
+            ]
+        }, {"588090": {"code": "588090", "formal_quote_status": "UNAVAILABLE"}})
+        self.assertEqual(admitted, set())
+        self.assertIn("without READY formal quote", error)
+
 if __name__ == "__main__":
     unittest.main()
