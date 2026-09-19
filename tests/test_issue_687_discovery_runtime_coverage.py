@@ -69,6 +69,19 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
                 "NODE_LOCAL_ALL_MARKET_OPPORTUNITY_SIGNAL_FOR_EXISTING_MANAGED_ETF",
             )
 
+    def test_validated_existing_history_precedes_network_repair(self) -> None:
+        rows = [spot("510001")]
+        with patch.object(discovery, "load_validated_history", return_value=history()) as local_history, patch.object(discovery, "fetch_daily_history") as repair:
+            result = discovery.discover_formal_candidates(
+                discovery.Path("."), market_date="2026-09-18", managed_codes=set(), spot_rows=rows
+            )
+        local_history.assert_called_once()
+        repair.assert_not_called()
+        self.assertEqual(result["status"], "READY")
+        self.assertEqual(result["history_failure_count"], 0)
+        if result["candidates"]:
+            self.assertEqual(result["candidates"][0]["history_source"], "VALIDATED_EXISTING_HISTORY")
+
 
 if __name__ == "__main__":
     unittest.main()
