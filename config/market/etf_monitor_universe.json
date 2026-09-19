@@ -1,32 +1,80 @@
 {
   "version": "V1.1",
-  "purpose": "ETF层机器监测唯一运行清单；管理身份由Dashboard与账户事实决定，本文件只定义需要持续采集的ETF对象。",
-  "mode": "HOLDING_PLUS_OBSERVATION",
+  "purpose": "ETF层持续行情采集唯一运行清单；集合由实际持仓ETF与正式决策准入/保留的观察ETF组成。本文件不定义观察准入规则、不承担交易假设owner，也不是全市场机会发现边界。",
+  "mode": "HOLDING_PLUS_ADMITTED_OBSERVATION",
   "objects": [
-    {"code":"561980","name":"半导体设备ETF","thscode":"561980.SH"},
-    {"code":"588000","name":"科创50ETF","thscode":"588000.SH"},
-    {"code":"159781","name":"科创创业ETF","thscode":"159781.SZ"},
     {
-      "code":"159941",
-      "name":"纳指ETF",
-      "thscode":"159941.SZ",
-      "market_state_note":"近期常见开市后停牌至10:30附近；仅在当前provider明确返回SUSPENDED/HALTED时标注为停牌/不可交易，不计入行情provider失败，不伪造OHLC或可成交价格；10:30后重新按当前provider状态和普通连续竞价质量门槛判断。",
+      "code": "561980",
+      "name": "半导体设备ETF",
+      "thscode": "561980.SH"
+    },
+    {
+      "code": "588000",
+      "name": "科创50ETF",
+      "thscode": "588000.SH"
+    },
+    {
+      "code": "159781",
+      "name": "科创创业ETF",
+      "thscode": "159781.SZ"
+    },
+    {
+      "code": "159941",
+      "name": "纳指ETF",
+      "thscode": "159941.SZ",
+      "market_state_note": "近期常见开市后停牌至10:30附近；仅在当前provider明确返回SUSPENDED/HALTED时标注为停牌/不可交易，不计入行情provider失败，不伪造OHLC或可成交价格；10:30后重新按当前provider状态和普通连续竞价质量门槛判断。",
       "recurring_opening_suspension": {
-        "typical_start":"09:30",
-        "typical_end":"10:30",
-        "confirmation_required":true,
-        "provider_failure_semantics":"NOT_PROVIDER_FAILURE_WHEN_SUSPENSION_CONFIRMED"
+        "typical_start": "09:30",
+        "typical_end": "10:30",
+        "confirmation_required": true,
+        "provider_failure_semantics": "NOT_PROVIDER_FAILURE_WHEN_SUSPENSION_CONFIRMED"
       }
     },
-    {"code":"513180","name":"恒生科技ETF","thscode":"513180.SH"},
-    {"code":"159561","name":"德国ETF","thscode":"159561.SZ"},
-    {"code":"513520","name":"日经ETF","thscode":"513520.SH"},
-    {"code":"518880","name":"黄金ETF","thscode":"518880.SH"},
-    {"code":"159992","name":"创新药ETF","thscode":"159992.SZ"},
-    {"code":"515880","name":"通信ETF","thscode":"515880.SH"},
-    {"code":"159326","name":"电网设备ETF","thscode":"159326.SZ"},
-    {"code":"515220","name":"煤炭ETF","thscode":"515220.SH"},
-    {"code":"513350","name":"标普油气ETF","thscode":"513350.SH"}
+    {
+      "code": "513180",
+      "name": "恒生科技ETF",
+      "thscode": "513180.SH"
+    },
+    {
+      "code": "159561",
+      "name": "德国ETF",
+      "thscode": "159561.SZ"
+    },
+    {
+      "code": "513520",
+      "name": "日经ETF",
+      "thscode": "513520.SH"
+    },
+    {
+      "code": "518880",
+      "name": "黄金ETF",
+      "thscode": "518880.SH"
+    },
+    {
+      "code": "159992",
+      "name": "创新药ETF",
+      "thscode": "159992.SZ"
+    },
+    {
+      "code": "515880",
+      "name": "通信ETF",
+      "thscode": "515880.SH"
+    },
+    {
+      "code": "159326",
+      "name": "电网设备ETF",
+      "thscode": "159326.SZ"
+    },
+    {
+      "code": "515220",
+      "name": "煤炭ETF",
+      "thscode": "515220.SH"
+    },
+    {
+      "code": "513350",
+      "name": "标普油气ETF",
+      "thscode": "513350.SH"
+    }
   ],
-  "maintenance_rule": "ETF层名单发生新增、删除、持仓/观察结构调整时，先更新Dashboard与本文件并执行scripts/check_system_consistency.py；不得只修改文档或只修改采集代码。持仓/观察身份不在本文件写死。"
+  "maintenance_rule": "ETF持续采集集合发生变化时：实际持仓变化以canonical账户/成交事实为依据；观察ETF新增/保留/退出必须来自正式决策中的观察管理意图，并由现有canonical state-sync/mutation链投影到本文件及Dashboard后执行scripts/check_system_consistency.py。不得由广域发现脚本、行情producer或Dashboard展示自行授予观察身份；不得只修改文档或只修改采集代码。"
 }
