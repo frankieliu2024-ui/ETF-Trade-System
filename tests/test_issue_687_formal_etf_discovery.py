@@ -75,7 +75,7 @@ class FormalEtfOpportunityDiscoveryTest(unittest.TestCase):
 
 
     def test_discovery_quote_is_not_treated_as_formal_quote(self) -> None:
-        formal = {"status": "READY", "candidates": [{
+        formal = {"status": "READY", "coverage_status": "COMPLETE", "candidates": [{
             "code": "588080", "name": "科创50ETF易方达",
             "discovery_spot": {"price": 1.4},
             "historical_context": {"status": "READY"},
@@ -112,10 +112,24 @@ class FormalEtfOpportunityDiscoveryTest(unittest.TestCase):
             "comparison_universe": [{"code": "588080", "category": "OBSERVED_ETF"}],
             "ordered_candidates": [{"code": "588080", "category": "OBSERVED_ETF"}],
         }
-        formal = {"candidates": [{"code": "588080", "historical_context": {"status": "READY"}}]}
+        formal = {"coverage_status": "COMPLETE", "candidates": [{"code": "588080", "historical_context": {"status": "READY"}}]}
         out = state_manager._extend_capital_comparison_with_discovery(base, formal)
         self.assertEqual(len(out["comparison_universe"]), 1)
         self.assertEqual(out["comparison_universe"][0]["category"], "OBSERVED_ETF")
+
+    def test_partial_discovery_does_not_enter_formal_capital_competition(self) -> None:
+        base = {
+            "comparison_universe": [{"code": None, "category": "CASH"}],
+            "ordered_candidates": [{"code": None, "category": "CASH"}],
+        }
+        formal = {
+            "status": "DEGRADED", "coverage_status": "PARTIAL",
+            "candidates": [{"code": "588080", "historical_context": {"status": "READY"}, "formal_quote_status": "READY"}],
+        }
+        out = state_manager._extend_capital_comparison_with_discovery(base, formal)
+        self.assertEqual(out["comparison_universe"], base["comparison_universe"])
+        self.assertFalse(out["formal_discovery_included"])
+        self.assertEqual(out["formal_discovery_ingress_status"], "BLOCKED_INCOMPLETE_COVERAGE")
 
 
 if __name__ == "__main__":
