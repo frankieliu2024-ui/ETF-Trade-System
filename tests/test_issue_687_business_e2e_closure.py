@@ -113,6 +113,93 @@ class BusinessE2EClosureContractTests(unittest.TestCase):
                 monitored_codes={"513180"},
             )
 
+    def test_20260918_shadow_discovery_can_enter_formal_capital_competition_without_persistence(self) -> None:
+        from scripts import formal_etf_opportunity_discovery as discovery
+
+        def history(start: float, end: float, n: int = 70) -> list[dict]:
+            rows = []
+            for i in range(n):
+                close = start + (end - start) * i / (n - 1)
+                rows.append({
+                    "date": f"2026-06-{(i % 28) + 1:02d}" if i < 28 else (
+                        f"2026-07-{((i-28) % 28) + 1:02d}" if i < 56 else f"2026-09-{(i-56)+1:02d}"
+                    ),
+                    "close": close,
+                    "amount": 200000000,
+                })
+            return rows
+
+        # Bounded PIT shadow: the synthetic bar set represents evidence available
+        # strictly before 2026-09-18.  The discovered object is outside the
+        # persistent managed set and receives no management/trading authority.
+        spot = [{
+            "code": "588080", "name": "池外ETF", "market_id": 1,
+            "price": 1.30, "change_pct": 1.2, "amount": 300000000,
+            "return_60d_pct": 18.0, "volume_ratio": 1.2,
+        }]
+        result = discovery.discover_formal_candidates(
+            Path("."),
+            market_date="2026-09-18",
+            managed_codes={"561980", "588000", "159781", "159941", "513180"},
+            spot_rows=spot,
+            history_by_code={"588080": history(1.0, 1.30)},
+        )
+        self.assertEqual(result["status"], "READY")
+        self.assertEqual([x["code"] for x in result["candidates"]], ["588080"])
+        candidate = result["candidates"][0]
+        self.assertEqual(candidate["category"], "DISCOVERED_ETF")
+        self.assertEqual(candidate["eligibility"], "FORMAL_FULL_EVALUATION")
+        self.assertIsNone(candidate["management_identity"])
+        self.assertFalse(candidate["trial_confirm_permission"])
+        self.assertFalse(candidate["decision_output_generated"])
+
+        required = {"513180": "OBSERVED_ETF", "588080": "DISCOVERED_ETF"}
+        capital = {
+            "next_unit_capital_use": "现金",
+            "full_competition_completed": True,
+            "releasable_capital_reviewed": True,
+            "post_action_deployable_cash": 18009.45,
+            "future_opportunity_capacity": "保留后续Trial/Confirm承载能力",
+            "concentration_account_structure_effect": "不增加集中度",
+            "selected_state_reason": "完整竞争后现金仍优于当前可执行候选",
+            "new_amount_yuan": 0,
+            "zero_amount_decisive_reason": "完整资本竞争后无更优合法用途",
+            "compared_capital_states": [
+                {"state_name": "现金", "capital_action": "保留", "remaining_deployable_cash": 18009.45, "why_not_selected": "已选中"},
+                {"state_name": "池外ETF（588080）", "capital_action": "不部署", "remaining_deployable_cash": 18009.45, "why_not_selected": "发现只授予完整评估资格；MASTER证据不足"},
+            ],
+            "etf_opportunity_reviews": [
+                {"security_code": "513180", "category": "OBSERVED_ETF", "opportunity_status": "观察机会", "conclusion": "继续观察", "reason": "跨节点假设仍有信息价值"},
+                {"security_code": "588080", "category": "DISCOVERED_ETF", "opportunity_status": "观察机会", "conclusion": "本节点不部署", "reason": "已进入完整评估但不足以形成合法新增资本动作"},
+            ],
+        }
+        self.assertEqual(
+            state_sync.validate_capital_competition_contract(
+                capital, {"positions": []}, required_etf_opportunities=required
+            ),
+            "",
+        )
+
+        # A current formal node cannot silently keep an Observation, and a
+        # discovered object is not forced through Observation before evaluation.
+        validate_observation_management(
+            {
+                "observation_management": [{
+                    "action": "RETAIN",
+                    "code": "513180",
+                    "name": "观察ETF",
+                    "thscode": "513180.SH",
+                    "thesis": "跨节点假设仍有效",
+                    "falsifier": "结构同步失效",
+                    "next_decision_information": "下一节点验证",
+                    "information_value_reason": "可能改变资本配置",
+                }]
+            },
+            held_codes={"561980", "588000", "159781", "159941"},
+            monitored_codes={"561980", "588000", "159781", "159941", "513180"},
+            require_existing_coverage=True,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
