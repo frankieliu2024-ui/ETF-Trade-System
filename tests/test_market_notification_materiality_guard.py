@@ -581,4 +581,3 @@ from tests.test_issue_649_market_anomaly_clustering import (  # noqa: E402
 
 class Issue649MarketAnomalyClusteringTests(_Issue649MarketAnomalyClusteringTests):
     pass
-
