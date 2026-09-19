@@ -125,7 +125,10 @@ def load_validated_history(root: Path, code: str, market_date: str, limit: int =
         if not obj.get("ok") or obj.get("asset_type") != "etf" or obj.get("mode") != "history":
             continue
         last_date, dataset = str(obj.get("last_date") or ""), obj.get("dataset")
-        if not dataset or not last_date or last_date >= market_date:
+        # A dataset may include the decision market-date bar. Discovery itself
+        # filters rows to date < market_date, so such a dataset remains PIT-safe
+        # and is preferable to a redundant network repair.
+        if not dataset or not last_date:
             continue
         candidate = root / str(dataset)
         if candidate.exists() and (best is None or last_date > best[0]):
