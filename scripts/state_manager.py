@@ -466,7 +466,62 @@ def build_decision_trace(root: Path, timing: dict[str, str] | None = None) -> di
     return metadata
 
 
-def build_decision_context(root: Path | None = None, observability: dict[str, Any] | None = None) -> dict[str, Any]:
+def _extend_analysis_coverage_with_discovery(base: dict[str, Any], formal_discovery: dict[str, Any] | None) -> dict[str, Any]:
+    discovery = formal_discovery or {}
+    candidates = [x for x in (discovery.get("candidates") or []) if isinstance(x, dict)]
+    available = sum(
+        str((x.get("historical_context") or {}).get("status") or "").upper() == "READY"
+        and (x.get("formal_quote") or {}).get("latest_price") is not None
+        for x in candidates
+    )
+    return {
+        **base,
+        "discovered_etfs_total": len(candidates),
+        "discovered_etfs_available": available,
+        "formal_discovery_status": discovery.get("status") or "NOT_REQUESTED",
+        "formal_discovery_boundary": "节点临时正式评估对象；不改变持仓/观察管理身份。",
+    }
+
+
+def _extend_capital_comparison_with_discovery(base: dict[str, Any], formal_discovery: dict[str, Any] | None) -> dict[str, Any]:
+    discovery = formal_discovery or {}
+    candidates = [x for x in (discovery.get("candidates") or []) if isinstance(x, dict)]
+    if not candidates:
+        return base
+    existing = [x for x in (base.get("comparison_universe") or base.get("ordered_candidates") or []) if isinstance(x, dict)]
+    seen = {str(x.get("code") or "") for x in existing if x.get("code")}
+    appended = []
+    for item in candidates:
+        code = str(item.get("code") or "")
+        if not code or code in seen:
+            continue
+        appended.append({
+            "display_name": item.get("display_name") or f'{item.get("name", code)}（{code}）',
+            "code": code,
+            "category": "DISCOVERED_ETF",
+            "eligibility": "FORMAL_FULL_EVALUATION",
+            "data_availability": "READY" if (item.get("historical_context") or {}).get("status") == "READY" and item.get("formal_quote_status") == "READY" else "DEGRADED",
+            "reason": "广域机会发现形成的本节点临时正式评估对象；与现金、全部持仓ETF、全部观察ETF及其他资本用途参加同一次MASTER完整比较。",
+            "management_identity": None,
+            "auto_promote_to_observation": False,
+            "discovery_evidence": item,
+            "comparison_basis": item.get("comparison_basis") or ["历史结构", "当前结构", "风险收益", "资本效率"],
+            "action_boundary": "发现不产生观察身份、Trial/Confirm、金额或交易动作；完整MASTER判断是唯一权限边界。",
+        })
+        seen.add(code)
+    combined = existing + appended
+    return {
+        **base,
+        "ordered_candidates": combined,
+        "comparison_universe": combined,
+        "next_unit_capital_use": "由ChatGPT按MASTER对现金、全部持仓ETF、全部观察ETF、本节点合格池外发现ETF、账户个股及可释放资本重新比较；机器不预选唯一主候选。",
+        "formal_discovery_included": bool(appended),
+        "formal_discovery_candidate_count": len(appended),
+        "order_semantics": "ENUMERATION_ONLY_NOT_RANKING",
+    }
+
+
+def build_decision_context(root: Path | None = None, observability: dict[str, Any] | None = None, formal_discovery: dict[str, Any] | None = None) -> dict[str, Any]:
     root = root or root_from_env()
     current, account = read_current(root), read_account_fact(root)
     dashboard = root / "ETF当前状态_DASHBOARD.md"
@@ -476,15 +531,22 @@ def build_decision_context(root: Path | None = None, observability: dict[str, An
     generated = now_utc()
     quality = build_data_quality_summary(snapshot)
     trace = observability or build_decision_trace(root)
+    analysis_coverage = _extend_analysis_coverage_with_discovery(
+        build_analysis_coverage(root, snapshot, account, quality), formal_discovery
+    )
+    capital_comparison = _extend_capital_comparison_with_discovery(
+        read_json(root / "data" / "state" / "capital_efficiency_ranking.json", {"status": "NOT_BUILT", "ordered_candidates": [], "read_only": True}),
+        formal_discovery,
+    )
     return {
         "observability": trace, "generated_at": generated, "rules_version": current_rule_version(root) or str(current.get("rules_version") or ""), "market_date": current.get("market_date", ""), "latest_node": current.get("latest_valid_node", ""), "current": current, "latest_snapshot": snapshot, "data_status": effective, "freshness_at_context_build": effective,
-        "data_quality_summary": quality, "account_funding": build_account_funding_summary(account), "etf_strategy_risk_metrics": build_etf_strategy_risk_metrics(root), "analysis_coverage": build_analysis_coverage(root, snapshot, account, quality), "point_in_time": build_point_in_time_summary(current, account, snapshot, generated), "scheduled_pulse_health": build_scheduled_pulse_health(root, current), "formal_action": build_formal_action_summary(account),
+        "data_quality_summary": quality, "account_funding": build_account_funding_summary(account), "etf_strategy_risk_metrics": build_etf_strategy_risk_metrics(root), "analysis_coverage": analysis_coverage, "point_in_time": build_point_in_time_summary(current, account, snapshot, generated), "scheduled_pulse_health": build_scheduled_pulse_health(root, current), "formal_action": build_formal_action_summary(account),
         "market_quote_router": build_market_quote_context(root), "lifecycle_projection": build_lifecycle_projection(root),
         "decision_trigger": read_json(root / "data" / "state" / "decision_trigger.json", {"status": "NOT_BUILT", "requires_formal_reassessment": False, "read_only": True}),
-        "capital_efficiency_ranking": read_json(root / "data" / "state" / "capital_efficiency_ranking.json", {"status": "NOT_BUILT", "ordered_candidates": [], "read_only": True}),
+        "capital_efficiency_ranking": capital_comparison,
         "intraday_path_features": read_json(root / "data" / "state" / "intraday_path_features.json", {"status": "MISSING", "features": []}), "research_evidence": build_research_evidence_summary(root),
         "research_context_file": "data/state/research_context.json", "relative_strength_file": "data/state/relative_strength.json", "research_evidence_delta_file": "data/state/research_evidence_delta.json",
         "research_master_feedback": {"current_decision": "研究证据及其节点变化直接进入机会判断、统一资本比较、持仓资本效率与正式输出解释。", "master_maintenance": "研究结论只有通过MASTER第8.1正式研究转化机制后才可修改MASTER；自动程序只提供证据，不修改规则。"},
         "dashboard_source": str(dashboard.relative_to(root)).replace("\\", "/"), "dashboard_summary": {"maintenance_mode": "candidate_only", "automatic_overwrite": False, "automatic_trade_output": False}, "account_fact_status": account["status"], "needs_account_screenshot": account["status"] != "VALID",
-        "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。日内路径、研究证据及证据变化必须参与完整MASTER判断，但单独均不是交易信号。",
+        "formal_etf_discovery": formal_discovery or {"status": "NOT_REQUESTED", "candidates": []}, "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。正式机会比较完整覆盖全部持仓/观察ETF，并在本节点存在合格池外发现对象时把其作为临时正式评估输入加入同一次MASTER与全资本竞争；发现本身不产生管理身份或交易权限。",
     }
