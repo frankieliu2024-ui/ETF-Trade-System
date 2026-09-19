@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import csv
 import json
 import math
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -111,6 +113,37 @@ def fetch_daily_history(code: str, market_id: int, end_date: str, limit: int = 9
     return [x for x in rows if x["date"] and x["close"] is not None]
 
 
+
+def load_validated_history(root: Path, code: str, market_date: str, limit: int = 90) -> list[dict[str, Any]] | None:
+    result_dir = root / "data/market/on_demand/results"
+    best: tuple[str, Path] | None = None
+    for path in result_dir.glob(f"*_{code}_*.json"):
+        try:
+            obj = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if not obj.get("ok") or obj.get("asset_type") != "etf" or obj.get("mode") != "history":
+            continue
+        last_date, dataset = str(obj.get("last_date") or ""), obj.get("dataset")
+        if not dataset or not last_date or last_date >= market_date:
+            continue
+        candidate = root / str(dataset)
+        if candidate.exists() and (best is None or last_date > best[0]):
+            best = (last_date, candidate)
+    if best is None:
+        return None
+    rows: list[dict[str, Any]] = []
+    with best[1].open("r", encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            if str(row.get("date") or "") >= market_date:
+                continue
+            close = _num(row.get("close"))
+            if close is None:
+                continue
+            rows.append({"date": str(row["date"]), "open": _num(row.get("open")), "high": _num(row.get("high")), "low": _num(row.get("low")), "close": close, "volume": _num(row.get("volume")), "amount": _num(row.get("amount"))})
+    return rows[-limit:] if len(rows) >= MIN_HISTORY else None
+
+
 def _ret(closes: list[float], sessions: int) -> float | None:
     if len(closes) <= sessions or closes[-sessions - 1] <= 0:
         return None
@@ -186,11 +219,9 @@ def _potential_families(row: dict[str, Any]) -> list[str]:
     return families
 
 
-def _bounded_prefilter(rows: list[dict[str, Any]], managed_codes: set[str]) -> list[dict[str, Any]]:
+def _bounded_prefilter(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     buckets: dict[str, list[dict[str, Any]]] = {x: [] for x in ("PERSISTENT_TREND", "TREND_CHANGE", "RECOVERY_BREAKOUT")}
     for row in rows:
-        if row.get("code") in managed_codes:
-            continue
         for family in _potential_families(row):
             buckets[family].append(row)
     selected: dict[str, dict[str, Any]] = {}
@@ -273,20 +304,43 @@ def discover_formal_candidates(
             "broad_universe_count": 0, "candidates": [], "error": str(exc)[-500:],
             "decision_boundary": "广域发现失败不删除持仓/观察ETF，也不阻塞其现有正式MASTER链。",
         }
-    prefiltered = _bounded_prefilter(broad, managed_codes)
+    prefiltered = _bounded_prefilter(broad)
     candidates = []
     failures = []
+    history_attempted = 0
+    history_succeeded = 0
+    started = time.monotonic()
     for row in prefiltered:
         code = str(row["code"])
+        history_attempted += 1
         try:
             history = (history_by_code or {}).get(code) if history_by_code is not None else None
+            history_source = "INJECTED" if history is not None else None
             if history is None:
+                history = load_validated_history(root, code, market_date, 90)
+                history_source = "VALIDATED_EXISTING_HISTORY" if history is not None else None
+                if history is not None:
+                    history_reused += 1
+            if history is None:
+                history_repair_attempted += 1
                 history = fetch_daily_history(code, int(row.get("market_id") or 0), market_date, 90)
+                history_source = "EASTMONEY_BOUNDED_REPAIR"
+            history_succeeded += 1
             item = _candidate(row, history, market_date)
             if item:
+                item["history_source"] = history_source
+            if item:
+                code = str(item.get("code") or "")
+                item["management_identity"] = "MANAGED" if code in managed_codes else None
+                item["discovery_semantic"] = (
+                    "NODE_LOCAL_ALL_MARKET_OPPORTUNITY_SIGNAL_FOR_EXISTING_MANAGED_ETF"
+                    if code in managed_codes
+                    else "NODE_LOCAL_FORMAL_EVALUATION_INPUT"
+                )
                 candidates.append(item)
         except Exception as exc:
             failures.append({"code": code, "error": str(exc)[-300:]})
+    elapsed = round(time.monotonic() - started, 3)
     state_priority = {"RECOVERY_BREAKOUT": 0, "TREND_CHANGE": 1, "PERSISTENT_TREND": 2}
     def key(item: dict[str, Any]) -> tuple:
         states = item.get("entered_states") or [x.get("state") for x in item.get("surfaced_states") or []]
@@ -296,12 +350,17 @@ def discover_formal_candidates(
     candidates.sort(key=key)
     candidates = candidates[:MAX_FORMAL_CANDIDATES]
     return {
-        "schema_version": "1.0", "status": "READY" if broad else "DEGRADED",
+        "schema_version": "1.0", "status": "READY" if broad and not failures else "DEGRADED",
         "generated_at_beijing": generated, "market_date": market_date,
         "source": "EASTMONEY_BROAD_ETF_SPOT_PLUS_OBJECT_DAILY_HISTORY",
         "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
-        "broad_universe_count": len(broad), "managed_excluded_count": sum(1 for x in broad if x.get("code") in managed_codes),
+        "broad_universe_count": len(broad),
+        "managed_identity_count": sum(1 for x in broad if x.get("code") in managed_codes),
+        "managed_excluded_count": 0,
         "history_prefilter_count": len(prefiltered), "candidate_count": len(candidates),
+        "history_attempted_count": history_attempted, "history_succeeded_count": history_succeeded,
+        "history_failure_count": len(failures), "history_elapsed_seconds": elapsed,
+        "coverage_status": "COMPLETE" if not failures else ("UNAVAILABLE" if history_succeeded == 0 else "PARTIAL"),
         "history_failures": failures, "candidates": candidates,
         "selection_contract": {
             "all_market_boundary": True,
