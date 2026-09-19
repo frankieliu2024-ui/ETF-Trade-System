@@ -471,7 +471,7 @@ def _extend_analysis_coverage_with_discovery(base: dict[str, Any], formal_discov
     candidates = [x for x in (discovery.get("candidates") or []) if isinstance(x, dict)]
     available = sum(
         str((x.get("historical_context") or {}).get("status") or "").upper() == "READY"
-        and (x.get("current_spot") or {}).get("price") is not None
+        and (x.get("formal_quote") or {}).get("latest_price") is not None
         for x in candidates
     )
     return {
@@ -500,7 +500,7 @@ def _extend_capital_comparison_with_discovery(base: dict[str, Any], formal_disco
             "code": code,
             "category": "DISCOVERED_ETF",
             "eligibility": "FORMAL_FULL_EVALUATION",
-            "data_availability": "READY" if (item.get("historical_context") or {}).get("status") == "READY" else "DEGRADED",
+            "data_availability": "READY" if (item.get("historical_context") or {}).get("status") == "READY" and item.get("formal_quote_status") == "READY" else "DEGRADED",
             "reason": "广域机会发现形成的本节点临时正式评估对象；与现金、全部持仓ETF、全部观察ETF及其他资本用途参加同一次MASTER完整比较。",
             "management_identity": None,
             "auto_promote_to_observation": False,
