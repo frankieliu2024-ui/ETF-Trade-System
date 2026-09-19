@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-19T13:56:10Z",
-  "generated_at_beijing": "2026-09-19T21:56:10+08:00",
+  "generated_at": "2026-09-19T14:36:28Z",
+  "generated_at_beijing": "2026-09-19T22:36:28+08:00",
   "market_date": "2026-09-18",
   "latest_valid_node": "close",
   "rules_version": "V2.2.31",
@@ -393,7 +393,7 @@
       "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
       "timing": {}
     },
-    "generated_at": "2026-09-19T13:56:10Z",
+    "generated_at": "2026-09-19T14:36:28Z",
     "rules_version": "V2.2.31",
     "market_date": "2026-09-18",
     "latest_node": "close",
@@ -1517,7 +1517,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 10.409,
-      "age_seconds": 111083
+      "age_seconds": 113501
     },
     "freshness_at_context_build": {
       "status": "STALE",
@@ -1533,7 +1533,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 10.409,
-      "age_seconds": 111083
+      "age_seconds": 113501
     },
     "data_quality_summary": {
       "pass_count": 16,
@@ -1608,8 +1608,8 @@
       "missing_objects": [],
       "coverage_status": "COMPLETE",
       "read_only": true,
-      "discovered_etfs_total": 3,
-      "discovered_etfs_available": 1,
+      "discovered_etfs_total": 0,
+      "discovered_etfs_available": 0,
       "formal_discovery_status": "DEGRADED",
       "formal_discovery_boundary": "节点临时正式评估对象；不改变持仓/观察管理身份。"
     },
@@ -1617,7 +1617,7 @@
       "account_fact_time": "2026-09-18T15:53:00+08:00",
       "market_snapshot_time": "2026-09-18T15:04:47+08:00",
       "market_phase": "POST_CLOSE_GRACE",
-      "context_generated_time": "2026-09-19T13:56:10Z",
+      "context_generated_time": "2026-09-19T14:36:28Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
@@ -1644,7 +1644,7 @@
       "read_only": true
     },
     "market_quote_router": {
-      "generated_at_beijing": "2026-09-19T21:56:10+08:00",
+      "generated_at_beijing": "2026-09-19T22:36:28+08:00",
       "refresh_mode": "CACHED_STATE",
       "refresh_failures": [],
       "decision_freshness": {
@@ -1653,8 +1653,8 @@
         "captured_at": "2026-09-18T07:04:47+00:00",
         "provider_as_of": "2026-09-18T07:04:42+00:00",
         "effective_as_of": "2026-09-18T07:04:42+00:00",
-        "request_time": "2026-09-19T13:56:10.518267+00:00",
-        "age_seconds": 111088,
+        "request_time": "2026-09-19T14:36:28.435972+00:00",
+        "age_seconds": 113506,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -2421,7 +2421,7 @@
       ],
       "top_candidate": null,
       "candidate_selection_status": "REQUIRES_MASTER_DECISION",
-      "next_unit_capital_use": "由ChatGPT按MASTER对现金、全部持仓ETF、全部观察ETF、账户个股及可释放资本重新比较；机器不预选唯一主候选。",
+      "next_unit_capital_use": "由ChatGPT按MASTER对现金、全部持仓、本节点ADMIT/RETAIN后的合法Observation及可释放资本完成最终比较；Discovery临时对象不直接进入最终资本竞争。",
       "ordered_candidates": [
         {
           "display_name": "现金",
@@ -3144,13 +3144,14 @@
       "execution_constraints": [],
       "key_reason": "机器层只枚举完整资本比较全集与真实数据/执行约束；风险复核边界只提高复核强度，不自动生成风险许可或删除合法机会。",
       "previous_top_candidate": null,
-      "order_semantics": "ENUMERATION_ONLY_NOT_RANKING",
+      "order_semantics": "LEGAL_CAPITAL_UNIVERSE_ONLY_NOT_RANKING",
       "read_only": true,
       "safety_boundary": "资本比较不替代唯一主候选；风险区间不自动生成风险许可；本状态不自动生成Trial、Confirm、金额、卖出份额或订单。",
       "formal_discovery_included": false,
       "formal_discovery_candidate_count": 0,
-      "formal_discovery_ingress_status": "BLOCKED_INCOMPLETE_COVERAGE",
-      "formal_discovery_ingress_reason": "全市场Discovery覆盖不完整；部分成功对象不得代表完整全市场机会集进入正式资本竞争。"
+      "formal_discovery_ingress_status": "ELIGIBILITY_ONLY",
+      "formal_discovery_coverage_status": "PARTIAL",
+      "observation_eligibility_inputs": []
     },
     "intraday_path_features": {
       "generated_at": "2026-09-18T13:20:03Z",
@@ -4805,7 +4806,7 @@
     "formal_etf_discovery": {
       "schema_version": "1.0",
       "status": "DEGRADED",
-      "generated_at_beijing": "2026-09-19T21:55:46+08:00",
+      "generated_at_beijing": "2026-09-19T22:35:58+08:00",
       "market_date": "2026-09-18",
       "source": "EASTMONEY_BROAD_ETF_SPOT_PLUS_OBJECT_DAILY_HISTORY",
       "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
@@ -4813,249 +4814,62 @@
       "managed_identity_count": 13,
       "held_identity_count": 4,
       "managed_excluded_count": 0,
-      "history_prefilter_count": 8,
-      "candidate_count": 3,
-      "history_attempted_count": 8,
-      "history_succeeded_count": 5,
-      "history_reused_count": 5,
-      "history_repair_attempted_count": 3,
-      "history_failure_count": 3,
-      "history_elapsed_seconds": 3.772,
+      "history_prefilter_count": 12,
+      "candidate_count": 0,
+      "history_attempted_count": 12,
+      "history_succeeded_count": 1,
+      "history_reused_count": 1,
+      "history_repair_attempted_count": 11,
+      "history_failure_count": 11,
+      "history_elapsed_seconds": 10.035,
       "coverage_status": "PARTIAL",
       "history_failures": [
+        {
+          "code": "512070",
+          "error": "Remote end closed connection without response"
+        },
+        {
+          "code": "159146",
+          "error": "Remote end closed connection without response"
+        },
         {
           "code": "513090",
           "error": "Remote end closed connection without response"
         },
         {
-          "code": "159915",
+          "code": "513390",
           "error": "Remote end closed connection without response"
         },
         {
-          "code": "515880",
+          "code": "513600",
+          "error": "Remote end closed connection without response"
+        },
+        {
+          "code": "512220",
+          "error": "Remote end closed connection without response"
+        },
+        {
+          "code": "159666",
+          "error": "Remote end closed connection without response"
+        },
+        {
+          "code": "159531",
+          "error": "Remote end closed connection without response"
+        },
+        {
+          "code": "159029",
+          "error": "Remote end closed connection without response"
+        },
+        {
+          "code": "158008",
+          "error": "Remote end closed connection without response"
+        },
+        {
+          "code": "159665",
           "error": "Remote end closed connection without response"
         }
       ],
-      "candidates": [
-        {
-          "code": "511880",
-          "name": "银华日利ETF",
-          "display_name": "银华日利ETF（511880）",
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "management_identity": null,
-          "auto_promote_to_observation": false,
-          "trial_confirm_permission": false,
-          "trade_signal": null,
-          "decision_output_generated": false,
-          "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-          "entered_states": [],
-          "surfaced_states": [
-            {
-              "state": "PERSISTENT_TREND",
-              "evidence": {
-                "window_returns": {
-                  "20": 0.000705,
-                  "40": 0.00154,
-                  "60": 0.002516
-                },
-                "positive_windows": [
-                  20,
-                  40,
-                  60
-                ],
-                "max_drawdown_60": 0.000238
-              }
-            }
-          ],
-          "discovery_spot": {
-            "price": 100.8,
-            "change_pct": 0.0,
-            "amount": 27338836645.0,
-            "amplitude_pct": 0.01,
-            "turnover_pct": 23.74,
-            "volume_ratio": 1.33,
-            "high": 100.811,
-            "low": 100.8,
-            "open": 100.81,
-            "prev_close": 100.798,
-            "return_60d_pct": 0.24,
-            "return_ytd_pct": 0.72,
-            "provider_timestamp": 1789719111
-          },
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-09-17",
-            "sample_count": 89,
-            "avg_amount_20": 16590449005.85
-          },
-          "comparison_basis": [
-            "历史趋势/状态变化",
-            "当前结构",
-            "成交与可执行性",
-            "风险收益",
-            "资本效率"
-          ],
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "history_source": "DISCOVERY_NODE_HISTORY",
-          "formal_quote": {},
-          "formal_quote_status": "UNAVAILABLE",
-          "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
-        },
-        {
-          "code": "513120",
-          "name": "港股创新药ETF广发",
-          "display_name": "港股创新药ETF广发（513120）",
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "management_identity": null,
-          "auto_promote_to_observation": false,
-          "trial_confirm_permission": false,
-          "trade_signal": null,
-          "decision_output_generated": false,
-          "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-          "entered_states": [],
-          "surfaced_states": [
-            {
-              "state": "PERSISTENT_TREND",
-              "evidence": {
-                "window_returns": {
-                  "20": -0.043931,
-                  "40": 0.075377,
-                  "60": 0.25636
-                },
-                "positive_windows": [
-                  40,
-                  60
-                ],
-                "max_drawdown_60": 0.093658
-              }
-            }
-          ],
-          "discovery_spot": {
-            "price": 1.293,
-            "change_pct": 0.7,
-            "amount": 6979143077.0,
-            "amplitude_pct": 2.26,
-            "turnover_pct": 30.37,
-            "volume_ratio": 1.31,
-            "high": 1.322,
-            "low": 1.293,
-            "open": 1.294,
-            "prev_close": 1.284,
-            "return_60d_pct": 28.02,
-            "return_ytd_pct": 8.29,
-            "provider_timestamp": 1789719100
-          },
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-09-17",
-            "sample_count": 89,
-            "avg_amount_20": 5619587786.3
-          },
-          "comparison_basis": [
-            "历史趋势/状态变化",
-            "当前结构",
-            "成交与可执行性",
-            "风险收益",
-            "资本效率"
-          ],
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "history_source": "DISCOVERY_NODE_HISTORY",
-          "formal_quote": {},
-          "formal_quote_status": "UNAVAILABLE",
-          "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
-        },
-        {
-          "code": "518880",
-          "name": "黄金ETF华安",
-          "display_name": "黄金ETF华安（518880）",
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "management_identity": "MANAGED",
-          "auto_promote_to_observation": false,
-          "trial_confirm_permission": false,
-          "trade_signal": null,
-          "decision_output_generated": false,
-          "discovery_semantic": "NODE_LOCAL_ALL_MARKET_OPPORTUNITY_SIGNAL_FOR_EXISTING_MANAGED_ETF",
-          "entered_states": [],
-          "surfaced_states": [
-            {
-              "state": "PERSISTENT_TREND",
-              "evidence": {
-                "window_returns": {
-                  "20": -0.040936,
-                  "40": 0.034579,
-                  "60": 0.068662
-                },
-                "positive_windows": [
-                  40,
-                  60
-                ],
-                "max_drawdown_60": 0.076851
-              }
-            }
-          ],
-          "discovery_spot": {
-            "price": 9.009,
-            "change_pct": 1.73,
-            "amount": 5385512314.0,
-            "amplitude_pct": 1.47,
-            "turnover_pct": 5.01,
-            "volume_ratio": 1.15,
-            "high": 9.026,
-            "low": 8.896,
-            "open": 8.95,
-            "prev_close": 8.856,
-            "return_60d_pct": 7.38,
-            "return_ytd_pct": -3.14,
-            "provider_timestamp": 1789719120
-          },
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-09-17",
-            "sample_count": 90,
-            "avg_amount_20": 5526587140.0
-          },
-          "comparison_basis": [
-            "历史趋势/状态变化",
-            "当前结构",
-            "成交与可执行性",
-            "风险收益",
-            "资本效率"
-          ],
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "history_source": "DISCOVERY_NODE_HISTORY",
-          "formal_quote": {
-            "market": "CN",
-            "market_name": "中国大陆",
-            "symbol": "518880",
-            "name": "",
-            "latest_price": 9.009,
-            "open": 8.95,
-            "high": 9.026,
-            "low": 8.896,
-            "prev_close": 8.856,
-            "volume": 601308800.0,
-            "amount": 5385510000.0,
-            "turnover": 5385510000.0,
-            "data_time_beijing": "2026-09-18T15:04:36+08:00",
-            "data_time_local": "",
-            "market_phase": "OFF_SESSION",
-            "market_status_cn": "A股收盘",
-            "data_nature_cn": "最近正式收盘行情",
-            "source": "tencent_qq",
-            "freshness": "STALE",
-            "freshness_cn": "时点过旧",
-            "quality_status": "PASS",
-            "quality_status_cn": "数据可用",
-            "direct_quote": true,
-            "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
-          },
-          "formal_quote_status": "READY",
-          "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
-        }
-      ],
+      "candidates": [],
       "observation_capacity": {
         "target_typical": "5-10",
         "allowed_min": 0,
@@ -5065,11 +4879,10 @@
         "all_market_boundary": true,
         "no_gain_ranking": true,
         "no_hidden_score": true,
-        "prefilter": "multi-horizon state-family plausibility plus minimum executability; liquidity only bounds provider work within each state family",
-        "final_ingress": "validated interpretable state evidence; at most a small node-local set enters full formal evaluation"
+        "prefilter": "multi-horizon state-family plausibility plus minimum executability; cheap exposure dedup plus date-rotated bounded sampling prevents liquidity/code order from becoming hidden Top-N",
+        "final_ingress": "each successfully evidenced object independently enters Observation eligibility evaluation; provider failure is explicit and does not convert successful peers into legal capital competitors"
       },
-      "decision_boundary": "发现对象是本节点临时正式评估输入，不是第三种ETF身份；不得自动写观察池、生成Trial/Confirm或交易动作。",
-      "formal_quote_coverage": 1
+      "decision_boundary": "发现对象是本节点临时正式评估输入，不是第三种ETF身份；不得自动写观察池、生成Trial/Confirm或交易动作。"
     },
     "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。正式机会比较完整覆盖全部持仓/观察ETF，并在本节点存在合格池外发现对象时把其作为临时正式评估输入加入同一次MASTER与全资本竞争；发现本身不产生管理身份或交易权限。"
   },
@@ -5206,8 +5019,8 @@
     "missing_objects": [],
     "coverage_status": "COMPLETE",
     "read_only": true,
-    "discovered_etfs_total": 3,
-    "discovered_etfs_available": 1,
+    "discovered_etfs_total": 0,
+    "discovered_etfs_available": 0,
     "formal_discovery_status": "DEGRADED",
     "formal_discovery_boundary": "节点临时正式评估对象；不改变持仓/观察管理身份。"
   },
@@ -5242,7 +5055,7 @@
     "account_fact_time": "2026-09-18T15:53:00+08:00",
     "market_snapshot_time": "2026-09-18T15:04:47+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-09-19T13:56:10Z",
+    "context_generated_time": "2026-09-19T14:36:28Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -5331,7 +5144,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "STALE",
-        "age_seconds": 111059,
+        "age_seconds": 113471,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -5349,7 +5162,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 10.409,
-        "age_seconds": 111059
+        "age_seconds": 113471
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新判断为“时点正常／存在延迟／时点过旧”。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -5392,26 +5205,17 @@
     }
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-09-19T21:55:46+08:00",
+    "generated_at_beijing": "2026-09-19T22:35:58+08:00",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-    "refresh_failures": [
-      {
-        "symbol": "511880",
-        "error": "Tencent 511880.SH is not a same-day session reference: provider_date=2026-09-18 query_date=2026-09-19"
-      },
-      {
-        "symbol": "513120",
-        "error": "Tencent 513120.SH is not a same-day session reference: provider_date=2026-09-18 query_date=2026-09-19"
-      }
-    ],
+    "refresh_failures": [],
     "decision_freshness": {
       "status": "REFRESH_REQUIRED",
       "quality_status": "UNKNOWN",
       "captured_at": "2026-09-18T07:04:47+00:00",
       "provider_as_of": "2026-09-18T07:04:42+00:00",
       "effective_as_of": "2026-09-18T07:04:42+00:00",
-      "request_time": "2026-09-19T14:15:00+00:00",
-      "age_seconds": 111064,
+      "request_time": "2026-09-19T14:40:00+00:00",
+      "age_seconds": 113476,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -6138,16 +5942,6 @@
       "object_code": "601138",
       "object_name": "工业富联",
       "source_type": "SYSTEM_MONITORED"
-    },
-    {
-      "object_code": "511880",
-      "object_name": "银华日利ETF",
-      "source_type": "NODE_LOCAL_OBSERVATION_EVALUATION"
-    },
-    {
-      "object_code": "513120",
-      "object_name": "港股创新药ETF广发",
-      "source_type": "NODE_LOCAL_OBSERVATION_EVALUATION"
     }
   ],
   "user_requested_objects": [],
@@ -6305,7 +6099,7 @@
   "formal_etf_discovery": {
     "schema_version": "1.0",
     "status": "DEGRADED",
-    "generated_at_beijing": "2026-09-19T21:55:46+08:00",
+    "generated_at_beijing": "2026-09-19T22:35:58+08:00",
     "market_date": "2026-09-18",
     "source": "EASTMONEY_BROAD_ETF_SPOT_PLUS_OBJECT_DAILY_HISTORY",
     "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
@@ -6313,249 +6107,62 @@
     "managed_identity_count": 13,
     "held_identity_count": 4,
     "managed_excluded_count": 0,
-    "history_prefilter_count": 8,
-    "candidate_count": 3,
-    "history_attempted_count": 8,
-    "history_succeeded_count": 5,
-    "history_reused_count": 5,
-    "history_repair_attempted_count": 3,
-    "history_failure_count": 3,
-    "history_elapsed_seconds": 3.772,
+    "history_prefilter_count": 12,
+    "candidate_count": 0,
+    "history_attempted_count": 12,
+    "history_succeeded_count": 1,
+    "history_reused_count": 1,
+    "history_repair_attempted_count": 11,
+    "history_failure_count": 11,
+    "history_elapsed_seconds": 10.035,
     "coverage_status": "PARTIAL",
     "history_failures": [
+      {
+        "code": "512070",
+        "error": "Remote end closed connection without response"
+      },
+      {
+        "code": "159146",
+        "error": "Remote end closed connection without response"
+      },
       {
         "code": "513090",
         "error": "Remote end closed connection without response"
       },
       {
-        "code": "159915",
+        "code": "513390",
         "error": "Remote end closed connection without response"
       },
       {
-        "code": "515880",
+        "code": "513600",
+        "error": "Remote end closed connection without response"
+      },
+      {
+        "code": "512220",
+        "error": "Remote end closed connection without response"
+      },
+      {
+        "code": "159666",
+        "error": "Remote end closed connection without response"
+      },
+      {
+        "code": "159531",
+        "error": "Remote end closed connection without response"
+      },
+      {
+        "code": "159029",
+        "error": "Remote end closed connection without response"
+      },
+      {
+        "code": "158008",
+        "error": "Remote end closed connection without response"
+      },
+      {
+        "code": "159665",
         "error": "Remote end closed connection without response"
       }
     ],
-    "candidates": [
-      {
-        "code": "511880",
-        "name": "银华日利ETF",
-        "display_name": "银华日利ETF（511880）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": null,
-        "auto_promote_to_observation": false,
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "PERSISTENT_TREND",
-            "evidence": {
-              "window_returns": {
-                "20": 0.000705,
-                "40": 0.00154,
-                "60": 0.002516
-              },
-              "positive_windows": [
-                20,
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.000238
-            }
-          }
-        ],
-        "discovery_spot": {
-          "price": 100.8,
-          "change_pct": 0.0,
-          "amount": 27338836645.0,
-          "amplitude_pct": 0.01,
-          "turnover_pct": 23.74,
-          "volume_ratio": 1.33,
-          "high": 100.811,
-          "low": 100.8,
-          "open": 100.81,
-          "prev_close": 100.798,
-          "return_60d_pct": 0.24,
-          "return_ytd_pct": 0.72,
-          "provider_timestamp": 1789719111
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-09-17",
-          "sample_count": 89,
-          "avg_amount_20": 16590449005.85
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "history_source": "DISCOVERY_NODE_HISTORY",
-        "formal_quote": {},
-        "formal_quote_status": "UNAVAILABLE",
-        "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
-      },
-      {
-        "code": "513120",
-        "name": "港股创新药ETF广发",
-        "display_name": "港股创新药ETF广发（513120）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": null,
-        "auto_promote_to_observation": false,
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "PERSISTENT_TREND",
-            "evidence": {
-              "window_returns": {
-                "20": -0.043931,
-                "40": 0.075377,
-                "60": 0.25636
-              },
-              "positive_windows": [
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.093658
-            }
-          }
-        ],
-        "discovery_spot": {
-          "price": 1.293,
-          "change_pct": 0.7,
-          "amount": 6979143077.0,
-          "amplitude_pct": 2.26,
-          "turnover_pct": 30.37,
-          "volume_ratio": 1.31,
-          "high": 1.322,
-          "low": 1.293,
-          "open": 1.294,
-          "prev_close": 1.284,
-          "return_60d_pct": 28.02,
-          "return_ytd_pct": 8.29,
-          "provider_timestamp": 1789719100
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-09-17",
-          "sample_count": 89,
-          "avg_amount_20": 5619587786.3
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "history_source": "DISCOVERY_NODE_HISTORY",
-        "formal_quote": {},
-        "formal_quote_status": "UNAVAILABLE",
-        "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
-      },
-      {
-        "code": "518880",
-        "name": "黄金ETF华安",
-        "display_name": "黄金ETF华安（518880）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": "MANAGED",
-        "auto_promote_to_observation": false,
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_ALL_MARKET_OPPORTUNITY_SIGNAL_FOR_EXISTING_MANAGED_ETF",
-        "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "PERSISTENT_TREND",
-            "evidence": {
-              "window_returns": {
-                "20": -0.040936,
-                "40": 0.034579,
-                "60": 0.068662
-              },
-              "positive_windows": [
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.076851
-            }
-          }
-        ],
-        "discovery_spot": {
-          "price": 9.009,
-          "change_pct": 1.73,
-          "amount": 5385512314.0,
-          "amplitude_pct": 1.47,
-          "turnover_pct": 5.01,
-          "volume_ratio": 1.15,
-          "high": 9.026,
-          "low": 8.896,
-          "open": 8.95,
-          "prev_close": 8.856,
-          "return_60d_pct": 7.38,
-          "return_ytd_pct": -3.14,
-          "provider_timestamp": 1789719120
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-09-17",
-          "sample_count": 90,
-          "avg_amount_20": 5526587140.0
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "history_source": "DISCOVERY_NODE_HISTORY",
-        "formal_quote": {
-          "market": "CN",
-          "market_name": "中国大陆",
-          "symbol": "518880",
-          "name": "",
-          "latest_price": 9.009,
-          "open": 8.95,
-          "high": 9.026,
-          "low": 8.896,
-          "prev_close": 8.856,
-          "volume": 601308800.0,
-          "amount": 5385510000.0,
-          "turnover": 5385510000.0,
-          "data_time_beijing": "2026-09-18T15:04:36+08:00",
-          "data_time_local": "",
-          "market_phase": "OFF_SESSION",
-          "market_status_cn": "A股收盘",
-          "data_nature_cn": "最近正式收盘行情",
-          "source": "tencent_qq",
-          "freshness": "STALE",
-          "freshness_cn": "时点过旧",
-          "quality_status": "PASS",
-          "quality_status_cn": "数据可用",
-          "direct_quote": true,
-          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
-        },
-        "formal_quote_status": "READY",
-        "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
-      }
-    ],
+    "candidates": [],
     "observation_capacity": {
       "target_typical": "5-10",
       "allowed_min": 0,
@@ -6565,11 +6172,10 @@
       "all_market_boundary": true,
       "no_gain_ranking": true,
       "no_hidden_score": true,
-      "prefilter": "multi-horizon state-family plausibility plus minimum executability; liquidity only bounds provider work within each state family",
-      "final_ingress": "validated interpretable state evidence; at most a small node-local set enters full formal evaluation"
+      "prefilter": "multi-horizon state-family plausibility plus minimum executability; cheap exposure dedup plus date-rotated bounded sampling prevents liquidity/code order from becoming hidden Top-N",
+      "final_ingress": "each successfully evidenced object independently enters Observation eligibility evaluation; provider failure is explicit and does not convert successful peers into legal capital competitors"
     },
-    "decision_boundary": "发现对象是本节点临时正式评估输入，不是第三种ETF身份；不得自动写观察池、生成Trial/Confirm或交易动作。",
-    "formal_quote_coverage": 1
+    "decision_boundary": "发现对象是本节点临时正式评估输入，不是第三种ETF身份；不得自动写观察池、生成Trial/Confirm或交易动作。"
   },
   "canonical_files": {
     "index": "ETF_SYSTEM_INDEX.md",
@@ -6609,11 +6215,11 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 10.409,
-    "age_seconds": 111059
+    "age_seconds": 113471
   },
   "freshness_at_context_build": {
     "status": "STALE",
-    "age_seconds": 111059,
+    "age_seconds": 113471,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -6623,8 +6229,8 @@
     "captured_at": "2026-09-18T07:04:47+00:00",
     "provider_as_of": "2026-09-18T07:04:42+00:00",
     "effective_as_of": "2026-09-18T07:04:42+00:00",
-    "request_time": "2026-09-19T14:15:00+00:00",
-    "age_seconds": 111064,
+    "request_time": "2026-09-19T14:40:00+00:00",
+    "age_seconds": 113476,
     "post_request": false,
     "preferred_max_age_seconds": 300,
     "fallback_max_age_seconds": 900,
@@ -6686,7 +6292,7 @@
   "system_consistency_status": "PASS",
   "system_consistency_hard_errors": 0,
   "etf_universe_count": 13,
-  "formal_discovery_candidate_count": 3,
+  "formal_discovery_candidate_count": 0,
   "overseas_context_status": "PASS",
   "overseas_generated_at_beijing": "2026-09-19T06:35:05+08:00",
   "us_extended_hours_status": "DEGRADED",
@@ -6714,7 +6320,7 @@
     "trigger": {
       "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
       "request_id": "",
-      "requested_at_beijing": "2026-09-19T22:15:00+08:00"
+      "requested_at_beijing": "2026-09-19T22:40:00+08:00"
     },
     "master": {
       "version": "V2.2.31",
@@ -6733,7 +6339,7 @@
       "provider": "tencent_qq"
     },
     "decision_context": {
-      "generated_at_beijing": "2026-09-19T13:56:10Z",
+      "generated_at_beijing": "2026-09-19T14:36:28Z",
       "source": "scripts/state_manager.py::build_decision_context"
     },
     "market_quote": {
@@ -6744,8 +6350,8 @@
         "captured_at": "2026-09-18T07:04:47+00:00",
         "provider_as_of": "2026-09-18T07:04:42+00:00",
         "effective_as_of": "2026-09-18T07:04:42+00:00",
-        "request_time": "2026-09-19T14:15:00+00:00",
-        "age_seconds": 111064,
+        "request_time": "2026-09-19T14:40:00+00:00",
+        "age_seconds": 113476,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -6787,15 +6393,15 @@
   "freshness_assurance": {
     "status": "REFRESH_REQUIRED",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-    "decision_request_time": "2026-09-19T14:15:00+00:00",
+    "decision_request_time": "2026-09-19T14:40:00+00:00",
     "decision_request_post_current": false,
     "rule": "freshness assurance precedes full decision-context construction; post-refresh CURRENT is re-read before formal decision context construction."
   },
   "fast_path_latency": {
-    "t0": "2026-09-19T22:15:00+08:00",
-    "manual_request_identity": "20260919_2215_issue687_semantic_replay_acceptance-b9b02c0830fe",
-    "manual_request_received_at": "2026-09-19T22:15:00+08:00",
-    "user_request_received": "2026-09-19T22:15:00+08:00",
+    "t0": "2026-09-19T22:40:00+08:00",
+    "manual_request_identity": "20260919_2240_issue687_post703_merged_replay-101e4d934e37",
+    "manual_request_received_at": "2026-09-19T22:40:00+08:00",
+    "user_request_received": "2026-09-19T22:40:00+08:00",
     "screenshot_account_fact_available": "UNKNOWN",
     "screenshot_account_fact_available_at": "UNKNOWN",
     "t_refresh_start_or_reuse": "",
@@ -6806,14 +6412,14 @@
     "t_new_current": "",
     "t_minimum_legal_inputs_ready": "UNKNOWN",
     "minimum_legal_inputs_ready_at": "UNKNOWN",
-    "t_decision_ready": "2026-09-19T13:56:10Z",
-    "final_answer_identity": "2026-09-19T21:56:10+08:00",
-    "final_analysis_identity": "2026-09-19T21:56:10+08:00",
-    "t_reply_or_output_ready": "2026-09-19T21:56:10+08:00",
+    "t_decision_ready": "2026-09-19T14:36:28Z",
+    "final_answer_identity": "2026-09-19T22:36:28+08:00",
+    "final_analysis_identity": "2026-09-19T22:36:28+08:00",
+    "t_reply_or_output_ready": "2026-09-19T22:36:28+08:00",
     "required_account_persistence_identity": "UNKNOWN",
     "refresh_start_latency": null,
     "refresh_duration": null,
-    "post_current_decision_latency": 111083.0,
+    "post_current_decision_latency": 113501.0,
     "total_fast_path_latency": 0.0,
     "measurement_status": "OBSERVED_FIELDS_ONLY; MISSING_TIMESTAMPS_REMAIN_EXPLICIT",
     "trace_metadata_is_non_authoritative": true,
