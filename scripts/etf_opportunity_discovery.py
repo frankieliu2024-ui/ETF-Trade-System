@@ -246,3 +246,71 @@ def route_discovery_result(
         "trade_signal": None,
         "decision_output_generated": False,
     }
+
+
+def consolidate_discovery_events(
+    events: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Collapse same-day, same-state, same-exposure discovery events.
+
+    Representative selection is deterministic and auditable:
+    1. formal holding evidence is preserved first;
+    2. then formal observation evidence;
+    3. then out-of-pool ephemeral candidates;
+    4. within the same route, higher recent average amount is preferred when
+       both values are available; otherwise lexical code order breaks ties.
+
+    This is exposure/event de-duplication, not a cross-opportunity score.
+    Different states or exposure clusters remain separate.
+    """
+    route_priority = {
+        "HOLDING_DELTA_EVIDENCE": 0,
+        "OBSERVATION_DELTA_EVIDENCE": 1,
+        "EPHEMERAL_FULL_EVALUATION_INPUT": 2,
+    }
+
+    def avg_amount(event: dict[str, Any]) -> float | None:
+        note = event.get("liquidity_executability_note") or {}
+        value = note.get("avg_amount_20")
+        try:
+            return float(value) if value is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    def representative_key(event: dict[str, Any]) -> tuple:
+        route = str(event.get("route") or "EPHEMERAL_FULL_EVALUATION_INPUT")
+        amount = avg_amount(event)
+        return (
+            route_priority.get(route, 9),
+            0 if amount is not None else 1,
+            -(amount or 0.0),
+            str(event.get("code") or ""),
+        )
+
+    groups: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+    passthrough: list[dict[str, Any]] = []
+    for event in events:
+        entered = list(event.get("entered_states") or [])
+        cluster = event.get("homogeneous_exposure_cluster")
+        as_of = str(event.get("as_of") or "")
+        if not entered or not cluster:
+            passthrough.append({**event, "consolidated_member_codes": [str(event.get("code"))]})
+            continue
+        for state in entered:
+            groups.setdefault((as_of, str(state), str(cluster)), []).append(event)
+
+    consolidated: list[dict[str, Any]] = []
+    for (as_of, state, cluster), members in sorted(groups.items()):
+        representative = min(members, key=representative_key)
+        consolidated.append({
+            **representative,
+            "as_of": as_of,
+            "entered_states": [state],
+            "homogeneous_exposure_cluster": cluster,
+            "consolidated_member_codes": sorted({str(x.get("code")) for x in members}),
+            "consolidation_semantic": "SAME_DAY_SAME_STATE_SAME_EXPOSURE",
+            "hidden_score": None,
+            "trade_signal": None,
+            "decision_output_generated": False,
+        })
+    return passthrough + consolidated
