@@ -187,11 +187,9 @@ def _potential_families(row: dict[str, Any]) -> list[str]:
     return families
 
 
-def _bounded_prefilter(rows: list[dict[str, Any]], managed_codes: set[str]) -> list[dict[str, Any]]:
+def _bounded_prefilter(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     buckets: dict[str, list[dict[str, Any]]] = {x: [] for x in ("PERSISTENT_TREND", "TREND_CHANGE", "RECOVERY_BREAKOUT")}
     for row in rows:
-        if row.get("code") in managed_codes:
-            continue
         for family in _potential_families(row):
             buckets[family].append(row)
     selected: dict[str, dict[str, Any]] = {}
@@ -274,7 +272,7 @@ def discover_formal_candidates(
             "broad_universe_count": 0, "candidates": [], "error": str(exc)[-500:],
             "decision_boundary": "广域发现失败不删除持仓/观察ETF，也不阻塞其现有正式MASTER链。",
         }
-    prefiltered = _bounded_prefilter(broad, managed_codes)
+    prefiltered = _bounded_prefilter(broad)
     candidates = []
     failures = []
     history_attempted = 0
@@ -290,6 +288,13 @@ def discover_formal_candidates(
             history_succeeded += 1
             item = _candidate(row, history, market_date)
             if item:
+                code = str(item.get("code") or "")
+                item["management_identity"] = "MANAGED" if code in managed_codes else None
+                item["discovery_semantic"] = (
+                    "NODE_LOCAL_ALL_MARKET_OPPORTUNITY_SIGNAL_FOR_EXISTING_MANAGED_ETF"
+                    if code in managed_codes
+                    else "NODE_LOCAL_FORMAL_EVALUATION_INPUT"
+                )
                 candidates.append(item)
         except Exception as exc:
             failures.append({"code": code, "error": str(exc)[-300:]})
@@ -307,7 +312,9 @@ def discover_formal_candidates(
         "generated_at_beijing": generated, "market_date": market_date,
         "source": "EASTMONEY_BROAD_ETF_SPOT_PLUS_OBJECT_DAILY_HISTORY",
         "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
-        "broad_universe_count": len(broad), "managed_excluded_count": sum(1 for x in broad if x.get("code") in managed_codes),
+        "broad_universe_count": len(broad),
+        "managed_identity_count": sum(1 for x in broad if x.get("code") in managed_codes),
+        "managed_excluded_count": 0,
         "history_prefilter_count": len(prefiltered), "candidate_count": len(candidates),
         "history_attempted_count": history_attempted, "history_succeeded_count": history_succeeded,
         "history_failure_count": len(failures), "history_elapsed_seconds": elapsed,
