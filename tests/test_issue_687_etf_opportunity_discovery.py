@@ -9,7 +9,13 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from etf_opportunity_discovery import (\n    compress_homogeneous_exposure,\n    discover_etf,\n    discover_state_delta,\n    route_discovery_result,\n    consolidate_discovery_events,\n    build_discovery_bridge_evidence,\n)
+from etf_opportunity_discovery import (\n    compress_homogeneous_exposure,
+    discover_etf,
+    discover_state_delta,
+    route_discovery_result,
+    consolidate_discovery_events,
+    build_discovery_bridge_evidence,
+)
 
 
 def series(values):
