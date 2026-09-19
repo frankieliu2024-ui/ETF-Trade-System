@@ -612,6 +612,9 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     if research_error:
         raise ValueError(f"invalid formal decision research-evidence contract: {research_error}")
     account_for_lifecycle = _load_account_for_lifecycle_validation()
+    current_path = ROOT / "data/state/CURRENT.json"
+    current = load_json(current_path) if current_path.exists() else {}
+    market_date = str(request.get("market_date") or current.get("market_date") or "")
     managed_error = validate_managed_position_lifecycle(decision.get("lifecycle"), account_for_lifecycle, "formal_decision.lifecycle")
     if managed_error:
         raise ValueError(f"invalid formal decision managed-position contract: {managed_error}")
@@ -621,7 +624,7 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     )
     if review_error:
         raise ValueError(f"invalid formal decision managed-position review contract: {review_error}")
-    required_opportunities = required_etf_opportunity_reviews(ROOT, account_for_lifecycle)
+    required_opportunities = required_etf_opportunity_reviews(ROOT, account_for_lifecycle, market_date)
     capital_error = validate_capital_competition_contract(
         decision.get("capital_competition"), account_for_lifecycle,
         "formal_decision.capital_competition",
@@ -652,11 +655,8 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
             decision,
             held_codes=held_etfs,
             monitored_codes=monitored_codes,
-            require_existing_coverage=True,
+            require_existing_coverage=bool(required_opportunities),
         )
-    current_path = ROOT / "data/state/CURRENT.json"
-    current = load_json(current_path) if current_path.exists() else {}
-    market_date = str(request.get("market_date") or current.get("market_date") or "")
     main_candidate = str(decision.get("main_candidate") or "")
     explicit_code = str(decision.get("candidate_code") or decision.get("code") or "")
     match = re.search(r"（(\d{6})）", main_candidate) or re.search(r"(?<!\d)(\d{6})(?!\d)", main_candidate)
@@ -912,12 +912,20 @@ def validate_managed_position_lifecycle(value: object, account: dict, object_nam
     return ""
 
 
-def required_etf_opportunity_reviews(root: Path, account: dict) -> dict[str, str]:
-    """Return the current node ETF opportunity set that formal completion must cover."""
+def required_etf_opportunity_reviews(root: Path, account: dict, market_date: str = "") -> dict[str, str]:
+    """Return the request-node ETF opportunity set that formal completion must cover.
+
+    Current query_context must never be projected backwards onto a historical
+    replay.  Coverage is enforced only when the decision market_date matches
+    the query-context market_date that enumerated the node.
+    """
     path = root / "data" / "state" / "query_context.json"
     if not path.exists():
         return {}
     context = load_json(path)
+    context_market_date = str(context.get("market_date") or (context.get("current") or {}).get("market_date") or "")
+    if market_date and context_market_date != str(market_date):
+        return {}
     decision_context = context.get("decision_context") if isinstance(context.get("decision_context"), dict) else context
     capital = (decision_context or {}).get("capital_efficiency_ranking") or context.get("capital_efficiency_ranking") or {}
     rows = capital.get("comparison_universe") or capital.get("ordered_candidates") or []
