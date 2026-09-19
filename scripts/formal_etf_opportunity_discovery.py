@@ -319,7 +319,10 @@ def discover_formal_candidates(
             if history is None:
                 history = load_validated_history(root, code, market_date, 90)
                 history_source = "VALIDATED_EXISTING_HISTORY" if history is not None else None
+                if history is not None:
+                    history_reused += 1
             if history is None:
+                history_repair_attempted += 1
                 history = fetch_daily_history(code, int(row.get("market_id") or 0), market_date, 90)
                 history_source = "EASTMONEY_BOUNDED_REPAIR"
             history_succeeded += 1
