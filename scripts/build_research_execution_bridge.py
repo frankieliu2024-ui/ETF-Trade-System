@@ -143,6 +143,10 @@ def build(root: Path | None = None) -> dict:
     component_lead = build_561980_component_lead_evidence(root)
     if_ic_basis = build_if_ic_basis_evidence(root)
     oversold_300750 = build_300750_oversold_reversal_evidence(root)
+    etf_discovery = read_json(root / "data/state/etf_discovery_evidence.json", {})
+    if not isinstance(etf_discovery, dict):
+        etf_discovery = {}
+
     intraday_path_risk = market_structure.get("formal_intraday_path_risk_review") or {
         "evidence_id": "intraday_path_risk_review",
         "display_name": "日内路径风险复核",
@@ -266,6 +270,7 @@ def build(root: Path | None = None) -> dict:
         "etf_object_evidence": {
             "component_lead_561980_3d": component_lead,
             "intraday_path_risk_review": intraday_path_risk,
+            "etf_opportunity_discovery": etf_discovery if etf_discovery.get("use_as_decision_evidence") else {},
         },
         "execution_bridge": {
             "direct_execution_contribution": True,
