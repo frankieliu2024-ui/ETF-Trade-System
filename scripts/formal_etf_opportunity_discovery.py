@@ -22,6 +22,8 @@ MAX_OBSERVATION_CANDIDATES = 12
 MAX_HISTORY_SUCCESS_BUDGET = 12
 MAX_HISTORY_ATTEMPT_MULTIPLIER = 3
 MIN_HISTORY = 65
+RELATIVE_DIVERGENCE_PCT = 1.5
+SHORT_HISTORY_MIN = 20
 
 
 def _num(value: Any) -> float | None:
@@ -239,13 +241,44 @@ def _state_names(rows: list[dict[str, Any]]) -> set[str]:
     return {str(x.get("state")) for x in classify_states(rows)}
 
 
-def _potential_families(row: dict[str, Any]) -> list[str]:
+def _broad_return_median(rows: list[dict[str, Any]]) -> float | None:
+    values = sorted(x for row in rows if (x := _num(row.get("change_pct"))) is not None)
+    if not values:
+        return None
+    mid = len(values) // 2
+    return values[mid] if len(values) % 2 else (values[mid - 1] + values[mid]) / 2.0
+
+
+def _information_classes(row: dict[str, Any], broad_median: float | None) -> list[str]:
+    """Cheap evidence-acquisition classes. They are not trade/capital rankings."""
     if (_num(row.get("amount")) or 0) < MIN_AMOUNT or (_num(row.get("price")) or 0) <= 0:
         return []
     r60 = _num(row.get("return_60d_pct"))
     daily = _num(row.get("change_pct"))
     vr = _num(row.get("volume_ratio"))
+    classes: list[str] = []
+    if daily is not None and broad_median is not None and daily - broad_median >= RELATIVE_DIVERGENCE_PCT:
+        classes.append("NEW_RELATIVE_DIVERGENCE")
+    if daily is not None and daily > 0 and (r60 is None or r60 < 15):
+        classes.append("STRUCTURAL_CHANGE")
+    if r60 is not None and r60 <= 0 and daily is not None and daily > 0 and (vr is None or vr >= 1.0):
+        if "STRUCTURAL_CHANGE" not in classes:
+            classes.append("STRUCTURAL_CHANGE")
+    if r60 is not None and r60 > 0:
+        classes.append("PERSISTENT_STRUCTURE")
+    if r60 is None and daily is not None and broad_median is not None and daily - broad_median >= RELATIVE_DIVERGENCE_PCT:
+        classes.append("SHORT_HISTORY_CURRENT_CHANGE")
+    return classes
+
+
+def _potential_families(row: dict[str, Any]) -> list[str]:
+    """Compatibility view for history-state alignment; scheduling uses information classes."""
+    r60 = _num(row.get("return_60d_pct"))
+    daily = _num(row.get("change_pct"))
+    vr = _num(row.get("volume_ratio"))
     families = []
+    if (_num(row.get("amount")) or 0) < MIN_AMOUNT or (_num(row.get("price")) or 0) <= 0:
+        return families
     if r60 is not None and r60 > 0:
         families.append("PERSISTENT_TREND")
     if daily is not None and daily > 0 and (r60 is None or r60 < 15):
@@ -266,49 +299,79 @@ def _exposure_key(row: dict[str, Any]) -> str:
 
 
 def _bounded_prefilter(rows: list[dict[str, Any]], held_codes: set[str] | None = None, market_date: str = "") -> list[dict[str, Any]]:
-    """Return an ordered deep-validation queue, not a Top-N winner list.
-
-    Cheap current-node evidence first allocates information-acquisition priority:
-    newly changing/recovery families precede persistent trend, while one cheap
-    representative per economic label prevents clone-heavy themes from consuming
-    the queue. Date rotation is only the final tie-break inside the same family.
-    """
+    """Allocate scarce validation work by information class, never by return score."""
     held_codes = {str(x) for x in (held_codes or set())}
-    family_priority = ("TREND_CHANGE", "RECOVERY_BREAKOUT", "PERSISTENT_TREND")
-    buckets: dict[str, dict[str, dict[str, Any]]] = {x: {} for x in family_priority}
+    class_priority = (
+        "NEW_RELATIVE_DIVERGENCE",
+        "STRUCTURAL_CHANGE",
+        "SHORT_HISTORY_CURRENT_CHANGE",
+        "PERSISTENT_STRUCTURE",
+    )
+    broad_median = _broad_return_median(rows)
+    buckets: dict[str, dict[str, dict[str, Any]]] = {x: {} for x in class_priority}
     for row in rows:
         code = str(row.get("code") or "")
         if code in held_codes:
             continue
         exposure = _exposure_key(row)
-        for family in _potential_families(row):
-            current = buckets[family].get(exposure)
+        for info_class in _information_classes(row, broad_median):
+            current = buckets[info_class].get(exposure)
+            # Conservative clone control: deterministic representative only when
+            # the cheap normalized label is exactly identical.
             if current is None or code < str(current.get("code") or ""):
-                buckets[family][exposure] = row
+                buckets[info_class][exposure] = row
 
     queue: list[dict[str, Any]] = []
     seen_codes: set[str] = set()
-    for family in family_priority:
-        members = list(buckets[family].values())
+    for info_class in class_priority:
+        members = list(buckets[info_class].values())
         members.sort(key=lambda x: hashlib.sha256(
-            f"{market_date}|{family}|{_exposure_key(x)}".encode("utf-8")
+            f"{market_date}|{info_class}|{_exposure_key(x)}".encode("utf-8")
         ).hexdigest())
         for item in members:
             code = str(item.get("code") or "")
             if code and code not in seen_codes:
                 seen_codes.add(code)
-                queue.append(item)
+                tagged = dict(item)
+                tagged["_discovery_information_classes"] = _information_classes(item, broad_median)
+                tagged["_broad_return_median_pct"] = broad_median
+                queue.append(tagged)
     return queue
 
 def _candidate(row: dict[str, Any], history: list[dict[str, Any]], market_date: str) -> dict[str, Any] | None:
     completed = [x for x in history if str(x.get("date") or "") < market_date]
+    info_classes = list(row.get("_discovery_information_classes") or [])
     if len(completed) < MIN_HISTORY:
-        return None
+        if len(completed) < SHORT_HISTORY_MIN or not set(info_classes) & {"NEW_RELATIVE_DIVERGENCE", "SHORT_HISTORY_CURRENT_CHANGE"}:
+            return None
+        avg_amount = sum(float(x.get("amount") or 0) for x in completed[-20:]) / min(20, len(completed))
+        return {
+            "code": row["code"], "name": row["name"], "display_name": f'{row["name"]}（{row["code"]}）',
+            "category": "OBSERVATION_EVALUATION_INPUT", "eligibility": "OBSERVATION_FULL_EVALUATION",
+            "management_identity": None, "auto_promote_to_observation": False,
+            "trial_confirm_permission": False, "trade_signal": None, "decision_output_generated": False,
+            "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
+            "entered_states": [], "surfaced_states": [],
+            "information_classes": info_classes,
+            "discovery_spot": {k: row.get(k) for k in (
+                "price", "change_pct", "amount", "amplitude_pct", "turnover_pct", "volume_ratio",
+                "high", "low", "open", "prev_close", "return_60d_pct", "return_ytd_pct", "provider_timestamp"
+            )},
+            "historical_context": {
+                "status": "SHORT_HISTORY_LIMITED", "as_of": completed[-1]["date"] if completed else None,
+                "sample_count": len(completed), "listing_date": row.get("listing_date"),
+                "avg_amount_20": round(avg_amount, 2),
+                "limitation": "不足65个已完成交易日；不得推导完整历史趋势状态。",
+            },
+            "comparison_basis": ["当前相对结构", "有限历史", "成交与可执行性", "风险收益", "资本效率"],
+            "decision_boundary": "短历史仅授予本节点Observation资格完整评估；不得替代正式行情、Observation ADMIT或MASTER，不产生Trial/Confirm、金额或交易动作。",
+        }
     current_states = classify_states(completed)
     previous_states = _state_names(completed[:-1]) if len(completed) > MIN_HISTORY else set()
     entered = sorted({x["state"] for x in current_states} - previous_states)
     aligned = [x for x in current_states if x["state"] in set(_potential_families(row))]
-    if not entered and not aligned:
+    relative_only = "NEW_RELATIVE_DIVERGENCE" in info_classes
+    if not entered and not aligned and not relative_only:
         return None
     avg_amount = sum(float(x.get("amount") or 0) for x in completed[-20:]) / min(20, len(completed))
     return {
@@ -317,7 +380,7 @@ def _candidate(row: dict[str, Any], history: list[dict[str, Any]], market_date: 
         "management_identity": None, "auto_promote_to_observation": False,
         "trial_confirm_permission": False, "trade_signal": None, "decision_output_generated": False,
         "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": entered, "surfaced_states": current_states,
+        "entered_states": entered, "surfaced_states": current_states, "information_classes": info_classes,
         "discovery_spot": {k: row.get(k) for k in (
             "price", "change_pct", "amount", "amplitude_pct", "turnover_pct", "volume_ratio",
             "high", "low", "open", "prev_close", "return_60d_pct", "return_ytd_pct", "provider_timestamp"
@@ -326,7 +389,7 @@ def _candidate(row: dict[str, Any], history: list[dict[str, Any]], market_date: 
             "status": "READY", "as_of": completed[-1]["date"], "sample_count": len(completed),
             "avg_amount_20": round(avg_amount, 2),
         },
-        "comparison_basis": ["历史趋势/状态变化", "当前结构", "成交与可执行性", "风险收益", "资本效率"],
+        "comparison_basis": ["历史趋势/状态变化", "当前相对结构", "成交与可执行性", "风险收益", "资本效率"],
         "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
     }
 
@@ -451,7 +514,7 @@ def discover_formal_candidates(
             "all_market_boundary": True,
             "no_gain_ranking": True,
             "no_hidden_score": True,
-            "prefilter": "multi-horizon state-family plausibility plus minimum executability; cheap exposure dedup; state-change/recovery information value is acquired before persistent-trend evidence; date rotation is tie-break only within the same family",
+            "prefilter": "single broad cross-section; minimum executability; explicit information-acquisition classes for relative divergence, structural change, short-history current change and persistent structure; exact cheap-label clone control; no return ranking; date hash is tie-break only within equivalent information class/exposure",
             "final_ingress": "history budget counts successful evidence acquisition, with a bounded attempt cap; provider failure is explicit, does not consume a successful-evidence seat, and does not convert successful peers into legal capital competitors",
         },
         "decision_boundary": "发现对象是本节点临时正式评估输入，不是第三种ETF身份；不得自动写观察池、生成Trial/Confirm或交易动作。",
