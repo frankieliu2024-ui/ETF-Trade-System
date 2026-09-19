@@ -486,6 +486,17 @@ def _extend_analysis_coverage_with_discovery(base: dict[str, Any], formal_discov
 def _extend_capital_comparison_with_discovery(base: dict[str, Any], formal_discovery: dict[str, Any] | None) -> dict[str, Any]:
     discovery = formal_discovery or {}
     candidates = [x for x in (discovery.get("candidates") or []) if isinstance(x, dict)]
+    # Partial all-market discovery is evidence, not a complete opportunity set.
+    # Do not let a subset of successful history lookups enter formal capital
+    # competition while peer candidates failed qualification at the same node.
+    if str(discovery.get("coverage_status") or "").upper() != "COMPLETE":
+        return {
+            **base,
+            "formal_discovery_included": False,
+            "formal_discovery_candidate_count": 0,
+            "formal_discovery_ingress_status": "BLOCKED_INCOMPLETE_COVERAGE",
+            "formal_discovery_ingress_reason": "全市场Discovery覆盖不完整；部分成功对象不得代表完整全市场机会集进入正式资本竞争。",
+        }
     if not candidates:
         return base
     existing = [x for x in (base.get("comparison_universe") or base.get("ordered_candidates") or []) if isinstance(x, dict)]
