@@ -9,7 +9,8 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from etf_opportunity_discovery import (\n    compress_homogeneous_exposure,
+from etf_opportunity_discovery import (
+    compress_homogeneous_exposure,
     discover_etf,
     discover_state_delta,
     route_discovery_result,
