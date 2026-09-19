@@ -633,10 +633,14 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     if consistency_error:
         raise ValueError(f"invalid formal decision cross-field consistency: {consistency_error}")
     managed_projection = build_managed_position_projection(ROOT, account_for_lifecycle)
-    monitor_universe = load_json(ROOT / "config/market/etf_monitor_universe.json")
-    monitored_codes = {str(x.get("code") or "") for x in (monitor_universe.get("objects") or [])}
-    held_etfs = set(active_account_asset_codes(ROOT, account_for_lifecycle).get("etf", set()))
-    validate_observation_management(decision, held_codes=held_etfs, monitored_codes=monitored_codes)
+    if decision.get("observation_management") not in (None, []):
+        monitor_path = ROOT / "config/market/etf_monitor_universe.json"
+        if not monitor_path.exists():
+            raise ValueError("observation management requires canonical ETF monitor universe")
+        monitor_universe = load_json(monitor_path)
+        monitored_codes = {str(x.get("code") or "") for x in (monitor_universe.get("objects") or [])}
+        held_etfs = set(active_account_asset_codes(ROOT, account_for_lifecycle).get("etf", set()))
+        validate_observation_management(decision, held_codes=held_etfs, monitored_codes=monitored_codes)
     current_path = ROOT / "data/state/CURRENT.json"
     current = load_json(current_path) if current_path.exists() else {}
     market_date = str(request.get("market_date") or current.get("market_date") or "")
