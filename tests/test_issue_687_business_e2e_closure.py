@@ -69,6 +69,10 @@ class BusinessE2EClosureContractTests(unittest.TestCase):
             state_sync.required_etf_opportunity_reviews(root, {"positions": []}),
             {"513180": "OBSERVED_ETF", "588080": "DISCOVERED_ETF"},
         )
+        self.assertEqual(
+            state_sync.required_etf_opportunity_reviews(root, {"positions": []}, "2026-09-17"),
+            {},
+        )
 
     def test_formal_decision_must_resolve_every_current_observation(self) -> None:
         with self.assertRaisesRegex(ValueError, "missing current observations"):
