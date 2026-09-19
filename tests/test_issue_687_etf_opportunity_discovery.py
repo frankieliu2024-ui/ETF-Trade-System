@@ -9,7 +9,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from etf_opportunity_discovery import compress_homogeneous_exposure, discover_etf
+from etf_opportunity_discovery import (\n    compress_homogeneous_exposure,\n    discover_etf,\n    discover_state_delta,\n    route_discovery_result,\n)
 
 
 def series(values):
@@ -64,6 +64,37 @@ class Issue687V0DiscoveryTests(unittest.TestCase):
         compressed = compress_homogeneous_exposure(candidates)
         self.assertEqual([x["code"] for x in compressed], ["A", "C"])
 
+
+    def test_delta_event_does_not_repeat_persistent_state(self):
+        previous = {"surfaced_states": ["PERSISTENT_TREND"]}
+        current = {"code": "999999", "as_of": "2026-09-18", "surfaced_states": ["PERSISTENT_TREND"], "worth_full_evaluation": True}
+        delta = discover_state_delta(previous, current)
+        self.assertFalse(delta["material_delta"])
+        self.assertFalse(delta["worth_full_evaluation"])
+        self.assertIsNone(delta["trade_signal"])
+
+    def test_delta_event_surfaces_new_state_entry(self):
+        previous = {"surfaced_states": ["PERSISTENT_TREND"]}
+        current = {"code": "999999", "as_of": "2026-09-18", "surfaced_states": ["PERSISTENT_TREND", "TREND_CHANGE"], "worth_full_evaluation": True}
+        delta = discover_state_delta(previous, current)
+        self.assertEqual(delta["entered_states"], ["TREND_CHANGE"])
+        self.assertTrue(delta["worth_full_evaluation"])
+
+    def test_holding_and_observation_remain_only_formal_identities(self):
+        holding = route_discovery_result({"code": "561980", "worth_full_evaluation": True}, holding_codes={"561980"}, observation_codes={"513180"})
+        self.assertEqual(holding["route"], "HOLDING_DELTA_EVIDENCE")
+        self.assertFalse(holding["management_identity_change"])
+        observed = route_discovery_result({"code": "513180", "worth_full_evaluation": True}, holding_codes={"561980"}, observation_codes={"513180"})
+        self.assertEqual(observed["route"], "OBSERVATION_DELTA_EVIDENCE")
+        self.assertFalse(observed["auto_promote_to_observation"])
+
+    def test_out_of_pool_hit_is_ephemeral_not_third_identity(self):
+        routed = route_discovery_result({"code": "999999", "worth_full_evaluation": True}, holding_codes={"561980"}, observation_codes={"513180"})
+        self.assertEqual(routed["route"], "EPHEMERAL_FULL_EVALUATION_INPUT")
+        self.assertTrue(routed["ephemeral"])
+        self.assertTrue(routed["full_evaluation_ingress"])
+        self.assertFalse(routed["management_identity_change"])
+        self.assertFalse(routed["auto_promote_to_observation"])
 
 if __name__ == "__main__":
     unittest.main()
