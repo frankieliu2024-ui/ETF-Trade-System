@@ -24,7 +24,7 @@ def held_etf_codes(root: Path, account: dict) -> set[str]:
     return {_code(x) for x in active_account_asset_codes(root, account).get("etf", set())}
 
 
-def validate_observation_management(decision: dict, *, held_codes: set[str], monitored_codes: set[str], require_existing_coverage: bool = False) -> list[dict]:
+def validate_observation_management(decision: dict, *, held_codes: set[str], monitored_codes: set[str], require_existing_coverage: bool = False, allowed_admit_codes: set[str] | None = None) -> list[dict]:
     raw = decision.get("observation_management")
     existing_observations = {_code(x) for x in monitored_codes} - {_code(x) for x in held_codes}
     if raw in (None, []):
@@ -48,6 +48,8 @@ def validate_observation_management(decision: dict, *, held_codes: set[str], mon
             raise ValueError(f"held ETF cannot be admitted as observation: {code}")
         if action == "ADMIT" and code in monitored_codes:
             raise ValueError(f"ADMIT requires a node-local non-managed ETF: {code}")
+        if action == "ADMIT" and allowed_admit_codes is not None and code not in {_code(x) for x in allowed_admit_codes}:
+            raise ValueError(f"ADMIT requires a same-node eligible Discovery object with formal quote: {code}")
         if action in {"RETAIN", "EXIT"} and code not in monitored_codes:
             raise ValueError(f"{action} requires current continuous-monitor membership: {code}")
         if action in {"ADMIT", "RETAIN"}:
