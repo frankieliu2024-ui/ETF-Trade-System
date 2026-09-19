@@ -624,7 +624,35 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     )
     if review_error:
         raise ValueError(f"invalid formal decision managed-position review contract: {review_error}")
-    required_opportunities = required_etf_opportunity_reviews(ROOT, account_for_lifecycle, market_date)
+    managed_projection = build_managed_position_projection(ROOT, account_for_lifecycle)
+    monitor_path = ROOT / "config/market/etf_monitor_universe.json"
+    if monitor_path.exists():
+        monitor_universe = load_json(monitor_path)
+        monitored_codes = {str(x.get("code") or "") for x in (monitor_universe.get("objects") or [])}
+        held_etfs = set(active_account_asset_codes(ROOT, account_for_lifecycle).get("etf", set()))
+        current_observations = monitored_codes - held_etfs
+    else:
+        monitored_codes = set()
+        held_etfs = set()
+        current_observations = set()
+    discovery_inputs = discovery_eligibility_inputs(ROOT, market_date)
+    admitted_discovery, eligibility_error = validate_observation_eligibility_reviews(decision, discovery_inputs)
+    if eligibility_error:
+        raise ValueError(f"invalid formal decision Observation eligibility contract: {eligibility_error}")
+    if decision.get("observation_management") not in (None, []) or current_observations or admitted_discovery:
+        if not monitor_path.exists():
+            raise ValueError("observation management requires canonical ETF monitor universe")
+        changes = validate_observation_management(
+            decision,
+            held_codes=held_etfs,
+            monitored_codes=monitored_codes,
+            require_existing_coverage=bool(current_observations),
+            allowed_admit_codes=admitted_discovery,
+        )
+        actual_admits = {normalize_code(x.get("code") or "") for x in changes if str(x.get("action") or "").upper() == "ADMIT"}
+        if actual_admits != admitted_discovery:
+            raise ValueError("formal decision ADMIT actions must exactly match Observation eligibility ADMIT dispositions")
+    required_opportunities = legal_observation_reviews(decision, current_observations, admitted_discovery)
     capital_error = validate_capital_competition_contract(
         decision.get("capital_competition"), account_for_lifecycle,
         "formal_decision.capital_competition",
@@ -637,26 +665,6 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     )
     if consistency_error:
         raise ValueError(f"invalid formal decision cross-field consistency: {consistency_error}")
-    managed_projection = build_managed_position_projection(ROOT, account_for_lifecycle)
-    monitor_path = ROOT / "config/market/etf_monitor_universe.json"
-    if monitor_path.exists():
-        monitor_universe = load_json(monitor_path)
-        monitored_codes = {str(x.get("code") or "") for x in (monitor_universe.get("objects") or [])}
-        held_etfs = set(active_account_asset_codes(ROOT, account_for_lifecycle).get("etf", set()))
-        current_observations = monitored_codes - held_etfs
-    else:
-        monitored_codes = set()
-        held_etfs = set()
-        current_observations = set()
-    if decision.get("observation_management") not in (None, []) or current_observations:
-        if not monitor_path.exists():
-            raise ValueError("observation management requires canonical ETF monitor universe")
-        validate_observation_management(
-            decision,
-            held_codes=held_etfs,
-            monitored_codes=monitored_codes,
-            require_existing_coverage=bool(required_opportunities),
-        )
     main_candidate = str(decision.get("main_candidate") or "")
     explicit_code = str(decision.get("candidate_code") or decision.get("code") or "")
     match = re.search(r"（(\d{6})）", main_candidate) or re.search(r"(?<!\d)(\d{6})(?!\d)", main_candidate)
@@ -910,6 +918,61 @@ def validate_managed_position_lifecycle(value: object, account: dict, object_nam
     if missing:
         return f"{object_name} is missing current managed positions: {', '.join(missing)}"
     return ""
+
+
+def discovery_eligibility_inputs(root: Path, market_date: str = "") -> dict[str, dict]:
+    path = root / "data" / "state" / "query_context.json"
+    if not path.exists():
+        return {}
+    context = load_json(path)
+    context_market_date = str(context.get("market_date") or (context.get("current") or {}).get("market_date") or "")
+    if market_date and context_market_date != str(market_date):
+        return {}
+    discovery = context.get("formal_etf_discovery") or {}
+    return {
+        normalize_code(item.get("code") or ""): item
+        for item in (discovery.get("candidates") or [])
+        if isinstance(item, dict) and normalize_code(item.get("code") or "")
+    }
+
+
+def validate_observation_eligibility_reviews(decision: dict, inputs: dict[str, dict]) -> tuple[set[str], str]:
+    if not inputs:
+        return set(), ""
+    reviews = decision.get("observation_eligibility_reviews")
+    if not isinstance(reviews, list):
+        return set(), "formal_decision.observation_eligibility_reviews must cover every same-node Discovery input"
+    seen, admitted = set(), set()
+    for index, review in enumerate(reviews):
+        if not isinstance(review, dict):
+            return set(), f"formal_decision.observation_eligibility_reviews[{index}] must be an object"
+        code = normalize_code(review.get("code") or review.get("security_code") or "")
+        disposition = str(review.get("disposition") or "").upper().strip()
+        if code not in inputs or code in seen:
+            return set(), f"formal_decision.observation_eligibility_reviews[{index}] has unknown or duplicate code"
+        if disposition not in {"ADMIT", "REJECT"}:
+            return set(), f"formal_decision.observation_eligibility_reviews[{index}].disposition must be ADMIT or REJECT"
+        if not str(review.get("reason") or "").strip():
+            return set(), f"formal_decision.observation_eligibility_reviews[{index}] requires reason"
+        if disposition == "ADMIT":
+            if str(inputs[code].get("formal_quote_status") or "").upper() != "READY":
+                return set(), f"formal_decision cannot ADMIT {code} without READY formal quote"
+            admitted.add(code)
+        seen.add(code)
+    missing = sorted(set(inputs) - seen)
+    if missing:
+        return set(), "formal_decision.observation_eligibility_reviews missing Discovery inputs: " + ", ".join(missing)
+    return admitted, ""
+
+
+def legal_observation_reviews(decision: dict, current_observations: set[str], admitted: set[str]) -> dict[str, str]:
+    actions = {
+        normalize_code(item.get("code") or ""): str(item.get("action") or "").upper()
+        for item in (decision.get("observation_management") or [])
+        if isinstance(item, dict)
+    }
+    legal = {code for code in current_observations if actions.get(code) == "RETAIN"} | set(admitted)
+    return {code: "OBSERVED_ETF" for code in legal}
 
 
 def required_etf_opportunity_reviews(root: Path, account: dict, market_date: str = "") -> dict[str, str]:
