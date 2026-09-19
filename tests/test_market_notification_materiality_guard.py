@@ -582,16 +582,3 @@ from tests.test_issue_649_market_anomaly_clustering import (  # noqa: E402
 class Issue649MarketAnomalyClusteringTests(_Issue649MarketAnomalyClusteringTests):
     pass
 
-
-class Issue687V0ReplayBridgeTest(unittest.TestCase):
-    def test_issue_687_v0_replay_contract(self):
-        import importlib.util
-        path = ROOT / "tests/test_issue_687_etf_opportunity_discovery.py"
-        spec = importlib.util.spec_from_file_location("issue687_v0_tests", path)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        case = module.Issue687V0DiscoveryTests("test_bounded_eight_case_pit_replay")
-        result = unittest.TestResult()
-        case.run(result)
-        if result.errors or result.failures:
-            self.fail(str(result.errors + result.failures))
