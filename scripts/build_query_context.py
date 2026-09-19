@@ -11,11 +11,11 @@ from pathlib import Path
 try:
     from state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current, read_json
     from market_quote_router import build_market_quote_context
-    from formal_etf_opportunity_discovery import discover_formal_candidates
+    from formal_etf_opportunity_discovery import attach_formal_quotes, discover_formal_candidates
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current, read_json
     from scripts.market_quote_router import build_market_quote_context
-    from scripts.formal_etf_opportunity_discovery import discover_formal_candidates
+    from scripts.formal_etf_opportunity_discovery import attach_formal_quotes, discover_formal_candidates
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
@@ -446,6 +446,15 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
             market_date=str(current.get("market_date") or trading_day_status.get("market_date") or ""),
             managed_codes=managed_etf_codes,
         )
+        discovered_codes = [str(x.get("code") or "") for x in (formal_discovery.get("candidates") or []) if x.get("code")]
+        if discovered_codes:
+            candidate_quote = build_market_quote_context(
+                root,
+                force_refresh=True,
+                requested_symbols=discovered_codes,
+                decision_request_time=None,
+            )
+            formal_discovery = attach_formal_quotes(formal_discovery, candidate_quote)
     system_objects = []
     seen_system_codes = set()
     for item in etf_universe.get("objects") or []:
