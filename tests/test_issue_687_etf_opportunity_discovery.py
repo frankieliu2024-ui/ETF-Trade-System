@@ -125,5 +125,20 @@ class Issue687V0DiscoveryTests(unittest.TestCase):
         ]
         self.assertEqual(len(consolidate_discovery_events(events)), 3)
 
+    def test_bounded_security_master_has_explicit_repeated_tracking_index_families(self):
+        import json
+        manifest_path = ROOT / "research/issue-687/bounded_homogeneous_security_master.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        self.assertTrue(manifest["research_only"])
+        self.assertFalse(manifest["production_security_master"])
+        self.assertEqual(manifest["clustering_contract"], "exact explicit tracking_index within this manifest; no name-only inference")
+        families = manifest["families"]
+        self.assertGreaterEqual(len(families), 4)
+        self.assertTrue(all(len(family["members"]) >= 3 for family in families))
+        codes = [m["code"] for family in families for m in family["members"]]
+        self.assertEqual(len(codes), len(set(codes)))
+        self.assertFalse(manifest["boundaries"]["can_generate_trade_signal"])
+        self.assertFalse(manifest["boundaries"]["can_modify_formal_monitor_universe"])
+
 if __name__ == "__main__":
     unittest.main()
