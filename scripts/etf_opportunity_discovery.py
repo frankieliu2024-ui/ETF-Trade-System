@@ -180,3 +180,4 @@ def compress_homogeneous_exposure(candidates: list[dict[str, Any]]) -> list[dict
             seen.add(cluster)
         output.append(item)
     return output
+\n
