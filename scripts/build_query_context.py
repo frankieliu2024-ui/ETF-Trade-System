@@ -447,19 +447,22 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
             managed_codes=managed_etf_codes,
         )
         discovered_codes = [str(x.get("code") or "") for x in (formal_discovery.get("candidates") or []) if x.get("code")]
-        if discovered_codes:
+        existing_quote_symbols = {
+            str(x.get("symbol") or x.get("code") or "").upper().replace(".SH", "").replace(".SZ", "")
+            for x in (market_quote.get("quotes") or []) if isinstance(x, dict)
+        }
+        quote_refresh_codes = [x for x in discovered_codes if x.upper() not in existing_quote_symbols]
+        if discovered_codes and not quote_refresh_codes:
+            formal_discovery = attach_formal_quotes(formal_discovery, market_quote)
+        elif discovered_codes:
             candidate_quote = build_market_quote_context(
                 root,
                 force_refresh=True,
-                requested_symbols=discovered_codes,
+                requested_symbols=quote_refresh_codes,
                 decision_request_time=None,
             )
             formal_discovery = attach_formal_quotes(formal_discovery, candidate_quote)
             discovered_set = {x.upper() for x in discovered_codes}
-            existing_quote_symbols = {
-                str(x.get("symbol") or x.get("code") or "").upper().replace(".SH", "").replace(".SZ", "")
-                for x in (market_quote.get("quotes") or []) if isinstance(x, dict)
-            }
             for quote in candidate_quote.get("quotes") or []:
                 symbol = str(quote.get("symbol") or quote.get("code") or "").upper().replace(".SH", "").replace(".SZ", "")
                 if symbol in discovered_set and symbol not in existing_quote_symbols:
