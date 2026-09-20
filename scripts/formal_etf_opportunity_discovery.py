@@ -113,7 +113,7 @@ def _plain_html(value: Any) -> str:
 
 
 def _six_digit(value: Any) -> str:
-    match = re.search(r"(?<!\\d)(\\d{6})(?!\\d)", _plain_html(value))
+    match = re.search(r"(?<!\d)(\d{6})(?!\d)", _plain_html(value))
     return match.group(1) if match else ""
 
 
@@ -134,7 +134,7 @@ def fetch_sse_official_etf_master(market_date: str) -> list[dict[str, Any]]:
     result = []
     for raw in rows:
         code = str(raw.get("SEC_CODE") or "").strip()
-        if re.fullmatch(r"\\d{6}", code):
+        if re.fullmatch(r"\d{6}", code):
             result.append({"code": code, "name": str(raw.get("SEC_NAME") or code).strip(),
                            "market_id": 1, "exchange": "SSE", "identity_source": "SSE_OFFICIAL_ETF_SCALE_ENUMERATION"})
     return result
