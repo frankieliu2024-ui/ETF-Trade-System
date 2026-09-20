@@ -1,18 +1,18 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-20T17:10:00+08:00",
+  "generated_at": "2026-09-20T17:10:16+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 35501530489,
+  "workflow_name": "ETF system consistency",
+  "run_id": 35501530480,
   "run_attempt": 1,
   "head_sha": "d6cbb4bed98415b024a88ae2a456a6fddf9040d7",
-  "main_head_sha": "b2e73f979fba8670aab8f5f5893c9807cc49b31b",
-  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
+  "main_head_sha": "6e4f099e8a7fea40b28683314583e762e3afb830",
+  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
-      "job": "watchdog",
-      "step": "Escalate persistent or structural failure",
-      "number": 14
+      "job": "consistency",
+      "step": "Enforce hard consistency result or admit bounded replay migration",
+      "number": 9
     }
   ],
   "changed_files": [
@@ -23,8 +23,8 @@
   ],
   "commit_message": "docs: align ETF formal-file freshness metadata",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
-  "reason": "failure is classified as transient/persistence and this is the first attempt",
+  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
+  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
