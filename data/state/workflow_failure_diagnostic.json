@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-20T17:24:51+08:00",
+  "generated_at": "2026-09-20T17:37:46+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 35502100411,
-  "run_attempt": 2,
-  "head_sha": "6bc1e0f87febf76222e3da857d17a7c1a03175ad",
-  "main_head_sha": "edc55cb364895ed3113bf1c9f8edb3b4e3a06f5b",
+  "run_id": 35502804519,
+  "run_attempt": 1,
+  "head_sha": "4773cc52a4eeb84fe6dc0dc0de9f6eac3d91b819",
+  "main_head_sha": "c803a60c8c9f651e43b34764bd90c9c02ed40472",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
@@ -16,9 +16,11 @@
     }
   ],
   "changed_files": [
-    "scripts/check_system_consistency_core.py"
+    ".github/workflows/self-healing-watchdog.yml",
+    ".github/workflows/system-consistency.yml",
+    "tests/test_opening_current_self_healing.py"
   ],
-  "commit_message": "fix: allow non-version-bumping MASTER revision dates (#730)",
+  "commit_message": "fix: persist recovered self-healing health state (#731)",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
