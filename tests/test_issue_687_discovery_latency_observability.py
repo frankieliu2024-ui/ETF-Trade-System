@@ -33,3 +33,7 @@ def test_issue_687_discovery_latency_is_observability_only() -> None:
     assert "MAX_HISTORY_SUCCESS_BUDGET = 12" in discovery
     assert "MAX_HISTORY_ATTEMPT_MULTIPLIER = 3" in discovery
     assert "MAX_OBSERVATION_CANDIDATES = 12" in discovery
+    assert "MAX_HISTORY_FETCH_WORKERS = 2" in discovery
+    assert "ThreadPoolExecutor" in discovery
+    assert "as_completed" in discovery
+    assert "Consume completed work strictly in original queue order" in discovery
