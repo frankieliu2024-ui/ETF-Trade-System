@@ -98,7 +98,7 @@ def _secid(code: str, market_id: int | None = None) -> str:
     return f"{market}.{code}"
 
 
-def fetch_daily_history(code: str, market_id: int, end_date: str, limit: int = 90) -> list[dict[str, Any]]:
+def fetch_eastmoney_daily_history(code: str, market_id: int, end_date: str, limit: int = 90) -> list[dict[str, Any]]:
     payload = _request_json(HISTORY_URL, {
         "secid": _secid(code, market_id),
         "fields1": "f1,f2,f3,f4,f5,f6",
@@ -115,10 +115,48 @@ def fetch_daily_history(code: str, market_id: int, end_date: str, limit: int = 9
         rows.append({
             "date": parts[0], "open": _num(parts[1]), "close": _num(parts[2]),
             "high": _num(parts[3]), "low": _num(parts[4]),
-            "volume": _num(parts[5]), "amount": _num(parts[6]),
+            "volume": _num(parts[5]), "amount": _num(parts[6]), "_provider": "eastmoney_push2his",
         })
     return [x for x in rows if x["date"] and x["close"] is not None]
 
+
+def fetch_tencent_daily_history_bounded(code: str, market_id: int, end_date: str, limit: int = 90) -> list[dict[str, Any]]:
+    from scripts.tencent_quote import fetch_tencent_daily_history
+
+    suffix = "SH" if market_id == 1 else "SZ"
+    end = datetime.fromisoformat(end_date).date()
+    start = end - timedelta(days=180)
+    rows, _meta = fetch_tencent_daily_history(
+        f"{code}.{suffix}", start, end, adjustment="none", timeout=10, page_size=180, window_days=181
+    )
+    normalized = []
+    for row in rows[-limit:]:
+        normalized.append({
+            "date": str(row.get("date") or ""), "open": _num(row.get("open")), "close": _num(row.get("close")),
+            "high": _num(row.get("high")), "low": _num(row.get("low")), "volume": _num(row.get("volume")),
+            "amount": _num(row.get("amount")), "_provider": "tencent_qq_history",
+        })
+    return [x for x in normalized if x["date"] and x["close"] is not None]
+
+
+def fetch_daily_history(code: str, market_id: int, end_date: str, limit: int = 90) -> list[dict[str, Any]]:
+    """Independent-provider bounded repair for Discovery completed daily bars."""
+    errors = []
+    try:
+        rows = fetch_tencent_daily_history_bounded(code, market_id, end_date, limit)
+        if rows:
+            return rows
+        errors.append("tencent_qq_history:empty")
+    except Exception as exc:
+        errors.append(f"tencent_qq_history:{type(exc).__name__}:{exc}")
+    try:
+        rows = fetch_eastmoney_daily_history(code, market_id, end_date, limit)
+        if rows:
+            return rows
+        errors.append("eastmoney_push2his:empty")
+    except Exception as exc:
+        errors.append(f"eastmoney_push2his:{type(exc).__name__}:{exc}")
+    raise RuntimeError("historical provider chain exhausted; " + " | ".join(errors))
 
 
 def _history_snapshot_path(root: Path, market_date: str) -> Path:
@@ -500,7 +538,7 @@ def discover_formal_candidates(
         if history is None:
             repair_attempted = True
             history = fetch_daily_history(code, int(row.get("market_id") or 0), market_date, 90)
-            history_source = "EASTMONEY_BOUNDED_REPAIR"
+            provider = str((history[0] if history else {}).get("_provider") or "bounded_provider_repair").upper()\n            history_source = f"{provider}_BOUNDED_REPAIR"
         return history, str(history_source or ""), reused, repair_attempted
 
     # Preserve deterministic queue semantics and the successful-evidence budget.
