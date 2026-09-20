@@ -538,7 +538,8 @@ def discover_formal_candidates(
         if history is None:
             repair_attempted = True
             history = fetch_daily_history(code, int(row.get("market_id") or 0), market_date, 90)
-            provider = str((history[0] if history else {}).get("_provider") or "bounded_provider_repair").upper()\n            history_source = f"{provider}_BOUNDED_REPAIR"
+            provider = str((history[0] if history else {}).get("_provider") or "bounded_provider_repair").upper()
+            history_source = f"{provider}_BOUNDED_REPAIR"
         return history, str(history_source or ""), reused, repair_attempted
 
     # Preserve deterministic queue semantics and the successful-evidence budget.
