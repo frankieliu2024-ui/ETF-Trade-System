@@ -5,6 +5,7 @@ import hashlib
 import json
 import math
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,7 @@ MAX_OBSERVATION_INPUTS_PER_FAMILY = 4
 MAX_OBSERVATION_CANDIDATES = 12
 MAX_HISTORY_SUCCESS_BUDGET = 12
 MAX_HISTORY_ATTEMPT_MULTIPLIER = 3
+MAX_HISTORY_FETCH_WORKERS = 2
 MIN_HISTORY = 65
 RELATIVE_DIVERGENCE_PCT = 1.5
 SHORT_HISTORY_MIN = 20
@@ -485,44 +487,81 @@ def discover_formal_candidates(
     history_reused = 0
     history_repair_attempted = 0
     started = time.monotonic()
-    for row in prefiltered:
-        if history_succeeded >= MAX_HISTORY_SUCCESS_BUDGET or history_attempted >= max_history_attempts:
-            break
+    def resolve_history(row: dict[str, Any]) -> tuple[list[dict[str, Any]], str, bool, bool]:
         code = str(row["code"])
-        history_attempted += 1
-        try:
-            history = (history_by_code or {}).get(code) if history_by_code is not None else node_history.get(code)
-            history_source = "INJECTED" if history_by_code is not None and history is not None else ("DISCOVERY_NODE_HISTORY" if history is not None else None)
-            if history_source == "DISCOVERY_NODE_HISTORY":
+        history = (history_by_code or {}).get(code) if history_by_code is not None else node_history.get(code)
+        history_source = "INJECTED" if history_by_code is not None and history is not None else ("DISCOVERY_NODE_HISTORY" if history is not None else None)
+        reused = history_source == "DISCOVERY_NODE_HISTORY"
+        repair_attempted = False
+        if history is None:
+            history = load_validated_history(root, code, market_date, 90)
+            history_source = "VALIDATED_EXISTING_HISTORY" if history is not None else None
+            reused = history is not None
+        if history is None:
+            repair_attempted = True
+            history = fetch_daily_history(code, int(row.get("market_id") or 0), market_date, 90)
+            history_source = "EASTMONEY_BOUNDED_REPAIR"
+        return history, str(history_source or ""), reused, repair_attempted
+
+    # Preserve deterministic queue semantics and the successful-evidence budget.
+    # Only independent provider repairs inside the current queue window overlap.
+    # A batch is never wider than the remaining success seats, so concurrency
+    # cannot over-consume the 12-success resource contract.
+    queue_index = 0
+    while history_succeeded < MAX_HISTORY_SUCCESS_BUDGET and history_attempted < max_history_attempts and queue_index < len(prefiltered):
+        remaining_success = MAX_HISTORY_SUCCESS_BUDGET - history_succeeded
+        remaining_attempts = max_history_attempts - history_attempted
+        batch_size = min(MAX_HISTORY_FETCH_WORKERS, remaining_success, remaining_attempts, len(prefiltered) - queue_index)
+        batch = prefiltered[queue_index:queue_index + batch_size]
+        queue_index += batch_size
+        history_attempted += len(batch)
+
+        resolved: dict[str, tuple[list[dict[str, Any]], str, bool, bool]] = {}
+        errors: dict[str, Exception] = {}
+        if history_by_code is not None or batch_size == 1:
+            for row in batch:
+                code = str(row["code"])
+                try:
+                    resolved[code] = resolve_history(row)
+                except Exception as exc:
+                    errors[code] = exc
+        else:
+            with ThreadPoolExecutor(max_workers=MAX_HISTORY_FETCH_WORKERS, thread_name_prefix="etf-discovery-history") as executor:
+                futures = {executor.submit(resolve_history, row): str(row["code"]) for row in batch}
+                for future in as_completed(futures):
+                    code = futures[future]
+                    try:
+                        resolved[code] = future.result()
+                    except Exception as exc:
+                        errors[code] = exc
+
+        # Consume completed work strictly in original queue order. Completion
+        # order must never become a hidden ranking or change candidate identity.
+        for row in batch:
+            code = str(row["code"])
+            if code in errors:
+                failures.append({"code": code, "error": str(errors[code])[-300:]})
+                continue
+            history, history_source, reused, repair_attempted = resolved[code]
+            if reused:
                 history_reused += 1
-            if history is None:
-                history = load_validated_history(root, code, market_date, 90)
-                history_source = "VALIDATED_EXISTING_HISTORY" if history is not None else None
-                if history is not None:
-                    history_reused += 1
-                    node_history[code] = history
-                    snapshot_dirty = True
-            if history is None:
+            if repair_attempted:
                 history_repair_attempted += 1
-                history = fetch_daily_history(code, int(row.get("market_id") or 0), market_date, 90)
-                history_source = "EASTMONEY_BOUNDED_REPAIR"
+            if history_by_code is None and history_source in {"VALIDATED_EXISTING_HISTORY", "EASTMONEY_BOUNDED_REPAIR"}:
                 node_history[code] = history
                 snapshot_dirty = True
             history_succeeded += 1
             item = _candidate(row, history, market_date)
             if item:
                 item["history_source"] = history_source
-            if item:
-                code = str(item.get("code") or "")
-                item["management_identity"] = "MANAGED" if code in managed_codes else None
+                item_code = str(item.get("code") or "")
+                item["management_identity"] = "MANAGED" if item_code in managed_codes else None
                 item["discovery_semantic"] = (
                     "NODE_LOCAL_ALL_MARKET_OPPORTUNITY_SIGNAL_FOR_EXISTING_MANAGED_ETF"
-                    if code in managed_codes
+                    if item_code in managed_codes
                     else "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT"
                 )
                 candidates.append(item)
-        except Exception as exc:
-            failures.append({"code": code, "error": str(exc)[-300:]})
     if history_by_code is None and snapshot_dirty:
         persist_discovery_history_snapshot(root, market_date, node_history)
     elapsed = round(time.monotonic() - started, 3)
@@ -540,7 +579,7 @@ def discover_formal_candidates(
         "held_identity_count": sum(1 for x in broad if x.get("code") in held_codes),
         "managed_excluded_count": 0,
         "history_prefilter_count": len(prefiltered), "candidate_count": len(candidates),
-        "history_success_budget": MAX_HISTORY_SUCCESS_BUDGET, "history_attempt_cap": max_history_attempts,
+        "history_success_budget": MAX_HISTORY_SUCCESS_BUDGET, "history_attempt_cap": max_history_attempts, "history_fetch_workers": MAX_HISTORY_FETCH_WORKERS,
         "history_attempted_count": history_attempted, "history_succeeded_count": history_succeeded,
         "history_reused_count": history_reused, "history_repair_attempted_count": history_repair_attempted,
         "history_failure_count": len(failures), "history_elapsed_seconds": elapsed,

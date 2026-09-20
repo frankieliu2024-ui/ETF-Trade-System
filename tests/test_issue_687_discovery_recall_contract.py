@@ -110,6 +110,24 @@ class DiscoveryRecallContractTests(unittest.TestCase):
         self.assertGreaterEqual(len(queue), 8)
         self.assertEqual(len({item["code"] for item in queue}), len(queue))
 
+    def test_parallel_history_completion_preserves_queue_order_and_budget(self) -> None:
+        rows = [
+            row(f"54{i:04d}", 2.0, r60=20.0, name=f"并发主题{i}ETF")
+            for i in range(14)
+        ]
+        rows += [row(f"55{i:04d}", 0.0, r60=0.0, name=f"基准{i}ETF") for i in range(20)]
+        queue = discovery._bounded_prefilter(rows, set(), "2026-09-18")
+        expected = [x["code"] for x in queue[:discovery.MAX_HISTORY_SUCCESS_BUDGET]]
+        histories = {code: hist(70) for code in expected}
+        result = discovery.discover_formal_candidates(
+            Path("."), market_date="2026-09-18", managed_codes=set(),
+            spot_rows=rows, history_by_code=histories,
+        )
+        self.assertEqual(result["history_succeeded_count"], discovery.MAX_HISTORY_SUCCESS_BUDGET)
+        self.assertLessEqual(result["history_attempted_count"], result["history_attempt_cap"])
+        self.assertEqual(result["history_fetch_workers"], discovery.MAX_HISTORY_FETCH_WORKERS)
+        self.assertEqual(result["latency_observability"]["measurement_role"], "OBSERVABILITY_ONLY_NOT_DECISION_GATE")
+
     def test_discovery_classes_do_not_grant_trade_authority(self) -> None:
         rows = [row("510001", -3.0), row("510002", -2.5), row("513350", -0.2)]
         result = discovery.discover_formal_candidates(
