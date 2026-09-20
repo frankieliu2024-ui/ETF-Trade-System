@@ -443,6 +443,8 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     )
     held_etf_codes = {str(x) for x in active_account_asset_codes(root, account).get("etf", set())}
     formal_discovery = {"status": "NOT_REQUESTED", "candidates": []}
+    discovery_pipeline_started = time.monotonic() if (force_refresh or request_file) else None
+    candidate_quote_elapsed = 0.0
     if force_refresh or request_file:
         formal_discovery = discover_formal_candidates(
             root,
@@ -459,12 +461,14 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         if discovered_codes and not quote_refresh_codes:
             formal_discovery = attach_formal_quotes(formal_discovery, market_quote)
         elif discovered_codes:
+            candidate_quote_started = time.monotonic()
             candidate_quote = build_market_quote_context(
                 root,
                 force_refresh=True,
                 requested_symbols=quote_refresh_codes,
                 decision_request_time=None,
             )
+            candidate_quote_elapsed = round(time.monotonic() - candidate_quote_started, 3)
             formal_discovery = attach_formal_quotes(formal_discovery, candidate_quote)
             discovered_set = {x.upper() for x in discovered_codes}
             for quote in candidate_quote.get("quotes") or []:
@@ -476,6 +480,10 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
                 x for x in (candidate_quote.get("refresh_failures") or [])
                 if str(x.get("symbol") or "").upper().replace(".SH", "").replace(".SZ", "") in discovered_set
             )
+        discovery_latency = formal_discovery.setdefault("latency_observability", {})
+        discovery_latency["candidate_formal_quote_elapsed_seconds"] = candidate_quote_elapsed
+        discovery_latency["discovery_pipeline_elapsed_seconds"] = round(time.monotonic() - discovery_pipeline_started, 3) if discovery_pipeline_started is not None else None
+        discovery_latency["measurement_role"] = "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
     system_objects = []
     seen_system_codes = set()
     for item in etf_universe.get("objects") or []:

@@ -460,16 +460,21 @@ def discover_formal_candidates(
     history_by_code: dict[str, list[dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
     generated = datetime.now(BEIJING).isoformat(timespec="seconds")
+    broad_started = time.monotonic()
     try:
         broad = list(spot_rows) if spot_rows is not None else fetch_broad_etf_spot()
     except Exception as exc:
         return {
             "status": "DEGRADED", "generated_at_beijing": generated, "source": "EASTMONEY_BROAD_ETF_SPOT",
             "broad_universe_count": 0, "candidates": [], "error": str(exc)[-500:],
+            "broad_acquisition_elapsed_seconds": round(time.monotonic() - broad_started, 3),
             "decision_boundary": "广域发现失败不删除持仓/观察ETF，也不阻塞其现有正式MASTER链。",
         }
+    broad_elapsed = round(time.monotonic() - broad_started, 3)
+    prefilter_started = time.monotonic()
     held_codes = {str(x) for x in (held_codes or set())}
     prefiltered = _bounded_prefilter(broad, held_codes, market_date)
+    prefilter_elapsed = round(time.monotonic() - prefilter_started, 3)
     max_history_attempts = min(len(prefiltered), MAX_HISTORY_SUCCESS_BUDGET * MAX_HISTORY_ATTEMPT_MULTIPLIER)
     candidates = []
     failures = []
@@ -539,6 +544,12 @@ def discover_formal_candidates(
         "history_attempted_count": history_attempted, "history_succeeded_count": history_succeeded,
         "history_reused_count": history_reused, "history_repair_attempted_count": history_repair_attempted,
         "history_failure_count": len(failures), "history_elapsed_seconds": elapsed,
+        "latency_observability": {
+            "broad_acquisition_elapsed_seconds": broad_elapsed,
+            "prefilter_elapsed_seconds": prefilter_elapsed,
+            "history_validation_elapsed_seconds": elapsed,
+            "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
+        },
         "coverage_status": "COMPLETE" if not failures else ("UNAVAILABLE" if history_succeeded == 0 else "PARTIAL"),
         "history_failures": failures, "candidates": candidates,
         "observation_capacity": {"target_typical": "5-10", "allowed_min": 0, "resource_protection_max": MAX_OBSERVATION_CANDIDATES},
