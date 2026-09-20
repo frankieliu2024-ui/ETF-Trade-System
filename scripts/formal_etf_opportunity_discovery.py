@@ -189,10 +189,32 @@ def fetch_szse_official_etf_master() -> list[dict[str, Any]]:
     return [unique[code] for code in sorted(unique)]
 
 
-def fetch_official_etf_master(market_date: str) -> list[dict[str, Any]]:
-    rows = fetch_sse_official_etf_master(market_date) + fetch_szse_official_etf_master()
+def fetch_official_etf_master(market_date: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Enumerate SSE/SZSE independently so one exchange outage cannot erase the other."""
+    rows: list[dict[str, Any]] = []
+    errors: dict[str, str | None] = {"sse": None, "szse": None}
+    counts = {"sse": 0, "szse": 0}
+    try:
+        sse_rows = fetch_sse_official_etf_master(market_date)
+        rows.extend(sse_rows)
+        counts["sse"] = len(sse_rows)
+    except Exception as exc:
+        errors["sse"] = str(exc)[-300:]
+    try:
+        szse_rows = fetch_szse_official_etf_master()
+        rows.extend(szse_rows)
+        counts["szse"] = len(szse_rows)
+    except Exception as exc:
+        errors["szse"] = str(exc)[-300:]
     unique = {(row["market_id"], row["code"]): row for row in rows}
-    return [unique[key] for key in sorted(unique)]
+    if not unique:
+        raise RuntimeError(f"official ETF masters unavailable; sse={errors['sse']}; szse={errors['szse']}")
+    return [unique[key] for key in sorted(unique)], {
+        "sse_official_master_count": counts["sse"],
+        "szse_official_master_count": counts["szse"],
+        "sse_official_master_error": errors["sse"],
+        "szse_official_master_error": errors["szse"],
+    }
 
 
 def _tencent_spot_row(identity: dict[str, Any], quote: dict[str, Any]) -> dict[str, Any]:
@@ -218,7 +240,7 @@ def fetch_official_tencent_broad_spot(market_date: str) -> tuple[list[dict[str, 
         # repository script context; keep the existing Tencent owner reachable in both.
         from tencent_quote import fetch_tencent_quotes
 
-    master = fetch_official_etf_master(market_date)
+    master, master_meta = fetch_official_etf_master(market_date)
     rows: list[dict[str, Any]] = []
     failures: list[dict[str, Any]] = []
     for offset in range(0, len(master), 60):
@@ -234,6 +256,7 @@ def fetch_official_tencent_broad_spot(market_date: str) -> tuple[list[dict[str, 
             if quote:
                 rows.append(_tencent_spot_row(identity, quote))
     return rows, {
+        **master_meta,
         "official_master_count": len(master), "tencent_quote_count": len(rows),
         "tencent_failed_batch_count": len(failures), "tencent_failures": failures,
     }
