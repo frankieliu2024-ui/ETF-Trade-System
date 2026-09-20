@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import html
 import json
 import math
 import os
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
@@ -15,6 +17,10 @@ from urllib.request import Request, urlopen
 
 BEIJING = timezone(timedelta(hours=8), name="Asia/Shanghai")
 SPOT_URL = "https://push2delay.eastmoney.com/api/qt/clist/get"
+SSE_MASTER_URL = "https://query.sse.com.cn/commonQuery.do"
+SSE_MASTER_SQL = "COMMON_SSE_ZQPZ_ETFZL_XXPL_ETFGM_SEARCH_L"
+SZSE_MASTER_URL = "https://www.szse.cn/api/report/ShowReport/data"
+SZSE_MASTER_CATALOG = "1945"
 HISTORY_URL = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
 ETF_FS = "b:MK0021,b:MK0022,b:MK0023,b:MK0024,b:MK0827"
 FIELDS = "f2,f3,f6,f7,f8,f10,f12,f13,f14,f15,f16,f17,f18,f24,f25,f26,f124"
@@ -92,6 +98,182 @@ def fetch_broad_etf_spot() -> list[dict[str, Any]]:
         if page > 50:
             break
     return rows
+
+
+def _request_json_headers(url: str, params: dict[str, Any], headers: dict[str, str], timeout: int = 12) -> Any:
+    req = Request(f"{url}?{urlencode(params)}", headers=headers)
+    with urlopen(req, timeout=timeout) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def _plain_html(value: Any) -> str:
+    text = html.unescape(str(value or ""))
+    text = re.sub(r"<[^>]+>", " ", text)
+    return " ".join(text.split()).strip()
+
+
+def _six_digit(value: Any) -> str:
+    match = re.search(r"(?<!\\d)(\\d{6})(?!\\d)", _plain_html(value))
+    return match.group(1) if match else ""
+
+
+def fetch_sse_official_etf_master(market_date: str) -> list[dict[str, Any]]:
+    """Enumerate SSE ETFs from the existing official broad ETF-scale owner."""
+    payload = _request_json_headers(
+        SSE_MASTER_URL,
+        {
+            "isPagination": "true", "pageHelp.pageSize": "2000", "pageHelp.pageNo": "1",
+            "pageHelp.beginPage": "1", "pageHelp.cacheSize": "1", "pageHelp.endPage": "1",
+            "sqlId": SSE_MASTER_SQL, "STAT_DATE": market_date,
+        },
+        {"User-Agent": "Mozilla/5.0", "Accept": "application/json,text/javascript,*/*;q=0.01",
+         "Referer": "https://www.sse.com.cn/market/funddata/volumn/etfvolumn/"},
+        timeout=15,
+    )
+    rows = payload.get("result") or (payload.get("pageHelp") or {}).get("data") or []
+    result = []
+    for raw in rows:
+        code = str(raw.get("SEC_CODE") or "").strip()
+        if re.fullmatch(r"\\d{6}", code):
+            result.append({"code": code, "name": str(raw.get("SEC_NAME") or code).strip(),
+                           "market_id": 1, "exchange": "SSE", "identity_source": "SSE_OFFICIAL_ETF_SCALE_ENUMERATION"})
+    return result
+
+
+def fetch_szse_official_etf_master() -> list[dict[str, Any]]:
+    """Enumerate the official SZSE ETF List (CATALOGID=1945) with explicit pagination."""
+    headers = {
+        "User-Agent": "Mozilla/5.0", "Accept": "application/json,text/javascript,*/*;q=0.01",
+        "X-Requested-With": "XMLHttpRequest",
+        "Referer": "https://www.szse.cn/market/product/list/etfList/index.html",
+    }
+    result: list[dict[str, Any]] = []
+    page = 1
+    expected_records: int | None = None
+    while True:
+        payload = _request_json_headers(
+            SZSE_MASTER_URL,
+            {"SHOWTYPE": "JSON", "CATALOGID": SZSE_MASTER_CATALOG, "TABKEY": "tab1", "tab1PAGENO": str(page)},
+            headers, timeout=15,
+        )
+        block = payload[0] if isinstance(payload, list) and payload else {}
+        if block.get("error"):
+            raise RuntimeError(f"SZSE ETF List API error: {block.get('error')}")
+        metadata = block.get("metadata") or {}
+        if str(metadata.get("catalogid") or "") != SZSE_MASTER_CATALOG:
+            raise RuntimeError("SZSE ETF List returned unexpected catalog")
+        pages = int(metadata.get("pagecount") or 1)
+        if expected_records is None:
+            expected_records = int(metadata.get("recordcount") or 0)
+        for raw in block.get("data") or []:
+            code = _six_digit(raw.get("sys_key"))
+            name = _plain_html(raw.get("zxjghj"))
+            if not code:
+                continue
+            if name.startswith(code):
+                name = name[len(code):].strip()
+            result.append({
+                "code": code, "name": name or code, "market_id": 0, "exchange": "SZSE",
+                "identity_source": "SZSE_OFFICIAL_ETF_LIST_1945",
+                "tracking_index": _plain_html(raw.get("nhzs")),
+                "manager": _plain_html(raw.get("glrmc")),
+            })
+        if page >= pages:
+            break
+        page += 1
+        if page > 200:
+            raise RuntimeError("SZSE ETF List pagination exceeded safety bound")
+    unique = {row["code"]: row for row in result}
+    if expected_records and len(unique) != expected_records:
+        raise RuntimeError(f"SZSE ETF List coverage mismatch: expected={expected_records} parsed={len(unique)}")
+    return [unique[code] for code in sorted(unique)]
+
+
+def fetch_official_etf_master(market_date: str) -> list[dict[str, Any]]:
+    rows = fetch_sse_official_etf_master(market_date) + fetch_szse_official_etf_master()
+    unique = {(row["market_id"], row["code"]): row for row in rows}
+    return [unique[key] for key in sorted(unique)]
+
+
+def _tencent_spot_row(identity: dict[str, Any], quote: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "code": identity["code"], "name": str(quote.get("name") or identity.get("name") or identity["code"]),
+        "market_id": identity["market_id"], "price": _num(quote.get("last_price")),
+        "change_pct": _num(quote.get("price_change_ratio_pct")), "amount": _num(quote.get("turnover")),
+        "amplitude_pct": None, "turnover_pct": None, "volume_ratio": None,
+        "high": _num(quote.get("high_price")), "low": _num(quote.get("low_price")),
+        "open": _num(quote.get("open_price")), "prev_close": _num(quote.get("prev_price")),
+        "return_60d_pct": None, "return_ytd_pct": None, "listing_date": "",
+        "provider_timestamp": quote.get("provider_timestamp_ms"),
+        "broad_quote_source": "TENCENT_QQ", "identity_source": identity.get("identity_source"),
+    }
+
+
+def fetch_official_tencent_broad_spot(market_date: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Independent official-universe + Tencent quote path; partial batches degrade explicitly."""
+    from scripts.tencent_quote import fetch_tencent_quotes
+
+    master = fetch_official_etf_master(market_date)
+    rows: list[dict[str, Any]] = []
+    failures: list[dict[str, Any]] = []
+    for offset in range(0, len(master), 60):
+        batch = master[offset:offset + 60]
+        symbols = [f'{x["code"]}.{"SH" if x["market_id"] == 1 else "SZ"}' for x in batch]
+        try:
+            quotes = fetch_tencent_quotes(symbols, timeout=10)
+        except Exception as exc:
+            failures.append({"offset": offset, "count": len(batch), "error": str(exc)[-240:]})
+            continue
+        for identity, symbol in zip(batch, symbols):
+            quote = quotes.get(symbol.upper())
+            if quote:
+                rows.append(_tencent_spot_row(identity, quote))
+    return rows, {
+        "official_master_count": len(master), "tencent_quote_count": len(rows),
+        "tencent_failed_batch_count": len(failures), "tencent_failures": failures,
+    }
+
+
+def fetch_reconciled_broad_etf_spot(market_date: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Official security master + Tencent hydration, with Eastmoney fallback/augmentation."""
+    official_rows: list[dict[str, Any]] = []
+    official_meta: dict[str, Any] = {}
+    official_error = None
+    try:
+        official_rows, official_meta = fetch_official_tencent_broad_spot(market_date)
+    except Exception as exc:
+        official_error = str(exc)[-500:]
+    east_rows: list[dict[str, Any]] = []
+    east_error = None
+    try:
+        east_rows = fetch_broad_etf_spot()
+    except Exception as exc:
+        east_error = str(exc)[-500:]
+    if not official_rows and not east_rows:
+        raise RuntimeError(f"broad providers unavailable; official={official_error}; eastmoney={east_error}")
+    merged = {(int(x.get("market_id") or 0), str(x.get("code") or "")): dict(x) for x in official_rows}
+    official_keys = set(merged)
+    east_keys = set()
+    for row in east_rows:
+        key = (int(row.get("market_id") or 0), str(row.get("code") or ""))
+        east_keys.add(key)
+        if key in merged:
+            base = merged[key]
+            for field in ("return_60d_pct", "return_ytd_pct", "volume_ratio", "turnover_pct", "amplitude_pct", "listing_date"):
+                if row.get(field) is not None and row.get(field) != "":
+                    base[field] = row.get(field)
+            base["eastmoney_augmented"] = True
+        else:
+            enriched = dict(row)
+            enriched["broad_quote_source"] = "EASTMONEY_PUSH2DELAY_FALLBACK_AUGMENTATION"
+            merged[key] = enriched
+    return [merged[key] for key in sorted(merged)], {
+        **official_meta,
+        "official_path_error": official_error, "eastmoney_count": len(east_rows), "eastmoney_error": east_error,
+        "official_intersection_eastmoney_count": len(official_keys & east_keys),
+        "official_only_count": len(official_keys - east_keys), "eastmoney_only_count": len(east_keys - official_keys),
+        "reconciled_count": len(merged),
+    }
 
 
 def _secid(code: str, market_id: int | None = None) -> str:
@@ -549,10 +731,14 @@ def discover_formal_candidates(
     generated = datetime.now(BEIJING).isoformat(timespec="seconds")
     broad_started = time.monotonic()
     try:
-        broad = list(spot_rows) if spot_rows is not None else fetch_broad_etf_spot()
+        if spot_rows is not None:
+            broad = list(spot_rows)
+            broad_source_meta = {"injected_spot_rows": len(broad)}
+        else:
+            broad, broad_source_meta = fetch_reconciled_broad_etf_spot(market_date)
     except Exception as exc:
         return {
-            "status": "DEGRADED", "generated_at_beijing": generated, "source": "EASTMONEY_BROAD_ETF_SPOT",
+            "status": "DEGRADED", "generated_at_beijing": generated, "source": "OFFICIAL_SSE_SZSE_SECURITY_MASTER_PLUS_TENCENT_WITH_EASTMONEY_FALLBACK",
             "broad_universe_count": 0, "candidates": [], "error": str(exc)[-500:],
             "broad_acquisition_elapsed_seconds": round(time.monotonic() - broad_started, 3),
             "decision_boundary": "广域发现失败不删除持仓/观察ETF，也不阻塞其现有正式MASTER链。",
@@ -658,7 +844,8 @@ def discover_formal_candidates(
     return {
         "schema_version": "1.0", "status": "READY" if broad and not failures else "DEGRADED",
         "generated_at_beijing": generated, "market_date": market_date,
-        "source": "EASTMONEY_BROAD_ETF_SPOT_PLUS_VALIDATED_HISTORY_OR_HITHINK_TENCENT_EASTMONEY_BOUNDED_REPAIR",
+        "source": "OFFICIAL_SSE_SZSE_SECURITY_MASTER_PLUS_TENCENT_WITH_EASTMONEY_FALLBACK_AUGMENTATION_PLUS_VALIDATED_HISTORY_OR_HITHINK_TENCENT_EASTMONEY_BOUNDED_REPAIR",
+        "broad_source_reconciliation": broad_source_meta,
         "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
         "broad_universe_count": len(broad),
         "managed_identity_count": sum(1 for x in broad if x.get("code") in managed_codes),
