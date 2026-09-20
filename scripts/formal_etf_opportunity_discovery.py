@@ -694,8 +694,8 @@ def _bounded_prefilter(rows: list[dict[str, Any]], held_codes: set[str] | None =
             append_item(item)
     return queue
 
-def _candidate(row: dict[str, Any], history: list[dict[str, Any]], market_date: str) -> dict[str, Any] | None:
-    completed = [x for x in history if str(x.get("date") or "") < market_date]
+def _candidate(row: dict[str, Any], history: list[dict[str, Any]], required_history_end_date: str) -> dict[str, Any] | None:
+    completed = [x for x in history if str(x.get("date") or "") <= required_history_end_date]
     info_classes = list(row.get("_discovery_information_classes") or [])
     if len(completed) < MIN_HISTORY:
         if len(completed) < SHORT_HISTORY_MIN or not set(info_classes) & {"NEW_RELATIVE_DIVERGENCE", "SHORT_HISTORY_CURRENT_CHANGE"}:
@@ -886,7 +886,7 @@ def discover_formal_candidates(
                 node_history[code] = history
                 snapshot_dirty = True
             history_succeeded += 1
-            item = _candidate(row, history, market_date)
+            item = _candidate(row, history, required_history_end_date)
             if item:
                 item["history_source"] = history_source
                 item_code = str(item.get("code") or "")
