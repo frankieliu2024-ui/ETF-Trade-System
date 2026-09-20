@@ -126,7 +126,9 @@ def fetch_sse_official_etf_master(market_date: str) -> list[dict[str, Any]]:
             "pageHelp.beginPage": "1", "pageHelp.cacheSize": "1", "pageHelp.endPage": "1",
             "sqlId": SSE_MASTER_SQL, "STAT_DATE": market_date,
         },
-        {"User-Agent": "Mozilla/5.0", "Accept": "application/json,text/javascript,*/*;q=0.01",
+        {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+         "Accept": "application/json, text/javascript, */*; q=0.01", "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+         "X-Requested-With": "XMLHttpRequest",
          "Referer": "https://www.sse.com.cn/market/funddata/volumn/etfvolumn/"},
         timeout=15,
     )
@@ -143,7 +145,8 @@ def fetch_sse_official_etf_master(market_date: str) -> list[dict[str, Any]]:
 def fetch_szse_official_etf_master() -> list[dict[str, Any]]:
     """Enumerate the official SZSE ETF List (CATALOGID=1945) with explicit pagination."""
     headers = {
-        "User-Agent": "Mozilla/5.0", "Accept": "application/json,text/javascript,*/*;q=0.01",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/javascript, */*; q=0.01", "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
         "X-Requested-With": "XMLHttpRequest",
         "Referer": "https://www.szse.cn/market/product/list/etfList/index.html",
     }
