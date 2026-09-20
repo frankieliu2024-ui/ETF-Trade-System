@@ -44,6 +44,7 @@ def validate_report_delivery_request(request: dict) -> tuple[bool, str]:
     return True, ""
 
 def build_report_delivery_request(*, task_id: str, task_run_id: str, report_id: str,
+                                  report_type: str,
                                   effective_market_date: str, title: str, summary: str,
                                   full_content: str, source_reference: str,
                                   idempotency_key: str, generated_at: str,
