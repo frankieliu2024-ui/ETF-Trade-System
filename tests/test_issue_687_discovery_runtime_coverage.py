@@ -28,6 +28,57 @@ def history() -> list[dict]:
 
 
 class DiscoveryRuntimeCoverageTests(unittest.TestCase):
+    def test_szse_official_etf_list_parses_html_and_paginates(self) -> None:
+        page1 = [{"data": [{"sys_key": '<a>158022</a>', "zxjghj": '<a>创业板综增强ETF国联</a>',
+                            "nhzs": "399102 创业板综", "glrmc": "国联基金管理有限公司"}],
+                  "error": None, "metadata": {"catalogid": "1945", "pagecount": 2, "recordcount": 2}}]
+        page2 = [{"data": [{"sys_key": '<a>159001</a>', "zxjghj": '<a>货币ETF</a>',
+                            "nhzs": "", "glrmc": "示例基金"}],
+                  "error": None, "metadata": {"catalogid": "1945", "pagecount": 2, "recordcount": 2}}]
+        with patch.object(discovery, "_request_json_headers", side_effect=[page1, page2]) as request:
+            rows = discovery.fetch_szse_official_etf_master()
+        self.assertEqual(request.call_count, 2)
+        self.assertEqual([x["code"] for x in rows], ["158022", "159001"])
+        self.assertEqual(rows[0]["name"], "创业板综增强ETF国联")
+        self.assertEqual(rows[0]["identity_source"], "SZSE_OFFICIAL_ETF_LIST_1945")
+
+    def test_szse_official_etf_list_fails_closed_on_coverage_mismatch(self) -> None:
+        payload = [{"data": [{"sys_key": '<a>158022</a>', "zxjghj": '<a>ETF</a>'}],
+                    "error": None, "metadata": {"catalogid": "1945", "pagecount": 1, "recordcount": 2}}]
+        with patch.object(discovery, "_request_json_headers", return_value=payload):
+            with self.assertRaisesRegex(RuntimeError, "coverage mismatch"):
+                discovery.fetch_szse_official_etf_master()
+
+    def test_reconciled_broad_path_augments_tencent_and_keeps_eastmoney_only(self) -> None:
+        official = [{"code": "510001", "name": "官方ETF", "market_id": 1, "price": 1.0,
+                     "change_pct": 1.0, "amount": 20_000_000, "return_60d_pct": None}]
+        east = [
+            {"code": "510001", "name": "官方ETF", "market_id": 1, "price": 1.0,
+             "change_pct": 1.0, "amount": 20_000_000, "return_60d_pct": 8.0, "volume_ratio": 1.2},
+            {"code": "159999", "name": "补充ETF", "market_id": 0, "price": 1.0,
+             "change_pct": 0.5, "amount": 20_000_000},
+        ]
+        with patch.object(discovery, "fetch_official_tencent_broad_spot",
+                          return_value=(official, {"official_master_count": 1, "tencent_quote_count": 1})), \
+             patch.object(discovery, "fetch_broad_etf_spot", return_value=east):
+            rows, meta = discovery.fetch_reconciled_broad_etf_spot("2026-09-18")
+        by_code = {x["code"]: x for x in rows}
+        self.assertEqual(by_code["510001"]["return_60d_pct"], 8.0)
+        self.assertTrue(by_code["510001"]["eastmoney_augmented"])
+        self.assertEqual(by_code["159999"]["broad_quote_source"], "EASTMONEY_PUSH2DELAY_FALLBACK_AUGMENTATION")
+        self.assertEqual(meta["official_intersection_eastmoney_count"], 1)
+        self.assertEqual(meta["eastmoney_only_count"], 1)
+
+    def test_reconciled_broad_path_survives_eastmoney_failure(self) -> None:
+        official = [{"code": "510001", "name": "官方ETF", "market_id": 1, "price": 1.0,
+                     "change_pct": 1.0, "amount": 20_000_000}]
+        with patch.object(discovery, "fetch_official_tencent_broad_spot",
+                          return_value=(official, {"official_master_count": 1, "tencent_quote_count": 1})), \
+             patch.object(discovery, "fetch_broad_etf_spot", side_effect=ConnectionError("eastmoney down")):
+            rows, meta = discovery.fetch_reconciled_broad_etf_spot("2026-09-18")
+        self.assertEqual(len(rows), 1)
+        self.assertIn("eastmoney down", meta["eastmoney_error"])
+
     def test_history_network_repair_prefers_hithink_then_tencent_then_eastmoney(self) -> None:
         hithink_rows = [{**row, "_provider": "hithink_finance_history"} for row in history()]
         with patch.object(discovery, "fetch_hithink_daily_history_bounded", return_value=hithink_rows) as hithink, \
