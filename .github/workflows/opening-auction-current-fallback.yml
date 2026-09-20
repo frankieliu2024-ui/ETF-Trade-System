@@ -100,7 +100,7 @@ jobs:
           python scripts/build_stock_context.py
           python scripts/build_account_stock_market.py
           python scripts/build_state_context.py
-          python scripts/build_query_context.py
+          python scripts/build_query_context.py --run-discovery
           python scripts/build_e2e_status.py
       - name: Verify same-day auction CURRENT before publish
         if: ${{ steps.readiness.outputs.need_capture == 'true' }}

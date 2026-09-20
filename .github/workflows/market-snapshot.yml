@@ -437,6 +437,10 @@ jobs:
             else
               python scripts/build_query_context.py --force-refresh "${REQUEST_ARGS[@]}"
             fi
+          elif [ "${{ steps.snapshot_result.outputs.snapshot_written }}" = "true" ]; then
+            # The core snapshot is already current in this run. Execute bounded
+            # all-market Discovery without forcing a duplicate core refresh.
+            python scripts/build_query_context.py --run-discovery "${REQUEST_ARGS[@]}"
           else
             python scripts/build_query_context.py "${REQUEST_ARGS[@]}"
           fi
