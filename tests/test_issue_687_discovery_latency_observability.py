@@ -11,7 +11,15 @@ def test_issue_687_discovery_latency_is_observability_only() -> None:
     query = (ROOT / "scripts/build_query_context.py").read_text(encoding="utf-8")
 
     ast.parse(discovery)
-    ast.parse(query)
+    query_tree = ast.parse(query)
+
+    imported_names = {
+        alias.name
+        for node in query_tree.body
+        if isinstance(node, ast.Import)
+        for alias in node.names
+    }
+    assert "time" in imported_names
 
     for field in (
         "broad_acquisition_elapsed_seconds",
