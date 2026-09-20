@@ -39,7 +39,8 @@ class NotificationActiveReportContractTests(unittest.TestCase):
     def test_canonical_report_builder_always_satisfies_validator_schema(self):
         request = center.build_report_delivery_request(
             task_id="ETF交易复盘", task_run_id="run-20260915-2030",
-            report_id="report-20260915", effective_market_date="2026-09-15",
+            report_id="report-20260915", report_type="ETF_TRADE_REVIEW",
+            effective_market_date="2026-09-15",
             title="ETF交易复盘｜2026-09-15", summary="降级但正式完成",
             full_content="close evidence unavailable; no close inferred",
             source_reference="scheduled-trade-review:20260915",
@@ -50,6 +51,32 @@ class NotificationActiveReportContractTests(unittest.TestCase):
         self.assertTrue(valid, reason)
         for field in ("task_id", "task_run_id", "content_hash", "idempotency_key"):
             self.assertTrue(request[field])
+
+    def test_canonical_report_builder_supports_system_review(self):
+        request = center.build_report_delivery_request(
+            task_id="ETF系统复核", task_run_id="run-20260920-0800",
+            report_id="system-review-20260920-0800", report_type="ETF_SYSTEM_REVIEW",
+            effective_market_date="2026-09-20",
+            title="【系统复核】ETF系统复核｜2026-09-20 08:00", summary="系统复核完成",
+            full_content="frozen system review body",
+            source_reference="scheduled-system-review:20260920T0800",
+            idempotency_key="ETF_SYSTEM_REVIEW:20260920:run-20260920-0800",
+            generated_at="2026-09-20T08:00:00+08:00",
+        )
+        self.assertEqual(request["report_type"], "ETF_SYSTEM_REVIEW")
+        valid, reason = center.validate_report_delivery_request(request)
+        self.assertTrue(valid, reason)
+
+    def test_canonical_report_builder_rejects_retired_report_type(self):
+        with self.assertRaises(ValueError):
+            center.build_report_delivery_request(
+                task_id="ETF正式决策", task_run_id="run-retired",
+                report_id="retired", report_type="ETF_FORMAL_DECISION",
+                effective_market_date="2026-09-20",
+                title="retired", summary="retired", full_content="retired",
+                source_reference="retired", idempotency_key="retired",
+                generated_at="2026-09-20T08:00:00+08:00",
+            )
 
     def test_only_active_scheduled_report_types_are_accepted(self):
         for report_type in ("ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"):
