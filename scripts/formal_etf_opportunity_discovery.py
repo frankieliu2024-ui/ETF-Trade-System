@@ -396,6 +396,32 @@ def fetch_daily_history(code: str, market_id: int, end_date: str, limit: int = 9
     raise RuntimeError("historical provider chain exhausted; " + " | ".join(errors))
 
 
+def required_completed_history_date(root: Path, market_date: str) -> str:
+    """Last completed A-share session strictly before the discovery market date."""
+    calendar_path = root / "config/market/a_share_trading_calendar_2026.json"
+    closed: set[str] = set()
+    if calendar_path.exists():
+        try:
+            closed = set(json.loads(calendar_path.read_text(encoding="utf-8")).get("closed_dates") or [])
+        except Exception:
+            closed = set()
+    day = datetime.fromisoformat(market_date).date() - timedelta(days=1)
+    for _ in range(370):
+        iso = day.isoformat()
+        if day.weekday() < 5 and iso not in closed:
+            return iso
+        day -= timedelta(days=1)
+    raise RuntimeError(f"cannot resolve required completed-history PIT before {market_date}")
+
+
+def _history_is_current_for_market_date(root: Path, rows: list[dict[str, Any]] | None, market_date: str) -> bool:
+    if not rows:
+        return False
+    required = required_completed_history_date(root, market_date)
+    usable_dates = [str(row.get("date") or "") for row in rows if str(row.get("date") or "") < market_date]
+    return bool(usable_dates and max(usable_dates) >= required)
+
+
 def _history_snapshot_path(root: Path, market_date: str) -> Path:
     return root / "data/market/discovery_history" / f"{market_date}.json"
 
@@ -769,11 +795,15 @@ def discover_formal_candidates(
     def resolve_history(row: dict[str, Any]) -> tuple[list[dict[str, Any]], str, bool, bool]:
         code = str(row["code"])
         history = (history_by_code or {}).get(code) if history_by_code is not None else node_history.get(code)
+        if history_by_code is None and history is not None and not _history_is_current_for_market_date(root, history, market_date):
+            history = None
         history_source = "INJECTED" if history_by_code is not None and history is not None else ("DISCOVERY_NODE_HISTORY" if history is not None else None)
         reused = history_source == "DISCOVERY_NODE_HISTORY"
         repair_attempted = False
         if history is None:
             history = load_validated_history(root, code, market_date, 90)
+            if history is not None and not _history_is_current_for_market_date(root, history, market_date):
+                history = None
             history_source = "VALIDATED_EXISTING_HISTORY" if history is not None else None
             reused = history is not None
         if history is None:

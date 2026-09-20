@@ -108,6 +108,30 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         self.assertEqual(meta["official_master_count"], 0)
         self.assertEqual(meta["tencent_quote_count"], 0)
 
+    def test_history_reuse_requires_previous_completed_trading_session(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            calendar = root / "config/market"
+            calendar.mkdir(parents=True)
+            (calendar / "a_share_trading_calendar_2026.json").write_text(
+                json.dumps({"closed_dates": []}), encoding="utf-8"
+            )
+            stale = [{"date": "2026-09-18", "close": 1.0}] * 65
+            current = stale[:-1] + [{"date": "2026-09-21", "close": 1.0}]
+            self.assertEqual(discovery.required_completed_history_date(root, "2026-09-22"), "2026-09-21")
+            self.assertFalse(discovery._history_is_current_for_market_date(root, stale, "2026-09-22"))
+            self.assertTrue(discovery._history_is_current_for_market_date(root, current, "2026-09-22"))
+
+    def test_history_required_pit_skips_weekend_and_exchange_holiday(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            calendar = root / "config/market"
+            calendar.mkdir(parents=True)
+            (calendar / "a_share_trading_calendar_2026.json").write_text(
+                json.dumps({"closed_dates": ["2026-09-21"]}), encoding="utf-8"
+            )
+            self.assertEqual(discovery.required_completed_history_date(root, "2026-09-22"), "2026-09-18")
+
     def test_history_network_repair_prefers_hithink_then_tencent_then_eastmoney(self) -> None:
         hithink_rows = [{**row, "_provider": "hithink_finance_history"} for row in history()]
         with patch.object(discovery, "fetch_hithink_daily_history_bounded", return_value=hithink_rows) as hithink, \
