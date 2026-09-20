@@ -8,6 +8,10 @@ on:
         description: "Optional historical market date (YYYY-MM-DD) for read-only Issue #687 Discovery shadow artifact"
         required: false
         default: ""
+      eastmoney_broad_attribution:
+        description: "Optional read-only Issue #687 Eastmoney broad attribution probe (true/false)"
+        required: false
+        default: "false"
   # Read-only precheck for changes that can redefine consistency semantics.
   # It reuses the same production checks before merge, but never executes
   # mutation requests or persists generated state back to main.
@@ -567,6 +571,22 @@ jobs:
         with:
           name: issue-687-discovery-shadow-${{ github.event.inputs.discovery_shadow_market_date }}
           path: ${{ runner.temp }}/issue-687-discovery-shadow.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Run read-only Issue 687 Eastmoney broad attribution probe
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.eastmoney_broad_attribution == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/issue_687_eastmoney_broad_attribution.py --output "$RUNNER_TEMP/issue-687-eastmoney-broad-attribution.json"
+
+      - name: Upload Issue 687 Eastmoney broad attribution probe
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.eastmoney_broad_attribution == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-687-eastmoney-broad-attribution
+          path: ${{ runner.temp }}/issue-687-eastmoney-broad-attribution.json
           if-no-files-found: error
           retention-days: 7
 
