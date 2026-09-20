@@ -69,6 +69,23 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         self.assertEqual(meta["official_intersection_eastmoney_count"], 1)
         self.assertEqual(meta["eastmoney_only_count"], 1)
 
+    def test_official_master_survives_single_exchange_failure(self) -> None:
+        szse = [{"code": "159001", "name": "深市ETF", "market_id": 0, "exchange": "SZSE",
+                 "identity_source": "SZSE_OFFICIAL_ETF_LIST_1945"}]
+        with patch.object(discovery, "fetch_sse_official_etf_master", side_effect=ConnectionResetError("sse reset")), \
+             patch.object(discovery, "fetch_szse_official_etf_master", return_value=szse):
+            rows, meta = discovery.fetch_official_etf_master("2026-09-18")
+        self.assertEqual([x["code"] for x in rows], ["159001"])
+        self.assertEqual(meta["sse_official_master_count"], 0)
+        self.assertEqual(meta["szse_official_master_count"], 1)
+        self.assertIn("sse reset", meta["sse_official_master_error"])
+
+    def test_official_master_fails_only_when_both_exchanges_fail(self) -> None:
+        with patch.object(discovery, "fetch_sse_official_etf_master", side_effect=ConnectionResetError("sse reset")), \
+             patch.object(discovery, "fetch_szse_official_etf_master", side_effect=TimeoutError("szse timeout")):
+            with self.assertRaisesRegex(RuntimeError, "official ETF masters unavailable"):
+                discovery.fetch_official_etf_master("2026-09-18")
+
     def test_reconciled_broad_path_survives_eastmoney_failure(self) -> None:
         official = [{"code": "510001", "name": "官方ETF", "market_id": 1, "price": 1.0,
                      "change_pct": 1.0, "amount": 20_000_000}]
@@ -97,7 +114,7 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         sys.modules["tencent_quote"] = fake
         try:
             with patch.object(builtins, "__import__", side_effect=import_without_scripts), \
-                 patch.object(discovery, "fetch_official_etf_master", return_value=[]):
+                 patch.object(discovery, "fetch_official_etf_master", return_value=([], {"sse_official_master_count": 0, "szse_official_master_count": 0})):
                 rows, meta = discovery.fetch_official_tencent_broad_spot("2026-09-18")
         finally:
             if previous is None:
@@ -108,7 +125,7 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         self.assertEqual(meta["official_master_count"], 0)
         self.assertEqual(meta["tencent_quote_count"], 0)
 
-    def test_history_reuse_requires_previous_completed_trading_session(self) -> None:
+    def test_history_required_pit_uses_latest_completed_session_before_execution(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             calendar = root / "config/market"
@@ -116,21 +133,28 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
             (calendar / "a_share_trading_calendar_2026.json").write_text(
                 json.dumps({"closed_dates": []}), encoding="utf-8"
             )
-            stale = [{"date": "2026-09-18", "close": 1.0}] * 65
-            current = stale[:-1] + [{"date": "2026-09-21", "close": 1.0}]
-            self.assertEqual(discovery.required_completed_history_date(root, "2026-09-22"), "2026-09-21")
-            self.assertFalse(discovery._history_is_current_for_market_date(root, stale, "2026-09-22"))
-            self.assertTrue(discovery._history_is_current_for_market_date(root, current, "2026-09-22"))
+            self.assertEqual(discovery.required_completed_history_date(root, "2026-09-20"), "2026-09-18")
+            self.assertEqual(discovery.required_completed_history_date(root, "2026-09-21"), "2026-09-18")
+            self.assertEqual(discovery.required_completed_history_date(root, "2026-09-23"), "2026-09-22")
 
-    def test_history_required_pit_skips_weekend_and_exchange_holiday(self) -> None:
+    def test_history_required_pit_can_include_execution_date_after_close(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             calendar = root / "config/market"
             calendar.mkdir(parents=True)
             (calendar / "a_share_trading_calendar_2026.json").write_text(
-                json.dumps({"closed_dates": ["2026-09-21"]}), encoding="utf-8"
+                json.dumps({"closed_dates": []}), encoding="utf-8"
             )
-            self.assertEqual(discovery.required_completed_history_date(root, "2026-09-22"), "2026-09-18")
+            self.assertEqual(
+                discovery.required_completed_history_date(root, "2026-09-18", include_execution_date=True),
+                "2026-09-18",
+            )
+
+    def test_history_freshness_requires_exact_completed_session(self) -> None:
+        stale = [{"date": "2026-09-17", "close": 1.0}] * 65
+        current = stale[:-1] + [{"date": "2026-09-18", "close": 1.0}]
+        self.assertFalse(discovery._history_is_current_for_required_date(stale, "2026-09-18"))
+        self.assertTrue(discovery._history_is_current_for_required_date(current, "2026-09-18"))
 
     def test_history_network_repair_prefers_hithink_then_tencent_then_eastmoney(self) -> None:
         hithink_rows = [{**row, "_provider": "hithink_finance_history"} for row in history()]
@@ -256,7 +280,7 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
             loaded = discovery.load_validated_history(root, "518880", "2026-09-18", 90)
         self.assertIsNotNone(loaded)
         self.assertGreaterEqual(len(loaded), discovery.MIN_HISTORY)
-        self.assertTrue(all(row["date"] < "2026-09-18" for row in loaded))
+        self.assertEqual(loaded[-1]["date"], "2026-09-18")
 
     def test_successful_repair_is_reused_on_same_market_date_node(self) -> None:
         rows = [spot("510001")]
