@@ -94,6 +94,8 @@ def build_gate(now: datetime | None = None) -> dict:
         return {
             "status": "NOT_REQUESTED",
             "formal_analysis_allowed": True,
+            "formal_current_pit_analysis_allowed": True,
+            "degraded_analysis_allowed": True,
             "formal_decision_persist_allowed": True,
             "fallback_allowed": True,
             "rule": "普通盘中请求允许即时补采失败后回退最近有效快照；用户明确要求最新/当前/现在行情或等待指定节点新数据时，必须先建立显式query-time请求并关闭请求前快照回退。",
@@ -143,7 +145,12 @@ def build_gate(now: datetime | None = None) -> dict:
     )
     return {
         "status": status,
+        # Compatibility: this legacy field means that analysis which depends on
+        # the requested fresh/current PIT may proceed. It is not a blanket ban
+        # on clearly-labelled degraded reasoning from other still-legal facts.
         "formal_analysis_allowed": ready or allow_fallback,
+        "formal_current_pit_analysis_allowed": ready or allow_fallback,
+        "degraded_analysis_allowed": True,
         "formal_decision_persist_allowed": ready or allow_fallback,
         "fallback_allowed": allow_fallback,
         "query_intent": req.get("query_intent") or req.get("request_kind") or "",
@@ -219,7 +226,14 @@ def annotate_contexts() -> None:
             continue
         obj = load_json(path)
         obj["refresh_gate"] = gate
+        # Keep the legacy flag for compatibility, but publish the action-scoped
+        # meaning explicitly so Chat/consumers do not interpret a pending
+        # EXPLICIT_LATEST refresh as "produce no analysis at all".
         obj["formal_analysis_allowed"] = bool(gate.get("formal_analysis_allowed", True))
+        obj["formal_current_pit_analysis_allowed"] = bool(
+            gate.get("formal_current_pit_analysis_allowed", gate.get("formal_analysis_allowed", True))
+        )
+        obj["degraded_analysis_allowed"] = bool(gate.get("degraded_analysis_allowed", True))
         if path == QUERY_CONTEXT:
             read_plan = obj.setdefault("decision_read_plan", {})
             if gate.get("status") in {"PENDING", "FAILED"} and not gate.get("fallback_allowed", True):
