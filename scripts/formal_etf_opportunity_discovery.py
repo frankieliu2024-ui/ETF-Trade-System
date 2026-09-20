@@ -4,6 +4,7 @@ import csv
 import hashlib
 import json
 import math
+import os
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
@@ -120,6 +121,45 @@ def fetch_eastmoney_daily_history(code: str, market_id: int, end_date: str, limi
     return [x for x in rows if x["date"] and x["close"] is not None]
 
 
+def fetch_hithink_daily_history_bounded(code: str, market_id: int, end_date: str, limit: int = 90) -> list[dict[str, Any]]:
+    """Fetch bounded raw ETF daily bars from the existing Hithink Finance API credential."""
+    api_key = os.environ.get("HITHINK_FINANCE_API_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError("HITHINK_FINANCE_API_KEY is not configured")
+    suffix = "SH" if market_id == 1 else "SZ"
+    end = datetime.fromisoformat(end_date).replace(tzinfo=BEIJING) + timedelta(days=1) - timedelta(milliseconds=1)
+    start = end - timedelta(days=180)
+    params = {
+        "thscode": f"{code}.{suffix}", "interval": "1d",
+        "start": int(start.timestamp() * 1000), "end": int(end.timestamp() * 1000),
+    }
+    req = Request(
+        f"https://fuyao.aicubes.cn/api/fund/market/historical?{urlencode(params)}",
+        headers={"X-api-key": api_key, "Accept": "application/json", "User-Agent": "ETF-Swing-System/2.2.14"},
+    )
+    with urlopen(req, timeout=10) as resp:
+        payload = json.loads(resp.read().decode("utf-8"))
+    if payload.get("code") != 0:
+        raise RuntimeError(f"hithink history business error: {payload.get('code')} {payload.get('message')}")
+    data = payload.get("data") or {}
+    if str(data.get("thscode") or "").upper() != f"{code}.{suffix}" or data.get("interval") != "1d":
+        raise RuntimeError("unexpected hithink history identity")
+    rows = []
+    for row in data.get("item") or []:
+        date_ms = row.get("date_ms")
+        if date_ms in (None, ""):
+            continue
+        day = datetime.fromtimestamp(int(date_ms) / 1000, timezone.utc).astimezone(BEIJING).date().isoformat()
+        rows.append({
+            "date": day, "open": _num(row.get("open_price")), "close": _num(row.get("close_price")),
+            "high": _num(row.get("high_price")), "low": _num(row.get("low_price")),
+            "volume": _num(row.get("volume")), "amount": _num(row.get("turnover")), "_provider": "hithink_finance_history",
+        })
+    rows = [x for x in rows if x["date"] and x["close"] is not None and x["date"] <= end_date]
+    rows.sort(key=lambda x: x["date"])
+    return rows[-limit:]
+
+
 def fetch_tencent_daily_history_bounded(code: str, market_id: int, end_date: str, limit: int = 90) -> list[dict[str, Any]]:
     from scripts.tencent_quote import fetch_tencent_daily_history
 
@@ -142,6 +182,13 @@ def fetch_tencent_daily_history_bounded(code: str, market_id: int, end_date: str
 def fetch_daily_history(code: str, market_id: int, end_date: str, limit: int = 90) -> list[dict[str, Any]]:
     """Independent-provider bounded repair for Discovery completed daily bars."""
     errors = []
+    try:
+        rows = fetch_hithink_daily_history_bounded(code, market_id, end_date, limit)
+        if rows:
+            return rows
+        errors.append("hithink_finance_history:empty")
+    except Exception as exc:
+        errors.append(f"hithink_finance_history:{type(exc).__name__}:{exc}")
     try:
         rows = fetch_tencent_daily_history_bounded(code, market_id, end_date, limit)
         if rows:
@@ -611,7 +658,7 @@ def discover_formal_candidates(
     return {
         "schema_version": "1.0", "status": "READY" if broad and not failures else "DEGRADED",
         "generated_at_beijing": generated, "market_date": market_date,
-        "source": "EASTMONEY_BROAD_ETF_SPOT_PLUS_VALIDATED_HISTORY_OR_TENCENT_EASTMONEY_BOUNDED_REPAIR",
+        "source": "EASTMONEY_BROAD_ETF_SPOT_PLUS_VALIDATED_HISTORY_OR_HITHINK_TENCENT_EASTMONEY_BOUNDED_REPAIR",
         "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
         "broad_universe_count": len(broad),
         "managed_identity_count": sum(1 for x in broad if x.get("code") in managed_codes),
