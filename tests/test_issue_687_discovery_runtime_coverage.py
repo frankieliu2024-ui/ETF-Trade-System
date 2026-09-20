@@ -296,5 +296,14 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         self.assertEqual(second["coverage_status"], "COMPLETE")
 
 
+    def test_official_master_requests_use_repo_proven_browser_contract(self) -> None:
+        with patch.object(discovery, "_request_json_headers", return_value={"result": []}) as req:
+            discovery.fetch_sse_official_etf_master("2026-09-18")
+        headers = req.call_args.args[2]
+        self.assertIn("Chrome/", headers["User-Agent"])
+        self.assertEqual(headers["X-Requested-With"], "XMLHttpRequest")
+        self.assertIn("zh-CN", headers["Accept-Language"])
+
+
 if __name__ == "__main__":
     unittest.main()
