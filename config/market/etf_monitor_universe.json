@@ -1,6 +1,6 @@
 {
   "version": "V1.1",
-  "purpose": "ETF层持续行情采集唯一运行清单；集合由实际持仓ETF与正式决策准入/保留的观察ETF组成。本文件不定义观察准入规则、不承担交易假设owner，也不是全市场机会发现边界。",
+  "purpose": "ETF层持续行情采集唯一运行清单；集合由持仓ETF与正式准入/保留的观察ETF组成。本文件不定义观察ETF准入规则、不承担交易假设owner，也不是全市场机会发现边界。",
   "mode": "HOLDING_PLUS_ADMITTED_OBSERVATION",
   "objects": [
     {
@@ -76,5 +76,5 @@
       "thscode": "513350.SH"
     }
   ],
-  "maintenance_rule": "ETF持续采集集合只承载Holding＋Observation两种正式身份。Holding由canonical账户/成交事实决定且不占Observation容量；Observation由每个正式决策节点对全市场非Holding低成本Discovery后的少量对象完成正式评估，再以ADMIT/RETAIN/EXIT意图通过现有canonical state-sync/mutation链动态投影。本节点Observation允许0只，当前资源保护上限12只；不得由Discovery脚本、行情producer、排名或Dashboard自行授予身份，不得建立第三种持久ETF池。"
+  "maintenance_rule": "ETF持续采集集合只承载持仓ETF＋观察ETF两种正式身份。持仓ETF由canonical账户/成交事实决定且不占观察ETF容量；每个正式决策节点先对全市场非持仓ETF执行低成本机会发现，少量临时评估对象完成正式评估后，再以ADMIT/RETAIN/EXIT意图通过现有canonical state-sync/mutation链动态投影为观察ETF。本节点观察ETF允许0只，当前资源保护上限12只；不得由机会发现脚本、行情producer、排名或Dashboard自行授予身份，不得建立第三种持久ETF池。"
 }
