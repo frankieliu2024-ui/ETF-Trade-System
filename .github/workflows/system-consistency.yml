@@ -3,6 +3,11 @@ name: ETF system consistency
 # Remote latest-main consistency validation trigger; active US and formal overseas contexts are refreshed before audit without relaxing freshness limits.
 on:
   workflow_dispatch:
+    inputs:
+      discovery_shadow_market_date:
+        description: "Optional historical market date (YYYY-MM-DD) for read-only Issue #687 Discovery shadow artifact"
+        required: false
+        default: ""
   # Read-only precheck for changes that can redefine consistency semantics.
   # It reuses the same production checks before merge, but never executes
   # mutation requests or persists generated state back to main.
@@ -545,6 +550,24 @@ jobs:
           print(f"required={'true' if scope['required'] else 'false'}")
           print(f"classes={','.join(scope['classes'])}")
           PY
+      - name: Run optional Issue 687 historical Discovery shadow
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.discovery_shadow_market_date != '' }}
+        env:
+          DISCOVERY_SHADOW_MARKET_DATE: ${{ github.event.inputs.discovery_shadow_market_date }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/issue_687_historical_discovery_shadow.py --market-date "$DISCOVERY_SHADOW_MARKET_DATE" --output "$RUNNER_TEMP/issue-687-discovery-shadow.json"
+
+      - name: Upload Issue 687 historical Discovery shadow
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.discovery_shadow_market_date != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-687-discovery-shadow-${{ github.event.inputs.discovery_shadow_market_date }}
+          path: ${{ runner.temp }}/issue-687-discovery-shadow.json
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Run canonical post-write acceptance
         id: acceptance
         if: ${{ steps.acceptance_scope.outputs.required == 'true' || github.event_name == 'workflow_dispatch' }}
