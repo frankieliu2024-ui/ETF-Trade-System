@@ -211,7 +211,12 @@ def _tencent_spot_row(identity: dict[str, Any], quote: dict[str, Any]) -> dict[s
 
 def fetch_official_tencent_broad_spot(market_date: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Independent official-universe + Tencent quote path; partial batches degrade explicitly."""
-    from scripts.tencent_quote import fetch_tencent_quotes
+    try:
+        from scripts.tencent_quote import fetch_tencent_quotes
+    except ModuleNotFoundError:
+        # market-snapshot executes this owner both as an imported package and from
+        # repository script context; keep the existing Tencent owner reachable in both.
+        from tencent_quote import fetch_tencent_quotes
 
     master = fetch_official_etf_master(market_date)
     rows: list[dict[str, Any]] = []
@@ -343,7 +348,10 @@ def fetch_hithink_daily_history_bounded(code: str, market_id: int, end_date: str
 
 
 def fetch_tencent_daily_history_bounded(code: str, market_id: int, end_date: str, limit: int = 90) -> list[dict[str, Any]]:
-    from scripts.tencent_quote import fetch_tencent_daily_history
+    try:
+        from scripts.tencent_quote import fetch_tencent_daily_history
+    except ModuleNotFoundError:
+        from tencent_quote import fetch_tencent_daily_history
 
     suffix = "SH" if market_id == 1 else "SZ"
     end = datetime.fromisoformat(end_date).date()
