@@ -283,6 +283,17 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertIn("gh run list --workflow market-snapshot.yml", dispatch)
         self.assertIn('status == "queued" or .status == "in_progress"', dispatch)
 
+    def test_successful_healthy_assessment_is_persisted_without_staging_repair_state(self):
+        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        persist = workflow.split("- name: Persist bounded self-healing state and deterministic repairs", 1)[1]
+        self.assertIn("always() && steps.assess.outcome == 'success'", persist)
+        self.assertIn("git add -A -- data/state/self_healing_status.json", persist)
+        self.assertIn('if [ "${{ steps.assess.outputs.action }}" != "NONE" ]; then', persist)
+        self.assertLess(
+            persist.index("git add -A -- data/state/self_healing_status.json"),
+            persist.index('if [ "${{ steps.assess.outputs.action }}" != "NONE" ]; then'),
+        )
+
     def test_event_wake_sources_are_existing_cross_market_workflows(self):
         workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
         trigger = workflow.split("  workflow_run:", 1)[1].split("  push:", 1)[0]
