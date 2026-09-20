@@ -635,6 +635,18 @@ def _exposure_key(row: dict[str, Any]) -> str:
     return name or str(row.get("code") or "")
 
 
+def _opportunity_eligible(row: dict[str, Any]) -> bool:
+    """Cheap economic gate before scarce history work; never grants trade authority."""
+    name = "".join(str(row.get("name") or "").upper().split())
+    # Cash-management ETFs are designed to preserve near-cash value rather than
+    # express a swing-price hypothesis. This narrow semantic exclusion is
+    # intentionally not generalized to bond/fixed-income asset classes.
+    cash_management_markers = ("货币ETF", "保证金ETF", "快线ETF", "快钱ETF")
+    if any(marker.upper() in name for marker in cash_management_markers):
+        return False
+    return True
+
+
 def _bounded_prefilter(rows: list[dict[str, Any]], held_codes: set[str] | None = None, market_date: str = "") -> list[dict[str, Any]]:
     """Allocate scarce validation work by information class, never by return score."""
     held_codes = {str(x) for x in (held_codes or set())}
@@ -649,6 +661,8 @@ def _bounded_prefilter(rows: list[dict[str, Any]], held_codes: set[str] | None =
     for row in rows:
         code = str(row.get("code") or "")
         if code in held_codes:
+            continue
+        if not _opportunity_eligible(row):
             continue
         exposure = _exposure_key(row)
         for info_class in _information_classes(row, broad_median):
