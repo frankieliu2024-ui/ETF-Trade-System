@@ -398,7 +398,7 @@ def build_market_domain_projection(current: dict, overseas: dict, us_extended: d
         "consumption_rule": "这是由既有域事实重建的派生消费投影；fresh domain pulse减少不必要补采，但不放宽显式latest/current请求的新鲜度门槛。",
         "read_only": True,
     }
-def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: list[str] | None = None, request_file: str | None = None) -> dict:
+def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: list[str] | None = None, request_file: str | None = None, run_discovery: bool = False) -> dict:
     # Only read request identity/time before freshness assurance. All decision
     # facts and derived context are deliberately loaded after the router returns.
     request_payload = {}
@@ -446,7 +446,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     formal_discovery = {"status": "NOT_REQUESTED", "candidates": []}
     discovery_pipeline_started = time.monotonic() if (force_refresh or request_file) else None
     candidate_quote_elapsed = 0.0
-    if force_refresh or request_file:
+    if force_refresh or request_file or run_discovery:
         formal_discovery = discover_formal_candidates(
             root,
             market_date=str(current.get("market_date") or trading_day_status.get("market_date") or ""),
@@ -547,9 +547,10 @@ def main() -> None:
     parser.add_argument("--force-refresh", action="store_true")
     parser.add_argument("--symbols", default="")
     parser.add_argument("--request-file", default="", help="explicit live_snapshot request payload for this analysis")
+    parser.add_argument("--run-discovery", action="store_true", help="run bounded all-market Discovery from an already-current production snapshot without forcing a second core refresh")
     args = parser.parse_args()
     symbols = [x.strip() for x in args.symbols.split(",") if x.strip()]
-    context = build(ROOT, force_refresh=args.force_refresh, requested_symbols=symbols, request_file=args.request_file or None)
+    context = build(ROOT, force_refresh=args.force_refresh, requested_symbols=symbols, request_file=args.request_file or None, run_discovery=args.run_discovery)
     atomic_json_write(ROOT / "data" / "state" / "query_context.json", context)
     print(json.dumps({"ok": True, "generated_at_beijing": context["generated_at_beijing"], "market_date": context["market_date"], "latest_valid_node": context["latest_valid_node"], "system_consistency_status": context["system_consistency_status"], "candidate_trading_day": context["trading_day_status"]["is_candidate_trading_day"], "etf_universe_count": context["etf_universe_count"], "account_fact_status": context["account_fact_status"], "account_usable": context["account_gate"]["can_use_current_account_fact"], "freshness": context["freshness_at_context_build"]["status"], "overseas_context_status": context["overseas_context_status"], "us_extended_hours_status": context["us_extended_hours_status"], "stock_context_status": context["stock_context_status"], "stock_market_context_status": context["stock_market_context_status"], "read_plan_mode": context["decision_read_plan"]["mode"]}, ensure_ascii=False))
 
