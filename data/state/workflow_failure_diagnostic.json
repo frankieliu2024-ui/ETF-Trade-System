@@ -1,30 +1,25 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-20T08:19:25+08:00",
+  "generated_at": "2026-09-20T10:59:27+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 35478417942,
+  "run_id": 35485363176,
   "run_attempt": 1,
-  "head_sha": "c286e79de15b68fbb50a4ec850fa80fc2b7116b1",
-  "main_head_sha": "9cac289fe05b1540fddc995025d72c3f3ba19151",
+  "head_sha": "20b8ec22a08b00ed360060d7fd4f94d443ca0451",
+  "main_head_sha": "cfde5e87a781c9879b3612fb33a65f8f9637b153",
   "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
   "failed_steps": [
     {
       "job": "production_acceptance",
-      "step": "Run optional Issue 687 historical Discovery shadow",
-      "number": 8
+      "step": "Consume pending trade-fact corrections",
+      "number": 5
     }
   ],
   "changed_files": [
-    "data/state/e2e_status.json",
-    "data/state/execution_quality.json",
-    "data/state/last_known_good.json",
-    "data/state/maintenance_diagnostic.json",
-    "data/state/maintenance_health.json",
-    "data/state/system_consistency.json"
+    "requests/live_snapshot/manual-history-provider-validation-20260920T1058-687.json"
   ],
-  "commit_message": "state: persist production acceptance",
-  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "commit_message": "ops: validate Issue 687 historical data sources",
+  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
   "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
   "safety": {
@@ -32,7 +27,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": true,
+    "bot_or_revert_commit": false,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
