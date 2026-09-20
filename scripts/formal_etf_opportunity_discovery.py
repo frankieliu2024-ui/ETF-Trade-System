@@ -419,8 +419,8 @@ def fetch_daily_history(code: str, market_id: int, end_date: str, limit: int = 9
     raise RuntimeError("historical provider chain exhausted; " + " | ".join(errors))
 
 
-def required_completed_history_date(root: Path, market_date: str) -> str:
-    """Last completed A-share session strictly before the discovery market date."""
+def required_completed_history_date(root: Path, execution_date: str, *, include_execution_date: bool = False) -> str:
+    """Latest fully completed A-share session available at the execution point."""
     calendar_path = root / "config/market/a_share_trading_calendar_2026.json"
     closed: set[str] = set()
     if calendar_path.exists():
@@ -428,21 +428,22 @@ def required_completed_history_date(root: Path, market_date: str) -> str:
             closed = set(json.loads(calendar_path.read_text(encoding="utf-8")).get("closed_dates") or [])
         except Exception:
             closed = set()
-    day = datetime.fromisoformat(market_date).date() - timedelta(days=1)
+    day = datetime.fromisoformat(execution_date).date()
+    if not include_execution_date:
+        day -= timedelta(days=1)
     for _ in range(370):
         iso = day.isoformat()
         if day.weekday() < 5 and iso not in closed:
             return iso
         day -= timedelta(days=1)
-    raise RuntimeError(f"cannot resolve required completed-history PIT before {market_date}")
+    raise RuntimeError(f"cannot resolve required completed-history PIT for {execution_date}")
 
 
-def _history_is_current_for_market_date(root: Path, rows: list[dict[str, Any]] | None, market_date: str) -> bool:
+def _history_is_current_for_required_date(rows: list[dict[str, Any]] | None, required_history_end_date: str) -> bool:
     if not rows:
         return False
-    required = required_completed_history_date(root, market_date)
-    usable_dates = [str(row.get("date") or "") for row in rows if str(row.get("date") or "") < market_date]
-    return bool(usable_dates and max(usable_dates) >= required)
+    usable_dates = {str(row.get("date") or "") for row in rows if row.get("date")}
+    return required_history_end_date in usable_dates
 
 
 def _history_snapshot_path(root: Path, market_date: str) -> Path:
@@ -475,7 +476,7 @@ def persist_discovery_history_snapshot(root: Path, market_date: str, histories: 
     path.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
 
 
-def load_validated_history(root: Path, code: str, market_date: str, limit: int = 90) -> list[dict[str, Any]] | None:
+def load_validated_history(root: Path, code: str, required_history_end_date: str, limit: int = 90) -> list[dict[str, Any]] | None:
     result_dir = root / "data/market/on_demand/results"
     best: tuple[str, Path] | None = None
     for path in result_dir.glob(f"*_{code}_*.json"):
@@ -486,9 +487,6 @@ def load_validated_history(root: Path, code: str, market_date: str, limit: int =
         if not obj.get("ok") or obj.get("asset_type") != "etf" or obj.get("mode") != "history":
             continue
         last_date, dataset = str(obj.get("last_date") or ""), obj.get("dataset")
-        # A dataset may include the decision market-date bar. Discovery itself
-        # filters rows to date < market_date, so such a dataset remains PIT-safe
-        # and is preferable to a redundant network repair.
         if not dataset or not last_date:
             continue
         candidate = root / str(dataset)
@@ -499,7 +497,7 @@ def load_validated_history(root: Path, code: str, market_date: str, limit: int =
     rows: list[dict[str, Any]] = []
     with best[1].open("r", encoding="utf-8-sig", newline="") as handle:
         for row in csv.DictReader(handle):
-            if str(row.get("date") or "") >= market_date:
+            if str(row.get("date") or "") > required_history_end_date:
                 continue
             close = _num(row.get("close"))
             if close is None:
@@ -780,12 +778,16 @@ def discover_formal_candidates(
     root: Path,
     *,
     market_date: str,
+    required_history_end_date: str | None = None,
     managed_codes: set[str],
     held_codes: set[str] | None = None,
     spot_rows: list[dict[str, Any]] | None = None,
     history_by_code: dict[str, list[dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
-    generated = datetime.now(BEIJING).isoformat(timespec="seconds")
+    generated_dt = datetime.now(BEIJING)
+    generated = generated_dt.isoformat(timespec="seconds")
+    if required_history_end_date is None:
+        required_history_end_date = required_completed_history_date(root, generated_dt.date().isoformat())
     broad_started = time.monotonic()
     try:
         if spot_rows is not None:
@@ -818,20 +820,20 @@ def discover_formal_candidates(
     def resolve_history(row: dict[str, Any]) -> tuple[list[dict[str, Any]], str, bool, bool]:
         code = str(row["code"])
         history = (history_by_code or {}).get(code) if history_by_code is not None else node_history.get(code)
-        if history_by_code is None and history is not None and not _history_is_current_for_market_date(root, history, market_date):
+        if history_by_code is None and history is not None and not _history_is_current_for_required_date(history, required_history_end_date):
             history = None
         history_source = "INJECTED" if history_by_code is not None and history is not None else ("DISCOVERY_NODE_HISTORY" if history is not None else None)
         reused = history_source == "DISCOVERY_NODE_HISTORY"
         repair_attempted = False
         if history is None:
-            history = load_validated_history(root, code, market_date, 90)
-            if history is not None and not _history_is_current_for_market_date(root, history, market_date):
+            history = load_validated_history(root, code, required_history_end_date, 90)
+            if history is not None and not _history_is_current_for_required_date(history, required_history_end_date):
                 history = None
             history_source = "VALIDATED_EXISTING_HISTORY" if history is not None else None
             reused = history is not None
         if history is None:
             repair_attempted = True
-            history = fetch_daily_history(code, int(row.get("market_id") or 0), market_date, 90)
+            history = fetch_daily_history(code, int(row.get("market_id") or 0), required_history_end_date, 90)
             provider = str((history[0] if history else {}).get("_provider") or "bounded_provider_repair").upper()
             history_source = f"{provider}_BOUNDED_REPAIR"
         return history, str(history_source or ""), reused, repair_attempted
@@ -905,6 +907,7 @@ def discover_formal_candidates(
     return {
         "schema_version": "1.0", "status": "READY" if broad and not failures else "DEGRADED",
         "generated_at_beijing": generated, "market_date": market_date,
+        "required_history_end_date": required_history_end_date,
         "source": "OFFICIAL_SSE_SZSE_SECURITY_MASTER_PLUS_TENCENT_WITH_EASTMONEY_FALLBACK_AUGMENTATION_PLUS_VALIDATED_HISTORY_OR_HITHINK_TENCENT_EASTMONEY_BOUNDED_REPAIR",
         "broad_source_reconciliation": broad_source_meta,
         "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
