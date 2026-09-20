@@ -296,6 +296,27 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         self.assertEqual(second["coverage_status"], "COMPLETE")
 
 
+    def test_reconciliation_persists_provider_only_identity_evidence(self) -> None:
+        official = [
+            {"market_id": 1, "code": "510001", "name": "Official Only", "price": 1.0},
+            {"market_id": 1, "code": "510002", "name": "Shared", "price": 2.0},
+        ]
+        east = [
+            {"market_id": 1, "code": "510002", "name": "Shared", "price": 2.0},
+            {"market_id": 0, "code": "159999", "name": "East Only", "price": 3.0},
+        ]
+        with patch.object(discovery, "fetch_official_tencent_broad_spot", return_value=(official, {"official_master_count": 2})), \
+             patch.object(discovery, "fetch_broad_etf_spot", return_value=east):
+            rows, meta = discovery.fetch_reconciled_broad_etf_spot("2026-09-18")
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(meta["official_only_identities"], [
+            {"market_id": 1, "code": "510001", "exchange": "SSE", "name": "Official Only"}
+        ])
+        self.assertEqual(meta["eastmoney_only_identities"], [
+            {"market_id": 0, "code": "159999", "exchange": "SZSE", "name": "East Only"}
+        ])
+
+
     def test_official_master_requests_use_repo_proven_browser_contract(self) -> None:
         with patch.object(discovery, "_request_json_headers", return_value={"result": []}) as req:
             discovery.fetch_sse_official_etf_master("2026-09-18")
