@@ -28,6 +28,29 @@ def history() -> list[dict]:
 
 
 class DiscoveryRuntimeCoverageTests(unittest.TestCase):
+    def test_history_network_repair_prefers_tencent_then_eastmoney(self) -> None:
+        tencent_rows = [{**row, "_provider": "tencent_qq_history"} for row in history()]
+        with patch.object(discovery, "fetch_tencent_daily_history_bounded", return_value=tencent_rows) as tencent, \
+             patch.object(discovery, "fetch_eastmoney_daily_history") as eastmoney:
+            rows = discovery.fetch_daily_history("510001", 1, "2026-09-18", 90)
+        tencent.assert_called_once()
+        eastmoney.assert_not_called()
+        self.assertEqual(rows[0]["_provider"], "tencent_qq_history")
+
+    def test_history_network_repair_falls_back_to_eastmoney(self) -> None:
+        eastmoney_rows = [{**row, "_provider": "eastmoney_push2his"} for row in history()]
+        with patch.object(discovery, "fetch_tencent_daily_history_bounded", side_effect=TimeoutError("tencent timeout")), \
+             patch.object(discovery, "fetch_eastmoney_daily_history", return_value=eastmoney_rows) as eastmoney:
+            rows = discovery.fetch_daily_history("510001", 1, "2026-09-18", 90)
+        eastmoney.assert_called_once()
+        self.assertEqual(rows[0]["_provider"], "eastmoney_push2his")
+
+    def test_history_network_repair_fails_closed_after_both_providers(self) -> None:
+        with patch.object(discovery, "fetch_tencent_daily_history_bounded", side_effect=TimeoutError("tencent timeout")), \
+             patch.object(discovery, "fetch_eastmoney_daily_history", side_effect=ConnectionError("eastmoney closed")):
+            with self.assertRaisesRegex(RuntimeError, "historical provider chain exhausted"):
+                discovery.fetch_daily_history("510001", 1, "2026-09-18", 90)
+
     def test_any_history_failure_degrades_discovery_instead_of_false_ready(self) -> None:
         rows = [spot("510001"), spot("510002")]
         with patch.object(discovery, "fetch_daily_history", side_effect=[history(), RuntimeError("provider closed")]):
