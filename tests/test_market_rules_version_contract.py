@@ -32,6 +32,12 @@ class RulesVersionContractTests(unittest.TestCase):
         parsed = parse_master_release(BASE.replace("规则版本：V2.2.31", "规则版本：V2.2.30"))
         self.assertFalse(parsed["ok"])
 
+    def test_legacy_metadata_labels_remain_parseable(self):
+        legacy = BASE.replace("最近正式修订：2026-09-20", "更新日期：2026-09-20").replace("规则版本：V2.2.31", "定位：V2.2.31")
+        parsed = parse_master_release(legacy)
+        self.assertTrue(parsed["ok"], parsed["errors"])
+        self.assertEqual(parsed["version"], "V2.2.31")
+
     def test_current_table_drift_fails(self):
         parsed = parse_master_release(BASE.replace("|V2.2.31|新版|当前版本与现行交易规则|", "|V2.2.30|新版|当前版本与现行交易规则|"))
         self.assertFalse(parsed["ok"])
