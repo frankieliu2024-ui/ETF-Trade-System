@@ -253,7 +253,12 @@ def main() -> int:
     check("rules_release:previous_history", bool(release.get("previous_version_present")), f"previous={release.get('previous_version')}")
     check("rules_release:current_description", bool(release.get("current_description_present")), f"version={master_version}")
     if master_version == "V2.2.31":
-        check("rules_release:V2.2.31_date", release.get("update_date") == "2026-09-01", f"update_date={release.get('update_date')}")
+        # V2.2.31 was released on 2026-09-01, while the header field now records
+        # the latest formal revision of the same stable rule identity. Non-version-
+        # bumping formal revisions may therefore move this date forward, but never
+        # before the release date.
+        revision_date = str(release.get("update_date") or "")
+        check("rules_release:V2.2.31_date", revision_date >= "2026-09-01", f"revision_date={revision_date}")
     check("rules_release:pass_semantics", "生产一致性合同" in read_text("ETF_SYSTEM_INDEX.md"), "PASS is scoped to registered production contracts")
     research_registry_markers = {
         "margin_financing": "融资余额5日变化",
