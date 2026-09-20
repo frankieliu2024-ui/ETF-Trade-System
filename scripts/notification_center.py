@@ -56,7 +56,7 @@ def build_report_delivery_request(*, task_id: str, task_run_id: str, report_id: 
     body = str(full_content)
     request = {
         "schema_version": "1.0", "channel": "REPORT",
-        "report_type": "ETF_TRADE_REVIEW", "report_id": str(report_id),
+        "report_type": str(report_type), "report_id": str(report_id),
         "task_id": str(task_id), "task_run_id": str(task_run_id),
         "generated_at": str(generated_at),
         "effective_market_date": str(effective_market_date),
