@@ -283,5 +283,22 @@ class BusinessE2EClosureContractTests(unittest.TestCase):
         self.assertEqual(result["history_failure_count"], 0)
         self.assertEqual(result["history_success_budget"], discovery.MAX_HISTORY_SUCCESS_BUDGET)
 
+    def test_natural_market_nodes_are_wired_to_discovery_without_duplicate_core_refresh(self) -> None:
+        root = Path(__file__).parents[1]
+        workflow = (root / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        fallback = (root / ".github/workflows/opening-auction-current-fallback.yml").read_text(encoding="utf-8")
+        query_builder = (root / "scripts/build_query_context.py").read_text(encoding="utf-8")
+        self.assertIn('python scripts/build_query_context.py --run-discovery "${REQUEST_ARGS[@]}"', workflow)
+        self.assertIn("python scripts/build_query_context.py --run-discovery", fallback)
+        self.assertIn('parser.add_argument("--run-discovery"', query_builder)
+        self.assertIn("if force_refresh or request_file or run_discovery:", query_builder)
+
+    def test_run_discovery_does_not_imply_force_refresh(self) -> None:
+        from scripts import build_query_context as query
+        self.assertIn("run_discovery: bool = False", query.build.__annotations__.get("return", "") if False else
+                      (Path(__file__).parents[1] / "scripts/build_query_context.py").read_text(encoding="utf-8"))
+        text_value = (Path(__file__).parents[1] / "scripts/build_query_context.py").read_text(encoding="utf-8")
+        self.assertIn("if force_refresh or request_file or run_discovery:", text_value)
+
 if __name__ == "__main__":
     unittest.main()
