@@ -69,6 +69,23 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         self.assertEqual(meta["official_intersection_eastmoney_count"], 1)
         self.assertEqual(meta["eastmoney_only_count"], 1)
 
+    def test_official_master_survives_single_exchange_failure(self) -> None:
+        szse = [{"code": "159001", "name": "深市ETF", "market_id": 0, "exchange": "SZSE",
+                 "identity_source": "SZSE_OFFICIAL_ETF_LIST_1945"}]
+        with patch.object(discovery, "fetch_sse_official_etf_master", side_effect=ConnectionResetError("sse reset")), \
+             patch.object(discovery, "fetch_szse_official_etf_master", return_value=szse):
+            rows, meta = discovery.fetch_official_etf_master("2026-09-18")
+        self.assertEqual([x["code"] for x in rows], ["159001"])
+        self.assertEqual(meta["sse_official_master_count"], 0)
+        self.assertEqual(meta["szse_official_master_count"], 1)
+        self.assertIn("sse reset", meta["sse_official_master_error"])
+
+    def test_official_master_fails_only_when_both_exchanges_fail(self) -> None:
+        with patch.object(discovery, "fetch_sse_official_etf_master", side_effect=ConnectionResetError("sse reset")), \
+             patch.object(discovery, "fetch_szse_official_etf_master", side_effect=TimeoutError("szse timeout")):
+            with self.assertRaisesRegex(RuntimeError, "official ETF masters unavailable"):
+                discovery.fetch_official_etf_master("2026-09-18")
+
     def test_reconciled_broad_path_survives_eastmoney_failure(self) -> None:
         official = [{"code": "510001", "name": "官方ETF", "market_id": 1, "price": 1.0,
                      "change_pct": 1.0, "amount": 20_000_000}]
@@ -97,7 +114,7 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         sys.modules["tencent_quote"] = fake
         try:
             with patch.object(builtins, "__import__", side_effect=import_without_scripts), \
-                 patch.object(discovery, "fetch_official_etf_master", return_value=[]):
+                 patch.object(discovery, "fetch_official_etf_master", return_value=([], {"sse_official_master_count": 0, "szse_official_master_count": 0})):
                 rows, meta = discovery.fetch_official_tencent_broad_spot("2026-09-18")
         finally:
             if previous is None:
