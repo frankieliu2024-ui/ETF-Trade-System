@@ -99,6 +99,36 @@ class ScheduledFormalDecisionPrewarmPersistenceTests(unittest.TestCase):
 
             self.assertEqual(gate["status"], "PENDING")
             self.assertFalse(gate["formal_decision_persist_allowed"])
+            self.assertFalse(gate["formal_current_pit_analysis_allowed"])
+            self.assertTrue(gate["degraded_analysis_allowed"])
+
+    def test_pending_refresh_does_not_blanket_block_degraded_analysis(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            request_dir, current, health, policy = self._paths(root)
+            (request_dir / "explicit.json").write_text(json.dumps({
+                "request_id": "explicit",
+                "requested_at_beijing": "2026-09-09T11:23:30+08:00",
+                "requested_market_time": "2026-09-09T11:25:00+08:00",
+                "query_intent": "EXPLICIT_LATEST",
+                "wait_for_refresh": True,
+                "require_post_request_snapshot": True,
+                "allow_wait_refresh_fallback": False,
+            }), encoding="utf-8")
+            current.write_text(json.dumps({
+                "captured_at": "2026-09-09T11:24:06+08:00",
+                "latest_snapshot": "data/market/snapshots/2026-09-09_112406.json",
+                "data_freshness": {"captured_at_beijing": "2026-09-09T11:24:06+08:00"},
+            }), encoding="utf-8")
+
+            with self._patch_paths(request_dir, current, health, policy):
+                gate = refresh_gate.build_gate(datetime.fromisoformat("2026-09-09T11:25:30+08:00"))
+
+            self.assertEqual(gate["status"], "PENDING")
+            self.assertFalse(gate["formal_analysis_allowed"])
+            self.assertFalse(gate["formal_current_pit_analysis_allowed"])
+            self.assertTrue(gate["degraded_analysis_allowed"])
+            self.assertFalse(gate["formal_decision_persist_allowed"])
 
     def test_scheduled_decision_alignment_uses_request_time_not_nominal_fact_floor(self):
         request = {
