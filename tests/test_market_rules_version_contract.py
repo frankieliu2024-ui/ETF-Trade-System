@@ -7,8 +7,8 @@ from scripts.rules_version import parse_master_release
 
 
 BASE = """# ETF波段交易系统 V2.2.31 规则 MASTER
-> 更新日期：2026-09-01
-> 定位：V2.2.31 待结算现金约束与新股兑现证据正式吸收版；本文件为现行交易规则唯一来源。
+> 最近正式修订：2026-09-20
+> 规则版本：V2.2.31（规则身份未因后续非升版修订自动变化）；本文件为现行交易规则唯一来源。
 
 |版本|定位|状态|
 |-|-|-|
@@ -29,7 +29,7 @@ class RulesVersionContractTests(unittest.TestCase):
         self.assertTrue(parsed["current_description_present"])
 
     def test_positioning_drift_fails(self):
-        parsed = parse_master_release(BASE.replace("定位：V2.2.31", "定位：V2.2.30"))
+        parsed = parse_master_release(BASE.replace("规则版本：V2.2.31", "规则版本：V2.2.30"))
         self.assertFalse(parsed["ok"])
 
     def test_current_table_drift_fails(self):
