@@ -1,28 +1,27 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-20T17:11:06+08:00",
+  "generated_at": "2026-09-20T17:15:55+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 35501557103,
-  "run_attempt": 2,
-  "head_sha": "6e4f099e8a7fea40b28683314583e762e3afb830",
-  "main_head_sha": "2bc623d3255aaaf36d4d4d2e7d6a9e5bd216e634",
+  "run_id": 35501803617,
+  "run_attempt": 1,
+  "head_sha": "f5dc08c101da2d7316b7bd492a78907b8cc37693",
+  "main_head_sha": "c1fe9bb09fafb831468bfa81d7df542b989470ba",
   "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
       "job": "watchdog",
-      "step": "Persist bounded self-healing state and deterministic repairs",
-      "number": 13
+      "step": "Escalate persistent or structural failure",
+      "number": 14
     }
   ],
   "changed_files": [
-    "data/state/restricted_rollback_plan.json",
-    "data/state/workflow_failure_diagnostic.json"
+    "data/state/notification_center.json"
   ],
-  "commit_message": "state: record workflow failure diagnosis",
+  "commit_message": "state: record notification and execution reconciliation",
   "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
