@@ -557,7 +557,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python scripts/issue_687_historical_discovery_shadow.py --market-date "$DISCOVERY_SHADOW_MARKET_DATE" --output "$RUNNER_TEMP/issue-687-discovery-shadow.json"
+          SHADOW_DATE="$(printf '%s' "$DISCOVERY_SHADOW_MARKET_DATE" | tr -d '[:space:]' | sed 's/^discovery_shadow_market_date=//')"
+          test "$SHADOW_DATE" = "2026-09-18" || { echo "Unsupported Issue #687 shadow date: [$DISCOVERY_SHADOW_MARKET_DATE]"; exit 64; }
+          python scripts/issue_687_historical_discovery_shadow.py --market-date "$SHADOW_DATE" --output "$RUNNER_TEMP/issue-687-discovery-shadow.json"
 
       - name: Upload Issue 687 historical Discovery shadow
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.discovery_shadow_market_date != '' }}
