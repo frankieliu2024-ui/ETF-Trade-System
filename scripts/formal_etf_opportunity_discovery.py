@@ -547,7 +547,7 @@ def discover_formal_candidates(
                 history_reused += 1
             if repair_attempted:
                 history_repair_attempted += 1
-            if history_by_code is None and history_source in {"VALIDATED_EXISTING_HISTORY", "EASTMONEY_BOUNDED_REPAIR"}:
+            if history_by_code is None and (history_source == "VALIDATED_EXISTING_HISTORY" or history_source.endswith("_BOUNDED_REPAIR")):
                 node_history[code] = history
                 snapshot_dirty = True
             history_succeeded += 1
@@ -572,7 +572,7 @@ def discover_formal_candidates(
     return {
         "schema_version": "1.0", "status": "READY" if broad and not failures else "DEGRADED",
         "generated_at_beijing": generated, "market_date": market_date,
-        "source": "EASTMONEY_BROAD_ETF_SPOT_PLUS_OBJECT_DAILY_HISTORY",
+        "source": "EASTMONEY_BROAD_ETF_SPOT_PLUS_VALIDATED_HISTORY_OR_TENCENT_EASTMONEY_BOUNDED_REPAIR",
         "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
         "broad_universe_count": len(broad),
         "managed_identity_count": sum(1 for x in broad if x.get("code") in managed_codes),
