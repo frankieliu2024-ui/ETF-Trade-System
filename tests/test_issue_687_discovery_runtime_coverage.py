@@ -79,6 +79,35 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         self.assertIn("eastmoney down", meta["eastmoney_error"])
 
+    def test_tencent_runtime_import_has_direct_script_fallback(self) -> None:
+        import builtins
+        import sys
+        import types
+
+        fake = types.ModuleType("tencent_quote")
+        fake.fetch_tencent_quotes = lambda symbols, timeout=10: {}
+        real_import = builtins.__import__
+
+        def import_without_scripts(name, globals=None, locals=None, fromlist=(), level=0):
+            if name == "scripts.tencent_quote":
+                raise ModuleNotFoundError("No module named 'scripts'")
+            return real_import(name, globals, locals, fromlist, level)
+
+        previous = sys.modules.get("tencent_quote")
+        sys.modules["tencent_quote"] = fake
+        try:
+            with patch.object(builtins, "__import__", side_effect=import_without_scripts), \
+                 patch.object(discovery, "fetch_official_etf_master", return_value=[]):
+                rows, meta = discovery.fetch_official_tencent_broad_spot("2026-09-18")
+        finally:
+            if previous is None:
+                sys.modules.pop("tencent_quote", None)
+            else:
+                sys.modules["tencent_quote"] = previous
+        self.assertEqual(rows, [])
+        self.assertEqual(meta["official_master_count"], 0)
+        self.assertEqual(meta["tencent_quote_count"], 0)
+
     def test_history_network_repair_prefers_hithink_then_tencent_then_eastmoney(self) -> None:
         hithink_rows = [{**row, "_provider": "hithink_finance_history"} for row in history()]
         with patch.object(discovery, "fetch_hithink_daily_history_bounded", return_value=hithink_rows) as hithink, \
