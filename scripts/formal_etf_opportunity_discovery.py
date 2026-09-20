@@ -303,6 +303,16 @@ def fetch_reconciled_broad_etf_spot(market_date: str) -> tuple[list[dict[str, An
         "official_path_error": official_error, "eastmoney_count": len(east_rows), "eastmoney_error": east_error,
         "official_intersection_eastmoney_count": len(official_keys & east_keys),
         "official_only_count": len(official_keys - east_keys), "eastmoney_only_count": len(east_keys - official_keys),
+        "official_only_identities": [
+            {"market_id": market_id, "code": code, "exchange": "SSE" if market_id == 1 else "SZSE",
+             "name": str(merged.get((market_id, code), {}).get("name") or code)}
+            for market_id, code in sorted(official_keys - east_keys)
+        ],
+        "eastmoney_only_identities": [
+            {"market_id": market_id, "code": code, "exchange": "SSE" if market_id == 1 else "SZSE",
+             "name": str(merged.get((market_id, code), {}).get("name") or code)}
+            for market_id, code in sorted(east_keys - official_keys)
+        ],
         "reconciled_count": len(merged),
     }
 
