@@ -17,6 +17,7 @@ SOURCE_REQUEST = {
     "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
     "requested_at_beijing": "2026-09-15T14:47:00+08:00",
     "market_date": "2026-09-15",
+    "query_intent": "EXPLICIT_LATEST",
 }
 SNAPSHOT_PATH = "data/market/snapshots/2026-09-15_144842.json"
 
@@ -81,6 +82,23 @@ class ManualCompletionEnvelopeTests(unittest.TestCase):
     def test_non_manual_request_cannot_enter_manual_completion_path(self):
         with self.assertRaises(ValueError):
             completion.build_completion_request({**SOURCE_REQUEST, "source": "SCHEDULED_ACTOR"}, formal_decision(), SNAPSHOT_PATH)
+
+    def test_user_continue_formal_analysis_can_complete_same_manual_chain(self):
+        source = {
+            **SOURCE_REQUEST,
+            "request_id": "20260921_user_continue_intraday_discovery",
+            "source": "CHATGPT_USER_CONTINUE",
+            "intent": "FORMAL_INTRADAY_ANALYSIS",
+            "query_intent": "FORMAL_INTRADAY_ANALYSIS",
+        }
+        payload = completion.build_completion_request(source, formal_decision(), SNAPSHOT_PATH)
+        self.assertEqual(payload["parent_request_id"], source["request_id"])
+        self.assertEqual(payload["source"], "CHATGPT_MANUAL_FORMAL_COMPLETION")
+
+    def test_user_continue_without_formal_intent_fails_closed(self):
+        source = {**SOURCE_REQUEST, "source": "CHATGPT_USER_CONTINUE", "query_intent": "MARKET_QUOTE_REFRESH"}
+        with self.assertRaises(ValueError):
+            completion.build_completion_request(source, formal_decision(), SNAPSHOT_PATH)
 
     def test_completion_identity_must_be_distinct_from_parent(self):
         with self.assertRaises(ValueError):
