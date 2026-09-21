@@ -130,9 +130,22 @@ def _changed_request_files() -> list[Path]:
 
 def _push_request_class() -> str:
     classes = []
+    policy = load_json(ROOT / "config" / "runtime_policy.json")
     for path in _changed_request_files():
         try:
-            classes.append(classify_live_snapshot_request(json.loads(path.read_text(encoding="utf-8"))))
+            request = json.loads(path.read_text(encoding="utf-8"))
+            source = str(request.get("source") or request.get("requested_by") or "").upper()
+            is_manual_chat = "CHATGPT" in source or "MANUAL" in source
+            if is_manual_chat:
+                normalized = normalize_manual_request_session(request, policy)
+                if normalized.get("interaction_scenario_reclassified"):
+                    raise RuntimeError(
+                        "manual request interaction_scenario conflicts with its own requested_at_beijing; "
+                        f"supplied={normalized.get('supplied_interaction_scenario')} "
+                        f"derived={normalized.get('interaction_scenario')}"
+                    )
+                request = normalized
+            classes.append(classify_live_snapshot_request(request))
         except (OSError, json.JSONDecodeError):
             continue
     if not classes:
