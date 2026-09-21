@@ -151,6 +151,19 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
             self.assertIn(pattern, pr_block)
             self.assertIn(pattern, push_block)
 
+    def test_acceptance_cleans_non_owned_generated_outputs_before_rebase(self):
+        source = WORKFLOW.read_text(encoding="utf-8")
+        persist = source.split("- name: Persist acceptance result", 1)[1].split("- name: Enforce production acceptance", 1)[0]
+        commit_pos = persist.index('git commit -m "state: persist production acceptance"')
+        restore_pos = persist.index("git restore --worktree .")
+        clean_pos = persist.index("git clean -fd -- data/state")
+        rebase_pos = persist.index("git rebase origin/main")
+        self.assertLess(commit_pos, restore_pos)
+        self.assertLess(restore_pos, clean_pos)
+        self.assertLess(clean_pos, rebase_pos)
+        self.assertNotIn("git add -A", persist)
+        self.assertNotIn("git reset --hard", persist[commit_pos:])
+
     def test_workflow_does_not_add_a_second_state_store(self):
         source = WORKFLOW.read_text(encoding="utf-8")
         self.assertEqual(source.count("system_consistency.json"), 8)
