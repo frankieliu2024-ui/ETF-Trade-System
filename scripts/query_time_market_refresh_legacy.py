@@ -474,7 +474,7 @@ def refresh_market_quotes(root: Path | str, requested_symbols: list[str], now: d
             else:
                 yahoo_symbol = DEFAULT_SYMBOLS.get(symbol, (symbol, market))[0]
                 quote = _yahoo(yahoo_symbol, market, now, policy) | {"symbol": symbol}
-            if phase in {"REGULAR", "OPENING_AUCTION"} and quote.get("freshness") != "FRESH":
+            if phase in {"REGULAR", "OPENING_AUCTION", "PRE_MARKET", "POST_MARKET"} and quote.get("freshness") != "FRESH":
                 raise RuntimeError(f"active-market query-time refresh requires FRESH provider timestamp, got {quote.get('freshness')}")
             quotes.append(quote)
         except Exception as exc:
