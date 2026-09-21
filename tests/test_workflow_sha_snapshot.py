@@ -14,6 +14,51 @@ class WorkflowShaSnapshotTests(unittest.TestCase):
             (False, "HEAD=abc GITHUB_SHA=def"),
         )
 
+    def test_production_acceptance_allows_proven_runtime_only_head_advance(self):
+        semantic = {
+            "base": "stable-anchor",
+            "head": "runtime-head",
+            "decision": "SEMANTICALLY_FRESH",
+        }
+        ok, detail = workflow_sha_validation(
+            "runtime-head",
+            "workflow-sha",
+            "push",
+            stable_acceptance_base="stable-anchor",
+            semantic_freshness=semantic,
+        )
+        self.assertTrue(ok)
+        self.assertIn("runtime-only latest-main advancement validated", detail)
+
+    def test_production_acceptance_rejects_unproven_or_replay_required_head_advance(self):
+        replay = {
+            "base": "stable-anchor",
+            "head": "runtime-head",
+            "decision": "REPLAY_REQUIRED",
+        }
+        self.assertFalse(
+            workflow_sha_validation(
+                "runtime-head",
+                "workflow-sha",
+                "push",
+                stable_acceptance_base="stable-anchor",
+                semantic_freshness=replay,
+            )[0]
+        )
+        self.assertFalse(
+            workflow_sha_validation(
+                "runtime-head",
+                "workflow-sha",
+                "push",
+                stable_acceptance_base="wrong-anchor",
+                semantic_freshness={
+                    "base": "stable-anchor",
+                    "head": "runtime-head",
+                    "decision": "SEMANTICALLY_FRESH",
+                },
+            )[0]
+        )
+
     def test_pull_request_replay_accepts_ephemeral_candidate_head(self):
         ok, detail = workflow_sha_validation("candidate-head", "merge-event-sha", "pull_request")
         self.assertTrue(ok)
