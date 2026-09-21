@@ -25,7 +25,11 @@ def build_completion_request(source_request: dict, formal_decision: dict, consum
     """Transport an already-formed manual conclusion through the existing state-sync request path."""
     if not isinstance(source_request, dict) or not source_request:
         raise ValueError("source manual request is required")
-    if source_request.get("source") != "CHATGPT_MANUAL_FORMAL_ANALYSIS":
+    source = str(source_request.get("source") or "").strip().upper()
+    intent = str(source_request.get("intent") or source_request.get("query_intent") or "").strip().upper()
+    manual_sources = {"CHATGPT_MANUAL_FORMAL_ANALYSIS", "CHATGPT_USER_CONTINUE"}
+    formal_intents = {"EXPLICIT_LATEST", "FORMAL_INTRADAY_ANALYSIS"}
+    if source not in manual_sources or intent not in formal_intents:
         raise ValueError("source request is not a manual formal analysis")
     if not isinstance(formal_decision, dict) or not formal_decision:
         raise ValueError("completed formal_decision payload is required")
