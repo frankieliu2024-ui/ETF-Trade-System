@@ -223,8 +223,37 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "evidence": item.get("evidence") or item.get("features") or {},
         })
 
+    request_id = str(request.get("request_id") or "").strip()
+    requested_at = _request_received_at_beijing(request)
+    discovery_status = str(discovery.get("status") or "NOT_REQUESTED").strip().upper()
+    discovery_resolved = discovery_status not in {"", "NOT_REQUESTED", "PENDING", "RUNNING", "UNKNOWN"}
+    post_request = bool(freshness.get("resolved_post_request") or freshness.get("post_request"))
+    account_ready = str(account.get("status") or "").upper() == "VALID"
+    blockers = []
+    if not request_id:
+        blockers.append("REQUEST_IDENTITY_MISSING")
+    if not requested_at:
+        blockers.append("REQUEST_TIME_MISSING")
+    if not post_request:
+        blockers.append("REQUEST_SCOPED_PIT_NOT_RESOLVED")
+    if not account_ready:
+        blockers.append("ACCOUNT_FACT_NOT_READY")
+    if not discovery_resolved:
+        blockers.append("FORMAL_DISCOVERY_NOT_RESOLVED")
+    formal_reasoning_readiness = {
+        "status": "READY" if not blockers else "NOT_READY",
+        "ready": not blockers,
+        "blockers": blockers,
+        "request_bound": bool(request_id and requested_at),
+        "request_scoped_pit_resolved": post_request,
+        "account_fact_ready": account_ready,
+        "formal_discovery_status": discovery_status,
+        "formal_discovery_resolved": discovery_resolved,
+        "rule": "Formal reasoning may be treated as complete only when this request-scoped input contract is READY. NOT_REQUESTED is incomplete, not zero candidates.",
+    }
+
     return {
-        "schema_version": "1.1",
+        "schema_version": "1.2",
         "role": "PREFERRED_MINIMUM_SUFFICIENT_FORMAL_REASONING_INPUT",
         "trigger": {
             "source": request.get("requested_by") or request.get("source") or "INTERACTIVE_QUERY",
@@ -270,6 +299,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "version": universe.get("version") or "",
             "count": len(universe.get("objects") or []),
         },
+        "formal_reasoning_readiness": formal_reasoning_readiness,
         "opportunity_inputs": {
             "formal_discovery_status": discovery.get("status") or "NOT_REQUESTED",
             "candidates": discovery_inputs,
@@ -300,7 +330,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "NON_DECISION_E2E_PROJECTION",
         ],
         "provenance_rule": "Every projected fact is copied from the existing canonical request/account/current/decision/quote/discovery inputs; this packet is not a new fact owner.",
-        "pit_rule": "Formal reasoning should prefer this request-scoped packet; downstream projections cannot mutate the same PIT decision.",
+        "pit_rule": "Formal reasoning consumes this request-scoped packet only when formal_reasoning_readiness.status is READY; downstream projections cannot mutate the same PIT decision.",
         "decision_boundary": "This packet normalizes facts and obligations only. It must not select the main candidate, rank capital states, or generate buy/sell actions.",
     }
 
