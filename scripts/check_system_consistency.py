@@ -52,11 +52,11 @@ def _normalize_us_phase_freshness(report: dict) -> None:
         return
     detail = str(target.get("detail") or "")
     # Scheduled-pulse cache age is observability only; decision-time PIT stays fail-closed.
-    match = re.search(r"failures=\\[(.*?)\\]\\s+limit=(\\d+)", detail)
+    match = re.search(r"failures=\[(.*?)\]\s+limit=(\d+)", detail)
     age_only = False
     if match:
         limit = int(match.group(2))
-        entries = re.findall(r"[^,\\[]+?:[^,\\[]+?:age=(\\d+):freshness=([A-Z_]+)", match.group(1))
+        entries = re.findall(r"[^,\[]+?:[^,\[]+?:age=(\d+):freshness=([A-Z_]+)", match.group(1))
         age_only = bool(entries) and all(int(age) > limit and freshness == "FRESH" for age, freshness in entries)
     if "max_age_seconds" in detail or age_only:
         target["status"] = "WARNING"

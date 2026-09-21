@@ -78,7 +78,8 @@ class UsExtendedRoleFreshnessTests(unittest.TestCase):
     def test_pure_role_aware_pulse_age_is_observability_warning(self):
         detail = "phase=PRE_MARKET required=['QQQ', 'SOXX'] failures=['QQQ:NASDAQ100_EXTENDED_HOURS_PROXY:age=1198:freshness=FRESH', 'SOXX:SEMICONDUCTOR_EXTENDED_HOURS_PROXY:age=1198:freshness=FRESH'] limit=900"
         report = {"checks": [{"name": "us_extended:live_freshness", "status": "FAIL", "detail": detail}], "errors": ["us_extended:live_freshness: " + detail], "warnings": []}
-        consistency._normalize_us_phase_freshness(report)
+        with unittest.mock.patch.object(consistency, "_read_json", return_value={"objects": {}}):
+            consistency._normalize_us_phase_freshness(report)
         self.assertEqual(report["checks"][0]["status"], "WARNING")
         self.assertEqual(report["hard_error_count"], 0)
 

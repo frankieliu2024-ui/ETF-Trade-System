@@ -502,7 +502,7 @@ class NotificationDecisionIdentityTests(unittest.TestCase):
 
 
     def test_system_consistency_acceptance_publication_has_bounded_retry(self):
-        workflow = (ROOT / ".github/workflows/system-consistency.yml").read_text(encoding="utf-8")
+        workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/system-consistency.yml").read_text(encoding="utf-8")
         self.assertIn("for attempt in 1 2; do", workflow)
         self.assertIn("if git push origin HEAD:main; then", workflow)
         self.assertIn('test "$published" = "true"', workflow)
