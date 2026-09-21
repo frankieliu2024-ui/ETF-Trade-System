@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-21T18:15:32+08:00",
+  "generated_at": "2026-09-21T18:18:46+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 35587594694,
-  "run_attempt": 2,
-  "head_sha": "b13af31af274504c8b7b738feab57e444c7b4430",
-  "main_head_sha": "564d785d50bbf9ef88ec79fb6da3f2c1ceb97ea0",
+  "run_id": 35587950320,
+  "run_attempt": 1,
+  "head_sha": "f989e8d08d8c93e37db680862c095752c999eed7",
+  "main_head_sha": "2f69cb5ed7751deed26820cab9fca28da8c34a4b",
   "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
@@ -21,19 +21,18 @@
     }
   ],
   "changed_files": [
-    "scripts/check_system_consistency.py",
-    "tests/test_us_extended_role_freshness.py"
+    "data/state/notification_center.json"
   ],
-  "commit_message": "Merge pull request #752 from frankieliu2024-ui/fix/141-decouple-pulse-age-latest-main-20260921",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "commit_message": "state: record notification and execution reconciliation",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
