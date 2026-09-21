@@ -452,6 +452,24 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
 
 
+    def test_cash_opportunity_cost_is_required(self):
+        request = self.request("missing_cash_opportunity_cost")
+        request["formal_decision"]["capital_competition"].pop("cash_opportunity_cost")
+        with self.assertRaisesRegex(ValueError, "cash_opportunity_cost"):
+            state_sync.record_formal_decision(request)
+
+    def test_trial_information_value_review_is_required(self):
+        request = self.request("missing_trial_information_value")
+        request["formal_decision"]["capital_competition"].pop("trial_information_value_review")
+        with self.assertRaisesRegex(ValueError, "trial_information_value_review"):
+            state_sync.record_formal_decision(request)
+
+    def test_each_compared_state_requires_opportunity_cost(self):
+        request = self.request("missing_state_opportunity_cost")
+        request["formal_decision"]["capital_competition"]["compared_capital_states"][0].pop("opportunity_cost_if_selected")
+        with self.assertRaisesRegex(ValueError, "opportunity_cost_if_selected"):
+            state_sync.record_formal_decision(request)
+
     def test_missing_formal_conclusion_creates_no_event(self):
         request = self.request("no_conclusion_envelope")
         request.pop("formal_decision")
