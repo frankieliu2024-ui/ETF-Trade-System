@@ -1,31 +1,25 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-21T18:14:50+08:00",
+  "generated_at": "2026-09-21T18:15:08+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 35587594694,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 35587705588,
   "run_attempt": 1,
-  "head_sha": "b13af31af274504c8b7b738feab57e444c7b4430",
-  "main_head_sha": "2ad3dd3e6f1551460bdd1cbd2dcea49fe9335703",
+  "head_sha": "2ad3dd3e6f1551460bdd1cbd2dcea49fe9335703",
+  "main_head_sha": "d3e397787837294aa67d0c163e076c48d307517c",
   "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "production_acceptance",
-      "step": "Persist acceptance result",
+      "job": "watchdog",
+      "step": "Persist bounded self-healing state and deterministic repairs",
       "number": 13
-    },
-    {
-      "job": "production_acceptance",
-      "step": "Enforce production acceptance",
-      "number": 14
     }
   ],
   "changed_files": [
-    "scripts/check_system_consistency.py",
-    "tests/test_us_extended_role_freshness.py"
+    "data/state/etf_strategy_equity.json"
   ],
-  "commit_message": "Merge pull request #752 from frankieliu2024-ui/fix/141-decouple-pulse-age-latest-main-20260921",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "state: consume trade fact corrections",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RERUN_FAILED_JOBS_ONCE",
   "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
@@ -33,7 +27,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
