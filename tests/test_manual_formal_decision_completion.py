@@ -167,7 +167,8 @@ class FormalDecisionCrossFieldConsistencyTests(unittest.TestCase):
                 "risk_reduction_or_exit_condition": "当前未达到降低风险或退出条件",
                 "higher_efficiency_alternative": "当前不存在已经独立成立且效率更高的资本用途",
                 "capital_occupancy_reason": "继续占用资本仍优于释放",
-                "capital_use": {"continued_holding_vs_cash": "继续持有优于释放"},
+                "continued_holding_opportunity_cost": "继续持有将放弃现金、部分/全部释放及迁移到其他合法资本用途的价值",
+                "capital_use": {"continued_holding_vs_cash": "继续持有优于释放", "alternative_capital_uses_review": "已比较现金、部分释放、全部释放、合法新Trial/直接Confirm、其他持仓追加及其他MASTER允许状态", "position_capital_states": {"HOLD": "继续持有", "REDUCE": "部分释放", "EXIT": "全部释放"}},
                 "action_changes_now": False,
                 "next_change_condition": "结构失效时重评",
             }

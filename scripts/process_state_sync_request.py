@@ -1277,6 +1277,7 @@ def validate_managed_position_review_contract(value: object, account: dict, obje
             "current_action", "holding_state_risk_reward_evidence",
             "holding_thesis_status", "risk_reduction_or_exit_condition",
             "higher_efficiency_alternative", "capital_occupancy_reason",
+            "continued_holding_opportunity_cost",
             "capital_use", "action_changes_now", "next_change_condition",
         )
         missing = [key for key in required if key not in review or review[key] in (None, "", [])]
@@ -1285,6 +1286,14 @@ def validate_managed_position_review_contract(value: object, account: dict, obje
         capital_use = review["capital_use"]
         if not isinstance(capital_use, dict) or not capital_use.get("continued_holding_vs_cash"):
             return f"{object_name}[{index}].capital_use requires continued_holding_vs_cash"
+        if not capital_use.get("alternative_capital_uses_review"):
+            return f"{object_name}[{index}].capital_use requires alternative_capital_uses_review"
+        position_states = capital_use.get("position_capital_states")
+        if not isinstance(position_states, dict):
+            return f"{object_name}[{index}].capital_use requires position_capital_states"
+        missing_states = [state for state in ("HOLD", "REDUCE", "EXIT") if not position_states.get(state)]
+        if missing_states:
+            return f"{object_name}[{index}].capital_use.position_capital_states missing: {', '.join(missing_states)}"
         action = str(review["current_action"]).strip()
         if action in {"降低风险", "退出"}:
             if review.get("action_changes_now") is not True:
