@@ -615,9 +615,14 @@ jobs:
           done
           git fetch --no-tags origin main
           git reset --hard origin/main
+          # Acceptance artifacts are derived outputs. Rebuild them against the
+          # execution-time latest main after any concurrent canonical fact
+          # advance, instead of copying artifacts produced from the older
+          # workflow checkout back over newer canonical-consistent state.
+          export ETF_SYSTEM_ROOT="$PWD"
+          python scripts/run_production_acceptance.py --mutation-sha "$(git rev-parse HEAD)"
           for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json data/state/last_known_good.json data/state/e2e_status.json data/state/execution_quality.json; do
-            if [ -f "$owned/$f" ]; then
-              cp "$owned/$f" "$f"
+            if [ -f "$f" ]; then
               git add "$f"
             fi
           done
