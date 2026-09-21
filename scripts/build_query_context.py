@@ -225,6 +225,29 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
 
     request_id = str(request.get("request_id") or "").strip()
     requested_at = _request_received_at_beijing(request)
+    request_source = str(request.get("source") or request.get("requested_by") or "").strip().upper()
+    manual_formal_sources = {
+        "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+        "CHATGPT_USER_CONTINUE",
+        "CHATGPT_USER_GITHUB_INTRADAY",
+        "CHATGPT_USER_REQUEST",
+        "CHATGPT_USER_INTERACTION",
+    }
+    manual_formal_intents = {"FORMAL_INTRADAY_DECISION", "FORMAL_INTRADAY_ANALYSIS", "EXPLICIT_LATEST"}
+    request_intent = str(request.get("intent") or request.get("query_intent") or "").strip().upper()
+    is_manual_formal_request = request_source in manual_formal_sources and request_intent in manual_formal_intents
+    ingress_path = str(request.get("_request_file") or request.get("_ingress_path") or request.get("request_file") or "").strip().replace("\\", "/")
+    ingress_path_parts = Path(ingress_path).parts if ingress_path else ()
+    canonical_source_ingress = bool(
+        ingress_path
+        and not ingress_path.startswith("/")
+        and ".." not in ingress_path_parts
+        and len(ingress_path_parts) >= 3
+        and ingress_path_parts[0] == "requests"
+        and ingress_path_parts[1] == "live_snapshot"
+        and ingress_path.endswith(".json")
+    )
+    manual_source_ingress_qualified = (not is_manual_formal_request) or canonical_source_ingress
     discovery_status = str(discovery.get("status") or "NOT_REQUESTED").strip().upper()
     discovery_resolved = discovery_status not in {"", "NOT_REQUESTED", "PENDING", "RUNNING", "UNKNOWN"}
     post_request = bool(freshness.get("resolved_post_request") or freshness.get("post_request"))
@@ -236,6 +259,8 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         ingress_blockers.append("REQUEST_IDENTITY_MISSING")
     if not requested_at:
         ingress_blockers.append("REQUEST_TIME_MISSING")
+    if is_manual_formal_request and not manual_source_ingress_qualified:
+        ingress_blockers.append("MANUAL_SOURCE_INGRESS_UNQUALIFIED")
 
     analysis_limitations = []
     if not post_request:
@@ -255,7 +280,13 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "available": not ingress_blockers,
         "global_blockers": ingress_blockers,
         "limitations": analysis_limitations,
-        "rule": "Missing market/account/discovery facts localize their impact and do not suppress independent legal analysis. Only missing canonical request identity/time globally blocks this request-scoped formal-analysis packet.",
+        "source_ingress": {
+            "manual_formal_request": is_manual_formal_request,
+            "qualified": manual_source_ingress_qualified,
+            "path": ingress_path,
+            "rule": "Manual formal analysis is request-scoped only when bound to the existing canonical requests/live_snapshot ingress. Derived state alone cannot impersonate a new manual formal request.",
+        },
+        "rule": "Missing market/account/discovery facts localize their impact and do not suppress independent legal analysis. Missing canonical request identity/time or an unqualified manual source ingress globally blocks this request-scoped formal-analysis packet.",
     }
 
     action_blockers = list(ingress_blockers)
