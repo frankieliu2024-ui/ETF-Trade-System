@@ -255,6 +255,24 @@ def select_intraday_path_features(root: Path) -> tuple[dict, dict]:
     return selected, diagnostics
 
 
+def load_node_local_formal_discovery(root: Path, current: dict) -> dict | None:
+    """Reuse Discovery only when query_context belongs to the same current market node."""
+    query = load_json(root / "data" / "state" / "query_context.json", {})
+    discovery = query.get("formal_etf_discovery") or {}
+    if not discovery or str(discovery.get("status") or "").upper() == "NOT_REQUESTED":
+        return None
+    query_current = query.get("current") or {}
+    if str(query.get("market_date") or query_current.get("market_date") or "") != str(current.get("market_date") or ""):
+        return None
+    if str(query.get("latest_valid_node") or query_current.get("latest_valid_node") or "") != str(current.get("latest_valid_node") or ""):
+        return None
+    query_snapshot = str(query_current.get("latest_snapshot") or "")
+    current_snapshot = str(current.get("latest_snapshot") or "")
+    if query_snapshot and current_snapshot and query_snapshot != current_snapshot:
+        return None
+    return discovery
+
+
 def main() -> None:
     timing = {"state_builder_started_at": now_utc()}
     current = read_current(ROOT)
@@ -351,7 +369,12 @@ def main() -> None:
     phase4 = build_phase4_automation(ROOT)
     candidate = build_dashboard_candidate(ROOT)
     timing["full_state_context_observation_at"] = now_utc()
-    context = build_decision_context(ROOT, observability=build_decision_trace(ROOT, timing))
+    formal_discovery = load_node_local_formal_discovery(ROOT, current)
+    context = build_decision_context(
+        ROOT,
+        observability=build_decision_trace(ROOT, timing),
+        formal_discovery=formal_discovery,
+    )
     context["managed_position_sell_review"] = build_managed_position_projection(ROOT)
     context.setdefault("research_evidence", {})["market_regime_context"] = market_regime
     context["research_evidence"]["market_structure_context"] = market_structure
