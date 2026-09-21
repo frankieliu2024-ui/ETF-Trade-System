@@ -30,6 +30,12 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         self.assertIn("--report-path", source)
         self.assertTrue(any(isinstance(node, ast.Call) and getattr(node.func, "attr", "") == "parse_args" for node in ast.walk(tree)))
 
+    def test_acceptance_rebuilds_execution_quality_once_via_state_context(self):
+        source = ACCEPTANCE.read_text(encoding="utf-8")
+        self.assertNotIn('scripts/build_execution_quality.py', source)
+        self.assertEqual(source.count('scripts/build_state_context.py'), 1)
+        self.assertIn("quality_rc=state_rc", source)
+
     def test_acceptance_reuses_canonical_checks_and_has_no_recursive_push(self):
         source = ACCEPTANCE.read_text(encoding="utf-8")
         self.assertIn("check_system_consistency.py", source)
