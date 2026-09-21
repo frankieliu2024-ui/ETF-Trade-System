@@ -5,7 +5,7 @@
 
 > 账户事实更新时间：2026-09-18T15:53:00+08:00  
 > 账户事实来源：BROKER_HOLDINGS_SCREENSHOT_20260918_1553_USER_CONFIRMED_CLOSE  
-> ETF策略风险as-of：2026-09-18  
+> ETF策略风险as-of：2026-09-21  
 > ETF策略风险来源：data/state/etf_strategy_equity.json::summary.current_strategy_return_pct_gross  
 > 场景：账户事实维护  
 > 账户事实与ETF策略风险使用各自canonical provenance；本区块不推导交易权限或下单。
@@ -20,7 +20,7 @@
 |账户持仓盈亏|-21,482.66元|
 |当日盈亏|2,562.80元（+1.33%）|
 |账户总风险暴露率|约90.80%|
-|ETF策略风险率|约-7.6307%（Gross；as-of 2026-09-18）|
+|ETF策略风险率|约-7.2662%（Gross；as-of 2026-09-21）|
 |累计已知ETF费用（有效事实）|159.56元；已执行成交overlay 0.00元；待确认费用状态：存在|
 |账户事实内已确认费用记录合计|0.00元（仅统计account_fact中明确标记CONFIRMED的记录；不代表历史累计ETF费用）|
 
