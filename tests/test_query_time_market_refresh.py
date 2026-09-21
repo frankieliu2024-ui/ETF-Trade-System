@@ -148,5 +148,60 @@ class QueryTimeRefreshTests(unittest.TestCase):
         self.assertIn("no fresh usable quote", result["failures"][0]["error"])
 
 
+    def test_us_pre_market_query_time_refresh_rejects_degraded_proxy(self):
+        from scripts.query_time_market_refresh import refresh_market_quotes
+
+        root = self._root("2026-09-21T17:00:00+08:00")
+        now = datetime.fromisoformat("2026-09-21T05:30:00-04:00")
+        degraded = {
+            "symbol": "QQQ", "market": "US", "latest_price": 600,
+            "data_time_beijing": "2026-09-21T17:10:00+08:00",
+            "market_phase": "PRE_MARKET", "freshness": "DEGRADED",
+            "quality_status": "DEGRADED", "source": "yahoo_chart_api",
+        }
+        with patch("scripts.query_time_market_refresh._yahoo", return_value=degraded):
+            result = refresh_market_quotes(root, ["QQQ"], now)
+
+        self.assertEqual(result["quotes"], [])
+        self.assertEqual(result["failures"][0]["symbol"], "QQQ")
+        self.assertIn("requires FRESH provider timestamp", result["failures"][0]["error"])
+
+    def test_us_post_market_query_time_refresh_rejects_stale_proxy(self):
+        from scripts.query_time_market_refresh import refresh_market_quotes
+
+        root = self._root("2026-09-21T17:00:00+08:00")
+        now = datetime.fromisoformat("2026-09-21T17:30:00-04:00")
+        stale = {
+            "symbol": "SOXX", "market": "US", "latest_price": 300,
+            "data_time_beijing": "2026-09-22T04:00:00+08:00",
+            "market_phase": "POST_MARKET", "freshness": "STALE",
+            "quality_status": "STALE", "source": "yahoo_chart_api",
+        }
+        with patch("scripts.query_time_market_refresh._yahoo", return_value=stale):
+            result = refresh_market_quotes(root, ["SOXX"], now)
+
+        self.assertEqual(result["quotes"], [])
+        self.assertEqual(result["failures"][0]["symbol"], "SOXX")
+        self.assertIn("requires FRESH provider timestamp", result["failures"][0]["error"])
+
+    def test_us_extended_query_time_refresh_accepts_fresh_proxy(self):
+        from scripts.query_time_market_refresh import refresh_market_quotes
+
+        root = self._root("2026-09-21T17:00:00+08:00")
+        now = datetime.fromisoformat("2026-09-21T05:30:00-04:00")
+        fresh = {
+            "symbol": "QQQ", "market": "US", "latest_price": 601,
+            "data_time_beijing": "2026-09-21T17:29:30+08:00",
+            "market_phase": "PRE_MARKET", "freshness": "FRESH",
+            "quality_status": "PASS", "source": "yahoo_chart_api",
+        }
+        with patch("scripts.query_time_market_refresh._yahoo", return_value=fresh):
+            result = refresh_market_quotes(root, ["QQQ"], now)
+
+        self.assertEqual(result["failures"], [])
+        self.assertEqual(result["quotes"][0]["freshness"], "FRESH")
+        self.assertEqual(result["quotes"][0]["latest_price"], 601)
+
+
 if __name__ == "__main__":
     unittest.main()
