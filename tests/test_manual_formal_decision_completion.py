@@ -39,6 +39,8 @@ def formal_decision():
             "releasable_capital_reviewed": True,
             "post_action_deployable_cash": 10000.0,
             "future_opportunity_capacity": "仍可承载后续Trial/Confirm",
+            "cash_opportunity_cost": "保留现金会放弃当前合法候选可能产生的收益与信息获取价值",
+            "alternative_capital_use_review": "已比较新Trial、直接Confirm、持仓ETF追加、现有持仓继续占资、低效率资本释放迁移及其他MASTER允许状态与现金",
             "concentration_account_structure_effect": "不增加集中度",
             "selected_state_reason": "现金优于当前可执行候选",
             "new_amount_yuan": 0,
@@ -48,13 +50,13 @@ def formal_decision():
                     "state_name": "维持现有组合+现金",
                     "capital_action": "不新增",
                     "remaining_deployable_cash": 10000.0,
-                    "why_not_selected": "已选中"
+                    "why_not_selected": "已选中", "opportunity_cost_if_selected": "选择该状态将放弃其他合法资本状态的潜在收益、信息价值或现金选择权"
                 },
                 {
                     "state_name": "半导体设备ETF新增Trial+剩余现金",
                     "capital_action": "新增5000元",
                     "remaining_deployable_cash": 5000.0,
-                    "why_not_selected": "风险许可不允许新增"
+                    "why_not_selected": "风险许可不允许新增", "opportunity_cost_if_selected": "选择该状态将放弃其他合法资本状态的潜在收益、信息价值或现金选择权"
                 }
             ],
             "held_etf_add_capital_reviews": [],
@@ -449,6 +451,24 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             state_sync.record_formal_decision(request)
         self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
 
+
+    def test_cash_opportunity_cost_is_required(self):
+        request = self.request("missing_cash_opportunity_cost")
+        request["formal_decision"]["capital_competition"].pop("cash_opportunity_cost")
+        with self.assertRaisesRegex(ValueError, "cash_opportunity_cost"):
+            state_sync.record_formal_decision(request)
+
+    def test_alternative_capital_use_review_is_required(self):
+        request = self.request("missing_trial_information_value")
+        request["formal_decision"]["capital_competition"].pop("alternative_capital_use_review")
+        with self.assertRaisesRegex(ValueError, "alternative_capital_use_review"):
+            state_sync.record_formal_decision(request)
+
+    def test_each_compared_state_requires_opportunity_cost(self):
+        request = self.request("missing_state_opportunity_cost")
+        request["formal_decision"]["capital_competition"]["compared_capital_states"][0].pop("opportunity_cost_if_selected")
+        with self.assertRaisesRegex(ValueError, "opportunity_cost_if_selected"):
+            state_sync.record_formal_decision(request)
 
     def test_missing_formal_conclusion_creates_no_event(self):
         request = self.request("no_conclusion_envelope")

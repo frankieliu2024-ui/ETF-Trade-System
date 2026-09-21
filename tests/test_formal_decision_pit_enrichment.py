@@ -135,6 +135,8 @@ class FormalDecisionPitEnrichmentTests(unittest.TestCase):
                         "releasable_capital_reviewed": True,
                         "post_action_deployable_cash": 10000.0,
                         "future_opportunity_capacity": "仍可承载后续Trial/Confirm",
+            "cash_opportunity_cost": "保留现金会放弃当前合法候选可能产生的收益与信息获取价值",
+            "alternative_capital_use_review": "已比较新Trial、直接Confirm、持仓ETF追加、现有持仓继续占资、低效率资本释放迁移及其他MASTER允许状态与现金",
                         "concentration_account_structure_effect": "不增加集中度",
                         "selected_state_reason": "现金优于当前可执行候选",
                         "new_amount_yuan": 0,
@@ -144,13 +146,13 @@ class FormalDecisionPitEnrichmentTests(unittest.TestCase):
                                 "state_name": "维持现有组合+现金",
                                 "capital_action": "不新增",
                                 "remaining_deployable_cash": 10000.0,
-                                "why_not_selected": "已选中"
+                                "why_not_selected": "已选中", "opportunity_cost_if_selected": "选择该状态将放弃其他合法资本状态的潜在收益、信息价值或现金选择权"
                             },
                             {
                                 "state_name": "候选Trial+剩余现金",
                                 "capital_action": "新增5000元",
                                 "remaining_deployable_cash": 5000.0,
-                                "why_not_selected": "未被当前决策选中"
+                                "why_not_selected": "未被当前决策选中", "opportunity_cost_if_selected": "选择该状态将放弃其他合法资本状态的潜在收益、信息价值或现金选择权"
                             }
                         ],
                         "held_etf_add_capital_reviews": [],
@@ -208,6 +210,8 @@ class FormalDecisionPitEnrichmentTests(unittest.TestCase):
                         "releasable_capital_reviewed": True,
                         "post_action_deployable_cash": 10000.0,
                         "future_opportunity_capacity": "仍可承载后续Trial/Confirm",
+            "cash_opportunity_cost": "保留现金会放弃当前合法候选可能产生的收益与信息获取价值",
+            "alternative_capital_use_review": "已比较新Trial、直接Confirm、持仓ETF追加、现有持仓继续占资、低效率资本释放迁移及其他MASTER允许状态与现金",
                         "concentration_account_structure_effect": "不增加集中度",
                         "selected_state_reason": "现金优于当前可执行候选",
                         "new_amount_yuan": 0,
@@ -217,13 +221,13 @@ class FormalDecisionPitEnrichmentTests(unittest.TestCase):
                                 "state_name": "维持现有组合+现金",
                                 "capital_action": "不新增",
                                 "remaining_deployable_cash": 10000.0,
-                                "why_not_selected": "已选中"
+                                "why_not_selected": "已选中", "opportunity_cost_if_selected": "选择该状态将放弃其他合法资本状态的潜在收益、信息价值或现金选择权"
                             },
                             {
                                 "state_name": "候选Trial+剩余现金",
                                 "capital_action": "新增5000元",
                                 "remaining_deployable_cash": 5000.0,
-                                "why_not_selected": "未被当前决策选中"
+                                "why_not_selected": "未被当前决策选中", "opportunity_cost_if_selected": "选择该状态将放弃其他合法资本状态的潜在收益、信息价值或现金选择权"
                             }
                         ],
                         "held_etf_add_capital_reviews": [],
