@@ -39,18 +39,42 @@ REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api", "eastmoney_push2"}
 CORE_A_SHARE_INDEX_CODES = frozenset({"000001.SH", "399006.SZ", "000688.SH"})
 
 
-def workflow_sha_validation(head_sha: str, workflow_sha: str, event_name: str) -> tuple[bool, str]:
-    """Validate immutable workflow identity without rejecting PR replay snapshots.
+def workflow_sha_validation(
+    head_sha: str,
+    workflow_sha: str,
+    event_name: str,
+    *,
+    stable_acceptance_base: str = "",
+    semantic_freshness: dict | None = None,
+) -> tuple[bool, str]:
+    """Validate immutable workflow identity while permitting proven runtime-only advancement.
 
-    Production and non-PR runs must still bind the report to the exact checked
-    out workflow SHA.  A pull-request candidate intentionally validates an
-    ephemeral replay tree, so its HEAD cannot equal the Actions event SHA.
+    The workflow/event SHA remains the immutable execution identity.  During a
+    production acceptance rebuild, HEAD may intentionally advance to latest
+    main.  That divergence is legal only when an explicit admitted stable
+    anchor is present and semantic classification proves the movement requires
+    no replay.  Stable or unknown movement remains fail-closed.
     """
     if not workflow_sha:
         return True, f"workflow_sha_unset event={event_name or 'UNKNOWN'}"
     if event_name == "pull_request":
         return True, f"PR candidate snapshot validated head={head_sha} event_sha={workflow_sha}"
-    return head_sha == workflow_sha, f"HEAD={head_sha} GITHUB_SHA={workflow_sha}"
+    if head_sha == workflow_sha:
+        return True, f"HEAD={head_sha} GITHUB_SHA={workflow_sha}"
+    if stable_acceptance_base and semantic_freshness:
+        decision = semantic_freshness.get("decision")
+        base = semantic_freshness.get("base")
+        head = semantic_freshness.get("head")
+        if (
+            base == stable_acceptance_base
+            and head == head_sha
+            and decision == "SEMANTICALLY_FRESH"
+        ):
+            return True, (
+                f"runtime-only latest-main advancement validated "
+                f"anchor={stable_acceptance_base} HEAD={head_sha} GITHUB_SHA={workflow_sha}"
+            )
+    return False, f"HEAD={head_sha} GITHUB_SHA={workflow_sha}"
 
 
 def canonical_etf_codes(objects: list[dict]) -> set[str]:
@@ -327,6 +351,8 @@ def main() -> int:
         head_sha,
         github_sha,
         os.environ.get("GITHUB_EVENT_NAME", ""),
+        stable_acceptance_base=os.environ.get("ETF_STABLE_ACCEPTANCE_BASE", ""),
+        semantic_freshness=semantic_freshness,
     )
     check("git:workflow_sha_matches_head", workflow_sha_ok, workflow_sha_detail)
     rc, tracked = run_git("-c", "core.quotePath=false", "ls-files")
