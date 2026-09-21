@@ -174,11 +174,135 @@ def _stable_manual_request_identity(request: dict) -> str:
     return f"{safe_stem}-{digest}"
 
 
-def build_decision_fact_pack(root: Path, request: dict, current: dict, account: dict, decision: dict, market_quote: dict) -> dict:
-    """Expose one request's PIT references without creating another state store."""
+def build_decision_fact_pack(root: Path, request: dict, current: dict, account: dict, decision: dict, market_quote: dict, formal_discovery: dict | None = None) -> dict:
+    """Project one request's minimum sufficient, decision-ready PIT inputs.
+
+    This remains an in-memory read-only projection.  It normalizes already
+    qualified facts and completion obligations; it never ranks candidates or
+    derives a buy/sell/capital-allocation answer.
+    """
     freshness = market_quote.get("decision_freshness") or {}
     universe = read_json(root / CANONICAL_FILES["etf_monitor_universe"], {})
-    return {"schema_version": "1.0", "trigger": {"source": request.get("requested_by") or request.get("source") or "INTERACTIVE_QUERY", "request_id": request.get("request_id") or "", "requested_at_beijing": _request_received_at_beijing(request)}, "master": {"version": decision.get("rules_version") or current.get("rules_version") or "", "source": "ETF规则_MASTER.md"}, "account_fact": {"source": account.get("source") or "", "as_of_beijing": account.get("updated_at") or "", "status": account.get("status") or ""}, "current": {"market_date": current.get("market_date") or "", "latest_snapshot": current.get("latest_snapshot") or "", "captured_at_beijing": current.get("captured_at") or (current.get("data_freshness") or {}).get("captured_at_beijing") or "", "provider_as_of_beijing": (current.get("data_freshness") or {}).get("provider_as_of") or "", "provider": (current.get("data_freshness") or {}).get("provider") or ""}, "decision_context": {"generated_at_beijing": decision.get("generated_at_beijing") or decision.get("generated_at") or "", "source": "scripts/state_manager.py::build_decision_context"}, "market_quote": {"mode": market_quote.get("refresh_mode") or "", "decision_freshness": freshness, "quotes_as_of_beijing": sorted({str(q.get("data_time_beijing") or "") for q in (market_quote.get("quotes") or []) if isinstance(q, dict) and q.get("data_time_beijing")}), "source": "scripts/market_quote_router.py"}, "lifecycle": {"source": "decision_context.lifecycle_projection", "reference": "decision_context.lifecycle_projection"}, "etf_universe": {"source": CANONICAL_FILES["etf_monitor_universe"], "version": universe.get("version") or "", "count": len(universe.get("objects") or [])}, "pit_rule": "Formal reasoning consumes only this request-scoped fact set; downstream projections cannot mutate the same PIT decision."}
+    discovery = formal_discovery or {}
+    positions = []
+    for item in account.get("positions") or []:
+        if not isinstance(item, dict) or float(item.get("quantity") or 0) <= 0:
+            continue
+        positions.append({
+            "code": str(item.get("code") or item.get("symbol") or item.get("security_code") or ""),
+            "name": item.get("name") or "",
+            "asset_type": item.get("asset_type") or "",
+            "quantity": item.get("quantity"),
+            "market_value": item.get("market_value"),
+            "cost": item.get("cost") or item.get("cost_price"),
+        })
+
+    quotes = []
+    for item in market_quote.get("quotes") or []:
+        if not isinstance(item, dict):
+            continue
+        quotes.append({
+            "code": str(item.get("symbol") or item.get("code") or item.get("object_code") or ""),
+            "name": item.get("name") or item.get("object_name") or "",
+            "price": item.get("price") if item.get("price") is not None else item.get("close"),
+            "change_pct": item.get("change_pct"),
+            "market_phase": item.get("market_phase") or "",
+            "as_of_beijing": item.get("data_time_beijing") or item.get("as_of_beijing") or item.get("provider_as_of") or "",
+            "quality_status": item.get("quality_status") or item.get("freshness") or "",
+            "provider": item.get("provider") or item.get("provider_used") or "",
+        })
+
+    discovery_inputs = []
+    for item in discovery.get("candidates") or []:
+        if not isinstance(item, dict):
+            continue
+        discovery_inputs.append({
+            "code": str(item.get("code") or ""),
+            "name": item.get("name") or "",
+            "eligibility": item.get("eligibility") or item.get("status") or "",
+            "evidence": item.get("evidence") or item.get("features") or {},
+        })
+
+    return {
+        "schema_version": "1.1",
+        "role": "PREFERRED_MINIMUM_SUFFICIENT_FORMAL_REASONING_INPUT",
+        "trigger": {
+            "source": request.get("requested_by") or request.get("source") or "INTERACTIVE_QUERY",
+            "request_id": request.get("request_id") or "",
+            "requested_at_beijing": _request_received_at_beijing(request),
+        },
+        "master": {
+            "version": decision.get("rules_version") or current.get("rules_version") or "",
+            "source": "ETF规则_MASTER.md",
+        },
+        "account_fact": {
+            "source": account.get("source") or "",
+            "as_of_beijing": account.get("updated_at") or "",
+            "status": account.get("status") or "",
+            "deployable_cash": account.get("deployable_cash"),
+            "reserved_cash_for_settlement": account.get("reserved_cash_for_settlement"),
+            "positions": positions,
+        },
+        "current": {
+            "market_date": current.get("market_date") or "",
+            "market_phase": current.get("market_phase") or "",
+            "latest_snapshot": current.get("latest_snapshot") or "",
+            "captured_at_beijing": current.get("captured_at") or (current.get("data_freshness") or {}).get("captured_at_beijing") or "",
+            "provider_as_of_beijing": (current.get("data_freshness") or {}).get("provider_as_of") or "",
+            "provider": (current.get("data_freshness") or {}).get("provider") or "",
+        },
+        "qualified_market_facts": quotes,
+        "decision_context": {
+            "generated_at_beijing": decision.get("generated_at_beijing") or decision.get("generated_at") or "",
+            "source": "scripts/state_manager.py::build_decision_context",
+            "analysis_coverage": decision.get("analysis_coverage") or {},
+            "lifecycle_projection": decision.get("lifecycle_projection") or {},
+            "risk_metrics": decision.get("etf_strategy_risk_metrics") or {},
+        },
+        "market_quote": {
+            "mode": market_quote.get("refresh_mode") or "",
+            "decision_freshness": freshness,
+            "quotes_as_of_beijing": sorted({str(q.get("data_time_beijing") or q.get("as_of_beijing") or "") for q in (market_quote.get("quotes") or []) if isinstance(q, dict) and (q.get("data_time_beijing") or q.get("as_of_beijing"))}),
+            "source": "scripts/market_quote_router.py",
+        },
+        "etf_universe": {
+            "source": CANONICAL_FILES["etf_monitor_universe"],
+            "version": universe.get("version") or "",
+            "count": len(universe.get("objects") or []),
+        },
+        "opportunity_inputs": {
+            "formal_discovery_status": discovery.get("status") or "NOT_REQUESTED",
+            "candidates": discovery_inputs,
+            "rule": "Inputs only. Candidate selection and capital allocation remain ChatGPT judgments under MASTER.",
+        },
+        "formal_reasoning_obligations": [
+            "THREE_LAYER_MONITORING",
+            "ALL_OBSERVATION_AND_HELD_ETF_OPPORTUNITY_COMPARISON",
+            "EVERY_ACTUAL_POSITION_MANAGED_POSITION_REVIEW",
+            "HELD_ETF_ADDITIONAL_CAPITAL_REVIEW_WHERE_APPLICABLE",
+            "RELEASABLE_LOW_EFFICIENCY_CAPITAL_REVIEW",
+            "EXPLICIT_NEXT_UNIT_CAPITAL_USE",
+            "ZERO_AMOUNT_ONLY_AFTER_FULL_CAPITAL_COMPETITION",
+            "POST_ACTION_CASH_AND_FUTURE_TRIAL_CONFIRM_CAPACITY",
+            "CONCENTRATION_AND_ACCOUNT_STRUCTURE_EFFECT",
+            "CAPITAL_SOURCE_OR_DESTINATION_FOR_RELEASE_OR_MIGRATION",
+        ],
+        "conditional_reads": {
+            "experience": CANONICAL_FILES["experience"],
+            "market_archive": CANONICAL_FILES["market_archive"],
+            "rule": "Read only when the evidence can change risk permission, opportunity, lifecycle, amount, funding source, sell action, account truth, or capital allocation.",
+        },
+        "deferred_non_blocking": [
+            "DASHBOARD_RENDER",
+            "MARKET_ARCHIVE_RENDER",
+            "REVIEW_CONTEXT",
+            "NOTIFICATION_RENDER",
+            "NON_DECISION_E2E_PROJECTION",
+        ],
+        "provenance_rule": "Every projected fact is copied from the existing canonical request/account/current/decision/quote/discovery inputs; this packet is not a new fact owner.",
+        "pit_rule": "Formal reasoning should prefer this request-scoped packet; downstream projections cannot mutate the same PIT decision.",
+        "decision_boundary": "This packet normalizes facts and obligations only. It must not select the main candidate, rank capital states, or generate buy/sell actions.",
+    }
 
 
 def _first_qualified_market_fact(market_quote: dict) -> dict:
@@ -533,7 +657,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
             seen_system_codes.add(code)
     decision = build_decision_context(root, formal_discovery=formal_discovery)
     generated_at = datetime.now(SHANGHAI).isoformat(timespec="seconds")
-    fact_pack = build_decision_fact_pack(root, request_payload, current, account, decision, market_quote)
+    fact_pack = build_decision_fact_pack(root, request_payload, current, account, decision, market_quote, formal_discovery=formal_discovery)
     latency = build_fast_path_latency(request_payload, current, account, decision, market_quote, generated_at, root)
     return {
         "generated_at": now_utc(), "generated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
