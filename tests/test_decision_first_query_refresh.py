@@ -76,6 +76,41 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertEqual(pack["account_fact"]["as_of_beijing"], "2026-09-04T15:03:00+08:00")
         self.assertEqual(pack["etf_universe"]["count"], 0)
 
+    def test_fact_pack_is_decision_ready_without_predeciding(self):
+        with tempfile.TemporaryDirectory() as directory:
+            pack = query_context.build_decision_fact_pack(
+                Path(directory),
+                {"request_id": "r3", "requested_at_beijing": "2026-09-21T14:00:00+08:00"},
+                {"market_date": "2026-09-21", "market_phase": "CONTINUOUS_AFTERNOON", "latest_snapshot": "snap.json"},
+                {
+                    "status": "VALID", "updated_at": "2026-09-21T13:59:00+08:00",
+                    "deployable_cash": 18000,
+                    "positions": [{"code": "561980", "name": "半导体设备ETF", "asset_type": "ETF", "quantity": 100, "market_value": 1200}],
+                },
+                {
+                    "rules_version": "V2.2.31", "generated_at": "2026-09-21T14:00:03+08:00",
+                    "analysis_coverage": {"status": "PASS"},
+                    "lifecycle_projection": {"561980": "HOLDING"},
+                    "etf_strategy_risk_metrics": {"status": "READY"},
+                },
+                {
+                    "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
+                    "decision_freshness": {"status": "DIRECT", "post_request": True},
+                    "quotes": [{"symbol": "561980", "close": 1.2, "change_pct": 1.0, "data_time_beijing": "2026-09-21T14:00:02+08:00", "quality_status": "PASS", "provider": "test"}],
+                },
+                formal_discovery={"status": "PASS", "candidates": [{"code": "159995", "name": "芯片ETF", "eligibility": "EVALUATION"}]},
+            )
+        self.assertEqual(pack["role"], "PREFERRED_MINIMUM_SUFFICIENT_FORMAL_REASONING_INPUT")
+        self.assertEqual(pack["account_fact"]["deployable_cash"], 18000)
+        self.assertEqual(pack["account_fact"]["positions"][0]["code"], "561980")
+        self.assertEqual(pack["qualified_market_facts"][0]["code"], "561980")
+        self.assertEqual(pack["opportunity_inputs"]["candidates"][0]["code"], "159995")
+        self.assertIn("EVERY_ACTUAL_POSITION_MANAGED_POSITION_REVIEW", pack["formal_reasoning_obligations"])
+        self.assertIn("EXPLICIT_NEXT_UNIT_CAPITAL_USE", pack["formal_reasoning_obligations"])
+        self.assertNotIn("main_candidate", pack)
+        self.assertNotIn("recommended_action", pack)
+        self.assertIn("must not select", pack["decision_boundary"])
+
     def test_missing_latency_fields_remain_explicit(self):
         result = query_context.build_fast_path_latency(
             {"requested_at_beijing": "2026-09-05T10:00:00+08:00"},
