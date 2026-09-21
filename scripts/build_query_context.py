@@ -238,8 +238,6 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         blockers.append("REQUEST_SCOPED_PIT_NOT_RESOLVED")
     if not account_ready:
         blockers.append("ACCOUNT_FACT_NOT_READY")
-    if not discovery_resolved:
-        blockers.append("FORMAL_DISCOVERY_NOT_RESOLVED")
     formal_reasoning_readiness = {
         "status": "READY" if not blockers else "NOT_READY",
         "ready": not blockers,
@@ -249,11 +247,13 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "account_fact_ready": account_ready,
         "formal_discovery_status": discovery_status,
         "formal_discovery_resolved": discovery_resolved,
-        "rule": "Formal reasoning may be treated as complete only when this request-scoped input contract is READY. NOT_REQUESTED is incomplete, not zero candidates.",
+        "capital_efficiency_scope": "FULL_MARKET" if discovery_resolved else "DEGRADED_KNOWN_UNIVERSE",
+        "capital_efficiency_limitations": [] if discovery_resolved else ["FORMAL_DISCOVERY_NOT_RESOLVED"],
+        "rule": "Core formal reasoning remains available when request/PIT/account facts are ready. Unresolved Discovery degrades only full-market opportunity and capital-efficiency completeness; it must not block holding sell chains, legal Observation analysis, account/risk analysis, or a bounded decision over known legal facts. NOT_REQUESTED is incomplete, not zero candidates.",
     }
 
     return {
-        "schema_version": "1.2",
+        "schema_version": "1.3",
         "role": "PREFERRED_MINIMUM_SUFFICIENT_FORMAL_REASONING_INPUT",
         "trigger": {
             "source": request.get("requested_by") or request.get("source") or "INTERACTIVE_QUERY",
