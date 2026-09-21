@@ -156,6 +156,8 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         self.assertEqual(source.count("system_consistency.json"), 8)
         self.assertEqual(source.count("maintenance_health.json"), 2)
         self.assertEqual(source.count("e2e_status.json"), 3)
+        self.assertIn('python scripts/run_production_acceptance.py --mutation-sha "$(git rev-parse HEAD)"', source)
+        self.assertIn("Acceptance artifacts are derived outputs", source)
 
 
 if __name__ == "__main__":
