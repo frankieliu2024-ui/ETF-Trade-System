@@ -503,24 +503,49 @@ def main() -> int:
     us_now = datetime.now(timezone.utc)
     us_local = us_now.astimezone(ZoneInfo("America/New_York"))
     us_minute = us_local.hour * 60 + us_local.minute
-    us_active = us_local.weekday() < 5 and (4 * 60 <= us_minute < 20 * 60)
-    us_live_ages = []
-    for symbol, record in (us_live.get("objects") or {}).items():
-        latest = record.get("latest") if isinstance(record, dict) else None
-        timestamp = latest.get("timestamp") if isinstance(latest, dict) else None
-        if timestamp is not None:
-            us_live_ages.append(max(0, int((us_now - datetime.fromtimestamp(int(timestamp), timezone.utc)).total_seconds())))
+    if us_local.weekday() >= 5:
+        us_phase = "OFF_SESSION"
+    elif 4 * 60 <= us_minute < 9 * 60 + 30:
+        us_phase = "PRE_MARKET"
+    elif 9 * 60 + 30 <= us_minute < 16 * 60:
+        us_phase = "REGULAR"
+    elif 16 * 60 <= us_minute < 20 * 60:
+        us_phase = "POST_MARKET"
+    else:
+        us_phase = "OFF_SESSION"
     live_fresh_limit = int(read_json("config/runtime_policy.json").get("fresh_max_age_seconds", 900))
-    us_live_ok = (not us_active) or (
-        len(us_live_ages) == len(us_live.get("objects") or {})
-        and bool(us_live_ages)
-        and max(us_live_ages) <= live_fresh_limit
-        and str(us_live.get("quality_status", "")).upper() == "PASS"
-    )
+    us_live_failures = []
+    us_live_required = []
+    for symbol, record in (us_live.get("objects") or {}).items():
+        if not isinstance(record, dict):
+            continue
+        role = str(record.get("reference_role") or "")
+        conditional = bool(record.get("conditional_industry_object"))
+        required_now = (
+            (us_phase in {"PRE_MARKET", "POST_MARKET"} and (role.endswith("_EXTENDED_HOURS_PROXY") or conditional))
+            or (us_phase == "REGULAR" and (role == "FORMAL_US_CASH_INDEX" or conditional))
+        )
+        if not required_now:
+            continue
+        us_live_required.append(symbol)
+        latest = record.get("latest") if isinstance(record.get("latest"), dict) else {}
+        timestamp = latest.get("timestamp")
+        age = None if timestamp is None else max(
+            0, int((us_now - datetime.fromtimestamp(int(timestamp), timezone.utc)).total_seconds())
+        )
+        if (
+            timestamp is None
+            or age is None
+            or age > live_fresh_limit
+            or str(record.get("quality_status", "")).upper() not in {"PASS", "FRESH"}
+            or str(record.get("freshness_status", "")).upper() != "FRESH"
+        ):
+            us_live_failures.append(f"{symbol}:{role}:age={age}:freshness={record.get('freshness_status')}")
+    us_live_ok = us_phase == "OFF_SESSION" or (bool(us_live_required) and not us_live_failures)
     check(
         "us_extended:live_freshness",
         us_live_ok,
-        f"active={us_active} phase={us_local.strftime('%H:%M')} max_age_seconds={max(us_live_ages) if us_live_ages else None} limit={live_fresh_limit}",
+        f"phase={us_phase} required={us_live_required} failures={us_live_failures} limit={live_fresh_limit}",
     )
 
     session_gate = read_text("scripts/runtime_session_gate.py")
