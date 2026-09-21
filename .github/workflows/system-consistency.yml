@@ -630,6 +630,13 @@ jobs:
             exit 0
           fi
           git commit -m "state: persist production acceptance"
+          # run_production_acceptance also rebuilds observability/runtime views
+          # outside this step's declared ownership.  Keep the acceptance commit
+          # bounded to the six staged artifacts, then discard only remaining
+          # tracked generated outputs before the latest-main rebase.  Canonical
+          # facts are never staged or reset by this cleanup.
+          git restore --worktree .
+          git clean -fd -- data/state
           git fetch --no-tags origin main
           git rebase origin/main
           git push origin HEAD:main
