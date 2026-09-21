@@ -40,6 +40,8 @@ class ManualRequestBoundedObservabilityTests(unittest.TestCase):
 
         self.assertEqual(trace["manual_request_identity"], "manual-20260914-1")
         self.assertEqual(trace["manual_request_received_at"], "2026-09-14T10:00:00+08:00")
+        self.assertFalse(trace["minimum_legal_inputs_ready_is_stop_boundary"])
+        self.assertEqual(trace["canonical_chain_status"], "FORMAL_COMPLETION_PENDING")
         self.assertEqual(trace["screenshot_account_fact_available_at"], "2026-09-14T10:00:05+08:00")
         self.assertEqual(trace["market_refresh_identity"], "query-refresh-1")
         self.assertEqual(trace["first_qualified_market_fact_identity"], "000001.SH")
@@ -49,6 +51,18 @@ class ManualRequestBoundedObservabilityTests(unittest.TestCase):
         self.assertTrue(trace["trace_metadata_is_non_authoritative"])
         self.assertFalse(trace["trace_metadata_is_decision_gate"])
         self.assertFalse(trace["business_semantics_changed"])
+
+    def test_utc_request_timestamp_is_converted_without_inference(self):
+        trace = build_query_context.build_fast_path_latency(
+            {"request_id": "utc-1", "requested_at_utc": "2026-09-21T01:50:52.737Z"},
+            {},
+            {},
+            {},
+            {"decision_freshness": {}, "quotes": []},
+            "",
+        )
+        self.assertEqual(trace["manual_request_received_at"], "2026-09-21T09:50:52+08:00")
+        self.assertEqual(trace["t0"], "2026-09-21T09:50:52+08:00")
 
     def test_request_file_without_request_id_gets_stable_diagnostic_identity(self):
         request = {
@@ -81,6 +95,7 @@ class ManualRequestBoundedObservabilityTests(unittest.TestCase):
         self.assertEqual(first["manual_request_identity"], second["manual_request_identity"])
         self.assertTrue(first["manual_request_identity"].startswith("20260915_1121_manual_intraday_chat-"))
         self.assertEqual(first["manual_request_received_at"], "2026-09-15T11:21:00+08:00")
+        self.assertFalse(first["minimum_legal_inputs_ready_is_stop_boundary"])
         self.assertTrue(first["trace_metadata_is_non_authoritative"])
         self.assertFalse(first["trace_metadata_is_decision_gate"])
         self.assertFalse(first["business_semantics_changed"])
