@@ -230,6 +230,71 @@ class AShareProductionChainTests(unittest.TestCase):
                 self.assertIsNotNone(result["latest_candidate_slot_at"])
 
 
+
+class ManualRequestSessionAnchorTests(unittest.TestCase):
+    def policy(self):
+        return {
+            "interaction_routing": {
+                "routes": [
+                    {"start": "00:00", "end": "06:59", "scenario": "OFF_HOURS_ACCOUNT_UPDATE"},
+                    {"start": "07:00", "end": "09:14", "scenario": "PRE_MARKET"},
+                    {"start": "09:15", "end": "09:29", "scenario": "OPENING_CALL_AUCTION"},
+                    {"start": "09:30", "end": "11:30", "scenario": "INTRADAY"},
+                    {"start": "11:31", "end": "12:59", "scenario": "MIDDAY_REVIEW"},
+                    {"start": "13:00", "end": "14:59", "scenario": "INTRADAY"},
+                    {"start": "15:00", "end": "23:59", "scenario": "POST_CLOSE_REVIEW"},
+                ]
+            }
+        }
+
+    def test_interaction_scenario_boundaries_are_derived_from_request_time(self):
+        p = self.policy()
+        cases = [
+            ("2026-09-21T11:30:00+08:00", "INTRADAY"),
+            ("2026-09-21T11:31:00+08:00", "MIDDAY_REVIEW"),
+            ("2026-09-21T12:59:00+08:00", "MIDDAY_REVIEW"),
+            ("2026-09-21T13:00:00+08:00", "INTRADAY"),
+            ("2026-09-21T14:59:00+08:00", "INTRADAY"),
+            ("2026-09-21T15:00:00+08:00", "POST_CLOSE_REVIEW"),
+        ]
+        for stamp, expected in cases:
+            with self.subTest(stamp=stamp):
+                dt = runtime_session_gate.parse_runtime_time(stamp)
+                self.assertEqual(runtime_session_gate.interaction_scenario_for_time(p, dt), expected)
+
+    def test_new_turn_reclassifies_stale_inherited_scenario(self):
+        request = {
+            "request_id": "new-turn-1504",
+            "requested_at_beijing": "2026-09-21T15:04:00+08:00",
+            "interaction_scenario": "INTRADAY",
+            "scenario": "INTRADAY",
+        }
+        out = runtime_session_gate.normalize_manual_request_session(request, self.policy())
+        self.assertEqual(out["interaction_scenario"], "POST_CLOSE_REVIEW")
+        self.assertEqual(out["scenario"], "POST_CLOSE_REVIEW")
+        self.assertEqual(out["supplied_interaction_scenario"], "INTRADAY")
+        self.assertTrue(out["interaction_scenario_reclassified"])
+
+    def test_same_session_continuation_preserves_scenario(self):
+        request = {
+            "request_id": "same-session-1455",
+            "requested_at_beijing": "2026-09-21T14:55:00+08:00",
+            "interaction_scenario": "INTRADAY",
+        }
+        out = runtime_session_gate.normalize_manual_request_session(request, self.policy())
+        self.assertEqual(out["interaction_scenario"], "INTRADAY")
+        self.assertNotIn("interaction_scenario_reclassified", out)
+
+    def test_missing_request_time_is_bound_to_current_beijing_time(self):
+        now = runtime_session_gate.parse_runtime_time("2026-09-21T15:04:07+08:00")
+        out = runtime_session_gate.normalize_manual_request_session(
+            {"request_id": "missing-time", "interaction_scenario": "INTRADAY"},
+            self.policy(),
+            now=now,
+        )
+        self.assertEqual(out["requested_at_beijing"], "2026-09-21T15:04:07+08:00")
+        self.assertEqual(out["interaction_scenario"], "POST_CLOSE_REVIEW")
+
 if __name__ == "__main__":
     unittest.main()
 
