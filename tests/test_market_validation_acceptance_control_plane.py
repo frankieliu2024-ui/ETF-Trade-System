@@ -161,26 +161,32 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
             self.assertIn(pattern, pr_block)
             self.assertIn(pattern, push_block)
 
-    def test_acceptance_cleans_non_owned_generated_outputs_before_rebase(self):
+    def test_acceptance_rebuilds_owned_outputs_from_latest_main_without_rebase(self):
         source = WORKFLOW.read_text(encoding="utf-8")
         persist = source.split("- name: Persist acceptance result", 1)[1].split("- name: Enforce production acceptance", 1)[0]
+        reset_pos = persist.index("git reset --hard origin/main")
+        rebuild_pos = persist.index('python scripts/run_production_acceptance.py --mutation-sha "$(git rev-parse HEAD)"')
         commit_pos = persist.index('git commit -m "state: persist production acceptance"')
         restore_pos = persist.index("git restore --worktree .")
         clean_pos = persist.index("git clean -fd -- data/state")
-        rebase_pos = persist.index("git rebase origin/main")
+        push_pos = persist.index("git push origin HEAD:main")
+        self.assertLess(reset_pos, rebuild_pos)
+        self.assertLess(rebuild_pos, commit_pos)
         self.assertLess(commit_pos, restore_pos)
         self.assertLess(restore_pos, clean_pos)
-        self.assertLess(clean_pos, rebase_pos)
+        self.assertLess(clean_pos, push_pos)
+        self.assertNotIn("git rebase origin/main", persist)
         self.assertNotIn("git add -A", persist)
-        self.assertNotIn("git reset --hard", persist[commit_pos:])
 
     def test_workflow_does_not_add_a_second_state_store(self):
         source = WORKFLOW.read_text(encoding="utf-8")
-        self.assertEqual(source.count("system_consistency.json"), 8)
-        self.assertEqual(source.count("maintenance_health.json"), 2)
-        self.assertEqual(source.count("e2e_status.json"), 3)
-        self.assertIn('python scripts/run_production_acceptance.py --mutation-sha "$(git rev-parse HEAD)"', source)
-        self.assertIn("Acceptance artifacts are derived outputs", source)
+        persist = source.split("- name: Persist acceptance result", 1)[1].split("- name: Enforce production acceptance", 1)[0]
+        self.assertEqual(persist.count("system_consistency.json"), 1)
+        self.assertEqual(persist.count("maintenance_health.json"), 1)
+        self.assertEqual(persist.count("e2e_status.json"), 1)
+        self.assertNotIn("RUNNER_TEMP/etf-acceptance-state", persist)
+        self.assertIn('python scripts/run_production_acceptance.py --mutation-sha "$(git rev-parse HEAD)"', persist)
+        self.assertIn("Acceptance artifacts are rebuildable derived state", persist)
 
 
 if __name__ == "__main__":
