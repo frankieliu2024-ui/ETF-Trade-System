@@ -143,6 +143,55 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertEqual(readiness["capital_efficiency_scope"], "FULL_MARKET")
         self.assertEqual(pack["opportunity_inputs"]["candidates"], [])
 
+    def test_missing_account_degrades_analysis_but_blocks_exact_action(self):
+        with tempfile.TemporaryDirectory() as directory:
+            pack = query_context.build_decision_fact_pack(
+                Path(directory),
+                {"request_id": "r6", "requested_at_beijing": "2026-09-21T14:00:00+08:00"},
+                {"market_date": "2026-09-21", "latest_snapshot": "snap.json"},
+                {"status": "MISSING", "positions": []},
+                {"rules_version": "V2.2.31"},
+                {"decision_freshness": {"post_request": True}, "quotes": []},
+                formal_discovery={"status": "PASS", "candidates": []},
+            )
+        self.assertTrue(pack["formal_analysis_availability"]["available"])
+        self.assertEqual(pack["formal_analysis_availability"]["status"], "DEGRADED")
+        self.assertIn("ACCOUNT_FACT_NOT_READY_EXACT_AMOUNT_SHARE_BLOCKED", pack["formal_analysis_availability"]["limitations"])
+        self.assertFalse(pack["formal_action_readiness"]["ready"])
+        self.assertIn("ACCOUNT_FACT_NOT_READY", pack["formal_action_readiness"]["blockers"])
+
+    def test_pre_request_fallback_degrades_analysis_but_does_not_qualify_action(self):
+        with tempfile.TemporaryDirectory() as directory:
+            pack = query_context.build_decision_fact_pack(
+                Path(directory),
+                {"request_id": "r7", "requested_at_beijing": "2026-09-21T14:00:00+08:00"},
+                {"market_date": "2026-09-21", "latest_snapshot": "snap.json"},
+                {"status": "VALID", "positions": []},
+                {"rules_version": "V2.2.31"},
+                {"decision_freshness": {"post_request": False, "fallback_allowed": True}, "quotes": []},
+                formal_discovery={"status": "PASS", "candidates": []},
+            )
+        self.assertTrue(pack["formal_analysis_availability"]["available"])
+        self.assertEqual(pack["formal_analysis_availability"]["status"], "DEGRADED")
+        self.assertIn("REQUEST_SCOPED_PIT_NOT_RESOLVED_FALLBACK_AVAILABLE", pack["formal_analysis_availability"]["limitations"])
+        self.assertFalse(pack["formal_action_readiness"]["ready"])
+        self.assertIn("REQUEST_SCOPED_PIT_NOT_RESOLVED", pack["formal_action_readiness"]["blockers"])
+
+    def test_missing_request_identity_remains_global_packet_block(self):
+        with tempfile.TemporaryDirectory() as directory:
+            pack = query_context.build_decision_fact_pack(
+                Path(directory), {},
+                {"market_date": "2026-09-21", "latest_snapshot": "snap.json"},
+                {"status": "VALID", "positions": []},
+                {"rules_version": "V2.2.31"},
+                {"decision_freshness": {"post_request": True}, "quotes": []},
+                formal_discovery={"status": "PASS", "candidates": []},
+            )
+        self.assertFalse(pack["formal_analysis_availability"]["available"])
+        self.assertEqual(pack["formal_analysis_availability"]["status"], "BLOCKED")
+        self.assertIn("REQUEST_IDENTITY_MISSING", pack["formal_analysis_availability"]["global_blockers"])
+        self.assertFalse(pack["formal_action_readiness"]["ready"])
+
     def test_missing_latency_fields_remain_explicit(self):
         result = query_context.build_fast_path_latency(
             {"requested_at_beijing": "2026-09-05T10:00:00+08:00"},
