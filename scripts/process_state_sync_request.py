@@ -1070,6 +1070,8 @@ def validate_capital_competition_contract(value: object, account: dict, object_n
         "releasable_capital_reviewed",
         "post_action_deployable_cash",
         "future_opportunity_capacity",
+        "cash_opportunity_cost",
+        "trial_information_value_review",
         "concentration_account_structure_effect",
         "selected_state_reason",
         "new_amount_yuan",
@@ -1097,7 +1099,7 @@ def validate_capital_competition_contract(value: object, account: dict, object_n
     for index, state in enumerate(states):
         if not isinstance(state, dict):
             return f"{object_name}.compared_capital_states[{index}] must be an object"
-        for key in ("state_name", "capital_action", "remaining_deployable_cash", "why_not_selected"):
+        for key in ("state_name", "capital_action", "remaining_deployable_cash", "why_not_selected", "opportunity_cost_if_selected"):
             if key not in state or state[key] in (None, ""):
                 return f"{object_name}.compared_capital_states[{index}] missing {key}"
         if safe_float(state.get("remaining_deployable_cash")) is None:
