@@ -50,6 +50,24 @@ class SemanticLatestMainTests(unittest.TestCase):
         root, commits = self._repo([{"data/state/CURRENT.json": "old"}, {"unregistered.json": "unknown"}])
         self.assertEqual(classify_delta(root, commits[0], commits[1])["decision"], "REPLAY_REQUIRED")
 
+    def test_admitted_stable_anchor_keeps_later_dynamic_movement_semantically_fresh(self):
+        root, commits = self._repo([
+            {"scripts/x.py": "v1", "data/state/CURRENT.json": "old"},
+            {"scripts/x.py": "v2"},
+            {"data/state/CURRENT.json": "new"},
+        ])
+        result = classify_delta(root, commits[1], commits[2])
+        self.assertEqual(result["decision"], "SEMANTICALLY_FRESH")
+
+    def test_admitted_stable_anchor_still_blocks_new_stable_movement(self):
+        root, commits = self._repo([
+            {"scripts/x.py": "v1"},
+            {"scripts/x.py": "v2"},
+            {"scripts/y.py": "new stable change"},
+        ])
+        result = classify_delta(root, commits[1], commits[2])
+        self.assertEqual(result["decision"], "REPLAY_REQUIRED")
+
     def test_formal_or_request_movement_requires_review_but_not_automatic_replay(self):
         root, commits = self._repo([{"data/state/CURRENT.json": "old"}, {"events/research/x.json": "fact", "requests/live_snapshot/x.json": "request"}])
         result = classify_delta(root, commits[0], commits[1])
