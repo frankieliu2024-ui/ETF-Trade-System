@@ -147,6 +147,87 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertTrue(pack["formal_analysis_availability"]["source_ingress"]["qualified"])
         self.assertEqual(pack["formal_reasoning_readiness"]["capital_efficiency_scope"], "DEGRADED_KNOWN_UNIVERSE")
 
+    def test_manual_formal_reply_freeze_waits_for_same_request_pit(self):
+        request = {
+            "request_id": "manual-wait-pit",
+            "requested_at_beijing": "2026-09-21T14:00:00+08:00",
+            "source": "CHATGPT_USER_GITHUB_INTRADAY",
+            "intent": "FORMAL_INTRADAY_ANALYSIS",
+            "_request_file": "requests/live_snapshot/manual-wait-pit.json",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            pack = query_context.build_decision_fact_pack(
+                Path(directory), request, {"market_date": "2026-09-21"},
+                {"status": "VALID", "positions": []}, {"rules_version": "V2.2.31"},
+                {"decision_freshness": {"post_request": False, "fallback_allowed": False}, "quotes": []},
+                formal_discovery={"status": "NOT_REQUESTED", "candidates": []},
+            )
+        freeze = pack["formal_reply_freeze"]
+        self.assertEqual(freeze["status"], "IN_FLIGHT")
+        self.assertFalse(freeze["reply_freezable"])
+        self.assertIn("REQUEST_SCOPED_PIT_IN_FLIGHT", freeze["blockers"])
+
+    def test_manual_formal_reply_freeze_waits_for_inflight_discovery(self):
+        request = {
+            "request_id": "manual-wait-discovery",
+            "requested_at_beijing": "2026-09-21T14:00:00+08:00",
+            "source": "CHATGPT_USER_GITHUB_INTRADAY",
+            "intent": "FORMAL_INTRADAY_ANALYSIS",
+            "_request_file": "requests/live_snapshot/manual-wait-discovery.json",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            pack = query_context.build_decision_fact_pack(
+                Path(directory), request, {"market_date": "2026-09-21"},
+                {"status": "VALID", "positions": []}, {"rules_version": "V2.2.31"},
+                {"decision_freshness": {"post_request": True}, "quotes": []},
+                formal_discovery={"status": "RUNNING", "candidates": []},
+            )
+        freeze = pack["formal_reply_freeze"]
+        self.assertEqual(freeze["status"], "IN_FLIGHT")
+        self.assertFalse(freeze["reply_freezable"])
+        self.assertIn("FORMAL_DISCOVERY_IN_FLIGHT", freeze["blockers"])
+
+    def test_manual_formal_reply_freeze_allows_terminal_degradation(self):
+        request = {
+            "request_id": "manual-degraded",
+            "requested_at_beijing": "2026-09-21T14:00:00+08:00",
+            "source": "CHATGPT_USER_GITHUB_INTRADAY",
+            "intent": "FORMAL_INTRADAY_ANALYSIS",
+            "_request_file": "requests/live_snapshot/manual-degraded.json",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            pack = query_context.build_decision_fact_pack(
+                Path(directory), request, {"market_date": "2026-09-21"},
+                {"status": "VALID", "positions": []}, {"rules_version": "V2.2.31"},
+                {"decision_freshness": {"post_request": False, "fallback_allowed": True}, "quotes": []},
+                formal_discovery={"status": "FAILED", "candidates": []},
+            )
+        freeze = pack["formal_reply_freeze"]
+        self.assertEqual(freeze["status"], "RESOLVED_DEGRADED")
+        self.assertTrue(freeze["reply_freezable"])
+        self.assertEqual(freeze["blockers"], [])
+        self.assertEqual(pack["formal_reasoning_readiness"]["capital_efficiency_scope"], "FULL_MARKET")
+
+    def test_manual_formal_reply_freeze_ready_after_same_request_pit(self):
+        request = {
+            "request_id": "manual-ready",
+            "requested_at_beijing": "2026-09-21T14:00:00+08:00",
+            "source": "CHATGPT_USER_GITHUB_INTRADAY",
+            "intent": "FORMAL_INTRADAY_ANALYSIS",
+            "_request_file": "requests/live_snapshot/manual-ready.json",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            pack = query_context.build_decision_fact_pack(
+                Path(directory), request, {"market_date": "2026-09-21"},
+                {"status": "VALID", "positions": []}, {"rules_version": "V2.2.31"},
+                {"decision_freshness": {"resolved_post_request": True}, "quotes": []},
+                formal_discovery={"status": "PASS", "candidates": []},
+            )
+        freeze = pack["formal_reply_freeze"]
+        self.assertEqual(freeze["status"], "READY")
+        self.assertTrue(freeze["reply_freezable"])
+        self.assertEqual(freeze["blockers"], [])
+
     def test_fact_pack_degrades_capital_scope_when_discovery_not_requested(self):
         with tempfile.TemporaryDirectory() as directory:
             pack = query_context.build_decision_fact_pack(
