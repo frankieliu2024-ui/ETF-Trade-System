@@ -514,6 +514,13 @@ class NotificationDecisionIdentityTests(unittest.TestCase):
         self.assertNotIn("git push --force", workflow)
         self.assertNotIn("git push -f ", workflow)
 
+
+class PrAcceptancePathCoverageTests(unittest.TestCase):
+    def test_failure_guard_workflow_changes_trigger_pr_acceptance(self):
+        workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/system-consistency.yml").read_text(encoding="utf-8")
+        pull_request_block = workflow.split("  pull_request:", 1)[1].split("  push:", 1)[0]
+        self.assertIn('".github/workflows/workflow-failure-guard.yml"', pull_request_block)
+
 if __name__ == "__main__":
     unittest.main()
 
