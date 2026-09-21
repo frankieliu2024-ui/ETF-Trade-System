@@ -273,6 +273,14 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         )
         account = self.root / "data/state/account_fact.json"
         account.write_text(json.dumps({"status": "VALID", "positions": []}), encoding="utf-8")
+        (self.root / "data/state/query_context.json").write_text(
+            json.dumps({
+                "decision_fact_pack": {
+                    "trigger": {"request_id": SOURCE_REQUEST["request_id"]},
+                    "formal_reasoning_readiness": {"status": "READY", "ready": True, "blockers": []},
+                }
+            }), encoding="utf-8"
+        )
         self.stack = mock.patch.multiple(
             state_sync,
             ROOT=self.root,

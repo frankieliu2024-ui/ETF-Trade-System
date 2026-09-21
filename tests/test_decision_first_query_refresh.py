@@ -111,6 +111,38 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertNotIn("recommended_action", pack)
         self.assertIn("must not select", pack["decision_boundary"])
 
+    def test_fact_pack_degrades_capital_scope_when_discovery_not_requested(self):
+        with tempfile.TemporaryDirectory() as directory:
+            pack = query_context.build_decision_fact_pack(
+                Path(directory),
+                {"request_id": "r4", "requested_at_beijing": "2026-09-21T14:00:00+08:00"},
+                {"market_date": "2026-09-21", "latest_snapshot": "snap.json"},
+                {"status": "VALID", "positions": []},
+                {"rules_version": "V2.2.31"},
+                {"decision_freshness": {"post_request": True}, "quotes": []},
+                formal_discovery={"status": "NOT_REQUESTED", "candidates": []},
+            )
+        readiness = pack["formal_reasoning_readiness"]
+        self.assertTrue(readiness["ready"])
+        self.assertEqual(readiness["capital_efficiency_scope"], "DEGRADED_KNOWN_UNIVERSE")
+        self.assertIn("FORMAL_DISCOVERY_NOT_RESOLVED", readiness["capital_efficiency_limitations"])
+
+    def test_fact_pack_allows_resolved_discovery_with_zero_candidates(self):
+        with tempfile.TemporaryDirectory() as directory:
+            pack = query_context.build_decision_fact_pack(
+                Path(directory),
+                {"request_id": "r5", "requested_at_beijing": "2026-09-21T14:00:00+08:00"},
+                {"market_date": "2026-09-21", "latest_snapshot": "snap.json"},
+                {"status": "VALID", "positions": []},
+                {"rules_version": "V2.2.31"},
+                {"decision_freshness": {"resolved_post_request": True}, "quotes": []},
+                formal_discovery={"status": "PASS", "candidates": []},
+            )
+        readiness = pack["formal_reasoning_readiness"]
+        self.assertTrue(readiness["ready"])
+        self.assertEqual(readiness["capital_efficiency_scope"], "FULL_MARKET")
+        self.assertEqual(pack["opportunity_inputs"]["candidates"], [])
+
     def test_missing_latency_fields_remain_explicit(self):
         result = query_context.build_fast_path_latency(
             {"requested_at_beijing": "2026-09-05T10:00:00+08:00"},
