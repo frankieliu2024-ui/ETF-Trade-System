@@ -50,9 +50,17 @@ def _normalize_us_phase_freshness(report: dict) -> None:
     target = next((x for x in report.get("checks", []) if x.get("name") == "us_extended:live_freshness"), None)
     if not target or target.get("status") != "FAIL":
         return
-    if "max_age_seconds" in str(target.get("detail") or ""):
+    detail = str(target.get("detail") or "")
+    # Scheduled-pulse cache age is observability only; decision-time PIT stays fail-closed.
+    match = re.search(r"failures=\\[(.*?)\\]\\s+limit=(\\d+)", detail)
+    age_only = False
+    if match:
+        limit = int(match.group(2))
+        entries = re.findall(r"[^,\\[]+?:[^,\\[]+?:age=(\\d+):freshness=([A-Z_]+)", match.group(1))
+        age_only = bool(entries) and all(int(age) > limit and freshness == "FRESH" for age, freshness in entries)
+    if "max_age_seconds" in detail or age_only:
         target["status"] = "WARNING"
-        target["detail"] = f"observability_stale {target.get('detail')} canonical_facts_unaffected"
+        target["detail"] = f"observability_stale {detail} canonical_facts_unaffected"
         _remove_error(report, "us_extended:live_freshness:")
         warning = "us_extended:live_freshness: derived observation stale"
         if warning not in report.setdefault("warnings", []):
