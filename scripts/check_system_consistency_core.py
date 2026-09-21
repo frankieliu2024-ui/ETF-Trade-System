@@ -223,6 +223,52 @@ def _python_ast_ok(relative_path: str) -> bool:
         return False
 
 
+def validate_us_extended_live_freshness(us_live: dict, us_now: datetime, live_fresh_limit: int) -> tuple[bool, str]:
+    us_local = us_now.astimezone(ZoneInfo("America/New_York"))
+    us_minute = us_local.hour * 60 + us_local.minute
+    if us_local.weekday() >= 5:
+        us_phase = "OFF_SESSION"
+    elif 4 * 60 <= us_minute < 9 * 60 + 30:
+        us_phase = "PRE_MARKET"
+    elif 9 * 60 + 30 <= us_minute < 16 * 60:
+        us_phase = "REGULAR"
+    elif 16 * 60 <= us_minute < 20 * 60:
+        us_phase = "POST_MARKET"
+    else:
+        us_phase = "OFF_SESSION"
+
+    failures = []
+    required = []
+    for symbol, record in (us_live.get("objects") or {}).items():
+        if not isinstance(record, dict):
+            continue
+        role = str(record.get("reference_role") or "")
+        conditional = bool(record.get("conditional_industry_object"))
+        required_now = (
+            (us_phase in {"PRE_MARKET", "POST_MARKET"} and (role.endswith("_EXTENDED_HOURS_PROXY") or conditional))
+            or (us_phase == "REGULAR" and (role == "FORMAL_US_CASH_INDEX" or conditional))
+        )
+        if not required_now:
+            continue
+        required.append(symbol)
+        latest = record.get("latest") if isinstance(record.get("latest"), dict) else {}
+        timestamp = latest.get("timestamp")
+        age = None if timestamp is None else max(
+            0, int((us_now - datetime.fromtimestamp(int(timestamp), timezone.utc)).total_seconds())
+        )
+        if (
+            timestamp is None
+            or age is None
+            or age > live_fresh_limit
+            or str(record.get("quality_status", "")).upper() not in {"PASS", "FRESH"}
+            or str(record.get("freshness_status", "")).upper() != "FRESH"
+        ):
+            failures.append(f"{symbol}:{role}:age={age}:freshness={record.get('freshness_status')}")
+    ok = us_phase == "OFF_SESSION" or (bool(required) and not failures)
+    return ok, f"phase={us_phase} required={required} failures={failures} limit={live_fresh_limit}"
+
+
+
 def main() -> int:
     errors: list[str] = []
     warnings: list[str] = []
@@ -527,27 +573,9 @@ def main() -> int:
 
     us_live = read_json("data/state/us_extended_hours_context.json")
     us_now = datetime.now(timezone.utc)
-    us_local = us_now.astimezone(ZoneInfo("America/New_York"))
-    us_minute = us_local.hour * 60 + us_local.minute
-    us_active = us_local.weekday() < 5 and (4 * 60 <= us_minute < 20 * 60)
-    us_live_ages = []
-    for symbol, record in (us_live.get("objects") or {}).items():
-        latest = record.get("latest") if isinstance(record, dict) else None
-        timestamp = latest.get("timestamp") if isinstance(latest, dict) else None
-        if timestamp is not None:
-            us_live_ages.append(max(0, int((us_now - datetime.fromtimestamp(int(timestamp), timezone.utc)).total_seconds())))
     live_fresh_limit = int(read_json("config/runtime_policy.json").get("fresh_max_age_seconds", 900))
-    us_live_ok = (not us_active) or (
-        len(us_live_ages) == len(us_live.get("objects") or {})
-        and bool(us_live_ages)
-        and max(us_live_ages) <= live_fresh_limit
-        and str(us_live.get("quality_status", "")).upper() == "PASS"
-    )
-    check(
-        "us_extended:live_freshness",
-        us_live_ok,
-        f"active={us_active} phase={us_local.strftime('%H:%M')} max_age_seconds={max(us_live_ages) if us_live_ages else None} limit={live_fresh_limit}",
-    )
+    us_live_ok, us_live_detail = validate_us_extended_live_freshness(us_live, us_now, live_fresh_limit)
+    check("us_extended:live_freshness", us_live_ok, us_live_detail)
 
     session_gate = read_text("scripts/runtime_session_gate.py")
     check("session_gate:calendar_read", "a_share_trading_calendar_2026.json" in session_gate, "session gate reads official exchange calendar")
