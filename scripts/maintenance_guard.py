@@ -41,7 +41,6 @@ RUNTIME_HEALTH = STATE / "runtime_health.json"
 CURRENT = STATE / "CURRENT.json"
 MAINTENANCE = STATE / "maintenance_health.json"
 DIAGNOSTIC = STATE / "maintenance_diagnostic.json"
-LKG = STATE / "last_known_good.json"
 
 
 def read_json(path: Path, default=None):
@@ -242,7 +241,6 @@ def main() -> int:
             "reconciliation": "CHECK_ONLY",
             "diagnostic_packet": "AUTO_GENERATE_ON_FAILURE",
             "workflow_failure_diagnosis": "AUTO_CLASSIFY_FAILED_STEP_AND_RECENT_DIFF",
-            "last_known_good": "AUTO_ADVANCE_ONLY_AFTER_ALL_GATES_PASS",
             "rollback": "RESTRICTED_MAINTENANCE_ONLY; HEAD_ONLY; STRICT_ALLOWLIST; NEVER_FORMAL_RULES_OR_ACCOUNT_FACTS",
             "ai_patch_main": "FORBIDDEN"
         }
@@ -265,21 +263,6 @@ def main() -> int:
         write_json(DIAGNOSTIC, diagnostic)
     else:
         write_json(DIAGNOSTIC, {"schema_version": "1.0", "generated_at": now, "classification": "NONE", "requires_codex_or_manual_review": False, "reason": "all maintenance gates passed"})
-        checked_sha = ((consistency.get("commit_audit") or {}).get("checked_commit") or git_head())
-        previous = read_json(LKG, {}) or {}
-        lkg = {
-            "schema_version": "1.1",
-            "updated_at": now,
-            "status": "VALID",
-            "commit_sha": checked_sha,
-            "basis": "system_consistency PASS + ETF ledger/account reconciliation PASS + self-healing not escalated",
-            "previous_commit_sha": previous.get("commit_sha"),
-            "rollback_policy": "RESTRICTED_MAINTENANCE_ONLY; automatic revert is allowed only for current-HEAD deterministic regressions whose changed files are entirely inside the strict maintenance allowlist; never automatically revert MASTER, trading rules, provider policy, market data, trade events, or user-confirmed account facts",
-            "automatic_rollback_enabled": True,
-            "automatic_rollback_scope": "STRICT_MAINTENANCE_ALLOWLIST_ONLY",
-            "automatic_rollback_guard": "workflow-failure-guard.yml + scripts/workflow_failure_guard.py"
-        }
-        write_json(LKG, lkg)
 
     print(json.dumps(health, ensure_ascii=False))
     return 0 if overall_ok else 2

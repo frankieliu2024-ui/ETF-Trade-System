@@ -34,6 +34,13 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertNotIn("data/state/maintenance_diagnostic.json", workflow)
 
+    def test_acceptance_does_not_recreate_unused_last_known_good_state(self):
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        maintenance = (ROOT / "scripts" / "maintenance_guard.py").read_text(encoding="utf-8")
+        self.assertNotIn("last_known_good.json", workflow)
+        self.assertNotIn("last_known_good.json", maintenance)
+        self.assertNotIn('"last_known_good"', maintenance)
+
     def test_acceptance_rebuilds_execution_quality_once_via_state_context(self):
         source = ACCEPTANCE.read_text(encoding="utf-8")
         self.assertNotIn('scripts/build_execution_quality.py', source)
