@@ -412,6 +412,15 @@ jobs:
           if [ -z "$REQUEST_FILE" ]; then REQUEST_FILE=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | head -n 1); fi
           REQUEST_ARGS=()
           if [ -n "$REQUEST_FILE" ]; then REQUEST_ARGS+=(--request-file "$REQUEST_FILE"); fi
+          REQUEST_REQUIRES_REFRESH=false
+          if [ -n "$REQUEST_FILE" ] && [ -f "$REQUEST_FILE" ]; then
+            REQUEST_REQUIRES_REFRESH=$(python - "$REQUEST_FILE" <<'PY'
+          import json, sys
+          request = json.load(open(sys.argv[1], encoding="utf-8"))
+          print("true" if request.get("force_refresh") is True or request.get("require_post_request_snapshot") is True else "false")
+          PY
+            )
+          fi
           if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "${{ steps.snapshot_result.outputs.snapshot_written }}" != "true" ] && [ "${{ steps.session_gate.outputs.request_class }}" != "STATE_SYNC_ONLY" ]; then
             REQUEST_SYMBOLS=$(python - <<'PY'
           import json, os, subprocess
@@ -437,6 +446,12 @@ jobs:
             else
               python scripts/build_query_context.py --force-refresh "${REQUEST_ARGS[@]}"
             fi
+          elif [ "${{ steps.snapshot_result.outputs.snapshot_written }}" = "true" ] && [ "$REQUEST_REQUIRES_REFRESH" = "true" ]; then
+            # A request that explicitly requires a post-request snapshot must
+            # retain its request-scoped refresh semantics even when this run
+            # already published a core snapshot. Do not silently downgrade it
+            # to discovery-only cached-state consumption.
+            python scripts/build_query_context.py --force-refresh "${REQUEST_ARGS[@]}"
           elif [ "${{ steps.snapshot_result.outputs.snapshot_written }}" = "true" ]; then
             # The core snapshot is already current in this run. Execute bounded
             # all-market Discovery without forcing a duplicate core refresh.
