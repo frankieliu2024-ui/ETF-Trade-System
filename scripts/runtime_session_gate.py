@@ -36,6 +36,59 @@ EXPLICIT_REFRESH_INTENTS = {"EXPLICIT_LATEST", "MARKET_QUOTE_REFRESH", "QUERY_TI
 scheduled_cron_observability = resolve_scheduled_pulse
 
 
+def parse_runtime_time(value: object) -> datetime | None:
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=SHANGHAI)
+    return dt.astimezone(SHANGHAI)
+
+
+def interaction_scenario_for_time(policy: dict, when: datetime) -> str:
+    """Resolve the registered interaction scenario for one Beijing timestamp."""
+    local = when.astimezone(SHANGHAI)
+    minute = local.hour * 60 + local.minute
+    for route in ((policy.get("interaction_routing") or {}).get("routes") or []):
+        try:
+            sh, sm = [int(x) for x in str(route.get("start") or "").split(":", 1)]
+            eh, em = [int(x) for x in str(route.get("end") or "").split(":", 1)]
+        except (TypeError, ValueError):
+            continue
+        start_minute = sh * 60 + sm
+        end_minute = eh * 60 + em
+        if start_minute <= minute <= end_minute:
+            scenario = str(route.get("scenario") or "").strip().upper()
+            if scenario:
+                return scenario
+    raise ValueError("runtime policy has no interaction route for current Beijing time")
+
+
+def normalize_manual_request_session(request: dict, policy: dict, *, now: datetime | None = None) -> dict:
+    """Bind one new manual Chat request to its own request time and interaction scenario."""
+    normalized = json.loads(json.dumps(request))
+    current = (now or datetime.now(SHANGHAI)).astimezone(SHANGHAI)
+    requested = parse_runtime_time(
+        normalized.get("requested_at_beijing")
+        or normalized.get("request_time_beijing")
+        or normalized.get("requested_at_utc")
+    )
+    if requested is None:
+        requested = current
+    normalized["requested_at_beijing"] = requested.isoformat(timespec="seconds")
+    derived = interaction_scenario_for_time(policy, requested)
+    supplied = str(normalized.get("interaction_scenario") or normalized.get("scenario") or "").strip().upper()
+    if supplied and supplied != derived:
+        normalized["supplied_interaction_scenario"] = supplied
+        normalized["interaction_scenario_reclassified"] = True
+    normalized["interaction_scenario"] = derived
+    normalized["scenario"] = derived
+    return normalized
+
+
 def classify_live_snapshot_request(request: dict) -> str:
     """Classify one live_snapshot request before any market capture.
 
