@@ -1,30 +1,25 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-21T09:27:44+08:00",
+  "generated_at": "2026-09-21T09:31:21+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 35550947575,
+  "workflow_name": "US extended-hours pulse",
+  "run_id": 35551130084,
   "run_attempt": 1,
-  "head_sha": "3d5a2f3f09fd35e19a9b046aa38c5a89e407f4ed",
-  "main_head_sha": "337795fc858646c8fdecebdb51c246737658d172",
+  "head_sha": "d6b862fd4708727a837bb8cc56596fda77e9332b",
+  "main_head_sha": "d391fcf9460a9ad80e2d50695206b629c38bba10",
   "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "watchdog",
-      "step": "Persist bounded self-healing state and deterministic repairs",
-      "number": 13
+      "job": "us_extended",
+      "step": "Commit US extended-hours context",
+      "number": 9
     }
   ],
   "changed_files": [
-    "data/state/e2e_status.json",
-    "data/state/execution_quality.json",
-    "data/state/last_known_good.json",
-    "data/state/maintenance_diagnostic.json",
-    "data/state/maintenance_health.json",
-    "data/state/system_consistency.json"
+    "requests/live_snapshot/20260921_user_continue_intraday_discovery.json"
   ],
-  "commit_message": "state: persist production acceptance",
-  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "commit_message": "request: continue formal intraday discovery analysis",
+  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RERUN_FAILED_JOBS_ONCE",
   "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
@@ -32,7 +27,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": true,
+    "bot_or_revert_commit": false,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
