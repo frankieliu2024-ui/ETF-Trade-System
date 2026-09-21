@@ -122,6 +122,17 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
             base["updated_at"],
         )
 
+    def test_notification_state_merge_drops_volatile_timestamp_after_revalidation_converges(self):
+        from scripts.merge_notification_state import merge_notification_state
+        item = {"notification_id": "pending", "source_event_id": "fact-1", "event_type": "ACCOUNT_FACT_CONFIRMATION", "lifecycle_status": "WAITING_CONFIRMATION"}
+        base = {"schema_version": "2.2", "updated_at": "2026-09-21T19:25:02+08:00", "notifications": [item], "recent": [{"key": "fact-1", "type": "ACCOUNT_FACT_CONFIRMATION", "title": None, "content": None, "source": None, "user_severity": None, "user_action": None, "status": "WAITING_CONFIRMATION", "attempted_at": None, "response": {}, "notification_id": "pending", "lifecycle_status": "WAITING_CONFIRMATION"}], "pending_questions": ["pending"]}
+        incoming = dict(base)
+        incoming["updated_at"] = "2026-09-21T19:26:48+08:00"
+        incoming["recent"] = []
+        merged = merge_notification_state(base, incoming)
+        self.assertEqual(merged, base)
+        self.assertEqual(merged["updated_at"], "2026-09-21T19:25:02+08:00")
+
     def test_notification_state_merge_preserves_newer_sent_state(self):
         from scripts.merge_notification_state import merge_notification_state
         base = {"updated_at": "2026-09-01T10:05:00+08:00", "notifications": [{"notification_id": "a", "source_event_id": "fact", "lifecycle_status": "SENT", "sent_at": "2026-09-01T10:05:00+08:00", "response": {"pushplus_code": 200}}]}

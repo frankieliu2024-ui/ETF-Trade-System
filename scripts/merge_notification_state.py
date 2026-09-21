@@ -131,6 +131,11 @@ def merge_notification_state(base: dict, incoming: dict) -> dict:
     ]
     result["notifications"] = revalidate_pending_notifications(result["notifications"])
     result["pending_questions"] = [x.get("notification_id") for x in result["notifications"] if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]
+    # A runner may transiently differ before identity merge/revalidation, then
+    # converge back to the exact durable state. Do not let its volatile
+    # top-level timestamp turn that semantic no-op into a main commit.
+    if _state_without_volatile_updated_at(result) == _state_without_volatile_updated_at(base):
+        return base
     return result
 
 
