@@ -356,6 +356,43 @@ def _snapshot_fact_times(snapshot: dict) -> list[datetime]:
                 values.append(parsed)
     return values
 
+def _manual_completion_parent_request(request: dict) -> dict:
+    """Load and validate the durable parent request for manual formal completion."""
+    parent_id = str(request.get("parent_request_id") or "").strip()
+    if not parent_id or any(part in parent_id for part in ("/", "\\", "..")):
+        raise ValueError("manual formal completion requires a safe parent request identity")
+    parent_path = ROOT / "requests" / "live_snapshot" / f"{parent_id}.json"
+    if not parent_path.exists():
+        raise ValueError("manual formal completion parent request is not durable")
+    parent = load_json(parent_path)
+    if str(parent.get("request_id") or "").strip() != parent_id:
+        raise ValueError("manual formal completion parent request identity mismatch")
+    intent = str(parent.get("intent") or parent.get("query_intent") or "").strip().upper()
+    if intent not in {"EXPLICIT_LATEST", "FORMAL_INTRADAY_ANALYSIS"}:
+        raise ValueError("manual formal completion parent is not a formal market request")
+    if not (
+        parent.get("require_post_request_snapshot") is True
+        or parent.get("require_post_request_current") is True
+    ):
+        raise ValueError("manual formal completion parent does not require post-request market facts")
+    if parse_time(parent.get("requested_at_beijing") or parent.get("request_time_beijing") or parent.get("requested_at_utc")) is None:
+        raise ValueError("manual formal completion parent request time is invalid")
+    return parent
+
+
+def _manual_completion_snapshot_is_post_request(parent: dict, snapshot: dict) -> bool:
+    """Apply the same effective-time lower bound used by decision freshness."""
+    requested = parse_time(
+        parent.get("requested_at_beijing")
+        or parent.get("request_time_beijing")
+        or parent.get("requested_at_utc")
+    )
+    captured = parse_time(snapshot.get("captured_at_beijing") or snapshot.get("captured_at"))
+    provider = parse_time(snapshot.get("provider_as_of") or snapshot.get("provider_as_of_beijing"))
+    effective = min([value for value in (captured, provider) if value is not None], default=None)
+    return bool(requested and effective and effective >= requested)
+
+
 def _snapshot_is_valid_for_decision(market_date: str, snapshot: dict, market_fact_cutoff: datetime, availability_cutoff: datetime) -> tuple[bool, str]:
     """Validate independent market-fact and snapshot-availability cutoffs."""
     if snapshot.get("market_date") != market_date or snapshot.get("quality_status") != "PASS":
@@ -679,6 +716,7 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     parent_request_id = str(request.get("parent_request_id") or "").strip()
     if is_manual_completion and (not parent_request_id or not request_id or parent_request_id == request_id):
         raise ValueError("manual formal completion requires distinct envelope and parent request identities")
+    manual_parent_request = _manual_completion_parent_request(request) if is_manual_completion else {}
     fingerprint_request_id = parent_request_id if is_manual_completion else request_id
     fingerprint = hashlib.sha256(json.dumps({"request_id": fingerprint_request_id, "market_date": market_date, "formal_decision": decision}, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
     decision_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(decision.get("decision_id") or request_id or f"{market_date}_{fingerprint[:12]}"))
@@ -735,6 +773,10 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
         }
     ):
         raise ValueError(f"manual formal decision requires legal PIT/source snapshot: {pit_status}")
+    if is_manual_completion and not external_evidence and not _manual_completion_snapshot_is_post_request(
+        manual_parent_request, snapshot
+    ):
+        raise ValueError("manual formal decision requires a qualified post-request snapshot")
 
     supplied_price = safe_float(decision.get("price_at_decision"))
     supplied_as_of = str(decision.get("price_as_of_beijing") or "")
