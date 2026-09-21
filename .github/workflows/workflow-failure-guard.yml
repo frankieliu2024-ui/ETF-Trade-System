@@ -162,24 +162,6 @@ jobs:
           git revert --no-edit "$TARGET"
           git push origin HEAD:main
 
-      - name: Persist diagnostic and rollback plan
-        if: ${{ always() }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          [ -f data/state/workflow_failure_diagnostic.json ] || exit 0
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main --quiet
-          git checkout -B guard-state origin/main
-          git add -f data/state/workflow_failure_diagnostic.json data/state/restricted_rollback_plan.json
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          git commit -m "state: record workflow failure diagnosis"
-          git pull --rebase origin main
-          git push origin HEAD:main
-
       - name: Escalation boundary
         if: ${{ steps.classify.outputs.action == 'ESCALATE_WITH_DIAGNOSTIC' }}
         run: |
