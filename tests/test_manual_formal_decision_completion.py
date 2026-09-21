@@ -277,6 +277,8 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             json.dumps({
                 "decision_fact_pack": {
                     "trigger": {"request_id": SOURCE_REQUEST["request_id"]},
+                    "formal_analysis_availability": {"status": "AVAILABLE", "available": True, "global_blockers": [], "limitations": []},
+                    "formal_action_readiness": {"status": "READY", "ready": True, "blockers": []},
                     "formal_reasoning_readiness": {"status": "READY", "ready": True, "blockers": []},
                 }
             }), encoding="utf-8"
@@ -341,6 +343,22 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         self.assertEqual(event["price_source_snapshot"], SNAPSHOT_PATH)
         self.assertEqual(event["point_in_time_status"], "CONSUMED_SNAPSHOT_VALIDATED")
         self.assertTrue(event["fingerprint"])
+
+    def test_degraded_analysis_does_not_bypass_action_readiness(self):
+        query_path = self.root / "data/state/query_context.json"
+        query = json.loads(query_path.read_text(encoding="utf-8"))
+        packet = query["decision_fact_pack"]
+        packet["formal_analysis_availability"] = {
+            "status": "DEGRADED", "available": True, "global_blockers": [],
+            "limitations": ["ACCOUNT_FACT_NOT_READY_EXACT_AMOUNT_SHARE_BLOCKED"],
+        }
+        packet["formal_action_readiness"] = {
+            "status": "NOT_READY", "ready": False, "blockers": ["ACCOUNT_FACT_NOT_READY"],
+        }
+        query_path.write_text(json.dumps(query), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "action inputs are not READY"):
+            state_sync.record_formal_decision(self.request("degraded_analysis_envelope"))
+        self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
 
     def test_pre_request_snapshot_fails_closed_without_event(self):
         stale = {

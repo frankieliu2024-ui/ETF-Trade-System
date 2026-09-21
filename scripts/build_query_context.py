@@ -228,20 +228,57 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     discovery_status = str(discovery.get("status") or "NOT_REQUESTED").strip().upper()
     discovery_resolved = discovery_status not in {"", "NOT_REQUESTED", "PENDING", "RUNNING", "UNKNOWN"}
     post_request = bool(freshness.get("resolved_post_request") or freshness.get("post_request"))
+    fallback_available = bool(freshness.get("fallback_allowed"))
     account_ready = str(account.get("status") or "").upper() == "VALID"
-    blockers = []
+
+    ingress_blockers = []
     if not request_id:
-        blockers.append("REQUEST_IDENTITY_MISSING")
+        ingress_blockers.append("REQUEST_IDENTITY_MISSING")
     if not requested_at:
-        blockers.append("REQUEST_TIME_MISSING")
+        ingress_blockers.append("REQUEST_TIME_MISSING")
+
+    analysis_limitations = []
     if not post_request:
-        blockers.append("REQUEST_SCOPED_PIT_NOT_RESOLVED")
+        analysis_limitations.append(
+            "REQUEST_SCOPED_PIT_NOT_RESOLVED_FALLBACK_AVAILABLE"
+            if fallback_available else "CURRENT_MARKET_FACT_NOT_ACTION_QUALIFIED"
+        )
     if not account_ready:
-        blockers.append("ACCOUNT_FACT_NOT_READY")
+        analysis_limitations.append("ACCOUNT_FACT_NOT_READY_EXACT_AMOUNT_SHARE_BLOCKED")
+    if not discovery_resolved:
+        analysis_limitations.append("FORMAL_DISCOVERY_NOT_RESOLVED")
+
+    formal_analysis_availability = {
+        "status": "AVAILABLE" if not ingress_blockers and not analysis_limitations else (
+            "DEGRADED" if not ingress_blockers else "BLOCKED"
+        ),
+        "available": not ingress_blockers,
+        "global_blockers": ingress_blockers,
+        "limitations": analysis_limitations,
+        "rule": "Missing market/account/discovery facts localize their impact and do not suppress independent legal analysis. Only missing canonical request identity/time globally blocks this request-scoped formal-analysis packet.",
+    }
+
+    action_blockers = list(ingress_blockers)
+    if not post_request:
+        action_blockers.append("REQUEST_SCOPED_PIT_NOT_RESOLVED")
+    if not account_ready:
+        action_blockers.append("ACCOUNT_FACT_NOT_READY")
+    formal_action_readiness = {
+        "status": "READY" if not action_blockers else "NOT_READY",
+        "ready": not action_blockers,
+        "blockers": action_blockers,
+        "request_bound": bool(request_id and requested_at),
+        "request_scoped_pit_resolved": post_request,
+        "fallback_available": fallback_available,
+        "account_fact_ready": account_ready,
+        "rule": "Exact amount/share/action canonical completion remains fail-closed on request identity, action-qualified request-scoped PIT and valid account truth. This gate must not be interpreted as a ban on independent legal analysis.",
+    }
+
     formal_reasoning_readiness = {
-        "status": "READY" if not blockers else "NOT_READY",
-        "ready": not blockers,
-        "blockers": blockers,
+        "status": "READY" if formal_analysis_availability["available"] else "NOT_READY",
+        "ready": formal_analysis_availability["available"],
+        "blockers": ingress_blockers,
+        "limitations": analysis_limitations,
         "request_bound": bool(request_id and requested_at),
         "request_scoped_pit_resolved": post_request,
         "account_fact_ready": account_ready,
@@ -249,11 +286,12 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "formal_discovery_resolved": discovery_resolved,
         "capital_efficiency_scope": "FULL_MARKET" if discovery_resolved else "DEGRADED_KNOWN_UNIVERSE",
         "capital_efficiency_limitations": [] if discovery_resolved else ["FORMAL_DISCOVERY_NOT_RESOLVED"],
-        "rule": "Core formal reasoning remains available when request/PIT/account facts are ready. Unresolved Discovery degrades only full-market opportunity and capital-efficiency completeness; it must not block holding sell chains, legal Observation analysis, account/risk analysis, or a bounded decision over known legal facts. NOT_REQUESTED is incomplete, not zero candidates.",
+        "compatibility_role": "ANALYSIS_AVAILABILITY_NOT_ACTION_QUALIFICATION",
+        "rule": "Formal reasoning continues under explicit local limitations. Exact executable/canonical action qualification is owned by formal_action_readiness.",
     }
 
     return {
-        "schema_version": "1.3",
+        "schema_version": "1.4",
         "role": "PREFERRED_MINIMUM_SUFFICIENT_FORMAL_REASONING_INPUT",
         "trigger": {
             "source": request.get("requested_by") or request.get("source") or "INTERACTIVE_QUERY",
@@ -299,6 +337,8 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "version": universe.get("version") or "",
             "count": len(universe.get("objects") or []),
         },
+        "formal_analysis_availability": formal_analysis_availability,
+        "formal_action_readiness": formal_action_readiness,
         "formal_reasoning_readiness": formal_reasoning_readiness,
         "opportunity_inputs": {
             "formal_discovery_status": discovery.get("status") or "NOT_REQUESTED",
@@ -330,7 +370,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "NON_DECISION_E2E_PROJECTION",
         ],
         "provenance_rule": "Every projected fact is copied from the existing canonical request/account/current/decision/quote/discovery inputs; this packet is not a new fact owner.",
-        "pit_rule": "Formal reasoning consumes this request-scoped packet only when formal_reasoning_readiness.status is READY; downstream projections cannot mutate the same PIT decision.",
+        "pit_rule": "Formal reasoning may continue when formal_analysis_availability is AVAILABLE or DEGRADED, honoring local limitations. Exact amount/share/action canonical completion requires formal_action_readiness=READY. Downstream projections cannot mutate the same PIT decision.",
         "decision_boundary": "This packet normalizes facts and obligations only. It must not select the main candidate, rank capital states, or generate buy/sell actions.",
     }
 

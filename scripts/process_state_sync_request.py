@@ -723,13 +723,13 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
             raise ValueError("manual formal completion requires request-scoped query context")
         query_context = load_json(query_path)
         packet = query_context.get("decision_fact_pack") or {}
-        readiness = packet.get("formal_reasoning_readiness") or {}
+        action_readiness = packet.get("formal_action_readiness") or packet.get("formal_reasoning_readiness") or {}
         packet_request_id = str((packet.get("trigger") or {}).get("request_id") or "").strip()
         if packet_request_id != parent_request_id:
             raise ValueError("manual formal completion query context is not bound to parent request")
-        if readiness.get("ready") is not True or str(readiness.get("status") or "").upper() != "READY":
-            blockers = ",".join(str(x) for x in (readiness.get("blockers") or [])) or "UNKNOWN"
-            raise ValueError(f"manual formal completion reasoning inputs are not READY: {blockers}")
+        if action_readiness.get("ready") is not True or str(action_readiness.get("status") or "").upper() != "READY":
+            blockers = ",".join(str(x) for x in (action_readiness.get("blockers") or [])) or "UNKNOWN"
+            raise ValueError(f"manual formal completion action inputs are not READY: {blockers}")
     fingerprint_request_id = parent_request_id if is_manual_completion else request_id
     fingerprint = hashlib.sha256(json.dumps({"request_id": fingerprint_request_id, "market_date": market_date, "formal_decision": decision}, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
     decision_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(decision.get("decision_id") or request_id or f"{market_date}_{fingerprint[:12]}"))
