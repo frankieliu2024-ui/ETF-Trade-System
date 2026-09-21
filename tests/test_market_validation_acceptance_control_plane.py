@@ -30,6 +30,10 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         self.assertIn("--report-path", source)
         self.assertTrue(any(isinstance(node, ast.Call) and getattr(node.func, "attr", "") == "parse_args" for node in ast.walk(tree)))
 
+    def test_acceptance_does_not_persist_diagnostic_only_maintenance_snapshot(self):
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertNotIn("data/state/maintenance_diagnostic.json", workflow)
+
     def test_acceptance_rebuilds_execution_quality_once_via_state_context(self):
         source = ACCEPTANCE.read_text(encoding="utf-8")
         self.assertNotIn('scripts/build_execution_quality.py', source)
