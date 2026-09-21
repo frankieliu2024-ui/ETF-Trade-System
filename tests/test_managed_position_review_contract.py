@@ -23,8 +23,11 @@ class ManagedPositionReviewContractTests(unittest.TestCase):
             "risk_reduction_or_exit_condition": "当前未达到降低风险或退出条件",
             "higher_efficiency_alternative": "当前不存在已经独立成立且效率更高的资本用途",
             "capital_occupancy_reason": "继续占用资本在当前风险收益与替代用途比较下仍合理",
+            "continued_holding_opportunity_cost": "继续持有将放弃现金、部分/全部释放及迁移到其他合法资本用途的价值",
             "capital_use": {
                 "continued_holding_vs_cash": "继续持有与现金用途比较",
+                "alternative_capital_uses_review": "已比较现金、部分释放、全部释放、合法新Trial/直接Confirm、其他持仓追加及其他MASTER允许状态",
+                "position_capital_states": {"HOLD": "继续持有", "REDUCE": "部分释放", "EXIT": "全部释放"},
                 "qualified_alternative": "无合格替代机会"},
             "action_changes_now": changed,
             "next_change_condition": "下一正式节点重新比较",
@@ -78,6 +81,27 @@ class ManagedPositionReviewContractTests(unittest.TestCase):
                 [item, self.review("588000")], self.account
             )
         self.assertIn("capital_occupancy_reason", error)
+
+    def test_missing_continued_holding_opportunity_cost_is_rejected(self):
+        item = self.review("561980")
+        item.pop("continued_holding_opportunity_cost")
+        with patch("process_state_sync_request.ROOT", Path(".")):
+            error = validate_managed_position_review_contract([item, self.review("588000")], self.account)
+        self.assertIn("continued_holding_opportunity_cost", error)
+
+    def test_missing_alternative_capital_uses_review_is_rejected(self):
+        item = self.review("561980")
+        item["capital_use"].pop("alternative_capital_uses_review")
+        with patch("process_state_sync_request.ROOT", Path(".")):
+            error = validate_managed_position_review_contract([item, self.review("588000")], self.account)
+        self.assertIn("alternative_capital_uses_review", error)
+
+    def test_hold_reduce_exit_capital_states_are_all_required(self):
+        item = self.review("561980")
+        item["capital_use"]["position_capital_states"].pop("REDUCE")
+        with patch("process_state_sync_request.ROOT", Path(".")):
+            error = validate_managed_position_review_contract([item, self.review("588000")], self.account)
+        self.assertIn("REDUCE", error)
 
     def test_review_does_not_infer_sell_from_trend(self):
         item = self.review("561980")
