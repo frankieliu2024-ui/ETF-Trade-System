@@ -504,8 +504,13 @@ class NotificationDecisionIdentityTests(unittest.TestCase):
     def test_system_consistency_acceptance_publication_has_bounded_retry(self):
         workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/system-consistency.yml").read_text(encoding="utf-8")
         self.assertIn("for attempt in 1 2; do", workflow)
+        self.assertIn("git reset --hard origin/main", workflow)
+        self.assertIn('python scripts/run_production_acceptance.py --mutation-sha "$(git rev-parse HEAD)"', workflow)
         self.assertIn("if git push origin HEAD:main; then", workflow)
+        self.assertIn("rebuilding from latest main", workflow)
         self.assertIn('test "$published" = "true"', workflow)
+        persist_step = workflow.split("- name: Persist acceptance result", 1)[1].split("- name: Enforce production acceptance", 1)[0]
+        self.assertNotIn("git rebase origin/main", persist_step)
         self.assertNotIn("git push --force", workflow)
         self.assertNotIn("git push -f ", workflow)
 
