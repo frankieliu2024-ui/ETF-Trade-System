@@ -111,7 +111,7 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertNotIn("recommended_action", pack)
         self.assertIn("must not select", pack["decision_boundary"])
 
-    def test_fact_pack_fails_closed_when_discovery_not_requested(self):
+    def test_fact_pack_degrades_capital_scope_when_discovery_not_requested(self):
         with tempfile.TemporaryDirectory() as directory:
             pack = query_context.build_decision_fact_pack(
                 Path(directory),
@@ -123,8 +123,9 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
                 formal_discovery={"status": "NOT_REQUESTED", "candidates": []},
             )
         readiness = pack["formal_reasoning_readiness"]
-        self.assertFalse(readiness["ready"])
-        self.assertIn("FORMAL_DISCOVERY_NOT_RESOLVED", readiness["blockers"])
+        self.assertTrue(readiness["ready"])
+        self.assertEqual(readiness["capital_efficiency_scope"], "DEGRADED_KNOWN_UNIVERSE")
+        self.assertIn("FORMAL_DISCOVERY_NOT_RESOLVED", readiness["capital_efficiency_limitations"])
 
     def test_fact_pack_allows_resolved_discovery_with_zero_candidates(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -139,6 +140,7 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
             )
         readiness = pack["formal_reasoning_readiness"]
         self.assertTrue(readiness["ready"])
+        self.assertEqual(readiness["capital_efficiency_scope"], "FULL_MARKET")
         self.assertEqual(pack["opportunity_inputs"]["candidates"], [])
 
     def test_missing_latency_fields_remain_explicit(self):
