@@ -111,6 +111,42 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertNotIn("recommended_action", pack)
         self.assertIn("must not select", pack["decision_boundary"])
 
+    def test_manual_formal_packet_requires_canonical_source_ingress(self):
+        request = {
+            "request_id": "manual-r1",
+            "requested_at_beijing": "2026-09-21T14:00:00+08:00",
+            "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "intent": "FORMAL_INTRADAY_DECISION",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            pack = query_context.build_decision_fact_pack(
+                Path(directory), request, {"market_date": "2026-09-21"},
+                {"status": "VALID", "positions": []}, {"rules_version": "V2.2.31"},
+                {"decision_freshness": {"post_request": True}, "quotes": []},
+                formal_discovery={"status": "PASS", "candidates": []},
+            )
+        self.assertFalse(pack["formal_analysis_availability"]["available"])
+        self.assertIn("MANUAL_SOURCE_INGRESS_UNQUALIFIED", pack["formal_analysis_availability"]["global_blockers"])
+
+    def test_manual_formal_packet_accepts_persisted_source_ingress(self):
+        request = {
+            "request_id": "manual-r2",
+            "requested_at_beijing": "2026-09-21T14:00:00+08:00",
+            "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "intent": "FORMAL_INTRADAY_DECISION",
+            "_request_file": "requests/live_snapshot/manual-r2.json",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            pack = query_context.build_decision_fact_pack(
+                Path(directory), request, {"market_date": "2026-09-21"},
+                {"status": "VALID", "positions": []}, {"rules_version": "V2.2.31"},
+                {"decision_freshness": {"post_request": True}, "quotes": []},
+                formal_discovery={"status": "NOT_REQUESTED", "candidates": []},
+            )
+        self.assertTrue(pack["formal_analysis_availability"]["available"])
+        self.assertTrue(pack["formal_analysis_availability"]["source_ingress"]["qualified"])
+        self.assertEqual(pack["formal_reasoning_readiness"]["capital_efficiency_scope"], "DEGRADED_KNOWN_UNIVERSE")
+
     def test_fact_pack_degrades_capital_scope_when_discovery_not_requested(self):
         with tempfile.TemporaryDirectory() as directory:
             pack = query_context.build_decision_fact_pack(
