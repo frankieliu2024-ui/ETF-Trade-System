@@ -606,49 +606,33 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          owned="$RUNNER_TEMP/etf-acceptance-state"
-          mkdir -p "$owned/data/state"
-          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/last_known_good.json data/state/e2e_status.json data/state/execution_quality.json; do
-            if [ -f "$f" ]; then
-              cp "$f" "$owned/$f"
-            fi
-          done
-          git fetch --no-tags origin main
-          git reset --hard origin/main
-          # Acceptance artifacts are derived outputs. Rebuild them against the
-          # execution-time latest main after any concurrent canonical fact
-          # advance, instead of copying artifacts produced from the older
-          # workflow checkout back over newer canonical-consistent state.
-          export ETF_SYSTEM_ROOT="$PWD"
-          ETF_STABLE_ACCEPTANCE_BASE="${GITHUB_SHA}" python scripts/run_production_acceptance.py --mutation-sha "$(git rev-parse HEAD)"
-          for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/last_known_good.json data/state/e2e_status.json data/state/execution_quality.json; do
-            if [ -f "$f" ]; then
-              git add "$f"
-            fi
-          done
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          git commit -m "state: persist production acceptance"
-          # run_production_acceptance also rebuilds observability/runtime views
-          # outside this step's declared ownership.  Keep the acceptance commit
-          # bounded to the six staged artifacts, then discard only remaining
-          # tracked generated outputs before the latest-main rebase.  Canonical
-          # facts are never staged or reset by this cleanup.
-          git restore --worktree .
-          git clean -fd -- data/state
-          # Dynamic-state writers can advance main between fetch/rebase and push.
-          # Retry this owned derived-state publication once against the new tip;
-          # never force-push and never use last-writer-wins semantics.
+          # Acceptance artifacts are rebuildable derived state.  On a moving
+          # main, never rebase an already-built derived-state commit: rebuild
+          # from the new tip instead.  Two bounded attempts cover one ordinary
+          # concurrent writer race while repeated movement still fails closed.
           published=false
           for attempt in 1 2; do
             git fetch --no-tags origin main
-            git rebase origin/main
+            git reset --hard origin/main
+            export ETF_SYSTEM_ROOT="$PWD"
+            ETF_STABLE_ACCEPTANCE_BASE="${GITHUB_SHA}" python scripts/run_production_acceptance.py --mutation-sha "$(git rev-parse HEAD)"
+            for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/last_known_good.json data/state/e2e_status.json data/state/execution_quality.json; do
+              if [ -f "$f" ]; then
+                git add "$f"
+              fi
+            done
+            if git diff --cached --quiet; then
+              published=true
+              break
+            fi
+            git commit -m "state: persist production acceptance"
+            git restore --worktree .
+            git clean -fd -- data/state
             if git push origin HEAD:main; then
               published=true
               break
             fi
-            echo "acceptance publication raced with main on attempt $attempt"
+            echo "acceptance publication raced with main on attempt $attempt; rebuilding from latest main"
           done
           test "$published" = "true"
       - name: Enforce production acceptance
