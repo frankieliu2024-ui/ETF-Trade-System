@@ -1071,7 +1071,7 @@ def validate_capital_competition_contract(value: object, account: dict, object_n
         "post_action_deployable_cash",
         "future_opportunity_capacity",
         "cash_opportunity_cost",
-        "trial_information_value_review",
+        "alternative_capital_use_review",
         "concentration_account_structure_effect",
         "selected_state_reason",
         "new_amount_yuan",
