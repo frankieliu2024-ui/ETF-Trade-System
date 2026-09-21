@@ -178,7 +178,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     """Expose one request's PIT references without creating another state store."""
     freshness = market_quote.get("decision_freshness") or {}
     universe = read_json(root / CANONICAL_FILES["etf_monitor_universe"], {})
-    return {"schema_version": "1.0", "trigger": {"source": request.get("requested_by") or request.get("source") or "INTERACTIVE_QUERY", "request_id": request.get("request_id") or "", "requested_at_beijing": request.get("requested_at_beijing") or request.get("request_time") or ""}, "master": {"version": decision.get("rules_version") or current.get("rules_version") or "", "source": "ETF规则_MASTER.md"}, "account_fact": {"source": account.get("source") or "", "as_of_beijing": account.get("updated_at") or "", "status": account.get("status") or ""}, "current": {"market_date": current.get("market_date") or "", "latest_snapshot": current.get("latest_snapshot") or "", "captured_at_beijing": current.get("captured_at") or (current.get("data_freshness") or {}).get("captured_at_beijing") or "", "provider_as_of_beijing": (current.get("data_freshness") or {}).get("provider_as_of") or "", "provider": (current.get("data_freshness") or {}).get("provider") or ""}, "decision_context": {"generated_at_beijing": decision.get("generated_at_beijing") or decision.get("generated_at") or "", "source": "scripts/state_manager.py::build_decision_context"}, "market_quote": {"mode": market_quote.get("refresh_mode") or "", "decision_freshness": freshness, "quotes_as_of_beijing": sorted({str(q.get("data_time_beijing") or "") for q in (market_quote.get("quotes") or []) if isinstance(q, dict) and q.get("data_time_beijing")}), "source": "scripts/market_quote_router.py"}, "lifecycle": {"source": "decision_context.lifecycle_projection", "reference": "decision_context.lifecycle_projection"}, "etf_universe": {"source": CANONICAL_FILES["etf_monitor_universe"], "version": universe.get("version") or "", "count": len(universe.get("objects") or [])}, "pit_rule": "Formal reasoning consumes only this request-scoped fact set; downstream projections cannot mutate the same PIT decision."}
+    return {"schema_version": "1.0", "trigger": {"source": request.get("requested_by") or request.get("source") or "INTERACTIVE_QUERY", "request_id": request.get("request_id") or "", "requested_at_beijing": _request_received_at_beijing(request)}, "master": {"version": decision.get("rules_version") or current.get("rules_version") or "", "source": "ETF规则_MASTER.md"}, "account_fact": {"source": account.get("source") or "", "as_of_beijing": account.get("updated_at") or "", "status": account.get("status") or ""}, "current": {"market_date": current.get("market_date") or "", "latest_snapshot": current.get("latest_snapshot") or "", "captured_at_beijing": current.get("captured_at") or (current.get("data_freshness") or {}).get("captured_at_beijing") or "", "provider_as_of_beijing": (current.get("data_freshness") or {}).get("provider_as_of") or "", "provider": (current.get("data_freshness") or {}).get("provider") or ""}, "decision_context": {"generated_at_beijing": decision.get("generated_at_beijing") or decision.get("generated_at") or "", "source": "scripts/state_manager.py::build_decision_context"}, "market_quote": {"mode": market_quote.get("refresh_mode") or "", "decision_freshness": freshness, "quotes_as_of_beijing": sorted({str(q.get("data_time_beijing") or "") for q in (market_quote.get("quotes") or []) if isinstance(q, dict) and q.get("data_time_beijing")}), "source": "scripts/market_quote_router.py"}, "lifecycle": {"source": "decision_context.lifecycle_projection", "reference": "decision_context.lifecycle_projection"}, "etf_universe": {"source": CANONICAL_FILES["etf_monitor_universe"], "version": universe.get("version") or "", "count": len(universe.get("objects") or [])}, "pit_rule": "Formal reasoning consumes only this request-scoped fact set; downstream projections cannot mutate the same PIT decision."}
 
 
 def _first_qualified_market_fact(market_quote: dict) -> dict:
@@ -203,6 +203,27 @@ def _first_qualified_market_fact(market_quote: dict) -> dict:
                 "quality_status": quality,
             }
     return {"identity": "UNKNOWN", "as_of_beijing": "UNKNOWN", "quality_status": "UNKNOWN"}
+
+
+def _request_received_at_beijing(request: dict) -> str:
+    """Return the real request timestamp in one display timezone when supplied.
+
+    UTC ingress timestamps are converted; missing timestamps remain explicit and
+    are never inferred from a filename or workflow time.
+    """
+    value = str(request.get("requested_at_beijing") or request.get("request_time") or "").strip()
+    if value:
+        return value
+    utc_value = str(request.get("requested_at_utc") or "").strip()
+    if not utc_value:
+        return ""
+    try:
+        dt = datetime.fromisoformat(utc_value.replace("Z", "+00:00"))
+    except ValueError:
+        return ""
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(SHANGHAI).isoformat(timespec="seconds")
 
 
 def _minimum_legal_inputs_ready_at(root: Path, request: dict, current: dict, account: dict, market_quote: dict, observed_at: str) -> str:
@@ -264,7 +285,7 @@ def _minimum_legal_inputs_ready_at(root: Path, request: dict, current: dict, acc
 
 def build_fast_path_latency(request: dict, current: dict, account: dict, decision: dict, market_quote: dict, reply_ready: str, root: Path | None = None) -> dict:
     """Report only observed timestamps; missing instrumentation stays explicit."""
-    t0 = request.get("requested_at_beijing") or request.get("request_time") or ""
+    t0 = _request_received_at_beijing(request)
     manual_request_identity = _stable_manual_request_identity(request)
     freshness = market_quote.get("decision_freshness") or {}
     t_new = current.get("captured_at") or (current.get("data_freshness") or {}).get("captured_at_beijing") or ""
@@ -292,6 +313,10 @@ def build_fast_path_latency(request: dict, current: dict, account: dict, decisio
         "final_answer_identity": final_identity,
         "final_analysis_identity": final_identity,
         "t_reply_or_output_ready": reply_ready,
+        "minimum_legal_inputs_ready_role": "NON_TERMINAL_READINESS_MARKER",
+        "minimum_legal_inputs_ready_is_stop_boundary": False,
+        "canonical_chain_status": "FORMAL_COMPLETION_PENDING",
+        "canonical_chain_next_step": "CONTINUE_EXISTING_CANONICAL_CHAIN",
         "required_account_persistence_identity": request.get("required_account_persistence_identity") or "UNKNOWN",
         "refresh_start_latency": _duration_seconds(t0, t_refresh),
         "refresh_duration": _duration_seconds(t_refresh, t_new),
