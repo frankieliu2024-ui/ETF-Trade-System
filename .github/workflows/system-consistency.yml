@@ -617,7 +617,7 @@ jobs:
             git reset --hard origin/main
             export ETF_SYSTEM_ROOT="$PWD"
             ETF_STABLE_ACCEPTANCE_BASE="${GITHUB_SHA}" python scripts/run_production_acceptance.py --mutation-sha "$(git rev-parse HEAD)"
-            for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/last_known_good.json data/state/e2e_status.json data/state/execution_quality.json; do
+            for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/e2e_status.json data/state/execution_quality.json; do
               if [ -f "$f" ]; then
                 git add "$f"
               fi
