@@ -249,10 +249,41 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     )
     manual_source_ingress_qualified = (not is_manual_formal_request) or canonical_source_ingress
     discovery_status = str(discovery.get("status") or "NOT_REQUESTED").strip().upper()
-    discovery_resolved = discovery_status not in {"", "NOT_REQUESTED", "PENDING", "RUNNING", "UNKNOWN"}
+    discovery_inflight = discovery_status in {"PENDING", "RUNNING", "QUEUED", "IN_PROGRESS", "BUILDING"}
+    discovery_resolved = discovery_status not in {"", "NOT_REQUESTED", "PENDING", "RUNNING", "QUEUED", "IN_PROGRESS", "BUILDING", "UNKNOWN"}
     post_request = bool(freshness.get("resolved_post_request") or freshness.get("post_request"))
     fallback_available = bool(freshness.get("fallback_allowed"))
     account_ready = str(account.get("status") or "").upper() == "VALID"
+
+    # Formal reply-freeze is stricter than analysis availability.  A manual
+    # request may legally degrade after the canonical chain reaches a terminal
+    # failure/unavailable outcome, but it must not freeze against an older
+    # context while the same-request decision facts are still forming.
+    request_scoped_context = bool(
+        is_manual_formal_request
+        and manual_source_ingress_qualified
+        and request_id
+        and requested_at
+    )
+    pit_inflight = request_scoped_context and not post_request and not fallback_available
+    reply_freeze_blockers = []
+    if request_scoped_context and pit_inflight:
+        reply_freeze_blockers.append("REQUEST_SCOPED_PIT_IN_FLIGHT")
+    if request_scoped_context and discovery_inflight:
+        reply_freeze_blockers.append("FORMAL_DISCOVERY_IN_FLIGHT")
+    formal_reply_freeze = {
+        "status": "IN_FLIGHT" if reply_freeze_blockers else (
+            "READY" if request_scoped_context and post_request else
+            "RESOLVED_DEGRADED" if request_scoped_context else
+            "NOT_APPLICABLE"
+        ),
+        "reply_freezable": not reply_freeze_blockers,
+        "blockers": reply_freeze_blockers,
+        "request_id": request_id,
+        "post_request_pit_resolved": post_request,
+        "discovery_status": discovery_status,
+        "rule": "Manual formal replies must not freeze while same-request decision facts are still in flight. Explicit terminal degradation may continue legal reasoning; Discovery success is not required.",
+    }
 
     ingress_blockers = []
     if not request_id:
@@ -288,6 +319,8 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         },
         "rule": "Missing market/account/discovery facts localize their impact and do not suppress independent legal analysis. Missing canonical request identity/time or an unqualified manual source ingress globally blocks this request-scoped formal-analysis packet.",
     }
+
+    formal_analysis_availability["reply_freeze"] = formal_reply_freeze
 
     action_blockers = list(ingress_blockers)
     if not post_request:
@@ -369,6 +402,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "count": len(universe.get("objects") or []),
         },
         "formal_analysis_availability": formal_analysis_availability,
+        "formal_reply_freeze": formal_reply_freeze,
         "formal_action_readiness": formal_action_readiness,
         "formal_reasoning_readiness": formal_reasoning_readiness,
         "opportunity_inputs": {
@@ -789,6 +823,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         "needs_account_screenshot": not account_gate["can_use_current_account_fact"], "read_only": True,
         "interaction_boundary": "用户主动查询时先进入freshness assurance，再按‘查询时立即补采/复用 → 最近一次有效快照 → 明确降级/缺失’获取行情；正式输出必须标注北京时间真实数据时点，并区分美股现金盘、盘后和盘前。",
         "decision_fact_pack": fact_pack,
+        "formal_reply_freeze": fact_pack.get("formal_reply_freeze", {}),
         "freshness_assurance": {"status": (market_quote.get("decision_freshness") or {}).get("status", "UNKNOWN"), "refresh_mode": market_quote.get("refresh_mode", ""), "decision_request_time": request_time.isoformat() if request_time else "", "decision_request_post_current": (market_quote.get("decision_freshness") or {}).get("post_request", False), "rule": "freshness assurance precedes full decision-context construction; post-refresh CURRENT is re-read before formal decision context construction."},
         "fast_path_latency": latency,
     }
