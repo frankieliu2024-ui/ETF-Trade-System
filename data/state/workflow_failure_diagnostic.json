@@ -1,25 +1,25 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-21T14:40:52+08:00",
+  "generated_at": "2026-09-21T15:01:34+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF system consistency",
-  "run_id": 35569352294,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 35570946007,
   "run_attempt": 1,
-  "head_sha": "a7b26c56b8d7e2a0463886a6bdbdbd5e1042ac20",
-  "main_head_sha": "9b7b991976426ecd253950ffd99ee25f8810097e",
+  "head_sha": "19bff4f897d49926b41286c27419ee61ad9e12aa",
+  "main_head_sha": "860ac1b42a922ae0e9090683e243360f0a0ca726",
   "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "production_acceptance",
-      "step": "Persist acceptance result",
+      "job": "watchdog",
+      "step": "Persist bounded self-healing state and deterministic repairs",
       "number": 13
     }
   ],
   "changed_files": [
-    "requests/live_snapshot/20260921_143825_user_formal_intraday.json"
+    "data/state/notification_center.json"
   ],
-  "commit_message": "intraday: execute formal analysis 20260921_143825",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "state: record notification and execution reconciliation",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RERUN_FAILED_JOBS_ONCE",
   "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
@@ -27,7 +27,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
