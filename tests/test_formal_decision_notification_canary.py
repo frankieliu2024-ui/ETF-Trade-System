@@ -147,6 +147,63 @@ class FormalDecisionNotificationCanaryTests(unittest.TestCase):
             self.assertEqual(guard.notification_evidence_error(event), "")
 
 
+    def test_action_guidance_uses_runtime_policy_fallback_boundary_not_literal_ten_minutes(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            config = root / "config"
+            config.mkdir(parents=True, exist_ok=True)
+            (config / "runtime_policy.json").write_text(
+                json.dumps({"interactive_decision_freshness": {"fallback_max_age_seconds": 900}}),
+                encoding="utf-8",
+            )
+            prior = self._event(
+                "d1", "2026-09-04T11:20:00+08:00", "159326", "电网设备ETF",
+                "观察机会", "允许Trial",
+            )
+            latest = self._event(
+                "d2", "2026-09-04T11:30:00+08:00", "159326", "电网设备ETF",
+                "Trial机会", "允许Trial", amount_action="Trial新增5,000元；由用户人工下单。",
+            )
+            latest["comparison_snapshot"] = {"as_of_beijing": "2026-09-04T11:19:00+08:00"}
+            self._write_events(root, prior, latest)
+            with patch.object(center, "ROOT", root), patch.object(
+                center, "now", return_value=datetime.fromisoformat("2026-09-04T11:31:00+08:00")
+            ):
+                event = center.formal_decision_change_event()
+
+            self.assertIsNotNone(event)
+            self.assertIn("人工执行", event["user_action"])
+            self.assertNotIn("超过10分钟", event["user_action"])
+            self.assertNotIn("超出current runtime policy", event["user_action"])
+
+    def test_action_guidance_blocks_only_outside_runtime_policy_fallback_window(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            config = root / "config"
+            config.mkdir(parents=True, exist_ok=True)
+            (config / "runtime_policy.json").write_text(
+                json.dumps({"interactive_decision_freshness": {"fallback_max_age_seconds": 900}}),
+                encoding="utf-8",
+            )
+            prior = self._event(
+                "d1", "2026-09-04T11:20:00+08:00", "159326", "电网设备ETF",
+                "观察机会", "允许Trial",
+            )
+            latest = self._event(
+                "d2", "2026-09-04T11:30:00+08:00", "159326", "电网设备ETF",
+                "Trial机会", "允许Trial", amount_action="Trial新增5,000元；由用户人工下单。",
+            )
+            latest["comparison_snapshot"] = {"as_of_beijing": "2026-09-04T11:14:00+08:00"}
+            self._write_events(root, prior, latest)
+            with patch.object(center, "ROOT", root), patch.object(
+                center, "now", return_value=datetime.fromisoformat("2026-09-04T11:31:00+08:00")
+            ):
+                event = center.formal_decision_change_event()
+
+            self.assertIsNotNone(event)
+            self.assertIn("超出current runtime policy允许的盘中动作时效窗口", event["user_action"])
+            self.assertNotIn("超过10分钟", event["user_action"])
+
     def test_risk_permission_upgrade_without_trade_opportunity_is_action_complete(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
