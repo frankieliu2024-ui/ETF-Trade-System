@@ -1,25 +1,25 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-21T09:31:21+08:00",
+  "generated_at": "2026-09-21T09:32:09+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "US extended-hours pulse",
-  "run_id": 35551130084,
+  "workflow_name": "ETF runtime self-healing watchdog",
+  "run_id": 35551183130,
   "run_attempt": 1,
-  "head_sha": "d6b862fd4708727a837bb8cc56596fda77e9332b",
-  "main_head_sha": "d391fcf9460a9ad80e2d50695206b629c38bba10",
+  "head_sha": "59a98d74adc017a508e167c3d1e4bb5ebe57f621",
+  "main_head_sha": "42727bc2c3db2103142d2d60fec102281063a950",
   "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "us_extended",
-      "step": "Commit US extended-hours context",
-      "number": 9
+      "job": "watchdog",
+      "step": "Persist bounded self-healing state and deterministic repairs",
+      "number": 13
     }
   ],
   "changed_files": [
-    "requests/live_snapshot/20260921_user_continue_intraday_discovery.json"
+    "data/state/notification_center.json"
   ],
-  "commit_message": "request: continue formal intraday discovery analysis",
-  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
+  "commit_message": "state: record notification and execution reconciliation",
+  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
   "recommended_action": "RERUN_FAILED_JOBS_ONCE",
   "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
@@ -27,7 +27,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": false,
+    "bot_or_revert_commit": true,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
