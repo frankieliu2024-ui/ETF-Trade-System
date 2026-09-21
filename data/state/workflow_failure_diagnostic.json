@@ -1,25 +1,27 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-21T16:40:28+08:00",
+  "generated_at": "2026-09-21T16:52:14+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
-  "workflow_name": "ETF runtime self-healing watchdog",
-  "run_id": 35579086894,
+  "workflow_name": "ETF system consistency",
+  "run_id": 35579958575,
   "run_attempt": 1,
-  "head_sha": "80ed9b6d1c13f4ba6c5500c799cce9f4c7c302ce",
-  "main_head_sha": "620c2724b0c7cd310971b9e9b5fa27b5a37a3dd6",
+  "head_sha": "540c5e8b364e1eb110676c6759f8fc7e1ac60768",
+  "main_head_sha": "e35520cce76e2250b515424ec540de3016d370cd",
   "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "watchdog",
-      "step": "Persist bounded self-healing state and deterministic repairs",
+      "job": "production_acceptance",
+      "step": "Persist acceptance result",
       "number": 13
     }
   ],
   "changed_files": [
-    "data/state/etf_strategy_equity.json"
+    ".github/workflows/system-consistency.yml",
+    "scripts/check_system_consistency_core.py",
+    "tests/test_semantic_latest_main.py"
   ],
-  "commit_message": "state: consume trade fact corrections",
-  "commit_author": "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+  "commit_message": "Merge pull request #742 from frankieliu2024-ui/fix/158-acceptance-stable-anchor-20260921",
+  "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
   "recommended_action": "RERUN_FAILED_JOBS_ONCE",
   "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
@@ -27,7 +29,7 @@
     "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
-    "bot_or_revert_commit": true,
+    "bot_or_revert_commit": false,
     "user_notification_authority": false,
     "user_escalation_owner": "self_healing_status_on_proven_runtime_impact",
     "may_modify_master": false,
