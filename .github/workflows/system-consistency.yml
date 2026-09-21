@@ -637,9 +637,20 @@ jobs:
           # facts are never staged or reset by this cleanup.
           git restore --worktree .
           git clean -fd -- data/state
-          git fetch --no-tags origin main
-          git rebase origin/main
-          git push origin HEAD:main
+          # Dynamic-state writers can advance main between fetch/rebase and push.
+          # Retry this owned derived-state publication once against the new tip;
+          # never force-push and never use last-writer-wins semantics.
+          published=false
+          for attempt in 1 2; do
+            git fetch --no-tags origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              published=true
+              break
+            fi
+            echo "acceptance publication raced with main on attempt $attempt"
+          done
+          test "$published" = "true"
       - name: Enforce production acceptance
         if: ${{ always() && (steps.acceptance_scope.outputs.required == 'true' || github.event_name == 'workflow_dispatch') && steps.acceptance.outcome == 'failure' }}
         run: exit 1
