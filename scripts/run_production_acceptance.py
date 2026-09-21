@@ -22,8 +22,7 @@ def persist_consistency_report_if_valid(report,target=CONSISTENCY):
     target.write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8"); return True
 def main():
     parser=argparse.ArgumentParser(); parser.add_argument("--mutation-sha",default=os.environ.get("GITHUB_SHA","")); args=parser.parse_args()
-    quality_rc=run([sys.executable,str(ROOT/"scripts/build_execution_quality.py")])
-    state_rc=run([sys.executable,str(ROOT/"scripts/build_state_context.py")])
+    # build_state_context is the canonical acceptance rebuild for execution_quality too;\n    # do not invoke the same deterministic builder twice on the Fast Path.\n    state_rc=run([sys.executable,str(ROOT/"scripts/build_state_context.py")])\n    quality_rc=state_rc
     query_rc=run([sys.executable,str(ROOT/"scripts/build_query_context.py")])
     with tempfile.NamedTemporaryFile(prefix="etf-system-consistency-",suffix=".json",delete=False) as handle: fresh_path=Path(handle.name)
     report_error=""
