@@ -27,7 +27,12 @@ def build_completion_request(source_request: dict, formal_decision: dict, consum
         raise ValueError("source manual request is required")
     source = str(source_request.get("source") or "").strip().upper()
     intent = str(source_request.get("intent") or source_request.get("query_intent") or "").strip().upper()
-    manual_sources = {"CHATGPT_MANUAL_FORMAL_ANALYSIS", "CHATGPT_USER_CONTINUE"}
+    manual_sources = {
+        "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+        "CHATGPT_USER_CONTINUE",
+        "CHATGPT_USER_GITHUB_INTRADAY",
+        "CHATGPT_USER_REQUEST",
+    }
     formal_intents = {"EXPLICIT_LATEST", "FORMAL_INTRADAY_ANALYSIS"}
     if source not in manual_sources or intent not in formal_intents:
         raise ValueError("source request is not a manual formal analysis")

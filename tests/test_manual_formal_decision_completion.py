@@ -265,6 +265,12 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         }
         (self.root / SNAPSHOT_PATH).parent.mkdir(parents=True, exist_ok=True)
         (self.root / SNAPSHOT_PATH).write_text(json.dumps(self.snapshot), encoding="utf-8")
+        request_dir = self.root / "requests/live_snapshot"
+        request_dir.mkdir(parents=True, exist_ok=True)
+        (request_dir / f"{SOURCE_REQUEST['request_id']}.json").write_text(
+            json.dumps({**SOURCE_REQUEST, "require_post_request_snapshot": True}),
+            encoding="utf-8",
+        )
         account = self.root / "data/state/account_fact.json"
         account.write_text(json.dumps({"status": "VALID", "positions": []}), encoding="utf-8")
         self.stack = mock.patch.multiple(
@@ -327,6 +333,26 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         self.assertEqual(event["price_source_snapshot"], SNAPSHOT_PATH)
         self.assertEqual(event["point_in_time_status"], "CONSUMED_SNAPSHOT_VALIDATED")
         self.assertTrue(event["fingerprint"])
+
+    def test_pre_request_snapshot_fails_closed_without_event(self):
+        stale = {
+            **self.snapshot,
+            "captured_at_beijing": "2026-09-15T14:46:59+08:00",
+            "provider_as_of": "2026-09-15T14:46:58+08:00",
+        }
+        self.mocks["select_point_in_time_snapshot"].return_value = (
+            SNAPSHOT_PATH, stale, "CONSUMED_SNAPSHOT_VALIDATED"
+        )
+        with self.assertRaisesRegex(ValueError, "qualified post-request snapshot"):
+            state_sync.record_formal_decision(self.request("pre_request_snapshot_envelope"))
+        self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
+
+    def test_missing_durable_parent_request_fails_closed_without_event(self):
+        request = self.request("missing_durable_parent_envelope")
+        request["parent_request_id"] = "unknown_parent"
+        with self.assertRaisesRegex(ValueError, "parent request is not durable"):
+            state_sync.record_formal_decision(request)
+        self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
 
     def test_illegal_pit_fails_closed_without_event(self):
         self.mocks["select_point_in_time_snapshot"].return_value = ("", {}, "NO_PRIOR_SNAPSHOT")
