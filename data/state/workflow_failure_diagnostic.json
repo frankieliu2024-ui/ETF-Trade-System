@@ -1,31 +1,35 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-21T18:42:58+08:00",
+  "generated_at": "2026-09-21T18:53:22+08:00",
   "mode": "WORKFLOW_FAILURE_DIAGNOSIS",
   "workflow_name": "ETF system consistency",
-  "run_id": 35590134569,
+  "run_id": 35591009879,
   "run_attempt": 1,
-  "head_sha": "8e57ee2ffc1df194d2922c0137deb811a37b4097",
-  "main_head_sha": "8e57ee2ffc1df194d2922c0137deb811a37b4097",
-  "classification": "WORKFLOW_FAILURE_UNCLASSIFIED",
+  "head_sha": "40f89adba769ea7d93ce62b51f33466607409a7f",
+  "main_head_sha": "40cf2ba7438650cd7f22871fb87e39d0c23af061",
+  "classification": "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE",
   "failed_steps": [
     {
-      "job": "consistency",
-      "step": "Enforce hard consistency result or admit bounded replay migration",
-      "number": 9
+      "job": "production_acceptance",
+      "step": "Persist acceptance result",
+      "number": 13
+    },
+    {
+      "job": "production_acceptance",
+      "step": "Enforce production acceptance",
+      "number": 14
     }
   ],
   "changed_files": [
-    ".github/workflows/system-consistency.yml",
-    "tests/test_production_reliability.py"
+    "tests/test_market_validation_acceptance_control_plane.py"
   ],
-  "commit_message": "Merge pull request #756 from frankieliu2024-ui/fix/753-rebuild-derived-acceptance-on-race",
+  "commit_message": "Merge pull request #757 from frankieliu2024-ui/fix/753-update-acceptance-contract-tests",
   "commit_author": "frankieliu2024-ui <frankieliu2024@gmail.com>",
-  "recommended_action": "RECORD_DIAGNOSTIC_ONLY",
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "recommended_action": "RERUN_FAILED_JOBS_ONCE",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "safety": {
     "supported_workflow": true,
-    "head_is_current_main": true,
+    "head_is_current_main": false,
     "changes_confined_to_auto_rollback_allowlist": false,
     "forbidden_path_touched": false,
     "bot_or_revert_commit": false,
