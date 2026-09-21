@@ -40,7 +40,7 @@ def formal_decision():
             "post_action_deployable_cash": 10000.0,
             "future_opportunity_capacity": "仍可承载后续Trial/Confirm",
             "cash_opportunity_cost": "保留现金会放弃当前合法候选可能产生的收益与信息获取价值",
-            "trial_information_value_review": "已比较5,000元Trial用于有限风险购买信息的价值与继续等待的价值",
+            "alternative_capital_use_review": "已比较新Trial、直接Confirm、持仓ETF追加、现有持仓继续占资、低效率资本释放迁移及其他MASTER允许状态与现金",
             "concentration_account_structure_effect": "不增加集中度",
             "selected_state_reason": "现金优于当前可执行候选",
             "new_amount_yuan": 0,
@@ -458,10 +458,10 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "cash_opportunity_cost"):
             state_sync.record_formal_decision(request)
 
-    def test_trial_information_value_review_is_required(self):
+    def test_alternative_capital_use_review_is_required(self):
         request = self.request("missing_trial_information_value")
-        request["formal_decision"]["capital_competition"].pop("trial_information_value_review")
-        with self.assertRaisesRegex(ValueError, "trial_information_value_review"):
+        request["formal_decision"]["capital_competition"].pop("alternative_capital_use_review")
+        with self.assertRaisesRegex(ValueError, "alternative_capital_use_review"):
             state_sync.record_formal_decision(request)
 
     def test_each_compared_state_requires_opportunity_cost(self):
