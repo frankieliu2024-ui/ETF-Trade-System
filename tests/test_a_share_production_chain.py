@@ -295,6 +295,48 @@ class ManualRequestSessionAnchorTests(unittest.TestCase):
         self.assertEqual(out["requested_at_beijing"], "2026-09-21T15:04:07+08:00")
         self.assertEqual(out["interaction_scenario"], "POST_CLOSE_REVIEW")
 
+
+class ManualRequestSessionIngressTests(unittest.TestCase):
+    def test_push_ingress_rejects_stale_manual_scenario(self):
+        request = {
+            "request_id": "stale-1504",
+            "source": "CHATGPT_USER_REQUEST",
+            "requested_at_beijing": "2026-09-21T15:04:00+08:00",
+            "interaction_scenario": "INTRADAY",
+            "request_type": "MARKET_QUOTE_REFRESH",
+        }
+        policy = {
+            "interaction_routing": {
+                "routes": [
+                    {"start": "13:00", "end": "14:59", "scenario": "INTRADAY"},
+                    {"start": "15:00", "end": "23:59", "scenario": "POST_CLOSE_REVIEW"},
+                ]
+            }
+        }
+        normalized = runtime_session_gate.normalize_manual_request_session(request, policy)
+        self.assertTrue(normalized["interaction_scenario_reclassified"])
+        self.assertEqual(normalized["interaction_scenario"], "POST_CLOSE_REVIEW")
+
+    def test_push_ingress_accepts_current_manual_scenario(self):
+        request = {
+            "request_id": "current-1504",
+            "source": "CHATGPT_USER_REQUEST",
+            "requested_at_beijing": "2026-09-21T15:04:00+08:00",
+            "interaction_scenario": "POST_CLOSE_REVIEW",
+            "request_type": "MARKET_QUOTE_REFRESH",
+        }
+        policy = {
+            "interaction_routing": {
+                "routes": [
+                    {"start": "13:00", "end": "14:59", "scenario": "INTRADAY"},
+                    {"start": "15:00", "end": "23:59", "scenario": "POST_CLOSE_REVIEW"},
+                ]
+            }
+        }
+        normalized = runtime_session_gate.normalize_manual_request_session(request, policy)
+        self.assertNotIn("interaction_scenario_reclassified", normalized)
+        self.assertEqual(runtime_session_gate.classify_live_snapshot_request(normalized), "REFRESH_BEARING")
+
 if __name__ == "__main__":
     unittest.main()
 
