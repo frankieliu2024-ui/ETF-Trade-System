@@ -317,7 +317,7 @@ def main() -> int:
     except (FileNotFoundError, json.JSONDecodeError):
         prior_report = {}
     validated_commit = (prior_report.get("commit_audit") or {}).get("checked_commit") or head_sha
-    semantic_base = os.environ.get("GITHUB_BASE_SHA") or validated_commit
+    semantic_base = os.environ.get("GITHUB_BASE_SHA") or os.environ.get("ETF_STABLE_ACCEPTANCE_BASE") or validated_commit
     try:
         semantic_freshness = classify_delta(ROOT, semantic_base, head_sha)
     except RuntimeError as exc:
