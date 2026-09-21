@@ -1,15 +1,17 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-09-20T17:37:46+08:00",
+  "generated_at": "2026-09-21T08:53:24+08:00",
   "status": "NOT_ELIGIBLE",
   "target_sha": null,
-  "main_head_sha_at_assessment": "c803a60c8c9f651e43b34764bd90c9c02ed40472",
+  "main_head_sha_at_assessment": "6e3d43672c798dc7f9e54b6c164e6dcfc650903f",
   "changed_files": [
-    ".github/workflows/self-healing-watchdog.yml",
-    ".github/workflows/system-consistency.yml",
-    "tests/test_opening_current_self_healing.py"
+    "data/state/overseas_context.json",
+    "data/state/overseas_context_previous.json",
+    "data/state/overseas_runtime_health.json",
+    "data/state/query_context.json",
+    "data/state/us_extended_hours_context.json"
   ],
-  "reason": "no safe automatic workflow action; user escalation is deferred to proven runtime impact via self-healing",
+  "reason": "failure is classified as transient/persistence and this is the first attempt",
   "guardrails": [
     "target SHA must still equal origin/main immediately before revert",
     "changed files must remain entirely inside strict maintenance allowlist",
