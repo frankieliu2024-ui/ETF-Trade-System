@@ -430,7 +430,13 @@ def formal_decision_change_event() -> dict | None:
         change_lines.append(f"- **持仓动作**：{action_summary}")
 
     actionable = holding_action_changed or (status in {"Trial机会", "Confirm机会"} and opportunity_changed) or risk_permission == "禁止新增"
-    stale_action_warning = actionable and market_age is not None and market_age > 10
+    freshness_policy = (read_json(ROOT / "config" / "runtime_policy.json", {}).get("interactive_decision_freshness") or {})
+    fallback_max_age_minutes = float(freshness_policy.get("fallback_max_age_seconds", 900)) / 60.0
+    outside_canonical_action_window = (
+        actionable
+        and market_age is not None
+        and market_age > fallback_max_age_minutes
+    )
 
     if holding_action_changed:
         title = "【持仓动作｜需处理】ETF持仓需要降低风险/退出"
@@ -457,8 +463,8 @@ def formal_decision_change_event() -> dict | None:
         severity = "需要关注"
         user_action = details["user_action"]
 
-    if stale_action_warning:
-        user_action = "该判断使用的A股行情距判断时点超过10分钟；请先打开ChatGPT的ETF项目刷新最新行情，再决定是否人工执行"
+    if outside_canonical_action_window:
+        user_action = "该正式判断的A股行情已超出current runtime policy允许的盘中动作时效窗口；请先刷新最新行情并重新确认正式判断，再决定是否人工执行"
 
     timing_lines = [
         f"- **判断时点**：{human_time(decision_time_raw)}",
