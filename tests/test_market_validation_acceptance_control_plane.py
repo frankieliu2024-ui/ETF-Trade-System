@@ -172,7 +172,7 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         source = WORKFLOW.read_text(encoding="utf-8")
         persist = source.split("- name: Persist acceptance result", 1)[1].split("- name: Enforce production acceptance", 1)[0]
         reset_pos = persist.index("git reset --hard origin/main")
-        rebuild_pos = persist.index('python scripts/run_production_acceptance.py --mutation-sha "$(git rev-parse HEAD)"')
+        rebuild_pos = persist.index('python scripts/run_production_acceptance.py --mutation-sha "$latest_main_sha"')
         commit_pos = persist.index('git commit -m "state: persist production acceptance"')
         restore_pos = persist.index("git restore --worktree .")
         clean_pos = persist.index("git clean -fd -- data/state")
@@ -192,7 +192,7 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         self.assertEqual(persist.count("maintenance_health.json"), 1)
         self.assertEqual(persist.count("e2e_status.json"), 1)
         self.assertNotIn("RUNNER_TEMP/etf-acceptance-state", persist)
-        self.assertIn('python scripts/run_production_acceptance.py --mutation-sha "$(git rev-parse HEAD)"', persist)
+        self.assertIn('python scripts/run_production_acceptance.py --mutation-sha "$latest_main_sha"', persist)
         self.assertIn("Acceptance artifacts are rebuildable derived state", persist)
 
 
