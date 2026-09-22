@@ -227,6 +227,41 @@ def _formal_decision_matches_requested_refresh(req: dict, gate: dict) -> tuple[b
     return True, "FORMAL_DECISION_REFRESH_ALIGNED"
 
 
+def _manual_completion_request_bound_pit_ready(req: dict) -> bool:
+    """Let canonical completion pass the legacy CURRENT gate only when the
+    existing parent-bound query-time PIT contract is already action-qualified.
+
+    The canonical decision writer independently revalidates the same boundary;
+    this guard only prevents the older CURRENT-only precheck from rejecting a
+    closure that query-time providers have already resolved.
+    """
+    if str(req.get("source") or "").upper() != "CHATGPT_MANUAL_FORMAL_COMPLETION":
+        return False
+    parent_id = str(req.get("parent_request_id") or "").strip()
+    if not parent_id or any(part in parent_id for part in ("/", "\\\\", "..")):
+        return False
+    parent_path = REQUEST_DIR / f"{parent_id}.json"
+    if not parent_path.exists() or not QUERY_CONTEXT.exists():
+        return False
+    parent = load_json(parent_path)
+    if str(parent.get("request_id") or "").strip() != parent_id:
+        return False
+    packet = (load_json(QUERY_CONTEXT).get("decision_fact_pack") or {})
+    trigger = packet.get("trigger") or {}
+    action = packet.get("formal_action_readiness") or {}
+    market_quote = packet.get("market_quote") or {}
+    freshness = market_quote.get("decision_freshness") or {}
+    return bool(
+        str(trigger.get("request_id") or "").strip() == parent_id
+        and action.get("ready") is True
+        and str(action.get("status") or "").upper() == "READY"
+        and action.get("request_scoped_pit_resolved") is True
+        and freshness.get("request_time")
+        and freshness.get("resolved_post_request") is True
+        and str(market_quote.get("mode") or "").upper() in {"QUERY_TIME_IMMEDIATE_REFRESH", "REUSED_REQUEST_BOUND_FACTS"}
+    )
+
+
 def guard_request(path: Path) -> int:
     req = load_json(path)
     if str(req.get("request_type") or "").upper() == "EMERGENCY_EXTERNAL_MARKET_EVIDENCE":
@@ -237,6 +272,8 @@ def guard_request(path: Path) -> int:
         return 0
     gate = build_gate()
     if not gate.get("formal_decision_persist_allowed", True):
+        if _manual_completion_request_bound_pit_ready(req):
+            return 0
         print(json.dumps({"ok": False, "reason": "WAIT_FOR_REFRESH_NOT_READY", "refresh_gate": gate, "request": str(path)}, ensure_ascii=False))
         return 3
     aligned, reason = _formal_decision_matches_requested_refresh(req, gate)
