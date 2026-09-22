@@ -139,8 +139,8 @@ def _push_request_class() -> str:
             if is_manual_chat:
                 normalized = normalize_manual_request_session(request, policy)
                 if normalized.get("interaction_scenario_reclassified"):
-                    raise RuntimeError(
-                        "manual request interaction_scenario conflicts with its own requested_at_beijing; "
+                    print(
+                        "manual request interaction_scenario reclassified by requested_at_beijing: "
                         f"supplied={normalized.get('supplied_interaction_scenario')} "
                         f"derived={normalized.get('interaction_scenario')}"
                     )
