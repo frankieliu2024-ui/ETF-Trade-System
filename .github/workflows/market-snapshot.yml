@@ -298,6 +298,13 @@ jobs:
           triggering_request_file=$(printf '%s\n' $request_files | head -n 1)
           echo "triggering_request_file=$triggering_request_file" >> "$GITHUB_OUTPUT"
           echo "TRIGGERING_REQUEST_FILE=$triggering_request_file" >> "$GITHUB_ENV"
+          # Preserve the triggering request before execution-time main resets.
+          # REFRESH_BEARING requests skip state sync but still own the exact
+          # request identity/time consumed by query and decision contexts.
+          if [ -n "$triggering_request_file" ] && [ -f "$triggering_request_file" ]; then
+            mkdir -p "/tmp/etf-triggering-request/$(dirname "$triggering_request_file")"
+            cp "$triggering_request_file" "/tmp/etf-triggering-request/$triggering_request_file"
+          fi
           processed=false
           if [ -z "${REPLAY_REQUEST:-}" ]; then
             state_sync_files=""
@@ -436,6 +443,13 @@ jobs:
           REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"
           if [ -z "$REQUEST_FILE" ] && [ -n "${REPLAY_REQUEST:-}" ]; then REQUEST_FILE="$REPLAY_REQUEST"; fi
           if [ -z "$REQUEST_FILE" ]; then REQUEST_FILE=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | head -n 1); fi
+          # Core publish may reset the worktree to execution-time main before
+          # this step. Restore only the triggering request envelope so the
+          # canonical builder can bind request_id/requested_at_beijing.
+          if [ -n "$REQUEST_FILE" ] && [ ! -f "$REQUEST_FILE" ] && [ -f "/tmp/etf-triggering-request/$REQUEST_FILE" ]; then
+            mkdir -p "$(dirname "$REQUEST_FILE")"
+            cp "/tmp/etf-triggering-request/$REQUEST_FILE" "$REQUEST_FILE"
+          fi
           REQUEST_ARGS=()
           if [ -n "$REQUEST_FILE" ]; then REQUEST_ARGS+=(--request-file "$REQUEST_FILE"); fi
           REQUEST_REQUIRES_REFRESH=false
