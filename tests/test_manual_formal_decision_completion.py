@@ -442,6 +442,59 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             "data/state/query_context.json",
         )
 
+    def test_pre_request_snapshot_can_use_stable_completion_pit_closure_after_query_context_drift(self):
+        stale = {
+            **self.snapshot,
+            "captured_at_beijing": "2026-09-15T14:46:59+08:00",
+            "provider_as_of": "2026-09-15T14:46:58+08:00",
+        }
+        self.mocks["select_point_in_time_snapshot"].return_value = (
+            SNAPSHOT_PATH, stale, "CONSUMED_SNAPSHOT_VALIDATED"
+        )
+        completion_id = "stable_parent_pit_envelope"
+        query_path = self.root / "data/state/query_context.json"
+        query = json.loads(query_path.read_text(encoding="utf-8"))
+        query["decision_fact_pack"]["trigger"]["request_id"] = completion_id
+        query["decision_fact_pack"]["formal_action_readiness"].update({
+            "request_bound": True,
+            "request_scoped_pit_resolved": False,
+        })
+        query_path.write_text(json.dumps(query), encoding="utf-8")
+        request = self.request(completion_id)
+        request["request_bound_pit_closure"] = {
+            "parent_request_id": SOURCE_REQUEST["request_id"],
+            "status": "READY",
+            "request_scoped_pit_resolved": True,
+            "decision_request_time": SOURCE_REQUEST["requested_at_beijing"],
+            "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
+            "freshness_status": "DIRECT",
+            "query_context_generated_at_beijing": "2026-09-15T14:48:43+08:00",
+        }
+        recorded, decision_id = state_sync.record_formal_decision(request)
+        self.assertTrue(recorded)
+        event = json.loads((self.root / "events/decisions" / f"{decision_id}.json").read_text(encoding="utf-8"))
+        self.assertEqual(event["point_in_time_status"], "REQUEST_BOUND_QUERY_TIME_PIT_WITH_PRIOR_CANONICAL_SNAPSHOT")
+        self.assertEqual(event["request_bound_query_time_pit_source"], "completion_envelope.request_bound_pit_closure")
+
+    def test_stable_completion_pit_closure_wrong_parent_fails_closed(self):
+        stale = {
+            **self.snapshot,
+            "captured_at_beijing": "2026-09-15T14:46:59+08:00",
+            "provider_as_of": "2026-09-15T14:46:58+08:00",
+        }
+        self.mocks["select_point_in_time_snapshot"].return_value = (SNAPSHOT_PATH, stale, "CONSUMED_SNAPSHOT_VALIDATED")
+        request = self.request("wrong_parent_pit_envelope")
+        request["request_bound_pit_closure"] = {
+            "parent_request_id": "unrelated_parent",
+            "status": "READY",
+            "request_scoped_pit_resolved": True,
+            "decision_request_time": SOURCE_REQUEST["requested_at_beijing"],
+            "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
+            "freshness_status": "DIRECT",
+        }
+        with self.assertRaisesRegex(ValueError, "qualified post-request snapshot"):
+            state_sync.record_formal_decision(request)
+
     def test_missing_durable_parent_request_fails_closed_without_event(self):
         request = self.request("missing_durable_parent_envelope")
         request["parent_request_id"] = "unknown_parent"
