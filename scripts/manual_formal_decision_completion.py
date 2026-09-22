@@ -31,6 +31,7 @@ def build_completion_request(source_request: dict, formal_decision: dict, consum
         "CHATGPT_MANUAL_FORMAL_ANALYSIS",
         "CHATGPT_USER_CONTINUE",
         "CHATGPT_USER_GITHUB_INTRADAY",
+        "CHATGPT_USER_GITHUB_DECISION",
         "CHATGPT_USER_REQUEST",
     }
     formal_intents = {"EXPLICIT_LATEST", "FORMAL_INTRADAY_ANALYSIS"}
