@@ -730,9 +730,25 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     )
     held_etf_codes = {str(x) for x in active_account_asset_codes(root, account).get("etf", set())}
     formal_discovery = {"status": "NOT_REQUESTED", "candidates": []}
-    discovery_pipeline_started = time.monotonic() if (force_refresh or request_file) else None
+    request_source = str(request_payload.get("source") or request_payload.get("requested_by") or "").strip().upper()
+    request_intent = str(request_payload.get("intent") or request_payload.get("query_intent") or "").strip().upper()
+    manual_formal_sources = {
+        "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+        "CHATGPT_USER_CONTINUE",
+        "CHATGPT_USER_GITHUB_INTRADAY",
+        "CHATGPT_USER_REQUEST",
+        "CHATGPT_USER_INTERACTION",
+    }
+    manual_formal_intents = {"FORMAL_INTRADAY_DECISION", "FORMAL_INTRADAY_ANALYSIS", "EXPLICIT_LATEST"}
+    formal_node_discovery_required = bool(
+        request_file
+        and request_source in manual_formal_sources
+        and request_intent in manual_formal_intents
+    )
+    should_run_discovery = bool(force_refresh or run_discovery or formal_node_discovery_required)
+    discovery_pipeline_started = time.monotonic() if should_run_discovery else None
     candidate_quote_elapsed = 0.0
-    if force_refresh or request_file or run_discovery:
+    if should_run_discovery:
         formal_discovery = discover_formal_candidates(
             root,
             market_date=str(current.get("market_date") or trading_day_status.get("market_date") or ""),
