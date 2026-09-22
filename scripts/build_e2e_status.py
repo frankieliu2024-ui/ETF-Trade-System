@@ -327,14 +327,28 @@ def context_component(query: dict, decision: dict) -> dict:
             "observability_boundary": boundary or None,
         }
 
+    trigger = (query.get("decision_fact_pack") or {}).get("trigger") or {}
+    request_bound = bool(str(trigger.get("request_id") or "").strip() and str(trigger.get("requested_at_beijing") or "").strip())
+
     if boundary == "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED":
+        if request_bound:
+            return {
+                "status": "DEGRADED",
+                "reason": "request-bound decision context has not established the minimum decision-ready boundary",
+                "query_context": True,
+                "decision_context": True,
+                "minimum_decision_context": "INCOMPLETE",
+                "observability_boundary": boundary,
+                "request_bound": True,
+            }
         return {
             "status": "READY",
-            "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only for the current manual product",
+            "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only for non-request-scoped background state",
             "query_context": True,
             "decision_context": True,
             "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
             "observability_boundary": boundary,
+            "request_bound": False,
         }
 
     return {
