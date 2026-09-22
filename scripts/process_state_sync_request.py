@@ -393,6 +393,21 @@ def _manual_completion_snapshot_is_post_request(parent: dict, snapshot: dict) ->
     return bool(requested and effective and effective >= requested)
 
 
+def _manual_completion_envelope_pit_ready(request: dict, parent: dict, parent_request_id: str) -> bool:
+    """Validate immutable request-bound PIT closure captured when the formal conclusion was built."""
+    closure = request.get("request_bound_pit_closure") or {}
+    requested = str(parent.get("requested_at_beijing") or parent.get("request_time_beijing") or "").strip()
+    return bool(
+        isinstance(closure, dict)
+        and str(closure.get("parent_request_id") or "").strip() == str(parent_request_id or "").strip()
+        and str(closure.get("status") or "").upper() == "READY"
+        and closure.get("request_scoped_pit_resolved") is True
+        and str(closure.get("decision_request_time") or "").strip() == requested
+        and closure.get("refresh_mode") in {"QUERY_TIME_IMMEDIATE_REFRESH", "REUSED_REQUEST_BOUND_FACTS"}
+        and closure.get("freshness_status") in {"DIRECT", "REUSED", "READY"}
+    )
+
+
 def _manual_completion_request_bound_pit_ready(query_context: dict, parent_request_id: str) -> bool:
     """Accept the existing request-bound query-time PIT closure without inventing a new snapshot.
 
@@ -814,8 +829,9 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     if is_manual_completion and not external_evidence and not _manual_completion_snapshot_is_post_request(
         manual_parent_request, snapshot
     ):
-        request_bound_query_time_pit = _manual_completion_request_bound_pit_ready(
-            query_context, parent_request_id
+        request_bound_query_time_pit = (
+            _manual_completion_envelope_pit_ready(request, manual_parent_request, parent_request_id)
+            or _manual_completion_request_bound_pit_ready(query_context, parent_request_id)
         )
         if not request_bound_query_time_pit:
             raise ValueError(
@@ -864,7 +880,11 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     comparison = build_comparison_snapshot(snapshot) if snapshot else {"items": [], "interpretation_rule": "决策时点无可用历史快照，不使用未来数据补齐。"}
     event = {"event_type": "FORMAL_DECISION", "decision_id": decision_id, "request_id": request_id, "parent_request_id": parent_request_id or None, "fingerprint": fingerprint, "market_date": market_date, "decision_time_beijing": decision_time, "decision_effective_at_beijing": str(decision.get("decision_effective_at_beijing") or decision.get("issued_at_beijing") or ""), "decision_effective_ordering": str(decision.get("decision_effective_ordering") or ""), "timing_quality": str(decision.get("timing_quality") or ""), "timing_provenance": str(decision.get("timing_provenance") or ""), "interaction_scenario": request.get("interaction_scenario"), "candidate_code": code, "candidate_name": name, "hypothesis_id": hypothesis_id, "hypothesis_link_status": hypothesis_link_status, "hypothesis_closed": hypothesis_closed, "price_at_decision": price_at_decision, "price_as_of_beijing": price_as_of, "price_source_snapshot": snapshot_rel, "price_source": price_source, "point_in_time_status": pit_status, "comparison_snapshot": comparison, "formal_decision": decision, "managed_position_sell_review": managed_projection, "read_only_research_event": True, "decision_boundary": "只保存ChatGPT已经形成的正式决策和决策时点可见证据。禁止使用决策时点之后的行情回填价格或比较快照；研究留痕用于验证候选选择、假设生命周期、判断与执行质量，不自行推导交易权限。", "market_evidence_type": "EMERGENCY_EXTERNAL_MARKET_EVIDENCE" if external_evidence else "CANONICAL_SNAPSHOT", "external_evidence_path": external_evidence["path"] if external_evidence else "", "external_evidence_id": external_evidence["evidence_id"] if external_evidence else "", "external_evidence_validation": external_evidence["validation_status"] if external_evidence else "",
         "request_bound_query_time_pit": request_bound_query_time_pit,
-        "request_bound_query_time_pit_source": "data/state/query_context.json" if request_bound_query_time_pit else "",
+        "request_bound_query_time_pit_source": (
+            "completion_envelope.request_bound_pit_closure"
+            if request_bound_query_time_pit and _manual_completion_envelope_pit_ready(request, manual_parent_request, parent_request_id)
+            else ("data/state/query_context.json" if request_bound_query_time_pit else "")
+        ),
         "external_evidence_scope": external_evidence.get("evidence_scope", "") if external_evidence else "",
         "decision_evidence_eligibility": external_evidence.get("decision_evidence_eligibility", "") if external_evidence else "",
         "execution_price_eligibility": external_evidence.get("execution_price_eligibility", "") if external_evidence else "",
