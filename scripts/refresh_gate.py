@@ -142,14 +142,14 @@ def build_gate(now: datetime | None = None, request_file: str | Path | None = No
         ready = threshold is not None and captured is not None and captured >= threshold
 
     finished = parse_time(health.get("finished_at") or health.get("captured_at_beijing"))
-    failed_after_request = (
-        str(health.get("status") or "").upper() == "FAILED"
+    terminal_unavailable_after_request = (
+        str(health.get("status") or "").upper() in {"FAILED", "SKIPPED"}
         and requested is not None
         and finished is not None
         and finished >= requested
         and not ready
     )
-    status = "READY" if ready else ("FAILED" if failed_after_request else "PENDING")
+    status = "READY" if ready else ("FAILED" if terminal_unavailable_after_request else "PENDING")
     explicit_latest = _query_intent(req) == _explicit_latest_intent()
     allow_fallback = req.get("allow_wait_refresh_fallback") is True and not explicit_latest
     # Expose one business-level result independently of the legacy gate status.
@@ -157,8 +157,12 @@ def build_gate(now: datetime | None = None, request_file: str | Path | None = No
     # an explicitly permitted fallback is usable; NOT_READY means no formal
     # result may be produced yet. This avoids making callers infer business
     # state from PENDING/FAILED or workflow exit codes.
-    request_result = "READY" if ready else ("DEGRADED" if allow_fallback else "NOT_READY")
-    request_result_terminal = bool(ready or failed_after_request)
+    request_result = (
+        "READY"
+        if ready
+        else ("DEGRADED" if allow_fallback else ("EXPIRED" if terminal_unavailable_after_request else "NOT_READY"))
+    )
+    request_result_terminal = bool(ready or terminal_unavailable_after_request)
     rule = (
         "SCHEDULED_FORMAL_DECISION允许在名义节点前PREWARM形成请求后的合法CURRENT；只有名义节点实际到达后才允许正式分析/持久化。"
         "PREWARM事实仍须由Formal Decision按现行PIT/freshness/quality/session合同复核；本规则不放宽EXPLICIT_LATEST。"
@@ -172,7 +176,7 @@ def build_gate(now: datetime | None = None, request_file: str | Path | None = No
         "request_result_reason": (
             "post_request_snapshot_ready"
             if ready
-            else (health.get("reason", "") if failed_after_request else "awaiting_post_request_snapshot")
+            else (health.get("reason", "") if terminal_unavailable_after_request else "awaiting_post_request_snapshot")
         ),
         # Compatibility: this legacy field means that analysis which depends on
         # the requested fresh/current PIT may proceed. It is not a blanket ban
@@ -190,7 +194,8 @@ def build_gate(now: datetime | None = None, request_file: str | Path | None = No
         "current_snapshot_time": captured_text or "",
         "resolved_snapshot_time": captured_text if ready else "",
         "latest_snapshot": current.get("latest_snapshot", ""),
-        "failure_reason": health.get("reason", "") if failed_after_request else "",
+        "failure_reason": health.get("reason", "") if terminal_unavailable_after_request else "",
+        "terminal_unavailable": bool(terminal_unavailable_after_request),
         "post_request_snapshot": bool(post_request_snapshot),
         "nominal_node_reached": bool(nominal_node_reached),
         "rule": rule,
@@ -266,9 +271,13 @@ def annotate_contexts() -> None:
         if path == QUERY_CONTEXT:
             read_plan = obj.setdefault("decision_read_plan", {})
             if gate.get("status") in {"PENDING", "FAILED"} and not gate.get("fallback_allowed", True):
-                read_plan["mode"] = "WAIT_FOR_REFRESH"
+                read_plan["mode"] = "REQUEST_EXPIRED" if gate.get("request_result") == "EXPIRED" else "WAIT_FOR_REFRESH"
                 read_plan["refresh_gate"] = gate
-                read_plan["acquisition_priority"] = ["WAIT_FOR_REQUESTED_REFRESH", "EXPLICIT_FAILURE_NO_FALLBACK"]
+                read_plan["acquisition_priority"] = (
+                    ["REQUEST_TERMINAL_NO_POST_REQUEST_SNAPSHOT", "NO_FORMAL_DECISION"]
+                    if gate.get("request_result") == "EXPIRED"
+                    else ["WAIT_FOR_REQUESTED_REFRESH", "EXPLICIT_FAILURE_NO_FALLBACK"]
+                )
             else:
                 read_plan["refresh_gate"] = gate
         atomic_write(path, obj)
