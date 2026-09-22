@@ -56,13 +56,24 @@ def _is_scheduled_formal_decision(req: dict) -> bool:
 
 
 def _requires_wait(req: dict) -> bool:
-    if req.get("wait_for_refresh") is True or req.get("require_post_request_snapshot") is True:
+    if (
+        req.get("force_refresh") is True
+        or req.get("wait_for_refresh") is True
+        or req.get("require_post_request_snapshot") is True
+    ):
         return True
     intent = _query_intent(req)
     return bool(intent and intent == _explicit_latest_intent())
 
 
-def latest_wait_request() -> tuple[Path | None, dict]:
+def latest_wait_request(preferred_path: Path | None = None) -> tuple[Path | None, dict]:
+    # The triggering request is the canonical identity for this run.  Never
+    # let a historical request in the shared directory take ownership of a
+    # newer execution merely because it also requested a refresh.
+    if preferred_path is not None and preferred_path.exists():
+        req = load_json(preferred_path)
+        if _requires_wait(req):
+            return preferred_path, req
     candidates = []
     if REQUEST_DIR.exists():
         for path in REQUEST_DIR.glob("*.json"):
@@ -88,8 +99,12 @@ def _utc_now(now: datetime | None = None) -> datetime:
     return value.astimezone(timezone.utc)
 
 
-def build_gate(now: datetime | None = None) -> dict:
-    path, req = latest_wait_request()
+def build_gate(now: datetime | None = None, request_file: str | Path | None = None) -> dict:
+    preferred = None
+    if request_file:
+        candidate = Path(request_file)
+        preferred = candidate if candidate.is_absolute() else (ROOT / candidate)
+    path, req = latest_wait_request(preferred)
     if not req:
         return {
             "status": "NOT_REQUESTED",
@@ -234,7 +249,7 @@ def guard_request(path: Path) -> int:
 
 
 def annotate_contexts() -> None:
-    gate = build_gate()
+    gate = build_gate(request_file=os.environ.get("TRIGGERING_REQUEST_FILE") or None)
     for path in (QUERY_CONTEXT, DECISION_CONTEXT):
         if not path.exists():
             continue
@@ -274,3 +289,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
