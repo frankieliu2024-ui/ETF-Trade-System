@@ -516,7 +516,7 @@ class NotificationDecisionIdentityTests(unittest.TestCase):
         workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/system-consistency.yml").read_text(encoding="utf-8")
         self.assertIn("for attempt in 1 2; do", workflow)
         self.assertIn("git reset --hard origin/main", workflow)
-        self.assertIn('python scripts/run_production_acceptance.py --mutation-sha "$(git rev-parse HEAD)"', workflow)
+        self.assertIn('python scripts/run_production_acceptance.py --mutation-sha "$latest_main_sha"', workflow)
         self.assertIn("if git push origin HEAD:main; then", workflow)
         self.assertIn("rebuilding from latest main", workflow)
         self.assertIn('test "$published" = "true"', workflow)
