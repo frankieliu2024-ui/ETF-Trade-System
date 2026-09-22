@@ -749,12 +749,10 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
         packet = query_context.get("decision_fact_pack") or {}
         action_readiness = packet.get("formal_action_readiness") or packet.get("formal_reasoning_readiness") or {}
         packet_request_id = str((packet.get("trigger") or {}).get("request_id") or "").strip()
-        packet_bound_request_id = str(action_readiness.get("request_id") or "").strip()
-        valid_packet_request_ids = {parent_request_id, request_id}
-        if packet_request_id not in valid_packet_request_ids:
+        if packet_request_id not in {parent_request_id, request_id}:
             raise ValueError("manual formal completion query context is not bound to parent/completion request")
-        if packet_bound_request_id and packet_bound_request_id != parent_request_id:
-            raise ValueError("manual formal completion action readiness is not bound to parent request")
+        if action_readiness.get("request_bound") is not True or action_readiness.get("request_scoped_pit_resolved") is not True:
+            raise ValueError("manual formal completion action readiness is not request-bound to resolved PIT")
         if action_readiness.get("ready") is not True or str(action_readiness.get("status") or "").upper() != "READY":
             blockers = ",".join(str(x) for x in (action_readiness.get("blockers") or [])) or "UNKNOWN"
             raise ValueError(f"manual formal completion action inputs are not READY: {blockers}")
