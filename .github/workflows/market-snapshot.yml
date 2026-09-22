@@ -412,19 +412,26 @@ jobs:
           done
           echo "processed=$processed" >> "$GITHUB_OUTPUT"
       - name: Build objective intraday market delta
-        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        # Derived observability must not block the formal decision critical path.
+        if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        continue-on-error: true
         run: python scripts/build_market_delta.py
       - name: Refresh overseas and Asia index context
-        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        # Decision input: keep fail-closed for this fact domain.
+        if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_overseas_context.py
       - name: Build dynamic stock context from current account
-        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        # Decision input: run independently of unrelated prior-step failures.
+        if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_stock_context.py
       - name: Collect current account-stock market facts
-        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        # Decision input: run independently of unrelated prior-step failures.
+        if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_account_stock_market.py
       - name: Build on-demand query context
-        if: ${{ (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        # Formal decision critical path. Do not let an unrelated optional/derived
+        # step failure suppress request binding and PIT qualification.
+        if: ${{ always() && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: |
           REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"
           if [ -z "$REQUEST_FILE" ] && [ -n "${REPLAY_REQUEST:-}" ]; then REQUEST_FILE="$REPLAY_REQUEST"; fi
@@ -481,14 +488,20 @@ jobs:
           python scripts/refresh_gate.py --annotate-contexts
 
       - name: Build E2E usability state
-        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        # Diagnostic/qualification output: always attempt after a qualifying
+        # request so the system records which decision fact domain failed.
+        if: ${{ always() && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_e2e_status.py
 
       - name: Build state context and candidates
-        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        # Formal decision critical path. Its own contracts decide fail-closed;
+        # unrelated earlier step failure must not suppress the build.
+        if: ${{ always() && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_state_context.py
       - name: Build post-market review context
-        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        # Review is downstream maintenance, not an intraday decision prerequisite.
+        if: ${{ always() && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        continue-on-error: true
         run: python scripts/build_post_market_review.py
       - name: Commit downstream runtime/data artifacts
         if: ${{ always() && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success' || steps.state_sync.outputs.processed == 'true') }}
