@@ -240,6 +240,16 @@ jobs:
               f.write(f"reason={reason}\n")
           print(json.dumps({'snapshot_written': written, 'reason': reason}, ensure_ascii=False))
           PY
+      - name: Preserve triggering request envelope before core publish
+        if: ${{ github.event_name == 'push' && github.event.inputs.probe_only != 'true' }}
+        shell: bash
+        run: |
+          REQUEST_FILE=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | head -n 1)
+          echo "TRIGGERING_REQUEST_FILE=$REQUEST_FILE" >> "$GITHUB_ENV"
+          if [ -n "$REQUEST_FILE" ] && [ -f "$REQUEST_FILE" ]; then
+            mkdir -p "/tmp/etf-triggering-request/$(dirname "$REQUEST_FILE")"
+            cp "$REQUEST_FILE" "/tmp/etf-triggering-request/$REQUEST_FILE"
+          fi
       - name: Publish core snapshot and CURRENT immediately
         if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         shell: bash
