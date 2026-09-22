@@ -251,8 +251,11 @@ def _manual_completion_request_bound_pit_ready(req: dict) -> bool:
     action = packet.get("formal_action_readiness") or {}
     market_quote = packet.get("market_quote") or {}
     freshness = market_quote.get("decision_freshness") or {}
+    trigger_request_id = str(trigger.get("request_id") or "").strip()
+    completion_id = str(req.get("request_id") or "").strip()
+    trigger_matches_request = trigger_request_id in {parent_id, completion_id}
     return bool(
-        str(trigger.get("request_id") or "").strip() == parent_id
+        trigger_matches_request
         and action.get("ready") is True
         and str(action.get("status") or "").upper() == "READY"
         and action.get("request_scoped_pit_resolved") is True
