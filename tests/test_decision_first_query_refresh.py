@@ -24,6 +24,24 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
             reused = query_context._reusable_formal_discovery(root, {"market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON", "latest_snapshot": "snap.json"}, identity, {"159326"})
             self.assertEqual(reused["reuse"]["mode"], "SAME_MARKET_NODE_LEGAL_DISCOVERY_EVIDENCE_REUSE")
 
+    def test_degraded_discovery_is_retried_even_when_market_node_is_unchanged(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "data/state").mkdir(parents=True)
+            identity = query_context._discovery_universe_identity({"version": "u1", "objects": [{"code": "159326"}]})
+            (root / "data/state/query_context.json").write_text(json.dumps({
+                "market_date": "2026-09-22",
+                "latest_valid_node": "CONTINUOUS_AFTERNOON",
+                "current": {"market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON", "latest_snapshot": "snap.json"},
+                "formal_etf_discovery": {"status": "DEGRADED", "universe_identity": identity, "candidates": [], "error": "transient provider failure"},
+            }), encoding="utf-8")
+            self.assertIsNone(query_context._reusable_formal_discovery(
+                root,
+                {"market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON", "latest_snapshot": "snap.json"},
+                identity,
+                set(),
+            ))
+
     def test_terminal_discovery_invalidates_when_market_node_changes(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
