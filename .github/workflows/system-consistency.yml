@@ -616,7 +616,7 @@ jobs:
             git fetch --no-tags origin main
             git reset --hard origin/main
             export ETF_SYSTEM_ROOT="$PWD"
-            ETF_STABLE_ACCEPTANCE_BASE="${GITHUB_SHA}" python scripts/run_production_acceptance.py --mutation-sha "$(git rev-parse HEAD)"
+            # The first acceptance pass validates the triggering workflow SHA.\n            # This rebuild runs after rebinding to latest main, so its identity\n            # must follow the exact tree being validated rather than the stale\n            # triggering SHA. The original workflow identity remains recorded by\n            # the preceding acceptance gate.\n            latest_main_sha="$(git rev-parse HEAD)"\n            ETF_ACCEPTANCE_SHA="$latest_main_sha" GITHUB_SHA="$latest_main_sha" ETF_STABLE_ACCEPTANCE_BASE="${GITHUB_SHA}" python scripts/run_production_acceptance.py --mutation-sha "$latest_main_sha"
             for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/e2e_status.json data/state/execution_quality.json; do
               if [ -f "$f" ]; then
                 git add "$f"
