@@ -1,6 +1,6 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-09-21T08:12:19Z",
+  "generated_at": "2026-09-22T01:17:21Z",
   "mode": "RESEARCH_TO_EXECUTION_READ_ONLY_BRIDGE",
   "read_only": true,
   "use_in_current_decision": true,
@@ -13,7 +13,7 @@
     "runtime_validated_evidence": [
       {
         "evidence_id": "market_regime",
-        "status": "READY",
+        "status": "DEGRADED",
         "use_in_current_decision": true,
         "decision_eligible": null,
         "use_as_decision_evidence": true,
@@ -58,10 +58,10 @@
       },
       {
         "evidence_id": "opening_residual_561980",
-        "status": "READY",
-        "use_in_current_decision": true,
+        "status": "DEGRADED",
+        "use_in_current_decision": false,
         "decision_eligible": false,
-        "use_as_decision_evidence": true,
+        "use_as_decision_evidence": false,
         "can_generate_decision_independently": false,
         "trade_signal": null
       },
@@ -121,7 +121,7 @@
       },
       {
         "evidence_id": "intraday_path_risk_review",
-        "status": "READY",
+        "status": "DEGRADED",
         "use_in_current_decision": true,
         "decision_eligible": null,
         "use_as_decision_evidence": true,
@@ -470,9 +470,9 @@
     "opening_residual_561980": {
       "evidence_id": "opening_residual_561980",
       "display_name": "半导体设备ETF（561980）海外开盘定价残差证据",
-      "status": "READY",
-      "use_in_current_decision": true,
-      "use_as_decision_evidence": true,
+      "status": "DEGRADED",
+      "use_in_current_decision": false,
+      "use_as_decision_evidence": false,
       "decision_eligible": false,
       "can_generate_decision_independently": false,
       "trade_signal": null,
@@ -481,15 +481,7 @@
       ],
       "calibration_cutoff": "2026-08-21",
       "interpretation_rule": "正残差表示实际A股开盘相对历史SOX/NDX传导估计更低定价，负残差表示相对更高定价；仅参与半导体设备ETF机会强弱和风险收益判断，不是买入阈值。",
-      "a_share_market_date": "2026-09-21",
-      "us_tech_equal_1d_pct": 1.7515,
-      "ndx_1d_pct": 0.6863,
-      "sox_1d_pct": 2.8166,
-      "actual_open_gap_pct": 1.4327,
-      "expected_open_gap_pct": 0.4257,
-      "opening_underpricing_residual_pct": -1.007,
-      "historical_residual_zone": "RICHLY_PRICED_TAIL",
-      "threshold_not_a_trade_rule": true
+      "reason": "requires current 561980 open/prev_close plus prior completed NDX and SOX close/previous_close"
     },
     "selling_exhaustion": {
       "evidence_id": "selling_exhaustion",
@@ -628,16 +620,16 @@
       "trade_signal": null,
       "margin_fact_latest_date": "2026-08-25",
       "margin_5d_state": "CONTRACTING",
-      "etf_feedback_date": "2026-09-18",
-      "etf_universe_median_return_pct": 1.7276,
+      "etf_feedback_date": "2026-09-21",
+      "etf_universe_median_return_pct": 0.2648,
       "items": [
         {
           "code": "159326",
           "name": "电网设备ETF",
           "display_name": "电网设备ETF（159326）",
-          "prior_day_return_pct": 1.2774,
-          "relative_to_etf_universe_median_pct_points": -0.4502,
-          "relative_feedback": "NOT_STRONGER",
+          "prior_day_return_pct": 1.5015,
+          "relative_to_etf_universe_median_pct_points": 1.2367,
+          "relative_feedback": "STRONGER",
           "conditional_support_active": false,
           "evidence_strength": "SUPPORTED_HETEROGENEOUS"
         },
@@ -645,8 +637,8 @@
           "code": "159781",
           "name": "科创创业ETF",
           "display_name": "科创创业ETF（159781）",
-          "prior_day_return_pct": 2.7938,
-          "relative_to_etf_universe_median_pct_points": 1.0662,
+          "prior_day_return_pct": 0.7498,
+          "relative_to_etf_universe_median_pct_points": 0.485,
           "relative_feedback": "STRONGER",
           "conditional_support_active": false,
           "evidence_strength": "SUPPORTED_HETEROGENEOUS"
@@ -655,9 +647,9 @@
           "code": "159992",
           "name": "创新药ETF",
           "display_name": "创新药ETF（159992）",
-          "prior_day_return_pct": 0.6024,
-          "relative_to_etf_universe_median_pct_points": -1.1252,
-          "relative_feedback": "NOT_STRONGER",
+          "prior_day_return_pct": 4.0719,
+          "relative_to_etf_universe_median_pct_points": 3.8071,
+          "relative_feedback": "STRONGER",
           "conditional_support_active": false,
           "evidence_strength": "SUPPORTED_HETEROGENEOUS"
         },
@@ -665,9 +657,9 @@
           "code": "561980",
           "name": "半导体设备ETF",
           "display_name": "半导体设备ETF（561980）",
-          "prior_day_return_pct": 3.1019,
-          "relative_to_etf_universe_median_pct_points": 1.3743,
-          "relative_feedback": "STRONGER",
+          "prior_day_return_pct": -0.4298,
+          "relative_to_etf_universe_median_pct_points": -0.6946,
+          "relative_feedback": "NOT_STRONGER",
           "conditional_support_active": false,
           "evidence_strength": "SUPPORTED_HETEROGENEOUS"
         },
@@ -675,9 +667,9 @@
           "code": "588000",
           "name": "科创50ETF",
           "display_name": "科创50ETF（588000）",
-          "prior_day_return_pct": 2.8302,
-          "relative_to_etf_universe_median_pct_points": 1.1026,
-          "relative_feedback": "STRONGER",
+          "prior_day_return_pct": 0.2294,
+          "relative_to_etf_universe_median_pct_points": -0.0354,
+          "relative_feedback": "NOT_STRONGER",
           "conditional_support_active": false,
           "evidence_strength": "MOST_STABLE"
         }
@@ -688,27 +680,13 @@
     "intraday_path_risk_review": {
       "evidence_id": "intraday_path_risk_review",
       "display_name": "日内路径风险复核",
-      "status": "READY",
-      "market_date": "2026-09-21",
-      "ready_codes": [
-        "561980",
-        "588000",
-        "159781",
-        "159941",
-        "513180",
-        "159561",
-        "513520",
-        "518880",
-        "159992",
-        "515880",
-        "159326",
-        "515220",
-        "513350"
+      "status": "DEGRADED",
+      "market_date": "2026-09-22",
+      "ready_codes": [],
+      "degraded_codes": [
+        "159941"
       ],
-      "degraded_codes": [],
-      "active_codes": [
-        "515880"
-      ],
+      "active_codes": [],
       "use_in_current_decision": true,
       "use_as_decision_evidence": true,
       "can_generate_decision_independently": false,
@@ -722,7 +700,7 @@
     },
     "if_ic_basis_5d": {
       "schema_version": "1.2",
-      "generated_at": "2026-09-21T08:12:05Z",
+      "generated_at": "2026-09-22T01:17:02Z",
       "mode": "FORMAL_IF_IC_5D_BASIS_DYNAMIC_EVIDENCE",
       "evidence_id": "if_ic_basis_5d",
       "display_name": "IF／IC 5日基差变化证据",
@@ -742,12 +720,12 @@
       "research_source": "research/backtests/index_futures_if_ic_basis_formal_conclusion.json",
       "status": "DEGRADED",
       "use_in_current_decision": false,
-      "decision_market_date": "2026-09-21",
-      "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-09-18:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
+      "decision_market_date": "2026-09-22",
+      "reason": "dynamic input fetch failed: RuntimeError: daily_probe 2026-09-21:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped"
     },
     "ipo_base_stock_oversold_reversal_300750": {
       "schema_version": "1.1",
-      "generated_at": "2026-09-21T08:12:18Z",
+      "generated_at": "2026-09-22T01:17:16Z",
       "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
       "evidence_id": "ipo_base_stock_oversold_reversal_300750",
       "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -767,11 +745,11 @@
       "provider_fallback_errors": [
         "eastmoney:RemoteDisconnected:Remote end closed connection without response"
       ],
-      "completed_bar_date": "2026-09-18",
-      "close": 301.95,
-      "close_5_sessions_ago": 330.51,
-      "return_5d_pct": -8.6412,
-      "ma20": 345.493,
+      "completed_bar_date": "2026-09-21",
+      "close": 297.1,
+      "close_5_sessions_ago": 337.11,
+      "return_5d_pct": -11.8685,
+      "ma20": 340.9535,
       "below_ma20": true,
       "pattern_match": true,
       "direction": "POSITIVE",
@@ -793,57 +771,57 @@
       "scope": [
         "561980"
       ],
-      "decision_market_date": "2026-09-21",
-      "price_cutoff_market_date": "2026-09-18",
-      "return_window_start": "2026-09-15",
-      "return_window_end": "2026-09-18",
+      "decision_market_date": "2026-09-22",
+      "price_cutoff_market_date": "2026-09-21",
+      "return_window_start": "2026-09-16",
+      "return_window_end": "2026-09-21",
       "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
       "pcf_component_count": 40,
       "top5": [
         {
           "code": "002371",
           "name": "北方华创",
-          "td_amount": 480557.0,
+          "td_amount": 473627.0,
           "cash_flag": "1",
-          "ann_date": "2026-09-21",
-          "three_day_return_pct": 7.5765
+          "ann_date": "2026-09-22",
+          "three_day_return_pct": 2.0697
         },
         {
           "code": "300604",
           "name": "长川科技",
-          "td_amount": 251757.0,
+          "td_amount": 254277.0,
           "cash_flag": "1",
-          "ann_date": "2026-09-21",
-          "three_day_return_pct": 4.6698
+          "ann_date": "2026-09-22",
+          "three_day_return_pct": 4.831
         },
         {
           "code": "300666",
           "name": "江丰电子",
-          "td_amount": 52088.0,
+          "td_amount": 51412.0,
           "cash_flag": "1",
-          "ann_date": "2026-09-21",
-          "three_day_return_pct": 6.428
+          "ann_date": "2026-09-22",
+          "three_day_return_pct": 1.6731
         },
         {
           "code": "002409",
           "name": "雅克科技",
-          "td_amount": 41649.0,
+          "td_amount": 41124.0,
           "cash_flag": "1",
-          "ann_date": "2026-09-21",
-          "three_day_return_pct": 4.2502
+          "ann_date": "2026-09-22",
+          "three_day_return_pct": 0.234
         },
         {
           "code": "300346",
           "name": "南大光电",
-          "td_amount": 39200.0,
+          "td_amount": 38934.0,
           "cash_flag": "1",
-          "ann_date": "2026-09-21",
-          "three_day_return_pct": 6.9723
+          "ann_date": "2026-09-22",
+          "three_day_return_pct": 2.2803
         }
       ],
-      "top5_three_day_average_return_pct": 5.9794,
-      "etf_three_day_return_pct": 7.8825,
-      "leader_minus_etf_3d_lag1_pct_points": -1.9032,
+      "top5_three_day_average_return_pct": 2.2176,
+      "etf_three_day_return_pct": 2.3529,
+      "leader_minus_etf_3d_lag1_pct_points": -0.1353,
       "evidence_direction": "WEAKEN",
       "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
       "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
@@ -867,9 +845,9 @@
       "market_value": 59420.0,
       "account_weight_pct": 30.39,
       "holding_pnl_pct": -14.358,
-      "last_price": 297.1,
-      "change_pct": -1.6062,
-      "as_of_beijing": "2026-09-21T14:58:03+08:00",
+      "last_price": 296.88,
+      "change_pct": -0.074,
+      "as_of_beijing": "2026-09-22T09:16:12+08:00",
       "quality_status": "PASS",
       "use_in_current_decision": true,
       "research_scope": "CURRENT_FACT_CAPITAL_ROLE_AND_MATCHED_VALIDATED_RESEARCH",
@@ -928,7 +906,7 @@
       ],
       "dynamic_stock_specific_signal": {
         "schema_version": "1.1",
-        "generated_at": "2026-09-21T08:12:18Z",
+        "generated_at": "2026-09-22T01:17:16Z",
         "mode": "FORMAL_300750_OVERSOLD_REVERSAL_DYNAMIC_EVIDENCE",
         "evidence_id": "ipo_base_stock_oversold_reversal_300750",
         "display_name": "宁德时代（300750）超跌反转专项证据",
@@ -948,11 +926,11 @@
         "provider_fallback_errors": [
           "eastmoney:RemoteDisconnected:Remote end closed connection without response"
         ],
-        "completed_bar_date": "2026-09-18",
-        "close": 301.95,
-        "close_5_sessions_ago": 330.51,
-        "return_5d_pct": -8.6412,
-        "ma20": 345.493,
+        "completed_bar_date": "2026-09-21",
+        "close": 297.1,
+        "close_5_sessions_ago": 337.11,
+        "return_5d_pct": -11.8685,
+        "ma20": 340.9535,
         "below_ma20": true,
         "pattern_match": true,
         "direction": "POSITIVE",
@@ -992,9 +970,9 @@
       "market_value": 31800.0,
       "account_weight_pct": 16.26,
       "holding_pnl_pct": 9.552,
-      "last_price": 63.6,
-      "change_pct": 1.4192,
-      "as_of_beijing": "2026-09-21T14:58:03+08:00",
+      "last_price": 63.62,
+      "change_pct": 0.0314,
+      "as_of_beijing": "2026-09-22T09:16:16+08:00",
       "quality_status": "PASS",
       "use_in_current_decision": true,
       "research_scope": "CURRENT_FACT_CAPITAL_ROLE_AND_MATCHED_VALIDATED_RESEARCH",
@@ -1053,57 +1031,57 @@
       "scope": [
         "561980"
       ],
-      "decision_market_date": "2026-09-21",
-      "price_cutoff_market_date": "2026-09-18",
-      "return_window_start": "2026-09-15",
-      "return_window_end": "2026-09-18",
+      "decision_market_date": "2026-09-22",
+      "price_cutoff_market_date": "2026-09-21",
+      "return_window_start": "2026-09-16",
+      "return_window_end": "2026-09-21",
       "pcf_source": "https://static.cmfchina.com/ws-business-server/fund/getEtfStockList",
       "pcf_component_count": 40,
       "top5": [
         {
           "code": "002371",
           "name": "北方华创",
-          "td_amount": 480557.0,
+          "td_amount": 473627.0,
           "cash_flag": "1",
-          "ann_date": "2026-09-21",
-          "three_day_return_pct": 7.5765
+          "ann_date": "2026-09-22",
+          "three_day_return_pct": 2.0697
         },
         {
           "code": "300604",
           "name": "长川科技",
-          "td_amount": 251757.0,
+          "td_amount": 254277.0,
           "cash_flag": "1",
-          "ann_date": "2026-09-21",
-          "three_day_return_pct": 4.6698
+          "ann_date": "2026-09-22",
+          "three_day_return_pct": 4.831
         },
         {
           "code": "300666",
           "name": "江丰电子",
-          "td_amount": 52088.0,
+          "td_amount": 51412.0,
           "cash_flag": "1",
-          "ann_date": "2026-09-21",
-          "three_day_return_pct": 6.428
+          "ann_date": "2026-09-22",
+          "three_day_return_pct": 1.6731
         },
         {
           "code": "002409",
           "name": "雅克科技",
-          "td_amount": 41649.0,
+          "td_amount": 41124.0,
           "cash_flag": "1",
-          "ann_date": "2026-09-21",
-          "three_day_return_pct": 4.2502
+          "ann_date": "2026-09-22",
+          "three_day_return_pct": 0.234
         },
         {
           "code": "300346",
           "name": "南大光电",
-          "td_amount": 39200.0,
+          "td_amount": 38934.0,
           "cash_flag": "1",
-          "ann_date": "2026-09-21",
-          "three_day_return_pct": 6.9723
+          "ann_date": "2026-09-22",
+          "three_day_return_pct": 2.2803
         }
       ],
-      "top5_three_day_average_return_pct": 5.9794,
-      "etf_three_day_return_pct": 7.8825,
-      "leader_minus_etf_3d_lag1_pct_points": -1.9032,
+      "top5_three_day_average_return_pct": 2.2176,
+      "etf_three_day_return_pct": 2.3529,
+      "leader_minus_etf_3d_lag1_pct_points": -0.1353,
       "evidence_direction": "WEAKEN",
       "interpretation_rule": "正值只表示核心成分相对ETF提前走强，负值只表示核心成分相对滞后；必须与561980自身价格结构、承接、相对强弱、生命周期、风险收益和其他正式证据联合判断，不设置机械阈值。",
       "point_in_time": "交易日D使用D日开盘前官方PCF；全部价格仅截止D-1完整收盘。",
@@ -1112,27 +1090,13 @@
     "intraday_path_risk_review": {
       "evidence_id": "intraday_path_risk_review",
       "display_name": "日内路径风险复核",
-      "status": "READY",
-      "market_date": "2026-09-21",
-      "ready_codes": [
-        "561980",
-        "588000",
-        "159781",
-        "159941",
-        "513180",
-        "159561",
-        "513520",
-        "518880",
-        "159992",
-        "515880",
-        "159326",
-        "515220",
-        "513350"
+      "status": "DEGRADED",
+      "market_date": "2026-09-22",
+      "ready_codes": [],
+      "degraded_codes": [
+        "159941"
       ],
-      "degraded_codes": [],
-      "active_codes": [
-        "515880"
-      ],
+      "active_codes": [],
       "use_in_current_decision": true,
       "use_as_decision_evidence": true,
       "can_generate_decision_independently": false,
