@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+import json
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
@@ -8,6 +9,51 @@ import scripts.build_query_context as query_context
 
 
 class DecisionFirstQueryRefreshTests(unittest.TestCase):
+    def test_terminal_discovery_reuses_same_market_node_and_universe(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "data/state").mkdir(parents=True)
+            universe = {"version": "u1", "objects": [{"code": "159326"}]}
+            identity = query_context._discovery_universe_identity(universe)
+            (root / "data/state/query_context.json").write_text(json.dumps({
+                "market_date": "2026-09-22",
+                "latest_valid_node": "CONTINUOUS_AFTERNOON",
+                "current": {"market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON", "latest_snapshot": "snap.json"},
+                "formal_etf_discovery": {"status": "READY", "universe_identity": identity, "candidates": [{"code": "159326"}]},
+            }), encoding="utf-8")
+            reused = query_context._reusable_formal_discovery(root, {"market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON", "latest_snapshot": "snap.json"}, identity, {"159326"})
+            self.assertEqual(reused["reuse"]["mode"], "SAME_MARKET_NODE_LEGAL_DISCOVERY_EVIDENCE_REUSE")
+
+    def test_degraded_discovery_is_retried_even_when_market_node_is_unchanged(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "data/state").mkdir(parents=True)
+            identity = query_context._discovery_universe_identity({"version": "u1", "objects": [{"code": "159326"}]})
+            (root / "data/state/query_context.json").write_text(json.dumps({
+                "market_date": "2026-09-22",
+                "latest_valid_node": "CONTINUOUS_AFTERNOON",
+                "current": {"market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON", "latest_snapshot": "snap.json"},
+                "formal_etf_discovery": {"status": "DEGRADED", "universe_identity": identity, "candidates": [], "error": "transient provider failure"},
+            }), encoding="utf-8")
+            self.assertIsNone(query_context._reusable_formal_discovery(
+                root,
+                {"market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON", "latest_snapshot": "snap.json"},
+                identity,
+                set(),
+            ))
+
+    def test_terminal_discovery_invalidates_when_market_node_changes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "data/state").mkdir(parents=True)
+            identity = query_context._discovery_universe_identity({"version": "u1", "objects": [{"code": "159326"}]})
+            (root / "data/state/query_context.json").write_text(json.dumps({
+                "market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_MORNING",
+                "current": {"market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_MORNING", "latest_snapshot": "old.json"},
+                "formal_etf_discovery": {"status": "READY", "universe_identity": identity, "candidates": []},
+            }), encoding="utf-8")
+            self.assertIsNone(query_context._reusable_formal_discovery(root, {"market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON", "latest_snapshot": "new.json"}, identity, set()))
+
     def test_refresh_assurance_precedes_full_decision_context(self):
         events = []
         current = {
@@ -36,16 +82,19 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
             events.append("account")
             return dict(account)
 
+        refresh_result = {
+            "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
+            "decision_freshness": {"status": "DIRECT", "post_request": True, "resolved_post_request": True},
+            "quotes": [],
+        }
+
         def fake_refresh(*args, **kwargs):
             events.append("refresh")
-            return {
-                "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-                "decision_freshness": {"status": "DIRECT", "post_request": True, "resolved_post_request": True},
-                "quotes": [],
-            }
+            return refresh_result
 
-        def fake_decision(root):
+        def fake_decision(root, **kwargs):
             events.append("decision")
+            self.assertIs(kwargs["market_quote_context"], refresh_result)
             return dict(decision)
 
         with tempfile.TemporaryDirectory() as directory:
