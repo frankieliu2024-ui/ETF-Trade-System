@@ -278,6 +278,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "CHATGPT_MANUAL_FORMAL_ANALYSIS",
         "CHATGPT_USER_CONTINUE",
         "CHATGPT_USER_GITHUB_INTRADAY",
+        "CHATGPT_USER_GITHUB_DECISION",
         "CHATGPT_USER_REQUEST",
         "CHATGPT_USER_INTERACTION",
     }
@@ -801,6 +802,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         "CHATGPT_MANUAL_FORMAL_ANALYSIS",
         "CHATGPT_USER_CONTINUE",
         "CHATGPT_USER_GITHUB_INTRADAY",
+        "CHATGPT_USER_GITHUB_DECISION",
         "CHATGPT_USER_REQUEST",
         "CHATGPT_USER_INTERACTION",
     }
