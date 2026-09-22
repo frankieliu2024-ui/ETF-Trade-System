@@ -760,15 +760,11 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         request_payload["_request_file"] = request_path.as_posix()
         request_time = parse_time(request_payload.get("requested_at_beijing") or request_payload.get("request_time"))
     live_dir = root / "requests" / "live_snapshot"
-    if request_time is None and live_dir.exists():
-        request_times = []
-        for path in live_dir.glob("*.json"):
-            request = read_json(path, {})
-            stamp = parse_time(request.get("requested_at_beijing") or request.get("request_time"))
-            if stamp:
-                request_times.append(stamp)
-        if request_times:
-            request_time = max(request_times)
+    # A caller that did not supply a durable request envelope is not a new
+    # manual Formal Decision at T.  Never borrow the newest historical request
+    # timestamp here: that can make old request-scoped facts look post-request
+    # for a new user interaction.  Non-request builds may still evaluate current
+    # state, but formal request identity/time must come from --request-file.
     # Freshness assurance is the first decision-critical operation.
     market_quote = build_market_quote_context(root, force_refresh=force_refresh, requested_symbols=requested_symbols, decision_request_time=request_time)
     # Re-read canonical facts so formal reasoning consumes the post-refresh snapshot.

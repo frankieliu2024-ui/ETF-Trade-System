@@ -526,6 +526,43 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertTrue(pack["formal_analysis_availability"]["source_ingress"]["manual_formal_request"])
         self.assertEqual(pack["formal_reply_freeze"]["status"], "READY")
 
+    def test_build_without_request_file_does_not_borrow_historical_request_time(self):
+        observed = {}
+
+        def fake_market_quote(*args, **kwargs):
+            observed["decision_request_time"] = kwargs.get("decision_request_time")
+            return {"decision_freshness": {"status": "DIRECT", "post_request": False}, "quotes": []}
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "requests" / "live_snapshot").mkdir(parents=True)
+            (root / "requests" / "live_snapshot" / "old.json").write_text(
+                json.dumps({
+                    "request_id": "old-formal-request",
+                    "requested_at_beijing": "2026-09-22T17:04:14+08:00",
+                    "source": "CHATGPT_USER_GITHUB_DECISION",
+                    "intent": "FORMAL_INTRADAY_DECISION",
+                }),
+                encoding="utf-8",
+            )
+            current = {"market_date": "2026-09-22", "data_freshness": {}}
+            account = {"status": "VALID", "positions": []}
+            with patch.object(query_context, "build_market_quote_context", side_effect=fake_market_quote), \
+                 patch.object(query_context, "read_current", return_value=current), \
+                 patch.object(query_context, "read_account_fact", return_value=account), \
+                 patch.object(query_context, "read_json", return_value={}), \
+                 patch.object(query_context, "active_account_asset_codes", return_value={"etf": set()}), \
+                 patch.object(query_context, "build_decision_context", return_value={"rules_version": "V2.2.31"}):
+                result = query_context.build(root)
+
+        self.assertIsNone(observed["decision_request_time"])
+        self.assertEqual(result["decision_fact_pack"]["trigger"]["request_id"], "")
+        self.assertIn(
+            "REQUEST_IDENTITY_MISSING",
+            result["decision_fact_pack"]["formal_analysis_availability"]["global_blockers"],
+        )
+        self.assertFalse(result["decision_fact_pack"]["formal_action_readiness"]["ready"])
+
 
 if __name__ == "__main__":
     unittest.main()
