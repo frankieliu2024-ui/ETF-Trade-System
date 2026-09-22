@@ -593,6 +593,12 @@ def build_fast_path_latency(request: dict, current: dict, account: dict, decisio
             "final_answer_delivered_at",
         ],
         "refresh_mode": market_quote.get("refresh_mode") or "",
+        "request_bound_at": request.get("request_bound_at_beijing") or ("UNKNOWN" if not request.get("request_id") else t0 or "UNKNOWN"),
+        "pit_ready_at": t_new if (freshness.get("resolved_post_request") or freshness.get("post_request")) else "UNKNOWN",
+        "core_result_at": t_decision if t_decision else "UNKNOWN",
+        "request_to_core_result_latency": _duration_seconds(t0, t_decision),
+        "latency_status": "OBSERVED" if t0 and t_decision else "INSTRUMENTATION_INCOMPLETE",
+        "latency_contract": "REQUEST_RECEIVED_TO_CORE_RESULT; enrichment is non-blocking and must not redefine core_result_at",
     }
 
 def build_market_domain_projection(current: dict, overseas: dict, us_extended: dict, freshness: dict | None = None) -> dict:
