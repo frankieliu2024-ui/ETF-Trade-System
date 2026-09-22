@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-09-22T09:16:49+08:00",
+  "generated_at": "2026-09-22T09:22:08+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -44,11 +44,11 @@
       "completion_source": "CURRENT.close_review_closure"
     },
     "decision_context": {
-      "status": "READY",
-      "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only for the current manual product",
+      "status": "DEGRADED",
+      "reason": "formal decision context is incomplete",
       "query_context": true,
       "decision_context": true,
-      "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
+      "minimum_decision_context": "INCOMPLETE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED"
     },
     "lifecycle": {
@@ -63,12 +63,13 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-09-22T08:17:49+08:00"
+      "checked_at": "2026-09-22T09:22:08+08:00"
     }
   },
   "blockers": [],
   "degradations": [
-    "market"
+    "market",
+    "decision_context"
   ],
   "safety_boundary": "This state does not create or modify risk permission, Trial/Confirm rules, amounts, sell rules, or execution authority."
 }
