@@ -298,6 +298,26 @@ jobs:
           triggering_request_file=$(printf '%s\n' $request_files | head -n 1)
           echo "triggering_request_file=$triggering_request_file" >> "$GITHUB_OUTPUT"
           echo "TRIGGERING_REQUEST_FILE=$triggering_request_file" >> "$GITHUB_ENV"
+          processed=false
+          if [ -z "${REPLAY_REQUEST:-}" ]; then
+            state_sync_files=""
+            for f in $request_files; do
+              if python - "$f" <<'PY'
+          import json, sys
+          from scripts.runtime_session_gate import classify_live_snapshot_request
+          data = json.load(open(sys.argv[1], encoding='utf-8'))
+          raise SystemExit(0 if classify_live_snapshot_request(data) in {'STATE_SYNC_ONLY', 'HYBRID'} else 1)
+          PY
+              then
+                state_sync_files="$state_sync_files $f"
+              fi
+            done
+            if [ -z "$state_sync_files" ]; then
+              echo "processed=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            request_files="$state_sync_files"
+          fi
           mkdir -p /tmp/etf-state-sync-requests
           for f in $request_files; do
             mkdir -p "/tmp/etf-state-sync-requests/$(dirname "$f")"
@@ -308,7 +328,6 @@ jobs:
             mkdir -p "$(dirname "$f")"
             cp "/tmp/etf-state-sync-requests/$f" "$f"
           done
-          processed=false
           if [ -n "${REPLAY_REQUEST:-}" ]; then
             python - "$request_files" <<'PY'
           import json, sys
