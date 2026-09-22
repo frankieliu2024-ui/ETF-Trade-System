@@ -65,6 +65,41 @@ class RefreshGateRequestIdentityTests(unittest.TestCase):
             self.assertEqual(result["refresh_gate"]["request_id"], "current")
 
 
+    def test_skipped_capture_after_request_is_terminal_expiry(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            request_dir = root / "requests" / "live_snapshot"
+            request_dir.mkdir(parents=True)
+            request = request_dir / "current.json"
+            request.write_text(json.dumps({
+                "request_id": "current",
+                "requested_at_beijing": "2026-09-22T17:04:14+08:00",
+                "force_refresh": True,
+                "require_post_request_snapshot": True,
+                "query_intent": "FORMAL_INTRADAY_ANALYSIS",
+            }), encoding="utf-8")
+            state_dir = root / "data" / "state"
+            state_dir.mkdir(parents=True)
+            (state_dir / "CURRENT.json").write_text(json.dumps({
+                "captured_at_beijing": "2026-09-22T14:26:01+08:00",
+                "latest_snapshot": "data/market/snapshots/2026-09-22_142601.json",
+            }), encoding="utf-8")
+            (state_dir / "runtime_health.json").write_text(json.dumps({
+                "status": "SKIPPED",
+                "finished_at": "2026-09-22T17:04:24+08:00",
+                "reason": "outside_a_share_capture_window",
+            }), encoding="utf-8")
+            with patch.object(refresh_gate, "ROOT", root), \\
+                 patch.object(refresh_gate, "REQUEST_DIR", request_dir), \\
+                 patch.object(refresh_gate, "CURRENT", state_dir / "CURRENT.json"), \\
+                 patch.object(refresh_gate, "RUNTIME_HEALTH", state_dir / "runtime_health.json"):
+                gate = refresh_gate.build_gate()
+            self.assertEqual(gate["request_result"], "EXPIRED")
+            self.assertTrue(gate["request_result_terminal"])
+            self.assertTrue(gate["terminal_unavailable"])
+            self.assertFalse(gate["formal_decision_persist_allowed"])
+
+
 if __name__ == "__main__":
     unittest.main()
 
