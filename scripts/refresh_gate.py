@@ -149,7 +149,7 @@ def build_gate(now: datetime | None = None, request_file: str | Path | None = No
         and finished >= requested
         and not ready
     )
-    status = "READY" if ready else ("FAILED" if failed_after_request else "PENDING")
+    status = "READY" if ready else ("FAILED" if terminal_unavailable_after_request else "PENDING")
     explicit_latest = _query_intent(req) == _explicit_latest_intent()
     allow_fallback = req.get("allow_wait_refresh_fallback") is True and not explicit_latest
     # Expose one business-level result independently of the legacy gate status.
@@ -172,7 +172,7 @@ def build_gate(now: datetime | None = None, request_file: str | Path | None = No
         "request_result_reason": (
             "post_request_snapshot_ready"
             if ready
-            else (health.get("reason", "") if failed_after_request else "awaiting_post_request_snapshot")
+            else (health.get("reason", "") if terminal_unavailable_after_request else "awaiting_post_request_snapshot")
         ),
         # Compatibility: this legacy field means that analysis which depends on
         # the requested fresh/current PIT may proceed. It is not a blanket ban
@@ -190,7 +190,7 @@ def build_gate(now: datetime | None = None, request_file: str | Path | None = No
         "current_snapshot_time": captured_text or "",
         "resolved_snapshot_time": captured_text if ready else "",
         "latest_snapshot": current.get("latest_snapshot", ""),
-        "failure_reason": health.get("reason", "") if failed_after_request else "",
+        "failure_reason": health.get("reason", "") if terminal_unavailable_after_request else "",\n        "terminal_unavailable": bool(terminal_unavailable_after_request),
         "post_request_snapshot": bool(post_request_snapshot),
         "nominal_node_reached": bool(nominal_node_reached),
         "rule": rule,
