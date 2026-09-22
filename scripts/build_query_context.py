@@ -49,6 +49,54 @@ def parse_time(text: str) -> datetime | None:
     return dt.astimezone(timezone.utc)
 
 
+def _discovery_universe_identity(universe: dict) -> str:
+    """Stable identity for the existing monitored ETF universe, not a TTL."""
+    codes = sorted(
+        str(item.get("code") or item.get("symbol") or "").upper()
+        for item in (universe.get("objects") or [])
+        if isinstance(item, dict) and (item.get("code") or item.get("symbol"))
+    )
+    payload = {"version": str(universe.get("version") or ""), "codes": codes}
+    return hashlib.sha256(json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")).hexdigest()[:16]
+
+
+def _reusable_formal_discovery(root: Path, current: dict, universe_identity: str, managed_codes: set[str]) -> dict | None:
+    """Reuse a terminal result only when it belongs to the same legal market node."""
+    prior = read_json(root / "data" / "state" / "query_context.json", {})
+    discovery = prior.get("formal_etf_discovery") or {}
+    if str(discovery.get("status") or "").upper() != "READY":
+        return None
+    prior_current = prior.get("current") or {}
+    if str(prior.get("market_date") or prior_current.get("market_date") or "") != str(current.get("market_date") or ""):
+        return None
+    if str(prior.get("latest_valid_node") or prior_current.get("latest_valid_node") or "") != str(current.get("latest_valid_node") or ""):
+        return None
+    if str(prior_current.get("latest_snapshot") or "") != str(current.get("latest_snapshot") or ""):
+        return None
+    if str(discovery.get("universe_identity") or "") != universe_identity:
+        return None
+    reused = dict(discovery)
+    candidates = []
+    for item in discovery.get("candidates") or []:
+        candidate = dict(item)
+        code = str(candidate.get("code") or "")
+        candidate["management_identity"] = "MANAGED" if code in managed_codes else None
+        candidate["discovery_semantic"] = (
+            "NODE_LOCAL_ALL_MARKET_OPPORTUNITY_SIGNAL_FOR_EXISTING_MANAGED_ETF"
+            if code in managed_codes else "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT"
+        )
+        candidates.append(candidate)
+    reused["candidates"] = candidates
+    reused["managed_identity_count"] = sum(1 for item in candidates if item.get("management_identity") == "MANAGED")
+    reused["reuse"] = {
+        "mode": "SAME_MARKET_NODE_LEGAL_DISCOVERY_EVIDENCE_REUSE",
+        "source": "data/state/query_context.json",
+        "qualification": "same_market_date_same_latest_valid_node_same_latest_snapshot_same_universe_identity",
+        "fixed_ttl": False,
+    }
+    return reused
+
+
 def evaluate_freshness(current: dict, policy: dict) -> dict:
     captured = parse_time(current.get("captured_at", ""))
     now = datetime.now(timezone.utc)
@@ -544,8 +592,18 @@ def _minimum_legal_inputs_ready_at(root: Path, request: dict, current: dict, acc
     return observed_at or current_time
 
 
-def build_fast_path_latency(request: dict, current: dict, account: dict, decision: dict, market_quote: dict, reply_ready: str, root: Path | None = None) -> dict:
+def build_fast_path_latency(request: dict, current: dict, account_or_decision: dict, decision_or_quote: dict, market_quote_or_reply: dict | str = "", reply_ready: str = "", root: Path | None = None) -> dict:
     """Report only observed timestamps; missing instrumentation stays explicit."""
+    # Preserve the established five-argument replay shape
+    # (request, current, decision, market_quote, reply_ready) while accepting
+    # the production shape that also supplies account facts.
+    if "generated_at" in account_or_decision or "generated_at_beijing" in account_or_decision:
+        account, decision, market_quote = {}, account_or_decision, decision_or_quote
+        reply_ready = str(market_quote_or_reply or reply_ready)
+    else:
+        account, decision, market_quote = account_or_decision, decision_or_quote, market_quote_or_reply
+    if isinstance(market_quote, str):
+        reply_ready, market_quote = market_quote, {}
     t0 = _request_received_at_beijing(request)
     manual_request_identity = _stable_manual_request_identity(request)
     freshness = market_quote.get("decision_freshness") or {}
@@ -723,6 +781,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     stock_market_context = read_json(root / CANONICAL_FILES["stock_market_context"], {})
     consistency = read_json(root / CANONICAL_FILES["system_consistency"], {})
     etf_universe = read_json(root / CANONICAL_FILES["etf_monitor_universe"], {})
+    universe_identity = _discovery_universe_identity(etf_universe)
     trading_calendar = read_json(root / CANONICAL_FILES["trading_calendar"], {})
     freshness = evaluate_freshness(current, policy)
     market_domain_projection = build_market_domain_projection(current, overseas_context, us_extended, freshness)
@@ -751,16 +810,21 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         and request_source in manual_formal_sources
         and request_intent in manual_formal_intents
     )
+    # if force_refresh or request_file or run_discovery: formal requests enter
+    # the existing Discovery owner; legal same-node reuse is resolved below.
     should_run_discovery = bool(force_refresh or run_discovery or formal_node_discovery_required)
     discovery_pipeline_started = time.monotonic() if should_run_discovery else None
     candidate_quote_elapsed = 0.0
     if should_run_discovery:
-        formal_discovery = discover_formal_candidates(
-            root,
-            market_date=str(current.get("market_date") or trading_day_status.get("market_date") or ""),
-            managed_codes=managed_etf_codes,
-            held_codes=held_etf_codes,
-        )
+        formal_discovery = None if (force_refresh or run_discovery) else _reusable_formal_discovery(root, current, universe_identity, managed_etf_codes)
+        if formal_discovery is None:
+            formal_discovery = discover_formal_candidates(
+                root,
+                market_date=str(current.get("market_date") or trading_day_status.get("market_date") or ""),
+                managed_codes=managed_etf_codes,
+                held_codes=held_etf_codes,
+            )
+            formal_discovery["universe_identity"] = universe_identity
         discovered_codes = [str(x.get("code") or "") for x in (formal_discovery.get("candidates") or []) if x.get("code")]
         existing_quote_symbols = {
             str(x.get("symbol") or x.get("code") or "").upper().replace(".SH", "").replace(".SZ", "")
@@ -792,6 +856,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         discovery_latency = formal_discovery.setdefault("latency_observability", {})
         discovery_latency["candidate_formal_quote_elapsed_seconds"] = candidate_quote_elapsed
         discovery_latency["discovery_pipeline_elapsed_seconds"] = round(time.monotonic() - discovery_pipeline_started, 3) if discovery_pipeline_started is not None else None
+        discovery_latency["reuse_mode"] = (formal_discovery.get("reuse") or {}).get("mode", "FRESH_DISCOVERY")
         discovery_latency["measurement_role"] = "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
     system_objects = []
     seen_system_codes = set()
@@ -814,7 +879,12 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         if code and code not in seen_system_codes:
             system_objects.append({"object_code": code, "object_name": item.get("name") or code, "source_type": "NODE_LOCAL_OBSERVATION_EVALUATION"})
             seen_system_codes.add(code)
-    decision = build_decision_context(root, formal_discovery=formal_discovery, decision_request_time=request_time)
+    decision = build_decision_context(
+        root,
+        formal_discovery=formal_discovery,
+        decision_request_time=request_time,
+        market_quote_context=market_quote,
+    )
     generated_at = datetime.now(SHANGHAI).isoformat(timespec="seconds")
     fact_pack = build_decision_fact_pack(root, request_payload, current, account, decision, market_quote, formal_discovery=formal_discovery)
     latency = build_fast_path_latency(request_payload, current, account, decision, market_quote, generated_at, root)
@@ -837,7 +907,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         "interactive_decision_freshness": market_quote.get("decision_freshness", {}),
         "trading_day_status": trading_day_status, "runtime_health": runtime_health,
         "system_consistency_status": consistency.get("status", "MISSING"), "system_consistency_hard_errors": consistency.get("hard_error_count", None),
-        "etf_universe_count": len(etf_universe.get("objects") or []), "formal_discovery_candidate_count": len(formal_discovery.get("candidates") or []), "overseas_context_status": overseas_context.get("quality_status", "MISSING"),
+        "etf_universe_count": len(etf_universe.get("objects") or []), "etf_universe_identity": universe_identity, "formal_discovery_candidate_count": len(formal_discovery.get("candidates") or []), "overseas_context_status": overseas_context.get("quality_status", "MISSING"),
         "overseas_generated_at_beijing": overseas_context.get("generated_at_beijing", ""),
         "us_extended_hours_status": us_extended.get("quality_status", "MISSING"), "us_extended_hours_generated_at_beijing": us_extended.get("generated_at_beijing", ""),
         "stock_context_status": stock_context.get("account_fact_status", "MISSING"), "stock_market_context_status": stock_market_context.get("quality_status", "MISSING"),
