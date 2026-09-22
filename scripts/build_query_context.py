@@ -64,7 +64,7 @@ def _reusable_formal_discovery(root: Path, current: dict, universe_identity: str
     """Reuse a terminal result only when it belongs to the same legal market node."""
     prior = read_json(root / "data" / "state" / "query_context.json", {})
     discovery = prior.get("formal_etf_discovery") or {}
-    if str(discovery.get("status") or "").upper() not in {"READY", "DEGRADED"}:
+    if str(discovery.get("status") or "").upper() != "READY":
         return None
     prior_current = prior.get("current") or {}
     if str(prior.get("market_date") or prior_current.get("market_date") or "") != str(current.get("market_date") or ""):
