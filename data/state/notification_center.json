@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-22T11:55:28+08:00",
+  "updated_at": "2026-09-22T14:15:05+08:00",
   "last_status": "SENT",
   "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】通信ETF（515880）冲高明显回吐",
+  "last_title": "【市场异动】创业板指（399006）冲高明显回吐",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -12154,27 +12154,58 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-22T11:55:28+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "a-share-session-summary:2026-09-09:CLOSE",
-      "type": "A_SHARE_SESSION_SUMMARY",
-      "title": "【收盘总结】A股全天结构与ETF强弱",
-      "content": "### 核心结论\n- **市场结构**：宽基相对稳定，科技成长明显偏弱。\n- **指数反馈**：上证指数（000001）+0.28%，科创50（000688）-0.69%，创业板指（399006）-0.14%。\n- **ETF自身反馈**：收盘持有管理。，已执行对象煤炭ETF（515220）收盘+3.00%，较最近盘中有效节点（14:28）+0.23个百分点，仍强于半导体设备ETF（561980）3.61个百分点；持仓中偏弱的是半导体设备ETF（561980）-0.61%。\n\n### 关键路径\n- **当前正式对象路径**：煤炭ETF（515220）开盘后继续走强，目前接近日内高位（当前+3.00%）。\n- 科创50（000688）高开+1.08%后明显回吐；创业板指（399006）高开+1.15%后明显回吐；而上证指数（000001）当前处于日内区间中部，方向尚未形成新的强化。这更像科技成长局部降温，而不是全市场同步风险释放。\n\n### 对ETF系统的影响\n宽基相对稳定，科技成长明显偏弱。优先复核煤炭ETF（515220）既有持有管理。，已执行假设是否继续成立；比较半导体设备ETF（561980）等持仓继续占用资本的边际效率。跨市场ETF的相对涨幅只用于解释不同风险因子，不替代A股自身反馈，也不等同资本效率排名。\n\n### 当前动作\n**不因通知机械交易；优先复核煤炭ETF（515220）当前持有管理。，已执行假设，同时比较半导体设备ETF（561980）的资本占用效率；只有正式机会、金额或卖出动作改变时执行。**\n\n### 数据与边界\n- **价格有效时点**：2026-09-09 15:00:00\n- **provider补查/观测上限**：2026-09-09 15:19:33\n- **通知生成**：2026-09-09 15:20:47\n- **边界**：只要同日verified close仍可追溯，固定收盘总结允许延迟补发；必须明确15:00价格有效时点，不能伪装成晚间新行情。",
-      "source": "CURRENT+intraday_path_features",
+      "notification_id": "notification_78cab2dd9a98f3827b80",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:a-share:2026-09-22:399006:DOWN:REVERSAL:2026-09-22T14:12:36+08:00",
+      "related_decision_id": "",
+      "security_code": "399006",
+      "security_name": "创业板指",
       "user_severity": "需要关注",
-      "user_action": "查看结构摘要；正式交易动作以MASTER完整决策链为准",
-      "status": "SENT",
-      "attempted_at": "2026-09-09T15:20:47+08:00",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-22T14:15:04+08:00",
+      "sent_at": "2026-09-22T14:15:05+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-24T14:15:04+08:00",
+      "title": "【市场异动】创业板指（399006）冲高明显回吐",
+      "content": "### 核心结论\n- **事件类型**：方向反转\n- **对象/结构**：创业板指（399006）\n- **最近脉冲变化**：-0.05%\n- **关键结构**：盘中一度较前收+2.14%，当前回落至+0.25%\n\n**判断**：行情先形成足够大的单向日内幅度，随后大幅回吐或修复，原先的单向市场解释可能已经失效。\n\n### 对ETF系统的影响\n创业板指（399006）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-22 14:12:36\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "confirmation_context": {
+        "market": "A_SHARE",
+        "market_date": "2026-09-22",
+        "direction": "DOWN",
+        "event_category": "REVERSAL",
+        "asset_class": "A_SHARE_INDEX",
+        "day_change_pct": 0.2497359975761615,
+        "sudden_change_pct": -0.049563460292045836,
+        "interval_minutes": 3.45,
+        "event_magnitude_pct": 2.1437879273676907,
+        "market_as_of_beijing": "2026-09-22T14:12:36+08:00",
+        "source_fact_id": "2026-09-22:399006:REVERSAL:DOWN:2026-09-22T14:12:36+08:00",
+        "structure_cluster_id": "A_SHARE_TECH_GROWTH_EPISODE",
+        "structure_cluster_members": [
+          "000688",
+          "159781",
+          "399006",
+          "588000"
+        ],
+        "structure_cluster_scope": "EXPLICIT_SAME_EPISODE_ONLY",
+        "event_family_id": "A_SHARE:2026-09-22:A_SHARE:399006:REVERSAL:DOWN:A_SHARE_TECH_GROWTH_EPISODE"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_28a5fefe2ad2571de84e",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-09-22T14:15:05+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "apac-session-summary:2026-09-09:PRIMARY_CLOSE",
       "type": "APAC_SESSION_SUMMARY",
@@ -15754,6 +15785,24 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_bbfcf9f1d37a1cb45b92",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:a-share:2026-09-22:399006:DOWN:REVERSAL:2026-09-22T14:12:36+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】创业板指（399006）冲高明显回吐",
+      "content": "### 核心结论\n- **事件类型**：方向反转\n- **对象/结构**：创业板指（399006）\n- **最近脉冲变化**：-0.05%\n- **关键结构**：盘中一度较前收+2.14%，当前回落至+0.25%\n\n**判断**：行情先形成足够大的单向日内幅度，随后大幅回吐或修复，原先的单向市场解释可能已经失效。\n\n### 对ETF系统的影响\n创业板指（399006）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-22 14:12:36\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "status": "SENT",
+      "attempted_at": "2026-09-22T14:15:05+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_78cab2dd9a98f3827b80",
       "lifecycle_status": "SENT"
     }
   ],
