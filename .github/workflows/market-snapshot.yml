@@ -34,7 +34,9 @@ permissions:
 
 concurrency:
   group: etf-market-snapshot-${{ github.ref }}
-  cancel-in-progress: false
+  # A newer user request supersedes an older queued request. Scheduled pulses
+  # and bot-produced snapshot/state commits never cancel an active request.
+  cancel-in-progress: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, 'request') }}
 
 jobs:
   snapshot:
