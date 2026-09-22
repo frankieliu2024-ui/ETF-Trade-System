@@ -60,6 +60,33 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertEqual(result["freshness_assurance"]["refresh_mode"], "QUERY_TIME_IMMEDIATE_REFRESH")
         self.assertEqual(result["decision_fact_pack"]["current"]["latest_snapshot"], current["latest_snapshot"])
 
+
+    def test_rebuilt_decision_context_reuses_original_request_time(self):
+        request_time = datetime.fromisoformat("2026-09-22T09:43:00+08:00")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "data" / "state").mkdir(parents=True)
+            (root / "data" / "market" / "snapshots").mkdir(parents=True)
+            (root / "data" / "state" / "CURRENT.json").write_text(
+                '{"market_date":"2026-09-22","latest_snapshot":"data/market/snapshots/s.json","captured_at":"2026-09-22T09:44:53+08:00","data_freshness":{"quality_status":"PASS","captured_at_beijing":"2026-09-22T09:44:53+08:00","provider_as_of":"2026-09-22T09:44:51+08:00"}}',
+                encoding="utf-8",
+            )
+            (root / "data" / "market" / "snapshots" / "s.json").write_text('{"rows":[]}', encoding="utf-8")
+            (root / "data" / "state" / "account_fact.json").write_text('{"status":"VALID","updated_at":"2026-09-21T15:49:00+08:00","positions":[]}', encoding="utf-8")
+            (root / "config").mkdir(parents=True)
+            (root / "config" / "runtime_policy.json").write_text(
+                '{"interactive_decision_freshness":{"preferred_max_age_seconds":300,"fallback_max_age_seconds":900}}',
+                encoding="utf-8",
+            )
+            from scripts import state_manager
+            with patch.object(state_manager, "build_market_quote_context", wraps=state_manager.build_market_quote_context) as routed:
+                try:
+                    state_manager.build_decision_context(root, decision_request_time=request_time)
+                except Exception:
+                    pass
+                self.assertTrue(routed.called)
+                self.assertEqual(routed.call_args.kwargs["decision_request_time"], request_time)
+
     def test_formal_manual_request_runs_discovery_without_explicit_flag(self):
         events = []
         request = {

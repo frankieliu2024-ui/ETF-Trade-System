@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import datetime
 from pathlib import Path
 
 from build_intraday_path_features import build as build_intraday_path_features
@@ -370,10 +371,19 @@ def main() -> None:
     candidate = build_dashboard_candidate(ROOT)
     timing["full_state_context_observation_at"] = now_utc()
     formal_discovery = load_node_local_formal_discovery(ROOT, current)
+    query_context = load_json(ROOT / "data" / "state" / "query_context.json", {})
+    request_time_text = str(((query_context.get("decision_fact_pack") or {}).get("trigger") or {}).get("requested_at_beijing") or "")
+    request_time = None
+    if request_time_text:
+        try:
+            request_time = datetime.fromisoformat(request_time_text.replace("Z", "+00:00"))
+        except ValueError:
+            request_time = None
     context = build_decision_context(
         ROOT,
         observability=build_decision_trace(ROOT, timing),
         formal_discovery=formal_discovery,
+        decision_request_time=request_time,
     )
     context["managed_position_sell_review"] = build_managed_position_projection(ROOT)
     context.setdefault("research_evidence", {})["market_regime_context"] = market_regime
