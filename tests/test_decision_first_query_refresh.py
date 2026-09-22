@@ -508,5 +508,24 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertTrue(result["trace_metadata_is_non_authoritative"])
 
 
+    def test_canonical_github_decision_source_is_request_scoped_formal(self):
+        request = {
+            "request_id": "formal-source-alias",
+            "requested_at_beijing": "2026-09-22T17:04:14+08:00",
+            "source": "CHATGPT_USER_GITHUB_DECISION",
+            "intent": "FORMAL_INTRADAY_ANALYSIS",
+            "_request_file": "requests/live_snapshot/formal-source-alias.json",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            pack = query_context.build_decision_fact_pack(
+                Path(directory), request, {"market_date": "2026-09-22"},
+                {"status": "VALID", "positions": []}, {"rules_version": "V2.2.31"},
+                {"decision_freshness": {"post_request": True}, "quotes": []},
+                formal_discovery={"status": "DEGRADED", "candidates": []},
+            )
+        self.assertTrue(pack["formal_analysis_availability"]["source_ingress"]["manual_formal_request"])
+        self.assertEqual(pack["formal_reply_freeze"]["status"], "READY")
+
+
 if __name__ == "__main__":
     unittest.main()
