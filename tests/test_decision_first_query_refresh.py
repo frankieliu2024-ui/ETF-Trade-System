@@ -36,16 +36,19 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
             events.append("account")
             return dict(account)
 
+        refresh_result = {
+            "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
+            "decision_freshness": {"status": "DIRECT", "post_request": True, "resolved_post_request": True},
+            "quotes": [],
+        }
+
         def fake_refresh(*args, **kwargs):
             events.append("refresh")
-            return {
-                "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-                "decision_freshness": {"status": "DIRECT", "post_request": True, "resolved_post_request": True},
-                "quotes": [],
-            }
+            return refresh_result
 
-        def fake_decision(root):
+        def fake_decision(root, **kwargs):
             events.append("decision")
+            self.assertIs(kwargs["market_quote_context"], refresh_result)
             return dict(decision)
 
         with tempfile.TemporaryDirectory() as directory:

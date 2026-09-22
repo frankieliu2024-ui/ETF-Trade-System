@@ -814,7 +814,12 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         if code and code not in seen_system_codes:
             system_objects.append({"object_code": code, "object_name": item.get("name") or code, "source_type": "NODE_LOCAL_OBSERVATION_EVALUATION"})
             seen_system_codes.add(code)
-    decision = build_decision_context(root, formal_discovery=formal_discovery, decision_request_time=request_time)
+    decision = build_decision_context(
+        root,
+        formal_discovery=formal_discovery,
+        decision_request_time=request_time,
+        market_quote_context=market_quote,
+    )
     generated_at = datetime.now(SHANGHAI).isoformat(timespec="seconds")
     fact_pack = build_decision_fact_pack(root, request_payload, current, account, decision, market_quote, formal_discovery=formal_discovery)
     latency = build_fast_path_latency(request_payload, current, account, decision, market_quote, generated_at, root)
