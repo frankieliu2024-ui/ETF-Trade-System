@@ -520,6 +520,8 @@ class NotificationDecisionIdentityTests(unittest.TestCase):
         self.assertIn("if git push origin HEAD:main; then", workflow)
         self.assertIn("rebuilding from latest main", workflow)
         self.assertIn('test "$published" = "true"', workflow)
+        self.assertIn('latest_main_sha="$(git rev-parse HEAD)"', workflow)
+        self.assertIn('ETF_ACCEPTANCE_SHA="$latest_main_sha" GITHUB_SHA="$latest_main_sha"', workflow)
         persist_step = workflow.split("- name: Persist acceptance result", 1)[1].split("- name: Enforce production acceptance", 1)[0]
         self.assertNotIn("git rebase origin/main", persist_step)
         self.assertNotIn("git push --force", workflow)
