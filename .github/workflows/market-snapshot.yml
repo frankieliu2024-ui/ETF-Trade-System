@@ -298,6 +298,26 @@ jobs:
           triggering_request_file=$(printf '%s\n' $request_files | head -n 1)
           echo "triggering_request_file=$triggering_request_file" >> "$GITHUB_OUTPUT"
           echo "TRIGGERING_REQUEST_FILE=$triggering_request_file" >> "$GITHUB_ENV"
+          processed=false
+          if [ -z "${REPLAY_REQUEST:-}" ]; then
+            state_sync_files=""
+            for f in $request_files; do
+              if python - "$f" <<'PY'
+          import json, sys
+          from scripts.runtime_session_gate import classify_live_snapshot_request
+          data = json.load(open(sys.argv[1], encoding='utf-8'))
+          raise SystemExit(0 if classify_live_snapshot_request(data) in {'STATE_SYNC_ONLY', 'HYBRID'} else 1)
+          PY
+              then
+                state_sync_files="$state_sync_files $f"
+              fi
+            done
+            if [ -z "$state_sync_files" ]; then
+              echo "processed=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            request_files="$state_sync_files"
+          fi
           mkdir -p /tmp/etf-state-sync-requests
           for f in $request_files; do
             mkdir -p "/tmp/etf-state-sync-requests/$(dirname "$f")"
@@ -308,7 +328,6 @@ jobs:
             mkdir -p "$(dirname "$f")"
             cp "/tmp/etf-state-sync-requests/$f" "$f"
           done
-          processed=false
           if [ -n "${REPLAY_REQUEST:-}" ]; then
             python - "$request_files" <<'PY'
           import json, sys
@@ -393,19 +412,26 @@ jobs:
           done
           echo "processed=$processed" >> "$GITHUB_OUTPUT"
       - name: Build objective intraday market delta
-        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        # Derived observability must not block the formal decision critical path.
+        if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        continue-on-error: true
         run: python scripts/build_market_delta.py
       - name: Refresh overseas and Asia index context
-        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        # Decision input: keep fail-closed for this fact domain.
+        if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_overseas_context.py
       - name: Build dynamic stock context from current account
-        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        # Decision input: run independently of unrelated prior-step failures.
+        if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_stock_context.py
       - name: Collect current account-stock market facts
-        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        # Decision input: run independently of unrelated prior-step failures.
+        if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_account_stock_market.py
       - name: Build on-demand query context
-        if: ${{ (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        # Formal decision critical path. Do not let an unrelated optional/derived
+        # step failure suppress request binding and PIT qualification.
+        if: ${{ always() && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: |
           REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"
           if [ -z "$REQUEST_FILE" ] && [ -n "${REPLAY_REQUEST:-}" ]; then REQUEST_FILE="$REPLAY_REQUEST"; fi
@@ -462,14 +488,20 @@ jobs:
           python scripts/refresh_gate.py --annotate-contexts
 
       - name: Build E2E usability state
-        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        # Diagnostic/qualification output: always attempt after a qualifying
+        # request so the system records which decision fact domain failed.
+        if: ${{ always() && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_e2e_status.py
 
       - name: Build state context and candidates
-        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        # Formal decision critical path. Its own contracts decide fail-closed;
+        # unrelated earlier step failure must not suppress the build.
+        if: ${{ always() && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_state_context.py
       - name: Build post-market review context
-        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        # Review is downstream maintenance, not an intraday decision prerequisite.
+        if: ${{ always() && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        continue-on-error: true
         run: python scripts/build_post_market_review.py
       - name: Commit downstream runtime/data artifacts
         if: ${{ always() && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success' || steps.state_sync.outputs.processed == 'true') }}
