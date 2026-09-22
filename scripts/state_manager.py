@@ -518,7 +518,7 @@ def _extend_capital_comparison_with_discovery(base: dict[str, Any], formal_disco
         "order_semantics": "LEGAL_CAPITAL_UNIVERSE_ONLY_NOT_RANKING",
     }
 
-def build_decision_context(root: Path | None = None, observability: dict[str, Any] | None = None, formal_discovery: dict[str, Any] | None = None) -> dict[str, Any]:
+def build_decision_context(root: Path | None = None, observability: dict[str, Any] | None = None, formal_discovery: dict[str, Any] | None = None, decision_request_time: datetime | None = None) -> dict[str, Any]:
     root = root or root_from_env()
     current, account = read_current(root), read_account_fact(root)
     dashboard = root / "ETF当前状态_DASHBOARD.md"
@@ -538,7 +538,7 @@ def build_decision_context(root: Path | None = None, observability: dict[str, An
     return {
         "observability": trace, "generated_at": generated, "rules_version": current_rule_version(root) or str(current.get("rules_version") or ""), "market_date": current.get("market_date", ""), "latest_node": current.get("latest_valid_node", ""), "current": current, "latest_snapshot": snapshot, "data_status": effective, "freshness_at_context_build": effective,
         "data_quality_summary": quality, "account_funding": build_account_funding_summary(account), "etf_strategy_risk_metrics": build_etf_strategy_risk_metrics(root), "analysis_coverage": analysis_coverage, "point_in_time": build_point_in_time_summary(current, account, snapshot, generated), "scheduled_pulse_health": build_scheduled_pulse_health(root, current), "formal_action": build_formal_action_summary(account),
-        "market_quote_router": build_market_quote_context(root), "lifecycle_projection": build_lifecycle_projection(root),
+        "market_quote_router": build_market_quote_context(root, decision_request_time=decision_request_time), "lifecycle_projection": build_lifecycle_projection(root),
         "decision_trigger": read_json(root / "data" / "state" / "decision_trigger.json", {"status": "NOT_BUILT", "requires_formal_reassessment": False, "read_only": True}),
         "capital_efficiency_ranking": capital_comparison,
         "intraday_path_features": read_json(root / "data" / "state" / "intraday_path_features.json", {"status": "MISSING", "features": []}), "research_evidence": build_research_evidence_summary(root),
