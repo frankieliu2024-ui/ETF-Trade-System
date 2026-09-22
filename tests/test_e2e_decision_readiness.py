@@ -42,6 +42,29 @@ class E2EDecisionReadinessTests(unittest.TestCase):
         self.assertEqual(result["minimum_decision_context"], "INCOMPLETE")
         self.assertTrue(result["request_bound"])
 
+    def test_request_bound_observed_latency_can_reach_boundary_check(self):
+        result = context_component(
+            {
+                "decision_fact_pack": {
+                    "trigger": {
+                        "request_id": "r2",
+                        "requested_at_beijing": "2026-09-22T12:30:00+08:00",
+                    }
+                },
+                "fast_path_latency": {
+                    "latency_status": "OBSERVED",
+                    "request_to_core_result_latency": 4.2,
+                },
+            },
+            {
+                "observability": {
+                    "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED"
+                }
+            },
+        )
+        self.assertEqual(result["status"], "DEGRADED")
+        self.assertEqual(result["minimum_decision_context"], "INCOMPLETE")
+
     def test_true_incomplete_formal_context_remains_not_ready(self):
         result = context_component(
             {"request_id": "q"},
