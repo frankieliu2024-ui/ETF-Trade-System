@@ -376,6 +376,44 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             state_sync.record_formal_decision(self.request("pre_request_snapshot_envelope"))
         self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
 
+    def test_pre_request_snapshot_can_persist_when_same_request_query_time_pit_is_ready(self):
+        stale = {
+            **self.snapshot,
+            "captured_at_beijing": "2026-09-15T14:46:59+08:00",
+            "provider_as_of": "2026-09-15T14:46:58+08:00",
+        }
+        self.mocks["select_point_in_time_snapshot"].return_value = (
+            SNAPSHOT_PATH, stale, "CONSUMED_SNAPSHOT_VALIDATED"
+        )
+        query_path = self.root / "data/state/query_context.json"
+        query = json.loads(query_path.read_text(encoding="utf-8"))
+        query["decision_fact_pack"]["formal_action_readiness"].update({
+            "request_bound": True,
+            "request_scoped_pit_resolved": True,
+        })
+        query["freshness_assurance"] = {
+            "status": "DIRECT",
+            "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
+            "decision_request_time": SOURCE_REQUEST["requested_at_beijing"],
+        }
+        query_path.write_text(json.dumps(query), encoding="utf-8")
+        recorded, decision_id = state_sync.record_formal_decision(
+            self.request("request_bound_query_time_pit_envelope")
+        )
+        self.assertTrue(recorded)
+        event = json.loads(
+            (self.root / "events/decisions" / f"{decision_id}.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            event["point_in_time_status"],
+            "REQUEST_BOUND_QUERY_TIME_PIT_WITH_PRIOR_CANONICAL_SNAPSHOT",
+        )
+        self.assertTrue(event["request_bound_query_time_pit"])
+        self.assertEqual(
+            event["request_bound_query_time_pit_source"],
+            "data/state/query_context.json",
+        )
+
     def test_missing_durable_parent_request_fails_closed_without_event(self):
         request = self.request("missing_durable_parent_envelope")
         request["parent_request_id"] = "unknown_parent"
