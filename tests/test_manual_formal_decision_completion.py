@@ -347,6 +347,34 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         self.assertEqual(event["point_in_time_status"], "CONSUMED_SNAPSHOT_VALIDATED")
         self.assertTrue(event["fingerprint"])
 
+    def test_completion_trigger_can_rebind_envelope_while_parent_pit_remains_ready(self):
+        query_path = self.root / "data/state/query_context.json"
+        query = json.loads(query_path.read_text(encoding="utf-8"))
+        completion_id = "completion_trigger_rebound_envelope"
+        packet = query["decision_fact_pack"]
+        packet["trigger"]["request_id"] = completion_id
+        packet["formal_action_readiness"].update({
+            "request_bound": True,
+            "request_scoped_pit_resolved": True,
+        })
+        query_path.write_text(json.dumps(query), encoding="utf-8")
+        recorded, decision_id = state_sync.record_formal_decision(self.request(completion_id))
+        self.assertTrue(recorded)
+        event = json.loads(
+            (self.root / "events/decisions" / f"{decision_id}.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(event["parent_request_id"], SOURCE_REQUEST["request_id"])
+        self.assertEqual(event["request_id"], completion_id)
+
+    def test_unrelated_trigger_still_fails_closed(self):
+        query_path = self.root / "data/state/query_context.json"
+        query = json.loads(query_path.read_text(encoding="utf-8"))
+        query["decision_fact_pack"]["trigger"]["request_id"] = "unrelated_request"
+        query_path.write_text(json.dumps(query), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "not bound to parent/completion request"):
+            state_sync.record_formal_decision(self.request("completion_trigger_envelope"))
+        self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
+
     def test_degraded_analysis_does_not_bypass_action_readiness(self):
         query_path = self.root / "data/state/query_context.json"
         query = json.loads(query_path.read_text(encoding="utf-8"))
