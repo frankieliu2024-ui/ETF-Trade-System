@@ -137,6 +137,13 @@ def build_gate(now: datetime | None = None) -> dict:
     status = "READY" if ready else ("FAILED" if failed_after_request else "PENDING")
     explicit_latest = _query_intent(req) == _explicit_latest_intent()
     allow_fallback = req.get("allow_wait_refresh_fallback") is True and not explicit_latest
+    # Expose one business-level result independently of the legacy gate status.
+    # READY means the request has a legal post-request CURRENT; DEGRADED means
+    # an explicitly permitted fallback is usable; NOT_READY means no formal
+    # result may be produced yet. This avoids making callers infer business
+    # state from PENDING/FAILED or workflow exit codes.
+    request_result = "READY" if ready else ("DEGRADED" if allow_fallback else "NOT_READY")
+    request_result_terminal = bool(ready or failed_after_request)
     rule = (
         "SCHEDULED_FORMAL_DECISION允许在名义节点前PREWARM形成请求后的合法CURRENT；只有名义节点实际到达后才允许正式分析/持久化。"
         "PREWARM事实仍须由Formal Decision按现行PIT/freshness/quality/session合同复核；本规则不放宽EXPLICIT_LATEST。"
@@ -145,6 +152,13 @@ def build_gate(now: datetime | None = None) -> dict:
     )
     return {
         "status": status,
+        "request_result": request_result,
+        "request_result_terminal": request_result_terminal,
+        "request_result_reason": (
+            "post_request_snapshot_ready"
+            if ready
+            else (health.get("reason", "") if failed_after_request else "awaiting_post_request_snapshot")
+        ),
         # Compatibility: this legacy field means that analysis which depends on
         # the requested fresh/current PIT may proceed. It is not a blanket ban
         # on clearly-labelled degraded reasoning from other still-legal facts.
