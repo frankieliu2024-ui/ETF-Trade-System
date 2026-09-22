@@ -60,6 +60,79 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertEqual(result["freshness_assurance"]["refresh_mode"], "QUERY_TIME_IMMEDIATE_REFRESH")
         self.assertEqual(result["decision_fact_pack"]["current"]["latest_snapshot"], current["latest_snapshot"])
 
+    def test_formal_manual_request_runs_discovery_without_explicit_flag(self):
+        events = []
+        request = {
+            "request_id": "formal-auto-discovery",
+            "requested_at_beijing": "2026-09-22T09:45:00+08:00",
+            "source": "CHATGPT_USER_GITHUB_INTRADAY",
+            "intent": "FORMAL_INTRADAY_ANALYSIS",
+        }
+        current = {"market_date": "2026-09-22", "data_freshness": {}}
+        account = {"status": "VALID", "positions": []}
+
+        def fake_read_json(path, default=None):
+            if str(path).endswith("formal.json"):
+                return request
+            if str(path).endswith("etf_monitor_universe.json"):
+                return {"objects": []}
+            if str(path).endswith("a_share_trading_calendar_2026.json"):
+                return {"coverage_start": "2026-01-01", "coverage_end": "2026-12-31", "closed_dates": []}
+            return {} if default is None else default
+
+        def fake_discovery(*args, **kwargs):
+            events.append("discovery")
+            return {"status": "PASS", "candidates": []}
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "formal.json").write_text("{}", encoding="utf-8")
+            with patch.object(query_context, "read_json", side_effect=fake_read_json), \
+                 patch.object(query_context, "read_current", return_value=current), \
+                 patch.object(query_context, "read_account_fact", return_value=account), \
+                 patch.object(query_context, "active_account_asset_codes", return_value={"etf": set()}), \
+                 patch.object(query_context, "build_market_quote_context", return_value={"decision_freshness": {"post_request": True}, "quotes": []}), \
+                 patch.object(query_context, "discover_formal_candidates", side_effect=fake_discovery), \
+                 patch.object(query_context, "build_decision_context", return_value={"rules_version": "V2.2.31"}):
+                result = query_context.build(root, request_file="formal.json")
+
+        self.assertEqual(events, ["discovery"])
+        self.assertEqual(result["formal_etf_discovery"]["status"], "PASS")
+
+    def test_nonformal_request_file_does_not_implicitly_run_discovery(self):
+        request = {
+            "request_id": "system-review",
+            "requested_at_beijing": "2026-09-22T08:00:00+08:00",
+            "source": "SCHEDULED_ACTOR",
+            "intent": "ETF_SYSTEM_REVIEW",
+        }
+        current = {"market_date": "2026-09-22", "data_freshness": {}}
+        account = {"status": "VALID", "positions": []}
+
+        def fake_read_json(path, default=None):
+            if str(path).endswith("review.json"):
+                return request
+            if str(path).endswith("etf_monitor_universe.json"):
+                return {"objects": []}
+            if str(path).endswith("a_share_trading_calendar_2026.json"):
+                return {"coverage_start": "2026-01-01", "coverage_end": "2026-12-31", "closed_dates": []}
+            return {} if default is None else default
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "review.json").write_text("{}", encoding="utf-8")
+            with patch.object(query_context, "read_json", side_effect=fake_read_json), \
+                 patch.object(query_context, "read_current", return_value=current), \
+                 patch.object(query_context, "read_account_fact", return_value=account), \
+                 patch.object(query_context, "active_account_asset_codes", return_value={"etf": set()}), \
+                 patch.object(query_context, "build_market_quote_context", return_value={"decision_freshness": {"post_request": True}, "quotes": []}), \
+                 patch.object(query_context, "discover_formal_candidates") as discovery, \
+                 patch.object(query_context, "build_decision_context", return_value={"rules_version": "V2.2.31"}):
+                result = query_context.build(root, request_file="review.json")
+
+        discovery.assert_not_called()
+        self.assertEqual(result["formal_etf_discovery"]["status"], "NOT_REQUESTED")
+
     def test_fact_pack_keeps_request_and_pit_identity(self):
         with tempfile.TemporaryDirectory() as directory:
             pack = query_context.build_decision_fact_pack(
