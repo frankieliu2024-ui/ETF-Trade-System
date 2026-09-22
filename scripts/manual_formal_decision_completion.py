@@ -21,7 +21,7 @@ def _safe_id(value: object) -> str:
     return value
 
 
-def build_completion_request(source_request: dict, formal_decision: dict, consumed_snapshot: str, completion_request_id: str = "") -> dict:
+def build_completion_request(source_request: dict, formal_decision: dict, consumed_snapshot: str, completion_request_id: str = "", request_bound_pit_closure: dict | None = None) -> dict:
     """Transport an already-formed manual conclusion through the existing state-sync request path."""
     if not isinstance(source_request, dict) or not source_request:
         raise ValueError("source manual request is required")
@@ -60,6 +60,7 @@ def build_completion_request(source_request: dict, formal_decision: dict, consum
         "persistence_available_at_beijing": source_request.get("persistence_available_at_beijing") or source_request.get("requested_at_beijing") or source_request.get("request_time_beijing"),
         "consumed_snapshot": snapshot,
         "formal_decision": formal_decision,
+        "request_bound_pit_closure": request_bound_pit_closure,
     }
     payload = {key: value for key, value in payload.items() if value not in (None, "")}
     if classify_live_snapshot_request(payload) != "STATE_SYNC_ONLY":
@@ -74,7 +75,30 @@ def write_completion_request(source_request_path: str, decision_path: str, consu
         raise ValueError("input paths must stay inside repository root")
     source = json.loads(source_path.read_text(encoding="utf-8"))
     decision = json.loads(decision_file.read_text(encoding="utf-8"))
-    payload = build_completion_request(source, decision, consumed_snapshot, completion_request_id)
+    query_path = ROOT / "data/state/query_context.json"
+    pit_closure = None
+    if query_path.exists():
+        query = json.loads(query_path.read_text(encoding="utf-8"))
+        packet = query.get("decision_fact_pack") or {}
+        trigger = packet.get("trigger") or {}
+        action = packet.get("formal_action_readiness") or {}
+        freshness = query.get("freshness_assurance") or {}
+        if (
+            str(trigger.get("request_id") or "").strip() == str(source.get("request_id") or "").strip()
+            and action.get("ready") is True
+            and str(action.get("status") or "").upper() == "READY"
+            and action.get("request_scoped_pit_resolved") is True
+        ):
+            pit_closure = {
+                "parent_request_id": str(source.get("request_id") or "").strip(),
+                "status": "READY",
+                "request_scoped_pit_resolved": True,
+                "decision_request_time": freshness.get("decision_request_time"),
+                "refresh_mode": freshness.get("refresh_mode"),
+                "freshness_status": freshness.get("status"),
+                "query_context_generated_at_beijing": query.get("generated_at_beijing"),
+            }
+    payload = build_completion_request(source, decision, consumed_snapshot, completion_request_id, pit_closure)
     target = (ROOT / output_path).resolve() if output_path else REQUEST_DIR / f"{payload['request_id']}.json"
     if ROOT not in target.parents or target.suffix != ".json":
         raise ValueError("output path must be a repository JSON path")
