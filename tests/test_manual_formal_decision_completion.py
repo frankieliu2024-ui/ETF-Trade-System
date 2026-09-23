@@ -109,6 +109,52 @@ class ManualCompletionEnvelopeTests(unittest.TestCase):
                 completion_request_id=SOURCE_REQUEST["request_id"],
             )
 
+    def test_completion_can_carry_immutable_discovery_eligibility_closure(self):
+        closure = {
+            "parent_request_id": SOURCE_REQUEST["request_id"],
+            "status": "READY",
+            "candidates": [{"code": "159502", "formal_quote_status": "READY"}],
+        }
+        payload = completion.build_completion_request(
+            SOURCE_REQUEST, formal_decision(), SNAPSHOT_PATH,
+            observation_eligibility_closure=closure,
+        )
+        self.assertEqual(payload["observation_eligibility_closure"], closure)
+
+
+class ManualCompletionDiscoveryClosureTests(unittest.TestCase):
+    def test_valid_closure_recovers_discovery_inputs_after_query_context_drift(self):
+        request = {
+            "source": "CHATGPT_MANUAL_FORMAL_COMPLETION",
+            "parent_request_id": SOURCE_REQUEST["request_id"],
+            "observation_eligibility_closure": {
+                "parent_request_id": SOURCE_REQUEST["request_id"],
+                "status": "READY",
+                "candidates": [
+                    {"code": "159502", "formal_quote_status": "READY"},
+                    {"code": "159707", "formal_quote_status": "READY"},
+                ],
+            },
+        }
+        inputs, error = state_sync.manual_completion_discovery_inputs(request)
+        self.assertEqual(error, "")
+        self.assertEqual(inputs["159502"]["formal_quote_status"], "READY")
+        self.assertEqual(set(inputs), {"159502", "159707"})
+
+    def test_wrong_parent_discovery_closure_fails_closed(self):
+        request = {
+            "source": "CHATGPT_MANUAL_FORMAL_COMPLETION",
+            "parent_request_id": SOURCE_REQUEST["request_id"],
+            "observation_eligibility_closure": {
+                "parent_request_id": "other_request",
+                "status": "READY",
+                "candidates": [{"code": "159502", "formal_quote_status": "READY"}],
+            },
+        }
+        inputs, error = state_sync.manual_completion_discovery_inputs(request)
+        self.assertIsNone(inputs)
+        self.assertIn("not bound READY", error)
+
 
 class CapitalCompetitionContractTests(unittest.TestCase):
     def test_zero_amount_requires_full_competition_reason(self):
