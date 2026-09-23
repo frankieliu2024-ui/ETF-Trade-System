@@ -88,7 +88,7 @@ class QueryTimeRefreshTests(unittest.TestCase):
         root = self._closed_reference_root(market_date="2026-09-30", node="close", captured_at="2026-09-30T15:00:05+08:00", closed_dates=["2026-10-02"])
         fresh = {"symbol": "N225", "market": "JP", "latest_price": 40000, "data_time_beijing": "2026-10-02T10:00:05+08:00", "quality_status": "PASS", "freshness": "FRESH"}
         with patch("scripts.query_time_market_refresh.refresh_market_quotes", return_value={"quotes": [fresh], "failures": []}) as refresh:
-            result = build_market_quote_context(root, now=now, decision_request_time=now)
+            result = build_market_quote_context(root, now=now, requested_symbols=["N225"], decision_request_time=now)
         refresh.assert_called_once()
         self.assertTrue(all(not str(x).split(".")[0].isdigit() for x in refresh.call_args.args[1]))
         self.assertTrue(result["decision_freshness"]["formal_decision_allowed"])
