@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-24T01:55:08+08:00",
-  "last_status": "AGGREGATED_INTO_EXISTING",
-  "last_type": "US_OPEN_VALUE_ALERT",
-  "last_title": "【市场异动】美股科技指数开盘出现显著分化",
+  "updated_at": "2026-09-24T04:54:31+08:00",
+  "last_status": "SENT",
+  "last_type": "US_SESSION_SUMMARY",
+  "last_title": "【收盘总结】美股科技结构偏弱",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -13090,27 +13090,63 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-24T01:52:07+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "report-delivery:ETF变更复核:etf-system-review-20260910T174014-run10",
-      "type": "REPORT_DELIVERY_REQUEST",
-      "title": "【系统复核】ETF系统复核｜2026-09-10",
-      "content": "【复核截止时点】2026-09-10 17:40（北京时间）｜最终读取main：6bb049a\n\n【交易决策链】不可用\n【系统一致性】失败\n【需要用户处理】否\n\n【本轮新增事实】\n- 今日15:00收盘行情已完整形成，13只ETF和3个核心指数均可用；14:42账户事实有效，煤炭ETF（515220）、电科思仪（301689）和电网设备ETF（159326）的卖出结果已反映为清零，现金为37,262.48元。\n- 收盘后复盘“尚未到20:30却被提前判定缺失”的问题已完成主版本修复；但新的主版本一致性检查仍因正式成交与CASE映射问题硬失败，最新端到端可用状态无法形成。\n- 账户/成交修复候选仍未通过：最新重放在主版本新鲜度校验处停止，精确重放、候选验收和最终CI均未完成，因此不得合并。\n\n【当前处理】\n- 已按最新主版本重新归因：当前硬失败由正式成交/CASE投影及候选基线过旧共同造成，不是行情采集、账户截图或收盘复盘到点规则再次失效。\n- 未执行行情刷新、账户重建或市场唤醒，未修改生产代码、配置、MASTER或交易权限，也未合并任何候选；正式决策节点运行保障仍由【ETF正式决策】承担。\n- 已保留现有Issue和PR作为唯一处理入口，等待从最新主版本进行符合协议的干净重建与完整验收。\n\n【未闭环事项】\n- #493 / PR #495：由账户与成交投影owner负责；结束条件是从最新主版本完成干净重建、2026-09-10精确重放、候选验收、最终CI及合并后主版本验收，且三笔退出、ETF辅助台账和CASE生命周期全部一致。\n- #496：实现已合并且冻结；结束条件是20:30真实复盘节点证明“到点前合法等待、到点后完成正式复盘闭环”。\n- #389 / #460：继续由正式决策时延owner负责；结束条件是用真实节点拆分行情发布、最小决策上下文就绪、持久化及用户可见时延，并确认是否仍需生产优化。\n\n【下一验证】\n- 先验证PR #495或其合法后继是否真正基于最新主版本重建，并通过精确重放、候选验收和最终CI。\n- 合并后重新生成系统一致性与端到端状态，确认三笔退出、账户成员、成交映射和CASE生命周期无硬错误。\n- 20:30后验证今日正式复盘与收盘闭环是否按新的到点合同完成。\n\n【当前最大风险】\n当前账户和收盘行情虽然可读，但正式成交与CASE链尚未通过全局一致性验收；在新端到端状态恢复前，系统不能被视为可提供新的正式金额或份额判断。\n\n【下一阶段】\n优先完成#493 / PR #495的最新主版本干净重建与完整验收；不以局部测试或历史候选结果替代最终通过。\n\n【下一关注点】\n- PR #495是否摆脱过旧基线并形成可合并候选。\n- 主版本硬失败是否全部消失，而不是仅换成新的派生状态滞后。\n- 20:30正式复盘是否按新合同准时闭环。\n\n【置信度】\n高\n\n【最可能出错的地方】\n当前账户事实已经正确反映三笔退出，但一致性硬失败来自成交/CASE投影；后续干净重放可能证明其中部分失败只是旧候选或派生状态残留。不过在新的主版本一致性与端到端结果实际通过前，不能提前降级为普通告警。",
-      "source": "product-task:ETF系统复核",
-      "user_severity": "正式报告",
-      "user_action": "阅读已完成的正式ETF报告；无需交易操作",
-      "status": "SENT",
-      "attempted_at": "2026-09-10T17:43:22+08:00",
+      "notification_id": "notification_9300af2d5fdafa4cb390",
+      "event_type": "US_SESSION_SUMMARY",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "us-session-summary:2026-09-23:CLOSE",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "user_severity": "需要关注",
+      "user_action": "纳入下一A股交易节点复核，无需机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-24T04:54:30+08:00",
+      "sent_at": "2026-09-24T04:54:30+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-26T04:54:30+08:00",
+      "title": "【收盘总结】美股科技结构偏弱",
+      "content": "### 核心结论\n- **外部结构**：美股科技风险偏好偏弱。\n- **宽科技**：纳斯达克100指数（NDX）-0.85%。\n- **半导体**：费城半导体指数（SOX）-1.20%。\n- **数据口径**：纳斯达克100指数（NDX）/费城半导体指数（SOX）直接指数。\n\n### 关键路径\n- **纳斯达克100指数（NDX）**：日内路径未形成比最终涨跌更强的新结论。\n- **费城半导体指数（SOX）**：早段与尾段方向相反，日内结构存在明显修复或回吐。\n\n### 对ETF系统的影响\n- **外部含义**：美股科技风险偏好转弱，提高A股高相关科技篮子的风险复核优先级。\n- **本地验证**：先检查A股自身承接是否同步减弱。\n- **资本比较**：只有本地反馈也转弱，才进一步影响持仓风险收益与资本配置。\n\n### 当前动作\n**纳入下一A股正式节点复核：先看本地传导，再看相关ETF自身反馈和资本效率；不因海外单一信号机械交易。**\n\n### 数据与边界\n- **美股现金盘收盘时点（北京时间）**：2026-09-24 04:00:00\n- **本次复核数据时点（北京时间）**：2026-09-24 04:50:00\n- **通知生成（北京时间）**：2026-09-24 04:54:30\n- **边界**：美股常规交易时段（现金盘）优先使用纳斯达克100指数（NDX）和费城半导体指数（SOX）直接指数；盘前、盘后仅作前置信号。海外结构必须经过A股本地传导和ETF自身反馈后才能进入机会判断。",
+      "source": "us_extended_hours_context",
+      "confirmation_context": {
+        "market": "US",
+        "market_date": "2026-09-23",
+        "us_market_date": "2026-09-23",
+        "session": "REGULAR",
+        "direction": "DOWN",
+        "event_category": "CLOSE_SUMMARY",
+        "fact_family": "US_SESSION_STRUCTURE",
+        "object_codes": [
+          "NDX",
+          "SOX"
+        ],
+        "source_fact_ids": [
+          "2026-09-23:NDX:2026-09-24T04:50:00+08:00",
+          "2026-09-23:SOX:2026-09-24T04:50:00+08:00"
+        ],
+        "session_node": "CLOSE",
+        "direct_cash_indices_used": true,
+        "tech_open_gap_pct": -0.130452934746772,
+        "semi_open_gap_pct": -0.23982437300135162,
+        "tech_change_pct": -0.8532,
+        "semi_change_pct": -1.1989,
+        "market_as_of_beijing": "2026-09-24T04:50:00+08:00",
+        "cash_close_as_of_beijing": "2026-09-24 04:00:00",
+        "generated_at_beijing": "2026-09-24 04:54:30",
+        "event_family_id": "US:2026-09-23:REGULAR::CLOSE_SUMMARY:DOWN:"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_4f749b68759fdeb1649a",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-09-24T04:54:30+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "close-account:2026-09-10",
       "type": "收盘账户",
@@ -16690,6 +16726,24 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_ee4fb146189228f363f3",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "us-session-summary:2026-09-23:CLOSE",
+      "type": "US_SESSION_SUMMARY",
+      "title": "【收盘总结】美股科技结构偏弱",
+      "content": "### 核心结论\n- **外部结构**：美股科技风险偏好偏弱。\n- **宽科技**：纳斯达克100指数（NDX）-0.85%。\n- **半导体**：费城半导体指数（SOX）-1.20%。\n- **数据口径**：纳斯达克100指数（NDX）/费城半导体指数（SOX）直接指数。\n\n### 关键路径\n- **纳斯达克100指数（NDX）**：日内路径未形成比最终涨跌更强的新结论。\n- **费城半导体指数（SOX）**：早段与尾段方向相反，日内结构存在明显修复或回吐。\n\n### 对ETF系统的影响\n- **外部含义**：美股科技风险偏好转弱，提高A股高相关科技篮子的风险复核优先级。\n- **本地验证**：先检查A股自身承接是否同步减弱。\n- **资本比较**：只有本地反馈也转弱，才进一步影响持仓风险收益与资本配置。\n\n### 当前动作\n**纳入下一A股正式节点复核：先看本地传导，再看相关ETF自身反馈和资本效率；不因海外单一信号机械交易。**\n\n### 数据与边界\n- **美股现金盘收盘时点（北京时间）**：2026-09-24 04:00:00\n- **本次复核数据时点（北京时间）**：2026-09-24 04:50:00\n- **通知生成（北京时间）**：2026-09-24 04:54:30\n- **边界**：美股常规交易时段（现金盘）优先使用纳斯达克100指数（NDX）和费城半导体指数（SOX）直接指数；盘前、盘后仅作前置信号。海外结构必须经过A股本地传导和ETF自身反馈后才能进入机会判断。",
+      "source": "us_extended_hours_context",
+      "user_severity": "需要关注",
+      "user_action": "纳入下一A股交易节点复核，无需机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-09-24T04:54:30+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_9300af2d5fdafa4cb390",
       "lifecycle_status": "SENT"
     }
   ],
