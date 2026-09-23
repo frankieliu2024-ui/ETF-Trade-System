@@ -357,6 +357,30 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertEqual(freeze["blockers"], [])
         self.assertEqual(pack["formal_reasoning_readiness"]["capital_efficiency_scope"], "FULL_MARKET")
 
+    def test_reply_boundary_explicitly_defers_persistence_and_downstream_projections(self):
+        request = {
+            "request_id": "manual-reply-boundary",
+            "requested_at_beijing": "2026-09-21T14:00:00+08:00",
+            "source": "CHATGPT_USER_GITHUB_INTRADAY",
+            "intent": "FORMAL_INTRADAY_ANALYSIS",
+            "_request_file": "requests/live_snapshot/manual-reply-boundary.json",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            pack = query_context.build_decision_fact_pack(
+                Path(directory), request, {"market_date": "2026-09-21"},
+                {"status": "VALID", "positions": []}, {"rules_version": "V2.2.31"},
+                {"decision_freshness": {"post_request": True}, "quotes": []},
+                formal_discovery={"status": "PASS", "candidates": []},
+            )
+        self.assertTrue(pack["formal_reply_freeze"]["reply_freezable"])
+        self.assertIn("CANONICAL_DECISION_PERSISTENCE_AFTER_BUSINESS_DECISION_IS_FORMED", pack["deferred_non_blocking"])
+        self.assertIn("CANONICAL_DECISION_POST_WRITE_ACCEPTANCE_AFTER_BUSINESS_DECISION_IS_FORMED", pack["deferred_non_blocking"])
+        self.assertIn("ACCOUNT_DECISION_PROJECTION", pack["deferred_non_blocking"])
+        boundary = pack["user_visible_reply_boundary"]
+        self.assertTrue(boundary["non_blocking_after_business_decision_formed"])
+        self.assertEqual(boundary["persistence_failure_disclosure"], "正式决策尚未持久化。")
+        self.assertIn("complete business decision analysis", boundary["rule"])
+
     def test_manual_formal_reply_freeze_ready_after_same_request_pit(self):
         request = {
             "request_id": "manual-ready",
