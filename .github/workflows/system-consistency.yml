@@ -161,6 +161,19 @@ jobs:
           python scripts/semantic_latest_main.py \
             --base "${PR_BASE_SHA}" \
             --head "$(git rev-parse origin/main)"
+      - name: Compile changed Python production files
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "${{ github.base_ref }}"
+          mapfile -t changed_py < <(git diff --name-only "origin/${{ github.base_ref }}...HEAD" -- 'scripts/*.py' 'scripts/**/*.py')
+          if (( ${#changed_py[@]} )); then
+            printf '%s\n' "${changed_py[@]}"
+            python -m py_compile "${changed_py[@]}"
+          else
+            echo "No changed production Python files."
+          fi
       - name: Validate OpenSSL SM4 runtime dependency
         shell: bash
         run: |
