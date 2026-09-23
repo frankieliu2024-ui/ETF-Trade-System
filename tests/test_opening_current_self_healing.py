@@ -288,11 +288,36 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         persist = workflow.split("- name: Persist bounded self-healing state and deterministic repairs", 1)[1]
         self.assertIn("always() && steps.assess.outcome == 'success'", persist)
         self.assertIn("git add -A -- data/state/self_healing_status.json", persist)
-        self.assertIn('if [ "${{ steps.assess.outputs.action }}" != "NONE" ]; then', persist)
+        self.assertIn('if [ "$action" != "NONE" ]; then', persist)
         self.assertLess(
             persist.index("git add -A -- data/state/self_healing_status.json"),
             persist.index('if [ "${{ steps.assess.outputs.action }}" != "NONE" ]; then'),
         )
+
+    def test_self_healing_persistence_rebuilds_from_latest_main_without_rebase(self):
+        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        persist = workflow.split("- name: Persist bounded self-healing state and deterministic repairs", 1)[1]
+        self.assertIn("git restore --worktree --staged .", persist)
+        self.assertIn("git fetch origin main", persist)
+        self.assertIn("git reset --hard origin/main", persist)
+        self.assertLess(persist.index("git restore --worktree --staged ."), persist.index("git fetch origin main"))
+        self.assertIn("python scripts/runtime_self_heal.py --assess", persist)
+        self.assertIn('max_attempts=3', persist)
+        self.assertIn('if [ "$parent" != "$remote" ]; then', persist)
+        self.assertIn("rebuilding from latest main", persist)
+        self.assertNotIn("git pull --rebase origin main", persist)
+        self.assertNotIn("git rebase", persist)
+        self.assertNotIn("git push --force", persist)
+
+    def test_self_healing_persistence_keeps_canonical_rebuilders_for_repair_actions(self):
+        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        persist = workflow.split("- name: Persist bounded self-healing state and deterministic repairs", 1)[1]
+        self.assertIn('if [ "$action" = "REBUILD_DERIVED_CONTEXTS" ]; then', persist)
+        self.assertIn('elif [ "$action" = "SYNC_RULES_VERSION_METADATA" ]; then', persist)
+        self.assertIn("python scripts/build_state_context.py", persist)
+        self.assertIn("python scripts/build_query_context.py", persist)
+        self.assertIn("python scripts/runtime_self_heal.py --repair-safe", persist)
+        self.assertIn("Self-healing persistence exhausted bounded latest-main retries; fail closed.", persist)
 
     def test_event_wake_sources_are_existing_cross_market_workflows(self):
         workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
