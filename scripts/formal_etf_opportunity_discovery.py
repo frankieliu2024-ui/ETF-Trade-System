@@ -77,10 +77,7 @@ def _spot_row(raw: dict[str, Any]) -> dict[str, Any]:
 
 
 def fetch_broad_etf_spot() -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    page = 1
-    total = None
-    while True:
+    def fetch_page(page: int) -> tuple[list[dict[str, Any]], int]:
         payload = _request_json(SPOT_URL, {
             "pn": page, "pz": 100, "po": 0, "np": 1,
             "ut": "bd1d9ddb04089700cf9c27f6f7426281", "fltt": 2, "invt": 2,
@@ -88,17 +85,28 @@ def fetch_broad_etf_spot() -> list[dict[str, Any]]:
         })
         data = payload.get("data") or {}
         diff = data.get("diff") or []
-        if total is None:
-            total = int(data.get("total") or 0)
-        if not diff:
-            break
-        rows.extend(_spot_row(x) for x in diff if isinstance(x, dict))
-        if (total and len(rows) >= total) or len(diff) < 100:
-            break
-        page += 1
-        if page > 50:
-            break
-    return rows
+        return [_spot_row(x) for x in diff if isinstance(x, dict)], int(data.get("total") or 0)
+
+    first_rows, total = fetch_page(1)
+    if not first_rows:
+        return []
+    page_count = max(1, min(50, (total + 99) // 100)) if total else 1
+    if page_count == 1:
+        return first_rows
+
+    # Pages are independent snapshots of the same broad cross-section. Fetch
+    # the remaining pages concurrently, but consume them in page order so
+    # provider timing never becomes a hidden ranking signal.
+    page_rows: dict[int, list[dict[str, Any]]] = {1: first_rows}
+    with ThreadPoolExecutor(max_workers=min(6, page_count - 1), thread_name_prefix="eastmoney-etf-page") as executor:
+        futures = {executor.submit(fetch_page, page): page for page in range(2, page_count + 1)}
+        for future in as_completed(futures):
+            page = futures[future]
+            rows, observed_total = future.result()
+            if observed_total and total and observed_total != total:
+                raise RuntimeError(f"Eastmoney ETF pagination total changed: first={total} page{page}={observed_total}")
+            page_rows[page] = rows
+    return [row for page in range(1, page_count + 1) for row in page_rows.get(page, [])]
 
 
 def _request_json_headers(url: str, params: dict[str, Any], headers: dict[str, str], timeout: int = 12) -> Any:
