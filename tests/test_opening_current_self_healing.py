@@ -297,8 +297,10 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
     def test_self_healing_persistence_rebuilds_from_latest_main_without_rebase(self):
         workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
         persist = workflow.split("- name: Persist bounded self-healing state and deterministic repairs", 1)[1]
+        self.assertIn("git restore --worktree --staged .", persist)
         self.assertIn("git fetch origin main", persist)
         self.assertIn("git reset --hard origin/main", persist)
+        self.assertLess(persist.index("git restore --worktree --staged ."), persist.index("git fetch origin main"))
         self.assertIn("python scripts/runtime_self_heal.py --assess", persist)
         self.assertIn('max_attempts=3', persist)
         self.assertIn('if [ "$parent" != "$remote" ]; then', persist)
