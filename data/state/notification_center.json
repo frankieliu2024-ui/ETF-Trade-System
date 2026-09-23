@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-23T10:58:42+08:00",
+  "updated_at": "2026-09-23T13:02:22+08:00",
   "last_status": "SENT",
-  "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】亚太主要指数结构出现显著分化",
+  "last_type": "FORMAL_DECISION_MATERIAL_CHANGE",
+  "last_title": "【观察机会】标普生物科技ETF嘉实（159502）",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -12783,27 +12783,66 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-23T10:58:42+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "report-delivery:ETF变更复核:etf-system-review-20260910T1240-run10",
-      "type": "REPORT_DELIVERY_REQUEST",
-      "title": "【系统复核】ETF系统复核｜2026-09-10",
-      "content": "【复核截止时点】2026-09-10 12:40（北京时间）｜最终读取main：7d47dbd\n\n【本次结论】系统正常但有告警：11:29最新A股行情、09:45账户事实、决策上下文和E2E均READY，上午正式决策已形成合法PIT闭环；当前没有需要立即修改生产环境的硬故障。主要剩余问题已从“正式决策能否完成”收敛为端到端用户可见时延仍偏高及L0控制面完整closure proof尚未全部满足，用户无需操作。\n\n【本轮健康检查】\n1. 11:29正式行情完整覆盖13只ETF和3个核心指数，行情质量PASS；09:45账户事实VALID，现金及结算约束已同步。\n2. E2E在11:29为READY，market/account/close review/decision context/maintenance均无blocker或degradation。\n3. 09:20正式决策实际消费09:26:10附近合法集合竞价快照并完成正式持久化，没有混用旧行情或旧decision context。\n4. 今晨US扩展时段链继续正常刷新；当前未发现新的writer、processor或notification硬故障。\n\n【本轮变化】\n1. 09:20真实正式决策已完成此前等待的生产验收：wait/final-reread正确性获得真实生产支持，但11:20节点用户可见FINAL_CUTOFF约11:28，端到端时延仍需拆分归因。\n2. L0控制面获得新的真实证据：09:20节点在自然pulse不足时由【ETF正式决策】使用现行wake-only入口恢复同一canonical producer/C并完成合法决策；primary wake不足的归因仍被保留。\n3. 当前无开放PR，本轮没有等待前序解除后需要推进的集成候选。\n\n【Production Acceptance】\n1. #389 — INCOMPLETE：09:20真实节点证明合法行情→匹配decision context→正式判断/持久化能够闭环；剩余条件是用后续真实节点拆分平台启动延迟与Task内部时延，并证明端到端有界完成。\n2. #385 — PASS（本轮暴露）/Issue closure仍INCOMPLETE：09:20证明decision-critical节点可由已准入wake-only入口有界保护且不改写primary wake归因；完整多节点、race/dedupe及系统级closure matrix仍需逐项满足。\n3. #460 — INCOMPLETE：上午节点证明corrected wait contract可以跨越CURRENT→decision-context就绪，但尚缺干净的阶段级时延证据，不能据此认定底层context关键路径已无需优化。\n\n【本次实际动作】本轮完成latest-main健康复核和09:20/11:20真实production exposure验收，并已将#389、#385、#460验收结果分别回写其真实owner Issue；未创建/合并PR，未修改代码、配置、MASTER或交易权限，未执行额外refresh/rebuild/retry。未承担L0 wake；decision-critical runtime assurance由【ETF正式决策】按其每次T0/current contract决定是否执行。\n\n【仍需处理】\n1. #389：下一真实正式决策节点需输出可归因的阶段时延，区分Scheduled平台启动延迟、行情/上下文等待、reasoning、持久化和final reread；只有端到端有界完成得到证明才具备关闭条件。\n2. #385：当前production exposure已证明核心保护路径有效，但Issue自身更宽的closure checklist尚未全部满足；应按现有证据矩阵重新核对，不因单次PASS机械关闭。\n3. #460：只有阶段时延证明CURRENT→minimum decision context仍是实质瓶颈时才重新准入生产修改；否则保持OBSERVE，不做高风险context重构。\n\n【下次重点】\n1. 13:20正式决策自然形成后，重点验收端到端stage timing和是否继续保持合法PIT闭环。\n2. 用上午多个真实节点重新核对#385多节点保护、dedupe/race与failure attribution closure条件，能满足的自动闭环，缺证据的明确保留。\n\n下一阶段：保持当前生产实现稳定，优先消费13:20及后续真实正式决策节点的stage timing与多节点保护证据。\n\n下一关注点：系统现在的主要矛盾已经从“正式决策会不会丢节点”转为“正确闭环能否更快、更稳定地完成”，同时不削弱PIT、fail-safe和唯一canonical owner。\n\n置信度：高\n\n最可能出错的地方：当前仓库已经能证明09:20决策正确闭环和11:29系统READY，但缺少Scheduled平台真实T0到各内部阶段的统一机器时间线；因此不能把11:20到11:28的全部延迟都归因于Task内部，也不能据此直接决定#460需要代码优化。",
-      "source": "product-task:ETF系统复核",
-      "user_severity": "正式报告",
-      "user_action": "阅读已完成的正式ETF报告；无需交易操作",
-      "status": "SENT",
-      "attempted_at": "2026-09-10T12:37:46+08:00",
+      "notification_id": "notification_ce86058535fee18b7ee6",
+      "event_type": "FORMAL_DECISION_MATERIAL_CHANGE",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "formal-change:20260923_1237_chatgpt_decision_analysis_decision",
+      "related_decision_id": "20260923_1237_chatgpt_decision_analysis_decision",
+      "security_code": "159502",
+      "security_name": "标普生物科技ETF嘉实",
+      "user_severity": "需要关注",
+      "user_action": "当前仅进入观察，不下单；等待下一正式复核节点验证条件是否升级。",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-23T13:02:21+08:00",
+      "sent_at": "2026-09-23T13:02:22+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-25T13:02:21+08:00",
+      "title": "【观察机会】标普生物科技ETF嘉实（159502）",
+      "content": "### 发生了什么\n- **机会状态**：无机会 → 观察机会\n- **风险许可**：允许Trial（未变化）\n\n### 当前正式状态\n无机会 → 观察机会；风险许可：允许Trial\n\n### 为什么现在值得关注\n完整资本竞争后，局部强势尚不足以覆盖风险观察区下的证据要求、现有集中度与现金选择权价值；当前新增0元。\n\n### 当前正式动作\n新增0元；保留现金18,011.14元\n\n### 资本去向\n下一单位资本：保留现金18,011.14元\n\n### 你需要做什么\n当前仅进入观察，不下单；等待下一正式复核节点验证条件是否升级。\n\n### 下一关注点\n13:00后下一可交易正式节点按current MASTER和届时合格PIT重新比较。\n\n> 通知只转发已有正式判断；用户如需交易必须人工核对并下单，通知本身不代表成交。\n\n### 事实时点（北京时间）\n2026-09-23 12:39:56",
+      "source": "formal_decision_event",
+      "confirmation_context": {
+        "decision_id": "20260923_1237_chatgpt_decision_analysis_decision",
+        "security_code": "159502",
+        "security_name": "标普生物科技ETF嘉实",
+        "opportunity_status": "观察机会",
+        "previous_opportunity_status": "无机会",
+        "previous_security_code": "",
+        "risk_permission": "允许Trial",
+        "previous_risk_permission": "允许Trial",
+        "holding_action_changed": false,
+        "change_summary": [
+          "- **机会状态**：无机会 → 观察机会",
+          "- **风险许可**：允许Trial（未变化）"
+        ],
+        "action_summary": "新增0元；现有持仓维持；现金保留。",
+        "decisive_reason": "完整资本竞争后，局部强势尚不足以覆盖风险观察区下的证据要求、现有集中度与现金选择权价值；当前新增0元。",
+        "current_action": "新增0元；保留现金18,011.14元",
+        "capital_route": "下一单位资本：保留现金18,011.14元",
+        "next_validation": "13:00后下一可交易正式节点按current MASTER和届时合格PIT重新比较。",
+        "timing_lines": [
+          "- **判断时点**：2026-09-23 12:40:47",
+          "- **行情依据**：2026-09-23 12:39:56",
+          "- **行情距判断**：约1分钟",
+          "- **通知生成**：2026-09-23 13:02:21"
+        ],
+        "decision_time_beijing": "2026-09-23T12:40:47+08:00",
+        "market_as_of_beijing": "2026-09-23T12:39:56+08:00",
+        "account_as_of_beijing": "",
+        "market_age_minutes_at_decision": 0.85
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_cb7e00275f48658e9fcb",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-09-23T13:02:22+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "report-delivery:ETF_FORMAL_DECISION:ETF正式决策-20260910T132000+0800",
       "type": "REPORT_DELIVERY_REQUEST",
@@ -16384,11 +16423,29 @@
       },
       "notification_id": "notification_aa960d9f4ff2cec0481c",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "formal-change:20260923_1237_chatgpt_decision_analysis_decision",
+      "type": "FORMAL_DECISION_MATERIAL_CHANGE",
+      "title": "【观察机会】标普生物科技ETF嘉实（159502）",
+      "content": "### 发生了什么\n- **机会状态**：无机会 → 观察机会\n- **风险许可**：允许Trial（未变化）\n\n### 当前正式状态\n无机会 → 观察机会；风险许可：允许Trial\n\n### 为什么现在值得关注\n完整资本竞争后，局部强势尚不足以覆盖风险观察区下的证据要求、现有集中度与现金选择权价值；当前新增0元。\n\n### 当前正式动作\n新增0元；保留现金18,011.14元\n\n### 资本去向\n下一单位资本：保留现金18,011.14元\n\n### 你需要做什么\n当前仅进入观察，不下单；等待下一正式复核节点验证条件是否升级。\n\n### 下一关注点\n13:00后下一可交易正式节点按current MASTER和届时合格PIT重新比较。\n\n> 通知只转发已有正式判断；用户如需交易必须人工核对并下单，通知本身不代表成交。\n\n### 事实时点（北京时间）\n2026-09-23 12:39:56",
+      "source": "formal_decision_event",
+      "user_severity": "需要关注",
+      "user_action": "当前仅进入观察，不下单；等待下一正式复核节点验证条件是否升级。",
+      "status": "SENT",
+      "attempted_at": "2026-09-23T13:02:22+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_ce86058535fee18b7ee6",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [
     "notification_9e807af78e8bd43ceb36"
   ],
-  "policy": "canonical bounded market notification batch",
-  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
+  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
+  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
 }
