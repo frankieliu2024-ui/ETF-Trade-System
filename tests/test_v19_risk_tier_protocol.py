@@ -3,6 +3,8 @@ import unittest
 from scripts.check_production_mutation_protocol import (
     acceptance_matrix_for_tier,
     classify_risk_tier,
+    system_subtraction_fast_path_eligible,
+    tier2_acceptance_route,
 )
 
 
@@ -71,6 +73,31 @@ class V19RiskTierTests(unittest.TestCase):
             ),
             "TIER_3",
         )
+
+    def test_tier2_routes_preserve_fail_safe_fact_path(self):
+        self.assertEqual(tier2_acceptance_route(projection_or_maintenance_only=True), "T2-P")
+        self.assertEqual(
+            tier2_acceptance_route(projection_or_maintenance_only=True, formal_decision_input=True),
+            "T2-F",
+        )
+        self.assertEqual(
+            tier2_acceptance_route(projection_or_maintenance_only=True, attribution_reliable=False),
+            "T2-F",
+        )
+        self.assertIn("failure_attribution_on_hard_fail", acceptance_matrix_for_tier("TIER_2", "T2-F")["required_gates"])
+        self.assertNotIn("merged_main_full_consistency", acceptance_matrix_for_tier("TIER_2", "T2-P")["required_gates"])
+
+    def test_subtraction_fast_path_requires_all_safety_conditions(self):
+        kwargs = dict(
+            no_new_owner_state_workflow=True,
+            no_consumer_removed=True,
+            no_core_input_change=True,
+            net_complexity_decreases=True,
+            stable_regression_evidence=True,
+        )
+        self.assertTrue(system_subtraction_fast_path_eligible(**kwargs))
+        kwargs["no_core_input_change"] = False
+        self.assertFalse(system_subtraction_fast_path_eligible(**kwargs))
 
     def test_acceptance_matrices_are_minimal_and_escalating(self):
         self.assertEqual(
