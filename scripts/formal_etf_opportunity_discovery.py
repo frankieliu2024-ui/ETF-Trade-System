@@ -31,6 +31,7 @@ MAX_OBSERVATION_CANDIDATES = 12
 MAX_HISTORY_SUCCESS_BUDGET = 12
 MAX_HISTORY_ATTEMPT_MULTIPLIER = 3
 MAX_HISTORY_FETCH_WORKERS = 2
+MAX_TENCENT_HYDRATION_WORKERS = 6
 MIN_HISTORY = 65
 RELATIVE_DIVERGENCE_PCT = 1.5
 SHORT_HISTORY_MIN = 20
@@ -343,25 +344,52 @@ def _hydrate_tencent_identities(identities: list[dict[str, Any]]) -> tuple[list[
     except ModuleNotFoundError:
         from tencent_quote import fetch_tencent_quotes
 
-    rows: list[dict[str, Any]] = []
-    failures: list[dict[str, Any]] = []
-    for offset in range(0, len(identities), 60):
-        batch = identities[offset:offset + 60]
+    batches = [
+        (offset, identities[offset:offset + 60])
+        for offset in range(0, len(identities), 60)
+    ]
+
+    def hydrate_batch(offset: int, batch: list[dict[str, Any]]) -> tuple[int, list[dict[str, Any]], dict[str, Any] | None]:
         symbols = [f'{x["code"]}.{"SH" if x["market_id"] == 1 else "SZ"}' for x in batch]
         try:
             quotes = fetch_tencent_quotes(symbols, timeout=10)
         except Exception as exc:
-            failures.append({"offset": offset, "count": len(batch), "error": str(exc)[-240:]})
-            continue
+            return offset, [], {"offset": offset, "count": len(batch), "error": str(exc)[-240:]}
+        batch_rows = []
         for identity, symbol in zip(batch, symbols):
             quote = quotes.get(symbol.upper())
             if quote:
-                rows.append(_tencent_spot_row(identity, quote))
+                batch_rows.append(_tencent_spot_row(identity, quote))
+        return offset, batch_rows, None
+
+    completed: dict[int, tuple[list[dict[str, Any]], dict[str, Any] | None]] = {}
+    if batches:
+        with ThreadPoolExecutor(
+            max_workers=min(MAX_TENCENT_HYDRATION_WORKERS, len(batches)),
+            thread_name_prefix="tencent-etf-hydration",
+        ) as executor:
+            futures = {
+                executor.submit(hydrate_batch, offset, batch): offset
+                for offset, batch in batches
+            }
+            for future in as_completed(futures):
+                offset, batch_rows, failure = future.result()
+                completed[offset] = (batch_rows, failure)
+
+    rows: list[dict[str, Any]] = []
+    failures: list[dict[str, Any]] = []
+    for offset, _batch in batches:
+        batch_rows, failure = completed.get(offset, ([], {"offset": offset, "count": len(_batch), "error": "missing hydration result"}))
+        rows.extend(batch_rows)
+        if failure:
+            failures.append(failure)
     return rows, {
         "requested_identity_count": len(identities),
         "tencent_quote_count": len(rows),
         "tencent_failed_batch_count": len(failures),
         "tencent_failures": failures,
+        "tencent_hydration_batch_count": len(batches),
+        "tencent_hydration_workers": min(MAX_TENCENT_HYDRATION_WORKERS, len(batches)) if batches else 0,
     }
 
 
