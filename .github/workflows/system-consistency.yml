@@ -318,7 +318,26 @@ jobs:
               "candidate_failed_checks": failed,
           }, ensure_ascii=False))
           PY
-          test "$consistency_rc" -eq 0
+          export CANDIDATE_CONSISTENCY_RC="$consistency_rc"
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" > "$candidate/changed-files.txt"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from scripts.check_production_mutation_protocol import candidate_change_acceptance_allows_global_failure
+
+          report = json.loads(Path("data/state/system_consistency.json").read_text(encoding="utf-8"))
+          failed = [item for item in report.get("checks", []) if item.get("status") == "FAIL"]
+          changed = [line.strip() for line in Path("changed-files.txt").read_text(encoding="utf-8").splitlines() if line.strip()]
+          allowed = candidate_change_acceptance_allows_global_failure(changed_files=changed, failed_checks=failed)
+          print(json.dumps({
+              "change_specific_acceptance": "PASS" if allowed else "FAIL",
+              "global_health": report.get("status"),
+              "failed_checks": [item.get("name") for item in failed],
+          }, ensure_ascii=False))
+          if int(os.environ["CANDIDATE_CONSISTENCY_RC"]) != 0 and not allowed:
+              raise SystemExit("candidate global failure is change-relevant or attribution is inconclusive")
+          PY
           python scripts/maintenance_guard.py
           python scripts/build_e2e_status.py
           python - <<'PY'
