@@ -2,6 +2,8 @@ import csv
 import json
 import tempfile
 import unittest
+import threading
+import time
 from unittest.mock import patch
 
 from scripts import formal_etf_opportunity_discovery as discovery
@@ -367,6 +369,34 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         self.assertEqual(headers["X-Requested-With"], "XMLHttpRequest")
         self.assertIn("zh-CN", headers["Accept-Language"])
 
+
+    def test_eastmoney_broad_pages_fetch_concurrently_but_preserve_page_order(self):
+        calls = []
+        lock = threading.Lock()
+        def fake_request(url, params, timeout=12):
+            page = int(params["pn"])
+            with lock:
+                calls.append(page)
+            if page == 1:
+                return {"data": {"total": 250, "diff": [{"f12": "510001", "f13": 1, "f14": "p1"}]}}
+            if page == 2:
+                time.sleep(0.03)
+                return {"data": {"total": 250, "diff": [{"f12": "510002", "f13": 1, "f14": "p2"}]}}
+            return {"data": {"total": 250, "diff": [{"f12": "510003", "f13": 1, "f14": "p3"}]}}
+        with mock.patch.object(discovery, "_request_json", side_effect=fake_request):
+            rows = discovery.fetch_broad_etf_spot()
+        self.assertEqual([row["code"] for row in rows], ["510001", "510002", "510003"])
+        self.assertEqual(calls[0], 1)
+        self.assertEqual(set(calls[1:]), {2, 3})
+
+    def test_eastmoney_broad_fails_closed_if_pagination_total_changes(self):
+        def fake_request(url, params, timeout=12):
+            page = int(params["pn"])
+            total = 201 if page == 2 else 200
+            return {"data": {"total": total, "diff": [{"f12": f"51000{page}", "f13": 1, "f14": "x"}]}}
+        with mock.patch.object(discovery, "_request_json", side_effect=fake_request):
+            with self.assertRaisesRegex(RuntimeError, "pagination total changed"):
+                discovery.fetch_broad_etf_spot()
 
 if __name__ == "__main__":
     unittest.main()
