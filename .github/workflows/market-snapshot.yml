@@ -477,11 +477,22 @@ jobs:
           if [ -z "$REQUEST_FILE" ] && [ -n "${REPLAY_REQUEST:-}" ]; then REQUEST_FILE="$REPLAY_REQUEST"; fi
           if [ -z "$REQUEST_FILE" ]; then REQUEST_FILE=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | head -n 1); fi
           # Core publish may reset the worktree to execution-time main before
-          # this step. Restore only the triggering request envelope so the
-          # canonical builder can bind request_id/requested_at_beijing.
+          # this step. Restore the triggering request envelope so the canonical
+          # builder can bind request_id/requested_at_beijing. On push requests
+          # without a new core snapshot, also restore the latest canonical
+          # query_context from execution-time main: checkout still reflects the
+          # request commit's parent, so otherwise same-node Discovery reuse
+          # cannot see the immediately preceding READY evidence.
           if [ -n "$REQUEST_FILE" ] && [ ! -f "$REQUEST_FILE" ] && [ -f "/tmp/etf-triggering-request/$REQUEST_FILE" ]; then
             mkdir -p "$(dirname "$REQUEST_FILE")"
             cp "/tmp/etf-triggering-request/$REQUEST_FILE" "$REQUEST_FILE"
+          fi
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "${{ steps.snapshot_result.outputs.snapshot_written }}" != "true" ]; then
+            git fetch origin main --quiet
+            git show origin/main:data/state/query_context.json > /tmp/latest-query-context.json 2>/dev/null || true
+            if [ -s /tmp/latest-query-context.json ]; then
+              cp /tmp/latest-query-context.json data/state/query_context.json
+            fi
           fi
           REQUEST_ARGS=()
           if [ -n "$REQUEST_FILE" ]; then REQUEST_ARGS+=(--request-file "$REQUEST_FILE"); fi
