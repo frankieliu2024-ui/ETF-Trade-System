@@ -52,6 +52,43 @@ class ManualRequestBoundedObservabilityTests(unittest.TestCase):
         self.assertFalse(trace["trace_metadata_is_decision_gate"])
         self.assertFalse(trace["business_semantics_changed"])
 
+    def test_downstream_completion_cannot_masquerade_as_original_decision_latency(self):
+        trace = build_query_context.build_fast_path_latency(
+            {
+                "request_id": "decision-1__formal_completion",
+                "parent_request_id": "decision-1",
+                "request_type": "STATE_SYNC_ONLY",
+                "source": "CHATGPT_MANUAL_FORMAL_COMPLETION",
+                "requested_at_beijing": "2026-09-23T18:01:40+08:00",
+            },
+            {"captured_at": "2026-09-23T15:27:38+08:00"},
+            {"status": "VALID", "positions": []},
+            {"generated_at_beijing": "2026-09-23T18:26:43+08:00"},
+            {"decision_freshness": {}, "quotes": []},
+            "2026-09-23T18:26:43+08:00",
+        )
+        self.assertEqual(trace["latency_observation_role"], "DOWNSTREAM_COMPLETION_NOT_DECISION_REQUEST")
+        self.assertEqual(trace["original_decision_request_identity"], "decision-1")
+        self.assertFalse(trace["may_measure_original_decision_latency"])
+        self.assertIsNone(trace["request_to_core_result_latency"])
+        self.assertIsNone(trace["canonical_ingress_to_decision_latency"])
+        self.assertEqual(trace["latency_status"], "DOWNSTREAM_NOT_DECISION_LATENCY")
+
+    def test_formal_decision_request_keeps_request_scoped_latency(self):
+        trace = build_query_context.build_fast_path_latency(
+            {"request_id": "decision-2", "source": "CHATGPT_USER_INTERACTION", "requested_at_beijing": "2026-09-23T14:03:00+08:00"},
+            {"captured_at": "2026-09-23T14:03:01+08:00"},
+            {"status": "VALID", "positions": []},
+            {"generated_at_beijing": "2026-09-23T14:04:03+08:00"},
+            {"decision_freshness": {"post_request": True}, "quotes": []},
+            "2026-09-23T14:04:03+08:00",
+        )
+        self.assertEqual(trace["latency_observation_role"], "FORMAL_DECISION_REQUEST")
+        self.assertEqual(trace["original_decision_request_identity"], "decision-2")
+        self.assertTrue(trace["may_measure_original_decision_latency"])
+        self.assertEqual(trace["request_to_core_result_latency"], 63.0)
+        self.assertEqual(trace["latency_status"], "OBSERVED")
+
     def test_utc_request_timestamp_is_converted_without_inference(self):
         trace = build_query_context.build_fast_path_latency(
             {"request_id": "utc-1", "requested_at_utc": "2026-09-21T01:50:52.737Z"},
