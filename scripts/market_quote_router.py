@@ -232,6 +232,29 @@ def evaluate_interactive_decision_freshness(current: dict[str, Any], request_tim
             "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required" if not direct else "CURRENT is fresh after request"}
 
 
+def _a_share_closed_reference_resolution(root: Path, current: dict[str, Any], request_time: datetime, now: datetime) -> dict[str, Any]:
+    """Resolve request-scoped A-share PIT when the exchange is not producing a new trade."""
+    local = now.astimezone(BEIJING)
+    calendar = _read_json(root, "config/market/a_share_trading_calendar_2026.json", {})
+    date_text = local.date().isoformat()
+    covered = bool(calendar.get("coverage_start") <= date_text <= calendar.get("coverage_end")) if calendar.get("coverage_start") and calendar.get("coverage_end") else True
+    trading_day = covered and local.weekday() < 5 and date_text not in set(calendar.get("closed_dates") or [])
+    phase = market_phase("CN", now=local) if trading_day else "OFF_SESSION"
+    quality = str(current.get("quality_status") or (current.get("data_freshness") or {}).get("quality_status") or (current.get("data_freshness") or {}).get("status") or "UNKNOWN").upper()
+    node = str(current.get("latest_valid_node") or current.get("node") or "").lower()
+    captured = _parse_timestamp(current.get("captured_at") or (current.get("data_freshness") or {}).get("captured_at_beijing"))
+    request_utc = request_time.astimezone(timezone.utc)
+    if quality != "PASS":
+        return {"resolved": False, "phase": phase, "mode": "NONE", "reason": "canonical A-share reference quality is not PASS"}
+    if phase == "MIDDAY_BREAK":
+        resolved = node == "1130" and bool(captured and captured >= request_utc)
+        return {"resolved": resolved, "phase": phase, "mode": "MIDDAY_REQUEST_BOUND_REFERENCE", "reason": "11:30 canonical reference re-observed after request" if resolved else "midday reference is not request-bound"}
+    if phase == "OFF_SESSION":
+        resolved = node == "close"
+        return {"resolved": resolved, "phase": phase, "mode": "CLOSED_SESSION_CANONICAL_REUSE", "reason": "closed A-share session legally reuses latest canonical close" if resolved else "latest canonical A-share fact is not a close"}
+    return {"resolved": False, "phase": phase, "mode": "ACTIVE_SESSION", "reason": "active A-share session requires post-request market fact"}
+
+
 def _market_for_overseas(key: str, record: dict[str, Any]) -> str:
     timezone_name = str(record.get("market_timezone") or "")
     if timezone_name == "America/New_York" or key in {"NDX", "SOX"}:
@@ -344,6 +367,19 @@ def _query_refresh_needed(root: Path, symbols: list[str], now: datetime, policy:
     return False
 
 
+def _active_non_cn_refresh_symbols(overseas: dict[str, Any], extended: dict[str, Any], now: datetime) -> list[str]:
+    symbols: list[str] = []
+    for key, raw in (overseas.get("objects") or {}).items():
+        record = raw if isinstance(raw, dict) else {}
+        market = _market_for_overseas(str(key), record)
+        if market != "UNKNOWN" and market_phase(market, now=now, object_type=_object_type_for_market(str(key), record)) in {"REGULAR", "OPENING_AUCTION", "PRE_MARKET", "POST_MARKET"}:
+            symbols.append(str(key).upper())
+    for key in (extended.get("objects") or {}):
+        if market_phase("US", now=now) in {"REGULAR", "PRE_MARKET", "POST_MARKET"}:
+            symbols.append(str(key).upper())
+    return list(dict.fromkeys(symbols))
+
+
 def build_market_quote_context(root: Path | str, now: datetime | None = None, *, force_refresh: bool = False, requested_symbols: list[str] | None = None, decision_request_time: datetime | None = None) -> dict[str, Any]:
     """Build the routed quote view; explicit query-time requests call providers before state fallback."""
     root = Path(root)
@@ -361,16 +397,37 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
     has_decision_request = decision_request_time is not None
     decision_request_time = decision_request_time or query_time
     decision_freshness = evaluate_interactive_decision_freshness(current, decision_request_time, query_time, policy)
-    # Any formal intraday request must attempt the existing query-time refresh,
-    # even when the cached CURRENT is still inside the ordinary FRESH window.
+    reference_resolution = _a_share_closed_reference_resolution(root, current, decision_request_time, query_time) if has_decision_request else {"resolved": False, "mode": "NONE", "phase": market_phase("CN", now=query_time)}
+    if has_decision_request and reference_resolution["resolved"]:
+        # Existing downstream resolved_post_request means request-scoped PIT is
+        # legally resolved; a closed exchange need not print a new trade.
+        decision_freshness["resolved_post_request"] = True
+        decision_freshness["formal_decision_allowed"] = True
+        decision_freshness["refresh_required"] = False
+        decision_freshness["status"] = "DIRECT"
+        decision_freshness["request_scoped_resolution_mode"] = reference_resolution["mode"]
+        decision_freshness["request_scoped_resolution_reason"] = reference_resolution["reason"]
+        decision_freshness["a_share_market_phase"] = reference_resolution["phase"]
+    # Active markets still refresh independently when A-share is resolved by a
+    # closed-session reference. On an A-share holiday/off-session, do not turn
+    # wall-clock CN hours into a synthetic active-market refresh requirement.
     has_usable_post_request_current = has_decision_request and decision_freshness["formal_decision_allowed"]
-    should_refresh = ((force_refresh and not has_decision_request) or (has_decision_request and not has_usable_post_request_current)) and (bool(explicit_symbols) or _query_refresh_needed(root, [], query_time, policy) or has_decision_request or decision_freshness["refresh_required"])
+    refresh_symbols = list(explicit_symbols)
+    if has_decision_request and reference_resolution["resolved"]:
+        refresh_symbols = [x for x in refresh_symbols if not str(x).split(".")[0].isdigit()]
+        if not refresh_symbols:
+            refresh_symbols = _active_non_cn_refresh_symbols(overseas, extended, query_time)
+    active_market_refresh_needed = _query_refresh_needed(root, refresh_symbols, query_time, policy) if refresh_symbols else False
+    should_refresh = (
+        (force_refresh and not has_decision_request)
+        or (has_decision_request and (not has_usable_post_request_current or active_market_refresh_needed))
+    ) and (bool(refresh_symbols) or active_market_refresh_needed or (has_decision_request and not has_usable_post_request_current) or decision_freshness["refresh_required"])
     if should_refresh:
         try:
             from scripts.query_time_market_refresh import refresh_market_quotes
         except ModuleNotFoundError:
             from query_time_market_refresh import refresh_market_quotes
-        refreshed = refresh_market_quotes(root, explicit_symbols, query_time)
+        refreshed = refresh_market_quotes(root, refresh_symbols, query_time)
         for quote in refreshed.get("quotes", []):
             if isinstance(quote, dict):
                 quotes.append(quote)

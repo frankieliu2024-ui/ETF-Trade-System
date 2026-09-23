@@ -26,6 +26,73 @@ class QueryTimeRefreshTests(unittest.TestCase):
         }), encoding="utf-8")
         return root
 
+    def _closed_reference_root(self, *, market_date: str, node: str, captured_at: str, closed_dates=None):
+        root = self._root(captured_at)
+        (root / "config/market").mkdir(parents=True, exist_ok=True)
+        (root / "config/market/a_share_trading_calendar_2026.json").write_text(json.dumps({
+            "coverage_start": "2026-01-01", "coverage_end": "2026-12-31",
+            "closed_dates": list(closed_dates or []),
+        }), encoding="utf-8")
+        (root / "data/state/CURRENT.json").write_text(json.dumps({
+            "market_date": market_date,
+            "latest_valid_node": node,
+            "captured_at": captured_at,
+            "provider_as_of": captured_at,
+            "quality_status": "PASS",
+            "latest_snapshot": "",
+            "data_freshness": {"status": "PASS", "captured_at_beijing": captured_at, "provider_as_of": captured_at},
+        }), encoding="utf-8")
+        return root
+
+    def test_premarket_formal_request_reuses_prior_canonical_close(self):
+        now = datetime.fromisoformat("2026-09-23T08:00:00+08:00")
+        root = self._closed_reference_root(market_date="2026-09-22", node="close", captured_at="2026-09-22T15:00:05+08:00")
+        with patch("scripts.query_time_market_refresh.refresh_market_quotes") as refresh:
+            result = build_market_quote_context(root, now=now, decision_request_time=now)
+        refresh.assert_not_called()
+        gate = result["decision_freshness"]
+        self.assertTrue(gate["formal_decision_allowed"])
+        self.assertTrue(gate["resolved_post_request"])
+        self.assertEqual(gate["request_scoped_resolution_mode"], "CLOSED_SESSION_CANONICAL_REUSE")
+
+    def test_midday_formal_request_accepts_reobserved_1130_reference_without_new_trade(self):
+        request = datetime.fromisoformat("2026-09-23T11:55:00+08:00")
+        now = datetime.fromisoformat("2026-09-23T11:56:00+08:00")
+        root = self._closed_reference_root(market_date="2026-09-23", node="1130", captured_at="2026-09-23T11:55:46+08:00")
+        with patch("scripts.query_time_market_refresh.refresh_market_quotes", return_value={"quotes": [], "failures": []}):
+            result = build_market_quote_context(root, now=now, decision_request_time=request)
+        gate = result["decision_freshness"]
+        self.assertTrue(gate["formal_decision_allowed"])
+        self.assertEqual(gate["request_scoped_resolution_mode"], "MIDDAY_REQUEST_BOUND_REFERENCE")
+
+    def test_post_close_formal_request_reuses_a_share_close_but_refreshes_active_overseas(self):
+        request = datetime.fromisoformat("2026-09-23T16:00:00+08:00")
+        root = self._closed_reference_root(market_date="2026-09-23", node="close", captured_at="2026-09-23T15:00:05+08:00")
+        fresh = {"symbol": "NDX", "market": "US", "latest_price": 25000, "data_time_beijing": "2026-09-23T16:00:10+08:00", "quality_status": "PASS", "freshness": "FRESH"}
+        with patch("scripts.query_time_market_refresh.refresh_market_quotes", return_value={"quotes": [fresh], "failures": []}) as refresh:
+            result = build_market_quote_context(root, now=request, decision_request_time=request)
+        refresh.assert_called_once()
+        self.assertNotIn("000001", refresh.call_args.args[1])
+        self.assertTrue(result["decision_freshness"]["formal_decision_allowed"])
+
+    def test_weekend_formal_request_reuses_last_close_without_synthetic_cn_refresh(self):
+        now = datetime.fromisoformat("2026-09-27T10:00:00+08:00")
+        root = self._closed_reference_root(market_date="2026-09-25", node="close", captured_at="2026-09-25T15:00:05+08:00")
+        with patch("scripts.query_time_market_refresh.refresh_market_quotes") as refresh:
+            result = build_market_quote_context(root, now=now, decision_request_time=now)
+        refresh.assert_not_called()
+        self.assertEqual(result["decision_freshness"]["request_scoped_resolution_mode"], "CLOSED_SESSION_CANONICAL_REUSE")
+
+    def test_a_share_holiday_does_not_create_synthetic_cn_active_refresh(self):
+        now = datetime.fromisoformat("2026-10-02T10:00:00+08:00")
+        root = self._closed_reference_root(market_date="2026-09-30", node="close", captured_at="2026-09-30T15:00:05+08:00", closed_dates=["2026-10-02"])
+        fresh = {"symbol": "N225", "market": "JP", "latest_price": 40000, "data_time_beijing": "2026-10-02T10:00:05+08:00", "quality_status": "PASS", "freshness": "FRESH"}
+        with patch("scripts.query_time_market_refresh.refresh_market_quotes", return_value={"quotes": [fresh], "failures": []}) as refresh:
+            result = build_market_quote_context(root, now=now, requested_symbols=["N225"], decision_request_time=now)
+        refresh.assert_called_once()
+        self.assertTrue(all(not str(x).split(".")[0].isdigit() for x in refresh.call_args.args[1]))
+        self.assertTrue(result["decision_freshness"]["formal_decision_allowed"])
+
     def test_explicit_force_refresh_calls_provider_even_with_fresh_cache(self):
         root = self._root("2026-08-25T00:29:00+08:00")
         now = datetime.fromisoformat("2026-08-25T00:30:00+08:00")
