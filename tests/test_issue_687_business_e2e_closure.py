@@ -295,14 +295,14 @@ class BusinessE2EClosureContractTests(unittest.TestCase):
         self.assertIn('python scripts/build_query_context.py --run-discovery "${REQUEST_ARGS[@]}"', workflow)
         self.assertIn("python scripts/build_query_context.py --run-discovery", fallback)
         self.assertIn('parser.add_argument("--run-discovery"', query_builder)
-        self.assertIn("if force_refresh or request_file or run_discovery:", query_builder)
+        self.assertIn("should_run_discovery = bool(force_refresh or run_discovery or formal_node_discovery_required)", query_builder)
 
     def test_run_discovery_does_not_imply_force_refresh(self) -> None:
         from scripts import build_query_context as query
         self.assertIn("run_discovery: bool = False", query.build.__annotations__.get("return", "") if False else
                       (Path(__file__).parents[1] / "scripts/build_query_context.py").read_text(encoding="utf-8"))
         text_value = (Path(__file__).parents[1] / "scripts/build_query_context.py").read_text(encoding="utf-8")
-        self.assertIn("if force_refresh or request_file or run_discovery:", text_value)
+        self.assertIn("formal_discovery = None if force_refresh else _reusable_formal_discovery", text_value)
 
 if __name__ == "__main__":
     unittest.main()

@@ -60,6 +60,13 @@ def _discovery_universe_identity(universe: dict) -> str:
     return hashlib.sha256(json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")).hexdigest()[:16]
 
 
+def _discovery_delta_identity(root: Path) -> str:
+    """Identify canonical market-delta semantics, not a snapshot filename or TTL."""
+    delta = read_json(root / CANONICAL_FILES["market_delta"], {})
+    semantic = {"market_date": delta.get("market_date"), "mode": delta.get("mode"), "status": delta.get("status"), "changes": delta.get("changes") or []}
+    return hashlib.sha256(json.dumps(semantic, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()[:16]
+
+
 def _reusable_formal_discovery(root: Path, current: dict, universe_identity: str, managed_codes: set[str]) -> dict | None:
     """Reuse a terminal result only when it belongs to the same legal market node."""
     prior = read_json(root / "data" / "state" / "query_context.json", {})
@@ -71,9 +78,10 @@ def _reusable_formal_discovery(root: Path, current: dict, universe_identity: str
         return None
     if str(prior.get("latest_valid_node") or prior_current.get("latest_valid_node") or "") != str(current.get("latest_valid_node") or ""):
         return None
-    if str(prior_current.get("latest_snapshot") or "") != str(current.get("latest_snapshot") or ""):
-        return None
     if str(discovery.get("universe_identity") or "") != universe_identity:
+        return None
+    prior_delta_identity = str(discovery.get("discovery_delta_identity") or "")
+    if not prior_delta_identity or prior_delta_identity != _discovery_delta_identity(root):
         return None
     reused = dict(discovery)
     candidates = []
@@ -91,7 +99,7 @@ def _reusable_formal_discovery(root: Path, current: dict, universe_identity: str
     reused["reuse"] = {
         "mode": "SAME_MARKET_NODE_LEGAL_DISCOVERY_EVIDENCE_REUSE",
         "source": "data/state/query_context.json",
-        "qualification": "same_market_date_same_latest_valid_node_same_latest_snapshot_same_universe_identity",
+        "qualification": "same_market_date_same_latest_valid_node_same_discovery_delta_identity_same_universe_identity",
         "fixed_ttl": False,
     }
     return reused
@@ -615,6 +623,7 @@ def build_fast_path_latency(request: dict, current: dict, account_or_decision: d
     if isinstance(market_quote, str):
         reply_ready, market_quote = market_quote, {}
     t0 = _request_received_at_beijing(request)
+    ingress = request.get("request_bound_at_beijing") or request.get("canonical_ingress_at_beijing") or ""
     manual_request_identity = _stable_manual_request_identity(request)
     freshness = market_quote.get("decision_freshness") or {}
     t_new = current.get("captured_at") or (current.get("data_freshness") or {}).get("captured_at_beijing") or ""
@@ -665,6 +674,9 @@ def build_fast_path_latency(request: dict, current: dict, account_or_decision: d
         "pit_ready_at": t_new if (freshness.get("resolved_post_request") or freshness.get("post_request")) else "UNKNOWN",
         "core_result_at": t_decision if t_decision else "UNKNOWN",
         "request_to_core_result_latency": _duration_seconds(t0, t_decision),
+        "request_to_canonical_ingress_latency": _duration_seconds(t0, ingress),
+        "canonical_ingress_to_decision_latency": _duration_seconds(ingress, t_decision),
+        "decision_latency_excludes_completion": True,
         "latency_status": "OBSERVED" if t0 and t_decision else "INSTRUMENTATION_INCOMPLETE",
         "latency_contract": "REQUEST_RECEIVED_TO_CORE_RESULT; enrichment is non-blocking and must not redefine core_result_at",
     }
@@ -823,7 +835,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     discovery_pipeline_started = time.monotonic() if should_run_discovery else None
     candidate_quote_elapsed = 0.0
     if should_run_discovery:
-        formal_discovery = None if (force_refresh or run_discovery) else _reusable_formal_discovery(root, current, universe_identity, managed_etf_codes)
+        formal_discovery = None if force_refresh else _reusable_formal_discovery(root, current, universe_identity, managed_etf_codes)
         if formal_discovery is None:
             formal_discovery = discover_formal_candidates(
                 root,
@@ -832,6 +844,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
                 held_codes=held_etf_codes,
             )
             formal_discovery["universe_identity"] = universe_identity
+            formal_discovery["discovery_delta_identity"] = _discovery_delta_identity(root)
         discovered_codes = [str(x.get("code") or "") for x in (formal_discovery.get("candidates") or []) if x.get("code")]
         existing_quote_symbols = {
             str(x.get("symbol") or x.get("code") or "").upper().replace(".SH", "").replace(".SZ", "")
