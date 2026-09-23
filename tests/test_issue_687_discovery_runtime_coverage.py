@@ -125,6 +125,79 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "official ETF masters unavailable"):
                 discovery.fetch_official_etf_master("2026-09-18")
 
+    def test_tencent_hydration_runs_batches_concurrently_but_preserves_input_order(self) -> None:
+        identities = [
+            {"code": f"5100{i:02d}", "name": f"ETF{i}", "market_id": 1}
+            for i in range(125)
+        ]
+        calls = []
+        lock = threading.Lock()
+
+        def fake_fetch(symbols, timeout=10):
+            first = symbols[0]
+            with lock:
+                calls.append(first)
+            if first.endswith("510000.SH"):
+                time.sleep(0.04)
+            elif first.endswith("510060.SH"):
+                time.sleep(0.02)
+            return {
+                symbol.upper(): {
+                    "name": symbol,
+                    "last_price": 1.0,
+                    "prev_price": 1.0,
+                    "open_price": 1.0,
+                    "high_price": 1.0,
+                    "low_price": 1.0,
+                    "turnover": 20_000_000,
+                    "price_change_ratio_pct": 0.0,
+                    "provider_timestamp_ms": 1,
+                }
+                for symbol in symbols
+            }
+
+        with patch("scripts.tencent_quote.fetch_tencent_quotes", side_effect=fake_fetch):
+            rows, meta = discovery._hydrate_tencent_identities(identities)
+
+        self.assertEqual(len(rows), 125)
+        self.assertEqual([row["code"] for row in rows], [row["code"] for row in identities])
+        self.assertEqual(meta["tencent_hydration_batch_count"], 3)
+        self.assertEqual(meta["tencent_hydration_workers"], 3)
+        self.assertEqual(meta["tencent_failed_batch_count"], 0)
+        self.assertEqual(len(calls), 3)
+
+    def test_tencent_hydration_keeps_batch_failures_ordered_and_local(self) -> None:
+        identities = [
+            {"code": f"5100{i:02d}", "name": f"ETF{i}", "market_id": 1}
+            for i in range(125)
+        ]
+
+        def fake_fetch(symbols, timeout=10):
+            if symbols[0].endswith("510060.SH"):
+                raise TimeoutError("batch timeout")
+            return {
+                symbol.upper(): {
+                    "name": symbol,
+                    "last_price": 1.0,
+                    "prev_price": 1.0,
+                    "open_price": 1.0,
+                    "high_price": 1.0,
+                    "low_price": 1.0,
+                    "turnover": 20_000_000,
+                    "price_change_ratio_pct": 0.0,
+                    "provider_timestamp_ms": 1,
+                }
+                for symbol in symbols
+            }
+
+        with patch("scripts.tencent_quote.fetch_tencent_quotes", side_effect=fake_fetch):
+            rows, meta = discovery._hydrate_tencent_identities(identities)
+
+        self.assertEqual([row["code"] for row in rows], [row["code"] for row in identities[:60]] + [row["code"] for row in identities[120:]])
+        self.assertEqual(meta["tencent_failed_batch_count"], 1)
+        self.assertEqual(meta["tencent_failures"][0]["offset"], 60)
+        self.assertEqual(meta["tencent_failures"][0]["count"], 60)
+
     def test_reconciled_broad_path_survives_eastmoney_failure(self) -> None:
         official = [{"code": "510001", "name": "官方ETF", "market_id": 1, "price": 1.0,
                      "change_pct": 1.0, "amount": 20_000_000}]
