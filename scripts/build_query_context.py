@@ -331,7 +331,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "request_id": request_id,
         "post_request_pit_resolved": post_request,
         "discovery_status": discovery_status,
-        "rule": "Manual formal replies must not freeze while same-request decision facts are still in flight. Explicit terminal degradation may continue legal reasoning; Discovery success is not required.",
+        "rule": "Manual formal replies wait only for same-request action-determinative facts that are still legally forming. Once those facts resolve (including explicit terminal degradation), complete analysis and the first user-visible decision reply must proceed without waiting for Decision Fact persistence/post-write acceptance or any downstream Dashboard/account/E2E/notification/research projection. Persistence failure is disclosed as '正式决策尚未持久化' and repaired separately; it does not suppress an otherwise valid business decision reply.",
     }
 
     ingress_blockers = []
@@ -479,12 +479,21 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "rule": "Read only when the evidence can change risk permission, opportunity, lifecycle, amount, funding source, sell action, account truth, or capital allocation.",
         },
         "deferred_non_blocking": [
+            "CANONICAL_DECISION_PERSISTENCE_AFTER_BUSINESS_DECISION_IS_FORMED",
+            "CANONICAL_DECISION_POST_WRITE_ACCEPTANCE_AFTER_BUSINESS_DECISION_IS_FORMED",
             "DASHBOARD_RENDER",
+            "ACCOUNT_DECISION_PROJECTION",
             "MARKET_ARCHIVE_RENDER",
             "REVIEW_CONTEXT",
             "NOTIFICATION_RENDER",
+            "RESEARCH_OR_EXPERIENCE_PROJECTION",
             "NON_DECISION_E2E_PROJECTION",
         ],
+        "user_visible_reply_boundary": {
+            "rule": "The first user-visible formal reply is the complete business decision analysis. It must not be replaced by an interim waiting/persistence/acceptance/projection status once action-determinative facts have resolved.",
+            "persistence_failure_disclosure": "正式决策尚未持久化。",
+            "non_blocking_after_business_decision_formed": True,
+        },
         "provenance_rule": "Every projected fact is copied from the existing canonical request/account/current/decision/quote/discovery inputs; this packet is not a new fact owner.",
         "pit_rule": "Formal reasoning may continue when formal_analysis_availability is AVAILABLE or DEGRADED, honoring local limitations. Exact amount/share/action canonical completion requires formal_action_readiness=READY. Downstream projections cannot mutate the same PIT decision.",
         "decision_boundary": "This packet normalizes facts and obligations only. It must not select the main candidate, rank capital states, or generate buy/sell actions.",
