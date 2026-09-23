@@ -712,6 +712,11 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
         held_etfs = set()
         current_observations = set()
     discovery_inputs = discovery_eligibility_inputs(ROOT, market_date)
+    closure_inputs, closure_error = manual_completion_discovery_inputs(request)
+    if closure_error:
+        raise ValueError(closure_error)
+    if closure_inputs is not None:
+        discovery_inputs = closure_inputs
     admitted_discovery, eligibility_error = validate_observation_eligibility_reviews(decision, discovery_inputs)
     if eligibility_error:
         raise ValueError(f"invalid formal decision Observation eligibility contract: {eligibility_error}")
@@ -1044,6 +1049,38 @@ def discovery_eligibility_inputs(root: Path, market_date: str = "") -> dict[str,
         for item in (discovery.get("candidates") or [])
         if isinstance(item, dict) and normalize_code(item.get("code") or "")
     }
+
+
+def manual_completion_discovery_inputs(request: dict) -> tuple[dict[str, dict] | None, str]:
+    """Recover immutable same-request Discovery eligibility after query_context moves on."""
+    if str(request.get("source") or "").upper() != "CHATGPT_MANUAL_FORMAL_COMPLETION":
+        return None, ""
+    closure = request.get("observation_eligibility_closure")
+    if closure is None:
+        return None, ""
+    if not isinstance(closure, dict):
+        return None, "manual completion observation_eligibility_closure must be an object"
+    parent_id = str(request.get("parent_request_id") or "").strip()
+    if (
+        str(closure.get("parent_request_id") or "").strip() != parent_id
+        or str(closure.get("status") or "").upper() != "READY"
+    ):
+        return None, "manual completion observation eligibility closure is not bound READY to parent request"
+    candidates = closure.get("candidates")
+    if not isinstance(candidates, list):
+        return None, "manual completion observation eligibility closure requires candidates"
+    out: dict[str, dict] = {}
+    for index, item in enumerate(candidates):
+        if not isinstance(item, dict):
+            return None, f"manual completion observation eligibility closure candidate[{index}] must be an object"
+        code = normalize_code(item.get("code") or "")
+        quote_status = str(item.get("formal_quote_status") or "").upper()
+        if not code or code in out:
+            return None, f"manual completion observation eligibility closure candidate[{index}] has invalid or duplicate code"
+        if quote_status not in {"READY", "DEGRADED", "FAILED"}:
+            return None, f"manual completion observation eligibility closure candidate[{index}] has invalid formal_quote_status"
+        out[code] = {"code": code, "formal_quote_status": quote_status}
+    return out, ""
 
 
 def validate_observation_eligibility_reviews(decision: dict, inputs: dict[str, dict]) -> tuple[set[str], str]:
