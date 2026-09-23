@@ -431,5 +431,43 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertIn("inputs.recovery_market == 'us'", workflow)
         self.assertNotIn("PUSHPLUS_TOKEN", (ROOT / ".github/workflows/us-extended-hours-pulse.yml").read_text(encoding="utf-8"))
 
+    def test_healthy_observation_only_change_is_not_semantic(self):
+        previous = {
+            "classification": "HEALTHY",
+            "recommended_action": "NONE",
+            "checked_at": "2026-09-23T09:00:00+08:00",
+            "current_capture_age_seconds": 120,
+            "current_capture_at": "2026-09-23T08:58:00+08:00",
+        }
+        current = {
+            **previous,
+            "checked_at": "2026-09-23T09:01:00+08:00",
+            "current_capture_age_seconds": 180,
+        }
+        self.assertFalse(runtime_self_heal.semantic_status_changed(previous, current))
+
+    def test_healthy_capture_or_action_change_remains_semantic(self):
+        previous = {
+            "classification": "HEALTHY",
+            "recommended_action": "NONE",
+            "checked_at": "2026-09-23T09:00:00+08:00",
+            "current_capture_age_seconds": 120,
+            "current_capture_at": "2026-09-23T08:58:00+08:00",
+        }
+        changed_capture = {**previous, "current_capture_at": "2026-09-23T09:01:00+08:00"}
+        changed_action = {**previous, "classification": "SCHEDULE_MISSED_OR_STALE", "recommended_action": "REFRESH_SNAPSHOT"}
+        self.assertTrue(runtime_self_heal.semantic_status_changed(previous, changed_capture))
+        self.assertTrue(runtime_self_heal.semantic_status_changed(previous, changed_action))
+
+    def test_non_healthy_status_metadata_change_is_not_suppressed(self):
+        previous = {
+            "classification": "CONSISTENCY_REGRESSION",
+            "recommended_action": "ESCALATE",
+            "checked_at": "2026-09-23T09:00:00+08:00",
+            "current_capture_age_seconds": 120,
+        }
+        current = {**previous, "checked_at": "2026-09-23T09:01:00+08:00", "current_capture_age_seconds": 180}
+        self.assertTrue(runtime_self_heal.semantic_status_changed(previous, current))
+
 if __name__ == "__main__":
     unittest.main()

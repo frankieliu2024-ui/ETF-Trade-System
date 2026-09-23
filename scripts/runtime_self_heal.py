@@ -136,6 +136,43 @@ def previous_status() -> dict:
     return data if isinstance(data, dict) else {}
 
 
+VOLATILE_HEALTH_OBSERVATION_FIELDS = frozenset({
+    "checked_at",
+    "current_capture_age_seconds",
+})
+
+
+def semantic_status_changed(previous: dict, current: dict) -> bool:
+    """Return whether a self-healing status change has business meaning.
+
+    Healthy/no-action assessments may refresh observation metadata without
+    creating a main mutation. All failure, recovery, trigger, identity, and
+    capture-time changes remain persistence-significant and fail closed.
+    """
+    if not previous:
+        return True
+    healthy_no_action = {
+        str(previous.get("classification") or "").upper(),
+        str(current.get("classification") or "").upper(),
+    } == {"HEALTHY"} and {
+        str(previous.get("recommended_action") or "").upper(),
+        str(current.get("recommended_action") or "").upper(),
+    } == {"NONE"}
+    if not healthy_no_action:
+        return previous != current
+    previous_semantic = {
+        key: value
+        for key, value in previous.items()
+        if key not in VOLATILE_HEALTH_OBSERVATION_FIELDS
+    }
+    current_semantic = {
+        key: value
+        for key, value in current.items()
+        if key not in VOLATILE_HEALTH_OBSERVATION_FIELDS
+    }
+    return previous_semantic != current_semantic
+
+
 def recent_attempts(previous: dict, now: datetime) -> list[str]:
     result: list[str] = []
     cutoff = now - timedelta(hours=1)
@@ -325,12 +362,15 @@ def main() -> int:
     parser.add_argument("--record-trigger", action="store_true")
     args = parser.parse_args()
 
+    previous = previous_status()
     status = assess()
     if args.repair_safe:
         status = repair_safe(status)
     if args.record_trigger:
         status = record_trigger(status)
-    atomic_write_json(STATUS_PATH, status)
+    explicit_mutation = args.repair_safe or args.record_trigger
+    if explicit_mutation or semantic_status_changed(previous, status):
+        atomic_write_json(STATUS_PATH, status)
     print(json.dumps(status, ensure_ascii=False))
     return 0
 
