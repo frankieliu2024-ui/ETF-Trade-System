@@ -546,15 +546,17 @@ jobs:
           python scripts/refresh_gate.py --annotate-contexts
 
       - name: Build E2E usability state
-        # Diagnostic/qualification output: always attempt after a qualifying
-        # request so the system records which decision fact domain failed.
-        if: ${{ always() && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        # Decision usability is request/state-sync qualification, not a scheduled
+        # market-fact producer responsibility. Scheduled pulses may refresh
+        # reusable Discovery evidence without rebuilding request-bound E2E state.
+        if: ${{ always() && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_e2e_status.py
 
       - name: Build state context and candidates
-        # Formal decision critical path. Its own contracts decide fail-closed;
-        # unrelated earlier step failure must not suppress the build.
-        if: ${{ always() && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        # Full decision preparation is request/state-sync bound. Scheduled
+        # snapshots keep canonical market facts and reusable Discovery current;
+        # formal requests/recovery rebuild the canonical decision context.
+        if: ${{ always() && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_state_context.py
       - name: Build post-market review context
         # Review is downstream maintenance, not an intraday decision prerequisite.
