@@ -367,6 +367,19 @@ def _query_refresh_needed(root: Path, symbols: list[str], now: datetime, policy:
     return False
 
 
+def _active_non_cn_refresh_symbols(overseas: dict[str, Any], extended: dict[str, Any], now: datetime) -> list[str]:
+    symbols: list[str] = []
+    for key, raw in (overseas.get("objects") or {}).items():
+        record = raw if isinstance(raw, dict) else {}
+        market = _market_for_overseas(str(key), record)
+        if market != "UNKNOWN" and market_phase(market, now=now, object_type=_object_type_for_market(str(key), record)) in {"REGULAR", "OPENING_AUCTION", "PRE_MARKET", "POST_MARKET"}:
+            symbols.append(str(key).upper())
+    for key in (extended.get("objects") or {}):
+        if market_phase("US", now=now) in {"REGULAR", "PRE_MARKET", "POST_MARKET"}:
+            symbols.append(str(key).upper())
+    return list(dict.fromkeys(symbols))
+
+
 def build_market_quote_context(root: Path | str, now: datetime | None = None, *, force_refresh: bool = False, requested_symbols: list[str] | None = None, decision_request_time: datetime | None = None) -> dict[str, Any]:
     """Build the routed quote view; explicit query-time requests call providers before state fallback."""
     root = Path(root)
@@ -396,19 +409,25 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
         decision_freshness["request_scoped_resolution_reason"] = reference_resolution["reason"]
         decision_freshness["a_share_market_phase"] = reference_resolution["phase"]
     # Active markets still refresh independently when A-share is resolved by a
-    # closed-session reference.
+    # closed-session reference. On an A-share holiday/off-session, do not turn
+    # wall-clock CN hours into a synthetic active-market refresh requirement.
     has_usable_post_request_current = has_decision_request and decision_freshness["formal_decision_allowed"]
-    active_market_refresh_needed = _query_refresh_needed(root, explicit_symbols, query_time, policy)
+    refresh_symbols = list(explicit_symbols)
+    if has_decision_request and reference_resolution["resolved"]:
+        refresh_symbols = [x for x in refresh_symbols if not str(x).split(".")[0].isdigit()]
+        if not refresh_symbols:
+            refresh_symbols = _active_non_cn_refresh_symbols(overseas, extended, query_time)
+    active_market_refresh_needed = _query_refresh_needed(root, refresh_symbols, query_time, policy) if refresh_symbols else False
     should_refresh = (
         (force_refresh and not has_decision_request)
         or (has_decision_request and (not has_usable_post_request_current or active_market_refresh_needed))
-    ) and (bool(explicit_symbols) or active_market_refresh_needed or has_decision_request or decision_freshness["refresh_required"])
+    ) and (bool(refresh_symbols) or active_market_refresh_needed or (has_decision_request and not has_usable_post_request_current) or decision_freshness["refresh_required"])
     if should_refresh:
         try:
             from scripts.query_time_market_refresh import refresh_market_quotes
         except ModuleNotFoundError:
             from query_time_market_refresh import refresh_market_quotes
-        refreshed = refresh_market_quotes(root, explicit_symbols, query_time)
+        refreshed = refresh_market_quotes(root, refresh_symbols, query_time)
         for quote in refreshed.get("quotes", []):
             if isinstance(quote, dict):
                 quotes.append(quote)
