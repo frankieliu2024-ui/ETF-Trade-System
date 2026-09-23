@@ -277,6 +277,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Drop any rebuildable working-tree changes produced by earlier steps
+          # before synchronizing this persistence attempt to execution-time latest main.
+          git restore --worktree --staged .
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
