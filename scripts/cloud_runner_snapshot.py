@@ -580,7 +580,7 @@ def main() -> int:
         node = "1130"
     planned_time = PLANNED_TIMES.get(node, "")
 
-    if args.node == "scheduled" and node == "1130" and morning_close_already_recorded(market_date):
+    query_time_refresh = os.environ.get("QUERY_TIME_REFRESH", "").lower() == "true"\n    if args.node == "scheduled" and node == "1130" and morning_close_already_recorded(market_date) and not query_time_refresh:
         current = read_current(ROOT)
         write_runtime_health({"status": "SKIPPED", "reason": "morning_close_already_recorded", "market_date": market_date, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "market_phase": market_phase, "latest_snapshot": current.get("latest_snapshot", ""), "provider_as_of": (current.get("data_freshness") or {}).get("provider_as_of", "")})
         print(json.dumps({"ok": True, "skipped": True, "reason": "morning_close_already_recorded", "market_date": market_date, "latest_snapshot": current.get("latest_snapshot", "")}, ensure_ascii=False))
