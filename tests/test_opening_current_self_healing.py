@@ -291,7 +291,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertIn('if [ "$action" != "NONE" ]; then', persist)
         self.assertLess(
             persist.index("git add -A -- data/state/self_healing_status.json"),
-            persist.index('if [ "${{ steps.assess.outputs.action }}" != "NONE" ]; then'),
+            persist.index('if [ "$action" != "NONE" ]; then'),
         )
 
     def test_self_healing_persistence_rebuilds_from_latest_main_without_rebase(self):
