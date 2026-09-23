@@ -1,0 +1,40 @@
+name: Issue 687 ETF source fallback benchmark
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "test/687-etf-source-fallback-benchmark-*"
+    paths:
+      - "scripts/issue_687_source_fallback_benchmark.py"
+      - ".github/workflows/issue-687-source-fallback-benchmark.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: issue-687-etf-source-fallback-benchmark
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Compile bounded benchmark
+        run: python -m py_compile scripts/issue_687_source_fallback_benchmark.py
+      - name: Run primary/fallback completeness and latency benchmark
+        run: python scripts/issue_687_source_fallback_benchmark.py
+      - name: Upload benchmark evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-687-source-fallback-benchmark-${{ github.run_id }}
+          path: data/state/issue_687_source_fallback_benchmark.json
+          if-no-files-found: error
+          retention-days: 14
