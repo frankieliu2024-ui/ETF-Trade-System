@@ -209,7 +209,9 @@ PushPlus微信渠道存在平台层展示模板：ETF系统通过API传入的业
 
 REPORT只接受已经达到合法终态并冻结的active正式节点结果，不重新分析，也不拥有formal reasoning或交易权限。请求至少包含：schema_version、channel=REPORT、report_type、report_id、task_id、task_run_id、generated_at、effective_market_date、source_actor、source_reference、title、summary、full_content、content_hash、idempotency_key、delivery_mode=FULL_REPORT和no_trade_authority=true。
 
-Scheduled Review Actor持久化REPORT时，唯一可执行写入入口为`scripts/write_report_delivery_request.py`；该入口必须调用`notification_center.build_report_delivery_request`并在落盘前通过同一validator。Actor不得手工拼接或复制REPORT schema；schema变化只由主动通知域canonical owner维护。\n\ncanonical intake只接受`ETF_TRADE_REVIEW`与`ETF_SYSTEM_REVIEW`，并校验来源身份、任务/运行身份、正文哈希和幂等键；重复幂等键不得重复投递。新的`ETF_FORMAL_DECISION` REPORT请求必须fail closed为unsupported report type；这一限制只约束新投递，不删除、不改写既有历史artifact。REPORT请求只能创建delivery event，不能修改MASTER、risk permission、lifecycle、formal decision、account、trade、CASE或订单。REPORT投递成功或失败都不得反向改写业务事实是否成功；业务事实失败也不得在正文中伪装为成功。REPORT是终态投递输入，不得重新进入INTERRUPT事件生成器；同一Scheduled run/node继续由现有幂等键防止重复投递。
+Scheduled Review Actor持久化REPORT时，唯一可执行写入入口为`scripts/write_report_delivery_request.py`；该入口必须调用`notification_center.build_report_delivery_request`并在落盘前通过同一validator。Actor不得手工拼接或复制REPORT schema；schema变化只由主动通知域canonical owner维护。
+
+canonical intake只接受`ETF_TRADE_REVIEW`与`ETF_SYSTEM_REVIEW`，并校验来源身份、任务/运行身份、正文哈希和幂等键；重复幂等键不得重复投递。新的`ETF_FORMAL_DECISION` REPORT请求必须fail closed为unsupported report type；这一限制只约束新投递，不删除、不改写既有历史artifact。REPORT请求只能创建delivery event，不能修改MASTER、risk permission、lifecycle、formal decision、account、trade、CASE或订单。REPORT投递成功或失败都不得反向改写业务事实是否成功；业务事实失败也不得在正文中伪装为成功。REPORT是终态投递输入，不得重新进入INTERRUPT事件生成器；同一Scheduled run/node继续由现有幂等键防止重复投递。
 
 ### 正式判断与raw trigger边界
 
