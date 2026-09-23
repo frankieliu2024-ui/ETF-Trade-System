@@ -22,7 +22,7 @@ class E2EDecisionReadinessTests(unittest.TestCase):
             "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
         )
 
-    def test_request_bound_incomplete_observability_is_not_ready(self):
+    def test_request_bound_legacy_observability_is_diagnostic_only(self):
         result = context_component(
             {
                 "decision_fact_pack": {
@@ -42,7 +42,7 @@ class E2EDecisionReadinessTests(unittest.TestCase):
         self.assertEqual(result["minimum_decision_context"], "INCOMPLETE")
         self.assertTrue(result["request_bound"])
 
-    def test_request_bound_observed_latency_can_reach_boundary_check(self):
+    def test_request_bound_observed_latency_ignores_legacy_boundary(self):
         result = context_component(
             {
                 "decision_fact_pack": {
@@ -62,8 +62,9 @@ class E2EDecisionReadinessTests(unittest.TestCase):
                 }
             },
         )
-        self.assertEqual(result["status"], "DEGRADED")
-        self.assertEqual(result["minimum_decision_context"], "INCOMPLETE")
+        self.assertEqual(result["status"], "READY")
+        self.assertEqual(result["minimum_decision_context"], "READY_OR_NOT_APPLICABLE")
+        self.assertTrue(result["request_bound"])
 
     def test_true_incomplete_formal_context_remains_not_ready(self):
         result = context_component(
