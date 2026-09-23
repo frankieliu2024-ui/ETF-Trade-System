@@ -2,6 +2,7 @@ import unittest
 
 from scripts.check_production_mutation_protocol import (
     acceptance_matrix_for_tier,
+    candidate_change_acceptance_allows_global_failure,
     classify_risk_tier,
     system_subtraction_fast_path_eligible,
     tier2_acceptance_route,
@@ -86,6 +87,21 @@ class V19RiskTierTests(unittest.TestCase):
         )
         self.assertIn("failure_attribution_on_hard_fail", acceptance_matrix_for_tier("TIER_2", "T2-F")["required_gates"])
         self.assertNotIn("merged_main_full_consistency", acceptance_matrix_for_tier("TIER_2", "T2-P")["required_gates"])
+
+    def test_unrelated_review_failure_is_orthogonal_but_same_domain_fails_safe(self):
+        failed = [{"name": "review:post_close_canonical_chain", "status": "FAIL"}]
+        self.assertTrue(candidate_change_acceptance_allows_global_failure(
+            changed_files=["docs/生产变更与并发写入协议_V1.0.md", "scripts/check_production_mutation_protocol.py"],
+            failed_checks=failed,
+        ))
+        self.assertFalse(candidate_change_acceptance_allows_global_failure(
+            changed_files=["scripts/build_post_market_review.py"],
+            failed_checks=failed,
+        ))
+        self.assertFalse(candidate_change_acceptance_allows_global_failure(
+            changed_files=["docs/生产变更与并发写入协议_V1.0.md"],
+            failed_checks=[{"name": "account_fact:current_availability", "status": "FAIL"}],
+        ))
 
     def test_subtraction_fast_path_requires_all_safety_conditions(self):
         kwargs = dict(
