@@ -15,11 +15,13 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
             (root / "data/state").mkdir(parents=True)
             universe = {"version": "u1", "objects": [{"code": "159326"}]}
             identity = query_context._discovery_universe_identity(universe)
+            (root / "data/state/market_delta.json").write_text(json.dumps({"market_date": "2026-09-22", "mode": "OBJECTIVE_INTRADAY_DELTA", "status": "READY", "changes": []}), encoding="utf-8")
+            delta_identity = query_context._discovery_delta_identity(root)
             (root / "data/state/query_context.json").write_text(json.dumps({
                 "market_date": "2026-09-22",
                 "latest_valid_node": "CONTINUOUS_AFTERNOON",
                 "current": {"market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON", "latest_snapshot": "snap.json"},
-                "formal_etf_discovery": {"status": "READY", "universe_identity": identity, "candidates": [{"code": "159326"}]},
+                "formal_etf_discovery": {"status": "READY", "universe_identity": identity, "discovery_delta_identity": delta_identity, "candidates": [{"code": "159326"}]},
             }), encoding="utf-8")
             reused = query_context._reusable_formal_discovery(root, {"market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON", "latest_snapshot": "snap.json"}, identity, {"159326"})
             self.assertEqual(reused["reuse"]["mode"], "SAME_MARKET_NODE_LEGAL_DISCOVERY_EVIDENCE_REUSE")
@@ -53,6 +55,34 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
                 "formal_etf_discovery": {"status": "READY", "universe_identity": identity, "candidates": []},
             }), encoding="utf-8")
             self.assertIsNone(query_context._reusable_formal_discovery(root, {"market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON", "latest_snapshot": "new.json"}, identity, set()))
+
+    def test_terminal_discovery_reuses_after_request_bound_snapshot_changes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "data/state").mkdir(parents=True)
+            identity = query_context._discovery_universe_identity({"version": "u1", "objects": [{"code": "159326"}]})
+            (root / "data/state/market_delta.json").write_text(json.dumps({"market_date": "2026-09-22", "mode": "OBJECTIVE_INTRADAY_DELTA", "status": "READY", "changes": []}), encoding="utf-8")
+            delta_identity = query_context._discovery_delta_identity(root)
+            (root / "data/state/query_context.json").write_text(json.dumps({
+                "market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON",
+                "current": {"market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON", "latest_snapshot": "old.json"},
+                "formal_etf_discovery": {"status": "READY", "universe_identity": identity, "discovery_delta_identity": delta_identity, "candidates": [{"code": "159326"}]},
+            }), encoding="utf-8")
+            reused = query_context._reusable_formal_discovery(root, {"market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON", "latest_snapshot": "new.json"}, identity, {"159326"})
+            self.assertIsNotNone(reused)
+
+    def test_discovery_delta_change_invalidates_reuse(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "data/state").mkdir(parents=True)
+            identity = query_context._discovery_universe_identity({"version": "u1", "objects": [{"code": "159326"}]})
+            (root / "data/state/market_delta.json").write_text(json.dumps({"market_date": "2026-09-22", "mode": "OBJECTIVE_INTRADAY_DELTA", "status": "READY", "changes": []}), encoding="utf-8")
+            (root / "data/state/query_context.json").write_text(json.dumps({
+                "market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON", "current": {"market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON"},
+                "formal_etf_discovery": {"status": "READY", "universe_identity": identity, "discovery_delta_identity": query_context._discovery_delta_identity(root), "candidates": []},
+            }), encoding="utf-8")
+            (root / "data/state/market_delta.json").write_text(json.dumps({"market_date": "2026-09-22", "mode": "OBJECTIVE_INTRADAY_DELTA", "status": "READY", "changes": [{"symbol": "159326", "price_change_pct": 1.0}]}), encoding="utf-8")
+            self.assertIsNone(query_context._reusable_formal_discovery(root, {"market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON"}, identity, set()))
 
     def test_refresh_assurance_precedes_full_decision_context(self):
         events = []
