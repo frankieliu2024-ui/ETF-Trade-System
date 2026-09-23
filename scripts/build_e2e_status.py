@@ -345,24 +345,21 @@ def context_component(query: dict, decision: dict) -> dict:
         }
 
     if boundary == "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED":
-        if request_bound:
-            return {
-                "status": "DEGRADED",
-                "reason": "request-bound decision context has not established the minimum decision-ready boundary",
-                "query_context": True,
-                "decision_context": True,
-                "minimum_decision_context": "INCOMPLETE",
-                "observability_boundary": boundary,
-                "request_bound": True,
-            }
+        # state_manager.build_decision_trace() emits this legacy marker by
+        # default. It is observability metadata, not a readiness contract.
+        # Request-scoped readiness is owned by the decision_fact_pack gates
+        # above (identity/time + observed core-result latency) and by the
+        # explicit formal context completeness contract. Treating the marker
+        # itself as a request-bound blocker can re-block an already legal
+        # business decision and delay the first user-visible reply.
         return {
             "status": "READY",
-            "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only for non-request-scoped background state",
+            "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only",
             "query_context": True,
             "decision_context": True,
             "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
             "observability_boundary": boundary,
-            "request_bound": False,
+            "request_bound": request_bound,
         }
 
     return {
