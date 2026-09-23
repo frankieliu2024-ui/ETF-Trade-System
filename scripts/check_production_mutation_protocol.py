@@ -98,6 +98,27 @@ def system_subtraction_fast_path_eligible(
     ))
 
 
+def candidate_change_acceptance_allows_global_failure(*, changed_files: list[str], failed_checks: list[dict]) -> bool:
+    """Allow only reliably attributed, unrelated historical review failures.
+
+    Unknown failures remain fail-closed. This is the existing acceptance owner's
+    change-specific/global-health routing rule, not a second acceptance engine.
+    """
+    if not failed_checks:
+        return True
+    if any(str(item.get("name") or "") != "review:post_close_canonical_chain" for item in failed_checks):
+        return False
+    review_domain_markers = (
+        "post_market_review/",
+        "events/reviews/",
+        "close_review_closure",
+        "build_post_market_review",
+        "post_close_review",
+        "review_context",
+    )
+    return not any(any(marker in str(path) for marker in review_domain_markers) for path in changed_files)
+
+
 def acceptance_matrix_for_tier(tier: str, route: str | None = None) -> dict:
     """Return the minimum acceptance envelope for the existing risk tier."""
     rows = {
