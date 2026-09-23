@@ -107,15 +107,15 @@ jobs:
           NATURAL_PULSE_ELIGIBLE: ${{ steps.pulse_gate.outputs.natural_pulse_eligible }}
           PULSE_GATE_ELIGIBLE: ${{ steps.pulse_gate.outputs.eligible }}
         run: python scripts/build_overseas_runtime_health.py
-      - name: Rebuild on-demand query context
-        if: ${{ success() && steps.pulse_gate.outputs.eligible == 'true' }}
-        run: python scripts/build_query_context.py
+      # Decision preparation is request-bound/recovery-owned. A scheduled
+      # overseas fact pulse publishes canonical market facts and health only;
+      # formal requests rebuild query_context from those facts when needed.
       - name: Commit overseas contexts and runtime health
         if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/state/overseas_context.json data/state/us_extended_hours_context.json data/state/query_context.json data/state/overseas_runtime_health.json
+          git add data/state/overseas_context.json data/state/us_extended_hours_context.json data/state/overseas_runtime_health.json
           [ -f data/state/overseas_context_previous.json ] && git add data/state/overseas_context_previous.json || true
           if git diff --cached --quiet; then
             exit 0
