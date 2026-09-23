@@ -122,6 +122,32 @@ class ManualCompletionEnvelopeTests(unittest.TestCase):
         self.assertEqual(payload["observation_eligibility_closure"], closure)
 
 
+class PostCloseFormalDecisionIngressTests(unittest.TestCase):
+    def test_post_close_formal_completion_remains_decision_fact(self):
+        request = {
+            "request_id": "post-close-completion",
+            "parent_request_id": "post-close-parent",
+            "request_type": "STATE_SYNC_ONLY",
+            "source": "CHATGPT_MANUAL_FORMAL_COMPLETION",
+            "interaction_scenario": "POST_CLOSE_REVIEW",
+            "_ingress_path": "requests/live_snapshot/post-close-completion.json",
+            "formal_decision": formal_decision(),
+        }
+        contract = state_sync.canonical_ingress_contract_for_request(request)
+        self.assertEqual(contract["terminal_state"], state_sync.CANONICAL_INGRESS_SUBMITTED)
+        self.assertEqual(contract["reason"], "formal_decision_request_submitted")
+
+    def test_actual_post_close_review_still_requires_review_payload(self):
+        request = {
+            "request_id": "post-close-review",
+            "interaction_scenario": "POST_CLOSE_REVIEW",
+            "_ingress_path": "requests/live_snapshot/post-close-review.json",
+        }
+        contract = state_sync.canonical_ingress_contract_for_request(request)
+        self.assertEqual(contract["terminal_state"], state_sync.CANONICAL_INGRESS_FAILED_EXPLICITLY)
+        self.assertEqual(contract["reason"], "missing_formal_review")
+
+
 class ManualCompletionDiscoveryClosureTests(unittest.TestCase):
     def test_valid_closure_recovers_discovery_inputs_after_query_context_drift(self):
         request = {
