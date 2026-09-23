@@ -329,56 +329,46 @@ def fetch_official_tencent_broad_spot(market_date: str) -> tuple[list[dict[str, 
 
 
 def fetch_reconciled_broad_etf_spot(market_date: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Eastmoney broad primary plus independent Hithink/Tencent fallback and reconciliation."""
-    official_rows: list[dict[str, Any]] = []
-    official_meta: dict[str, Any] = {}
-    official_error = None
-    try:
-        official_rows, official_meta = fetch_official_tencent_broad_spot(market_date)
-    except Exception as exc:
-        official_error = str(exc)[-500:]
-    east_rows: list[dict[str, Any]] = []
+    """Eastmoney is the broad primary; Hithink ETF identities + Tencent quotes are the independent fallback."""
     east_error = None
     try:
         east_rows = fetch_broad_etf_spot()
     except Exception as exc:
+        east_rows = []
         east_error = str(exc)[-500:]
-    if not official_rows and not east_rows:
-        raise RuntimeError(f"broad providers unavailable; official={official_error}; eastmoney={east_error}")
-    merged = {(int(x.get("market_id") or 0), str(x.get("code") or "")): dict(x) for x in official_rows}
-    official_keys = set(merged)
-    east_keys = set()
-    for row in east_rows:
-        key = (int(row.get("market_id") or 0), str(row.get("code") or ""))
-        east_keys.add(key)
-        if key in merged:
-            base = merged[key]
-            for field in ("return_60d_pct", "return_ytd_pct", "volume_ratio", "turnover_pct", "amplitude_pct", "listing_date"):
-                if row.get(field) is not None and row.get(field) != "":
-                    base[field] = row.get(field)
-            base["eastmoney_augmented"] = True
-        else:
-            enriched = dict(row)
-            enriched["broad_quote_source"] = "EASTMONEY_PUSH2DELAY_FALLBACK_AUGMENTATION"
-            merged[key] = enriched
-    return [merged[key] for key in sorted(merged)], {
-        **official_meta,
-        "official_path_error": official_error, "eastmoney_count": len(east_rows), "eastmoney_error": east_error,
-        "official_intersection_eastmoney_count": len(official_keys & east_keys),
-        "official_only_count": len(official_keys - east_keys), "eastmoney_only_count": len(east_keys - official_keys),
-        "official_only_identities": [
-            {"market_id": market_id, "code": code, "exchange": "SSE" if market_id == 1 else "SZSE",
-             "name": str(merged.get((market_id, code), {}).get("name") or code)}
-            for market_id, code in sorted(official_keys - east_keys)
-        ],
-        "eastmoney_only_identities": [
-            {"market_id": market_id, "code": code, "exchange": "SSE" if market_id == 1 else "SZSE",
-             "name": str(merged.get((market_id, code), {}).get("name") or code)}
-            for market_id, code in sorted(east_keys - official_keys)
-        ],
-        "reconciled_count": len(merged),
-    }
 
+    if east_rows:
+        return east_rows, {
+            "broad_primary_source": "EASTMONEY_PUSH2DELAY",
+            "eastmoney_count": len(east_rows),
+            "eastmoney_error": None,
+            "fallback_used": False,
+            "fallback_source": None,
+            "reconciled_count": len(east_rows),
+        }
+
+    fallback_error = None
+    try:
+        fallback_rows, fallback_meta = fetch_official_tencent_broad_spot(market_date)
+    except Exception as exc:
+        fallback_rows = []
+        fallback_meta = {}
+        fallback_error = str(exc)[-500:]
+
+    if not fallback_rows:
+        raise RuntimeError(
+            f"broad providers unavailable; eastmoney={east_error}; hithink_tencent={fallback_error}"
+        )
+    return fallback_rows, {
+        **fallback_meta,
+        "broad_primary_source": "EASTMONEY_PUSH2DELAY",
+        "eastmoney_count": 0,
+        "eastmoney_error": east_error,
+        "fallback_used": True,
+        "fallback_source": "HITHINK_ETF_MASTER_PLUS_TENCENT",
+        "fallback_error": fallback_error,
+        "reconciled_count": len(fallback_rows),
+    }
 
 def _secid(code: str, market_id: int | None = None) -> str:
     market = market_id if market_id in {0, 1} else (1 if str(code).startswith("5") else 0)
