@@ -84,6 +84,14 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
             (root / "data/state/market_delta.json").write_text(json.dumps({"market_date": "2026-09-22", "mode": "OBJECTIVE_INTRADAY_DELTA", "status": "READY", "changes": [{"symbol": "159326", "price_change_pct": 1.0}]}), encoding="utf-8")
             self.assertIsNone(query_context._reusable_formal_discovery(root, {"market_date": "2026-09-22", "latest_valid_node": "CONTINUOUS_AFTERNOON"}, identity, set()))
 
+    def test_push_without_new_snapshot_restores_latest_query_context_before_reuse(self):
+        workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        restore = 'git show origin/main:data/state/query_context.json > /tmp/latest-query-context.json'
+        build = 'python scripts/build_query_context.py --run-discovery "${REQUEST_ARGS[@]}"'
+        self.assertIn(restore, workflow)
+        self.assertIn('cp /tmp/latest-query-context.json data/state/query_context.json', workflow)
+        self.assertLess(workflow.index(restore), workflow.index(build))
+
     def test_refresh_assurance_precedes_full_decision_context(self):
         events = []
         current = {
