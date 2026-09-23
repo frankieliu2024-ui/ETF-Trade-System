@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-23T21:10:17+08:00",
+  "updated_at": "2026-09-24T01:52:07+08:00",
   "last_status": "SENT",
-  "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】美股科技内部结构出现显著分化",
+  "last_type": "US_OPEN_VALUE_ALERT",
+  "last_title": "【市场异动】美股科技指数开盘出现显著分化",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -13031,27 +13031,63 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-23T21:10:17+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "apac-session-summary:2026-09-10:PRIMARY_CLOSE",
-      "type": "APAC_SESSION_SUMMARY",
-      "title": "【收盘总结】日经225指数（N225）、韩国综合指数（KOSPI）、台湾加权指数（TWII）收盘结构，A股参考：区域分化/相对平稳",
-      "content": "### 核心结论\n- **节点**：日韩台主要市场收盘后\n- **区域判断**：区域分化/相对平稳\n- **当日有效覆盖**：4/4\n- **时点语义**：日本/韩国/台湾已进入收盘结果；香港仍可能在交易\n- **日经225指数（N225）**：较前收+0.20%\n\n### 关键路径\n- **日经225指数（N225）**：开盘64,768.53，日内高65,270.95、低64,186.68，收/现价65,270.95；较开盘+0.78%，自低点修复+1.69%，距高点+0.00%，收于日内区间高位。\n- **韩国综合指数（KOSPI）**：开盘7,038.85，日内高7,072.79、低6,898.45，收/现价7,033.92；较开盘-0.07%，自低点修复+1.96%，距高点-0.55%，收于日内区间中部。\n- **台湾加权指数（TWII）**：开盘47,130.96，日内高47,130.96、低46,573.47，收/现价46,940.49；较开盘-0.40%，自低点修复+0.79%，距高点-0.40%，收于日内区间中部。\n\n### 对ETF系统的影响\n优先服务A股尾盘；若因调度或provider延迟而补发，仍保留日韩台收盘事实，但必须以真实时点解释，不能伪装成当前刚发生。\n\n### 当前动作\n**将亚太收盘结构纳入A股尾盘/下一节点复核，重点检查相关指数、持仓ETF和观察ETF自身反馈。**\n\n### 数据与边界\n- **亚太各市场最新有效时点上限**：2026-09-10 15:29:42\n- **A股同步参考时点**：2026-09-10 15:15:00\n- **通知生成**：2026-09-10 15:30:29\n- **边界**：香港尚未收盘时必须标为盘中；不同市场真实时点不伪装同步。",
-      "source": "overseas_context+CURRENT",
+      "notification_id": "notification_ee4fb146189228f363f3",
+      "event_type": "US_OPEN_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "us-session-summary:2026-09-23:OPEN",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
       "user_severity": "需要关注",
-      "user_action": "纳入A股尾盘/最近节点跨市场复核，不机械交易",
-      "status": "SENT",
-      "attempted_at": "2026-09-10T15:30:30+08:00",
+      "user_action": "纳入下一A股交易节点复核，无需机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-24T01:52:06+08:00",
+      "sent_at": "2026-09-24T01:52:07+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-26T01:52:06+08:00",
+      "title": "【市场异动】美股科技指数开盘出现显著分化",
+      "content": "### 核心结论\n- **触发原因**：现金盘当前最大绝对涨跌1.43%。\n- **外部结构**：美股科技风险偏好偏弱。\n- **宽科技**：纳斯达克100指数（NDX）-0.90%。\n- **半导体**：费城半导体指数（SOX）-1.43%。\n- **数据口径**：纳斯达克100指数（NDX）/费城半导体指数（SOX）直接指数。\n\n### 关键路径\n- **纳斯达克100指数（NDX）**：开盘后明显回吐。\n- **费城半导体指数（SOX）**：开盘后明显回吐。\n\n### 对ETF系统的影响\n- **外部含义**：美股科技风险偏好转弱，提高A股高相关科技篮子的风险复核优先级。\n- **本地验证**：先检查A股自身承接是否同步减弱。\n- **资本比较**：只有本地反馈也转弱，才进一步影响持仓风险收益与资本配置。\n\n### 当前动作\n**纳入下一A股正式节点复核：先看本地传导，再看相关ETF自身反馈和资本效率；不因海外单一信号机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-24 01:51:49\n- **通知生成（北京时间）**：2026-09-24 01:52:06\n- **边界**：这是海外结构证据，不是A股买卖信号；实际现金盘开盘事实可在同一常规交易时段恢复，但不得把后续累计涨跌伪装成开盘跳空。",
+      "source": "us_extended_hours_context",
+      "confirmation_context": {
+        "market": "US",
+        "market_date": "2026-09-23",
+        "us_market_date": "2026-09-23",
+        "session": "REGULAR",
+        "direction": "DOWN",
+        "event_category": "OPEN_SIGNAL",
+        "fact_family": "US_SESSION_STRUCTURE",
+        "object_codes": [
+          "NDX",
+          "SOX"
+        ],
+        "source_fact_ids": [
+          "2026-09-23:NDX:2026-09-24T01:51:49+08:00",
+          "2026-09-23:SOX:2026-09-24T01:51:49+08:00"
+        ],
+        "session_node": "OPEN",
+        "direct_cash_indices_used": true,
+        "tech_open_gap_pct": -0.130452934746772,
+        "semi_open_gap_pct": -0.23982437300135162,
+        "tech_change_pct": -0.8954,
+        "semi_change_pct": -1.426,
+        "market_as_of_beijing": "2026-09-24T01:51:49+08:00",
+        "cash_close_as_of_beijing": "",
+        "generated_at_beijing": "2026-09-24 01:52:06",
+        "event_family_id": "US:2026-09-23:REGULAR::OPEN_SIGNAL:DOWN:"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_94e6572e0980bceb3176",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-09-24T01:52:07+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "report-delivery:ETF变更复核:etf-system-review-20260910T174014-run10",
       "type": "REPORT_DELIVERY_REQUEST",
@@ -16631,6 +16667,24 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_1887e26c48273f034300",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "us-session-summary:2026-09-23:OPEN",
+      "type": "US_OPEN_VALUE_ALERT",
+      "title": "【市场异动】美股科技指数开盘出现显著分化",
+      "content": "### 核心结论\n- **触发原因**：现金盘当前最大绝对涨跌1.43%。\n- **外部结构**：美股科技风险偏好偏弱。\n- **宽科技**：纳斯达克100指数（NDX）-0.90%。\n- **半导体**：费城半导体指数（SOX）-1.43%。\n- **数据口径**：纳斯达克100指数（NDX）/费城半导体指数（SOX）直接指数。\n\n### 关键路径\n- **纳斯达克100指数（NDX）**：开盘后明显回吐。\n- **费城半导体指数（SOX）**：开盘后明显回吐。\n\n### 对ETF系统的影响\n- **外部含义**：美股科技风险偏好转弱，提高A股高相关科技篮子的风险复核优先级。\n- **本地验证**：先检查A股自身承接是否同步减弱。\n- **资本比较**：只有本地反馈也转弱，才进一步影响持仓风险收益与资本配置。\n\n### 当前动作\n**纳入下一A股正式节点复核：先看本地传导，再看相关ETF自身反馈和资本效率；不因海外单一信号机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-24 01:51:49\n- **通知生成（北京时间）**：2026-09-24 01:52:06\n- **边界**：这是海外结构证据，不是A股买卖信号；实际现金盘开盘事实可在同一常规交易时段恢复，但不得把后续累计涨跌伪装成开盘跳空。",
+      "source": "us_extended_hours_context",
+      "user_severity": "需要关注",
+      "user_action": "纳入下一A股交易节点复核，无需机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-09-24T01:52:07+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_ee4fb146189228f363f3",
       "lifecycle_status": "SENT"
     }
   ],
