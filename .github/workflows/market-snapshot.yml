@@ -520,11 +520,11 @@ jobs:
               python scripts/build_query_context.py --force-refresh "${REQUEST_ARGS[@]}"
             fi
           elif [ "${{ steps.snapshot_result.outputs.snapshot_written }}" = "true" ] && [ "$REQUEST_REQUIRES_REFRESH" = "true" ]; then
-            # A request that explicitly requires a post-request snapshot must
-            # retain its request-scoped refresh semantics even when this run
-            # already published a core snapshot. Do not silently downgrade it
-            # to discovery-only cached-state consumption.
-            python scripts/build_query_context.py --force-refresh "${REQUEST_ARGS[@]}"
+            # The workflow has already published the request-bound post-request
+            # core snapshot. Preserve request identity/time through REQUEST_ARGS,
+            # but do not force a second refresh: --force-refresh also disables
+            # legal same-node Discovery reuse inside build_query_context.
+            python scripts/build_query_context.py --run-discovery "${REQUEST_ARGS[@]}"
           elif [ "${{ steps.snapshot_result.outputs.snapshot_written }}" = "true" ]; then
             # The core snapshot is already current in this run. Execute bounded
             # all-market Discovery without forcing a duplicate core refresh.

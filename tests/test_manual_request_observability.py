@@ -203,6 +203,13 @@ class ManualRequestBoundedObservabilityTests(unittest.TestCase):
         self.assertIn('REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"', workflow)
         self.assertIn('python scripts/build_query_context.py --force-refresh --symbols "$REQUEST_SYMBOLS" "${REQUEST_ARGS[@]}"', workflow)
 
+    def test_post_request_snapshot_does_not_force_discovery_rescan(self):
+        workflow = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
+        branch = workflow.split('elif [ "${{ steps.snapshot_result.outputs.snapshot_written }}" = "true" ] && [ "$REQUEST_REQUIRES_REFRESH" = "true" ]; then', 1)[1]
+        branch = branch.split('elif [ "${{ steps.snapshot_result.outputs.snapshot_written }}" = "true" ]; then', 1)[0]
+        self.assertIn('python scripts/build_query_context.py --run-discovery "${REQUEST_ARGS[@]}"', branch)
+        self.assertNotIn('python scripts/build_query_context.py --force-refresh "${REQUEST_ARGS[@]}"', branch)
+
 
 if __name__ == "__main__":
     unittest.main()
