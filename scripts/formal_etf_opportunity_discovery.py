@@ -385,9 +385,13 @@ def fetch_reconciled_broad_etf_spot(market_date: str) -> tuple[list[dict[str, An
     def get_hithink() -> list[dict[str, Any]]:
         return fetch_hithink_etf_master()
 
+    source_started = time.monotonic()
+    source_finished: dict[str, float] = {}
     with ThreadPoolExecutor(max_workers=2, thread_name_prefix="etf-universe") as executor:
-        futures = {"eastmoney": executor.submit(get_east), "hithink": executor.submit(get_hithink)}
-        for source, future in futures.items():
+        future_sources = {executor.submit(get_east): "eastmoney", executor.submit(get_hithink): "hithink"}
+        for future in as_completed(future_sources):
+            source = future_sources[future]
+            source_finished[source] = round(time.monotonic() - source_started, 3)
             try:
                 value = future.result()
                 if source == "eastmoney":
@@ -399,6 +403,7 @@ def fetch_reconciled_broad_etf_spot(market_date: str) -> tuple[list[dict[str, An
                     east_error = str(exc)[-500:]
                 else:
                     hithink_error = str(exc)[-500:]
+    source_join_elapsed = round(time.monotonic() - source_started, 3)
 
     if not east_rows and not hithink_master:
         # Preserve the existing deeper official-master fallback when both normal
@@ -418,6 +423,8 @@ def fetch_reconciled_broad_etf_spot(market_date: str) -> tuple[list[dict[str, An
             "fallback_used": True,
             "fallback_source": "OFFICIAL_MASTER_PLUS_TENCENT",
             "reconciled_count": len(fallback_rows),
+            "source_elapsed_seconds": source_finished,
+            "source_join_elapsed_seconds": source_join_elapsed,
         }
 
     if not east_rows:
@@ -435,6 +442,8 @@ def fetch_reconciled_broad_etf_spot(market_date: str) -> tuple[list[dict[str, An
             "fallback_used": True,
             "fallback_source": "HITHINK_ETF_MASTER_PLUS_TENCENT",
             "reconciled_count": len(hydrated),
+            "source_elapsed_seconds": source_finished,
+            "source_join_elapsed_seconds": source_join_elapsed,
         }
 
     if not hithink_master:
@@ -448,6 +457,8 @@ def fetch_reconciled_broad_etf_spot(market_date: str) -> tuple[list[dict[str, An
             "fallback_used": False,
             "fallback_source": None,
             "reconciled_count": len(east_rows),
+            "source_elapsed_seconds": source_finished,
+            "source_join_elapsed_seconds": source_join_elapsed,
         }
 
     east_keys = {(int(x.get("market_id") or 0), str(x.get("code") or "")) for x in east_rows}
@@ -455,10 +466,12 @@ def fetch_reconciled_broad_etf_spot(market_date: str) -> tuple[list[dict[str, An
         x for x in hithink_master
         if (int(x.get("market_id") or 0), str(x.get("code") or "")) not in east_keys
     ]
+    supplemental_started = time.monotonic()
     supplemental_rows, hydration_meta = _hydrate_tencent_identities(missing) if missing else ([], {
         "requested_identity_count": 0, "tencent_quote_count": 0,
         "tencent_failed_batch_count": 0, "tencent_failures": [],
     })
+    supplemental_hydration_elapsed = round(time.monotonic() - supplemental_started, 3)
     merged = {(int(x.get("market_id") or 0), str(x.get("code") or "")): x for x in east_rows}
     for row in supplemental_rows:
         merged[(int(row.get("market_id") or 0), str(row.get("code") or ""))] = row
@@ -475,6 +488,9 @@ def fetch_reconciled_broad_etf_spot(market_date: str) -> tuple[list[dict[str, An
         "fallback_used": False,
         "fallback_source": None,
         "reconciled_count": len(rows),
+        "source_elapsed_seconds": source_finished,
+        "source_join_elapsed_seconds": source_join_elapsed,
+        "supplemental_hydration_elapsed_seconds": supplemental_hydration_elapsed,
     }
 
 def _secid(code: str, market_id: int | None = None) -> str:
