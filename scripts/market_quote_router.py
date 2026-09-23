@@ -232,7 +232,7 @@ def evaluate_interactive_decision_freshness(current: dict[str, Any], request_tim
             "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required" if not direct else "CURRENT is fresh after request"}
 
 
-def _a_share_closed_reference_resolution(root: Path, current: dict[str, Any], request_time: datetime, now: datetime) -> dict[str, Any]:
+def resolve_a_share_request_pit_reference(root: Path, current: dict[str, Any], request_time: datetime, now: datetime) -> dict[str, Any]:
     """Resolve request-scoped A-share PIT when the exchange is not producing a new trade."""
     local = now.astimezone(BEIJING)
     calendar = _read_json(root, "config/market/a_share_trading_calendar_2026.json", {})
@@ -397,7 +397,7 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
     has_decision_request = decision_request_time is not None
     decision_request_time = decision_request_time or query_time
     decision_freshness = evaluate_interactive_decision_freshness(current, decision_request_time, query_time, policy)
-    reference_resolution = _a_share_closed_reference_resolution(root, current, decision_request_time, query_time) if has_decision_request else {"resolved": False, "mode": "NONE", "phase": market_phase("CN", now=query_time)}
+    reference_resolution = resolve_a_share_request_pit_reference(root, current, decision_request_time, query_time) if has_decision_request else {"resolved": False, "mode": "NONE", "phase": market_phase("CN", now=query_time)}
     if has_decision_request and reference_resolution["resolved"]:
         # Existing downstream resolved_post_request means request-scoped PIT is
         # legally resolved; a closed exchange need not print a new trade.

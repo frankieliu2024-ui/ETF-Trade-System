@@ -2528,9 +2528,16 @@ def canonical_ingress_contract_for_request(request: dict) -> dict:
     report_type = str(request.get("report_type") or request.get("report_kind") or "").strip().upper()
 
     is_broker_fact = is_broker_screenshot_request(request)
-    is_review_fact = fact_type in {"FORMAL_POST_CLOSE_REVIEW", "POST_CLOSE_REVIEW"} or scenario == "POST_CLOSE_REVIEW"
     is_trade_fact = fact_type in {"CONFIRMED_TRADE", "TRADE_EVENT"} or isinstance(request.get("trade_event"), dict)
     is_decision_fact = fact_type == "FORMAL_DECISION" or isinstance(request.get("formal_decision"), dict)
+    # POST_CLOSE_REVIEW is a session/scenario label as well as a review fact
+    # label. An explicit formal_decision payload remains a Decision Fact and
+    # must not be diverted into the review-ingress contract merely because the
+    # user requested the decision after A-share close.
+    is_review_fact = (
+        fact_type in {"FORMAL_POST_CLOSE_REVIEW", "POST_CLOSE_REVIEW"}
+        or (scenario == "POST_CLOSE_REVIEW" and not is_decision_fact and not is_trade_fact)
+    )
     is_report_delivery = channel in {"REPORT", "REPORT_DELIVERY"} or report_type in {"ETF_TRADE_REVIEW", "SCHEDULED_TRADE_REVIEW"}
 
     if not any([is_broker_fact, is_review_fact, is_trade_fact, is_decision_fact]):

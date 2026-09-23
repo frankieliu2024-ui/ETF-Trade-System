@@ -6,6 +6,11 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
+try:
+    from market_quote_router import resolve_a_share_request_pit_reference
+except ModuleNotFoundError:
+    from scripts.market_quote_router import resolve_a_share_request_pit_reference
+
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 REQUEST_DIR = ROOT / "requests" / "live_snapshot"
 CURRENT = ROOT / "data" / "state" / "CURRENT.json"
@@ -127,7 +132,15 @@ def build_gate(now: datetime | None = None, request_file: str | Path | None = No
     captured = parse_time(captured_text)
 
     checked_at = _utc_now(now)
-    if scheduled_formal_decision:
+    # Align the legacy gate with the canonical quote router. After the A-share
+    # session is closed, a same-day PASS close is the final lawful CN fact;
+    # waiting cannot create a later A-share trade merely to satisfy request time.
+    closed_reference = resolve_a_share_request_pit_reference(ROOT, current, requested, checked_at) if requested is not None else {"resolved": False, "mode": "NONE", "phase": "UNKNOWN", "reason": "request time missing"}
+    if closed_reference.get("resolved"):
+        post_request_snapshot = False
+        nominal_node_reached = True
+        ready = True
+    elif scheduled_formal_decision:
         # Scheduled Formal Decision PREWARM is intentionally allowed to acquire
         # a legal post-request fact before the nominal node.  The consumer may
         # persist it only after the nominal node has actually arrived.  This is
@@ -163,6 +176,7 @@ def build_gate(now: datetime | None = None, request_file: str | Path | None = No
         else ("DEGRADED" if allow_fallback else ("EXPIRED" if terminal_unavailable_after_request else "NOT_READY"))
     )
     request_result_terminal = bool(ready or terminal_unavailable_after_request)
+    closed_reference_ready = bool(closed_reference.get("resolved"))
     rule = (
         "SCHEDULED_FORMAL_DECISION允许在名义节点前PREWARM形成请求后的合法CURRENT；只有名义节点实际到达后才允许正式分析/持久化。"
         "PREWARM事实仍须由Formal Decision按现行PIT/freshness/quality/session合同复核；本规则不放宽EXPLICIT_LATEST。"
@@ -174,9 +188,9 @@ def build_gate(now: datetime | None = None, request_file: str | Path | None = No
         "request_result": request_result,
         "request_result_terminal": request_result_terminal,
         "request_result_reason": (
-            "post_request_snapshot_ready"
-            if ready
-            else (health.get("reason", "") if terminal_unavailable_after_request else "awaiting_post_request_snapshot")
+            "closed_session_canonical_reference_ready"
+            if closed_reference_ready
+            else ("post_request_snapshot_ready" if ready else (health.get("reason", "") if terminal_unavailable_after_request else "awaiting_post_request_snapshot"))
         ),
         # Compatibility: this legacy field means that analysis which depends on
         # the requested fresh/current PIT may proceed. It is not a blanket ban
@@ -197,6 +211,8 @@ def build_gate(now: datetime | None = None, request_file: str | Path | None = No
         "failure_reason": health.get("reason", "") if terminal_unavailable_after_request else "",
         "terminal_unavailable": bool(terminal_unavailable_after_request),
         "post_request_snapshot": bool(post_request_snapshot),
+        "request_scoped_resolution_mode": str(closed_reference.get("mode") or ""),
+        "request_scoped_resolution_reason": str(closed_reference.get("reason") or ""),
         "nominal_node_reached": bool(nominal_node_reached),
         "rule": rule,
     }
