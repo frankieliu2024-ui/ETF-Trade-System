@@ -72,6 +72,19 @@ class DelayedCloseRecoveryTests(unittest.TestCase):
         self.assertIn("scheduled_close_boundary_intent", text)
         self.assertIn("wait_for_close_boundary_seconds", text)
 
+    def test_query_time_midday_refresh_bypasses_duplicate_morning_close_skip(self):
+        text = (
+            Path(__file__).parents[1] / "scripts/cloud_runner_snapshot.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            'morning_close_already_recorded(market_date) and not query_time_refresh',
+            text,
+        )
+        self.assertIn(
+            'query_time_refresh = os.environ.get("QUERY_TIME_REFRESH", "").lower() == "true"',
+            text,
+        )
+
     def test_effective_and_observed_times_are_separate(self):
         text = (
             Path(__file__).parents[1] / "scripts/cloud_runner_snapshot.py"
