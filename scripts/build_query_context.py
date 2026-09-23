@@ -610,6 +610,22 @@ def _minimum_legal_inputs_ready_at(root: Path, request: dict, current: dict, acc
     return observed_at or current_time
 
 
+def _latency_observation_role(request: dict) -> str:
+    source = str(request.get("source") or request.get("requested_by") or "").strip().upper()
+    request_type = str(request.get("request_type") or "").strip().upper()
+    parent = str(request.get("parent_request_id") or "").strip()
+    if request_type == "STATE_SYNC_ONLY" or source == "CHATGPT_MANUAL_FORMAL_COMPLETION" or parent:
+        return "DOWNSTREAM_COMPLETION_NOT_DECISION_REQUEST"
+    return "FORMAL_DECISION_REQUEST"
+
+
+def _original_decision_request_identity(request: dict) -> str:
+    role = _latency_observation_role(request)
+    if role == "DOWNSTREAM_COMPLETION_NOT_DECISION_REQUEST":
+        return str(request.get("parent_request_id") or "").strip() or "UNKNOWN"
+    return _stable_manual_request_identity(request)
+
+
 def build_fast_path_latency(request: dict, current: dict, account_or_decision: dict, decision_or_quote: dict, market_quote_or_reply: dict | str = "", reply_ready: str = "", root: Path | None = None) -> dict:
     """Report only observed timestamps; missing instrumentation stays explicit."""
     # Preserve the established five-argument replay shape
@@ -625,6 +641,8 @@ def build_fast_path_latency(request: dict, current: dict, account_or_decision: d
     t0 = _request_received_at_beijing(request)
     ingress = request.get("request_bound_at_beijing") or request.get("canonical_ingress_at_beijing") or ""
     manual_request_identity = _stable_manual_request_identity(request)
+    observation_role = _latency_observation_role(request)
+    original_decision_request_identity = _original_decision_request_identity(request)
     freshness = market_quote.get("decision_freshness") or {}
     t_new = current.get("captured_at") or (current.get("data_freshness") or {}).get("captured_at_beijing") or ""
     t_decision = decision.get("generated_at_beijing") or decision.get("generated_at") or ""
@@ -635,6 +653,9 @@ def build_fast_path_latency(request: dict, current: dict, account_or_decision: d
     return {
         "t0": t0,
         "manual_request_identity": manual_request_identity,
+        "latency_observation_role": observation_role,
+        "original_decision_request_identity": original_decision_request_identity,
+        "may_measure_original_decision_latency": observation_role == "FORMAL_DECISION_REQUEST",
         "manual_request_received_at": t0 or "UNKNOWN",
         "user_request_received": t0,
         "screenshot_account_fact_available": request.get("screenshot_account_fact_available_at_beijing") or request.get("account_fact_available_at_beijing") or "UNKNOWN",
@@ -673,12 +694,12 @@ def build_fast_path_latency(request: dict, current: dict, account_or_decision: d
         "request_bound_at": request.get("request_bound_at_beijing") or ("UNKNOWN" if not request.get("request_id") else t0 or "UNKNOWN"),
         "pit_ready_at": t_new if (freshness.get("resolved_post_request") or freshness.get("post_request")) else "UNKNOWN",
         "core_result_at": t_decision if t_decision else "UNKNOWN",
-        "request_to_core_result_latency": _duration_seconds(t0, t_decision),
+        "request_to_core_result_latency": _duration_seconds(t0, t_decision) if observation_role == "FORMAL_DECISION_REQUEST" else None,
         "request_to_canonical_ingress_latency": _duration_seconds(t0, ingress),
-        "canonical_ingress_to_decision_latency": _duration_seconds(ingress, t_decision),
+        "canonical_ingress_to_decision_latency": _duration_seconds(ingress, t_decision) if observation_role == "FORMAL_DECISION_REQUEST" else None,
         "decision_latency_excludes_completion": True,
-        "latency_status": "OBSERVED" if t0 and t_decision else "INSTRUMENTATION_INCOMPLETE",
-        "latency_contract": "REQUEST_RECEIVED_TO_CORE_RESULT; enrichment is non-blocking and must not redefine core_result_at",
+        "latency_status": ("OBSERVED" if t0 and t_decision else "INSTRUMENTATION_INCOMPLETE") if observation_role == "FORMAL_DECISION_REQUEST" else "DOWNSTREAM_NOT_DECISION_LATENCY",
+        "latency_contract": "Only the original Formal Decision Request may measure REQUEST_RECEIVED_TO_CORE_RESULT; downstream completion/projection rebuilds must not redefine or masquerade as original decision latency.",
     }
 
 def build_market_domain_projection(current: dict, overseas: dict, us_extended: dict, freshness: dict | None = None) -> dict:
