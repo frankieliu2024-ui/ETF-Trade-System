@@ -21,6 +21,7 @@ SSE_MASTER_URL = "https://query.sse.com.cn/commonQuery.do"
 SSE_MASTER_SQL = "COMMON_SSE_ZQPZ_ETFZL_XXPL_ETFGM_SEARCH_L"
 SZSE_MASTER_URL = "https://www.szse.cn/api/report/ShowReport/data"
 SZSE_MASTER_CATALOG = "1945"
+HITHINK_ETF_MASTER_URL = "https://fund.10jqka.com.cn/data/Net/info/ETF_rate_desc_0_0_1_9999_0_0_0_jsonp_g.html"
 HISTORY_URL = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
 ETF_FS = "b:MK0021,b:MK0022,b:MK0023,b:MK0024,b:MK0827"
 FIELDS = "f2,f3,f6,f7,f8,f10,f12,f13,f14,f15,f16,f17,f18,f24,f25,f26,f124"
@@ -192,6 +193,47 @@ def fetch_szse_official_etf_master() -> list[dict[str, Any]]:
     return [unique[code] for code in sorted(unique)]
 
 
+def fetch_hithink_etf_master() -> list[dict[str, Any]]:
+    """Enumerate the Hithink ETF category as an independent security-master fallback."""
+    req = Request(
+        HITHINK_ETF_MASTER_URL,
+        headers={
+            "User-Agent": "Mozilla/5.0",
+            "Referer": "https://fund.10jqka.com.cn/datacenter/jz/kfs/etf/",
+            "Accept": "application/json,text/javascript,*/*;q=0.8",
+        },
+    )
+    with urlopen(req, timeout=15) as resp:
+        text = resp.read().decode("utf-8", errors="replace").strip()
+    if text.startswith("g(") and text.endswith(")"):
+        text = text[2:-1]
+    elif text.startswith("(") and text.endswith(")"):
+        text = text[1:-1]
+    payload = json.loads(text)
+    raw_rows = ((payload.get("data") or {}).get("data") or {})
+    if not isinstance(raw_rows, dict) or not raw_rows:
+        raise RuntimeError("Hithink ETF master returned empty or unexpected data")
+    result: dict[tuple[int, str], dict[str, Any]] = {}
+    for raw in raw_rows.values():
+        if not isinstance(raw, dict):
+            continue
+        code = str(raw.get("code") or "").strip()
+        name = str(raw.get("name") or code).strip()
+        if not re.fullmatch(r"\d{6}", code):
+            continue
+        market_id = 1 if code.startswith(("5", "6")) else 0
+        result[(market_id, code)] = {
+            "code": code,
+            "name": name or code,
+            "market_id": market_id,
+            "exchange": "SSE" if market_id == 1 else "SZSE",
+            "identity_source": "HITHINK_ETF_CATEGORY_ENUMERATION",
+        }
+    if not result:
+        raise RuntimeError("Hithink ETF master parsed zero six-digit ETF identities")
+    return [result[key] for key in sorted(result)]
+
+
 def fetch_official_etf_master(market_date: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Enumerate SSE/SZSE independently so one exchange outage cannot erase the other."""
     rows: list[dict[str, Any]] = []
@@ -235,7 +277,7 @@ def _tencent_spot_row(identity: dict[str, Any], quote: dict[str, Any]) -> dict[s
 
 
 def fetch_official_tencent_broad_spot(market_date: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Independent official-universe + Tencent quote path; partial batches degrade explicitly."""
+    """Independent ETF identity fallback + Tencent hydration; partial batches degrade explicitly."""
     try:
         from scripts.tencent_quote import fetch_tencent_quotes
     except ModuleNotFoundError:
@@ -243,7 +285,28 @@ def fetch_official_tencent_broad_spot(market_date: str) -> tuple[list[dict[str, 
         # repository script context; keep the existing Tencent owner reachable in both.
         from tencent_quote import fetch_tencent_quotes
 
-    master, master_meta = fetch_official_etf_master(market_date)
+    hithink_error = None
+    official_error = None
+    master_source = "HITHINK_ETF_CATEGORY"
+    try:
+        master = fetch_hithink_etf_master()
+        master_meta = {"hithink_master_count": len(master)}
+    except Exception as exc:
+        hithink_error = str(exc)[-300:]
+        master_source = "SSE_SZSE_OFFICIAL_FALLBACK"
+        try:
+            master, master_meta = fetch_official_etf_master(market_date)
+        except Exception as official_exc:
+            official_error = str(official_exc)[-300:]
+            raise RuntimeError(
+                f"independent ETF masters unavailable; hithink={hithink_error}; official={official_error}"
+            ) from official_exc
+    master_meta = {
+        **master_meta,
+        "identity_master_source": master_source,
+        "hithink_master_error": hithink_error,
+        "official_master_fallback_error": official_error,
+    }
     rows: list[dict[str, Any]] = []
     failures: list[dict[str, Any]] = []
     for offset in range(0, len(master), 60):
@@ -266,7 +329,7 @@ def fetch_official_tencent_broad_spot(market_date: str) -> tuple[list[dict[str, 
 
 
 def fetch_reconciled_broad_etf_spot(market_date: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Official security master + Tencent hydration, with Eastmoney fallback/augmentation."""
+    """Eastmoney broad primary plus independent Hithink/Tencent fallback and reconciliation."""
     official_rows: list[dict[str, Any]] = []
     official_meta: dict[str, Any] = {}
     official_error = None
@@ -824,7 +887,7 @@ def discover_formal_candidates(
             broad, broad_source_meta = fetch_reconciled_broad_etf_spot(market_date)
     except Exception as exc:
         return {
-            "status": "DEGRADED", "generated_at_beijing": generated, "source": "OFFICIAL_SSE_SZSE_SECURITY_MASTER_PLUS_TENCENT_WITH_EASTMONEY_FALLBACK",
+            "status": "DEGRADED", "generated_at_beijing": generated, "source": "EASTMONEY_PRIMARY_WITH_HITHINK_ETF_MASTER_TENCENT_FALLBACK",
             "broad_universe_count": 0, "candidates": [], "error": str(exc)[-500:],
             "broad_acquisition_elapsed_seconds": round(time.monotonic() - broad_started, 3),
             "decision_boundary": "广域发现失败不删除持仓/观察ETF，也不阻塞其现有正式MASTER链。",
