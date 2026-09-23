@@ -399,6 +399,62 @@
       "canonical_state_or_notification": "TIER_2",
       "account_trade_pit_authority_topology": "TIER_3",
       "behavior_semantic_prompt_or_doc": "TIER_1 minimum; TIER_2 when important runtime contract; TIER_3 on high-risk flags"
+    },
+    "tier_2_profiles": {
+      "T2-F": {
+        "description": "Tier 2 fact/runtime route: the change can alter a canonical fact, formal-decision input, freshness/tradability interpretation, required persistence, or an important runtime contract.",
+        "selection_rule": "Use when any formal decision input, canonical fact/state production, runtime contract, or persistence hard dependency can change; unknown or ambiguous attribution remains fail-safe.",
+        "required_gates": [
+          "targeted_tests",
+          "relevant_tests",
+          "latest_main_semantic_check",
+          "ci",
+          "compile_or_diff_check",
+          "owner_protocol_check",
+          "candidate_acceptance",
+          "failure_attribution_on_hard_fail"
+        ],
+        "merged_main_full_consistency": "only_when_triggered_by_same_failure_domain, core-fact/permission impact, attribution_inconclusive, or current diff introduction/amplification"
+      },
+      "T2-P": {
+        "description": "Tier 2 projection/maintenance route: projection, notification, review enrichment, or maintenance-only behavior with no change to account/trade/PIT/MASTER/permission/Formal Decision inputs or canonical fact ownership.",
+        "selection_rule": "Use only when the changed output is rebuildable or maintenance-only and the no-core-input condition is evidenced; otherwise route to T2-F.",
+        "required_gates": [
+          "targeted_tests",
+          "relevant_tests",
+          "latest_main_semantic_check",
+          "ci",
+          "compile_or_diff_check",
+          "owner_protocol_check",
+          "candidate_acceptance",
+          "change_specific_failure_attribution"
+        ],
+        "merged_main_full_consistency": "not default; retain global result and trigger only under the global blocking conditions"
+      }
+    },
+    "system_subtraction_fast_path": {
+      "eligible_only_if": [
+        "no_new_or_changed_owner_state_workflow_checker_writer",
+        "no_consumer_is_removed_or_degraded",
+        "no_account_trade_PIT_MASTER_permission_or_Formal_Decision_input_change",
+        "net_architecture_complexity_decreases",
+        "stable_semantic_diff_and_targeted_regression_are_available"
+      ],
+      "required_gates": [
+        "consumer_absence_evidence",
+        "targeted_regression",
+        "owner_protocol_check",
+        "latest_main_semantic_check",
+        "ci",
+        "change_specific_failure_attribution"
+      ],
+      "forbidden_shortcuts": [
+        "no_hidden_error",
+        "no_continue_on_error",
+        "no_global_core_failure_downgrade",
+        "no_automatic_tier_3_reduction"
+      ],
+      "routing": "T2-P only when all eligibility conditions are proven; otherwise use the existing risk tier route"
     }
   },
   "root_cause_stop_rule": {
@@ -447,7 +503,8 @@
       "canonical_owner_change",
       "reconstruction_trigger",
       "evidence_contract_version_change"
-    ]
+    ],
+    "dynamic_state_only_reuse_condition": "A main advance containing only classified dynamic-state/diagnostic/notification projection changes does not invalidate stable candidate evidence; reuse ends on shared owner/file conflict, behavior semantic change, candidate invalidation, or changed risk identity."
   },
   "global_vs_change_acceptance": {
     "global_hard_severity": "always_preserved",
@@ -465,7 +522,19 @@
       "TIER_2_ON_HARD_FAIL",
       "TIER_3",
       "ATTRIBUTION_INCONCLUSIVE"
-    ]
+    ],
+    "block_current_change_only_if": [
+      "same_failure_domain",
+      "core_fact_or_permission_impact",
+      "attribution_inconclusive",
+      "introduced_or_amplified_by_current_change"
+    ],
+    "orthogonal_result_contract": {
+      "global_failure_remains_visible": true,
+      "change_specific_pass_may_coexist_with_global_fail": true,
+      "closure_allowed_for_unrelated_reliable_failure": true,
+      "closure_forbidden_for_introduced_or_inconclusive_failure": true
+    }
   },
   "mirror_reduction": {
     "machine_only_semantics": [
@@ -479,6 +548,7 @@
     ],
     "normative_text_source": "docs/生产变更与并发写入协议_V1.0.md",
     "issue_brief_packet_rule": "reference_protocol_and_task_fields_only",
-    "no_manual_second_rule_set": true
+    "no_manual_second_rule_set": true,
+    "note": "T2-F/T2-P and subtraction routing are declarative extensions of the existing Tier 2 matrix; no new workflow, checker, state, registry, or acceptance engine."
   }
 }
