@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-09-23T11:23:10+08:00",
-  "status": "DEGRADED",
+  "generated_at": "2026-09-23T11:28:35+08:00",
+  "status": "READY",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
@@ -27,7 +27,7 @@
     "risk": {
       "status": "READY",
       "reason": "formal ETF strategy risk metric is available from a fresh canonical reconstruction",
-      "etf_strategy_risk_pct": -7.2103,
+      "etf_strategy_risk_pct": -7.3373,
       "source": "data/state/etf_strategy_equity.json",
       "source_updated_at": "2026-09-11T13:51:00+08:00",
       "reconstruction_as_of_transaction_date": "",
@@ -44,13 +44,13 @@
       "completion_source": "CURRENT.close_review_closure"
     },
     "decision_context": {
-      "status": "DEGRADED",
-      "reason": "request-bound decision context has not established the minimum decision-ready boundary",
+      "status": "READY",
+      "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only for non-request-scoped background state",
       "query_context": true,
       "decision_context": true,
-      "minimum_decision_context": "INCOMPLETE",
+      "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": true
+      "request_bound": false
     },
     "lifecycle": {
       "status": "READY",
@@ -64,12 +64,10 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-09-23T11:16:08+08:00"
+      "checked_at": "2026-09-23T11:28:35+08:00"
     }
   },
   "blockers": [],
-  "degradations": [
-    "decision_context"
-  ],
+  "degradations": [],
   "safety_boundary": "This state does not create or modify risk permission, Trial/Confirm rules, amounts, sell rules, or execution authority."
 }
