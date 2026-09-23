@@ -90,6 +90,7 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         build = 'python scripts/build_query_context.py --run-discovery "${REQUEST_ARGS[@]}"'
         self.assertIn(restore, workflow)
         self.assertIn('cp /tmp/latest-query-context.json data/state/query_context.json', workflow)
+        self.assertNotIn('git show origin/main:data/state/query_context.json > /tmp/latest-query-context.json 2>/dev/null || true', workflow)
         self.assertLess(workflow.index(restore), workflow.index(build))
 
     def test_refresh_assurance_precedes_full_decision_context(self):
