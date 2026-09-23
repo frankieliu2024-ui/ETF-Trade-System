@@ -489,7 +489,11 @@ jobs:
           fi
           if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "${{ steps.snapshot_result.outputs.snapshot_written }}" != "true" ]; then
             git fetch origin main --quiet
-            git show origin/main:data/state/query_context.json > /tmp/latest-query-context.json 2>/dev/null || true
+            if git show origin/main:data/state/query_context.json > /tmp/latest-query-context.json 2>/dev/null; then
+              :
+            else
+              rm -f /tmp/latest-query-context.json
+            fi
             if [ -s /tmp/latest-query-context.json ]; then
               cp /tmp/latest-query-context.json data/state/query_context.json
             fi
