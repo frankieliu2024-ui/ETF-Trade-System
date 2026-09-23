@@ -61,15 +61,57 @@ def classify_risk_tier(
     return "TIER_3"
 
 
-def acceptance_matrix_for_tier(tier: str) -> dict:
-    """Return the minimum machine-readable acceptance envelope."""
+def tier2_acceptance_route(
+    *,
+    formal_decision_input: bool = False,
+    canonical_fact_or_state: bool = False,
+    important_runtime_contract: bool = False,
+    projection_or_maintenance_only: bool = False,
+    subtraction_fast_path: bool = False,
+    attribution_reliable: bool = True,
+) -> str:
+    """Select the existing Tier 2 acceptance profile without creating a new tier."""
+    if not attribution_reliable or formal_decision_input or canonical_fact_or_state or important_runtime_contract:
+        return "T2-F"
+    if subtraction_fast_path and projection_or_maintenance_only:
+        return "T2-P"
+    if projection_or_maintenance_only:
+        return "T2-P"
+    return "T2-F"
+
+
+def system_subtraction_fast_path_eligible(
+    *,
+    no_new_owner_state_workflow: bool,
+    no_consumer_removed: bool,
+    no_core_input_change: bool,
+    net_complexity_decreases: bool,
+    stable_regression_evidence: bool,
+) -> bool:
+    """Pure predicate for the existing Tier 2 projection/maintenance route."""
+    return all((
+        no_new_owner_state_workflow,
+        no_consumer_removed,
+        no_core_input_change,
+        net_complexity_decreases,
+        stable_regression_evidence,
+    ))
+
+
+def acceptance_matrix_for_tier(tier: str, route: str | None = None) -> dict:
+    """Return the minimum acceptance envelope for the existing risk tier."""
     rows = {
         "TIER_0": ["docs_or_format_check", "ordinary_ci"],
         "TIER_1": ["targeted_tests", "relevant_tests", "latest_main_semantic_check", "ci", "compile_or_diff_check"],
         "TIER_2": ["targeted_tests", "relevant_tests", "latest_main_semantic_check", "ci", "compile_or_diff_check", "owner_protocol_check", "candidate_acceptance"],
         "TIER_3": ["targeted_tests", "relevant_full_tests", "latest_main_semantic_check", "ci", "owner_protocol_check", "candidate_acceptance", "merged_main_full_consistency", "merged_main_e2e", "failure_attribution", "human_review"],
     }
-    return {"tier": tier if tier in rows else "TIER_3", "required_gates": rows.get(tier, rows["TIER_3"])}
+    routes = {
+        "T2-F": rows["TIER_2"] + ["failure_attribution_on_hard_fail"],
+        "T2-P": ["targeted_tests", "relevant_tests", "latest_main_semantic_check", "ci", "compile_or_diff_check", "owner_protocol_check", "candidate_acceptance", "change_specific_failure_attribution"],
+    }
+    gates = routes.get(route, rows.get(tier, rows["TIER_3"]))
+    return {"tier": tier if tier in rows else "TIER_3", "route": route if route in routes else None, "required_gates": gates}
 
 
 def _read_json(path: Path) -> dict:
@@ -393,6 +435,29 @@ def run(root: Path = ROOT) -> dict:
         "governance_ssot:stable_semantics_present",
         all(marker in doc_text for marker in required_doc_markers),
         "unique normative document contains compact admission, residual-risk observation and closure semantics",
+    )
+
+    tier2_profiles = (cfg.get("risk_tier_classifier") or {}).get("tier_2_profiles") or {}
+    subtraction = (cfg.get("risk_tier_classifier") or {}).get("system_subtraction_fast_path") or {}
+    check(
+        "governance_routing:t2_profiles",
+        set(tier2_profiles) == {"T2-F", "T2-P"}
+        and all(tier2_profiles.get(x, {}).get("required_gates") for x in ("T2-F", "T2-P")),
+        "existing Tier 2 has explicit fact/runtime and projection/maintenance routes",
+    )
+    check(
+        "governance_routing:subtraction_fast_path",
+        bool(subtraction.get("eligible_only_if"))
+        and bool(subtraction.get("required_gates"))
+        and "no_global_core_failure_downgrade" in subtraction.get("forbidden_shortcuts", []),
+        "subtraction fast path is bounded by net complexity and safety invariants",
+    )
+    orthogonal = cfg.get("global_vs_change_acceptance") or {}
+    check(
+        "governance_routing:orthogonal_global_change",
+        orthogonal.get("orthogonal_result_contract", {}).get("change_specific_pass_may_coexist_with_global_fail") is True
+        and "same_failure_domain" in orthogonal.get("block_current_change_only_if", []),
+        "global health remains visible while reliable unrelated failure does not default-block change closure",
     )
 
     requirements = cfg.get("writer_requirements") or {}
