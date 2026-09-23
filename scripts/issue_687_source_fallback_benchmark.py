@@ -49,7 +49,24 @@ def main():
     fallback_rows, fallback_meta = d.fetch_official_tencent_broad_spot(market_date)
     fallback_total_s = round(time.perf_counter() - fallback_start, 3)
 
+    official_start = time.perf_counter()
+    try:
+        official_rows, official_meta = d.fetch_official_etf_master(market_date)
+        official_error = None
+    except Exception as exc:
+        official_rows, official_meta = [], {}
+        official_error = f"{type(exc).__name__}:{exc}"
+    official_total_s = round(time.perf_counter() - official_start, 3)
+
     f = keyset(fallback_rows)
+    o = keyset(official_rows)
+    h_only_live = {
+        (int(x["market_id"]), str(x["code"])) for x in fallback_rows
+        if (int(x["market_id"]), str(x["code"])) in hithink_only
+        and x.get("price") is not None and x.get("prev_close") is not None
+    }
+    h_only_official = hithink_only & o
+    e_only_official = east_only & o
     result = {
         "schema_version": "1.0",
         "issue": 687,
@@ -65,18 +82,28 @@ def main():
             "fallback_tencent_hydrated": len(f),
             "fallback_missing_vs_hithink": len(h - f),
             "hithink_feeder_or_lof_name_hits": len(feeder_like),
+            "official_exchange_master": len(o),
+            "hithink_only_with_live_tencent_quote": len(h_only_live),
+            "hithink_only_confirmed_by_official_master": len(h_only_official),
+            "eastmoney_only_confirmed_by_official_master": len(e_only_official),
         },
         "latency_seconds": {
             "eastmoney_enumeration": east_s,
             "hithink_enumeration_and_parse": hithink_s,
             "fallback_hithink_plus_tencent_total": fallback_total_s,
+            "official_exchange_master_diagnostic": official_total_s,
         },
         "fallback_meta": fallback_meta,
+        "official_master_meta": official_meta,
+        "official_master_error": official_error,
         "samples": {
             "eastmoney_only": sample(east, east_only),
             "hithink_only": sample(hithink, hithink_only),
             "fallback_missing_vs_hithink": sample(hithink, h - f),
             "hithink_feeder_or_lof_name_hits": feeder_like[:50],
+            "hithink_only_with_live_tencent_quote": sample(fallback_rows, h_only_live, 120),
+            "hithink_only_confirmed_by_official_master": sample(hithink, h_only_official, 120),
+            "eastmoney_only_confirmed_by_official_master": sample(east, e_only_official, 20),
         },
         "manual_same_day_reference": {
             "eastmoney_web_grid": 1626,
