@@ -49,6 +49,17 @@ def build_completion_request(source_request: dict, formal_decision: dict, consum
     scenario = str(source_request.get("interaction_scenario") or "").strip()
     if not scenario:
         raise ValueError("source request is missing interaction_scenario")
+    for closure_name, closure in (
+        ("request_bound_pit_closure", request_bound_pit_closure),
+        ("observation_eligibility_closure", observation_eligibility_closure),
+    ):
+        if closure is not None:
+            if not isinstance(closure, dict):
+                raise ValueError(f"{closure_name} must be an object")
+            closure_parent = str(closure.get("parent_request_id") or "").strip()
+            if closure_parent != parent_id:
+                raise ValueError(f"{closure_name} parent_request_id must match source request")
+
     payload = {
         "request_id": envelope_id,
         "parent_request_id": parent_id,
