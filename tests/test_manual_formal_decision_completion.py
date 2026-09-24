@@ -446,8 +446,9 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
 
         with mock.patch.object(state_sync, "build_dashboard_block", return_value=""):
-            with mock.patch("sys.argv", ["process_state_sync_request.py", str(request_path.relative_to(self.root))]):
-                state_sync.main()
+            with mock.patch.object(state_sync, "persist_monitor_universe", return_value=False):
+                with mock.patch("sys.argv", ["process_state_sync_request.py", str(request_path.relative_to(self.root))]):
+                    state_sync.main()
         files = list((self.root / "events/decisions").glob("*.json"))
         self.assertEqual(len(files), 1)
         event = json.loads(files[0].read_text(encoding="utf-8"))
@@ -463,8 +464,9 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         }, expected_snapshot=SNAPSHOT_PATH)["fingerprint"], before_fingerprint)
 
         with mock.patch.object(state_sync, "build_dashboard_block", return_value=""):
-            with mock.patch("sys.argv", ["process_state_sync_request.py", str(request_path.relative_to(self.root))]):
-                state_sync.main()
+            with mock.patch.object(state_sync, "persist_monitor_universe", return_value=False):
+                with mock.patch("sys.argv", ["process_state_sync_request.py", str(request_path.relative_to(self.root))]):
+                    state_sync.main()
         self.assertEqual(len(list((self.root / "events/decisions").glob("*.json"))), 1)
 
     def test_parent_identity_fingerprint_event_fields_and_retry_exactly_once(self):
