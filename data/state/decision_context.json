@@ -6765,5 +6765,34 @@
     "stock_sell_destination_rule": "若打新底仓个股出现足以支持降低风险或退出的证据，必须比较资金进入现金还是已经独立通过完整机会判断的ETF/其他合法机会；不得先卖出再寻找用途，也不得机械轮动。",
     "etf_buy_source_rule": "ETF机会成立而现金不足时，打新底仓只有在其自身继续持有的边际收益效率更低、账户打新/底仓功能不被破坏且卖出决议独立成立时，才可作为资金来源。",
     "separate_decisions_rule": "旧资产卖出与新资产买入始终分别决议；研究层只改变证据和比较结果，不自动联动两笔交易。"
-  }
+  },
+  "refresh_gate": {
+    "status": "READY",
+    "request_result": "READY",
+    "request_result_terminal": true,
+    "request_result_reason": "post_request_snapshot_ready",
+    "formal_analysis_allowed": true,
+    "formal_current_pit_analysis_allowed": true,
+    "degraded_analysis_allowed": true,
+    "formal_decision_persist_allowed": true,
+    "fallback_allowed": false,
+    "query_intent": "FORMAL_DECISION",
+    "request_file": "requests/live_snapshot/20260924_0910_chatgpt_decision_analysis.json",
+    "request_id": "20260924_0910_chatgpt_decision_analysis",
+    "requested_at_beijing": "2026-09-24T09:10:00+08:00",
+    "requested_market_time": "2026-09-24T09:10:00+08:00",
+    "current_snapshot_time": "2026-09-24T09:33:32+08:00",
+    "resolved_snapshot_time": "2026-09-24T09:33:32+08:00",
+    "latest_snapshot": "data/market/snapshots/2026-09-24_093332.json",
+    "failure_reason": "",
+    "terminal_unavailable": false,
+    "post_request_snapshot": true,
+    "request_scoped_resolution_mode": "ACTIVE_SESSION",
+    "request_scoped_resolution_reason": "active A-share session requires post-request market fact",
+    "nominal_node_reached": true,
+    "rule": "EXPLICIT_LATEST或wait_for_refresh请求必须等本次请求之后且不早于requested_market_time的新CURRENT发布后才可称为最新/当前行情；请求前即使仍处普通FRESH窗口，也不得冒充本次最新查询结果。仅非EXPLICIT_LATEST且用户明确授权时可回退旧快照。"
+  },
+  "formal_analysis_allowed": true,
+  "formal_current_pit_analysis_allowed": true,
+  "degraded_analysis_allowed": true
 }
