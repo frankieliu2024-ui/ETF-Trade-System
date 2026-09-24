@@ -423,6 +423,7 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         }
         request_path = self.root / "requests/live_snapshot" / f"{source_id}.json"
         request_path.write_text(json.dumps(source, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+        state_sync.DASHBOARD.write_text("", encoding="utf-8")
         before_bytes = request_path.read_bytes()
         before_obj = json.loads(before_bytes)
         validated_source = state_sync.validate_source({
@@ -443,8 +444,9 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         self.assertEqual((before_obj["request_id"], before_obj["decision_id"]), before_identity)
         self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
 
-        with mock.patch("sys.argv", ["process_state_sync_request.py", str(request_path.relative_to(self.root))]):
-            state_sync.main()
+        with mock.patch.object(state_sync, "build_dashboard_block", return_value=""):
+            with mock.patch("sys.argv", ["process_state_sync_request.py", str(request_path.relative_to(self.root))]):
+                state_sync.main()
         files = list((self.root / "events/decisions").glob("*.json"))
         self.assertEqual(len(files), 1)
         event = json.loads(files[0].read_text(encoding="utf-8"))
@@ -459,8 +461,9 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             "consumed_snapshot": SNAPSHOT_PATH,
         }, expected_snapshot=SNAPSHOT_PATH)["fingerprint"], before_fingerprint)
 
-        with mock.patch("sys.argv", ["process_state_sync_request.py", str(request_path.relative_to(self.root))]):
-            state_sync.main()
+        with mock.patch.object(state_sync, "build_dashboard_block", return_value=""):
+            with mock.patch("sys.argv", ["process_state_sync_request.py", str(request_path.relative_to(self.root))]):
+                state_sync.main()
         self.assertEqual(len(list((self.root / "events/decisions").glob("*.json"))), 1)
 
     def test_parent_identity_fingerprint_event_fields_and_retry_exactly_once(self):
