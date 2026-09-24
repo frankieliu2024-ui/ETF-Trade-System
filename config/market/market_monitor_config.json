@@ -225,5 +225,80 @@
     "no_fixed_industry_stock_watchlist": true,
     "new_account_stock_role_requires_confirmation": true,
     "unverified_tencent_overseas_cannot_be_production_primary": true
+  },
+  "vnext_contracts": {
+    "schema_version": "VNext-Phase2-1.0",
+    "decision_boundary": "metadata_and_eligibility_contract_only; does_not_generate_trade_actions_or_rankings",
+    "monitoring_layers": {
+      "layer_1_external_drivers_cross_market_state": {
+        "mode": "BASE_PLUS_TRIGGERED_EXPANSION",
+        "fact_domains": ["global_risk", "overseas_industry_theme", "commodity", "rates", "fx", "macro_policy_events", "cross_market_assets_and_supply_chain"],
+        "default_scope": "low_cost_base_state",
+        "expansion_trigger": "only_when_anomaly_or_current_exposure_or_candidate_may_change_risk_opportunity_sell_or_capital_allocation",
+        "action_boundary": "evidence_and_trigger_selection_only"
+      },
+      "layer_2_china_internal_market_state": {
+        "mode": "BASE_PLUS_TRIGGERED_EXPANSION",
+        "fact_domains": ["index", "breadth", "style", "industry_theme", "liquidity_turnover", "capital_flow", "anomaly", "external_confirmation_state"],
+        "availability": {"BASE": "low_cost_stable", "TRIGGERED": "targeted_evidence", "OPTIONAL_ENHANCING": "must_not_block_decision"},
+        "action_boundary": "market_fact_and_qualification_only"
+      },
+      "layer_3_etf_opportunity_and_capital_state": {
+        "fact_domains": ["full_market_discovery", "holding_etf", "observation_etf", "temporary_discovery_candidate", "cash", "releasable_low_efficiency_capital", "holding_additional_capital"],
+        "candidate_pool_owner": "scripts/formal_etf_opportunity_discovery.py",
+        "capital_competition_owner": "MASTER_and_ChatGPT",
+        "action_boundary": "eligibility_inputs_only_until_MASTER_decision"
+      }
+    },
+    "transmission_metadata": {
+      "fields": ["transmission_tags", "external_drivers", "china_feedback", "etf_family", "trigger_metadata"],
+      "owner": "market_monitor_config_and_formal_discovery_evidence",
+      "purpose": "select_targeted_evidence_only",
+      "forbidden_uses": ["hidden_score", "ranking", "trial_confirm_sell", "amount", "order", "persistent_exposure_state"]
+    },
+    "evidence_contract": {
+      "version": "1.0",
+      "required_fields": ["object", "fact_type", "source", "provider_as_of", "received_at", "market_phase", "actual_age", "quality", "PIT", "freshness", "decision_eligible", "execution_eligible", "fallback_status", "decision_use", "evidence_identity"],
+      "decision_use": ["DECISION_CRITICAL", "DECISION_ENHANCING", "CONTEXT_ONLY", "RESEARCH"],
+      "eligibility_rule": "fact_type_x_market_phase_x_decision_use; preserve_provider_as_of_and_actual_age; provider_call_time_is_not_realtime",
+      "execution_rule": "execution_eligible_is_independent_from_decision_eligible",
+      "backward_compatibility": "legacy_fields_remain_accepted; consumers may derive missing optional fields as UNKNOWN; missing critical provenance is fail_closed"
+    },
+    "discovery_evidence_identity": {
+      "owner": "scripts/formal_etf_opportunity_discovery.py",
+      "components": ["market_date", "market_node", "universe_identity", "decision_relevant_market_delta", "required_history_end_date"],
+      "reuse_rule": "reuse_only_after_identity_and_delta_validation",
+      "snapshot_filename_rule": "snapshot_filename_alone_is_not_identity",
+      "coverage_rule": "full_market_boundary_remains_true; observation_capacity_is_resource_protection_not_top_n_ranking",
+      "failure_rule": "missing_identity_or_invalid_delta_must_refresh_or_fail_closed"
+    },
+    "discovery_entrypoints": {
+      "cross_sectional": ["full_market_etf", "cheap_qualification", "family_or_information_class", "history", "candidate_eligibility"],
+      "triggered": ["external_or_china_or_commodity_or_flow_anomaly", "transmission_metadata", "relevant_etf_family", "etf_validation"],
+      "convergence": "both_entries_share_one_candidate_eligibility_pool_and_one_MASTER_qualification_chain",
+      "forbidden": ["second_discovery_engine", "direct_trade_action", "fixed_observation_pool"]
+    },
+    "decision_readiness": {
+      "DECISION_READY": ["risk_permission", "all_holding_sell_hold", "holding_additional_judgment", "full_market_opportunity_comparison", "observation_and_temporary_candidate_comparison", "cash", "releasable_capital", "trial_confirm", "amount", "funding_source", "post_action_cash", "future_trial_confirm_capacity", "concentration_and_common_risk", "next_unit_capital_use"],
+      "FULL_SYSTEM_READY": ["dashboard", "archive", "review", "notification_enrichment", "experience", "research_enrichment", "contribution_audit", "other_projections"],
+      "ordering_rule": "FULL_SYSTEM_READY_is_not_a_prerequisite_for_DECISION_READY",
+      "state_rule": "reuse_existing_decision_fact_pack_query_context_decision_context_and_e2e_contract; do_not_create_minimum_decision_state"
+    },
+    "decision_dependencies": {
+      "SELL_HOLD": ["account", "holding_market_fact", "risk_reward", "alternatives"],
+      "TRIAL": ["risk_permission", "candidate_evidence", "capital_state"],
+      "CONFIRM": ["confirm_evidence", "lifecycle", "capital_state"],
+      "DISCOVERY": ["universe", "cross_section", "history", "family_constraints"],
+      "workflow_failure_rule": "workflow_failure_does_not_equal_decision_failure_when_canonical_required_facts_are_recoverable"
+    },
+    "state_builder_classification": {
+      "HOT_PATH_REQUIRED": ["account", "holding_facts", "current_market_facts", "decision_relevant_intraday_path", "decision_relevant_discovery_projection"],
+      "REUSABLE": ["market_regime", "market_structure", "validated_history", "skfolio_when_risk_relevant", "etf_share_flow_when_relevant", "margin_financing_when_relevant"],
+      "ASYNC": ["research_features", "research_evidence_delta", "execution_quality", "low_cost_alpha", "active_return", "noncritical_research_enrichment"],
+      "SLOW_PATH": ["contribution_audit", "research_master_candidates", "historical_backfill"],
+      "AFTER_DECISION": ["dashboard_candidate", "review", "archive", "notification_enrichment", "experience"],
+      "REMOVE_CANDIDATE": ["duplicate_projection_or_rebuild_without_current_decision_consumer"],
+      "runtime_change_boundary": "classification_only_in_phase2; runtime_reordering_is_phase3"
+    }
   }
 }
