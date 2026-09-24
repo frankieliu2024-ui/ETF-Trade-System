@@ -19,6 +19,7 @@ RUNTIME_HEALTH_PATH = ROOT / "data" / "state" / "runtime_health.json"
 CONSISTENCY_PATH = ROOT / "data" / "state" / "system_consistency.json"
 QUERY_CONTEXT_PATH = ROOT / "data" / "state" / "query_context.json"
 DECISION_CONTEXT_PATH = ROOT / "data" / "state" / "decision_context.json"
+REVIEW_CONTEXT_PATH = ROOT / "data" / "state" / "review_context.json"
 MASTER_PATH = ROOT / "ETF规则_MASTER.md"
 STATUS_PATH = ROOT / "data" / "state" / "self_healing_status.json"
 TZ = ZoneInfo("Asia/Shanghai")
@@ -248,6 +249,8 @@ def assess(now: datetime | None = None) -> dict:
     consistency_status = str(consistency.get("status") or "UNKNOWN").upper()
     master_ver = master_version()
     current_ver = str(current.get("rules_version") or "")
+    review_context = load_json(REVIEW_CONTEXT_PATH, {}) or {}
+    review_ver = str(review_context.get("rules_version") or "")
 
     classification = "HEALTHY"
     action = "NONE"
@@ -257,6 +260,8 @@ def assess(now: datetime | None = None) -> dict:
         classification, action, reason = "RULES_VERSION_METADATA_INVALID", "ESCALATE", "MASTER current release metadata cannot be parsed safely"
     elif not current_ver or master_ver != current_ver:
         classification, action, reason = "RULES_VERSION_METADATA_DRIFT", "SYNC_RULES_VERSION_METADATA", f"MASTER={master_ver}, CURRENT={current_ver}"
+    elif review_ver and review_ver != master_ver:
+        classification, action, reason = "DERIVED_CONTEXT_RULES_VERSION_DRIFT", "REBUILD_DERIVED_CONTEXTS", f"MASTER={master_ver}, REVIEW_CONTEXT={review_ver}"
     elif not enabled:
         classification, action, reason = "DISABLED", "NONE", "self-healing disabled by runtime policy"
     elif consistency_gate["blocks_market_recovery"]:
@@ -313,6 +318,7 @@ def assess(now: datetime | None = None) -> dict:
         "market_recovery_consistency_gate": consistency_gate,
         "master_rules_version": master_ver,
         "current_rules_version": current_ver or None,
+        "review_context_rules_version": review_ver or None,
         "snapshot_refresh_attempts": attempts,
         "last_snapshot_refresh_trigger_at": previous.get("last_snapshot_refresh_trigger_at"),
         "last_safe_repair_at": previous.get("last_safe_repair_at"),

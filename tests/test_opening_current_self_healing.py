@@ -34,6 +34,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
             "data/state/system_consistency.json": {"status": "PASS"},
             "data/state/query_context.json": {},
             "data/state/decision_context.json": {},
+            "data/state/review_context.json": {"rules_version": "V2.2.31"},
             "data/state/self_healing_status.json": {},
         }
 
@@ -49,6 +50,41 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
             mock.patch.object(runtime_self_heal, "master_version", return_value="V2.2.31"),
         ):
             return runtime_self_heal.assess(now)
+
+    def test_stale_review_context_rebuilds_existing_derived_contexts(self):
+        values = {
+            "config/runtime_policy.json": {"self_healing": {"enabled": True}},
+            "config/market/a_share_trading_calendar_2026.json": {"closed_dates": []},
+            "data/state/CURRENT.json": {
+                "market_date": "2026-09-24",
+                "captured_at": "2026-09-24T15:04:36+08:00",
+                "latest_valid_node": "close",
+                "node_status": "READY",
+                "rules_version": "V2.2.32",
+            },
+            "data/state/runtime_health.json": {"status": "SKIPPED"},
+            "data/state/system_consistency.json": {"status": "FAIL"},
+            "data/state/query_context.json": {},
+            "data/state/decision_context.json": {},
+            "data/state/review_context.json": {"rules_version": "V2.2.31"},
+            "data/state/self_healing_status.json": {},
+        }
+
+        def fake_load(path: Path, default=None):
+            normalized = path.as_posix()
+            for key, value in values.items():
+                if normalized.endswith(key):
+                    return value
+            return default
+
+        with (
+            mock.patch.object(runtime_self_heal, "load_json", side_effect=fake_load),
+            mock.patch.object(runtime_self_heal, "master_version", return_value="V2.2.32"),
+        ):
+            status = runtime_self_heal.assess(datetime.fromisoformat("2026-09-24T18:15:00+08:00"))
+        self.assertEqual(status["classification"], "DERIVED_CONTEXT_RULES_VERSION_DRIFT")
+        self.assertEqual(status["recommended_action"], "REBUILD_DERIVED_CONTEXTS")
+        self.assertEqual(status["review_context_rules_version"], "V2.2.31")
 
     def test_previous_day_current_is_an_explicit_opening_recovery(self):
         status = self._assess(
