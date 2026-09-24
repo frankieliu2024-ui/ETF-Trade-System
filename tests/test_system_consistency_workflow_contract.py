@@ -4,6 +4,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github/workflows/system-consistency.yml"
+CHECKER = ROOT / "scripts/check_system_consistency.py"
 
 
 class SystemConsistencyCandidatePathTests(unittest.TestCase):
@@ -36,6 +37,19 @@ class SystemConsistencyCandidatePathTests(unittest.TestCase):
         self.assertLess(text.index(handoff), text.index(research))
         research_block = text[text.index(research) - 500:text.index(research) + len(research)]
         self.assertIn(handoff, research_block)
+
+
+class SystemConsistencyFailureObservabilityTests(unittest.TestCase):
+    def test_compact_output_preserves_actionable_hard_error_identity(self):
+        text = CHECKER.read_text(encoding="utf-8")
+        compact = text[text.index('print(json.dumps({', text.index('def main()')):]
+        self.assertIn('"hard_error_count": report.get("hard_error_count")', compact)
+        self.assertIn('"errors": report.get("errors") or []', compact)
+
+    def test_candidate_output_preserves_actionable_error_identity(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn('"candidate_errors": report.get("errors") or []', text)
+        self.assertIn('"candidate_failed_checks": failed', text)
 
 
 if __name__ == "__main__":
