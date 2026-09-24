@@ -436,8 +436,13 @@ jobs:
           p = json.load(open(sys.argv[1], encoding="utf-8"))
           s = p.get("summary") or {}
           required = ["current_gross_strategy_equity", "current_strategy_return_pct_gross", "trade_fact_count", "price_date_count"]
-          if any(k not in s for k in required) or s.get("coverage_status") != "COMPLETE":
+          if any(k not in s for k in required):
               raise SystemExit("accepted ETF equity replay is incomplete")
+          coverage = str(s.get("coverage_status") or "")
+          if coverage not in {"COMPLETE", "DEGRADED_PENDING_LATEST_VALUATION"}:
+              raise SystemExit("accepted ETF equity replay has invalid coverage status")
+          if coverage == "DEGRADED_PENDING_LATEST_VALUATION" and not s.get("pending_latest_valuation", False):
+              raise SystemExit("degraded ETF equity replay missing explicit latest-valuation boundary")
           if not s.get("pending_fees_do_not_block_gross", False):
               raise SystemExit("fee boundary missing from gross replay")
           print(json.dumps({"cutoff": p.get("replay_cutoff"), "trade_facts": s.get("trade_fact_count"), "price_dates": s.get("price_date_count"), "gross_equity": s.get("current_gross_strategy_equity"), "gross_return": s.get("current_strategy_return_pct_gross")}, ensure_ascii=False))
