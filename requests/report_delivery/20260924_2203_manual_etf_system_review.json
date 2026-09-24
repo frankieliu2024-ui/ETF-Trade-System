@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "channel": "REPORT",
+  "report_type": "ETF_SYSTEM_REVIEW",
+  "report_id": "system-review-20260924-2203-manual",
+  "task_id": "ETF系统复核",
+  "task_run_id": "manual-20260924-2203",
+  "generated_at": "2026-09-24T22:03:00+08:00",
+  "effective_market_date": "2026-09-24",
+  "source_actor": "ChatGPT",
+  "source_reference": "manual-system-review:20260924T2203+0800",
+  "title": "【系统复核】ETF系统复核｜2026-09-24 22:03",
+  "summary": "系统可用但可解释降级；A股正式收盘与账户事实有效；20:30交易复盘正式REPORT履约尚未证明。",
+  "full_content": "【系统复核】ETF系统复核｜2026-09-24 22:03\n\n【总体结论】\n\n系统当前可用，但属于可解释降级：A股9月24日正式收盘事实完整、账户事实有效；系统一致性最新为WARNING且无硬错误。当前没有证据表明这些告警会使既有正式事实失效或阻断下一次独立Formal Decision。\n\n【对当前交易/系统使用的影响】\n\n1. A股今日15:00正式收盘已经形成并通过收盘合同验证，17个正式对象数据完整；当前盘后使用该收盘事实合法，不需要也不得伪装成22:03实时A股行情。\n\n2. 账户最新正式变化已包含今日09:52能源化工ETF（159981）买入，系统记录当前可部署现金13,169.54元；本次系统复核不重新执行交易判断。\n\n3. 亚洲日间链中日经225、台湾加权、恒生科技已有今日有效收盘参考；韩国综合指数仍停留在9月23日，属于单对象陈旧降级，不能作为9月24日同步亚洲证据，也不能扩大解释为整个行情链不可用。\n\n4. 当前已进入美股夜间阶段，但仓库中本轮可取得的美国市场事实仍停留在较早盘前/上一现金盘参考，因此本次复核不把它包装成当前美股实时事实；这不影响A股今日正式收盘和账户事实有效性。\n\n【需要用户处理】\n\n当前无需你补充账户、成交或交易操作。需要继续验收的是20:30【ETF交易复盘】是否真正形成正式REPORT，以及本次系统复核的PushPlus最终送达证据。\n\n【技术状态】\n\n1. 最新系统一致性为WARNING：0项硬错误、12项警告。PASS/WARNING边界按现行合同保留，不把WARNING弱化为PASS。\n\n2. A股收盘上下文为READY_FOR_REVIEW，正式close为已验证的15:00收盘；系统基础行情链当前可供盘后复盘消费。\n\n3. 海外运行健康为DEGRADED且无硬错误，决定性业务降级包括韩国综合指数上一交易日reference及自然pulse身份不可证明；现有fallback/降级机制仍在，不因单次外部数据问题新增provider或平行采集链。\n\n【正式节点履约】\n\n1. 今日16:24已有新的正式决策事实，账户与成交事实没有因Scheduled节点状态而被否定。\n\n2. 截至本次22:03复核，在current main未取得能够证明今日20:30【ETF交易复盘】正式REPORT已经形成的证据。因此本轮只能判定“20:30复盘履约尚未证明”，不能把Scheduled Task启动或聊天输出等同于正式复盘闭环，也不由系统复核补跑第二套交易复盘。\n\n3. 该缺口目前首先属于正式交付/履约证据缺口；在没有证明交易必要事实本身缺失前，不升级为Formal Decision不可用。\n\n【数据时点（北京时间）】\n\n1. A股正式收盘有效时点：2026-09-24 15:00；正式快照约15:04完成。\n\n2. 日经225指数：2026-09-24 14:30；台湾加权指数：13:31；恒生科技指数：16:08左右；韩国综合指数仍为2026-09-23 14:00。\n\n3. 当前仓库可取得的美国市场状态不足以证明22:03实时现金盘行情，因此本次不使用其形成新的市场判断。\n\n【未闭环事项】\n\n1. 今日20:30【ETF交易复盘】的正式REPORT闭环尚未从current main得到证明；下一步只需核验现有Scheduled Actor/REPORT链的真实结果，不新建第二复盘或通知机制。\n\n2. 本次ETF_SYSTEM_REVIEW正式报告已按current REPORT合同提交到现有report_delivery入口；PushPlus最终送达仍必须以下游sender/API和delivery evidence为准，不能由REPORT持久化反推。\n\n【下一验证】\n\n1. 核验今日20:30交易复盘是否形成正式REPORT，并确认其自身应执行的正式复盘链和PushPlus交付。\n\n2. 核验本次ETF_SYSTEM_REVIEW请求被现有通知链消费后的sender/API结果及最终送达证据。\n\n3. 下一次海外有效刷新确认韩国综合指数是否由现有fallback/self-healing恢复；若只是单次陈旧且机制自行恢复，不新增维护事项。\n\n【当前最大风险】\n\n1. 把“20:30 Scheduled Task可能已经启动/输出”误当成“正式交易复盘REPORT已经闭环”。\n\n2. 把韩国综合指数单对象陈旧或海外pulse身份降级扩大解释为整个系统或下一次Formal Decision不可用。\n\n3. 把本次REPORT成功持久化直接推断为PushPlus最终送达成功。\n\n【下一阶段】\n\n继续核验20:30交易复盘正式REPORT和本次系统复核PushPlus下游证据；不补跑第二套交易判断、Discovery、行情采集或通知链。\n\n【执行状态】\n\n已自动接管。本次ETF_SYSTEM_REVIEW请求已提交现有report_delivery入口，后续由既有notification workflow消费；20:30交易复盘是否闭环则继续以其正式生产事实验收，用户当前无需操作。\n\n【下一关注点】\n\n20:30交易复盘REPORT是否真实形成，以及本次系统复核的PushPlus sender/API和最终delivery evidence是否出现。\n\n【置信度】\n\n高\n\n【最可能出错的地方】\n\n最可能出错的是把GitHub当前尚未检索到20:30复盘REPORT解释成“复盘一定没有运行”；当前只能确认正式闭环证据尚未取得，而不能反推Scheduled Task产品层完全未启动。",
+  "content_hash": "8594e892f6648941731e1ba11804074e1d5bdf695a134bcbd2696b733137c23e",
+  "idempotency_key": "ETF_SYSTEM_REVIEW:2026-09-24:manual-20260924-2203",
+  "delivery_mode": "FULL_REPORT",
+  "no_trade_authority": true
+}
