@@ -828,7 +828,10 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     # for a new user interaction.  Non-request builds may still evaluate current
     # state, but formal request identity/time must come from --request-file.
     # Freshness assurance is the first decision-critical operation.
+    build_started = time.monotonic()
+    quote_started = time.monotonic()
     market_quote = build_market_quote_context(root, force_refresh=force_refresh, requested_symbols=requested_symbols, decision_request_time=request_time)
+    quote_elapsed = round(time.monotonic() - quote_started, 3)
     # Re-read canonical facts so formal reasoning consumes the post-refresh snapshot.
     current = read_current(root)
     account = read_account_fact(root)
@@ -945,15 +948,33 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         if code and code not in seen_system_codes:
             system_objects.append({"object_code": code, "object_name": item.get("name") or code, "source_type": "NODE_LOCAL_OBSERVATION_EVALUATION"})
             seen_system_codes.add(code)
+    decision_context_started = time.monotonic()
     decision = build_decision_context(
         root,
         formal_discovery=formal_discovery,
         decision_request_time=request_time,
         market_quote_context=market_quote,
     )
+    decision_context_elapsed = round(time.monotonic() - decision_context_started, 3)
     generated_at = datetime.now(SHANGHAI).isoformat(timespec="seconds")
+    fact_pack_started = time.monotonic()
     fact_pack = build_decision_fact_pack(root, request_payload, current, account, decision, market_quote, formal_discovery=formal_discovery)
+    fact_pack_elapsed = round(time.monotonic() - fact_pack_started, 3)
     latency = build_fast_path_latency(request_payload, current, account, decision, market_quote, generated_at, root)
+    latency["in_process_stage_durations_seconds"] = {
+        "freshness_assurance_and_quote_context": quote_elapsed,
+        "discovery_pipeline": (formal_discovery.get("latency_observability") or {}).get("discovery_pipeline_elapsed_seconds"),
+        "decision_context_build": decision_context_elapsed,
+        "decision_fact_pack_build": fact_pack_elapsed,
+        "query_context_build_total": round(time.monotonic() - build_started, 3),
+    }
+    latency["workflow_runtime_observation"] = {
+        "run_started_at_beijing": runtime_health.get("run_started_at") or runtime_health.get("started_at") or "UNKNOWN",
+        "core_snapshot_finished_at_beijing": runtime_health.get("captured_at_beijing") or runtime_health.get("finished_at") or "UNKNOWN",
+        "workflow_run_id": runtime_health.get("workflow_run_id") or runtime_health.get("run_id") or "UNKNOWN",
+        "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
+    }
+    latency["waterfall_rule"] = "Persist only directly observed repository/workflow boundaries and measured in-process durations; UNKNOWN remains explicit. Hidden model reasoning is never logged or inferred."
     return {
         "generated_at": now_utc(), "generated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
         "market_date": current.get("market_date", ""), "latest_valid_node": current.get("latest_valid_node", ""),
