@@ -66,7 +66,11 @@ def build_formal_completion_from_source(source: dict[str, Any]) -> dict[str, Any
     # complete an investment judgment.
     for field in ("managed_position_reviews", "etf_opportunity_reviews", "capital_competition"):
         value = checked.get(field)
-        if not isinstance(value, list):
+        if field == "capital_competition":
+            valid = isinstance(value, (dict, list))
+        else:
+            valid = isinstance(value, list)
+        if not valid:
             raise ValueError(f"{field} projection is ambiguous")
         result[field] = json.loads(json.dumps(value))
     result["request_type"] = STATE_SYNC_ONLY
