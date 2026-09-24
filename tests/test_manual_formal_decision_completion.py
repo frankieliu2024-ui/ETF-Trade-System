@@ -409,6 +409,8 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             "action_changes_now": "NO",
             "next_change_condition": "风险许可变化时重评",
             "next_unit_capital_use": "保留现金",
+            "managed_position_reviews": [],
+            "etf_opportunity_reviews": [],
         })
         source = {
             **SOURCE_REQUEST,
@@ -423,13 +425,14 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         request_path.write_text(json.dumps(source, ensure_ascii=False, sort_keys=True), encoding="utf-8")
         before_bytes = request_path.read_bytes()
         before_obj = json.loads(before_bytes)
-        before_fingerprint = state_sync.source_fingerprint({
+        validated_source = state_sync.validate_source({
             **decision,
             "request_type": "BUSINESS_DECISION_SOURCE",
             "request_id": source_id,
             "decision_id": decision["decision_id"],
             "consumed_snapshot": SNAPSHOT_PATH,
-        })
+        }, expected_snapshot=SNAPSHOT_PATH)
+        before_fingerprint = validated_source["fingerprint"]
         before_identity = (source_id, decision["decision_id"])
 
         with mock.patch.object(state_sync, "build_formal_completion_from_source", side_effect=RuntimeError("injected projection failure")):
@@ -448,13 +451,13 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         self.assertEqual(event["decision_id"], decision["decision_id"])
         self.assertEqual(event["parent_request_id"], source_id)
         self.assertEqual(event["source_fingerprint"], before_fingerprint)
-        self.assertEqual(state_sync.source_fingerprint({
+        self.assertEqual(state_sync.validate_source({
             **decision,
             "request_type": "BUSINESS_DECISION_SOURCE",
             "request_id": source_id,
             "decision_id": decision["decision_id"],
             "consumed_snapshot": SNAPSHOT_PATH,
-        }), before_fingerprint)
+        }, expected_snapshot=SNAPSHOT_PATH)["fingerprint"], before_fingerprint)
 
         with mock.patch("sys.argv", ["process_state_sync_request.py", str(request_path.relative_to(self.root))]):
             state_sync.main()
