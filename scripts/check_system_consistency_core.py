@@ -82,9 +82,30 @@ def canonical_etf_codes(objects: list[dict]) -> set[str]:
     return {str(item.get("code", "")) for item in objects if item.get("code")}
 
 
-def expected_a_share_snapshot_count(objects: list[dict]) -> int:
-    """Derive the expected A-share snapshot size from canonical identities."""
-    return len(canonical_etf_codes(objects)) + len(CORE_A_SHARE_INDEX_CODES)
+def active_account_etf_codes(account: dict) -> set[str]:
+    """Return current positive-quantity ETF identities from canonical account truth."""
+    result: set[str] = set()
+    for pos in account.get("positions") or []:
+        if not isinstance(pos, dict) or str(pos.get("asset_type") or "").upper() != "ETF":
+            continue
+        try:
+            quantity = float(pos.get("quantity") or 0)
+        except (TypeError, ValueError):
+            quantity = 0.0
+        code = str(pos.get("code") or pos.get("symbol") or "").strip()
+        if quantity > 0 and code:
+            result.add(code)
+    return result
+
+
+def expected_runtime_etf_codes(objects: list[dict], account: dict) -> set[str]:
+    """Match the canonical runtime producer: persisted universe plus actual held ETFs."""
+    return canonical_etf_codes(objects) | active_account_etf_codes(account)
+
+
+def expected_a_share_snapshot_count(runtime_etf_codes: set[str]) -> int:
+    """Derive expected runtime A-share snapshot size from runtime identities."""
+    return len(runtime_etf_codes) + len(CORE_A_SHARE_INDEX_CODES)
 
 
 def validate_current_fee_projection() -> dict:
@@ -717,12 +738,14 @@ def main() -> int:
             rows = snapshot.get("rows") or []
             etf_rows = [row for row in rows if row.get("asset_class") == "ETF"]
             index_rows = [row for row in rows if row.get("asset_class") == "A_SHARE_INDEX"]
-            expected_snapshot_count = expected_a_share_snapshot_count(objects)
+            account_for_runtime = read_json("data/state/account_fact.json")
+            runtime_etf_codes = expected_runtime_etf_codes(objects, account_for_runtime)
+            expected_snapshot_count = expected_a_share_snapshot_count(runtime_etf_codes)
             check("a_share_runtime:snapshot_count", snapshot.get("count") == len(rows) == expected_snapshot_count, f"snapshot_count={snapshot.get('count')} rows={len(rows)} expected={expected_snapshot_count}")
             query_only_runtime = str(runtime_health.get("status", "")).upper() == "SKIPPED" and str(runtime_health.get("trigger_mode", "")).upper() == "QUERY_TIME_PUSH"
             market_date_aligned = snapshot.get("market_date") == current.get("market_date") == runtime_health.get("market_date")
             check("a_share_runtime:market_date_alignment", market_date_aligned or query_only_runtime, f"snapshot={snapshot.get('market_date')} current={current.get('market_date')} health={runtime_health.get('market_date')} query_only={query_only_runtime}")
-            check("a_share_runtime:etf_complete", {str(row.get('symbol', '')) for row in etf_rows} == universe_codes and all(row.get("quality_status") == "PASS" for row in etf_rows), f"count={len(etf_rows)} expected={len(universe_codes)}")
+            check("a_share_runtime:etf_complete", {str(row.get('symbol', '')) for row in etf_rows} == runtime_etf_codes and all(row.get("quality_status") == "PASS" for row in etf_rows), f"count={len(etf_rows)} expected={len(runtime_etf_codes)}")
             check("a_share_runtime:core_indices_complete", {str(row.get('thscode', '')) for row in index_rows} == CORE_A_SHARE_INDEX_CODES and all(row.get("quality_status") == "PASS" for row in index_rows), f"indices={[row.get('thscode') for row in index_rows]}")
             check("a_share_runtime:beijing_capture", bool(snapshot.get("captured_at_beijing")) and snapshot.get("timezone") == "Asia/Shanghai", f"captured_at_beijing={snapshot.get('captured_at_beijing')} timezone={snapshot.get('timezone')}")
 
