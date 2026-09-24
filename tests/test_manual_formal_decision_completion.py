@@ -399,6 +399,67 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             "formal_decision": formal_decision(),
         }
 
+    def test_business_source_consumer_fault_recovery_writes_one_decision_fact(self):
+        """Exercise the real process_state_sync_request consumer after Source durability."""
+        source_id = "20260915_1447_business_source"
+        decision = formal_decision()
+        decision.update({
+            "capital_use": "现金",
+            "continued_holding_opportunity_cost": "低",
+            "action_changes_now": "NO",
+            "next_change_condition": "风险许可变化时重评",
+            "next_unit_capital_use": "保留现金",
+        })
+        source = {
+            **SOURCE_REQUEST,
+            "request_id": source_id,
+            "request_type": "BUSINESS_DECISION_SOURCE",
+            "parent_request_id": source_id,
+            "decision_id": decision["decision_id"],
+            "consumed_snapshot": SNAPSHOT_PATH,
+            "formal_decision": decision,
+        }
+        request_path = self.root / "requests/live_snapshot" / f"{source_id}.json"
+        request_path.write_text(json.dumps(source, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+        before_bytes = request_path.read_bytes()
+        before_obj = json.loads(before_bytes)
+        before_fingerprint = state_sync.source_fingerprint({
+            **decision,
+            "request_type": "BUSINESS_DECISION_SOURCE",
+            "request_id": source_id,
+            "decision_id": decision["decision_id"],
+            "consumed_snapshot": SNAPSHOT_PATH,
+        })
+        before_identity = (source_id, decision["decision_id"])
+
+        with mock.patch.object(state_sync, "build_formal_completion_from_source", side_effect=RuntimeError("injected projection failure")):
+            with self.assertRaisesRegex(RuntimeError, "injected projection failure"):
+                with mock.patch("sys.argv", ["process_state_sync_request.py", str(request_path.relative_to(self.root))]):
+                    state_sync.main()
+        self.assertEqual(request_path.read_bytes(), before_bytes)
+        self.assertEqual((before_obj["request_id"], before_obj["decision_id"]), before_identity)
+        self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
+
+        with mock.patch("sys.argv", ["process_state_sync_request.py", str(request_path.relative_to(self.root))]):
+            state_sync.main()
+        files = list((self.root / "events/decisions").glob("*.json"))
+        self.assertEqual(len(files), 1)
+        event = json.loads(files[0].read_text(encoding="utf-8"))
+        self.assertEqual(event["decision_id"], decision["decision_id"])
+        self.assertEqual(event["parent_request_id"], source_id)
+        self.assertEqual(event["source_fingerprint"], before_fingerprint)
+        self.assertEqual(state_sync.source_fingerprint({
+            **decision,
+            "request_type": "BUSINESS_DECISION_SOURCE",
+            "request_id": source_id,
+            "decision_id": decision["decision_id"],
+            "consumed_snapshot": SNAPSHOT_PATH,
+        }), before_fingerprint)
+
+        with mock.patch("sys.argv", ["process_state_sync_request.py", str(request_path.relative_to(self.root))]):
+            state_sync.main()
+        self.assertEqual(len(list((self.root / "events/decisions").glob("*.json"))), 1)
+
     def test_parent_identity_fingerprint_event_fields_and_retry_exactly_once(self):
         first_request = self.request("20260915_1447_manual_intraday_chat__formal_completion")
         retry_request = self.request("different_completion_envelope_retry")
