@@ -433,6 +433,9 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             "request_id": source_id,
             "decision_id": decision["decision_id"],
             "consumed_snapshot": SNAPSHOT_PATH,
+            "parent_request_id": source_id,
+            "requested_at_beijing": SOURCE_REQUEST["requested_at_beijing"],
+            "market_date": SOURCE_REQUEST["market_date"],
         }, expected_snapshot=SNAPSHOT_PATH)
         before_fingerprint = validated_source["fingerprint"]
         before_identity = (source_id, decision["decision_id"])
@@ -462,6 +465,9 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             "request_id": source_id,
             "decision_id": decision["decision_id"],
             "consumed_snapshot": SNAPSHOT_PATH,
+            "parent_request_id": source_id,
+            "requested_at_beijing": SOURCE_REQUEST["requested_at_beijing"],
+            "market_date": SOURCE_REQUEST["market_date"],
         }, expected_snapshot=SNAPSHOT_PATH)["fingerprint"], before_fingerprint)
 
         with mock.patch.object(state_sync, "build_dashboard_block", return_value=""):
