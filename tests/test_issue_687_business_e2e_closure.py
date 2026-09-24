@@ -302,7 +302,8 @@ class BusinessE2EClosureContractTests(unittest.TestCase):
         self.assertIn("run_discovery: bool = False", query.build.__annotations__.get("return", "") if False else
                       (Path(__file__).parents[1] / "scripts/build_query_context.py").read_text(encoding="utf-8"))
         text_value = (Path(__file__).parents[1] / "scripts/build_query_context.py").read_text(encoding="utf-8")
-        self.assertIn("formal_discovery = None if force_refresh else _reusable_formal_discovery", text_value)
+        self.assertIn("formal_discovery = _reusable_formal_discovery", text_value)
+        self.assertNotIn("formal_discovery = None if force_refresh else _reusable_formal_discovery", text_value)
 
 if __name__ == "__main__":
     unittest.main()
