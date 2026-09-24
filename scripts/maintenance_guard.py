@@ -70,6 +70,21 @@ def rounded(value: float, digits: int = 2) -> float:
     return round(float(value), digits)
 
 
+def _positions_from_trades(trades: list[dict]) -> dict[str, float]:
+    qty_by_code: dict[str, float] = defaultdict(float)
+    for trade in trades:
+        code = str(trade.get("code") or "")
+        qty = float(trade.get("quantity") or 0)
+        if not code:
+            continue
+        side = str(trade.get("side") or trade.get("action") or "").upper()
+        if side == "BUY":
+            qty_by_code[code] += qty
+        elif side == "SELL":
+            qty_by_code[code] -= qty
+    return qty_by_code
+
+
 def reconcile() -> dict:
     equity = read_json(EQUITY, {}) or {}
     account = read_json(ACCOUNT, {}) or {}
@@ -79,11 +94,6 @@ def reconcile() -> dict:
     canonical_replay = str(equity.get("schema_version") or "").startswith("1.0-canonical-replay") and bool(series)
     expected_trade_count = int(summary.get("trade_fact_count") or summary.get("trade_count") or 0)
 
-    # FACT_ENRICHMENT_ONLY rows were historically persisted inside the replay
-    # trade array even though they describe already-recorded economic executions.
-    # During the one-way migration to canonical execution identity, allow only
-    # the exact declared-count delta explained by those rows. Any other deficit
-    # still uses the existing bounded formal-index recovery and remains fail-closed.
     enrichment_only_count = sum(
         1 for t in trades
         if str(t.get("replay_semantics") or "").upper() == "FACT_ENRICHMENT_ONLY"
@@ -102,25 +112,22 @@ def reconcile() -> dict:
     }
     overlay_events = [t for t in trades_for_positions if trade_signature(t) not in reconstructed_signatures]
 
-    ledger_qty: dict[str, float] = defaultdict(float)
-    position_basis = "AUXILIARY_EQUITY_RECONSTRUCTION_PLUS_EXECUTED_TRADE_EVENTS"
     current_replay_row = series[-1] if canonical_replay else {}
     replay_complete = bool(canonical_replay and str(current_replay_row.get("quality_status") or "").upper() == "COMPLETE")
-    if canonical_replay:
+    pending_latest_valuation = bool(summary.get("pending_latest_valuation", False))
+
+    if canonical_replay and not pending_latest_valuation:
+        ledger_qty: dict[str, float] = defaultdict(float)
         position_basis = "CANONICAL_REPLAY_FINAL_COMPLETE_POSITION_IDENTITY"
         for code, position in (current_replay_row.get("positions") or {}).items():
             ledger_qty[str(code)] = float((position or {}).get("quantity") or 0)
     else:
-        for t in trades_for_positions:
-            code = str(t.get("code") or "")
-            qty = float(t.get("quantity") or 0)
-            if not code:
-                continue
-            side = str(t.get("side") or t.get("action") or "").upper()
-            if side == "BUY":
-                ledger_qty[code] += qty
-            elif side == "SELL":
-                ledger_qty[code] -= qty
+        ledger_qty = _positions_from_trades(trades_for_positions)
+        position_basis = (
+            "CANONICAL_EXECUTED_TRADE_FACTS_CURRENT_POSITION_IDENTITY_WITH_PRIOR_EOD_EQUITY"
+            if canonical_replay and pending_latest_valuation
+            else "AUXILIARY_EQUITY_RECONSTRUCTION_PLUS_EXECUTED_TRADE_EVENTS"
+        )
 
     account_qty: dict[str, float] = {}
     etf_codes = active_account_asset_codes(ROOT, account)["etf"]
