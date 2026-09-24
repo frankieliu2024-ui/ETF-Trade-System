@@ -240,6 +240,19 @@ class ManualRequestBoundedObservabilityTests(unittest.TestCase):
         self.assertIn('REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"', workflow)
         self.assertIn('python scripts/build_query_context.py --force-refresh --symbols "$REQUEST_SYMBOLS" "${REQUEST_ARGS[@]}"', workflow)
 
+    def test_formal_completion_stays_on_state_sync_fast_path(self):
+        workflow = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
+        self.assertIn('echo "formal_completion=$formal_completion" >> "$GITHUB_OUTPUT"', workflow)
+        self.assertIn('steps.state_sync.outputs.formal_completion != \'true\'', workflow)
+
+        query_block = workflow.split("- name: Build on-demand query context", 1)[1].split("- name: Build E2E usability state", 1)[0]
+        e2e_block = workflow.split("- name: Build E2E usability state", 1)[1].split("- name: Build state context and candidates", 1)[0]
+        state_block = workflow.split("- name: Build state context and candidates", 1)[1].split("- name: Build post-market review context", 1)[0]
+        review_block = workflow.split("- name: Build post-market review context", 1)[1].split("- name: Commit downstream runtime/data artifacts", 1)[0]
+
+        for block in (query_block, e2e_block, state_block, review_block):
+            self.assertIn("steps.state_sync.outputs.formal_completion != 'true'", block)
+
     def test_post_request_snapshot_does_not_force_discovery_rescan(self):
         workflow = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
         branch = workflow.split('elif [ "${{ steps.snapshot_result.outputs.snapshot_written }}" = "true" ] && [ "$REQUEST_REQUIRES_REFRESH" = "true" ]; then', 1)[1]
