@@ -350,8 +350,8 @@ jobs:
           assert review["review_unavailability"]["recovery_classification"] == "UNRECOVERABLE"
           assert review["review_unavailability"]["normal_case_generated"] is False
           e2e = json.loads(Path("data/state/e2e_status.json").read_text(encoding="utf-8"))
+          report = json.loads(Path("data/state/system_consistency.json").read_text(encoding="utf-8"))
           if e2e.get("status") not in {"READY", "DEGRADED"}:
-              report = json.loads(Path("data/state/system_consistency.json").read_text(encoding="utf-8"))
               failed = [item for item in report.get("checks", []) if item.get("status") == "FAIL"]
               changed = subprocess.check_output(["git", "diff", "--name-only", "origin/${{ github.base_ref }}...${{ github.event.pull_request.head.sha }}"], text=True).splitlines()
               assert report.get("status") == "FAIL"
