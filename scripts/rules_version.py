@@ -51,11 +51,16 @@ def parse_master_release(text: str) -> dict[str, Any]:
         previous_version = f"V{major}.{minor}.{patch - 1}" if patch > 0 else None
         if previous_version and not any(m.group("version") == previous_version for m in table_rows):
             errors.append(f"MASTER version table is missing previous release {previous_version}")
-        # A release description is a prose line beginning with the version,
-        # not a table row. This avoids counting historical mentions elsewhere.
-        current_description_present = any(
-            line.startswith(f"{heading_version}") and not line.startswith("|")
-            for line in lines
+        # The canonical positioning metadata is itself the formal release
+        # description. A separate changelog sentence is optional; otherwise a
+        # valid metadata line such as `规则版本：V2.2.32（说明）` would be
+        # rejected merely because its human-readable suffix changed.
+        current_description_present = bool(
+            positioning_version == heading_version
+            and any(
+                line.startswith(f"{heading_version}") and not line.startswith("|")
+                for line in lines
+            )
         )
         if not current_description_present:
             errors.append(f"MASTER is missing a complete description for {heading_version}")
