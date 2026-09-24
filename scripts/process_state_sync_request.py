@@ -20,6 +20,20 @@ except ModuleNotFoundError:
     from scripts.build_stock_context import active_account_asset_codes, build_managed_position_projection, first, normalize_code, position_metric
 from sync_formal_files import sync_formal_files, latest_canonical_formal_decision, format_position_pnl
 from observation_etf_management import persist_monitor_universe, validate_observation_management
+try:
+    from business_decision_source import (
+        BUSINESS_DECISION_SOURCE,
+        build_formal_completion_from_source,
+        source_fingerprint,
+        validate_source,
+    )
+except ModuleNotFoundError:
+    from scripts.business_decision_source import (
+        BUSINESS_DECISION_SOURCE,
+        build_formal_completion_from_source,
+        source_fingerprint,
+        validate_source,
+    )
 from formal_file_mutation_gateway import (
     append_managed_line,
     replace_formal_block,
@@ -906,7 +920,7 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
             if external_evidence and external_evidence.get("execution_price_eligibility") != "EXECUTION_PRICE_ELIGIBLE"
             else ""
         ),
-        "recorded_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
+        "source_type": request.get("request_type") if str(request.get("request_type") or "").upper() == BUSINESS_DECISION_SOURCE else "", "source_fingerprint": request.get("_source_fingerprint") or "", "reply_ready": bool(request.get("_source_fingerprint")), "recorded_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
     event_path = ROOT / "events/decisions" / f"{decision_id}.json"
     event_path.parent.mkdir(parents=True, exist_ok=True)
     if event_path.exists():
@@ -2835,6 +2849,41 @@ def main() -> int:
         raise RuntimeError("invalid state sync request path")
     request = load_json(req_path)
     request["_ingress_path"] = str(req_path.relative_to(ROOT)).replace("\\\\", "/")
+
+    # Explicit Business Decision Source dispatch. The ingress file itself is
+    # the immutable durable Source artifact; projection only occurs after the
+    # Phase 1 gate and never calls decision logic or refreshes market facts.
+    source_dispatch = str(request.get("request_type") or "").strip().upper() == BUSINESS_DECISION_SOURCE
+    source_fingerprint_value = ""
+    source_reply_ready = False
+    if source_dispatch:
+        supplied_decision = request.get("formal_decision")
+        if not isinstance(supplied_decision, dict):
+            supplied_decision = request
+        source_payload = dict(supplied_decision)
+        for key in ("request_id", "decision_id", "consumed_snapshot", "parent_request_id",
+                    "requested_at_beijing", "market_date"):
+            if key not in source_payload and request.get(key) not in (None, ""):
+                source_payload[key] = request.get(key)
+        source_payload["request_type"] = BUSINESS_DECISION_SOURCE
+        source = validate_source(
+            source_payload,
+            expected_snapshot=str(request.get("consumed_snapshot") or source_payload.get("consumed_snapshot") or "").strip(),
+        )
+        source_fingerprint_value = source["fingerprint"]
+        source_reply_ready = True
+        request["_business_decision_source"] = source
+        request["_source_fingerprint"] = source_fingerprint_value
+        # Deterministic projection only: no new facts, ranking, or investment
+        # judgment is introduced by this branch.
+        projected = build_formal_completion_from_source(source)
+        projected.pop("request_type", None)
+        projected.pop("source_type", None)
+        projected.pop("source_durable", None)
+        projected.pop("reply_ready", None)
+        projected.pop("projection_status", None)
+        projected.pop("fingerprint", None)
+        request["formal_decision"] = projected
     if str(request.get("ingress_mode") or "").upper() == "HISTORICAL_BACKFILL":
         result = process_historical_backfill_request(request)
         result.update({
@@ -2843,6 +2892,11 @@ def main() -> int:
             "account_sync_status": "NOT_APPLICABLE",
             "canonical_ingress_state": CANONICAL_INGRESS_SUBMITTED,
             "canonical_ingress_failure_reason": "",
+            "source_dispatch": source_dispatch,
+            "source_durable": bool(source_dispatch),
+            "source_immutable": bool(source_dispatch),
+            "source_fingerprint": source_fingerprint_value,
+            "reply_ready": source_reply_ready,
         })
         print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
         return 0
