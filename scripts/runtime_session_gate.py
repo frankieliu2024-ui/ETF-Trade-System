@@ -29,6 +29,7 @@ def set_output(key: str, value: str) -> None:
 
 STATE_SYNC_FIELDS = ("account_fact", "formal_decision", "trade_event", "formal_review")
 EVIDENCE_REQUEST_TYPES = {"EMERGENCY_EXTERNAL_MARKET_EVIDENCE"}
+BUSINESS_DECISION_SOURCE_REQUEST_TYPE = "BUSINESS_DECISION_SOURCE"
 REFRESH_REQUEST_TYPES = {"MARKET_QUOTE_REFRESH", "QUERY_TIME_REFRESH", "LIVE_SNAPSHOT_REFRESH"}
 EXPLICIT_REFRESH_INTENTS = {"EXPLICIT_LATEST", "MARKET_QUOTE_REFRESH", "QUERY_TIME_REFRESH"}
 
@@ -95,6 +96,9 @@ def classify_live_snapshot_request(request: dict) -> str:
     This is a routing classification only. It does not create a producer,
     state store, transport, decision engine or freshness rule.
     """
+    request_type = str(request.get("request_type") or "").upper()
+    if request_type == BUSINESS_DECISION_SOURCE_REQUEST_TYPE:
+        return "BUSINESS_DECISION_SOURCE"
     source = str(request.get("source") or "").upper()
     scenario = str(request.get("interaction_scenario") or "").upper()
     has_state_sync = any(field in request for field in STATE_SYNC_FIELDS)
