@@ -566,7 +566,7 @@ jobs:
         # Full decision preparation is request/state-sync bound. Scheduled
         # snapshots keep canonical market facts and reusable Discovery current;
         # formal requests/recovery rebuild the canonical decision context.
-        if: ${{ always() && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_state_context.py
       - name: Build post-market review context
         # Review is a close/state-sync consumer, not a generic intraday pulse
