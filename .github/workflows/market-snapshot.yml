@@ -456,10 +456,6 @@ jobs:
         if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         continue-on-error: true
         run: python scripts/build_market_delta.py
-      - name: Refresh overseas and Asia index context
-        # Decision input: keep fail-closed for this fact domain.
-        if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
-        run: python scripts/build_overseas_context.py
       - name: Build dynamic stock context from current account
         # Decision input: run independently of unrelated prior-step failures.
         if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
@@ -559,8 +555,9 @@ jobs:
         if: ${{ always() && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_state_context.py
       - name: Build post-market review context
-        # Review is downstream maintenance, not an intraday decision prerequisite.
-        if: ${{ always() && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        # Review is a close/state-sync consumer, not a generic intraday pulse
+        # responsibility. Explicit/manual close remains a legal recovery path.
+        if: ${{ always() && (steps.state_sync.outputs.processed == 'true' || (steps.snapshot_result.outputs.snapshot_written == 'true' && (steps.session_gate.outputs.close_intent == 'true' || github.event.inputs.node == 'close'))) && github.event.inputs.probe_only != 'true' }}
         continue-on-error: true
         run: python scripts/build_post_market_review.py
       - name: Commit downstream runtime/data artifacts
