@@ -1,0 +1,69 @@
+import json
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def contract():
+    config = json.loads((ROOT / "config/market/market_monitor_config.json").read_text(encoding="utf-8"))
+    return config["vnext_contracts"]
+
+
+def test_vnext_contract_has_three_business_layers_without_trade_authority():
+    layers = contract()["monitoring_layers"]
+    assert set(layers) == {
+        "layer_1_external_drivers_cross_market_state",
+        "layer_2_china_internal_market_state",
+        "layer_3_etf_opportunity_and_capital_state",
+    }
+    assert "breadth" in layers["layer_2_china_internal_market_state"]["fact_domains"]
+    assert "capital_flow" in layers["layer_2_china_internal_market_state"]["fact_domains"]
+    assert layers["layer_3_etf_opportunity_and_capital_state"]["capital_competition_owner"] == "MASTER_and_ChatGPT"
+    assert all("action" not in value.get("action_boundary", "") or "only" in value["action_boundary"] for value in layers.values())
+
+
+def test_transmission_metadata_is_selection_only():
+    metadata = contract()["transmission_metadata"]
+    assert set(("transmission_tags", "external_drivers", "china_feedback", "etf_family")).issubset(metadata["fields"])
+    assert "ranking" in metadata["forbidden_uses"]
+    assert "trial_confirm_sell" in metadata["forbidden_uses"]
+
+
+def test_unified_evidence_contract_preserves_pit_and_separate_eligibility():
+    evidence = contract()["evidence_contract"]
+    required = {"object", "fact_type", "source", "provider_as_of", "received_at", "market_phase", "actual_age", "quality", "PIT", "freshness", "decision_eligible", "execution_eligible", "fallback_status", "decision_use", "evidence_identity"}
+    assert required.issubset(evidence["required_fields"])
+    assert set(evidence["decision_use"]) == {"DECISION_CRITICAL", "DECISION_ENHANCING", "CONTEXT_ONLY", "RESEARCH"}
+    assert evidence["execution_rule"] == "execution_eligible_is_independent_from_decision_eligible"
+
+
+def test_discovery_identity_and_dual_entrypoints_share_one_pool():
+    discovery = contract()["discovery_evidence_identity"]
+    assert set(discovery["components"]) == {"market_date", "market_node", "universe_identity", "decision_relevant_market_delta", "required_history_end_date"}
+    entrypoints = contract()["discovery_entrypoints"]
+    assert "both_entries_share_one_candidate_eligibility_pool_and_one_MASTER_qualification_chain" == entrypoints["convergence"]
+    assert "second_discovery_engine" in entrypoints["forbidden"]
+
+
+def test_decision_ready_is_distinct_from_full_system_ready():
+    readiness = contract()["decision_readiness"]
+    assert "risk_permission" in readiness["DECISION_READY"]
+    assert "next_unit_capital_use" in readiness["DECISION_READY"]
+    assert "dashboard" in readiness["FULL_SYSTEM_READY"]
+    assert readiness["ordering_rule"] == "FULL_SYSTEM_READY_is_not_a_prerequisite_for_DECISION_READY"
+    assert "minimum_decision_state" in readiness["state_rule"]
+
+
+def test_state_builder_classification_defers_projection_and_research_without_runtime_reordering():
+    classification = contract()["state_builder_classification"]
+    assert "account" in classification["HOT_PATH_REQUIRED"]
+    assert "research_features" in classification["ASYNC"]
+    assert "dashboard_candidate" in classification["AFTER_DECISION"]
+    assert classification["runtime_change_boundary"] == "classification_only_in_phase2; runtime_reordering_is_phase3"
+
+
+def test_contract_is_configuration_only_and_does_not_add_runtime_topology():
+    config = json.loads((ROOT / "config/market/market_monitor_config.json").read_text(encoding="utf-8"))
+    assert "vnext_contracts" in config
+    assert not any(key in config["vnext_contracts"] for key in ("workflow", "state_file", "producer", "checker", "queue", "executor"))
