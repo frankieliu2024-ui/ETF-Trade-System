@@ -22,6 +22,8 @@ class BusinessDecisionSourceTests(unittest.TestCase):
             "continued_holding_opportunity_cost": "低",
             "action_changes_now": "NO",
             "next_change_condition": "risk permission changes",
+            "managed_position_reviews": [],
+            "etf_opportunity_reviews": [],
             "capital_competition": [],
             "next_unit_capital_use": "现金",
         }
