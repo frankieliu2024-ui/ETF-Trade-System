@@ -135,22 +135,35 @@ def replay(root: Path = ROOT, *, price_dir: Path | None = None, cutoff: str | No
             trade_index += 1
         market_value = 0.0
         positions = {}
+        missing_held_prices = []
         for code, code_lots in sorted(lots.items()):
             qty = sum(x[0] for x in code_lots)
             if qty <= 1e-9:
                 continue
             if code not in prices[day]:
-                raise ValueError(f"missing date-aligned close for held ETF {code} on {day}")
+                missing_held_prices.append(code)
+                continue
             mv = qty * prices[day][code]
             market_value += mv
             positions[code] = {"quantity": round(qty, 6), "close": prices[day][code], "market_value": round(mv, 2), "cost_basis": round(sum(q * p for q, p in code_lots), 2)}
+        if missing_held_prices:
+            # An intraday trade may become canonical before the current market
+            # date has an EOD-equivalent daily feature for the new holding.
+            # Never manufacture a close or publish a partial strategy-equity row.
+            # A historical/non-latest gap remains a hard data error.
+            if day != dates[-1]:
+                raise ValueError(f"missing date-aligned close for held ETF {','.join(missing_held_prices)} on {day}")
+            break
         equity = round(cash + market_value, 2)
         high = max(high, equity)
         rows.append({"date": day, "cash": round(cash, 2), "market_value": round(market_value, 2), "strategy_equity_gross": equity, "realized_pnl_gross": round(realized, 2), "drawdown_amount": round(equity - high, 2), "drawdown_pct": round((equity / high - 1) * 100, 4), "positions": positions, "quality_status": "COMPLETE"})
+    if not rows:
+        raise ValueError("no complete date-aligned ETF strategy valuation rows")
     current = rows[-1]
+    pending_latest_valuation = current["date"] != cutoff
     pending_fee_count = sum(1 for t in facts if str(t.get("fee_status") or "").upper() != "CONFIRMED")
     fee_status = "ALL_RECORDED_TRADE_FEES_CONFIRMED" if pending_fee_count == 0 else f"{pending_fee_count} RECORDED TRADE FEE(S) PENDING_OR_NOT_YET_DISPLAYED"
-    return {"schema_version": "1.0-canonical-replay-candidate", "read_only_research": True, "trade_accounting": "FIFO", "replay_start": "2026-07-13", "replay_cutoff": cutoff, "input_source_identity": {"trade_owner": "confirmed_trade_facts.canonical_etf_trade_facts", "price_owner": "events/research/daily_features", "price_semantics": "date-aligned daily close / EOD-equivalent"}, "trades": facts, "summary": {"starting_etf_strategy_capital": STARTING_CAPITAL, "current_gross_strategy_equity": current["strategy_equity_gross"], "current_strategy_return_pct_gross": round((current["strategy_equity_gross"] / STARTING_CAPITAL - 1) * 100, 4), "current_cumulative_pnl_gross": round(current["strategy_equity_gross"] - STARTING_CAPITAL, 2), "max_drawdown_amount": min(x["drawdown_amount"] for x in rows), "max_drawdown_pct": min(x["drawdown_pct"] for x in rows), "gross_realized_pnl": round(realized, 2), "confirmed_fees_separate": round(fee_total, 2), "known_fees": round(fee_total, 2), "pending_fee_count": pending_fee_count, "fee_status": fee_status, "pending_fees_do_not_block_gross": True, "trade_fact_count": len(facts), "price_date_count": len(dates), "coverage_status": "COMPLETE"}, "series": rows}
+    return {"schema_version": "1.0-canonical-replay-candidate", "read_only_research": True, "trade_accounting": "FIFO", "replay_start": "2026-07-13", "replay_cutoff": current["date"], "input_source_identity": {"trade_owner": "confirmed_trade_facts.canonical_etf_trade_facts", "price_owner": "events/research/daily_features", "price_semantics": "date-aligned daily close / EOD-equivalent"}, "trades": facts, "summary": {"starting_etf_strategy_capital": STARTING_CAPITAL, "current_gross_strategy_equity": current["strategy_equity_gross"], "current_strategy_return_pct_gross": round((current["strategy_equity_gross"] / STARTING_CAPITAL - 1) * 100, 4), "current_cumulative_pnl_gross": round(current["strategy_equity_gross"] - STARTING_CAPITAL, 2), "max_drawdown_amount": min(x["drawdown_amount"] for x in rows), "max_drawdown_pct": min(x["drawdown_pct"] for x in rows), "gross_realized_pnl": round(realized, 2), "confirmed_fees_separate": round(fee_total, 2), "known_fees": round(fee_total, 2), "pending_fee_count": pending_fee_count, "fee_status": fee_status, "pending_fees_do_not_block_gross": True, "trade_fact_count": len(facts), "price_date_count": len(dates), "coverage_status": "DEGRADED_PENDING_LATEST_VALUATION" if pending_latest_valuation else "COMPLETE", "pending_latest_valuation": pending_latest_valuation}, "series": rows}
 
 
 def main():
