@@ -112,10 +112,6 @@ class ProviderPolicyConsistencyTest(unittest.TestCase):
         self.assertIn(("159981", "159981.SZ"), cloud_runner_snapshot.ETF)
         self.assertIn("159981", cloud_runner_snapshot.EASTMONEY_FALLBACK_ETFS)
         self.assertNotIn("159981.SZ", self.priority.get("object_fallback_policy") or {})
-        self.assertEqual(
-            ["tencent_qq", "hithink_finance", "eastmoney_push2"],
-            ["tencent_qq", "hithink_finance", "eastmoney_push2"],
-        )
 
     def test_production_scope_declarations_do_not_drift(self):
         """Production scope labels duplicated for display must match the provider authority exactly."""
