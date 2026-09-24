@@ -275,6 +275,16 @@ def load_node_local_formal_discovery(root: Path, current: dict) -> dict | None:
 
 
 def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--decision-ready-only",
+        action="store_true",
+        help="reuse persisted non-critical research/enrichment facts while rebuilding the canonical decision context",
+    )
+    args = parser.parse_args()
+    decision_ready_only = bool(args.decision_ready_only)
     timing = {"state_builder_started_at": now_utc()}
     current = read_current(ROOT)
     timing["current_published_at"] = str(current.get("captured_at") or "")
@@ -289,35 +299,47 @@ def main() -> None:
     timing["market_structure_ready_at"] = now_utc()
     atomic_json_write(ROOT / "data" / "state" / "market_structure_context.json", market_structure)
 
-    research = build_research_features(ROOT)
-    evidence_delta = build_research_evidence_delta(ROOT)
-    atomic_json_write(ROOT / "data" / "state" / "research_evidence_delta.json", evidence_delta)
-    execution_quality = build_execution_quality(ROOT)
-    atomic_json_write(ROOT / "data" / "state" / "execution_quality.json", execution_quality)
-
-    skfolio_risk = build_skfolio_risk_evidence(ROOT)
-    atomic_json_write(ROOT / "data" / "state" / "skfolio_risk_evidence.json", skfolio_risk)
+    if decision_ready_only:
+        # These are canonical, read-only/enrichment facts. Rebuilding them here
+        # cannot improve the request-bound decision unless their own evidence
+        # has changed; their owners/workflows remain responsible for refresh.
+        research = load_json(ROOT / "data" / "state" / "research_context.json", {"status": "REUSED", "read_only": True})
+        evidence_delta = load_json(ROOT / "data" / "state" / "research_evidence_delta.json", {"items": [], "status": "REUSED"})
+        execution_quality = load_json(ROOT / "data" / "state" / "execution_quality.json", {"status": "REUSED"})
+        skfolio_risk = load_json(ROOT / "data" / "state" / "skfolio_risk_evidence.json", {"status": "REUSED"})
+    else:
+        research = build_research_features(ROOT)
+        evidence_delta = build_research_evidence_delta(ROOT)
+        atomic_json_write(ROOT / "data" / "state" / "research_evidence_delta.json", evidence_delta)
+        execution_quality = build_execution_quality(ROOT)
+        atomic_json_write(ROOT / "data" / "state" / "execution_quality.json", execution_quality)
+        skfolio_risk = build_skfolio_risk_evidence(ROOT)
+        atomic_json_write(ROOT / "data" / "state" / "skfolio_risk_evidence.json", skfolio_risk)
     skfolio_summary = compact_skfolio_risk(skfolio_risk)
 
-    share_flow = build_etf_share_flow_evidence(ROOT)
-    atomic_json_write(ROOT / "data" / "state" / "etf_share_flow_evidence.json", share_flow)
+    if decision_ready_only:
+        share_flow = load_json(ROOT / "data" / "state" / "etf_share_flow_evidence.json", {"status": "REUSED"})
+        margin_financing = load_json(ROOT / "data" / "state" / "margin_financing_evidence.json", {"status": "REUSED"})
+        low_cost_alpha = load_json(ROOT / "data" / "state" / "low_cost_alpha_evidence.json", {"status": "REUSED"})
+        active_return = load_json(ROOT / "data" / "state" / "active_return_evidence.json", {"status": "REUSED"})
+    else:
+        share_flow = build_etf_share_flow_evidence(ROOT)
+        atomic_json_write(ROOT / "data" / "state" / "etf_share_flow_evidence.json", share_flow)
+        margin_financing = build_margin_financing_evidence(ROOT)
+        atomic_json_write(ROOT / "data" / "state" / "margin_financing_evidence.json", margin_financing)
+        low_cost_alpha = build_low_cost_alpha_evidence(ROOT)
+        atomic_json_write(ROOT / "data" / "state" / "low_cost_alpha_evidence.json", low_cost_alpha)
+        active_return = build_active_return_evidence(ROOT)
+        atomic_json_write(ROOT / "data" / "state" / "active_return_evidence.json", active_return)
     share_flow_summary = compact_share_flow(share_flow)
-
-    margin_financing = build_margin_financing_evidence(ROOT)
-    atomic_json_write(ROOT / "data" / "state" / "margin_financing_evidence.json", margin_financing)
     margin_financing_summary = compact_margin_financing(margin_financing)
-
-    low_cost_alpha = build_low_cost_alpha_evidence(ROOT)
-    atomic_json_write(ROOT / "data" / "state" / "low_cost_alpha_evidence.json", low_cost_alpha)
-
-    active_return = build_active_return_evidence(ROOT)
-    atomic_json_write(ROOT / "data" / "state" / "active_return_evidence.json", active_return)
 
     contribution_audit = load_json(ROOT / "data" / "state" / "research_contribution_audit.json", {})
     contribution_summary = compact_contribution_audit(contribution_audit)
 
     research_master = load_json(ROOT / "data" / "state" / "research_master_candidates.json", {})
-    atomic_json_write(ROOT / "data" / "state" / "research_context.json", {
+    if not decision_ready_only:
+        atomic_json_write(ROOT / "data" / "state" / "research_context.json", {
         **research,
         "read_only": True,
         "decision_boundary": "研究层向当前决策提供经过归纳的市场、ETF与打新底仓研究证据，可直接改变候选比较、风险收益、持仓/卖出、金额及资金来源/去向判断；不得绕过MASTER生成交易动作或自动交易。",
@@ -365,7 +387,7 @@ def main() -> None:
             "decision_outcomes": "events/research/decision_outcomes/<decision_id>.json",
             "master_candidates": "data/state/research_master_candidates.json (slow-path/on-demand input; not regenerated by build_state_context)",
         },
-    })
+        })
 
     phase4 = build_phase4_automation(ROOT)
     candidate = build_dashboard_candidate(ROOT)
@@ -452,10 +474,31 @@ def main() -> None:
         "note": "该状态只证明机器上下文已具备市场层+标的层正式盘中分析所需结构，不等于ChatGPT已实际消费；正式回复仍必须遵守formal_intraday_response_contract。",
     }
     context["intraday_path_production_selection"] = path_features.get("production_selection") or {}
+    context["runtime_optimization"] = {
+        "mode": "DECISION_READY_ONLY_REUSE" if decision_ready_only else "FULL_REBUILD",
+        "decision_ready_boundary": "account_holdings_current_market_required_discovery_and_capital_facts",
+        "reused_enrichment_facts": bool(decision_ready_only),
+        "reused_fact_files": [
+            "research_context.json",
+            "research_evidence_delta.json",
+            "execution_quality.json",
+            "skfolio_risk_evidence.json",
+            "etf_share_flow_evidence.json",
+            "margin_financing_evidence.json",
+            "low_cost_alpha_evidence.json",
+            "active_return_evidence.json",
+            "research_execution_summary.json",
+        ] if decision_ready_only else [],
+        "eligibility_rule": "reuse is canonical and evidence-bound; no fixed-minute qualification or PIT/freshness relaxation",
+        "trade_authority": False,
+    }
     atomic_json_write(ROOT / "data" / "state" / "dashboard_update_candidate.json", candidate)
     context["observability"]["timing"]["decision_context_written_at"] = now_utc()
     atomic_json_write(ROOT / "data" / "state" / "decision_context.json", context)
-    research_execution_summary = build_research_execution_bridge(ROOT)
+    if decision_ready_only:
+        research_execution_summary = load_json(ROOT / "data" / "state" / "research_execution_summary.json", {"mode": "REUSED"})
+    else:
+        research_execution_summary = build_research_execution_bridge(ROOT)
     print(json.dumps({
         "ok": True,
         "account_fact_status": context["account_fact_status"],
