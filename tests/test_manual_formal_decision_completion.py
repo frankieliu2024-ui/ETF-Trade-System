@@ -449,7 +449,7 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             with mock.patch.object(state_sync, "persist_monitor_universe", return_value=False):
                 with mock.patch.object(state_sync, "sync_formal_files", return_value={}):
                     with mock.patch("sys.argv", ["process_state_sync_request.py", str(request_path.relative_to(self.root))]):
-                    state_sync.main()
+                        state_sync.main()
         files = list((self.root / "events/decisions").glob("*.json"))
         self.assertEqual(len(files), 1)
         event = json.loads(files[0].read_text(encoding="utf-8"))
