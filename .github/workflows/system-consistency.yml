@@ -319,7 +319,7 @@ jobs:
           }, ensure_ascii=False))
           PY
           export CANDIDATE_CONSISTENCY_RC="$consistency_rc"
-          git diff --name-only "origin/${{ github.base_ref }}...HEAD" > "$candidate/changed-files.txt"
+          git diff --name-only "origin/${{ github.base_ref }}...${{ github.event.pull_request.head.sha }}" > "$candidate/changed-files.txt"
           python - <<'PY'
           import json
           import os
