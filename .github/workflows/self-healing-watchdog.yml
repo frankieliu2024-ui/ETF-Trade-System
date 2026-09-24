@@ -247,6 +247,7 @@ jobs:
         run: |
           python scripts/build_state_context.py
           python scripts/build_query_context.py
+          python scripts/build_post_market_review.py
           python scripts/runtime_self_heal.py --assess
 
       - name: Repair deterministic metadata drift
@@ -255,6 +256,7 @@ jobs:
           python scripts/runtime_self_heal.py --repair-safe
           python scripts/build_state_context.py
           python scripts/build_query_context.py
+          python scripts/build_post_market_review.py
           python scripts/runtime_self_heal.py --assess
 
       - name: Dispatch replacement market snapshot
@@ -314,7 +316,7 @@ jobs:
 
             git add -A -- data/state/self_healing_status.json
             if [ "$action" != "NONE" ]; then
-              git add -A -- data/state/CURRENT.json data/state/query_context.json data/state/decision_context.json data/state/intraday_path_features.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json
+              git add -A -- data/state/CURRENT.json data/state/query_context.json data/state/decision_context.json data/state/review_context.json data/state/intraday_path_features.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json post_market_review/post_market_review_event.json
             fi
             if git diff --cached --quiet; then
               exit 0
