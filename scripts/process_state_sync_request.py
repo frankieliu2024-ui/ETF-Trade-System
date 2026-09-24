@@ -925,6 +925,11 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     event_path.parent.mkdir(parents=True, exist_ok=True)
     if event_path.exists():
         prior = load_json(event_path)
+        if str(request.get("request_type") or "").upper() == BUSINESS_DECISION_SOURCE:
+            prior_source = str(prior.get("source_fingerprint") or "").strip()
+            current_source = str(request.get("_source_fingerprint") or "").strip()
+            if prior_source and current_source and prior_source != current_source:
+                raise ValueError("business decision source semantic conflict: immutable source fingerprint mismatch")
         if is_manual_completion and prior.get("fingerprint") == fingerprint:
             if (
                 prior.get("price_source_snapshot") == snapshot_rel
