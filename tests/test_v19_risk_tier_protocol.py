@@ -1,4 +1,6 @@
+import json
 import unittest
+from pathlib import Path
 
 from scripts.check_production_mutation_protocol import (
     acceptance_matrix_for_tier,
@@ -114,6 +116,17 @@ class V19RiskTierTests(unittest.TestCase):
         self.assertTrue(system_subtraction_fast_path_eligible(**kwargs))
         kwargs["no_core_input_change"] = False
         self.assertFalse(system_subtraction_fast_path_eligible(**kwargs))
+
+    def test_query_context_writer_contract_matches_request_bound_ownership(self):
+        root = Path(__file__).resolve().parents[1]
+        cfg = json.loads((root / "config/maintenance/production_mutation_protocol.json").read_text(encoding="utf-8"))
+        contract = cfg["state_file_contracts"]["data/state/query_context.json"]
+        writers = set(contract["allowed_writers"])
+        self.assertNotIn(".github/workflows/overseas-preopen-pulse.yml", writers)
+        pulse = (root / ".github/workflows/overseas-preopen-pulse.yml").read_text(encoding="utf-8")
+        self.assertNotIn("scripts/build_query_context.py", pulse)
+        self.assertNotIn("data/state/query_context.json", pulse)
+        self.assertIn("formal requests rebuild query_context", pulse)
 
     def test_acceptance_matrices_are_minimal_and_escalating(self):
         self.assertEqual(
