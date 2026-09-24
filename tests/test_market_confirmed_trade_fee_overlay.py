@@ -203,5 +203,74 @@ class ConfirmedTradeFeeOverlayTests(unittest.TestCase):
             self.assertEqual(rec["status"], "PASS")
 
 
+    def test_pending_latest_valuation_uses_current_trade_identity_and_prior_eod_equity(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            state = root / "data/state"
+            self.write_json(
+                state / "etf_strategy_equity.json",
+                {
+                    "schema_version": "1.0-canonical-replay-candidate",
+                    "summary": {
+                        "trade_fact_count": 1,
+                        "current_gross_strategy_equity": 200.0,
+                        "known_fees": 0.0,
+                        "coverage_status": "DEGRADED_PENDING_LATEST_VALUATION",
+                        "pending_latest_valuation": True,
+                    },
+                    "trades": [
+                        {
+                            "datetime": "2026-09-24 09:52:55",
+                            "code": "159981",
+                            "name": "能源化工ETF",
+                            "asset_type": "ETF",
+                            "side": "BUY",
+                            "quantity": 2800,
+                            "price": 1.727,
+                            "fee_amount": 0.0,
+                            "fee_status": "CONFIRMED",
+                        }
+                    ],
+                    "series": [
+                        {
+                            "date": "2026-09-23",
+                            "cash": 50.0,
+                            "market_value": 150.0,
+                            "strategy_equity_gross": 200.0,
+                            "quality_status": "COMPLETE",
+                            "positions": {},
+                        }
+                    ],
+                },
+            )
+            self.write_json(
+                state / "account_fact.json",
+                {"positions": [{"asset_type": "ETF", "code": "159981", "quantity": 2800}]},
+            )
+            self.write_json(
+                root / "config/market/etf_monitor_universe.json",
+                {"objects": [{"code": "159981"}]},
+            )
+            old_root, old_equity, old_account = maintenance_guard.ROOT, maintenance_guard.EQUITY, maintenance_guard.ACCOUNT
+            try:
+                maintenance_guard.ROOT = root
+                maintenance_guard.EQUITY = state / "etf_strategy_equity.json"
+                maintenance_guard.ACCOUNT = state / "account_fact.json"
+                rec = maintenance_guard.reconcile()
+            finally:
+                maintenance_guard.ROOT, maintenance_guard.EQUITY, maintenance_guard.ACCOUNT = old_root, old_equity, old_account
+            self.assertEqual(
+                rec["position_ledger_basis"],
+                "CANONICAL_EXECUTED_TRADE_FACTS_CURRENT_POSITION_IDENTITY_WITH_PRIOR_EOD_EQUITY",
+            )
+            check = next(x for x in rec["position_reconciliation"]["checks"] if x["code"] == "159981")
+            self.assertEqual(check["ledger_quantity"], 2800)
+            self.assertEqual(check["account_quantity"], 2800)
+            self.assertEqual(check["status"], "PASS")
+            self.assertEqual(rec["gross_equity_reconciliation"]["reported_gross_equity"], 200.0)
+            self.assertEqual(rec["gross_equity_reconciliation"]["status"], "PASS")
+            self.assertEqual(rec["status"], "PASS")
+
+
 if __name__ == "__main__":
     unittest.main()
