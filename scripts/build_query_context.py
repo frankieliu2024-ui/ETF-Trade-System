@@ -874,7 +874,11 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     discovery_pipeline_started = time.monotonic() if should_run_discovery else None
     candidate_quote_elapsed = 0.0
     if should_run_discovery:
-        formal_discovery = None if force_refresh else _reusable_formal_discovery(root, current, universe_identity, managed_etf_codes)
+        # force_refresh refreshes request-bound market facts; it must not make
+        # a still-valid Discovery evidence identity ineligible for reuse.
+        # Discovery reuse remains guarded by market node, universe identity,
+        # decision-relevant delta and the existing terminal READY contract.
+        formal_discovery = _reusable_formal_discovery(root, current, universe_identity, managed_etf_codes)
         if formal_discovery is None:
             formal_discovery = discover_formal_candidates(
                 root,
