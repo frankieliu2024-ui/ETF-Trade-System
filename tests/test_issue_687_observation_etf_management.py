@@ -58,6 +58,26 @@ class ObservationEtfManagementTest(unittest.TestCase):
         self.assertTrue(changed)
         self.assertEqual([x["code"] for x in projected["objects"]], ["588000"])
 
+    def test_new_broker_held_etf_without_thscode_enters_continuous_monitor(self) -> None:
+        root = root_fixture()
+        account = {"positions":[
+            {"asset_type":"ETF","code":"159981","name":"能源化工ETF","quantity":2800}
+        ]}
+        projected, changed = project_monitor_universe(root, account, {})
+        self.assertTrue(changed)
+        row = next(x for x in projected["objects"] if x["code"] == "159981")
+        self.assertEqual(row["thscode"], "159981.SZ")
+
+    def test_new_shanghai_held_etf_without_thscode_resolves_exchange(self) -> None:
+        root = root_fixture()
+        account = {"positions":[
+            {"asset_type":"ETF","code":"512000","name":"券商ETF","quantity":100}
+        ]}
+        projected, changed = project_monitor_universe(root, account, {})
+        self.assertTrue(changed)
+        row = next(x for x in projected["objects"] if x["code"] == "512000")
+        self.assertEqual(row["thscode"], "512000.SH")
+
     def test_full_exit_does_not_automatically_create_observation(self) -> None:
         root = root_fixture()
         # No observation-management ADMIT intent: projection is unchanged.
