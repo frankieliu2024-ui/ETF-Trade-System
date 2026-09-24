@@ -55,13 +55,7 @@ def parse_master_release(text: str) -> dict[str, Any]:
         # description. A separate changelog sentence is optional; otherwise a
         # valid metadata line such as `规则版本：V2.2.32（说明）` would be
         # rejected merely because its human-readable suffix changed.
-        current_description_present = bool(
-            positioning_version == heading_version
-            and any(
-                line.startswith(f"{heading_version}") and not line.startswith("|")
-                for line in lines
-            )
-        )
+        current_description_present = bool(positioning_version == heading_version)
         if not current_description_present:
             errors.append(f"MASTER is missing a complete description for {heading_version}")
 
