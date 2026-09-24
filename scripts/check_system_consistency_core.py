@@ -472,7 +472,7 @@ def main() -> int:
     )
 
     master = read_text("ETF规则_MASTER.md")
-    check("master:three_layers", "云端市场监测固定为三层" in master, "three-layer rule present")
+    check("master:three_layers", "云端正式监测固定为三层业务语义" in master and all(x in master for x in ("第一层：外部驱动与跨市场状态", "第二层：A股内部市场状态", "第三层：ETF机会与资本状态")), "three-layer business semantics present")
     check("master:holding_observation", "持仓ETF＋观察ETF" in master or "持仓ETF+观察ETF" in master, "holding/observation taxonomy present")
     stale_pool = "统一研究池固定为" in master or ("八ETF" in master and "每个自动或人工决策节点先读取八ETF" in master)
     check("master:no_parallel_fixed_pool", not stale_pool, "no stale fixed-pool taxonomy")
@@ -534,7 +534,7 @@ def main() -> int:
     check("providers:us_extended_hours", us_provider.get("base_proxies") == ["QQQ", "SOXX"] and us_provider.get("conditional_industry_stocks") == "dynamic_only", f"us_extended_hours={us_provider}")
 
     standard = read_text(DATA_STANDARD)
-    check("data_standard:three_layers", all(x in standard for x in ["第一层：指数", "第二层：ETF", "第三层：个股"]), "three-layer structure documented")
+    check("data_standard:three_layers", all(x in standard for x in ["第一层：外部驱动与跨市场状态数据", "第二层：A股内部市场状态数据", "第三层：ETF机会与资本状态数据"]), "three-layer business data structure documented")
     check("data_standard:multi_provider", "hithink-finance" in standard and "Yahoo Chart API" in standard, "Hithink and Yahoo documented")
     check("data_standard:pulse_principle", "10分钟是常规采集目标，不是决策时钟" in standard, "pulse principle documented")
     check("data_standard:preopen_start", all(x in standard for x in ["北京时间08:00", "北京时间09:15", "OPENING_CALL_AUCTION"]), "Asia pre-open and A-share auction start documented")
