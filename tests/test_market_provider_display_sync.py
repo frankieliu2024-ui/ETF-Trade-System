@@ -105,6 +105,14 @@ class ProviderPolicyConsistencyTest(unittest.TestCase):
             self.assertIn(thscode, policies, f"ETF missing canonical fallback policy: {thscode}")
             self.assertGreaterEqual(len(canonical_chain(self.priority, thscode)), 1, f"ETF has empty provider chain: {thscode}")
 
+    def test_dynamic_positive_holding_reuses_established_a_share_etf_chain(self):
+        """A new held A-share ETF must not require an object-level provider entry."""
+        from scripts import cloud_runner_snapshot
+
+        self.assertIn(("159981", "159981.SZ"), cloud_runner_snapshot.ETF)
+        self.assertIn("159981", cloud_runner_snapshot.EASTMONEY_FALLBACK_ETFS)
+        self.assertNotIn("159981.SZ", self.priority.get("object_fallback_policy") or {})
+
     def test_production_scope_declarations_do_not_drift(self):
         """Production scope labels duplicated for display must match the provider authority exactly."""
         monitor_scopes = set((self.monitor.get("provider_expansion") or {}).get("tencent_current_production") or [])
