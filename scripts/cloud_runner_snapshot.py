@@ -93,18 +93,31 @@ ETF = load_etf_universe()
 
 
 def load_eastmoney_fallback_etfs() -> set[str]:
+    """Return all active A-share ETF codes eligible for the existing direct fallback.
+
+    The ETF universe is dynamic: positive account holdings are overlaid by
+    load_etf_universe and must reuse the established A-share ETF chain.
+    Object-level policy remains an optional override for verified special cases;
+    a new held ETF must not require a new provider_priority entry.
+    """
+    configured: set[str] = set()
     path = ROOT / "config" / "market" / "provider_priority.json"
-    if not path.exists():
-        return set()
-    config = json.loads(path.read_text(encoding="utf-8"))
-    policy = config.get("object_fallback_policy") or {}
-    return {
-        str(thscode).split(".")[0]
-        for thscode, rule in policy.items()
-        if str(rule.get("primary", "")) == "tencent_qq"
-        and "eastmoney_push2" in (rule.get("fallback") or [])
-        and rule.get("direct_only") is True
+    if path.exists():
+        config = json.loads(path.read_text(encoding="utf-8"))
+        policy = config.get("object_fallback_policy") or {}
+        configured = {
+            str(thscode).split(".")[0]
+            for thscode, rule in policy.items()
+            if str(rule.get("primary", "")) == "tencent_qq"
+            and "eastmoney_push2" in (rule.get("fallback") or [])
+            and rule.get("direct_only") is True
+            and str(thscode).upper().endswith((".SH", ".SZ"))
+        }
+    runtime_etfs = {
+        code for code, thscode in ETF
+        if str(thscode).upper().endswith((".SH", ".SZ"))
     }
+    return configured | runtime_etfs
 
 
 EASTMONEY_FALLBACK_ETFS = load_eastmoney_fallback_etfs()
