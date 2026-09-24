@@ -185,6 +185,13 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         self.assertNotIn("git rebase origin/main", persist)
         self.assertNotIn("git add -A", persist)
 
+    def test_acceptance_persistence_rebinds_stable_baseline_to_latest_main(self):
+        source = WORKFLOW.read_text(encoding="utf-8")
+        persist = source.split("- name: Persist acceptance result", 1)[1].split("- name: Enforce production acceptance", 1)[0]
+        self.assertIn('latest_main_sha="$(git rev-parse HEAD)"', persist)
+        self.assertIn('ETF_STABLE_ACCEPTANCE_BASE="$latest_main_sha"', persist)
+        self.assertNotIn('ETF_STABLE_ACCEPTANCE_BASE="${GITHUB_SHA}"', persist)
+
     def test_workflow_does_not_add_a_second_state_store(self):
         source = WORKFLOW.read_text(encoding="utf-8")
         persist = source.split("- name: Persist acceptance result", 1)[1].split("- name: Enforce production acceptance", 1)[0]
