@@ -440,7 +440,7 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         with mock.patch.object(state_sync, "build_formal_completion_from_source", side_effect=RuntimeError("injected projection failure")):
             with self.assertRaisesRegex(RuntimeError, "injected projection failure"):
                 with mock.patch("sys.argv", ["process_state_sync_request.py", str(request_path.relative_to(self.root))]):
-                    state_sync.main()
+                        state_sync.main()
         self.assertEqual(request_path.read_bytes(), before_bytes)
         self.assertEqual((before_obj["request_id"], before_obj["decision_id"]), before_identity)
         self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
