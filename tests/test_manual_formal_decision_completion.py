@@ -109,6 +109,30 @@ class ManualCompletionEnvelopeTests(unittest.TestCase):
                 completion_request_id=SOURCE_REQUEST["request_id"],
             )
 
+    def test_stale_request_bound_pit_closure_fails_closed(self):
+        closure = {
+            "parent_request_id": "previous_formal_request",
+            "status": "READY",
+            "request_scoped_pit_resolved": True,
+        }
+        with self.assertRaisesRegex(ValueError, "request_bound_pit_closure parent_request_id"):
+            completion.build_completion_request(
+                SOURCE_REQUEST, formal_decision(), SNAPSHOT_PATH,
+                request_bound_pit_closure=closure,
+            )
+
+    def test_stale_observation_eligibility_closure_fails_closed(self):
+        closure = {
+            "parent_request_id": "previous_formal_request",
+            "status": "READY",
+            "candidates": [],
+        }
+        with self.assertRaisesRegex(ValueError, "observation_eligibility_closure parent_request_id"):
+            completion.build_completion_request(
+                SOURCE_REQUEST, formal_decision(), SNAPSHOT_PATH,
+                observation_eligibility_closure=closure,
+            )
+
     def test_completion_can_carry_immutable_discovery_eligibility_closure(self):
         closure = {
             "parent_request_id": SOURCE_REQUEST["request_id"],
