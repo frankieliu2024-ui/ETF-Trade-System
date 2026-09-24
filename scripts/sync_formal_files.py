@@ -93,7 +93,7 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
 def render_decision_projection(decision: dict) -> str:
     """Render the selector result using the existing Dashboard markdown contract."""
     return "\n".join([
-        "### 最近一次正式盘中决策", "",
+        "### 最近一次正式决策", "",
         f"- 风险许可：{decision.get('risk_permission', '未提供')}",
         f"- 生命周期：{decision.get('lifecycle', '未提供')}",
         f"- 唯一主候选：{decision.get('main_candidate', '无新的主候选。')}",
@@ -203,7 +203,7 @@ def normalize_dashboard_projection(text: str, root: Path = ROOT, account: dict |
             pass
         lines[start:end] = [
             heading, "",
-            f"- 下一A股交易日：{next_day}；优先复核当前ACTIVE_TRIAL与正式行情/账户事实。",
+            f"- 下一可交易节点：A股下一交易日 {next_day}（如相关动作只能在A股执行）；优先复核当前ACTIVE_TRIAL与正式行情/账户事实。",
             "- 已关闭Trial仅在下一可执行节点独立评估降低风险或退出；本投影不生成订单。",
             "- 当前无待处理结算现金约束。",
         ]
@@ -215,7 +215,11 @@ def preserve_decision_block(existing: str) -> str:
     if START_DASH not in existing or END_DASH not in existing:
         return ""
     block = existing[existing.index(START_DASH) + len(START_DASH):existing.index(END_DASH)]
-    starts = [block.find("### 最近一次正式盘中决策"), block.find("### 最近一次正式收盘复盘")]
+    starts = [
+        block.find("### 最近一次正式决策"),
+        block.find("### 最近一次正式盘中决策"),
+        block.find("### 最近一次正式收盘复盘"),
+    ]
     start = min([x for x in starts if x >= 0], default=-1)
     if start < 0:
         return ""

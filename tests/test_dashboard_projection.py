@@ -34,7 +34,7 @@ class DashboardProjectionTests(unittest.TestCase):
                 result,
             )
             self.assertNotIn("FEE_old", result)
-            self.assertIn("下一A股交易日：2026-09-04", result)
+            self.assertIn("下一可交易节点：A股下一交易日 2026-09-04", result)
             self.assertIn("不生成订单", result)
 
     def test_latest_formal_review_wins_over_narrow_request(self):
@@ -97,7 +97,7 @@ class DashboardProjectionTests(unittest.TestCase):
             }, ensure_ascii=False), encoding="utf-8")
             account = {"positions": [], "total_asset": 1, "stock_market_value": 0}
             result = build_dashboard_block(account, {"risk_permission": "禁止新增"}, "", root)
-            self.assertIn("### 最近一次正式盘中决策", result)
+            self.assertIn("### 最近一次正式决策", result)
             self.assertNotIn("{'risk_permission'", result)
 
     def test_trade_correction_writer_has_no_dashboard_destination(self):

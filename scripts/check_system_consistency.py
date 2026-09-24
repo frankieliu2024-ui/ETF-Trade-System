@@ -718,6 +718,50 @@ def _validate_production_mutation_protocol(report: dict) -> None:
     _recount(report)
 
 
+def _validate_formal_completion_decision_readback(report: dict) -> None:
+    """Ensure persisted formal-completion requests have a canonical event."""
+    completion_dir = ROOT / "requests/live_snapshot"
+    missing = []
+    mismatches = []
+    checked = 0
+    for path in sorted(completion_dir.glob("*__formal_completion.json")) if completion_dir.exists() else []:
+        try:
+            request = _read_json(str(path.relative_to(ROOT)))
+        except (OSError, ValueError, json.JSONDecodeError):
+            continue
+        if request.get("formal_fact_type") != "FORMAL_DECISION" or not isinstance(request.get("formal_decision"), dict):
+            continue
+        checked += 1
+        decision = request["formal_decision"]
+        decision_id = str(decision.get("decision_id") or "").strip()
+        event_path = ROOT / "events/decisions" / f"{decision_id}.json"
+        if not decision_id or not event_path.exists():
+            missing.append(f"{path.name}->{decision_id or 'missing decision_id'}")
+            continue
+        try:
+            event = json.loads(event_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, json.JSONDecodeError):
+            mismatches.append(f"{path.name}:event unreadable")
+            continue
+        expected_parent = str(request.get("parent_request_id") or "").strip()
+        if event.get("event_type") != "FORMAL_DECISION" or event.get("formal_decision", {}).get("decision_id") != decision_id:
+            mismatches.append(f"{path.name}:event identity mismatch")
+        if expected_parent and event.get("request_id") not in {expected_parent, str(request.get("request_id") or "").strip()}:
+            mismatches.append(f"{path.name}:request identity mismatch")
+    status = "FAIL" if missing or mismatches else "PASS"
+    detail = f"checked={checked} missing={missing} mismatches={mismatches}"
+    report.setdefault("checks", []).append({"name": "formal_completion:decision_fact_readback", "status": status, "detail": detail})
+    for item in missing:
+        message = "formal_completion:decision_fact_missing:" + item
+        if message not in report.setdefault("errors", []):
+            report["errors"].append(message)
+    for item in mismatches:
+        message = "formal_completion:decision_fact_mismatch:" + item
+        if message not in report.setdefault("errors", []):
+            report["errors"].append(message)
+    _recount(report)
+
+
 def _validate_semantic_formal_structure(report: dict) -> None:
     from formal_document_structure import validate_files
     errors = validate_files(ROOT)
@@ -751,6 +795,7 @@ def main() -> int:
     _validate_post_close_review_contract(report)
     _validate_trade_event_formal_sync(report)
     _validate_historical_trade_case_mapping(report)
+    _validate_formal_completion_decision_readback(report)
     _validate_semantic_formal_structure(report)
     _validate_execution_quality_projection(report)
     _validate_readme_front_door(report)

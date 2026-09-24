@@ -24,6 +24,11 @@ class FormalDecisionContractTests(unittest.TestCase):
         })
         self.assertIn("opportunity_status", error)
 
+    def test_unambiguous_rich_opportunity_status_is_accepted(self):
+        self.assertEqual(validate_formal_decision_contract({
+            "opportunity_status": "Trial持仓反馈显著增强；下一可交易节点进入Confirm复核",
+        }), "")
+
     def test_multi_object_lifecycle_mapping_and_legacy_composite_text_are_accepted(self):
         error = validate_formal_decision_contract({
             "opportunity_status": "无机会",
