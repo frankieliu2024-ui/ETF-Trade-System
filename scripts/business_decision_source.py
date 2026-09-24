@@ -61,6 +61,14 @@ def validate_source(source: dict[str, Any], *, expected_snapshot: str | None = N
 def build_formal_completion_from_source(source: dict[str, Any]) -> dict[str, Any]:
     checked = validate_source(source)
     result = json.loads(json.dumps(checked))
+    # These three structures are transport projections only. Each must already
+    # be present in the Source; no account/market fact may be used to create or
+    # complete an investment judgment.
+    for field in ("managed_position_reviews", "etf_opportunity_reviews", "capital_competition"):
+        value = checked.get(field)
+        if not isinstance(value, list):
+            raise ValueError(f"{field} projection is ambiguous")
+        result[field] = json.loads(json.dumps(value))
     result["request_type"] = STATE_SYNC_ONLY
     result["source"] = "CHATGPT_BUSINESS_DECISION_PROJECTION"
     result["projection_status"] = "READY"
