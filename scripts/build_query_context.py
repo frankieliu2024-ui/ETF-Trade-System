@@ -968,12 +968,28 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         "decision_fact_pack_build": fact_pack_elapsed,
         "query_context_build_total": round(time.monotonic() - build_started, 3),
     }
-    latency["workflow_runtime_observation"] = {
-        "run_started_at_beijing": runtime_health.get("run_started_at") or runtime_health.get("started_at") or "UNKNOWN",
-        "core_snapshot_finished_at_beijing": runtime_health.get("captured_at_beijing") or runtime_health.get("finished_at") or "UNKNOWN",
-        "workflow_run_id": runtime_health.get("workflow_run_id") or runtime_health.get("run_id") or "UNKNOWN",
-        "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
-    }
+    current_workflow_run_id = str(os.environ.get("GITHUB_RUN_ID") or "").strip()
+    runtime_workflow_run_id = str(runtime_health.get("workflow_run_id") or runtime_health.get("run_id") or "").strip()
+    runtime_matches_current = bool(current_workflow_run_id and runtime_workflow_run_id == current_workflow_run_id)
+    if current_workflow_run_id:
+        workflow_runtime_observation = {
+            "run_started_at_beijing": (runtime_health.get("run_started_at") or runtime_health.get("started_at") or "UNKNOWN") if runtime_matches_current else "UNKNOWN",
+            "core_snapshot_finished_at_beijing": (runtime_health.get("captured_at_beijing") or runtime_health.get("finished_at") or "UNKNOWN") if runtime_matches_current else "UNKNOWN",
+            "workflow_run_id": current_workflow_run_id,
+            "runtime_health_workflow_run_id": runtime_workflow_run_id or "UNKNOWN",
+            "correlation_status": "MATCHED_CURRENT_RUN" if runtime_matches_current else "RUNTIME_HEALTH_NOT_CURRENT_RUN",
+            "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
+        }
+    else:
+        workflow_runtime_observation = {
+            "run_started_at_beijing": runtime_health.get("run_started_at") or runtime_health.get("started_at") or "UNKNOWN",
+            "core_snapshot_finished_at_beijing": runtime_health.get("captured_at_beijing") or runtime_health.get("finished_at") or "UNKNOWN",
+            "workflow_run_id": runtime_workflow_run_id or "UNKNOWN",
+            "runtime_health_workflow_run_id": runtime_workflow_run_id or "UNKNOWN",
+            "correlation_status": "CURRENT_RUN_ID_UNAVAILABLE",
+            "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
+        }
+    latency["workflow_runtime_observation"] = workflow_runtime_observation
     latency["waterfall_rule"] = "Persist only directly observed repository/workflow boundaries and measured in-process durations; UNKNOWN remains explicit. Hidden model reasoning is never logged or inferred."
     return {
         "generated_at": now_utc(), "generated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
