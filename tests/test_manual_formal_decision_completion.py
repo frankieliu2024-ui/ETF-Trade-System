@@ -423,6 +423,7 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         }
         request_path = self.root / "requests/live_snapshot" / f"{source_id}.json"
         request_path.write_text(json.dumps(source, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+        state_sync.DASHBOARD = self.root / "ETF当前状态_DASHBOARD.md"
         state_sync.DASHBOARD.write_text("", encoding="utf-8")
         before_bytes = request_path.read_bytes()
         before_obj = json.loads(before_bytes)
