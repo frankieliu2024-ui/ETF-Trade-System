@@ -105,6 +105,46 @@ class V19RiskTierTests(unittest.TestCase):
             failed_checks=[{"name": "account_fact:current_availability", "status": "FAIL"}],
         ))
 
+    def test_v19_failure_attribution_matrix(self):
+        base = ["scripts/decision_source.py"]
+        self.assertTrue(candidate_change_acceptance_allows_global_failure(
+            changed_files=base,
+            failed_checks=[{"name": "x:market_data", "failure_domain": "market_data",
+                            "attribution": "PREEXISTING_UNRELATED"}],
+        ))
+        self.assertTrue(candidate_change_acceptance_allows_global_failure(
+            changed_files=base,
+            failed_checks=[{"name": "x:review", "failure_domain": "review",
+                            "attribution": "NEW_UNRELATED_DISCOVERY"}],
+        ))
+        self.assertFalse(candidate_change_acceptance_allows_global_failure(
+            changed_files=base,
+            failed_checks=[{"name": "x:any", "attribution": "INTRODUCED_BY_CURRENT_CHANGE"}],
+        ))
+        self.assertFalse(candidate_change_acceptance_allows_global_failure(
+            changed_files=base,
+            failed_checks=[{"name": "x:any", "attribution": "ATTRIBUTION_INCONCLUSIVE"}],
+        ))
+        self.assertFalse(candidate_change_acceptance_allows_global_failure(
+            changed_files=["scripts/market_data.py"],
+            failed_checks=[{"name": "x:market_data", "failure_domain": "market_data",
+                            "attribution": "PREEXISTING_UNRELATED"}],
+        ))
+        self.assertTrue(candidate_change_acceptance_allows_global_failure(
+            changed_files=base,
+            failed_checks=[
+                {"name": "x:a", "attribution": "PREEXISTING_UNRELATED"},
+                {"name": "x:b", "attribution": "NEW_UNRELATED_DISCOVERY"},
+            ],
+        ))
+        self.assertFalse(candidate_change_acceptance_allows_global_failure(
+            changed_files=base,
+            failed_checks=[
+                {"name": "x:a", "attribution": "PREEXISTING_UNRELATED"},
+                {"name": "x:b", "attribution": "INTRODUCED_BY_CURRENT_CHANGE"},
+            ],
+        ))
+
     def test_subtraction_fast_path_requires_all_safety_conditions(self):
         kwargs = dict(
             no_new_owner_state_workflow=True,

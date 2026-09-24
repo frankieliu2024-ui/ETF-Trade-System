@@ -98,25 +98,63 @@ def system_subtraction_fast_path_eligible(
     ))
 
 
-def candidate_change_acceptance_allows_global_failure(*, changed_files: list[str], failed_checks: list[dict]) -> bool:
-    """Allow only reliably attributed, unrelated historical review failures.
+def _attribution_category(item: dict, changed_files: list[str]) -> str:
+    """Use the canonical failure attribution carried by a check, fail-closed.
 
-    Unknown failures remain fail-closed. This is the existing acceptance owner's
-    change-specific/global-health routing rule, not a second acceptance engine.
+    A check may provide an explicit V1.9 attribution. Otherwise its declared
+    failure domain is compared with the changed-file domain. Domain separation
+    is generic and does not encode object/date/PR-specific exceptions.
+    """
+    categories = {
+        "INTRODUCED_BY_CURRENT_CHANGE",
+        "PREEXISTING_UNRELATED",
+        "NEW_UNRELATED_DISCOVERY",
+        "ATTRIBUTION_INCONCLUSIVE",
+    }
+    explicit = str(
+        item.get("attribution")
+        or item.get("failure_attribution")
+        or item.get("classification")
+        or ""
+    ).upper()
+    if explicit in categories:
+        return explicit
+    domain = str(item.get("failure_domain") or "").strip()
+    if not domain:
+        name = str(item.get("name") or "")
+        domain = name.split(":", 1)[1] if ":" in name else ""
+    if not domain:
+        return "ATTRIBUTION_INCONCLUSIVE"
+    def tokens(value: str) -> set[str]:
+        return {part for part in re.split(r"[^a-z0-9]+", value.lower()) if len(part) > 2}
+    failure_tokens = tokens(domain)
+    changed_tokens = tokens(" ".join(str(path) for path in changed_files))
+    if failure_tokens & changed_tokens:
+        return "INTRODUCED_BY_CURRENT_CHANGE"
+    return "PREEXISTING_UNRELATED"
+
+
+def candidate_change_acceptance_allows_global_failure(*, changed_files: list[str], failed_checks: list[dict]) -> bool:
+    """Apply the existing V1.9 attribution contract to every failed check.
+
+    Global health remains independently failed; only a reliable unrelated
+    attribution can allow change-specific acceptance. Same-domain,
+    introduced, and inconclusive failures remain fail-closed.
     """
     if not failed_checks:
         return True
-    if any(str(item.get("name") or "") != "review:post_close_canonical_chain" for item in failed_checks):
-        return False
-    review_domain_markers = (
-        "post_market_review/",
-        "events/reviews/",
-        "close_review_closure",
-        "build_post_market_review",
-        "post_close_review",
-        "review_context",
+    categories = [_attribution_category(item, changed_files) for item in failed_checks]
+    decision = classify_merged_main_failure(
+        global_status="FAIL",
+        change_specific_status="PASS",
+        attribution="PREEXISTING_UNRELATED"
+        if all(category == "PREEXISTING_UNRELATED" for category in categories)
+        else "ATTRIBUTION_INCONCLUSIVE",
     )
-    return not any(any(marker in str(path) for marker in review_domain_markers) for path in changed_files)
+    return decision["change_specific_acceptance"] == "PASS" and all(
+        category in {"PREEXISTING_UNRELATED", "NEW_UNRELATED_DISCOVERY"}
+        for category in categories
+    )
 
 
 def acceptance_matrix_for_tier(tier: str, route: str | None = None) -> dict:
