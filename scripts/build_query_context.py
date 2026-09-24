@@ -845,6 +845,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     freshness = evaluate_freshness(current, policy)
     market_domain_projection = build_market_domain_projection(current, overseas_context, us_extended, freshness)
     trading_day_status = current_trading_day_status(trading_calendar)
+    user_visible_time_anchor = user_visible_trading_time_anchor(datetime.now(SHANGHAI).date(), trading_calendar)
     account_gate = account_gate_status(current, account, policy)
     managed_etf_codes = {str(x.get("code") or "") for x in (etf_universe.get("objects") or []) if x.get("code")}
     managed_etf_codes.update(
@@ -970,7 +971,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         "formal_etf_discovery": formal_discovery,
         "canonical_files": CANONICAL_FILES, "data_status": {**(current.get("data_freshness") or {}), **freshness}, "freshness_at_context_build": freshness,
         "interactive_decision_freshness": market_quote.get("decision_freshness", {}),
-        "trading_day_status": trading_day_status, "runtime_health": runtime_health,
+        "trading_day_status": trading_day_status, "user_visible_time_anchor": user_visible_time_anchor, "runtime_health": runtime_health,
         "system_consistency_status": consistency.get("status", "MISSING"), "system_consistency_hard_errors": consistency.get("hard_error_count", None),
         "etf_universe_count": len(etf_universe.get("objects") or []), "etf_universe_identity": universe_identity, "formal_discovery_candidate_count": len(formal_discovery.get("candidates") or []), "overseas_context_status": overseas_context.get("quality_status", "MISSING"),
         "overseas_generated_at_beijing": overseas_context.get("generated_at_beijing", ""),
