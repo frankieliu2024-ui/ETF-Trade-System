@@ -353,6 +353,9 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertIn("python scripts/build_state_context.py", persist)
         self.assertIn("python scripts/build_query_context.py", persist)
         self.assertIn("python scripts/build_post_market_review.py", persist)
+        self.assertGreaterEqual(persist.count("python scripts/build_post_market_review.py"), 2)
+        retry_loop = persist.split('for attempt in $(seq 1 "$max_attempts"); do', 1)[1]
+        self.assertIn("python scripts/build_post_market_review.py", retry_loop)
         self.assertIn("data/state/review_context.json", persist)
         self.assertIn("post_market_review/post_market_review_event.json", persist)
         self.assertIn("python scripts/runtime_self_heal.py --repair-safe", persist)
