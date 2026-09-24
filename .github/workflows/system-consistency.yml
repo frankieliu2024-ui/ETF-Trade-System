@@ -577,7 +577,12 @@ jobs:
             # triggering SHA. The original workflow identity remains recorded by
             # the preceding acceptance gate.
             latest_main_sha="$(git rev-parse HEAD)"
-            ETF_ACCEPTANCE_SHA="$latest_main_sha" GITHUB_SHA="$latest_main_sha" ETF_STABLE_ACCEPTANCE_BASE="${GITHUB_SHA}" python scripts/run_production_acceptance.py --mutation-sha "$latest_main_sha"
+            # This persistence rebuild validates the latest canonical main tree.
+            # Do not compare it back to the workflow-trigger SHA: independent
+            # canonical writers may have legally advanced main while this run
+            # was in progress.  The triggering change was already accepted by
+            # the preceding bound acceptance gate.
+            ETF_ACCEPTANCE_SHA="$latest_main_sha" GITHUB_SHA="$latest_main_sha" ETF_STABLE_ACCEPTANCE_BASE="$latest_main_sha" python scripts/run_production_acceptance.py --mutation-sha "$latest_main_sha"
             for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/e2e_status.json data/state/execution_quality.json; do
               if [ -f "$f" ]; then
                 git add "$f"
