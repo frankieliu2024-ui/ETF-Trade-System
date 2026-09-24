@@ -384,6 +384,21 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         action_blockers.append("REQUEST_SCOPED_PIT_NOT_RESOLVED")
     if not account_ready:
         action_blockers.append("ACCOUNT_FACT_NOT_READY")
+    coverage = decision.get("analysis_coverage") or {}
+    held_etfs_total = int(coverage.get("held_etfs_total") or 0)
+    held_etfs_available = int(coverage.get("held_etfs_available") or 0)
+    account_stocks_total = int(coverage.get("account_stocks_total") or 0)
+    account_stocks_available = int(coverage.get("account_stocks_available") or 0)
+    missing_held_etfs = [str(x) for x in (coverage.get("missing_held_etfs") or []) if str(x)]
+    missing_account_stocks = [str(x) for x in (coverage.get("missing_account_stocks") or []) if str(x)]
+    actual_position_market_coverage_complete = (
+        held_etfs_available >= held_etfs_total
+        and account_stocks_available >= account_stocks_total
+        and not missing_held_etfs
+        and not missing_account_stocks
+    )
+    if account_ready and positions and not actual_position_market_coverage_complete:
+        action_blockers.append("ACTUAL_POSITION_MARKET_COVERAGE_INCOMPLETE")
     formal_action_readiness = {
         "status": "READY" if not action_blockers else "NOT_READY",
         "ready": not action_blockers,
@@ -392,7 +407,10 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "request_scoped_pit_resolved": post_request,
         "fallback_available": fallback_available,
         "account_fact_ready": account_ready,
-        "rule": "Exact amount/share/action canonical completion remains fail-closed on request identity, action-qualified request-scoped PIT and valid account truth. This gate must not be interpreted as a ban on independent legal analysis.",
+        "actual_position_market_coverage_complete": actual_position_market_coverage_complete,
+        "missing_held_etfs": missing_held_etfs,
+        "missing_account_stocks": missing_account_stocks,
+        "rule": "Exact amount/share/action canonical completion remains fail-closed on request identity, action-qualified request-scoped PIT, valid account truth, and complete market-evidence coverage for every actual positive-quantity position. This gate must not be interpreted as a ban on independent legal analysis.",
     }
 
     formal_reasoning_readiness = {
