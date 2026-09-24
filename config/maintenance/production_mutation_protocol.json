@@ -286,10 +286,9 @@
       "allowed_writers": [
         ".github/workflows/market-snapshot.yml",
         ".github/workflows/opening-auction-current-fallback.yml",
-        ".github/workflows/overseas-preopen-pulse.yml",
         ".github/workflows/self-healing-watchdog.yml"
       ],
-      "rule": "允许A股核心、海外刷新和自愈重建，但所有持久化版本必须调用同一个canonical builder；system-consistency只可临时重建用于审计，不应把query_context作为自身owned state提交。"
+      "rule": "允许A股核心和自愈入口重建，但所有持久化版本必须调用同一个canonical builder；海外scheduled pulse只发布海外市场事实与runtime health，正式请求按需从这些事实重建query_context；system-consistency只可临时重建用于审计，不应把query_context作为自身owned state提交。"
     },
     "data/state/decision_trigger.json": {
       "state_class": "DERIVED_REBUILDABLE_STATE",
