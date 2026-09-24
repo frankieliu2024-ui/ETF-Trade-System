@@ -41,6 +41,14 @@ class TradingTimeSemanticsTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             next_a_share_trading_day(date(2026, 12, 31), self.calendar)
 
+    def test_query_context_wires_user_visible_anchor(self):
+        source = (Path(__file__).resolve().parents[1] / "scripts" / "build_query_context.py").read_text(encoding="utf-8")
+        self.assertIn(
+            "user_visible_time_anchor = user_visible_trading_time_anchor(datetime.now(SHANGHAI).date(), trading_calendar)",
+            source,
+        )
+        self.assertIn('"user_visible_time_anchor": user_visible_time_anchor', source)
+
 
 if __name__ == "__main__":
     unittest.main()
