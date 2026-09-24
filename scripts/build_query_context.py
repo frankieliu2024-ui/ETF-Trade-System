@@ -14,11 +14,13 @@ try:
     from build_stock_context import active_account_asset_codes
     from market_quote_router import build_market_quote_context
     from formal_etf_opportunity_discovery import attach_formal_quotes, discover_formal_candidates
+    from trading_time_semantics import user_visible_trading_time_anchor
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current, read_json
     from scripts.build_stock_context import active_account_asset_codes
     from scripts.market_quote_router import build_market_quote_context
     from scripts.formal_etf_opportunity_discovery import attach_formal_quotes, discover_formal_candidates
+    from scripts.trading_time_semantics import user_visible_trading_time_anchor
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
