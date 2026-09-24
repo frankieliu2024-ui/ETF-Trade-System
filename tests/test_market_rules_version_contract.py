@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 from scripts import runtime_self_heal
-from scripts.rules_version import parse_master_release
+from scripts.rules_version import parse_master_release, parse_master_release_file
 
 
 BASE = """# ETF波段交易系统 V2.2.31 规则 MASTER
@@ -68,6 +68,14 @@ class RulesVersionContractTests(unittest.TestCase):
         parsed = parse_master_release(fixture)
         self.assertTrue(parsed["ok"], parsed["errors"])
         self.assertEqual(parsed["version"], "V2.2.32")
+        self.assertTrue(parsed["current_description_present"])
+
+    def test_repository_master_is_parseable(self):
+        root = Path(__file__).resolve().parents[1]
+        parsed = parse_master_release_file(root / "ETF规则_MASTER.md")
+        self.assertTrue(parsed["ok"], parsed["errors"])
+        self.assertEqual(parsed["version"], "V2.2.32")
+        self.assertEqual(parsed["current_table_version"], "V2.2.32")
         self.assertTrue(parsed["current_description_present"])
 
     def test_future_release_is_not_hard_coded(self):
