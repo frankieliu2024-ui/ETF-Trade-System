@@ -15,6 +15,24 @@ ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "data" / "state" / "system_consistency.json"
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
+# Bounded historical debt discovered by PIT replay.  This list is not a
+# general exemption: any new completion identity missing its canonical event
+# remains a hard failure.  Entries may be removed only when a historical
+# artifact is legally recovered and read back.
+LEGACY_UNRECOVERABLE_FORMAL_DECISION_IDS = {
+    "20260922_093348_chatgpt_intraday_analysis_decision",
+    "20260922_215438_chatgpt_decision_analysis_decision",
+    "20260922_220802_chatgpt_decision_analysis_decision",
+    "20260922_224104_chatgpt_decision_analysis_decision",
+    "20260923_071000_chatgpt_decision_analysis_decision",
+    "20260923_112107_chatgpt_decision_analysis_decision",
+    "20260923_1300_chatgpt_decision_analysis_decision",
+    "20260924_0910_chatgpt_decision_analysis_decision",
+    "20260924_0945_chatgpt_decision_analysis_decision",
+    "20260924_113441_chatgpt_decision_analysis_decision",
+    "20260924_150403_chatgpt_formal_decision_decision",
+}
+
 
 def _read_json(path: str) -> dict:
     return json.loads((ROOT / path).read_text(encoding="utf-8"))
@@ -718,6 +736,65 @@ def _validate_production_mutation_protocol(report: dict) -> None:
     _recount(report)
 
 
+def _validate_formal_completion_decision_readback(report: dict) -> None:
+    """Ensure persisted formal-completion requests have a canonical event."""
+    completion_dir = ROOT / "requests/live_snapshot"
+    missing = []
+    legacy = []
+    mismatches = []
+    checked = 0
+    identities = {}
+    for path in sorted(completion_dir.glob("*__formal_completion.json")) if completion_dir.exists() else []:
+        try:
+            request = _read_json(str(path.relative_to(ROOT)))
+        except (OSError, ValueError, json.JSONDecodeError):
+            continue
+        if request.get("formal_fact_type") != "FORMAL_DECISION" or not isinstance(request.get("formal_decision"), dict):
+            continue
+        decision = request["formal_decision"]
+        decision_id = str(decision.get("decision_id") or "").strip()
+        parent_id = str(request.get("parent_request_id") or "").strip()
+        identity = (parent_id, decision_id)
+        identities.setdefault(identity, []).append((path, request))
+    for (parent_id, decision_id), occurrences in identities.items():
+        checked += 1
+        path, request = occurrences[0]
+        event_path = ROOT / "events/decisions" / f"{decision_id}.json"
+        if not decision_id or not event_path.exists():
+            item = f"{path.name}->{decision_id or 'missing decision_id'}"
+            if decision_id in LEGACY_UNRECOVERABLE_FORMAL_DECISION_IDS:
+                legacy.append(item)
+            else:
+                missing.append(item)
+            continue
+        try:
+            event = json.loads(event_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, json.JSONDecodeError):
+            mismatches.append(f"{path.name}:event unreadable")
+            continue
+        expected_parent = parent_id
+        if event.get("event_type") != "FORMAL_DECISION" or event.get("formal_decision", {}).get("decision_id") != decision_id:
+            mismatches.append(f"{path.name}:event identity mismatch")
+        if expected_parent and event.get("request_id") not in {expected_parent, str(request.get("request_id") or "").strip()}:
+            mismatches.append(f"{path.name}:request identity mismatch")
+    status = "FAIL" if missing or mismatches else ("WARNING" if legacy else "PASS")
+    detail = f"checked_unique={checked} retry_files_deduplicated={sum(max(0, len(v)-1) for v in identities.values())} legacy={legacy} missing={missing} mismatches={mismatches}"
+    report.setdefault("checks", []).append({"name": "formal_completion:decision_fact_readback", "status": status, "detail": detail})
+    for item in missing:
+        message = "formal_completion:decision_fact_missing:" + item
+        if message not in report.setdefault("errors", []):
+            report["errors"].append(message)
+    for item in legacy:
+        message = "formal_completion:legacy_unrecoverable_baseline:" + item
+        if message not in report.setdefault("warnings", []):
+            report["warnings"].append(message)
+    for item in mismatches:
+        message = "formal_completion:decision_fact_mismatch:" + item
+        if message not in report.setdefault("errors", []):
+            report["errors"].append(message)
+    _recount(report)
+
+
 def _validate_semantic_formal_structure(report: dict) -> None:
     from formal_document_structure import validate_files
     errors = validate_files(ROOT)
@@ -751,6 +828,7 @@ def main() -> int:
     _validate_post_close_review_contract(report)
     _validate_trade_event_formal_sync(report)
     _validate_historical_trade_case_mapping(report)
+    _validate_formal_completion_decision_readback(report)
     _validate_semantic_formal_structure(report)
     _validate_execution_quality_projection(report)
     _validate_readme_front_door(report)

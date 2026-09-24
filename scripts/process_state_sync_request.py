@@ -322,7 +322,7 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
     observed = [f"{name}（{code}）" for code, name in names.items() if code not in membership["etf"]]
     lines += ["", f"持仓ETF：{'、'.join(display_name(p) for p in etfs) or '无'}。", f"账户个股：{'、'.join(display_name(p) for p in stocks) or '无'}。", f"观察ETF：{'、'.join(observed) or '无'}。"]
     if decision:
-        title = "最近一次正式收盘复盘" if scenario == "POST_CLOSE_REVIEW" else "最近一次正式盘中决策"
+        title = "最近一次正式决策"
         lifecycle_lines = _managed_lifecycle_lines(decision.get("lifecycle"), account)
         lifecycle_block = ["- 生命周期："] + lifecycle_lines if lifecycle_lines else [f"- 生命周期：{decision.get('lifecycle','未提供')}"]
         lines += ["", f"### {title}", "", f"- 风险许可：{decision.get('risk_permission','未提供')}", *lifecycle_block, f"- 唯一主候选：{decision.get('main_candidate','无新的主候选。')}", f"- 金额与动作：{decision.get('amount_action','未提供')}", f"- 最大风险或0元主因：{decision.get('decisive_reason','未提供')}", f"- 决策数据时点：{decision.get('data_as_of_beijing','未提供')}"]
@@ -681,6 +681,12 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     decision = request.get("formal_decision")
     if not isinstance(decision, dict) or not decision:
         return False, ""
+    decision = dict(decision)
+    original_opportunity_status = str(decision.get("opportunity_status") or "").strip()
+    canonical_opportunity_status = _canonical_formal_opportunity_status(original_opportunity_status)
+    if canonical_opportunity_status and canonical_opportunity_status != original_opportunity_status:
+        decision["opportunity_status"] = canonical_opportunity_status
+        decision.setdefault("opportunity_status_detail", original_opportunity_status)
     contract_error = validate_formal_decision_contract(decision)
     if contract_error:
         raise ValueError(f"invalid formal decision contract: {contract_error}")
@@ -927,8 +933,8 @@ def validate_formal_decision_contract(decision: dict) -> str:
     later by notification rendering.  This intentionally validates only the
     existing contract fields and does not infer a transaction or alter MASTER.
     """
-    opportunity_status = str(decision.get("opportunity_status") or "").strip()
-    if opportunity_status not in FORMAL_OPPORTUNITY_STATUSES:
+    opportunity_status = _canonical_formal_opportunity_status(decision.get("opportunity_status"))
+    if not opportunity_status:
         return "opportunity_status must be one of: " + ", ".join(sorted(FORMAL_OPPORTUNITY_STATUSES))
     risk = decision.get("risk_permission")
     if risk is not None and str(risk).strip() not in {"禁止新增", "允许Trial", "允许Confirm"}:
@@ -939,6 +945,22 @@ def validate_formal_decision_contract(decision: dict) -> str:
     lifecycle_error = validate_current_lifecycle_contract(decision.get("lifecycle"), _load_account_for_lifecycle_validation())
     if lifecycle_error:
         return lifecycle_error
+    return ""
+
+
+def _canonical_formal_opportunity_status(value: object) -> str:
+    """Map unambiguous rich status text to the existing canonical enum."""
+    text = str(value or "").strip()
+    if text in FORMAL_OPPORTUNITY_STATUSES:
+        return text
+    for prefix, canonical in (
+        ("Trial", "Trial机会"),
+        ("Confirm", "Confirm机会"),
+        ("观察", "观察机会"),
+        ("无机会", "无机会"),
+    ):
+        if text.startswith(prefix):
+            return canonical
     return ""
 
 
