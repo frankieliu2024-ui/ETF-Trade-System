@@ -294,16 +294,21 @@ def build_analysis_coverage(root: Path, snapshot: dict[str, Any], account: dict[
     stocks = memberships["stocks"]
     def usable(row): return bool(row) and str(row.get("quality_status") or row.get("status") or "").upper() not in {"FAILED", "FAIL"}
     observed = etfs - held
-    missing = sorted((etfs | expected_indices) - set(by_code))
-    status = "INCOMPLETE" if missing else ("DEGRADED" if quality["failed_count"] or quality["degraded_count"] or quality["stale_count"] else "COMPLETE")
+    missing_held_etfs = sorted(code for code in held if code not in by_code)
     stock_objects = stocks_ctx.get("objects") or {}
+    missing_account_stocks = sorted(
+        code for code in stocks
+        if str((stock_objects.get(code) or {}).get("quality_status") or "").upper() not in {"PASS", "DEGRADED"}
+    )
+    missing = sorted((etfs | held | expected_indices) - set(by_code))
+    status = "INCOMPLETE" if (missing or missing_account_stocks) else ("DEGRADED" if quality["failed_count"] or quality["degraded_count"] or quality["stale_count"] else "COMPLETE")
     core_rows = [x for x in rows if x.get("asset_class") in {"ETF", "A_SHARE_INDEX"}]
     core_pass = sum(str(x.get("quality_status") or "").upper() == "PASS" for x in core_rows)
     core_failed = sum(str(x.get("quality_status") or "").upper() in {"FAILED", "FAIL"} for x in core_rows)
     core_degraded = sum(str(x.get("quality_status") or "").upper() in {"DEGRADED", "PARTIAL"} for x in core_rows)
     account_stock_pass = sum(str((stock_objects.get(x) or {}).get("quality_status") or "").upper() == "PASS" for x in stocks)
     account_stock_failed = sum(str((stock_objects.get(x) or {}).get("quality_status") or "").upper() in {"FAILED", "FAIL"} for x in stocks)
-    return {"indices_total": len(expected_indices), "indices_available": sum(usable(x) for x in rows if x.get("asset_class") == "A_SHARE_INDEX"), "held_etfs_total": len(held), "held_etfs_available": sum(usable(by_code.get(x)) for x in held), "observed_etfs_total": len(observed), "observed_etfs_available": sum(usable(by_code.get(x)) for x in observed), "account_stocks_total": len(stocks), "account_stocks_available": sum(str((stock_objects.get(x) or {}).get("quality_status") or "").upper() in {"PASS", "DEGRADED"} for x in stocks), "core_market_pass": core_pass, "core_market_failed": core_failed, "core_market_degraded": core_degraded, "account_stock_market_pass": account_stock_pass, "account_stock_market_failed": account_stock_failed, "cash_available": account.get("cash") is not None, "failed_objects": quality["failed_objects"], "degraded_objects": quality["degraded_objects"] + quality["stale_objects"], "missing_objects": missing, "coverage_status": status, "read_only": True}
+    return {"indices_total": len(expected_indices), "indices_available": sum(usable(x) for x in rows if x.get("asset_class") == "A_SHARE_INDEX"), "held_etfs_total": len(held), "held_etfs_available": sum(usable(by_code.get(x)) for x in held), "observed_etfs_total": len(observed), "observed_etfs_available": sum(usable(by_code.get(x)) for x in observed), "account_stocks_total": len(stocks), "account_stocks_available": sum(str((stock_objects.get(x) or {}).get("quality_status") or "").upper() in {"PASS", "DEGRADED"} for x in stocks), "core_market_pass": core_pass, "core_market_failed": core_failed, "core_market_degraded": core_degraded, "account_stock_market_pass": account_stock_pass, "account_stock_market_failed": account_stock_failed, "cash_available": account.get("cash") is not None, "failed_objects": quality["failed_objects"], "degraded_objects": quality["degraded_objects"] + quality["stale_objects"], "missing_objects": missing, "missing_held_etfs": missing_held_etfs, "missing_account_stocks": missing_account_stocks, "coverage_status": status, "read_only": True}
 
 
 def build_scheduled_pulse_health(root: Path, current: dict[str, Any]) -> dict[str, Any]:

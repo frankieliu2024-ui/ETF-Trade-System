@@ -57,6 +57,32 @@ def load_etf_universe() -> list[tuple[str, str]]:
             raise RuntimeError(f"duplicate ETF code in universe: {code}")
         seen.add(code)
         result.append((code, thscode))
+    # Account truth is the mandatory runtime overlay for actual holdings.
+    # The persisted universe remains the canonical Holding+Observation identity
+    # projection, but a delayed projection/replay must never make a positive
+    # current holding disappear from the market acquisition target.
+    account_path = ROOT / "data" / "state" / "account_fact.json"
+    if account_path.exists():
+        account = json.loads(account_path.read_text(encoding="utf-8"))
+        for pos in account.get("positions") or []:
+            if not isinstance(pos, dict):
+                continue
+            if str(pos.get("asset_type") or "").upper() != "ETF":
+                continue
+            try:
+                quantity = float(pos.get("quantity") or 0)
+            except (TypeError, ValueError):
+                quantity = 0.0
+            code = str(pos.get("code") or pos.get("symbol") or "").strip()
+            if quantity <= 0 or not code or code in seen:
+                continue
+            thscode = str(pos.get("thscode") or "").strip()
+            if not thscode and code.isdigit() and len(code) == 6:
+                thscode = code + (".SH" if code.startswith(("5", "6")) else ".SZ")
+            if not thscode:
+                raise RuntimeError(f"active held ETF missing resolvable thscode: {code}")
+            seen.add(code)
+            result.append((code, thscode))
     if not result:
         raise RuntimeError("canonical ETF universe is empty")
     return result
