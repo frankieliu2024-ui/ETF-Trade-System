@@ -84,11 +84,20 @@ class RulesVersionContractTests(unittest.TestCase):
         self.assertTrue(parsed["ok"], parsed["errors"])
         self.assertEqual(parsed["version"], "V9.8.7")
 
-    def test_missing_previous_history_and_metadata_fail(self):
-        broken = BASE.replace("|V2.2.30|旧版|历史|\n", "").replace("> 规则版本：V2.2.31（规则身份未因后续非升版修订自动变化）；\n", "")
+    def test_missing_previous_history_fails_closed(self):
+        broken = BASE.replace("|V2.2.30|旧版|历史|\n", "")
         parsed = parse_master_release(broken)
         self.assertFalse(parsed["ok"])
         self.assertFalse(parsed["previous_version_present"])
+
+    def test_missing_release_metadata_fails_closed(self):
+        broken = BASE.replace(
+            "> 规则版本：V2.2.31（规则身份未因后续非升版修订自动变化）；本文件为现行交易规则唯一来源。\n",
+            "",
+        )
+        parsed = parse_master_release(broken)
+        self.assertFalse(parsed["ok"])
+        self.assertIsNone(parsed["positioning_version"])
         self.assertFalse(parsed["current_description_present"])
 
     def test_historical_version_does_not_become_current(self):
