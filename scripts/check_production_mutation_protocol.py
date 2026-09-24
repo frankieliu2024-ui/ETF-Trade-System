@@ -144,16 +144,18 @@ def candidate_change_acceptance_allows_global_failure(*, changed_files: list[str
     if not failed_checks:
         return True
     categories = [_attribution_category(item, changed_files) for item in failed_checks]
-    decision = classify_merged_main_failure(
-        global_status="FAIL",
-        change_specific_status="PASS",
-        attribution="PREEXISTING_UNRELATED"
-        if all(category == "PREEXISTING_UNRELATED" for category in categories)
-        else "ATTRIBUTION_INCONCLUSIVE",
-    )
-    return decision["change_specific_acceptance"] == "PASS" and all(
-        category in {"PREEXISTING_UNRELATED", "NEW_UNRELATED_DISCOVERY"}
+    decisions = [
+        classify_merged_main_failure(
+            global_status="FAIL",
+            change_specific_status="PASS",
+            attribution=category,
+        )
         for category in categories
+    ]
+    return all(
+        decision["change_specific_acceptance"] == "PASS"
+        and decision["issue_closure"] == "CLOSE"
+        for decision in decisions
     )
 
 
