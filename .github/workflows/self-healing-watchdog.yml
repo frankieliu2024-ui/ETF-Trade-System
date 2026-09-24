@@ -306,11 +306,13 @@ jobs:
             if [ "$action" = "REBUILD_DERIVED_CONTEXTS" ]; then
               python scripts/build_state_context.py
               python scripts/build_query_context.py
+              python scripts/build_post_market_review.py
               python scripts/runtime_self_heal.py --assess
             elif [ "$action" = "SYNC_RULES_VERSION_METADATA" ]; then
               python scripts/runtime_self_heal.py --repair-safe
               python scripts/build_state_context.py
               python scripts/build_query_context.py
+              python scripts/build_post_market_review.py
               python scripts/runtime_self_heal.py --assess
             fi
 
