@@ -331,6 +331,20 @@ jobs:
           triggering_request_file=$(printf '%s\n' $request_files | head -n 1)
           echo "triggering_request_file=$triggering_request_file" >> "$GITHUB_OUTPUT"
           echo "TRIGGERING_REQUEST_FILE=$triggering_request_file" >> "$GITHUB_ENV"
+          formal_completion=false
+          if [ -n "$triggering_request_file" ] && [ -f "$triggering_request_file" ]; then
+            formal_completion=$(python - "$triggering_request_file" <<'PY'
+          import json, sys
+          request = json.load(open(sys.argv[1], encoding="utf-8"))
+          is_completion = (
+              str(request.get("source") or "").upper() == "CHATGPT_MANUAL_FORMAL_COMPLETION"
+              or str(request.get("formal_fact_type") or "").upper() == "FORMAL_DECISION"
+          )
+          print("true" if is_completion else "false")
+          PY
+            )
+          fi
+          echo "formal_completion=$formal_completion" >> "$GITHUB_OUTPUT"
           # Preserve the triggering request before execution-time main resets.
           # REFRESH_BEARING requests skip state sync but still own the exact
           # request identity/time consumed by query and decision contexts.
@@ -467,7 +481,7 @@ jobs:
       - name: Build on-demand query context
         # Formal decision critical path. Do not let an unrelated optional/derived
         # step failure suppress request binding and PIT qualification.
-        if: ${{ always() && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: |
           REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"
           if [ -z "$REQUEST_FILE" ] && [ -n "${REPLAY_REQUEST:-}" ]; then REQUEST_FILE="$REPLAY_REQUEST"; fi
@@ -545,7 +559,7 @@ jobs:
         # Decision usability is request/state-sync qualification, not a scheduled
         # market-fact producer responsibility. Scheduled pulses may refresh
         # reusable Discovery evidence without rebuilding request-bound E2E state.
-        if: ${{ always() && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_e2e_status.py
 
       - name: Build state context and candidates
@@ -557,7 +571,7 @@ jobs:
       - name: Build post-market review context
         # Review is a close/state-sync consumer, not a generic intraday pulse
         # responsibility. Explicit/manual close remains a legal recovery path.
-        if: ${{ always() && (steps.state_sync.outputs.processed == 'true' || (steps.snapshot_result.outputs.snapshot_written == 'true' && (steps.session_gate.outputs.close_intent == 'true' || github.event.inputs.node == 'close'))) && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outputs.formal_completion != 'true' && (steps.state_sync.outputs.processed == 'true' || (steps.snapshot_result.outputs.snapshot_written == 'true' && (steps.session_gate.outputs.close_intent == 'true' || github.event.inputs.node == 'close'))) && github.event.inputs.probe_only != 'true' }}
         continue-on-error: true
         run: python scripts/build_post_market_review.py
       - name: Commit downstream runtime/data artifacts
