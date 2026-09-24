@@ -12,6 +12,23 @@ def _code(value: Any) -> str:
     return str(value or "").upper().replace(".SH", "").replace(".SZ", "").strip()
 
 
+def _infer_a_share_thscode(code: str) -> str:
+    """Infer the canonical A-share market suffix for a six-digit ETF code.
+
+    Broker account facts are authoritative for held identity but historically do
+    not require provider metadata such as thscode.  A newly confirmed holding
+    must still enter the existing continuous-monitor universe immediately.
+    """
+    code = _code(code)
+    if len(code) != 6 or not code.isdigit():
+        return ""
+    if code.startswith(("5", "6")):
+        return f"{code}.SH"
+    if code.startswith(("1", "3")):
+        return f"{code}.SZ"
+    return ""
+
+
 def load_monitor_universe(root: Path) -> dict:
     return json.loads((root / "config/market/etf_monitor_universe.json").read_text(encoding="utf-8"))
 
@@ -83,9 +100,9 @@ def project_monitor_universe(root: Path, account: dict, decision: dict) -> tuple
     for code in held:
         if code not in by_code:
             pos = account_positions.get(code) or {}
-            thscode = str(pos.get("thscode") or "").strip()
+            thscode = str(pos.get("thscode") or "").strip() or _infer_a_share_thscode(code)
             if not thscode:
-                raise ValueError(f"held ETF {code} missing thscode; cannot mutate monitor universe safely")
+                raise ValueError(f"held ETF {code} missing resolvable thscode; cannot mutate monitor universe safely")
             by_code[code] = {"code": code, "name": str(pos.get("name") or code), "thscode": thscode}
 
     for item in changes:
