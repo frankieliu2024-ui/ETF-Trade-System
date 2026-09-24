@@ -42,8 +42,42 @@ class RulesVersionContractTests(unittest.TestCase):
         parsed = parse_master_release(BASE.replace("|V2.2.31|新版|当前版本与现行交易规则|", "|V2.2.30|新版|当前版本与现行交易规则|"))
         self.assertFalse(parsed["ok"])
 
-    def test_missing_previous_history_and_description_fail(self):
-        broken = BASE.replace("|V2.2.30|旧版|历史|\n", "").replace("V2.2.31完成", "V2.2.32完成")
+    def test_valid_parenthetical_release_metadata_is_sufficient(self):
+        fixture = BASE.replace(
+            "# ETF波段交易系统 V2.2.31 规则 MASTER",
+            "# ETF波段交易系统 V2.2.32 规则 MASTER",
+        ).replace(
+            "最近正式修订：2026-09-20",
+            "最近正式修订：2026-09-24",
+        ).replace(
+            "规则版本：V2.2.31（规则身份未因后续非升版修订自动变化）；",
+            "规则版本：V2.2.32（本次仅收口三层正式监测语义，不改变交易规则）；",
+        ).replace(
+            "|V2.2.30|旧版|历史|",
+            "|V2.2.31|旧版|历史|",
+        ).replace(
+            "|V2.2.31|新版|当前版本与现行交易规则|",
+            "|V2.2.32|新版|当前版本与现行交易规则|",
+        ).replace(
+            "V2.2.30旧说明。",
+            "V2.2.31旧说明。",
+        ).replace(
+            "V2.2.31完成待结算现金约束与新股兑现证据正式吸收。",
+            "",
+        )
+        parsed = parse_master_release(fixture)
+        self.assertTrue(parsed["ok"], parsed["errors"])
+        self.assertEqual(parsed["version"], "V2.2.32")
+        self.assertTrue(parsed["current_description_present"])
+
+    def test_future_release_is_not_hard_coded(self):
+        fixture = BASE.replace("V2.2.31", "V9.8.7").replace("V2.2.30", "V9.8.6")
+        parsed = parse_master_release(fixture)
+        self.assertTrue(parsed["ok"], parsed["errors"])
+        self.assertEqual(parsed["version"], "V9.8.7")
+
+    def test_missing_previous_history_and_metadata_fail(self):
+        broken = BASE.replace("|V2.2.30|旧版|历史|\n", "").replace("> 规则版本：V2.2.31（规则身份未因后续非升版修订自动变化）；\n", "")
         parsed = parse_master_release(broken)
         self.assertFalse(parsed["ok"])
         self.assertFalse(parsed["previous_version_present"])
