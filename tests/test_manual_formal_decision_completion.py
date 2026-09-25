@@ -446,9 +446,9 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
                 "next_unit_capital_use_consumed": True,
             },
         })
-        # Historical fault-recovery fixture exercises an already-canonical Source.
-        # Keep an explicit work package/response marker so the post-cutover consumer
-        # can distinguish this durability replay from a new actor ingress.
+        # Historical fault-recovery fixture exercises an already-canonical immutable Source.
+        # The consumer must replay this durable source directly rather than reinterpret
+        # it through today's actor response contract.
         source = {
             **SOURCE_REQUEST,
             "request_id": source_id,
