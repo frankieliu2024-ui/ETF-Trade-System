@@ -240,7 +240,8 @@ class ManualRequestBoundedObservabilityTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            with patch.object(build_query_context, "build_market_quote_context", return_value={"decision_freshness": {"post_request": True}, "quotes": []}), \
+            with patch.dict("os.environ", {"GITHUB_RUN_ID": "123"}), \
+                 patch.object(build_query_context, "build_market_quote_context", return_value={"decision_freshness": {"post_request": True}, "quotes": []}), \
                  patch.object(build_query_context, "read_current", return_value={"captured_at": "2026-09-25T06:40:10+08:00"}), \
                  patch.object(build_query_context, "read_account_fact", return_value={"status": "VALID", "positions": []}), \
                  patch.object(build_query_context, "build_decision_context", return_value={"generated_at_beijing": "2026-09-25T06:40:44+08:00"}):
@@ -258,7 +259,38 @@ class ManualRequestBoundedObservabilityTests(unittest.TestCase):
         self.assertEqual(trace["workflow_runtime_observation"]["run_started_at_beijing"], "2026-09-25T06:39:50+08:00")
         self.assertEqual(trace["workflow_runtime_observation"]["core_snapshot_finished_at_beijing"], "2026-09-25T06:40:10+08:00")
         self.assertEqual(trace["workflow_runtime_observation"]["workflow_run_id"], "123")
+        self.assertEqual(trace["workflow_runtime_observation"]["correlation_status"], "MATCHED_CURRENT_RUN")
         self.assertIn("UNKNOWN remains explicit", trace["waterfall_rule"])
+
+    def test_stale_runtime_health_is_not_presented_as_current_workflow_timing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            request_path = root / "requests" / "live_snapshot" / "decision-latency.json"
+            request_path.parent.mkdir(parents=True)
+            request_path.write_text(
+                '{"request_id":"decision-latency","requested_at_beijing":"2026-09-25T07:19:07+08:00","source":"CHATGPT_USER_INTERACTION","intent":"FORMAL_INTRADAY_ANALYSIS"}',
+                encoding="utf-8",
+            )
+            (root / "config").mkdir(parents=True)
+            (root / "config" / "runtime_policy.json").write_text("{}", encoding="utf-8")
+            (root / "data" / "state").mkdir(parents=True)
+            (root / "data" / "state" / "runtime_health.json").write_text(
+                '{"run_started_at":"2026-09-24T15:00:00+08:00","captured_at_beijing":"2026-09-24T15:04:00+08:00","workflow_run_id":"old-run"}',
+                encoding="utf-8",
+            )
+            with patch.dict("os.environ", {"GITHUB_RUN_ID": "current-run"}), \
+                 patch.object(build_query_context, "build_market_quote_context", return_value={"decision_freshness": {"post_request": True}, "quotes": []}), \
+                 patch.object(build_query_context, "read_current", return_value={"captured_at": "2026-09-24T15:04:00+08:00"}), \
+                 patch.object(build_query_context, "read_account_fact", return_value={"status": "VALID", "positions": []}), \
+                 patch.object(build_query_context, "build_decision_context", return_value={"generated_at_beijing": "2026-09-25T07:20:13+08:00"}):
+                context = build_query_context.build(root, request_file="requests/live_snapshot/decision-latency.json")
+
+        observation = context["fast_path_latency"]["workflow_runtime_observation"]
+        self.assertEqual(observation["workflow_run_id"], "current-run")
+        self.assertEqual(observation["runtime_health_workflow_run_id"], "old-run")
+        self.assertEqual(observation["correlation_status"], "RUNTIME_HEALTH_NOT_CURRENT_RUN")
+        self.assertEqual(observation["run_started_at_beijing"], "UNKNOWN")
+        self.assertEqual(observation["core_snapshot_finished_at_beijing"], "UNKNOWN")
 
     def test_query_context_step_precedes_full_derived_context_steps(self):
         workflow = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
