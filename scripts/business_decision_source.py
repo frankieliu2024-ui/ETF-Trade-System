@@ -105,6 +105,10 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
                 raise ValueError(f"decision response missing valid opportunity disposition: {pid}")
             if not str(answer.get("reason") or "").strip():
                 raise ValueError(f"decision response missing opportunity reason: {pid}")
+        if pid.startswith("DISCOVERY:") and str(answer.get("disposition") or "").upper() == "ADMIT":
+            for field in ("name", "thscode", "thesis", "falsifier", "next_decision_information", "information_value_reason"):
+                if not str(answer.get(field) or "").strip():
+                    raise ValueError(f"decision response ADMIT requires {pid}.{field}")
 
     next_answer = answers.get("NEXT_UNIT_CAPITAL_USE") or {}
     for field in (
@@ -221,11 +225,29 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
                 raise ValueError(f"Discovery disposition must be ADMIT/REJECT: {pid}")
             observation_eligibility_reviews.append({"code": code, "disposition": disposition, "reason": answer.get("reason")})
             if disposition == "ADMIT":
-                observation_management.append({"code": code, "action": "ADMIT", "reason": answer.get("reason")})
+                observation_management.append({
+                    "code": code, "action": "ADMIT",
+                    "name": answer["name"], "thscode": answer["thscode"],
+                    "thesis": answer["thesis"], "falsifier": answer["falsifier"],
+                    "next_decision_information": answer["next_decision_information"],
+                    "information_value_reason": answer["information_value_reason"],
+                })
         else:
             if disposition not in {"RETAIN", "EXIT"}:
                 raise ValueError(f"Observation disposition must be RETAIN/EXIT: {pid}")
-            observation_management.append({"code": code, "action": disposition, "reason": answer.get("reason")})
+            if disposition == "EXIT":
+                observation_management.append({"code": code, "action": "EXIT", "reason": answer.get("reason")})
+            else:
+                thesis = item.get("existing_thesis_state") or {}
+                required_thesis = ("name", "thscode", "thesis", "falsifier", "next_decision_information", "information_value_reason")
+                missing_thesis = [key for key in required_thesis if not str(thesis.get(key) or "").strip()]
+                if missing_thesis:
+                    raise ValueError(f"decision work package missing canonical Observation thesis state for {code}: {','.join(missing_thesis)}")
+                observation_management.append({
+                    "code": code,
+                    "action": "RETAIN",
+                    **{key: thesis[key] for key in required_thesis},
+                })
 
     main_answer = answers["MAIN_CANDIDATE"]
     risk_answer = answers["RISK_PERMISSION"]
