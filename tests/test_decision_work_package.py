@@ -69,9 +69,9 @@ class DecisionWorkPackageTests(unittest.TestCase):
             {"problem_id": "HELD_ETF_ADD:159981", "security": "能源化工ETF"},
         ]
         plan = [
-            {"requirement_id": "RISK_PERMISSION:A_SHARE_STYLE_FEEDBACK", "target_problem_id": "RISK_PERMISSION", "evidence_class": "A_SHARE_STYLE_FEEDBACK", "required": True},
-            {"requirement_id": "HOLDING:159981:GLOBAL_RISK", "target_problem_id": "HOLDING:159981", "evidence_class": "GLOBAL_RISK", "required": True},
-            {"requirement_id": "NEXT_UNIT_CAPITAL_USE:ETF_RELATIVE_STRENGTH", "target_problem_id": "NEXT_UNIT_CAPITAL_USE", "evidence_class": "ETF_RELATIVE_STRENGTH", "required": True},
+            {"requirement_id": "RISK_PERMISSION:A_SHARE_STYLE_FEEDBACK", "target_problem_id": "RISK_PERMISSION", "evidence_class": "A_SHARE_STYLE_FEEDBACK", "required": True, "satisfaction": "SATISFIED"},
+            {"requirement_id": "HOLDING:159981:GLOBAL_RISK", "target_problem_id": "HOLDING:159981", "evidence_class": "GLOBAL_RISK", "required": True, "satisfaction": "SATISFIED"},
+            {"requirement_id": "NEXT_UNIT_CAPITAL_USE:ETF_RELATIVE_STRENGTH", "target_problem_id": "NEXT_UNIT_CAPITAL_USE", "evidence_class": "ETF_RELATIVE_STRENGTH", "required": True, "satisfaction": "SATISFIED"},
         ]
         answers = {
             pid: {"final_action": "NO_ADD", "capital_comparison": "business comparison", "next_change_condition": "facts change", "evidence_decision_impact": ["ALL_REQUIRED"]}
@@ -112,7 +112,7 @@ class DecisionWorkPackageTests(unittest.TestCase):
         source = {"request_type":"BUSINESS_DECISION_SOURCE","request_id":"r2","parent_request_id":"p2","decision_id":"d2","consumed_snapshot":"snap"}
         thesis = {"name":"恒生科技ETF","thscode":"513180.SH","thesis":"港股科技结构观察","falsifier":"结构失效则退出","next_decision_information":"下一节点重新比较","information_value_reason":"可能改变资本配置"}
         graph = [{"problem_id":"RISK_PERMISSION"},{"problem_id":"MAIN_CANDIDATE"},{"problem_id":"NEXT_UNIT_CAPITAL_USE"},{"problem_id":"OBSERVATION:513180","security":"恒生科技ETF","existing_thesis_state":thesis}]
-        plan = [{"requirement_id":"r:a","target_problem_id":"RISK_PERMISSION","evidence_class":"A_SHARE_STYLE_FEEDBACK","required":True},{"requirement_id":"o:g","target_problem_id":"OBSERVATION:513180","evidence_class":"GLOBAL_RISK","required":True},{"requirement_id":"n:e","target_problem_id":"NEXT_UNIT_CAPITAL_USE","evidence_class":"ETF_RELATIVE_STRENGTH","required":True}]
+        plan = [{"requirement_id":"r:a","target_problem_id":"RISK_PERMISSION","evidence_class":"A_SHARE_STYLE_FEEDBACK","required":True,"satisfaction":"SATISFIED"},{"requirement_id":"o:g","target_problem_id":"OBSERVATION:513180","evidence_class":"GLOBAL_RISK","required":True,"satisfaction":"SATISFIED"},{"requirement_id":"n:e","target_problem_id":"NEXT_UNIT_CAPITAL_USE","evidence_class":"ETF_RELATIVE_STRENGTH","required":True,"satisfaction":"SATISFIED"}]
         answers = {x["problem_id"]:{"final_action":"NO_ADD","capital_comparison":"compare","next_change_condition":"change","evidence_decision_impact":["ALL_REQUIRED"]} for x in graph}
         answers["RISK_PERMISSION"]["final_action"]="允许Confirm"
         answers["MAIN_CANDIDATE"].update({"candidate_code":"159981","candidate_name":"能源化工ETF","opportunity_status":"Confirm机会"})
@@ -134,9 +134,9 @@ class DecisionWorkPackageTests(unittest.TestCase):
             {"problem_id":"NEXT_UNIT_CAPITAL_USE"},
         ]
         plan = [
-            {"requirement_id":"r:a","target_problem_id":"RISK_PERMISSION","evidence_class":"A_SHARE_STYLE_FEEDBACK","required":True},
-            {"requirement_id":"c:g","target_problem_id":"DEPLOYABLE_CASH","evidence_class":"GLOBAL_RISK","required":False},
-            {"requirement_id":"n:e","target_problem_id":"NEXT_UNIT_CAPITAL_USE","evidence_class":"ETF_RELATIVE_STRENGTH","required":True},
+            {"requirement_id":"r:a","target_problem_id":"RISK_PERMISSION","evidence_class":"A_SHARE_STYLE_FEEDBACK","required":True,"satisfaction":"SATISFIED"},
+            {"requirement_id":"c:g","target_problem_id":"DEPLOYABLE_CASH","evidence_class":"GLOBAL_RISK","required":False,"satisfaction":"INSUFFICIENT"},
+            {"requirement_id":"n:e","target_problem_id":"NEXT_UNIT_CAPITAL_USE","evidence_class":"ETF_RELATIVE_STRENGTH","required":True,"satisfaction":"SATISFIED"},
         ]
         answers = {x["problem_id"]:{"final_action":"保持","capital_comparison":"真实业务比较","next_change_condition":"下一合法节点重评","evidence_decision_impact":["ALL_REQUIRED"]} for x in graph}
         answers["RISK_PERMISSION"]["final_action"]="允许Confirm"
