@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-09-25T16:26:00+08:00",
+  "updated_at": "2026-09-25T16:45:02+08:00",
   "last_status": "SENT",
   "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】半导体ETF代理（SOXX）出现极端波动 +1.56%",
+  "last_title": "【市场异动】美股科技内部结构出现显著分化",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -14297,27 +14297,54 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-09-25T16:26:00+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "report-delivery:ETF系统复核:etf-system-review-20260911T173252",
-      "type": "REPORT_DELIVERY_REQUEST",
-      "title": "【系统复核】ETF系统复核｜2026-09-11 17:39",
-      "content": "**【交易决策链】降级**\n\n**【系统一致性】失败**\n\n**【需要用户处理】否**\n\n**【本轮新增事实】**\n\n- **PR #519 / #518**：当前风险率已统一为稳定的Gross口径并完成变更自身验收；但合并后的全局检查仍有通知聚合硬失败，且尚无更新后的全局通过结果，因此不能沿用合并前的绿色结论。\n\n- 当前行情、账户、决策上下文和端到端状态仍可用；14:20正式决策及黄金ETF（518880）卖出500份已闭环，说明交易链能够运行，但不等于全局一致性已恢复。\n\n- 今日09:20、10:20、11:20、13:20和14:20均形成正式结果，12:20节点没有可恢复的决策或REPORT记录；该节点不能补写，午间异步路由验收仍未完成。\n\n**【当前处理】**\n\n- 已把合并后全局失败、当前可用性边界和下一验收门回写 **#517**；没有把与风险率变更无关的通知失败并入 **#518**。\n\n- 已将12:20节点记为 **#478** 的“不完整验收”：没有证据证明路由语义回退，也没有资格关闭事项，继续等待下一次真实午间节点。\n\n- 本轮未修改代码、配置、workflow、MASTER或交易权限，未创建或合并PR，也未触发行情唤醒；17:33美股盘前上下文虽已刷新，但整体仍为降级，未据此弱化全局硬失败。\n\n**【未闭环事项】**\n\n- **#517**：由全局治理与通知owner负责；结束条件是基于最新主版本完成新的全局一致性与端到端组合验收，通知聚合硬失败实际消失或完成独立根因闭环。\n\n- **#478**：由正式决策运行路由owner负责；结束条件是一次真实12:20节点正确使用A股11:30事实和其他市场各自合法时点，并形成可恢复的正式记录。\n\n- **#516 / #460**：由Scheduled Actor时延与决策上下文owner负责；结束条件是用同一运行身份拆清任务启动、必要输入就绪、持久化和用户送达时延，证明具体可改根因或确认无需修改。\n\n**【下一验证】**\n\n- 下一次最新主版本全局检查必须重新验证通知聚合、当前Gross风险率、系统一致性与端到端状态；旧的持久化PASS不能替代这次验收。\n\n- 今晚正式交易复盘应验证今日黄金ETF卖出、账户事实和CASE/生命周期是否完整归档，并确认没有新的交易事实硬错误。\n\n- 下一次12:20正式决策验证午间异步时点；下一轮系统复核再根据真实记录决定是否关闭 **#478**。\n\n**【当前最大风险】**\n\n主链目前可以完成交易判断和账户闭环，但最新完成的全局验收仍为失败；若把较早的绿色一致性文件误当成当前结论，可能掩盖通知聚合或相邻消费者仍未通过的问题。\n\n**【下一阶段】**\n\n保持生产实现稳定，不再追加推测性修复；先消费今晚交易复盘和下一次最新主版本全局验收，只有硬失败被定位到明确owner且现有机制不足时才重新准入变更。\n\n**【下一关注点】**\n\n- 通知聚合硬失败是否在新的全局检查中真实消失。\n\n- 今晚交易复盘能否完整吸收黄金ETF卖出及最新账户事实。\n\n- 下一次午间节点是否形成12:20可验收记录。\n\n**【置信度】**\n\n高\n\n**【最可能出错的地方】**\n\n17:33后的美股盘前刷新已经改善代理行情新鲜度，但尚未形成新的全局一致性终态；下一次检查可能把其中一项运行时失败降为普通告警，不过通知聚合硬失败在实际通过前仍不能提前视为已解决。",
-      "source": "product-task:ETF系统复核",
-      "user_severity": "正式报告",
-      "user_action": "阅读已完成的正式ETF报告；无需交易操作",
-      "status": "SENT",
-      "attempted_at": "2026-09-11T17:40:57+08:00",
+      "notification_id": "notification_f059add85bdad0e3462e",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:us:2026-09-25:US_TECH_DIVERGENCE:DIVERGED:DIVERGENCE:2026-09-25T16:44:46+08:00",
+      "related_decision_id": "",
+      "security_code": "US_TECH_DIVERGENCE",
+      "security_name": "美股科技内部结构",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-09-25T16:45:00+08:00",
+      "sent_at": "2026-09-25T16:45:02+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-09-27T16:45:00+08:00",
+      "title": "【市场异动】美股科技内部结构出现显著分化",
+      "content": "### 核心结论\n- **事件类型**：显著分化\n- **对象/结构**：美股科技内部结构\n- **关键结构**：横截面两端：半导体ETF代理（SOXX）+1.67%，纳指100ETF代理（QQQ）+0.61%，涨跌幅相差1.06个百分点\n\n**判断**：相关对象之间的相对差已经扩大到值得单独关注的程度，不能再用单一市场方向概括全部机会和风险。\n\n### 对ETF系统的影响\n美股科技内部结构属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核相关持仓/观察ETF的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-25 16:44:46\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
+      "source": "data/state/us_extended_hours_context.json",
+      "confirmation_context": {
+        "market": "US",
+        "market_date": "2026-09-25",
+        "direction": "DIVERGED",
+        "event_category": "DIVERGENCE",
+        "fact_family": "US_SESSION_STRUCTURE",
+        "object_codes": [
+          "SOXX",
+          "QQQ"
+        ],
+        "phase_metric_change_pct": null,
+        "sudden_change_pct": null,
+        "event_magnitude_pct": 1.0622,
+        "market_as_of_beijing": "2026-09-25T16:44:46+08:00",
+        "source_fact_id": "2026-09-25:US_TECH_DIVERGENCE:DIVERGENCE:DIVERGED:2026-09-25T16:44:46+08:00",
+        "session": "PRE_MARKET",
+        "event_family_id": "US:2026-09-25:PRE_MARKET:US_TECH_DIVERGENCE:DIVERGENCE:DIVERGED:"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_b5974ff8a6cd93d0d0e9",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-09-25T16:45:02+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "report-delivery:ETF_FORMAL_DECISION:ETF正式决策-20260911T180600+0800",
       "type": "REPORT_DELIVERY_REQUEST",
@@ -17897,6 +17924,24 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_23744503e03c82ddd01c",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:us:2026-09-25:US_TECH_DIVERGENCE:DIVERGED:DIVERGENCE:2026-09-25T16:44:46+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】美股科技内部结构出现显著分化",
+      "content": "### 核心结论\n- **事件类型**：显著分化\n- **对象/结构**：美股科技内部结构\n- **关键结构**：横截面两端：半导体ETF代理（SOXX）+1.67%，纳指100ETF代理（QQQ）+0.61%，涨跌幅相差1.06个百分点\n\n**判断**：相关对象之间的相对差已经扩大到值得单独关注的程度，不能再用单一市场方向概括全部机会和风险。\n\n### 对ETF系统的影响\n美股科技内部结构属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核相关持仓/观察ETF的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-25 16:44:46\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
+      "source": "data/state/us_extended_hours_context.json",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-09-25T16:45:02+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_f059add85bdad0e3462e",
       "lifecycle_status": "SENT"
     }
   ],
