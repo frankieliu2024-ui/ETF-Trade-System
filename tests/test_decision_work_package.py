@@ -192,5 +192,20 @@ class DecisionWorkPackageTests(unittest.TestCase):
         self.assertEqual(consumed["layer_3_etf_opportunity_capital"],["n:e"])
 
 
+    def test_validator_allows_empty_unqualified_layer(self):
+        value = {
+            "request_id": "p905",
+            "layer_1_external_cross_market": [],
+            "layer_2_a_share_internal": ["r:a"],
+            "layer_3_etf_opportunity_capital": ["n:e"],
+            "discovery_to_capital_competition_consumed": True,
+            "all_managed_positions_sell_chain_consumed": True,
+            "held_etf_additional_capital_consumed": True,
+            "next_unit_capital_use_consumed": True,
+        }
+        from scripts.business_decision_source import validate_decision_evidence_consumption
+        self.assertEqual(validate_decision_evidence_consumption(value, parent_request_id="p905"), "")
+
+
 if __name__ == "__main__":
     unittest.main()
