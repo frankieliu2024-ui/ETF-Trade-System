@@ -125,5 +125,45 @@ class DecisionWorkPackageTests(unittest.TestCase):
 
 
 
+    def test_real_1922_actor_capital_state_names_project_to_strict_objects(self):
+        source = {"request_type":"BUSINESS_DECISION_SOURCE","request_id":"r1922","parent_request_id":"p1922","decision_id":"d1922","consumed_snapshot":"snap"}
+        graph = [
+            {"problem_id":"RISK_PERMISSION"},{"problem_id":"MAIN_CANDIDATE"},
+            {"problem_id":"DEPLOYABLE_CASH"},{"problem_id":"RELEASABLE_CAPITAL"},
+            {"problem_id":"TRIAL_CONFIRM_CAPACITY"},{"problem_id":"CONCENTRATION_COMMON_RISK"},
+            {"problem_id":"NEXT_UNIT_CAPITAL_USE"},
+        ]
+        plan = [
+            {"requirement_id":"r:a","target_problem_id":"RISK_PERMISSION","evidence_class":"A_SHARE_STYLE_FEEDBACK","required":True},
+            {"requirement_id":"c:g","target_problem_id":"DEPLOYABLE_CASH","evidence_class":"GLOBAL_RISK","required":False},
+            {"requirement_id":"n:e","target_problem_id":"NEXT_UNIT_CAPITAL_USE","evidence_class":"ETF_RELATIVE_STRENGTH","required":True},
+        ]
+        answers = {x["problem_id"]:{"final_action":"保持","capital_comparison":"真实业务比较","next_change_condition":"下一合法节点重评","evidence_decision_impact":["ALL_REQUIRED"]} for x in graph}
+        answers["RISK_PERMISSION"]["final_action"]="允许Confirm"
+        answers["MAIN_CANDIDATE"].update({"candidate_code":"159981","candidate_name":"能源化工ETF","opportunity_status":"Confirm机会"})
+        answers["DEPLOYABLE_CASH"]["final_action"]="当前可部署现金13,169.54元，休市期间保持现金"
+        answers["RELEASABLE_CAPITAL"]["final_action"]="561980条件释放资本"
+        answers["TRIAL_CONFIRM_CAPACITY"]["final_action"]="现有现金足以承载10,000元Confirm；当前休市不执行"
+        answers["CONCENTRATION_COMMON_RISK"]["final_action"]="科技/成长共同暴露较高，不追加"
+        answers["NEXT_UNIT_CAPITAL_USE"].update({
+            "final_action":"当前保持现金13,169.54元；下一A股合法交易节点第一优先复核能源化工ETF（159981）Confirm 10,000元",
+            "new_amount_yuan":0,"post_action_deployable_cash":13169.54,
+            "future_opportunity_capacity":"保持完整一次10,000元Confirm承载能力",
+            "cash_opportunity_cost":"休市期间现金机会成本低于预设未来成交的执行风险",
+            "alternative_capital_use_review":"已比较全部合法资本状态",
+            "concentration_account_structure_effect":"当前不增加科技/成长共同暴露",
+            "selected_state_reason":"A股休市，当前唯一合法可执行状态为保持现金",
+            "zero_amount_decisive_reason":"A股休市，当前不能执行A股新增风险动作",
+            "compared_capital_states":["现金","全部实际持仓继续占资","全部持仓ETF追加","全部正式观察ETF","12只Discovery临时评估对象","561980条件释放资本","159981下一节点Confirm"],
+        })
+        projected=project_decision_response(source,{"answers":answers},{"problem_graph":graph,"evidence_requirements":plan})
+        states=projected["capital_competition"]["compared_capital_states"]
+        self.assertEqual(len(states),7)
+        self.assertTrue(all(isinstance(x,dict) for x in states))
+        self.assertTrue(all(set(("state_name","capital_action","remaining_deployable_cash","why_not_selected","opportunity_cost_if_selected")) <= set(x) for x in states))
+        self.assertEqual([x["state_name"] for x in states], answers["NEXT_UNIT_CAPITAL_USE"]["compared_capital_states"])
+        self.assertTrue(all(isinstance(x,str) for x in answers["NEXT_UNIT_CAPITAL_USE"]["compared_capital_states"]))
+
+
 if __name__ == "__main__":
     unittest.main()
