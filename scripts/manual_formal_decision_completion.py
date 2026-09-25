@@ -80,7 +80,42 @@ def build_completion_request(source_request: dict, formal_decision: dict, consum
     return payload
 
 
-def write_completion_request(source_request_path: str, decision_path: str, consumed_snapshot: str, output_path: str = "", completion_request_id: str = "") -> Path:
+def build_structured_completion_request(
+    source_request: dict,
+    formal_decision: dict,
+    decision_response: dict,
+    decision_work_package: dict,
+    consumed_snapshot: str,
+    completion_request_id: str = "",
+    request_bound_pit_closure: dict | None = None,
+    observation_eligibility_closure: dict | None = None,
+) -> dict:
+    """Build the production Formal Decision envelope.
+
+    The actor supplies business judgments in decision_response.  Canonical
+    capital_use/evidence-consumption nesting is projected downstream by the
+    existing BUSINESS_DECISION_SOURCE owner.
+    """
+    legacy = build_completion_request(
+        source_request,
+        formal_decision,
+        consumed_snapshot,
+        completion_request_id,
+        request_bound_pit_closure,
+        observation_eligibility_closure,
+    )
+    if not isinstance(decision_response, dict) or not decision_response.get("answers"):
+        raise ValueError("new formal decision completion requires structured decision_response answers")
+    if not isinstance(decision_work_package, dict) or not decision_work_package.get("problem_graph"):
+        raise ValueError("new formal decision completion requires request-bound decision_work_package")
+    legacy["request_type"] = "BUSINESS_DECISION_SOURCE"
+    legacy["source"] = "CHATGPT_BUSINESS_DECISION_RESPONSE"
+    legacy["decision_response"] = decision_response
+    legacy["decision_work_package"] = decision_work_package
+    return legacy
+
+
+def write_completion_request(source_request_path: str, decision_path: str, consumed_snapshot: str, output_path: str = "", completion_request_id: str = "", decision_response_path: str = "") -> Path:
     source_path = (ROOT / source_request_path).resolve()
     decision_file = (ROOT / decision_path).resolve()
     if ROOT not in source_path.parents or ROOT not in decision_file.parents:
@@ -131,7 +166,24 @@ def write_completion_request(source_request_path: str, decision_path: str, consu
                     if isinstance(item, dict) and str(item.get("code") or "").strip()
                 ],
             }
-    payload = build_completion_request(source, decision, consumed_snapshot, completion_request_id, pit_closure, observation_closure)
+    if not decision_response_path:
+        raise ValueError("new Formal Decision production completion requires --decision-response")
+    response_file = (ROOT / decision_response_path).resolve()
+    if ROOT not in response_file.parents or not response_file.exists():
+        raise ValueError("decision response path must stay inside repository root and exist")
+    decision_response = json.loads(response_file.read_text(encoding="utf-8"))
+    if not query_path.exists():
+        raise ValueError("request-bound query context is required for structured Formal Decision completion")
+    query = json.loads(query_path.read_text(encoding="utf-8"))
+    packet = query.get("decision_fact_pack") or {}
+    trigger = packet.get("trigger") or {}
+    if str(trigger.get("request_id") or "").strip() != str(source.get("request_id") or "").strip():
+        raise ValueError("decision work package is not bound to the source Formal Decision request")
+    work_package = packet.get("decision_work_package") or {}
+    payload = build_structured_completion_request(
+        source, decision, decision_response, work_package, consumed_snapshot,
+        completion_request_id, pit_closure, observation_closure,
+    )
     target = (ROOT / output_path).resolve() if output_path else REQUEST_DIR / f"{payload['request_id']}.json"
     if ROOT not in target.parents or target.suffix != ".json":
         raise ValueError("output path must be a repository JSON path")
@@ -151,9 +203,13 @@ def main() -> int:
     parser.add_argument("--formal-decision", required=True)
     parser.add_argument("--consumed-snapshot", required=True)
     parser.add_argument("--completion-request-id", default="")
+    parser.add_argument("--decision-response", required=True)
     parser.add_argument("--output", default="")
     args = parser.parse_args()
-    target = write_completion_request(args.source_request, args.formal_decision, args.consumed_snapshot, args.output, args.completion_request_id)
+    target = write_completion_request(
+        args.source_request, args.formal_decision, args.consumed_snapshot,
+        args.output, args.completion_request_id, args.decision_response,
+    )
     print(json.dumps({"ok": True, "request": str(target.relative_to(ROOT)).replace("\\", "/")}, ensure_ascii=False))
     return 0
 
