@@ -2886,23 +2886,49 @@ def main() -> int:
     source_fingerprint_value = ""
     source_reply_ready = False
     if source_dispatch:
+        parent_id = str(request.get("parent_request_id") or "").strip()
+        if not parent_id or any(part in parent_id for part in ("/", "\\", "..")):
+            raise ValueError("business decision source requires a safe parent Formal Decision request")
+        parent_path = ROOT / "requests" / "live_snapshot" / f"{parent_id}.json"
+        if not parent_path.exists():
+            raise ValueError("business decision source parent Formal Decision request is not durable")
+        parent_request = load_json(parent_path)
+        if str(parent_request.get("request_id") or "").strip() != parent_id:
+            raise ValueError("business decision source parent request identity mismatch")
+
+        query_path = ROOT / "data" / "state" / "query_context.json"
+        query_context = load_json(query_path) if query_path.exists() else {}
+        packet = query_context.get("decision_fact_pack") or {}
+        trigger = packet.get("trigger") or {}
+        if str(trigger.get("request_id") or "").strip() != parent_id:
+            raise ValueError("business decision source requires current request-bound Decision Work Package")
+        decision_work_package = request.get("decision_work_package") or packet.get("decision_work_package") or {}
+        if not isinstance(decision_work_package, dict) or not decision_work_package.get("problem_graph"):
+            raise ValueError("business decision source Decision Work Package is missing")
+
         supplied_decision = request.get("formal_decision")
-        if not isinstance(supplied_decision, dict):
-            supplied_decision = request
-        source_payload = dict(supplied_decision)
-        for key in ("request_id", "decision_id", "consumed_snapshot", "parent_request_id",
-                    "requested_at_beijing", "market_date"):
-            if key not in source_payload and request.get(key) not in (None, ""):
-                source_payload[key] = request.get(key)
+        source_payload = dict(supplied_decision) if isinstance(supplied_decision, dict) else {}
+        current_context = query_context.get("current") or {}
+        source_payload.setdefault("request_id", str(request.get("request_id") or f"{parent_id}__business_decision_source"))
+        source_payload.setdefault("parent_request_id", parent_id)
+        source_payload.setdefault("decision_id", str(request.get("decision_id") or f"{parent_id}_decision"))
+        source_payload.setdefault("consumed_snapshot", str(request.get("consumed_snapshot") or current_context.get("latest_snapshot") or ""))
+        source_payload.setdefault("requested_at_beijing", parent_request.get("requested_at_beijing") or parent_request.get("request_time_beijing"))
+        source_payload.setdefault("market_date", query_context.get("market_date") or parent_request.get("market_date"))
+        source_payload.setdefault("data_as_of_beijing", query_context.get("generated_at_beijing") or source_payload.get("requested_at_beijing"))
         source_payload["request_type"] = BUSINESS_DECISION_SOURCE
+
         decision_response = request.get("decision_response")
-        decision_work_package = request.get("decision_work_package")
-        if decision_response is not None or decision_work_package is not None:
-            source_payload = project_decision_response(
-                source_payload,
-                decision_response or {},
-                decision_work_package or {},
-            )
+        if isinstance(supplied_decision, dict) and supplied_decision:
+            # Historical durable Business Decision Source replay: preserve the
+            # already-canonical immutable Source instead of re-projecting it
+            # through today's actor response contract. New production ingress
+            # cannot use this path because it does not supply formal_decision.
+            source_payload = source_payload
+        else:
+            if not isinstance(decision_response, dict):
+                raise ValueError("business decision source requires actor-only structured decision_response")
+            source_payload = project_decision_response(source_payload, decision_response, decision_work_package)
         source = validate_source(
             source_payload,
             expected_snapshot=str(request.get("consumed_snapshot") or source_payload.get("consumed_snapshot") or "").strip(),

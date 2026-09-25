@@ -68,7 +68,7 @@ def validate_decision_evidence_consumption(value: Any, *, parent_request_id: str
 
 
 def project_decision_response(source: dict[str, Any], response: dict[str, Any], work_package: dict[str, Any]) -> dict[str, Any]:
-    """Project a complete business response into the existing canonical Source contract."""
+    """Project actor-only business answers into the canonical Business Decision Source."""
     if not isinstance(response, dict) or not isinstance(work_package, dict):
         raise ValueError("decision response/work package must be objects")
     answers = response.get("answers")
@@ -79,6 +79,8 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
     missing = [pid for pid in required_ids if pid not in answers]
     if missing:
         raise ValueError("decision response missing problem_ids: " + ",".join(missing))
+
+    by_id = {str(x.get("problem_id") or ""): x for x in graph}
     for pid in required_ids:
         answer = answers[pid]
         if not isinstance(answer, dict):
@@ -86,12 +88,42 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         for field in ("final_action", "capital_comparison", "next_change_condition", "evidence_decision_impact"):
             if answer.get(field) in (None, "", [], {}):
                 raise ValueError(f"decision response missing {pid}.{field}")
-        if str(pid).startswith("HOLDING:"):
+        if pid.startswith("HOLDING:"):
             if not answer.get("capital_occupancy_reason") or not answer.get("higher_efficiency_alternative"):
                 raise ValueError(f"decision response missing holding capital rationale: {pid}")
             if str(answer.get("final_action") or "").upper() in {"REDUCE", "EXIT"}:
                 if answer.get("quantity") in (None, "") or not answer.get("capital_destination"):
                     raise ValueError(f"decision response missing action quantity/destination: {pid}")
+        if pid == "MAIN_CANDIDATE":
+            for field in ("candidate_code", "candidate_name", "opportunity_status"):
+                if answer.get(field) in (None, ""):
+                    raise ValueError(f"decision response missing MAIN_CANDIDATE.{field}")
+        if pid.startswith(("DISCOVERY:", "OBSERVATION:")):
+            if str(answer.get("opportunity_status") or "").strip() not in {"无机会", "观察机会", "Trial机会", "Confirm机会"}:
+                raise ValueError(f"decision response missing registered opportunity_status: {pid}")
+            if str(answer.get("disposition") or "").upper() not in {"ADMIT", "REJECT", "RETAIN", "EXIT"}:
+                raise ValueError(f"decision response missing valid opportunity disposition: {pid}")
+            if not str(answer.get("reason") or "").strip():
+                raise ValueError(f"decision response missing opportunity reason: {pid}")
+
+    next_answer = answers.get("NEXT_UNIT_CAPITAL_USE") or {}
+    for field in (
+        "new_amount_yuan", "post_action_deployable_cash", "future_opportunity_capacity",
+        "cash_opportunity_cost", "alternative_capital_use_review",
+        "concentration_account_structure_effect", "selected_state_reason", "compared_capital_states",
+    ):
+        if next_answer.get(field) in (None, "", []):
+            raise ValueError(f"decision response missing NEXT_UNIT_CAPITAL_USE.{field}")
+    try:
+        new_amount = float(next_answer.get("new_amount_yuan"))
+        post_cash = float(next_answer.get("post_action_deployable_cash"))
+    except (TypeError, ValueError):
+        raise ValueError("NEXT_UNIT_CAPITAL_USE amount/cash must be numeric")
+    if new_amount < 0 or post_cash < 0:
+        raise ValueError("NEXT_UNIT_CAPITAL_USE amount/cash must be non-negative")
+    if new_amount == 0 and not str(next_answer.get("zero_amount_decisive_reason") or "").strip():
+        raise ValueError("decision response requires zero_amount_decisive_reason when new amount is zero")
+
     layer_map = {"A_SHARE_STYLE_FEEDBACK": "layer_2_a_share_internal", "ETF_RELATIVE_STRENGTH": "layer_3_etf_opportunity_capital"}
     consumed = {"request_id": str(source.get("parent_request_id") or source.get("request_id") or "").strip()}
     domains = {"layer_1_external_cross_market": [], "layer_2_a_share_internal": [], "layer_3_etf_opportunity_capital": []}
@@ -108,45 +140,139 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
     if any(not domains[k] for k in domains):
         raise ValueError("decision response must consume evidence in all three decision layers")
     consumed.update(domains)
+
+    action_map = {"HOLD": "持有管理", "REDUCE": "降低风险", "EXIT": "退出"}
     position_reviews = []
+    lifecycle = {}
     for item in graph:
         pid = str(item.get("problem_id") or "")
         if not pid.startswith("HOLDING:"):
             continue
         answer = answers[pid]
         code = pid.split(":", 1)[1]
+        action = str(answer.get("final_action") or "").upper()
+        if action not in action_map:
+            raise ValueError(f"holding final_action must be HOLD/REDUCE/EXIT: {pid}")
         alternatives = item.get("alternatives") or {}
-        states = {
-            key: str(alternatives.get(key) or "").strip()
-            for key in ("HOLD", "REDUCE", "EXIT")
-        }
+        states = {key: str(alternatives.get(key) or "").strip() for key in ("HOLD", "REDUCE", "EXIT")}
         if any(not states[key] for key in states):
             raise ValueError(f"decision work package missing holding alternatives: {pid}")
+        quantity = answer.get("quantity") if action in {"REDUCE", "EXIT"} else 0
+        destination = answer.get("capital_destination") if action in {"REDUCE", "EXIT"} else "继续持有"
+        lifecycle[f"{item.get('security') or code}（{code}）"] = action_map[action]
         position_reviews.append({
-            "security_code": code, "security_name": item.get("security") or code,
-            "current_action": answer["final_action"],
+            "security_code": code,
+            "security_name": item.get("security") or code,
+            "current_quantity": item.get("current_quantity"),
+            "current_action": action_map[action],
+            "release_quantity": quantity,
+            "capital_destination": destination,
             "holding_state_risk_reward_evidence": answer["capital_comparison"],
             "holding_thesis_status": answer["capital_comparison"],
             "risk_reduction_or_exit_condition": answer["next_change_condition"],
             "higher_efficiency_alternative": answer["higher_efficiency_alternative"],
             "capital_occupancy_reason": answer["capital_occupancy_reason"],
             "continued_holding_opportunity_cost": answer["capital_comparison"],
-            "action_changes_now": str(answer["final_action"]).upper() in {"REDUCE", "EXIT"},
+            "action_changes_now": action in {"REDUCE", "EXIT"},
             "next_change_condition": answer["next_change_condition"],
-            "capital_use": {"position_capital_states": states, "quantity": answer.get("quantity"), "capital_destination": answer.get("capital_destination")},
+            "action_detail": answer.get("action_detail") or (f"{action_map[action]} {quantity}" if action in {"REDUCE", "EXIT"} else "继续持有"),
+            "capital_use": {
+                "continued_holding_vs_cash": answer["capital_comparison"],
+                "alternative_capital_uses_review": answer["higher_efficiency_alternative"],
+                "position_capital_states": states,
+                "quantity": quantity,
+                "capital_destination": destination,
+            },
         })
+
+    held_add_reviews = []
+    for item in graph:
+        pid = str(item.get("problem_id") or "")
+        if not pid.startswith("HELD_ETF_ADD:"):
+            continue
+        answer = answers[pid]
+        code = pid.split(":", 1)[1]
+        add_action = str(answer.get("final_action") or "").upper()
+        held_add_reviews.append({
+            "security_code": code,
+            "eligible_for_additional_capital_review": True,
+            "conclusion": answer.get("final_action"),
+            "reason": answer.get("capital_comparison"),
+        })
+
+    opportunity_reviews = []
+    observation_eligibility_reviews = []
+    observation_management = []
+    for item in graph:
+        pid = str(item.get("problem_id") or "")
+        if not pid.startswith(("DISCOVERY:", "OBSERVATION:")):
+            continue
+        answer = answers[pid]
+        code = pid.split(":", 1)[1]
+        disposition = str(answer.get("disposition") or "").upper()
+        opportunity_reviews.append({
+            "security_code": code, "code": code, "security_name": item.get("security") or code,
+            "category": "OBSERVATION_EVALUATION_INPUT" if pid.startswith("DISCOVERY:") else "OBSERVED_ETF",
+            "opportunity_status": answer.get("opportunity_status"),
+            "conclusion": answer.get("final_action"), "reason": answer.get("reason"),
+        })
+        if pid.startswith("DISCOVERY:"):
+            if disposition not in {"ADMIT", "REJECT"}:
+                raise ValueError(f"Discovery disposition must be ADMIT/REJECT: {pid}")
+            observation_eligibility_reviews.append({"code": code, "disposition": disposition, "reason": answer.get("reason")})
+            if disposition == "ADMIT":
+                observation_management.append({"code": code, "action": "ADMIT", "reason": answer.get("reason")})
+        else:
+            if disposition not in {"RETAIN", "EXIT"}:
+                raise ValueError(f"Observation disposition must be RETAIN/EXIT: {pid}")
+            observation_management.append({"code": code, "action": disposition, "reason": answer.get("reason")})
+
+    main_answer = answers["MAIN_CANDIDATE"]
+    risk_answer = answers["RISK_PERMISSION"]
     projected = json.loads(json.dumps(source))
+    projected.update({
+        "risk_permission": risk_answer["final_action"],
+        "candidate_code": str(main_answer["candidate_code"]),
+        "candidate_name": str(main_answer["candidate_name"]),
+        "main_candidate": f"{main_answer['candidate_name']}（{main_answer['candidate_code']}）",
+        "opportunity_status": main_answer["opportunity_status"],
+        "lifecycle": lifecycle,
+        "managed_position_reviews": position_reviews,
+        "etf_opportunity_reviews": opportunity_reviews,
+        "observation_eligibility_reviews": observation_eligibility_reviews,
+        "observation_management": observation_management,
+        "continued_holding_opportunity_cost": "；".join(str(x.get("continued_holding_opportunity_cost") or "") for x in position_reviews),
+        "action_changes_now": any(bool(x.get("action_changes_now")) for x in position_reviews) or new_amount > 0,
+        "next_change_condition": next_answer["next_change_condition"],
+        "next_unit_capital_use": next_answer["final_action"],
+        "capital_competition": {
+            "next_unit_capital_use": next_answer["final_action"],
+            "full_competition_completed": True,
+            "releasable_capital_reviewed": True,
+            "post_action_deployable_cash": post_cash,
+            "future_opportunity_capacity": next_answer["future_opportunity_capacity"],
+            "cash_opportunity_cost": next_answer["cash_opportunity_cost"],
+            "alternative_capital_use_review": next_answer["alternative_capital_use_review"],
+            "concentration_account_structure_effect": next_answer["concentration_account_structure_effect"],
+            "selected_state_reason": next_answer["selected_state_reason"],
+            "new_amount_yuan": new_amount,
+            "zero_amount_decisive_reason": next_answer.get("zero_amount_decisive_reason"),
+            "compared_capital_states": next_answer["compared_capital_states"],
+            "held_etf_add_capital_reviews": held_add_reviews,
+            "etf_opportunity_reviews": opportunity_reviews,
+        },
+    })
     projected["decision_evidence_consumption"] = {**consumed,
         "discovery_to_capital_competition_consumed": True,
-        "all_managed_positions_sell_chain_consumed": bool(any(str(x.get("problem_id") or "").startswith("HOLDING:") for x in graph)),
-        "held_etf_additional_capital_consumed": bool(any(str(x.get("problem_id") or "").startswith("HELD_ETF_ADD:") for x in graph)),
+        "all_managed_positions_sell_chain_consumed": bool(position_reviews),
+        "held_etf_additional_capital_consumed": bool(held_add_reviews) or not any(str(x.get("problem_id") or "").startswith("HELD_ETF_ADD:") for x in graph),
         "next_unit_capital_use_consumed": "NEXT_UNIT_CAPITAL_USE" in required_ids}
-    projected["managed_position_reviews"] = position_reviews
-    projected["capital_use"] = {"business_response_projection": True,
+    projected["capital_use"] = {
+        "business_response_projection": True,
         "position_capital_states": {x["security_code"]: x["capital_use"]["position_capital_states"] for x in position_reviews},
-        "capital_destinations": {x["security_code"]: x["capital_use"]["capital_destination"] for x in position_reviews}}
+        "capital_destinations": {x["security_code"]: x["capital_use"]["capital_destination"] for x in position_reviews},
+    }
     return projected
-
 
 def validate_source(source: dict[str, Any], *, expected_snapshot: str | None = None) -> dict[str, Any]:
     if classify_request(source) != BUSINESS_DECISION_SOURCE:

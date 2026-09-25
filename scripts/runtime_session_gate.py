@@ -156,6 +156,8 @@ def _push_request_class() -> str:
         return "NOT_APPLICABLE"
     if all(item == "STATE_SYNC_ONLY" for item in classes):
         return "STATE_SYNC_ONLY"
+    if all(item == "BUSINESS_DECISION_SOURCE" for item in classes):
+        return "BUSINESS_DECISION_SOURCE"
     if any(item == "HYBRID" for item in classes) or len(set(classes)) > 1:
         return "HYBRID"
     return "REFRESH_BEARING"
@@ -238,9 +240,9 @@ def main() -> int:
         phase = "POST_CLOSE_RECOVERY"
         reason = "delayed_scheduled_close_recovery"
 
-    if event_name == "push" and request_class == "STATE_SYNC_ONLY":
+    if event_name == "push" and request_class in {"STATE_SYNC_ONLY", "BUSINESS_DECISION_SOURCE"}:
         should_capture = False
-        reason = "state_sync_only_request"
+        reason = "business_decision_source_request" if request_class == "BUSINESS_DECISION_SOURCE" else "state_sync_only_request"
 
     close_intent = bool(scheduled_close_intent or boundary_close_intent)
     wait_for_close_boundary_seconds = 0

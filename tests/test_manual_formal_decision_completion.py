@@ -446,6 +446,9 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
                 "next_unit_capital_use_consumed": True,
             },
         })
+        # Historical fault-recovery fixture exercises an already-canonical immutable Source.
+        # The consumer must replay this durable source directly rather than reinterpret
+        # it through today's actor response contract.
         source = {
             **SOURCE_REQUEST,
             "request_id": source_id,
@@ -454,7 +457,25 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             "decision_id": decision["decision_id"],
             "consumed_snapshot": SNAPSHOT_PATH,
             "formal_decision": decision,
+            "decision_response": {"answers": {
+                "HISTORICAL_CANONICAL_SOURCE": {
+                    "final_action": "REPLAY",
+                    "capital_comparison": "historical canonical source replay",
+                    "next_change_condition": "none",
+                    "evidence_decision_impact": ["ALL_REQUIRED"],
+                }
+            }},
+            "decision_work_package": {"problem_graph": [{"problem_id": "HISTORICAL_CANONICAL_SOURCE"}]},
         }
+        (self.root / "data/state/query_context.json").write_text(json.dumps({
+            "market_date": SOURCE_REQUEST["market_date"],
+            "generated_at_beijing": SOURCE_REQUEST["requested_at_beijing"],
+            "current": {"latest_snapshot": SNAPSHOT_PATH},
+            "decision_fact_pack": {
+                "trigger": {"request_id": source_id},
+                "decision_work_package": source["decision_work_package"],
+            },
+        }, ensure_ascii=False), encoding="utf-8")
         request_path = self.root / "requests/live_snapshot" / f"{source_id}.json"
         request_path.write_text(json.dumps(source, ensure_ascii=False, sort_keys=True), encoding="utf-8")
         state_sync.DASHBOARD = self.root / "ETF当前状态_DASHBOARD.md"

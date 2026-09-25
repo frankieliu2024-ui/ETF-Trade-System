@@ -82,7 +82,7 @@ def build_completion_request(source_request: dict, formal_decision: dict, consum
 
 def build_structured_completion_request(
     source_request: dict,
-    formal_decision: dict,
+    formal_decision: dict | None,
     decision_response: dict,
     decision_work_package: dict,
     consumed_snapshot: str,
@@ -90,38 +90,42 @@ def build_structured_completion_request(
     request_bound_pit_closure: dict | None = None,
     observation_eligibility_closure: dict | None = None,
 ) -> dict:
-    """Build the production Formal Decision envelope.
-
-    The actor supplies business judgments in decision_response.  Canonical
-    capital_use/evidence-consumption nesting is projected downstream by the
-    existing BUSINESS_DECISION_SOURCE owner.
-    """
-    legacy = build_completion_request(
-        source_request,
-        formal_decision,
-        consumed_snapshot,
-        completion_request_id,
-        request_bound_pit_closure,
-        observation_eligibility_closure,
-    )
+    """Build the production actor envelope without canonical Formal Decision nesting."""
+    if not isinstance(source_request, dict) or not source_request:
+        raise ValueError("source Formal Decision request is required")
+    parent_id = _safe_id(source_request.get("request_id"))
+    scenario = str(source_request.get("interaction_scenario") or "").strip()
+    if not scenario:
+        raise ValueError("source request is missing interaction_scenario")
     if not isinstance(decision_response, dict) or not decision_response.get("answers"):
         raise ValueError("new formal decision completion requires structured decision_response answers")
     if not isinstance(decision_work_package, dict) or not decision_work_package.get("problem_graph"):
         raise ValueError("new formal decision completion requires request-bound decision_work_package")
-    legacy["request_type"] = "BUSINESS_DECISION_SOURCE"
-    legacy["source"] = "CHATGPT_BUSINESS_DECISION_RESPONSE"
-    legacy["decision_response"] = decision_response
-    legacy["decision_work_package"] = decision_work_package
-    return legacy
+    envelope_id = _safe_id(completion_request_id or f"{parent_id}__business_decision_source")
+    payload = {
+        "request_id": envelope_id,
+        "parent_request_id": parent_id,
+        "request_type": "BUSINESS_DECISION_SOURCE",
+        "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
+        "interaction_scenario": scenario,
+        "requested_at_beijing": source_request.get("requested_at_beijing") or source_request.get("request_time_beijing"),
+        "market_date": source_request.get("market_date"),
+        "consumed_snapshot": str(consumed_snapshot or source_request.get("consumed_snapshot") or "").strip(),
+        "decision_response": decision_response,
+        "decision_work_package": decision_work_package,
+        "request_bound_pit_closure": request_bound_pit_closure,
+        "observation_eligibility_closure": observation_eligibility_closure,
+    }
+    return {key: value for key, value in payload.items() if value not in (None, "")}
 
 
 def write_completion_request(source_request_path: str, decision_path: str, consumed_snapshot: str, output_path: str = "", completion_request_id: str = "", decision_response_path: str = "") -> Path:
     source_path = (ROOT / source_request_path).resolve()
-    decision_file = (ROOT / decision_path).resolve()
-    if ROOT not in source_path.parents or ROOT not in decision_file.parents:
+    decision_file = (ROOT / decision_path).resolve() if decision_path else None
+    if ROOT not in source_path.parents or (decision_file is not None and ROOT not in decision_file.parents):
         raise ValueError("input paths must stay inside repository root")
     source = json.loads(source_path.read_text(encoding="utf-8"))
-    decision = json.loads(decision_file.read_text(encoding="utf-8"))
+    decision = json.loads(decision_file.read_text(encoding="utf-8")) if decision_file is not None and decision_file.exists() else {}
     query_path = ROOT / "data/state/query_context.json"
     pit_closure = None
     observation_closure = None
@@ -200,7 +204,7 @@ def write_completion_request(source_request_path: str, decision_path: str, consu
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source-request", required=True)
-    parser.add_argument("--formal-decision", required=True)
+    parser.add_argument("--formal-decision", default="", help="historical compatibility only; new production source is projected from --decision-response")
     parser.add_argument("--consumed-snapshot", required=True)
     parser.add_argument("--completion-request-id", default="")
     parser.add_argument("--decision-response", required=True)

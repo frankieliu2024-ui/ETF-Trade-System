@@ -59,19 +59,48 @@ class DecisionWorkPackageTests(unittest.TestCase):
         self.assertFalse(package["response_contract"]["schema_knowledge_required"])
 
 
-    def test_structured_response_projects_capital_and_consumption(self):
-        source = {"request_type": "BUSINESS_DECISION_SOURCE", "request_id": "r1", "decision_id": "d1", "consumed_snapshot": "snap-1", "risk_permission": "PERMITTED", "main_candidate": "159981", "opportunity_status": "Confirm机会", "capital_use": "cash", "continued_holding_opportunity_cost": "medium", "action_changes_now": "NO", "next_change_condition": "risk changes", "capital_competition": [], "next_unit_capital_use": "cash"}
-        graph = [{"problem_id": "RISK_PERMISSION", "security": "risk"}, {"problem_id": "HOLDING:159981", "security": "能源化工ETF"}, {"problem_id": "NEXT_UNIT_CAPITAL_USE", "security": "capital"}]
-        plan = [{"requirement_id": "RISK_PERMISSION:A_SHARE_STYLE_FEEDBACK", "target_problem_id": "RISK_PERMISSION", "evidence_class": "A_SHARE_STYLE_FEEDBACK", "required": True}, {"requirement_id": "HOLDING:159981:COMMODITY", "target_problem_id": "HOLDING:159981", "evidence_class": "COMMODITY", "required": True}, {"requirement_id": "NEXT_UNIT_CAPITAL_USE:ETF_RELATIVE_STRENGTH", "target_problem_id": "NEXT_UNIT_CAPITAL_USE", "evidence_class": "ETF_RELATIVE_STRENGTH", "required": True}]
-        answers = {}
-        for item in graph:
-            answers[item["problem_id"]] = {"final_action": "HOLD", "capital_comparison": "cash versus holding", "next_change_condition": "risk or relative efficiency changes", "evidence_decision_impact": ["ALL_REQUIRED"]}
-        answers["HOLDING:159981"].update({"capital_occupancy_reason": "confirmed evidence supports retaining exposure", "higher_efficiency_alternative": "cash"})
+    def test_structured_response_projects_complete_canonical_source_from_actor_answers(self):
+        source = {"request_type": "BUSINESS_DECISION_SOURCE", "request_id": "r1", "parent_request_id": "parent-r1", "decision_id": "d1", "consumed_snapshot": "snap-1"}
+        graph = [
+            {"problem_id": "RISK_PERMISSION", "security": "risk"},
+            {"problem_id": "MAIN_CANDIDATE", "security": "candidate"},
+            {"problem_id": "NEXT_UNIT_CAPITAL_USE", "security": "capital"},
+            {"problem_id": "HOLDING:159981", "security": "能源化工ETF", "current_quantity": 2800, "alternatives": {"HOLD": "retain", "REDUCE": "release", "EXIT": "exit"}},
+            {"problem_id": "HELD_ETF_ADD:159981", "security": "能源化工ETF"},
+        ]
+        plan = [
+            {"requirement_id": "RISK_PERMISSION:A_SHARE_STYLE_FEEDBACK", "target_problem_id": "RISK_PERMISSION", "evidence_class": "A_SHARE_STYLE_FEEDBACK", "required": True},
+            {"requirement_id": "HOLDING:159981:GLOBAL_RISK", "target_problem_id": "HOLDING:159981", "evidence_class": "GLOBAL_RISK", "required": True},
+            {"requirement_id": "NEXT_UNIT_CAPITAL_USE:ETF_RELATIVE_STRENGTH", "target_problem_id": "NEXT_UNIT_CAPITAL_USE", "evidence_class": "ETF_RELATIVE_STRENGTH", "required": True},
+        ]
+        answers = {
+            pid: {"final_action": "NO_ADD", "capital_comparison": "business comparison", "next_change_condition": "facts change", "evidence_decision_impact": ["ALL_REQUIRED"]}
+            for pid in [x["problem_id"] for x in graph]
+        }
+        answers["RISK_PERMISSION"]["final_action"] = "允许Confirm"
+        answers["MAIN_CANDIDATE"].update({"candidate_code": "159981", "candidate_name": "能源化工ETF", "opportunity_status": "Confirm机会"})
+        answers["HOLDING:159981"].update({"final_action": "HOLD", "capital_occupancy_reason": "retain right tail", "higher_efficiency_alternative": "cash"})
+        answers["NEXT_UNIT_CAPITAL_USE"].update({
+            "final_action": "当前现金；下一节点复核159981 Confirm 10000元",
+            "new_amount_yuan": 0,
+            "post_action_deployable_cash": 13169.54,
+            "future_opportunity_capacity": "保留Confirm承载能力",
+            "cash_opportunity_cost": "可能错过右尾",
+            "alternative_capital_use_review": "已比较全部合法资本状态",
+            "concentration_account_structure_effect": "不增加共同风险",
+            "selected_state_reason": "休市不可执行",
+            "zero_amount_decisive_reason": "休市且需下一节点重评",
+            "compared_capital_states": [
+                {"state_name": "现金", "capital_action": "保留", "remaining_deployable_cash": 13169.54, "why_not_selected": "已选中", "opportunity_cost_if_selected": "可能错过右尾"},
+                {"state_name": "159981 Confirm", "capital_action": "条件新增", "remaining_deployable_cash": 3169.54, "why_not_selected": "当前休市", "opportunity_cost_if_selected": "增加风险"},
+            ],
+        })
         projected = project_decision_response(source, {"answers": answers}, {"problem_graph": graph, "evidence_requirements": plan})
         checked = validate_source(projected, expected_snapshot="snap-1")
+        self.assertEqual(checked["risk_permission"], "允许Confirm")
+        self.assertEqual(checked["managed_position_reviews"][0]["capital_use"]["position_capital_states"]["HOLD"], "retain")
         self.assertEqual(checked["decision_evidence_consumption"]["layer_2_a_share_internal"], ["RISK_PERMISSION:A_SHARE_STYLE_FEEDBACK"])
         self.assertEqual(checked["decision_evidence_consumption"]["layer_3_etf_opportunity_capital"], ["NEXT_UNIT_CAPITAL_USE:ETF_RELATIVE_STRENGTH"])
-        self.assertEqual(checked["capital_use"]["position_capital_states"]["159981"]["HOLD"], "retain")
         self.assertNotIn("position_capital_states", answers["HOLDING:159981"])
 
     def test_structured_response_fails_before_strict_validator_for_missing_business_judgment(self):
