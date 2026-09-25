@@ -131,18 +131,29 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
     layer_map = {"A_SHARE_STYLE_FEEDBACK": "layer_2_a_share_internal", "ETF_RELATIVE_STRENGTH": "layer_3_etf_opportunity_capital"}
     consumed = {"request_id": str(source.get("parent_request_id") or source.get("request_id") or "").strip()}
     domains = {"layer_1_external_cross_market": [], "layer_2_a_share_internal": [], "layer_3_etf_opportunity_capital": []}
-    for requirement in work_package.get("evidence_requirements") or []:
+    consumable_states = {"SATISFIED"}
+    requirements = work_package.get("evidence_requirements") or []
+    qualified_domains = set()
+    for requirement in requirements:
+        if str(requirement.get("satisfaction") or "").upper() not in consumable_states:
+            continue
+        domain = layer_map.get(requirement.get("evidence_class"), "layer_1_external_cross_market")
+        qualified_domains.add(domain)
         pid = requirement.get("target_problem_id")
         answer = answers.get(pid) or {}
         impact = answer.get("evidence_decision_impact") or []
         if requirement.get("required") and not impact:
             raise ValueError(f"decision response missing evidence impact: {pid}")
         evidence_id = requirement.get("requirement_id")
-        domain = layer_map.get(requirement.get("evidence_class"), "layer_1_external_cross_market")
-        if evidence_id in impact or impact == ["ALL_REQUIRED"]:
+        if evidence_id in impact or (impact == ["ALL_REQUIRED"] and requirement.get("required")):
             domains[domain].append(evidence_id)
-    if any(not domains[k] for k in domains):
-        raise ValueError("decision response must consume evidence in all three decision layers")
+
+    # Consumer completeness is scoped to evidence that this request actually
+    # qualified.  A missing qualified layer must not be fabricated by
+    # consuming INSUFFICIENT optional requirements.
+    missing_qualified = [domain for domain in sorted(qualified_domains) if not domains[domain]]
+    if missing_qualified:
+        raise ValueError("decision response missing qualified evidence consumption: " + ",".join(missing_qualified))
     consumed.update(domains)
 
     action_map = {"HOLD": "持有管理", "REDUCE": "降低风险", "EXIT": "退出"}
