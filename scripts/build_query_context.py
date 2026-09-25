@@ -232,6 +232,52 @@ def _stable_manual_request_identity(request: dict) -> str:
     return f"{safe_stem}-{digest}"
 
 
+def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict], account: dict) -> list[dict]:
+    problems = [
+        {"problem_id": "RISK_PERMISSION", "decision_object": "risk_permission", "required_business_judgment": "风险许可及新增风险边界"},
+        {"problem_id": "MAIN_CANDIDATE", "decision_object": "main_candidate", "required_business_judgment": "主候选及机会状态"},
+        {"problem_id": "DEPLOYABLE_CASH", "decision_object": "deployable_cash", "required_business_judgment": "现金与其他合法资本用途比较"},
+        {"problem_id": "RELEASABLE_CAPITAL", "decision_object": "releasable_capital", "required_business_judgment": "低效率资本是否释放及迁移"},
+        {"problem_id": "TRIAL_CONFIRM_CAPACITY", "decision_object": "trial_confirm_capacity", "required_business_judgment": "Trial/Confirm承载能力"},
+        {"problem_id": "CONCENTRATION_COMMON_RISK", "decision_object": "concentration_common_risk", "required_business_judgment": "集中度与共同风险"},
+        {"problem_id": "NEXT_UNIT_CAPITAL_USE", "decision_object": "next_unit_capital_use", "required_business_judgment": "下一单位资本用途"},
+    ]
+    for item in positions:
+        code = str(item.get("code") or "")
+        problems.append({"problem_id": f"HOLDING:{code}", "decision_object": code, "security": item.get("name") or code, "current_capital_occupation": item.get("market_value"), "alternatives": {"HOLD": "继续占用当前资本", "REDUCE": "部分释放资本", "EXIT": "全部释放资本"}, "required_business_judgment": "比较HOLD/REDUCE/EXIT并确定当前动作、数量、去向和下一变化条件"})
+        problems.append({"problem_id": f"HELD_ETF_ADD:{code}", "decision_object": code, "security": item.get("name") or code, "required_business_judgment": "判断是否追加资本及相对现金/其他用途的效率"})
+    for item in discovery_inputs:
+        code = str(item.get("code") or "")
+        if code:
+            problems.append({"problem_id": f"DISCOVERY:{code}", "decision_object": code, "security": item.get("name") or code, "required_business_judgment": "判断Observation/临时评估资格及资本竞争位置"})
+    return problems
+
+
+def _evidence_requirement_plan(problems: list[dict]) -> list[dict]:
+    plan = []
+    for problem in problems:
+        pid = problem["problem_id"]
+        target = str(problem.get("security") or problem.get("decision_object") or "")
+        classes = ["A_SHARE_STYLE_FEEDBACK", "ETF_RELATIVE_STRENGTH"]
+        text = target.lower()
+        if any(token in text for token in ("能源", "化工", "油", "资源", "商品")):
+            classes += ["COMMODITY", "FX", "RATES", "OVERSEAS_INDUSTRY_CHAIN", "HK_INDUSTRY_CHAIN"]
+        elif any(token in text for token in ("半导体", "科技", "芯片", "纳指", "科创")):
+            classes += ["FX", "RATES", "OVERSEAS_INDUSTRY_CHAIN", "HK_INDUSTRY_CHAIN"]
+        if pid in {"DEPLOYABLE_CASH", "RELEASABLE_CAPITAL", "NEXT_UNIT_CAPITAL_USE"}:
+            classes += ["GLOBAL_RISK"]
+        for evidence_class in dict.fromkeys(classes):
+            plan.append({"requirement_id": f"{pid}:{evidence_class}", "target_problem_id": pid, "evidence_class": evidence_class, "target_exposure": target, "required": evidence_class in {"A_SHARE_STYLE_FEEDBACK", "ETF_RELATIVE_STRENGTH"}, "optional": evidence_class not in {"A_SHARE_STYLE_FEEDBACK", "ETF_RELATIVE_STRENGTH"}, "why_decision_relevant": "可能改变风险许可、候选、持仓动作、金额、资本迁移或下一单位资本用途", "satisfaction": "UNSATISFIED"})
+    return plan
+
+
+def _decision_work_package(graph: list[dict], plan: list[dict], evidence: list[dict]) -> dict:
+    by_problem = {}
+    for item in plan:
+        by_problem.setdefault(item["target_problem_id"], []).append(item["requirement_id"])
+    return {"schema_version": "1.0", "problem_graph": graph, "evidence_requirements": plan, "current_evidence": evidence, "response_contract": {"must_answer": ["final_action", "capital_comparison", "quantity", "capital_destination", "capital_occupancy_reason", "higher_efficiency_alternative", "next_change_condition", "evidence_decision_impact"], "schema_knowledge_required": False}, "decision_marginal_stop": {"required_states": ["SATISFIED", "DEGRADED", "INSUFFICIENT", "NOT_REQUIRED"], "expansion_required": True, "expansion_complete": False, "unresolved_required_requirements": [x["requirement_id"] for x in plan if x["required"]]}, "problem_evidence_index": by_problem}
+
+
 def build_decision_fact_pack(root: Path, request: dict, current: dict, account: dict, decision: dict, market_quote: dict, formal_discovery: dict | None = None) -> dict:
     """Project one request's minimum sufficient, decision-ready PIT inputs.
 
@@ -431,8 +477,12 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "rule": "Formal reasoning continues under explicit local limitations. Exact executable/canonical action qualification is owned by formal_action_readiness.",
     }
 
+    problem_graph = _decision_problem_graph(positions, discovery_inputs, account)
+    evidence_plan = _evidence_requirement_plan(problem_graph)
+    work_package = _decision_work_package(problem_graph, evidence_plan, quotes)
+
     return {
-        "schema_version": "1.4",
+        "schema_version": "1.5",
         "role": "PREFERRED_MINIMUM_SUFFICIENT_FORMAL_REASONING_INPUT",
         "trigger": {
             "source": request.get("requested_by") or request.get("source") or "INTERACTIVE_QUERY",
@@ -487,6 +537,9 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "candidates": discovery_inputs,
             "rule": "Inputs only. Candidate selection and capital allocation remain ChatGPT judgments under MASTER.",
         },
+        "decision_work_package": work_package,
+        "decision_problem_graph": problem_graph,
+        "evidence_requirement_plan": evidence_plan,
         "formal_reasoning_obligations": [
             "THREE_LAYER_MONITORING",
             "ALL_OBSERVATION_AND_HELD_ETF_OPPORTUNITY_COMPARISON",
