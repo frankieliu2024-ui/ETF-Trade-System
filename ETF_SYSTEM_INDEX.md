@@ -28,6 +28,8 @@
 
 ### 正式ETF分析
 
+正式决策生产闭环的ChatGPT写入入口固定为现有 `BUSINESS_DECISION_SOURCE`：业务判断完成后，ChatGPT只提交与本次 `decision_work_package.problem_graph` 对齐的 `decision_response.answers`；不得直接构造 `STATE_SYNC_ONLY / CHATGPT_MANUAL_FORMAL_COMPLETION`，不得手写 `formal_decision.managed_position_reviews`、`capital_use`、`position_capital_states` 或 `decision_evidence_consumption` canonical nesting。现有 `scripts/business_decision_source.py` 负责确定性投影，`scripts/process_state_sync_request.py` 负责canonical持久化与single writer。历史legacy completion仅保留读取/历史兼容，不是新Formal Decision生产入口。
+
 盘前、集合竞价、盘中、午间、盘后、风险许可、生命周期、金额、卖出和资本比较：
 
 `本INDEX → system_consistency → MASTER → 当前必要账户／行情／decision context → 所属规范或研究证据`
