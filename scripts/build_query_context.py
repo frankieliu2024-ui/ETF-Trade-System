@@ -305,10 +305,17 @@ def _evidence_requirement_plan(problems: list[dict]) -> list[dict]:
     return plan
 
 
-def _decision_work_package(graph: list[dict], plan: list[dict], evidence: list[dict]) -> dict:
+def _decision_work_package(
+    graph: list[dict],
+    plan: list[dict],
+    evidence: list[dict],
+    *,
+    three_layer_monitoring: dict | None = None,
+) -> dict:
     by_problem = {}
     for item in plan:
         by_problem.setdefault(item["target_problem_id"], []).append(item["requirement_id"])
+
     available = {}
     for item in evidence or []:
         if not isinstance(item, dict):
@@ -318,6 +325,34 @@ def _decision_work_package(graph: list[dict], plan: list[dict], evidence: list[d
             continue
         status = str(item.get("status") or item.get("quality_status") or "SATISFIED").upper()
         available[cls] = status if status in {"SATISFIED", "DEGRADED", "INSUFFICIENT", "NOT_REQUIRED"} else "SATISFIED"
+
+    # Required evidence classes are grounded in the existing qualified
+    # three-layer packet.  Generic quote presence is intentionally not enough.
+    monitoring = three_layer_monitoring or {}
+    layer_2 = monitoring.get("layer_2_a_share_internal") or {}
+    layer_3 = monitoring.get("layer_3_etf_opportunity_capital") or {}
+    layer_2_domains = layer_2.get("fact_domains") or {}
+    regime = layer_2.get("market_regime_context") or {}
+    structure = layer_2.get("market_structure_context") or {}
+    has_breadth = bool(layer_2_domains.get("breadth") and regime.get("etf_breadth"))
+    has_style = bool(layer_2_domains.get("style") and regime.get("style_context"))
+    has_structure = bool(layer_2_domains.get("industry_theme") and (structure.get("items") or []))
+    if has_breadth and has_style:
+        available["A_SHARE_STYLE_FEEDBACK"] = "SATISFIED"
+    elif has_breadth or has_style or has_structure:
+        available["A_SHARE_STYLE_FEEDBACK"] = "DEGRADED"
+
+    discovery_candidates = layer_3.get("discovery_candidates") or []
+    actual_positions = layer_3.get("actual_positions") or []
+    observation_inputs = layer_3.get("observation_inputs") or []
+    if actual_positions and (observation_inputs or discovery_candidates):
+        available["ETF_RELATIVE_STRENGTH"] = "SATISFIED"
+    elif actual_positions or observation_inputs or discovery_candidates:
+        available["ETF_RELATIVE_STRENGTH"] = "DEGRADED"
+
+    # Optional/triggered classes stay unresolved unless an upstream qualified
+    # fact explicitly carries their evidence_class.  Do not infer GLOBAL_RISK,
+    # COMMODITY, FX, RATES or industry-chain satisfaction from broad quotes.
     requirement_states = []
     for item in plan:
         status = available.get(item["evidence_class"], "INSUFFICIENT")
@@ -555,7 +590,6 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         })
     problem_graph = _decision_problem_graph(positions, discovery_inputs, account, observation_inputs)
     evidence_plan = _evidence_requirement_plan(problem_graph)
-    work_package = _decision_work_package(problem_graph, evidence_plan, quotes)
 
     # Project already-produced monitoring facts into the request-bound packet.
     # This is a read-only projection: it does not create facts, rank candidates,
@@ -611,6 +645,12 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "completeness_rule": "Three-layer monitoring means qualified evidence across the current request's relevant fact domains, not a fixed-index checklist. Missing optional/triggered evidence remains explicit and localized.",
     }
 
+    work_package = _decision_work_package(
+        problem_graph,
+        evidence_plan,
+        quotes,
+        three_layer_monitoring=three_layer_monitoring,
+    )
     work_package["three_layer_monitoring_evidence"] = three_layer_monitoring
 
     return {
