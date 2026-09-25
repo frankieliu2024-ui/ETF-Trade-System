@@ -275,7 +275,32 @@ def _decision_work_package(graph: list[dict], plan: list[dict], evidence: list[d
     by_problem = {}
     for item in plan:
         by_problem.setdefault(item["target_problem_id"], []).append(item["requirement_id"])
-    return {"schema_version": "1.0", "problem_graph": graph, "evidence_requirements": plan, "current_evidence": evidence, "response_contract": {"must_answer": ["final_action", "capital_comparison", "quantity", "capital_destination", "capital_occupancy_reason", "higher_efficiency_alternative", "next_change_condition", "evidence_decision_impact"], "schema_knowledge_required": False}, "decision_marginal_stop": {"required_states": ["SATISFIED", "DEGRADED", "INSUFFICIENT", "NOT_REQUIRED"], "expansion_required": True, "expansion_complete": False, "unresolved_required_requirements": [x["requirement_id"] for x in plan if x["required"]]}, "problem_evidence_index": by_problem}
+    available = {}
+    for item in evidence or []:
+        if not isinstance(item, dict):
+            continue
+        cls = str(item.get("evidence_class") or item.get("class") or "").strip()
+        if not cls:
+            continue
+        status = str(item.get("status") or item.get("quality_status") or "SATISFIED").upper()
+        available[cls] = status if status in {"SATISFIED", "DEGRADED", "INSUFFICIENT", "NOT_REQUIRED"} else "SATISFIED"
+    requirement_states = []
+    for item in plan:
+        status = available.get(item["evidence_class"], "INSUFFICIENT")
+        requirement_states.append({**item, "satisfaction": status})
+    unresolved = [x["requirement_id"] for x in requirement_states if x["required"] and x["satisfaction"] not in {"SATISFIED", "NOT_REQUIRED"}]
+    return {
+        "schema_version": "1.0", "problem_graph": graph,
+        "evidence_requirements": requirement_states, "current_evidence": evidence,
+        "response_contract": {"must_answer": ["final_action", "capital_comparison", "quantity", "capital_destination", "capital_occupancy_reason", "higher_efficiency_alternative", "next_change_condition", "evidence_decision_impact"], "schema_knowledge_required": False},
+        "decision_marginal_stop": {
+            "required_states": ["SATISFIED", "DEGRADED", "INSUFFICIENT", "NOT_REQUIRED"],
+            "expansion_required": bool(unresolved), "expansion_complete": not unresolved,
+            "unresolved_required_requirements": unresolved,
+            "stop_rule": "继续扩展仅当未解决required evidence仍可能改变risk permission、candidate、holding action、amount、capital migration或next-unit capital use。",
+        },
+        "problem_evidence_index": by_problem,
+    }
 
 
 def build_decision_fact_pack(root: Path, request: dict, current: dict, account: dict, decision: dict, market_quote: dict, formal_discovery: dict | None = None) -> dict:
