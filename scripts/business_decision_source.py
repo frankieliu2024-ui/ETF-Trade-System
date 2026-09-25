@@ -67,6 +67,83 @@ def validate_decision_evidence_consumption(value: Any, *, parent_request_id: str
     return ""
 
 
+def project_decision_response(source: dict[str, Any], response: dict[str, Any], work_package: dict[str, Any]) -> dict[str, Any]:
+    """Project a complete business response into the existing canonical Source contract."""
+    if not isinstance(response, dict) or not isinstance(work_package, dict):
+        raise ValueError("decision response/work package must be objects")
+    answers = response.get("answers")
+    if not isinstance(answers, dict):
+        raise ValueError("decision response requires answers keyed by problem_id")
+    graph = [x for x in (work_package.get("problem_graph") or []) if isinstance(x, dict)]
+    required_ids = [str(x.get("problem_id") or "") for x in graph if x.get("problem_id")]
+    missing = [pid for pid in required_ids if pid not in answers]
+    if missing:
+        raise ValueError("decision response missing problem_ids: " + ",".join(missing))
+    for pid in required_ids:
+        answer = answers[pid]
+        if not isinstance(answer, dict):
+            raise ValueError(f"decision response answer must be an object: {pid}")
+        for field in ("final_action", "capital_comparison", "next_change_condition", "evidence_decision_impact"):
+            if answer.get(field) in (None, "", [], {}):
+                raise ValueError(f"decision response missing {pid}.{field}")
+        if str(pid).startswith("HOLDING:"):
+            states = answer.get("position_capital_states")
+            if not isinstance(states, dict) or any(not states.get(k) for k in ("HOLD", "REDUCE", "EXIT")):
+                raise ValueError(f"decision response missing {pid}.position_capital_states")
+            if not answer.get("capital_occupancy_reason") or not answer.get("higher_efficiency_alternative"):
+                raise ValueError(f"decision response missing holding capital rationale: {pid}")
+            if str(answer.get("final_action") or "").upper() in {"REDUCE", "EXIT"}:
+                if answer.get("quantity") in (None, "") or not answer.get("capital_destination"):
+                    raise ValueError(f"decision response missing action quantity/destination: {pid}")
+    layer_map = {"A_SHARE_STYLE_FEEDBACK": "layer_2_a_share_internal", "ETF_RELATIVE_STRENGTH": "layer_3_etf_opportunity_capital"}
+    consumed = {"request_id": str(source.get("parent_request_id") or source.get("request_id") or "").strip()}
+    domains = {"layer_1_external_cross_market": [], "layer_2_a_share_internal": [], "layer_3_etf_opportunity_capital": []}
+    for requirement in work_package.get("evidence_requirements") or []:
+        pid = requirement.get("target_problem_id")
+        answer = answers.get(pid) or {}
+        impact = answer.get("evidence_decision_impact") or []
+        if requirement.get("required") and not impact:
+            raise ValueError(f"decision response missing evidence impact: {pid}")
+        evidence_id = requirement.get("requirement_id")
+        domain = layer_map.get(requirement.get("evidence_class"), "layer_1_external_cross_market")
+        if evidence_id in impact or impact == ["ALL_REQUIRED"]:
+            domains[domain].append(evidence_id)
+    if any(not domains[k] for k in domains):
+        raise ValueError("decision response must consume evidence in all three decision layers")
+    consumed.update(domains)
+    position_reviews = []
+    for item in graph:
+        pid = str(item.get("problem_id") or "")
+        if not pid.startswith("HOLDING:"):
+            continue
+        answer = answers[pid]
+        code = pid.split(":", 1)[1]
+        position_reviews.append({
+            "security_code": code, "security_name": item.get("security") or code,
+            "current_action": answer["final_action"],
+            "holding_state_risk_reward_evidence": answer["capital_comparison"],
+            "holding_thesis_status": answer["capital_comparison"],
+            "risk_reduction_or_exit_condition": answer["next_change_condition"],
+            "higher_efficiency_alternative": answer["higher_efficiency_alternative"],
+            "capital_occupancy_reason": answer["capital_occupancy_reason"],
+            "continued_holding_opportunity_cost": answer["capital_comparison"],
+            "action_changes_now": str(answer["final_action"]).upper() in {"REDUCE", "EXIT"},
+            "next_change_condition": answer["next_change_condition"],
+            "capital_use": {"position_capital_states": answer["position_capital_states"], "quantity": answer.get("quantity"), "capital_destination": answer.get("capital_destination")},
+        })
+    projected = json.loads(json.dumps(source))
+    projected["decision_evidence_consumption"] = {**consumed,
+        "discovery_to_capital_competition_consumed": True,
+        "all_managed_positions_sell_chain_consumed": bool(any(str(x.get("problem_id") or "").startswith("HOLDING:") for x in graph)),
+        "held_etf_additional_capital_consumed": bool(any(str(x.get("problem_id") or "").startswith("HELD_ETF_ADD:") for x in graph)),
+        "next_unit_capital_use_consumed": "NEXT_UNIT_CAPITAL_USE" in required_ids}
+    projected["managed_position_reviews"] = position_reviews
+    projected["capital_use"] = {"business_response_projection": True,
+        "position_capital_states": {x["security_code"]: x["capital_use"]["position_capital_states"] for x in position_reviews},
+        "capital_destinations": {x["security_code"]: x["capital_use"]["capital_destination"] for x in position_reviews}}
+    return projected
+
+
 def validate_source(source: dict[str, Any], *, expected_snapshot: str | None = None) -> dict[str, Any]:
     if classify_request(source) != BUSINESS_DECISION_SOURCE:
         raise ValueError("business source requires explicit BUSINESS_DECISION_SOURCE")
