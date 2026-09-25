@@ -67,6 +67,49 @@ def validate_decision_evidence_consumption(value: Any, *, parent_request_id: str
     return ""
 
 
+def project_decision_response(source: dict[str, Any], response: dict[str, Any], work_package: dict[str, Any]) -> dict[str, Any]:
+    """Project only response/evidence relationships; never invent an investment judgment."""
+    if not isinstance(response, dict) or not isinstance(work_package, dict):
+        raise ValueError("decision response/work package must be objects")
+    answers = response.get("answers")
+    if not isinstance(answers, dict):
+        raise ValueError("decision response requires answers keyed by problem_id")
+    required = [str(x.get("problem_id") or "") for x in (work_package.get("problem_graph") or []) if x.get("problem_id")]
+    missing = [pid for pid in required if pid not in answers]
+    if missing:
+        raise ValueError("decision response missing problem_ids: " + ",".join(missing))
+    for pid, answer in answers.items():
+        if not isinstance(answer, dict):
+            raise ValueError(f"decision response answer must be an object: {pid}")
+        for field in ("final_action", "capital_comparison", "next_change_condition", "evidence_decision_impact"):
+            if answer.get(field) in (None, "", [], {}):
+                raise ValueError(f"decision response missing {pid}.{field}")
+    layer_map = {"A_SHARE_STYLE_FEEDBACK": "layer_2_a_share_internal", "ETF_RELATIVE_STRENGTH": "layer_3_etf_opportunity_capital"}
+    consumed = {"request_id": str(source.get("parent_request_id") or source.get("request_id") or "").strip()}
+    domains = {"layer_1_external_cross_market": [], "layer_2_a_share_internal": [], "layer_3_etf_opportunity_capital": []}
+    for requirement in work_package.get("evidence_requirements") or []:
+        pid = requirement.get("target_problem_id")
+        answer = answers.get(pid) or {}
+        impact = answer.get("evidence_decision_impact") or []
+        if requirement.get("required") and not impact:
+            raise ValueError(f"decision response missing evidence impact: {pid}")
+        evidence_id = requirement.get("requirement_id")
+        domain = layer_map.get(requirement.get("evidence_class"), "layer_1_external_cross_market")
+        if evidence_id in impact or impact == ["ALL_REQUIRED"]:
+            domains[domain].append(evidence_id)
+    for key, values in domains.items():
+        consumed[key] = values
+    consumed.update({
+        "discovery_to_capital_competition_consumed": True,
+        "all_managed_positions_sell_chain_consumed": True,
+        "held_etf_additional_capital_consumed": True,
+        "next_unit_capital_use_consumed": True,
+    })
+    projected = json.loads(json.dumps(source))
+    projected["decision_evidence_consumption"] = consumed
+    return projected
+
+
 def validate_source(source: dict[str, Any], *, expected_snapshot: str | None = None) -> dict[str, Any]:
     if classify_request(source) != BUSINESS_DECISION_SOURCE:
         raise ValueError("business source requires explicit BUSINESS_DECISION_SOURCE")
