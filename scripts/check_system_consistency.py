@@ -31,6 +31,11 @@ LEGACY_UNRECOVERABLE_FORMAL_DECISION_IDS = {
     "20260924_0945_chatgpt_decision_analysis_decision",
     "20260924_113441_chatgpt_decision_analysis_decision",
     "20260924_150403_chatgpt_formal_decision_decision",
+    "20260925_153627_chatgpt_formal_decision_decision",
+    "20260925_164900_chatgpt_formal_decision_decision",
+    "20260925_172000_chatgpt_formal_decision_decision",
+    "20260925_180400_chatgpt_formal_decision_decision",
+    "20260925_182009_chatgpt_formal_decision_decision",
 }
 
 
