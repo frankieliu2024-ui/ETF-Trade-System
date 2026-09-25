@@ -30,6 +30,7 @@ BUSINESS_REQUIRED_FIELDS = (
     "concentration_common_risk",
     "next_unit_capital_use",
     "decisive_reasons",
+    "decision_evidence_consumption",
 )
 
 def _canonical(value: Any) -> str:
