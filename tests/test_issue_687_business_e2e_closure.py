@@ -76,6 +76,65 @@ class BusinessE2EClosureContractTests(unittest.TestCase):
             {},
         )
 
+    def test_request_bound_work_package_keeps_rejected_discovery_in_capital_universe(self) -> None:
+        request = {
+            "decision_work_package": {
+                "problem_graph": [
+                    {"problem_id": "OBSERVATION:513180"},
+                    {"problem_id": "DISCOVERY:159127", "formal_quote_status": "UNAVAILABLE"},
+                    {"problem_id": "DISCOVERY:159148", "formal_quote_status": "UNAVAILABLE"},
+                ]
+            }
+        }
+        required = state_sync.request_bound_etf_opportunity_reviews(request)
+        self.assertEqual(required, {
+            "513180": "OBSERVED_ETF",
+            "159127": "OBSERVATION_EVALUATION_INPUT",
+            "159148": "OBSERVATION_EVALUATION_INPUT",
+        })
+        decision = {
+            "observation_eligibility_reviews": [
+                {"code": "159127", "disposition": "REJECT", "reason": "formal quote unavailable"},
+                {"code": "159148", "disposition": "REJECT", "reason": "formal quote unavailable"},
+            ]
+        }
+        admitted, error = state_sync.validate_observation_eligibility_reviews(decision, {
+            "159127": {"code": "159127", "formal_quote_status": "UNAVAILABLE"},
+            "159148": {"code": "159148", "formal_quote_status": "UNAVAILABLE"},
+        })
+        self.assertEqual(error, "")
+        self.assertEqual(admitted, set())
+        # REJECT controls Observation identity; it must not erase the already
+        # evaluated Discovery objects from this request's capital universe.
+        self.assertIn("159127", required)
+        self.assertIn("159148", required)
+
+    def test_request_bound_opportunity_domain_is_replay_stable(self) -> None:
+        request = {
+            "decision_work_package": {
+                "problem_graph": [
+                    {"problem_id": "OBSERVATION:513180"},
+                    {"problem_id": "DISCOVERY:159127"},
+                ]
+            }
+        }
+        before = state_sync.request_bound_etf_opportunity_reviews(request)
+        # Simulate execution-time query/monitor state moving to unrelated objects.
+        root = Path(tempfile.mkdtemp())
+        (root / "data/state").mkdir(parents=True)
+        (root / "data/state/query_context.json").write_text(json.dumps({
+            "market_date": "2026-09-25",
+            "decision_context": {"capital_efficiency_ranking": {"comparison_universe": [
+                {"code": "159992", "category": "OBSERVED_ETF"},
+                {"code": "588080", "category": "OBSERVATION_EVALUATION_INPUT"},
+            ]}},
+        }), encoding="utf-8")
+        self.assertEqual(state_sync.request_bound_etf_opportunity_reviews(request), before)
+        self.assertEqual(before, {
+            "513180": "OBSERVED_ETF",
+            "159127": "OBSERVATION_EVALUATION_INPUT",
+        })
+
     def test_formal_decision_must_resolve_every_current_observation(self) -> None:
         with self.assertRaisesRegex(ValueError, "missing current observations"):
             validate_observation_management(
