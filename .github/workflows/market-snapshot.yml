@@ -337,7 +337,8 @@ jobs:
           import json, sys
           request = json.load(open(sys.argv[1], encoding="utf-8"))
           is_completion = (
-              str(request.get("source") or "").upper() == "CHATGPT_MANUAL_FORMAL_COMPLETION"
+              str(request.get("source") or "").upper() in {"CHATGPT_MANUAL_FORMAL_COMPLETION", "CHATGPT_BUSINESS_DECISION_RESPONSE"}
+              or str(request.get("request_type") or "").upper() == "BUSINESS_DECISION_SOURCE"
               or str(request.get("formal_fact_type") or "").upper() == "FORMAL_DECISION"
           )
           print("true" if is_completion else "false")
@@ -360,7 +361,7 @@ jobs:
           import json, sys
           from scripts.runtime_session_gate import classify_live_snapshot_request
           data = json.load(open(sys.argv[1], encoding='utf-8'))
-          raise SystemExit(0 if classify_live_snapshot_request(data) in {'STATE_SYNC_ONLY', 'HYBRID'} else 1)
+          raise SystemExit(0 if classify_live_snapshot_request(data) in {'STATE_SYNC_ONLY', 'HYBRID', 'BUSINESS_DECISION_SOURCE'} else 1)
           PY
               then
                 state_sync_files="$state_sync_files $f"
@@ -456,7 +457,7 @@ jobs:
           import json, sys
           from scripts.runtime_session_gate import classify_live_snapshot_request
           data = json.load(open(sys.argv[1], encoding='utf-8'))
-          raise SystemExit(0 if classify_live_snapshot_request(data) in {'STATE_SYNC_ONLY', 'HYBRID'} else 1)
+          raise SystemExit(0 if classify_live_snapshot_request(data) in {'STATE_SYNC_ONLY', 'HYBRID', 'BUSINESS_DECISION_SOURCE'} else 1)
           PY
             then
               python scripts/refresh_gate.py --guard-request "$f"
