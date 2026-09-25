@@ -67,3 +67,16 @@ def test_contract_is_configuration_only_and_does_not_add_runtime_topology():
     config = json.loads((ROOT / "config/market/market_monitor_config.json").read_text(encoding="utf-8"))
     assert "vnext_contracts" in config
     assert not any(key in config["vnext_contracts"] for key in ("workflow", "state_file", "producer", "checker", "queue", "executor"))
+
+
+def test_formal_decision_packet_projects_existing_three_layer_evidence():
+    text = (ROOT / "scripts" / "build_query_context.py").read_text(encoding="utf-8")
+    assert '"three_layer_monitoring_evidence": three_layer_monitoring' in text
+    assert '"market_regime_context": market_regime_context' in text
+    assert '"market_structure_context": market_structure_context' in text
+    assert '"breadth": bool(market_regime_context.get("etf_breadth"))' in text
+    assert '"style": bool(market_regime_context.get("style_context"))' in text
+    assert '"formal_discovery_status": discovery.get("status") or "NOT_REQUESTED"' in text
+    assert '"actual_positions": positions' in text
+    assert '"observation_inputs": observation_inputs' in text
+    assert "not satisfied by fixed indices alone" in text
