@@ -500,6 +500,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "POST_ACTION_CASH_AND_FUTURE_TRIAL_CONFIRM_CAPACITY",
             "CONCENTRATION_AND_ACCOUNT_STRUCTURE_EFFECT",
             "CAPITAL_SOURCE_OR_DESTINATION_FOR_RELEASE_OR_MIGRATION",
+            "EXPLICIT_DECISION_EVIDENCE_CONSUMPTION_BOUND_TO_THIS_REQUEST",
         ],
         "conditional_reads": {
             "experience": CANONICAL_FILES["experience"],
@@ -524,6 +525,22 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         },
         "provenance_rule": "Every projected fact is copied from the existing canonical request/account/current/decision/quote/discovery inputs; this packet is not a new fact owner.",
         "pit_rule": "Formal reasoning may continue when formal_analysis_availability is AVAILABLE or DEGRADED, honoring local limitations. Exact amount/share/action canonical completion requires formal_action_readiness=READY. Downstream projections cannot mutate the same PIT decision.",
+        "decision_evidence_consumption_contract": {
+            "required_in_business_decision_source": True,
+            "request_id": request_id,
+            "required_domains": [
+                "layer_1_external_cross_market",
+                "layer_2_a_share_internal",
+                "layer_3_etf_opportunity_capital",
+            ],
+            "required_chain_attestations": [
+                "discovery_to_capital_competition_consumed",
+                "all_managed_positions_sell_chain_consumed",
+                "held_etf_additional_capital_consumed",
+                "next_unit_capital_use_consumed",
+            ],
+            "rule": "The Formal Decision actor must explicitly record what it consumed for this request. This is a consumer-completeness contract, not a second decision engine and not permission for machine-generated investment judgments.",
+        },
         "decision_boundary": "This packet normalizes facts and obligations only. It must not select the main candidate, rank capital states, or generate buy/sell actions.",
     }
 
