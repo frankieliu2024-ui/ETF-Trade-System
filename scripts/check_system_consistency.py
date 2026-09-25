@@ -777,7 +777,10 @@ def _validate_formal_completion_decision_readback(report: dict) -> None:
             mismatches.append(f"{path.name}:event identity mismatch")
         if expected_parent and event.get("request_id") not in {expected_parent, str(request.get("request_id") or "").strip()}:
             mismatches.append(f"{path.name}:request identity mismatch")
-    # Bounded unrecoverable historical identities are terminal audit facts, not\n    # active current-health degradation. They stay visible in detail while any\n    # new/unlisted missing identity remains a hard failure.\n    status = "FAIL" if missing or mismatches else "PASS"
+    # Bounded unrecoverable historical identities are terminal audit facts, not
+    # active current-health degradation. They stay visible in detail while any
+    # new/unlisted missing identity remains a hard failure.
+    status = "FAIL" if missing or mismatches else "PASS"
     detail = f"checked_unique={checked} retry_files_deduplicated={sum(max(0, len(v)-1) for v in identities.values())} legacy={legacy} missing={missing} mismatches={mismatches}"
     report.setdefault("checks", []).append({"name": "formal_completion:decision_fact_readback", "status": status, "detail": detail})
     for item in missing:
