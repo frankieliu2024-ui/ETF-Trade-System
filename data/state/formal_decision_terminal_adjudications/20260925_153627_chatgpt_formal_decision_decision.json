@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "decision_id": "20260925_153627_chatgpt_formal_decision_decision",
+  "completion_identity": "20260925_153627_chatgpt_formal_decision__formal_completion.json",
+  "terminal_status": "UNRECOVERABLE",
+  "adjudicated_at_beijing": "2026-09-26T05:55:00+08:00",
+  "reason": "No durable BUSINESS_DECISION_SOURCE exists and the canonical historical backfill contract is trade-only; creating a Decision Fact would require retroactive authority rather than deterministic replay.",
+  "evidence": {
+    "recovery_path_checks": [
+      {
+        "path": "BUSINESS_DECISION_SOURCE",
+        "result": "ABSENT"
+      },
+      {
+        "path": ".github/workflows/historical-canonical-backfill.yml",
+        "result": "DECISION_EVENTS_NOT_AUTHORIZED"
+      }
+    ]
+  },
+  "current_impact": {
+    "isolated": true,
+    "evidence": [
+      "Later canonical account_fact is authoritative for current positions/cash and does not derive from this missing Decision Fact.",
+      "Later Formal Decision requests use independent request-bound BUSINESS_DECISION_SOURCE facts; this historical gap is not a current lifecycle/capital-state input."
+    ]
+  }
+}
