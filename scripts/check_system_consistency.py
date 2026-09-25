@@ -767,7 +767,32 @@ def _validate_formal_completion_decision_readback(report: dict) -> None:
         event_path = ROOT / "events/decisions" / f"{decision_id}.json"
         if not decision_id or not event_path.exists():
             item = f"{path.name}->{decision_id or 'missing decision_id'}"
-            if decision_id in LEGACY_UNRECOVERABLE_FORMAL_DECISION_IDS:
+            adjudication_path = ROOT / "data/state/formal_decision_terminal_adjudications" / f"{decision_id}.json"
+            adjudication = {}
+            if decision_id and adjudication_path.exists():
+                try:
+                    adjudication = json.loads(adjudication_path.read_text(encoding="utf-8"))
+                except (OSError, ValueError, json.JSONDecodeError):
+                    adjudication = {}
+            evidence = adjudication.get("evidence") if isinstance(adjudication.get("evidence"), dict) else {}
+            recovery_checks = evidence.get("recovery_path_checks") if isinstance(evidence.get("recovery_path_checks"), list) else []
+            impact = adjudication.get("current_impact") if isinstance(adjudication.get("current_impact"), dict) else {}
+            terminal_unrecoverable = (
+                adjudication.get("schema_version") == "1.0"
+                and adjudication.get("decision_id") == decision_id
+                and adjudication.get("completion_identity") == path.name
+                and adjudication.get("terminal_status") == "UNRECOVERABLE"
+                and bool(adjudication.get("adjudicated_at_beijing"))
+                and bool(adjudication.get("reason"))
+                and len(recovery_checks) > 0
+                and all(isinstance(x, dict) and x.get("path") and x.get("result") for x in recovery_checks)
+                and impact.get("isolated") is True
+                and isinstance(impact.get("evidence"), list)
+                and len(impact.get("evidence")) > 0
+            )
+            if terminal_unrecoverable:
+                legacy.append(item)
+            elif decision_id in LEGACY_UNRECOVERABLE_FORMAL_DECISION_IDS:
                 legacy.append(item)
             else:
                 missing.append(item)
