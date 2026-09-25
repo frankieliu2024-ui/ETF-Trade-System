@@ -29,7 +29,7 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
         }
         self.assertIn("excursion", guard.notification_evidence_error(event))
 
-    def test_market_reversal_with_numeric_path_is_allowed(self):
+    def test_standalone_market_reversal_with_numeric_path_is_not_enough_to_interrupt(self):
         event = {
             "event_type": "MARKET_VALUE_ALERT",
             "security_code": "515880",
