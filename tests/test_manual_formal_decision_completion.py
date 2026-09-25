@@ -457,7 +457,14 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             "decision_id": decision["decision_id"],
             "consumed_snapshot": SNAPSHOT_PATH,
             "formal_decision": decision,
-            "decision_response": {"answers": {"HISTORICAL_CANONICAL_SOURCE": {"final_action": "REPLAY"}}},
+            "decision_response": {"answers": {
+                "HISTORICAL_CANONICAL_SOURCE": {
+                    "final_action": "REPLAY",
+                    "capital_comparison": "historical canonical source replay",
+                    "next_change_condition": "none",
+                    "evidence_decision_impact": ["ALL_REQUIRED"],
+                }
+            }},
             "decision_work_package": {"problem_graph": [{"problem_id": "HISTORICAL_CANONICAL_SOURCE"}]},
         }
         (self.root / "data/state/query_context.json").write_text(json.dumps({
