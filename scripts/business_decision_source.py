@@ -99,6 +99,8 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
                 if answer.get(field) in (None, ""):
                     raise ValueError(f"decision response missing MAIN_CANDIDATE.{field}")
         if pid.startswith(("DISCOVERY:", "OBSERVATION:")):
+            if str(answer.get("opportunity_status") or "").strip() not in {"无机会", "观察机会", "Trial机会", "Confirm机会"}:
+                raise ValueError(f"decision response missing registered opportunity_status: {pid}")
             if str(answer.get("disposition") or "").upper() not in {"ADMIT", "REJECT", "RETAIN", "EXIT"}:
                 raise ValueError(f"decision response missing valid opportunity disposition: {pid}")
             if not str(answer.get("reason") or "").strip():
@@ -173,7 +175,14 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             "continued_holding_opportunity_cost": answer["capital_comparison"],
             "action_changes_now": action in {"REDUCE", "EXIT"},
             "next_change_condition": answer["next_change_condition"],
-            "capital_use": {"position_capital_states": states, "quantity": quantity, "capital_destination": destination},
+            "action_detail": answer.get("action_detail") or (f"{action_map[action]} {quantity}" if action in {"REDUCE", "EXIT"} else "继续持有"),
+            "capital_use": {
+                "continued_holding_vs_cash": answer["capital_comparison"],
+                "alternative_capital_uses_review": answer["higher_efficiency_alternative"],
+                "position_capital_states": states,
+                "quantity": quantity,
+                "capital_destination": destination,
+            },
         })
 
     held_add_reviews = []
@@ -204,6 +213,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         opportunity_reviews.append({
             "security_code": code, "code": code, "security_name": item.get("security") or code,
             "category": "OBSERVATION_EVALUATION_INPUT" if pid.startswith("DISCOVERY:") else "OBSERVED_ETF",
+            "opportunity_status": answer.get("opportunity_status"),
             "conclusion": answer.get("final_action"), "reason": answer.get("reason"),
         })
         if pid.startswith("DISCOVERY:"):
