@@ -2,10 +2,11 @@
   "status": "DEGRADED",
   "pulse_success": true,
   "hard_error_count": 0,
-  "warning_count": 1,
+  "warning_count": 2,
   "hard_errors": [],
   "warnings": [
-    "KOSPI: quality=DEGRADED as_of_beijing=2026-09-23T14:00:00+08:00"
+    "KOSPI: quality=PASS as_of_beijing=2026-09-23T14:00:00+08:00",
+    "HSTECH: quality=DEGRADED error="
   ],
   "scheduled_for": "workflow_dispatch",
   "scheduled_cron": "",
@@ -19,19 +20,19 @@
   "candidate_delay_class": null,
   "natural_pulse_eligible": false,
   "trigger": "workflow_dispatch",
-  "started_at": "2026-09-25T06:06:49Z",
-  "provider_as_of": "2026-09-25T14:06:48+08:00",
+  "started_at": "2026-09-25T07:38:07Z",
+  "provider_as_of": "2026-09-25T15:23:04+08:00",
   "provider_as_of_by_object": {
     "NDX": "2026-09-25T04:00:00+08:00",
     "SOX": "2026-09-25T04:00:00+08:00",
-    "N225": "2026-09-25T14:05:44+08:00",
+    "N225": "2026-09-25T14:30:00+08:00",
     "KOSPI": "2026-09-23T14:00:00+08:00",
     "TWII": "2026-09-24T13:30:00+08:00",
-    "HSTECH": "2026-09-25T14:06:48+08:00"
+    "HSTECH": "2026-09-25T15:23:04+08:00"
   },
-  "finished_at": "2026-09-25T06:06:49Z",
-  "commit_sha": "2fea46669fb666a16330db7d34790a4b9a9afb5f",
-  "run_id": "36101367425",
+  "finished_at": "2026-09-25T07:38:07Z",
+  "commit_sha": "697476453174c505d7e2b3e8e7c4d2dedf0fd2d1",
+  "run_id": "36108599451",
   "market_date_beijing": "2026-09-25",
   "overseas_quality_status": "DEGRADED",
   "us_extended_hours_status": "PASS",
@@ -44,7 +45,7 @@
       "symbol": "^NDX",
       "market_phase": "PRE_OPEN",
       "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 606.28,
+      "delay_minutes": 697.92,
       "error": ""
     },
     "SOX": {
@@ -55,29 +56,29 @@
       "symbol": "^SOX",
       "market_phase": "PRE_OPEN",
       "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 606.28,
+      "delay_minutes": 697.92,
       "error": ""
     },
     "N225": {
       "quality_status": "PASS",
-      "as_of_beijing": "2026-09-25T14:05:44+08:00",
+      "as_of_beijing": "2026-09-25T14:30:00+08:00",
       "market_date_local": "2026-09-25",
-      "provider": "eastmoney_push2",
-      "symbol": "100.N225",
-      "market_phase": "OPEN",
-      "freshness_status": "FRESH",
-      "delay_minutes": 0.55,
+      "provider": "yahoo_chart_api",
+      "symbol": "^N225",
+      "market_phase": "CLOSED",
+      "freshness_status": "SESSION_REFERENCE",
+      "delay_minutes": 67.92,
       "error": ""
     },
     "KOSPI": {
-      "quality_status": "DEGRADED",
+      "quality_status": "PASS",
       "as_of_beijing": "2026-09-23T14:00:00+08:00",
       "market_date_local": "2026-09-23",
       "provider": "yahoo_chart_api",
       "symbol": "^KS11",
-      "market_phase": "OPEN",
-      "freshness_status": "STALE",
-      "delay_minutes": 2886.28,
+      "market_phase": "CLOSED",
+      "freshness_status": "PREVIOUS_SESSION_REFERENCE",
+      "delay_minutes": 2977.92,
       "error": ""
     },
     "TWII": {
@@ -88,18 +89,18 @@
       "symbol": "^TWII",
       "market_phase": "CLOSED",
       "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 1476.28,
+      "delay_minutes": 1567.92,
       "error": ""
     },
     "HSTECH": {
-      "quality_status": "PASS",
-      "as_of_beijing": "2026-09-25T14:06:48+08:00",
+      "quality_status": "DEGRADED",
+      "as_of_beijing": "2026-09-25T15:23:04+08:00",
       "market_date_local": "2026-09-25",
-      "provider": "eastmoney_push2",
-      "symbol": "124.HSTECH",
+      "provider": "yahoo_chart_api",
+      "symbol": "HSTECH.HK",
       "market_phase": "OPEN",
-      "freshness_status": "FRESH",
-      "delay_minutes": 0.0,
+      "freshness_status": "DELAYED",
+      "delay_minutes": 14.85,
       "error": ""
     }
   },
@@ -115,13 +116,13 @@
     "yahoo_chart_api:HSTECH.HK": {
       "status": "ACTIVE",
       "consecutive_failures": 0,
-      "last_success_at": "2026-09-25T06:06:16+00:00"
+      "last_success_at": "2026-09-25T07:37:55+00:00"
     },
     "eastmoney_push2:124.HSTECH": {
       "status": "ACTIVE",
       "consecutive_failures": 0,
       "last_success_at": "2026-09-25T06:06:16+00:00",
-      "failure_class": "TRANSIENT",
+      "failure_class": "UNKNOWN",
       "bypass_date": "2026-09-25"
     }
   },
