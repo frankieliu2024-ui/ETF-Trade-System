@@ -132,7 +132,7 @@ def _normalize_a_share_off_window_market_date(report: dict) -> None:
         return
     runtime = _read_json("data/state/runtime_health.json")
     current = _read_json("data/state/CURRENT.json")
-    if str(runtime.get("status") or "").upper() != "SKIPPED" or str(runtime.get("failure_stage") or "") != "session_gate" or str(runtime.get("reason") or "") != "outside_a_share_capture_window":
+    if str(runtime.get("status") or "").upper() != "SKIPPED" or str(runtime.get("failure_stage") or "") != "session_gate" or str(runtime.get("reason") or "") not in {"outside_a_share_capture_window", "exchange_closed"}:
         return
     if str(current.get("node_status") or "").upper() != "READY" or str(current.get("latest_valid_node") or "").lower() != "close":
         return
