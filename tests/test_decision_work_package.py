@@ -108,6 +108,22 @@ class DecisionWorkPackageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "holding capital rationale"):
             project_decision_response({}, {"answers": {"HOLDING:159981": {"final_action": "HOLD", "capital_comparison": "cash", "next_change_condition": "risk changes", "evidence_decision_impact": ["x"]}}}, package)
 
+    def test_observation_retain_projects_existing_canonical_thesis(self):
+        source = {"request_type":"BUSINESS_DECISION_SOURCE","request_id":"r2","parent_request_id":"p2","decision_id":"d2","consumed_snapshot":"snap"}
+        thesis = {"name":"恒生科技ETF","thscode":"513180.SH","thesis":"港股科技结构观察","falsifier":"结构失效则退出","next_decision_information":"下一节点重新比较","information_value_reason":"可能改变资本配置"}
+        graph = [{"problem_id":"RISK_PERMISSION"},{"problem_id":"MAIN_CANDIDATE"},{"problem_id":"NEXT_UNIT_CAPITAL_USE"},{"problem_id":"OBSERVATION:513180","security":"恒生科技ETF","existing_thesis_state":thesis}]
+        plan = [{"requirement_id":"r:a","target_problem_id":"RISK_PERMISSION","evidence_class":"A_SHARE_STYLE_FEEDBACK","required":True},{"requirement_id":"o:g","target_problem_id":"OBSERVATION:513180","evidence_class":"GLOBAL_RISK","required":True},{"requirement_id":"n:e","target_problem_id":"NEXT_UNIT_CAPITAL_USE","evidence_class":"ETF_RELATIVE_STRENGTH","required":True}]
+        answers = {x["problem_id"]:{"final_action":"NO_ADD","capital_comparison":"compare","next_change_condition":"change","evidence_decision_impact":["ALL_REQUIRED"]} for x in graph}
+        answers["RISK_PERMISSION"]["final_action"]="允许Confirm"
+        answers["MAIN_CANDIDATE"].update({"candidate_code":"159981","candidate_name":"能源化工ETF","opportunity_status":"Confirm机会"})
+        answers["OBSERVATION:513180"].update({"disposition":"RETAIN","reason":"继续观察","opportunity_status":"观察机会"})
+        answers["NEXT_UNIT_CAPITAL_USE"].update({"final_action":"保留现金","new_amount_yuan":0,"post_action_deployable_cash":10000,"future_opportunity_capacity":"保留","cash_opportunity_cost":"右尾","alternative_capital_use_review":"已比较","concentration_account_structure_effect":"不增加","selected_state_reason":"休市","zero_amount_decisive_reason":"休市","compared_capital_states":[{"state_name":"现金","capital_action":"保留","remaining_deployable_cash":10000,"why_not_selected":"已选中","opportunity_cost_if_selected":"右尾"},{"state_name":"候选","capital_action":"等待","remaining_deployable_cash":0,"why_not_selected":"休市","opportunity_cost_if_selected":"风险"}]})
+        projected=project_decision_response(source,{"answers":answers},{"problem_graph":graph,"evidence_requirements":plan})
+        retained=projected["observation_management"][0]
+        for key,value in thesis.items(): self.assertEqual(retained[key],value)
+        self.assertNotIn("thesis",answers["OBSERVATION:513180"])
+
+
 
 if __name__ == "__main__":
     unittest.main()
