@@ -755,7 +755,15 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
         actual_admits = {normalize_code(x.get("code") or "") for x in changes if str(x.get("action") or "").upper() == "ADMIT"}
         if actual_admits != admitted_discovery:
             raise ValueError("formal decision ADMIT actions must exactly match Observation eligibility ADMIT dispositions")
-    required_opportunities = legal_observation_reviews(decision, current_observations, admitted_discovery)
+    # Capital-competition coverage belongs to the request-bound Decision Work
+    # Package.  ADMIT/REJECT controls Observation identity only; a REJECTed
+    # Discovery object was still a legal temporary evaluation object that had to
+    # participate in this request's capital competition.
+    required_opportunities = request_bound_etf_opportunity_reviews(request)
+    if not required_opportunities:
+        # Legacy completions predate the Decision Work Package contract.  Keep
+        # their historical compatibility path without weakening new production.
+        required_opportunities = legal_observation_reviews(decision, current_observations, admitted_discovery)
     capital_error = validate_capital_competition_contract(
         decision.get("capital_competition"), account_for_lifecycle,
         "formal_decision.capital_competition",
@@ -1163,6 +1171,37 @@ def legal_observation_reviews(decision: dict, current_observations: set[str], ad
     }
     legal = {code for code in current_observations if actions.get(code) == "RETAIN"} | set(admitted)
     return {code: "OBSERVED_ETF" for code in legal}
+
+
+def request_bound_etf_opportunity_reviews(request: dict) -> dict[str, str]:
+    """Return the immutable ETF opportunity domain frozen in this Formal Decision request.
+
+    A durable BUSINESS_DECISION_SOURCE carries the same request-bound Decision Work
+    Package that ChatGPT answered.  Persistence must validate coverage against that
+    frozen problem graph, not reconstruct the decision-object universe from a later
+    monitor/query state.  Observation eligibility remains a separate identity gate.
+    """
+    work_package = request.get("decision_work_package") or {}
+    graph = work_package.get("problem_graph") if isinstance(work_package, dict) else None
+    if not isinstance(graph, list):
+        return {}
+    required: dict[str, str] = {}
+    for item in graph:
+        if not isinstance(item, dict):
+            continue
+        problem_id = str(item.get("problem_id") or "")
+        if problem_id.startswith("OBSERVATION:"):
+            code = normalize_code(problem_id.split(":", 1)[1])
+            category = "OBSERVED_ETF"
+        elif problem_id.startswith("DISCOVERY:"):
+            code = normalize_code(problem_id.split(":", 1)[1])
+            category = "OBSERVATION_EVALUATION_INPUT"
+        else:
+            continue
+        if not code or code in required:
+            raise ValueError("decision work package has invalid or duplicate ETF opportunity identity")
+        required[code] = category
+    return required
 
 
 def required_etf_opportunity_reviews(root: Path, account: dict, market_date: str = "") -> dict[str, str]:
