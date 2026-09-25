@@ -24,6 +24,7 @@ try:
     from business_decision_source import (
         BUSINESS_DECISION_SOURCE,
         build_formal_completion_from_source,
+        project_decision_response,
         source_fingerprint,
         validate_source,
     )
@@ -31,6 +32,7 @@ except ModuleNotFoundError:
     from scripts.business_decision_source import (
         BUSINESS_DECISION_SOURCE,
         build_formal_completion_from_source,
+        project_decision_response,
         source_fingerprint,
         validate_source,
     )
@@ -2871,6 +2873,14 @@ def main() -> int:
             if key not in source_payload and request.get(key) not in (None, ""):
                 source_payload[key] = request.get(key)
         source_payload["request_type"] = BUSINESS_DECISION_SOURCE
+        decision_response = request.get("decision_response")
+        decision_work_package = request.get("decision_work_package")
+        if decision_response is not None or decision_work_package is not None:
+            source_payload = project_decision_response(
+                source_payload,
+                decision_response or {},
+                decision_work_package or {},
+            )
         source = validate_source(
             source_payload,
             expected_snapshot=str(request.get("consumed_snapshot") or source_payload.get("consumed_snapshot") or "").strip(),
