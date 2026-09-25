@@ -80,3 +80,80 @@ def test_formal_decision_packet_projects_existing_three_layer_evidence():
     assert '"actual_positions": positions' in text
     assert '"observation_inputs": observation_inputs' in text
     assert "not satisfied by fixed indices alone" in text
+
+
+def test_decision_work_package_satisfaction_uses_three_layer_facts_without_auto_satisfying_optional_classes():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("build_query_context_under_test", ROOT / "scripts" / "build_query_context.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    graph = [{"problem_id": "NEXT_UNIT_CAPITAL_USE", "security": "next_unit_capital_use"}]
+    plan = module._evidence_requirement_plan(graph)
+    monitoring = {
+        "layer_2_a_share_internal": {
+            "market_regime_context": {
+                "etf_breadth": {"up": 3, "down": 11},
+                "style_context": {"large_vs_growth": "large_cap_relative_strength"},
+            },
+            "market_structure_context": {"items": [{"kind": "industry"}]},
+            "fact_domains": {"breadth": True, "style": True, "industry_theme": True},
+        },
+        "layer_3_etf_opportunity_capital": {
+            "actual_positions": [{"code": "588000"}],
+            "observation_inputs": [{"code": "513180"}],
+            "discovery_candidates": [],
+        },
+    }
+    package = module._decision_work_package(graph, plan, [], three_layer_monitoring=monitoring)
+    states = {x["evidence_class"]: x["satisfaction"] for x in package["evidence_requirements"]}
+    assert states["A_SHARE_STYLE_FEEDBACK"] == "SATISFIED"
+    assert states["ETF_RELATIVE_STRENGTH"] == "SATISFIED"
+    assert states["GLOBAL_RISK"] == "INSUFFICIENT"
+    assert package["decision_marginal_stop"]["expansion_complete"] is True
+
+
+def test_decision_work_package_fixed_index_only_does_not_satisfy_a_share_style_feedback():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("build_query_context_under_test_2", ROOT / "scripts" / "build_query_context.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    graph = [{"problem_id": "RISK_PERMISSION", "security": "risk_permission"}]
+    plan = module._evidence_requirement_plan(graph)
+    monitoring = {
+        "layer_2_a_share_internal": {
+            "market_regime_context": {"indices": [{"code": "000001"}]},
+            "market_structure_context": {},
+            "fact_domains": {"index": True, "breadth": False, "style": False, "industry_theme": False},
+        },
+        "layer_3_etf_opportunity_capital": {},
+    }
+    package = module._decision_work_package(graph, plan, [], three_layer_monitoring=monitoring)
+    states = {x["evidence_class"]: x["satisfaction"] for x in package["evidence_requirements"]}
+    assert states["A_SHARE_STYLE_FEEDBACK"] == "INSUFFICIENT"
+    assert states["ETF_RELATIVE_STRENGTH"] == "INSUFFICIENT"
+    assert package["decision_marginal_stop"]["expansion_required"] is True
+
+
+def test_decision_work_package_partial_three_layer_evidence_is_degraded():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("build_query_context_under_test_3", ROOT / "scripts" / "build_query_context.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    graph = [{"problem_id": "RISK_PERMISSION", "security": "risk_permission"}]
+    plan = module._evidence_requirement_plan(graph)
+    monitoring = {
+        "layer_2_a_share_internal": {
+            "market_regime_context": {"etf_breadth": {"up": 3, "down": 11}},
+            "market_structure_context": {},
+            "fact_domains": {"breadth": True, "style": False, "industry_theme": False},
+        },
+        "layer_3_etf_opportunity_capital": {"actual_positions": [{"code": "588000"}]},
+    }
+    package = module._decision_work_package(graph, plan, [], three_layer_monitoring=monitoring)
+    states = {x["evidence_class"]: x["satisfaction"] for x in package["evidence_requirements"]}
+    assert states["A_SHARE_STYLE_FEEDBACK"] == "DEGRADED"
+    assert states["ETF_RELATIVE_STRENGTH"] == "DEGRADED"
+    assert package["decision_marginal_stop"]["expansion_required"] is True
