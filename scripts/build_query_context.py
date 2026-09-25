@@ -557,6 +557,62 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     evidence_plan = _evidence_requirement_plan(problem_graph)
     work_package = _decision_work_package(problem_graph, evidence_plan, quotes)
 
+    # Project already-produced monitoring facts into the request-bound packet.
+    # This is a read-only projection: it does not create facts, rank candidates,
+    # or grant trade authority.
+    market_regime_context = read_json(root / "data" / "state" / "market_regime_context.json", {})
+    market_structure_context = read_json(root / "data" / "state" / "market_structure_context.json", {})
+    overseas_context = read_json(root / CANONICAL_FILES["overseas_context"], {})
+    us_extended_hours_context = read_json(root / CANONICAL_FILES["us_extended_hours_context"], {})
+
+    three_layer_monitoring = {
+        "layer_1_external_cross_market": {
+            "base_evidence": {
+                "overseas_context": overseas_context,
+                "us_extended_hours_context": us_extended_hours_context,
+            },
+            "triggered_expansion": {
+                "status": "CONDITIONAL",
+                "rule": "Expand only when current exposure, candidate, anomaly, commodity/macro event, or transmission hypothesis can change risk, opportunity, sell/hold, or capital allocation.",
+            },
+            "decision_boundary": "External facts are evidence only; asynchronous overseas facts must not be described as synchronous A-share confirmation.",
+        },
+        "layer_2_a_share_internal": {
+            "market_regime_context": market_regime_context,
+            "market_structure_context": market_structure_context,
+            "fact_domains": {
+                "index": bool(market_regime_context.get("indices")),
+                "breadth": bool(market_regime_context.get("etf_breadth")),
+                "style": bool(market_regime_context.get("style_context")),
+                "industry_theme": bool((market_structure_context.get("items") or [])),
+                "liquidity_turnover": bool((market_structure_context.get("items") or [])),
+                "capital_flow": "OPTIONAL_OR_TRIGGERED",
+                "anomaly": "OPTIONAL_OR_TRIGGERED",
+                "external_confirmation_state": "ACTOR_DERIVED_FROM_QUALIFIED_LAYER_1_AND_LAYER_2_FACTS",
+            },
+            "decision_boundary": "A-share internal monitoring is not satisfied by fixed indices alone when qualified breadth/style/structure evidence already exists.",
+        },
+        "layer_3_etf_opportunity_capital": {
+            "formal_discovery_status": discovery.get("status") or "NOT_REQUESTED",
+            "discovery_candidates": discovery_inputs,
+            "actual_positions": positions,
+            "observation_inputs": observation_inputs,
+            "deployable_cash": account.get("deployable_cash"),
+            "required_capital_states": [
+                "all_actual_positions_continue_or_release",
+                "held_etf_additional_capital",
+                "all_observation_etfs",
+                "temporary_discovery_candidates",
+                "cash",
+                "releasable_low_efficiency_capital",
+            ],
+            "decision_boundary": "Inputs only; MASTER and ChatGPT own sell/hold, candidate selection, amount, funding source, and next-unit capital use.",
+        },
+        "completeness_rule": "Three-layer monitoring means qualified evidence across the current request's relevant fact domains, not a fixed-index checklist. Missing optional/triggered evidence remains explicit and localized.",
+    }
+
+    work_package["three_layer_monitoring_evidence"] = three_layer_monitoring
+
     return {
         "schema_version": "1.5",
         "role": "PREFERRED_MINIMUM_SUFFICIENT_FORMAL_REASONING_INPUT",
@@ -614,6 +670,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "rule": "Inputs only. Candidate selection and capital allocation remain ChatGPT judgments under MASTER.",
         },
         "decision_work_package": work_package,
+        "three_layer_monitoring_evidence": three_layer_monitoring,
         "decision_problem_graph": problem_graph,
         "evidence_requirement_plan": evidence_plan,
         "formal_reasoning_obligations": [
