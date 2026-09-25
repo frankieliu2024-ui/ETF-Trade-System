@@ -40,7 +40,48 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
                 "day_change_pct": -0.88,
             },
         }
-        self.assertEqual(guard.notification_evidence_error(event), "")
+        with patch("notification_semantics.object_role", return_value=("INDEX", "正式指数")):
+            self.assertIn("no user interruption qualification", guard.notification_evidence_error(event))
+
+    def test_managed_object_reversal_retains_interrupt_value(self):
+        event = {
+            "event_type": "MARKET_VALUE_ALERT",
+            "security_code": "515880",
+            "confirmation_context": {
+                "event_category": "REVERSAL",
+                "market_as_of_beijing": "2026-08-28T14:20:13+08:00",
+                "event_magnitude_pct": 2.51,
+                "day_change_pct": -0.88,
+            },
+        }
+        with patch("notification_semantics.object_role", return_value=("HELD_ETF", "当前持仓ETF")):
+            self.assertEqual(guard.notification_evidence_error(event), "")
+
+    def test_structural_divergence_retains_interrupt_value(self):
+        event = {
+            "event_type": "MARKET_VALUE_ALERT",
+            "security_code": "US_TECH_DIVERGENCE",
+            "confirmation_context": {
+                "event_category": "DIVERGENCE",
+                "market_as_of_beijing": "2026-08-28T22:20:13+08:00",
+                "event_magnitude_pct": 2.1,
+            },
+        }
+        with patch("notification_semantics.object_role", return_value=("OTHER", "监测对象")):
+            self.assertEqual(guard.notification_evidence_error(event), "")
+
+    def test_extreme_market_event_retains_interrupt_value_without_threshold_raise(self):
+        event = {
+            "event_type": "MARKET_VALUE_ALERT",
+            "security_code": "000001",
+            "confirmation_context": {
+                "event_category": "EXTREME",
+                "market_as_of_beijing": "2026-08-28T14:20:13+08:00",
+                "event_magnitude_pct": 3.2,
+            },
+        }
+        with patch("notification_semantics.object_role", return_value=("INDEX", "正式指数")):
+            self.assertEqual(guard.notification_evidence_error(event), "")
 
     def test_apac_coverage_or_tone_change_without_hstech_delta_is_rejected(self):
         event = {
