@@ -435,6 +435,16 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             "next_unit_capital_use": "保留现金",
             "managed_position_reviews": [],
             "etf_opportunity_reviews": [],
+            "decision_evidence_consumption": {
+                "request_id": source_id,
+                "layer_1_external_cross_market": "consumed",
+                "layer_2_a_share_internal": "consumed",
+                "layer_3_etf_opportunity_capital": "consumed",
+                "discovery_to_capital_competition_consumed": True,
+                "all_managed_positions_sell_chain_consumed": True,
+                "held_etf_additional_capital_consumed": True,
+                "next_unit_capital_use_consumed": True,
+            },
         })
         source = {
             **SOURCE_REQUEST,

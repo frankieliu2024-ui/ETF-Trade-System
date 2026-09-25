@@ -26,6 +26,16 @@ class BusinessDecisionSourceTests(unittest.TestCase):
             "etf_opportunity_reviews": [],
             "capital_competition": [],
             "next_unit_capital_use": "现金",
+            "decision_evidence_consumption": {
+                "request_id": "r1",
+                "layer_1_external_cross_market": "external/cross-market evidence reviewed",
+                "layer_2_a_share_internal": "A-share index/structure/breadth feedback reviewed",
+                "layer_3_etf_opportunity_capital": "Discovery/holdings/Observation/cash/releasable capital reviewed",
+                "discovery_to_capital_competition_consumed": True,
+                "all_managed_positions_sell_chain_consumed": True,
+                "held_etf_additional_capital_consumed": True,
+                "next_unit_capital_use_consumed": True,
+            },
         }
 
     def test_explicit_classification_does_not_guess(self):
@@ -47,6 +57,24 @@ class BusinessDecisionSourceTests(unittest.TestCase):
         source = self.base()
         source.pop("capital_use")
         with self.assertRaises(ValueError):
+            validate_source(source)
+
+    def test_evidence_consumption_missing_fails_closed(self):
+        source = self.base()
+        source.pop("decision_evidence_consumption")
+        with self.assertRaisesRegex(ValueError, "decision_evidence_consumption"):
+            validate_source(source)
+
+    def test_evidence_consumption_cross_request_fails_closed(self):
+        source = self.base()
+        source["parent_request_id"] = "parent-r1"
+        with self.assertRaisesRegex(ValueError, "request_id must match parent request"):
+            validate_source(source)
+
+    def test_evidence_consumption_incomplete_chain_fails_closed(self):
+        source = self.base()
+        source["decision_evidence_consumption"]["discovery_to_capital_competition_consumed"] = False
+        with self.assertRaisesRegex(ValueError, "discovery_to_capital_competition_consumed"):
             validate_source(source)
 
     def test_pit_mismatch_fails_closed(self):
