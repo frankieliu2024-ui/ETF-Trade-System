@@ -44,7 +44,6 @@ RESPONSE = {
             "capital_comparison": "继续占用资本相对现金仍合理",
             "next_change_condition": "相对效率恶化时重评",
             "evidence_decision_impact": ["ALL_REQUIRED"],
-            "position_capital_states": {"HOLD": "继续持有", "REDUCE": "部分释放", "EXIT": "全部退出"},
             "capital_occupancy_reason": "当前继续占资效率更高",
             "higher_efficiency_alternative": "现金",
         }
@@ -62,6 +61,7 @@ class ProductionBusinessSourceIngressTests(unittest.TestCase):
         self.assertEqual(payload["decision_response"], RESPONSE)
         self.assertEqual(payload["decision_work_package"], WORK_PACKAGE)
         self.assertEqual(payload["parent_request_id"], SOURCE["request_id"])
+        self.assertNotIn("position_capital_states", RESPONSE["answers"]["HOLDING:561980"])
 
     def test_structured_completion_rejects_missing_business_answers(self):
         with self.assertRaisesRegex(ValueError, "structured decision_response"):
