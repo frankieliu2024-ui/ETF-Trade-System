@@ -165,5 +165,32 @@ class DecisionWorkPackageTests(unittest.TestCase):
         self.assertTrue(all(isinstance(x,str) for x in answers["NEXT_UNIT_CAPITAL_USE"]["compared_capital_states"]))
 
 
+    def test_insufficient_optional_layer1_is_not_consumed(self):
+        source = {"request_type":"BUSINESS_DECISION_SOURCE","request_id":"r905","parent_request_id":"p905","decision_id":"d905","consumed_snapshot":"snap"}
+        graph = [{"problem_id":"RISK_PERMISSION"},{"problem_id":"MAIN_CANDIDATE"},{"problem_id":"NEXT_UNIT_CAPITAL_USE"}]
+        plan = [
+            {"requirement_id":"r:a","target_problem_id":"RISK_PERMISSION","evidence_class":"A_SHARE_STYLE_FEEDBACK","required":True,"satisfaction":"SATISFIED"},
+            {"requirement_id":"r:g","target_problem_id":"RISK_PERMISSION","evidence_class":"GLOBAL_RISK","required":False,"satisfaction":"INSUFFICIENT"},
+            {"requirement_id":"n:e","target_problem_id":"NEXT_UNIT_CAPITAL_USE","evidence_class":"ETF_RELATIVE_STRENGTH","required":True,"satisfaction":"SATISFIED"},
+        ]
+        answers = {x["problem_id"]:{"final_action":"保持","capital_comparison":"compare","next_change_condition":"change","evidence_decision_impact":["ALL_REQUIRED"]} for x in graph}
+        answers["RISK_PERMISSION"]["final_action"]="允许Confirm"
+        answers["MAIN_CANDIDATE"].update({"candidate_code":"159981","candidate_name":"能源化工ETF","opportunity_status":"Confirm机会"})
+        answers["NEXT_UNIT_CAPITAL_USE"].update({
+            "final_action":"保持现金","new_amount_yuan":0,"post_action_deployable_cash":13169.54,
+            "future_opportunity_capacity":"保留","cash_opportunity_cost":"right-tail","alternative_capital_use_review":"compared",
+            "concentration_account_structure_effect":"unchanged","selected_state_reason":"closed","zero_amount_decisive_reason":"closed",
+            "compared_capital_states":[
+                {"state_name":"现金","capital_action":"保留","remaining_deployable_cash":13169.54,"why_not_selected":"selected","opportunity_cost_if_selected":"right-tail"},
+                {"state_name":"候选","capital_action":"等待","remaining_deployable_cash":3169.54,"why_not_selected":"closed","opportunity_cost_if_selected":"risk"}
+            ]
+        })
+        projected=project_decision_response(source,{"answers":answers},{"problem_graph":graph,"evidence_requirements":plan})
+        consumed=projected["decision_evidence_consumption"]
+        self.assertEqual(consumed["layer_1_external_cross_market"],[])
+        self.assertEqual(consumed["layer_2_a_share_internal"],["r:a"])
+        self.assertEqual(consumed["layer_3_etf_opportunity_capital"],["n:e"])
+
+
 if __name__ == "__main__":
     unittest.main()
