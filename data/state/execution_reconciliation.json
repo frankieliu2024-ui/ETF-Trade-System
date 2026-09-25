@@ -1,15 +1,84 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-09-25T06:41:44+08:00",
-  "status": "NO_MATCH",
+  "generated_at": "2026-09-25T10:51:48+08:00",
+  "status": "CONFIRMATION_REQUIRED",
   "lookback_days": 5,
   "supported_intents": [
     "正式正金额买入",
     "明确份额减持/卖出",
     "全部退出/清仓（仅在事实足够时匹配）"
   ],
-  "matches": [],
-  "actionable_count": 0,
+  "matches": [
+    {
+      "status": "PARTIAL_EXECUTION_REQUIRES_CONFIRMATION",
+      "requires_user_confirmation": true,
+      "confidence": "HIGH",
+      "intent": {
+        "decision_id": "20260925_063400_chatgpt_formal_decision_decision",
+        "decision_time": "2026-09-25T06:34:25+08:00",
+        "decision_market_date": "2026-09-24",
+        "source_event": "events/decisions/20260925_063400_chatgpt_formal_decision_decision.json",
+        "code": "159981",
+        "name": "能源化工ETF",
+        "side": "BUY",
+        "lifecycle": "Confirm",
+        "planned_amount_yuan": null,
+        "planned_quantity": 10000
+      },
+      "fill_status": "PARTIAL_EXECUTION",
+      "fill_ratio": 0.28,
+      "observed_account_change": {
+        "previous_quantity": 0.0,
+        "current_quantity": 2800.0,
+        "quantity_change": 2800.0,
+        "directional_quantity": 2800.0,
+        "approx_amount_yuan": 4841.2,
+        "account_fact_updated_at": "2026-09-24T09:53:00+08:00",
+        "account_confirmed_market_date": "2026-09-24",
+        "history_source": "NO_PRIOR_ACCOUNT_VERSION"
+      },
+      "suggested_execution_date": "2026-09-24",
+      "suggested_lifecycle_t_date": "2026-09-24",
+      "confirmation_date": "2026-09-25",
+      "user_confirmation_prompt": "检测到能源化工ETF（159981）持仓新增2,800份，与2026-09-24的Confirm决策相符。请确认是否按该决策执行，并确认实际交易日。 当前迹象更像部分成交，请确认实际成交数量/金额。",
+      "safety_boundary": "这里只生成反向对账候选；不自动生成成交事实。交易日、确认日和生命周期T日分开记录。"
+    },
+    {
+      "status": "PARTIAL_EXECUTION_REQUIRES_CONFIRMATION",
+      "requires_user_confirmation": true,
+      "confidence": "HIGH",
+      "intent": {
+        "decision_id": "20260924_162255_chatgpt_formal_decision_decision",
+        "decision_time": "2026-09-24T16:24:08+08:00",
+        "decision_market_date": "2026-09-24",
+        "source_event": "events/decisions/20260924_162255_chatgpt_formal_decision_decision.json",
+        "code": "159981",
+        "name": "能源化工ETF",
+        "side": "BUY",
+        "lifecycle": "Trial",
+        "planned_amount_yuan": null,
+        "planned_quantity": 10000
+      },
+      "fill_status": "PARTIAL_EXECUTION",
+      "fill_ratio": 0.28,
+      "observed_account_change": {
+        "previous_quantity": 0.0,
+        "current_quantity": 2800.0,
+        "quantity_change": 2800.0,
+        "directional_quantity": 2800.0,
+        "approx_amount_yuan": 4841.2,
+        "account_fact_updated_at": "2026-09-24T09:53:00+08:00",
+        "account_confirmed_market_date": "2026-09-24",
+        "history_source": "NO_PRIOR_ACCOUNT_VERSION"
+      },
+      "suggested_execution_date": "2026-09-24",
+      "suggested_lifecycle_t_date": "2026-09-24",
+      "confirmation_date": "2026-09-25",
+      "user_confirmation_prompt": "检测到能源化工ETF（159981）持仓新增2,800份，与2026-09-24的Trial决策相符。请确认是否按该决策执行，并确认实际交易日。 当前迹象更像部分成交，请确认实际成交数量/金额。",
+      "safety_boundary": "这里只生成反向对账候选；不自动生成成交事实。交易日、确认日和生命周期T日分开记录。"
+    }
+  ],
+  "actionable_count": 2,
   "account_fact_updated_at": "2026-09-24T09:53:00+08:00",
   "design_rule": "对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。",
   "known_limitation": "仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。",
