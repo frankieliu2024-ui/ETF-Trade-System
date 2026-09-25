@@ -232,7 +232,7 @@ def _stable_manual_request_identity(request: dict) -> str:
     return f"{safe_stem}-{digest}"
 
 
-def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict], account: dict) -> list[dict]:
+def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict], account: dict, observation_inputs: list[dict] | None = None) -> list[dict]:
     problems = [
         {"problem_id": "RISK_PERMISSION", "decision_object": "risk_permission", "required_business_judgment": "风险许可及新增风险边界"},
         {"problem_id": "MAIN_CANDIDATE", "decision_object": "main_candidate", "required_business_judgment": "主候选及机会状态"},
@@ -244,12 +244,17 @@ def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict],
     ]
     for item in positions:
         code = str(item.get("code") or "")
-        problems.append({"problem_id": f"HOLDING:{code}", "decision_object": code, "security": item.get("name") or code, "current_capital_occupation": item.get("market_value"), "alternatives": {"HOLD": "继续占用当前资本", "REDUCE": "部分释放资本", "EXIT": "全部释放资本"}, "required_business_judgment": "比较HOLD/REDUCE/EXIT并确定当前动作、数量、去向和下一变化条件"})
-        problems.append({"problem_id": f"HELD_ETF_ADD:{code}", "decision_object": code, "security": item.get("name") or code, "required_business_judgment": "判断是否追加资本及相对现金/其他用途的效率"})
+        problems.append({"problem_id": f"HOLDING:{code}", "decision_object": code, "security": item.get("name") or code, "current_quantity": item.get("quantity"), "current_capital_occupation": item.get("market_value"), "alternatives": {"HOLD": "继续占用当前资本", "REDUCE": "部分释放资本", "EXIT": "全部释放资本"}, "required_business_judgment": "比较HOLD/REDUCE/EXIT并确定当前动作、数量、去向和下一变化条件"})
+        if str(item.get("asset_type") or "").upper() == "ETF":
+            problems.append({"problem_id": f"HELD_ETF_ADD:{code}", "decision_object": code, "security": item.get("name") or code, "required_business_judgment": "判断是否追加资本及相对现金/其他用途的效率"})
+    for item in observation_inputs or []:
+        code = str(item.get("code") or "")
+        if code:
+            problems.append({"problem_id": f"OBSERVATION:{code}", "decision_object": code, "security": item.get("name") or code, "required_business_judgment": "判断既有观察ETF是否保留及其资本竞争位置"})
     for item in discovery_inputs:
         code = str(item.get("code") or "")
         if code:
-            problems.append({"problem_id": f"DISCOVERY:{code}", "decision_object": code, "security": item.get("name") or code, "required_business_judgment": "判断Observation/临时评估资格及资本竞争位置"})
+            problems.append({"problem_id": f"DISCOVERY:{code}", "decision_object": code, "security": item.get("name") or code, "formal_quote_status": item.get("formal_quote_status") or "", "required_business_judgment": "判断Observation/临时评估资格及资本竞争位置"})
     return problems
 
 
@@ -292,7 +297,7 @@ def _decision_work_package(graph: list[dict], plan: list[dict], evidence: list[d
     return {
         "schema_version": "1.0", "problem_graph": graph,
         "evidence_requirements": requirement_states, "current_evidence": evidence,
-        "response_contract": {"must_answer": ["final_action", "capital_comparison", "quantity", "capital_destination", "capital_occupancy_reason", "higher_efficiency_alternative", "next_change_condition", "evidence_decision_impact"], "schema_knowledge_required": False},
+        "response_contract": {"must_answer": ["final_action", "capital_comparison", "next_change_condition", "evidence_decision_impact"], "holding_additional_fields": ["capital_occupancy_reason", "higher_efficiency_alternative", "quantity_if_reduce_or_exit", "capital_destination_if_reduce_or_exit"], "main_candidate_additional_fields": ["candidate_code", "candidate_name", "opportunity_status"], "opportunity_additional_fields": ["disposition", "reason"], "next_unit_additional_fields": ["new_amount_yuan", "post_action_deployable_cash", "future_opportunity_capacity", "cash_opportunity_cost", "alternative_capital_use_review", "concentration_account_structure_effect", "selected_state_reason", "compared_capital_states", "zero_amount_decisive_reason_if_zero"], "schema_knowledge_required": False, "rule": "Actor answers only business questions keyed by problem_id. Canonical lifecycle, managed reviews, opportunity reviews, capital_use and evidence-consumption nesting are machine projections."},
         "decision_marginal_stop": {
             "required_states": ["SATISFIED", "DEGRADED", "INSUFFICIENT", "NOT_REQUIRED"],
             "expansion_required": bool(unresolved), "expansion_complete": not unresolved,
@@ -349,6 +354,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "code": str(item.get("code") or ""),
             "name": item.get("name") or "",
             "eligibility": item.get("eligibility") or item.get("status") or "",
+            "formal_quote_status": item.get("formal_quote_status") or "",
             "evidence": item.get("evidence") or item.get("features") or {},
         })
 
@@ -502,7 +508,13 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "rule": "Formal reasoning continues under explicit local limitations. Exact executable/canonical action qualification is owned by formal_action_readiness.",
     }
 
-    problem_graph = _decision_problem_graph(positions, discovery_inputs, account)
+    held_etf_codes = {str(item.get("code") or "") for item in positions if str(item.get("asset_type") or "").upper() == "ETF"}
+    observation_inputs = [
+        {"code": str(item.get("code") or ""), "name": item.get("name") or str(item.get("code") or "")}
+        for item in (universe.get("objects") or [])
+        if str(item.get("code") or "") and str(item.get("code") or "") not in held_etf_codes
+    ]
+    problem_graph = _decision_problem_graph(positions, discovery_inputs, account, observation_inputs)
     evidence_plan = _evidence_requirement_plan(problem_graph)
     work_package = _decision_work_package(problem_graph, evidence_plan, quotes)
 
