@@ -232,6 +232,35 @@ def _stable_manual_request_identity(request: dict) -> str:
     return f"{safe_stem}-{digest}"
 
 
+def _latest_observation_thesis_state(root: Path, observation_codes: set[str]) -> dict[str, dict]:
+    """Read the latest durable Formal Decision thesis metadata for current observations."""
+    out: dict[str, dict] = {}
+    decisions_dir = root / "events" / "decisions"
+    if not decisions_dir.exists() or not observation_codes:
+        return out
+    paths = sorted(decisions_dir.glob("*.json"), reverse=True)
+    required = ("name", "thscode", "thesis", "falsifier", "next_decision_information", "information_value_reason")
+    for path in paths:
+        if len(out) >= len(observation_codes):
+            break
+        try:
+            event = read_json(path, {})
+        except Exception:
+            continue
+        decision = event.get("formal_decision") or {}
+        for item in decision.get("observation_management") or []:
+            if not isinstance(item, dict):
+                continue
+            code = str(item.get("code") or "").replace(".SH", "").replace(".SZ", "").strip()
+            if code not in observation_codes or code in out:
+                continue
+            if str(item.get("action") or "").upper() not in {"ADMIT", "RETAIN"}:
+                continue
+            if all(str(item.get(key) or "").strip() for key in required):
+                out[code] = {key: item.get(key) for key in required}
+    return out
+
+
 def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict], account: dict, observation_inputs: list[dict] | None = None) -> list[dict]:
     problems = [
         {"problem_id": "RISK_PERMISSION", "decision_object": "risk_permission", "required_business_judgment": "风险许可及新增风险边界"},
@@ -250,7 +279,7 @@ def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict],
     for item in observation_inputs or []:
         code = str(item.get("code") or "")
         if code:
-            problems.append({"problem_id": f"OBSERVATION:{code}", "decision_object": code, "security": item.get("name") or code, "required_business_judgment": "判断既有观察ETF是否保留及其资本竞争位置"})
+            problems.append({"problem_id": f"OBSERVATION:{code}", "decision_object": code, "security": item.get("name") or code, "thscode": item.get("thscode") or "", "existing_thesis_state": item.get("existing_thesis_state") or {}, "required_business_judgment": "判断既有观察ETF是否保留及其资本竞争位置；RETAIN沿用已有canonical thesis metadata，EXIT只需业务退出理由"})
     for item in discovery_inputs:
         code = str(item.get("code") or "")
         if code:
@@ -509,11 +538,21 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     }
 
     held_etf_codes = {str(item.get("code") or "") for item in positions if str(item.get("asset_type") or "").upper() == "ETF"}
-    observation_inputs = [
-        {"code": str(item.get("code") or ""), "name": item.get("name") or str(item.get("code") or "")}
-        for item in (universe.get("objects") or [])
+    raw_observations = [
+        item for item in (universe.get("objects") or [])
         if str(item.get("code") or "") and str(item.get("code") or "") not in held_etf_codes
     ]
+    observation_codes = {str(item.get("code") or "") for item in raw_observations}
+    observation_thesis = _latest_observation_thesis_state(root, observation_codes)
+    observation_inputs = []
+    for item in raw_observations:
+        code = str(item.get("code") or "")
+        observation_inputs.append({
+            "code": code,
+            "name": item.get("name") or code,
+            "thscode": item.get("thscode") or "",
+            "existing_thesis_state": observation_thesis.get(code) or {},
+        })
     problem_graph = _decision_problem_graph(positions, discovery_inputs, account, observation_inputs)
     evidence_plan = _evidence_requirement_plan(problem_graph)
     work_package = _decision_work_package(problem_graph, evidence_plan, quotes)
