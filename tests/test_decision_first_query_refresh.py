@@ -419,6 +419,12 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertTrue(boundary["non_blocking_after_business_decision_formed"])
         self.assertEqual(boundary["persistence_failure_disclosure"], "正式决策尚未持久化。")
         self.assertIn("complete business decision analysis", boundary["rule"])
+        self.assertIn("EVERY_ACTUAL_POSITION_ACTION_WITH_RELEASE_DESTINATION_AND_CHANGE_CONDITION", boundary["summary_must_preserve"])
+        self.assertIn("THREE_LAYER_DECISION_CHANGING_DELTAS", boundary["summary_must_preserve"])
+        self.assertIn("FIVE_DELTAS_NEW_STRONGER_WEAKER_INVALID_NEXT_UNIT_USE", boundary["summary_must_preserve"])
+        self.assertIn("MOST_LIKELY_ERROR_POINT", boundary["summary_must_preserve"])
+        self.assertIn("Compress unchanged evidence, not business conclusions", boundary["compression_rule"])
+        self.assertIn("same request-bound Business Decision Source", boundary["projection_rule"])
 
     def test_manual_formal_reply_freeze_ready_after_same_request_pit(self):
         request = {
