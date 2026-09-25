@@ -66,16 +66,17 @@ class DecisionWorkPackageTests(unittest.TestCase):
         answers = {}
         for item in graph:
             answers[item["problem_id"]] = {"final_action": "HOLD", "capital_comparison": "cash versus holding", "next_change_condition": "risk or relative efficiency changes", "evidence_decision_impact": ["ALL_REQUIRED"]}
-        answers["HOLDING:159981"].update({"position_capital_states": {"HOLD": "retain", "REDUCE": "release risk", "EXIT": "release all"}, "capital_occupancy_reason": "confirmed evidence supports retaining exposure", "higher_efficiency_alternative": "cash"})
+        answers["HOLDING:159981"].update({"capital_occupancy_reason": "confirmed evidence supports retaining exposure", "higher_efficiency_alternative": "cash"})
         projected = project_decision_response(source, {"answers": answers}, {"problem_graph": graph, "evidence_requirements": plan})
         checked = validate_source(projected, expected_snapshot="snap-1")
         self.assertEqual(checked["decision_evidence_consumption"]["layer_2_a_share_internal"], ["RISK_PERMISSION:A_SHARE_STYLE_FEEDBACK"])
         self.assertEqual(checked["decision_evidence_consumption"]["layer_3_etf_opportunity_capital"], ["NEXT_UNIT_CAPITAL_USE:ETF_RELATIVE_STRENGTH"])
         self.assertEqual(checked["capital_use"]["position_capital_states"]["159981"]["HOLD"], "retain")
+        self.assertNotIn("position_capital_states", answers["HOLDING:159981"])
 
     def test_structured_response_fails_before_strict_validator_for_missing_business_judgment(self):
         package = {"problem_graph": [{"problem_id": "HOLDING:159981", "security": "能源化工ETF"}], "evidence_requirements": []}
-        with self.assertRaisesRegex(ValueError, "position_capital_states"):
+        with self.assertRaisesRegex(ValueError, "holding capital rationale"):
             project_decision_response({}, {"answers": {"HOLDING:159981": {"final_action": "HOLD", "capital_comparison": "cash", "next_change_condition": "risk changes", "evidence_decision_impact": ["x"]}}}, package)
 
 

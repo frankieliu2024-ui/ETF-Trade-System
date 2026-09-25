@@ -87,9 +87,6 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             if answer.get(field) in (None, "", [], {}):
                 raise ValueError(f"decision response missing {pid}.{field}")
         if str(pid).startswith("HOLDING:"):
-            states = answer.get("position_capital_states")
-            if not isinstance(states, dict) or any(not states.get(k) for k in ("HOLD", "REDUCE", "EXIT")):
-                raise ValueError(f"decision response missing {pid}.position_capital_states")
             if not answer.get("capital_occupancy_reason") or not answer.get("higher_efficiency_alternative"):
                 raise ValueError(f"decision response missing holding capital rationale: {pid}")
             if str(answer.get("final_action") or "").upper() in {"REDUCE", "EXIT"}:
@@ -118,6 +115,13 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             continue
         answer = answers[pid]
         code = pid.split(":", 1)[1]
+        alternatives = item.get("alternatives") or {}
+        states = {
+            key: str(alternatives.get(key) or "").strip()
+            for key in ("HOLD", "REDUCE", "EXIT")
+        }
+        if any(not states[key] for key in states):
+            raise ValueError(f"decision work package missing holding alternatives: {pid}")
         position_reviews.append({
             "security_code": code, "security_name": item.get("security") or code,
             "current_action": answer["final_action"],
@@ -129,7 +133,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             "continued_holding_opportunity_cost": answer["capital_comparison"],
             "action_changes_now": str(answer["final_action"]).upper() in {"REDUCE", "EXIT"},
             "next_change_condition": answer["next_change_condition"],
-            "capital_use": {"position_capital_states": answer["position_capital_states"], "quantity": answer.get("quantity"), "capital_destination": answer.get("capital_destination")},
+            "capital_use": {"position_capital_states": states, "quantity": answer.get("quantity"), "capital_destination": answer.get("capital_destination")},
         })
     projected = json.loads(json.dumps(source))
     projected["decision_evidence_consumption"] = {**consumed,
