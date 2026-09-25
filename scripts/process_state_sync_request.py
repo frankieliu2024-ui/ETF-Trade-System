@@ -2919,9 +2919,16 @@ def main() -> int:
         source_payload["request_type"] = BUSINESS_DECISION_SOURCE
 
         decision_response = request.get("decision_response")
-        if not isinstance(decision_response, dict):
-            raise ValueError("business decision source requires actor-only structured decision_response")
-        source_payload = project_decision_response(source_payload, decision_response, decision_work_package)
+        if isinstance(supplied_decision, dict) and supplied_decision:
+            # Historical durable Business Decision Source replay: preserve the
+            # already-canonical immutable Source instead of re-projecting it
+            # through today's actor response contract. New production ingress
+            # cannot use this path because it does not supply formal_decision.
+            source_payload = source_payload
+        else:
+            if not isinstance(decision_response, dict):
+                raise ValueError("business decision source requires actor-only structured decision_response")
+            source_payload = project_decision_response(source_payload, decision_response, decision_work_package)
         source = validate_source(
             source_payload,
             expected_snapshot=str(request.get("consumed_snapshot") or source_payload.get("consumed_snapshot") or "").strip(),
