@@ -2857,6 +2857,28 @@ def main() -> int:
     request = load_json(req_path)
     request["_ingress_path"] = str(req_path.relative_to(ROOT)).replace("\\\\", "/")
 
+    # New Formal Decision identities must not bypass the structured Business
+    # Decision Source ingress. Historical legacy completion artifacts remain
+    # readable/replayable, but a legacy envelope whose parent request was
+    # created after the production cutover is rejected at the canonical
+    # state-sync gateway even if a caller bypasses the CLI builder.
+    legacy_manual_completion = (
+        str(request.get("request_type") or "").strip().upper() == "STATE_SYNC_ONLY"
+        and str(request.get("source") or "").strip().upper() == "CHATGPT_MANUAL_FORMAL_COMPLETION"
+        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_DECISION"
+    )
+    if legacy_manual_completion:
+        parent_id = str(request.get("parent_request_id") or "").strip()
+        parent_path = ROOT / "requests" / "live_snapshot" / f"{parent_id}.json"
+        parent = load_json(parent_path) if parent_id and parent_path.exists() else {}
+        parent_requested = str(parent.get("requested_at_beijing") or request.get("requested_at_beijing") or "").strip()
+        production_cutover = "2026-09-25T17:17:43+08:00"
+        if parent_requested and parent_requested >= production_cutover:
+            raise ValueError(
+                "new Formal Decision legacy completion bypass is forbidden; "
+                "use BUSINESS_DECISION_SOURCE with structured decision_response"
+            )
+
     # Explicit Business Decision Source dispatch. The ingress file itself is
     # the immutable durable Source artifact; projection only occurs after the
     # Phase 1 gate and never calls decision logic or refreshes market facts.
