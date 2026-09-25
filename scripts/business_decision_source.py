@@ -251,6 +251,53 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
 
     main_answer = answers["MAIN_CANDIDATE"]
     risk_answer = answers["RISK_PERMISSION"]
+    # Capital-state comparison is an actor business judgment, but the canonical
+    # writer shape is a machine-owned projection.  The actor names the states;
+    # existing problem answers supply the per-state business semantics.
+    state_problem_map = {
+        "现金": "DEPLOYABLE_CASH",
+        "全部实际持仓继续占资": "RELEASABLE_CAPITAL",
+        "全部持仓ETF追加": "CONCENTRATION_COMMON_RISK",
+        "全部正式观察ETF": "CONCENTRATION_COMMON_RISK",
+        "12只Discovery临时评估对象": "CONCENTRATION_COMMON_RISK",
+        "561980条件释放资本": "RELEASABLE_CAPITAL",
+        "159981下一节点Confirm": "TRIAL_CONFIRM_CAPACITY",
+    }
+    canonical_capital_states = []
+    for raw_state in next_answer["compared_capital_states"]:
+        if isinstance(raw_state, dict):
+            canonical_capital_states.append(raw_state)
+            continue
+        state_name = str(raw_state or "").strip()
+        if not state_name:
+            raise ValueError("NEXT_UNIT_CAPITAL_USE compared_capital_states contains empty state")
+        problem_id = state_problem_map.get(state_name)
+        if not problem_id:
+            # Generic deterministic routing for future request-specific names.
+            if "现金" in state_name:
+                problem_id = "DEPLOYABLE_CASH"
+            elif "释放" in state_name:
+                problem_id = "RELEASABLE_CAPITAL"
+            elif "Confirm" in state_name or "Trial" in state_name:
+                problem_id = "TRIAL_CONFIRM_CAPACITY"
+            elif "追加" in state_name or "观察" in state_name or "Discovery" in state_name:
+                problem_id = "CONCENTRATION_COMMON_RISK"
+            else:
+                raise ValueError(f"NEXT_UNIT_CAPITAL_USE capital state has no business-semantics owner: {state_name}")
+        owner = answers.get(problem_id) or {}
+        action = str(owner.get("final_action") or "").strip()
+        comparison = str(owner.get("capital_comparison") or "").strip()
+        if not action or not comparison:
+            raise ValueError(f"decision response missing capital-state business semantics: {state_name}->{problem_id}")
+        selected = state_name in str(next_answer.get("final_action") or "")
+        canonical_capital_states.append({
+            "state_name": state_name,
+            "capital_action": action,
+            "remaining_deployable_cash": post_cash,
+            "why_not_selected": "已选中" if selected else comparison,
+            "opportunity_cost_if_selected": str(next_answer.get("cash_opportunity_cost") or comparison),
+        })
+
     projected = json.loads(json.dumps(source))
     projected.update({
         "risk_permission": risk_answer["final_action"],
@@ -279,7 +326,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             "selected_state_reason": next_answer["selected_state_reason"],
             "new_amount_yuan": new_amount,
             "zero_amount_decisive_reason": next_answer.get("zero_amount_decisive_reason"),
-            "compared_capital_states": next_answer["compared_capital_states"],
+            "compared_capital_states": canonical_capital_states,
             "held_etf_add_capital_reviews": held_add_reviews,
             "etf_opportunity_reviews": opportunity_reviews,
         },
