@@ -49,6 +49,40 @@ def decision_critical_blockage() -> tuple[bool, str]:
     return False, "no_decision_critical_blockage"
 
 
+def _market_interruption_error(event: dict) -> str:
+    """Separate raw anomaly detection from user interruption qualification.
+
+    Detection stays high-recall.  A market anomaly may interrupt the user only
+    when it is directly tied to a managed object or carries registered
+    structural/severe market information.  This is not a trading decision and
+    does not infer an action from price alone.
+    """
+    ctx = event.get("confirmation_context") or {}
+    category = str(ctx.get("event_category") or ctx.get("shock_severity") or "")
+    code = str(event.get("security_code") or ctx.get("security_code") or "")
+    asset_class = str(event.get("asset_class") or ctx.get("asset_class") or "")
+
+    try:
+        from notification_semantics import object_role
+        role, _ = object_role(code, asset_class)
+    except (ImportError, OSError, TypeError, ValueError):
+        role = ""
+
+    if role in {"ACTIVE_FORMAL_OBJECT", "HELD_ETF", "ACCOUNT_STOCK"}:
+        return ""
+    if str(ctx.get("structure_cluster_id") or ""):
+        return ""
+    if category in {"DIVERGENCE", "EXTREME"}:
+        return ""
+    if bool(ctx.get("decision_or_capital_relevance_confirmed")):
+        return ""
+    return (
+        "raw market anomaly has price/path evidence but no user interruption "
+        "qualification (managed-object, structural, severe, or canonical "
+        "decision/capital relevance)"
+    )
+
+
 def _market_value_error(event: dict) -> str:
     ctx = event.get("confirmation_context") or {}
     category = str(ctx.get("event_category") or ctx.get("shock_severity") or "")
@@ -75,7 +109,7 @@ def _market_value_error(event: dict) -> str:
         return "REVERSAL notification has no current comparable level"
     if category == "DIVERGENCE" and magnitude is None:
         return "DIVERGENCE notification has no numeric spread magnitude"
-    return ""
+    return _market_interruption_error(event)
 
 
 def _late_apac_error(event: dict) -> str:
