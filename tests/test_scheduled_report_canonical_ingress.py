@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from notification_center import validate_report_delivery_request
-from write_report_delivery_request import build_and_write_report_request, project_scheduled_report_source
+from write_report_delivery_request import build_and_write_report_request
 
 
 class ScheduledReportCanonicalIngressTests(unittest.TestCase):
