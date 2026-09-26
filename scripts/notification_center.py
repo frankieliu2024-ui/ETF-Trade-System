@@ -28,6 +28,7 @@ ACTIVE_REPORT_TYPES = {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}
 HISTORICAL_REPORT_TYPES = {"ETF_FORMAL_DECISION"}
 REPORT_REQUEST_DIR = ROOT / "requests" / "report_delivery"
 REPORT_HANDOFF_DIR = ROOT / "requests" / "report_handoff"
+REVIEW_EVENT_DIR = ROOT / "events" / "reviews"
 
 def validate_report_delivery_request(request: dict) -> tuple[bool, str]:
     """Validate a completed active formal report before shared delivery."""
@@ -147,6 +148,9 @@ def report_delivery_validation_error() -> str | None:
 
 
 def report_delivery_event() -> dict | None:
+    canonical = canonical_scheduled_report_events()
+    if canonical:
+        return canonical[-1]
     handoff_path = _report_handoff_path()
     if handoff_path is not None:
         handoff = read_json(handoff_path, {})
@@ -179,6 +183,38 @@ def report_delivery_event() -> dict | None:
             "report_type": str(request["report_type"]), "report_id": str(request["report_id"]),
             "task_id": str(request["task_id"]), "task_run_id": str(request["task_run_id"]),
             "idempotency_key": key, "no_trade_authority": True}
+
+def canonical_scheduled_report_events() -> list[dict]:
+    """Read report presentation bindings published with business completion events."""
+    events = []
+    for path in sorted(REVIEW_EVENT_DIR.glob("*.json")) if REVIEW_EVENT_DIR.exists() else []:
+        event = read_json(path, {})
+        binding = event.get("presentation_binding") or {}
+        report_type = str(binding.get("report_type") or "")
+        content = str(binding.get("full_content") or "")
+        if report_type not in ACTIVE_REPORT_TYPES or not content:
+            continue
+        expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        if str(binding.get("content_hash") or expected) != expected:
+            continue
+        task_run_id = str(binding.get("task_run_id") or event.get("occurrence_id") or "")
+        task_id = str(binding.get("task_id") or "")
+        if not task_run_id or not task_id:
+            continue
+        key = f"{report_type}:{task_run_id}"
+        events.append({
+            "key": f"report-delivery:{key}", "source_event_id": f"report-completion:{key}",
+            "event_type": "REPORT_DELIVERY_REQUEST", "notification_channel": "REPORT",
+            "delivery_mode": "FULL_REPORT", "type": "正式报告",
+            "title": str(binding.get("title") or ("【ETF交易复盘】" if report_type == "ETF_TRADE_REVIEW" else "【ETF系统复核】")),
+            "content": content, "source": f"canonical-review-completion:{path.name}",
+            "user_severity": "正式报告", "user_action": "阅读已完成的正式ETF报告；无需交易操作",
+            "report_type": report_type, "report_id": f"{report_type.lower()}:{task_run_id}",
+            "task_id": task_id, "task_run_id": task_run_id, "idempotency_key": key,
+            "no_trade_authority": True, "content_hash": expected,
+        })
+    return events
+
 
 def read_json(path: Path, default: Any) -> Any:
     try:

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from scripts import scheduled_review_completion as completion
 
@@ -96,6 +99,48 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             completion.build_completion_request(
                 review, "20260923_2030_scheduled_trade_review", "2026-09-23T20:30:00+08:00"
             )
+
+    def test_trade_completion_binds_frozen_final_content(self):
+        payload = completion.build_completion_request(
+            full_review(), "trade-run", "2026-09-23T20:30:00+08:00",
+            final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run",
+        )
+        self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_TRADE_REVIEW")
+        self.assertEqual(payload["presentation_binding"]["full_content"], "FROZEN TRADE REPORT")
+
+    def test_system_review_completion_is_business_completion_not_report_handoff(self):
+        payload = completion.build_system_review_completion_request(
+            {"status": "PASS"}, "system-request", "2026-09-26T19:30:00+08:00",
+            "ETF系统复核", "system-run", "FROZEN SYSTEM REPORT",
+        )
+        self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_SYSTEM_REVIEW")
+        self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_SYSTEM_REVIEW")
+        self.assertNotIn("report_delivery", payload)
+        self.assertNotIn("report_handoff", payload)
+
+
+    def test_system_completion_publishes_canonical_event_consumed_by_notification_center(self):
+        from scripts import notification_center
+        from scripts import process_state_sync_request as state_sync
+        payload = completion.build_system_review_completion_request(
+            {"status": "PASS"}, "system-request", "2026-09-26T19:30:00+08:00",
+            "ETF系统复核", "system-run", "FROZEN SYSTEM REPORT",
+        )
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            with patch.object(state_sync, "ROOT", root):
+                recorded, replay = state_sync.record_scheduled_system_review(payload)
+                self.assertTrue(recorded)
+                self.assertFalse(replay)
+                recorded, replay = state_sync.record_scheduled_system_review(payload)
+                self.assertTrue(recorded)
+                self.assertTrue(replay)
+            with patch.object(notification_center, "REVIEW_EVENT_DIR", root / "events" / "reviews"):
+                event = notification_center.report_delivery_event()
+            self.assertEqual(event["report_type"], "ETF_SYSTEM_REVIEW")
+            self.assertEqual(event["content"], "FROZEN SYSTEM REPORT")
+            self.assertEqual(event["idempotency_key"], "ETF_SYSTEM_REVIEW:system-run")
+
 
 
 if __name__ == "__main__":

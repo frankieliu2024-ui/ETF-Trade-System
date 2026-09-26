@@ -88,6 +88,9 @@ def build_completion_request(
     market_date: str = "",
     parent_request_id: str = "",
     account: dict | None = None,
+    final_content: str = "",
+    task_id: str = "",
+    task_run_id: str = "",
 ) -> dict:
     """Wrap an already-formed full-day Scheduled Review for the existing state-sync owner."""
     validate_full_day_review(formal_review, account)
@@ -104,6 +107,12 @@ def build_completion_request(
         "requested_at_beijing": str(requested_at_beijing or "").strip(),
         "market_date": effective_market_date,
         "formal_review": formal_review,
+        "presentation_binding": {
+            "report_type": "ETF_TRADE_REVIEW",
+            "task_id": str(task_id or "ETF交易复盘"),
+            "task_run_id": str(task_run_id or request_id),
+            "full_content": str(final_content or ""),
+        },
     }
     if parent_request_id:
         payload["parent_request_id"] = _safe_id(parent_request_id)
@@ -114,6 +123,38 @@ def build_completion_request(
     return payload
 
 
+def build_system_review_completion_request(
+    system_review: dict,
+    request_id: str,
+    requested_at_beijing: str,
+    task_id: str,
+    task_run_id: str,
+    final_content: str,
+) -> dict:
+    """Build the business completion envelope for one Scheduled System Review occurrence."""
+    if not isinstance(system_review, dict) or not system_review:
+        raise ValueError("scheduled system review completion requires system_review")
+    request_id = _safe_id(request_id)
+    task_run_id = _safe_id(task_run_id)
+    if not str(requested_at_beijing or "").strip() or not str(final_content or "").strip():
+        raise ValueError("scheduled system review completion requires requested_at_beijing and frozen final_content")
+    return {
+        "request_id": request_id,
+        "request_type": "STATE_SYNC_ONLY",
+        "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+        "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+        "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+        "requested_at_beijing": str(requested_at_beijing),
+        "system_review": system_review,
+        "presentation_binding": {
+            "report_type": "ETF_SYSTEM_REVIEW",
+            "task_id": str(task_id or "ETF系统复核"),
+            "task_run_id": task_run_id,
+            "full_content": str(final_content),
+        },
+    }
+
+
 def write_completion_request(
     review_path: str,
     request_id: str,
@@ -121,6 +162,9 @@ def write_completion_request(
     market_date: str = "",
     parent_request_id: str = "",
     output_path: str = "",
+    final_content: str = "",
+    task_id: str = "",
+    task_run_id: str = "",
 ) -> Path:
     source = (ROOT / review_path).resolve()
     if ROOT not in source.parents:
@@ -129,7 +173,8 @@ def write_completion_request(
     account_path = ROOT / "data/state/account_fact.json"
     account = json.loads(account_path.read_text(encoding="utf-8")) if account_path.exists() else None
     payload = build_completion_request(
-        review, request_id, requested_at_beijing, market_date, parent_request_id, account
+        review, request_id, requested_at_beijing, market_date, parent_request_id, account,
+        final_content, task_id, task_run_id
     )
     target = (ROOT / output_path).resolve() if output_path else REQUEST_DIR / f"{payload['request_id']}.json"
     if ROOT not in target.parents or target.suffix != ".json":
@@ -152,6 +197,9 @@ def main() -> int:
     parser.add_argument("--market-date", default="")
     parser.add_argument("--parent-request-id", default="")
     parser.add_argument("--output", default="")
+    parser.add_argument("--final-content", default="")
+    parser.add_argument("--task-id", default="")
+    parser.add_argument("--task-run-id", default="")
     args = parser.parse_args()
     target = write_completion_request(
         args.formal_review,
@@ -160,6 +208,9 @@ def main() -> int:
         args.market_date,
         args.parent_request_id,
         args.output,
+        args.final_content,
+        args.task_id,
+        args.task_run_id,
     )
     print(json.dumps({"ok": True, "request": str(target.relative_to(ROOT)).replace("\\", "/")}, ensure_ascii=False))
     return 0

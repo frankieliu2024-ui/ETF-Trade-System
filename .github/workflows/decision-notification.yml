@@ -26,6 +26,7 @@ on:
     paths:
       - "events/decisions/*.json"
       - "events/trades/*.json"
+      - "events/reviews/*.json"
       - "data/state/account_fact.json"
       - "requests/notification_test/*.json"
       - "requests/report_delivery/*.json"
@@ -137,6 +138,11 @@ jobs:
             echo "report_handoff=false" >> "$GITHUB_OUTPUT"
             echo "report_handoff_path=" >> "$GITHUB_OUTPUT"
           fi
+          if grep -Eq '^events/reviews/[^/]+\.json$' /tmp/changed_files.txt; then
+            echo "review_completion=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "review_completion=false" >> "$GITHUB_OUTPUT"
+          fi
           mapfile -t report_paths < <(grep -E '^requests/report_delivery/[^/]+\.json$' /tmp/changed_files.txt || true)
           if [ "${#report_paths[@]}" -eq 1 ]; then
             echo "report=true" >> "$GITHUB_OUTPUT"
@@ -226,7 +232,7 @@ jobs:
       # notification center can reach PushPlus.
       - name: Send material user-action notification
         id: event_notify
-        if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true')) }}
+        if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true')) }}
         continue-on-error: true
         env:
           # Bind the single report selected from the triggering push.
