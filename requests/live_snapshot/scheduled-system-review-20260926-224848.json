@@ -1,0 +1,38 @@
+{
+  "request_id": "scheduled-system-review-20260926-224848",
+  "request_type": "STATE_SYNC_ONLY",
+  "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+  "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+  "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+  "requested_at_beijing": "2026-09-26T22:48:48+08:00",
+  "system_review": {
+    "status": "PASS",
+    "trigger": "MANUAL",
+    "reviewed_at_beijing": "2026-09-26T22:48:48+08:00",
+    "market_phase": "CLOSED_NON_TRADING_DAY",
+    "a_share_latest_formal_market_date": "2026-09-24",
+    "system_consistency_status": "PASS",
+    "hard_error_count": 0,
+    "warning_count": 0,
+    "e2e_status": "READY",
+    "account_status": "VALID",
+    "account_updated_at": "2026-09-24T09:53:00+08:00",
+    "close_review_status": "CLOSED",
+    "close_review_market_date": "2026-09-24",
+    "overseas_runtime_status": "DEGRADED",
+    "user_action_required": false,
+    "new_work_item_gate": "NO_NEW_ITEM",
+    "maintenance_action": "DO_NOT_CHANGE",
+    "open_items": [
+      "NEXT_ACTIVE_A_SHARE_DISCOVERY_ACCEPTANCE",
+      "NEXT_NATURAL_SCHEDULED_SYSTEM_REVIEW_DELIVERY_OBSERVATION"
+    ],
+    "review_boundary": "SYSTEM_REVIEW_NOT_FORMAL_DECISION_NO_TRADE_AUTHORITY"
+  },
+  "presentation_binding": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "task_id": "ETF系统复核",
+    "task_run_id": "manual-20260926-224848",
+    "full_content": "【ETF系统复核】2026-09-26 22:48\n\n【总体结论】\nETF生产系统当前可用。最新正式一致性检查为PASS，0个硬错误、0个告警；E2E为READY，行情、账户、风险、收盘复盘、决策上下文、生命周期和维护组件均处于可用状态。当前为A股非交易时段，本次复核不生成交易指令，也没有发现需要立即修改生产系统的新故障。\n\n【异常与影响】\n海外运行层仍为DEGRADED，但当前没有硬错误。主要原因是部分亚洲市场只保留上一有效交易时段参考，以及个别直连来源存在结构性不可用；现有合法降级来源仍能提供质量合格的参考事实。这不会把旧行情冒充实时行情，也不构成当前A股交易判断阻塞。当前没有证据支持新增行情链、provider或通知旁路。\n\n【需要用户处理】\n无。当前账户事实有效，没有新的成交、资金划转或其他已确认账户变化需要补录；本轮也没有需要用户手工介入的系统修复。\n\n【关键状态】\n系统一致性：PASS，0个硬错误、0个告警。\nE2E：READY，无blocker、无degradation。\n账户：VALID；最近确认时间为2026-09-24 09:53，现金及可部署现金13,169.54元，总资产194,752.04元；当前登记7个持仓对象。\n收盘复盘：2026-09-24正式收盘复盘已CLOSED。\n通知交付：Scheduled Review单一路径的根因修复已经进入current main，原相关维护事项已关闭；本次复核完成后的实际消息送达结果不在本条冻结正文中预判。\n\n【数据时点（北京时间）】\nA股最新正式快照：2026-09-24 15:04:36，当前按非交易时段解释。\n美股正式指数：NDX、SOX最新参考时点为2026-09-26 04:00；美股扩展时段QQQ、SOXX参考更新至2026-09-26约08:00。\n亚洲市场：日经225为2026-09-25 14:30；恒生科技为2026-09-25 16:05；台湾加权为2026-09-24 13:30；韩国综合为2026-09-23 14:00。各市场时点不同，均按各自真实阶段解释，不视为同步信号。\n\n【本轮新增事实】\n此前Scheduled Review交付链的代码与规范已在current main完成收敛，最新系统级一致性和E2E状态均已恢复为正常可用。本轮未发现该修复引入新的系统级异常，因此没有新的生产修改准入事项。\n\n【未闭环事项】\n全市场ETF机会发现仍需在下一次有效A股市场暴露中继续验证最新生产链的真实候选收敛与资本竞争效果；该事项属于等待真实市场事实，不构成当前系统可用性阻塞。下一次自然自动系统复核仍具有无人值守交付观察价值，但当前没有证据支持为此继续修改生产架构。\n\n【下一阶段】\n保持current main及现有两项ETF定时任务不变。下一有效A股交易节点继续验证全市场机会发现；下一次自然系统复核继续观察自动完成与消息交付，不提前新增修复。\n\n【执行状态】\n等待外部条件\n\n【下一关注点】\n下一次有信息价值的事实是：有效A股市场节点下的全市场机会发现真实暴露，以及下一次自然Scheduled System Review是否按现有单一路径完成交付。\n\n【置信度】\n高。\n\n【最可能出错的地方】\n当前处于非交易时段，部分亚洲市场数据天然停留在各自上一有效交易时段；这些参考事实不能被误读为同步实时行情。其次，本次正文冻结时不能预先证明随后消息已经送达，实际交付结果必须由完成后的通知链事实确认。"
+  }
+}
