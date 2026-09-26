@@ -138,7 +138,157 @@ jobs:
             echo "report_handoff=false" >> "$GITHUB_OUTPUT"
             echo "report_handoff_path=" >> "$GITHUB_OUTPUT"
           fi
-          mapfile -t review_paths < <(grep -E '^events/reviews/[^/]+\\.json$' /tmp/changed_files.txt || true)
+          mapfile -t review_paths < <(grep -E '^events/reviews/[^/]+\.json /tmp/changed_files.txt || true)
+          if [ "${#review_paths[@]}" -eq 1 ]; then
+            echo "review_completion=true" >> "$GITHUB_OUTPUT"
+            echo "review_event_path=${review_paths[0]}" >> "$GITHUB_OUTPUT"
+          elif [ "${#review_paths[@]}" -gt 1 ]; then
+            echo "Ambiguous canonical Scheduled Review push: expected exactly one review event, found ${#review_paths[@]}" >&2
+            printf '%s\n' "${review_paths[@]}" >&2
+            exit 1
+          else
+            echo "review_completion=false" >> "$GITHUB_OUTPUT"
+            echo "review_event_path=" >> "$GITHUB_OUTPUT"
+          fi
+          mapfile -t report_paths < <(grep -E '^requests/report_delivery/[^/]+\.json$' /tmp/changed_files.txt || true)
+          if [ "${#report_paths[@]}" -eq 1 ]; then
+            echo "report=true" >> "$GITHUB_OUTPUT"
+            echo "report_path=${report_paths[0]}" >> "$GITHUB_OUTPUT"
+          elif [ "${#report_paths[@]}" -gt 1 ]; then
+            echo "Ambiguous REPORT push: expected exactly one report request, found ${#report_paths[@]}" >&2
+            printf '%s\n' "${report_paths[@]}" >&2
+            exit 1
+          else
+            echo "report=false" >> "$GITHUB_OUTPUT"
+            echo "report_path=" >> "$GITHUB_OUTPUT"
+          fi
+          cat /tmp/changed_files.txt
+
+      # notification_center.py historically scans the full report request directory.
+      # For a REPORT push, make the disposable checkout expose only the request that
+      # triggered this commit so an older lexicographically-later report cannot be
+      # selected. The canonical repository is untouched; persistence resets to
+      # origin/main before writing unified notification state.
+      - name: Isolate pushed report delivery request
+        if: ${{ github.event_name == 'push' && steps.push_kind.outputs.report == 'true' }}
+        shell: bash
+        env:
+          REPORT_PATH: ${{ steps.push_kind.outputs.report_path }}
+        run: |
+          test -n "$REPORT_PATH"
+          test -f "$REPORT_PATH"
+          find requests/report_delivery -maxdepth 1 -type f -name '*.json' ! -path "$REPORT_PATH" -delete
+          test "$(find requests/report_delivery -maxdepth 1 -type f -name '*.json' | wc -l)" -eq 1
+          test -f "$REPORT_PATH"
+
+      - name: Build delayed execution reconciliation
+        if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && (steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.trade == 'true')) }}
+        run: python scripts/build_execution_reconciliation.py
+
+      - name: Send A-share opening value signal or close summary when due
+        id: a_share_summary_notify
+        if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot') || (github.event_name == 'push' && steps.push_kind.outputs.a_share_market == 'true') }}
+        continue-on-error: true
+        run: python scripts/run_guarded_notification.py batch --market a-share
+
+      - name: Send APAC opening value signal or close summary when due
+        id: apac_summary_notify
+        if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Overseas pre-open pulse') || (github.event_name == 'push' && steps.push_kind.outputs.apac_market == 'true') }}
+        continue-on-error: true
+        run: python scripts/run_guarded_notification.py batch --market apac
+
+      - name: Send APAC monitored-object value event when due
+        id: apac_shock_notify
+        if: ${{ false }}
+        continue-on-error: true
+        env:
+          PREVIOUS_CONTEXT_PATH: data/state/overseas_context_previous.json
+        run: echo "included in canonical batch"
+
+      - name: Send US session summary when due
+        id: us_summary_notify
+        if: ${{ (github.event_name == 'workflow_run' && (github.event.workflow_run.name == 'US extended-hours pulse' || github.event.workflow_run.name == 'Overseas pre-open pulse')) || (github.event_name == 'workflow_dispatch' && inputs.recovery_market == 'us') || (github.event_name == 'push' && steps.push_kind.outputs.us_market == 'true') }}
+        continue-on-error: true
+        run: python scripts/run_guarded_notification.py batch --market us
+
+      - name: Send US monitored-object value event when due
+        id: us_shock_notify
+        if: ${{ false }}
+        continue-on-error: true
+        env:
+          PREVIOUS_CONTEXT_PATH: data/state/us_extended_hours_context_previous.json
+        run: echo "included in canonical batch"
+
+      # A-share is only the data source route here. The event engine evaluates
+      # every currently monitored index/ETF/account stock by attention value;
+      # market membership itself never grants or blocks notification eligibility.
+      - name: Send A-share monitored-object value event when due
+        id: a_share_shock_notify
+        if: ${{ false }}
+        continue-on-error: true
+        run: echo "included in canonical batch"
+
+      - name: Send safe notification-channel test
+        id: test_notify
+        if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.test_notification == 'true') || (github.event_name == 'push' && steps.push_kind.outputs.test == 'true') }}
+        continue-on-error: true
+        run: python scripts/run_guarded_notification.py center --mode channel-test
+
+      # Event-driven notifications have no A-share-session or night-time gate.
+      # The shared evidence guard rejects label/coverage-only changes before the
+      # notification center can reach PushPlus.
+      - name: Send material user-action notification
+        id: event_notify
+        if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true')) }}
+        continue-on-error: true
+        env:
+          # Bind the single report selected from the triggering push.
+          REPORT_DELIVERY_PATH: ${{ steps.push_kind.outputs.report_path }}
+          REPORT_HANDOFF_PATH: ${{ steps.push_kind.outputs.report_handoff_path }}
+          REVIEW_EVENT_PATH: ${{ steps.push_kind.outputs.review_event_path }}
+        run: python scripts/run_guarded_notification.py center --mode event
+
+      - name: Send conditional A-share trading-day post-close account reminder
+        id: close_notify
+        if: ${{ github.event_name == 'schedule' }}
+        continue-on-error: true
+        run: python scripts/run_guarded_notification.py center --mode close
+
+      - name: Persist unified notification and execution-reconciliation state
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          mkdir -p /tmp/etf-notification-state/data/state
+          [ -f data/state/notification_center.json ] && cp data/state/notification_center.json /tmp/etf-notification-state/data/state/notification_center.json || true
+          [ -f data/state/execution_reconciliation.json ] && cp data/state/execution_reconciliation.json /tmp/etf-notification-state/data/state/execution_reconciliation.json || true
+          if [ ! -f /tmp/etf-notification-state/data/state/notification_center.json ] && [ ! -f /tmp/etf-notification-state/data/state/execution_reconciliation.json ]; then
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git reset --hard origin/main
+          if [ -f /tmp/etf-notification-state/data/state/notification_center.json ]; then
+            python scripts/merge_notification_state.py \
+              --base data/state/notification_center.json \
+              --incoming /tmp/etf-notification-state/data/state/notification_center.json \
+              --output data/state/notification_center.json
+          fi
+          [ -f /tmp/etf-notification-state/data/state/execution_reconciliation.json ] && cp /tmp/etf-notification-state/data/state/execution_reconciliation.json data/state/execution_reconciliation.json || true
+          git add data/state/notification_center.json data/state/execution_reconciliation.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "state: record notification and execution reconciliation"
+          git push origin HEAD:main
+
+      - name: Surface notification delivery failure without blocking trading system
+        if: ${{ steps.test_notify.outcome == 'failure' || steps.event_notify.outcome == 'failure' || steps.close_notify.outcome == 'failure' || steps.a_share_summary_notify.outcome == 'failure' || steps.a_share_shock_notify.outcome == 'failure' || steps.apac_summary_notify.outcome == 'failure' || steps.apac_shock_notify.outcome == 'failure' || steps.us_summary_notify.outcome == 'failure' || steps.us_shock_notify.outcome == 'failure' }}
+        run: |
+          echo "User notification delivery failed; ETF market/data/trading-decision workflows remain unaffected."
+          exit 1
+ /tmp/changed_files.txt || true)
           if [ "${#review_paths[@]}" -eq 1 ]; then
             echo "review_completion=true" >> "$GITHUB_OUTPUT"
             echo "review_event_path=${review_paths[0]}" >> "$GITHUB_OUTPUT"
