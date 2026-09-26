@@ -102,7 +102,12 @@ def classify_live_snapshot_request(request: dict) -> str:
     source = str(request.get("source") or "").upper()
     scenario = str(request.get("interaction_scenario") or "").upper()
     has_state_sync = any(field in request for field in STATE_SYNC_FIELDS)
-    has_state_sync = has_state_sync or str(request.get("request_type") or "").upper() in EVIDENCE_REQUEST_TYPES
+    # STATE_SYNC_ONLY is the explicit routing contract for business-completion
+    # envelopes, including Scheduled System Review. Do not require each new
+    # completion payload to duplicate a legacy state-sync field merely to reach
+    # the existing canonical state-sync owner.
+    has_state_sync = has_state_sync or request_type == "STATE_SYNC_ONLY"
+    has_state_sync = has_state_sync or request_type in EVIDENCE_REQUEST_TYPES
     has_state_sync = has_state_sync or source == "CHATGPT_USER_BROKER_SCREENSHOT" or scenario == "BROKER_SCREENSHOT_SYNC"
     refresh_bearing = bool(
         request.get("force_refresh") is True
