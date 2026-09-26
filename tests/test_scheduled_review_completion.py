@@ -97,6 +97,25 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
                 review, "20260923_2030_scheduled_trade_review", "2026-09-23T20:30:00+08:00"
             )
 
+    def test_trade_completion_binds_frozen_final_content(self):
+        payload = completion.build_completion_request(
+            full_review(), "trade-run", "2026-09-23T20:30:00+08:00",
+            final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run",
+        )
+        self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_TRADE_REVIEW")
+        self.assertEqual(payload["presentation_binding"]["full_content"], "FROZEN TRADE REPORT")
+
+    def test_system_review_completion_is_business_completion_not_report_handoff(self):
+        payload = completion.build_system_review_completion_request(
+            {"status": "PASS"}, "system-request", "2026-09-26T19:30:00+08:00",
+            "ETF系统复核", "system-run", "FROZEN SYSTEM REPORT",
+        )
+        self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_SYSTEM_REVIEW")
+        self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_SYSTEM_REVIEW")
+        self.assertNotIn("report_delivery", payload)
+        self.assertNotIn("report_handoff", payload)
+
+
 
 if __name__ == "__main__":
     unittest.main()
