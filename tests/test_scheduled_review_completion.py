@@ -145,5 +145,13 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
 
 
 
+    def test_both_scheduled_review_fact_types_share_notification_wake_contract(self):
+        workflow = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
+        self.assertIn('{"FORMAL_SCHEDULED_REVIEW", "FORMAL_SCHEDULED_SYSTEM_REVIEW"}', workflow)
+        self.assertIn("python scripts/run_guarded_notification.py center --mode event", workflow)
+        self.assertNotIn("requests/report_delivery", workflow[workflow.index("Deliver canonical Scheduled Review completion through notification center"):])
+
+
+
 if __name__ == "__main__":
     unittest.main()
