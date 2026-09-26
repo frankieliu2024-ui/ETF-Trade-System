@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from scripts import scheduled_review_completion as completion
 
@@ -114,6 +117,29 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_SYSTEM_REVIEW")
         self.assertNotIn("report_delivery", payload)
         self.assertNotIn("report_handoff", payload)
+
+
+    def test_system_completion_publishes_canonical_event_consumed_by_notification_center(self):
+        from scripts import notification_center
+        from scripts import process_state_sync_request as state_sync
+        payload = completion.build_system_review_completion_request(
+            {"status": "PASS"}, "system-request", "2026-09-26T19:30:00+08:00",
+            "ETF系统复核", "system-run", "FROZEN SYSTEM REPORT",
+        )
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            with patch.object(state_sync, "ROOT", root):
+                recorded, replay = state_sync.record_scheduled_system_review(payload)
+                self.assertTrue(recorded)
+                self.assertFalse(replay)
+                recorded, replay = state_sync.record_scheduled_system_review(payload)
+                self.assertTrue(recorded)
+                self.assertTrue(replay)
+            with patch.object(notification_center, "REVIEW_EVENT_DIR", root / "events" / "reviews"):
+                event = notification_center.report_delivery_event()
+            self.assertEqual(event["report_type"], "ETF_SYSTEM_REVIEW")
+            self.assertEqual(event["content"], "FROZEN SYSTEM REPORT")
+            self.assertEqual(event["idempotency_key"], "ETF_SYSTEM_REVIEW:system-run")
 
 
 
