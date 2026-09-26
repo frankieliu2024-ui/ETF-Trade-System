@@ -123,6 +123,38 @@ def build_completion_request(
     return payload
 
 
+def build_system_review_completion_request(
+    system_review: dict,
+    request_id: str,
+    requested_at_beijing: str,
+    task_id: str,
+    task_run_id: str,
+    final_content: str,
+) -> dict:
+    """Build the business completion envelope for one Scheduled System Review occurrence."""
+    if not isinstance(system_review, dict) or not system_review:
+        raise ValueError("scheduled system review completion requires system_review")
+    request_id = _safe_id(request_id)
+    task_run_id = _safe_id(task_run_id)
+    if not str(requested_at_beijing or "").strip() or not str(final_content or "").strip():
+        raise ValueError("scheduled system review completion requires requested_at_beijing and frozen final_content")
+    return {
+        "request_id": request_id,
+        "request_type": "STATE_SYNC_ONLY",
+        "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+        "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+        "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+        "requested_at_beijing": str(requested_at_beijing),
+        "system_review": system_review,
+        "presentation_binding": {
+            "report_type": "ETF_SYSTEM_REVIEW",
+            "task_id": str(task_id or "ETF系统复核"),
+            "task_run_id": task_run_id,
+            "full_content": str(final_content),
+        },
+    }
+
+
 def write_completion_request(
     review_path: str,
     request_id: str,
