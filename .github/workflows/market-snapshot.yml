@@ -644,31 +644,3 @@ jobs:
             fi
             if [ "$attempt" = "3" ]; then exit 1; fi
           done
-
-      - name: Deliver canonical Scheduled Review completion through notification center
-        # GitHub suppresses recursive workflow triggers for commits pushed with
-        # GITHUB_TOKEN. Scheduled Review completion is already canonical at this
-        # point, so consume that same events/reviews fact in the existing single
-        # notification center instead of creating a second report-delivery path.
-        if: ${{ always() && steps.state_sync.outputs.processed == 'true' && github.event.inputs.probe_only != 'true' }}
-        env:
-          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
-        shell: bash
-        run: |
-          git fetch origin main
-          git reset --hard origin/main
-          REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"
-          if [ -z "$REQUEST_FILE" ] && [ -n "${REPLAY_REQUEST:-}" ]; then REQUEST_FILE="$REPLAY_REQUEST"; fi
-          if [ -z "$REQUEST_FILE" ] || [ ! -f "$REQUEST_FILE" ]; then exit 0; fi
-          if ! python - "$REQUEST_FILE" <<'PY'
-          import json, sys
-          request = json.load(open(sys.argv[1], encoding="utf-8"))
-          fact_type = str(request.get("formal_fact_type") or "").upper()
-          raise SystemExit(0 if fact_type in {"FORMAL_SCHEDULED_REVIEW", "FORMAL_SCHEDULED_SYSTEM_REVIEW"} else 1)
-          PY
-          then
-            exit 0
-          fi
-          python scripts/run_guarded_notification.py center --mode event
-
-
