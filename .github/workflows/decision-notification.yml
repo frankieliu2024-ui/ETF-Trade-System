@@ -248,10 +248,34 @@ jobs:
         if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot' && github.event.workflow_run.conclusion == 'success' }}
         shell: bash
         env:
+          PRODUCER_RUN_ID: ${{ github.event.workflow_run.id }}
           PRODUCER_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
-          git cat-file -e "$PRODUCER_SHA^{commit}" 2>/dev/null || git fetch --no-tags origin "$PRODUCER_SHA"
-          mapfile -t review_paths < <(git show --format= --name-only "$PRODUCER_SHA" -- 'events/reviews/*.json' | sed '/^$/d')
+          # workflow_run.head_sha is the input commit; Review events are written
+          # by the downstream data commit created inside market-snapshot.
+          if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+            git fetch --no-tags --unshallow origin main
+          else
+            git fetch --no-tags origin main
+          fi
+          mapfile -t downstream_commits < <(
+            git log origin/main --format='%H%x09%s' --grep="[producer-run:${PRODUCER_RUN_ID}]" --fixed-strings
+          )
+          if [ "${#downstream_commits[@]}" -eq 0 ]; then
+            echo "No downstream producer commit for run ${PRODUCER_RUN_ID}; no Scheduled Review completion to notify."
+            echo "review_completion=false" >> "$GITHUB_OUTPUT"
+            echo "review_event_path=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "${#downstream_commits[@]}" -ne 1 ]; then
+            echo "Ambiguous downstream producer commits for run ${PRODUCER_RUN_ID}: ${#downstream_commits[@]}" >&2
+            printf '%s\n' "${downstream_commits[@]}" >&2
+            exit 1
+          fi
+          downstream_sha="${downstream_commits[0]%%$'\t'*}"
+          mapfile -t review_paths < <(
+            git diff-tree --no-commit-id --name-only -r "$downstream_sha" -- 'events/reviews/*.json' | sed '/^$/d'
+          )
           if [ "${#review_paths[@]}" -eq 1 ]; then
             echo "review_completion=true" >> "$GITHUB_OUTPUT"
             echo "review_event_path=${review_paths[0]}" >> "$GITHUB_OUTPUT"
@@ -260,8 +284,8 @@ jobs:
             printf '%s\n' "${review_paths[@]}" >&2
             exit 1
           else
-            echo "review_completion=false" >> "$GITHUB_OUTPUT"
-            echo "review_event_path=" >> "$GITHUB_OUTPUT"
+            echo "Producer run ${PRODUCER_RUN_ID} has no canonical Scheduled Review event." >&2
+            exit 1
           fi
 
       - name: Send material user-action notification

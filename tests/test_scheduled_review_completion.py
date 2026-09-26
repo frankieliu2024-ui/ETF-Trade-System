@@ -218,5 +218,17 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
 
 
 
+    def test_workflow_run_binds_downstream_producer_commit_before_exact_review_path(self):
+        producer = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
+        notifier = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
+        self.assertIn("[producer-run:${GITHUB_RUN_ID}]", producer)
+        self.assertIn("PRODUCER_RUN_ID:", notifier)
+        self.assertIn("git log origin/main --format='%H%x09%s'", notifier)
+        self.assertIn('--grep="[producer-run:${PRODUCER_RUN_ID}]"', notifier)
+        self.assertIn('git diff-tree --no-commit-id --name-only -r "$downstream_sha"', notifier)
+        self.assertIn("REVIEW_EVENT_PATH:", notifier)
+        self.assertNotIn('git show --format= --name-only "$PRODUCER_SHA"', notifier)
+
+
 if __name__ == "__main__":
     unittest.main()

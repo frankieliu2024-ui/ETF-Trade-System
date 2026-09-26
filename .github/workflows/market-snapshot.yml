@@ -638,7 +638,7 @@ jobs:
             if git diff --cached --quiet; then
               exit 0
             fi
-            git commit -m "data: record downstream market contexts and state sync"
+            git commit -m "data: record downstream market contexts and state sync [producer-run:${GITHUB_RUN_ID}]"
             if git push origin HEAD:main; then
               break
             fi
