@@ -51,9 +51,20 @@ def validate_decision_evidence_consumption(value: Any, *, parent_request_id: str
         "held_etf_additional_capital_consumed",
         "next_unit_capital_use_consumed",
     )
-    missing = [key for key in required if key not in value or value[key] in (None, "", [], {})]
+    layer_keys = {
+        "layer_1_external_cross_market",
+        "layer_2_a_share_internal",
+        "layer_3_etf_opportunity_capital",
+    }
+    missing = [
+        key for key in required
+        if key not in value or (key not in layer_keys and value[key] in (None, "", [], {}))
+    ]
     if missing:
         return "decision_evidence_consumption missing: " + ",".join(missing)
+    for key in layer_keys:
+        if not isinstance(value.get(key), list):
+            return f"decision_evidence_consumption.{key} must be a list"
     if parent_request_id and str(value.get("request_id") or "").strip() != parent_request_id:
         return "decision_evidence_consumption request_id must match parent request"
     for key in (
