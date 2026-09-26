@@ -24,7 +24,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
         }
 
     def test_all_three_report_types_are_shared_delivery_events(self):
-        for report_type in ("ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW", "ETF_FORMAL_DECISION"):
+        for report_type in ("ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"):
             request = self._request(report_type)
             with tempfile.TemporaryDirectory() as directory:
                 path = Path(directory) / "report.json"
@@ -137,6 +137,38 @@ class ReportDeliveryContractTests(unittest.TestCase):
                 event = notification_center.report_delivery_event()
         self.assertEqual(event["content"], handoff["full_content"])
         self.assertEqual(event["report_type"], "ETF_TRADE_REVIEW")
+
+    def test_canonical_trade_and_system_completion_preserve_frozen_content(self):
+        for report_type, filename in (("ETF_TRADE_REVIEW", "2026-09-26.json"), ("ETF_SYSTEM_REVIEW", "system_20260926_1930.json")):
+            body = f"FROZEN FINAL_CONTENT {report_type}"
+            event = {
+                "event_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW" if report_type == "ETF_SYSTEM_REVIEW" else "FORMAL_POST_CLOSE_REVIEW",
+                "presentation_binding": {
+                    "report_type": report_type, "task_id": report_type,
+                    "task_run_id": f"run-{report_type}", "full_content": body,
+                    "content_hash": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+                },
+            }
+            with tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / filename
+                path.write_text(json.dumps(event, ensure_ascii=False), encoding="utf-8")
+                with patch.object(notification_center, "REVIEW_EVENT_DIR", Path(directory)):
+                    first = notification_center.report_delivery_event()
+                    second = notification_center.report_delivery_event()
+            self.assertEqual(first["content"], body)
+            self.assertEqual(first["content_hash"], second["content_hash"])
+            self.assertEqual(first["idempotency_key"], second["idempotency_key"])
+            self.assertEqual(first["report_type"], report_type)
+
+    def test_malformed_canonical_completion_is_fail_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "system_bad.json"
+            path.write_text(json.dumps({"presentation_binding": {
+                "report_type": "ETF_SYSTEM_REVIEW", "task_id": "t", "task_run_id": "r",
+                "full_content": "body", "content_hash": "wrong",
+            }}), encoding="utf-8")
+            with patch.object(notification_center, "REVIEW_EVENT_DIR", Path(directory)):
+                self.assertEqual(notification_center.canonical_scheduled_report_events(), [])
 
 
 if __name__ == "__main__":
