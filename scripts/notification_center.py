@@ -225,7 +225,8 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
         event_occurrence = str(event.get("occurrence_id") or event.get("task_run_id") or "")
         if event_occurrence and event_occurrence != task_run_id:
             continue
-        key = f"{report_type}:{task_run_id}"
+        occurrence_id = event_occurrence or task_run_id
+        key = f"{report_type}:{occurrence_id}"
         events.append({
             "key": f"report-delivery:{key}", "source_event_id": f"report-completion:{key}",
             "event_type": "REPORT_DELIVERY_REQUEST", "notification_channel": "REPORT",
