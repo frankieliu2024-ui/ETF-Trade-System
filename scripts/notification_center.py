@@ -27,6 +27,7 @@ TRADING_CALENDAR = ROOT / "config" / "market" / "a_share_trading_calendar_2026.j
 ACTIVE_REPORT_TYPES = {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}
 HISTORICAL_REPORT_TYPES = {"ETF_FORMAL_DECISION"}
 REPORT_REQUEST_DIR = ROOT / "requests" / "report_delivery"
+REPORT_HANDOFF_DIR = ROOT / "requests" / "report_handoff"
 
 def validate_report_delivery_request(request: dict) -> tuple[bool, str]:
     """Validate a completed active formal report before shared delivery."""
@@ -73,6 +74,51 @@ def build_report_delivery_request(*, task_id: str, task_run_id: str, report_id: 
     return request
 
 
+def validate_report_handoff(handoff: dict) -> tuple[bool, str]:
+    """Validate the minimal delivery-only envelope from a Scheduled Review."""
+    required = ("schema_version", "report_type", "task_id", "task_run_id",
+                "generated_at", "effective_market_date", "title", "summary", "full_content")
+    missing = [key for key in required if not str(handoff.get(key) or "").strip()]
+    if missing:
+        return False, "missing:" + ",".join(missing)
+    if handoff.get("schema_version") != "1.0":
+        return False, "unsupported_handoff_schema"
+    if handoff.get("report_type") not in ACTIVE_REPORT_TYPES:
+        return False, "unsupported_report_type"
+    return True, ""
+
+
+def build_report_from_handoff(handoff: dict) -> dict:
+    """Project a delivery-only handoff into the canonical REPORT contract in memory."""
+    valid, reason = validate_report_handoff(handoff)
+    if not valid:
+        raise ValueError("invalid REPORT handoff: " + reason)
+    report_type = str(handoff["report_type"])
+    task_run_id = str(handoff["task_run_id"])
+    return build_report_delivery_request(
+        task_id=str(handoff["task_id"]),
+        task_run_id=task_run_id,
+        report_id=f"{report_type.lower()}:{task_run_id}",
+        report_type=report_type,
+        effective_market_date=str(handoff["effective_market_date"]),
+        title=str(handoff["title"]),
+        summary=str(handoff["summary"]),
+        full_content=str(handoff["full_content"]),
+        source_reference=f"scheduled-report-handoff:{task_run_id}",
+        idempotency_key=f"{report_type}:{task_run_id}",
+        generated_at=str(handoff["generated_at"]),
+        source_actor="Scheduled Review Actor",
+    )
+
+
+def _report_handoff_path() -> Path | None:
+    raw_path = os.environ.get("REPORT_HANDOFF_PATH", "").strip()
+    if not raw_path:
+        return None
+    path = Path(raw_path)
+    return path if path.is_absolute() else ROOT / path
+
+
 def _report_delivery_path() -> Path | None:
     raw_path = os.environ.get("REPORT_DELIVERY_PATH", "").strip()
     if not raw_path:
@@ -83,6 +129,13 @@ def _report_delivery_path() -> Path | None:
 
 def report_delivery_validation_error() -> str | None:
     """Return an auditable validation error for an explicitly triggered REPORT."""
+    handoff_path = _report_handoff_path()
+    if handoff_path is not None:
+        if not handoff_path.is_file():
+            return "missing_report_handoff_path:" + str(handoff_path)
+        handoff = read_json(handoff_path, {})
+        valid, reason = validate_report_handoff(handoff)
+        return None if valid else "invalid_report_handoff:" + reason
     path = _report_delivery_path()
     if path is None:
         return None
@@ -94,11 +147,20 @@ def report_delivery_validation_error() -> str | None:
 
 
 def report_delivery_event() -> dict | None:
-    explicit_path = _report_delivery_path()
-    paths = [explicit_path] if explicit_path is not None else (
-        sorted(REPORT_REQUEST_DIR.glob("*.json")) if REPORT_REQUEST_DIR.exists() else []
-    )
-    candidates = []
+    handoff_path = _report_handoff_path()
+    if handoff_path is not None:
+        handoff = read_json(handoff_path, {})
+        valid, _ = validate_report_handoff(handoff)
+        if not valid:
+            return None
+        candidates = [build_report_from_handoff(handoff)]
+        paths = []
+    else:
+        explicit_path = _report_delivery_path()
+        paths = [explicit_path] if explicit_path is not None else (
+            sorted(REPORT_REQUEST_DIR.glob("*.json")) if REPORT_REQUEST_DIR.exists() else []
+        )
+        candidates = []
     for path in paths:
         if path is None:
             continue
@@ -709,7 +771,7 @@ def choose_event(mode: str) -> dict | None:
     builders = (
         (report_delivery_event, execution_confirmation_event, formal_decision_change_event,
          account_confirmation_event, system_event, decision_event)
-        if _report_delivery_path() is not None
+        if (_report_handoff_path() is not None or _report_delivery_path() is not None)
         else
         (execution_confirmation_event, formal_decision_change_event, account_confirmation_event,
          system_event, decision_event, report_delivery_event)
