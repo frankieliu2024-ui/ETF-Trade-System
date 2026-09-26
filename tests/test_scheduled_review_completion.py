@@ -117,6 +117,8 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_SYSTEM_REVIEW")
         self.assertNotIn("report_delivery", payload)
         self.assertNotIn("report_handoff", payload)
+        from scripts.runtime_session_gate import classify_live_snapshot_request
+        self.assertEqual(classify_live_snapshot_request(payload), "STATE_SYNC_ONLY")
 
 
     def test_system_completion_publishes_canonical_event_consumed_by_notification_center(self):
