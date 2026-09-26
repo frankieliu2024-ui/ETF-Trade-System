@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -152,6 +153,46 @@ def build_system_review_completion_request(
             "task_run_id": task_run_id,
             "full_content": str(final_content),
         },
+    }
+
+
+def build_report_delivery_from_completion(completion: dict) -> dict:
+    """Project the frozen Scheduled Review presentation into the existing REPORT contract."""
+    binding = completion.get("presentation_binding") or {}
+    report_type = str(binding.get("report_type") or "")
+    if report_type not in {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}:
+        raise ValueError("unsupported Scheduled Review report_type")
+    full_content = str(binding.get("full_content") or "")
+    task_id = str(binding.get("task_id") or "")
+    task_run_id = _safe_id(binding.get("task_run_id"))
+    if not full_content or not task_id:
+        raise ValueError("Scheduled Review REPORT requires frozen full_content and task_id")
+    effective_market_date = str(
+        completion.get("market_date")
+        or (completion.get("system_review") or {}).get("a_share_latest_formal_market_date")
+        or ""
+    )
+    if not effective_market_date:
+        raise ValueError("Scheduled Review REPORT requires effective_market_date")
+    content_hash = hashlib.sha256(full_content.encode("utf-8")).hexdigest()
+    return {
+        "schema_version": "1.0",
+        "channel": "REPORT",
+        "report_type": report_type,
+        "report_id": f"{report_type.lower()}:{task_run_id}",
+        "task_id": task_id,
+        "task_run_id": task_run_id,
+        "generated_at": str(completion.get("requested_at_beijing") or ""),
+        "effective_market_date": effective_market_date,
+        "source_actor": str(completion.get("source") or "Scheduled Review Actor"),
+        "source_reference": f"scheduled-review-completion:{completion.get('request_id')}",
+        "title": "【ETF交易复盘】" if report_type == "ETF_TRADE_REVIEW" else "【ETF系统复核】",
+        "summary": "Scheduled Review completed; deliver the frozen FINAL_CONTENT unchanged.",
+        "full_content": full_content,
+        "content_hash": content_hash,
+        "idempotency_key": f"{report_type}:{task_run_id}",
+        "delivery_mode": "FULL_REPORT",
+        "no_trade_authority": True,
     }
 
 
