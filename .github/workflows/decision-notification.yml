@@ -8,6 +8,12 @@ on:
       - "US extended-hours pulse"
       - "ETF workflow failure guard"
     types: [completed]
+  # Canonical Scheduled Review events are committed to main by the market-snapshot
+  # workflow. GitHub does not recursively create a push-triggered workflow from a
+  # commit made with GITHUB_TOKEN, so consume that producer completion directly.
+  # The event step reconstructs and binds the exact review path from the producer
+  # commit instead of scanning the review directory.
+
   workflow_dispatch:
     inputs:
       test_notification:
@@ -237,15 +243,36 @@ jobs:
       # Event-driven notifications have no A-share-session or night-time gate.
       # The shared evidence guard rejects label/coverage-only changes before the
       # notification center can reach PushPlus.
+      - name: Bind canonical review event from producer completion
+        id: workflow_review
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot' && github.event.workflow_run.conclusion == 'success' }}
+        shell: bash
+        env:
+          PRODUCER_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          git cat-file -e "$PRODUCER_SHA^{commit}" 2>/dev/null || git fetch --no-tags origin "$PRODUCER_SHA"
+          mapfile -t review_paths < <(git show --format= --name-only "$PRODUCER_SHA" -- 'events/reviews/*.json' | sed '/^$/d')
+          if [ "${#review_paths[@]}" -eq 1 ]; then
+            echo "review_completion=true" >> "$GITHUB_OUTPUT"
+            echo "review_event_path=${review_paths[0]}" >> "$GITHUB_OUTPUT"
+          elif [ "${#review_paths[@]}" -gt 1 ]; then
+            echo "Ambiguous canonical Scheduled Review producer commit: expected exactly one review event, found ${#review_paths[@]}" >&2
+            printf '%s\n' "${review_paths[@]}" >&2
+            exit 1
+          else
+            echo "review_completion=false" >> "$GITHUB_OUTPUT"
+            echo "review_event_path=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Send material user-action notification
         id: event_notify
-        if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true')) }}
+        if: ${{ (github.event_name == 'workflow_run' && (github.event.workflow_run.name != 'ETF market snapshot' || steps.workflow_review.outputs.review_completion == 'true')) || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true')) }}
         continue-on-error: true
         env:
-          # Bind the single report selected from the triggering push.
+          # Bind the exact report/review selected from the triggering production fact.
           REPORT_DELIVERY_PATH: ${{ steps.push_kind.outputs.report_path }}
           REPORT_HANDOFF_PATH: ${{ steps.push_kind.outputs.report_handoff_path }}
-          REVIEW_EVENT_PATH: ${{ steps.push_kind.outputs.review_event_path }}
+          REVIEW_EVENT_PATH: ${{ steps.push_kind.outputs.review_event_path || steps.workflow_review.outputs.review_event_path }}
         run: python scripts/run_guarded_notification.py center --mode event
 
       - name: Send conditional A-share trading-day post-close account reminder
