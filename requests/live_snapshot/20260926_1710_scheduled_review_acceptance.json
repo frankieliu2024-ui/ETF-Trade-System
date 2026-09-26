@@ -1,0 +1,25 @@
+{
+  "request_id": "20260926_1710_scheduled_review_acceptance",
+  "request_type": "STATE_SYNC_ONLY",
+  "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+  "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+  "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+  "requested_at_beijing": "2026-09-26T17:10:16+08:00",
+  "system_review": {
+    "status": "PASS",
+    "purpose": "scheduled_occurrence_acceptance",
+    "market_phase": "CLOSED_NON_TRADING_DAY",
+    "market_date": "2026-09-26",
+    "no_trade_authority": true,
+    "system_consistency_status": "PASS",
+    "hard_error_count": 0,
+    "warning_count": 0
+  },
+  "presentation_binding": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "task_id": "ETF实测验收",
+    "task_run_id": "20260926_1710_scheduled_review_acceptance",
+    "title": "【ETF实测验收】2026-09-26 17:10",
+    "full_content": "【ETF实测验收】2026-09-26 17:10\n\n【实测结论】\n\n1. 本次按休市日口径执行，A股2026年9月26日为休市日，不制造交易动作或市场变化。\n2. 当前系统一致性检查为通过，未发现影响本次Scheduled Review验收的关键生产异常。\n3. 本次业务完成将只走现有Scheduled Review正式发布与通知链，不另建仅用于通知的第二写入。\n\n【业务链验收】\n\n1. 已按current main读取统一入口及生产治理要求，本次只提交Scheduled Review业务完成，不创建正式交易决策身份。\n2. 本次完成事实绑定唯一正式发布内容；重复消费应保持同一业务发生项，不产生第二份正式报告。\n3. 未修改交易规则、数据源优先级、正式监测范围或交易权限，也不触发自动下单。\n\n【显示格式验收】\n\n1. 一级主题均独立分行并留空行，并列事项统一使用数字序号。\n2. 正文采用短段落和自然中文，仅保留直接影响验收结论的生产信息。\n3. 当前版本满足本次用户显示合同的主要要求。\n\n【通知交付】\n\n1. 本次正式发布完成后，由现有通知中心尝试PushPlus交付，不新增发送通道。\n2. PushPlus是否真实送达必须以后续正式交付事实为准；在该事实形成前不预先声称送达。\n\n【异常与影响】\n\n当前无影响生产使用的关键异常。\n\n【下一阶段】\n\n1. 核对本次正式发布是否形成唯一业务完成事实。\n2. 核对现有通知链是否产生本次PushPlus正式交付事实；只有该事实存在才判定通知链闭环。\n\n【执行状态】\n\n等待外部条件\n\n【下一关注点】\n\n本次唯一剩余关注点是PushPlus正式交付事实是否形成。\n\n【置信度】\n\n高\n\n【最可能出错的地方】\n\nPushPlus属于外部交付环节；即使业务完成与通知中心已正常接管，最终送达仍可能受外部服务或凭据状态影响。"
+  }
+}
