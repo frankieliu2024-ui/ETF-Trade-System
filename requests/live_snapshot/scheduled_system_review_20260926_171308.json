@@ -1,0 +1,30 @@
+{
+  "request_id": "scheduled_system_review_20260926_171308",
+  "request_type": "STATE_SYNC_ONLY",
+  "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+  "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+  "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+  "requested_at_beijing": "2026-09-26T17:13:08+08:00",
+  "system_review": {
+    "status": "PASS",
+    "system_usable": true,
+    "system_consistency_status": "PASS",
+    "hard_error_count": 0,
+    "warning_count": 0,
+    "a_share_market_phase": "NON_TRADING_DAY",
+    "a_share_latest_formal_market_date": "2026-09-24",
+    "account_fact_status": "VALID",
+    "overseas_runtime_status": "DEGRADED",
+    "user_action_required": false,
+    "open_items": [
+      "NEXT_ACTIVE_A_SHARE_DISCOVERY_ACCEPTANCE",
+      "SCHEDULED_REPORT_PUSHPLUS_DELIVERY_ACCEPTANCE"
+    ]
+  },
+  "presentation_binding": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "task_id": "ETF系统复核",
+    "task_run_id": "20260926_171308",
+    "full_content": "【ETF系统复核】2026-09-26 17:13\n\n【总体结论】\n\n1. 系统当前可用。最新系统一致性检查为通过，硬错误和警告均为0。\n2. 今天为A股非交易日，正式A股行情正确沿用9月24日收盘事实，不影响当前交易节点；下一关键验证节点是下一次A股真实活跃交易时段。\n3. 当前无需用户处理。\n\n【异常与影响】\n\n海外运行链当前处于降级状态：美股9月25日收盘事实可用，但韩国综合指数仍引用9月23日收盘、中国台湾市场引用9月24日收盘，且本轮自然调度身份未确认。该状态不影响今天休市条件下的A股生产使用；现有链继续等待下一有效市场窗口自动刷新，不新增修复链。\n\n【需要用户处理】\n\n当前无需用户处理。\n\n【关键状态】\n\n1. 系统一致性与运行状态：最新检查通过，硬错误0、警告0；当前主线结构可视为完整生产状态。\n2. 正式行情与数据时点：A股最近正式行情为9月24日15:00收盘；今天休市，不将历史收盘事实冒充实时行情。海外最近有效事实按各市场实际阶段保留，其中美股已更新至9月25日收盘。\n3. 账户/成交与正式节点：账户事实有效，最近确认时间为9月24日09:53；系统采用事件驱动延续，在没有新成交、资金划转或其他已确认账户变化时继续有效。当前无新增成交需要闭环。\n4. 通知交付：本次系统复核已形成唯一业务完成内容并进入现有正式完成链；微信推送只有在后续出现正式送达事实后才可认定“已送达”，当前不提前宣称送达。\n\n【数据时点（北京时间）】\n\nA股：2026-09-24 15:00，最近正式收盘行情；2026-09-26为非交易日。美股：2026-09-26 04:00，对应9月25日常规交易收盘。日本：9月25日收盘；韩国：9月23日收盘；中国台湾：9月24日收盘；中国香港：9月25日收盘。\n\n【未闭环事项】\n\n1. 全市场ETF机会发现链仍只等待下一次真实A股活跃节点完成最终生产验证；当前无代码修改必要。\n2. 固定报告通知链仍需以本次及后续自然运行的真实微信送达事实完成生产验收；不另建通知通道，也不重复做无信息增量的权限探针。\n\n【下一阶段】\n\n保持现有生产链运行。下一次A股真实活跃节点重点验证全市场机会发现到观察、资本比较的同节点闭环；固定系统复核继续验证唯一业务完成链到微信推送的真实交付。\n\n【执行状态】\n\n已自动接管\n\n【下一关注点】\n\n下一次A股活跃交易节点的全市场机会发现闭环，以及本次系统复核微信推送是否形成正式送达事实。\n\n【置信度】\n\n高\n\n【最可能出错的地方】\n\n海外市场最近有效时点可能在本次复核完成后继续更新；此外，微信推送属于异步外部交付，本次业务完成发布成功不等于已经送达。"
+  }
+}
