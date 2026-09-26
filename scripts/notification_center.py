@@ -148,7 +148,15 @@ def report_delivery_validation_error() -> str | None:
 
 
 def report_delivery_event() -> dict | None:
-    canonical = canonical_scheduled_report_events()
+    # A canonical Scheduled Review push must bind this occurrence to the exact
+    # review event path identified by the triggering commit. Never select a
+    # different event by directory order when an explicit binding is present.
+    review_event_path = os.environ.get("REVIEW_EVENT_PATH", "").strip()
+    canonical = canonical_scheduled_report_events(review_event_path or None)
+    if review_event_path:
+        # An invalid or ambiguous exact binding is fail-closed and must not
+        # fall through to compatibility report/handoff scanning.
+        return canonical[0] if len(canonical) == 1 else None
     if canonical:
         return canonical[-1]
     handoff_path = _report_handoff_path()
@@ -184,22 +192,38 @@ def report_delivery_event() -> dict | None:
             "task_id": str(request["task_id"]), "task_run_id": str(request["task_run_id"]),
             "idempotency_key": key, "no_trade_authority": True}
 
-def canonical_scheduled_report_events() -> list[dict]:
-    """Read report presentation bindings published with business completion events."""
+def canonical_scheduled_report_events(event_path: str | None = None) -> list[dict]:
+    """Project one exact canonical review event, or use legacy scan compatibility."""
+    paths = []
+    if event_path:
+        candidate = Path(event_path)
+        candidate = candidate if candidate.is_absolute() else ROOT / candidate
+        if not candidate.is_file() or candidate.parent.resolve() != REVIEW_EVENT_DIR.resolve():
+            return []
+        paths = [candidate]
+    elif REVIEW_EVENT_DIR.exists():
+        paths = sorted(REVIEW_EVENT_DIR.glob("*.json"))
+
     events = []
-    for path in sorted(REVIEW_EVENT_DIR.glob("*.json")) if REVIEW_EVENT_DIR.exists() else []:
+    for path in paths:
         event = read_json(path, {})
-        binding = event.get("presentation_binding") or {}
-        report_type = str(binding.get("report_type") or "")
-        content = str(binding.get("full_content") or "")
+        binding = event.get("presentation_binding")
+        if not isinstance(binding, dict):
+            continue
+        required = ("report_type", "task_id", "task_run_id", "full_content", "content_hash")
+        if any(not str(binding.get(key) or "").strip() for key in required):
+            continue
+        report_type = str(binding["report_type"])
+        content = str(binding["full_content"])
         if report_type not in ACTIVE_REPORT_TYPES or not content:
             continue
         expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
-        if str(binding.get("content_hash") or expected) != expected:
+        if str(binding["content_hash"]) != expected:
             continue
-        task_run_id = str(binding.get("task_run_id") or event.get("occurrence_id") or "")
-        task_id = str(binding.get("task_id") or "")
-        if not task_run_id or not task_id:
+        task_run_id = str(binding["task_run_id"])
+        task_id = str(binding["task_id"])
+        event_occurrence = str(event.get("occurrence_id") or event.get("task_run_id") or "")
+        if event_occurrence and event_occurrence != task_run_id:
             continue
         key = f"{report_type}:{task_run_id}"
         events.append({

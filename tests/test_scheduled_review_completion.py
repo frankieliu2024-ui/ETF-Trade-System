@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import unittest
+import hashlib
+import json
+import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -168,6 +171,50 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             __import__("hashlib").sha256(b"FINAL-CONTENT").hexdigest(),
         )
         self.assertTrue(report["no_trade_authority"])
+
+
+
+    def test_exact_review_event_binding_wins_over_later_directory_event(self):
+        from scripts import notification_center
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            review_dir = root / "events" / "reviews"
+            review_dir.mkdir(parents=True)
+            def event(name, run_id, content):
+                body = {"occurrence_id": run_id, "presentation_binding": {
+                    "report_type": "ETF_TRADE_REVIEW", "task_id": "ETF交易复盘",
+                    "task_run_id": run_id, "full_content": content,
+                    "content_hash": hashlib.sha256(content.encode()).hexdigest(),
+                }}
+                (review_dir / name).write_text(json.dumps(body), encoding="utf-8")
+            event("2026-09-26-a.json", "run-a", "FINAL A")
+            event("2026-09-26-z.json", "run-b", "FINAL B")
+            with patch.object(notification_center, "ROOT", root),                  patch.object(notification_center, "REVIEW_EVENT_DIR", review_dir),                  patch.dict(os.environ, {"REVIEW_EVENT_PATH": "events/reviews/2026-09-26-a.json"}, clear=False):
+                projected = notification_center.report_delivery_event()
+            self.assertEqual(projected["task_run_id"], "run-a")
+            self.assertEqual(projected["content"], "FINAL A")
+            self.assertEqual(projected["content_hash"], hashlib.sha256(b"FINAL A").hexdigest())
+
+    def test_exact_review_event_malformed_binding_fails_closed(self):
+        from scripts import notification_center
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            review_dir = root / "events" / "reviews"
+            review_dir.mkdir(parents=True)
+            (review_dir / "bad.json").write_text(json.dumps({
+                "occurrence_id": "run-a",
+                "presentation_binding": {"report_type": "ETF_TRADE_REVIEW",
+                                          "task_id": "ETF交易复盘", "task_run_id": "run-a",
+                                          "full_content": "FINAL A", "content_hash": "wrong"}
+            }), encoding="utf-8")
+            with patch.object(notification_center, "ROOT", root),                  patch.object(notification_center, "REVIEW_EVENT_DIR", review_dir),                  patch.dict(os.environ, {"REVIEW_EVENT_PATH": "events/reviews/bad.json"}, clear=False):
+                self.assertIsNone(notification_center.report_delivery_event())
+
+    def test_multiple_triggering_review_events_fail_closed_in_workflow(self):
+        workflow = (Path(__file__).parents[1] / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
+        self.assertIn('expected exactly one review event', workflow)
+        self.assertIn('review_event_path=', workflow)
+        self.assertIn('REVIEW_EVENT_PATH:', workflow)
 
 
 
