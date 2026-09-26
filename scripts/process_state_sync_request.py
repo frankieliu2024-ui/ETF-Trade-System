@@ -1989,7 +1989,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         raise ValueError(f"invalid formal review managed-position contract: {managed_error}")
     managed_projection = build_managed_position_projection(ROOT, account)
     review = _normalize_executed_trade_case_mapping(review, market_date)
-    payload = {"market_date": market_date, "account_updated_at": account.get("updated_at"), "formal_review": review}
+    payload = {"market_date": market_date, "account_updated_at": account.get("updated_at"), "formal_review": review, "presentation_binding": request.get("presentation_binding") or {}}
     fingerprint = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
     prior = load_json(event_path) if event_path.exists() else {}
     if prior.get("fingerprint") == fingerprint:
@@ -2005,12 +2005,52 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         _persist_existing_case_detail_projections(prior_review)
         return True, True
     review_time = (incoming_time or datetime.now(SHANGHAI)).isoformat(timespec="seconds")
-    event = {"event_type": "FORMAL_POST_CLOSE_REVIEW", "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "review": review, "managed_position_sell_review": managed_projection, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
+    event = {"event_type": "FORMAL_POST_CLOSE_REVIEW", "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "review": review, "presentation_binding": request.get("presentation_binding") or {}, "managed_position_sell_review": managed_projection, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
     event["reviewed_at_beijing"] = review_time
     event_path.parent.mkdir(parents=True, exist_ok=True)
     atomic_json_write(event_path, event)
     _persist_post_close_review_projections(account, request, review, event)
     return True, False
+
+
+def _validate_presentation_binding(binding: dict, report_type: str) -> dict:
+    if not isinstance(binding, dict):
+        raise ValueError("scheduled completion presentation_binding must be an object")
+    required = ("task_id", "task_run_id", "full_content")
+    missing = [key for key in required if not str(binding.get(key) or "").strip()]
+    if missing:
+        raise ValueError("scheduled completion presentation_binding missing:" + ",".join(missing))
+    if str(binding.get("report_type") or "") != report_type:
+        raise ValueError("scheduled completion presentation_binding report_type mismatch")
+    content = str(binding["full_content"])
+    binding = dict(binding)
+    binding["content_hash"] = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    return binding
+
+
+def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
+    if str(request.get("formal_fact_type") or "") != "FORMAL_SCHEDULED_SYSTEM_REVIEW":
+        return False, False
+    binding = _validate_presentation_binding(request.get("presentation_binding"), "ETF_SYSTEM_REVIEW")
+    occurrence = str(binding["task_run_id"])
+    event_path = ROOT / "events" / "reviews" / f"system_{occurrence}.json"
+    payload = {
+        "event_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+        "occurrence_id": occurrence,
+        "request_id": request.get("request_id"),
+        "reviewed_at_beijing": request.get("requested_at_beijing"),
+        "presentation_binding": binding,
+        "review": request.get("system_review") or {},
+    }
+    payload["fingerprint"] = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+    prior = load_json(event_path) if event_path.exists() else {}
+    if prior and prior.get("fingerprint") != payload["fingerprint"]:
+        raise ValueError("scheduled system review occurrence is immutable")
+    if not prior:
+        event_path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_json_write(event_path, payload)
+        return True, False
+    return True, True
 
 
 def record_close_review_closure(account: dict, request: dict, review: dict, event: dict) -> None:
@@ -2986,6 +3026,11 @@ def main() -> int:
         projected.pop("projection_status", None)
         projected.pop("fingerprint", None)
         request["formal_decision"] = projected
+    system_review_recorded, system_review_idempotent = record_scheduled_system_review(request)
+    if system_review_recorded:
+        result = {"ok": True, "request_id": request.get("request_id"), "system_review_completion": True, "idempotent_replay": system_review_idempotent, "canonical_publication": "events/reviews/system_" + str((request.get("presentation_binding") or {}).get("task_run_id") or "") + ".json"}
+        print(json.dumps(result, ensure_ascii=False))
+        return 0
     if str(request.get("ingress_mode") or "").upper() == "HISTORICAL_BACKFILL":
         result = process_historical_backfill_request(request)
         result.update({
