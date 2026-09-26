@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-09-26T17:40:05+08:00",
-  "status": "READY",
+  "generated_at": "2026-09-26T17:41:40+08:00",
+  "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
@@ -44,13 +44,14 @@
       "completion_source": "CURRENT.close_review_closure"
     },
     "decision_context": {
-      "status": "READY",
-      "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only",
+      "status": "DEGRADED",
+      "reason": "request-bound core-result latency contract is not fully observed",
       "query_context": true,
       "decision_context": true,
-      "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
+      "minimum_decision_context": "INCOMPLETE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": false
+      "request_bound": true,
+      "latency_status": "DOWNSTREAM_NOT_DECISION_LATENCY"
     },
     "lifecycle": {
       "status": "READY",
@@ -68,6 +69,8 @@
     }
   },
   "blockers": [],
-  "degradations": [],
+  "degradations": [
+    "decision_context"
+  ],
   "safety_boundary": "This state does not create or modify risk permission, Trial/Confirm rules, amounts, sell rules, or execution authority."
 }
