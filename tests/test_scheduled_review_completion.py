@@ -153,5 +153,23 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
 
 
 
+    def test_system_review_projects_same_frozen_content_to_report_delivery(self):
+        completion = build_system_review_completion_request(
+            {"status": "PASS", "a_share_latest_formal_market_date": "2026-09-24"},
+            "system-review-1", "2026-09-26T18:30:00+08:00",
+            "ETF系统复核", "run-1", "FINAL-CONTENT"
+        )
+        report = build_report_delivery_from_completion(completion)
+        self.assertEqual(report["report_type"], "ETF_SYSTEM_REVIEW")
+        self.assertEqual(report["full_content"], completion["presentation_binding"]["full_content"])
+        self.assertEqual(report["idempotency_key"], "ETF_SYSTEM_REVIEW:run-1")
+        self.assertEqual(
+            report["content_hash"],
+            __import__("hashlib").sha256(b"FINAL-CONTENT").hexdigest(),
+        )
+        self.assertTrue(report["no_trade_authority"])
+
+
+
 if __name__ == "__main__":
     unittest.main()
