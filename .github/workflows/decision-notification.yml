@@ -28,7 +28,7 @@ on:
       - "events/trades/*.json"
       - "data/state/account_fact.json"
       - "requests/notification_test/*.json"
-      - "requests/report_delivery/*.json"\n      - "requests/report_source/*.json"
+      - "requests/report_delivery/*.json"
       # Canonical market-state publication is an independent notification wake.
       # This preserves one notification engine while avoiding a hard dependency
       # on workflow_run creation after a producer was itself recovered from a
@@ -138,28 +138,6 @@ jobs:
             echo "report_path=" >> "$GITHUB_OUTPUT"
           fi
           cat /tmp/changed_files.txt
-
-      - name: Project Scheduled REPORT source through canonical owner
-        if: ${{ github.event_name == 'push' && steps.push_kind.outputs.report_source == 'true' }}
-        shell: bash
-        env:
-          REPORT_SOURCE_PATH: ${{ steps.push_kind.outputs.report_source_path }}
-        run: |
-          set -euo pipefail
-          test -n "$REPORT_SOURCE_PATH"
-          test -f "$REPORT_SOURCE_PATH"
-          REPORT_PATH="$(python scripts/write_report_delivery_request.py --source-request "$REPORT_SOURCE_PATH")"
-          test -n "$REPORT_PATH"
-          test -f "$REPORT_PATH"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "$REPORT_PATH"
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          git commit -m "report: project scheduled review source"
-          git pull --rebase origin main
-          git push origin HEAD:main
 
       # notification_center.py historically scans the full report request directory.
       # For a REPORT push, make the disposable checkout expose only the request that
