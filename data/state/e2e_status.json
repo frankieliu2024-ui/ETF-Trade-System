@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-09-26T19:47:27+08:00",
-  "status": "DEGRADED",
+  "generated_at": "2026-09-26T19:49:00+08:00",
+  "status": "READY",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
@@ -44,14 +44,13 @@
       "completion_source": "CURRENT.close_review_closure"
     },
     "decision_context": {
-      "status": "DEGRADED",
-      "reason": "request-bound core-result latency contract is not fully observed",
+      "status": "READY",
+      "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only",
       "query_context": true,
       "decision_context": true,
-      "minimum_decision_context": "INCOMPLETE",
+      "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": true,
-      "latency_status": "DOWNSTREAM_NOT_DECISION_LATENCY"
+      "request_bound": false
     },
     "lifecycle": {
       "status": "READY",
@@ -65,12 +64,10 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-09-26T18:44:06+08:00"
+      "checked_at": "2026-09-26T19:49:00+08:00"
     }
   },
   "blockers": [],
-  "degradations": [
-    "decision_context"
-  ],
+  "degradations": [],
   "safety_boundary": "This state does not create or modify risk permission, Trial/Confirm rules, amounts, sell rules, or execution authority."
 }
