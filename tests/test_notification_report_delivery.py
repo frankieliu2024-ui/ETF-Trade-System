@@ -100,5 +100,44 @@ class ReportDeliveryContractTests(unittest.TestCase):
         self.assertNotEqual(item["notification_channel"], "REPORT")
 
 
+    def test_minimal_handoff_projects_to_canonical_report(self):
+        handoff = {
+            "schema_version": "1.0",
+            "report_type": "ETF_SYSTEM_REVIEW",
+            "task_id": "ETF系统复核",
+            "task_run_id": "20260926_1930",
+            "generated_at": "2026-09-26T19:30:00+08:00",
+            "effective_market_date": "2026-09-26",
+            "title": "【系统复核】ETF系统复核｜2026-09-26 19:30",
+            "summary": "完成。",
+            "full_content": "冻结的 FINAL_CONTENT",
+        }
+        request = notification_center.build_report_from_handoff(handoff)
+        self.assertEqual(request["channel"], "REPORT")
+        self.assertEqual(request["full_content"], handoff["full_content"])
+        self.assertTrue(request["no_trade_authority"])
+        self.assertTrue(notification_center.validate_report_delivery_request(request)[0])
+
+    def test_handoff_event_forwards_exact_full_content(self):
+        handoff = {
+            "schema_version": "1.0",
+            "report_type": "ETF_TRADE_REVIEW",
+            "task_id": "ETF交易复盘",
+            "task_run_id": "20260926_2030",
+            "generated_at": "2026-09-26T20:30:00+08:00",
+            "effective_market_date": "2026-09-26",
+            "title": "【交易复盘】ETF交易复盘｜2026-09-26 20:30",
+            "summary": "完成。",
+            "full_content": "同一份冻结正文",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "handoff.json"
+            path.write_text(json.dumps(handoff, ensure_ascii=False), encoding="utf-8")
+            with patch.dict("os.environ", {"REPORT_HANDOFF_PATH": str(path)}, clear=False):
+                event = notification_center.report_delivery_event()
+        self.assertEqual(event["content"], handoff["full_content"])
+        self.assertEqual(event["report_type"], "ETF_TRADE_REVIEW")
+
+
 if __name__ == "__main__":
     unittest.main()
