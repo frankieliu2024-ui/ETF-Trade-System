@@ -230,5 +230,32 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertNotIn('git show --format= --name-only "$PRODUCER_SHA"', notifier)
 
 
+    def test_distinct_review_occurrences_with_same_task_run_id_are_not_absorbed(self):
+        from scripts import notification_center
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            review_dir = root / "events" / "reviews"
+            review_dir.mkdir(parents=True)
+            def write_event(name, occurrence, content):
+                body = {"occurrence_id": occurrence, "presentation_binding": {
+                    "report_type": "ETF_SYSTEM_REVIEW", "task_id": "ETF系统复核",
+                    "task_run_id": "stable-scheduled-task", "full_content": content,
+                    "content_hash": hashlib.sha256(content.encode()).hexdigest(),
+                }}
+                (review_dir / name).write_text(json.dumps(body), encoding="utf-8")
+            write_event("a.json", "occurrence-a", "FINAL A")
+            write_event("b.json", "occurrence-b", "FINAL B")
+            with patch.object(notification_center, "ROOT", root), patch.object(notification_center, "REVIEW_EVENT_DIR", review_dir), patch.dict(os.environ, {"REVIEW_EVENT_PATH": "events/reviews/a.json"}, clear=False):
+                first = notification_center.report_delivery_event()
+            with patch.object(notification_center, "ROOT", root), patch.object(notification_center, "REVIEW_EVENT_DIR", review_dir), patch.dict(os.environ, {"REVIEW_EVENT_PATH": "events/reviews/b.json"}, clear=False):
+                second = notification_center.report_delivery_event()
+            self.assertEqual(first["task_run_id"], second["task_run_id"])
+            self.assertNotEqual(first["source_event_id"], second["source_event_id"])
+            self.assertEqual(first["idempotency_key"], "ETF_SYSTEM_REVIEW:occurrence-a")
+            self.assertEqual(second["idempotency_key"], "ETF_SYSTEM_REVIEW:occurrence-b")
+            self.assertEqual(first["content"], "FINAL A")
+            self.assertEqual(second["content"], "FINAL B")
+
+
 if __name__ == "__main__":
     unittest.main()
