@@ -1,0 +1,28 @@
+{
+  "request_id": "scheduled-system-review-manual-20260926-233500",
+  "request_type": "STATE_SYNC_ONLY",
+  "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+  "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+  "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+  "requested_at_beijing": "2026-09-26T23:35:00+08:00",
+  "system_review": {
+    "status": "COMPLETED",
+    "reviewed_at_beijing": "2026-09-26T23:35:00+08:00",
+    "market_phase": "CLOSED_NON_TRADING_DAY",
+    "a_share_latest_formal_market_date": "2026-09-24",
+    "system_consistency": "PASS",
+    "hard_error_count": 0,
+    "warning_count": 0,
+    "e2e_status": "READY",
+    "account_status": "VALID",
+    "overseas_runtime_status": "DEGRADED",
+    "maintenance_admission": "DO_NOT_CHANGE",
+    "user_action_required": false
+  },
+  "presentation_binding": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "task_id": "ETF系统复核",
+    "task_run_id": "manual-20260926-233500",
+    "full_content": "【ETF系统复核】2026-09-26 23:35\n\n【总体结论】\n\n系统当前可用，整体一致性为PASS、E2E为READY，没有硬阻断。今天为A股休市日，本次按休市阶段完成复核；最近正式A股市场日仍为9月24日，不把休市期间旧行情冒充实时行情。\n\n【异常与影响】\n\n1. 海外运行健康为DEGRADED，但硬错误为0；美股主要指数数据质量通过，日韩台港部分对象按休市/上一交易日参考处理，不构成当前A股交易节点阻断。\n\n2. 海外调度身份存在一次无法确认自然脉冲归属的告警；当前没有证据表明其破坏正式行情事实、账户事实或下一有效A股节点，因此不升级为新的生产修复事项。\n\n【需要用户处理】\n\n当前无需用户处理。没有发现需要补充账户事实、成交确认或人工恢复的系统阻断。\n\n【关键状态】\n\n1. 系统一致性：PASS，硬错误0，警告0。\n\n2. E2E：READY，市场、账户、风险、收盘复盘、决策上下文、生命周期和维护组件均处于可用状态。\n\n3. 账户事实：VALID；最近确认时间为9月24日09:53，未登记待处理账户变化事件，可用现金13,169.54元。\n\n4. 正式收盘复盘：9月24日链路已完成；休市日不生成新的A股交易日收盘事实。\n\n5. 通知交付链：此前Scheduled Review通知工作流结构缺陷已完成修复并进入current main；当前结构复核未再发现重复或断裂的Review投递入口。\n\n【数据时点（北京时间）】\n\n1. A股最近正式收盘事实：2026-09-24 15:00；9月25日至26日为休市阶段，本次不触发新的A股实时行情采集。\n\n2. 美股NDX、SOX最近有效时点：2026-09-26 04:00；其余亚太对象按各自最近有效交易日作为休市参考，不用于冒充当前实时行情。\n\n【下一阶段】\n\n保持现有生产配置，不新增修复。下一有效A股交易节点按既有链自然运行；正常Discovery、资本竞争和交易判断继续归交易主链，不登记为本次系统维护事项。\n\n【执行状态】\n\n本事项已闭环。\n\n【下一关注点】\n\n下一有效A股节点重点观察现有行情、复盘和通知链能否继续自然完成；只有出现新的确定性生产故障或事实合法性问题，才重新进入维护准入。\n\n【置信度】\n\n高。\n\n【最可能出错的地方】\n\n休市期间海外市场各自交易日不同，部分亚太对象只能作为最近有效交易日参考；因此本次结论不把这些跨市场旧时点外推为新的A股交易判断。\n\n本事项结束，不再追加维护。"
+  }
+}
