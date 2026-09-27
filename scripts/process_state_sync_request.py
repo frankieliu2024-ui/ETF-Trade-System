@@ -1945,12 +1945,14 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         # today's account, or rewrite the event/closure/current state.
         _persist_existing_case_detail_projections(prior_review)
         return True, True
-    # Normalize the trade-review presentation binding at the canonical owner.
-    # Scheduled system reviews already use this validator; applying the same
-    # contract here prevents a trade event from reaching projection without
-    # the hash required for exact frozen-content delivery.
-    presentation_binding = _validate_presentation_binding(
-        request.get("presentation_binding"), "ETF_TRADE_REVIEW"
+    # Normalize scheduled trade-review bindings at the canonical owner.
+    # Legacy/recovery requests without a presentation binding remain compatible;
+    # a present binding must satisfy the exact scheduled-delivery contract.
+    raw_presentation_binding = request.get("presentation_binding")
+    presentation_binding = (
+        _validate_presentation_binding(raw_presentation_binding, "ETF_TRADE_REVIEW")
+        if raw_presentation_binding is not None
+        else {}
     )
     current_path = ROOT / "data" / "state" / "CURRENT.json"
     current = load_json(current_path) if current_path.exists() else {}
