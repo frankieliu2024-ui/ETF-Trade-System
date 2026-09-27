@@ -40,6 +40,24 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
     def request(self, when="2026-08-31T15:20:00+08:00"):
         return {"request_id": "review-20260831", "interaction_scenario": "POST_CLOSE_REVIEW", "requested_at_beijing": when, "formal_review": {"market_date": "2026-08-31", "reviewed_at_beijing": when, "case_id": "CASE-20260827-01", "case_mode": "CONTINUATION_NO_NEW_CASE", "data_time": {"close_snapshot": "data/market/snapshots/2026-08-31_150110.json"}, "archive_entry": "2026-08-31｜正式收盘事实归档。", "experience_entry": "2026-08-31｜延续既有Trial假设，不新增CASE。"}}
 
+    def test_trade_review_normalizes_binding_hash_for_notification_projection(self):
+        request = self.request()
+        final_content = "FROZEN TRADE REVIEW"
+        request["presentation_binding"] = {
+            "report_type": "ETF_TRADE_REVIEW",
+            "task_id": "ETF交易复盘",
+            "task_run_id": "trade-occurrence-1",
+            "full_content": final_content,
+        }
+        account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
+        self.assertEqual(sync.record_post_close_review(account, request), (True, False))
+        event = json.loads((self.root / "events/reviews/2026-08-31.json").read_text(encoding="utf-8"))
+        binding = event["presentation_binding"]
+        self.assertEqual(binding["report_type"], "ETF_TRADE_REVIEW")
+        self.assertEqual(binding["task_run_id"], "trade-occurrence-1")
+        self.assertEqual(binding["full_content"], final_content)
+        self.assertEqual(binding["content_hash"], __import__("hashlib").sha256(final_content.encode()).hexdigest())
+
     def test_idempotent_and_closure(self):
         account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
         self.assertEqual(sync.record_post_close_review(account, self.request()), (True, False))
