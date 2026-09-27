@@ -1945,6 +1945,13 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         # today's account, or rewrite the event/closure/current state.
         _persist_existing_case_detail_projections(prior_review)
         return True, True
+    # Normalize the trade-review presentation binding at the canonical owner.
+    # Scheduled system reviews already use this validator; applying the same
+    # contract here prevents a trade event from reaching projection without
+    # the hash required for exact frozen-content delivery.
+    presentation_binding = _validate_presentation_binding(
+        request.get("presentation_binding"), "ETF_TRADE_REVIEW"
+    )
     current_path = ROOT / "data" / "state" / "CURRENT.json"
     current = load_json(current_path) if current_path.exists() else {}
     close_contract = build_close_data_contract(ROOT, current)
@@ -1989,7 +1996,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         raise ValueError(f"invalid formal review managed-position contract: {managed_error}")
     managed_projection = build_managed_position_projection(ROOT, account)
     review = _normalize_executed_trade_case_mapping(review, market_date)
-    payload = {"market_date": market_date, "account_updated_at": account.get("updated_at"), "formal_review": review, "presentation_binding": request.get("presentation_binding") or {}}
+    payload = {"market_date": market_date, "account_updated_at": account.get("updated_at"), "formal_review": review, "presentation_binding": presentation_binding}
     fingerprint = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
     prior = load_json(event_path) if event_path.exists() else {}
     if prior.get("fingerprint") == fingerprint:
@@ -2005,7 +2012,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         _persist_existing_case_detail_projections(prior_review)
         return True, True
     review_time = (incoming_time or datetime.now(SHANGHAI)).isoformat(timespec="seconds")
-    event = {"event_type": "FORMAL_POST_CLOSE_REVIEW", "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "review": review, "presentation_binding": request.get("presentation_binding") or {}, "managed_position_sell_review": managed_projection, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
+    event = {"event_type": "FORMAL_POST_CLOSE_REVIEW", "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "review": review, "presentation_binding": presentation_binding, "managed_position_sell_review": managed_projection, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
     event["reviewed_at_beijing"] = review_time
     event_path.parent.mkdir(parents=True, exist_ok=True)
     atomic_json_write(event_path, event)
