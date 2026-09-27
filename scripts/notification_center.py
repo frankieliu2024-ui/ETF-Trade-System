@@ -829,10 +829,11 @@ def choose_event(mode: str) -> dict | None:
     if mode == "close-test": return close_account_event(force=True)
     # An explicitly triggered REPORT must deliver that exact report.
     # Other workflow_run events retain the existing INTERRUPT precedence.
+    explicit_report_binding = bool(os.environ.get("REVIEW_EVENT_PATH", "").strip())
     builders = (
         (report_delivery_event, execution_confirmation_event, formal_decision_change_event,
          account_confirmation_event, system_event, decision_event)
-        if (_report_handoff_path() is not None or _report_delivery_path() is not None)
+        if (explicit_report_binding or _report_handoff_path() is not None or _report_delivery_path() is not None)
         else
         (execution_confirmation_event, formal_decision_change_event, account_confirmation_event,
          system_event, decision_event, report_delivery_event)
