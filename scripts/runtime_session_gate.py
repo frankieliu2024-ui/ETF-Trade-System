@@ -187,10 +187,8 @@ def _same_day_close_ready(date_text: str) -> bool:
     )
 
 
-def _push_has_manual_formal_refresh_request(policy: dict) -> bool:
-    if os.environ.get("GITHUB_EVENT_NAME") != "push":
-        return False
-    for path in _changed_request_files():
+def _event_has_manual_formal_refresh_request(policy: dict) -> bool:
+    for path in _event_request_files():
         try:
             request = load_json(path)
         except (OSError, json.JSONDecodeError):
@@ -250,7 +248,7 @@ def main() -> int:
     now = datetime.now(SHANGHAI)
     date_text = now.date().isoformat()
     event_name = os.environ.get("GITHUB_EVENT_NAME", "")
-    request_class = _push_request_class() if event_name == "push" else "NOT_APPLICABLE"
+    request_class = _event_request_class()
     scheduled_cron = os.environ.get("SCHEDULED_CRON", "").strip()
     policy = load_json(ROOT / "config" / "runtime_policy.json")
     schedule_observation = resolve_scheduled_pulse(scheduled_cron, now, cadence_seconds=int(policy.get("target_cadence_seconds", 600)))
@@ -291,9 +289,9 @@ def main() -> int:
         reason = "delayed_scheduled_close_recovery"
 
     request_time_close_recovery = bool(
-        event_name == "push"
+        event_name in {"push", "workflow_dispatch"}
         and request_class == "REFRESH_BEARING"
-        and _push_has_manual_formal_refresh_request(policy)
+        and _event_has_manual_formal_refresh_request(policy)
         and minute > 15 * 60
         and not _same_day_close_ready(date_text)
         and now.weekday() < 5
