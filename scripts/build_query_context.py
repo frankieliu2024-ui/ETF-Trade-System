@@ -298,7 +298,6 @@ def _evidence_requirement_plan(problems: list[dict]) -> list[dict]:
         classes = [
             # Layer 1: external multi-asset drivers and transmission inputs.
             "GLOBAL_RISK",
-            "COMMODITY",
             "RATES",
             "FX",
             "OVERSEAS_INDUSTRY_CHAIN",
