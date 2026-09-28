@@ -129,8 +129,14 @@ def _attribution_category(item: dict, changed_files: list[str]) -> str:
     def tokens(value: str) -> set[str]:
         return {part for part in re.split(r"[^a-z0-9]+", value.lower()) if len(part) > 2}
 
-    failure_tokens = tokens(domain)
-    changed_tokens = tokens(" ".join(str(path) for path in changed_files))
+    # Broad market/test labels name a subject area, not a causal owner.
+    # Requiring at least one more specific shared token prevents a notification
+    # test from claiming an unrelated market-data/router failure.
+    generic_domain_tokens = {"market", "test", "tests", "check", "checks", "failure", "global", "candidate"}
+    failure_tokens = tokens(domain) - generic_domain_tokens
+    changed_tokens = tokens(" ".join(str(path) for path in changed_files)) - generic_domain_tokens
+    if not failure_tokens:
+        return "ATTRIBUTION_INCONCLUSIVE"
     same_domain = bool(failure_tokens & changed_tokens)
     if same_domain:
         return "INTRODUCED_BY_CURRENT_CHANGE"
