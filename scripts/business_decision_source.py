@@ -33,6 +33,39 @@ def classify_request(request: dict[str, Any]) -> str:
 def _canonical(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
+_HOLDING_ACTION_ALIASES = {
+    "HOLD": "HOLD",
+    "持有": "HOLD",
+    "持有管理": "HOLD",
+    "持仓管理": "HOLD",
+    "REDUCE": "REDUCE",
+    "降低风险": "REDUCE",
+    "EXIT": "EXIT",
+    "退出": "EXIT",
+    "全部退出": "EXIT",
+}
+
+
+def _normalize_holding_action(value: Any) -> str:
+    raw = str(value or "").strip()
+    return _HOLDING_ACTION_ALIASES.get(raw.upper(), _HOLDING_ACTION_ALIASES.get(raw, raw.upper()))
+
+
+def _parse_yuan_amount(value: Any, field: str) -> float:
+    if isinstance(value, bool):
+        raise ValueError(f"{field} must be numeric")
+    raw = value
+    if isinstance(value, str):
+        raw = value.strip().replace(",", "").replace("人民币", "")
+        if raw.endswith("元"):
+            raw = raw[:-1].strip()
+    try:
+        number = float(raw)
+    except (TypeError, ValueError):
+        raise ValueError(f"{field} must be numeric")
+    return number
+
+
 def source_fingerprint(source: dict[str, Any]) -> str:
     body = {k: v for k, v in source.items() if k not in {"fingerprint", "status", "projection_status"}}
     return hashlib.sha256(_canonical(body).encode("utf-8")).hexdigest()
@@ -102,7 +135,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         if pid.startswith("HOLDING:"):
             if not answer.get("capital_occupancy_reason") or not answer.get("higher_efficiency_alternative"):
                 raise ValueError(f"decision response missing holding capital rationale: {pid}")
-            if str(answer.get("final_action") or "").upper() in {"REDUCE", "EXIT"}:
+            if _normalize_holding_action(answer.get("final_action")) in {"REDUCE", "EXIT"}:
                 if answer.get("quantity") in (None, "") or not answer.get("capital_destination"):
                     raise ValueError(f"decision response missing action quantity/destination: {pid}")
         if pid == "MAIN_CANDIDATE":
@@ -130,10 +163,10 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         if next_answer.get(field) in (None, "", []):
             raise ValueError(f"decision response missing NEXT_UNIT_CAPITAL_USE.{field}")
     try:
-        new_amount = float(next_answer.get("new_amount_yuan"))
-        post_cash = float(next_answer.get("post_action_deployable_cash"))
-    except (TypeError, ValueError):
-        raise ValueError("NEXT_UNIT_CAPITAL_USE amount/cash must be numeric")
+        new_amount = _parse_yuan_amount(next_answer.get("new_amount_yuan"), "NEXT_UNIT_CAPITAL_USE.new_amount_yuan")
+        post_cash = _parse_yuan_amount(next_answer.get("post_action_deployable_cash"), "NEXT_UNIT_CAPITAL_USE.post_action_deployable_cash")
+    except ValueError as exc:
+        raise ValueError(str(exc))
     if new_amount < 0 or post_cash < 0:
         raise ValueError("NEXT_UNIT_CAPITAL_USE amount/cash must be non-negative")
     if new_amount == 0 and not str(next_answer.get("zero_amount_decisive_reason") or "").strip():
@@ -159,9 +192,6 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         if evidence_id in impact or (impact == ["ALL_REQUIRED"] and requirement.get("required")):
             domains[domain].append(evidence_id)
 
-    # Consumer completeness is scoped to evidence that this request actually
-    # qualified.  A missing qualified layer must not be fabricated by
-    # consuming INSUFFICIENT optional requirements.
     missing_qualified = [domain for domain in sorted(qualified_domains) if not domains[domain]]
     if missing_qualified:
         raise ValueError("decision response missing qualified evidence consumption: " + ",".join(missing_qualified))
@@ -176,7 +206,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             continue
         answer = answers[pid]
         code = pid.split(":", 1)[1]
-        action = str(answer.get("final_action") or "").upper()
+        action = _normalize_holding_action(answer.get("final_action"))
         if action not in action_map:
             raise ValueError(f"holding final_action must be HOLD/REDUCE/EXIT: {pid}")
         alternatives = item.get("alternatives") or {}
@@ -273,9 +303,6 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
 
     main_answer = answers["MAIN_CANDIDATE"]
     risk_answer = answers["RISK_PERMISSION"]
-    # Capital-state comparison is an actor business judgment, but the canonical
-    # writer shape is a machine-owned projection.  The actor names the states;
-    # existing problem answers supply the per-state business semantics.
     state_problem_map = {
         "现金": "DEPLOYABLE_CASH",
         "全部实际持仓继续占资": "RELEASABLE_CAPITAL",
@@ -295,7 +322,6 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             raise ValueError("NEXT_UNIT_CAPITAL_USE compared_capital_states contains empty state")
         problem_id = state_problem_map.get(state_name)
         if not problem_id:
-            # Generic deterministic routing for future request-specific names.
             if "现金" in state_name:
                 problem_id = "DEPLOYABLE_CASH"
             elif "释放" in state_name:
@@ -397,9 +423,6 @@ def validate_source(source: dict[str, Any], *, expected_snapshot: str | None = N
 def build_formal_completion_from_source(source: dict[str, Any]) -> dict[str, Any]:
     checked = validate_source(source)
     result = json.loads(json.dumps(checked))
-    # These three structures are transport projections only. Each must already
-    # be present in the Source; no account/market fact may be used to create or
-    # complete an investment judgment.
     for field in ("managed_position_reviews", "etf_opportunity_reviews", "capital_competition"):
         value = checked.get(field)
         if field == "capital_competition":
