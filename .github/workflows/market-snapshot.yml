@@ -381,6 +381,12 @@ jobs:
               exit 1
             fi
             request_files="${formal_sources[0]}"
+            formal_source_commit=$(git log --diff-filter=A --format=%H -- "$request_files" | head -n 1)
+            if [ -z "$formal_source_commit" ]; then
+              echo "formal replay cannot resolve immutable BUSINESS_DECISION_SOURCE introduction commit" >&2
+              exit 1
+            fi
+            echo "FORMAL_REPLAY_SOURCE_COMMIT=$formal_source_commit" >> "$GITHUB_ENV"
           else
             request_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
           fi
@@ -410,7 +416,7 @@ jobs:
             cp "$triggering_request_file" "/tmp/etf-triggering-request/$triggering_request_file"
           fi
           processed=false
-          if [ -z "${REPLAY_REQUEST:-}" ]; then
+          if [ -z "${REPLAY_REQUEST:-}" ] && [ -z "${FORMAL_REPLAY_REQUEST:-}" ]; then
             state_sync_files=""
             for f in $request_files; do
               if python - "$f" <<'PY'
@@ -502,6 +508,32 @@ jobs:
           PY
             python scripts/refresh_gate.py --guard-request "$request_files"
             python scripts/process_state_sync_request.py "$request_files"
+            processed=true
+          elif [ -n "${FORMAL_REPLAY_REQUEST:-}" ]; then
+            python scripts/refresh_gate.py --guard-request "$request_files"
+            python scripts/process_state_sync_request.py --formal-replay-source-commit "$FORMAL_REPLAY_SOURCE_COMMIT" "$request_files"
+            python - "$request_files" <<'PY'
+          import json, sys
+          from pathlib import Path
+          source = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          decision_id = str(source.get("decision_id") or "").strip()
+          parent_id = str(source.get("parent_request_id") or "").strip()
+          if not decision_id or not parent_id:
+              raise SystemExit("formal replay source is missing decision_id/parent_request_id")
+          event_path = Path("events/decisions") / f"{decision_id}.json"
+          matches = list(Path("events/decisions").glob(f"{decision_id}.json"))
+          if len(matches) != 1 or not event_path.is_file():
+              raise SystemExit(f"formal replay canonical Decision Fact count must equal one; found={len(matches)}")
+          event = json.loads(event_path.read_text(encoding="utf-8"))
+          if str(event.get("decision_id") or "") != decision_id:
+              raise SystemExit("formal replay canonical Decision Fact decision_id mismatch")
+          if str(event.get("parent_request_id") or "") != parent_id:
+              raise SystemExit("formal replay canonical Decision Fact parent_request_id mismatch")
+          if str(event.get("source_type") or "").upper() != "BUSINESS_DECISION_SOURCE":
+              raise SystemExit("formal replay canonical Decision Fact source_type mismatch")
+          if not str(event.get("source_fingerprint") or "").strip():
+              raise SystemExit("formal replay canonical Decision Fact source_fingerprint missing")
+          PY
             processed=true
           elif [ -n "${EVENT_BEFORE:-}" ] && git cat-file -e "${EVENT_BEFORE}^{commit}" 2>/dev/null; then
             files=$(git diff --name-only "${EVENT_BEFORE}" "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
