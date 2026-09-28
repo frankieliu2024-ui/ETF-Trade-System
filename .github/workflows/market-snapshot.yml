@@ -356,7 +356,7 @@ jobs:
         run: python scripts/cloud_runner_snapshot.py --retry-failed
       - name: Process optional broker/dashboard state sync
         id: state_sync
-        if: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.replay_request != '')) && github.event.inputs.probe_only != 'true' }}
+        if: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.replay_request != '' || github.event.inputs.formal_replay_request != ''))) && github.event.inputs.probe_only != 'true' }}
         shell: bash
         run: |
           # Process queued state-sync runs against execution-time main while
@@ -364,6 +364,23 @@ jobs:
           git fetch origin main
           if [ -n "${REPLAY_REQUEST:-}" ]; then
             request_files="$REPLAY_REQUEST"
+          elif [ -n "${FORMAL_REPLAY_REQUEST:-}" ]; then
+            # Explicit Formal Decision recovery reuses the immutable parent
+            # only to locate its already-durable BUSINESS_DECISION_SOURCE.
+            # It must not create a fresh market capture or a new decision identity.
+            parent_request_id=$(python - "${FORMAL_REPLAY_REQUEST}" <<'PY'
+          import json, sys
+          from pathlib import Path
+          request = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          print(str(request.get("request_id") or "").strip())
+          PY
+            )
+            mapfile -t formal_sources < <(find requests/live_snapshot -maxdepth 1 -type f -name "${parent_request_id}__business_decision_source_*.json" -print | sort)
+            if [ "${#formal_sources[@]}" -ne 1 ]; then
+              echo "formal replay requires exactly one durable BUSINESS_DECISION_SOURCE for parent=${parent_request_id}; found=${#formal_sources[@]}" >&2
+              exit 1
+            fi
+            request_files="${formal_sources[0]}"
           else
             request_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
           fi
