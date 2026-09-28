@@ -28,7 +28,17 @@
 
 ### 正式ETF分析
 
-正式决策生产闭环的ChatGPT写入入口固定为现有 `BUSINESS_DECISION_SOURCE`：业务判断完成后，ChatGPT只提交与本次 `decision_work_package.problem_graph` 对齐的 `decision_response.answers`；不得直接构造 `STATE_SYNC_ONLY / CHATGPT_MANUAL_FORMAL_COMPLETION`，不得手写 `formal_decision.managed_position_reviews`、`capital_use`、`position_capital_states` 或 `decision_evidence_consumption` canonical nesting。现有 `scripts/business_decision_source.py` 负责确定性投影，`scripts/process_state_sync_request.py` 负责canonical持久化与single writer。历史legacy completion仅保留读取/历史兼容，不是新Formal Decision生产入口。
+#### 用户发起的新 Formal Decision Request：父请求首跳 ingress（强制）
+
+当用户新发起当前交易判断，或明确要求按当前时点重新判断时，必须先为这次用户请求建立独立父请求身份，再读取任何用于本次正式判断的账户、行情、Discovery 或 decision context。恢复同一条仍在处理中的请求时沿用其父请求身份；新的用户触发必须创建新身份。System Review、scheduled review、REPORT 交付、普通行情问答不属于 Formal Decision Request，不得创建或冒充该身份。
+
+1. 以本次用户交互的实际北京时间生成唯一 `request_id` 和 `requested_at_beijing`。把只含请求元数据的父请求 envelope 写入现有 `requests/live_snapshot/<request_id>.json`：使用 `request_type=MARKET_QUOTE_REFRESH`、`source=CHATGPT_MANUAL_FORMAL_ANALYSIS`、`intent=query_intent=FORMAL_INTRADAY_ANALYSIS`，并设置 `force_refresh=true`、`require_post_request_snapshot=true`、`reuse_inflight_refresh=true`、`duplicate_equivalent_refresh_forbidden=true`。不要在首跳 envelope 中填写交易动作或把它伪装成 `FORMAL_DECISION` 事实。
+2. 使用已连接 GitHub 的 Contents `create_file` 能力将该 envelope 提交到 current `main`；请求文件写入是本次运行 ingress，不是代码变更，不走分支或 PR。必须确认工具返回提交回执，并回读 current `main` 上同路径文件，核对 `request_id` 与 `requested_at_beijing`。若文件已存在，先核对是否属于同一请求；新请求必须使用不同身份。若提交失败或结果不确定且无法回读确认，停止正式分析，不得用旧请求、当前状态或直接行情替代。
+3. 由该请求文件的 push 唤醒现有 `.github/workflows/market-snapshot.yml` 和既有 request-bound producer；不得另建 workflow、producer、state 或第二决策链。按当前场景和数据规范取得本次 request-bound 合法事实。
+4. 正式推理前确认 `data/state/query_context.json` 的 `decision_fact_pack.trigger.request_id` 与本次父请求 ID 完全一致，且其中 `decision_work_package.problem_graph` 属于本次请求。缺少或不匹配时保持 fail-closed；不得把无身份的当前 DWP 或历史 DWP 当成本次请求包。
+5. 完成业务判断后，继续使用下述既有 `BUSINESS_DECISION_SOURCE`：仅提交与本次 request-bound `decision_work_package.problem_graph` 对齐的 `decision_response.answers`，再由现有确定性投影和 canonical single writer 完成持久化。完成分析本身不得重用历史 parent request identity。
+
+正式决策生产闭环的ChatGPT写入入口固定为现有 `BUSINESS_DECISION_SOURCE`：业务判断完成后，ChatGPT只提交与本次 `decision_work_package.problem_graph` 对齐的 `decision_response.answers`；不得直接构造 `STATE_SYNC_ONLY / CHATGPT_MANUAL_FORMAL_COMPLETION`，不得手写 `formal_decision.managed_position_reviews`、`capital_use`、`position_capital_states` 或 `decision_evidence_consumption` canonical nesting。现有 `scripts/business_decision_source.py` 负责确定性投影，`scripts/process_state_sync_request.py` 负责canonical持久化与single writer。历史legacy completion仅保留读取/历史兼容，不是新Formal Decision生产入口。业务判断完成后，ChatGPT只提交与本次 `decision_work_package.problem_graph` 对齐的 `decision_response.answers`；不得直接构造 `STATE_SYNC_ONLY / CHATGPT_MANUAL_FORMAL_COMPLETION`，不得手写 `formal_decision.managed_position_reviews`、`capital_use`、`position_capital_states` 或 `decision_evidence_consumption` canonical nesting。现有 `scripts/business_decision_source.py` 负责确定性投影，`scripts/process_state_sync_request.py` 负责canonical持久化与single writer。历史legacy completion仅保留读取/历史兼容，不是新Formal Decision生产入口。
 
 盘前、集合竞价、盘中、午间、盘后、风险许可、生命周期、金额、卖出和资本比较：
 
