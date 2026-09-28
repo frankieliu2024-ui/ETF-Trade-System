@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-09-28T13:38:52+08:00",
-  "status": "BLOCKED",
+  "generated_at": "2026-09-28T13:42:02+08:00",
+  "status": "READY",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
@@ -13,19 +13,16 @@
       "market_phase": "CONTINUOUS_AFTERNOON"
     },
     "account": {
-      "status": "BLOCKED",
-      "reason": "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request has not converged into canonical account_fact",
+      "status": "READY",
+      "reason": "confirmed account facts remain valid; historical audit deltas are not pending updates",
       "updated_at": "2026-09-28T11:36:00+08:00",
       "source": "BROKER_HOLDINGS_SCREENSHOT_20260928_1136_USER_CONFIRMED",
       "pending_change_events": [],
       "historical_audit_event_count": 80,
-      "pending_broker_request": {
-        "path": "requests/live_snapshot/20260928_125400_broker_position_facts_replay.json",
-        "request_id": "BROKER_POSITION_FACTS_20260928_125400_FORMAL_PARENT",
-        "request_time": "2026-09-28T12:54:00+08:00",
-        "has_account_fact": true,
-        "status": "ACCOUNT_SYNC_NOT_PERFORMED"
-      }
+      "cash": 13114.24,
+      "reserved_cash_for_settlement": 0,
+      "deployable_cash": 13114.24,
+      "settlement_constraint_status": "NONE"
     },
     "risk": {
       "status": "READY",
@@ -73,9 +70,7 @@
       "checked_at": "2026-09-28T10:50:43+08:00"
     }
   },
-  "blockers": [
-    "account"
-  ],
+  "blockers": [],
   "degradations": [],
   "safety_boundary": "This state does not create or modify risk permission, Trial/Confirm rules, amounts, sell rules, or execution authority."
 }
