@@ -3144,6 +3144,49 @@ def main() -> int:
         }, ensure_ascii=False, indent=2, sort_keys=True))
         return 0
 
+    if isinstance(supplied_account, dict):
+        supplied_account = merge_account_fact(prior_account, supplied_account)
+        supplied_account.setdefault("status", "VALID")
+        supplied_account.setdefault("validity_mode", "EVENT_DRIVEN_CARRY_FORWARD")
+        if account_fact_is_older(prior_account, supplied_account):
+            account_sync_status = "STALE_ACCOUNT_FACT_IGNORED"
+        else:
+            # Use the canonicalized event history returned by merge_account_fact:
+            # it may have upgraded a previously unresolved IPO registration.
+            prior_events = supplied_account.get("account_change_events_after_confirmed_at") or []
+            new_events = _account_change_events(prior_account, supplied_account, request, trades)
+            known = {str(x.get("idempotency_key") or x.get("event_id") or "") for x in prior_events}
+            supplied_account["account_change_events_after_confirmed_at"] = prior_events + [x for x in new_events if str(x.get("idempotency_key")) not in known]
+            if supplied_account == prior_account:
+                account_sync_status = "ACCOUNT_SYNC_IDEMPOTENT_NOOP"
+            else:
+                account_sync_status = "ACCOUNT_FACT_UPDATED"
+                atomic_json_write(ACCOUNT, supplied_account)
+    account = load_json(ACCOUNT)
+    latest_trade_event_id = _latest_trade_event_id()
+    if latest_trade_event_id:
+        current_path = ROOT / "data/state/CURRENT.json"
+        current = load_json(current_path) if current_path.exists() else {}
+        if current.get("last_trade_event_id") != latest_trade_event_id:
+            current["last_trade_event_id"] = latest_trade_event_id
+            current["generated_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            atomic_json_write(current_path, current)
+    if account.get("status") != "VALID":
+        raise RuntimeError("account_fact is not VALID")
+    decision_recorded, decision_id = record_formal_decision(request)
+    if decision_recorded:
+        decision = request.get("formal_decision") or {}
+        prior_action = account.get("formal_action") or {}
+        same_executed_decision = (
+            str(prior_action.get("decision_id") or "") == decision_id
+            and str(prior_action.get("execution_status") or "").upper() == "EXECUTED"
+        )
+        # Replaying the same formal decision is idempotent: an executed action
+        # must never be downgraded back to PENDING. A genuinely new decision
+        # may still become the current pending action.
+        if not same_executed_decision:
+            account["formal_action"] = {"action": decision.get("action") or decision.get("amount_action") or "", "quantity": decision.get("quantity"), "decision_id": decision_id, "decision_time": decision.get("decision_time") or decision.get("data_as_of_beijing") or datetime.now(SHANGHAI).isoformat(timespec="seconds"), "source": "CHATGPT_FORMAL_DECISION", "lifecycle": decision.get("lifecycle"), "applicable_object": decision.get("candidate_code") or decision.get("code") or "", "validity": "ACTIVE", "execution_status": "PENDING"}
+            atomic_json_write(ACCOUNT, account)
     trade_event_recorded = False
     persisted_trade_events = []
     for trade_index, trade in enumerate(trades):
