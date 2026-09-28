@@ -301,7 +301,9 @@ def _evidence_requirement_plan(problems: list[dict]) -> list[dict]:
         if pid in {"DEPLOYABLE_CASH", "RELEASABLE_CAPITAL", "NEXT_UNIT_CAPITAL_USE"}:
             classes += ["GLOBAL_RISK"]
         for evidence_class in dict.fromkeys(classes):
-            plan.append({"requirement_id": f"{pid}:{evidence_class}", "target_problem_id": pid, "evidence_class": evidence_class, "target_exposure": target, "required": evidence_class in {"A_SHARE_STYLE_FEEDBACK", "ETF_RELATIVE_STRENGTH"}, "optional": evidence_class not in {"A_SHARE_STYLE_FEEDBACK", "ETF_RELATIVE_STRENGTH"}, "why_decision_relevant": "可能改变风险许可、候选、持仓动作、金额、资本迁移或下一单位资本用途", "satisfaction": "UNSATISFIED"})
+            triggered_external_classes = {"GLOBAL_RISK", "COMMODITY", "FX", "RATES", "OVERSEAS_INDUSTRY_CHAIN", "HK_INDUSTRY_CHAIN"}
+            required = evidence_class in {"A_SHARE_STYLE_FEEDBACK", "ETF_RELATIVE_STRENGTH"} or evidence_class in triggered_external_classes
+            plan.append({"requirement_id": f"{pid}:{evidence_class}", "target_problem_id": pid, "evidence_class": evidence_class, "target_exposure": target, "required": required, "optional": not required, "why_decision_relevant": "可能改变风险许可、候选、持仓动作、金额、资本迁移或下一单位资本用途", "satisfaction": "UNSATISFIED"})
     return plan
 
 
