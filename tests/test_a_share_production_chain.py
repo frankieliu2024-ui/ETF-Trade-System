@@ -403,7 +403,16 @@ class ManualRequestSessionIngressTests(unittest.TestCase):
         self.assertIn('name "${parent_request_id}__business_decision_source_*.json"', workflow)
         self.assertIn("formal replay requires exactly one durable BUSINESS_DECISION_SOURCE", workflow)
         self.assertIn("request_files=\"${formal_sources[0]}\"", workflow)
+        self.assertIn("FORMAL_REPLAY_SOURCE_COMMIT", workflow)
+        self.assertIn("--formal-replay-source-commit", workflow)
+        self.assertIn("formal replay canonical Decision Fact count must equal one", workflow)
+        self.assertIn("formal replay canonical Decision Fact parent_request_id mismatch", workflow)
+        self.assertIn("formal replay canonical Decision Fact source_type mismatch", workflow)
         self.assertIn('event_name in {"push", "workflow_dispatch"}', gate)
+        state_sync = (ROOT / "scripts/process_state_sync_request.py").read_text(encoding="utf-8")
+        self.assertIn("--formal-replay-source-commit", state_sync)
+        self.assertIn("formal replay source bytes must match the immutable source-introduction commit", state_sync)
+        self.assertIn("historical request-bound Decision Work Package", state_sync)
 
     def test_runtime_session_gate_defines_event_replay_helpers(self):
         gate = (ROOT / "scripts/runtime_session_gate.py").read_text(encoding="utf-8")
