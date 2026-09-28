@@ -76,6 +76,48 @@ class DashboardProjectionTests(unittest.TestCase):
             }, ensure_ascii=False), encoding="utf-8")
             self.assertEqual(latest_canonical_formal_decision(root)["risk_permission"], "禁止新增")
 
+    def test_latest_formal_decision_projects_canonical_capital_fields(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "events/decisions"
+            path.mkdir(parents=True)
+            (path / "formal.json").write_text(json.dumps({
+                "event_type": "FORMAL_DECISION",
+                "decision_time_beijing": "2026-09-28T22:51:36+08:00",
+                "formal_decision": {
+                    "risk_permission": "禁止新增",
+                    "main_candidate": "800红利低波ETF（159355）",
+                    "next_unit_capital_use": "下一单位资本最有效用途：现金21,962.84元；新增金额0元。",
+                    "capital_competition": {
+                        "new_amount_yuan": 0,
+                        "zero_amount_decisive_reason": "广泛风险收缩且无对象通过完整新增许可与Trial/Confirm链。",
+                    },
+                    "data_as_of_beijing": "2026-09-28T22:51:36+08:00",
+                },
+            }, ensure_ascii=False), encoding="utf-8")
+            result = latest_canonical_formal_decision(root)
+            self.assertIn("现金21,962.84元", result["amount_action"])
+            self.assertIn("新增金额0.00元", result["amount_action"])
+            self.assertEqual(result["decisive_reason"], "广泛风险收缩且无对象通过完整新增许可与Trial/Confirm链。")
+
+    def test_latest_formal_decision_keeps_legacy_display_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "events/decisions"
+            path.mkdir(parents=True)
+            (path / "formal.json").write_text(json.dumps({
+                "event_type": "FORMAL_DECISION",
+                "decision_time_beijing": "2026-09-14T11:20:00+08:00",
+                "formal_decision": {
+                    "risk_permission": "禁止新增",
+                    "amount_action": "旧格式动作",
+                    "decisive_reason": "旧格式原因",
+                },
+            }, ensure_ascii=False), encoding="utf-8")
+            result = latest_canonical_formal_decision(root)
+            self.assertEqual(result["amount_action"], "旧格式动作")
+            self.assertEqual(result["decisive_reason"], "旧格式原因")
+
     def test_position_pnl_is_exact_estimated_or_unknown(self):
         self.assertIn("-10.00元", format_position_pnl({"pnl": -10, "pnl_pct": -2}))
         self.assertIn("估算", format_position_pnl({"market_value": 90, "cost": 1, "quantity": 100}))

@@ -80,12 +80,34 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
     lifecycle = decision.get("lifecycle")
     if isinstance(lifecycle, dict):
         lifecycle = "；".join(f"{key}：{value}" for key, value in lifecycle.items())
+    competition = decision.get("capital_competition") if isinstance(decision.get("capital_competition"), dict) else {}
+    amount = competition.get("new_amount_yuan")
+    canonical_use = str(decision.get("next_unit_capital_use") or competition.get("next_unit_capital_use") or "").strip()
+    if decision.get("amount_action") or decision.get("action"):
+        amount_action = decision.get("amount_action") or decision.get("action")
+    elif canonical_use:
+        amount_text = ""
+        if amount not in (None, ""):
+            try:
+                amount_text = f"；新增金额{float(amount):,.2f}元"
+            except (TypeError, ValueError):
+                amount_text = ""
+        amount_action = canonical_use + amount_text
+    else:
+        amount_action = "未提供"
+    decisive_reason = (
+        decision.get("decisive_reason")
+        or decision.get("zero_amount_decisive_reason")
+        or competition.get("zero_amount_decisive_reason")
+        or competition.get("selected_state_reason")
+        or "未提供"
+    )
     return {
         "risk_permission": decision.get("risk_permission") or "未提供",
         "lifecycle": lifecycle or "未提供",
         "main_candidate": decision.get("main_candidate") or decision.get("candidate") or "无新的主候选。",
-        "amount_action": decision.get("amount_action") or decision.get("action") or "未提供",
-        "decisive_reason": decision.get("decisive_reason") or decision.get("zero_amount_decisive_reason") or "未提供",
+        "amount_action": amount_action,
+        "decisive_reason": decisive_reason,
         "data_as_of_beijing": decision.get("data_as_of_beijing") or decision.get("data_as_of") or "未提供",
     }
 
