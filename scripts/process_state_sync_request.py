@@ -3037,6 +3037,12 @@ def main() -> int:
         decision_work_package = request.get("decision_work_package") or packet.get("decision_work_package") or {}
         if not isinstance(decision_work_package, dict) or not decision_work_package.get("problem_graph"):
             raise ValueError("business decision source Decision Work Package is missing")
+        # Freeze the already-validated request-bound opportunity domain onto the
+        # in-memory ingress object. record_formal_decision() must validate the
+        # deterministic projection against the exact DWP that produced it,
+        # including REJECTed Discovery evaluation inputs, rather than falling
+        # back to the later post-disposition Observation set.
+        request["decision_work_package"] = json.loads(json.dumps(decision_work_package))
 
         supplied_decision = request.get("formal_decision")
         source_payload = dict(supplied_decision) if isinstance(supplied_decision, dict) else {}

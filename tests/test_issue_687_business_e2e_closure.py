@@ -109,6 +109,57 @@ class BusinessE2EClosureContractTests(unittest.TestCase):
         self.assertIn("159127", required)
         self.assertIn("159148", required)
 
+    def test_business_source_query_context_dwp_is_frozen_for_canonical_validation(self) -> None:
+        request = {}
+        packet = {
+            "decision_work_package": {
+                "problem_graph": [
+                    {"problem_id": "OBSERVATION:513180"},
+                    {"problem_id": "DISCOVERY:159127", "formal_quote_status": "UNAVAILABLE"},
+                ]
+            }
+        }
+        decision_work_package = request.get("decision_work_package") or packet.get("decision_work_package") or {}
+        self.assertTrue(decision_work_package.get("problem_graph"))
+
+        # Mirrors the Business Decision Source dispatch handoff: the DWP loaded
+        # from same-request query_context must remain attached to the in-memory
+        # request consumed by record_formal_decision().
+        request["decision_work_package"] = json.loads(json.dumps(decision_work_package))
+        required = state_sync.request_bound_etf_opportunity_reviews(request)
+        self.assertEqual(required, {
+            "513180": "OBSERVED_ETF",
+            "159127": "OBSERVATION_EVALUATION_INPUT",
+        })
+
+        capital = {
+            "next_unit_capital_use": "现金",
+            "full_competition_completed": True,
+            "releasable_capital_reviewed": True,
+            "post_action_deployable_cash": 10000,
+            "future_opportunity_capacity": "保留后续Trial/Confirm承载能力",
+            "cash_opportunity_cost": "可能错过右尾",
+            "alternative_capital_use_review": "已比较全部合法资本状态",
+            "concentration_account_structure_effect": "不增加集中度",
+            "selected_state_reason": "当前现金更优",
+            "new_amount_yuan": 0,
+            "zero_amount_decisive_reason": "当前无合法新增用途",
+            "compared_capital_states": [
+                {"state_name": "现金", "capital_action": "保留", "remaining_deployable_cash": 10000, "why_not_selected": "已选中", "opportunity_cost_if_selected": "可能错过右尾"},
+                {"state_name": "Discovery", "capital_action": "不部署", "remaining_deployable_cash": 10000, "why_not_selected": "正式行情不可用", "opportunity_cost_if_selected": "增加未验证风险"},
+            ],
+            "etf_opportunity_reviews": [
+                {"security_code": "513180", "category": "OBSERVED_ETF", "opportunity_status": "观察机会", "conclusion": "继续观察", "reason": "假设仍有信息价值"},
+                {"security_code": "159127", "category": "OBSERVATION_EVALUATION_INPUT", "opportunity_status": "无机会", "conclusion": "不部署", "reason": "正式行情不可用"},
+            ],
+        }
+        self.assertEqual(
+            state_sync.validate_capital_competition_contract(
+                capital, {"positions": []}, required_etf_opportunities=required
+            ),
+            "",
+        )
+
     def test_request_bound_opportunity_domain_is_replay_stable(self) -> None:
         request = {
             "decision_work_package": {
