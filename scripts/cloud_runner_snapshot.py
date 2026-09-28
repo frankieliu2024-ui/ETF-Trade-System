@@ -585,7 +585,7 @@ def scheduled_close_recovery_intent(run_started_dt: datetime, market_date: str) 
         and bool(scheduled_cron)
         and (handed_off_intent or exact_close_intent)
     )
-    request_recovery = event_name == "push" and request_time_recovery
+    request_recovery = event_name in {"push", "workflow_dispatch"} and request_time_recovery
     return (
         (scheduled_recovery or request_recovery)
         and run_started_dt.weekday() < 5
