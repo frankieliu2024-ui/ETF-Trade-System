@@ -141,6 +141,42 @@ def _changed_request_files() -> list[Path]:
     return [ROOT / name.strip() for name in result.stdout.splitlines() if name.strip().endswith(".json")]
 
 
+def _event_request_files() -> list[Path]:
+    event_name = os.environ.get("GITHUB_EVENT_NAME")
+    if event_name == "workflow_dispatch":
+        replay = os.environ.get("FORMAL_REPLAY_REQUEST", "").strip()
+        if replay:
+            path = Path(replay)
+            if path.is_absolute() or path.parts[:2] != ("requests", "live_snapshot") or ".." in path.parts or path.suffix != ".json":
+                raise ValueError("formal_replay_request must be one existing requests/live_snapshot/*.json path")
+            return [ROOT / path]
+    return _changed_request_files() if event_name == "push" else []
+
+
+def _event_request_class() -> str:
+    classes = []
+    policy = load_json(ROOT / "config" / "runtime_policy.json")
+    for path in _event_request_files():
+        try:
+            request = json.loads(path.read_text(encoding="utf-8"))
+            source = str(request.get("source") or request.get("requested_by") or "").upper()
+            is_manual_chat = "CHATGPT" in source or "MANUAL" in source
+            if is_manual_chat:
+                request = normalize_manual_request_session(request, policy)
+            classes.append(classify_live_snapshot_request(request))
+        except (OSError, json.JSONDecodeError):
+            continue
+    if not classes:
+        return "NOT_APPLICABLE"
+    if all(item == "STATE_SYNC_ONLY" for item in classes):
+        return "STATE_SYNC_ONLY"
+    if all(item == "BUSINESS_DECISION_SOURCE" for item in classes):
+        return "BUSINESS_DECISION_SOURCE"
+    if any(item == "HYBRID" for item in classes) or len(set(classes)) > 1:
+        return "HYBRID"
+    return "REFRESH_BEARING"
+
+
 def _push_request_class() -> str:
     classes = []
     policy = load_json(ROOT / "config" / "runtime_policy.json")
