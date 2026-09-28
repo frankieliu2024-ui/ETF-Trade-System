@@ -19,7 +19,7 @@ class ThreeLayerSemanticConvergenceTests(unittest.TestCase):
         text = (ROOT / "ETF与市场监测数据接口使用规范.md").read_text(encoding="utf-8")
         self.assertIn("第一层：外部驱动与跨市场状态数据", text)
         self.assertIn("第二层：A股内部市场状态数据", text)
-        self.assertIn("第三层：ETF机会与资本状态数据", text)
+        self.assertIn("第三层：ETF与决策对象市场证据", text)
         self.assertIn("provider_as_of", text)
         self.assertIn("execution_eligibility", text)
         self.assertIn("不得复制MASTER中的风险许可", text)
