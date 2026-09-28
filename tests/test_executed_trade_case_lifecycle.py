@@ -30,6 +30,44 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
         event = {"event_id": "trade-1", "confirmed_at_beijing": "2026-09-01T14:40:01+08:00"}
         self.assertTrue(consistency._case_mapping_required(current, event))
 
+    def test_execution_quality_is_pending_before_same_day_full_day_review(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            state = root / "data/state"
+            state.mkdir(parents=True)
+            (state / "CURRENT.json").write_text(json.dumps({
+                "market_date": "2026-09-28",
+                "latest_valid_node": "live",
+            }), encoding="utf-8")
+            trades = root / "events/trades"
+            trades.mkdir(parents=True)
+            (trades / "trade-1.json").write_text(json.dumps({
+                "event_id": "trade-1",
+                "execution_status": "EXECUTED",
+                "confirmed_at_beijing": "2026-09-28T14:14:44+08:00",
+            }), encoding="utf-8")
+            with patch.object(consistency, "ROOT", root):
+                self.assertFalse(consistency._execution_quality_projection_required())
+
+    def test_execution_quality_is_required_after_market_date_rolls_forward(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            state = root / "data/state"
+            state.mkdir(parents=True)
+            (state / "CURRENT.json").write_text(json.dumps({
+                "market_date": "2026-09-29",
+                "latest_valid_node": "live",
+            }), encoding="utf-8")
+            trades = root / "events/trades"
+            trades.mkdir(parents=True)
+            (trades / "trade-1.json").write_text(json.dumps({
+                "event_id": "trade-1",
+                "execution_status": "EXECUTED",
+                "confirmed_at_beijing": "2026-09-28T14:14:44+08:00",
+            }), encoding="utf-8")
+            with patch.object(consistency, "ROOT", root):
+                self.assertTrue(consistency._execution_quality_projection_required())
+
     def test_checker_accepts_pending_intraday_but_fails_post_close_until_mapping(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
