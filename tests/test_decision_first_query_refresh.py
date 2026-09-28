@@ -425,6 +425,13 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertIn("MOST_LIKELY_ERROR_POINT", boundary["summary_must_preserve"])
         self.assertIn("Compress unchanged evidence, not business conclusions", boundary["compression_rule"])
         self.assertIn("same request-bound Business Decision Source", boundary["projection_rule"])
+        status_contract = boundary["execution_status_contract"]
+        self.assertEqual(status_contract["business_ready_persistence_pending"], "已自动接管")
+        self.assertEqual(status_contract["canonical_persistence_confirmed"], "本事项已闭环")
+        self.assertIn("must not be 本事项已闭环", status_contract["rule"])
+        tense_contract = boundary["canonical_identity_change_tense_contract"]
+        self.assertIn("本次判断要求/拟/应", tense_contract["before_persistence_confirmed"])
+        self.assertIn("canonical persistence/readback confirms", tense_contract["after_persistence_confirmed"])
 
     def test_manual_formal_reply_freeze_ready_after_same_request_pit(self):
         request = {
