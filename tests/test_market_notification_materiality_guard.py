@@ -611,6 +611,48 @@ class NotificationAggregationTests(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
+    def test_a_share_summary_surfaces_observation_and_query_time_industry_context(self):
+        import notification_semantics as semantics
+        indices = {"000001": {"symbol": "000001", "provider_name": "上证指数", "change_pct": 0.2}}
+        etfs = [
+            {"symbol": "561980", "provider_name": "半导体设备ETF", "change_pct": -1.1},
+            {"symbol": "515880", "provider_name": "通信ETF", "change_pct": 0.6},
+        ]
+        account = {
+            "held_etfs": {"561980": {}}, "held_stocks": {"300750": {}},
+            "formal": {"validity": "ACTIVE", "applicable_object": "561980", "lifecycle": "Trial"},
+        }
+        stocks = [
+            {"symbol": "300750", "provider_name": "宁德时代", "change_pct": 1.3,
+             "quality_status": "PASS", "as_of_beijing": "2026-09-28T11:30:00+08:00", "provider": "tencent_qq",
+             "_monitor_role": "账户个股"},
+            {"symbol": "688981", "provider_name": "中芯国际", "change_pct": 0.8,
+             "quality_status": "PASS", "as_of_beijing": "2026-09-28T11:30:00+08:00", "provider": "tencent_qq",
+             "_monitor_role": "查询时产业链个股"},
+        ]
+        with patch.object(semantics, "_account_context", return_value=account), \
+             patch.object(semantics, "_current_stock_context_rows", return_value=stocks):
+            headline, _, implication, action = semantics.a_share_structure(indices, etfs, {}, is_close=False)
+        rendered = " ".join(headline)
+        self.assertIn("第一层｜A股指数结构", rendered)
+        self.assertIn("第二层｜ETF持仓与观察机会", rendered)
+        self.assertIn("通信ETF", rendered)
+        self.assertIn("第三层｜个股/产业链验证", rendered)
+        self.assertIn("宁德时代", rendered)
+        self.assertIn("中芯国际", rendered)
+        self.assertIn("资本", implication)
+        self.assertIn("不因通知机械交易", action)
+
+    def test_a_share_summary_explicitly_marks_absent_stock_evidence(self):
+        import notification_semantics as semantics
+        indices = {"000001": {"symbol": "000001", "provider_name": "上证指数", "change_pct": 0.1}}
+        ctx = {"held_etfs": {}, "held_stocks": {}, "formal": {}}
+        with patch.object(semantics, "_account_context", return_value=ctx), \
+             patch.object(semantics, "_current_stock_context_rows", return_value=[]):
+            headline, _, _, _ = semantics.a_share_structure(indices, [], {}, is_close=False)
+        self.assertIn("第三层｜个股/产业链验证", " ".join(headline))
+        self.assertIn("没有可合法投影", " ".join(headline))
+
 
 # The existing candidate acceptance command executes this adjacent regression
 # module. Re-export the Issue #649 focused matrix here so CI runs it without a
