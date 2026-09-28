@@ -498,6 +498,48 @@ jobs:
             mkdir -p "$(dirname "$REQUEST_FILE")"
             cp "/tmp/etf-triggering-request/$REQUEST_FILE" "$REQUEST_FILE"
           fi
+          # An account/trade screenshot may identify the already-ingressed
+          # Formal Decision request whose query context must be replayed after
+          # canonical account sync. The account event remains the state-sync
+          # input; this only selects the existing request envelope for the
+          # canonical request-bound context builder.
+          if [ -n "$REQUEST_FILE" ] && [ -f "$REQUEST_FILE" ]; then
+            FORMAL_PARENT_ID=$(python - "$REQUEST_FILE" <<'PY'
+          import json, sys
+          request = json.load(open(sys.argv[1], encoding="utf-8"))
+          print(str(request.get("formal_decision_parent_request_id") or "").strip())
+          PY
+            )
+            if [ -n "$FORMAL_PARENT_ID" ]; then
+              if [[ ! "$FORMAL_PARENT_ID" =~ ^[A-Za-z0-9_.-]+$ ]]; then
+                echo "invalid formal_decision_parent_request_id" >&2
+                exit 1
+              fi
+              FORMAL_PARENT_FILE="requests/live_snapshot/$FORMAL_PARENT_ID.json"
+              git fetch origin main --quiet
+              git show "origin/main:$FORMAL_PARENT_FILE" > /tmp/etf-formal-parent-request.json
+              python - "$FORMAL_PARENT_ID" /tmp/etf-formal-parent-request.json <<'PY'
+          import json, sys
+          expected_id, path = sys.argv[1:]
+          request = json.load(open(path, encoding="utf-8"))
+          valid = (
+              request.get("request_id") == expected_id
+              and request.get("request_type") == "MARKET_QUOTE_REFRESH"
+              and request.get("source") == "CHATGPT_MANUAL_FORMAL_ANALYSIS"
+              and request.get("intent") == "FORMAL_INTRADAY_ANALYSIS"
+              and request.get("query_intent") == "FORMAL_INTRADAY_ANALYSIS"
+              and request.get("force_refresh") is True
+              and request.get("require_post_request_snapshot") is True
+          )
+          if not valid:
+              raise SystemExit("linked parent is not an existing canonical Formal Decision request")
+          PY
+              mkdir -p "$(dirname "$FORMAL_PARENT_FILE")"
+              cp /tmp/etf-formal-parent-request.json "$FORMAL_PARENT_FILE"
+              REQUEST_FILE="$FORMAL_PARENT_FILE"
+              echo "replaying existing Formal Decision request: $FORMAL_PARENT_ID"
+            fi
+          fi
           if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "${{ steps.snapshot_result.outputs.snapshot_written }}" != "true" ]; then
             git fetch origin main --quiet
             git show origin/main:data/state/query_context.json > /tmp/latest-query-context.json
