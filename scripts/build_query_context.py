@@ -292,7 +292,18 @@ def _evidence_requirement_plan(problems: list[dict]) -> list[dict]:
     for problem in problems:
         pid = problem["problem_id"]
         target = str(problem.get("security") or problem.get("decision_object") or "")
-        classes = ["A_SHARE_STYLE_FEEDBACK", "ETF_RELATIVE_STRENGTH"]
+        # Fixed three-layer baseline; commodity remains exposure-triggered below.
+        classes = [
+            "GLOBAL_RISK", "RATES", "FX", "OVERSEAS_INDUSTRY_CHAIN",
+            "MACRO_POLICY_EVENTS", "CROSS_MARKET_ASSETS_SUPPLY_CHAIN",
+            "A_SHARE_INDEX", "A_SHARE_BREADTH", "A_SHARE_STYLE_FEEDBACK",
+            "A_SHARE_INDUSTRY_THEME", "A_SHARE_LIQUIDITY_TURNOVER",
+            "A_SHARE_CAPITAL_FLOW", "A_SHARE_ANOMALY", "EXTERNAL_CONFIRMATION_STATE",
+            "ETF_RELATIVE_STRENGTH", "FULL_MARKET_DISCOVERY", "HOLDING_ETF",
+            "OBSERVATION_ETF", "TEMPORARY_DISCOVERY_CANDIDATE", "ACCOUNT_STOCK",
+            "CONDITIONAL_INDUSTRY_CHAIN", "CASH", "RELEASABLE_CAPITAL",
+            "HOLDING_ADDITIONAL_CAPITAL",
+        ]
         text = target.lower()
         if any(token in text for token in ("能源", "化工", "油", "资源", "商品")):
             classes += ["COMMODITY", "FX", "RATES", "OVERSEAS_INDUSTRY_CHAIN", "HK_INDUSTRY_CHAIN"]
