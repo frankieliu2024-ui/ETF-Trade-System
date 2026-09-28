@@ -18,5 +18,14 @@ def test_fixed_external_baseline_is_present_for_risk_permission():
     problems = [{"problem_id": "RISK_PERMISSION", "security": "风险许可"}]
     plan = _evidence_requirement_plan(problems)
     classes = {item["evidence_class"] for item in plan}
-    assert {"GLOBAL_RISK", "COMMODITY", "RATES", "FX", "OVERSEAS_INDUSTRY_CHAIN"}.issubset(classes)
-    assert all(item["required"] for item in plan if item["evidence_class"] in {"GLOBAL_RISK", "COMMODITY", "RATES", "FX", "OVERSEAS_INDUSTRY_CHAIN"})
+    assert {
+        "GLOBAL_RISK", "COMMODITY", "RATES", "FX", "OVERSEAS_INDUSTRY_CHAIN",
+        "A_SHARE_INDEX", "A_SHARE_BREADTH", "A_SHARE_STYLE_FEEDBACK",
+        "A_SHARE_INDUSTRY_THEME", "A_SHARE_LIQUIDITY_TURNOVER",
+        "A_SHARE_CAPITAL_FLOW", "A_SHARE_ANOMALY", "EXTERNAL_CONFIRMATION_STATE",
+        "ETF_RELATIVE_STRENGTH", "FULL_MARKET_DISCOVERY", "HOLDING_ETF",
+        "OBSERVATION_ETF", "TEMPORARY_DISCOVERY_CANDIDATE", "ACCOUNT_STOCK",
+        "CONDITIONAL_INDUSTRY_CHAIN", "CASH", "RELEASABLE_CAPITAL",
+        "HOLDING_ADDITIONAL_CAPITAL",
+    }.issubset(classes)
+    assert all(item["required"] for item in plan)
