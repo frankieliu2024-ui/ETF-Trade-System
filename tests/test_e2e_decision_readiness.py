@@ -66,6 +66,53 @@ class E2EDecisionReadinessTests(unittest.TestCase):
         self.assertEqual(result["minimum_decision_context"], "READY_OR_NOT_APPLICABLE")
         self.assertTrue(result["request_bound"])
 
+    def test_request_bound_ready_exposes_compact_formal_reply_gate(self):
+        result = context_component(
+            {
+                "decision_fact_pack": {
+                    "trigger": {
+                        "request_id": "r3",
+                        "requested_at_beijing": "2026-09-29T01:16:00+08:00",
+                    },
+                    "formal_reply_freeze": {
+                        "status": "READY",
+                        "reply_freezable": True,
+                        "blockers": [],
+                    },
+                },
+                "fast_path_latency": {"latency_status": "OBSERVED"},
+            },
+            {"formal_intraday_context_completeness": {"status": "READY"}},
+        )
+        self.assertEqual(result["status"], "READY")
+        self.assertEqual(result["formal_reply_gate"]["request_id"], "r3")
+        self.assertEqual(result["formal_reply_gate"]["status"], "READY")
+        self.assertTrue(result["formal_reply_gate"]["reply_freezable"])
+        self.assertEqual(result["formal_reply_gate"]["blockers"], [])
+
+    def test_request_bound_inflight_gate_remains_visible_when_context_degraded(self):
+        result = context_component(
+            {
+                "decision_fact_pack": {
+                    "trigger": {
+                        "request_id": "r4",
+                        "requested_at_beijing": "2026-09-29T01:16:00+08:00",
+                    },
+                    "formal_reply_freeze": {
+                        "status": "IN_FLIGHT",
+                        "reply_freezable": False,
+                        "blockers": ["FORMAL_DISCOVERY_IN_FLIGHT"],
+                    },
+                },
+                "fast_path_latency": {"latency_status": "BUILDING"},
+            },
+            {"formal_intraday_context_completeness": {"status": "READY"}},
+        )
+        self.assertEqual(result["status"], "DEGRADED")
+        self.assertEqual(result["formal_reply_gate"]["request_id"], "r4")
+        self.assertFalse(result["formal_reply_gate"]["reply_freezable"])
+        self.assertEqual(result["formal_reply_gate"]["blockers"], ["FORMAL_DISCOVERY_IN_FLIGHT"])
+
     def test_true_incomplete_formal_context_remains_not_ready(self):
         result = context_component(
             {"request_id": "q"},

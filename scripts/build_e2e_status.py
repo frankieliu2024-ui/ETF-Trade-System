@@ -327,8 +327,20 @@ def context_component(query: dict, decision: dict) -> dict:
             "observability_boundary": boundary or None,
         }
 
-    trigger = (query.get("decision_fact_pack") or {}).get("trigger") or {}
-    request_bound = bool(str(trigger.get("request_id") or "").strip() and str(trigger.get("requested_at_beijing") or "").strip())
+    decision_fact_pack = query.get("decision_fact_pack") or {}
+    trigger = decision_fact_pack.get("trigger") or {}
+    request_id = str(trigger.get("request_id") or "").strip()
+    requested_at_beijing = str(trigger.get("requested_at_beijing") or "").strip()
+    request_bound = bool(request_id and requested_at_beijing)
+    reply_freeze = decision_fact_pack.get("formal_reply_freeze") or {}
+    formal_reply_gate = {
+        "request_id": request_id,
+        "requested_at_beijing": requested_at_beijing,
+        "status": str(reply_freeze.get("status") or "UNKNOWN").strip().upper(),
+        "reply_freezable": bool(reply_freeze.get("reply_freezable")),
+        "blockers": list(reply_freeze.get("blockers") or []),
+        "source": "decision_fact_pack.formal_reply_freeze",
+    } if request_bound else None
     fast_path = query.get("fast_path_latency") or {}
     latency_status = str(fast_path.get("latency_status") or "").strip().upper()
 
@@ -342,6 +354,7 @@ def context_component(query: dict, decision: dict) -> dict:
             "observability_boundary": boundary or None,
             "request_bound": True,
             "latency_status": latency_status or "MISSING",
+            "formal_reply_gate": formal_reply_gate,
         }
 
     if boundary == "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED":
@@ -360,6 +373,7 @@ def context_component(query: dict, decision: dict) -> dict:
             "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
             "observability_boundary": boundary,
             "request_bound": request_bound,
+            "formal_reply_gate": formal_reply_gate,
         }
 
     return {
@@ -369,6 +383,8 @@ def context_component(query: dict, decision: dict) -> dict:
         "decision_context": True,
         "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
         "observability_boundary": boundary or None,
+        "request_bound": request_bound,
+        "formal_reply_gate": formal_reply_gate,
     }
 
 
