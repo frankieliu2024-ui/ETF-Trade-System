@@ -288,33 +288,67 @@ def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict],
 
 
 def _evidence_requirement_plan(problems: list[dict]) -> list[dict]:
+    """Build decision-relevant evidence requirements without copying the full
+    three-layer catalogue onto every business problem.
+
+    Three-layer monitoring qualifies shared request-bound facts once.  This
+    plan only links each business problem to evidence classes that can change
+    that problem's judgment.  It does not weaken monitoring coverage or any
+    MASTER/business obligation.
+    """
+    shared_market = [
+        "GLOBAL_RISK", "RATES", "FX", "MACRO_POLICY_EVENTS",
+        "A_SHARE_INDEX", "A_SHARE_BREADTH", "A_SHARE_STYLE_FEEDBACK",
+        "A_SHARE_INDUSTRY_THEME", "A_SHARE_LIQUIDITY_TURNOVER",
+        "A_SHARE_CAPITAL_FLOW", "A_SHARE_ANOMALY", "EXTERNAL_CONFIRMATION_STATE",
+    ]
+    opportunity = [
+        "ETF_RELATIVE_STRENGTH", "FULL_MARKET_DISCOVERY",
+        "OBSERVATION_ETF", "TEMPORARY_DISCOVERY_CANDIDATE",
+    ]
+    holding = ["ETF_RELATIVE_STRENGTH", "HOLDING_ETF", "ACCOUNT_STOCK"]
+    capital = ["CASH", "RELEASABLE_CAPITAL", "HOLDING_ADDITIONAL_CAPITAL"]
+
     plan = []
     for problem in problems:
         pid = problem["problem_id"]
         target = str(problem.get("security") or problem.get("decision_object") or "")
-        # Fixed three-layer baseline; commodity remains exposure-triggered below.
-        classes = [
-            "GLOBAL_RISK", "RATES", "FX", "OVERSEAS_INDUSTRY_CHAIN",
-            "MACRO_POLICY_EVENTS", "CROSS_MARKET_ASSETS_SUPPLY_CHAIN",
-            "A_SHARE_INDEX", "A_SHARE_BREADTH", "A_SHARE_STYLE_FEEDBACK",
-            "A_SHARE_INDUSTRY_THEME", "A_SHARE_LIQUIDITY_TURNOVER",
-            "A_SHARE_CAPITAL_FLOW", "A_SHARE_ANOMALY", "EXTERNAL_CONFIRMATION_STATE",
-            "ETF_RELATIVE_STRENGTH", "FULL_MARKET_DISCOVERY", "HOLDING_ETF",
-            "OBSERVATION_ETF", "TEMPORARY_DISCOVERY_CANDIDATE", "ACCOUNT_STOCK",
-            "CONDITIONAL_INDUSTRY_CHAIN", "CASH", "RELEASABLE_CAPITAL",
-            "HOLDING_ADDITIONAL_CAPITAL",
-        ]
+        if pid == "RISK_PERMISSION":
+            classes = shared_market
+        elif pid == "MAIN_CANDIDATE":
+            classes = shared_market + opportunity
+        elif pid.startswith("HOLDING:"):
+            classes = shared_market + holding
+        elif pid.startswith("HELD_ETF_ADD:"):
+            classes = shared_market + holding + ["HOLDING_ADDITIONAL_CAPITAL", "CASH"]
+        elif pid.startswith(("DISCOVERY:", "OBSERVATION:")):
+            classes = shared_market + opportunity
+        elif pid in {"DEPLOYABLE_CASH", "RELEASABLE_CAPITAL", "TRIAL_CONFIRM_CAPACITY",
+                     "CONCENTRATION_COMMON_RISK", "NEXT_UNIT_CAPITAL_USE"}:
+            classes = shared_market + opportunity + capital
+        else:
+            # Unknown future problem families fail safe to the shared market
+            # packet instead of silently inheriting every object/capital class.
+            classes = shared_market
+
         text = target.lower()
         if any(token in text for token in ("能源", "化工", "油", "资源", "商品")):
-            classes += ["COMMODITY", "FX", "RATES", "OVERSEAS_INDUSTRY_CHAIN", "HK_INDUSTRY_CHAIN"]
+            classes += ["COMMODITY", "OVERSEAS_INDUSTRY_CHAIN", "HK_INDUSTRY_CHAIN"]
         elif any(token in text for token in ("半导体", "科技", "芯片", "纳指", "科创")):
-            classes += ["FX", "RATES", "OVERSEAS_INDUSTRY_CHAIN", "HK_INDUSTRY_CHAIN"]
-        if pid in {"DEPLOYABLE_CASH", "RELEASABLE_CAPITAL", "NEXT_UNIT_CAPITAL_USE"}:
-            classes += ["GLOBAL_RISK"]
-        for evidence_class in dict.fromkeys(classes):
-            plan.append({"requirement_id": f"{pid}:{evidence_class}", "target_problem_id": pid, "evidence_class": evidence_class, "target_exposure": target, "required": evidence_class in {"A_SHARE_STYLE_FEEDBACK", "ETF_RELATIVE_STRENGTH"}, "optional": evidence_class not in {"A_SHARE_STYLE_FEEDBACK", "ETF_RELATIVE_STRENGTH"}, "why_decision_relevant": "可能改变风险许可、候选、持仓动作、金额、资本迁移或下一单位资本用途", "satisfaction": "UNSATISFIED"})
-    return plan
+            classes += ["OVERSEAS_INDUSTRY_CHAIN", "HK_INDUSTRY_CHAIN"]
 
+        for evidence_class in dict.fromkeys(classes):
+            plan.append({
+                "requirement_id": f"{pid}:{evidence_class}",
+                "target_problem_id": pid,
+                "evidence_class": evidence_class,
+                "target_exposure": target,
+                "required": evidence_class in {"A_SHARE_STYLE_FEEDBACK", "ETF_RELATIVE_STRENGTH"},
+                "optional": evidence_class not in {"A_SHARE_STYLE_FEEDBACK", "ETF_RELATIVE_STRENGTH"},
+                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
+                "satisfaction": "UNSATISFIED",
+            })
+    return plan
 
 def _decision_work_package(
     graph: list[dict],
