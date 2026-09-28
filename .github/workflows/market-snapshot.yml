@@ -16,6 +16,10 @@ on:
         description: "Existing requests/live_snapshot STATE_SYNC_ONLY request to replay from execution-time main"
         required: false
         default: ""
+      formal_replay_request:
+        description: "Existing canonical Formal Decision MARKET_QUOTE_REFRESH request to replay without creating a new request identity"
+        required: false
+        default: ""
   push:
     paths:
       - "requests/live_snapshot/**.json"
@@ -50,6 +54,7 @@ jobs:
       QUERY_TIME_REFRESH: ${{ github.event_name == 'push' && 'true' || 'false' }}
       EVENT_BEFORE: ${{ github.event.before }}
       REPLAY_REQUEST: ${{ github.event.inputs.replay_request || '' }}
+      FORMAL_REPLAY_REQUEST: ${{ github.event.inputs.formal_replay_request || '' }}
       SCHEDULED_CRON: ${{ github.event.schedule || '' }}
     steps:
       - uses: actions/checkout@v5
@@ -77,6 +82,39 @@ jobs:
           echo "request_file=$REQUEST_FILE" >> "$GITHUB_OUTPUT"
           echo "request_expected=$REQUEST_EXPECTED" >> "$GITHUB_OUTPUT"
           echo "triggering request: file=$REQUEST_FILE expected=$REQUEST_EXPECTED"
+
+      - name: Bind explicit existing Formal Decision replay
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.formal_replay_request != '' }}
+        shell: bash
+        run: |
+          REQUEST_FILE="${FORMAL_REPLAY_REQUEST}"
+          python - "$REQUEST_FILE" <<'PY'
+          import json, sys
+          from pathlib import Path
+          path = Path(sys.argv[1])
+          if path.is_absolute() or path.parts[:2] != ("requests", "live_snapshot") or ".." in path.parts or path.suffix != ".json":
+              raise SystemExit("formal_replay_request must be one existing requests/live_snapshot/*.json path")
+          if not path.is_file():
+              raise SystemExit("formal_replay_request does not exist in execution-time main")
+          request = json.loads(path.read_text(encoding="utf-8"))
+          required = (
+              str(request.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH"
+              and str(request.get("source") or "").upper() == "CHATGPT_MANUAL_FORMAL_ANALYSIS"
+              and str(request.get("intent") or "").upper() == "FORMAL_INTRADAY_ANALYSIS"
+              and str(request.get("query_intent") or "").upper() == "FORMAL_INTRADAY_ANALYSIS"
+              and request.get("force_refresh") is True
+              and request.get("require_post_request_snapshot") is True
+          )
+          if not required:
+              raise SystemExit("formal_replay_request is not an existing canonical Formal Decision refresh request")
+          PY
+          mkdir -p "/tmp/etf-triggering-request/$(dirname "$REQUEST_FILE")"
+          cp "$REQUEST_FILE" "/tmp/etf-triggering-request/$REQUEST_FILE"
+          {
+            echo "TRIGGERING_REQUEST_FILE=$REQUEST_FILE"
+            echo "TRIGGERING_REQUEST_EXPECTED=true"
+          } >> "$GITHUB_ENV"
+          echo "formal replay request: file=$REQUEST_FILE expected=true"
 
       - name: Check exchange calendar and capture window
         id: session_gate
