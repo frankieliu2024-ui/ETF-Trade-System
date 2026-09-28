@@ -68,7 +68,7 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         shell: bash
         run: |
-          REQUEST_FILE=$(git show --format= --name-only "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | sed '/^$/d' | grep -vE '(__business_decision_source|__formal_completion)' | head -n 1)
+          REQUEST_FILE=$(git show --format= --name-only "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | sed '/^$/d' | grep -vE '(__business_decision_source|__formal_completion)' | head -n 1 || true)
           REQUEST_EXPECTED=false
           if [ -n "$REQUEST_FILE" ]; then
             REQUEST_EXPECTED=true
