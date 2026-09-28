@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from statistics import median
@@ -2982,6 +2983,7 @@ def account_fact_is_older(prior: dict, supplied: dict) -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("request_path")
+    parser.add_argument("--formal-replay-source-commit", default="")
     args = parser.parse_args()
     req_path = (ROOT / args.request_path).resolve()
     if ROOT not in req_path.parents or not req_path.exists():
@@ -3028,12 +3030,32 @@ def main() -> int:
         if str(parent_request.get("request_id") or "").strip() != parent_id:
             raise ValueError("business decision source parent request identity mismatch")
 
-        query_path = ROOT / "data" / "state" / "query_context.json"
-        query_context = load_json(query_path) if query_path.exists() else {}
+        replay_source_commit = str(args.formal_replay_source_commit or "").strip()
+        if replay_source_commit:
+            if not re.fullmatch(r"[0-9a-fA-F]{40}", replay_source_commit):
+                raise ValueError("formal replay source commit must be a full commit SHA")
+            request_rel = str(req_path.relative_to(ROOT)).replace("\\\\", "/")
+            historical_source = subprocess.run(
+                ["git", "show", f"{replay_source_commit}:{request_rel}"],
+                cwd=ROOT, capture_output=True, text=True, check=False,
+            )
+            if historical_source.returncode != 0 or historical_source.stdout.encode("utf-8") != req_path.read_bytes():
+                raise ValueError("formal replay source bytes must match the immutable source-introduction commit")
+            historical_query = subprocess.run(
+                ["git", "show", f"{replay_source_commit}:data/state/query_context.json"],
+                cwd=ROOT, capture_output=True, text=True, check=False,
+            )
+            if historical_query.returncode != 0:
+                raise ValueError("formal replay source commit is missing historical request-bound query_context")
+            query_context = json.loads(historical_query.stdout)
+        else:
+            query_path = ROOT / "data" / "state" / "query_context.json"
+            query_context = load_json(query_path) if query_path.exists() else {}
         packet = query_context.get("decision_fact_pack") or {}
         trigger = packet.get("trigger") or {}
         if str(trigger.get("request_id") or "").strip() != parent_id:
-            raise ValueError("business decision source requires current request-bound Decision Work Package")
+            qualifier = "historical" if replay_source_commit else "current"
+            raise ValueError(f"business decision source requires {qualifier} request-bound Decision Work Package")
         decision_work_package = request.get("decision_work_package") or packet.get("decision_work_package") or {}
         if not isinstance(decision_work_package, dict) or not decision_work_package.get("problem_graph"):
             raise ValueError("business decision source Decision Work Package is missing")
