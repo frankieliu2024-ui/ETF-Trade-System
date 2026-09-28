@@ -172,6 +172,47 @@ def _push_request_class() -> str:
     return "REFRESH_BEARING"
 
 
+def _same_day_close_ready(date_text: str) -> bool:
+    path = ROOT / "data" / "state" / "CURRENT.json"
+    if not path.exists():
+        return False
+    try:
+        current = load_json(path)
+    except (OSError, json.JSONDecodeError):
+        return False
+    return (
+        str(current.get("market_date") or "") == date_text
+        and str(current.get("latest_valid_node") or "") == "close"
+        and str(current.get("node_status") or "") == "READY"
+    )
+
+
+def _push_has_manual_formal_refresh_request(policy: dict) -> bool:
+    if os.environ.get("GITHUB_EVENT_NAME") != "push":
+        return False
+    for path in _changed_request_files():
+        try:
+            request = load_json(path)
+        except (OSError, json.JSONDecodeError):
+            continue
+        source = str(request.get("source") or request.get("requested_by") or "").upper()
+        if source != "CHATGPT_MANUAL_FORMAL_ANALYSIS":
+            continue
+        try:
+            request = normalize_manual_request_session(request, policy)
+        except ValueError:
+            continue
+        if (
+            classify_live_snapshot_request(request) == "REFRESH_BEARING"
+            and str(request.get("intent") or "").upper() == "FORMAL_INTRADAY_ANALYSIS"
+            and str(request.get("query_intent") or "").upper() == "FORMAL_INTRADAY_ANALYSIS"
+            and request.get("force_refresh") is True
+            and request.get("require_post_request_snapshot") is True
+        ):
+            return True
+    return False
+
+
 def scheduled_close_boundary_intent(now: datetime, event_name: str, scheduled_cron: str) -> bool:
     """Recognize a real scheduled pulse that reached the A-share close boundary.
 
@@ -249,11 +290,26 @@ def main() -> int:
         phase = "POST_CLOSE_RECOVERY"
         reason = "delayed_scheduled_close_recovery"
 
+    request_time_close_recovery = bool(
+        event_name == "push"
+        and request_class == "REFRESH_BEARING"
+        and _push_has_manual_formal_refresh_request(policy)
+        and minute > 15 * 60
+        and not _same_day_close_ready(date_text)
+        and now.weekday() < 5
+        and date_text not in set(calendar.get("closed_dates") or [])
+    )
+    if request_time_close_recovery and not should_capture:
+        should_capture = True
+        phase = "POST_CLOSE_RECOVERY"
+        reason = "request_time_close_recovery"
+
     if event_name == "push" and request_class in {"STATE_SYNC_ONLY", "BUSINESS_DECISION_SOURCE"}:
         should_capture = False
         reason = "business_decision_source_request" if request_class == "BUSINESS_DECISION_SOURCE" else "state_sync_only_request"
+        request_time_close_recovery = False
 
-    close_intent = bool(scheduled_close_intent or boundary_close_intent)
+    close_intent = bool(scheduled_close_intent or boundary_close_intent or request_time_close_recovery)
     wait_for_close_boundary_seconds = 0
     if boundary_close_intent and minute < 15 * 60:
         wait_for_close_boundary_seconds = 15 * 60 - (now.hour * 60 * 60 + now.minute * 60 + now.second)
@@ -275,10 +331,11 @@ def main() -> int:
     set_output("market_date", date_text)
     set_output("market_phase", phase)
     set_output("close_intent", "true" if close_intent else "false")
+    set_output("request_time_close_recovery", "true" if request_time_close_recovery else "false")
     set_output("wait_for_close_boundary_seconds", str(max(0, wait_for_close_boundary_seconds)))
     for key, value in schedule_observation.items():
         set_output(key, "" if value is None else str(value))
-    print(json.dumps({"should_capture": should_capture, "request_class": request_class, "reason": reason, "market_date": date_text, "market_phase": phase, "close_intent": close_intent, "wait_for_close_boundary_seconds": max(0, wait_for_close_boundary_seconds), "captured_at_beijing": now.isoformat(timespec="seconds"), "schedule_observability": schedule_observation}, ensure_ascii=False))
+    print(json.dumps({"should_capture": should_capture, "request_class": request_class, "reason": reason, "market_date": date_text, "market_phase": phase, "close_intent": close_intent, "request_time_close_recovery": request_time_close_recovery, "wait_for_close_boundary_seconds": max(0, wait_for_close_boundary_seconds), "captured_at_beijing": now.isoformat(timespec="seconds"), "schedule_observability": schedule_observation}, ensure_ascii=False))
     return 0
 
 

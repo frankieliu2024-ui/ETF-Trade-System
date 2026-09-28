@@ -578,11 +578,16 @@ def scheduled_close_recovery_intent(run_started_dt: datetime, market_date: str) 
     event_name = os.environ.get("GITHUB_EVENT_NAME", "")
     scheduled_cron = os.environ.get("SCHEDULED_CRON", "").strip()
     handed_off_intent = os.environ.get("SCHEDULED_CLOSE_INTENT", "").lower() == "true"
+    request_time_recovery = os.environ.get("REQUEST_TIME_CLOSE_RECOVERY", "").lower() == "true"
     exact_close_intent = scheduled_cron == "0,10 7 * * 1-5"
-    return (
+    scheduled_recovery = (
         event_name == "schedule"
         and bool(scheduled_cron)
         and (handed_off_intent or exact_close_intent)
+    )
+    request_recovery = event_name == "push" and request_time_recovery
+    return (
+        (scheduled_recovery or request_recovery)
         and run_started_dt.weekday() < 5
         and run_started_dt.date().isoformat() == market_date
         and run_started_dt.hour * 60 + run_started_dt.minute >= 15 * 60
