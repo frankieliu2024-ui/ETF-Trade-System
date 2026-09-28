@@ -1,0 +1,124 @@
+{
+  "request_id": "BROKER_ACCOUNT_SYNC_20260928_142235_FORMAL_PARENT",
+  "requested_at_beijing": "2026-09-28T14:22:35+08:00",
+  "requested_by": "chatgpt",
+  "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+  "formal_fact_type": "BROKER_ACCOUNT_SNAPSHOT",
+  "interaction_scenario": "INTRADAY",
+  "market_date": "2026-09-28",
+  "account_change_event_type": "USER_REPORTED_TRADE",
+  "formal_decision_parent_request_id": "20260928_142000_chatgpt_formal_decision",
+  "linked_decision_id": "20260928_120100_chatgpt_formal_decision_decision_140700",
+  "account_fact": {
+    "updated_at": "2026-09-28T14:14:59+08:00",
+    "status": "VALID",
+    "source": "BROKER_HOLDINGS_SCREENSHOT_20260928_1414_USER_CONFIRMED",
+    "broker_displayed_at_beijing": "2026-09-28T14:14:59+08:00",
+    "last_confirmed_market_date": "2026-09-28",
+    "total_asset": 188292.34,
+    "stock_market_value": 166328.5,
+    "cash": 21962.84,
+    "holding_pnl": -28987.16,
+    "daily_pnl": -3824.1,
+    "daily_pnl_pct": -1.99,
+    "positions": [
+      {
+        "name": "宁德时代",
+        "code": "300750",
+        "asset_type": "STOCK",
+        "quantity": 200,
+        "last_price": 291.09,
+        "market_value": 58218,
+        "cost": 346.908,
+        "holding_pnl": -11163.63,
+        "holding_pnl_pct": -16.09
+      },
+      {
+        "name": "工业富联",
+        "code": "601138",
+        "asset_type": "STOCK",
+        "quantity": 500,
+        "last_price": 59.12,
+        "market_value": 29560,
+        "cost": 58.054,
+        "holding_pnl": 532.78,
+        "holding_pnl_pct": 1.835
+      },
+      {
+        "name": "科创50ETF",
+        "code": "588000",
+        "asset_type": "ETF",
+        "quantity": 14100,
+        "last_price": 1.657,
+        "market_value": 23363.7,
+        "cost": 2.099,
+        "holding_pnl": -6230.71,
+        "holding_pnl_pct": -21.054
+      },
+      {
+        "name": "纳指ETF",
+        "code": "159941",
+        "asset_type": "ETF",
+        "quantity": 12200,
+        "last_price": 1.704,
+        "market_value": 20788.8,
+        "cost": 1.626,
+        "holding_pnl": 952.2,
+        "holding_pnl_pct": 4.8
+      },
+      {
+        "name": "科创创业ETF",
+        "code": "159781",
+        "asset_type": "ETF",
+        "quantity": 19500,
+        "last_price": 0.999,
+        "market_value": 19480.5,
+        "cost": 1.269,
+        "holding_pnl": -5268.1,
+        "holding_pnl_pct": -21.286
+      },
+      {
+        "name": "能源化工ETF",
+        "code": "159981",
+        "asset_type": "ETF",
+        "quantity": 8500,
+        "last_price": 1.755,
+        "market_value": 14917.5,
+        "cost": 1.744,
+        "holding_pnl": 96.9,
+        "holding_pnl_pct": 0.654
+      },
+      {
+        "name": "半导体设备ETF",
+        "code": "561980",
+        "asset_type": "ETF",
+        "quantity": 0,
+        "available_quantity": 0,
+        "last_price": 0.652,
+        "market_value": 0,
+        "cost": 1.232,
+        "holding_pnl": -7906.6,
+        "holding_pnl_pct": 0
+      }
+    ],
+    "note": "Transcribed from the 14:14:59 broker account screenshot. Displayed prices are account facts only, not canonical market quotes. Executed sell proceeds and available cash are as displayed by the broker; trade fee status is unconfirmed."
+  },
+  "trade_events": [
+    {
+      "name": "半导体设备ETF",
+      "code": "561980",
+      "asset_type": "ETF",
+      "side": "SELL",
+      "quantity": 13600,
+      "price": 0.651,
+      "amount": 8853.6,
+      "fee_status": "UNCONFIRMED",
+      "confirmed_at_beijing": "2026-09-28T14:14:44+08:00",
+      "source": "BROKER_TRADE_SCREENSHOT_20260928_141444_USER_CONFIRMED",
+      "linked_decision_id": "20260928_120100_chatgpt_formal_decision_decision_140700",
+      "idempotency_key": "20260928_141444_561980_SELL_13600_0.651"
+    }
+  ],
+  "note": "User-confirmed 14:14:44 execution and 14:14:59 account snapshot. Process via existing canonical broker account ingress; account screenshot values are not market quotes. Bind account change to current Formal Decision parent 20260928_142000_chatgpt_formal_decision. The confirmed trade was executed against prior formal decision 20260928_120100_chatgpt_formal_decision_decision_140700.",
+  "replay_note": "Canonical existing broker screenshot ingress for the confirmed 2026-09-28 14:14:44 full sale of 13,600 shares of 561980 at 0.651 and the 14:14:59 account snapshot; do not reapply trade quantity to the screenshot ending balance."
+}
