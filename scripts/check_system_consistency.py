@@ -724,10 +724,7 @@ def _execution_quality_projection_required() -> bool:
         review_event = _read_json(str(review_path.relative_to(ROOT)))
     except (OSError, ValueError, json.JSONDecodeError):
         return False
-    return str(review_event.get("event_type") or "").upper() in {
-        "FORMAL_POST_CLOSE_REVIEW",
-        "FORMAL_POST_CLOSE_REVIEW_UNAVAILABLE",
-    }
+    return _is_full_day_review_completion(review_event)
 
 
 def _validate_execution_quality_projection(report: dict) -> None:
