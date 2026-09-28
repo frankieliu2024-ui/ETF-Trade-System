@@ -180,6 +180,7 @@ jobs:
           NODE_LABEL: ${{ github.event_name == 'push' && 'scheduled' || (github.event.inputs.node || 'scheduled') }}
           PROBE_ONLY: ${{ github.event.inputs.probe_only || 'false' }}
           SCHEDULED_CLOSE_INTENT: ${{ steps.session_gate.outputs.close_intent }}
+          REQUEST_TIME_CLOSE_RECOVERY: ${{ steps.session_gate.outputs.request_time_close_recovery }}
           WAIT_FOR_CLOSE_BOUNDARY_SECONDS: ${{ steps.session_gate.outputs.wait_for_close_boundary_seconds }}
         run: |
           if [ "${WAIT_FOR_CLOSE_BOUNDARY_SECONDS:-0}" -gt 0 ]; then

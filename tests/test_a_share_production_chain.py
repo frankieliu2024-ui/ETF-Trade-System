@@ -348,6 +348,29 @@ class ManualRequestSessionIngressTests(unittest.TestCase):
         self.assertNotIn("interaction_scenario_reclassified", normalized)
         self.assertEqual(runtime_session_gate.classify_live_snapshot_request(normalized), "REFRESH_BEARING")
 
+    def test_post_close_formal_request_reuses_existing_close_recovery_producer(self):
+        gate = (ROOT / "scripts/runtime_session_gate.py").read_text(encoding="utf-8")
+        runner = (ROOT / "scripts/cloud_runner_snapshot.py").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        self.assertIn("request_time_close_recovery", gate)
+        self.assertIn("not _same_day_close_ready(date_text)", gate)
+        self.assertIn('reason = "request_time_close_recovery"', gate)
+        self.assertIn('set_output("request_time_close_recovery"', gate)
+        self.assertIn("REQUEST_TIME_CLOSE_RECOVERY", runner)
+        self.assertIn('event_name == "push" and request_time_recovery', runner)
+        self.assertIn("REQUEST_TIME_CLOSE_RECOVERY:", workflow)
+        self.assertIn("steps.session_gate.outputs.request_time_close_recovery", workflow)
+
+    def test_request_close_recovery_is_narrowly_bound_to_canonical_formal_ingress(self):
+        gate = (ROOT / "scripts/runtime_session_gate.py").read_text(encoding="utf-8")
+        self.assertIn('source != "CHATGPT_MANUAL_FORMAL_ANALYSIS"', gate)
+        self.assertIn('classify_live_snapshot_request(request) == "REFRESH_BEARING"', gate)
+        self.assertIn('str(request.get("intent") or "").upper() == "FORMAL_INTRADAY_ANALYSIS"', gate)
+        self.assertIn('str(request.get("query_intent") or "").upper() == "FORMAL_INTRADAY_ANALYSIS"', gate)
+        self.assertIn('request.get("force_refresh") is True', gate)
+        self.assertIn('request.get("require_post_request_snapshot") is True', gate)
+        self.assertIn('request_class in {"STATE_SYNC_ONLY", "BUSINESS_DECISION_SOURCE"}', gate)
+
 if __name__ == "__main__":
     unittest.main()
 
