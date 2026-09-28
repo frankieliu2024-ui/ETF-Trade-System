@@ -300,7 +300,8 @@ jobs:
           import subprocess
           from pathlib import Path
           from scripts.check_production_mutation_protocol import candidate_change_acceptance_allows_global_failure
-          log = Path("$RUNNER_TEMP/candidate-formal-contract.log").read_text(encoding="utf-8")
+          log = Path(__import__("os").environ["RUNNER_TEMP"]) / "candidate-formal-contract.log"
+          log = log.read_text(encoding="utf-8")
           known = "test_multi_object_lifecycle_mapping_and_legacy_composite_text_are_accepted" in log and "561980" in log
           if not known:
               raise SystemExit("candidate formal-contract suite failed outside the known unrelated 561980 lifecycle fixture")
