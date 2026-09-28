@@ -145,6 +145,34 @@ class V19RiskTierTests(unittest.TestCase):
             ],
         ))
 
+    def test_generic_market_token_does_not_create_false_same_domain_attribution(self):
+        failed = [{
+            "name": "tests:market_data_and_quote_router",
+            "failure_domain": "market_data_and_quote_router",
+            "status": "FAIL",
+            "attribution": "PREEXISTING_UNRELATED",
+        }]
+        self.assertTrue(candidate_change_acceptance_allows_global_failure(
+            changed_files=[
+                "scripts/notification_semantics.py",
+                "tests/test_market_notification_materiality_guard.py",
+            ],
+            failed_checks=failed,
+        ))
+        self.assertFalse(candidate_change_acceptance_allows_global_failure(
+            changed_files=["scripts/market_quote_router.py"],
+            failed_checks=failed,
+        ))
+        self.assertFalse(candidate_change_acceptance_allows_global_failure(
+            changed_files=["tests/test_market_notification_materiality_guard.py"],
+            failed_checks=[{
+                "name": "tests:market",
+                "failure_domain": "market",
+                "status": "FAIL",
+                "attribution": "PREEXISTING_UNRELATED",
+            }],
+        ))
+
     def test_subtraction_fast_path_requires_all_safety_conditions(self):
         kwargs = dict(
             no_new_owner_state_workflow=True,
