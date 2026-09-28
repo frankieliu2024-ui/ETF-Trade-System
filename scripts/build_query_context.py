@@ -296,8 +296,7 @@ def _evidence_requirement_plan(problems: list[dict]) -> list[dict]:
         # existing qualified external-driver/plugin path. Triggered expansion
         # may add targeted evidence, but these domains cannot silently disappear.
         classes = [
-            "A_SHARE_STYLE_FEEDBACK",
-            "ETF_RELATIVE_STRENGTH",
+            # Layer 1: external multi-asset drivers and transmission inputs.
             "GLOBAL_RISK",
             "COMMODITY",
             "RATES",
@@ -305,6 +304,26 @@ def _evidence_requirement_plan(problems: list[dict]) -> list[dict]:
             "OVERSEAS_INDUSTRY_CHAIN",
             "MACRO_POLICY_EVENTS",
             "CROSS_MARKET_ASSETS_SUPPLY_CHAIN",
+            # Layer 2: China internal confirmation/rejection/amplification/divergence.
+            "A_SHARE_INDEX",
+            "A_SHARE_BREADTH",
+            "A_SHARE_STYLE_FEEDBACK",
+            "A_SHARE_INDUSTRY_THEME",
+            "A_SHARE_LIQUIDITY_TURNOVER",
+            "A_SHARE_CAPITAL_FLOW",
+            "A_SHARE_ANOMALY",
+            "EXTERNAL_CONFIRMATION_STATE",
+            # Layer 3: opportunity, holdings, account and capital competition.
+            "ETF_RELATIVE_STRENGTH",
+            "FULL_MARKET_DISCOVERY",
+            "HOLDING_ETF",
+            "OBSERVATION_ETF",
+            "TEMPORARY_DISCOVERY_CANDIDATE",
+            "ACCOUNT_STOCK",
+            "CONDITIONAL_INDUSTRY_CHAIN",
+            "CASH",
+            "RELEASABLE_CAPITAL",
+            "HOLDING_ADDITIONAL_CAPITAL",
         ]
         text = target.lower()
         if any(token in text for token in ("能源", "化工", "油", "资源", "商品")):
