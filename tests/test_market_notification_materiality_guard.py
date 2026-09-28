@@ -651,6 +651,35 @@ class NotificationAggregationTests(unittest.TestCase):
         self.assertIn("没有可合法投影", " ".join(headline))
 
 
+    def test_current_stock_context_requires_current_pit_and_fresh_rows(self):
+        import notification_semantics as semantics
+        fixtures = {
+            "stock_context.json": {
+                "generated_at": "2026-09-28T03:30:00Z",
+                "account_fact_status": "VALID",
+                "default_stock_layer": {"monitored_account_stocks": [{"code": "300750"}]},
+                "conditional_industry_observation": {"current_objects": [{"code": "688981"}]},
+            },
+            "stock_market_context.json": {
+                "generated_at": "2026-09-28T03:30:00Z",
+                "objects": {
+                    "300750": {"code": "300750", "change_pct": 0.2, "quality_status": "PASS",
+                               "freshness_status": "FRESH", "provider": "tencent_qq",
+                               "as_of_beijing": "2026-09-28T11:30:00+08:00",
+                               "market_phase": "CONTINUOUS_MORNING"},
+                    "688981": {"code": "688981", "change_pct": 0.4, "quality_status": "PASS",
+                               "freshness_status": "FRESH", "provider": "tencent_qq",
+                               "as_of_beijing": "2026-09-28T11:31:00+08:00",
+                               "market_phase": "CONTINUOUS_MORNING"},
+                },
+            },
+            "CURRENT.json": {"market_date": "2026-09-28"},
+        }
+        with patch.object(semantics, "read_json", side_effect=lambda path, default=None: fixtures.get(Path(path).name, default)):
+            rows = semantics._current_stock_context_rows()
+        self.assertEqual([row["_monitor_role"] for row in rows], ["账户个股"])
+        self.assertEqual([row["code"] for row in rows], ["300750"])
+
 if __name__ == "__main__":
     unittest.main()
 
