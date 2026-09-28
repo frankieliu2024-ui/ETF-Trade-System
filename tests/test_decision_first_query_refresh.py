@@ -435,6 +435,15 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertIn("not the three visible layer identities", boundary["compression_rule"])
         self.assertIn("without duplicating downstream Discovery", boundary["compression_rule"])
         self.assertIn("same request-bound Business Decision Source", boundary["projection_rule"])
+        semantic = boundary["semantic_payload_contract"]
+        self.assertEqual(semantic["source_of_business_judgment"], "same request-bound BUSINESS_DECISION_SOURCE after deterministic projection")
+        self.assertIn("EVERY_ACTUAL_POSITION_ACTION_WITH_RELEASE_DESTINATION_AND_CHANGE_CONDITION", semantic["required_from_projected_source"])
+        self.assertIn("NEXT_UNIT_CAPITAL_USE", semantic["required_from_projected_source"])
+        self.assertIn("THREE_LAYER_VISIBLE_SUMMARY", semantic["required_from_request_bound_context"])
+        self.assertIn("FIVE_DELTAS", semantic["required_from_request_bound_context"])
+        self.assertEqual(semantic["execution_status_source"], "execution_status_contract")
+        self.assertEqual(semantic["canonical_identity_tense_source"], "canonical_identity_change_tense_contract")
+        self.assertIn("not a renderer, report, second decision engine, state, writer, or persistence prerequisite", semantic["rule"])
         status_contract = boundary["execution_status_contract"]
         self.assertEqual(status_contract["business_ready_persistence_pending"], "已自动接管")
         self.assertEqual(status_contract["canonical_persistence_confirmed"], "本事项已闭环")
