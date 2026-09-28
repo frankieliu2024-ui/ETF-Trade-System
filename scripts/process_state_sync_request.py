@@ -3113,7 +3113,7 @@ def main() -> int:
         replay_key = _trade_idempotency_key(trade, confirmed_at)
         existing = _find_existing_trade(trade, confirmed_at, replay_key)
         existing_trades.append(existing)
-        if not supplied_account and existing is None:
+        if request.get("account_fact") is None and existing is None:
             supplied_account = _apply_trade_to_account(supplied_account or prior_account, trade)
     account_sync_status = "NOT_APPLICABLE"
     if is_broker_screenshot_request(request) and not isinstance(supplied_account, dict) and not trades:
