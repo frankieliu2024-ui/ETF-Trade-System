@@ -68,7 +68,7 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         shell: bash
         run: |
-          REQUEST_FILE=$(git show --format= --name-only "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | sed '/^$/d' | head -n 1)
+          REQUEST_FILE=$(git show --format= --name-only "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | sed '/^$/d' | grep -vE '(__business_decision_source|__formal_completion)' | head -n 1)
           REQUEST_EXPECTED=false
           if [ -n "$REQUEST_FILE" ]; then
             REQUEST_EXPECTED=true
@@ -306,7 +306,7 @@ jobs:
         shell: bash
         run: |
           REQUEST_FILE="\${TRIGGERING_REQUEST_FILE:-}"
-          if [ -z "$REQUEST_FILE" ]; then REQUEST_FILE=$(git show --format= --name-only "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | sed '/^$/d' | head -n 1); fi
+          if [ -z "$REQUEST_FILE" ]; then REQUEST_FILE=$(git show --format= --name-only "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | sed '/^$/d' | grep -vE '(__business_decision_source|__formal_completion)' | head -n 1); fi
           echo "TRIGGERING_REQUEST_FILE=$REQUEST_FILE" >> "$GITHUB_ENV"
           if [ -n "$REQUEST_FILE" ] && [ -f "$REQUEST_FILE" ]; then
             mkdir -p "/tmp/etf-triggering-request/$(dirname "$REQUEST_FILE")"
