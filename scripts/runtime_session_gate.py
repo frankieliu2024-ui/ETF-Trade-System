@@ -77,6 +77,10 @@ def normalize_manual_request_session(request: dict, policy: dict, *, now: dateti
         or normalized.get("request_time_beijing")
         or normalized.get("requested_at_utc")
     )
+    if requested is not None and requested > current:
+        raise ValueError(
+            "requested_at_beijing cannot be future-dated relative to canonical ingress receipt"
+        )
     if requested is None:
         requested = current
     normalized["requested_at_beijing"] = requested.isoformat(timespec="seconds")
