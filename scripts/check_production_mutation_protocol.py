@@ -137,6 +137,26 @@ def _attribution_category(item: dict, changed_files: list[str]) -> str:
     changed_tokens = tokens(" ".join(str(path) for path in changed_files)) - generic_domain_tokens
     if not failure_tokens:
         return "ATTRIBUTION_INCONCLUSIVE"
+    # For domains with a stable production owner, use bounded path evidence
+    # instead of generic token overlap.  This prevents display/test filenames
+    # from claiming causality for a contract they do not own, while preserving
+    # fail-closed behavior when the owner itself changes.
+    canonical_domain_owners = {
+        "formal_decision_contract": {
+            "scripts/process_state_sync_request.py",
+            "scripts/business_decision_source.py",
+            "tests/test_formal_decision_contract.py",
+        },
+    }
+    owner_paths = canonical_domain_owners.get(domain)
+    if owner_paths is not None:
+        owner_changed = any(str(path) in owner_paths for path in changed_files)
+        if owner_changed:
+            return "INTRODUCED_BY_CURRENT_CHANGE"
+        if explicit in {"PREEXISTING_UNRELATED", "NEW_UNRELATED_DISCOVERY"}:
+            return explicit
+        return "ATTRIBUTION_INCONCLUSIVE"
+
     same_domain = bool(failure_tokens & changed_tokens)
     if same_domain:
         return "INTRODUCED_BY_CURRENT_CHANGE"

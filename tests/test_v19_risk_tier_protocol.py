@@ -154,6 +154,37 @@ class V19RiskTierTests(unittest.TestCase):
             ],
         ))
 
+    def test_formal_contract_explicit_unrelated_ignores_dashboard_projection_tokens(self):
+        failed = [{
+            "name": "tests.test_formal_decision_contract",
+            "failure_domain": "formal_decision_contract",
+            "status": "FAIL",
+            "attribution": "PREEXISTING_UNRELATED",
+        }]
+        self.assertTrue(candidate_change_acceptance_allows_global_failure(
+            changed_files=[
+                "scripts/sync_formal_files.py",
+                "tests/test_dashboard_projection.py",
+            ],
+            failed_checks=failed,
+        ))
+
+    def test_formal_contract_owner_change_remains_blocking_despite_unrelated_label(self):
+        failed = [{
+            "name": "tests.test_formal_decision_contract",
+            "failure_domain": "formal_decision_contract",
+            "status": "FAIL",
+            "attribution": "PREEXISTING_UNRELATED",
+        }]
+        self.assertFalse(candidate_change_acceptance_allows_global_failure(
+            changed_files=["scripts/process_state_sync_request.py"],
+            failed_checks=failed,
+        ))
+        self.assertFalse(candidate_change_acceptance_allows_global_failure(
+            changed_files=["tests/test_formal_decision_contract.py"],
+            failed_checks=failed,
+        ))
+
     def test_generic_market_token_does_not_create_false_same_domain_attribution(self):
         failed = [{
             "name": "tests:market_data_and_quote_router",
