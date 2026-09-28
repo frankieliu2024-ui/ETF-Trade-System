@@ -285,16 +285,34 @@ class ManualRequestSessionAnchorTests(unittest.TestCase):
         self.assertEqual(out["interaction_scenario"], "INTRADAY")
         self.assertNotIn("interaction_scenario_reclassified", out)
 
-    def test_future_dated_request_is_fail_closed_at_canonical_ingress(self):
+    def test_canonical_ingress_owns_time_when_caller_clock_is_ahead(self):
         now = runtime_session_gate.parse_runtime_time("2026-09-28T14:18:38+08:00")
         request = {
-            "request_id": "future-dated-1420",
+            "request_id": "caller-ahead-1420",
             "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
             "requested_at_beijing": "2026-09-28T14:20:00+08:00",
             "request_type": "MARKET_QUOTE_REFRESH",
         }
-        with self.assertRaisesRegex(ValueError, "future-dated"):
-            runtime_session_gate.normalize_manual_request_session(request, self.policy(), now=now)
+        out = runtime_session_gate.normalize_manual_request_session(request, self.policy(), now=now)
+        self.assertEqual(out["interaction_requested_at_beijing"], "2026-09-28T14:20:00+08:00")
+        self.assertEqual(out["canonical_ingress_received_at_beijing"], "2026-09-28T14:18:38+08:00")
+        self.assertEqual(out["requested_at_beijing"], "2026-09-28T14:18:38+08:00")
+        self.assertEqual(out["interaction_scenario"], "INTRADAY")
+
+    def test_canonical_ingress_owns_time_when_caller_clock_is_behind(self):
+        now = runtime_session_gate.parse_runtime_time("2026-09-28T15:00:01+08:00")
+        request = {
+            "request_id": "caller-behind-boundary",
+            "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "requested_at_beijing": "2026-09-28T14:59:59+08:00",
+            "interaction_scenario": "INTRADAY",
+            "request_type": "MARKET_QUOTE_REFRESH",
+        }
+        out = runtime_session_gate.normalize_manual_request_session(request, self.policy(), now=now)
+        self.assertEqual(out["interaction_requested_at_beijing"], "2026-09-28T14:59:59+08:00")
+        self.assertEqual(out["requested_at_beijing"], "2026-09-28T15:00:01+08:00")
+        self.assertEqual(out["interaction_scenario"], "POST_CLOSE_REVIEW")
+        self.assertTrue(out["interaction_scenario_reclassified"])
 
     def test_missing_request_time_is_bound_to_current_beijing_time(self):
         now = runtime_session_gate.parse_runtime_time("2026-09-21T15:04:07+08:00")
@@ -304,6 +322,8 @@ class ManualRequestSessionAnchorTests(unittest.TestCase):
             now=now,
         )
         self.assertEqual(out["requested_at_beijing"], "2026-09-21T15:04:07+08:00")
+        self.assertEqual(out["canonical_ingress_received_at_beijing"], "2026-09-21T15:04:07+08:00")
+        self.assertNotIn("interaction_requested_at_beijing", out)
         self.assertEqual(out["interaction_scenario"], "POST_CLOSE_REVIEW")
 
 

@@ -77,12 +77,14 @@ def normalize_manual_request_session(request: dict, policy: dict, *, now: dateti
         or normalized.get("request_time_beijing")
         or normalized.get("requested_at_utc")
     )
-    if requested is not None and requested > current:
-        raise ValueError(
-            "requested_at_beijing cannot be future-dated relative to canonical ingress receipt"
-        )
-    if requested is None:
-        requested = current
+    # The caller timestamp is provenance, not the canonical ingress clock.
+    # Different hosts and transport latency can legitimately put it slightly
+    # ahead of this runner.  Canonical receipt time owns routing/PIT anchoring;
+    # preserve the supplied interaction time separately for audit.
+    if requested is not None:
+        normalized["interaction_requested_at_beijing"] = requested.isoformat(timespec="seconds")
+    normalized["canonical_ingress_received_at_beijing"] = current.isoformat(timespec="seconds")
+    requested = current
     normalized["requested_at_beijing"] = requested.isoformat(timespec="seconds")
     derived = interaction_scenario_for_time(policy, requested)
     supplied = str(normalized.get("interaction_scenario") or normalized.get("scenario") or "").strip().upper()
