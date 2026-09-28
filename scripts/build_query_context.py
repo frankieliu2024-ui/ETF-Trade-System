@@ -1312,8 +1312,29 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
                 decision_request_time=None,
             )
             candidate_quote_elapsed = round(time.monotonic() - candidate_quote_started, 3)
-            formal_discovery = attach_formal_quotes(formal_discovery, candidate_quote)
             discovered_set = {x.upper() for x in discovered_codes}
+            # Mixed candidate coverage is normal: some Discovery objects may
+            # already have request-bound quotes while only the missing subset
+            # needs an object-level refresh. Attach against the union so a
+            # successful existing quote cannot be erased merely because a
+            # sibling candidate required refresh.
+            candidate_quotes_by_symbol = {}
+            for quote in market_quote.get("quotes") or []:
+                if not isinstance(quote, dict):
+                    continue
+                symbol = str(quote.get("symbol") or quote.get("code") or "").upper().replace(".SH", "").replace(".SZ", "")
+                if symbol in discovered_set:
+                    candidate_quotes_by_symbol[symbol] = quote
+            for quote in candidate_quote.get("quotes") or []:
+                if not isinstance(quote, dict):
+                    continue
+                symbol = str(quote.get("symbol") or quote.get("code") or "").upper().replace(".SH", "").replace(".SZ", "")
+                if symbol in discovered_set:
+                    candidate_quotes_by_symbol[symbol] = quote
+            formal_discovery = attach_formal_quotes(
+                formal_discovery,
+                {"quotes": [candidate_quotes_by_symbol[code.upper()] for code in discovered_codes if code.upper() in candidate_quotes_by_symbol]},
+            )
             for quote in candidate_quote.get("quotes") or []:
                 symbol = str(quote.get("symbol") or quote.get("code") or "").upper().replace(".SH", "").replace(".SZ", "")
                 if symbol in discovered_set and symbol not in existing_quote_symbols:
