@@ -62,6 +62,29 @@ def _discovery_universe_identity(universe: dict) -> str:
     return hashlib.sha256(json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")).hexdigest()[:16]
 
 
+def _quote_symbol(quote: dict) -> str:
+    return str(quote.get("symbol") or quote.get("code") or "").upper().replace(".SH", "").replace(".SZ", "")
+
+
+def _merge_discovery_candidate_quotes(discovered_codes: list[str], existing_quote: dict, refreshed_quote: dict) -> dict:
+    """Union candidate quotes without turning mixed coverage into false UNAVAILABLE."""
+    discovered_set = {str(code).upper() for code in discovered_codes}
+    by_symbol = {}
+    for quote in existing_quote.get("quotes") or []:
+        if isinstance(quote, dict):
+            symbol = _quote_symbol(quote)
+            if symbol in discovered_set:
+                by_symbol[symbol] = quote
+    # The refresh is explicitly requested for missing candidates, so a returned
+    # quote for the same symbol is the newer request-local evidence.
+    for quote in refreshed_quote.get("quotes") or []:
+        if isinstance(quote, dict):
+            symbol = _quote_symbol(quote)
+            if symbol in discovered_set:
+                by_symbol[symbol] = quote
+    return {"quotes": [by_symbol[str(code).upper()] for code in discovered_codes if str(code).upper() in by_symbol]}
+
+
 def _discovery_delta_identity(root: Path) -> str:
     """Identify canonical market-delta semantics, not a snapshot filename or TTL."""
     delta = read_json(root / CANONICAL_FILES["market_delta"], {})
@@ -1312,8 +1335,11 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
                 decision_request_time=None,
             )
             candidate_quote_elapsed = round(time.monotonic() - candidate_quote_started, 3)
-            formal_discovery = attach_formal_quotes(formal_discovery, candidate_quote)
             discovered_set = {x.upper() for x in discovered_codes}
+            # Preserve both request-bound existing quotes and the refreshed
+            # missing subset before assigning per-candidate formal status.
+            candidate_quote_union = _merge_discovery_candidate_quotes(discovered_codes, market_quote, candidate_quote)
+            formal_discovery = attach_formal_quotes(formal_discovery, candidate_quote_union)
             for quote in candidate_quote.get("quotes") or []:
                 symbol = str(quote.get("symbol") or quote.get("code") or "").upper().replace(".SH", "").replace(".SZ", "")
                 if symbol in discovered_set and symbol not in existing_quote_symbols:
