@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from notification_center import STATE, read_json
@@ -100,6 +101,66 @@ def object_role(code: str, asset_class: str = "") -> tuple[str, str]:
     return "OTHER", "监测对象"
 
 
+def _current_stock_context_rows() -> list[dict]:
+    """Project current account and query-time industry stocks from existing canonical read-only contexts."""
+    stock_context = read_json(STATE / "stock_context.json", {})
+    stock_market = read_json(STATE / "stock_market_context.json", {})
+    current = read_json(STATE / "CURRENT.json", {})
+    if str(stock_context.get("account_fact_status") or "").upper() != "VALID":
+        return []
+    market_date = str(current.get("market_date") or "")
+    generated_at = str(stock_context.get("generated_at") or "")
+    if not market_date or not generated_at or stock_market.get("generated_at") != generated_at:
+        return []
+    try:
+        generated_dt = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
+        if generated_dt.tzinfo is None:
+            return []
+        beijing = timezone(timedelta(hours=8))
+        generated_dt = generated_dt.astimezone(beijing)
+    except ValueError:
+        return []
+    if generated_dt.date().isoformat() != market_date:
+        return []
+
+    allowed = {}
+    default_layer = stock_context.get("default_stock_layer") or {}
+    for row in default_layer.get("monitored_account_stocks") or []:
+        code = str(row.get("code") or "")
+        if code:
+            allowed[code] = "账户个股"
+    industry = stock_context.get("conditional_industry_observation") or {}
+    for row in industry.get("current_objects") or []:
+        code = str(row.get("code") or "")
+        if code:
+            allowed[code] = "查询时产业链个股"
+
+    out = []
+    for code, role in allowed.items():
+        row = (stock_market.get("objects") or {}).get(code) or {}
+        if row.get("quality_status") != "PASS" or number(row.get("change_pct")) is None:
+            continue
+        if str(row.get("freshness_status") or "").upper() != "FRESH":
+            continue
+        if not row.get("provider") or not row.get("as_of_beijing"):
+            continue
+        if str(row.get("market_phase") or "").upper() == "OUTSIDE_SESSION":
+            continue
+        try:
+            quote_dt = datetime.fromisoformat(str(row["as_of_beijing"]).replace("Z", "+00:00"))
+            if quote_dt.tzinfo is None:
+                continue
+            quote_dt = quote_dt.astimezone(timezone(timedelta(hours=8)))
+        except ValueError:
+            continue
+        if quote_dt.date().isoformat() != market_date or quote_dt > generated_dt:
+            continue
+        projected = dict(row)
+        projected["_monitor_role"] = role
+        out.append(projected)
+    return out
+
+
 def compact_path(row: dict, feature: dict | None = None, *, include_current: bool = False) -> str:
     label = _label(row)
     day = number(row.get("change_pct"))
@@ -154,13 +215,13 @@ def a_share_structure(indices: dict[str, dict], etfs: list[dict], features: dict
     else:
         structure = "指数整体震荡，风格分化有限"
 
-    headline = [f"- **市场结构**：{structure}。"]
+    headline = [f"- **第一层｜A股指数结构**：{structure}。"]
     index_values = []
     for code, row in (("000001", sh), ("000688", star), ("399006", cyb)):
         if row and number(row.get("change_pct")) is not None:
             index_values.append(f"{_label(row)}{pct(number(row.get('change_pct')))}")
     if index_values:
-        headline.append("- **指数反馈**：" + "，".join(index_values) + "。")
+        headline.append("- **指数反馈**：" + "，".join(index_values) + "。指数只定义市场环境与风格，不替代ETF/个股层验证。")
 
     ctx = _account_context()
     held = ctx["held_etfs"]
@@ -199,8 +260,42 @@ def a_share_structure(indices: dict[str, dict], etfs: list[dict], features: dict
     # holding. This avoids diluting the current hypothesis with ranking noise.
     if formal_row is None and strongest is not None and weakest is not None and str(strongest.get("symbol")) != str(weakest.get("symbol")):
         details.append(f"持仓中相对较强的是{_label(strongest)}{pct(number(strongest.get('change_pct')))}")
+    # The runtime monitor universe is already the canonical HOLDING_PLUS_ADMITTED_OBSERVATION set.
+    # Surface only observed quality-pass rows from this pulse; do not infer eligibility/rank or create a new observation identity.
+    observation_rows = [
+        row for row in etfs
+        if str(row.get("symbol") or "") not in held
+        and str(row.get("symbol") or "") != formal_code
+        and number(row.get("change_pct")) is not None
+    ]
+    if observation_rows:
+        observations = "；".join(
+            f"{_label(row)}{pct(number(row.get('change_pct')))}"
+            for row in observation_rows
+        )
+        details.append(f"当前观察ETF反馈：{observations}")
     if details:
-        headline.append("- **ETF自身反馈**：" + "；".join(details) + "。")
+        headline.append("- **第二层｜ETF持仓与观察机会**：" + "；".join(details) + "。")
+    else:
+        headline.append("- **第二层｜ETF持仓与观察机会**：当前没有足以投影的正式对象、持仓ETF或观察ETF行情证据。")
+
+    stock_rows = _current_stock_context_rows()
+    account_rows = [row for row in stock_rows if row["_monitor_role"] == "账户个股"]
+    industry_rows = [row for row in stock_rows if row["_monitor_role"] == "查询时产业链个股"]
+    third_details = [f"{_label(row)}{pct(number(row.get('change_pct')))}" for row in account_rows + industry_rows]
+    if third_details:
+        roles = []
+        if account_rows:
+            roles.append("账户持仓验证")
+        if industry_rows:
+            roles.append("本次假设关联产业链验证")
+        headline.append(
+            "- **第三层｜个股/产业链验证**（" + "、".join(roles) + "）：" +
+            "，".join(third_details) +
+            "。个股仅验证独立持仓假设、资金释放价值与产业传导，不机械映射ETF动作。"
+        )
+    else:
+        headline.append("- **第三层｜个股/产业链验证**：当前没有可合法投影且足以改变判断的个股证据。")
 
     path_parts = []
     if star:
@@ -225,6 +320,8 @@ def a_share_structure(indices: dict[str, dict], etfs: list[dict], features: dict
         focus.append(f"优先复核{_label(formal_row)}既有{_formal_detail(formal)}假设是否继续成立")
     if weakest is not None:
         focus.append(f"比较{_label(weakest)}等持仓继续占用资本的边际效率")
+    if observation_rows:
+        focus.append(f"结合{len(observation_rows)}只正式观察ETF的有效行情判断机会竞争力")
     implication = (
         f"{structure}。" + ("；".join(focus) + "。" if focus else "需要重新比较持仓/观察ETF的相对强弱和资本效率。")
         + "跨市场ETF的相对涨幅只用于解释不同风险因子，不替代A股自身反馈，也不等同资本效率排名。"
