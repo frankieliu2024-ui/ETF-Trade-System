@@ -47,11 +47,13 @@
 
 本层取得并解释正式A股指数、市场结构、风格、行业/主题反馈、市场广度、流动性/成交、必要资金行为和本地异常，并标记对外部结构的确认、拒绝、放大、弱化或背离。数据规范只规定事实取得、质量、时点和资格，不直接生成Trial、Confirm、金额、买卖或资本排序。
 
-### 2.3 第三层：ETF机会与资本状态数据
+### 2.3 第三层：ETF与决策对象市场证据
 
-本层统一承载全市场ETF Discovery、持仓ETF、Observation ETF、临时评估对象、持仓ETF追加机会、可部署现金和可释放资本所需的事实。Discovery是发现与收敛事实，不是交易动作；广域发现对象在完整评估前仍须通过对象级market quote router取得合格正式行情。Observation身份、持仓状态和资本竞争继续由MASTER及现有canonical状态链决定。
+本层只负责把前两层市场环境落实到ETF及其他实际决策对象的**合格市场证据包**：全市场ETF Discovery所需的广域发现事实、持仓ETF、Observation ETF、临时评估对象及实际持仓个股的对象级行情、相对强弱和必要结构证据。Discovery在本层取得和收敛发现事实，但“是否进入Observation、是否继续持仓、是否追加、是否释放资本、现金是否胜出、下一单位资本去向”均不属于第三层市场监测判断；这些业务问题只在后续Observation／Position Review／Capital Competition中各判断一次。
 
-实际持有个股属于账户驱动的正式持仓事实和资本状态输入，行情按对象和市场阶段取得，并进入全部持仓sell-chain及资本竞争。条件产业链个股属于Triggered Evidence，仅在ETF候选、持仓、行业冲击、外部驱动或传导假设需要时动态调用，不维护永久名单、固定第四层或独立动作。
+可部署现金、可释放资本、持仓追加能力等可以作为request-bound资本状态事实随证据包提供，但不得因此把第三层解释成第二套资本竞争。后续决策步骤直接消费同一份已通过PIT／freshness／quality校验的对象事实，不因进入Discovery、Observation、持仓判断或资本竞争而重复采集同一行情。广域发现对象在完整评估前仍须通过对象级market quote router取得合格正式行情。
+
+实际持有个股属于账户驱动的正式持仓事实和资本状态输入，行情按对象和市场阶段取得，并进入后续唯一的Position Review及资本竞争。条件产业链个股属于Triggered Evidence，仅在ETF候选、持仓、行业冲击、外部驱动或传导假设需要时动态调用，不维护永久名单、固定第四层或独立动作。
 
 三层数据职责不改变数据资格合同：接口成功不等于可用，provider返回不等于实时；必须保留provider_as_of、received_at、PIT、freshness、quality、market phase、fallback、proxy、execution_eligibility和failure/degraded语义。数据资格只能决定事实能否进入正式Decision，不得复制MASTER中的风险许可、Trial/Confirm、金额、卖出规则或资本竞争最终动作。
 
