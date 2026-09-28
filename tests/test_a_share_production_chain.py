@@ -399,6 +399,10 @@ class ManualRequestSessionIngressTests(unittest.TestCase):
         self.assertIn("Bind explicit existing Formal Decision replay", workflow)
         self.assertIn("TRIGGERING_REQUEST_FILE=$REQUEST_FILE", workflow)
         self.assertIn("formal_replay_request is not an existing canonical Formal Decision refresh request", workflow)
+        self.assertIn("github.event.inputs.formal_replay_request != ''", workflow)
+        self.assertIn('name "${parent_request_id}__business_decision_source_*.json"', workflow)
+        self.assertIn("formal replay requires exactly one durable BUSINESS_DECISION_SOURCE", workflow)
+        self.assertIn("request_files=\"${formal_sources[0]}\"", workflow)
         self.assertIn('event_name in {"push", "workflow_dispatch"}', gate)
 
     def test_runtime_session_gate_defines_event_replay_helpers(self):
