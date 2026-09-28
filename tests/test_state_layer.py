@@ -345,6 +345,65 @@ def test_real_20260904_broker_screenshot_replay_fails_explicitly_not_silently():
     assert contract["reason"] == "missing_account_fact"
 
 
+
+def test_plural_broker_trade_events_are_consumed_without_event_id_collision(tmp_path, monkeypatch, capsys):
+    request = {
+        "request_id": "broker-batch",
+        "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+        "formal_fact_type": "BROKER_TRADE_CONFIRMATION",
+        "interaction_scenario": "INTRADAY",
+        "requested_at_beijing": "2026-09-28T10:51:23+08:00",
+        "trade_events": [
+            {"code": "159981", "name": "能源化工ETF", "asset_type": "ETF", "side": "BUY", "quantity": 5700,
+             "price": 1.75, "amount": 9975, "confirmed_at_beijing": "2026-09-28T10:51:05+08:00",
+             "idempotency_key": "20260928_105105_159981_BUY_5700_1.750"},
+            {"code": "561980", "name": "半导体设备ETF", "asset_type": "ETF", "side": "SELL", "quantity": 15300,
+             "price": 0.649, "amount": 9929.7, "confirmed_at_beijing": "2026-09-28T10:51:23+08:00",
+             "idempotency_key": "20260928_105123_561980_SELL_15300_0.649"},
+        ],
+    }
+    contract = canonical_ingress_contract_for_request({
+        **request, "_ingress_path": "requests/live_snapshot/broker-batch.json",
+    })
+    assert contract["terminal_state"] == CANONICAL_INGRESS_SUBMITTED
+
+    result = _run_processor_contract_case(tmp_path, monkeypatch, capsys, request)
+    assert result["trade_event_recorded"] is True
+    events = sorted((tmp_path / "events" / "trades").glob("*.json"))
+    assert len(events) == 2
+    saved = [json.loads(path.read_text(encoding="utf-8")) for path in events]
+    assert {event["code"] for event in saved} == {"159981", "561980"}
+    assert len({event["event_id"] for event in saved}) == 2
+    assert {event["idempotency_key"] for event in saved} == {
+        "20260928_105105_159981_BUY_5700_1.750",
+        "20260928_105123_561980_SELL_15300_0.649",
+    }
+
+
+def test_account_change_events_reconcile_each_plural_confirmed_trade():
+    prior = {
+        "updated_at": "2026-09-24T09:53:00+08:00", "cash": 13169.54, "total_asset": 187900.0,
+        "positions": [{"code": "159981", "quantity": 2800}, {"code": "561980", "quantity": 28900}],
+    }
+    current = {
+        "updated_at": "2026-09-28T11:36:00+08:00", "cash": 13114.24, "total_asset": 187917.74,
+        "positions": [{"code": "159981", "quantity": 8500}, {"code": "561980", "quantity": 13600}],
+    }
+    trades = [
+        {"code": "159981", "side": "BUY", "quantity": 5700, "confirmed_at_beijing": "2026-09-28T10:51:05+08:00"},
+        {"code": "561980", "side": "SELL", "quantity": 15300, "confirmed_at_beijing": "2026-09-28T10:51:23+08:00"},
+    ]
+    events = state_sync._account_change_events(
+        prior, current, {"account_change_event_type": "USER_REPORTED_TRADE"}, trades
+    )
+    position_events = {event["code"]: event for event in events if event.get("code")}
+    assert position_events["159981"]["reconciliation_status"] == "RECONCILED_BY_CONFIRMED_TRADE"
+    assert position_events["159981"]["event_time"] == "2026-09-28T10:51:05+08:00"
+    assert position_events["561980"]["reconciliation_status"] == "RECONCILED_BY_CONFIRMED_TRADE"
+    assert position_events["561980"]["event_time"] == "2026-09-28T10:51:23+08:00"
+    cash_event = next(event for event in events if event.get("object") == "cash")
+    assert cash_event["reconciliation_status"] == "RECONCILED_BY_CONFIRMED_TRADE"
+
 def _minimal_valid_account():
     return {
         "updated_at": "2026-09-14T15:00:00+08:00",
