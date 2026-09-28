@@ -105,6 +105,15 @@ class V19RiskTierTests(unittest.TestCase):
             failed_checks=[{"name": "account_fact:current_availability", "status": "FAIL"}],
         ))
 
+    def test_unrelated_formal_contract_fixture_does_not_block_runtime_change(self):
+        self.assertTrue(candidate_change_acceptance_allows_global_failure(
+            changed_files=["scripts/runtime_session_gate.py", "tests/test_a_share_production_chain.py"],
+            failed_checks=[{
+                "name": "tests.test_formal_decision_contract",
+                "failure_domain": "formal_decision_contract",
+            }],
+        ))
+
     def test_v19_failure_attribution_matrix(self):
         base = ["scripts/decision_source.py"]
         self.assertTrue(candidate_change_acceptance_allows_global_failure(
