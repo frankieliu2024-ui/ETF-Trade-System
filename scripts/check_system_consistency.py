@@ -385,8 +385,26 @@ def _validate_post_close_review_contract(report: dict, now=None) -> None:
     if errors:
         report.setdefault("errors", []).extend(f"post_close_review:{x}" for x in errors)
     _recount(report)
+def _is_full_day_review_completion(review_event: dict) -> bool:
+    """Return true only for a durable FULL_DAY review, not a midday review."""
+    if str(review_event.get("event_type") or "").upper() not in {
+        "FORMAL_POST_CLOSE_REVIEW",
+        "FORMAL_POST_CLOSE_REVIEW_UNAVAILABLE",
+    }:
+        return False
+    review = review_event.get("review") or review_event.get("formal_review") or {}
+    if not isinstance(review, dict) or str(review.get("review_scope") or "").upper() != "FULL_DAY":
+        return False
+    version = str(review.get("review_version") or "").upper()
+    mode = str(review.get("case_mode") or "").upper()
+    boundary = str(review.get("review_boundary") or "")
+    if "MORNING" in version or "MORNING" in mode or "上午复盘" in boundary:
+        return False
+    return True
+
+
 def _case_mapping_required(current: dict, event: dict) -> bool:
-    """Require CASE after canonical review completion or once the trade is prior-day."""
+    """Require CASE only after canonical FULL_DAY completion or for prior-day trades."""
     event_date = str(event.get("confirmed_at_beijing") or event.get("executed_at_beijing") or event.get("event_id") or "")[:10]
     current_date = str(current.get("market_date") or "")
     if not event_date or not current_date:
@@ -397,10 +415,10 @@ def _case_mapping_required(current: dict, event: dict) -> bool:
     if not review_path.exists():
         return False
     try:
-        review = json.loads(review_path.read_text(encoding="utf-8"))
+        review_event = json.loads(review_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return False
-    return str(review.get("event_type") or "").upper() in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_POST_CLOSE_REVIEW_UNAVAILABLE"}
+    return _is_full_day_review_completion(review_event)
 
 
 def _valid_unrecoverable_review_terminal(event_id: str, event: dict) -> bool:
@@ -706,10 +724,7 @@ def _execution_quality_projection_required() -> bool:
         review_event = _read_json(str(review_path.relative_to(ROOT)))
     except (OSError, ValueError, json.JSONDecodeError):
         return False
-    return str(review_event.get("event_type") or "").upper() in {
-        "FORMAL_POST_CLOSE_REVIEW",
-        "FORMAL_POST_CLOSE_REVIEW_UNAVAILABLE",
-    }
+    return _is_full_day_review_completion(review_event)
 
 
 def _validate_execution_quality_projection(report: dict) -> None:
