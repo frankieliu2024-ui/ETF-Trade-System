@@ -1,7 +1,7 @@
 {
   "status": "VALID",
-  "updated_at": "2026-09-24T09:53:00+08:00",
-  "source": "BROKER_TRADE_AND_HOLDINGS_SCREENSHOTS_20260924_0953_USER_CONFIRMED",
+  "updated_at": "2026-09-28T11:36:00+08:00",
+  "source": "BROKER_HOLDINGS_SCREENSHOT_20260928_1136_USER_CONFIRMED",
   "fee_fact_updated_at": "2026-08-28T08:11:00+08:00",
   "fee_fact_source": "BROKER_STATEMENT_SCREENSHOT_20260828_USER_CONFIRMED",
   "account_reconciled_at": "2026-08-28T08:11:00+08:00",
@@ -39,88 +39,60 @@
   ],
   "positions": [
     {
-      "asset_type": "STOCK",
       "name": "宁德时代",
       "code": "300750",
+      "asset_type": "STOCK",
       "quantity": 200,
-      "available_quantity": 200,
-      "cost": 346.908,
-      "last_price": 298.38,
-      "market_value": 59676,
-      "holding_pnl": -9705.63,
-      "holding_pnl_pct": -13.989
+      "current_price": 291.81,
+      "market_value": 58362
     },
     {
-      "asset_type": "STOCK",
       "name": "工业富联",
       "code": "601138",
+      "asset_type": "STOCK",
       "quantity": 500,
-      "available_quantity": 500,
-      "cost": 58.054,
-      "last_price": 61.79,
-      "market_value": 30895,
-      "holding_pnl": 1867.78,
-      "holding_pnl_pct": 6.435
+      "current_price": 58.71,
+      "market_value": 29355
     },
     {
-      "asset_type": "ETF",
       "name": "科创50ETF",
       "code": "588000",
+      "asset_type": "ETF",
       "quantity": 14100,
-      "available_quantity": 14100,
-      "cost": 2.099,
-      "last_price": 1.739,
-      "market_value": 24519.9,
-      "holding_pnl": -5074.51,
-      "holding_pnl_pct": -17.147
+      "current_price": 1.646,
+      "market_value": 23208.6
     },
     {
-      "asset_type": "ETF",
       "name": "纳指ETF",
       "code": "159941",
+      "asset_type": "ETF",
       "quantity": 12200,
-      "available_quantity": 12200,
-      "cost": 1.626,
-      "last_price": 1.728,
-      "market_value": 21081.6,
-      "holding_pnl": 1245,
-      "holding_pnl_pct": 6.276
+      "current_price": 1.708,
+      "market_value": 20837.6
     },
     {
-      "asset_type": "ETF",
       "name": "科创创业ETF",
       "code": "159781",
+      "asset_type": "ETF",
       "quantity": 19500,
-      "available_quantity": 19500,
-      "cost": 1.269,
-      "last_price": 1.064,
-      "market_value": 20748,
-      "holding_pnl": -4000.6,
-      "holding_pnl_pct": -16.165
+      "current_price": 0.995,
+      "market_value": 19402.5
     },
     {
-      "asset_type": "ETF",
-      "name": "半导体设备ETF",
-      "code": "561980",
-      "quantity": 28900,
-      "available_quantity": 28900,
-      "cost": 0.923,
-      "last_price": 0.686,
-      "market_value": 19825.4,
-      "holding_pnl": -6854.5,
-      "holding_pnl_pct": -25.692
-    },
-    {
-      "asset_type": "ETF",
       "name": "能源化工ETF",
       "code": "159981",
-      "quantity": 2800,
-      "available_quantity": 0,
-      "cost": 1.729,
-      "last_price": 1.728,
-      "market_value": 4838.4,
-      "holding_pnl": -2.2,
-      "holding_pnl_pct": -0.045
+      "asset_type": "ETF",
+      "quantity": 8500,
+      "current_price": 1.744,
+      "market_value": 14824
+    },
+    {
+      "name": "半导体设备ETF",
+      "code": "561980",
+      "asset_type": "ETF",
+      "quantity": 13600,
+      "current_price": 0.648,
+      "market_value": 8812.8
     }
   ],
   "validity_mode": "EVENT_DRIVEN_CARRY_FORWARD",
@@ -141,7 +113,9 @@
     },
     "applicable_object": "159981",
     "validity": "ACTIVE",
-    "execution_status": "PENDING"
+    "execution_status": "EXECUTED",
+    "execution_fact_ref": "events/trades/BROKER_ACCOUNT_SYNC_20260928_124700_FORMAL_PARENT_2_c2df2e1d7cb1296e.json",
+    "last_executed_event_id": "BROKER_ACCOUNT_SYNC_20260928_124700_FORMAL_PARENT_2_c2df2e1d7cb1296e"
   },
   "account_change_events_after_confirmed_at": [
     {
@@ -1223,6 +1197,36 @@
       "reconciliation_status": "RECONCILED_BY_CONFIRMED_TRADE",
       "source": "BROKER_TRADE_AND_HOLDINGS_SCREENSHOTS_20260924_0953_USER_CONFIRMED",
       "read_only": true
+    },
+    {
+      "event_id": "account_change_08f1deb35789f89fb81e",
+      "idempotency_key": "account_change_08f1deb35789f89fb81e",
+      "event_type": "USER_REPORTED_TRADE",
+      "event_time": "2026-09-28T10:51:05+08:00",
+      "object": "能源化工ETF（159981）",
+      "code": "159981",
+      "quantity_before": 2800.0,
+      "quantity_after": 8500.0,
+      "quantity_delta": 5700.0,
+      "change_summary": "买入/新增持仓",
+      "reconciliation_status": "RECONCILED_BY_CONFIRMED_TRADE",
+      "source": "BROKER_HOLDINGS_SCREENSHOT_20260928_1136_USER_CONFIRMED",
+      "read_only": true
+    },
+    {
+      "event_id": "account_change_9a9b9c92e93ee081cd8e",
+      "idempotency_key": "account_change_9a9b9c92e93ee081cd8e",
+      "event_type": "USER_REPORTED_TRADE",
+      "event_time": "2026-09-28T10:51:23+08:00",
+      "object": "半导体设备ETF（561980）",
+      "code": "561980",
+      "quantity_before": 28900.0,
+      "quantity_after": 13600.0,
+      "quantity_delta": -15300.0,
+      "change_summary": "卖出/减少持仓",
+      "reconciliation_status": "RECONCILED_BY_CONFIRMED_TRADE",
+      "source": "BROKER_HOLDINGS_SCREENSHOT_20260928_1136_USER_CONFIRMED",
+      "read_only": true
     }
   ],
   "settlement_obligations": [
@@ -1248,16 +1252,16 @@
   "settlement_cash_shortfall": 0.0,
   "settlement_constraint_status": "NONE",
   "account_fact_derivation_note": "Positions/prices/PnL are directly visible in the user-provided post-trade broker screenshot. Cash is derived from prior broker-confirmed cash 11197.47 minus confirmed execution amount 4953.00 and 5.00 fee implied by broker position cost/PnL, yielding 6239.47; total asset is displayed market value 174405.50 plus derived cash. This derived cash must be replaced by a later broker-displayed cash fact if one is provided.",
-  "broker_displayed_at_beijing": "2026-09-24T09:53:00+08:00",
-  "total_assets": 179921.82,
-  "total_market_value": 173451.2,
-  "available_cash": 6470.62,
-  "day_pnl": -646.6,
-  "day_pnl_pct": -0.36,
-  "floating_pnl": -19615.65,
+  "broker_displayed_at_beijing": "2026-09-28T11:36:00+08:00",
+  "total_assets": 187917.74,
+  "total_market_value": 174802.5,
+  "available_cash": 13114.24,
+  "day_pnl": -4203.7,
+  "day_pnl_pct": -2.19,
+  "floating_pnl": -29361.76,
   "exposure_pct": 74.9,
   "carry_forward_reason": "User-provided 2026-09-15 16:18 broker screenshot reflects the 2026-09-15 15:00 close; no account-changing trade was reported and position quantities are unchanged.",
   "no_new_trade_observed": true,
   "screenshot_account_position_pct": 90.8,
-  "note": "Trade detail confirms 09:52:55 BUY 2800 @1.727 amount 4835.60. Holdings screenshot confirms post-trade account and position facts; broker cost 1.729 implies fees/taxes embedded by broker but exact fee amount is not independently confirmed."
+  "note": "Screenshot is account/holding fact only. Displayed prices are transcribed for account reconciliation and must not be treated as canonical market quotes."
 }
