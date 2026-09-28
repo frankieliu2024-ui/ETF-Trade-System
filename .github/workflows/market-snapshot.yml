@@ -636,6 +636,23 @@ jobs:
             python scripts/build_query_context.py "${REQUEST_ARGS[@]}"
           fi
           python scripts/refresh_gate.py --annotate-contexts
+          # A formal request is not complete unless the request-bound query
+          # context is materially present before downstream persistence.
+          if [ -n "$REQUEST_FILE" ] && [ -f "$REQUEST_FILE" ]; then
+            python - "$REQUEST_FILE" <<'PY'
+          import json, sys
+          from pathlib import Path
+          request = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          context_path = Path("data/state/query_context.json")
+          context = json.loads(context_path.read_text(encoding="utf-8")) if context_path.exists() and context_path.stat().st_size else {}
+          pack = context.get("decision_fact_pack") or {}
+          trigger = pack.get("trigger") or {}
+          expected = str(request.get("request_id") or "").strip()
+          actual = str(trigger.get("request_id") or "").strip()
+          if not expected or actual != expected:
+              raise SystemExit(f"request-bound query context missing or mismatched: expected={expected} actual={actual}")
+          PY
+          fi
 
       - name: Build E2E usability state
         # Decision usability is request/state-sync qualification, not a scheduled
