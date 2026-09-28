@@ -100,6 +100,27 @@ def object_role(code: str, asset_class: str = "") -> tuple[str, str]:
     return "OTHER", "监测对象"
 
 
+def _current_account_stock_rows() -> list[dict]:
+    """Return only current actual account stocks present in the legal CURRENT snapshot.
+
+    This is a presentation projection over existing facts. It creates no fixed stock
+    pool and no new market-data acquisition path.
+    """
+    ctx = _account_context()
+    held_stocks = ctx["held_stocks"]
+    if not held_stocks:
+        return []
+    current = read_json(STATE / "CURRENT.json", {})
+    snapshot_path = STATE.parent.parent / str(current.get("latest_snapshot") or "")
+    snapshot = read_json(snapshot_path, {}) if snapshot_path.exists() else {}
+    return [
+        row for row in (snapshot.get("rows") or [])
+        if str(row.get("symbol") or "") in held_stocks
+        and row.get("quality_status") == "PASS"
+        and number(row.get("change_pct")) is not None
+    ]
+
+
 def compact_path(row: dict, feature: dict | None = None, *, include_current: bool = False) -> str:
     label = _label(row)
     day = number(row.get("change_pct"))
@@ -154,13 +175,13 @@ def a_share_structure(indices: dict[str, dict], etfs: list[dict], features: dict
     else:
         structure = "指数整体震荡，风格分化有限"
 
-    headline = [f"- **市场结构**：{structure}。"]
+    headline = [f"- **第一层｜A股指数结构**：{structure}。"]
     index_values = []
     for code, row in (("000001", sh), ("000688", star), ("399006", cyb)):
         if row and number(row.get("change_pct")) is not None:
             index_values.append(f"{_label(row)}{pct(number(row.get('change_pct')))}")
     if index_values:
-        headline.append("- **指数反馈**：" + "，".join(index_values) + "。")
+        headline.append("- **指数反馈**：" + "，".join(index_values) + "。指数只定义市场环境与风格，不替代ETF/个股层验证。")
 
     ctx = _account_context()
     held = ctx["held_etfs"]
@@ -200,7 +221,14 @@ def a_share_structure(indices: dict[str, dict], etfs: list[dict], features: dict
     if formal_row is None and strongest is not None and weakest is not None and str(strongest.get("symbol")) != str(weakest.get("symbol")):
         details.append(f"持仓中相对较强的是{_label(strongest)}{pct(number(strongest.get('change_pct')))}")
     if details:
-        headline.append("- **ETF自身反馈**：" + "；".join(details) + "。")
+        headline.append("- **第二层｜ETF持仓与机会结构**：" + "；".join(details) + "。")
+
+    stock_rows = _current_account_stock_rows()
+    if stock_rows:
+        stock_details = [f"{_label(row)}{pct(number(row.get('change_pct')))}" for row in stock_rows]
+        headline.append("- **第三层｜账户个股验证**：" + "，".join(stock_details) + "。个股只用于验证独立持仓假设、资金释放价值及相关产业传导，不机械映射ETF动作。")
+    else:
+        headline.append("- **第三层｜个股/产业链验证**：当前没有可合法投影且足以改变判断的个股证据。")
 
     path_parts = []
     if star:
