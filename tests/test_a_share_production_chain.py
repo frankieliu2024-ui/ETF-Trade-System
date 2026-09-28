@@ -381,6 +381,13 @@ class ManualRequestSessionIngressTests(unittest.TestCase):
         self.assertIn("formal_replay_request is not an existing canonical Formal Decision refresh request", workflow)
         self.assertIn('event_name in {"push", "workflow_dispatch"}', gate)
 
+    def test_runtime_session_gate_defines_event_replay_helpers(self):
+        gate = (ROOT / "scripts/runtime_session_gate.py").read_text(encoding="utf-8")
+        self.assertIn("def _event_request_files()", gate)
+        self.assertIn("def _event_request_class()", gate)
+        self.assertIn("request_class = _event_request_class()", gate)
+        self.assertIn("FORMAL_REPLAY_REQUEST", gate)
+
 if __name__ == "__main__":
     unittest.main()
 
