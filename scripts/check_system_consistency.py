@@ -676,6 +676,42 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
     _recount(report)
 
 
+def _execution_quality_projection_required() -> bool:
+    """Require terminal execution-quality only after the day's FULL_DAY review boundary.
+
+    execution_quality is an asynchronous AFTER_DECISION projection. Before a
+    durable post-close review (or an explicit unrecoverable terminal) for the
+    current market date, missing rows remain observable pending state rather
+    than a hard consistency failure. Prior-day rows still fail closed.
+    """
+    current = _read_json("data/state/CURRENT.json")
+    current_date = str(current.get("market_date") or "").strip()
+    if not current_date:
+        return True
+    trade_dir = ROOT / "events" / "trades"
+    for path in sorted(trade_dir.glob("*.json")) if trade_dir.exists() else []:
+        try:
+            event = _read_json(str(path.relative_to(ROOT)))
+        except (OSError, ValueError, json.JSONDecodeError):
+            continue
+        if str(event.get("execution_status") or "").upper() != "EXECUTED":
+            continue
+        event_date = str(event.get("confirmed_at_beijing") or event.get("executed_at_beijing") or "")[:10]
+        if event_date and event_date < current_date:
+            return True
+    review_path = ROOT / "events" / "reviews" / f"{current_date}.json"
+    if not review_path.exists():
+        return False
+    try:
+        review_event = _read_json(str(review_path.relative_to(ROOT)))
+    except (OSError, ValueError, json.JSONDecodeError):
+        return False
+    return str(review_event.get("event_type") or "").upper() in {
+        "FORMAL_POST_CLOSE_REVIEW",
+        "FORMAL_POST_CLOSE_REVIEW_UNAVAILABLE",
+    }
+
+
 def _validate_execution_quality_projection(report: dict) -> None:
     persisted = _read_json("data/state/execution_quality.json")
     try:
@@ -694,12 +730,23 @@ def _validate_execution_quality_projection(report: dict) -> None:
         for field in ("hypothesis_id", "decision_price", "adverse_execution_cost_pct", "status", "code"):
             if actual.get(field) != expected_item.get(field):
                 mismatches.append(f"{event_id}:{field}")
-    status = "FAIL" if mismatches else "PASS"
-    report.setdefault("checks", []).append({"name": "state:execution_quality_canonical_alignment", "status": status, "detail": f"executed_events_checked={len(expected_items)} mismatches={mismatches}"})
+    projection_required = _execution_quality_projection_required()
+    status = "FAIL" if mismatches and projection_required else "WARNING" if mismatches else "PASS"
+    report.setdefault("checks", []).append({
+        "name": "state:execution_quality_canonical_alignment",
+        "status": status,
+        "detail": f"executed_events_checked={len(expected_items)} mismatches={mismatches} projection_required={projection_required}",
+    })
     for item in mismatches:
         message = "execution_quality:" + item
-        if message not in report.setdefault("errors", []):
-            report["errors"].append(message)
+        if projection_required:
+            if message not in report.setdefault("errors", []):
+                report["errors"].append(message)
+        else:
+            pending = "execution_quality:pending_full_day_projection"
+            if pending not in report.setdefault("warnings", []):
+                report["warnings"].append(pending)
+            break
     _recount(report)
 
 
