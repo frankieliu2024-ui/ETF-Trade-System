@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from notification_center import STATE, read_json
@@ -101,36 +102,58 @@ def object_role(code: str, asset_class: str = "") -> tuple[str, str]:
 
 
 def _current_stock_context_rows() -> list[dict]:
-    """Project current account and query-time industry stocks from existing canonical read-only contexts.
-
-    Only market-data rows with PASS quality and explicit PIT timestamp are eligible.
-    Query-time industry rows are included only when current stock_context names them.
-    """
+    """Project current account and query-time industry stocks from existing canonical read-only contexts."""
     stock_context = read_json(STATE / "stock_context.json", {})
     stock_market = read_json(STATE / "stock_market_context.json", {})
+    current = read_json(STATE / "CURRENT.json", {})
     if str(stock_context.get("account_fact_status") or "").upper() != "VALID":
         return []
-    default_layer = stock_context.get("default_stock_layer") or {}
-    account_rows = default_layer.get("monitored_account_stocks") or []
-    industry = stock_context.get("conditional_industry_observation") or {}
-    industry_rows = industry.get("current_objects") or []
+    market_date = str(current.get("market_date") or "")
+    generated_at = str(stock_context.get("generated_at") or "")
+    if not market_date or not generated_at or stock_market.get("generated_at") != generated_at:
+        return []
+    try:
+        generated_dt = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
+        if generated_dt.tzinfo is None:
+            return []
+        beijing = timezone(timedelta(hours=8))
+        generated_dt = generated_dt.astimezone(beijing)
+    except ValueError:
+        return []
+    if generated_dt.date().isoformat() != market_date:
+        return []
+
     allowed = {}
-    for row in account_rows:
+    default_layer = stock_context.get("default_stock_layer") or {}
+    for row in default_layer.get("monitored_account_stocks") or []:
         code = str(row.get("code") or "")
         if code:
             allowed[code] = "账户个股"
-    for row in industry_rows:
+    industry = stock_context.get("conditional_industry_observation") or {}
+    for row in industry.get("current_objects") or []:
         code = str(row.get("code") or "")
         if code:
             allowed[code] = "查询时产业链个股"
+
     out = []
     for code, role in allowed.items():
         row = (stock_market.get("objects") or {}).get(code) or {}
         if row.get("quality_status") != "PASS" or number(row.get("change_pct")) is None:
             continue
-        if not row.get("as_of_beijing") or not row.get("provider"):
+        if str(row.get("freshness_status") or "").upper() != "FRESH":
+            continue
+        if not row.get("provider") or not row.get("as_of_beijing"):
             continue
         if str(row.get("market_phase") or "").upper() == "OUTSIDE_SESSION":
+            continue
+        try:
+            quote_dt = datetime.fromisoformat(str(row["as_of_beijing"]).replace("Z", "+00:00"))
+            if quote_dt.tzinfo is None:
+                continue
+            quote_dt = quote_dt.astimezone(timezone(timedelta(hours=8)))
+        except ValueError:
+            continue
+        if quote_dt.date().isoformat() != market_date or quote_dt > generated_dt:
             continue
         projected = dict(row)
         projected["_monitor_role"] = role
