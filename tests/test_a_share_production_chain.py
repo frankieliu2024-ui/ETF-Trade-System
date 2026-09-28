@@ -357,7 +357,7 @@ class ManualRequestSessionIngressTests(unittest.TestCase):
         self.assertIn('reason = "request_time_close_recovery"', gate)
         self.assertIn('set_output("request_time_close_recovery"', gate)
         self.assertIn("REQUEST_TIME_CLOSE_RECOVERY", runner)
-        self.assertIn('event_name == "push" and request_time_recovery', runner)
+        self.assertIn('event_name in {"push", "workflow_dispatch"} and request_time_recovery', runner)
         self.assertIn("REQUEST_TIME_CLOSE_RECOVERY:", workflow)
         self.assertIn("steps.session_gate.outputs.request_time_close_recovery", workflow)
 
@@ -370,6 +370,16 @@ class ManualRequestSessionIngressTests(unittest.TestCase):
         self.assertIn('request.get("force_refresh") is True', gate)
         self.assertIn('request.get("require_post_request_snapshot") is True', gate)
         self.assertIn('request_class in {"STATE_SYNC_ONLY", "BUSINESS_DECISION_SOURCE"}', gate)
+
+    def test_existing_formal_request_can_be_replayed_without_new_identity(self):
+        gate = (ROOT / "scripts/runtime_session_gate.py").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        self.assertIn("FORMAL_REPLAY_REQUEST", gate)
+        self.assertIn("formal_replay_request:", workflow)
+        self.assertIn("Bind explicit existing Formal Decision replay", workflow)
+        self.assertIn("TRIGGERING_REQUEST_FILE=$REQUEST_FILE", workflow)
+        self.assertIn("formal_replay_request is not an existing canonical Formal Decision refresh request", workflow)
+        self.assertIn('event_name in {"push", "workflow_dispatch"}', gate)
 
 if __name__ == "__main__":
     unittest.main()
