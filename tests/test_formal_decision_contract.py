@@ -30,12 +30,15 @@ class FormalDecisionContractTests(unittest.TestCase):
         }), "")
 
     def test_multi_object_lifecycle_mapping_and_legacy_composite_text_are_accepted(self):
+        # This test owns lifecycle syntax compatibility, not live account
+        # membership. Use explicitly historical wording so the fixture remains
+        # deterministic when production holdings change.
         error = validate_formal_decision_contract({
             "opportunity_status": "无机会",
             "lifecycle": {
-                "半导体设备ETF（561980）": "持有管理",
-                "黄金ETF（518880）": "持有管理；继续Trial验证",
-                "通信ETF（515880）": "退出；原Trial假设已关闭",
+                "半导体设备ETF（561980）": "历史持有管理",
+                "黄金ETF（518880）": "历史持有管理；继续Trial验证",
+                "通信ETF（515880）": "历史退出；原Trial假设已关闭",
             },
         })
         self.assertEqual(error, "")
