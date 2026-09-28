@@ -226,7 +226,7 @@ class ExecutedTradeCaseLifecycleTests(unittest.TestCase):
             (trade_dir / "trade-1.json").write_text(json.dumps({"event_id": "trade-1", "execution_status": "EXECUTED", "confirmed_at_beijing": "2026-09-01T14:40:01+08:00"}), encoding="utf-8")
             reviews = root / "events/reviews"
             reviews.mkdir(parents=True)
-            (reviews / "2026-09-01.json").write_text(json.dumps({"event_type": "FORMAL_POST_CLOSE_REVIEW", "review": {}}), encoding="utf-8")
+            (reviews / "2026-09-01.json").write_text(json.dumps({"event_type": "FORMAL_POST_CLOSE_REVIEW", "review": {"review_scope": "FULL_DAY", "review_version": "V2.2.32_FULL_DAY", "case_mode": "FULL_DAY_REVIEW", "review_boundary": "交易日收盘后全天复盘"}}), encoding="utf-8")
             state = root / "data/state"
             state.mkdir(parents=True)
             (state / "CURRENT.json").write_text(json.dumps({"market_date": "2026-09-01", "latest_valid_node": "close", "data_freshness": {"market_phase": "POST_CLOSE_GRACE"}}), encoding="utf-8")
