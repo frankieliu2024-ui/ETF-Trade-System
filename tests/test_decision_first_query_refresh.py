@@ -633,5 +633,15 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertFalse(result["decision_fact_pack"]["formal_action_readiness"]["ready"])
 
 
+    def test_index_requires_same_request_consumer_wait_until_ready_or_terminal(self):
+        index = (ROOT / "ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
+        self.assertIn("该现象本身只表示本次 request-bound facts 尚未发布，不构成 Formal Decision 的终止失败", index)
+        self.assertIn("只要该链仍为 queued/in_progress/building", index)
+        self.assertIn("formal_reply_freeze.reply_freezable=true", index)
+        self.assertIn("terminal failure", index)
+        self.assertIn("不得创建第二个等价请求", index)
+        self.assertIn("大型 canonical JSON 的连接器空读", index)
+
+
 if __name__ == "__main__":
     unittest.main()
