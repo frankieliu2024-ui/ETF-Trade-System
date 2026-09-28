@@ -71,6 +71,103 @@ def _a_share(symbol: str, root, now, policy: dict) -> dict:
     return _attach_stock_minute(symbol, root, quote)
 
 
+def _a_share_calendar(root) -> dict:
+    try:
+        return json.loads((root / "config/market/a_share_trading_calendar_2026.json").read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _is_a_share_trading_date(root, date_value) -> bool:
+    calendar = _a_share_calendar(root)
+    text = date_value.isoformat()
+    if date_value.weekday() >= 5:
+        return False
+    if calendar.get("coverage_start") and text < str(calendar["coverage_start"]):
+        return False
+    if calendar.get("coverage_end") and text > str(calendar["coverage_end"]):
+        return False
+    return text not in set(calendar.get("closed_dates") or [])
+
+
+def _latest_completed_a_share_session_date(root, now):
+    from datetime import timedelta
+    query_date = now.astimezone(_legacy.BEIJING).date()
+    phase = market_phase("CN", now=now)
+    candidate = query_date
+    # Before the first trading phase, today's session has not produced a completed
+    # reference. Midday/post-close may legally consume today's latest terminal fact.
+    if phase == "OFF_SESSION" and now.astimezone(_legacy.BEIJING).hour < 9:
+        candidate -= timedelta(days=1)
+    if not _is_a_share_trading_date(root, candidate):
+        candidate -= timedelta(days=1)
+    for _ in range(10):
+        if _is_a_share_trading_date(root, candidate):
+            return candidate
+        candidate -= timedelta(days=1)
+    raise RuntimeError("cannot resolve latest completed A-share session date")
+
+
+def _is_etf_reference_target(symbol: str, root) -> bool:
+    raw = str(symbol).upper().replace(".SH", "").replace(".SZ", "")
+    if not (raw.isdigit() and len(raw) == 6):
+        return False
+    try:
+        universe = json.loads((root / "config/market/etf_monitor_universe.json").read_text(encoding="utf-8"))
+        if raw in {str(x.get("code") or "") for x in (universe.get("objects") or [])}:
+            return True
+    except Exception:
+        pass
+    # Discovery candidates are dynamic and intentionally need not be in the monitor
+    # universe. Exchange fund prefixes are only an object classifier, never a
+    # permission/ranking rule.
+    return raw.startswith(("159", "5"))
+
+
+def _explicit_etf_session_reference(symbol: str, root, now) -> dict:
+    """Return a provider-backed ETF terminal fact for the latest legal completed session.
+
+    This fact is eligible for structure/Observation evaluation only. It is never
+    relabelled FRESH and never grants executable-price/amount permission.
+    """
+    thscode = _stock_thscode(symbol)
+    provider_rows = fetch_tencent_quotes([thscode], timeout=10)
+    row = provider_rows[thscode.upper()]
+    timestamp_ms = row.get("provider_timestamp_ms")
+    if timestamp_ms in (None, ""):
+        raise RuntimeError(f"Tencent {thscode} missing provider timestamp")
+    provider_dt = datetime.fromtimestamp(float(timestamp_ms) / 1000.0, tz=timezone.utc).astimezone(_legacy.BEIJING)
+    expected_date = _latest_completed_a_share_session_date(root, now)
+    if provider_dt.date() != expected_date:
+        raise RuntimeError(
+            f"Tencent {thscode} is not the latest legal completed-session reference: "
+            f"provider_date={provider_dt.date().isoformat()} expected_date={expected_date.isoformat()}"
+        )
+    phase = market_phase("CN", now=now)
+    no_trade_partial = any(row.get(key) is None for key in ("open_price", "high_price", "low_price", "volume", "turnover"))
+    return {
+        "market": "CN", "market_name": "中国大陆", "symbol": str(symbol).upper(),
+        "name": row.get("name", str(symbol).upper()), "latest_price": row["last_price"],
+        "open": row.get("open_price"), "high": row.get("high_price"), "low": row.get("low_price"),
+        "prev_close": row.get("prev_price"), "volume": row.get("volume"),
+        "amount": row.get("turnover"), "turnover": row.get("turnover"),
+        "data_time_beijing": provider_dt.isoformat(timespec="seconds"),
+        "data_time_local": provider_dt.isoformat(timespec="seconds"),
+        "market_phase": phase, "market_status_cn": display_market_status("CN", phase),
+        "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
+        "source": "tencent_qq", "freshness": "SESSION_REFERENCE",
+        "quality_status": "DEGRADED" if no_trade_partial else "PASS",
+        "direct_quote": True, "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
+        "provider_symbol": row.get("provider_symbol"), "provider_timestamp_ms": timestamp_ms,
+        "evidence_fitness": {
+            "object_fact": True, "observation_evaluation": True,
+            "capital_candidate_evaluation": True, "executable_price": False,
+            "trade_amount_or_shares": False,
+        },
+        "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission.",
+    }
+
+
 def _explicit_same_day_stock_reference(symbol: str, root, now) -> dict:
     """Query Tencent directly for an explicitly requested A-share stock outside active trading.
 
@@ -150,13 +247,16 @@ def refresh_market_quotes(root, requested_symbols: list[str], now):
     returned = {str(x.get("symbol") or "").upper() for x in (result.get("quotes") or []) if isinstance(x, dict)}
     failed = {str(x.get("symbol") or "").upper() for x in (result.get("failures") or []) if isinstance(x, dict)}
     for symbol in explicit:
-        if symbol in returned or symbol in failed or not _cn_code(symbol) or not _is_stock_minute_target(symbol, root):
+        if symbol in returned or symbol in failed or not _cn_code(symbol):
             continue
         try:
-            result.setdefault("quotes", []).append(_explicit_same_day_stock_reference(symbol, root, now))
+            if _is_etf_reference_target(symbol, root):
+                result.setdefault("quotes", []).append(_explicit_etf_session_reference(symbol, root, now))
+            elif _is_stock_minute_target(symbol, root):
+                result.setdefault("quotes", []).append(_explicit_same_day_stock_reference(symbol, root, now))
         except Exception as exc:
             result.setdefault("failures", []).append({"symbol": symbol, "error": str(exc)[-500:]})
-    result["refresh_contract"] = "QUERY_TIME_ACTIVE_MARKET_REQUIRES_FRESH_PROVIDER_TIMESTAMP; EXPLICIT_CN_STOCK_OFF_SESSION_REQUIRES_SAME_DAY_TENCENT_SESSION_REFERENCE"
+    result["refresh_contract"] = "QUERY_TIME_ACTIVE_MARKET_REQUIRES_FRESH_PROVIDER_TIMESTAMP; EXPLICIT_CN_ETF_OFF_SESSION_REQUIRES_LATEST_LEGAL_COMPLETED_SESSION_REFERENCE; EXPLICIT_CN_STOCK_OFF_SESSION_REQUIRES_SAME_DAY_TENCENT_SESSION_REFERENCE"
     return result
 
 
