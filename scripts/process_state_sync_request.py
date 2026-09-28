@@ -2183,18 +2183,18 @@ def _latest_trade_event_id() -> str:
 
 
 
-def _account_change_events(prior: dict, current: dict, request: dict, trade: dict | None) -> list[dict]:
-    """Record only observable account deltas; never infer an unexplained trade."""
+def _account_change_events(prior: dict, current: dict, request: dict, trade: dict | list[dict] | None) -> list[dict]:
+    """Record observable account deltas and reconcile each against exact confirmed trade mechanics."""
     prior_positions = {str(x.get("code")): x for x in (prior.get("positions") or []) if x.get("code")}
     current_positions = {str(x.get("code")): x for x in (current.get("positions") or []) if x.get("code")}
+    trades = trade if isinstance(trade, list) else ([trade] if isinstance(trade, dict) else [])
+    by_code: dict[str, list[dict]] = {}
+    for item in trades:
+        by_code.setdefault(str(item.get("code") or ""), []).append(item)
     codes = sorted(set(prior_positions) | set(current_positions))
-    confirmed_code = str((trade or {}).get("code") or "")
-    confirmed_side = str((trade or {}).get("side") or "").upper()
-    confirmed_qty = safe_float((trade or {}).get("quantity"))
     event_type = str(request.get("account_change_event_type") or "").strip() or (
-        "USER_REPORTED_TRADE" if trade else "BROKER_SCREENSHOT_CHANGE"
+        "USER_REPORTED_TRADE" if trades else "BROKER_SCREENSHOT_CHANGE"
     )
-    event_time = str((trade or {}).get("confirmed_at_beijing") or current.get("updated_at") or "")
     events: list[dict] = []
     for code in codes:
         before = safe_float(prior_positions.get(code, {}).get("quantity")) or 0.0
@@ -2203,13 +2203,17 @@ def _account_change_events(prior: dict, current: dict, request: dict, trade: dic
         if delta == 0:
             continue
         row = current_positions.get(code) or prior_positions.get(code) or {}
-        explained = bool(
-            trade and code == confirmed_code and confirmed_qty is not None
-            and abs(abs(delta) - confirmed_qty) < 1e-8
-            and ((delta > 0 and confirmed_side in {"BUY", "B", "买入", "买"})
-                 or (delta < 0 and confirmed_side in {"SELL", "S", "卖出", "卖"}))
-        )
+        matching_trade = None
+        for candidate in by_code.get(code, []):
+            side = str(candidate.get("side") or "").upper()
+            quantity = safe_float(candidate.get("quantity"))
+            direction_matches = (delta > 0 and side in {"BUY", "B", "买入", "买"}) or (delta < 0 and side in {"SELL", "S", "卖出", "卖"})
+            if quantity is not None and abs(abs(delta) - quantity) < 1e-8 and direction_matches:
+                matching_trade = candidate
+                break
+        explained = matching_trade is not None
         known_ipo = _is_known_ipo_registration(current, code, delta, after)
+        event_time = str((matching_trade or {}).get("confirmed_at_beijing") or current.get("updated_at") or "")
         key_body = {"event_type": event_type, "code": code, "delta": delta, "event_time": event_time}
         key = "account_change_" + hashlib.sha256(json.dumps(key_body, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:20]
         events.append({
@@ -2226,18 +2230,23 @@ def _account_change_events(prior: dict, current: dict, request: dict, trade: dic
             "source": str(current.get("source") or request.get("source") or "USER_CONFIRMED"),
             "read_only": True,
         })
+    batch_event_time = next(
+        (str(item.get("confirmed_at_beijing") or item.get("executed_at") or "") for item in trades
+         if item.get("confirmed_at_beijing") or item.get("executed_at")),
+        str(current.get("updated_at") or ""),
+    )
     for field in ("cash", "total_asset"):
         before = safe_float(prior.get(field))
         after = safe_float(current.get(field))
         if before is None or after is None or abs(after - before) < 0.005:
             continue
-        key_body = {"event_type": event_type, "field": field, "delta": round(after - before, 2), "event_time": event_time}
+        key_body = {"event_type": event_type, "field": field, "delta": round(after - before, 2), "event_time": batch_event_time}
         key = "account_change_" + hashlib.sha256(json.dumps(key_body, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:20]
         events.append({
             "event_id": key, "idempotency_key": key, "event_type": event_type,
-            "event_time": event_time, "object": field, "change_summary": f"{field}变化 {after - before:+.2f}",
+            "event_time": batch_event_time, "object": field, "change_summary": f"{field}变化 {after - before:+.2f}",
             "amount_before": before, "amount_after": after, "amount_delta": round(after - before, 2),
-            "reconciliation_status": "RECONCILED_BY_CONFIRMED_TRADE" if trade else "UNRECONCILED_ACCOUNT_CHANGE",
+            "reconciliation_status": "RECONCILED_BY_CONFIRMED_TRADE" if trades else "UNRECONCILED_ACCOUNT_CHANGE",
             "source": str(current.get("source") or request.get("source") or "USER_CONFIRMED"),
             "read_only": True,
         })
@@ -2650,6 +2659,29 @@ def _explicit_fact_type(request: dict) -> str:
     ).strip().upper()
 
 
+
+def _request_trade_events(request: dict) -> list[dict]:
+    """Normalize the existing singular and batch broker trade ingress shapes."""
+    plural = request.get("trade_events")
+    if isinstance(plural, list) and plural and all(isinstance(item, dict) for item in plural):
+        return plural
+    if "trade_events" in request:
+        return []
+    singular = request.get("trade_event")
+    return [singular] if isinstance(singular, dict) else []
+
+
+def _trade_event_id(request: dict, trade: dict, idempotency_key: str, ordinal: int, total: int) -> str:
+    """Use stable, collision-resistant IDs when a batch omits explicit event IDs."""
+    explicit = str(trade.get("event_id") or "").strip()
+    if explicit:
+        return explicit
+    request_id = str(request.get("request_id") or datetime.now(SHANGHAI).strftime("%Y%m%d_%H%M%S"))
+    if total == 1:
+        return request_id
+    suffix = hashlib.sha256(idempotency_key.encode("utf-8")).hexdigest()[:16]
+    return f"{request_id}_{ordinal + 1}_{suffix}"
+
 def canonical_ingress_contract_for_request(request: dict) -> dict:
     """Return the actor-side terminal canonical ingress contract for formal facts."""
 
@@ -2659,7 +2691,12 @@ def canonical_ingress_contract_for_request(request: dict) -> dict:
     report_type = str(request.get("report_type") or request.get("report_kind") or "").strip().upper()
 
     is_broker_fact = is_broker_screenshot_request(request)
-    is_trade_fact = fact_type in {"CONFIRMED_TRADE", "TRADE_EVENT"} or isinstance(request.get("trade_event"), dict)
+    trade_events = request.get("trade_events")
+    has_trade_events = isinstance(trade_events, list) and bool(trade_events) and all(isinstance(item, dict) for item in trade_events)
+    invalid_trade_events = "trade_events" in request and (
+        not has_trade_events or isinstance(request.get("trade_event"), dict)
+    )
+    is_trade_fact = fact_type in {"CONFIRMED_TRADE", "TRADE_EVENT"} or isinstance(request.get("trade_event"), dict) or has_trade_events
     is_decision_fact = fact_type == "FORMAL_DECISION" or isinstance(request.get("formal_decision"), dict)
     # POST_CLOSE_REVIEW is a session/scenario label as well as a review fact
     # label. An explicit formal_decision payload remains a Decision Fact and
@@ -2692,8 +2729,15 @@ def canonical_ingress_contract_for_request(request: dict) -> dict:
             "reason": "missing_durable_ingress_receipt",
         }
 
+    if invalid_trade_events:
+        return {
+            "required": True,
+            "terminal_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
+            "reason": "invalid_trade_events",
+        }
+
     if is_broker_fact:
-        if isinstance(request.get("account_fact"), dict) or isinstance(request.get("trade_event"), dict):
+        if isinstance(request.get("account_fact"), dict) or isinstance(request.get("trade_event"), dict) or has_trade_events:
             return {
                 "required": True,
                 "terminal_state": CANONICAL_INGRESS_SUBMITTED,
@@ -2725,7 +2769,7 @@ def canonical_ingress_contract_for_request(request: dict) -> dict:
         }
 
     if is_trade_fact:
-        if isinstance(request.get("trade_event"), dict):
+        if isinstance(request.get("trade_event"), dict) or has_trade_events:
             return {
                 "required": True,
                 "terminal_state": CANONICAL_INGRESS_SUBMITTED,
@@ -3057,19 +3101,22 @@ def main() -> int:
         print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
         return 0
     canonical_ingress_contract = canonical_ingress_contract_for_request(request)
-    trade = request.get("trade_event")
+    trades = _request_trade_events(request)
     prior_account = load_json(ACCOUNT) if ACCOUNT.exists() else {}
     supplied_account = request.get("account_fact")
-    confirmed_at = (
-        trade.get("confirmed_at_beijing") or request.get("requested_at_beijing")
-        or trade.get("executed_at") or prior_account.get("updated_at")
-    ) if isinstance(trade, dict) else ""
-    replay_key = _trade_idempotency_key(trade, confirmed_at) if isinstance(trade, dict) else ""
-    existing_trade = _find_existing_trade(trade, confirmed_at, replay_key) if isinstance(trade, dict) else None
+    existing_trades = []
+    for trade in trades:
+        confirmed_at = (
+            trade.get("confirmed_at_beijing") or request.get("requested_at_beijing")
+            or trade.get("executed_at") or prior_account.get("updated_at")
+        )
+        replay_key = _trade_idempotency_key(trade, confirmed_at)
+        existing = _find_existing_trade(trade, confirmed_at, replay_key)
+        existing_trades.append(existing)
+        if request.get("account_fact") is None and existing is None:
+            supplied_account = _apply_trade_to_account(supplied_account or prior_account, trade)
     account_sync_status = "NOT_APPLICABLE"
-    if not supplied_account and isinstance(trade, dict) and existing_trade is None:
-        supplied_account = _apply_trade_to_account(prior_account, trade)
-    if is_broker_screenshot_request(request) and not isinstance(supplied_account, dict) and not isinstance(trade, dict):
+    if is_broker_screenshot_request(request) and not isinstance(supplied_account, dict) and not trades:
         result = {
             "ok": False,
             "request_id": request.get("request_id"),
@@ -3093,7 +3140,7 @@ def main() -> int:
             "status": "CANONICAL_INGRESS_FAILED_EXPLICITLY",
             "canonical_ingress_state": canonical_ingress_contract["terminal_state"],
             "canonical_ingress_failure_reason": canonical_ingress_contract["reason"],
-            "request": str(req_path.relative_to(ROOT)).replace("\\\\", "/"),
+            "request": str(req_path.relative_to(ROOT)).replace("\\", "/"),
         }, ensure_ascii=False, indent=2, sort_keys=True))
         return 0
 
@@ -3107,7 +3154,7 @@ def main() -> int:
             # Use the canonicalized event history returned by merge_account_fact:
             # it may have upgraded a previously unresolved IPO registration.
             prior_events = supplied_account.get("account_change_events_after_confirmed_at") or []
-            new_events = _account_change_events(prior_account, supplied_account, request, trade)
+            new_events = _account_change_events(prior_account, supplied_account, request, trades)
             known = {str(x.get("idempotency_key") or x.get("event_id") or "") for x in prior_events}
             supplied_account["account_change_events_after_confirmed_at"] = prior_events + [x for x in new_events if str(x.get("idempotency_key")) not in known]
             if supplied_account == prior_account:
@@ -3141,10 +3188,11 @@ def main() -> int:
             account["formal_action"] = {"action": decision.get("action") or decision.get("amount_action") or "", "quantity": decision.get("quantity"), "decision_id": decision_id, "decision_time": decision.get("decision_time") or decision.get("data_as_of_beijing") or datetime.now(SHANGHAI).isoformat(timespec="seconds"), "source": "CHATGPT_FORMAL_DECISION", "lifecycle": decision.get("lifecycle"), "applicable_object": decision.get("candidate_code") or decision.get("code") or "", "validity": "ACTIVE", "execution_status": "PENDING"}
             atomic_json_write(ACCOUNT, account)
     trade_event_recorded = False
-    if trade:
+    persisted_trade_events = []
+    for trade_index, trade in enumerate(trades):
         confirmed_at = trade.get("confirmed_at_beijing") or request.get("requested_at_beijing") or trade.get("executed_at") or account.get("updated_at")
         idempotency_key = _trade_idempotency_key(trade, confirmed_at)
-        existing = existing_trade or _find_existing_trade(trade, confirmed_at, idempotency_key)
+        existing = existing_trades[trade_index] or _find_existing_trade(trade, confirmed_at, idempotency_key)
         if existing:
             event, event_id, trade_event_recorded = existing, str(existing.get("event_id") or ""), True
             # A request-scoped confirmation time is authoritative for an
@@ -3180,7 +3228,7 @@ def main() -> int:
             if changed:
                 atomic_json_write(ROOT / "events" / "trades" / f"{event_id}.json", event)
         else:
-            event_id = str(trade.get("event_id") or request.get("request_id") or datetime.now(SHANGHAI).strftime("%Y%m%d_%H%M%S"))
+            event_id = _trade_event_id(request, trade, idempotency_key, trade_index, len(trades))
             linked_decision_id = resolve_trade_linked_decision_id(trade, decision_id)
             attribution = execution_attribution({**trade, "confirmed_at_beijing": confirmed_at}, linked_decision_id)
             event = {"event_id": event_id, "idempotency_key": idempotency_key, "confirmed_at_beijing": confirmed_at, "execution_date": trade.get("execution_date") or str(confirmed_at)[:10], "confirmation_date": trade.get("confirmation_date") or str(confirmed_at)[:10], "notification_id": trade.get("notification_id"), "name": trade.get("name"), "code": trade.get("code"), "side": trade.get("side"), "quantity": trade.get("quantity"), "price": trade.get("price"), "amount": trade.get("amount"), "lifecycle": trade.get("lifecycle"), "source": trade.get("source", account.get("source")), "source_confidence": trade.get("source_confidence"), "linked_decision_id": linked_decision_id or None, "hypothesis_id": trade.get("hypothesis_id") or attribution.get("hypothesis_id") or None, "execution_status": "EXECUTED", "execution_attribution": attribution}
@@ -3198,11 +3246,14 @@ def main() -> int:
         account["formal_action"] = {**(account.get("formal_action") or {}), "execution_status": "EXECUTED", "execution_fact_ref": f"events/trades/{event_id}.json", "last_executed_event_id": event_id}
         atomic_json_write(ACCOUNT, account)
         write_trade_review_required(event)
+        persisted_trade_events.append((trade, event))
     sync_current_account_mirror(ROOT, account)
     review_recorded, review_idempotent = record_post_close_review(account, request)
     unavailable_recorded, unavailable_idempotent = (False, False)
-    if trade:
-        unavailable_recorded, unavailable_idempotent = record_unrecoverable_review_prerequisite(account, request, event)
+    for trade, event in persisted_trade_events:
+        recorded, idempotent = record_unrecoverable_review_prerequisite(account, request, event)
+        unavailable_recorded = unavailable_recorded or recorded
+        unavailable_idempotent = unavailable_idempotent or idempotent
     # Render after event/review persistence so a newly confirmed execution is
     # visible in the same canonical dashboard update, rather than one request
     # behind the machine facts.
