@@ -825,6 +825,21 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "rule": "The first user-visible formal reply is the complete business decision analysis. It must not be replaced by an interim waiting/persistence/acceptance/projection status once action-determinative facts have resolved.",
             "persistence_failure_disclosure": "正式决策尚未持久化。",
             "non_blocking_after_business_decision_formed": True,
+            "execution_status_contract": {
+                "before_business_decision": "已自动接管",
+                "business_ready_persistence_pending": "已自动接管",
+                "external_condition_required": "等待外部条件",
+                "user_trigger_required": "等待用户触发",
+                "canonical_persistence_confirmed": "本事项已闭环",
+                "closed_requires": "existing canonical Decision Fact persistence/readback/acceptance confirmed for this same decision identity",
+                "rule": "BUSINESS_DECISION_READY makes the complete business reply eligible but never implies canonical closure. While persistence/readback/acceptance is pending or failed, the user-visible execution status must not be 本事项已闭环. Persistence failure is disclosed separately and repaired from the same immutable Source.",
+            },
+            "canonical_identity_change_tense_contract": {
+                "objects": ["Observation ADMIT", "Observation RETAIN", "Observation EXIT", "other canonical identity/state changes"],
+                "before_persistence_confirmed": "Describe the business judgment as 本次判断要求/拟/应, not as an already-persisted canonical state change.",
+                "after_persistence_confirmed": "Completed-state wording is allowed only after same-decision canonical persistence/readback confirms the change.",
+                "rule": "A Business Decision Source contains the judgment; canonical identity/state ownership remains with the existing deterministic projection and single writer.",
+            },
             "summary_must_preserve": [
                 "DATA_AS_OF_BEIJING",
                 "RISK_PERMISSION",
