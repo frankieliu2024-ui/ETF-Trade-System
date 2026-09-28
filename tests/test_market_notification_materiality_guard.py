@@ -608,9 +608,6 @@ class NotificationAggregationTests(unittest.TestCase):
         current["confirmation_context"].update({"market": "US", "session": "REGULAR", "object_codes": ["N225", "KOSPI"], "fact_family": "US_TECH_STRUCTURE"})
         self.assertIsNone(notification_common._find_aggregate_target([prior], current))
 
-if __name__ == "__main__":
-    unittest.main()
-
     def test_a_share_summary_surfaces_observation_and_query_time_industry_context(self):
         import notification_semantics as semantics
         indices = {"000001": {"symbol": "000001", "provider_name": "上证指数", "change_pct": 0.2}}
@@ -652,6 +649,11 @@ if __name__ == "__main__":
             headline, _, _, _ = semantics.a_share_structure(indices, [], {}, is_close=False)
         self.assertIn("第三层｜个股/产业链验证", " ".join(headline))
         self.assertIn("没有可合法投影", " ".join(headline))
+
+
+if __name__ == "__main__":
+    unittest.main()
+
 
 
 # The existing candidate acceptance command executes this adjacent regression
