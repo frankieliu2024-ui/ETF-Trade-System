@@ -46,6 +46,40 @@ class DecisionWorkPackageTests(unittest.TestCase):
         holding = next(x for x in graph if x["problem_id"] == "HOLDING:561980")
         self.assertEqual(set(holding["alternatives"]), {"HOLD", "REDUCE", "EXIT"})
 
+    def test_evidence_plan_scopes_object_and_capital_facts_by_problem_family(self):
+        graph = _decision_problem_graph(
+            [{"code": "561980", "name": "半导体设备ETF", "asset_type": "ETF", "market_value": 10000}],
+            [{"code": "159127", "name": "观察候选"}],
+            {"deployable_cash": 1000},
+        )
+        plan = _evidence_requirement_plan(graph)
+        by_problem = {}
+        for item in plan:
+            by_problem.setdefault(item["target_problem_id"], set()).add(item["evidence_class"])
+
+        self.assertNotIn("FULL_MARKET_DISCOVERY", by_problem["HOLDING:561980"])
+        self.assertNotIn("TEMPORARY_DISCOVERY_CANDIDATE", by_problem["HOLDING:561980"])
+        self.assertNotIn("ACCOUNT_STOCK", by_problem["DISCOVERY:159127"])
+        self.assertNotIn("HOLDING_ETF", by_problem["DISCOVERY:159127"])
+        self.assertNotIn("RELEASABLE_CAPITAL", by_problem["RISK_PERMISSION"])
+        self.assertIn("FULL_MARKET_DISCOVERY", by_problem["MAIN_CANDIDATE"])
+        self.assertIn("RELEASABLE_CAPITAL", by_problem["NEXT_UNIT_CAPITAL_USE"])
+        self.assertIn("HOLDING_ADDITIONAL_CAPITAL", by_problem["HELD_ETF_ADD:561980"])
+
+    def test_scoped_plan_is_smaller_than_legacy_full_cartesian_plan(self):
+        graph = _decision_problem_graph(
+            [
+                {"code": "300750", "name": "宁德时代", "asset_type": "STOCK"},
+                {"code": "561980", "name": "半导体设备ETF", "asset_type": "ETF"},
+            ],
+            [{"code": "159127", "name": "观察候选"}],
+            {"deployable_cash": 1000},
+        )
+        plan = _evidence_requirement_plan(graph)
+        legacy_baseline_classes = 22
+        self.assertLess(len(plan), len(graph) * legacy_baseline_classes)
+        self.assertEqual({x["problem_id"] for x in graph}, {x["target_problem_id"] for x in plan})
+
     def test_work_package_exposes_missing_required_evidence_and_no_schema_knowledge(self):
         graph = _decision_problem_graph(
             [{"code": "159981", "name": "能源化工ETF", "asset_type": "ETF"}],
