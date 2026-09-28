@@ -14,7 +14,9 @@ def test_triggered_external_domains_are_required_for_capital_competition():
     assert by_class[("HOLDING:159981", "RATES")]["required"] is True
 
 
-def test_untriggered_optional_domain_is_not_added_to_plan():
+def test_fixed_external_baseline_is_present_for_risk_permission():
     problems = [{"problem_id": "RISK_PERMISSION", "security": "风险许可"}]
     plan = _evidence_requirement_plan(problems)
-    assert not any(item["evidence_class"] == "COMMODITY" for item in plan)
+    classes = {item["evidence_class"] for item in plan}
+    assert {"GLOBAL_RISK", "COMMODITY", "RATES", "FX", "OVERSEAS_INDUSTRY_CHAIN"}.issubset(classes)
+    assert all(item["required"] for item in plan if item["evidence_class"] in {"GLOBAL_RISK", "COMMODITY", "RATES", "FX", "OVERSEAS_INDUSTRY_CHAIN"})
