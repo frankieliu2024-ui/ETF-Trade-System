@@ -138,38 +138,6 @@ def _current_stock_context_rows() -> list[dict]:
     return out
 
 
-def _current_stock_context_rows() -> list[dict]:
-    """Project current account and query-time industry stocks from existing canonical read-only contexts."""
-    stock_context = read_json(STATE / "stock_context.json", {})
-    stock_market = read_json(STATE / "stock_market_context.json", {})
-    if str(stock_context.get("account_fact_status") or "").upper() != "VALID":
-        return []
-    allowed = {}
-    default_layer = stock_context.get("default_stock_layer") or {}
-    for row in default_layer.get("monitored_account_stocks") or []:
-        code = str(row.get("code") or "")
-        if code:
-            allowed[code] = "账户个股"
-    industry = stock_context.get("conditional_industry_observation") or {}
-    for row in industry.get("current_objects") or []:
-        code = str(row.get("code") or "")
-        if code:
-            allowed[code] = "查询时产业链个股"
-    out = []
-    for code, role in allowed.items():
-        row = (stock_market.get("objects") or {}).get(code) or {}
-        if row.get("quality_status") != "PASS" or number(row.get("change_pct")) is None:
-            continue
-        if not row.get("as_of_beijing") or not row.get("provider"):
-            continue
-        if str(row.get("market_phase") or "").upper() == "OUTSIDE_SESSION":
-            continue
-        projected = dict(row)
-        projected["_monitor_role"] = role
-        out.append(projected)
-    return out
-
-
 def compact_path(row: dict, feature: dict | None = None, *, include_current: bool = False) -> str:
     label = _label(row)
     day = number(row.get("change_pct"))
