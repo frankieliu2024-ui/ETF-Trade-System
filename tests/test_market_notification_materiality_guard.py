@@ -348,6 +348,31 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
         self.assertIn("当前", text)
         self.assertNotIn("收盘", text)
 
+    def test_a_share_summary_surfaces_three_layers_and_account_stock(self):
+        import notification_semantics as semantics
+        indices = {"000001": {"symbol": "000001", "provider_name": "上证指数", "change_pct": 0.2}, "000688": {"symbol": "000688", "provider_name": "科创50", "change_pct": -0.4}, "399006": {"symbol": "399006", "provider_name": "创业板指", "change_pct": -0.2}}
+        etfs = [{"symbol": "561980", "provider_name": "半导体设备ETF", "change_pct": -1.1}]
+        ctx = {"held_etfs": {"561980": {}}, "held_stocks": {"300750": {}}, "formal": {"validity": "ACTIVE", "applicable_object": "561980", "lifecycle": "Confirm"}}
+        stocks = [{"symbol": "300750", "provider_name": "宁德时代", "change_pct": 1.3, "quality_status": "PASS"}]
+        with patch.object(semantics, "_account_context", return_value=ctx), patch.object(semantics, "_current_account_stock_rows", return_value=stocks):
+            headline, _, implication, _ = semantics.a_share_structure(indices, etfs, {}, is_close=False)
+        text = " ".join(headline)
+        self.assertIn("第一层｜A股指数结构", text)
+        self.assertIn("第二层｜ETF持仓与机会结构", text)
+        self.assertIn("第三层｜账户个股验证", text)
+        self.assertIn("宁德时代（300750）", text)
+        self.assertIn("资本", implication)
+
+    def test_a_share_summary_explicitly_marks_absent_stock_evidence(self):
+        import notification_semantics as semantics
+        indices = {"000001": {"symbol": "000001", "provider_name": "上证指数", "change_pct": 0.1}}
+        etfs = [{"symbol": "515880", "provider_name": "通信ETF", "change_pct": 0.2}]
+        ctx = {"held_etfs": {}, "held_stocks": {}, "formal": {}}
+        with patch.object(semantics, "_account_context", return_value=ctx), patch.object(semantics, "_current_account_stock_rows", return_value=[]):
+            headline, _, _, _ = semantics.a_share_structure(indices, etfs, {}, is_close=False)
+        self.assertIn("第三层｜个股/产业链验证", " ".join(headline))
+        self.assertIn("没有可合法投影", " ".join(headline))
+
     def test_close_summary_retains_close_wording(self):
         import notification_semantics as semantics
 
