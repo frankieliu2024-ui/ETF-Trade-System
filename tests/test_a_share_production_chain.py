@@ -285,6 +285,17 @@ class ManualRequestSessionAnchorTests(unittest.TestCase):
         self.assertEqual(out["interaction_scenario"], "INTRADAY")
         self.assertNotIn("interaction_scenario_reclassified", out)
 
+    def test_future_dated_request_is_fail_closed_at_canonical_ingress(self):
+        now = runtime_session_gate.parse_runtime_time("2026-09-28T14:18:38+08:00")
+        request = {
+            "request_id": "future-dated-1420",
+            "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "requested_at_beijing": "2026-09-28T14:20:00+08:00",
+            "request_type": "MARKET_QUOTE_REFRESH",
+        }
+        with self.assertRaisesRegex(ValueError, "future-dated"):
+            runtime_session_gate.normalize_manual_request_session(request, self.policy(), now=now)
+
     def test_missing_request_time_is_bound_to_current_beijing_time(self):
         now = runtime_session_gate.parse_runtime_time("2026-09-21T15:04:07+08:00")
         out = runtime_session_gate.normalize_manual_request_session(
