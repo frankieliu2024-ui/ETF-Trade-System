@@ -292,7 +292,20 @@ def _evidence_requirement_plan(problems: list[dict]) -> list[dict]:
     for problem in problems:
         pid = problem["problem_id"]
         target = str(problem.get("security") or problem.get("decision_object") or "")
-        classes = ["A_SHARE_STYLE_FEEDBACK", "ETF_RELATIVE_STRENGTH"]
+        # Fixed Layer-1 baseline: every formal decision must attempt the
+        # existing qualified external-driver/plugin path. Triggered expansion
+        # may add targeted evidence, but these domains cannot silently disappear.
+        classes = [
+            "A_SHARE_STYLE_FEEDBACK",
+            "ETF_RELATIVE_STRENGTH",
+            "GLOBAL_RISK",
+            "COMMODITY",
+            "RATES",
+            "FX",
+            "OVERSEAS_INDUSTRY_CHAIN",
+            "MACRO_POLICY_EVENTS",
+            "CROSS_MARKET_ASSETS_SUPPLY_CHAIN",
+        ]
         text = target.lower()
         if any(token in text for token in ("能源", "化工", "油", "资源", "商品")):
             classes += ["COMMODITY", "FX", "RATES", "OVERSEAS_INDUSTRY_CHAIN", "HK_INDUSTRY_CHAIN"]
