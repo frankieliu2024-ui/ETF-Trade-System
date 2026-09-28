@@ -610,7 +610,39 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     overseas_context = read_json(root / CANONICAL_FILES["overseas_context"], {})
     us_extended_hours_context = read_json(root / CANONICAL_FILES["us_extended_hours_context"], {})
 
+    # Fixed source-binding contract: each monitoring layer must expose the
+    # canonical source bundle it consumed. This is a projection contract only;
+    # it does not add providers or grant action authority.
+    three_layer_source_contract = {
+        "layer_1_external_cross_market": {
+            "required_sources": [
+                {"source_id": "OVERSEAS_CONTEXT", "path": CANONICAL_FILES["overseas_context"], "provider_field": "provider"},
+                {"source_id": "US_EXTENDED_HOURS", "path": CANONICAL_FILES["us_extended_hours_context"], "provider_field": "provider"},
+            ],
+            "required_domains": ["global_risk", "rates", "fx", "overseas_industry_theme", "macro_policy_supply_chain"],
+            "degrade_rule": "If a required domain is unavailable or stale, mark the domain DEGRADED; never substitute an overseas equity index list.",
+        },
+        "layer_2_a_share_internal": {
+            "required_sources": [
+                {"source_id": "A_SHARE_CURRENT", "path": CANONICAL_FILES["current"], "provider_field": "provider"},
+                {"source_id": "A_SHARE_MARKET_STRUCTURE", "path": "data/state/market_structure_context.json", "provider_field": "provider"},
+                {"source_id": "A_SHARE_MARKET_REGIME", "path": "data/state/market_regime_context.json", "provider_field": "provider"},
+            ],
+            "required_domains": ["index", "breadth", "style", "industry_theme", "liquidity_turnover", "capital_flow", "anomaly", "external_confirmation"],
+            "degrade_rule": "Index-only output is insufficient; missing internal domains remain explicit DEGRADED.",
+        },
+        "layer_3_etf_opportunity_capital": {
+            "required_sources": [
+                {"source_id": "BROKER_ACCOUNT_FACT", "path": CANONICAL_FILES["account_fact"], "provider_field": "source"},
+                {"source_id": "ETF_DISCOVERY_UNIVERSE", "path": CANONICAL_FILES["etf_monitor_universe"], "provider_field": "source"},
+                {"source_id": "STOCK_CONTEXT", "path": CANONICAL_FILES["stock_context"], "provider_field": "source"},
+            ],
+            "required_domains": ["holdings", "cash", "releasable_capital", "discovery", "observation", "account_stock", "conditional_industry_chain"],
+            "degrade_rule": "No account/industry fact may be invented; absence is explicit and localized.",
+        },
+    }
     three_layer_monitoring = {
+        "source_contract": three_layer_source_contract,
         "layer_1_external_cross_market": {
             "base_evidence": {
                 "overseas_context": overseas_context,
