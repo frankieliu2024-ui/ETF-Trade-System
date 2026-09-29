@@ -316,7 +316,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         disposition = str(answer.get("disposition") or "").upper()
         opportunity_reviews.append({
             "security_code": code, "code": code, "security_name": item.get("security") or code,
-            "category": "NODE_LOCAL_CANDIDATE" if pid.startswith("DISCOVERY:") else "OBSERVED_ETF",
+            "category": "OBSERVATION_EVALUATION_INPUT" if pid.startswith("DISCOVERY:") else "OBSERVED_ETF",
             "opportunity_status": _normalize_opportunity_status(answer.get("opportunity_status")),
             "conclusion": answer.get("final_action"), "reason": answer.get("reason"),
         })
