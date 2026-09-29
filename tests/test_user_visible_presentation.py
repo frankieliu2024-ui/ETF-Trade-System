@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from scripts.user_visible_presentation import validate_user_visible_content
+from scripts.user_visible_presentation import (\n    validate_formal_decision_reply_nonblocking,\n    validate_user_visible_content,\n)
 
 
 SECURITIES = {

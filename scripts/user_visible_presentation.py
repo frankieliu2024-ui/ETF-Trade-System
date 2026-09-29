@@ -83,3 +83,38 @@ def validate_user_visible_content(
                 errors.append(f"internal identity is forbidden in normal business presentation: {marker}")
     if errors:
         raise ValueError("user-visible presentation contract failed: " + "; ".join(dict.fromkeys(errors)))
+
+
+def validate_formal_decision_reply_nonblocking(
+    content: str,
+    *,
+    canonical_closure_confirmed: bool = False,
+    technical_audit_mode: bool = False,
+    security_map: dict[str, str] | None = None,
+    root: Path | None = None,
+) -> dict[str, object]:
+    """Validate presentation without revoking an already-earned BUSINESS_DECISION_READY reply.
+
+    This helper is deliberately side-effect free and performs no network, persistence,
+    projection, notification, or canonical writes. Presentation defects are returned
+    for caller-visible correction/audit; they are not a new business-decision gate.
+    """
+    try:
+        validate_user_visible_content(
+            content,
+            canonical_closure_confirmed=canonical_closure_confirmed,
+            technical_audit_mode=technical_audit_mode,
+            security_map=security_map,
+            root=root,
+        )
+    except ValueError as exc:
+        return {
+            "business_reply_eligible": True,
+            "presentation_valid": False,
+            "presentation_error": str(exc),
+        }
+    return {
+        "business_reply_eligible": True,
+        "presentation_valid": True,
+        "presentation_error": "",
+    }
