@@ -271,6 +271,13 @@ class DecisionWorkPackageTests(unittest.TestCase):
         self.assertEqual(projected["capital_competition"]["zero_amount_decisive_reason"], "当前没有独立机会优于现金")
         self.assertEqual(len(projected["capital_competition"]["compared_capital_states"]), 6)
 
+    def test_opportunity_enum_boundary_rejects_unregistered_fuzzy_language(self):
+        source = {"request_type":"BUSINESS_DECISION_SOURCE","request_id":"fuzzy","parent_request_id":"p","decision_id":"d","consumed_snapshot":"snap"}
+        graph = [{"problem_id":"MAIN_CANDIDATE"}]
+        answer = {"final_action":"保持","capital_comparison":"compare","next_change_condition":"change","evidence_decision_impact":["ALL_REQUIRED"],"candidate_code":"","candidate_name":"现金","opportunity_status":"当前大概没有什么新增交易机会"}
+        with self.assertRaisesRegex(ValueError, "registered opportunity_status"):
+            project_decision_response(source, {"answers":{"MAIN_CANDIDATE":answer}}, {"problem_graph":graph,"evidence_requirements":[]})
+
     def test_no_new_trade_status_cannot_mask_security_or_positive_capital(self):
         source = {"request_type":"BUSINESS_DECISION_SOURCE","request_id":"bad-cash","parent_request_id":"p","decision_id":"d","consumed_snapshot":"snap"}
         graph = [{"problem_id":"RISK_PERMISSION"},{"problem_id":"MAIN_CANDIDATE"},{"problem_id":"NEXT_UNIT_CAPITAL_USE"}]
