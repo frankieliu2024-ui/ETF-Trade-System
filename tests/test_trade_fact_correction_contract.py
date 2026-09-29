@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -179,6 +180,66 @@ class TradeFactCorrectionContractTests(unittest.TestCase):
             self.assertEqual(projection["effective_confirmed_fee_sum"], 10)
             self.assertEqual(projection["canonical_trade_count"], 2)
 
+    def test_fee_correction_updates_recovery_row_by_trade_signature(self):
+        """A human-index recovery row must not remain PENDING after event correction."""
+        from scripts import apply_trade_fact_correction as correction
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "events/trades").mkdir(parents=True)
+            (root / "data/state").mkdir(parents=True)
+            event = {
+                "event_id": "sig-match",
+                "execution_status": "EXECUTED",
+                "name": "黄金ETF",
+                "code": "518880",
+                "side": "SELL",
+                "quantity": 500,
+                "price": 8.938,
+                "amount": 4469.0,
+                "confirmed_at_beijing": "2026-09-11T15:47:00+08:00",
+                "execution_date": "2026-09-11",
+                "fee_status": "PENDING",
+            }
+            (root / "events/trades/sig-match.json").write_text(json.dumps(event), encoding="utf-8")
+            equity = {
+                "trades": [{
+                    "datetime": "2026-09-11 15:47:00", "name": "黄金ETF（518880）",
+                    "code": "518880", "side": "SELL", "quantity": 500,
+                    "price": 8.938, "gross_amount": 4469.0,
+                    "fee_status": "PENDING", "source": "experience_trade_index",
+                }],
+                "summary": {
+                    "trade_count": 1, "current_gross_strategy_equity": 100000,
+                    "current_cumulative_pnl_gross": 0, "current_strategy_return_pct_gross": 0,
+                    "gross_realized_pnl": 0, "max_drawdown_amount": 0, "max_drawdown_pct": 0,
+                },
+            }
+            (root / "data/state/etf_strategy_equity.json").write_text(json.dumps(equity), encoding="utf-8")
+            (root / "ETF交易复盘与经验库_2026.md").write_text("", encoding="utf-8")
+            (root / "ETF市场行情档案_2026.md").write_text("", encoding="utf-8")
+            (root / "ETF当前状态_DASHBOARD.md").write_text("", encoding="utf-8")
+            request = root / "request.json"
+            request.write_text(json.dumps({
+                "request_id": "correction-test",
+                "trade_event_id": "sig-match",
+                "fee_amount": 4.47,
+                "requested_at_beijing": "2026-09-29T09:00:00+08:00",
+                "evidence_time_beijing": "2026-09-29T09:00:00+08:00",
+                "source": "TEST",
+            }), encoding="utf-8")
+            with patch.object(correction, "ROOT", root), patch.object(correction, "STATE", root / "data/state"), \
+                 patch.object(correction, "EQUITY", root / "data/state/etf_strategy_equity.json"), \
+                 patch.object(correction, "EXPERIENCE", root / "ETF交易复盘与经验库_2026.md"), \
+                 patch.object(correction, "ARCHIVE", root / "ETF市场行情档案_2026.md"), \
+                 patch.object(correction, "DASHBOARD", root / "ETF当前状态_DASHBOARD.md"):
+                correction.main = correction.main
+                with patch("sys.argv", ["apply_trade_fact_correction.py", "request.json"]):
+                    self.assertEqual(correction.main(), 0)
+            updated = json.loads((root / "data/state/etf_strategy_equity.json").read_text(encoding="utf-8"))
+            self.assertEqual(updated["trades"][0]["fee_status"], "CONFIRMED")
+            self.assertEqual(updated["trades"][0]["fee_amount"], 4.47)
+
     def test_historical_pit_pending_wording_is_not_globally_rewritten(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -241,4 +302,3 @@ class TradeFactCorrectionContractTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

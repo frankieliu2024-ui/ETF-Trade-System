@@ -9,7 +9,7 @@ from typing import Any
 
 from formal_file_mutation_gateway import upsert_formal_line
 from process_state_sync_request import sync_experience_transaction_index
-from confirmed_trade_facts import canonical_etf_fee_projection
+from confirmed_trade_facts import canonical_etf_fee_projection, trade_signature
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STATE = ROOT / "data" / "state"
@@ -196,7 +196,19 @@ def main() -> int:
     equity_before = json.dumps(equity, ensure_ascii=False, sort_keys=True)
     trades = equity.get("trades") or []
     source_ref = f"events/trades/{event_id}.json"
-    matches = [t for t in trades if str(t.get("source") or "") == source_ref or str(t.get("duplicate_check") or "") == f"unique_event_id_{event_id}"]
+    # Recovery rows may predate the canonical event and therefore carry only
+    # ``source=experience_trade_index``.  Match by the economic trade
+    # signature as well, otherwise a fee correction updates the event/index
+    # but leaves the auxiliary equity ledger permanently PENDING.
+    event_signature = trade_signature(event)
+    matches = [
+        t for t in trades
+        if (
+            str(t.get("source") or "") == source_ref
+            or str(t.get("duplicate_check") or "") == f"unique_event_id_{event_id}"
+            or trade_signature(t) == event_signature
+        )
+    ]
     if len(matches) > 1:
         raise RuntimeError("strategy equity does not contain exactly one matching trade; refuse partial correction")
     if matches:
