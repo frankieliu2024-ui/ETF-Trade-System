@@ -44,6 +44,25 @@ _FORMAL_OPPORTUNITY_ALIASES = {
 def _normalize_opportunity_status(value: Any) -> str:
     return _FORMAL_OPPORTUNITY_ALIASES.get(str(value or "").strip(), "")
 
+_FORMAL_RISK_PERMISSION_VALUES = ("禁止新增", "允许Trial", "允许Confirm")
+
+def _normalize_risk_permission(value: Any) -> str:
+    """Project an actor risk-permission sentence onto the existing formal enum.
+
+    The actor-facing DWP asks for a business judgment, so final_action may carry
+    an explanatory suffix. Persistence owns only the leading registered
+    permission. Ambiguous or unregistered text remains fail-closed.
+    """
+    text = str(value or "").strip()
+    if text in _FORMAL_RISK_PERMISSION_VALUES:
+        return text
+    matches = [item for item in _FORMAL_RISK_PERMISSION_VALUES if text.startswith(item)]
+    if len(matches) == 1:
+        suffix = text[len(matches[0]):]
+        if not suffix or suffix[0] in "；;，,。:： （(":
+            return matches[0]
+    return ""
+
 _HOLDING_ACTION_ALIASES = {
     "HOLD": "HOLD",
     "持有": "HOLD",
@@ -328,6 +347,9 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
 
     main_answer = answers["MAIN_CANDIDATE"]
     risk_answer = answers["RISK_PERMISSION"]
+    risk_permission = _normalize_risk_permission(risk_answer["final_action"])
+    if not risk_permission:
+        raise ValueError("decision response RISK_PERMISSION.final_action has no registered formal permission")
     raw_main_opportunity_status = str(main_answer["opportunity_status"]).strip()
     main_opportunity_status = _normalize_opportunity_status(raw_main_opportunity_status)
     if raw_main_opportunity_status == "无新增交易机会" and (
@@ -379,7 +401,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
 
     projected = json.loads(json.dumps(source))
     projected.update({
-        "risk_permission": risk_answer["final_action"],
+        "risk_permission": risk_permission,
         "candidate_code": str(main_answer.get("candidate_code") or ""),
         "candidate_name": str(main_answer["candidate_name"]),
         "main_candidate": (
