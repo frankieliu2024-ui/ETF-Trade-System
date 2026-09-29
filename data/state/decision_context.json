@@ -7,15 +7,15 @@
     "snapshot_commit": "e68b843e02fb50f7946ecf9779f249d0f9779c81",
     "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
     "timing": {
-      "state_builder_started_at": "2026-09-29T00:05:41Z",
+      "state_builder_started_at": "2026-09-29T00:08:56Z",
       "current_published_at": "2026-09-28T17:31:22+08:00",
-      "market_regime_ready_at": "2026-09-29T00:05:46Z",
-      "market_structure_ready_at": "2026-09-29T00:05:46Z",
-      "full_state_context_observation_at": "2026-09-29T00:05:46Z",
-      "decision_context_written_at": "2026-09-29T00:05:46Z"
+      "market_regime_ready_at": "2026-09-29T00:09:02Z",
+      "market_structure_ready_at": "2026-09-29T00:09:02Z",
+      "full_state_context_observation_at": "2026-09-29T00:09:02Z",
+      "decision_context_written_at": "2026-09-29T00:09:02Z"
     }
   },
-  "generated_at": "2026-09-29T00:05:46Z",
+  "generated_at": "2026-09-29T00:09:02Z",
   "rules_version": "V2.2.32",
   "market_date": "2026-09-28",
   "latest_node": "close",
@@ -1077,7 +1077,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 46.058,
-    "age_seconds": 52464
+    "age_seconds": 52660
   },
   "freshness_at_context_build": {
     "status": "STALE",
@@ -1093,7 +1093,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 46.058,
-    "age_seconds": 52464
+    "age_seconds": 52660
   },
   "data_quality_summary": {
     "pass_count": 17,
@@ -1179,7 +1179,7 @@
     "account_fact_time": "2026-09-28T18:36:00+08:00",
     "market_snapshot_time": "2026-09-28T17:31:22+08:00",
     "market_phase": "OUTSIDE_SESSION",
-    "context_generated_time": "2026-09-29T00:05:46Z",
+    "context_generated_time": "2026-09-29T00:09:02Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -1213,7 +1213,7 @@
     "read_only": true
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-09-29T08:05:46+08:00",
+    "generated_at_beijing": "2026-09-29T08:09:02+08:00",
     "refresh_mode": "CACHED_STATE",
     "refresh_failures": [],
     "decision_freshness": {
@@ -1222,8 +1222,8 @@
       "captured_at": "2026-09-28T09:31:22+00:00",
       "provider_as_of": "2026-09-28T09:31:22+00:00",
       "effective_as_of": "2026-09-28T09:31:22+00:00",
-      "request_time": "2026-09-29T00:05:46.771996+00:00",
-      "age_seconds": 52464,
+      "request_time": "2026-09-29T00:09:02.683732+00:00",
+      "age_seconds": 52660,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -2007,7 +2007,7 @@
   },
   "decision_trigger": {
     "schema_version": "1.2",
-    "generated_at": "2026-09-29T08:05:46+08:00",
+    "generated_at": "2026-09-29T08:09:02+08:00",
     "status": "NO_NEW_TRIGGER",
     "trigger_type": "",
     "triggered_at": "",
@@ -2028,7 +2028,7 @@
   },
   "capital_efficiency_ranking": {
     "schema_version": "1.2",
-    "generated_at": "2026-09-29T08:05:46+08:00",
+    "generated_at": "2026-09-29T08:09:02+08:00",
     "as_of": "2026-09-28T17:31:22+08:00",
     "e2e_status": "READY",
     "risk_zone": "RISK_OBSERVATION",
@@ -2878,7 +2878,14 @@
           "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR",
           "formal_quote": {},
           "formal_quote_status": "UNAVAILABLE",
-          "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+          "formal_quote_evidence_fitness": {
+            "object_fact": false,
+            "observation_evaluation": false,
+            "capital_candidate_evaluation": false,
+            "executable_price": false,
+            "trade_amount_or_shares": false
+          }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -2887,8 +2894,8 @@
         "code": "159265",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "data_availability": "READY",
-        "formal_quote_status": "READY",
+        "data_availability": "DEGRADED",
+        "formal_quote_status": "SESSION_REFERENCE_READY",
         "discovery_evidence": {
           "code": "159265",
           "name": "港股消费ETF鹏华",
@@ -2972,8 +2979,15 @@
             },
             "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
           },
-          "formal_quote_status": "READY",
-          "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+          "formal_quote_status": "SESSION_REFERENCE_READY",
+          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+          "formal_quote_evidence_fitness": {
+            "object_fact": true,
+            "observation_evaluation": true,
+            "capital_candidate_evaluation": true,
+            "executable_price": false,
+            "trade_amount_or_shares": false
+          }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -2982,8 +2996,8 @@
         "code": "159275",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "data_availability": "READY",
-        "formal_quote_status": "READY",
+        "data_availability": "DEGRADED",
+        "formal_quote_status": "SESSION_REFERENCE_READY",
         "discovery_evidence": {
           "code": "159275",
           "name": "农牧渔ETF华宝",
@@ -3082,8 +3096,15 @@
             },
             "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
           },
-          "formal_quote_status": "READY",
-          "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+          "formal_quote_status": "SESSION_REFERENCE_READY",
+          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+          "formal_quote_evidence_fitness": {
+            "object_fact": true,
+            "observation_evaluation": true,
+            "capital_candidate_evaluation": true,
+            "executable_price": false,
+            "trade_amount_or_shares": false
+          }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3092,8 +3113,8 @@
         "code": "159355",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "data_availability": "READY",
-        "formal_quote_status": "READY",
+        "data_availability": "DEGRADED",
+        "formal_quote_status": "SESSION_REFERENCE_READY",
         "discovery_evidence": {
           "code": "159355",
           "name": "800红利低波ETF华宝",
@@ -3177,8 +3198,15 @@
             },
             "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
           },
-          "formal_quote_status": "READY",
-          "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+          "formal_quote_status": "SESSION_REFERENCE_READY",
+          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+          "formal_quote_evidence_fitness": {
+            "object_fact": true,
+            "observation_evaluation": true,
+            "capital_candidate_evaluation": true,
+            "executable_price": false,
+            "trade_amount_or_shares": false
+          }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3187,8 +3215,8 @@
         "code": "159366",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "data_availability": "READY",
-        "formal_quote_status": "READY",
+        "data_availability": "DEGRADED",
+        "formal_quote_status": "SESSION_REFERENCE_READY",
         "discovery_evidence": {
           "code": "159366",
           "name": "港股医疗ETF永赢",
@@ -3288,8 +3316,15 @@
             },
             "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
           },
-          "formal_quote_status": "READY",
-          "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+          "formal_quote_status": "SESSION_REFERENCE_READY",
+          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+          "formal_quote_evidence_fitness": {
+            "object_fact": true,
+            "observation_evaluation": true,
+            "capital_candidate_evaluation": true,
+            "executable_price": false,
+            "trade_amount_or_shares": false
+          }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3298,8 +3333,8 @@
         "code": "159509",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "data_availability": "READY",
-        "formal_quote_status": "READY",
+        "data_availability": "DEGRADED",
+        "formal_quote_status": "SESSION_REFERENCE_READY",
         "discovery_evidence": {
           "code": "159509",
           "name": "纳指科技ETF景顺",
@@ -3408,8 +3443,15 @@
             },
             "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
           },
-          "formal_quote_status": "READY",
-          "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+          "formal_quote_status": "SESSION_REFERENCE_READY",
+          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+          "formal_quote_evidence_fitness": {
+            "object_fact": true,
+            "observation_evaluation": true,
+            "capital_candidate_evaluation": true,
+            "executable_price": false,
+            "trade_amount_or_shares": false
+          }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3418,8 +3460,8 @@
         "code": "159605",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "data_availability": "READY",
-        "formal_quote_status": "READY",
+        "data_availability": "DEGRADED",
+        "formal_quote_status": "SESSION_REFERENCE_READY",
         "discovery_evidence": {
           "code": "159605",
           "name": "中概互联ETF广发",
@@ -3502,8 +3544,15 @@
             },
             "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
           },
-          "formal_quote_status": "READY",
-          "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+          "formal_quote_status": "SESSION_REFERENCE_READY",
+          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+          "formal_quote_evidence_fitness": {
+            "object_fact": true,
+            "observation_evaluation": true,
+            "capital_candidate_evaluation": true,
+            "executable_price": false,
+            "trade_amount_or_shares": false
+          }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3512,8 +3561,8 @@
         "code": "510900",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "data_availability": "READY",
-        "formal_quote_status": "READY",
+        "data_availability": "DEGRADED",
+        "formal_quote_status": "SESSION_REFERENCE_READY",
         "discovery_evidence": {
           "code": "510900",
           "name": "恒生中国企业ETF易方达",
@@ -3596,8 +3645,15 @@
             },
             "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
           },
-          "formal_quote_status": "READY",
-          "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+          "formal_quote_status": "SESSION_REFERENCE_READY",
+          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+          "formal_quote_evidence_fitness": {
+            "object_fact": true,
+            "observation_evaluation": true,
+            "capital_candidate_evaluation": true,
+            "executable_price": false,
+            "trade_amount_or_shares": false
+          }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3606,8 +3662,8 @@
         "code": "511090",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "data_availability": "READY",
-        "formal_quote_status": "READY",
+        "data_availability": "DEGRADED",
+        "formal_quote_status": "SESSION_REFERENCE_READY",
         "discovery_evidence": {
           "code": "511090",
           "name": "30年国债ETF鹏扬",
@@ -3707,8 +3763,15 @@
             },
             "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
           },
-          "formal_quote_status": "READY",
-          "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+          "formal_quote_status": "SESSION_REFERENCE_READY",
+          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+          "formal_quote_evidence_fitness": {
+            "object_fact": true,
+            "observation_evaluation": true,
+            "capital_candidate_evaluation": true,
+            "executable_price": false,
+            "trade_amount_or_shares": false
+          }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3717,8 +3780,8 @@
         "code": "513000",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "data_availability": "READY",
-        "formal_quote_status": "READY",
+        "data_availability": "DEGRADED",
+        "formal_quote_status": "SESSION_REFERENCE_READY",
         "discovery_evidence": {
           "code": "513000",
           "name": "日经225ETF易方达",
@@ -3801,8 +3864,15 @@
             },
             "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
           },
-          "formal_quote_status": "READY",
-          "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+          "formal_quote_status": "SESSION_REFERENCE_READY",
+          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+          "formal_quote_evidence_fitness": {
+            "object_fact": true,
+            "observation_evaluation": true,
+            "capital_candidate_evaluation": true,
+            "executable_price": false,
+            "trade_amount_or_shares": false
+          }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3811,8 +3881,8 @@
         "code": "513290",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "data_availability": "READY",
-        "formal_quote_status": "READY",
+        "data_availability": "DEGRADED",
+        "formal_quote_status": "SESSION_REFERENCE_READY",
         "discovery_evidence": {
           "code": "513290",
           "name": "纳指生物科技ETF汇添富",
@@ -3896,8 +3966,15 @@
             },
             "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
           },
-          "formal_quote_status": "READY",
-          "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+          "formal_quote_status": "SESSION_REFERENCE_READY",
+          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+          "formal_quote_evidence_fitness": {
+            "object_fact": true,
+            "observation_evaluation": true,
+            "capital_candidate_evaluation": true,
+            "executable_price": false,
+            "trade_amount_or_shares": false
+          }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3906,8 +3983,8 @@
         "code": "562860",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "data_availability": "READY",
-        "formal_quote_status": "READY",
+        "data_availability": "DEGRADED",
+        "formal_quote_status": "SESSION_REFERENCE_READY",
         "discovery_evidence": {
           "code": "562860",
           "name": "疫苗ETF嘉实",
@@ -3990,15 +4067,22 @@
             },
             "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
           },
-          "formal_quote_status": "READY",
-          "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+          "formal_quote_status": "SESSION_REFERENCE_READY",
+          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+          "formal_quote_evidence_fitness": {
+            "object_fact": true,
+            "observation_evaluation": true,
+            "capital_candidate_evaluation": true,
+            "executable_price": false,
+            "trade_amount_or_shares": false
+          }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       }
     ]
   },
   "intraday_path_features": {
-    "generated_at": "2026-09-29T00:05:41Z",
+    "generated_at": "2026-09-29T00:08:56Z",
     "market_date": "2026-09-28",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -5627,7 +5711,7 @@
     },
     "market_structure_context": {
       "schema_version": "1.4",
-      "generated_at": "2026-09-29T00:05:46Z",
+      "generated_at": "2026-09-29T00:09:02Z",
       "market_date": "2026-09-28",
       "as_of_beijing": "2026-09-28T17:31:22+08:00",
       "source_snapshot": "data/market/snapshots/2026-09-28_173122.json",
@@ -8473,8 +8557,8 @@
       "prefilter_elapsed_seconds": 0.006,
       "history_validation_elapsed_seconds": 2.066,
       "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
-      "candidate_formal_quote_elapsed_seconds": 8.084,
-      "discovery_pipeline_elapsed_seconds": 8.093,
+      "candidate_formal_quote_elapsed_seconds": 9.294,
+      "discovery_pipeline_elapsed_seconds": 9.303,
       "reuse_mode": "SAME_MARKET_NODE_LEGAL_DISCOVERY_EVIDENCE_REUSE"
     },
     "coverage_status": "COMPLETE",
@@ -8533,7 +8617,14 @@
         "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR",
         "formal_quote": {},
         "formal_quote_status": "UNAVAILABLE",
-        "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+        "formal_quote_evidence_fitness": {
+          "object_fact": false,
+          "observation_evaluation": false,
+          "capital_candidate_evaluation": false,
+          "executable_price": false,
+          "trade_amount_or_shares": false
+        }
       },
       {
         "code": "159265",
@@ -8618,8 +8709,15 @@
           },
           "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
         },
-        "formal_quote_status": "READY",
-        "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+        "formal_quote_status": "SESSION_REFERENCE_READY",
+        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+        "formal_quote_evidence_fitness": {
+          "object_fact": true,
+          "observation_evaluation": true,
+          "capital_candidate_evaluation": true,
+          "executable_price": false,
+          "trade_amount_or_shares": false
+        }
       },
       {
         "code": "159275",
@@ -8719,8 +8817,15 @@
           },
           "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
         },
-        "formal_quote_status": "READY",
-        "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+        "formal_quote_status": "SESSION_REFERENCE_READY",
+        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+        "formal_quote_evidence_fitness": {
+          "object_fact": true,
+          "observation_evaluation": true,
+          "capital_candidate_evaluation": true,
+          "executable_price": false,
+          "trade_amount_or_shares": false
+        }
       },
       {
         "code": "159355",
@@ -8805,8 +8910,15 @@
           },
           "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
         },
-        "formal_quote_status": "READY",
-        "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+        "formal_quote_status": "SESSION_REFERENCE_READY",
+        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+        "formal_quote_evidence_fitness": {
+          "object_fact": true,
+          "observation_evaluation": true,
+          "capital_candidate_evaluation": true,
+          "executable_price": false,
+          "trade_amount_or_shares": false
+        }
       },
       {
         "code": "159366",
@@ -8907,8 +9019,15 @@
           },
           "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
         },
-        "formal_quote_status": "READY",
-        "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+        "formal_quote_status": "SESSION_REFERENCE_READY",
+        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+        "formal_quote_evidence_fitness": {
+          "object_fact": true,
+          "observation_evaluation": true,
+          "capital_candidate_evaluation": true,
+          "executable_price": false,
+          "trade_amount_or_shares": false
+        }
       },
       {
         "code": "159509",
@@ -9018,8 +9137,15 @@
           },
           "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
         },
-        "formal_quote_status": "READY",
-        "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+        "formal_quote_status": "SESSION_REFERENCE_READY",
+        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+        "formal_quote_evidence_fitness": {
+          "object_fact": true,
+          "observation_evaluation": true,
+          "capital_candidate_evaluation": true,
+          "executable_price": false,
+          "trade_amount_or_shares": false
+        }
       },
       {
         "code": "159605",
@@ -9103,8 +9229,15 @@
           },
           "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
         },
-        "formal_quote_status": "READY",
-        "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+        "formal_quote_status": "SESSION_REFERENCE_READY",
+        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+        "formal_quote_evidence_fitness": {
+          "object_fact": true,
+          "observation_evaluation": true,
+          "capital_candidate_evaluation": true,
+          "executable_price": false,
+          "trade_amount_or_shares": false
+        }
       },
       {
         "code": "510900",
@@ -9188,8 +9321,15 @@
           },
           "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
         },
-        "formal_quote_status": "READY",
-        "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+        "formal_quote_status": "SESSION_REFERENCE_READY",
+        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+        "formal_quote_evidence_fitness": {
+          "object_fact": true,
+          "observation_evaluation": true,
+          "capital_candidate_evaluation": true,
+          "executable_price": false,
+          "trade_amount_or_shares": false
+        }
       },
       {
         "code": "511090",
@@ -9290,8 +9430,15 @@
           },
           "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
         },
-        "formal_quote_status": "READY",
-        "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+        "formal_quote_status": "SESSION_REFERENCE_READY",
+        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+        "formal_quote_evidence_fitness": {
+          "object_fact": true,
+          "observation_evaluation": true,
+          "capital_candidate_evaluation": true,
+          "executable_price": false,
+          "trade_amount_or_shares": false
+        }
       },
       {
         "code": "513000",
@@ -9375,8 +9522,15 @@
           },
           "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
         },
-        "formal_quote_status": "READY",
-        "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+        "formal_quote_status": "SESSION_REFERENCE_READY",
+        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+        "formal_quote_evidence_fitness": {
+          "object_fact": true,
+          "observation_evaluation": true,
+          "capital_candidate_evaluation": true,
+          "executable_price": false,
+          "trade_amount_or_shares": false
+        }
       },
       {
         "code": "513290",
@@ -9461,8 +9615,15 @@
           },
           "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
         },
-        "formal_quote_status": "READY",
-        "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+        "formal_quote_status": "SESSION_REFERENCE_READY",
+        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+        "formal_quote_evidence_fitness": {
+          "object_fact": true,
+          "observation_evaluation": true,
+          "capital_candidate_evaluation": true,
+          "executable_price": false,
+          "trade_amount_or_shares": false
+        }
       },
       {
         "code": "562860",
@@ -9546,8 +9707,15 @@
           },
           "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
         },
-        "formal_quote_status": "READY",
-        "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。"
+        "formal_quote_status": "SESSION_REFERENCE_READY",
+        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
+        "formal_quote_evidence_fitness": {
+          "object_fact": true,
+          "observation_evaluation": true,
+          "capital_candidate_evaluation": true,
+          "executable_price": false,
+          "trade_amount_or_shares": false
+        }
       }
     ],
     "observation_capacity": {
