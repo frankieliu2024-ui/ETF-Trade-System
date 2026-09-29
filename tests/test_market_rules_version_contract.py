@@ -74,8 +74,8 @@ class RulesVersionContractTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         parsed = parse_master_release_file(root / "ETF规则_MASTER.md")
         self.assertTrue(parsed["ok"], parsed["errors"])
-        self.assertEqual(parsed["version"], "V2.2.32")
-        self.assertEqual(parsed["current_table_version"], "V2.2.32")
+        self.assertEqual(parsed["version"], parsed["current_table_version"])
+        self.assertRegex(parsed["version"], r"^V\\d+\\.\\d+\\.\\d+$")
         self.assertTrue(parsed["current_description_present"])
 
     def test_future_release_is_not_hard_coded(self):
