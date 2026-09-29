@@ -241,5 +241,41 @@ class DecisionWorkPackageTests(unittest.TestCase):
         self.assertEqual(validate_decision_evidence_consumption(value, parent_request_id="p905"), "")
 
 
+    def test_actor_contract_cash_candidate_projects_without_hidden_schema_fields(self):
+        source = {"request_type":"BUSINESS_DECISION_SOURCE","request_id":"cash-source","parent_request_id":"cash-parent","decision_id":"cash-decision","consumed_snapshot":"snap"}
+        graph = [
+            {"problem_id":"RISK_PERMISSION"},{"problem_id":"MAIN_CANDIDATE"},
+            {"problem_id":"DEPLOYABLE_CASH"},{"problem_id":"RELEASABLE_CAPITAL"},
+            {"problem_id":"CONCENTRATION_COMMON_RISK"},{"problem_id":"NEXT_UNIT_CAPITAL_USE"},
+        ]
+        answers = {x["problem_id"]:{"final_action":"保持","capital_comparison":"真实业务比较","next_change_condition":"下一合法节点重评","evidence_decision_impact":["ALL_REQUIRED"]} for x in graph}
+        answers["RISK_PERMISSION"]["final_action"] = "允许Trial"
+        answers["MAIN_CANDIDATE"].update({"candidate_code":"","candidate_name":"现金","opportunity_status":"无新增交易机会"})
+        answers["DEPLOYABLE_CASH"]["final_action"] = "保留现金"
+        answers["RELEASABLE_CAPITAL"]["final_action"] = "当前不释放持仓资本"
+        answers["CONCENTRATION_COMMON_RISK"]["final_action"] = "不增加共同风险"
+        answers["NEXT_UNIT_CAPITAL_USE"].update({
+            "final_action":"现金；新增0元","new_amount_yuan":0,"post_action_deployable_cash":17004.64,
+            "future_opportunity_capacity":"保留后续机会承载能力","cash_opportunity_cost":"可能错过右尾",
+            "alternative_capital_use_review":"已比较全部合法资本状态","concentration_account_structure_effect":"不扩大共同风险",
+            "selected_state_reason":"现金边际效率最高",
+            "compared_capital_states_as_business_state_names":["现金","全部实际持仓继续占资","全部持仓ETF追加","全部正式观察ETF","7只Discovery临时评估对象","可释放低效率资本"],
+            "zero_amount_decisive_reason_if_zero":"当前没有独立机会优于现金",
+        })
+        projected = project_decision_response(source, {"answers":answers}, {"problem_graph":graph,"evidence_requirements":[]})
+        self.assertEqual(projected["candidate_code"], "")
+        self.assertEqual(projected["candidate_name"], "现金")
+        self.assertEqual(projected["main_candidate"], "现金")
+        self.assertEqual(projected["capital_competition"]["zero_amount_decisive_reason"], "当前没有独立机会优于现金")
+        self.assertEqual(len(projected["capital_competition"]["compared_capital_states"]), 6)
+
+    def test_security_candidate_still_requires_code(self):
+        source = {"request_type":"BUSINESS_DECISION_SOURCE","request_id":"bad","parent_request_id":"p","decision_id":"d","consumed_snapshot":"snap"}
+        graph = [{"problem_id":"MAIN_CANDIDATE"}]
+        answer = {"final_action":"新增","capital_comparison":"compare","next_change_condition":"change","evidence_decision_impact":["ALL_REQUIRED"],"candidate_code":"","candidate_name":"能源化工ETF","opportunity_status":"Trial机会"}
+        with self.assertRaisesRegex(ValueError, "candidate_code for security candidate"):
+            project_decision_response(source, {"answers":{"MAIN_CANDIDATE":answer}}, {"problem_graph":graph,"evidence_requirements":[]})
+
+
 if __name__ == "__main__":
     unittest.main()
