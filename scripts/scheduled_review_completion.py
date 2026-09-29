@@ -12,12 +12,14 @@ try:
         validate_current_lifecycle_contract,
         validate_managed_position_lifecycle,
     )
+    from user_visible_presentation import validate_user_visible_content
 except ModuleNotFoundError:
     from scripts.runtime_session_gate import classify_live_snapshot_request
     from scripts.process_state_sync_request import (
         validate_current_lifecycle_contract,
         validate_managed_position_lifecycle,
     )
+    from scripts.user_visible_presentation import validate_user_visible_content
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 REQUEST_DIR = ROOT / "requests" / "live_snapshot"
@@ -95,6 +97,7 @@ def build_completion_request(
 ) -> dict:
     """Wrap an already-formed full-day Scheduled Review for the existing state-sync owner."""
     validate_full_day_review(formal_review, account)
+    validate_user_visible_content(str(final_content or ""), canonical_closure_confirmed=False)
     review_market_date = str(formal_review.get("market_date") or "").strip()
     effective_market_date = str(market_date or review_market_date).strip()
     if not effective_market_date or effective_market_date != review_market_date:
@@ -173,6 +176,7 @@ def build_system_review_completion_request(
     if not str(requested_at_beijing or "").strip() or not str(final_content or "").strip():
         raise ValueError("scheduled system review completion requires requested_at_beijing and frozen final_content")
     validate_system_review_presentation(system_review, final_content)
+    validate_user_visible_content(str(final_content), canonical_closure_confirmed=False)
     return {
         "request_id": request_id,
         "request_type": "STATE_SYNC_ONLY",
