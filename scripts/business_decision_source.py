@@ -147,7 +147,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             if not candidate_code and candidate_name != "现金":
                 raise ValueError("decision response missing MAIN_CANDIDATE.candidate_code for security candidate")
         if pid.startswith(("DISCOVERY:", "OBSERVATION:")):
-            if str(answer.get("opportunity_status") or "").strip() not in {"无机会", "观察机会", "Trial机会", "Confirm机会"}:
+            if str(answer.get("opportunity_status") or "").strip() not in {"无机会", "无新增交易机会", "观察机会", "Trial机会", "Confirm机会"}:
                 raise ValueError(f"decision response missing registered opportunity_status: {pid}")
             if str(answer.get("disposition") or "").upper() not in {"ADMIT", "REJECT", "RETAIN", "EXIT"}:
                 raise ValueError(f"decision response missing valid opportunity disposition: {pid}")
@@ -317,6 +317,11 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
 
     main_answer = answers["MAIN_CANDIDATE"]
     risk_answer = answers["RISK_PERMISSION"]
+    main_opportunity_status = str(main_answer["opportunity_status"]).strip()
+    if main_opportunity_status == "无新增交易机会":
+        if str(main_answer.get("candidate_name") or "").strip() != "现金" or new_amount != 0:
+            raise ValueError("无新增交易机会 is only valid for cash-selected zero-new-capital decisions")
+        main_opportunity_status = "无机会"
     state_problem_map = {
         "现金": "DEPLOYABLE_CASH",
         "全部实际持仓继续占资": "RELEASABLE_CAPITAL",
@@ -370,7 +375,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             if str(main_answer.get("candidate_code") or "").strip()
             else str(main_answer["candidate_name"])
         ),
-        "opportunity_status": main_answer["opportunity_status"],
+        "opportunity_status": main_opportunity_status,
         "lifecycle": lifecycle,
         "managed_position_reviews": position_reviews,
         "etf_opportunity_reviews": opportunity_reviews,

@@ -266,8 +266,20 @@ class DecisionWorkPackageTests(unittest.TestCase):
         self.assertEqual(projected["candidate_code"], "")
         self.assertEqual(projected["candidate_name"], "现金")
         self.assertEqual(projected["main_candidate"], "现金")
+        self.assertEqual(projected["opportunity_status"], "无机会")
         self.assertEqual(projected["capital_competition"]["zero_amount_decisive_reason"], "当前没有独立机会优于现金")
         self.assertEqual(len(projected["capital_competition"]["compared_capital_states"]), 6)
+
+    def test_no_new_trade_status_cannot_mask_security_or_positive_capital(self):
+        source = {"request_type":"BUSINESS_DECISION_SOURCE","request_id":"bad-cash","parent_request_id":"p","decision_id":"d","consumed_snapshot":"snap"}
+        graph = [{"problem_id":"RISK_PERMISSION"},{"problem_id":"MAIN_CANDIDATE"},{"problem_id":"NEXT_UNIT_CAPITAL_USE"}]
+        base = {"final_action":"保持","capital_comparison":"compare","next_change_condition":"change","evidence_decision_impact":["ALL_REQUIRED"]}
+        answers = {x["problem_id"]:dict(base) for x in graph}
+        answers["RISK_PERMISSION"]["final_action"] = "允许Trial"
+        answers["MAIN_CANDIDATE"].update({"candidate_code":"159981","candidate_name":"能源化工ETF","opportunity_status":"无新增交易机会"})
+        answers["NEXT_UNIT_CAPITAL_USE"].update({"new_amount_yuan":1000,"post_action_deployable_cash":16004.64,"future_opportunity_capacity":"保留","cash_opportunity_cost":"成本","alternative_capital_use_review":"已比较","concentration_account_structure_effect":"受控","selected_state_reason":"理由","compared_capital_states_as_business_state_names":["现金"]})
+        with self.assertRaisesRegex(ValueError, "only valid for cash-selected zero-new-capital decisions"):
+            project_decision_response(source, {"answers":answers}, {"problem_graph":graph,"evidence_requirements":[]})
 
     def test_security_candidate_still_requires_code(self):
         source = {"request_type":"BUSINESS_DECISION_SOURCE","request_id":"bad","parent_request_id":"p","decision_id":"d","consumed_snapshot":"snap"}
