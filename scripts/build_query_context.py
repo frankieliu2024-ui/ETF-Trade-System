@@ -327,7 +327,7 @@ def _evidence_requirement_plan(problems: list[dict]) -> list[dict]:
     ]
     opportunity = [
         "ETF_RELATIVE_STRENGTH", "FULL_MARKET_DISCOVERY",
-        "OBSERVATION_ETF", "NODE_LOCAL_CANDIDATE",
+        "OBSERVATION_ETF", "TEMPORARY_DISCOVERY_CANDIDATE",
     ]
     holding = ["ETF_RELATIVE_STRENGTH", "HOLDING_ETF", "ACCOUNT_STOCK"]
     capital = ["CASH", "RELEASABLE_CAPITAL", "HOLDING_ADDITIONAL_CAPITAL"]
@@ -1386,7 +1386,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     for item in formal_discovery.get("candidates") or []:
         code = str(item.get("code") or "").upper()
         if code and code not in seen_system_codes:
-            system_objects.append({"object_code": code, "object_name": item.get("name") or code, "source_type": "NODE_LOCAL_CANDIDATE"})
+            system_objects.append({"object_code": code, "object_name": item.get("name") or code, "source_type": "NODE_LOCAL_OBSERVATION_EVALUATION"})
             seen_system_codes.add(code)
     decision_context_started = time.monotonic()
     decision = build_decision_context(
