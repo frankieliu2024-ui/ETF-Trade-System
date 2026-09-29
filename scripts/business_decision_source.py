@@ -33,6 +33,18 @@ def classify_request(request: dict[str, Any]) -> str:
 def _canonical(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
+_FORMAL_OPPORTUNITY_ALIASES = {
+    "无机会": "无机会",
+    "无新增交易机会": "无机会",
+    "观察机会": "观察机会",
+    "Trial机会": "Trial机会",
+    "Confirm机会": "Confirm机会",
+}
+
+def _normalize_opportunity_status(value: Any) -> str:
+    raw = str(value or "").strip()
+    return _FORMAL_OPPORTUNITY_ALIASES.get(raw, "")
+
 _HOLDING_ACTION_ALIASES = {
     "HOLD": "HOLD",
     "持有": "HOLD",
@@ -147,7 +159,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             if not candidate_code and candidate_name != "现金":
                 raise ValueError("decision response missing MAIN_CANDIDATE.candidate_code for security candidate")
         if pid.startswith(("DISCOVERY:", "OBSERVATION:")):
-            if str(answer.get("opportunity_status") or "").strip() not in {"无机会", "无新增交易机会", "观察机会", "Trial机会", "Confirm机会"}:
+            if not _normalize_opportunity_status(answer.get("opportunity_status")):
                 raise ValueError(f"decision response missing registered opportunity_status: {pid}")
             if str(answer.get("disposition") or "").upper() not in {"ADMIT", "REJECT", "RETAIN", "EXIT"}:
                 raise ValueError(f"decision response missing valid opportunity disposition: {pid}")
@@ -283,7 +295,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         opportunity_reviews.append({
             "security_code": code, "code": code, "security_name": item.get("security") or code,
             "category": "OBSERVATION_EVALUATION_INPUT" if pid.startswith("DISCOVERY:") else "OBSERVED_ETF",
-            "opportunity_status": answer.get("opportunity_status"),
+            "opportunity_status": _normalize_opportunity_status(answer.get("opportunity_status")),
             "conclusion": answer.get("final_action"), "reason": answer.get("reason"),
         })
         if pid.startswith("DISCOVERY:"):
@@ -317,11 +329,12 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
 
     main_answer = answers["MAIN_CANDIDATE"]
     risk_answer = answers["RISK_PERMISSION"]
-    main_opportunity_status = str(main_answer["opportunity_status"]).strip()
-    if main_opportunity_status == "无新增交易机会":
-        if str(main_answer.get("candidate_name") or "").strip() != "现金" or new_amount != 0:
-            raise ValueError("无新增交易机会 is only valid for cash-selected zero-new-capital decisions")
-        main_opportunity_status = "无机会"
+    raw_main_opportunity_status = str(main_answer["opportunity_status"]).strip()
+    main_opportunity_status = _normalize_opportunity_status(raw_main_opportunity_status)
+    if raw_main_opportunity_status == "无新增交易机会" and (
+        str(main_answer.get("candidate_name") or "").strip() != "现金" or new_amount != 0
+    ):
+        raise ValueError("无新增交易机会 is only valid for cash-selected zero-new-capital decisions")
     state_problem_map = {
         "现金": "DEPLOYABLE_CASH",
         "全部实际持仓继续占资": "RELEASABLE_CAPITAL",
