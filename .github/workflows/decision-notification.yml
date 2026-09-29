@@ -332,7 +332,34 @@ jobs:
             exit 0
           fi
           git commit -m "state: record notification and execution reconciliation"
-          git push origin HEAD:main
+
+          # The external delivery may already have succeeded while another
+          # canonical writer advances main. Persist the accepted delivery by
+          # replaying the saved incoming state against latest main; never rerun
+          # the sender and never force-push.
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Notification state persistence exhausted latest-main replay attempts" >&2
+              exit 1
+            fi
+            git fetch origin main
+            git reset --hard origin/main
+            if [ -f /tmp/etf-notification-state/data/state/notification_center.json ]; then
+              python scripts/merge_notification_state.py \
+                --base data/state/notification_center.json \
+                --incoming /tmp/etf-notification-state/data/state/notification_center.json \
+                --output data/state/notification_center.json
+            fi
+            [ -f /tmp/etf-notification-state/data/state/execution_reconciliation.json ] && cp /tmp/etf-notification-state/data/state/execution_reconciliation.json data/state/execution_reconciliation.json || true
+            git add data/state/notification_center.json data/state/execution_reconciliation.json 2>/dev/null || true
+            if git diff --cached --quiet; then
+              exit 0
+            fi
+            git commit -m "state: record notification and execution reconciliation"
+          done
 
       - name: Surface notification delivery failure without blocking trading system
         if: ${{ steps.test_notify.outcome == 'failure' || steps.event_notify.outcome == 'failure' || steps.close_notify.outcome == 'failure' || steps.a_share_summary_notify.outcome == 'failure' || steps.a_share_shock_notify.outcome == 'failure' || steps.apac_summary_notify.outcome == 'failure' || steps.apac_shock_notify.outcome == 'failure' || steps.us_summary_notify.outcome == 'failure' || steps.us_shock_notify.outcome == 'failure' }}
