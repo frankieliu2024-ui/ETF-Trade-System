@@ -848,6 +848,19 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "rule": "The first user-visible formal reply is the complete business decision analysis. It must not be replaced by an interim waiting/persistence/acceptance/projection status once action-determinative facts have resolved.",
             "persistence_failure_disclosure": "正式决策尚未持久化。",
             "non_blocking_after_business_decision_formed": True,
+            "business_language_contract": {
+                "normal_business_mode": "User-visible prose states result, evidence, impact, and next step in plain business language. Internal machine schemas and enums remain unchanged but are not copied into ordinary replies merely to prove execution.",
+                "translate_not_suppress": "Preserve decision-relevant timing, freshness, source quality, degradation, lifecycle, observation, and completion meaning; translate control-plane labels into their business effect instead of deleting material facts.",
+                "examples": {
+                    "request_bound_ready": "本次判断所需数据已满足决策要求，目前无影响判断的关键缺口。",
+                    "held_etf_no_add": "现有ETF持仓本次均不建议追加资金。",
+                    "persistence_pending": "本次判断已形成，但相关正式状态更新尚未全部确认。",
+                    "observation_exit": "本次判断认为应移出观察范围。",
+                    "freshness": "行情截至相应时点，并说明是否满足本次判断的时效要求。",
+                },
+                "technical_audit_exception": "Explicit technical-audit or fault-diagnosis mode may expose internal terms when they are the subject of the audit.",
+                "rule": "Do not expose request-bound/READY/blocker/NO_ADD/BUSINESS_DECISION_READY/reply_freezable/canonical persistence/Observation ADMIT-RETAIN-EXIT or equivalent control-plane labels in ordinary business prose when the same fact has an accurate business-language expression.",
+            },
             "execution_status_contract": {
                 "before_business_decision": "已自动接管",
                 "business_ready_persistence_pending": "已自动接管",
