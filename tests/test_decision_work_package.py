@@ -267,6 +267,7 @@ class DecisionWorkPackageTests(unittest.TestCase):
         self.assertEqual(projected["candidate_name"], "现金")
         self.assertEqual(projected["main_candidate"], "现金")
         self.assertEqual(projected["opportunity_status"], "无机会")
+        self.assertTrue(all(x["opportunity_status"] in {"无机会","观察机会","Trial机会","Confirm机会"} for x in projected["etf_opportunity_reviews"]))
         self.assertEqual(projected["capital_competition"]["zero_amount_decisive_reason"], "当前没有独立机会优于现金")
         self.assertEqual(len(projected["capital_competition"]["compared_capital_states"]), 6)
 
