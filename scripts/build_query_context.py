@@ -306,7 +306,7 @@ def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict],
     for item in discovery_inputs:
         code = str(item.get("code") or "")
         if code:
-            problems.append({"problem_id": f"DISCOVERY:{code}", "decision_object": code, "security": item.get("name") or code, "formal_quote_status": item.get("formal_quote_status") or "", "role_contract": "NODE_LOCAL_CANDIDATE_V1", "management_identity": item.get("management_identity"), "required_business_judgment": "判断本节点候选机会状态及资本竞争位置；候选身份本身不持久。只有另有持续跨节点信息价值时才ADMIT为观察ETF，REJECT观察准入不等于否定本节点候选机会"})
+            problems.append({"problem_id": f"DISCOVERY:{code}", "decision_object": code, "security": item.get("name") or code, "formal_quote_status": item.get("formal_quote_status") or "", "role_contract": "NODE_LOCAL_CANDIDATE_V1", "management_identity": item.get("management_identity"), "required_business_judgment": "判断本节点机会ETF状态及资本竞争位置；机会ETF角色本身不持久。只有另有持续跨节点信息价值时才ADMIT为观察ETF，REJECT观察准入不等于否定本节点候选机会"})
     return problems
 
 
