@@ -47,7 +47,10 @@ def main():
     consistency_ok=is_complete_consistency_report(consistency) and consistency.get("status") in {"PASS","WARNING"} and consistency.get("hard_error_count")==0
     maintenance_ok=maintenance.get("status") in {"PASS","WARNING","DEGRADED"}; e2e_ok=e2e.get("status") in {"READY","DEGRADED"}
     accepted=all(x==0 for x in (quality_rc,state_rc,query_rc,consistency_rc,maintenance_rc,e2e_rc)) and consistency_ok and maintenance_ok and e2e_ok and not report_error
-    result={"acceptance":"PASS" if accepted else "FAIL","quality_rebuild":quality_rc==0,"state_context":state_rc==0,"query_context":query_rc==0,"return_codes":{"quality_rebuild":quality_rc,"state_context":state_rc,"query_context":query_rc,"consistency":consistency_rc,"maintenance":maintenance_rc,"e2e":e2e_rc},"consistency_report_valid":not report_error,"consistency":consistency.get("status"),"maintenance":maintenance.get("status"),"e2e":e2e.get("status"),"report_error":report_error,"mutation_sha":args.mutation_sha,"recursive_push_required":False}\n    print(json.dumps(result,ensure_ascii=False))\n    if args.result_path:\n        result_path=Path(args.result_path); result_path.parent.mkdir(parents=True,exist_ok=True); result_path.write_text(json.dumps(result,ensure_ascii=False,indent=2)+"\\n",encoding="utf-8")
+    result={"acceptance":"PASS" if accepted else "FAIL","quality_rebuild":quality_rc==0,"state_context":state_rc==0,"query_context":query_rc==0,"return_codes":{"quality_rebuild":quality_rc,"state_context":state_rc,"query_context":query_rc,"consistency":consistency_rc,"maintenance":maintenance_rc,"e2e":e2e_rc},"consistency_report_valid":not report_error,"consistency":consistency.get("status"),"maintenance":maintenance.get("status"),"e2e":e2e.get("status"),"report_error":report_error,"mutation_sha":args.mutation_sha,"recursive_push_required":False}
+    print(json.dumps(result,ensure_ascii=False))
+    if args.result_path:
+        result_path=Path(args.result_path); result_path.parent.mkdir(parents=True,exist_ok=True); result_path.write_text(json.dumps(result,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     try: fresh_path.unlink()
     except OSError: pass
     return 0 if accepted else 1
