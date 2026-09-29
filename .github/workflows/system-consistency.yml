@@ -610,7 +610,14 @@ jobs:
           # from the new tip instead.  Two bounded attempts cover one ordinary
           # concurrent writer race while repeated movement still fails closed.
           published=false
-          for attempt in 1 2; do
+          # Converge against a moving main for a bounded wall-clock window rather
+          # than assuming that exactly two writer races cover production load.
+          # Every retry rebuilds derived acceptance state from the newest tip;
+          # ordinary git push remains the atomic no-last-writer-wins guard.
+          publication_deadline=$((SECONDS + 150))
+          attempt=0
+          while [ "$SECONDS" -lt "$publication_deadline" ]; do
+            attempt=$((attempt + 1))
             git fetch --no-tags origin main
             git reset --hard origin/main
             export ETF_SYSTEM_ROOT="$PWD"
@@ -643,8 +650,12 @@ jobs:
               break
             fi
             echo "acceptance publication raced with main on attempt $attempt; rebuilding from latest main"
+            sleep 2
           done
-          test "$published" = "true"
+          if [ "$published" != "true" ]; then
+            echo "acceptance publication did not reach a quiet main within the bounded convergence window"
+            exit 1
+          fi
       - name: Enforce production acceptance
         if: ${{ always() && (steps.acceptance_scope.outputs.required == 'true' || github.event_name == 'workflow_dispatch') && steps.acceptance.outcome == 'failure' }}
         run: exit 1
