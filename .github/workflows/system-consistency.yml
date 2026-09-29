@@ -598,64 +598,18 @@ jobs:
         shell: bash
         run: |
           python scripts/run_production_acceptance.py --mutation-sha "$ETF_ACCEPTANCE_SHA"
-      - name: Persist acceptance result
+      - name: Preserve acceptance projections as run evidence
         if: ${{ always() && (steps.acceptance_scope.outputs.required == 'true' || github.event_name == 'workflow_dispatch') }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Acceptance artifacts are rebuildable derived state.  On a moving
-          # main, never rebase an already-built derived-state commit: rebuild
-          # from the new tip instead.  Two bounded attempts cover one ordinary
-          # concurrent writer race while repeated movement still fails closed.
-          published=false
-          # Converge against a moving main for a bounded wall-clock window rather
-          # than assuming that exactly two writer races cover production load.
-          # Every retry rebuilds derived acceptance state from the newest tip;
-          # ordinary git push remains the atomic no-last-writer-wins guard.
-          publication_deadline=$((SECONDS + 150))
-          attempt=0
-          while [ "$SECONDS" -lt "$publication_deadline" ]; do
-            attempt=$((attempt + 1))
-            git fetch --no-tags origin main
-            git reset --hard origin/main
-            export ETF_SYSTEM_ROOT="$PWD"
-            # The first acceptance pass validates the triggering workflow SHA.
-            # This rebuild runs after rebinding to latest main, so its identity
-            # must follow the exact tree being validated rather than the stale
-            # triggering SHA. The original workflow identity remains recorded by
-            # the preceding acceptance gate.
-            latest_main_sha="$(git rev-parse HEAD)"
-            # This persistence rebuild validates the latest canonical main tree.
-            # Do not compare it back to the workflow-trigger SHA: independent
-            # canonical writers may have legally advanced main while this run
-            # was in progress.  The triggering change was already accepted by
-            # the preceding bound acceptance gate.
-            ETF_ACCEPTANCE_SHA="$latest_main_sha" GITHUB_SHA="$latest_main_sha" ETF_STABLE_ACCEPTANCE_BASE="$latest_main_sha" python scripts/run_production_acceptance.py --mutation-sha "$latest_main_sha"
-            for f in data/state/system_consistency.json data/state/maintenance_health.json data/state/e2e_status.json data/state/execution_quality.json; do
-              if [ -f "$f" ]; then
-                git add "$f"
-              fi
-            done
-            if git diff --cached --quiet; then
-              published=true
-              break
-            fi
-            git commit -m "state: persist production acceptance"
-            git restore --worktree .
-            git clean -fd -- data/state
-            if git push origin HEAD:main; then
-              published=true
-              break
-            fi
-            echo "acceptance publication raced with main on attempt $attempt; rebuilding from latest main"
-            sleep 2
-          done
-          if [ "$published" != "true" ]; then
-            echo "acceptance publication did not reach a quiet main within the bounded convergence window"
-            exit 1
-          fi
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-acceptance-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            data/state/system_consistency.json
+            data/state/maintenance_health.json
+            data/state/e2e_status.json
+            data/state/execution_quality.json
       - name: Enforce production acceptance
         if: ${{ always() && (steps.acceptance_scope.outputs.required == 'true' || github.event_name == 'workflow_dispatch') && steps.acceptance.outcome == 'failure' }}
         run: exit 1
