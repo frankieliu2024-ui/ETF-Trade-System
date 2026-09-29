@@ -139,9 +139,13 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
                 if answer.get("quantity") in (None, "") or not answer.get("capital_destination"):
                     raise ValueError(f"decision response missing action quantity/destination: {pid}")
         if pid == "MAIN_CANDIDATE":
-            for field in ("candidate_code", "candidate_name", "opportunity_status"):
+            for field in ("candidate_name", "opportunity_status"):
                 if answer.get(field) in (None, ""):
                     raise ValueError(f"decision response missing MAIN_CANDIDATE.{field}")
+            candidate_code = str(answer.get("candidate_code") or "").strip()
+            candidate_name = str(answer.get("candidate_name") or "").strip()
+            if not candidate_code and candidate_name != "现金":
+                raise ValueError("decision response missing MAIN_CANDIDATE.candidate_code for security candidate")
         if pid.startswith(("DISCOVERY:", "OBSERVATION:")):
             if str(answer.get("opportunity_status") or "").strip() not in {"无机会", "观察机会", "Trial机会", "Confirm机会"}:
                 raise ValueError(f"decision response missing registered opportunity_status: {pid}")
@@ -155,13 +159,23 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
                     raise ValueError(f"decision response ADMIT requires {pid}.{field}")
 
     next_answer = answers.get("NEXT_UNIT_CAPITAL_USE") or {}
+    compared_capital_states = next_answer.get("compared_capital_states_as_business_state_names")
+    if compared_capital_states in (None, "", []):
+        compared_capital_states = next_answer.get("compared_capital_states")
+    zero_amount_decisive_reason = str(
+        next_answer.get("zero_amount_decisive_reason_if_zero")
+        or next_answer.get("zero_amount_decisive_reason")
+        or ""
+    ).strip()
     for field in (
         "new_amount_yuan", "post_action_deployable_cash", "future_opportunity_capacity",
         "cash_opportunity_cost", "alternative_capital_use_review",
-        "concentration_account_structure_effect", "selected_state_reason", "compared_capital_states",
+        "concentration_account_structure_effect", "selected_state_reason",
     ):
         if next_answer.get(field) in (None, "", []):
             raise ValueError(f"decision response missing NEXT_UNIT_CAPITAL_USE.{field}")
+    if compared_capital_states in (None, "", []):
+        raise ValueError("decision response missing NEXT_UNIT_CAPITAL_USE.compared_capital_states_as_business_state_names")
     try:
         new_amount = _parse_yuan_amount(next_answer.get("new_amount_yuan"), "NEXT_UNIT_CAPITAL_USE.new_amount_yuan")
         post_cash = _parse_yuan_amount(next_answer.get("post_action_deployable_cash"), "NEXT_UNIT_CAPITAL_USE.post_action_deployable_cash")
@@ -169,8 +183,8 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         raise ValueError(str(exc))
     if new_amount < 0 or post_cash < 0:
         raise ValueError("NEXT_UNIT_CAPITAL_USE amount/cash must be non-negative")
-    if new_amount == 0 and not str(next_answer.get("zero_amount_decisive_reason") or "").strip():
-        raise ValueError("decision response requires zero_amount_decisive_reason when new amount is zero")
+    if new_amount == 0 and not zero_amount_decisive_reason:
+        raise ValueError("decision response requires zero_amount_decisive_reason_if_zero when new amount is zero")
 
     layer_map = {"A_SHARE_STYLE_FEEDBACK": "layer_2_a_share_internal", "ETF_RELATIVE_STRENGTH": "layer_3_etf_opportunity_capital"}
     consumed = {"request_id": str(source.get("parent_request_id") or source.get("request_id") or "").strip()}
@@ -313,7 +327,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         "159981下一节点Confirm": "TRIAL_CONFIRM_CAPACITY",
     }
     canonical_capital_states = []
-    for raw_state in next_answer["compared_capital_states"]:
+    for raw_state in compared_capital_states:
         if isinstance(raw_state, dict):
             canonical_capital_states.append(raw_state)
             continue
@@ -349,9 +363,13 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
     projected = json.loads(json.dumps(source))
     projected.update({
         "risk_permission": risk_answer["final_action"],
-        "candidate_code": str(main_answer["candidate_code"]),
+        "candidate_code": str(main_answer.get("candidate_code") or ""),
         "candidate_name": str(main_answer["candidate_name"]),
-        "main_candidate": f"{main_answer['candidate_name']}（{main_answer['candidate_code']}）",
+        "main_candidate": (
+            f"{main_answer['candidate_name']}（{main_answer['candidate_code']}）"
+            if str(main_answer.get("candidate_code") or "").strip()
+            else str(main_answer["candidate_name"])
+        ),
         "opportunity_status": main_answer["opportunity_status"],
         "lifecycle": lifecycle,
         "managed_position_reviews": position_reviews,
@@ -373,7 +391,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             "concentration_account_structure_effect": next_answer["concentration_account_structure_effect"],
             "selected_state_reason": next_answer["selected_state_reason"],
             "new_amount_yuan": new_amount,
-            "zero_amount_decisive_reason": next_answer.get("zero_amount_decisive_reason"),
+            "zero_amount_decisive_reason": zero_amount_decisive_reason,
             "compared_capital_states": canonical_capital_states,
             "held_etf_add_capital_reviews": held_add_reviews,
             "etf_opportunity_reviews": opportunity_reviews,
