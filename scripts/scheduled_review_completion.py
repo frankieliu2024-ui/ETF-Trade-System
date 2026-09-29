@@ -141,6 +141,37 @@ SYSTEM_REVIEW_FALSE_ATTRIBUTION_PHRASES = (
 )
 
 
+def _canonical_attribution_summary(system_review: dict) -> dict:
+    summary = (system_review or {}).get("canonical_trade_attribution")
+    return summary if isinstance(summary, dict) else {}
+
+
+def _reject_false_user_attribution_dependency(system_review: dict, content: str) -> None:
+    """Validate user-action claims against canonical attribution semantics, not wording.
+
+    The actor supplies the canonical summary it consumed.  A linked decision identity
+    makes mapping a machine-known fact even when execution-quality enrichment is PARTIAL.
+    Only genuinely missing/ambiguous identities may require user mapping.
+    """
+    summary = _canonical_attribution_summary(system_review)
+    if not summary:
+        return
+    trades = summary.get("trades") or []
+    known = [t for t in trades if str(t.get("decision_identity_status") or "").upper() == "KNOWN"]
+    unresolved = [t for t in trades if str(t.get("decision_identity_status") or "").upper() in {"MISSING", "AMBIGUOUS"}]
+    user_req = str((system_review or {}).get("user_attribution_requirement") or "NONE").upper()
+    if user_req not in {"NONE", "MAPPING_REQUIRED"}:
+        raise ValueError("Scheduled System Review user_attribution_requirement must be NONE or MAPPING_REQUIRED")
+    if user_req == "MAPPING_REQUIRED" and not unresolved:
+        raise ValueError("Scheduled System Review must not request user mapping for canonically linked trades")
+    if user_req == "NONE" and unresolved and any(bool(t.get("decision_identity_required")) for t in unresolved):
+        raise ValueError("Scheduled System Review must surface genuinely unresolved required trade attribution")
+    if known and any(bool(t.get("asks_user_to_confirm_mapping")) for t in known):
+        raise ValueError("Scheduled System Review must not request user mapping for canonically linked trades")
+    if known and any(bool(t.get("asks_user_to_classify_trial_confirm")) for t in known):
+        raise ValueError("Scheduled System Review must resolve linked Trial/Confirm semantics from canonical decision facts")
+
+
 def validate_system_review_presentation(system_review: dict, final_content: str) -> None:
     """Keep Scheduled System Review informational and non-decisional.
 
@@ -155,6 +186,7 @@ def validate_system_review_presentation(system_review: dict, final_content: str)
         raise ValueError("Scheduled System Review must not renew or extend Formal Decision trading authority")
     if any(phrase in content for phrase in SYSTEM_REVIEW_FALSE_ATTRIBUTION_PHRASES):
         raise ValueError("Scheduled System Review must not request user mapping for canonically linked trades")
+    _reject_false_user_attribution_dependency(system_review, content)
     reconciliation = str((system_review or {}).get("execution_reconciliation") or "").strip().upper()
     if reconciliation in {"CONFIRMATION_REQUIRED", "USER_CONFIRMATION_REQUIRED"}:
         raise ValueError("Scheduled System Review must distinguish execution-quality gaps from missing decision identity")
