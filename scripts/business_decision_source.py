@@ -353,6 +353,59 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
                     **{key: thesis[key] for key in required_thesis},
                 })
 
+    role_contract_v1 = str(work_package.get("business_role_reconciliation_contract") or "").upper() == "V1"
+    business_role_reconciliation = None
+    if role_contract_v1:
+        holding_etfs = []
+        for review in position_reviews:
+            code = str(review.get("security_code") or "")
+            if any(str(x.get("problem_id") or "") == f"HELD_ETF_ADD:{code}" for x in graph):
+                add_review = next((x for x in held_add_reviews if str(x.get("security_code") or "") == code), {})
+                holding_etfs.append({
+                    "code": code,
+                    "name": review.get("security_name"),
+                    "capital_occupancy": review.get("current_action"),
+                    "additional_capital_review": add_review.get("conclusion"),
+                })
+
+        observation_etfs = []
+        opportunity_etfs = []
+        discovery_summary = {"evaluated": 0, "entered_opportunity_role": 0, "rejected_from_opportunity_role": 0}
+        for review in opportunity_reviews:
+            status = str(review.get("opportunity_status") or "")
+            is_opportunity = status != "无机会"
+            code = str(review.get("code") or review.get("security_code") or "")
+            if review.get("category") == "OBSERVED_ETF":
+                management = next((x for x in observation_management if str(x.get("code") or "") == code), {})
+                observation_etfs.append({
+                    "code": code,
+                    "name": review.get("security_name"),
+                    "observation_action": management.get("action"),
+                    "information_value_reason": management.get("information_value_reason") or review.get("reason"),
+                    "current_opportunity_status": status,
+                })
+            else:
+                discovery_summary["evaluated"] += 1
+            if is_opportunity:
+                opportunity_etfs.append({
+                    "code": code,
+                    "name": review.get("security_name"),
+                    "source": "观察ETF" if review.get("category") == "OBSERVED_ETF" else "全市场机会发现",
+                    "opportunity_status": status,
+                    "execution_evidence": review.get("reason"),
+                })
+                if review.get("category") != "OBSERVED_ETF":
+                    discovery_summary["entered_opportunity_role"] += 1
+            elif review.get("category") != "OBSERVED_ETF":
+                discovery_summary["rejected_from_opportunity_role"] += 1
+
+        business_role_reconciliation = {
+            "持仓ETF": holding_etfs,
+            "观察ETF": observation_etfs,
+            "机会ETF": opportunity_etfs,
+            "全市场机会发现": discovery_summary,
+        }
+
     main_answer = answers["MAIN_CANDIDATE"]
     risk_answer = answers["RISK_PERMISSION"]
     risk_permission = _normalize_risk_permission(risk_answer["final_action"])
@@ -373,6 +426,16 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         "561980条件释放资本": "RELEASABLE_CAPITAL",
         "159981下一节点Confirm": "TRIAL_CONFIRM_CAPACITY",
     }
+    if role_contract_v1:
+        forbidden_aggregate_states = [
+            str(x or "").strip() for x in compared_capital_states
+            if not isinstance(x, dict) and ("观察ETF" in str(x or "") or "Discovery" in str(x or "") or "全市场机会发现" in str(x or ""))
+        ]
+        if forbidden_aggregate_states:
+            raise ValueError(
+                "business-role V1 capital competition cannot use observation/discovery aggregates as capital states: "
+                + ",".join(forbidden_aggregate_states)
+            )
     canonical_capital_states = []
     for raw_state in compared_capital_states:
         if isinstance(raw_state, dict):
@@ -423,6 +486,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         "etf_opportunity_reviews": opportunity_reviews,
         "observation_eligibility_reviews": observation_eligibility_reviews,
         "observation_management": observation_management,
+        "business_role_reconciliation": business_role_reconciliation,
         "continued_holding_opportunity_cost": "；".join(str(x.get("continued_holding_opportunity_cost") or "") for x in position_reviews),
         "action_changes_now": any(bool(x.get("action_changes_now")) for x in position_reviews) or new_amount > 0,
         "next_change_condition": next_answer["next_change_condition"],
