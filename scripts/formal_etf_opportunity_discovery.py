@@ -995,14 +995,43 @@ def attach_formal_quotes(discovery: dict[str, Any], market_quote: dict[str, Any]
         code = str(item.get("code") or "").upper()
         quote = quotes.get(code)
         quality = str((quote or {}).get("quality_status") or "").upper()
+        freshness = str((quote or {}).get("freshness") or "").upper()
         usable = bool(quote and quality not in {"", "FAILED", "FAIL", "STALE", "INVALID"})
+        if usable and freshness == "SESSION_REFERENCE":
+            fitness = {
+                "object_fact": True,
+                "observation_evaluation": True,
+                "capital_candidate_evaluation": True,
+                "executable_price": False,
+                "trade_amount_or_shares": False,
+            }
+            quote_status = "SESSION_REFERENCE_READY"
+        elif usable:
+            fitness = {
+                "object_fact": True,
+                "observation_evaluation": True,
+                "capital_candidate_evaluation": True,
+                "executable_price": freshness == "FRESH",
+                "trade_amount_or_shares": freshness == "FRESH",
+            }
+            quote_status = "READY"
+        else:
+            fitness = {
+                "object_fact": False,
+                "observation_evaluation": False,
+                "capital_candidate_evaluation": False,
+                "executable_price": False,
+                "trade_amount_or_shares": False,
+            }
+            quote_status = "UNAVAILABLE"
         candidates.append({
             **item,
             "formal_quote": quote or {},
-            "formal_quote_status": "READY" if usable else "UNAVAILABLE",
-            "formal_quote_rule": "发现源只负责缩小评估对象；正式当前行情必须由现有market_quote_router对象级补采链取得。",
+            "formal_quote_status": quote_status,
+            "formal_quote_evidence_fitness": fitness,
+            "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。",
         })
-    return {**discovery, "candidates": candidates, "formal_quote_coverage": sum(x["formal_quote_status"] == "READY" for x in candidates)}
+    return {**discovery, "candidates": candidates, "formal_quote_coverage": sum(x["formal_quote_status"] in {"READY", "SESSION_REFERENCE_READY"} for x in candidates)}
 
 
 def discover_formal_candidates(
