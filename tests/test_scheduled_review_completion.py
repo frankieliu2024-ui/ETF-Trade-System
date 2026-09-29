@@ -257,5 +257,43 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             self.assertEqual(second["content"], "FINAL B")
 
 
+    def test_system_review_rejects_false_trade_mapping_dependency(self):
+        with self.assertRaisesRegex(ValueError, "canonically linked trades"):
+            completion.build_system_review_completion_request(
+                {"status": "PASS", "execution_reconciliation": "QUALITY_ENRICHMENT_PARTIAL"},
+                "system-request", "2026-09-29T08:37:00+08:00",
+                "ETF系统复核", "system-run",
+                "【需要用户处理】请确认能源化工ETF（159981）5,700份买入对应Trial还是Confirm。",
+            )
+
+    def test_system_review_rejects_confirmation_required_reconciliation_state(self):
+        with self.assertRaisesRegex(ValueError, "execution-quality gaps"):
+            completion.build_system_review_completion_request(
+                {"status": "PASS", "execution_reconciliation": "CONFIRMATION_REQUIRED"},
+                "system-request", "2026-09-29T08:37:00+08:00",
+                "ETF系统复核", "system-run", "FROZEN SYSTEM REPORT",
+            )
+
+    def test_system_review_rejects_renewed_formal_decision_authority(self):
+        with self.assertRaisesRegex(ValueError, "must not renew or extend"):
+            completion.build_system_review_completion_request(
+                {"status": "PASS", "execution_reconciliation": "QUALITY_ENRICHMENT_PARTIAL"},
+                "system-request", "2026-09-29T08:37:00+08:00",
+                "ETF系统复核", "system-run",
+                "【下一阶段】继续维持禁止新增，直至新的正式判断改变风险许可。",
+            )
+
+    def test_system_review_accepts_historical_decision_attribution_with_quality_gap(self):
+        payload = completion.build_system_review_completion_request(
+            {"status": "PASS", "execution_reconciliation": "QUALITY_ENRICHMENT_PARTIAL"},
+            "system-request", "2026-09-29T08:37:00+08:00",
+            "ETF系统复核", "system-run",
+            "【成交归因】159981买入5,700份已绑定昨日10:41正式判断的Confirm；"
+            "561980两笔卖出已有正式决策身份。执行质量字段仍有缺口，不影响账户事实。",
+        )
+        self.assertEqual(payload["request_type"], "STATE_SYNC_ONLY")
+        self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_SYSTEM_REVIEW")
+
+
 if __name__ == "__main__":
     unittest.main()
