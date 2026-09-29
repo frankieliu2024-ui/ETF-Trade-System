@@ -24,6 +24,10 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertEqual(state["status"], "REQUEST_BOUND_FACTS_BUILDING")
         self.assertTrue(state["continue_same_request"])
         self.assertFalse(state["reply_eligible"])
+        self.assertFalse(state["analysis_eligible"])
+        self.assertEqual(state["user_visible_output"], "SILENT_CONTINUATION")
+        self.assertFalse(state["analysis_eligible"])
+        self.assertEqual(state["user_visible_output"], "SILENT_CONTINUATION")
 
     def test_same_request_inflight_continues_without_duplicate_parent(self):
         state = classify_formal_request_consumer_state(
@@ -64,6 +68,8 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertEqual(state["status"], "BUSINESS_DECISION_READY")
         self.assertFalse(state["continue_same_request"])
         self.assertTrue(state["reply_eligible"])
+        self.assertTrue(state["analysis_eligible"])
+        self.assertEqual(state["user_visible_output"], "COMPLETE_BUSINESS_DECISION_ONLY")
 
     def test_downstream_persistence_failure_does_not_revoke_ready_reply(self):
         state = classify_formal_request_consumer_state(
