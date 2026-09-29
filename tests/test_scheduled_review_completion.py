@@ -266,6 +266,60 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
                 "【需要用户处理】请确认能源化工ETF（159981）5,700份买入对应Trial还是Confirm。",
             )
 
+    def test_system_review_rejects_paraphrased_mapping_request_from_semantics(self):
+        review = {
+            "status": "PASS",
+            "execution_reconciliation": "QUALITY_ENRICHMENT_PARTIAL",
+            "user_attribution_requirement": "MAPPING_REQUIRED",
+            "canonical_trade_attribution": {"trades": [
+                {"code": "561980", "quantity": 15300, "decision_identity_status": "KNOWN",
+                 "linked_decision_id": "20260928_104100_chatgpt_formal_decision_decision",
+                 "execution_quality_status": "PARTIAL"},
+                {"code": "561980", "quantity": 13600, "decision_identity_status": "KNOWN",
+                 "linked_decision_id": "20260928_120100_chatgpt_formal_decision_decision_140700",
+                 "execution_quality_status": "PARTIAL"},
+            ]},
+        }
+        with self.assertRaisesRegex(ValueError, "canonically linked trades"):
+            completion.build_system_review_completion_request(
+                review, "system-request", "2026-09-29T19:31:00+08:00",
+                "ETF系统复核", "system-run",
+                "【需要用户处理】请把昨日两笔561980卖出分别和相应的正式判断对上。",
+            )
+
+    def test_system_review_rejects_user_trial_confirm_classification_when_link_known(self):
+        review = {
+            "status": "PASS",
+            "user_attribution_requirement": "NONE",
+            "canonical_trade_attribution": {"trades": [
+                {"code": "159981", "quantity": 5700, "decision_identity_status": "KNOWN",
+                 "linked_decision_id": "20260928_104100_chatgpt_formal_decision_decision",
+                 "decision_lifecycle": "Confirm", "asks_user_to_classify_trial_confirm": True},
+            ]},
+        }
+        with self.assertRaisesRegex(ValueError, "Trial/Confirm"):
+            completion.build_system_review_completion_request(
+                review, "system-request", "2026-09-29T19:31:00+08:00",
+                "ETF系统复核", "system-run",
+                "【需要用户处理】请说明这笔159981买入属于哪个仓位阶段。",
+            )
+
+    def test_system_review_allows_genuinely_missing_required_mapping(self):
+        review = {
+            "status": "PASS",
+            "user_attribution_requirement": "MAPPING_REQUIRED",
+            "canonical_trade_attribution": {"trades": [
+                {"code": "TEST", "quantity": 100, "decision_identity_status": "AMBIGUOUS",
+                 "decision_identity_required": True, "execution_quality_status": "PARTIAL"},
+            ]},
+        }
+        payload = completion.build_system_review_completion_request(
+            review, "system-request", "2026-09-29T19:31:00+08:00",
+            "ETF系统复核", "system-run",
+            "【需要用户处理】存在一笔无法由正式事实唯一归因的成交，需要补充确认。",
+        )
+        self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_SYSTEM_REVIEW")
+
     def test_system_review_rejects_confirmation_required_reconciliation_state(self):
         with self.assertRaisesRegex(ValueError, "execution-quality gaps"):
             completion.build_system_review_completion_request(
