@@ -168,39 +168,21 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
             self.assertIn(pattern, pr_block)
             self.assertIn(pattern, push_block)
 
-    def test_acceptance_rebuilds_owned_outputs_from_latest_main_without_rebase(self):
+    def test_acceptance_completion_does_not_require_main_projection_publication(self):
         source = WORKFLOW.read_text(encoding="utf-8")
-        persist = source.split("- name: Persist acceptance result", 1)[1].split("- name: Enforce production acceptance", 1)[0]
-        reset_pos = persist.index("git reset --hard origin/main")
-        rebuild_pos = persist.index('python scripts/run_production_acceptance.py --mutation-sha "$latest_main_sha"')
-        commit_pos = persist.index('git commit -m "state: persist production acceptance"')
-        restore_pos = persist.index("git restore --worktree .")
-        clean_pos = persist.index("git clean -fd -- data/state")
-        push_pos = persist.index("git push origin HEAD:main")
-        self.assertLess(reset_pos, rebuild_pos)
-        self.assertLess(rebuild_pos, commit_pos)
-        self.assertLess(commit_pos, restore_pos)
-        self.assertLess(restore_pos, clean_pos)
-        self.assertLess(clean_pos, push_pos)
-        self.assertNotIn("git rebase origin/main", persist)
-        self.assertNotIn("git add -A", persist)
+        acceptance = source.split("  production_acceptance:", 1)[1]
+        self.assertNotIn("- name: Persist acceptance result", acceptance)
+        self.assertIn("- name: Preserve acceptance projections as run evidence", acceptance)
+        self.assertIn("uses: actions/upload-artifact@v4", acceptance)
+        self.assertIn("data/state/system_consistency.json", acceptance)
+        self.assertIn("data/state/maintenance_health.json", acceptance)
+        self.assertIn("data/state/e2e_status.json", acceptance)
+        self.assertIn("data/state/execution_quality.json", acceptance)
+        self.assertNotIn("git push origin HEAD:main", acceptance)
+        self.assertNotIn("publication_deadline=", acceptance)
 
-    def test_acceptance_persistence_rebinds_stable_baseline_to_latest_main(self):
-        source = WORKFLOW.read_text(encoding="utf-8")
-        persist = source.split("- name: Persist acceptance result", 1)[1].split("- name: Enforce production acceptance", 1)[0]
-        self.assertIn('latest_main_sha="$(git rev-parse HEAD)"', persist)
-        self.assertIn('ETF_STABLE_ACCEPTANCE_BASE="$latest_main_sha"', persist)
-        self.assertNotIn('ETF_STABLE_ACCEPTANCE_BASE="${GITHUB_SHA}"', persist)
 
-    def test_workflow_does_not_add_a_second_state_store(self):
-        source = WORKFLOW.read_text(encoding="utf-8")
-        persist = source.split("- name: Persist acceptance result", 1)[1].split("- name: Enforce production acceptance", 1)[0]
-        self.assertEqual(persist.count("system_consistency.json"), 1)
-        self.assertEqual(persist.count("maintenance_health.json"), 1)
-        self.assertEqual(persist.count("e2e_status.json"), 1)
-        self.assertNotIn("RUNNER_TEMP/etf-acceptance-state", persist)
-        self.assertIn('python scripts/run_production_acceptance.py --mutation-sha "$latest_main_sha"', persist)
-        self.assertIn("Acceptance artifacts are rebuildable derived state", persist)
+
 
 
 if __name__ == "__main__":
