@@ -341,6 +341,25 @@ def context_component(query: dict, decision: dict) -> dict:
         "blockers": list(reply_freeze.get("blockers") or []),
         "source": "decision_fact_pack.formal_reply_freeze",
     } if request_bound else None
+    # Account-changing broker evidence is a hard dependency of capital decisions.
+    # Reuse the existing account component rather than introducing parallel state.
+    account_gate = account_component(read_json(FILES["account"]), read_json(FILES["current"]))
+    if request_bound and formal_reply_gate and account_gate.get("status") == "BLOCKED":
+        blockers = list(formal_reply_gate.get("blockers") or [])
+        marker = str(account_gate.get("reason") or "ACCOUNT_FACT_NOT_READY")
+        if marker not in blockers:
+            blockers.append(marker)
+        formal_reply_gate = {
+            **formal_reply_gate,
+            "status": "BLOCKED",
+            "reply_freezable": False,
+            "blockers": blockers,
+            "account_dependency": {
+                "status": account_gate.get("status"),
+                "reason": account_gate.get("reason"),
+                "pending_broker_request": account_gate.get("pending_broker_request"),
+            },
+        }
     fast_path = query.get("fast_path_latency") or {}
     latency_status = str(fast_path.get("latency_status") or "").strip().upper()
 

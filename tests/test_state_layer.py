@@ -241,6 +241,91 @@ class StateLayerTests(unittest.TestCase):
         self.assertIn("ACCOUNT_SYNC_NOT_PERFORMED", result["reason"])
 
 
+
+def test_request_bound_formal_reply_gate_blocks_on_unconsumed_broker_fact(tmp_path):
+    from scripts import build_e2e_status as e2e
+
+    root = tmp_path
+    state = root / "data" / "state"
+    requests = root / "requests" / "live_snapshot"
+    state.mkdir(parents=True)
+    requests.mkdir(parents=True)
+
+    account = {
+        "status": "VALID",
+        "updated_at": "2026-09-29T09:40:00+08:00",
+        "cash": 21962.84,
+        "positions": [{"code": "159941", "quantity": 12200}],
+    }
+    current = {
+        "needs_account_update": False,
+        "account_fact": {"status": "VALID", "updated_at": account["updated_at"]},
+    }
+    broker = {
+        "request_id": "broker-159992",
+        "requested_at_beijing": "2026-09-29T09:51:00+08:00",
+        "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+        "account_change_event_type": "USER_REPORTED_TRADE",
+        "account_fact": {
+            "status": "VALID",
+            "updated_at": "2026-09-29T09:50:30+08:00",
+            "cash": 17004.64,
+            "positions": [
+                {"code": "159941", "quantity": 12200},
+                {"code": "159992", "quantity": 5800},
+            ],
+        },
+        "trade_event": {
+            "event_id": "trade-159992",
+            "code": "159992",
+            "side": "BUY",
+            "quantity": 5800,
+            "price": 0.854,
+            "amount": 4953.20,
+            "executed_at": "2026-09-29T09:50:25+08:00",
+        },
+    }
+    query = {
+        "decision_fact_pack": {
+            "trigger": {
+                "request_id": "formal-0955",
+                "requested_at_beijing": "2026-09-29T09:55:00+08:00",
+            },
+            "formal_reply_freeze": {
+                "status": "READY",
+                "reply_freezable": True,
+                "blockers": [],
+            },
+        },
+        "fast_path_latency": {"latency_status": "OBSERVED"},
+    }
+    decision = {
+        "observability": {},
+        "formal_intraday_context_completeness": {"status": "READY"},
+    }
+
+    (state / "account_fact.json").write_text(json.dumps(account), encoding="utf-8")
+    (state / "CURRENT.json").write_text(json.dumps(current), encoding="utf-8")
+    (requests / "broker-159992.json").write_text(json.dumps(broker), encoding="utf-8")
+
+    old_root, old_state, old_files = e2e.ROOT, e2e.STATE, e2e.FILES
+    try:
+        e2e.ROOT = root
+        e2e.STATE = state
+        e2e.FILES = {
+            **old_files,
+            "account": state / "account_fact.json",
+            "current": state / "CURRENT.json",
+        }
+        component = e2e.context_component(query, decision)
+        gate = component["formal_reply_gate"]
+        assert gate["reply_freezable"] is False
+        assert gate["status"] == "BLOCKED"
+        assert any("ACCOUNT_SYNC_NOT_PERFORMED" in item for item in gate["blockers"])
+        assert gate["account_dependency"]["pending_broker_request"]["request_id"] == "broker-159992"
+    finally:
+        e2e.ROOT, e2e.STATE, e2e.FILES = old_root, old_state, old_files
+
 if __name__ == "__main__":
     unittest.main()
 
