@@ -512,17 +512,21 @@ class NotificationDecisionIdentityTests(unittest.TestCase):
 
 
 
-    def test_system_consistency_acceptance_publication_has_bounded_retry(self):
+    def test_system_consistency_acceptance_publication_has_bounded_convergence_window(self):
         workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/system-consistency.yml").read_text(encoding="utf-8")
-        self.assertIn("for attempt in 1 2; do", workflow)
+        self.assertIn("publication_deadline=$((SECONDS + 150))", workflow)
+        self.assertIn('while [ "$SECONDS" -lt "$publication_deadline" ]; do', workflow)
+        self.assertIn("attempt=$((attempt + 1))", workflow)
         self.assertIn("git reset --hard origin/main", workflow)
         self.assertIn('python scripts/run_production_acceptance.py --mutation-sha "$latest_main_sha"', workflow)
         self.assertIn("if git push origin HEAD:main; then", workflow)
         self.assertIn("rebuilding from latest main", workflow)
-        self.assertIn('test "$published" = "true"', workflow)
+        self.assertIn("sleep 2", workflow)
+        self.assertIn("did not reach a quiet main within the bounded convergence window", workflow)
         self.assertIn('latest_main_sha="$(git rev-parse HEAD)"', workflow)
         self.assertIn('ETF_ACCEPTANCE_SHA="$latest_main_sha" GITHUB_SHA="$latest_main_sha"', workflow)
         persist_step = workflow.split("- name: Persist acceptance result", 1)[1].split("- name: Enforce production acceptance", 1)[0]
+        self.assertNotIn("for attempt in 1 2; do", persist_step)
         self.assertNotIn("git rebase origin/main", persist_step)
         self.assertNotIn("git push --force", workflow)
         self.assertNotIn("git push -f ", workflow)
