@@ -56,5 +56,38 @@ class UserVisiblePresentationContractTests(unittest.TestCase):
         )
 
 
+    def test_formal_reply_presentation_failure_never_revokes_business_ready(self):
+        result = validate_formal_decision_reply_nonblocking(
+            "159992已成交。",
+            security_map=SECURITIES,
+        )
+        self.assertTrue(result["business_reply_eligible"])
+        self.assertFalse(result["presentation_valid"])
+        self.assertIn("创新药ETF", result["presentation_error"])
+
+    def test_formal_reply_closure_tense_failure_never_revokes_business_ready(self):
+        result = validate_formal_decision_reply_nonblocking(
+            "【执行状态】本事项已闭环",
+            security_map=SECURITIES,
+            canonical_closure_confirmed=False,
+        )
+        self.assertTrue(result["business_reply_eligible"])
+        self.assertFalse(result["presentation_valid"])
+
+    def test_formal_reply_valid_payload_remains_immediately_eligible(self):
+        result = validate_formal_decision_reply_nonblocking(
+            "创新药ETF（159992）继续持有。",
+            security_map=SECURITIES,
+        )
+        self.assertEqual(
+            result,
+            {
+                "business_reply_eligible": True,
+                "presentation_valid": True,
+                "presentation_error": "",
+            },
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
