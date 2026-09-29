@@ -12,6 +12,23 @@ INTERNAL_MARKERS = (
     "provider log", "commit sha", "head sha",
 )
 
+# High-confidence control-plane vocabulary that has a plain business-language
+# equivalent. Keep this list deliberately bounded: it protects presentation
+# without becoming a general English/NLP blacklist or changing machine schemas.
+CONTROL_PLANE_PATTERNS = (
+    (r"(?i)(?<![\w-])request-bound(?![\w-])", "request-bound"),
+    (r"(?<![A-Z0-9_])READY(?![A-Z0-9_])", "READY"),
+    (r"(?i)(?<![\w-])blocker(?:s)?(?![\w-])", "blocker"),
+    (r"(?<![A-Z0-9_])NO_ADD(?![A-Z0-9_])", "NO_ADD"),
+    (r"(?<![A-Z0-9_])BUSINESS_DECISION_READY(?![A-Z0-9_])", "BUSINESS_DECISION_READY"),
+    (r"(?i)(?<![\w-])reply_freezable(?![\w-])", "reply_freezable"),
+    (r"(?i)(?<![\w-])canonical\s+persistence(?![\w-])", "canonical persistence"),
+    (r"(?i)(?<![\w-])canonical(?![\w-])", "canonical"),
+    (r"(?i)(?<![\w-])Discovery(?![\w-])", "Discovery"),
+    (r"(?i)(?<![\w-])Observation\s+(?:ADMIT|RETAIN|EXIT)(?![\w-])", "Observation state enum"),
+    (r"(?<![A-Z0-9_])(?:ADMIT|RETAIN|EXIT)(?![A-Z0-9_])", "ADMIT/RETAIN/EXIT"),
+)
+
 
 def canonical_security_map(root: Path | None = None) -> dict[str, str]:
     """Build a read-only display map from existing canonical/config facts."""
@@ -81,6 +98,11 @@ def validate_user_visible_content(
         for marker in INTERNAL_MARKERS:
             if marker in lower:
                 errors.append(f"internal identity is forbidden in normal business presentation: {marker}")
+        for pattern, label in CONTROL_PLANE_PATTERNS:
+            if re.search(pattern, text):
+                errors.append(
+                    f"control-plane vocabulary must be translated into business language: {label}"
+                )
     if errors:
         raise ValueError("user-visible presentation contract failed: " + "; ".join(dict.fromkeys(errors)))
 
