@@ -514,6 +514,7 @@ class NotificationDecisionIdentityTests(unittest.TestCase):
 
     def test_system_consistency_acceptance_uses_artifact_evidence_without_main_publication(self):
         workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/system-consistency.yml").read_text(encoding="utf-8")
+        workflow = workflow.split("- name: Run canonical post-write acceptance", 1)[1]
         self.assertIn("- name: Preserve acceptance projections as run evidence", workflow)
         self.assertIn("production-acceptance-", workflow)
         self.assertIn("production-acceptance-result.json", workflow)
