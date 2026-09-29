@@ -136,6 +136,7 @@ def rebuild_known_net(equity: dict, root: Path | None = None) -> None:
     fee_summary["etf_pending_fees"] = pending
     fee_summary["pending_note"] = "canonical ETF fee projection"
     summary["known_fees"] = confirmed_fees
+    summary["pending_fee_count"] = pending
     summary["unknown_fee_flag"] = pending > 0
     summary["fee_status"] = "ALL_RECORDED_TRADE_FEES_CONFIRMED" if pending == 0 else f"{pending} RECORDED TRADE FEE(S) PENDING_OR_NOT_YET_DISPLAYED"
     summary["known_net_status"] = f"KNOWN_NET_DEDUCTS_{confirmed_fees:.2f}_CONFIRMED_ETF_FEES" + ("; NOT_FINAL_NET" if pending else "; RECORDED_FEES_COMPLETE")
