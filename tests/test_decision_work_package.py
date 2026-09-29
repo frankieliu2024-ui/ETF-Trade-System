@@ -271,6 +271,40 @@ class DecisionWorkPackageTests(unittest.TestCase):
         self.assertEqual(projected["capital_competition"]["zero_amount_decisive_reason"], "当前没有独立机会优于现金")
         self.assertEqual(len(projected["capital_competition"]["compared_capital_states"]), 6)
 
+    def test_actor_risk_permission_explanation_projects_to_registered_value(self):
+        source = {"request_type":"BUSINESS_DECISION_SOURCE","request_id":"risk-source","parent_request_id":"risk-parent","decision_id":"risk-decision","consumed_snapshot":"snap"}
+        graph = [
+            {"problem_id":"RISK_PERMISSION"},{"problem_id":"MAIN_CANDIDATE"},
+            {"problem_id":"DEPLOYABLE_CASH"},{"problem_id":"RELEASABLE_CAPITAL"},
+            {"problem_id":"CONCENTRATION_COMMON_RISK"},{"problem_id":"NEXT_UNIT_CAPITAL_USE"},
+        ]
+        answers = {x["problem_id"]:{"final_action":"保持","capital_comparison":"真实业务比较","next_change_condition":"下一合法节点重评","evidence_decision_impact":["ALL_REQUIRED"]} for x in graph}
+        answers["RISK_PERMISSION"]["final_action"] = "允许Trial；当前不支持新增Confirm"
+        answers["MAIN_CANDIDATE"].update({"candidate_code":"","candidate_name":"现金","opportunity_status":"无机会"})
+        answers["DEPLOYABLE_CASH"]["final_action"] = "保留现金"
+        answers["RELEASABLE_CAPITAL"]["final_action"] = "当前不释放持仓资本"
+        answers["CONCENTRATION_COMMON_RISK"]["final_action"] = "不增加共同风险"
+        answers["NEXT_UNIT_CAPITAL_USE"].update({
+            "final_action":"现金；新增0元","new_amount_yuan":0,"post_action_deployable_cash":17004.64,
+            "future_opportunity_capacity":"保留","cash_opportunity_cost":"可能错过右尾",
+            "alternative_capital_use_review":"已比较","concentration_account_structure_effect":"不扩大共同风险",
+            "selected_state_reason":"现金边际效率最高","compared_capital_states_as_business_state_names":["现金"],
+            "zero_amount_decisive_reason_if_zero":"当前没有独立机会优于现金",
+        })
+        projected = project_decision_response(source, {"answers":answers}, {"problem_graph":graph,"evidence_requirements":[]})
+        self.assertEqual(projected["risk_permission"], "允许Trial")
+
+    def test_actor_risk_permission_unknown_or_ambiguous_text_fails_closed(self):
+        source = {"request_type":"BUSINESS_DECISION_SOURCE","request_id":"risk-bad","parent_request_id":"risk-parent","decision_id":"risk-decision","consumed_snapshot":"snap"}
+        graph = [{"problem_id":"RISK_PERMISSION"},{"problem_id":"MAIN_CANDIDATE"},{"problem_id":"NEXT_UNIT_CAPITAL_USE"}]
+        base = {"final_action":"保持","capital_comparison":"compare","next_change_condition":"change","evidence_decision_impact":["ALL_REQUIRED"]}
+        answers = {x["problem_id"]:dict(base) for x in graph}
+        answers["RISK_PERMISSION"]["final_action"] = "适度允许新增"
+        answers["MAIN_CANDIDATE"].update({"candidate_code":"","candidate_name":"现金","opportunity_status":"无机会"})
+        answers["NEXT_UNIT_CAPITAL_USE"].update({"new_amount_yuan":0,"post_action_deployable_cash":1000,"future_opportunity_capacity":"保留","cash_opportunity_cost":"成本","alternative_capital_use_review":"已比较","concentration_account_structure_effect":"受控","selected_state_reason":"现金","compared_capital_states_as_business_state_names":["现金"],"zero_amount_decisive_reason_if_zero":"无更优机会"})
+        with self.assertRaisesRegex(ValueError, "no registered formal permission"):
+            project_decision_response(source, {"answers":answers}, {"problem_graph":graph,"evidence_requirements":[]})
+
     def test_no_new_trade_status_cannot_mask_security_or_positive_capital(self):
         source = {"request_type":"BUSINESS_DECISION_SOURCE","request_id":"bad-cash","parent_request_id":"p","decision_id":"d","consumed_snapshot":"snap"}
         graph = [{"problem_id":"RISK_PERMISSION"},{"problem_id":"MAIN_CANDIDATE"},{"problem_id":"NEXT_UNIT_CAPITAL_USE"}]
