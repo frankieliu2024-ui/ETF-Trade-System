@@ -597,7 +597,7 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          python scripts/run_production_acceptance.py --mutation-sha "$ETF_ACCEPTANCE_SHA"
+          python scripts/run_production_acceptance.py --mutation-sha "$ETF_ACCEPTANCE_SHA" --result-path "$RUNNER_TEMP/production-acceptance-result.json"
       - name: Preserve acceptance projections as run evidence
         if: ${{ always() && (steps.acceptance_scope.outputs.required == 'true' || github.event_name == 'workflow_dispatch') }}
         uses: actions/upload-artifact@v4
@@ -610,6 +610,7 @@ jobs:
             data/state/maintenance_health.json
             data/state/e2e_status.json
             data/state/execution_quality.json
+            ${{ runner.temp }}/production-acceptance-result.json
       - name: Enforce production acceptance
         if: ${{ always() && (steps.acceptance_scope.outputs.required == 'true' || github.event_name == 'workflow_dispatch') && steps.acceptance.outcome == 'failure' }}
         run: exit 1

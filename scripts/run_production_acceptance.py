@@ -21,7 +21,7 @@ def persist_consistency_report_if_valid(report,target=CONSISTENCY):
     if not is_complete_consistency_report(report): return False
     target.write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8"); return True
 def main():
-    parser=argparse.ArgumentParser(); parser.add_argument("--mutation-sha",default=os.environ.get("GITHUB_SHA","")); args=parser.parse_args()
+    parser=argparse.ArgumentParser(); parser.add_argument("--mutation-sha",default=os.environ.get("GITHUB_SHA","")); parser.add_argument("--result-path",default=""); args=parser.parse_args()
     # build_state_context is the canonical acceptance rebuild for execution_quality too;
     # do not invoke the same deterministic builder twice on the Fast Path.
     state_rc=run([sys.executable,str(ROOT/"scripts/build_state_context.py")])
@@ -47,7 +47,10 @@ def main():
     consistency_ok=is_complete_consistency_report(consistency) and consistency.get("status") in {"PASS","WARNING"} and consistency.get("hard_error_count")==0
     maintenance_ok=maintenance.get("status") in {"PASS","WARNING","DEGRADED"}; e2e_ok=e2e.get("status") in {"READY","DEGRADED"}
     accepted=all(x==0 for x in (quality_rc,state_rc,query_rc,consistency_rc,maintenance_rc,e2e_rc)) and consistency_ok and maintenance_ok and e2e_ok and not report_error
-    print(json.dumps({"acceptance":"PASS" if accepted else "FAIL","quality_rebuild":quality_rc==0,"state_context":state_rc==0,"query_context":query_rc==0,"consistency_report_valid":not report_error,"consistency":consistency.get("status"),"maintenance":maintenance.get("status"),"e2e":e2e.get("status"),"report_error":report_error,"mutation_sha":args.mutation_sha,"recursive_push_required":False},ensure_ascii=False))
+    result={"acceptance":"PASS" if accepted else "FAIL","quality_rebuild":quality_rc==0,"state_context":state_rc==0,"query_context":query_rc==0,"return_codes":{"quality_rebuild":quality_rc,"state_context":state_rc,"query_context":query_rc,"consistency":consistency_rc,"maintenance":maintenance_rc,"e2e":e2e_rc},"consistency_report_valid":not report_error,"consistency":consistency.get("status"),"maintenance":maintenance.get("status"),"e2e":e2e.get("status"),"report_error":report_error,"mutation_sha":args.mutation_sha,"recursive_push_required":False}
+    print(json.dumps(result,ensure_ascii=False))
+    if args.result_path:
+        result_path=Path(args.result_path); result_path.parent.mkdir(parents=True,exist_ok=True); result_path.write_text(json.dumps(result,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     try: fresh_path.unlink()
     except OSError: pass
     return 0 if accepted else 1
