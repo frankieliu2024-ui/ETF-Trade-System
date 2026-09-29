@@ -476,6 +476,7 @@ def main() -> int:
     check("master:holding_observation", "持仓ETF＋观察ETF" in master or "持仓ETF+观察ETF" in master, "holding/observation taxonomy present")
     stale_pool = "统一研究池固定为" in master or ("八ETF" in master and "每个自动或人工决策节点先读取八ETF" in master)
     check("master:no_parallel_fixed_pool", not stale_pool, "no stale fixed-pool taxonomy")
+    check("master:observation_candidate_roles", all(x in master for x in ("持续但可替换的信息监测集合", "候选ETF是**节点级机会角色，不是第三种持久ETF身份**", "观察ETF与候选ETF允许在同一节点重叠")), "continuous observation and node-local candidate roles separated")
     check("master:direct_confirm_explicit", "不是Confirm的强制前置" in master and "直接Confirm" in master, "MASTER explicitly allows direct Confirm when full Confirm evidence is already satisfied")
 
     runner = read_text("scripts/cloud_runner_snapshot.py")
