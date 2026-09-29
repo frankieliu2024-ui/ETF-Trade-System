@@ -108,5 +108,16 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertTrue(_workflow_may_stage("git add data/state/notification_center.json", "data/state/notification_center.json"))
 
 
+    def test_notification_state_persistence_replays_latest_main_without_resend(self):
+        persist = self.text.split("- name: Persist unified notification and execution-reconciliation state", 1)[1]
+        persist = persist.split("- name: Surface notification delivery failure", 1)[0]
+        self.assertIn("for attempt in 1 2 3; do", persist)
+        self.assertIn("git fetch origin main", persist)
+        self.assertIn("git reset --hard origin/main", persist)
+        self.assertIn("merge_notification_state.py", persist)
+        self.assertNotIn("run_guarded_notification.py", persist)
+        self.assertNotIn("git push --force", persist)
+
+
 if __name__ == "__main__":
     unittest.main()
