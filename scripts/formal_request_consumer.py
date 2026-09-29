@@ -26,7 +26,9 @@ def classify_formal_request_consumer_state(
         return {
             "status": "TERMINAL_FAILURE",
             "continue_same_request": False,
+            "analysis_eligible": False,
             "reply_eligible": False,
+            "user_visible_output": "TERMINAL_FAILURE",
             "reason": "PARENT_REQUEST_ID_MISSING",
         }
 
@@ -46,7 +48,9 @@ def classify_formal_request_consumer_state(
         return {
             "status": "TERMINAL_FAILURE",
             "continue_same_request": False,
+            "analysis_eligible": False,
             "reply_eligible": False,
+            "user_visible_output": "TERMINAL_FAILURE",
             "reason": "EXPLICIT_TERMINAL_FAILURE",
         }
 
@@ -55,7 +59,9 @@ def classify_formal_request_consumer_state(
         return {
             "status": "BUSINESS_DECISION_READY",
             "continue_same_request": False,
+            "analysis_eligible": True,
             "reply_eligible": True,
+            "user_visible_output": "COMPLETE_BUSINESS_DECISION_ONLY",
             "reason": "SAME_REQUEST_FORMAL_REPLY_FREEZE_READY",
         }
 
@@ -63,7 +69,9 @@ def classify_formal_request_consumer_state(
         return {
             "status": "REQUEST_BOUND_FACTS_BUILDING",
             "continue_same_request": True,
+            "analysis_eligible": False,
             "reply_eligible": False,
+            "user_visible_output": "SILENT_CONTINUATION",
             "reason": "CURRENT_DERIVED_CONTEXT_NOT_YET_BOUND_TO_DURABLE_PARENT",
         }
 
@@ -71,13 +79,17 @@ def classify_formal_request_consumer_state(
         return {
             "status": "REQUEST_BOUND_FACTS_BUILDING",
             "continue_same_request": True,
+            "analysis_eligible": False,
             "reply_eligible": False,
+            "user_visible_output": "SILENT_CONTINUATION",
             "reason": "SAME_REQUEST_FACTS_STILL_FORMING",
         }
 
     return {
         "status": "REQUEST_BOUND_FACTS_BUILDING",
         "continue_same_request": True,
+        "analysis_eligible": False,
         "reply_eligible": False,
+        "user_visible_output": "SILENT_CONTINUATION",
         "reason": "NO_EXPLICIT_TERMINAL_FAILURE_AND_REPLY_NOT_YET_READY",
     }
