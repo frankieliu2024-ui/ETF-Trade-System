@@ -187,6 +187,10 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             for field in ("name", "thscode", "thesis", "falsifier", "next_decision_information", "information_value_reason"):
                 if not str(answer.get(field) or "").strip():
                     raise ValueError(f"decision response ADMIT requires {pid}.{field}")
+        if pid.startswith("OBSERVATION:") and str((by_id.get(pid) or {}).get("role_contract") or "") == "CONTINUOUS_INFORMATION_V1" and str(answer.get("disposition") or "").upper() == "EXIT":
+            for field in ("information_value_reason", "continuity_cost_assessment"):
+                if not str(answer.get(field) or "").strip():
+                    raise ValueError(f"decision response EXIT requires continuous-information rationale {pid}.{field}")
 
     next_answer = answers.get("NEXT_UNIT_CAPITAL_USE") or {}
     compared_capital_states = next_answer.get("compared_capital_states_as_business_state_names")
@@ -332,7 +336,11 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             if disposition not in {"RETAIN", "EXIT"}:
                 raise ValueError(f"Observation disposition must be RETAIN/EXIT: {pid}")
             if disposition == "EXIT":
-                observation_management.append({"code": code, "action": "EXIT", "reason": answer.get("reason")})
+                exit_item = {"code": code, "action": "EXIT", "reason": answer.get("reason")}
+                if str(item.get("role_contract") or "") == "CONTINUOUS_INFORMATION_V1":
+                    exit_item["information_value_reason"] = answer.get("information_value_reason")
+                    exit_item["continuity_cost_assessment"] = answer.get("continuity_cost_assessment")
+                observation_management.append(exit_item)
             else:
                 thesis = item.get("existing_thesis_state") or {}
                 required_thesis = ("name", "thscode", "thesis", "falsifier", "next_decision_information", "information_value_reason")
