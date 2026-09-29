@@ -42,6 +42,13 @@ _FORMAL_OPPORTUNITY_ALIASES = {
 }
 
 def _normalize_opportunity_status(value: Any) -> str:
+    """Resolve actor language to one canonical opportunity enum.
+
+    Exact canonical values and explicitly registered aliases are accepted.
+    Free-text substring/fuzzy matching is intentionally forbidden here: if a
+    business phrase needs support it must be registered once and covered by
+    cross-field validation before persistence.
+    """
     raw = str(value or "").strip()
     return _FORMAL_OPPORTUNITY_ALIASES.get(raw, "")
 
