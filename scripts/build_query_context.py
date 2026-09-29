@@ -302,11 +302,11 @@ def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict],
     for item in observation_inputs or []:
         code = str(item.get("code") or "")
         if code:
-            problems.append({"problem_id": f"OBSERVATION:{code}", "decision_object": code, "security": item.get("name") or code, "thscode": item.get("thscode") or "", "existing_thesis_state": item.get("existing_thesis_state") or {}, "required_business_judgment": "判断既有观察ETF是否保留及其资本竞争位置；RETAIN沿用已有canonical thesis metadata，EXIT只需业务退出理由"})
+            problems.append({"problem_id": f"OBSERVATION:{code}", "decision_object": code, "security": item.get("name") or code, "thscode": item.get("thscode") or "", "existing_thesis_state": item.get("existing_thesis_state") or {}, "role_contract": "CONTINUOUS_INFORMATION_V1", "required_business_judgment": "先判断持续信息功能是否仍独立、可证伪且不可被更有效对象充分替代，再判断当前机会状态；RETAIN不要求当前接近Trial/Confirm，EXIT必须说明信息功能失效/被替代及退出后的信息连续性成本。观察ETF若当前形成机会可同时作为节点级候选参与资本比较"})
     for item in discovery_inputs:
         code = str(item.get("code") or "")
         if code:
-            problems.append({"problem_id": f"DISCOVERY:{code}", "decision_object": code, "security": item.get("name") or code, "formal_quote_status": item.get("formal_quote_status") or "", "required_business_judgment": "判断Observation/临时评估资格及资本竞争位置"})
+            problems.append({"problem_id": f"DISCOVERY:{code}", "decision_object": code, "security": item.get("name") or code, "formal_quote_status": item.get("formal_quote_status") or "", "role_contract": "NODE_LOCAL_CANDIDATE_V1", "management_identity": item.get("management_identity"), "required_business_judgment": "判断本节点候选机会状态及资本竞争位置；候选身份本身不持久。只有另有持续跨节点信息价值时才ADMIT为观察ETF，REJECT观察准入不等于否定本节点候选机会"})
     return problems
 
 
@@ -327,7 +327,7 @@ def _evidence_requirement_plan(problems: list[dict]) -> list[dict]:
     ]
     opportunity = [
         "ETF_RELATIVE_STRENGTH", "FULL_MARKET_DISCOVERY",
-        "OBSERVATION_ETF", "TEMPORARY_DISCOVERY_CANDIDATE",
+        "OBSERVATION_ETF", "NODE_LOCAL_CANDIDATE",
     ]
     holding = ["ETF_RELATIVE_STRENGTH", "HOLDING_ETF", "ACCOUNT_STOCK"]
     capital = ["CASH", "RELEASABLE_CAPITAL", "HOLDING_ADDITIONAL_CAPITAL"]
@@ -1386,7 +1386,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     for item in formal_discovery.get("candidates") or []:
         code = str(item.get("code") or "").upper()
         if code and code not in seen_system_codes:
-            system_objects.append({"object_code": code, "object_name": item.get("name") or code, "source_type": "NODE_LOCAL_OBSERVATION_EVALUATION"})
+            system_objects.append({"object_code": code, "object_name": item.get("name") or code, "source_type": "NODE_LOCAL_CANDIDATE"})
             seen_system_codes.add(code)
     decision_context_started = time.monotonic()
     decision = build_decision_context(
