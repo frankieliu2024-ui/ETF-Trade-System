@@ -63,6 +63,7 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         self.assertIn("ETF_CONSISTENCY_REPORT_PATH", source)
         self.assertIn("git -c core.quotePath=false diff-tree --no-commit-id --name-only -m -r", source)
         self.assertIn("run_production_acceptance.py", source)
+        self.assertIn("--scope-path", source)
         self.assertNotIn("Refresh formal overseas and Asia index context", source)
         self.assertNotIn("Run requested research historical backfill", source)
         self.assertNotIn("Apply confirmed trade fact correction", source)
@@ -170,7 +171,7 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
 
     def test_acceptance_completion_does_not_require_main_projection_publication(self):
         source = WORKFLOW.read_text(encoding="utf-8")
-        acceptance = source.split("  production_acceptance:", 1)[1]
+        acceptance = source.split("- name: Run canonical post-write acceptance", 1)[1]
         self.assertNotIn("- name: Persist acceptance result", acceptance)
         self.assertIn("- name: Preserve acceptance projections as run evidence", acceptance)
         self.assertIn("uses: actions/upload-artifact@v4", acceptance)
