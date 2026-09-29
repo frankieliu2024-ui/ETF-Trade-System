@@ -124,6 +124,39 @@ def build_completion_request(
     return payload
 
 
+SYSTEM_REVIEW_FORBIDDEN_AUTHORITY_PHRASES = (
+    "继续维持禁止新增",
+    "维持禁止新增",
+    "继续禁止新增",
+    "维持允许新增",
+    "继续维持允许新增",
+)
+SYSTEM_REVIEW_FALSE_ATTRIBUTION_PHRASES = (
+    "逐笔归因仍待用户确认",
+    "成交归因仍待用户确认",
+    "确认能源化工ETF（159981）5,700份买入对应Trial还是Confirm",
+)
+
+
+def validate_system_review_presentation(system_review: dict, final_content: str) -> None:
+    """Keep Scheduled System Review informational and non-decisional.
+
+    Canonical trade facts may carry a linked decision identity while execution-quality
+    enrichment remains PARTIAL.  The report must not turn that distinction into a
+    false user mapping dependency, and it must not renew prior Formal Decision authority.
+    """
+    content = str(final_content or "").strip()
+    if not content:
+        raise ValueError("scheduled system review completion requires frozen final_content")
+    if any(phrase in content for phrase in SYSTEM_REVIEW_FORBIDDEN_AUTHORITY_PHRASES):
+        raise ValueError("Scheduled System Review must not renew or extend Formal Decision trading authority")
+    if any(phrase in content for phrase in SYSTEM_REVIEW_FALSE_ATTRIBUTION_PHRASES):
+        raise ValueError("Scheduled System Review must not request user mapping for canonically linked trades")
+    reconciliation = str((system_review or {}).get("execution_reconciliation") or "").strip().upper()
+    if reconciliation in {"CONFIRMATION_REQUIRED", "USER_CONFIRMATION_REQUIRED"}:
+        raise ValueError("Scheduled System Review must distinguish execution-quality gaps from missing decision identity")
+
+
 def build_system_review_completion_request(
     system_review: dict,
     request_id: str,
@@ -139,6 +172,7 @@ def build_system_review_completion_request(
     task_run_id = _safe_id(task_run_id)
     if not str(requested_at_beijing or "").strip() or not str(final_content or "").strip():
         raise ValueError("scheduled system review completion requires requested_at_beijing and frozen final_content")
+    validate_system_review_presentation(system_review, final_content)
     return {
         "request_id": request_id,
         "request_type": "STATE_SYNC_ONLY",
