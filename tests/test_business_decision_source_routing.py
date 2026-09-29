@@ -14,6 +14,23 @@ class BusinessDecisionSourceRoutingTests(unittest.TestCase):
         }
         self.assertEqual(gate.classify_live_snapshot_request(request), "BUSINESS_DECISION_SOURCE")
 
+    def test_broker_screenshot_source_routes_to_existing_state_sync(self):
+        request = {
+            "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+            "fact_type": "BROKER_ACCOUNT_SNAPSHOT",
+            "interaction_scenario": "POST_CLOSE_REVIEW",
+            "account_fact": {"status": "VALID", "updated_at": "2026-09-29T18:44:00+08:00"},
+        }
+        self.assertEqual(gate.classify_live_snapshot_request(request), "STATE_SYNC_ONLY")
+
+    def test_broker_screenshot_sync_scenario_routes_to_existing_state_sync(self):
+        request = {
+            "source": "CHATGPT_MANUAL",
+            "interaction_scenario": "BROKER_SCREENSHOT_SYNC",
+            "account_fact": {"status": "VALID"},
+        }
+        self.assertEqual(gate.classify_live_snapshot_request(request), "STATE_SYNC_ONLY")
+
     def test_push_class_preserves_business_source(self):
         request = {
             "request_type": "BUSINESS_DECISION_SOURCE",
