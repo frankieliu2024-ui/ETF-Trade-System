@@ -112,7 +112,7 @@ class ProductionBusinessSourceIngressTests(unittest.TestCase):
                 SOURCE, BASE_DECISION, response, work_package, "data/market/snapshots/x.json"
             )
 
-    def test_durable_business_source_must_come_from_authoritative_builder(self):
+    def test_repo_builder_remains_available_for_preflight_and_recovery(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             (root / "requests/live_snapshot").mkdir(parents=True)

@@ -14,6 +14,25 @@ class BusinessDecisionSourceRoutingTests(unittest.TestCase):
         }
         self.assertEqual(gate.classify_live_snapshot_request(request), "BUSINESS_DECISION_SOURCE")
 
+    def test_actor_business_source_envelope_stays_minimal(self):
+        request = {
+            "request_id": "formal-r1__business_decision_source_1",
+            "request_type": "BUSINESS_DECISION_SOURCE",
+            "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
+            "parent_request_id": "formal-r1",
+            "decision_id": "formal-r1_decision",
+            "consumed_snapshot": "data/market/snapshots/2026-09-30_151018.json",
+            "decision_response": {"answers": {"RISK_PERMISSION": {
+                "final_action": "允许Confirm",
+                "capital_comparison": "comparison",
+                "next_change_condition": "condition",
+                "evidence_decision_impact": ["ALL_REQUIRED"],
+            }}},
+        }
+        self.assertEqual(gate.classify_live_snapshot_request(request), "BUSINESS_DECISION_SOURCE")
+        self.assertNotIn("formal_decision", request)
+        self.assertNotIn("decision_work_package", request)
+
     def test_broker_screenshot_source_routes_to_existing_state_sync(self):
         request = {
             "source": "CHATGPT_USER_BROKER_SCREENSHOT",
