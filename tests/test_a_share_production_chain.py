@@ -422,6 +422,8 @@ class ManualRequestSessionIngressTests(unittest.TestCase):
         self.assertIn("--formal-replay-dwp-commit", state_sync)
         self.assertIn("formal replay source bytes must match the immutable source-introduction commit", state_sync)
         self.assertIn("historical request-bound Decision Work Package", state_sync)
+        self.assertIn("if replay_source_commit:", state_sync)
+        self.assertIn('decision_work_package = packet.get("decision_work_package") or {}', state_sync)
         self.assertIn("FORMAL_REPLAY_DWP_COMMIT", workflow)
         self.assertIn("formal replay cannot resolve historical request-bound Decision Work Package provenance", workflow)
 
