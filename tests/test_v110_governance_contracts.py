@@ -19,6 +19,15 @@ class V110GovernanceContractTests(unittest.TestCase):
         self.assertEqual(self.mirror["normative_contract"]["version"], "V1.10")
         self.assertIn("V1.10", self.mirror["normative_contract"]["migration_note"])
 
+    def test_risk_classifier_consumer_reads_canonical_protocol_version(self):
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+        import check_production_mutation_protocol as checker
+        result = checker.run(Path(__file__).resolve().parents[1])
+        check = next(item for item in result["checks"] if item["name"] == "mutation_protocol:risk_tier_classifier")
+        self.assertEqual(check["status"], "PASS")
+        self.assertIn(self.mirror["normative_contract"]["version"], check["detail"])
+
     def test_failure_escalation_is_evidence_state_based(self):
         gate = self.mirror["failure_escalation_gate"]
         self.assertEqual(gate["basis"], "evidence_state_not_fixed_attempt_count")
