@@ -2134,6 +2134,15 @@ def record_close_review_closure(account: dict, request: dict, review: dict, even
 
 
 def execution_attribution(trade: dict, linked_decision_id: str) -> dict:
+    try:
+        from decision_trade_link import resolve_link
+        resolved_id, _decision, resolution = resolve_link(ROOT, trade, linked_decision_id)
+        if resolution == "CORRECTION_CONFLICT":
+            return {"status": "CORRECTION_CONFLICT"}
+        if resolved_id:
+            return {"status": "READY", "decision_id": resolved_id, "resolution": resolution}
+    except Exception:
+        pass
     if not linked_decision_id:
         return {"status": "NO_LINKED_DECISION"}
     path = ROOT / "events/decisions" / f"{linked_decision_id}.json"
