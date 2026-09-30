@@ -18,6 +18,27 @@ class HistoricalRecoveryTemporalContractTests(unittest.TestCase):
         self.assertNotEqual(resolved, current)
         self.assertIsNot(resolved, historical)
 
+    def test_lifecycle_validator_receives_decision_time_positions(self):
+        historical = {"status": "VALID", "positions": [{"code": "513520", "quantity": 2100}]}
+        current = {"status": "VALID", "positions": [{"code": "513520", "quantity": 2100}, {"code": "159981", "quantity": 2800}]}
+        lifecycle = {"日经ETF（513520）": "观察"}
+        with patch.object(state_sync, "build_managed_position_projection",
+                          side_effect=lambda _root, account: {
+                              "positions": [
+                                  {"code": str(item["code"]), "name": str(item["code"]), "quantity": item["quantity"]}
+                                  for item in account.get("positions", [])
+                                  if float(item.get("quantity") or 0) > 0
+                              ]
+                          }):
+            self.assertEqual(
+                state_sync.validate_managed_position_lifecycle(lifecycle, historical),
+                "",
+            )
+            self.assertIn(
+                "159981",
+                state_sync.validate_managed_position_lifecycle(lifecycle, current),
+            )
+
     def test_ordinary_completion_keeps_current_account_contract(self):
         current = {"status": "VALID", "positions": [{"code": "159981", "quantity": 2800}]}
         with patch.object(state_sync, "_load_account_for_lifecycle_validation", return_value=current):
