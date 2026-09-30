@@ -696,13 +696,12 @@ jobs:
               if not required:
                   raise SystemExit("FORMAL_POST_CLOSE_REVIEW replay has invalid request/market temporal identity")
           else:
-              trade = obj.get("trade_event")
-              if not isinstance(trade, dict):
-                  raise SystemExit("trade-bearing STATE_SYNC_ONLY replay must contain a trade_event")
-          # Historical durable requests may predate embedded execution_status.
-          # Admission still requires the same canonical EXECUTED event that the
-          # state-sync owner will consume; the request itself is never rewritten.
-          else:
+            trade = obj.get("trade_event")
+            if not isinstance(trade, dict):
+                raise SystemExit("trade-bearing STATE_SYNC_ONLY replay must contain a trade_event")
+            # Historical durable requests may predate embedded execution_status.
+            # Admission still requires the same canonical EXECUTED event that the
+            # state-sync owner will consume; the request itself is never rewritten.
             embedded_status = trade.get("execution_status")
             if embedded_status is not None and str(embedded_status).upper() != "EXECUTED":
                 raise SystemExit("replay_request embedded trade_event is not EXECUTED")
