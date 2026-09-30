@@ -411,6 +411,10 @@ class ManualRequestSessionIngressTests(unittest.TestCase):
         self.assertIn('original_source_commit=$(python - "$parent_request_id" "${formal_sources[@]}"', workflow)
         self.assertIn('["git", "rev-list", "--reverse", "HEAD"]', workflow)
         self.assertIn('formal_dwp_commit=$(python - "$parent_request_id" "$original_source_commit"', workflow)
+        self.assertIn('"$request_files" <<\'PY\'', workflow)
+        self.assertIn('git", "diff-tree", "--no-commit-id", "--name-only", "-r"', workflow)
+        self.assertIn("state-at-commit evidence, not a state-producing", workflow)
+        self.assertIn("generated_time <= source_time", workflow)
         self.assertIn("FORMAL_REPLAY_SOURCE_COMMIT", workflow)
         self.assertIn("--formal-replay-source-commit", workflow)
         self.assertIn("formal replay canonical Decision Fact count must equal one", workflow)
@@ -421,7 +425,7 @@ class ManualRequestSessionIngressTests(unittest.TestCase):
         self.assertIn("--formal-replay-source-commit", state_sync)
         self.assertIn("--formal-replay-dwp-commit", state_sync)
         self.assertIn("formal replay source bytes must match the immutable source-introduction commit", state_sync)
-        self.assertIn("historical request-bound Decision Work Package", state_sync)
+        self.assertIn("Historical replay is provenance-bound", state_sync)
         self.assertIn("if replay_source_commit:", state_sync)
         self.assertIn('decision_work_package = packet.get("decision_work_package") or {}', state_sync)
         self.assertIn("FORMAL_REPLAY_DWP_COMMIT", workflow)
@@ -436,4 +440,3 @@ class ManualRequestSessionIngressTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
