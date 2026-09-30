@@ -154,6 +154,39 @@ class V19RiskTierTests(unittest.TestCase):
             ],
         ))
 
+    def test_merged_main_runtime_state_does_not_pollute_unrelated_attribution(self):
+        failed = [{
+            "name": "tests:market_data_and_quote_router",
+            "status": "FAIL",
+        }]
+        changed = [
+            "data/state/overseas_context.json",
+            "data/state/us_extended_hours_context.json",
+            "data/state/us_pulse_runtime_health.json",
+            "scripts/check_production_mutation_protocol.py",
+            "tests/test_v19_risk_tier_protocol.py",
+        ]
+        self.assertTrue(candidate_change_acceptance_allows_global_failure(
+            changed_files=changed,
+            failed_checks=failed,
+        ))
+
+    def test_failure_movement_matrix_preserves_global_failure_and_routes_change_result(self):
+        from scripts.check_production_mutation_protocol import classify_merged_main_failure
+        for attribution, closure in (
+            ("PREEXISTING_UNRELATED", "CLOSE"),
+            ("NEW_UNRELATED_DISCOVERY", "CLOSE"),
+            ("INTRODUCED_BY_CURRENT_CHANGE", "DO_NOT_CLOSE"),
+            ("ATTRIBUTION_INCONCLUSIVE", "DO_NOT_CLOSE"),
+        ):
+            result = classify_merged_main_failure(
+                global_status="FAIL",
+                change_specific_status="PASS",
+                attribution=attribution,
+            )
+            self.assertEqual(result["global_failure_preserved"], True)
+            self.assertEqual(result["issue_closure"], closure)
+
     def test_formal_contract_explicit_unrelated_ignores_dashboard_projection_tokens(self):
         failed = [{
             "name": "tests.test_formal_decision_contract",

@@ -157,7 +157,20 @@ def _attribution_category(item: dict, changed_files: list[str]) -> str:
             return explicit
         return "ATTRIBUTION_INCONCLUSIVE"
 
-    same_domain = bool(failure_tokens & changed_tokens)
+    # Acceptance runs may advance main and regenerate derived runtime state
+    # before attribution. Those files are execution evidence, not the stable
+    # mutation boundary; including their generic path tokens (for example
+    # data/state) can falsely make an unrelated market failure appear
+    # same-domain. Preserve core fact files as causal inputs.
+    runtime_only_prefixes = ("data/state/", "data/market/snapshots/")
+    core_fact_paths = {"data/state/account_fact.json"}
+    stable_changed_files = [
+        str(path) for path in changed_files
+        if str(path) in core_fact_paths
+        or not str(path).replace("\\", "/").startswith(runtime_only_prefixes)
+    ]
+    stable_changed_tokens = tokens(" ".join(stable_changed_files)) - generic_domain_tokens
+    same_domain = bool(failure_tokens & stable_changed_tokens)
     if same_domain:
         return "INTRODUCED_BY_CURRENT_CHANGE"
     if explicit in {"PREEXISTING_UNRELATED", "NEW_UNRELATED_DISCOVERY"}:
