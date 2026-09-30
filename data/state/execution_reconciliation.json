@@ -1,41 +1,15 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-09-30T12:12:21+08:00",
-  "status": "CONFIRMATION_REQUIRED",
+  "generated_at": "2026-09-30T13:12:36+08:00",
+  "status": "NO_MATCH",
   "lookback_days": 5,
   "supported_intents": [
     "正式正金额买入",
     "明确份额减持/卖出",
     "全部退出/清仓（仅在事实足够时匹配）"
   ],
-  "matches": [
-    {
-      "status": "MULTIPLE_OPERATIONS_REQUIRE_DETAIL",
-      "requires_user_confirmation": true,
-      "intent": {
-        "decision_id": "20260925_131000_chatgpt_formal_decision_decision",
-        "decision_time": "2026-09-25T13:11:27+08:00",
-        "decision_market_date": "2026-09-24",
-        "source_event": "events/decisions/20260925_131000_chatgpt_formal_decision_decision.json",
-        "code": "561980",
-        "name": "半导体设备ETF",
-        "side": "SELL",
-        "planned_quantity": 10000,
-        "full_exit": false,
-        "lifecycle": "EXIT_OR_RISK_REDUCTION",
-        "planned_amount_yuan": null
-      },
-      "trade_event_ids": [
-        "BROKER_ACCOUNT_SYNC_20260928_124700_FORMAL_PARENT_2_c2df2e1d7cb1296e",
-        "BROKER_ACCOUNT_SYNC_20260928_142235_FORMAL_PARENT"
-      ],
-      "fill_status": "OVER_EXECUTION_OR_MULTIPLE_OPERATIONS",
-      "fill_ratio": 2.89,
-      "suggested_execution_date": "2026-09-28",
-      "reason": "同一决策窗口内发现多笔同代码成交，仅靠最终持仓无法安全判断每笔归因。"
-    }
-  ],
-  "actionable_count": 1,
+  "matches": [],
+  "actionable_count": 0,
   "account_fact_updated_at": "2026-09-30T09:45:00+08:00",
   "design_rule": "对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。",
   "known_limitation": "仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。",
