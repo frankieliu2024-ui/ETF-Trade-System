@@ -66,6 +66,59 @@ class E2EDecisionReadinessTests(unittest.TestCase):
         self.assertEqual(result["minimum_decision_context"], "READY_OR_NOT_APPLICABLE")
         self.assertTrue(result["request_bound"])
 
+    def test_downstream_state_sync_latency_does_not_degrade_decision_context(self):
+        result = context_component(
+            {
+                "decision_fact_pack": {
+                    "trigger": {
+                        "request_id": "broker-sync",
+                        "requested_at_beijing": "2026-09-30T13:27:00+08:00",
+                    },
+                    "formal_reply_freeze": {
+                        "status": "NOT_APPLICABLE",
+                        "reply_freezable": True,
+                        "blockers": [],
+                    },
+                },
+                "fast_path_latency": {
+                    "latency_status": "DOWNSTREAM_NOT_DECISION_LATENCY",
+                    "latency_observation_role": "DOWNSTREAM_COMPLETION_NOT_DECISION_REQUEST",
+                    "may_measure_original_decision_latency": False,
+                },
+            },
+            {
+                "observability": {
+                    "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED"
+                },
+                "formal_intraday_context_completeness": {"status": "READY"},
+            },
+        )
+        self.assertEqual(result["status"], "READY")
+        self.assertEqual(result["minimum_decision_context"], "READY_OR_NOT_APPLICABLE")
+        self.assertEqual(result["formal_reply_gate"]["request_id"], "broker-sync")
+        self.assertTrue(result["formal_reply_gate"]["reply_freezable"])
+
+    def test_original_formal_request_missing_latency_still_degrades(self):
+        result = context_component(
+            {
+                "decision_fact_pack": {
+                    "trigger": {
+                        "request_id": "formal-parent",
+                        "requested_at_beijing": "2026-09-30T13:16:00+08:00",
+                    }
+                },
+                "fast_path_latency": {
+                    "latency_status": "INSTRUMENTATION_INCOMPLETE",
+                    "latency_observation_role": "FORMAL_DECISION_REQUEST",
+                    "may_measure_original_decision_latency": True,
+                },
+            },
+            {"formal_intraday_context_completeness": {"status": "READY"}},
+        )
+        self.assertEqual(result["status"], "DEGRADED")
+        self.assertEqual(result["latency_status"], "INSTRUMENTATION_INCOMPLETE")
+        self.assertEqual(result["latency_observation_role"], "FORMAL_DECISION_REQUEST")
+
     def test_request_bound_ready_exposes_compact_formal_reply_gate(self):
         result = context_component(
             {
