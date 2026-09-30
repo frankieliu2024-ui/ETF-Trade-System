@@ -27,6 +27,8 @@ try:
         build_formal_completion_from_source,
         project_decision_response,
         source_fingerprint,
+        emit_formal_replay_forensic_fingerprint,
+        reset_formal_replay_forensic_trace,
         validate_source,
     )
 except ModuleNotFoundError:
@@ -2998,6 +3000,8 @@ def main() -> int:
     parser.add_argument("--formal-replay-source-commit", default="")
     parser.add_argument("--formal-replay-dwp-commit", default="")
     args = parser.parse_args()
+    forensic_historical_replay = bool(str(args.formal_replay_source_commit or "").strip()) and os.environ.get("ETF_FORMAL_REPLAY_FORENSIC") == "1"
+    reset_formal_replay_forensic_trace(forensic_historical_replay)
     req_path = (ROOT / args.request_path).resolve()
     if ROOT not in req_path.parents or not req_path.exists():
         raise RuntimeError("invalid state sync request path")
@@ -3070,6 +3074,9 @@ def main() -> int:
         if str(trigger.get("request_id") or "").strip() != parent_id:
             qualifier = "historical" if replay_source_commit else "current"
             raise ValueError(f"business decision source requires {qualifier} request-bound Decision Work Package")
+        if forensic_historical_replay:
+            emit_formal_replay_forensic_fingerprint("A_HISTORICAL_PACKET", obj=packet, dwp=packet.get("decision_work_package"), object_type="query_context.decision_fact_pack", provenance=f"historical_query_context:{replay_dwp_commit}", historical=True)
+            emit_formal_replay_forensic_fingerprint("B_PACKET_DWP", obj=packet, dwp=packet.get("decision_work_package"), object_type="packet.decision_work_package", provenance=f"historical_query_context:{replay_dwp_commit}", historical=True)
         # Historical replay is provenance-bound: only the DWP loaded from the
         # explicitly selected historical query_context may define the problem graph.
         # A request-local/current DWP must never override that PIT boundary.
@@ -3079,6 +3086,8 @@ def main() -> int:
             decision_work_package = request.get("decision_work_package") or packet.get("decision_work_package") or {}
         if not isinstance(decision_work_package, dict) or not decision_work_package.get("problem_graph"):
             raise ValueError("business decision source Decision Work Package is missing")
+        if forensic_historical_replay:
+            emit_formal_replay_forensic_fingerprint("C_REQUEST_DWP_FREEZE", obj=request, dwp=decision_work_package, object_type="request.decision_work_package", provenance=f"historical_query_context:{replay_dwp_commit}", historical=True)
         # Freeze the already-validated request-bound opportunity domain onto the
         # in-memory ingress object. record_formal_decision() must validate the
         # deterministic projection against the exact DWP that produced it,
@@ -3107,7 +3116,7 @@ def main() -> int:
         else:
             if not isinstance(decision_response, dict):
                 raise ValueError("business decision source requires actor-only structured decision_response")
-            source_payload = project_decision_response(source_payload, decision_response, decision_work_package)
+            source_payload = project_decision_response(source_payload, decision_response, decision_work_package, forensic_historical_replay=forensic_historical_replay)
         source = validate_source(
             source_payload,
             expected_snapshot=str(request.get("consumed_snapshot") or source_payload.get("consumed_snapshot") or "").strip(),
@@ -3117,6 +3126,8 @@ def main() -> int:
         # business content, so replay/idempotency fingerprints remain stable.
         source = freeze_source_work_package(source, decision_work_package)
         source_fingerprint_value = source["fingerprint"]
+        if forensic_historical_replay:
+            emit_formal_replay_forensic_fingerprint("D_SOURCE_BINDING", obj=source, dwp=source.get("decision_work_package"), object_type="business_decision_source.bound", provenance=f"historical_query_context:{replay_dwp_commit}", source_fingerprint_value=source_fingerprint_value, historical=True)
         source_reply_ready = True
         request["_business_decision_source"] = source
         request["_source_fingerprint"] = source_fingerprint_value
