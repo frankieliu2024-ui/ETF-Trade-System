@@ -799,7 +799,6 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
             raise ValueError("manual formal completion requires request-scoped query context")
         query_context = load_json(query_path)
         packet = query_context.get("decision_fact_pack") or {}
-        forensic_fingerprint("A_historical_packet", packet, provenance=f"git_show:{replay_dwp_commit}" if replay_source_commit else "current_query_context", historical=bool(replay_source_commit))
         action_readiness = packet.get("formal_action_readiness") or packet.get("formal_reasoning_readiness") or {}
         packet_request_id = str((packet.get("trigger") or {}).get("request_id") or "").strip()
         if packet_request_id not in {parent_request_id, request_id}:
@@ -3068,6 +3067,7 @@ def main() -> int:
             query_path = ROOT / "data" / "state" / "query_context.json"
             query_context = load_json(query_path) if query_path.exists() else {}
         packet = query_context.get("decision_fact_pack") or {}
+        forensic_fingerprint("A_historical_packet", packet, provenance=f"git_show:{replay_dwp_commit}" if replay_source_commit else "current_query_context", historical=bool(replay_source_commit))
         trigger = packet.get("trigger") or {}
         if str(trigger.get("request_id") or "").strip() != parent_id:
             qualifier = "historical" if replay_source_commit else "current"
