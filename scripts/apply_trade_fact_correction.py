@@ -178,7 +178,12 @@ def _apply_attribution_request(req: dict) -> int:
     if ids - {decision_id}: raise RuntimeError("existing canonical attribution conflicts with requested Decision Fact")
     req = dict(req); req.update({"correction_type":"DECISION_ATTRIBUTION","status":"APPLIED","immutable_trade_source":True})
     if existing:
-        if any(json.dumps(x,ensure_ascii=False,sort_keys=True)==json.dumps(req,ensure_ascii=False,sort_keys=True) for x in existing):
+        # A pending ingress for the same trade and Decision Fact is the
+        # canonical idempotent case.  The processor adds execution metadata
+        # (correction_type/status/immutable_trade_source) before persistence,
+        # so comparing the raw ingress byte-for-byte would incorrectly turn
+        # a retry of the same attribution into a conflict.
+        if ids == {decision_id}:
             print(json.dumps({"status":"RECONCILED","trade_event_id":event_id,"linked_decision_id":decision_id,"immutable_trade_source":True},ensure_ascii=False)); return 0
         raise RuntimeError("trade already has a different canonical attribution correction")
     target=rd/f"{req['request_id']}.json"
