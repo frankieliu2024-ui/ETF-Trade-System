@@ -465,6 +465,66 @@ def test_plural_broker_trade_events_are_consumed_without_event_id_collision(tmp_
     }
 
 
+
+def test_new_trade_updates_current_mirror_after_event_persistence(tmp_path, monkeypatch, capsys):
+    request = {
+        "request_id": "broker-current-mirror",
+        "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+        "formal_fact_type": "BROKER_TRADE_CONFIRMATION",
+        "interaction_scenario": "BROKER_SCREENSHOT_SYNC",
+        "requested_at_beijing": "2026-09-30T09:45:00+08:00",
+        "trade_event": {
+            "event_id": "trade_20260930_094415_513520_buy_2100",
+            "code": "513520",
+            "name": "日经ETF",
+            "asset_type": "ETF",
+            "side": "BUY",
+            "quantity": 2100,
+            "price": 2.31,
+            "amount": 4851,
+            "confirmed_at_beijing": "2026-09-30T09:45:00+08:00",
+            "idempotency_key": "20260930_094415_513520_BUY_2100_2.310",
+        },
+    }
+    root = tmp_path
+    (root / "requests" / "live_snapshot").mkdir(parents=True)
+    (root / "data" / "state").mkdir(parents=True)
+    (root / "events" / "trades").mkdir(parents=True)
+    (root / "ETF当前状态_DASHBOARD.md").write_text("dashboard", encoding="utf-8")
+    (root / "data" / "state" / "account_fact.json").write_text(
+        json.dumps(_minimal_valid_account(), ensure_ascii=False), encoding="utf-8"
+    )
+    (root / "data" / "state" / "CURRENT.json").write_text(
+        json.dumps({"last_trade_event_id": "older-trade"}), encoding="utf-8"
+    )
+    request_path = root / "requests" / "live_snapshot" / "case.json"
+    request_path.write_text(json.dumps(request, ensure_ascii=False), encoding="utf-8")
+
+    monkeypatch.setattr(state_sync, "ROOT", root)
+    monkeypatch.setattr(state_sync, "ACCOUNT", root / "data" / "state" / "account_fact.json")
+    monkeypatch.setattr(state_sync, "DASHBOARD", root / "ETF当前状态_DASHBOARD.md")
+    monkeypatch.setattr(state_sync, "record_formal_decision", lambda payload: (False, ""))
+    monkeypatch.setattr(state_sync, "record_post_close_review", lambda account, payload: (False, False))
+    monkeypatch.setattr(state_sync, "record_unrecoverable_review_prerequisite", lambda account, payload, event: (False, False))
+    monkeypatch.setattr(state_sync, "replace_block", lambda text, *args, **kwargs: text)
+    monkeypatch.setattr(state_sync, "build_dashboard_block", lambda *args, **kwargs: "")
+    monkeypatch.setattr(state_sync, "write_formal_text_if_changed", lambda *args, **kwargs: False)
+    monkeypatch.setattr(state_sync, "sync_formal_files", lambda *args, **kwargs: {"ok": True})
+    monkeypatch.setattr(state_sync, "latest_formal_review_decision", lambda root: None)
+    monkeypatch.setattr(state_sync, "sync_experience_transaction_index", lambda *args, **kwargs: None)
+    monkeypatch.setattr(state_sync, "upsert_formal_line", lambda *args, **kwargs: None)
+    monkeypatch.setattr(state_sync, "write_trade_review_required", lambda *args, **kwargs: None)
+    monkeypatch.setattr(state_sync, "sync_current_account_mirror", lambda *args, **kwargs: None)
+    monkeypatch.setattr(state_sync, "account_membership_delta", lambda *args, **kwargs: {})
+    monkeypatch.setattr(state_sync, "sync_account_membership_formal_files", lambda *args, **kwargs: None)
+    monkeypatch.setattr("sys.argv", ["process_state_sync_request.py", "requests/live_snapshot/case.json"])
+
+    assert state_sync.main() == 0
+    current = json.loads((root / "data" / "state" / "CURRENT.json").read_text(encoding="utf-8"))
+    assert current["last_trade_event_id"] == "trade_20260930_094415_513520_buy_2100"
+
+
+
 def test_account_change_events_reconcile_each_plural_confirmed_trade():
     prior = {
         "updated_at": "2026-09-24T09:53:00+08:00", "cash": 13169.54, "total_asset": 187900.0,
