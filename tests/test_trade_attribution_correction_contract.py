@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest.mock import patch
 from scripts import apply_trade_fact_correction as correction
 from scripts import decision_trade_link as link
+from scripts import process_state_sync_request as sync
 
 class AttributionCorrectionTests(unittest.TestCase):
  def fixture(self,root):
@@ -27,6 +28,29 @@ class AttributionCorrectionTests(unittest.TestCase):
    stored=json.loads(pending.read_text())
    self.assertEqual(stored["linked_decision_id"],"decision-a")
    self.assertEqual(stored["correction_type"],"DECISION_ATTRIBUTION")
+
+ def test_review_normalization_uses_effective_attribution_for_raw_unlinked_trade(self):
+  with tempfile.TemporaryDirectory() as d:
+   root=Path(d);p=self.fixture(root)
+   corr=root/"requests/trade_fact_correction"/"attr.json"
+   corr.write_text(json.dumps(self.req()|{"correction_type":"DECISION_ATTRIBUTION","status":"APPLIED"}),encoding="utf-8")
+   before=p.read_bytes()
+   review={"case_mapping":{}}
+   with patch.object(sync,"ROOT",root):
+    out=sync._normalize_executed_trade_case_mapping(review,"2026-09-30")
+   row=out["case_mapping"]["ineligible_executed_trades"][0]
+   self.assertEqual(row["decision_id"],"decision-a")
+   self.assertEqual(before,p.read_bytes())
+
+ def test_review_normalization_conflict_fails_closed(self):
+  with tempfile.TemporaryDirectory() as d:
+   root=Path(d);self.fixture(root)
+   for name,did in (("a.json","decision-a"),("b.json","decision-b")):
+    decision={"decision_id":did,"decision_time_beijing":"2026-09-30T09:36:13+08:00","candidate_code":"513520","formal_decision":{"amount_action":"日经ETF（513520）Trial；买入2,100份"}}
+    (root/"events/decisions"/f"{did}.json").write_text(json.dumps(decision),encoding="utf-8")
+    (root/"requests/trade_fact_correction"/name).write_text(json.dumps(self.req(did=did)|{"correction_type":"DECISION_ATTRIBUTION","status":"APPLIED"}),encoding="utf-8")
+   with patch.object(sync,"ROOT",root):
+    with self.assertRaises(RuntimeError): sync._normalize_executed_trade_case_mapping({"case_mapping":{}},"2026-09-30")
 
  def test_temporal_and_conflict_fail_closed(self):
   with tempfile.TemporaryDirectory() as d:
