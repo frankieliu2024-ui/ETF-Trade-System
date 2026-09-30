@@ -1159,6 +1159,50 @@ def build_fast_path_latency(request: dict, current: dict, account_or_decision: d
         "latency_contract": "Only the original Formal Decision Request may measure REQUEST_RECEIVED_TO_CORE_RESULT; downstream completion/projection rebuilds must not redefine or masquerade as original decision latency.",
     }
 
+def _business_decision_source_observation(root: Path, parent_request_id: str) -> dict:
+    """Observe the earliest durable Business Decision Source for this parent.
+
+    This is observability only. It never changes decision readiness or waits for
+    canonical projection/acceptance. Product/model phases that the repository
+    cannot observe remain explicit UNKNOWN.
+    """
+    if not parent_request_id:
+        return {
+            "status": "UNKNOWN",
+            "requested_at_beijing": "UNKNOWN",
+            "request_id": "UNKNOWN",
+            "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
+        }
+    request_dir = root / "requests" / "live_snapshot"
+    candidates = []
+    for path in request_dir.glob("*.json") if request_dir.exists() else []:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if str(payload.get("request_type") or "").upper() != "BUSINESS_DECISION_SOURCE":
+            continue
+        if str(payload.get("parent_request_id") or "").strip() != parent_request_id:
+            continue
+        stamp = str(payload.get("requested_at_beijing") or "").strip()
+        if stamp:
+            candidates.append((stamp, str(payload.get("request_id") or path.stem)))
+    if not candidates:
+        return {
+            "status": "UNKNOWN",
+            "requested_at_beijing": "UNKNOWN",
+            "request_id": "UNKNOWN",
+            "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
+        }
+    stamp, request_id = min(candidates, key=lambda item: item[0])
+    return {
+        "status": "OBSERVED",
+        "requested_at_beijing": stamp,
+        "request_id": request_id,
+        "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
+    }
+
+
 def build_market_domain_projection(current: dict, overseas: dict, us_extended: dict, freshness: dict | None = None) -> dict:
     """Expose domain facts without flattening them into A-share CURRENT semantics."""
     a_freshness = current.get("data_freshness") or {}
@@ -1401,6 +1445,33 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     fact_pack = build_decision_fact_pack(root, request_payload, current, account, decision, market_quote, formal_discovery=formal_discovery)
     fact_pack_elapsed = round(time.monotonic() - fact_pack_started, 3)
     latency = build_fast_path_latency(request_payload, current, account, decision, market_quote, generated_at, root)
+    bds = _business_decision_source_observation(root, str(request_payload.get("request_id") or "").strip()) if latency.get("may_measure_original_decision_latency") else {
+        "status": "NOT_APPLICABLE",
+        "requested_at_beijing": "UNKNOWN",
+        "request_id": "UNKNOWN",
+        "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
+    }
+    latency["user_visible_decision_waterfall"] = {
+        "request_received_at_beijing": latency.get("manual_request_received_at") or "UNKNOWN",
+        "canonical_ingress_at_beijing": request_payload.get("request_bound_at_beijing") or request_payload.get("canonical_ingress_at_beijing") or "UNKNOWN",
+        "first_qualified_market_fact_as_of_beijing": latency.get("first_qualified_market_fact_as_of") or "UNKNOWN",
+        "minimum_legal_inputs_ready_at_beijing": latency.get("minimum_legal_inputs_ready_at") or "UNKNOWN",
+        "business_decision_ready_at_beijing": latency.get("core_result_at") or "UNKNOWN",
+        "business_decision_source": bds,
+        "request_to_business_decision_ready_seconds": latency.get("request_to_core_result_latency"),
+        "business_decision_ready_to_bds_seconds": (
+            _duration_seconds(str(latency.get("core_result_at") or ""), str(bds.get("requested_at_beijing") or ""))
+            if bds.get("status") == "OBSERVED" else None
+        ),
+        "business_decision_source_to_user_visible_delivery_seconds": None,
+        "user_visible_delivery_at_beijing": "UNKNOWN",
+        "plugin_research_wall_clock_seconds": None,
+        "chatgpt_business_reasoning_wall_clock_seconds": None,
+        "user_execution_interval_seconds": None,
+        "user_execution_is_system_decision_latency": False,
+        "unknown_reason": "Product delivery, hidden model reasoning, and plugin orchestration boundaries are not repository-observable; UNKNOWN is preserved rather than inferred.",
+        "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
+    }
     latency["in_process_stage_durations_seconds"] = {
         "freshness_assurance_and_quote_context": quote_elapsed,
         "discovery_pipeline": (formal_discovery.get("latency_observability") or {}).get("discovery_pipeline_elapsed_seconds"),
