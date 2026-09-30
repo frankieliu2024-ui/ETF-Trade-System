@@ -362,8 +362,20 @@ def context_component(query: dict, decision: dict) -> dict:
         }
     fast_path = query.get("fast_path_latency") or {}
     latency_status = str(fast_path.get("latency_status") or "").strip().upper()
+    observation_role = str(fast_path.get("latency_observation_role") or "").strip().upper()
+    may_measure_original_decision_latency = fast_path.get("may_measure_original_decision_latency")
+    # Older Formal Decision packets predate the explicit role flag. Preserve
+    # their fail-closed latency contract, but never let a downstream
+    # STATE_SYNC_ONLY/completion packet masquerade as original decision
+    # latency merely because it is the newest request-bound query context.
+    downstream_not_decision_latency = (
+        observation_role == "DOWNSTREAM_COMPLETION_NOT_DECISION_REQUEST"
+        or may_measure_original_decision_latency is False
+        or latency_status == "DOWNSTREAM_NOT_DECISION_LATENCY"
+    )
+    original_decision_latency_scope = request_bound and not downstream_not_decision_latency
 
-    if request_bound and latency_status != "OBSERVED":
+    if original_decision_latency_scope and latency_status != "OBSERVED":
         return {
             "status": "DEGRADED",
             "reason": "request-bound core-result latency contract is not fully observed",
@@ -373,6 +385,7 @@ def context_component(query: dict, decision: dict) -> dict:
             "observability_boundary": boundary or None,
             "request_bound": True,
             "latency_status": latency_status or "MISSING",
+            "latency_observation_role": observation_role or "FORMAL_DECISION_REQUEST",
             "formal_reply_gate": formal_reply_gate,
         }
 
