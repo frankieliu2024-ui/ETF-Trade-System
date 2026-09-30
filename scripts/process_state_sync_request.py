@@ -3191,14 +3191,6 @@ def main() -> int:
                 account_sync_status = "ACCOUNT_FACT_UPDATED"
                 atomic_json_write(ACCOUNT, supplied_account)
     account = load_json(ACCOUNT)
-    latest_trade_event_id = _latest_trade_event_id()
-    if latest_trade_event_id:
-        current_path = ROOT / "data/state/CURRENT.json"
-        current = load_json(current_path) if current_path.exists() else {}
-        if current.get("last_trade_event_id") != latest_trade_event_id:
-            current["last_trade_event_id"] = latest_trade_event_id
-            current["generated_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-            atomic_json_write(current_path, current)
     if account.get("status") != "VALID":
         raise RuntimeError("account_fact is not VALID")
     decision_recorded, decision_id = record_formal_decision(request)
@@ -3275,6 +3267,19 @@ def main() -> int:
         atomic_json_write(ACCOUNT, account)
         write_trade_review_required(event)
         persisted_trade_events.append((trade, event))
+
+    # Refresh the CURRENT trade mirror only after this request's trade events
+    # are durable.  Doing this before the loop leaves CURRENT and downstream
+    # trigger construction one confirmed trade behind.
+    latest_trade_event_id = _latest_trade_event_id()
+    if latest_trade_event_id:
+        current_path = ROOT / "data/state/CURRENT.json"
+        current = load_json(current_path) if current_path.exists() else {}
+        if current.get("last_trade_event_id") != latest_trade_event_id:
+            current["last_trade_event_id"] = latest_trade_event_id
+            current["generated_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            atomic_json_write(current_path, current)
+
     sync_current_account_mirror(ROOT, account)
     review_recorded, review_idempotent = record_post_close_review(account, request)
     unavailable_recorded, unavailable_idempotent = (False, False)
