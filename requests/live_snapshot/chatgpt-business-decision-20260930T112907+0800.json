@@ -1,0 +1,450 @@
+{
+  "request_id": "chatgpt-business-decision-20260930T112907+0800",
+  "request_type": "BUSINESS_DECISION_SOURCE",
+  "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
+  "parent_request_id": "chatgpt-formal-20260930T112524+0800",
+  "decision_id": "chatgpt-formal-20260930T112524+0800_decision",
+  "consumed_snapshot": "data/market/snapshots/2026-09-30_112548.json",
+  "requested_at_beijing": "2026-09-30T11:29:07+08:00",
+  "decision_response": {
+    "answers": {
+      "RISK_PERMISSION": {
+        "final_action": "允许Confirm",
+        "capital_comparison": "ETF策略风险率约-7.30%处于风险观察复核区，但当前无账户硬约束，市场内部并非全面恶化；医药创新方向出现ETF自身强反馈和全市场同主题扩散，允许在提高复核强度下增加Confirm风险。",
+        "next_change_condition": "若ETF策略风险继续恶化并与市场结构、目标ETF承接同步转弱，或账户硬约束收紧，则降为Trial或禁止新增。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "MAIN_CANDIDATE": {
+        "final_action": "159992作为唯一主候选，进入Confirm机会",
+        "capital_comparison": "创新药ETF159992已有实际持仓且11:25约+3.08%，全市场Discovery同时收敛出多只创新药/生物医药ETF，形成方向宽度确认；相比新建同质ETF，追加现有159992减少同质暴露碎片化。",
+        "next_change_condition": "若159992自身强势结构/承接明显破坏，或医药扩散快速退潮并失去相对优势，则取消Confirm机会。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "candidate_code": "159992",
+        "candidate_name": "创新药ETF",
+        "opportunity_status": "Confirm机会"
+      },
+      "DEPLOYABLE_CASH": {
+        "final_action": "部署10000元至159992，保留约2148.64元现金",
+        "capital_comparison": "当前可部署现金12148.64元足以覆盖一个10,000元Confirm档；无需先卖旧仓筹资，保留剩余现金维持后续机会容量。",
+        "next_change_condition": "若执行价格使10,000元上限无法按整手形成合理数量，或执行前机会条件失效，则停止新增并保留现金。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "RELEASABLE_CAPITAL": {
+        "final_action": "本节点不释放旧仓资本",
+        "capital_comparison": "现金已足以支持当前Confirm；588000、159781虽弱但尚缺足以授权REDUCE/EXIT的独立失效证据，不能为追逐新机会机械卖亏损仓。",
+        "next_change_condition": "若弱势持仓的原假设失效、风险收益继续恶化且出现独立更高效率用途，再单独通过sell-chain释放。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "TRIAL_CONFIRM_CAPACITY": {
+        "final_action": "允许一个10000元Confirm档",
+        "capital_comparison": "无未决Trial，现金可覆盖；风险观察区要求控制新增风险，因此本节点采用10,000元Confirm而非20,000/30,000元更高档。",
+        "next_change_condition": "若医药方向新增独立增强证据且风险缓冲改善，可重新评估更高Confirm档；若承接转弱则0元。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "CONCENTRATION_COMMON_RISK": {
+        "final_action": "允许159992增加10000元但不再新增同主题第二只ETF",
+        "capital_comparison": "Discovery集中在医药/创新药，方向确认同时也意味着同质风险；选择已有159992承载新增资本，拒绝把多只同主题Discovery对象同时变成仓位。",
+        "next_change_condition": "若医药主题相关性风险上升或159992新增后组合暴露不再具边际收益风险优势，则停止追加。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "NEXT_UNIT_CAPITAL_USE": {
+        "final_action": "下一单位资本用于159992创新药ETF Confirm 10000元",
+        "capital_comparison": "比较现金、全部实际持仓继续占资、六只持仓ETF追加、七只观察ETF、九只Discovery节点候选、两只账户个股及可释放资本后，159992的ETF自身强反馈+同主题广度确认提供当前最清晰边际优势；现金次优，旧仓无必要为本次动作释放。",
+        "next_change_condition": "若159992执行前跌破当前强势结构并失去相对优势，或医药扩散显著退潮，则取消新增并回到现金。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "new_amount_yuan": 10000,
+        "post_action_deployable_cash": 2148.64,
+        "future_opportunity_capacity": "保留约2148.64元现金；后续新增资本需重新通过MASTER完整链，必要时再评估合法可释放资本。",
+        "cash_opportunity_cost": "完全持有现金会放弃当前医药创新方向已形成的ETF自身反馈与全市场宽度确认；但剩余现金继续提供风险缓冲。",
+        "alternative_capital_use_review": "588000/159781弱但未达卖出授权；159941/159981/513520继续持有但追加效率弱于159992；观察ETF黄金/煤炭有正反馈但机会强度和方向宽度不及医药；两只个股继续占资但无独立卖出理由。",
+        "concentration_account_structure_effect": "新增约1万元提高医药创新暴露，但选择已有159992而非新建同质ETF，控制同主题碎片化；新增规模为MASTER最低Confirm档。",
+        "selected_state_reason": "159992在风险观察复核下仍具最完整的自身强反馈、方向扩散和可执行性证据，边际资本效率优于现金及其他追加用途。",
+        "compared_capital_states_as_business_state_names": [
+          {
+            "state_name": "现金12148.64元",
+            "capital_action": "部分部署至159992",
+            "remaining_deployable_cash": 2148.64,
+            "why_not_selected": "现金保留价值存在，但完全持币的机会成本高于本次10,000元Confirm。",
+            "opportunity_cost_if_selected": "错失当前医药创新方向的节点机会。"
+          },
+          {
+            "state_name": "全部实际持仓继续占资",
+            "capital_action": "继续持有；不为本次新增机械释放",
+            "remaining_deployable_cash": 2148.64,
+            "why_not_selected": "各持仓sell-chain未形成REDUCE/EXIT授权。",
+            "opportunity_cost_if_selected": "弱势588000/159781继续占资存在机会成本，后续需复核。"
+          },
+          {
+            "state_name": "159992持仓追加",
+            "capital_action": "Confirm新增10000元",
+            "remaining_deployable_cash": 2148.64,
+            "why_not_selected": "已选中",
+            "opportunity_cost_if_selected": "承担医药主题回撤及盘中强势回吐风险。"
+          },
+          {
+            "state_name": "其他持仓ETF追加",
+            "capital_action": "本节点0元",
+            "remaining_deployable_cash": 2148.64,
+            "why_not_selected": "相对反馈或方向宽度不及159992。",
+            "opportunity_cost_if_selected": "挤占当前更高效率的医药创新机会。"
+          },
+          {
+            "state_name": "当前机会ETF（Discovery医药候选）",
+            "capital_action": "不新建同质仓位",
+            "remaining_deployable_cash": 2148.64,
+            "why_not_selected": "Discovery主要与159992同主题，现有持仓是更直接的资本承载。",
+            "opportunity_cost_if_selected": "增加同主题碎片化而未明显提高独立收益来源。"
+          },
+          {
+            "state_name": "可释放资本",
+            "capital_action": "本节点不释放",
+            "remaining_deployable_cash": 2148.64,
+            "why_not_selected": "现有现金足够且旧仓卖出链未授权。",
+            "opportunity_cost_if_selected": "可能损失旧仓后续右尾且制造不必要迁移成本。"
+          },
+          {
+            "state_name": "账户个股300750/601138",
+            "capital_action": "继续持有",
+            "remaining_deployable_cash": 2148.64,
+            "why_not_selected": "未形成独立REDUCE/EXIT证据。",
+            "opportunity_cost_if_selected": "继续占资但当前无需为ETF动作强制释放。"
+          }
+        ]
+      },
+      "HOLDING:159781": {
+        "final_action": "HOLD",
+        "capital_comparison": "科创创业ETF约-1.21%，日内弱势且资本效率偏低，但单日下跌和历史成本均不能单独触发卖出。",
+        "next_change_condition": "若成长结构继续恶化并确认原假设失效或更高效率用途优势足以覆盖迁移成本，则降低风险或退出。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "capital_occupancy_reason": "科创创业ETF约-1.21%，日内弱势且资本效率偏低，但单日下跌和历史成本均不能单独触发卖出。",
+        "higher_efficiency_alternative": "159992是更高效率新增用途；本次现金足够，不强制迁移159781。",
+        "quantity": 0,
+        "capital_destination": "继续持有"
+      },
+      "HOLDING:159941": {
+        "final_action": "HOLD",
+        "capital_comparison": "纳指ETF约+0.94%，上一美股科技现金盘偏正，持有依据未被破坏。",
+        "next_change_condition": "若美股科技结构转弱并被159941自身价格/承接确认，重新评估降低风险。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "capital_occupancy_reason": "纳指ETF约+0.94%，上一美股科技现金盘偏正，持有依据未被破坏。",
+        "higher_efficiency_alternative": "追加不及159992；继续持有仍优于当前释放为现金。",
+        "quantity": 0,
+        "capital_destination": "继续持有"
+      },
+      "HOLDING:159981": {
+        "final_action": "HOLD",
+        "capital_comparison": "能源化工ETF约+0.28%，结构中性偏稳；跨市场油气ETF513350走弱构成反证，但尚未破坏159981自身持有依据。",
+        "next_change_condition": "若159981自身转弱并与资源外部验证同步恶化，重新评估降低风险或退出。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "capital_occupancy_reason": "能源化工ETF约+0.28%，结构中性偏稳；跨市场油气ETF513350走弱构成反证，但尚未破坏159981自身持有依据。",
+        "higher_efficiency_alternative": "不追加；159992当前边际效率更高。",
+        "quantity": 0,
+        "capital_destination": "继续持有"
+      },
+      "HOLDING:159992": {
+        "final_action": "HOLD",
+        "capital_comparison": "创新药ETF约+3.08%，ETF自身强反馈且Discovery广泛出现医药/创新药候选，持有依据显著增强。",
+        "next_change_condition": "若强势结构和承接明显破坏或医药扩散退潮，则取消追加并重新评估持有风险。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "capital_occupancy_reason": "创新药ETF约+3.08%，ETF自身强反馈且Discovery广泛出现医药/创新药候选，持有依据显著增强。",
+        "higher_efficiency_alternative": "本节点最高效率独立用途是对该持仓追加Confirm 10000元。",
+        "quantity": 0,
+        "capital_destination": "继续持有"
+      },
+      "HOLDING:300750": {
+        "final_action": "HOLD",
+        "capital_comparison": "宁德时代盘中约+1.09%，低点后有修复，当前没有原假设失效或风险收益恶化到需释放的证据。",
+        "next_change_condition": "若修复失败并出现结构、承接和风险收益同步恶化，重新评估降低风险或退出。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "capital_occupancy_reason": "宁德时代盘中约+1.09%，低点后有修复，当前没有原假设失效或风险收益恶化到需释放的证据。",
+        "higher_efficiency_alternative": "现金/159992是新增资本更高效率用途，但不要求卖出宁德时代来筹资。",
+        "quantity": 0,
+        "capital_destination": "继续持有"
+      },
+      "HOLDING:513520": {
+        "final_action": "HOLD",
+        "capital_comparison": "日经ETF约+1.49%，早盘新建持仓后方向反馈为正，当前没有失败或降低风险条件。",
+        "next_change_condition": "若日经方向反馈反转并破坏原假设，重新评估降低风险或退出。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "capital_occupancy_reason": "日经ETF约+1.49%，早盘新建持仓后方向反馈为正，当前没有失败或降低风险条件。",
+        "higher_efficiency_alternative": "不继续追加；刚建立的暴露需要保留风险容量，159992当前新增效率更高。",
+        "quantity": 0,
+        "capital_destination": "继续持有"
+      },
+      "HOLDING:588000": {
+        "final_action": "HOLD",
+        "capital_comparison": "科创50ETF约-1.99%，为当前较弱持仓之一，继续占资效率下降；但尚无足以证明原假设失效并授权卖出的完整证据。",
+        "next_change_condition": "若科创弱势持续、承接继续恶化且相对机会成本扩大到足以覆盖迁移成本，则降低风险或退出。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "capital_occupancy_reason": "科创50ETF约-1.99%，为当前较弱持仓之一，继续占资效率下降；但尚无足以证明原假设失效并授权卖出的完整证据。",
+        "higher_efficiency_alternative": "159992明显是更高效率的新增资本用途；本次先用现金，不为追强机械卖出588000。",
+        "quantity": 0,
+        "capital_destination": "继续持有"
+      },
+      "HOLDING:601138": {
+        "final_action": "HOLD",
+        "capital_comparison": "工业富联盘中约-0.27%，从早盘高点回撤，但单一日内走弱不足以授权卖出。",
+        "next_change_condition": "若弱势持续并伴随原持仓逻辑失效或相对机会成本显著扩大，重新评估释放。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "capital_occupancy_reason": "工业富联盘中约-0.27%，从早盘高点回撤，但单一日内走弱不足以授权卖出。",
+        "higher_efficiency_alternative": "159992新增资本效率更高，但现金足够，无需机械迁移该个股资本。",
+        "quantity": 0,
+        "capital_destination": "继续持有"
+      },
+      "HELD_ETF_ADD:159781": {
+        "final_action": "0元；当前弱势，不追加。",
+        "capital_comparison": "0元；当前弱势，不追加。",
+        "next_change_condition": "若相对结构、承接和方向宽度发生足以改变边际收益风险的变化，则重新评估追加。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HELD_ETF_ADD:159941": {
+        "final_action": "0元；持有依据仍在，但新增资本效率弱于159992。",
+        "capital_comparison": "0元；持有依据仍在，但新增资本效率弱于159992。",
+        "next_change_condition": "若相对结构、承接和方向宽度发生足以改变边际收益风险的变化，则重新评估追加。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HELD_ETF_ADD:159981": {
+        "final_action": "0元；自身中性且外部油气验证偏弱，不追加。",
+        "capital_comparison": "0元；自身中性且外部油气验证偏弱，不追加。",
+        "next_change_condition": "若相对结构、承接和方向宽度发生足以改变边际收益风险的变化，则重新评估追加。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HELD_ETF_ADD:159992": {
+        "final_action": "Confirm新增10000元；ETF自身强反馈并获得全市场医药方向宽度确认。",
+        "capital_comparison": "Confirm新增10000元；ETF自身强反馈并获得全市场医药方向宽度确认。",
+        "next_change_condition": "若相对结构、承接和方向宽度发生足以改变边际收益风险的变化，则重新评估追加。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HELD_ETF_ADD:513520": {
+        "final_action": "0元；当前持有反馈正，但刚建立暴露且边际效率不及159992。",
+        "capital_comparison": "0元；当前持有反馈正，但刚建立暴露且边际效率不及159992。",
+        "next_change_condition": "若相对结构、承接和方向宽度发生足以改变边际收益风险的变化，则重新评估追加。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HELD_ETF_ADD:588000": {
+        "final_action": "0元；当前弱势，不追加。",
+        "capital_comparison": "0元；当前弱势，不追加。",
+        "next_change_condition": "若相对结构、承接和方向宽度发生足以改变边际收益风险的变化，则重新评估追加。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "OBSERVATION:159326": {
+        "final_action": "无机会",
+        "capital_comparison": "电网设备约+0.06%，独立产业暴露仍有信息价值，当前机会不足。",
+        "next_change_condition": "若其持续信息功能失效、被更有效同质对象充分替代或当前机会证据显著增强，则调整身份/机会状态。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "RETAIN",
+        "reason": "电网设备约+0.06%，独立产业暴露仍有信息价值，当前机会不足。"
+      },
+      "OBSERVATION:159561": {
+        "final_action": "无机会",
+        "capital_comparison": "欧洲权益分散信息仍独立，当前约+0.38%但不足以形成当前机会。",
+        "next_change_condition": "若其持续信息功能失效、被更有效同质对象充分替代或当前机会证据显著增强，则调整身份/机会状态。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "RETAIN",
+        "reason": "欧洲权益分散信息仍独立，当前约+0.38%但不足以形成当前机会。"
+      },
+      "OBSERVATION:513180": {
+        "final_action": "无机会",
+        "capital_comparison": "港股科技仍提供跨市场科技传导信息，但当前约-0.19%，未形成新增资本优势。",
+        "next_change_condition": "若其持续信息功能失效、被更有效同质对象充分替代或当前机会证据显著增强，则调整身份/机会状态。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "RETAIN",
+        "reason": "港股科技仍提供跨市场科技传导信息，但当前约-0.19%，未形成新增资本优势。"
+      },
+      "OBSERVATION:513350": {
+        "final_action": "无机会",
+        "capital_comparison": "标普油气约-1.85%，当前机会减弱，但仍提供159981资源方向的跨市场反证信息。",
+        "next_change_condition": "若其持续信息功能失效、被更有效同质对象充分替代或当前机会证据显著增强，则调整身份/机会状态。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "RETAIN",
+        "reason": "标普油气约-1.85%，当前机会减弱，但仍提供159981资源方向的跨市场反证信息。"
+      },
+      "OBSERVATION:515220": {
+        "final_action": "观察机会",
+        "capital_comparison": "煤炭约+1.20%，资源内部正反馈仍在，保留机会观察，但弱于医药主候选。",
+        "next_change_condition": "若其持续信息功能失效、被更有效同质对象充分替代或当前机会证据显著增强，则调整身份/机会状态。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "观察机会",
+        "disposition": "RETAIN",
+        "reason": "煤炭约+1.20%，资源内部正反馈仍在，保留机会观察，但弱于医药主候选。"
+      },
+      "OBSERVATION:515880": {
+        "final_action": "无机会",
+        "capital_comparison": "通信ETF当前约-0.16%，结构未形成新增资本优势，但通信风格观察仍有独立信息价值。",
+        "next_change_condition": "若其持续信息功能失效、被更有效同质对象充分替代或当前机会证据显著增强，则调整身份/机会状态。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "RETAIN",
+        "reason": "通信ETF当前约-0.16%，结构未形成新增资本优势，但通信风格观察仍有独立信息价值。"
+      },
+      "OBSERVATION:518880": {
+        "final_action": "观察机会",
+        "capital_comparison": "黄金约+0.89%，低相关防御信息价值继续成立，但当前资本效率仍低于159992。",
+        "next_change_condition": "若其持续信息功能失效、被更有效同质对象充分替代或当前机会证据显著增强，则调整身份/机会状态。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "观察机会",
+        "disposition": "RETAIN",
+        "reason": "黄金约+0.89%，低相关防御信息价值继续成立，但当前资本效率仍低于159992。"
+      },
+      "DISCOVERY:159102": {
+        "final_action": "观察机会",
+        "capital_comparison": "医药/生物科技方向出现趋势与当日正反馈，构成本节点机会证据； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。",
+        "next_change_condition": "若后续形成与159992不同的独立信息功能或更优资本效率，再重新评估。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "观察机会",
+        "disposition": "REJECT",
+        "reason": "医药/生物科技方向出现趋势与当日正反馈，构成本节点机会证据； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。"
+      },
+      "DISCOVERY:159377": {
+        "final_action": "无机会",
+        "capital_comparison": "虽被Discovery命中，但当前独立优势不足； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。",
+        "next_change_condition": "若后续形成与159992不同的独立信息功能或更优资本效率，再重新评估。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "虽被Discovery命中，但当前独立优势不足； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。"
+      },
+      "DISCOVERY:159622": {
+        "final_action": "观察机会",
+        "capital_comparison": "医药/生物科技方向出现趋势与当日正反馈，构成本节点机会证据； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。",
+        "next_change_condition": "若后续形成与159992不同的独立信息功能或更优资本效率，再重新评估。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "观察机会",
+        "disposition": "REJECT",
+        "reason": "医药/生物科技方向出现趋势与当日正反馈，构成本节点机会证据； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。"
+      },
+      "DISCOVERY:159837": {
+        "final_action": "无机会",
+        "capital_comparison": "虽被Discovery命中，但当前独立优势不足； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。",
+        "next_change_condition": "若后续形成与159992不同的独立信息功能或更优资本效率，再重新评估。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "虽被Discovery命中，但当前独立优势不足； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。"
+      },
+      "DISCOVERY:159883": {
+        "final_action": "无机会",
+        "capital_comparison": "虽被Discovery命中，但当前独立优势不足； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。",
+        "next_change_condition": "若后续形成与159992不同的独立信息功能或更优资本效率，再重新评估。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "虽被Discovery命中，但当前独立优势不足； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。"
+      },
+      "DISCOVERY:159892": {
+        "final_action": "观察机会",
+        "capital_comparison": "医药/生物科技方向出现趋势与当日正反馈，构成本节点机会证据； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。",
+        "next_change_condition": "若后续形成与159992不同的独立信息功能或更优资本效率，再重新评估。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "观察机会",
+        "disposition": "REJECT",
+        "reason": "医药/生物科技方向出现趋势与当日正反馈，构成本节点机会证据； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。"
+      },
+      "DISCOVERY:513290": {
+        "final_action": "观察机会",
+        "capital_comparison": "医药/生物科技方向出现趋势与当日正反馈，构成本节点机会证据； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。",
+        "next_change_condition": "若后续形成与159992不同的独立信息功能或更优资本效率，再重新评估。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "观察机会",
+        "disposition": "REJECT",
+        "reason": "医药/生物科技方向出现趋势与当日正反馈，构成本节点机会证据； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。"
+      },
+      "DISCOVERY:516820": {
+        "final_action": "无机会",
+        "capital_comparison": "虽被Discovery命中，但当前独立优势不足； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。",
+        "next_change_condition": "若后续形成与159992不同的独立信息功能或更优资本效率，再重新评估。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "虽被Discovery命中，但当前独立优势不足； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。"
+      },
+      "DISCOVERY:520500": {
+        "final_action": "观察机会",
+        "capital_comparison": "医药/生物科技方向出现趋势与当日正反馈，构成本节点机会证据； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。",
+        "next_change_condition": "若后续形成与159992不同的独立信息功能或更优资本效率，再重新评估。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "观察机会",
+        "disposition": "REJECT",
+        "reason": "医药/生物科技方向出现趋势与当日正反馈，构成本节点机会证据； 与已有159992高度同主题，当前不需要新增持续观察身份或新建同质仓位。"
+      }
+    }
+  }
+}
