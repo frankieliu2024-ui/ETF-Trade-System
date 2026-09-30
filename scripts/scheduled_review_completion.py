@@ -139,6 +139,16 @@ SYSTEM_REVIEW_FALSE_ATTRIBUTION_PHRASES = (
     "成交归因仍待用户确认",
     "确认能源化工ETF（159981）5,700份买入对应Trial还是Confirm",
 )
+SYSTEM_REVIEW_TOO_NARROW_REASSESSMENT_PHRASES = (
+    "只有出现新的交易需要时才进入正式判断",
+    "仅在出现新的交易需要时才进入正式判断",
+    "只有出现新成交时才进入正式判断",
+    "仅在出现新成交时才进入正式判断",
+)
+SYSTEM_REVIEW_FACT_CUTOFF_FIELDS = (
+    "fact_cutoff_at_beijing",
+    "facts_as_of_beijing",
+)
 
 
 def _canonical_attribution_summary(system_review: dict) -> dict:
@@ -172,6 +182,36 @@ def _reject_false_user_attribution_dependency(system_review: dict, content: str)
         raise ValueError("Scheduled System Review must resolve linked Trial/Confirm semantics from canonical decision facts")
 
 
+def _validate_system_review_fact_cutoff(system_review: dict) -> None:
+    """Require an explicit coherent fact cutoff when the actor supplies source as-of facts.
+
+    The cutoff freezes what the review claims to know.  Later canonical publications may
+    supersede the report, but they do not retroactively mutate or invalidate the frozen
+    REPORT.  The actor must final-reread latest main before choosing this cutoff.
+    """
+    source_as_of = (system_review or {}).get("source_facts_as_of")
+    if source_as_of is None:
+        return
+    if not isinstance(source_as_of, dict) or not source_as_of:
+        raise ValueError("Scheduled System Review source_facts_as_of must be a non-empty object")
+    cutoff = ""
+    for key in SYSTEM_REVIEW_FACT_CUTOFF_FIELDS:
+        value = str((system_review or {}).get(key) or "").strip()
+        if value:
+            cutoff = value
+            break
+    if not cutoff:
+        raise ValueError("Scheduled System Review with source as-of facts requires fact_cutoff_at_beijing")
+    advanced = [
+        name for name, as_of in source_as_of.items()
+        if str(as_of or "").strip() and str(as_of).strip() > cutoff
+    ]
+    if advanced:
+        raise ValueError(
+            "Scheduled System Review source fact is newer than frozen fact cutoff: " + ", ".join(sorted(advanced))
+        )
+
+
 def validate_system_review_presentation(system_review: dict, final_content: str) -> None:
     """Keep Scheduled System Review informational and non-decisional.
 
@@ -186,6 +226,9 @@ def validate_system_review_presentation(system_review: dict, final_content: str)
         raise ValueError("Scheduled System Review must not renew or extend Formal Decision trading authority")
     if any(phrase in content for phrase in SYSTEM_REVIEW_FALSE_ATTRIBUTION_PHRASES):
         raise ValueError("Scheduled System Review must not request user mapping for canonically linked trades")
+    if any(phrase in content for phrase in SYSTEM_REVIEW_TOO_NARROW_REASSESSMENT_PHRASES):
+        raise ValueError("Scheduled System Review must not make trade need the sole Formal Decision trigger")
+    _validate_system_review_fact_cutoff(system_review)
     _reject_false_user_attribution_dependency(system_review, content)
     reconciliation = str((system_review or {}).get("execution_reconciliation") or "").strip().upper()
     if reconciliation in {"CONFIRMATION_REQUIRED", "USER_CONFIRMATION_REQUIRED"}:
