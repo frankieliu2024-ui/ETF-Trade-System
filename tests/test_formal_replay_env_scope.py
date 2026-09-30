@@ -16,8 +16,7 @@ class FormalReplayEnvScopeTests(unittest.TestCase):
         for marker in (persist_source, persist_dwp, local_source, local_dwp, export_line):
             self.assertIn(marker, text)
         block_start = text.index(persist_source)
-        block_end = text.index("          else:", block_start)
-        block = text[block_start:block_end]
+        block = text[block_start:]
         self.assertLess(block.index(persist_source), block.index(local_source))
         self.assertLess(block.index(persist_dwp), block.index(local_dwp))
         self.assertLess(block.index(local_dwp), block.index(export_line))
