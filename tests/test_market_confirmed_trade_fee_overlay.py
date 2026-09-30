@@ -98,6 +98,15 @@ class ConfirmedTradeFeeOverlayTests(unittest.TestCase):
                     ]
                 },
             )
+            # The production fee overlay only admits executed events that
+            # belong to the canonical ETF monitor universe.  The old fixture
+            # omitted that contract input, so the overlay event was silently
+            # excluded and the unrelated trade-count mismatch made reconcile()
+            # return FAIL before the non-blocking fee warning was evaluated.
+            self.write_json(
+                root / "config/market/etf_monitor_universe.json",
+                {"objects": [{"code": "561980"}, {"code": "515880"}]},
+            )
             self.write_json(root / "events/trades/new.json", self.overlay_event())
             self.write_json(
                 root / "events/reviews/2026-08-28.json",
