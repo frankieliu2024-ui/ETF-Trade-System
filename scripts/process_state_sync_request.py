@@ -714,7 +714,7 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     research_error = validate_research_evidence_used(decision.get("research_evidence_used"))
     if research_error:
         raise ValueError(f"invalid formal decision research-evidence contract: {research_error}")
-    account_for_lifecycle = _load_account_for_lifecycle_validation()
+    account_for_lifecycle = _account_for_decision_validation(request)
     current_path = ROOT / "data/state/CURRENT.json"
     current = load_json(current_path) if current_path.exists() else {}
     market_date = str(request.get("market_date") or current.get("market_date") or "")
@@ -1047,6 +1047,23 @@ def _load_account_for_lifecycle_validation() -> dict:
     """Load the canonical account fact for current lifecycle validation."""
     account_path = ROOT / "data" / "state" / "account_fact.json"
     return load_json(account_path) if account_path.exists() else {}
+
+
+def _account_for_decision_validation(request: dict) -> dict:
+    """Resolve the account fact at the decision boundary being validated.
+
+    Historical Formal Decision recovery validates the immutable decision against
+    the account snapshot captured in its request-bound query context. Ordinary
+    current completion keeps the existing current-account contract. The
+    snapshot is request-local only and is never persisted or used to rewrite
+    current account state.
+    """
+    if request.get("_historical_replay") is True:
+        historical = request.get("_historical_account_fact")
+        if not isinstance(historical, dict) or not historical:
+            raise ValueError("historical Formal Decision recovery requires request-bound account fact")
+        return json.loads(json.dumps(historical))
+    return _load_account_for_lifecycle_validation()
 
 
 def _lifecycle_object_code(security: object) -> str:
@@ -3068,6 +3085,12 @@ def main() -> int:
             if historical_query.returncode != 0 or not historical_query.stdout.strip():
                 raise ValueError("formal replay DWP commit is missing historical request-bound query_context")
             query_context = json.loads(historical_query.stdout)
+            decision_fact_pack = query_context.get("decision_fact_pack") or {}
+            historical_account = decision_fact_pack.get("account_fact")
+            if not isinstance(historical_account, dict) or not historical_account:
+                raise ValueError("formal replay DWP commit is missing request-bound account fact")
+            request["_historical_replay"] = True
+            request["_historical_account_fact"] = json.loads(json.dumps(historical_account))
         else:
             query_path = ROOT / "data" / "state" / "query_context.json"
             query_context = load_json(query_path) if query_path.exists() else {}
