@@ -479,11 +479,46 @@ jobs:
               echo "formal replay cannot resolve immutable BUSINESS_DECISION_SOURCE retry binding" >&2
               exit 1
             fi
-            # The immutable Source is normally committed after the request-bound
-            # DWP/query context was produced.  Preserve Source provenance at its
-            # introduction commit, but resolve DWP provenance from the newest
-            # ancestor whose query_context is bound to this parent request.
-            formal_dwp_commit=$(python - "$parent_request_id" "$formal_source_commit" <<'PY'
+            # The selected retry remains the immutable Source provenance.
+            # Historical DWP lookup is separately bounded by the original Actor
+            # decision boundary so a later retry cannot time-travel post-decision
+            # account/discovery state into the pre-execution decision.
+            original_source_commit=$(python - "$parent_request_id" "${formal_sources[@]}" <<'PY'
+          import json
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          parent = sys.argv[1]
+          rows = []
+          for item in sys.argv[2:]:
+              path = Path(item)
+              source = json.loads(path.read_text(encoding="utf-8"))
+              if str(source.get("parent_request_id") or "").strip() != parent:
+                  raise SystemExit(f"formal replay BDS parent mismatch: {path}")
+              commits = subprocess.run(
+                  ["git", "log", "--diff-filter=A", "--format=%H", "--", str(path)],
+                  capture_output=True, text=True, check=True,
+              ).stdout.splitlines()
+              if len(commits) != 1:
+                  raise SystemExit(f"formal replay cannot resolve unique BDS introduction commit: {path}")
+              rows.append(commits[0])
+          history = subprocess.run(
+              ["git", "rev-list", "--reverse", "HEAD"],
+              capture_output=True, text=True, check=True,
+          ).stdout.splitlines()
+          candidates = set(rows)
+          selected = next((commit for commit in history if commit in candidates), None)
+          if selected is None:
+              raise SystemExit("formal replay cannot resolve original BDS provenance boundary")
+          print(selected)
+          PY
+            )
+            if [ -z "$original_source_commit" ]; then
+              echo "formal replay cannot resolve original BDS provenance boundary" >&2
+              exit 1
+            fi
+            formal_dwp_commit=$(python - "$parent_request_id" "$original_source_commit" <<'PY'
           import json
           import subprocess
           import sys
