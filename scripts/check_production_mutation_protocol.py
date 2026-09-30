@@ -344,12 +344,15 @@ def run(root: Path = ROOT) -> dict:
     separation = cfg.get("global_vs_change_acceptance") or {}
     mirror_reduction = cfg.get("mirror_reduction") or {}
     expected_tiers = {"TIER_0", "TIER_1", "TIER_2", "TIER_3"}
-    protocol_version = str((cfg.get("normative_contract") or {}).get("version") or "").strip()
+    normative_contract = cfg.get("normative_contract") or {}
+    protocol_version = str(normative_contract.get("version") or "").strip()
+    doc_version_match = re.search(r"生产变更与并发写入协议\s+(V\d+\.\d+)", doc_text)
+    doc_version = doc_version_match.group(1) if doc_version_match else ""
     check(
         "mutation_protocol:risk_tier_classifier",
         cfg.get("schema_version") == "1.7"
         and bool(protocol_version)
-        and protocol_version == str((cfg.get("normative_contract") or {}).get("version") or "").strip()
+        and protocol_version == doc_version
         and set(tiers) == expected_tiers
         and tier_cfg.get("unknown_defaults_to") == "TIER_3"
         and set(classifier) >= {"docs_prompts_display", "single_owner_deterministic_runtime", "canonical_state_or_notification", "account_trade_pit_authority_topology"},
