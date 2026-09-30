@@ -708,7 +708,7 @@ jobs:
             processed=true
           elif [ -n "${FORMAL_REPLAY_REQUEST:-}" ]; then
             python scripts/refresh_gate.py --guard-request "$request_files"
-            python scripts/process_state_sync_request.py --formal-replay-source-commit "$FORMAL_REPLAY_SOURCE_COMMIT" --formal-replay-dwp-commit "$FORMAL_REPLAY_DWP_COMMIT" "$request_files"
+            ETF_FORENSIC_FINGERPRINT=1 ETF_FORENSIC_REPLAY=1 python scripts/process_state_sync_request.py --formal-replay-source-commit "$FORMAL_REPLAY_SOURCE_COMMIT" --formal-replay-dwp-commit "$FORMAL_REPLAY_DWP_COMMIT" "$request_files"
             python - "$request_files" <<'PY'
           import json, sys
           from pathlib import Path
