@@ -99,7 +99,6 @@ class ProductionBusinessSourceIngressTests(unittest.TestCase):
     def test_structured_completion_rejects_observation_or_discovery_aggregates_as_capital_states(self):
         response = json.loads(json.dumps(RESPONSE))
         response["answers"]["NEXT_UNIT_CAPITAL_USE"]["compared_capital_states_as_business_state_names"] = [
-            "现金",
             "持续观察ETF",
             "Discovery候选",
         ]
