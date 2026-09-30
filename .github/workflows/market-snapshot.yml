@@ -421,14 +421,62 @@ jobs:
           PY
             )
             mapfile -t formal_sources < <(find requests/live_snapshot -maxdepth 1 -type f -name "${parent_request_id}__business_decision_source_*.json" -print | sort)
-            if [ "${#formal_sources[@]}" -ne 1 ]; then
-              echo "formal replay requires exactly one durable BUSINESS_DECISION_SOURCE for parent=${parent_request_id}; found=${#formal_sources[@]}" >&2
+            if [ "${#formal_sources[@]}" -lt 1 ]; then
+              echo "formal replay requires at least one durable BUSINESS_DECISION_SOURCE for parent=${parent_request_id}; found=0" >&2
               exit 1
             fi
-            request_files="${formal_sources[0]}"
-            formal_source_commit=$(git log --diff-filter=A --format=%H -- "$request_files" | head -n 1)
-            if [ -z "$formal_source_commit" ]; then
-              echo "formal replay cannot resolve immutable BUSINESS_DECISION_SOURCE introduction commit" >&2
+            # BDS Actor retries are a supported same-decision recovery pattern.
+            # Preserve every durable attempt, but replay only the newest attempt
+            # when all attempts prove the same parent + decision identity.
+            # Distinct decision identities under one parent remain ambiguous and
+            # fail closed instead of being guessed by filename or wall-clock time.
+            replay_binding=$(python - "$parent_request_id" "${formal_sources[@]}" <<'PY'
+          import json
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          parent = sys.argv[1]
+          paths = [Path(item) for item in sys.argv[2:]]
+          rows = []
+          decision_ids = set()
+          for path in paths:
+              source = json.loads(path.read_text(encoding="utf-8"))
+              if str(source.get("parent_request_id") or "").strip() != parent:
+                  raise SystemExit(f"formal replay BDS parent mismatch: {path}")
+              decision_id = str(source.get("decision_id") or "").strip()
+              if not decision_id:
+                  raise SystemExit(f"formal replay BDS decision_id missing: {path}")
+              decision_ids.add(decision_id)
+              commit = subprocess.run(
+                  ["git", "log", "--diff-filter=A", "--format=%H", "--", str(path)],
+                  capture_output=True, text=True, check=True,
+              ).stdout.splitlines()
+              if len(commit) != 1:
+                  raise SystemExit(f"formal replay cannot resolve unique BDS introduction commit: {path}")
+              rows.append((path, commit[0]))
+          if len(decision_ids) != 1:
+              raise SystemExit(
+                  "formal replay refuses multiple durable decision identities for one parent: "
+                  + ",".join(sorted(decision_ids))
+              )
+          # main history is the authority for retry order.  Pick the first BDS
+          # introduction encountered while walking HEAD newest-to-oldest.
+          by_commit = {commit: path for path, commit in rows}
+          history = subprocess.run(
+              ["git", "rev-list", "HEAD"],
+              capture_output=True, text=True, check=True,
+          ).stdout.splitlines()
+          selected = next(((by_commit[c], c) for c in history if c in by_commit), None)
+          if selected is None:
+              raise SystemExit("formal replay cannot order durable BDS retry provenance on execution-time main")
+          print(f"{selected[0]}|{selected[1]}")
+          PY
+            )
+            request_files="${replay_binding%%|*}"
+            formal_source_commit="${replay_binding#*|}"
+            if [ -z "$request_files" ] || [ -z "$formal_source_commit" ]; then
+              echo "formal replay cannot resolve immutable BUSINESS_DECISION_SOURCE retry binding" >&2
               exit 1
             fi
             # The immutable Source is normally committed after the request-bound
