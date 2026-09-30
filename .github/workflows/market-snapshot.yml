@@ -672,11 +672,33 @@ jobs:
           if not path.exists():
               raise SystemExit("replay_request does not exist in execution-time main")
           obj = json.loads(path.read_text(encoding="utf-8"))
-          trade = obj.get("trade_event")
           if str(obj.get("request_type") or "").upper() != "STATE_SYNC_ONLY":
               raise SystemExit("replay_request must be STATE_SYNC_ONLY")
-          if not isinstance(trade, dict):
-              raise SystemExit("replay_request must contain a trade_event")
+          formal_fact_type = str(obj.get("formal_fact_type") or "").upper()
+          interaction_scenario = str(obj.get("interaction_scenario") or "").upper()
+          review = obj.get("formal_review")
+          is_formal_post_close_review = (
+              formal_fact_type == "FORMAL_POST_CLOSE_REVIEW"
+              and interaction_scenario == "POST_CLOSE_REVIEW"
+              and isinstance(review, dict)
+          )
+          if is_formal_post_close_review:
+              # Historical post-close review replay is a canonical review
+              # request, not a trade-event request.  Keep it bounded to the
+              # existing durable review identity and temporal envelope.
+              required = (
+                  str(obj.get("request_id") or "").strip()
+                  and str(obj.get("requested_at_beijing") or "").strip()
+                  and str(obj.get("market_date") or "").strip()
+                  and str(review.get("market_date") or "").strip() == str(obj.get("market_date") or "").strip()
+                  and str(review.get("reviewed_at_beijing") or "").strip()
+              )
+              if not required:
+                  raise SystemExit("FORMAL_POST_CLOSE_REVIEW replay has invalid request/market temporal identity")
+          else:
+              trade = obj.get("trade_event")
+              if not isinstance(trade, dict):
+                  raise SystemExit("trade-bearing STATE_SYNC_ONLY replay must contain a trade_event")
           # Historical durable requests may predate embedded execution_status.
           # Admission still requires the same canonical EXECUTED event that the
           # state-sync owner will consume; the request itself is never rewritten.
