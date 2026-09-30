@@ -8,10 +8,30 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import sys
 from typing import Any
 
 BUSINESS_DECISION_SOURCE = "BUSINESS_DECISION_SOURCE"
 STATE_SYNC_ONLY = "STATE_SYNC_ONLY"
+
+_FORENSIC_EXPECTED_DWP_HASH = None
+
+def forensic_fingerprint(stage: str, work_package: Any = None, *, source_object: Any = None, provenance: str = "", historical: bool = False) -> None:
+    global _FORENSIC_EXPECTED_DWP_HASH
+    if os.environ.get("ETF_FORENSIC_FINGERPRINT") != "1":
+        return
+    graph = []
+    if isinstance(work_package, dict):
+        graph = [str(item.get("problem_id") or "") for item in (work_package.get("problem_graph") or []) if isinstance(item, dict) and item.get("problem_id")]
+    graph_hash = hashlib.sha256(json.dumps(graph, ensure_ascii=False, separators=(",", ":")).encode("utf-8")).hexdigest()
+    record = {"stage": stage, "problem_ids": graph, "problem_ids_sha256": graph_hash, "object_type": type(work_package).__name__, "object_id": id(work_package) if work_package is not None else None, "source_object_type": type(source_object).__name__ if source_object is not None else None, "source_object_id": id(source_object) if source_object is not None else None, "provenance": provenance, "historical": historical}
+    if historical and stage == "B_packet_dwp":
+        _FORENSIC_EXPECTED_DWP_HASH = graph_hash
+    if historical and _FORENSIC_EXPECTED_DWP_HASH and stage != "B_packet_dwp" and graph_hash != _FORENSIC_EXPECTED_DWP_HASH:
+        record["FIRST_DIVERGENCE_STAGE"] = stage
+        record["expected_dwp_sha256"] = _FORENSIC_EXPECTED_DWP_HASH
+    print("FORENSIC_DWP_FINGERPRINT=" + json.dumps(record, ensure_ascii=False, sort_keys=True), file=sys.stderr)
 
 _REQUIRED = (
     "risk_permission", "main_candidate", "opportunity_status", "capital_use",
@@ -149,6 +169,9 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
     if not isinstance(answers, dict):
         raise ValueError("decision response requires answers keyed by problem_id")
     graph = [x for x in (work_package.get("problem_graph") or []) if isinstance(x, dict)]
+    forensic_fingerprint("E_project_decision_response_dwp", work_package, source_object=source, provenance="project_decision_response argument", historical=os.environ.get("ETF_FORENSIC_REPLAY") == "1")
+    forensic_fingerprint("F_source_internal_dwp", source.get("decision_work_package"), source_object=source, provenance="project_decision_response source internal field", historical=os.environ.get("ETF_FORENSIC_REPLAY") == "1")
+    forensic_fingerprint("G_completeness_validator_graph", {"problem_graph": graph}, source_object=source, provenance="project_decision_response completeness required_ids", historical=os.environ.get("ETF_FORENSIC_REPLAY") == "1")
     required_ids = [str(x.get("problem_id") or "") for x in graph if x.get("problem_id")]
     missing = [pid for pid in required_ids if pid not in answers]
     if missing:
