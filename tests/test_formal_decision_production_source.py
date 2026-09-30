@@ -27,6 +27,9 @@ BASE_DECISION = {
 
 WORK_PACKAGE = {
     "problem_graph": [
+        {"problem_id": "RISK_PERMISSION", "decision_object": "risk"},
+        {"problem_id": "MAIN_CANDIDATE", "decision_object": "candidate"},
+        {"problem_id": "NEXT_UNIT_CAPITAL_USE", "decision_object": "capital"},
         {
             "problem_id": "HOLDING:561980",
             "decision_object": "561980",
@@ -39,6 +42,36 @@ WORK_PACKAGE = {
 
 RESPONSE = {
     "answers": {
+        "RISK_PERMISSION": {
+            "final_action": "允许Confirm",
+            "capital_comparison": "比较完成",
+            "next_change_condition": "风险许可变化时重评",
+            "evidence_decision_impact": ["ALL_REQUIRED"],
+        },
+        "MAIN_CANDIDATE": {
+            "final_action": "NO_ADD",
+            "capital_comparison": "现金优先",
+            "next_change_condition": "候选效率变化时重评",
+            "evidence_decision_impact": ["ALL_REQUIRED"],
+            "candidate_code": "159981",
+            "candidate_name": "能源化工ETF",
+            "opportunity_status": "Trial机会",
+        },
+        "NEXT_UNIT_CAPITAL_USE": {
+            "final_action": "CASH",
+            "capital_comparison": "现金优先",
+            "next_change_condition": "机会效率变化时重评",
+            "evidence_decision_impact": ["ALL_REQUIRED"],
+            "new_amount_yuan": 0,
+            "post_action_deployable_cash": 10000,
+            "future_opportunity_capacity": "保留",
+            "cash_opportunity_cost": "放弃当前机会",
+            "alternative_capital_use_review": "已比较",
+            "concentration_account_structure_effect": "不增加",
+            "selected_state_reason": "现金更优",
+            "zero_amount_decisive_reason": "无更优机会",
+            "compared_capital_states": [{"state_name": "现金", "capital_action": "保留"}],
+        },
         "HOLDING:561980": {
             "final_action": "HOLD",
             "capital_comparison": "继续占用资本相对现金仍合理",
