@@ -37,6 +37,8 @@ except ModuleNotFoundError:
         build_formal_completion_from_source,
         project_decision_response,
         source_fingerprint,
+        emit_formal_replay_forensic_fingerprint,
+        reset_formal_replay_forensic_trace,
         validate_source,
     )
 from formal_file_mutation_gateway import (
