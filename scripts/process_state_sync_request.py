@@ -2984,6 +2984,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("request_path")
     parser.add_argument("--formal-replay-source-commit", default="")
+    parser.add_argument("--formal-replay-dwp-commit", default="")
     args = parser.parse_args()
     req_path = (ROOT / args.request_path).resolve()
     if ROOT not in req_path.parents or not req_path.exists():
@@ -3041,12 +3042,13 @@ def main() -> int:
             )
             if historical_source.returncode != 0 or historical_source.stdout.encode("utf-8") != req_path.read_bytes():
                 raise ValueError("formal replay source bytes must match the immutable source-introduction commit")
+            replay_dwp_commit = str(args.formal_replay_dwp_commit or replay_source_commit).strip()
             historical_query = subprocess.run(
-                ["git", "show", f"{replay_source_commit}:data/state/query_context.json"],
+                ["git", "show", f"{replay_dwp_commit}:data/state/query_context.json"],
                 cwd=ROOT, capture_output=True, text=True, check=False,
             )
-            if historical_query.returncode != 0:
-                raise ValueError("formal replay source commit is missing historical request-bound query_context")
+            if historical_query.returncode != 0 or not historical_query.stdout.strip():
+                raise ValueError("formal replay DWP commit is missing historical request-bound query_context")
             query_context = json.loads(historical_query.stdout)
         else:
             query_path = ROOT / "data" / "state" / "query_context.json"
