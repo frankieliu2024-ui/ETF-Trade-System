@@ -386,7 +386,44 @@ jobs:
               echo "formal replay cannot resolve immutable BUSINESS_DECISION_SOURCE introduction commit" >&2
               exit 1
             fi
+            # The immutable Source is normally committed after the request-bound
+            # DWP/query context was produced.  Preserve Source provenance at its
+            # introduction commit, but resolve DWP provenance from the newest
+            # ancestor whose query_context is bound to this parent request.
+            formal_dwp_commit=$(python - "$parent_request_id" "$formal_source_commit" <<'PY'
+import json
+import subprocess
+import sys
+parent, source_commit = sys.argv[1:]
+history = subprocess.run(
+    ["git", "rev-list", source_commit],
+    capture_output=True, text=True, check=True,
+).stdout.splitlines()
+for commit in history:
+    shown = subprocess.run(
+        ["git", "show", f"{commit}:data/state/query_context.json"],
+        capture_output=True, text=True, check=False,
+    )
+    if shown.returncode != 0 or not shown.stdout.strip():
+        continue
+    try:
+        context = json.loads(shown.stdout)
+    except json.JSONDecodeError:
+        continue
+    trigger = ((context.get("decision_fact_pack") or {}).get("trigger") or {})
+    package = ((context.get("decision_fact_pack") or {}).get("decision_work_package") or {})
+    if str(trigger.get("request_id") or "").strip() == parent and isinstance(package.get("problem_graph"), list) and package["problem_graph"]:
+        print(commit)
+        raise SystemExit(0)
+raise SystemExit(1)
+PY
+            )
+            if [ -z "$formal_dwp_commit" ]; then
+              echo "formal replay cannot resolve historical request-bound Decision Work Package provenance" >&2
+              exit 1
+            fi
             echo "FORMAL_REPLAY_SOURCE_COMMIT=$formal_source_commit" >> "$GITHUB_ENV"
+            echo "FORMAL_REPLAY_DWP_COMMIT=$formal_dwp_commit" >> "$GITHUB_ENV"
           else
             request_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
           fi
@@ -511,7 +548,7 @@ jobs:
             processed=true
           elif [ -n "${FORMAL_REPLAY_REQUEST:-}" ]; then
             python scripts/refresh_gate.py --guard-request "$request_files"
-            python scripts/process_state_sync_request.py --formal-replay-source-commit "$FORMAL_REPLAY_SOURCE_COMMIT" "$request_files"
+            python scripts/process_state_sync_request.py --formal-replay-source-commit "$FORMAL_REPLAY_SOURCE_COMMIT" --formal-replay-dwp-commit "$FORMAL_REPLAY_DWP_COMMIT" "$request_files"
             python - "$request_files" <<'PY'
           import json, sys
           from pathlib import Path
