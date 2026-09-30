@@ -4,9 +4,9 @@
   "purpose": "允许并行诊断、研究、实现和测试；对共享生产状态实行价值/残余风险准入、隔离实施、latest-main重放、文件所有权和串行集成约束。",
   "normative_contract": {
     "source": "docs/生产变更与并发写入协议_V1.0.md",
-    "version": "V1.9",
+    "version": "V1.10",
     "machine_role": "EXECUTABLE_MIRROR_NOT_RULE_SOURCE",
-    "migration_note": "V1.9 is a governance reduction over V1.8; V1.8 hard safety invariants remain mandatory."
+    "migration_note": "V1.10 adds evidence-state failure escalation, historical recovery temporal separation, and orthogonal incident closure semantics while preserving V1.9 hard safety invariants."
   },
   "principles": [
     "parallel_diagnosis_is_allowed",
@@ -548,6 +548,58 @@
     "normative_text_source": "docs/生产变更与并发写入协议_V1.0.md",
     "issue_brief_packet_rule": "reference_protocol_and_task_fields_only",
     "no_manual_second_rule_set": true,
-    "note": "T2-F/T2-P and subtraction routing are declarative extensions of the existing Tier 2 matrix; no new workflow, checker, state, registry, or acceptance engine."
+    "note": "V1.10 extends the existing protocol with three contracts only: failure escalation, historical recovery temporal separation, and orthogonal implementation/incident closure acceptance; opt-in forensic observability remains an existing diagnostic capability."
+  },
+  "failure_escalation_gate": {
+    "trigger": "same_failure_domain_still_fails_on_the_real_target_path_after_root_cause_complete_repair_and_independent_domain_is_not_proven",
+    "basis": "evidence_state_not_fixed_attempt_count",
+    "required_audit": [
+      "request_identity",
+      "pit_temporal_boundary",
+      "source_dwp_account_trade_provenance",
+      "state_producing_owner",
+      "runtime_object_transformation",
+      "canonical_owner",
+      "downstream_consumers",
+      "current_vs_historical_dependencies",
+      "failure_movement"
+    ],
+    "next_action": "classify_as_same_root_cause_complete_repair_or_upper_contract_repair_or_independent_work_item_before_next_production_change",
+    "no_new_parallel_mechanism": true
+  },
+  "historical_recovery_temporal_contract": {
+    "decision_time_proves": [
+      "source",
+      "decision_work_package",
+      "account",
+      "lifecycle",
+      "observation_opportunity_discovery",
+      "capital_competition",
+      "formal_decision_completeness"
+    ],
+    "recovery_time_proves": [
+      "current_canonical_writer_safety",
+      "current_account_trade_protection",
+      "duplicate_prevention",
+      "idempotency",
+      "reconciliation"
+    ],
+    "prohibition": "recovery_time_current_state_must_not_redefine_historical_decision_semantics",
+    "missing_historical_fact": "FAIL_CLOSED",
+    "ordinary_current_formal_decision": "CURRENT_STATE_CONTRACT"
+  },
+  "acceptance_orthogonality": {
+    "implementation_acceptance": "proves_change_is_safe_to_enter_main",
+    "incident_closure_acceptance": "proves_failure_domain_is_absent_on_real_target_path_and_canonical_readback_is_correct",
+    "local_pass_is_not_incident_closure": true,
+    "cross_temporal_operations": [
+      "historical_recovery",
+      "replay",
+      "migration",
+      "backfill",
+      "canonical_repair"
+    ],
+    "production_exposure": "only_when_deterministic_evidence_cannot_close_key_residual_risk",
+    "canonical_readback": "required_for_incident_closure"
   }
 }
