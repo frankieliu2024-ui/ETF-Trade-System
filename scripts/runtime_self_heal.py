@@ -132,6 +132,41 @@ def valid_json(path: Path) -> bool:
     return isinstance(load_json(path), dict)
 
 
+def latest_unfinished_formal_parent() -> tuple[str | None, str | None]:
+    """Find the newest durable Formal parent that lacks same-request context.
+
+    Reuses the existing market-snapshot producer and formal replay input; it
+    never creates a parent, decision source, writer, or parallel recovery state.
+    """
+    directory = ROOT / "requests" / "live_snapshot"
+    parents: list[tuple[datetime, str, Path]] = []
+    if not directory.exists():
+        return None, None
+    for path in directory.glob("*.json"):
+        request = load_json(path, {}) or {}
+        if str(request.get("request_type") or "").upper() != "MARKET_QUOTE_REFRESH":
+            continue
+        if str(request.get("source") or "").upper() != "CHATGPT_MANUAL_FORMAL_ANALYSIS":
+            continue
+        request_id = str(request.get("request_id") or "").strip()
+        stamp = parse_dt(request.get("requested_at_beijing") or request.get("request_time_beijing"))
+        if request_id and stamp:
+            parents.append((stamp, request_id, path))
+    if not parents:
+        return None, None
+    _, parent_id, parent_path = max(parents, key=lambda item: item[0])
+    query = load_json(QUERY_CONTEXT_PATH, {}) or {}
+    pack = query.get("decision_fact_pack") if isinstance(query, dict) else {}
+    trigger = pack.get("trigger") if isinstance(pack, dict) else {}
+    bound_id = str((trigger or {}).get("request_id") or "").strip() if isinstance(trigger, dict) else ""
+    if bound_id == parent_id:
+        return None, None
+    for candidate in directory.glob("*.json"):
+        child = load_json(candidate, {}) or {}
+        if str(child.get("request_type") or "").upper() == "BUSINESS_DECISION_SOURCE" and str(child.get("parent_request_id") or "").strip() == parent_id:
+            return None, None
+    return str(parent_path.relative_to(ROOT)).replace("\\", "/"), parent_id
+
 def previous_status() -> dict:
     data = load_json(STATUS_PATH, {})
     return data if isinstance(data, dict) else {}
@@ -250,6 +285,7 @@ def assess(now: datetime | None = None) -> dict:
     master_ver = master_version()
     current_ver = str(current.get("rules_version") or "")
     review_context = load_json(REVIEW_CONTEXT_PATH, {}) or {}
+    formal_replay_path, formal_replay_parent_id = latest_unfinished_formal_parent()
     review_ver = str(review_context.get("rules_version") or "")
 
     classification = "HEALTHY"
@@ -266,6 +302,8 @@ def assess(now: datetime | None = None) -> dict:
         classification, action, reason = "DISABLED", "NONE", "self-healing disabled by runtime policy"
     elif consistency_gate["blocks_market_recovery"]:
         classification, action, reason = "CONSISTENCY_REGRESSION", "ESCALATE", "system consistency has a hard failure that is not proven orthogonal to canonical market recovery"
+    elif formal_replay_path:
+        classification, action, reason = "FORMAL_PARENT_RECOVERY_REQUIRED", "REPLAY_FORMAL_REQUEST", f"durable Formal Decision parent {formal_replay_parent_id} has no same-request derived context and no BUSINESS_DECISION_SOURCE"
     elif same_day_missing:
         last_trigger = parse_dt(previous.get("last_snapshot_refresh_trigger_at"))
         seconds_since_trigger = int((now - last_trigger).total_seconds()) if last_trigger else None
@@ -319,6 +357,8 @@ def assess(now: datetime | None = None) -> dict:
         "master_rules_version": master_ver,
         "current_rules_version": current_ver or None,
         "review_context_rules_version": review_ver or None,
+        "formal_replay_request": formal_replay_path,
+        "formal_replay_parent_id": formal_replay_parent_id,
         "snapshot_refresh_attempts": attempts,
         "last_snapshot_refresh_trigger_at": previous.get("last_snapshot_refresh_trigger_at"),
         "last_safe_repair_at": previous.get("last_safe_repair_at"),

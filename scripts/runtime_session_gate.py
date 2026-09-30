@@ -147,10 +147,15 @@ def _event_request_files() -> list[Path]:
     event_name = os.environ.get("GITHUB_EVENT_NAME")
     if event_name == "workflow_dispatch":
         replay = os.environ.get("FORMAL_REPLAY_REQUEST", "").strip()
-        if replay:
-            path = Path(replay)
+        context_recovery = os.environ.get("FORMAL_CONTEXT_RECOVERY_REQUEST", "").strip()
+        if replay and context_recovery:
+            raise ValueError("replay_request and formal_context_recovery_request/formal_replay_request are mutually exclusive")
+        if replay or context_recovery:
+            input_name = "formal_replay_request" if replay else "formal_context_recovery_request"
+            value = replay or context_recovery
+            path = Path(value)
             if path.is_absolute() or path.parts[:2] != ("requests", "live_snapshot") or ".." in path.parts or path.suffix != ".json":
-                raise ValueError("formal_replay_request must be one existing requests/live_snapshot/*.json path")
+                raise ValueError(f"{input_name} must be one existing requests/live_snapshot/*.json path")
             return [ROOT / path]
     return _changed_request_files() if event_name == "push" else []
 

@@ -17,7 +17,11 @@ on:
         required: false
         default: ""
       formal_replay_request:
-        description: "Existing canonical Formal Decision MARKET_QUOTE_REFRESH request to replay without creating a new request identity"
+        description: "Existing canonical Formal Decision MARKET_QUOTE_REFRESH request with durable BUSINESS_DECISION_SOURCE to replay"
+        required: false
+        default: ""
+      formal_context_recovery_request:
+        description: "Existing canonical Formal Decision MARKET_QUOTE_REFRESH parent to rebuild request-bound context before BUSINESS_DECISION_SOURCE"
         required: false
         default: ""
   push:
@@ -55,6 +59,7 @@ jobs:
       EVENT_BEFORE: ${{ github.event.before }}
       REPLAY_REQUEST: ${{ github.event.inputs.replay_request || '' }}
       FORMAL_REPLAY_REQUEST: ${{ github.event.inputs.formal_replay_request || '' }}
+      FORMAL_CONTEXT_RECOVERY_REQUEST: ${{ github.event.inputs.formal_context_recovery_request || '' }}
       SCHEDULED_CRON: ${{ github.event.schedule || '' }}
     steps:
       - uses: actions/checkout@v5
@@ -63,6 +68,23 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Reject ambiguous recovery inputs
+        if: \${{ github.event_name == 'workflow_dispatch' }}
+        shell: bash
+        run: |
+          # Use the already-bound job-level environment values. Re-evaluating
+          # optional workflow_dispatch inputs in a step env can expose GitHub's
+          # escaped empty/default representation (for example "\\") as a
+          # non-empty string and falsely trip the mutual-exclusion gate.
+          count=0
+          [ -n "$REPLAY_REQUEST" ] && count=$((count + 1))
+          [ -n "$FORMAL_REPLAY_REQUEST" ] && count=$((count + 1))
+          [ -n "$FORMAL_CONTEXT_RECOVERY_REQUEST" ] && count=$((count + 1))
+          if [ "$count" -gt 1 ]; then
+            echo "replay_request, formal_replay_request and formal_context_recovery_request are mutually exclusive" >&2
+            exit 1
+          fi
+
       - name: Detect triggering request envelope before any runtime work
         id: triggering_request
         if: ${{ github.event_name == 'push' }}
@@ -115,6 +137,27 @@ jobs:
             echo "TRIGGERING_REQUEST_EXPECTED=true"
           } >> "$GITHUB_ENV"
           echo "formal replay request: file=$REQUEST_FILE expected=true"
+
+      - name: Bind existing Formal Decision context recovery parent
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.formal_context_recovery_request != '' }}
+        shell: bash
+        run: |
+          REQUEST_FILE="${FORMAL_CONTEXT_RECOVERY_REQUEST}"
+          python - "$REQUEST_FILE" <<'PY'
+          import json, sys
+          from pathlib import Path
+          path = Path(sys.argv[1])
+          if path.is_absolute() or path.parts[:2] != ("requests", "live_snapshot") or ".." in path.parts or path.suffix != ".json" or not path.is_file():
+              raise SystemExit("formal_context_recovery_request must be one existing requests/live_snapshot/*.json path")
+          request = json.loads(path.read_text(encoding="utf-8"))
+          valid = (str(request.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH" and str(request.get("source") or "").upper() == "CHATGPT_MANUAL_FORMAL_ANALYSIS" and str(request.get("intent") or "").upper() == "FORMAL_INTRADAY_ANALYSIS" and str(request.get("query_intent") or "").upper() == "FORMAL_INTRADAY_ANALYSIS" and request.get("force_refresh") is True and request.get("require_post_request_snapshot") is True)
+          if not valid:
+              raise SystemExit("formal_context_recovery_request is not an existing canonical Formal Decision refresh request")
+          PY
+          mkdir -p "/tmp/etf-triggering-request/$(dirname "$REQUEST_FILE")"
+          cp "$REQUEST_FILE" "/tmp/etf-triggering-request/$REQUEST_FILE"
+          echo "TRIGGERING_REQUEST_FILE=$REQUEST_FILE" >> "$GITHUB_ENV"
+          echo "TRIGGERING_REQUEST_EXPECTED=true" >> "$GITHUB_ENV"
 
       - name: Check exchange calendar and capture window
         id: session_gate
@@ -362,7 +405,9 @@ jobs:
           # Process queued state-sync runs against execution-time main while
           # preserving only the triggering request payload.
           git fetch origin main
-          if [ -n "${REPLAY_REQUEST:-}" ]; then
+          if [ -n "${FORMAL_CONTEXT_RECOVERY_REQUEST:-}" ]; then
+            request_files=""
+          elif [ -n "${REPLAY_REQUEST:-}" ]; then
             request_files="$REPLAY_REQUEST"
           elif [ -n "${FORMAL_REPLAY_REQUEST:-}" ]; then
             # Explicit Formal Decision recovery reuses the immutable parent
@@ -607,9 +652,10 @@ jobs:
       - name: Build on-demand query context
         # Formal decision critical path. Do not let an unrelated optional/derived
         # step failure suppress request binding and PIT qualification.
-        if: ${{ always() && steps.state_sync.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
         run: |
           REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"
+          if [ -z "$REQUEST_FILE" ] && [ -n "${FORMAL_CONTEXT_RECOVERY_REQUEST:-}" ]; then REQUEST_FILE="$FORMAL_CONTEXT_RECOVERY_REQUEST"; fi
           if [ -z "$REQUEST_FILE" ] && [ -n "${REPLAY_REQUEST:-}" ]; then REQUEST_FILE="$REPLAY_REQUEST"; fi
           if [ -z "$REQUEST_FILE" ]; then REQUEST_FILE=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | head -n 1); fi
           # Core publish may reset the worktree to execution-time main before
