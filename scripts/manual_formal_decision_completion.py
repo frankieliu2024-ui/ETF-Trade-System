@@ -10,6 +10,11 @@ try:
 except ModuleNotFoundError:
     from scripts.runtime_session_gate import classify_live_snapshot_request
 
+try:
+    from business_decision_source import project_decision_response, validate_source
+except ModuleNotFoundError:
+    from scripts.business_decision_source import project_decision_response, validate_source
+
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 REQUEST_DIR = ROOT / "requests" / "live_snapshot"
 
@@ -101,7 +106,31 @@ def build_structured_completion_request(
         raise ValueError("new formal decision completion requires structured decision_response answers")
     if not isinstance(decision_work_package, dict) or not decision_work_package.get("problem_graph"):
         raise ValueError("new formal decision completion requires request-bound decision_work_package")
+    snapshot = str(consumed_snapshot or source_request.get("consumed_snapshot") or "").strip()
+    if not snapshot:
+        raise ValueError("new formal decision completion requires an explicit consumed PIT snapshot")
     envelope_id = _safe_id(completion_request_id or f"{parent_id}__business_decision_source")
+    decision_id = str(
+        (formal_decision or {}).get("decision_id")
+        or source_request.get("decision_id")
+        or f"{parent_id}__decision"
+    ).strip()
+    if not decision_id:
+        raise ValueError("new formal decision completion requires a decision identity")
+
+    # Preflight the actor response with the same side-effect-free canonical
+    # projector used by the downstream consumer.  This is deliberately before
+    # constructing a durable request, so malformed BDS cannot enter the
+    # production ingress and the actor receives the exact missing-field error.
+    preflight_source = {
+        "request_type": "BUSINESS_DECISION_SOURCE",
+        "request_id": envelope_id,
+        "parent_request_id": parent_id,
+        "decision_id": decision_id,
+        "consumed_snapshot": snapshot,
+    }
+    projected = project_decision_response(preflight_source, decision_response, decision_work_package)
+    validate_source(projected, expected_snapshot=snapshot)
     payload = {
         "request_id": envelope_id,
         "parent_request_id": parent_id,
@@ -110,7 +139,8 @@ def build_structured_completion_request(
         "interaction_scenario": scenario,
         "requested_at_beijing": source_request.get("requested_at_beijing") or source_request.get("request_time_beijing"),
         "market_date": source_request.get("market_date"),
-        "consumed_snapshot": str(consumed_snapshot or source_request.get("consumed_snapshot") or "").strip(),
+        "consumed_snapshot": snapshot,
+        "decision_id": decision_id,
         "decision_response": decision_response,
         "decision_work_package": decision_work_package,
         "request_bound_pit_closure": request_bound_pit_closure,

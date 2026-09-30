@@ -66,6 +66,23 @@ def formal_decision():
 
 
 class ManualCompletionEnvelopeTests(unittest.TestCase):
+    def test_structured_completion_preflights_authoritative_answer_contract(self):
+        response = {
+            "answers": {
+                "MAIN_CANDIDATE": {
+                    "final_action": "159992_CONFIRM_OPPORTUNITY",
+                    "capital_comparison": "comparison",
+                    "next_change_condition": "condition",
+                    "evidence_decision_impact": ["REQUEST_BOUND_DWP"],
+                }
+            }
+        }
+        work_package = {"problem_graph": [{"problem_id": "MAIN_CANDIDATE", "security": "candidate"}], "evidence_requirements": []}
+        with self.assertRaisesRegex(ValueError, "candidate_name"):
+            completion.build_structured_completion_request(
+                SOURCE_REQUEST, formal_decision(), response, work_package, SNAPSHOT_PATH
+            )
+
     def test_matched_request_keeps_parent_separate_from_completion_identity_and_binds_pit(self):
         payload = completion.build_completion_request(SOURCE_REQUEST, formal_decision(), SNAPSHOT_PATH)
         self.assertEqual(payload["request_id"], "20260915_1447_manual_intraday_chat__formal_completion")
