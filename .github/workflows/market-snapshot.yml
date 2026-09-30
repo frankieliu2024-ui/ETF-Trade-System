@@ -70,16 +70,16 @@ jobs:
           python-version: "3.11"
       - name: Reject ambiguous recovery inputs
         if: \${{ github.event_name == 'workflow_dispatch' }}
-        env:
-          REPLAY_REQUEST_INPUT: \${{ github.event.inputs.replay_request || '' }}
-          FORMAL_REPLAY_REQUEST_INPUT: \${{ github.event.inputs.formal_replay_request || '' }}
-          FORMAL_CONTEXT_RECOVERY_REQUEST_INPUT: \${{ github.event.inputs.formal_context_recovery_request || '' }}
         shell: bash
         run: |
+          # Use the already-bound job-level environment values. Re-evaluating
+          # optional workflow_dispatch inputs in a step env can expose GitHub's
+          # escaped empty/default representation (for example "\\") as a
+          # non-empty string and falsely trip the mutual-exclusion gate.
           count=0
-          [ -n "$REPLAY_REQUEST_INPUT" ] && count=$((count + 1))
-          [ -n "$FORMAL_REPLAY_REQUEST_INPUT" ] && count=$((count + 1))
-          [ -n "$FORMAL_CONTEXT_RECOVERY_REQUEST_INPUT" ] && count=$((count + 1))
+          [ -n "$REPLAY_REQUEST" ] && count=$((count + 1))
+          [ -n "$FORMAL_REPLAY_REQUEST" ] && count=$((count + 1))
+          [ -n "$FORMAL_CONTEXT_RECOVERY_REQUEST" ] && count=$((count + 1))
           if [ "$count" -gt 1 ]; then
             echo "replay_request, formal_replay_request and formal_context_recovery_request are mutually exclusive" >&2
             exit 1
