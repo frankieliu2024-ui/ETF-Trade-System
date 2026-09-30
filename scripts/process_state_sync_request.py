@@ -1900,10 +1900,22 @@ def _normalize_executed_trade_case_mapping(review: dict, market_date: str) -> di
             continue
         code = str(trade.get("code") or "")
         case = prior_cases.get(code)
+        # Downstream review/CASE projections must consume the same effective
+        # attribution truth as execution_attribution/decision_trade_link.
+        # The immutable trade may intentionally retain linked_decision_id=null.
+        from decision_trade_link import resolve_link
+        effective_id, _decision, resolution = resolve_link(
+            ROOT, trade, str(trade.get("linked_decision_id") or "")
+        )
+        if resolution == "CORRECTION_CONFLICT":
+            raise RuntimeError(
+                f"executed trade attribution conflict during review normalization: {event_id}"
+            )
+        effective_id = str(effective_id or trade.get("linked_decision_id") or "")
         if case:
             existing.append({
                 "trade_event_id": event_id,
-                "decision_id": str(trade.get("linked_decision_id") or ""),
+                "decision_id": effective_id,
                 "case_id": case[0],
                 "security_code": code,
                 "case_status": "RESOLVED",
@@ -1913,7 +1925,7 @@ def _normalize_executed_trade_case_mapping(review: dict, market_date: str) -> di
         else:
             ineligible.append({
                 "trade_event_id": event_id,
-                "decision_id": str(trade.get("linked_decision_id") or ""),
+                "decision_id": effective_id,
                 "security_code": code,
                 "eligibility": "EXPLICIT_CANONICAL_INELIGIBILITY",
                 "reason": "正式复盘已完成，但当前不存在该证券既有CASE，且本次退出不满足既有通用CASE intake语义；不创建新CASE。",
