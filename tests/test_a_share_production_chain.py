@@ -395,6 +395,7 @@ class ManualRequestSessionIngressTests(unittest.TestCase):
         gate = (ROOT / "scripts/runtime_session_gate.py").read_text(encoding="utf-8")
         workflow = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
         self.assertIn("FORMAL_REPLAY_REQUEST", gate)
+        self.assertIn("fetch-depth: 0", workflow)
         self.assertIn("formal_replay_request:", workflow)
         self.assertIn("Bind explicit existing Formal Decision replay", workflow)
         self.assertIn("TRIGGERING_REQUEST_FILE=$REQUEST_FILE", workflow)
