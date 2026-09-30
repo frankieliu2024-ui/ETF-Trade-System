@@ -28,6 +28,7 @@ try:
         project_decision_response,
         source_fingerprint,
         validate_source,
+        forensic_fingerprint,
     )
 except ModuleNotFoundError:
     from scripts.business_decision_source import (
@@ -798,6 +799,7 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
             raise ValueError("manual formal completion requires request-scoped query context")
         query_context = load_json(query_path)
         packet = query_context.get("decision_fact_pack") or {}
+        forensic_fingerprint("A_historical_packet", packet, provenance=f"git_show:{replay_dwp_commit}" if replay_source_commit else "current_query_context", historical=bool(replay_source_commit))
         action_readiness = packet.get("formal_action_readiness") or packet.get("formal_reasoning_readiness") or {}
         packet_request_id = str((packet.get("trigger") or {}).get("request_id") or "").strip()
         if packet_request_id not in {parent_request_id, request_id}:
@@ -3075,6 +3077,7 @@ def main() -> int:
         # A request-local/current DWP must never override that PIT boundary.
         if replay_source_commit:
             decision_work_package = packet.get("decision_work_package") or {}
+            forensic_fingerprint("B_packet_dwp", decision_work_package, source_object=packet, provenance=f"git_show:{replay_dwp_commit}", historical=True)
         else:
             decision_work_package = request.get("decision_work_package") or packet.get("decision_work_package") or {}
         if not isinstance(decision_work_package, dict) or not decision_work_package.get("problem_graph"):
@@ -3085,6 +3088,7 @@ def main() -> int:
         # including REJECTed Discovery evaluation inputs, rather than falling
         # back to the later post-disposition Observation set.
         request["decision_work_package"] = json.loads(json.dumps(decision_work_package))
+        forensic_fingerprint("C_request_freeze_dwp", request["decision_work_package"], source_object=request, provenance="request in-memory freeze", historical=bool(replay_source_commit))
 
         supplied_decision = request.get("formal_decision")
         source_payload = dict(supplied_decision) if isinstance(supplied_decision, dict) else {}
@@ -3116,6 +3120,7 @@ def main() -> int:
         # fingerprinting.  It is validation context, not mutable Source
         # business content, so replay/idempotency fingerprints remain stable.
         source = freeze_source_work_package(source, decision_work_package)
+        forensic_fingerprint("D_source_binding_dwp", source.get("decision_work_package"), source_object=source, provenance="freeze_source_work_package", historical=bool(replay_source_commit))
         source_fingerprint_value = source["fingerprint"]
         source_reply_ready = True
         request["_business_decision_source"] = source
