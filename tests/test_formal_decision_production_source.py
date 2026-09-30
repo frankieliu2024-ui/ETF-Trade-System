@@ -96,6 +96,58 @@ class ProductionBusinessSourceIngressTests(unittest.TestCase):
         self.assertEqual(payload["parent_request_id"], SOURCE["request_id"])
         self.assertNotIn("position_capital_states", RESPONSE["answers"]["HOLDING:561980"])
 
+    def test_structured_completion_rejects_observation_or_discovery_aggregates_as_capital_states(self):
+        response = json.loads(json.dumps(RESPONSE))
+        work_package = json.loads(json.dumps(WORK_PACKAGE))
+        work_package["business_role_reconciliation_contract"] = "V1"
+        response["answers"]["NEXT_UNIT_CAPITAL_USE"]["compared_capital_states_as_business_state_names"] = [
+            "持续观察ETF",
+            "Discovery候选",
+        ]
+        with self.assertRaisesRegex(
+            ValueError,
+            "cannot use observation/discovery aggregates as capital states",
+        ):
+            completion.build_structured_completion_request(
+                SOURCE, BASE_DECISION, response, work_package, "data/market/snapshots/x.json"
+            )
+
+    def test_durable_business_source_must_come_from_authoritative_builder(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "requests/live_snapshot").mkdir(parents=True)
+            source_path = root / "requests/live_snapshot/source.json"
+            response_path = root / "response.json"
+            source_path.write_text(json.dumps(SOURCE), encoding="utf-8")
+            response_path.write_text(json.dumps(RESPONSE), encoding="utf-8")
+            query = {
+                "decision_fact_pack": {
+                    "trigger": {"request_id": SOURCE["request_id"]},
+                    "decision_work_package": WORK_PACKAGE,
+                    "formal_action_readiness": {
+                        "ready": True,
+                        "status": "READY",
+                        "request_scoped_pit_resolved": True,
+                    },
+                },
+                "freshness_assurance": {},
+            }
+            (root / "data/state").mkdir(parents=True)
+            (root / "data/state/query_context.json").write_text(json.dumps(query), encoding="utf-8")
+            with mock.patch.object(completion, "ROOT", root), mock.patch.object(
+                completion, "REQUEST_DIR", root / "requests/live_snapshot"
+            ):
+                target = completion.write_completion_request(
+                    "requests/live_snapshot/source.json",
+                    "",
+                    "data/market/snapshots/x.json",
+                    decision_response_path="response.json",
+                )
+            durable = json.loads(target.read_text(encoding="utf-8"))
+            self.assertEqual(durable["request_type"], "BUSINESS_DECISION_SOURCE")
+            self.assertEqual(durable["decision_response"], RESPONSE)
+            self.assertEqual(durable["decision_work_package"], WORK_PACKAGE)
+
     def test_structured_completion_rejects_missing_business_answers(self):
         with self.assertRaisesRegex(ValueError, "structured decision_response"):
             completion.build_structured_completion_request(
