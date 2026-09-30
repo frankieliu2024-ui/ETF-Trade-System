@@ -20,6 +20,11 @@ on:
         description: "Existing canonical Formal Decision MARKET_QUOTE_REFRESH request with durable BUSINESS_DECISION_SOURCE to replay"
         required: false
         default: ""
+      formal_replay_forensic:
+        description: "Enable diagnostic forensic fingerprints for an existing Formal Decision replay only"
+        required: false
+        default: "false"
+        type: boolean
       formal_context_recovery_request:
         description: "Existing canonical Formal Decision MARKET_QUOTE_REFRESH parent to rebuild request-bound context before BUSINESS_DECISION_SOURCE"
         required: false
@@ -59,6 +64,7 @@ jobs:
       EVENT_BEFORE: ${{ github.event.before }}
       REPLAY_REQUEST: ${{ github.event.inputs.replay_request || '' }}
       FORMAL_REPLAY_REQUEST: ${{ github.event.inputs.formal_replay_request || '' }}
+      ETF_FORMAL_REPLAY_FORENSIC: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.formal_replay_request != '' && github.event.inputs.formal_replay_forensic == 'true' && '1' || '0' }}
       FORMAL_CONTEXT_RECOVERY_REQUEST: ${{ github.event.inputs.formal_context_recovery_request || '' }}
       SCHEDULED_CRON: ${{ github.event.schedule || '' }}
     steps:
@@ -82,6 +88,15 @@ jobs:
           [ -n "$FORMAL_CONTEXT_RECOVERY_REQUEST" ] && count=$((count + 1))
           if [ "$count" -gt 1 ]; then
             echo "replay_request, formal_replay_request and formal_context_recovery_request are mutually exclusive" >&2
+            exit 1
+          fi
+          forensic_input="${{ github.event.inputs.formal_replay_forensic || 'false' }}"
+          if [ "$forensic_input" != "true" ] && [ "$forensic_input" != "false" ]; then
+            echo "formal_replay_forensic must be true or false" >&2
+            exit 1
+          fi
+          if [ "$forensic_input" = "true" ] && [ -z "$FORMAL_REPLAY_REQUEST" ]; then
+            echo "formal_replay_forensic=true requires formal_replay_request" >&2
             exit 1
           fi
 
