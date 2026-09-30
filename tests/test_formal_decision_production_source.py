@@ -148,6 +148,37 @@ class ProductionBusinessSourceIngressTests(unittest.TestCase):
             self.assertEqual(durable["decision_response"], RESPONSE)
             self.assertEqual(durable["decision_work_package"], WORK_PACKAGE)
 
+    def test_structured_completion_derives_scenario_for_canonical_minimal_parent(self):
+        source = json.loads(json.dumps(SOURCE))
+        source.pop("interaction_scenario")
+        source["requested_at_beijing"] = "2026-09-30T16:06:24+08:00"
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "config").mkdir(parents=True)
+            policy = {
+                "interaction_routing": {
+                    "routes": [
+                        {"start": "13:00", "end": "14:59", "scenario": "INTRADAY"},
+                        {"start": "15:00", "end": "23:59", "scenario": "POST_CLOSE_REVIEW"},
+                    ]
+                }
+            }
+            (root / "config/runtime_policy.json").write_text(json.dumps(policy), encoding="utf-8")
+            with mock.patch.object(completion, "ROOT", root):
+                payload = completion.build_structured_completion_request(
+                    source, BASE_DECISION, RESPONSE, WORK_PACKAGE, "data/market/snapshots/x.json"
+                )
+        self.assertEqual(payload["interaction_scenario"], "POST_CLOSE_REVIEW")
+
+    def test_structured_completion_missing_scenario_and_invalid_time_fails_closed(self):
+        source = json.loads(json.dumps(SOURCE))
+        source.pop("interaction_scenario")
+        source["requested_at_beijing"] = "not-a-time"
+        with self.assertRaisesRegex(ValueError, "valid request time"):
+            completion.build_structured_completion_request(
+                source, BASE_DECISION, RESPONSE, WORK_PACKAGE, "data/market/snapshots/x.json"
+            )
+
     def test_structured_completion_rejects_missing_business_answers(self):
         with self.assertRaisesRegex(ValueError, "structured decision_response"):
             completion.build_structured_completion_request(
