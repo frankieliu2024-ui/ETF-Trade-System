@@ -3097,12 +3097,6 @@ def main() -> int:
         source_payload.setdefault("market_date", query_context.get("market_date") or parent_request.get("market_date"))
         source_payload.setdefault("data_as_of_beijing", query_context.get("generated_at_beijing") or source_payload.get("requested_at_beijing"))
         source_payload["request_type"] = BUSINESS_DECISION_SOURCE
-        # The DWP selected above is the sole request-bound contract for this
-        # ingress.  Keep it attached to the in-memory Source as well as the
-        # request envelope so downstream completion/validation cannot fall
-        # back to a retry-local or execution-time post-trade graph.
-        source_payload = freeze_source_work_package(source_payload, decision_work_package)
-
         decision_response = request.get("decision_response")
         if isinstance(supplied_decision, dict) and supplied_decision:
             # Historical durable Business Decision Source replay: preserve the
@@ -3118,6 +3112,10 @@ def main() -> int:
             source_payload,
             expected_snapshot=str(request.get("consumed_snapshot") or source_payload.get("consumed_snapshot") or "").strip(),
         )
+        # Bind the selected request-bound DWP only after Source identity and
+        # fingerprinting.  It is validation context, not mutable Source
+        # business content, so replay/idempotency fingerprints remain stable.
+        source = freeze_source_work_package(source, decision_work_package)
         source_fingerprint_value = source["fingerprint"]
         source_reply_ready = True
         request["_business_decision_source"] = source
