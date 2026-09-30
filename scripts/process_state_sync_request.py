@@ -3085,7 +3085,8 @@ def main() -> int:
             if historical_query.returncode != 0 or not historical_query.stdout.strip():
                 raise ValueError("formal replay DWP commit is missing historical request-bound query_context")
             query_context = json.loads(historical_query.stdout)
-            historical_account = query_context.get("account_fact")
+            decision_fact_pack = query_context.get("decision_fact_pack") or {}
+            historical_account = decision_fact_pack.get("account_fact")
             if not isinstance(historical_account, dict) or not historical_account:
                 raise ValueError("formal replay DWP commit is missing request-bound account fact")
             request["_historical_replay"] = True
