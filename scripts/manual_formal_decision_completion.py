@@ -116,9 +116,7 @@ def build_structured_completion_request(
     if not isinstance(source_request, dict) or not source_request:
         raise ValueError("source Formal Decision request is required")
     parent_id = _safe_id(source_request.get("request_id"))
-    scenario = str(source_request.get("interaction_scenario") or "").strip()
-    if not scenario:
-        raise ValueError("source request is missing interaction_scenario")
+    scenario = _source_interaction_scenario(source_request)
     if not isinstance(decision_response, dict) or not decision_response.get("answers"):
         raise ValueError("new formal decision completion requires structured decision_response answers")
     if not isinstance(decision_work_package, dict) or not decision_work_package.get("problem_graph"):
