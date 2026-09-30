@@ -1,7 +1,10 @@
 import json
 import tempfile
 import unittest
+import os
 from pathlib import Path
+
+from scripts import runtime_session_gate
 
 from scripts import runtime_self_heal as heal
 
@@ -67,6 +70,36 @@ class FormalParentSelfHealingTests(unittest.TestCase):
             },
         )
         self.assertEqual(heal.latest_unfinished_formal_parent(), (None, None))
+
+
+    def test_context_recovery_routes_existing_parent_into_canonical_entry(self):
+        path = self.write("formal.json", {"request_id":"p1","request_type":"MARKET_QUOTE_REFRESH","source":"CHATGPT_MANUAL_FORMAL_ANALYSIS","intent":"FORMAL_INTRADAY_ANALYSIS","query_intent":"FORMAL_INTRADAY_ANALYSIS","force_refresh":True,"require_post_request_snapshot":True,"requested_at_beijing":"2026-09-30T11:11:00+08:00"})
+        old_root = runtime_session_gate.ROOT
+        old_event = os.environ.get("GITHUB_EVENT_NAME")
+        old_input = os.environ.get("FORMAL_REPLAY_REQUEST")
+        try:
+            runtime_session_gate.ROOT = self.root
+            os.environ["GITHUB_EVENT_NAME"] = "workflow_dispatch"
+            os.environ["FORMAL_REPLAY_REQUEST"] = str(path.relative_to(self.root))
+            self.assertEqual(runtime_session_gate._event_request_files(), [path])
+            self.assertEqual(runtime_session_gate.classify_live_snapshot_request(json.loads(path.read_text())), "REFRESH_BEARING")
+            workflow = Path(".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+            self.assertIn("formal_context_recovery_request", workflow)
+            self.assertIn("REQUEST_FILE=\"$FORMAL_CONTEXT_RECOVERY_REQUEST\"", workflow)
+            self.assertIn("python scripts/build_query_context.py --run-discovery", workflow)
+            self.assertEqual(len(list(self.requests.glob("*.json"))), 1)
+        finally:
+            runtime_session_gate.ROOT = old_root
+            if old_event is None: os.environ.pop("GITHUB_EVENT_NAME", None)
+            else: os.environ["GITHUB_EVENT_NAME"] = old_event
+            if old_input is None: os.environ.pop("FORMAL_REPLAY_REQUEST", None)
+            else: os.environ["FORMAL_REPLAY_REQUEST"] = old_input
+
+    def test_existing_bds_and_state_sync_routes_are_unchanged(self):
+        workflow = Path(".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        self.assertIn("formal replay requires exactly one durable BUSINESS_DECISION_SOURCE", workflow)
+        self.assertIn("REPLAY_REQUEST", workflow)
+        self.assertIn("process_state_sync_request.py", workflow)
 
     def test_workflow_reuses_single_canonical_replay_input(self):
         workflow = Path(".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
