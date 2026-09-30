@@ -19,6 +19,18 @@ from scheduled_pulse_slot import resolve_scheduled_pulse  # noqa: E402
 
 
 class AShareProductionChainTests(unittest.TestCase):
+
+    def test_replay_admission_preserves_trade_gate_and_allows_bounded_post_close_review(self):
+        workflow = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        self.assertIn('formal_fact_type == "FORMAL_POST_CLOSE_REVIEW"', workflow)
+        self.assertIn('interaction_scenario == "POST_CLOSE_REVIEW"', workflow)
+        self.assertIn('trade-bearing STATE_SYNC_ONLY replay must contain a trade_event', workflow)
+        self.assertIn('replay_request embedded trade_event is not EXECUTED', workflow)
+        self.assertIn('replay_request trade_event.event_id is invalid', workflow)
+        self.assertIn('replay_request trade_event is missing execution time', workflow)
+        self.assertIn('formal_review replay has invalid request/market temporal identity', workflow)
+        self.assertIn('python scripts/process_state_sync_request.py "$request_files"', workflow)
+
     def test_stock_classifier_reads_canonical_etf_universe(self):
         codes = stock_context.load_etf_codes()
         configured = {
