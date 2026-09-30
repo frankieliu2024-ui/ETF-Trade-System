@@ -337,6 +337,68 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
                 "【下一阶段】继续维持禁止新增，直至新的正式判断改变风险许可。",
             )
 
+    def test_system_review_rejects_trade_need_as_only_formal_decision_trigger(self):
+        with self.assertRaisesRegex(ValueError, "sole Formal Decision trigger"):
+            completion.build_system_review_completion_request(
+                {"status": "PASS"},
+                "system-request", "2026-09-30T08:36:00+08:00",
+                "ETF系统复核", "system-run",
+                "【下一阶段】只有出现新的交易需要时才进入正式判断。",
+            )
+
+    def test_system_review_allows_material_reassessment_conditions_without_trade_authority(self):
+        payload = completion.build_system_review_completion_request(
+            {"status": "PASS"},
+            "system-request", "2026-09-30T08:36:00+08:00",
+            "ETF系统复核", "system-run",
+            "【下一阶段】若市场、风险、机会、持仓资本效率或账户事实出现重要变化，"
+            "或用户主动要求重新判断，再进入新的正式判断；本次复核不产生交易权限。",
+        )
+        self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_SYSTEM_REVIEW")
+
+    def test_system_review_requires_cutoff_when_source_as_of_facts_are_bound(self):
+        review = {
+            "status": "PASS",
+            "source_facts_as_of": {"e2e": "2026-09-30T08:35:00+08:00"},
+        }
+        with self.assertRaisesRegex(ValueError, "requires fact_cutoff_at_beijing"):
+            completion.build_system_review_completion_request(
+                review, "system-request", "2026-09-30T08:36:00+08:00",
+                "ETF系统复核", "system-run", "FROZEN SYSTEM REPORT",
+            )
+
+    def test_system_review_rejects_source_fact_newer_than_frozen_cutoff(self):
+        review = {
+            "status": "PASS",
+            "fact_cutoff_at_beijing": "2026-09-30T08:36:00+08:00",
+            "source_facts_as_of": {
+                "system_consistency": "2026-09-29T14:31:00+08:00",
+                "e2e": "2026-09-30T08:37:38+08:00",
+            },
+        }
+        with self.assertRaisesRegex(ValueError, "newer than frozen fact cutoff"):
+            completion.build_system_review_completion_request(
+                review, "system-request", "2026-09-30T08:36:00+08:00",
+                "ETF系统复核", "system-run", "FROZEN SYSTEM REPORT",
+            )
+
+    def test_system_review_accepts_coherent_source_fact_cutoff(self):
+        review = {
+            "status": "PASS",
+            "fact_cutoff_at_beijing": "2026-09-30T08:36:00+08:00",
+            "source_facts_as_of": {
+                "system_consistency": "2026-09-29T14:31:00+08:00",
+                "e2e": "2026-09-29T22:49:37+08:00",
+                "account": "2026-09-29T18:44:00+08:00",
+            },
+        }
+        payload = completion.build_system_review_completion_request(
+            review, "system-request", "2026-09-30T08:36:00+08:00",
+            "ETF系统复核", "system-run",
+            "【数据边界】本报告基于08:36冻结前已完成的正式事实；冻结后的新事实由后续节点吸收。",
+        )
+        self.assertEqual(payload["system_review"]["fact_cutoff_at_beijing"], "2026-09-30T08:36:00+08:00")
+
     def test_system_review_accepts_historical_decision_attribution_with_quality_gap(self):
         payload = completion.build_system_review_completion_request(
             {"status": "PASS", "execution_reconciliation": "QUALITY_ENRICHMENT_PARTIAL"},
