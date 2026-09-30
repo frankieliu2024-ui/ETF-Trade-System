@@ -14,6 +14,36 @@ if str(SCRIPTS) not in sys.path:
 import build_query_context
 
 
+class FormalDecisionWaterfallObservationTests(unittest.TestCase):
+    def test_business_decision_source_observation_binds_same_parent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            request_dir = root / "requests" / "live_snapshot"
+            request_dir.mkdir(parents=True)
+            (request_dir / "other.json").write_text(json.dumps({
+                "request_id": "other__business",
+                "parent_request_id": "other",
+                "request_type": "BUSINESS_DECISION_SOURCE",
+                "requested_at_beijing": "2026-09-30T13:20:00+08:00",
+            }), encoding="utf-8")
+            (request_dir / "target.json").write_text(json.dumps({
+                "request_id": "formal-parent__business",
+                "parent_request_id": "formal-parent",
+                "request_type": "BUSINESS_DECISION_SOURCE",
+                "requested_at_beijing": "2026-09-30T13:25:00+08:00",
+            }), encoding="utf-8")
+            observed = build_query_context._business_decision_source_observation(root, "formal-parent")
+            self.assertEqual(observed["status"], "OBSERVED")
+            self.assertEqual(observed["request_id"], "formal-parent__business")
+            self.assertEqual(observed["requested_at_beijing"], "2026-09-30T13:25:00+08:00")
+
+    def test_business_decision_source_unknown_is_explicit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            observed = build_query_context._business_decision_source_observation(Path(directory), "formal-parent")
+            self.assertEqual(observed["status"], "UNKNOWN")
+            self.assertEqual(observed["requested_at_beijing"], "UNKNOWN")
+
+
 class ManualRequestBoundedObservabilityTests(unittest.TestCase):
     def test_fast_path_trace_keeps_observed_identities_and_unknowns_explicit(self):
         trace = build_query_context.build_fast_path_latency(
