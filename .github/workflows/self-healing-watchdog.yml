@@ -259,6 +259,20 @@ jobs:
           python scripts/build_post_market_review.py
           python scripts/runtime_self_heal.py --assess
 
+
+      - name: Recover unfinished Formal Decision parent through canonical snapshot producer
+        if: ${{ steps.assess.outputs.action == 'REPLAY_FORMAL_REQUEST' && steps.assess.outputs.formal_replay_request != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          active=$(gh run list --workflow market-snapshot.yml --limit 10 --json status --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | length')
+          if [ "$active" != "0" ]; then
+            echo "Canonical market snapshot already queued/in progress; reuse it for the existing Formal parent."
+            exit 0
+          fi
+          gh workflow run market-snapshot.yml --ref main -f node=query -f probe_only=false -f formal_replay_request="${{ steps.assess.outputs.formal_replay_request }}"
+          echo "Redispatched the existing Formal parent through the canonical market snapshot producer."
+
       - name: Dispatch replacement market snapshot
         if: ${{ steps.assess.outputs.action == 'REFRESH_SNAPSHOT' }}
         run: |
