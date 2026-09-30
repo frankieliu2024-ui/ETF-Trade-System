@@ -6,9 +6,9 @@ import os
 from pathlib import Path
 
 try:
-    from runtime_session_gate import classify_live_snapshot_request
+    from runtime_session_gate import classify_live_snapshot_request, interaction_scenario_for_time, parse_runtime_time
 except ModuleNotFoundError:
-    from scripts.runtime_session_gate import classify_live_snapshot_request
+    from scripts.runtime_session_gate import classify_live_snapshot_request, interaction_scenario_for_time, parse_runtime_time
 
 try:
     from business_decision_source import project_decision_response, validate_source
@@ -24,6 +24,25 @@ def _safe_id(value: object) -> str:
     if not value or any(part in value for part in ("/", "\\", "..")):
         raise ValueError("manual completion requires a safe request identity")
     return value
+
+
+def _source_interaction_scenario(source_request: dict) -> str:
+    """Resolve the scenario without requiring normalized runtime-only fields to be durable."""
+    supplied = str(source_request.get("interaction_scenario") or source_request.get("scenario") or "").strip().upper()
+    if supplied:
+        return supplied
+    requested = parse_runtime_time(
+        source_request.get("requested_at_beijing")
+        or source_request.get("request_time_beijing")
+        or source_request.get("requested_at_utc")
+    )
+    if requested is None:
+        raise ValueError("source request is missing a valid request time for interaction scenario")
+    policy_path = ROOT / "config" / "runtime_policy.json"
+    if not policy_path.exists():
+        raise ValueError("runtime policy is required to derive source interaction scenario")
+    policy = json.loads(policy_path.read_text(encoding="utf-8"))
+    return interaction_scenario_for_time(policy, requested)
 
 
 def build_completion_request(source_request: dict, formal_decision: dict, consumed_snapshot: str, completion_request_id: str = "", request_bound_pit_closure: dict | None = None, observation_eligibility_closure: dict | None = None) -> dict:
@@ -51,9 +70,7 @@ def build_completion_request(source_request: dict, formal_decision: dict, consum
     envelope_id = _safe_id(completion_request_id or f"{parent_id}__formal_completion")
     if envelope_id == parent_id:
         raise ValueError("completion envelope identity must differ from its parent request")
-    scenario = str(source_request.get("interaction_scenario") or "").strip()
-    if not scenario:
-        raise ValueError("source request is missing interaction_scenario")
+    scenario = _source_interaction_scenario(source_request)
     for closure_name, closure in (
         ("request_bound_pit_closure", request_bound_pit_closure),
         ("observation_eligibility_closure", observation_eligibility_closure),
