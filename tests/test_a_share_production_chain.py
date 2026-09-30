@@ -411,8 +411,11 @@ class ManualRequestSessionIngressTests(unittest.TestCase):
         self.assertIn('event_name in {"push", "workflow_dispatch"}', gate)
         state_sync = (ROOT / "scripts/process_state_sync_request.py").read_text(encoding="utf-8")
         self.assertIn("--formal-replay-source-commit", state_sync)
+        self.assertIn("--formal-replay-dwp-commit", state_sync)
         self.assertIn("formal replay source bytes must match the immutable source-introduction commit", state_sync)
         self.assertIn("historical request-bound Decision Work Package", state_sync)
+        self.assertIn("FORMAL_REPLAY_DWP_COMMIT", workflow)
+        self.assertIn("formal replay cannot resolve historical request-bound Decision Work Package provenance", workflow)
 
     def test_runtime_session_gate_defines_event_replay_helpers(self):
         gate = (ROOT / "scripts/runtime_session_gate.py").read_text(encoding="utf-8")
