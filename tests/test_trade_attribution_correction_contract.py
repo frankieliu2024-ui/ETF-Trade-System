@@ -17,6 +17,17 @@ class AttributionCorrectionTests(unittest.TestCase):
    root=Path(d);p=self.fixture(root);before=p.read_bytes()
    with patch.object(correction,"ROOT",root): correction._apply_attribution_request(self.req());correction._apply_attribution_request(self.req())
    self.assertEqual(before,p.read_bytes());self.assertEqual(link.resolve_link(root,json.loads(p.read_text()))[0],"decision-a")
+ def test_existing_raw_ingress_same_decision_is_reconciled(self):
+  with tempfile.TemporaryDirectory() as d:
+   root=Path(d);self.fixture(root);req=self.req()
+   pending=root/"requests/trade_fact_correction"/"trade-attribution-20261001-513520-1048.json"
+   pending.write_text(json.dumps(req),encoding="utf-8")
+   with patch.object(correction,"ROOT",root):
+    self.assertEqual(correction._apply_attribution_request(req),0)
+   stored=json.loads(pending.read_text())
+   self.assertEqual(stored["linked_decision_id"],"decision-a")
+   self.assertEqual(stored["correction_type"],"DECISION_ATTRIBUTION")
+
  def test_temporal_and_conflict_fail_closed(self):
   with tempfile.TemporaryDirectory() as d:
    root=Path(d);p=self.fixture(root);bad=json.loads(p.read_text());bad["confirmed_at_beijing"]="2026-09-30T09:30:00+08:00";p.write_text(json.dumps(bad))
