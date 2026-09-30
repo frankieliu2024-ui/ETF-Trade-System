@@ -98,6 +98,8 @@ class ProductionBusinessSourceIngressTests(unittest.TestCase):
 
     def test_structured_completion_rejects_observation_or_discovery_aggregates_as_capital_states(self):
         response = json.loads(json.dumps(RESPONSE))
+        work_package = json.loads(json.dumps(WORK_PACKAGE))
+        work_package["business_role_reconciliation_contract"] = "V1"
         response["answers"]["NEXT_UNIT_CAPITAL_USE"]["compared_capital_states_as_business_state_names"] = [
             "持续观察ETF",
             "Discovery候选",
@@ -107,7 +109,7 @@ class ProductionBusinessSourceIngressTests(unittest.TestCase):
             "cannot use observation/discovery aggregates as capital states",
         ):
             completion.build_structured_completion_request(
-                SOURCE, BASE_DECISION, response, WORK_PACKAGE, "data/market/snapshots/x.json"
+                SOURCE, BASE_DECISION, response, work_package, "data/market/snapshots/x.json"
             )
 
     def test_durable_business_source_must_come_from_authoritative_builder(self):
