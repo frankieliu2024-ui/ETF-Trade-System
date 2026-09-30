@@ -17,9 +17,15 @@ class MarketObjectQueryTests(unittest.TestCase):
         self.assertEqual(obj["code"], "MU")
 
     def test_formal_etf_is_system_monitored(self):
-        obj, source_type = resolve_object(ROOT, "561980")
+        obj, source_type = resolve_object(ROOT, "159981")
         self.assertEqual(source_type, "SYSTEM_MONITORED")
-        self.assertEqual(obj["code"], "561980")
+        self.assertEqual(obj["code"], "159981")
+
+    def test_suffixed_held_etf_is_system_monitored(self):
+        obj, source_type = resolve_object(ROOT, "159981.SZ")
+        self.assertEqual(source_type, "SYSTEM_MONITORED")
+        self.assertEqual(obj["code"], "159981")
+        self.assertEqual(obj["provider_symbol"], "159981.SZ")
 
     def test_output_contract_keeps_timestamp_and_source_type(self):
         obj = {"name": "美光科技", "code": "MU", "asset_type": "STOCK", "market": "US"}

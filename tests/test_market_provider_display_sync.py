@@ -92,7 +92,9 @@ class ProviderPolicyConsistencyTest(unittest.TestCase):
             self.assertGreaterEqual(len(objects.get(object_id) or []), 1, f"conditional index has empty provider chain: {object_id}")
 
     def test_etf_universe_has_complete_canonical_provider_policy(self):
-        """Every continuously monitored ETF must have one complete canonical production chain."""
+        """Every monitored ETF has a static or generic canonical provider chain."""
+        from scripts import cloud_runner_snapshot
+
         objects = self.priority.get("objects") or {}
         policies = self.priority.get("object_fallback_policy") or {}
         etfs = self.universe.get("objects") or []
@@ -101,9 +103,14 @@ class ProviderPolicyConsistencyTest(unittest.TestCase):
         for item in etfs:
             thscode = str(item.get("thscode") or "")
             self.assertTrue(thscode, "ETF universe contains empty thscode")
-            self.assertIn(thscode, objects, f"ETF missing provider declaration: {thscode}")
-            self.assertIn(thscode, policies, f"ETF missing canonical fallback policy: {thscode}")
-            self.assertGreaterEqual(len(canonical_chain(self.priority, thscode)), 1, f"ETF has empty provider chain: {thscode}")
+            if thscode in objects or thscode in policies:
+                self.assertIn(thscode, objects, f"ETF missing provider declaration: {thscode}")
+                self.assertIn(thscode, policies, f"ETF missing canonical fallback policy: {thscode}")
+                self.assertGreaterEqual(len(canonical_chain(self.priority, thscode)), 1, f"ETF has empty provider chain: {thscode}")
+                continue
+            code = str(item.get("code") or "")
+            self.assertIn((code, thscode), cloud_runner_snapshot.ETF, f"ETF missing runtime universe identity: {thscode}")
+            self.assertIn(code, cloud_runner_snapshot.EASTMONEY_FALLBACK_ETFS, f"ETF missing generic A-share fallback chain: {thscode}")
 
     def test_dynamic_positive_holding_reuses_established_a_share_etf_chain(self):
         """A new held A-share ETF must not require an object-level provider entry."""
