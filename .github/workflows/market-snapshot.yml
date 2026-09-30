@@ -518,16 +518,36 @@ jobs:
               echo "formal replay cannot resolve original BDS provenance boundary" >&2
               exit 1
             fi
-            formal_dwp_commit=$(python - "$parent_request_id" "$original_source_commit" <<'PY'
+            formal_dwp_commit=$(python - "$parent_request_id" "$original_source_commit" "$request_files" <<'PY'
           import json
           import subprocess
           import sys
-          parent, source_commit = sys.argv[1:]
+          from datetime import datetime
+          from pathlib import Path
+          parent, source_commit, source_path = sys.argv[1:]
+          source = json.loads(Path(source_path).read_text(encoding="utf-8"))
+          source_requested_at = str(
+              source.get("requested_at_beijing")
+              or source.get("request_time_beijing")
+              or ""
+          ).strip()
+          if not source_requested_at:
+              raise SystemExit("formal replay cannot prove original BDS decision boundary")
+          source_time = datetime.fromisoformat(source_requested_at.replace("Z", "+00:00"))
           history = subprocess.run(
               ["git", "rev-list", source_commit],
               capture_output=True, text=True, check=True,
           ).stdout.splitlines()
           for commit in history:
+              changed = subprocess.run(
+                  ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", commit, "--", "data/state/query_context.json"],
+                  capture_output=True, text=True, check=True,
+              ).stdout.splitlines()
+              # A tree can inherit query_context.json from its parent. Such a
+              # commit is state-at-commit evidence, not a state-producing
+              # provenance commit and must not be selected as the DWP producer.
+              if "data/state/query_context.json" not in changed:
+                  continue
               shown = subprocess.run(
                   ["git", "show", f"{commit}:data/state/query_context.json"],
                   capture_output=True, text=True, check=False,
@@ -540,7 +560,19 @@ jobs:
                   continue
               trigger = ((context.get("decision_fact_pack") or {}).get("trigger") or {})
               package = ((context.get("decision_fact_pack") or {}).get("decision_work_package") or {})
-              if str(trigger.get("request_id") or "").strip() == parent and isinstance(package.get("problem_graph"), list) and package["problem_graph"]:
+              generated_at = str(context.get("generated_at_beijing") or "").strip()
+              if not generated_at:
+                  continue
+              try:
+                  generated_time = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
+              except ValueError:
+                  continue
+              if (
+                  str(trigger.get("request_id") or "").strip() == parent
+                  and isinstance(package.get("problem_graph"), list)
+                  and package["problem_graph"]
+                  and generated_time <= source_time
+              ):
                   print(commit)
                   raise SystemExit(0)
           raise SystemExit(1)
@@ -586,383 +618,3 @@ jobs:
             for f in $request_files; do
               if python - "$f" <<'PY'
           import json, sys
-          from scripts.runtime_session_gate import classify_live_snapshot_request
-          data = json.load(open(sys.argv[1], encoding='utf-8'))
-          raise SystemExit(0 if classify_live_snapshot_request(data) in {'STATE_SYNC_ONLY', 'HYBRID', 'BUSINESS_DECISION_SOURCE'} else 1)
-          PY
-              then
-                state_sync_files="$state_sync_files $f"
-              fi
-            done
-            if [ -z "$state_sync_files" ]; then
-              echo "processed=false" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            request_files="$state_sync_files"
-          fi
-          mkdir -p /tmp/etf-state-sync-requests
-          for f in $request_files; do
-            mkdir -p "/tmp/etf-state-sync-requests/$(dirname "$f")"
-            cp "$f" "/tmp/etf-state-sync-requests/$f"
-          done
-          git reset --hard origin/main
-          for f in $request_files; do
-            mkdir -p "$(dirname "$f")"
-            cp "/tmp/etf-state-sync-requests/$f" "$f"
-          done
-          if [ -n "${REPLAY_REQUEST:-}" ]; then
-            python - "$request_files" <<'PY'
-          import json, sys
-          from pathlib import Path
-          path = Path(sys.argv[1])
-          if path.is_absolute() or path.parts[:2] != ("requests", "live_snapshot") or ".." in path.parts or path.suffix != ".json":
-              raise SystemExit("replay_request must be one existing requests/live_snapshot/*.json path")
-          if not path.exists():
-              raise SystemExit("replay_request does not exist in execution-time main")
-          obj = json.loads(path.read_text(encoding="utf-8"))
-          trade = obj.get("trade_event")
-          if str(obj.get("request_type") or "").upper() != "STATE_SYNC_ONLY":
-              raise SystemExit("replay_request must be STATE_SYNC_ONLY")
-          if not isinstance(trade, dict):
-              raise SystemExit("replay_request must contain a trade_event")
-          # Historical durable requests may predate embedded execution_status.
-          # Admission still requires the same canonical EXECUTED event that the
-          # state-sync owner will consume; the request itself is never rewritten.
-          embedded_status = trade.get("execution_status")
-          if embedded_status is not None and str(embedded_status).upper() != "EXECUTED":
-              raise SystemExit("replay_request embedded trade_event is not EXECUTED")
-          event_id = str(trade.get("event_id") or "").strip()
-          if not event_id or any(part in event_id for part in ("/", "\\\\", "..")):
-              raise SystemExit("replay_request trade_event.event_id is invalid")
-          canonical_path = Path("events/trades") / f"{event_id}.json"
-          if canonical_path.parent != Path("events/trades") or not canonical_path.is_file():
-              raise SystemExit("canonical trade event is missing")
-          canonical = json.loads(canonical_path.read_text(encoding="utf-8"))
-          if str(canonical.get("execution_status") or "").upper() != "EXECUTED":
-              raise SystemExit("canonical trade event is not EXECUTED")
-          def text_value(data, key):
-              value = data.get(key)
-              return None if value in (None, "") else str(value).strip().upper()
-          def number_value(data, key):
-              value = data.get(key)
-              return None if value in (None, "") else f"{float(value):.10f}"
-          def time_value(data):
-              for key in ("executed_at_beijing", "executed_at", "execution_time", "trade_time", "confirmed_at_beijing"):
-                  value = data.get(key)
-                  if value not in (None, ""):
-                      return key, str(value).strip()
-              return None, None
-          # Canonical identity is event_id plus trade mechanics and execution time
-          # when both records expose the same semantic time field. Request-only
-          # asset_type/name/source/lifecycle are enrichment; asset classification
-          # remains owned by the canonical ETF universe/account projection.
-          for key in ("event_id", "idempotency_key", "code", "side"):
-              if trade.get(key) not in (None, "") and trade.get(key) != canonical.get(key):
-                  raise SystemExit(f"canonical trade event mismatch: {key}")
-          for key in ("quantity", "price"):
-              if number_value(trade, key) != number_value(canonical, key):
-                  raise SystemExit(f"canonical trade event mismatch: {key}")
-          request_time_key, request_time = time_value(trade)
-          canonical_time_key, canonical_time = time_value(canonical)
-          if request_time is None:
-              raise SystemExit("replay_request trade_event is missing execution time")
-          if request_time_key == canonical_time_key and request_time != canonical_time:
-              raise SystemExit("canonical trade event mismatch: time")
-          if canonical_time is None:
-              raise SystemExit("canonical trade event is missing execution time")
-          PY
-            python scripts/refresh_gate.py --guard-request "$request_files"
-            python scripts/process_state_sync_request.py "$request_files"
-            processed=true
-          elif [ -n "${FORMAL_REPLAY_REQUEST:-}" ]; then
-            python scripts/refresh_gate.py --guard-request "$request_files"
-            python scripts/process_state_sync_request.py --formal-replay-source-commit "$FORMAL_REPLAY_SOURCE_COMMIT" --formal-replay-dwp-commit "$FORMAL_REPLAY_DWP_COMMIT" "$request_files"
-            python - "$request_files" <<'PY'
-          import json, sys
-          from pathlib import Path
-          source = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-          decision_id = str(source.get("decision_id") or "").strip()
-          parent_id = str(source.get("parent_request_id") or "").strip()
-          if not decision_id or not parent_id:
-              raise SystemExit("formal replay source is missing decision_id/parent_request_id")
-          event_path = Path("events/decisions") / f"{decision_id}.json"
-          matches = list(Path("events/decisions").glob(f"{decision_id}.json"))
-          if len(matches) != 1 or not event_path.is_file():
-              raise SystemExit(f"formal replay canonical Decision Fact count must equal one; found={len(matches)}")
-          event = json.loads(event_path.read_text(encoding="utf-8"))
-          if str(event.get("decision_id") or "") != decision_id:
-              raise SystemExit("formal replay canonical Decision Fact decision_id mismatch")
-          if str(event.get("parent_request_id") or "") != parent_id:
-              raise SystemExit("formal replay canonical Decision Fact parent_request_id mismatch")
-          if str(event.get("source_type") or "").upper() != "BUSINESS_DECISION_SOURCE":
-              raise SystemExit("formal replay canonical Decision Fact source_type mismatch")
-          if not str(event.get("source_fingerprint") or "").strip():
-              raise SystemExit("formal replay canonical Decision Fact source_fingerprint missing")
-          PY
-            processed=true
-          elif [ -n "${EVENT_BEFORE:-}" ] && git cat-file -e "${EVENT_BEFORE}^{commit}" 2>/dev/null; then
-            files=$(git diff --name-only "${EVENT_BEFORE}" "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
-          else
-            files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
-          fi
-          for f in $files; do
-            if python - "$f" <<'PY'
-          import json, sys
-          from scripts.runtime_session_gate import classify_live_snapshot_request
-          data = json.load(open(sys.argv[1], encoding='utf-8'))
-          raise SystemExit(0 if classify_live_snapshot_request(data) in {'STATE_SYNC_ONLY', 'HYBRID', 'BUSINESS_DECISION_SOURCE'} else 1)
-          PY
-            then
-              python scripts/refresh_gate.py --guard-request "$f"
-              python scripts/process_state_sync_request.py "$f"
-              processed=true
-            fi
-          done
-          echo "processed=$processed" >> "$GITHUB_OUTPUT"
-      - name: Build objective intraday market delta
-        # Derived observability must not block the formal decision critical path.
-        if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
-        continue-on-error: true
-        run: python scripts/build_market_delta.py
-      - name: Build dynamic stock context from current account
-        # Decision input: run independently of unrelated prior-step failures.
-        if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
-        run: python scripts/build_stock_context.py
-      - name: Collect current account-stock market facts
-        # Decision input: run independently of unrelated prior-step failures.
-        if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
-        run: python scripts/build_account_stock_market.py
-      - name: Build on-demand query context
-        # Formal decision critical path. Do not let an unrelated optional/derived
-        # step failure suppress request binding and PIT qualification.
-        if: ${{ always() && steps.state_sync.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
-        run: |
-          REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"
-          if [ -z "$REQUEST_FILE" ] && [ -n "${FORMAL_CONTEXT_RECOVERY_REQUEST:-}" ]; then REQUEST_FILE="$FORMAL_CONTEXT_RECOVERY_REQUEST"; fi
-          if [ -z "$REQUEST_FILE" ] && [ -n "${REPLAY_REQUEST:-}" ]; then REQUEST_FILE="$REPLAY_REQUEST"; fi
-          if [ -z "$REQUEST_FILE" ]; then REQUEST_FILE=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | head -n 1); fi
-          # Core publish may reset the worktree to execution-time main before
-          # this step. Restore the triggering request envelope so the canonical
-          # builder can bind request_id/requested_at_beijing. On push requests
-          # without a new core snapshot, also restore the latest canonical
-          # query_context from execution-time main: checkout still reflects the
-          # request commit's parent, so otherwise same-node Discovery reuse
-          # cannot see the immediately preceding READY evidence.
-          if [ -n "$REQUEST_FILE" ] && [ ! -f "$REQUEST_FILE" ] && [ -f "/tmp/etf-triggering-request/$REQUEST_FILE" ]; then
-            mkdir -p "$(dirname "$REQUEST_FILE")"
-            cp "/tmp/etf-triggering-request/$REQUEST_FILE" "$REQUEST_FILE"
-          fi
-          # An account/trade screenshot may identify the already-ingressed
-          # Formal Decision request whose query context must be replayed after
-          # canonical account sync. The account event remains the state-sync
-          # input; this only selects the existing request envelope for the
-          # canonical request-bound context builder.
-          if [ -n "$REQUEST_FILE" ] && [ -f "$REQUEST_FILE" ]; then
-            FORMAL_PARENT_ID=$(python - "$REQUEST_FILE" <<'PY'
-          import json, sys
-          request = json.load(open(sys.argv[1], encoding="utf-8"))
-          print(str(request.get("formal_decision_parent_request_id") or "").strip())
-          PY
-            )
-            if [ -n "$FORMAL_PARENT_ID" ]; then
-              if [[ ! "$FORMAL_PARENT_ID" =~ ^[A-Za-z0-9_.-]+$ ]]; then
-                echo "invalid formal_decision_parent_request_id" >&2
-                exit 1
-              fi
-              FORMAL_PARENT_FILE="requests/live_snapshot/$FORMAL_PARENT_ID.json"
-              git fetch origin main --quiet
-              git show "origin/main:$FORMAL_PARENT_FILE" > /tmp/etf-formal-parent-request.json
-              python - "$FORMAL_PARENT_ID" /tmp/etf-formal-parent-request.json <<'PY'
-          import json, sys
-          expected_id, path = sys.argv[1:]
-          request = json.load(open(path, encoding="utf-8"))
-          valid = (
-              request.get("request_id") == expected_id
-              and request.get("request_type") == "MARKET_QUOTE_REFRESH"
-              and request.get("source") == "CHATGPT_MANUAL_FORMAL_ANALYSIS"
-              and request.get("intent") == "FORMAL_INTRADAY_ANALYSIS"
-              and request.get("query_intent") == "FORMAL_INTRADAY_ANALYSIS"
-              and request.get("force_refresh") is True
-              and request.get("require_post_request_snapshot") is True
-          )
-          if not valid:
-              raise SystemExit("linked parent is not an existing canonical Formal Decision request")
-          PY
-              mkdir -p "$(dirname "$FORMAL_PARENT_FILE")"
-              cp /tmp/etf-formal-parent-request.json "$FORMAL_PARENT_FILE"
-              REQUEST_FILE="$FORMAL_PARENT_FILE"
-              echo "replaying existing Formal Decision request: $FORMAL_PARENT_ID"
-            fi
-          fi
-          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "${{ steps.snapshot_result.outputs.snapshot_written }}" != "true" ]; then
-            git fetch origin main --quiet
-            git show origin/main:data/state/query_context.json > /tmp/latest-query-context.json
-            if [ -s /tmp/latest-query-context.json ]; then
-              cp /tmp/latest-query-context.json data/state/query_context.json
-            fi
-          fi
-          REQUEST_ARGS=()
-          if [ -n "$REQUEST_FILE" ]; then REQUEST_ARGS+=(--request-file "$REQUEST_FILE"); fi
-          REQUEST_REQUIRES_REFRESH=false
-          if [ -n "$REQUEST_FILE" ] && [ -f "$REQUEST_FILE" ]; then
-            REQUEST_REQUIRES_REFRESH=$(python - "$REQUEST_FILE" <<'PY'
-          import json, sys
-          request = json.load(open(sys.argv[1], encoding="utf-8"))
-          print("true" if request.get("force_refresh") is True or request.get("require_post_request_snapshot") is True else "false")
-          PY
-            )
-          fi
-          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "${{ steps.snapshot_result.outputs.snapshot_written }}" != "true" ] && [ "${{ steps.session_gate.outputs.request_class }}" != "STATE_SYNC_ONLY" ]; then
-            REQUEST_SYMBOLS=$(python - <<'PY'
-          import json, os, subprocess
-          files = subprocess.check_output(
-              ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", os.environ["GITHUB_SHA"], "--", "requests/live_snapshot/"],
-              text=True,
-          ).splitlines()
-          symbols = []
-          for name in files:
-              try:
-                  obj = json.loads(open(name, encoding="utf-8").read())
-              except (OSError, json.JSONDecodeError):
-                  continue
-              for value in obj.get("symbols") or []:
-                  value = str(value).strip()
-                  if value and value not in symbols:
-                      symbols.append(value)
-          print(",".join(symbols))
-          PY
-            )
-            if [ -n "$REQUEST_SYMBOLS" ]; then
-              python scripts/build_query_context.py --force-refresh --symbols "$REQUEST_SYMBOLS" "${REQUEST_ARGS[@]}"
-            else
-              python scripts/build_query_context.py --force-refresh "${REQUEST_ARGS[@]}"
-            fi
-          elif [ "${{ steps.snapshot_result.outputs.snapshot_written }}" = "true" ] && [ "$REQUEST_REQUIRES_REFRESH" = "true" ]; then
-            # The workflow has already published the request-bound post-request
-            # core snapshot. Preserve request identity/time through REQUEST_ARGS,
-            # but do not force a second refresh: --force-refresh also disables
-            # legal same-node Discovery reuse inside build_query_context.
-            python scripts/build_query_context.py --run-discovery "${REQUEST_ARGS[@]}"
-          elif [ "${{ steps.snapshot_result.outputs.snapshot_written }}" = "true" ]; then
-            # The core snapshot is already current in this run. Execute bounded
-            # all-market Discovery without forcing a duplicate core refresh.
-            python scripts/build_query_context.py --run-discovery "${REQUEST_ARGS[@]}"
-          else
-            python scripts/build_query_context.py "${REQUEST_ARGS[@]}"
-          fi
-          python scripts/refresh_gate.py --annotate-contexts
-          # A formal request is not complete unless the request-bound query
-          # context is materially present before downstream persistence.
-          if [ -n "$REQUEST_FILE" ] && [ -f "$REQUEST_FILE" ]; then
-            python - "$REQUEST_FILE" <<'PY'
-          import json, sys
-          from pathlib import Path
-          request = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-          context_path = Path("data/state/query_context.json")
-          context = json.loads(context_path.read_text(encoding="utf-8")) if context_path.exists() and context_path.stat().st_size else {}
-          pack = context.get("decision_fact_pack") or {}
-          trigger = pack.get("trigger") or {}
-          expected = str(request.get("request_id") or "").strip()
-          actual = str(trigger.get("request_id") or "").strip()
-          if not expected or actual != expected:
-              raise SystemExit(f"request-bound query context missing or mismatched: expected={expected} actual={actual}")
-          PY
-          fi
-
-      - name: Build E2E usability state
-        # Decision usability is request/state-sync qualification, not a scheduled
-        # market-fact producer responsibility. Scheduled pulses may refresh
-        # reusable Discovery evidence without rebuilding request-bound E2E state.
-        if: ${{ always() && steps.state_sync.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
-        run: python scripts/build_e2e_status.py
-
-      - name: Build state context and candidates
-        # Full decision preparation is request/state-sync bound. Scheduled
-        # snapshots keep canonical market facts and reusable Discovery current;
-        # formal requests/recovery rebuild the canonical decision context.
-        if: ${{ always() && steps.state_sync.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
-        run: python scripts/build_state_context.py --decision-ready-only
-      - name: Build post-market review context
-        # Review is a close/state-sync consumer, not a generic intraday pulse
-        # responsibility. Explicit/manual close remains a legal recovery path.
-        if: ${{ always() && steps.state_sync.outputs.formal_completion != 'true' && (steps.state_sync.outputs.processed == 'true' || (steps.snapshot_result.outputs.snapshot_written == 'true' && (steps.session_gate.outputs.close_intent == 'true' || github.event.inputs.node == 'close'))) && github.event.inputs.probe_only != 'true' }}
-        continue-on-error: true
-        run: python scripts/build_post_market_review.py
-      - name: Commit downstream runtime/data artifacts
-        if: ${{ always() && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success' || steps.state_sync.outputs.processed == 'true') }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Finalize runtime health from the post-retry snapshot, not the initial capture result.
-          python - <<'PY'
-          import json, os
-          from datetime import datetime
-          from pathlib import Path
-          health_path = Path('data/state/runtime_health.json')
-          if os.environ.get('GITHUB_EVENT_NAME') == 'push':
-              raise SystemExit(0)
-          if health_path.exists():
-              health = json.loads(health_path.read_text(encoding='utf-8'))
-              snapshot_path = Path(str(health.get('latest_snapshot') or ''))
-              if snapshot_path.is_file():
-                  snapshot = json.loads(snapshot_path.read_text(encoding='utf-8'))
-                  if str(snapshot.get('workflow_run_id', '')) == str(__import__('os').environ.get('GITHUB_RUN_ID', '')):
-                      quality = str(snapshot.get('quality_status') or '')
-                      if quality in {'PASS', 'DEGRADED'}:
-                          provider_times = [row.get('as_of_beijing') for row in (snapshot.get('rows') or []) if row.get('as_of_beijing')]
-                          health['status'] = quality
-                          health['quality_status'] = quality
-                          health['market_date'] = snapshot.get('market_date', health.get('market_date', ''))
-                          health['node'] = snapshot.get('node', health.get('node', 'live'))
-                          health['market_phase'] = snapshot.get('market_phase', health.get('market_phase', ''))
-                          health['captured_at'] = snapshot.get('captured_at', health.get('captured_at', ''))
-                          health['captured_at_beijing'] = snapshot.get('captured_at_beijing', health.get('captured_at_beijing', ''))
-                          health['provider_as_of'] = max(provider_times) if provider_times else health.get('provider_as_of', '')
-                          health['count'] = snapshot.get('count', health.get('count', 0))
-                          health['latest_snapshot'] = str(snapshot_path).replace('\\\\', '/')
-                          health['failure_stage'] = '' if quality == 'PASS' else health.get('failure_stage', '')
-                          health_path.write_text(json.dumps(health, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-          PY
-          # system_consistency is owned by the dedicated audit workflow and may
-          # change concurrently; keep it out of this data commit.
-          git checkout -- data/state/system_consistency.json
-          git reset -- data/state/notification_center.json
-              git add -A -- data/market/snapshots data/market/discovery_history data/state post_market_review events config/market/etf_monitor_universe.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
-              git reset -- data/state/system_consistency.json
-              git reset -- data/state/notification_center.json
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          mkdir -p /tmp/etf-downstream-publish
-          git diff --cached --name-only -z > /tmp/etf-downstream-files
-          while IFS= read -r -d '' file; do
-            mkdir -p "/tmp/etf-downstream-publish/$(dirname "$file")"
-            cp "$file" "/tmp/etf-downstream-publish/$file"
-          done < /tmp/etf-downstream-files
-          for attempt in 1 2 3; do
-            git fetch origin main
-            git reset --hard origin/main
-            while IFS= read -r -d '' file; do
-              mkdir -p "$(dirname "$file")"
-              cp "/tmp/etf-downstream-publish/$file" "$file"
-            done < /tmp/etf-downstream-files
-            # CURRENT may have advanced after the derived state was built (for
-            # example a core snapshot or account/trade mirror publish). Rebuild
-            # the canonical Phase4-derived trigger/ranking from execution-time
-            # latest-main CURRENT after the final reset so a stale staged
-            # decision_trigger cannot overwrite a newer trade/account fact.
-            if grep -zqxF 'data/state/decision_trigger.json' /tmp/etf-downstream-files || \
-               grep -zqxF 'data/state/capital_efficiency_ranking.json' /tmp/etf-downstream-files; then
-              python scripts/build_state_context.py --decision-ready-only
-            fi
-            git add -A -- data/market/snapshots data/market/discovery_history data/state post_market_review events config/market/etf_monitor_universe.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
-            git reset -- data/state/system_consistency.json
-            if git diff --cached --quiet; then
-              exit 0
-            fi
-            git commit -m "data: record downstream market contexts and state sync [producer-run:${GITHUB_RUN_ID}]"
-            if git push origin HEAD:main; then
-              break
-            fi
-            if [ "$attempt" = "3" ]; then exit 1; fi
-          done
