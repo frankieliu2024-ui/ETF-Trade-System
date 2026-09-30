@@ -41,6 +41,20 @@ def _effective_time(event: dict) -> datetime | None:
     return _time(event.get("decision_effective_at_beijing") or event.get("issued_at_beijing") or event.get("decision_time_beijing"))
 
 
+def _load_attribution_correction(root: Path, trade: dict) -> tuple[str, dict, str]:
+    event_id = str(trade.get("event_id") or "").strip()
+    request_dir = root / "requests" / "trade_fact_correction"
+    matches = []
+    for path in sorted(request_dir.glob("*.json")) if request_dir.exists() else []:
+        obj = _load(path)
+        if str(obj.get("correction_type") or "").upper() == "DECISION_ATTRIBUTION" and str(obj.get("trade_event_id") or "") == event_id and str(obj.get("status") or "").upper() in {"APPLIED", "RECONCILED"}:
+            matches.append(obj)
+    ids = {str(x.get("linked_decision_id") or "") for x in matches} - {""}
+    if not matches: return "", {}, "NO_CANONICAL_CORRECTION"
+    if len(matches) != 1 or len(ids) != 1: return "", {}, "CORRECTION_CONFLICT"
+    return next(iter(ids)), matches[0], "CANONICAL_CORRECTION"
+
+
 def resolve_link(root: Path, trade: dict, requested_id: str = "") -> tuple[str, dict, str]:
     """Return a decision no later than the confirmed trade time.
 
@@ -53,6 +67,18 @@ def resolve_link(root: Path, trade: dict, requested_id: str = "") -> tuple[str, 
     if trade_time is None or not decision_dir.exists():
         return "", {}, "NO_VALID_TRADE_TIME"
 
+    corrected_id, _correction, correction_status = _load_attribution_correction(root, trade)
+    if correction_status == "CORRECTION_CONFLICT":
+        return "", {}, correction_status
+    if corrected_id:
+        decision = _load(decision_dir / f"{corrected_id}.json")
+        dt = _effective_time(decision)
+        tt = _time(trade.get("confirmed_at_beijing") or trade.get("executed_at_beijing"))
+        if not decision or not dt or not tt or dt >= tt:
+            return "", {}, "CORRECTION_PIT_INVALID"
+        if not _decision_mentions_trade(decision, trade):
+            return "", {}, "CORRECTION_ACTION_MISMATCH"
+        return corrected_id, decision, correction_status
     requested_id = str(requested_id or "")
     if requested_id:
         path = decision_dir / f"{requested_id}.json"

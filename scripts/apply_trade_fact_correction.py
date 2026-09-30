@@ -154,6 +154,40 @@ def rebuild_known_net(equity: dict, root: Path | None = None) -> None:
         summary["known_net_status"] += "; CANONICAL_EVENT_OVERLAYS_INCLUDED"
 
 
+def _apply_attribution_request(req: dict) -> int:
+    required = ("request_id", "trade_event_id", "linked_decision_id", "provenance")
+    missing = [k for k in required if not req.get(k)]
+    if missing: raise RuntimeError("attribution correction missing required fields: " + ", ".join(missing))
+    event_id, decision_id = str(req["trade_event_id"]).strip(), str(req["linked_decision_id"]).strip()
+    event = read_json(ROOT / "events/trades" / f"{event_id}.json", {}) or {}
+    decision = read_json(ROOT / "events/decisions" / f"{decision_id}.json", {}) or {}
+    if not event or not decision: raise RuntimeError("attribution correction source fact or Decision Fact is missing")
+    from decision_trade_link import _effective_time, _time, _decision_mentions_trade
+    dt, tt = _effective_time(decision), _time(event.get("confirmed_at_beijing") or event.get("executed_at_beijing"))
+    if str(event.get("execution_status") or "EXECUTED").upper() != "EXECUTED" or not dt or not tt or dt >= tt:
+        raise RuntimeError("attribution correction violates executed-trade/PIT contract")
+    if not _decision_mentions_trade(decision, event): raise RuntimeError("attribution correction action/security semantics are incompatible")
+    p = req["provenance"]
+    if not isinstance(p, dict) or not all(str(p.get(k) or "").strip() for k in ("resolver","source_trade","source_decision","parent_request_id")):
+        raise RuntimeError("attribution correction provenance is incomplete")
+    if p["source_trade"] != f"events/trades/{event_id}.json" or p["source_decision"] != f"events/decisions/{decision_id}.json":
+        raise RuntimeError("attribution correction provenance source mismatch")
+    rd = ROOT / "requests/trade_fact_correction"; rd.mkdir(parents=True, exist_ok=True)
+    existing = [read_json(x, {}) or {} for x in rd.glob("*.json") if str((read_json(x, {}) or {}).get("correction_type") or "").upper() == "DECISION_ATTRIBUTION" and str((read_json(x, {}) or {}).get("trade_event_id") or "") == event_id]
+    ids = {str(x.get("linked_decision_id") or "") for x in existing}
+    if ids - {decision_id}: raise RuntimeError("existing canonical attribution conflicts with requested Decision Fact")
+    req = dict(req); req.update({"correction_type":"DECISION_ATTRIBUTION","status":"APPLIED","immutable_trade_source":True})
+    if existing:
+        if any(json.dumps(x,ensure_ascii=False,sort_keys=True)==json.dumps(req,ensure_ascii=False,sort_keys=True) for x in existing):
+            print(json.dumps({"status":"RECONCILED","trade_event_id":event_id,"linked_decision_id":decision_id,"immutable_trade_source":True},ensure_ascii=False)); return 0
+        raise RuntimeError("trade already has a different canonical attribution correction")
+    target=rd/f"{req['request_id']}.json"
+    if target.exists() and json.dumps(read_json(target,{}),ensure_ascii=False,sort_keys=True)!=json.dumps(req,ensure_ascii=False,sort_keys=True):
+        raise RuntimeError("attribution correction request identity conflict")
+    if not target.exists(): write_json(target, req)
+    print(json.dumps({"status":"APPLIED","trade_event_id":event_id,"linked_decision_id":decision_id,"immutable_trade_source":True},ensure_ascii=False)); return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Backfill newly confirmed metadata for an already-recorded trade without creating a new trade.")
     parser.add_argument("request_path")
@@ -162,6 +196,8 @@ def main() -> int:
     if ROOT not in request_path.parents or not request_path.exists():
         raise RuntimeError("invalid correction request path")
     req = read_json(request_path, {}) or {}
+    if str(req.get("correction_type") or "").upper() == "DECISION_ATTRIBUTION":
+        return _apply_attribution_request(req)
     event_id = str(req.get("trade_event_id") or "").strip()
     fee = safe_float(req.get("fee_amount"))
     if not event_id or fee is None or fee < 0:
