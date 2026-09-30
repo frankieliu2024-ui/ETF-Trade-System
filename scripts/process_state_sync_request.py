@@ -3215,6 +3215,12 @@ def main() -> int:
         existing = existing_trades[trade_index] or _find_existing_trade(trade, confirmed_at, idempotency_key)
         if existing:
             event, event_id, trade_event_recorded = existing, str(existing.get("event_id") or ""), True
+            # A request-scoped replay may repair an earlier unlinked trade, but
+            # never by guessing from the latest account action.  The replay must
+            # carry an explicit decision identity or a same-request formal decision.
+            explicit_replay_decision_id = str(trade.get("linked_decision_id") or trade.get("decision_id") or decision_id or "").strip()
+            if not str(event.get("linked_decision_id") or "").strip() and explicit_replay_decision_id:
+                event["linked_decision_id"] = explicit_replay_decision_id
             # A request-scoped confirmation time is authoritative for an
             # idempotent replay.  Never replace an earlier PIT confirmation with
             # the current account snapshot's updated_at.
@@ -3263,7 +3269,33 @@ def main() -> int:
         upsert_formal_line(ROOT, ARCHIVE.name, TRADE_START, TRADE_END, event_id, archive_line, before_heading="## 6. 历史Excel与专项数据来源")
         upsert_formal_line(ROOT, EXPERIENCE.name, CASE_START, CASE_END, event_id, case_line, before_heading="## 3. 历史研究与专项回测")
         sync_experience_transaction_index(event)
-        account["formal_action"] = {**(account.get("formal_action") or {}), "execution_status": "EXECUTED", "execution_fact_ref": f"events/trades/{event_id}.json", "last_executed_event_id": event_id}
+        linked_event_decision_id = str(event.get("linked_decision_id") or "").strip()
+        prior_formal_action = account.get("formal_action") or {}
+        if linked_event_decision_id:
+            decision_path = ROOT / "events" / "decisions" / f"{linked_event_decision_id}.json"
+            linked_decision = load_json(decision_path) if decision_path.exists() else {}
+            linked_formal = linked_decision.get("formal_decision") if isinstance(linked_decision.get("formal_decision"), dict) else {}
+            account["formal_action"] = {
+                **prior_formal_action,
+                "action": linked_formal.get("action") or linked_formal.get("amount_action") or prior_formal_action.get("action") or "",
+                "quantity": linked_formal.get("quantity", prior_formal_action.get("quantity")),
+                "decision_id": linked_event_decision_id,
+                "decision_time": linked_formal.get("decision_time") or linked_formal.get("data_as_of_beijing") or linked_decision.get("decision_time_beijing") or prior_formal_action.get("decision_time"),
+                "source": "CHATGPT_FORMAL_DECISION",
+                "lifecycle": linked_formal.get("lifecycle") or prior_formal_action.get("lifecycle"),
+                "applicable_object": linked_formal.get("candidate_code") or linked_formal.get("code") or linked_decision.get("candidate_code") or prior_formal_action.get("applicable_object") or "",
+                "validity": "ACTIVE",
+                "execution_status": "EXECUTED",
+                "execution_fact_ref": f"events/trades/{event_id}.json",
+                "last_executed_event_id": event_id,
+            }
+        else:
+            account["formal_action"] = {
+                **prior_formal_action,
+                "execution_status": "EXECUTED",
+                "execution_fact_ref": f"events/trades/{event_id}.json",
+                "last_executed_event_id": event_id,
+            }
         atomic_json_write(ACCOUNT, account)
         write_trade_review_required(event)
         persisted_trade_events.append((trade, event))

@@ -326,6 +326,73 @@ def test_request_bound_formal_reply_gate_blocks_on_unconsumed_broker_fact(tmp_pa
     finally:
         e2e.ROOT, e2e.STATE, e2e.FILES = old_root, old_state, old_files
 
+
+def test_trade_replay_repairs_formal_action_identity_from_linked_decision(tmp_path, monkeypatch):
+    import json
+    from pathlib import Path
+    import scripts.process_state_sync_request as state_sync
+
+    root = Path(tmp_path)
+    (root / "data/state").mkdir(parents=True)
+    (root / "events/trades").mkdir(parents=True)
+    (root / "events/decisions").mkdir(parents=True)
+    (root / "config/market").mkdir(parents=True)
+    (root / "requests/live_snapshot").mkdir(parents=True)
+    (root / "data/state/account_fact.json").write_text(json.dumps({
+        "status":"VALID","updated_at":"2026-09-30T09:45:00+08:00","cash":12148.64,
+        "positions":[{"asset_type":"ETF","name":"日经ETF","code":"513520","quantity":2100}],
+        "formal_action":{"decision_id":"formal-20260929-195621__decision_2002","execution_status":"EXECUTED"}
+    },ensure_ascii=False),encoding="utf-8")
+    (root / "data/state/CURRENT.json").write_text(json.dumps({}),encoding="utf-8")
+    (root / "config/market/etf_monitor_universe.json").write_text(json.dumps({"objects":[]}),encoding="utf-8")
+    trade_id="trade_20260930_094415_513520_buy_2100"
+    (root / f"events/trades/{trade_id}.json").write_text(json.dumps({
+        "event_id":trade_id,"idempotency_key":"k","confirmed_at_beijing":"2026-09-30T09:45:00+08:00",
+        "name":"日经ETF","code":"513520","side":"BUY","quantity":2100,"price":2.31,"amount":4851.0,
+        "execution_status":"EXECUTED","linked_decision_id":None
+    },ensure_ascii=False),encoding="utf-8")
+    decision_id="manual-formal-20260930-093510__decision_093954"
+    (root / f"events/decisions/{decision_id}.json").write_text(json.dumps({
+        "decision_id":decision_id,"candidate_code":"513520","decision_time_beijing":"2026-09-30T09:39:54+08:00",
+        "formal_decision":{"candidate_code":"513520","amount_action":"Trial买入2,100份","quantity":2100,
+        "lifecycle":{"日经ETF（513520）":"持有管理"}}
+    },ensure_ascii=False),encoding="utf-8")
+    req={"request_id":"replay","source":"CHATGPT_USER_BROKER_SCREENSHOT","interaction_scenario":"BROKER_SCREENSHOT_SYNC",
+         "trade_event":{"event_id":trade_id,"idempotency_key":"k","confirmed_at_beijing":"2026-09-30T09:45:00+08:00",
+                        "name":"日经ETF","code":"513520","side":"BUY","quantity":2100,"price":2.31,"amount":4851.0,
+                        "linked_decision_id":decision_id}}
+    (root / "requests/live_snapshot/replay.json").write_text(json.dumps(req,ensure_ascii=False),encoding="utf-8")
+
+    monkeypatch.setattr(state_sync, "ROOT", root)
+    monkeypatch.setattr(state_sync, "ACCOUNT", root / "data/state/account_fact.json")
+    monkeypatch.setattr(state_sync, "DASHBOARD", root / "ETF当前状态_DASHBOARD.md")
+    monkeypatch.setattr(state_sync, "ARCHIVE", root / "ETF市场行情档案_2026.md")
+    monkeypatch.setattr(state_sync, "EXPERIENCE", root / "ETF交易复盘与经验库_2026.md")
+    monkeypatch.setattr(state_sync, "upsert_formal_line", lambda *a, **k: None)
+    monkeypatch.setattr(state_sync, "sync_experience_transaction_index", lambda *a, **k: None)
+    monkeypatch.setattr(state_sync, "write_trade_review_required", lambda *a, **k: None)
+    monkeypatch.setattr(state_sync, "sync_current_account_mirror", lambda *a, **k: None)
+    monkeypatch.setattr(state_sync, "persist_monitor_universe", lambda *a, **k: False)
+    monkeypatch.setattr(state_sync, "sync_formal_files", lambda *a, **k: {})
+    monkeypatch.setattr(state_sync, "record_post_close_review", lambda *a, **k: (False,False))
+    monkeypatch.setattr(state_sync, "record_unrecoverable_review_prerequisite", lambda *a, **k: (False,False))
+    monkeypatch.setattr(state_sync, "build_dashboard_block", lambda *a, **k: "")
+    monkeypatch.setattr(state_sync, "replace_block", lambda *a, **k: "")
+    monkeypatch.setattr(state_sync, "write_formal_text_if_changed", lambda *a, **k: None)
+    monkeypatch.setattr(state_sync, "latest_canonical_formal_decision", lambda *a, **k: {})
+    monkeypatch.setattr(state_sync, "execution_attribution", lambda trade, did: {"status":"READY","decision_id":did})
+    monkeypatch.setattr(state_sync, "record_formal_decision", lambda request: (False,""))
+
+    import sys
+    monkeypatch.setattr(sys, "argv", ["process_state_sync_request.py","requests/live_snapshot/replay.json"])
+    assert state_sync.main() == 0
+    event=json.loads((root / f"events/trades/{trade_id}.json").read_text(encoding="utf-8"))
+    account=json.loads((root / "data/state/account_fact.json").read_text(encoding="utf-8"))
+    assert event["linked_decision_id"] == decision_id
+    assert account["formal_action"]["decision_id"] == decision_id
+    assert account["formal_action"]["execution_status"] == "EXECUTED"
+    assert account["formal_action"]["execution_fact_ref"] == f"events/trades/{trade_id}.json"
+
 if __name__ == "__main__":
     unittest.main()
 
