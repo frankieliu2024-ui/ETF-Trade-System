@@ -33,6 +33,68 @@ def classify_request(request: dict[str, Any]) -> str:
 def _canonical(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
+# Ephemeral, opt-in forensic tracing for controlled historical Formal replay.
+# This state exists only in process memory and never enters any business payload.
+_FORENSIC_TRACE = {"enabled": False, "baseline_graph_sha256": "", "first_divergence_reported": False, "previous": None}
+
+def reset_formal_replay_forensic_trace(enabled: bool = False) -> None:
+    """Reset this process-local diagnostic trace; does not touch domain state."""
+    _FORENSIC_TRACE.update({"enabled": bool(enabled), "baseline_graph_sha256": "", "first_divergence_reported": False, "previous": None})
+
+def emit_formal_replay_forensic_fingerprint(
+    stage: str,
+    *,
+    obj: Any = None,
+    dwp: Any = None,
+    object_type: str = "",
+    source_type: str = "",
+    provenance: str = "",
+    source_fingerprint_value: str = "",
+    historical: bool = False,
+) -> None:
+    """Write a redacted runtime fingerprint to stdout only when explicitly enabled."""
+    if not _FORENSIC_TRACE["enabled"] or not historical:
+        return
+    dwp_obj = dwp if isinstance(dwp, dict) else None
+    graph_present = bool(dwp_obj is not None and "problem_graph" in dwp_obj)
+    graph = dwp_obj.get("problem_graph") if graph_present else None
+    graph = graph if isinstance(graph, list) else []
+    problem_ids = [str(item.get("problem_id") or "") for item in graph if isinstance(item, dict) and item.get("problem_id")]
+    canonical = lambda value: json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    sha = lambda value: hashlib.sha256(canonical(value).encode("utf-8")).hexdigest()
+    graph_sha = sha(graph) if graph_present else ""
+    ids_sha = sha(problem_ids)
+    dwp_sha = sha(dwp_obj) if dwp_obj is not None else ""
+    previous = _FORENSIC_TRACE.get("previous")
+    record = {
+        "event": "FORMAL_REPLAY_FORENSIC_FINGERPRINT",
+        "stage": stage,
+        "problem_ids": problem_ids,
+        "problem_ids_sha256": ids_sha,
+        "problem_graph_sha256": graph_sha,
+        "dwp_sha256": dwp_sha,
+        "object_type": object_type or (type(obj).__name__ if obj is not None else "null"),
+        "source_type": source_type or (str((obj or {}).get("source_type") or (obj or {}).get("request_type") or "") if isinstance(obj, dict) else ""),
+        "provenance": provenance,
+        "object_identity": {"object_id": hex(id(obj)) if obj is not None else "", "dwp_id": hex(id(dwp)) if dwp is not None else "", "graph_id": hex(id(graph)) if graph_present else ""},
+        "mutation_evidence": {
+            "previous_stage": previous.get("stage") if previous else "",
+            "same_graph_content_as_previous": bool(previous and graph_sha and graph_sha == previous.get("problem_graph_sha256")),
+            "same_dwp_object_as_previous": bool(previous and dwp is not None and hex(id(dwp)) == previous.get("dwp_id")),
+            "graph_present_in_object": graph_present,
+        },
+        "source_fingerprint": source_fingerprint_value,
+    }
+    print(json.dumps(record, ensure_ascii=False, sort_keys=True), flush=True)
+    if stage == "A_HISTORICAL_PACKET" and graph_sha:
+        _FORENSIC_TRACE["baseline_graph_sha256"] = graph_sha
+    baseline = _FORENSIC_TRACE.get("baseline_graph_sha256")
+    if stage != "A_HISTORICAL_PACKET" and graph_sha and baseline and graph_sha != baseline and not _FORENSIC_TRACE["first_divergence_reported"]:
+        print(json.dumps({"event": "FIRST_DIVERGENCE_STAGE", "stage": stage, "historical_graph_sha256": baseline, "observed_graph_sha256": graph_sha}, sort_keys=True), flush=True)
+        _FORENSIC_TRACE["first_divergence_reported"] = True
+    _FORENSIC_TRACE["previous"] = {"stage": stage, "problem_graph_sha256": graph_sha, "dwp_id": hex(id(dwp)) if dwp is not None else ""}
+
+
 _FORMAL_OPPORTUNITY_ALIASES = {
     "无机会": "无机会",
     "无新增交易机会": "无机会",
@@ -141,14 +203,19 @@ def validate_decision_evidence_consumption(value: Any, *, parent_request_id: str
     return ""
 
 
-def project_decision_response(source: dict[str, Any], response: dict[str, Any], work_package: dict[str, Any]) -> dict[str, Any]:
+def project_decision_response(source: dict[str, Any], response: dict[str, Any], work_package: dict[str, Any], *, forensic_historical_replay: bool = False) -> dict[str, Any]:
     """Project actor-only business answers into the canonical Business Decision Source."""
+    if forensic_historical_replay:
+        emit_formal_replay_forensic_fingerprint("E_PROJECT_ENTRY", obj=source, dwp=work_package, object_type="project_decision_response.source", provenance="historical_replay", historical=True)
+        emit_formal_replay_forensic_fingerprint("F_SOURCE_INTERNAL_DWP", obj=source, dwp=source.get("decision_work_package"), object_type="project_decision_response.source", provenance="historical_replay", historical=True)
     if not isinstance(response, dict) or not isinstance(work_package, dict):
         raise ValueError("decision response/work package must be objects")
     answers = response.get("answers")
     if not isinstance(answers, dict):
         raise ValueError("decision response requires answers keyed by problem_id")
     graph = [x for x in (work_package.get("problem_graph") or []) if isinstance(x, dict)]
+    if forensic_historical_replay:
+        emit_formal_replay_forensic_fingerprint("G_COMPLETENESS_VALIDATOR_GRAPH", obj=work_package, dwp={"problem_graph": graph}, object_type="completeness_validator.problem_graph", provenance="historical_replay", historical=True)
     required_ids = [str(x.get("problem_id") or "") for x in graph if x.get("problem_id")]
     missing = [pid for pid in required_ids if pid not in answers]
     if missing:
