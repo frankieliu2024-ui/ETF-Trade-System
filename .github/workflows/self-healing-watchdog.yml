@@ -270,7 +270,7 @@ jobs:
             echo "Canonical market snapshot already queued/in progress; reuse it for the existing Formal parent."
             exit 0
           fi
-          gh workflow run market-snapshot.yml --ref main -f node=query -f probe_only=false -f formal_context_recovery_request="${{ steps.assess.outputs.formal_replay_request }}"
+          gh workflow run market-snapshot.yml --ref main -f node=scheduled -f probe_only=false -f formal_context_recovery_request="${{ steps.assess.outputs.formal_replay_request }}"
           echo "Redispatched the existing Formal parent through the canonical market snapshot producer."
 
       - name: Dispatch replacement market snapshot
