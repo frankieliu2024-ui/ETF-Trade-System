@@ -3058,8 +3058,7 @@ def main() -> int:
         if str(trigger.get("request_id") or "").strip() != parent_id:
             qualifier = "historical" if replay_source_commit else "current"
             raise ValueError(f"business decision source requires {qualifier} request-bound Decision Work Package")
-        decision_work_package = request.get("decision_work_package") or packet.get("decision_work_package") or {}
-        if not isinstance(decision_work_package, dict) or not decision_work_package.get("problem_graph"):
+        # Historical replay is provenance-bound: only the DWP loaded from the\n        # explicitly selected historical query_context may define the problem graph.\n        # A request-local/current DWP must never override that PIT boundary.\n        if replay_source_commit:\n            decision_work_package = packet.get("decision_work_package") or {}\n        else:\n            decision_work_package = request.get("decision_work_package") or packet.get("decision_work_package") or {}\n        if not isinstance(decision_work_package, dict) or not decision_work_package.get("problem_graph"):
             raise ValueError("business decision source Decision Work Package is missing")
         # Freeze the already-validated request-bound opportunity domain onto the
         # in-memory ingress object. record_formal_decision() must validate the
