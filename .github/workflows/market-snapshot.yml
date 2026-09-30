@@ -780,6 +780,15 @@ jobs:
               mkdir -p "$(dirname "$file")"
               cp "/tmp/etf-downstream-publish/$file" "$file"
             done < /tmp/etf-downstream-files
+            # CURRENT may have advanced after the derived state was built (for
+            # example a core snapshot or account/trade mirror publish). Rebuild
+            # the canonical Phase4-derived trigger/ranking from execution-time
+            # latest-main CURRENT after the final reset so a stale staged
+            # decision_trigger cannot overwrite a newer trade/account fact.
+            if grep -zqxF 'data/state/decision_trigger.json' /tmp/etf-downstream-files || \
+               grep -zqxF 'data/state/capital_efficiency_ranking.json' /tmp/etf-downstream-files; then
+              python scripts/build_state_context.py --decision-ready-only
+            fi
             git add -A -- data/market/snapshots data/market/discovery_history data/state post_market_review events config/market/etf_monitor_universe.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
             git reset -- data/state/system_consistency.json
             if git diff --cached --quiet; then
