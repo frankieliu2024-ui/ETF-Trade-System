@@ -466,6 +466,20 @@ def test_plural_broker_trade_events_are_consumed_without_event_id_collision(tmp_
 
 
 
+
+def test_market_snapshot_rebuilds_phase4_after_latest_main_reset():
+    workflow = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
+    reset = workflow.index("git reset --hard origin/main", workflow.index("Commit downstream runtime/data artifacts"))
+    rebuild = workflow.index("python scripts/build_state_context.py --decision-ready-only", reset)
+    final_add = workflow.index("git add -A -- data/market/snapshots", rebuild)
+    assert reset < rebuild < final_add
+    publish_slice = workflow[reset:final_add]
+    assert "data/state/decision_trigger.json" in publish_slice
+    assert "data/state/capital_efficiency_ranking.json" in publish_slice
+    assert "execution-time latest-main CURRENT" in publish_slice
+
+
+
 def test_new_trade_updates_current_mirror_after_event_persistence(tmp_path, monkeypatch, capsys):
     request = {
         "request_id": "broker-current-mirror",
