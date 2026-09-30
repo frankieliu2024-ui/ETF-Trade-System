@@ -68,6 +68,23 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Reject ambiguous recovery inputs
+        if: \${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          REPLAY_REQUEST_INPUT: \${{ github.event.inputs.replay_request || '' }}
+          FORMAL_REPLAY_REQUEST_INPUT: \${{ github.event.inputs.formal_replay_request || '' }}
+          FORMAL_CONTEXT_RECOVERY_REQUEST_INPUT: \${{ github.event.inputs.formal_context_recovery_request || '' }}
+        shell: bash
+        run: |
+          count=0
+          [ -n "$REPLAY_REQUEST_INPUT" ] && count=$((count + 1))
+          [ -n "$FORMAL_REPLAY_REQUEST_INPUT" ] && count=$((count + 1))
+          [ -n "$FORMAL_CONTEXT_RECOVERY_REQUEST_INPUT" ] && count=$((count + 1))
+          if [ "$count" -gt 1 ]; then
+            echo "replay_request, formal_replay_request and formal_context_recovery_request are mutually exclusive" >&2
+            exit 1
+          fi
+
       - name: Detect triggering request envelope before any runtime work
         id: triggering_request
         if: ${{ github.event_name == 'push' }}
