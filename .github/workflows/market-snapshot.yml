@@ -599,6 +599,11 @@ jobs:
             fi
             echo "FORMAL_REPLAY_SOURCE_COMMIT=$formal_source_commit" >> "$GITHUB_ENV"
             echo "FORMAL_REPLAY_DWP_COMMIT=$formal_dwp_commit" >> "$GITHUB_ENV"
+            # Keep the same resolved values in this step for the immediate state-sync call;
+            # GITHUB_ENV remains the cross-step handoff for later steps.
+            FORMAL_REPLAY_SOURCE_COMMIT="$formal_source_commit"
+            FORMAL_REPLAY_DWP_COMMIT="$formal_dwp_commit"
+            export FORMAL_REPLAY_SOURCE_COMMIT FORMAL_REPLAY_DWP_COMMIT
           else
             request_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
           fi
