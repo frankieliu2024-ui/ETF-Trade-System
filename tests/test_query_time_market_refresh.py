@@ -75,6 +75,28 @@ class QueryTimeRefreshTests(unittest.TestCase):
         self.assertNotIn("000001", refresh.call_args.args[1])
         self.assertTrue(result["decision_freshness"]["formal_decision_allowed"])
 
+    def test_post_close_overseas_quote_before_parent_does_not_revoke_closed_session_pit(self):
+        request = datetime.fromisoformat("2026-09-30T16:40:33+08:00")
+        now = datetime.fromisoformat("2026-09-30T16:40:59+08:00")
+        root = self._closed_reference_root(market_date="2026-09-30", node="close", captured_at="2026-09-30T15:10:18+08:00")
+        fresh = {
+            "symbol": "N225",
+            "market": "JP",
+            "latest_price": 41000,
+            "data_time_beijing": "2026-09-30T16:40:14+08:00",
+            "quality_status": "PASS",
+            "freshness": "FRESH",
+        }
+        with patch("scripts.query_time_market_refresh.refresh_market_quotes", return_value={"quotes": [fresh], "failures": []}) as refresh:
+            result = build_market_quote_context(root, now=now, requested_symbols=["N225"], decision_request_time=request)
+        refresh.assert_called_once()
+        gate = result["decision_freshness"]
+        self.assertTrue(gate["resolved_post_request"])
+        self.assertTrue(gate["formal_decision_allowed"])
+        self.assertEqual(gate["status"], "DIRECT")
+        self.assertEqual(gate["request_scoped_resolution_mode"], "CLOSED_SESSION_CANONICAL_REUSE")
+        self.assertEqual(gate["resolved_as_of"], "2026-09-30T08:40:14+00:00")
+
     def test_weekend_formal_request_reuses_last_close_without_synthetic_cn_refresh(self):
         now = datetime.fromisoformat("2026-09-27T10:00:00+08:00")
         root = self._closed_reference_root(market_date="2026-09-25", node="close", captured_at="2026-09-25T15:00:05+08:00")

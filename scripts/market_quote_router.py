@@ -439,9 +439,21 @@ def build_market_quote_context(root: Path | str, now: datetime | None = None, *,
         if resolved_times:
             resolved_at = max(resolved_times)
             decision_freshness["resolved_as_of"] = resolved_at.isoformat()
-            decision_freshness["resolved_post_request"] = resolved_at >= decision_request_time.astimezone(timezone.utc)
-            decision_freshness["formal_decision_allowed"] = bool(decision_freshness["resolved_post_request"] and max(0, int((query_time.astimezone(timezone.utc) - resolved_at).total_seconds())) <= decision_freshness["preferred_max_age_seconds"])
-            decision_freshness["status"] = "DIRECT" if decision_freshness["formal_decision_allowed"] else "REFRESH_REQUIRED"
+            refreshed_post_request = resolved_at >= decision_request_time.astimezone(timezone.utc)
+            # A closed A-share session is already request-scoped resolved by the
+            # canonical close.  Independent active overseas refreshes enrich
+            # evidence but must not revoke that CN PIT qualification merely
+            # because their latest provider timestamp predates the parent by a
+            # few seconds. Active-session requests still require a genuinely
+            # post-request refreshed fact.
+            if not reference_resolution.get("resolved"):
+                decision_freshness["resolved_post_request"] = refreshed_post_request
+                decision_freshness["formal_decision_allowed"] = bool(
+                    refreshed_post_request
+                    and max(0, int((query_time.astimezone(timezone.utc) - resolved_at).total_seconds()))
+                    <= decision_freshness["preferred_max_age_seconds"]
+                )
+                decision_freshness["status"] = "DIRECT" if decision_freshness["formal_decision_allowed"] else "REFRESH_REQUIRED"
     else:
         refresh_failures = []
         refreshed_symbols = set()
