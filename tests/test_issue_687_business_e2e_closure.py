@@ -11,6 +11,31 @@ from scripts.observation_etf_management import validate_observation_management
 
 
 class BusinessE2EClosureContractTests(unittest.TestCase):
+    def test_historical_dwp_freezes_source_projection_against_post_trade_graph(self) -> None:
+        historical = {
+            "problem_graph": [
+                {"problem_id": "DISCOVERY:159518"},
+                {"problem_id": "DISCOVERY:159632"},
+            ]
+        }
+        source = {
+            "decision_work_package": {
+                "problem_graph": [
+                    {"problem_id": "HOLDING:513520"},
+                    {"problem_id": "HELD_ETF_ADD:513520"},
+                    {"problem_id": "DISCOVERY:159377"},
+                ]
+            }
+        }
+        bound = state_sync.freeze_source_work_package(source, historical)
+        self.assertEqual(
+            [x["problem_id"] for x in bound["decision_work_package"]["problem_graph"]],
+            ["DISCOVERY:159518", "DISCOVERY:159632"],
+        )
+        self.assertNotIn("HOLDING:513520", {
+            x["problem_id"] for x in bound["decision_work_package"]["problem_graph"]
+        })
+
     def test_capital_competition_requires_every_observation_and_discovery(self) -> None:
         value = {
             "next_unit_capital_use": "现金",

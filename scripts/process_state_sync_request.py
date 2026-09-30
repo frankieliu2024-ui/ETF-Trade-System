@@ -1205,6 +1205,18 @@ def request_bound_etf_opportunity_reviews(request: dict) -> dict[str, str]:
     return required
 
 
+def freeze_source_work_package(source_payload: dict, decision_work_package: dict) -> dict:
+    """Bind the exact request-bound DWP to the in-memory Source projection."""
+    if not isinstance(source_payload, dict) or not isinstance(decision_work_package, dict):
+        raise ValueError("source payload and decision work package must be objects")
+    graph = decision_work_package.get("problem_graph")
+    if not isinstance(graph, list) or not graph:
+        raise ValueError("source projection requires a non-empty request-bound problem graph")
+    bound = json.loads(json.dumps(source_payload))
+    bound["decision_work_package"] = json.loads(json.dumps(decision_work_package))
+    return bound
+
+
 def required_etf_opportunity_reviews(root: Path, account: dict, market_date: str = "") -> dict[str, str]:
     """Return the request-node ETF opportunity set that formal completion must cover.
 
@@ -3085,7 +3097,6 @@ def main() -> int:
         source_payload.setdefault("market_date", query_context.get("market_date") or parent_request.get("market_date"))
         source_payload.setdefault("data_as_of_beijing", query_context.get("generated_at_beijing") or source_payload.get("requested_at_beijing"))
         source_payload["request_type"] = BUSINESS_DECISION_SOURCE
-
         decision_response = request.get("decision_response")
         if isinstance(supplied_decision, dict) and supplied_decision:
             # Historical durable Business Decision Source replay: preserve the
@@ -3101,6 +3112,10 @@ def main() -> int:
             source_payload,
             expected_snapshot=str(request.get("consumed_snapshot") or source_payload.get("consumed_snapshot") or "").strip(),
         )
+        # Bind the selected request-bound DWP only after Source identity and
+        # fingerprinting.  It is validation context, not mutable Source
+        # business content, so replay/idempotency fingerprints remain stable.
+        source = freeze_source_work_package(source, decision_work_package)
         source_fingerprint_value = source["fingerprint"]
         source_reply_ready = True
         request["_business_decision_source"] = source
@@ -3349,4 +3364,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
