@@ -49,6 +49,46 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertFalse(state["analysis_eligible"])
         self.assertEqual(state["user_visible_output"], "SILENT_CONTINUATION")
 
+    def test_real_recurrence_85s_prior_context_remains_silent_until_same_request_ready(self):
+        parent = "formal-analysis-20261001-080100-bjt"
+        building = classify_formal_request_consumer_state(
+            parent,
+            {
+                "decision_fact_pack": {
+                    "trigger": {"request_id": "manual-formal-20261001-075946"},
+                    "formal_reply_freeze": {
+                        "status": "READY",
+                        "reply_freezable": True,
+                        "request_id": "manual-formal-20261001-075946",
+                    },
+                }
+            },
+            producer_status="IN_PROGRESS",
+        )
+        self.assertEqual(building["status"], "REQUEST_BOUND_FACTS_BUILDING")
+        self.assertTrue(building["continue_same_request"])
+        self.assertFalse(building["reply_eligible"])
+        self.assertEqual(building["user_visible_output"], "SILENT_CONTINUATION")
+
+        ready = classify_formal_request_consumer_state(
+            parent,
+            {
+                "decision_fact_pack": {
+                    "trigger": {"request_id": parent},
+                    "formal_reply_freeze": {
+                        "status": "READY",
+                        "reply_freezable": True,
+                        "request_id": parent,
+                        "blockers": [],
+                    },
+                }
+            },
+            producer_status="SUCCESS",
+        )
+        self.assertEqual(ready["status"], "BUSINESS_DECISION_READY")
+        self.assertTrue(ready["reply_eligible"])
+        self.assertEqual(ready["user_visible_output"], "COMPLETE_BUSINESS_DECISION_ONLY")
+
     def test_same_request_ready_makes_business_reply_immediately_eligible(self):
         state = classify_formal_request_consumer_state(
             "parent",
