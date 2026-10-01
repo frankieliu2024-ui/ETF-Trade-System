@@ -284,6 +284,53 @@ def _latest_observation_thesis_state(root: Path, observation_codes: set[str]) ->
     return out
 
 
+def _latest_formal_decision_baseline(root: Path, request_time: str = "") -> dict:
+    """Return the latest canonical Formal Decision strictly before this request.
+
+    The baseline is request input only: it does not authorize a transition and
+    does not create a second state store.  It lets the business Actor explain
+    why a material state is changing instead of silently regenerating it.
+    """
+    decisions_dir = root / "events" / "decisions"
+    if not decisions_dir.exists():
+        return {}
+    cutoff = parse_time(request_time) if request_time else None
+    candidates = []
+    for path in decisions_dir.glob("*.json"):
+        try:
+            event = read_json(path, {})
+        except Exception:
+            continue
+        decision = event.get("formal_decision") or {}
+        when_raw = str(event.get("decision_time_beijing") or decision.get("data_as_of_beijing") or "")
+        when = parse_time(when_raw)
+        if cutoff is not None and when is not None and when >= cutoff:
+            continue
+        if not decision:
+            continue
+        candidates.append((when or parse_time("1970-01-01T00:00:00+00:00"), event, decision))
+    if not candidates:
+        return {}
+    _, event, decision = max(candidates, key=lambda item: item[0])
+    holding_actions = {}
+    for review in decision.get("managed_position_reviews") or []:
+        if not isinstance(review, dict):
+            continue
+        code = str(review.get("security_code") or review.get("code") or "").strip()
+        action = str(review.get("current_action") or review.get("action") or "").strip()
+        if code and action:
+            holding_actions[code] = action
+    return {
+        "decision_id": str(event.get("decision_id") or decision.get("decision_id") or ""),
+        "decision_time_beijing": str(event.get("decision_time_beijing") or decision.get("data_as_of_beijing") or ""),
+        "risk_permission": str(decision.get("risk_permission") or ""),
+        "candidate_code": str(decision.get("candidate_code") or ""),
+        "candidate_name": str(decision.get("candidate_name") or ""),
+        "opportunity_status": str(event.get("_opportunity_status") or decision.get("opportunity_status") or ""),
+        "holding_actions": holding_actions,
+    }
+
+
 def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict], account: dict, observation_inputs: list[dict] | None = None) -> list[dict]:
     problems = [
         {"problem_id": "RISK_PERMISSION", "decision_object": "risk_permission", "required_business_judgment": "风险许可及新增风险边界"},
@@ -751,7 +798,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         quotes,
         three_layer_monitoring=three_layer_monitoring,
     )
-    work_package["three_layer_monitoring_evidence"] = three_layer_monitoring
+    work_package["three_layer_monitoring_evidence"] = three_layer_monitoring\n    work_package["previous_formal_decision_baseline"] = _latest_formal_decision_baseline(root, _request_received_at_beijing(request))\n    work_package["response_contract"]["material_state_transition_attribution"] = {"required_when_changed": ["risk_permission", "main_candidate_or_opportunity_status", "holding_action"], "fields": ["material_evidence_delta", "evidence_requirement_ids"], "rule": "Material state changes versus the previous canonical Formal Decision require explicit attribution to qualified current-request evidence. Execution/market-phase or cash constraints must not mechanically rewrite orthogonal risk/opportunity states."}
 
     return {
         "schema_version": "1.5",
