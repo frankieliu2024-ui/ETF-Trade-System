@@ -7,15 +7,15 @@
     "snapshot_commit": "381ecd8d879fb5d7a0ecd91b4c373924c4b1d609",
     "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
     "timing": {
-      "state_builder_started_at": "2026-10-01T00:00:57Z",
+      "state_builder_started_at": "2026-10-01T00:02:34Z",
       "current_published_at": "2026-09-30T15:10:18+08:00",
-      "market_regime_ready_at": "2026-10-01T00:01:04Z",
-      "market_structure_ready_at": "2026-10-01T00:01:04Z",
-      "full_state_context_observation_at": "2026-10-01T00:01:04Z",
-      "decision_context_written_at": "2026-10-01T00:01:08Z"
+      "market_regime_ready_at": "2026-10-01T00:02:39Z",
+      "market_structure_ready_at": "2026-10-01T00:02:39Z",
+      "full_state_context_observation_at": "2026-10-01T00:02:40Z",
+      "decision_context_written_at": "2026-10-01T00:02:41Z"
     }
   },
-  "generated_at": "2026-10-01T00:01:04Z",
+  "generated_at": "2026-10-01T00:02:40Z",
   "rules_version": "V2.2.33",
   "market_date": "2026-09-30",
   "latest_node": "close",
@@ -1279,7 +1279,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 13.752,
-    "age_seconds": 60646
+    "age_seconds": 60742
   },
   "freshness_at_context_build": {
     "status": "STALE",
@@ -1295,7 +1295,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 13.752,
-    "age_seconds": 60646
+    "age_seconds": 60742
   },
   "data_quality_summary": {
     "pass_count": 16,
@@ -1381,7 +1381,7 @@
     "account_fact_time": "2026-09-30T17:21:00+08:00",
     "market_snapshot_time": "2026-09-30T15:10:18+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-10-01T00:01:04Z",
+    "context_generated_time": "2026-10-01T00:02:40Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -1416,22 +1416,17 @@
     "read_only": true
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-10-01T08:01:04+08:00",
+    "generated_at_beijing": "2026-10-01T08:02:40+08:00",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-    "refresh_failures": [
-      {
-        "symbol": "N225",
-        "error": "N225 query-time direct chain has no fresh usable quote; eastmoney_push2delay:100.N225: HTTP Error 502: Bad Gateway | eastmoney_push2:100.N225: HTTP Error 502: Bad Gateway | yahoo_chart_api: freshness=STALE quality=PASS"
-      }
-    ],
+    "refresh_failures": [],
     "decision_freshness": {
       "status": "DIRECT",
       "quality_status": "UNKNOWN",
       "captured_at": "2026-09-30T07:10:18+00:00",
       "provider_as_of": "2026-09-30T07:10:09+00:00",
       "effective_as_of": "2026-09-30T07:10:09+00:00",
-      "request_time": "2026-09-30T23:59:46+00:00",
-      "age_seconds": 60655,
+      "request_time": "2026-10-01T00:01:00+00:00",
+      "age_seconds": 60751,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -1443,27 +1438,54 @@
       "request_scoped_resolution_mode": "CLOSED_SESSION_CANONICAL_REUSE",
       "request_scoped_resolution_reason": "closed A-share session legally reuses latest canonical close",
       "a_share_market_phase": "OFF_SESSION",
-      "resolved_as_of": "2026-10-01T00:01:07+00:00"
+      "resolved_as_of": "2026-10-01T00:02:41+00:00"
     },
     "route_version": "V1.1",
     "query_entry": "market_quote_router",
     "quotes": [
+      {
+        "market": "JP",
+        "market_name": "日本",
+        "symbol": "N225",
+        "canonical_object": "N225",
+        "name": "日经225指数",
+        "latest_price": 67280.64,
+        "open": 67106.52,
+        "high": 67280.64,
+        "low": 67081.66,
+        "prev_close": 66753.72,
+        "volume": 0,
+        "amount": "-",
+        "turnover": "-",
+        "data_time_beijing": "2026-10-01T08:02:34+08:00",
+        "data_time_local": "2026-10-01T09:02:34+09:00",
+        "market_phase": "REGULAR",
+        "market_status_cn": "日股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "eastmoney_push2delay:100.N225",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_FORMAL_PROVIDER_CHAIN",
+        "provider_timestamp_field": "f86",
+        "refresh_contract": "ACTIVE_MARKET_REQUIRES_FRESH_PROVIDER_TIMESTAMP"
+      },
       {
         "market": "KR",
         "market_name": "韩国",
         "symbol": "KOSPI",
         "canonical_object": "KOSPI",
         "name": "韩国综合指数",
-        "latest_price": 6792.89,
+        "latest_price": 6784.26,
         "open": 6814.49,
         "high": 6814.49,
-        "low": 6792.89,
+        "low": 6782.84,
         "prev_close": 6838.04,
-        "volume": 7417000.0,
-        "amount": 491987000000.0,
-        "turnover": 491987000000.0,
-        "data_time_beijing": "2026-10-01T08:01:07+08:00",
-        "data_time_local": "2026-10-01T09:01:07+09:00",
+        "volume": 13894000.0,
+        "amount": 754125000000.0,
+        "turnover": 754125000000.0,
+        "data_time_beijing": "2026-10-01T08:02:41+08:00",
+        "data_time_local": "2026-10-01T09:02:41+09:00",
         "market_phase": "REGULAR",
         "market_status_cn": "韩股交易中",
         "data_nature_cn": "实时交易行情",
@@ -1944,32 +1966,6 @@
         "route_rule": "返回最近正式收盘行情"
       },
       {
-        "market": "JP",
-        "market_name": "日本",
-        "symbol": "^N225",
-        "name": "日经225指数",
-        "latest_price": 66753.71875,
-        "open": null,
-        "high": null,
-        "low": null,
-        "prev_close": null,
-        "volume": null,
-        "amount": null,
-        "turnover": null,
-        "data_time_beijing": "2026-09-30T14:30:00+08:00",
-        "data_time_local": "",
-        "market_phase": "REGULAR",
-        "market_status_cn": "日股交易中",
-        "data_nature_cn": "实时交易行情",
-        "source": "yahoo_chart_api",
-        "freshness": "STALE",
-        "freshness_cn": "时点过旧",
-        "quality_status": "PASS",
-        "quality_status_cn": "数据可用",
-        "direct_quote": true,
-        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
-      },
-      {
         "market": "TW",
         "market_name": "中国台湾",
         "symbol": "^TWII",
@@ -2195,7 +2191,7 @@
   },
   "decision_trigger": {
     "schema_version": "1.2",
-    "generated_at": "2026-10-01T08:01:04+08:00",
+    "generated_at": "2026-10-01T08:02:40+08:00",
     "status": "NO_NEW_TRIGGER",
     "trigger_type": "",
     "triggered_at": "",
@@ -2216,7 +2212,7 @@
   },
   "capital_efficiency_ranking": {
     "schema_version": "1.2",
-    "generated_at": "2026-10-01T08:01:04+08:00",
+    "generated_at": "2026-10-01T08:02:40+08:00",
     "as_of": "2026-09-30T15:10:18+08:00",
     "e2e_status": "READY",
     "risk_zone": "RISK_OBSERVATION",
@@ -4054,7 +4050,7 @@
     ]
   },
   "intraday_path_features": {
-    "generated_at": "2026-10-01T00:00:57Z",
+    "generated_at": "2026-10-01T00:02:34Z",
     "market_date": "2026-09-30",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -5619,7 +5615,7 @@
     },
     "market_structure_context": {
       "schema_version": "1.4",
-      "generated_at": "2026-10-01T00:01:04Z",
+      "generated_at": "2026-10-01T00:02:39Z",
       "market_date": "2026-09-30",
       "as_of_beijing": "2026-09-30T15:10:18+08:00",
       "source_snapshot": "data/market/snapshots/2026-09-30_151018.json",
@@ -8418,7 +8414,7 @@
     },
     "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
     "broad_universe_count": 1620,
-    "managed_identity_count": 13,
+    "managed_identity_count": 0,
     "held_identity_count": 6,
     "managed_excluded_count": 0,
     "history_prefilter_count": 180,
@@ -8437,9 +8433,9 @@
       "prefilter_elapsed_seconds": 0.007,
       "history_validation_elapsed_seconds": 11.127,
       "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
-      "candidate_formal_quote_elapsed_seconds": 7.34,
-      "discovery_pipeline_elapsed_seconds": 28.664,
-      "reuse_mode": "FRESH_DISCOVERY"
+      "candidate_formal_quote_elapsed_seconds": 6.164,
+      "discovery_pipeline_elapsed_seconds": 6.184,
+      "reuse_mode": "SAME_MARKET_NODE_LEGAL_DISCOVERY_EVIDENCE_REUSE"
     },
     "coverage_status": "COMPLETE",
     "history_failures": [],
@@ -9472,7 +9468,13 @@
     "decision_boundary": "发现对象是本节点临时正式评估输入，不是第三种ETF身份；不得自动写观察池、生成Trial/Confirm或交易动作。",
     "universe_identity": "055e094a25a1e87e",
     "discovery_delta_identity": "1d16090d93065a3e",
-    "formal_quote_coverage": 9
+    "formal_quote_coverage": 9,
+    "reuse": {
+      "mode": "SAME_MARKET_NODE_LEGAL_DISCOVERY_EVIDENCE_REUSE",
+      "source": "data/state/query_context.json",
+      "qualification": "same_market_date_same_latest_valid_node_same_discovery_delta_identity_same_universe_identity",
+      "fixed_ttl": false
+    }
   },
   "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。正式机会比较完整覆盖全部持仓/观察ETF，并在本节点存在合格池外发现对象时把其作为临时正式评估输入加入同一次MASTER与全资本竞争；发现本身不产生管理身份或交易权限。",
   "managed_position_sell_review": {
