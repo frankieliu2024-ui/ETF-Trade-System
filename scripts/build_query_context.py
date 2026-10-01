@@ -798,7 +798,9 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         quotes,
         three_layer_monitoring=three_layer_monitoring,
     )
-    work_package["three_layer_monitoring_evidence"] = three_layer_monitoring\n    work_package["previous_formal_decision_baseline"] = _latest_formal_decision_baseline(root, _request_received_at_beijing(request))\n    work_package["response_contract"]["material_state_transition_attribution"] = {"required_when_changed": ["risk_permission", "main_candidate_or_opportunity_status", "holding_action"], "fields": ["material_evidence_delta", "evidence_requirement_ids"], "rule": "Material state changes versus the previous canonical Formal Decision require explicit attribution to qualified current-request evidence. Execution/market-phase or cash constraints must not mechanically rewrite orthogonal risk/opportunity states."}
+    work_package["three_layer_monitoring_evidence"] = three_layer_monitoring
+    work_package["previous_formal_decision_baseline"] = _latest_formal_decision_baseline(root, _request_received_at_beijing(request))
+    work_package["response_contract"]["material_state_transition_attribution"] = {"required_when_changed": ["risk_permission", "main_candidate_or_opportunity_status", "holding_action"], "fields": ["material_evidence_delta", "evidence_requirement_ids"], "rule": "Material state changes versus the previous canonical Formal Decision require explicit attribution to qualified current-request evidence. Execution/market-phase or cash constraints must not mechanically rewrite orthogonal risk/opportunity states."}
 
     return {
         "schema_version": "1.5",
