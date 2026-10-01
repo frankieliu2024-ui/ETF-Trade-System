@@ -203,6 +203,65 @@ def validate_decision_evidence_consumption(value: Any, *, parent_request_id: str
     return ""
 
 
+def _transition_attribution_error(answer: dict, *, problem_id: str, qualified_requirement_ids: set[str]) -> str:
+    attribution = answer.get("state_transition_attribution")
+    if not isinstance(attribution, dict):
+        return f"decision response material state transition requires {problem_id}.state_transition_attribution"
+    delta = str(attribution.get("material_evidence_delta") or "").strip()
+    evidence_ids = attribution.get("evidence_requirement_ids")
+    if not delta:
+        return f"decision response material state transition requires {problem_id}.material_evidence_delta"
+    if not isinstance(evidence_ids, list) or not evidence_ids:
+        return f"decision response material state transition requires {problem_id}.evidence_requirement_ids"
+    invalid = [str(x) for x in evidence_ids if str(x) not in qualified_requirement_ids]
+    if invalid:
+        return f"decision response material state transition cites unqualified evidence for {problem_id}: " + ",".join(invalid)
+    return ""
+
+
+def _validate_material_state_transitions(
+    answers: dict[str, Any], work_package: dict[str, Any], *, risk_permission: str,
+    candidate_code: str, opportunity_status: str, position_reviews: list[dict[str, Any]],
+) -> None:
+    baseline = work_package.get("previous_formal_decision_baseline") or {}
+    if not isinstance(baseline, dict) or not baseline:
+        return
+    requirements = work_package.get("evidence_requirements") or []
+    qualified_by_problem: dict[str, set[str]] = {}
+    for item in requirements:
+        if not isinstance(item, dict) or str(item.get("satisfaction") or "").upper() not in {"SATISFIED", "DEGRADED"}:
+            continue
+        pid = str(item.get("target_problem_id") or "")
+        rid = str(item.get("requirement_id") or "")
+        if pid and rid:
+            qualified_by_problem.setdefault(pid, set()).add(rid)
+
+    prior_risk = _normalize_risk_permission(baseline.get("risk_permission"))
+    if prior_risk and risk_permission != prior_risk:
+        error = _transition_attribution_error(answers.get("RISK_PERMISSION") or {}, problem_id="RISK_PERMISSION", qualified_requirement_ids=qualified_by_problem.get("RISK_PERMISSION", set()))
+        if error:
+            raise ValueError(error)
+
+    prior_code = str(baseline.get("candidate_code") or "").strip()
+    prior_status = _normalize_opportunity_status(baseline.get("opportunity_status"))
+    if (prior_code and candidate_code != prior_code) or (prior_status and opportunity_status != prior_status):
+        error = _transition_attribution_error(answers.get("MAIN_CANDIDATE") or {}, problem_id="MAIN_CANDIDATE", qualified_requirement_ids=qualified_by_problem.get("MAIN_CANDIDATE", set()))
+        if error:
+            raise ValueError(error)
+
+    prior_holding = baseline.get("holding_actions") or {}
+    if isinstance(prior_holding, dict):
+        for review in position_reviews:
+            code = str(review.get("security_code") or "")
+            prior_action = _normalize_holding_action(prior_holding.get(code))
+            current_action = _normalize_holding_action(review.get("current_action"))
+            if prior_action and current_action and prior_action != current_action:
+                pid = f"HOLDING:{code}"
+                error = _transition_attribution_error(answers.get(pid) or {}, problem_id=pid, qualified_requirement_ids=qualified_by_problem.get(pid, set()))
+                if error:
+                    raise ValueError(error)
+
+
 def project_decision_response(source: dict[str, Any], response: dict[str, Any], work_package: dict[str, Any], *, forensic_historical_replay: bool = False) -> dict[str, Any]:
     """Project actor-only business answers into the canonical Business Decision Source."""
     if forensic_historical_replay:
@@ -536,6 +595,14 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             "why_not_selected": "已选中" if selected else comparison,
             "opportunity_cost_if_selected": str(next_answer.get("cash_opportunity_cost") or comparison),
         })
+
+    _validate_material_state_transitions(
+        answers, work_package,
+        risk_permission=risk_permission,
+        candidate_code=str(main_answer.get("candidate_code") or ""),
+        opportunity_status=main_opportunity_status,
+        position_reviews=position_reviews,
+    )
 
     projected = json.loads(json.dumps(source))
     projected.update({
