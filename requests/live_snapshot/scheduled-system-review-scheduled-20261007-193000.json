@@ -1,0 +1,52 @@
+{
+  "request_id": "scheduled-system-review-scheduled-20261007-193000",
+  "request_type": "STATE_SYNC_ONLY",
+  "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+  "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+  "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+  "requested_at_beijing": "2026-10-07T19:30:00+08:00",
+  "system_review": {
+    "status": "PASS_WITH_NON_BLOCKING_DEGRADATIONS",
+    "review_semantics": "NON_TRADING_DAY_EVENING_HANDOFF_REVIEW",
+    "a_share_latest_formal_market_date": "2026-09-30",
+    "a_share_market_phase": "OFF_SESSION",
+    "market_status_as_of_beijing": "2026-10-07T19:30:00+08:00",
+    "formal_close_snapshot_as_of_beijing": "2026-09-30T15:10:18+08:00",
+    "system_consistency": "PASS",
+    "system_consistency_as_of_beijing": "2026-09-29T14:31:00+08:00",
+    "system_consistency_hard_errors": 0,
+    "system_consistency_warnings": 0,
+    "e2e_status": "READY",
+    "e2e_as_of_beijing": "2026-10-07T17:25:20+08:00",
+    "account_status": "VALID",
+    "account_as_of_beijing": "2026-09-30T17:21:00+08:00",
+    "execution_reconciliation": "NO_ACTIONABLE_MATCH",
+    "user_attribution_requirement": "NONE",
+    "full_day_trade_review_status": "COMPLETED",
+    "full_day_trade_review_as_of_beijing": "2026-09-30T20:33:00+08:00",
+    "weekly_trade_review_status": "COMPLETED",
+    "weekly_trade_review_as_of_beijing": "2026-10-04T20:30:00+08:00",
+    "latest_formal_decision_status": "COMPLETED_NO_NEW_ACTION",
+    "latest_formal_decision_as_of_beijing": "2026-10-07T17:25:20+08:00",
+    "notification_delivery_status": "MORNING_SYSTEM_REVIEW_AND_APAC_NOTIFICATIONS_SENT_AND_RECORDED",
+    "notification_state_as_of_beijing": "2026-10-07T18:34:02+08:00",
+    "overseas_context_status": "PASS_WITH_NON_BLOCKING_SCHEDULE_IDENTITY_AND_PREMARKET_REFERENCE_WARNINGS",
+    "overseas_provider_as_of_beijing": "2026-10-07T18:48:28+08:00",
+    "role_contract_status": "ALIGNED",
+    "formal_request_consumer_status": "READY_NO_BLOCKERS",
+    "formal_decision_state_transition_contract_status": "NATURAL_UNCHANGED_STATE_PATH_PASS",
+    "formal_decision_presentation_status": "OPEN_NON_BLOCKING",
+    "capital_competition_contract_status": "AUDIT_OPEN_NON_BLOCKING",
+    "open_maintenance_items": [
+      "资本竞争的相对排序与持仓机会成本尚未形成可稳定验收的正式合同",
+      "正式判断最终回复的业务语言与证券名称约束尚未完全进入实际对话输出路径",
+      "海外自然定时节点的完整履约身份仍待真实运行确认"
+    ]
+  },
+  "presentation_binding": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "task_id": "ETF系统复核",
+    "task_run_id": "scheduled-20261007-193000",
+    "full_content": "【ETF系统复核】2026-10-07 19:30\n\n【复核时点（北京时间）】\n\n1. 本次系统复核时间：2026-10-07 19:30。2026-10-07为周三，但属于A股国庆节休市期，T0为休市阶段；本次按休市日晚间收口与夜间交接复核执行，不把工作日冒充交易日，也不因休市跳过复核。\n\n2. A股正式行情截至2026-09-30 15:00，收盘快照于15:10取得；账户事实截至2026-09-30 17:21，端到端状态及最近正式判断截至今日17:25。亚太市场事实分别截至今日13:33、14:30、15:15和16:09；美股盘前代理截至18:48，美股现金指数仍使用今日04:00的最近收盘参考。\n\n【总体结论】\n\n系统可用，没有影响休市期间监测或下一交易日合法节点的硬阻断。今日亚太市场整体偏弱，美股盘前科技代理同步回落且半导体更弱；最近正式判断已完成并维持0元新增。三项非阻断维护事项仍待闭环，但不改变账户事实、交易权限或既有正式判断。\n\n【异常与影响】\n\n1. 资本竞争可解释性：现有正式判断能够覆盖持仓、机会ETF、现金和可释放资本，但尚未强制形成可验收的相对排序，也不能稳定展示持仓继续占资的机会成本。这不证明既有0元判断错误，但会影响下一次正式判断的解释完整度。\n\n2. 海外时点与履约：截至18:48，各正式海外对象的行情质量均通过，但运行汇总仍有1条定时履约身份警告；美股现金指数在盘前只能作为最近收盘参考。补充报价未取得可用结果，因此本次美股盘前结论只适用于18:48时点，不代表19:30实时价格。\n\n3. 正式判断展示：最终业务回复的自然语言与证券名称格式约束尚未完全进入实际对话输出，仍可能出现技术词语或名称格式不一致。正式判断事实及其保存不受影响，但用户阅读体验仍需修复。\n\n【需要用户处理】\n\n无需处理。无需补充账户、成交或行情事实，也无需手工重发通知；最近正式判断未形成需要用户执行的新交易动作。\n\n【关键状态】\n\n1. 系统可用性：最近一次完整一致性检查完成于2026-09-29 14:31，结果正常、硬错误0、警告0；最近一次端到端检查完成于今日17:25，状态就绪、阻断0、降级0。本次复核未发现新的系统级阻断。\n\n2. 行情链：外部层确认日经225指数截至14:30下跌约0.92%、韩国综合指数截至15:15下跌约1.98%、台湾加权指数截至13:33基本持平、恒生科技指数截至16:09下跌约0.68%；美股盘前代理截至18:48较最近现金盘收盘分别下跌约0.58%和1.38%。A股内部层继续使用2026-09-30合格收盘快照。ETF与资本层没有新的A股价格或账户变化，不由海外弱势直接生成机会资格、金额或动作。\n\n3. 账户事实：截至2026-09-30 17:21有效；总资产187,565.24元，证券市值185,384.20元，可部署现金2,180.04元，实际持仓8只，待处理账户变化为0。\n\n4. 交易复盘链：今日17:25最近正式判断已完成；8只实际持仓继续持有，新增0元，2,180.04元现金保留，创新药ETF（159992）仍为唯一主候选。该判断以A股休市、没有合法当前执行价格为边界，不由本次系统复核延长或改写。\n\n5. 主动通知：今日08:34系统复核于08:35发送并完整保存；韩国市场开盘异动及亚太收盘总结均已发送并保存，最近一次完成于18:34。未发现新的重复发送或记录缺失。\n\n【本轮新增事实】\n\n1. 亚太收盘整体偏弱：日经225指数和韩国综合指数均收于日内低位附近，韩国跌幅接近2%；台湾市场基本持平，恒生科技指数温和下跌。该结构提高日经ETF（513520）、恒生科技ETF（513180）及跨市场科技风险篮子的下一交易日风险复核优先级，但不生成交易动作。\n\n2. 美股盘前科技回落：纳指100ETF代理和半导体ETF代理截至18:48分别较最近现金盘收盘下跌约0.58%和1.38%，半导体相对更弱。该信号尚未经过美股现金盘确认，也不能绕过A股本地传导和ETF自身反馈形成机会判断。\n\n3. 最近正式判断已闭环：系统在今日17:25完成休市阶段判断，维持8只实际持仓、0元新增和现金保留，没有产生新的成交或账户变化。\n\n【未闭环事项】\n\n1. 资本竞争的相对排序与持仓机会成本尚未形成可稳定验收的正式合同；先复核近期真实判断，再决定是否需要最小修正。\n\n2. 正式判断最终回复的业务语言与证券名称约束仍未完全进入实际对话输出路径；修复范围仅限用户可见表达，不改变判断事实或交易权限。\n\n3. 海外行情事实可用且质量通过，但自然定时节点的完整履约身份仍待真实运行确认；继续沿现有责任方验证，不建立第二条行情或通知链。\n\n【下一阶段】\n\n继续按美股盘前、现金盘和收盘的真实阶段监测，保留2026-09-30 A股收盘与账户事实。下一交易日前重新取得合格的三层市场、账户与风险事实，再复核机会资格、全部持仓和资本安排，不预设交易动作。\n\n【执行状态】\n\n已自动接管\n\n【下一关注点】\n\n1. 美股现金盘开启后，纳斯达克100指数与费城半导体指数是否确认盘前回落，以及半导体相对弱势是否持续。\n\n2. 下一交易日首批A股事实能否确认或拒绝亚太偏弱和美股科技回落，并完成全部持仓、机会ETF、现金与可释放资本的重新竞争。\n\n【置信度】\n\n中高\n\n【最可能出错的地方】\n\n最近一次完整一致性检查完成于2026-09-29 14:31，端到端检查完成于今日17:25，均不是19:30重新执行的全量验收。美股盘前代理仅截至18:48，后续可能在现金盘开市前或开市后反转；各亚太市场收盘时点并不完全同步。A股与账户事实仍停留在2026-09-30，不能代表下一交易日的可执行价格和承接。"
+  }
+}
