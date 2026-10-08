@@ -537,18 +537,9 @@ jobs:
           import json
           import subprocess
           import sys
-          from datetime import datetime
           from pathlib import Path
           parent, source_commit, source_path = sys.argv[1:]
           source = json.loads(Path(source_path).read_text(encoding="utf-8"))
-          source_requested_at = str(
-              source.get("requested_at_beijing")
-              or source.get("request_time_beijing")
-              or ""
-          ).strip()
-          if not source_requested_at:
-              raise SystemExit("formal replay cannot prove original BDS decision boundary")
-          source_time = datetime.fromisoformat(source_requested_at.replace("Z", "+00:00"))
           history = subprocess.run(
               ["git", "rev-list", source_commit],
               capture_output=True, text=True, check=True,
@@ -575,18 +566,17 @@ jobs:
                   continue
               trigger = ((context.get("decision_fact_pack") or {}).get("trigger") or {})
               package = ((context.get("decision_fact_pack") or {}).get("decision_work_package") or {})
-              generated_at = str(context.get("generated_at_beijing") or "").strip()
-              if not generated_at:
-                  continue
-              try:
-                  generated_time = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
-              except ValueError:
-                  continue
+              # The request envelope is written before the request-bound
+              # producer publishes its DWP.  Therefore generated_at may be
+              # later than requested_at.  Commit ancestry and the same parent
+              # identity are the authoritative ordering/provenance boundary:
+              # this DWP must exist before the immutable BDS introduction
+              # commit, but must not be rejected merely because production
+              # processing crossed the request timestamp.
               if (
                   str(trigger.get("request_id") or "").strip() == parent
                   and isinstance(package.get("problem_graph"), list)
                   and package["problem_graph"]
-                  and generated_time <= source_time
               ):
                   print(commit)
                   raise SystemExit(0)
