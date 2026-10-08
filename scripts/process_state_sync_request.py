@@ -2332,7 +2332,21 @@ def record_close_review_closure(account: dict, request: dict, review: dict, even
         "case_id": review.get("case_id") or "", "case_mode": review.get("case_mode") or "CONTINUATION_NO_NEW_CASE",
         "known_net_equity": (review.get("etf_strategy_known_net") or {}).get("known_net_strategy_equity"),
         "risk_rate_pct": (review.get("etf_strategy_known_net") or {}).get("etf_strategy_risk_rate_pct"),
-        "status": "CLOSED", "reviewed_at_beijing": event.get("reviewed_at_beijing", ""),
+        # CLOSED means the canonical closure event was persisted.  Keep the
+        # substantive evidence state separate so degraded discovery/evidence
+        # cannot be mistaken for a complete business review.
+        "status": "CLOSED",
+        "review_evidence_status": (
+            "COMPLETE"
+            if str(review.get("discovery_close_status") or "").upper() == "COMPLETED"
+            else "DEGRADED"
+        ),
+        "business_completion_status": (
+            "COMPLETE"
+            if str(review.get("discovery_close_status") or "").upper() == "COMPLETED"
+            else "DEGRADED"
+        ),
+        "reviewed_at_beijing": event.get("reviewed_at_beijing", ""),
         "request_id": request.get("request_id", ""),
         "note": "Formal post-close review is canonicalized from the request-scoped review payload; no trade or permission is inferred.",
     }
