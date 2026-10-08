@@ -360,14 +360,14 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             candidate_name = str(answer.get("candidate_name") or "").strip()
             if not candidate_code and candidate_name != "现金":
                 raise ValueError("decision response missing MAIN_CANDIDATE.candidate_code for security candidate")
-        if pid.startswith(("DISCOVERY:", "OBSERVATION:")):
+        if pid.startswith(("DISCOVERY:", "OBSERVATION:", "OBSERVATION_REVIEW:")):
             if not _normalize_opportunity_status(answer.get("opportunity_status")):
                 raise ValueError(f"decision response missing registered opportunity_status: {pid}")
             if str(answer.get("disposition") or "").upper() not in {"ADMIT", "REJECT", "RETAIN", "EXIT"}:
                 raise ValueError(f"decision response missing valid opportunity disposition: {pid}")
             if not str(answer.get("reason") or "").strip():
                 raise ValueError(f"decision response missing opportunity reason: {pid}")
-        if pid.startswith("DISCOVERY:") and str(answer.get("disposition") or "").upper() == "ADMIT":
+        if pid.startswith(("DISCOVERY:", "OBSERVATION_REVIEW:")) and str(answer.get("disposition") or "").upper() == "ADMIT":
             for field in ("name", "thscode", "thesis", "falsifier", "next_decision_information", "information_value_reason"):
                 if not str(answer.get(field) or "").strip():
                     raise ValueError(f"decision response ADMIT requires {pid}.{field}")
@@ -493,20 +493,20 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
     observation_management = []
     for item in graph:
         pid = str(item.get("problem_id") or "")
-        if not pid.startswith(("DISCOVERY:", "OBSERVATION:")):
+        if not pid.startswith(("DISCOVERY:", "OBSERVATION:", "OBSERVATION_REVIEW:")):
             continue
         answer = answers[pid]
         code = pid.split(":", 1)[1]
         disposition = str(answer.get("disposition") or "").upper()
         opportunity_reviews.append({
             "security_code": code, "code": code, "security_name": item.get("security") or code,
-            "category": "OBSERVATION_EVALUATION_INPUT" if pid.startswith("DISCOVERY:") else "OBSERVED_ETF",
+            "category": "OBSERVATION_EVALUATION_INPUT" if pid.startswith(("DISCOVERY:", "OBSERVATION_REVIEW:")) else "OBSERVED_ETF",
             "opportunity_status": _normalize_opportunity_status(answer.get("opportunity_status")),
             "conclusion": answer.get("final_action"), "reason": answer.get("reason"),
         })
-        if pid.startswith("DISCOVERY:"):
+        if pid.startswith(("DISCOVERY:", "OBSERVATION_REVIEW:")):
             if disposition not in {"ADMIT", "REJECT"}:
-                raise ValueError(f"Discovery disposition must be ADMIT/REJECT: {pid}")
+                raise ValueError(f"Observation eligibility disposition must be ADMIT/REJECT: {pid}")
             observation_eligibility_reviews.append({"code": code, "disposition": disposition, "reason": answer.get("reason")})
             if disposition == "ADMIT":
                 observation_management.append({
