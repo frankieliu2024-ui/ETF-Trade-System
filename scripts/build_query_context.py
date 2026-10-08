@@ -375,7 +375,8 @@ def _latest_base_stock_replacement_candidates(root: Path, positions: list[dict],
             continue
         code = str(rec.get("code") or "")
         market = str(rec.get("market") or "")
-        if not code or code in held_codes or market not in base_markets:
+        is_a_share_stock = (market == "SH" and code.startswith(("60", "68"))) or (market == "SZ" and code.startswith(("00", "30")))
+        if not code or code in held_codes or market not in base_markets or not is_a_share_stock:
             continue
         out.append({
             "code": code,
