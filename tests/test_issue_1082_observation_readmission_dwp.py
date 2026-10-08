@@ -4,6 +4,7 @@ from pathlib import Path
 
 from scripts import build_query_context as query
 from scripts import process_state_sync_request as sync
+from scripts import business_decision_source as bds
 
 
 class ObservationReadmissionDwpTests(unittest.TestCase):
@@ -97,6 +98,23 @@ class ObservationReadmissionDwpTests(unittest.TestCase):
         }, inputs)
         self.assertEqual(admitted, set())
         self.assertIn("Discovery input 515210 without READY formal quote", error)
+
+    def test_explicit_review_role_is_accepted_by_capital_projection(self):
+        graph = [{
+            "problem_id": "OBSERVATION_REVIEW:561980",
+            "role_contract": "EXPLICIT_OBSERVATION_IDENTITY_REVIEW_V1",
+        }]
+        reviews = [{
+            "code": "561980",
+            "category": "OBSERVATION_EVALUATION_INPUT",
+            "opportunity_status": "无机会",
+            "conclusion": "保留观察身份，不进入当前资本用途",
+            "reason": "观察身份与当前可执行机会资格分离",
+        }]
+        projected = bds._capital_competition_opportunity_reviews(reviews, graph)
+        self.assertEqual(len(projected), 1)
+        self.assertEqual(projected[0]["code"], "561980")
+        self.assertEqual(projected[0]["category"], "OBSERVATION_EVALUATION_INPUT")
 
     def test_explicit_review_participates_in_capital_opportunity_coverage(self):
         required = sync.request_bound_etf_opportunity_reviews({
