@@ -1041,6 +1041,12 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
         if is_manual_completion:
             raise ValueError("manual formal decision_id is already bound to a different request or decision")
         if prior.get("fingerprint") == fingerprint and prior.get("price_source_snapshot") == snapshot_rel:
+            # Preserve semantic idempotency while refreshing the non-semantic
+            # user-visible presentation binding when a replay supplies newer
+            # presentation text for the same immutable decision fact.
+            if prior.get("presentation_binding") != event.get("presentation_binding"):
+                prior["presentation_binding"] = event.get("presentation_binding")
+                atomic_json_write(event_path, prior)
             return True, decision_id
     atomic_json_write(event_path, event)
     return True, decision_id
