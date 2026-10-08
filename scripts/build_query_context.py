@@ -331,7 +331,7 @@ def _latest_formal_decision_baseline(root: Path, request_time: str = "") -> dict
     }
 
 
-def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict], account: dict, observation_inputs: list[dict] | None = None) -> list[dict]:
+def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict], account: dict, observation_inputs: list[dict] | None = None, observation_review_inputs: list[dict] | None = None) -> list[dict]:
     problems = [
         {"problem_id": "RISK_PERMISSION", "decision_object": "risk_permission", "required_business_judgment": "风险许可及新增风险边界"},
         {"problem_id": "MAIN_CANDIDATE", "decision_object": "main_candidate", "required_business_judgment": "主候选及机会状态"},
@@ -350,6 +350,10 @@ def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict],
         code = str(item.get("code") or "")
         if code:
             problems.append({"problem_id": f"OBSERVATION:{code}", "decision_object": code, "security": item.get("name") or code, "thscode": item.get("thscode") or "", "existing_thesis_state": item.get("existing_thesis_state") or {}, "role_contract": "CONTINUOUS_INFORMATION_V1", "required_business_judgment": "先判断持续信息功能是否仍独立、可证伪且不可被更有效对象充分替代，再判断当前机会状态；RETAIN不要求当前接近Trial/Confirm，EXIT必须说明信息功能失效/被替代及退出后的信息连续性成本。观察ETF若当前形成机会可同时作为节点级候选参与资本比较"})
+    for item in observation_review_inputs or []:
+        code = str(item.get("code") or "")
+        if code:
+            problems.append({"problem_id": f"OBSERVATION_REVIEW:{code}", "decision_object": code, "security": item.get("name") or code, "thscode": item.get("thscode") or "", "formal_quote_status": item.get("formal_quote_status") or "", "role_contract": "EXPLICIT_OBSERVATION_IDENTITY_REVIEW_V1", "required_business_judgment": "用户显式要求重新评估已退出Observation的对象。先判断是否重新取得独立、可证伪、跨节点持续信息价值；ADMIT/REJECT只决定Observation身份，不自动产生机会、Trial/Confirm或交易动作。"})
     for item in discovery_inputs:
         code = str(item.get("code") or "")
         if code:
@@ -391,7 +395,7 @@ def _evidence_requirement_plan(problems: list[dict]) -> list[dict]:
             classes = shared_market + holding
         elif pid.startswith("HELD_ETF_ADD:"):
             classes = shared_market + holding + ["HOLDING_ADDITIONAL_CAPITAL", "CASH"]
-        elif pid.startswith(("DISCOVERY:", "OBSERVATION:")):
+        elif pid.startswith(("DISCOVERY:", "OBSERVATION:", "OBSERVATION_REVIEW:")):
             classes = shared_market + opportunity
         elif pid in {"DEPLOYABLE_CASH", "RELEASABLE_CAPITAL", "TRIAL_CONFIRM_CAPACITY",
                      "CONCENTRATION_COMMON_RISK", "NEXT_UNIT_CAPITAL_USE"}:
@@ -703,7 +707,30 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "thscode": item.get("thscode") or "",
             "existing_thesis_state": observation_thesis.get(code) or {},
         })
-    problem_graph = _decision_problem_graph(positions, discovery_inputs, account, observation_inputs)
+    observation_review_inputs = []
+    existing_role_codes = held_etf_codes | observation_codes
+    quote_by_code = {
+        str(item.get("symbol") or item.get("code") or "").upper().replace(".SH", "").replace(".SZ", ""): item
+        for item in (market_quote.get("quotes") or []) if isinstance(item, dict)
+    }
+    seen_review_codes = set()
+    for item in request.get("observation_identity_review_targets") or []:
+        if not isinstance(item, dict):
+            continue
+        code = str(item.get("code") or "").upper().replace(".SH", "").replace(".SZ", "").strip()
+        if len(code) != 6 or not code.isdigit() or code in seen_review_codes or code in existing_role_codes:
+            continue
+        quote = quote_by_code.get(code) or {}
+        quote_status = "READY" if quote.get("latest_price") is not None or quote.get("close") is not None else "FAILED"
+        observation_review_inputs.append({
+            "code": code,
+            "name": item.get("name") or code,
+            "thscode": item.get("thscode") or "",
+            "formal_quote_status": quote_status,
+            "request_bound_explicit_review": True,
+        })
+        seen_review_codes.add(code)
+    problem_graph = _decision_problem_graph(positions, discovery_inputs, account, observation_inputs, observation_review_inputs)
     evidence_plan = _evidence_requirement_plan(problem_graph)
 
     # Project already-produced monitoring facts into the request-bound packet.
@@ -778,6 +805,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "discovery_candidates": discovery_inputs,
             "actual_positions": positions,
             "observation_inputs": observation_inputs,
+            "observation_identity_review_inputs": observation_review_inputs,
             "deployable_cash": account.get("deployable_cash"),
             "required_capital_states": [
                 "all_actual_positions_continue_or_release",
@@ -1360,7 +1388,14 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     # Freshness assurance is the first decision-critical operation.
     build_started = time.monotonic()
     quote_started = time.monotonic()
-    market_quote = build_market_quote_context(root, force_refresh=force_refresh, requested_symbols=requested_symbols, decision_request_time=request_time)
+    explicit_review_symbols = []
+    for item in request_payload.get("observation_identity_review_targets") or []:
+        if isinstance(item, dict):
+            code = str(item.get("code") or "").upper().replace(".SH", "").replace(".SZ", "").strip()
+            if len(code) == 6 and code.isdigit():
+                explicit_review_symbols.append(code)
+    effective_requested_symbols = list(dict.fromkeys([*(requested_symbols or []), *explicit_review_symbols]))
+    market_quote = build_market_quote_context(root, force_refresh=force_refresh, requested_symbols=effective_requested_symbols, decision_request_time=request_time)
     quote_elapsed = round(time.monotonic() - quote_started, 3)
     # Re-read canonical facts so formal reasoning consumes the post-refresh snapshot.
     current = read_current(root)
