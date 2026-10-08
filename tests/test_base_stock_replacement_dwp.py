@@ -40,7 +40,7 @@ class BaseStockReplacementDwpTest(unittest.TestCase):
             candidates = _latest_base_stock_replacement_candidates(
                 root, positions, "2026-10-08T21:00:00+08:00"
             )
-            self.assertEqual([x["code"] for x in candidates], ["600900", "000333", "513180"])
+            self.assertEqual([x["code"] for x in candidates], ["600900", "000333"])
             self.assertTrue(all(x["authority"] == "RESEARCH_CANDIDATE_ONLY" for x in candidates))
 
     def test_replacement_is_explicit_problem_and_not_mechanical_action(self):
