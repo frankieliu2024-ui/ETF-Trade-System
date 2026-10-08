@@ -3402,7 +3402,7 @@ def main() -> int:
             "detail": "Broker screenshot request has no request-scoped account_fact; market success must not be treated as account sync success.",
         }
         print(json.dumps(result, ensure_ascii=False))
-        return 0
+        return 1
     if (
         canonical_ingress_contract["required"]
         and canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_FAILED_EXPLICITLY
