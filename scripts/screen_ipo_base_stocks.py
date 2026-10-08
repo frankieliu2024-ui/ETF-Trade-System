@@ -125,8 +125,34 @@ def main() -> None:
     request_id = req["request_id"]
     start_date = req["start_date"]
     end_date = req["end_date"]
+    stocks = req.get("stocks") or []
+    discovery_meta = None
+    if not stocks and req.get("market"):
+        try:
+            from scripts.discover_ipo_base_stock_candidates import fetch_market_cross_section, bounded_candidates
+        except ModuleNotFoundError:
+            from discover_ipo_base_stock_candidates import fetch_market_cross_section, bounded_candidates
+        market = str(req["market"]).upper()
+        universe, source_meta = fetch_market_cross_section(market)
+        candidates = bounded_candidates(
+            universe,
+            {str(x) for x in (req.get("held_codes") or [])},
+            int(req.get("max_candidates") or 12),
+        )
+        stocks = [
+            {"code": x["code"], "name": x.get("name", ""), "role": "discovered_replacement_candidate"}
+            for x in candidates
+        ]
+        discovery_meta = {
+            "authority": "RESEARCH_CANDIDATE_ONLY",
+            "market": market,
+            "universe_count": len(universe),
+            "candidate_count": len(candidates),
+            "source": source_meta,
+            "guardrail": "discovery does not grant Observation/Trial/Confirm/buy authority",
+        }
     records: list[dict] = []
-    for item in req["stocks"]:
+    for item in stocks:
         code = str(item["code"])
         frame, request_ids = fetch_history(code, start_date, end_date)
         rec = {
@@ -154,7 +180,9 @@ def main() -> None:
         "processed_at": datetime.now(SHANGHAI).isoformat(),
         "start_date": start_date,
         "end_date": end_date,
-        "ranking_method": "45% low annualized volatility + 35% low absolute max drawdown + 15% liquidity + 5% period return; ranked separately by exchange",
+        "ranking_method": "45% low annualized volatility + 35% low absolute max drawdown + 15% liquidity + 5% period return; ranked separately by exchange; research evidence only",
+        "discovery": discovery_meta,
+        "authority": "RESEARCH_CANDIDATE_ONLY" if discovery_meta else "CALLER_SUPPLIED_RESEARCH_SET",
         "records": records,
     }
     OUT_DIR.mkdir(parents=True, exist_ok=True)
