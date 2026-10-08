@@ -847,5 +847,19 @@ class RequestBoundOpportunityIdentityTests(unittest.TestCase):
             state_sync.request_bound_etf_opportunity_reviews(request)
 
 
+    def test_repeated_discovery_role_after_valid_overlap_remains_invalid(self):
+        request = {
+            "decision_work_package": {
+                "problem_graph": [
+                    {"problem_id": "OBSERVATION:515220"},
+                    {"problem_id": "DISCOVERY:515220"},
+                    {"problem_id": "DISCOVERY:515220"},
+                ]
+            }
+        }
+        with self.assertRaisesRegex(ValueError, "duplicate ETF opportunity identity"):
+            state_sync.request_bound_etf_opportunity_reviews(request)
+
+
 if __name__ == "__main__":
     unittest.main()
