@@ -125,11 +125,6 @@ class UserVisiblePresentationContractTests(unittest.TestCase):
             },
         )
 
-
-if __name__ == "__main__":
-    unittest.main()
-
-
     def test_formal_decision_binding_fingerprints_checked_text(self):
         binding = build_formal_decision_presentation_binding(
             "【业务结论】保持现金。",
@@ -149,3 +144,7 @@ if __name__ == "__main__":
         )
         self.assertTrue(binding["business_reply_eligible"])
         self.assertFalse(binding["presentation_valid"])
+
+
+if __name__ == "__main__":
+    unittest.main()
