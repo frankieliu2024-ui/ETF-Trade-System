@@ -2271,9 +2271,29 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
 
 
 def record_close_review_closure(account: dict, request: dict, review: dict, event: dict) -> None:
-    """Persist the completed review chain without creating a second review store."""
+    """Persist full-day closure only after legal close evidence and time boundary."""
     market_date = str(event.get("market_date") or "")
     if not market_date:
+        return
+    review_scope = str(review.get("review_scope") or "").strip().upper()
+    data_time = review.get("data_time") if isinstance(review.get("data_time"), dict) else {}
+    close_verified = (
+        data_time.get("close_data_status") == "VERIFIED_SESSION_CLOSE"
+        and bool(str(data_time.get("close_snapshot") or "").strip())
+    )
+    reviewed_at = parse_time(
+        review.get("reviewed_at_beijing")
+        or event.get("reviewed_at_beijing")
+        or event.get("updated_at_beijing")
+    )
+    legal_close_boundary = parse_time(f"{market_date}T15:00:00+08:00")
+    if (
+        review_scope != "FULL_DAY"
+        or not close_verified
+        or reviewed_at is None
+        or legal_close_boundary is None
+        or reviewed_at < legal_close_boundary
+    ):
         return
     closure_path = ROOT / "data" / "state" / f"close_review_closure_{market_date}.json"
     snapshot = review.get("data_time") or {}
