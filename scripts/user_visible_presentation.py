@@ -140,3 +140,43 @@ def validate_formal_decision_reply_nonblocking(
         "presentation_valid": True,
         "presentation_error": "",
     }
+
+
+
+def build_formal_decision_presentation_binding(
+    content: str,
+    *,
+    request_id: str,
+    decision_id: str,
+    canonical_closure_confirmed: bool = False,
+    technical_audit_mode: bool = False,
+    security_map: dict[str, str] | None = None,
+    root: Path | None = None,
+) -> dict[str, object]:
+    """Return a deterministic binding for the exact Formal Decision reply text.
+
+    The business decision remains independently eligible; this binding only
+    records whether the proposed user-visible text satisfies the presentation
+    contract and fingerprints the exact text that was checked.
+    """
+    safe_request_id = str(request_id or "").strip()
+    safe_decision_id = str(decision_id or "").strip()
+    if not safe_request_id or not safe_decision_id:
+        raise ValueError("formal decision presentation binding requires request_id and decision_id")
+    result = validate_formal_decision_reply_nonblocking(
+        content,
+        canonical_closure_confirmed=canonical_closure_confirmed,
+        technical_audit_mode=technical_audit_mode,
+        security_map=security_map,
+        root=root,
+    )
+    import hashlib
+    text = str(content or "").strip()
+    result.update({
+        "schema_version": "formal-decision-presentation-binding-v1",
+        "request_id": safe_request_id,
+        "decision_id": safe_decision_id,
+        "content_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        "technical_audit_mode": bool(technical_audit_mode),
+    })
+    return result

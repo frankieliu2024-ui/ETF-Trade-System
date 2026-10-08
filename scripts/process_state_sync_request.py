@@ -41,6 +41,10 @@ except ModuleNotFoundError:
         reset_formal_replay_forensic_trace,
         validate_source,
     )
+try:
+    from user_visible_presentation import build_formal_decision_presentation_binding
+except ModuleNotFoundError:
+    from scripts.user_visible_presentation import build_formal_decision_presentation_binding
 from formal_file_mutation_gateway import (
     append_managed_line,
     replace_formal_block,
@@ -1017,7 +1021,7 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
             if external_evidence and external_evidence.get("execution_price_eligibility") != "EXECUTION_PRICE_ELIGIBLE"
             else ""
         ),
-        "source_type": request.get("request_type") if str(request.get("request_type") or "").upper() == BUSINESS_DECISION_SOURCE else "", "source_fingerprint": request.get("_source_fingerprint") or "", "reply_ready": bool(request.get("_source_fingerprint")), "recorded_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
+        "source_type": request.get("request_type") if str(request.get("request_type") or "").upper() == BUSINESS_DECISION_SOURCE else "", "source_fingerprint": request.get("_source_fingerprint") or "", "reply_ready": bool(request.get("_source_fingerprint")), "presentation_binding": _formal_decision_presentation_binding(request, request_id, decision_id), "recorded_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
     event_path = ROOT / "events/decisions" / f"{decision_id}.json"
     event_path.parent.mkdir(parents=True, exist_ok=True)
     if event_path.exists():
@@ -1040,6 +1044,20 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
             return True, decision_id
     atomic_json_write(event_path, event)
     return True, decision_id
+
+
+def _formal_decision_presentation_binding(request: dict, request_id: str, decision_id: str) -> dict:
+    """Validate and fingerprint supplied Formal Decision user-facing text."""
+    supplied = request.get("presentation_content")
+    if supplied in (None, ""):
+        return {"status": "NOT_SUPPLIED", "presentation_valid": False, "business_reply_eligible": bool(request.get("_source_fingerprint"))}
+    return build_formal_decision_presentation_binding(
+        str(supplied),
+        request_id=request_id,
+        decision_id=decision_id,
+        canonical_closure_confirmed=bool(request.get("canonical_closure_confirmed")),
+        technical_audit_mode=bool(request.get("technical_audit_mode")),
+    )
 
 
 def validate_formal_decision_contract(decision: dict) -> str:
