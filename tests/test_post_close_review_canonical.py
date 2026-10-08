@@ -229,7 +229,6 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertEqual(sync.record_post_close_review(account, full_day), (True, False))
         self.assertEqual(sync.record_post_close_review(account, full_day), (True, True))
         event = json.loads((self.root / "events/reviews/2026-08-31.json").read_text(encoding="utf-8"))
-        closure = json.loads((self.root / "data/state/close_review_closure_2026-08-31.json").read_text(encoding="utf-8"))
         self.assertEqual(event["event_type"], "FORMAL_POST_CLOSE_REVIEW")
         self.assertEqual(event["review"]["data_time"]["close_snapshot"], "data/market/snapshots/2026-08-31_150110.json")
         self.assertEqual(closure["status"], "CLOSED")
