@@ -38,7 +38,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.tmp.cleanup()
 
     def request(self, when="2026-08-31T15:20:00+08:00"):
-        return {"request_id": "review-20260831", "interaction_scenario": "POST_CLOSE_REVIEW", "requested_at_beijing": when, "formal_review": {"market_date": "2026-08-31", "reviewed_at_beijing": when, "case_id": "CASE-20260827-01", "case_mode": "CONTINUATION_NO_NEW_CASE", "data_time": {"close_snapshot": "data/market/snapshots/2026-08-31_150110.json"}, "archive_entry": "2026-08-31｜正式收盘事实归档。", "experience_entry": "2026-08-31｜延续既有Trial假设，不新增CASE。"}}
+        return {"request_id": "review-20260831", "interaction_scenario": "POST_CLOSE_REVIEW", "requested_at_beijing": when, "formal_review": {"market_date": "2026-08-31", "reviewed_at_beijing": when, "case_id": "CASE-20260827-01", "case_mode": "CONTINUATION_NO_NEW_CASE", "review_scope": "FULL_DAY", "data_time": {"close_snapshot": "data/market/snapshots/2026-08-31_150110.json"}, "archive_entry": "2026-08-31｜正式收盘事实归档。", "experience_entry": "2026-08-31｜延续既有Trial假设，不新增CASE。"}}
 
     def test_trade_review_normalizes_binding_hash_for_notification_projection(self):
         request = self.request()
