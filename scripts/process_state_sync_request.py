@@ -3415,7 +3415,7 @@ def main() -> int:
             "canonical_ingress_failure_reason": canonical_ingress_contract["reason"],
             "request": str(req_path.relative_to(ROOT)).replace("\\", "/"),
         }, ensure_ascii=False, indent=2, sort_keys=True))
-        return 0
+        return 1
 
     if isinstance(supplied_account, dict):
         supplied_account = merge_account_fact(prior_account, supplied_account)
