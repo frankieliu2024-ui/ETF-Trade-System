@@ -276,7 +276,7 @@ def _capital_competition_opportunity_reviews(reviews: list[dict[str, Any]], grap
         if problem_id.startswith("OBSERVATION:"):
             code = problem_id.split(":", 1)[1].strip()
             category = "OBSERVED_ETF"
-        elif problem_id.startswith("DISCOVERY:"):
+        elif problem_id.startswith(("DISCOVERY:", "OBSERVATION_REVIEW:")):
             code = problem_id.split(":", 1)[1].strip()
             category = "OBSERVATION_EVALUATION_INPUT"
         else:
