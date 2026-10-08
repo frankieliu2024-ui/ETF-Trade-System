@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import argparse
-import hashlib\nimport subprocess
+import hashlib
+import subprocess
 import json
 import os
 import re
