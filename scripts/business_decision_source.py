@@ -410,7 +410,15 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
     # This reuses the existing BDS/DWP contract; it does not grant sell or buy
     # authority and does not choose the holding mechanically.
     has_holding = any(pid.startswith("HOLDING:") for pid in required_ids)
-    has_opportunity = any(pid.startswith(("DISCOVERY:", "OBSERVATION:", "OBSERVATION_REVIEW:")) for pid in required_ids)
+    opportunity_ids = [
+        pid for pid in required_ids
+        if pid.startswith(("DISCOVERY:", "OBSERVATION:", "OBSERVATION_REVIEW:"))
+    ]
+    active_opportunity_statuses = {"观察机会", "Trial机会", "Confirm机会", "TRIAL", "CONFIRM", "OPPORTUNITY"}
+    has_opportunity = any(
+        str((answers.get(pid) or {}).get("opportunity_status") or "").strip() in active_opportunity_statuses
+        for pid in opportunity_ids
+    )
     cash_limited_zero = (
         new_amount == 0
         and has_holding
