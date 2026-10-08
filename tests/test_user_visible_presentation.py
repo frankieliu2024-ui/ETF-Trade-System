@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 
 from scripts.user_visible_presentation import (
+    build_formal_decision_presentation_binding,
     validate_formal_decision_reply_nonblocking,
     validate_user_visible_content,
 )
@@ -127,3 +128,24 @@ class UserVisiblePresentationContractTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+    def test_formal_decision_binding_fingerprints_checked_text(self):
+        binding = build_formal_decision_presentation_binding(
+            "【业务结论】保持现金。",
+            request_id="formal-test-request",
+            decision_id="formal-test-decision",
+        )
+        self.assertTrue(binding["presentation_valid"])
+        self.assertEqual(binding["request_id"], "formal-test-request")
+        self.assertEqual(binding["decision_id"], "formal-test-decision")
+        self.assertEqual(len(binding["content_sha256"]), 64)
+
+    def test_formal_decision_binding_preserves_business_eligibility_on_noise(self):
+        binding = build_formal_decision_presentation_binding(
+            "READY：request_id=internal",
+            request_id="formal-test-request",
+            decision_id="formal-test-decision",
+        )
+        self.assertTrue(binding["business_reply_eligible"])
+        self.assertFalse(binding["presentation_valid"])
