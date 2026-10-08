@@ -352,6 +352,88 @@ class BusinessE2EClosureContractTests(unittest.TestCase):
         self.assertEqual(out["observation_eligibility_inputs"][0]["code"], "588080")
         self.assertEqual(out["formal_discovery_ingress_status"], "ELIGIBILITY_ONLY")
 
+    def test_historical_replay_discovery_eligibility_uses_request_bound_context(self) -> None:
+        root = Path(tempfile.mkdtemp())
+        (root / "data/state").mkdir(parents=True)
+        current_context = {
+            "market_date": "2026-10-08",
+            "formal_etf_discovery": {"candidates": [
+                {"code": "515210", "formal_quote_status": "READY"},
+            ]},
+        }
+        (root / "data/state/query_context.json").write_text(
+            json.dumps(current_context), encoding="utf-8"
+        )
+        historical_context = {
+            "market_date": "2026-10-08",
+            "formal_etf_discovery": {"candidates": [
+                {"code": "513910", "formal_quote_status": "UNAVAILABLE"},
+            ]},
+        }
+        request = {
+            "_historical_replay": True,
+            "_historical_query_context": historical_context,
+            "decision_work_package": {
+                "problem_graph": [{"problem_id": "DISCOVERY:513910"}],
+            },
+        }
+
+        inputs = state_sync.request_bound_discovery_eligibility_inputs(
+            root, "2026-10-08", request
+        )
+        self.assertEqual(set(inputs), {"513910"})
+        admitted, error = state_sync.validate_observation_eligibility_reviews(
+            {
+                "observation_eligibility_reviews": [
+                    {"code": "513910", "disposition": "REJECT", "reason": "未获得同节点观察资格"},
+                ],
+            },
+            inputs,
+        )
+        self.assertEqual(error, "")
+        self.assertEqual(admitted, set())
+        self.assertEqual(
+            set(state_sync.request_bound_discovery_eligibility_inputs(
+                root, "2026-10-08", {}
+            )),
+            {"515210"},
+        )
+
+    def test_historical_replay_discovery_eligibility_fails_closed_without_matching_provenance(self) -> None:
+        root = Path(tempfile.mkdtemp())
+        (root / "data/state").mkdir(parents=True)
+        (root / "data/state/query_context.json").write_text(
+            json.dumps({
+                "market_date": "2026-10-08",
+                "formal_etf_discovery": {"candidates": [
+                    {"code": "515210", "formal_quote_status": "READY"},
+                ]},
+            }),
+            encoding="utf-8",
+        )
+        request = {
+            "_historical_replay": True,
+            "_historical_query_context": {
+                "market_date": "2026-10-08",
+                "formal_etf_discovery": {"candidates": [
+                    {"code": "515210", "formal_quote_status": "READY"},
+                ]},
+            },
+            "decision_work_package": {
+                "problem_graph": [{"problem_id": "DISCOVERY:513910"}],
+            },
+        }
+        with self.assertRaisesRegex(ValueError, "do not match request-bound DWP"):
+            state_sync.request_bound_discovery_eligibility_inputs(
+                root, "2026-10-08", request
+            )
+
+        request.pop("_historical_query_context")
+        with self.assertRaisesRegex(ValueError, "requires request-bound Discovery context"):
+            state_sync.request_bound_discovery_eligibility_inputs(
+                root, "2026-10-08", request
+            )
+
     def test_eligibility_admit_requires_ready_quote_and_then_becomes_legal_observation(self) -> None:
         inputs = {
             "588080": {"code": "588080", "formal_quote_status": "READY"},
