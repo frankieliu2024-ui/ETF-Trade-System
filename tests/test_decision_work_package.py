@@ -324,5 +324,132 @@ class DecisionWorkPackageTests(unittest.TestCase):
             project_decision_response(source, {"answers":{"MAIN_CANDIDATE":answer}}, {"problem_graph":graph,"evidence_requirements":[]})
 
 
+    def test_observation_discovery_overlap_counts_once_in_capital_competition(self):
+        source = {
+            "request_type": "BUSINESS_DECISION_SOURCE",
+            "request_id": "r-overlap",
+            "parent_request_id": "p-overlap",
+            "decision_id": "d-overlap",
+            "consumed_snapshot": "snap-overlap",
+        }
+        thesis = {
+            "name": "煤炭ETF",
+            "thscode": "515220.SH",
+            "thesis": "资源内部结构观察",
+            "falsifier": "相对优势持续消失则退出",
+            "next_decision_information": "下一节点复核承接",
+            "information_value_reason": "持续提供资源内部横向比较",
+        }
+        graph = [
+            {"problem_id": "RISK_PERMISSION"},
+            {"problem_id": "MAIN_CANDIDATE"},
+            {"problem_id": "NEXT_UNIT_CAPITAL_USE"},
+            {
+                "problem_id": "OBSERVATION:515220",
+                "security": "煤炭ETF",
+                "role_contract": "CONTINUOUS_INFORMATION_V1",
+                "existing_thesis_state": thesis,
+            },
+            {"problem_id": "DISCOVERY:515220", "security": "煤炭ETF"},
+        ]
+        requirements = []
+        for pid in ("RISK_PERMISSION", "MAIN_CANDIDATE", "NEXT_UNIT_CAPITAL_USE"):
+            requirements.extend([
+                {
+                    "requirement_id": pid + ":A_SHARE_STYLE_FEEDBACK",
+                    "target_problem_id": pid,
+                    "evidence_class": "A_SHARE_STYLE_FEEDBACK",
+                    "required": True,
+                    "satisfaction": "SATISFIED",
+                },
+                {
+                    "requirement_id": pid + ":ETF_RELATIVE_STRENGTH",
+                    "target_problem_id": pid,
+                    "evidence_class": "ETF_RELATIVE_STRENGTH",
+                    "required": True,
+                    "satisfaction": "SATISFIED",
+                },
+            ])
+        answers = {
+            item["problem_id"]: {
+                "final_action": "review",
+                "capital_comparison": "compare against cash",
+                "next_change_condition": "reassess on next valid node",
+                "evidence_decision_impact": ["ALL_REQUIRED"],
+            }
+            for item in graph
+        }
+        answers["RISK_PERMISSION"]["final_action"] = "允许Trial"
+        answers["MAIN_CANDIDATE"].update({
+            "final_action": "515220观察机会",
+            "candidate_code": "515220",
+            "candidate_name": "煤炭ETF",
+            "opportunity_status": "观察机会",
+        })
+        answers["NEXT_UNIT_CAPITAL_USE"].update({
+            "final_action": "保留现金",
+            "new_amount_yuan": 0,
+            "post_action_deployable_cash": 1000,
+            "future_opportunity_capacity": "保留",
+            "cash_opportunity_cost": "可能错过机会",
+            "alternative_capital_use_review": "比较观察角色和发现角色",
+            "concentration_account_structure_effect": "不新增",
+            "selected_state_reason": "现金胜出",
+            "zero_amount_decisive_reason_if_zero": "没有候选达到Trial条件",
+            "compared_capital_states": [{
+                "state_name": "现金",
+                "capital_action": "保留",
+                "remaining_deployable_cash": 1000,
+                "why_not_selected": "已选中",
+                "opportunity_cost_if_selected": "可能错过机会",
+            }],
+        })
+        answers["OBSERVATION:515220"].update({
+            "final_action": "RETAIN",
+            "disposition": "RETAIN",
+            "opportunity_status": "观察机会",
+            "reason": "持续观察角色保留；仍是观察机会。",
+        })
+        answers["DISCOVERY:515220"].update({
+            "final_action": "Discovery评估完成",
+            "disposition": "REJECT",
+            "opportunity_status": "观察机会",
+            "reason": "本节点Discovery角色不重复建身份；仍是观察机会。",
+        })
+
+        projected = project_decision_response(
+            source,
+            {"answers": answers},
+            {
+                "problem_graph": graph,
+                "evidence_requirements": requirements,
+                "business_role_reconciliation_contract": "V1",
+            },
+        )
+
+        self.assertEqual(len(projected["etf_opportunity_reviews"]), 2)
+        capital_reviews = projected["capital_competition"]["etf_opportunity_reviews"]
+        self.assertEqual(len(capital_reviews), 1)
+        self.assertEqual(capital_reviews[0]["code"], "515220")
+        self.assertEqual(capital_reviews[0]["category"], "OBSERVED_ETF")
+        self.assertEqual(capital_reviews[0]["opportunity_status"], "观察机会")
+        self.assertIn("持续观察角色保留", capital_reviews[0]["reason"])
+        self.assertIn("Discovery角色不重复建身份", capital_reviews[0]["reason"])
+        self.assertEqual(len(projected["business_role_reconciliation"]["机会ETF"]), 1)
+
+    def test_overlap_with_conflicting_role_status_fails_closed(self):
+        graph = [
+            {"problem_id": "OBSERVATION:515220", "security": "煤炭ETF"},
+            {"problem_id": "DISCOVERY:515220", "security": "煤炭ETF"},
+        ]
+        reviews = [
+            {"code": "515220", "category": "OBSERVED_ETF", "opportunity_status": "观察机会", "conclusion": "retain", "reason": "observation"},
+            {"code": "515220", "category": "OBSERVATION_EVALUATION_INPUT", "opportunity_status": "无机会", "conclusion": "reject", "reason": "discovery"},
+        ]
+        from scripts.business_decision_source import _capital_competition_opportunity_reviews
+        with self.assertRaisesRegex(ValueError, "conflicting opportunity status across roles"):
+            _capital_competition_opportunity_reviews(reviews, graph)
+
+
 if __name__ == "__main__":
     unittest.main()
