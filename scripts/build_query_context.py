@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
+import hashlib\nimport subprocess
 import json
 import os
 import re
@@ -162,6 +162,38 @@ def account_gate_status(current: dict, account: dict, policy: dict) -> dict:
     usable = raw_valid and (same_day or not same_day_required)
     reason = "OK" if usable else ("ACCOUNT_NOT_VALID" if not raw_valid else "ACCOUNT_FACT_NOT_CURRENT_MARKET_DATE")
     return {"raw_status": account.get("status", "MISSING"), "updated_at": account.get("updated_at", ""), "updated_market_date": updated_market_date, "current_market_date": market_date, "same_market_date_required": same_day_required, "can_use_current_account_fact": usable, "requires_user_broker_screenshot": not usable, "reason": reason, "rule": "正式盘中/盘后决策使用的账户、持仓、现金和成交事实必须符合当前账户事实有效性机制；已确认账户变化后必须刷新，未确认变化时按EVENT_DRIVEN_CARRY_FORWARD处理。"}
+
+
+def consistency_projection_status(root: Path = ROOT) -> dict:
+    """Classify the persisted report as current evidence or last-known history.
+
+    A persisted PASS/WARNING may only represent current consistency when its
+    checked commit is the current checkout.  A stale FAIL keeps its severity,
+    but is labelled last-known rather than silently promoted to current proof.
+    """
+    report = read_json(root / CANONICAL_FILES["system_consistency"], {})
+    status = str(report.get("status") or "MISSING").upper()
+    checked = str((report.get("commit_audit") or {}).get("checked_commit") or "")
+    try:
+        head = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=root, text=True, stderr=subprocess.DEVNULL
+        ).strip()
+    except (OSError, subprocess.CalledProcessError):
+        head = ""
+    identity_matches = bool(checked and head and checked == head)
+    current_evidence = identity_matches and status in {"PASS", "WARNING", "FAIL"}
+    return {
+        "path": CANONICAL_FILES["system_consistency"],
+        "reported_status": status,
+        "checked_commit": checked,
+        "current_head": head,
+        "identity_matches_current_head": identity_matches,
+        "evidence_semantic": "CURRENT_ACCEPTANCE_PROJECTION" if current_evidence else "LAST_KNOWN_PROJECTION",
+        "can_prove_current_consistency": current_evidence,
+        "effective_current_status": status if current_evidence else "UNKNOWN",
+        "last_known_failure_preserved": status == "FAIL",
+        "rule": "stale PASS/WARNING cannot prove current consistency; stale FAIL remains visible as last-known failure without masquerading as current acceptance",
+    }
 
 
 def build_read_plan(current: dict, account: dict, policy: dict, freshness: dict) -> dict:
