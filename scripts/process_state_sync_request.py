@@ -3356,6 +3356,8 @@ def main() -> int:
         source_payload.setdefault("data_as_of_beijing", query_context.get("generated_at_beijing") or source_payload.get("requested_at_beijing"))
         source_payload["request_type"] = BUSINESS_DECISION_SOURCE
         decision_response = request.get("decision_response")
+        if isinstance(decision_response, dict) and "presentation_content" in decision_response:
+            request["presentation_content"] = decision_response.get("presentation_content")
         if isinstance(supplied_decision, dict) and supplied_decision:
             # Historical durable Business Decision Source replay: preserve the
             # already-canonical immutable Source instead of re-projecting it
