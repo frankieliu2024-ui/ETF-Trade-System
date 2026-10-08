@@ -263,7 +263,9 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertNotIn("close_snapshot", event["review"]["data_time"])
         self.assertEqual(event["review"]["data_time"]["close_data_status"], "UNVERIFIED")
         self.assertIn("VERIFIED_SESSION_CLOSE unavailable", event["review"]["data_time"]["close_data_gap"])
-        self.assertFalse((self.root / "data/state/close_review_closure_2026-08-31.json").exists())
+        closure = json.loads((self.root / "data/state/close_review_closure_2026-08-31.json").read_text(encoding="utf-8"))
+        self.assertEqual(closure["review_evidence_status"], "DEGRADED")
+        self.assertEqual(closure["business_completion_status"], "DEGRADED")
 
     def test_review_completes_when_no_close_snapshot_exists(self):
         account = {"status": "VALID", "updated_at": "2026-08-31T16:18:00+08:00"}
@@ -276,7 +278,9 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertEqual(event["event_type"], "FORMAL_POST_CLOSE_REVIEW")
         self.assertEqual(event["review"]["data_time"]["close_data_status"], "UNVERIFIED")
         self.assertNotIn("close_snapshot", event["review"]["data_time"])
-        self.assertFalse((self.root / "data/state/close_review_closure_2026-08-31.json").exists())
+        closure = json.loads((self.root / "data/state/close_review_closure_2026-08-31.json").read_text(encoding="utf-8"))
+        self.assertEqual(closure["review_evidence_status"], "DEGRADED")
+        self.assertEqual(closure["business_completion_status"], "DEGRADED")
 
     def test_mismatched_snapshot_is_rejected_when_verified_close_exists(self):
         account = {"status": "VALID", "updated_at": "2026-08-31T12:00:00+08:00"}
