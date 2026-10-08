@@ -69,7 +69,7 @@ class ObservationReadmissionDwpTests(unittest.TestCase):
         self.assertEqual(error, "")
         self.assertEqual(admitted, {"561980"})
 
-    def test_admit_fails_closed_without_ready_formal_quote(self):
+    def test_explicit_identity_admit_allows_failed_executable_quote(self):
         request = {
             "decision_work_package": {
                 "problem_graph": [{
@@ -82,11 +82,21 @@ class ObservationReadmissionDwpTests(unittest.TestCase):
         inputs = sync.request_bound_observation_identity_review_inputs(request)
         admitted, error = sync.validate_observation_eligibility_reviews({
             "observation_eligibility_reviews": [
-                {"code": "561980", "disposition": "ADMIT", "reason": "test"}
+                {"code": "561980", "disposition": "ADMIT", "reason": "independent falsifiable cross-node information value"}
+            ]
+        }, inputs, identity_review_codes={"561980"})
+        self.assertEqual(error, "")
+        self.assertEqual(admitted, {"561980"})
+
+    def test_discovery_admit_still_fails_closed_without_ready_formal_quote(self):
+        inputs = {"515210": {"code": "515210", "formal_quote_status": "FAILED"}}
+        admitted, error = sync.validate_observation_eligibility_reviews({
+            "observation_eligibility_reviews": [
+                {"code": "515210", "disposition": "ADMIT", "reason": "same-node Discovery candidate"}
             ]
         }, inputs)
         self.assertEqual(admitted, set())
-        self.assertIn("without READY formal quote", error)
+        self.assertIn("Discovery input 515210 without READY formal quote", error)
 
     def test_explicit_review_participates_in_capital_opportunity_coverage(self):
         required = sync.request_bound_etf_opportunity_reviews({
