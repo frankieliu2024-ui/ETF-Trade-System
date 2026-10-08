@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 51382)
+Total output lines: 3642
+
 from __future__ import annotations
 
 import argparse
@@ -1818,139 +1821,7 @@ def sync_experience_case_mapping_index(review: dict) -> None:
         if not line.startswith("|2026-") or "TRADE_EVENT:" not in line:
             continue
         for event_id, case_id in mappings:
-            if f"TRADE_EVENT:{event_id}" not in line:
-                continue
-            parts = line.strip().strip("|").split("|")
-            if len(parts) < 10:
-                continue
-            marker = f"<!-- TRADE_EVENT:{event_id} -->"
-            # Rebuild the matched row from its table fields and append one
-            # canonical marker. This repairs historical duplicate markers while
-            # keeping the transaction identity and unrelated rows unchanged.
-            without_markers = line.replace(marker, "").strip()
-            if without_markers.startswith("|"):
-                without_markers = without_markers[1:]
-            normalized_parts = without_markers.split("|")
-            if len(normalized_parts) < 10:
-                continue
-            remark = normalized_parts[9].strip()
-            if case_id not in remark:
-                normalized_parts[9] = f"{case_id}；{remark}" if remark else case_id
-            normalized_line = "|" + "|".join(normalized_parts) + f" {marker}"
-            if normalized_line != line:
-                lines[index] = normalized_line
-                changed = True
-            break
-    if changed:
-        newline = "\n".join(lines) + ("\n" if text.endswith("\n") else "")
-        write_formal_text_if_changed(ROOT, EXPERIENCE.name, newline)
-
-
-
-def _purge_case_mapping_rows() -> None:
-    """Remove legacy routing rows from the human CASE managed block."""
-    text = EXPERIENCE.read_text(encoding="utf-8")
-    start, end = text.find(CASE_DETAILS_START), text.find(CASE_DETAILS_END)
-    if start < 0 or end < start:
-        return
-    body_start = start + len(CASE_DETAILS_START)
-    block = text[body_start:end]
-    kept = []
-    for line in block.splitlines():
-        stripped = line.strip()
-        if (
-            re.match(r"^\\d{8}[_-]", stripped)
-            or stripped.startswith("2026-") and "｜" in stripped
-            or "TRADE_EVENT:" in stripped
-            or "已归入CASE" in stripped
-            or "待复盘CASE" in stripped
-        ):
-            continue
-        kept.append(line)
-    cleaned = "\n".join(kept).strip("\n")
-    updated = text[:body_start] + "\n" + cleaned + "\n" + text[end:]
-    write_formal_text_if_changed(ROOT, EXPERIENCE.name, updated)
-
-
-
-_CASE_TEMPLATE_FIELDS = (
-    "背景／生命周期",
-    "关键证据",
-    "执行",
-    "结果",
-    "判断质量",
-    "执行质量",
-    "风险收益质量",
-    "资本使用效率",
-    "最终结果／反事实",
-    "经验",
-)
-
-
-def _case_detail_projection_entry(case_entry: str, case_id: str) -> str:
-    """Build the shared human CASE template without manufacturing absent facts."""
-    text = EXPERIENCE.read_text(encoding="utf-8")
-    case_match = re.search(
-        rf"^### (2\.\d+) {re.escape(case_id)}[:：]",
-        text,
-        re.MULTILINE,
-    )
-    if case_match:
-        ordinal = int(case_match.group(1).split(".")[1])
-    else:
-        ordinals = [
-            int(value)
-            for value in re.findall(r"^### 2\.(\d+) CASE-", text, re.MULTILINE)
-        ]
-        ordinal = max(ordinals, default=2) + 1
-    body = case_entry.strip()
-    body_lines = body.splitlines()
-    # CASE_MAPPING rows are audit metadata, never CASE_REVIEW prose.
-    body_lines = [
-        line for line in body_lines
-        if not re.match(r"^\d{8}[_-].*｜- 已归入CASE-", line.strip())
-    ]
-    body = "\n".join(body_lines).strip()
-    body = re.sub(r"^### (?:2\.\d+ )?", "", body, count=1)
-    if body.startswith(case_id):
-        body = re.sub(rf"^{re.escape(case_id)}[：:]?\s*", "", body, count=1)
-    title = body.splitlines()[0].split("｜", 1)[0].strip() if body else "CASE复盘"
-    title = title or "CASE复盘"
-
-    fields: dict[str, list[str]] = {name: [] for name in _CASE_TEMPLATE_FIELDS}
-    current_field = ""
-    unstructured: list[str] = []
-    for line in body.splitlines():
-        match = re.match(r"^-\s*(背景／生命周期|关键证据|执行|结果|判断质量|执行质量|风险收益质量|资本使用效率|最终结果／反事实|经验)：\s*(.*)$", line.strip())
-        if match:
-            current_field = match.group(1)
-            if match.group(2):
-                fields[current_field].append(match.group(2))
-        elif current_field and line.startswith(("  ", "\t")):
-            fields[current_field].append(line.strip())
-        elif line.strip():
-            unstructured.append(line.strip())
-    if unstructured and not any(fields.values()):
-        fields["背景／生命周期"].append("；".join(unstructured))
-    rendered = [f"### 2.{ordinal} {case_id}：{title}"]
-    for name in _CASE_TEMPLATE_FIELDS:
-        value = "\n".join(fields[name]).strip() or "信息不足（现有正式复盘未记录该字段）"
-        rendered.append(f"- {name}：{value}")
-    return "\n".join(rendered)
-
-
-def _case_lifecycle_update_text(root: Path, case_id: str, review: dict, updates: list[dict]) -> str:
-    market_date = str(review.get("market_date") or "")
-    status = next((str(item.get("case_status") or "").strip() for item in reversed(updates) if item.get("case_status")), "")
-    reason = next((str(item.get("mapping_reason") or "").strip() for item in reversed(updates) if item.get("mapping_reason")), "")
-    trade_lines = []
-    for item in updates:
-        event_id = str(item.get("trade_event_id") or "").strip()
-        if not event_id:
-            continue
-        trade_path = root / "events" / "trades" / f"{event_id}.json"
-        if not trade_path.exists():
-            if str(item.get("case_status") or "").upper() == "RESOLVED":
+ …1382 tokens truncated…get("case_status") or "").upper() == "RESOLVED":
                 raise ValueError(f"resolved CASE update lacks canonical trade fact: {event_id}")
             continue
         trade = load_json(trade_path)
@@ -2332,7 +2203,21 @@ def record_close_review_closure(account: dict, request: dict, review: dict, even
         "case_id": review.get("case_id") or "", "case_mode": review.get("case_mode") or "CONTINUATION_NO_NEW_CASE",
         "known_net_equity": (review.get("etf_strategy_known_net") or {}).get("known_net_strategy_equity"),
         "risk_rate_pct": (review.get("etf_strategy_known_net") or {}).get("etf_strategy_risk_rate_pct"),
-        "status": "CLOSED", "reviewed_at_beijing": event.get("reviewed_at_beijing", ""),
+        # CLOSED means the canonical closure event was persisted.  Keep the
+        # substantive evidence state separate so degraded discovery/evidence
+        # cannot be mistaken for a complete business review.
+        "status": "CLOSED",
+        "review_evidence_status": (
+            "COMPLETE"
+            if str(review.get("discovery_close_status") or "").upper() == "COMPLETED"
+            else "DEGRADED"
+        ),
+        "business_completion_status": (
+            "COMPLETE"
+            if str(review.get("discovery_close_status") or "").upper() == "COMPLETED"
+            else "DEGRADED"
+        ),
+        "reviewed_at_beijing": event.get("reviewed_at_beijing", ""),
         "request_id": request.get("request_id", ""),
         "note": "Formal post-close review is canonicalized from the request-scoped review payload; no trade or permission is inferred.",
     }

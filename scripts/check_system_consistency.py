@@ -364,6 +364,16 @@ def _validate_post_close_review_contract(report: dict, now=None) -> None:
         errors.append(f"missing_or_invalid_review=events/reviews/{market_date}.json")
     if closure.get("status") != "CLOSED" or closure.get("formal_review_path") != f"events/reviews/{market_date}.json":
         errors.append(f"missing_or_invalid_closure=data/state/close_review_closure_{market_date}.json")
+    review_payload = review.get("review") if isinstance(review.get("review"), dict) else {}
+    discovery_status = str(review_payload.get("discovery_close_status") or "").upper()
+    evidence_status = str(closure.get("review_evidence_status") or "").upper()
+    business_status = str(closure.get("business_completion_status") or "").upper()
+    expected_status = "COMPLETE" if discovery_status == "COMPLETED" else "DEGRADED"
+    if evidence_status != expected_status or business_status != expected_status:
+        errors.append(
+            "closure_review_status_mismatch="
+            f"expected={expected_status},evidence={evidence_status or 'MISSING'},business={business_status or 'MISSING'}"
+        )
     if due_state == "NOT_DUE_TODAY":
         report.setdefault("checks", []).append({
             "name": "review:post_close_canonical_chain",
