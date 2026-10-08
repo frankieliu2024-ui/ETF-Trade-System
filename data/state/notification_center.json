@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-10-08T20:39:02+08:00",
+  "updated_at": "2026-10-08T22:35:42+08:00",
   "last_status": "SENT",
-  "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【ETF交易复盘】",
+  "last_type": "US_OPEN_VALUE_ALERT",
+  "last_title": "【市场异动】费城半导体指数（SOX）低开-1.73%后明显修复",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -19707,27 +19707,63 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-10-08T20:39:02+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "market-value:a-share:2026-09-21:A_SHARE_ETF_DIVERGENCE:DIVERGED:DIVERGENCE:2026-09-21T14:57:55+08:00",
-      "type": "MARKET_VALUE_ALERT",
-      "title": "【市场异动】A股监测ETF横截面出现显著分化",
-      "content": "### 核心结论\n- **事件类型**：显著分化\n- **对象/结构**：A股监测ETF横截面\n- **关键结构**：横截面两端：创新药ETF（159992）+4.07%，黄金ETF（518880）-0.88%，涨跌幅相差4.95个百分点\n\n**判断**：相关对象之间的相对差已经扩大到值得单独关注的程度，不能再用单一市场方向概括全部机会和风险。\n\n### 对ETF系统的影响\nA股监测ETF横截面（A股监测ETF横截面）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-21 14:57:55\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
-      "source": "market_delta+CURRENT+stock_market_context",
+      "notification_id": "notification_45bacd7d6c6d5576616e",
+      "event_type": "US_OPEN_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "us-session-summary:2026-10-08:OPEN",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
       "user_severity": "需要关注",
-      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
-      "status": "SENT",
-      "attempted_at": "2026-09-21T14:59:44+08:00",
+      "user_action": "纳入下一A股交易节点复核，无需机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-10-08T22:35:40+08:00",
+      "sent_at": "2026-10-08T22:35:41+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-10-10T22:35:40+08:00",
+      "title": "【市场异动】费城半导体指数（SOX）低开-1.73%后明显修复",
+      "content": "### 核心结论\n- **触发原因**：实际现金盘开盘最大跳空1.73%。\n- **开盘事实｜费城半导体指数（SOX）**：实际现金盘开盘相对前收-1.73%。\n- **外部结构**：美股科技风险偏好偏弱。\n- **宽科技**：纳斯达克100指数（NDX）-0.18%。\n- **半导体**：费城半导体指数（SOX）-0.92%。\n\n### 关键路径\n- **纳斯达克100指数（NDX）**：开盘后暂未形成新的强化。\n- **费城半导体指数（SOX）**：开盘后继续走强。\n\n### 对ETF系统的影响\n- **外部含义**：美股科技风险偏好转弱，提高A股高相关科技篮子的风险复核优先级。\n- **本地验证**：先检查A股自身承接是否同步减弱。\n- **资本比较**：只有本地反馈也转弱，才进一步影响持仓风险收益与资本配置。\n\n### 当前动作\n**纳入下一A股正式节点复核：先看本地传导，再看相关ETF自身反馈和资本效率；不因海外单一信号机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-10-08 22:35:26\n- **通知生成（北京时间）**：2026-10-08 22:35:40\n- **边界**：这是海外结构证据，不是A股买卖信号；实际现金盘开盘事实可在同一常规交易时段恢复，但不得把后续累计涨跌伪装成开盘跳空。",
+      "source": "us_extended_hours_context",
+      "confirmation_context": {
+        "market": "US",
+        "market_date": "2026-10-08",
+        "us_market_date": "2026-10-08",
+        "session": "REGULAR",
+        "direction": "DOWN",
+        "event_category": "OPEN_SIGNAL",
+        "fact_family": "US_SESSION_STRUCTURE",
+        "object_codes": [
+          "NDX",
+          "SOX"
+        ],
+        "source_fact_ids": [
+          "2026-10-08:NDX:2026-10-08T22:35:26+08:00",
+          "2026-10-08:SOX:2026-10-08T22:35:26+08:00"
+        ],
+        "session_node": "OPEN",
+        "direct_cash_indices_used": true,
+        "tech_open_gap_pct": -0.5894518878901356,
+        "semi_open_gap_pct": -1.725120481176201,
+        "tech_change_pct": -0.1832,
+        "semi_change_pct": -0.9222,
+        "market_as_of_beijing": "2026-10-08T22:35:26+08:00",
+        "cash_close_as_of_beijing": "",
+        "generated_at_beijing": "2026-10-08 22:35:40",
+        "event_family_id": "US:2026-10-08:REGULAR::OPEN_SIGNAL:DOWN:"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_7ccf2837634a1f6c2838",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-10-08T22:35:41+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "apac-session-summary:2026-09-21:HK_LATE_UPDATE",
       "type": "APAC_SESSION_SUMMARY",
@@ -23309,6 +23345,24 @@
       },
       "notification_id": "notification_200377b0584bcdc76530",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "us-session-summary:2026-10-08:OPEN",
+      "type": "US_OPEN_VALUE_ALERT",
+      "title": "【市场异动】费城半导体指数（SOX）低开-1.73%后明显修复",
+      "content": "### 核心结论\n- **触发原因**：实际现金盘开盘最大跳空1.73%。\n- **开盘事实｜费城半导体指数（SOX）**：实际现金盘开盘相对前收-1.73%。\n- **外部结构**：美股科技风险偏好偏弱。\n- **宽科技**：纳斯达克100指数（NDX）-0.18%。\n- **半导体**：费城半导体指数（SOX）-0.92%。\n\n### 关键路径\n- **纳斯达克100指数（NDX）**：开盘后暂未形成新的强化。\n- **费城半导体指数（SOX）**：开盘后继续走强。\n\n### 对ETF系统的影响\n- **外部含义**：美股科技风险偏好转弱，提高A股高相关科技篮子的风险复核优先级。\n- **本地验证**：先检查A股自身承接是否同步减弱。\n- **资本比较**：只有本地反馈也转弱，才进一步影响持仓风险收益与资本配置。\n\n### 当前动作\n**纳入下一A股正式节点复核：先看本地传导，再看相关ETF自身反馈和资本效率；不因海外单一信号机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-10-08 22:35:26\n- **通知生成（北京时间）**：2026-10-08 22:35:40\n- **边界**：这是海外结构证据，不是A股买卖信号；实际现金盘开盘事实可在同一常规交易时段恢复，但不得把后续累计涨跌伪装成开盘跳空。",
+      "source": "us_extended_hours_context",
+      "user_severity": "需要关注",
+      "user_action": "纳入下一A股交易节点复核，无需机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-10-08T22:35:41+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_45bacd7d6c6d5576616e",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [
@@ -23318,6 +23372,6 @@
     "notification_d5f3ea1194565824a934",
     "notification_fd7763215037ab96f889"
   ],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
-  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
+  "policy": "canonical bounded market notification batch",
+  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
