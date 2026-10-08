@@ -331,7 +331,74 @@ def _latest_formal_decision_baseline(root: Path, request_time: str = "") -> dict
     }
 
 
-def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict], account: dict, observation_inputs: list[dict] | None = None, observation_review_inputs: list[dict] | None = None) -> list[dict]:
+
+def _latest_base_stock_replacement_candidates(root: Path, positions: list[dict], request_time: str = "") -> list[dict]:
+    """Project the latest PIT-eligible base-stock screen as bounded research candidates.
+
+    This is research supply only. It does not create a stock watchlist, rank an
+    unscreened market, grant trade authority, or turn the screen score into an
+    action rule. Candidate buy judgment remains separate from any held-stock
+    sell judgment in the existing Formal Decision.
+    """
+    roles = read_json(root / CANONICAL_FILES["asset_roles"], {})
+    role_map = roles.get("roles") or roles.get("assets") or {}
+    held_codes = {str(item.get("code") or "") for item in positions}
+    base_markets = set()
+    for code in held_codes:
+        role = role_map.get(code) if isinstance(role_map, dict) else None
+        role_name = str((role or {}).get("role") if isinstance(role, dict) else "")
+        status = str((role or {}).get("status") if isinstance(role, dict) else "")
+        if role_name == "IPO_BASE_STOCK" and status == "CONFIRMED":
+            base_markets.add("SH" if code.startswith(("60", "68")) else "SZ" if code.startswith(("00", "30")) else "")
+    base_markets.discard("")
+    if not base_markets:
+        return []
+
+    cutoff = parse_time(request_time) if request_time else None
+    screen_dir = root / "research" / "base_stock_screen"
+    eligible = []
+    for path in screen_dir.glob("*.json") if screen_dir.exists() else []:
+        obj = read_json(path, {})
+        processed = parse_time(str(obj.get("processed_at") or ""))
+        if cutoff is not None and processed is not None and processed > cutoff:
+            continue
+        if not obj.get("ok") or not isinstance(obj.get("records"), list):
+            continue
+        eligible.append((processed or parse_time("1970-01-01T00:00:00+00:00"), path, obj))
+    if not eligible:
+        return []
+    _, source_path, screen = max(eligible, key=lambda item: item[0])
+
+    out = []
+    for rec in screen.get("records") or []:
+        if not isinstance(rec, dict):
+            continue
+        code = str(rec.get("code") or "")
+        market = str(rec.get("market") or "")
+        if not code or code in held_codes or market not in base_markets:
+            continue
+        out.append({
+            "code": code,
+            "name": rec.get("name") or code,
+            "market": market,
+            "research_role": rec.get("role") or "candidate",
+            "screen_metrics": {
+                key: rec.get(key) for key in (
+                    "return_pct", "ann_vol_pct", "downside_vol_pct",
+                    "max_drawdown_pct", "avg_amount", "median_amount",
+                )
+            },
+            "screen_rank": rec.get("market_rank"),
+            "screen_score": rec.get("stability_score"),
+            "screen_source": str(source_path.relative_to(root)).replace("\\", "/"),
+            "screen_processed_at": screen.get("processed_at"),
+            "screen_end_date": screen.get("end_date"),
+            "authority": "RESEARCH_CANDIDATE_ONLY",
+        })
+    return out
+
+
+def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict], account: dict, observation_inputs: list[dict] | None = None, observation_review_inputs: list[dict] | None = None, base_stock_replacement_inputs: list[dict] | None = None) -> list[dict]:
     problems = [
         {"problem_id": "RISK_PERMISSION", "decision_object": "risk_permission", "required_business_judgment": "风险许可及新增风险边界"},
         {"problem_id": "MAIN_CANDIDATE", "decision_object": "main_candidate", "required_business_judgment": "主候选及机会状态"},
@@ -354,6 +421,18 @@ def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict],
         code = str(item.get("code") or "")
         if code:
             problems.append({"problem_id": f"OBSERVATION_REVIEW:{code}", "decision_object": code, "security": item.get("name") or code, "thscode": item.get("thscode") or "", "formal_quote_status": item.get("formal_quote_status") or "", "role_contract": "EXPLICIT_OBSERVATION_IDENTITY_REVIEW_V1", "required_business_judgment": "用户显式要求重新评估已退出Observation的对象。先判断是否重新取得独立、可证伪、跨节点持续信息价值；ADMIT/REJECT只决定Observation身份，不自动产生机会、Trial/Confirm或交易动作。"})
+    for item in base_stock_replacement_inputs or []:
+        code = str(item.get("code") or "")
+        if code:
+            problems.append({
+                "problem_id": f"BASE_STOCK_REPLACEMENT:{code}",
+                "decision_object": code,
+                "security": item.get("name") or code,
+                "market": item.get("market") or "",
+                "research_evidence": item,
+                "role_contract": "IPO_BASE_REPLACEMENT_CANDIDATE_V1",
+                "required_business_judgment": "判断该同市场候选是否独立值得作为打新底仓资本用途；必须与继续持有现底仓、ETF机会和现金比较。筛选排名/分数仅为研究证据，不产生买入许可；允许结论为不替换。",
+            })
     for item in discovery_inputs:
         code = str(item.get("code") or "")
         if code:
@@ -397,6 +476,8 @@ def _evidence_requirement_plan(problems: list[dict]) -> list[dict]:
             classes = shared_market + holding + ["HOLDING_ADDITIONAL_CAPITAL", "CASH"]
         elif pid.startswith(("DISCOVERY:", "OBSERVATION:", "OBSERVATION_REVIEW:")):
             classes = shared_market + opportunity
+        elif pid.startswith("BASE_STOCK_REPLACEMENT:"):
+            classes = shared_market + ["ACCOUNT_STOCK", "CASH", "RELEASABLE_CAPITAL"]
         elif pid in {"DEPLOYABLE_CASH", "RELEASABLE_CAPITAL", "TRIAL_CONFIRM_CAPACITY",
                      "CONCENTRATION_COMMON_RISK", "NEXT_UNIT_CAPITAL_USE"}:
             classes = shared_market + opportunity + capital
@@ -730,7 +811,13 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "request_bound_explicit_review": True,
         })
         seen_review_codes.add(code)
-    problem_graph = _decision_problem_graph(positions, discovery_inputs, account, observation_inputs, observation_review_inputs)
+    base_stock_replacement_inputs = _latest_base_stock_replacement_candidates(
+        root, positions, str(request.get("requested_at_beijing") or request.get("request_time") or "")
+    )
+    problem_graph = _decision_problem_graph(
+        positions, discovery_inputs, account, observation_inputs, observation_review_inputs,
+        base_stock_replacement_inputs,
+    )
     evidence_plan = _evidence_requirement_plan(problem_graph)
 
     # Project already-produced monitoring facts into the request-bound packet.
@@ -803,6 +890,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "layer_3_etf_opportunity_capital": {
             "formal_discovery_status": discovery.get("status") or "NOT_REQUESTED",
             "discovery_candidates": discovery_inputs,
+            "base_stock_replacement_candidates": base_stock_replacement_inputs,
             "actual_positions": positions,
             "observation_inputs": observation_inputs,
             "observation_identity_review_inputs": observation_review_inputs,
