@@ -46,6 +46,33 @@ class FormalReplayForensicInstrumentationTests(unittest.TestCase):
                 canonical = bds.build_formal_completion_from_source(checked)
         return projected, checked, canonical, output.getvalue(), source, response, package
 
+    def test_cash_limited_zero_requires_capital_migration_review(self):
+        source, response, package = copy.deepcopy((SOURCE, RESPONSE, WORK_PACKAGE))
+        package["problem_graph"].append({"problem_id": "DISCOVERY:515220", "security": "煤炭ETF"})
+        response["answers"]["DISCOVERY:515220"] = {
+            "final_action": "NO_ADD",
+            "capital_comparison": "当前机会尚未达到Trial",
+            "next_change_condition": "承接改善后重评",
+            "evidence_decision_impact": ["ALL_REQUIRED"],
+            "disposition": "REJECT",
+            "reason": "缺少持续承接",
+            "opportunity_status": "观察机会",
+        }
+        response["answers"]["NEXT_UNIT_CAPITAL_USE"]["zero_amount_decisive_reason_if_zero"] = "现金不足且机会需要重新比较"
+        response["answers"]["NEXT_UNIT_CAPITAL_USE"]["zero_amount_decisive_reason"] = "现金不足且机会需要重新比较"
+        with self.assertRaisesRegex(ValueError, "capital_migration_review"):
+            bds.project_decision_response(source, response, package)
+
+        response["answers"]["NEXT_UNIT_CAPITAL_USE"]["capital_migration_review"] = {
+            "current_best_opportunity": "煤炭ETF（515220）",
+            "cash_gap": "2820元",
+            "lowest_efficiency_holding": "半导体设备ETF（561980）",
+            "release_vs_continue_comparison": "释放后仍需比较执行资格与继续持有右尾",
+            "decision": "当前不释放，下一节点重新验证",
+        }
+        projected = bds.project_decision_response(source, response, package)
+        self.assertEqual(projected["decision_response"]["answers"]["NEXT_UNIT_CAPITAL_USE"]["capital_migration_review"]["current_best_opportunity"], "煤炭ETF（515220）")
+
     def test_instrumentation_is_business_semantics_inert(self):
         off = self._run(False)
         on = self._run(True)
