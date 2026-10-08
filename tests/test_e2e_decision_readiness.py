@@ -142,6 +142,13 @@ class E2EDecisionReadinessTests(unittest.TestCase):
         self.assertEqual(result["formal_reply_gate"]["status"], "READY")
         self.assertTrue(result["formal_reply_gate"]["reply_freezable"])
         self.assertEqual(result["formal_reply_gate"]["blockers"], [])
+        manifest = result["formal_reply_gate"]["consumer_manifest"]
+        self.assertEqual(manifest["request_id"], "r3")
+        self.assertEqual(manifest["read_strategy"], "GATE_FIRST_TARGETED_PAYLOAD")
+        self.assertEqual(
+            manifest["large_payload_empty_read"],
+            "REVERIFY_SAME_GITHUB_SOURCE_BEFORE_MISSING",
+        )
 
     def test_request_bound_inflight_gate_remains_visible_when_context_degraded(self):
         result = context_component(

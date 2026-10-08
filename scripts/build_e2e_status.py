@@ -332,6 +332,21 @@ def context_component(query: dict, decision: dict) -> dict:
     request_id = str(trigger.get("request_id") or "").strip()
     requested_at_beijing = str(trigger.get("requested_at_beijing") or "").strip()
     request_bound = bool(request_id and requested_at_beijing)
+    decision_work_package = decision_fact_pack.get("decision_work_package")
+    consumer_manifest = {
+        "request_id": request_id,
+        "requested_at_beijing": requested_at_beijing,
+        "query_context_path": "data/state/query_context.json",
+        "decision_context_path": "data/state/decision_context.json",
+        "decision_work_package_present": isinstance(decision_work_package, dict),
+        "required_fields": [
+            "decision_fact_pack.trigger.request_id",
+            "decision_fact_pack.formal_reply_freeze",
+            "decision_fact_pack.decision_work_package.problem_graph",
+        ],
+        "read_strategy": "GATE_FIRST_TARGETED_PAYLOAD",
+        "large_payload_empty_read": "REVERIFY_SAME_GITHUB_SOURCE_BEFORE_MISSING",
+    }
     reply_freeze = decision_fact_pack.get("formal_reply_freeze") or {}
     formal_reply_gate = {
         "request_id": request_id,
@@ -340,6 +355,7 @@ def context_component(query: dict, decision: dict) -> dict:
         "reply_freezable": bool(reply_freeze.get("reply_freezable")),
         "blockers": list(reply_freeze.get("blockers") or []),
         "source": "decision_fact_pack.formal_reply_freeze",
+        "consumer_manifest": consumer_manifest,
     } if request_bound else None
     # Account-changing broker evidence is a hard dependency of capital decisions.
     # Reuse the existing account component rather than introducing parallel state.
