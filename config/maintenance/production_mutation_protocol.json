@@ -186,6 +186,81 @@
         "new_issue_bot"
       ],
       "duplicate_reuse_contract": "Search current Issues/PRs and reuse an existing same-semantic item or mechanism before creating a new Issue."
+    },
+    "merge_eligibility_contract": {
+      "name": "AUTHORIZATION_AWARE_CODE_PR_MERGE",
+      "purpose": "将用户授权、风险Tier、既有PR验收和GitHub自动合并能力绑定；不改变交易权限，不约束已登记canonical runtime ingress。",
+      "applies_to": [
+        "code",
+        "rule",
+        "workflow",
+        "test",
+        "configuration",
+        "documentation_changes_submitted_as_pull_requests"
+      ],
+      "does_not_apply_to": [
+        "requests/live_snapshot_runtime_ingress",
+        "canonical_runtime_state_ingress",
+        "formal_fact_runtime_ingress"
+      ],
+      "auto_merge_policy": {
+        "eligible_tiers": [
+          "TIER_0",
+          "TIER_1"
+        ],
+        "explicit_tier_2_requires": [
+          "explicit_user_authorization_scoped_to_change",
+          "change_specific_acceptance",
+          "latest_main_replay",
+          "candidate_acceptance"
+        ],
+        "never_auto_merge": [
+          "TIER_3",
+          "UNKNOWN",
+          "authorization_ambiguous",
+          "MASTER_change",
+          "trading_authority_change",
+          "account_or_trade_fact_change",
+          "PIT_or_freshness_contract_change",
+          "writer_ownership_or_topology_change"
+        ],
+        "required_conditions": [
+          "pull_request_change_path",
+          "explicit_user_authorization",
+          "required_ci_checks_pass",
+          "latest_main_semantic_check_pass",
+          "change_specific_acceptance_pass",
+          "no_introduced_or_inconclusive_merged_main_failure"
+        ],
+        "merge_is_not_business_acceptance": "GitHub merge only integrates an eligible code change; merged-main consistency/E2E remains mandatory where the Tier or acceptance scope requires it."
+      },
+      "required_checks": {
+        "existing_workflow": ".github/workflows/system-consistency.yml",
+        "jobs": [
+          "consistency",
+          "production_acceptance"
+        ],
+        "rule": "Use actual PR check names exposed by GitHub; workflow file names are not sufficient identifiers.",
+        "runtime_ingress_rule": "These checks govern code PRs and do not convert runtime Contents writes into PRs."
+      },
+      "authorization_record": {
+        "source": "current user instruction or formally recoverable Issue/PR execution record",
+        "must_include": [
+          "scope",
+          "risk_tier_or_tier_limit",
+          "action_limit"
+        ],
+        "not_a_persistent_trade_permission": true,
+        "not_a_parallel_state_store": true
+      },
+      "fail_closed": [
+        "missing_authorization",
+        "ambiguous_scope",
+        "unknown_tier",
+        "required_check_missing",
+        "change_specific_acceptance_missing",
+        "runtime_ingress_misclassified_as_code_pr"
+      ]
     }
   },
   "writer_requirements": {
