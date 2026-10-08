@@ -826,7 +826,7 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     if overlapping_identity:
         raise ValueError("explicit Observation identity review duplicates same-node Discovery input: " + ", ".join(sorted(overlapping_identity)))
     eligibility_inputs = {**discovery_inputs, **identity_review_inputs}
-    admitted_discovery, eligibility_error = validate_observation_eligibility_reviews(decision, eligibility_inputs)
+    admitted_discovery, eligibility_error = validate_observation_eligibility_reviews(decision, eligibility_inputs, identity_review_codes=set(identity_review_inputs))
     if eligibility_error:
         raise ValueError(f"invalid formal decision Observation eligibility contract: {eligibility_error}")
     if decision.get("observation_management") not in (None, []) or current_observations or admitted_discovery:
@@ -1270,13 +1270,14 @@ def manual_completion_discovery_inputs(request: dict) -> tuple[dict[str, dict] |
     return out, ""
 
 
-def validate_observation_eligibility_reviews(decision: dict, inputs: dict[str, dict]) -> tuple[set[str], str]:
+def validate_observation_eligibility_reviews(decision: dict, inputs: dict[str, dict], *, identity_review_codes: set[str] | None = None) -> tuple[set[str], str]:
     if not inputs:
         return set(), ""
     reviews = decision.get("observation_eligibility_reviews")
     if not isinstance(reviews, list):
         return set(), "formal_decision.observation_eligibility_reviews must cover every same-node Discovery input"
     seen, admitted = set(), set()
+    identity_review_codes = {normalize_code(code) for code in (identity_review_codes or set())}
     for index, review in enumerate(reviews):
         if not isinstance(review, dict):
             return set(), f"formal_decision.observation_eligibility_reviews[{index}] must be an object"
@@ -1289,8 +1290,13 @@ def validate_observation_eligibility_reviews(decision: dict, inputs: dict[str, d
         if not str(review.get("reason") or "").strip():
             return set(), f"formal_decision.observation_eligibility_reviews[{index}] requires reason"
         if disposition == "ADMIT":
-            if str(inputs[code].get("formal_quote_status") or "").upper() != "READY":
-                return set(), f"formal_decision cannot ADMIT {code} without READY formal quote"
+            quote_status = str(inputs[code].get("formal_quote_status") or "").upper()
+            # MASTER 3.2: a persistent Observation identity may be admitted on lawful
+            # non-execution cross-node evidence even when the current executable quote
+            # is unavailable.  Discovery-origin admission still requires READY because
+            # it originates in same-node opportunity qualification.
+            if code not in identity_review_codes and quote_status != "READY":
+                return set(), f"formal_decision cannot ADMIT Discovery input {code} without READY formal quote"
             admitted.add(code)
         seen.add(code)
     missing = sorted(set(inputs) - seen)
