@@ -264,8 +264,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertNotIn("close_snapshot", event["review"]["data_time"])
         self.assertEqual(event["review"]["data_time"]["close_data_status"], "UNVERIFIED")
         self.assertIn("VERIFIED_SESSION_CLOSE unavailable", event["review"]["data_time"]["close_data_gap"])
-        self.assertEqual(closure["status"], "CLOSED")
-        self.assertEqual(closure["close_snapshot"], "")
+        self.assertFalse((self.root / "data/state/close_review_closure_2026-08-31.json").exists())
 
     def test_review_completes_when_no_close_snapshot_exists(self):
         account = {"status": "VALID", "updated_at": "2026-08-31T16:18:00+08:00"}
