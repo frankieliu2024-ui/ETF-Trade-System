@@ -675,6 +675,34 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
 
     capital_opportunity_reviews = _capital_competition_opportunity_reviews(opportunity_reviews, graph)
 
+    # Capital-competition completeness is derived from the request-bound graph.
+    # Do not allow a non-empty partial review list or actor-declared booleans to
+    # masquerade as complete coverage of the managed account.
+    expected_holding_ids = {
+        str(item.get("problem_id") or "")
+        for item in graph
+        if str(item.get("problem_id") or "").startswith("HOLDING:")
+    }
+    reviewed_holding_ids = {f"HOLDING:{item.get('security_code')}" for item in position_reviews}
+    holding_review_complete = bool(expected_holding_ids) and reviewed_holding_ids == expected_holding_ids and all(
+        isinstance(item.get("capital_use"), dict)
+        and all(str(item.get("capital_use", {}).get("position_capital_states", {}).get(key) or "").strip() for key in ("HOLD", "REDUCE", "EXIT"))
+        for item in position_reviews
+    )
+    expected_add_ids = {
+        str(item.get("problem_id") or "")
+        for item in graph
+        if str(item.get("problem_id") or "").startswith("HELD_ETF_ADD:")
+    }
+    reviewed_add_ids = {f"HELD_ETF_ADD:{item.get('security_code')}" for item in held_add_reviews}
+    holding_add_review_complete = reviewed_add_ids == expected_add_ids
+    capital_competition_complete = bool(
+        holding_review_complete
+        and holding_add_review_complete
+        and "NEXT_UNIT_CAPITAL_USE" in required_ids
+        and compared_capital_states not in (None, "", [])
+    )
+
     projected = json.loads(json.dumps(source))
     projected.update({
         "risk_permission": risk_permission,
@@ -698,8 +726,8 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         "next_unit_capital_use": next_answer["final_action"],
         "capital_competition": {
             "next_unit_capital_use": next_answer["final_action"],
-            "full_competition_completed": True,
-            "releasable_capital_reviewed": True,
+            "full_competition_completed": capital_competition_complete,
+            "releasable_capital_reviewed": holding_review_complete,
             "post_action_deployable_cash": post_cash,
             "future_opportunity_capacity": next_answer["future_opportunity_capacity"],
             "cash_opportunity_cost": next_answer["cash_opportunity_cost"],
@@ -715,7 +743,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
     })
     projected["decision_evidence_consumption"] = {**consumed,
         "discovery_to_capital_competition_consumed": True,
-        "all_managed_positions_sell_chain_consumed": bool(position_reviews),
+        "all_managed_positions_sell_chain_consumed": holding_review_complete,
         "held_etf_additional_capital_consumed": bool(held_add_reviews) or not any(str(x.get("problem_id") or "").startswith("HELD_ETF_ADD:") for x in graph),
         "next_unit_capital_use_consumed": "NEXT_UNIT_CAPITAL_USE" in required_ids}
     projected["capital_use"] = {
