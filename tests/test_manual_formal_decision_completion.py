@@ -819,5 +819,47 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
 
 
+class RequestBoundOpportunityIdentityTests(unittest.TestCase):
+    def test_observation_and_discovery_roles_for_one_code_are_one_capital_identity(self):
+        request = {
+            "decision_work_package": {
+                "problem_graph": [
+                    {"problem_id": "OBSERVATION:515220"},
+                    {"problem_id": "DISCOVERY:515220"},
+                ]
+            }
+        }
+        self.assertEqual(
+            state_sync.request_bound_etf_opportunity_reviews(request),
+            {"515220": "OBSERVED_ETF"},
+        )
+
+    def test_duplicate_same_role_remains_invalid(self):
+        request = {
+            "decision_work_package": {
+                "problem_graph": [
+                    {"problem_id": "OBSERVATION:515220"},
+                    {"problem_id": "OBSERVATION:515220"},
+                ]
+            }
+        }
+        with self.assertRaisesRegex(ValueError, "duplicate ETF opportunity identity"):
+            state_sync.request_bound_etf_opportunity_reviews(request)
+
+
+    def test_repeated_discovery_role_after_valid_overlap_remains_invalid(self):
+        request = {
+            "decision_work_package": {
+                "problem_graph": [
+                    {"problem_id": "OBSERVATION:515220"},
+                    {"problem_id": "DISCOVERY:515220"},
+                    {"problem_id": "DISCOVERY:515220"},
+                ]
+            }
+        }
+        with self.assertRaisesRegex(ValueError, "duplicate ETF opportunity identity"):
+            state_sync.request_bound_etf_opportunity_reviews(request)
+
+
 if __name__ == "__main__":
     unittest.main()

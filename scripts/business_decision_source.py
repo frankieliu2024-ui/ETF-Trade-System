@@ -262,6 +262,64 @@ def _validate_material_state_transitions(
                     raise ValueError(error)
 
 
+def _capital_competition_opportunity_reviews(reviews: list[dict[str, Any]], graph: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Collapse distinct role reviews for one ETF into one capital state.
+
+    An ETF can already be a persistent Observation and also surface in the
+    node-local Discovery set. Keep both role-level reviews for audit, but count
+    the instrument once in executable capital competition. Conflicting status
+    judgments fail closed and must be reconciled by the decision actor.
+    """
+    roles_by_code: dict[str, set[str]] = {}
+    for item in graph:
+        problem_id = str(item.get("problem_id") or "")
+        if problem_id.startswith("OBSERVATION:"):
+            code = problem_id.split(":", 1)[1].strip()
+            category = "OBSERVED_ETF"
+        elif problem_id.startswith("DISCOVERY:"):
+            code = problem_id.split(":", 1)[1].strip()
+            category = "OBSERVATION_EVALUATION_INPUT"
+        else:
+            continue
+        if code:
+            roles_by_code.setdefault(code, set()).add(category)
+
+    allowed_overlap = {"OBSERVED_ETF", "OBSERVATION_EVALUATION_INPUT"}
+    result: list[dict[str, Any]] = []
+    index_by_code: dict[str, int] = {}
+    seen_roles: dict[str, set[str]] = {}
+    for review in reviews:
+        code = str(review.get("code") or review.get("security_code") or "").strip()
+        category = str(review.get("category") or "").strip().upper()
+        expected_roles = roles_by_code.get(code, set())
+        if not code or category not in expected_roles:
+            raise ValueError("capital opportunity review does not match its decision-work-package role")
+        if category in seen_roles.setdefault(code, set()):
+            raise ValueError("duplicate capital opportunity review role for " + code)
+        seen_roles[code].add(category)
+
+        if code not in index_by_code:
+            item = dict(review)
+            item["category"] = "OBSERVED_ETF" if allowed_overlap <= expected_roles else category
+            index_by_code[code] = len(result)
+            result.append(item)
+            continue
+
+        if expected_roles != allowed_overlap:
+            raise ValueError("duplicate capital opportunity identity for " + code)
+        existing = result[index_by_code[code]]
+        if str(existing.get("opportunity_status") or "") != str(review.get("opportunity_status") or ""):
+            raise ValueError("conflicting opportunity status across roles for " + code)
+        existing["category"] = "OBSERVED_ETF"
+        existing["conclusion"] = "；".join(
+            value for value in (str(existing.get("conclusion") or "").strip(), str(review.get("conclusion") or "").strip()) if value
+        )
+        existing["reason"] = "；".join(
+            value for value in (str(existing.get("reason") or "").strip(), str(review.get("reason") or "").strip()) if value
+        )
+    return result
+
+
 def project_decision_response(source: dict[str, Any], response: dict[str, Any], work_package: dict[str, Any], *, forensic_historical_replay: bool = False) -> dict[str, Any]:
     """Project actor-only business answers into the canonical Business Decision Source."""
     if forensic_historical_replay:
@@ -525,10 +583,21 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             elif review.get("category") != "OBSERVED_ETF":
                 discovery_summary["rejected_from_opportunity_role"] += 1
 
+        opportunity_by_code = {}
+        for item in opportunity_etfs:
+            code = str(item.get("code") or "")
+            if code not in opportunity_by_code:
+                opportunity_by_code[code] = dict(item)
+                continue
+            existing = opportunity_by_code[code]
+            sources = list(dict.fromkeys([existing.get("source"), item.get("source")]))
+            existing["source"] = "；".join(x for x in sources if x)
+            evidence = [existing.get("execution_evidence"), item.get("execution_evidence")]
+            existing["execution_evidence"] = "；".join(dict.fromkeys(x for x in evidence if x))
         business_role_reconciliation = {
             "持仓ETF": holding_etfs,
             "观察ETF": observation_etfs,
-            "机会ETF": opportunity_etfs,
+            "机会ETF": list(opportunity_by_code.values()),
             "全市场机会发现": discovery_summary,
         }
 
@@ -604,6 +673,8 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         position_reviews=position_reviews,
     )
 
+    capital_opportunity_reviews = _capital_competition_opportunity_reviews(opportunity_reviews, graph)
+
     projected = json.loads(json.dumps(source))
     projected.update({
         "risk_permission": risk_permission,
@@ -639,7 +710,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             "zero_amount_decisive_reason": zero_amount_decisive_reason,
             "compared_capital_states": canonical_capital_states,
             "held_etf_add_capital_reviews": held_add_reviews,
-            "etf_opportunity_reviews": opportunity_reviews,
+            "etf_opportunity_reviews": capital_opportunity_reviews,
         },
     })
     projected["decision_evidence_consumption"] = {**consumed,
