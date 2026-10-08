@@ -821,7 +821,12 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
         raise ValueError(closure_error)
     if closure_inputs is not None:
         discovery_inputs = closure_inputs
-    admitted_discovery, eligibility_error = validate_observation_eligibility_reviews(decision, discovery_inputs)
+    identity_review_inputs = request_bound_observation_identity_review_inputs(request)
+    overlapping_identity = set(discovery_inputs) & set(identity_review_inputs)
+    if overlapping_identity:
+        raise ValueError("explicit Observation identity review duplicates same-node Discovery input: " + ", ".join(sorted(overlapping_identity)))
+    eligibility_inputs = {**discovery_inputs, **identity_review_inputs}
+    admitted_discovery, eligibility_error = validate_observation_eligibility_reviews(decision, eligibility_inputs)
     if eligibility_error:
         raise ValueError(f"invalid formal decision Observation eligibility contract: {eligibility_error}")
     if decision.get("observation_management") not in (None, []) or current_observations or admitted_discovery:
@@ -1304,6 +1309,32 @@ def legal_observation_reviews(decision: dict, current_observations: set[str], ad
     return {code: "OBSERVED_ETF" for code in legal}
 
 
+def request_bound_observation_identity_review_inputs(request: dict) -> dict[str, dict]:
+    """Return explicit non-managed Observation identity reviews frozen in the request-bound DWP."""
+    work_package = request.get("decision_work_package") or {}
+    graph = work_package.get("problem_graph") if isinstance(work_package, dict) else None
+    if not isinstance(graph, list):
+        return {}
+    out: dict[str, dict] = {}
+    for item in graph:
+        if not isinstance(item, dict):
+            continue
+        problem_id = str(item.get("problem_id") or "")
+        if not problem_id.startswith("OBSERVATION_REVIEW:"):
+            continue
+        code = normalize_code(problem_id.split(":", 1)[1])
+        if not code or code in out:
+            raise ValueError("decision work package has invalid or duplicate explicit Observation identity review")
+        if str(item.get("role_contract") or "") != "EXPLICIT_OBSERVATION_IDENTITY_REVIEW_V1":
+            raise ValueError("explicit Observation identity review has invalid role contract")
+        out[code] = {
+            "code": code,
+            "formal_quote_status": str(item.get("formal_quote_status") or "").upper(),
+            "source": "REQUEST_BOUND_EXPLICIT_OBSERVATION_IDENTITY_REVIEW",
+        }
+    return out
+
+
 def request_bound_etf_opportunity_reviews(request: dict) -> dict[str, str]:
     """Return the immutable ETF opportunity domain frozen in this Formal Decision request.
 
@@ -1325,7 +1356,7 @@ def request_bound_etf_opportunity_reviews(request: dict) -> dict[str, str]:
         if problem_id.startswith("OBSERVATION:"):
             code = normalize_code(problem_id.split(":", 1)[1])
             category = "OBSERVED_ETF"
-        elif problem_id.startswith("DISCOVERY:"):
+        elif problem_id.startswith(("DISCOVERY:", "OBSERVATION_REVIEW:")):
             code = normalize_code(problem_id.split(":", 1)[1])
             category = "OBSERVATION_EVALUATION_INPUT"
         else:
