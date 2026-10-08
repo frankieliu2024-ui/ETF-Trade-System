@@ -738,7 +738,7 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
         monitored_codes = set()
         held_etfs = set()
         current_observations = set()
-    discovery_inputs = discovery_eligibility_inputs(ROOT, market_date)
+    discovery_inputs = request_bound_discovery_eligibility_inputs(ROOT, market_date, request)
     closure_inputs, closure_error = manual_completion_discovery_inputs(request)
     if closure_error:
         raise ValueError(closure_error)
@@ -1108,11 +1108,14 @@ def validate_managed_position_lifecycle(value: object, account: dict, object_nam
     return ""
 
 
-def discovery_eligibility_inputs(root: Path, market_date: str = "") -> dict[str, dict]:
-    path = root / "data" / "state" / "query_context.json"
-    if not path.exists():
+def discovery_eligibility_inputs(root: Path, market_date: str = "", context: dict | None = None) -> dict[str, dict]:
+    if context is None:
+        path = root / "data" / "state" / "query_context.json"
+        if not path.exists():
+            return {}
+        context = load_json(path)
+    if not isinstance(context, dict):
         return {}
-    context = load_json(path)
     context_market_date = str(context.get("market_date") or (context.get("current") or {}).get("market_date") or "")
     if market_date and context_market_date != str(market_date):
         return {}
@@ -1122,6 +1125,35 @@ def discovery_eligibility_inputs(root: Path, market_date: str = "") -> dict[str,
         for item in (discovery.get("candidates") or [])
         if isinstance(item, dict) and normalize_code(item.get("code") or "")
     }
+
+
+def request_bound_discovery_eligibility_inputs(root: Path, market_date: str, request: dict) -> dict[str, dict]:
+    if request.get("_historical_replay") is not True:
+        return discovery_eligibility_inputs(root, market_date)
+
+    context = request.get("_historical_query_context")
+    if not isinstance(context, dict) or not context:
+        raise ValueError("historical Formal Decision replay requires request-bound Discovery context")
+    inputs = discovery_eligibility_inputs(root, market_date, context=context)
+    dwp = request.get("decision_work_package") or {}
+    problem_graph = dwp.get("problem_graph") if isinstance(dwp, dict) else None
+    if not isinstance(problem_graph, list):
+        raise ValueError("historical Formal Decision replay requires request-bound DWP problem_graph")
+
+    graph_codes = []
+    for item in problem_graph:
+        if not isinstance(item, dict):
+            raise ValueError("historical Formal Decision replay DWP problem_graph contains an invalid item")
+        problem_id = str(item.get("problem_id") or "")
+        if not problem_id.startswith("DISCOVERY:"):
+            continue
+        code = normalize_code(problem_id.split(":", 1)[1])
+        if not code:
+            raise ValueError("historical Formal Decision replay DWP Discovery item has no code")
+        graph_codes.append(code)
+    if len(graph_codes) != len(set(graph_codes)) or set(inputs) != set(graph_codes):
+        raise ValueError("historical Formal Decision Discovery candidates do not match request-bound DWP")
+    return inputs
 
 
 def manual_completion_discovery_inputs(request: dict) -> tuple[dict[str, dict] | None, str]:
@@ -3128,6 +3160,9 @@ def main() -> int:
                 raise ValueError("formal replay DWP commit is missing request-bound account fact")
             request["_historical_replay"] = True
             request["_historical_account_fact"] = json.loads(json.dumps(historical_account))
+            # Keep discovery eligibility bound to the same immutable DWP context;
+            # execution-time query_context may belong to a later request.
+            request["_historical_query_context"] = query_context
         else:
             query_path = ROOT / "data" / "state" / "query_context.json"
             query_context = load_json(query_path) if query_path.exists() else {}
