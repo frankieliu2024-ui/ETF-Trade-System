@@ -234,6 +234,17 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertEqual(event["review"]["data_time"]["close_snapshot"], "data/market/snapshots/2026-08-31_150110.json")
         self.assertEqual(closure["status"], "CLOSED")
 
+    def test_full_day_payload_before_legal_close_persists_node_without_closing_chain(self):
+        account = {"status": "VALID", "updated_at": "2026-08-31T12:00:00+08:00"}
+        current = {"market_date": "2026-08-31", "latest_valid_node": "live", "latest_snapshot": ""}
+        (self.root / "data/state/CURRENT.json").write_text(json.dumps(current), encoding="utf-8")
+        request = self.request("2026-08-31T12:30:00+08:00")
+        request["formal_review"]["review_scope"] = "FULL_DAY"
+        request["formal_review"]["data_time"]["close_snapshot"] = ""
+        self.assertEqual(sync.record_post_close_review(account, request), (True, False))
+        self.assertTrue((self.root / "events/reviews/2026-08-31.json").exists())
+        self.assertFalse((self.root / "data/state/close_review_closure_2026-08-31.json").exists())
+
     def test_live_snapshot_and_late_account_degrade_review_without_fake_close(self):
         account = {"status": "VALID", "updated_at": "2026-08-31T16:18:00+08:00"}
         live_snapshot = "data/market/snapshots/2026-08-31_144800.json"
@@ -267,6 +278,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertEqual(event["event_type"], "FORMAL_POST_CLOSE_REVIEW")
         self.assertEqual(event["review"]["data_time"]["close_data_status"], "UNVERIFIED")
         self.assertNotIn("close_snapshot", event["review"]["data_time"])
+        self.assertFalse((self.root / "data/state/close_review_closure_2026-08-31.json").exists())
 
     def test_mismatched_snapshot_is_rejected_when_verified_close_exists(self):
         account = {"status": "VALID", "updated_at": "2026-08-31T12:00:00+08:00"}
