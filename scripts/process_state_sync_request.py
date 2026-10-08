@@ -1208,6 +1208,7 @@ def request_bound_etf_opportunity_reviews(request: dict) -> dict[str, str]:
     if not isinstance(graph, list):
         return {}
     required: dict[str, str] = {}
+    seen_roles: dict[str, set[str]] = {}
     for item in graph:
         if not isinstance(item, dict):
             continue
@@ -1222,18 +1223,22 @@ def request_bound_etf_opportunity_reviews(request: dict) -> dict[str, str]:
             continue
         if not code:
             raise ValueError("decision work package has invalid ETF opportunity identity")
+        prior_roles = seen_roles.get(code, set())
+        if category in prior_roles:
+            raise ValueError("decision work package has invalid or duplicate ETF opportunity identity")
         if code in required:
-            existing = required[code]
-            role_pair = {existing, category}
-            if existing == category or role_pair != {"OBSERVED_ETF", "OBSERVATION_EVALUATION_INPUT"}:
+            role_pair = prior_roles | {category}
+            if role_pair != {"OBSERVED_ETF", "OBSERVATION_EVALUATION_INPUT"}:
                 raise ValueError("decision work package has invalid or duplicate ETF opportunity identity")
             # One instrument may have two distinct decision roles in the same
             # node: an existing Observation and a temporary Discovery evaluation.
             # Capital competition is instrument-level, so the registered
             # Observation identity owns the single canonical opportunity row.
             required[code] = "OBSERVED_ETF"
+            seen_roles[code] = role_pair
             continue
         required[code] = category
+        seen_roles[code] = {category}
     return required
 
 
