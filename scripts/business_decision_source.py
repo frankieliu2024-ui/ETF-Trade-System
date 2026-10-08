@@ -583,10 +583,21 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             elif review.get("category") != "OBSERVED_ETF":
                 discovery_summary["rejected_from_opportunity_role"] += 1
 
+        opportunity_by_code = {}
+        for item in opportunity_etfs:
+            code = str(item.get("code") or "")
+            if code not in opportunity_by_code:
+                opportunity_by_code[code] = dict(item)
+                continue
+            existing = opportunity_by_code[code]
+            sources = list(dict.fromkeys([existing.get("source"), item.get("source")]))
+            existing["source"] = "；".join(x for x in sources if x)
+            evidence = [existing.get("execution_evidence"), item.get("execution_evidence")]
+            existing["execution_evidence"] = "；".join(dict.fromkeys(x for x in evidence if x))
         business_role_reconciliation = {
             "持仓ETF": holding_etfs,
             "观察ETF": observation_etfs,
-            "机会ETF": opportunity_etfs,
+            "机会ETF": list(opportunity_by_code.values()),
             "全市场机会发现": discovery_summary,
         }
 
