@@ -123,7 +123,7 @@ jobs:
       - name: Run bounded LLM adapter contract tests
         shell: bash
         run: |
-          python -m unittest \
+          PYTHONPATH=scripts python -m unittest \
             tests.test_issue_687_business_e2e_closure.BusinessE2EClosureContractTests.test_historical_replay_discovery_eligibility_uses_request_bound_context \
             tests.test_issue_687_business_e2e_closure.BusinessE2EClosureContractTests.test_historical_replay_discovery_eligibility_fails_closed_without_matching_provenance
           python - <<'PY'
