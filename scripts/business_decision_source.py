@@ -404,6 +404,33 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
     if new_amount == 0 and not zero_amount_decisive_reason:
         raise ValueError("decision response requires zero_amount_decisive_reason_if_zero when new amount is zero")
 
+    # When cash is insufficient but a current opportunity and actual holdings
+    # coexist, zero deployment is not complete until the actor compares
+    # releasing the lowest-efficiency holding against continuing to hold it.
+    # This reuses the existing BDS/DWP contract; it does not grant sell or buy
+    # authority and does not choose the holding mechanically.
+    has_holding = any(pid.startswith("HOLDING:") for pid in required_ids)
+    has_opportunity = any(pid.startswith(("DISCOVERY:", "OBSERVATION:", "OBSERVATION_REVIEW:")) for pid in required_ids)
+    cash_limited_zero = (
+        new_amount == 0
+        and has_holding
+        and has_opportunity
+        and any(token in zero_amount_decisive_reason for token in ("现金", "资金不足", "资金缺口", "不足"))
+    )
+    if cash_limited_zero:
+        migration = next_answer.get("capital_migration_review")
+        if not isinstance(migration, dict):
+            raise ValueError("decision response requires NEXT_UNIT_CAPITAL_USE.capital_migration_review when cash-limited zero deployment competes with holdings")
+        for field in (
+            "current_best_opportunity",
+            "cash_gap",
+            "lowest_efficiency_holding",
+            "release_vs_continue_comparison",
+            "decision",
+        ):
+            if migration.get(field) in (None, "", [], {}):
+                raise ValueError(f"decision response missing NEXT_UNIT_CAPITAL_USE.capital_migration_review.{field}")
+
     layer_map = {"A_SHARE_STYLE_FEEDBACK": "layer_2_a_share_internal", "ETF_RELATIVE_STRENGTH": "layer_3_etf_opportunity_capital"}
     consumed = {"request_id": str(source.get("parent_request_id") or source.get("request_id") or "").strip()}
     domains = {"layer_1_external_cross_market": [], "layer_2_a_share_internal": [], "layer_3_etf_opportunity_capital": []}
