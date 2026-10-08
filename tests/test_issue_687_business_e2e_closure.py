@@ -434,6 +434,109 @@ class BusinessE2EClosureContractTests(unittest.TestCase):
                 root, "2026-10-08", request
             )
 
+    def test_stale_historical_replay_cannot_replace_current_formal_action(self) -> None:
+        root = Path(tempfile.mkdtemp())
+        decision_dir = root / "events" / "decisions"
+        decision_dir.mkdir(parents=True)
+        decisions = [
+            ("old_decision", "2026-10-08T12:21:00+08:00"),
+            ("current_decision", "2026-10-08T13:51:41+08:00"),
+        ]
+        for decision_id, stamp in decisions:
+            (decision_dir / f"{decision_id}.json").write_text(
+                json.dumps({
+                    "event_type": "FORMAL_DECISION",
+                    "decision_id": decision_id,
+                    "decision_time_beijing": stamp,
+                    "formal_decision": {"decision_id": decision_id, "decision_time": stamp},
+                }),
+                encoding="utf-8",
+            )
+
+        account = {"formal_action": {
+            "decision_id": "current_decision",
+            "action": "current action",
+            "execution_status": "PENDING",
+        }}
+        original = json.loads(json.dumps(account))
+        request = {
+            "_historical_replay": True,
+            "formal_decision": {
+                "decision_id": "old_decision",
+                "decision_time": "2026-10-08T12:21:00+08:00",
+                "action": "stale historical action",
+            },
+        }
+
+        current, changed = state_sync.project_current_formal_action(
+            account, request, "old_decision", root
+        )
+        self.assertFalse(current)
+        self.assertFalse(changed)
+        self.assertEqual(account, original)
+
+    def test_latest_historical_replay_projects_and_ambiguous_order_fails_closed(self) -> None:
+        root = Path(tempfile.mkdtemp())
+        decision_dir = root / "events" / "decisions"
+        decision_dir.mkdir(parents=True)
+        stamp = "2026-10-08T13:51:41+08:00"
+        (decision_dir / "current_decision.json").write_text(
+            json.dumps({
+                "event_type": "FORMAL_DECISION",
+                "decision_id": "current_decision",
+                "decision_time_beijing": stamp,
+                "formal_decision": {"decision_id": "current_decision", "decision_time": stamp},
+            }),
+            encoding="utf-8",
+        )
+        request = {
+            "_historical_replay": True,
+            "formal_decision": {
+                "decision_id": "current_decision",
+                "decision_time": stamp,
+                "action": "current action",
+            },
+        }
+        account = {"formal_action": {
+            "decision_id": "older_decision",
+            "action": "older action",
+            "execution_status": "PENDING",
+        }}
+        current, changed = state_sync.project_current_formal_action(
+            account, request, "current_decision", root
+        )
+        self.assertTrue(current)
+        self.assertTrue(changed)
+        self.assertEqual(account["formal_action"]["decision_id"], "current_decision")
+        self.assertEqual(account["formal_action"]["execution_status"], "PENDING")
+
+        executed = {"formal_action": {
+            "decision_id": "current_decision",
+            "action": "current action",
+            "execution_status": "EXECUTED",
+        }}
+        current, changed = state_sync.project_current_formal_action(
+            executed, request, "current_decision", root
+        )
+        self.assertTrue(current)
+        self.assertFalse(changed)
+        self.assertEqual(executed["formal_action"]["execution_status"], "EXECUTED")
+
+        (decision_dir / "tied_decision.json").write_text(
+            json.dumps({
+                "event_type": "FORMAL_DECISION",
+                "decision_id": "tied_decision",
+                "decision_time_beijing": stamp,
+                "formal_decision": {"decision_id": "tied_decision", "decision_time": stamp},
+            }),
+            encoding="utf-8",
+        )
+        self.assertFalse(
+            state_sync.should_project_formal_decision_current_state(
+                request, "current_decision", root
+            )
+        )
+
     def test_eligibility_admit_requires_ready_quote_and_then_becomes_legal_observation(self) -> None:
         inputs = {
             "588080": {"code": "588080", "formal_quote_status": "READY"},

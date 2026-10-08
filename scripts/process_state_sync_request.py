@@ -123,6 +123,83 @@ def parse_time(text: object) -> datetime | None:
         dt = dt.replace(tzinfo=SHANGHAI)
     return dt.astimezone(SHANGHAI)
 
+def should_project_formal_decision_current_state(request: dict, decision_id: str, root: Path = ROOT) -> bool:
+    """Historical replay may project current state only when it is the unique latest decision."""
+    if request.get("_historical_replay") is not True:
+        return True
+    decision_id = str(decision_id or "").strip()
+    decision_dir = root / "events" / "decisions"
+    if not decision_id or not decision_dir.is_dir():
+        return False
+
+    records = []
+    for path in decision_dir.glob("*.json"):
+        try:
+            event = load_json(path)
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+            return False
+        if str(event.get("event_type") or "").upper() != "FORMAL_DECISION":
+            continue
+        decision = event.get("formal_decision") or event.get("decision") or {}
+        if not isinstance(decision, dict):
+            return False
+        event_id = str(event.get("decision_id") or decision.get("decision_id") or "").strip()
+        stamp = (
+            event.get("decision_time_beijing")
+            or event.get("decision_effective_at_beijing")
+            or decision.get("decision_time")
+            or decision.get("decision_effective_at_beijing")
+            or event.get("recorded_at_beijing")
+        )
+        parsed = parse_time(stamp)
+        if not event_id or parsed is None:
+            return False
+        records.append((parsed, event_id))
+
+    matching = [stamp for stamp, event_id in records if event_id == decision_id]
+    if len(matching) != 1:
+        return False
+    target_time = matching[0]
+    # Equal-time decisions are ambiguous unless they are the same unique event.
+    return not any(
+        event_id != decision_id and stamp >= target_time
+        for stamp, event_id in records
+    )
+
+
+def project_current_formal_action(
+    account: dict,
+    request: dict,
+    decision_id: str,
+    root: Path = ROOT,
+) -> tuple[bool, bool]:
+    """Project a current action without letting stale historical replay roll state back."""
+    if not should_project_formal_decision_current_state(request, decision_id, root):
+        return False, False
+    decision = request.get("formal_decision") or {}
+    prior_action = account.get("formal_action") or {}
+    same_executed_decision = (
+        str(prior_action.get("decision_id") or "") == decision_id
+        and str(prior_action.get("execution_status") or "").upper() == "EXECUTED"
+    )
+    if same_executed_decision:
+        return True, False
+    next_action = {
+        "action": decision.get("action") or decision.get("amount_action") or "",
+        "quantity": decision.get("quantity"),
+        "decision_id": decision_id,
+        "decision_time": decision.get("decision_time") or decision.get("data_as_of_beijing") or datetime.now(SHANGHAI).isoformat(timespec="seconds"),
+        "source": "CHATGPT_FORMAL_DECISION",
+        "lifecycle": decision.get("lifecycle"),
+        "applicable_object": decision.get("candidate_code") or decision.get("code") or "",
+        "validity": "ACTIVE",
+        "execution_status": "PENDING",
+    }
+    if next_action == prior_action:
+        return True, False
+    account["formal_action"] = next_action
+    return True, True
+
 
 
 def latest_formal_review_decision(root: Path) -> dict:
@@ -3325,18 +3402,12 @@ def main() -> int:
     if account.get("status") != "VALID":
         raise RuntimeError("account_fact is not VALID")
     decision_recorded, decision_id = record_formal_decision(request)
+    formal_decision_current = False
     if decision_recorded:
-        decision = request.get("formal_decision") or {}
-        prior_action = account.get("formal_action") or {}
-        same_executed_decision = (
-            str(prior_action.get("decision_id") or "") == decision_id
-            and str(prior_action.get("execution_status") or "").upper() == "EXECUTED"
+        formal_decision_current, formal_action_changed = project_current_formal_action(
+            account, request, decision_id
         )
-        # Replaying the same formal decision is idempotent: an executed action
-        # must never be downgraded back to PENDING. A genuinely new decision
-        # may still become the current pending action.
-        if not same_executed_decision:
-            account["formal_action"] = {"action": decision.get("action") or decision.get("amount_action") or "", "quantity": decision.get("quantity"), "decision_id": decision_id, "decision_time": decision.get("decision_time") or decision.get("data_as_of_beijing") or datetime.now(SHANGHAI).isoformat(timespec="seconds"), "source": "CHATGPT_FORMAL_DECISION", "lifecycle": decision.get("lifecycle"), "applicable_object": decision.get("candidate_code") or decision.get("code") or "", "validity": "ACTIVE", "execution_status": "PENDING"}
+        if formal_action_changed:
             atomic_json_write(ACCOUNT, account)
     trade_event_recorded = False
     persisted_trade_events = []
@@ -3462,8 +3533,8 @@ def main() -> int:
     # change; do not wait for a later formal decision to repair market coverage.
     account_membership_changed = account_sync_status == "ACCOUNT_FACT_UPDATED" or bool(trade_event_recorded)
     observation_universe_changed = persist_monitor_universe(
-        ROOT, account, request.get("formal_decision") or {}
-    ) if (decision_recorded or account_membership_changed) else False
+        ROOT, account, (request.get("formal_decision") or {}) if formal_decision_current else {}
+    ) if (formal_decision_current or account_membership_changed) else False
     formal_files_sync = sync_formal_files(ROOT, account)
     result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "review_prerequisite_unavailable_recorded": unavailable_recorded, "review_prerequisite_unavailable_idempotent_noop": unavailable_idempotent, "formal_files_sync": formal_files_sync, "observation_universe_changed": observation_universe_changed, "account_sync_status": account_sync_status, "canonical_ingress_state": canonical_ingress_contract["terminal_state"], "canonical_ingress_failure_reason": None if canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_SUBMITTED else canonical_ingress_contract["reason"]}
     print(json.dumps(result, ensure_ascii=False))
