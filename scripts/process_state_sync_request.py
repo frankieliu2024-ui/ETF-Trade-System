@@ -3101,6 +3101,43 @@ def is_broker_screenshot_request(request: dict) -> bool:
     )
 
 
+def validate_broker_account_fact_ingress(request: dict, supplied: object) -> str:
+    """Fail fast on malformed ChatGPT-translated broker account facts.
+
+    This validates transport shape only. It does not infer security identity,
+    trading permission, or market facts from names.
+    """
+    if not is_broker_screenshot_request(request) or supplied is None:
+        return ""
+    if not isinstance(supplied, dict):
+        return "broker account_fact must be an object"
+    positions = supplied.get("positions")
+    if positions is None:
+        return ""
+    if not isinstance(positions, list):
+        return "broker account_fact.positions must be a list"
+    seen: set[str] = set()
+    for index, position in enumerate(positions):
+        if not isinstance(position, dict):
+            return f"broker account_fact.positions[{index}] must be an object"
+        code = str(position.get("code") or "").strip()
+        if not re.fullmatch(r"\d{6}", code):
+            return f"broker account_fact.positions[{index}].code must be a six-digit security code"
+        if code in seen:
+            return f"broker account_fact.positions contains duplicate code {code}"
+        seen.add(code)
+        if position.get("quantity") is None:
+            return f"broker account_fact.positions[{index}].quantity is required"
+        try:
+            float(position.get("quantity"))
+        except (TypeError, ValueError):
+            return f"broker account_fact.positions[{index}].quantity must be numeric"
+        asset_type = str(position.get("asset_type") or "").strip().upper()
+        if asset_type and asset_type not in {"ETF", "STOCK", "FUND", "OTHER"}:
+            return f"broker account_fact.positions[{index}].asset_type is invalid"
+    return ""
+
+
 def merge_account_fact(prior: dict, supplied: dict) -> dict:
     """Merge confirmed screenshot facts and derive settlement cash canonically."""
     merged = json.loads(json.dumps(prior or {}))
@@ -3478,6 +3515,20 @@ def main() -> int:
             "canonical_ingress_failure_reason": canonical_ingress_contract["reason"],
             "request": str(req_path.relative_to(ROOT)).replace("\\", "/"),
         }, ensure_ascii=False, indent=2, sort_keys=True))
+        return 1
+
+    broker_shape_error = validate_broker_account_fact_ingress(request, supplied_account)
+    if broker_shape_error:
+        print(json.dumps({
+            "ok": False,
+            "request_id": request.get("request_id"),
+            "status": "BROKER_ACCOUNT_FACT_SCHEMA_INVALID",
+            "account_sync_status": "ACCOUNT_SYNC_NOT_PERFORMED",
+            "canonical_ingress_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
+            "canonical_ingress_failure_reason": "broker_account_fact_schema_invalid",
+            "dashboard_updated": False,
+            "detail": broker_shape_error,
+        }, ensure_ascii=False))
         return 1
 
     if isinstance(supplied_account, dict):
