@@ -47,9 +47,11 @@ permissions:
 
 concurrency:
   group: etf-market-snapshot-${{ github.ref }}
-  # A newer user request supersedes an older queued request. Scheduled pulses
-  # and bot-produced snapshot/state commits never cancel an active request.
-  cancel-in-progress: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, 'request') }}
+  # Formal Decision parents are durable request identities. A later request
+  # must never cancel an active run that may still be producing request-bound
+  # facts for an unfinished parent. Keep the existing shared producer queue;
+  # recovery/deduplication remains owned by the canonical request/recovery path.
+  cancel-in-progress: false
 
 jobs:
   snapshot:
