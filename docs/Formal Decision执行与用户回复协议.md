@@ -117,10 +117,16 @@ Implementation Acceptance 只能证明仓库实现、测试、PR、CI 和必要�
 
 Real Target-Path Acceptance 必须验证：
 
-- WAIT期间用户端保持零输出；
+- WAIT期间用户端保持零输出，机器Actor动作明确为继续同一请求；
+- 旧context、空context、连接器暂时空读、单次超时、派生状态暂未追上父请求时仍保持WAIT，不提前失败；
+- 重复“继续／重试”恢复同一父请求，不创建第二父请求或重复等价刷新；
 - 同一父请求随后达到 READY；
 - 第一条用户可见消息直接是完整业务报告；
-- READY 后不等待后置生产闭环；
-- 不创建第二父请求。
+- READY 后不等待后置生产闭环，后置失败也不撤销已经取得的业务回复资格；
+- 明确terminal failure才允许终止说明；
+- 用户报告中的证券名称（代码）来自本次request-bound或已核验身份事实，不以模型知识补造名称、交易所、asset type或代理关系；
+- Actor提交的业务回答只覆盖DWP要求的问题，机器字段、身份绑定和正式结构由既有builder/validator完成。
+
+对于曾由真实交互暴露的Actor失效模式，验收必须至少包含原失败场景、一个相邻非终态场景和一个此前正常READY场景。Implementation Acceptance与Real Target-Path Acceptance分别记录；前者不得替代后者。
 
 在真实目标路径验收通过前，不得仅凭 helper、单元测试或 CI PASS 宣称本故障域已经闭环。
