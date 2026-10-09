@@ -54,7 +54,7 @@ Formal Decision中，ChatGPT只负责机器无法确定性替代的业务判断�
 
 ### 4.1 状态解释与下一动作
 
-现有 `scripts/formal_request_consumer.py` 是消费侧唯一三态解释器。其 `actor_action` 与 `user_output_allowed` 构成Actor执行合同：
+现有 `scripts/formal_request_consumer.py` 是消费侧唯一三态解释器。其每一条返回路径都必须同时给出 `actor_action` 与 `user_output_allowed`；缺少任一字段即属于实现不完整，不得交给ChatGPT自行解释。两者共同构成Actor执行合同：
 
 - `CONTINUE_SAME_REQUEST_SILENTLY`：继续消费同一父请求，且不得产生过程性用户输出。
 - `COMPLETE_BUSINESS_DECISION_NOW`：立即完成本次业务判断，不等待后置持久化、审计、通知或验收。
