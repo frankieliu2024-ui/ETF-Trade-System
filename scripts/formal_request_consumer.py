@@ -14,6 +14,7 @@ def classify_formal_request_consumer_state(
     *,
     producer_status: str = "",
     terminal_failure: bool = False,
+    canonical_persistence_status: str = "",
 ) -> dict[str, Any]:
     """Classify a durable Formal Decision parent without inventing a second gate.
 
@@ -47,6 +48,8 @@ def classify_formal_request_consumer_state(
     freeze_request = str(freeze.get("request_id") or bound_request).strip()
     reply_freezable = bool(freeze.get("reply_freezable"))
     producer = str(producer_status or "").strip().upper()
+    persistence = str(canonical_persistence_status or "").strip().upper()
+    canonical_persisted = persistence in {"PERSISTED", "COMMITTED", "ACCEPTED", "PASS"}
 
     if terminal_failure or producer in TERMINAL_FAILURE_STATUSES:
         return {
@@ -60,13 +63,26 @@ def classify_formal_request_consumer_state(
 
     same_request = bound_request == parent and (not freeze_request or freeze_request == parent)
     if same_request and freeze_status in READY_STATUSES and reply_freezable:
+        # Request-bound facts make business analysis legal, but they do not
+        # prove that the actor's BUSINESS_DECISION_SOURCE reached the canonical
+        # writer.  Keep the user-visible reply frozen until that handoff is
+        # explicitly confirmed by the persistence owner.
+        if not canonical_persisted:
+            return {
+                "status": "BUSINESS_DECISION_PENDING_PERSISTENCE",
+                "continue_same_request": True,
+                "analysis_eligible": True,
+                "reply_eligible": False,
+                "user_visible_output": "SILENT_CONTINUATION",
+                "reason": "BDS_CANONICAL_PERSISTENCE_NOT_CONFIRMED",
+            }
         return {
             "status": "BUSINESS_DECISION_READY",
             "continue_same_request": False,
             "analysis_eligible": True,
             "reply_eligible": True,
             "user_visible_output": "COMPLETE_BUSINESS_DECISION_ONLY",
-            "reason": "SAME_REQUEST_FORMAL_REPLY_FREEZE_READY",
+            "reason": "SAME_REQUEST_FORMAL_REPLY_AND_CANONICAL_PERSISTENCE_READY",
         }
 
     if not same_request:
