@@ -349,6 +349,11 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         if pid.startswith("HOLDING:"):
             if not answer.get("capital_occupancy_reason") or not answer.get("higher_efficiency_alternative"):
                 raise ValueError(f"decision response missing holding capital rationale: {pid}")
+            # New DWP nodes explicitly require a separate capital-efficiency
+            # release judgment. Historical packages without the flag remain
+            # replay-compatible.
+            if by_id.get(pid, {}).get("capital_efficiency_release_required") is True and not answer.get("capital_efficiency_release_assessment"):
+                raise ValueError(f"decision response missing capital-efficiency release assessment: {pid}")
             if _normalize_holding_action(answer.get("final_action")) in {"REDUCE", "EXIT"}:
                 if answer.get("quantity") in (None, "") or not answer.get("capital_destination"):
                     raise ValueError(f"decision response missing action quantity/destination: {pid}")
