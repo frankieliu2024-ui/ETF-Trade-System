@@ -235,6 +235,7 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         )
         self.assertEqual(state["actor_action"], "CONTINUE_SAME_REQUEST_SILENTLY")
         self.assertFalse(state["user_output_allowed"])
+        self.assertFalse(state["reply_eligible"])
 
 
 
