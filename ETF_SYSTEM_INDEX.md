@@ -13,13 +13,14 @@
 
 正式优先级：MASTER > Dashboard > 当前有效行情与实际成交 > 经验库 > 行情档案 > 历史聊天。历史聊天不属于正式来源。
 
-## 2. 四个规范域
+## 2. 五个规范域
 
 系统只保留以下四个独立规范域；各规范文件分别是所属域的**唯一规范性规则来源**。INDEX只负责路由，不复制其正文、对象清单、阈值、时段表或当前参数：
 
 - **交易域**：`ETF规则_MASTER.md`。
 - **数据与市场监测域**：`ETF与市场监测数据接口使用规范.md`。负责数据资格、三层监测语义、market phase、Point-in-Time、provider降级、代理、新鲜度、质量验收与查询时补采边界。当前对象、provider顺序和runtime参数读取机器配置，不从INDEX复制。
 - **主动通知域**：`docs/ETF主动通知体系.md`。负责通知资格、事件语义、标题、固定节点、可比事实门、去重、恢复和展示边界。
+- **Formal Decision执行域**：`docs/Formal Decision执行与用户回复协议.md`。负责Formal Decision的唯一父请求、WAIT/READY/TERMINAL三态消费、业务回复时序和用户可见边界；不定义交易规则，不新增生产链。
 - **生产变更与并发治理域**：`docs/生产变更与并发写入协议_V1.0.md`。负责生产变更准入、writer ownership、latest-main、并发、mutation gateway、状态producer和组合验收。`config/maintenance/production_mutation_protocol.json`只是该规范的机器可执行镜像，不是第二套规则源。
 
 查询路由技术说明：`docs/市场行情查询路由与全球时点规则_V1.0.md`。它只解释ETF系统内部查询路由实现，不是第五个规范域；唯一无网络路由实现为`scripts/market_quote_router.py`，单对象查询入口为`scripts/query_market_object.py`，查询时即时补采由`scripts/query_time_market_refresh.py`执行。
@@ -37,6 +38,8 @@
 3. 由该请求文件的 push 唤醒现有 `.github/workflows/market-snapshot.yml` 和既有 request-bound producer；不得另建 workflow、producer、state 或第二决策链。按当前场景和数据规范取得本次 request-bound 合法事实。
 4. 正式推理前必须先使用现有 `scripts/formal_request_consumer.py` 的 `classify_formal_request_consumer_state` 解释父请求与当前派生状态；其 `user_visible_output=SILENT_CONTINUATION` 时属于硬用户可见门禁，ChatGPT不得输出等待、处理中、外部条件或失败状态，只能继续消费同一父请求。随后读取小型 `data/state/e2e_status.json` 的 `components.decision_context.formal_reply_gate` 作为消费侧首要机器门：其 `request_id` 必须与本次父请求一致，且 `reply_freezable=true`；若 request_id 仍旧/缺失或状态为 IN_FLIGHT/BUILDING，只表示同一请求仍在形成，必须继续消费同一链，不得终止或创建第二请求。门通过后，再确认 `data/state/query_context.json` 的 `decision_fact_pack.trigger.request_id` 与本次父请求 ID 完全一致，且其中 `decision_work_package.problem_graph` 属于本次请求。缺少或不匹配时保持 fail-closed；不得把无身份的当前 DWP 或历史 DWP 当成本次请求包。**父请求已成功写入并回读后，若当前 `query_context` 仍为空、属于旧请求或尚未匹配本次 `request_id`，该现象本身只表示本次 request-bound facts 尚未发布，不构成 Formal Decision 的终止失败。此时必须沿同一父请求检查现有 canonical workflow/check 状态并继续消费同一链；只要该链仍为 queued/in_progress/building，就不得创建第二个等价请求，也不得向用户输出最终失败结论。只有本次同 request 的 `formal_reply_freeze.reply_freezable=true`／合法 READY（含明确允许的 resolved degradation），或现有 canonical 链明确进入 terminal failure／不存在合法链时，才允许结束等待并进入业务判断或 fail-closed 终止。对于大型 canonical JSON 的连接器空读，必须先以同一 GitHub Contents 来源回读/复核后才能认定缺失。**
 #### Formal Decision 回复优先与用户可见边界（强制）
+
+本场景唯一三态合同读取 `docs/Formal Decision执行与用户回复协议.md`；本节只提供执行路由，不复制该协议正文。
 
 当 `formal_reply_freeze.reply_freezable=true` 且父请求、request-bound DWP 和当前 facts 已一致时，`classify_formal_request_consumer_state` 返回 `BUSINESS_DECISION_READY` 即视为用户业务分析的硬交接点：ChatGPT必须直接完成一次完整业务判断并输出既定长报告，不得继续等待 canonical persistence、audit、notification、consistency、acceptance 或任何后置投影，也不得再次读取原始行情、重复执行同一份 Discovery 或重新审计已通过的生产链。上述后置工作只能异步进行，不能撤销本次业务回复资格。
 
