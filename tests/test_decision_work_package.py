@@ -45,6 +45,8 @@ class DecisionWorkPackageTests(unittest.TestCase):
         self.assertIn("DISCOVERY:159127", ids)
         holding = next(x for x in graph if x["problem_id"] == "HOLDING:561980")
         self.assertEqual(set(holding["alternatives"]), {"HOLD", "REDUCE", "EXIT"})
+        self.assertTrue(holding["capital_efficiency_release_required"])
+        self.assertIn("资本效率型释放", holding["required_business_judgment"])
 
     def test_evidence_plan_scopes_object_and_capital_facts_by_problem_family(self):
         graph = _decision_problem_graph(
@@ -57,8 +59,10 @@ class DecisionWorkPackageTests(unittest.TestCase):
         for item in plan:
             by_problem.setdefault(item["target_problem_id"], set()).add(item["evidence_class"])
 
-        self.assertNotIn("FULL_MARKET_DISCOVERY", by_problem["HOLDING:561980"])
-        self.assertNotIn("TEMPORARY_DISCOVERY_CANDIDATE", by_problem["HOLDING:561980"])
+        self.assertIn("FULL_MARKET_DISCOVERY", by_problem["HOLDING:561980"])
+        self.assertIn("TEMPORARY_DISCOVERY_CANDIDATE", by_problem["HOLDING:561980"])
+        self.assertIn("RELEASABLE_CAPITAL", by_problem["HOLDING:561980"])
+        self.assertIn("CASH", by_problem["HOLDING:561980"])
         self.assertNotIn("ACCOUNT_STOCK", by_problem["DISCOVERY:159127"])
         self.assertNotIn("HOLDING_ETF", by_problem["DISCOVERY:159127"])
         self.assertNotIn("RELEASABLE_CAPITAL", by_problem["RISK_PERMISSION"])
