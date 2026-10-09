@@ -36,9 +36,13 @@ def classify_formal_request_consumer_state(
     pack = context.get("decision_fact_pack") if isinstance(context.get("decision_fact_pack"), dict) else {}
     trigger = pack.get("trigger") if isinstance(pack.get("trigger"), dict) else {}
     bound_request = str(trigger.get("request_id") or "").strip()
-    freeze = context.get("formal_reply_freeze")
+    # The request-bound fact pack is the authoritative reply contract.  The
+    # top-level projection is global/derived and may lag or belong to another
+    # request; it must never turn a current request into a false READY state.
+    freeze = pack.get("formal_reply_freeze")
     if not isinstance(freeze, dict):
-        freeze = pack.get("formal_reply_freeze") if isinstance(pack.get("formal_reply_freeze"), dict) else {}
+        projected_freeze = context.get("formal_reply_freeze")
+        freeze = projected_freeze if isinstance(projected_freeze, dict) else {}
     freeze_status = str(freeze.get("status") or "").strip().upper()
     freeze_request = str(freeze.get("request_id") or bound_request).strip()
     reply_freezable = bool(freeze.get("reply_freezable"))

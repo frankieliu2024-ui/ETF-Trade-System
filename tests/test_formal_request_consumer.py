@@ -131,6 +131,31 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertTrue(state["analysis_eligible"])
         self.assertEqual(state["user_visible_output"], "COMPLETE_BUSINESS_DECISION_ONLY")
 
+    def test_stale_top_level_projection_cannot_make_current_request_ready(self):
+        state = classify_formal_request_consumer_state(
+            "current-parent",
+            {
+                # This projection is from an older request and must be ignored.
+                "formal_reply_freeze": {
+                    "status": "READY",
+                    "reply_freezable": True,
+                    "request_id": "old-parent",
+                },
+                "decision_fact_pack": {
+                    "trigger": {"request_id": "current-parent"},
+                    "formal_reply_freeze": {
+                        "status": "IN_FLIGHT",
+                        "reply_freezable": False,
+                        "request_id": "current-parent",
+                    },
+                },
+            },
+            producer_status="RUNNING",
+        )
+        self.assertEqual(state["status"], "REQUEST_BOUND_FACTS_BUILDING")
+        self.assertFalse(state["reply_eligible"])
+        self.assertEqual(state["user_visible_output"], "SILENT_CONTINUATION")
+
     def test_explicit_terminal_failure_is_the_only_failure_exit(self):
         state = classify_formal_request_consumer_state(
             "parent",
