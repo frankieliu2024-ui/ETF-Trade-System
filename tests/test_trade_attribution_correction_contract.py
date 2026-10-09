@@ -26,8 +26,10 @@ class AttributionCorrectionTests(unittest.TestCase):
    with patch.object(correction,"ROOT",root):
     self.assertEqual(correction._apply_attribution_request(req),0)
    stored=json.loads(pending.read_text())
+   # Raw ingress is immutable; the processor reconciles the same decision
+   # without rewriting the pending request with derived metadata.
    self.assertEqual(stored["linked_decision_id"],"decision-a")
-   self.assertEqual(stored["correction_type"],"DECISION_ATTRIBUTION")
+   self.assertNotIn("correction_type",stored)
 
  def test_review_normalization_uses_effective_attribution_for_raw_unlinked_trade(self):
   with tempfile.TemporaryDirectory() as d:
