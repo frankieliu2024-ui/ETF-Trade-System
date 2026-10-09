@@ -444,7 +444,7 @@ def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict],
     ]
     for item in positions:
         code = str(item.get("code") or "")
-        problems.append({"problem_id": f"HOLDING:{code}", "decision_object": code, "security": item.get("name") or code, "current_quantity": item.get("quantity"), "current_capital_occupation": item.get("market_value"), "alternatives": {"HOLD": "继续占用当前资本", "REDUCE": "部分释放资本", "EXIT": "全部释放资本"}, "required_business_judgment": "比较HOLD/REDUCE/EXIT并确定当前动作、数量、去向和下一变化条件"})
+        problems.append({"problem_id": f"HOLDING:{code}", "decision_object": code, "security": item.get("name") or code, "current_quantity": item.get("quantity"), "current_capital_occupation": item.get("market_value"), "alternatives": {"HOLD": "继续占用当前资本", "REDUCE": "部分释放资本", "EXIT": "全部释放资本"}, "capital_efficiency_release_required": True, "required_business_judgment": "比较HOLD/REDUCE/EXIT并确定当前动作、数量、去向和下一变化条件；必须把风险型卖出与资本效率型释放分开判断：未达到资产自身风险退出条件不能单独证明继续占资最优，若存在已独立成立的新机会，必须判断其优势是否足以覆盖迁移成本、失败风险、旧仓赢家右尾和账户功能损失"})
         if str(item.get("asset_type") or "").upper() == "ETF":
             problems.append({"problem_id": f"HELD_ETF_ADD:{code}", "decision_object": code, "security": item.get("name") or code, "required_business_judgment": "判断是否追加资本及相对现金/其他用途的效率"})
     for item in observation_inputs or []:
@@ -505,7 +505,10 @@ def _evidence_requirement_plan(problems: list[dict]) -> list[dict]:
         elif pid == "MAIN_CANDIDATE":
             classes = shared_market + opportunity
         elif pid.startswith("HOLDING:"):
-            classes = shared_market + holding
+            # A holding sell-chain must see the same opportunity/capital alternatives
+            # that can justify a capital-efficiency release.  Asset-self evidence
+            # alone creates an incumbent bias when cash is below a qualified Trial.
+            classes = shared_market + holding + opportunity + capital
         elif pid.startswith("HELD_ETF_ADD:"):
             classes = shared_market + holding + ["HOLDING_ADDITIONAL_CAPITAL", "CASH"]
         elif pid.startswith(("DISCOVERY:", "OBSERVATION:", "OBSERVATION_REVIEW:")):
@@ -595,7 +598,7 @@ def _decision_work_package(
     return {
         "schema_version": "1.0", "business_role_reconciliation_contract": "V1", "problem_graph": graph,
         "evidence_requirements": requirement_states, "current_evidence": evidence,
-        "response_contract": {"must_answer": ["final_action", "capital_comparison", "next_change_condition", "evidence_decision_impact"], "holding_additional_fields": ["capital_occupancy_reason", "higher_efficiency_alternative", "quantity_if_reduce_or_exit", "capital_destination_if_reduce_or_exit"], "main_candidate_additional_fields": ["candidate_code", "candidate_name", "opportunity_status"], "opportunity_additional_fields": ["disposition", "reason", "opportunity_status", "for_DISCOVERY_ADMIT_only:name,thscode,thesis,falsifier,next_decision_information,information_value_reason"], "next_unit_additional_fields": ["new_amount_yuan", "post_action_deployable_cash", "future_opportunity_capacity", "cash_opportunity_cost", "alternative_capital_use_review", "concentration_account_structure_effect", "selected_state_reason", "compared_capital_states_as_business_state_names", "zero_amount_decisive_reason_if_zero", "capital_migration_review"], "schema_knowledge_required": False, "rule": "Actor answers only business questions keyed by problem_id. Canonical lifecycle, managed reviews, opportunity reviews, capital_use and evidence-consumption nesting are machine projections."},
+        "response_contract": {"must_answer": ["final_action", "capital_comparison", "next_change_condition", "evidence_decision_impact"], "holding_additional_fields": ["capital_occupancy_reason", "higher_efficiency_alternative", "capital_efficiency_release_assessment", "quantity_if_reduce_or_exit", "capital_destination_if_reduce_or_exit"], "main_candidate_additional_fields": ["candidate_code", "candidate_name", "opportunity_status"], "opportunity_additional_fields": ["disposition", "reason", "opportunity_status", "for_DISCOVERY_ADMIT_only:name,thscode,thesis,falsifier,next_decision_information,information_value_reason"], "next_unit_additional_fields": ["new_amount_yuan", "post_action_deployable_cash", "future_opportunity_capacity", "cash_opportunity_cost", "alternative_capital_use_review", "concentration_account_structure_effect", "selected_state_reason", "compared_capital_states_as_business_state_names", "zero_amount_decisive_reason_if_zero", "capital_migration_review"], "schema_knowledge_required": False, "rule": "Actor answers only business questions keyed by problem_id. Canonical lifecycle, managed reviews, opportunity reviews, capital_use and evidence-consumption nesting are machine projections."},
         "decision_marginal_stop": {
             "required_states": ["SATISFIED", "DEGRADED", "INSUFFICIENT", "NOT_REQUIRED"],
             "expansion_required": bool(unresolved), "expansion_complete": not unresolved,

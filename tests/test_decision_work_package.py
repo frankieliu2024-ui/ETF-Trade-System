@@ -45,6 +45,8 @@ class DecisionWorkPackageTests(unittest.TestCase):
         self.assertIn("DISCOVERY:159127", ids)
         holding = next(x for x in graph if x["problem_id"] == "HOLDING:561980")
         self.assertEqual(set(holding["alternatives"]), {"HOLD", "REDUCE", "EXIT"})
+        self.assertTrue(holding["capital_efficiency_release_required"])
+        self.assertIn("资本效率型释放", holding["required_business_judgment"])
 
     def test_evidence_plan_scopes_object_and_capital_facts_by_problem_family(self):
         graph = _decision_problem_graph(
@@ -57,8 +59,10 @@ class DecisionWorkPackageTests(unittest.TestCase):
         for item in plan:
             by_problem.setdefault(item["target_problem_id"], set()).add(item["evidence_class"])
 
-        self.assertNotIn("FULL_MARKET_DISCOVERY", by_problem["HOLDING:561980"])
-        self.assertNotIn("TEMPORARY_DISCOVERY_CANDIDATE", by_problem["HOLDING:561980"])
+        self.assertIn("FULL_MARKET_DISCOVERY", by_problem["HOLDING:561980"])
+        self.assertIn("TEMPORARY_DISCOVERY_CANDIDATE", by_problem["HOLDING:561980"])
+        self.assertIn("RELEASABLE_CAPITAL", by_problem["HOLDING:561980"])
+        self.assertIn("CASH", by_problem["HOLDING:561980"])
         self.assertNotIn("ACCOUNT_STOCK", by_problem["DISCOVERY:159127"])
         self.assertNotIn("HOLDING_ETF", by_problem["DISCOVERY:159127"])
         self.assertNotIn("RELEASABLE_CAPITAL", by_problem["RISK_PERMISSION"])
@@ -141,6 +145,26 @@ class DecisionWorkPackageTests(unittest.TestCase):
         package = {"problem_graph": [{"problem_id": "HOLDING:159981", "security": "能源化工ETF"}], "evidence_requirements": []}
         with self.assertRaisesRegex(ValueError, "holding capital rationale"):
             project_decision_response({}, {"answers": {"HOLDING:159981": {"final_action": "HOLD", "capital_comparison": "cash", "next_change_condition": "risk changes", "evidence_decision_impact": ["x"]}}}, package)
+
+    def test_new_holding_contract_requires_separate_capital_efficiency_release_assessment(self):
+        package = {
+            "problem_graph": [{
+                "problem_id": "HOLDING:159981",
+                "security": "能源化工ETF",
+                "capital_efficiency_release_required": True,
+            }],
+            "evidence_requirements": [],
+        }
+        answer = {
+            "final_action": "HOLD",
+            "capital_comparison": "新机会与继续持有已比较",
+            "next_change_condition": "资本效率变化时重评",
+            "evidence_decision_impact": ["ALL_REQUIRED"],
+            "capital_occupancy_reason": "旧仓仍有正向预期",
+            "higher_efficiency_alternative": "515220 Trial机会",
+        }
+        with self.assertRaisesRegex(ValueError, "capital-efficiency release assessment"):
+            project_decision_response({}, {"answers": {"HOLDING:159981": answer}}, package)
 
     def test_observation_retain_projects_existing_canonical_thesis(self):
         source = {"request_type":"BUSINESS_DECISION_SOURCE","request_id":"r2","parent_request_id":"p2","decision_id":"d2","consumed_snapshot":"snap"}
