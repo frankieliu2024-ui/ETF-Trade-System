@@ -239,3 +239,14 @@ if __name__ == "__main__":
         self.assertEqual(state["actor_action"], "CONTINUE_SAME_REQUEST_SILENTLY")
         self.assertFalse(state["user_output_allowed"])
         self.assertFalse(state["reply_eligible"])
+
+
+    def test_unknown_nonterminal_state_still_exposes_silent_actor_contract(self):
+        state = classify_formal_request_consumer_state(
+            "req-unknown",
+            {"decision_fact_pack": {"trigger": {"request_id": "req-unknown"}, "formal_reply_freeze": {"status": "UNKNOWN", "reply_freezable": False}}},
+            producer_status="",
+        )
+        self.assertEqual(state["actor_action"], "CONTINUE_SAME_REQUEST_SILENTLY")
+        self.assertFalse(state["user_output_allowed"])
+        self.assertFalse(state["reply_eligible"])
