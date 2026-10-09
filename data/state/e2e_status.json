@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-09T15:29:34+08:00",
-  "status": "BLOCKED",
+  "generated_at": "2026-10-09T15:33:28+08:00",
+  "status": "READY",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
@@ -13,19 +13,16 @@
       "market_phase": "POST_CLOSE_GRACE"
     },
     "account": {
-      "status": "BLOCKED",
-      "reason": "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request has not converged into canonical account_fact",
-      "updated_at": "2026-10-08T15:09:00+08:00",
-      "source": "BROKER_HOLDINGS_SCREENSHOTS_20261008_1509_USER_CONFIRMED_CLOSE",
+      "status": "READY",
+      "reason": "confirmed account facts remain valid; historical audit deltas are not pending updates",
+      "updated_at": "2026-10-09T15:27:00+08:00",
+      "source": "BROKER_HOLDINGS_SCREENSHOTS_20261009_1527_USER_CONFIRMED_CLOSE",
       "pending_change_events": [],
-      "historical_audit_event_count": 97,
-      "pending_broker_request": {
-        "path": "requests/live_snapshot/broker-screenshot-20261009-1527-close.json",
-        "request_id": "broker-screenshot-20261009-1527-close",
-        "request_time": "2026-10-09T15:27:00+08:00",
-        "has_account_fact": true,
-        "status": "ACCOUNT_SYNC_NOT_PERFORMED"
-      }
+      "historical_audit_event_count": 98,
+      "cash": 2181.04,
+      "reserved_cash_for_settlement": 0,
+      "deployable_cash": 2181.04,
+      "settlement_constraint_status": "NONE"
     },
     "risk": {
       "status": "READY",
@@ -58,16 +55,14 @@
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
       "request_bound": true,
       "formal_reply_gate": {
-        "request_id": "broker-screenshot-20261009-1527-close",
+        "request_id": "broker-screenshot-20261009-1527-close-recovery",
         "requested_at_beijing": "2026-10-09T15:27:00+08:00",
-        "status": "BLOCKED",
-        "reply_freezable": false,
-        "blockers": [
-          "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request has not converged into canonical account_fact"
-        ],
+        "status": "NOT_APPLICABLE",
+        "reply_freezable": true,
+        "blockers": [],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
-          "request_id": "broker-screenshot-20261009-1527-close",
+          "request_id": "broker-screenshot-20261009-1527-close-recovery",
           "requested_at_beijing": "2026-10-09T15:27:00+08:00",
           "query_context_path": "data/state/query_context.json",
           "decision_context_path": "data/state/decision_context.json",
@@ -79,17 +74,6 @@
           ],
           "read_strategy": "GATE_FIRST_TARGETED_PAYLOAD",
           "large_payload_empty_read": "REVERIFY_SAME_GITHUB_SOURCE_BEFORE_MISSING"
-        },
-        "account_dependency": {
-          "status": "BLOCKED",
-          "reason": "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request has not converged into canonical account_fact",
-          "pending_broker_request": {
-            "path": "requests/live_snapshot/broker-screenshot-20261009-1527-close.json",
-            "request_id": "broker-screenshot-20261009-1527-close",
-            "request_time": "2026-10-09T15:27:00+08:00",
-            "has_account_fact": true,
-            "status": "ACCOUNT_SYNC_NOT_PERFORMED"
-          }
         }
       }
     },
@@ -108,9 +92,7 @@
       "checked_at": "2026-09-29T14:31:02+08:00"
     }
   },
-  "blockers": [
-    "account"
-  ],
+  "blockers": [],
   "degradations": [],
   "safety_boundary": "This state does not create or modify risk permission, Trial/Confirm rules, amounts, sell rules, or execution authority."
 }
