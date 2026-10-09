@@ -1,0 +1,466 @@
+{
+  "request_id": "chatgpt-formal-20261009T104400p0800__business_decision_source",
+  "request_type": "BUSINESS_DECISION_SOURCE",
+  "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
+  "parent_request_id": "chatgpt-formal-20261009T104400p0800",
+  "decision_id": "chatgpt-formal-20261009T104400p0800_decision",
+  "consumed_snapshot": "data/market/snapshots/2026-10-09_104744.json",
+  "interaction_scenario": "INTRADAY",
+  "requested_at_beijing": "2026-10-09T10:53:00+08:00",
+  "decision_response": {
+    "answers": {
+      "RISK_PERMISSION": {
+        "final_action": "允许Trial",
+        "capital_comparison": "ETF策略风险率约-7.30%，仍处风险观察复核区。当前A股上证约-1.02%、科创50约-3.07%、创业板约-2.64%，成长科技明显承压；上一美股时段纳指100约-1.4%、半导体约-3.4%，但A股资源、防御方向存在独立正反馈。账户无结算硬约束，故允许Trial但不授权Confirm。",
+        "next_change_condition": "若A股宽度和成长继续恶化且资源/防御也失去承接，则收紧新增风险；若主候选承接和风险收益继续确认，再重评Confirm。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "MAIN_CANDIDATE": {
+        "final_action": "515220煤炭ETF维持Trial机会",
+        "capital_comparison": "515220约1.302、+1.80%，在上证-1.02%、科创50-3.07%、创业板-2.64%的弱市中保持独立强势；资源内部159981约+0.41%，513350约+1.42%但后者出现明显冲高回落风险复核。相对追逐油气、追加成长科技或保留现金，515220仍是当前最优新增风险资本候选。",
+        "next_change_condition": "若515220资源相对优势、成交承接或风险收益显著转弱则取消Trial；若午后继续保持独立强势且证据升级，再评估Confirm。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "candidate_code": "515220",
+        "candidate_name": "煤炭ETF",
+        "opportunity_status": "Trial机会"
+      },
+      "DEPLOYABLE_CASH": {
+        "final_action": "保留现金",
+        "capital_comparison": "可部署现金2,181.04元，无结算占用，低于固定Trial 5,000元。现金不足不否定515220机会，但不能绕过固定金额纪律。",
+        "next_change_condition": "若形成合法可释放资本或现金增加至可承载固定Trial，再执行金额判断；候选失效则继续保留现金。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "RELEASABLE_CAPITAL": {
+        "final_action": "当前不释放",
+        "capital_comparison": "已逐项比较全部8项实际持仓。601138工业富联当前约-3.75%，叠加成长科技共同风险，仍是最低效率优先复核对象；但单日下跌不能机械触发卖出，且其独立卖出链仍不足以授权降低风险或退出。其他持仓亦未达到独立卖出条件，因此可释放资本0元。",
+        "next_change_condition": "若601138自身结构/承接继续恶化并达到持有假设失效，或更高效率用途与同市场底仓替代取得独立合格证据，则优先重走其卖出链。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "TRIAL_CONFIRM_CAPACITY": {
+        "final_action": "保留Trial资格但当前无法承载",
+        "capital_comparison": "固定Trial为5,000元，可部署现金2,181.04元，缺口2,818.96元；当前可释放资本0元。Confirm证据未成立。",
+        "next_change_condition": "若515220继续成立且出现至少2,818.96元合法新增/释放资本，则可承载Trial；Confirm仍需独立证据升级。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "CONCENTRATION_COMMON_RISK": {
+        "final_action": "不增加成长科技共同风险",
+        "capital_comparison": "科创50ETF、科创创业ETF、工业富联、宁德时代及纳指ETF构成较高成长/科技共同暴露；当前A股科技弱、上一美股科技亦弱。资源已有159981仓位，因此也不追逐513350的冲高波动。",
+        "next_change_condition": "若成长出现本地结构与承接修复再比较追加；若资源延续，优先选择风险收益更平衡的资源表达。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "NEXT_UNIT_CAPITAL_USE": {
+        "final_action": "515220煤炭ETF为下一单位资本最有效用途；当前实际新增0元",
+        "capital_comparison": "完整资本竞争覆盖现金、8项实际持仓、6只持仓ETF追加、7只既有观察ETF、本节点Discovery对象、打新底仓替代研究候选及可释放资本。515220仍优于成长科技追加、油气追涨及当前Discovery对象；但现金不足固定Trial且没有持仓通过独立卖出链，因此当前新增0元。",
+        "next_change_condition": "午后/下一合法节点首先复核515220承接，同时继续复核601138是否真正达到释放条件。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "new_amount_yuan": 0,
+        "post_action_deployable_cash": 2181.04,
+        "future_opportunity_capacity": "保留2,181.04元现金；距固定Trial 5,000元仍缺2,818.96元。",
+        "cash_opportunity_cost": "若资源主线继续强化，保留现金存在价格机会成本；但不能以追价或强制卖出现有持仓替代资本纪律。",
+        "alternative_capital_use_review": "已比较全部实际持仓继续占资、全部持仓ETF追加、既有观察ETF、本节点Discovery对象、打新底仓替代研究候选、现金及可释放资本。",
+        "concentration_account_structure_effect": "新增0元，不扩大成长科技或资源共同风险；若未来执行515220 Trial，需与159981既有资源仓共同复核。",
+        "selected_state_reason": "515220在弱市中的资源相对强势和风险收益优于成长科技追加，也优于当前冲高回落风险较高的513350；但资金来源尚未合法成立。",
+        "compared_capital_states_as_business_state_names": [
+          "现金",
+          "全部实际持仓继续占资",
+          "全部持仓ETF追加",
+          "既有观察ETF",
+          "本节点Discovery对象",
+          "515220 Trial",
+          "可释放资本"
+        ],
+        "zero_amount_decisive_reason_if_zero": "可部署现金2,181.04元低于固定Trial 5,000元，且没有持仓通过独立卖出链形成可释放资本。",
+        "capital_migration_review": {
+          "current_best_opportunity": "515220煤炭ETF Trial机会；固定Trial 5,000元",
+          "cash_gap": "可部署现金2,181.04元，资金缺口2,818.96元",
+          "lowest_efficiency_holding": "601138工业富联仍是当前最低效率优先复核对象；当前约-3.75%且与成长科技共同风险较高，但独立卖出链尚未成立",
+          "release_vs_continue_comparison": "释放601138可覆盖Trial资金缺口并降低成长科技共同暴露；但当前证据仍不足以证明卖出601138的独立风险收益优于继续持有，且不能因单日下跌或为新机会筹资而制造卖出理由。",
+          "decision": "不释放资本；可释放资本0元。"
+        }
+      },
+      "HOLDING:159781": {
+        "final_action": "HOLD",
+        "capital_comparison": "科创创业ETF约0.911、-3.29%，成长结构继续偏弱；持有依据边际减弱但未达到独立退出条件，当前不追加。",
+        "next_change_condition": "若自身结构、承接和风险收益持续恶化达到假设失效，或独立更高效率用途通过完整比较，则重评降低风险/退出。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "capital_occupancy_reason": "科创创业ETF约0.911、-3.29%，成长结构继续偏弱；持有依据边际减弱但未达到独立退出条件，当前不追加。",
+        "higher_efficiency_alternative": "515220 Trial、现金及其他资本状态已比较；当前没有经独立卖出链确认的更高效率可执行迁移。"
+      },
+      "HOLDING:159941": {
+        "final_action": "HOLD",
+        "capital_comparison": "纳指ETF约1.742、-0.23%，相对A股成长更抗跌，但上一美股科技明显走弱；继续持有合理，新增资本效率不足。",
+        "next_change_condition": "若自身结构、承接和风险收益持续恶化达到假设失效，或独立更高效率用途通过完整比较，则重评降低风险/退出。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "capital_occupancy_reason": "纳指ETF约1.742、-0.23%，相对A股成长更抗跌，但上一美股科技明显走弱；继续持有合理，新增资本效率不足。",
+        "higher_efficiency_alternative": "515220 Trial、现金及其他资本状态已比较；当前没有经独立卖出链确认的更高效率可执行迁移。"
+      },
+      "HOLDING:159981": {
+        "final_action": "HOLD",
+        "capital_comparison": "能源化工ETF约1.945、+0.41%，资源方向仍有正反馈；既有仓位继续持有优于追涨追加。",
+        "next_change_condition": "若自身结构、承接和风险收益持续恶化达到假设失效，或独立更高效率用途通过完整比较，则重评降低风险/退出。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "capital_occupancy_reason": "能源化工ETF约1.945、+0.41%，资源方向仍有正反馈；既有仓位继续持有优于追涨追加。",
+        "higher_efficiency_alternative": "515220 Trial、现金及其他资本状态已比较；当前没有经独立卖出链确认的更高效率可执行迁移。"
+      },
+      "HOLDING:159992": {
+        "final_action": "HOLD",
+        "capital_comparison": "创新药ETF约0.832、-0.83%，弱于资源但跌幅明显小于科创成长；原持有假设未确认失效，当前不追加。",
+        "next_change_condition": "若自身结构、承接和风险收益持续恶化达到假设失效，或独立更高效率用途通过完整比较，则重评降低风险/退出。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "capital_occupancy_reason": "创新药ETF约0.832、-0.83%，弱于资源但跌幅明显小于科创成长；原持有假设未确认失效，当前不追加。",
+        "higher_efficiency_alternative": "515220 Trial、现金及其他资本状态已比较；当前没有经独立卖出链确认的更高效率可执行迁移。"
+      },
+      "HOLDING:300750": {
+        "final_action": "HOLD",
+        "capital_comparison": "宁德时代当前约291.51、+1.66%，在弱市中相对抗跌，持有依据未失效；作为深市底仓和成长资产继续占资仍合理。",
+        "next_change_condition": "若自身结构、承接和风险收益持续恶化达到假设失效，或独立更高效率用途通过完整比较，则重评降低风险/退出。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "capital_occupancy_reason": "宁德时代当前约291.51、+1.66%，在弱市中相对抗跌，持有依据未失效；作为深市底仓和成长资产继续占资仍合理。",
+        "higher_efficiency_alternative": "515220 Trial、现金及其他资本状态已比较；当前没有经独立卖出链确认的更高效率可执行迁移。"
+      },
+      "HOLDING:513520": {
+        "final_action": "HOLD",
+        "capital_comparison": "日经ETF约2.368、-1.33%，日本市场同日偏弱；仓位较小且未出现独立退出条件，继续持有但不追加。",
+        "next_change_condition": "若自身结构、承接和风险收益持续恶化达到假设失效，或独立更高效率用途通过完整比较，则重评降低风险/退出。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "capital_occupancy_reason": "日经ETF约2.368、-1.33%，日本市场同日偏弱；仓位较小且未出现独立退出条件，继续持有但不追加。",
+        "higher_efficiency_alternative": "515220 Trial、现金及其他资本状态已比较；当前没有经独立卖出链确认的更高效率可执行迁移。"
+      },
+      "HOLDING:588000": {
+        "final_action": "HOLD",
+        "capital_comparison": "科创50ETF约1.492、-2.93%，与科创50弱势一致，持有依据边际减弱但未独立失效；当前不追加。",
+        "next_change_condition": "若自身结构、承接和风险收益持续恶化达到假设失效，或独立更高效率用途通过完整比较，则重评降低风险/退出。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "capital_occupancy_reason": "科创50ETF约1.492、-2.93%，与科创50弱势一致，持有依据边际减弱但未独立失效；当前不追加。",
+        "higher_efficiency_alternative": "515220 Trial、现金及其他资本状态已比较；当前没有经独立卖出链确认的更高效率可执行迁移。"
+      },
+      "HOLDING:601138": {
+        "final_action": "HOLD",
+        "capital_comparison": "工业富联当前约53.60、-3.75%，与科技共同风险叠加，是最低效率优先复核对象；但尚未达到独立降低风险/退出条件。",
+        "next_change_condition": "若自身结构、承接和风险收益持续恶化达到假设失效，或独立更高效率用途通过完整比较，则重评降低风险/退出。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "capital_occupancy_reason": "工业富联当前约53.60、-3.75%，与科技共同风险叠加，是最低效率优先复核对象；但尚未达到独立降低风险/退出条件。",
+        "higher_efficiency_alternative": "515220 Trial、现金及其他资本状态已比较；当前没有经独立卖出链确认的更高效率可执行迁移。"
+      },
+      "HELD_ETF_ADD:588000": {
+        "final_action": "不追加",
+        "capital_comparison": "当前追加的边际效率不优于515220 Trial或保留现金；集中度与当前结构不支持新增。",
+        "next_change_condition": "若自身结构和承接显著改善并在全资本竞争中超过515220/现金，再重评追加。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HELD_ETF_ADD:159941": {
+        "final_action": "不追加",
+        "capital_comparison": "当前追加的边际效率不优于515220 Trial或保留现金；集中度与当前结构不支持新增。",
+        "next_change_condition": "若自身结构和承接显著改善并在全资本竞争中超过515220/现金，再重评追加。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HELD_ETF_ADD:159781": {
+        "final_action": "不追加",
+        "capital_comparison": "当前追加的边际效率不优于515220 Trial或保留现金；集中度与当前结构不支持新增。",
+        "next_change_condition": "若自身结构和承接显著改善并在全资本竞争中超过515220/现金，再重评追加。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HELD_ETF_ADD:159981": {
+        "final_action": "不追加",
+        "capital_comparison": "资源仓已有正反馈，但新增资本风险收益仍不优于515220 Trial，且当前现金不足固定Trial。",
+        "next_change_condition": "若自身结构和承接显著改善并在全资本竞争中超过515220/现金，再重评追加。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HELD_ETF_ADD:159992": {
+        "final_action": "不追加",
+        "capital_comparison": "当前追加的边际效率不优于515220 Trial或保留现金；集中度与当前结构不支持新增。",
+        "next_change_condition": "若自身结构和承接显著改善并在全资本竞争中超过515220/现金，再重评追加。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HELD_ETF_ADD:513520": {
+        "final_action": "不追加",
+        "capital_comparison": "当前追加的边际效率不优于515220 Trial或保留现金；集中度与当前结构不支持新增。",
+        "next_change_condition": "若自身结构和承接显著改善并在全资本竞争中超过515220/现金，再重评追加。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "OBSERVATION:159326": {
+        "final_action": "继续观察",
+        "capital_comparison": "电网设备ETF约-2.72%，当前机会减弱，但独立产业暴露的信息功能尚未失效。",
+        "next_change_condition": "若既有失效条件触发、信息功能被更有效同质对象替代，或后续合格PIT改变机会状态则重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "RETAIN",
+        "reason": "电网设备ETF约-2.72%，当前机会减弱，但独立产业暴露的信息功能尚未失效。"
+      },
+      "OBSERVATION:159561": {
+        "final_action": "继续观察",
+        "capital_comparison": "德国ETF约-0.39%，欧洲权益分散信息功能仍可证伪且未被替代，当前无新增机会。",
+        "next_change_condition": "若既有失效条件触发、信息功能被更有效同质对象替代，或后续合格PIT改变机会状态则重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "RETAIN",
+        "reason": "德国ETF约-0.39%，欧洲权益分散信息功能仍可证伪且未被替代，当前无新增机会。"
+      },
+      "OBSERVATION:513180": {
+        "final_action": "继续观察",
+        "capital_comparison": "恒生科技ETF约+0.97%，港股科技同日正反馈，跨市场科技传导信息功能仍独立；当前只保留观察机会，不升级Trial。",
+        "next_change_condition": "若既有失效条件触发、信息功能被更有效同质对象替代，或后续合格PIT改变机会状态则重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "观察机会",
+        "disposition": "RETAIN",
+        "reason": "恒生科技ETF约+0.97%，港股科技同日正反馈，跨市场科技传导信息功能仍独立；当前只保留观察机会，不升级Trial。"
+      },
+      "OBSERVATION:513350": {
+        "final_action": "继续观察",
+        "capital_comparison": "标普油气ETF约+1.42%，但盘中曾显著冲高后回落并触发路径风险复核；跨市场资源验证价值保留，当前不升级Trial。",
+        "next_change_condition": "若既有失效条件触发、信息功能被更有效同质对象替代，或后续合格PIT改变机会状态则重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "观察机会",
+        "disposition": "RETAIN",
+        "reason": "标普油气ETF约+1.42%，但盘中曾显著冲高后回落并触发路径风险复核；跨市场资源验证价值保留，当前不升级Trial。"
+      },
+      "OBSERVATION:515220": {
+        "final_action": "继续观察",
+        "capital_comparison": "煤炭ETF约+1.80%，在A股成长弱势中保持资源独立强势，持续信息价值与当前Trial机会同时成立。",
+        "next_change_condition": "若既有失效条件触发、信息功能被更有效同质对象替代，或后续合格PIT改变机会状态则重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "Trial机会",
+        "disposition": "RETAIN",
+        "reason": "煤炭ETF约+1.80%，在A股成长弱势中保持资源独立强势，持续信息价值与当前Trial机会同时成立。"
+      },
+      "OBSERVATION:515880": {
+        "final_action": "继续观察",
+        "capital_comparison": "通信ETF约-3.70%，结构明显偏弱，但通信/科技内部反馈信息仍有独立监测价值；不因单日弱势机械退出观察。",
+        "next_change_condition": "若既有失效条件触发、信息功能被更有效同质对象替代，或后续合格PIT改变机会状态则重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "RETAIN",
+        "reason": "通信ETF约-3.70%，结构明显偏弱，但通信/科技内部反馈信息仍有独立监测价值；不因单日弱势机械退出观察。"
+      },
+      "OBSERVATION:518880": {
+        "final_action": "继续观察",
+        "capital_comparison": "黄金ETF约+1.17%，在风险资产偏弱时继续提供低相关防御比较价值，但当前不升级Trial。",
+        "next_change_condition": "若既有失效条件触发、信息功能被更有效同质对象替代，或后续合格PIT改变机会状态则重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "观察机会",
+        "disposition": "RETAIN",
+        "reason": "黄金ETF约+1.17%，在风险资产偏弱时继续提供低相关防御比较价值，但当前不升级Trial。"
+      },
+      "BASE_STOCK_REPLACEMENT:600900": {
+        "final_action": "研究候选；当前不替换",
+        "capital_comparison": "长江电力仍仅具RESEARCH_CANDIDATE_ONLY资格，研究证据时点早于当前节点，不足以替换现有打新底仓或为515220筹资。",
+        "next_change_condition": "取得当前合格行情和更新风险收益证据，并与现有底仓及ETF机会独立比较后再判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "BASE_STOCK_REPLACEMENT:600941": {
+        "final_action": "研究候选；当前不替换",
+        "capital_comparison": "中国移动仍仅具RESEARCH_CANDIDATE_ONLY资格，研究证据时点早于当前节点，不足以替换现有打新底仓或为515220筹资。",
+        "next_change_condition": "取得当前合格行情和更新风险收益证据，并与现有底仓及ETF机会独立比较后再判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "BASE_STOCK_REPLACEMENT:601398": {
+        "final_action": "研究候选；当前不替换",
+        "capital_comparison": "工商银行仍仅具RESEARCH_CANDIDATE_ONLY资格，研究证据时点早于当前节点，不足以替换现有打新底仓或为515220筹资。",
+        "next_change_condition": "取得当前合格行情和更新风险收益证据，并与现有底仓及ETF机会独立比较后再判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "BASE_STOCK_REPLACEMENT:000001": {
+        "final_action": "研究候选；当前不替换",
+        "capital_comparison": "平安银行仍仅具RESEARCH_CANDIDATE_ONLY资格，研究证据时点早于当前节点，不足以替换现有打新底仓或为515220筹资。",
+        "next_change_condition": "取得当前合格行情和更新风险收益证据，并与现有底仓及ETF机会独立比较后再判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "BASE_STOCK_REPLACEMENT:000333": {
+        "final_action": "研究候选；当前不替换",
+        "capital_comparison": "美的集团仍仅具RESEARCH_CANDIDATE_ONLY资格，研究证据时点早于当前节点，不足以替换现有打新底仓或为515220筹资。",
+        "next_change_condition": "取得当前合格行情和更新风险收益证据，并与现有底仓及ETF机会独立比较后再判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "BASE_STOCK_REPLACEMENT:000651": {
+        "final_action": "研究候选；当前不替换",
+        "capital_comparison": "格力电器仍仅具RESEARCH_CANDIDATE_ONLY资格，研究证据时点早于当前节点，不足以替换现有打新底仓或为515220筹资。",
+        "next_change_condition": "取得当前合格行情和更新风险收益证据，并与现有底仓及ETF机会独立比较后再判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "DISCOVERY:159030": {
+        "final_action": "本节点机会评估",
+        "capital_comparison": "粮食ETF华夏通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。",
+        "next_change_condition": "若后续形成新的可证伪跨节点信息价值或机会证据升级，再重新评估Observation/Trial。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "粮食ETF华夏通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。"
+      },
+      "DISCOVERY:159636": {
+        "final_action": "本节点机会评估",
+        "capital_comparison": "港股通科技30ETF工银通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。",
+        "next_change_condition": "若后续形成新的可证伪跨节点信息价值或机会证据升级，再重新评估Observation/Trial。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "港股通科技30ETF工银通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。"
+      },
+      "DISCOVERY:159647": {
+        "final_action": "本节点机会评估",
+        "capital_comparison": "中药ETF鹏华通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。",
+        "next_change_condition": "若后续形成新的可证伪跨节点信息价值或机会证据升级，再重新评估Observation/Trial。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "中药ETF鹏华通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。"
+      },
+      "DISCOVERY:159830": {
+        "final_action": "本节点机会评估",
+        "capital_comparison": "金ETF天弘通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。",
+        "next_change_condition": "若后续形成新的可证伪跨节点信息价值或机会证据升级，再重新评估Observation/Trial。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "金ETF天弘通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。"
+      },
+      "DISCOVERY:159928": {
+        "final_action": "本节点机会评估",
+        "capital_comparison": "消费ETF汇添富通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。",
+        "next_change_condition": "若后续形成新的可证伪跨节点信息价值或机会证据升级，再重新评估Observation/Trial。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "消费ETF汇添富通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。"
+      },
+      "DISCOVERY:513020": {
+        "final_action": "本节点机会评估",
+        "capital_comparison": "港股科技ETF国泰通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。",
+        "next_change_condition": "若后续形成新的可证伪跨节点信息价值或机会证据升级，再重新评估Observation/Trial。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "港股科技ETF国泰通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。"
+      },
+      "DISCOVERY:513070": {
+        "final_action": "本节点机会评估",
+        "capital_comparison": "港股通消费ETF易方达通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。",
+        "next_change_condition": "若后续形成新的可证伪跨节点信息价值或机会证据升级，再重新评估Observation/Trial。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "港股通消费ETF易方达通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。"
+      },
+      "DISCOVERY:513400": {
+        "final_action": "本节点机会评估",
+        "capital_comparison": "道琼斯ETF鹏华通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。",
+        "next_change_condition": "若后续形成新的可证伪跨节点信息价值或机会证据升级，再重新评估Observation/Trial。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "道琼斯ETF鹏华通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。"
+      },
+      "DISCOVERY:515080": {
+        "final_action": "本节点机会评估",
+        "capital_comparison": "中证红利ETF在A股成长显著走弱时保持正收益，且历史多窗口趋势为正，提供国内防御/红利风格的独立跨节点信息功能；与黄金的低相关防御功能不同，值得新增持续观察。",
+        "next_change_condition": "若后续形成新的可证伪跨节点信息价值或机会证据升级，再重新评估Observation/Trial。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "观察机会",
+        "disposition": "ADMIT",
+        "reason": "中证红利ETF在A股成长显著走弱时保持正收益，且历史多窗口趋势为正，提供国内防御/红利风格的独立跨节点信息功能；与黄金的低相关防御功能不同，值得新增持续观察。",
+        "name": "中证红利ETF招商",
+        "thscode": "515080.SH",
+        "thesis": "A股成长承压阶段，国内红利风格的相对韧性可能持续提供独立防御/风格切换信息。",
+        "falsifier": "若红利相对优势持续消失、结构转弱且其信息功能被其他国内防御对象充分替代，则退出观察。",
+        "next_decision_information": "午后及后续节点相对上证/成长指数的强弱、成交承接与持续趋势是否保持。",
+        "information_value_reason": "补充现有观察集中缺少的国内红利/防御风格维度，可改变风险许可、成长持仓与新增资本比较。"
+      },
+      "DISCOVERY:562080": {
+        "final_action": "本节点机会评估",
+        "capital_comparison": "300现金流ETF华宝通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。",
+        "next_change_condition": "若后续形成新的可证伪跨节点信息价值或机会证据升级，再重新评估Observation/Trial。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "300现金流ETF华宝通过全市场发现进入本节点评估，但当前证据不足以授予Trial/Confirm或持续观察身份。"
+      }
+    }
+  }
+}
