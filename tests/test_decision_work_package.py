@@ -69,6 +69,11 @@ class DecisionWorkPackageTests(unittest.TestCase):
         self.assertIn("FULL_MARKET_DISCOVERY", by_problem["MAIN_CANDIDATE"])
         self.assertIn("RELEASABLE_CAPITAL", by_problem["NEXT_UNIT_CAPITAL_USE"])
         self.assertIn("HOLDING_ADDITIONAL_CAPITAL", by_problem["HELD_ETF_ADD:561980"])
+        self.assertIn("FULL_MARKET_DISCOVERY", by_problem["BASE_STOCK_REPLACEMENT:600900"])
+        self.assertIn("TEMPORARY_DISCOVERY_CANDIDATE", by_problem["BASE_STOCK_REPLACEMENT:600900"])
+        self.assertIn("HOLDING_ETF", by_problem["BASE_STOCK_REPLACEMENT:600900"])
+        self.assertIn("CASH", by_problem["BASE_STOCK_REPLACEMENT:600900"])
+        self.assertIn("RELEASABLE_CAPITAL", by_problem["BASE_STOCK_REPLACEMENT:600900"])
 
     def test_scoped_plan_is_smaller_than_legacy_full_cartesian_plan(self):
         graph = _decision_problem_graph(
