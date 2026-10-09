@@ -43,5 +43,15 @@ class RuntimeResponsibilityBoundaryTests(unittest.TestCase):
         self.assertIn("steps.state_sync.outputs.formal_completion != 'true'", block)
         self.assertIn("steps.triggering_request.outputs.formal_completion != 'true'", block)
 
+    def test_all_derived_decision_steps_use_the_early_formal_completion_guard(self):
+        for name in (
+            "Build E2E usability state",
+            "Build state context and candidates",
+            "Build post-market review context",
+        ):
+            start = self.text.index(f"- name: {name}")
+            block = self.text[start:start + 700]
+            self.assertIn("steps.triggering_request.outputs.formal_completion != 'true'", block, name)
+
 if __name__ == "__main__":
     unittest.main()
