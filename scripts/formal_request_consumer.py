@@ -6,6 +6,8 @@ from typing import Any
 INFLIGHT_STATUSES = {"BUILDING", "PENDING", "QUEUED", "RUNNING", "IN_PROGRESS", "IN_FLIGHT"}
 READY_STATUSES = {"READY", "RESOLVED_DEGRADED"}
 TERMINAL_FAILURE_STATUSES = {"FAILED", "TERMINAL_FAILURE", "BLOCKED_TERMINAL"}
+BUSINESS_REPLY_OUTPUT = "COMPLETE_BUSINESS_DECISION_ONLY"
+POST_REPLY_ASYNC = "CANONICAL_AUDIT_NOTIFICATION_ASYNC"
 
 
 def classify_formal_request_consumer_state(
@@ -72,7 +74,9 @@ def classify_formal_request_consumer_state(
             "continue_same_request": False,
             "analysis_eligible": True,
             "reply_eligible": True,
-            "user_visible_output": "COMPLETE_BUSINESS_DECISION_ONLY",
+            "user_visible_output": BUSINESS_REPLY_OUTPUT,
+            "post_reply_processing": POST_REPLY_ASYNC,
+            "control_plane_in_user_reply": False,
             "reason": (
                 "SAME_REQUEST_FACTS_READY_BDS_HANDOFF_REQUIRED_"
                 "CANONICAL_PERSISTENCE_ASYNC"
