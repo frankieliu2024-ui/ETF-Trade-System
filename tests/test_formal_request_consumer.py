@@ -26,6 +26,8 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertFalse(state["reply_eligible"])
         self.assertFalse(state["analysis_eligible"])
         self.assertEqual(state["user_visible_output"], "SILENT_CONTINUATION")
+        self.assertEqual(state["actor_action"], "CONTINUE_SAME_REQUEST_SILENTLY")
+        self.assertFalse(state["user_output_allowed"])
 
     def test_same_request_inflight_continues_without_duplicate_parent(self):
         state = classify_formal_request_consumer_state(
@@ -112,6 +114,8 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertTrue(state["reply_eligible"])
         self.assertTrue(state["analysis_eligible"])
         self.assertEqual(state["user_visible_output"], "COMPLETE_BUSINESS_DECISION_ONLY")
+        self.assertEqual(state["actor_action"], "COMPLETE_BUSINESS_DECISION_NOW")
+        self.assertTrue(state["user_output_allowed"])
 
 
     def test_same_request_ready_without_bds_persistence_is_reply_eligible(self):
@@ -196,6 +200,8 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertFalse(state["reply_eligible"])
         self.assertFalse(state["analysis_eligible"])
         self.assertEqual(state["user_visible_output"], "TERMINAL_FAILURE")
+        self.assertEqual(state["actor_action"], "TERMINATE_ON_EXPLICIT_FAILURE")
+        self.assertTrue(state["user_output_allowed"])
 
 
     def test_ready_facts_allow_reply_before_async_canonical_persistence(self):
