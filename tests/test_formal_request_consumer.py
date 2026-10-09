@@ -28,6 +28,7 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertEqual(state["user_visible_output"], "SILENT_CONTINUATION")
         self.assertEqual(state["actor_action"], "CONTINUE_SAME_REQUEST_SILENTLY")
         self.assertFalse(state["user_output_allowed"])
+        self.assertFalse(state["reply_eligible"])
 
     def test_same_request_inflight_continues_without_duplicate_parent(self):
         state = classify_formal_request_consumer_state(
