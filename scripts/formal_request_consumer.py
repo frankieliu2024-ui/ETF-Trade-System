@@ -63,26 +63,23 @@ def classify_formal_request_consumer_state(
 
     same_request = bound_request == parent and (not freeze_request or freeze_request == parent)
     if same_request and freeze_status in READY_STATUSES and reply_freezable:
-        # Request-bound facts make business analysis legal, but they do not
-        # prove that the actor's BUSINESS_DECISION_SOURCE reached the canonical
-        # writer.  Keep the user-visible reply frozen until that handoff is
-        # explicitly confirmed by the persistence owner.
-        if not canonical_persisted:
-            return {
-                "status": "BUSINESS_DECISION_PENDING_PERSISTENCE",
-                "continue_same_request": True,
-                "analysis_eligible": True,
-                "reply_eligible": False,
-                "user_visible_output": "SILENT_CONTINUATION",
-                "reason": "BDS_CANONICAL_PERSISTENCE_NOT_CONFIRMED",
-            }
+        # Request-bound facts authorize business analysis.  The actor's
+        # BUSINESS_DECISION_SOURCE is the reply handoff; canonical projection
+        # and post-write acceptance remain asynchronous and must not block the
+        # user-visible business answer.
         return {
             "status": "BUSINESS_DECISION_READY",
             "continue_same_request": False,
             "analysis_eligible": True,
             "reply_eligible": True,
             "user_visible_output": "COMPLETE_BUSINESS_DECISION_ONLY",
-            "reason": "SAME_REQUEST_FORMAL_REPLY_AND_CANONICAL_PERSISTENCE_READY",
+            "reason": (
+                "SAME_REQUEST_FACTS_READY_BDS_HANDOFF_REQUIRED_"
+                "CANONICAL_PERSISTENCE_ASYNC"
+            ),
+            "canonical_persistence_status": (
+                "CONFIRMED" if canonical_persisted else "PENDING_ASYNC"
+            ),
         }
 
     if not same_request:
