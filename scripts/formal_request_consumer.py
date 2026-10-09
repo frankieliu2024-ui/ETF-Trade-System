@@ -72,6 +72,17 @@ def classify_formal_request_consumer_state(
 
     same_request = bound_request == parent and (not freeze_request or freeze_request == parent)
     if same_request and freeze_status in READY_STATUSES and reply_freezable:
+        # READY authorizes business judgment, but the actor must consume the
+        # complete request-bound DWP before presenting the first business
+        # report.  Expose the deterministic checklist here; this is not a new
+        # state/checker and does not wait for persistence.
+        dwp = packet.get("decision_work_package") or {}
+        graph = dwp.get("problem_graph") if isinstance(dwp, dict) else []
+        required_problem_ids = [
+            str(item.get("problem_id") or "").strip()
+            for item in (graph or [])
+            if isinstance(item, dict) and str(item.get("problem_id") or "").strip()
+        ]
         # Request-bound facts authorize business analysis.  The actor's
         # BUSINESS_DECISION_SOURCE is the reply handoff; canonical projection
         # and post-write acceptance remain asynchronous and must not block the
@@ -85,6 +96,9 @@ def classify_formal_request_consumer_state(
             "actor_action": ACTOR_DECIDE,
             "user_output_allowed": True,
             "post_reply_processing": POST_REPLY_ASYNC,
+            "required_problem_ids": required_problem_ids,
+            "required_problem_count": len(required_problem_ids),
+            "business_answer_contract": "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
             "control_plane_in_user_reply": False,
             "reason": (
                 "SAME_REQUEST_FACTS_READY_BDS_HANDOFF_REQUIRED_"
