@@ -53,5 +53,12 @@ class RuntimeResponsibilityBoundaryTests(unittest.TestCase):
             block = self.text[start:start + 700]
             self.assertIn("steps.triggering_request.outputs.formal_completion != 'true'", block, name)
 
+    def test_final_publish_rejects_empty_or_mismatched_formal_query_context(self):
+        start = self.text.index("# A formal request must never publish a READY projection")
+        block = self.text[start:start + 2200]
+        self.assertIn("formal request cannot publish empty query_context.json", block)
+        self.assertIn("query_context request_id mismatch", block)
+        self.assertIn("missing decision_work_package", block)
+
 if __name__ == "__main__":
     unittest.main()
