@@ -119,6 +119,67 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertTrue(state["user_output_allowed"])
 
 
+    def test_ready_exposes_exact_dwp_problem_checklist_before_presentation(self):
+        state = classify_formal_request_consumer_state(
+            "parent",
+            {
+                "decision_fact_pack": {
+                    "trigger": {"request_id": "parent"},
+                    "formal_reply_freeze": {
+                        "status": "READY",
+                        "reply_freezable": True,
+                        "request_id": "parent",
+                        "blockers": [],
+                    },
+                    "decision_work_package": {
+                        "problem_graph": [
+                            {"problem_id": "RISK_PERMISSION"},
+                            {"problem_id": "DISCOVERY:159029"},
+                            {"problem_id": "OBSERVATION:513180"},
+                            {"problem_id": "BASE_STOCK_REPLACEMENT:600900"},
+                        ]
+                    },
+                }
+            },
+            producer_status="SUCCESS",
+        )
+        self.assertEqual(
+            state["required_problem_ids"],
+            [
+                "RISK_PERMISSION",
+                "DISCOVERY:159029",
+                "OBSERVATION:513180",
+                "BASE_STOCK_REPLACEMENT:600900",
+            ],
+        )
+        self.assertEqual(state["required_problem_count"], 4)
+        self.assertEqual(
+            state["business_answer_contract"],
+            "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
+        )
+        self.assertTrue(state["reply_eligible"])
+
+    def test_wait_does_not_publish_ready_problem_checklist(self):
+        state = classify_formal_request_consumer_state(
+            "parent",
+            {
+                "decision_fact_pack": {
+                    "trigger": {"request_id": "parent"},
+                    "formal_reply_freeze": {
+                        "status": "IN_FLIGHT",
+                        "reply_freezable": False,
+                        "request_id": "parent",
+                    },
+                    "decision_work_package": {
+                        "problem_graph": [{"problem_id": "DISCOVERY:159029"}]
+                    },
+                }
+            },
+            producer_status="RUNNING",
+        )
+        self.assertNotIn("required_problem_ids", state)
+        self.assertNotIn("business_answer_contract", state)
+
     def test_same_request_ready_without_bds_persistence_is_reply_eligible(self):
         state = classify_formal_request_consumer_state(
             "parent",
