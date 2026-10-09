@@ -105,7 +105,8 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         shell: bash
         run: |
-          REQUEST_FILE=$(git show --format= --name-only "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | sed '/^$/d' | grep -vE '(__business_decision_source|__formal_completion)' | head -n 1 || true)
+          ALL_REQUEST_FILES=$(git show --format= --name-only "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | sed '/^$/d' || true)
+          REQUEST_FILE=$(printf '%s\n' "$ALL_REQUEST_FILES" | grep -vE '(__business_decision_source|__formal_completion)' | head -n 1 || true)
           REQUEST_EXPECTED=false
           if [ -n "$REQUEST_FILE" ]; then
             REQUEST_EXPECTED=true
@@ -116,9 +117,30 @@ jobs:
             echo "TRIGGERING_REQUEST_FILE=$REQUEST_FILE"
             echo "TRIGGERING_REQUEST_EXPECTED=$REQUEST_EXPECTED"
           } >> "$GITHUB_ENV"
+          FORMAL_COMPLETION=false
+          while IFS= read -r candidate; do
+            [ -z "$candidate" ] && continue
+            if python - "$candidate" <<'PY'
+          import json, sys
+          from pathlib import Path
+          request = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          is_completion = (
+              str(request.get("source") or "").upper() in {"CHATGPT_MANUAL_FORMAL_COMPLETION", "CHATGPT_BUSINESS_DECISION_RESPONSE"}
+              or str(request.get("request_type") or "").upper() == "BUSINESS_DECISION_SOURCE"
+              or str(request.get("formal_fact_type") or "").upper() == "FORMAL_DECISION"
+          )
+          raise SystemExit(0 if is_completion else 1)
+          PY
+            then
+              FORMAL_COMPLETION=true
+              break
+            fi
+          done <<< "$ALL_REQUEST_FILES"
+          echo "formal_completion=$FORMAL_COMPLETION" >> "$GITHUB_OUTPUT"
+          echo "FORMAL_COMPLETION=$FORMAL_COMPLETION" >> "$GITHUB_ENV"
           echo "request_file=$REQUEST_FILE" >> "$GITHUB_OUTPUT"
           echo "request_expected=$REQUEST_EXPECTED" >> "$GITHUB_OUTPUT"
-          echo "triggering request: file=$REQUEST_FILE expected=$REQUEST_EXPECTED"
+          echo "triggering request: file=$REQUEST_FILE expected=$REQUEST_EXPECTED formal_completion=$FORMAL_COMPLETION"
 
       - name: Bind explicit existing Formal Decision replay
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.formal_replay_request != '' }}
@@ -799,7 +821,7 @@ jobs:
       - name: Build on-demand query context
         # Formal decision critical path. Do not let an unrelated optional/derived
         # step failure suppress request binding and PIT qualification.
-        if: ${{ always() && steps.state_sync.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outputs.formal_completion != 'true' && steps.triggering_request.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
         run: |
           REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"
           if [ -z "$REQUEST_FILE" ] && [ -n "${FORMAL_CONTEXT_RECOVERY_REQUEST:-}" ]; then REQUEST_FILE="$FORMAL_CONTEXT_RECOVERY_REQUEST"; fi

@@ -29,5 +29,19 @@ class RuntimeResponsibilityBoundaryTests(unittest.TestCase):
         self.assertIn("python scripts/build_stock_context.py", self.text)
         self.assertIn("python scripts/build_account_stock_market.py", self.text)
 
+    def test_formal_completion_identity_is_bound_before_optional_state_sync(self):
+        detection_start = self.text.index("- name: Detect triggering request envelope before any runtime work")
+        state_sync_start = self.text.index("- name: Process optional broker/dashboard state sync")
+        detection = self.text[detection_start:state_sync_start]
+        self.assertIn("FORMAL_COMPLETION=false", detection)
+        self.assertIn('request.get("request_type") or "").upper() == "BUSINESS_DECISION_SOURCE"', detection)
+        self.assertIn('echo "formal_completion=$FORMAL_COMPLETION"', detection)
+
+    def test_formal_completion_does_not_reenter_query_context_after_state_sync_failure(self):
+        start = self.text.index("- name: Build on-demand query context")
+        block = self.text[start:start + 650]
+        self.assertIn("steps.state_sync.outputs.formal_completion != 'true'", block)
+        self.assertIn("steps.triggering_request.outputs.formal_completion != 'true'", block)
+
 if __name__ == "__main__":
     unittest.main()
