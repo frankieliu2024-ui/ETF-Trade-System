@@ -226,10 +226,6 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertEqual(result["user_visible_output"], "COMPLETE_BUSINESS_DECISION_ONLY")
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
     def test_unknown_nonterminal_state_still_exposes_silent_actor_contract(self):
         state = classify_formal_request_consumer_state(
             "req-unknown",
@@ -238,6 +234,11 @@ if __name__ == "__main__":
         )
         self.assertEqual(state["actor_action"], "CONTINUE_SAME_REQUEST_SILENTLY")
         self.assertFalse(state["user_output_allowed"])
+
+
+if __name__ == "__main__":
+    unittest.main()
+
         self.assertFalse(state["reply_eligible"])
 
 
