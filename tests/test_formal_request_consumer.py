@@ -114,7 +114,7 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertEqual(state["user_visible_output"], "COMPLETE_BUSINESS_DECISION_ONLY")
 
 
-    def test_same_request_ready_without_bds_persistence_stays_silent_but_analysis_can_continue(self):
+    def test_same_request_ready_without_bds_persistence_is_reply_eligible(self):
         state = classify_formal_request_consumer_state(
             "parent",
             {
@@ -130,12 +130,13 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
             },
             producer_status="SUCCESS",
         )
-        self.assertEqual(state["status"], "BUSINESS_DECISION_PENDING_PERSISTENCE")
+        self.assertEqual(state["status"], "BUSINESS_DECISION_READY")
         self.assertTrue(state["analysis_eligible"])
-        self.assertFalse(state["reply_eligible"])
-        self.assertTrue(state["continue_same_request"])
-        self.assertEqual(state["user_visible_output"], "SILENT_CONTINUATION")
-        self.assertEqual(state["reason"], "BDS_CANONICAL_PERSISTENCE_NOT_CONFIRMED")
+        self.assertTrue(state["reply_eligible"])
+        self.assertFalse(state["continue_same_request"])
+        self.assertEqual(state["user_visible_output"], "COMPLETE_BUSINESS_DECISION_ONLY")
+        self.assertEqual(state["post_reply_processing"], "CANONICAL_AUDIT_NOTIFICATION_ASYNC")
+        self.assertFalse(state["control_plane_in_user_reply"])
 
     def test_downstream_persistence_failure_does_not_revoke_ready_reply(self):
         state = classify_formal_request_consumer_state(
