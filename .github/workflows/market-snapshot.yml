@@ -1016,11 +1016,11 @@ jobs:
           # publish owner as well as at the builder boundary because the retry
           # reset/replay loop can otherwise reintroduce an empty derived file.
           python - <<'PY'
-          import json, subprocess
+          import json, os, subprocess
           from pathlib import Path
 
           changed = subprocess.check_output(
-              ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", "${GITHUB_SHA}", "--", "requests/live_snapshot/"],
+              ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", os.environ["GITHUB_SHA"], "--", "requests/live_snapshot/"],
               text=True,
           ).splitlines()
           formal_ids = []
