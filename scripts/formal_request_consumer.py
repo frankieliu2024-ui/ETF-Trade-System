@@ -125,5 +125,7 @@ def classify_formal_request_consumer_state(
         "analysis_eligible": False,
         "reply_eligible": False,
         "user_visible_output": "SILENT_CONTINUATION",
+        "actor_action": ACTOR_CONTINUE,
+        "user_output_allowed": False,
         "reason": "NO_EXPLICIT_TERMINAL_FAILURE_AND_REPLY_NOT_YET_READY",
     }
