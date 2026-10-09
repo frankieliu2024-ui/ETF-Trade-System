@@ -137,7 +137,23 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
                             {"problem_id": "DISCOVERY:159029"},
                             {"problem_id": "OBSERVATION:513180"},
                             {"problem_id": "BASE_STOCK_REPLACEMENT:600900"},
-                        ]
+                        ],
+                        "response_contract": {
+                            "must_answer": [
+                                "final_action",
+                                "capital_comparison",
+                                "next_change_condition",
+                                "evidence_decision_impact",
+                            ],
+                            "holding_additional_fields": [
+                                "capital_occupancy_reason",
+                                "higher_efficiency_alternative",
+                                "capital_efficiency_release_assessment",
+                                "quantity_if_reduce_or_exit",
+                                "capital_destination_if_reduce_or_exit",
+                            ],
+                            "schema_knowledge_required": False,
+                        },
                     },
                 }
             },
@@ -157,6 +173,17 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
             state["business_answer_contract"],
             "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
         )
+        self.assertEqual(
+            state["actor_response_contract"]["holding_additional_fields"],
+            [
+                "capital_occupancy_reason",
+                "higher_efficiency_alternative",
+                "capital_efficiency_release_assessment",
+                "quantity_if_reduce_or_exit",
+                "capital_destination_if_reduce_or_exit",
+            ],
+        )
+        self.assertFalse(state["actor_response_contract"]["schema_knowledge_required"])
         self.assertTrue(state["reply_eligible"])
 
     def test_wait_does_not_publish_ready_problem_checklist(self):
@@ -179,6 +206,7 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         )
         self.assertNotIn("required_problem_ids", state)
         self.assertNotIn("business_answer_contract", state)
+        self.assertNotIn("actor_response_contract", state)
 
     def test_same_request_ready_without_bds_persistence_is_reply_eligible(self):
         state = classify_formal_request_consumer_state(
