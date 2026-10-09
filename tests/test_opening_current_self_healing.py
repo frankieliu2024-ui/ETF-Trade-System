@@ -438,6 +438,8 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertIn("gh workflow run market-snapshot.yml --ref main", workflow)
         self.assertIn("Publish core snapshot and CURRENT immediately", snapshot)
         self.assertIn("etf-market-snapshot-${{ github.ref }}", snapshot)
+        self.assertIn("cancel-in-progress: false", snapshot)
+        self.assertNotIn("A newer user request supersedes an older queued request", snapshot)
         self.assertIn("etf-market-snapshot-${{ github.ref }}", fallback)
         self.assertIn("newer_current_already_exists", (ROOT / "scripts/cloud_runner_snapshot.py").read_text(encoding="utf-8"))
         self.assertNotIn("may_auto_trade", workflow)
