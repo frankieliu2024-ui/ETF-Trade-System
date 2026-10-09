@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-10-09T12:34:24+08:00",
+  "updated_at": "2026-10-09T14:49:55+08:00",
   "last_status": "SENT",
-  "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【ETF交易复盘】",
+  "last_type": "MARKET_VALUE_ALERT",
+  "last_title": "【市场异动】科创50（000688）日内方向明显反转",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -20174,27 +20174,58 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-10-09T12:34:24+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "a-share-session-summary:2026-09-22:OPEN",
-      "type": "A_SHARE_OPEN_VALUE_ALERT",
-      "title": "【市场异动】A股开盘/上午结构出现有价值变化",
-      "content": "### 核心结论\n- **市场结构**：科技成长明显强于宽基，风险偏好向成长扩散。\n- **指数反馈**：上证指数（000001）+0.19%，科创50（000688）+2.49%，创业板指（399006）+1.74%。\n- **ETF自身反馈**：当前'持有管理'}，待执行对象创新药ETF（159992）当前-0.58%，较最近盘中有效节点（09:34）+0.00个百分点，弱于纳指ETF（159941）0.58个百分点；持仓中偏弱的是纳指ETF（159941）+0.00%。\n\n### 关键路径\n- **当前正式对象路径**：创新药ETF（159992）当前处于日内区间中部，方向尚未形成新的强化（当前-0.58%）。\n- 科创50（000688）当前处于日内区间中部，方向尚未形成新的强化；创业板指（399006）当前接近日内高位，强势尚未明显回吐；而上证指数（000001）当前接近日内低位，尚未出现有效修复。强势主要集中在科技成长方向，需要继续验证ETF层是否同步接受。\n\n### 对ETF系统的影响\n科技成长明显强于宽基，风险偏好向成长扩散。优先复核创新药ETF（159992）既有'持有管理'}，待执行假设是否继续成立；比较纳指ETF（159941）等持仓继续占用资本的边际效率。跨市场ETF的相对涨幅只用于解释不同风险因子，不替代A股自身反馈，也不等同资本效率排名。\n\n### 当前动作\n**不因通知机械交易；优先复核创新药ETF（159992）当前'持有管理'}，待执行假设，同时比较纳指ETF（159941）的资本占用效率；只有正式机会、金额或卖出动作改变时执行。**\n\n### 数据与边界\n- **A股行情依据**：2026-09-22 09:34:33\n- **通知生成**：2026-09-22 09:38:05\n- **边界**：A股开盘不逢开必报；恢复窗口延长到上午收盘，约0.8%/1.5%/2个百分点仅控制注意力。",
-      "source": "CURRENT+intraday_path_features",
+      "notification_id": "notification_037e84652b8849e19a28",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:a-share:2026-10-09:000688:UP:REVERSAL:2026-10-09T14:48:00+08:00",
+      "related_decision_id": "",
+      "security_code": "000688",
+      "security_name": "科创50",
       "user_severity": "需要关注",
-      "user_action": "查看结构摘要；正式交易动作以MASTER完整决策链为准",
-      "status": "SENT",
-      "attempted_at": "2026-09-22T09:38:07+08:00",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-10-09T14:49:54+08:00",
+      "sent_at": "2026-10-09T14:49:55+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-10-11T14:49:54+08:00",
+      "title": "【市场异动】科创50（000688）日内方向明显反转",
+      "content": "### 核心结论\n- **事件类型**：方向反转\n- **对象/结构**：科创50（000688）\n- **最近脉冲变化**：-0.33%\n- **关键结构**：盘中一度较前收-4.55%，当前修复至+0.16%\n\n**判断**：行情先形成足够大的单向日内幅度，随后大幅回吐或修复，原先的单向市场解释可能已经失效。\n\n### 对ETF系统的影响\n科创50（000688）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-10-09 14:48:00\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "confirmation_context": {
+        "market": "A_SHARE",
+        "market_date": "2026-10-09",
+        "direction": "UP",
+        "event_category": "REVERSAL",
+        "asset_class": "A_SHARE_INDEX",
+        "day_change_pct": 0.1606789716545931,
+        "sudden_change_pct": -0.33480007652572086,
+        "interval_minutes": 21.55,
+        "event_magnitude_pct": 4.553944188090531,
+        "market_as_of_beijing": "2026-10-09T14:48:00+08:00",
+        "source_fact_id": "2026-10-09:000688:REVERSAL:UP:2026-10-09T14:48:00+08:00",
+        "structure_cluster_id": "A_SHARE_TECH_GROWTH_EPISODE",
+        "structure_cluster_members": [
+          "000688",
+          "159781",
+          "399006",
+          "588000"
+        ],
+        "structure_cluster_scope": "EXPLICIT_SAME_EPISODE_ONLY",
+        "event_family_id": "A_SHARE:2026-10-09:A_SHARE:000688:REVERSAL:UP:A_SHARE_TECH_GROWTH_EPISODE"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_c7b5fe476d16e5f4fb66",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-10-09T14:49:55+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "market-value:a-share:2026-09-22:000688:UP:EXTREME:2026-09-22T09:34:33+08:00",
       "type": "MARKET_VALUE_ALERT",
@@ -23776,6 +23807,24 @@
       },
       "notification_id": "notification_4f8d92160d217d203222",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:a-share:2026-10-09:000688:UP:REVERSAL:2026-10-09T14:48:00+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】科创50（000688）日内方向明显反转",
+      "content": "### 核心结论\n- **事件类型**：方向反转\n- **对象/结构**：科创50（000688）\n- **最近脉冲变化**：-0.33%\n- **关键结构**：盘中一度较前收-4.55%，当前修复至+0.16%\n\n**判断**：行情先形成足够大的单向日内幅度，随后大幅回吐或修复，原先的单向市场解释可能已经失效。\n\n### 对ETF系统的影响\n科创50（000688）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-10-09 14:48:00\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "status": "SENT",
+      "attempted_at": "2026-10-09T14:49:55+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_037e84652b8849e19a28",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [
@@ -23785,6 +23834,6 @@
     "notification_d5f3ea1194565824a934",
     "notification_fd7763215037ab96f889"
   ],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
-  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
+  "policy": "canonical bounded market notification batch",
+  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
