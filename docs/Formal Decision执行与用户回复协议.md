@@ -75,6 +75,21 @@ Formal Decision中，ChatGPT只负责机器无法确定性替代的业务判断�
 
 ChatGPT不得根据旧context、空读、单次超时、历史状态或聊天记忆覆盖机器给出的Actor动作，也不得发明第四种用户可见状态。
 
+### 4.2 READY业务完整性门
+
+READY只表示业务判断可以立即开始，不表示ChatGPT可以跳过DWP中的部分业务问题直接生成报告。为避免“先回复、再靠用户复核补漏”，同一request-bound DWP的`problem_graph`同时是本次Actor业务判断的确定性完整性清单。
+
+在第一条Formal Decision长报告形成前，ChatGPT必须先在当前交互内完成以下动作：
+
+- 以消费器READY结果中的`required_problem_ids`（来源仅为同一DWP `problem_graph`）作为必答集合；不得用聊天记忆、固定对象清单或上一次报告代替；
+- 为每个required problem形成业务答案；Discovery、Observation／Observation Review、全部实际持仓、持仓ETF追加、资本状态及DWP登记的其他问题均不得因报告篇幅被跳过；
+- 业务答案集合必须与required problem集合完整覆盖；少任何一项都不得声称“完整Formal Decision已经形成”；
+- 用户报告可以对“动作、资格、理由均相同”的对象合并表达，但必须枚举被合并对象并保留其角色边界；不得用“其他候选”“其余观察对象”等无法证明覆盖范围的概括替代必答对象；
+- 该完整性检查只发生在Actor当前交互内，是业务回答形成的一部分，不写canonical状态、不新增checker/workflow/state，也不得等待后置BUSINESS_DECISION_SOURCE持久化。业务判断完成后仍按第6节先向用户交付报告，再异步提交既有BUSINESS_DECISION_SOURCE；
+- 既有`project_decision_response`对`decision_response.answers`与DWP problem ids的fail-closed校验继续作为后置正式入口保护，但不得把该后置拒绝当成首份用户报告完整性的替代机制。
+
+消费器在READY时必须返回`required_problem_ids`、`required_problem_count`和固定`business_answer_contract=DWP_EXACT_COVERAGE_BEFORE_PRESENTATION`，使Actor不需要自行重新推导必答集合。WAIT与TERMINAL不产生该READY清单。
+
 ### 4.2 请求恢复与重复输入
 
 同一未终结父请求上的“继续”“重试”“再执行”等催办，只改变消费时机，不改变请求身份。恢复身份必须以正式父请求和机器状态为依据，不以聊天摘要、模型记忆或最近一次可见回复猜测。重复等价输入不得创建第二父请求、第二刷新或第二决策链。
