@@ -76,7 +76,7 @@ def classify_formal_request_consumer_state(
         # complete request-bound DWP before presenting the first business
         # report.  Expose the deterministic checklist here; this is not a new
         # state/checker and does not wait for persistence.
-        dwp = packet.get("decision_work_package") or {}
+        dwp = pack.get("decision_work_package") or {}
         graph = dwp.get("problem_graph") if isinstance(dwp, dict) else []
         required_problem_ids = [
             str(item.get("problem_id") or "").strip()
