@@ -146,6 +146,30 @@ class DecisionWorkPackageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "holding capital rationale"):
             project_decision_response({}, {"answers": {"HOLDING:159981": {"final_action": "HOLD", "capital_comparison": "cash", "next_change_condition": "risk changes", "evidence_decision_impact": ["x"]}}}, package)
 
+    def test_new_holding_contract_requires_separate_capital_efficiency_release_assessment(self):
+        package = {
+            "problem_graph": [{
+                "problem_id": "HOLDING:159981",
+                "security": "能源化工ETF",
+                "capital_efficiency_release_required": True,
+            }],
+            "evidence_requirements": [],
+        }
+        answer = {
+            "final_action": "HOLD",
+            "capital_comparison": "新机会与继续持有已比较",
+            "next_change_condition": "资本效率变化时重评",
+            "evidence_decision_impact": ["ALL_REQUIRED"],
+            "capital_occupancy_reason": "旧仓仍有正向预期",
+            "higher_efficiency_alternative": "515220 Trial机会",
+        }
+        with self.assertRaisesRegex(ValueError, "capital-efficiency release assessment"):
+            project_decision_response({}, {"answers": {"HOLDING:159981": answer}}, package)
+
+        answer["capital_efficiency_release_assessment"] = "新机会优势尚不足以覆盖迁移成本、失败风险和旧仓右尾，因此不释放"
+        projected = project_decision_response({}, {"answers": {"HOLDING:159981": answer}}, package)
+        self.assertEqual(projected["managed_position_reviews"][0]["current_action"], "HOLD")
+
     def test_observation_retain_projects_existing_canonical_thesis(self):
         source = {"request_type":"BUSINESS_DECISION_SOURCE","request_id":"r2","parent_request_id":"p2","decision_id":"d2","consumed_snapshot":"snap"}
         thesis = {"name":"恒生科技ETF","thscode":"513180.SH","thesis":"港股科技结构观察","falsifier":"结构失效则退出","next_decision_information":"下一节点重新比较","information_value_reason":"可能改变资本配置"}
