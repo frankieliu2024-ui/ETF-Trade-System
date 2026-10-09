@@ -69,11 +69,22 @@ class DecisionWorkPackageTests(unittest.TestCase):
         self.assertIn("FULL_MARKET_DISCOVERY", by_problem["MAIN_CANDIDATE"])
         self.assertIn("RELEASABLE_CAPITAL", by_problem["NEXT_UNIT_CAPITAL_USE"])
         self.assertIn("HOLDING_ADDITIONAL_CAPITAL", by_problem["HELD_ETF_ADD:561980"])
-        self.assertIn("FULL_MARKET_DISCOVERY", by_problem["BASE_STOCK_REPLACEMENT:600900"])
-        self.assertIn("TEMPORARY_DISCOVERY_CANDIDATE", by_problem["BASE_STOCK_REPLACEMENT:600900"])
-        self.assertIn("HOLDING_ETF", by_problem["BASE_STOCK_REPLACEMENT:600900"])
-        self.assertIn("CASH", by_problem["BASE_STOCK_REPLACEMENT:600900"])
-        self.assertIn("RELEASABLE_CAPITAL", by_problem["BASE_STOCK_REPLACEMENT:600900"])
+
+    def test_base_stock_replacement_receives_full_capital_competition_evidence(self):
+        graph = [{
+            "problem_id": "BASE_STOCK_REPLACEMENT:600900",
+            "security": "600900",
+            "decision_object": "打新底仓替换候选",
+        }]
+        plan = _evidence_requirement_plan(graph)
+        classes = {item["evidence_class"] for item in plan}
+
+        self.assertIn("ACCOUNT_STOCK", classes)
+        self.assertIn("HOLDING_ETF", classes)
+        self.assertIn("FULL_MARKET_DISCOVERY", classes)
+        self.assertIn("TEMPORARY_DISCOVERY_CANDIDATE", classes)
+        self.assertIn("CASH", classes)
+        self.assertIn("RELEASABLE_CAPITAL", classes)
 
     def test_scoped_plan_is_smaller_than_legacy_full_cartesian_plan(self):
         graph = _decision_problem_graph(
