@@ -514,7 +514,10 @@ def _evidence_requirement_plan(problems: list[dict]) -> list[dict]:
         elif pid.startswith(("DISCOVERY:", "OBSERVATION:", "OBSERVATION_REVIEW:")):
             classes = shared_market + opportunity
         elif pid.startswith("BASE_STOCK_REPLACEMENT:"):
-            classes = shared_market + ["ACCOUNT_STOCK", "CASH", "RELEASABLE_CAPITAL"]
+            # Replacement is a capital-use comparison: the existing contract
+            # requires comparison with current base stock, ETF opportunities,
+            # cash and other legally releasable capital.
+            classes = shared_market + holding + opportunity + capital
         elif pid in {"DEPLOYABLE_CASH", "RELEASABLE_CAPITAL", "TRIAL_CONFIRM_CAPACITY",
                      "CONCENTRATION_COMMON_RISK", "NEXT_UNIT_CAPITAL_USE"}:
             classes = shared_market + opportunity + capital
