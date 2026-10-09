@@ -1011,6 +1011,42 @@ jobs:
           PY
           # system_consistency is owned by the dedicated audit workflow and may
           # change concurrently; keep it out of this data commit.
+          # A formal request must never publish a READY projection alongside
+          # an empty or differently-bound query context. Validate at the final
+          # publish owner as well as at the builder boundary because the retry
+          # reset/replay loop can otherwise reintroduce an empty derived file.
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+
+          changed = subprocess.check_output(
+              ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", "${GITHUB_SHA}", "--", "requests/live_snapshot/"],
+              text=True,
+          ).splitlines()
+          formal_ids = []
+          for name in changed:
+              path = Path(name)
+              try:
+                  obj = json.loads(path.read_text(encoding="utf-8"))
+              except (OSError, json.JSONDecodeError):
+                  continue
+              if str(obj.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH" and str(obj.get("source") or "") == "CHATGPT_MANUAL_FORMAL_ANALYSIS":
+                  formal_ids.append(str(obj.get("request_id") or "").strip())
+          if formal_ids:
+              query_path = Path("data/state/query_context.json")
+              if not query_path.exists() or query_path.stat().st_size == 0:
+                  raise SystemExit("formal request cannot publish empty query_context.json")
+              try:
+                  context = json.loads(query_path.read_text(encoding="utf-8"))
+              except (OSError, json.JSONDecodeError) as exc:
+                  raise SystemExit(f"formal request query_context.json is invalid: {exc}")
+              actual = str(((context.get("decision_fact_pack") or {}).get("trigger") or {}).get("request_id") or "").strip()
+              if actual not in formal_ids:
+                  raise SystemExit(f"formal request query_context request_id mismatch: expected={formal_ids} actual={actual}")
+              pack = context.get("decision_fact_pack") or {}
+              if not isinstance(pack.get("decision_work_package"), dict):
+                  raise SystemExit("formal request query_context missing decision_work_package")
+          PY
           git checkout -- data/state/system_consistency.json
           git reset -- data/state/notification_center.json
               git add -A -- data/market/snapshots data/market/discovery_history data/state post_market_review events config/market/etf_monitor_universe.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
