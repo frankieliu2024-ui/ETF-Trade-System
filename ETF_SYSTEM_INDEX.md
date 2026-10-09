@@ -41,7 +41,7 @@
 
 本场景唯一三态合同读取 `docs/Formal Decision执行与用户回复协议.md`；本节只提供执行路由，不复制该协议正文。
 
-当 `formal_reply_freeze.reply_freezable=true` 且父请求、request-bound DWP 和当前 facts 已一致时，`classify_formal_request_consumer_state` 返回 `BUSINESS_DECISION_READY` 即视为用户业务分析的硬交接点：ChatGPT必须直接完成一次完整业务判断并输出既定长报告，不得继续等待 canonical persistence、audit、notification、consistency、acceptance 或任何后置投影，也不得再次读取原始行情、重复执行同一份 Discovery 或重新审计已通过的生产链。上述后置工作只能异步进行，不能撤销本次业务回复资格。
+当 `formal_reply_freeze.reply_freezable=true` 且父请求、request-bound DWP 和当前 facts 已一致时，`classify_formal_request_consumer_state` 返回 `BUSINESS_DECISION_READY` 即视为用户业务分析的硬交接点：ChatGPT必须直接完成一次完整业务判断并输出既定长报告，不得继续等待 canonical persistence、audit、notification、consistency、acceptance 或任何后置投影。READY 后不得重新生产、刷新、拉取或重建已经 request-bound 的正式行情／事实，不得重复执行同一份 Discovery，也不得重新审计已通过的生产链；但这不禁止 ChatGPT 为完成本次 DWP 中机器无法替代的业务判断，有限、按需调用适用的 Bigdata、Longbridge、Exa 或其他合法外部研究工具取得尚未包含在 request-bound 包中的决策相关补充证据。外部补充证据只作为研究／判断补充：必须保留其事实时点、来源和用途边界，不得覆盖 request-bound/canonical 正式事实，不得冒充当前可执行价格或证券身份，不得改变 provider 优先级、绕过 PIT/freshness、扩大交易权限或建立第二 producer/state/decision chain；已有 request-bound 证据足够时不得机械重复查询，外部补证失败、超时或空结果按现有规范合法降级，不得阻塞已经具备的 READY 回复资格。上述后置工作只能异步进行，不能撤销本次业务回复资格。
 
 正式业务回复只表达业务结论、依据、风险和人工交易边界；不得出现 `canonical`、`writer`、`BDS`、`reply_freezable`、`control plane`、内部 workflow/job、持久化等待或“自动接管”等内部或歧义表述。默认用户可见语义为“本次正式判断已完成；证券交易仍由用户人工确认和下单”。
 
