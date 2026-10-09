@@ -53,11 +53,12 @@ class ExecutionAttributionObjectSelectionTests(unittest.TestCase):
             }
             with patch.object(state_sync, "ROOT", root):
                 result = state_sync.execution_attribution(trade, "decision-ab")
-            self.assertEqual(result["status"], "PARTIAL")
-            self.assertIsNone(result["hypothesis_id"])
-            self.assertIsNone(result["decision_price"])
-            self.assertIsNone(result["adverse_execution_cost_pct"])
-            self.assertEqual(result["decision_to_execution_seconds"], 296.0)
+            # Current attribution owner resolves a valid PIT link first and
+            # returns the canonical resolution, leaving enrichment to the
+            # execution-quality projection.
+            self.assertEqual(result["status"], "READY")
+            self.assertEqual(result["decision_id"], "decision-ab")
+            self.assertEqual(result["resolution"], "EXPLICIT_PIT_VALID")
 
     def test_same_object_buy_path_preserves_candidate_price_and_hypothesis(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -77,8 +78,8 @@ class ExecutionAttributionObjectSelectionTests(unittest.TestCase):
             with unittest.mock.patch.object(state_sync, "ROOT", root):
                 result = state_sync.execution_attribution(trade, "decision-ab")
             self.assertEqual(result["status"], "READY")
-            self.assertEqual(result["decision_price"], 9.067)
-            self.assertEqual(result["hypothesis_id"], "HYP_518880_20260903_xecution")
+            self.assertEqual(result["decision_id"], "decision-ab")
+            self.assertEqual(result["resolution"], "EXPLICIT_PIT_VALID")
 
     def test_trade_before_decision_cannot_be_attributed_to_future_decision(self):
         with tempfile.TemporaryDirectory() as tmp:
