@@ -84,6 +84,7 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
                 }
             },
             producer_status="SUCCESS",
+            canonical_persistence_status="PERSISTED",
         )
         self.assertEqual(ready["status"], "BUSINESS_DECISION_READY")
         self.assertTrue(ready["reply_eligible"])
@@ -104,12 +105,37 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
                 }
             },
             producer_status="SUCCESS",
+            canonical_persistence_status="PERSISTED",
         )
         self.assertEqual(state["status"], "BUSINESS_DECISION_READY")
         self.assertFalse(state["continue_same_request"])
         self.assertTrue(state["reply_eligible"])
         self.assertTrue(state["analysis_eligible"])
         self.assertEqual(state["user_visible_output"], "COMPLETE_BUSINESS_DECISION_ONLY")
+
+
+    def test_same_request_ready_without_bds_persistence_stays_silent_but_analysis_can_continue(self):
+        state = classify_formal_request_consumer_state(
+            "parent",
+            {
+                "decision_fact_pack": {
+                    "trigger": {"request_id": "parent"},
+                    "formal_reply_freeze": {
+                        "status": "READY",
+                        "reply_freezable": True,
+                        "request_id": "parent",
+                        "blockers": [],
+                    },
+                }
+            },
+            producer_status="SUCCESS",
+        )
+        self.assertEqual(state["status"], "BUSINESS_DECISION_PENDING_PERSISTENCE")
+        self.assertTrue(state["analysis_eligible"])
+        self.assertFalse(state["reply_eligible"])
+        self.assertTrue(state["continue_same_request"])
+        self.assertEqual(state["user_visible_output"], "SILENT_CONTINUATION")
+        self.assertEqual(state["reason"], "BDS_CANONICAL_PERSISTENCE_NOT_CONFIRMED")
 
     def test_downstream_persistence_failure_does_not_revoke_ready_reply(self):
         state = classify_formal_request_consumer_state(
@@ -125,6 +151,7 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
                 }
             },
             producer_status="SUCCESS",
+            canonical_persistence_status="PERSISTED",
         )
         # Persistence/projection/notification state is intentionally not an input.
         self.assertTrue(state["reply_eligible"])
