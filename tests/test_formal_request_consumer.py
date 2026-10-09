@@ -197,5 +197,27 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertEqual(state["user_visible_output"], "TERMINAL_FAILURE")
 
 
+    def test_ready_facts_allow_reply_before_async_canonical_persistence(self):
+        result = classify_formal_request_consumer_state(
+            "request-1",
+            {
+                "decision_fact_pack": {
+                    "trigger": {"request_id": "request-1"},
+                    "formal_reply_freeze": {
+                        "status": "READY",
+                        "request_id": "request-1",
+                        "reply_freezable": True,
+                    },
+                }
+            },
+            canonical_persistence_status="",
+        )
+        self.assertEqual(result["status"], "BUSINESS_DECISION_READY")
+        self.assertTrue(result["analysis_eligible"])
+        self.assertTrue(result["reply_eligible"])
+        self.assertEqual(result["canonical_persistence_status"], "PENDING_ASYNC")
+        self.assertEqual(result["user_visible_output"], "COMPLETE_BUSINESS_DECISION_ONLY")
+
+
 if __name__ == "__main__":
     unittest.main()
