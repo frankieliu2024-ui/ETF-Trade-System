@@ -8,6 +8,9 @@ READY_STATUSES = {"READY", "RESOLVED_DEGRADED"}
 TERMINAL_FAILURE_STATUSES = {"FAILED", "TERMINAL_FAILURE", "BLOCKED_TERMINAL"}
 BUSINESS_REPLY_OUTPUT = "COMPLETE_BUSINESS_DECISION_ONLY"
 POST_REPLY_ASYNC = "CANONICAL_AUDIT_NOTIFICATION_ASYNC"
+ACTOR_CONTINUE = "CONTINUE_SAME_REQUEST_SILENTLY"
+ACTOR_DECIDE = "COMPLETE_BUSINESS_DECISION_NOW"
+ACTOR_TERMINATE = "TERMINATE_ON_EXPLICIT_FAILURE"
 
 
 def classify_formal_request_consumer_state(
@@ -32,6 +35,8 @@ def classify_formal_request_consumer_state(
             "analysis_eligible": False,
             "reply_eligible": False,
             "user_visible_output": "TERMINAL_FAILURE",
+            "actor_action": ACTOR_TERMINATE,
+            "user_output_allowed": True,
             "reason": "PARENT_REQUEST_ID_MISSING",
         }
 
@@ -60,6 +65,8 @@ def classify_formal_request_consumer_state(
             "analysis_eligible": False,
             "reply_eligible": False,
             "user_visible_output": "TERMINAL_FAILURE",
+            "actor_action": ACTOR_TERMINATE,
+            "user_output_allowed": True,
             "reason": "EXPLICIT_TERMINAL_FAILURE",
         }
 
@@ -75,6 +82,8 @@ def classify_formal_request_consumer_state(
             "analysis_eligible": True,
             "reply_eligible": True,
             "user_visible_output": BUSINESS_REPLY_OUTPUT,
+            "actor_action": ACTOR_DECIDE,
+            "user_output_allowed": True,
             "post_reply_processing": POST_REPLY_ASYNC,
             "control_plane_in_user_reply": False,
             "reason": (
@@ -93,6 +102,8 @@ def classify_formal_request_consumer_state(
             "analysis_eligible": False,
             "reply_eligible": False,
             "user_visible_output": "SILENT_CONTINUATION",
+            "actor_action": ACTOR_CONTINUE,
+            "user_output_allowed": False,
             "reason": "CURRENT_DERIVED_CONTEXT_NOT_YET_BOUND_TO_DURABLE_PARENT",
         }
 
@@ -103,6 +114,8 @@ def classify_formal_request_consumer_state(
             "analysis_eligible": False,
             "reply_eligible": False,
             "user_visible_output": "SILENT_CONTINUATION",
+            "actor_action": ACTOR_CONTINUE,
+            "user_output_allowed": False,
             "reason": "SAME_REQUEST_FACTS_STILL_FORMING",
         }
 
