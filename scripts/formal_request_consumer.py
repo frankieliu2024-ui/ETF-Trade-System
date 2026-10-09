@@ -83,6 +83,8 @@ def classify_formal_request_consumer_state(
             for item in (graph or [])
             if isinstance(item, dict) and str(item.get("problem_id") or "").strip()
         ]
+        response_contract = dwp.get("response_contract") if isinstance(dwp, dict) else {}
+        response_contract = response_contract if isinstance(response_contract, dict) else {}
         # Request-bound facts authorize business analysis.  The actor's
         # BUSINESS_DECISION_SOURCE is the reply handoff; canonical projection
         # and post-write acceptance remain asynchronous and must not block the
@@ -99,6 +101,7 @@ def classify_formal_request_consumer_state(
             "required_problem_ids": required_problem_ids,
             "required_problem_count": len(required_problem_ids),
             "business_answer_contract": "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
+            "actor_response_contract": response_contract,
             "control_plane_in_user_reply": False,
             "reason": (
                 "SAME_REQUEST_FACTS_READY_BDS_HANDOFF_REQUIRED_"
