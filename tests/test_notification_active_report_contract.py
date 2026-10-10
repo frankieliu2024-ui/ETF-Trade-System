@@ -83,12 +83,11 @@ class NotificationActiveReportContractTests(unittest.TestCase):
             valid, reason = center.validate_report_delivery_request(self._request(report_type))
             self.assertTrue(valid, reason)
 
-    def test_retired_scheduled_formal_decision_report_is_rejected_for_new_delivery(self):
+    def test_formal_decision_report_is_accepted_for_new_delivery(self):
         valid, reason = center.validate_report_delivery_request(self._request("ETF_FORMAL_DECISION"))
-        self.assertFalse(valid)
-        self.assertEqual(reason, "unsupported_report_type")
-        self.assertIn("ETF_FORMAL_DECISION", center.HISTORICAL_REPORT_TYPES)
-        self.assertNotIn("ETF_FORMAL_DECISION", center.ACTIVE_REPORT_TYPES)
+        self.assertTrue(valid, reason)
+        self.assertIn("ETF_FORMAL_DECISION", center.ACTIVE_REPORT_TYPES)
+        self.assertNotIn("ETF_FORMAL_DECISION", center.HISTORICAL_REPORT_TYPES)
 
     def test_historical_formal_report_notification_record_remains_readable(self):
         historical = {
