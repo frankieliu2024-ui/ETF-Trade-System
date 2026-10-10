@@ -81,6 +81,11 @@ class ReportDeliveryContractTests(unittest.TestCase):
         request = self._request("ETF_UNKNOWN_REPORT")
         self.assertFalse(notification_center.validate_report_delivery_request(request)[0])
 
+    def test_formal_decision_report_type_is_active(self):
+        request = self._request("ETF_FORMAL_DECISION")
+        valid, reason = notification_center.validate_report_delivery_request(request)
+        self.assertTrue(valid, reason)
+
     def test_invalid_report_is_rejected(self):
         request = self._request()
         request["content_hash"] = "wrong"
