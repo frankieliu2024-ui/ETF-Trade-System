@@ -111,6 +111,23 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_TRADE_REVIEW")
         self.assertEqual(payload["presentation_binding"]["full_content"], "FROZEN TRADE REPORT")
 
+    def test_formal_decision_completion_projects_shared_report(self):
+        payload = completion.build_completion_request(
+            full_review(), "formal-run", "2026-09-23T20:30:00+08:00",
+            final_content="FROZEN FORMAL REPORT", task_id="ETF正式决策", task_run_id="formal-run",
+        )
+        payload["presentation_binding"]["report_type"] = "ETF_FORMAL_DECISION"
+        report = completion.build_report_delivery_from_completion(payload)
+        self.assertEqual(report["report_type"], "ETF_FORMAL_DECISION")
+        self.assertEqual(report["title"], "【ETF正式决策】")
+        self.assertEqual(report["full_content"], "FROZEN FORMAL REPORT")
+        self.assertEqual(report["idempotency_key"], "ETF_FORMAL_DECISION:formal-run")
+        self.assertEqual(
+            report["content_hash"],
+            hashlib.sha256(b"FROZEN FORMAL REPORT").hexdigest(),
+        )
+        self.assertTrue(report["no_trade_authority"])
+
     def test_system_review_completion_is_business_completion_not_report_handoff(self):
         payload = completion.build_system_review_completion_request(
             {"status": "PASS"}, "system-request", "2026-09-26T19:30:00+08:00",
