@@ -47,7 +47,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
             other_path = Path(directory) / "other.json"
             selected_path.write_text(json.dumps(selected, ensure_ascii=False), encoding="utf-8")
             other_path.write_text(json.dumps(other, ensure_ascii=False), encoding="utf-8")
-            with patch.object(notification_center, "REPORT_REQUEST_DIR", Path(directory)), patch.dict(
+            with patch.object(notification_center, "REPORT_REQUEST_DIR", Path(directory)), patch.object(notification_center, "REVIEW_EVENT_DIR", Path(directory) / "empty-reviews"), patch.dict(
                 "os.environ", {"REPORT_DELIVERY_PATH": str(selected_path)}
             ):
                 event = notification_center.report_delivery_event()
