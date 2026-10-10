@@ -98,10 +98,17 @@ jobs:
           git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_BEFORE"
           git cat-file -e "$PUSH_AFTER^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_AFTER"
           git diff --name-only "$PUSH_BEFORE" "$PUSH_AFTER" > /tmp/changed_files.txt
-          if grep -Eq '^events/decisions/[^/]+\.json$' /tmp/changed_files.txt; then
+          mapfile -t decision_paths < <(grep -E '^events/decisions/[^/]+\.json$' /tmp/changed_files.txt || true)
+          if [ "${#decision_paths[@]}" -eq 1 ]; then
             echo "decision=true" >> "$GITHUB_OUTPUT"
+            echo "decision_event_path=${decision_paths[0]}" >> "$GITHUB_OUTPUT"
+          elif [ "${#decision_paths[@]}" -gt 1 ]; then
+            echo "Ambiguous Formal Decision push: expected exactly one decision event, found ${#decision_paths[@]}" >&2
+            printf '%s\n' "${decision_paths[@]}" >&2
+            exit 1
           else
             echo "decision=false" >> "$GITHUB_OUTPUT"
+            echo "decision_event_path=" >> "$GITHUB_OUTPUT"
           fi
           if grep -Eq '^events/trades/[^/]+\.json$' /tmp/changed_files.txt; then
             echo "trade=true" >> "$GITHUB_OUTPUT"
@@ -297,6 +304,7 @@ jobs:
           REPORT_DELIVERY_PATH: ${{ steps.push_kind.outputs.report_path }}
           REPORT_HANDOFF_PATH: ${{ steps.push_kind.outputs.report_handoff_path }}
           REVIEW_EVENT_PATH: ${{ steps.push_kind.outputs.review_event_path || steps.workflow_review.outputs.review_event_path }}
+          DECISION_EVENT_PATH: ${{ steps.push_kind.outputs.decision_event_path }}
         run: python scripts/run_guarded_notification.py center --mode event
 
       - name: Send conditional A-share trading-day post-close account reminder
