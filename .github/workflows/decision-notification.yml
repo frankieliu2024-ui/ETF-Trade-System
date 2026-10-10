@@ -283,6 +283,9 @@ jobs:
           mapfile -t review_paths < <(
             git diff-tree --no-commit-id --name-only -r "$downstream_sha" -- 'events/reviews/*.json' | sed '/^$/d'
           )
+          mapfile -t decision_paths < <(
+            git diff-tree --no-commit-id --name-only -r "$downstream_sha" -- 'events/decisions/*.json' | sed '/^$/d'
+          )
           if [ "${#review_paths[@]}" -eq 1 ]; then
             echo "review_completion=true" >> "$GITHUB_OUTPUT"
             echo "review_event_path=${review_paths[0]}" >> "$GITHUB_OUTPUT"
@@ -291,7 +294,22 @@ jobs:
             printf '%s\n' "${review_paths[@]}" >&2
             exit 1
           else
-            echo "Producer run ${PRODUCER_RUN_ID} has no canonical Scheduled Review event." >&2
+            echo "review_completion=false" >> "$GITHUB_OUTPUT"
+            echo "review_event_path=" >> "$GITHUB_OUTPUT"
+          fi
+          if [ "${#decision_paths[@]}" -eq 1 ]; then
+            echo "decision_completion=true" >> "$GITHUB_OUTPUT"
+            echo "decision_event_path=${decision_paths[0]}" >> "$GITHUB_OUTPUT"
+          elif [ "${#decision_paths[@]}" -gt 1 ]; then
+            echo "Ambiguous Formal Decision producer commit: expected exactly one decision event, found ${#decision_paths[@]}" >&2
+            printf '%s\n' "${decision_paths[@]}" >&2
+            exit 1
+          else
+            echo "decision_completion=false" >> "$GITHUB_OUTPUT"
+            echo "decision_event_path=" >> "$GITHUB_OUTPUT"
+          fi
+          if [ "${#review_paths[@]}" -eq 0 ] && [ "${#decision_paths[@]}" -eq 0 ]; then
+            echo "Producer run ${PRODUCER_RUN_ID} has no canonical report event." >&2
             exit 1
           fi
 
@@ -304,7 +322,7 @@ jobs:
           REPORT_DELIVERY_PATH: ${{ steps.push_kind.outputs.report_path }}
           REPORT_HANDOFF_PATH: ${{ steps.push_kind.outputs.report_handoff_path }}
           REVIEW_EVENT_PATH: ${{ steps.push_kind.outputs.review_event_path || steps.workflow_review.outputs.review_event_path }}
-          DECISION_EVENT_PATH: ${{ steps.push_kind.outputs.decision_event_path }}
+          DECISION_EVENT_PATH: ${{ steps.push_kind.outputs.decision_event_path || steps.workflow_review.outputs.decision_event_path }}
         run: python scripts/run_guarded_notification.py center --mode event
 
       - name: Send conditional A-share trading-day post-close account reminder

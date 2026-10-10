@@ -210,6 +210,13 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             with patch.object(notification_center, "ROOT", root),                  patch.object(notification_center, "REVIEW_EVENT_DIR", review_dir),                  patch.dict(os.environ, {"REVIEW_EVENT_PATH": "events/reviews/bad.json"}, clear=False):
                 self.assertIsNone(notification_center.report_delivery_event())
 
+    def test_formal_decision_event_is_bound_from_market_snapshot_workflow_run(self):
+        workflow = (Path(__file__).parents[1] / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
+        self.assertIn("decision_paths", workflow)
+        self.assertIn("decision_completion", workflow)
+        self.assertIn("steps.workflow_review.outputs.decision_event_path", workflow)
+        self.assertIn("events/decisions/*.json", workflow)
+
     def test_multiple_triggering_review_events_fail_closed_in_workflow(self):
         workflow = (Path(__file__).parents[1] / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
         self.assertIn('expected exactly one review event', workflow)
