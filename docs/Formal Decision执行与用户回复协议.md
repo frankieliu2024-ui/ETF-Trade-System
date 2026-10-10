@@ -50,6 +50,7 @@ Formal Decision 对用户可见行为只有 WAIT、READY、TERMINAL 三种状态
 - 不重新生产、刷新、拉取或重建已经 request-bound 的正式行情／事实，不重复 Discovery，不重新审计已经通过的生产链；
 - 允许为完成本次 DWP 中机器无法替代的业务判断，有限、按需取得尚未包含在 request-bound 包中的决策相关外部补充证据；这类补证不得覆盖 request-bound/canonical 正式事实、冒充当前可执行价格或证券身份、改变 provider 优先级、绕过 PIT/freshness、扩大交易权限或建立第二 producer/state/decision chain；
 - 外部补证必须保留事实时点、来源和用途边界；已有 request-bound 证据足够时不得机械重复查询，补证失败、超时或空结果按现有规范合法降级，不得阻塞已经具备的 READY 回复资格。
+- 外部工具的“已连接”、某一 endpoint 调用成功或能够解析证券身份，不等于其对目标对象、目标市场、目标时段或目标数据类型具有行情／研究权限；必须按本次实际 endpoint 返回、entitlement／套餐／quota、对象覆盖和数据时点分别判断证据资格，不得由一个成功 endpoint 外推同工具其他 endpoint 可用。
 
 ### TERMINAL
 
