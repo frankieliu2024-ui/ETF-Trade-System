@@ -273,7 +273,7 @@ def build_report_delivery_from_completion(completion: dict) -> dict:
     """Project the frozen Scheduled Review presentation into the existing REPORT contract."""
     binding = completion.get("presentation_binding") or {}
     report_type = str(binding.get("report_type") or "")
-    if report_type not in {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}:
+    if report_type not in {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW", "ETF_FORMAL_DECISION"}:
         raise ValueError("unsupported Scheduled Review report_type")
     full_content = str(binding.get("full_content") or "")
     task_id = str(binding.get("task_id") or "")
@@ -299,7 +299,11 @@ def build_report_delivery_from_completion(completion: dict) -> dict:
         "effective_market_date": effective_market_date,
         "source_actor": str(completion.get("source") or "Scheduled Review Actor"),
         "source_reference": f"scheduled-review-completion:{completion.get('request_id')}",
-        "title": "【ETF交易复盘】" if report_type == "ETF_TRADE_REVIEW" else "【ETF系统复核】",
+        "title": (
+            "【ETF交易复盘】" if report_type == "ETF_TRADE_REVIEW"
+            else "【ETF系统复核】" if report_type == "ETF_SYSTEM_REVIEW"
+            else "【ETF正式决策】"
+        ),
         "summary": "Scheduled Review completed; deliver the frozen FINAL_CONTENT unchanged.",
         "full_content": full_content,
         "content_hash": content_hash,
