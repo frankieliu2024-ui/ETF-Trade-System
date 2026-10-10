@@ -217,7 +217,7 @@ REPORT只接受已经达到合法终态并冻结的active正式节点结果，�
 
 Scheduled Review Actor达到合法终态并冻结唯一`FINAL_CONTENT`后，只提交一次现有canonical Scheduled Review completion ingress；completion事件携带`presentation_binding`，由现有`notification_center`从该canonical review event投影REPORT并经统一sender投递。Scheduled Actor不得在completion之后另行创建`requests/report_delivery`或`requests/report_handoff`作为新的生产标准。`decision-notification.yml`在review event触发的push中必须精确绑定唯一`events/reviews/*.json`路径；多个候选或binding/schema、哈希、来源、task/run identity不合法时fail closed，不得按目录排序猜测occurrence。历史`report_delivery`/`report_handoff`仅保留current确需的compatibility/recovery语义。`notification_center.build_report_delivery_request`可以继续作为仓库内辅助构造/测试函数，但不是Scheduled Actor的生产前置执行依赖。
 
-canonical intake只接受`ETF_TRADE_REVIEW`与`ETF_SYSTEM_REVIEW`，并校验来源身份、任务/运行身份、正文哈希和幂等键；重复幂等键不得重复投递。新的`ETF_FORMAL_DECISION` REPORT请求必须fail closed为unsupported report type；这一限制只约束新投递，不删除、不改写既有历史artifact。REPORT请求只能创建delivery event，不能修改MASTER、risk permission、lifecycle、formal decision、account、trade、CASE或订单。REPORT投递成功或失败都不得反向改写业务事实是否成功；业务事实失败也不得在正文中伪装为成功。REPORT是终态投递输入，不得重新进入INTERRUPT事件生成器；同一Scheduled run/node继续由现有幂等键防止重复投递。
+canonical intake只接受已登记的`ETF_TRADE_REVIEW`、`ETF_SYSTEM_REVIEW`与`ETF_FORMAL_DECISION`三类REPORT，并校验来源身份、任务/运行身份、正文哈希和幂等键；重复幂等键不得重复投递。REPORT请求只能创建delivery event，不能修改MASTER、risk permission、lifecycle、formal decision、account、trade、CASE或订单。REPORT投递成功或失败都不得反向改写业务事实是否成功；业务事实失败也不得在正文中伪装为成功。REPORT是终态投递输入，不得重新进入INTERRUPT事件生成器；同一任务运行/节点继续由现有幂等键防止重复投递。
 
 ### 正式判断与raw trigger边界
 
