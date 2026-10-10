@@ -47,9 +47,9 @@ class ScheduledReportDirectDeliveryContractTests(unittest.TestCase):
         request["content_hash"] = "not-the-frozen-body-hash"
         self.assertEqual(validate_report_delivery_request(request), (False, "content_hash_mismatch"))
 
-    def test_retired_formal_decision_report_still_fails_closed(self):
+    def test_formal_decision_report_is_active(self):
         request = direct_scheduled_report("ETF_FORMAL_DECISION")
-        self.assertEqual(validate_report_delivery_request(request), (False, "unsupported_report_type"))
+        self.assertEqual(validate_report_delivery_request(request), (True, ""))
 
 
 if __name__ == "__main__":
