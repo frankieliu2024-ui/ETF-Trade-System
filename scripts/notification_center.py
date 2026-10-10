@@ -209,7 +209,55 @@ def formal_decision_report_event() -> dict | None:
     }
 
 
+def _formal_decision_report_event(event_path: str) -> dict | None:
+    """Project one frozen Formal Decision presentation into the shared REPORT contract."""
+    candidate = Path(event_path)
+    candidate = candidate if candidate.is_absolute() else ROOT / candidate
+    if not candidate.is_file() or candidate.parent.resolve() != (ROOT / "events" / "decisions").resolve():
+        return None
+    event = read_json(candidate, {})
+    binding = event.get("presentation_binding")
+    if not isinstance(binding, dict):
+        return None
+    report_type = str(binding.get("report_type") or "")
+    content = str(binding.get("full_content") or "")
+    task_id = str(binding.get("task_id") or "ETF正式决策")
+    task_run_id = str(binding.get("task_run_id") or event.get("decision_id") or "")
+    content_hash = str(binding.get("content_hash") or "")
+    if report_type != "ETF_FORMAL_DECISION" or not content or not task_run_id:
+        return None
+    expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    if content_hash != expected_hash:
+        return None
+    key = f"{report_type}:{task_run_id}"
+    return {
+        "key": f"report-delivery:{key}",
+        "source_event_id": f"report-completion:{key}",
+        "event_type": "REPORT_DELIVERY_REQUEST",
+        "notification_channel": "REPORT",
+        "delivery_mode": "FULL_REPORT",
+        "type": "正式报告",
+        "title": str(binding.get("title") or "【ETF正式决策】"),
+        "content": content,
+        "source": f"canonical-formal-decision:{candidate.name}",
+        "user_severity": "正式报告",
+        "user_action": "阅读已完成的正式ETF报告；无需交易操作",
+        "report_type": report_type,
+        "report_id": f"{report_type.lower()}:{task_run_id}",
+        "task_id": task_id,
+        "task_run_id": task_run_id,
+        "idempotency_key": key,
+        "no_trade_authority": True,
+        "content_hash": expected_hash,
+    }
+
+
 def report_delivery_event() -> dict | None:
+    decision_event_path = os.environ.get("DECISION_EVENT_PATH", "").strip()
+    if decision_event_path:
+        # Formal Decision uses the same frozen-presentation REPORT path as the
+        # two Scheduled Review products; it is not a separate sender or workflow.
+        return _formal_decision_report_event(decision_event_path)
     # A canonical Scheduled Review push must bind this occurrence to the exact
     # review event path identified by the triggering commit. Never select a
     # different event by directory order when an explicit binding is present.
