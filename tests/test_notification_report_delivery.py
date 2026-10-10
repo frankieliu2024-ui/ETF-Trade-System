@@ -101,17 +101,15 @@ class ReportDeliveryContractTests(unittest.TestCase):
             },
         }
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "fd.json"
+            path = Path(directory) / "events" / "decisions" / "fd.json"
+            path.parent.mkdir(parents=True)
             path.write_text(json.dumps(event, ensure_ascii=False), encoding="utf-8")
             with patch.object(notification_center, "ROOT", Path(directory)):
                 with patch.object(notification_center, "STATE", Path(directory) / "state"):
                     with patch.object(notification_center, "REVIEW_EVENT_DIR", Path(directory) / "events" / "reviews"):
                         with patch.object(notification_center, "REPORT_REQUEST_DIR", Path(directory) / "requests" / "report_delivery"):
                             with patch.object(notification_center, "REPORT_HANDOFF_DIR", Path(directory) / "requests" / "report_handoff"):
-                                with patch.object(notification_center, "Path", Path):
-                                    (Path(directory) / "events" / "decisions").mkdir(parents=True)
-                                    path.write_text(json.dumps(event, ensure_ascii=False), encoding="utf-8")
-                                    projected = notification_center.formal_decision_report_event()
+                                projected = notification_center.formal_decision_report_event()
         self.assertEqual(projected["report_type"], "ETF_FORMAL_DECISION")
         self.assertEqual(projected["delivery_mode"], "FULL_REPORT")
         self.assertEqual(projected["content"], event["presentation_binding"]["content"])
