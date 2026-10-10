@@ -42,7 +42,7 @@ def main() -> int:
     parser.add_argument("--task-id", required=True)
     parser.add_argument("--task-run-id", required=True)
     parser.add_argument("--report-id", required=True)
-    parser.add_argument("--report-type", required=True, choices=("ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"))
+    parser.add_argument("--report-type", required=True, choices=("ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW", "ETF_FORMAL_DECISION"))
     parser.add_argument("--effective-market-date", required=True)
     parser.add_argument("--title", required=True)
     parser.add_argument("--summary", required=True)
