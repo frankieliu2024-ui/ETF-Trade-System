@@ -122,6 +122,23 @@ class ReportDeliveryContractTests(unittest.TestCase):
         request["no_trade_authority"] = False
         self.assertFalse(notification_center.validate_report_delivery_request(request)[0])
 
+    def test_formal_decision_event_path_binds_exact_event(self):
+        event = {
+            "event_type": "FORMAL_DECISION", "decision_id": "fd-selected",
+            "parent_request_id": "req-selected", "recorded_at_beijing": "2026-10-10T21:48:00+08:00",
+            "presentation_binding": {"request_id": "req-selected", "decision_id": "fd-selected",
+                                     "content": "SELECTED", "content_sha256": hashlib.sha256(b"SELECTED").hexdigest()},
+        }
+        other = dict(event); other["decision_id"] = "fd-other"; other["recorded_at_beijing"] = "2026-10-10T21:49:00+08:00"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); selected = root / "selected.json"; stale = root / "stale.json"
+            selected.write_text(json.dumps(event, ensure_ascii=False), encoding="utf-8")
+            stale.write_text(json.dumps(other, ensure_ascii=False), encoding="utf-8")
+            with patch.object(notification_center, "ROOT", root), patch.dict("os.environ", {"DECISION_EVENT_PATH": "selected.json"}):
+                projected = notification_center.formal_decision_report_event()
+        self.assertEqual(projected["task_run_id"], "fd-selected")
+        self.assertEqual(projected["content"], "SELECTED")
+
     def test_report_is_terminal_and_existing_events_remain_interrupt_compact(self):
         report = notification_center.report_delivery_event
         self.assertIsNotNone(report)
