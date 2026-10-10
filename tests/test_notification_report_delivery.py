@@ -29,7 +29,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
             with tempfile.TemporaryDirectory() as directory:
                 path = Path(directory) / "report.json"
                 path.write_text(json.dumps(request, ensure_ascii=False), encoding="utf-8")
-                with patch.object(notification_center, "REPORT_REQUEST_DIR", Path(directory)):
+                with patch.object(notification_center, "REPORT_REQUEST_DIR", Path(directory)), patch.object(notification_center, "REVIEW_EVENT_DIR", Path(directory) / "empty-reviews"):
                     valid, reason = notification_center.validate_report_delivery_request(request)
                     event = notification_center.report_delivery_event()
             self.assertTrue(valid, (report_type, reason))
@@ -47,7 +47,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
             other_path = Path(directory) / "other.json"
             selected_path.write_text(json.dumps(selected, ensure_ascii=False), encoding="utf-8")
             other_path.write_text(json.dumps(other, ensure_ascii=False), encoding="utf-8")
-            with patch.object(notification_center, "REPORT_REQUEST_DIR", Path(directory)), patch.dict(
+            with patch.object(notification_center, "REPORT_REQUEST_DIR", Path(directory)), patch.object(notification_center, "REVIEW_EVENT_DIR", Path(directory) / "empty-reviews"), patch.dict(
                 "os.environ", {"REPORT_DELIVERY_PATH": str(selected_path)}
             ):
                 event = notification_center.report_delivery_event()
@@ -71,7 +71,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "report.json"
             path.write_text(json.dumps(request, ensure_ascii=False), encoding="utf-8")
-            with patch.dict("os.environ", {"REPORT_DELIVERY_PATH": str(path)}), \
+            with patch.object(notification_center, "REVIEW_EVENT_DIR", Path(directory) / "empty-reviews"), patch.dict("os.environ", {"REPORT_DELIVERY_PATH": str(path)}), \
                  patch.object(notification_center, "execution_confirmation_event", return_value={"key": "interrupt"}):
                 event = notification_center.choose_event("event")
         self.assertEqual(event["event_type"], "REPORT_DELIVERY_REQUEST")
@@ -166,7 +166,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "handoff.json"
             path.write_text(json.dumps(handoff, ensure_ascii=False), encoding="utf-8")
-            with patch.dict("os.environ", {"REPORT_HANDOFF_PATH": str(path)}, clear=False):
+            with patch.object(notification_center, "REVIEW_EVENT_DIR", Path(directory) / "empty-reviews"), patch.dict("os.environ", {"REPORT_HANDOFF_PATH": str(path)}, clear=False):
                 event = notification_center.report_delivery_event()
         self.assertEqual(event["content"], handoff["full_content"])
         self.assertEqual(event["report_type"], "ETF_TRADE_REVIEW")
