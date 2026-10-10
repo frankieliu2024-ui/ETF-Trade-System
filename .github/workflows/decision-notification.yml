@@ -98,7 +98,7 @@ jobs:
           git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_BEFORE"
           git cat-file -e "$PUSH_AFTER^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_AFTER"
           git diff --name-only "$PUSH_BEFORE" "$PUSH_AFTER" > /tmp/changed_files.txt
-          mapfile -t decision_paths < <(grep -E '^events/decisions/[^/]+\\.json$' /tmp/changed_files.txt || true)
+          mapfile -t decision_paths < <(grep -E '^events/decisions/[^/]+\.json$' /tmp/changed_files.txt || true)
           if [ "${#decision_paths[@]}" -eq 1 ]; then
             echo "decision=true" >> "$GITHUB_OUTPUT"
             echo "decision_event_path=${decision_paths[0]}" >> "$GITHUB_OUTPUT"
