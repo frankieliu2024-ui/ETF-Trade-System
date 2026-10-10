@@ -169,6 +169,14 @@ READY 前必须完成或按正式规范合法降级：
 
 后置步骤不得阻塞、撤销或改写已经取得合法业务回复资格的判断；后置闭环未完成时，也不得宣称整个事项已经完成闭环。
 
+### 6.1 READY回复与正式交接的不可混淆边界
+
+READY后的首份用户报告与正式生产完成是两个连续但不同的动作。ChatGPT在冻结唯一`FINAL_CONTENT`后，必须在同一请求上提交一次`BUSINESS_DECISION_SOURCE` Actor envelope，并由GitHub Contents取得提交回执、回读同一路径，确定性核对`parent_request_id`、`request_type`、`decision_response.answers`覆盖同一DWP必答集合，以及`presentation_content`逐字等于冻结的`FINAL_CONTENT`。
+
+仅生成聊天正文、仅创建父请求、仅形成READY事实或仅取得事实门通过，均不构成Formal Decision completion，也不能据此声称正式决策已进入REPORT通知链。提交、回读或逐字核对任一步失败时，必须保留同一父请求，不得创建第二请求、第二正文、第二BDS、第二completion或旁路通知；应在当前合法交互边界内如实保留未完成交接状态。
+
+正式完成的验收最低要求为：同一父请求存在合法`BUSINESS_DECISION_SOURCE`，并由既有owner生成唯一正式决策事件；REPORT、统一通知状态和PushPlus结果属于后置交付状态，必须分别核对，不能用聊天回复或代码路径存在替代真实运行证据。
+
 ## 7. 用户可见边界
 
 正式回复只表达业务结论、数据时点、三层监测、持仓动作、资本用途、风险、后续关注点、置信度和最可能出错的地方。
