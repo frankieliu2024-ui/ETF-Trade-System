@@ -1,0 +1,66 @@
+{
+  "request_id": "scheduled-system-review-scheduled-20261010-193000",
+  "request_type": "STATE_SYNC_ONLY",
+  "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+  "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+  "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+  "requested_at_beijing": "2026-10-10T19:30:00+08:00",
+  "system_review": {
+    "review_kind": "WEEKEND_SYSTEM_STATUS_REVIEW",
+    "market_date": "2026-10-10",
+    "market_phase": "WEEKEND_CLOSED",
+    "is_a_share_trading_day": false,
+    "latest_a_share_effective_at_beijing": "2026-10-09T15:00:00+08:00",
+    "latest_snapshot_captured_at_beijing": "2026-10-09T15:22:06+08:00",
+    "account_fact_as_of_beijing": "2026-10-09T15:27:00+08:00",
+    "e2e_as_of_beijing": "2026-10-10T15:49:25+08:00",
+    "e2e_status": "READY",
+    "blockers": [],
+    "degradations": [],
+    "account_summary": {
+      "total_asset": 187398.94,
+      "stock_market_value": 185217.9,
+      "deployable_cash": 2181.04,
+      "position_count": 8,
+      "daily_pnl": 2745.7,
+      "daily_pnl_pct": 1.49
+    },
+    "risk_summary": {
+      "gross_return_pct": -7.2959,
+      "known_net_return_pct": -7.4,
+      "confirmed_fees": 204.03,
+      "pending_fee_count": 0,
+      "coverage_status": "DEGRADED_PENDING_LATEST_VALUATION"
+    },
+    "close_review": {
+      "market_date": "2026-10-09",
+      "status": "CLOSED",
+      "reviewed_at_beijing": "2026-10-09T20:34:54+08:00"
+    },
+    "overseas_runtime": {
+      "status": "DEGRADED",
+      "data_quality": "PASS",
+      "warning_count": 3
+    },
+    "notification_last_confirmed": {
+      "status": "SENT",
+      "attempted_at_beijing": "2026-10-10T08:34:15+08:00"
+    },
+    "open_issue_count": 0,
+    "auxiliary_evidence": {
+      "registry_checked": true,
+      "additional_fetch_required": false,
+      "reason": "No evidence gap capable of changing this weekend system-status conclusion."
+    },
+    "unresolved_items": [
+      "LATEST_VALUATION_COVERAGE",
+      "OVERSEAS_NATURAL_PULSE_IDENTITY"
+    ]
+  },
+  "presentation_binding": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "task_id": "ETF系统复核",
+    "task_run_id": "scheduled-20261010-193000",
+    "full_content": "【ETF系统复核】2026-10-10 19:30 晚间复核\n\n【复核时点（北京时间）】\n\n1. 本次系统复核时间：2026-10-10 19:30。2026-10-10为周六，也是A股正式休市日，T0为周末休市阶段；本次执行周末系统状态复核，不冒充交易日晚间复核。\n\n2. A股市场事实截至2026-10-09 15:00收盘，正式快照于15:22取得；账户事实截至15:27。最近一次系统联检完成于今日15:49。美股现金盘事实截至今日04:00，盘后参考截至05:15；亚太市场使用各自最近已结束交易时段事实，不冒充今日盘中行情。\n\n【总体结论】\n\n系统可用，没有影响周末监测或下一交易日合法判断的硬阻断。上午尚待覆盖的策略收益复算已经纳入今日15:49联检；当前只保留最新估值完整性和海外行情自动时点识别两项非阻断观察。\n\n【异常与影响】\n\n1. 风险数据：ETF策略累计毛收益率约为-7.30%，已确认费用后的收益率约为-7.40%；已记录交易费用已全部确认，但最新估值覆盖仍不完整。该缺口降低风险数值的最新性，不影响现有账户事实、昨日复盘结论或系统可用性。\n\n2. 海外监测：正式海外行情质量通过，但最近一次自动刷新仍有时点识别告警，日经225指数和韩国综合指数使用上一交易时段参考。该告警未造成行情链中断，也未影响已完成通知。\n\n【需要用户处理】\n\n无需处理。账户、持仓和已记录交易费用均已确认；周末没有A股可执行价格，不需要补录、重复触发或人工重发通知。\n\n【关键状态】\n\n1. 系统可用性：最近一次完整一致性检查完成于2026-09-29 14:31，结果正常、硬错误0、警告0；今日15:49系统联检就绪，阻断0、降级0，且未发现未关闭的系统维护事项。\n\n2. 行情链：A股继续使用2026-10-09完整收盘事实；外部层中，纳斯达克100指数截至今日04:00上涨约0.51%，费城半导体指数下跌约0.41%，宽科技与半导体方向分化。周末没有新的A股价格，现有证据足以完成系统复核，因此没有机械扩展外部查询。\n\n3. 账户事实：截至2026-10-09 15:27有效；总资产187,398.94元，证券市值185,217.90元，可部署现金2,181.04元，实际持仓8只；当日盈亏增加2,745.70元、涨幅1.49%，无已确认新增成交。\n\n4. 交易复盘链：2026-10-09完整日复盘已闭环，8只实际持仓继续持有、释放0股或0份、新增0元，现金选择权胜出。今日15:49确认正式判断入口可用，同一事实窗口和完整问题清单已就绪；本次系统复核未创建新的交易判断。\n\n5. 主动通知：上一轮系统复核已于今日08:34发送并完整保存；未发现重复发送、记录缺失或通知链阻断。\n\n【本轮新增事实】\n\n1. 费用状态已完成收口：已记录交易费用全部确认，待确认费用降为0；上午关于费用待确认的观察已关闭。\n\n2. 真实正式判断路径在今日15:49达到可回复状态，账户、行情、风险、生命周期和完整问题清单均可用，未出现单一辅助证据失败阻塞合法结论的情况。\n\n3. 外部辅助证据已明确按业务缺口选择、证据充分即停止，并在单一来源受限时只降低对应证据强度；该边界不改变正式行情、账户事实或交易权限。\n\n【未闭环事项】\n\n1. 最新估值覆盖仍需在下一次合格市场事实形成后补齐，避免把历史复算结果误写成下一交易日的实时风险值。\n\n2. 海外行情自动刷新时点识别告警需继续观察下一次自然运行；现有行情质量和已完成通知未受影响。\n\n【下一阶段】\n\n周日按周复核汇总本周已验证事项、未闭环风险和下一周重点路径。下一交易日先取得合格的A股三层市场与账户事实，再复核全部持仓、机会ETF、现金和可释放资本，不预设交易动作。\n\n【执行状态】\n\n已自动接管\n\n【下一关注点】\n\n1. 下一次系统检查能否在新市场事实下补齐最新估值覆盖，并保持账户、风险和交易复盘口径一致。\n\n2. 海外行情下一次自然运行能否消除自动时点识别告警，同时继续区分宽科技与半导体结构。\n\n3. 下一交易日A股能否守住10月9日下午修复；煤炭ETF（515220）及临时评估对象只有在新事实下取得节点性机会资格后，才参加新增资本竞争。\n\n【置信度】\n\n中高\n\n【最可能出错的地方】\n\n最近一次完整一致性检查早于本次复核，周末又没有新的A股价格；最新估值仍未完整覆盖。海外市场时点不同步且宽科技与半导体方向分化，最容易把上一交易时段参考误写成下一交易日可执行事实。"
+  }
+}
