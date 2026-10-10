@@ -1,10 +1,25 @@
 import unittest
 from unittest import mock
+from pathlib import Path
 
 from scripts import runtime_session_gate as gate
 
 
 class BusinessDecisionSourceRoutingTests(unittest.TestCase):
+    ROOT = Path(__file__).resolve().parents[1]
+
+    def test_formal_protocol_separates_chat_reply_from_durable_handoff(self):
+        protocol = (self.ROOT / "docs" / "Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
+        self.assertIn("READY回复与正式交接的不可混淆边界", protocol)
+        self.assertIn("BUSINESS_DECISION_SOURCE", protocol)
+        self.assertIn("presentation_content", protocol)
+        self.assertIn("逐字等于冻结的`FINAL_CONTENT`", protocol)
+        self.assertIn("不能据此声称正式决策已进入REPORT通知链", protocol)
+
+    def test_market_snapshot_keeps_business_source_on_canonical_owner_path(self):
+        workflow = (self.ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
+        self.assertIn('str(request.get("request_type") or "").upper() == "BUSINESS_DECISION_SOURCE"', workflow)
+        self.assertIn('python scripts/process_state_sync_request.py "$request_files"', workflow)
     def test_classifier_keeps_business_source_distinct(self):
         request = {
             "request_type": "BUSINESS_DECISION_SOURCE",
