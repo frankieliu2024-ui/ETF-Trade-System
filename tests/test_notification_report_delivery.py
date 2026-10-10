@@ -23,8 +23,8 @@ class ReportDeliveryContractTests(unittest.TestCase):
             "delivery_mode": "FULL_REPORT", "no_trade_authority": True,
         }
 
-    def test_all_three_report_types_are_shared_delivery_events(self):
-        for report_type in ("ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"):
+    def test_all_active_report_types_are_shared_delivery_events(self):
+        for report_type in ("ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW", "ETF_FORMAL_DECISION"):
             request = self._request(report_type)
             with tempfile.TemporaryDirectory() as directory:
                 path = Path(directory) / "report.json"

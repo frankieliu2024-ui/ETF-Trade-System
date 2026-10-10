@@ -25,7 +25,7 @@ MIN_UNEXPLAINED_CASH_DELTA_YUAN = 10.0
 TRADING_CALENDAR = ROOT / "config" / "market" / "a_share_trading_calendar_2026.json"
 
 ACTIVE_REPORT_TYPES = {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW", "ETF_FORMAL_DECISION"}
-HISTORICAL_REPORT_TYPES = {"ETF_FORMAL_DECISION"}
+HISTORICAL_REPORT_TYPES = set()
 REPORT_REQUEST_DIR = ROOT / "requests" / "report_delivery"
 REPORT_HANDOFF_DIR = ROOT / "requests" / "report_handoff"
 REVIEW_EVENT_DIR = ROOT / "events" / "reviews"

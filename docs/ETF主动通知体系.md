@@ -191,7 +191,7 @@ PushPlus微信渠道存在平台层展示模板：ETF系统通过API传入的业
 - **INTERRUPT**：事件驱动的固定模板通知，覆盖市场异动、观察/Trial/Confirm机会、机会失效、持仓动作、风险许可、成交确认、账户确认、系统阻塞、判断恢复和收盘账户。其资格受正式事实、PIT、materiality、dedup、冷却和实质升级约束；默认delivery mode为**COMPACT**。
 - **REPORT**：当前只覆盖仍在运行的两个固定正式报告产品：`ETF_TRADE_REVIEW`与`ETF_SYSTEM_REVIEW`。二者达到合法终态后以**FULL_REPORT**原文投递，不套用INTERRUPT模板，也不创建第二sender、第二state或第二token owner。REPORT与INTERRUPT共享现有发送、状态和transport owner，但资格语义严格分离：REPORT只转发已完成、已冻结的完整节点结果，不能重新分析、产生交易权限或回流生成INTERRUPT。`report_type`标识当前active report family，不证明对应业务事实已经成功持久化。
 
-已退役的固定`ETF_FORMAL_DECISION` Scheduled Actor不再属于active REPORT生产体系，也不得再提交新的`ETF_FORMAL_DECISION` REPORT请求。历史仓库中既有的Formal Decision REPORT文件、notification history与审计引用继续保留，只作为历史artifact读取，不因退役而重写历史事实。当前manual正式ETF分析以Chat即时完整交付为主；若形成可审计的formal-decision material change，则通过既有INTERRUPT链投递观察/Trial/Confirm、机会失效、持仓动作或风险许可变化，不再复制整篇manual分析为REPORT。
+固定`ETF_FORMAL_DECISION` Scheduled Actor重新纳入active REPORT生产体系，并与`ETF_TRADE_REVIEW`、`ETF_SYSTEM_REVIEW`共用同一completion、`presentation_binding`、REPORT、notification_center和统一PushPlus链。Formal Decision达到合法终态并冻结唯一`FINAL_CONTENT`后，必须通过同一正式完成入口投递完整报告；不得改走`FORMAL_DECISION_MATERIAL_CHANGE`或重新生成摘要。既有历史Formal Decision REPORT文件、notification history与审计引用继续保留，不因本次重新启用而重写历史事实。
 
 固定报告Actor的**节点终态、业务持久化、REPORT投递**是三个独立层次：节点终态回答本次固定运行是否已经得到可恢复的最终结果；业务持久化只在对应业务合同允许时写入canonical事实；REPORT只负责把已冻结的Trade Review/System Review节点结果完整投递。普通in-progress/尚未到terminal的评估不得提前生成终态REPORT。同一Scheduled run/node必须保持幂等性，每次合法终态至多投递一个REPORT；不得为失败分支新增report type、第二transport、sender、workflow、state、queue或relay。
 
@@ -225,7 +225,7 @@ canonical intake只接受已登记的`ETF_TRADE_REVIEW`、`ETF_SYSTEM_REVIEW`与
 
 ### Scheduled Actor边界
 
-当前固定REPORT Actor只有ETF交易复盘与ETF系统复核。它们达到合法终态后是否形成REPORT，服从本节REPORT完成语义；其输出本身不产生交易类INTERRUPT资格。manual正式ETF分析不是Scheduled REPORT Actor，其交易语义只通过canonical FORMAL_DECISION material change进入INTERRUPT。Scheduled Task的connector、GitHub request-file能力或产品侧运行细节不在本文冻结，也不形成第二行情链、第二writer或第二transport。
+当前固定REPORT Actor包括ETF交易复盘、ETF系统复核与ETF正式决策。三者共用同一REPORT完成与通知链。它们达到合法终态后是否形成REPORT，服从本节REPORT完成语义；其输出本身不产生交易类INTERRUPT资格。manual正式ETF分析不是Scheduled REPORT Actor，其交易语义只通过canonical FORMAL_DECISION material change进入INTERRUPT。Scheduled Task的connector、GitHub request-file能力或产品侧运行细节不在本文冻结，也不形成第二行情链、第二writer或第二transport。
 
 ### 维护与验收 owner
 
