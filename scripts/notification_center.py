@@ -147,6 +147,60 @@ def report_delivery_validation_error() -> str | None:
     return None if valid else "invalid_report:" + reason
 
 
+def formal_decision_report_event() -> dict | None:
+    """Project one completed Formal Decision presentation into the shared REPORT path."""
+    directory = ROOT / "events" / "decisions"
+    candidates = []
+    for path in directory.glob("*.json") if directory.exists() else []:
+        event = read_json(path, {})
+        if str(event.get("event_type") or "") != "FORMAL_DECISION":
+            continue
+        binding = event.get("presentation_binding")
+        if not isinstance(binding, dict):
+            continue
+        content = str(binding.get("content") or binding.get("full_content") or "").strip()
+        if not content:
+            continue
+        request_id = str(binding.get("request_id") or event.get("parent_request_id") or "").strip()
+        decision_id = str(binding.get("decision_id") or event.get("decision_id") or "").strip()
+        if not request_id or not decision_id:
+            continue
+        expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        if str(binding.get("content_sha256") or binding.get("content_hash") or "") != expected:
+            continue
+        generated_at = str(event.get("recorded_at_beijing") or event.get("decision_time_beijing") or "").strip()
+        candidates.append((generated_at, path, event, binding, content))
+    if not candidates:
+        return None
+    _, path, event, binding, content = sorted(candidates, key=lambda x: x[0])[-1]
+    decision = event.get("formal_decision") or {}
+    decision_id = str(binding.get("decision_id") or event.get("decision_id") or "")
+    key = f"ETF_FORMAL_DECISION:{decision_id}"
+    return {
+        "key": f"report-delivery:{key}",
+        "source_event_id": f"formal-decision-presentation:{decision_id}",
+        "event_type": "REPORT_DELIVERY_REQUEST",
+        "notification_channel": "REPORT",
+        "delivery_mode": "FULL_REPORT",
+        "type": "正式报告",
+        "title": str(binding.get("title") or "【ETF正式决策】"),
+        "content": content,
+        "source": f"canonical-formal-decision:{path.name}",
+        "user_severity": "正式报告",
+        "user_action": "阅读已完成的正式ETF正式决策；无需自动交易操作",
+        "report_type": "ETF_FORMAL_DECISION",
+        "report_id": f"etf-formal-decision:{decision_id}",
+        "task_id": "ETF正式决策",
+        "task_run_id": decision_id,
+        "idempotency_key": key,
+        "no_trade_authority": True,
+        "content_hash": hashlib.sha256(content.encode("utf-8")).hexdigest(),
+        "related_decision_id": str(event.get("decision_id") or ""),
+        "security_code": str(decision.get("candidate_code") or ""),
+        "security_name": str(decision.get("candidate_name") or ""),
+    }
+
+
 def report_delivery_event() -> dict | None:
     # A canonical Scheduled Review push must bind this occurrence to the exact
     # review event path identified by the triggering commit. Never select a
@@ -836,12 +890,12 @@ def choose_event(mode: str) -> dict | None:
         # malformed, missing, or otherwise not projectable.
         return report_delivery_event()
     builders = (
-        (report_delivery_event, execution_confirmation_event, formal_decision_change_event,
-         account_confirmation_event, system_event, decision_event)
+        (report_delivery_event, formal_decision_report_event, execution_confirmation_event,
+         formal_decision_change_event, account_confirmation_event, system_event, decision_event)
         if (_report_handoff_path() is not None or _report_delivery_path() is not None)
         else
-        (execution_confirmation_event, formal_decision_change_event, account_confirmation_event,
-         system_event, decision_event, report_delivery_event)
+        (execution_confirmation_event, formal_decision_report_event, formal_decision_change_event,
+         account_confirmation_event, system_event, decision_event, report_delivery_event)
     )
     for builder in builders:
         event = builder()
