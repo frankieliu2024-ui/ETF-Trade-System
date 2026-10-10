@@ -1,0 +1,378 @@
+{
+  "request_id": "fd_20261010_214835_3ejrsx22__business_decision_source_2148",
+  "parent_request_id": "fd_20261010_214835_3ejrsx22",
+  "request_type": "BUSINESS_DECISION_SOURCE",
+  "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
+  "interaction_scenario": "POST_CLOSE",
+  "requested_at_beijing": "2026-10-10T21:48:35+08:00",
+  "decision_id": "fd_20261010_214835_3ejrsx22__decision",
+  "consumed_snapshot": "data/market/snapshots/2026-10-09_152206.json",
+  "decision_response": {
+    "answers": {
+      "RISK_PERMISSION": {
+        "final_action": "允许Trial，不升级Confirm；不增加高相关科技风险。",
+        "capital_comparison": "策略风险率约-7.30%，处于增强复核区间，但本节点没有触发禁止Trial的独立硬约束。",
+        "next_change_condition": "风险与持仓共同暴露同步恶化时收紧。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "MAIN_CANDIDATE": {
+        "final_action": "515220煤炭ETF继续为唯一主候选，维持Trial机会；本节点不部署。",
+        "candidate_code": "515220",
+        "candidate_name": "煤炭ETF",
+        "opportunity_status": "Trial机会",
+        "capital_comparison": "资源相对优势和收盘承接仍在，但现金不足5000元且无合法释放资本。",
+        "next_change_condition": "下一交易节点确认承接并满足资金条件后重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "DEPLOYABLE_CASH": {
+        "final_action": "保留现金2181.04元，新增0元。",
+        "capital_comparison": "低于5000元固定Trial档位。",
+        "next_change_condition": "现金达到5000元或出现合法释放资本。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "RELEASABLE_CAPITAL": {
+        "final_action": "当前不释放，金额0元。",
+        "capital_comparison": "无持仓达到独立卖出门槛，不能倒推卖出筹资。",
+        "next_change_condition": "持仓假设独立失效或更高效率用途经卖出链成立。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "TRIAL_CONFIRM_CAPACITY": {
+        "final_action": "保留Trial承载资格，暂不Confirm。",
+        "capital_comparison": "515220为Trial机会，但现金不足，且不以卖出倒推资金。",
+        "next_change_condition": "资金和机会同时满足时重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "CONCENTRATION_COMMON_RISK": {
+        "final_action": "不增加科技共同风险；资源新增仍限Trial级。",
+        "capital_comparison": "成长共同暴露仍高，本地市场未形成全面风险偏好扩张。",
+        "next_change_condition": "科技结构重新确认或资源机会失效时重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "NEXT_UNIT_CAPITAL_USE": {
+        "final_action": "下一单位资本保留现金，实际新增0元。",
+        "capital_comparison": "比较了全部持仓、持仓ETF追加、观察ETF、Discovery候选和可释放资本；现金是当前唯一可执行的合法边际用途。",
+        "next_change_condition": "现金达到5000元且515220仍有效，或出现合法释放资本。",
+        "new_amount_yuan": 0,
+        "post_action_deployable_cash": 2181.04,
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HOLDING:300750": {
+        "final_action": "继续持有，不追加、不卖出；持有依据是自身假设尚未独立失效，若结构、承接和风险收益进一步恶化并达到独立卖出条件再重评。",
+        "capital_comparison": "已与现金、515220 Trial和其他资本状态比较；本次没有形成独立卖出条件。",
+        "next_change_condition": "自身结构、承接或原假设独立失效时重评.",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HOLDING:601138": {
+        "final_action": "继续持有，不追加、不卖出；科技硬件偏弱提高复核强度，但尚未达到独立卖出条件。",
+        "capital_comparison": "已与现金、515220 Trial和其他资本状态比较；本次没有形成独立卖出条件。",
+        "next_change_condition": "自身结构、承接或原假设独立失效时重评.",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HOLDING:588000": {
+        "final_action": "继续持有，不追加、不卖出；科创方向风险暴露较高，但本节点没有新增独立退出证据。",
+        "capital_comparison": "已与现金、515220 Trial和其他资本状态比较；本次没有形成独立卖出条件。",
+        "next_change_condition": "自身结构、承接或原假设独立失效时重评.",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HELD_ETF_ADD:588000": {
+        "final_action": "不追加。",
+        "capital_comparison": "新增资本效率不优于515220 Trial或现金；现金不足固定Trial金额。",
+        "next_change_condition": "独立增强证据与资金条件同时满足时重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HOLDING:159941": {
+        "final_action": "继续持有，不追加、不卖出；收盘上涨但新增资本效率不足，海外证据存在时点差异。",
+        "capital_comparison": "已与现金、515220 Trial和其他资本状态比较；本次没有形成独立卖出条件。",
+        "next_change_condition": "自身结构、承接或原假设独立失效时重评.",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HELD_ETF_ADD:159941": {
+        "final_action": "不追加。",
+        "capital_comparison": "新增资本效率不优于515220 Trial或现金；现金不足固定Trial金额。",
+        "next_change_condition": "独立增强证据与资金条件同时满足时重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HOLDING:159781": {
+        "final_action": "继续持有，不追加、不卖出；成长弱势仍在，但没有新增独立失效证据。",
+        "capital_comparison": "已与现金、515220 Trial和其他资本状态比较；本次没有形成独立卖出条件。",
+        "next_change_condition": "自身结构、承接或原假设独立失效时重评.",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HELD_ETF_ADD:159781": {
+        "final_action": "不追加。",
+        "capital_comparison": "新增资本效率不优于515220 Trial或现金；现金不足固定Trial金额。",
+        "next_change_condition": "独立增强证据与资金条件同时满足时重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HOLDING:159981": {
+        "final_action": "继续持有，不追加、不卖出；资源主线仍有支撑，但不追涨、不追加。",
+        "capital_comparison": "已与现金、515220 Trial和其他资本状态比较；本次没有形成独立卖出条件。",
+        "next_change_condition": "自身结构、承接或原假设独立失效时重评.",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HELD_ETF_ADD:159981": {
+        "final_action": "不追加。",
+        "capital_comparison": "新增资本效率不优于515220 Trial或现金；现金不足固定Trial金额。",
+        "next_change_condition": "独立增强证据与资金条件同时满足时重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HOLDING:159992": {
+        "final_action": "继续持有，不追加、不卖出；医药成长弱势未触发独立退出条件。",
+        "capital_comparison": "已与现金、515220 Trial和其他资本状态比较；本次没有形成独立卖出条件。",
+        "next_change_condition": "自身结构、承接或原假设独立失效时重评.",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HELD_ETF_ADD:159992": {
+        "final_action": "不追加。",
+        "capital_comparison": "新增资本效率不优于515220 Trial或现金；现金不足固定Trial金额。",
+        "next_change_condition": "独立增强证据与资金条件同时满足时重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HOLDING:513520": {
+        "final_action": "继续持有，不追加、不卖出；自身承接尚可，新增资本效率不足。",
+        "capital_comparison": "已与现金、515220 Trial和其他资本状态比较；本次没有形成独立卖出条件。",
+        "next_change_condition": "自身结构、承接或原假设独立失效时重评.",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "HELD_ETF_ADD:513520": {
+        "final_action": "不追加。",
+        "capital_comparison": "新增资本效率不优于515220 Trial或现金；现金不足固定Trial金额。",
+        "next_change_condition": "独立增强证据与资金条件同时满足时重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "OBSERVATION:513180": {
+        "final_action": "继续观察",
+        "disposition": "RETAIN",
+        "opportunity_status": "无机会",
+        "capital_comparison": "持续信息功能未失效；当前不形成新增部署。",
+        "next_change_condition": "信息功能失效/被替代，或下一节点证据改变机会资格时重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "OBSERVATION:159561": {
+        "final_action": "继续观察",
+        "disposition": "RETAIN",
+        "opportunity_status": "无机会",
+        "capital_comparison": "持续信息功能未失效；当前不形成新增部署。",
+        "next_change_condition": "信息功能失效/被替代，或下一节点证据改变机会资格时重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "OBSERVATION:518880": {
+        "final_action": "继续观察",
+        "disposition": "RETAIN",
+        "opportunity_status": "无机会",
+        "capital_comparison": "持续信息功能未失效；当前不形成新增部署。",
+        "next_change_condition": "信息功能失效/被替代，或下一节点证据改变机会资格时重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "OBSERVATION:515880": {
+        "final_action": "继续观察",
+        "disposition": "RETAIN",
+        "opportunity_status": "无机会",
+        "capital_comparison": "持续信息功能未失效；当前不形成新增部署。",
+        "next_change_condition": "信息功能失效/被替代，或下一节点证据改变机会资格时重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "OBSERVATION:159326": {
+        "final_action": "继续观察",
+        "disposition": "RETAIN",
+        "opportunity_status": "观察机会",
+        "capital_comparison": "持续信息功能未失效；当前不形成新增部署。",
+        "next_change_condition": "信息功能失效/被替代，或下一节点证据改变机会资格时重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "OBSERVATION:515220": {
+        "final_action": "继续观察",
+        "disposition": "RETAIN",
+        "opportunity_status": "Trial机会",
+        "capital_comparison": "持续信息功能未失效；当前不形成新增部署。",
+        "next_change_condition": "信息功能失效/被替代，或下一节点证据改变机会资格时重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "OBSERVATION:513350": {
+        "final_action": "继续观察",
+        "disposition": "RETAIN",
+        "opportunity_status": "观察机会",
+        "capital_comparison": "持续信息功能未失效；当前不形成新增部署。",
+        "next_change_condition": "信息功能失效/被替代，或下一节点证据改变机会资格时重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "OBSERVATION:515080": {
+        "final_action": "继续观察",
+        "disposition": "RETAIN",
+        "opportunity_status": "无机会",
+        "capital_comparison": "持续信息功能未失效；当前不形成新增部署。",
+        "next_change_condition": "信息功能失效/被替代，或下一节点证据改变机会资格时重评。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "DISCOVERY:159029": {
+        "final_action": "本节点候选评估，实际部署0元。",
+        "disposition": "未升级为新的观察身份、Trial或Confirm",
+        "opportunity_status": "未形成可部署机会",
+        "capital_comparison": "本次以正式Discovery候选为评估输入，未形成足以超过515220并覆盖资金与执行约束的独立优势。",
+        "next_change_condition": "下一交易节点重新验证结构、承接、相对反馈和资本效率。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "DISCOVERY:159030": {
+        "final_action": "本节点候选评估，实际部署0元。",
+        "disposition": "未升级为新的观察身份、Trial或Confirm",
+        "opportunity_status": "未形成可部署机会",
+        "capital_comparison": "本次以正式Discovery候选为评估输入，未形成足以超过515220并覆盖资金与执行约束的独立优势。",
+        "next_change_condition": "下一交易节点重新验证结构、承接、相对反馈和资本效率。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "DISCOVERY:159128": {
+        "final_action": "本节点候选评估，实际部署0元。",
+        "disposition": "未升级为新的观察身份、Trial或Confirm",
+        "opportunity_status": "未形成可部署机会",
+        "capital_comparison": "本次以正式Discovery候选为评估输入，未形成足以超过515220并覆盖资金与执行约束的独立优势。",
+        "next_change_condition": "下一交易节点重新验证结构、承接、相对反馈和资本效率。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "DISCOVERY:159268": {
+        "final_action": "本节点候选评估，实际部署0元。",
+        "disposition": "未升级为新的观察身份、Trial或Confirm",
+        "opportunity_status": "未形成可部署机会",
+        "capital_comparison": "本次以正式Discovery候选为评估输入，未形成足以超过515220并覆盖资金与执行约束的独立优势。",
+        "next_change_condition": "下一交易节点重新验证结构、承接、相对反馈和资本效率。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "DISCOVERY:159275": {
+        "final_action": "本节点候选评估，实际部署0元。",
+        "disposition": "未升级为新的观察身份、Trial或Confirm",
+        "opportunity_status": "未形成可部署机会",
+        "capital_comparison": "本次以正式Discovery候选为评估输入，未形成足以超过515220并覆盖资金与执行约束的独立优势。",
+        "next_change_condition": "下一交易节点重新验证结构、承接、相对反馈和资本效率。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "DISCOVERY:159509": {
+        "final_action": "本节点候选评估，实际部署0元。",
+        "disposition": "未升级为新的观察身份、Trial或Confirm",
+        "opportunity_status": "未形成可部署机会",
+        "capital_comparison": "本次以正式Discovery候选为评估输入，未形成足以超过515220并覆盖资金与执行约束的独立优势。",
+        "next_change_condition": "下一交易节点重新验证结构、承接、相对反馈和资本效率。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "DISCOVERY:159636": {
+        "final_action": "本节点候选评估，实际部署0元。",
+        "disposition": "未升级为新的观察身份、Trial或Confirm",
+        "opportunity_status": "未形成可部署机会",
+        "capital_comparison": "本次以正式Discovery候选为评估输入，未形成足以超过515220并覆盖资金与执行约束的独立优势。",
+        "next_change_condition": "下一交易节点重新验证结构、承接、相对反馈和资本效率。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "DISCOVERY:159647": {
+        "final_action": "本节点候选评估，实际部署0元。",
+        "disposition": "未升级为新的观察身份、Trial或Confirm",
+        "opportunity_status": "未形成可部署机会",
+        "capital_comparison": "本次以正式Discovery候选为评估输入，未形成足以超过515220并覆盖资金与执行约束的独立优势。",
+        "next_change_condition": "下一交易节点重新验证结构、承接、相对反馈和资本效率。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "DISCOVERY:159866": {
+        "final_action": "本节点候选评估，实际部署0元。",
+        "disposition": "未升级为新的观察身份、Trial或Confirm",
+        "opportunity_status": "未形成可部署机会",
+        "capital_comparison": "本次以正式Discovery候选为评估输入，未形成足以超过515220并覆盖资金与执行约束的独立优势。",
+        "next_change_condition": "下一交易节点重新验证结构、承接、相对反馈和资本效率。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "DISCOVERY:159869": {
+        "final_action": "本节点候选评估，实际部署0元。",
+        "disposition": "未升级为新的观察身份、Trial或Confirm",
+        "opportunity_status": "未形成可部署机会",
+        "capital_comparison": "本次以正式Discovery候选为评估输入，未形成足以超过515220并覆盖资金与执行约束的独立优势。",
+        "next_change_condition": "下一交易节点重新验证结构、承接、相对反馈和资本效率。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      },
+      "DISCOVERY:561330": {
+        "final_action": "本节点候选评估，实际部署0元。",
+        "disposition": "未升级为新的观察身份、Trial或Confirm",
+        "opportunity_status": "未形成可部署机会",
+        "capital_comparison": "本次以正式Discovery候选为评估输入，未形成足以超过515220并覆盖资金与执行约束的独立优势。",
+        "next_change_condition": "下一交易节点重新验证结构、承接、相对反馈和资本效率。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ]
+      }
+    },
+    "presentation_content": "【ETF正式决策】2026-10-10 21:48 盘中正式判断\n\n【业务结论】\n\n本次正式判断：风险许可维持“允许Trial”，但不升级Confirm；当前唯一优先机会为煤炭ETF（515220）的Trial机会，实际新增部署0元。全部8项实际持仓继续持有，全部持仓ETF均不追加，不降低风险、不全部退出。下一单位可部署资本优先保留现金，等待现金达到固定Trial金额或出现独立成立的可释放资本；当前可部署现金为2181.04元，低于5000元Trial档位。\n\n【数据时点与必要依据】\n\n本次触发时间为2026-10-10 21:48（北京时间），A股已收盘且2026-10-11、2026-10-12前一日为周末/休市安排，正式判断使用最近完整且仍合法的2026-10-09 A股收盘事实，不代表当前可成交价格。A股行情快照截至2026-10-09 15:22左右，账户事实截至2026-10-09 15:27，账户现金2181.04元、可部署现金2181.04元、待结算锁定资金0元。持仓市值合计约185217.90元，策略风险率约-7.30%，处于需要增强复核但未自动禁止Trial的观察区间。A股核心行情17/17可用；正式Discovery本节点覆盖11只非持仓候选，观察ETF和持仓ETF均有合法收盘参考行情，但收盘参考不能替代下一交易日的可成交价格。\n\n【三层监测】\n\n第一层：外部与跨市场。纳斯达克100指数截至2026-10-10 04:00（美东2026-10-09收盘）为30883.15，费城半导体指数为12572.42，属于上一美股交易时段参考；恒生科技、日经等亚洲信息亦为已收盘或上一交易时段参考。韩国、台湾部分数据较旧，海外延长时段代理数据降级，因此只作背景，不能单独支持新增部署。\n\n第二层：A股内部。上证指数3813.79（+0.05%）、创业板指3043.33（+0.22%）、科创50指数1457.27（+0.07%）；ETF样本8涨6跌，中位收益约+0.24%，市场宽度为混合，成长与大盘风格差异有限，整体是结构性分化而非全面风险偏好扩张。A股本地反馈不足以支持高相关科技方向新增加仓。\n\n第三层：ETF机会与资本。515220煤炭ETF收1.298、+1.49%，资源相对强度和承接仍支持Trial级机会；518880黄金ETF+1.69%、513180恒生科技ETF+1.74%仍有信息价值，但均未形成优于515220且可部署的新增用途；513350标普油气ETF收跌0.93%，日内振幅较大，不追逐；159509纳指科技ETF虽有20/40/60日持续上行、趋势强化和恢复突破证据，但属于收盘参考且面临科技共同风险，不足以在本节点取代515220。\n\n【持仓动作】\n\n宁德时代（300750）：继续持有，不追加、不卖出。持仓市值59550元，浮亏9831.63元；当前事实未形成自身结构、承接或原持有假设达到独立卖出门槛的确定性证据。若自身风险收益继续恶化并满足独立卖出链，再重评是否释放资本。\n\n工业富联（601138）：继续持有，不追加、不卖出。持仓市值28035元，浮亏992.22元；科技硬件反馈偏弱，复核强度提高，但单一弱势和跨市场偏弱不足以机械退出。若自身结构与承接进一步失效，或原假设达到独立退出条件，再重评。\n\n科创50ETF（588000）：继续持有，不追加、不卖出。持仓市值21728.10元，浮亏7866.31元；科创方向仍是组合主要风险暴露之一，但本节点没有新增到达独立卖出条件的事实。若自身承接、风险收益和原假设同步失效，再考虑降低风险。\n\n纳指ETF（159941）：继续持有，不追加、不卖出。持仓市值21581.80元，浮盈1745.20元；收盘+1.32%但不等于新增资本效率最优，海外科技信息存在时点和数据质量限制。若后续科技趋势与本地反馈同步转弱，再重评。\n\n科创创业ETF（159781）：继续持有，不追加、不卖出。持仓市值18408元，浮亏6340.60元；成长弱势和共同暴露仍需关注，但没有新增独立失效证据。若自身结构、承接和原假设进一步恶化并达到卖出条件，再重评。\n\n能源化工ETF（159981）：继续持有，不追加、不卖出。持仓市值16388元，浮盈1567.40元；资源方向仍有支撑，但已有较大涨幅后的新增风险收益不优于515220，不追涨、不追加。若资源主线失效或自身风险收益显著恶化，再重评。\n\n创新药ETF（159992）：继续持有，不追加、不卖出。持仓市值14499.60元，浮亏427.20元；医药成长仍弱，但本次没有足以单独触发退出的新增事实。若自身趋势、承接和风险收益进一步失效，再重评。\n\n日经ETF（513520）：继续持有，不追加、不卖出。持仓市值5027.40元，浮盈171.40元；日经相关反馈偏弱而ETF自身仍有一定承接，继续占资尚可，但新增资本效率不足。若自身结构和承接转弱并达到卖出条件，再重评。\n\n本次可释放资本为0元；没有任何持仓达到独立卖出门槛，因此不能为515220 Trial倒推卖出理由。\n\n【资本用途】\n\n完整比较对象包括2181.04元现金、全部8项实际持仓、6只持仓ETF的追加用途、8只观察ETF、11只本节点Discovery候选及可释放资本。当前最优的下一单位资本用途是保留现金；515220维持Trial机会但资金缺口为2818.96元，且没有合法可释放资本，因此实际新增部署为0元。全部持仓ETF本次均不追加。\n\n观察ETF逐项判断：513180恒生科技ETF继续观察，当前无新增机会；159561德国ETF继续观察，当前无新增机会；518880黄金ETF继续观察，保留低相关防御信息价值，当前不部署；515880通信ETF继续观察，当前无新增机会；159326电网设备ETF继续观察，保留观察机会但不足Trial；515220煤炭ETF继续观察并升级为当前Trial机会；513350标普油气ETF继续观察，保留跨市场资源验证价值但不升级Trial；515080中证红利ETF招商继续观察，保留防御/风格切换信息价值，当前不部署。\n\n本节点Discovery候选均未获得实际部署金额：159029有色ETF广发、159030粮食ETF华夏、159128港股科技ETF天弘、159268港股通消费ETF汇添富、159275农牧渔ETF华宝、159509纳指科技ETF景顺、159636港股通科技30ETF工银、159647中药ETF鹏华、159866日经ETF工银、159869游戏ETF华夏、561330矿业ETF国泰，均保留为本节点候选评估输入，未升级为新的观察身份、Trial或Confirm；其中159509趋势证据最强，但尚未形成足以覆盖时点、共同风险和资金约束的资本优势。各对象实际部署金额均为0元。\n\n【五项关键变化】\n\n新增：本次没有新的A股交易或账户变化；正式Discovery新增/复核了11只非持仓候选，但没有新增可部署对象。\n\n增强：515220煤炭ETF的资源相对优势和收盘承接继续支持Trial级机会；黄金、恒生科技、红利等观察对象的信息价值仍保留。\n\n减弱：高相关科技成长新增资本吸引力仍偏弱；159509虽有趋势强化，但海外参考和共同风险不足以形成新增部署。\n\n失效：本项无新增失效事实；没有任何实际持仓达到独立降低风险或全部退出条件，观察ETF也没有出现必须退出的信息功能失效。\n\n下一单位资本用途：继续保留现金2181.04元；待现金达到5000元且515220仍满足Trial条件，或出现独立合法可释放资本后再重评，不以单日强势倒推卖出。\n\n【关键风险】\n\n最大风险是把资源方向单日相对强势外推为持续波段趋势；其次是海外科技、韩国和台湾等部分信息时点较旧或降级，可能低估或高估跨市场传导。组合中科技/成长共同暴露仍高，若后续本地承接继续转弱，持仓占资合理性需要提高复核强度。当前收盘参考不提供下一交易日的可成交价格，任何人工下单前都必须重新读取当时合法行情。\n\n【后续安排】\n\n下一交易日（2026-10-12）开盘后，重新比较515220的相对强度、承接和可执行行情，复核现金是否达到5000元Trial档位；同时复核全部持仓、全部持仓ETF追加资格和是否出现独立可释放资本。当前不自动下单，证券交易由用户人工确认并执行。\n\n【置信度】\n\n中高。A股核心行情、账户和Discovery覆盖完整；但本次为盘后收盘判断，海外部分证据存在时点差异和局部降级，且515220的机会仍需下一交易节点验证持续性。\n\n【最可能出错的地方】\n\n最可能出错的是把515220的单日资源相对强势误判为可持续波段机会；其次是低估科技共同暴露继续恶化对601138、588000、159781、159992及159941后续资本占用效率的影响。"
+  }
+}
