@@ -150,8 +150,16 @@ def report_delivery_validation_error() -> str | None:
 def formal_decision_report_event() -> dict | None:
     """Project one completed Formal Decision presentation into the shared REPORT path."""
     directory = ROOT / "events" / "decisions"
+    bound = os.environ.get("DECISION_EVENT_PATH", "").strip()
+    if bound:
+        bound_path = Path(bound)
+        if not bound_path.is_absolute():
+            bound_path = ROOT / bound_path
+        paths = [bound_path] if bound_path.is_file() else []
+    else:
+        paths = list(directory.glob("*.json")) if directory.exists() else []
     candidates = []
-    for path in directory.glob("*.json") if directory.exists() else []:
+    for path in paths:
         event = read_json(path, {})
         if str(event.get("event_type") or "") != "FORMAL_DECISION":
             continue
