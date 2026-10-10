@@ -95,6 +95,7 @@ Codex协作交接说明：`docs/Codex协作执行说明.md`。它只负责CODEX_
 - 运行策略和场景路由：`config/runtime_policy.json`
 - 动态个股角色：`data/state/asset_roles.json`、`data/state/stock_context.json`、`data/state/stock_market_context.json`
 - 研究执行桥：`data/state/research_execution_summary.json`
+- 外部辅助证据能力提示：`config/research/external_auxiliary_capabilities.json`（只读Actor能力登记；不是provider优先级、生产state、DWP producer或交易权限来源）
 - 查询时补采请求：`requests/live_snapshot/*.json`
 - 历史行情事实恢复合同：`scripts/historical_market_fact_recovery.py`（只读评估；正式写入仍归现有market-data writer）
 - A股行情workflow：`.github/workflows/market-snapshot.yml`
