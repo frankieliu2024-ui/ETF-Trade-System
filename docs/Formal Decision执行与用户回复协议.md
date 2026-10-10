@@ -136,6 +136,18 @@ Formal Decision必须完成与当前市场节点相匹配的证据核验，但�
 
 Formal Decision验收应分别记录：节点证据需求是否满足；适用工具是否成功调用或存在合法降级；调用结果是否被业务判断实际消费。未调用某个插件本身不构成失败；未完成本节点必要证据核验，或调用结果完全未进入判断，才构成证据消费不完整。
 
+### 4.1.1 外部辅助证据编排与安全并行
+
+外部补证按业务问题而不是按工具名单机械执行。Actor可读取 `config/research/external_auxiliary_capabilities.json` 作为只读能力提示，先识别 `EVIDENCE_NEED_PLANNING`，再做 `CAPABILITY_MATCH`，随后对相互独立的只读辅助证据执行 `AUXILIARY_EVIDENCE_FETCH`，最后在同一交互内完成 `EVIDENCE_SYNTHESIS`。这些名称只描述Actor执行阶段，不是持久化状态，不新增workflow、producer、checker、writer或第二决策链。
+
+允许并行的是不同且相互独立的辅助证据域，例如市场行为、公司研究、ETF结构、跨市场反馈和事件核验。不得并行或重复生产父请求、request-bound snapshot、DWP、Discovery、账户、正式行情、PIT/freshness或BUSINESS_DECISION_SOURCE；这些仍沿既有单一正式链。
+
+并行补证必须在业务判断前汇合：实际采用的结果统一核验对象身份、事实时点、market phase、entitlement/coverage和数据性质，再进入三层监测、候选比较、持仓判断、资本竞争或风险说明。某一辅助分支超时、空结果、quota或entitlement受限，只降低该证据域强度；已有合法充分证据时不得等待可选分支而延迟READY回复。
+
+优先并行不同证据域，而不是对同一事实机械多源查询。只有身份冲突、重大事件、数据异常或结论对单一来源高度敏感时才追加第二来源核验。同一证据域涉及多个对象时，若工具真实支持batch，应优先batch；否则可在Actor层并行只读获取，但每个对象的业务影响仍须可区分。
+
+能力登记中的 `parallel_safe`、`independent_fetch_group`、`stop_when_sufficient` 等字段只是执行提示，不构成provider priority、正式行情fallback、交易权限或证据事实。registry不得持久化每次调用结果；真正影响判断的证据仍必须通过既有 `answers[].evidence_decision_impact → decision_evidence_consumption` 合同消费。
+
 ## 5. READY前的业务门禁
 
 READY 前必须完成或按正式规范合法降级：

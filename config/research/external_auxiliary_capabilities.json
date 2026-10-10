@@ -1,0 +1,268 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Actor-side, read-only capability hints for decision-relevant external auxiliary evidence. This is not a provider registry, production state, DWP producer, security-identity source, or trading authority.",
+  "authority_boundary": {
+    "formal_facts_owner": "request-bound/canonical GitHub production chain",
+    "provider_priority_changed": false,
+    "trading_authority_changed": false,
+    "can_override_request_bound_facts": false,
+    "can_generate_trade_action": false,
+    "can_generate_trial_or_confirm": false,
+    "can_set_amount": false,
+    "can_create_security_identity": false
+  },
+  "orchestration_contract": {
+    "stages": [
+      "EVIDENCE_NEED_PLANNING",
+      "CAPABILITY_MATCH",
+      "AUXILIARY_EVIDENCE_FETCH",
+      "EVIDENCE_SYNTHESIS"
+    ],
+    "stages_are_actor_execution_phases_not_persisted_state": true,
+    "parallelism": "Only mutually independent, read-only auxiliary evidence domains may be fetched in parallel. Formal request/snapshot/DWP/Discovery/canonical facts/writers remain single-chain.",
+    "join_rule": "All adopted auxiliary evidence must be synthesized against object identity, fact time, market phase, entitlement/coverage and evidence nature before it affects a business answer.",
+    "stop_rule": "Stop auxiliary expansion when evidence is sufficient for the business question; do not wait for optional branches once READY business judgment can be completed legally.",
+    "degradation_rule": "Timeout, empty result, quota or entitlement failure degrades only that evidence domain and does not revoke an otherwise legal READY reply."
+  },
+  "observed_status_values": [
+    "TESTED_AVAILABLE",
+    "ENDPOINT_EXISTS_BUT_EMPTY",
+    "ENTITLEMENT_BLOCKED",
+    "NOT_APPLICABLE",
+    "UNTESTED"
+  ],
+  "capabilities": [
+    {
+      "tool": "Longbridge",
+      "domain": "market_status_quote_path_capital_flow",
+      "scope": [
+        "CN_STOCK",
+        "CN_ETF",
+        "HK",
+        "US"
+      ],
+      "observed_status": "TESTED_AVAILABLE",
+      "evidence_nature": "AUXILIARY_MARKET_BEHAVIOR",
+      "allowed_business_uses": [
+        "THREE_LAYER_MONITORING",
+        "HOLDING_REVIEW",
+        "CANDIDATE_COMPARISON",
+        "CAPITAL_COMPETITION",
+        "RISK_EXPLANATION"
+      ],
+      "parallel_safe": true,
+      "independent_fetch_group": "MARKET_BEHAVIOR",
+      "stop_when_sufficient": true,
+      "notes": "A-share quote/path/capital-flow capability has been observed useful. Actual endpoint/object/time entitlement must still be checked per call."
+    },
+    {
+      "tool": "Longbridge",
+      "domain": "cn_stock_fundamentals_valuation_consensus",
+      "scope": [
+        "CN_STOCK"
+      ],
+      "observed_status": "ENDPOINT_EXISTS_BUT_EMPTY",
+      "evidence_nature": "STRUCTURED_RESEARCH",
+      "allowed_business_uses": [
+        "HOLDING_REVIEW",
+        "CAPITAL_COMPETITION"
+      ],
+      "parallel_safe": true,
+      "independent_fetch_group": "COMPANY_RESEARCH",
+      "stop_when_sufficient": true,
+      "notes": "Representative tests on 300750/601138 returned empty for several research endpoints; do not infer coverage from endpoint existence."
+    },
+    {
+      "tool": "Longbridge",
+      "domain": "etf_constituents",
+      "scope": [
+        "CN_ETF"
+      ],
+      "observed_status": "ENDPOINT_EXISTS_BUT_EMPTY",
+      "evidence_nature": "ETF_STRUCTURE",
+      "allowed_business_uses": [
+        "CANDIDATE_COMPARISON",
+        "RISK_EXPLANATION"
+      ],
+      "parallel_safe": true,
+      "independent_fetch_group": "ETF_STRUCTURE",
+      "stop_when_sufficient": true,
+      "notes": "Representative 513520 test returned no constituents."
+    },
+    {
+      "tool": "Longbridge",
+      "domain": "etf_constituents",
+      "scope": [
+        "US_ETF"
+      ],
+      "observed_status": "TESTED_AVAILABLE",
+      "evidence_nature": "ETF_STRUCTURE",
+      "allowed_business_uses": [
+        "THREE_LAYER_MONITORING",
+        "CANDIDATE_COMPARISON",
+        "RISK_EXPLANATION"
+      ],
+      "parallel_safe": true,
+      "independent_fetch_group": "ETF_STRUCTURE",
+      "stop_when_sufficient": true,
+      "notes": "Representative QQQ constituent/sector structure test succeeded."
+    },
+    {
+      "tool": "Bigdata",
+      "domain": "company_identity_fundamentals_earnings_events",
+      "scope": [
+        "CN_STOCK",
+        "US_STOCK"
+      ],
+      "observed_status": "TESTED_AVAILABLE",
+      "evidence_nature": "STRUCTURED_COMPANY_RESEARCH",
+      "allowed_business_uses": [
+        "HOLDING_REVIEW",
+        "CANDIDATE_COMPARISON",
+        "CAPITAL_COMPETITION",
+        "RISK_EXPLANATION"
+      ],
+      "parallel_safe": true,
+      "independent_fetch_group": "COMPANY_RESEARCH",
+      "stop_when_sufficient": true,
+      "notes": "Representative 300750, 601138 and NVDA identity/tearsheet tests returned structured company/earnings information. Section-level coverage remains call-specific."
+    },
+    {
+      "tool": "Bigdata",
+      "domain": "cn_stock_analyst_revisions_valuation_history",
+      "scope": [
+        "CN_STOCK"
+      ],
+      "observed_status": "UNTESTED",
+      "evidence_nature": "STRUCTURED_COMPANY_RESEARCH",
+      "allowed_business_uses": [
+        "HOLDING_REVIEW",
+        "CAPITAL_COMPETITION"
+      ],
+      "parallel_safe": true,
+      "independent_fetch_group": "COMPANY_RESEARCH",
+      "stop_when_sufficient": true,
+      "notes": "Do not count as available until targeted section/endpoint tests succeed."
+    },
+    {
+      "tool": "Twelve Data",
+      "domain": "global_identity_market_state",
+      "scope": [
+        "GLOBAL"
+      ],
+      "observed_status": "TESTED_AVAILABLE",
+      "evidence_nature": "AUXILIARY_MARKET_REFERENCE",
+      "allowed_business_uses": [
+        "THREE_LAYER_MONITORING",
+        "IDENTITY_CROSS_CHECK"
+      ],
+      "parallel_safe": true,
+      "independent_fetch_group": "CROSS_MARKET",
+      "stop_when_sufficient": true,
+      "notes": "Use as auxiliary only; request-bound/canonical identity and market facts remain authoritative."
+    },
+    {
+      "tool": "Twelve Data",
+      "domain": "us_etf_structure",
+      "scope": [
+        "US_ETF"
+      ],
+      "observed_status": "TESTED_AVAILABLE",
+      "evidence_nature": "ETF_STRUCTURE",
+      "allowed_business_uses": [
+        "THREE_LAYER_MONITORING",
+        "CANDIDATE_COMPARISON",
+        "RISK_EXPLANATION"
+      ],
+      "parallel_safe": true,
+      "independent_fetch_group": "ETF_STRUCTURE",
+      "stop_when_sufficient": true,
+      "notes": "Representative QQQ ETF summary/structure succeeded."
+    },
+    {
+      "tool": "Twelve Data",
+      "domain": "cn_etf_deep_data_and_fundamentals",
+      "scope": [
+        "CN_ETF",
+        "CN_STOCK"
+      ],
+      "observed_status": "ENTITLEMENT_BLOCKED",
+      "evidence_nature": "STRUCTURED_RESEARCH",
+      "allowed_business_uses": [
+        "CANDIDATE_COMPARISON",
+        "HOLDING_REVIEW"
+      ],
+      "parallel_safe": true,
+      "independent_fetch_group": "ETF_STRUCTURE",
+      "stop_when_sufficient": true,
+      "notes": "Representative calls require higher subscription tier; do not treat symbol search success as data entitlement."
+    },
+    {
+      "tool": "Massive",
+      "domain": "us_market_history_intraday",
+      "scope": [
+        "US_ETF",
+        "US_STOCK"
+      ],
+      "observed_status": "TESTED_AVAILABLE",
+      "evidence_nature": "AUXILIARY_MARKET_BEHAVIOR",
+      "allowed_business_uses": [
+        "THREE_LAYER_MONITORING",
+        "CANDIDATE_COMPARISON",
+        "RISK_EXPLANATION"
+      ],
+      "parallel_safe": true,
+      "independent_fetch_group": "CROSS_MARKET",
+      "stop_when_sufficient": true,
+      "notes": "Representative SPY/QQQ daily and AAPL intraday history succeeded."
+    },
+    {
+      "tool": "Massive",
+      "domain": "us_fundamentals_ratios_news_regulatory",
+      "scope": [
+        "US_STOCK"
+      ],
+      "observed_status": "UNTESTED",
+      "evidence_nature": "STRUCTURED_COMPANY_AND_REGULATORY_RESEARCH",
+      "allowed_business_uses": [
+        "THREE_LAYER_MONITORING",
+        "HOLDING_REVIEW",
+        "RISK_EXPLANATION"
+      ],
+      "parallel_safe": true,
+      "independent_fetch_group": "COMPANY_RESEARCH",
+      "stop_when_sufficient": true,
+      "notes": "Endpoints have been identified but actual entitlement must be tested before upgrade."
+    },
+    {
+      "tool": "Exa",
+      "domain": "official_open_web_event_policy_verification",
+      "scope": [
+        "GLOBAL"
+      ],
+      "observed_status": "TESTED_AVAILABLE",
+      "evidence_nature": "OPEN_WEB_RESEARCH",
+      "allowed_business_uses": [
+        "THREE_LAYER_MONITORING",
+        "HOLDING_REVIEW",
+        "CANDIDATE_COMPARISON",
+        "RISK_EXPLANATION"
+      ],
+      "parallel_safe": true,
+      "independent_fetch_group": "EVENT_VERIFICATION",
+      "stop_when_sufficient": true,
+      "notes": "Use for a real event/policy/official-source gap, not ceremonial duplicate searching or structured executable quotes."
+    }
+  ],
+  "global_prohibitions": [
+    "PROVIDER_PRIORITY",
+    "FORMAL_QUOTE_OWNER",
+    "ACCOUNT_FACT_OWNER",
+    "PIT_OR_FRESHNESS_OVERRIDE",
+    "SECURITY_IDENTITY_OWNER",
+    "TRADE_PERMISSION",
+    "TRADE_ACTION_GENERATION",
+    "SECOND_DECISION_CHAIN",
+    "PERSIST_CALL_RESULTS_AS_CANONICAL_STATE"
+  ]
+}

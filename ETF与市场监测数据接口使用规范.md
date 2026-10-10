@@ -223,6 +223,10 @@ ChatGPT可按节点证据需求调用已连接且合法的外部辅助工具，�
 
 具体工具名称、套餐和当前连接状态属于运行期能力，不在本规范固化为provider优先级或生产依赖。只有经过MASTER研究正式转化边界、数据资格验证和生产变更协议验收后，外部工具才可能成为正式生产provider；ChatGPT层的辅助调用本身不构成该转化。
 
+`config/research/external_auxiliary_capabilities.json` 仅登记已观察到的外部辅助能力边界和Actor执行提示，用于避免把endpoint存在、连接成功或身份解析误当成目标对象可用资格。其状态只能表达实测可用、endpoint存在但为空、entitlement受限、不适用或尚未测试等能力事实；不得成为provider优先级、正式行情/账户/身份owner、PIT/freshness来源、DWP producer或交易权限来源。
+
+为降低Formal Decision延迟，相互独立的只读辅助证据域允许在Actor侧并行获取；正式事实生产链不得因此并行复制。所有实际采用的辅助结果必须在进入业务判断前统一完成对象、时点、market phase、entitlement/coverage和数据性质核验。已有证据足以回答当前业务问题时应停止扩展；可选分支失败或较慢不得阻塞已经合法READY的业务回复。
+
 ## 5. 强制数据时点与跨市场时间对齐
 
 ### 5.1 正式输出强制时间戳
