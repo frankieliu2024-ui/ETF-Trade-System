@@ -67,19 +67,20 @@ class NotificationActiveReportContractTests(unittest.TestCase):
         valid, reason = center.validate_report_delivery_request(request)
         self.assertTrue(valid, reason)
 
-    def test_canonical_report_builder_rejects_retired_report_type(self):
-        with self.assertRaises(ValueError):
-            center.build_report_delivery_request(
-                task_id="ETF正式决策", task_run_id="run-retired",
-                report_id="retired", report_type="ETF_FORMAL_DECISION",
-                effective_market_date="2026-09-20",
-                title="retired", summary="retired", full_content="retired",
-                source_reference="retired", idempotency_key="retired",
-                generated_at="2026-09-20T08:00:00+08:00",
-            )
+    def test_canonical_report_builder_accepts_formal_decision_report_type(self):
+        request = center.build_report_delivery_request(
+            task_id="ETF正式决策", task_run_id="run-formal",
+            report_id="formal", report_type="ETF_FORMAL_DECISION",
+            effective_market_date="2026-09-20",
+            title="【ETF正式决策】", summary="正式决策完成", full_content="frozen formal decision",
+            source_reference="formal-decision", idempotency_key="ETF_FORMAL_DECISION:run-formal",
+            generated_at="2026-09-20T08:00:00+08:00",
+        )
+        self.assertEqual(request["report_type"], "ETF_FORMAL_DECISION")
+        self.assertTrue(center.validate_report_delivery_request(request)[0])
 
     def test_only_active_scheduled_report_types_are_accepted(self):
-        for report_type in ("ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"):
+        for report_type in ("ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW", "ETF_FORMAL_DECISION"):
             valid, reason = center.validate_report_delivery_request(self._request(report_type))
             self.assertTrue(valid, reason)
 
