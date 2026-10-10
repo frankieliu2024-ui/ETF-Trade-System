@@ -889,6 +889,10 @@ def close_account_event(force: bool = False) -> dict | None:
 def choose_event(mode: str) -> dict | None:
     if mode == "close": return close_account_event()
     if mode == "close-test": return close_account_event(force=True)
+    # A Formal Decision push binds one exact decision event. It must take
+    # precedence over unrelated scheduled REPORT compatibility inputs.
+    if os.environ.get("DECISION_EVENT_PATH", "").strip():
+        return formal_decision_report_event()
     # An explicitly triggered REPORT must deliver that exact report.
     # Other workflow_run events retain the existing INTERRUPT precedence.
     explicit_report_binding = bool(os.environ.get("REVIEW_EVENT_PATH", "").strip())
