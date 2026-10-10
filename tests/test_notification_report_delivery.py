@@ -86,6 +86,36 @@ class ReportDeliveryContractTests(unittest.TestCase):
         valid, reason = notification_center.validate_report_delivery_request(request)
         self.assertTrue(valid, reason)
 
+    def test_formal_decision_presentation_projects_full_report(self):
+        event = {
+            "event_type": "FORMAL_DECISION",
+            "decision_id": "fd-20261010-2102",
+            "parent_request_id": "fd-20261010-2102",
+            "recorded_at_beijing": "2026-10-10T21:02:00+08:00",
+            "formal_decision": {"candidate_code": "", "candidate_name": ""},
+            "presentation_binding": {
+                "request_id": "fd-20261010-2102",
+                "decision_id": "fd-20261010-2102",
+                "content": "【ETF正式决策】\n\n冻结正文",
+                "content_sha256": hashlib.sha256("【ETF正式决策】\\n\\n冻结正文".encode("utf-8")).hexdigest(),
+            },
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "fd.json"
+            path.write_text(json.dumps(event, ensure_ascii=False), encoding="utf-8")
+            with patch.object(notification_center, "ROOT", Path(directory)):
+                with patch.object(notification_center, "STATE", Path(directory) / "state"):
+                    with patch.object(notification_center, "REVIEW_EVENT_DIR", Path(directory) / "events" / "reviews"):
+                        with patch.object(notification_center, "REPORT_REQUEST_DIR", Path(directory) / "requests" / "report_delivery"):
+                            with patch.object(notification_center, "REPORT_HANDOFF_DIR", Path(directory) / "requests" / "report_handoff"):
+                                with patch.object(notification_center, "Path", Path):
+                                    (Path(directory) / "events" / "decisions").mkdir(parents=True)
+                                    path.write_text(json.dumps(event, ensure_ascii=False), encoding="utf-8")
+                                    projected = notification_center.formal_decision_report_event()
+        self.assertEqual(projected["report_type"], "ETF_FORMAL_DECISION")
+        self.assertEqual(projected["delivery_mode"], "FULL_REPORT")
+        self.assertEqual(projected["content"], event["presentation_binding"]["content"])
+
     def test_invalid_report_is_rejected(self):
         request = self._request()
         request["content_hash"] = "wrong"
