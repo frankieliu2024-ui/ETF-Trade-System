@@ -97,7 +97,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
                 "request_id": "fd-20261010-2102",
                 "decision_id": "fd-20261010-2102",
                 "content": "【ETF正式决策】\n\n冻结正文",
-                "content_sha256": hashlib.sha256("【ETF正式决策】\\n\\n冻结正文".encode("utf-8")).hexdigest(),
+                "content_sha256": hashlib.sha256("【ETF正式决策】\n\n冻结正文".encode("utf-8")).hexdigest(),
             },
         }
         with tempfile.TemporaryDirectory() as directory:
