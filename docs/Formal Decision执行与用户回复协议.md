@@ -68,7 +68,7 @@ Formal Decision中，ChatGPT只负责机器无法确定性替代的业务判断�
 
 ### 4.1 状态解释与下一动作
 
-现有 `scripts/formal_request_consumer.py` 是消费侧唯一三态解释器。其每一条返回路径都必须同时给出 `actor_action` 与 `user_output_allowed`；缺少任一字段即属于实现不完整，不得交给ChatGPT自行解释。两者共同构成Actor执行合同：
+现有 `scripts/formal_request_consumer.py` 是消费侧唯一三态解释器。既有 `scripts/build_e2e_status.py` 必须直接复用该解释器，并把结果投影到既有 `data/state/e2e_status.json` 的 `components.decision_context.formal_reply_gate`，作为GitHub外部Actor的首要机器交接面；不得在E2E层重写第二套状态算法。外部Actor必须先核对gate的 `request_id` 等于当前父请求，再直接消费其中的 `consumer_status`、`actor_action`、`user_output_allowed` 和READY必答清单，不得仅凭 `reply_freezable`、Dashboard、旧context或自然语言自行推导输出资格。解释器每一条返回路径都必须同时给出 `actor_action` 与 `user_output_allowed`；缺少任一字段即属于实现不完整，不得交给ChatGPT自行解释。两者共同构成Actor执行合同：
 
 - `CONTINUE_SAME_REQUEST_SILENTLY`：继续消费同一父请求，且不得产生过程性用户输出。
 - `COMPLETE_BUSINESS_DECISION_NOW`：立即完成本次业务判断，不等待后置持久化、审计、通知或验收。
