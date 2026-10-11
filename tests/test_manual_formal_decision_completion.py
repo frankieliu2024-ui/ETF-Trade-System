@@ -514,6 +514,9 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             "parent_request_id": source_id,
             "requested_at_beijing": SOURCE_REQUEST["requested_at_beijing"],
             "market_date": SOURCE_REQUEST["market_date"],
+            "presentation_content": frozen_presentation,
+            "decision_response": {"presentation_content": frozen_presentation},
+            "presentation_binding": {"full_content": frozen_presentation},
         }, expected_snapshot=SNAPSHOT_PATH)
         before_fingerprint = validated_source["fingerprint"]
         before_identity = (source_id, decision["decision_id"])
