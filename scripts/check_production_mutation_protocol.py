@@ -471,6 +471,7 @@ def run(root: Path = ROOT) -> dict:
         "attribution does not add admission or integration states",
     )
     gate_fields = gate.get("fields") or {}
+    net_complexity_guard = gate.get("net_complexity_guard") or {}
     gate_outcomes = gate.get("outcomes") or {}
     emergency = gate.get("emergency_fast_path") or {}
     prohibitions = [str(x) for x in gate.get("prohibitions") or []]
@@ -480,6 +481,16 @@ def run(root: Path = ROOT) -> dict:
         and gate_fields["EXISTING_MECHANISM_INSUFFICIENT"] == ["YES", "NO", "INCONCLUSIVE"]
         and gate_fields["EVIDENCE_QUALITY"] == ["SUFFICIENT", "INSUFFICIENT", "INCONCLUSIVE"],
         "gate exposes the three auditable pre-issue fields")
+    net_fields = (net_complexity_guard.get("required_design_fields") or {})
+    check(
+        "v110:net_complexity_guard",
+        set(net_fields) == {"INDEPENDENT_INVARIANT_OR_CONSUMER", "EXISTING_OWNER_ABSORPTION_CHECK", "NET_COMPLEXITY", "RETIREMENT_CONDITION"}
+        and net_complexity_guard.get("no_new_parallel_mechanism") is True
+        and "full user-outcome/failure-domain diagnosis" in str(net_complexity_guard.get("repeated_same_domain_rule") or "")
+        and "original user/business objective" in str(net_complexity_guard.get("user_outcome_closure") or "")
+        and "V1.10 净复杂度准入约束" in doc_text,
+        "net-complexity accounting is folded into the existing work-item/root-cause gate without a second control plane",
+    )
     check("new_work_item_gate:outcomes_orthogonal",
         gate_outcomes.get("NEW_WORK_ITEM_GATE") == ["PASS", "FAIL"]
         and gate_outcomes.get("NEW_ISSUE") == ["YES", "NO"]
