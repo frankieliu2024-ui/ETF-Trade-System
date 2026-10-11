@@ -6,7 +6,7 @@
     "source": "docs/生产变更与并发写入协议_V1.0.md",
     "version": "V1.10",
     "machine_role": "EXECUTABLE_MIRROR_NOT_RULE_SOURCE",
-    "migration_note": "V1.10 adds evidence-state failure escalation, historical recovery temporal separation, and orthogonal incident closure semantics while preserving V1.9 hard safety invariants."
+    "migration_note": "V1.10 includes evidence-state failure escalation, historical recovery temporal separation, orthogonal incident closure semantics, and a bounded net-complexity admission guard while preserving V1.9 hard safety invariants."
   },
   "principles": [
     "parallel_diagnosis_is_allowed",
@@ -186,7 +186,31 @@
         "new_state_store",
         "new_issue_bot"
       ],
-      "duplicate_reuse_contract": "Search current Issues/PRs and reuse an existing same-semantic item or mechanism before creating a new Issue."
+      "duplicate_reuse_contract": "Search current Issues/PRs and reuse an existing same-semantic item or mechanism before creating a new Issue.",
+      "net_complexity_guard": {
+        "purpose": "Fold net-complexity accounting into the existing work-item/root-cause design gate without creating another governance plane.",
+        "applies_before_durable_additions": [
+          "field",
+          "projection",
+          "compatibility_branch",
+          "recovery_branch",
+          "gate",
+          "state",
+          "workflow",
+          "checker",
+          "writer",
+          "decision_path"
+        ],
+        "required_design_fields": {
+          "INDEPENDENT_INVARIANT_OR_CONSUMER": "Name the independent invariant or real consumer protected by the durable addition.",
+          "EXISTING_OWNER_ABSORPTION_CHECK": "Prove an existing canonical owner or governance principle cannot absorb the invariant more simply.",
+          "NET_COMPLEXITY": "State whether long-lived architecture/maintenance complexity decreases, stays justified, or increases; unjustified increase requires redesign or convergence.",
+          "RETIREMENT_CONDITION": "Required when applicable for temporary/compatibility/recovery/migration additions; permanent independent invariants may use NOT_APPLICABLE_PERMANENT_INVARIANT with rationale."
+        },
+        "repeated_same_domain_rule": "After a root-cause-complete repair, a same-domain recurrence on the real user path requires full user-outcome/failure-domain diagnosis before another local mutation.",
+        "user_outcome_closure": "candidate_or_merged_main_acceptance_proves_implementation_safety_not_incident_closure; re-test the original user/business objective",
+        "no_new_parallel_mechanism": true
+      }
     },
     "merge_eligibility_contract": {
       "name": "AUTHORIZATION_AWARE_CODE_PR_MERGE",
@@ -624,7 +648,7 @@
     "normative_text_source": "docs/生产变更与并发写入协议_V1.0.md",
     "issue_brief_packet_rule": "reference_protocol_and_task_fields_only",
     "no_manual_second_rule_set": true,
-    "note": "V1.10 extends the existing protocol with three contracts only: failure escalation, historical recovery temporal separation, and orthogonal implementation/incident closure acceptance; opt-in forensic observability remains an existing diagnostic capability."
+    "note": "V1.10 keeps failure escalation, historical temporal separation, orthogonal incident closure, and the bounded net-complexity admission guard inside the existing governance owner; no second control plane is created."
   },
   "failure_escalation_gate": {
     "trigger": "same_failure_domain_still_fails_on_the_real_target_path_after_root_cause_complete_repair_and_independent_domain_is_not_proven",
