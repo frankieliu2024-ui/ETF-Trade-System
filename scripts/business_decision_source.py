@@ -190,6 +190,11 @@ def validate_decision_evidence_consumption(value: Any, *, parent_request_id: str
     for key in layer_keys:
         if not isinstance(value.get(key), list):
             return f"decision_evidence_consumption.{key} must be a list"
+    # Current formal work packages carry this marker when the global clock
+    # review is mandatory. Legacy recovery/preflight packages may legitimately
+    # omit the domain because they predate the global-review requirement.
+    if value.get("global_cross_market_review_required") is True and not value.get("layer_1_external_cross_market"):
+        return "decision_evidence_consumption requires an explicit global cross-market review"
     if parent_request_id and str(value.get("request_id") or "").strip() != parent_request_id:
         return "decision_evidence_consumption request_id must match parent request"
     for key in (
@@ -781,7 +786,14 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             "etf_opportunity_reviews": capital_opportunity_reviews,
         },
     })
+    global_review_required = any(
+        str(item.get("evidence_class") or "").upper() == "GLOBAL_CROSS_MARKET_REVIEW"
+        and bool(item.get("required"))
+        for item in requirements
+        if isinstance(item, dict)
+    )
     projected["decision_evidence_consumption"] = {**consumed,
+        "global_cross_market_review_required": global_review_required,
         "discovery_to_capital_competition_consumed": True,
         "all_managed_positions_sell_chain_consumed": holding_review_complete,
         "held_etf_additional_capital_consumed": bool(held_add_reviews) or not any(str(x.get("problem_id") or "").startswith("HELD_ETF_ADD:") for x in graph),
