@@ -42,6 +42,10 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertIn("/tmp/changed_files.txt; then", self.text)
         self.assertNotIn("echo report=true", self.text)
 
+    def test_push_routes_accept_canonical_bds_suffix(self):
+        self.assertIn(r"(bds|business_decision_source)", self.text)
+        self.assertIn(r"__(bds|business_decision_source)", self.text)
+
     def test_account_and_trade_canonical_publications_wake_existing_notification_chain(self):
         self.assertIn('- "data/state/account_fact.json"', self.text)
         self.assertIn('- "events/trades/*.json"', self.text)
