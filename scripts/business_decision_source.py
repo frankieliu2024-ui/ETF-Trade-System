@@ -190,6 +190,8 @@ def validate_decision_evidence_consumption(value: Any, *, parent_request_id: str
     for key in layer_keys:
         if not isinstance(value.get(key), list):
             return f"decision_evidence_consumption.{key} must be a list"
+    if not value.get("layer_1_external_cross_market"):
+        return "decision_evidence_consumption requires an explicit global cross-market review"
     if parent_request_id and str(value.get("request_id") or "").strip() != parent_request_id:
         return "decision_evidence_consumption request_id must match parent request"
     for key in (
