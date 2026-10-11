@@ -967,6 +967,40 @@ def compact_recent(item: dict) -> dict:
     return {"key": item.get("source_event_id"), "type": item.get("event_type"), "title": item.get("title"), "content": item.get("content"), "source": item.get("source"), "user_severity": item.get("user_severity"), "user_action": item.get("user_action"), "status": "SENT" if item.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION"} else item.get("lifecycle_status"), "attempted_at": item.get("last_attempted_at") or item.get("sent_at") or item.get("created_at"), "response": item.get("response") or {}, "notification_id": item.get("notification_id"), "lifecycle_status": item.get("lifecycle_status")}
 
 
+def formal_content_event(source_path: Path) -> dict | None:
+    """Project a BDS completion into the normal idempotent notification path."""
+    source = read_json(source_path, {})
+    content = source.get("presentation_content")
+    if not content and isinstance(source.get("decision_response"), dict):
+        content = source["decision_response"].get("presentation_content")
+    if not isinstance(content, str) or not content.strip():
+        return None
+    content = content.strip()
+    request_id = str(source.get("parent_request_id") or source.get("request_id") or "").strip()
+    task_run_id = str(source.get("task_run_id") or source.get("occurrence_id") or source.get("decision_id") or "").strip()
+    identity = task_run_id or hashlib.sha256(content.encode("utf-8")).hexdigest()
+    return {
+        "key": f"ETF_FORMAL_DECISION:{identity}",
+        "source_event_id": f"formal-decision-bds:{request_id}:{identity}",
+        "event_type": "REPORT_DELIVERY_REQUEST",
+        "notification_channel": "REPORT",
+        "delivery_mode": "FULL_REPORT",
+        "type": "正式报告",
+        "title": content.splitlines()[0].strip() or "【ETF正式决策】",
+        "content": content,
+        "source": f"business-decision-source:{source_path.name}",
+        "user_severity": "正式报告",
+        "user_action": "阅读已完成的正式ETF正式决策；无需自动交易操作",
+        "report_type": "ETF_FORMAL_DECISION",
+        "task_id": str(source.get("task_id") or "ETF正式决策"),
+        "task_run_id": identity,
+        "related_decision_id": str(source.get("decision_id") or identity),
+        "idempotency_key": f"ETF_FORMAL_DECISION:{identity}",
+        "no_trade_authority": True,
+        "content_hash": hashlib.sha256(content.encode("utf-8")).hexdigest(),
+    }
+
+
 def _notification_matches_intent(item: dict, match: dict) -> bool:
     """Require exact decision identity plus the notification's object/action identity."""
     intent = match.get("intent") or {}
@@ -1152,30 +1186,23 @@ def render_canonical_notification(event: dict) -> dict | None:
 def main() -> int:
     parser = argparse.ArgumentParser(); parser.add_argument("--mode", choices=["event", "close", "close-test", "channel-test"], default="event"); parser.add_argument("--formal-content-file", default=""); args = parser.parse_args()
     token = os.environ.get("PUSHPLUS_TOKEN", "").strip(); state_path = STATE / "notification_center.json"; state = read_json(state_path, {"schema_version": "1.0", "recent": []})
+    formal_event = None
     if args.formal_content_file:
         source_path = Path(args.formal_content_file)
         if not source_path.is_file():
             print(json.dumps({"status": "FAILED", "error": "formal content file missing"}, ensure_ascii=False))
             return 1
-        source = read_json(source_path, {})
-        content = source.get("presentation_content")
-        if not content and isinstance(source.get("decision_response"), dict):
-            content = source["decision_response"].get("presentation_content")
-        if not isinstance(content, str) or not content.strip():
+        formal_event = formal_content_event(source_path)
+        if formal_event is None:
             print(json.dumps({"status": "FAILED", "error": "formal presentation_content missing"}, ensure_ascii=False))
             return 1
-        title = content.splitlines()[0].strip() or "【ETF正式决策】"
-        if not token:
-            print(json.dumps({"status": "FAILED", "error": "PUSHPLUS_TOKEN missing"}, ensure_ascii=False))
-            return 1
-        ok, response = send(token, title, content)
-        print(json.dumps({"status": "SENT" if ok else "FAILED", "title": title, "response": response}, ensure_ascii=False))
-        return 0 if ok else 1
     raw_items = list(state.get("notifications") or [])
     if not raw_items: raw_items = [normalize_notification(x, x) for x in (state.get("recent") or [])]
     notifications = expire_notifications(raw_items)
     notifications = revalidate_pending_notifications(notifications)
-    if args.mode == "channel-test":
+    if formal_event is not None:
+        event = formal_event
+    elif args.mode == "channel-test":
         event = {"key": f"channel-test:{now().isoformat(timespec='seconds')}", "type": "测试", "title": "【测试】ETF系统通知中心", "content": "这是一条通知通道测试，不代表真实行情、账户、交易或系统故障。\n\n你现在需要做什么：无需操作。收到即表示 GitHub → PushPlus → 微信通道正常。", "source": "manual_test", "event_type": "CHANNEL_TEST", "user_severity": "测试", "user_action": "无需操作"}
     else:
         validation_error = report_delivery_validation_error()
