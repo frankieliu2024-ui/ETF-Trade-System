@@ -3431,6 +3431,7 @@ def main() -> int:
         source = validate_source(
             source_payload,
             expected_snapshot=str(request.get("consumed_snapshot") or source_payload.get("consumed_snapshot") or "").strip(),
+            require_presentation=True,
         )
         # Bind the selected request-bound DWP only after Source identity and
         # fingerprinting.  It is validation context, not mutable Source
