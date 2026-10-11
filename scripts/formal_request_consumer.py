@@ -58,7 +58,16 @@ def classify_formal_request_consumer_state(
     persistence = str(canonical_persistence_status or "").strip().upper()
     canonical_persisted = persistence in {"PERSISTED", "COMMITTED", "ACCEPTED", "PASS"}
 
-    if terminal_failure or producer in TERMINAL_FAILURE_STATUSES:
+    # A caller-side boolean is not proof of a terminal state.  In particular,
+    # stale/empty derived context and an in-flight producer must remain WAIT,
+    # even if an older consumer invocation supplied terminal_failure=True.
+    # TERMINAL is fail-closed: it requires an explicit terminal status from the
+    # current producer or request-bound freeze, never a detached flag alone.
+    explicit_terminal = (
+        producer in TERMINAL_FAILURE_STATUSES
+        or freeze_status in TERMINAL_FAILURE_STATUSES
+    )
+    if explicit_terminal:
         return {
             "status": "TERMINAL_FAILURE",
             "continue_same_request": False,
@@ -67,7 +76,7 @@ def classify_formal_request_consumer_state(
             "user_visible_output": "TERMINAL_FAILURE",
             "actor_action": ACTOR_TERMINATE,
             "user_output_allowed": True,
-            "reason": "EXPLICIT_TERMINAL_FAILURE",
+            "reason": "EXPLICIT_TERMINAL_FAILURE_STATUS",
         }
 
     same_request = bound_request == parent and (not freeze_request or freeze_request == parent)
