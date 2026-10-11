@@ -37,6 +37,7 @@ on:
       - "requests/notification_test/*.json"
       - "requests/report_delivery/*.json"
       - "requests/report_handoff/*.json"
+      - "requests/live_snapshot/*__business_decision_source*.json"
       # Canonical market-state publication is an independent notification wake.
       # This preserves one notification engine while avoiding a hard dependency
       # on workflow_run creation after a producer was itself recovered from a
@@ -98,6 +99,17 @@ jobs:
           git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_BEFORE"
           git cat-file -e "$PUSH_AFTER^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_AFTER"
           git diff --name-only "$PUSH_BEFORE" "$PUSH_AFTER" > /tmp/changed_files.txt
+          mapfile -t formal_content_paths < <(grep -E '^requests/live_snapshot/[^/]+__business_decision_source[^/]*\.json$' /tmp/changed_files.txt || true)
+          if [ "${#formal_content_paths[@]}" -eq 1 ]; then
+            echo "formal_content=true" >> "$GITHUB_OUTPUT"
+            echo "formal_content_path=${formal_content_paths[0]}" >> "$GITHUB_OUTPUT"
+          elif [ "${#formal_content_paths[@]}" -gt 1 ]; then
+            echo "Ambiguous Formal Decision content push: expected exactly one BDS file, found ${#formal_content_paths[@]}" >&2
+            exit 1
+          else
+            echo "formal_content=false" >> "$GITHUB_OUTPUT"
+            echo "formal_content_path=" >> "$GITHUB_OUTPUT"
+          fi
           mapfile -t decision_paths < <(grep -E '^events/decisions/[^/]+\.json$' /tmp/changed_files.txt || true)
           if [ "${#decision_paths[@]}" -eq 1 ]; then
             echo "decision=true" >> "$GITHUB_OUTPUT"
@@ -193,6 +205,14 @@ jobs:
           find requests/report_delivery -maxdepth 1 -type f -name '*.json' ! -path "$REPORT_PATH" -delete
           test "$(find requests/report_delivery -maxdepth 1 -type f -name '*.json' | wc -l)" -eq 1
           test -f "$REPORT_PATH"
+
+      - name: Send exact Formal Decision content
+        id: formal_content_notify
+        if: ${{ github.event_name == 'push' && steps.push_kind.outputs.formal_content == 'true' }}
+        env:
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+          FORMAL_CONTENT_PATH: ${{ steps.push_kind.outputs.formal_content_path }}
+        run: python scripts/notification_center.py --formal-content-file "$FORMAL_CONTENT_PATH"
 
       - name: Build delayed execution reconciliation
         if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && (steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.trade == 'true')) }}
@@ -388,7 +408,7 @@ jobs:
           done
 
       - name: Surface notification delivery failure without blocking trading system
-        if: ${{ steps.test_notify.outcome == 'failure' || steps.event_notify.outcome == 'failure' || steps.close_notify.outcome == 'failure' || steps.a_share_summary_notify.outcome == 'failure' || steps.a_share_shock_notify.outcome == 'failure' || steps.apac_summary_notify.outcome == 'failure' || steps.apac_shock_notify.outcome == 'failure' || steps.us_summary_notify.outcome == 'failure' || steps.us_shock_notify.outcome == 'failure' }}
+        if: ${{ steps.formal_content_notify.outcome == 'failure' || steps.test_notify.outcome == 'failure' || steps.event_notify.outcome == 'failure' || steps.close_notify.outcome == 'failure' || steps.a_share_summary_notify.outcome == 'failure' || steps.a_share_shock_notify.outcome == 'failure' || steps.apac_summary_notify.outcome == 'failure' || steps.apac_shock_notify.outcome == 'failure' || steps.us_summary_notify.outcome == 'failure' || steps.us_shock_notify.outcome == 'failure' }}
         run: |
           echo "User notification delivery failed; ETF market/data/trading-decision workflows remain unaffected."
           exit 1
