@@ -828,7 +828,7 @@ def _validate_single_frozen_presentation(source: dict[str, Any], *, required: bo
     if len(set(str(value) for value in values)) != 1:
         raise ValueError("formal presentation content must have one identical frozen source")
 
-def validate_source(source: dict[str, Any], *, expected_snapshot: str | None = None) -> dict[str, Any]:
+def validate_source(source: dict[str, Any], *, expected_snapshot: str | None = None, require_presentation: bool = False) -> dict[str, Any]:
     if classify_request(source) != BUSINESS_DECISION_SOURCE:
         raise ValueError("business source requires explicit BUSINESS_DECISION_SOURCE")
     if not str(source.get("request_id") or "").strip():
@@ -841,7 +841,7 @@ def validate_source(source: dict[str, Any], *, expected_snapshot: str | None = N
     missing = [key for key in _REQUIRED if key not in source or source[key] in (None, "", [], {})]
     if missing:
         raise ValueError("business decision completeness failed: " + ",".join(missing))
-    _validate_single_frozen_presentation(source, required=bool(source.get("_production_consumer_ingress")))
+    _validate_single_frozen_presentation(source, required=require_presentation)
     parent_request_id = str(source.get("parent_request_id") or source.get("request_id") or "").strip()
     consumption_error = validate_decision_evidence_consumption(
         source.get("decision_evidence_consumption"),
