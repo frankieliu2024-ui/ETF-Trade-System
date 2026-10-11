@@ -813,10 +813,6 @@ def validate_source(source: dict[str, Any], *, expected_snapshot: str | None = N
         raise ValueError("business source requires request_id")
     if not str(source.get("decision_id") or "").strip():
         raise ValueError("business source requires decision_id")
-    parent_request_id = str(source.get("parent_request_id") or "").strip()
-    request_id = str(source.get("request_id") or "").strip()
-    if parent_request_id and parent_request_id != request_id:
-        raise ValueError("business source parent request binding failed")
     snapshot = str(source.get("consumed_snapshot") or "").strip()
     if not snapshot or expected_snapshot and snapshot != expected_snapshot:
         raise ValueError("business source PIT binding failed")
