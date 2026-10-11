@@ -11,6 +11,30 @@ except ModuleNotFoundError:
 
 
 class FormalDecisionContractTests(unittest.TestCase):
+    def test_frozen_presentation_fields_must_be_identical_when_present(self):
+        content = "【ETF正式决策】统一冻结正文"
+        source = {
+            "presentation_content": content,
+            "decision_response": {"presentation_content": content},
+            "presentation_binding": {"full_content": content},
+        }
+        self.assertEqual(
+            source["presentation_content"],
+            source["decision_response"]["presentation_content"],
+        )
+        self.assertEqual(
+            source["presentation_content"],
+            source["presentation_binding"]["full_content"],
+        )
+
+    def test_frozen_presentation_conflict_is_detectable(self):
+        content = "【ETF正式决策】统一冻结正文"
+        with self.assertRaises(AssertionError):
+            self.assertEqual(
+                content,
+                {"presentation_content": content + "（冲突）"}["presentation_content"],
+            )
+
     def test_registered_opportunity_and_holding_values_are_accepted(self):
         self.assertEqual(validate_formal_decision_contract({
             "opportunity_status": "观察机会",
