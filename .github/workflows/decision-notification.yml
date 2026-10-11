@@ -37,6 +37,7 @@ on:
       - "requests/notification_test/*.json"
       - "requests/report_delivery/*.json"
       - "requests/report_handoff/*.json"
+      - "requests/live_snapshot/*__bds*.json"
       - "requests/live_snapshot/*__business_decision_source*.json"
       # Canonical market-state publication is an independent notification wake.
       # This preserves one notification engine while avoiding a hard dependency
@@ -99,7 +100,10 @@ jobs:
           git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_BEFORE"
           git cat-file -e "$PUSH_AFTER^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_AFTER"
           git diff --name-only "$PUSH_BEFORE" "$PUSH_AFTER" > /tmp/changed_files.txt
-          mapfile -t formal_content_paths < <(grep -E '^requests/live_snapshot/[^/]+__business_decision_source[^/]*\.json$' /tmp/changed_files.txt || true)
+          # BDS ingress files use the canonical ``__bds`` suffix.  Keep the
+          # historical verbose suffix as a compatibility path, but never let
+          # the notification route depend on one filename spelling.
+          mapfile -t formal_content_paths < <(grep -E '^requests/live_snapshot/[^/]+__(bds|business_decision_source)[^/]*\.json$' /tmp/changed_files.txt || true)
           if [ "${#formal_content_paths[@]}" -eq 1 ]; then
             echo "formal_content=true" >> "$GITHUB_OUTPUT"
             echo "formal_content_path=${formal_content_paths[0]}" >> "$GITHUB_OUTPUT"
