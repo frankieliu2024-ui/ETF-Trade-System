@@ -805,17 +805,24 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
     }
     return projected
 
-def _validate_single_frozen_presentation(source: dict[str, Any]) -> None:
-    """Require every exposed Formal Decision presentation field to be one text."""
+def _validate_single_frozen_presentation(source: dict[str, Any], *, required: bool = False) -> None:
+    """Validate one frozen presentation; require it only at production consumer ingress."""
     top = source.get("presentation_content")
     nested_obj = source.get("decision_response")
     nested = nested_obj.get("presentation_content") if isinstance(nested_obj, dict) else None
     binding_obj = source.get("presentation_binding")
     bound = binding_obj.get("full_content") if isinstance(binding_obj, dict) else None
     values = [value for value in (top, nested, bound) if value not in (None, "")]
+    if not values:
+        if required:
+            raise ValueError(
+                "formal presentation content is required and must be exposed identically "
+                "at top-level, decision_response, and presentation_binding"
+            )
+        return
     if len(values) != 3:
         raise ValueError(
-            "formal presentation content is required and must be exposed identically "
+            "formal presentation content must be exposed identically "
             "at top-level, decision_response, and presentation_binding"
         )
     if len(set(str(value) for value in values)) != 1:
@@ -834,7 +841,7 @@ def validate_source(source: dict[str, Any], *, expected_snapshot: str | None = N
     missing = [key for key in _REQUIRED if key not in source or source[key] in (None, "", [], {})]
     if missing:
         raise ValueError("business decision completeness failed: " + ",".join(missing))
-    _validate_single_frozen_presentation(source)
+    _validate_single_frozen_presentation(source, required=bool(source.get("_production_consumer_ingress")))
     parent_request_id = str(source.get("parent_request_id") or source.get("request_id") or "").strip()
     consumption_error = validate_decision_evidence_consumption(
         source.get("decision_evidence_consumption"),
