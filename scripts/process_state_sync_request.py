@@ -3453,6 +3453,19 @@ def main() -> int:
         # fingerprinting.  It is validation context, not mutable Source
         # business content, so replay/idempotency fingerprints remain stable.
         source = freeze_source_work_package(source, decision_work_package)
+        # From this point onward, the validated Business Decision Source is the
+        # sole owner of user-visible Formal Decision presentation content.
+        canonical_presentation = str(source.get("presentation_content") or "")
+        if not canonical_presentation:
+            raise ValueError("validated business decision source has no frozen presentation content")
+        request["presentation_content"] = canonical_presentation
+        presentation_binding = request.get("presentation_binding")
+        if not isinstance(presentation_binding, dict):
+            presentation_binding = {}
+        else:
+            presentation_binding = dict(presentation_binding)
+        presentation_binding["full_content"] = canonical_presentation
+        request["presentation_binding"] = presentation_binding
         source_fingerprint_value = source["fingerprint"]
         if forensic_historical_replay:
             emit_formal_replay_forensic_fingerprint("D_SOURCE_BINDING", obj=source, dwp=source.get("decision_work_package"), object_type="business_decision_source.bound", provenance=f"historical_query_context:{replay_dwp_commit}", source_fingerprint_value=source_fingerprint_value, historical=True)
