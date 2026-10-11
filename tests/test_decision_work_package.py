@@ -272,6 +272,7 @@ class DecisionWorkPackageTests(unittest.TestCase):
             "layer_1_external_cross_market": [],
             "layer_2_a_share_internal": ["r:a"],
             "layer_3_etf_opportunity_capital": ["n:e"],
+            "global_cross_market_review_required": True,
             "discovery_to_capital_competition_consumed": True,
             "all_managed_positions_sell_chain_consumed": True,
             "held_etf_additional_capital_consumed": True,
