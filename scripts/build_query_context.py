@@ -405,6 +405,10 @@ def _evidence_requirement_plan(problems: list[dict]) -> list[dict]:
     MASTER/business obligation.
     """
     shared_market = [
+        # Every formal problem must explicitly consume the current global/cross-market
+        # review. This is a review attestation, not a trade signal: it may record
+        # material change, no material change, or localized degradation.
+        "GLOBAL_CROSS_MARKET_REVIEW",
         "GLOBAL_RISK", "RATES", "FX", "MACRO_POLICY_EVENTS",
         "A_SHARE_INDEX", "A_SHARE_BREADTH", "A_SHARE_STYLE_FEEDBACK",
         "A_SHARE_INDUSTRY_THEME", "A_SHARE_LIQUIDITY_TURNOVER",
@@ -510,6 +514,15 @@ def _decision_work_package(
         available["ETF_RELATIVE_STRENGTH"] = "SATISFIED"
     elif actual_positions or observation_inputs or discovery_candidates:
         available["ETF_RELATIVE_STRENGTH"] = "DEGRADED"
+
+    # The cross-market review itself is mandatory even when no single external
+    # domain changes the decision. The actor must attest that the current global
+    # clocks were checked and state whether the result is material, immaterial,
+    # or degraded. This prevents an empty layer-1 consumption list from being
+    # interpreted as "no global information exists".
+    layer_1 = monitoring.get("layer_1_external_cross_market") or {}
+    base_evidence = layer_1.get("base_evidence") or {}
+    available["GLOBAL_CROSS_MARKET_REVIEW"] = "SATISFIED" if base_evidence else "DEGRADED"
 
     # Optional/triggered classes stay unresolved unless an upstream qualified
     # fact explicitly carries their evidence_class.  Do not infer GLOBAL_RISK,
