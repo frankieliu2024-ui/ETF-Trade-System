@@ -515,7 +515,17 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             "requested_at_beijing": SOURCE_REQUEST["requested_at_beijing"],
             "market_date": SOURCE_REQUEST["market_date"],
             "presentation_content": frozen_presentation,
-            "decision_response": {"presentation_content": frozen_presentation},
+            "decision_response": {
+                "answers": {
+                    "HISTORICAL_CANONICAL_SOURCE": {
+                        "final_action": "REPLAY",
+                        "capital_comparison": "historical canonical source replay",
+                        "next_change_condition": "none",
+                        "evidence_decision_impact": ["ALL_REQUIRED"],
+                    }
+                },
+                "presentation_content": frozen_presentation,
+            },
             "presentation_binding": {"full_content": frozen_presentation},
         }, expected_snapshot=SNAPSHOT_PATH)
         before_fingerprint = validated_source["fingerprint"]
