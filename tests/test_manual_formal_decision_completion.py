@@ -466,6 +466,7 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         # Historical fault-recovery fixture exercises an already-canonical immutable Source.
         # The consumer must replay this durable source directly rather than reinterpret
         # it through today's actor response contract.
+        frozen_presentation = "【ETF正式决策】2026-09-15 14:47 正式判断\\n\\n【业务结论】\\n\\n历史回放测试正文。"
         source = {
             **SOURCE_REQUEST,
             "request_id": source_id,
@@ -474,7 +475,9 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             "decision_id": decision["decision_id"],
             "consumed_snapshot": SNAPSHOT_PATH,
             "formal_decision": decision,
-            "decision_response": {"answers": {
+            "presentation_content": frozen_presentation,
+            "presentation_binding": {"full_content": frozen_presentation},
+            "decision_response": {"presentation_content": frozen_presentation, "answers": {
                 "HISTORICAL_CANONICAL_SOURCE": {
                     "final_action": "REPLAY",
                     "capital_comparison": "historical canonical source replay",
@@ -508,7 +511,10 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
             "parent_request_id": source_id,
             "requested_at_beijing": SOURCE_REQUEST["requested_at_beijing"],
             "market_date": SOURCE_REQUEST["market_date"],
-        }, expected_snapshot=SNAPSHOT_PATH)
+            "presentation_content": frozen_presentation,
+            "presentation_binding": {"full_content": frozen_presentation},
+            "decision_response": {"presentation_content": frozen_presentation},
+        }, expected_snapshot=SNAPSHOT_PATH, require_presentation=True)
         before_fingerprint = validated_source["fingerprint"]
         before_identity = (source_id, decision["decision_id"])
 
