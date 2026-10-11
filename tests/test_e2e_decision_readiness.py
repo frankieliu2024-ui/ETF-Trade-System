@@ -173,6 +173,69 @@ class E2EDecisionReadinessTests(unittest.TestCase):
         self.assertFalse(result["formal_reply_gate"]["reply_freezable"])
         self.assertEqual(result["formal_reply_gate"]["blockers"], ["FORMAL_DISCOVERY_IN_FLIGHT"])
 
+    def test_actor_gate_projects_wait_contract_from_sole_consumer(self):
+        result = context_component(
+            {
+                "decision_fact_pack": {
+                    "trigger": {
+                        "request_id": "wait-parent",
+                        "requested_at_beijing": "2026-10-11T14:00:00+08:00",
+                    },
+                    "formal_reply_freeze": {
+                        "status": "IN_FLIGHT",
+                        "reply_freezable": False,
+                        "blockers": ["FORMAL_DISCOVERY_IN_FLIGHT"],
+                    },
+                },
+                "fast_path_latency": {"latency_status": "BUILDING"},
+            },
+            {"formal_intraday_context_completeness": {"status": "READY"}},
+        )
+        gate = result["formal_reply_gate"]
+        self.assertEqual(gate["consumer_status"], "REQUEST_BOUND_FACTS_BUILDING")
+        self.assertEqual(gate["actor_action"], "CONTINUE_SAME_REQUEST_SILENTLY")
+        self.assertFalse(gate["user_output_allowed"])
+        self.assertEqual(gate["required_problem_ids"], [])
+        self.assertEqual(gate["required_problem_count"], 0)
+
+    def test_actor_gate_projects_ready_contract_and_exact_dwp_checklist(self):
+        result = context_component(
+            {
+                "decision_fact_pack": {
+                    "trigger": {
+                        "request_id": "ready-parent",
+                        "requested_at_beijing": "2026-10-11T14:00:00+08:00",
+                    },
+                    "formal_reply_freeze": {
+                        "status": "READY",
+                        "reply_freezable": True,
+                        "blockers": [],
+                    },
+                    "decision_work_package": {
+                        "problem_graph": [
+                            {"problem_id": "DISCOVERY:159029"},
+                            {"problem_id": "HOLDING:510300"},
+                        ]
+                    },
+                },
+                "fast_path_latency": {"latency_status": "OBSERVED"},
+            },
+            {"formal_intraday_context_completeness": {"status": "READY"}},
+        )
+        gate = result["formal_reply_gate"]
+        self.assertEqual(gate["consumer_status"], "BUSINESS_DECISION_READY")
+        self.assertEqual(gate["actor_action"], "COMPLETE_BUSINESS_DECISION_NOW")
+        self.assertTrue(gate["user_output_allowed"])
+        self.assertEqual(
+            gate["required_problem_ids"],
+            ["DISCOVERY:159029", "HOLDING:510300"],
+        )
+        self.assertEqual(gate["required_problem_count"], 2)
+        self.assertEqual(
+            gate["business_answer_contract"],
+            "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
+        )
+
     def test_true_incomplete_formal_context_remains_not_ready(self):
         result = context_component(
             {"request_id": "q"},
