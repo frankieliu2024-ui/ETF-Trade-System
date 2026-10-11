@@ -633,6 +633,10 @@ jobs:
           print(value)
           PY
               )
+              # The BDS itself is the completion envelope consumed below.
+              # Keep it as the triggering request so formal_completion is derived
+              # from the BDS rather than falling back to state-only processing.
+              request_files="$bds_file"
               FORMAL_REPLAY_SOURCE_COMMIT="$GITHUB_SHA"
               FORMAL_REPLAY_DWP_COMMIT=$(python - "$bds_parent_id" "$GITHUB_SHA" <<'PY'
           import json, subprocess, sys
