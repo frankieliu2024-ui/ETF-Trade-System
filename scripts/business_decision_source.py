@@ -813,9 +813,12 @@ def _validate_single_frozen_presentation(source: dict[str, Any]) -> None:
     binding_obj = source.get("presentation_binding")
     bound = binding_obj.get("full_content") if isinstance(binding_obj, dict) else None
     values = [value for value in (top, nested, bound) if value not in (None, "")]
-    if not values:
-        return
-    if len(values) != 3 or len(set(str(value) for value in values)) != 1:
+    if len(values) != 3:
+        raise ValueError(
+            "formal presentation content is required and must be exposed identically "
+            "at top-level, decision_response, and presentation_binding"
+        )
+    if len(set(str(value) for value in values)) != 1:
         raise ValueError("formal presentation content must have one identical frozen source")
 
 def validate_source(source: dict[str, Any], *, expected_snapshot: str | None = None) -> dict[str, Any]:
