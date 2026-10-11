@@ -3416,8 +3416,24 @@ def main() -> int:
         source_payload.setdefault("data_as_of_beijing", query_context.get("generated_at_beijing") or source_payload.get("requested_at_beijing"))
         source_payload["request_type"] = BUSINESS_DECISION_SOURCE
         decision_response = request.get("decision_response")
-        if isinstance(decision_response, dict) and "presentation_content" in decision_response:
-            request["presentation_content"] = decision_response.get("presentation_content")
+        # The frozen user-visible presentation belongs to the Business Decision
+        # Source contract. Carry it through the request -> source_payload ->
+        # projection path instead of allowing the formal_decision projection to
+        # drop it before the production consumer validates the source.
+        presentation_content = request.get("presentation_content")
+        if isinstance(decision_response, dict) and decision_response.get("presentation_content") not in (None, ""):
+            presentation_content = decision_response.get("presentation_content")
+        if presentation_content not in (None, ""):
+            source_payload["presentation_content"] = presentation_content
+            source_payload["presentation_binding"] = request.get("presentation_binding") or {
+                "full_content": presentation_content
+            }
+            source_decision_response = source_payload.get("decision_response")
+            if not isinstance(source_decision_response, dict):
+                source_decision_response = {}
+            source_decision_response["presentation_content"] = presentation_content
+            source_payload["decision_response"] = source_decision_response
+            request["presentation_content"] = presentation_content
         if isinstance(supplied_decision, dict) and supplied_decision:
             # Historical durable Business Decision Source replay: preserve the
             # already-canonical immutable Source instead of re-projecting it
