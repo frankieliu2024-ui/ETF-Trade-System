@@ -1150,8 +1150,27 @@ def render_canonical_notification(event: dict) -> dict | None:
     return rendered
 
 def main() -> int:
-    parser = argparse.ArgumentParser(); parser.add_argument("--mode", choices=["event", "close", "close-test", "channel-test"], default="event"); args = parser.parse_args()
+    parser = argparse.ArgumentParser(); parser.add_argument("--mode", choices=["event", "close", "close-test", "channel-test"], default="event"); parser.add_argument("--formal-content-file", default=""); args = parser.parse_args()
     token = os.environ.get("PUSHPLUS_TOKEN", "").strip(); state_path = STATE / "notification_center.json"; state = read_json(state_path, {"schema_version": "1.0", "recent": []})
+    if args.formal_content_file:
+        source_path = Path(args.formal_content_file)
+        if not source_path.is_file():
+            print(json.dumps({"status": "FAILED", "error": "formal content file missing"}, ensure_ascii=False))
+            return 1
+        source = read_json(source_path, {})
+        content = source.get("presentation_content")
+        if not content and isinstance(source.get("decision_response"), dict):
+            content = source["decision_response"].get("presentation_content")
+        if not isinstance(content, str) or not content.strip():
+            print(json.dumps({"status": "FAILED", "error": "formal presentation_content missing"}, ensure_ascii=False))
+            return 1
+        title = content.splitlines()[0].strip() or "【ETF正式决策】"
+        if not token:
+            print(json.dumps({"status": "FAILED", "error": "PUSHPLUS_TOKEN missing"}, ensure_ascii=False))
+            return 1
+        ok, response = send(token, title, content)
+        print(json.dumps({"status": "SENT" if ok else "FAILED", "title": title, "response": response}, ensure_ascii=False))
+        return 0 if ok else 1
     raw_items = list(state.get("notifications") or [])
     if not raw_items: raw_items = [normalize_notification(x, x) for x in (state.get("recent") or [])]
     notifications = expire_notifications(raw_items)
