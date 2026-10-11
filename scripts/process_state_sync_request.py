@@ -3421,8 +3421,19 @@ def main() -> int:
         # projection path instead of allowing the formal_decision projection to
         # drop it before the production consumer validates the source.
         presentation_content = request.get("presentation_content")
-        if isinstance(decision_response, dict) and decision_response.get("presentation_content") not in (None, ""):
-            presentation_content = decision_response.get("presentation_content")
+        nested_presentation = (
+            decision_response.get("presentation_content")
+            if isinstance(decision_response, dict)
+            else None
+        )
+        supplied_presentations = [
+            value for value in (presentation_content, nested_presentation)
+            if value not in (None, "")
+        ]
+        if supplied_presentations and len(set(str(value) for value in supplied_presentations)) != 1:
+            raise ValueError("formal presentation content conflicts across request entry points")
+        if nested_presentation not in (None, ""):
+            presentation_content = nested_presentation
         if presentation_content not in (None, ""):
             source_payload["presentation_content"] = presentation_content
             source_payload["presentation_binding"] = request.get("presentation_binding") or {
