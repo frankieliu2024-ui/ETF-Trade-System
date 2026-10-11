@@ -505,29 +505,9 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         state_sync.DASHBOARD.write_text("", encoding="utf-8")
         before_bytes = request_path.read_bytes()
         before_obj = json.loads(before_bytes)
-        validated_source = state_sync.validate_source({
-            **decision,
-            "request_type": "BUSINESS_DECISION_SOURCE",
-            "request_id": source_id,
-            "decision_id": decision["decision_id"],
-            "consumed_snapshot": SNAPSHOT_PATH,
-            "parent_request_id": source_id,
-            "requested_at_beijing": SOURCE_REQUEST["requested_at_beijing"],
-            "market_date": SOURCE_REQUEST["market_date"],
-            "presentation_content": frozen_presentation,
-            "decision_response": {
-                "answers": {
-                    "HISTORICAL_CANONICAL_SOURCE": {
-                        "final_action": "REPLAY",
-                        "capital_comparison": "historical canonical source replay",
-                        "next_change_condition": "none",
-                        "evidence_decision_impact": ["ALL_REQUIRED"],
-                    }
-                },
-                "presentation_content": frozen_presentation,
-            },
-            "presentation_binding": {"full_content": frozen_presentation},
-        }, expected_snapshot=SNAPSHOT_PATH)
+        validated_source = state_sync.validate_source(
+            source, expected_snapshot=SNAPSHOT_PATH, require_presentation=True
+        )
         before_fingerprint = validated_source["fingerprint"]
         before_identity = (source_id, decision["decision_id"])
 
