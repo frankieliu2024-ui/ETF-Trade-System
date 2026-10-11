@@ -120,7 +120,6 @@ class FormalParentSelfHealingTests(unittest.TestCase):
             "force_refresh": True,
             "require_post_request_snapshot": True,
         }
-        now = runtime_session_gate.SHANGHAI.localize if False else None
         from datetime import datetime
         fixed = datetime.fromisoformat("2026-10-11T13:47:48+08:00")
         normalized = runtime_session_gate.normalize_manual_request_session(raw, policy, now=fixed)
