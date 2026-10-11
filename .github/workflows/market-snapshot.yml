@@ -621,6 +621,43 @@ jobs:
           else
             request_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
           fi
+          # Direct BDS pushes must reuse the existing request-bound DWP.
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            bds_file=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*__business_decision_source*.json' | head -n 1 || true)
+            if [ -n "$bds_file" ] && [ -f "$bds_file" ]; then
+              bds_parent_id=$(python - "$bds_file" <<'PY'
+          import json, sys
+          from pathlib import Path
+          value = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8")).get("parent_request_id")
+          if not value: raise SystemExit("BUSINESS_DECISION_SOURCE missing parent_request_id")
+          print(value)
+          PY
+              )
+              FORMAL_REPLAY_SOURCE_COMMIT="$GITHUB_SHA"
+              FORMAL_REPLAY_DWP_COMMIT=$(python - "$bds_parent_id" "$GITHUB_SHA" <<'PY'
+          import json, subprocess, sys
+          parent, source_commit = sys.argv[1:]
+          for commit in subprocess.run(["git", "rev-list", source_commit], capture_output=True, text=True, check=True).stdout.splitlines():
+              changed = subprocess.run(["git", "diff-tree", "--no-commit-id", "--name-only", "-r", commit, "--", "data/state/query_context.json"], capture_output=True, text=True, check=True).stdout.splitlines()
+              if "data/state/query_context.json" not in changed: continue
+              shown = subprocess.run(["git", "show", f"{commit}:data/state/query_context.json"], capture_output=True, text=True, check=False)
+              if shown.returncode != 0 or not shown.stdout.strip(): continue
+              try: context = json.loads(shown.stdout)
+              except json.JSONDecodeError: continue
+              pack = context.get("decision_fact_pack") or {}
+              trigger = pack.get("trigger") or {}
+              work_package = pack.get("decision_work_package") or {}
+              if str(trigger.get("request_id") or "").strip() == parent and isinstance(work_package.get("problem_graph"), list) and work_package["problem_graph"]:
+                  print(commit); raise SystemExit(0)
+          raise SystemExit("cannot resolve request-bound DWP commit for BUSINESS_DECISION_SOURCE")
+          PY
+              )
+              echo "FORMAL_REPLAY_SOURCE_COMMIT=$FORMAL_REPLAY_SOURCE_COMMIT" >> "$GITHUB_ENV"
+              echo "FORMAL_REPLAY_DWP_COMMIT=$FORMAL_REPLAY_DWP_COMMIT" >> "$GITHUB_ENV"
+              export FORMAL_REPLAY_SOURCE_COMMIT FORMAL_REPLAY_DWP_COMMIT
+              echo "resolved direct-push BDS replay source=$FORMAL_REPLAY_SOURCE_COMMIT dwp=$FORMAL_REPLAY_DWP_COMMIT"
+            fi
+          fi
           triggering_request_file=$(printf '%s\n' $request_files | head -n 1)
           echo "triggering_request_file=$triggering_request_file" >> "$GITHUB_OUTPUT"
           echo "TRIGGERING_REQUEST_FILE=$triggering_request_file" >> "$GITHUB_ENV"
@@ -762,7 +799,7 @@ jobs:
             python scripts/refresh_gate.py --guard-request "$request_files"
             python scripts/process_state_sync_request.py "$request_files"
             processed=true
-          elif [ -n "${FORMAL_REPLAY_REQUEST:-}" ]; then
+          elif [ -n "${FORMAL_REPLAY_REQUEST:-}" ] || [ -n "${FORMAL_REPLAY_SOURCE_COMMIT:-}" ]; then
             python scripts/refresh_gate.py --guard-request "$request_files"
             python scripts/process_state_sync_request.py --formal-replay-source-commit "$FORMAL_REPLAY_SOURCE_COMMIT" --formal-replay-dwp-commit "$FORMAL_REPLAY_DWP_COMMIT" "$request_files"
             python - "$request_files" <<'PY'
