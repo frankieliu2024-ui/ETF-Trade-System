@@ -3416,8 +3416,36 @@ def main() -> int:
         source_payload.setdefault("data_as_of_beijing", query_context.get("generated_at_beijing") or source_payload.get("requested_at_beijing"))
         source_payload["request_type"] = BUSINESS_DECISION_SOURCE
         decision_response = request.get("decision_response")
-        if isinstance(decision_response, dict) and "presentation_content" in decision_response:
-            request["presentation_content"] = decision_response.get("presentation_content")
+        request_presentation = request.get("presentation_content")
+        response_presentation = (
+            decision_response.get("presentation_content")
+            if isinstance(decision_response, dict)
+            else None
+        )
+        supplied_presentations = [
+            value for value in (request_presentation, response_presentation)
+            if value not in (None, "")
+        ]
+        if supplied_presentations and len(set(str(value) for value in supplied_presentations)) != 1:
+            raise ValueError("formal presentation content conflicts across request entry points")
+        presentation_content = (
+            response_presentation
+            if response_presentation not in (None, "")
+            else request_presentation
+        )
+        if presentation_content not in (None, ""):
+            source_payload["presentation_content"] = presentation_content
+            binding = request.get("presentation_binding")
+            source_payload["presentation_binding"] = (
+                dict(binding) if isinstance(binding, dict) else {}
+            )
+            source_payload["presentation_binding"]["full_content"] = presentation_content
+            nested = source_payload.get("decision_response")
+            if not isinstance(nested, dict):
+                nested = {}
+            nested["presentation_content"] = presentation_content
+            source_payload["decision_response"] = nested
+            request["presentation_content"] = presentation_content
         if isinstance(supplied_decision, dict) and supplied_decision:
             # Historical durable Business Decision Source replay: preserve the
             # already-canonical immutable Source instead of re-projecting it
