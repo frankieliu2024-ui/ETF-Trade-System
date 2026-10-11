@@ -328,5 +328,38 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
 
 
 
+    def test_stale_terminal_flag_cannot_turn_unbound_request_into_terminal(self):
+        state = classify_formal_request_consumer_state(
+            "new-parent",
+            None,
+            producer_status="IN_PROGRESS",
+            terminal_failure=True,
+        )
+        self.assertEqual(state["status"], "REQUEST_BOUND_FACTS_BUILDING")
+        self.assertTrue(state["continue_same_request"])
+        self.assertFalse(state["reply_eligible"])
+        self.assertEqual(state["user_visible_output"], "SILENT_CONTINUATION")
+        self.assertFalse(state["user_output_allowed"])
+
+    def test_request_bound_unknown_state_ignores_detached_terminal_flag(self):
+        state = classify_formal_request_consumer_state(
+            "parent",
+            {
+                "decision_fact_pack": {
+                    "trigger": {"request_id": "parent"},
+                    "formal_reply_freeze": {
+                        "status": "UNKNOWN",
+                        "request_id": "parent",
+                        "reply_freezable": False,
+                    },
+                }
+            },
+            terminal_failure=True,
+        )
+        self.assertEqual(state["status"], "REQUEST_BOUND_FACTS_BUILDING")
+        self.assertEqual(state["actor_action"], "CONTINUE_SAME_REQUEST_SILENTLY")
+        self.assertFalse(state["user_output_allowed"])
+
+
 if __name__ == "__main__":
     unittest.main()
