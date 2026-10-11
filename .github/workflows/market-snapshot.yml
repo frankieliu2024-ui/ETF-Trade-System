@@ -1129,24 +1129,24 @@ jobs:
             git reset -- data/state/system_consistency.json
             if [ -n "$FORMAL_PARENT_ID" ] || [ -n "$TRIGGERING_REQUEST_FILE" ]; then
               python - <<'PY'
-import json, os
-from pathlib import Path
-path = Path("data/state/query_context.json")
-if not path.exists() or path.stat().st_size == 0:
-    raise SystemExit("final publish cannot omit non-empty request-bound query_context.json")
-try:
-    context = json.loads(path.read_text(encoding="utf-8"))
-except (OSError, json.JSONDecodeError) as exc:
-    raise SystemExit(f"final publish query_context.json is invalid: {exc}")
-request_file = os.environ.get("TRIGGERING_REQUEST_FILE", "")
-expected = ""
-if request_file and Path(request_file).is_file():
-    expected = str((json.loads(Path(request_file).read_text(encoding="utf-8"))).get("request_id") or "").strip()
-if expected:
-    actual = str(((context.get("decision_fact_pack") or {}).get("trigger") or {}).get("request_id") or "").strip()
-    if actual != expected:
-        raise SystemExit(f"final publish query_context request mismatch: expected={expected} actual={actual}")
-PY
+              import json, os
+              from pathlib import Path
+              path = Path("data/state/query_context.json")
+              if not path.exists() or path.stat().st_size == 0:
+                  raise SystemExit("final publish cannot omit non-empty request-bound query_context.json")
+              try:
+                  context = json.loads(path.read_text(encoding="utf-8"))
+              except (OSError, json.JSONDecodeError) as exc:
+                  raise SystemExit(f"final publish query_context.json is invalid: {exc}")
+              request_file = os.environ.get("TRIGGERING_REQUEST_FILE", "")
+              expected = ""
+              if request_file and Path(request_file).is_file():
+                  expected = str((json.loads(Path(request_file).read_text(encoding="utf-8"))).get("request_id") or "").strip()
+              if expected:
+                  actual = str(((context.get("decision_fact_pack") or {}).get("trigger") or {}).get("request_id") or "").strip()
+                  if actual != expected:
+                      raise SystemExit(f"final publish query_context request mismatch: expected={expected} actual={actual}")
+              PY
             fi
             if git diff --cached --quiet; then
               exit 0
