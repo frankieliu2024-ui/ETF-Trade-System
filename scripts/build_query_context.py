@@ -546,6 +546,16 @@ def _decision_work_package(
     }
 
 
+def _request_query_intent(request: dict) -> str:
+    """Normalize current structured and legacy request intent shapes."""
+    intent = request.get("intent")
+    if isinstance(intent, dict):
+        value = intent.get("query_intent") or intent.get("intent") or ""
+    else:
+        value = intent or request.get("query_intent") or ""
+    return str(value).strip().upper()
+
+
 def build_decision_fact_pack(root: Path, request: dict, current: dict, account: dict, decision: dict, market_quote: dict, formal_discovery: dict | None = None) -> dict:
     """Project one request's minimum sufficient, decision-ready PIT inputs.
 
@@ -608,7 +618,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "CHATGPT_USER_INTERACTION",
     }
     manual_formal_intents = {"FORMAL_INTRADAY_DECISION", "FORMAL_INTRADAY_ANALYSIS", "EXPLICIT_LATEST"}
-    request_intent = str(request.get("intent") or request.get("query_intent") or "").strip().upper()
+    request_intent = _request_query_intent(request)
     is_manual_formal_request = request_source in manual_formal_sources and request_intent in manual_formal_intents
     ingress_path = str(request.get("_request_file") or request.get("_ingress_path") or request.get("request_file") or "").strip().replace("\\", "/")
     ingress_path_parts = Path(ingress_path).parts if ingress_path else ()
@@ -1485,7 +1495,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     held_etf_codes = {str(x) for x in active_account_asset_codes(root, account).get("etf", set())}
     formal_discovery = {"status": "NOT_REQUESTED", "candidates": []}
     request_source = str(request_payload.get("source") or request_payload.get("requested_by") or "").strip().upper()
-    request_intent = str(request_payload.get("intent") or request_payload.get("query_intent") or "").strip().upper()
+    request_intent = _request_query_intent(request_payload)
     manual_formal_sources = {
         "CHATGPT_MANUAL_FORMAL_ANALYSIS",
         "CHATGPT_USER_CONTINUE",

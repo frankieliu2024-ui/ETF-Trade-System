@@ -214,6 +214,84 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         self.assertEqual(events, ["discovery"])
         self.assertEqual(result["formal_etf_discovery"]["status"], "PASS")
 
+    def test_structured_formal_intent_runs_discovery(self):
+        events = []
+        request = {
+            "request_id": "formal-structured",
+            "requested_at_beijing": "2026-10-11T15:02:31+08:00",
+            "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "intent": {"query_intent": "FORMAL_INTRADAY_ANALYSIS"},
+        }
+        current = {"market_date": "2026-10-09", "data_freshness": {}}
+        account = {"status": "VALID", "positions": []}
+
+        def fake_read_json(path, default=None):
+            if str(path).endswith("formal.json"):
+                return request
+            if str(path).endswith("etf_monitor_universe.json"):
+                return {"objects": []}
+            if str(path).endswith("a_share_trading_calendar_2026.json"):
+                return {"coverage_start": "2026-01-01", "coverage_end": "2026-12-31", "closed_dates": []}
+            return {} if default is None else default
+
+        def fake_discovery(*args, **kwargs):
+            events.append("discovery")
+            return {"status": "PASS", "candidates": []}
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "formal.json").write_text("{}", encoding="utf-8")
+            with patch.object(query_context, "read_json", side_effect=fake_read_json), \\
+                 patch.object(query_context, "read_current", return_value=current), \\
+                 patch.object(query_context, "read_account_fact", return_value=account), \\
+                 patch.object(query_context, "active_account_asset_codes", return_value={"etf": set()}), \\
+                 patch.object(query_context, "build_market_quote_context", return_value={"decision_freshness": {"post_request": True}, "quotes": []}), \\
+                 patch.object(query_context, "discover_formal_candidates", side_effect=fake_discovery), \\
+                 patch.object(query_context, "build_decision_context", return_value={"rules_version": "V2.2.33"}):
+                result = query_context.build(root, request_file="formal.json")
+
+        self.assertEqual(events, ["discovery"])
+        self.assertEqual(result["formal_etf_discovery"]["status"], "PASS")
+        self.assertEqual(result["decision_fact_pack"]["formal_reply_freeze"]["status"], "READY")
+        self.assertTrue(result["decision_fact_pack"]["formal_reply_freeze"]["reply_freezable"])
+
+    def test_structured_formal_intent_fact_pack_is_request_scoped(self):
+        request = {
+            "request_id": "manual-structured",
+            "requested_at_beijing": "2026-10-11T15:02:31+08:00",
+            "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "intent": {"query_intent": "FORMAL_INTRADAY_ANALYSIS"},
+            "_request_file": "requests/live_snapshot/manual-structured.json",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            pack = query_context.build_decision_fact_pack(
+                Path(directory), request, {"market_date": "2026-10-09"},
+                {"status": "VALID", "positions": []}, {"rules_version": "V2.2.33"},
+                {"decision_freshness": {"post_request": False, "fallback_allowed": True}, "quotes": []},
+                formal_discovery={"status": "FAILED", "candidates": []},
+            )
+        self.assertTrue(pack["formal_analysis_availability"]["source_ingress"]["manual_formal_request"])
+        self.assertEqual(pack["formal_reply_freeze"]["status"], "RESOLVED_DEGRADED")
+        self.assertTrue(pack["formal_reply_freeze"]["reply_freezable"])
+
+    def test_structured_nonformal_intent_does_not_become_formal(self):
+        request = {
+            "request_id": "system-review-structured",
+            "requested_at_beijing": "2026-10-11T19:30:00+08:00",
+            "source": "SCHEDULED_ACTOR",
+            "intent": {"query_intent": "ETF_SYSTEM_REVIEW"},
+        }
+        self.assertEqual(query_context._request_query_intent(request), "ETF_SYSTEM_REVIEW")
+        with tempfile.TemporaryDirectory() as directory:
+            pack = query_context.build_decision_fact_pack(
+                Path(directory), request, {"market_date": "2026-10-11"},
+                {"status": "VALID", "positions": []}, {"rules_version": "V2.2.33"},
+                {"decision_freshness": {"post_request": True}, "quotes": []},
+                formal_discovery={"status": "NOT_REQUESTED", "candidates": []},
+            )
+        self.assertFalse(pack["formal_analysis_availability"]["source_ingress"]["manual_formal_request"])
+        self.assertEqual(pack["formal_reply_freeze"]["status"], "NOT_APPLICABLE")
+
     def test_nonformal_request_file_does_not_implicitly_run_discovery(self):
         request = {
             "request_id": "system-review",
