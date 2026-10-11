@@ -11,6 +11,10 @@ try:
     from process_state_sync_request import is_broker_screenshot_request
 except ModuleNotFoundError:
     from scripts.process_state_sync_request import is_broker_screenshot_request
+try:
+    from formal_request_consumer import classify_formal_request_consumer_state
+except ModuleNotFoundError:
+    from scripts.formal_request_consumer import classify_formal_request_consumer_state
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE = ROOT / "data" / "state"
@@ -375,6 +379,37 @@ def context_component(query: dict, decision: dict) -> dict:
                 "reason": account_gate.get("reason"),
                 "pending_broker_request": account_gate.get("pending_broker_request"),
             },
+        }
+    if request_bound and formal_reply_gate:
+        # Project the sole Formal Decision consumer contract into the existing
+        # compact E2E gate.  This gives external Actors one machine-readable
+        # handoff instead of requiring them to reinterpret reply_freezable.
+        # Reuse the classifier; do not create a second readiness algorithm.
+        consumer_query = {
+            **query,
+            "decision_fact_pack": {
+                **decision_fact_pack,
+                "formal_reply_freeze": {
+                    **reply_freeze,
+                    "status": formal_reply_gate["status"],
+                    "reply_freezable": formal_reply_gate["reply_freezable"],
+                    "request_id": request_id,
+                    "blockers": formal_reply_gate["blockers"],
+                },
+            },
+        }
+        consumer_state = classify_formal_request_consumer_state(
+            request_id,
+            consumer_query,
+        )
+        formal_reply_gate = {
+            **formal_reply_gate,
+            "actor_action": consumer_state["actor_action"],
+            "user_output_allowed": consumer_state["user_output_allowed"],
+            "consumer_status": consumer_state["status"],
+            "required_problem_ids": list(consumer_state.get("required_problem_ids") or []),
+            "required_problem_count": int(consumer_state.get("required_problem_count") or 0),
+            "business_answer_contract": consumer_state.get("business_answer_contract"),
         }
     fast_path = query.get("fast_path_latency") or {}
     latency_status = str(fast_path.get("latency_status") or "").strip().upper()
