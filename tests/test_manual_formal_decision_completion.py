@@ -443,6 +443,7 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
     def test_business_source_consumer_fault_recovery_writes_one_decision_fact(self):
         """Exercise the real process_state_sync_request consumer after Source durability."""
         source_id = "20260915_1447_business_source"
+        frozen_presentation = "历史正式决策冻结回复：继续持有，保留现金。"
         decision = formal_decision()
         decision.update({
             "capital_use": "现金",
