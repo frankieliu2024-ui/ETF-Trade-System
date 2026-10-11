@@ -84,7 +84,7 @@ def validate_user_visible_content(
     root: Path | None = None,
 ) -> None:
     """Fail closed on user-visible presentation drift; never rewrite prose."""
-    text = str(content or "").strip()
+    text = normalize_formal_decision_content(content)
     if not text:
         raise ValueError("user-visible content must not be empty")
     mapping = security_map if security_map is not None else canonical_security_map(root)
@@ -105,6 +105,23 @@ def validate_user_visible_content(
                 )
     if errors:
         raise ValueError("user-visible presentation contract failed: " + "; ".join(dict.fromkeys(errors)))
+
+
+def normalize_formal_decision_content(content: str) -> str:
+    """Return one exact business presentation without duplicated title lines.
+
+    The actor may supply a title plus an identical first body line. The user
+    contract has one visible title, so remove only an immediately repeated
+    first non-empty line; never rewrite the report body.
+    """
+    text = str(content or "").strip()
+    if not text:
+        return ""
+    lines = text.splitlines()
+    first = lines[0].strip()
+    if first and len(lines) > 1 and lines[1].strip() == first:
+        lines = [lines[0]] + lines[2:]
+    return "\n".join(lines).strip()
 
 
 def validate_formal_decision_reply_nonblocking(
@@ -171,7 +188,7 @@ def build_formal_decision_presentation_binding(
         root=root,
     )
     import hashlib
-    text = str(content or "").strip()
+    text = normalize_formal_decision_content(content)
     result.update({
         "schema_version": "formal-decision-presentation-binding-v1",
         "request_id": safe_request_id,
