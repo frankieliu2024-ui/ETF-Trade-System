@@ -15,7 +15,7 @@ except ModuleNotFoundError:
 class FormalDecisionContractTests(unittest.TestCase):
     def test_formal_presentation_is_required_at_business_source_ingress(self):
         with self.assertRaisesRegex(ValueError, "presentation content is required"):
-            _validate_single_frozen_presentation({})
+            _validate_single_frozen_presentation({}, required=True)
 
     def test_formal_presentation_must_be_identical_across_exposed_fields(self):
         content = "【ETF正式决策】2026-10-11 11:00 正式判断"
