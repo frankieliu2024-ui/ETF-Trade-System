@@ -100,6 +100,34 @@ class FormalParentSelfHealingTests(unittest.TestCase):
             if old_input is None: os.environ.pop("FORMAL_CONTEXT_RECOVERY_REQUEST", None)
             else: os.environ["FORMAL_CONTEXT_RECOVERY_REQUEST"] = old_input
 
+    def test_workflow_preserves_normalized_manual_formal_envelope(self):
+        workflow = Path(".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        self.assertIn("normalize_manual_request_session", workflow)
+        self.assertIn('dst.write_text(json.dumps(request, ensure_ascii=False, indent=2)', workflow)
+        preserve = workflow.index("Preserve triggering request envelope before core publish")
+        normalize = workflow.index("normalize_manual_request_session", preserve)
+        context = workflow.index("python scripts/build_query_context.py --run-discovery", normalize)
+        self.assertLess(normalize, context)
+
+    def test_normalizer_recovers_missing_requested_at_beijing_at_existing_ingress_owner(self):
+        policy = json.loads(Path("config/runtime_policy.json").read_text(encoding="utf-8"))
+        raw = {
+            "request_id": "p-missing-time",
+            "request_type": "MARKET_QUOTE_REFRESH",
+            "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "intent": "FORMAL_INTRADAY_ANALYSIS",
+            "query_intent": "FORMAL_INTRADAY_ANALYSIS",
+            "force_refresh": True,
+            "require_post_request_snapshot": True,
+        }
+        now = runtime_session_gate.SHANGHAI.localize if False else None
+        from datetime import datetime
+        fixed = datetime.fromisoformat("2026-10-11T13:47:48+08:00")
+        normalized = runtime_session_gate.normalize_manual_request_session(raw, policy, now=fixed)
+        self.assertEqual(normalized["requested_at_beijing"], "2026-10-11T13:47:48+08:00")
+        self.assertEqual(normalized["canonical_ingress_received_at_beijing"], "2026-10-11T13:47:48+08:00")
+        self.assertEqual(normalized["request_id"], "p-missing-time")
+
     def test_existing_bds_and_state_sync_routes_are_unchanged(self):
         workflow = Path(".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
         self.assertIn("formal replay requires exactly one durable BUSINESS_DECISION_SOURCE", workflow)
