@@ -195,6 +195,23 @@ jobs:
           PY
           mkdir -p "/tmp/etf-triggering-request/$(dirname "$REQUEST_FILE")"
           cp "$REQUEST_FILE" "/tmp/etf-triggering-request/$REQUEST_FILE"
+          # Persist the existing ingress owner's normalized manual-request envelope
+          # into the preserved triggering copy. Downstream query-context construction
+          # must consume the canonical receipt time, not the raw caller payload.
+          python - "$REQUEST_FILE" "/tmp/etf-triggering-request/$REQUEST_FILE" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          from scripts.runtime_session_gate import normalize_manual_request_session
+          src = Path(sys.argv[1])
+          dst = Path(sys.argv[2])
+          request = json.loads(src.read_text(encoding="utf-8"))
+          source = str(request.get("source") or request.get("requested_by") or "").upper()
+          if source == "CHATGPT_MANUAL_FORMAL_ANALYSIS":
+              policy = json.loads(Path("config/runtime_policy.json").read_text(encoding="utf-8"))
+              request = normalize_manual_request_session(request, policy)
+              dst.write_text(json.dumps(request, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
+          PY
           echo "TRIGGERING_REQUEST_FILE=$REQUEST_FILE" >> "$GITHUB_ENV"
           echo "TRIGGERING_REQUEST_EXPECTED=true" >> "$GITHUB_ENV"
 
