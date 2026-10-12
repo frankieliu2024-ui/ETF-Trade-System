@@ -182,6 +182,43 @@ class DecisionWorkPackageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "capital-efficiency release assessment"):
             project_decision_response({}, {"answers": {"HOLDING:159981": answer}}, package)
 
+    def test_every_holding_requires_symmetric_capital_efficiency_assessment(self):
+        package = {
+            "problem_graph": [{
+                "problem_id": "HOLDING:159981",
+                "security": "能源化工ETF",
+                "current_quantity": 8500,
+                "alternatives": {"HOLD": "继续持有", "REDUCE": "部分释放", "EXIT": "全部退出"},
+            }],
+            "evidence_requirements": [],
+        }
+        answer = {
+            "final_action": "HOLD",
+            "capital_comparison": "与现金比较",
+            "next_change_condition": "下一节点重评",
+            "evidence_decision_impact": ["ALL_REQUIRED"],
+            "capital_occupancy_reason": "持仓理由",
+            "higher_efficiency_alternative": "现金",
+        }
+        with self.assertRaisesRegex(ValueError, "capital-efficiency release assessment"):
+            project_decision_response(
+                {},
+                {"answers": {"HOLDING:159981": answer}},
+                package,
+            )
+
+        answer["capital_efficiency_release_assessment"] = (
+            "零基线不重新买入；继续持有与现金及替代用途已对称比较；"
+            "当前结论为继续持有/部分释放/全部退出中的明确选择。"
+        )
+        projected = project_decision_response(
+            {},
+            {"answers": {"HOLDING:159981": answer}},
+            package,
+        )
+        self.assertEqual(projected["managed_position_reviews"][0]["current_action"], "持有管理")
+
+
     def test_observation_retain_projects_existing_canonical_thesis(self):
         source = {"request_type":"BUSINESS_DECISION_SOURCE","request_id":"r2","parent_request_id":"p2","decision_id":"d2","consumed_snapshot":"snap"}
         thesis = {"name":"恒生科技ETF","thscode":"513180.SH","thesis":"港股科技结构观察","falsifier":"结构失效则退出","next_decision_information":"下一节点重新比较","information_value_reason":"可能改变资本配置"}
