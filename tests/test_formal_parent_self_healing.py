@@ -44,6 +44,29 @@ class FormalParentSelfHealingTests(unittest.TestCase):
         self.assertEqual(result[0], str(path.relative_to(self.root)))
         self.assertEqual(result[1], "p1")
 
+    def test_scheduled_formal_parent_is_selected_and_not_shadowed_by_older_manual(self):
+        self.write(
+            "old.json",
+            {
+                "request_id": "old",
+                "request_type": "MARKET_QUOTE_REFRESH",
+                "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+                "requested_at_beijing": "2026-10-12T17:01:11+08:00",
+            },
+        )
+        path = self.write(
+            "scheduled.json",
+            {
+                "request_id": "new",
+                "request_type": "MARKET_QUOTE_REFRESH",
+                "source": "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+                "requested_at_beijing": "2026-10-12T18:25:33+08:00",
+            },
+        )
+        result = heal.latest_unfinished_formal_parent()
+        self.assertEqual(result[0], str(path.relative_to(self.root)))
+        self.assertEqual(result[1], "new")
+
     def test_same_request_context_or_business_source_stops_replay(self):
         self.write(
             "formal.json",
