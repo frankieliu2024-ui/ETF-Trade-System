@@ -44,6 +44,27 @@ class CurrentDecisionFreshnessTests(unittest.TestCase):
 
 
 class PushPlusNotificationClosureTests(unittest.TestCase):
+    def test_formal_content_event_consumes_presentation_binding_full_content(self):
+        from scripts import notification_center as center
+        with tempfile.TemporaryDirectory() as td:
+            source = Path(td) / "scheduled-bds.json"
+            source.write_text(json.dumps({
+                "request_id": "scheduled-20261012-110000__business_decision_source",
+                "parent_request_id": "scheduled-20261012-110000",
+                "decision_id": "scheduled-20261012-110000_decision",
+                "presentation_binding": {
+                    "report_type": "ETF_FORMAL_DECISION",
+                    "task_id": "ETF正式决策",
+                    "task_run_id": "scheduled-20261012-110000",
+                    "full_content": "【ETF正式决策】测试正文",
+                },
+            }, ensure_ascii=False), encoding="utf-8")
+            event = center.formal_content_event(source)
+        self.assertIsNotNone(event)
+        self.assertEqual(event["content"], "【ETF正式决策】测试正文")
+        self.assertEqual(event["title"], "【ETF正式决策】")
+
+
     def test_canonical_known_ipo_attribution_is_consumed_without_reinference(self):
         from scripts import notification_center as center
         account = {
