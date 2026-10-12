@@ -214,9 +214,24 @@ class DecisionWorkPackageTests(unittest.TestCase):
             "零基线不重新买入；继续持有与现金及替代用途已对称比较；"
             "当前结论为继续持有/部分释放/全部退出中的明确选择。"
         )
+        next_unit = {
+            "final_action": "保留现金",
+            "capital_comparison": "已比较现金与合法替代用途",
+            "next_change_condition": "资本效率变化时重评",
+            "evidence_decision_impact": ["ALL_REQUIRED"],
+            "new_amount_yuan": 0,
+            "post_action_deployable_cash": 10000,
+            "future_opportunity_capacity": "保留",
+            "cash_opportunity_cost": "可能错过未来机会",
+            "alternative_capital_use_review": "已比较全部合法资本状态",
+            "concentration_account_structure_effect": "不增加共同风险",
+            "selected_state_reason": "现金更优",
+            "zero_amount_decisive_reason": "当前无合法新增部署",
+            "compared_capital_states": [{"state_name": "现金", "capital_action": "保留", "remaining_deployable_cash": 10000, "why_not_selected": "已选中", "opportunity_cost_if_selected": "机会成本可接受"}],
+        }
         projected = project_decision_response(
             {},
-            {"answers": {"HOLDING:159981": answer}},
+            {"answers": {"HOLDING:159981": answer, "NEXT_UNIT_CAPITAL_USE": next_unit}},
             package,
         )
         self.assertEqual(projected["managed_position_reviews"][0]["current_action"], "持有管理")
