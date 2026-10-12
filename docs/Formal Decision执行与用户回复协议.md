@@ -288,6 +288,20 @@ READY后的首条用户可见业务回复必须直接消费同一请求的完整
 
 本合同约束首份用户可见报告的事实消费和展示完整性，不改变READY资格，不新增业务状态，不阻塞已经具备合法业务回复资格的判断，不撤销已取得的回复资格，也不建立第二条决策链。机器DWP、正式事实和交易规则仍由既有owner确定；ChatGPT只负责完成需要业务判断的回答并按本合同完整呈现。
 
+## 7.1.3 正式完成事件写入路径与逐项候选覆盖（强制）
+
+1. ChatGPT完成业务判断后提交的唯一 BUSINESS_DECISION_SOURCE Actor envelope，必须写入 current main 的：
+
+   requests/live_snapshot/<parent_request_id>__business_decision_source.json
+
+   或现有兼容命名 requests/live_snapshot/<parent_request_id>__bds*.json。本次完成事件不得写入 requests/state_sync/、requests/report_delivery/、requests/report_handoff/ 或其他路径代替正式完成入口。通知工作流对上述 requests/live_snapshot/*__business_decision_source*.json 和 requests/live_snapshot/*__bds*.json 变更负责唤醒；错误路径写入不构成通知已触发。
+
+2. 写入后必须回读同一 current main 路径，核对父请求、唯一决策身份、消费快照和冻结正文；只有写入回执与回读均成功，才能确认正式完成事件已提交。业务报告已READY不等于持久化、通知发送或用户收到；三者必须分别如实表达。不得为了补发通知创建第二完成事件、第二正文或旁路发送路径。
+
+3. 用户可见报告中的全市场机会发现候选必须逐项覆盖。每项至少说明：名称和代码、是否进入本节点观察评估、是否取得观察ETF或机会ETF身份、Trial/Confirm资格、实际部署金额，以及未进入下一层的业务原因。候选可以使用紧凑的编号清单，不得用一句共同结论替代全部候选的逐项判断。全市场机会发现结果只是候选评估输入，不因被列出而取得任何正式身份或交易资格。
+
+4. “五项关键变化”只保留能够改变风险许可、候选排序、持仓判断、资本用途或交易资格的业务事实。快照更新、进入连续竞价、时段切换、事实刷新、覆盖变化或本次事实包形成本身，不得机械列入；如仅改变事实时点而未改变业务结论，应放入“数据时点与必要依据”，不得列为关键变化。
+
 ## 8. 验收边界
 
 Implementation Acceptance 只能证明仓库实现、测试、PR、CI 和必要的 latest-main 验收符合本协议；不能单独证明真实 ChatGPT 交互路径已经遵守协议。
