@@ -96,8 +96,8 @@ class ReportDeliveryContractTests(unittest.TestCase):
             "presentation_binding": {
                 "request_id": "fd-20261010-2102",
                 "decision_id": "fd-20261010-2102",
-                "content": "【ETF正式决策】\n\n冻结正文",
-                "content_sha256": hashlib.sha256("【ETF正式决策】\n\n冻结正文".encode("utf-8")).hexdigest(),
+                "content": "【ETF正式决策】2026-10-10 21:02 正式判断\n\n冻结正文",
+                "content_sha256": hashlib.sha256("【ETF正式决策】2026-10-10 21:02 正式判断\n\n冻结正文".encode("utf-8")).hexdigest(),
             },
         }
         with tempfile.TemporaryDirectory() as directory:
@@ -113,6 +113,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
         self.assertEqual(projected["report_type"], "ETF_FORMAL_DECISION")
         self.assertEqual(projected["delivery_mode"], "FULL_REPORT")
         self.assertEqual(projected["content"], event["presentation_binding"]["content"])
+        self.assertEqual(projected["title"], "【ETF正式决策】")
 
     def test_invalid_report_is_rejected(self):
         request = self._request()
