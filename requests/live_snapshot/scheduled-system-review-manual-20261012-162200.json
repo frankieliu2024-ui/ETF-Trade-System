@@ -1,0 +1,82 @@
+{
+  "request_id": "scheduled-system-review-manual-20261012-162200",
+  "request_type": "STATE_SYNC_ONLY",
+  "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+  "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+  "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+  "requested_at_beijing": "2026-10-12T16:22:00+08:00",
+  "system_review": {
+    "status": "USABLE_WITH_FORMAL_DELIVERY_OPEN",
+    "review_semantics": "MANUAL_POST_CLOSE_REVIEW",
+    "market_date": "2026-10-12",
+    "market_phase": "POST_CLOSE_GRACE",
+    "is_a_share_trading_day": true,
+    "latest_a_share_effective_at_beijing": "2026-10-12T15:00:00+08:00",
+    "latest_snapshot_captured_at_beijing": "2026-10-12T15:24:19+08:00",
+    "account_fact_as_of_beijing": "2026-10-09T15:27:00+08:00",
+    "e2e_as_of_beijing": "2026-10-12T16:02:47+08:00",
+    "e2e_status": "READY",
+    "blockers": [],
+    "degradations": [
+      "INTRADAY_MINUTE_VALIDATION_GATE_FAILED",
+      "FORMAL_DECISION_DELIVERY_INCOMPLETE",
+      "NOTIFICATION_DELIVERY_UNCONFIRMED"
+    ],
+    "system_consistency_baseline": {
+      "status": "PASS",
+      "as_of_beijing": "2026-09-29T14:31:00+08:00",
+      "hard_errors": 0,
+      "warnings": 0,
+      "current_full_acceptance": false
+    },
+    "account_summary": {
+      "total_asset": 187398.94,
+      "stock_market_value": 185217.9,
+      "deployable_cash": 2181.04,
+      "position_count": 8,
+      "pending_change_count": 0
+    },
+    "market_summary": {
+      "snapshot_as_of_beijing": "2026-10-12T15:24:19+08:00",
+      "broad_regime": "BROAD_RISK_OFF",
+      "discovery_universe_count": 1742,
+      "discovery_candidate_count": 10
+    },
+    "trade_review_delivery": {
+      "morning_review_completed": true,
+      "reviewed_at_beijing": "2026-10-12T12:34:37+08:00",
+      "full_day_review_due": false,
+      "notification_confirmed": false
+    },
+    "formal_decision_readiness": {
+      "latest_ready_as_of_beijing": "2026-10-12T16:02:47+08:00",
+      "business_report_completed": false,
+      "prior_business_answer_as_of_beijing": "2026-10-12T15:29:00+08:00",
+      "prior_final_delivery_confirmed": false
+    },
+    "auxiliary_evidence": {
+      "registry_checked": true,
+      "additional_fetch_required": false,
+      "reason": "Current-main formal market, account, review, readiness and delivery facts were sufficient; external evidence could not change the system closure conclusion."
+    },
+    "fact_cutoff_at_beijing": "2026-10-12T16:22:00+08:00",
+    "source_facts_as_of": {
+      "market": "2026-10-12T15:24:19+08:00",
+      "account": "2026-10-09T15:27:00+08:00",
+      "e2e": "2026-10-12T16:02:47+08:00",
+      "trade_review": "2026-10-12T12:34:37+08:00"
+    },
+    "unresolved_items": [
+      "LATEST_READY_FORMAL_DECISION_BUSINESS_REPORT",
+      "PRIOR_FORMAL_DECISION_PERSISTENCE_AND_DELIVERY",
+      "TODAY_NOTIFICATION_DELIVERY",
+      "FULL_DAY_TRADE_REVIEW_NOT_YET_DUE"
+    ]
+  },
+  "presentation_binding": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "task_id": "ETF系统复核",
+    "task_run_id": "manual-20261012-162200",
+    "full_content": "【ETF系统复核】2026-10-12 16:22 晚间复核\n\n【复核时点（北京时间）】\n\n本次系统复核时间：2026-10-12 16:22。今日为A股交易日，当前处于收盘后阶段。本次仅检查当日运行是否完整收口，不形成新的买卖结论、金额或份额。\n\n正式完整一致性基线最近一次为2026-09-29 14:31，当时为通过、硬错误0、警告0；本次没有重新执行全量一致性验收。\n\n【晚间复核结论】\n\n**行情、账户、风险、全市场发现和正式判断事实准备均可用，不影响下一交易日继续运行；但今日正式判断的报告落地与通知没有完整闭环，因此今天不能判定为“完整收口”。**\n\n用户无需重复触发正式判断、复盘或刷新行情。现有正式判断应沿同一次已形成的事实继续完成，不能再新建等价请求。\n\n【当日运行与判断链状态】\n\n1. 今日15:24的收盘后行情已形成，系统可用性检查于16:02显示核心组件可用；账户事实仍截至10月9日15:27，可部署现金2,181.04元，实际持仓8项，当前正式记录没有新增成交。\n\n2. 全市场机会发现已覆盖1,742只ETF并收敛出10只临时评估对象；这些对象只用于本节点评估，没有自动获得观察ETF、机会ETF或交易资格。\n\n3. 今日收盘后的正式判断事实已覆盖全部实际持仓、观察ETF、全市场发现对象和资本比较问题。当前存在一项已具备完整业务回复条件、但尚未完成用户可见报告的正式判断，说明事实准备正常，交付环节仍未收口。\n\n【当日新增事实与影响】\n\n1. 今日收盘后，上证指数下跌约0.43%，创业板指下跌约2.61%，科创50指数下跌约2.10%；纳入复核的14只代表性ETF中2只上涨、12只下跌，市场结构转为广泛偏弱。\n\n2. 成长和高波动方向承压更明显，资源方向也未延续此前强势；这些事实已进入正式判断材料，但系统复核不据此重新形成交易动作。\n\n3. 日内路径事实可用，但分钟级验证仍有一项质量门未通过；这会降低相关细节证据强度，不阻断收盘事实、全部持仓复核或下一交易日开门。\n\n【正式判断与交易复盘交付】\n\n1. 今日12:34上午交易复盘已生成并保存，覆盖1,742只ETF发现、8项实际持仓、观察ETF和资本效率比较；复盘报告本身已完成。\n\n2. 今日15:29形成了一份完整正式判断正文，并已提交业务回答，但截至本次复核，尚未看到对应的正式记录和通知完成证据。\n\n3. 今日16:00后的另一项正式判断已完成同次事实准备，16:02已具备完整业务回复条件；截至本次复核，尚未形成对应的最终业务报告。该项应恢复同一次判断并直接完成，不应重复创建新请求。\n\n【通知与记录状态】\n\n1. 今日08:30早间系统复核已生成并保存。\n\n2. 今日12:34上午交易复盘已生成并保存。\n\n3. 上述报告以及今日正式判断的微信发送状态、用户实际收到状态均没有当前可核实的完成证据，不能由“报告已生成”推定“通知已发送”或“用户已收到”。\n\n【未闭环事项】\n\n1. 完成今日16:00后已具备回复条件的正式判断业务报告。\n\n2. 核实今日15:29正式判断的正式记录、完整报告保存和微信交付；若未完成，应沿既有单一路径恢复，不新增第二条处理链。\n\n3. 下一次完整日复盘尚未到20:30节点；当前只确认上午复盘已完成，不能提前表述为今日完整日复盘已经完成。\n\n【下一交易日重点】\n\n1. 开盘前重新确认账户是否出现新的成交、资金划转或持仓变化；没有新账户事实时继续明确沿用10月9日15:27的确认边界。\n\n2. 验证正式判断能否从“事实已具备”一次完成到完整业务报告、正式保存和微信交付，避免再次停在交付中间状态。\n\n3. 继续保持全市场发现、观察ETF、机会ETF和实际持仓边界分离；只有本节点取得机会资格的具体ETF才参加新增资本竞争。\n\n【执行状态】\n\n本次复核结论已形成；今日正式判断交付和通知仍有未闭环事项，本次系统复核的正式记录与通知结果尚未确认。\n\n【置信度】\n\n中高\n\n【最可能出错的地方】\n\n1. 当前账户事实仍截至10月9日15:27；如果用户今日实际发生了尚未录入的成交或资金变化，持仓和现金判断会随之改变。\n\n2. 今日收盘行情取得于15:24，处于收盘后缓冲阶段；个别分钟级细节质量不足，但不改变今日大盘与ETF宽度偏弱这一收盘结构判断。\n\n3. 正式判断的“事实准备完成”“业务正文形成”“正式保存”“通知发送”和“用户收到”是不同状态；最容易出错的是把前一状态误写成后一状态。"
+  }
+}
