@@ -971,6 +971,8 @@ def formal_content_event(source_path: Path) -> dict | None:
     """Project a BDS completion into the normal idempotent notification path."""
     source = read_json(source_path, {})
     content = source.get("presentation_content")
+    if not content and isinstance(source.get("presentation_binding"), dict):
+        content = source["presentation_binding"].get("full_content")
     if not content and isinstance(source.get("decision_response"), dict):
         content = source["decision_response"].get("presentation_content")
     if not isinstance(content, str) or not content.strip():
