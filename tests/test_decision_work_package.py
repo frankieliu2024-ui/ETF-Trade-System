@@ -131,6 +131,9 @@ class DecisionWorkPackageTests(unittest.TestCase):
             pid: {"final_action": "NO_ADD", "capital_comparison": "business comparison", "next_change_condition": "facts change", "evidence_decision_impact": ["ALL_REQUIRED"]}
             for pid in [x["problem_id"] for x in graph]
         }
+        for pid in answers:
+            if pid.startswith("HOLDING:"):
+                answers[pid]["capital_efficiency_release_assessment"] = "已将继续持有、部分释放、全部释放与现金及合格替代用途进行对称资本效率比较。"
         answers["RISK_PERMISSION"]["final_action"] = "允许Confirm"
         answers["MAIN_CANDIDATE"].update({"candidate_code": "159981", "candidate_name": "能源化工ETF", "opportunity_status": "Confirm机会"})
         answers["HOLDING:159981"].update({"final_action": "HOLD", "capital_occupancy_reason": "retain right tail", "higher_efficiency_alternative": "cash"})
