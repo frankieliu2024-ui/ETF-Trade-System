@@ -2,40 +2,38 @@
   "status": "DEGRADED",
   "pulse_success": true,
   "hard_error_count": 0,
-  "warning_count": 3,
+  "warning_count": 1,
   "hard_errors": [],
   "warnings": [
-    "N225: quality=PASS as_of_beijing=2026-10-09T14:30:00+08:00",
-    "KOSPI: quality=PASS as_of_beijing=2026-10-08T14:00:00+08:00",
-    "ambiguous_scheduled_pulse: occurrence identity unavailable; current refresh is not natural-pulse fulfillment"
+    "N225: quality=DEGRADED as_of_beijing=2026-10-09T14:30:00+08:00"
   ],
-  "scheduled_for": "15,30 20 * * 1-5",
-  "scheduled_cron": "15,30 20 * * 1-5",
+  "scheduled_for": "workflow_dispatch",
+  "scheduled_cron": "",
   "scheduled_slot_at": null,
   "schedule_delay_seconds": null,
-  "schedule_delay_class": "AMBIGUOUS",
+  "schedule_delay_class": "NOT_SCHEDULED",
   "natural_pulse_identity": null,
-  "natural_pulse_identity_status": "AMBIGUOUS",
-  "latest_candidate_slot_at": "2026-10-10T04:30:00+08:00",
-  "candidate_delay_seconds": 12801,
-  "candidate_delay_class": "SEVERELY_DELAYED",
+  "natural_pulse_identity_status": "NOT_SCHEDULED",
+  "latest_candidate_slot_at": null,
+  "candidate_delay_seconds": null,
+  "candidate_delay_class": null,
   "natural_pulse_eligible": false,
-  "trigger": "schedule",
-  "started_at": "2026-10-10T00:03:21Z",
-  "provider_as_of": "2026-10-10T04:00:00+08:00",
+  "trigger": "workflow_dispatch",
+  "started_at": "2026-10-12T00:34:06Z",
+  "provider_as_of": "2026-10-12T08:33:57+08:00",
   "provider_as_of_by_object": {
     "NDX": "2026-10-10T04:00:00+08:00",
     "SOX": "2026-10-10T04:00:00+08:00",
     "N225": "2026-10-09T14:30:00+08:00",
-    "KOSPI": "2026-10-08T14:00:00+08:00",
+    "KOSPI": "2026-10-12T08:33:57+08:00",
     "TWII": "2026-10-08T13:30:00+08:00",
     "HSTECH": "2026-10-09T16:05:00+08:00"
   },
-  "finished_at": "2026-10-10T00:03:21Z",
-  "commit_sha": "7e2fd5b1c5352ca45326150a92c9186b4ef29c54",
-  "run_id": "38007291161",
-  "market_date_beijing": "2026-10-10",
-  "overseas_quality_status": "PASS",
+  "finished_at": "2026-10-12T00:34:06Z",
+  "commit_sha": "13aabfd42c6e4fce1433a19dca51e36c615f0376",
+  "run_id": "38188466048",
+  "market_date_beijing": "2026-10-12",
+  "overseas_quality_status": "DEGRADED",
   "us_extended_hours_status": "PASS",
   "objects": {
     "NDX": {
@@ -44,9 +42,9 @@
       "market_date_local": "2026-10-09",
       "provider": "yahoo_chart_api",
       "symbol": "^NDX",
-      "market_phase": "CLOSED",
-      "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 242.92,
+      "market_phase": "CLOSED_NON_TRADING_DAY",
+      "freshness_status": "PREVIOUS_SESSION_REFERENCE",
+      "delay_minutes": 3153.9,
       "error": ""
     },
     "SOX": {
@@ -55,31 +53,31 @@
       "market_date_local": "2026-10-09",
       "provider": "yahoo_chart_api",
       "symbol": "^SOX",
-      "market_phase": "CLOSED",
-      "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 242.92,
+      "market_phase": "CLOSED_NON_TRADING_DAY",
+      "freshness_status": "PREVIOUS_SESSION_REFERENCE",
+      "delay_minutes": 3153.9,
       "error": ""
     },
     "N225": {
-      "quality_status": "PASS",
+      "quality_status": "DEGRADED",
       "as_of_beijing": "2026-10-09T14:30:00+08:00",
       "market_date_local": "2026-10-09",
       "provider": "yahoo_chart_api",
       "symbol": "^N225",
-      "market_phase": "CLOSED_NON_TRADING_DAY",
-      "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 1052.92,
+      "market_phase": "OPEN",
+      "freshness_status": "STALE",
+      "delay_minutes": 3963.9,
       "error": ""
     },
     "KOSPI": {
       "quality_status": "PASS",
-      "as_of_beijing": "2026-10-08T14:00:00+08:00",
-      "market_date_local": "2026-10-08",
-      "provider": "yahoo_chart_api",
-      "symbol": "^KS11",
-      "market_phase": "CLOSED_NON_TRADING_DAY",
-      "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 2522.92,
+      "as_of_beijing": "2026-10-12T08:33:57+08:00",
+      "market_date_local": "2026-10-12",
+      "provider": "naver_finance",
+      "symbol": "KOSPI",
+      "market_phase": "OPEN",
+      "freshness_status": "FRESH",
+      "delay_minutes": 0.0,
       "error": ""
     },
     "TWII": {
@@ -88,9 +86,9 @@
       "market_date_local": "2026-10-08",
       "provider": "yahoo_chart_api",
       "symbol": "^TWII",
-      "market_phase": "CLOSED_NON_TRADING_DAY",
+      "market_phase": "PRE_OPEN",
       "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 2552.92,
+      "delay_minutes": 5463.9,
       "error": ""
     },
     "HSTECH": {
@@ -99,25 +97,25 @@
       "market_date_local": "2026-10-09",
       "provider": "yahoo_chart_api",
       "symbol": "HSTECH.HK",
-      "market_phase": "CLOSED_NON_TRADING_DAY",
+      "market_phase": "PRE_OPEN",
       "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 957.92,
+      "delay_minutes": 3868.9,
       "error": ""
     }
   },
   "provider_health": {
     "hithink-finance:HS2083": {
       "status": "SESSION_BYPASS",
-      "consecutive_failures": 40,
+      "consecutive_failures": 41,
       "failure_class": "STRUCTURAL",
-      "bypass_date": "2026-10-10",
-      "last_failure_at": "2026-10-10T00:02:55+00:00",
-      "reason": "HS2083\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"5b6d0ca96b984fdeb2201938e87227d6\"},\"meta\":{\"cli_version\":\"0.1.13\",\"schema_version\":\"1\"}}\n"
+      "bypass_date": "2026-10-12",
+      "last_failure_at": "2026-10-12T00:33:54+00:00",
+      "reason": "HS2083\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"ec02e37e24b441df89f5fcdb606553b9\"},\"meta\":{\"cli_version\":\"0.1.13\",\"schema_version\":\"1\"}}\n"
     },
     "yahoo_chart_api:HSTECH.HK": {
       "status": "ACTIVE",
       "consecutive_failures": 0,
-      "last_success_at": "2026-10-10T00:02:55+00:00",
+      "last_success_at": "2026-10-12T00:33:54+00:00",
       "failure_class": "UNKNOWN",
       "bypass_date": "2026-09-28"
     },
@@ -126,7 +124,7 @@
       "consecutive_failures": 0,
       "last_success_at": "2026-10-09T15:06:49+00:00",
       "failure_class": "UNKNOWN",
-      "bypass_date": "2026-10-10"
+      "bypass_date": "2026-10-12"
     }
   },
   "rules": {
