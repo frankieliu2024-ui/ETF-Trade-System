@@ -36,7 +36,7 @@ def integration_action(decision: str) -> str:
 
 def classify_path(path: str) -> str:
     path = path.replace("\\", "/")
-    if path in FORMAL_FILES or path.startswith("events/"):
+    if path in FORMAL_FILES or path.startswith("events/") or path == "post_market_review/post_market_review_event.json":
         return "FORMAL_FACT_MUTATION"
     if path.startswith(REQUEST_PREFIXES):
         return "REQUEST_OR_TRIGGER_FACT"
