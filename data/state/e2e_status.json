@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-12T09:45:02+08:00",
+  "generated_at": "2026-10-12T10:02:17+08:00",
   "status": "READY",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -8,8 +8,8 @@
     "market": {
       "status": "READY",
       "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-10-12_094402.json",
-      "captured_at": "2026-10-12T09:44:02+08:00",
+      "snapshot": "data/market/snapshots/2026-10-12_100113.json",
+      "captured_at": "2026-10-12T10:01:13+08:00",
       "market_phase": "CONTINUOUS_MORNING"
     },
     "account": {
@@ -50,8 +50,35 @@
       "decision_context": true,
       "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": false,
-      "formal_reply_gate": null
+      "request_bound": true,
+      "formal_reply_gate": {
+        "request_id": "scheduled-20261012-100000",
+        "requested_at_beijing": "2026-10-12T10:00:00+08:00",
+        "status": "NOT_APPLICABLE",
+        "reply_freezable": true,
+        "blockers": [],
+        "source": "decision_fact_pack.formal_reply_freeze",
+        "consumer_manifest": {
+          "request_id": "scheduled-20261012-100000",
+          "requested_at_beijing": "2026-10-12T10:00:00+08:00",
+          "query_context_path": "data/state/query_context.json",
+          "decision_context_path": "data/state/decision_context.json",
+          "decision_work_package_present": true,
+          "required_fields": [
+            "decision_fact_pack.trigger.request_id",
+            "decision_fact_pack.formal_reply_freeze",
+            "decision_fact_pack.decision_work_package.problem_graph"
+          ],
+          "read_strategy": "GATE_FIRST_TARGETED_PAYLOAD",
+          "large_payload_empty_read": "REVERIFY_SAME_GITHUB_SOURCE_BEFORE_MISSING"
+        },
+        "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
+        "user_output_allowed": false,
+        "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
+        "required_problem_ids": [],
+        "required_problem_count": 0,
+        "business_answer_contract": null
+      }
     },
     "lifecycle": {
       "status": "READY",
