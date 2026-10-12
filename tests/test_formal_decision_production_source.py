@@ -79,6 +79,7 @@ RESPONSE = {
             "evidence_decision_impact": ["ALL_REQUIRED"],
             "capital_occupancy_reason": "当前继续占资效率更高",
             "higher_efficiency_alternative": "现金",
+            "capital_efficiency_release_assessment": "已将继续持有、部分释放、全部释放与现金及合格替代用途进行对称资本效率比较。",
         }
     }
 }

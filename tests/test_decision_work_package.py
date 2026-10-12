@@ -131,6 +131,9 @@ class DecisionWorkPackageTests(unittest.TestCase):
             pid: {"final_action": "NO_ADD", "capital_comparison": "business comparison", "next_change_condition": "facts change", "evidence_decision_impact": ["ALL_REQUIRED"]}
             for pid in [x["problem_id"] for x in graph]
         }
+        for pid in answers:
+            if pid.startswith("HOLDING:"):
+                answers[pid]["capital_efficiency_release_assessment"] = "已将继续持有、部分释放、全部释放与现金及合格替代用途进行对称资本效率比较。"
         answers["RISK_PERMISSION"]["final_action"] = "允许Confirm"
         answers["MAIN_CANDIDATE"].update({"candidate_code": "159981", "candidate_name": "能源化工ETF", "opportunity_status": "Confirm机会"})
         answers["HOLDING:159981"].update({"final_action": "HOLD", "capital_occupancy_reason": "retain right tail", "higher_efficiency_alternative": "cash"})
@@ -181,6 +184,77 @@ class DecisionWorkPackageTests(unittest.TestCase):
         }
         with self.assertRaisesRegex(ValueError, "capital-efficiency release assessment"):
             project_decision_response({}, {"answers": {"HOLDING:159981": answer}}, package)
+
+    def test_every_holding_requires_symmetric_capital_efficiency_assessment(self):
+        package = {
+            "problem_graph": [{
+                "problem_id": "HOLDING:159981",
+                "security": "能源化工ETF",
+                "current_quantity": 8500,
+                "alternatives": {"HOLD": "继续持有", "REDUCE": "部分释放", "EXIT": "全部退出"},
+            }],
+            "evidence_requirements": [],
+        }
+        answer = {
+            "final_action": "HOLD",
+            "capital_comparison": "与现金比较",
+            "next_change_condition": "下一节点重评",
+            "evidence_decision_impact": ["ALL_REQUIRED"],
+            "capital_occupancy_reason": "持仓理由",
+            "higher_efficiency_alternative": "现金",
+        }
+        with self.assertRaisesRegex(ValueError, "capital-efficiency release assessment"):
+            project_decision_response(
+                {},
+                {"answers": {"HOLDING:159981": answer}},
+                package,
+            )
+
+        answer["capital_efficiency_release_assessment"] = (
+            "零基线不重新买入；继续持有与现金及替代用途已对称比较；"
+            "当前结论为继续持有/部分释放/全部退出中的明确选择。"
+        )
+        next_unit = {
+            "final_action": "保留现金",
+            "capital_comparison": "已比较现金与合法替代用途",
+            "next_change_condition": "资本效率变化时重评",
+            "evidence_decision_impact": ["ALL_REQUIRED"],
+            "new_amount_yuan": 0,
+            "post_action_deployable_cash": 10000,
+            "future_opportunity_capacity": "保留",
+            "cash_opportunity_cost": "可能错过未来机会",
+            "alternative_capital_use_review": "已比较全部合法资本状态",
+            "concentration_account_structure_effect": "不增加共同风险",
+            "selected_state_reason": "现金更优",
+            "zero_amount_decisive_reason": "当前无合法新增部署",
+            "compared_capital_states": [{"state_name": "现金", "capital_action": "保留", "remaining_deployable_cash": 10000, "why_not_selected": "已选中", "opportunity_cost_if_selected": "机会成本可接受"}],
+        }
+        risk_permission = {
+            "final_action": "允许Confirm",
+            "capital_comparison": "已比较风险许可与资本用途",
+            "next_change_condition": "风险许可变化时重评",
+            "evidence_decision_impact": ["ALL_REQUIRED"],
+        }
+        main_candidate = {
+            "final_action": "NO_ADD",
+            "capital_comparison": "现金优先",
+            "next_change_condition": "机会条件变化时重评",
+            "evidence_decision_impact": ["ALL_REQUIRED"],
+            "candidate_name": "现金",
+            "opportunity_status": "无新增交易机会",
+        }
+        projected = project_decision_response(
+            {},
+            {"answers": {
+                "RISK_PERMISSION": risk_permission,
+                "MAIN_CANDIDATE": main_candidate,
+                "HOLDING:159981": answer,
+                "NEXT_UNIT_CAPITAL_USE": next_unit,
+            }},
+            package,
+        )
+        self.assertEqual(projected["managed_position_reviews"][0]["current_action"], "持有管理")
+
 
     def test_observation_retain_projects_existing_canonical_thesis(self):
         source = {"request_type":"BUSINESS_DECISION_SOURCE","request_id":"r2","parent_request_id":"p2","decision_id":"d2","consumed_snapshot":"snap"}
