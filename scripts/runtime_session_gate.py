@@ -34,6 +34,16 @@ REFRESH_REQUEST_TYPES = {"MARKET_QUOTE_REFRESH", "QUERY_TIME_REFRESH", "LIVE_SNA
 EXPLICIT_REFRESH_INTENTS = {"EXPLICIT_LATEST", "MARKET_QUOTE_REFRESH", "QUERY_TIME_REFRESH"}
 
 
+def _request_query_intent(request: dict) -> str:
+    """Normalize structured and legacy request intent shapes for ingress gating."""
+    intent = request.get("intent")
+    if isinstance(intent, dict):
+        value = intent.get("query_intent")
+    else:
+        value = request.get("query_intent") or intent
+    return str(value or "").strip().upper()
+
+
 scheduled_cron_observability = resolve_scheduled_pulse
 
 
