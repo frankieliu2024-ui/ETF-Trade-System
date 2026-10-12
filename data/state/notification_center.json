@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-10-12T11:28:30+08:00",
+  "updated_at": "2026-10-12T11:40:21+08:00",
   "last_status": "SENT",
-  "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【ETF正式决策】",
+  "last_type": "MARKET_VALUE_ALERT",
+  "last_title": "【市场异动】亚太主要指数结构出现显著分化",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -21238,27 +21238,54 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-10-12T11:28:30+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "us-session-summary:2026-09-23:OPEN",
-      "type": "US_OPEN_VALUE_ALERT",
-      "title": "【市场异动】美股科技指数开盘出现显著分化",
-      "content": "### 核心结论\n- **触发原因**：现金盘当前最大绝对涨跌1.43%。\n- **外部结构**：美股科技风险偏好偏弱。\n- **宽科技**：纳斯达克100指数（NDX）-0.90%。\n- **半导体**：费城半导体指数（SOX）-1.43%。\n- **数据口径**：纳斯达克100指数（NDX）/费城半导体指数（SOX）直接指数。\n\n### 关键路径\n- **纳斯达克100指数（NDX）**：开盘后明显回吐。\n- **费城半导体指数（SOX）**：开盘后明显回吐。\n\n### 对ETF系统的影响\n- **外部含义**：美股科技风险偏好转弱，提高A股高相关科技篮子的风险复核优先级。\n- **本地验证**：先检查A股自身承接是否同步减弱。\n- **资本比较**：只有本地反馈也转弱，才进一步影响持仓风险收益与资本配置。\n\n### 当前动作\n**纳入下一A股正式节点复核：先看本地传导，再看相关ETF自身反馈和资本效率；不因海外单一信号机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-09-24 01:51:49\n- **通知生成（北京时间）**：2026-09-24 01:52:06\n- **边界**：这是海外结构证据，不是A股买卖信号；实际现金盘开盘事实可在同一常规交易时段恢复，但不得把后续累计涨跌伪装成开盘跳空。",
-      "source": "us_extended_hours_context",
+      "notification_id": "notification_9e1bf30aeeec68613cf3",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:asia:2026-10-12:APAC_DIVERGENCE:DIVERGED:DIVERGENCE:2026-10-12T11:39:56+08:00",
+      "related_decision_id": "",
+      "security_code": "APAC_DIVERGENCE",
+      "security_name": "亚太主要指数结构",
       "user_severity": "需要关注",
-      "user_action": "纳入下一A股交易节点复核，无需机械交易",
-      "status": "SENT",
-      "attempted_at": "2026-09-24T01:52:07+08:00",
+      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-10-12T11:40:19+08:00",
+      "sent_at": "2026-10-12T11:40:20+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-10-14T11:40:19+08:00",
+      "title": "【市场异动】亚太主要指数结构出现显著分化",
+      "content": "### 核心结论\n- **较上一同类通知**：2.05 → 2.77个百分点，进一步扩大0.73个百分点。\n- **事件类型**：显著分化\n- **对象/结构**：亚太主要指数结构\n- **关键结构**：横截面两端：台湾加权指数（TWII）-0.03%，韩国综合指数（KOSPI）-2.80%，涨跌幅相差2.77个百分点\n\n**判断**：相关对象之间的相对差已经扩大到值得单独关注的程度，不能再用单一市场方向概括全部机会和风险。\n\n### 对ETF系统的影响\n亚太主要指数结构属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核相关持仓/观察ETF的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-10-12 11:39:56\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
+      "source": "data/state/overseas_context.json",
+      "confirmation_context": {
+        "market": "ASIA",
+        "market_date": "2026-10-12",
+        "direction": "DIVERGED",
+        "event_category": "DIVERGENCE",
+        "fact_family": "APAC_SESSION_STRUCTURE",
+        "object_codes": [
+          "TWII",
+          "KOSPI"
+        ],
+        "phase_metric_change_pct": null,
+        "sudden_change_pct": null,
+        "event_magnitude_pct": 2.7740850502592895,
+        "market_as_of_beijing": "2026-10-12T11:39:56+08:00",
+        "source_fact_id": "2026-10-12:APAC_DIVERGENCE:DIVERGENCE:DIVERGED:2026-10-12T11:39:56+08:00",
+        "session": "SESSION",
+        "event_family_id": "ASIA:2026-10-12:SESSION:APAC_DIVERGENCE:DIVERGENCE:DIVERGED:"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_ee4fb146189228f363f3",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-10-12T11:40:20+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "us-session-summary:2026-09-23:CLOSE",
       "type": "US_SESSION_SUMMARY",
@@ -24840,6 +24867,24 @@
       },
       "notification_id": "notification_e1fa6974e17b7de36f18",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:asia:2026-10-12:APAC_DIVERGENCE:DIVERGED:DIVERGENCE:2026-10-12T11:39:56+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】亚太主要指数结构出现显著分化",
+      "content": "### 核心结论\n- **较上一同类通知**：2.05 → 2.77个百分点，进一步扩大0.73个百分点。\n- **事件类型**：显著分化\n- **对象/结构**：亚太主要指数结构\n- **关键结构**：横截面两端：台湾加权指数（TWII）-0.03%，韩国综合指数（KOSPI）-2.80%，涨跌幅相差2.77个百分点\n\n**判断**：相关对象之间的相对差已经扩大到值得单独关注的程度，不能再用单一市场方向概括全部机会和风险。\n\n### 对ETF系统的影响\n亚太主要指数结构属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核相关持仓/观察ETF的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-10-12 11:39:56\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
+      "source": "data/state/overseas_context.json",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-10-12T11:40:20+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_9e1bf30aeeec68613cf3",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [
@@ -24849,6 +24894,6 @@
     "notification_d5f3ea1194565824a934",
     "notification_fd7763215037ab96f889"
   ],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
-  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
+  "policy": "canonical bounded market notification batch",
+  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
