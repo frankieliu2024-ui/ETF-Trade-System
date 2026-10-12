@@ -13,6 +13,7 @@ class SemanticLatestMainTests(unittest.TestCase):
         self.assertEqual(classify_path("scripts/build_query_context.py"), "STABLE_PRODUCTION_CHANGE")
         self.assertEqual(classify_path("ETF当前状态_DASHBOARD.md"), "FORMAL_FACT_MUTATION")
         self.assertEqual(classify_path("ETF交易复盘与经验库_2026.md"), "FORMAL_FACT_MUTATION")
+        self.assertEqual(classify_path("post_market_review/post_market_review_event.json"), "FORMAL_FACT_MUTATION")
 
     def _repo(self, files_by_commit):
         root = Path(tempfile.mkdtemp())
