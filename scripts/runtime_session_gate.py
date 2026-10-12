@@ -245,8 +245,7 @@ def _event_has_manual_formal_refresh_request(policy: dict) -> bool:
             continue
         if (
             classify_live_snapshot_request(request) == "REFRESH_BEARING"
-            and str(request.get("intent") or "").upper() == "FORMAL_INTRADAY_ANALYSIS"
-            and str(request.get("query_intent") or "").upper() == "FORMAL_INTRADAY_ANALYSIS"
+            and _request_query_intent(request) == "FORMAL_INTRADAY_ANALYSIS"
             and request.get("force_refresh") is True
             and request.get("require_post_request_snapshot") is True
         ):
