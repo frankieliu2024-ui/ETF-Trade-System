@@ -230,7 +230,7 @@ class DecisionWorkPackageTests(unittest.TestCase):
             "compared_capital_states": [{"state_name": "现金", "capital_action": "保留", "remaining_deployable_cash": 10000, "why_not_selected": "已选中", "opportunity_cost_if_selected": "机会成本可接受"}],
         }
         risk_permission = {
-            "final_action": "PERMITTED",
+            "final_action": "允许Confirm",
             "capital_comparison": "已比较风险许可与资本用途",
             "next_change_condition": "风险许可变化时重评",
             "evidence_decision_impact": ["ALL_REQUIRED"],
