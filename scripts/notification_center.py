@@ -986,7 +986,9 @@ def formal_content_event(source_path: Path) -> dict | None:
         "notification_channel": "REPORT",
         "delivery_mode": "FULL_REPORT",
         "type": "正式报告",
-        "title": content.splitlines()[0].strip() or "【ETF正式决策】",
+        # REPORT 的 PushPlus 外层业务标题固定使用任务名称；日期时间等
+        # 正式判断标题只保留在冻结正文第一行，不得污染外层标题。
+        "title": "【ETF正式决策】",
         "content": content,
         "source": f"business-decision-source:{source_path.name}",
         "user_severity": "正式报告",
