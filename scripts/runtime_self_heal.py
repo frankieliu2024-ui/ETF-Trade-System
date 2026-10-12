@@ -146,7 +146,14 @@ def latest_unfinished_formal_parent() -> tuple[str | None, str | None]:
         request = load_json(path, {}) or {}
         if str(request.get("request_type") or "").upper() != "MARKET_QUOTE_REFRESH":
             continue
-        if str(request.get("source") or "").upper() != "CHATGPT_MANUAL_FORMAL_ANALYSIS":
+        # Scheduled Formal Decision uses the same canonical parent contract as
+        # manual Formal Decision. Excluding its actor source makes the
+        # self-healer fall back to an older manual parent and can repeatedly
+        # steal recovery from the active request.
+        if str(request.get("source") or "").upper() not in {
+            "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+        }:
             continue
         request_id = str(request.get("request_id") or "").strip()
         stamp = parse_dt(request.get("requested_at_beijing") or request.get("request_time_beijing"))
