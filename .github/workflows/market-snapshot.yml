@@ -158,11 +158,14 @@ jobs:
           if not path.is_file():
               raise SystemExit("formal_replay_request does not exist in execution-time main")
           request = json.loads(path.read_text(encoding="utf-8"))
+          intent = request.get("intent")
+          query_intent = (
+              intent.get("query_intent") if isinstance(intent, dict) else request.get("query_intent") or intent
+          )
           required = (
               str(request.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH"
               and str(request.get("source") or "").upper() == "CHATGPT_MANUAL_FORMAL_ANALYSIS"
-              and str(request.get("intent") or "").upper() == "FORMAL_INTRADAY_ANALYSIS"
-              and str(request.get("query_intent") or "").upper() == "FORMAL_INTRADAY_ANALYSIS"
+              and str(query_intent or "").upper() == "FORMAL_INTRADAY_ANALYSIS"
               and request.get("force_refresh") is True
               and request.get("require_post_request_snapshot") is True
           )
@@ -189,7 +192,11 @@ jobs:
           if path.is_absolute() or path.parts[:2] != ("requests", "live_snapshot") or ".." in path.parts or path.suffix != ".json" or not path.is_file():
               raise SystemExit("formal_context_recovery_request must be one existing requests/live_snapshot/*.json path")
           request = json.loads(path.read_text(encoding="utf-8"))
-          valid = (str(request.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH" and str(request.get("source") or "").upper() == "CHATGPT_MANUAL_FORMAL_ANALYSIS" and str(request.get("intent") or "").upper() == "FORMAL_INTRADAY_ANALYSIS" and str(request.get("query_intent") or "").upper() == "FORMAL_INTRADAY_ANALYSIS" and request.get("force_refresh") is True and request.get("require_post_request_snapshot") is True)
+          intent = request.get("intent")
+          query_intent = (
+              intent.get("query_intent") if isinstance(intent, dict) else request.get("query_intent") or intent
+          )
+          valid = (str(request.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH" and str(request.get("source") or "").upper() == "CHATGPT_MANUAL_FORMAL_ANALYSIS" and str(query_intent or "").upper() == "FORMAL_INTRADAY_ANALYSIS" and request.get("force_refresh") is True and request.get("require_post_request_snapshot") is True)
           if not valid:
               raise SystemExit("formal_context_recovery_request is not an existing canonical Formal Decision refresh request")
           PY
