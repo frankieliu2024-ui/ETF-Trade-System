@@ -38,6 +38,18 @@ Formal Decision 对用户可见行为只有 WAIT、READY、TERMINAL 三种状态
 
 旧上下文、空上下文、连接器暂时空读、一次超时和 request_id 尚未匹配，只能解释为 WAIT；除非已有明确 terminal failure，不得提前终止。
 
+### WAIT循环固化规则（强制）
+
+WAIT不是一次判断，而是同一父请求上的连续消费循环。每一轮循环必须按以下顺序执行：
+
+1. 回读同一父请求及其现有canonical链状态，重新读取formal_reply_gate，并核对request_id仍等于当前父请求。
+2. 若状态仍为queued、building、in-flight、旧context、空context或未匹配，只能继续消费同一父请求；不得创建第二请求、重复刷新、复用旧事实或输出中间状态。
+3. 若状态变为合法READY，立即退出WAIT循环并进入完整业务判断和首份用户报告；不得继续等待后置持久化、审计、通知或验收。
+4. 若状态明确为TERMINAL_FAILURE且不存在合法继续路径，退出WAIT循环并仅输出一次真实终止说明。
+5. 单次空读、单次超时、后台排队或派生状态暂未追上父请求，均不得直接跳出循环；只有明确终止条件才允许结束。
+
+该循环只允许沿现有父请求、canonical workflow和既有状态投影继续消费，不新增workflow、producer、state、writer、completion或通知链。若当前交互回合已无法继续执行，按本节“交互回合与请求生命周期”处理：保持原父请求身份和状态，后续恢复时继续读取同一父请求，不得伪造WAIT完成或重新创建等价请求。
+
 ### READY
 
 同一父请求的合法 request-bound facts、DWP、PIT、freshness、market phase 和业务判断前置条件已经满足。
