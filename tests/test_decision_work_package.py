@@ -229,9 +229,28 @@ class DecisionWorkPackageTests(unittest.TestCase):
             "zero_amount_decisive_reason": "当前无合法新增部署",
             "compared_capital_states": [{"state_name": "现金", "capital_action": "保留", "remaining_deployable_cash": 10000, "why_not_selected": "已选中", "opportunity_cost_if_selected": "机会成本可接受"}],
         }
+        risk_permission = {
+            "final_action": "暂不新增风险",
+            "capital_comparison": "已比较风险许可与资本用途",
+            "next_change_condition": "风险许可变化时重评",
+            "evidence_decision_impact": ["ALL_REQUIRED"],
+        }
+        main_candidate = {
+            "final_action": "NO_ADD",
+            "capital_comparison": "现金优先",
+            "next_change_condition": "机会条件变化时重评",
+            "evidence_decision_impact": ["ALL_REQUIRED"],
+            "candidate_name": "现金",
+            "opportunity_status": "无新增交易机会",
+        }
         projected = project_decision_response(
             {},
-            {"answers": {"HOLDING:159981": answer, "NEXT_UNIT_CAPITAL_USE": next_unit}},
+            {"answers": {
+                "RISK_PERMISSION": risk_permission,
+                "MAIN_CANDIDATE": main_candidate,
+                "HOLDING:159981": answer,
+                "NEXT_UNIT_CAPITAL_USE": next_unit,
+            }},
             package,
         )
         self.assertEqual(projected["managed_position_reviews"][0]["current_action"], "持有管理")
