@@ -39,6 +39,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: etf-main-canonical-writer
+  cancel-in-progress: false
+
 jobs:
   formal-decision-e2e:
     runs-on: ubuntu-latest
@@ -77,6 +81,10 @@ jobs:
               "acceptance_sha": os.environ["GITHUB_SHA"],
               "final_main_sha": os.environ["GITHUB_SHA"],
               "sha_stable": True,
+              "state_write_commits": [],
+              "acceptance_window_id": f"acceptance:{os.environ['GITHUB_RUN_ID']}:{os.environ.get('GITHUB_RUN_ATTEMPT', '1')}",
+              "writer_runs_during_window": [],
+              "blocked_or_isolated_writers": ["etf-main-canonical-writer"],
               "run_id": os.environ["GITHUB_RUN_ID"],
               "status": "MERGED_BUT_NOT_ACCEPTED",
               "acceptance_scope": "CONTRACT_ONLY_AND_CONTROLLED_SIMULATION",

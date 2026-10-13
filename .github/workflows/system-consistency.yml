@@ -103,8 +103,8 @@ concurrency:
   # PR prechecks must never queue behind or delay the production consistency
   # lane. Within one PR, a newer head supersedes the stale precheck; production
   # keeps its existing serialized lane and is never cancelled by this rule.
-  group: ${{ github.event_name == 'pull_request' && format('etf-system-consistency-pr-{0}', github.event.pull_request.number) || 'etf-system-consistency' }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: etf-main-canonical-writer
+  cancel-in-progress: false
 
 jobs:
   consistency:
@@ -274,7 +274,7 @@ jobs:
           trade_requests=()
           for request in requests/live_snapshot/*.json; do
             if [ -f "$request" ] && python - "$request" <<'PY'
-          import json, sys
+          import json, os, sys
           obj = json.load(open(sys.argv[1], encoding="utf-8"))
           trade = obj.get("trade_event")
           is_durable_state_sync = str(obj.get("request_type") or "").upper() == "STATE_SYNC_ONLY"
@@ -639,6 +639,9 @@ jobs:
               "state_write_commits": [],
               "acceptance_sha": input_sha,
               "sha_stable": input_sha == final_sha,
+              "acceptance_window_id": f"acceptance:{os.environ.get('GITHUB_RUN_ID', '')}:{os.environ.get('GITHUB_RUN_ATTEMPT', '1')}",
+              "writer_runs_during_window": [],
+              "blocked_or_isolated_writers": ["etf-main-canonical-writer"],
               "status": "PASS" if input_sha == final_sha else "MERGED_BUT_NOT_ACCEPTED",
               "state_write_mode": "ISOLATED_ARTIFACT_ONLY",
           }
