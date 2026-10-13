@@ -326,7 +326,7 @@
         ".github/workflows/market-snapshot.yml",
         ".github/workflows/opening-auction-current-fallback.yml"
       ],
-      "required_concurrency_token": "etf-market-snapshot-${{ github.ref }}",
+      "required_concurrency_token": "etf-main-canonical-writer",
       "reason": "两条链使用同一A股核心producer并可能写CURRENT/runtime及快照，必须共享串行队列。"
     }
   ],
