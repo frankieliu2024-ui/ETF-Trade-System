@@ -143,3 +143,25 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FormalBusinessHealthBoundaryTests(unittest.TestCase):
+    def test_system_consistency_is_not_a_pull_request_business_gate(self):
+        root = Path(__file__).parents[1]
+        workflow = (root / ".github/workflows/system-consistency.yml").read_text(encoding="utf-8")
+        self.assertNotIn("\n  pull_request:", workflow)
+        self.assertNotIn("pr_production_acceptance:", workflow)
+        self.assertIn("\n  push:", workflow)
+        self.assertIn("\n  workflow_dispatch:", workflow)
+
+    def test_formal_business_contract_is_the_only_formal_pr_acceptance_entry(self):
+        root = Path(__file__).parents[1]
+        workflow = (root / ".github/workflows/formal-decision-e2e-acceptance.yml").read_text(encoding="utf-8")
+        self.assertIn("name: Formal Decision business contract", workflow)
+        self.assertIn("tests.test_formal_decision_e2e_contract", workflow)
+        self.assertIn("tests.test_formal_decision_production_e2e", workflow)
+        self.assertNotIn("Persist merged-main acceptance identity", workflow)
+        self.assertNotIn("acceptance_window_id", workflow)
+
+if __name__ == "__main__":
+    unittest.main()
