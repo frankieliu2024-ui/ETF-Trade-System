@@ -1225,7 +1225,7 @@ def discovery_eligibility_inputs(root: Path, market_date: str = "", context: dic
     context_market_date = str(context.get("market_date") or (context.get("current") or {}).get("market_date") or "")
     if market_date and context_market_date != str(market_date):
         return {}
-    discovery = context.get("formal_etf_discovery") or context.get("opportunity_inputs") or {}
+    discovery = context.get("formal_etf_discovery") or context.get("opportunity_inputs") or (context.get("decision_fact_pack") or {}).get("opportunity_inputs") or {}
     return {
         normalize_code(item.get("code") or ""): item
         for item in (discovery.get("candidates") or [])
