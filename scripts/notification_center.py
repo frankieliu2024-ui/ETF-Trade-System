@@ -978,11 +978,49 @@ def compact_recent(item: dict) -> dict:
 
 
 def formal_content_event(source_path: Path) -> dict | None:
-    """Reject direct BDS delivery; only a canonical decision event may notify."""
-    # BDS is an actor input, not a completion event.  Sending it directly made
-    # notification race state-sync and allowed a report without Decision Fact.
-    # Keep this function as a compatibility guard for old callers.
-    return None
+    """Project one explicitly supplied FORMAL_DECISION completion event.
+
+    The caller must supply the exact completion path.  This function never
+    scans history and never accepts a BUSINESS_DECISION_SOURCE envelope.
+    """
+    if not source_path.is_file():
+        return None
+    event = read_json(source_path, {})
+    if str(event.get("event_type") or "") != "FORMAL_DECISION":
+        return None
+    binding = event.get("presentation_binding")
+    if not isinstance(binding, dict):
+        return None
+    content = str(binding.get("full_content") or binding.get("content") or "").strip()
+    request_id = str(binding.get("request_id") or event.get("parent_request_id") or "").strip()
+    decision_id = str(binding.get("decision_id") or event.get("decision_id") or "").strip()
+    report_id = str(binding.get("report_id") or event.get("report_id") or "").strip()
+    content_hash = str(binding.get("content_hash") or binding.get("content_sha256") or "").strip()
+    if not content or not request_id or not decision_id or not report_id:
+        return None
+    if content_hash != hashlib.sha256(content.encode("utf-8")).hexdigest():
+        return None
+    expected_request = str(os.environ.get("EXPECTED_FORMAL_REQUEST_ID") or "").strip()
+    if expected_request and expected_request != request_id:
+        return None
+    return {
+        "key": f"report-delivery:ETF_FORMAL_DECISION:{report_id}",
+        "source_event_id": f"formal-decision-completion:{source_path.name}",
+        "event_type": "REPORT_DELIVERY_REQUEST",
+        "notification_channel": "REPORT",
+        "delivery_mode": "FULL_REPORT",
+        "type": "正式报告",
+        "title": str(binding.get("title") or "【ETF正式决策】"),
+        "content": content,
+        "source": f"canonical-formal-decision:{source_path.name}",
+        "report_type": "ETF_FORMAL_DECISION",
+        "report_id": report_id,
+        "related_decision_id": decision_id,
+        "parent_request_id": request_id,
+        "content_hash": content_hash,
+        "idempotency_key": f"ETF_FORMAL_DECISION:{report_id}",
+        "no_trade_authority": True,
+    }
 
 
 def _notification_matches_intent(item: dict, match: dict) -> bool:
