@@ -831,7 +831,7 @@ jobs:
             python scripts/refresh_gate.py --guard-request "$request_files"
             python scripts/process_state_sync_request.py --formal-replay-source-commit "$FORMAL_REPLAY_SOURCE_COMMIT" --formal-replay-dwp-commit "$FORMAL_REPLAY_DWP_COMMIT" "$request_files"
             python - "$request_files" <<'PY'
-          import json, sys
+          import json, subprocess, sys
           from pathlib import Path
           source = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
           decision_id = str(source.get("decision_id") or "").strip()
