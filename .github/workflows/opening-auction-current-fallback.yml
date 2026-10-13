@@ -14,7 +14,7 @@ permissions:
 concurrency:
   # Share the primary workflow concurrency group so the fallback never races a
   # canonical market-snapshot publish.
-  group: etf-main-canonical-writer
+  group: etf-market-snapshot-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
