@@ -142,7 +142,20 @@ jobs:
           echo "FORMAL_COMPLETION=$FORMAL_COMPLETION" >> "$GITHUB_ENV"
           echo "request_file=$REQUEST_FILE" >> "$GITHUB_OUTPUT"
           echo "request_expected=$REQUEST_EXPECTED" >> "$GITHUB_OUTPUT"
-          echo "triggering request: file=$REQUEST_FILE expected=$REQUEST_EXPECTED formal_completion=$FORMAL_COMPLETION"
+          if [ -n "$REQUEST_FILE" ] && [ -f "$REQUEST_FILE" ]; then
+            request_id=$(python - "$REQUEST_FILE" <<'PY'
+          import json, sys
+          from pathlib import Path
+          value = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8")).get("request_id")
+          print(str(value or "").strip())
+          PY
+            )
+          else
+            request_id=""
+          fi
+          echo "TRIGGERING_REQUEST_ID=$request_id" >> "$GITHUB_ENV"
+          echo "request_id=$request_id" >> "$GITHUB_OUTPUT"
+          echo "triggering request: file=$REQUEST_FILE id=$request_id expected=$REQUEST_EXPECTED formal_completion=$FORMAL_COMPLETION"
 
       - name: Bind explicit existing Formal Decision replay
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.formal_replay_request != '' }}
@@ -914,6 +927,7 @@ jobs:
         if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_account_stock_market.py
       - name: Build on-demand query context
+        id: query_context
         # Formal decision critical path. Do not let an unrelated optional/derived
         # step failure suppress request binding and PIT qualification.
         if: ${{ always() && steps.state_sync.outputs.formal_completion != 'true' && steps.triggering_request.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
@@ -1055,14 +1069,14 @@ jobs:
         # Full decision preparation is request/state-sync bound. Scheduled
         # snapshots keep canonical market facts and reusable Discovery current;
         # formal requests/recovery rebuild the canonical decision context.
-        if: ${{ always() && steps.state_sync.outputs.formal_completion != 'true' && steps.triggering_request.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ steps.query_context.outcome == 'success' && steps.state_sync.outputs.formal_completion != 'true' && steps.triggering_request.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_state_context.py --decision-ready-only
 
       - name: Build E2E usability state
         # Decision usability is request/state-sync qualification, not a scheduled
         # market-fact producer responsibility. Scheduled pulses may refresh
         # reusable Discovery evidence without rebuilding request-bound E2E state.
-        if: ${{ always() && steps.state_sync.outputs.formal_completion != 'true' && steps.triggering_request.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ steps.query_context.outcome == 'success' && steps.state_sync.outputs.formal_completion != 'true' && steps.triggering_request.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_e2e_status.py
       - name: Build post-market review context
         # Review is a close/state-sync consumer, not a generic intraday pulse
@@ -1120,12 +1134,15 @@ jobs:
               text=True,
           ).splitlines()
           formal_ids = []
-          for name in changed:
-              path = Path(name)
+          triggering_id = str(os.environ.get("TRIGGERING_REQUEST_ID") or "").strip()
+          triggering_path = Path(os.environ.get("TRIGGERING_REQUEST_FILE") or "")
+          if triggering_id:
+              formal_ids.append(triggering_id)
+          elif triggering_path.is_file():
               try:
-                  obj = json.loads(path.read_text(encoding="utf-8"))
+                  obj = json.loads(triggering_path.read_text(encoding="utf-8"))
               except (OSError, json.JSONDecodeError):
-                  continue
+                  obj = {}
               if str(obj.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH" and str(obj.get("source") or "") in {"CHATGPT_MANUAL_FORMAL_ANALYSIS", "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"}:
                   formal_ids.append(str(obj.get("request_id") or "").strip())
           if formal_ids:
@@ -1145,6 +1162,12 @@ jobs:
           PY
           git checkout -- data/state/system_consistency.json
           git reset -- data/state/notification_center.json
+          # Never publish stale request-bound projections after a formal
+          # query-context build failure. Core market facts remain publishable,
+          # but derived decision state must wait for the same request to rebuild.
+          if [ -n "${TRIGGERING_REQUEST_ID:-}" ] && [ "${{ steps.query_context.outcome }}" != "success" ]; then
+            git reset -- data/state/query_context.json data/state/decision_context.json data/state/e2e_status.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json || true
+          fi
           git add -f -- data/state/query_context.json
           git add -A -- data/market/snapshots data/market/discovery_history data/state post_market_review events config/market/etf_monitor_universe.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
               git reset -- data/state/system_consistency.json
