@@ -1148,6 +1148,11 @@ jobs:
             # explicitly staged through the final latest-main reset/publish loop;
             # a successful builder run is not sufficient if this file is omitted
             # from the downstream commit.
+            # Explicit Formal replay must restore the historical request-bound
+            # handoff after the latest-main reset, before final validation.
+            if [ -n "${FORMAL_REPLAY_DWP_COMMIT:-}" ]; then
+              git show "${FORMAL_REPLAY_DWP_COMMIT}:data/state/query_context.json" > data/state/query_context.json
+            fi
             git add -f -- data/state/query_context.json
             git add -A -- data/market/snapshots data/market/discovery_history data/state post_market_review events config/market/etf_monitor_universe.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
             git reset -- data/state/system_consistency.json
