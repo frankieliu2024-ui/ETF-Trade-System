@@ -845,15 +845,19 @@ jobs:
           # parent on latest main. Restore that exact path before validating it;
           # this does not create a second writer or relax uniqueness.
           if len(matches) == 0 and not event_path.is_file():
-              subprocess.run(["git", "fetch", "origin", "main", "--quiet"], check=True)
               event_path.parent.mkdir(parents=True, exist_ok=True)
-              restored = subprocess.run(
-                  ["git", "show", f"origin/main:{event_path.as_posix()}"],
-                  check=False,
-                  capture_output=True,
-                  text=True,
-              )
-              if restored.returncode == 0 and restored.stdout.strip():
+              restored = None
+              for ref in ("HEAD", "origin/main"):
+                  candidate = subprocess.run(
+                      ["git", "show", f"{ref}:{event_path.as_posix()}"],
+                      check=False,
+                      capture_output=True,
+                      text=True,
+                  )
+                  if candidate.returncode == 0 and candidate.stdout.strip():
+                      restored = candidate
+                      break
+              if restored is not None:
                   event_path.write_text(restored.stdout, encoding="utf-8")
                   matches = list(Path("events/decisions").glob(f"{decision_id}.json"))
           if len(matches) != 1 or not event_path.is_file():
