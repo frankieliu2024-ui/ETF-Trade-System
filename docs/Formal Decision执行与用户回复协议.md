@@ -344,3 +344,12 @@ Real Target-Path Acceptance 必须验证：
 对于曾由真实交互暴露的Actor失效模式，验收必须至少包含原失败场景、一个相邻非终态场景和一个此前正常READY场景。Implementation Acceptance与Real Target-Path Acceptance分别记录；前者不得替代后者。
 
 在真实目标路径验收通过前，不得仅凭 helper、单元测试或 CI PASS 宣称本故障域已经闭环。
+
+
+## Formal Decision业务验收与生产健康边界
+
+Formal Decision业务验收只验证当前代码所定义的业务合同：三种入口身份能够绑定当前request_id，并在同一业务链中校验当前report_id、content_hash和notification_id的一致性；同时验证历史completion、REPORT和notification不得污染当前请求，BDS不得绕过completion直接触发通知。
+
+Formal Decision业务验收不得读取或要求当天生产运行态，包括close_review_closure、CURRENT、账户事实、行情快照、post-close review、动态state文件或全局system-consistency结果。上述内容属于独立运行健康域，不是业务PR的输入，也不能阻断Formal Decision业务PR。
+
+业务合同测试通过只表示代码业务链合同通过，不等于三入口真实生产请求已经产生，也不等于PushPlus用户端已送达。真实运行证据和外部发送证据必须单独标注；缺少当前request级provider回执时使用EXTERNAL_SEND_UNVERIFIED。
