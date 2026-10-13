@@ -1756,6 +1756,39 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     }
 
 
+
+def validate_request_bound_context(context: dict, request_file: str | None) -> None:
+    """Fail closed when a Formal Decision context is empty or bound to another request."""
+    if not request_file:
+        return
+    request_path = (ROOT / request_file).resolve()
+    if not request_path.is_file():
+        raise RuntimeError(f"request-bound context source missing: {request_file}")
+    request = read_json(request_path, {})
+    request_id = str(request.get("request_id") or "").strip()
+    source = str(request.get("source") or request.get("requested_by") or "").strip().upper()
+    formal_sources = {
+        "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+        "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+        "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+    }
+    if source not in formal_sources:
+        return
+    if not request_id:
+        raise RuntimeError("Formal Decision request is missing request_id")
+    if not isinstance(context, dict) or not context:
+        raise RuntimeError(f"Formal Decision query_context is empty for request_id={request_id}")
+    pack = context.get("decision_fact_pack") if isinstance(context.get("decision_fact_pack"), dict) else {}
+    trigger = pack.get("trigger") if isinstance(pack.get("trigger"), dict) else {}
+    bound_id = str(trigger.get("request_id") or "").strip()
+    if bound_id != request_id:
+        raise RuntimeError(
+            f"Formal Decision query_context request binding mismatch: expected={request_id} actual={bound_id or '<empty>'}"
+        )
+    work_package = pack.get("decision_work_package") if isinstance(pack.get("decision_work_package"), dict) else {}
+    if not isinstance(work_package.get("problem_graph"), list) or not work_package.get("problem_graph"):
+        raise RuntimeError(f"Formal Decision query_context missing problem_graph for request_id={request_id}")
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--force-refresh", action="store_true")
@@ -1765,6 +1798,7 @@ def main() -> None:
     args = parser.parse_args()
     symbols = [x.strip() for x in args.symbols.split(",") if x.strip()]
     context = build(ROOT, force_refresh=args.force_refresh, requested_symbols=symbols, request_file=args.request_file or None, run_discovery=args.run_discovery)
+    validate_request_bound_context(context, args.request_file or None)
     atomic_json_write(ROOT / "data" / "state" / "query_context.json", context)
     print(json.dumps({"ok": True, "generated_at_beijing": context["generated_at_beijing"], "market_date": context["market_date"], "latest_valid_node": context["latest_valid_node"], "system_consistency_status": context["system_consistency_status"], "candidate_trading_day": context["trading_day_status"]["is_candidate_trading_day"], "etf_universe_count": context["etf_universe_count"], "account_fact_status": context["account_fact_status"], "account_usable": context["account_gate"]["can_use_current_account_fact"], "freshness": context["freshness_at_context_build"]["status"], "overseas_context_status": context["overseas_context_status"], "us_extended_hours_status": context["us_extended_hours_status"], "stock_context_status": context["stock_context_status"], "stock_market_context_status": context["stock_market_context_status"], "read_plan_mode": context["decision_read_plan"]["mode"]}, ensure_ascii=False))
 
