@@ -51,6 +51,21 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'main' }}
+      - name: Verify acceptance source SHA
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        shell: bash
+        run: |
+          HEAD_SHA=$(git rev-parse HEAD)
+          echo "GITHUB_SHA=$GITHUB_SHA"
+          echo "HEAD_SHA=$HEAD_SHA"
+          echo "PR_HEAD_SHA=$PR_HEAD_SHA"
+          echo "BASE_SHA=$BASE_SHA"
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ "$HEAD_SHA" != "$PR_HEAD_SHA" ]; then
+            echo "acceptance checkout SHA does not match PR head" >&2
+            exit 1
+          fi
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"

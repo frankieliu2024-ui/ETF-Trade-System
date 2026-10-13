@@ -42,6 +42,18 @@ class AcceptanceWindowGovernanceTests(unittest.TestCase):
             ):
                 self.assertIn(field, text, f"{name}: missing {field}")
 
+    def test_pr_e2e_checks_current_head_and_writer_token_contract(self):
+        e2e = (ROOT / ".github" / "workflows" / "formal-decision-e2e-acceptance.yml").read_text(encoding="utf-8")
+        self.assertIn("github.event.pull_request.head.sha", e2e)
+        self.assertIn("Verify acceptance source SHA", e2e)
+        for name in ("market-snapshot.yml", "opening-auction-current-fallback.yml"):
+            text = (ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8")
+            self.assertIn("group: etf-main-canonical-writer", text)
+            self.assertNotIn("etf-market-snapshot-${{ github.ref }}", text)
+        protocol = (ROOT / "config" / "maintenance" / "production_mutation_protocol.json").read_text(encoding="utf-8")
+        self.assertIn("etf-main-canonical-writer", protocol)
+        self.assertNotIn("etf-market-snapshot-${{ github.ref }}", protocol)
+
     def test_consistency_acceptance_never_publishes_to_main(self):
         text = (ROOT / ".github" / "workflows" / "system-consistency.yml").read_text(encoding="utf-8")
         self.assertNotIn("git push origin HEAD:main", text)
