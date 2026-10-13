@@ -3,8 +3,11 @@ import json
 import os
 import tempfile
 import unittest
+import sys
 from pathlib import Path
 from unittest.mock import patch
+
+sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 
 from scripts.formal_entry_contract import (
     ENTRY_AUTOMATIC_SCHEDULED_TASK,
@@ -30,6 +33,8 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
                 "occurrence_id": occurrence,
                 "task_id": "ETF正式决策",
                 "task_run_id": "run_" + occurrence,
+                "occurrence": occurrence,
+                "market_date": "2026-10-13",
             }
             identity = build_identity(payload)
             identities.append(identity["dedup_key"])
