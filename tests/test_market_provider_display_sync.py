@@ -173,11 +173,12 @@ class ProviderPolicyConsistencyTest(unittest.TestCase):
             "ETF规则_MASTER.md",
             "ETF与市场监测数据接口使用规范.md",
             "docs/ETF主动通知体系.md",
+            "docs/Formal Decision执行与用户回复协议.md",
             "docs/生产变更与并发写入协议_V1.0.md",
         ):
             self.assertIn(path, index, f"system index must route normative domain: {path}")
         self.assertIn("路由索引", index)
-        self.assertIn("系统只保留以下四个独立规范域", index)
+        self.assertIn("系统只保留以下五个独立规范域", index)
         self.assertIn("不得重新定义以下内容", index)
 
     def test_user_visible_language_gate_is_normative(self):
