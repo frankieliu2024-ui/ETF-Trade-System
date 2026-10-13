@@ -84,18 +84,34 @@ def classify_formal_request_consumer_state(
         }
 
     same_request = bound_request == parent and (not freeze_request or freeze_request == parent)
-    if same_request and freeze_status in READY_STATUSES and reply_freezable:
+    dwp = pack.get("decision_work_package")
+    dwp = dwp if isinstance(dwp, dict) else {}
+    graph = dwp.get("problem_graph")
+    graph = graph if isinstance(graph, list) else []
+    required_problem_ids = [
+        str(item.get("problem_id") or "").strip()
+        for item in graph
+        if isinstance(item, dict) and str(item.get("problem_id") or "").strip()
+    ]
+    # READY is valid only when the same request has a complete, non-empty
+    # request-bound work package.  A stale gate, an empty connector read, or a
+    # projection containing only status metadata must remain WAIT.  This is a
+    # consumer boundary, not a second readiness algorithm.
+    dwp_complete = bool(
+        same_request
+        and isinstance(context, dict)
+        and pack
+        and isinstance(pack.get("trigger"), dict)
+        and bound_request == parent
+        and isinstance(dwp, dict)
+        and required_problem_ids
+        and isinstance(dwp.get("response_contract"), dict)
+    )
+    if dwp_complete and freeze_status in READY_STATUSES and reply_freezable:
         # READY authorizes business judgment, but the actor must consume the
         # complete request-bound DWP before presenting the first business
         # report.  Expose the deterministic checklist here; this is not a new
         # state/checker and does not wait for persistence.
-        dwp = pack.get("decision_work_package") or {}
-        graph = dwp.get("problem_graph") if isinstance(dwp, dict) else []
-        required_problem_ids = [
-            str(item.get("problem_id") or "").strip()
-            for item in (graph or [])
-            if isinstance(item, dict) and str(item.get("problem_id") or "").strip()
-        ]
         response_contract = dwp.get("response_contract") if isinstance(dwp, dict) else {}
         response_contract = response_contract if isinstance(response_contract, dict) else {}
         # Request-bound facts authorize business analysis.  The actor's
