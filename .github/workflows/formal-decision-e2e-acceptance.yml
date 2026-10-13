@@ -61,18 +61,9 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-      - name: Compile changed Python files
-        if: github.event_name == 'pull_request'
+      - name: Compile production Python modules
         shell: bash
-        run: |
-          set -euo pipefail
-          git fetch --no-tags origin "${{ github.base_ref }}"
-          mapfile -t changed_py < <(git diff --name-only "origin/${{ github.base_ref }}...HEAD" -- '*.py')
-          if (( ${#changed_py[@]} )); then
-            python -m py_compile "${changed_py[@]}"
-          else
-            echo "No changed Python files."
-          fi
+        run: python -m compileall -q scripts tests
       - name: Run three-entry and REPORT handoff contract acceptance
         run: |
           python -m unittest -v tests.test_formal_decision_e2e_contract
