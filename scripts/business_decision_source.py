@@ -819,6 +819,73 @@ def _validate_single_frozen_presentation(source: dict[str, Any]) -> None:
     if len(values) != 3 or len(set(str(value) for value in values)) != 1:
         raise ValueError("formal presentation content must have one identical frozen source")
 
+_FORMAL_PRESENTATION_HEADINGS = (
+    "【业务结论】",
+    "【数据时点与必要依据】",
+    "【三层监测】",
+    "【持仓动作】",
+    "【资本用途】",
+    "【全市场机会发现】",
+    "【观察ETF】",
+    "【关键风险】",
+    "【后续安排】",
+    "【置信度】",
+    "【最可能出错的地方】",
+)
+
+
+def _validate_formal_presentation_contract(source: dict[str, Any]) -> None:
+    """Validate the user-visible Formal Decision report, not only its envelope.
+
+    The business-answer validator proves DWP coverage.  This second, deterministic
+    check proves that the frozen presentation also exposes the required report
+    sections and enumerates every request-bound holding, observation and discovery
+    object.  It does not create a new state, writer or notification path.
+    """
+    binding = source.get("presentation_binding")
+    content = binding.get("full_content") if isinstance(binding, dict) else None
+    if not isinstance(content, str) or not content.strip():
+        raise ValueError("formal presentation requires non-empty full_content")
+    if len(content.strip()) < 1200:
+        raise ValueError("formal presentation is shorter than the required full report contract")
+    missing_headings = [heading for heading in _FORMAL_PRESENTATION_HEADINGS if heading not in content]
+    if missing_headings:
+        raise ValueError("formal presentation missing required sections: " + ",".join(missing_headings))
+    if "**" in content:
+        raise ValueError("formal presentation must not contain Markdown bold markers")
+    forbidden_internal_terms = ("canonical", "writer", "BDS", "reply_freezable", "control plane")
+    leaked = [term for term in forbidden_internal_terms if term in content]
+    if leaked:
+        raise ValueError("formal presentation contains internal terms: " + ",".join(leaked))
+
+    def require_object(code: str, name: str, role: str) -> None:
+        if code and code not in content:
+            raise ValueError(f"formal presentation missing {role} code: {code}")
+        if name and name not in content:
+            raise ValueError(f"formal presentation missing {role} name: {name}")
+
+    for review in source.get("managed_position_reviews") or []:
+        require_object(str(review.get("security_code") or "").strip(), str(review.get("security_name") or "").strip(), "holding")
+    for review in source.get("etf_opportunity_reviews") or []:
+        code = str(review.get("security_code") or review.get("code") or "").strip()
+        name = str(review.get("security_name") or "").strip()
+        require_object(code, name, "opportunity/observation")
+    role_map = source.get("business_role_reconciliation") or {}
+    for role, items in role_map.items():
+        if role == "全市场机会发现":
+            continue
+        if isinstance(items, list):
+            for item in items:
+                require_object(str(item.get("code") or "").strip(), str(item.get("name") or "").strip(), role)
+    if "持有管理" not in content or "不追加" not in content:
+        raise ValueError("formal presentation must state holding management and held-ETF add decisions")
+    if "可释放资本" not in content or "实际新增部署" not in content:
+        raise ValueError("formal presentation must state releasable capital and actual deployment")
+    if "Trial" not in content or "Confirm" not in content:
+        raise ValueError("formal presentation must state Trial and Confirm eligibility")
+    if not any(token in content for token in ("1）", "2）", "3）")):
+        raise ValueError("formal presentation requires hanging-indent secondary numbering 1）/2）/3）")
+
 def validate_source(source: dict[str, Any], *, expected_snapshot: str | None = None) -> dict[str, Any]:
     if classify_request(source) != BUSINESS_DECISION_SOURCE:
         raise ValueError("business source requires explicit BUSINESS_DECISION_SOURCE")
@@ -833,6 +900,7 @@ def validate_source(source: dict[str, Any], *, expected_snapshot: str | None = N
     if missing:
         raise ValueError("business decision completeness failed: " + ",".join(missing))
     _validate_single_frozen_presentation(source)
+    _validate_formal_presentation_contract(source)
     parent_request_id = str(source.get("parent_request_id") or source.get("request_id") or "").strip()
     consumption_error = validate_decision_evidence_consumption(
         source.get("decision_evidence_consumption"),
