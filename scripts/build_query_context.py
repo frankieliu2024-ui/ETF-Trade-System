@@ -183,6 +183,19 @@ def consistency_projection_status(root: Path = ROOT) -> dict:
         head = ""
     identity_matches = bool(checked and head and checked == head)
     current_evidence = identity_matches and status in {"PASS", "WARNING", "FAIL"}
+    source_value = str(request.get("requested_by") or request.get("source") or "INTERACTIVE_QUERY").strip().upper()
+    entry_mode = {
+        "CHATGPT_MANUAL_FORMAL_ANALYSIS": "MANUAL_CONVERSATION",
+        "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS": "MANUAL_SCHEDULED_TASK",
+        "CHATGPT_SCHEDULED_FORMAL_ANALYSIS": "AUTOMATIC_SCHEDULED_TASK",
+    }.get(source_value, "")
+    requested_at_value = _request_received_at_beijing(request)
+    requested_date = requested_at_value[:10] if requested_at_value else str(request.get("market_date") or "")
+    occurrence_value = str(request.get("occurrence_id") or request.get("occurrence") or "").strip()
+    if not occurrence_value:
+        occurrence_value = requested_at_value or str(request.get("request_id") or "")
+    task_id_value = str(request.get("task_id") or ("ETF正式决策" if entry_mode else "")).strip()
+    task_run_value = str(request.get("task_run_id") or request.get("request_id") or "").strip()
     return {
         "path": CANONICAL_FILES["system_consistency"],
         "reported_status": status,
@@ -611,6 +624,8 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     request_source = str(request.get("source") or request.get("requested_by") or "").strip().upper()
     manual_formal_sources = {
         "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+        "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+        "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
         "CHATGPT_USER_CONTINUE",
         "CHATGPT_USER_GITHUB_INTRADAY",
         "CHATGPT_USER_GITHUB_DECISION",
@@ -940,9 +955,14 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "schema_version": "1.5",
         "role": "PREFERRED_MINIMUM_SUFFICIENT_FORMAL_REASONING_INPUT",
         "trigger": {
-            "source": request.get("requested_by") or request.get("source") or "INTERACTIVE_QUERY",
+            "source": source_value,
             "request_id": request.get("request_id") or "",
-            "requested_at_beijing": _request_received_at_beijing(request),
+            "requested_at_beijing": requested_at_value,
+            "entry_mode": entry_mode,
+            "task_id": task_id_value,
+            "task_run_id": task_run_value,
+            "occurrence_id": occurrence_value,
+            "market_date": requested_date,
         },
         "master": {
             "version": decision.get("rules_version") or current.get("rules_version") or "",
@@ -1533,6 +1553,8 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     request_intent = _request_query_intent(request_payload)
     manual_formal_sources = {
         "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+        "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+        "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
         "CHATGPT_USER_CONTINUE",
         "CHATGPT_USER_GITHUB_INTRADAY",
         "CHATGPT_USER_GITHUB_DECISION",
