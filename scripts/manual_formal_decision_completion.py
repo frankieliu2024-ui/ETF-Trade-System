@@ -111,6 +111,7 @@ def build_structured_completion_request(
     completion_request_id: str = "",
     request_bound_pit_closure: dict | None = None,
     observation_eligibility_closure: dict | None = None,
+    presentation_content: str = "",
 ) -> dict:
     """Build the production actor envelope without canonical Formal Decision nesting."""
     if not isinstance(source_request, dict) or not source_request:
@@ -146,6 +147,21 @@ def build_structured_completion_request(
     }
     projected = project_decision_response(preflight_source, decision_response, decision_work_package)
     validate_source(projected, expected_snapshot=snapshot)
+    frozen_content = presentation_content if presentation_content not in (None, "") else None
+    if frozen_content is None and "presentation_content" in decision_response:
+        frozen_content = decision_response.get("presentation_content")
+    if frozen_content not in (None, "") and not isinstance(frozen_content, str):
+        raise ValueError("presentation_content must be a string")
+    if isinstance(frozen_content, str) and not frozen_content.strip():
+        raise ValueError("presentation_content must not be empty")
+    response_payload = dict(decision_response)
+    if frozen_content not in (None, ""):
+        # The report shown to the user and the report handed to the canonical
+        # producer must be the same frozen bytes.  The downstream consumer
+        # owns construction of presentation_binding; the actor envelope only
+        # carries the immutable content once, plus this mirrored field for
+        # same-source consistency validation.
+        response_payload["presentation_content"] = frozen_content
     payload = {
         "request_id": envelope_id,
         "parent_request_id": parent_id,
@@ -156,12 +172,51 @@ def build_structured_completion_request(
         "market_date": source_request.get("market_date"),
         "consumed_snapshot": snapshot,
         "decision_id": decision_id,
-        "decision_response": decision_response,
+        "decision_response": response_payload,
         "decision_work_package": decision_work_package,
         "request_bound_pit_closure": request_bound_pit_closure,
         "observation_eligibility_closure": observation_eligibility_closure,
     }
+    if frozen_content not in (None, ""):
+        payload["presentation_content"] = frozen_content
     return {key: value for key, value in payload.items() if value not in (None, "")}
+
+
+def build_ready_actor_envelope(
+    source_request: dict,
+    formal_decision: dict | None,
+    decision_response: dict,
+    decision_work_package: dict,
+    consumed_snapshot: str,
+    final_content: str,
+    completion_request_id: str = "",
+) -> dict:
+    """Build the one-shot handoff produced immediately after a READY reply.
+
+    This is intentionally a builder, not a second producer.  It requires the
+    exact frozen user-facing report and binds it to the same structured
+    answers, decision identity, DWP and snapshot used by the BDS projector.
+    Missing content fails closed instead of allowing a later interaction to
+    regenerate or guess the report.
+    """
+    if not isinstance(final_content, str) or not final_content.strip():
+        raise ValueError("READY actor handoff requires the frozen presentation_content")
+    response_payload = dict(decision_response or {})
+    response_payload["presentation_content"] = final_content
+    payload = build_structured_completion_request(
+        source_request,
+        formal_decision,
+        response_payload,
+        decision_work_package,
+        consumed_snapshot,
+        completion_request_id=completion_request_id,
+        presentation_content=final_content,
+    )
+    if payload.get("presentation_content") != final_content:
+        raise ValueError("READY actor handoff presentation_content was not preserved")
+    if payload.get("decision_response", {}).get("presentation_content") != final_content:
+        raise ValueError("READY actor handoff response content is not source-bound")
+    return payload
 
 
 def write_completion_request(source_request_path: str, decision_path: str, consumed_snapshot: str, output_path: str = "", completion_request_id: str = "", decision_response_path: str = "") -> Path:
@@ -265,3 +320,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
