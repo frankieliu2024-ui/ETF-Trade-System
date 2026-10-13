@@ -158,6 +158,12 @@ def formal_decision_report_event() -> dict | None:
         paths = [bound_path] if bound_path.is_file() else []
     else:
         paths = list(directory.glob("*.json")) if directory.exists() else []
+    expected_request_id = str(os.environ.get("EXPECTED_FORMAL_REQUEST_ID") or "").strip()
+    # A Formal Decision REPORT must be bound to the request that caused this
+    # notification wake. Without that identity, fail closed instead of scanning
+    # an older decision and returning ALREADY_MANAGED for the wrong run.
+    if not expected_request_id and os.environ.get("DECISION_EVENT_PATH", "").strip():
+        return None
     candidates = []
     for path in paths:
         event = read_json(path, {})
@@ -171,6 +177,8 @@ def formal_decision_report_event() -> dict | None:
             continue
         request_id = str(binding.get("request_id") or event.get("parent_request_id") or "").strip()
         decision_id = str(binding.get("decision_id") or event.get("decision_id") or "").strip()
+        if expected_request_id and request_id != expected_request_id:
+            continue
         if not request_id or not decision_id:
             continue
         expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
