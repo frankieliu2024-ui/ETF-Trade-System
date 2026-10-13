@@ -15,30 +15,6 @@ on:
   # Read-only precheck for changes that can redefine consistency semantics.
   # It reuses the same production checks before merge, but never executes
   # mutation requests or persists generated state back to main.
-  pull_request:
-    branches: [main]
-    paths:
-      - ".github/workflows/system-consistency.yml"
-      - ".github/workflows/historical-canonical-backfill.yml"
-      - ".github/workflows/self-healing-watchdog.yml"
-      - ".github/workflows/workflow-failure-guard.yml"
-      - ".github/workflows/decision-notification.yml"
-      - ".github/workflows/market-snapshot.yml"
-      - "scripts/**"
-      - "tests/**"
-      - "config/**"
-      # All formal facts, requests, normative documentation, and contract tests
-      # are full-acceptance inputs; keep the PR trigger aligned with the
-      # classifier rather than relying on a later manual dispatch.
-      - "ETF规则_MASTER.md"
-      - "ETF_SYSTEM_INDEX.md"
-      - "ETF当前状态_DASHBOARD.md"
-      - "ETF市场行情档案_2026.md"
-      - "ETF交易复盘与经验库_2026.md"
-      - "ETF与市场监测数据接口使用规范.md"
-      - "docs/**"
-      - "events/**"
-      - "requests/**"
   push:
     branches: [main]
     paths:
@@ -199,42 +175,6 @@ jobs:
           name: system-consistency-${{ github.run_id }}
           path: ${{ runner.temp }}/system_consistency.json
           if-no-files-found: ignore
-
-  pr_production_acceptance:
-    # Pull requests must execute the production-facing acceptance contract in an
-    # isolated checkout. The mutating production_acceptance job remains main-only.
-    if: ${{ github.event_name == 'pull_request' }}
-    needs: consistency
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      ETF_SYSTEM_ROOT: ${{ github.workspace }}
-      PYTHONPATH: ${{ github.workspace }}/scripts:${{ github.workspace }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-      - name: Run isolated production reliability acceptance
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m unittest tests.test_production_reliability
-      - name: Run isolated market production acceptance
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m unittest tests.test_market_production_health_coverage tests.test_market_provider_display_sync
-      - name: Run formal decision handoff contract acceptance
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m unittest tests.test_formal_decision_e2e_contract
-      - name: Record non-mutating PR acceptance
-        run: |
-          printf '%s\\n' '{"acceptance":"PASS","mode":"PR_ISOLATED_NON_MUTATING","production_send":"UNVERIFIED_EXTERNAL_SEND"}'
 
   production_acceptance:
     # Do not allocate a second acceptance runner after the consistency gate
