@@ -457,28 +457,14 @@ def _evidence_requirement_plan(problems: list[dict]) -> list[dict]:
         elif any(token in text for token in ("半导体", "科技", "芯片", "纳指", "科创")):
             classes += ["OVERSEAS_INDUSTRY_CHAIN", "HK_INDUSTRY_CHAIN"]
 
-        hard_required_classes = {"A_SHARE_STYLE_FEEDBACK"}
-        if pid.startswith(("HOLDING:", "BASE_STOCK_REPLACEMENT:")) or pid in {
-            "DEPLOYABLE_CASH", "RELEASABLE_CAPITAL", "TRIAL_CONFIRM_CAPACITY", "NEXT_UNIT_CAPITAL_USE"
-        }:
-            hard_required_classes.update({
-                "ETF_RELATIVE_STRENGTH", "FULL_MARKET_DISCOVERY", "OBSERVATION_ETF",
-                "TEMPORARY_DISCOVERY_CANDIDATE", "CASH", "RELEASABLE_CAPITAL",
-                "HOLDING_ADDITIONAL_CAPITAL",
-            })
-        elif pid == "MAIN_CANDIDATE" or pid.startswith(("DISCOVERY:", "OBSERVATION:", "OBSERVATION_REVIEW:")):
-            hard_required_classes.update({
-                "ETF_RELATIVE_STRENGTH", "FULL_MARKET_DISCOVERY", "OBSERVATION_ETF",
-                "TEMPORARY_DISCOVERY_CANDIDATE",
-            })
         for evidence_class in dict.fromkeys(classes):
             plan.append({
                 "requirement_id": f"{pid}:{evidence_class}",
                 "target_problem_id": pid,
                 "evidence_class": evidence_class,
                 "target_exposure": target,
-                "required": evidence_class in hard_required_classes,
-                "optional": evidence_class not in hard_required_classes,
+                "required": evidence_class in {"A_SHARE_STYLE_FEEDBACK", "ETF_RELATIVE_STRENGTH"},
+                "optional": evidence_class not in {"A_SHARE_STYLE_FEEDBACK", "ETF_RELATIVE_STRENGTH"},
                 "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
                 "satisfaction": "UNSATISFIED",
             })
@@ -929,25 +915,22 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             or str(item).split(":", 1)[0] in capital_scope_ids
         )
     ]
-    capital_ready = not capital_unresolved
+    # Keep analysis admission lightweight: unresolved capital evidence is
+    # observable here, while the action/amount/share decision remains subject
+    # to the single unified capital-comparison contract at BDS validation.
     work_package["capital_competition_readiness"] = {
-        "status": "READY" if capital_ready else "NOT_READY",
-        "ready": capital_ready,
+        "status": "READY" if not capital_unresolved else "NOT_READY",
+        "ready": not capital_unresolved,
         "hard_gate": True,
+        "scope": "ACTION_AMOUNT_SHARE_ONLY",
         "unresolved_required_requirements": capital_unresolved,
-        "rule": "现金、全部实际持仓、持仓追加、观察/机会ETF和可释放资本必须在同一资本比较中完成；未完成不得形成正式READY或用户可见业务决策。",
+        "rule": "分析可以继续输出；具体买卖、金额和份额必须由统一资本比较合同在BDS阶段完成校验。",
     }
-    if not capital_ready:
-        if "CAPITAL_COMPETITION_INCOMPLETE" not in formal_action_readiness["blockers"]:
-            formal_action_readiness["blockers"].append("CAPITAL_COMPETITION_INCOMPLETE")
-        formal_action_readiness["status"] = "NOT_READY"
-        formal_action_readiness["ready"] = False
-        if "CAPITAL_COMPETITION_INCOMPLETE" not in formal_reply_freeze["blockers"]:
-            formal_reply_freeze["blockers"].append("CAPITAL_COMPETITION_INCOMPLETE")
-        formal_reply_freeze["status"] = "IN_FLIGHT"
-        formal_reply_freeze["reply_freezable"] = False
-        formal_reasoning_readiness["capital_efficiency_scope"] = "NOT_READY_CAPITAL_COMPETITION"
-        formal_reasoning_readiness["capital_efficiency_limitations"] = ["CAPITAL_COMPETITION_INCOMPLETE"]
+    work_package["capital_competition_action_gate"] = {
+        "status": "BLOCKED" if capital_unresolved else "OPEN",
+        "blocks": ["ACTION_AMOUNT_SHARE"] if capital_unresolved else [],
+        "source": "UNIFIED_CAPITAL_COMPARISON_CONTRACT",
+    }
 
     work_package["three_layer_monitoring_evidence"] = three_layer_monitoring
     work_package["previous_formal_decision_baseline"] = _latest_formal_decision_baseline(root, _request_received_at_beijing(request))
