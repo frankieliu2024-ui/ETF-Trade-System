@@ -1,6 +1,22 @@
 name: Formal Decision automated E2E acceptance
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/formal_entry_contract.py"
+      - "scripts/notification_center.py"
+      - "scripts/business_decision_source.py"
+      - "scripts/process_state_sync_request.py"
+      - "scripts/build_query_context.py"
+      - "scripts/runtime_self_heal.py"
+      - "scripts/build_e2e_status.py"
+      - "scripts/report_delivery_request.py"
+      - "tests/test_formal_decision_e2e_contract.py"
+      - "tests/test_formal_decision_production_e2e.py"
+      - "docs/Formal Decision执行与用户回复协议.md"
+      - "docs/生产变更与并发写入协议_V1.0.md"
+      - ".github/workflows/decision-notification.yml"
   push:
     branches: [main]
     paths:
@@ -57,9 +73,19 @@ jobs:
           python - <<'PY' > "$RUNNER_TEMP/formal-decision-acceptance/result.json"
           import json, os
           print(json.dumps({
-              "merged_commit_sha": os.environ["GITHUB_SHA"],
+              "input_sha": os.environ["GITHUB_SHA"],
+              "acceptance_sha": os.environ["GITHUB_SHA"],
+              "final_main_sha": os.environ["GITHUB_SHA"],
+              "sha_stable": True,
               "run_id": os.environ["GITHUB_RUN_ID"],
               "status": "MERGED_BUT_NOT_ACCEPTED",
+              "acceptance_scope": "CONTRACT_ONLY_AND_CONTROLLED_SIMULATION",
+              "real_production_evidence": "MISSING",
+              "entry_results": {
+                  "CHATGPT_MANUAL_FORMAL_ANALYSIS": "REAL_PRODUCTION_EVIDENCE_MISSING",
+                  "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS": "REAL_PRODUCTION_EVIDENCE_MISSING",
+                  "CHATGPT_SCHEDULED_FORMAL_ANALYSIS": "REAL_PRODUCTION_EVIDENCE_MISSING",
+              },
               "pushplus": "UNVERIFIED_EXTERNAL_SEND",
           }))
           PY
