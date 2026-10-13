@@ -177,9 +177,11 @@ jobs:
           if-no-files-found: ignore
 
   production_acceptance:
-    # Do not allocate a second acceptance runner after the consistency gate
-    # has already failed; successful production paths retain the same acceptance.
+    # This is a diagnostic production-health lane. Formal Decision business
+    # acceptance is owned by formal-decision-e2e-acceptance.yml; global
+    # post-close/current-state health must never overwrite that business result.
     if: ${{ needs.consistency.result == 'success' && github.event_name != 'pull_request' }}
+    continue-on-error: true
     needs: consistency
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -346,6 +348,13 @@ jobs:
             data/state/e2e_status.json
             data/state/execution_quality.json
             ${{ runner.temp }}/production-acceptance-result.json
-      - name: Enforce production acceptance
-        if: ${{ always() && (steps.acceptance_scope.outputs.required == 'true' || github.event_name == 'workflow_dispatch') && steps.acceptance.outcome == 'failure' }}
-        run: exit 1
+      - name: Report production acceptance without gating business CI
+        if: ${{ always() && (steps.acceptance_scope.outputs.required == 'true' || github.event_name == 'workflow_dispatch') }}
+        shell: bash
+        run: |
+          if [ "${{ steps.acceptance.outcome }}" = "failure" ]; then
+            echo "Production/global health acceptance failed; retained as diagnostic evidence only."
+            echo "Formal Decision business-chain status is owned by the dedicated business contract workflow."
+          else
+            echo "Production/global health acceptance completed."
+          fi
