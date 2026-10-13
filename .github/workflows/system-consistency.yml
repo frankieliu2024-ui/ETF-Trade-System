@@ -629,7 +629,7 @@ jobs:
           input_sha="${ETF_ACCEPTANCE_SHA:-$(git rev-parse HEAD)}"
           final_sha="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
           python - "$RUNNER_TEMP/acceptance-identity.json" "$input_sha" "$final_sha" <<'PY'
-          import json, sys
+          import json, os, sys
           from pathlib import Path
           out = Path(sys.argv[1])
           input_sha, final_sha = sys.argv[2:4]
