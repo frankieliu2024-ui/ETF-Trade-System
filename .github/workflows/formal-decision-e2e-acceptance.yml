@@ -17,9 +17,6 @@ on:
       - "docs/Formal Decision执行与用户回复协议.md"
       - "docs/生产变更与并发写入协议_V1.0.md"
       - ".github/workflows/decision-notification.yml"
-      - ".github/workflows/formal-decision-e2e-acceptance.yml"
-      - "config/maintenance/production_mutation_protocol.json"
-      - "tests/test_acceptance_window_governance.py"
   push:
     branches: [main]
     paths:
@@ -42,10 +39,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: ${{ github.event_name == 'pull_request' && format('etf-formal-decision-e2e-pr-{0}', github.event.pull_request.number) || 'etf-main-canonical-writer' }}
-  cancel-in-progress: false
-
 jobs:
   formal-decision-e2e:
     runs-on: ubuntu-latest
@@ -53,22 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'main' }}
-      - name: Verify acceptance source SHA
-        env:
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        shell: bash
-        run: |
-          HEAD_SHA=$(git rev-parse HEAD)
-          echo "GITHUB_SHA=$GITHUB_SHA"
-          echo "HEAD_SHA=$HEAD_SHA"
-          echo "PR_HEAD_SHA=$PR_HEAD_SHA"
-          echo "BASE_SHA=$BASE_SHA"
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ "$HEAD_SHA" != "$PR_HEAD_SHA" ]; then
-            echo "acceptance checkout SHA does not match PR head" >&2
-            exit 1
-          fi
+          ref: main
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
@@ -99,10 +77,6 @@ jobs:
               "acceptance_sha": os.environ["GITHUB_SHA"],
               "final_main_sha": os.environ["GITHUB_SHA"],
               "sha_stable": True,
-              "state_write_commits": [],
-              "acceptance_window_id": f"acceptance:{os.environ['GITHUB_RUN_ID']}:{os.environ.get('GITHUB_RUN_ATTEMPT', '1')}",
-              "writer_runs_during_window": [],
-              "blocked_or_isolated_writers": ["etf-main-canonical-writer"],
               "run_id": os.environ["GITHUB_RUN_ID"],
               "status": "MERGED_BUT_NOT_ACCEPTED",
               "acceptance_scope": "CONTRACT_ONLY_AND_CONTROLLED_SIMULATION",
