@@ -109,7 +109,7 @@ def normative_rule_paths() -> list[str]:
     in_domains = False
     for line in lines:
         stripped = line.strip()
-        if stripped == "## 2. 四个规范域":
+        if stripped in {"## 2. 四个规范域", "## 2. 五个规范域"}:
             in_domains = True
             continue
         if in_domains and stripped.startswith("## "):

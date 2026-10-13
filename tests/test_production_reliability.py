@@ -49,20 +49,27 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             source = Path(td) / "scheduled-bds.json"
             source.write_text(json.dumps({
+                "event_type": "FORMAL_DECISION",
                 "request_id": "scheduled-20261012-110000__business_decision_source",
                 "parent_request_id": "scheduled-20261012-110000",
                 "decision_id": "scheduled-20261012-110000_decision",
+                "report_id": "scheduled-20261012-110000_report",
                 "presentation_binding": {
                     "report_type": "ETF_FORMAL_DECISION",
                     "task_id": "ETF正式决策",
                     "task_run_id": "scheduled-20261012-110000",
                     "full_content": "【ETF正式决策】测试正文",
+                    "request_id": "scheduled-20261012-110000",
+                    "decision_id": "scheduled-20261012-110000_decision",
+                    "report_id": "scheduled-20261012-110000_report",
+                    "content_hash": __import__("hashlib").sha256("【ETF正式决策】测试正文".encode()).hexdigest(),
                 },
             }, ensure_ascii=False), encoding="utf-8")
             event = center.formal_content_event(source)
         self.assertIsNotNone(event)
         self.assertEqual(event["content"], "【ETF正式决策】测试正文")
         self.assertEqual(event["title"], "【ETF正式决策】")
+        self.assertEqual(event["content_hash"], __import__("hashlib").sha256("【ETF正式决策】测试正文".encode()).hexdigest())
 
 
     def test_canonical_known_ipo_attribution_is_consumed_without_reinference(self):
