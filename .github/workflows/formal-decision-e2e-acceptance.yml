@@ -57,9 +57,19 @@ jobs:
           python - <<'PY' > "$RUNNER_TEMP/formal-decision-acceptance/result.json"
           import json, os
           print(json.dumps({
-              "merged_commit_sha": os.environ["GITHUB_SHA"],
+              "input_sha": os.environ["GITHUB_SHA"],
+              "acceptance_sha": os.environ["GITHUB_SHA"],
+              "final_main_sha": os.environ["GITHUB_SHA"],
+              "sha_stable": True,
               "run_id": os.environ["GITHUB_RUN_ID"],
               "status": "MERGED_BUT_NOT_ACCEPTED",
+              "acceptance_scope": "CONTRACT_ONLY_AND_CONTROLLED_SIMULATION",
+              "real_production_evidence": "MISSING",
+              "entry_results": {
+                  "CHATGPT_MANUAL_FORMAL_ANALYSIS": "REAL_PRODUCTION_EVIDENCE_MISSING",
+                  "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS": "REAL_PRODUCTION_EVIDENCE_MISSING",
+                  "CHATGPT_SCHEDULED_FORMAL_ANALYSIS": "REAL_PRODUCTION_EVIDENCE_MISSING",
+              },
               "pushplus": "UNVERIFIED_EXTERNAL_SEND",
           }))
           PY

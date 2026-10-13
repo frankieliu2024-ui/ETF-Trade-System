@@ -507,7 +507,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-      - name: Persist accepted canonical ETF equity replay
+      - name: Build isolated ETF equity replay (no canonical write)
         shell: bash
         run: |
           set -euo pipefail
@@ -529,22 +529,7 @@ jobs:
               raise SystemExit("fee boundary missing from gross replay")
           print(json.dumps({"cutoff": p.get("replay_cutoff"), "trade_facts": s.get("trade_fact_count"), "price_dates": s.get("price_date_count"), "gross_equity": s.get("current_gross_strategy_equity"), "gross_return": s.get("current_strategy_return_pct_gross")}, ensure_ascii=False))
           PY
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+users.noreply.github.com"
-          cp "$replay" data/state/etf_strategy_equity.json
-          python scripts/sync_formal_files.py
-          git add data/state/etf_strategy_equity.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          git commit -m "state: persist accepted canonical ETF equity replay"
-          # The consistency run can overlap with independent canonical writers
-          # (for example the scheduled trade-review/report-delivery chain). Keep
-          # this owned commit intact, absorb the latest remote main immediately
-          # before publication, and never rely on last-writer-wins semantics.
-          git fetch --no-tags origin main
-          git rebase origin/main
-          git push origin HEAD:main
+          echo "replay_path=$replay" >> "$GITHUB_OUTPUT"
 
       - name: Consume pending trade-fact corrections
         shell: bash
@@ -569,17 +554,16 @@ jobs:
           git commit -m "state: consume trade fact corrections"
           git fetch --no-tags origin main
           git rebase origin/main
-          git push origin HEAD:main
-      - name: Bind acceptance to post-correction main HEAD
+          echo "state publication disabled during acceptance"
+      - name: Bind acceptance to immutable input main HEAD
         shell: bash
         run: |
           set -euo pipefail
-          # Correction consumption may publish a new canonical main commit.
-          # All following acceptance and persistence steps must use that exact
-          # checkout identity, never the triggering commit's stale SHA.
-          git fetch --no-tags origin main
-          git reset --hard origin/main
-          echo "ETF_ACCEPTANCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          input_sha="$(git rev-parse HEAD)"
+          remote_sha="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          test "$input_sha" = "$remote_sha" || { echo "main advanced before acceptance: $input_sha -> $remote_sha" >&2; exit 1; }
+          echo "ETF_ACCEPTANCE_SHA=$input_sha" >> "$GITHUB_ENV"
+          echo "input_sha=$input_sha" >> "$GITHUB_OUTPUT"
 
       - name: Classify mutation for combination acceptance
         id: acceptance_scope
@@ -637,6 +621,31 @@ jobs:
         shell: bash
         run: |
           python scripts/run_production_acceptance.py --mutation-sha "$ETF_ACCEPTANCE_SHA" --scope-path "$RUNNER_TEMP/acceptance_scope.json" --result-path "$RUNNER_TEMP/production-acceptance-result.json"
+      - name: Write immutable acceptance identity
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          input_sha="${ETF_ACCEPTANCE_SHA:-$(git rev-parse HEAD)}"
+          final_sha="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          python - "$RUNNER_TEMP/acceptance-identity.json" "$input_sha" "$final_sha" <<'PY'
+          import json, sys
+          from pathlib import Path
+          out = Path(sys.argv[1])
+          input_sha, final_sha = sys.argv[2:4]
+          payload = {
+              "input_sha": input_sha,
+              "final_main_sha": final_sha,
+              "state_write_commits": [],
+              "acceptance_sha": input_sha,
+              "sha_stable": input_sha == final_sha,
+              "status": "PASS" if input_sha == final_sha else "MERGED_BUT_NOT_ACCEPTED",
+              "state_write_mode": "ISOLATED_ARTIFACT_ONLY",
+          }
+          out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          if not payload["sha_stable"]:
+              raise SystemExit("main advanced during acceptance; acceptance is invalid for final main")
+          PY
       - name: Preserve acceptance projections as run evidence
         if: ${{ always() && (steps.acceptance_scope.outputs.required == 'true' || github.event_name == 'workflow_dispatch') }}
         uses: actions/upload-artifact@v4
@@ -645,6 +654,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
           path: |
+            ${{ runner.temp }}/acceptance-identity.json
             data/state/system_consistency.json
             data/state/maintenance_health.json
             data/state/e2e_status.json
