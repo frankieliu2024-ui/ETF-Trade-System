@@ -845,6 +845,14 @@ jobs:
           # parent on latest main. Restore that exact path before validating it;
           # this does not create a second writer or relax uniqueness.
           if len(matches) == 0 and not event_path.is_file():
+              # The canonical ingress is idempotent. Retry the same existing
+              # request once to bridge a transient workspace handoff gap.
+              subprocess.run(
+                  ["python", "scripts/process_state_sync_request.py", str(Path(sys.argv[1]))],
+                  check=True,
+              )
+              matches = list(Path("events/decisions").glob(f"{decision_id}.json"))
+          if len(matches) == 0 and not event_path.is_file():
               event_path.parent.mkdir(parents=True, exist_ok=True)
               restored = None
               for ref in ("HEAD", "origin/main"):
