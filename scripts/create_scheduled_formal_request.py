@@ -5,6 +5,8 @@ import os
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+from formal_entry_contract import build_identity
+
 ROOT = Path(__file__).resolve().parents[1]
 REQUEST_DIR = ROOT / "requests" / "live_snapshot"
 BEIJING = timezone(timedelta(hours=8))
@@ -61,6 +63,7 @@ def main() -> int:
         "duplicate_equivalent_refresh_forbidden": True,
         "ingress_owner": "GITHUB_SCHEDULED_FORMAL_DECISION",
     }
+    build_identity(payload)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"FORMAL_SCHEDULE_INGRESS=CREATED request_id={request_id} path={path}")
     return 0
