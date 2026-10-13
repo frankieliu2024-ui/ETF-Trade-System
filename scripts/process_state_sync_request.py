@@ -3302,8 +3302,12 @@ def main() -> int:
     args = parser.parse_args()
     forensic_historical_replay = bool(str(args.formal_replay_source_commit or "").strip()) and os.environ.get("ETF_FORMAL_REPLAY_FORENSIC") == "1"
     reset_formal_replay_forensic_trace(forensic_historical_replay)
-    req_path = (ROOT / args.request_path).resolve()
-    if ROOT not in req_path.parents or not req_path.exists():
+    raw_request_path = Path(str(args.request_path or "").strip())
+    # The workflow may pass either the repository-relative ingress path or the
+    # absolute path after its execution-time-main reset/recovery step. Resolve
+    # both forms through the same root boundary; never allow an outside path.
+    req_path = (raw_request_path if raw_request_path.is_absolute() else ROOT / raw_request_path).resolve()
+    if req_path == ROOT or ROOT not in req_path.parents or not req_path.is_file():
         raise RuntimeError("invalid state sync request path")
     request = load_json(req_path)
     request["_ingress_path"] = str(req_path.relative_to(ROOT)).replace("\\\\", "/")
