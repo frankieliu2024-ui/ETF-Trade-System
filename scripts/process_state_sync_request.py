@@ -2190,6 +2190,11 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         if raw_presentation_binding is not None
         else {}
     )
+    if presentation_binding:
+        presentation_binding["request_id"] = str(request.get("request_id") or "")
+        presentation_binding["report_id"] = (
+            f"etf_trade_review:{presentation_binding['task_run_id']}"
+        )
     data_time = dict(review.get("data_time")) if isinstance(review.get("data_time"), dict) else {}
     if is_midday_review:
         # Midday Scheduled Review is a valid stage review, not a 15:00 close review.
@@ -2262,7 +2267,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         _persist_existing_case_detail_projections(prior_review)
         return True, True
     review_time = (incoming_time or datetime.now(SHANGHAI)).isoformat(timespec="seconds")
-    event = {"event_type": "FORMAL_POST_CLOSE_REVIEW", "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "review": review, "presentation_binding": presentation_binding, "managed_position_sell_review": managed_projection, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
+    event = {"event_type": "FORMAL_POST_CLOSE_REVIEW", "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "report_id": presentation_binding.get("report_id", ""), "content_hash": presentation_binding.get("content_hash", ""), "review": review, "presentation_binding": presentation_binding, "managed_position_sell_review": managed_projection, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
     event["reviewed_at_beijing"] = review_time
     event_path.parent.mkdir(parents=True, exist_ok=True)
     atomic_json_write(event_path, event)
@@ -2332,6 +2337,42 @@ def record_close_review_closure(account: dict, request: dict, review: dict, even
         return
     closure_path = ROOT / "data" / "state" / f"close_review_closure_{market_date}.json"
     snapshot = review.get("data_time") or {}
+    binding = event.get("presentation_binding") if isinstance(event.get("presentation_binding"), dict) else {}
+    # The review event is the single completion owner.  Persist the REPORT
+    # handoff from that same event so a generated review cannot exist without
+    # a durable, request-bound delivery request.  notification_center remains
+    # the only sender; this projection only records the immutable handoff.
+    task_run_id = str(binding.get("task_run_id") or "").strip()
+    full_content = str(binding.get("full_content") or "")
+    report_id = f"etf_trade_review:{task_run_id}" if task_run_id else ""
+    content_hash = hashlib.sha256(full_content.encode("utf-8")).hexdigest() if full_content else ""
+    if task_run_id and full_content and str(binding.get("content_hash") or "") == content_hash:
+        report_path = ROOT / "requests" / "report_delivery" / f"{report_id.replace(':', '__')}.json"
+        report = {
+            "schema_version": "1.0",
+            "event_type": "REPORT_DELIVERY_REQUEST",
+            "channel": "REPORT",
+            "report_type": str(binding.get("report_type") or "ETF_TRADE_REVIEW"),
+            "report_id": report_id,
+            "request_id": str(event.get("request_id") or request.get("request_id") or ""),
+            "task_id": str(binding.get("task_id") or "ETF交易复盘"),
+            "task_run_id": task_run_id,
+            "generated_at": str(event.get("reviewed_at_beijing") or event.get("updated_at_beijing") or ""),
+            "effective_market_date": market_date,
+            "source_actor": str(event.get("source") or "CHATGPT_SCHEDULED_REVIEW_ACTOR"),
+            "source_reference": f"canonical-review-completion:events/reviews/{market_date}.json",
+            "title": "【ETF交易复盘】",
+            "summary": "Canonical review completion; deliver the frozen report unchanged.",
+            "full_content": full_content,
+            "content_hash": content_hash,
+            "idempotency_key": f"ETF_TRADE_REVIEW:{task_run_id}",
+            "delivery_mode": "FULL_REPORT",
+            "no_trade_authority": True,
+        }
+        if report_path.exists() and load_json(report_path) != report:
+            raise RuntimeError("current review REPORT_DELIVERY_REQUEST identity/content mismatch")
+        if not report_path.exists():
+            atomic_json_write(report_path, report)
     closure = {
         "schema_version": "1.0", "market_date": market_date,
         "chain": ["market_close", "account", "formal_review", "archive", "experience", "dashboard", "risk"],
