@@ -40,7 +40,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: etf-main-canonical-writer
+  group: ${{ github.event_name == 'pull_request' && format('etf-formal-decision-e2e-pr-{0}', github.event.pull_request.number) || 'etf-main-canonical-writer' }}
   cancel-in-progress: false
 
 jobs:
@@ -50,7 +50,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: main
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'main' }}
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
