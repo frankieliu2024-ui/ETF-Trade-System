@@ -686,7 +686,7 @@ jobs:
               echo "resolved direct-push BDS replay source=$FORMAL_REPLAY_SOURCE_COMMIT dwp=$FORMAL_REPLAY_DWP_COMMIT"
             fi
           fi
-          triggering_request_file=$(printf '%s\n' $request_files | head -n 1)
+          triggering_request_file=$(printf '%s\n' "$request_files" | sed '/^$/d' | head -n 1)
           echo "triggering_request_file=$triggering_request_file" >> "$GITHUB_OUTPUT"
           echo "TRIGGERING_REQUEST_FILE=$triggering_request_file" >> "$GITHUB_ENV"
           formal_completion=false
