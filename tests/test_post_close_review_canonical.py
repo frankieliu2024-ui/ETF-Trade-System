@@ -57,6 +57,15 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertEqual(binding["task_run_id"], "trade-occurrence-1")
         self.assertEqual(binding["full_content"], final_content)
         self.assertEqual(binding["content_hash"], __import__("hashlib").sha256(final_content.encode()).hexdigest())
+        self.assertEqual(binding["request_id"], request["request_id"])
+        self.assertEqual(binding["report_id"], "etf_trade_review:trade-occurrence-1")
+        report_path = self.root / "requests/report_delivery/etf_trade_review__trade-occurrence-1.json"
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        self.assertEqual(report["event_type"], "REPORT_DELIVERY_REQUEST")
+        self.assertEqual(report["request_id"], request["request_id"])
+        self.assertEqual(report["report_id"], binding["report_id"])
+        self.assertEqual(report["content_hash"], binding["content_hash"])
+        self.assertEqual(report["full_content"], final_content)
 
     def test_idempotent_and_closure(self):
         account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
