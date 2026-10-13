@@ -8,6 +8,14 @@ on:
       - "scripts/notification_center.py"
       - "scripts/business_decision_source.py"
       - "scripts/process_state_sync_request.py"
+      - "scripts/formal_entry_contract.py"
+      - "scripts/build_query_context.py"
+      - "scripts/runtime_self_heal.py"
+      - "scripts/build_e2e_status.py"
+      - "scripts/report_delivery_request.py"
+      - "tests/test_formal_decision_production_e2e.py"
+      - "docs/Formal Decision执行与用户回复协议.md"
+      - "docs/生产变更与并发写入协议_V1.0.md"
       - ".github/workflows/decision-notification.yml"
       - "tests/test_formal_decision_e2e_contract.py"
   workflow_dispatch:
@@ -29,6 +37,9 @@ jobs:
       - name: Run three-entry and REPORT handoff contract acceptance
         run: |
           python -m unittest -v tests.test_formal_decision_e2e_contract
+      - name: Run controlled three-entry production handoff acceptance
+        run: |
+          python -m unittest -v tests.test_formal_decision_production_e2e
       - name: Run notification workflow structural acceptance
         run: |
           python -m unittest -v tests.test_notification_workflow_structure
@@ -40,3 +51,20 @@ jobs:
           test -f scripts/process_state_sync_request.py
           test -f scripts/notification_center.py
           echo "Formal Decision automated E2E acceptance scope verified"
+      - name: Persist merged-main acceptance identity
+        run: |
+          mkdir -p "$RUNNER_TEMP/formal-decision-acceptance"
+          python - <<'PY' > "$RUNNER_TEMP/formal-decision-acceptance/result.json"
+          import json, os
+          print(json.dumps({
+              "merged_commit_sha": os.environ["GITHUB_SHA"],
+              "run_id": os.environ["GITHUB_RUN_ID"],
+              "status": "MERGED_BUT_NOT_ACCEPTED",
+              "pushplus": "UNVERIFIED_EXTERNAL_SEND",
+          }))
+          PY
+      - name: Upload acceptance evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: formal-decision-e2e-${{ github.run_id }}
+          path: ${{ runner.temp }}/formal-decision-acceptance/result.json
