@@ -48,6 +48,8 @@ def main() -> int:
         "requested_at_beijing": now.isoformat(),
         "request_type": "MARKET_QUOTE_REFRESH",
         "source": "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+        "entry_mode": "AUTOMATIC_SCHEDULED_TASK",
+        "task_id": "ETF正式决策",
         "task_run_id": f"ETF_FORMAL_DECISION_{market_date.replace('-', '')}_{hour:02d}{minute:02d}",
         "occurrence_id": occurrence,
         "market_date": market_date,
