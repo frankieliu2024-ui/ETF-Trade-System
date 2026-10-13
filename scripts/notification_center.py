@@ -157,7 +157,11 @@ def formal_decision_report_event() -> dict | None:
             bound_path = ROOT / bound_path
         paths = [bound_path] if bound_path.is_file() else []
     else:
-        paths = list(directory.glob("*.json")) if directory.exists() else []
+        # Formal Decision delivery is never allowed to discover an arbitrary
+        # historical event.  The producer workflow must pass the exact event
+        # path from the triggering commit; otherwise a stale decision can be
+        # projected as the current report.
+        return None
     expected_request_id = str(os.environ.get("EXPECTED_FORMAL_REQUEST_ID") or "").strip()
     # DECISION_EVENT_PATH is itself the exact current completion binding. An
     # optional request id further strengthens the check, but must not be
@@ -974,41 +978,11 @@ def compact_recent(item: dict) -> dict:
 
 
 def formal_content_event(source_path: Path) -> dict | None:
-    """Project a BDS completion into the normal idempotent notification path."""
-    source = read_json(source_path, {})
-    content = source.get("presentation_content")
-    if not content and isinstance(source.get("presentation_binding"), dict):
-        content = source["presentation_binding"].get("full_content")
-    if not content and isinstance(source.get("decision_response"), dict):
-        content = source["decision_response"].get("presentation_content")
-    if not isinstance(content, str) or not content.strip():
-        return None
-    content = content.strip()
-    request_id = str(source.get("parent_request_id") or source.get("request_id") or "").strip()
-    task_run_id = str(source.get("task_run_id") or source.get("occurrence_id") or source.get("decision_id") or "").strip()
-    identity = task_run_id or hashlib.sha256(content.encode("utf-8")).hexdigest()
-    return {
-        "key": f"ETF_FORMAL_DECISION:{identity}",
-        "source_event_id": f"formal-decision-bds:{request_id}:{identity}",
-        "event_type": "REPORT_DELIVERY_REQUEST",
-        "notification_channel": "REPORT",
-        "delivery_mode": "FULL_REPORT",
-        "type": "正式报告",
-        # REPORT 的 PushPlus 外层业务标题固定使用任务名称；日期时间等
-        # 正式判断标题只保留在冻结正文第一行，不得污染外层标题。
-        "title": "【ETF正式决策】",
-        "content": content,
-        "source": f"business-decision-source:{source_path.name}",
-        "user_severity": "正式报告",
-        "user_action": "阅读已完成的正式ETF正式决策；无需自动交易操作",
-        "report_type": "ETF_FORMAL_DECISION",
-        "task_id": str(source.get("task_id") or "ETF正式决策"),
-        "task_run_id": identity,
-        "related_decision_id": str(source.get("decision_id") or identity),
-        "idempotency_key": f"ETF_FORMAL_DECISION:{identity}",
-        "no_trade_authority": True,
-        "content_hash": hashlib.sha256(content.encode("utf-8")).hexdigest(),
-    }
+    """Reject direct BDS delivery; only a canonical decision event may notify."""
+    # BDS is an actor input, not a completion event.  Sending it directly made
+    # notification race state-sync and allowed a report without Decision Fact.
+    # Keep this function as a compatibility guard for old callers.
+    return None
 
 
 def _notification_matches_intent(item: dict, match: dict) -> bool:
