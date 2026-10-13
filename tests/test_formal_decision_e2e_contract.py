@@ -37,7 +37,7 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
                 "market_date": "2026-10-13",
             }
             identity = build_identity(payload)
-            identities.append(identity["dedup_key"])
+            identities.append(identity.dedup_key)
         self.assertEqual(len(identities), len(set(identities)))
 
     def test_formal_report_requires_exact_current_decision_event(self):
