@@ -2144,13 +2144,17 @@ def _persist_post_close_review_projections(account: dict, request: dict, review:
 
 def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     review = request.get("formal_review")
-    if request.get("interaction_scenario") != "POST_CLOSE_REVIEW" or not review:
+    interaction_scenario = str(request.get("interaction_scenario") or "").strip().upper()
+    if interaction_scenario not in {"POST_CLOSE_REVIEW", "MIDDAY_REVIEW"} or not review:
         return False, False
     review_scope = str(review.get("review_scope") or "").strip().upper()
     request_phase = str(request.get("market_phase") or request.get("session_stage") or "").strip().upper()
     review_phase = str(review.get("market_phase") or review.get("session_stage") or "").strip().upper()
-    if review_scope == "MORNING_SESSION_STAGE_ONLY" or "MIDDAY_BREAK" in {request_phase, review_phase}:
-        return False, False
+    is_midday_review = (
+        interaction_scenario == "MIDDAY_REVIEW"
+        or review_scope == "MORNING_SESSION_STAGE_ONLY"
+        or "MIDDAY_BREAK" in {request_phase, review_phase}
+    )
     market_date = str(review.get("market_date") or request.get("market_date") or account.get("last_confirmed_market_date") or "")
     if not market_date:
         raise RuntimeError("POST_CLOSE_REVIEW requires market_date")
@@ -2186,41 +2190,53 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         if raw_presentation_binding is not None
         else {}
     )
-    current_path = ROOT / "data" / "state" / "CURRENT.json"
-    current = load_json(current_path) if current_path.exists() else {}
-    close_contract = build_close_data_contract(ROOT, current)
     data_time = dict(review.get("data_time")) if isinstance(review.get("data_time"), dict) else {}
-    supplied_close_snapshot = str(data_time.get("close_snapshot") or review.get("close_snapshot") or "").strip()
-    canonical_close_snapshot = str(close_contract.get("latest_snapshot") or "").strip()
-    canonical_close_verified = (
-        close_contract.get("status") == "VERIFIED_SESSION_CLOSE"
-        and close_contract.get("verified_session_close") is True
-        and close_contract.get("market_date") == market_date
-        and bool(canonical_close_snapshot)
-    )
-    # A present verified close with a mismatched or absent request reference is
-    # a stale/ambiguous input, not a missing-close case. Do not silently turn a
-    # review computed against another snapshot into a degraded formal review.
-    if canonical_close_verified and supplied_close_snapshot != canonical_close_snapshot:
-        return False, False
-    close_verified = canonical_close_verified and supplied_close_snapshot == canonical_close_snapshot
-    # Review completion is independent from close-data completeness. Preserve
-    # the canonical close contract when available; otherwise persist an explicit
-    # degraded review with the missing/invalid evidence boundary. Never invent
-    # a close snapshot or promote an intraday fact to 15:00.
-    if close_verified:
-        data_time["close_data_status"] = "VERIFIED_SESSION_CLOSE"
-        data_time["close_snapshot"] = canonical_close_snapshot
-        data_time.pop("close_data_gap", None)
-    else:
-        data_time["close_data_status"] = str(close_contract.get("status") or "UNVERIFIED")
+    if is_midday_review:
+        # Midday Scheduled Review is a valid stage review, not a 15:00 close review.
+        # Preserve the frozen morning boundary and bypass the close-only contract;
+        # the same canonical review event/report path remains the sole delivery chain.
+        data_time["close_data_status"] = "MORNING_STAGE_REFERENCE"
         data_time["close_data_gap"] = (
-            "VERIFIED_SESSION_CLOSE unavailable for this market date; review completed "
-            "with degraded/incomplete evidence and no inferred close."
+            "This is a MORNING stage review bounded by the 11:30 A-share boundary; "
+            "it is not a full-day session close."
         )
-        data_time.pop("close_snapshot", None)
-    review = dict(review)
-    review["data_time"] = data_time
+        review = dict(review)
+        review["data_time"] = data_time
+    else:
+        current_path = ROOT / "data" / "state" / "CURRENT.json"
+        current = load_json(current_path) if current_path.exists() else {}
+        close_contract = build_close_data_contract(ROOT, current)
+        supplied_close_snapshot = str(data_time.get("close_snapshot") or review.get("close_snapshot") or "").strip()
+        canonical_close_snapshot = str(close_contract.get("latest_snapshot") or "").strip()
+        canonical_close_verified = (
+            close_contract.get("status") == "VERIFIED_SESSION_CLOSE"
+            and close_contract.get("verified_session_close") is True
+            and close_contract.get("market_date") == market_date
+            and bool(canonical_close_snapshot)
+        )
+        # A present verified close with a mismatched or absent request reference is
+        # a stale/ambiguous input, not a missing-close case. Do not silently turn a
+        # review computed against another snapshot into a degraded formal review.
+        if canonical_close_verified and supplied_close_snapshot != canonical_close_snapshot:
+            return False, False
+        close_verified = canonical_close_verified and supplied_close_snapshot == canonical_close_snapshot
+        # Review completion is independent from close-data completeness. Preserve
+        # the canonical close contract when available; otherwise persist an explicit
+        # degraded review with the missing/invalid evidence boundary. Never invent
+        # a close snapshot or promote an intraday fact to 15:00.
+        if close_verified:
+            data_time["close_data_status"] = "VERIFIED_SESSION_CLOSE"
+            data_time["close_snapshot"] = canonical_close_snapshot
+            data_time.pop("close_data_gap", None)
+        else:
+            data_time["close_data_status"] = str(close_contract.get("status") or "UNVERIFIED")
+            data_time["close_data_gap"] = (
+                "VERIFIED_SESSION_CLOSE unavailable for this market date; review completed "
+                "with degraded/incomplete evidence and no inferred close."
+            )
+            data_time.pop("close_snapshot", None)
+        review = dict(review)
+        review["data_time"] = data_time
     lifecycle_error = validate_current_lifecycle_contract(review.get("lifecycle"), account)
     if lifecycle_error:
         raise ValueError(f"invalid formal review lifecycle contract: {lifecycle_error}")
