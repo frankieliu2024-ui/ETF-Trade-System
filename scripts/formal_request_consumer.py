@@ -58,14 +58,18 @@ def classify_formal_request_consumer_state(
     persistence = str(canonical_persistence_status or "").strip().upper()
     canonical_persisted = persistence in {"PERSISTED", "COMMITTED", "ACCEPTED", "PASS"}
 
-    # A caller-side boolean is not proof of a terminal state.  In particular,
-    # stale/empty derived context and an in-flight producer must remain WAIT,
-    # even if an older consumer invocation supplied terminal_failure=True.
+    # A caller-side status is not proof of a terminal state.  In particular,
+    # stale/empty derived context, a connector empty read, and an in-flight
+    # producer must remain WAIT.  A producer status without a request-bound
+    # context is not attributable to this parent and may belong to an older
+    # request; it must never terminate the current parent.
     # TERMINAL is fail-closed: it requires an explicit terminal status from the
-    # current producer or request-bound freeze, never a detached flag alone.
-    explicit_terminal = (
-        producer in TERMINAL_FAILURE_STATUSES
-        or freeze_status in TERMINAL_FAILURE_STATUSES
+    # current request-bound freeze, or a producer terminal status while the
+    # current parent is already bound in the same context.
+    context_bound_to_parent = bool(bound_request and bound_request == parent)
+    explicit_terminal = context_bound_to_parent and (
+        freeze_status in TERMINAL_FAILURE_STATUSES
+        or producer in TERMINAL_FAILURE_STATUSES
     )
     if explicit_terminal:
         return {
