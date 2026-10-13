@@ -622,6 +622,15 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     request_id = str(request.get("request_id") or "").strip()
     requested_at = _request_received_at_beijing(request)
     request_source = str(request.get("source") or request.get("requested_by") or "").strip().upper()
+    # Canonical request-bound identity values are derived once from the
+    # validated parent envelope and reused by every downstream projection.
+    source_value = request_source
+    requested_at_value = requested_at
+    entry_mode = str(request.get("entry_mode") or "").strip().upper()
+    task_id_value = str(request.get("task_id") or "").strip()
+    task_run_value = str(request.get("task_run_id") or "").strip()
+    occurrence_value = str(request.get("occurrence_id") or "").strip()
+    requested_date = str(request.get("market_date") or current.get("market_date") or "").strip()
     manual_formal_sources = {
         "CHATGPT_MANUAL_FORMAL_ANALYSIS",
         "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
@@ -1762,4 +1771,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
