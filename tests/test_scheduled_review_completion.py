@@ -437,3 +437,10 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+    def test_market_snapshot_push_trigger_covers_canonical_scheduled_review_ingress(self):
+        workflow = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
+        trigger = workflow.split("  push:", 1)[1].split("  schedule:", 1)[0]
+        self.assertIn('requests/live_snapshot/**', trigger)
+        self.assertNotIn('requests/live_snapshot/**.json', trigger)
