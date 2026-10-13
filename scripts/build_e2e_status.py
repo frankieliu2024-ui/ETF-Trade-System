@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 try:
@@ -31,6 +32,25 @@ FILES = {
 OUT = STATE / "e2e_status.json"
 POST_MARKET_REVIEW = ROOT / "post_market_review" / "post_market_review_event.json"
 REVIEW_DIR = ROOT / "events" / "reviews"
+
+
+def context_read_contract(path: Path, parsed: dict) -> dict:
+    """Expose trustworthy read evidence for large request-bound JSON files."""
+    try:
+        raw = path.read_bytes()
+    except OSError:
+        return {"status": "UNVERIFIED_READ", "path": str(path), "byte_count": None, "sha256": None}
+    try:
+        display_path = str(path.relative_to(ROOT))
+    except ValueError:
+        display_path = str(path)
+    return {
+        "status": "READ_OK" if raw.strip() else "VERIFIED_EMPTY",
+        "path": display_path,
+        "byte_count": len(raw),
+        "sha256": hashlib.sha256(raw).hexdigest(),
+        "parsed_object": isinstance(parsed, dict) and bool(parsed),
+    }
 
 
 def read_json(path: Path) -> dict:
@@ -626,6 +646,8 @@ def maintenance_component(maintenance: dict) -> dict:
 
 def main() -> int:
     data = {name: read_json(path) for name, path in FILES.items()}
+    query_read = context_read_contract(FILES["query"], data["query"])
+    decision_read = context_read_contract(FILES["decision"], data["decision"])
     components = {
         "market": market_component(data["current"]),
         "account": account_component(data["account"], data["current"]),
@@ -634,6 +656,11 @@ def main() -> int:
         "decision_context": context_component(data["query"], data["decision"]),
         "lifecycle": lifecycle_component(data["current"]),
         "maintenance": maintenance_component(data["maintenance"]),
+    }
+    components["decision_context"]["context_read_contract"] = {
+        "query_context": query_read,
+        "decision_context": decision_read,
+        "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY",
     }
 
     statuses = [x["status"] for x in components.values()]
@@ -671,6 +698,11 @@ def main() -> int:
         "components": components,
         "blockers": blockers,
         "degradations": degradations,
+        "context_read_contract": {
+            "query_context": query_read,
+            "decision_context": decision_read,
+            "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY",
+        },
         "safety_boundary": "This state does not create or modify risk permission, Trial/Confirm rules, amounts, sell rules, or execution authority."
     }
     write_json(OUT, result)
