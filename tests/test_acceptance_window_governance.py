@@ -49,10 +49,10 @@ class AcceptanceWindowGovernanceTests(unittest.TestCase):
         for name in ("market-snapshot.yml", "opening-auction-current-fallback.yml"):
             text = (ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8")
             self.assertIn("group: etf-main-canonical-writer", text)
-            self.assertNotIn("etf-market-snapshot-${{ github.ref }}", text)
+            self.assertNotIn("etf-main-canonical-writer", text)
         protocol = (ROOT / "config" / "maintenance" / "production_mutation_protocol.json").read_text(encoding="utf-8")
         self.assertIn("etf-main-canonical-writer", protocol)
-        self.assertNotIn("etf-market-snapshot-${{ github.ref }}", protocol)
+        self.assertNotIn("etf-main-canonical-writer", protocol)
 
     def test_consistency_acceptance_never_publishes_to_main(self):
         text = (ROOT / ".github" / "workflows" / "system-consistency.yml").read_text(encoding="utf-8")
