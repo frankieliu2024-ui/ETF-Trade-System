@@ -457,12 +457,13 @@ jobs:
   pr_production_acceptance:
     # Pull requests must execute the production-facing acceptance contract in an
     # isolated checkout. The mutating production_acceptance job remains main-only.
-    if: \${{ github.event_name == 'pull_request' }}
+    if: ${{ github.event_name == 'pull_request' }}
     needs: consistency
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      ETF_SYSTEM_ROOT: \${{ github.workspace }}
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+      PYTHONPATH: ${{ github.workspace }}/scripts:${{ github.workspace }}
     steps:
       - uses: actions/checkout@v5
         with:
