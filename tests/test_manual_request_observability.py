@@ -328,9 +328,9 @@ class ManualRequestBoundedObservabilityTests(unittest.TestCase):
         e2e_pos = workflow.index("- name: Build E2E usability state")
         state_pos = workflow.index("- name: Build state context and candidates")
         review_pos = workflow.index("- name: Build post-market review context")
-        self.assertLess(query_pos, e2e_pos)
         self.assertLess(query_pos, state_pos)
-        self.assertLess(query_pos, review_pos)
+        self.assertLess(state_pos, e2e_pos)
+        self.assertLess(e2e_pos, review_pos)
 
 
     def test_market_snapshot_workflow_preserves_triggering_request_path_after_reset(self):
