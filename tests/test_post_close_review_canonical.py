@@ -213,26 +213,28 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         event = json.loads((self.root / "events/reviews/2026-08-31.json").read_text(encoding="utf-8"))
         self.assertEqual(event["reviewed_at_beijing"], "2026-08-31T15:30:00+08:00")
 
-    def test_midday_stage_does_not_consume_same_day_full_day_review_slot(self):
+    def test_midday_stage_persists_canonical_review_and_does_not_close_day(self):
         account = {"status": "VALID", "updated_at": "2026-08-31T12:00:00+08:00"}
         stage = self.request("2026-08-31T12:30:00+08:00")
+        stage["interaction_scenario"] = "MIDDAY_REVIEW"
         stage["market_phase"] = "MIDDAY_BREAK"
         stage["formal_review"]["review_scope"] = "MORNING_SESSION_STAGE_ONLY"
         stage["formal_review"]["market_phase"] = "MIDDAY_BREAK"
         stage["formal_review"]["data_time"]["close_snapshot"] = "data/market/snapshots/2026-08-31_113000.json"
-        self.assertEqual(sync.record_post_close_review(account, stage), (False, False))
-        self.assertFalse((self.root / "events/reviews/2026-08-31.json").exists())
+        stage["presentation_binding"] = {
+            "report_type": "ETF_TRADE_REVIEW",
+            "task_id": "ETF交易复盘",
+            "task_run_id": "midday-occurrence-1",
+            "full_content": "FROZEN MIDDAY REPORT",
+        }
+        self.assertEqual(sync.record_post_close_review(account, stage), (True, False))
+        event = json.loads((self.root / "events/reviews/2026-08-31.json").read_text(encoding="utf-8"))
+        self.assertEqual(event["presentation_binding"]["task_run_id"], "midday-occurrence-1")
+        self.assertEqual(event["presentation_binding"]["content_hash"], __import__("hashlib").sha256(b"FROZEN MIDDAY REPORT").hexdigest())
+        self.assertEqual(event["review"]["data_time"]["close_data_status"], "MORNING_STAGE_REFERENCE")
         self.assertFalse((self.root / "data/state/close_review_closure_2026-08-31.json").exists())
 
         full_day = self.request("2026-08-31T20:30:00+08:00")
-        full_day["formal_review"]["review_scope"] = "FULL_DAY"
-        self.assertEqual(sync.record_post_close_review(account, full_day), (True, False))
-        self.assertEqual(sync.record_post_close_review(account, full_day), (True, True))
-        event = json.loads((self.root / "events/reviews/2026-08-31.json").read_text(encoding="utf-8"))
-        closure = json.loads((self.root / "data/state/close_review_closure_2026-08-31.json").read_text(encoding="utf-8"))
-        self.assertEqual(event["event_type"], "FORMAL_POST_CLOSE_REVIEW")
-        self.assertEqual(event["review"]["data_time"]["close_snapshot"], "data/market/snapshots/2026-08-31_150110.json")
-        self.assertEqual(closure["status"], "CLOSED")
 
     def test_full_day_payload_before_legal_close_persists_node_without_closing_chain(self):
         account = {"status": "VALID", "updated_at": "2026-08-31T12:00:00+08:00"}
