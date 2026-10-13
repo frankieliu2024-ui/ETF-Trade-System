@@ -63,7 +63,7 @@ jobs:
           python-version: "3.11"
       - name: Compile production Python modules
         shell: bash
-        run: python -m compileall -q scripts tests
+        run: python -m compileall -q scripts
       - name: Run three-entry and REPORT handoff contract acceptance
         run: |
           python -m unittest -v tests.test_formal_decision_e2e_contract
