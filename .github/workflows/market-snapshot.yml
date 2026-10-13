@@ -198,7 +198,7 @@ jobs:
           )
           required = (
               str(request.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH"
-              and str(request.get("source") or "").upper() == "CHATGPT_MANUAL_FORMAL_ANALYSIS"
+              and str(request.get("source") or "").upper() in {"CHATGPT_MANUAL_FORMAL_ANALYSIS", "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS", "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"}
               and str(query_intent or "").upper() == "FORMAL_INTRADAY_ANALYSIS"
               and request.get("force_refresh") is True
               and request.get("require_post_request_snapshot") is True
@@ -230,7 +230,7 @@ jobs:
           query_intent = (
               intent.get("query_intent") if isinstance(intent, dict) else request.get("query_intent") or intent
           )
-          valid = (str(request.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH" and str(request.get("source") or "").upper() == "CHATGPT_MANUAL_FORMAL_ANALYSIS" and str(query_intent or "").upper() == "FORMAL_INTRADAY_ANALYSIS" and request.get("force_refresh") is True and request.get("require_post_request_snapshot") is True)
+          valid = (str(request.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH" and str(request.get("source") or "").upper() in {"CHATGPT_MANUAL_FORMAL_ANALYSIS", "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS", "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"} and str(query_intent or "").upper() == "FORMAL_INTRADAY_ANALYSIS" and request.get("force_refresh") is True and request.get("require_post_request_snapshot") is True)
           if not valid:
               raise SystemExit("formal_context_recovery_request is not an existing canonical Formal Decision refresh request")
           PY
@@ -996,7 +996,7 @@ jobs:
           valid = (
               request.get("request_id") == expected_id
               and request.get("request_type") == "MARKET_QUOTE_REFRESH"
-              and request.get("source") == "CHATGPT_MANUAL_FORMAL_ANALYSIS"
+              and request.get("source") in {"CHATGPT_MANUAL_FORMAL_ANALYSIS", "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS", "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"}
               and request.get("intent") == "FORMAL_INTRADAY_ANALYSIS"
               and request.get("query_intent") == "FORMAL_INTRADAY_ANALYSIS"
               and request.get("force_refresh") is True
@@ -1164,7 +1164,7 @@ jobs:
                   obj = json.loads(triggering_path.read_text(encoding="utf-8"))
               except (OSError, json.JSONDecodeError):
                   obj = {}
-              if str(obj.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH" and str(obj.get("source") or "") in {"CHATGPT_MANUAL_FORMAL_ANALYSIS", "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"}:
+              if str(obj.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH" and str(obj.get("source") or "") in {"CHATGPT_MANUAL_FORMAL_ANALYSIS", "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS", "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"}:
                   formal_ids.append(str(obj.get("request_id") or "").strip())
           if formal_ids:
               query_path = Path("data/state/query_context.json")
