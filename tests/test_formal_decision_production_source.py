@@ -86,6 +86,35 @@ RESPONSE = {
 
 
 class ProductionBusinessSourceIngressTests(unittest.TestCase):
+    def test_ready_actor_envelope_binds_one_frozen_report_to_structured_answers(self):
+        content = "\n\n".join(
+            [
+                "【ETF正式决策】正式判断",
+                "【业务结论】继续持有，实际新增部署0元。",
+                "【数据时点与必要依据】已使用当前请求绑定的快照。",
+                "【三层监测】外部、A股内部和ETF机会已完成比较。",
+                "【持仓动作】全部持仓继续管理，不形成自动下单。",
+                "【资本用途】现金优先，当前没有合法新增部署。",
+                "【后续安排】下一合法节点重新核验。",
+            ]
+        )
+        payload = completion.build_ready_actor_envelope(
+            SOURCE, BASE_DECISION, RESPONSE, WORK_PACKAGE,
+            "data/market/snapshots/x.json", content,
+        )
+        self.assertEqual(payload["presentation_content"], content)
+        self.assertEqual(payload["decision_response"]["presentation_content"], content)
+        self.assertEqual(payload["decision_response"]["answers"], RESPONSE["answers"])
+        self.assertEqual(payload["parent_request_id"], SOURCE["request_id"])
+        self.assertEqual(payload["consumed_snapshot"], "data/market/snapshots/x.json")
+
+    def test_ready_actor_envelope_fails_closed_without_frozen_report(self):
+        with self.assertRaisesRegex(ValueError, "frozen presentation_content"):
+            completion.build_ready_actor_envelope(
+                SOURCE, BASE_DECISION, RESPONSE, WORK_PACKAGE,
+                "data/market/snapshots/x.json", "",
+            )
+
     def test_structured_completion_is_business_decision_source(self):
         payload = completion.build_structured_completion_request(
             SOURCE, BASE_DECISION, RESPONSE, WORK_PACKAGE, "data/market/snapshots/x.json"
@@ -208,3 +237,4 @@ class ProductionBusinessSourceIngressTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
