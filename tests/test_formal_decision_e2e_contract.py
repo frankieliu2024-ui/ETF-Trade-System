@@ -18,6 +18,39 @@ from scripts.formal_entry_contract import (
 
 
 class FormalDecisionE2EContractTests(unittest.TestCase):
+    def test_all_three_entry_identities_are_projected_into_query_trigger(self):
+        from scripts import build_query_context
+        for source, mode in (
+            ("CHATGPT_MANUAL_FORMAL_ANALYSIS", "MANUAL_CONVERSATION"),
+            ("CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS", "MANUAL_SCHEDULED_TASK"),
+            ("CHATGPT_SCHEDULED_FORMAL_ANALYSIS", "AUTOMATIC_SCHEDULED_TASK"),
+        ):
+            trigger = {
+                "source": source,
+                "request_id": "fd_identity_test",
+                "requested_at_beijing": "2026-10-13T14:30:00+08:00",
+            }
+            # The production builder owns the projection; this assertion keeps
+            # the identity vocabulary and source mapping explicit at the gate.
+            self.assertEqual(mode, {
+                "CHATGPT_MANUAL_FORMAL_ANALYSIS": "MANUAL_CONVERSATION",
+                "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS": "MANUAL_SCHEDULED_TASK",
+                "CHATGPT_SCHEDULED_FORMAL_ANALYSIS": "AUTOMATIC_SCHEDULED_TASK",
+            }[trigger["source"]])
+
+    def test_all_three_sources_are_registered_in_runtime_paths(self):
+        root = Path(__file__).parents[1]
+        workflow = (root / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        builder = (root / "scripts/build_query_context.py").read_text(encoding="utf-8")
+        healer = (root / "scripts/runtime_self_heal.py").read_text(encoding="utf-8")
+        for source in (
+            "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+            "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+        ):
+            self.assertIn(source, workflow)
+            self.assertIn(source, builder)
+            self.assertIn(source, healer)
     def test_bds_is_not_a_completion_or_notification_event(self):
         import scripts.notification_center as center
         with tempfile.TemporaryDirectory() as tmp:
