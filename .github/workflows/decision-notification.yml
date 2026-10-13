@@ -213,10 +213,8 @@ jobs:
       - name: Send exact Formal Decision content
         id: formal_content_notify
         if: ${{ github.event_name == 'push' && steps.push_kind.outputs.formal_content == 'true' }}
-        env:
-          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
-          FORMAL_CONTENT_PATH: ${{ steps.push_kind.outputs.formal_content_path }}
-        run: python scripts/notification_center.py --formal-content-file "$FORMAL_CONTENT_PATH"
+        run: |
+          echo "BDS is an actor input; no notification is sent before the canonical FORMAL_DECISION completion event."
 
       - name: Build delayed execution reconciliation
         if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && (steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.trade == 'true')) }}
@@ -375,10 +373,13 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          merge_notification_state() {
+            python scripts/merge_notification_state.py "$@"
+          }
           git fetch origin main
           git reset --hard origin/main
           if [ -f /tmp/etf-notification-state/data/state/notification_center.json ]; then
-            python scripts/merge_notification_state.py \
+            merge_notification_state \
               --base data/state/notification_center.json \
               --incoming /tmp/etf-notification-state/data/state/notification_center.json \
               --output data/state/notification_center.json
@@ -405,7 +406,7 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             if [ -f /tmp/etf-notification-state/data/state/notification_center.json ]; then
-              python scripts/merge_notification_state.py \
+              merge_notification_state \
                 --base data/state/notification_center.json \
                 --incoming /tmp/etf-notification-state/data/state/notification_center.json \
                 --output data/state/notification_center.json

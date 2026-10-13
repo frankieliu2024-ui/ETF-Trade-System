@@ -18,6 +18,40 @@ from scripts.formal_entry_contract import (
 
 
 class FormalDecisionE2EContractTests(unittest.TestCase):
+    def test_bds_is_not_a_completion_or_notification_event(self):
+        import scripts.notification_center as center
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bds.json"
+            path.write_text(json.dumps({
+                "request_type": "BUSINESS_DECISION_SOURCE",
+                "parent_request_id": "fd_current",
+                "decision_id": "decision_current",
+                "presentation_content": "报告正文",
+            }, ensure_ascii=False), encoding="utf-8")
+            self.assertIsNone(center.formal_content_event(path))
+
+    def test_formal_report_requires_request_bound_completion_and_hash(self):
+        import scripts.notification_center as center
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            decisions = root / "events" / "decisions"
+            decisions.mkdir(parents=True)
+            body = "报告正文"
+            event = {
+                "event_type": "FORMAL_DECISION",
+                "parent_request_id": "fd_current",
+                "decision_id": "decision_current",
+                "presentation_binding": {
+                    "request_id": "fd_current",
+                    "decision_id": "decision_current",
+                    "content": body,
+                    "content_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+                },
+            }
+            (decisions / "current.json").write_text(json.dumps(event), encoding="utf-8")
+            env = {"DECISION_EVENT_PATH": "events/decisions/current.json", "EXPECTED_FORMAL_REQUEST_ID": "fd_other"}
+            with patch.object(center, "ROOT", root), patch.dict(os.environ, env, clear=False):
+                self.assertIsNone(center.formal_decision_report_event())
     def test_three_entry_identities_are_distinct_and_valid(self):
         cases = [
             (ENTRY_MANUAL_CONVERSATION, "CHATGPT_MANUAL_FORMAL_ANALYSIS", "manual"),

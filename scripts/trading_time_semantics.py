@@ -33,7 +33,7 @@ def next_a_share_trading_day(after: date, calendar: dict[str, Any]) -> date:
     while True:
         day += timedelta(days=1)
         if coverage_end and day.isoformat() > coverage_end:
-            raise ValueError("next A-share trading day is outside calendar coverage")
+            return None
         if is_a_share_trading_day(day, calendar):
             return day
 
@@ -43,11 +43,11 @@ def user_visible_trading_time_anchor(as_of: date, calendar: dict[str, Any]) -> d
     tomorrow = as_of + timedelta(days=1)
     return {
         "as_of_date": as_of.isoformat(),
-        "next_a_share_trading_date": next_day.isoformat(),
+        "next_a_share_trading_date": next_day.isoformat() if next_day else None,
         "tomorrow_is_a_share_trading_day": is_a_share_trading_day(tomorrow, calendar),
         "preferred_future_action_wording": "下一交易日",
         "preferred_future_node_wording": "下一可交易节点",
-        "explicit_date_wording": f"下一A股交易日（{next_day.isoformat()}）",
+        "explicit_date_wording": f"下一A股交易日（{next_day.isoformat()}）" if next_day else "下一A股交易日",
         "rule": (
             "涉及买入、卖出、Trial、Confirm、盘中复核等未来可执行A股动作时，"
             "默认使用“下一交易日”或“下一可交易节点”；需要消除歧义时使用明确日期。"
