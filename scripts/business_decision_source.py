@@ -844,6 +844,17 @@ def _validate_formal_presentation_contract(source: dict[str, Any]) -> None:
     """
     binding = source.get("presentation_binding")
     content = binding.get("full_content") if isinstance(binding, dict) else None
+    exposed = [
+        source.get("presentation_content"),
+        (source.get("decision_response") or {}).get("presentation_content")
+        if isinstance(source.get("decision_response"), dict) else None,
+        content,
+    ]
+    # Structured preflight/recovery builders may intentionally omit user-facing
+    # presentation. Once any presentation field is supplied, however, the
+    # frozen report becomes a strict user-visible Formal Decision contract.
+    if not any(value not in (None, "") for value in exposed):
+        return
     if not isinstance(content, str) or not content.strip():
         raise ValueError("formal presentation requires non-empty full_content")
     if len(content.strip()) < 1200:
