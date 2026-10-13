@@ -923,7 +923,11 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     }
     capital_unresolved = [
         item for item in unresolved_required
-        if str(item).startswith(capital_scope_prefixes) or str(item) in capital_scope_ids
+        if (
+            str(item).startswith(capital_scope_prefixes)
+            or str(item) in capital_scope_ids
+            or str(item).split(":", 1)[0] in capital_scope_ids
+        )
     ]
     capital_ready = not capital_unresolved
     work_package["capital_competition_readiness"] = {
