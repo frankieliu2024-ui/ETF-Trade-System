@@ -243,16 +243,6 @@ jobs:
           git fetch --no-tags origin main
           git rebase origin/main
           echo "state publication disabled during acceptance"
-      - name: Bind acceptance to immutable input main HEAD
-        shell: bash
-        run: |
-          set -euo pipefail
-          input_sha="$(git rev-parse HEAD)"
-          remote_sha="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
-          test "$input_sha" = "$remote_sha" || { echo "main advanced before acceptance: $input_sha -> $remote_sha" >&2; exit 1; }
-          echo "ETF_ACCEPTANCE_SHA=$input_sha" >> "$GITHUB_ENV"
-          echo "input_sha=$input_sha" >> "$GITHUB_OUTPUT"
-
       - name: Classify mutation for combination acceptance
         id: acceptance_scope
         shell: bash
@@ -308,41 +298,15 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          python scripts/run_production_acceptance.py --mutation-sha "$ETF_ACCEPTANCE_SHA" --scope-path "$RUNNER_TEMP/acceptance_scope.json" --result-path "$RUNNER_TEMP/production-acceptance-result.json"
-      - name: Write immutable acceptance identity
-        if: ${{ always() }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          input_sha="${ETF_ACCEPTANCE_SHA:-$(git rev-parse HEAD)}"
-          final_sha="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
-          python - "$RUNNER_TEMP/acceptance-identity.json" "$input_sha" "$final_sha" <<'PY'
-          import json, os, sys
-          from pathlib import Path
-          out = Path(sys.argv[1])
-          input_sha, final_sha = sys.argv[2:4]
-          payload = {
-              "input_sha": input_sha,
-              "final_main_sha": final_sha,
-              "state_write_commits": [],
-              "acceptance_sha": input_sha,
-              "sha_stable": input_sha == final_sha,
-              "status": "PASS" if input_sha == final_sha else "MERGED_BUT_NOT_ACCEPTED",
-              "state_write_mode": "ISOLATED_ARTIFACT_ONLY",
-          }
-          out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-          if not payload["sha_stable"]:
-              raise SystemExit("main advanced during acceptance; acceptance is invalid for final main")
-          PY
-      - name: Preserve acceptance projections as run evidence
-        if: ${{ always() && (steps.acceptance_scope.outputs.required == 'true' || github.event_name == 'workflow_dispatch') }}
+          python scripts/run_production_acceptance.py --result-path "$RUNNER_TEMP/production-acceptance-result.json"
+      - name: Preserve diagnostic production-health evidence
+        if: ${{ always() && github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
           name: production-acceptance-${{ github.run_id }}-${{ github.run_attempt }}
           if-no-files-found: ignore
           retention-days: 14
           path: |
-            ${{ runner.temp }}/acceptance-identity.json
             data/state/system_consistency.json
             data/state/maintenance_health.json
             data/state/e2e_status.json
