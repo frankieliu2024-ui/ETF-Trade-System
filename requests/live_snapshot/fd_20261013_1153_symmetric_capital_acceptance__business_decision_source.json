@@ -17,6 +17,11 @@
   "decision_response": {
     "answers": {
       "RISK_PERMISSION": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
         "final_action": "风险观察；允许继续持有与观察，本节点不新增风险"
       },
       "MAIN_CANDIDATE": {
@@ -25,18 +30,394 @@
         "candidate_name": ""
       },
       "DEPLOYABLE_CASH": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
         "final_action": "保留可部署现金2181.04元"
       },
       "RELEASABLE_CAPITAL": {
-        "final_action": "本节点不释放持仓资本；没有任何持仓达到独立卖出门槛"
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "不释放持仓资本，金额0元；没有任何持仓达到独立卖出门槛"
       },
       "TRIAL_CONFIRM_CAPACITY": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
         "final_action": "Trial资格无、Confirm资格无，实际新增部署0元"
       },
       "NEXT_UNIT_CAPITAL_USE": {
-        "final_action": "下一单位资本继续保留现金；新增部署0元",
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "下一单位资本继续保留现金；实际新增部署0元",
         "new_amount_yuan": 0,
-        "post_action_deployable_cash": 2181.04
+        "post_action_deployable_cash": 2181.04,
+        "future_opportunity_capacity": "保留下一节点重新比较的现金能力",
+        "cash_opportunity_cost": "现金保留成本低于未获准入候选的风险和执行成本",
+        "alternative_capital_use_review": "已比较现金、全部持仓、持仓追加、观察ETF、全市场机会发现候选和可释放资本",
+        "concentration_account_structure_effect": "共同暴露提高复核强度但不自动触发卖出",
+        "selected_state_reason": "当前现金是最稳妥的合法用途",
+        "compared_capital_states_as_business_state_names": [
+          "现金",
+          "全部实际持仓",
+          "持仓ETF追加",
+          "观察ETF",
+          "全市场机会发现候选",
+          "可释放资本"
+        ],
+        "zero_amount_decisive_reason_if_zero": "现金不足固定Trial金额且没有持仓通过独立卖出链释放资本；当前不存在足以支持新增部署的合法机会",
+        "capital_migration_review": {
+          "current_best_opportunity": "现金保留",
+          "cash_gap": 2818.96,
+          "lowest_efficiency_holding": "没有经独立卖出链确认的最低效率持仓",
+          "release_vs_continue_comparison": "继续持有与释放后迁移至未获准入候选相比，当前继续持有风险更低且证据更充分",
+          "decision": "不释放、不买入，保留现金"
+        }
+      },
+      "CONCENTRATION_COMMON_RISK": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "共同风险继续监测，不单独触发交易动作",
+        "reason": "共同暴露提高复核优先级，但不替代各持仓独立卖出链。"
+      },
+      "HOLDING:300750": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "持有管理",
+        "capital_occupancy_reason": "未证明存在足以覆盖卖出成本和重新配置风险的更高效率用途。",
+        "higher_efficiency_alternative": "现金与全部合法候选已比较，当前没有足以胜出的替代用途。",
+        "capital_efficiency_release_assessment": "继续占用资本目前仍合理；未达到独立卖出门槛。",
+        "action_detail": "继续持有，不追加"
+      },
+      "HOLDING:601138": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "持有管理",
+        "capital_occupancy_reason": "未证明存在足以覆盖卖出成本和重新配置风险的更高效率用途。",
+        "higher_efficiency_alternative": "现金与全部合法候选已比较，当前没有足以胜出的替代用途。",
+        "capital_efficiency_release_assessment": "继续占用资本目前仍合理；未达到独立卖出门槛。",
+        "action_detail": "继续持有，不追加"
+      },
+      "HOLDING:159941": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "持有管理",
+        "capital_occupancy_reason": "未证明存在足以覆盖卖出成本和重新配置风险的更高效率用途。",
+        "higher_efficiency_alternative": "现金与全部合法候选已比较，当前没有足以胜出的替代用途。",
+        "capital_efficiency_release_assessment": "继续占用资本目前仍合理；未达到独立卖出门槛。",
+        "action_detail": "继续持有，不追加"
+      },
+      "HELD_ETF_ADD:159941": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "不追加",
+        "reason": "持仓追加未取得新增资本效率优势。"
+      },
+      "HOLDING:588000": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "持有管理",
+        "capital_occupancy_reason": "未证明存在足以覆盖卖出成本和重新配置风险的更高效率用途。",
+        "higher_efficiency_alternative": "现金与全部合法候选已比较，当前没有足以胜出的替代用途。",
+        "capital_efficiency_release_assessment": "继续占用资本目前仍合理；未达到独立卖出门槛。",
+        "action_detail": "继续持有，不追加"
+      },
+      "HELD_ETF_ADD:588000": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "不追加",
+        "reason": "持仓追加未取得新增资本效率优势。"
+      },
+      "HOLDING:159781": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "持有管理",
+        "capital_occupancy_reason": "未证明存在足以覆盖卖出成本和重新配置风险的更高效率用途。",
+        "higher_efficiency_alternative": "现金与全部合法候选已比较，当前没有足以胜出的替代用途。",
+        "capital_efficiency_release_assessment": "继续占用资本目前仍合理；未达到独立卖出门槛。",
+        "action_detail": "继续持有，不追加"
+      },
+      "HELD_ETF_ADD:159781": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "不追加",
+        "reason": "持仓追加未取得新增资本效率优势。"
+      },
+      "HOLDING:159981": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "持有管理",
+        "capital_occupancy_reason": "未证明存在足以覆盖卖出成本和重新配置风险的更高效率用途。",
+        "higher_efficiency_alternative": "现金与全部合法候选已比较，当前没有足以胜出的替代用途。",
+        "capital_efficiency_release_assessment": "继续占用资本目前仍合理；未达到独立卖出门槛。",
+        "action_detail": "继续持有，不追加"
+      },
+      "HELD_ETF_ADD:159981": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "不追加",
+        "reason": "持仓追加未取得新增资本效率优势。"
+      },
+      "HOLDING:159992": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "持有管理",
+        "capital_occupancy_reason": "未证明存在足以覆盖卖出成本和重新配置风险的更高效率用途。",
+        "higher_efficiency_alternative": "现金与全部合法候选已比较，当前没有足以胜出的替代用途。",
+        "capital_efficiency_release_assessment": "继续占用资本目前仍合理；未达到独立卖出门槛。",
+        "action_detail": "继续持有，不追加"
+      },
+      "HELD_ETF_ADD:159992": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "不追加",
+        "reason": "持仓追加未取得新增资本效率优势。"
+      },
+      "HOLDING:513520": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "持有管理",
+        "capital_occupancy_reason": "未证明存在足以覆盖卖出成本和重新配置风险的更高效率用途。",
+        "higher_efficiency_alternative": "现金与全部合法候选已比较，当前没有足以胜出的替代用途。",
+        "capital_efficiency_release_assessment": "继续占用资本目前仍合理；未达到独立卖出门槛。",
+        "action_detail": "继续持有，不追加"
+      },
+      "HELD_ETF_ADD:513520": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "不追加",
+        "reason": "持仓追加未取得新增资本效率优势。"
+      },
+      "OBSERVATION:513180": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "继续观察，未升级",
+        "opportunity_status": "无机会",
+        "disposition": "RETAIN",
+        "reason": "未同时满足机会、风险收益、承接和资本效率要求。"
+      },
+      "OBSERVATION:159561": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "继续观察，未升级",
+        "opportunity_status": "无机会",
+        "disposition": "RETAIN",
+        "reason": "未同时满足机会、风险收益、承接和资本效率要求。"
+      },
+      "OBSERVATION:518880": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "继续观察，未升级",
+        "opportunity_status": "无机会",
+        "disposition": "RETAIN",
+        "reason": "未同时满足机会、风险收益、承接和资本效率要求。"
+      },
+      "OBSERVATION:515880": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "继续观察，未升级",
+        "opportunity_status": "无机会",
+        "disposition": "RETAIN",
+        "reason": "未同时满足机会、风险收益、承接和资本效率要求。"
+      },
+      "OBSERVATION:159326": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "继续观察，未升级",
+        "opportunity_status": "无机会",
+        "disposition": "RETAIN",
+        "reason": "未同时满足机会、风险收益、承接和资本效率要求。"
+      },
+      "OBSERVATION:515220": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "继续观察，未升级",
+        "opportunity_status": "无机会",
+        "disposition": "RETAIN",
+        "reason": "未同时满足机会、风险收益、承接和资本效率要求。"
+      },
+      "OBSERVATION:513350": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "继续观察，未升级",
+        "opportunity_status": "无机会",
+        "disposition": "RETAIN",
+        "reason": "未同时满足机会、风险收益、承接和资本效率要求。"
+      },
+      "OBSERVATION:515080": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "继续观察，未升级",
+        "opportunity_status": "无机会",
+        "disposition": "RETAIN",
+        "reason": "未同时满足机会、风险收益、承接和资本效率要求。"
+      },
+      "DISCOVERY:159201": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "进入本节点评估，未升级为机会ETF",
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "仅为候选输入，未满足正式升级和资本效率要求。"
+      },
+      "DISCOVERY:159227": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "进入本节点评估，未升级为机会ETF",
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "仅为候选输入，未满足正式升级和资本效率要求。"
+      },
+      "DISCOVERY:159309": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "进入本节点评估，未升级为机会ETF",
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "仅为候选输入，未满足正式升级和资本效率要求。"
+      },
+      "DISCOVERY:159666": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "进入本节点评估，未升级为机会ETF",
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "仅为候选输入，未满足正式升级和资本效率要求。"
+      },
+      "DISCOVERY:159930": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "进入本节点评估，未升级为机会ETF",
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "仅为候选输入，未满足正式升级和资本效率要求。"
+      },
+      "DISCOVERY:512710": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "进入本节点评估，未升级为机会ETF",
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "仅为候选输入，未满足正式升级和资本效率要求。"
+      },
+      "DISCOVERY:513530": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "进入本节点评估，未升级为机会ETF",
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "仅为候选输入，未满足正式升级和资本效率要求。"
+      },
+      "DISCOVERY:517180": {
+        "capital_comparison": "现金、全部实际持仓、观察ETF、全市场机会发现候选及可释放资本已纳入同一资本比较。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "ALL_REQUIRED"
+        ],
+        "final_action": "进入本节点评估，未升级为机会ETF",
+        "opportunity_status": "无机会",
+        "disposition": "REJECT",
+        "reason": "仅为候选输入，未满足正式升级和资本效率要求。"
       }
     }
   },
