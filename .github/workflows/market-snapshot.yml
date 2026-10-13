@@ -1166,6 +1166,17 @@ jobs:
                   obj = {}
               if str(obj.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH" and str(obj.get("source") or "") in {"CHATGPT_MANUAL_FORMAL_ANALYSIS", "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS", "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"}:
                   formal_ids.append(str(obj.get("request_id") or "").strip())
+
+          recovery_path = Path(os.environ.get("FORMAL_CONTEXT_RECOVERY_REQUEST") or "")
+          if recovery_path.is_file():
+              try:
+                  recovery_obj = json.loads(recovery_path.read_text(encoding="utf-8"))
+              except (OSError, json.JSONDecodeError):
+                  recovery_obj = {}
+              if str(recovery_obj.get("source") or "").upper() in {"CHATGPT_MANUAL_FORMAL_ANALYSIS", "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS", "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"}:
+                  recovery_id = str(recovery_obj.get("request_id") or "").strip()
+                  if recovery_id:
+                      formal_ids.append(recovery_id)
           if formal_ids:
               query_path = Path("data/state/query_context.json")
               if not query_path.exists() or query_path.stat().st_size == 0:
@@ -1230,7 +1241,7 @@ jobs:
             git add -f -- data/state/query_context.json
             git add -A -- data/market/snapshots data/market/discovery_history data/state post_market_review events config/market/etf_monitor_universe.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
             git reset -- data/state/system_consistency.json
-            if [ -n "$FORMAL_PARENT_ID" ] || [ -n "$TRIGGERING_REQUEST_FILE" ]; then
+            if [ -n "$FORMAL_PARENT_ID" ] || [ -n "$TRIGGERING_REQUEST_FILE" ] || [ -n "${FORMAL_CONTEXT_RECOVERY_REQUEST:-}" ]; then
               python - <<'PY'
           import json, os
           from pathlib import Path
@@ -1241,7 +1252,7 @@ jobs:
               context = json.loads(path.read_text(encoding="utf-8"))
           except (OSError, json.JSONDecodeError) as exc:
               raise SystemExit(f"final publish query_context.json is invalid: {exc}")
-          request_file = os.environ.get("TRIGGERING_REQUEST_FILE", "")
+          request_file = os.environ.get("TRIGGERING_REQUEST_FILE", "") or os.environ.get("FORMAL_CONTEXT_RECOVERY_REQUEST", "")
           expected = ""
           if request_file and Path(request_file).is_file():
               expected = str((json.loads(Path(request_file).read_text(encoding="utf-8"))).get("request_id") or "").strip()
