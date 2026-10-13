@@ -134,6 +134,27 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
             with patch.object(center, "ROOT", root), patch.dict(os.environ, {"DECISION_EVENT_PATH": "events/decisions/missing.json"}):
                 self.assertIsNone(center.formal_decision_report_event())
 
+    def test_formal_context_validation_fails_closed_for_empty_or_wrong_request(self):
+        from scripts.build_query_context import validate_request_bound_context
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            request_path = root / "request.json"
+            request_path.write_text(json.dumps({
+                "request_id": "fd_current",
+                "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            }), encoding="utf-8")
+            with patch("scripts.build_query_context.ROOT", root):
+                with self.assertRaises(RuntimeError):
+                    validate_request_bound_context({}, "request.json")
+                with self.assertRaisesRegex(RuntimeError, "binding mismatch"):
+                    validate_request_bound_context({"decision_fact_pack": {"trigger": {"request_id": "fd_old"}}}, "request.json")
+                validate_request_bound_context({
+                    "decision_fact_pack": {
+                        "trigger": {"request_id": "fd_current"},
+                        "decision_work_package": {"problem_graph": [{"problem_id": "p1"}]},
+                    }
+                }, "request.json")
+
     def test_unbound_formal_notification_fails_closed(self):
         import scripts.notification_center as center
 
