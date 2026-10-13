@@ -1,4 +1,4 @@
-name: Formal Decision automated E2E acceptance
+name: Formal Decision business contract
 
 on:
   pull_request:
@@ -15,7 +15,6 @@ on:
       - "tests/test_formal_decision_e2e_contract.py"
       - "tests/test_formal_decision_production_e2e.py"
       - "docs/Formal Decision执行与用户回复协议.md"
-      - "docs/生产变更与并发写入协议_V1.0.md"
       - ".github/workflows/decision-notification.yml"
   push:
     branches: [main]
@@ -46,7 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: main
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
@@ -67,30 +66,3 @@ jobs:
           test -f scripts/process_state_sync_request.py
           test -f scripts/notification_center.py
           echo "Formal Decision automated E2E acceptance scope verified"
-      - name: Persist merged-main acceptance identity
-        run: |
-          mkdir -p "$RUNNER_TEMP/formal-decision-acceptance"
-          python - <<'PY' > "$RUNNER_TEMP/formal-decision-acceptance/result.json"
-          import json, os
-          print(json.dumps({
-              "input_sha": os.environ["GITHUB_SHA"],
-              "acceptance_sha": os.environ["GITHUB_SHA"],
-              "final_main_sha": os.environ["GITHUB_SHA"],
-              "sha_stable": True,
-              "run_id": os.environ["GITHUB_RUN_ID"],
-              "status": "MERGED_BUT_NOT_ACCEPTED",
-              "acceptance_scope": "CONTRACT_ONLY_AND_CONTROLLED_SIMULATION",
-              "real_production_evidence": "MISSING",
-              "entry_results": {
-                  "CHATGPT_MANUAL_FORMAL_ANALYSIS": "REAL_PRODUCTION_EVIDENCE_MISSING",
-                  "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS": "REAL_PRODUCTION_EVIDENCE_MISSING",
-                  "CHATGPT_SCHEDULED_FORMAL_ANALYSIS": "REAL_PRODUCTION_EVIDENCE_MISSING",
-              },
-              "pushplus": "UNVERIFIED_EXTERNAL_SEND",
-          }))
-          PY
-      - name: Upload acceptance evidence
-        uses: actions/upload-artifact@v4
-        with:
-          name: formal-decision-e2e-${{ github.run_id }}
-          path: ${{ runner.temp }}/formal-decision-acceptance/result.json
