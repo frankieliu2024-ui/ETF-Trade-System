@@ -333,8 +333,15 @@ jobs:
             echo "decision_event_path=" >> "$GITHUB_OUTPUT"
           fi
           if [ "${#review_paths[@]}" -eq 0 ] && [ "${#decision_paths[@]}" -eq 0 ]; then
-            echo "Producer run ${PRODUCER_RUN_ID} has no canonical report event." >&2
-            exit 1
+            # Successful market snapshots can be non-report wakes. Absence of a
+            # report event is a normal no-op; only an explicit canonical event
+            # authorizes REPORT delivery. Formal request closure is covered by
+            # the dedicated automated E2E contract.
+            echo "Producer run ${PRODUCER_RUN_ID} has no canonical report event; notification is a no-op."
+            echo "review_completion=false" >> "$GITHUB_OUTPUT"
+            echo "review_event_path=" >> "$GITHUB_OUTPUT"
+            echo "decision_completion=false" >> "$GITHUB_OUTPUT"
+            echo "decision_event_path=" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Send material user-action notification
