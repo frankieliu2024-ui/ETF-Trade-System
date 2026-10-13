@@ -152,6 +152,7 @@ def latest_unfinished_formal_parent() -> tuple[str | None, str | None]:
         # steal recovery from the active request.
         if str(request.get("source") or "").upper() not in {
             "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
             "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
         }:
             continue
