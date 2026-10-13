@@ -18,6 +18,13 @@ on:
       - "tests/test_formal_decision_production_source.py"
       - "docs/Formal Decision执行与用户回复协议.md"
       - ".github/workflows/decision-notification.yml"
+      # Stable PR business-CI coverage: source, tests, protocols and workflow changes
+      # must not silently receive zero checks. This remains contract-only and
+      # never reads or writes dynamic production state.
+      - "scripts/**"
+      - "tests/**"
+      - "docs/**"
+      - ".github/workflows/**"
   push:
     branches: [main]
     paths:
@@ -54,6 +61,18 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Compile changed Python files
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "${{ github.base_ref }}"
+          mapfile -t changed_py < <(git diff --name-only "origin/${{ github.base_ref }}...HEAD" -- '*.py')
+          if (( ${#changed_py[@]} )); then
+            python -m py_compile "${changed_py[@]}"
+          else
+            echo "No changed Python files."
+          fi
       - name: Run three-entry and REPORT handoff contract acceptance
         run: |
           python -m unittest -v tests.test_formal_decision_e2e_contract
