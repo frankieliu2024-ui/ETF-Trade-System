@@ -1125,7 +1125,7 @@ jobs:
                   obj = json.loads(path.read_text(encoding="utf-8"))
               except (OSError, json.JSONDecodeError):
                   continue
-              if str(obj.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH" and str(obj.get("source") or "") == "CHATGPT_MANUAL_FORMAL_ANALYSIS":
+              if str(obj.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH" and str(obj.get("source") or "") in {"CHATGPT_MANUAL_FORMAL_ANALYSIS", "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"}:
                   formal_ids.append(str(obj.get("request_id") or "").strip())
           if formal_ids:
               query_path = Path("data/state/query_context.json")
@@ -1144,6 +1144,7 @@ jobs:
           PY
           git checkout -- data/state/system_consistency.json
           git reset -- data/state/notification_center.json
+              git add -f -- data/state/query_context.json
               git add -A -- data/market/snapshots data/market/discovery_history data/state post_market_review events config/market/etf_monitor_universe.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
               git reset -- data/state/system_consistency.json
               git reset -- data/state/notification_center.json
