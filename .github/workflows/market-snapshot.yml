@@ -919,6 +919,7 @@ jobs:
         if: ${{ always() && steps.state_sync.outputs.formal_completion != 'true' && steps.triggering_request.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
         run: |
           REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"
+          REQUEST_FILE="$(printf '%s' "$REQUEST_FILE" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
           if [ -z "$REQUEST_FILE" ] && [ -n "${FORMAL_CONTEXT_RECOVERY_REQUEST:-}" ]; then REQUEST_FILE="$FORMAL_CONTEXT_RECOVERY_REQUEST"; fi
           if [ -z "$REQUEST_FILE" ] && [ -n "${REPLAY_REQUEST:-}" ]; then REQUEST_FILE="$REPLAY_REQUEST"; fi
           if [ -z "$REQUEST_FILE" ]; then REQUEST_FILE=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | head -n 1); fi
