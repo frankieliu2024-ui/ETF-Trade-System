@@ -1,11 +1,27 @@
 from __future__ import annotations
 
 import unittest
+import tempfile
+from pathlib import Path
 
-from scripts.build_e2e_status import context_component
+from scripts.build_e2e_status import context_component, context_read_contract
 
 
 class E2EDecisionReadinessTests(unittest.TestCase):
+    def test_context_read_contract_distinguishes_verified_empty_from_readable_payload(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "query_context.json"
+            path.write_text('{"decision_fact_pack": {"trigger": {"request_id": "r"}}}\n', encoding="utf-8")
+            readable = context_read_contract(path, {"decision_fact_pack": {}})
+            self.assertEqual(readable["status"], "READ_OK")
+            self.assertGreater(readable["byte_count"], 0)
+            self.assertEqual(len(readable["sha256"]), 64)
+
+            path.write_text("", encoding="utf-8")
+            empty = context_read_contract(path, {})
+            self.assertEqual(empty["status"], "VERIFIED_EMPTY")
+            self.assertEqual(empty["byte_count"], 0)
+
     def test_legacy_unestablished_boundary_is_diagnostic_only(self):
         result = context_component(
             {"request_id": "q"},
