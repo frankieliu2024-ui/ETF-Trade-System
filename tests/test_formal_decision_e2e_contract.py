@@ -167,6 +167,13 @@ if __name__ == "__main__":
 
 
 class FormalBusinessHealthBoundaryTests(unittest.TestCase):
+    def test_context_recovery_is_checked_at_final_publish(self):
+        root = Path(__file__).parents[1]
+        workflow = (root / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        self.assertIn("FORMAL_CONTEXT_RECOVERY_REQUEST", workflow)
+        self.assertIn("final publish cannot omit non-empty request-bound query_context.json", workflow)
+        self.assertIn("final publish query_context request mismatch", workflow)
+
     def test_system_consistency_is_not_a_pull_request_business_gate(self):
         root = Path(__file__).parents[1]
         workflow = (root / ".github/workflows/system-consistency.yml").read_text(encoding="utf-8")
