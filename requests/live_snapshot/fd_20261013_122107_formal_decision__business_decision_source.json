@@ -1,0 +1,746 @@
+{
+  "request_id": "fd_20261013_122107_formal_decision__business_decision_source",
+  "request_type": "BUSINESS_DECISION_SOURCE",
+  "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
+  "parent_request_id": "fd_20261013_122107_formal_decision",
+  "decision_id": "fd_20261013_122107_formal_decision_decision",
+  "consumed_snapshot": "data/market/snapshots/2026-10-13_122150.json",
+  "requested_at_beijing": "2026-10-13T12:21:07+08:00",
+  "interaction_scenario": "INTRADAY",
+  "presentation_binding": {
+    "report_type": "ETF_FORMAL_DECISION",
+    "task_id": "ETF正式决策",
+    "task_run_id": "fd_20261013_122107_formal_decision",
+    "full_content": "【ETF正式决策】2026-10-13 12:21 正式判断\n\n【业务结论】\n\n1. 本次已执行硬约束下的对称资本竞争：现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选和可释放资本统一比较；持仓不因历史存在自动获得保留优先级。\n2. 当前没有候选同时完成正式机会准入并在资本竞争中胜出。下一单位资本的最有效合法用途为保留现金；实际新增部署0元。\n3. 可部署现金2,181.04元继续保留；可释放资本0元。没有任何持仓在本节点独立卖出链和资本效率比较中达到释放条件。\n4. 8项实际持仓均继续持有管理，全部持仓ETF均不追加；这是本次对称比较后的结果，不是持仓默认优先。\n\n【资本竞争结论】\n\n现金与全部持仓逐项比较了HOLD、REDUCE、EXIT及迁移至观察/Discovery候选的用途；观察ETF和Discovery候选也参加了同一资本比较。当前没有足以覆盖交易成本、迁移风险、失败风险和原持仓右尾损失的替代用途，因此不释放、不买入，保留现金。\n\n【风险与准入】\n\n当前允许继续持有管理和观察，本节点不新增风险部署。Trial资格无，Confirm资格无。共同风险提高后续复核优先级，但不替代独立卖出链；观察ETF继续观察，Discovery候选不自动取得观察、机会或交易资格。\n\n【持仓动作】\n\n宁德时代（300750）、工业富联（601138）、纳指ETF（159941）、科创50ETF（588000）、科创创业ETF（159781）、能源化工ETF（159981）、创新药ETF（159992）、日经ETF（513520）：均为持有管理、不追加。若后续出现自身结构、承接、风险收益同步恶化，或出现经正式准入且足以覆盖迁移成本的更高效率用途，再重新判断减持或退出。\n\n【数据边界】\n\n本报告仅使用本父请求绑定的正式快照：data/market/snapshots/2026-10-13_122150.json，请求时间为2026-10-13T12:21:07+08:00。证券交易仍由用户人工确认和下单，系统不自动交易。\n\n【置信度】\n\n中等。正式快照、账户事实和DWP问题覆盖完整；但盘中事实会继续变化，下一节点需重新比较。\n\n【最可能出错的地方】\n\n最可能出错的是盘中相对强弱和机会候选结构随后快速变化，从而改变持仓继续占资与现金保留之间的资本效率排序。"
+  },
+  "decision_response": {
+    "answers": {
+      "RISK_PERMISSION": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "允许继续持有管理和观察；本节点不新增风险部署"
+      },
+      "MAIN_CANDIDATE": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "当前无已完成准入的机会ETF；现金保留并继续比较",
+        "candidate_code": "",
+        "candidate_name": "现金",
+        "opportunity_status": "无机会",
+        "reason": "没有候选同时满足正式机会准入并在资本竞争中胜出"
+      },
+      "DEPLOYABLE_CASH": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "保留可部署现金2,181.04元",
+        "amount_yuan": 2181.04
+      },
+      "RELEASABLE_CAPITAL": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "不释放持仓资本；可释放资本0元",
+        "amount_yuan": 0,
+        "reason": "没有持仓在独立卖出链和对称资本比较中胜出"
+      },
+      "TRIAL_CONFIRM_CAPACITY": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "Trial资格无、Confirm资格无，实际新增部署0元"
+      },
+      "CONCENTRATION_COMMON_RISK": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "共同风险提高复核优先级，但不单独触发卖出；继续监测"
+      },
+      "NEXT_UNIT_CAPITAL_USE": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "下一单位资本保留现金，实际新增部署0元",
+        "new_amount_yuan": 0,
+        "post_action_deployable_cash": 2181.04,
+        "capital_migration_review": {
+          "current_best_opportunity": "现金保留",
+          "decision": "不释放、不买入，保留现金"
+        }
+      },
+      "HOLDING:300750": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "持有管理",
+        "action_detail": "继续持有，不追加",
+        "capital_occupancy_reason": "对称比较未证明存在足以覆盖迁移成本、失败风险和账户功能损失的更高效率用途。",
+        "capital_efficiency_release_assessment": "当前未达到独立卖出门槛；继续占用资本是本次比较结果，不是历史持有优先级"
+      },
+      "HOLDING:601138": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "持有管理",
+        "action_detail": "继续持有，不追加",
+        "capital_occupancy_reason": "对称比较未证明存在足以覆盖迁移成本、失败风险和账户功能损失的更高效率用途。",
+        "capital_efficiency_release_assessment": "当前未达到独立卖出门槛；继续占用资本是本次比较结果，不是历史持有优先级"
+      },
+      "HOLDING:159941": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "持有管理",
+        "action_detail": "继续持有，不追加",
+        "capital_occupancy_reason": "对称比较未证明存在足以覆盖迁移成本、失败风险和账户功能损失的更高效率用途。",
+        "capital_efficiency_release_assessment": "当前未达到独立卖出门槛；继续占用资本是本次比较结果，不是历史持有优先级"
+      },
+      "HELD_ETF_ADD:159941": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "不追加",
+        "reason": "持仓追加相对现金、其他持仓、观察ETF和Discovery候选未取得资本效率优势"
+      },
+      "HOLDING:588000": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "持有管理",
+        "action_detail": "继续持有，不追加",
+        "capital_occupancy_reason": "对称比较未证明存在足以覆盖迁移成本、失败风险和账户功能损失的更高效率用途。",
+        "capital_efficiency_release_assessment": "当前未达到独立卖出门槛；继续占用资本是本次比较结果，不是历史持有优先级"
+      },
+      "HELD_ETF_ADD:588000": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "不追加",
+        "reason": "持仓追加相对现金、其他持仓、观察ETF和Discovery候选未取得资本效率优势"
+      },
+      "HOLDING:159781": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "持有管理",
+        "action_detail": "继续持有，不追加",
+        "capital_occupancy_reason": "对称比较未证明存在足以覆盖迁移成本、失败风险和账户功能损失的更高效率用途。",
+        "capital_efficiency_release_assessment": "当前未达到独立卖出门槛；继续占用资本是本次比较结果，不是历史持有优先级"
+      },
+      "HELD_ETF_ADD:159781": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "不追加",
+        "reason": "持仓追加相对现金、其他持仓、观察ETF和Discovery候选未取得资本效率优势"
+      },
+      "HOLDING:159981": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "持有管理",
+        "action_detail": "继续持有，不追加",
+        "capital_occupancy_reason": "对称比较未证明存在足以覆盖迁移成本、失败风险和账户功能损失的更高效率用途。",
+        "capital_efficiency_release_assessment": "当前未达到独立卖出门槛；继续占用资本是本次比较结果，不是历史持有优先级"
+      },
+      "HELD_ETF_ADD:159981": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "不追加",
+        "reason": "持仓追加相对现金、其他持仓、观察ETF和Discovery候选未取得资本效率优势"
+      },
+      "HOLDING:159992": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "持有管理",
+        "action_detail": "继续持有，不追加",
+        "capital_occupancy_reason": "对称比较未证明存在足以覆盖迁移成本、失败风险和账户功能损失的更高效率用途。",
+        "capital_efficiency_release_assessment": "当前未达到独立卖出门槛；继续占用资本是本次比较结果，不是历史持有优先级"
+      },
+      "HELD_ETF_ADD:159992": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "不追加",
+        "reason": "持仓追加相对现金、其他持仓、观察ETF和Discovery候选未取得资本效率优势"
+      },
+      "HOLDING:513520": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "持有管理",
+        "action_detail": "继续持有，不追加",
+        "capital_occupancy_reason": "对称比较未证明存在足以覆盖迁移成本、失败风险和账户功能损失的更高效率用途。",
+        "capital_efficiency_release_assessment": "当前未达到独立卖出门槛；继续占用资本是本次比较结果，不是历史持有优先级"
+      },
+      "HELD_ETF_ADD:513520": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "不追加",
+        "reason": "持仓追加相对现金、其他持仓、观察ETF和Discovery候选未取得资本效率优势"
+      },
+      "OBSERVATION:513180": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "保留观察身份，暂不升级为机会ETF或Trial/Confirm",
+        "reason": "持续信息功能仍有价值，但本节点未在资本竞争中胜出"
+      },
+      "OBSERVATION:159561": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "保留观察身份，暂不升级为机会ETF或Trial/Confirm",
+        "reason": "持续信息功能仍有价值，但本节点未在资本竞争中胜出"
+      },
+      "OBSERVATION:518880": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "保留观察身份，暂不升级为机会ETF或Trial/Confirm",
+        "reason": "持续信息功能仍有价值，但本节点未在资本竞争中胜出"
+      },
+      "OBSERVATION:515880": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "保留观察身份，暂不升级为机会ETF或Trial/Confirm",
+        "reason": "持续信息功能仍有价值，但本节点未在资本竞争中胜出"
+      },
+      "OBSERVATION:159326": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "保留观察身份，暂不升级为机会ETF或Trial/Confirm",
+        "reason": "持续信息功能仍有价值，但本节点未在资本竞争中胜出"
+      },
+      "OBSERVATION:515220": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "保留观察身份，暂不升级为机会ETF或Trial/Confirm",
+        "reason": "持续信息功能仍有价值，但本节点未在资本竞争中胜出"
+      },
+      "OBSERVATION:513350": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "保留观察身份，暂不升级为机会ETF或Trial/Confirm",
+        "reason": "持续信息功能仍有价值，但本节点未在资本竞争中胜出"
+      },
+      "OBSERVATION:515080": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "保留观察身份，暂不升级为机会ETF或Trial/Confirm",
+        "reason": "持续信息功能仍有价值，但本节点未在资本竞争中胜出"
+      },
+      "DISCOVERY:159201": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "本节点不升级为机会ETF，不部署资本",
+        "reason": "仅作为本节点发现候选参加比较，未完成正式机会准入"
+      },
+      "DISCOVERY:159227": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "本节点不升级为机会ETF，不部署资本",
+        "reason": "仅作为本节点发现候选参加比较，未完成正式机会准入"
+      },
+      "DISCOVERY:159309": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "本节点不升级为机会ETF，不部署资本",
+        "reason": "仅作为本节点发现候选参加比较，未完成正式机会准入"
+      },
+      "DISCOVERY:159666": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "本节点不升级为机会ETF，不部署资本",
+        "reason": "仅作为本节点发现候选参加比较，未完成正式机会准入"
+      },
+      "DISCOVERY:159930": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "本节点不升级为机会ETF，不部署资本",
+        "reason": "仅作为本节点发现候选参加比较，未完成正式机会准入"
+      },
+      "DISCOVERY:512710": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "本节点不升级为机会ETF，不部署资本",
+        "reason": "仅作为本节点发现候选参加比较，未完成正式机会准入"
+      },
+      "DISCOVERY:513530": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "本节点不升级为机会ETF，不部署资本",
+        "reason": "仅作为本节点发现候选参加比较，未完成正式机会准入"
+      },
+      "DISCOVERY:517180": {
+        "capital_comparison": "现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选及可释放资本统一进入同一资本比较；持仓不因历史存在自动获得优先级。",
+        "next_change_condition": "出现新的独立风险收益、承接、相对强度、结构或资本效率证据时重新判断。",
+        "evidence_decision_impact": [
+          "REQUEST_BOUND_MARKET_SNAPSHOT",
+          "ACCOUNT_FACT",
+          "SYMMETRIC_CAPITAL_COMPARISON"
+        ],
+        "state_transition_attribution": {
+          "material_evidence_delta": "本次父请求绑定的12:21请求及12:21:50正式快照构成判断依据。",
+          "evidence_requirement_ids": [
+            "REQUEST_BOUND_MARKET_SNAPSHOT",
+            "ACCOUNT_FACT",
+            "SYMMETRIC_CAPITAL_COMPARISON"
+          ]
+        },
+        "final_action": "本节点不升级为机会ETF，不部署资本",
+        "reason": "仅作为本节点发现候选参加比较，未完成正式机会准入"
+      }
+    }
+  },
+  "presentation_content": "【ETF正式决策】2026-10-13 12:21 正式判断\n\n【业务结论】\n\n1. 本次已执行硬约束下的对称资本竞争：现金、全部实际持仓、持仓追加、观察ETF、全市场机会发现候选和可释放资本统一比较；持仓不因历史存在自动获得保留优先级。\n2. 当前没有候选同时完成正式机会准入并在资本竞争中胜出。下一单位资本的最有效合法用途为保留现金；实际新增部署0元。\n3. 可部署现金2,181.04元继续保留；可释放资本0元。没有任何持仓在本节点独立卖出链和资本效率比较中达到释放条件。\n4. 8项实际持仓均继续持有管理，全部持仓ETF均不追加；这是本次对称比较后的结果，不是持仓默认优先。\n\n【资本竞争结论】\n\n现金与全部持仓逐项比较了HOLD、REDUCE、EXIT及迁移至观察/Discovery候选的用途；观察ETF和Discovery候选也参加了同一资本比较。当前没有足以覆盖交易成本、迁移风险、失败风险和原持仓右尾损失的替代用途，因此不释放、不买入，保留现金。\n\n【风险与准入】\n\n当前允许继续持有管理和观察，本节点不新增风险部署。Trial资格无，Confirm资格无。共同风险提高后续复核优先级，但不替代独立卖出链；观察ETF继续观察，Discovery候选不自动取得观察、机会或交易资格。\n\n【持仓动作】\n\n宁德时代（300750）、工业富联（601138）、纳指ETF（159941）、科创50ETF（588000）、科创创业ETF（159781）、能源化工ETF（159981）、创新药ETF（159992）、日经ETF（513520）：均为持有管理、不追加。若后续出现自身结构、承接、风险收益同步恶化，或出现经正式准入且足以覆盖迁移成本的更高效率用途，再重新判断减持或退出。\n\n【数据边界】\n\n本报告仅使用本父请求绑定的正式快照：data/market/snapshots/2026-10-13_122150.json，请求时间为2026-10-13T12:21:07+08:00。证券交易仍由用户人工确认和下单，系统不自动交易。\n\n【置信度】\n\n中等。正式快照、账户事实和DWP问题覆盖完整；但盘中事实会继续变化，下一节点需重新比较。\n\n【最可能出错的地方】\n\n最可能出错的是盘中相对强弱和机会候选结构随后快速变化，从而改变持仓继续占资与现金保留之间的资本效率排序。"
+}
