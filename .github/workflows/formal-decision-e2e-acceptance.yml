@@ -1,6 +1,22 @@
 name: Formal Decision automated E2E acceptance
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/formal_entry_contract.py"
+      - "scripts/notification_center.py"
+      - "scripts/business_decision_source.py"
+      - "scripts/process_state_sync_request.py"
+      - "scripts/build_query_context.py"
+      - "scripts/runtime_self_heal.py"
+      - "scripts/build_e2e_status.py"
+      - "scripts/report_delivery_request.py"
+      - "tests/test_formal_decision_e2e_contract.py"
+      - "tests/test_formal_decision_production_e2e.py"
+      - "docs/Formal Decision执行与用户回复协议.md"
+      - "docs/生产变更与并发写入协议_V1.0.md"
+      - ".github/workflows/decision-notification.yml"
   push:
     branches: [main]
     paths:
