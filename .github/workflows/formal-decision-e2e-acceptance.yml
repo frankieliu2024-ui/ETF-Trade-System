@@ -1,0 +1,38 @@
+name: Formal Decision automated E2E acceptance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/formal_entry_contract.py"
+      - "scripts/notification_center.py"
+      - "scripts/business_decision_source.py"
+      - "scripts/process_state_sync_request.py"
+      - ".github/workflows/decision-notification.yml"
+      - "tests/test_formal_decision_e2e_contract.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  formal-decision-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Run three-entry and REPORT handoff contract acceptance
+        run: |
+          python -m unittest -v tests.test_formal_decision_e2e_contract
+      - name: Assert acceptance scope
+        run: |
+          test -f scripts/formal_entry_contract.py
+          test -f scripts/notification_center.py
+          test -f scripts/business_decision_source.py
+          test -f scripts/process_state_sync_request.py
+          echo "Formal Decision automated E2E acceptance scope verified"
