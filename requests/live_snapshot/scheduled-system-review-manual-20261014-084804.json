@@ -1,0 +1,87 @@
+{
+  "request_id": "scheduled-system-review-manual-20261014-084804",
+  "request_type": "STATE_SYNC_ONLY",
+  "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+  "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+  "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+  "requested_at_beijing": "2026-10-14T08:48:04+08:00",
+  "system_review": {
+    "status": "PASS_WITH_DELIVERY_AND_VALIDATION_GAPS",
+    "review_semantics": "MORNING_OPENING_REVIEW",
+    "market_date": "2026-10-14",
+    "a_share_latest_formal_market_date": "2026-10-13",
+    "market_phase": "PRE_OPEN",
+    "is_a_share_trading_day": true,
+    "fact_cutoff_at_beijing": "2026-10-14T08:48:04+08:00",
+    "source_facts_as_of": {
+      "market": "2026-10-13T15:05:25+08:00",
+      "account": "2026-10-13T15:00:00+08:00",
+      "e2e": "2026-10-14T08:38:40+08:00",
+      "decision_context": "2026-10-14T08:38:57+08:00",
+      "system_consistency": "2026-09-29T14:31:00+08:00",
+      "strategy_risk": "2026-09-23"
+    },
+    "e2e_status": "READY",
+    "blockers": [],
+    "degradations": [
+      "CURRENT_FULL_SYSTEM_CONSISTENCY_CHECK_IS_OLD",
+      "STRATEGY_RISK_FACT_AS_OF_2026_09_23",
+      "NO_CURRENT_A_SHARE_MARKET_FACT_BEFORE_OPEN",
+      "LATEST_FULL_DAY_TRADE_REVIEW_COMPLETION_AND_DELIVERY_NOT_CONFIRMED",
+      "FORMAL_DECISION_REPORT_COMPLETION_AND_DELIVERY_NOT_CONFIRMED"
+    ],
+    "account_summary": {
+      "total_asset": 181547.24,
+      "stock_market_value": 179366.2,
+      "deployable_cash": 2181.04,
+      "position_count": 8,
+      "account_fact_as_of_beijing": "2026-10-13T15:00:00+08:00",
+      "pending_change_count": 0
+    },
+    "risk_summary": {
+      "etf_strategy_risk_pct": -7.2959,
+      "as_of_date": "2026-09-23",
+      "lifecycle_due_count": 0
+    },
+    "discovery_summary": {
+      "observation_count": 8,
+      "held_etf_count": 6,
+      "held_stock_count": 2,
+      "latest_discovery_temporary_count": 6,
+      "opportunity_permission_automatic": false
+    },
+    "delivery_summary": {
+      "latest_full_day_trade_review": {
+        "report": true,
+        "completion": "UNCONFIRMED",
+        "notification_sent": "UNCONFIRMED",
+        "user_received": "UNCONFIRMED"
+      },
+      "current_formal_decision": {
+        "facts_ready": true,
+        "report": "UNCONFIRMED",
+        "completion": "UNCONFIRMED",
+        "notification_sent": "UNCONFIRMED",
+        "user_received": "UNCONFIRMED"
+      },
+      "current_system_review": {
+        "report": true,
+        "completion": "UNCONFIRMED_AT_FREEZE",
+        "notification_sent": "UNCONFIRMED_AT_FREEZE",
+        "user_received": "UNCONFIRMED_AT_FREEZE"
+      }
+    },
+    "unresolved_items": [
+      "VERIFY_LATEST_FULL_DAY_TRADE_REVIEW_COMPLETION_AND_REPORT_DELIVERY",
+      "VERIFY_CURRENT_FORMAL_DECISION_REPORT_AND_COMPLETION_DELIVERY",
+      "FULL_SYSTEM_CONSISTENCY_REVIEW_FOR_CURRENT_MAIN",
+      "VERIFY_CURRENT_SYSTEM_REVIEW_COMPLETION_AND_NOTIFICATION_OUTCOME"
+    ]
+  },
+  "presentation_binding": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "task_id": "ETF系统复核",
+    "task_run_id": "manual-20261014-084804",
+    "full_content": "【ETF系统复核】2026-10-14 08:48 早间复核\n\n【复核时点（北京时间）】\n\n本次复核时间：2026-10-14 08:48。按现行交易日历，今日为A股交易日；当前尚未进入集合竞价。本次只检查系统与事实链，不形成买卖结论、金额或份额。\n\n【早间复核结论】\n\n截至08:38，系统可用性检查为READY，未见阻止今日开盘后继续运行的关键阻断项。今日后续节点可按原安排执行，用户目前无需处理。当前仍有交付状态待核实，且最近一次完整一致性核查较早，因此“可运行”不代表此后所有调整均已完成新一轮全量验收。\n\n【今日市场阶段与开门条件】\n\n1. 今日A股尚未开盘，最近有效行情为10月13日收盘，价格有效时点15:00、采集时间15:05。开盘后正式判断须使用对应市场阶段的新鲜行情，不能把昨日收盘价当作今日可成交价格。\n\n2. 账户事实已更新至10月13日15:00；如其后发生买卖、资金划转或持仓变化，应先用新账户事实核实。\n\n【关键事实与数据可用性】\n\n1. 账户记录为总资产181,547.24元、证券市值179,366.20元、可部署现金2,181.04元，实际持仓8项；当前未见待处理账户变更。\n\n2. 市场、账户、风险和生命周期状态均可用，未到期的Trial处理事项为0。ETF策略风险事实约为-7.2959%，对应估值时点为9月23日；最近一次完整系统一致性核查为9月29日，结果通过但未覆盖此后全部变化。\n\n3. 最新可读的收盘复盘资料仍需核实完整日复盘对应的完成记录及通知状态。今日正式判断资料已具备，但其报告、完成记录和通知结果尚未由本次复核确认。\n\n【今日决策链准备度】\n\n1. 最新全市场机会发现形成6个临时评估对象；另有8只观察ETF、6只持仓ETF和2只持仓个股。发现、观察、机会与持仓身份彼此独立，发现或观察本身不产生交易许可。\n\n2. 当前决策资料具备覆盖持仓、持仓ETF追加、现金、可释放资本及候选比较的条件；正式机会资格和资本比较仍由既有正式判断完成。本次系统复核不另建决策链，也不替代该判断。\n\n【需要用户处理】\n\n目前无需补交账户截图或采取其他操作。若10月13日收盘后发生了账户变化，请在正式判断前提供对应成交、资金或持仓事实。\n\n【今日重点关注】\n\n开盘后先核实市场和账户事实是否仍有效，再由正式判断重新比较全部实际持仓、持仓ETF追加、合格机会、现金与可释放资本；不沿用昨日判断作为今日交易授权。\n\n【下一阶段】\n\n等待开盘后的首个适用正式节点验证行情更新、完整资本比较、报告记录和通知链。系统复核不触发第二条交易判断。\n\n【执行状态】\n\n本次复核正文已形成。完成记录尚未确认；通知是否发送及用户是否收到也尚未确认。本轮正文输出后仅尝试一次既有完成提交，后续状态以明确结果为准。\n\n【置信度】\n\n中高\n\n【最可能出错的地方】\n\n1. 08:38之后的正式判断、收盘复盘或通知状态可能已有更新，本次读取未覆盖后续变化。\n\n2. 策略风险事实与完整一致性核查时点较早，不能证明当前全部内容都已重新验收。\n\n3. 收盘账户事实之后若有尚未提供的交易或资金变化，账户资本状态需要相应更新。"
+  }
+}
