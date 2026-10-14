@@ -458,7 +458,7 @@ jobs:
 
       - name: Send material user-action notification
         id: event_notify
-        if: ${{ (github.event_name == 'workflow_dispatch' && steps.dispatch_bds.outputs.formal_content == 'true') || (github.event_name == 'workflow_run' && (github.event.workflow_run.name != 'ETF market snapshot' || steps.workflow_review.outputs.review_completion == 'true')) || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.formal_content == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true')) }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && steps.dispatch_bds.outputs.formal_content == 'true') || (github.event_name == 'workflow_run' && (github.event.workflow_run.name != 'ETF market snapshot' || steps.workflow_review.outputs.review_completion == 'true')) || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true')) }}
         continue-on-error: true
         env:
           # Bind the exact report/review selected from the triggering production fact.
