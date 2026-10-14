@@ -47,7 +47,7 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertIn('id: workflow_bds', self.text)
         self.assertIn("github.event.workflow_run.name == 'ETF system consistency'", self.text)
         self.assertIn("github.event.workflow_run.head_sha", self.text)
-        self.assertIn("git diff-tree --no-commit-id --name-only -r \\\"$PRODUCER_SHA\\\"", self.text)
+        self.assertIn('git diff-tree --no-commit-id --name-only -r "$PRODUCER_SHA"', self.text)
         self.assertIn("requests/live_snapshot/*__bds*.json", self.text)
         self.assertIn('Expected exactly one current BDS', self.text)
         self.assertIn('steps.workflow_bds.outputs.formal_content_path', self.text)
