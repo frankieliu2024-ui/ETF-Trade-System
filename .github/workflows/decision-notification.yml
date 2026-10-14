@@ -353,7 +353,15 @@ jobs:
           REVIEW_EVENT_PATH: ${{ steps.push_kind.outputs.review_event_path || steps.workflow_review.outputs.review_event_path }}
           DECISION_EVENT_PATH: ${{ steps.push_kind.outputs.decision_event_path || steps.workflow_review.outputs.decision_event_path }}
           FORMAL_PRESENTATION_PATH: ${{ steps.push_kind.outputs.formal_content_path }}
-        run: python scripts/run_guarded_notification.py center --mode event
+        run: |
+          if [ -n "$FORMAL_PRESENTATION_PATH" ]; then
+            # A current Formal Decision BDS is authoritative. Pass it explicitly
+            # so notification_center cannot fall back to an older review event.
+            python scripts/run_guarded_notification.py center --mode event \
+              --formal-content-file "$FORMAL_PRESENTATION_PATH"
+          else
+            python scripts/run_guarded_notification.py center --mode event
+          fi
 
       - name: Send conditional A-share trading-day post-close account reminder
         id: close_notify

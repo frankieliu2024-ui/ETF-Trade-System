@@ -70,7 +70,9 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertIn(reconciliation_condition, self.text)
         self.assertIn(event_condition_fragment, self.text)
         self.assertEqual(self.text.count("python scripts/build_execution_reconciliation.py"), 1)
-        self.assertEqual(self.text.count("python scripts/run_guarded_notification.py center --mode event"), 1)
+        self.assertEqual(self.text.count("id: event_notify"), 1)
+        self.assertIn("--formal-content-file", self.text)
+        self.assertIn("$FORMAL_PRESENTATION_PATH", self.text)
 
     def test_existing_route_commands_remain_present_once(self):
         commands = [
@@ -79,7 +81,6 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
             "python scripts/run_guarded_notification.py batch --market apac",
             "python scripts/run_guarded_notification.py batch --market us",
             "python scripts/run_guarded_notification.py center --mode channel-test",
-            "python scripts/run_guarded_notification.py center --mode event",
             "python scripts/run_guarded_notification.py center --mode close",
             "python scripts/merge_notification_state.py",
         ]
