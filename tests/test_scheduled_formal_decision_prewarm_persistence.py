@@ -43,6 +43,18 @@ class ScheduledFormalDecisionPrewarmPersistenceTests(unittest.TestCase):
         }
         self.assertEqual(classify_live_snapshot_request(request), "STATE_SYNC_ONLY")
 
+    def test_nested_formal_query_intent_is_used_for_pit_routing(self):
+        request = {
+            "request_type": "MARKET_QUOTE_REFRESH",
+            "intent": {"query_intent": "FORMAL_INTRADAY_ANALYSIS"},
+            "force_refresh": True,
+            "require_post_request_snapshot": True,
+        }
+        self.assertEqual(
+            refresh_gate._query_intent(request),
+            "FORMAL_INTRADAY_ANALYSIS",
+        )
+
     def test_scheduled_prewarm_waits_for_nominal_node_but_accepts_post_request_snapshot(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
