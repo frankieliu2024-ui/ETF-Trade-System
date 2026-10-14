@@ -162,6 +162,29 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
             self.assertIsNone(center.formal_decision_report_event())
 
 
+
+class FormalDecisionLessonsProtocolTests(unittest.TestCase):
+    def test_protocol_separates_formal_decision_from_full_day_review(self):
+        root = Path(__file__).parents[1]
+        text = (root / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
+        self.assertIn("正式决策与完整日复盘是两个独立业务链", text)
+        self.assertIn("READY 的首份报告不等待后置动作", text)
+
+    def test_protocol_keeps_health_out_of_business_pr_gate(self):
+        root = Path(__file__).parents[1]
+        text = (root / "docs/生产变更与并发写入协议_V1.0.md").read_text(encoding="utf-8")
+        self.assertIn("system-consistency属于独立生产健康检查", text)
+        self.assertIn("不得作为Formal Decision业务PR的硬门禁", text)
+        self.assertIn("无 run 是", text)
+        self.assertIn("SHA 仅是审计元数据", text)
+
+    def test_protocol_preserves_current_request_fail_closed_and_send_boundary(self):
+        root = Path(__file__).parents[1]
+        text = (root / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
+        self.assertIn("当前 request、decision、report、content_hash 或 completion 缺失/不一致时", text)
+        self.assertIn("EXTERNAL_SEND_UNVERIFIED", text)
+        self.assertIn("大文件读取不等于生产状态缺失", text)
+
 if __name__ == "__main__":
     unittest.main()
 
