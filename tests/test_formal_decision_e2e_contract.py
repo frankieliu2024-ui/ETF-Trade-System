@@ -51,17 +51,38 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
             self.assertIn(source, workflow)
             self.assertIn(source, builder)
             self.assertIn(source, healer)
-    def test_bds_is_not_a_completion_or_notification_event(self):
+    def test_current_bds_is_projected_directly_into_formal_notification(self):
         import scripts.notification_center as center
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "bds.json"
-            path.write_text(json.dumps({
+            body = "【ETF正式决策】当前请求正式报告"
+            digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
+            bds = {
                 "request_type": "BUSINESS_DECISION_SOURCE",
+                "request_id": "fd_current",
                 "parent_request_id": "fd_current",
+                "entry_mode": "MANUAL_CONVERSATION",
+                "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
                 "decision_id": "decision_current",
-                "presentation_content": "报告正文",
-            }, ensure_ascii=False), encoding="utf-8")
-            self.assertIsNone(center.formal_content_event(path))
+                "presentation_content": body,
+                "content_hash": digest,
+                "content_sha256": digest,
+                "presentation_binding": {
+                    "request_id": "fd_current",
+                    "parent_request_id": "fd_current",
+                    "decision_id": "decision_current",
+                    "report_id": "report_current",
+                    "full_content": body,
+                    "content_hash": digest,
+                },
+            }
+            path.write_text(json.dumps(bds, ensure_ascii=False), encoding="utf-8")
+            with patch.dict(os.environ, {"EXPECTED_FORMAL_REQUEST_ID": "fd_current"}, clear=False):
+                event = center.formal_content_event(path)
+            self.assertIsNotNone(event)
+            self.assertEqual(event["report_type"], "ETF_FORMAL_DECISION")
+            self.assertEqual(event["request_id"], "fd_current")
+            self.assertEqual(event["content_hash"], digest)
 
     def test_formal_report_requires_request_bound_completion_and_hash(self):
         import scripts.notification_center as center
