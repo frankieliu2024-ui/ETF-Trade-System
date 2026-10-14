@@ -93,9 +93,9 @@ class RefreshGateRequestIdentityTests(unittest.TestCase):
             (calendar_dir / "a_share_trading_calendar_2026.json").write_text(json.dumps({
                 "coverage_start": "2026-01-01", "coverage_end": "2026-12-31", "closed_dates": []
             }), encoding="utf-8")
-            with patch.object(refresh_gate, "ROOT", root), \\
-                 patch.object(refresh_gate, "REQUEST_DIR", request_dir), \\
-                 patch.object(refresh_gate, "CURRENT", state_dir / "CURRENT.json"), \\
+            with patch.object(refresh_gate, "ROOT", root), \
+                 patch.object(refresh_gate, "REQUEST_DIR", request_dir), \
+                 patch.object(refresh_gate, "CURRENT", state_dir / "CURRENT.json"), \
                  patch.object(refresh_gate, "RUNTIME_HEALTH", state_dir / "runtime_health.json"):
                 gate = refresh_gate.build_gate(now=refresh_gate.parse_time("2026-09-23T18:02:00+08:00"), request_file=request)
             self.assertEqual(gate["request_id"], "post-close-current")
@@ -129,9 +129,9 @@ class RefreshGateRequestIdentityTests(unittest.TestCase):
                 "finished_at": "2026-09-22T17:04:24+08:00",
                 "reason": "outside_a_share_capture_window",
             }), encoding="utf-8")
-            with patch.object(refresh_gate, "ROOT", root), \\
-                 patch.object(refresh_gate, "REQUEST_DIR", request_dir), \\
-                 patch.object(refresh_gate, "CURRENT", state_dir / "CURRENT.json"), \\
+            with patch.object(refresh_gate, "ROOT", root), \
+                 patch.object(refresh_gate, "REQUEST_DIR", request_dir), \
+                 patch.object(refresh_gate, "CURRENT", state_dir / "CURRENT.json"), \
                  patch.object(refresh_gate, "RUNTIME_HEALTH", state_dir / "runtime_health.json"):
                 gate = refresh_gate.build_gate()
             self.assertEqual(gate["request_result"], "EXPIRED")

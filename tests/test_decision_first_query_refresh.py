@@ -241,12 +241,12 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "formal.json").write_text("{}", encoding="utf-8")
-            with patch.object(query_context, "read_json", side_effect=fake_read_json), \\
-                 patch.object(query_context, "read_current", return_value=current), \\
-                 patch.object(query_context, "read_account_fact", return_value=account), \\
-                 patch.object(query_context, "active_account_asset_codes", return_value={"etf": set()}), \\
-                 patch.object(query_context, "build_market_quote_context", return_value={"decision_freshness": {"post_request": True}, "quotes": []}), \\
-                 patch.object(query_context, "discover_formal_candidates", side_effect=fake_discovery), \\
+            with patch.object(query_context, "read_json", side_effect=fake_read_json), \
+                 patch.object(query_context, "read_current", return_value=current), \
+                 patch.object(query_context, "read_account_fact", return_value=account), \
+                 patch.object(query_context, "active_account_asset_codes", return_value={"etf": set()}), \
+                 patch.object(query_context, "build_market_quote_context", return_value={"decision_freshness": {"post_request": True}, "quotes": []}), \
+                 patch.object(query_context, "discover_formal_candidates", side_effect=fake_discovery), \
                  patch.object(query_context, "build_decision_context", return_value={"rules_version": "V2.2.33"}):
                 result = query_context.build(root, request_file="formal.json")
 
