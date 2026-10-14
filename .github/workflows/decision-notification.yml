@@ -214,7 +214,7 @@ jobs:
         id: formal_content_notify
         if: ${{ github.event_name == 'push' && steps.push_kind.outputs.formal_content == 'true' }}
         run: |
-          echo "BDS is an actor input; no notification is sent before the canonical FORMAL_DECISION completion event."
+          echo "BDS presentation content is projected by the existing notification center; no second notification chain is created."
 
       - name: Build delayed execution reconciliation
         if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && (steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.trade == 'true')) }}
