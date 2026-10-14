@@ -186,6 +186,23 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         self.assertIn("EXTERNAL_SEND_UNVERIFIED", text)
         self.assertIn("大文件读取不等于生产状态缺失", text)
 
+class FormalReadyHandoffContractTests(unittest.TestCase):
+    def test_ready_gate_exposes_one_shot_bds_handoff_contract(self):
+        root = Path(__file__).parents[1]
+        text = (root / "scripts/formal_request_consumer.py").read_text(encoding="utf-8")
+        self.assertIn('"submission_type": "BUSINESS_DECISION_SOURCE"', text)
+        self.assertIn('"source": "CHATGPT_BUSINESS_DECISION_RESPONSE"', text)
+        self.assertIn('"decision_response.answers"', text)
+        self.assertIn('"presentation_content"', text)
+        self.assertIn('"must_read_back_before_completion": True', text)
+        self.assertIn('"historical_fallback_forbidden": True', text)
+
+    def test_ready_handoff_does_not_create_a_second_notification_path(self):
+        root = Path(__file__).parents[1]
+        text = (root / "scripts/formal_request_consumer.py").read_text(encoding="utf-8")
+        self.assertNotIn("REPORT_DELIVERY_REQUEST", text)
+        self.assertNotIn("PushPlus", text)
+
 if __name__ == "__main__":
     unittest.main()
 
