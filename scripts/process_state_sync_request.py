@@ -1061,6 +1061,8 @@ def _formal_decision_presentation_binding(request: dict, request_id: str, decisi
         str(supplied),
         request_id=request_id,
         decision_id=decision_id,
+        parent_request_id=str(request.get("parent_request_id") or request_id),
+        report_id=f"etf-formal-decision:{decision_id}",
         canonical_closure_confirmed=bool(request.get("canonical_closure_confirmed")),
         technical_audit_mode=bool(request.get("technical_audit_mode")),
     )
