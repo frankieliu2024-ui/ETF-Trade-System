@@ -3496,6 +3496,14 @@ def main() -> int:
             if response_presentation not in (None, "")
             else request_presentation
         )
+        # A Business Decision Source without the frozen user-visible body is
+        # not a valid Formal Decision completion input.  Do not publish a
+        # half-complete decision event that notification_center cannot safely
+        # consume.
+        if presentation_content in (None, ""):
+            raise ValueError(
+                "business decision source requires frozen presentation_content"
+            )
         if presentation_content not in (None, ""):
             source_payload["presentation_content"] = presentation_content
             binding = request.get("presentation_binding")
