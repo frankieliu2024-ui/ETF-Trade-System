@@ -141,7 +141,7 @@ class FormalFinalContentNotificationTests(unittest.TestCase):
                     "request_id": "parent-1",
                     "parent_request_id": "parent-1",
                     "decision_id": "decision-1",
-                    "report_id": "etf-formal-decision:decision-1",
+                    "report_id": "report-20261014T1120",
                     "full_content": body,
                     "content_hash": digest,
                     "title": "正式决策",
@@ -154,7 +154,7 @@ class FormalFinalContentNotificationTests(unittest.TestCase):
             self.assertEqual(event["content_hash"], digest)
             self.assertEqual(event["request_id"], "parent-1")
             self.assertEqual(event["parent_request_id"], "parent-1")
-            self.assertEqual(event["report_id"], "etf-formal-decision:decision-1")
+            self.assertEqual(event["report_id"], "report-20261014T1120")
 
     def test_formal_notification_accepts_distinct_completion_and_parent_request_ids(self):
         import scripts.notification_center as center
