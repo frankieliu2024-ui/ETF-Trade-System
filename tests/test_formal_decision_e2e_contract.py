@@ -133,7 +133,7 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
             }
             path = decisions / "current.json"
             path.write_text(json.dumps(event, ensure_ascii=False), encoding="utf-8")
-            with patch.object(center, "ROOT", root), patch.dict(os.environ, {"DECISION_EVENT_PATH": "events/decisions/current.json"}):
+            with patch.object(center, "ROOT", root), patch.dict(os.environ, {"DECISION_EVENT_PATH": "events/decisions/current.json", "EXPECTED_FORMAL_REQUEST_ID": "fd_current"}, clear=False):
                 self.assertIsNotNone(center.formal_decision_report_event())
             with patch.object(center, "ROOT", root), patch.dict(os.environ, {"DECISION_EVENT_PATH": "events/decisions/missing.json"}):
                 self.assertIsNone(center.formal_decision_report_event())
