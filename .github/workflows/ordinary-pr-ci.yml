@@ -1,0 +1,49 @@
+name: ordinary-pr-ci
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "scripts/**"
+      - "tests/**"
+      - "docs/**"
+      - ".github/workflows/**"
+      - "config/**"
+      - "ETF_SYSTEM_INDEX.md"
+      - "ETF规则_MASTER.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-ordinary-pr-ci-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ordinary-pr-ci:
+    name: ordinary-pr-ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Compile affected Python modules
+        run: |
+          python -m py_compile \
+            scripts/notification_center.py \
+            scripts/process_state_sync_request.py \
+            scripts/scheduled_review_completion.py \
+            scripts/user_visible_presentation.py
+      - name: Run affected notification and contract tests
+        run: |
+          python -m unittest -v \
+            tests.test_notification_active_report_contract \
+            tests.test_formal_decision_e2e_contract
