@@ -1345,7 +1345,10 @@ def main() -> int:
     if existing and existing.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED"}:
         state.update({"schema_version": "2.2", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "ALREADY_MANAGED", "notification_id": existing.get("notification_id"), "lifecycle_status": existing.get("lifecycle_status")}, ensure_ascii=False)); return 0
     if existing and existing.get("lifecycle_status") == "EXPIRED":
-        print(json.dumps({"status": "EXPIRED_REQUIRES_NEW_EVENT", "notification_id": existing.get("notification_id")}, ensure_ascii=False)); return 0
+        # EXPIRED is historical delivery state, not an active idempotency barrier.
+        # The current request-bound event has passed identity,正文 and hash
+        # validation above, so create a fresh notification for this event.
+        existing = None
     item = normalize_notification(event, existing); item["lifecycle_status"] = "CREATED"; item["created_at"] = item.get("created_at") or now().isoformat(timespec="seconds")
     if not token:
         stamp = now().isoformat(timespec="seconds")
