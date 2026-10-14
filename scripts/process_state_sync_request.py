@@ -3517,9 +3517,18 @@ def main() -> int:
             if not isinstance(decision_response, dict):
                 raise ValueError("business decision source requires actor-only structured decision_response")
             source_payload = project_decision_response(source_payload, decision_response, decision_work_package, forensic_historical_replay=forensic_historical_replay)
+        source_payload["request_bound_fact_binding"] = {
+            "snapshot_id": str(snapshot_rel or "").strip(),
+            "market_date": str(snapshot.get("market_date") or market_date or "").strip(),
+            "market_phase": str(snapshot.get("market_phase") or "").strip(),
+            "captured_at": str(snapshot.get("captured_at_beijing") or snapshot.get("captured_at") or "").strip(),
+        }
         source = validate_source(
             source_payload,
             expected_snapshot=str(request.get("consumed_snapshot") or source_payload.get("consumed_snapshot") or "").strip(),
+            expected_market_date=str(snapshot.get("market_date") or market_date or "").strip(),
+            expected_market_phase=str(snapshot.get("market_phase") or "").strip(),
+            expected_captured_at=str(snapshot.get("captured_at_beijing") or snapshot.get("captured_at") or "").strip(),
         )
         # Bind the selected request-bound DWP only after Source identity and
         # fingerprinting.  It is validation context, not mutable Source
