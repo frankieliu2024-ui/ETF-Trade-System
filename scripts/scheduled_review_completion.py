@@ -84,6 +84,31 @@ def validate_full_day_review(review: dict, account: dict | None = None) -> None:
             raise ValueError(f"invalid formal review managed-position contract: {managed_error}")
 
 
+def freeze_presentation_binding(
+    *,
+    final_content: str,
+    task_id: str,
+    task_run_id: str,
+    report_type: str = "ETF_TRADE_REVIEW",
+) -> dict:
+    """Freeze one exact FINAL_CONTENT string and derive its hash once."""
+    body = str(final_content or "")
+    if not body:
+        raise ValueError("scheduled completion requires non-empty FINAL_CONTENT")
+    occurrence = str(task_run_id or "").strip()
+    if not occurrence:
+        raise ValueError("scheduled completion requires task_run_id/occurrence_id")
+    return {
+        "report_type": str(report_type),
+        "task_id": str(task_id or "ETF交易复盘"),
+        "task_run_id": occurrence,
+        "occurrence_id": occurrence,
+        "report_id": f"{str(report_type).upper()}:{occurrence}",
+        "full_content": body,
+        "content_hash": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+    }
+
+
 def build_completion_request(
     formal_review: dict,
     request_id: str,
@@ -111,14 +136,11 @@ def build_completion_request(
         "requested_at_beijing": str(requested_at_beijing or "").strip(),
         "market_date": effective_market_date,
         "formal_review": formal_review,
-        "presentation_binding": {
-            "report_type": "ETF_TRADE_REVIEW",
-            "task_id": str(task_id or "ETF交易复盘"),
-            "task_run_id": str(task_run_id or request_id),
-            "report_id": f"ETF_TRADE_REVIEW:{str(task_run_id or request_id)}",
-            "full_content": str(final_content or ""),
-            "content_hash": hashlib.sha256(str(final_content or "").encode("utf-8")).hexdigest(),
-        },
+        "presentation_binding": freeze_presentation_binding(
+            final_content=final_content,
+            task_id=str(task_id or "ETF交易复盘"),
+            task_run_id=str(task_run_id or request_id),
+        ),
     }
     if parent_request_id:
         payload["parent_request_id"] = _safe_id(parent_request_id)
