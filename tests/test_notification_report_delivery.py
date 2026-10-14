@@ -150,6 +150,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
         self.assertEqual(request["channel"], "REPORT")
         self.assertEqual(request["full_content"], handoff["full_content"])
         self.assertTrue(request["no_trade_authority"])
+        self.assertEqual(request["title"], "【ETF系统复核】")
         self.assertTrue(notification_center.validate_report_delivery_request(request)[0])
 
     def test_handoff_event_forwards_exact_full_content(self):
@@ -171,6 +172,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
                 event = notification_center.report_delivery_event()
         self.assertEqual(event["content"], handoff["full_content"])
         self.assertEqual(event["report_type"], "ETF_TRADE_REVIEW")
+        self.assertEqual(event["title"], "【ETF交易复盘】")
 
     def test_canonical_trade_and_system_completion_preserve_frozen_content(self):
         for report_type, filename in (("ETF_TRADE_REVIEW", "2026-09-26.json"), ("ETF_SYSTEM_REVIEW", "system_20260926_1930.json")):
