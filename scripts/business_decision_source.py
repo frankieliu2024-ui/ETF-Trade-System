@@ -139,8 +139,22 @@ _HOLDING_ACTION_ALIASES = {
 
 
 def _normalize_holding_action(value: Any) -> str:
+    """Normalize the actor's human-readable holding action to the existing enum.
+
+    FINAL_CONTENT remains human-readable; this projection boundary accepts the
+    wording used by the verified notification examples without changing it.
+    """
     raw = str(value or "").strip()
-    return _HOLDING_ACTION_ALIASES.get(raw.upper(), _HOLDING_ACTION_ALIASES.get(raw, raw.upper()))
+    exact = _HOLDING_ACTION_ALIASES.get(raw.upper(), _HOLDING_ACTION_ALIASES.get(raw))
+    if exact:
+        return exact
+    if raw.startswith(("继续持有", "持有管理", "持仓管理")):
+        return "HOLD"
+    if raw.startswith("降低风险"):
+        return "REDUCE"
+    if raw.startswith(("全部退出", "退出")):
+        return "EXIT"
+    return raw.upper()
 
 
 def _parse_yuan_amount(value: Any, field: str) -> float:
