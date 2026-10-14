@@ -91,6 +91,22 @@ def read_json(path: Path, fallback: Any) -> Any:
         raise
 
 
+
+def read_json_checked(path: Path, fallback: Any) -> tuple[Any, str]:
+    """Read JSON with an auditable result; never collapse read failure into empty data."""
+    if not path.exists():
+        return fallback, "NOT_FOUND"
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except OSError:
+        return fallback, "READ_UNVERIFIED"
+    if raw == "":
+        return fallback, "VERIFIED_EMPTY"
+    try:
+        return json.loads(raw), "READ_OK"
+    except json.JSONDecodeError:
+        return fallback, "INVALID_CONTENT"
+
 def read_current(root: Path | None = None) -> dict[str, Any]:
     root = root or root_from_env()
     current = default_current()
