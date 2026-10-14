@@ -469,8 +469,11 @@ def minutes_between(later: Any, earlier: Any) -> float | None:
     return max(0.0, (a - b).total_seconds() / 60.0)
 
 
-def send(token: str, title: str, content: str) -> tuple[bool, dict]:
-    payload = json.dumps({"token": token, "title": title, "content": content, "template": "markdown", "channel": "wechat"}, ensure_ascii=False).encode("utf-8")
+def send(token: str, title: str, content: str, *, template: str = "markdown") -> tuple[bool, dict]:
+    """Send through the selected PushPlus template without changing content bytes."""
+    if template not in {"markdown", "txt"}:
+        raise ValueError(f"unsupported PushPlus template: {template}")
+    payload = json.dumps({"token": token, "title": title, "content": content, "template": template, "channel": "wechat"}, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(PUSHPLUS_URL, data=payload, headers={"Content-Type": "application/json", "User-Agent": "ETF-Trade-System/1.0"}, method="POST")
     try:
         pushplus_policy = read_json(ROOT / "config" / "runtime_policy.json", {})
@@ -1459,7 +1462,11 @@ def main() -> int:
         notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
         notifications.append(item)
         state.update({"schema_version": "2.2", "updated_at": stamp, "last_status": "FAILED", "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "FAILED", "notification_id": item["notification_id"], "lifecycle_status": "FAILED"}, ensure_ascii=False)); return 1
-    ok, response = send(token, item["title"], item["content"]); stamp = now().isoformat(timespec="seconds"); item["last_attempted_at"] = stamp; item["response"] = response
+    # Formal Decision is contractually plain text. Keep the established Markdown
+    # path for system review, trade review, and other existing notification families.
+    pushplus_template = "txt" if item["event_type"] == "FORMAL_DECISION" else "markdown"
+    item["pushplus_template"] = pushplus_template
+    ok, response = send(token, item["title"], item["content"], template=pushplus_template); stamp = now().isoformat(timespec="seconds"); item["last_attempted_at"] = stamp; item["response"] = response
     item["lifecycle_status"] = "WAITING_CONFIRMATION" if ok and item["event_type"] in {"PENDING_EXECUTION_CONFIRMATION", "成交确认", "账户确认", "ACCOUNT_FACT_CONFIRMATION", "收盘账户"} else ("SENT" if ok else "FAILED"); item["sent_at"] = stamp if ok else item.get("sent_at")
     if existing: notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
     notifications.append(item)

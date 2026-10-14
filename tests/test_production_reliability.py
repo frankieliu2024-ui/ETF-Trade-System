@@ -44,6 +44,31 @@ class CurrentDecisionFreshnessTests(unittest.TestCase):
 
 
 class PushPlusNotificationClosureTests(unittest.TestCase):
+    def test_formal_send_uses_plain_text_template_and_real_lf(self):
+        from scripts import notification_center as center
+        captured = {}
+
+        class Response:
+            def __enter__(self):
+                return self
+            def __exit__(self, *args):
+                return False
+            def read(self):
+                return b'{"code":200,"msg":"SUCCESS"}'
+
+        def fake_urlopen(request, timeout=None):
+            captured["payload"] = json.loads(request.data.decode("utf-8"))
+            return Response()
+
+        with patch.object(center.urllib.request, "urlopen", side_effect=fake_urlopen):
+            ok, response = center.send("token", "【ETF正式决策】", "（1）第一项。\\n\\n（2）第二项。", template="txt")
+
+        self.assertTrue(ok)
+        self.assertEqual(response["code"], 200)
+        self.assertEqual(captured["payload"]["template"], "txt")
+        self.assertEqual(captured["payload"]["content"], "（1）第一项。\\n\\n（2）第二项。")
+        self.assertNotIn("\\\\n", captured["payload"]["content"])
+
     def test_formal_content_event_consumes_presentation_binding_full_content(self):
         from scripts import notification_center as center
         with tempfile.TemporaryDirectory() as td:
