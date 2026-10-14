@@ -303,6 +303,10 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
             continue
         occurrence_id = event_occurrence or task_run_id
         key = f"{report_type}:{occurrence_id}"
+        binding_request_id = str(binding.get("request_id") or event.get("request_id") or "").strip()
+        binding_report_id = str(binding.get("report_id") or "").strip()
+        if not binding_request_id or not binding_report_id:
+            continue
         events.append({
             "key": f"report-delivery:{key}", "source_event_id": f"report-completion:{key}",
             "event_type": "REPORT_DELIVERY_REQUEST", "notification_channel": "REPORT",
@@ -310,7 +314,7 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
             "title": str(binding.get("title") or ("【ETF交易复盘】" if report_type == "ETF_TRADE_REVIEW" else "【ETF系统复核】")),
             "content": content, "source": f"canonical-review-completion:{path.name}",
             "user_severity": "正式报告", "user_action": "阅读已完成的正式ETF报告；无需交易操作",
-            "report_type": report_type, "report_id": f"{report_type.lower()}:{task_run_id}",
+            "report_type": report_type, "report_id": binding_report_id, "request_id": binding_request_id,
             "task_id": task_id, "task_run_id": task_run_id, "idempotency_key": key,
             "no_trade_authority": True, "content_hash": expected,
         })
