@@ -466,6 +466,15 @@ Formal Decision 达到 READY 后，Actor 只冻结一份 `FINAL_CONTENT`。用�
 
 completion 的 `presentation_binding` 必须同时保存并校验：`request_id`、`parent_request_id`、`decision_id`、`report_id`、`full_content`、`content_hash`。其中 `full_content` 必须逐字等于 `FINAL_CONTENT`，`content_hash` 必须等于其实际 SHA-256。当前请求任一身份或哈希缺失、不一致时，必须 fail-closed，不得返回 `ALREADY_MANAGED`。
 
-PushPlus 只能由现有 `notification_center` 从当前 Formal Decision completion 的 `presentation_binding.full_content` 投影通知正文。BDS、READY、旧 completion、旧 REPORT、旧 notification 和历史 provider 结果均不得旁路触发或补齐当前正文。`REPORT_DELIVERY_REQUEST` 如被现有兼容链使用，只能由当前 completion 确定性投影，不是 Actor 需要新建的前置请求。
+PushPlus 只能由现有 `notification_center` 从当前请求冻结的 `FINAL_CONTENT` 原文投影通知正文。优先消费当前 BDS 的 `presentation_content`（其 `content_hash` 和请求身份必须一致）；若当前 completion 已存在，则可消费其同一份 `presentation_binding.full_content`。BDS 不重新生成正文，completion/REPORT 也不重建正文。旧 completion、旧 REPORT、旧 notification 和历史 provider 结果均不得回退或补齐当前正文。`REPORT_DELIVERY_REQUEST` 如被现有兼容链使用，只能由当前冻结正文确定性投影，不是 Actor 需要新建的前置请求。
 
 通知失败不撤回用户已看到的 `FINAL_CONTENT`；没有当前 `notification_id` 对应的 provider 成功结果时，状态只能记录为 `EXTERNAL_SEND_UNVERIFIED`。
+
+## 11.2 冻结正文与主动通知的直接投影边界（2026-10-14）
+
+1. 用户可见正文必须先按本协议固定版式生成并冻结为唯一 `FINAL_CONTENT`：首行、章节顺序、章节空行、一级编号 `1.`、二级编号 `1）`、证券“名称（六位代码）”格式、同一清单去重和纯文本可读性均属于正文合同。PushPlus、微信及其他渠道只能原文转发，不得增加通知标题、摘要、状态、内部字段或第二份正文。
+2. 主动通知是 `FINAL_CONTENT` 的投影，不是 BDS 业务答案的再次校验，也不是 REPORT 重建流程。现有 `notification_center` 可以直接消费当前请求的 `presentation_content`；该路径只校验当前 request/parent、decision、task/run/occurrence、entry identity、正文和实际 `content_hash`，不得要求 `decision_response` 的业务字段（例如 `RISK_PERMISSION.final_action`）才能转发正文。
+3. BDS 结构化校验、Decision Fact、completion 和 REPORT 仍各自按既有合同运行，但任何后置结构化投影失败都不得撤回已经生成的 `FINAL_CONTENT`，也不得阻断同一当前请求的原文主动通知。通知不得从 BDS answers、旧 REPORT、旧 completion 或历史 notification 重建正文。
+4. 当前 BDS 的直接通知投影只能由现有 `decision-notification.yml` 唤醒并调用既有 `notification_center`；不得新增 producer、sender、workflow、state 或旁路通知链。触发文件必须是本次提交识别到的唯一当前请求文件，历史目录扫描、标题匹配和旧请求回退一律禁止。
+5. 当前正文、身份或哈希缺失/不一致时，通知必须 fail-closed；不得返回 `ALREADY_MANAGED`，不得补发旧正文。用户已看到正文但当前 PushPlus 无当前 notification/provider 成功证据时，用户业务回复仍保留，外部状态只能记为 `EXTERNAL_SEND_UNVERIFIED`。
+

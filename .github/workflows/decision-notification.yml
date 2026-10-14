@@ -214,7 +214,7 @@ jobs:
         id: formal_content_notify
         if: ${{ github.event_name == 'push' && steps.push_kind.outputs.formal_content == 'true' }}
         run: |
-          echo "BDS is an actor input; no notification is sent before the canonical FORMAL_DECISION completion event."
+          echo "BDS presentation content is projected by the existing notification center; no second notification chain is created."
 
       - name: Build delayed execution reconciliation
         if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && (steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.trade == 'true')) }}
@@ -344,7 +344,7 @@ jobs:
 
       - name: Send material user-action notification
         id: event_notify
-        if: ${{ (github.event_name == 'workflow_run' && (github.event.workflow_run.name != 'ETF market snapshot' || steps.workflow_review.outputs.review_completion == 'true')) || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true')) }}
+        if: ${{ (github.event_name == 'workflow_run' && (github.event.workflow_run.name != 'ETF market snapshot' || steps.workflow_review.outputs.review_completion == 'true')) || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.formal_content == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true')) }}
         continue-on-error: true
         env:
           # Bind the exact report/review selected from the triggering production fact.
@@ -352,6 +352,7 @@ jobs:
           REPORT_HANDOFF_PATH: ${{ steps.push_kind.outputs.report_handoff_path }}
           REVIEW_EVENT_PATH: ${{ steps.push_kind.outputs.review_event_path || steps.workflow_review.outputs.review_event_path }}
           DECISION_EVENT_PATH: ${{ steps.push_kind.outputs.decision_event_path || steps.workflow_review.outputs.decision_event_path }}
+          FORMAL_PRESENTATION_PATH: ${{ steps.push_kind.outputs.formal_content_path }}
         run: python scripts/run_guarded_notification.py center --mode event
 
       - name: Send conditional A-share trading-day post-close account reminder

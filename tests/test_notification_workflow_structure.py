@@ -63,8 +63,9 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
             "(steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.trade == 'true'))"
         )
         event_condition_fragment = (
-            "steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || "
-            "steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true'"
+            "steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.formal_content == 'true' || "
+            "steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || "
+            "steps.push_kind.outputs.report == 'true'"
         )
         self.assertIn(reconciliation_condition, self.text)
         self.assertIn(event_condition_fragment, self.text)
