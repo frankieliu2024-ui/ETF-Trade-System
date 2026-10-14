@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-10-14T14:21:07+08:00",
+  "updated_at": "2026-10-14T14:34:11+08:00",
   "last_status": "SENT",
   "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】A股监测ETF横截面出现显著分化",
+  "last_title": "【市场异动】A股核心指数出现显著分化",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -24359,27 +24359,54 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-10-14T14:21:07+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "apac-open-signal:2026-09-30:KOSPI:UP",
-      "type": "APAC_OPEN_SIGNAL",
-      "title": "【市场异动】韩国综合指数（KOSPI）实际开盘出现异常跳空",
-      "content": "### 核心结论\n- **节点**：亚太错位开盘异常\n- **触发对象**：韩国综合指数（KOSPI）\n- **实际开盘较前收**：+1.06%\n- **当前较前收**：+0.42%\n- **区域结构**：区域分化/相对平稳\n- **数据质量**：覆盖4/4；触发判断使用PASS对象4/4；当前未发现需单列的数据质量降级。\n\n### 关键路径\n- **触发对象**：高开+1.06%后当前+0.42%，高开优势明显收窄。\n- **区域对照**：其他市场对照：台湾加权指数（TWII）+1.41%、日经225指数（N225）+1.24%、恒生科技指数（HSTECH）-0.54%。\n\n### 对ETF系统的影响\n外部结构：韩国综合指数（KOSPI）的实际开盘异常仍需结合当前+0.42%和区域判断“区域分化/相对平稳”继续验证是否延续。\n\n本地传导：A股同步反馈为上证指数（000001）+0.33%、科创50指数（000688）-0.61%、创业板指（399006）+0.37%；外部信号只有被A股自身价格结构接受，才可能改变当前ETF判断。\n\nETF自身反馈：当前没有需要机械绑定的直接监测ETF，区域指数变化只进入跨市场证据层。\n\n机会判断：本通知不生成Trial/Confirm或卖出动作；只有外部结构、本地传导和ETF自身反馈共同改变正式判断时，才进入交易链。\n\n### 当前动作\n**把该事件纳入最近A股正式节点复核；不因单一海外/区域指数跳空机械买卖，重点看A股是否接受以及直接相关ETF自身反馈。**\n\n### 数据与边界\n- **触发对象行情时点（北京时间）**：2026-09-30 09:51:45\n- **亚太对象最新有效时点上限**：2026-09-30 09:51:48\n- **A股同步参考时点**：2026-09-30 09:49:42\n- **通知生成**：2026-09-30 09:52:39\n- **边界**：约0.8%的门槛只检查实际开盘价相对前收；开盘后的累计涨跌不回填成开盘异常。覆盖数量与数据质量分开表达，DEGRADED/延迟对象不得被包装成全部实时FRESH。",
-      "source": "overseas_context+CURRENT",
+      "notification_id": "notification_eb9846c1339ca8a59e1d",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:a-share:2026-10-14:A_SHARE_INDEX_DIVERGENCE:DIVERGED:DIVERGENCE:2026-10-14T14:32:01+08:00",
+      "request_id": "",
+      "parent_request_id": "",
+      "report_id": "",
+      "content_hash": "",
+      "related_decision_id": "",
+      "security_code": "A_SHARE_INDEX_DIVERGENCE",
+      "security_name": "A股核心指数",
       "user_severity": "需要关注",
-      "user_action": "纳入最近A股节点，检查本地传导和直接相关ETF自身反馈，不机械交易",
-      "status": "SENT",
-      "attempted_at": "2026-09-30T09:52:40+08:00",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-10-14T14:34:10+08:00",
+      "sent_at": "2026-10-14T14:34:11+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-10-16T14:34:10+08:00",
+      "title": "【市场异动】A股核心指数出现显著分化",
+      "content": "### 核心结论\n- **事件类型**：显著分化\n- **对象/结构**：A股核心指数\n- **关键结构**：横截面两端：上证指数（000001）-0.83%，创业板指（399006）-2.79%，涨跌幅相差1.96个百分点\n\n**判断**：相关对象之间的相对差已经扩大到值得单独关注的程度，不能再用单一市场方向概括全部机会和风险。\n\n### 对ETF系统的影响\nA股核心指数（A股核心指数）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-10-14 14:32:01\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "confirmation_context": {
+        "market": "A_SHARE",
+        "market_date": "2026-10-14",
+        "direction": "DIVERGED",
+        "event_category": "DIVERGENCE",
+        "asset_class": "STRUCTURE",
+        "day_change_pct": null,
+        "sudden_change_pct": null,
+        "interval_minutes": 13.183333333333334,
+        "event_magnitude_pct": 1.9603809526970495,
+        "market_as_of_beijing": "2026-10-14T14:32:01+08:00",
+        "source_fact_id": "2026-10-14:A_SHARE_INDEX_DIVERGENCE:DIVERGENCE:DIVERGED:2026-10-14T14:32:01+08:00",
+        "event_family_id": "A_SHARE:2026-10-14:A_SHARE:A_SHARE_INDEX_DIVERGENCE:DIVERGENCE:DIVERGED:"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_d44bba237d40df1dbcc4",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-10-14T14:34:11+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "market-value:asia:2026-09-30:APAC_DIVERGENCE:DIVERGED:DIVERGENCE:2026-09-30T09:51:42+08:00",
       "type": "MARKET_VALUE_ALERT",
@@ -27960,6 +27987,24 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_72b56bb56d3fa31ef648",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:a-share:2026-10-14:A_SHARE_INDEX_DIVERGENCE:DIVERGED:DIVERGENCE:2026-10-14T14:32:01+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】A股核心指数出现显著分化",
+      "content": "### 核心结论\n- **事件类型**：显著分化\n- **对象/结构**：A股核心指数\n- **关键结构**：横截面两端：上证指数（000001）-0.83%，创业板指（399006）-2.79%，涨跌幅相差1.96个百分点\n\n**判断**：相关对象之间的相对差已经扩大到值得单独关注的程度，不能再用单一市场方向概括全部机会和风险。\n\n### 对ETF系统的影响\nA股核心指数（A股核心指数）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-10-14 14:32:01\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "status": "SENT",
+      "attempted_at": "2026-10-14T14:34:11+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_eb9846c1339ca8a59e1d",
       "lifecycle_status": "SENT"
     }
   ],
