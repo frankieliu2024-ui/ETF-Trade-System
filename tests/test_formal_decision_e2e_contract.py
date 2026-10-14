@@ -172,7 +172,7 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         root = Path(__file__).parents[1]
         text = (root / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
         self.assertIn("正式决策与完整日复盘是两个独立业务链", text)
-        self.assertIn("READY 的首份报告不等待后置动作", text)
+        self.assertIn("BDS写入并回读 → 通知尝试 → 用户窗口输出同一 FINAL_CONTENT", text)
 
     def test_protocol_keeps_health_out_of_business_pr_gate(self):
         root = Path(__file__).parents[1]
@@ -198,10 +198,13 @@ class FormalReadyHandoffContractTests(unittest.TestCase):
         self.assertIn('"source": "CHATGPT_BUSINESS_DECISION_RESPONSE"', text)
         self.assertIn('"decision_response.answers"', text)
         self.assertIn('"presentation_content"', text)
-        self.assertIn('"user_reply_precondition": False', text)
-        self.assertIn('"post_reply_async": True', text)
-        self.assertIn('"must_read_back_after_reply": True', text)
+        self.assertIn('"notification_attempt_precondition": True', text)
+        self.assertIn('"provider_success_not_required_for_user_reply": True', text)
+        self.assertIn('"must_read_back_before_reply": True', text)
         self.assertIn('"historical_fallback_forbidden": True', text)
+        self.assertIn('"formal_decision_notification_chain_starts_at_bds": True', text)
+        self.assertIn('"post_reply_async": False', text)
+        self.assertIn('"provider_success_async": True', text)
 
     def test_ready_handoff_does_not_create_a_second_notification_path(self):
         root = Path(__file__).parents[1]

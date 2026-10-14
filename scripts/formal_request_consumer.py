@@ -7,7 +7,7 @@ INFLIGHT_STATUSES = {"BUILDING", "PENDING", "QUEUED", "RUNNING", "IN_PROGRESS", 
 READY_STATUSES = {"READY", "RESOLVED_DEGRADED"}
 TERMINAL_FAILURE_STATUSES = {"FAILED", "TERMINAL_FAILURE", "BLOCKED_TERMINAL"}
 BUSINESS_REPLY_OUTPUT = "COMPLETE_BUSINESS_DECISION_ONLY"
-POST_REPLY_ASYNC = "CANONICAL_AUDIT_NOTIFICATION_ASYNC"
+POST_REPLY_ASYNC = "CANONICAL_AUDIT_ASYNC"
 ACTOR_CONTINUE = "CONTINUE_SAME_REQUEST_SILENTLY"
 ACTOR_DECIDE = "COMPLETE_BUSINESS_DECISION_NOW"
 ACTOR_TERMINATE = "TERMINATE_ON_EXPLICIT_FAILURE"
@@ -117,10 +117,10 @@ def classify_formal_request_consumer_state(
         # state/checker and does not wait for persistence.
         response_contract = dwp.get("response_contract") if isinstance(dwp, dict) else {}
         response_contract = response_contract if isinstance(response_contract, dict) else {}
-        # Request-bound facts authorize business analysis.  The actor's
-        # BUSINESS_DECISION_SOURCE is the reply handoff; canonical projection
-        # and post-write acceptance remain asynchronous and must not block the
-        # user-visible business answer.
+        # Request-bound facts authorize business analysis.  FINAL_CONTENT is
+        # frozen once, then BDS is written/read back before the user reply;
+        # notification is attempted from that same BDS. Provider success is
+        # asynchronous and must not block the full user-visible answer.
         return {
             "status": "BUSINESS_DECISION_READY",
             "continue_same_request": False,
@@ -137,15 +137,15 @@ def classify_formal_request_consumer_state(
             "control_plane_in_user_reply": False,
             "reason": (
                 "SAME_REQUEST_FACTS_READY_BDS_HANDOFF_REQUIRED_"
-                "CANONICAL_PERSISTENCE_ASYNC"
+                "NOTIFICATION_ATTEMPT_PROVIDER_ASYNC"
             ),
             "canonical_persistence_status": (
                 "CONFIRMED" if canonical_persisted else "PENDING_ASYNC"
             ),
-            # This is an asynchronous post-reply handoff contract, not a
-            # user-visible gate, new state, or producer.  The Actor freezes
-            # FINAL_CONTENT and returns it first; this payload is then consumed
-            # once by the existing BDS path using the exact same content.
+            # This is the single pre-reply BDS handoff contract, not a new
+            # state or producer. The Actor freezes FINAL_CONTENT, persists and
+            # reads back BDS, attempts the existing notification path, and then
+            # returns the same full content. Provider success remains async.
             "ready_handoff": {
                 "required": True,
                 "submission_type": "BUSINESS_DECISION_SOURCE",
@@ -179,10 +179,13 @@ def classify_formal_request_consumer_state(
                     ],
                     "forbid_historical_fallback": True,
                     "read_back_required": True,
-                    "report_chain_starts_at_completion": True,
-                    "completion_is_post_reply": True,
+                    "formal_decision_notification_chain_starts_at_bds": True,
+                    "completion_and_report_not_required_for_formal_decision_notification": True,
+                    "bds_must_be_written_and_read_back_before_user_reply": True,
                 },
                 "user_reply_precondition": False,
+                "notification_attempt_precondition": True,
+                "provider_success_not_required_for_user_reply": True,
                 "user_reply_contract": {
                     "must_be_first_user_visible_message": True,
                     "must_contain_complete_final_content": True,
@@ -190,8 +193,9 @@ def classify_formal_request_consumer_state(
                     "handoff_status_cannot_replace_content": True,
                     "bds_must_reuse_exact_final_content": True,
                 },
-                "post_reply_async": True,
-                "must_read_back_after_reply": True,
+                "post_reply_async": False,
+                "provider_success_async": True,
+                "must_read_back_before_reply": True,
                 "historical_fallback_forbidden": True,
             },
         }

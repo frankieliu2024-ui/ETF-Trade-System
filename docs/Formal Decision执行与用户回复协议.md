@@ -263,23 +263,25 @@ READY 前必须完成或按正式规范合法降级：
 
 ## 6. 回复与后置生产分离
 
-合法 READY 后，执行顺序为：
+合法 READY 后，Formal Decision 执行顺序为：
 
-`request-bound facts → 业务判断 → 用户长报告 → 后置持久化、审计、通知和验收`
+`request-bound facts → 业务判断 → 冻结 FINAL_CONTENT → BDS写入并回读 → 通知尝试 → 用户窗口输出同一 FINAL_CONTENT`
 
-后置步骤不得阻塞、撤销或改写已经取得合法业务回复资格的判断；后置闭环未完成时，也不得宣称整个事项已经完成闭环。
+BDS写入、回读和通知尝试前置于用户窗口输出；PushPlus/provider成功不作为用户回复门禁。通知失败不得阻塞、撤销或改写完整用户正文，但必须保留当前通知失败或未确认事实。
+
+ETF交易复盘和ETF系统复核仍遵循各自已验证的Scheduled Review completion/report路径，不因本节Formal Decision减法而改变。
 
 ### 6.1 READY回复与后置正式交接的不可混淆边界
 
-READY后的用户正式报告与内部生产交接是两个连续但独立的动作。ChatGPT在冻结唯一FINAL_CONTENT后，应立即将这份正文返回用户；不得等待BDS、completion、REPORT、notification或PushPlus。用户回复不是内部完成事件，但必须成为后置链唯一正文来源。
+ChatGPT完成业务判断后只生成一次冻结的FINAL_CONTENT。既有Actor handoff应先提交一次BUSINESS_DECISION_SOURCE envelope并回读，确定性核对parent_request_id、request_type、decision_response.answers覆盖同一DWP必答集合、presentation_content逐字等于冻结的FINAL_CONTENT，以及content_hash一致。
 
-用户回复之后，既有Actor handoff应异步提交一次BUSINESS_DECISION_SOURCE envelope，并从同一路径回读，确定性核对parent_request_id、request_type、decision_response.answers覆盖同一DWP必答集合、presentation_content逐字等于冻结的FINAL_CONTENT，以及content_hash一致。
+BDS回读确认后，立即交给既有notification_center和PushPlus发送链。通知尝试应先于用户窗口输出，但provider成功不构成用户回复门禁；通知失败或未确认时，用户窗口仍必须输出完整同一FINAL_CONTENT，不得生成第二正文或第二次分析。
 
-这里的“用户回复”具有严格的可见性含义：首份回复必须实际包含完整冻结的FINAL_CONTENT正文，不能只返回“已展示正文”、HANDOFF状态、通知状态、内部校验结果或任何占位说明。Actor只有在完整FINAL_CONTENT已经作为用户首份消息输出后，才能执行后置BDS写入；FORMAL_DECISION_HANDOFF_INCOMPLETE、EXTERNAL_SEND_UNVERIFIED等状态只能附着于后置交接记录，不能替代、截断或覆盖用户正文。BDS的presentation_content必须逐字复用已经输出的同一FINAL_CONTENT，不得从状态消息重新生成正文。该提交和回读是后置审计/通知交接，不是用户回复前置条件，不得阻塞、撤回或改写已经展示的正文。
+这里的“用户回复”具有严格的可见性含义：首份回复必须实际包含完整冻结的FINAL_CONTENT正文，不能只返回“已展示正文”、HANDOFF状态、通知状态、内部校验结果或任何占位说明。Actor必须先完成BDS写入/回读和通知尝试，再输出完整FINAL_CONTENT；FORMAL_DECISION_HANDOFF_INCOMPLETE、EXTERNAL_SEND_UNVERIFIED等状态不能替代、截断或覆盖用户正文。BDS的presentation_content必须逐字复用冻结的FINAL_CONTENT，不得重新生成正文；PushPlus/provider成功不要求在回复前取得。
 
-后置提交、回读或逐字核对任一步失败时，必须保留同一父请求和已展示的FINAL_CONTENT，记录FORMAL_DECISION_HANDOFF_INCOMPLETE；不得创建第二请求、第二正文、第二BDS、第二completion、历史回退或旁路通知。后置失败不改变用户已经看到的业务判断。
+BDS提交、回读或通知尝试失败时，必须保留同一父请求和冻结的FINAL_CONTENT；不得创建第二请求、第二正文、第二BDS、历史回退或旁路通知。通知失败不改变用户业务判断，但不得宣称当前notification或provider成功。
 
-正式闭环验收仍必须分别核对：同一父请求的BDS/Decision Fact、completion、REPORT、REPORT_DELIVERY_REQUEST、notification和PushPlus结果；这些事实缺失时不得宣称内部链已完成，但也不得把它们反向改造成用户回复门禁。
+Formal Decision通知验收只要求核对同一父请求的BDS、notification和PushPlus结果；completion、REPORT和REPORT_DELIVERY_REQUEST不再是Formal Decision通知的必经节点。Scheduled Review仍按其自身合同核对completion、REPORT和REPORT_DELIVERY_REQUEST。
 
 ## 7. 用户可见边界
 
