@@ -88,6 +88,20 @@ Formal Decision中，ChatGPT只负责机器无法确定性替代的业务判断�
 
 ChatGPT不得根据旧context、空读、单次超时、历史状态或聊天记忆覆盖机器给出的Actor动作，也不得发明第四种用户可见状态。
 
+
+### 4.1.1 当前请求 READY 与全局健康状态的优先级（强制）
+
+Formal Decision 的用户回复资格只由当前父请求的 request-bound `formal_reply_gate` 决定。必须严格区分当前请求业务回复门与全局健康、系统复核、收盘复盘及后置投影：
+
+- 当前请求 `formal_reply_gate.status=READY`、`reply_freezable=true` 且 `request_id` 匹配时，必须立即进入业务判断并输出完整 FINAL_CONTENT；
+- 顶层 `e2e_status=BLOCKED`、`GLOBAL_SYSTEM_HEALTH_DEGRADED` 或其他全局状态不得覆盖当前请求 READY；
+- `close_review` 未完成、completion 未写入、REPORT 未形成、notification 未发送或 provider 结果未知，均属于后置状态，不得阻断当前 READY 业务回复；
+- 顶层状态只能作为系统健康和后置闭环可见性，不得被外部 Actor 用来重新推导当前 Formal Decision 的用户输出资格；
+- 当前请求未 READY 时，外部 Actor 不得把全局状态、旧 gate 或旧 DWP 解释为当前请求终止，也不得向用户展示内部中间状态；
+- 当前请求 READY 后，第一条用户可见消息必须是完整业务判断，不得输出“暂时不能进入业务判断”、workflow、gate、DWP、close_review 或提交回执。
+
+该优先级只固化既有三态合同，不新增状态、workflow、producer、checker、writer 或通知链。
+
 ### 4.2 READY业务完整性门
 
 READY只表示业务判断可以立即开始，不表示ChatGPT可以跳过DWP中的部分业务问题直接生成报告。为避免“先回复、再靠用户复核补漏”，同一request-bound DWP的`problem_graph`同时是本次Actor业务判断的确定性完整性清单。

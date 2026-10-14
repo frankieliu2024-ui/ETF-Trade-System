@@ -23,7 +23,10 @@ def classify_formal_request_consumer_state(
 ) -> dict[str, Any]:
     """Classify a durable Formal Decision parent without inventing a second gate.
 
-    This helper is read-only. It interprets the existing request-bound
+    The request-bound formal_reply_freeze is the reply decision boundary.
+    Global e2e_status and close-review projections are observability or
+    post-decision state and must not override a same-request READY gate.
+    This helper is read-only and interprets the existing request-bound
     query_context/formal_reply_freeze contract for interactive consumers.
     """
 
