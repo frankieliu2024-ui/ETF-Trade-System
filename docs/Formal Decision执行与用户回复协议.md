@@ -475,10 +475,18 @@ PushPlus 只能由现有 `notification_center` 从当前请求冻结的 `FINAL_C
 
 通知失败不撤回用户已看到的 `FINAL_CONTENT`；没有当前 `notification_id` 对应的 provider 成功结果时，状态只能记录为 `EXTERNAL_SEND_UNVERIFIED`。
 
+## 11.3 正式正文二级编号与纯文本排版（2026-10-14）
+
+1. 用户可见的一级编号统一使用 `1.`、`2.`、`3.`；二级编号统一使用 `1）`、`2）`、`3）`，不得在同一清单中混用圆点、小横线或不同编号样式。
+2. 每个二级项目必须独立成段，项目之间使用两个真实换行符；不得把多个二级项目连续放在同一段，也不得仅用空格或单个普通换行分隔。
+3. 二级项目采用悬挂缩进：编号与首行正文同属一个段落，续行必须与正文首行左边界对齐，不得回到页面最左侧；实现不得依赖手工空格或全角空格模拟缩进。
+4. 该版式必须在 `FINAL_CONTENT` 冻结前形成；BDS、PushPlus、微信和用户窗口均逐字转发同一正文，不在通知链再次排版、摘要或改写。
+5. 本节只约束用户可见排版，不改变交易规则、机会资格、资金金额、通知资格或任何生产链路。
+
 ## 11.2 冻结正文与主动通知的直接投影边界（2026-10-14）
 
 1. 用户可见正文必须先按本协议固定版式生成并冻结为唯一 `FINAL_CONTENT`：首行、章节顺序、章节空行、一级编号 `1.`、二级编号 `1）`、证券“名称（六位代码）”格式、同一清单去重和纯文本可读性均属于正文合同。PushPlus、微信及其他渠道只能原文转发，不得增加通知标题、摘要、状态、内部字段或第二份正文。
-2. 主动通知是 `FINAL_CONTENT` 的投影，不是 BDS 业务答案的再次校验，也不是 REPORT 重建流程。现有 `notification_center` 可以直接消费当前请求的 `presentation_content`；该路径只校验当前 request/parent、decision、task/run/occurrence、entry identity、正文和实际 `content_hash`，不得要求 `decision_response` 的业务字段（例如 `RISK_PERMISSION.final_action`）才能转发正文。
+2. 主动通知是 `FINAL_CONTENT` 的投影，不是 BDS 业务答案的再次校验，也不是 REPORT 重建流程。现有 `notification_center` 可以直接消费当前请求的 `presentation_content`；该路径只校验当前 request/parent、decision、entry identity、正文和实际 `content_hash`；Scheduled Task来源另外校验 `task_id`、`task_run_id`、`occurrence_id`，手动对话来源不得强制要求这三个定时任务专用字段。不得要求 `decision_response` 的业务字段（例如 `RISK_PERMISSION.final_action`）才能转发正文。
 3. BDS 结构化校验、Decision Fact、completion 和 REPORT 仍各自按既有合同运行，但任何后置结构化投影失败都不得撤回已经生成的 `FINAL_CONTENT`，也不得阻断同一当前请求的原文主动通知。通知不得从 BDS answers、旧 REPORT、旧 completion 或历史 notification 重建正文。
 4. 当前 BDS 的直接通知投影只能由现有 `decision-notification.yml` 唤醒并调用既有 `notification_center`；不得新增 producer、sender、workflow、state 或旁路通知链。触发文件必须是本次提交识别到的唯一当前请求文件，历史目录扫描、标题匹配和旧请求回退一律禁止。
 5. 当前正文、身份或哈希缺失/不一致时，通知必须 fail-closed；不得返回 `ALREADY_MANAGED`，不得补发旧正文。用户已看到正文但当前 PushPlus 无当前 notification/provider 成功证据时，用户业务回复仍保留，外部状态只能记为 `EXTERNAL_SEND_UNVERIFIED`。
