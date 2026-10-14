@@ -208,6 +208,42 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertNotIn("business_answer_contract", state)
         self.assertNotIn("actor_response_contract", state)
 
+    def test_current_ready_gate_ignores_global_blocked_and_close_review_projection(self):
+        state = classify_formal_request_consumer_state(
+            "parent",
+            {
+                "status": "BLOCKED",
+                "components": {
+                    "close_review": {
+                        "status": "BLOCKED",
+                        "reason": "FORMAL_POST_CLOSE_REVIEW_NOT_CANONICALIZED",
+                    },
+                    "decision_context": {
+                        "formal_reply_gate": {
+                            "status": "READY",
+                            "reply_freezable": True,
+                            "request_id": "parent",
+                        }
+                    },
+                },
+                "decision_fact_pack": {
+                    "trigger": {"request_id": "parent"},
+                    "formal_reply_freeze": {
+                        "status": "READY",
+                        "reply_freezable": True,
+                        "request_id": "parent",
+                        "blockers": [],
+                    },
+                },
+            },
+            producer_status="SUCCESS",
+        )
+        self.assertEqual(state["status"], "BUSINESS_DECISION_READY")
+        self.assertTrue(state["reply_eligible"])
+        self.assertTrue(state["user_output_allowed"])
+        self.assertEqual(state["actor_action"], "COMPLETE_BUSINESS_DECISION_NOW")
+        self.assertEqual(state["user_visible_output"], "COMPLETE_BUSINESS_DECISION_ONLY")
+
     def test_same_request_ready_without_bds_persistence_is_reply_eligible(self):
         state = classify_formal_request_consumer_state(
             "parent",
