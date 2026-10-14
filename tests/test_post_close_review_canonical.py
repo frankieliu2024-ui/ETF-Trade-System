@@ -43,11 +43,16 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
     def test_trade_review_normalizes_binding_hash_for_notification_projection(self):
         request = self.request()
         final_content = "FROZEN TRADE REVIEW"
+        import hashlib
+        content_hash = hashlib.sha256(final_content.encode("utf-8")).hexdigest()
         request["presentation_binding"] = {
             "report_type": "ETF_TRADE_REVIEW",
             "task_id": "ETF交易复盘",
             "task_run_id": "trade-occurrence-1",
+            "occurrence_id": "trade-occurrence-1",
+            "report_id": "canonical-report:trade-occurrence-1",
             "full_content": final_content,
+            "content_hash": content_hash,
         }
         account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
         self.assertEqual(sync.record_post_close_review(account, request), (True, False))
@@ -58,8 +63,8 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertEqual(binding["full_content"], final_content)
         self.assertEqual(binding["content_hash"], __import__("hashlib").sha256(final_content.encode()).hexdigest())
         self.assertEqual(binding["request_id"], request["request_id"])
-        self.assertEqual(binding["report_id"], "etf_trade_review:trade-occurrence-1")
-        report_path = self.root / "requests/report_delivery/etf_trade_review__trade-occurrence-1.json"
+        self.assertEqual(binding["report_id"], "canonical-report:trade-occurrence-1")
+        report_path = self.root / "requests/report_delivery/canonical-report__trade-occurrence-1.json"
         report = json.loads(report_path.read_text(encoding="utf-8"))
         self.assertEqual(report["event_type"], "REPORT_DELIVERY_REQUEST")
         self.assertEqual(report["request_id"], request["request_id"])
