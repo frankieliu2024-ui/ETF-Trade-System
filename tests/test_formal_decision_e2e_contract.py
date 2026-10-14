@@ -76,9 +76,11 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
                 "decision_id": "decision_current",
                 "presentation_binding": {
                     "request_id": "fd_current",
+                    "parent_request_id": "fd_current",
                     "decision_id": "decision_current",
-                    "content": body,
-                    "content_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+                    "report_id": "report_current",
+                    "full_content": body,
+                    "content_hash": hashlib.sha256(body.encode("utf-8")).hexdigest(),
                 },
             }
             (decisions / "current.json").write_text(json.dumps(event), encoding="utf-8")
