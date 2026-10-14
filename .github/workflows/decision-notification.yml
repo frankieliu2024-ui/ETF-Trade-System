@@ -7,6 +7,7 @@ on:
       - "Overseas pre-open pulse"
       - "US extended-hours pulse"
       - "ETF workflow failure guard"
+      - "ETF system consistency"
     types: [completed]
   # Canonical Scheduled Review events are committed to main by the market-snapshot
   # workflow. GitHub does not recursively create a push-triggered workflow from a
@@ -85,6 +86,27 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+
+      - name: Bind BDS from consistency workflow completion
+        id: workflow_bds
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF system consistency' && github.event.workflow_run.conclusion == 'success' }}
+        shell: bash
+        env:
+          PRODUCER_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$PRODUCER_SHA"
+          mapfile -t bds_paths < <(
+            git diff-tree --no-commit-id --name-only -r "$PRODUCER_SHA" -- 'requests/live_snapshot/*__bds*.json' | sed '/^$/d'
+          )
+          if [ "${#bds_paths[@]}" -ne 1 ]; then
+            echo "Expected exactly one current BDS in consistency producer commit; found ${#bds_paths[@]}" >&2
+            printf '%s\n' "${bds_paths[@]}" >&2
+            exit 1
+          fi
+          test -f "${bds_paths[0]}"
+          echo "formal_content=true" >> "$GITHUB_OUTPUT"
+          echo "formal_content_path=${bds_paths[0]}" >> "$GITHUB_OUTPUT"
 
       - name: Detect push notification kind
         if: ${{ github.event_name == 'push' }}
@@ -352,7 +374,7 @@ jobs:
           REPORT_HANDOFF_PATH: ${{ steps.push_kind.outputs.report_handoff_path }}
           REVIEW_EVENT_PATH: ${{ steps.push_kind.outputs.review_event_path || steps.workflow_review.outputs.review_event_path }}
           DECISION_EVENT_PATH: ${{ steps.push_kind.outputs.decision_event_path || steps.workflow_review.outputs.decision_event_path }}
-          FORMAL_PRESENTATION_PATH: ${{ steps.push_kind.outputs.formal_content_path }}
+          FORMAL_PRESENTATION_PATH: ${{ steps.push_kind.outputs.formal_content_path || steps.workflow_bds.outputs.formal_content_path }}
         run: |
           if [ -n "$FORMAL_PRESENTATION_PATH" ]; then
             # A current Formal Decision BDS is authoritative. Pass it explicitly

@@ -4,14 +4,9 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
-    paths:
-      - "scripts/**"
-      - "tests/**"
-      - "docs/**"
-      - ".github/workflows/**"
-      - "config/**"
-      - "ETF_SYSTEM_INDEX.md"
-      - "ETF规则_MASTER.md"
+    # Every PR targeting main must create an independent current-head run.
+  # Scope decisions belong inside the job; top-level paths filtering silently
+  # suppresses required checks for otherwise valid business PRs.
   workflow_dispatch:
 
 permissions:
