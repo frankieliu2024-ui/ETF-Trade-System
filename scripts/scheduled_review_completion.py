@@ -115,7 +115,9 @@ def build_completion_request(
             "report_type": "ETF_TRADE_REVIEW",
             "task_id": str(task_id or "ETF交易复盘"),
             "task_run_id": str(task_run_id or request_id),
+            "report_id": f"ETF_TRADE_REVIEW:{str(task_run_id or request_id)}",
             "full_content": str(final_content or ""),
+            "content_hash": hashlib.sha256(str(final_content or "").encode("utf-8")).hexdigest(),
         },
     }
     if parent_request_id:
