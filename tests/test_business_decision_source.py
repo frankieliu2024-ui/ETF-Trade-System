@@ -127,6 +127,14 @@ class BusinessDecisionSourceTests(unittest.TestCase):
             self.assertTrue(second["idempotent_reuse"])
             self.assertEqual(len(list((root / "events" / "decision_sources").glob("*.json"))), 1)
 
+    def test_human_holding_actions_normalize_at_projection_boundary(self):
+        from scripts.business_decision_source import _normalize_holding_action
+
+        self.assertEqual(_normalize_holding_action("继续持有，不追加、不减仓"), "HOLD")
+        self.assertEqual(_normalize_holding_action("继续持有，不追加、不卖出"), "HOLD")
+        self.assertEqual(_normalize_holding_action("降低风险100股"), "REDUCE")
+        self.assertEqual(_normalize_holding_action("全部退出"), "EXIT")
+
     def test_projection_is_deterministic_and_does_not_redecide(self):
         projected = build_formal_completion_from_source(self.base())
         self.assertEqual(projected["request_type"], STATE_SYNC_ONLY)
