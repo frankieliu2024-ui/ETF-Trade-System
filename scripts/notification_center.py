@@ -189,10 +189,8 @@ def formal_decision_report_event() -> dict | None:
             continue
         if not request_id or not parent_request_id or not decision_id or not report_id or not content:
             continue
-        # This is the existing Formal Decision report namespace. Validate the
-        # event's supplied binding; do not synthesize or discover a report here.
-        if report_id != f"etf-formal-decision:{decision_id}":
-            continue
+        # report_id is canonical data from the current completion binding.
+        # Do not synthesize a report id or discover one from historical files.
         expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
         if content_hash != expected:
             continue
