@@ -181,13 +181,15 @@ READY 前必须完成或按正式规范合法降级：
 
 后置步骤不得阻塞、撤销或改写已经取得合法业务回复资格的判断；后置闭环未完成时，也不得宣称整个事项已经完成闭环。
 
-### 6.1 READY回复与正式交接的不可混淆边界
+### 6.1 READY回复与后置正式交接的不可混淆边界
 
-READY后的首份用户报告与正式生产完成是两个连续但不同的动作。ChatGPT在冻结唯一`FINAL_CONTENT`后，必须在同一请求上提交一次`BUSINESS_DECISION_SOURCE` Actor envelope，并由GitHub Contents取得提交回执、回读同一路径，确定性核对`parent_request_id`、`request_type`、`decision_response.answers`覆盖同一DWP必答集合，以及`presentation_content`逐字等于冻结的`FINAL_CONTENT`。
+READY后的用户正式报告与内部生产交接是两个连续但独立的动作。ChatGPT在冻结唯一FINAL_CONTENT后，应立即将这份正文返回用户；不得等待BDS、completion、REPORT、notification或PushPlus。用户回复不是内部完成事件，但必须成为后置链唯一正文来源。
 
-仅生成聊天正文、仅创建父请求、仅形成READY事实或仅取得事实门通过，均不构成Formal Decision completion，也不能据此声称正式决策已进入REPORT通知链。提交、回读或逐字核对任一步失败时，必须保留同一父请求，不得创建第二请求、第二正文、第二BDS、第二completion或旁路通知；应在当前合法交互边界内如实保留未完成交接状态。
+用户回复之后，既有Actor handoff应异步提交一次BUSINESS_DECISION_SOURCE envelope，并从同一路径回读，确定性核对parent_request_id、request_type、decision_response.answers覆盖同一DWP必答集合、presentation_content逐字等于冻结的FINAL_CONTENT，以及content_hash一致。该提交和回读是后置审计/通知交接，不是用户回复前置条件，不得阻塞、撤回或改写已经展示的正文。
 
-正式完成的验收最低要求为：同一父请求存在合法`BUSINESS_DECISION_SOURCE`，并由既有owner生成唯一正式决策事件；REPORT、统一通知状态和PushPlus结果属于后置交付状态，必须分别核对，不能用聊天回复或代码路径存在替代真实运行证据。
+后置提交、回读或逐字核对任一步失败时，必须保留同一父请求和已展示的FINAL_CONTENT，记录FORMAL_DECISION_HANDOFF_INCOMPLETE；不得创建第二请求、第二正文、第二BDS、第二completion、历史回退或旁路通知。后置失败不改变用户已经看到的业务判断。
+
+正式闭环验收仍必须分别核对：同一父请求的BDS/Decision Fact、completion、REPORT、REPORT_DELIVERY_REQUEST、notification和PushPlus结果；这些事实缺失时不得宣称内部链已完成，但也不得把它们反向改造成用户回复门禁。
 
 ## 7. 用户可见边界
 
