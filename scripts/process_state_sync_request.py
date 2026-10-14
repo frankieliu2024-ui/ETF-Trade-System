@@ -2280,15 +2280,18 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
 def _validate_presentation_binding(binding: dict, report_type: str) -> dict:
     if not isinstance(binding, dict):
         raise ValueError("scheduled completion presentation_binding must be an object")
-    required = ("task_id", "task_run_id", "full_content")
+    required = ("task_id", "task_run_id", "report_id", "full_content", "content_hash")
     missing = [key for key in required if not str(binding.get(key) or "").strip()]
     if missing:
         raise ValueError("scheduled completion presentation_binding missing:" + ",".join(missing))
     if str(binding.get("report_type") or "") != report_type:
         raise ValueError("scheduled completion presentation_binding report_type mismatch")
     content = str(binding["full_content"])
+    expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    if str(binding.get("content_hash") or "") != expected_hash:
+        raise ValueError("scheduled completion presentation_binding content_hash mismatch")
     binding = dict(binding)
-    binding["content_hash"] = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    binding["content_hash"] = expected_hash
     return binding
 
 
