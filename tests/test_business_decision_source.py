@@ -6,6 +6,7 @@ from scripts.business_decision_source import (
     build_formal_completion_from_source,
     classify_request,
     validate_source,
+    _normalize_formal_presentation_layout,
 )
 
 class BusinessDecisionSourceTests(unittest.TestCase):
@@ -134,6 +135,19 @@ class BusinessDecisionSourceTests(unittest.TestCase):
         self.assertEqual(_normalize_holding_action("继续持有，不追加、不卖出"), "HOLD")
         self.assertEqual(_normalize_holding_action("降低风险100股"), "REDUCE")
         self.assertEqual(_normalize_holding_action("全部退出"), "EXIT")
+
+    def test_formal_secondary_items_are_split_into_paragraphs(self):
+        inline = "（1）第一项内容。 （2）第二项内容。 （3）第三项内容。"
+        normalized = _normalize_formal_presentation_layout(inline)
+        self.assertEqual(
+            normalized,
+            "（1）第一项内容。\\n\\n（2）第二项内容。\\n\\n（3）第三项内容。",
+        )
+        self.assertNotIn("。 （2）", normalized)
+        self.assertEqual(
+            _normalize_formal_presentation_layout("证券（159781）"),
+            "证券（159781）",
+        )
 
     def test_projection_is_deterministic_and_does_not_redecide(self):
         projected = build_formal_completion_from_source(self.base())

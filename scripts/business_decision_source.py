@@ -820,6 +820,30 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
     }
     return projected
 
+def _normalize_formal_presentation_layout(value: Any) -> Any:
+    """Normalize secondary numbered items before frozen presentation validation.
+
+    PushPlus forwards plain text. Secondary items must therefore begin a new
+    paragraph; relying on inline numbered items is not sufficient. Only one-
+    or two-digit parenthesized item markers are touched, so security codes
+    such as （159781） remain unchanged.
+    """
+    if not isinstance(value, str):
+        return value
+    import re
+    return re.sub(r"[ \t]+([（(][0-9]{1,2}[）)])", r"\n\n\1", value)
+
+def _normalize_formal_presentation_source(source: dict[str, Any]) -> None:
+    source["presentation_content"] = _normalize_formal_presentation_layout(
+        source.get("presentation_content")
+    )
+    for container_key in ("decision_response", "presentation_binding"):
+        container = source.get(container_key)
+        if not isinstance(container, dict):
+            continue
+        field = "presentation_content" if container_key == "decision_response" else "full_content"
+        container[field] = _normalize_formal_presentation_layout(container.get(field))
+
 def _validate_single_frozen_presentation(source: dict[str, Any]) -> None:
     """Require every exposed Formal Decision presentation field to be one text."""
     top = source.get("presentation_content")
@@ -943,6 +967,8 @@ def validate_source(
     expected_market_date: str | None = None, expected_market_phase: str | None = None,
     expected_captured_at: str | None = None,
 ) -> dict[str, Any]:
+    source = json.loads(json.dumps(source))
+    _normalize_formal_presentation_source(source)
     if classify_request(source) != BUSINESS_DECISION_SOURCE:
         raise ValueError("business source requires explicit BUSINESS_DECISION_SOURCE")
     if not str(source.get("request_id") or "").strip():
@@ -965,7 +991,6 @@ def validate_source(
     )
     if consumption_error:
         raise ValueError(consumption_error)
-    source = json.loads(json.dumps(source))
     source["source_type"] = BUSINESS_DECISION_SOURCE
     source["fingerprint"] = source_fingerprint(source)
     source["phase1_status"] = "PASS"

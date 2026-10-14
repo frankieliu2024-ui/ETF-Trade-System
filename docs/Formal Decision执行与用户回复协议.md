@@ -495,7 +495,7 @@ PushPlus 只能由现有 `notification_center` 从当前请求冻结的 `FINAL_C
 
 ## 11.2 冻结正文与主动通知的直接投影边界（2026-10-14）
 
-1. 用户可见正文必须先按本协议固定版式生成并冻结为唯一 `FINAL_CONTENT`：首行、章节顺序、章节空行、一级编号 `1.`、二级编号 `1）`、证券“名称（六位代码）”格式、同一清单去重和纯文本可读性均属于正文合同。PushPlus、微信及其他渠道只能原文转发，不得增加通知标题、摘要、状态、内部字段或第二份正文。
+1. 用户可见正文必须先按本协议固定版式生成并冻结为唯一 `FINAL_CONTENT`：首行、章节顺序、章节空行、一级编号 `1.`、二级编号 `1）` 必须各自独立起行并独立成段（不得在同一段内以内联 `（1）…（2）` 连接；续行由纯文本客户端自然换行，不依赖富文本表格）、证券“名称（六位代码）”格式、同一清单去重和纯文本可读性均属于正文合同。PushPlus、微信及其他渠道只能原文转发，不得增加通知标题、摘要、状态、内部字段或第二份正文。
 2. 主动通知是 `FINAL_CONTENT` 的投影，不是 BDS 业务答案的再次校验，也不是 REPORT 重建流程。现有 `notification_center` 应从当前 Decision completion event 的 `presentation_binding.full_content` 投影通知；completion event 必须证明其绑定的 BDS path、BDS commit、当前 request/parent、decision、正文和实际 `content_hash`。BDS 仅作为业务事实源和 completion 绑定对象，不得被旧文件扫描或历史 REPORT 替代。Scheduled Task来源另外校验 `task_id`、`task_run_id`、`occurrence_id`，手动对话来源不得强制要求这三个定时任务专用字段。不得要求 `decision_response` 的业务字段（例如 `RISK_PERMISSION.final_action`）才能转发正文。
 3. BDS 结构化校验、Decision Fact、completion 和 REPORT 仍各自按既有合同运行，但任何后置结构化投影失败都不得撤回已经生成的 `FINAL_CONTENT`，也不得阻断同一当前请求的原文主动通知。通知不得从 BDS answers、旧 REPORT、旧 completion 或历史 notification 重建正文。
 4. 当前 Formal Decision completion event 的通知投影只能由现有 `decision-notification.yml` 唤醒并调用既有 `notification_center`；不得新增 producer、sender、workflow、state 或旁路通知链。触发事件必须精确绑定本次 completion event 及其当前 BDS，历史目录扫描、标题匹配和旧请求回退一律禁止。
