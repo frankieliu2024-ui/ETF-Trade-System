@@ -123,5 +123,86 @@ class NotificationActiveReportContractTests(unittest.TestCase):
         self.assertEqual(center.canonical_template_family(event), "Trial机会")
 
 
+class FormalFinalContentNotificationTests(unittest.TestCase):
+    def test_formal_notification_requires_exact_current_frozen_content(self):
+        import scripts.notification_center as center
+        from pathlib import Path
+        import tempfile
+        import json
+        body = "唯一冻结正文"
+        digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "current.json"
+            path.write_text(json.dumps({
+                "event_type": "FORMAL_DECISION",
+                "parent_request_id": "parent-1",
+                "decision_id": "decision-1",
+                "presentation_binding": {
+                    "request_id": "parent-1",
+                    "parent_request_id": "parent-1",
+                    "decision_id": "decision-1",
+                    "report_id": "report-20261014T1120",
+                    "full_content": body,
+                    "content_hash": digest,
+                    "title": "正式决策",
+                },
+            }), encoding="utf-8")
+            with patch.dict(os.environ, {"DECISION_EVENT_PATH": str(path), "EXPECTED_FORMAL_REQUEST_ID": "parent-1"}, clear=False):
+                event = center.formal_decision_report_event()
+            self.assertIsNotNone(event)
+            self.assertEqual(event["content"], body)
+            self.assertEqual(event["content_hash"], digest)
+            self.assertEqual(event["request_id"], "parent-1")
+            self.assertEqual(event["parent_request_id"], "parent-1")
+            self.assertEqual(event["report_id"], "report-20261014T1120")
+
+    def test_formal_notification_accepts_distinct_completion_and_parent_request_ids(self):
+        import scripts.notification_center as center
+        from pathlib import Path
+        import tempfile
+        import json
+        body = "父子请求仍属同一正式判断"
+        digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "current.json"
+            path.write_text(json.dumps({
+                "event_type": "FORMAL_DECISION",
+                "presentation_binding": {
+                    "request_id": "completion-1",
+                    "parent_request_id": "parent-1",
+                    "decision_id": "decision-1",
+                    "report_id": "etf-formal-decision:decision-1",
+                    "full_content": body,
+                    "content_hash": digest,
+                    "title": "正式决策",
+                },
+            }), encoding="utf-8")
+            with patch.dict(os.environ, {
+                "DECISION_EVENT_PATH": str(path),
+                "EXPECTED_FORMAL_REQUEST_ID": "parent-1",
+            }, clear=False):
+                event = center.formal_decision_report_event()
+            self.assertIsNotNone(event)
+            self.assertEqual(event["request_id"], "completion-1")
+            self.assertEqual(event["parent_request_id"], "parent-1")
+            self.assertEqual(event["report_id"], "etf-formal-decision:decision-1")
+
+    def test_formal_notification_rejects_missing_or_mismatched_binding(self):
+        import scripts.notification_center as center
+        from pathlib import Path
+        import tempfile
+        import json
+        body = "唯一冻结正文"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "current.json"
+            payload = {"event_type": "FORMAL_DECISION", "presentation_binding": {
+                "request_id": "current", "parent_request_id": "current", "decision_id": "d",
+                "report_id": "r", "full_content": body, "content_hash": "old-hash"
+            }}
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with patch.dict(os.environ, {"DECISION_EVENT_PATH": str(path), "EXPECTED_FORMAL_REQUEST_ID": "current"}, clear=False):
+                self.assertIsNone(center.formal_decision_report_event())
+
+
 if __name__ == "__main__":
     unittest.main()
