@@ -50,7 +50,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
             "task_id": "ETF交易复盘",
             "task_run_id": "trade-occurrence-1",
             "occurrence_id": "trade-occurrence-1",
-            "report_id": "canonical-report:trade-occurrence-1",
+            "report_id": "ETF_TRADE_REVIEW:trade-occurrence-1",
             "full_content": final_content,
             "content_hash": content_hash,
         }
@@ -63,8 +63,9 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertEqual(binding["full_content"], final_content)
         self.assertEqual(binding["content_hash"], __import__("hashlib").sha256(final_content.encode()).hexdigest())
         self.assertEqual(binding["request_id"], request["request_id"])
-        self.assertEqual(binding["report_id"], "canonical-report:trade-occurrence-1")
-        report_path = self.root / "requests/report_delivery/canonical-report__trade-occurrence-1.json"
+        self.assertEqual(binding["report_id"], "ETF_TRADE_REVIEW:trade-occurrence-1")
+        self.assertEqual(binding["occurrence_id"], "trade-occurrence-1")
+        report_path = self.root / "requests/report_delivery/ETF_TRADE_REVIEW__trade-occurrence-1.json"
         report = json.loads(report_path.read_text(encoding="utf-8"))
         self.assertEqual(report["event_type"], "REPORT_DELIVERY_REQUEST")
         self.assertEqual(report["request_id"], request["request_id"])
