@@ -267,7 +267,9 @@ class E2EDecisionReadinessTests(unittest.TestCase):
             handoff["target_path"],
             "requests/live_snapshot/ready-parent__business_decision_source.json",
         )
-        self.assertTrue(handoff["must_read_back_before_completion"])
+        self.assertFalse(handoff["user_reply_precondition"])
+        self.assertTrue(handoff["post_reply_async"])
+        self.assertTrue(handoff["must_read_back_after_reply"])
         self.assertTrue(handoff["historical_fallback_forbidden"])
 
     def test_true_incomplete_formal_context_remains_not_ready(self):
