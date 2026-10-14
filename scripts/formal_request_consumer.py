@@ -117,10 +117,10 @@ def classify_formal_request_consumer_state(
         # state/checker and does not wait for persistence.
         response_contract = dwp.get("response_contract") if isinstance(dwp, dict) else {}
         response_contract = response_contract if isinstance(response_contract, dict) else {}
-        # Request-bound facts authorize business analysis.  The actor's
-        # BUSINESS_DECISION_SOURCE is the reply handoff; canonical projection
-        # and post-write acceptance remain asynchronous and must not block the
-        # user-visible business answer.
+        # Request-bound facts authorize business analysis.  FINAL_CONTENT is
+        # frozen once, then BDS is written/read back before the user reply;
+        # notification is attempted from that same BDS. Provider success is
+        # asynchronous and must not block the full user-visible answer.
         return {
             "status": "BUSINESS_DECISION_READY",
             "continue_same_request": False,
@@ -142,10 +142,10 @@ def classify_formal_request_consumer_state(
             "canonical_persistence_status": (
                 "CONFIRMED" if canonical_persisted else "PENDING_ASYNC"
             ),
-            # This is an asynchronous post-reply handoff contract, not a
-            # user-visible gate, new state, or producer.  The Actor freezes
-            # FINAL_CONTENT and returns it first; this payload is then consumed
-            # once by the existing BDS path using the exact same content.
+            # This is the single pre-reply BDS handoff contract, not a new
+            # state or producer. The Actor freezes FINAL_CONTENT, persists and
+            # reads back BDS, attempts the existing notification path, and then
+            # returns the same full content. Provider success remains async.
             "ready_handoff": {
                 "required": True,
                 "submission_type": "BUSINESS_DECISION_SOURCE",
@@ -193,8 +193,9 @@ def classify_formal_request_consumer_state(
                     "handoff_status_cannot_replace_content": True,
                     "bds_must_reuse_exact_final_content": True,
                 },
-                "post_reply_async": True,
-                "must_read_back_after_reply": True,
+                "post_reply_async": False,
+                "provider_success_async": True,
+                "must_read_back_before_reply": True,
                 "historical_fallback_forbidden": True,
             },
         }
