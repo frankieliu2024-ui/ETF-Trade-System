@@ -268,8 +268,14 @@ def formal_presentation_event() -> dict | None:
     entry_mode = str(envelope.get("entry_mode") or "").strip()
     content = envelope.get("presentation_content")
     content_hash = str(envelope.get("content_hash") or "").strip()
-    if not all((request_id, parent_request_id, decision_id, task_id,
-                task_run_id, occurrence_id, source, entry_mode)):
+    # Manual conversation BDS does not have Scheduled Task identity fields.
+    # Its direct notification identity is request/parent/decision + source/entry
+    # plus the frozen body hash. Scheduled/task-originated BDS keeps the
+    # stronger task/run/occurrence requirement.
+    base_identity = (request_id, parent_request_id, decision_id, source, entry_mode)
+    if not all(base_identity):
+        return None
+    if entry_mode != "MANUAL_CONVERSATION" and not all((task_id, task_run_id, occurrence_id)):
         return None
     if not isinstance(content, str) or not content:
         return None
@@ -313,9 +319,15 @@ def formal_presentation_event() -> dict | None:
     }
 
 def report_delivery_event() -> dict | None:
+    direct_path = os.environ.get("FORMAL_PRESENTATION_PATH", "").strip()
     direct = formal_presentation_event()
     if direct is not None:
         return direct
+    # An explicitly supplied current Formal Decision BDS is authoritative.
+    # Never fall back to legacy REPORT/review scanning or stale notification
+    # state when that direct binding is invalid.
+    if direct_path:
+        return None
     # A canonical Scheduled Review push must bind this occurrence to the exact
     # review event path identified by the triggering commit. Never select a
     # different event by directory order when an explicit binding is present.
