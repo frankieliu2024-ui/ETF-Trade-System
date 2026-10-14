@@ -251,6 +251,24 @@ class E2EDecisionReadinessTests(unittest.TestCase):
             gate["business_answer_contract"],
             "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
         )
+        handoff = gate["ready_handoff"]
+        self.assertTrue(handoff["required"])
+        self.assertEqual(handoff["submission_type"], "BUSINESS_DECISION_SOURCE")
+        self.assertEqual(handoff["source"], "CHATGPT_BUSINESS_DECISION_RESPONSE")
+        self.assertEqual(handoff["parent_request_id"], "ready-parent")
+        for field in (
+            "decision_response.answers",
+            "decision_id",
+            "consumed_snapshot",
+            "presentation_content",
+        ):
+            self.assertIn(field, handoff["required_payload_fields"])
+        self.assertEqual(
+            handoff["target_path"],
+            "requests/live_snapshot/ready-parent__business_decision_source.json",
+        )
+        self.assertTrue(handoff["must_read_back_before_completion"])
+        self.assertTrue(handoff["historical_fallback_forbidden"])
 
     def test_true_incomplete_formal_context_remains_not_ready(self):
         result = context_component(
