@@ -181,6 +181,12 @@ jobs:
               'requests/live_snapshot/*__bds*.json' \
               'requests/live_snapshot/*__business_decision_source*.json' | sed '/^$/d'
           )
+          if [ "${#bds_paths[@]}" -eq 0 ]; then
+            echo "No BDS in consistency producer commit; notification binding is not applicable."
+            echo "formal_content=false" >> "$GITHUB_OUTPUT"
+            echo "formal_content_path=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if [ "${#bds_paths[@]}" -ne 1 ]; then
             echo "Expected exactly one current BDS in consistency producer commit; found ${#bds_paths[@]}" >&2
             printf '%s\n' "${bds_paths[@]}" >&2

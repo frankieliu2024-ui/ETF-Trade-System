@@ -254,6 +254,7 @@ def build_system_review_completion_request(
         raise ValueError("scheduled system review completion requires requested_at_beijing and frozen final_content")
     validate_system_review_presentation(system_review, final_content)
     validate_user_visible_content(str(final_content), canonical_closure_confirmed=False)
+    content_hash = hashlib.sha256(str(final_content).encode("utf-8")).hexdigest()
     return {
         "request_id": request_id,
         "request_type": "STATE_SYNC_ONLY",
@@ -266,7 +267,9 @@ def build_system_review_completion_request(
             "report_type": "ETF_SYSTEM_REVIEW",
             "task_id": str(task_id or "ETF系统复核"),
             "task_run_id": task_run_id,
+            "report_id": f"etf_system_review:{task_run_id}",
             "full_content": str(final_content),
+            "content_hash": content_hash,
         },
     }
 

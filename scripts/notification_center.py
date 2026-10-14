@@ -25,10 +25,21 @@ MIN_UNEXPLAINED_CASH_DELTA_YUAN = 10.0
 TRADING_CALENDAR = ROOT / "config" / "market" / "a_share_trading_calendar_2026.json"
 
 ACTIVE_REPORT_TYPES = {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW", "ETF_FORMAL_DECISION"}
+CANONICAL_REPORT_TITLES = {
+    "ETF_TRADE_REVIEW": "【ETF交易复盘】",
+    "ETF_SYSTEM_REVIEW": "【ETF系统复核】",
+    "ETF_FORMAL_DECISION": "【ETF正式决策】",
+}
 HISTORICAL_REPORT_TYPES = set()
 REPORT_REQUEST_DIR = ROOT / "requests" / "report_delivery"
 REPORT_HANDOFF_DIR = ROOT / "requests" / "report_handoff"
 REVIEW_EVENT_DIR = ROOT / "events" / "reviews"
+
+def canonical_report_title(report_type: str) -> str:
+    try:
+        return CANONICAL_REPORT_TITLES[str(report_type)]
+    except KeyError as exc:
+        raise ValueError(f"unsupported report_type for canonical title: {report_type}") from exc
 
 def validate_report_delivery_request(request: dict) -> tuple[bool, str]:
     """Validate a completed active formal report before shared delivery."""
@@ -64,7 +75,7 @@ def build_report_delivery_request(*, task_id: str, task_run_id: str, report_id: 
         "generated_at": str(generated_at),
         "effective_market_date": str(effective_market_date),
         "source_actor": str(source_actor), "source_reference": str(source_reference),
-        "title": str(title), "summary": str(summary), "full_content": body,
+        "title": canonical_report_title(report_type), "summary": str(summary), "full_content": body,
         "content_hash": hashlib.sha256(body.encode("utf-8")).hexdigest(),
         "idempotency_key": str(idempotency_key),
         "delivery_mode": "FULL_REPORT", "no_trade_authority": True,
@@ -102,7 +113,7 @@ def build_report_from_handoff(handoff: dict) -> dict:
         report_id=f"{report_type.lower()}:{task_run_id}",
         report_type=report_type,
         effective_market_date=str(handoff["effective_market_date"]),
-        title=str(handoff["title"]),
+        title=canonical_report_title(report_type),
         summary=str(handoff["summary"]),
         full_content=str(handoff["full_content"]),
         source_reference=f"scheduled-report-handoff:{task_run_id}",
@@ -392,7 +403,7 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
             "key": f"report-delivery:{key}", "source_event_id": f"report-completion:{key}",
             "event_type": "REPORT_DELIVERY_REQUEST", "notification_channel": "REPORT",
             "delivery_mode": "FULL_REPORT", "type": "正式报告",
-            "title": str(binding.get("title") or ("【ETF交易复盘】" if report_type == "ETF_TRADE_REVIEW" else "【ETF系统复核】")),
+            "title": canonical_report_title(report_type),
             "content": content, "source": f"canonical-review-completion:{path.name}",
             "user_severity": "正式报告", "user_action": "阅读已完成的正式ETF报告；无需交易操作",
             "report_type": report_type, "report_id": binding_report_id, "request_id": binding_request_id,
