@@ -158,9 +158,7 @@ def test_frozen_review_nested_mapping_is_nonempty_and_safe():
 def test_json_content_parser_accepts_bare_json_and_complete_code_fence():
     payload = '{"critique":"ok","evidence_used":[],"uncertainties":[],"follow_ups":[]}'
     assert _parse_json_content(payload)["critique"] == "ok"
-    assert _parse_json_content("```json
-" + payload + "
-```")["critique"] == "ok"
+    assert _parse_json_content("```json\n" + payload + "\n```")["critique"] == "ok"
 
 
 def test_invalid_or_truncated_json_is_not_salvaged():
