@@ -58,7 +58,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertEqual(binding["full_content"], final_content)
         self.assertEqual(binding["content_hash"], __import__("hashlib").sha256(final_content.encode()).hexdigest())
         self.assertEqual(binding["request_id"], request["request_id"])
-        self.assertEqual(binding["report_id"], "ETF_TRADE_REVIEW:trade-occurrence-1")
+        self.assertEqual(binding["report_id"], "canonical-trade-report-1")
         self.assertEqual(binding["occurrence_id"], "trade-occurrence-1")
         report_path = self.root / "requests/report_delivery/ETF_TRADE_REVIEW__trade-occurrence-1.json"
         report = json.loads(report_path.read_text(encoding="utf-8"))
