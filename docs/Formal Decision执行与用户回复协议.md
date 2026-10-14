@@ -397,13 +397,23 @@ READY后的首条用户可见业务回复必须直接消费同一请求的完整
 
 ## 7.1.3 正式完成事件写入路径与逐项候选覆盖（强制）
 
-1. ChatGPT完成业务判断后提交的唯一 BUSINESS_DECISION_SOURCE Actor envelope，必须写入 current main 的：
+1. ChatGPT完成业务判断后，必须先提交唯一 BUSINESS_DECISION_SOURCE Actor envelope，写入 current main 的：
 
    requests/live_snapshot/<parent_request_id>__business_decision_source.json
 
-   或现有兼容命名 requests/live_snapshot/<parent_request_id>__bds*.json。本次完成事件不得写入 requests/state_sync/、requests/report_delivery/、requests/report_handoff/ 或其他路径代替正式完成入口。通知工作流对上述 requests/live_snapshot/*__business_decision_source*.json 和 requests/live_snapshot/*__bds*.json 变更负责唤醒；错误路径写入不构成通知已触发。
+   或现有兼容命名 requests/live_snapshot/<parent_request_id>__bds*.json。BDS 是当前业务判断和冻结正文的业务事实源，不是通知 workflow 的唯一唤醒机制。
 
-2. 写入后必须回读同一 current main 路径，核对父请求、唯一决策身份、消费快照和冻结正文；只有写入回执与回读均成功，才能确认正式完成事件已提交。业务报告已READY不等于持久化、通知发送或用户收到；三者必须分别如实表达。不得为了补发通知创建第二完成事件、第二正文或旁路发送路径。
+2. BDS 写入完成后，必须由既有 Formal Decision completion owner 生成唯一 Decision completion event：
+
+   events/decisions/<decision_id>.json
+
+   completion event 必须绑定同一 request_id、parent_request_id、decision_id、report_id、bds_path、bds_commit、content_hash 和完整 presentation_binding.full_content。BDS 与 completion event 缺任一者，均不得声称 Formal Decision 完成闭环。
+
+3. 主动通知必须由既有 notification workflow 从本次 completion event 的精确路径唤醒并消费；不得依赖 API/GITHUB_TOKEN 写入 BDS 后产生递归 push workflow，不得扫描历史目录、按文件名排序或按最新 commit 猜测当前正文。通知 workflow success 不等于 notification_id、provider result 或用户收到。
+
+4. 本次完成事件不得写入 requests/state_sync/、requests/report_delivery/、requests/report_handoff/ 或其他路径代替 BDS 或 Decision completion 的正式入口。不得为了补发通知创建第二个 BDS、第二个 completion event、第二份正文或旁路发送路径。
+
+5. BDS 和 completion event 写入后，必须分别回读 current main 的同一文件，核对当前请求身份、消费快照、decision_id、bds_commit、冻结正文和 content_hash；只有业务事实、completion event 和正文回读均成功，才能确认 Formal Decision 已形成。业务报告 READY、BDS 持久化、completion event、通知发送和用户收到必须分别如实表达。
 
 3. 用户可见报告中的全市场机会发现候选必须逐项覆盖。每项至少说明：名称和代码、是否进入本节点观察评估、是否取得观察ETF或机会ETF身份、Trial/Confirm资格、实际部署金额，以及未进入下一层的业务原因。候选可以使用紧凑的编号清单，不得用一句共同结论替代全部候选的逐项判断。全市场机会发现结果只是候选评估输入，不因被列出而取得任何正式身份或交易资格。
 
@@ -455,7 +465,7 @@ Formal Decision业务验收不得读取或要求当天生产运行态，包括cl
 
 1. **正式决策与完整日复盘是两个独立业务链。** 复盘报告是否生成、落盘或通知成功，不得决定 Formal Decision 是否可以回复、完成或通知；Formal Decision 也不得代替完整日复盘。两者各自使用自己的 request、事实、报告和通知事件。
 2. **READY 的首份报告不等待后置动作。** READY 表示当前请求已具备业务判断条件。Actor 必须用同一份冻结正文和同一份结构化答案完成当前交互回复；后置 BDS、completion、REPORT 和 notification 只能继续交接，不能反向阻塞、重写或要求重新生成正文。
-3. **通知只有一条业务来源。** Formal Decision 的当前 BDS 是当前冻结正文的唯一通知交接入口；既有 completion、REPORT 或 REPORT_DELIVERY_REQUEST 只能作为同一正文的确定性兼容投影。snapshot、复盘、旧事件、旧报告或历史 PushPlus 结果都不能旁路触发或证明当前通知。Scheduled Review 继续按其自身 completion/REPORT 合同运行。
+3. **通知只有一条业务来源。** Formal Decision 的当前 BDS 是业务事实源，当前 Decision completion event 是通知唤醒和交接入口；completion、REPORT 和 notification 必须确定性绑定同一 request、decision、bds_commit 和 content_hash。snapshot、复盘、旧事件、旧报告或历史 PushPlus 结果都不能旁路触发或证明当前通知。Scheduled Review 继续按其自身 completion/REPORT 合同运行。
 4. **运行健康与业务合并分离。** post-close、行情、账户、动态 state、self-healing 和 system-consistency 属于运行健康域；它们失败时报告 GLOBAL_SYSTEM_HEALTH_DEGRADED，不得把普通业务 PR 或已具备 READY 条件的 Formal Decision 改写为业务失败。
 5. **CI 只证明代码合同。** PR CI 只验证变更代码、受影响模块和唯一 Formal Decision business contract。无 run 是 NOT_STARTED，不是成功；skipped、旧 run、旧 artifact 或其他 SHA 的结果不能证明当前 PR。SHA 仅是审计元数据，不是业务身份、完成条件或通知条件。
 6. **失败必须按当前身份 fail-closed。** 当前 request、decision、report、content_hash 或 completion 缺失/不一致时，拒绝当前交接；不得扫描历史事件回退，不得返回 ALREADY_MANAGED 掩盖当前缺失，也不得创建第二请求或第二通知。
@@ -486,8 +496,8 @@ PushPlus 只能由现有 `notification_center` 从当前请求冻结的 `FINAL_C
 ## 11.2 冻结正文与主动通知的直接投影边界（2026-10-14）
 
 1. 用户可见正文必须先按本协议固定版式生成并冻结为唯一 `FINAL_CONTENT`：首行、章节顺序、章节空行、一级编号 `1.`、二级编号 `1）`、证券“名称（六位代码）”格式、同一清单去重和纯文本可读性均属于正文合同。PushPlus、微信及其他渠道只能原文转发，不得增加通知标题、摘要、状态、内部字段或第二份正文。
-2. 主动通知是 `FINAL_CONTENT` 的投影，不是 BDS 业务答案的再次校验，也不是 REPORT 重建流程。现有 `notification_center` 可以直接消费当前请求的 `presentation_content`；该路径只校验当前 request/parent、decision、entry identity、正文和实际 `content_hash`；Scheduled Task来源另外校验 `task_id`、`task_run_id`、`occurrence_id`，手动对话来源不得强制要求这三个定时任务专用字段。不得要求 `decision_response` 的业务字段（例如 `RISK_PERMISSION.final_action`）才能转发正文。
+2. 主动通知是 `FINAL_CONTENT` 的投影，不是 BDS 业务答案的再次校验，也不是 REPORT 重建流程。现有 `notification_center` 应从当前 Decision completion event 的 `presentation_binding.full_content` 投影通知；completion event 必须证明其绑定的 BDS path、BDS commit、当前 request/parent、decision、正文和实际 `content_hash`。BDS 仅作为业务事实源和 completion 绑定对象，不得被旧文件扫描或历史 REPORT 替代。Scheduled Task来源另外校验 `task_id`、`task_run_id`、`occurrence_id`，手动对话来源不得强制要求这三个定时任务专用字段。不得要求 `decision_response` 的业务字段（例如 `RISK_PERMISSION.final_action`）才能转发正文。
 3. BDS 结构化校验、Decision Fact、completion 和 REPORT 仍各自按既有合同运行，但任何后置结构化投影失败都不得撤回已经生成的 `FINAL_CONTENT`，也不得阻断同一当前请求的原文主动通知。通知不得从 BDS answers、旧 REPORT、旧 completion 或历史 notification 重建正文。
-4. 当前 BDS 的直接通知投影只能由现有 `decision-notification.yml` 唤醒并调用既有 `notification_center`；不得新增 producer、sender、workflow、state 或旁路通知链。触发文件必须是本次提交识别到的唯一当前请求文件，历史目录扫描、标题匹配和旧请求回退一律禁止。
+4. 当前 Formal Decision completion event 的通知投影只能由现有 `decision-notification.yml` 唤醒并调用既有 `notification_center`；不得新增 producer、sender、workflow、state 或旁路通知链。触发事件必须精确绑定本次 completion event 及其当前 BDS，历史目录扫描、标题匹配和旧请求回退一律禁止。
 5. 当前正文、身份或哈希缺失/不一致时，通知必须 fail-closed；不得返回 `ALREADY_MANAGED`，不得补发旧正文。用户已看到正文但当前 PushPlus 无当前 notification/provider 成功证据时，用户业务回复仍保留，外部状态只能记为 `EXTERNAL_SEND_UNVERIFIED`。
 
