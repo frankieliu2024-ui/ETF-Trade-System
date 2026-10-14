@@ -323,8 +323,12 @@ jobs:
       - name: Send exact Formal Decision content
         id: formal_content_notify
         if: ${{ github.event_name == 'push' && steps.push_kind.outputs.formal_content == 'true' }}
+        env:
+          FORMAL_CONTENT_PATH: ${{ steps.push_kind.outputs.formal_content_path }}
         run: |
-          echo "BDS presentation content is projected by the existing notification center; no second notification chain is created."
+          set -euo pipefail
+          test -n "$FORMAL_CONTENT_PATH"
+          python scripts/run_guarded_notification.py center --mode event --formal-content-file "$FORMAL_CONTENT_PATH"
 
       - name: Build delayed execution reconciliation
         if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && (steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.trade == 'true')) }}
