@@ -76,9 +76,11 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
                 "decision_id": "decision_current",
                 "presentation_binding": {
                     "request_id": "fd_current",
+                    "parent_request_id": "fd_current",
                     "decision_id": "decision_current",
-                    "content": body,
-                    "content_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+                    "report_id": "report_current",
+                    "full_content": body,
+                    "content_hash": hashlib.sha256(body.encode("utf-8")).hexdigest(),
                 },
             }
             (decisions / "current.json").write_text(json.dumps(event), encoding="utf-8")
@@ -122,14 +124,16 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
                 "formal_decision": {},
                 "presentation_binding": {
                     "request_id": "fd_current",
+                    "parent_request_id": "fd_current",
                     "decision_id": "decision_current",
-                    "content": body,
-                    "content_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+                    "report_id": "report_current",
+                    "full_content": body,
+                    "content_hash": hashlib.sha256(body.encode("utf-8")).hexdigest(),
                 },
             }
             path = decisions / "current.json"
             path.write_text(json.dumps(event, ensure_ascii=False), encoding="utf-8")
-            with patch.object(center, "ROOT", root), patch.dict(os.environ, {"DECISION_EVENT_PATH": "events/decisions/current.json"}):
+            with patch.object(center, "ROOT", root), patch.dict(os.environ, {"DECISION_EVENT_PATH": "events/decisions/current.json", "EXPECTED_FORMAL_REQUEST_ID": "fd_current"}, clear=False):
                 self.assertIsNotNone(center.formal_decision_report_event())
             with patch.object(center, "ROOT", root), patch.dict(os.environ, {"DECISION_EVENT_PATH": "events/decisions/missing.json"}):
                 self.assertIsNone(center.formal_decision_report_event())

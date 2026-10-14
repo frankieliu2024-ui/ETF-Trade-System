@@ -230,3 +230,10 @@ canonical intake只接受已登记的`ETF_TRADE_REVIEW`、`ETF_SYSTEM_REVIEW`与
 ### 维护与验收 owner
 
 实现/运行入口包括：scripts/notification_center.py、scripts/notification_materiality_guard.py、scripts/run_guarded_notification.py、scripts/merge_notification_state.py、.github/workflows/decision-notification.yml，以及负责生产结构化事实的市场/正式决策/账户/成交/system builders。producer不得持有独立不可逆PushPlus发送权；任何新增外部副作用必须先通过本文和生产治理重新准入。
+
+
+### Formal Decision 主动通知正文边界（2026-10-14）
+
+`ETF_FORMAL_DECISION` 的通知正文唯一来源是当前 FORMAL_DECISION completion 事件的 `presentation_binding.full_content`。通知中心必须同时验证当前 `request_id`、`parent_request_id`、`decision_id`、`report_id` 以及 `content_hash`；任何字段缺失或不一致都不得发送，不得扫描历史事件回退，也不得返回 `ALREADY_MANAGED`。
+
+`notification.content` 必须逐字等于 `presentation_binding.full_content`，`notification.content_hash` 必须等于正文实际哈希。PushPlus 只发送该正文原文。

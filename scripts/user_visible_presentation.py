@@ -165,6 +165,8 @@ def build_formal_decision_presentation_binding(
     *,
     request_id: str,
     decision_id: str,
+    parent_request_id: str = "",
+    report_id: str = "",
     canonical_closure_confirmed: bool = False,
     technical_audit_mode: bool = False,
     security_map: dict[str, str] | None = None,
@@ -192,7 +194,11 @@ def build_formal_decision_presentation_binding(
     result.update({
         "schema_version": "formal-decision-presentation-binding-v1",
         "request_id": safe_request_id,
+        "parent_request_id": str(parent_request_id or safe_request_id).strip(),
         "decision_id": safe_decision_id,
+        "report_id": str(report_id or f"etf-formal-decision:{safe_decision_id}").strip(),
+        "full_content": text,
+        "content_hash": hashlib.sha256(text.encode("utf-8")).hexdigest(),
         "content_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
         "technical_audit_mode": bool(technical_audit_mode),
     })

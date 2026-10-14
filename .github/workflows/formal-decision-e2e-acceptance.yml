@@ -26,7 +26,9 @@ on:
       - "docs/**"
       - ".github/workflows/**"
   push:
-    branches: [main]
+    branches:
+      - main
+      - fix/formal-decision-final-content-pushplus-closure-v2
     paths:
       - "scripts/formal_entry_contract.py"
       - "scripts/notification_center.py"
@@ -51,6 +53,32 @@ permissions:
   contents: read
 
 jobs:
+  # Independent ordinary PR CI: compile and run directly affected regression tests.
+  # This remains in the existing PR workflow; it does not read or write production state
+  # and is separate from the Formal Decision business contract job.
+  ordinary-pr-ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Compile affected Python modules
+        run: |
+          python -m py_compile \
+            scripts/notification_center.py \
+            scripts/process_state_sync_request.py \
+            scripts/scheduled_review_completion.py \
+            scripts/user_visible_presentation.py
+      - name: Run affected notification and contract tests
+        run: |
+          python -m unittest -v \
+            tests.test_notification_active_report_contract \
+            tests.test_formal_decision_e2e_contract
+
   formal-decision-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 10
