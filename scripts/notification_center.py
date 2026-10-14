@@ -181,9 +181,17 @@ def formal_decision_report_event() -> dict | None:
         decision_id = str(binding.get("decision_id") or event.get("decision_id") or "").strip()
         report_id = str(binding.get("report_id") or "").strip()
         content_hash = str(binding.get("content_hash") or "").strip()
-        if expected_request_id and request_id != expected_request_id:
+        # request_id identifies the completion envelope; parent_request_id identifies
+        # the Formal Decision request. They are distinct legal identities and
+        # must both remain bound. The expected current request is the parent,
+        # never an equality assertion between the two fields.
+        if expected_request_id and parent_request_id != expected_request_id:
             continue
-        if not request_id or parent_request_id != request_id or not decision_id or not report_id or not content:
+        if not request_id or not parent_request_id or not decision_id or not report_id or not content:
+            continue
+        # This is the existing Formal Decision report namespace. Validate the
+        # event's supplied binding; do not synthesize or discover a report here.
+        if report_id != f"etf-formal-decision:{decision_id}":
             continue
         expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
         if content_hash != expected:
