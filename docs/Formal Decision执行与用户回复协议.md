@@ -26,7 +26,7 @@
 
 所有入口严格按以下顺序执行：
 
-当前入口 → 当前唯一 parent request → request-bound snapshot → query_context → DWP/problem graph → formal_reply_gate → READY → 业务判断 → 唯一 FINAL_CONTENT → 用户可见回复 → 当前请求 BUSINESS_DECISION_SOURCE → 现有通知投影 → notification_center → 当前 notification → PushPlus provider result
+当前入口 → 当前唯一 parent request → request-bound snapshot → query_context → DWP/problem graph → formal_reply_gate → READY → 业务判断 → 唯一 FINAL_CONTENT → 当前请求 BUSINESS_DECISION_SOURCE 写入并回读 → 现有通知投影 → notification_center → 当前 notification → PushPlus provider result → 用户可见回复
 
 其中：
 
@@ -51,11 +51,12 @@ READY 后只生成一份 FINAL_CONTENT。它必须同时满足：
 
 用户回复和后置交接是连续但独立的两个动作：
 
-1. READY 后先向用户输出完整 FINAL_CONTENT；
-2. 随后将同一正文和同一请求身份写入现有 BUSINESS_DECISION_SOURCE 入口；
+1. READY 后冻结唯一 FINAL_CONTENT；
+2. 将同一正文和同一请求身份写入现有 BUSINESS_DECISION_SOURCE 入口；
 3. 写入后从同一 current main 路径回读；
-4. 只有当前 completion、REPORT、notification 和 provider result 均绑定当前请求并通过哈希/身份校验，才可确认对应后置事实；
-5. 任一当前对象缺失或不一致时，当前交接 fail-closed，不扫描历史对象、不返回 ALREADY_MANAGED、不创建第二对象。
+4. 回读通过后交给既有 notification_center 发起一次通知尝试；
+5. 随后向用户输出同一份完整 FINAL_CONTENT；provider 成功不是用户回复门禁；
+6. 任一当前对象缺失或不一致时，当前交接 fail-closed，不扫描历史对象、不返回 ALREADY_MANAGED、不创建第二对象。
 
 BDS 不直接调用 PushPlus，但当前 Formal Decision 的 BDS 是既有通知链的唯一正文交接入口：notification_center 必须直接读取当前 BDS 携带的 presentation_content/full_content 原文并投递。REPORT、completion 或 REPORT_DELIVERY_REQUEST 如由既有实现生成，只能是同一正文的确定性保存或兼容投影，不得成为 Actor 新建的通知前置步骤，不得重新生成、摘要、改写或从历史对象恢复正文。PushPlus 未取得当前 notification 对应的明确 provider 成功结果时，只能记录 EXTERNAL_SEND_UNVERIFIED；历史 provider 成功不能证明当前请求发送成功。
 
@@ -454,7 +455,7 @@ Formal Decision业务验收不得读取或要求当天生产运行态，包括cl
 
 1. **正式决策与完整日复盘是两个独立业务链。** 复盘报告是否生成、落盘或通知成功，不得决定 Formal Decision 是否可以回复、完成或通知；Formal Decision 也不得代替完整日复盘。两者各自使用自己的 request、事实、报告和通知事件。
 2. **READY 的首份报告不等待后置动作。** READY 表示当前请求已具备业务判断条件。Actor 必须用同一份冻结正文和同一份结构化答案完成当前交互回复；后置 BDS、completion、REPORT 和 notification 只能继续交接，不能反向阻塞、重写或要求重新生成正文。
-3. **通知只有一条业务来源。** 只有当前请求的 completion event 生成的 REPORT 才能生成当前 notification。BDS、snapshot、复盘、旧事件、旧报告或历史 PushPlus 结果都不能旁路触发或证明当前通知。
+3. **通知只有一条业务来源。** Formal Decision 的当前 BDS 是当前冻结正文的唯一通知交接入口；既有 completion、REPORT 或 REPORT_DELIVERY_REQUEST 只能作为同一正文的确定性兼容投影。snapshot、复盘、旧事件、旧报告或历史 PushPlus 结果都不能旁路触发或证明当前通知。Scheduled Review 继续按其自身 completion/REPORT 合同运行。
 4. **运行健康与业务合并分离。** post-close、行情、账户、动态 state、self-healing 和 system-consistency 属于运行健康域；它们失败时报告 GLOBAL_SYSTEM_HEALTH_DEGRADED，不得把普通业务 PR 或已具备 READY 条件的 Formal Decision 改写为业务失败。
 5. **CI 只证明代码合同。** PR CI 只验证变更代码、受影响模块和唯一 Formal Decision business contract。无 run 是 NOT_STARTED，不是成功；skipped、旧 run、旧 artifact 或其他 SHA 的结果不能证明当前 PR。SHA 仅是审计元数据，不是业务身份、完成条件或通知条件。
 6. **失败必须按当前身份 fail-closed。** 当前 request、decision、report、content_hash 或 completion 缺失/不一致时，拒绝当前交接；不得扫描历史事件回退，不得返回 ALREADY_MANAGED 掩盖当前缺失，也不得创建第二请求或第二通知。
