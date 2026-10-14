@@ -655,13 +655,13 @@ def run(root: Path = ROOT) -> dict:
     check("mutation_protocol:direct_writers_discovered", bool(writer_rows), f"writers={writer_rows}")
     consistency_workflow = workflow_texts.get(".github/workflows/system-consistency.yml", "")
     check(
-        "acceptance_evidence:artifact_not_main_projection",
+        "system_consistency:independent_health_only",
         bool(consistency_workflow)
-        and "- name: Preserve acceptance projections as run evidence" in consistency_workflow
-        and "production-acceptance-result.json" in consistency_workflow
-        and "- name: Persist acceptance result" not in consistency_workflow
-        and not _workflow_may_stage(consistency_workflow, "data/state/system_consistency.json"),
-        "change-specific production acceptance preserves immutable per-run evidence without requiring system_consistency.json main publication",
+        and "pull_request:" not in consistency_workflow
+        and "production_acceptance:" not in consistency_workflow
+        and "acceptance_sha" not in consistency_workflow
+        and "sha_stable" not in consistency_workflow,
+        "system-consistency remains an independent non-PR health check without SHA or production-acceptance business gating",
     )
 
     notification_owner = ".github/workflows/decision-notification.yml"
