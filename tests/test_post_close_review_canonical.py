@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import build_e2e_status
 import check_system_consistency
 import process_state_sync_request as sync
+import scheduled_review_completion
 
 
 class PostCloseReviewCanonicalTests(unittest.TestCase):
@@ -43,17 +44,11 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
     def test_trade_review_normalizes_binding_hash_for_notification_projection(self):
         request = self.request()
         final_content = "FROZEN TRADE REVIEW"
-        import hashlib
-        content_hash = hashlib.sha256(final_content.encode("utf-8")).hexdigest()
-        request["presentation_binding"] = {
-            "report_type": "ETF_TRADE_REVIEW",
-            "task_id": "ETF交易复盘",
-            "task_run_id": "trade-occurrence-1",
-            "occurrence_id": "trade-occurrence-1",
-            "report_id": "ETF_TRADE_REVIEW:trade-occurrence-1",
-            "full_content": final_content,
-            "content_hash": content_hash,
-        }
+        request["presentation_binding"] = scheduled_review_completion.freeze_presentation_binding(
+            final_content=final_content,
+            task_id="ETF交易复盘",
+            task_run_id="trade-occurrence-1",
+        )
         account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
         self.assertEqual(sync.record_post_close_review(account, request), (True, False))
         event = json.loads((self.root / "events/reviews/2026-08-31.json").read_text(encoding="utf-8"))
