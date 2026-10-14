@@ -53,9 +53,15 @@ def _explicit_latest_intent() -> str:
 
 
 def _query_intent(req: dict) -> str:
-    # Formal Decision ingress stores the canonical query intent inside the\n    # request intent object.  Normalize both shapes before PIT routing so a\n    # formal request cannot silently fall into the generic refresh branch.\n    intent = req.get("intent")\n    if isinstance(intent, dict):\n        value = intent.get("query_intent") or intent.get("intent")\n    else:\n        value = intent\n    return str(req.get("query_intent") or value or req.get("request_kind") or "").upper()
-
-
+    # Formal Decision ingress stores the canonical query intent inside the
+    # request intent object. Normalize both shapes before PIT routing so a
+    # formal request cannot silently fall into the generic refresh branch.
+    intent = req.get("intent")
+    if isinstance(intent, dict):
+        value = intent.get("query_intent") or intent.get("intent")
+    else:
+        value = intent
+    return str(req.get("query_intent") or value or req.get("request_kind") or "").upper()
 def _is_scheduled_formal_decision(req: dict) -> bool:
     return _query_intent(req) == SCHEDULED_FORMAL_DECISION_INTENT
 
