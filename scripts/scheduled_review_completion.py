@@ -89,21 +89,24 @@ def freeze_presentation_binding(
     final_content: str,
     task_id: str,
     task_run_id: str,
-    report_type: str = "ETF_TRADE_REVIEW",
+    report_id: str,
 ) -> dict:
-    """Freeze one exact FINAL_CONTENT string and derive its hash once."""
+    """Freeze one exact FINAL_CONTENT string with the canonical report identity."""
     body = str(final_content or "")
     if not body:
         raise ValueError("scheduled completion requires non-empty FINAL_CONTENT")
     occurrence = str(task_run_id or "").strip()
     if not occurrence:
         raise ValueError("scheduled completion requires task_run_id/occurrence_id")
+    canonical_report_id = str(report_id or "").strip()
+    if not canonical_report_id:
+        raise ValueError("scheduled completion requires canonical report_id")
     return {
-        "report_type": str(report_type),
+        "report_type": "ETF_TRADE_REVIEW",
         "task_id": str(task_id or "ETF交易复盘"),
         "task_run_id": occurrence,
         "occurrence_id": occurrence,
-        "report_id": f"{str(report_type).upper()}:{occurrence}",
+        "report_id": canonical_report_id,
         "full_content": body,
         "content_hash": hashlib.sha256(body.encode("utf-8")).hexdigest(),
     }
@@ -119,6 +122,7 @@ def build_completion_request(
     final_content: str = "",
     task_id: str = "",
     task_run_id: str = "",
+    report_id: str = "",
 ) -> dict:
     """Wrap an already-formed full-day Scheduled Review for the existing state-sync owner."""
     validate_full_day_review(formal_review, account)
@@ -127,6 +131,14 @@ def build_completion_request(
     effective_market_date = str(market_date or review_market_date).strip()
     if not effective_market_date or effective_market_date != review_market_date:
         raise ValueError("scheduled review completion market_date must match formal_review.market_date")
+    presentation_binding = {}
+    if str(final_content or "").strip():
+        presentation_binding = freeze_presentation_binding(
+            final_content=final_content,
+            task_id=str(task_id or "ETF交易复盘"),
+            task_run_id=str(task_run_id or request_id),
+            report_id=report_id,
+        )
     payload = {
         "request_id": _safe_id(request_id),
         "request_type": "STATE_SYNC_ONLY",
@@ -136,11 +148,7 @@ def build_completion_request(
         "requested_at_beijing": str(requested_at_beijing or "").strip(),
         "market_date": effective_market_date,
         "formal_review": formal_review,
-        "presentation_binding": freeze_presentation_binding(
-            final_content=final_content,
-            task_id=str(task_id or "ETF交易复盘"),
-            task_run_id=str(task_run_id or request_id),
-        ),
+        "presentation_binding": presentation_binding,
     }
     if parent_request_id:
         payload["parent_request_id"] = _safe_id(parent_request_id)
@@ -347,6 +355,7 @@ def write_completion_request(
     final_content: str = "",
     task_id: str = "",
     task_run_id: str = "",
+    report_id: str = "",
 ) -> Path:
     source = (ROOT / review_path).resolve()
     if ROOT not in source.parents:
@@ -356,7 +365,7 @@ def write_completion_request(
     account = json.loads(account_path.read_text(encoding="utf-8")) if account_path.exists() else None
     payload = build_completion_request(
         review, request_id, requested_at_beijing, market_date, parent_request_id, account,
-        final_content, task_id, task_run_id
+        final_content, task_id, task_run_id, report_id
     )
     target = (ROOT / output_path).resolve() if output_path else REQUEST_DIR / f"{payload['request_id']}.json"
     if ROOT not in target.parents or target.suffix != ".json":
@@ -382,6 +391,7 @@ def main() -> int:
     parser.add_argument("--final-content", default="")
     parser.add_argument("--task-id", default="")
     parser.add_argument("--task-run-id", default="")
+    parser.add_argument("--report-id", default="")
     args = parser.parse_args()
     target = write_completion_request(
         args.formal_review,
@@ -393,6 +403,7 @@ def main() -> int:
         args.final_content,
         args.task_id,
         args.task_run_id,
+        args.report_id,
     )
     print(json.dumps({"ok": True, "request": str(target.relative_to(ROOT)).replace("\\", "/")}, ensure_ascii=False))
     return 0
