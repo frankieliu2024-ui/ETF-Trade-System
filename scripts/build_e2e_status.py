@@ -430,6 +430,7 @@ def context_component(query: dict, decision: dict) -> dict:
             "required_problem_ids": list(consumer_state.get("required_problem_ids") or []),
             "required_problem_count": int(consumer_state.get("required_problem_count") or 0),
             "business_answer_contract": consumer_state.get("business_answer_contract"),
+            "ready_handoff": consumer_state.get("ready_handoff"),
         }
     fast_path = query.get("fast_path_latency") or {}
     latency_status = str(fast_path.get("latency_status") or "").strip().upper()
