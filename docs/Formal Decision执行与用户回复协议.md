@@ -6,6 +6,71 @@
 
 适用范围：用户发起正式决策、要求重新判断、询问是否买卖/调仓、现在怎么办或盘中分析。System Review、Formal Review、Technical Audit 和普通行情问答不适用本协议。
 
+## 1.1 统一核心执行合同（最高优先级）
+
+本节是三个正式决策入口共同遵守的唯一执行总合同。后文如存在重复、简写或解释差异，以本节为准；后文只补充本节未定义的入口字段、业务内容和展示细节，不得改变本节顺序。
+
+### 1.1.1 三个入口适配
+
+三个入口只负责声明入口身份并创建或恢复自己的当前请求，READY 后全部进入同一核心链：
+
+|入口|source|entry_mode|
+|-|-|-|
+|对话窗口|'CHATGPT_MANUAL_FORMAL_ANALYSIS'|'MANUAL_CONVERSATION'|
+|手动定时任务|'CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS'|'MANUAL_SCHEDULED_TASK'|
+|自动定时任务|'CHATGPT_SCHEDULED_FORMAL_ANALYSIS'|'AUTOMATIC_SCHEDULED_TASK'|
+
+三者必须分别保留当前 request_id、parent_request_id、task_id、task_run_id、occurrence_id 和 market_date。入口不得互相冒充、消费其他入口的历史请求，或为同一业务另建 producer、completion、REPORT、notification 或通知链。自动任务仍只在既有正式节点执行；非交易日或不适用节点只 SKIP，不创建请求、不消费旧请求、不生成伪报告。
+
+### 1.1.2 唯一业务主链
+
+所有入口严格按以下顺序执行：
+
+当前入口 → 当前唯一 parent request → request-bound snapshot → query_context → DWP/problem graph → formal_reply_gate → READY → 业务判断 → 唯一 FINAL_CONTENT → 用户可见回复 → 当前请求 BUSINESS_DECISION_SOURCE → completion → 当前 completion 绑定的 REPORT → REPORT_DELIVERY_REQUEST（如既有链需要）→ notification_center → 当前 notification → PushPlus provider result
+
+其中：
+
+- force_refresh=true 或 require_post_request_snapshot=true 时，本请求创建后生成并绑定的 snapshot、Discovery、query_context、DWP 和 decision context 属于当前请求合法事实；不得因为生成时间晚于请求创建时间而排除；
+- WAIT 期间只能继续消费同一 parent request；不得创建第二请求、复用旧事实或输出中间失败说明；
+- 当前请求 formal_reply_gate=READY、reply_freezable=true 且身份匹配时，立即完成业务判断；不得等待 completion、REPORT、notification、PushPlus 或系统健康状态；
+- 当前请求未 READY 时，不得使用旧 gate、全局状态或历史 DWP 代替；只有明确 terminal failure 才能终止。
+
+### 1.1.3 唯一正文合同
+
+READY 后只生成一份 FINAL_CONTENT。它必须同时满足：
+
+- 用户正式回复正文 = FINAL_CONTENT；
+- presentation_binding.full_content = FINAL_CONTENT；
+- completion、REPORT、notification 和 PushPlus payload 的正文逐字等于 FINAL_CONTENT；
+- 所有对象、金额、资格、动作、事实时点、章节顺序和编号均来自同一份冻结正文；
+- content_hash 由该正文一次计算，后续只复制和校验，不重新分析、摘要、改写、拼接或从历史对象恢复。
+
+正文必须完整覆盖当前 DWP：风险许可、三层监测、全市场机会发现候选、观察 ETF、机会 ETF、全部实际持仓、持仓 ETF 是否追加、现金、可释放资本、Trial/Confirm、实际部署金额、关键风险和后续条件。固定标题、章节顺序、一级/二级编号和名称（代码）格式按本协议后文执行；不得为了缩短报告而省略候选或持仓。
+
+### 1.1.4 完成与通知合同
+
+用户回复和后置交接是连续但独立的两个动作：
+
+1. READY 后先向用户输出完整 FINAL_CONTENT；
+2. 随后将同一正文和同一请求身份写入现有 BUSINESS_DECISION_SOURCE 入口；
+3. 写入后从同一 current main 路径回读；
+4. 只有当前 completion、REPORT、notification 和 provider result 均绑定当前请求并通过哈希/身份校验，才可确认对应后置事实；
+5. 任一当前对象缺失或不一致时，当前交接 fail-closed，不扫描历史对象、不返回 ALREADY_MANAGED、不创建第二对象。
+
+BDS 不得直接触发 PushPlus。REPORT_DELIVERY_REQUEST 只能由既有 completion 确定性投影，不能要求 Actor 新建第二个报告或第二份正文。PushPlus 未取得当前 notification 对应的明确 provider 成功结果时，只能记录 EXTERNAL_SEND_UNVERIFIED；历史 provider 成功不能证明当前请求发送成功。
+
+### 1.1.5 状态和边界合同
+
+机器消费状态只使用 WAIT、READY、TERMINAL；业务状态只使用：
+
+- FORMAL_DECISION_CHAIN_PASS
+- FORMAL_DECISION_CHAIN_FAIL
+- GLOBAL_SYSTEM_HEALTH_DEGRADED
+- MERGED_BUT_NOT_ACCEPTED
+
+READY 不代表报告、通知或用户收到；workflow success 不代表业务链完成；全局 system consistency、System Review、交易复盘、post-close、行情、账户动态和 self-healing 失败不得改写当前 request-bound Formal Decision READY。正式决策只提供业务判断，不自动下单、不改变 MASTER、provider priority、monitor universe、交易权限或调度节点。
+
+
 ## 2. 唯一父请求
 
 每次独立 Formal Decision 对应一个唯一父请求。重复催办、重试和“继续执行”必须恢复并消费同一父请求，不得创建等价请求、重复刷新或建立平行完成链。只有用户明确要求新的独立判断，或原请求已经终结后再次判断，才建立新请求。
@@ -73,6 +138,15 @@ WAIT不是一次判断，而是同一父请求上的连续消费循环。每一�
 - 输出一次终止说明；
 - 说明真实原因和必要的人工下一步；
 - 不将非终态读取结果解释为终止失败。
+
+
+## 3.1 当前请求主动刷新事实的时点例外（强制）
+
+当父请求明确设置 `force_refresh=true` 或 `require_post_request_snapshot=true` 时，本次请求创建后由既有正式链生成的 snapshot、Discovery、query_context、DWP 和 decision context，属于本次请求的合法事实，不得仅因其生成时间晚于 `requested_at_beijing` 而排除。
+
+“不得使用触发时点之后产生的事实”仅适用于与本次父请求无关的后续运行、其他请求、未来节点事实或未绑定身份的事实；不适用于本请求明确要求生成的 post-request snapshot。执行顺序必须是：写入并回读当前父请求 → 等待同一请求的正式事实发布 → 读取同一请求的 gate → READY 后完成判断。等待本请求事实发布期间，只能继续消费同一请求，不能以“触发后生成”为理由终止、创建第二请求或复用旧事实。
+
+本次请求的合法事实截止边界，应以该请求实际绑定并被 gate/DWP确认的正式事实为准，而不是机械以父请求创建时间截断。
 
 ## 4. Actor确定性执行边界
 
