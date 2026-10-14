@@ -2193,9 +2193,10 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         else {}
     )
     if presentation_binding:
-        # The completion ingress owns report_id. Preserve the exact binding
-        # instead of recomputing a task-specific fallback at the review writer.
         presentation_binding["request_id"] = str(request.get("request_id") or "")
+        presentation_binding["report_id"] = (
+            f"etf_trade_review:{presentation_binding['task_run_id']}"
+        )
     data_time = dict(review.get("data_time")) if isinstance(review.get("data_time"), dict) else {}
     if is_midday_review:
         # Midday Scheduled Review is a valid stage review, not a 15:00 close review.
@@ -2348,7 +2349,7 @@ def record_close_review_closure(account: dict, request: dict, review: dict, even
     # the only sender; this projection only records the immutable handoff.
     task_run_id = str(binding.get("task_run_id") or "").strip()
     full_content = str(binding.get("full_content") or "")
-    report_id = str(binding.get("report_id") or "").strip()
+    report_id = f"etf_trade_review:{task_run_id}" if task_run_id else ""
     content_hash = hashlib.sha256(full_content.encode("utf-8")).hexdigest() if full_content else ""
     if task_run_id and full_content and str(binding.get("content_hash") or "") == content_hash:
         report_path = ROOT / "requests" / "report_delivery" / f"{report_id.replace(':', '__')}.json"
