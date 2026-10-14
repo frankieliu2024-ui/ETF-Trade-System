@@ -918,7 +918,10 @@ def _validate_request_bound_presentation_facts(
     for field, (expected, supplied) in checks.items():
         if expected and supplied != expected:
             raise ValueError(f"request-bound presentation {field} mismatch")
-        if expected and expected not in content:
+        # Internal snapshot/phase identity is carried in the binding; the
+        # user-facing report must expose the market date and exact captured
+        # time so stale displayed facts cannot pass silently.
+        if field in {"market_date", "captured_at"} and expected and expected not in content:
             raise ValueError(f"request-bound presentation does not consume current {field}")
 
 def validate_source(
