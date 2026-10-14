@@ -47,7 +47,7 @@
 
 该规则不缩短长报告、不改变 BUSINESS_DECISION_SOURCE 合同、不新增状态或第二条决策链；它只规定 facts READY 后的执行顺序和展示边界。
 
-5. 完成业务判断后，先冻结唯一 FINAL_CONTENT 并直接返回用户。随后异步使用下述既有 BUSINESS_DECISION_SOURCE：仅提交与本次 request-bound decision_work_package.problem_graph 对齐的 decision_response.answers、同一 request-bound snapshot，以及逐字相同的 presentation_content/content_hash，再由现有确定性投影和 canonical single writer 完成持久化。后置提交不得阻塞、撤回或改写已展示正文，不得重用历史 parent request identity，不得创建第二 request、第二正文或历史回退。
+5. 完成业务判断后，先冻结唯一 FINAL_CONTENT；不得先向用户输出正文。使用下述既有 BUSINESS_DECISION_SOURCE：仅提交与本次 request-bound decision_work_package.problem_graph 对齐的 decision_response.answers、同一 request-bound snapshot，以及逐字相同的 presentation_content/content_hash。BDS必须由明确Actor owner实际写入 current main指定路径并回读确认；回读通过后才交给既有notification_center发起通知尝试，随后用户窗口输出同一份完整FINAL_CONTENT。provider成功不是用户回复门禁；BDS、回读或通知尝试失败时仍输出完整正文，但不得声称notification/provider成功。不得重用历史parent request identity，不得创建第二request、第二正文或历史回退。
 
 正式决策生产闭环的ChatGPT写入入口固定为现有 BUSINESS_DECISION_SOURCE 路由：后置 handoff 只能使用本次父请求绑定、唯一BDS/decision identity、实际消费的request-bound snapshot，以及与本次 decision_work_package.problem_graph 对齐的 decision_response.answers；若本次需要PushPlus完整报告，必须携带同一份冻结用户可见正文到既有 presentation_content 字段，由正式决策事件保存其正文指纹并交给现有通知owner投递。GitHub Contents只负责把这个Actor业务回答envelope提交到 requests/live_snapshot/，不执行投影、不生成交易判断。现有 scripts/process_state_sync_request.py 在execution-time main上读取同一父请求的request-bound DWP，并调用 scripts/business_decision_source.py 完成确定性 project_decision_response → validate_source 后再进入canonical single writer；parent/DWP/snapshot不匹配或业务回答不合法必须在该owner处fail-closed。现有 scripts/manual_formal_decision_completion.py --decision-response ... 仅保留为同合同preflight/builder与人工恢复工具，不是用户回复前置节点。不得直接构造 STATE_SYNC_ONLY / CHATGPT_MANUAL_FORMAL_COMPLETION，不得手写 canonical nesting。
 

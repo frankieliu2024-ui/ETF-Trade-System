@@ -234,6 +234,6 @@ canonical intake只接受已登记的`ETF_TRADE_REVIEW`、`ETF_SYSTEM_REVIEW`与
 
 ### Formal Decision 主动通知正文边界（2026-10-14）
 
-`ETF_FORMAL_DECISION` 的通知正文唯一来源是当前 FORMAL_DECISION completion 事件的 `presentation_binding.full_content`。通知中心必须同时验证当前 `request_id`、`parent_request_id`、`decision_id`、`report_id` 以及 `content_hash`；任何字段缺失或不一致都不得发送，不得扫描历史事件回退，也不得返回 `ALREADY_MANAGED`。
+`ETF_FORMAL_DECISION` 的通知正文唯一来源是当前请求已写入并回读确认的 BDS `presentation_content`；不得等待或强制依赖 completion、REPORT 或 REPORT_DELIVERY_REQUEST。通知中心必须验证当前 `request_id`、`parent_request_id`、`decision_id`、`content_hash`、BDS路径和BDS提交commit；任何字段缺失或不一致都不得发送，不得扫描历史事件回退，也不得返回 `ALREADY_MANAGED`。
 
-`notification.content` 必须逐字等于 `presentation_binding.full_content`，`notification.content_hash` 必须等于正文实际哈希。PushPlus 只发送该正文原文。
+`notification.content` 必须逐字等于当前BDS的 `presentation_content`，`notification.content_hash` 必须等于正文实际哈希。PushPlus 只发送该正文原文。BDS写入、回读和通知尝试先于用户窗口输出；provider成功不是用户回复门禁，通知失败不得替代或改写完整FINAL_CONTENT。
