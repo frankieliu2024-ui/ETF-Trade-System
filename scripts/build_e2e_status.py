@@ -32,6 +32,30 @@ FILES = {
 OUT = STATE / "e2e_status.json"
 POST_MARKET_REVIEW = ROOT / "post_market_review" / "post_market_review_event.json"
 REVIEW_DIR = ROOT / "events" / "reviews"
+FORMAL_REQUEST_SOURCES = {
+    "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+    "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+    "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+}
+
+
+def formal_parent_request(request_id: str) -> dict:
+    """Return the exact durable parent only when it is a Formal Decision ingress."""
+    request_id = str(request_id or "").strip()
+    if not request_id or any(part in request_id for part in ("/", "\\\\", "..")):
+        return {}
+    request = read_json(ROOT / "requests" / "live_snapshot" / f"{request_id}.json")
+    if str(request.get("request_id") or "").strip() != request_id:
+        return {}
+    if str(request.get("request_type") or "").upper() != "MARKET_QUOTE_REFRESH":
+        return {}
+    if str(request.get("source") or "").upper() not in FORMAL_REQUEST_SOURCES:
+        return {}
+    intent = request.get("intent")
+    query_intent = intent.get("query_intent") if isinstance(intent, dict) else intent or request.get("query_intent")
+    if str(query_intent or "").upper() != "FORMAL_INTRADAY_ANALYSIS":
+        return {}
+    return request
 
 
 def context_read_contract(path: Path, parsed: dict) -> dict:
@@ -355,7 +379,8 @@ def context_component(query: dict, decision: dict) -> dict:
     trigger = decision_fact_pack.get("trigger") or {}
     request_id = str(trigger.get("request_id") or "").strip()
     requested_at_beijing = str(trigger.get("requested_at_beijing") or "").strip()
-    request_bound = bool(request_id and requested_at_beijing)
+    parent_request = formal_parent_request(request_id)
+    request_bound = bool(request_id and requested_at_beijing and parent_request)
     decision_work_package = decision_fact_pack.get("decision_work_package")
     consumer_manifest = {
         "request_id": request_id,
@@ -380,6 +405,9 @@ def context_component(query: dict, decision: dict) -> dict:
         "blockers": list(reply_freeze.get("blockers") or []),
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": consumer_manifest,
+        "projection_scope": "FORMAL_DECISION_REQUEST",
+        "parent_request_source": parent_request.get("source"),
+        "parent_request_entry_mode": parent_request.get("entry_mode"),
     } if request_bound else None
     # Account-changing broker evidence is a hard dependency of capital decisions.
     # Reuse the existing account component rather than introducing parallel state.
@@ -649,6 +677,7 @@ def main() -> int:
     data = {name: read_json(path) for name, path in FILES.items()}
     query_read = context_read_contract(FILES["query"], data["query"])
     decision_read = context_read_contract(FILES["decision"], data["decision"])
+    prior = read_json(OUT)
     components = {
         "market": market_component(data["current"]),
         "account": account_component(data["account"], data["current"]),
@@ -658,6 +687,21 @@ def main() -> int:
         "lifecycle": lifecycle_component(data["current"]),
         "maintenance": maintenance_component(data["maintenance"]),
     }
+    # A non-Formal runtime request (System Review, trade review, or a
+    # market wake) must not erase the last request-bound Formal Decision gate.
+    # Preserve it only when the durable parent still exists and is still a
+    # recognized Formal Decision ingress; never promote the non-formal request
+    # itself into a Formal Decision.
+    current_gate = components["decision_context"].get("formal_reply_gate")
+    prior_gate = (prior.get("components") or {}).get("decision_context", {}).get("formal_reply_gate")
+    if not current_gate and isinstance(prior_gate, dict):
+        prior_parent = formal_parent_request(prior_gate.get("request_id"))
+        if prior_parent:
+            components["decision_context"]["formal_reply_gate"] = {
+                **prior_gate,
+                "projection_preserved_from_non_formal_runtime_request": True,
+                "projection_scope": "FORMAL_DECISION_REQUEST",
+            }
     components["decision_context"]["context_read_contract"] = {
         "query_context": query_read,
         "decision_context": decision_read,

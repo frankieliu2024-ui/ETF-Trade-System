@@ -149,16 +149,35 @@ def classify_formal_request_consumer_state(
                 "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
                 "parent_request_id": parent,
                 "required_payload_fields": [
+                    "request_id",
+                    "parent_request_id",
+                    "entry_mode",
+                    "source",
+                    "task_id",
+                    "task_run_id",
+                    "occurrence_id",
+                    "market_date",
                     "decision_response.answers",
                     "decision_id",
                     "consumed_snapshot",
                     "presentation_content",
+                    "content_hash",
+                    "target_path",
                 ],
                 "target_path": (
                     "requests/live_snapshot/"
                     + parent
                     + "__business_decision_source.json"
                 ),
+                "binding_rules": {
+                    "parent_request_id": parent,
+                    "allowed_sources": [
+                        "CHATGPT_BUSINESS_DECISION_RESPONSE",
+                    ],
+                    "forbid_historical_fallback": True,
+                    "read_back_required": True,
+                    "report_chain_starts_at_completion": True,
+                },
                 "must_read_back_before_completion": True,
                 "historical_fallback_forbidden": True,
             },
