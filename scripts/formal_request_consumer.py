@@ -139,6 +139,29 @@ def classify_formal_request_consumer_state(
             "canonical_persistence_status": (
                 "CONFIRMED" if canonical_persisted else "PENDING_ASYNC"
             ),
+            # This is an execution contract, not a new state or producer.  It
+            # makes the one-shot READY handoff explicit to the external Actor:
+            # freeze the displayed report, build the existing BDS envelope,
+            # submit it once to the canonical request path, and read it back.
+            "ready_handoff": {
+                "required": True,
+                "submission_type": "BUSINESS_DECISION_SOURCE",
+                "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
+                "parent_request_id": parent,
+                "required_payload_fields": [
+                    "decision_response.answers",
+                    "decision_id",
+                    "consumed_snapshot",
+                    "presentation_content",
+                ],
+                "target_path": (
+                    "requests/live_snapshot/"
+                    + parent
+                    + "__business_decision_source.json"
+                ),
+                "must_read_back_before_completion": True,
+                "historical_fallback_forbidden": True,
+            },
         }
 
     if not same_request:
