@@ -370,3 +370,14 @@ Formal Decision业务验收不得读取或要求当天生产运行态，包括cl
 8. **大文件读取不等于生产状态缺失。** 连接器空读或截断必须区分 READ_OK、VERIFIED_EMPTY 和 UNVERIFIED_READ，先按同一权威来源复核；不得把读取失败直接投影为 query_context 为空、Formal Decision 失败或需要新请求。
 
 本节不新增 workflow、producer、checker、state、writer、acceptance 层或交易权限；只约束既有业务链的身份、时序、归因和 fail-closed 行为。
+
+
+## 11.1 Formal Decision 唯一正文与主动通知绑定（2026-10-14）
+
+Formal Decision 达到 READY 后，Actor 只冻结一份 `FINAL_CONTENT`。用户回复、completion 事件和主动通知必须引用同一份正文，不得重新分析、摘要、改写、拼接或从历史 REPORT／notification 恢复。
+
+completion 的 `presentation_binding` 必须同时保存并校验：`request_id`、`parent_request_id`、`decision_id`、`report_id`、`full_content`、`content_hash`。其中 `full_content` 必须逐字等于 `FINAL_CONTENT`，`content_hash` 必须等于其实际 SHA-256。当前请求任一身份或哈希缺失、不一致时，必须 fail-closed，不得返回 `ALREADY_MANAGED`。
+
+PushPlus 只能由现有 `notification_center` 从当前 Formal Decision completion 的 `presentation_binding.full_content` 投影通知正文。BDS、READY、旧 completion、旧 REPORT、旧 notification 和历史 provider 结果均不得旁路触发或补齐当前正文。`REPORT_DELIVERY_REQUEST` 如被现有兼容链使用，只能由当前 completion 确定性投影，不是 Actor 需要新建的前置请求。
+
+通知失败不撤回用户已看到的 `FINAL_CONTENT`；没有当前 `notification_id` 对应的 provider 成功结果时，状态只能记录为 `EXTERNAL_SEND_UNVERIFIED`。
