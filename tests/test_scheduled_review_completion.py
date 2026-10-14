@@ -106,7 +106,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
     def test_trade_completion_binds_frozen_final_content(self):
         payload = completion.build_completion_request(
             full_review(), "trade-run", "2026-09-23T20:30:00+08:00",
-            final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run",
+            final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run", report_id="canonical-trade-report",
         )
         self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_TRADE_REVIEW")
         self.assertEqual(payload["presentation_binding"]["full_content"], "FROZEN TRADE REPORT")
@@ -114,7 +114,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
     def test_formal_decision_completion_projects_shared_report(self):
         payload = completion.build_completion_request(
             full_review(), "formal-run", "2026-09-23T20:30:00+08:00",
-            final_content="FROZEN FORMAL REPORT", task_id="ETF正式决策", task_run_id="formal-run",
+            final_content="FROZEN FORMAL REPORT", task_id="ETF正式决策", task_run_id="formal-run", report_id="canonical-formal-report",
         )
         payload["presentation_binding"]["report_type"] = "ETF_FORMAL_DECISION"
         report = completion.build_report_delivery_from_completion(payload)
