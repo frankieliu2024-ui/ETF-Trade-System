@@ -200,9 +200,11 @@ class FormalReadyHandoffContractTests(unittest.TestCase):
         self.assertIn('"presentation_content"', text)
         self.assertIn('"notification_attempt_precondition": True', text)
         self.assertIn('"provider_success_not_required_for_user_reply": True', text)
-        self.assertIn('"must_read_back_after_reply": True', text)
+        self.assertIn('"must_read_back_before_reply": True', text)
         self.assertIn('"historical_fallback_forbidden": True', text)
         self.assertIn('"formal_decision_notification_chain_starts_at_bds": True', text)
+        self.assertIn('"post_reply_async": False', text)
+        self.assertIn('"provider_success_async": True', text)
 
     def test_ready_handoff_does_not_create_a_second_notification_path(self):
         root = Path(__file__).parents[1]
