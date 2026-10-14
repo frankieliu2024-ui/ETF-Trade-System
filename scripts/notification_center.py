@@ -1125,6 +1125,57 @@ def formal_content_event(source_path: Path) -> dict | None:
     if not source_path.is_file():
         return None
     event = read_json(source_path, {})
+    # The notification workflow is bound directly to the current BDS. A BDS
+    # is already the immutable formal presentation source; requiring a later
+    # FORMAL_DECISION event incorrectly turns a valid current decision into
+    # NO_NOTIFICATION_NEEDED. Keep strict identity/hash checks for both forms.
+    if str(event.get("request_type") or "") == "BUSINESS_DECISION_SOURCE":
+        binding = event.get("presentation_binding")
+        if not isinstance(binding, dict):
+            return None
+        content = str(event.get("presentation_content") or "").strip()
+        request_id = str(event.get("request_id") or "").strip()
+        parent_request_id = str(event.get("parent_request_id") or "").strip()
+        decision_id = str(event.get("decision_id") or "").strip()
+        report_id = str(binding.get("report_id") or "").strip()
+        content_hash = str(event.get("content_hash") or event.get("content_sha256") or "").strip()
+        if not content or not request_id or not parent_request_id or not decision_id or not report_id:
+            return None
+        if content_hash != hashlib.sha256(content.encode("utf-8")).hexdigest():
+            return None
+        if str(binding.get("request_id") or "") != request_id or str(binding.get("parent_request_id") or "") != parent_request_id:
+            return None
+        if str(binding.get("decision_id") or "") != decision_id or str(binding.get("full_content") or "") != content:
+            return None
+        if str(binding.get("content_hash") or "") != content_hash:
+            return None
+        expected_request = str(os.environ.get("EXPECTED_FORMAL_REQUEST_ID") or "").strip()
+        if expected_request and expected_request not in {request_id, parent_request_id}:
+            return None
+        return {
+            "key": f"report-delivery:ETF_FORMAL_DECISION:{decision_id}",
+            "source_event_id": f"formal-bds:{source_path.name}",
+            "event_type": "REPORT_DELIVERY_REQUEST",
+            "notification_channel": "REPORT",
+            "delivery_mode": "FULL_REPORT",
+            "type": "正式报告",
+            "title": "【ETF正式决策】",
+            "content": content,
+            "source": f"canonical-formal-bds:{source_path.name}",
+            "report_type": "ETF_FORMAL_DECISION",
+            "report_id": report_id,
+            "request_id": request_id,
+            "parent_request_id": parent_request_id,
+            "task_id": str(event.get("task_id") or ""),
+            "task_run_id": str(event.get("task_run_id") or decision_id),
+            "occurrence_id": str(event.get("occurrence_id") or ""),
+            "entry_mode": str(event.get("entry_mode") or ""),
+            "source_identity": str(event.get("source") or ""),
+            "related_decision_id": decision_id,
+            "idempotency_key": f"ETF_FORMAL_DECISION:{decision_id}",
+            "no_trade_authority": True,
+            "content_hash": content_hash,
+        }
     if str(event.get("event_type") or "") != "FORMAL_DECISION":
         return None
     binding = event.get("presentation_binding")
