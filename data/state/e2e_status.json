@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-14T04:56:36+08:00",
+  "generated_at": "2026-10-14T08:14:26+08:00",
   "status": "READY",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -49,15 +49,15 @@
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
       "request_bound": true,
       "formal_reply_gate": {
-        "request_id": "fd-manual-scheduled-20261014T045544+0800",
-        "requested_at_beijing": "2026-10-14T04:55:44+08:00",
+        "request_id": "chatgpt_formal_20261014T081342Z_20261014_161342_jst",
+        "requested_at_beijing": "2026-10-14T08:13:42+08:00",
         "status": "READY",
         "reply_freezable": true,
         "blockers": [],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
-          "request_id": "fd-manual-scheduled-20261014T045544+0800",
-          "requested_at_beijing": "2026-10-14T04:55:44+08:00",
+          "request_id": "chatgpt_formal_20261014T081342Z_20261014_161342_jst",
+          "requested_at_beijing": "2026-10-14T08:13:42+08:00",
           "query_context_path": "data/state/query_context.json",
           "decision_context_path": "data/state/decision_context.json",
           "decision_work_package_present": true,
@@ -111,6 +111,23 @@
         ],
         "required_problem_count": 35,
         "business_answer_contract": "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION"
+      },
+      "context_read_contract": {
+        "query_context": {
+          "status": "READ_OK",
+          "path": "data/state/query_context.json",
+          "byte_count": 1554604,
+          "sha256": "5686e8b68f1d2d9bfb65463e3b760cde4cb50d7f3a77bae73be6b3a63b4477e2",
+          "parsed_object": true
+        },
+        "decision_context": {
+          "status": "READ_OK",
+          "path": "data/state/decision_context.json",
+          "byte_count": 472646,
+          "sha256": "d778376f3936ca7db38ed16419e0224471c658473faed9483bd5df4b129f6d6f",
+          "parsed_object": true
+        },
+        "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
       }
     },
     "lifecycle": {
@@ -130,5 +147,22 @@
   },
   "blockers": [],
   "degradations": [],
+  "context_read_contract": {
+    "query_context": {
+      "status": "READ_OK",
+      "path": "data/state/query_context.json",
+      "byte_count": 1554604,
+      "sha256": "5686e8b68f1d2d9bfb65463e3b760cde4cb50d7f3a77bae73be6b3a63b4477e2",
+      "parsed_object": true
+    },
+    "decision_context": {
+      "status": "READ_OK",
+      "path": "data/state/decision_context.json",
+      "byte_count": 472646,
+      "sha256": "d778376f3936ca7db38ed16419e0224471c658473faed9483bd5df4b129f6d6f",
+      "parsed_object": true
+    },
+    "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
+  },
   "safety_boundary": "This state does not create or modify risk permission, Trial/Confirm rules, amounts, sell rules, or execution authority."
 }
