@@ -52,6 +52,11 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertIn("requests/live_snapshot/*__business_decision_source*.json", self.text)
         self.assertIn('Expected exactly one current BDS', self.text)
         self.assertIn('steps.workflow_bds.outputs.formal_content_path', self.text)
+        # A push BDS is sent by the dedicated exact-content step; the generic
+        # material-action step must not send the same BDS a second time.
+        self.assertIn("steps.push_kind.outputs.formal_content == 'true'", self.text)
+        self.assertIn("id: formal_content_notify", self.text)
+        self.assertNotIn("steps.push_kind.outputs.formal_content == 'true' || steps.push_kind.outputs.trade", self.text)
 
     def test_push_routes_accept_canonical_bds_suffix(self):
         self.assertIn(r"(bds|business_decision_source)", self.text)
