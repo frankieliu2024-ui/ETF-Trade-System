@@ -1061,6 +1061,8 @@ def _formal_decision_presentation_binding(request: dict, request_id: str, decisi
         str(supplied),
         request_id=request_id,
         decision_id=decision_id,
+        parent_request_id=str(request.get("parent_request_id") or request_id),
+        report_id=f"etf-formal-decision:{decision_id}",
         canonical_closure_confirmed=bool(request.get("canonical_closure_confirmed")),
         technical_audit_mode=bool(request.get("technical_audit_mode")),
     )
@@ -2278,15 +2280,18 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
 def _validate_presentation_binding(binding: dict, report_type: str) -> dict:
     if not isinstance(binding, dict):
         raise ValueError("scheduled completion presentation_binding must be an object")
-    required = ("task_id", "task_run_id", "full_content")
+    required = ("task_id", "task_run_id", "report_id", "full_content", "content_hash")
     missing = [key for key in required if not str(binding.get(key) or "").strip()]
     if missing:
         raise ValueError("scheduled completion presentation_binding missing:" + ",".join(missing))
     if str(binding.get("report_type") or "") != report_type:
         raise ValueError("scheduled completion presentation_binding report_type mismatch")
     content = str(binding["full_content"])
+    expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    if str(binding.get("content_hash") or "") != expected_hash:
+        raise ValueError("scheduled completion presentation_binding content_hash mismatch")
     binding = dict(binding)
-    binding["content_hash"] = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    binding["content_hash"] = expected_hash
     return binding
 
 
@@ -3494,6 +3499,14 @@ def main() -> int:
             if response_presentation not in (None, "")
             else request_presentation
         )
+        # A Business Decision Source without the frozen user-visible body is
+        # not a valid Formal Decision completion input.  Do not publish a
+        # half-complete decision event that notification_center cannot safely
+        # consume.
+        if presentation_content in (None, ""):
+            raise ValueError(
+                "business decision source requires frozen presentation_content"
+            )
         if presentation_content not in (None, ""):
             source_payload["presentation_content"] = presentation_content
             binding = request.get("presentation_binding")
