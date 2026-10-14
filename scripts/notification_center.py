@@ -1054,6 +1054,33 @@ def expire_notifications(items: list[dict]) -> list[dict]:
 
 
 def find_existing_notification(items: list[dict], event: dict) -> dict | None:
+    """Find an active notification without letting stale Formal Decision state block delivery.
+
+    Scheduled Review and legacy interrupt matching retain their existing contracts.
+    Formal Decision delivery is stricter: a historical notification is reusable only
+    when it matches the current request/parent/decision identity and exact body hash.
+    """
+    report_type = str(event.get("report_type") or "")
+    if report_type == "ETF_FORMAL_DECISION":
+        current = {
+            "request_id": str(event.get("request_id") or ""),
+            "parent_request_id": str(event.get("parent_request_id") or ""),
+            "related_decision_id": str(event.get("related_decision_id") or ""),
+            "content_hash": str(event.get("content_hash") or ""),
+        }
+        if not all(current.values()):
+            return None
+        for item in items:
+            if (
+                str(item.get("report_type") or "") == report_type
+                and str(item.get("request_id") or "") == current["request_id"]
+                and str(item.get("parent_request_id") or "") == current["parent_request_id"]
+                and str(item.get("related_decision_id") or "") == current["related_decision_id"]
+                and str(item.get("content_hash") or "") == current["content_hash"]
+            ):
+                return item
+        return None
+
     source = str(event.get("source_event_id") or event.get("key") or "")
     nid = str(event.get("notification_id") or "")
     related_decision_id = str(event.get("related_decision_id") or (event.get("confirmation_context") or {}).get("decision_id") or "")
