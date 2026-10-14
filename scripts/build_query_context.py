@@ -1764,7 +1764,15 @@ def validate_request_bound_context(context: dict, request_file: str | None) -> N
     request_path = (ROOT / request_file).resolve()
     if not request_path.is_file():
         raise RuntimeError(f"request-bound context source missing: {request_file}")
-    request = read_json(request_path, {})
+    try:
+        from state_manager import read_json_checked
+    except ModuleNotFoundError:
+        from scripts.state_manager import read_json_checked
+    request, read_status = read_json_checked(request_path, {})
+    if read_status != "READ_OK" or not isinstance(request, dict) or not request:
+        raise RuntimeError(
+            f"Formal Decision request-bound source read status={read_status}: {request_file}"
+        )
     request_id = str(request.get("request_id") or "").strip()
     source = str(request.get("source") or request.get("requested_by") or "").strip().upper()
     formal_sources = {
