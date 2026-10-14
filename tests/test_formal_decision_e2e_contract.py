@@ -172,11 +172,12 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
 
     def test_protocol_keeps_health_out_of_business_pr_gate(self):
         root = Path(__file__).parents[1]
-        text = (root / "docs/生产变更与并发写入协议_V1.0.md").read_text(encoding="utf-8")
-        self.assertIn("system-consistency属于独立生产健康检查", text)
-        self.assertIn("不得作为Formal Decision业务PR的硬门禁", text)
-        self.assertIn("无 run 是", text)
-        self.assertIn("SHA 仅是审计元数据", text)
+        health_text = (root / "docs/生产变更与并发写入协议_V1.0.md").read_text(encoding="utf-8")
+        formal_text = (root / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
+        self.assertIn("system-consistency属于独立生产健康检查", health_text)
+        self.assertIn("不得作为Formal Decision业务PR的硬门禁", health_text)
+        self.assertIn("无 run 是", formal_text)
+        self.assertIn("SHA 仅是审计元数据", formal_text)
 
     def test_protocol_preserves_current_request_fail_closed_and_send_boundary(self):
         root = Path(__file__).parents[1]
