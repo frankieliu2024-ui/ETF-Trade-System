@@ -174,17 +174,19 @@ def formal_decision_report_event() -> dict | None:
         binding = event.get("presentation_binding")
         if not isinstance(binding, dict):
             continue
-        content = str(binding.get("content") or binding.get("full_content") or "").strip()
-        if not content:
-            continue
-        request_id = str(binding.get("request_id") or event.get("parent_request_id") or "").strip()
+        # Consume only the exact frozen FINAL_CONTENT from this completion event.
+        content = str(binding.get("full_content") or "").strip()
+        request_id = str(binding.get("request_id") or "").strip()
+        parent_request_id = str(binding.get("parent_request_id") or event.get("parent_request_id") or "").strip()
         decision_id = str(binding.get("decision_id") or event.get("decision_id") or "").strip()
+        report_id = str(binding.get("report_id") or "").strip()
+        content_hash = str(binding.get("content_hash") or "").strip()
         if expected_request_id and request_id != expected_request_id:
             continue
-        if not request_id or not decision_id:
+        if not request_id or parent_request_id != request_id or not decision_id or not report_id or not content:
             continue
         expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
-        if str(binding.get("content_sha256") or binding.get("content_hash") or "") != expected:
+        if content_hash != expected:
             continue
         generated_at = str(event.get("recorded_at_beijing") or event.get("decision_time_beijing") or "").strip()
         candidates.append((generated_at, path, event, binding, content))
@@ -207,12 +209,14 @@ def formal_decision_report_event() -> dict | None:
         "user_severity": "正式报告",
         "user_action": "阅读已完成的正式ETF正式决策；无需自动交易操作",
         "report_type": "ETF_FORMAL_DECISION",
-        "report_id": f"etf-formal-decision:{decision_id}",
+        "report_id": report_id,
+        "request_id": request_id,
+        "parent_request_id": parent_request_id,
         "task_id": "ETF正式决策",
         "task_run_id": decision_id,
         "idempotency_key": key,
         "no_trade_authority": True,
-        "content_hash": hashlib.sha256(content.encode("utf-8")).hexdigest(),
+        "content_hash": content_hash,
         "related_decision_id": str(event.get("decision_id") or ""),
         "security_code": str(decision.get("candidate_code") or ""),
         "security_name": str(decision.get("candidate_name") or ""),
@@ -938,7 +942,7 @@ def normalize_notification(event: dict, record: dict | None = None) -> dict:
     record = record or {}
     created = str(record.get("created_at") or event.get("created_at") or now().isoformat(timespec="seconds"))
     context = event.get("confirmation_context") or {}
-    return {"notification_id": str(record.get("notification_id") or event.get("notification_id") or notification_id_for(event)), "event_type": str(record.get("event_type") or event.get("event_type") or event.get("type") or "SYSTEM_EVENT"), "notification_channel": str(record.get("notification_channel") or event.get("notification_channel") or ("REPORT" if event.get("event_type") == "REPORT_DELIVERY_REQUEST" else "INTERRUPT")), "delivery_mode": str(record.get("delivery_mode") or event.get("delivery_mode") or ("FULL_REPORT" if event.get("event_type") == "REPORT_DELIVERY_REQUEST" else "COMPACT")), "source_event_id": str(record.get("source_event_id") or event.get("source_event_id") or event.get("key") or ""), "related_decision_id": str(record.get("related_decision_id") or event.get("related_decision_id") or context.get("decision_id") or ""), "security_code": str(record.get("security_code") or event.get("security_code") or context.get("security_code") or ""), "security_name": str(record.get("security_name") or event.get("security_name") or context.get("security_name") or ""), "user_severity": str(record.get("user_severity") or event.get("user_severity") or ""), "user_action": str(record.get("user_action") or event.get("user_action") or ""), "lifecycle_status": str(record.get("lifecycle_status") or record.get("status") or "CREATED"), "created_at": created, "sent_at": record.get("sent_at"), "confirmed_at": record.get("confirmed_at"), "archived_at": record.get("archived_at"), "expires_at": record.get("expires_at") or ((parse_notification_time(created) + timedelta(days=NOTIFICATION_TTL_DAYS)).isoformat(timespec="seconds") if parse_notification_time(created) else None), "title": str(record.get("title") or event.get("title") or ""), "content": str(record.get("content") or event.get("content") or ""), "source": str(record.get("source") or event.get("source") or ""), "confirmation_context": context or record.get("confirmation_context") or {}, "response": record.get("response") or {}, "last_attempted_at": record.get("last_attempted_at") or record.get("attempted_at")}
+    return {"notification_id": str(record.get("notification_id") or event.get("notification_id") or notification_id_for(event)), "event_type": str(record.get("event_type") or event.get("event_type") or event.get("type") or "SYSTEM_EVENT"), "notification_channel": str(record.get("notification_channel") or event.get("notification_channel") or ("REPORT" if event.get("event_type") == "REPORT_DELIVERY_REQUEST" else "INTERRUPT")), "delivery_mode": str(record.get("delivery_mode") or event.get("delivery_mode") or ("FULL_REPORT" if event.get("event_type") == "REPORT_DELIVERY_REQUEST" else "COMPACT")), "source_event_id": str(record.get("source_event_id") or event.get("source_event_id") or event.get("key") or ""), "request_id": str(record.get("request_id") or event.get("request_id") or ""), "parent_request_id": str(record.get("parent_request_id") or event.get("parent_request_id") or ""), "report_id": str(record.get("report_id") or event.get("report_id") or ""), "content_hash": str(record.get("content_hash") or event.get("content_hash") or ""), "related_decision_id": str(record.get("related_decision_id") or event.get("related_decision_id") or context.get("decision_id") or ""), "security_code": str(record.get("security_code") or event.get("security_code") or context.get("security_code") or ""), "security_name": str(record.get("security_name") or event.get("security_name") or context.get("security_name") or ""), "user_severity": str(record.get("user_severity") or event.get("user_severity") or ""), "user_action": str(record.get("user_action") or event.get("user_action") or ""), "lifecycle_status": str(record.get("lifecycle_status") or record.get("status") or "CREATED"), "created_at": created, "sent_at": record.get("sent_at"), "confirmed_at": record.get("confirmed_at"), "archived_at": record.get("archived_at"), "expires_at": record.get("expires_at") or ((parse_notification_time(created) + timedelta(days=NOTIFICATION_TTL_DAYS)).isoformat(timespec="seconds") if parse_notification_time(created) else None), "title": str(record.get("title") or event.get("title") or ""), "content": str(record.get("content") or event.get("content") or ""), "source": str(record.get("source") or event.get("source") or ""), "confirmation_context": context or record.get("confirmation_context") or {}, "response": record.get("response") or {}, "last_attempted_at": record.get("last_attempted_at") or record.get("attempted_at")}
 
 
 def expire_notifications(items: list[dict]) -> list[dict]:
