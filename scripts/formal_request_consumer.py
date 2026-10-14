@@ -183,6 +183,13 @@ def classify_formal_request_consumer_state(
                     "completion_is_post_reply": True,
                 },
                 "user_reply_precondition": False,
+                "user_reply_contract": {
+                    "must_be_first_user_visible_message": True,
+                    "must_contain_complete_final_content": True,
+                    "status_only_reply_forbidden": True,
+                    "handoff_status_cannot_replace_content": True,
+                    "bds_must_reuse_exact_final_content": True,
+                },
                 "post_reply_async": True,
                 "must_read_back_after_reply": True,
                 "historical_fallback_forbidden": True,
