@@ -26,7 +26,7 @@
 
 所有入口严格按以下顺序执行：
 
-当前入口 → 当前唯一 parent request → request-bound snapshot → query_context → DWP/problem graph → formal_reply_gate → READY → 业务判断 → 唯一 FINAL_CONTENT → 用户可见回复 → 当前请求 BUSINESS_DECISION_SOURCE → completion → 当前 completion 绑定的 REPORT → REPORT_DELIVERY_REQUEST（如既有链需要）→ notification_center → 当前 notification → PushPlus provider result
+当前入口 → 当前唯一 parent request → request-bound snapshot → query_context → DWP/problem graph → formal_reply_gate → READY → 业务判断 → 唯一 FINAL_CONTENT → 用户可见回复 → 当前请求 BUSINESS_DECISION_SOURCE → 现有通知投影 → notification_center → 当前 notification → PushPlus provider result
 
 其中：
 
@@ -57,7 +57,7 @@ READY 后只生成一份 FINAL_CONTENT。它必须同时满足：
 4. 只有当前 completion、REPORT、notification 和 provider result 均绑定当前请求并通过哈希/身份校验，才可确认对应后置事实；
 5. 任一当前对象缺失或不一致时，当前交接 fail-closed，不扫描历史对象、不返回 ALREADY_MANAGED、不创建第二对象。
 
-BDS 不得直接触发 PushPlus。REPORT_DELIVERY_REQUEST 只能由既有 completion 确定性投影，不能要求 Actor 新建第二个报告或第二份正文。PushPlus 未取得当前 notification 对应的明确 provider 成功结果时，只能记录 EXTERNAL_SEND_UNVERIFIED；历史 provider 成功不能证明当前请求发送成功。
+BDS 不直接调用 PushPlus，但当前 Formal Decision 的 BDS 是既有通知链的唯一正文交接入口：notification_center 必须直接读取当前 BDS 携带的 presentation_content/full_content 原文并投递。REPORT、completion 或 REPORT_DELIVERY_REQUEST 如由既有实现生成，只能是同一正文的确定性保存或兼容投影，不得成为 Actor 新建的通知前置步骤，不得重新生成、摘要、改写或从历史对象恢复正文。PushPlus 未取得当前 notification 对应的明确 provider 成功结果时，只能记录 EXTERNAL_SEND_UNVERIFIED；历史 provider 成功不能证明当前请求发送成功。
 
 ### 1.1.5 状态和边界合同
 
