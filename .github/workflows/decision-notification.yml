@@ -177,7 +177,9 @@ jobs:
           set -euo pipefail
           git fetch --no-tags origin "$PRODUCER_SHA"
           mapfile -t bds_paths < <(
-            git diff-tree --no-commit-id --name-only -r "$PRODUCER_SHA" -- 'requests/live_snapshot/*__bds*.json' | sed '/^$/d'
+            git diff-tree --no-commit-id --name-only -r "$PRODUCER_SHA" -- \
+              'requests/live_snapshot/*__bds*.json' \
+              'requests/live_snapshot/*__business_decision_source*.json' | sed '/^$/d'
           )
           if [ "${#bds_paths[@]}" -ne 1 ]; then
             echo "Expected exactly one current BDS in consistency producer commit; found ${#bds_paths[@]}" >&2
