@@ -353,3 +353,18 @@ Formal Decision业务验收只验证当前代码所定义的业务合同：三�
 Formal Decision业务验收不得读取或要求当天生产运行态，包括close_review_closure、CURRENT、账户事实、行情快照、post-close review、动态state文件或全局system-consistency结果。上述内容属于独立运行健康域，不是业务PR的输入，也不能阻断Formal Decision业务PR。
 
 业务合同测试通过只表示代码业务链合同通过，不等于三入口真实生产请求已经产生，也不等于PushPlus用户端已送达。真实运行证据和外部发送证据必须单独标注；缺少当前request级provider回执时使用EXTERNAL_SEND_UNVERIFIED。
+
+## 11. 今日故障经验的永久边界
+
+本节把已验证的工程经验固化为业务协议边界，不把某次 PR、workflow run、SHA、时间戳或动态状态文件变成新的业务条件。
+
+1. **正式决策与完整日复盘是两个独立业务链。** 复盘报告是否生成、落盘或通知成功，不得决定 Formal Decision 是否可以回复、完成或通知；Formal Decision 也不得代替完整日复盘。两者各自使用自己的 request、事实、报告和通知事件。
+2. **READY 的首份报告不等待后置动作。** READY 表示当前请求已具备业务判断条件。Actor 必须用同一份冻结正文和同一份结构化答案完成当前交互回复；后置 BDS、completion、REPORT 和 notification 只能继续交接，不能反向阻塞、重写或要求重新生成正文。
+3. **通知只有一条业务来源。** 只有当前请求的 completion event 生成的 REPORT 才能生成当前 notification。BDS、snapshot、复盘、旧事件、旧报告或历史 PushPlus 结果都不能旁路触发或证明当前通知。
+4. **运行健康与业务合并分离。** post-close、行情、账户、动态 state、self-healing 和 system-consistency 属于运行健康域；它们失败时报告 GLOBAL_SYSTEM_HEALTH_DEGRADED，不得把普通业务 PR 或已具备 READY 条件的 Formal Decision 改写为业务失败。
+5. **CI 只证明代码合同。** PR CI 只验证变更代码、受影响模块和唯一 Formal Decision business contract。无 run 是 NOT_STARTED，不是成功；skipped、旧 run、旧 artifact 或其他 SHA 的结果不能证明当前 PR。SHA 仅是审计元数据，不是业务身份、完成条件或通知条件。
+6. **失败必须按当前身份 fail-closed。** 当前 request、decision、report、content_hash 或 completion 缺失/不一致时，拒绝当前交接；不得扫描历史事件回退，不得返回 ALREADY_MANAGED 掩盖当前缺失，也不得创建第二请求或第二通知。
+7. **外部发送状态分层。** 报告生成、notification request、provider 调用成功和用户实际收到是四个不同事实。只有当前 notification_id 的 provider 结果才可证明当前发送；无法取得时只能标记 EXTERNAL_SEND_UNVERIFIED。
+8. **大文件读取不等于生产状态缺失。** 连接器空读或截断必须区分 READ_OK、VERIFIED_EMPTY 和 UNVERIFIED_READ，先按同一权威来源复核；不得把读取失败直接投影为 query_context 为空、Formal Decision 失败或需要新请求。
+
+本节不新增 workflow、producer、checker、state、writer、acceptance 层或交易权限；只约束既有业务链的身份、时序、归因和 fail-closed 行为。
