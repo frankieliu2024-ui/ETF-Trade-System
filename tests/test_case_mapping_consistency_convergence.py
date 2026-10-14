@@ -100,8 +100,8 @@ class CaseMappingConsistencyConvergenceTests(unittest.TestCase):
                 "### 2.1 2026-07-13以来完整证券成交索引\n"
                 f"共1笔证券交易：ETF {0 if stock else 1}笔、个股{1 if stock else 0}笔\n"
                 + row + "\n"
-                "### 2.2 银证转账与非交易现金流水\n"
-                encoding="utf-8",
+                + "### 2.2 银证转账与非交易现金流水\n"
+                , encoding="utf-8",
             )
             state = root / "data" / "state"
             state.mkdir(parents=True)
