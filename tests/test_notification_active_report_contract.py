@@ -208,5 +208,42 @@ class FormalFinalContentNotificationTests(unittest.TestCase):
                 self.assertIsNone(center.formal_decision_report_event())
 
 
+    def test_formal_decision_stale_notification_cannot_block_current_request(self):
+        import scripts.notification_center as center
+
+        current = {
+            "report_type": "ETF_FORMAL_DECISION",
+            "request_id": "fd-current",
+            "parent_request_id": "fd-parent-current",
+            "related_decision_id": "decision-current",
+            "content_hash": "hash-current",
+            "source_event_id": "formal-presentation:current",
+        }
+        stale = {
+            "report_type": "ETF_FORMAL_DECISION",
+            "request_id": "fd-old",
+            "parent_request_id": "fd-parent-old",
+            "related_decision_id": "decision-old",
+            "content_hash": "hash-old",
+            "source_event_id": "formal-presentation:current",
+            "notification_id": "notification_old",
+            "lifecycle_status": "SENT",
+        }
+        self.assertIsNone(center.find_existing_notification([stale], current))
+
+    def test_formal_decision_same_current_identity_is_idempotent(self):
+        import scripts.notification_center as center
+
+        current = {
+            "report_type": "ETF_FORMAL_DECISION",
+            "request_id": "fd-current",
+            "parent_request_id": "fd-parent-current",
+            "related_decision_id": "decision-current",
+            "content_hash": "hash-current",
+        }
+        existing = dict(current, notification_id="notification-current", lifecycle_status="SENT")
+        self.assertEqual(center.find_existing_notification([existing], current), existing)
+
+
 if __name__ == "__main__":
     unittest.main()
