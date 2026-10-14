@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-14T22:10:08+08:00",
+  "generated_at": "2026-10-14T23:24:11+08:00",
   "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -48,17 +48,17 @@
       "decision_context": true,
       "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": false,
+      "request_bound": true,
       "formal_reply_gate": {
-        "request_id": "fd-chat-20261014-2138-r6m2qa",
-        "requested_at_beijing": "2026-10-14T21:38:27+08:00",
+        "request_id": "fd-chat-20261014-2323-r9k6wd",
+        "requested_at_beijing": "2026-10-14T23:23:40+08:00",
         "status": "READY",
         "reply_freezable": true,
         "blockers": [],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
-          "request_id": "fd-chat-20261014-2138-r6m2qa",
-          "requested_at_beijing": "2026-10-14T21:38:27+08:00",
+          "request_id": "fd-chat-20261014-2323-r9k6wd",
+          "requested_at_beijing": "2026-10-14T23:23:40+08:00",
           "query_context_path": "data/state/query_context.json",
           "decision_context_path": "data/state/decision_context.json",
           "decision_work_package_present": true,
@@ -72,7 +72,7 @@
         },
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "parent_request_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
-        "parent_request_entry_mode": null,
+        "parent_request_entry_mode": "MANUAL_CONVERSATION",
         "actor_action": "COMPLETE_BUSINESS_DECISION_NOW",
         "user_output_allowed": true,
         "consumer_status": "BUSINESS_DECISION_READY",
@@ -123,7 +123,7 @@
           "required": true,
           "submission_type": "BUSINESS_DECISION_SOURCE",
           "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
-          "parent_request_id": "fd-chat-20261014-2138-r6m2qa",
+          "parent_request_id": "fd-chat-20261014-2323-r9k6wd",
           "required_payload_fields": [
             "request_id",
             "parent_request_id",
@@ -140,9 +140,9 @@
             "content_hash",
             "target_path"
           ],
-          "target_path": "requests/live_snapshot/fd-chat-20261014-2138-r6m2qa__business_decision_source.json",
+          "target_path": "requests/live_snapshot/fd-chat-20261014-2323-r9k6wd__business_decision_source.json",
           "binding_rules": {
-            "parent_request_id": "fd-chat-20261014-2138-r6m2qa",
+            "parent_request_id": "fd-chat-20261014-2323-r9k6wd",
             "allowed_sources": [
               "CHATGPT_BUSINESS_DECISION_RESPONSE"
             ],
@@ -166,22 +166,21 @@
           "provider_success_async": true,
           "must_read_back_before_reply": true,
           "historical_fallback_forbidden": true
-        },
-        "projection_preserved_from_non_formal_runtime_request": true
+        }
       },
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1688226,
-          "sha256": "11bbf042eb2e433945b7d267d1476f820d4a04be95d0ef822d0f59db55e74e6c",
+          "byte_count": 1688484,
+          "sha256": "00408d00105f494f25c2ae0b94060bf209442d7da48aeee7b447e2318a269d97",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 504215,
-          "sha256": "e0a54ece567441578024fe2995963037f630c03df97b13acb567189842d24333",
+          "byte_count": 504223,
+          "sha256": "565faa5d430be8f4679d1b928ff8728403d9586a259f66440bad1351bf5838ce",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -210,15 +209,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1688226,
-      "sha256": "11bbf042eb2e433945b7d267d1476f820d4a04be95d0ef822d0f59db55e74e6c",
+      "byte_count": 1688484,
+      "sha256": "00408d00105f494f25c2ae0b94060bf209442d7da48aeee7b447e2318a269d97",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 504215,
-      "sha256": "e0a54ece567441578024fe2995963037f630c03df97b13acb567189842d24333",
+      "byte_count": 504223,
+      "sha256": "565faa5d430be8f4679d1b928ff8728403d9586a259f66440bad1351bf5838ce",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
