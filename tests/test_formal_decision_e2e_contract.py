@@ -186,7 +186,7 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
     def test_protocol_preserves_current_request_fail_closed_and_send_boundary(self):
         root = Path(__file__).parents[1]
         text = (root / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
-        self.assertIn("当前 request、decision、content_hash 或BDS缺失/不一致时", text)
+        self.assertIn("当前 request、decision、report、content_hash 或 completion 缺失/不一致时", text)
         self.assertIn("EXTERNAL_SEND_UNVERIFIED", text)
         self.assertIn("大文件读取不等于生产状态缺失", text)
 
