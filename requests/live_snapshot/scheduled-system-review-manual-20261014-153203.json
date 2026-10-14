@@ -1,0 +1,66 @@
+{
+  "request_id": "scheduled-system-review-manual-20261014-153203",
+  "request_type": "STATE_SYNC_ONLY",
+  "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+  "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+  "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+  "requested_at_beijing": "2026-10-14T15:32:03+08:00",
+  "system_review": {
+    "status": "BLOCKED_WITH_USABLE_COMPONENTS",
+    "review_semantics": "MANUAL_POST_CLOSE_SYSTEM_REVIEW",
+    "market_date": "2026-10-14",
+    "fact_cutoff_at_beijing": "2026-10-14T15:32:03+08:00",
+    "source_facts_as_of": {
+      "market": "2026-10-14T15:26:11+08:00",
+      "account": "2026-10-13T15:00:00+08:00",
+      "system_status": "2026-10-14T15:26:55+08:00",
+      "runtime_health": "2026-10-14T15:28:50+08:00",
+      "system_consistency": "2026-09-29T14:31:00+08:00",
+      "strategy_risk": "2026-09-29"
+    },
+    "blockers": [
+      "FULL_DAY_REVIEW_2026-10-13_NOT_CANONICALIZED"
+    ],
+    "degradations": [
+      "ACCOUNT_FACT_NOT_UPDATED_TO_2026-10-14",
+      "STRATEGY_RISK_VALUATION_TIME_UNCONFIRMED",
+      "CURRENT_SYSTEM_CONSISTENCY_CHECK_IS_OLD",
+      "NOTIFICATION_AND_USER_RECEIPT_UNCONFIRMED"
+    ],
+    "discovery_summary": {
+      "coverage_status": "COMPLETE",
+      "temporary_candidate_count": 10,
+      "observation_count": 8,
+      "held_position_count": 8,
+      "held_etf_count": 6,
+      "held_stock_count": 2,
+      "automatic_trade_permission": false
+    },
+    "lifecycle_summary": {
+      "status": "READY",
+      "active_trial_count": 0,
+      "decision_due_count": 0,
+      "overdue_count": 0
+    },
+    "decision_summary": {
+      "status": "READY",
+      "capital_ranking_final_candidate": null,
+      "final_comparison_pending_formal_decision": true
+    },
+    "delivery_summary": {
+      "prior_2026_10_14_0848_completion": "CONFIRMED",
+      "prior_2026_10_14_0848_notification": "UNCONFIRMED",
+      "prior_2026_10_14_0848_user_received": "UNCONFIRMED",
+      "latest_full_day_review_2026_10_13": "NOT_CANONICALIZED",
+      "current_completion": "SUBMISSION_AFTER_USER_REPLY",
+      "current_notification": "UNCONFIRMED",
+      "current_user_received": "UNCONFIRMED"
+    }
+  },
+  "presentation_binding": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "task_id": "ETF系统复核",
+    "task_run_id": "manual-20261014-153203",
+    "full_content": "【ETF系统复核】2026-10-14 15:32 晚间复核\n\n【复核时点（北京时间）】\n\n本次复核时间为2026年10月14日15:32。今日是A股交易日，A股15:00收盘；本次为手动盘后系统复核，不形成买卖结论、金额或份额。\n\n【晚间复核结论】\n\n系统整体就绪状态目前受阻：10月13日完整收盘复盘尚未完成正式收口。今日15:00收盘行情已形成且资料可用，账户、风险、生命周期和决策资料在最近状态中也分别可读；但整体状态不能据此称为完全就绪。该缺口不使今日收盘行情失效，下一固定复核节点仍需检查复盘交接是否恢复。用户目前无需处理。\n\n【当日运行与判断链状态】\n\n1. 今日A股收盘快照于15:26取得，价格有效时点为15:00；17项计划行情齐全。系统最新完整一致性检查为9月29日，结果通过，但未覆盖此后所有变化。\n\n2. 账户组件显示有效，最新确认账户时点为10月13日15:00：总资产181,547.24元、证券市值179,366.20元、现金2,181.04元、持仓8项。当前状态未列出待处理账户变化，但没有今日账户确认，不能据此认定今日持仓或现金必然未变。\n\n3. 风险组件显示可用，策略风险率约为-7.2959%；可读来源更新于9月29日，具体估值时点未能确认，不应当作今日实时风险值。生命周期状态可用，待处理的到期Trial事项为0。\n\n【当日新增事实与影响】\n\n1. 今日收盘行情链已完成有效性确认；A股价格时点和采集时点分开记录，不把收盘参考价格表述为盘后可成交价格。\n\n2. 当前决策资料显示全市场发现覆盖完整，形成10个临时评估对象；另有8只观察ETF及8项实际持仓（6只持仓ETF、2只持仓个股）。这些身份保持区分，发现或观察身份不自动取得机会或交易资格。\n\n3. 资本比较资料尚未给出最终主候选，最终判断仍需由正式决策完成。系统复核不替代该判断，也不延长既有交易结论。\n\n【正式判断与交易复盘交付】\n\n1. 今日完整收盘复盘尚未到20:30固定节点；10月13日可读的复盘事件仅覆盖上午阶段。系统状态明确提示10月13日完整收盘复盘未完成正式收口，这是当前整体就绪受阻的直接原因。\n\n2. 当前决策资料组件显示可用，但本次复核不形成正式交易判断。正式判断报告、完成记录和通知须分别按各自结果确认。\n\n3. 今日19:30固定系统复核及20:30完整交易复盘尚待执行；本次手动复核不代替这两个节点。\n\n【通知与记录状态】\n\n1. 今日08:48系统复核的正文及对应完成记录已在正式记录中找到；当前可读状态没有找到与之对应的通知发送结果，PushPlus是否成功及用户是否收到均未确认。\n\n2. 10月13日完整收盘复盘尚未正式收口，其完成和通知状态不能按已闭环处理。\n\n3. 本次复核正文已在当前对话呈现；完成记录将在正文输出后仅尝试一次提交，提交结果待确认。本次主动通知、PushPlus发送及用户是否收到均尚未确认。\n\n【未闭环事项】\n\n1. 按既有复盘链完成并确认10月13日完整收盘复盘的正式收口，消除当前整体状态的阻断。\n\n2. 确认今日账户是否发生成交、资金划转或持仓变化；在没有新账户事实前，继续标明账户确认时点为10月13日15:00。\n\n3. 后续完整一致性检查覆盖当前版本前，不把9月29日的通过结果表述为最新全量验收。\n\n4. 分别确认系统复核的完成记录、通知发送结果和用户收到状态，不以其中一项代替其他状态。\n\n【下一交易日重点】\n\n1. 在下一交易日正式判断前，使用当日有效行情与最新可确认账户事实，继续覆盖全部实际持仓、观察ETF、发现候选、现金及可释放资本。\n\n2. 重新确认风险数据的估值时点，并核实10月13日完整复盘缺口是否已沿既有链收口。\n\n3. 发现、观察、机会和持仓身份继续分开判断；本次系统复核不生成交易许可或资本安排。\n\n【执行状态】\n\n系统行情资料可用，但整体就绪状态因10月13日完整收盘复盘未正式收口而受阻。用户目前无需处理；如今日确有成交、资金划转或持仓变化，需提供相应账户事实。本次正文已在对话呈现，完成提交、主动通知发送及用户收到仍分别待明确结果。\n\n【置信度】\n\n中。\n\n【最可能出错的地方】\n\n1. 15:26后系统或通知状态可能已更新，本次读取的最新整体状态生成于15:26:55。\n\n2. 账户事实停留在10月13日15:00；若今日已有未进入系统的成交或资金变化，账户资本状态需要更新。\n\n3. 风险数据源更新于9月29日且估值时点未确认；不能将该数值解释为10月14日实时风险水平。"
+  }
+}
