@@ -84,8 +84,12 @@ def _report_retryable_transport_failure(center, event: dict) -> bool:
     return False
 
 
-def _run_center(mode: str) -> int:
+def _run_center(mode: str, formal_content_file: str | None = None) -> int:
     import notification_center as center
+
+    if formal_content_file:
+        import os
+        os.environ["FORMAL_PRESENTATION_PATH"] = formal_content_file
 
     event = None
     if mode != "channel-test":
@@ -153,11 +157,12 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("family", choices=["center", "regional", "shock", "us", "batch"])
     parser.add_argument("--mode", choices=["event", "close", "close-test", "channel-test"], default="event")
+    parser.add_argument("--formal-content-file")
     parser.add_argument("--market", choices=["a-share", "apac", "asia", "us"])
     args = parser.parse_args()
 
     if args.family == "center":
-        return _run_center(args.mode)
+        return _run_center(args.mode, args.formal_content_file)
     if args.family == "batch":
         if args.market not in {"a-share", "apac", "us"}:
             parser.error("batch requires --market a-share|apac|us")
