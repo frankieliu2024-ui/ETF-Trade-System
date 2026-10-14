@@ -42,6 +42,16 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertIn("/tmp/changed_files.txt; then", self.text)
         self.assertNotIn("echo report=true", self.text)
 
+    def test_consistency_workflow_run_binds_exact_current_bds(self):
+        self.assertIn('"ETF system consistency"', self.text)
+        self.assertIn('id: workflow_bds', self.text)
+        self.assertIn("github.event.workflow_run.name == 'ETF system consistency'", self.text)
+        self.assertIn("github.event.workflow_run.head_sha", self.text)
+        self.assertIn("git diff-tree --no-commit-id --name-only -r \\\"$PRODUCER_SHA\\\"", self.text)
+        self.assertIn("requests/live_snapshot/*__bds*.json", self.text)
+        self.assertIn('Expected exactly one current BDS', self.text)
+        self.assertIn('steps.workflow_bds.outputs.formal_content_path', self.text)
+
     def test_push_routes_accept_canonical_bds_suffix(self):
         self.assertIn(r"(bds|business_decision_source)", self.text)
         self.assertIn(r"__(bds|business_decision_source)", self.text)
