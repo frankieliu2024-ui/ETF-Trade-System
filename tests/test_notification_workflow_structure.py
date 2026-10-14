@@ -125,6 +125,14 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertTrue(_workflow_may_stage("git add data/state/notification_center.json", "data/state/notification_center.json"))
 
 
+    def test_guarded_runner_accepts_formal_content_file_and_binds_existing_center(self):
+        runner = (ROOT / "scripts" / "run_guarded_notification.py").read_text(encoding="utf-8")
+        self.assertIn('parser.add_argument("--formal-content-file")', runner)
+        self.assertIn('def _run_center(mode: str, formal_content_file: str | None = None)', runner)
+        self.assertIn('os.environ["FORMAL_PRESENTATION_PATH"] = formal_content_file', runner)
+        self.assertIn('return _run_center(args.mode, args.formal_content_file)', runner)
+
+
     def test_notification_state_persistence_replays_latest_main_without_resend(self):
         persist = self.text.split("- name: Persist unified notification and execution-reconciliation state", 1)[1]
         persist = persist.split("- name: Surface notification delivery failure", 1)[0]
