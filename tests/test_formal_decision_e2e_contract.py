@@ -194,7 +194,9 @@ class FormalReadyHandoffContractTests(unittest.TestCase):
         self.assertIn('"source": "CHATGPT_BUSINESS_DECISION_RESPONSE"', text)
         self.assertIn('"decision_response.answers"', text)
         self.assertIn('"presentation_content"', text)
-        self.assertIn('"must_read_back_before_completion": True', text)
+        self.assertIn('"user_reply_precondition": False', text)
+        self.assertIn('"post_reply_async": True', text)
+        self.assertIn('"must_read_back_after_reply": True', text)
         self.assertIn('"historical_fallback_forbidden": True', text)
 
     def test_ready_handoff_does_not_create_a_second_notification_path(self):

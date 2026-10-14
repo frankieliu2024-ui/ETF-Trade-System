@@ -139,10 +139,10 @@ def classify_formal_request_consumer_state(
             "canonical_persistence_status": (
                 "CONFIRMED" if canonical_persisted else "PENDING_ASYNC"
             ),
-            # This is an execution contract, not a new state or producer.  It
-            # makes the one-shot READY handoff explicit to the external Actor:
-            # freeze the displayed report, build the existing BDS envelope,
-            # submit it once to the canonical request path, and read it back.
+            # This is an asynchronous post-reply handoff contract, not a
+            # user-visible gate, new state, or producer.  The Actor freezes
+            # FINAL_CONTENT and returns it first; this payload is then consumed
+            # once by the existing BDS path using the exact same content.
             "ready_handoff": {
                 "required": True,
                 "submission_type": "BUSINESS_DECISION_SOURCE",
@@ -177,8 +177,11 @@ def classify_formal_request_consumer_state(
                     "forbid_historical_fallback": True,
                     "read_back_required": True,
                     "report_chain_starts_at_completion": True,
+                    "completion_is_post_reply": True,
                 },
-                "must_read_back_before_completion": True,
+                "user_reply_precondition": False,
+                "post_reply_async": True,
+                "must_read_back_after_reply": True,
                 "historical_fallback_forbidden": True,
             },
         }
