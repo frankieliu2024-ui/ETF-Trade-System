@@ -1,0 +1,86 @@
+{
+  "request_id": "scheduled-system-review-manual-20261014-194233",
+  "request_type": "STATE_SYNC_ONLY",
+  "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+  "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+  "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+  "requested_at_beijing": "2026-10-14T19:42:33+08:00",
+  "system_review": {
+    "status": "PASS_WITH_DELIVERY_AND_VALIDATION_GAPS",
+    "review_semantics": "EVENING_SYSTEM_REVIEW",
+    "market_date": "2026-10-14",
+    "a_share_latest_formal_market_date": "2026-10-14",
+    "market_phase": "OFF_SESSION",
+    "is_a_share_trading_day": true,
+    "fact_cutoff_at_beijing": "2026-10-14T19:42:33+08:00",
+    "source_facts_as_of": {
+      "e2e": "2026-10-14T18:35:50+08:00",
+      "market": "2026-10-14T15:26:11+08:00",
+      "account": "2026-10-13T15:00:00+08:00",
+      "risk": "2026-09-29T09:15:02+08:00",
+      "system_consistency": "2026-09-29T14:31:00+08:00",
+      "decision_context": "2026-10-14T18:35:39+08:00",
+      "close_review": "2026-10-14T19:42:33+08:00"
+    },
+    "e2e_status": "READY",
+    "blockers": [],
+    "degradations": [
+      "RISK_SOURCE_UPDATED_2026_09_29_COVERAGE_NOT_CONFIRMED_FOR_CURRENT_MARKET_DATE",
+      "LATEST_FULL_SYSTEM_CONSISTENCY_CHECK_2026_09_29",
+      "FORMAL_DECISION_COMPLETION_AND_NOTIFICATION_UNCONFIRMED",
+      "FULL_DAY_TRADE_REVIEW_NOT_YET_DUE_AT_20_30",
+      "CURRENT_SYSTEM_REVIEW_COMPLETION_NOTIFICATION_AND_USER_RECEIPT_UNCONFIRMED_AT_FREEZE"
+    ],
+    "account_summary": {
+      "total_asset": 181547.24,
+      "stock_market_value": 179366.2,
+      "deployable_cash": 2181.04,
+      "position_count": 8,
+      "account_fact_as_of_beijing": "2026-10-13T15:00:00+08:00",
+      "pending_change_count": 0
+    },
+    "risk_summary": {
+      "etf_strategy_risk_pct": -7.2959,
+      "source_updated_at_beijing": "2026-09-29T09:15:02+08:00",
+      "coverage_for_market_date": "UNCONFIRMED",
+      "lifecycle_due_count": 0
+    },
+    "discovery_summary": {
+      "observation_count": 8,
+      "held_etf_count": 6,
+      "held_stock_count": 2,
+      "latest_discovery_temporary_count": 10,
+      "discovery_universe_count": 1745,
+      "opportunity_status": "NO_QUALIFIED_OPPORTUNITY_IN_18_35_DECISION",
+      "opportunity_permission_automatic": false,
+      "capital_comparison": "covered_actual_holdings_held_etf_adds_observations_discovery_candidates_cash_and_releasable_capital"
+    },
+    "delivery_summary": {
+      "formal_decision_1835": {
+        "report": "PRESENT_IN_BUSINESS_DECISION_SOURCE",
+        "completion": "UNCONFIRMED",
+        "notification_sent": "UNCONFIRMED",
+        "user_received": "UNCONFIRMED"
+      },
+      "full_day_trade_review_2026_10_14": {
+        "data": "READY_FOR_REVIEW",
+        "report": "NOT_YET_DUE",
+        "completion": "NOT_YET_DUE",
+        "notification_sent": "NOT_YET_DUE",
+        "user_received": "NOT_YET_DUE"
+      },
+      "current_system_review": {
+        "report": "FROZEN_AND_PRESENTED",
+        "completion": "UNCONFIRMED_AT_FREEZE",
+        "notification_sent": "UNCONFIRMED_AT_FREEZE",
+        "user_received": "UNCONFIRMED_AT_FREEZE"
+      }
+    }
+  },
+  "presentation_binding": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "task_id": "ETF系统复核",
+    "task_run_id": "manual-20261014-194233",
+    "full_content": "【ETF系统复核】2026-10-14 19:42 晚间复核\n\n【复核时点（北京时间）】\n\n本次复核时间为2026年10月14日19:42。今日为A股交易日，A股已收盘；本次只复核系统与事实链，不形成新的买卖结论、金额或份额。\n\n【晚间复核结论】\n\n系统核心分析能力可继续运行，现有记录未显示阻断下一节点的故障。今日收盘行情可用，20:30完整交易复盘尚未到执行时点，不能把资料就绪视为复盘完成。策略风险数据和最近一次完整一致性检查较早，且多项交付状态尚未核实，因此不能认定当前所有环节均已验收、通知闭环。用户目前无需处理。\n\n【当日运行与判断链状态】\n\n截至18:35的可用性记录为READY：市场、账户、风险、决策资料及生命周期均可用，没有到期未处理的Trial。账户事实截至10月13日15:00，总资产181,547.24元、证券市值179,366.20元、可部署现金2,181.04元，共8项持仓；当前记录没有待处理的账户变化。\n\nA股10月14日收盘行情于15:26采集，17个对象通过质量检查。策略风险率约-7.30%，对应来源更新于9月29日；最近一次完整系统一致性检查也在9月29日通过，不能证明之后所有变更均已重新覆盖。\n\n【当日新增事实与影响】\n\n上证指数跌0.88%，科创50指数跌3.29%，创业板指跌3.10%。科创50ETF（588000）跌3.25%、科创创业ETF（159781）跌3.51%、通信ETF（515880）跌4.20%；标普油气ETF（513350）涨3.64%、煤炭ETF（515220）涨0.85%。成长与资源方向明显分化，需作为下一交易日复核输入，不能单凭单日涨跌形成交易动作。\n\n【正式判断与交易复盘交付】\n\n18:35正式判断的完整业务正文已写入本次请求对应的记录，结论为不新增、无机会、持仓继续管理。可用性记录覆盖8项实际持仓、持仓ETF追加、8只观察ETF、10项全市场发现候选、现金及可释放资本的比较。发现、观察身份与机会资格仍保持区分。\n\n今日完整交易复盘计划于20:30执行；收盘复盘资料已就绪，但复盘正文与完成情况尚未确认。18:35正式判断的完成记录和主动通知结果也尚未确认。\n\n【通知与记录状态】\n\n今日08:48早间复核及18:35正式判断均有正文记录；现有材料不足以确认18:35判断的完成记录、通知发送及用户收到状态。本次晚间复核正文已形成；本次完成记录、通知发送和用户收到分别待实际结果确认。通知发送成功不能据此推定用户已收到。\n\n【未闭环事项】\n\n1. 完成20:30完整日复盘，并核实其完成记录和通知结果。\n\n2. 核实18:35正式判断的完成记录及通知发送结果；用户是否收到仍单独确认。\n\n3. 后续安排覆盖当前版本的完整一致性复核，并确认策略风险数据的实际覆盖时点。\n\n【下一交易日重点】\n\n下一交易日用当时有效行情和账户事实重新比较全部持仓、持仓ETF追加、观察与发现候选、现金及可释放资本；重点复核成长走弱是否延续，以及油气、煤炭相对强势能否持续。今日判断不延长为下一交易日的交易授权。\n\n【执行状态】\n\n系统可继续运行，不影响20:30完整交易复盘准备；用户目前无需处理。本次完成记录、通知发送和用户收到尚未分别确认。\n\n【置信度】\n\n中高。\n\n【最可能出错的地方】\n\n1. 18:35之后的完成或通知状态可能已有更新，本次读取未覆盖后续变化。\n\n2. 账户事实仍截至10月13日15:00；若之后发生未登记的成交或资金变化，资本状态需更新。\n\n3. 风险率来源与完整一致性检查时点较早，不能据此推断当前风险计量和所有系统变更均已完成全量验证。"
+  }
+}
