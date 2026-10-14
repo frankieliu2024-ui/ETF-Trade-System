@@ -897,7 +897,38 @@ def _validate_formal_presentation_contract(source: dict[str, Any]) -> None:
     if not any(token in content for token in ("1）", "2）", "3）")):
         raise ValueError("formal presentation requires hanging-indent secondary numbering 1）/2）/3）")
 
-def validate_source(source: dict[str, Any], *, expected_snapshot: str | None = None) -> dict[str, Any]:
+def _validate_request_bound_presentation_facts(
+    source: dict[str, Any], *, expected_snapshot: str | None = None,
+    expected_market_date: str | None = None, expected_market_phase: str | None = None,
+    expected_captured_at: str | None = None,
+) -> None:
+    """Reject a frozen report that displays older request-bound market facts."""
+    binding = source.get("request_bound_fact_binding")
+    if not isinstance(binding, dict):
+        return
+    content = source.get("presentation_content")
+    if not isinstance(content, str) or not content.strip():
+        raise ValueError("request-bound presentation facts require non-empty presentation_content")
+    checks = {
+        "snapshot_id": (str(expected_snapshot or "").strip(), str(binding.get("snapshot_id") or "").strip()),
+        "market_date": (str(expected_market_date or "").strip(), str(binding.get("market_date") or "").strip()),
+        "market_phase": (str(expected_market_phase or "").strip(), str(binding.get("market_phase") or "").strip()),
+        "captured_at": (str(expected_captured_at or "").strip(), str(binding.get("captured_at") or "").strip()),
+    }
+    for field, (expected, supplied) in checks.items():
+        if expected and supplied != expected:
+            raise ValueError(f"request-bound presentation {field} mismatch")
+        # Internal snapshot/phase identity is carried in the binding; the
+        # user-facing report must expose the market date and exact captured
+        # time so stale displayed facts cannot pass silently.
+        if field in {"market_date", "captured_at"} and expected and expected not in content:
+            raise ValueError(f"request-bound presentation does not consume current {field}")
+
+def validate_source(
+    source: dict[str, Any], *, expected_snapshot: str | None = None,
+    expected_market_date: str | None = None, expected_market_phase: str | None = None,
+    expected_captured_at: str | None = None,
+) -> dict[str, Any]:
     if classify_request(source) != BUSINESS_DECISION_SOURCE:
         raise ValueError("business source requires explicit BUSINESS_DECISION_SOURCE")
     if not str(source.get("request_id") or "").strip():
@@ -911,6 +942,7 @@ def validate_source(source: dict[str, Any], *, expected_snapshot: str | None = N
     if missing:
         raise ValueError("business decision completeness failed: " + ",".join(missing))
     _validate_single_frozen_presentation(source)
+    _validate_request_bound_presentation_facts(source, expected_snapshot=expected_snapshot, expected_market_date=expected_market_date, expected_market_phase=expected_market_phase, expected_captured_at=expected_captured_at)
     _validate_formal_presentation_contract(source)
     parent_request_id = str(source.get("parent_request_id") or source.get("request_id") or "").strip()
     consumption_error = validate_decision_evidence_consumption(
