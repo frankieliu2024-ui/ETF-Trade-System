@@ -84,6 +84,28 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
             ):
                 self.assertIsNone(center.formal_decision_report_event())
 
+    def test_formal_bds_builder_persists_complete_presentation_binding(self):
+        from scripts.manual_formal_decision_completion import build_structured_completion_request
+        body = "【ETF正式决策】当前请求正式报告"
+        source = {
+            "request_id": "fd_current",
+            "parent_request_id": "fd_current",
+            "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "entry_mode": "MANUAL_CONVERSATION",
+            "requested_at_beijing": "2026-10-15T13:37:50+08:00",
+            "market_date": "2026-10-15",
+        }
+        payload = build_structured_completion_request(
+            source, {}, {"presentation_content": body},
+            {"problem_graph": []}, "data/market/snapshots/current.json",
+            presentation_content=body,
+        )
+        binding = payload["presentation_binding"]
+        self.assertEqual(binding["request_id"], "fd_current")
+        self.assertEqual(binding["parent_request_id"], "fd_current")
+        self.assertEqual(binding["full_content"], body)
+        self.assertEqual(binding["content_hash"], payload["content_hash"])
+
     def test_bds_notification_rejects_compressed_presentation_with_structured_answers(self):
         import scripts.notification_center as center
         with tempfile.TemporaryDirectory() as tmp:
