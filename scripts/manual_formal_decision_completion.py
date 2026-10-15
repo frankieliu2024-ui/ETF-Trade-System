@@ -206,6 +206,46 @@ def build_structured_completion_request(
     return {key: value for key, value in payload.items() if value not in (None, "")}
 
 
+def build_formal_decision_completion_request(
+    source_request: dict,
+    bds_path: str,
+    decision_id: str,
+    content_hash: str,
+    completion_request_id: str = "",
+) -> dict:
+    """Build the post-BDS completion ingress consumed by the existing owner."""
+    if not isinstance(source_request, dict) or not source_request:
+        raise ValueError("Formal Decision completion requires the source request")
+    parent_id = _safe_id(source_request.get("request_id"))
+    bds_path = str(bds_path or "").strip()
+    if not bds_path or not bds_path.endswith(".json") or any(part in bds_path for part in ("/../", "\\\\", "..")):
+        raise ValueError("Formal Decision completion requires a safe BDS path")
+    decision_id = _safe_id(decision_id)
+    content_hash = str(content_hash or "").strip()
+    if len(content_hash) != 64:
+        raise ValueError("Formal Decision completion requires the FINAL_CONTENT hash")
+    request_id = _safe_id(completion_request_id or f"{parent_id}__formal_decision_completion")
+    if request_id == parent_id:
+        raise ValueError("Formal Decision completion identity must differ from its parent")
+    payload = {
+        "request_id": request_id,
+        "parent_request_id": parent_id,
+        "request_type": "STATE_SYNC_ONLY",
+        "source": "CHATGPT_FORMAL_DECISION_COMPLETION",
+        "formal_fact_type": "FORMAL_DECISION_COMPLETION",
+        "interaction_scenario": "FORMAL_INTRADAY_ANALYSIS",
+        "requested_at_beijing": source_request.get("requested_at_beijing") or source_request.get("request_time_beijing"),
+        "market_date": source_request.get("market_date"),
+        "bds_path": bds_path,
+        "decision_id": decision_id,
+        "content_hash": content_hash,
+    }
+    payload = {key: value for key, value in payload.items() if value not in (None, "")}
+    if classify_live_snapshot_request(payload) != "STATE_SYNC_ONLY":
+        raise ValueError("Formal Decision completion must remain STATE_SYNC_ONLY")
+    return payload
+
+
 def build_ready_actor_envelope(
     source_request: dict,
     formal_decision: dict | None,
