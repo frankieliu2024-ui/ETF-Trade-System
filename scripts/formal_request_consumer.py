@@ -117,10 +117,10 @@ def classify_formal_request_consumer_state(
         # state/checker and does not wait for persistence.
         response_contract = dwp.get("response_contract") if isinstance(dwp, dict) else {}
         response_contract = response_contract if isinstance(response_contract, dict) else {}
-        # Request-bound facts authorize business analysis.  FINAL_CONTENT is
-        # frozen once, then BDS is written/read back before the user reply;
-        # notification is attempted from that same BDS. Provider success is
-        # asynchronous and must not block the full user-visible answer.
+        # Request-bound facts authorize business analysis. FINAL_CONTENT is
+        # frozen once and returned as the first user-visible action. BDS,
+        # completion, REPORT, notification and provider delivery are
+        # post-reply projections and must not block the full answer.
         return {
             "status": "BUSINESS_DECISION_READY",
             "continue_same_request": False,
