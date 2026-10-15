@@ -51,7 +51,7 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
             self.assertIn(source, workflow)
             self.assertIn(source, builder)
             self.assertIn(source, healer)
-    def test_current_bds_is_projected_directly_into_formal_notification(self):
+    def test_bds_is_not_a_notification_wake_without_completion_event(self):
         import scripts.notification_center as center
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "bds.json"
@@ -77,12 +77,12 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
                 },
             }
             path.write_text(json.dumps(bds, ensure_ascii=False), encoding="utf-8")
-            with patch.dict(os.environ, {"EXPECTED_FORMAL_REQUEST_ID": "fd_current"}, clear=False):
-                event = center.formal_content_event(path)
-            self.assertIsNotNone(event)
-            self.assertEqual(event["report_type"], "ETF_FORMAL_DECISION")
-            self.assertEqual(event["request_id"], "fd_current")
-            self.assertEqual(event["content_hash"], digest)
+            with patch.object(center, "ROOT", Path(tmp)), patch.dict(
+                os.environ,
+                {"EXPECTED_FORMAL_REQUEST_ID": "fd_current", "DECISION_EVENT_PATH": ""},
+                clear=False,
+            ):
+                self.assertIsNone(center.formal_decision_report_event())
 
     def test_bds_notification_rejects_compressed_presentation_with_structured_answers(self):
         import scripts.notification_center as center
