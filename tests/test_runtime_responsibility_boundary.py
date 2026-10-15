@@ -42,6 +42,8 @@ class RuntimeResponsibilityBoundaryTests(unittest.TestCase):
         block = self.text[start:start + 650]
         self.assertIn("steps.state_sync.outputs.formal_completion != 'true'", block)
         self.assertIn("steps.triggering_request.outputs.formal_completion != 'true'", block)
+        self.assertIn("git diff-tree --root --no-commit-id --name-only -r \"$GITHUB_SHA\"", workflow)
+        self.assertIn("__formal_decision_completion", workflow)
 
     def test_all_derived_decision_steps_use_the_early_formal_completion_guard(self):
         for name in (
