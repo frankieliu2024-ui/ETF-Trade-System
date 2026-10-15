@@ -558,3 +558,7 @@ PushPlus 只能由现有 `notification_center` 从当前请求冻结的 `FINAL_C
 completion提交后，既有owner才可异步形成 events/reviews/formal_<occurrence_id>.json 并触发 decision-notification、notification_center 和 PushPlus。Actor不得直接写event、REPORT或notification。若BDS或completion在最终回复前失败，必须保留同一请求和唯一FINAL_CONTENT，并如实标记交接未完成；不得把“报告已生成”当作完成，不得声称通知成功，也不得创建第二请求、第二正文或旁路通知。
 
 该边界同时适用于MANUAL_CONVERSATION、MANUAL_SCHEDULED_TASK和AUTOMATIC_SCHEDULED_TASK，不改变系统复核和交易复盘的已验证通知实现。
+
+### Formal completion 唤醒合同（强制）
+
+Formal Decision completion 通过 GitHub Contents 写入后，不得假定该 API 提交必然产生 Actions push workflow run。completion owner 必须将当前唯一 completion 文件路径作为 `formal_completion_path` 精确交给既有 `.github/workflows/decision-notification.yml` 的 `workflow_dispatch` 入口；该 workflow 只消费这一指定路径，调用 `process_state_sync_request.py` 形成唯一 `events/reviews/formal_<occurrence_id>.json`，再进入既有 `notification_center` 和 PushPlus。不得通过 BDS 唤醒、market-snapshot 被动唤醒、历史文件扫描、最近文件猜测或第二通知链兜底。workflow dispatch 只是唤醒方式，不改变 event owner、正文、身份、content_hash 或通知 owner；任一环节未形成当前 event，必须记录未验证，不得声称主动通知成功。
