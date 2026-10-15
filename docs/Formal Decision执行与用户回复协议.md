@@ -26,7 +26,7 @@
 
 所有入口严格按以下顺序执行：
 
-当前入口 → 当前唯一 parent request → request-bound snapshot → query_context → DWP/problem graph → formal_reply_gate → READY → 业务判断 → 冻结唯一 FINAL_CONTENT → 当前请求 BUSINESS_DECISION_SOURCE 写入并回读 → 既有 Formal Decision completion ingress → 当前 events/decisions/<decision_id>.json 交接提交 → 用户可见回复（同一 FINAL_CONTENT） → REPORT/notification_center → 当前 notification → PushPlus provider result
+当前入口 → 当前唯一 parent request → request-bound snapshot → query_context → DWP/problem graph → formal_reply_gate → READY → 业务判断 → 冻结唯一 FINAL_CONTENT → 当前请求 BUSINESS_DECISION_SOURCE 写入并回读 → 既有 Formal Decision completion ingress → 当前 events/reviews/formal_<occurrence_id>.json 交接提交 → 用户可见回复（同一 FINAL_CONTENT） → REPORT/notification_center → 当前 notification → PushPlus provider result
 
 BDS 和 completion 的提交属于正文后的置后投影，但必须在同一执行回合内先完成提交/回读，再结束任务并输出用户可见正文；它们不得等待 REPORT、notification 或 provider 成功。用户正文优先的含义是 FINAL_CONTENT 优先冻结、不得被后置状态阻塞或改写，不是允许定时任务在正文输出后提前结束而跳过后置交接。
 
@@ -51,14 +51,14 @@ READY 后只生成一份 FINAL_CONTENT。它必须同时满足：
 
 ### 1.1.4 完成与通知合同
 
-Formal Decision 的后置 completion ingress 固定使用现有 state-sync owner，但与 BDS 分离：BDS 使用 `request_type=BUSINESS_DECISION_SOURCE` 只保存当前业务事实和 FINAL_CONTENT；completion 使用 `request_type=STATE_SYNC_ONLY`、`source=CHATGPT_FORMAL_DECISION_COMPLETION`、`formal_fact_type=FORMAL_DECISION_COMPLETION`，并且只能引用同一 parent_request_id、decision_id、BDS path 和 content_hash。只有该 completion ingress 才允许形成 `events/decisions/<decision_id>.json`。BDS 单独写入不得形成 Formal Decision event，不得直接进入通知投影。
+Formal Decision 的后置 completion ingress 固定使用现有 state-sync owner，但与 BDS 分离：BDS 使用 `request_type=BUSINESS_DECISION_SOURCE` 只保存当前业务事实和 FINAL_CONTENT；completion 使用 `request_type=STATE_SYNC_ONLY`、`source=CHATGPT_FORMAL_DECISION_COMPLETION`、`formal_fact_type=FORMAL_DECISION_COMPLETION`，并且只能引用同一 parent_request_id、decision_id、BDS path 和 content_hash。只有该 completion ingress 才允许形成 `events/reviews/formal_<occurrence_id>.json`。BDS 单独写入不得形成 Formal Decision event，不得直接进入通知投影。
 
 
 用户回复和后置交接是连续但独立的两个动作：
 
 1. READY 后完成业务判断并冻结唯一 FINAL_CONTENT；
 2. 在同一执行回合内，将同一正文和同一请求身份写入现有 BUSINESS_DECISION_SOURCE 入口并回读；
-3. 由同一请求直接提交既有 Formal Decision completion ingress，形成唯一 `events/decisions/<decision_id>.json`，绑定当前 request/parent、decision、BDS、report、正文和 content_hash；
+3. 由同一请求直接提交既有 Formal Decision completion ingress，形成唯一 `events/reviews/formal_<occurrence_id>.json`，绑定当前 request/parent、decision、BDS、report、正文和 content_hash；
 4. 上述 BDS/completion 交接不得等待 REPORT、notification 或 provider 成功，也不得改写、缩短或撤回 FINAL_CONTENT；
 5. 完成上述不阻塞正文的交接提交后，向用户输出同一份完整 FINAL_CONTENT；
 6. 由与【ETF系统复核】、【ETF交易复盘】相同的 REPORT/notification_center/PushPlus 主链消费该 completion event；
@@ -411,7 +411,7 @@ READY后的首条用户可见业务回复必须直接消费同一请求的完整
 
 2. BDS 写入完成后，必须由既有 Formal Decision completion owner 生成唯一 Decision completion event：
 
-   events/decisions/<decision_id>.json
+   events/reviews/formal_<occurrence_id>.json
 
    completion event 必须绑定同一 request_id、parent_request_id、decision_id、report_id、bds_path、bds_commit、content_hash 和完整 presentation_binding.full_content。BDS 与 completion event 缺任一者，均不得声称 Formal Decision 完成闭环。
 

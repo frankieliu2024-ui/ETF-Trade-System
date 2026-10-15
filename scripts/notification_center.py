@@ -460,8 +460,19 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
         occurrence_id = event_occurrence or task_run_id
         key = f"{report_type}:{occurrence_id}"
         binding_request_id = str(binding.get("request_id") or event.get("request_id") or "").strip()
+        binding_parent_request_id = str(binding.get("parent_request_id") or event.get("parent_request_id") or "").strip()
+        binding_decision_id = str(binding.get("decision_id") or event.get("decision_id") or "").strip()
+        event_request_id = str(event.get("request_id") or "").strip()
+        event_parent_request_id = str(event.get("parent_request_id") or "").strip()
+        event_decision_id = str(event.get("decision_id") or "").strip()
         binding_report_id = str(binding.get("report_id") or "").strip()
-        if not binding_request_id or not binding_report_id:
+        if not binding_request_id or not binding_parent_request_id or not binding_decision_id or not binding_report_id:
+            continue
+        if (
+            event_request_id != binding_request_id
+            or event_parent_request_id != binding_parent_request_id
+            or event_decision_id != binding_decision_id
+        ):
             continue
         events.append({
             "key": f"report-delivery:{key}", "source_event_id": f"report-completion:{key}",
