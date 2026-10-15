@@ -149,5 +149,21 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertNotIn("git push --force", persist)
 
 
+    def test_formal_decision_has_no_legacy_production_route(self):
+        center = (ROOT / "scripts" / "notification_center.py").read_text(encoding="utf-8")
+        sync = (ROOT / "scripts" / "process_state_sync_request.py").read_text(encoding="utf-8")
+        protocol = (ROOT / "docs" / "Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
+        notice = (ROOT / "docs" / "ETF主动通知体系.md").read_text(encoding="utf-8")
+        self.assertIn("events/reviews/formal_<occurrence_id>.json", protocol)
+        self.assertIn("events/reviews/formal_", notice)
+        self.assertNotIn("BDS写入、回读和通知尝试先于用户窗口输出", notice)
+        self.assertIn("def formal_decision_report_event", center)
+        self.assertIn("return None", center[center.index("def formal_decision_report_event"):center.index("def formal_decision_report_event")+220])
+        self.assertIn("DECISION_EVENT_PATH", center)
+        self.assertIn('if os.environ.get("DECISION_EVENT_PATH", "").strip():', center)
+        self.assertIn("new Formal Decision production source cannot use legacy events/decisions writer", sync)
+        self.assertNotIn("DECISION_EVENT_PATH", self.text)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -86,6 +86,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
         valid, reason = notification_center.validate_report_delivery_request(request)
         self.assertTrue(valid, reason)
 
+    @unittest.skip("legacy events/decisions route removed; canonical review event is tested separately")
     def test_formal_decision_presentation_projects_full_report(self):
         event = {
             "event_type": "FORMAL_DECISION",

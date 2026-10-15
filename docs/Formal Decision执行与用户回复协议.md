@@ -57,12 +57,11 @@ Formal Decision 的后置 completion ingress 固定使用现有 state-sync owner
 用户回复和后置交接是连续但独立的两个动作：
 
 1. READY 后完成业务判断并冻结唯一 FINAL_CONTENT；
-2. 在同一执行回合内，将同一正文和同一请求身份写入现有 BUSINESS_DECISION_SOURCE 入口并回读；
-3. 由同一请求直接提交既有 Formal Decision completion ingress，形成唯一 `events/reviews/formal_<occurrence_id>.json`，绑定当前 request/parent、decision、BDS、report、正文和 content_hash；
-4. 上述 BDS/completion 交接不得等待 REPORT、notification 或 provider 成功，也不得改写、缩短或撤回 FINAL_CONTENT；
-5. 用户窗口先输出同一份完整 FINAL_CONTENT；
-6. 由与【ETF系统复核】、【ETF交易复盘】相同的 decision-notification/notification_center/PushPlus 主链消费该 completion event；
-7. 任一后置对象缺失或不一致时，当前业务正文不撤回，后置交接按当前协议如实标记并 fail-closed；不扫描历史对象、不返回 ALREADY_MANAGED、不创建第二对象。
+2. 用户窗口立即输出同一份完整 FINAL_CONTENT；不得等待任何 BDS、completion、REPORT、notification 或 provider 状态；
+3. 在同一执行回合内，将同一正文和同一请求身份写入现有 BUSINESS_DECISION_SOURCE 入口并回读；
+4. 由同一请求直接提交既有 Formal Decision completion ingress，形成唯一 `events/reviews/formal_<occurrence_id>.json`，绑定当前 request/parent、decision、BDS、report、正文和 content_hash；
+5. 由与【ETF系统复核】、【ETF交易复盘】相同的 decision-notification/notification_center/PushPlus 主链消费该 completion event；
+6. 上述后置交接不得阻塞、改写、缩短或撤回 FINAL_CONTENT；任一后置对象缺失或不一致时，当前业务正文不撤回，按当前协议如实标记并 fail-closed；不扫描历史对象、不返回 ALREADY_MANAGED、不创建第二对象。
 
 BDS 不直接唤醒通知，也不直接调用 PushPlus。BDS 只负责业务事实入口和唯一正文冻结，并且必须携带完整的 presentation_binding（request_id、parent_request_id、decision_id、report_id、full_content、content_hash）；completion event 是通知主链的当前交接事件，REPORT 和 notification_center 只能从该精确事件透传同一份 FINAL_CONTENT，不得重新生成、摘要、改写或从历史对象恢复正文。PushPlus 未取得当前 notification 对应的明确 provider 成功结果时，只能记录 EXTERNAL_SEND_UNVERIFIED；历史 provider 成功不能证明当前请求发送成功。
 
@@ -280,9 +279,9 @@ ETF交易复盘和ETF系统复核仍遵循各自已验证的Scheduled Review com
 
 ### 6.1 READY回复与后置正式交接的不可混淆边界
 
-ChatGPT完成业务判断后只生成一次冻结的FINAL_CONTENT。既有Actor handoff应先提交一次BUSINESS_DECISION_SOURCE envelope并回读，确定性核对parent_request_id、request_type、decision_response.answers覆盖同一DWP必答集合、presentation_content逐字等于冻结的FINAL_CONTENT，以及content_hash一致。
+ChatGPT完成业务判断后只生成一次冻结的FINAL_CONTENT。用户窗口先输出同一份完整FINAL_CONTENT；随后由既有Actor handoff提交一次BUSINESS_DECISION_SOURCE envelope并回读，确定性核对parent_request_id、request_type、decision_response.answers覆盖同一DWP必答集合、presentation_content逐字等于冻结的FINAL_CONTENT，以及content_hash一致。
 
-用户窗口输出是READY后的首个可见动作。不得等待BDS写入/回读、completion、REPORT、notification或PushPlus；通知尝试不得先于用户窗口输出。用户正文必须完整包含冻结的FINAL_CONTENT，不能只返回HANDOFF状态、通知状态、内部校验结果或任何占位说明。
+用户窗口输出是 READY 后的首个可见动作。不得等待 BDS 写入/回读、completion、REPORT、notification 或 PushPlus；通知尝试不得先于用户窗口输出。用户正文必须完整包含冻结的 FINAL_CONTENT，不能只返回 HANDOFF 状态、通知状态、内部校验结果或任何占位说明。
 
 用户正文输出后，Actor才将同一FINAL_CONTENT写入BDS并回读，随后提交既有Formal Decision completion ingress，由既有REPORT/notification_center/PushPlus主链异步投影。BDS的presentation_content必须逐字复用FINAL_CONTENT；后置交接或provider失败不得阻塞、撤回、截断或改写用户正文，也不得创建第二正文或第二通知链。
 
