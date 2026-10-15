@@ -51,6 +51,18 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
             self.assertIsNone(notification_center.report_delivery_event())
             self.assertIsNone(notification_center.report_delivery_validation_error())
 
+    def test_legacy_decision_event_route_is_disabled(self):
+        center = (ROOT / "scripts" / "notification_center.py").read_text(encoding="utf-8")
+        self.assertIn("The legacy DECISION_EVENT_PATH/events/decisions route is deliberately disabled.", center)
+        self.assertIn("return None", center[center.index("The legacy DECISION_EVENT_PATH"):center.index("The legacy DECISION_EVENT_PATH") + 300])
+
+    def test_persistence_has_latest_main_retry(self):
+        workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
+        self.assertIn('for attempt in 1 2 3; do', workflow)
+        self.assertIn('git fetch --no-tags origin main', workflow)
+        self.assertIn('git reset --hard origin/main', workflow)
+        self.assertIn('event_backup="/tmp/formal-review-event.json"', workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
