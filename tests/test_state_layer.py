@@ -145,6 +145,31 @@ class StateLayerTests(unittest.TestCase):
         self.assertTrue(is_broker_screenshot_request({"formal_fact_type": "ACCOUNT_FACT_CONFIRMATION"}))
         self.assertFalse(is_broker_screenshot_request({"fact_type": "MARKET_SNAPSHOT"}))
 
+    def test_broker_screenshot_without_account_fact_fails_fast(self) -> None:
+        request = {
+            "request_id": "broker-noncanonical",
+            "requested_at_beijing": "2026-10-15T10:18:05+08:00",
+            "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+            "account_after_screenshot": {"total_assets": 100.0},
+            "positions": [{"security_code": "300750", "quantity": 1}],
+        }
+        error = state_sync.validate_broker_account_fact_ingress(request, None)
+        self.assertEqual(error, "broker screenshot request must provide account_fact")
+
+    def test_broker_screenshot_account_fact_is_accepted(self) -> None:
+        request = {
+            "request_id": "broker-canonical",
+            "requested_at_beijing": "2026-10-15T10:18:05+08:00",
+            "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+        }
+        supplied = {
+            "updated_at": "2026-10-15T10:17:00+08:00",
+            "status": "VALID",
+            "last_confirmed_market_date": "2026-10-14",
+            "positions": [{"code": "300750", "quantity": 1, "asset_type": "STOCK"}],
+        }
+        self.assertEqual(state_sync.validate_broker_account_fact_ingress(request, supplied), "")
+
     def test_e2e_blocks_new_unprocessed_broker_request(self) -> None:
         request_dir = self.root / "requests" / "live_snapshot"
         request_dir.mkdir(parents=True)

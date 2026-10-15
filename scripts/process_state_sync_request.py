@@ -3169,7 +3169,15 @@ def validate_broker_account_fact_ingress(request: dict, supplied: object) -> str
     This validates transport shape only. It does not infer security identity,
     trading permission, or market facts from names.
     """
-    if not is_broker_screenshot_request(request) or supplied is None:
+    if not is_broker_screenshot_request(request):
+        return ""
+    if supplied is None:
+        # A broker screenshot request must carry the canonical account_fact
+        # envelope. Silently accepting account_after_screenshot (or any other
+        # non-canonical field) leaves the request durable but unconsumed and
+        # makes the downstream gate appear stuck.
+        if "account_after_screenshot" in request or "positions" in request:
+            return "broker screenshot request must provide account_fact"
         return ""
     if not isinstance(supplied, dict):
         return "broker account_fact must be an object"
