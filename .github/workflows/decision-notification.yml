@@ -15,6 +15,9 @@ on:
   # The event step reconstructs and binds the exact review path from the producer
   # commit instead of scanning the review directory.
 
+  repository_dispatch:
+    types: [formal_decision_bds_written]
+
   workflow_dispatch:
     inputs:
       test_notification:
@@ -133,20 +136,20 @@ jobs:
 
       - name: Bind explicitly dispatched current BDS
         id: dispatch_bds
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.formal_content_path != '' }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.formal_content_path != '') || (github.event_name == 'repository_dispatch' && github.event.client_payload.formal_content_path != '') }}
         shell: bash
         env:
-          BDS_PATH: ${{ inputs.formal_content_path }}
-          EXPECTED_REQUEST_ID: ${{ inputs.formal_request_id }}
-          EXPECTED_PARENT_REQUEST_ID: ${{ inputs.formal_parent_request_id }}
-          EXPECTED_ENTRY_MODE: ${{ inputs.formal_entry_mode }}
-          EXPECTED_SOURCE: ${{ inputs.formal_source }}
-          EXPECTED_TASK_ID: ${{ inputs.formal_task_id }}
-          EXPECTED_TASK_RUN_ID: ${{ inputs.formal_task_run_id }}
-          EXPECTED_OCCURRENCE_ID: ${{ inputs.formal_occurrence_id }}
-          EXPECTED_MARKET_DATE: ${{ inputs.formal_market_date }}
-          EXPECTED_BDS_COMMIT: ${{ inputs.formal_bds_commit }}
-          EXPECTED_CONTENT_HASH: ${{ inputs.formal_content_hash }}
+          BDS_PATH: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.formal_content_path || inputs.formal_content_path }}
+          EXPECTED_REQUEST_ID: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.formal_request_id || inputs.formal_request_id }}
+          EXPECTED_PARENT_REQUEST_ID: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.formal_parent_request_id || inputs.formal_parent_request_id }}
+          EXPECTED_ENTRY_MODE: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.formal_entry_mode || inputs.formal_entry_mode }}
+          EXPECTED_SOURCE: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.formal_source || inputs.formal_source }}
+          EXPECTED_TASK_ID: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.formal_task_id || inputs.formal_task_id }}
+          EXPECTED_TASK_RUN_ID: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.formal_task_run_id || inputs.formal_task_run_id }}
+          EXPECTED_OCCURRENCE_ID: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.formal_occurrence_id || inputs.formal_occurrence_id }}
+          EXPECTED_MARKET_DATE: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.formal_market_date || inputs.formal_market_date }}
+          EXPECTED_BDS_COMMIT: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.formal_bds_commit || inputs.formal_bds_commit }}
+          EXPECTED_CONTENT_HASH: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.formal_content_hash || inputs.formal_content_hash }}
         run: |
           set -euo pipefail
           case "$BDS_PATH" in requests/live_snapshot/*__business_decision_source.json|requests/live_snapshot/*__bds*.json) ;; *) echo "invalid current BDS path" >&2; exit 1;; esac
