@@ -32,7 +32,7 @@
 
 - force_refresh=true 或 require_post_request_snapshot=true 时，本请求创建后生成并绑定的 snapshot、Discovery、query_context、DWP 和 decision context 属于当前请求合法事实；不得因为生成时间晚于请求创建时间而排除；
 - WAIT 期间只能继续消费同一 parent request；不得创建第二请求、复用旧事实或输出中间失败说明；
-- 当前请求 formal_reply_gate=READY、reply_freezable=true 且身份匹配时，立即完成业务判断；不得等待 completion、REPORT、notification、PushPlus 或系统健康状态；
+- 当前请求 formal_reply_gate=READY、reply_freezable=true 且身份匹配时，立即完成业务判断；不得等待历史 completion、历史 REPORT、notification、PushPlus 或系统健康状态来决定是否开始判断；冻结 FINAL_CONTENT 后，必须完成当前请求的BDS交接和既有canonical Formal Decision event形成，但不得以BDS直通知或历史对象替代当前event；
 - 当前请求未 READY 时，不得使用旧 gate、全局状态或历史 DWP 代替；只有明确 terminal failure 才能终止。
 
 ### 1.1.3 唯一正文合同
