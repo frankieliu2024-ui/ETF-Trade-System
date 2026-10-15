@@ -678,8 +678,10 @@ jobs:
           else
             request_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
           fi
-          # A BDS push is business-fact persistence only. It must not be
-          # promoted to a Formal Decision completion request or replayed here.
+          # Formal Decision completion is not consumed by market-snapshot.
+          # Its canonical event is formed only by the explicit completion
+          # handoff into decision-notification. A completion-shaped push must
+          # never become a passive second producer or a hidden replay path.
           if [ "$GITHUB_EVENT_NAME" = "push" ]; then
             completion_file=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | while IFS= read -r candidate; do
               [ -z "$candidate" ] && continue
@@ -697,10 +699,8 @@ jobs:
           PY
             done | head -n 1 || true)
             if [ -n "$completion_file" ]; then
-              request_files="$completion_file"
-            else
+              echo "Formal Decision completion push is rejected on market-snapshot; use the explicit decision-notification handoff."
               request_files=""
-              echo "BDS-only push: no Formal Decision completion ingress; event formation is deferred."
             fi
           fi
           triggering_request_file=$(printf '%s\n' "$request_files" | sed '/^$/d' | head -n 1)

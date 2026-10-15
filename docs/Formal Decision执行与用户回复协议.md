@@ -555,7 +555,7 @@ PushPlus 只能由现有 `notification_center` 从当前请求冻结的 `FINAL_C
 
 “用户正文优先”是用户可见顺序，不是把交接动作推迟到最终消息返回之后。最终回复返回即结束当前Actor回合，不能假定同一回合仍会执行异步GitHub写入。因此，READY后必须先冻结唯一FINAL_CONTENT，再在最终用户消息返回前完成同一父请求的BDS写入/回读和FORMAL_DECISION_COMPLETION ingress提交；最后一条用户消息只能原文输出已经冻结的FINAL_CONTENT，不能先返回正文、再期待后置代码继续运行。
 
-completion提交后，既有owner才可异步形成 events/reviews/formal_<occurrence_id>.json 并触发 decision-notification、notification_center 和 PushPlus。Actor不得直接写event、REPORT或notification。若BDS或completion在最终回复前失败，必须保留同一请求和唯一FINAL_CONTENT，并如实标记交接未完成；不得把“报告已生成”当作完成，不得声称通知成功，也不得创建第二请求、第二正文或旁路通知。
+completion提交后，completion handoff 必须在同一执行回合把当前唯一 completion 路径交给既有 canonical owner，由该 owner 形成 events/reviews/formal_<occurrence_id>.json，再触发 decision-notification、notification_center 和 PushPlus。不得等待 market-snapshot 被动发现，不得由Actor直接写event、REPORT或notification。若BDS、completion或canonical event handoff失败，必须保留同一请求和唯一FINAL_CONTENT，并如实标记交接未完成；不得把“报告已生成”当作完成，不得声称通知成功，也不得创建第二请求、第二正文或旁路通知。
 
 该边界同时适用于MANUAL_CONVERSATION、MANUAL_SCHEDULED_TASK和AUTOMATIC_SCHEDULED_TASK，不改变系统复核和交易复盘的已验证通知实现。
 

@@ -17,3 +17,10 @@ def test_formal_decision_uses_shared_completion_report_binding():
     assert "REVIEW_EVENT_PATH" in text
     assert "REPORT_HANDOFF_PATH" in text
     assert "python scripts/run_guarded_notification.py center --mode event" in text
+
+
+def test_market_snapshot_cannot_project_formal_completion():
+    snapshot = Path(".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+    assert "Formal Decision completion push is rejected on market-snapshot" in snapshot
+    assert "request_files=\"$completion_file\"" not in snapshot
+    assert "process_state_sync_request.py \"$request_files\"" in snapshot
