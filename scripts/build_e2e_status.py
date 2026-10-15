@@ -718,11 +718,39 @@ def main() -> int:
     if not current_gate and isinstance(prior_gate, dict):
         prior_parent = formal_parent_request(prior_gate.get("request_id"))
         if prior_parent:
-            components["decision_context"]["formal_reply_gate"] = {
-                **prior_gate,
-                "projection_preserved_from_non_formal_runtime_request": True,
-                "projection_scope": "FORMAL_DECISION_REQUEST",
-            }
+            prior_request_id = str(prior_gate.get("request_id") or "").strip()
+            current_trigger = (data["query"].get("decision_fact_pack") or {}).get("trigger") or {}
+            current_query_id = str(current_trigger.get("request_id") or "").strip()
+            current_dwp = (data["query"].get("decision_fact_pack") or {}).get("decision_work_package")
+            query_bound_to_prior = bool(
+                current_query_id
+                and current_query_id == prior_request_id
+                and isinstance(current_dwp, dict)
+            )
+            if query_bound_to_prior:
+                components["decision_context"]["formal_reply_gate"] = {
+                    **prior_gate,
+                    "request_bound": True,
+                    "projection_preserved_from_non_formal_runtime_request": True,
+                    "projection_scope": "FORMAL_DECISION_REQUEST",
+                }
+            else:
+                components["decision_context"]["formal_reply_gate"] = {
+                    **prior_gate,
+                    "request_bound": False,
+                    "status": "IN_FLIGHT",
+                    "reply_freezable": False,
+                    "blockers": ["REQUEST_BOUND_QUERY_CONTEXT_NOT_PUBLISHED"],
+                    "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
+                    "user_output_allowed": False,
+                    "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
+                    "required_problem_ids": [],
+                    "required_problem_count": 0,
+                    "business_answer_contract": None,
+                    "ready_handoff": None,
+                    "projection_preserved_from_non_formal_runtime_request": True,
+                    "projection_scope": "FORMAL_DECISION_REQUEST",
+                }
     # A state-sync run may correctly rebuild the account component while
     # preserving the prior Formal Decision gate because it has no new formal
     # query context.  Once the canonical account fact has converged, remove
