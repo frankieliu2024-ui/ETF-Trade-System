@@ -16,6 +16,10 @@ ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1
 STATE = ROOT / "data" / "state"
 TZ = timezone(timedelta(hours=8))
 PUSHPLUS_URL = "https://www.pushplus.plus/send"
+
+# Formal completion mode is a process-wide delivery boundary shared by validation and projection.
+def strict_formal_completion_enabled() -> bool:
+    return os.environ.get("FORMAL_COMPLETION_EVENT", "").strip().lower() == "true"
 HISTORY_LIMIT = 50
 OPPORTUNITY_STATUSES = {"无机会", "观察机会", "Trial机会", "Confirm机会"}
 RISK_PERMISSIONS = ("禁止新增", "允许Confirm", "允许Trial")
@@ -141,7 +145,7 @@ def _report_delivery_path() -> Path | None:
 
 def report_delivery_validation_error() -> str | None:
     """Return an auditable validation error for an explicitly triggered REPORT."""
-    if strict_formal_completion:
+    if strict_formal_completion_enabled():
         return None
     handoff_path = _report_handoff_path()
     if handoff_path is not None:
@@ -297,7 +301,6 @@ def formal_presentation_event() -> dict | None:
     This is a delivery projection only.  It never validates or reconstructs
     decision_response answers, BDS semantics, REPORT, or historical events.
     """
-    strict_formal_completion = os.environ.get("FORMAL_COMPLETION_EVENT", "").strip().lower() == "true"
     raw_path = os.environ.get("FORMAL_PRESENTATION_PATH", "").strip()
     if not raw_path:
         return None
@@ -375,7 +378,7 @@ def formal_presentation_event() -> dict | None:
 
 def report_delivery_event() -> dict | None:
     direct_path = os.environ.get("FORMAL_PRESENTATION_PATH", "").strip()
-    if strict_formal_completion and direct_path:
+    if strict_formal_completion_enabled() and direct_path:
         return None
     direct = formal_presentation_event()
     if direct is not None:
