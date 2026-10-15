@@ -562,3 +562,6 @@ completion提交后，completion handoff 必须在同一执行回合把当前唯
 ### Formal completion 唤醒合同（强制）
 
 Formal Decision completion 通过 GitHub Contents 写入后，不得假定该 API 提交必然产生 Actions push workflow run。completion owner 必须将当前唯一 completion 文件路径作为 `formal_completion_path` 精确交给既有 `.github/workflows/decision-notification.yml` 的 `workflow_dispatch` 入口；该 workflow 只消费这一指定路径，调用 `process_state_sync_request.py` 形成唯一 `events/reviews/formal_<occurrence_id>.json`，再进入既有 `notification_center` 和 PushPlus。不得通过 BDS 唤醒、market-snapshot 被动唤醒、历史文件扫描、最近文件猜测或第二通知链兜底。workflow dispatch 只是唤醒方式，不改变 event owner、正文、身份、content_hash 或通知 owner；任一环节未形成当前 event，必须记录未验证，不得声称主动通知成功。
+
+
+补充硬门：completion ingress不得由执行器手写成任意JSON。必须使用current main的completion builder，令request_id为<parent_request_id>__formal_decision_completion、parent_request_id为原始父请求，且文件名精确为<request_id>.json；三者任一不一致即拒绝进入canonical owner。completion写入并回读后，执行器必须显式调用既有decision-notification workflow的workflow_dispatch(formal_completion_path=<当前唯一completion路径>)；Contents push、BDS写入或market-snapshot均不构成唤醒。
