@@ -165,88 +165,14 @@ def report_delivery_validation_error() -> str | None:
 
 
 def formal_decision_report_event() -> dict | None:
-    """Project one completed Formal Decision presentation into the shared REPORT path."""
-    directory = ROOT / "events" / "decisions"
-    bound = os.environ.get("DECISION_EVENT_PATH", "").strip()
-    if bound:
-        bound_path = Path(bound)
-        if not bound_path.is_absolute():
-            bound_path = ROOT / bound_path
-        paths = [bound_path] if bound_path.is_file() else []
-    else:
-        # Formal Decision delivery is never allowed to discover an arbitrary
-        # historical event.  The producer workflow must pass the exact event
-        # path from the triggering commit; otherwise a stale decision can be
-        # projected as the current report.
-        return None
-    expected_request_id = str(os.environ.get("EXPECTED_FORMAL_REQUEST_ID") or "").strip()
-    # DECISION_EVENT_PATH is itself the exact current completion binding. An
-    # optional request id further strengthens the check, but must not be
-    # required by callers that already provide the canonical event path.
-    candidates = []
-    for path in paths:
-        event = read_json(path, {})
-        if str(event.get("event_type") or "") != "FORMAL_DECISION":
-            continue
-        binding = event.get("presentation_binding")
-        if not isinstance(binding, dict):
-            continue
-        # Consume only the exact frozen FINAL_CONTENT from this completion event.
-        content = str(binding.get("full_content") or "").strip()
-        request_id = str(binding.get("request_id") or "").strip()
-        parent_request_id = str(binding.get("parent_request_id") or event.get("parent_request_id") or "").strip()
-        decision_id = str(binding.get("decision_id") or event.get("decision_id") or "").strip()
-        report_id = str(binding.get("report_id") or "").strip()
-        content_hash = str(binding.get("content_hash") or "").strip()
-        # request_id identifies the completion envelope; parent_request_id identifies
-        # the Formal Decision request. They are distinct legal identities and
-        # must both remain bound. The expected current request is the parent,
-        # never an equality assertion between the two fields.
-        if expected_request_id and parent_request_id != expected_request_id:
-            continue
-        if not request_id or not parent_request_id or not decision_id or not report_id or not content:
-            continue
-        # report_id is canonical data from the current completion binding.
-        # Do not synthesize a report id or discover one from historical files.
-        expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
-        if content_hash != expected:
-            continue
-        generated_at = str(event.get("recorded_at_beijing") or event.get("decision_time_beijing") or "").strip()
-        candidates.append((generated_at, path, event, binding, content))
-    if not candidates:
-        return None
-    _, path, event, binding, content = sorted(candidates, key=lambda x: x[0])[-1]
-    decision = event.get("formal_decision") or {}
-    decision_id = str(binding.get("decision_id") or event.get("decision_id") or "")
-    key = f"ETF_FORMAL_DECISION:{decision_id}"
-    return {
-        "key": f"report-delivery:{key}",
-        "source_event_id": f"formal-decision-presentation:{decision_id}",
-        "event_type": "REPORT_DELIVERY_REQUEST",
-        "notification_channel": "REPORT",
-        "delivery_mode": "FULL_REPORT",
-        "type": "正式报告",
-        "title": str(binding.get("title") or "【ETF正式决策】"),
-        "content": content,
-        "source": f"canonical-formal-decision:{path.name}",
-        "user_severity": "正式报告",
-        "user_action": "阅读已完成的正式ETF正式决策；无需自动交易操作",
-        "report_type": "ETF_FORMAL_DECISION",
-        "report_id": report_id,
-        "request_id": request_id,
-        "parent_request_id": parent_request_id,
-        "task_id": "ETF正式决策",
-        "task_run_id": decision_id,
-        "idempotency_key": key,
-        "no_trade_authority": True,
-        "content_hash": content_hash,
-        "related_decision_id": str(event.get("decision_id") or ""),
-        "security_code": str(decision.get("candidate_code") or ""),
-        "security_name": str(decision.get("candidate_name") or ""),
-    }
+    """Disabled legacy Formal Decision builder.
 
-
-
+    New Formal Decision production delivery is authorized only by the exact
+    events/reviews/formal_<occurrence_id>.json completion event. The former
+    events/decisions/DECISION_EVENT_PATH route is retained neither as a
+    producer nor as a recovery source.
+    """
+    return None
 def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[bool, str]:
     """Fail closed when a BDS presentation is only a compressed summary.
 
