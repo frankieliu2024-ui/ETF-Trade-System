@@ -374,6 +374,27 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             # explicit release/retain comparison.
             if not str(answer.get("capital_efficiency_release_assessment") or "").strip():
                 raise ValueError(f"decision response missing capital-efficiency release assessment: {pid}")
+            # Capital competition is release-first for current holdings:
+            # HOLD is a conclusion that needs affirmative evidence, not the
+            # fallback when no independent exit trigger was found.
+            release_first = (
+                (work_package.get("response_contract") or {}).get("holding_capital_competition_policy")
+                == "RELEASE_FIRST"
+            )
+            if release_first:
+                action = _normalize_holding_action(answer.get("final_action"))
+                if not str(answer.get("strategy_reset_review") or "").strip():
+                    raise ValueError(f"decision response holding requires strategy-reset review: {pid}")
+                if action == "HOLD":
+                    for field in ("holding_thesis_status", "long_term_outcome_review", "hold_over_release_reason"):
+                        if not str(answer.get(field) or "").strip():
+                            raise ValueError(f"decision response HOLD requires {field}: {pid}")
+                    if str(answer.get("hold_over_release_reason") or "").strip() in {
+                        "无独立退出证据", "未达到独立卖出门槛", "没有独立退出依据",
+                    }:
+                        raise ValueError(f"decision response HOLD cannot rely only on absence of exit evidence: {pid}")
+                elif action in {"REDUCE", "EXIT"} and not str(answer.get("exit_or_reduce_evidence") or "").strip():
+                    raise ValueError(f"decision response {action} requires exit_or_reduce_evidence: {pid}")
             if _normalize_holding_action(answer.get("final_action")) in {"REDUCE", "EXIT"}:
                 if answer.get("quantity") in (None, "") or not answer.get("capital_destination"):
                     raise ValueError(f"decision response missing action quantity/destination: {pid}")
@@ -388,14 +409,39 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         if pid.startswith(("DISCOVERY:", "OBSERVATION:", "OBSERVATION_REVIEW:")):
             if not _normalize_opportunity_status(answer.get("opportunity_status")):
                 raise ValueError(f"decision response missing registered opportunity_status: {pid}")
-            if str(answer.get("disposition") or "").upper() not in {"ADMIT", "REJECT", "RETAIN", "EXIT"}:
+            disposition = str(answer.get("disposition") or "").upper()
+            if disposition not in {"ADMIT", "REJECT", "RETAIN", "EXIT"}:
                 raise ValueError(f"decision response missing valid opportunity disposition: {pid}")
             if not str(answer.get("reason") or "").strip():
                 raise ValueError(f"decision response missing opportunity reason: {pid}")
+            release_first = (
+                (work_package.get("response_contract") or {}).get("holding_capital_competition_policy")
+                == "RELEASE_FIRST"
+            )
+            if release_first:
+                if not str(answer.get("opportunity_review_evidence") or "").strip():
+                    raise ValueError(f"decision response opportunity requires review evidence: {pid}")
+                active_status = _normalize_opportunity_status(answer.get("opportunity_status")) in {"Trial机会", "Confirm机会"}
+                if active_status and disposition == "ADMIT":
+                    for field in ("opportunity_evidence", "buy_over_cash_reason", "execution_gate_reason"):
+                        if not str(answer.get(field) or "").strip():
+                            raise ValueError(f"decision response buy review requires {pid}.{field}")
+                elif disposition in {"REJECT", "RETAIN", "EXIT"}:
+                    if not str(answer.get("no_buy_review") or "").strip():
+                        raise ValueError(f"decision response no-buy review requires {pid}.no_buy_review")
         if pid.startswith(("DISCOVERY:", "OBSERVATION_REVIEW:")) and str(answer.get("disposition") or "").upper() == "ADMIT":
             for field in ("name", "thscode", "thesis", "falsifier", "next_decision_information", "information_value_reason"):
                 if not str(answer.get(field) or "").strip():
                     raise ValueError(f"decision response ADMIT requires {pid}.{field}")
+        if pid == "MAIN_CANDIDATE":
+            release_first = (
+                (work_package.get("response_contract") or {}).get("holding_capital_competition_policy")
+                == "RELEASE_FIRST"
+            )
+            if release_first and _normalize_opportunity_status(answer.get("opportunity_status")) in {"Trial机会", "Confirm机会"}:
+                for field in ("opportunity_evidence", "buy_over_cash_reason", "execution_gate_reason"):
+                    if not str(answer.get(field) or "").strip():
+                        raise ValueError(f"decision response active opportunity requires {pid}.{field}")
         if pid.startswith("OBSERVATION:") and str((by_id.get(pid) or {}).get("role_contract") or "") == "CONTINUOUS_INFORMATION_V1" and str(answer.get("disposition") or "").upper() == "EXIT":
             for field in ("information_value_reason", "continuity_cost_assessment"):
                 if not str(answer.get(field) or "").strip():
