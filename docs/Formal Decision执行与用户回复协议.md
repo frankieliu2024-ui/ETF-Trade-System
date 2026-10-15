@@ -402,25 +402,25 @@ READY后的首条用户可见业务回复必须直接消费同一请求的完整
 
 ## 7.1.3 正式完成事件写入路径与逐项候选覆盖（强制）
 
-1. ChatGPT完成业务判断后，必须先提交唯一 BUSINESS_DECISION_SOURCE Actor envelope，写入 current main 的：
+1. ChatGPT 完成业务判断后先冻结唯一 FINAL_CONTENT，并立即向用户输出同一份完整正文；用户回复不得等待 BDS、completion、REPORT、notification 或 provider。
+
+2. 用户正文输出后，Actor 才能提交唯一 BUSINESS_DECISION_SOURCE envelope，写入 current main 的：
 
    requests/live_snapshot/<parent_request_id>__business_decision_source.json
 
    或现有兼容命名 requests/live_snapshot/<parent_request_id>__bds*.json。BDS 是当前业务判断和冻结正文的业务事实源，不是通知 workflow 的唯一唤醒机制。
 
-2. BDS 写入完成后，必须由既有 Formal Decision completion owner 生成唯一 Decision completion event：
+3. BDS 写入并回读成功后，由既有 Formal Decision completion owner 提交唯一 completion ingress，形成并持久化：
 
    events/reviews/formal_<occurrence_id>.json
 
-   completion event 必须绑定同一 request_id、parent_request_id、decision_id、report_id、bds_path、bds_commit、content_hash 和完整 presentation_binding.full_content。BDS 与 completion event 缺任一者，均不得声称 Formal Decision 完成闭环。
+   completion event 必须绑定同一 request_id、parent_request_id、decision_id、report_id、bds_path、bds_commit、content_hash 和完整 presentation_binding.full_content。只有该 completion event 才能进入通知主链。
 
-3. 主动通知必须由既有 notification workflow 从本次 completion event 的精确路径唤醒并消费；不得依赖 API/GITHUB_TOKEN 写入 BDS 后产生递归 push workflow，不得扫描历史目录、按文件名排序或按最新 commit 猜测当前正文。通知 workflow success 不等于 notification_id、provider result 或用户收到。
+4. 主动通知必须由既有 notification workflow 从本次 completion event 的精确路径唤醒并消费；不得依赖 BDS 写入后的 market-snapshot 递归唤醒，不得扫描历史目录、按文件名排序或按最新 commit 猜测当前正文。通知 workflow success 不等于 notification_id、provider result 或用户收到。
 
-4. 本次完成事件不得写入 requests/state_sync/、requests/report_delivery/、requests/report_handoff/ 或其他路径代替 BDS 或 Decision completion 的正式入口。不得为了补发通知创建第二个 BDS、第二个 completion event、第二份正文或旁路发送路径。
+5. 任一后置对象缺失或不一致时，当前业务正文不撤回；后置交接按当前协议如实标记并 fail-closed，不扫描历史对象、不返回 ALREADY_MANAGED、不创建第二 BDS、第二 completion event、第二份正文或旁路发送路径。
 
-5. BDS 和 completion event 写入后，必须分别回读 current main 的同一文件，核对当前请求身份、消费快照、decision_id、bds_commit、冻结正文和 content_hash；只有业务事实、completion event 和正文回读均成功，才能确认 Formal Decision 已形成。业务报告 READY、BDS 持久化、completion event、通知发送和用户收到必须分别如实表达。
-
-3. 用户可见报告中的全市场机会发现候选必须逐项覆盖。每项至少说明：名称和代码、是否进入本节点观察评估、是否取得观察ETF或机会ETF身份、Trial/Confirm资格、实际部署金额，以及未进入下一层的业务原因。候选可以使用紧凑的编号清单，不得用一句共同结论替代全部候选的逐项判断。全市场机会发现结果只是候选评估输入，不因被列出而取得任何正式身份或交易资格。
+6. 用户可见报告中的全市场机会发现候选必须逐项覆盖。用户可见报告中的全市场机会发现候选必须逐项覆盖。每项至少说明：名称和代码、是否进入本节点观察评估、是否取得观察ETF或机会ETF身份、Trial/Confirm资格、实际部署金额，以及未进入下一层的业务原因。候选可以使用紧凑的编号清单，不得用一句共同结论替代全部候选的逐项判断。全市场机会发现结果只是候选评估输入，不因被列出而取得任何正式身份或交易资格。
 
 4. “五项关键变化”只保留能够改变风险许可、候选排序、持仓判断、资本用途或交易资格的业务事实。快照更新、进入连续竞价、时段切换、事实刷新、覆盖变化或本次事实包形成本身，不得机械列入；如仅改变事实时点而未改变业务结论，应放入“数据时点与必要依据”，不得列为关键变化。
 
