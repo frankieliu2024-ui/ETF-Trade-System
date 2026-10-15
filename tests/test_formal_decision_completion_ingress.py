@@ -30,5 +30,14 @@ class FormalDecisionCompletionIngressTests(unittest.TestCase):
         self.assertIn("Formal Decision completion must reference BUSINESS_DECISION_SOURCE", text)
 
 
+    def test_index_bans_only_legacy_completion_and_allows_new_ingress(self):
+        index = Path("ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
+        self.assertIn("CHATGPT_FORMAL_DECISION_COMPLETION", index)
+        self.assertIn("FORMAL_DECISION_COMPLETION", index)
+        self.assertIn("CHATGPT_MANUAL_FORMAL_COMPLETION", index)
+        self.assertIn("formal_fact_type=FORMAL_DECISION", index)
+        self.assertNotIn("不得直接构造 STATE_SYNC_ONLY / CHATGPT_MANUAL_FORMAL_COMPLETION", index)
+
+
 if __name__ == "__main__":
     unittest.main()
