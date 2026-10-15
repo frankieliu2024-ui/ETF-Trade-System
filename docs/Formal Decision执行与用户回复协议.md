@@ -49,14 +49,14 @@ READY 后只生成一份 FINAL_CONTENT。它必须同时满足：
 
 ### 1.1.4 完成与通知合同
 
-用户回复和后置交接是连续但独立的两个动作：
+用户回复优先，完成事件和通知是后置投影，三个动作连续但独立：
 
-1. READY 后冻结唯一 FINAL_CONTENT；
-2. 将同一正文和同一请求身份写入现有 BUSINESS_DECISION_SOURCE 入口并回读；
-3. 通过既有 completion ingress 形成当前精确 completion event，绑定同一正文、request/decision identity 和 content_hash；
-4. 由与【ETF系统复核】、【ETF交易复盘】相同的 REPORT/notification_center/PushPlus 主链消费该 completion event；
-5. 随后向用户输出同一份完整 FINAL_CONTENT；provider 成功不是用户回复门禁；
-6. 任一当前对象缺失或不一致时，当前交接 fail-closed，不扫描历史对象、不返回 ALREADY_MANAGED、不创建第二对象。
+1. READY 后完成完整业务判断并冻结唯一 FINAL_CONTENT；
+2. 首次用户可见回复立即输出同一份完整 FINAL_CONTENT，不等待 BDS、completion、REPORT、notification、PushPlus 或 provider 成功；
+3. 用户回复后，将同一正文和同一请求身份写入现有 BUSINESS_DECISION_SOURCE 入口并回读；
+4. 由既有 canonical owner 形成当前精确 Formal Decision event，绑定同一正文、request/decision identity 和 content_hash；
+5. 由与【ETF系统复核】、【ETF交易复盘】相同的 REPORT/notification_center/PushPlus 主链消费该当前 event；
+6. BDS、event 或通知投影失败时保留当前请求和 FINAL_CONTENT，如实记录未验证；不得扫描历史对象、返回 ALREADY_MANAGED、创建第二对象或改走 BDS 直通知。
 
 BDS 不直接唤醒通知，也不直接调用 PushPlus。BDS 只负责业务事实入口和唯一正文冻结；completion event 是通知主链的当前交接事件，REPORT 和 notification_center 只能从该精确事件透传同一份 FINAL_CONTENT，不得重新生成、摘要、改写或从历史对象恢复正文。PushPlus 未取得当前 notification 对应的明确 provider 成功结果时，只能记录 EXTERNAL_SEND_UNVERIFIED；历史 provider 成功不能证明当前请求发送成功。
 
