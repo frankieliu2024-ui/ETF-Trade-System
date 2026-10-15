@@ -355,6 +355,11 @@ def write_completion_request(source_request_path: str, decision_path: str, consu
     target = (ROOT / output_path).resolve() if output_path else REQUEST_DIR / f"{payload['request_id']}.json"
     if ROOT not in target.parents or target.suffix != ".json":
         raise ValueError("output path must be a repository JSON path")
+    expected_name = f"{payload['request_id']}.json"
+    if target.name != expected_name:
+        raise ValueError("Formal Decision completion filename must equal its envelope request_id")
+    if payload.get("request_id") == payload.get("parent_request_id"):
+        raise ValueError("Formal Decision completion envelope and parent identities must differ")
     serialized = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     if target.exists():
         if target.read_text(encoding="utf-8") == serialized:
@@ -378,7 +383,14 @@ def main() -> int:
         args.source_request, args.formal_decision, args.consumed_snapshot,
         args.output, args.completion_request_id, args.decision_response,
     )
-    print(json.dumps({"ok": True, "request": str(target.relative_to(ROOT)).replace("\\", "/")}, ensure_ascii=False))
+    print(json.dumps({
+        "ok": True,
+        "request": str(target.relative_to(ROOT)).replace("\\", "/"),
+        "completion_request_id": payload.get("request_id"),
+        "parent_request_id": payload.get("parent_request_id"),
+        "handoff_required": True,
+        "handoff": "decision-notification.workflow_dispatch(formal_completion_path=<request>)",
+    }, ensure_ascii=False))
     return 0
 
 
