@@ -82,8 +82,6 @@ on:
       - "requests/notification_test/*.json"
       - "requests/report_delivery/*.json"
       - "requests/report_handoff/*.json"
-      - "requests/live_snapshot/*__bds*.json"
-      - "requests/live_snapshot/*__business_decision_source*.json"
       # Canonical market-state publication is an independent notification wake.
       # This preserves one notification engine while avoiding a hard dependency
       # on workflow_run creation after a producer was itself recovered from a
@@ -320,17 +318,8 @@ jobs:
           test "$(find requests/report_delivery -maxdepth 1 -type f -name '*.json' | wc -l)" -eq 1
           test -f "$REPORT_PATH"
 
-      - name: Reject direct BDS notification path
-        id: formal_content_notify
-        if: ${{ github.event_name == 'push' && steps.push_kind.outputs.formal_content == 'true' }}
-        shell: bash
-        env:
-          FORMAL_CONTENT_PATH: ${{ steps.push_kind.outputs.formal_content_path }}
-        run: |
-          set -euo pipefail
-          test -n "$FORMAL_CONTENT_PATH"
-          echo "Formal Decision BDS is not a notification wake; shared completion/REPORT path is required."
-          echo "Direct BDS notification intentionally disabled."
+      # BDS is not a notification wake. Formal Decision notifications are
+      # authorized only by the current completion event under event_notify.
       - name: Build delayed execution reconciliation
         if: ${{ github.event_name == 'workflow_run' || (github.event_name == 'push' && (steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.trade == 'true')) }}
         run: python scripts/build_execution_reconciliation.py
