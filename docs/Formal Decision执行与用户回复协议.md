@@ -266,9 +266,9 @@ READY 前必须完成或按正式规范合法降级：
 
 合法 READY 后，Formal Decision 执行顺序为：
 
-`request-bound facts → 业务判断 → 冻结 FINAL_CONTENT → BDS写入并回读 → 通知尝试 → 用户窗口输出同一 FINAL_CONTENT`
+`request-bound facts → 业务判断 → 冻结 FINAL_CONTENT → 用户窗口输出同一 FINAL_CONTENT → BDS写入并回读 → Formal Decision completion ingress → REPORT/notification_center → PushPlus`
 
-BDS写入、回读和通知尝试前置于用户窗口输出；PushPlus/provider成功不作为用户回复门禁。通知失败不得阻塞、撤销或改写完整用户正文，但必须保留当前通知失败或未确认事实。
+用户窗口输出是READY后的首个可见动作；BDS写入、回读、completion、REPORT、notification和PushPlus均为后置投影。BDS不是通知唤醒源，必须由既有Formal Decision completion ingress形成当前Decision completion event后进入通知主链。PushPlus/provider成功不作为用户回复门禁。后置失败不得阻塞、撤销或改写完整用户正文，但必须保留当前失败或未确认事实。
 
 ETF交易复盘和ETF系统复核仍遵循各自已验证的Scheduled Review completion/report路径，不因本节Formal Decision减法而改变。
 
