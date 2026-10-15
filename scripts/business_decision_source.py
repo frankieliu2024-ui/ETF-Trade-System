@@ -981,6 +981,39 @@ def _validate_formal_presentation_contract(source: dict[str, Any]) -> None:
     if not any(token in content for token in ("1）", "2）", "3）")):
         raise ValueError("formal presentation requires hanging-indent secondary numbering 1）/2）/3）")
 
+def _validate_request_bound_identity(source: dict[str, Any]) -> None:
+    """Fail closed on stale decision identity or stale request timestamp in frozen text."""
+    request_id = str(source.get("request_id") or "").strip()
+    parent_id = str(source.get("parent_request_id") or request_id).strip()
+    decision_id = str(source.get("decision_id") or "").strip()
+    if parent_id and parent_id != request_id:
+        raise ValueError("business source parent_request_id must match request_id")
+    nested = source.get("decision_response")
+    if isinstance(nested, dict):
+        nested_id = str(nested.get("decision_id") or "").strip()
+        if nested_id and nested_id != decision_id:
+            raise ValueError("business source decision_response.decision_id must match decision_id")
+    binding = source.get("presentation_binding")
+    if isinstance(binding, dict):
+        bound_id = str(binding.get("decision_id") or "").strip()
+        if bound_id and bound_id != decision_id:
+            raise ValueError("business source presentation_binding.decision_id must match decision_id")
+        bound_request = str(binding.get("request_id") or "").strip()
+        if bound_request and bound_request != request_id:
+            raise ValueError("business source presentation_binding.request_id must match request_id")
+    requested_at = str(source.get("requested_at_beijing") or "").strip()
+    content = source.get("presentation_content")
+    if requested_at and isinstance(content, str):
+        request_minute = requested_at[:16].replace("T", " ")
+        if request_minute not in content:
+            raise ValueError("formal presentation does not contain current request timestamp")
+    if request_id.startswith("fd-chatgpt-") and isinstance(content, str):
+        parts = request_id.split("-")
+        if len(parts) >= 4 and len(parts[2]) == 8 and len(parts[3]) == 6:
+            request_minute = f"{parts[2][:4]}-{parts[2][4:6]}-{parts[2][6:]} {parts[3][:2]}:{parts[3][2:4]}"
+            if request_minute not in content and not requested_at:
+                raise ValueError("formal presentation does not contain request-bound timestamp")
+
 def _validate_request_bound_presentation_facts(
     source: dict[str, Any], *, expected_snapshot: str | None = None,
     expected_market_date: str | None = None, expected_market_phase: str | None = None,
@@ -1021,6 +1054,7 @@ def validate_source(
         raise ValueError("business source requires request_id")
     if not str(source.get("decision_id") or "").strip():
         raise ValueError("business source requires decision_id")
+    _validate_request_bound_identity(source)
     snapshot = str(source.get("consumed_snapshot") or "").strip()
     if not snapshot or expected_snapshot and snapshot != expected_snapshot:
         raise ValueError("business source PIT binding failed")
