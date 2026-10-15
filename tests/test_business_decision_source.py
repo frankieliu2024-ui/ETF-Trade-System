@@ -156,5 +156,34 @@ class BusinessDecisionSourceTests(unittest.TestCase):
         self.assertEqual(projected["next_unit_capital_use"], "现金")
         self.assertEqual(projected["projection_status"], "READY")
 
-if __name__ == "__main__":
+
+
+    def test_stale_nested_decision_identity_fails_closed(self):
+        source = self.base()
+        source["parent_request_id"] = "r1"
+        source["decision_response"] = {"decision_id": "old-decision"}
+        with self.assertRaisesRegex(ValueError, "decision_response.decision_id"):
+            validate_source(source)
+
+    def test_stale_request_bound_presentation_timestamp_fails_closed(self):
+        source = self.base()
+        source.update({
+            "request_id": "fd-chatgpt-20261015-083934-k4n8pz",
+            "parent_request_id": "fd-chatgpt-20261015-083934-k4n8pz",
+            "decision_id": "fd-chatgpt-20261015-083934-k4n8pz_decision",
+            "requested_at_beijing": "2026-10-15T08:39:34+08:00",
+            "presentation_content": "【ETF正式决策】2026-10-15 08:40 正式判断\\n\\n当前请求于2026-10-15 07:23（北京时间）发起",
+            "presentation_binding": {
+                "request_id": "fd-chatgpt-20261015-083934-k4n8pz",
+                "decision_id": "fd-chatgpt-20261015-083934-k4n8pz_decision",
+                "full_content": "【ETF正式决策】2026-10-15 08:40 正式判断\\n\\n当前请求于2026-10-15 07:23（北京时间）发起",
+            },
+            "decision_response": {
+                "decision_id": "fd-chatgpt-20261015-083934-k4n8pz_decision",
+                "presentation_content": "【ETF正式决策】2026-10-15 08:40 正式判断\\n\\n当前请求于2026-10-15 07:23（北京时间）发起",
+            },
+        })
+        with self.assertRaisesRegex(ValueError, "current request timestamp"):
+            validate_source(source)
+\nif __name__ == "__main__":
     unittest.main()
