@@ -42,7 +42,7 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertIn("/tmp/changed_files.txt; then", self.text)
         self.assertNotIn("echo report=true", self.text)
 
-    def test_consistency_workflow_run_binds_exact_current_bds(self):
+    def test_consistency_workflow_run_validates_current_bds_without_waking_notification(self):
         self.assertIn('"ETF system consistency"', self.text)
         self.assertIn('id: workflow_bds', self.text)
         self.assertIn("github.event.workflow_run.name == 'ETF system consistency'", self.text)
@@ -51,7 +51,9 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertIn("requests/live_snapshot/*__bds*.json", self.text)
         self.assertIn("requests/live_snapshot/*__business_decision_source*.json", self.text)
         self.assertIn('Expected exactly one current BDS', self.text)
-        self.assertIn('steps.workflow_bds.outputs.formal_content_path', self.text)
+        # The consistency producer may validate the current BDS, but it must not
+        # expose a BDS presentation path as a notification input.
+        self.assertNotIn("steps.workflow_bds.outputs.formal_content_path", self.text)
         # Formal Decision BDS is not a notification wake; shared completion/REPORT binding is required.
         self.assertNotIn("steps.push_kind.outputs.formal_content == 'true' || steps.push_kind.outputs.trade", self.text)
         self.assertIn("DECISION_EVENT_PATH", self.text)
