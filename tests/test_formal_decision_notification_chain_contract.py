@@ -8,6 +8,9 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
     def test_completion_push_reaches_event_notification(self):
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
         self.assertIn("steps.formal_completion_event.outputs.review_event_path != ''", workflow)
+        self.assertIn("formal_completion_path:", workflow)
+        self.assertIn("github.event_name == 'workflow_dispatch' && inputs.formal_completion_path != ''", workflow)
+        self.assertIn("github.event_name == 'workflow_dispatch' && steps.formal_completion_event.outputs.review_event_path != ''", workflow)
         self.assertNotIn("\\n      - name: Send material user-action notification", workflow)
 
     def test_formal_review_event_requires_identity_binding(self):
