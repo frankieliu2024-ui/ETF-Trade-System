@@ -241,6 +241,54 @@ def formal_decision_report_event() -> dict | None:
 
 
 
+def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[bool, str]:
+    """Fail closed when a BDS presentation is only a compressed summary.
+
+    The notification owner must protect the user-visible contract as well as
+    request identity and content hash. Structured answers are the coverage
+    source; every coded object must remain visible in the frozen report.
+    Legacy completion fixtures without answers remain compatible because this
+    guard is specifically for the BDS handoff.
+    """
+    content = envelope.get("presentation_content")
+    answers = (envelope.get("decision_response") or {}).get("answers")
+    if not isinstance(answers, dict):
+        return True, ""
+    if not isinstance(content, str) or not content.strip():
+        return False, "formal_presentation_missing_content"
+    required_headings = (
+        "【业务结论】", "【数据时点与必要依据】", "【三层监测】",
+        "【持仓动作】", "【资本用途】", "【全市场机会发现】",
+        "【观察ETF】", "【关键风险】", "【后续安排】",
+        "【置信度】", "【最可能出错的地方】",
+    )
+    missing_headings = [heading for heading in required_headings if heading not in content]
+    if missing_headings:
+        return False, "formal_presentation_missing_sections:" + ",".join(missing_headings)
+    if len(content.strip()) < 1200:
+        return False, "formal_presentation_below_minimum_length"
+    if "**" in content or any(term in content for term in ("canonical", "writer", "BDS", "reply_freezable", "control plane")):
+        return False, "formal_presentation_internal_term_or_markdown"
+    missing_objects = []
+    for problem_id in answers:
+        key = str(problem_id)
+        if ":" not in key:
+            continue
+        code = key.split(":", 1)[1].strip()
+        if code and code not in content:
+            missing_objects.append(key)
+    if missing_objects:
+        return False, "formal_presentation_missing_objects:" + ",".join(missing_objects)
+    if "持有管理" not in content or "不追加" not in content:
+        return False, "formal_presentation_missing_holding_addition_boundary"
+    if "可释放资本" not in content or "实际新增部署" not in content:
+        return False, "formal_presentation_missing_capital_boundary"
+    if "Trial" not in content or "Confirm" not in content:
+        return False, "formal_presentation_missing_trial_confirm_boundary"
+    if not any(token in content for token in ("1）", "2）", "3）")):
+        return False, "formal_presentation_missing_secondary_numbering"
+    return True, ""
+
 def formal_presentation_event() -> dict | None:
     """Project the exact current BDS presentation binding into notification.
 
