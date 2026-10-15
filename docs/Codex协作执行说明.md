@@ -170,6 +170,7 @@ Issue 中的完整 brief／packet 是执行输入，Issue／PR 中的结构化�
 - 先读取执行时 latest main 和 ETF_SYSTEM_INDEX.md，再按 INDEX 读取 Formal Decision、主动通知和生产变更规范；历史对话、旧 Prompt、旧 Issue 只能作为线索。
 - 先验证用户正文时序：READY 后冻结并输出唯一 FINAL_CONTENT；后置 BDS、completion、事件、REPORT 和通知不能反向阻塞正文。
 - 沿唯一链核对 FINAL_CONTENT → completion → events/reviews/formal_*.json → decision-notification → notification_center → PushPlus，并与【ETF交易复盘】的 completion/report 投影机制逐项对照。
+- Formal Decision completion 写入并回读后，当前执行器必须在同一 handoff 中显式调用既有 decision-notification workflow 的 `workflow_dispatch(formal_completion_path=<当前唯一completion路径>)`；不得等待 GitHub Contents push、BDS 或 market-snapshot 被动唤醒。未实际调用并回读 formal event 的运行只能标记 handoff incomplete，不能声称通知已提交。
 - 对所有旧入口做反向审计：events/decisions、BDS直投影、FORMAL_PRESENTATION_PATH、--formal-content-file、历史 review/report/handoff 扫描和 market-snapshot 被动唤醒；只要仍可达，就必须显式 fail-closed或移除。
 - 最终报告必须分别给出正文生成、BDS写入/回读、completion event、notification、provider成功和用户收达，不能用 workflow success、HTTP 200 或历史通知替代当前事件证据。
 - CI通过后仍不得宣称真实生产闭环完成；只有下一次自然运行才能验证真实定时入口和用户实际收达。
