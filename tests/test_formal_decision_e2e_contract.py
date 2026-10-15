@@ -259,6 +259,13 @@ class FormalReadyHandoffContractTests(unittest.TestCase):
         self.assertIn('"post_reply_async": True', text)
         self.assertIn('"provider_success_async": True', text)
 
+    def test_protocol_has_no_pre_reply_bds_notification_contract(self):
+        protocol = (Path(__file__).parents[1] / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
+        self.assertNotIn("通知尝试应先于用户窗口输出", protocol)
+        self.assertNotIn("Actor必须先完成BDS写入/回读和通知尝试，再输出完整FINAL_CONTENT", protocol)
+        self.assertIn("通知尝试不得先于用户窗口输出", protocol)
+        self.assertIn("后置交接或provider失败不得阻塞、撤回、截断或改写用户正文", protocol)
+
     def test_ready_handoff_does_not_create_a_second_notification_path(self):
         root = Path(__file__).parents[1]
         text = (root / "scripts/formal_request_consumer.py").read_text(encoding="utf-8")
