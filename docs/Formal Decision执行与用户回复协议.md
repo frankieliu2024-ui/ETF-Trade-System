@@ -532,3 +532,18 @@ PushPlus 只能由现有 `notification_center` 从当前请求冻结的 `FINAL_C
 - 正文必须使用固定章节、独立段落和统一编号，不得追加交接审计、内部状态或第二正文。
 
 正文身份固定为 request_id + decision_id + content_hash。同一身份只能有一份FINAL_CONTENT；重试只能沿同一notification_id重试投递，不得重新分析、改写正文或创建第二通知。BDS写入、BDS回读、notification_id、provider result和用户收达必须分别记录，任何后置workflow成功均不得替代provider成功或用户收达事实。
+
+## 11.4 2026-10-15 Formal Decision故障域经验固化
+
+本节将已通过代码、协议、测试和真实运行复核的经验固化为长期边界：
+
+1. **先回复、后投影。** READY 后先冻结唯一 FINAL_CONTENT，并由用户窗口输出完整正文；BDS、completion、canonical review event、REPORT、notification 和 provider 均为后置投影，不得阻塞、缩短、改写或撤回正文。
+2. **BDS不是通知唤醒源。** BDS只保存当前业务事实和冻结正文；通知只能由当前 Formal Decision completion 形成的 events/reviews/formal_<occurrence_id>.json 精确触发。
+3. **事件必须精确绑定。** notification workflow 必须使用触发本次 completion 的精确事件路径、request/parent/decision identity 和 content_hash；缺少精确绑定时 fail-closed，禁止扫描历史目录、按文件名排序、按最新提交猜测或返回 ALREADY_MANAGED。
+4. **旧路径永久失效。** events/decisions、BDS直投影、FORMAL_PRESENTATION_PATH、--formal-content-file、旧 REPORT/handoff 和 market-snapshot 被动唤醒均不得作为新 Formal Decision 生产路径；兼容代码只能显式拒绝或仅服务非 Formal 历史恢复。
+5. **三层事实分别记录。** 正文生成、BDS写入/回读、completion event形成、notification形成、provider结果和用户实际收到必须分别记录；任何前一层不得冒充后一层。
+6. **完整性不是字数替代。** 报告必须逐项覆盖同一 DWP 的全部问题、候选、观察对象、持仓、现金、可释放资本、Trial/Confirm和后续条件；字符长度只能作为质量观测，不能替代对象级覆盖，也不能用短报告绕过必答集合。
+7. **修复必须验证相邻断点。** 每次通知故障修复至少检查：用户正文时序、completion owner、canonical event路径、精确 workflow 绑定、notification_center 投影、provider调用和历史/兼容 fallback；只修单个发送函数不构成闭环。
+8. **真实验证与CI分离。** CI只证明代码合同；下一次自然 Formal Decision 才能验证真实定时入口、PushPlus provider结果和用户实际收达，未取得这些证据不得宣称生产通知闭环完成。
+
+本节不新增 workflow、producer、state、writer、provider、通知链或交易权限；只固化既有 Formal Decision 和共享 REPORT/notification_center/PushPlus 合同。
