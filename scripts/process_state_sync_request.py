@@ -3414,7 +3414,7 @@ def main() -> int:
     )
     if completion_dispatch:
         bds_path = str(request.get("bds_path") or "").strip()
-        if not bds_path or any(part in bds_path for part in ("..", "\\\")):
+        if not bds_path or ".." in bds_path:
             raise ValueError("Formal Decision completion requires a safe BDS path")
         bds_file = (ROOT / bds_path).resolve()
         if ROOT not in bds_file.parents or not bds_file.is_file():
