@@ -33,6 +33,24 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertIn("if strict_formal_completion:", center)
         self.assertIn("if strict_formal_completion and direct_path:", center)
 
+    def test_strict_formal_mode_executes_without_scope_error(self):
+        import os
+        from unittest import mock
+        from scripts import notification_center
+        with mock.patch.dict(
+            os.environ,
+            {
+                "FORMAL_COMPLETION_EVENT": "true",
+                "REVIEW_EVENT_PATH": "events/reviews/formal_missing.json",
+                "FORMAL_PRESENTATION_PATH": "",
+                "REPORT_HANDOFF_PATH": "",
+                "REPORT_DELIVERY_PATH": "",
+            },
+            clear=False,
+        ):
+            self.assertIsNone(notification_center.report_delivery_event())
+            self.assertIsNone(notification_center.report_delivery_validation_error())
+
 
 if __name__ == "__main__":
     unittest.main()
