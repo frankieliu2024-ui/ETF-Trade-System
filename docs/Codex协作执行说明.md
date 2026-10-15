@@ -162,3 +162,14 @@ Issue 中的完整 brief／packet 是执行输入，Issue／PR 中的结构化�
 生产合并、Issue 关闭和组合验收仍严格服从 V1.8；本说明不授予自动合并权限（无条件合并、绕过 review 或跳过验收的权限），但“完整授权执行”在本说明第3.1节确定性门全部满足时构成条件性合并授权；不降低任何测试、writer ownership、latest-main、PIT、system consistency 或 E2E 要求。
 
 不得因此新增 Task-to-Task 通信、共享聊天状态、平行 workflow、state、writer、provider、decision engine 或第二治理规则源。`CODEX_EXECUTION_PACKET` 只提高执行确定性，不改变交易权限、研究转化标准或生产准入语义。
+
+## 3.3 多轮纠偏事项的经验固化：Formal Decision通知链
+
+针对多轮修复、通知缺失、正文缩短或旧路径回退的事项，执行器必须把以下内容作为同一 failure domain 一次性审计，不得只修最后一个发送函数：
+
+- 先读取执行时 latest main 和 ETF_SYSTEM_INDEX.md，再按 INDEX 读取 Formal Decision、主动通知和生产变更规范；历史对话、旧 Prompt、旧 Issue 只能作为线索。
+- 先验证用户正文时序：READY 后冻结并输出唯一 FINAL_CONTENT；后置 BDS、completion、事件、REPORT 和通知不能反向阻塞正文。
+- 沿唯一链核对 FINAL_CONTENT → completion → events/reviews/formal_*.json → decision-notification → notification_center → PushPlus，并与【ETF交易复盘】的 completion/report 投影机制逐项对照。
+- 对所有旧入口做反向审计：events/decisions、BDS直投影、FORMAL_PRESENTATION_PATH、--formal-content-file、历史 review/report/handoff 扫描和 market-snapshot 被动唤醒；只要仍可达，就必须显式 fail-closed或移除。
+- 最终报告必须分别给出正文生成、BDS写入/回读、completion event、notification、provider成功和用户收达，不能用 workflow success、HTTP 200 或历史通知替代当前事件证据。
+- CI通过后仍不得宣称真实生产闭环完成；只有下一次自然运行才能验证真实定时入口和用户实际收达。
