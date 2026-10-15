@@ -340,6 +340,9 @@ def formal_presentation_event() -> dict | None:
         bound_hash = str(binding.get("content_hash") or "").strip()
         if bound_hash and bound_hash != content_hash:
             return None
+    valid_presentation, presentation_reason = validate_formal_presentation_contract(envelope)
+    if not valid_presentation:
+        return None
     key = f"ETF_FORMAL_PRESENTATION:{request_id}:{content_hash}"
     return {
         "key": f"report-delivery:{key}",
