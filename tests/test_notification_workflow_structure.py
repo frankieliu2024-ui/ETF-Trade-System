@@ -134,8 +134,8 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         runner = (ROOT / "scripts" / "run_guarded_notification.py").read_text(encoding="utf-8")
         self.assertIn('parser.add_argument("--formal-content-file")', runner)
         self.assertIn('def _run_center(mode: str, formal_content_file: str | None = None)', runner)
-        self.assertIn('os.environ["FORMAL_PRESENTATION_PATH"] = formal_content_file', runner)
-        self.assertIn('return _run_center(args.mode, args.formal_content_file)', runner)
+        self.assertIn("Formal Decision direct content projection is disabled", runner)
+        self.assertIn("return _run_center(args.mode, args.formal_content_file)", runner)
 
 
     def test_notification_state_persistence_replays_latest_main_without_resend(self):
@@ -152,15 +152,21 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
     def test_formal_decision_has_no_legacy_production_route(self):
         center = (ROOT / "scripts" / "notification_center.py").read_text(encoding="utf-8")
         sync = (ROOT / "scripts" / "process_state_sync_request.py").read_text(encoding="utf-8")
+        index = (ROOT / "ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
         protocol = (ROOT / "docs" / "Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
         notice = (ROOT / "docs" / "ETF主动通知体系.md").read_text(encoding="utf-8")
         self.assertIn("events/reviews/formal_<occurrence_id>.json", protocol)
         self.assertIn("events/reviews/formal_", notice)
         self.assertNotIn("BDS写入、回读和通知尝试先于用户窗口输出", notice)
+        self.assertNotIn("完成这些不阻塞正文的后置交接提交后，向用户输出", index)
+        self.assertNotIn("1. ChatGPT完成业务判断后，必须先提交唯一 BUSINESS_DECISION_SOURCE", protocol)
+        self.assertIn("1. ChatGPT 完成业务判断后先冻结唯一 FINAL_CONTENT，并立即向用户输出", protocol)
         self.assertIn("def formal_decision_report_event", center)
         self.assertIn("return None", center[center.index("def formal_decision_report_event"):center.index("def formal_decision_report_event")+220])
         self.assertIn("DECISION_EVENT_PATH", center)
         self.assertIn('if os.environ.get("DECISION_EVENT_PATH", "").strip():', center)
+        self.assertIn("Formal Decision delivery is allowed only from an exact canonical review event", center)
+        self.assertIn("if strict_formal_completion_enabled() and not event_path:", center)
         self.assertIn("new Formal Decision production source cannot use legacy events/decisions writer", sync)
         self.assertNotIn("DECISION_EVENT_PATH", self.text)
 

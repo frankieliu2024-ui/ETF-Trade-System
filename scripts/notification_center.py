@@ -218,86 +218,11 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
     return True, ""
 
 def formal_presentation_event() -> dict | None:
-    """Project the exact current BDS presentation binding into notification.
-
-    This is a delivery projection only.  It never validates or reconstructs
-    decision_response answers, BDS semantics, REPORT, or historical events.
-    """
-    raw_path = os.environ.get("FORMAL_PRESENTATION_PATH", "").strip()
-    if not raw_path:
-        return None
-    path = Path(raw_path)
-    if not path.is_absolute():
-        path = ROOT / path
-    if not path.is_file():
-        return None
-    envelope = read_json(path, {})
-    if not isinstance(envelope, dict):
-        return None
-    request_id = str(envelope.get("request_id") or "").strip()
-    parent_request_id = str(envelope.get("parent_request_id") or "").strip()
-    decision_id = str(envelope.get("decision_id") or "").strip()
-    task_id = str(envelope.get("task_id") or "").strip()
-    task_run_id = str(envelope.get("task_run_id") or "").strip()
-    occurrence_id = str(envelope.get("occurrence_id") or "").strip()
-    source = str(envelope.get("source") or "").strip()
-    entry_mode = str(envelope.get("entry_mode") or "").strip()
-    content = envelope.get("presentation_content")
-    content_hash = str(envelope.get("content_hash") or "").strip()
-    # Manual conversation BDS does not have Scheduled Task identity fields.
-    # Its direct notification identity is request/parent/decision + source/entry
-    # plus the frozen body hash. Scheduled/task-originated BDS keeps the
-    # stronger task/run/occurrence requirement.
-    base_identity = (request_id, parent_request_id, decision_id, source, entry_mode)
-    if not all(base_identity):
-        return None
-    if entry_mode != "MANUAL_CONVERSATION" and not all((task_id, task_run_id, occurrence_id)):
-        return None
-    if not isinstance(content, str) or not content:
-        return None
-    if content_hash != hashlib.sha256(content.encode("utf-8")).hexdigest():
-        return None
-    expected_request = str(os.environ.get("EXPECTED_FORMAL_REQUEST_ID") or "").strip()
-    if expected_request and expected_request not in {request_id, parent_request_id}:
-        return None
-    binding = envelope.get("presentation_binding")
-    if isinstance(binding, dict):
-        bound_content = binding.get("full_content")
-        if bound_content is not None and bound_content != content:
-            return None
-        bound_hash = str(binding.get("content_hash") or "").strip()
-        if bound_hash and bound_hash != content_hash:
-            return None
-    valid_presentation, presentation_reason = validate_formal_presentation_contract(envelope)
-    if not valid_presentation:
-        print(f"Formal Decision presentation rejected: {presentation_reason}")
-        return None
-    key = f"ETF_FORMAL_PRESENTATION:{request_id}:{content_hash}"
-    return {
-        "key": f"report-delivery:{key}",
-        "source_event_id": f"formal-presentation:{path.name}",
-        "event_type": "REPORT_DELIVERY_REQUEST",
-        "notification_channel": "REPORT",
-        "delivery_mode": "FULL_REPORT",
-        "type": "正式报告",
-        "title": "【ETF正式决策】",
-        "content": content,
-        "source": f"canonical-formal-presentation:{path.name}",
-        "report_type": "ETF_FORMAL_DECISION",
-        "report_id": str(envelope.get("report_id") or ""),
-        "request_id": request_id,
-        "parent_request_id": parent_request_id,
-        "task_id": task_id,
-        "task_run_id": task_run_id,
-        "occurrence_id": occurrence_id,
-        "entry_mode": entry_mode,
-        "source_identity": source,
-        "related_decision_id": decision_id,
-        "idempotency_key": key,
-        "no_trade_authority": True,
-        "content_hash": content_hash,
-    }
-
+    """Formal Decision delivery is allowed only from an exact canonical review event."""
+    # The former BDS/FORMAL_PRESENTATION_PATH projection is deliberately
+    # disabled.  A completion event must first create and bind
+    # events/reviews/formal_<occurrence_id>.json.
+    return None
 def report_delivery_event() -> dict | None:
     direct_path = os.environ.get("FORMAL_PRESENTATION_PATH", "").strip()
     if strict_formal_completion_enabled() and direct_path:
@@ -356,6 +281,10 @@ def report_delivery_event() -> dict | None:
 
 def canonical_scheduled_report_events(event_path: str | None = None) -> list[dict]:
     """Project one exact canonical review event, or use legacy scan compatibility."""
+    if strict_formal_completion_enabled() and not event_path:
+        # Strict Formal Decision delivery must never discover a historical
+        # review event when the producer did not provide the exact path.
+        return []
     paths = []
     if event_path:
         candidate = Path(event_path)

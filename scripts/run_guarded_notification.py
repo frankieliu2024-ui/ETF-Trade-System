@@ -88,8 +88,11 @@ def _run_center(mode: str, formal_content_file: str | None = None) -> int:
     import notification_center as center
 
     if formal_content_file:
-        import os
-        os.environ["FORMAL_PRESENTATION_PATH"] = formal_content_file
+        print(json.dumps({
+            "status": "FAILED",
+            "error": "Formal Decision direct content projection is disabled; use canonical completion event",
+        }, ensure_ascii=False))
+        return 1
 
     event = None
     if mode != "channel-test":
