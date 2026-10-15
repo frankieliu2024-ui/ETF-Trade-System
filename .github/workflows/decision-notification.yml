@@ -29,53 +29,9 @@ on:
         description: "Source US pulse run ID for bounded recovery audit"
         required: false
         default: ""
-      formal_content_path:
-        description: "Current BDS path for explicit Formal Decision notification"
-        required: false
-        default: ""
-      formal_request_id:
-        description: "Current Formal Decision request_id"
-        required: false
-        default: ""
-      formal_parent_request_id:
-        description: "Current Formal Decision parent_request_id"
-        required: false
-        default: ""
-      formal_entry_mode:
-        description: "Current Formal Decision entry_mode"
-        required: false
-        default: ""
-      formal_source:
-        description: "Current Formal Decision source"
-        required: false
-        default: ""
-      formal_task_id:
-        description: "Current Formal Decision task_id"
-        required: false
-        default: ""
-      formal_task_run_id:
-        description: "Current Formal Decision task_run_id"
-        required: false
-        default: ""
-      formal_occurrence_id:
-        description: "Current Formal Decision occurrence_id"
-        required: false
-        default: ""
-      formal_market_date:
-        description: "Current Formal Decision market_date"
-        required: false
-        default: ""
-      formal_bds_commit:
-        description: "Commit that wrote the current BDS"
-        required: false
-        default: ""
-      formal_content_hash:
-        description: "SHA-256 of current FINAL_CONTENT"
-        required: false
-        default: ""
   push:
     paths:
-      - "events/decisions/*.json"
+      # Formal Decision notifications are authorized only by events/reviews/formal_*.json.
       - "requests/live_snapshot/*__formal_decision_completion.json"
       - "events/trades/*.json"
       - "events/reviews/*.json"
@@ -130,70 +86,6 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Bind explicitly dispatched current BDS
-        id: dispatch_bds
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.formal_content_path != '' }}
-        shell: bash
-        env:
-          BDS_PATH: ${{ inputs.formal_content_path }}
-          EXPECTED_REQUEST_ID: ${{ inputs.formal_request_id }}
-          EXPECTED_PARENT_REQUEST_ID: ${{ inputs.formal_parent_request_id }}
-          EXPECTED_ENTRY_MODE: ${{ inputs.formal_entry_mode }}
-          EXPECTED_SOURCE: ${{ inputs.formal_source }}
-          EXPECTED_TASK_ID: ${{ inputs.formal_task_id }}
-          EXPECTED_TASK_RUN_ID: ${{ inputs.formal_task_run_id }}
-          EXPECTED_OCCURRENCE_ID: ${{ inputs.formal_occurrence_id }}
-          EXPECTED_MARKET_DATE: ${{ inputs.formal_market_date }}
-          EXPECTED_BDS_COMMIT: ${{ inputs.formal_bds_commit }}
-          EXPECTED_CONTENT_HASH: ${{ inputs.formal_content_hash }}
-        run: |
-          set -euo pipefail
-          case "$BDS_PATH" in requests/live_snapshot/*__business_decision_source.json|requests/live_snapshot/*__bds*.json) ;; *) echo "invalid current BDS path" >&2; exit 1;; esac
-          test -f "$BDS_PATH"
-          test -n "$EXPECTED_BDS_COMMIT"
-          git cat-file -e "$EXPECTED_BDS_COMMIT^{commit}"
-          git diff-tree --no-commit-id --name-only -r "$EXPECTED_BDS_COMMIT" -- "$BDS_PATH" | grep -Fx "$BDS_PATH"
-          python - "$BDS_PATH" <<'PY'
-          import hashlib, json, os, sys
-          data=json.load(open(sys.argv[1], encoding="utf-8"))
-          expected={"request_id":os.environ["EXPECTED_REQUEST_ID"],"parent_request_id":os.environ["EXPECTED_PARENT_REQUEST_ID"],"entry_mode":os.environ["EXPECTED_ENTRY_MODE"],"source":os.environ["EXPECTED_SOURCE"],"task_id":os.environ["EXPECTED_TASK_ID"],"task_run_id":os.environ["EXPECTED_TASK_RUN_ID"],"occurrence_id":os.environ["EXPECTED_OCCURRENCE_ID"],"market_date":os.environ["EXPECTED_MARKET_DATE"]}
-          for key, value in expected.items():
-              if str(data.get(key, "")) != value: raise SystemExit(f"BDS {key} mismatch")
-          content=str(data.get("presentation_content") or "")
-          digest=hashlib.sha256(content.encode("utf-8")).hexdigest()
-          if digest != os.environ["EXPECTED_CONTENT_HASH"] or str(data.get("content_hash") or "") != digest: raise SystemExit("BDS content_hash mismatch")
-          if str(data.get("target_path") or "") != sys.argv[1]: raise SystemExit("BDS target_path mismatch")
-          PY
-          echo "formal_content=true" >> "$GITHUB_OUTPUT"
-          echo "formal_content_path=$BDS_PATH" >> "$GITHUB_OUTPUT"
-      - name: Bind BDS from consistency workflow completion
-        id: workflow_bds
-        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF system consistency' && github.event.workflow_run.conclusion == 'success' }}
-        shell: bash
-        env:
-          PRODUCER_SHA: ${{ github.event.workflow_run.head_sha }}
-        run: |
-          set -euo pipefail
-          git fetch --no-tags origin "$PRODUCER_SHA"
-          mapfile -t bds_paths < <(
-            git diff-tree --no-commit-id --name-only -r "$PRODUCER_SHA" -- \
-              'requests/live_snapshot/*__bds*.json' \
-              'requests/live_snapshot/*__business_decision_source*.json' | sed '/^$/d'
-          )
-          if [ "${#bds_paths[@]}" -eq 0 ]; then
-            echo "No BDS in consistency producer commit; notification binding is not applicable."
-            echo "formal_content=false" >> "$GITHUB_OUTPUT"
-            echo "formal_content_path=" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          if [ "${#bds_paths[@]}" -ne 1 ]; then
-            echo "Expected exactly one current BDS in consistency producer commit; found ${#bds_paths[@]}" >&2
-            printf '%s\n' "${bds_paths[@]}" >&2
-            exit 1
-          fi
-          test -f "${bds_paths[0]}"
-          echo "formal_content=true" >> "$GITHUB_OUTPUT"
-          echo "formal_content_path=${bds_paths[0]}" >> "$GITHUB_OUTPUT"
 
       - name: Detect push notification kind
         if: ${{ github.event_name == 'push' }}
@@ -220,32 +112,8 @@ jobs:
             echo "formal_completion=false" >> "$GITHUB_OUTPUT"
             echo "formal_completion_path=" >> "$GITHUB_OUTPUT"
           fi
-          # BDS ingress files use the canonical ``__bds`` suffix.  Keep the
-          # historical verbose suffix as a compatibility path, but never let
-          # the notification route depend on one filename spelling.
-          mapfile -t formal_content_paths < <(grep -E '^requests/live_snapshot/[^/]+__(bds|business_decision_source)[^/]*\.json$' /tmp/changed_files.txt || true)
-          if [ "${#formal_content_paths[@]}" -eq 1 ]; then
-            echo "formal_content=true" >> "$GITHUB_OUTPUT"
-            echo "formal_content_path=${formal_content_paths[0]}" >> "$GITHUB_OUTPUT"
-          elif [ "${#formal_content_paths[@]}" -gt 1 ]; then
-            echo "Ambiguous Formal Decision content push: expected exactly one BDS file, found ${#formal_content_paths[@]}" >&2
-            exit 1
-          else
-            echo "formal_content=false" >> "$GITHUB_OUTPUT"
-            echo "formal_content_path=" >> "$GITHUB_OUTPUT"
-          fi
-          mapfile -t decision_paths < <(grep -E '^events/decisions/[^/]+\.json$' /tmp/changed_files.txt || true)
-          if [ "${#decision_paths[@]}" -eq 1 ]; then
-            echo "decision=true" >> "$GITHUB_OUTPUT"
-            echo "decision_event_path=${decision_paths[0]}" >> "$GITHUB_OUTPUT"
-          elif [ "${#decision_paths[@]}" -gt 1 ]; then
-            echo "Ambiguous Formal Decision push: expected exactly one decision event, found ${#decision_paths[@]}" >&2
-            printf '%s\n' "${decision_paths[@]}" >&2
-            exit 1
-          else
-            echo "decision=false" >> "$GITHUB_OUTPUT"
-            echo "decision_event_path=" >> "$GITHUB_OUTPUT"
-          fi
+          echo "decision=false" >> "$GITHUB_OUTPUT"
+          echo "decision_event_path=" >> "$GITHUB_OUTPUT"
           if grep -Eq '^events/trades/[^/]+\.json$' /tmp/changed_files.txt; then
             echo "trade=true" >> "$GITHUB_OUTPUT"
           else
@@ -288,7 +156,7 @@ jobs:
             echo "report_handoff_path=" >> "$GITHUB_OUTPUT"
           fi
           mapfile -t review_paths < <(grep -E '^events/reviews/[^/]+\.json$' /tmp/changed_files.txt || true)
-          if [ "${#review_paths[@]}" -eq 1 ]; then
+          if [ "${#review_paths[@]}" -eq 1 ] && [[ "${review_paths[0]}" != events/reviews/formal_*.json ]]; then
             echo "review_completion=true" >> "$GITHUB_OUTPUT"
             echo "review_event_path=${review_paths[0]}" >> "$GITHUB_OUTPUT"
           elif [ "${#review_paths[@]}" -gt 1 ]; then
@@ -421,10 +289,7 @@ jobs:
           mapfile -t review_paths < <(
             git diff-tree --no-commit-id --name-only -r "$downstream_sha" -- 'events/reviews/*.json' | sed '/^$/d'
           )
-          mapfile -t decision_paths < <(
-            git diff-tree --no-commit-id --name-only -r "$downstream_sha" -- 'events/decisions/*.json' | sed '/^$/d'
-          )
-          if [ "${#review_paths[@]}" -eq 1 ]; then
+          if [ "${#review_paths[@]}" -eq 1 ] && [[ "${review_paths[0]}" != events/reviews/formal_*.json ]]; then
             echo "review_completion=true" >> "$GITHUB_OUTPUT"
             echo "review_event_path=${review_paths[0]}" >> "$GITHUB_OUTPUT"
           elif [ "${#review_paths[@]}" -gt 1 ]; then
@@ -435,18 +300,9 @@ jobs:
             echo "review_completion=false" >> "$GITHUB_OUTPUT"
             echo "review_event_path=" >> "$GITHUB_OUTPUT"
           fi
-          if [ "${#decision_paths[@]}" -eq 1 ]; then
-            echo "decision_completion=true" >> "$GITHUB_OUTPUT"
-            echo "decision_event_path=${decision_paths[0]}" >> "$GITHUB_OUTPUT"
-          elif [ "${#decision_paths[@]}" -gt 1 ]; then
-            echo "Ambiguous Formal Decision producer commit: expected exactly one decision event, found ${#decision_paths[@]}" >&2
-            printf '%s\n' "${decision_paths[@]}" >&2
-            exit 1
-          else
-            echo "decision_completion=false" >> "$GITHUB_OUTPUT"
-            echo "decision_event_path=" >> "$GITHUB_OUTPUT"
-          fi
-          if [ "${#review_paths[@]}" -eq 0 ] && [ "${#decision_paths[@]}" -eq 0 ]; then
+          echo "decision_completion=false" >> "$GITHUB_OUTPUT"
+          echo "decision_event_path=" >> "$GITHUB_OUTPUT"
+          if [ "${#review_paths[@]}" -eq 0 ]; then
             # Successful market snapshots can be non-report wakes. Absence of a
             # report event is a normal no-op; only an explicit canonical event
             # authorizes REPORT delivery. Formal request closure is covered by
@@ -522,10 +378,9 @@ jobs:
           REPORT_HANDOFF_PATH: ${{ steps.push_kind.outputs.report_handoff_path }}
           REVIEW_EVENT_PATH: ${{ steps.formal_completion_event.outputs.review_event_path || steps.push_kind.outputs.review_event_path || steps.workflow_review.outputs.review_event_path }}
           FORMAL_COMPLETION_EVENT: ${{ steps.formal_completion_event.outputs.review_event_path != '' && 'true' || 'false' }}
-          DECISION_EVENT_PATH: ${{ steps.push_kind.outputs.decision_event_path || steps.workflow_review.outputs.decision_event_path }}
         run: |
           set -euo pipefail
-          if [ -n "$REPORT_DELIVERY_PATH" ] || [ -n "$REPORT_HANDOFF_PATH" ] || [ -n "$REVIEW_EVENT_PATH" ] || [ -n "$DECISION_EVENT_PATH" ]; then
+          if [ -n "$REPORT_DELIVERY_PATH" ] || [ -n "$REPORT_HANDOFF_PATH" ] || [ -n "$REVIEW_EVENT_PATH" ]; then
             python scripts/run_guarded_notification.py center --mode event
           else
             echo "No current shared completion/report binding; fail closed without PushPlus."
@@ -596,7 +451,7 @@ jobs:
           done
 
       - name: Surface notification delivery failure without blocking trading system
-        if: ${{ steps.formal_content_notify.outcome == 'failure' || steps.test_notify.outcome == 'failure' || steps.event_notify.outcome == 'failure' || steps.close_notify.outcome == 'failure' || steps.a_share_summary_notify.outcome == 'failure' || steps.a_share_shock_notify.outcome == 'failure' || steps.apac_summary_notify.outcome == 'failure' || steps.apac_shock_notify.outcome == 'failure' || steps.us_summary_notify.outcome == 'failure' || steps.us_shock_notify.outcome == 'failure' }}
+        if: ${{ steps.test_notify.outcome == 'failure' || steps.event_notify.outcome == 'failure' || steps.close_notify.outcome == 'failure' || steps.a_share_summary_notify.outcome == 'failure' || steps.a_share_shock_notify.outcome == 'failure' || steps.apac_summary_notify.outcome == 'failure' || steps.apac_shock_notify.outcome == 'failure' || steps.us_summary_notify.outcome == 'failure' || steps.us_shock_notify.outcome == 'failure' }}
         run: |
           echo "User notification delivery failed; ETF market/data/trading-decision workflows remain unaffected."
           exit 1
