@@ -26,9 +26,9 @@
 
 所有入口严格按以下顺序执行：
 
-当前入口 → 当前唯一 parent request → request-bound snapshot → query_context → DWP/problem graph → formal_reply_gate → READY → 业务判断 → 冻结唯一 FINAL_CONTENT → 当前请求 BUSINESS_DECISION_SOURCE 写入并回读 → 既有 Formal Decision completion ingress → 当前 events/reviews/formal_<occurrence_id>.json 交接提交 → 用户可见回复（同一 FINAL_CONTENT） → REPORT/notification_center → 当前 notification → PushPlus provider result
+当前入口 → 当前唯一 parent request → request-bound snapshot → query_context → DWP/problem graph → formal_reply_gate → READY → 业务判断 → 冻结唯一 FINAL_CONTENT → 用户可见回复（同一 FINAL_CONTENT） → BUSINESS_DECISION_SOURCE 写入并回读 → Formal Decision completion ingress → 当前 events/reviews/formal_<occurrence_id>.json → decision-notification → notification_center → 当前 notification → PushPlus provider result
 
-BDS 和 completion 的提交属于正文后的置后投影，但必须在同一执行回合内先完成提交/回读，再结束任务并输出用户可见正文；它们不得等待 REPORT、notification 或 provider 成功。用户正文优先的含义是 FINAL_CONTENT 优先冻结、不得被后置状态阻塞或改写，不是允许定时任务在正文输出后提前结束而跳过后置交接。
+用户正文是 READY 后的首个可见动作。BDS、completion、canonical review event 和通知均为后置投影，不得阻塞、缩短、改写或撤回 FINAL_CONTENT；但在同一执行回合内应继续提交并回读这些后置对象。后置投影失败只能如实记录，不能重建正文、创建第二请求或回退到历史对象。
 
 其中：
 
@@ -60,9 +60,9 @@ Formal Decision 的后置 completion ingress 固定使用现有 state-sync owner
 2. 在同一执行回合内，将同一正文和同一请求身份写入现有 BUSINESS_DECISION_SOURCE 入口并回读；
 3. 由同一请求直接提交既有 Formal Decision completion ingress，形成唯一 `events/reviews/formal_<occurrence_id>.json`，绑定当前 request/parent、decision、BDS、report、正文和 content_hash；
 4. 上述 BDS/completion 交接不得等待 REPORT、notification 或 provider 成功，也不得改写、缩短或撤回 FINAL_CONTENT；
-5. 完成上述不阻塞正文的交接提交后，向用户输出同一份完整 FINAL_CONTENT；
-6. 由与【ETF系统复核】、【ETF交易复盘】相同的 REPORT/notification_center/PushPlus 主链消费该 completion event；
-6. 任一后置对象缺失或不一致时，当前业务正文不撤回，后置交接按当前协议如实标记并 fail-closed；不扫描历史对象、不返回 ALREADY_MANAGED、不创建第二对象。
+5. 用户窗口先输出同一份完整 FINAL_CONTENT；
+6. 由与【ETF系统复核】、【ETF交易复盘】相同的 decision-notification/notification_center/PushPlus 主链消费该 completion event；
+7. 任一后置对象缺失或不一致时，当前业务正文不撤回，后置交接按当前协议如实标记并 fail-closed；不扫描历史对象、不返回 ALREADY_MANAGED、不创建第二对象。
 
 BDS 不直接唤醒通知，也不直接调用 PushPlus。BDS 只负责业务事实入口和唯一正文冻结，并且必须携带完整的 presentation_binding（request_id、parent_request_id、decision_id、report_id、full_content、content_hash）；completion event 是通知主链的当前交接事件，REPORT 和 notification_center 只能从该精确事件透传同一份 FINAL_CONTENT，不得重新生成、摘要、改写或从历史对象恢复正文。PushPlus 未取得当前 notification 对应的明确 provider 成功结果时，只能记录 EXTERNAL_SEND_UNVERIFIED；历史 provider 成功不能证明当前请求发送成功。
 
@@ -288,7 +288,7 @@ ChatGPT完成业务判断后只生成一次冻结的FINAL_CONTENT。既有Actor 
 
 BDS提交、回读或通知尝试失败时，必须保留同一父请求和冻结的FINAL_CONTENT；不得创建第二请求、第二正文、第二BDS、历史回退或旁路通知。通知失败不改变用户业务判断，但不得宣称当前notification或provider成功。
 
-Formal Decision通知验收只要求核对同一父请求的BDS、notification和PushPlus结果；completion、REPORT和REPORT_DELIVERY_REQUEST不再是Formal Decision通知的必经节点。Scheduled Review仍按其自身合同核对completion、REPORT和REPORT_DELIVERY_REQUEST。
+Formal Decision通知验收必须核对同一父请求的 BDS、completion event、events/reviews/formal_<occurrence_id>.json、当前 notification、PushPlus provider result 和用户实际收到状态。通知正文可以在共享 notification_center 内部表现为 `REPORT_DELIVERY_REQUEST`，但该对象只能由当前 completion event 投影形成，不得作为独立生产入口、唤醒源或历史回退。Scheduled Review仍按其自身合同核对completion、REPORT和REPORT_DELIVERY_REQUEST。
 
 ## 7. 用户可见边界
 

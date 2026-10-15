@@ -19,7 +19,8 @@ class FormalDecisionWorkflowSeparationTests(unittest.TestCase):
         self.assertNotIn('requests/live_snapshot/*__bds*.json', workflow)
         self.assertNotIn('requests/live_snapshot/*__business_decision_source*.json', workflow)
         self.assertNotIn("Reject direct BDS notification path", workflow)
-        self.assertIn("DECISION_EVENT_PATH", workflow)
+        self.assertNotIn("DECISION_EVENT_PATH", workflow)
+        self.assertNotIn("events/decisions/*.json", workflow)
 
 
 if __name__ == "__main__":

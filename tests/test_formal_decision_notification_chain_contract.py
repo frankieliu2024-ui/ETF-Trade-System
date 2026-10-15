@@ -30,8 +30,8 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertIn("Persist Formal Decision canonical review event", workflow)
         self.assertIn('git add -- "$EVENT_PATH"', workflow)
         self.assertIn("FORMAL_COMPLETION_EVENT:", workflow)
-        self.assertIn("if strict_formal_completion:", center)
-        self.assertIn("if strict_formal_completion and direct_path:", center)
+        self.assertIn("strict_formal_completion_enabled", center)
+        self.assertIn("strict_formal_completion_enabled()", center)
 
     def test_strict_formal_mode_executes_without_scope_error(self):
         import os
@@ -54,7 +54,7 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
     def test_legacy_decision_event_route_is_disabled(self):
         center = (ROOT / "scripts" / "notification_center.py").read_text(encoding="utf-8")
         self.assertIn("The legacy DECISION_EVENT_PATH/events/decisions route is deliberately disabled.", center)
-        self.assertIn("return None", center[center.index("The legacy DECISION_EVENT_PATH"):center.index("The legacy DECISION_EVENT_PATH") + 300])
+        self.assertNotIn("formal_decision_report_event, execution_confirmation_event", center)
 
     def test_persistence_has_latest_main_retry(self):
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")

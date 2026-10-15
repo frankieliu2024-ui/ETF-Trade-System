@@ -1098,11 +1098,11 @@ def choose_event(mode: str) -> dict | None:
         # malformed, missing, or otherwise not projectable.
         return report_delivery_event()
     builders = (
-        (report_delivery_event, formal_decision_report_event, execution_confirmation_event,
+        (report_delivery_event, execution_confirmation_event,
          formal_decision_change_event, account_confirmation_event, system_event, decision_event)
         if (_report_handoff_path() is not None or _report_delivery_path() is not None)
         else
-        (execution_confirmation_event, formal_decision_report_event, formal_decision_change_event,
+        (execution_confirmation_event, formal_decision_change_event,
          account_confirmation_event, system_event, decision_event, report_delivery_event)
     )
     for builder in builders:
