@@ -374,6 +374,21 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             # explicit release/retain comparison.
             if not str(answer.get("capital_efficiency_release_assessment") or "").strip():
                 raise ValueError(f"decision response missing capital-efficiency release assessment: {pid}")
+            # Capital competition is release-first for current holdings:
+            # HOLD is a conclusion that needs affirmative evidence, not the
+            # fallback when no independent exit trigger was found.
+            release_first = (
+                (work_package.get("response_contract") or {}).get("holding_capital_competition_policy")
+                == "RELEASE_FIRST"
+            )
+            if release_first and _normalize_holding_action(answer.get("final_action")) == "HOLD":
+                for field in ("holding_thesis_status", "long_term_outcome_review", "hold_over_release_reason"):
+                    if not str(answer.get(field) or "").strip():
+                        raise ValueError(f"decision response HOLD requires {field}: {pid}")
+                if str(answer.get("hold_over_release_reason") or "").strip() in {
+                    "无独立退出证据", "未达到独立卖出门槛", "没有独立退出依据",
+                }:
+                    raise ValueError(f"decision response HOLD cannot rely only on absence of exit evidence: {pid}")
             if _normalize_holding_action(answer.get("final_action")) in {"REDUCE", "EXIT"}:
                 if answer.get("quantity") in (None, "") or not answer.get("capital_destination"):
                     raise ValueError(f"decision response missing action quantity/destination: {pid}")
