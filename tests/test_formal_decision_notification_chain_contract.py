@@ -51,6 +51,12 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
             self.assertIsNone(notification_center.report_delivery_event())
             self.assertIsNone(notification_center.report_delivery_validation_error())
 
+    def test_strict_formal_mode_requires_exact_event_binding_before_compatibility(self):
+        center = (ROOT / "scripts" / "notification_center.py").read_text(encoding="utf-8")
+        self.assertIn("strict_formal_completion_enabled() and not review_event_path", center)
+        self.assertIn("strict_formal_completion_enabled() and not explicit_report_binding", center)
+        self.assertIn("REPORT handoff/delivery compatibility", center)
+
     def test_legacy_decision_event_route_is_disabled(self):
         center = (ROOT / "scripts" / "notification_center.py").read_text(encoding="utf-8")
         self.assertIn("The legacy DECISION_EVENT_PATH/events/decisions route is deliberately disabled.", center)
