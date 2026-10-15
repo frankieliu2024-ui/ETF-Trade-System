@@ -136,16 +136,16 @@ def classify_formal_request_consumer_state(
             "actor_response_contract": response_contract,
             "control_plane_in_user_reply": False,
             "reason": (
-                "SAME_REQUEST_FACTS_READY_BDS_HANDOFF_REQUIRED_"
-                "NOTIFICATION_ATTEMPT_PROVIDER_ASYNC"
+                "SAME_REQUEST_FACTS_READY_REPLY_FIRST_COMPLETION_HANDOFF_"
+                "BDS_AUDIT_AND_PROVIDER_ASYNC"
             ),
             "canonical_persistence_status": (
                 "CONFIRMED" if canonical_persisted else "PENDING_ASYNC"
             ),
-            # This is the single pre-reply BDS handoff contract, not a new
-            # state or producer. The Actor freezes FINAL_CONTENT, persists and
-            # reads back BDS, attempts the existing notification path, and then
-            # returns the same full content. Provider success remains async.
+            # This is the single post-reply completion handoff contract, not a new
+            # state or producer. The Actor freezes FINAL_CONTENT and returns it
+            # first; BDS is a bound business-fact projection, then the existing
+            # Formal Decision completion ingress drives REPORT/notification.
             "ready_handoff": {
                 "required": True,
                 "submission_type": "BUSINESS_DECISION_SOURCE",
@@ -179,9 +179,9 @@ def classify_formal_request_consumer_state(
                     ],
                     "forbid_historical_fallback": True,
                     "read_back_required": True,
-                    "formal_decision_notification_chain_starts_at_bds": True,
-                    "completion_and_report_not_required_for_formal_decision_notification": True,
-                    "bds_must_be_written_and_read_back_before_user_reply": True,
+                    "formal_decision_notification_chain_starts_at_bds": False,
+                    "completion_and_report_not_required_for_formal_decision_notification": False,
+                    "bds_must_be_written_and_read_back_before_user_reply": False,
                 },
                 "user_reply_precondition": False,
                 "notification_attempt_precondition": True,
@@ -193,10 +193,11 @@ def classify_formal_request_consumer_state(
                     "handoff_status_cannot_replace_content": True,
                     "bds_must_reuse_exact_final_content": True,
                 },
-                "post_reply_async": False,
+                "post_reply_async": True,
                 "provider_success_async": True,
-                "must_read_back_before_reply": True,
+                "must_read_back_before_reply": False,
                 "historical_fallback_forbidden": True,
+                "must_read_back_after_reply": True,
             },
         }
 
