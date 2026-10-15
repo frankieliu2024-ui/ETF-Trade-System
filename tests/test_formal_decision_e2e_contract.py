@@ -84,6 +84,38 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
             self.assertEqual(event["request_id"], "fd_current")
             self.assertEqual(event["content_hash"], digest)
 
+    def test_bds_notification_rejects_compressed_presentation_with_structured_answers(self):
+        import scripts.notification_center as center
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bds.json"
+            body = "【ETF正式决策】短摘要"
+            digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
+            bds = {
+                "request_type": "BUSINESS_DECISION_SOURCE",
+                "request_id": "fd_current",
+                "parent_request_id": "fd_current",
+                "entry_mode": "MANUAL_CONVERSATION",
+                "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
+                "decision_id": "decision_current",
+                "decision_response": {"answers": {
+                    "HOLDING:300750": {"final_action": "EXIT"},
+                    "OBSERVATION:515080": {"final_action": "RETAIN"},
+                    "DISCOVERY:159110": {"final_action": "RETAIN"},
+                }},
+                "presentation_content": body,
+                "content_hash": digest,
+                "presentation_binding": {
+                    "request_id": "fd_current",
+                    "parent_request_id": "fd_current",
+                    "decision_id": "decision_current",
+                    "full_content": body,
+                    "content_hash": digest,
+                },
+            }
+            path.write_text(json.dumps(bds, ensure_ascii=False), encoding="utf-8")
+            with patch.dict(os.environ, {"EXPECTED_FORMAL_REQUEST_ID": "fd_current"}, clear=False):
+                self.assertIsNone(center.formal_content_event(path))
+
     def test_formal_report_requires_request_bound_completion_and_hash(self):
         import scripts.notification_center as center
         with tempfile.TemporaryDirectory() as tmp:
