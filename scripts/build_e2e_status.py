@@ -720,6 +720,33 @@ def main() -> int:
                 "projection_preserved_from_non_formal_runtime_request": True,
                 "projection_scope": "FORMAL_DECISION_REQUEST",
             }
+    # A state-sync run may correctly rebuild the account component while
+    # preserving the prior Formal Decision gate because it has no new formal
+    # query context.  Once the canonical account fact has converged, remove
+    # only the stale account-owned blocker from that preserved projection.
+    preserved_gate = components["decision_context"].get("formal_reply_gate")
+    stale_account_marker = "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request has not converged into canonical account_fact"
+    if (
+        not current_gate
+        and isinstance(preserved_gate, dict)
+        and account_gate.get("status") != "BLOCKED"
+    ):
+        preserved_blockers = [
+            item for item in (preserved_gate.get("blockers") or [])
+            if item != stale_account_marker
+        ]
+        if len(preserved_blockers) != len(preserved_gate.get("blockers") or []):
+            components["decision_context"]["formal_reply_gate"] = {
+                **preserved_gate,
+                "status": "READY" if not preserved_blockers else preserved_gate.get("status"),
+                "reply_freezable": True if not preserved_blockers else preserved_gate.get("reply_freezable"),
+                "blockers": preserved_blockers,
+                "account_dependency": {
+                    "status": account_gate.get("status"),
+                    "reason": account_gate.get("reason"),
+                    "pending_broker_request": account_gate.get("pending_broker_request"),
+                },
+            }
     components["decision_context"]["context_read_contract"] = {
         "query_context": query_read,
         "decision_context": decision_read,
