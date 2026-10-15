@@ -492,7 +492,7 @@ Formal Decision 达到 READY 后，Actor 只冻结一份 `FINAL_CONTENT`。用�
 
 completion 的 `presentation_binding` 必须同时保存并校验：`request_id`、`parent_request_id`、`decision_id`、`report_id`、`full_content`、`content_hash`。其中 `full_content` 必须逐字等于 `FINAL_CONTENT`，`content_hash` 必须等于其实际 SHA-256。当前请求任一身份或哈希缺失、不一致时，必须 fail-closed，不得返回 `ALREADY_MANAGED`。
 
-PushPlus 只能由现有 `notification_center` 从当前请求冻结的 `FINAL_CONTENT` 原文投影通知正文。优先消费当前 BDS 的 `presentation_content`（其 `content_hash` 和请求身份必须一致）；若当前 completion 已存在，则可消费其同一份 `presentation_binding.full_content`。BDS 不重新生成正文，completion/REPORT 也不重建正文。旧 completion、旧 REPORT、旧 notification 和历史 provider 结果均不得回退或补齐当前正文。`REPORT_DELIVERY_REQUEST` 如被现有兼容链使用，只能由当前冻结正文确定性投影，不是 Actor 需要新建的前置请求。
+PushPlus 只能由现有 `notification_center` 从当前请求冻结的 `FINAL_CONTENT` 原文投影通知正文。Formal Decision 必须像【ETF系统复核】和【ETF交易复盘】一样，先形成当前精确 completion event，再进入共享 REPORT/notification_center/PushPlus 主链；BDS 只保存业务事实入口和同一份冻结正文，不承担通知唤醒。completion/REPORT 不重新生成正文，只透传同一份 `presentation_binding.full_content`。旧 completion、旧 REPORT、旧 notification 和历史 provider 结果均不得回退或补齐当前正文。`REPORT_DELIVERY_REQUEST` 如被现有兼容链使用，只能由当前冻结正文确定性投影，不是 Actor 需要新建的前置请求。
 
 通知失败不撤回用户已看到的 `FINAL_CONTENT`；没有当前 `notification_id` 对应的 provider 成功结果时，状态只能记录为 `EXTERNAL_SEND_UNVERIFIED`。
 
