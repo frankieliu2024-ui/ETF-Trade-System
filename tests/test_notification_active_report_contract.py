@@ -161,6 +161,7 @@ class FormalFinalContentNotificationTests(unittest.TestCase):
             self.assertEqual(event["parent_request_id"], "parent-1")
             self.assertEqual(event["report_id"], "report-20261014T1120")
 
+    @unittest.skip("legacy events/decisions route removed; canonical review event is tested separately")
     def test_formal_notification_accepts_distinct_completion_and_parent_request_ids(self):
         import scripts.notification_center as center
         from pathlib import Path
