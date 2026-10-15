@@ -710,6 +710,9 @@ def main() -> int:
     # Preserve it only when the durable parent still exists and is still a
     # recognized Formal Decision ingress; never promote the non-formal request
     # itself into a Formal Decision.
+    # Reuse the account component in this main-level projection before
+    # evaluating a preserved Formal Decision gate.
+    account_gate = account_component(data["account"], data["current"])
     current_gate = components["decision_context"].get("formal_reply_gate")
     prior_gate = (prior.get("components") or {}).get("decision_context", {}).get("formal_reply_gate")
     if not current_gate and isinstance(prior_gate, dict):
