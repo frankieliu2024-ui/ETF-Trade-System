@@ -2320,6 +2320,49 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
     return True, True
 
 
+def record_formal_decision_report_event(request: dict, bds: dict) -> tuple[bool, bool, str]:
+    """Project one frozen Formal Decision body directly to the shared review-event notification chain."""
+    binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
+    full_content = str(bds.get("presentation_content") or binding.get("full_content") or "")
+    task_run_id = str(bds.get("task_run_id") or binding.get("task_run_id") or "").strip()
+    if not full_content or not task_run_id:
+        raise ValueError("Formal Decision canonical event requires frozen content and task_run_id")
+    content_hash = hashlib.sha256(full_content.encode("utf-8")).hexdigest()
+    if str(bds.get("content_hash") or binding.get("content_hash") or "") != content_hash:
+        raise ValueError("Formal Decision canonical event content_hash mismatch")
+    binding = {
+        "report_type": "ETF_FORMAL_DECISION",
+        "task_id": str(bds.get("task_id") or binding.get("task_id") or "ETF正式决策"),
+        "task_run_id": task_run_id,
+        "report_id": str(bds.get("report_id") or binding.get("report_id") or f"ETF_FORMAL_DECISION:{task_run_id}"),
+        "request_id": str(bds.get("request_id") or request.get("parent_request_id") or ""),
+        "title": "【ETF正式决策】",
+        "full_content": full_content,
+        "content_hash": content_hash,
+    }
+    occurrence = str(bds.get("occurrence_id") or binding.get("occurrence_id") or task_run_id)
+    payload = {
+        "event_type": "FORMAL_DECISION_REPORT",
+        "occurrence_id": occurrence,
+        "request_id": str(bds.get("request_id") or request.get("parent_request_id") or ""),
+        "decision_id": str(bds.get("decision_id") or request.get("decision_id") or ""),
+        "reviewed_at_beijing": str(bds.get("requested_at_beijing") or request.get("requested_at_beijing") or ""),
+        "presentation_binding": binding,
+        "formal_decision": bds.get("decision_response") or bds.get("formal_decision") or {},
+        "source_bds_path": str(bds.get("target_path") or ""),
+    }
+    payload["fingerprint"] = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+    event_path = ROOT / "events" / "reviews" / f"formal_{occurrence}.json"
+    prior = load_json(event_path) if event_path.exists() else {}
+    if prior and prior.get("fingerprint") != payload["fingerprint"]:
+        raise ValueError("Formal Decision occurrence is immutable")
+    if not prior:
+        event_path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_json_write(event_path, payload)
+        return True, False, str(event_path.relative_to(ROOT)).replace("\\", "/")
+    return True, True, str(event_path.relative_to(ROOT)).replace("\\", "/")
+
+
 def record_close_review_closure(account: dict, request: dict, review: dict, event: dict) -> None:
     """Persist canonical closure while preserving degraded evidence semantics."""
     market_date = str(event.get("market_date") or "")
@@ -3433,6 +3476,16 @@ def main() -> int:
         request["request_type"] = BUSINESS_DECISION_SOURCE
         request["request_id"] = str(bds.get("request_id") or "").strip()
         request["presentation_content"] = content
+        recorded, idempotent, event_path = record_formal_decision_report_event(request, bds)
+        print(json.dumps({
+            "ok": True,
+            "request_id": request.get("request_id"),
+            "decision_id": request.get("decision_id"),
+            "formal_decision_event": True,
+            "canonical_publication": event_path,
+            "idempotent_replay": idempotent,
+        }, ensure_ascii=False))
+        return 0
 
     # Explicit Business Decision Source dispatch. The ingress file itself is
     # the immutable durable Source artifact; projection only occurs after the
