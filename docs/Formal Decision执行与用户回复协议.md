@@ -279,7 +279,7 @@ ETF交易复盘和ETF系统复核仍遵循各自已验证的Scheduled Review com
 
 ### 6.1 READY回复与后置正式交接的不可混淆边界
 
-ChatGPT完成业务判断后只生成一次冻结的FINAL_CONTENT。既有Actor handoff应先提交一次BUSINESS_DECISION_SOURCE envelope并回读，确定性核对parent_request_id、request_type、decision_response.answers覆盖同一DWP必答集合、presentation_content逐字等于冻结的FINAL_CONTENT，以及content_hash一致。
+ChatGPT完成业务判断后只生成一次冻结的FINAL_CONTENT。用户窗口先输出同一份完整FINAL_CONTENT；随后由既有Actor handoff提交一次BUSINESS_DECISION_SOURCE envelope并回读，确定性核对parent_request_id、request_type、decision_response.answers覆盖同一DWP必答集合、presentation_content逐字等于冻结的FINAL_CONTENT，以及content_hash一致。
 
 用户窗口输出是 READY 后的首个可见动作。不得等待 BDS 写入/回读、completion、REPORT、notification 或 PushPlus；通知尝试不得先于用户窗口输出。用户正文必须完整包含冻结的 FINAL_CONTENT，不能只返回 HANDOFF 状态、通知状态、内部校验结果或任何占位说明。
 
