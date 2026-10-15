@@ -59,6 +59,19 @@ class WorkflowCostConservationTests(unittest.TestCase):
         self.assertFalse(allowed("ETF workflow failure guard", "failure"))
         self.assertTrue(allowed("ETF workflow failure guard", "success"))
 
+    def test_notification_event_wake_fails_closed_without_current_binding(self):
+        text = DECISION.read_text(encoding="utf-8")
+        self.assertIn('No current notification binding; fail closed without PushPlus.', text)
+        self.assertIn('elif [ -n "$REPORT_DELIVERY_PATH" ]', text)
+        self.assertNotIn('else\\n            python scripts/run_guarded_notification.py center --mode event\\n          fi', text)
+
+    def test_formal_decision_uses_explicit_bds_and_txt_template(self):
+        text = DECISION.read_text(encoding="utf-8")
+        self.assertIn('--formal-content-file "$FORMAL_PRESENTATION_PATH"', text)
+        center = (ROOT / "scripts" / "notification_center.py").read_text(encoding="utf-8")
+        self.assertIn('pushplus_template = "txt" if item["event_type"] == "FORMAL_DECISION" else "markdown"', center)
+
+
     def test_notification_domain_keeps_fact_and_dedupe_guards(self):
         guarded = (ROOT / "scripts" / "run_guarded_notification.py").read_text(encoding="utf-8")
         center = (ROOT / "scripts" / "notification_center.py").read_text(encoding="utf-8")
