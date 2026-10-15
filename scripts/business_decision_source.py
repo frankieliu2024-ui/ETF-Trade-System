@@ -411,6 +411,15 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             for field in ("name", "thscode", "thesis", "falsifier", "next_decision_information", "information_value_reason"):
                 if not str(answer.get(field) or "").strip():
                     raise ValueError(f"decision response ADMIT requires {pid}.{field}")
+        if pid == "MAIN_CANDIDATE":
+            release_first = (
+                (work_package.get("response_contract") or {}).get("holding_capital_competition_policy")
+                == "RELEASE_FIRST"
+            )
+            if release_first and _normalize_opportunity_status(answer.get("opportunity_status")) in {"Trial机会", "Confirm机会"}:
+                for field in ("opportunity_evidence", "buy_over_cash_reason", "execution_gate_reason"):
+                    if not str(answer.get(field) or "").strip():
+                        raise ValueError(f"decision response active opportunity requires {pid}.{field}")
         if pid.startswith("OBSERVATION:") and str((by_id.get(pid) or {}).get("role_contract") or "") == "CONTINUOUS_INFORMATION_V1" and str(answer.get("disposition") or "").upper() == "EXIT":
             for field in ("information_value_reason", "continuity_cost_assessment"):
                 if not str(answer.get(field) or "").strip():
