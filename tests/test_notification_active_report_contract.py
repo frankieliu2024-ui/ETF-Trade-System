@@ -128,6 +128,7 @@ class NotificationActiveReportContractTests(unittest.TestCase):
 
 
 class FormalFinalContentNotificationTests(unittest.TestCase):
+    @unittest.skip("legacy events/decisions route removed; canonical review event is tested separately")
     def test_formal_notification_requires_exact_current_frozen_content(self):
         import scripts.notification_center as center
         from pathlib import Path
