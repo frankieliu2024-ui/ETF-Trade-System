@@ -476,6 +476,29 @@ jobs:
           esac
           echo "review_event_path=$event_path" >> "$GITHUB_OUTPUT"
 
+      - name: Persist Formal Decision canonical review event
+        if: ${{ github.event_name == 'push' && steps.formal_completion_event.outputs.review_event_path != '' }}
+        shell: bash
+        env:
+          EVENT_PATH: ${{ steps.formal_completion_event.outputs.review_event_path }}
+        run: |
+          set -euo pipefail
+          test -n "$EVENT_PATH"
+          case "$EVENT_PATH" in
+            events/reviews/formal_*.json) ;;
+            *) echo "invalid Formal Decision review event path: $EVENT_PATH" >&2; exit 1 ;;
+          esac
+          test -f "$EVENT_PATH"
+          git config user.name "ETF notification bot"
+          git config user.email "etf-notification-bot@users.noreply.github.com"
+          git add -- "$EVENT_PATH"
+          if git diff --cached --quiet; then
+            echo "Formal Decision canonical review event already present in current main."
+          else
+            git commit -m "event: persist Formal Decision canonical review event"
+            git push origin HEAD:main
+          fi
+
       - name: Send material user-action notification
         id: event_notify
         if: ${{ (github.event_name == 'workflow_run' && (github.event.workflow_run.name != 'ETF market snapshot' || steps.workflow_review.outputs.review_completion == 'true')) || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true' || steps.formal_completion_event.outputs.review_event_path != '')) }}
@@ -484,6 +507,7 @@ jobs:
           REPORT_DELIVERY_PATH: ${{ steps.push_kind.outputs.report_path }}
           REPORT_HANDOFF_PATH: ${{ steps.push_kind.outputs.report_handoff_path }}
           REVIEW_EVENT_PATH: ${{ steps.formal_completion_event.outputs.review_event_path || steps.push_kind.outputs.review_event_path || steps.workflow_review.outputs.review_event_path }}
+          FORMAL_COMPLETION_EVENT: ${{ steps.formal_completion_event.outputs.review_event_path != '' && 'true' || 'false' }}
           DECISION_EVENT_PATH: ${{ steps.push_kind.outputs.decision_event_path || steps.workflow_review.outputs.decision_event_path }}
         run: |
           set -euo pipefail

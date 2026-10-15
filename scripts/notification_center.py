@@ -141,6 +141,8 @@ def _report_delivery_path() -> Path | None:
 
 def report_delivery_validation_error() -> str | None:
     """Return an auditable validation error for an explicitly triggered REPORT."""
+    if strict_formal_completion:
+        return None
     handoff_path = _report_handoff_path()
     if handoff_path is not None:
         if not handoff_path.is_file():
@@ -295,6 +297,7 @@ def formal_presentation_event() -> dict | None:
     This is a delivery projection only.  It never validates or reconstructs
     decision_response answers, BDS semantics, REPORT, or historical events.
     """
+    strict_formal_completion = os.environ.get("FORMAL_COMPLETION_EVENT", "").strip().lower() == "true"
     raw_path = os.environ.get("FORMAL_PRESENTATION_PATH", "").strip()
     if not raw_path:
         return None
@@ -372,6 +375,8 @@ def formal_presentation_event() -> dict | None:
 
 def report_delivery_event() -> dict | None:
     direct_path = os.environ.get("FORMAL_PRESENTATION_PATH", "").strip()
+    if strict_formal_completion and direct_path:
+        return None
     direct = formal_presentation_event()
     if direct is not None:
         return direct
