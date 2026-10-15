@@ -39,5 +39,13 @@ class FormalDecisionCompletionIngressTests(unittest.TestCase):
         self.assertNotIn("不得直接构造 STATE_SYNC_ONLY / CHATGPT_MANUAL_FORMAL_COMPLETION", index)
 
 
+    def test_post_projection_is_submitted_before_scheduled_task_final_output(self):
+        index = Path("ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
+        protocol = Path("docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
+        self.assertIn("完成这些不阻塞正文的后置交接提交后，向用户输出同一份完整 FINAL_CONTENT", index)
+        self.assertIn("完成上述不阻塞正文的交接提交后，向用户输出同一份完整 FINAL_CONTENT", protocol)
+        self.assertNotIn("并立即向用户输出同一份完整正文；不得等待 BDS", index)
+
+
 if __name__ == "__main__":
     unittest.main()
