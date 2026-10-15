@@ -164,6 +164,11 @@ def report_delivery_validation_error() -> str | None:
     return None if valid else "invalid_report:" + reason
 
 
+def formal_decision_report_event() -> dict | None:
+    """Compatibility stub: the legacy Formal Decision route is fail-closed."""
+    return None
+
+
 def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[bool, str]:
     """Fail closed when a BDS presentation is only a compressed summary.
 
