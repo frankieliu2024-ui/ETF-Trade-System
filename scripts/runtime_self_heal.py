@@ -20,6 +20,7 @@ CONSISTENCY_PATH = ROOT / "data" / "state" / "system_consistency.json"
 QUERY_CONTEXT_PATH = ROOT / "data" / "state" / "query_context.json"
 DECISION_CONTEXT_PATH = ROOT / "data" / "state" / "decision_context.json"
 REVIEW_CONTEXT_PATH = ROOT / "data" / "state" / "review_context.json"
+E2E_STATUS_PATH = ROOT / "data" / "state" / "e2e_status.json"
 MASTER_PATH = ROOT / "ETF规则_MASTER.md"
 STATUS_PATH = ROOT / "data" / "state" / "self_healing_status.json"
 TZ = ZoneInfo("Asia/Shanghai")
@@ -175,6 +176,65 @@ def latest_unfinished_formal_parent() -> tuple[str | None, str | None]:
             return None, None
     return str(parent_path.relative_to(ROOT)).replace("\\", "/"), parent_id
 
+def formal_parent_handoff_gap() -> tuple[str | None, str | None, str | None]:
+    """Detect a READY Formal parent whose completion projection is still absent.
+
+    This is an observability/escalation guard only. It never replays a Formal
+    Decision and never creates BDS, completion, event, report, or notification.
+    A parent is considered eligible only when the existing request-bound gate
+    explicitly says READY/reply_freezable for that same request.
+    """
+    directory = ROOT / "requests" / "live_snapshot"
+    parents: list[tuple[datetime, str, Path]] = []
+    for path in directory.glob("*.json") if directory.exists() else []:
+        request = load_json(path, {}) or {}
+        if str(request.get("request_type") or "").upper() != "MARKET_QUOTE_REFRESH":
+            continue
+        if str(request.get("source") or "").upper() not in {
+            "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+            "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+        }:
+            continue
+        request_id = str(request.get("request_id") or "").strip()
+        stamp = parse_dt(request.get("requested_at_beijing") or request.get("request_time_beijing"))
+        if request_id and stamp:
+            parents.append((stamp, request_id, path))
+    if not parents:
+        return None, None, None
+    _, parent_id, parent_path = max(parents, key=lambda item: item[0])
+    e2e = load_json(E2E_STATUS_PATH, {}) or {}
+    gate = ((e2e.get("components") or {}).get("decision_context") or {}).get("formal_reply_gate") or {}
+    if str(gate.get("request_id") or "").strip() != parent_id or not bool(gate.get("reply_freezable")):
+        return None, None, None
+    bds = False
+    completion = False
+    for path in directory.glob("*.json"):
+        item = load_json(path, {}) or {}
+        if str(item.get("parent_request_id") or "").strip() != parent_id:
+            continue
+        request_type = str(item.get("request_type") or "").upper()
+        source = str(item.get("source") or "").upper()
+        fact_type = str(item.get("formal_fact_type") or "").upper()
+        bds = bds or request_type == "BUSINESS_DECISION_SOURCE"
+        completion = completion or (
+            request_type == "STATE_SYNC_ONLY"
+            and source == "CHATGPT_FORMAL_DECISION_COMPLETION"
+            and fact_type == "FORMAL_DECISION_COMPLETION"
+        )
+    event_found = False
+    review_dir = ROOT / "events" / "reviews"
+    for path in review_dir.glob("formal_*.json") if review_dir.exists() else []:
+        item = load_json(path, {}) or {}
+        if str(item.get("parent_request_id") or "").strip() == parent_id or str(item.get("request_id") or "").strip() == parent_id:
+            event_found = True
+            break
+    if bds and completion and event_found:
+        return None, None, None
+    missing = ",".join(name for name, present in (("BDS", bds), ("COMPLETION", completion), ("FORMAL_EVENT", event_found)) if not present)
+    return str(parent_path.relative_to(ROOT)).replace("\\\\", "/"), parent_id, missing
+
+
 def previous_status() -> dict:
     data = load_json(STATUS_PATH, {})
     return data if isinstance(data, dict) else {}
@@ -294,6 +354,7 @@ def assess(now: datetime | None = None) -> dict:
     current_ver = str(current.get("rules_version") or "")
     review_context = load_json(REVIEW_CONTEXT_PATH, {}) or {}
     formal_replay_path, formal_replay_parent_id = latest_unfinished_formal_parent()
+    formal_handoff_path, formal_handoff_parent_id, formal_handoff_missing = formal_parent_handoff_gap()
     review_ver = str(review_context.get("rules_version") or "")
 
     classification = "HEALTHY"
@@ -310,8 +371,10 @@ def assess(now: datetime | None = None) -> dict:
         classification, action, reason = "DISABLED", "NONE", "self-healing disabled by runtime policy"
     elif consistency_gate["blocks_market_recovery"]:
         classification, action, reason = "CONSISTENCY_REGRESSION", "ESCALATE", "system consistency has a hard failure that is not proven orthogonal to canonical market recovery"
+    elif formal_handoff_path:
+        classification, action, reason = "FORMAL_PARENT_HANDOFF_INCOMPLETE", "ESCALATE", f"READY Formal Decision parent {formal_handoff_parent_id} is missing required post-reply projection: {formal_handoff_missing}; no replay is permitted"
     elif formal_replay_path:
-        classification, action, reason = "FORMAL_PARENT_RECOVERY_REQUIRED", "REPLAY_FORMAL_REQUEST", f"durable Formal Decision parent {formal_replay_parent_id} has no same-request derived context and no BUSINESS_DECISION_SOURCE"
+        classification, action, reason = "FORMAL_PARENT_RECOVERY_REQUIRED", "ESCALATE", f"durable Formal Decision parent {formal_replay_parent_id} has no same-request derived context and no BUSINESS_DECISION_SOURCE; automatic replay is prohibited"
     elif same_day_missing:
         last_trigger = parse_dt(previous.get("last_snapshot_refresh_trigger_at"))
         seconds_since_trigger = int((now - last_trigger).total_seconds()) if last_trigger else None
@@ -367,6 +430,8 @@ def assess(now: datetime | None = None) -> dict:
         "review_context_rules_version": review_ver or None,
         "formal_replay_request": formal_replay_path,
         "formal_replay_parent_id": formal_replay_parent_id,
+        "formal_handoff_parent_id": formal_handoff_parent_id,
+        "formal_handoff_missing": formal_handoff_missing,
         "snapshot_refresh_attempts": attempts,
         "last_snapshot_refresh_trigger_at": previous.get("last_snapshot_refresh_trigger_at"),
         "last_safe_repair_at": previous.get("last_safe_repair_at"),
