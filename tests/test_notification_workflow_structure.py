@@ -159,7 +159,8 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertNotIn("BDS写入、回读和通知尝试先于用户窗口输出", notice)
         self.assertIn("def formal_decision_report_event", center)
         self.assertIn("return None", center[center.index("def formal_decision_report_event"):center.index("def formal_decision_report_event")+220])
-        self.assertNotIn("DECISION_EVENT_PATH", center)
+        self.assertIn("DECISION_EVENT_PATH", center)
+        self.assertIn('if os.environ.get("DECISION_EVENT_PATH", "").strip():', center)
         self.assertIn("new Formal Decision production source cannot use legacy events/decisions writer", sync)
         self.assertNotIn("DECISION_EVENT_PATH", self.text)
 
