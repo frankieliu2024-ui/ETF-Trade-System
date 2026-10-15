@@ -24,6 +24,15 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertNotIn("events/decisions/<decision_id>.json", protocol)
         self.assertIn("events/reviews/formal_<occurrence_id>.json", protocol)
 
+    def test_formal_completion_persists_event_and_enables_strict_mode(self):
+        workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
+        center = (ROOT / "scripts" / "notification_center.py").read_text(encoding="utf-8")
+        self.assertIn("Persist Formal Decision canonical review event", workflow)
+        self.assertIn('git add -- "$EVENT_PATH"', workflow)
+        self.assertIn("FORMAL_COMPLETION_EVENT:", workflow)
+        self.assertIn("if strict_formal_completion:", center)
+        self.assertIn("if strict_formal_completion and direct_path:", center)
+
 
 if __name__ == "__main__":
     unittest.main()
