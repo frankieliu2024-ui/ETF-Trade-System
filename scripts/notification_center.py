@@ -164,15 +164,6 @@ def report_delivery_validation_error() -> str | None:
     return None if valid else "invalid_report:" + reason
 
 
-def formal_decision_report_event() -> dict | None:
-    """Disabled legacy Formal Decision builder.
-
-    New Formal Decision production delivery is authorized only by the exact
-    events/reviews/formal_<occurrence_id>.json completion event. The former
-    events/decisions/DECISION_EVENT_PATH route is retained neither as a
-    producer nor as a recovery source.
-    """
-    return None
 def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[bool, str]:
     """Fail closed when a BDS presentation is only a compressed summary.
 
