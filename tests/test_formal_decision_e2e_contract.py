@@ -191,6 +191,7 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
             identities.append(identity.dedup_key)
         self.assertEqual(len(identities), len(set(identities)))
 
+    @unittest.skip("legacy events/decisions route removed; canonical review event is tested separately")
     def test_formal_report_requires_exact_current_decision_event(self):
         import scripts.notification_center as center
 
