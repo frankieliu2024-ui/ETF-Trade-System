@@ -282,7 +282,7 @@ ETF交易复盘和ETF系统复核仍遵循各自已验证的Scheduled Review com
 
 ChatGPT完成业务判断后只生成一次冻结的FINAL_CONTENT。既有Actor handoff应先提交一次BUSINESS_DECISION_SOURCE envelope并回读，确定性核对parent_request_id、request_type、decision_response.answers覆盖同一DWP必答集合、presentation_content逐字等于冻结的FINAL_CONTENT，以及content_hash一致。
 
-用户窗口输出是READY后的首个可见动作。不得等待BDS写入/回读、completion、REPORT、notification或PushPlus；通知尝试不得先于用户窗口输出。用户正文必须完整包含冻结的FINAL_CONTENT，不能只返回HANDOFF状态、通知状态、内部校验结果或任何占位说明。
+用户窗口输出是 READY 后的首个可见动作。不得等待 BDS 写入/回读、completion、REPORT、notification 或 PushPlus；通知尝试不得先于用户窗口输出。用户正文必须完整包含冻结的 FINAL_CONTENT，不能只返回 HANDOFF 状态、通知状态、内部校验结果或任何占位说明。
 
 用户正文输出后，Actor才将同一FINAL_CONTENT写入BDS并回读，随后提交既有Formal Decision completion ingress，由既有REPORT/notification_center/PushPlus主链异步投影。BDS的presentation_content必须逐字复用FINAL_CONTENT；后置交接或provider失败不得阻塞、撤回、截断或改写用户正文，也不得创建第二正文或第二通知链。
 
