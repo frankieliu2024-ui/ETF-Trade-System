@@ -396,6 +396,14 @@ def sync_current_account_mirror(root: Path, account: dict) -> None:
     current["reserved_cash_for_settlement"] = account.get("reserved_cash_for_settlement", 0)
     current["deployable_cash"] = account.get("deployable_cash")
     current["needs_account_update"] = account.get("status") != "VALID"
+    # Keep the top-level CURRENT account reference authoritative after every
+    # canonical account ingress.  The nested mirror alone is insufficient for
+    # consumers that read the compact CURRENT projection.
+    current["account_fact_path"] = "data/state/account_fact.json"
+    current["account_fact_updated_at"] = account.get("updated_at", "")
+    current["account_fact_source"] = account.get("source", "")
+    current["account_fact_status"] = account.get("status", "")
+    current["account_fact_reference_synced_at"] = datetime.now(SHANGHAI).isoformat(timespec="seconds")
     atomic_json_write(current_path, current)
 
 
