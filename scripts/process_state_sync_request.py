@@ -3507,19 +3507,7 @@ def main() -> int:
         if ROOT not in bds_file.parents or not bds_file.is_file():
             raise ValueError("Formal Decision completion BDS path is not durable")
         bds = load_json(bds_file)
-        bds_request_type = str(bds.get("request_type") or "").strip().upper()
-        bds_source = str(bds.get("source") or "").strip().upper()
-        # Some production BDS writers emitted the canonical producer source but
-        # dropped request_type while preserving the complete structured payload.
-        # Normalize only that exact producer shape here; legacy REPORT/handoff
-        # artifacts and incomplete envelopes remain fail-closed.
-        producer_shape = (
-            bds_source == "CHATGPT_BUSINESS_DECISION_RESPONSE"
-            and isinstance(bds.get("decision_response"), dict)
-            and bool(str(bds.get("presentation_content") or "").strip())
-            and bool(str(bds.get("content_hash") or "").strip())
-        )
-        if bds_request_type != BUSINESS_DECISION_SOURCE and not producer_shape:
+        if str(bds.get("request_type") or "").strip().upper() != BUSINESS_DECISION_SOURCE:
             raise ValueError("Formal Decision completion must reference BUSINESS_DECISION_SOURCE")
         if str(bds.get("parent_request_id") or "").strip() != str(request.get("parent_request_id") or "").strip():
             raise ValueError("Formal Decision completion parent does not match BDS")
