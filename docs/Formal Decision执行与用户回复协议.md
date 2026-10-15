@@ -63,6 +63,8 @@ Formal Decision 的后置 completion ingress 固定使用现有 state-sync owner
 5. 由与【ETF系统复核】、【ETF交易复盘】相同的 decision-notification/notification_center/PushPlus 主链消费该 completion event；
 6. 上述后置交接不得阻塞、改写、缩短或撤回 FINAL_CONTENT；任一后置对象缺失或不一致时，当前业务正文不撤回，按当前协议如实标记并 fail-closed；不扫描历史对象、不返回 ALREADY_MANAGED、不创建第二对象。
 
+执行器约束：后置交接虽然是用户正文之后的投影，但不是可被静默丢弃的后台副作用。冻结 FINAL_CONTENT 后，当前 Formal Decision 执行回合在尝试并回读 BDS、completion 和当前 Formal review event 前不得被标记为完整结束；若执行环境在用户正文输出后无法继续执行，必须保留同一父请求并由运行态自愈/审计明确标记 `FORMAL_PARENT_HANDOFF_INCOMPLETE`，不得写成 HEALTHY、不得自动重放、不得改走 BDS 直通知或历史对象。该约束不改变“用户正文优先”：用户可见正文仍只是一份 FINAL_CONTENT，后置失败不得撤回、截短或改写正文。
+
 BDS 不直接唤醒通知，也不直接调用 PushPlus。BDS 只负责业务事实入口和唯一正文冻结，并且必须携带完整的 presentation_binding（request_id、parent_request_id、decision_id、report_id、full_content、content_hash）；completion event 是通知主链的当前交接事件，REPORT 和 notification_center 只能从该精确事件透传同一份 FINAL_CONTENT，不得重新生成、摘要、改写或从历史对象恢复正文。PushPlus 未取得当前 notification 对应的明确 provider 成功结果时，只能记录 EXTERNAL_SEND_UNVERIFIED；历史 provider 成功不能证明当前请求发送成功。
 
 ### 1.1.5 状态和边界合同
