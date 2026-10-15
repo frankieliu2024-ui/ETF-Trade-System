@@ -342,6 +342,7 @@ def formal_presentation_event() -> dict | None:
             return None
     valid_presentation, presentation_reason = validate_formal_presentation_contract(envelope)
     if not valid_presentation:
+        print(f"Formal Decision presentation rejected: {presentation_reason}")
         return None
     key = f"ETF_FORMAL_PRESENTATION:{request_id}:{content_hash}"
     return {
