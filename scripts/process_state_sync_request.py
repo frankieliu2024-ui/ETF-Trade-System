@@ -3656,10 +3656,16 @@ def main() -> int:
             source_payload["decision_response"] = nested
             request["presentation_content"] = presentation_content
         if isinstance(supplied_decision, dict) and supplied_decision:
-            # Historical durable Business Decision Source replay: preserve the
-            # already-canonical immutable Source instead of re-projecting it
-            # through today's actor response contract. New production ingress
-            # cannot use this path because it does not supply formal_decision.
+            # A pre-shaped formal_decision is only legitimate for an explicitly
+            # selected historical forensic replay. Current production ingress
+            # must always project actor answers through the request-bound DWP.
+            # Otherwise numeric/positional answers can bypass the problem_id
+            # coverage contract and still reach the canonical writer.
+            if not forensic_historical_replay:
+                raise ValueError(
+                    "current Business Decision Source ingress must use "
+                    "actor-only decision_response keyed by request-bound problem_id"
+                )
             source_payload = source_payload
         else:
             if not isinstance(decision_response, dict):
