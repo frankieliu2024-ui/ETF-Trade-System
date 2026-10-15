@@ -512,3 +512,18 @@ PushPlus 只能由现有 `notification_center` 从当前请求冻结的 `FINAL_C
 4. 当前 Formal Decision completion event 的通知投影只能由现有 `decision-notification.yml` 唤醒并调用既有 `notification_center`；不得新增 producer、sender、workflow、state 或旁路通知链。触发事件必须精确绑定本次 completion event 及其当前 BDS，历史目录扫描、标题匹配和旧请求回退一律禁止。
 5. 当前正文、身份或哈希缺失/不一致时，通知必须 fail-closed；不得返回 `ALREADY_MANAGED`，不得补发旧正文。用户已看到正文但当前 PushPlus 无当前 notification/provider 成功证据时，用户业务回复仍保留，外部状态只能记为 `EXTERNAL_SEND_UNVERIFIED`。
 
+
+
+## 1.1.6 三入口统一正文质量门与交付幂等（V2）
+
+三个入口均必须进入同一结构化业务判断和唯一正式正文渲染器；入口身份、等待预算、SKIP语义和task字段可以不同，但不得产生不同的正文生成、校验或通知逻辑。
+
+正式正文必须通过统一质量门后才能写入 BUSINESS_DECISION_SOURCE：
+
+- presentation_content、decision_response.presentation_content、presentation_binding.full_content（如存在）必须逐字一致；
+- 正文必须是完整长报告，生产最低长度为6000字符；长度不是唯一通过条件；
+- 当前DWP中的持仓、持仓ETF、观察ETF、全市场候选、机会ETF、现金、可释放资本、Trial/Confirm、风险和后续条件必须逐项覆盖；
+- 每个对象必须具备角色、时点、趋势/历史位置、日内路径或极值、相对强弱、成交/承接、风险收益或资本效率、当前结论和下一条件；证据缺失时必须明确降级或fail-closed，不得用泛化句填充；
+- 正文必须使用固定章节、独立段落和统一编号，不得追加交接审计、内部状态或第二正文。
+
+正文身份固定为 request_id + decision_id + content_hash。同一身份只能有一份FINAL_CONTENT；重试只能沿同一notification_id重试投递，不得重新分析、改写正文或创建第二通知。BDS写入、BDS回读、notification_id、provider result和用户收达必须分别记录，任何后置workflow成功均不得替代provider成功或用户收达事实。

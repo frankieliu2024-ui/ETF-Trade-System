@@ -941,8 +941,11 @@ def _validate_formal_presentation_contract(source: dict[str, Any]) -> None:
         return
     if not isinstance(content, str) or not content.strip():
         raise ValueError("formal presentation requires non-empty full_content")
-    if len(content.strip()) < 1200:
-        raise ValueError("formal presentation is shorter than the required full report contract")
+    if len(content.strip()) < 6000:
+        raise ValueError("formal presentation is shorter than the required long-report contract (minimum 6000 characters)")
+    for exposed_value in exposed:
+        if exposed_value not in (None, "") and exposed_value != content:
+            raise ValueError("formal presentation fields must be byte-identical to presentation_binding.full_content")
     missing_headings = [heading for heading in _FORMAL_PRESENTATION_HEADINGS if heading not in content]
     if missing_headings:
         raise ValueError("formal presentation missing required sections: " + ",".join(missing_headings))
