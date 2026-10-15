@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-15T16:29:22+08:00",
+  "generated_at": "2026-10-15T16:34:15+08:00",
   "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -48,7 +48,7 @@
       "decision_context": true,
       "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": true,
+      "request_bound": false,
       "formal_reply_gate": {
         "request_id": "fd-20261015-162800-manual-conversation-7c4e91",
         "requested_at_beijing": "2026-10-15T16:28:00+08:00",
@@ -164,21 +164,22 @@
           "must_read_back_before_reply": false,
           "historical_fallback_forbidden": true,
           "must_read_back_after_reply": true
-        }
+        },
+        "projection_preserved_from_non_formal_runtime_request": true
       },
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1637944,
-          "sha256": "3c19b5addf0451d7878b2f651c13a409b086a9a69709dca1e6f35528dc2645c7",
+          "byte_count": 1637227,
+          "sha256": "be4631abf9bb2734b4a3384e7559eb808aa8e5f4567709cb71ff111e8bcce8b4",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 516449,
-          "sha256": "886aab46dbd9253853a4c67d3910d8df5b404eca6f80eb0524fcf27db642c4c0",
+          "byte_count": 514254,
+          "sha256": "0edac2103c8c8c0fa99a39ddb6bdcc25147839d1ee5f3c3510c350e310d3a58c",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -207,15 +208,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1637944,
-      "sha256": "3c19b5addf0451d7878b2f651c13a409b086a9a69709dca1e6f35528dc2645c7",
+      "byte_count": 1637227,
+      "sha256": "be4631abf9bb2734b4a3384e7559eb808aa8e5f4567709cb71ff111e8bcce8b4",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 516449,
-      "sha256": "886aab46dbd9253853a4c67d3910d8df5b404eca6f80eb0524fcf27db642c4c0",
+      "byte_count": 514254,
+      "sha256": "0edac2103c8c8c0fa99a39ddb6bdcc25147839d1ee5f3c3510c350e310d3a58c",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
