@@ -225,7 +225,7 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         root = Path(__file__).parents[1]
         text = (root / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
         self.assertIn("正式决策与完整日复盘是两个独立业务链", text)
-        self.assertIn("用户正文 → BDS → Formal Decision completion ingress → REPORT/notification", text)
+        self.assertIn("用户窗口输出同一 FINAL_CONTENT → BDS写入并回读 → Formal Decision completion ingress", text)
 
     def test_protocol_keeps_health_out_of_business_pr_gate(self):
         root = Path(__file__).parents[1]
