@@ -17,9 +17,12 @@ def test_formal_decision_uses_release_first_holding_policy():
     assert "opportunity_evidence" in source
     assert "buy_over_cash_reason" in source
     assert "execution_gate_reason" in source
+    assert "strategy_reset_review" in source
+    assert "exit_or_reduce_evidence" in source
     assert "释放优先审查" in protocol
     assert "不能单独构成HOLD理由" in protocol
     assert "买入与卖出采用对称证明责任" in protocol
+    assert "REDUCE_OR_EXIT_REVIEW" in protocol
 
 
 def test_formal_decision_does_not_turn_release_first_into_auto_trading():
