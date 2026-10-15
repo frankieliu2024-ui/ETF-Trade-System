@@ -861,5 +861,20 @@ class RequestBoundOpportunityIdentityTests(unittest.TestCase):
             state_sync.request_bound_etf_opportunity_reviews(request)
 
 
+    def test_formal_completion_projects_directly_to_shared_review_event(self):
+        workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
+        self.assertIn("requests/live_snapshot/*__formal_decision_completion.json", workflow)
+        self.assertIn("Project Formal Decision completion to canonical review event", workflow)
+        self.assertIn("events/reviews/formal_*.json", workflow)
+        self.assertNotIn("market-snapshot.yml", workflow.split("Project Formal Decision completion to canonical review event", 1)[1].split("Send material user-action notification", 1)[0])
+
+    def test_formal_completion_event_is_not_bds_notification_wake(self):
+        workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
+        direct_block = workflow.split("Project Formal Decision completion to canonical review event", 1)[1].split("Send material user-action notification", 1)[0]
+        self.assertIn("process_state_sync_request.py", direct_block)
+        self.assertIn("canonical_publication", direct_block)
+        self.assertNotIn("PUSHPLUS", direct_block)
+
+
 if __name__ == "__main__":
     unittest.main()
