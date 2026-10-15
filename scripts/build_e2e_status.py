@@ -428,6 +428,24 @@ def context_component(query: dict, decision: dict) -> dict:
                 "pending_broker_request": account_gate.get("pending_broker_request"),
             },
         }
+    elif request_bound and formal_reply_gate:
+        # A prior projection may have preserved ACCOUNT_SYNC_NOT_PERFORMED
+        # after the canonical account fact converged. Remove only this stale
+        # account-owned blocker; preserve unrelated formal blockers.
+        stale_marker = "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request has not converged into canonical account_fact"
+        blockers = [item for item in (formal_reply_gate.get("blockers") or []) if item != stale_marker]
+        if len(blockers) != len(formal_reply_gate.get("blockers") or []):
+            formal_reply_gate = {
+                **formal_reply_gate,
+                "status": "READY" if not blockers else formal_reply_gate.get("status"),
+                "reply_freezable": True if not blockers else formal_reply_gate.get("reply_freezable"),
+                "blockers": blockers,
+                "account_dependency": {
+                    "status": account_gate.get("status"),
+                    "reason": account_gate.get("reason"),
+                    "pending_broker_request": account_gate.get("pending_broker_request"),
+                },
+            }
     if request_bound and formal_reply_gate:
         # Project the sole Formal Decision consumer contract into the existing
         # compact E2E gate.  This gives external Actors one machine-readable
