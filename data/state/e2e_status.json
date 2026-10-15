@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-15T10:09:51+08:00",
+  "generated_at": "2026-10-15T10:21:02+08:00",
   "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -8,21 +8,24 @@
     "market": {
       "status": "READY",
       "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-10-15_100838.json",
-      "captured_at": "2026-10-15T10:08:38+08:00",
+      "snapshot": "data/market/snapshots/2026-10-15_101935.json",
+      "captured_at": "2026-10-15T10:19:35+08:00",
       "market_phase": "CONTINUOUS_MORNING"
     },
     "account": {
-      "status": "READY",
-      "reason": "confirmed account facts remain valid; historical audit deltas are not pending updates",
+      "status": "BLOCKED",
+      "reason": "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request has not converged into canonical account_fact",
       "updated_at": "2026-10-14T15:00:00+08:00",
       "source": "BROKER_HOLDINGS_SCREENSHOTS_20261014_1500_USER_CONFIRMED",
       "pending_change_events": [],
       "historical_audit_event_count": 101,
-      "cash": 2181.04,
-      "reserved_cash_for_settlement": 0,
-      "deployable_cash": 2181.04,
-      "settlement_constraint_status": "NONE"
+      "pending_broker_request": {
+        "path": "requests/live_snapshot/broker-screenshot-20261015-1017-account-refresh.json",
+        "request_id": "broker-screenshot-20261015-1017-account-refresh",
+        "request_time": "2026-10-15T10:18:05+08:00",
+        "has_account_fact": false,
+        "status": "ACCOUNT_SYNC_NOT_PERFORMED"
+      }
     },
     "risk": {
       "status": "READY",
@@ -50,15 +53,17 @@
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
       "request_bound": true,
       "formal_reply_gate": {
-        "request_id": "fd-chatgpt-20261015-100800-r7m2qx",
-        "requested_at_beijing": "2026-10-15T10:08:00+08:00",
-        "status": "READY",
-        "reply_freezable": true,
-        "blockers": [],
+        "request_id": "fd-chatgpt-20261015-101805-p4x7mz",
+        "requested_at_beijing": "2026-10-15T10:18:05+08:00",
+        "status": "BLOCKED",
+        "reply_freezable": false,
+        "blockers": [
+          "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request has not converged into canonical account_fact"
+        ],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
-          "request_id": "fd-chatgpt-20261015-100800-r7m2qx",
-          "requested_at_beijing": "2026-10-15T10:08:00+08:00",
+          "request_id": "fd-chatgpt-20261015-101805-p4x7mz",
+          "requested_at_beijing": "2026-10-15T10:18:05+08:00",
           "query_context_path": "data/state/query_context.json",
           "decision_context_path": "data/state/decision_context.json",
           "decision_work_package_present": true,
@@ -73,116 +78,38 @@
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "parent_request_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
         "parent_request_entry_mode": null,
-        "actor_action": "COMPLETE_BUSINESS_DECISION_NOW",
-        "user_output_allowed": true,
-        "consumer_status": "BUSINESS_DECISION_READY",
-        "required_problem_ids": [
-          "RISK_PERMISSION",
-          "MAIN_CANDIDATE",
-          "DEPLOYABLE_CASH",
-          "RELEASABLE_CAPITAL",
-          "TRIAL_CONFIRM_CAPACITY",
-          "CONCENTRATION_COMMON_RISK",
-          "NEXT_UNIT_CAPITAL_USE",
-          "HOLDING:300750",
-          "HOLDING:601138",
-          "HOLDING:159941",
-          "HELD_ETF_ADD:159941",
-          "HOLDING:588000",
-          "HELD_ETF_ADD:588000",
-          "HOLDING:159781",
-          "HELD_ETF_ADD:159781",
-          "HOLDING:159981",
-          "HELD_ETF_ADD:159981",
-          "HOLDING:159992",
-          "HELD_ETF_ADD:159992",
-          "HOLDING:513520",
-          "HELD_ETF_ADD:513520",
-          "OBSERVATION:513180",
-          "OBSERVATION:159561",
-          "OBSERVATION:518880",
-          "OBSERVATION:515880",
-          "OBSERVATION:159326",
-          "OBSERVATION:515220",
-          "OBSERVATION:513350",
-          "OBSERVATION:515080",
-          "DISCOVERY:159111",
-          "DISCOVERY:159622",
-          "DISCOVERY:159892",
-          "DISCOVERY:159934",
-          "DISCOVERY:159972",
-          "DISCOVERY:511260",
-          "DISCOVERY:511270",
-          "DISCOVERY:511360",
-          "DISCOVERY:513070",
-          "DISCOVERY:513200",
-          "DISCOVERY:515080",
-          "DISCOVERY:561580"
-        ],
-        "required_problem_count": 41,
-        "business_answer_contract": "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
-        "ready_handoff": {
-          "required": true,
-          "submission_type": "BUSINESS_DECISION_SOURCE",
-          "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
-          "parent_request_id": "fd-chatgpt-20261015-100800-r7m2qx",
-          "required_payload_fields": [
-            "request_id",
-            "parent_request_id",
-            "entry_mode",
-            "source",
-            "task_id",
-            "task_run_id",
-            "occurrence_id",
-            "market_date",
-            "decision_response.answers",
-            "decision_id",
-            "consumed_snapshot",
-            "presentation_content",
-            "content_hash",
-            "target_path"
-          ],
-          "target_path": "requests/live_snapshot/fd-chatgpt-20261015-100800-r7m2qx__business_decision_source.json",
-          "binding_rules": {
-            "parent_request_id": "fd-chatgpt-20261015-100800-r7m2qx",
-            "allowed_sources": [
-              "CHATGPT_BUSINESS_DECISION_RESPONSE"
-            ],
-            "forbid_historical_fallback": true,
-            "read_back_required": true,
-            "formal_decision_notification_chain_starts_at_bds": true,
-            "completion_and_report_not_required_for_formal_decision_notification": true,
-            "bds_must_be_written_and_read_back_before_user_reply": true
-          },
-          "user_reply_precondition": false,
-          "notification_attempt_precondition": true,
-          "provider_success_not_required_for_user_reply": true,
-          "user_reply_contract": {
-            "must_be_first_user_visible_message": true,
-            "must_contain_complete_final_content": true,
-            "status_only_reply_forbidden": true,
-            "handoff_status_cannot_replace_content": true,
-            "bds_must_reuse_exact_final_content": true
-          },
-          "post_reply_async": false,
-          "provider_success_async": true,
-          "must_read_back_before_reply": true,
-          "historical_fallback_forbidden": true
-        }
+        "account_dependency": {
+          "status": "BLOCKED",
+          "reason": "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request has not converged into canonical account_fact",
+          "pending_broker_request": {
+            "path": "requests/live_snapshot/broker-screenshot-20261015-1017-account-refresh.json",
+            "request_id": "broker-screenshot-20261015-1017-account-refresh",
+            "request_time": "2026-10-15T10:18:05+08:00",
+            "has_account_fact": false,
+            "status": "ACCOUNT_SYNC_NOT_PERFORMED"
+          }
+        },
+        "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
+        "user_output_allowed": false,
+        "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
+        "required_problem_ids": [],
+        "required_problem_count": 0,
+        "business_answer_contract": null,
+        "ready_handoff": null
       },
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1970589,
-          "sha256": "c3ee863f0c494d5a8a54254f76aa3f3f5060fa6143bfb842d4cdef953d1fe8f9",
+          "byte_count": 1968857,
+          "sha256": "c1d662310e71082b2f92f666491deb3cf7a09b03b86808c562e0fb2bbc4f1fc4",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 611489,
-          "sha256": "6de329ba80841a691c907b85077029d9fe141a4e902ee353b83c19d046ba3079",
+          "byte_count": 615267,
+          "sha256": "d2e09c57438397e32ba7310544a16682b122d6f842b10dcf1110688598300c29",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -204,6 +131,7 @@
     }
   },
   "blockers": [
+    "account",
     "close_review"
   ],
   "degradations": [],
@@ -211,15 +139,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1970589,
-      "sha256": "c3ee863f0c494d5a8a54254f76aa3f3f5060fa6143bfb842d4cdef953d1fe8f9",
+      "byte_count": 1968857,
+      "sha256": "c1d662310e71082b2f92f666491deb3cf7a09b03b86808c562e0fb2bbc4f1fc4",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 611489,
-      "sha256": "6de329ba80841a691c907b85077029d9fe141a4e902ee353b83c19d046ba3079",
+      "byte_count": 615267,
+      "sha256": "d2e09c57438397e32ba7310544a16682b122d6f842b10dcf1110688598300c29",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
