@@ -3404,6 +3404,36 @@ def main() -> int:
                 "use BUSINESS_DECISION_SOURCE with structured decision_response"
             )
 
+    # Formal Decision completion is a separate post-BDS ingress. It reuses the
+    # same canonical owner but never lets the BDS push itself create a Decision event.
+    original_source_dispatch = str(request.get("request_type") or "").strip().upper() == BUSINESS_DECISION_SOURCE
+    completion_dispatch = (
+        str(request.get("request_type") or "").strip().upper() == "STATE_SYNC_ONLY"
+        and str(request.get("source") or "").strip().upper() == "CHATGPT_FORMAL_DECISION_COMPLETION"
+        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_DECISION_COMPLETION"
+    )
+    if completion_dispatch:
+        bds_path = str(request.get("bds_path") or "").strip()
+        if not bds_path or ".." in bds_path:
+            raise ValueError("Formal Decision completion requires a safe BDS path")
+        bds_file = (ROOT / bds_path).resolve()
+        if ROOT not in bds_file.parents or not bds_file.is_file():
+            raise ValueError("Formal Decision completion BDS path is not durable")
+        bds = load_json(bds_file)
+        if str(bds.get("request_type") or "").strip().upper() != BUSINESS_DECISION_SOURCE:
+            raise ValueError("Formal Decision completion must reference BUSINESS_DECISION_SOURCE")
+        if str(bds.get("parent_request_id") or "").strip() != str(request.get("parent_request_id") or "").strip():
+            raise ValueError("Formal Decision completion parent does not match BDS")
+        if str(bds.get("decision_id") or "").strip() != str(request.get("decision_id") or "").strip():
+            raise ValueError("Formal Decision completion decision_id does not match BDS")
+        content = str(bds.get("presentation_content") or "").strip()
+        if not content or str(request.get("content_hash") or "").strip() != hashlib.sha256(content.encode("utf-8")).hexdigest():
+            raise ValueError("Formal Decision completion content binding is invalid")
+        request.update({key: value for key, value in bds.items() if key not in {"request_id", "request_type", "source"}})
+        request["request_type"] = BUSINESS_DECISION_SOURCE
+        request["request_id"] = str(bds.get("request_id") or "").strip()
+        request["presentation_content"] = content
+
     # Explicit Business Decision Source dispatch. The ingress file itself is
     # the immutable durable Source artifact; projection only occurs after the
     # Phase 1 gate and never calls decision logic or refreshes market facts.
@@ -3571,6 +3601,9 @@ def main() -> int:
         projected.pop("projection_status", None)
         projected.pop("fingerprint", None)
         request["formal_decision"] = projected
+    if original_source_dispatch:
+        print(json.dumps({"ok": True, "request_id": request.get("request_id"), "business_decision_source_persisted": True, "completion_required": True}, ensure_ascii=False))
+        return 0
     system_review_recorded, system_review_idempotent = record_scheduled_system_review(request)
     if system_review_recorded:
         result = {"ok": True, "request_id": request.get("request_id"), "system_review_completion": True, "idempotent_replay": system_review_idempotent, "canonical_publication": "events/reviews/system_" + str((request.get("presentation_binding") or {}).get("task_run_id") or "") + ".json"}

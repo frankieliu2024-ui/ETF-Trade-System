@@ -49,6 +49,9 @@ READY 后只生成一份 FINAL_CONTENT。它必须同时满足：
 
 ### 1.1.4 完成与通知合同
 
+Formal Decision 的后置 completion ingress 固定使用现有 state-sync owner，但与 BDS 分离：BDS 使用 `request_type=BUSINESS_DECISION_SOURCE` 只保存当前业务事实和 FINAL_CONTENT；completion 使用 `request_type=STATE_SYNC_ONLY`、`source=CHATGPT_FORMAL_DECISION_COMPLETION`、`formal_fact_type=FORMAL_DECISION_COMPLETION`，并且只能引用同一 parent_request_id、decision_id、BDS path 和 content_hash。只有该 completion ingress 才允许形成 `events/decisions/<decision_id>.json`。BDS 单独写入不得形成 Formal Decision event，不得直接进入通知投影。
+
+
 用户回复和后置交接是连续但独立的两个动作：
 
 1. READY 后冻结唯一 FINAL_CONTENT；
