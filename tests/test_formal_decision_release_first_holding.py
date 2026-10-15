@@ -14,8 +14,12 @@ def test_formal_decision_uses_release_first_holding_policy():
     assert "holding_thesis_status" in source
     assert "long_term_outcome_review" in source
     assert "hold_over_release_reason" in source
+    assert "opportunity_evidence" in source
+    assert "buy_over_cash_reason" in source
+    assert "execution_gate_reason" in source
     assert "释放优先审查" in protocol
     assert "不能单独构成HOLD理由" in protocol
+    assert "买入与卖出采用对称证明责任" in protocol
 
 
 def test_formal_decision_does_not_turn_release_first_into_auto_trading():
