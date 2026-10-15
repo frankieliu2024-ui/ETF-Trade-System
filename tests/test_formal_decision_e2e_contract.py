@@ -95,11 +95,18 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
             "requested_at_beijing": "2026-10-15T13:37:50+08:00",
             "market_date": "2026-10-15",
         }
-        payload = build_structured_completion_request(
-            source, {}, {"presentation_content": body},
-            {"problem_graph": []}, "data/market/snapshots/current.json",
-            presentation_content=body,
-        )
+        with patch(
+            "scripts.manual_formal_decision_completion.project_decision_response",
+            return_value={"request_id": "fd_current", "decision_response": {"answers": {"RISK_PERMISSION": {"final_action": "禁止新增"}}}},
+        ), patch(
+            "scripts.manual_formal_decision_completion.validate_source",
+            return_value=None,
+        ):
+            payload = build_structured_completion_request(
+                source, {}, {"answers": {"RISK_PERMISSION": {"final_action": "禁止新增"}, "presentation_content": body}},
+                {"problem_graph": [{"problem_id": "RISK_PERMISSION"}]}, "data/market/snapshots/current.json",
+                presentation_content=body,
+            )
         binding = payload["presentation_binding"]
         self.assertEqual(binding["request_id"], "fd_current")
         self.assertEqual(binding["parent_request_id"], "fd_current")
