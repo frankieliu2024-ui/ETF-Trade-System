@@ -190,7 +190,7 @@ def build_structured_completion_request(
         "content_hash": hashlib.sha256(frozen_content.encode("utf-8")).hexdigest() if isinstance(frozen_content, str) else "",
         "presentation_binding": {
             "schema_version": "formal-decision-presentation-binding-v1",
-            "request_id": envelope_id,
+            "request_id": parent_id,
             "parent_request_id": parent_id,
             "decision_id": decision_id,
             "report_id": f"etf-formal-decision:{decision_id}",
