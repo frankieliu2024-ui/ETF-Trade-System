@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-15T13:41:22+08:00",
+  "generated_at": "2026-10-15T14:29:35+08:00",
   "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -8,20 +8,20 @@
     "market": {
       "status": "READY",
       "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-10-15_133842.json",
-      "captured_at": "2026-10-15T13:38:42+08:00",
+      "snapshot": "data/market/snapshots/2026-10-15_142553.json",
+      "captured_at": "2026-10-15T14:25:53+08:00",
       "market_phase": "CONTINUOUS_AFTERNOON"
     },
     "account": {
       "status": "READY",
       "reason": "confirmed account facts remain valid; historical audit deltas are not pending updates",
-      "updated_at": "2026-10-15T10:17:00+08:00",
-      "source": "BROKER_HOLDINGS_SCREENSHOTS_20261015_1017_USER_CONFIRMED",
+      "updated_at": "2026-10-15T14:19:00+08:00",
+      "source": "BROKER_HOLDINGS_AND_TRADE_SCREENSHOTS_20261015_1419_USER_CONFIRMED",
       "pending_change_events": [],
-      "historical_audit_event_count": 102,
-      "cash": 2181.04,
+      "historical_audit_event_count": 109,
+      "cash": 121242.47,
       "reserved_cash_for_settlement": 0,
-      "deployable_cash": 2181.04,
+      "deployable_cash": 121242.47,
       "settlement_constraint_status": "NONE"
     },
     "risk": {
@@ -48,7 +48,7 @@
       "decision_context": true,
       "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": true,
+      "request_bound": false,
       "formal_reply_gate": {
         "request_id": "fd-20261015-133750-manual-conversation-7f3c9a",
         "requested_at_beijing": "2026-10-15T13:37:50+08:00",
@@ -167,21 +167,22 @@
           "provider_success_async": true,
           "must_read_back_before_reply": true,
           "historical_fallback_forbidden": true
-        }
+        },
+        "projection_preserved_from_non_formal_runtime_request": true
       },
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1894086,
-          "sha256": "6c182090d7e7f37a75163ecd21fcb100aa7fc3f373d3de7ac57240de224cf95e",
+          "byte_count": 1211234,
+          "sha256": "4ad81cb66b04d4009b01c83255f88dd346d48160d7e8b7bbb17f18d31a89b60c",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 591573,
-          "sha256": "008afc17e49014fb1919c50dea040d4fe3f20edbe0fe40ba43315cefb86a6b8b",
+          "byte_count": 410332,
+          "sha256": "8906cdb035e8e75a80dd7bfedaccc135636ff465d7ccef2bb0c16a6c4fdf28dd",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -210,15 +211,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1894086,
-      "sha256": "6c182090d7e7f37a75163ecd21fcb100aa7fc3f373d3de7ac57240de224cf95e",
+      "byte_count": 1211234,
+      "sha256": "4ad81cb66b04d4009b01c83255f88dd346d48160d7e8b7bbb17f18d31a89b60c",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 591573,
-      "sha256": "008afc17e49014fb1919c50dea040d4fe3f20edbe0fe40ba43315cefb86a6b8b",
+      "byte_count": 410332,
+      "sha256": "8906cdb035e8e75a80dd7bfedaccc135636ff465d7ccef2bb0c16a6c4fdf28dd",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
