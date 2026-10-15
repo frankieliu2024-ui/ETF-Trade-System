@@ -13926,5 +13926,34 @@
     ],
     "eligibility_rule": "reuse is canonical and evidence-bound; no fixed-minute qualification or PIT/freshness relaxation",
     "trade_authority": false
-  }
+  },
+  "refresh_gate": {
+    "status": "PENDING",
+    "request_result": "NOT_READY",
+    "request_result_terminal": false,
+    "request_result_reason": "awaiting_post_request_snapshot",
+    "formal_analysis_allowed": false,
+    "formal_current_pit_analysis_allowed": false,
+    "degraded_analysis_allowed": true,
+    "formal_decision_persist_allowed": false,
+    "fallback_allowed": false,
+    "query_intent": "",
+    "request_file": "requests/live_snapshot/fd-chatgpt-20261015-101805-p4x7mz.json",
+    "request_id": "fd-chatgpt-20261015-101805-p4x7mz",
+    "requested_at_beijing": "2026-10-15T10:18:05+08:00",
+    "requested_market_time": "2026-10-15T10:18:05+08:00",
+    "current_snapshot_time": "2026-10-15T10:08:38+08:00",
+    "resolved_snapshot_time": "",
+    "latest_snapshot": "data/market/snapshots/2026-10-15_100838.json",
+    "failure_reason": "",
+    "terminal_unavailable": false,
+    "post_request_snapshot": false,
+    "request_scoped_resolution_mode": "ACTIVE_SESSION",
+    "request_scoped_resolution_reason": "active A-share session requires post-request market fact",
+    "nominal_node_reached": true,
+    "rule": "EXPLICIT_LATEST或wait_for_refresh请求必须等本次请求之后且不早于requested_market_time的新CURRENT发布后才可称为最新/当前行情；请求前即使仍处普通FRESH窗口，也不得冒充本次最新查询结果。仅非EXPLICIT_LATEST且用户明确授权时可回退旧快照。"
+  },
+  "formal_analysis_allowed": false,
+  "formal_current_pit_analysis_allowed": false,
+  "degraded_analysis_allowed": true
 }
