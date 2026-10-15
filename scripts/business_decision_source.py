@@ -409,10 +409,26 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         if pid.startswith(("DISCOVERY:", "OBSERVATION:", "OBSERVATION_REVIEW:")):
             if not _normalize_opportunity_status(answer.get("opportunity_status")):
                 raise ValueError(f"decision response missing registered opportunity_status: {pid}")
-            if str(answer.get("disposition") or "").upper() not in {"ADMIT", "REJECT", "RETAIN", "EXIT"}:
+            disposition = str(answer.get("disposition") or "").upper()
+            if disposition not in {"ADMIT", "REJECT", "RETAIN", "EXIT"}:
                 raise ValueError(f"decision response missing valid opportunity disposition: {pid}")
             if not str(answer.get("reason") or "").strip():
                 raise ValueError(f"decision response missing opportunity reason: {pid}")
+            release_first = (
+                (work_package.get("response_contract") or {}).get("holding_capital_competition_policy")
+                == "RELEASE_FIRST"
+            )
+            if release_first:
+                if not str(answer.get("opportunity_review_evidence") or "").strip():
+                    raise ValueError(f"decision response opportunity requires review evidence: {pid}")
+                active_status = _normalize_opportunity_status(answer.get("opportunity_status")) in {"Trial机会", "Confirm机会"}
+                if active_status and disposition == "ADMIT":
+                    for field in ("opportunity_evidence", "buy_over_cash_reason", "execution_gate_reason"):
+                        if not str(answer.get(field) or "").strip():
+                            raise ValueError(f"decision response buy review requires {pid}.{field}")
+                elif disposition in {"REJECT", "RETAIN", "EXIT"}:
+                    if not str(answer.get("no_buy_review") or "").strip():
+                        raise ValueError(f"decision response no-buy review requires {pid}.no_buy_review")
         if pid.startswith(("DISCOVERY:", "OBSERVATION_REVIEW:")) and str(answer.get("disposition") or "").upper() == "ADMIT":
             for field in ("name", "thscode", "thesis", "falsifier", "next_decision_information", "information_value_reason"):
                 if not str(answer.get(field) or "").strip():
