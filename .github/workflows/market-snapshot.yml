@@ -128,8 +128,11 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         shell: bash
         run: |
-          ALL_REQUEST_FILES=$(git show --format= --name-only "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | sed '/^$/d' || true)
-          REQUEST_FILE=$(printf '%s\n' "$ALL_REQUEST_FILES" | grep -vE '(__business_decision_source|__formal_completion)' | head -n 1 || true)
+          # Use the exact push diff, including root commits, as the canonical
+          # completion/request envelope. Do not infer the triggering file from
+          # the current checkout after a downstream reset.
+          ALL_REQUEST_FILES=$(git diff-tree --root --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | sed '/^$/d' || true)
+          REQUEST_FILE=$(printf '%s\n' "$ALL_REQUEST_FILES" | grep -vE '(__business_decision_source|__bds|__formal_completion|__formal_decision_completion)' | head -n 1 || true)
           REQUEST_EXPECTED=false
           if [ -n "$REQUEST_FILE" ]; then
             REQUEST_EXPECTED=true
@@ -676,7 +679,7 @@ jobs:
             FORMAL_REPLAY_DWP_COMMIT="$formal_dwp_commit"
             export FORMAL_REPLAY_SOURCE_COMMIT FORMAL_REPLAY_DWP_COMMIT
           else
-            request_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
+            request_files=$(git diff-tree --root --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
           fi
           # A BDS push is business-fact persistence only. It must not be
           # promoted to a Formal Decision completion request or replayed here.
