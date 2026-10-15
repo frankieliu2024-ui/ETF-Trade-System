@@ -521,7 +521,7 @@ PushPlus 只能由现有 `notification_center` 从当前请求冻结的 `FINAL_C
 正式正文必须通过统一质量门后才能写入 BUSINESS_DECISION_SOURCE：
 
 - presentation_content、decision_response.presentation_content、presentation_binding.full_content（如存在）必须逐字一致；
-- 正文必须是完整长报告，生产最低长度为6000字符；长度不是唯一通过条件；
+- 正文必须完整覆盖当前DWP和固定章节；字符长度仅作质量观测，不得作为用户回复、BDS、completion或通知的硬门槛；
 - 当前DWP中的持仓、持仓ETF、观察ETF、全市场候选、机会ETF、现金、可释放资本、Trial/Confirm、风险和后续条件必须逐项覆盖；
 - 每个对象必须具备角色、时点、趋势/历史位置、日内路径或极值、相对强弱、成交/承接、风险收益或资本效率、当前结论和下一条件；证据缺失时必须明确降级或fail-closed，不得用泛化句填充；
 - 正文必须使用固定章节、独立段落和统一编号，不得追加交接审计、内部状态或第二正文。

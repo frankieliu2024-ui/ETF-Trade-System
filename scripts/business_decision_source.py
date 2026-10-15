@@ -941,8 +941,9 @@ def _validate_formal_presentation_contract(source: dict[str, Any]) -> None:
         return
     if not isinstance(content, str) or not content.strip():
         raise ValueError("formal presentation requires non-empty full_content")
-    if len(content.strip()) < 6000:
-        raise ValueError("formal presentation is shorter than the required long-report contract (minimum 6000 characters)")
+    # Report length is diagnostic only. A fixed character floor must not block
+    # the post-reply BDS/completion projection or force filler text. Structural
+    # coverage, identity, hash and evidence-contract checks below remain hard gates.
     for exposed_value in exposed:
         if exposed_value not in (None, "") and exposed_value != content:
             raise ValueError("formal presentation fields must be byte-identical to presentation_binding.full_content")
