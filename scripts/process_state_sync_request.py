@@ -1022,6 +1022,21 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
             else ""
         ),
         "source_type": request.get("request_type") if str(request.get("request_type") or "").upper() == BUSINESS_DECISION_SOURCE else "", "source_fingerprint": request.get("_source_fingerprint") or "", "reply_ready": bool(request.get("_source_fingerprint")), "presentation_binding": _formal_decision_presentation_binding(request, request_id, decision_id), "recorded_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
+    # New production Formal Decision delivery must never use the historical
+    # events/decisions writer. Its only canonical publication is the separate
+    # completion ingress, which writes events/reviews/formal_<occurrence_id>.json.
+    if str(request.get("request_type") or "").strip().upper() == BUSINESS_DECISION_SOURCE:
+        raise ValueError(
+            "new Formal Decision production source cannot use legacy events/decisions writer"
+        )
+    if (
+        str(request.get("request_type") or "").strip().upper() == "STATE_SYNC_ONLY"
+        and str(request.get("source") or "").strip().upper() == "CHATGPT_FORMAL_DECISION_COMPLETION"
+        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_DECISION_COMPLETION"
+    ):
+        raise ValueError(
+            "Formal Decision completion must use events/reviews/formal_<occurrence_id>.json owner"
+        )
     event_path = ROOT / "events/decisions" / f"{decision_id}.json"
     event_path.parent.mkdir(parents=True, exist_ok=True)
     if event_path.exists():
