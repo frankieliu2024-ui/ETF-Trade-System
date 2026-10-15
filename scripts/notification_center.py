@@ -239,6 +239,10 @@ def report_delivery_event() -> dict | None:
     # review event path identified by the triggering commit. Never select a
     # different event by directory order when an explicit binding is present.
     review_event_path = os.environ.get("REVIEW_EVENT_PATH", "").strip()
+    if strict_formal_completion_enabled() and not review_event_path:
+        # Formal Decision completion is never allowed to fall through to
+        # REPORT handoff/delivery compatibility or directory scanning.
+        return None
     canonical = canonical_scheduled_report_events(review_event_path or None)
     if review_event_path:
         # An invalid or ambiguous exact binding is fail-closed and must not
@@ -943,6 +947,10 @@ def choose_event(mode: str) -> dict | None:
     # An explicitly triggered REPORT must deliver that exact report.
     # Other workflow_run events retain the existing INTERRUPT precedence.
     explicit_report_binding = bool(os.environ.get("REVIEW_EVENT_PATH", "").strip())
+    if strict_formal_completion_enabled() and not explicit_report_binding:
+        # A Formal completion notification requires the exact current
+        # events/reviews/formal_<occurrence_id>.json binding.
+        return None
     if explicit_report_binding:
         # An exact Scheduled Review binding is authoritative. Never fall back to
         # an unrelated pending/action notification when the bound REPORT is
