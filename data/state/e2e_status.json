@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-15T19:17:32+08:00",
+  "generated_at": "2026-10-15T19:32:09+08:00",
   "status": "READY",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -51,11 +51,9 @@
       "formal_reply_gate": {
         "request_id": "formal-1792060984342-5c0a4fef-3bfaa41b",
         "requested_at_beijing": "2026-10-15T18:43:04.342+08:00",
-        "status": "BLOCKED",
-        "reply_freezable": false,
-        "blockers": [
-          "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request has not converged into canonical account_fact"
-        ],
+        "status": "READY",
+        "reply_freezable": true,
+        "blockers": [],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
           "request_id": "formal-1792060984342-5c0a4fef-3bfaa41b",
@@ -75,15 +73,9 @@
         "parent_request_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
         "parent_request_entry_mode": "MANUAL_CONVERSATION",
         "account_dependency": {
-          "status": "BLOCKED",
-          "reason": "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request has not converged into canonical account_fact",
-          "pending_broker_request": {
-            "path": "requests/live_snapshot/broker-screenshot-20261015-1810-close.json",
-            "request_id": "broker-screenshot-20261015-1810-close",
-            "request_time": "2026-10-15T18:10:00+08:00",
-            "has_account_fact": true,
-            "status": "ACCOUNT_SYNC_NOT_PERFORMED"
-          }
+          "status": "READY",
+          "reason": "confirmed account facts remain valid; historical audit deltas are not pending updates",
+          "pending_broker_request": null
         },
         "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
         "user_output_allowed": false,
@@ -98,15 +90,15 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1211915,
-          "sha256": "8f8a9f0f966315d248ebe449b571e838eb16b6927216b49f301c03987a26a3e7",
+          "byte_count": 1211926,
+          "sha256": "dc8bd32856bade35bc2b5d7f05aef6ffe37515bc73f99e9c5e8119efa9c15b5b",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 405761,
-          "sha256": "ceb5e54fc0f08b834f95404d3f6ada351ebe0c0e97e12b03582240be50ead132",
+          "byte_count": 405764,
+          "sha256": "75c749b9212bae259613b2050ea716e5eb8cfbcb2db9e6f9a20d3871c82ba294",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -133,15 +125,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1211915,
-      "sha256": "8f8a9f0f966315d248ebe449b571e838eb16b6927216b49f301c03987a26a3e7",
+      "byte_count": 1211926,
+      "sha256": "dc8bd32856bade35bc2b5d7f05aef6ffe37515bc73f99e9c5e8119efa9c15b5b",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 405761,
-      "sha256": "ceb5e54fc0f08b834f95404d3f6ada351ebe0c0e97e12b03582240be50ead132",
+      "byte_count": 405764,
+      "sha256": "75c749b9212bae259613b2050ea716e5eb8cfbcb2db9e6f9a20d3871c82ba294",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
