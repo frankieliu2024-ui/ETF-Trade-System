@@ -236,4 +236,4 @@ canonical intake只接受已登记的`ETF_TRADE_REVIEW`、`ETF_SYSTEM_REVIEW`与
 
 `ETF_FORMAL_DECISION` 的通知正文唯一来源是当前请求已冻结并由既有 Formal Decision completion event 绑定的 `FINAL_CONTENT`；Formal Decision 必须复用与【ETF系统复核】、【ETF交易复盘】相同的 completion/REPORT/notification_center/PushPlus 主链。BDS 只负责业务事实入口和正文冻结，不是通知唤醒事件。通知中心必须消费当前精确 completion event，验证 `request_id`、`parent_request_id`、`decision_id`、`content_hash` 和 presentation binding；任何字段缺失或不一致都不得发送，不得扫描历史事件回退，也不得返回 `ALREADY_MANAGED`。
 
-`notification.content` 必须逐字等于当前BDS的 `presentation_content`，`notification.content_hash` 必须等于正文实际哈希。PushPlus 只发送该正文原文。BDS写入、回读和通知尝试先于用户窗口输出；provider成功不是用户回复门禁，通知失败不得替代或改写完整FINAL_CONTENT。
+`notification.content` 必须逐字等于当前 BDS 的 `presentation_content`，`notification.content_hash` 必须等于正文实际哈希。PushPlus 只发送该正文原文。用户窗口输出是 READY 后的首个可见动作；BDS 写入、回读、completion、canonical event 和通知尝试均为正文后的后置投影。provider 成功不是用户回复门禁，通知失败不得替代或改写完整 FINAL_CONTENT。
