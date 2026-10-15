@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-15T22:15:50+08:00",
+  "generated_at": "2026-10-15T22:17:23+08:00",
   "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -48,7 +48,7 @@
       "decision_context": true,
       "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": true,
+      "request_bound": false,
       "formal_reply_gate": {
         "request_id": "formal-1792073686123-d9a1f6c2-7b4e5038",
         "requested_at_beijing": "2026-10-15T22:14:46.123+08:00",
@@ -164,21 +164,23 @@
           "must_read_back_before_reply": false,
           "historical_fallback_forbidden": true,
           "must_read_back_after_reply": true
-        }
+        },
+        "request_bound": true,
+        "projection_preserved_from_non_formal_runtime_request": true
       },
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1637905,
-          "sha256": "121ac38881eea3e892945fdac5f3505a0f5ab406675e5e8bcffd54358342d591",
+          "byte_count": 1637152,
+          "sha256": "21c1bf54ff59f4c0d0dbfdaa07b9dbab76624eb33ec7713b877b1a17a44bc2a5",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 516358,
-          "sha256": "bff040b38fb4df9cf3e89fe1e9688998c4caacd80771752ee5248feeb224a1c1",
+          "byte_count": 514162,
+          "sha256": "4cefcc7df71bcc8f59232a12f717f83d046245ce0de2a8ad95681c13678fa84e",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -207,15 +209,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1637905,
-      "sha256": "121ac38881eea3e892945fdac5f3505a0f5ab406675e5e8bcffd54358342d591",
+      "byte_count": 1637152,
+      "sha256": "21c1bf54ff59f4c0d0dbfdaa07b9dbab76624eb33ec7713b877b1a17a44bc2a5",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 516358,
-      "sha256": "bff040b38fb4df9cf3e89fe1e9688998c4caacd80771752ee5248feeb224a1c1",
+      "byte_count": 514162,
+      "sha256": "4cefcc7df71bcc8f59232a12f717f83d046245ce0de2a8ad95681c13678fa84e",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
