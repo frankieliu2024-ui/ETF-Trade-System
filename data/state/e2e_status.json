@@ -1,16 +1,16 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-15T08:40:41+08:00",
-  "status": "READY",
+  "generated_at": "2026-10-15T10:09:51+08:00",
+  "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
     "market": {
       "status": "READY",
       "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-10-14_152611.json",
-      "captured_at": "2026-10-14T15:26:11+08:00",
-      "market_phase": "POST_CLOSE_GRACE"
+      "snapshot": "data/market/snapshots/2026-10-15_100838.json",
+      "captured_at": "2026-10-15T10:08:38+08:00",
+      "market_phase": "CONTINUOUS_MORNING"
     },
     "account": {
       "status": "READY",
@@ -35,10 +35,11 @@
       "data_quality": "KNOWN_NET_COMPLETE_FOR_RECORDED_TRADE_FEES"
     },
     "close_review": {
-      "status": "READY",
-      "reason": "scheduled_review_not_due",
-      "scheduled_review_due_time": "20:30",
-      "market_date": "2026-10-14"
+      "status": "BLOCKED",
+      "reason": "FORMAL_POST_CLOSE_REVIEW_NOT_CANONICALIZED",
+      "market_date": "2026-10-14",
+      "review_path": "events/reviews/2026-10-14.json",
+      "closure_path": "data/state/close_review_closure_2026-10-14.json"
     },
     "decision_context": {
       "status": "READY",
@@ -49,15 +50,15 @@
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
       "request_bound": true,
       "formal_reply_gate": {
-        "request_id": "fd-chatgpt-20261015-083934-k4n8pz",
-        "requested_at_beijing": "2026-10-15T08:39:34+08:00",
+        "request_id": "fd-chatgpt-20261015-100800-r7m2qx",
+        "requested_at_beijing": "2026-10-15T10:08:00+08:00",
         "status": "READY",
         "reply_freezable": true,
         "blockers": [],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
-          "request_id": "fd-chatgpt-20261015-083934-k4n8pz",
-          "requested_at_beijing": "2026-10-15T08:39:34+08:00",
+          "request_id": "fd-chatgpt-20261015-100800-r7m2qx",
+          "requested_at_beijing": "2026-10-15T10:08:00+08:00",
           "query_context_path": "data/state/query_context.json",
           "decision_context_path": "data/state/decision_context.json",
           "decision_work_package_present": true,
@@ -105,24 +106,26 @@
           "OBSERVATION:515220",
           "OBSERVATION:513350",
           "OBSERVATION:515080",
-          "DISCOVERY:159046",
-          "DISCOVERY:159119",
-          "DISCOVERY:159202",
-          "DISCOVERY:159281",
-          "DISCOVERY:159647",
-          "DISCOVERY:159747",
-          "DISCOVERY:513600",
-          "DISCOVERY:513730",
-          "DISCOVERY:560570",
-          "DISCOVERY:563900"
+          "DISCOVERY:159111",
+          "DISCOVERY:159622",
+          "DISCOVERY:159892",
+          "DISCOVERY:159934",
+          "DISCOVERY:159972",
+          "DISCOVERY:511260",
+          "DISCOVERY:511270",
+          "DISCOVERY:511360",
+          "DISCOVERY:513070",
+          "DISCOVERY:513200",
+          "DISCOVERY:515080",
+          "DISCOVERY:561580"
         ],
-        "required_problem_count": 39,
+        "required_problem_count": 41,
         "business_answer_contract": "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
         "ready_handoff": {
           "required": true,
           "submission_type": "BUSINESS_DECISION_SOURCE",
           "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
-          "parent_request_id": "fd-chatgpt-20261015-083934-k4n8pz",
+          "parent_request_id": "fd-chatgpt-20261015-100800-r7m2qx",
           "required_payload_fields": [
             "request_id",
             "parent_request_id",
@@ -139,9 +142,9 @@
             "content_hash",
             "target_path"
           ],
-          "target_path": "requests/live_snapshot/fd-chatgpt-20261015-083934-k4n8pz__business_decision_source.json",
+          "target_path": "requests/live_snapshot/fd-chatgpt-20261015-100800-r7m2qx__business_decision_source.json",
           "binding_rules": {
-            "parent_request_id": "fd-chatgpt-20261015-083934-k4n8pz",
+            "parent_request_id": "fd-chatgpt-20261015-100800-r7m2qx",
             "allowed_sources": [
               "CHATGPT_BUSINESS_DECISION_RESPONSE"
             ],
@@ -171,15 +174,15 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1685233,
-          "sha256": "f62ec1dabcb8f846672ba204332918e6c18706c737ef04b8feb4dc17980bb9e3",
+          "byte_count": 1970589,
+          "sha256": "c3ee863f0c494d5a8a54254f76aa3f3f5060fa6143bfb842d4cdef953d1fe8f9",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 499144,
-          "sha256": "09b89727fad0450920b0f8aa5c69ada50b6404a455174b564a4eed6ac2a07700",
+          "byte_count": 611489,
+          "sha256": "6de329ba80841a691c907b85077029d9fe141a4e902ee353b83c19d046ba3079",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -200,21 +203,23 @@
       "checked_at": "2026-09-29T14:31:02+08:00"
     }
   },
-  "blockers": [],
+  "blockers": [
+    "close_review"
+  ],
   "degradations": [],
   "context_read_contract": {
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1685233,
-      "sha256": "f62ec1dabcb8f846672ba204332918e6c18706c737ef04b8feb4dc17980bb9e3",
+      "byte_count": 1970589,
+      "sha256": "c3ee863f0c494d5a8a54254f76aa3f3f5060fa6143bfb842d4cdef953d1fe8f9",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 499144,
-      "sha256": "09b89727fad0450920b0f8aa5c69ada50b6404a455174b564a4eed6ac2a07700",
+      "byte_count": 611489,
+      "sha256": "6de329ba80841a691c907b85077029d9fe141a4e902ee353b83c19d046ba3079",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
