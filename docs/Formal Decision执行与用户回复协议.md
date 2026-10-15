@@ -527,3 +527,10 @@ PushPlus 只能由现有 `notification_center` 从当前请求冻结的 `FINAL_C
 - 正文必须使用固定章节、独立段落和统一编号，不得追加交接审计、内部状态或第二正文。
 
 正文身份固定为 request_id + decision_id + content_hash。同一身份只能有一份FINAL_CONTENT；重试只能沿同一notification_id重试投递，不得重新分析、改写正文或创建第二通知。BDS写入、BDS回读、notification_id、provider result和用户收达必须分别记录，任何后置workflow成功均不得替代provider成功或用户收达事实。
+
+
+## 1.1.7 当前BDS的显式通知交接
+
+BDS写入或回读不会被视为通知workflow的可靠唤醒。完成BDS回读后，当前Formal Decision Actor必须把同一BDS路径、request_id、parent_request_id、entry_mode、source、task身份、market_date、BDS写入commit和content_hash作为当前交接载荷，显式交给既有`decision-notification.yml`的`formal_decision_bds_written`入口。
+
+通知workflow只能消费该显式载荷绑定的当前BDS，不得扫描历史目录、按文件名排序或按最新commit猜测正文。载荷任一身份字段、commit、路径或hash不匹配时必须fail-closed。该显式交接只解决唤醒和绑定，不代表PushPlus成功；notification_id、provider result和用户收达仍须分别记录。
