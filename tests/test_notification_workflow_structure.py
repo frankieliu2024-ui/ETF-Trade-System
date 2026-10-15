@@ -42,7 +42,7 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertIn("/tmp/changed_files.txt; then", self.text)
         self.assertNotIn("echo report=true", self.text)
 
-    def test_consistency_workflow_run_binds_exact_current_bds(self):
+    def test_consistency_workflow_run_validates_current_bds_without_waking_notification(self):
         self.assertIn('"ETF system consistency"', self.text)
         self.assertIn('id: workflow_bds', self.text)
         self.assertIn("github.event.workflow_run.name == 'ETF system consistency'", self.text)
@@ -51,12 +51,14 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertIn("requests/live_snapshot/*__bds*.json", self.text)
         self.assertIn("requests/live_snapshot/*__business_decision_source*.json", self.text)
         self.assertIn('Expected exactly one current BDS', self.text)
-        self.assertIn('steps.workflow_bds.outputs.formal_content_path', self.text)
-        # A push BDS is sent by the dedicated exact-content step; the generic
-        # material-action step must not send the same BDS a second time.
-        self.assertIn("steps.push_kind.outputs.formal_content == 'true'", self.text)
-        self.assertIn("id: formal_content_notify", self.text)
+        # The consistency producer may validate the current BDS, but it must not
+        # expose a BDS presentation path as a notification input.
+        self.assertNotIn("steps.workflow_bds.outputs.formal_content_path", self.text)
+        # Formal Decision BDS is not a notification wake; shared completion/REPORT binding is required.
         self.assertNotIn("steps.push_kind.outputs.formal_content == 'true' || steps.push_kind.outputs.trade", self.text)
+        self.assertIn("DECISION_EVENT_PATH", self.text)
+        self.assertIn("REVIEW_EVENT_PATH", self.text)
+        self.assertNotIn("--formal-content-file", self.text)
 
     def test_push_routes_accept_canonical_bds_suffix(self):
         self.assertIn(r"(bds|business_decision_source)", self.text)
@@ -87,8 +89,10 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertIn(event_condition_fragment, self.text)
         self.assertEqual(self.text.count("python scripts/build_execution_reconciliation.py"), 1)
         self.assertEqual(self.text.count("id: event_notify"), 1)
-        self.assertIn("--formal-content-file", self.text)
-        self.assertIn("$FORMAL_PRESENTATION_PATH", self.text)
+        self.assertIn("DECISION_EVENT_PATH", self.text)
+        self.assertIn("REVIEW_EVENT_PATH", self.text)
+        self.assertIn("REPORT_HANDOFF_PATH", self.text)
+        self.assertNotIn("$FORMAL_PRESENTATION_PATH", self.text)
 
     def test_existing_route_commands_remain_present_once(self):
         commands = [

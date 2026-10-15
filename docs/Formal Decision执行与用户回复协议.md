@@ -52,13 +52,13 @@ READY 后只生成一份 FINAL_CONTENT。它必须同时满足：
 用户回复和后置交接是连续但独立的两个动作：
 
 1. READY 后冻结唯一 FINAL_CONTENT；
-2. 将同一正文和同一请求身份写入现有 BUSINESS_DECISION_SOURCE 入口；
-3. 写入后从同一 current main 路径回读；
-4. 回读通过后交给既有 notification_center 发起一次通知尝试；
+2. 将同一正文和同一请求身份写入现有 BUSINESS_DECISION_SOURCE 入口并回读；
+3. 通过既有 completion ingress 形成当前精确 completion event，绑定同一正文、request/decision identity 和 content_hash；
+4. 由与【ETF系统复核】、【ETF交易复盘】相同的 REPORT/notification_center/PushPlus 主链消费该 completion event；
 5. 随后向用户输出同一份完整 FINAL_CONTENT；provider 成功不是用户回复门禁；
 6. 任一当前对象缺失或不一致时，当前交接 fail-closed，不扫描历史对象、不返回 ALREADY_MANAGED、不创建第二对象。
 
-BDS 不直接调用 PushPlus，但当前 Formal Decision 的 BDS 是既有通知链的唯一正文交接入口：notification_center 必须直接读取当前 BDS 携带的 presentation_content/full_content 原文并投递。REPORT、completion 或 REPORT_DELIVERY_REQUEST 如由既有实现生成，只能是同一正文的确定性保存或兼容投影，不得成为 Actor 新建的通知前置步骤，不得重新生成、摘要、改写或从历史对象恢复正文。PushPlus 未取得当前 notification 对应的明确 provider 成功结果时，只能记录 EXTERNAL_SEND_UNVERIFIED；历史 provider 成功不能证明当前请求发送成功。
+BDS 不直接唤醒通知，也不直接调用 PushPlus。BDS 只负责业务事实入口和唯一正文冻结；completion event 是通知主链的当前交接事件，REPORT 和 notification_center 只能从该精确事件透传同一份 FINAL_CONTENT，不得重新生成、摘要、改写或从历史对象恢复正文。PushPlus 未取得当前 notification 对应的明确 provider 成功结果时，只能记录 EXTERNAL_SEND_UNVERIFIED；历史 provider 成功不能证明当前请求发送成功。
 
 ### 1.1.5 状态和边界合同
 
@@ -492,7 +492,7 @@ Formal Decision 达到 READY 后，Actor 只冻结一份 `FINAL_CONTENT`。用�
 
 completion 的 `presentation_binding` 必须同时保存并校验：`request_id`、`parent_request_id`、`decision_id`、`report_id`、`full_content`、`content_hash`。其中 `full_content` 必须逐字等于 `FINAL_CONTENT`，`content_hash` 必须等于其实际 SHA-256。当前请求任一身份或哈希缺失、不一致时，必须 fail-closed，不得返回 `ALREADY_MANAGED`。
 
-PushPlus 只能由现有 `notification_center` 从当前请求冻结的 `FINAL_CONTENT` 原文投影通知正文。优先消费当前 BDS 的 `presentation_content`（其 `content_hash` 和请求身份必须一致）；若当前 completion 已存在，则可消费其同一份 `presentation_binding.full_content`。BDS 不重新生成正文，completion/REPORT 也不重建正文。旧 completion、旧 REPORT、旧 notification 和历史 provider 结果均不得回退或补齐当前正文。`REPORT_DELIVERY_REQUEST` 如被现有兼容链使用，只能由当前冻结正文确定性投影，不是 Actor 需要新建的前置请求。
+PushPlus 只能由现有 `notification_center` 从当前请求冻结的 `FINAL_CONTENT` 原文投影通知正文。Formal Decision 必须像【ETF系统复核】和【ETF交易复盘】一样，先形成当前精确 completion event，再进入共享 REPORT/notification_center/PushPlus 主链；BDS 只保存业务事实入口和同一份冻结正文，不承担通知唤醒。completion/REPORT 不重新生成正文，只透传同一份 `presentation_binding.full_content`。旧 completion、旧 REPORT、旧 notification 和历史 provider 结果均不得回退或补齐当前正文。`REPORT_DELIVERY_REQUEST` 如被现有兼容链使用，只能由当前冻结正文确定性投影，不是 Actor 需要新建的前置请求。
 
 通知失败不撤回用户已看到的 `FINAL_CONTENT`；没有当前 `notification_id` 对应的 provider 成功结果时，状态只能记录为 `EXTERNAL_SEND_UNVERIFIED`。
 
