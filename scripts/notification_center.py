@@ -329,11 +329,18 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
         event_parent_request_id = str(event.get("parent_request_id") or "").strip()
         event_decision_id = str(event.get("decision_id") or "").strip()
         binding_report_id = str(binding.get("report_id") or "").strip()
-        if not binding_request_id or not binding_parent_request_id or not binding_decision_id or not binding_report_id:
+        if not binding_request_id or not binding_report_id:
             continue
-        if (
-            event_request_id != binding_request_id
-            or event_parent_request_id != binding_parent_request_id
+        # Scheduled Review events have their own request/task occurrence
+        # identity and must not be forced to invent Formal Decision fields.
+        # Formal Decision keeps the stricter parent/decision identity contract.
+        formal_report = report_type == "ETF_FORMAL_DECISION"
+        if formal_report and (not binding_parent_request_id or not binding_decision_id):
+            continue
+        if event_request_id != binding_request_id:
+            continue
+        if formal_report and (
+            event_parent_request_id != binding_parent_request_id
             or event_decision_id != binding_decision_id
         ):
             continue
