@@ -7,6 +7,7 @@ from scripts.business_decision_source import (
     classify_request,
     validate_source,
     _normalize_formal_presentation_layout,
+    _validate_formal_presentation_contract,
 )
 
 class BusinessDecisionSourceTests(unittest.TestCase):
@@ -148,6 +149,19 @@ class BusinessDecisionSourceTests(unittest.TestCase):
             _normalize_formal_presentation_layout("证券（159781）"),
             "证券（159781）",
         )
+
+    def test_short_but_structurally_valid_presentation_is_not_length_blocked(self):
+        content = (
+            "【业务结论】\n【数据时点与必要依据】\n【三层监测】\n"
+            "【持仓动作】\n【资本用途】\n【全市场机会发现】\n【观察ETF】\n"
+            "【关键风险】\n【后续安排】\n【置信度】\n【最可能出错的地方】\n"
+            "持有管理；不追加；可释放资本；实际新增部署；Trial；Confirm；1）"
+        )
+        _validate_formal_presentation_contract({
+            "presentation_content": content,
+            "decision_response": {"presentation_content": content},
+            "presentation_binding": {"full_content": content},
+        })
 
     def test_projection_is_deterministic_and_does_not_redecide(self):
         projected = build_formal_completion_from_source(self.base())
