@@ -180,9 +180,12 @@ class ReportDeliveryContractTests(unittest.TestCase):
             body = f"FROZEN FINAL_CONTENT {report_type}"
             event = {
                 "event_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW" if report_type == "ETF_SYSTEM_REVIEW" else "FORMAL_POST_CLOSE_REVIEW",
+                "request_id": f"request-{report_type}",
                 "presentation_binding": {
                     "report_type": report_type, "task_id": report_type,
-                    "task_run_id": f"run-{report_type}", "full_content": body,
+                    "task_run_id": f"run-{report_type}", "request_id": f"request-{report_type}",
+                    "report_id": f"{report_type}:run-{report_type}",
+                    "full_content": body,
                     "content_hash": hashlib.sha256(body.encode("utf-8")).hexdigest(),
                 },
             }
@@ -196,6 +199,46 @@ class ReportDeliveryContractTests(unittest.TestCase):
             self.assertEqual(first["content_hash"], second["content_hash"])
             self.assertEqual(first["idempotency_key"], second["idempotency_key"])
             self.assertEqual(first["report_type"], report_type)
+
+    def test_review_event_contract_rejects_cross_route_event_type(self):
+        body = "FROZEN FINAL_CONTENT"
+        event = {
+            "event_type": "FORMAL_SCHEDULED_REVIEW",
+            "request_id": "request-trade",
+            "presentation_binding": {
+                "report_type": "ETF_TRADE_REVIEW",
+                "task_id": "ETF交易复盘",
+                "task_run_id": "run-trade",
+                "request_id": "request-trade",
+                "report_id": "ETF_TRADE_REVIEW:run-trade",
+                "full_content": body,
+                "content_hash": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+            },
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "trade_wrong_route.json"
+            path.write_text(json.dumps(event, ensure_ascii=False), encoding="utf-8")
+            with patch.object(notification_center, "REVIEW_EVENT_DIR", Path(directory)):
+                self.assertEqual(notification_center.canonical_scheduled_report_events(), [])
+
+    def test_review_event_contract_requires_request_identity(self):
+        body = "FROZEN FINAL_CONTENT"
+        event = {
+            "event_type": "FORMAL_POST_CLOSE_REVIEW",
+            "presentation_binding": {
+                "report_type": "ETF_TRADE_REVIEW",
+                "task_id": "ETF交易复盘",
+                "task_run_id": "run-trade",
+                "report_id": "ETF_TRADE_REVIEW:run-trade",
+                "full_content": body,
+                "content_hash": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+            },
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "trade_missing_identity.json"
+            path.write_text(json.dumps(event, ensure_ascii=False), encoding="utf-8")
+            with patch.object(notification_center, "REVIEW_EVENT_DIR", Path(directory)):
+                self.assertEqual(notification_center.canonical_scheduled_report_events(), [])
 
     def test_malformed_canonical_completion_is_fail_closed(self):
         with tempfile.TemporaryDirectory() as directory:
