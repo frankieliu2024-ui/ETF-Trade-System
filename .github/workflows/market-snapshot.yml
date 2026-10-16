@@ -86,6 +86,10 @@ jobs:
         if: ${{ github.event_name == 'schedule' }}
         env:
           SCHEDULED_CRON: ${{ github.event.schedule }}
+          # These are execution-time identities, never defaults in the script.
+          TASK_ID: ETF正式决策
+          TASK_RUN_ID: ${{ github.run_id }}
+          OCCURRENCE_ID: scheduled_${{ github.run_id }}_${{ github.event.schedule }}
         shell: bash
         run: |
           python scripts/create_scheduled_formal_request.py
