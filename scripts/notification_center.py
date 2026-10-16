@@ -177,9 +177,9 @@ def _validate_formal_presentation_layout(content: str) -> str:
         return "formal_presentation_title_not_first_line"
     for index, line in enumerate(lines):
         stripped = line.strip()
-        if re.search(r"[ \\t]+[（(][0-9]{1,2}[）)]", line):
+        if re.search(r"[ \t]+[（(][0-9]{1,2}[）)]", line):
             return "formal_presentation_inline_secondary_numbering"
-        if re.match(r"^[（(][0-9]{1,2}[）)]", stripped) or re.match(r"^[0-9]{1,2}\\.", stripped):
+        if re.match(r"^[（(][0-9]{1,2}[）)]", stripped) or re.match(r"^[0-9]{1,2}\.", stripped):
             if index == 0 or lines[index - 1].strip() != "":
                 return "formal_presentation_numbered_items_need_blank_line"
     if re.search(r"(?m)^\\s*[0-9]{1,2}\\.\\s+[^\\n]+\\n[0-9]{1,2}\\.\\s+", content):
