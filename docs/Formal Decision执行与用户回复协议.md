@@ -1,5 +1,14 @@
 # Formal Decision执行与用户回复协议
 
+## 场景作用域防火墙（强制）
+
+本协议包含两套不可交叉消费的入口合同：
+
+- **MANUAL_CONVERSATION**（`CHATGPT_MANUAL_FORMAL_ANALYSIS`）：才允许使用 `MARKET_QUOTE_REFRESH`、request-bound snapshot/query_context/DWP/formal_reply_gate、READY、BUSINESS_DECISION_SOURCE 和 `FORMAL_DECISION_COMPLETION`。
+- **MANUAL_SCHEDULED_TASK / AUTOMATIC_SCHEDULED_TASK**（`CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS` / `CHATGPT_SCHEDULED_FORMAL_ANALYSIS`）：只允许按 `docs/formal-decision-scheduled-task-rebuild-v2.md` 建立本次 task/run/occurrence/request 身份，读取当前事实并以 `STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW` 形成 Scheduled Review completion；不得创建或消费上述对话入口的 gate、DWP、父请求、BDS 或 `MARKET_QUOTE_REFRESH`。
+
+本协议后文凡未明确标注入口身份的 parent request、formal_reply_gate、DWP、BDS、BUSINESS_DECISION_SOURCE 和 `FORMAL_DECISION_COMPLETION` 条款，默认仅适用于 `MANUAL_CONVERSATION`。定时任务不得以“缺少历史 gate/DWP/旧请求”为失败理由，也不得借用旧身份继续运行。
+
 ## 1. 目的与范围
 
 本协议只规定 Formal Decision 的请求消费、业务回复时序和用户可见边界。交易规则以 `ETF规则_MASTER.md` 为准，事实、PIT、freshness 和三层监测以数据规范为准，代码与生产变更以生产变更协议为准。本协议不新增 workflow、state、producer、checker、writer、provider 或第二决策链。
