@@ -4,6 +4,8 @@
 适用范围：仅限【ETF正式决策】定时任务。  
 唯一规则来源：本文件由 `ETF_SYSTEM_INDEX.md` 路由，交易权限、风险阈值、观察/机会/持仓定义仍分别服从 MASTER、数据规范和 Formal Decision 执行协议。
 
+本文件只补充两个定时任务入口的运行身份、自动节点和手动启动规则；它不再定义第二条 Formal Decision 生产链。对话窗口、手动任务和自动任务三者的业务判断、唯一正文、STATE_SYNC_ONLY、review event、REPORT、notification_center 和 PushPlus 统一服从 `docs/Formal Decision执行与用户回复协议.md`。
+
 ## 0. 作用域防火墙（强制）
 
 本文件是 `MANUAL_SCHEDULED_TASK` 与 `AUTOMATIC_SCHEDULED_TASK` 的唯一执行合同。它们不得读取、等待、复用或消费 `MANUAL_CONVERSATION` 的 `formal_reply_gate`、query_context、DWP、父请求、BDS、`MARKET_QUOTE_REFRESH` 或 `FORMAL_DECISION_COMPLETION`。这些旧对象即使存在，也不能成为本次定时任务的前置门禁或事实来源。
@@ -14,7 +16,7 @@
 
 【ETF系统复核】和【ETF交易复盘】仅作为只读对照对象。不得修改其任务、调度、代码、协议、状态、completion、REPORT、notification 或 PushPlus 链。本任务逐节点复用二者已经稳定的 Scheduled Review 请求、completion、canonical review event、REPORT、notification_center 和统一 PushPlus 链；Formal 的业务字段与正文不同，但生产链不分叉。
 
-## 二、两个合法入口
+## 二、两个定时任务入口（不产生第二生产链）
 
 用户明确手动启动本任务时，入口必须是：
 
