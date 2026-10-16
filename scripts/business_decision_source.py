@@ -936,6 +936,10 @@ def _validate_formal_presentation_layout(content: str) -> None:
             continue
         if re.search(r"[ \t]+[（(][0-9]{1,2}[）)]", line):
             raise ValueError("formal presentation secondary numbering must start a new paragraph")
+        if re.match(r"^[0-9]{1,2}\.[^ \t\n]", stripped):
+            raise ValueError("formal presentation primary numbering requires whitespace after marker")
+        if re.match(r"^[（(][0-9]{1,2}[）)][^ \t\n]", stripped):
+            raise ValueError("formal presentation secondary numbering requires whitespace after marker")
         if re.match(r"^[（(][0-9]{1,2}[）)]\s+", stripped):
             if not primary_seen:
                 raise ValueError("formal presentation secondary numbering requires a preceding primary item")
