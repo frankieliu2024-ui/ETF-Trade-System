@@ -1090,12 +1090,7 @@ jobs:
           PY
           fi
 
-      - name: Deliver canonical Scheduled Review completion through notification center
-        # Formal Decision, System Review, and Trade Review completions all wake
-        # the existing event-owned REPORT/PushPlus chain. No BDS or parallel
-        # report handoff is used for Scheduled Review production.
-        if: ${{ always() && steps.triggering_request.outputs.formal_completion == 'true' && github.event.inputs.probe_only != 'true' }}
-        run: python scripts/run_guarded_notification.py center --mode event
+      # Deliver canonical Scheduled Review completion through notification center via the existing decision-notification.yml owner. This producer only records the exact event; it never executes PushPlus or notification-center.
 
       - name: Build state context and candidates
         # Full decision preparation is request/state-sync bound. Scheduled
