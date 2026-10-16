@@ -31,7 +31,7 @@ CANONICAL_FILES = {
     "experience": "ETF交易复盘与经验库_2026.md", "market_archive": "ETF市场行情档案_2026.md",
     "data_standard": "ETF与市场监测数据接口使用规范.md", "current": "data/state/CURRENT.json",
     "account_fact": "data/state/account_fact.json", "asset_roles": "data/state/asset_roles.json",
-    "etf_monitor_universe": "config/market/etf_monitor_universe.json", "trading_calendar": "config/market/a_share_trading_calendar_2026.json",
+    "etf_monitor_universe": "config/market/etf_monitor_universe.json", "observation_thesis_registry": "config/market/etf_observation_thesis_registry.json", "trading_calendar": "config/market/a_share_trading_calendar_2026.json",
     "stock_context": "data/state/stock_context.json", "stock_market_context": "data/state/stock_market_context.json",
     "stock_monitor_policy": "config/market/stock_monitor_policy.json", "market_delta": "data/state/market_delta.json",
     "overseas_context": "data/state/overseas_context.json", "us_extended_hours_context": "data/state/us_extended_hours_context.json",
@@ -304,6 +304,10 @@ def _stable_manual_request_identity(request: dict) -> str:
 def _latest_observation_thesis_state(root: Path, observation_codes: set[str]) -> dict[str, dict]:
     """Read the latest durable Formal Decision thesis metadata for current observations."""
     out: dict[str, dict] = {}
+    registry = read_json(root / CANONICAL_FILES["observation_thesis_registry"], {})
+    registry_objects = registry.get("objects") if isinstance(registry, dict) else {}
+    if not isinstance(registry_objects, dict):
+        registry_objects = {}
     decisions_dir = root / "events" / "decisions"
     if not decisions_dir.exists() or not observation_codes:
         return out
@@ -327,6 +331,18 @@ def _latest_observation_thesis_state(root: Path, observation_codes: set[str]) ->
                 continue
             if all(str(item.get(key) or "").strip() for key in required):
                 out[code] = {key: item.get(key) for key in required}
+    # A formally admitted observation can predate the current event schema.  The
+    # canonical registry is the durable identity source for that case; it only
+    # supplies the six thesis fields and never creates an admission or trading
+    # decision.  Event data remains authoritative whenever it is complete.
+    for code in observation_codes:
+        if code in out:
+            continue
+        candidate = registry_objects.get(code)
+        if not isinstance(candidate, dict):
+            continue
+        if all(str(candidate.get(key) or "").strip() for key in required):
+            out[code] = {key: candidate.get(key) for key in required}
     return out
 
 
