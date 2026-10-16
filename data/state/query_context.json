@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-16T00:26:00Z",
-  "generated_at_beijing": "2026-10-16T08:26:00+08:00",
+  "generated_at": "2026-10-16T00:39:01Z",
+  "generated_at_beijing": "2026-10-16T08:39:01+08:00",
   "market_date": "2026-10-15",
   "latest_valid_node": "close",
   "rules_version": "V2.2.34",
@@ -663,7 +663,7 @@
       "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
       "timing": {}
     },
-    "generated_at": "2026-10-16T00:25:59Z",
+    "generated_at": "2026-10-16T00:39:01Z",
     "rules_version": "V2.2.34",
     "market_date": "2026-10-15",
     "latest_node": "close",
@@ -2100,7 +2100,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 10.539,
-      "age_seconds": 61591
+      "age_seconds": 62373
     },
     "freshness_at_context_build": {
       "status": "STALE",
@@ -2116,7 +2116,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 10.539,
-      "age_seconds": 61591
+      "age_seconds": 62373
     },
     "data_quality_summary": {
       "pass_count": 17,
@@ -2202,7 +2202,7 @@
       "account_fact_time": "2026-10-15T18:10:00+08:00",
       "market_snapshot_time": "2026-10-15T15:19:28+08:00",
       "market_phase": "POST_CLOSE_GRACE",
-      "context_generated_time": "2026-10-16T00:25:59Z",
+      "context_generated_time": "2026-10-16T00:39:01Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
@@ -2240,9 +2240,14 @@
       "read_only": true
     },
     "market_quote_router": {
-      "generated_at_beijing": "2026-10-16T08:25:46+08:00",
+      "generated_at_beijing": "2026-10-16T08:38:48+08:00",
       "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-      "refresh_failures": [],
+      "refresh_failures": [
+        {
+          "symbol": "N225",
+          "error": "N225 query-time direct chain has no fresh usable quote; eastmoney_push2delay:100.N225: HTTP Error 502: Bad Gateway | eastmoney_push2:100.N225: HTTP Error 502: Bad Gateway | yahoo_chart_api: freshness=DELAYED quality=PASS"
+        }
+      ],
       "decision_freshness": {
         "status": "DIRECT",
         "quality_status": "UNKNOWN",
@@ -2250,7 +2255,7 @@
         "provider_as_of": "2026-10-15T07:19:23+00:00",
         "effective_as_of": "2026-10-15T07:19:23+00:00",
         "request_time": "2026-10-16T00:25:09+00:00",
-        "age_seconds": 61583,
+        "age_seconds": 62365,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -2262,54 +2267,27 @@
         "request_scoped_resolution_mode": "CLOSED_SESSION_CANONICAL_REUSE",
         "request_scoped_resolution_reason": "closed A-share session legally reuses latest canonical close",
         "a_share_market_phase": "OFF_SESSION",
-        "resolved_as_of": "2026-10-16T00:25:47+00:00"
+        "resolved_as_of": "2026-10-16T00:38:51+00:00"
       },
       "route_version": "V1.1",
       "query_entry": "market_quote_router",
       "quotes": [
-        {
-          "market": "JP",
-          "market_name": "日本",
-          "symbol": "N225",
-          "canonical_object": "N225",
-          "name": "日经225指数",
-          "latest_price": 65150.89,
-          "open": 64925.29,
-          "high": 65238.03,
-          "low": 64800.9,
-          "prev_close": 64425.95,
-          "volume": 0,
-          "amount": "-",
-          "turnover": "-",
-          "data_time_beijing": "2026-10-16T08:25:11+08:00",
-          "data_time_local": "2026-10-16T09:25:11+09:00",
-          "market_phase": "REGULAR",
-          "market_status_cn": "日股交易中",
-          "data_nature_cn": "实时交易行情",
-          "source": "eastmoney_push2delay:100.N225",
-          "freshness": "FRESH",
-          "quality_status": "PASS",
-          "direct_quote": true,
-          "refresh_source": "QUERY_TIME_FORMAL_PROVIDER_CHAIN",
-          "provider_timestamp_field": "f86",
-          "refresh_contract": "ACTIVE_MARKET_REQUIRES_FRESH_PROVIDER_TIMESTAMP"
-        },
         {
           "market": "KR",
           "market_name": "韩国",
           "symbol": "KOSPI",
           "canonical_object": "KOSPI",
           "name": "韩国综合指数",
-          "latest_price": 5607.82,
+          "latest_price": 5651.0,
           "open": 5653.99,
           "high": 5662.3,
           "low": 5590.33,
           "prev_close": 5554.22,
-          "volume": 57241000.0,
-          "amount": 3744395000000.0,
-          "turnover": 3744395000000.0,
-          "data_time_beijing": "2026-10-16T08:25:47+08:00",
-          "data_time_local": "2026-10-16T09:25:47+09:00",
+          "volume": 75362000.0,
+          "amount": 4651079000000.0,
+          "turnover": 4651079000000.0,
+          "data_time_beijing": "2026-10-16T08:38:51+08:00",
+          "data_time_local": "2026-10-16T09:38:51+09:00",
           "market_phase": "REGULAR",
           "market_status_cn": "韩股交易中",
           "data_nature_cn": "实时交易行情",
@@ -2814,6 +2792,32 @@
           "quality_status_cn": "数据可用",
           "direct_quote": true,
           "route_rule": "返回最近正式收盘行情"
+        },
+        {
+          "market": "JP",
+          "market_name": "日本",
+          "symbol": "100.N225",
+          "name": "日经225指数",
+          "latest_price": 65050.6,
+          "open": null,
+          "high": null,
+          "low": null,
+          "prev_close": null,
+          "volume": null,
+          "amount": null,
+          "turnover": null,
+          "data_time_beijing": "2026-10-16T08:06:31+08:00",
+          "data_time_local": "",
+          "market_phase": "REGULAR",
+          "market_status_cn": "日股交易中",
+          "data_nature_cn": "实时交易行情",
+          "source": "eastmoney_push2",
+          "freshness": "STALE",
+          "freshness_cn": "时点过旧",
+          "quality_status": "PASS",
+          "quality_status_cn": "数据可用",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
         },
         {
           "market": "TW",
@@ -3449,7 +3453,7 @@
     },
     "decision_trigger": {
       "schema_version": "1.2",
-      "generated_at": "2026-10-16T08:17:09+08:00",
+      "generated_at": "2026-10-16T08:26:20+08:00",
       "status": "NO_NEW_TRIGGER",
       "trigger_type": "",
       "triggered_at": "",
@@ -3470,7 +3474,7 @@
     },
     "capital_efficiency_ranking": {
       "schema_version": "1.2",
-      "generated_at": "2026-10-16T08:17:09+08:00",
+      "generated_at": "2026-10-16T08:26:20+08:00",
       "as_of": "2026-10-15T15:19:28+08:00",
       "e2e_status": "READY",
       "risk_zone": "RISK_OBSERVATION",
@@ -5501,7 +5505,7 @@
       ]
     },
     "intraday_path_features": {
-      "generated_at": "2026-10-16T00:17:01Z",
+      "generated_at": "2026-10-16T00:26:13Z",
       "market_date": "2026-10-15",
       "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
       "read_only": true,
@@ -7167,8 +7171,8 @@
         "prefilter_elapsed_seconds": 0.006,
         "history_validation_elapsed_seconds": 0.003,
         "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
-        "candidate_formal_quote_elapsed_seconds": 10.22,
-        "discovery_pipeline_elapsed_seconds": 10.241,
+        "candidate_formal_quote_elapsed_seconds": 8.938,
+        "discovery_pipeline_elapsed_seconds": 8.948,
         "reuse_mode": "SAME_MARKET_NODE_LEGAL_DISCOVERY_EVIDENCE_REUSE"
       },
       "coverage_status": "COMPLETE",
@@ -8588,7 +8592,7 @@
     "account_fact_time": "2026-10-15T18:10:00+08:00",
     "market_snapshot_time": "2026-10-15T15:19:28+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-10-16T00:25:59Z",
+    "context_generated_time": "2026-10-16T00:39:01Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -8689,7 +8693,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "STALE",
-        "age_seconds": 61581,
+        "age_seconds": 62364,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -8707,7 +8711,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 10.539,
-        "age_seconds": 61581
+        "age_seconds": 62364
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新判断为“时点正常／存在延迟／时点过旧”。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -8758,9 +8762,14 @@
     }
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-10-16T08:25:46+08:00",
+    "generated_at_beijing": "2026-10-16T08:38:48+08:00",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-    "refresh_failures": [],
+    "refresh_failures": [
+      {
+        "symbol": "N225",
+        "error": "N225 query-time direct chain has no fresh usable quote; eastmoney_push2delay:100.N225: HTTP Error 502: Bad Gateway | eastmoney_push2:100.N225: HTTP Error 502: Bad Gateway | yahoo_chart_api: freshness=DELAYED quality=PASS"
+      }
+    ],
     "decision_freshness": {
       "status": "DIRECT",
       "quality_status": "UNKNOWN",
@@ -8768,7 +8777,7 @@
       "provider_as_of": "2026-10-15T07:19:23+00:00",
       "effective_as_of": "2026-10-15T07:19:23+00:00",
       "request_time": "2026-10-16T00:25:09+00:00",
-      "age_seconds": 61583,
+      "age_seconds": 62365,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -8780,54 +8789,27 @@
       "request_scoped_resolution_mode": "CLOSED_SESSION_CANONICAL_REUSE",
       "request_scoped_resolution_reason": "closed A-share session legally reuses latest canonical close",
       "a_share_market_phase": "OFF_SESSION",
-      "resolved_as_of": "2026-10-16T00:25:47+00:00"
+      "resolved_as_of": "2026-10-16T00:38:51+00:00"
     },
     "route_version": "V1.1",
     "query_entry": "market_quote_router",
     "quotes": [
-      {
-        "market": "JP",
-        "market_name": "日本",
-        "symbol": "N225",
-        "canonical_object": "N225",
-        "name": "日经225指数",
-        "latest_price": 65150.89,
-        "open": 64925.29,
-        "high": 65238.03,
-        "low": 64800.9,
-        "prev_close": 64425.95,
-        "volume": 0,
-        "amount": "-",
-        "turnover": "-",
-        "data_time_beijing": "2026-10-16T08:25:11+08:00",
-        "data_time_local": "2026-10-16T09:25:11+09:00",
-        "market_phase": "REGULAR",
-        "market_status_cn": "日股交易中",
-        "data_nature_cn": "实时交易行情",
-        "source": "eastmoney_push2delay:100.N225",
-        "freshness": "FRESH",
-        "quality_status": "PASS",
-        "direct_quote": true,
-        "refresh_source": "QUERY_TIME_FORMAL_PROVIDER_CHAIN",
-        "provider_timestamp_field": "f86",
-        "refresh_contract": "ACTIVE_MARKET_REQUIRES_FRESH_PROVIDER_TIMESTAMP"
-      },
       {
         "market": "KR",
         "market_name": "韩国",
         "symbol": "KOSPI",
         "canonical_object": "KOSPI",
         "name": "韩国综合指数",
-        "latest_price": 5607.82,
+        "latest_price": 5651.0,
         "open": 5653.99,
         "high": 5662.3,
         "low": 5590.33,
         "prev_close": 5554.22,
-        "volume": 57241000.0,
-        "amount": 3744395000000.0,
-        "turnover": 3744395000000.0,
-        "data_time_beijing": "2026-10-16T08:25:47+08:00",
-        "data_time_local": "2026-10-16T09:25:47+09:00",
+        "volume": 75362000.0,
+        "amount": 4651079000000.0,
+        "turnover": 4651079000000.0,
+        "data_time_beijing": "2026-10-16T08:38:51+08:00",
+        "data_time_local": "2026-10-16T09:38:51+09:00",
         "market_phase": "REGULAR",
         "market_status_cn": "韩股交易中",
         "data_nature_cn": "实时交易行情",
@@ -9332,6 +9314,32 @@
         "quality_status_cn": "数据可用",
         "direct_quote": true,
         "route_rule": "返回最近正式收盘行情"
+      },
+      {
+        "market": "JP",
+        "market_name": "日本",
+        "symbol": "100.N225",
+        "name": "日经225指数",
+        "latest_price": 65050.6,
+        "open": null,
+        "high": null,
+        "low": null,
+        "prev_close": null,
+        "volume": null,
+        "amount": null,
+        "turnover": null,
+        "data_time_beijing": "2026-10-16T08:06:31+08:00",
+        "data_time_local": "",
+        "market_phase": "REGULAR",
+        "market_status_cn": "日股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "eastmoney_push2",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
+        "quality_status": "PASS",
+        "quality_status_cn": "数据可用",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
       },
       {
         "market": "TW",
@@ -10094,7 +10102,7 @@
         "market_phase": "MIXED_BY_OBJECT",
         "provider": "DOMAIN_OBJECT_PROVIDERS",
         "provider_as_of_beijing": "",
-        "as_of_beijing": "2026-10-16T08:16:34+08:00",
+        "as_of_beijing": "2026-10-16T08:25:45+08:00",
         "quality_status": "PASS",
         "freshness_status": "MIXED_BY_OBJECT",
         "objects": [
@@ -10195,8 +10203,8 @@
       "prefilter_elapsed_seconds": 0.006,
       "history_validation_elapsed_seconds": 0.003,
       "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
-      "candidate_formal_quote_elapsed_seconds": 10.22,
-      "discovery_pipeline_elapsed_seconds": 10.241,
+      "candidate_formal_quote_elapsed_seconds": 8.938,
+      "discovery_pipeline_elapsed_seconds": 8.948,
       "reuse_mode": "SAME_MARKET_NODE_LEGAL_DISCOVERY_EVIDENCE_REUSE"
     },
     "coverage_status": "COMPLETE",
@@ -11458,11 +11466,11 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 10.539,
-    "age_seconds": 61581
+    "age_seconds": 62364
   },
   "freshness_at_context_build": {
     "status": "STALE",
-    "age_seconds": 61581,
+    "age_seconds": 62364,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -11473,7 +11481,7 @@
     "provider_as_of": "2026-10-15T07:19:23+00:00",
     "effective_as_of": "2026-10-15T07:19:23+00:00",
     "request_time": "2026-10-16T00:25:09+00:00",
-    "age_seconds": 61583,
+    "age_seconds": 62365,
     "post_request": false,
     "preferred_max_age_seconds": 300,
     "fallback_max_age_seconds": 900,
@@ -11485,7 +11493,7 @@
     "request_scoped_resolution_mode": "CLOSED_SESSION_CANONICAL_REUSE",
     "request_scoped_resolution_reason": "closed A-share session legally reuses latest canonical close",
     "a_share_market_phase": "OFF_SESSION",
-    "resolved_as_of": "2026-10-16T00:25:47+00:00"
+    "resolved_as_of": "2026-10-16T00:38:51+00:00"
   },
   "trading_day_status": {
     "market_date": "2026-10-16",
@@ -11569,7 +11577,7 @@
   "overseas_context_status": "PASS",
   "overseas_generated_at_beijing": "2026-10-16T08:06:51+08:00",
   "us_extended_hours_status": "PASS",
-  "us_extended_hours_generated_at_beijing": "2026-10-16T08:16:34+08:00",
+  "us_extended_hours_generated_at_beijing": "2026-10-16T08:25:45+08:00",
   "stock_context_status": "VALID",
   "stock_market_context_status": "EMPTY",
   "stock_role_confirmation_needed": false,
@@ -11592,7 +11600,7 @@
     "schema_version": "1.5",
     "role": "PREFERRED_MINIMUM_SUFFICIENT_FORMAL_REASONING_INPUT",
     "trigger": {
-      "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+      "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
       "request_id": "fd_manual_20261016T082509_plus0800",
       "requested_at_beijing": "2026-10-16T08:25:09+08:00",
       "entry_mode": "MANUAL_CONVERSATION",
@@ -11648,22 +11656,12 @@
     },
     "qualified_market_facts": [
       {
-        "code": "N225",
-        "name": "日经225指数",
-        "price": null,
-        "change_pct": null,
-        "market_phase": "REGULAR",
-        "as_of_beijing": "2026-10-16T08:25:11+08:00",
-        "quality_status": "PASS",
-        "provider": ""
-      },
-      {
         "code": "KOSPI",
         "name": "韩国综合指数",
         "price": null,
         "change_pct": null,
         "market_phase": "REGULAR",
-        "as_of_beijing": "2026-10-16T08:25:47+08:00",
+        "as_of_beijing": "2026-10-16T08:38:51+08:00",
         "quality_status": "PASS",
         "provider": ""
       },
@@ -11858,6 +11856,16 @@
         "provider": ""
       },
       {
+        "code": "100.N225",
+        "name": "日经225指数",
+        "price": null,
+        "change_pct": null,
+        "market_phase": "REGULAR",
+        "as_of_beijing": "2026-10-16T08:06:31+08:00",
+        "quality_status": "PASS",
+        "provider": ""
+      },
+      {
         "code": "^TWII",
         "name": "台湾加权指数",
         "price": null,
@@ -11999,7 +12007,7 @@
       }
     ],
     "decision_context": {
-      "generated_at_beijing": "2026-10-16T00:25:59Z",
+      "generated_at_beijing": "2026-10-16T00:39:01Z",
       "source": "scripts/state_manager.py::build_decision_context",
       "analysis_coverage": {
         "indices_total": 3,
@@ -12190,7 +12198,7 @@
         "provider_as_of": "2026-10-15T07:19:23+00:00",
         "effective_as_of": "2026-10-15T07:19:23+00:00",
         "request_time": "2026-10-16T00:25:09+00:00",
-        "age_seconds": 61583,
+        "age_seconds": 62365,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -12202,7 +12210,7 @@
         "request_scoped_resolution_mode": "CLOSED_SESSION_CANONICAL_REUSE",
         "request_scoped_resolution_reason": "closed A-share session legally reuses latest canonical close",
         "a_share_market_phase": "OFF_SESSION",
-        "resolved_as_of": "2026-10-16T00:25:47+00:00"
+        "resolved_as_of": "2026-10-16T00:38:51+00:00"
       },
       "quotes_as_of_beijing": [
         "2026-10-15T13:30:00+08:00",
@@ -12227,8 +12235,8 @@
         "2026-10-15T16:14:58+08:00",
         "2026-10-15T16:15:00+08:00",
         "2026-10-16T04:00:00+08:00",
-        "2026-10-16T08:25:11+08:00",
-        "2026-10-16T08:25:47+08:00"
+        "2026-10-16T08:06:31+08:00",
+        "2026-10-16T08:38:51+08:00"
       ],
       "source": "scripts/market_quote_router.py"
     },
@@ -12243,14 +12251,14 @@
       "global_blockers": [],
       "limitations": [],
       "source_ingress": {
-        "manual_formal_request": true,
+        "manual_formal_request": false,
         "qualified": true,
-        "path": "requests/live_snapshot/fd_manual_20261016T082509_plus0800.json",
+        "path": "requests/live_snapshot/fd_manual_20261016T082509_plus0800__business_decision_source.json",
         "rule": "Manual formal analysis is request-scoped only when bound to the existing canonical requests/live_snapshot ingress. Derived state alone cannot impersonate a new manual formal request."
       },
       "rule": "Missing market/account/discovery facts localize their impact and do not suppress independent legal analysis. Missing canonical request identity/time or an unqualified manual source ingress globally blocks this request-scoped formal-analysis packet.",
       "reply_freeze": {
-        "status": "READY",
+        "status": "NOT_APPLICABLE",
         "reply_freezable": true,
         "blockers": [],
         "request_id": "fd_manual_20261016T082509_plus0800",
@@ -12260,7 +12268,7 @@
       }
     },
     "formal_reply_freeze": {
-      "status": "READY",
+      "status": "NOT_APPLICABLE",
       "reply_freezable": true,
       "blockers": [],
       "request_id": "fd_manual_20261016T082509_plus0800",
@@ -19360,22 +19368,12 @@
       ],
       "current_evidence": [
         {
-          "code": "N225",
-          "name": "日经225指数",
-          "price": null,
-          "change_pct": null,
-          "market_phase": "REGULAR",
-          "as_of_beijing": "2026-10-16T08:25:11+08:00",
-          "quality_status": "PASS",
-          "provider": ""
-        },
-        {
           "code": "KOSPI",
           "name": "韩国综合指数",
           "price": null,
           "change_pct": null,
           "market_phase": "REGULAR",
-          "as_of_beijing": "2026-10-16T08:25:47+08:00",
+          "as_of_beijing": "2026-10-16T08:38:51+08:00",
           "quality_status": "PASS",
           "provider": ""
         },
@@ -19566,6 +19564,16 @@
           "change_pct": null,
           "market_phase": "OFF_SESSION",
           "as_of_beijing": "2026-10-16T04:00:00+08:00",
+          "quality_status": "PASS",
+          "provider": ""
+        },
+        {
+          "code": "100.N225",
+          "name": "日经225指数",
+          "price": null,
+          "change_pct": null,
+          "market_phase": "REGULAR",
+          "as_of_beijing": "2026-10-16T08:06:31+08:00",
           "quality_status": "PASS",
           "provider": ""
         },
@@ -21121,8 +21129,8 @@
               }
             },
             "us_extended_hours_context": {
-              "generated_at": "2026-10-16T00:16:34Z",
-              "generated_at_beijing": "2026-10-16T08:16:34+08:00",
+              "generated_at": "2026-10-16T00:25:45Z",
+              "generated_at_beijing": "2026-10-16T08:25:45+08:00",
               "scope": "US_SESSION_CONTEXT",
               "quality_status": "PASS",
               "base_proxies": [
@@ -21145,7 +21153,7 @@
                   "market_phase_of_latest": "POST_MARKET",
                   "quality_status": "PASS",
                   "freshness_status": "SESSION_REFERENCE",
-                  "data_age_seconds": 1008,
+                  "data_age_seconds": 1559,
                   "current_market_phase": "OFF_SESSION",
                   "latest": {
                     "open": 724.33,
@@ -21197,7 +21205,7 @@
                   "market_phase_of_latest": "POST_MARKET",
                   "quality_status": "PASS",
                   "freshness_status": "SESSION_REFERENCE",
-                  "data_age_seconds": 1049,
+                  "data_age_seconds": 1600,
                   "current_market_phase": "OFF_SESSION",
                   "latest": {
                     "open": 510.57,
@@ -21249,7 +21257,7 @@
                   "market_phase_of_latest": "POST_MARKET",
                   "quality_status": "PASS",
                   "freshness_status": "SESSION_REFERENCE",
-                  "data_age_seconds": 10894,
+                  "data_age_seconds": 11445,
                   "current_market_phase": "OFF_SESSION",
                   "latest": {
                     "open": 29935.594,
@@ -21301,7 +21309,7 @@
                   "market_phase_of_latest": "POST_MARKET",
                   "quality_status": "PASS",
                   "freshness_status": "SESSION_REFERENCE",
-                  "data_age_seconds": 10894,
+                  "data_age_seconds": 11445,
                   "current_market_phase": "OFF_SESSION",
                   "latest": {
                     "open": 11581.215,
@@ -21457,7 +21465,7 @@
           },
           "market_structure_context": {
             "schema_version": "1.4",
-            "generated_at": "2026-10-16T00:17:09Z",
+            "generated_at": "2026-10-16T00:26:20Z",
             "market_date": "2026-10-15",
             "as_of_beijing": "2026-10-15T15:19:28+08:00",
             "source_snapshot": "data/market/snapshots/2026-10-15_151928.json",
@@ -24721,8 +24729,8 @@
             }
           },
           "us_extended_hours_context": {
-            "generated_at": "2026-10-16T00:16:34Z",
-            "generated_at_beijing": "2026-10-16T08:16:34+08:00",
+            "generated_at": "2026-10-16T00:25:45Z",
+            "generated_at_beijing": "2026-10-16T08:25:45+08:00",
             "scope": "US_SESSION_CONTEXT",
             "quality_status": "PASS",
             "base_proxies": [
@@ -24745,7 +24753,7 @@
                 "market_phase_of_latest": "POST_MARKET",
                 "quality_status": "PASS",
                 "freshness_status": "SESSION_REFERENCE",
-                "data_age_seconds": 1008,
+                "data_age_seconds": 1559,
                 "current_market_phase": "OFF_SESSION",
                 "latest": {
                   "open": 724.33,
@@ -24797,7 +24805,7 @@
                 "market_phase_of_latest": "POST_MARKET",
                 "quality_status": "PASS",
                 "freshness_status": "SESSION_REFERENCE",
-                "data_age_seconds": 1049,
+                "data_age_seconds": 1600,
                 "current_market_phase": "OFF_SESSION",
                 "latest": {
                   "open": 510.57,
@@ -24849,7 +24857,7 @@
                 "market_phase_of_latest": "POST_MARKET",
                 "quality_status": "PASS",
                 "freshness_status": "SESSION_REFERENCE",
-                "data_age_seconds": 10894,
+                "data_age_seconds": 11445,
                 "current_market_phase": "OFF_SESSION",
                 "latest": {
                   "open": 29935.594,
@@ -24901,7 +24909,7 @@
                 "market_phase_of_latest": "POST_MARKET",
                 "quality_status": "PASS",
                 "freshness_status": "SESSION_REFERENCE",
-                "data_age_seconds": 10894,
+                "data_age_seconds": 11445,
                 "current_market_phase": "OFF_SESSION",
                 "latest": {
                   "open": 11581.215,
@@ -25057,7 +25065,7 @@
         },
         "market_structure_context": {
           "schema_version": "1.4",
-          "generated_at": "2026-10-16T00:17:09Z",
+          "generated_at": "2026-10-16T00:26:20Z",
           "market_date": "2026-10-15",
           "as_of_beijing": "2026-10-15T15:19:28+08:00",
           "source_snapshot": "data/market/snapshots/2026-10-15_151928.json",
@@ -34847,7 +34855,7 @@
     "decision_boundary": "This packet normalizes facts and obligations only. It must not select the main candidate, rank capital states, or generate buy/sell actions."
   },
   "formal_reply_freeze": {
-    "status": "READY",
+    "status": "NOT_APPLICABLE",
     "reply_freezable": true,
     "blockers": [],
     "request_id": "fd_manual_20261016T082509_plus0800",
@@ -34874,16 +34882,16 @@
     "screenshot_account_fact_available_at": "UNKNOWN",
     "t_refresh_start_or_reuse": "",
     "market_refresh_identity": "UNKNOWN",
-    "first_qualified_market_fact_identity": "N225",
-    "first_qualified_market_fact_as_of": "2026-10-16T08:25:11+08:00",
+    "first_qualified_market_fact_identity": "KOSPI",
+    "first_qualified_market_fact_as_of": "2026-10-16T08:38:51+08:00",
     "first_qualified_market_fact_quality": "PASS",
     "t_new_current": "2026-10-15T15:19:28+08:00",
-    "t_minimum_legal_inputs_ready": "2026-10-16T08:25:59+08:00",
-    "minimum_legal_inputs_ready_at": "2026-10-16T08:25:59+08:00",
-    "t_decision_ready": "2026-10-16T00:25:59Z",
-    "final_answer_identity": "2026-10-16T08:25:59+08:00",
-    "final_analysis_identity": "2026-10-16T08:25:59+08:00",
-    "t_reply_or_output_ready": "2026-10-16T08:25:59+08:00",
+    "t_minimum_legal_inputs_ready": "2026-10-16T08:39:01+08:00",
+    "minimum_legal_inputs_ready_at": "2026-10-16T08:39:01+08:00",
+    "t_decision_ready": "2026-10-16T00:39:01Z",
+    "final_answer_identity": "2026-10-16T08:39:01+08:00",
+    "final_analysis_identity": "2026-10-16T08:39:01+08:00",
+    "t_reply_or_output_ready": "2026-10-16T08:39:01+08:00",
     "minimum_legal_inputs_ready_role": "NON_TERMINAL_READINESS_MARKER",
     "minimum_legal_inputs_ready_is_stop_boundary": false,
     "canonical_chain_status": "FORMAL_COMPLETION_PENDING",
@@ -34891,8 +34899,8 @@
     "required_account_persistence_identity": "UNKNOWN",
     "refresh_start_latency": null,
     "refresh_duration": null,
-    "post_current_decision_latency": 61591.0,
-    "total_fast_path_latency": 50.0,
+    "post_current_decision_latency": 62373.0,
+    "total_fast_path_latency": 832.0,
     "measurement_status": "OBSERVED_FIELDS_ONLY; MISSING_TIMESTAMPS_REMAIN_EXPLICIT",
     "trace_metadata_is_non_authoritative": true,
     "trace_metadata_is_decision_gate": false,
@@ -34905,7 +34913,7 @@
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
     "request_bound_at": "2026-10-16T08:25:09+08:00",
     "pit_ready_at": "2026-10-15T15:19:28+08:00",
-    "core_result_at": "2026-10-16T00:25:59Z",
+    "core_result_at": "2026-10-16T00:39:01Z",
     "request_to_core_result_latency": null,
     "request_to_canonical_ingress_latency": null,
     "canonical_ingress_to_decision_latency": null,
@@ -34915,9 +34923,9 @@
     "user_visible_decision_waterfall": {
       "request_received_at_beijing": "2026-10-16T08:25:09+08:00",
       "canonical_ingress_at_beijing": "UNKNOWN",
-      "first_qualified_market_fact_as_of_beijing": "2026-10-16T08:25:11+08:00",
-      "minimum_legal_inputs_ready_at_beijing": "2026-10-16T08:25:59+08:00",
-      "business_decision_ready_at_beijing": "2026-10-16T00:25:59Z",
+      "first_qualified_market_fact_as_of_beijing": "2026-10-16T08:38:51+08:00",
+      "minimum_legal_inputs_ready_at_beijing": "2026-10-16T08:39:01+08:00",
+      "business_decision_ready_at_beijing": "2026-10-16T00:39:01Z",
       "business_decision_source": {
         "status": "NOT_APPLICABLE",
         "requested_at_beijing": "UNKNOWN",
@@ -34936,16 +34944,16 @@
       "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
     },
     "in_process_stage_durations_seconds": {
-      "freshness_assurance_and_quote_context": 2.346,
-      "discovery_pipeline": 10.241,
-      "decision_context_build": 0.553,
-      "decision_fact_pack_build": 0.203,
-      "query_context_build_total": 13.346
+      "freshness_assurance_and_quote_context": 3.528,
+      "discovery_pipeline": 8.948,
+      "decision_context_build": 0.417,
+      "decision_fact_pack_build": 0.158,
+      "query_context_build_total": 13.054
     },
     "workflow_runtime_observation": {
       "run_started_at_beijing": "UNKNOWN",
       "core_snapshot_finished_at_beijing": "UNKNOWN",
-      "workflow_run_id": "38829395677",
+      "workflow_run_id": "38830630342",
       "runtime_health_workflow_run_id": "38736102020",
       "correlation_status": "RUNTIME_HEALTH_NOT_CURRENT_RUN",
       "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
