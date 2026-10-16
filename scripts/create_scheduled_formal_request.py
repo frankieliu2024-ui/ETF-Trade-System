@@ -6,7 +6,10 @@ import secrets
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
-from formal_entry_contract import build_identity
+try:
+    from formal_entry_contract import build_identity
+except ModuleNotFoundError:  # package import in repository tests
+    from scripts.formal_entry_contract import build_identity
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUEST_DIR = ROOT / "requests" / "live_snapshot"
@@ -105,6 +108,7 @@ def build_scheduled_request(
             "task_id": str(task_id),
             "task_run_id": str(task_run_id),
             "report_id": f"ETF_FORMAL_DECISION:{task_run_id}",
+            "occurrence_id": identity.occurrence,
             "market_date": now.astimezone(BEIJING).date().isoformat(),
         },
         "no_trade_authority": True,
