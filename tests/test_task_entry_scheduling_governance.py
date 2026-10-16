@@ -19,7 +19,7 @@ class TaskEntrySchedulingGovernanceTests(unittest.TestCase):
             self.assertIn(phrase, text)
         self.assertIn("CHATGPT_MANUAL_FORMAL_ANALYSIS", text)
         self.assertIn("CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS", text)
-        self.assertIn("CHATGPT_SCHEDULED_FORMAL_ANALYSIS", text)\n        self.assertIn("同任务同正文合同", text)\n        self.assertIn("MANUAL_SYSTEM_REVIEW_CHAIN_VALIDATION", text)\n        self.assertIn("不得使用", text)\n
+        self.assertIn("CHATGPT_SCHEDULED_FORMAL_ANALYSIS", text)\n        self.assertIn("同任务同正文合同", text)\n        self.assertIn("MANUAL_SYSTEM_REVIEW_CHAIN_VALIDATION", text)\n        self.assertIn("不得使用", text)\n        self.assertIn("Scheduled Review后置交接合同", text)\n        self.assertIn("SCHEDULED_REVIEW_COMPLETION", text)\n
 
 if __name__ == "__main__":
     unittest.main()
