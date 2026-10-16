@@ -29,6 +29,15 @@ class FormalEntryContractTests(unittest.TestCase):
         ):
             self.assertEqual(validate_formal_entry_identity(self.base(mode, source, occurrence)), (True, ""))
 
+    def test_noncanonical_task_id_fails_closed(self):
+        payload = self.base(
+            ENTRY_MANUAL_CONVERSATION,
+            "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "manual",
+        )
+        payload["task_id"] = "CHATGPT_MANUAL_FORMAL_ANALYSIS_20261016T205101_MANUAL_FORMAL"
+        self.assertEqual(validate_formal_entry_identity(payload), (False, "task_id_must_be_ETF正式决策"))
+
     def test_manual_task_cannot_impersonate_automatic_occurrence(self):
         payload = self.base(
             ENTRY_MANUAL_SCHEDULED_TASK,
