@@ -49,7 +49,7 @@ READY 后必须完成同一DWP的全部必答问题：风险许可；海外与�
 1. 请求必须保持 `request_type=STATE_SYNC_ONLY`、`formal_fact_type=FORMAL_SCHEDULED_REVIEW`、`source=CHATGPT_SCHEDULED_REVIEW_ACTOR`；
 2. `presentation_binding` 必须包含 `report_type=ETF_FORMAL_DECISION`、`task_id`、`task_run_id`、`report_id`、`full_content`、`content_hash` 和 `market_date`；
 3. canonical state-sync owner 只形成唯一 `events/reviews/formal_<task_run_id>.json`，同一 occurrence 只能首次写入一次，重放只能幂等返回；
-4. 现有 `notification_center` 从该 review event 投影 `ETF_FORMAL_DECISION` 的 `FULL_REPORT`，再沿统一 guarded sender、PushPlus、notification state 和 provider 证据链投递；
+4. `market-snapshot.yml` 只负责处理请求并持久化该 review event；`decision-notification.yml` 通过 `workflow_run` 的 downstream producer commit 精确绑定 `events/reviews/formal_<task_run_id>.json`，再由唯一 `notification_center` 投影 `ETF_FORMAL_DECISION` 的 `FULL_REPORT`，沿统一 guarded sender、PushPlus、notification state 和 provider 证据链投递；producer 不得直接执行通知；
 5. 禁止在 completion 后重新分析、改写正文或创建第二正文、第二 event、`requests/report_delivery`、`requests/report_handoff`、独立 workflow、独立 sender 或直接 PushPlus。完整报告仍是信息交付，`no_trade_authority=true`，用户自行决定并手动下单。
 
 ## 七、验收
