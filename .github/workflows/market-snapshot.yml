@@ -1,5 +1,9 @@
 name: ETF market snapshot
 
+# Formal Decision production ingress is STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW.
+# Legacy replay inputs below are retained only for bounded historical recovery;
+# they are not a valid current Formal Decision producer or completion path.
+
 # Schedule registration marker: this workflow remains on the default branch for GitHub cron dispatch.
 on:
   workflow_dispatch:

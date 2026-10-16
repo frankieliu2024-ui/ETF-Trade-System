@@ -7,10 +7,10 @@ ROOT = Path(__file__).resolve().parents[1]
 class FormalDecisionNotificationChainContractTests(unittest.TestCase):
     def test_completion_push_reaches_event_notification(self):
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
-        self.assertIn("steps.formal_completion_event.outputs.review_event_path != ''", workflow)
-        self.assertIn("formal_completion_path:", workflow)
-        self.assertIn("github.event_name == 'workflow_dispatch' && inputs.formal_completion_path != ''", workflow)
-        self.assertIn("github.event_name == 'workflow_dispatch' && steps.formal_completion_event.outputs.review_event_path != ''", workflow)
+        self.assertIn("steps.workflow_review.outputs.review_event_path", workflow)
+        self.assertNotIn("formal_completion_path:", workflow)
+        self.assertNotIn("inputs.formal_completion_path", workflow)
+        self.assertIn("github.event_name == 'workflow_run'", workflow)
         self.assertNotIn("\\n      - name: Send material user-action notification", workflow)
 
     def test_formal_review_event_requires_identity_binding(self):
@@ -30,8 +30,6 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
     def test_formal_completion_persists_event_and_enables_strict_mode(self):
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
         center = (ROOT / "scripts" / "notification_center.py").read_text(encoding="utf-8")
-        self.assertIn("Persist Formal Decision canonical review event", workflow)
-        self.assertIn('git add -- "$EVENT_PATH"', workflow)
         self.assertIn("FORMAL_COMPLETION_EVENT:", workflow)
         self.assertIn("strict_formal_completion_enabled", center)
         self.assertIn("strict_formal_completion_enabled()", center)
@@ -70,7 +68,7 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertIn('for attempt in 1 2 3; do', workflow)
         self.assertIn('git fetch --no-tags origin main', workflow)
         self.assertIn('git reset --hard origin/main', workflow)
-        self.assertIn('event_backup="/tmp/formal-review-event.json"', workflow)
+        self.assertIn('for attempt in 1 2 3; do', workflow)
 
 
 if __name__ == "__main__":

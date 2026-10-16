@@ -54,6 +54,10 @@ from formal_file_mutation_gateway import (
     write_formal_text_if_changed,
 )
 try:
+    from formal_entry_contract import validate_canonical_formal_request
+except ModuleNotFoundError:
+    from scripts.formal_entry_contract import validate_canonical_formal_request
+try:
     from lifecycle_state import build_lifecycle_projection
 except ModuleNotFoundError:
     from scripts.lifecycle_state import build_lifecycle_projection
@@ -2346,6 +2350,9 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
 def record_scheduled_formal_decision_review(request: dict) -> tuple[bool, bool]:
     if str(request.get("formal_fact_type") or "") != "FORMAL_SCHEDULED_REVIEW":
         return False, False
+    valid, reason = validate_canonical_formal_request(request)
+    if not valid:
+        raise ValueError("Formal Scheduled Review canonical ingress invalid: " + reason)
     trigger_source = str(request.get("trigger_source") or "").strip().upper()
     entry_mode = str(request.get("entry_mode") or "").strip().upper()
     expected_sources = {

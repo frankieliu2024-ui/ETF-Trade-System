@@ -121,8 +121,8 @@ class FormalScheduledTaskFromZeroContractTests(unittest.TestCase):
 
     def test_task_stays_independent_from_stable_review_tasks(self):
         contract = Path("docs/formal-decision-scheduled-task-rebuild-v2.md").read_text(encoding="utf-8")
-        self.assertIn("不修改其任务、调度、代码、协议、状态、completion、REPORT、notification 或 PushPlus 链", contract)
-        self.assertNotIn("MARKET_QUOTE_REFRESH → BDS → Formal completion", contract)
+        self.assertIn("稳定任务的实现、状态和测试必须保持不变", contract)
+        self.assertIn("不得把旧的", contract)
 
 
 if __name__ == "__main__":

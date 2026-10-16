@@ -10,7 +10,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from notification_materiality_guard import decision_critical_blockage
+try:
+    from notification_materiality_guard import decision_critical_blockage
+except ModuleNotFoundError:  # package import in repository tests
+    from scripts.notification_materiality_guard import decision_critical_blockage
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STATE = ROOT / "data" / "state"
