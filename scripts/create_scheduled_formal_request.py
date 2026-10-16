@@ -58,6 +58,7 @@ def build_scheduled_request(
         "market_date": market_date,
         "triggered_at_beijing": now.isoformat(),
         "intent": {"query_intent": "FORMAL_INTRADAY_ANALYSIS"},
+        "query_intent": "FORMAL_INTRADAY_ANALYSIS",
         "force_refresh": True,
         "require_post_request_snapshot": True,
         "reuse_inflight_refresh": True,
@@ -99,20 +100,24 @@ def main() -> int:
     if slot is None:
         raise SystemExit("FORMAL_SCHEDULE_INGRESS=INVALID_AUTOMATIC_SLOT")
     hour, minute = slot
-    occurrence = os.environ.get(
-        "OCCURRENCE_ID",
-        f"{now.date().isoformat()}T{hour:02d}:{minute:02d}:00+08:00",
-    ).strip()
+    # Automatic task identity is supplied by the workflow runtime. Never
+    # synthesize task/occurrence identity when the runtime did not provide it.
+    task_id = os.environ.get("TASK_ID", "").strip()
+    task_run_id = os.environ.get("TASK_RUN_ID", "").strip()
+    occurrence = os.environ.get("OCCURRENCE_ID", "").strip()
+    if not task_id or not task_run_id or not occurrence:
+        raise SystemExit(
+            "FORMAL_SCHEDULE_INGRESS=MISSING_AUTOMATIC_RUNTIME_IDENTITY"
+        )
+    if not occurrence.startswith("scheduled_"):
+        raise SystemExit(
+            "FORMAL_SCHEDULE_INGRESS=INVALID_AUTOMATIC_OCCURRENCE"
+        )
     existing = _existing_occurrence(occurrence)
     if existing:
         print(f"FORMAL_SCHEDULE_INGRESS=EXISTS request_id={existing}")
         return 0
 
-    task_id = os.environ.get("TASK_ID", "ETF正式决策").strip()
-    task_run_id = os.environ.get(
-        "TASK_RUN_ID",
-        f"ETF_FORMAL_DECISION_{now:%Y%m%d}_{hour:02d}{minute:02d}",
-    ).strip()
     payload = build_scheduled_request(
         now=now,
         task_id=task_id,
