@@ -280,6 +280,29 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             with patch.object(notification_center, "ROOT", root),                  patch.object(notification_center, "REVIEW_EVENT_DIR", review_dir),                  patch.dict(os.environ, {"REVIEW_EVENT_PATH": "events/reviews/bad.json"}, clear=False):
                 self.assertIsNone(notification_center.report_delivery_event())
 
+    def test_trade_review_rejects_formal_scheduled_event_type(self):
+        from scripts import notification_center
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            review_dir = root / "events" / "reviews"
+            review_dir.mkdir(parents=True)
+            content = "FINAL TRADE REVIEW"
+            (review_dir / "wrong.json").write_text(json.dumps({
+                "event_type": "FORMAL_SCHEDULED_REVIEW",
+                "request_id": "scheduled-trade-review-run-a",
+                "occurrence_id": "run-a",
+                "presentation_binding": {
+                    "report_type": "ETF_TRADE_REVIEW",
+                    "task_id": "ETF交易复盘",
+                    "task_run_id": "run-a",
+                    "request_id": "scheduled-trade-review-run-a",
+                    "report_id": "ETF_TRADE_REVIEW:run-a",
+                    "full_content": content,
+                    "content_hash": hashlib.sha256(content.encode()).hexdigest(),
+                },
+            }), encoding="utf-8")
+            with patch.object(notification_center, "ROOT", root), patch.object(notification_center, "REVIEW_EVENT_DIR", review_dir), patch.dict(os.environ, {"REVIEW_EVENT_PATH": "events/reviews/wrong.json"}, clear=False):
+                self.assertIsNone(notification_center.report_delivery_event())
     def test_formal_scheduled_event_is_bound_from_market_snapshot_workflow_run(self):
         workflow = (Path(__file__).parents[1] / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
         self.assertIn("review_paths", workflow)
