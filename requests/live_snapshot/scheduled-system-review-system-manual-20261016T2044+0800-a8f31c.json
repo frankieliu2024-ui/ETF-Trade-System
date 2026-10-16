@@ -1,0 +1,67 @@
+{
+  "request_id": "scheduled-system-review-system-manual-20261016T2044+0800-a8f31c",
+  "request_type": "SCHEDULED_REVIEW_COMPLETION",
+  "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+  "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+  "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+  "requested_at_beijing": "2026-10-16T20:44:00+08:00",
+  "system_review": {
+    "review_semantics": "EVENING_SYSTEM_REVIEW",
+    "market_date": "2026-10-16",
+    "a_share_latest_formal_market_date": "2026-10-16",
+    "market_phase": "POST_CLOSE",
+    "is_a_share_trading_day": true,
+    "fact_cutoff_at_beijing": "2026-10-16T20:44:00+08:00",
+    "source_facts_as_of": {
+      "market": "2026-10-16T15:02:19+08:00",
+      "account": "2026-10-16T15:00:00+08:00",
+      "discovery": "2026-10-16T19:40:33+08:00",
+      "capital_comparison": "2026-10-16T19:49:36+08:00",
+      "consistency": "2026-09-29T14:31:00+08:00"
+    },
+    "e2e_status": "AVAILABLE_WITH_IDENTIFIED_FRESHNESS_GAPS",
+    "blockers": [],
+    "degradations": [
+      "RISK_ESTIMATE_DATE_INCONSISTENCY",
+      "FULL_CONSISTENCY_RECORD_OLD",
+      "OVERSEAS_RUNTIME_HEALTH_DEGRADED",
+      "FULL_DAY_TRADE_REVIEW_NOT_CONFIRMED"
+    ],
+    "account_summary": {
+      "total_assets_yuan": 187917.74,
+      "available_cash_yuan": 121196.87,
+      "holding_count": 3,
+      "pending_order_count": 0
+    },
+    "discovery_summary": {
+      "status": "COMPLETE",
+      "broad_universe_count": 1753,
+      "evaluation_input_count": 11,
+      "top_candidate": null,
+      "trade_authority": false
+    },
+    "lifecycle_summary": {
+      "status": "AVAILABLE",
+      "mandatory_due_count": 0,
+      "overdue_count": 0
+    },
+    "user_attribution_requirement": "NONE",
+    "delivery_summary": {
+      "current_system_review": {
+        "report": "FROZEN",
+        "completion": "PENDING_SUBMISSION_AT_FREEZE",
+        "notification_sent": "UNCONFIRMED",
+        "user_received": "UNCONFIRMED"
+      }
+    }
+  },
+  "presentation_binding": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "task_id": "ETF系统复核",
+    "task_run_id": "system-manual-20261016T2044+0800-a8f31c",
+    "request_id": "scheduled-system-review-system-manual-20261016T2044+0800-a8f31c",
+    "report_id": "etf_system_review:system-manual-20261016T2044+0800-a8f31c",
+    "full_content": "【ETF系统复核】2026-10-16 20:44 晚间复核\n\n【复核时点（北京时间）】\n\n本次为2026-10-16 20:44手动晚间复核。今日按正式日历为A股交易日，当前市场阶段为收盘后。\n\n【晚间复核结论】\n\n系统可支持后续正式分析准备，但并非所有关键事实都已在今日完成全量验证。收盘行情、账户、生命周期及全市场机会发现资料可读；风险估值时点与运行汇总存在不一致，完整一致性检查记录也较旧。用户目前无需补交已确认的账户资料。\n\n【当日运行与判断链状态】\n\n1. 今日正式收盘快照有效时点为15:00，采集完成于15:02:19。收盘后的行情采集状态为时段外跳过，符合当前市场阶段。\n\n2. 账户事实最近确认于15:00：总资产187,917.74元，可用现金121,196.87元；实际持仓为纳指ETF（159941）、能源化工ETF（159981）、创新药ETF（159992），共3项。账户记录没有待处理委托；结论仅覆盖该次账户确认时点。\n\n3. 生命周期状态可读，当前没有到期或逾期的强制判断节点。决策准备度汇总为可用，但较晚发起的一项独立正式判断仍在等待请求后事实，不能视为已完成；本复核没有读取或代替该判断。\n\n【当日新增事实与影响】\n\n1. 今日19:40左右完成的全市场机会发现覆盖1,753个ETF身份，筛出11个评估输入，覆盖状态完整。它们只是本节点待评估对象，不会自动转成观察ETF、机会ETF或交易许可。\n\n2. 正式观察ETF与实际持仓分别列入资本比较；资本比较记录未给出唯一主候选。当前没有由发现阶段自动形成的正式机会结论，持仓也不因持有而自动优先。\n\n3. 风险指标约为-7.30%，但底层数据仍标注9月29日；运行汇总同时称该指标适用于今日，缺少清楚一致的估值截止时点。完整系统一致性检查最近于9月29日通过，不能证明当日动态事实或全部运行链路已重新验证。\n\n【正式判断与交易复盘交付】\n\n1. 收盘行情、账户、全市场机会发现、观察ETF、持仓和资本比较均有可读取记录；这些资料只支持后续正式判断，不构成本次复核的买卖结论、金额或份额。\n\n2. 当前事件目录可见今日午间阶段复盘，未见今日20:30完整日复盘交付。本次读取不能确认该节点已完成；本复核不代替交易复盘。\n\n【通知与记录状态】\n\n正文冻结时，本次完成记录、报告投影、通知发送和用户收到均待分别核验。今日较早一次系统复核的后续处理未形成对应复核事件；不能用其他运行的记录或通知替代本次结果。\n\n【未闭环事项】\n\n1. 风险指标的估值截止时点需在后续正式判断前核实。\n\n2. 完整一致性检查记录偏旧；海外运行健康状态显示降级，本次未确认其更新时点及对下一节点的具体影响。\n\n3. 今日完整日交易复盘及本次通知链均未能由当前读取确认。无需重复提交已确认的账户事实。\n\n【下一交易日重点】\n\n下一交易日核对新行情和账户时点，确认风险估值的有效日期与完整一致性状态；正式比较仍应同时覆盖现金、全部实际持仓、已正式确认的观察ETF、当节点合法形成的机会ETF及可释放资本。发现对象或观察身份本身不产生交易许可。\n\n【执行状态】\n\n系统事实复核已完成并冻结唯一正文；资料足以准备后续分析，但风险时点、完整一致性及复盘和通知交付仍有待核实。本次未修改交易规则、权限、数据源、监控范围、代码或调度，也未形成买卖结论。\n\n【置信度】\n\n中。账户与收盘行情时点明确；风险估值和全量一致性验证的时效性不足。\n\n【最可能出错的地方】\n\n把汇总状态可用误读为全部事实都已及时验证；把11个发现评估输入当成正式机会；或把通知发送结果等同于用户实际收到。",
+    "content_hash": "1efa215fbfb49cb14ba1edc219a457e125d1358ce61a83952c4cac9b5d0c8b51"
+  }
+}
