@@ -6,27 +6,17 @@ class FormalDecisionWorkflowSeparationTests(unittest.TestCase):
     def setUp(self):
         self.root = Path(__file__).parents[1]
 
-    def test_market_snapshot_accepts_completion_not_bds_as_formal_completion(self):
+    def test_market_snapshot_does_not_define_a_second_formal_completion_ingress(self):
         workflow = (self.root / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
-        self.assertIn("CHATGPT_FORMAL_DECISION_COMPLETION", workflow)
-        self.assertIn("FORMAL_DECISION_COMPLETION", workflow)
-        self.assertIn("BDS-only push: no Formal Decision completion ingress", workflow)
-        self.assertNotIn("The BDS itself is the completion envelope", workflow)
-        self.assertNotIn('request_files="$bds_file"', workflow)
+        self.assertIn("FORMAL_SCHEDULED_REVIEW", workflow)
+        self.assertNotIn("formal_completion_path", workflow)
+        self.assertIn("Legacy replay inputs", workflow)
 
     def test_market_snapshot_keeps_unified_scheduled_review_on_review_pipeline(self):
         workflow = (self.root / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
-        self.assertIn('"FORMAL_SCHEDULED_REVIEW"', workflow)
-        self.assertIn('"FORMAL_SCHEDULED_SYSTEM_REVIEW"', workflow)
-        self.assertIn("formal_completion=$(python", workflow)
-        self.assertNotIn(
-            '"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_REVIEW", "FORMAL_SCHEDULED_SYSTEM_REVIEW"',
-            workflow,
-        )
-        self.assertIn(
-            '"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_SYSTEM_REVIEW"',
-            workflow,
-        )
+        self.assertIn("FORMAL_SCHEDULED_REVIEW", workflow)
+        self.assertIn("FORMAL_SCHEDULED_SYSTEM_REVIEW", workflow)
+        self.assertIn("STATE_SYNC_ONLY", workflow)
 
     def test_notification_workflow_has_no_bds_push_wake(self):
         workflow = (self.root / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
