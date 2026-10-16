@@ -375,7 +375,8 @@ jobs:
 
       - name: Send material user-action notification
         id: event_notify
-        if: ${{ (github.event_name == 'workflow_run' && (github.event.workflow_run.name != 'ETF market snapshot' || steps.workflow_review.outputs.review_completion == 'true')) || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true' || steps.formal_completion_event.outputs.review_event_path != '')) || (github.event_name == 'workflow_dispatch' && steps.formal_completion_event.outputs.review_event_path != '') }}
+        # Delivery uses the already-bound current REPORT/review event. It must still run when a prior state persistence step fails; the sender remains fail-closed and never creates a second object.
+        if: ${{ always() && ((github.event_name == 'workflow_run' && (github.event.workflow_run.name != 'ETF market snapshot' || steps.workflow_review.outputs.review_completion == 'true')) || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true' || steps.formal_completion_event.outputs.review_event_path != '')) || (github.event_name == 'workflow_dispatch' && steps.formal_completion_event.outputs.review_event_path != '')) }}
         continue-on-error: true
         env:
           REPORT_DELIVERY_PATH: ${{ steps.push_kind.outputs.report_path }}
