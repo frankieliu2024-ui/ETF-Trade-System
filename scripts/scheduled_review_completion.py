@@ -274,6 +274,48 @@ def build_system_review_completion_request(
     }
 
 
+def build_formal_decision_scheduled_review_completion_request(
+    formal_decision: dict,
+    request_id: str,
+    requested_at_beijing: str,
+    market_date: str,
+    task_id: str,
+    task_run_id: str,
+    final_content: str,
+) -> dict:
+    """Build Formal Decision using the same Scheduled Review completion contract."""
+    if not isinstance(formal_decision, dict) or not formal_decision:
+        raise ValueError("scheduled formal decision completion requires formal_decision")
+    request_id = _safe_id(request_id)
+    task_run_id = _safe_id(task_run_id)
+    market_date = str(market_date or "").strip()
+    final_content = str(final_content or "")
+    if not str(requested_at_beijing or "").strip() or not market_date or not final_content.strip():
+        raise ValueError(
+            "scheduled formal decision completion requires requested_at_beijing, market_date and frozen final_content"
+        )
+    validate_user_visible_content(final_content, canonical_closure_confirmed=False)
+    content_hash = hashlib.sha256(final_content.encode("utf-8")).hexdigest()
+    return {
+        "request_id": request_id,
+        "request_type": "STATE_SYNC_ONLY",
+        "formal_fact_type": "FORMAL_SCHEDULED_REVIEW",
+        "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+        "interaction_scenario": "SCHEDULED_FORMAL_DECISION",
+        "requested_at_beijing": str(requested_at_beijing),
+        "market_date": market_date,
+        "formal_decision": formal_decision,
+        "presentation_binding": {
+            "report_type": "ETF_FORMAL_DECISION",
+            "task_id": str(task_id or "ETF正式决策"),
+            "task_run_id": task_run_id,
+            "report_id": f"ETF_FORMAL_DECISION:{task_run_id}",
+            "full_content": final_content,
+            "content_hash": content_hash,
+        },
+    }
+
+
 def build_report_delivery_from_completion(completion: dict) -> dict:
     """Project the frozen Scheduled Review presentation into the existing REPORT contract."""
     binding = completion.get("presentation_binding") or {}
