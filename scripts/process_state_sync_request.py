@@ -2303,7 +2303,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
 def _validate_presentation_binding(binding: dict, report_type: str) -> dict:
     if not isinstance(binding, dict):
         raise ValueError("scheduled completion presentation_binding must be an object")
-    required = ("task_id", "task_run_id", "report_id", "full_content", "content_hash")
+    required = ("task_id", "task_run_id", "request_id", "report_id", "full_content", "content_hash")
     missing = [key for key in required if not str(binding.get(key) or "").strip()]
     if missing:
         raise ValueError("scheduled completion presentation_binding missing:" + ",".join(missing))
