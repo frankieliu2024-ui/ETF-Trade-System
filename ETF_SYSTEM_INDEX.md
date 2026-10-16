@@ -29,6 +29,12 @@
 
 ### 正式ETF分析
 
+### Formal Decision 场景作用域防火墙（强制）
+
+以下“用户发起的新 Formal Decision Request”及其 `MARKET_QUOTE_REFRESH → request-bound snapshot/query_context/DWP/formal_reply_gate → BUSINESS_DECISION_SOURCE → Formal Decision completion` 规则，仅适用于入口表中的 `entry_mode=MANUAL_CONVERSATION`、`source=CHATGPT_MANUAL_FORMAL_ANALYSIS`。
+
+`MANUAL_SCHEDULED_TASK` 和 `AUTOMATIC_SCHEDULED_TASK` 不得读取、等待、复用或消费本节的历史 `formal_reply_gate`、DWP、父请求、BDS 或 `MARKET_QUOTE_REFRESH` 首跳；统一按 `docs/formal-decision-scheduled-task-rebuild-v2.md` 建立本次新的运行身份，并以 `STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW` 完成。定时任务的事实、正文、completion、canonical review event 和通知只能绑定本次 task/run/occurrence/request 身份。
+
 #### 用户发起的新 Formal Decision Request：父请求首跳 ingress（强制）
 
 当用户新发起当前交易判断，或明确要求按当前时点重新判断时，必须先为这次用户请求建立独立父请求身份，再读取任何用于本次正式判断的账户、行情、Discovery 或 decision context。恢复同一条仍在处理中的请求时沿用其父请求身份；新的用户触发必须创建新身份。System Review、scheduled review、REPORT 交付、普通行情问答不属于 Formal Decision Request，不得创建或冒充该身份。
