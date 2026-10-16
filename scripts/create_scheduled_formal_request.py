@@ -118,7 +118,9 @@ def _existing_occurrence(occurrence_id: str) -> str:
         except (OSError, json.JSONDecodeError):
             continue
         if (
-            payload.get("formal_fact_type") == "FORMAL_SCHEDULED_REVIEW"
+            payload.get("request_type") == "MARKET_QUOTE_REFRESH"
+            and payload.get("source") in set(TRIGGER_SOURCES.values())
+            and payload.get("intent", {}).get("query_intent") == "FORMAL_INTRADAY_ANALYSIS"
             and payload.get("occurrence_id") == occurrence_id
         ):
             return str(payload.get("request_id") or "")
