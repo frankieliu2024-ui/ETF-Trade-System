@@ -54,7 +54,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             "20260923_2030_scheduled_trade_review__formal_completion",
             "2026-09-23T20:30:00+08:00",
         )
-        self.assertEqual(payload["request_type"], "STATE_SYNC_ONLY")
+        self.assertEqual(payload["request_type"], "SCHEDULED_REVIEW_COMPLETION")
         self.assertEqual(payload["formal_fact_type"], "FORMAL_POST_CLOSE_REVIEW")
         self.assertEqual(payload["interaction_scenario"], "POST_CLOSE_REVIEW")
         self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_REVIEW_ACTOR")
