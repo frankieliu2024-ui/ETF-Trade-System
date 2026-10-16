@@ -26,7 +26,6 @@ SLOTS = {
 CONVERSATION_MODE = "MANUAL_CONVERSATION"
 MANUAL_MODE = "MANUAL_SCHEDULED_TASK"
 AUTOMATIC_MODE = "AUTOMATIC_SCHEDULED_TASK"
-SCHEDULED_REVIEW_SOURCE = "CHATGPT_SCHEDULED_REVIEW_ACTOR"
 TRIGGER_SOURCES = {
     CONVERSATION_MODE: "CHATGPT_MANUAL_FORMAL_ANALYSIS",
     MANUAL_MODE: "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
@@ -89,13 +88,16 @@ def build_scheduled_request(
     })
     return {
         "request_id": request_id,
-        "parent_request_id": request_id,
-        "request_type": "STATE_SYNC_ONLY",
-        "formal_fact_type": "FORMAL_SCHEDULED_REVIEW",
-        "source": SCHEDULED_REVIEW_SOURCE,
-        "trigger_source": trigger_source,
-        "entry_mode": mode,
-        "interaction_scenario": "FORMAL_DECISION",
+        "request_type": "MARKET_QUOTE_REFRESH",
+        "source": trigger_source,
+        "intent": {
+            "query_intent": "FORMAL_INTRADAY_ANALYSIS",
+            "interaction_scenario": "FORMAL_DECISION",
+        },
+        "force_refresh": True,
+        "require_post_request_snapshot": True,
+        "reuse_inflight_refresh": True,
+        "duplicate_equivalent_refresh_forbidden": True,
         "requested_at_beijing": requested_at,
         "task_id": str(task_id),
         "task_run_id": str(task_run_id),
@@ -103,14 +105,6 @@ def build_scheduled_request(
         "occurrence_id": identity.occurrence,
         "market_date": now.astimezone(BEIJING).date().isoformat(),
         "triggered_at_beijing": requested_at,
-        "presentation_binding": {
-            "report_type": "ETF_FORMAL_DECISION",
-            "task_id": str(task_id),
-            "task_run_id": str(task_run_id),
-            "report_id": f"ETF_FORMAL_DECISION:{task_run_id}",
-            "occurrence_id": identity.occurrence,
-            "market_date": now.astimezone(BEIJING).date().isoformat(),
-        },
         "no_trade_authority": True,
         "identity_dedup_key": identity.dedup_key,
     }
