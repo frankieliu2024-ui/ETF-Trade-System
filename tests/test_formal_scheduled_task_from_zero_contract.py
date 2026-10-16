@@ -71,6 +71,21 @@ class FormalScheduledTaskFromZeroContractTests(unittest.TestCase):
         self.assertNotIn("force_refresh", payload)
         self.assertNotIn("query_intent", payload)
 
+
+    def test_conversation_builder_uses_the_same_scheduled_review_contract(self):
+        now = datetime(2026, 10, 16, 11, 30, tzinfo=timezone(timedelta(hours=8)))
+        payload = build_scheduled_request(
+            now=now,
+            task_id="ETF正式决策",
+            task_run_id="conversation-20261016T113000-ab12cd34",
+            occurrence_id="conversation_20261016T113000-ab12cd34",
+            entry_mode="MANUAL_CONVERSATION",
+        )
+        self.assertEqual(payload["trigger_source"], "CHATGPT_MANUAL_FORMAL_ANALYSIS")
+        self.assertEqual(payload["entry_mode"], "MANUAL_CONVERSATION")
+        self.assertEqual(payload["request_type"], "STATE_SYNC_ONLY")
+        self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_REVIEW")
+
     def test_manual_occurrence_cannot_impersonate_automatic(self):
         now = datetime(2026, 10, 16, 11, 30, tzinfo=timezone(timedelta(hours=8)))
         with self.assertRaisesRegex(ValueError, "manual occurrence"):
