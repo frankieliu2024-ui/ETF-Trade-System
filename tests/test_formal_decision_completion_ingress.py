@@ -44,6 +44,8 @@ class FormalDecisionCompletionIngressTests(unittest.TestCase):
         self.assertIn("Formal Scheduled Review entry identity is invalid", text)
         self.assertIn("Formal Scheduled Review occurrence identity is required", text)
         self.assertIn("Formal Scheduled Review occurrence binding mismatch", text)
+        self.assertIn("legacy Formal Decision completion is forbidden for the unified three-entry contract", text)
+        self.assertIn("BUSINESS_DECISION_SOURCE is forbidden for the unified three-entry Formal contract", text)
 
 
 if __name__ == "__main__":
