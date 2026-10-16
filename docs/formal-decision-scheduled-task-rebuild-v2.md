@@ -6,7 +6,7 @@
 
 ## 一、与两个稳定任务的边界
 
-【ETF系统复核】和【ETF交易复盘】仅作为只读对照对象。不得修改其任务、调度、代码、协议、状态、completion、REPORT、notification 或 PushPlus 链。本任务复用 current main 已登记的 Formal Decision canonical owner、BUSINESS_DECISION_SOURCE、completion ingress 和共享 decision-notification，不复制第二套生产链。
+【ETF系统复核】和【ETF交易复盘】仅作为只读对照对象。不得修改其任务、调度、代码、协议、状态、completion、REPORT、notification 或 PushPlus 链。本任务逐节点复用二者已经稳定的 Scheduled Review 请求、completion、canonical review event、REPORT、notification_center 和统一 PushPlus 链；Formal 的业务字段与正文不同，但生产链不分叉。
 
 ## 二、两个合法入口
 
@@ -34,7 +34,7 @@
 
 ## 四、请求与事实链
 
-入口先建立并回读 `requests/live_snapshot/<request_id>.json`，请求类型为 `MARKET_QUOTE_REFRESH`，意图为 `FORMAL_INTRADAY_ANALYSIS`，并绑定 `force_refresh`、`require_post_request_snapshot`、PIT/freshness、当前账户事实、三层监测、Discovery、观察ETF、机会ETF和DWP/problem_graph。WAIT、queued、building、in-flight、旧gate、空读或派生状态暂未追上时，只能沿同一父请求静默继续；不得把它们解释为失败，也不得创建第二请求。只有当前请求明确 READY，或 canonical producer 明确 terminal failure 且不存在合法继续路径，才可结束等待。
+入口先建立并回读 `requests/live_snapshot/<request_id>.json`，请求类型固定为 `STATE_SYNC_ONLY`，事实类型固定为 `FORMAL_SCHEDULED_REVIEW`，来源固定为 `CHATGPT_SCHEDULED_REVIEW_ACTOR`，并携带 `task_id=ETF正式决策`、本次唯一 `task_run_id/occurrence_id`、`market_date` 和完整 `presentation_binding`。Formal 业务判断仍按本合同第五节完成，但请求分类、身份绑定、完成入口和终态处理逐字段对齐两个稳定 Scheduled Review。不得在本定时任务入口创建 `MARKET_QUOTE_REFRESH`、BUSINESS_DECISION_SOURCE、BDS 或独立 Formal completion。身份、正文、哈希、时点或 binding 未追上时，只能沿同一运行身份继续或 fail-closed；不得创建第二请求、消费历史请求或按目录猜测。
 
 ## 五、READY后的业务与正文
 
@@ -44,22 +44,23 @@ READY 后必须完成同一DWP的全部必答问题：风险许可；海外与�
 
 ## 六、后置投影
 
-用户窗口必须先输出完整且冻结的 `FINAL_CONTENT`。随后同一运行继续：
+用户窗口或任务运行内部只冻结一份完整且不可变的 `FINAL_CONTENT`。随后同一运行只提交一次现有 Scheduled Review completion ingress：
 
-1. 使用 BUSINESS_DECISION_SOURCE 写入并回读当前请求、身份、request-bound snapshot、answers、完整正文和 content_hash。
-2. 使用唯一 Formal Decision completion ingress 生成、写入并回读 `<parent_request_id>__formal_decision_completion.json`。
-3. 立即对当前 completion 路径调用既有 decision-notification workflow 的 `workflow_dispatch(formal_completion_path=...)`；没有插件 dispatch 写调用时，使用授权云浏览器的 Actions → Run workflow 表单完成同一 dispatch，并回读真实 run。
-4. 只由 canonical owner 形成 `events/reviews/formal_<occurrence_id>.json`，再进入 notification_center 和 PushPlus。不得手写 event、REPORT 或 notification，不得直接调用 PushPlus，不得扫描历史对象或通过 BDS/market-snapshot 被动唤醒。
-
-BDS写入、BDS回读、completion、event、notification_id、PushPlus provider result和用户实际收到必须分别记录。缺少当前 notification_id 对应的 provider 成功证据时只能记为 `EXTERNAL_SEND_UNVERIFIED`。
+1. 请求必须保持 `request_type=STATE_SYNC_ONLY`、`formal_fact_type=FORMAL_SCHEDULED_REVIEW`、`source=CHATGPT_SCHEDULED_REVIEW_ACTOR`；
+2. `presentation_binding` 必须包含 `report_type=ETF_FORMAL_DECISION`、`task_id`、`task_run_id`、`report_id`、`full_content`、`content_hash` 和 `market_date`；
+3. canonical state-sync owner 只形成唯一 `events/reviews/formal_<task_run_id>.json`，同一 occurrence 只能首次写入一次，重放只能幂等返回；
+4. 现有 `notification_center` 从该 review event 投影 `ETF_FORMAL_DECISION` 的 `FULL_REPORT`，再沿统一 guarded sender、PushPlus、notification state 和 provider 证据链投递；
+5. 禁止在 completion 后重新分析、改写正文或创建第二正文、第二 event、`requests/report_delivery`、`requests/report_handoff`、独立 workflow、独立 sender 或直接 PushPlus。完整报告仍是信息交付，`no_trade_authority=true`，用户自行决定并手动下单。
 
 ## 七、验收
 
-代码验收必须覆盖三入口身份、四节点cron、自动身份缺失 fail-closed、occurrence幂等和观察thesis前置合同。真实目标路径验收必须使用全新请求，核对：
+代码验收必须逐项覆盖：Formal 请求字段与两个稳定 Scheduled Review 的字段相同；Formal completion 为 `STATE_SYNC_ONLY`；`FORMAL_SCHEDULED_REVIEW` 只能形成 `events/reviews/formal_<task_run_id>.json`；正文哈希、task/run identity、REPORT projection、幂等重放和通知唤醒均 fail-closed。稳定任务的实现、状态和测试必须保持不变。
 
-`入口 → request → request-bound facts → READY → FINAL_CONTENT → BDS → completion → workflow_dispatch → event → notification_id → provider result`
+真实目标路径验收必须核对：
 
-CI通过不等于真实通知成功；任务建立、运行已发起、workflow success或provider success均不等于用户实际收到。
+`任务运行 → STATE_SYNC_ONLY request → FORMAL_SCHEDULED_REVIEW → FINAL_CONTENT → canonical review event → ETF_FORMAL_DECISION REPORT → notification_center → PushPlus`
+
+不得把旧的 `MARKET_QUOTE_REFRESH → BDS → Formal completion → workflow_dispatch` 当作本定时任务验收路径。CI通过不等于真实通知成功；任务建立、运行已发起、workflow success或provider success均不等于用户实际收到。
 
 ## 八、手动启动定时任务的运行身份建立（V2.1）
 
@@ -72,6 +73,6 @@ CI通过不等于真实通知成功；任务建立、运行已发起、workflow 
 3. `task_run_id` 与 `occurrence_id` 必须在本次手动运行首次创建请求时一次性生成，格式为 `manual-scheduled-YYYYMMDDTHHMMSS+0800-<短随机后缀>`，并写入同一请求。该身份是本次手动 ingress 新建的当前运行身份，不得使用历史值，不得伪造为自动运行身份，也不得在后续步骤重新生成；
 4. `parent_request_id`、`request_id` 和 `market_date` 从同一请求 ingress 绑定并持续复用；
 5. 生成身份后必须立即写入并回读 `requests/live_snapshot/<request_id>.json`，后续所有事实、DWP、BDS、completion、event 和通知只能绑定这一组身份；
-6. 若同一手动运行已经取得当前 `task_run_id/occurrence_id`，只能继续消费该父请求；不得因后续读取不到自动化平台元数据而重新判定为未知、创建第二请求或暂停任务。
+6. 若同一手动运行已经取得当前 `task_run_id/occurrence_id`，只能继续消费该父请求；不得因后续读取不到自动化平台元数据而重新判定为未知、创建第二请求或暂停任务。该请求仍必须使用 `STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW`，不得切换成旧的 `MARKET_QUOTE_REFRESH`。
 
 对 `AUTOMATIC_SCHEDULED_TASK`，第三节的运行时注入和缺失即 fail-closed 规则保持不变；不得用本节的手动身份生成规则补齐自动入口。此次 V2.1 只修复手动启动入口的身份建立，不改变两个稳定任务、正式自动节点、交易规则或通知链。
