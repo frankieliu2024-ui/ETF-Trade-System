@@ -2346,8 +2346,27 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
 def record_scheduled_formal_decision_review(request: dict) -> tuple[bool, bool]:
     if str(request.get("formal_fact_type") or "") != "FORMAL_SCHEDULED_REVIEW":
         return False, False
+    trigger_source = str(request.get("trigger_source") or "").strip().upper()
+    entry_mode = str(request.get("entry_mode") or "").strip().upper()
+    expected_sources = {
+        "MANUAL_CONVERSATION": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+        "MANUAL_SCHEDULED_TASK": "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+        "AUTOMATIC_SCHEDULED_TASK": "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+    }
+    if entry_mode not in expected_sources or trigger_source != expected_sources[entry_mode]:
+        raise ValueError("Formal Scheduled Review entry identity is invalid")
+    if str(request.get("request_type") or "").strip().upper() != "STATE_SYNC_ONLY":
+        raise ValueError("Formal Scheduled Review must remain STATE_SYNC_ONLY")
+    if str(request.get("source") or "").strip().upper() != "CHATGPT_SCHEDULED_REVIEW_ACTOR":
+        raise ValueError("Formal Scheduled Review source actor is invalid")
+    if str(request.get("interaction_scenario") or "").strip().upper() != "FORMAL_DECISION":
+        raise ValueError("Formal Scheduled Review interaction scenario is invalid")
+    occurrence = str(request.get("occurrence_id") or request.get("occurrence") or "").strip()
+    if not occurrence:
+        raise ValueError("Formal Scheduled Review occurrence identity is required")
     binding = _validate_presentation_binding(request.get("presentation_binding"), "ETF_FORMAL_DECISION")
-    occurrence = str(binding["task_run_id"])
+    if str(binding.get("occurrence_id") or "").strip() != occurrence:
+        raise ValueError("Formal Scheduled Review occurrence binding mismatch")
     event_path = ROOT / "events" / "reviews" / f"formal_{occurrence}.json"
     payload = {
         "event_type": "FORMAL_SCHEDULED_REVIEW",
