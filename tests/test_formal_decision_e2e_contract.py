@@ -255,7 +255,9 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         root = Path(__file__).parents[1]
         text = (root / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
         self.assertIn("三个入口统一执行以下链条", text)
-        self.assertIn("STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW", text)
+        self.assertIn("不得再使用旧的", text)
+        self.assertIn("FORMAL_DECISION_COMPLETION", text)
+        self.assertIn("MARKET_QUOTE_REFRESH", text)
         self.assertIn("PushPlus/微信原文投递", text)
         self.assertIn("不得产生不同的业务判断、正文、completion、event、REPORT 或通知链", text)
 
