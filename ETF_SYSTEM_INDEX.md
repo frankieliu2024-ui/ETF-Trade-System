@@ -24,6 +24,7 @@
 - **生产变更与并发治理域**：`docs/生产变更与并发写入协议_V1.0.md`。负责生产变更准入、writer ownership、latest-main、并发、mutation gateway、状态producer和组合验收。`config/maintenance/production_mutation_protocol.json`只是该规范的机器可执行镜像，不是第二套规则源。
 
 - **自动维护与运行保障横向协议**：`docs/ETF自动维护与运行保障协议_V1.0.md`。只负责自动运行场景的触发、唯一owner、幂等、回读、投影、失败分类和人工接管；不新增交易规则、数据规则、通知规则、Formal Decision业务规则、workflow、state或writer。机器镜像为`config/maintenance/automatic_maintenance_protocol.json`，不是第二套业务规则源。
+- **任务入口与调度治理横向协议**：`docs/ETF任务入口与调度治理协议_V1.0.md`。只负责三个ETF任务的身份、自动/手动入口、节点、SKIP、版本保护和业务链路由；不复制业务规则，不新增任务、workflow、state或业务链。机器镜像为`config/maintenance/task_entry_scheduling_protocol.json`。
 
 查询路由技术说明：`docs/市场行情查询路由与全球时点规则_V1.0.md`。它只解释ETF系统内部查询路由实现，不是第五个规范域；唯一无网络路由实现为`scripts/market_quote_router.py`，单对象查询入口为`scripts/query_market_object.py`，查询时即时补采由`scripts/query_time_market_refresh.py`执行。
 
@@ -69,6 +70,7 @@
 ### 系统维护、故障和生产变更
 
 自动维护场景先读取`docs/ETF自动维护与运行保障协议_V1.0.md`确定触发、owner、回读和失败合同，再按本节生产变更协议判断是否需要修改代码或workflow。该协议只做横向运行路由，不覆盖所属业务规范。
+任务启动、自动/手动入口、节点适用性和SKIP先读取`docs/ETF任务入口与调度治理协议_V1.0.md`；该协议只做任务路由，不覆盖System Review、Trade Review或Formal Decision业务协议。
 
 `本INDEX → 当前main → docs/生产变更与并发写入协议_V1.0.md → config/maintenance/production_mutation_protocol.json → 相关canonical owner／脚本／workflow → 组合验收`
 
@@ -105,6 +107,7 @@ Codex协作交接说明：`docs/Codex协作执行说明.md`。它只负责CODEX_
 - 海外盘前workflow：`.github/workflows/overseas-preopen-pulse.yml`
 - 正式事实低层写入：`scripts/formal_file_mutation_gateway.py`
 - 自动维护场景与owner机器镜像：`config/maintenance/automatic_maintenance_protocol.json`
+- 任务入口与调度机器镜像：`config/maintenance/task_entry_scheduling_protocol.json`
 
 研究文件存在不等于正式转化。哪些研究允许进入执行及稳定使用边界读取MASTER第6.4；研究如何取得正式资格读取MASTER第8.1；动态研究数值读取`research_execution_summary.json`及对应证据文件。
 
