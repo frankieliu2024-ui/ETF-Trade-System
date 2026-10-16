@@ -3515,10 +3515,13 @@ def main() -> int:
             raise ValueError("Formal Decision completion decision_id does not match BDS")
         binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
         response = bds.get("decision_response") if isinstance(bds.get("decision_response"), dict) else {}
+        # FINAL_CONTENT is immutable: preserve its exact bytes when validating
+        # and hashing.  Trimming here changes the hash and breaks the completion
+        # boundary even though the BDS and completion contain the same content.
         content_candidates = [
-            str(bds.get("presentation_content") or "").strip(),
-            str(binding.get("full_content") or "").strip(),
-            str(response.get("presentation_content") or "").strip(),
+            str(bds.get("presentation_content") or ""),
+            str(binding.get("full_content") or ""),
+            str(response.get("presentation_content") or ""),
         ]
         present = [value for value in content_candidates if value]
         if not present or len(set(present)) != 1:
