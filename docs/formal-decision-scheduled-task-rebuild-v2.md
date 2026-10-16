@@ -1,3 +1,11 @@
+# 状态说明：历史重建方案，现已退役
+
+> 本文件仅保留为V2.1历史审计和回溯材料，不是当前【ETF正式决策】或其他两个ETF定时任务的现行规则源。当前三个任务的完整指令、节点、身份和回退基线以 `docs/automation_prompt_history/ETF三个定时任务冻结封存_2026-10-16.md` 及 current main 所登记的正式协议、workflow和canonical owner为准。
+>
+> 本文件中的“两个定时任务”、10:00起始节点、`STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW`旧路径和定时任务专属作用域，不得覆盖当前已启用的三任务调度与现行Formal Decision主链。保留本文件不表示恢复、启用或继续维护该旧方案。
+
+---
+
 # Formal Decision 定时任务重建合同 V2
 
 版本：V2.1  
