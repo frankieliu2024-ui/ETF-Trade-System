@@ -4,7 +4,7 @@
 ## 云端实时状态（自动同步）
 
 > 账户事实更新时间：2026-10-16T15:00:00+08:00  
-> 账户事实来源：BROKER_HOLDINGS_SCREENSHOT_20261016_173231_USER_CONFIRMED_CLOSE  
+> 账户事实来源：BROKER_STATEMENT_SCREENSHOT_20261016_173433_RECONCILIATION  
 > ETF策略风险as-of：2026-09-23  
 > ETF策略风险来源：data/state/etf_strategy_equity.json::summary.current_strategy_return_pct_gross  
 > 场景：账户事实维护  
