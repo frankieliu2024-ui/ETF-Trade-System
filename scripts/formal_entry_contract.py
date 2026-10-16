@@ -30,6 +30,7 @@ CANONICAL_FACT_TYPE = "FORMAL_SCHEDULED_REVIEW"
 CANONICAL_ACTOR_SOURCE = "CHATGPT_SCHEDULED_REVIEW_ACTOR"
 CANONICAL_SCENARIO = "FORMAL_DECISION"
 CANONICAL_REPORT_TYPE = "ETF_FORMAL_DECISION"
+CANONICAL_TASK_ID = "ETF正式决策"
 
 
 def validate_canonical_formal_request(payload: dict) -> tuple[bool, str]:
@@ -97,6 +98,8 @@ def validate_formal_entry_identity(payload: dict) -> tuple[bool, str]:
     missing = [name for name in required if not str(payload.get(name) or "").strip()]
     if missing:
         return False, "missing:" + ",".join(missing)
+    if str(payload.get("task_id") or "").strip() != CANONICAL_TASK_ID:
+        return False, "task_id_must_be_ETF正式决策"
     source = str(payload.get("trigger_source") or payload.get("source") or "").strip().upper()
     expected = {
         ENTRY_MANUAL_CONVERSATION: "CHATGPT_MANUAL_FORMAL_ANALYSIS",
