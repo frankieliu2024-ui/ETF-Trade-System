@@ -152,22 +152,13 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         )
         self.assertTrue(report["no_trade_authority"])
 
-ZEN FORMAL SCHEDULED REPORT",
-            entry_mode="MANUAL_SCHEDULED_TASK",
-            trigger_source="CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
-            occurrence_id="manual-scheduled-20260930T100000+0800-ab12cd34",
-        )
-        self.assertEqual(payload["request_type"], "STATE_SYNC_ONLY")
-        self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_REVIEW")
-        self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_REVIEW_ACTOR")
-        self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_FORMAL_DECISION")
-        self.assertEqual(payload["occurrence_id"], "manual-scheduled-20260930T100000+0800-ab12cd34")
-        self.assertEqual(payload["presentation_binding"]["report_id"], "ETF_FORMAL_DECISION:formal-run")
-        report = completion.build_report_delivery_from_completion(payload)
-        self.assertEqual(report["report_type"], "ETF_FORMAL_DECISION")
-        self.assertEqual(report["idempotency_key"], "ETF_FORMAL_DECISION:formal-run")
-        self.assertEqual(report["full_content"], "FROZEN FORMAL SCHEDULED REPORT")
-ZEN FORMAL SCHEDULED REPORT",
+
+    def test_formal_scheduled_review_publishes_shared_canonical_event(self):
+        from scripts import notification_center
+        from scripts import process_state_sync_request as state_sync
+        payload = completion.build_formal_decision_scheduled_review_completion_request(
+            {"action": "新增0元"}, "formal-request", "2026-09-30T10:00:00+08:00", "2026-09-29",
+            "ETF正式决策", "formal-run", "FROZEN FORMAL SCHEDULED REPORT",
             entry_mode="MANUAL_SCHEDULED_TASK",
             trigger_source="CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
             occurrence_id="manual-scheduled-20260930T100000+0800-ab12cd34",
