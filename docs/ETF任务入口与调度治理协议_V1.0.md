@@ -102,6 +102,10 @@
 
 禁止使用“MANUAL_SYSTEM_REVIEW_CHAIN_VALIDATION”作为ETF_SYSTEM_REVIEW正式报告的正文缩减理由。任何同任务不同正文合同都必须先升级任务分类和协议，再实施。
 
+## 6.2 Scheduled Review后置交接合同
+
+System Review和Trade Review在生成唯一完整FINAL_CONTENT后，不得以“正文已生成”作为任务完成。必须在同一运行中提交并回读唯一的`SCHEDULED_REVIEW_COMPLETION`，并继续形成canonical review event、REPORT、notification_id和provider result。任一对象缺失、错绑或回读失败，任务状态必须保持未闭环；不得补绑历史对象、补发历史正文或创建第二请求、第二event、第二通知。provider success只能记录为provider接口成功，不得表述为用户已收到。
+
 ## 7. 统一完成边界
 
 调度成功、任务已启动、请求已写入、正文已生成、workflow success、REPORT生成、provider success和用户已收到必须分别记录。
