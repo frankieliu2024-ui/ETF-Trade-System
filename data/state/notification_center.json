@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-10-16T09:46:40+08:00",
+  "updated_at": "2026-10-16T10:09:15+08:00",
   "last_status": "SENT",
   "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】创新药ETF（159992）出现极端波动 +3.09%",
+  "last_title": "【市场异动】创业板指（399006）冲高明显回吐",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -28906,27 +28906,62 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-10-16T09:46:40+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "apac-open-signal:2026-10-07:KOSPI:DOWN",
-      "type": "APAC_OPEN_SIGNAL",
-      "title": "【市场异动】韩国综合指数（KOSPI）实际开盘出现异常跳空",
-      "content": "### 核心结论\n- **节点**：亚太错位开盘异常\n- **触发对象**：韩国综合指数（KOSPI）\n- **实际开盘较前收**：-1.11%\n- **当前较前收**：-1.29%\n- **区域结构**：区域普遍偏弱\n- **数据质量**：覆盖4/4；触发判断使用PASS对象4/4；当前未发现需单列的数据质量降级。\n\n### 关键路径\n- **触发对象**：低开-1.11%后当前-1.29%，低开后仍维持偏弱，开盘冲击尚未解除。\n- **区域对照**：其他市场对照：台湾加权指数（TWII）-0.22%、日经225指数（N225）-0.79%、恒生科技指数（HSTECH）-1.23%。\n\n### 对ETF系统的影响\n外部结构：韩国综合指数（KOSPI）的实际开盘异常仍需结合当前-1.29%和区域判断“区域普遍偏弱”继续验证是否延续。\n\n本地传导：A股同步反馈为A股当日同步数据不可用；外部信号只有被A股自身价格结构接受，才可能改变当前ETF判断。\n\nETF自身反馈：当前没有需要机械绑定的直接监测ETF，区域指数变化只进入跨市场证据层。\n\n机会判断：本通知不生成Trial/Confirm或卖出动作；只有外部结构、本地传导和ETF自身反馈共同改变正式判断时，才进入交易链。\n\n### 当前动作\n**把该事件纳入最近A股正式节点复核；不因单一海外/区域指数跳空机械买卖，重点看A股是否接受以及直接相关ETF自身反馈。**\n\n### 数据与边界\n- **触发对象行情时点（北京时间）**：2026-10-07 10:08:29\n- **亚太对象最新有效时点上限**：2026-10-07 10:08:36\n- **A股同步参考时点**：未提供\n- **通知生成**：2026-10-07 10:08:53\n- **边界**：约0.8%的门槛只检查实际开盘价相对前收；开盘后的累计涨跌不回填成开盘异常。覆盖数量与数据质量分开表达，DEGRADED/延迟对象不得被包装成全部实时FRESH。",
-      "source": "overseas_context+CURRENT",
+      "notification_id": "notification_a49a1272f1795a1a31a9",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:a-share:2026-10-16:399006:DOWN:REVERSAL:2026-10-16T10:06:09+08:00",
+      "request_id": "",
+      "parent_request_id": "",
+      "report_id": "",
+      "content_hash": "",
+      "related_decision_id": "",
+      "security_code": "399006",
+      "security_name": "创业板指",
       "user_severity": "需要关注",
-      "user_action": "纳入最近A股节点，检查本地传导和直接相关ETF自身反馈，不机械交易",
-      "status": "SENT",
-      "attempted_at": "2026-10-07T10:08:54+08:00",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-10-16T10:09:14+08:00",
+      "sent_at": "2026-10-16T10:09:15+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-10-18T10:09:14+08:00",
+      "title": "【市场异动】创业板指（399006）冲高明显回吐",
+      "content": "### 核心结论\n- **事件类型**：方向反转\n- **对象/结构**：创业板指（399006）\n- **最近脉冲变化**：-0.57%\n- **关键结构**：盘中一度较前收+1.76%，当前回落至+0.06%\n\n**判断**：行情先形成足够大的单向日内幅度，随后大幅回吐或修复，原先的单向市场解释可能已经失效。\n\n### 对ETF系统的影响\n创业板指（399006）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-10-16 10:06:09\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "confirmation_context": {
+        "market": "A_SHARE",
+        "market_date": "2026-10-16",
+        "direction": "DOWN",
+        "event_category": "REVERSAL",
+        "asset_class": "A_SHARE_INDEX",
+        "day_change_pct": 0.057847706033054,
+        "sudden_change_pct": -0.5691393641634845,
+        "interval_minutes": 21.55,
+        "event_magnitude_pct": 1.7591451474398,
+        "market_as_of_beijing": "2026-10-16T10:06:09+08:00",
+        "source_fact_id": "2026-10-16:399006:REVERSAL:DOWN:2026-10-16T10:06:09+08:00",
+        "structure_cluster_id": "A_SHARE_TECH_GROWTH_EPISODE",
+        "structure_cluster_members": [
+          "000688",
+          "159781",
+          "399006",
+          "588000"
+        ],
+        "structure_cluster_scope": "EXPLICIT_SAME_EPISODE_ONLY",
+        "event_family_id": "A_SHARE:2026-10-16:A_SHARE:399006:REVERSAL:DOWN:A_SHARE_TECH_GROWTH_EPISODE"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_15727f99321874d782d1",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-10-16T10:09:15+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "apac-session-summary:2026-10-07:HK_LATE_UPDATE",
       "type": "APAC_SESSION_SUMMARY",
@@ -32507,6 +32542,24 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_aba8f5621a293a669c57",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:a-share:2026-10-16:399006:DOWN:REVERSAL:2026-10-16T10:06:09+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】创业板指（399006）冲高明显回吐",
+      "content": "### 核心结论\n- **事件类型**：方向反转\n- **对象/结构**：创业板指（399006）\n- **最近脉冲变化**：-0.57%\n- **关键结构**：盘中一度较前收+1.76%，当前回落至+0.06%\n\n**判断**：行情先形成足够大的单向日内幅度，随后大幅回吐或修复，原先的单向市场解释可能已经失效。\n\n### 对ETF系统的影响\n创业板指（399006）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-10-16 10:06:09\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "status": "SENT",
+      "attempted_at": "2026-10-16T10:09:15+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_a49a1272f1795a1a31a9",
       "lifecycle_status": "SENT"
     }
   ],
