@@ -29,9 +29,14 @@ on:
         description: "Source US pulse run ID for bounded recovery audit"
         required: false
         default: ""
+      formal_completion_path:
+        description: "Exact current Formal Decision completion path to canonicalize"
+        required: false
+        default: ""
   push:
     paths:
       # Formal Decision notifications are authorized only by events/reviews/formal_*.json.
+      - "requests/live_snapshot/*__formal_decision_completion.json"
       - "events/trades/*.json"
       - "events/reviews/*.json"
       - "data/state/account_fact.json"
@@ -100,7 +105,17 @@ jobs:
           git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_BEFORE"
           git cat-file -e "$PUSH_AFTER^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_AFTER"
           git diff --name-only "$PUSH_BEFORE" "$PUSH_AFTER" > /tmp/changed_files.txt
-          echo "formal_completion=false" >> "$GITHUB_OUTPUT"
+          mapfile -t formal_completion_paths < <(grep -E '^requests/live_snapshot/[^/]+__formal_decision_completion\\.json$' /tmp/changed_files.txt || true)
+          if [ "${#formal_completion_paths[@]}" -eq 1 ]; then
+            echo "formal_completion=true" >> "$GITHUB_OUTPUT"
+            echo "formal_completion_path=${formal_completion_paths[0]}" >> "$GITHUB_OUTPUT"
+          elif [ "${#formal_completion_paths[@]}" -gt 1 ]; then
+            echo "Ambiguous Formal Decision completion push: expected exactly one completion file, found ${#formal_completion_paths[@]}" >&2
+            exit 1
+          else
+            echo "formal_completion=false" >> "$GITHUB_OUTPUT"
+            echo "formal_completion_path=" >> "$GITHUB_OUTPUT"
+          fi
           echo "decision=false" >> "$GITHUB_OUTPUT"
           echo "decision_event_path=" >> "$GITHUB_OUTPUT"
           if grep -Eq '^events/trades/[^/]+\.json$' /tmp/changed_files.txt; then
@@ -145,7 +160,7 @@ jobs:
             echo "report_handoff_path=" >> "$GITHUB_OUTPUT"
           fi
           mapfile -t review_paths < <(grep -E '^events/reviews/[^/]+\.json$' /tmp/changed_files.txt || true)
-          if [ "${#review_paths[@]}" -eq 1 ]; then
+          if [ "${#review_paths[@]}" -eq 1 ] && [[ "${review_paths[0]}" != events/reviews/formal_*.json ]]; then
             echo "review_completion=true" >> "$GITHUB_OUTPUT"
             echo "review_event_path=${review_paths[0]}" >> "$GITHUB_OUTPUT"
           elif [ "${#review_paths[@]}" -gt 1 ]; then
@@ -278,7 +293,7 @@ jobs:
           mapfile -t review_paths < <(
             git diff-tree --no-commit-id --name-only -r "$downstream_sha" -- 'events/reviews/*.json' | sed '/^$/d'
           )
-          if [ "${#review_paths[@]}" -eq 1 ]; then
+          if [ "${#review_paths[@]}" -eq 1 ] && [[ "${review_paths[0]}" != events/reviews/formal_*.json ]]; then
             echo "review_completion=true" >> "$GITHUB_OUTPUT"
             echo "review_event_path=${review_paths[0]}" >> "$GITHUB_OUTPUT"
           elif [ "${#review_paths[@]}" -gt 1 ]; then
@@ -303,15 +318,70 @@ jobs:
             echo "decision_event_path=" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Project Formal Decision completion to canonical review event
+        id: formal_completion_event
+        if: ${{ (github.event_name == 'push' && steps.push_kind.outputs.formal_completion == 'true') || (github.event_name == 'workflow_dispatch' && inputs.formal_completion_path != '') }}
+        shell: bash
+        env:
+          COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.formal_completion_path || steps.push_kind.outputs.formal_completion_path }}
+        run: |
+          set -euo pipefail
+          test -f "$COMPLETION_PATH"
+          result=$(python scripts/process_state_sync_request.py "$COMPLETION_PATH")
+          echo "$result"
+          event_path=$(python -c 'import json,sys; print(json.loads(sys.argv[1]).get("canonical_publication",""))' "$result")
+          case "$event_path" in
+            events/reviews/formal_*.json) ;;
+            *) echo "Formal Decision canonical event path invalid: $event_path" >&2; exit 1 ;;
+          esac
+          echo "review_event_path=$event_path" >> "$GITHUB_OUTPUT"
+
+      - name: Persist Formal Decision canonical review event
+        if: ${{ (github.event_name == 'push' && steps.formal_completion_event.outputs.review_event_path != '') || (github.event_name == 'workflow_dispatch' && steps.formal_completion_event.outputs.review_event_path != '') }}
+        shell: bash
+        env:
+          EVENT_PATH: ${{ steps.formal_completion_event.outputs.review_event_path }}
+        run: |
+          set -euo pipefail
+          test -n "$EVENT_PATH"
+          case "$EVENT_PATH" in
+            events/reviews/formal_*.json) ;;
+            *) echo "invalid Formal Decision review event path: $EVENT_PATH" >&2; exit 1 ;;
+          esac
+          test -f "$EVENT_PATH"
+          event_backup="/tmp/formal-review-event.json"
+          cp -- "$EVENT_PATH" "$event_backup"
+          git config user.name "ETF notification bot"
+          git config user.email "etf-notification-bot@users.noreply.github.com"
+          for attempt in 1 2 3; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            mkdir -p "$(dirname "$EVENT_PATH")"
+            cp -- "$event_backup" "$EVENT_PATH"
+            git add -- "$EVENT_PATH"
+            if git diff --cached --quiet; then
+              echo "Formal Decision canonical review event already present in current main."
+              break
+            fi
+            git commit -m "event: persist Formal Decision canonical review event"
+            if git push origin HEAD:main; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Formal Decision canonical review event persistence exhausted latest-main retries." >&2
+              exit 1
+            fi
+          done
+
       - name: Send material user-action notification
         id: event_notify
-        if: ${{ (github.event_name == 'workflow_run' && (github.event.workflow_run.name != 'ETF market snapshot' || steps.workflow_review.outputs.review_completion == 'true')) || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true')) }}
+        if: ${{ (github.event_name == 'workflow_run' && (github.event.workflow_run.name != 'ETF market snapshot' || steps.workflow_review.outputs.review_completion == 'true')) || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true' || steps.formal_completion_event.outputs.review_event_path != '')) || (github.event_name == 'workflow_dispatch' && steps.formal_completion_event.outputs.review_event_path != '') }}
         continue-on-error: true
         env:
           REPORT_DELIVERY_PATH: ${{ steps.push_kind.outputs.report_path }}
           REPORT_HANDOFF_PATH: ${{ steps.push_kind.outputs.report_handoff_path }}
-          REVIEW_EVENT_PATH: ${{ steps.push_kind.outputs.review_event_path || steps.workflow_review.outputs.review_event_path }}
-          FORMAL_COMPLETION_EVENT: ${{ steps.push_kind.outputs.review_event_path != '' && 'true' || steps.workflow_review.outputs.review_event_path != '' && 'true' || 'false' }}
+          REVIEW_EVENT_PATH: ${{ steps.formal_completion_event.outputs.review_event_path || steps.push_kind.outputs.review_event_path || steps.workflow_review.outputs.review_event_path }}
+          FORMAL_COMPLETION_EVENT: ${{ steps.formal_completion_event.outputs.review_event_path != '' && 'true' || 'false' }}
         run: |
           set -euo pipefail
           if [ -n "$REPORT_DELIVERY_PATH" ] || [ -n "$REPORT_HANDOFF_PATH" ] || [ -n "$REVIEW_EVENT_PATH" ]; then
