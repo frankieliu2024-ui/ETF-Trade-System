@@ -20,7 +20,7 @@
 - **交易域**：`ETF规则_MASTER.md`。
 - **数据与市场监测域**：`ETF与市场监测数据接口使用规范.md`。负责数据资格、三层监测语义、market phase、Point-in-Time、provider降级、代理、新鲜度、质量验收与查询时补采边界。当前对象、provider顺序和runtime参数读取机器配置，不从INDEX复制。
 - **主动通知域**：`docs/ETF主动通知体系.md`。负责通知资格、事件语义、标题、固定节点、可比事实门、去重、恢复和展示边界。
-- **Formal Decision执行域**：`docs/Formal Decision执行与用户回复协议.md`。负责Formal Decision的唯一父请求、WAIT/READY/TERMINAL三态消费、业务回复时序和用户可见边界；不定义交易规则，不新增生产链。
+- **Formal Decision执行域**：`docs/Formal Decision执行与用户回复协议.md`。负责Formal Decision的唯一父请求、WAIT/READY/TERMINAL三态消费、业务回复时序和用户可见边界；不定义交易规则，不新增生产链。  定时任务从入口身份、四节点调度、请求创建、后置交接和真实目标路径验收的独立合同读取 `docs/formal-decision-scheduled-task-rebuild-v2.md`。
 - **生产变更与并发治理域**：`docs/生产变更与并发写入协议_V1.0.md`。负责生产变更准入、writer ownership、latest-main、并发、mutation gateway、状态producer和组合验收。`config/maintenance/production_mutation_protocol.json`只是该规范的机器可执行镜像，不是第二套规则源。
 
 查询路由技术说明：`docs/市场行情查询路由与全球时点规则_V1.0.md`。它只解释ETF系统内部查询路由实现，不是第五个规范域；唯一无网络路由实现为`scripts/market_quote_router.py`，单对象查询入口为`scripts/query_market_object.py`，查询时即时补采由`scripts/query_time_market_refresh.py`执行。
