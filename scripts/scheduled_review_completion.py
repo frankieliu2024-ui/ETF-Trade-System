@@ -329,7 +329,7 @@ def build_report_delivery_from_completion(completion: dict) -> dict:
     """Project the frozen Scheduled Review presentation into the existing REPORT contract."""
     binding = completion.get("presentation_binding") or {}
     report_type = str(binding.get("report_type") or "")
-    if report_type not in {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW", "ETF_FORMAL_DECISION"}:
+    if report_type not in {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}:
         raise ValueError("unsupported Scheduled Review report_type")
     full_content = str(binding.get("full_content") or "")
     task_id = str(binding.get("task_id") or "")
