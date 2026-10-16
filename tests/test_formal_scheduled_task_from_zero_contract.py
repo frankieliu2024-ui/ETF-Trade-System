@@ -37,15 +37,65 @@ class FormalScheduledTaskFromZeroContractTests(unittest.TestCase):
             now=now,
             task_id="task-1",
             task_run_id="run-1",
-            occurrence_id="2026-10-16T10:00:00+08:00",
+            occurrence_id="scheduled_2026-10-16T10:00:00+08:00",
         )
-        self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_FORMAL_ANALYSIS")
+        self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_REVIEW_ACTOR")
+        self.assertEqual(payload["trigger_source"], "CHATGPT_SCHEDULED_FORMAL_ANALYSIS")
         self.assertEqual(payload["entry_mode"], "AUTOMATIC_SCHEDULED_TASK")
+        self.assertEqual(payload["request_type"], "STATE_SYNC_ONLY")
+        self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_REVIEW")
         self.assertEqual(payload["occurrence_id"], payload["occurrence"])
         self.assertEqual(payload["task_id"], "task-1")
         self.assertEqual(payload["task_run_id"], "run-1")
-        self.assertTrue(payload["force_refresh"])
-        self.assertTrue(payload["require_post_request_snapshot"])
+        self.assertNotIn("force_refresh", payload)
+        self.assertNotIn("require_post_request_snapshot", payload)
+
+
+    def test_manual_builder_is_state_sync_and_not_slot_limited(self):
+        now = datetime(2026, 10, 16, 11, 30, tzinfo=timezone(timedelta(hours=8)))
+        payload = build_scheduled_request(
+            now=now,
+            task_id="ETF正式决策",
+            task_run_id="manual-scheduled-20261016T113000+0800-ab12cd34",
+            occurrence_id="manual-scheduled-20261016T113000+0800-ab12cd34",
+            entry_mode="MANUAL_SCHEDULED_TASK",
+        )
+        self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_REVIEW_ACTOR")
+        self.assertEqual(
+            payload["trigger_source"],
+            "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+        )
+        self.assertEqual(payload["entry_mode"], "MANUAL_SCHEDULED_TASK")
+        self.assertEqual(payload["request_type"], "STATE_SYNC_ONLY")
+        self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_REVIEW")
+        self.assertNotIn("force_refresh", payload)
+        self.assertNotIn("query_intent", payload)
+
+
+    def test_conversation_builder_uses_the_same_scheduled_review_contract(self):
+        now = datetime(2026, 10, 16, 11, 30, tzinfo=timezone(timedelta(hours=8)))
+        payload = build_scheduled_request(
+            now=now,
+            task_id="ETF正式决策",
+            task_run_id="conversation-20261016T113000-ab12cd34",
+            occurrence_id="conversation_20261016T113000-ab12cd34",
+            entry_mode="MANUAL_CONVERSATION",
+        )
+        self.assertEqual(payload["trigger_source"], "CHATGPT_MANUAL_FORMAL_ANALYSIS")
+        self.assertEqual(payload["entry_mode"], "MANUAL_CONVERSATION")
+        self.assertEqual(payload["request_type"], "STATE_SYNC_ONLY")
+        self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_REVIEW")
+
+    def test_manual_occurrence_cannot_impersonate_automatic(self):
+        now = datetime(2026, 10, 16, 11, 30, tzinfo=timezone(timedelta(hours=8)))
+        with self.assertRaisesRegex(ValueError, "manual occurrence"):
+            build_scheduled_request(
+                now=now,
+                task_id="ETF正式决策",
+                task_run_id="manual-scheduled-run",
+                occurrence_id="scheduled_20261016T113000",
+                entry_mode="MANUAL_SCHEDULED_TASK",
+            )
 
     def test_payload_is_json_serializable(self):
         now = datetime(2026, 10, 16, 10, 0, tzinfo=timezone(timedelta(hours=8)))
@@ -58,8 +108,9 @@ class FormalScheduledTaskFromZeroContractTests(unittest.TestCase):
         json.dumps(payload, ensure_ascii=False)
 
     def test_task_stays_independent_from_stable_review_tasks(self):
-        prompt = Path("docs/Formal Decision定时任务从零重建说明_V1.0.md").read_text(encoding="utf-8")
-        self.assertIn("不修改【ETF系统复核】、【ETF交易复盘】", prompt)
+        contract = Path("docs/formal-decision-scheduled-task-rebuild-v2.md").read_text(encoding="utf-8")
+        self.assertIn("不修改其任务、调度、代码、协议、状态、completion、REPORT、notification 或 PushPlus 链", contract)
+        self.assertNotIn("MARKET_QUOTE_REFRESH → BDS → Formal completion", contract)
 
 
 if __name__ == "__main__":

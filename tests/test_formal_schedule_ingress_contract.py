@@ -31,7 +31,9 @@ def test_automatic_identity_is_runtime_bound_and_fail_closed():
     assert 'os.environ.get("OCCURRENCE_ID", "").strip()' in text
     assert 'MISSING_AUTOMATIC_RUNTIME_IDENTITY' in text
     assert 'startswith("scheduled_")' in text
-    assert '"query_intent": "FORMAL_INTRADAY_ANALYSIS"' in text
+    assert '"request_type": "STATE_SYNC_ONLY"' in text
+    assert '"formal_fact_type": "FORMAL_SCHEDULED_REVIEW"' in text
+    assert "MARKET_QUOTE_REFRESH" not in text
 
 
 def test_manual_entry_is_not_created_by_automatic_ingress_script():

@@ -282,8 +282,10 @@ def build_formal_decision_scheduled_review_completion_request(
     task_id: str,
     task_run_id: str,
     final_content: str,
+    entry_mode: str = "",
+    trigger_source: str = "",
 ) -> dict:
-    """Build Formal Decision using the same Scheduled Review completion contract."""
+    """Build every Formal Decision entry using the one Scheduled Review contract."""
     if not isinstance(formal_decision, dict) or not formal_decision:
         raise ValueError("scheduled formal decision completion requires formal_decision")
     request_id = _safe_id(request_id)
@@ -301,7 +303,9 @@ def build_formal_decision_scheduled_review_completion_request(
         "request_type": "STATE_SYNC_ONLY",
         "formal_fact_type": "FORMAL_SCHEDULED_REVIEW",
         "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
-        "interaction_scenario": "SCHEDULED_FORMAL_DECISION",
+        "trigger_source": str(trigger_source or "").strip(),
+        "entry_mode": str(entry_mode or "").strip(),
+        "interaction_scenario": "FORMAL_DECISION",
         "requested_at_beijing": str(requested_at_beijing),
         "market_date": market_date,
         "formal_decision": formal_decision,

@@ -29,32 +29,19 @@
 
 ### 正式ETF分析
 
-### Formal Decision 场景作用域防火墙（强制）
+三个合法入口统一读取并执行 `docs/Formal Decision执行与用户回复协议.md`：
 
-以下“用户发起的新 Formal Decision Request”及其 `MARKET_QUOTE_REFRESH → request-bound snapshot/query_context/DWP/formal_reply_gate → BUSINESS_DECISION_SOURCE → Formal Decision completion` 规则，仅适用于入口表中的 `entry_mode=MANUAL_CONVERSATION`、`source=CHATGPT_MANUAL_FORMAL_ANALYSIS`。
+|入口|source/trigger_source|entry_mode|规则|
+|-|-|-|-|
+|对话窗口|\`CHATGPT_MANUAL_FORMAL_ANALYSIS\`|\`MANUAL_CONVERSATION\`|用户明确发起即可运行|
+|手动启动定时任务|\`CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS\`|\`MANUAL_SCHEDULED_TASK\`|用户明确启动即可运行，不受自动节点限制|
+|自动节点启动定时任务|\`CHATGPT_SCHEDULED_FORMAL_ANALYSIS\`|\`AUTOMATIC_SCHEDULED_TASK\`|仅按current main正式日历、交易日和适用节点运行|
 
-`MANUAL_SCHEDULED_TASK` 和 `AUTOMATIC_SCHEDULED_TASK` 不得读取、等待、复用或消费本节的历史 `formal_reply_gate`、DWP、父请求、BDS 或 `MARKET_QUOTE_REFRESH` 首跳；统一按 `docs/formal-decision-scheduled-task-rebuild-v2.md` 建立本次新的运行身份，并以 `STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW` 完成。定时任务的事实、正文、completion、canonical review event 和通知只能绑定本次 task/run/occurrence/request 身份。
+三个入口的业务判断、正文、完成事件、REPORT、通知和PushPlus必须使用同一条生产链：
 
-#### 用户发起的新 Formal Decision Request：父请求首跳 ingress（强制）
+`实际触发方式 → 本次唯一身份 → 当前正式事实 → 完整业务判断 → 唯一FINAL_CONTENT → STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW → canonical review event → REPORT → notification_center → PushPlus`
 
-当用户新发起当前交易判断，或明确要求按当前时点重新判断时，必须先为这次用户请求建立独立父请求身份，再读取任何用于本次正式判断的账户、行情、Discovery 或 decision context。恢复同一条仍在处理中的请求时沿用其父请求身份；新的用户触发必须创建新身份。System Review、scheduled review、REPORT 交付、普通行情问答不属于 Formal Decision Request，不得创建或冒充该身份。
-
-1. 以本次用户交互的实际北京时间生成唯一 `request_id` 和 `requested_at_beijing`。把只含请求元数据的父请求 envelope 写入现有 `requests/live_snapshot/<request_id>.json`：使用 `request_type=MARKET_QUOTE_REFRESH`、`source=CHATGPT_MANUAL_FORMAL_ANALYSIS`、`intent=query_intent=FORMAL_INTRADAY_ANALYSIS`，并设置 `force_refresh=true`、`require_post_request_snapshot=true`、`reuse_inflight_refresh=true`、`duplicate_equivalent_refresh_forbidden=true`。不要在首跳 envelope 中填写交易动作或把它伪装成 `FORMAL_DECISION` 事实。
-2. 使用已连接 GitHub 的 Contents `create_file` 能力将该 envelope 提交到 current `main`；请求文件写入是本次运行 ingress，不是代码变更，不走分支或 PR。必须确认工具返回提交回执，并回读 current `main` 上同路径文件，核对 `request_id` 与 `requested_at_beijing`。若文件已存在，先核对是否属于同一请求；新请求必须使用不同身份。若提交失败或结果不确定且无法回读确认，停止正式分析，不得用旧请求、当前状态或直接行情替代。
-3. 由该请求文件的 push 唤醒现有 `.github/workflows/market-snapshot.yml` 和既有 request-bound producer；不得另建 workflow、producer、state 或第二决策链。按当前场景和数据规范取得本次 request-bound 合法事实。
-4. 正式推理前必须先读取小型 `data/state/e2e_status.json` 的 `components.decision_context.formal_reply_gate`；该既有gate必须由 `scripts/build_e2e_status.py` 直接复用 `scripts/formal_request_consumer.py` 的 `classify_formal_request_consumer_state` 投影 `consumer_status`、`actor_action`、`user_output_allowed` 及READY必答清单，外部Actor不得自行重解释 `reply_freezable`。其 `actor_action` 与 `user_output_allowed` 是Formal Decision协议登记的Actor执行合同。`CONTINUE_SAME_REQUEST_SILENTLY`／`user_output_allowed=false` 时属于硬用户可见门禁，ChatGPT不得输出等待、处理中、外部条件或失败状态，只能继续消费同一父请求。随后读取小型 `data/state/e2e_status.json` 的 `components.decision_context.formal_reply_gate` 作为消费侧首要机器门：其 `request_id` 必须与本次父请求一致，且 `reply_freezable=true`；若 request_id 仍旧/缺失或状态为 IN_FLIGHT/BUILDING，只表示同一请求仍在形成，必须继续消费同一链，不得终止或创建第二请求。门通过后，再确认 `data/state/query_context.json` 的 `decision_fact_pack.trigger.request_id` 与本次父请求 ID 完全一致，且其中 `decision_work_package.problem_graph` 属于本次请求。缺少或不匹配时保持 fail-closed；不得把无身份的当前 DWP 或历史 DWP 当成本次请求包。**父请求已成功写入并回读后，若当前 `query_context` 仍为空、属于旧请求或尚未匹配本次 `request_id`，该现象本身只表示本次 request-bound facts 尚未发布，不构成 Formal Decision 的终止失败。此时必须沿同一父请求检查现有 canonical workflow/check 状态并继续消费同一链；只要该链仍为 queued/in_progress/building，就不得创建第二个等价请求，也不得向用户输出最终失败结论。只有本次同 request 的 `formal_reply_freeze.reply_freezable=true`／合法 READY（含明确允许的 resolved degradation），或现有 canonical 链明确进入 terminal failure／不存在合法链时，才允许结束等待并进入业务判断或 fail-closed 终止。对于大型 canonical JSON 的连接器空读，必须先以同一 GitHub Contents 来源回读/复核后才能认定缺失。**
-#### Formal Decision 回复优先与用户可见边界（强制）
-
-本场景唯一三态合同读取 `docs/Formal Decision执行与用户回复协议.md`；本节只提供执行路由，不复制该协议正文。
-
-当 `formal_reply_freeze.reply_freezable=true` 且父请求、request-bound DWP 和当前 facts 已一致时，`classify_formal_request_consumer_state` 返回 `BUSINESS_DECISION_READY` 即视为用户业务分析的硬交接点：ChatGPT必须直接完成一次完整业务判断并冻结唯一 FINAL_CONTENT；不得等待 canonical persistence、audit、notification、consistency、acceptance 或 provider 成功。为保证定时任务不会在首次回复后结束，必须在同一执行回合内完成当前 BDS 写入/回读和 Formal Decision completion ingress 提交；这些后置交接不得等待通知或 provider 成功，也不得改变或缩短即将输出的正文。READY 后不得重新生产、刷新、拉取或重建已经 request-bound 的正式行情／事实，不得重复执行同一份 Discovery，也不得重新审计已通过的生产链；但这不禁止 ChatGPT 为完成本次 DWP 中机器无法替代的业务判断，有限、按需调用适用的 Bigdata、Longbridge、Exa 或其他合法外部研究工具取得尚未包含在 request-bound 包中的决策相关补充证据。外部补充证据只作为研究／判断补充：必须保留其事实时点、来源和用途边界，不得覆盖 request-bound/canonical 正式事实，不得冒充当前可执行价格或证券身份，不得改变 provider 优先级、绕过 PIT/freshness、扩大交易权限或建立第二 producer/state/decision chain；已有 request-bound 证据足够时不得机械重复查询，外部补证失败、超时或空结果按现有规范合法降级，不得阻塞已经具备的 READY 回复资格。上述后置工作只能异步进行，不能撤销本次业务回复资格。执行侧必须先以同一 GitHub 来源回读本次 request-bound query_context 和 formal_reply_gate；若大型上下文暂时空读、仍在发布或 request_id 尚未匹配，只能继续沿同一父请求静默消费，不得输出停止说明。顶层 e2e_status 的 BLOCKED、close_review 未完成、System Review/交易复盘未完成或其他后置投影状态，均不得覆盖同一请求已经确认的 `formal_reply_gate=READY`。只有同一请求的 gate 明确为终止失败，或同一请求的 canonical producer 明确进入终止且不存在继续路径，才允许终止。
-正式业务回复只表达业务结论、依据、风险和人工交易边界；不得出现 `canonical`、`writer`、`BDS`、`reply_freezable`、`control plane`、内部 workflow/job、持久化等待或“自动接管”等内部或歧义表述。默认用户可见语义为“本次正式判断已完成；证券交易仍由用户人工确认和下单”。
-
-该规则不缩短长报告、不改变 BUSINESS_DECISION_SOURCE 合同、不新增状态或第二条决策链；它只规定 facts READY 后的执行顺序和展示边界。
-
-5. 完成业务判断后，先冻结唯一 FINAL_CONTENT；用户窗口立即输出同一份完整 FINAL_CONTENT，不得等待任何 BDS、completion、REPORT、notification 或 provider 状态。随后在同一执行回合内，使用既有 BUSINESS_DECISION_SOURCE 写入并回读同一 request_id、parent_request_id、decision_id、request-bound snapshot、decision_response.answers、presentation_content 和 content_hash；再提交同一请求的 Formal Decision completion ingress，并将该 completion 的唯一当前路径精确交给既有 `decision-notification.yml` 的 `workflow_dispatch(formal_completion_path=...)` 入口，由 canonical owner 形成当前 `events/reviews/formal_<occurrence_id>.json`，再进入 notification_center 和 PushPlus 主链。不得假定 Contents API 提交必然产生 push workflow run，不得由 BDS 或 market-snapshot 被动唤醒，不得扫描历史 completion。后置交接不得阻塞、缩短、改写或撤回正文；不得由 Actor 直接手写 event、REPORT 或通知文件，不得重用历史身份，不得创建第二 request、第二正文、第二 event 或历史回退。provider 成功不是用户回复门禁；任何后置交接或通知失败都必须如实记录，不得声称 notification/provider 成功。
-
-正式决策生产闭环的ChatGPT写入入口固定为现有 BUSINESS_DECISION_SOURCE 路由：后置 handoff 只能使用本次父请求绑定、唯一BDS/decision identity、实际消费的request-bound snapshot，以及与本次 decision_work_package.problem_graph 对齐的 decision_response.answers；若本次需要PushPlus完整报告，必须携带同一份冻结用户可见正文到既有 presentation_content 字段，由正式决策事件保存其正文指纹并交给现有通知owner投递。GitHub Contents只负责把这个Actor业务回答envelope提交到 requests/live_snapshot/，不执行投影、不生成交易判断。现有 scripts/process_state_sync_request.py 在execution-time main上读取同一父请求的request-bound DWP，并调用 scripts/business_decision_source.py 完成确定性 project_decision_response → validate_source 后再进入canonical single writer；parent/DWP/snapshot不匹配或业务回答不合法必须在该owner处fail-closed。现有 scripts/manual_formal_decision_completion.py --decision-response ... 仅保留为同合同preflight/builder与人工恢复工具，不是Actor的第二生产入口，也不得绕过现有BUSINESS_DECISION_SOURCE和canonical owner。不得构造旧的 legacy completion：`request_type=STATE_SYNC_ONLY`、`source=CHATGPT_MANUAL_FORMAL_COMPLETION`、`formal_fact_type=FORMAL_DECISION`；不得手写 `events/reviews/formal_*.json`、REPORT 或 notification canonical nesting；Formal review event只能由completion owner形成并持久化。Formal Decision 的合法后置交接只能使用 `CHATGPT_FORMAL_DECISION_COMPLETION` + `FORMAL_DECISION_COMPLETION` completion ingress，并绑定同一 parent request、BDS path、decision_id、FINAL_CONTENT 和 content_hash。
+三个入口统一禁止把 \`MARKET_QUOTE_REFRESH\`、历史 \`formal_reply_gate\`、旧DWP、旧父请求、BDS 或 \`FORMAL_DECISION_COMPLETION\` 作为本次Formal Decision生产链。它们不能产生“对话一套链、定时任务另一套链”的分叉。具体合同只读取 `docs/Formal Decision执行与用户回复协议.md`；定时任务身份和节点细节补充读取 `docs/formal-decision-scheduled-task-rebuild-v2.md`。
 
 盘前、集合竞价、盘中、午间、盘后、风险许可、生命周期、金额、卖出和资本比较：
 
