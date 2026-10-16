@@ -936,12 +936,12 @@ def _validate_formal_presentation_layout(content: str) -> None:
         stripped = line.strip()
         if stripped.startswith("【") and stripped.endswith("】") and not heading_pattern.fullmatch(stripped):
             raise ValueError("formal presentation heading must occupy its own line")
-        if re.search(r"[ \\t]+[（(][0-9]{1,2}[）)]", line):
+        if re.search(r"[ \t]+[（(][0-9]{1,2}[）)]", line):
             raise ValueError("formal presentation secondary numbering must start a new paragraph")
         if re.match(r"^[（(][0-9]{1,2}[）)]", stripped):
             if index == 0 or lines[index - 1].strip() != "":
                 raise ValueError("formal presentation secondary items require a blank line")
-        if re.match(r"^[0-9]{1,2}\\.", stripped):
+        if re.match(r"^[0-9]{1,2}\.", stripped):
             if index == 0 or lines[index - 1].strip() != "":
                 raise ValueError("formal presentation primary items require a blank line")
     if re.search(r"(?m)^\\s*[0-9]{1,2}\\.\\s+[^\\n]+\\n[0-9]{1,2}\\.\\s+", content):
