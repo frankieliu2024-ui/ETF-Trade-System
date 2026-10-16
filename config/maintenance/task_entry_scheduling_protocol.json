@@ -13,7 +13,24 @@
       ],
       "sunday_rule": "19:30周复核",
       "manual_allowed": true,
-      "route": "SYSTEM_REVIEW"
+      "route": "SYSTEM_REVIEW",
+      "content_contract": {
+        "mode": "FULL_SYSTEM_REVIEW",
+        "manual_and_automatic_same_contract": true,
+        "minimum_required_sections": [
+          "系统可用性",
+          "市场阶段",
+          "关键事实",
+          "账户/持仓",
+          "运行链状态",
+          "用户处理事项",
+          "下一阶段",
+          "执行状态",
+          "置信度",
+          "最可能出错的地方"
+        ],
+        "validation_only_report_forbidden": true
+      }
     },
     {
       "id": "ETF_TRADE_REVIEW",
@@ -53,7 +70,9 @@
     "one_task_one_business_chain",
     "no_cross_task_object_reuse",
     "prompt_and_schedule_version_reversible",
-    "no_trade_authority"
+    "no_trade_authority",
+    "same_task_same_full_review_content_contract",
+    "chain_validation_cannot_masquerade_as_formal_system_review"
   ],
   "required_readback": [
     "task_id",
