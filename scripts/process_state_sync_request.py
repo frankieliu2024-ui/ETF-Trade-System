@@ -2318,6 +2318,22 @@ def _validate_presentation_binding(binding: dict, report_type: str) -> dict:
     return binding
 
 
+def persist_canonical_review_event(event_path: Path, payload: dict, immutable_error: str) -> tuple[bool, bool, str]:
+    """Persist one canonical review event with shared idempotency semantics."""
+    payload = json.loads(json.dumps(payload, ensure_ascii=False))
+    payload["fingerprint"] = hashlib.sha256(
+        json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    prior = load_json(event_path) if event_path.exists() else {}
+    if prior and prior.get("fingerprint") != payload["fingerprint"]:
+        raise ValueError(immutable_error)
+    if not prior:
+        event_path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_json_write(event_path, payload)
+        return True, False, str(event_path.relative_to(ROOT)).replace("\\", "/")
+    return True, True, str(event_path.relative_to(ROOT)).replace("\\", "/")
+
+
 def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
     if str(request.get("formal_fact_type") or "") != "FORMAL_SCHEDULED_SYSTEM_REVIEW":
         return False, False
@@ -2332,15 +2348,10 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
         "presentation_binding": binding,
         "review": request.get("system_review") or {},
     }
-    payload["fingerprint"] = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
-    prior = load_json(event_path) if event_path.exists() else {}
-    if prior and prior.get("fingerprint") != payload["fingerprint"]:
-        raise ValueError("scheduled system review occurrence is immutable")
-    if not prior:
-        event_path.parent.mkdir(parents=True, exist_ok=True)
-        atomic_json_write(event_path, payload)
-        return True, False
-    return True, True
+    recorded, idempotent, _ = persist_canonical_review_event(
+        event_path, payload, "scheduled system review occurrence is immutable"
+    )
+    return recorded, idempotent
 
 
 def record_formal_decision_report_event(request: dict, bds: dict) -> tuple[bool, bool, str]:
@@ -2395,16 +2406,10 @@ def record_formal_decision_report_event(request: dict, bds: dict) -> tuple[bool,
         "formal_decision": bds.get("decision_response") or bds.get("formal_decision") or {},
         "source_bds_path": str(bds.get("target_path") or ""),
     }
-    payload["fingerprint"] = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
     event_path = ROOT / "events" / "reviews" / f"formal_{occurrence}.json"
-    prior = load_json(event_path) if event_path.exists() else {}
-    if prior and prior.get("fingerprint") != payload["fingerprint"]:
-        raise ValueError("Formal Decision occurrence is immutable")
-    if not prior:
-        event_path.parent.mkdir(parents=True, exist_ok=True)
-        atomic_json_write(event_path, payload)
-        return True, False, str(event_path.relative_to(ROOT)).replace("\\", "/")
-    return True, True, str(event_path.relative_to(ROOT)).replace("\\", "/")
+    return persist_canonical_review_event(
+        event_path, payload, "Formal Decision occurrence is immutable"
+    )
 
 
 def record_close_review_closure(account: dict, request: dict, review: dict, event: dict) -> None:
