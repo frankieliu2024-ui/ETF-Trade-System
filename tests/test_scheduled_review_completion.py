@@ -170,7 +170,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
                 recorded, replay = state_sync.record_scheduled_formal_decision_review(payload)
                 self.assertTrue(recorded)
                 self.assertTrue(replay)
-            event = json.loads((root / "events" / "reviews" / "formal_formal-run.json").read_text(encoding="utf-8"))
+            event = json.loads((root / "events" / "reviews" / "formal_manual-scheduled-20260930T100000+0800-ab12cd34.json").read_text(encoding="utf-8"))
             self.assertEqual(event["event_type"], "FORMAL_SCHEDULED_REVIEW")
             self.assertEqual(event["presentation_binding"]["report_type"], "ETF_FORMAL_DECISION")
             self.assertEqual(event["presentation_binding"]["full_content"], "FROZEN FORMAL SCHEDULED REPORT")
