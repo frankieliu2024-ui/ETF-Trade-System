@@ -54,10 +54,6 @@ from formal_file_mutation_gateway import (
     write_formal_text_if_changed,
 )
 try:
-    from formal_entry_contract import validate_canonical_formal_request
-except ModuleNotFoundError:
-    from scripts.formal_entry_contract import validate_canonical_formal_request
-try:
     from lifecycle_state import build_lifecycle_projection
 except ModuleNotFoundError:
     from scripts.lifecycle_state import build_lifecycle_projection
@@ -2307,7 +2303,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
 def _validate_presentation_binding(binding: dict, report_type: str) -> dict:
     if not isinstance(binding, dict):
         raise ValueError("scheduled completion presentation_binding must be an object")
-    required = ("task_id", "task_run_id", "request_id", "report_id", "full_content", "content_hash")
+    required = ("task_id", "task_run_id", "report_id", "full_content", "content_hash")
     missing = [key for key in required if not str(binding.get(key) or "").strip()]
     if missing:
         raise ValueError("scheduled completion presentation_binding missing:" + ",".join(missing))
@@ -2340,53 +2336,6 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
     prior = load_json(event_path) if event_path.exists() else {}
     if prior and prior.get("fingerprint") != payload["fingerprint"]:
         raise ValueError("scheduled system review occurrence is immutable")
-    if not prior:
-        event_path.parent.mkdir(parents=True, exist_ok=True)
-        atomic_json_write(event_path, payload)
-        return True, False
-    return True, True
-
-
-def record_scheduled_formal_decision_review(request: dict) -> tuple[bool, bool]:
-    if str(request.get("formal_fact_type") or "") != "FORMAL_SCHEDULED_REVIEW":
-        return False, False
-    valid, reason = validate_canonical_formal_request(request)
-    if not valid:
-        raise ValueError("Formal Scheduled Review canonical ingress invalid: " + reason)
-    trigger_source = str(request.get("trigger_source") or "").strip().upper()
-    entry_mode = str(request.get("entry_mode") or "").strip().upper()
-    expected_sources = {
-        "MANUAL_CONVERSATION": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
-        "MANUAL_SCHEDULED_TASK": "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
-        "AUTOMATIC_SCHEDULED_TASK": "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
-    }
-    if entry_mode not in expected_sources or trigger_source != expected_sources[entry_mode]:
-        raise ValueError("Formal Scheduled Review entry identity is invalid")
-    if str(request.get("request_type") or "").strip().upper() != "STATE_SYNC_ONLY":
-        raise ValueError("Formal Scheduled Review must remain STATE_SYNC_ONLY")
-    if str(request.get("source") or "").strip().upper() != "CHATGPT_SCHEDULED_REVIEW_ACTOR":
-        raise ValueError("Formal Scheduled Review source actor is invalid")
-    if str(request.get("interaction_scenario") or "").strip().upper() != "FORMAL_DECISION":
-        raise ValueError("Formal Scheduled Review interaction scenario is invalid")
-    occurrence = str(request.get("occurrence_id") or request.get("occurrence") or "").strip()
-    if not occurrence:
-        raise ValueError("Formal Scheduled Review occurrence identity is required")
-    binding = _validate_presentation_binding(request.get("presentation_binding"), "ETF_FORMAL_DECISION")
-    if str(binding.get("occurrence_id") or "").strip() != occurrence:
-        raise ValueError("Formal Scheduled Review occurrence binding mismatch")
-    event_path = ROOT / "events" / "reviews" / f"formal_{occurrence}.json"
-    payload = {
-        "event_type": "FORMAL_SCHEDULED_REVIEW",
-        "occurrence_id": occurrence,
-        "request_id": request.get("request_id"),
-        "reviewed_at_beijing": request.get("requested_at_beijing"),
-        "presentation_binding": binding,
-        "formal_decision": request.get("formal_decision") or {},
-    }
-    payload["fingerprint"] = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
-    prior = load_json(event_path) if event_path.exists() else {}
-    if prior and prior.get("fingerprint") != payload["fingerprint"]:
-        raise ValueError("scheduled formal decision occurrence is immutable")
     if not prior:
         event_path.parent.mkdir(parents=True, exist_ok=True)
         atomic_json_write(event_path, payload)
@@ -3495,18 +3444,6 @@ def process_historical_backfill_request(request: dict) -> dict:
                 enriched += 1
     return {"ok": True, "ingress_mode": "HISTORICAL_BACKFILL", "created": created, "metadata_enriched": enriched, "current_account_mutated": False, "current_state_mutated": False}
 
-def is_unified_formal_entry(payload: dict) -> bool:
-    """Return true only for the three current Formal Decision entry identities."""
-    mode = str(payload.get("entry_mode") or "").strip().upper()
-    source = str(payload.get("trigger_source") or payload.get("source") or "").strip().upper()
-    expected = {
-        "MANUAL_CONVERSATION": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
-        "MANUAL_SCHEDULED_TASK": "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
-        "AUTOMATIC_SCHEDULED_TASK": "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
-    }
-    return mode in expected and source == expected[mode]
-
-
 def account_fact_is_older(prior: dict, supplied: dict) -> bool:
     old_time = parse_time(prior.get("updated_at"))
     new_time = parse_time(supplied.get("updated_at"))
@@ -3563,13 +3500,6 @@ def main() -> int:
         and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_DECISION_COMPLETION"
     )
     if completion_dispatch:
-        parent_id = str(request.get("parent_request_id") or "").strip()
-        parent_path = ROOT / "requests" / "live_snapshot" / f"{parent_id}.json"
-        parent_request = load_json(parent_path) if parent_id and parent_path.exists() else {}
-        if is_unified_formal_entry(parent_request):
-            raise ValueError(
-                "legacy Formal Decision completion is forbidden for the unified three-entry contract"
-            )
         bds_path = str(request.get("bds_path") or "").strip()
         if not bds_path or ".." in bds_path:
             raise ValueError("Formal Decision completion requires a safe BDS path")
@@ -3583,40 +3513,13 @@ def main() -> int:
             raise ValueError("Formal Decision completion parent does not match BDS")
         if str(bds.get("decision_id") or "").strip() != str(request.get("decision_id") or "").strip():
             raise ValueError("Formal Decision completion decision_id does not match BDS")
-        binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
-        response = bds.get("decision_response") if isinstance(bds.get("decision_response"), dict) else {}
-        # FINAL_CONTENT is immutable: preserve its exact bytes when validating
-        # and hashing.  Trimming here changes the hash and breaks the completion
-        # boundary even though the BDS and completion contain the same content.
-        content_candidates = [
-            str(bds.get("presentation_content") or ""),
-            str(binding.get("full_content") or ""),
-            str(response.get("presentation_content") or ""),
-        ]
-        present = [value for value in content_candidates if value]
-        if not present or len(set(present)) != 1:
+        content = str(bds.get("presentation_content") or "").strip()
+        if not content or str(request.get("content_hash") or "").strip() != hashlib.sha256(content.encode("utf-8")).hexdigest():
             raise ValueError("Formal Decision completion content binding is invalid")
-        content = present[0]
-        expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
-        supplied_hashes = {
-            str(value).strip()
-            for value in (
-                bds.get("content_hash"),
-                binding.get("content_hash"),
-                response.get("content_hash"),
-                request.get("content_hash"),
-            )
-            if value not in (None, "")
-        }
-        if supplied_hashes and supplied_hashes != {expected_hash}:
-            raise ValueError("Formal Decision completion content hash binding is invalid")
-        if str(request.get("content_hash") or "").strip() != expected_hash:
-            raise ValueError("Formal Decision completion content hash binding is invalid")
         request.update({key: value for key, value in bds.items() if key not in {"request_id", "request_type", "source"}})
         request["request_type"] = BUSINESS_DECISION_SOURCE
         request["request_id"] = str(bds.get("request_id") or "").strip()
         request["presentation_content"] = content
-        request["content_hash"] = expected_hash
         recorded, idempotent, event_path = record_formal_decision_report_event(request, bds)
         print(json.dumps({
             "ok": True,
@@ -3644,10 +3547,6 @@ def main() -> int:
         parent_request = load_json(parent_path)
         if str(parent_request.get("request_id") or "").strip() != parent_id:
             raise ValueError("business decision source parent request identity mismatch")
-        if is_unified_formal_entry(parent_request):
-            raise ValueError(
-                "BUSINESS_DECISION_SOURCE is forbidden for the unified three-entry Formal contract"
-            )
 
         replay_source_commit = str(args.formal_replay_source_commit or "").strip()
         if replay_source_commit:
@@ -3807,11 +3706,6 @@ def main() -> int:
         request["formal_decision"] = projected
     if original_source_dispatch:
         print(json.dumps({"ok": True, "request_id": request.get("request_id"), "business_decision_source_persisted": True, "completion_required": True}, ensure_ascii=False))
-        return 0
-    formal_review_recorded, formal_review_idempotent = record_scheduled_formal_decision_review(request)
-    if formal_review_recorded:
-        result = {"ok": True, "request_id": request.get("request_id"), "formal_scheduled_review_completion": True, "idempotent_replay": formal_review_idempotent, "canonical_publication": "events/reviews/formal_" + str((request.get("presentation_binding") or {}).get("task_run_id") or "") + ".json"}
-        print(json.dumps(result, ensure_ascii=False))
         return 0
     system_review_recorded, system_review_idempotent = record_scheduled_system_review(request)
     if system_review_recorded:

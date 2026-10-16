@@ -1,9 +1,5 @@
 name: ETF market snapshot
 
-# Formal Decision production ingress is STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW.
-# Legacy replay inputs below are retained only for bounded historical recovery;
-# they are not a valid current Formal Decision producer or completion path.
-
 # Schedule registration marker: this workflow remains on the default branch for GitHub cron dispatch.
 on:
   workflow_dispatch:
@@ -45,6 +41,12 @@ on:
     - cron: "15,20,25,30,40,50 1 * * 1-5"
     - cron: "9,19,29,39,49,59 2-3,5-6 * * 1-5"
     - cron: "9,19 7 * * 1-5"
+    # Deterministic Formal Decision ingress: Beijing 10:00, 11:00, 13:30, 14:30.
+    # Holiday applicability remains enforced by the canonical market calendar.
+    - cron: "0 2 * * 1-5"
+    - cron: "0 3 * * 1-5"
+    - cron: "30 5 * * 1-5"
+    - cron: "30 6 * * 1-5"
 
 permissions:
   contents: write
@@ -80,6 +82,21 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Create deterministic Formal Decision schedule ingress
+        if: ${{ github.event_name == 'schedule' }}
+        env:
+          SCHEDULED_CRON: ${{ github.event.schedule }}
+        shell: bash
+        run: |
+          python scripts/create_scheduled_formal_request.py
+          if git diff --quiet -- requests/live_snapshot; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add requests/live_snapshot
+          git commit -m "chore: create scheduled formal decision ingress"
+          git push
       - name: Reject ambiguous recovery inputs
         if: \${{ github.event_name == 'workflow_dispatch' }}
         shell: bash
@@ -1068,8 +1085,6 @@ jobs:
               raise SystemExit(f"request-bound query context missing or mismatched: expected={expected} actual={actual}")
           PY
           fi
-
-      # Deliver canonical Scheduled Review completion through notification center via the existing decision-notification.yml owner. This producer only records the exact event; it never executes PushPlus or notification-center.
 
       - name: Build state context and candidates
         # Full decision preparation is request/state-sync bound. Scheduled
