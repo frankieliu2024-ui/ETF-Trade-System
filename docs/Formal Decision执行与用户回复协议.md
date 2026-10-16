@@ -96,19 +96,19 @@
 
 - `request_type=MARKET_QUOTE_REFRESH`
 - `source` 按三入口分别为 `CHATGPT_MANUAL_FORMAL_ANALYSIS`、`CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS` 或 `CHATGPT_SCHEDULED_FORMAL_ANALYSIS`
-- `entry_mode` 分别为 `MANUAL_CONVERSATION`、`MANUAL_SCHEDULED_TASK) 或 `AUTOMATIC_SCHEDULED_TASK`
+- `entry_mode` 分别为 `MANUAL_CONVERSATION`、`MANUAL_SCHEDULED_TASK 或 `AUTOMATIC_SCHEDULED_TASK`
 - `force_refresh=true`
 - `require_post_request_snapshot=true`
 - `reuse_inflight_refresh=true`
 - `duplicate_equivalent_refresh_forbidden=true`
 
-READY 后，必须先冻结并输出唯一 `FINAL_CONTENT)，然后才执行后置写入：
+READY 后，必须先冻结并输出唯一 `FINAL_CONTENT`，然后才执行后置写入：
 
 1. 使用同一父请求、同一DWP、同一request-bound snapshot和同一`decision_id`，形成 `BUSINESS_DECISION_SOURCE` envelope；
 2. 将BDS写入并回读 `requests/live_snapshot/<parent_request_id>__business_decision_source.json)；
 3. 使用该BDS路径、同一`decision_id`和同一`content_hash`，形成 `FORMAL_DECISION_COMPLETION` envelope；
 4. 将completion写入并回读，文件名必须精确等于completion自身`request_id`;
-5. 在同一handoff中显式调用既有 `decision-notification.workflow_dispatch(formal_completion_path=<当前completion路径>))；
+5. 在同一handoff中显式调用既有 `decision-notification.workflow_dispatch(formal_completion_path=<当前completion路径>)；
 6. 回读当前 `events/reviews/formal_<occurrence_id>.json`、REPORT、notification_id和provider result。
 
 任何后置阶段都不得反向阻塞、缩短、改写或撤回已输出的正文。没有当前completion对应的event，不得声称正式决策事件已形成；没有当前notification_id和provider结果，不得声称主动通知成功。
@@ -174,7 +174,7 @@ READY 后，必须先冻结并输出唯一 `FINAL_CONTENT)，然后才执行后�
 4. 回读当前 `events/reviews/formal_<occurrence_id>.json`；
 5. 回读当前REPORT、notification_id和provider result。
 
-Actor不得直接写event、REPORT、notification或PushPlus。通知只能由当前唯一review event进入既有notification_center和guarded sender。通知失败不撤回用户已经看到的正文，但必须如实记录。不得扫描历史对象回退，不得补发历史正文，不得创建第二正文、第二请求、第二event或第二通知链。
+Actor不得直接写event、REPORT、notification或PushPlus。通知只能由当前唯一review event进入既有notification_center和guarded sender。通知失败不撤回用户已经看到的正文，但必须如实记录。不得扫描历史对象、补发历史正文或回退到历史对象，不得创建第二正文、第二请求、第二event或第二通知链。
 
 ## 八、完成判定
 
