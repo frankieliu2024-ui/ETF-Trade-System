@@ -402,11 +402,12 @@ def main() -> int:
         args.source_request, args.formal_decision, args.consumed_snapshot,
         args.output, args.completion_request_id, args.decision_response,
     )
+    written = json.loads(target.read_text(encoding="utf-8"))
     print(json.dumps({
         "ok": True,
         "request": str(target.relative_to(ROOT)).replace("\\", "/"),
-        "completion_request_id": payload.get("request_id"),
-        "parent_request_id": payload.get("parent_request_id"),
+        "completion_request_id": written.get("request_id"),
+        "parent_request_id": written.get("parent_request_id"),
         "handoff_required": True,
         "handoff": "decision-notification.workflow_dispatch(formal_completion_path=<request>)",
     }, ensure_ascii=False))
