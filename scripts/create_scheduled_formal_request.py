@@ -10,6 +10,8 @@ from formal_entry_contract import build_identity
 ROOT = Path(__file__).resolve().parents[1]
 REQUEST_DIR = ROOT / "requests" / "live_snapshot"
 BEIJING = timezone(timedelta(hours=8))
+
+# GitHub Actions cron is UTC; these are the only four automatic Beijing nodes.
 SLOTS = {
     "0 2 * * 1-5": (10, 0),
     "0 3 * * 1-5": (11, 0),
@@ -18,41 +20,40 @@ SLOTS = {
 }
 
 
-def main() -> int:
-    cron = os.environ.get("SCHEDULED_CRON", "").strip()
-    slot = SLOTS.get(cron)
-    if slot is None:
-        print("FORMAL_SCHEDULE_INGRESS=SKIP")
-        return 0
+def classify_schedule_invocation(entry_mode: str, scheduled_cron: str) -> str:
+    mode = str(entry_mode or "").strip().upper()
+    if mode == "MANUAL_SCHEDULED_TASK":
+        return "RUN"
+    if mode != "AUTOMATIC_SCHEDULED_TASK":
+        return "TERMINAL"
+    return "RUN" if str(scheduled_cron or "").strip() in SLOTS else "SKIP"
 
-    now = datetime.now(BEIJING)
-    hour, minute = slot
+
+def build_scheduled_request(
+    *,
+    now: datetime,
+    task_id: str,
+    task_run_id: str,
+    occurrence_id: str,
+) -> dict:
+    occurrence = str(occurrence_id or "").strip()
+    if not occurrence:
+        raise ValueError("occurrence_id is required")
+    if not task_id or not task_run_id:
+        raise ValueError("task_id and task_run_id are required")
     market_date = now.date().isoformat()
-    occurrence = f"{market_date}T{hour:02d}:{minute:02d}:00+08:00"
-
-    REQUEST_DIR.mkdir(parents=True, exist_ok=True)
-    for path in REQUEST_DIR.glob("*.json"):
-        try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        if (
-            payload.get("source") == "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"
-            and payload.get("occurrence_id") == occurrence
-        ):
-            print(f"FORMAL_SCHEDULE_INGRESS=EXISTS request_id={payload.get('request_id', '')}")
-            return 0
-
-    request_id = f"fd_{now:%Y%m%d}_{hour:02d}{minute:02d}00_github_scheduled_formal_analysis"
-    path = REQUEST_DIR / f"{request_id}.json"
     payload = {
-        "request_id": request_id,
+        "request_id": (
+            "fd_" + now.strftime("%Y%m%d_%H%M%S") + "_"
+            + "github_scheduled_formal_analysis"
+        ),
         "requested_at_beijing": now.isoformat(),
         "request_type": "MARKET_QUOTE_REFRESH",
         "source": "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
         "entry_mode": "AUTOMATIC_SCHEDULED_TASK",
-        "task_id": "ETF正式决策",
-        "task_run_id": f"ETF_FORMAL_DECISION_{market_date.replace('-', '')}_{hour:02d}{minute:02d}",
+        "task_id": str(task_id),
+        "task_run_id": str(task_run_id),
+        "occurrence": occurrence,
         "occurrence_id": occurrence,
         "market_date": market_date,
         "triggered_at_beijing": now.isoformat(),
@@ -63,9 +64,64 @@ def main() -> int:
         "duplicate_equivalent_refresh_forbidden": True,
         "ingress_owner": "GITHUB_SCHEDULED_FORMAL_DECISION",
     }
-    build_identity(payload)
+    identity = build_identity(payload)
+    payload["identity_dedup_key"] = identity.dedup_key
+    return payload
+
+
+def _existing_occurrence(occurrence_id: str) -> str:
+    REQUEST_DIR.mkdir(parents=True, exist_ok=True)
+    for path in REQUEST_DIR.glob("*.json"):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if (
+            payload.get("source") == "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"
+            and payload.get("occurrence_id") == occurrence_id
+        ):
+            return str(payload.get("request_id") or "")
+    return ""
+
+
+def main() -> int:
+    cron = os.environ.get("SCHEDULED_CRON", "").strip()
+    mode = os.environ.get("ENTRY_MODE", "AUTOMATIC_SCHEDULED_TASK").strip()
+    decision = classify_schedule_invocation(mode, cron)
+    if decision == "SKIP":
+        print("FORMAL_SCHEDULE_INGRESS=SKIP")
+        return 0
+    if decision == "TERMINAL":
+        raise SystemExit("FORMAL_SCHEDULE_INGRESS=INVALID_ENTRY_MODE")
+
+    now = datetime.now(BEIJING)
+    slot = SLOTS.get(cron)
+    if slot is None:
+        raise SystemExit("FORMAL_SCHEDULE_INGRESS=INVALID_AUTOMATIC_SLOT")
+    hour, minute = slot
+    occurrence = os.environ.get(
+        "OCCURRENCE_ID",
+        f"{now.date().isoformat()}T{hour:02d}:{minute:02d}:00+08:00",
+    ).strip()
+    existing = _existing_occurrence(occurrence)
+    if existing:
+        print(f"FORMAL_SCHEDULE_INGRESS=EXISTS request_id={existing}")
+        return 0
+
+    task_id = os.environ.get("TASK_ID", "ETF正式决策").strip()
+    task_run_id = os.environ.get(
+        "TASK_RUN_ID",
+        f"ETF_FORMAL_DECISION_{now:%Y%m%d}_{hour:02d}{minute:02d}",
+    ).strip()
+    payload = build_scheduled_request(
+        now=now,
+        task_id=task_id,
+        task_run_id=task_run_id,
+        occurrence_id=occurrence,
+    )
+    path = REQUEST_DIR / f"{payload['request_id']}.json"
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"FORMAL_SCHEDULE_INGRESS=CREATED request_id={request_id} path={path}")
+    print(f"FORMAL_SCHEDULE_INGRESS=CREATED request_id={payload['request_id']} path={path}")
     return 0
 
 
