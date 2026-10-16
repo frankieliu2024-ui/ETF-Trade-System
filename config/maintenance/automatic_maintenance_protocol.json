@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.0",
+  "protocol": "docs/ETF自动维护与运行保障协议_V1.0.md",
+  "role": "RUNTIME_ROUTING_AND_CLOSURE_CONTRACT_NOT_BUSINESS_RULE_SOURCE",
+  "main_ssot": "ETF_SYSTEM_INDEX.md",
+  "invariants": [
+    "one_canonical_owner_per_scenario",
+    "workflow_only_triggers_and_reports",
+    "idempotent_same_input_retry",
+    "canonical_fact_precedes_projection",
+    "readback_required_for_success",
+    "fail_closed_on_identity_or_schema_conflict",
+    "no_master_permission_provider_or_monitor_scope_mutation",
+    "no_second_writer_workflow_state_or_business_chain"
+  ],
+  "scenarios": [
+    {
+      "id": "BROKER_ACCOUNT_SCREENSHOT",
+      "input": "requests/live_snapshot/**",
+      "owner": "scripts/sync_formal_files.py",
+      "outputs": [
+        "data/state/account_fact.json",
+        "ETF当前状态_DASHBOARD.md"
+      ]
+    },
+    {
+      "id": "BROKER_TRADE_FEE_CORRECTION",
+      "input": "requests/trade_fact_correction/**",
+      "owner": "scripts/apply_trade_fact_correction.py",
+      "outputs": [
+        "events/trades/**",
+        "data/state/etf_strategy_equity.json",
+        "ETF市场行情档案_2026.md",
+        "ETF交易复盘与经验库_2026.md",
+        "ETF当前状态_DASHBOARD.md"
+      ]
+    },
+    {
+      "id": "TRADE_FACT",
+      "input": "trade_fact_request_or_events/trades",
+      "owner": "scripts/process_state_sync_request.py",
+      "outputs": [
+        "events/trades/**",
+        "account_and_archive_projections"
+      ]
+    },
+    {
+      "id": "MARKET_REFRESH",
+      "input": "market_refresh_request_or_existing_node",
+      "owner": "scripts/cloud_runner_snapshot.py + scripts/query_time_market_refresh.py",
+      "outputs": [
+        "market_snapshots",
+        "request_bound_context"
+      ]
+    },
+    {
+      "id": "SYSTEM_REVIEW",
+      "input": "existing_system_review_entry",
+      "owner": "existing_system_review_owner",
+      "outputs": [
+        "review_report",
+        "notification_projection"
+      ]
+    },
+    {
+      "id": "TRADE_REVIEW",
+      "input": "existing_trade_review_entry",
+      "owner": "existing_trade_review_owner",
+      "outputs": [
+        "review_event",
+        "archive_and_experience_projection"
+      ]
+    },
+    {
+      "id": "FORMAL_DECISION_HANDOFF",
+      "input": "formal_completion_ingress",
+      "owner": "existing_completion_owner + decision-notification.yml",
+      "outputs": [
+        "event",
+        "REPORT",
+        "notification",
+        "provider_result"
+      ]
+    },
+    {
+      "id": "RESEARCH_BACKFILL",
+      "input": "existing_research_or_backfill_request",
+      "owner": "existing_research_backfill_owner",
+      "outputs": [
+        "research_or_historical_facts"
+      ]
+    },
+    {
+      "id": "CONSISTENCY_RELIABILITY",
+      "input": "push_schedule_or_manual_audit",
+      "owner": "existing_consistency_and_reliability_checkers",
+      "outputs": [
+        "consistency_evidence",
+        "failure_attribution"
+      ]
+    }
+  ],
+  "failure_classes": [
+    "SKIP_NOT_APPLICABLE",
+    "RETRY_SAME_INPUT",
+    "CONFLICT_REQUIRES_REVIEW",
+    "OWNER_REJECTED",
+    "PROJECTION_INCOMPLETE",
+    "MAINTENANCE_INCOMPLETE"
+  ]
+}
