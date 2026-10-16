@@ -310,11 +310,6 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
             continue
         report_type = str(binding["report_type"])
         content = str(binding["full_content"])
-        event_type = str(event.get("event_type") or "").strip()
-        # ETF trade reviews retain the proven POST_CLOSE_REVIEW event contract.
-        # A Formal Decision event must never be silently projected as a trade review.
-        if report_type == "ETF_TRADE_REVIEW" and event_type and event_type != "FORMAL_POST_CLOSE_REVIEW":
-            continue
         if report_type not in ACTIVE_REPORT_TYPES or not content:
             continue
         expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
