@@ -10,7 +10,7 @@
 
 本文件是 `MANUAL_SCHEDULED_TASK` 与 `AUTOMATIC_SCHEDULED_TASK` 的唯一执行合同。它们不得读取、等待、复用或消费 `MANUAL_CONVERSATION` 的 `formal_reply_gate`、query_context、DWP、父请求、BDS、`MARKET_QUOTE_REFRESH` 或 `FORMAL_DECISION_COMPLETION`。这些旧对象即使存在，也不能成为本次定时任务的前置门禁或事实来源。
 
-定时任务只建立本次 task/run/occurrence/request 身份，读取当前正式事实，完成本合同要求的业务覆盖，并以 `STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW` 进入既有 Scheduled Review completion/review-event/通知主链。两套入口共享展示质量和通知 owner，但不共享请求、gate、DWP、BDS 或 completion 身份。
+定时任务只建立本次 task/run/occurrence/request 身份，读取当前正式事实，完成本合同要求的业务覆盖，并以 `STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW` 进入既有 Scheduled Review completion/review-event/通知主链。两个定时入口与对话入口共享同一业务、completion、review event、REPORT和通知合同；每次运行的 request/run/occurrence 身份值必须各自唯一，不能互用。
 
 ## 一、与两个稳定任务的边界
 
@@ -56,13 +56,13 @@
 
 1. 请求必须保持 `request_type=STATE_SYNC_ONLY`、`formal_fact_type=FORMAL_SCHEDULED_REVIEW`、`source=CHATGPT_SCHEDULED_REVIEW_ACTOR`；
 2. `presentation_binding` 必须包含 `report_type=ETF_FORMAL_DECISION`、`task_id`、`task_run_id`、`report_id`、`full_content`、`content_hash` 和 `market_date`；
-3. canonical state-sync owner 只形成唯一 `events/reviews/formal_<task_run_id>.json`，同一 occurrence 只能首次写入一次，重放只能幂等返回；
-4. `market-snapshot.yml` 只负责处理请求并持久化该 review event；`decision-notification.yml` 通过 `workflow_run` 的 downstream producer commit 精确绑定 `events/reviews/formal_<task_run_id>.json`，再由唯一 `notification_center` 投影 `ETF_FORMAL_DECISION` 的 `FULL_REPORT`，沿统一 guarded sender、PushPlus、notification state 和 provider 证据链投递；producer 不得直接执行通知；
+3. canonical state-sync owner 只形成唯一 `events/reviews/formal_<occurrence_id>.json`，同一 occurrence 只能首次写入一次，重放只能幂等返回；
+4. `market-snapshot.yml` 只负责处理请求并持久化该 review event；`decision-notification.yml` 通过 `workflow_run` 的 downstream producer commit 精确绑定 `events/reviews/formal_<occurrence_id>.json`，再由唯一 `notification_center` 投影 `ETF_FORMAL_DECISION` 的 `FULL_REPORT`，沿统一 guarded sender、PushPlus、notification state 和 provider 证据链投递；producer 不得直接执行通知；
 5. 禁止在 completion 后重新分析、改写正文或创建第二正文、第二 event、`requests/report_delivery`、`requests/report_handoff`、独立 workflow、独立 sender 或直接 PushPlus。完整报告仍是信息交付，`no_trade_authority=true`，用户自行决定并手动下单。
 
 ## 七、验收
 
-代码验收必须逐项覆盖：Formal 请求字段与两个稳定 Scheduled Review 的字段相同；Formal completion 为 `STATE_SYNC_ONLY`；`FORMAL_SCHEDULED_REVIEW` 只能形成 `events/reviews/formal_<task_run_id>.json`；正文哈希、task/run identity、REPORT projection、幂等重放和通知唤醒均 fail-closed。稳定任务的实现、状态和测试必须保持不变。
+代码验收必须逐项覆盖：Formal 请求字段与两个稳定 Scheduled Review 的字段相同；Formal completion 为 `STATE_SYNC_ONLY`；`FORMAL_SCHEDULED_REVIEW` 只能形成 `events/reviews/formal_<occurrence_id>.json`；正文哈希、task/run identity、REPORT projection、幂等重放和通知唤醒均 fail-closed。稳定任务的实现、状态和测试必须保持不变。
 
 真实目标路径验收必须核对：
 

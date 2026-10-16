@@ -109,10 +109,22 @@ INDEX只负责回答“去哪里读”，不得重新定义以下内容：正式
 任何实现与所属唯一规范冲突时，应修复实现或规范镜像漂移；不得让INDEX、配置、脚本或历史聊天反向创造新的规则。README同样只承担导航和运行说明，不复制正式版本号、provider优先级或其他易变事实。
 
 
-#### Formal Decision交接可执行性硬门（集中修复）
+#### Formal Decision三入口统一交接硬门
 
-Formal Decision completion必须使用current main的completion builder生成：`request_id=<parent_request_id>__formal_decision_completion`，`parent_request_id=<原始父请求>`，且文件名必须精确为`<request_id>.json`；不得手写、复用父请求ID或使用任意文件名。写入并回读completion后，当前执行器必须在同一handoff中显式调用既有`decision-notification` workflow的`workflow_dispatch(formal_completion_path=<当前唯一completion路径>)`，再由workflow形成`events/reviews/formal_*.json`并进入notification_center。仅有BDS、completion文件或GitHub Contents push，不构成通知提交；无法完成显式handoff时只能记录FORMAL_PARENT_HANDOFF_INCOMPLETE，不得声称通知成功。
+三个Formal入口只允许使用统一的 Scheduled Review 生产合同：
 
-“用户正文优先、完成事件后置投影”只定义用户可见顺序，不得被解释为在最终回复返回后再由同一对话回合异步执行写入。由于对话窗口和定时任务在最终消息返回后即结束，ChatGPT必须在返回最终消息前完成同一请求的唯一FINAL_CONTENT冻结、BUSINESS_DECISION_SOURCE写入与回读、以及FORMAL_DECISION_COMPLETION ingress提交；随后最终消息只能输出该已冻结的原文。completion之后的事件、REPORT、notification_center和PushPlus继续由既有workflow异步投影，不得等待provider成功，也不得因此改写正文。
+实际入口身份 → 当前正式事实 → 完整业务判断 → 唯一FINAL_CONTENT → 用户正文 → `STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW` → canonical review event → REPORT → notification_center → PushPlus 原文投递。
 
-只生成完整正文但未完成BDS回读和completion提交，不得视为本次Formal Decision完成；不得以“后置异步”“已生成报告”或其他状态替代交接。若交接失败，必须保留同一请求和正文并明确记录未完成，不得声称主动通知已发送。该硬门适用于对话窗口、手动定时和自动定时三个入口，不改变【ETF系统复核】和【ETF交易复盘】既有链。
+统一请求必须由 current main 的 Scheduled Review completion builder 生成，并包含：
+
+- `request_type=STATE_SYNC_ONLY`；
+- `formal_fact_type=FORMAL_SCHEDULED_REVIEW`；
+- `source=CHATGPT_SCHEDULED_REVIEW_ACTOR`；
+- 实际 `trigger_source` 与 `entry_mode`；
+- `interaction_scenario=FORMAL_DECISION`；
+- 与本次运行绑定的 `task_id`、`task_run_id`、`occurrence_id`、`request_id`、`market_date`；
+- `presentation_binding.report_type=ETF_FORMAL_DECISION`、完整 `full_content` 和唯一 `content_hash`。
+
+三个入口不得创建、消费或转换 `MARKET_QUOTE_REFRESH`、历史 `formal_reply_gate`、旧DWP、`BUSINESS_DECISION_SOURCE/BDS`、`FORMAL_DECISION_COMPLETION` 或其他第二请求。旧对象只能作为历史数据留存，不能成为当前Formal入口的生产路径。用户正文优先只规定显示顺序；completion、review event、REPORT和通知均必须绑定同一份已冻结正文，不能在正文之外重新分析、摘要或改写。
+
+这一硬门只约束【ETF正式决策】三个入口，不改变【ETF系统复核】和【ETF交易复盘】既有链。

@@ -78,13 +78,25 @@ class FormalScheduledTaskFromZeroContractTests(unittest.TestCase):
             now=now,
             task_id="ETF正式决策",
             task_run_id="conversation-20261016T113000-ab12cd34",
-            occurrence_id="conversation_20261016T113000-ab12cd34",
+            occurrence_id="conversation-20261016T113000+0800-ab12cd34",
             entry_mode="MANUAL_CONVERSATION",
         )
         self.assertEqual(payload["trigger_source"], "CHATGPT_MANUAL_FORMAL_ANALYSIS")
         self.assertEqual(payload["entry_mode"], "MANUAL_CONVERSATION")
         self.assertEqual(payload["request_type"], "STATE_SYNC_ONLY")
         self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_REVIEW")
+
+    def test_conversation_identity_is_not_scheduled_task_identity(self):
+        now = datetime(2026, 10, 16, 11, 30, tzinfo=timezone(timedelta(hours=8)))
+        payload = build_scheduled_request(
+            now=now,
+            task_id="ETF正式决策",
+            task_run_id="conversation-20261016T113000+0800-ab12cd34",
+            occurrence_id="conversation-20261016T113000+0800-ab12cd34",
+            entry_mode="MANUAL_CONVERSATION",
+        )
+        self.assertTrue(payload["occurrence_id"].startswith("conversation-"))
+        self.assertNotIn("scheduled_", payload["occurrence_id"])
 
     def test_manual_occurrence_cannot_impersonate_automatic(self):
         now = datetime(2026, 10, 16, 11, 30, tzinfo=timezone(timedelta(hours=8)))
@@ -103,7 +115,7 @@ class FormalScheduledTaskFromZeroContractTests(unittest.TestCase):
             now=now,
             task_id="task-1",
             task_run_id="run-1",
-            occurrence_id="2026-10-16T10:00:00+08:00",
+            occurrence_id="scheduled_2026-10-16T10:00:00+08:00",
         )
         json.dumps(payload, ensure_ascii=False)
 

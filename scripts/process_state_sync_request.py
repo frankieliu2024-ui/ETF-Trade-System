@@ -2346,8 +2346,27 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
 def record_scheduled_formal_decision_review(request: dict) -> tuple[bool, bool]:
     if str(request.get("formal_fact_type") or "") != "FORMAL_SCHEDULED_REVIEW":
         return False, False
+    trigger_source = str(request.get("trigger_source") or "").strip().upper()
+    entry_mode = str(request.get("entry_mode") or "").strip().upper()
+    expected_sources = {
+        "MANUAL_CONVERSATION": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+        "MANUAL_SCHEDULED_TASK": "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+        "AUTOMATIC_SCHEDULED_TASK": "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+    }
+    if entry_mode not in expected_sources or trigger_source != expected_sources[entry_mode]:
+        raise ValueError("Formal Scheduled Review entry identity is invalid")
+    if str(request.get("request_type") or "").strip().upper() != "STATE_SYNC_ONLY":
+        raise ValueError("Formal Scheduled Review must remain STATE_SYNC_ONLY")
+    if str(request.get("source") or "").strip().upper() != "CHATGPT_SCHEDULED_REVIEW_ACTOR":
+        raise ValueError("Formal Scheduled Review source actor is invalid")
+    if str(request.get("interaction_scenario") or "").strip().upper() != "FORMAL_DECISION":
+        raise ValueError("Formal Scheduled Review interaction scenario is invalid")
+    occurrence = str(request.get("occurrence_id") or request.get("occurrence") or "").strip()
+    if not occurrence:
+        raise ValueError("Formal Scheduled Review occurrence identity is required")
     binding = _validate_presentation_binding(request.get("presentation_binding"), "ETF_FORMAL_DECISION")
-    occurrence = str(binding["task_run_id"])
+    if str(binding.get("occurrence_id") or "").strip() != occurrence:
+        raise ValueError("Formal Scheduled Review occurrence binding mismatch")
     event_path = ROOT / "events" / "reviews" / f"formal_{occurrence}.json"
     payload = {
         "event_type": "FORMAL_SCHEDULED_REVIEW",
@@ -3469,6 +3488,18 @@ def process_historical_backfill_request(request: dict) -> dict:
                 enriched += 1
     return {"ok": True, "ingress_mode": "HISTORICAL_BACKFILL", "created": created, "metadata_enriched": enriched, "current_account_mutated": False, "current_state_mutated": False}
 
+def is_unified_formal_entry(payload: dict) -> bool:
+    """Return true only for the three current Formal Decision entry identities."""
+    mode = str(payload.get("entry_mode") or "").strip().upper()
+    source = str(payload.get("trigger_source") or payload.get("source") or "").strip().upper()
+    expected = {
+        "MANUAL_CONVERSATION": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+        "MANUAL_SCHEDULED_TASK": "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+        "AUTOMATIC_SCHEDULED_TASK": "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+    }
+    return mode in expected and source == expected[mode]
+
+
 def account_fact_is_older(prior: dict, supplied: dict) -> bool:
     old_time = parse_time(prior.get("updated_at"))
     new_time = parse_time(supplied.get("updated_at"))
@@ -3525,6 +3556,13 @@ def main() -> int:
         and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_DECISION_COMPLETION"
     )
     if completion_dispatch:
+        parent_id = str(request.get("parent_request_id") or "").strip()
+        parent_path = ROOT / "requests" / "live_snapshot" / f"{parent_id}.json"
+        parent_request = load_json(parent_path) if parent_id and parent_path.exists() else {}
+        if is_unified_formal_entry(parent_request):
+            raise ValueError(
+                "legacy Formal Decision completion is forbidden for the unified three-entry contract"
+            )
         bds_path = str(request.get("bds_path") or "").strip()
         if not bds_path or ".." in bds_path:
             raise ValueError("Formal Decision completion requires a safe BDS path")
@@ -3599,6 +3637,10 @@ def main() -> int:
         parent_request = load_json(parent_path)
         if str(parent_request.get("request_id") or "").strip() != parent_id:
             raise ValueError("business decision source parent request identity mismatch")
+        if is_unified_formal_entry(parent_request):
+            raise ValueError(
+                "BUSINESS_DECISION_SOURCE is forbidden for the unified three-entry Formal contract"
+            )
 
         replay_source_commit = str(args.formal_replay_source_commit or "").strip()
         if replay_source_commit:

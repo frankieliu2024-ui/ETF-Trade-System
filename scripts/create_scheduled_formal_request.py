@@ -40,10 +40,11 @@ def classify_schedule_invocation(entry_mode: str, scheduled_cron: str) -> str:
     return "RUN" if str(scheduled_cron or "").strip() in SLOTS else "SKIP"
 
 
-def _manual_identity(now: datetime) -> tuple[str, str]:
+def _manual_identity(now: datetime, entry_mode: str) -> tuple[str, str]:
     suffix = secrets.token_hex(4)
     value = now.strftime("%Y%m%dT%H%M%S%z")
-    run_id = f"manual-scheduled-{value}-{suffix}"
+    prefix = "conversation" if entry_mode == CONVERSATION_MODE else "manual-scheduled"
+    run_id = f"{prefix}-{value}-{suffix}"
     return run_id, run_id
 
 
@@ -143,7 +144,7 @@ def main() -> int:
 
     if mode in {CONVERSATION_MODE, MANUAL_MODE}:
         if not task_run_id or not occurrence:
-            task_run_id, occurrence = _manual_identity(now)
+            task_run_id, occurrence = _manual_identity(now, mode)
     else:
         if cron not in SLOTS:
             raise SystemExit("FORMAL_SCHEDULE_INGRESS=INVALID_AUTOMATIC_SLOT")
