@@ -153,7 +153,7 @@ jobs:
           request = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
           is_completion = (
               str(request.get("source") or "").upper() in {"CHATGPT_FORMAL_DECISION_COMPLETION", "CHATGPT_MANUAL_FORMAL_COMPLETION"}
-              or str(request.get("formal_fact_type") or "").upper() in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_SYSTEM_REVIEW"}
+              or str(request.get("formal_fact_type") or "").upper() in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_REVIEW", "FORMAL_SCHEDULED_SYSTEM_REVIEW"}
           )
           raise SystemExit(0 if is_completion else 1)
           PY
@@ -1089,6 +1089,13 @@ jobs:
               raise SystemExit(f"request-bound query context missing or mismatched: expected={expected} actual={actual}")
           PY
           fi
+
+      - name: Deliver canonical Scheduled Review completion through notification center
+        # Formal Decision, System Review, and Trade Review completions all wake
+        # the existing event-owned REPORT/PushPlus chain. No BDS or parallel
+        # report handoff is used for Scheduled Review production.
+        if: ${{ always() && steps.triggering_request.outputs.formal_completion == 'true' && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/run_guarded_notification.py center --mode event
 
       - name: Build state context and candidates
         # Full decision preparation is request/state-sync bound. Scheduled
