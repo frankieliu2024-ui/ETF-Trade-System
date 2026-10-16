@@ -1,51 +1,43 @@
-import hashlib
 import unittest
 from pathlib import Path
 
-from scripts.scheduled_review_completion import (
-    build_formal_decision_scheduled_review_completion_request,
-)
 
-
-class FormalDecisionCompletionIngressTests(unittest.TestCase):
-    def test_three_entry_completion_uses_one_scheduled_review_contract(self):
-        payload = build_formal_decision_scheduled_review_completion_request(
-            {"action": "新增0元"},
-            "formal-request",
-            "2026-10-16T11:30:00+08:00",
-            "2026-10-16",
-            "ETF正式决策",
-            "manual-scheduled-20261016T113000+0800-ab12cd34",
-            "FINAL_CONTENT",
-            entry_mode="MANUAL_SCHEDULED_TASK",
-            trigger_source="CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
-            occurrence_id="manual-scheduled-20261016T113000+0800-ab12cd34",
-        )
-        self.assertEqual(payload["request_type"], "STATE_SYNC_ONLY")
-        self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_REVIEW")
-        self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_REVIEW_ACTOR")
-        self.assertEqual(payload["interaction_scenario"], "FORMAL_DECISION")
-        self.assertEqual(payload["occurrence_id"], payload["occurrence"])
-        self.assertEqual(
-            payload["presentation_binding"]["content_hash"],
-            hashlib.sha256(b"FINAL_CONTENT").hexdigest(),
-        )
-
-    def test_index_routes_formal_only_to_unified_chain(self):
+class FormalDecisionCanonicalChainTests(unittest.TestCase):
+    def test_protocol_uses_bds_then_formal_completion(self):
+        protocol = Path("docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
         index = Path("ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
-        self.assertIn("三个入口统一读取并执行", index)
-        self.assertIn("STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW", index)
-        self.assertIn("PushPlus", index)
-        self.assertNotIn("BUSINESS_DECISION_SOURCE/BDS → FORMAL_DECISION_COMPLETION", index)
-        self.assertNotIn("CHATGPT_MANUAL_FORMAL_COMPLETION", index)
+        for text in (protocol, index):
+            self.assertIn("BUSINESS_DECISION_SOURCE", text)
+            self.assertIn("FORMAL_DECISION_COMPLETION", text)
+            self.assertIn("formal_completion_path", text)
+        self.assertNotIn("STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW", protocol)
 
-    def test_process_owner_requires_formal_entry_identity(self):
-        text = Path("scripts/process_state_sync_request.py").read_text(encoding="utf-8")
-        self.assertIn("Formal Scheduled Review entry identity is invalid", text)
-        self.assertIn("Formal Scheduled Review occurrence identity is required", text)
-        self.assertIn("Formal Scheduled Review occurrence binding mismatch", text)
-        self.assertIn("legacy Formal Decision completion is forbidden for the unified three-entry contract", text)
-        self.assertIn("BUSINESS_DECISION_SOURCE is forbidden for the unified three-entry Formal contract", text)
+    def test_three_entry_identity_contract_is_registered(self):
+        protocol = Path("docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
+        for value in (
+            "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+            "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+            "MANUAL_CONVERSATION",
+            "MANUAL_SCHEDULED_TASK",
+            "AUTOMATIC_SCHEDULED_TASK",
+        ):
+            self.assertIn(value, protocol)
+
+    def test_completion_builder_binds_registered_entry_identity(self):
+        text = Path("scripts/manual_formal_decision_completion.py").read_text(encoding="utf-8")
+        self.assertIn("Formal Decision completion requires one of the three registered entry identities", text)
+        self.assertIn('"formal_entry_source": source_mode', text)
+        self.assertIn('"entry_mode": entry_mode', text)
+        self.assertIn('"bds_path": bds_path', text)
+        self.assertIn('"content_hash": content_hash', text)
+
+    def test_notification_workflow_requires_exact_formal_completion_path(self):
+        workflow = Path(".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
+        self.assertIn("inputs.formal_completion_path", workflow)
+        self.assertIn("events/reviews/formal_*.json", workflow)
+        self.assertIn("Project Formal Decision completion to canonical review event", workflow)
+        self.assertIn("No current shared completion/report binding; fail closed without PushPlus.", workflow)
 
 
 if __name__ == "__main__":

@@ -228,6 +228,19 @@ def build_formal_decision_completion_request(
     request_id = _safe_id(completion_request_id or f"{parent_id}__formal_decision_completion")
     if request_id == parent_id:
         raise ValueError("Formal Decision completion identity must differ from its parent")
+    source_mode = str(source_request.get("source") or "").strip().upper()
+    entry_mode = {
+        "CHATGPT_MANUAL_FORMAL_ANALYSIS": "MANUAL_CONVERSATION",
+        "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS": "MANUAL_SCHEDULED_TASK",
+        "CHATGPT_SCHEDULED_FORMAL_ANALYSIS": "AUTOMATIC_SCHEDULED_TASK",
+    }.get(source_mode)
+    if not entry_mode:
+        raise ValueError("Formal Decision completion requires one of the three registered entry identities")
+    task_id = str(source_request.get("task_id") or "ETF正式决策").strip()
+    task_run_id = str(source_request.get("task_run_id") or "").strip()
+    occurrence_id = str(source_request.get("occurrence_id") or "").strip()
+    if not task_id:
+        raise ValueError("Formal Decision completion requires task_id")
     payload = {
         "request_id": request_id,
         "parent_request_id": parent_id,
@@ -235,6 +248,11 @@ def build_formal_decision_completion_request(
         "source": "CHATGPT_FORMAL_DECISION_COMPLETION",
         "formal_fact_type": "FORMAL_DECISION_COMPLETION",
         "interaction_scenario": "FORMAL_INTRADAY_ANALYSIS",
+        "formal_entry_source": source_mode,
+        "entry_mode": entry_mode,
+        "task_id": task_id,
+        "task_run_id": task_run_id,
+        "occurrence_id": occurrence_id,
         "requested_at_beijing": source_request.get("requested_at_beijing") or source_request.get("request_time_beijing"),
         "market_date": source_request.get("market_date"),
         "bds_path": bds_path,
@@ -384,11 +402,12 @@ def main() -> int:
         args.source_request, args.formal_decision, args.consumed_snapshot,
         args.output, args.completion_request_id, args.decision_response,
     )
+    written = json.loads(target.read_text(encoding="utf-8"))
     print(json.dumps({
         "ok": True,
         "request": str(target.relative_to(ROOT)).replace("\\", "/"),
-        "completion_request_id": payload.get("request_id"),
-        "parent_request_id": payload.get("parent_request_id"),
+        "completion_request_id": written.get("request_id"),
+        "parent_request_id": written.get("parent_request_id"),
         "handoff_required": True,
         "handoff": "decision-notification.workflow_dispatch(formal_completion_path=<request>)",
     }, ensure_ascii=False))

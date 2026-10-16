@@ -153,50 +153,6 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertTrue(report["no_trade_authority"])
 
 
-    def test_formal_decision_uses_scheduled_review_completion_contract(self):
-        payload = completion.build_formal_decision_scheduled_review_completion_request(
-            {"action": "新增0元", "candidate_code": "561980", "risk_permission": "禁止新增"},
-            "formal-request", "2026-09-30T10:00:00+08:00", "2026-09-29",
-            "ETF正式决策", "formal-run", "FROZEN FORMAL SCHEDULED REPORT",
-            entry_mode="MANUAL_SCHEDULED_TASK",
-            trigger_source="CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
-            occurrence_id="manual-scheduled-20260930T100000+0800-ab12cd34",
-        )
-        self.assertEqual(payload["request_type"], "STATE_SYNC_ONLY")
-        self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_REVIEW")
-        self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_REVIEW_ACTOR")
-        self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_FORMAL_DECISION")
-        self.assertEqual(payload["occurrence_id"], "manual-scheduled-20260930T100000+0800-ab12cd34")
-        self.assertEqual(payload["presentation_binding"]["report_id"], "ETF_FORMAL_DECISION:formal-run")
-        report = completion.build_report_delivery_from_completion(payload)
-        self.assertEqual(report["report_type"], "ETF_FORMAL_DECISION")
-        self.assertEqual(report["idempotency_key"], "ETF_FORMAL_DECISION:formal-run")
-        self.assertEqual(report["full_content"], "FROZEN FORMAL SCHEDULED REPORT")
-
-    def test_formal_scheduled_review_publishes_shared_canonical_event(self):
-        from scripts import notification_center
-        from scripts import process_state_sync_request as state_sync
-        payload = completion.build_formal_decision_scheduled_review_completion_request(
-            {"action": "新增0元"}, "formal-request", "2026-09-30T10:00:00+08:00", "2026-09-29",
-            "ETF正式决策", "formal-run", "FROZEN FORMAL SCHEDULED REPORT",
-            entry_mode="MANUAL_SCHEDULED_TASK",
-            trigger_source="CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
-            occurrence_id="manual-scheduled-20260930T100000+0800-ab12cd34",
-        )
-        with TemporaryDirectory() as directory:
-            root = Path(directory)
-            with patch.object(state_sync, "ROOT", root):
-                recorded, replay = state_sync.record_scheduled_formal_decision_review(payload)
-                self.assertTrue(recorded)
-                self.assertFalse(replay)
-                recorded, replay = state_sync.record_scheduled_formal_decision_review(payload)
-                self.assertTrue(recorded)
-                self.assertTrue(replay)
-            event = json.loads((root / "events" / "reviews" / "formal_manual-scheduled-20260930T100000+0800-ab12cd34.json").read_text(encoding="utf-8"))
-            self.assertEqual(event["event_type"], "FORMAL_SCHEDULED_REVIEW")
-            self.assertEqual(event["presentation_binding"]["report_type"], "ETF_FORMAL_DECISION")
-            self.assertEqual(event["presentation_binding"]["full_content"], "FROZEN FORMAL SCHEDULED REPORT")
-
     def test_system_review_completion_is_business_completion_not_report_handoff(self):
         payload = completion.build_system_review_completion_request(
             {"status": "PASS"}, "system-request", "2026-09-26T19:30:00+08:00",
@@ -234,18 +190,6 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             self.assertEqual(event["report_type"], "ETF_SYSTEM_REVIEW")
             self.assertEqual(event["content"], "FROZEN SYSTEM REPORT")
             self.assertEqual(event["idempotency_key"], "ETF_SYSTEM_REVIEW:system-run")
-
-
-
-    def test_formal_scheduled_review_uses_shared_notification_owner(self):
-        producer = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
-        notifier = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
-        self.assertIn('"FORMAL_SCHEDULED_REVIEW"', producer)
-        self.assertIn('"FORMAL_SCHEDULED_SYSTEM_REVIEW"', producer)
-        self.assertNotIn("python scripts/run_guarded_notification.py center --mode event", producer)
-        self.assertIn("python scripts/run_guarded_notification.py center --mode event", notifier)
-        self.assertNotIn('[[ "${review_paths[0]}" != events/reviews/formal_*.json ]]', notifier)
-        self.assertNotIn("requests/report_delivery", notifier[notifier.index("Send material user-action notification"):])
 
 
 
@@ -514,9 +458,3 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
-
-    def test_market_snapshot_push_trigger_covers_canonical_scheduled_review_ingress(self):
-        workflow = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
-        trigger = workflow.split("  push:", 1)[1].split("  schedule:", 1)[0]
-        self.assertIn('requests/live_snapshot/**', trigger)
-        self.assertNotIn('requests/live_snapshot/**.json', trigger)

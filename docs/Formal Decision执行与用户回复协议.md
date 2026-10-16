@@ -1,6 +1,6 @@
 # Formal Decision执行与用户回复协议
 
-版本：统一三入口单链 V3  
+版本：统一三入口单链 V4  
 适用范围：以下三个入口的每一次【ETF正式决策】分析：
 
 1. 对话窗口：用户明确要求“@github 执行正式决策分析”；
@@ -61,53 +61,75 @@
 
 `实际触发方式`
 → `本次唯一运行身份`
-→ `current main正式规则与当前事实`
+→ `current main正式规则与本次request-bound事实`
 → `完整业务判断`
 → `唯一FINAL_CONTENT`
 → `用户窗口输出FINAL_CONTENT`
-→ `STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW`
-→ `canonical state-sync owner`
+→ `BUSINESS_DECISION_SOURCE/BDS`
+→ `FORMAL_DECISION_COMPLETION`
+→ `canonical owner`
 → `唯一events/reviews/formal_<occurrence_id>.json`
 → `既有decision-notification`
 → `notification_center`
 → `PushPlus/微信原文投递`
 
-三入口统一使用以下请求合同：
+三个入口的业务语义统一，但入口身份必须原样保留。正式决策不得再使用旧的
+`STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW` 作为生产主链，也不得让系统复核或交易复盘的请求类型冒充正式决策。
 
-- `request_type=STATE_SYNC_ONLY`
-- `formal_fact_type=FORMAL_SCHEDULED_REVIEW`
-- `source=CHATGPT_SCHEDULED_REVIEW_ACTOR`
-- `trigger_source` 保存实际三入口来源；
-- `entry_mode` 保存实际三入口身份；
-- `interaction_scenario=FORMAL_DECISION`
-- `presentation_binding.report_type=ETF_FORMAL_DECISION`
-- `presentation_binding.task_id`
-- `presentation_binding.task_run_id`
-- `presentation_binding.report_id`
-- `presentation_binding.full_content`
-- `presentation_binding.content_hash`
-- `presentation_binding.market_date`
+正式决策必须依次形成并绑定：
 
-## 四、已删除的旧生产链
+- 唯一 `parent_request_id` 和 `request_id`；
+- 本次请求对应的 request-bound snapshot、DWP、problem_graph；
+- 唯一 `decision_id`；
+- 唯一冻结 `FINAL_CONTENT`；
+- 唯一 BDS；
+- 唯一 Formal Decision completion；
+- 唯一 `occurrence_id` 和 review event；
+- 唯一 REPORT、notification_id和provider result。
 
-以下路径不再属于三个入口中的任何一个：
+`BUSINESS_DECISION_SOURCE` 只承载本次业务判断及正文冻结，不直接写入review event、REPORT或notification。
+`FORMAL_DECISION_COMPLETION` 只承载同一父请求的后置交接，不重新生产判断，不重新生成正文，不读取历史BDS或历史completion。
 
-`MARKET_QUOTE_REFRESH`
-→ `query_context/DWP/formal_reply_gate`
-→ `BUSINESS_DECISION_SOURCE/BDS`
-→ `FORMAL_DECISION_COMPLETION`
+## 四、正式决策请求与后置交接合同
 
-具体禁止：
+正式决策首跳必须使用当前正式请求合同：
 
-- 不得用 `MARKET_QUOTE_REFRESH` 作为Formal Decision首跳；
-- 不得等待、读取或复用历史 `formal_reply_gate`；
-- 不得把历史或空的 `query_context`、DWP、父请求当作本次前置门禁；
-- 不得写入或回读 BDS 作为三个入口的Formal生产步骤；
-- 不得生成 `FORMAL_DECISION_COMPLETION`；
-- 不得让 BDS、market-snapshot 普通行情请求或历史completion唤醒通知；
-- 不得保留“对话窗口一套链、定时任务另一套链”的解释。
+- `request_type=MARKET_QUOTE_REFRESH`
+- `source` 按三入口分别为 `CHATGPT_MANUAL_FORMAL_ANALYSIS`、`CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS` 或 `CHATGPT_SCHEDULED_FORMAL_ANALYSIS`
+- `entry_mode` 分别为 `MANUAL_CONVERSATION`、`MANUAL_SCHEDULED_TASK 或 `AUTOMATIC_SCHEDULED_TASK`
+- `force_refresh=true`
+- `require_post_request_snapshot=true`
+- `reuse_inflight_refresh=true`
+- `duplicate_equivalent_refresh_forbidden=true`
 
-`MARKET_QUOTE_REFRESH` 如被其他非Formal行情能力使用，仍只属于一般行情数据能力，不得被三个Formal入口调用或冒充Formal Decision请求。
+READY 后，必须先冻结并输出唯一 `FINAL_CONTENT`，然后才执行后置写入：
+
+1. 使用同一父请求、同一DWP、同一request-bound snapshot和同一`decision_id`，形成 `BUSINESS_DECISION_SOURCE` envelope；
+2. 将BDS写入并回读 `requests/live_snapshot/<parent_request_id>__business_decision_source.json`；
+3. 使用该BDS路径、同一`decision_id`和同一`content_hash`，形成 `FORMAL_DECISION_COMPLETION` envelope；
+4. 将completion写入并回读，文件名必须精确等于completion自身`request_id`;
+5. 在同一handoff中显式调用既有 `decision-notification.workflow_dispatch(formal_completion_path=<当前completion路径>)`；
+6. 回读当前 `events/reviews/formal_<occurrence_id>.json`、REPORT、notification_id和provider result。
+
+任何后置阶段都不得反向阻塞、缩短、改写或撤回已输出的正文。没有当前completion对应的event，不得声称正式决策事件已形成；没有当前notification_id和provider结果，不得声称主动通知成功。
+
+## 五、已删除的旧生产链
+
+以下路径不得作为正式决策生产链：
+
+`STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW`
+→ `旧Scheduled Review owner`
+→ `Formal Decision event`
+
+也不得：
+
+- 把系统复核或交易复盘的完成请求当作Formal Decision；
+- 以旧 `formal_reply_gate`、旧DWP、旧BDS、旧completion或历史正文完成本轮判断；
+- 直接手写 `events/reviews/formal_*.json`、REPORT或notification；
+- 让BDS、普通market snapshot push或历史completion被动替代显式workflow dispatch；
+- 在三个入口之间创建不同的业务判断、正文、event或通知链。
+
+`STATE_SYNC_ONLY` 仍可被系统复核、交易复盘等既有任务使用，但不属于本次Formal Decision主链。
 
 ## 五、当前事实与业务判断
 
@@ -144,17 +166,15 @@
 
 ## 七、后置交接和通知
 
-用户窗口输出唯一 `FINAL_CONTENT` 后，在同一次运行中只提交一次统一 Scheduled Review 请求，并立即回读：
+用户窗口输出唯一 `FINAL_CONTENT` 后，后置交接只能沿当前父请求继续：
 
-1. `requests/live_snapshot/<request_id>.json`；
-2. 当前 `events/reviews/formal_<occurrence_id>.json`；
-3. 当前REPORT；
-4. 当前`notification_id`；
-5. 当前PushPlus provider result。
+1. BDS写入并回读；
+2. Formal Decision completion写入并回读；
+3. 显式调用既有 `decision-notification` workflow的 `workflow_dispatch(formal_completion_path=...)`；
+4. 回读当前 `events/reviews/formal_<occurrence_id>.json`；
+5. 回读当前REPORT、notification_id和provider result。
 
-Actor不得直接写event、REPORT、notification或PushPlus。通知只能由当前唯一review event进入既有notification_center和guarded sender。
-
-通知失败不撤回用户已经看到的正文，但必须如实记录。没有当前notification_id和provider证据时，不得声称当前通知成功；不得扫描历史对象、补发历史正文、创建第二正文、第二请求、第二event或第二通知链。
+Actor不得直接写event、REPORT、notification或PushPlus。通知只能由当前唯一review event进入既有notification_center和guarded sender。通知失败不撤回用户已经看到的正文，但必须如实记录。不得扫描历史对象、补发历史正文或回退到历史对象，不得创建第二正文、第二请求、第二event或第二通知链。
 
 ## 八、完成判定
 
@@ -163,9 +183,11 @@ Actor不得直接写event、REPORT、notification或PushPlus。通知只能由�
 - 正确入口身份；
 - 本次唯一运行身份；
 - 当前事实已读取；
+- 本次request-bound事实、DWP和problem_graph一致；
 - 完整业务判断已形成；
 - 唯一FINAL_CONTENT已冻结并输出；
-- 当前STATE_SYNC_ONLY请求已写入并回读；
+- 当前BDS已写入并回读；
+- 当前FORMAL_DECISION_COMPLETION已写入并回读；
 - 当前review event已形成；
 - 当前REPORT已形成；
 - 当前notification_id已形成；
@@ -178,4 +200,4 @@ Actor不得直接写event、REPORT、notification或PushPlus。通知只能由�
 - provider成功不等于用户实际收到；
 - 用户正文已输出不等于后置通知已闭环。
 
-本协议不新增workflow、producer、checker、state、writer、provider、交易权限或第三个ETF任务；只将三个Formal入口收敛到同一条既有Scheduled Review/REPORT/notification_center/PushPlus生产链。
+本协议不新增workflow、producer、checker、state、writer、provider、交易权限或第三个ETF任务；只将三个Formal入口收敛到当前已有的BDS、Formal Decision completion、canonical event、REPORT、notification_center和PushPlus生产链。
