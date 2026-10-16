@@ -152,7 +152,7 @@ def build_completion_request(
         raise ValueError("scheduled review completion market_date must match formal_review.market_date")
     payload = {
         "request_id": _safe_id(request_id),
-        "request_type": "STATE_SYNC_ONLY",
+        "request_type": "SCHEDULED_REVIEW_COMPLETION",
         "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
         "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
         "interaction_scenario": "MIDDAY_REVIEW" if is_midday else "POST_CLOSE_REVIEW",
