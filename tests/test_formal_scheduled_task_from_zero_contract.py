@@ -39,13 +39,48 @@ class FormalScheduledTaskFromZeroContractTests(unittest.TestCase):
             task_run_id="run-1",
             occurrence_id="2026-10-16T10:00:00+08:00",
         )
-        self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_FORMAL_ANALYSIS")
+        self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_REVIEW_ACTOR")
+        self.assertEqual(payload["trigger_source"], "CHATGPT_SCHEDULED_FORMAL_ANALYSIS")
         self.assertEqual(payload["entry_mode"], "AUTOMATIC_SCHEDULED_TASK")
+        self.assertEqual(payload["request_type"], "STATE_SYNC_ONLY")
+        self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_REVIEW")
         self.assertEqual(payload["occurrence_id"], payload["occurrence"])
         self.assertEqual(payload["task_id"], "task-1")
         self.assertEqual(payload["task_run_id"], "run-1")
         self.assertTrue(payload["force_refresh"])
         self.assertTrue(payload["require_post_request_snapshot"])
+
+
+    def test_manual_builder_is_state_sync_and_not_slot_limited(self):
+        now = datetime(2026, 10, 16, 11, 30, tzinfo=timezone(timedelta(hours=8)))
+        payload = build_scheduled_request(
+            now=now,
+            task_id="ETF正式决策",
+            task_run_id="manual-scheduled-20261016T113000+0800-ab12cd34",
+            occurrence_id="manual-scheduled-20261016T113000+0800-ab12cd34",
+            entry_mode="MANUAL_SCHEDULED_TASK",
+        )
+        self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_REVIEW_ACTOR")
+        self.assertEqual(
+            payload["trigger_source"],
+            "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+        )
+        self.assertEqual(payload["entry_mode"], "MANUAL_SCHEDULED_TASK")
+        self.assertEqual(payload["request_type"], "STATE_SYNC_ONLY")
+        self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_REVIEW")
+        self.assertNotIn("force_refresh", payload)
+        self.assertNotIn("query_intent", payload)
+
+    def test_manual_occurrence_cannot_impersonate_automatic(self):
+        now = datetime(2026, 10, 16, 11, 30, tzinfo=timezone(timedelta(hours=8)))
+        with self.assertRaisesRegex(ValueError, "manual occurrence"):
+            build_scheduled_request(
+                now=now,
+                task_id="ETF正式决策",
+                task_run_id="manual-scheduled-run",
+                occurrence_id="scheduled_20261016T113000",
+                entry_mode="MANUAL_SCHEDULED_TASK",
+            )
 
     def test_payload_is_json_serializable(self):
         now = datetime(2026, 10, 16, 10, 0, tzinfo=timezone(timedelta(hours=8)))
