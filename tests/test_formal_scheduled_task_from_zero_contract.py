@@ -93,8 +93,9 @@ class FormalScheduledTaskFromZeroContractTests(unittest.TestCase):
         json.dumps(payload, ensure_ascii=False)
 
     def test_task_stays_independent_from_stable_review_tasks(self):
-        prompt = Path("docs/Formal Decision定时任务从零重建说明_V1.0.md").read_text(encoding="utf-8")
-        self.assertIn("不修改【ETF系统复核】、【ETF交易复盘】", prompt)
+        contract = Path("docs/formal-decision-scheduled-task-rebuild-v2.md").read_text(encoding="utf-8")
+        self.assertIn("不修改其任务、调度、代码、协议、状态、completion、REPORT、notification 或 PushPlus 链", contract)
+        self.assertNotIn("MARKET_QUOTE_REFRESH → BDS → Formal completion", contract)
 
 
 if __name__ == "__main__":
