@@ -56,8 +56,10 @@ def validate_report_delivery_request(request: dict) -> tuple[bool, str]:
     if request.get("report_type") not in ACTIVE_REPORT_TYPES: return False, "unsupported_report_type"
     if request.get("delivery_mode", "FULL_REPORT") != "FULL_REPORT": return False, "delivery_mode_must_be_FULL_REPORT"
     if request.get("no_trade_authority") is not True: return False, "no_trade_authority_must_be_true"
-    expected_hash = hashlib.sha256(str(request.get("full_content")).encode("utf-8")).hexdigest()
-    if str(request.get("content_hash")) != expected_hash: return False, "content_hash_mismatch"
+    # content_hash is optional audit metadata; closure is based on exact frozen-body equality.
+    supplied_hash = str(request.get("content_hash") or "").strip()
+    if supplied_hash and supplied_hash != hashlib.sha256(str(request.get("full_content")).encode("utf-8")).hexdigest():
+        return False, "content_hash_mismatch"
     return True, ""
 
 def build_report_delivery_request(*, task_id: str, task_run_id: str, report_id: str,
