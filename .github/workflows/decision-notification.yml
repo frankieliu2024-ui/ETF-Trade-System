@@ -160,7 +160,7 @@ jobs:
             echo "report_handoff_path=" >> "$GITHUB_OUTPUT"
           fi
           mapfile -t review_paths < <(grep -E '^events/reviews/[^/]+\.json$' /tmp/changed_files.txt || true)
-          if [ "${#review_paths[@]}" -eq 1 ] && [[ "${review_paths[0]}" != events/reviews/formal_*.json ]]; then
+          if [ "${#review_paths[@]}" -eq 1 ]; then
             echo "review_completion=true" >> "$GITHUB_OUTPUT"
             echo "review_event_path=${review_paths[0]}" >> "$GITHUB_OUTPUT"
           elif [ "${#review_paths[@]}" -gt 1 ]; then
@@ -293,7 +293,7 @@ jobs:
           mapfile -t review_paths < <(
             git diff-tree --no-commit-id --name-only -r "$downstream_sha" -- 'events/reviews/*.json' | sed '/^$/d'
           )
-          if [ "${#review_paths[@]}" -eq 1 ] && [[ "${review_paths[0]}" != events/reviews/formal_*.json ]]; then
+          if [ "${#review_paths[@]}" -eq 1 ]; then
             echo "review_completion=true" >> "$GITHUB_OUTPUT"
             echo "review_event_path=${review_paths[0]}" >> "$GITHUB_OUTPUT"
           elif [ "${#review_paths[@]}" -gt 1 ]; then
