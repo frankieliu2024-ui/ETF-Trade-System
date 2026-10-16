@@ -20,10 +20,12 @@ SLOTS = {
     "30 6 * * 1-5": (14, 30),
 }
 
+CONVERSATION_MODE = "MANUAL_CONVERSATION"
 MANUAL_MODE = "MANUAL_SCHEDULED_TASK"
 AUTOMATIC_MODE = "AUTOMATIC_SCHEDULED_TASK"
 SCHEDULED_REVIEW_SOURCE = "CHATGPT_SCHEDULED_REVIEW_ACTOR"
 TRIGGER_SOURCES = {
+    CONVERSATION_MODE: "CHATGPT_MANUAL_FORMAL_ANALYSIS",
     MANUAL_MODE: "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
     AUTOMATIC_MODE: "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
 }
@@ -31,7 +33,7 @@ TRIGGER_SOURCES = {
 
 def classify_schedule_invocation(entry_mode: str, scheduled_cron: str) -> str:
     mode = str(entry_mode or "").strip().upper()
-    if mode == MANUAL_MODE:
+    if mode in {CONVERSATION_MODE, MANUAL_MODE}:
         return "RUN"
     if mode != AUTOMATIC_MODE:
         return "TERMINAL"
@@ -63,7 +65,7 @@ def build_scheduled_request(
         raise ValueError("task_id and task_run_id are required")
     if mode == AUTOMATIC_MODE and not occurrence.startswith("scheduled_"):
         raise ValueError("automatic occurrence must start with scheduled_")
-    if mode == MANUAL_MODE and occurrence.startswith("scheduled_"):
+    if mode in {CONVERSATION_MODE, MANUAL_MODE} and occurrence.startswith("scheduled_"):
         raise ValueError("manual occurrence must not impersonate automatic occurrence")
 
     requested_at = now.astimezone(BEIJING).isoformat()
@@ -139,7 +141,7 @@ def main() -> int:
     task_run_id = os.environ.get("TASK_RUN_ID", "").strip()
     occurrence = os.environ.get("OCCURRENCE_ID", "").strip()
 
-    if mode == MANUAL_MODE:
+    if mode in {CONVERSATION_MODE, MANUAL_MODE}:
         if not task_run_id or not occurrence:
             task_run_id, occurrence = _manual_identity(now)
     else:
