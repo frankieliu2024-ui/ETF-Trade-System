@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0",
+  "protocol": "docs/ETF任务入口与调度治理协议_V1.0.md",
+  "role": "TASK_IDENTITY_AND_SCHEDULING_ROUTING_CONTRACT_NOT_BUSINESS_RULE_SOURCE",
+  "main_ssot": "ETF_SYSTEM_INDEX.md",
+  "tasks": [
+    {
+      "id": "ETF_SYSTEM_REVIEW",
+      "task_name": "ETF系统复核",
+      "automatic_schedule": [
+        "08:30",
+        "19:30"
+      ],
+      "sunday_rule": "19:30周复核",
+      "manual_allowed": true,
+      "route": "SYSTEM_REVIEW"
+    },
+    {
+      "id": "ETF_TRADE_REVIEW",
+      "task_name": "ETF交易复盘",
+      "automatic_schedule": [
+        "12:30",
+        "20:30"
+      ],
+      "sunday_rule": "20:30周复盘",
+      "manual_allowed": true,
+      "route": "TRADE_REVIEW"
+    },
+    {
+      "id": "ETF_FORMAL_DECISION",
+      "task_name": "ETF正式决策",
+      "automatic_schedule": [
+        "09:00",
+        "10:00",
+        "11:00",
+        "13:30",
+        "14:30"
+      ],
+      "sunday_rule": "按current main正式日历判定",
+      "manual_allowed": true,
+      "route": "FORMAL_DECISION",
+      "manual_entry_modes": [
+        "MANUAL_CONVERSATION",
+        "MANUAL_SCHEDULED_TASK"
+      ],
+      "automatic_entry_mode": "AUTOMATIC_SCHEDULED_TASK"
+    }
+  ],
+  "invariants": [
+    "manual_not_blocked_by_automatic_time",
+    "automatic_non_applicable_is_skip_only",
+    "entry_identity_must_be_observed_not_guessed",
+    "one_task_one_business_chain",
+    "no_cross_task_object_reuse",
+    "prompt_and_schedule_version_reversible",
+    "no_trade_authority"
+  ],
+  "required_readback": [
+    "task_id",
+    "task_run_id",
+    "occurrence_id",
+    "source",
+    "entry_mode",
+    "market_date",
+    "schedule_applicability",
+    "route",
+    "completion_status"
+  ]
+}
