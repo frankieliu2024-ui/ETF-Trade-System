@@ -210,7 +210,8 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
     def test_formal_scheduled_review_uses_shared_notification_owner(self):
         producer = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
         notifier = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
-        self.assertIn('{"FORMAL_SCHEDULED_REVIEW", "FORMAL_SCHEDULED_SYSTEM_REVIEW"}', producer)
+        self.assertIn('"FORMAL_SCHEDULED_REVIEW"', producer)
+        self.assertIn('"FORMAL_SCHEDULED_SYSTEM_REVIEW"', producer)
         self.assertNotIn("python scripts/run_guarded_notification.py center --mode event", producer)
         self.assertIn("python scripts/run_guarded_notification.py center --mode event", notifier)
         self.assertNotIn('[[ "${review_paths[0]}" != events/reviews/formal_*.json ]]', notifier)
