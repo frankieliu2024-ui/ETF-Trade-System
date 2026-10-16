@@ -3488,6 +3488,18 @@ def process_historical_backfill_request(request: dict) -> dict:
                 enriched += 1
     return {"ok": True, "ingress_mode": "HISTORICAL_BACKFILL", "created": created, "metadata_enriched": enriched, "current_account_mutated": False, "current_state_mutated": False}
 
+def is_unified_formal_entry(payload: dict) -> bool:
+    """Return true only for the three current Formal Decision entry identities."""
+    mode = str(payload.get("entry_mode") or "").strip().upper()
+    source = str(payload.get("trigger_source") or payload.get("source") or "").strip().upper()
+    expected = {
+        "MANUAL_CONVERSATION": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+        "MANUAL_SCHEDULED_TASK": "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+        "AUTOMATIC_SCHEDULED_TASK": "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+    }
+    return mode in expected and source == expected[mode]
+
+
 def account_fact_is_older(prior: dict, supplied: dict) -> bool:
     old_time = parse_time(prior.get("updated_at"))
     new_time = parse_time(supplied.get("updated_at"))
@@ -3544,6 +3556,13 @@ def main() -> int:
         and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_DECISION_COMPLETION"
     )
     if completion_dispatch:
+        parent_id = str(request.get("parent_request_id") or "").strip()
+        parent_path = ROOT / "requests" / "live_snapshot" / f"{parent_id}.json"
+        parent_request = load_json(parent_path) if parent_id and parent_path.exists() else {}
+        if is_unified_formal_entry(parent_request):
+            raise ValueError(
+                "legacy Formal Decision completion is forbidden for the unified three-entry contract"
+            )
         bds_path = str(request.get("bds_path") or "").strip()
         if not bds_path or ".." in bds_path:
             raise ValueError("Formal Decision completion requires a safe BDS path")
@@ -3618,6 +3637,10 @@ def main() -> int:
         parent_request = load_json(parent_path)
         if str(parent_request.get("request_id") or "").strip() != parent_id:
             raise ValueError("business decision source parent request identity mismatch")
+        if is_unified_formal_entry(parent_request):
+            raise ValueError(
+                "BUSINESS_DECISION_SOURCE is forbidden for the unified three-entry Formal contract"
+            )
 
         replay_source_commit = str(args.formal_replay_source_commit or "").strip()
         if replay_source_commit:
