@@ -161,11 +161,10 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
                 recorded, replay = state_sync.record_scheduled_formal_decision_review(payload)
                 self.assertTrue(recorded)
                 self.assertTrue(replay)
-            with patch.object(notification_center, "ROOT", root), patch.object(notification_center, "REVIEW_EVENT_DIR", root / "events" / "reviews"), patch.dict(os.environ, {"REVIEW_EVENT_PATH": "events/reviews/formal_formal-run.json"}, clear=False):
-                event = notification_center.report_delivery_event()
-            self.assertEqual(event["report_type"], "ETF_FORMAL_DECISION")
-            self.assertEqual(event["content"], "FROZEN FORMAL SCHEDULED REPORT")
-            self.assertEqual(event["idempotency_key"], "ETF_FORMAL_DECISION:formal-run")
+            event = json.loads((root / "events" / "reviews" / "formal_formal-run.json").read_text(encoding="utf-8"))
+            self.assertEqual(event["event_type"], "FORMAL_SCHEDULED_REVIEW")
+            self.assertEqual(event["presentation_binding"]["report_type"], "ETF_FORMAL_DECISION")
+            self.assertEqual(event["presentation_binding"]["full_content"], "FROZEN FORMAL SCHEDULED REPORT")
 
     def test_system_review_completion_is_business_completion_not_report_handoff(self):
         payload = completion.build_system_review_completion_request(
