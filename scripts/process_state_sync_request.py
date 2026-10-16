@@ -2343,6 +2343,31 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
     return True, True
 
 
+def record_scheduled_formal_decision_review(request: dict) -> tuple[bool, bool]:
+    if str(request.get("formal_fact_type") or "") != "FORMAL_SCHEDULED_REVIEW":
+        return False, False
+    binding = _validate_presentation_binding(request.get("presentation_binding"), "ETF_FORMAL_DECISION")
+    occurrence = str(binding["task_run_id"])
+    event_path = ROOT / "events" / "reviews" / f"formal_{occurrence}.json"
+    payload = {
+        "event_type": "FORMAL_SCHEDULED_REVIEW",
+        "occurrence_id": occurrence,
+        "request_id": request.get("request_id"),
+        "reviewed_at_beijing": request.get("requested_at_beijing"),
+        "presentation_binding": binding,
+        "formal_decision": request.get("formal_decision") or {},
+    }
+    payload["fingerprint"] = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+    prior = load_json(event_path) if event_path.exists() else {}
+    if prior and prior.get("fingerprint") != payload["fingerprint"]:
+        raise ValueError("scheduled formal decision occurrence is immutable")
+    if not prior:
+        event_path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_json_write(event_path, payload)
+        return True, False
+    return True, True
+
+
 def record_formal_decision_report_event(request: dict, bds: dict) -> tuple[bool, bool, str]:
     """Project one frozen Formal Decision body directly to the shared review-event notification chain."""
     binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
@@ -3733,6 +3758,11 @@ def main() -> int:
         request["formal_decision"] = projected
     if original_source_dispatch:
         print(json.dumps({"ok": True, "request_id": request.get("request_id"), "business_decision_source_persisted": True, "completion_required": True}, ensure_ascii=False))
+        return 0
+    formal_review_recorded, formal_review_idempotent = record_scheduled_formal_decision_review(request)
+    if formal_review_recorded:
+        result = {"ok": True, "request_id": request.get("request_id"), "formal_scheduled_review_completion": True, "idempotent_replay": formal_review_idempotent, "canonical_publication": "events/reviews/formal_" + str((request.get("presentation_binding") or {}).get("task_run_id") or "") + ".json"}
+        print(json.dumps(result, ensure_ascii=False))
         return 0
     system_review_recorded, system_review_idempotent = record_scheduled_system_review(request)
     if system_review_recorded:
