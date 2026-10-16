@@ -169,6 +169,25 @@ def formal_decision_report_event() -> dict | None:
     return None
 
 
+def _validate_formal_presentation_layout(content: str) -> str:
+    """Validate plain-text paragraph and numbering boundaries at delivery time."""
+    import re
+    lines = content.splitlines()
+    if not lines or not lines[0].strip().startswith("【ETF正式决策】"):
+        return "formal_presentation_title_not_first_line"
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if re.search(r"[ \\t]+[（(][0-9]{1,2}[）)]", line):
+            return "formal_presentation_inline_secondary_numbering"
+        if re.match(r"^[（(][0-9]{1,2}[）)]", stripped) or re.match(r"^[0-9]{1,2}\\.", stripped):
+            if index == 0 or lines[index - 1].strip() != "":
+                return "formal_presentation_numbered_items_need_blank_line"
+    if re.search(r"(?m)^\\s*[0-9]{1,2}\\.\\s+[^\\n]+\\n[0-9]{1,2}\\.\\s+", content):
+        return "formal_presentation_primary_items_not_separate_paragraphs"
+    if re.search(r"(?m)^\\s*[（(][0-9]{1,2}[）)]\\s+[^\\n]+\\n\\s*[（(][0-9]{1,2}[）)]\\s+", content):
+        return "formal_presentation_secondary_items_not_separate_paragraphs"
+    return ""
+
 def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[bool, str]:
     """Fail closed when a BDS presentation is only a compressed summary.
 
@@ -195,6 +214,9 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
         return False, "formal_presentation_missing_sections:" + ",".join(missing_headings)
     if len(content.strip()) < 1200:
         return False, "formal_presentation_below_minimum_length"
+    layout_error = _validate_formal_presentation_layout(content)
+    if layout_error:
+        return False, layout_error
     if "**" in content or any(term in content for term in ("canonical", "writer", "BDS", "reply_freezable", "control plane")):
         return False, "formal_presentation_internal_term_or_markdown"
     missing_objects = []
