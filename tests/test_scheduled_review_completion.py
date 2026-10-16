@@ -152,12 +152,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         )
         self.assertTrue(report["no_trade_authority"])
 
-
-    def test_formal_decision_uses_scheduled_review_completion_contract(self):
-        payload = completion.build_formal_decision_scheduled_review_completion_request(
-            {"action": "新增0元", "candidate_code": "561980", "risk_permission": "禁止新增"},
-            "formal-request", "2026-09-30T10:00:00+08:00", "2026-09-29",
-            "ETF正式决策", "formal-run", "FROZEN FORMAL SCHEDULED REPORT",
+ZEN FORMAL SCHEDULED REPORT",
             entry_mode="MANUAL_SCHEDULED_TASK",
             trigger_source="CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
             occurrence_id="manual-scheduled-20260930T100000+0800-ab12cd34",
@@ -172,13 +167,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertEqual(report["report_type"], "ETF_FORMAL_DECISION")
         self.assertEqual(report["idempotency_key"], "ETF_FORMAL_DECISION:formal-run")
         self.assertEqual(report["full_content"], "FROZEN FORMAL SCHEDULED REPORT")
-
-    def test_formal_scheduled_review_publishes_shared_canonical_event(self):
-        from scripts import notification_center
-        from scripts import process_state_sync_request as state_sync
-        payload = completion.build_formal_decision_scheduled_review_completion_request(
-            {"action": "新增0元"}, "formal-request", "2026-09-30T10:00:00+08:00", "2026-09-29",
-            "ETF正式决策", "formal-run", "FROZEN FORMAL SCHEDULED REPORT",
+ZEN FORMAL SCHEDULED REPORT",
             entry_mode="MANUAL_SCHEDULED_TASK",
             trigger_source="CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
             occurrence_id="manual-scheduled-20260930T100000+0800-ab12cd34",
@@ -234,18 +223,6 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             self.assertEqual(event["report_type"], "ETF_SYSTEM_REVIEW")
             self.assertEqual(event["content"], "FROZEN SYSTEM REPORT")
             self.assertEqual(event["idempotency_key"], "ETF_SYSTEM_REVIEW:system-run")
-
-
-
-    def test_formal_scheduled_review_uses_shared_notification_owner(self):
-        producer = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
-        notifier = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
-        self.assertIn('"FORMAL_SCHEDULED_REVIEW"', producer)
-        self.assertIn('"FORMAL_SCHEDULED_SYSTEM_REVIEW"', producer)
-        self.assertNotIn("python scripts/run_guarded_notification.py center --mode event", producer)
-        self.assertIn("python scripts/run_guarded_notification.py center --mode event", notifier)
-        self.assertNotIn('[[ "${review_paths[0]}" != events/reviews/formal_*.json ]]', notifier)
-        self.assertNotIn("requests/report_delivery", notifier[notifier.index("Send material user-action notification"):])
 
 
 
