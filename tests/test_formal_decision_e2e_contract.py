@@ -266,7 +266,7 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         self.assertIn("system-consistency属于独立生产健康检查", health_text)
         self.assertIn("不得作为Formal Decision业务PR的硬门禁", health_text)
         self.assertIn("当前事实已读取", formal_text)
-        self.assertIn("当前 provider result已回读", formal_text)
+        self.assertIn("当前provider result已回读", formal_text)
 
     def test_protocol_preserves_current_request_fail_closed_and_send_boundary(self):
         root = Path(__file__).parents[1]
