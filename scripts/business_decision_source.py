@@ -919,34 +919,35 @@ _FORMAL_PRESENTATION_HEADINGS = (
 
 
 def _validate_formal_presentation_layout(content: str) -> None:
-    """Fail closed on ambiguous user-visible layout before content is frozen.
-
-    The actor owns the single FINAL_CONTENT. This guard therefore rejects
-    presentation drift instead of silently rewriting text after the actor has
-    produced it. Plain-text delivery must retain paragraph boundaries, stable
-    numbering, and readable ETF identity.
-    """
+    """Fail closed on paragraph boundaries and semantic numbering hierarchy."""
     import re
 
     lines = content.splitlines()
     if not lines or not lines[0].strip().startswith("【ETF正式决策】"):
         raise ValueError("formal presentation title must be the first line")
     heading_pattern = re.compile(r"^【[^】]+】$")
+    primary_seen = False
     for index, line in enumerate(lines):
         stripped = line.strip()
-        if stripped.startswith("【") and stripped.endswith("】") and not heading_pattern.fullmatch(stripped):
-            raise ValueError("formal presentation heading must occupy its own line")
+        if stripped.startswith("【") and stripped.endswith("】"):
+            if not heading_pattern.fullmatch(stripped):
+                raise ValueError("formal presentation heading must occupy its own line")
+            primary_seen = False
+            continue
         if re.search(r"[ \t]+[（(][0-9]{1,2}[）)]", line):
             raise ValueError("formal presentation secondary numbering must start a new paragraph")
         if re.match(r"^[（(][0-9]{1,2}[）)]", stripped):
+            if not primary_seen:
+                raise ValueError("formal presentation secondary numbering requires a preceding primary item")
             if index == 0 or lines[index - 1].strip() != "":
                 raise ValueError("formal presentation secondary items require a blank line")
         if re.match(r"^[0-9]{1,2}\.", stripped):
+            primary_seen = True
             if index == 0 or lines[index - 1].strip() != "":
                 raise ValueError("formal presentation primary items require a blank line")
-    if re.search(r"(?m)^\\s*[0-9]{1,2}\\.\\s+[^\\n]+\\n[0-9]{1,2}\\.\\s+", content):
+    if re.search(r"(?m)^\s*[0-9]{1,2}\.\s+[^\n]+\n[0-9]{1,2}\.\s+", content):
         raise ValueError("formal presentation primary items must be separate paragraphs")
-    if re.search(r"(?m)^\\s*[（(][0-9]{1,2}[）)]\\s+[^\\n]+\\n\\s*[（(][0-9]{1,2}[）)]\\s+", content):
+    if re.search(r"(?m)^\s*[（(][0-9]{1,2}[）)]\s+[^\n]+\n\s*[（(][0-9]{1,2}[）)]\s+", content):
         raise ValueError("formal presentation secondary items must be separate paragraphs")
 
 
