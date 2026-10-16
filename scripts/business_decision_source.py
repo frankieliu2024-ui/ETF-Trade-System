@@ -995,6 +995,8 @@ def _validate_formal_presentation_contract(source: dict[str, Any]) -> None:
             raise ValueError(f"formal presentation missing {role} code: {code}")
         if name and name not in content:
             raise ValueError(f"formal presentation missing {role} name: {name}")
+        if code and name and f"{name}（{code}）" not in content and f"{name}({code})" not in content:
+            raise ValueError(f"formal presentation requires {role} name(code) identity: {name}（{code}）")
 
     for review in source.get("managed_position_reviews") or []:
         require_object(str(review.get("security_code") or "").strip(), str(review.get("security_name") or "").strip(), "holding")
