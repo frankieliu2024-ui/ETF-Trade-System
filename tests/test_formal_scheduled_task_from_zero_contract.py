@@ -37,7 +37,7 @@ class FormalScheduledTaskFromZeroContractTests(unittest.TestCase):
             now=now,
             task_id="task-1",
             task_run_id="run-1",
-            occurrence_id="2026-10-16T10:00:00+08:00",
+            occurrence_id="scheduled_2026-10-16T10:00:00+08:00",
         )
         self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_REVIEW_ACTOR")
         self.assertEqual(payload["trigger_source"], "CHATGPT_SCHEDULED_FORMAL_ANALYSIS")
@@ -47,8 +47,8 @@ class FormalScheduledTaskFromZeroContractTests(unittest.TestCase):
         self.assertEqual(payload["occurrence_id"], payload["occurrence"])
         self.assertEqual(payload["task_id"], "task-1")
         self.assertEqual(payload["task_run_id"], "run-1")
-        self.assertTrue(payload["force_refresh"])
-        self.assertTrue(payload["require_post_request_snapshot"])
+        self.assertNotIn("force_refresh", payload)
+        self.assertNotIn("require_post_request_snapshot", payload)
 
 
     def test_manual_builder_is_state_sync_and_not_slot_limited(self):
