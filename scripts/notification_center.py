@@ -170,23 +170,37 @@ def formal_decision_report_event() -> dict | None:
 
 
 def _validate_formal_presentation_layout(content: str) -> str:
-    """Validate plain-text paragraph and numbering boundaries at delivery time."""
+    """Validate paragraph boundaries and semantic numbering hierarchy."""
     import re
     lines = content.splitlines()
     if not lines or not lines[0].strip().startswith("【ETF正式决策】"):
         return "formal_presentation_title_not_first_line"
+    heading_pattern = re.compile(r"^【[^】]+】$")
+    primary_seen = False
     for index, line in enumerate(lines):
         stripped = line.strip()
+        if stripped.startswith("【") and stripped.endswith("】"):
+            if not heading_pattern.fullmatch(stripped):
+                return "formal_presentation_heading_not_standalone"
+            primary_seen = False
+            continue
         if re.search(r"[ \t]+[（(][0-9]{1,2}[）)]", line):
             return "formal_presentation_inline_secondary_numbering"
-        if re.match(r"^[（(][0-9]{1,2}[）)]", stripped) or re.match(r"^[0-9]{1,2}\.", stripped):
+        if re.match(r"^[（(][0-9]{1,2}[）)]", stripped):
+            if not primary_seen:
+                return "formal_presentation_secondary_without_primary_parent"
             if index == 0 or lines[index - 1].strip() != "":
                 return "formal_presentation_numbered_items_need_blank_line"
-    if re.search(r"(?m)^\\s*[0-9]{1,2}\\.\\s+[^\\n]+\\n[0-9]{1,2}\\.\\s+", content):
+        if re.match(r"^[0-9]{1,2}\.", stripped):
+            primary_seen = True
+            if index == 0 or lines[index - 1].strip() != "":
+                return "formal_presentation_numbered_items_need_blank_line"
+    if re.search(r"(?m)^\s*[0-9]{1,2}\.\s+[^\n]+\n[0-9]{1,2}\.\s+", content):
         return "formal_presentation_primary_items_not_separate_paragraphs"
-    if re.search(r"(?m)^\\s*[（(][0-9]{1,2}[）)]\\s+[^\\n]+\\n\\s*[（(][0-9]{1,2}[）)]\\s+", content):
+    if re.search(r"(?m)^\s*[（(][0-9]{1,2}[）)]\s+[^\n]+\n\s*[（(][0-9]{1,2}[）)]\s+", content):
         return "formal_presentation_secondary_items_not_separate_paragraphs"
     return ""
+
 
 def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[bool, str]:
     """Fail closed when a BDS presentation is only a compressed summary.
