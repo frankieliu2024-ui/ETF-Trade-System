@@ -307,7 +307,7 @@ def build_system_review_completion_request(
     content_hash = hashlib.sha256(str(final_content).encode("utf-8")).hexdigest()
     return {
         "request_id": request_id,
-        "request_type": "STATE_SYNC_ONLY",
+        "request_type": "SCHEDULED_REVIEW_COMPLETION",
         "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
         "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
         "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
