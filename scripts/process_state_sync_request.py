@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 57569)
-Total output lines: 4057
-
 from __future__ import annotations
 
 import argparse
@@ -1800,7 +1797,580 @@ def record_unrecoverable_review_prerequisite(account: dict, request: dict, trade
     if not ok:
         raise ValueError(f"invalid unrecoverable review prerequisite: {reason}")
     market_date = str(assessment["review_target_market_date"])
-    event_path = ROOT / "events" / "reviews" / f"{market_date}.json"…7569 tokens truncated…ValueError("Formal Scheduled Review occurrence identity is required")
+    event_path = ROOT / "events" / "reviews" / f"{market_date}.json"
+    prior = load_json(event_path) if event_path.exists() else {}
+    if prior.get("event_type") == "FORMAL_POST_CLOSE_REVIEW":
+        raise RuntimeError("normal formal review already exists; cannot overwrite with terminal state")
+    event = build_unrecoverable_review_event(
+        assessment,
+        request_id=str(request.get("request_id") or ""),
+        created_at_beijing=datetime.now(SHANGHAI).isoformat(timespec="seconds"),
+    )
+    if prior == event:
+        return True, True
+    event_path.parent.mkdir(parents=True, exist_ok=True)
+    atomic_json_write(event_path, event)
+    upsert_formal_line(
+        ROOT,
+        EXPERIENCE.name,
+        REVIEW_UNAVAILABLE_START,
+        REVIEW_UNAVAILABLE_END,
+        event_id,
+        terminal_experience_line(assessment),
+        before_heading="## 6. 版本维护记录",
+    )
+    return True, False
+
+
+def sync_experience_case_mapping_index(review: dict) -> None:
+    """Project canonical review trade→CASE mappings into the transaction index."""
+    # Review mappings are the canonical owner; the transaction index is only a human projection.
+    mappings = []
+
+    def collect(value):
+        if isinstance(value, dict):
+            if value.get("trade_event_id") and value.get("case_id"):
+                mappings.append((str(value["trade_event_id"]), str(value["case_id"])))
+            for child in value.values():
+                collect(child)
+        elif isinstance(value, list):
+            for child in value:
+                collect(child)
+
+    collect(review.get("case_mapping") or {})
+    if not mappings or not EXPERIENCE.exists():
+        return
+    text = EXPERIENCE.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    changed = False
+    for index, line in enumerate(lines):
+        if not line.startswith("|2026-") or "TRADE_EVENT:" not in line:
+            continue
+        for event_id, case_id in mappings:
+            if f"TRADE_EVENT:{event_id}" not in line:
+                continue
+            parts = line.strip().strip("|").split("|")
+            if len(parts) < 10:
+                continue
+            marker = f"<!-- TRADE_EVENT:{event_id} -->"
+            # Rebuild the matched row from its table fields and append one
+            # canonical marker. This repairs historical duplicate markers while
+            # keeping the transaction identity and unrelated rows unchanged.
+            without_markers = line.replace(marker, "").strip()
+            if without_markers.startswith("|"):
+                without_markers = without_markers[1:]
+            normalized_parts = without_markers.split("|")
+            if len(normalized_parts) < 10:
+                continue
+            remark = normalized_parts[9].strip()
+            if case_id not in remark:
+                normalized_parts[9] = f"{case_id}；{remark}" if remark else case_id
+            normalized_line = "|" + "|".join(normalized_parts) + f" {marker}"
+            if normalized_line != line:
+                lines[index] = normalized_line
+                changed = True
+            break
+    if changed:
+        newline = "\n".join(lines) + ("\n" if text.endswith("\n") else "")
+        write_formal_text_if_changed(ROOT, EXPERIENCE.name, newline)
+
+
+
+def _purge_case_mapping_rows() -> None:
+    """Remove legacy routing rows from the human CASE managed block."""
+    text = EXPERIENCE.read_text(encoding="utf-8")
+    start, end = text.find(CASE_DETAILS_START), text.find(CASE_DETAILS_END)
+    if start < 0 or end < start:
+        return
+    body_start = start + len(CASE_DETAILS_START)
+    block = text[body_start:end]
+    kept = []
+    for line in block.splitlines():
+        stripped = line.strip()
+        if (
+            re.match(r"^\\d{8}[_-]", stripped)
+            or stripped.startswith("2026-") and "｜" in stripped
+            or "TRADE_EVENT:" in stripped
+            or "已归入CASE" in stripped
+            or "待复盘CASE" in stripped
+        ):
+            continue
+        kept.append(line)
+    cleaned = "\n".join(kept).strip("\n")
+    updated = text[:body_start] + "\n" + cleaned + "\n" + text[end:]
+    write_formal_text_if_changed(ROOT, EXPERIENCE.name, updated)
+
+
+
+_CASE_TEMPLATE_FIELDS = (
+    "背景／生命周期",
+    "关键证据",
+    "执行",
+    "结果",
+    "判断质量",
+    "执行质量",
+    "风险收益质量",
+    "资本使用效率",
+    "最终结果／反事实",
+    "经验",
+)
+
+
+def _case_detail_projection_entry(case_entry: str, case_id: str) -> str:
+    """Build the shared human CASE template without manufacturing absent facts."""
+    text = EXPERIENCE.read_text(encoding="utf-8")
+    case_match = re.search(
+        rf"^### (2\.\d+) {re.escape(case_id)}[:：]",
+        text,
+        re.MULTILINE,
+    )
+    if case_match:
+        ordinal = int(case_match.group(1).split(".")[1])
+    else:
+        ordinals = [
+            int(value)
+            for value in re.findall(r"^### 2\.(\d+) CASE-", text, re.MULTILINE)
+        ]
+        ordinal = max(ordinals, default=2) + 1
+    body = case_entry.strip()
+    body_lines = body.splitlines()
+    # CASE_MAPPING rows are audit metadata, never CASE_REVIEW prose.
+    body_lines = [
+        line for line in body_lines
+        if not re.match(r"^\d{8}[_-].*｜- 已归入CASE-", line.strip())
+    ]
+    body = "\n".join(body_lines).strip()
+    body = re.sub(r"^### (?:2\.\d+ )?", "", body, count=1)
+    if body.startswith(case_id):
+        body = re.sub(rf"^{re.escape(case_id)}[：:]?\s*", "", body, count=1)
+    title = body.splitlines()[0].split("｜", 1)[0].strip() if body else "CASE复盘"
+    title = title or "CASE复盘"
+
+    fields: dict[str, list[str]] = {name: [] for name in _CASE_TEMPLATE_FIELDS}
+    current_field = ""
+    unstructured: list[str] = []
+    for line in body.splitlines():
+        match = re.match(r"^-\s*(背景／生命周期|关键证据|执行|结果|判断质量|执行质量|风险收益质量|资本使用效率|最终结果／反事实|经验)：\s*(.*)$", line.strip())
+        if match:
+            current_field = match.group(1)
+            if match.group(2):
+                fields[current_field].append(match.group(2))
+        elif current_field and line.startswith(("  ", "\t")):
+            fields[current_field].append(line.strip())
+        elif line.strip():
+            unstructured.append(line.strip())
+    if unstructured and not any(fields.values()):
+        fields["背景／生命周期"].append("；".join(unstructured))
+    rendered = [f"### 2.{ordinal} {case_id}：{title}"]
+    for name in _CASE_TEMPLATE_FIELDS:
+        value = "\n".join(fields[name]).strip() or "信息不足（现有正式复盘未记录该字段）"
+        rendered.append(f"- {name}：{value}")
+    return "\n".join(rendered)
+
+
+def _case_lifecycle_update_text(root: Path, case_id: str, review: dict, updates: list[dict]) -> str:
+    market_date = str(review.get("market_date") or "")
+    status = next((str(item.get("case_status") or "").strip() for item in reversed(updates) if item.get("case_status")), "")
+    reason = next((str(item.get("mapping_reason") or "").strip() for item in reversed(updates) if item.get("mapping_reason")), "")
+    trade_lines = []
+    for item in updates:
+        event_id = str(item.get("trade_event_id") or "").strip()
+        if not event_id:
+            continue
+        trade_path = root / "events" / "trades" / f"{event_id}.json"
+        if not trade_path.exists():
+            if str(item.get("case_status") or "").upper() == "RESOLVED":
+                raise ValueError(f"resolved CASE update lacks canonical trade fact: {event_id}")
+            continue
+        trade = load_json(trade_path)
+        if str(trade.get("code") or "") != str(item.get("security_code") or trade.get("code") or ""):
+            raise ValueError(f"CASE update trade identity mismatch: {event_id}")
+        if str(trade.get("execution_status") or "").upper() != "EXECUTED":
+            raise ValueError(f"CASE update trade is not confirmed executed: {event_id}")
+        side = str(trade.get("side") or "").upper()
+        if str(item.get("case_status") or "").upper() == "RESOLVED" and side != "SELL":
+            continue
+        trade_lines.append(
+            f"{trade.get('confirmed_at_beijing') or trade.get('executed_at_beijing') or '时间未记录'} "
+            f"{side or '交易'} {trade.get('quantity', '数量未记录')}份@{trade.get('price', '价格未记录')}元 "
+            f"(trade_event_id={event_id})"
+        )
+    if status.upper() == "RESOLVED" and not trade_lines:
+        raise ValueError(f"resolved CASE update has no canonical executed SELL fact: {case_id}")
+    parts = [f"状态={status or '未提供'}"]
+    if trade_lines:
+        parts.append("正式成交=" + "；".join(trade_lines))
+    if reason:
+        parts.append("复盘映射说明=" + reason)
+    return f"- 后续正式复盘（{market_date}）：" + "；".join(parts)
+
+
+def _append_case_update_field(entry: str, field: str, market_date: str, update_line: str) -> str:
+    marker = f"后续正式复盘（{market_date}）"
+    lines = entry.splitlines()
+    field_prefix = f"- {field}："
+    index = next((i for i, line in enumerate(lines) if line.startswith(field_prefix)), None)
+    if index is None:
+        raise ValueError(f"CASE template missing required field: {field}")
+    section_end = next(
+        (i for i in range(index + 1, len(lines)) if any(lines[i].startswith(f"- {name}：") for name in _CASE_TEMPLATE_FIELDS)),
+        len(lines),
+    )
+    field_lines = lines[index + 1:section_end]
+    update_pattern = re.compile(r"^\s*- 后续正式复盘（(\d{4}-\d{2}-\d{2})）：")
+    other_lines = [line for line in field_lines if not update_pattern.match(line)]
+    updates_by_date = {}
+    for line in field_lines:
+        match = update_pattern.match(line)
+        if match and marker not in line:
+            updates_by_date[match.group(1)] = line
+    updates_by_date[market_date] = "  " + update_line
+    updates = [updates_by_date[date] for date in sorted(updates_by_date)]
+    lines[index + 1:section_end] = other_lines + updates
+    return "\n".join(lines)
+
+
+def _persist_existing_case_detail_projections(review: dict) -> None:
+    """Project later canonical CASE lifecycle facts through the formal gateway."""
+    if not EXPERIENCE.exists():
+        return
+    mapping = review.get("case_mapping") if isinstance(review.get("case_mapping"), dict) else {}
+    updates = mapping.get("existing_case_updates") if isinstance(mapping.get("existing_case_updates"), list) else []
+    grouped: dict[str, list[dict]] = {}
+    for item in updates:
+        if not isinstance(item, dict) or not str(item.get("case_id") or "").strip():
+            continue
+        if not str(item.get("case_status") or "").strip():
+            continue
+        grouped.setdefault(str(item["case_id"]).strip(), []).append(item)
+    if not grouped:
+        return
+    text = EXPERIENCE.read_text(encoding="utf-8")
+    start = text.find(CASE_DETAILS_START)
+    end = text.find(CASE_DETAILS_END, start + len(CASE_DETAILS_START)) if start >= 0 else -1
+    if start < 0 or end < 0:
+        raise ValueError("canonical CASE detail managed block is missing")
+    block = text[start + len(CASE_DETAILS_START):end]
+    for case_id, case_updates in grouped.items():
+        match = re.search(rf"^### 2\.(\d+) {re.escape(case_id)}[:：].*$", block, re.MULTILINE)
+        if not match:
+            raise ValueError(f"canonical existing CASE detail not found: {case_id}")
+        next_heading = re.search(r"^### ", block[match.end():], re.MULTILINE)
+        section_end = match.end() + next_heading.start() if next_heading else len(block)
+        section_start = match.start()
+        section = block[section_start:section_end].strip()
+        if not all(re.search(rf"^- {re.escape(field)}：", section, re.MULTILINE) for field in _CASE_TEMPLATE_FIELDS):
+            section = _case_detail_projection_entry(section, case_id)
+        update_line = _case_lifecycle_update_text(ROOT, case_id, review, case_updates)
+        market_date = str(review.get("market_date") or "")
+        for field in ("背景／生命周期", "结果", "最终结果／反事实"):
+            section = _append_case_update_field(section, field, market_date, update_line)
+        block = block[:section_start] + "\n" + section + "\n" + block[section_end:]
+    replace_formal_block(ROOT, EXPERIENCE.name, CASE_DETAILS_START, CASE_DETAILS_END, block.strip())
+
+
+def _normalize_executed_trade_case_mapping(review: dict, market_date: str) -> dict:
+    """Normalize mapping-required executed trades at the formal review owner.
+
+    Existing CASE ownership is recovered from prior canonical reviews by exact
+    security code. A first-seen executed exit without a lawful CASE is recorded
+    as an explicit canonical ineligibility, never as a fabricated CASE.
+    """
+    normalized = json.loads(json.dumps(review))
+    mapping = normalized.setdefault("case_mapping", {})
+    existing = mapping.setdefault("existing_case_updates", [])
+    ineligible = mapping.setdefault("ineligible_executed_trades", [])
+    mapped_ids = {str(x.get("trade_event_id") or "") for x in existing if isinstance(x, dict)}
+    ineligible_ids = {str(x.get("trade_event_id") or "") for x in ineligible if isinstance(x, dict)}
+    prior_cases = {}
+    review_dir = ROOT / "events" / "reviews"
+    for path in sorted(review_dir.glob("*.json")) if review_dir.exists() else []:
+        try:
+            payload = load_json(path)
+        except (OSError, ValueError, TypeError):
+            continue
+        def walk(value):
+            if isinstance(value, dict):
+                code = str(value.get("security_code") or "")
+                case_id = str(value.get("case_id") or "")
+                if code and case_id:
+                    prior_cases.setdefault(code, (case_id, str(value.get("case_status") or "RESOLVED")))
+                for child in value.values():
+                    walk(child)
+            elif isinstance(value, list):
+                for child in value:
+                    walk(child)
+        walk(payload)
+    trade_dir = ROOT / "events" / "trades"
+    for path in sorted(trade_dir.glob("*.json")) if trade_dir.exists() else []:
+        try:
+            trade = load_json(path)
+        except (OSError, ValueError, TypeError):
+            continue
+        if str(trade.get("execution_status") or "").upper() != "EXECUTED":
+            continue
+        event_id = str(trade.get("event_id") or "")
+        trade_date = str(trade.get("confirmed_at_beijing") or trade.get("executed_at_beijing") or "")[:10]
+        if not event_id or trade_date != market_date or event_id in mapped_ids or event_id in ineligible_ids:
+            continue
+        code = str(trade.get("code") or "")
+        case = prior_cases.get(code)
+        # Downstream review/CASE projections must consume the same effective
+        # attribution truth as execution_attribution/decision_trade_link.
+        # The immutable trade may intentionally retain linked_decision_id=null.
+        from decision_trade_link import resolve_link
+        effective_id, _decision, resolution = resolve_link(
+            ROOT, trade, str(trade.get("linked_decision_id") or "")
+        )
+        if resolution == "CORRECTION_CONFLICT":
+            raise RuntimeError(
+                f"executed trade attribution conflict during review normalization: {event_id}"
+            )
+        effective_id = str(effective_id or trade.get("linked_decision_id") or "")
+        if case:
+            existing.append({
+                "trade_event_id": event_id,
+                "decision_id": effective_id,
+                "case_id": case[0],
+                "security_code": code,
+                "case_status": "RESOLVED",
+                "mapping_reason": "正式复盘后将当前executed exit映射至该证券既有CASE；使用authoritative trade event身份。",
+            })
+            mapped_ids.add(event_id)
+        else:
+            ineligible.append({
+                "trade_event_id": event_id,
+                "decision_id": effective_id,
+                "security_code": code,
+                "eligibility": "EXPLICIT_CANONICAL_INELIGIBILITY",
+                "reason": "正式复盘已完成，但当前不存在该证券既有CASE，且本次退出不满足既有通用CASE intake语义；不创建新CASE。",
+            })
+            ineligible_ids.add(event_id)
+    return normalized
+
+def _persist_post_close_review_projections(account: dict, request: dict, review: dict, event: dict) -> None:
+    """Complete all review projections for first write and safe idempotent replay."""
+    market_date = str(event.get("market_date") or review.get("market_date") or "")
+    if not market_date:
+        return
+    archive_entry = str(review.get("archive_entry") or "").strip()
+    if archive_entry:
+        upsert_formal_line(ROOT, ARCHIVE.name, REVIEW_ARCHIVE_START, REVIEW_ARCHIVE_END, market_date, archive_entry, before_heading="## 6. 历史Excel与专项数据来源")
+    _purge_case_mapping_rows()
+    experience_entry = str(review.get("experience_entry") or "").strip()
+    if experience_entry:
+        case_mode = str(review.get("case_mode") or "").upper()
+        case_id = str(review.get("case_id") or "").strip()
+        if case_mode.startswith("NEW_CASE_FROM_EXECUTED_") and case_id:
+            case_entry = _case_detail_projection_entry(experience_entry, case_id)
+            upsert_formal_line(ROOT, EXPERIENCE.name, CASE_DETAILS_START, CASE_DETAILS_END, case_id, case_entry, before_heading="## 3. 历史研究与专项回测")
+        else:
+            upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry, before_heading="## 5. 研究与经验转化")
+    _persist_existing_case_detail_projections(review)
+    sync_experience_case_mapping_index(review)
+    record_close_review_closure(account, request, review, event)
+
+
+def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
+    review = request.get("formal_review")
+    interaction_scenario = str(request.get("interaction_scenario") or "").strip().upper()
+    if interaction_scenario not in {"POST_CLOSE_REVIEW", "MIDDAY_REVIEW"} or not review:
+        return False, False
+    review_scope = str(review.get("review_scope") or "").strip().upper()
+    request_phase = str(request.get("market_phase") or request.get("session_stage") or "").strip().upper()
+    review_phase = str(review.get("market_phase") or review.get("session_stage") or "").strip().upper()
+    is_midday_review = (
+        interaction_scenario == "MIDDAY_REVIEW"
+        or review_scope == "MORNING_SESSION_STAGE_ONLY"
+        or "MIDDAY_BREAK" in {request_phase, review_phase}
+    )
+    market_date = str(review.get("market_date") or request.get("market_date") or account.get("last_confirmed_market_date") or "")
+    if not market_date:
+        raise RuntimeError("POST_CLOSE_REVIEW requires market_date")
+    event_path = ROOT / "events" / "reviews" / f"{market_date}.json"
+    prior = load_json(event_path) if event_path.exists() else {}
+    prior_review = prior.get("review") if isinstance(prior.get("review"), dict) else {}
+    incoming_time = parse_time(
+        review.get("reviewed_at_beijing")
+        or review.get("updated_at_beijing")
+        or request.get("requested_at_beijing")
+        or request.get("request_time_beijing")
+        or account.get("updated_at")
+    )
+    prior_time = parse_time(
+        prior.get("reviewed_at_beijing")
+        or prior.get("updated_at_beijing")
+        or prior.get("account_updated_at")
+    )
+    replay_received = parse_time(request.get("requested_at_beijing") or request.get("request_time_beijing"))
+    prior_updated = parse_time(prior.get("updated_at_beijing"))
+    if prior_updated and replay_received and replay_received < prior_updated and review == prior_review:
+        # Exact replay of the already-persisted canonical review: only repair
+        # its CASE human projection. Do not revalidate historical PIT against
+        # today's account, or rewrite the event/closure/current state.
+        _persist_existing_case_detail_projections(prior_review)
+        return True, True
+    # Normalize scheduled trade-review bindings at the canonical owner.
+    # Legacy/recovery requests without a presentation binding remain compatible;
+    # a present binding must satisfy the exact scheduled-delivery contract.
+    raw_presentation_binding = request.get("presentation_binding")
+    presentation_binding = (
+        _validate_presentation_binding(raw_presentation_binding, "ETF_TRADE_REVIEW")
+        if raw_presentation_binding is not None
+        else {}
+    )
+    if presentation_binding:
+        presentation_binding["request_id"] = str(request.get("request_id") or "")
+        presentation_binding["report_id"] = (
+            f"etf_trade_review:{presentation_binding['task_run_id']}"
+        )
+    data_time = dict(review.get("data_time")) if isinstance(review.get("data_time"), dict) else {}
+    if is_midday_review:
+        # Midday Scheduled Review is a valid stage review, not a 15:00 close review.
+        # Preserve the frozen morning boundary and bypass the close-only contract;
+        # the same canonical review event/report path remains the sole delivery chain.
+        data_time["close_data_status"] = "MORNING_STAGE_REFERENCE"
+        data_time["close_data_gap"] = (
+            "This is a MORNING stage review bounded by the 11:30 A-share boundary; "
+            "it is not a full-day session close."
+        )
+        review = dict(review)
+        review["data_time"] = data_time
+    else:
+        current_path = ROOT / "data" / "state" / "CURRENT.json"
+        current = load_json(current_path) if current_path.exists() else {}
+        close_contract = build_close_data_contract(ROOT, current)
+        supplied_close_snapshot = str(data_time.get("close_snapshot") or review.get("close_snapshot") or "").strip()
+        canonical_close_snapshot = str(close_contract.get("latest_snapshot") or "").strip()
+        canonical_close_verified = (
+            close_contract.get("status") == "VERIFIED_SESSION_CLOSE"
+            and close_contract.get("verified_session_close") is True
+            and close_contract.get("market_date") == market_date
+            and bool(canonical_close_snapshot)
+        )
+        # A present verified close with a mismatched or absent request reference is
+        # a stale/ambiguous input, not a missing-close case. Do not silently turn a
+        # review computed against another snapshot into a degraded formal review.
+        if canonical_close_verified and supplied_close_snapshot != canonical_close_snapshot:
+            return False, False
+        close_verified = canonical_close_verified and supplied_close_snapshot == canonical_close_snapshot
+        # Review completion is independent from close-data completeness. Preserve
+        # the canonical close contract when available; otherwise persist an explicit
+        # degraded review with the missing/invalid evidence boundary. Never invent
+        # a close snapshot or promote an intraday fact to 15:00.
+        if close_verified:
+            data_time["close_data_status"] = "VERIFIED_SESSION_CLOSE"
+            data_time["close_snapshot"] = canonical_close_snapshot
+            data_time.pop("close_data_gap", None)
+        else:
+            data_time["close_data_status"] = str(close_contract.get("status") or "UNVERIFIED")
+            data_time["close_data_gap"] = (
+                "VERIFIED_SESSION_CLOSE unavailable for this market date; review completed "
+                "with degraded/incomplete evidence and no inferred close."
+            )
+            data_time.pop("close_snapshot", None)
+        review = dict(review)
+        review["data_time"] = data_time
+    lifecycle_error = validate_current_lifecycle_contract(review.get("lifecycle"), account)
+    if lifecycle_error:
+        raise ValueError(f"invalid formal review lifecycle contract: {lifecycle_error}")
+    review_lifecycle = review.get("holding_actions") or review.get("lifecycle")
+    managed_error = validate_managed_position_lifecycle(review_lifecycle, account, "formal_review.managed_positions")
+    if managed_error:
+        raise ValueError(f"invalid formal review managed-position contract: {managed_error}")
+    managed_projection = build_managed_position_projection(ROOT, account)
+    review = _normalize_executed_trade_case_mapping(review, market_date)
+    payload = {"market_date": market_date, "account_updated_at": account.get("updated_at"), "formal_review": review, "presentation_binding": presentation_binding}
+    fingerprint = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+    prior = load_json(event_path) if event_path.exists() else {}
+    if prior.get("fingerprint") == fingerprint:
+        # Event existence is not proof that downstream projections completed.
+        persisted_review = prior.get("review") if isinstance(prior.get("review"), dict) else review
+        _persist_post_close_review_projections(account, request, persisted_review, prior)
+        return True, True
+    if prior_time and incoming_time and incoming_time < prior_time:
+        # A stale review cannot replace canonical event/PIT facts, but its
+        # already-canonical lifecycle mapping may still repair human CASE
+        # projections through the same formal-file gateway.
+        prior_review = prior.get("review") if isinstance(prior.get("review"), dict) else {}
+        _persist_existing_case_detail_projections(prior_review)
+        return True, True
+    review_time = (incoming_time or datetime.now(SHANGHAI)).isoformat(timespec="seconds")
+    event = {"event_type": "FORMAL_POST_CLOSE_REVIEW", "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "report_id": presentation_binding.get("report_id", ""), "content_hash": presentation_binding.get("content_hash", ""), "review": review, "presentation_binding": presentation_binding, "managed_position_sell_review": managed_projection, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
+    event["reviewed_at_beijing"] = review_time
+    event_path.parent.mkdir(parents=True, exist_ok=True)
+    atomic_json_write(event_path, event)
+    _persist_post_close_review_projections(account, request, review, event)
+    return True, False
+
+
+def _validate_presentation_binding(binding: dict, report_type: str) -> dict:
+    if not isinstance(binding, dict):
+        raise ValueError("scheduled completion presentation_binding must be an object")
+    required = ("task_id", "task_run_id", "report_id", "full_content", "content_hash")
+    missing = [key for key in required if not str(binding.get(key) or "").strip()]
+    if missing:
+        raise ValueError("scheduled completion presentation_binding missing:" + ",".join(missing))
+    if str(binding.get("report_type") or "") != report_type:
+        raise ValueError("scheduled completion presentation_binding report_type mismatch")
+    content = str(binding["full_content"])
+    expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    if str(binding.get("content_hash") or "") != expected_hash:
+        raise ValueError("scheduled completion presentation_binding content_hash mismatch")
+    binding = dict(binding)
+    binding["content_hash"] = expected_hash
+    return binding
+
+
+def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
+    if str(request.get("formal_fact_type") or "") != "FORMAL_SCHEDULED_SYSTEM_REVIEW":
+        return False, False
+    binding = _validate_presentation_binding(request.get("presentation_binding"), "ETF_SYSTEM_REVIEW")
+    occurrence = str(binding["task_run_id"])
+    event_path = ROOT / "events" / "reviews" / f"system_{occurrence}.json"
+    payload = {
+        "event_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+        "occurrence_id": occurrence,
+        "request_id": request.get("request_id"),
+        "reviewed_at_beijing": request.get("requested_at_beijing"),
+        "presentation_binding": binding,
+        "review": request.get("system_review") or {},
+    }
+    payload["fingerprint"] = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+    prior = load_json(event_path) if event_path.exists() else {}
+    if prior and prior.get("fingerprint") != payload["fingerprint"]:
+        raise ValueError("scheduled system review occurrence is immutable")
+    if not prior:
+        event_path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_json_write(event_path, payload)
+        return True, False
+    return True, True
+
+
+def record_scheduled_formal_decision_review(request: dict) -> tuple[bool, bool]:
+    if str(request.get("formal_fact_type") or "") != "FORMAL_SCHEDULED_REVIEW":
+        return False, False
+    valid, reason = validate_canonical_formal_request(request)
+    if not valid:
+        raise ValueError("Formal Scheduled Review canonical ingress invalid: " + reason)
+    trigger_source = str(request.get("trigger_source") or "").strip().upper()
+    entry_mode = str(request.get("entry_mode") or "").strip().upper()
+    expected_sources = {
+        "MANUAL_CONVERSATION": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+        "MANUAL_SCHEDULED_TASK": "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+        "AUTOMATIC_SCHEDULED_TASK": "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+    }
+    if entry_mode not in expected_sources or trigger_source != expected_sources[entry_mode]:
+        raise ValueError("Formal Scheduled Review entry identity is invalid")
+    if str(request.get("request_type") or "").strip().upper() != "STATE_SYNC_ONLY":
+        raise ValueError("Formal Scheduled Review must remain STATE_SYNC_ONLY")
+    if str(request.get("source") or "").strip().upper() != "CHATGPT_SCHEDULED_REVIEW_ACTOR":
+        raise ValueError("Formal Scheduled Review source actor is invalid")
+    if str(request.get("interaction_scenario") or "").strip().upper() != "FORMAL_DECISION":
+        raise ValueError("Formal Scheduled Review interaction scenario is invalid")
+    occurrence = str(request.get("occurrence_id") or request.get("occurrence") or "").strip()
+    if not occurrence:
+        raise ValueError("Formal Scheduled Review occurrence identity is required")
     binding = _validate_presentation_binding(request.get("presentation_binding"), "ETF_FORMAL_DECISION")
     if str(binding.get("occurrence_id") or "").strip() != occurrence:
         raise ValueError("Formal Scheduled Review occurrence binding mismatch")
@@ -1828,1660 +2398,3 @@ def record_formal_decision_report_event(request: dict, bds: dict) -> tuple[bool,
     """Project one frozen Formal Decision body directly to the shared review-event notification chain."""
     binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
     identity = {
-        "request_id": str(bds.get("request_id") or "").strip(),
-        "parent_request_id": str(bds.get("parent_request_id") or "").strip(),
-        "decision_id": str(bds.get("decision_id") or "").strip(),
-        "binding_request_id": str(binding.get("request_id") or "").strip(),
-        "binding_parent_request_id": str(binding.get("parent_request_id") or "").strip(),
-        "binding_decision_id": str(binding.get("decision_id") or "").strip(),
-    }
-    if any(not value for value in identity.values()):
-        raise ValueError("Formal Decision canonical event requires complete request/parent/decision identity")
-    if (
-        identity["binding_request_id"] != identity["request_id"]
-        or identity["binding_parent_request_id"] != identity["parent_request_id"]
-        or identity["binding_decision_id"] != identity["decision_id"]
-    ):
-        raise ValueError("Formal Decision canonical event presentation identity mismatch")
-    if str(request.get("parent_request_id") or "").strip() != identity["parent_request_id"]:
-        raise ValueError("Formal Decision canonical event completion parent mismatch")
-    full_content = str(bds.get("presentation_content") or binding.get("full_content") or "")
-    task_run_id = str(bds.get("task_run_id") or binding.get("task_run_id") or "").strip()
-    if not full_content or not task_run_id:
-        raise ValueError("Formal Decision canonical event requires frozen content and task_run_id")
-    content_hash = hashlib.sha256(full_content.encode("utf-8")).hexdigest()
-    if str(bds.get("content_hash") or binding.get("content_hash") or "") != content_hash:
-        raise ValueError("Formal Decision canonical event content_hash mismatch")
-    binding = {
-        "report_type": "ETF_FORMAL_DECISION",
-        "task_id": str(bds.get("task_id") or binding.get("task_id") or "ETF正式决策"),
-        "task_run_id": task_run_id,
-        "report_id": str(bds.get("report_id") or binding.get("report_id") or f"ETF_FORMAL_DECISION:{task_run_id}"),
-        "request_id": identity["request_id"],
-        "parent_request_id": identity["parent_request_id"],
-        "decision_id": identity["decision_id"],
-        "title": "【ETF正式决策】",
-        "full_content": full_content,
-        "content_hash": content_hash,
-    }
-    occurrence = str(bds.get("occurrence_id") or binding.get("occurrence_id") or task_run_id)
-    payload = {
-        "event_type": "FORMAL_DECISION_REPORT",
-        "occurrence_id": occurrence,
-        "request_id": identity["request_id"],
-        "parent_request_id": identity["parent_request_id"],
-        "decision_id": identity["decision_id"],
-        "reviewed_at_beijing": str(bds.get("requested_at_beijing") or request.get("requested_at_beijing") or ""),
-        "presentation_binding": binding,
-        "formal_decision": bds.get("decision_response") or bds.get("formal_decision") or {},
-        "source_bds_path": str(bds.get("target_path") or ""),
-    }
-    payload["fingerprint"] = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
-    event_path = ROOT / "events" / "reviews" / f"formal_{occurrence}.json"
-    prior = load_json(event_path) if event_path.exists() else {}
-    if prior and prior.get("fingerprint") != payload["fingerprint"]:
-        raise ValueError("Formal Decision occurrence is immutable")
-    if not prior:
-        event_path.parent.mkdir(parents=True, exist_ok=True)
-        atomic_json_write(event_path, payload)
-        return True, False, str(event_path.relative_to(ROOT)).replace("\\", "/")
-    return True, True, str(event_path.relative_to(ROOT)).replace("\\", "/")
-
-
-def record_close_review_closure(account: dict, request: dict, review: dict, event: dict) -> None:
-    """Persist canonical closure while preserving degraded evidence semantics."""
-    market_date = str(event.get("market_date") or "")
-    if not market_date:
-        return
-    review_scope = str(review.get("review_scope") or "").strip().upper()
-    data_time = review.get("data_time") if isinstance(review.get("data_time"), dict) else {}
-    reviewed_at = parse_time(
-        review.get("reviewed_at_beijing")
-        or event.get("reviewed_at_beijing")
-        or event.get("updated_at_beijing")
-    )
-    legal_close_boundary = parse_time(f"{market_date}T15:00:00+08:00")
-    if (
-        review_scope != "FULL_DAY"
-        or reviewed_at is None
-        or legal_close_boundary is None
-        or reviewed_at < legal_close_boundary
-    ):
-        return
-    closure_path = ROOT / "data" / "state" / f"close_review_closure_{market_date}.json"
-    snapshot = review.get("data_time") or {}
-    binding = event.get("presentation_binding") if isinstance(event.get("presentation_binding"), dict) else {}
-    # The review event is the single completion owner.  Persist the REPORT
-    # handoff from that same event so a generated review cannot exist without
-    # a durable, request-bound delivery request.  notification_center remains
-    # the only sender; this projection only records the immutable handoff.
-    task_run_id = str(binding.get("task_run_id") or "").strip()
-    full_content = str(binding.get("full_content") or "")
-    report_id = f"etf_trade_review:{task_run_id}" if task_run_id else ""
-    content_hash = hashlib.sha256(full_content.encode("utf-8")).hexdigest() if full_content else ""
-    if task_run_id and full_content and str(binding.get("content_hash") or "") == content_hash:
-        report_path = ROOT / "requests" / "report_delivery" / f"{report_id.replace(':', '__')}.json"
-        report = {
-            "schema_version": "1.0",
-            "event_type": "REPORT_DELIVERY_REQUEST",
-            "channel": "REPORT",
-            "report_type": str(binding.get("report_type") or "ETF_TRADE_REVIEW"),
-            "report_id": report_id,
-            "request_id": str(event.get("request_id") or request.get("request_id") or ""),
-            "task_id": str(binding.get("task_id") or "ETF交易复盘"),
-            "task_run_id": task_run_id,
-            "generated_at": str(event.get("reviewed_at_beijing") or event.get("updated_at_beijing") or ""),
-            "effective_market_date": market_date,
-            "source_actor": str(event.get("source") or "CHATGPT_SCHEDULED_REVIEW_ACTOR"),
-            "source_reference": f"canonical-review-completion:events/reviews/{market_date}.json",
-            "title": "【ETF交易复盘】",
-            "summary": "Canonical review completion; deliver the frozen report unchanged.",
-            "full_content": full_content,
-            "content_hash": content_hash,
-            "idempotency_key": f"ETF_TRADE_REVIEW:{task_run_id}",
-            "delivery_mode": "FULL_REPORT",
-            "no_trade_authority": True,
-        }
-        if report_path.exists() and load_json(report_path) != report:
-            raise RuntimeError("current review REPORT_DELIVERY_REQUEST identity/content mismatch")
-        if not report_path.exists():
-            atomic_json_write(report_path, report)
-    closure = {
-        "schema_version": "1.0", "market_date": market_date,
-        "chain": ["market_close", "account", "formal_review", "archive", "experience", "dashboard", "risk"],
-        "account_fact_updated_at": account.get("updated_at", ""),
-        "close_snapshot": snapshot.get("close_snapshot") or review.get("close_snapshot", ""),
-        "formal_review_path": f"events/reviews/{market_date}.json",
-        "dashboard_path": "ETF当前状态_DASHBOARD.md", "archive_path": "ETF市场行情档案_2026.md",
-        "experience_path": "ETF交易复盘与经验库_2026.md",
-        "case_id": review.get("case_id") or "", "case_mode": review.get("case_mode") or "CONTINUATION_NO_NEW_CASE",
-        "known_net_equity": (review.get("etf_strategy_known_net") or {}).get("known_net_strategy_equity"),
-        "risk_rate_pct": (review.get("etf_strategy_known_net") or {}).get("etf_strategy_risk_rate_pct"),
-        # CLOSED means the canonical closure event was persisted.  Keep the
-        # substantive evidence state separate so degraded discovery/evidence
-        # cannot be mistaken for a complete business review.
-        "status": "CLOSED",
-        "review_evidence_status": (
-            "COMPLETE"
-            if (
-                str(data_time.get("close_data_status") or "").upper() == "VERIFIED_SESSION_CLOSE"
-                and bool(str(data_time.get("close_snapshot") or "").strip())
-                and str(review.get("discovery_close_status") or "").upper() == "COMPLETED"
-            )
-            else "DEGRADED"
-        ),
-        "business_completion_status": (
-            "COMPLETE"
-            if (
-                str(data_time.get("close_data_status") or "").upper() == "VERIFIED_SESSION_CLOSE"
-                and bool(str(data_time.get("close_snapshot") or "").strip())
-                and str(review.get("discovery_close_status") or "").upper() == "COMPLETED"
-            )
-            else "DEGRADED"
-        ),
-        "reviewed_at_beijing": event.get("reviewed_at_beijing", ""),
-        "request_id": request.get("request_id", ""),
-        "note": "Formal post-close review is canonicalized from the request-scoped review payload; no trade or permission is inferred.",
-    }
-    prior = load_json(closure_path) if closure_path.exists() else {}
-    if prior == closure:
-        return
-    atomic_json_write(closure_path, closure)
-    current_path = ROOT / "data" / "state" / "CURRENT.json"
-    if current_path.exists():
-        current = load_json(current_path)
-        current["close_review_closure"] = {
-            "status": "CLOSED", "market_date": market_date,
-            "path": str(closure_path.relative_to(ROOT)).replace("\\", "/"),
-            "formal_review_path": f"events/reviews/{market_date}.json", "case_id": closure.get("case_id", ""),
-        }
-        atomic_json_write(current_path, current)
-
-
-def execution_attribution(trade: dict, linked_decision_id: str) -> dict:
-    try:
-        from decision_trade_link import resolve_link
-        resolved_id, _decision, resolution = resolve_link(ROOT, trade, linked_decision_id)
-        if resolution == "CORRECTION_CONFLICT":
-            return {"status": "CORRECTION_CONFLICT"}
-        if resolved_id:
-            return {"status": "READY", "decision_id": resolved_id, "resolution": resolution}
-    except Exception:
-        pass
-    if not linked_decision_id:
-        return {"status": "NO_LINKED_DECISION"}
-    path = ROOT / "events/decisions" / f"{linked_decision_id}.json"
-    if not path.exists():
-        return {"status": "LINKED_DECISION_NOT_FOUND"}
-    decision = load_json(path)
-    try:
-        from decision_trade_link import decision_price_for_trade
-    except ModuleNotFoundError:
-        from scripts.decision_trade_link import decision_price_for_trade
-    # Attribute price only to the actual traded object/action.  candidate_code
-    # may describe a simultaneous observation or new opportunity.
-    dprice = safe_float(decision_price_for_trade(decision, trade))
-    eprice = safe_float(trade.get("price"))
-    diff_pct = pct(eprice, dprice) if dprice not in (None, 0.0) and eprice is not None else None
-    side = str(trade.get("side") or "").upper()
-    is_buy = side in {"BUY", "B", "买", "买入"} or "买" in side
-    is_sell = side in {"SELL", "S", "卖", "卖出"} or "卖" in side
-    adverse = diff_pct if is_buy else (-diff_pct if is_sell and diff_pct is not None else None)
-    dt0 = parse_time(decision.get("decision_effective_at_beijing") or decision.get("issued_at_beijing") or decision.get("decision_time_beijing"))
-    dt1 = parse_time(trade.get("confirmed_at_beijing"))
-    delay = round((dt1 - dt0).total_seconds(), 1) if dt0 and dt1 else None
-    ordering = str(decision.get("decision_effective_ordering") or "").upper()
-    timing_quality = str(decision.get("timing_quality") or "").upper()
-    bounded_before_execution = ordering == "BEFORE_EXECUTION" and timing_quality in {"USER_CONFIRMED_BOUNDED", "USER_CONFIRMED"}
-    candidate_code = str(decision.get("candidate_code") or "").strip()
-    hypothesis_id = decision.get("hypothesis_id") if candidate_code and candidate_code == str(trade.get("code") or "").strip() else None
-    return {"status": "READY" if dprice is not None and eprice is not None and (delay is None or delay >= 0 or bounded_before_execution) else "PARTIAL", "decision_id": linked_decision_id, "hypothesis_id": hypothesis_id, "decision_price": dprice, "execution_price": eprice, "execution_price_vs_decision_pct": diff_pct, "adverse_execution_cost_pct": adverse, "decision_to_execution_seconds": delay if delay is None or delay >= 0 else None, "decision_effective_ordering": decision.get("decision_effective_ordering"), "timing_quality": decision.get("timing_quality"), "timing_status": "EXACT" if delay is not None and delay >= 0 else "BOUNDED_BEFORE_EXECUTION" if bounded_before_execution else "UNAVAILABLE", "method_note": "正的adverse_execution_cost_pct表示相对正式决策价格出现不利执行偏差；买入价更高或卖出价更低均为正。该指标分离判断质量与执行质量，不改变交易权限。"}
-
-
-
-def _trade_idempotency_key(trade: dict, confirmed_at: str) -> str:
-    explicit = str(trade.get("idempotency_key") or "").strip()
-    return explicit or "|".join(str(trade.get(key) or "") for key in ("code", "side", "quantity", "price")) + "|" + str(confirmed_at)
-
-
-def _find_existing_trade(trade: dict, confirmed_at: str, key: str) -> dict | None:
-    directory = ROOT / "events" / "trades"
-    for path in sorted(directory.glob("*.json")) if directory.exists() else []:
-        try: prior = load_json(path)
-        except Exception: continue
-        if prior.get("idempotency_key") == key or (all(str(prior.get(k) or "") == str(trade.get(k) or "") for k in ("code", "side", "quantity", "price")) and str(prior.get("confirmed_at_beijing") or "") == str(confirmed_at)):
-            return prior
-    return None
-
-
-def resolve_trade_linked_decision_id(
-    trade: dict,
-    decision_id: str = "",
-    existing_linked_decision_id: str = "",
-) -> str:
-    """Resolve one durable decision association without weakening legacy inputs.
-
-    An already-persisted association wins on replay.  For a new event, an
-    explicit trade-event link is authoritative, followed by the legacy
-    decision_id and same-request formal decision compatibility.
-    """
-    for value in (
-        existing_linked_decision_id,
-        trade.get("linked_decision_id"),
-        trade.get("decision_id"),
-        decision_id,
-    ):
-        resolved = str(value or "").strip()
-        if resolved:
-            return resolved
-    return ""
-
-def _latest_trade_event_id() -> str:
-    directory = ROOT / "events" / "trades"
-    candidates = []
-    for path in sorted(directory.glob("*.json")) if directory.exists() else []:
-        try:
-            event = load_json(path)
-        except Exception:
-            continue
-        event_id = str(event.get("event_id") or "")
-        if event_id:
-            candidates.append((str(event.get("confirmed_at_beijing") or ""), event_id))
-    return max(candidates)[1] if candidates else ""
-
-
-
-def _account_change_events(prior: dict, current: dict, request: dict, trade: dict | list[dict] | None) -> list[dict]:
-    """Record observable account deltas and reconcile each against exact confirmed trade mechanics."""
-    prior_positions = {str(x.get("code")): x for x in (prior.get("positions") or []) if x.get("code")}
-    current_positions = {str(x.get("code")): x for x in (current.get("positions") or []) if x.get("code")}
-    trades = trade if isinstance(trade, list) else ([trade] if isinstance(trade, dict) else [])
-    by_code: dict[str, list[dict]] = {}
-    for item in trades:
-        by_code.setdefault(str(item.get("code") or ""), []).append(item)
-    codes = sorted(set(prior_positions) | set(current_positions))
-    event_type = str(request.get("account_change_event_type") or "").strip() or (
-        "USER_REPORTED_TRADE" if trades else "BROKER_SCREENSHOT_CHANGE"
-    )
-    events: list[dict] = []
-    for code in codes:
-        before = safe_float(prior_positions.get(code, {}).get("quantity")) or 0.0
-        after = safe_float(current_positions.get(code, {}).get("quantity")) or 0.0
-        delta = round(after - before, 8)
-        if delta == 0:
-            continue
-        row = current_positions.get(code) or prior_positions.get(code) or {}
-        matching_trade = None
-        for candidate in by_code.get(code, []):
-            side = str(candidate.get("side") or "").upper()
-            quantity = safe_float(candidate.get("quantity"))
-            direction_matches = (delta > 0 and side in {"BUY", "B", "买入", "买"}) or (delta < 0 and side in {"SELL", "S", "卖出", "卖"})
-            if quantity is not None and abs(abs(delta) - quantity) < 1e-8 and direction_matches:
-                matching_trade = candidate
-                break
-        explained = matching_trade is not None
-        known_ipo = _is_known_ipo_registration(current, code, delta, after)
-        event_time = str((matching_trade or {}).get("confirmed_at_beijing") or current.get("updated_at") or "")
-        key_body = {"event_type": event_type, "code": code, "delta": delta, "event_time": event_time}
-        key = "account_change_" + hashlib.sha256(json.dumps(key_body, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:20]
-        events.append({
-            "event_id": key, "idempotency_key": key, "event_type": event_type,
-            "event_time": event_time, "object": display_name(row),
-            "code": code, "quantity_before": before, "quantity_after": after,
-            "quantity_delta": delta,
-            "change_summary": ("买入/新增持仓" if delta > 0 else "卖出/减少持仓"),
-            "reconciliation_status": (
-                "RECONCILED_BY_CONFIRMED_TRADE" if explained
-                else "RECONCILED_BY_KNOWN_IPO_REGISTRATION" if known_ipo
-                else "UNRECONCILED_ACCOUNT_CHANGE"
-            ),
-            "source": str(current.get("source") or request.get("source") or "USER_CONFIRMED"),
-            "read_only": True,
-        })
-    batch_event_time = next(
-        (str(item.get("confirmed_at_beijing") or item.get("executed_at") or "") for item in trades
-         if item.get("confirmed_at_beijing") or item.get("executed_at")),
-        str(current.get("updated_at") or ""),
-    )
-    for field in ("cash", "total_asset"):
-        before = safe_float(prior.get(field))
-        after = safe_float(current.get(field))
-        if before is None or after is None or abs(after - before) < 0.005:
-            continue
-        key_body = {"event_type": event_type, "field": field, "delta": round(after - before, 2), "event_time": batch_event_time}
-        key = "account_change_" + hashlib.sha256(json.dumps(key_body, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:20]
-        events.append({
-            "event_id": key, "idempotency_key": key, "event_type": event_type,
-            "event_time": batch_event_time, "object": field, "change_summary": f"{field}变化 {after - before:+.2f}",
-            "amount_before": before, "amount_after": after, "amount_delta": round(after - before, 2),
-            "reconciliation_status": "RECONCILED_BY_CONFIRMED_TRADE" if trades else "UNRECONCILED_ACCOUNT_CHANGE",
-            "source": str(current.get("source") or request.get("source") or "USER_CONFIRMED"),
-            "read_only": True,
-        })
-    return events
-
-
-def _is_known_ipo_registration(account: dict, code: str, delta: float, after: float) -> bool:
-    """Attribute a new position to one exact settled IPO obligation."""
-    if delta <= 0 or after <= 0:
-        return False
-    positions = [p for p in account.get("positions") or [] if str(p.get("code") or "") == code]
-    obligations = [
-        o for o in account.get("settlement_obligations") or []
-        if str(o.get("status") or "").upper() == "SETTLED"
-        and str(o.get("obligation_type") or "").upper() == "IPO_ALLOTMENT_PAYMENT"
-        and str(o.get("security_code") or "") == code
-    ]
-    if len(positions) != 1 or len(obligations) != 1:
-        return False
-    position, obligation = positions[0], obligations[0]
-    quantity = safe_float(position.get("quantity"))
-    price = safe_float(obligation.get("subscription_price"))
-    cost = safe_float(position.get("cost"))
-    required_cash = safe_float(obligation.get("required_cash"))
-    if None in (quantity, price, cost, required_cash):
-        return False
-    return (
-        abs(quantity - after) <= 1e-8
-        and price > 0
-        and abs(cost - price) <= max(0.01, price * 0.0001)
-        and abs(required_cash - after * price) <= 0.01
-    )
-
-
-def _reconcile_known_ipo_events(account: dict) -> None:
-    """Upgrade matching historical deltas without re-emitting notifications."""
-    for event in account.get("account_change_events_after_confirmed_at") or []:
-        if str(event.get("reconciliation_status") or "").upper() != "UNRECONCILED_ACCOUNT_CHANGE":
-            continue
-        code = str(event.get("code") or "").strip()
-        delta = safe_float(event.get("quantity_delta"))
-        after = safe_float(event.get("quantity_after"))
-        if code and delta is not None and after is not None and _is_known_ipo_registration(account, code, delta, after):
-            event["reconciliation_status"] = "RECONCILED_BY_KNOWN_IPO_REGISTRATION"
-
-
-def _apply_trade_to_account(prior: dict, trade: dict) -> dict:
-    """Safely carry a user-confirmed trade into the account fact when no screenshot is supplied."""
-    account = json.loads(json.dumps(prior))
-    account.setdefault("positions", [])
-    code = str(trade.get("code") or "")
-    side = str(trade.get("side") or "").upper()
-    qty = safe_float(trade.get("quantity"))
-    amount = safe_float(trade.get("amount"))
-    if amount is None:
-        price = safe_float(trade.get("price"))
-        amount = round(price * qty, 6) if price is not None else None
-    if not code or qty is None or qty <= 0 or amount is None:
-        return account
-    sign = 1 if side in {"BUY", "B", "买入", "买"} else -1 if side in {"SELL", "S", "卖出", "卖"} else 0
-    if sign == 0:
-        return account
-    position = next((p for p in account["positions"] if str(p.get("code")) == code), None)
-    if position is None:
-        if sign < 0:
-            return account
-        position = {"asset_type": trade.get("asset_type") or "ETF", "name": trade.get("name") or code, "code": code, "quantity": 0, "cost": safe_float(trade.get("price")) or 0, "last_price": safe_float(trade.get("price")) or 0, "market_value": 0, "holding_pnl": 0, "holding_pnl_pct": 0}
-        account["positions"].append(position)
-    before = safe_float(position.get("quantity")) or 0.0
-    after = before + sign * qty
-    if after < -1e-8:
-        return account
-    position["quantity"] = int(after) if abs(after - round(after)) < 1e-8 else after
-    if sign < 0 and after <= 1e-8:
-        # A fully executed exit must not leave an impossible residual
-        # available quantity. Partial sells retain existing semantics.
-        position["quantity"] = 0
-        position["available_quantity"] = 0
-    elif sign < 0 and position.get("available_quantity") is not None:
-        available = safe_float(position.get("available_quantity"))
-        if available is not None:
-            position["available_quantity"] = max(0, min(after, available - qty))
-    if sign > 0 and position.get("cost") in (None, 0, 0.0):
-        position["cost"] = safe_float(trade.get("price")) or position.get("cost") or 0
-    if position.get("last_price") in (None, 0, 0.0):
-        position["last_price"] = safe_float(trade.get("price")) or 0
-    position["market_value"] = round(float(position.get("last_price") or 0) * float(position["quantity"]), 2)
-    cash_delta = -sign * amount
-    account["cash"] = round((safe_float(account.get("cash")) or 0) + cash_delta, 2)
-    if account.get("total_asset") is not None:
-        account["total_asset"] = round((safe_float(account.get("total_asset")) or 0) + cash_delta, 2)
-    account["updated_at"] = str(trade.get("confirmed_at_beijing") or account.get("updated_at") or datetime.now(SHANGHAI).isoformat(timespec="seconds"))
-    account["last_confirmed_market_date"] = account["updated_at"][:10]
-    account["status"] = "VALID"
-    account["source"] = str(trade.get("source") or "USER_REPORTED_TRADE_CONFIRMED")
-    account["validity_mode"] = "EVENT_DRIVEN_TRADE_CONFIRMED"
-    return account
-
-
-
-
-def _explicit_case_ids_from_text(value: object) -> list[str]:
-    return sorted(set(re.findall(r"CASE-\d{8}-\d{2}", str(value or ""))))
-
-
-def _review_case_ids_for_trade(event: dict) -> list[str]:
-    """Read only existing formal review mappings; never create a CASE mapping."""
-    event_id = str(event.get("event_id") or "").strip()
-    if not event_id:
-        return []
-    found = set()
-    review_dir = ROOT / "events" / "reviews"
-    for path in sorted(review_dir.glob("*.json")) if review_dir.exists() else []:
-        try:
-            payload = load_json(path)
-        except (OSError, ValueError, TypeError):
-            continue
-
-        def walk(value):
-            if isinstance(value, dict):
-                if str(value.get("trade_event_id") or "").strip() == event_id:
-                    case_id = str(value.get("case_id") or "").strip()
-                    if case_id:
-                        found.add(case_id)
-                for child in value.values():
-                    walk(child)
-            elif isinstance(value, list):
-                for child in value:
-                    walk(child)
-
-        walk(payload)
-    return sorted(found)
-
-
-def _case_ids_from_existing_experience_for_trade(event: dict, text: str, table_start: int, table_end: int) -> list[str]:
-    """Recover an already documented CASE owner using exact immutable trade facts."""
-    event_id = str(event.get("event_id") or "").strip()
-    code = str(event.get("code") or "").strip()
-    name = str(event.get("name") or "").strip()
-    side = str(event.get("side") or "").upper()
-    side_cn = "买入" if side in {"BUY", "B", "买入", "买"} else "卖出" if side in {"SELL", "S", "卖出", "卖"} else side
-    qty = int(float(event.get("quantity") or 0))
-    price = float(event.get("price") or 0)
-    confirmed_at = str(
-        event.get("executed_at_beijing")
-        or event.get("executed_at")
-        or event.get("trade_time")
-        or event.get("confirmed_at_beijing")
-        or ""
-    )
-    trade_date = confirmed_at[:10]
-    date_time_tokens = set()
-    if len(confirmed_at) >= 19 and confirmed_at[5:7].isdigit() and confirmed_at[8:10].isdigit():
-        month = str(int(confirmed_at[5:7]))
-        day = str(int(confirmed_at[8:10]))
-        clock = confirmed_at[11:19]
-        date_time_tokens.update({f"{month}月{day}日{clock}", f"{confirmed_at[5:7]}月{confirmed_at[8:10]}日{clock}", f"{trade_date} {clock}"})
-    elif trade_date:
-        date_time_tokens.add(trade_date)
-    marker = f"TRADE_EVENT:{event_id}" if event_id else ""
-    old_case_ids = []
-    table_text = text[table_start:table_end]
-    for line in table_text.splitlines():
-        if (marker and marker in line) or (
-            trade_date and f"|{trade_date} " in line and f"|{code}|" in line
-            and f"|{side_cn}|" in line and f"|{qty:,}|" in line and f"|{price:.3f}|" in line
-        ):
-            old_case_ids.extend(_explicit_case_ids_from_text(line))
-
-    # The CASE section is a human-maintained formal owner record.  Consume it
-    # only when it contains either the exact event marker/linked decision, or
-    # all immutable trade facts; code/date alone is intentionally insufficient.
-    linked = str(event.get("linked_decision_id") or "").strip()
-    heading = re.compile(r"^###\s+.*?(CASE-\d{8}-\d{2}).*?$", re.MULTILINE)
-    matches = list(heading.finditer(text))
-    found = set()
-    for index, match in enumerate(matches):
-        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
-        section = text[match.start():end]
-        exact_identity = (
-            (code and code in section or name and name in section)
-            and side_cn and side_cn in section
-            and (f"{qty:,}" in section or str(qty) in section)
-            and f"{price:.3f}" in section
-            and any(token in section for token in date_time_tokens)
-        )
-        if (marker and marker in section) or (linked and linked in section) or exact_identity:
-            found.add(match.group(1))
-    resolved = sorted(set(old_case_ids) | found)
-    if len(resolved) > 1:
-        raise ValueError(
-            f"conflicting existing CASE ownership for {event_id or code}: {resolved}"
-        )
-    return resolved
-
-
-def _case_ids_for_transaction_projection(event: dict, text: str, table_start: int, table_end: int) -> list[str]:
-    """Resolve CASE ownership with strong facts first and no guessing."""
-    event_id = str(event.get("event_id") or "").strip()
-    # Historical FACT_ENRICHMENT_ONLY replay may preserve an exact CASE
-    # already documented on the economic row. This older formal PIT ownership
-    # must not be erased by later adoption-time ineligibility metadata.
-    # Ordinary events keep terminal-review precedence below.
-    if (
-        bool(event.get("historical_backfill"))
-        and str(event.get("replay_semantics") or "").upper() == "FACT_ENRICHMENT_ONLY"
-    ):
-        preserved = _case_ids_from_existing_experience_for_trade(
-            event, text, table_start, table_end
-        )
-        if preserved:
-            return preserved
-    event_date = str(
-        event.get("execution_date")
-        or event.get("executed_at_beijing")
-        or event.get("executed_at")
-        or event.get("trade_time")
-        or event.get("confirmed_at_beijing")
-        or ""
-    )[:10]
-    if event_id and event_date:
-        terminal_path = ROOT / "events" / "reviews" / f"{event_date}.json"
-        if terminal_path.exists():
-            try:
-                from review_prerequisite_lifecycle import is_valid_unrecoverable_review_event
-                terminal_review = json.loads(terminal_path.read_text(encoding="utf-8"))
-                if is_valid_unrecoverable_review_event(terminal_review, event_id):
-                    # An unrecoverable review is a canonical terminal lifecycle
-                    # fact, not a normal CASE owner.  Do not project a stale
-                    # CASE from an older transaction-index row.
-                    return []
-            except (OSError, ValueError, TypeError, ImportError):
-                pass
-    review_ids = _review_case_ids_for_trade(event)
-    if review_ids:
-        return review_ids
-    return _case_ids_from_existing_experience_for_trade(event, text, table_start, table_end)
-
-
-def sync_experience_transaction_index(event: dict) -> None:
-    """Upsert a confirmed trade into Experience §2.1 and keep its counts aligned.
-
-    This is fact synchronization only. It never evaluates trade quality, changes
-    lifecycle rules, or creates a trading action.
-    """
-    import re
-
-    event_id = str(event.get("event_id") or "")
-    if not event_id:
-        return
-    text = EXPERIENCE.read_text(encoding="utf-8")
-    section_end = "\n### 2.2 银证转账与非交易现金流水"
-    if section_end not in text:
-        raise RuntimeError("experience transaction-index boundary missing")
-
-    marker = f"TRADE_EVENT:{event_id}"
-    confirmed = str(event.get("confirmed_at_beijing") or "")
-    execution_stamp = str(
-        event.get("executed_at_beijing")
-        or event.get("executed_at")
-        or event.get("trade_time")
-        or confirmed
-    )
-    dt = execution_stamp.replace("T", " ")[:19]
-    code = str(event.get("code") or "")
-    name = str(event.get("name") or code)
-    name = re.sub(rf"（{re.escape(code)}）$", "", name).strip() if code else name
-    side = str(event.get("side") or "").upper()
-    side_cn = "买入" if side in {"BUY", "B", "买入", "买"} else "卖出" if side in {"SELL", "S", "卖出", "卖"} else side
-    qty = int(float(event.get("quantity") or 0))
-    price = float(event.get("price") or 0)
-    gross = float(event.get("amount") or price * qty)
-    # Older confirmed trade events use the canonical ``fee`` field while
-    # correction-enriched events use ``fee_amount``.  Treat both as the same
-    # trade-fact fee; a confirmed status still remains mandatory.
-    fee = safe_float(event.get("fee_amount"))
-    if fee is None:
-        fee = safe_float(event.get("fee"))
-    fee_status = str(event.get("fee_status") or "").upper()
-    fee_confirmed = fee is not None and fee_status in {"CONFIRMED", "KNOWN", "FINAL"}
-    fee_text = f"{fee:.2f}" if fee_confirmed else "待确认"
-    if side_cn == "买入":
-        cash = -(gross + (fee if fee_confirmed and fee is not None else 0))
-    elif side_cn == "卖出":
-        cash = gross - (fee if fee_confirmed and fee is not None else 0)
-    else:
-        cash = 0.0
-    cash_text = f"{cash:,.2f}" if fee_confirmed else f"{cash:,.2f}（未含待确认费用）"
-    lifecycle = str(event.get("lifecycle") or "").strip()
-    if lifecycle in {"待确认", "UNKNOWN", "未提供"}:
-        lifecycle = ""
-    linked = str(event.get("linked_decision_id") or "").strip()
-    # Preserve the strongest already-existing CASE ownership while rewriting
-    # the managed transaction row.  This is projection-only: no CASE is created.
-    table_header = "|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|"
-    projection_table_start = text.index(table_header)
-    projection_table_end = text.index(section_end, projection_table_start)
-    case_ids = _case_ids_for_transaction_projection(
-        event, text, projection_table_start, projection_table_end
-    )
-    note_parts = list(case_ids)
-    if lifecycle:
-        note_parts.append(lifecycle)
-    if linked:
-        note_parts.append(f"关联决策{linked}")
-    note_parts.append("真实成交已执行")
-    note = "；".join(note_parts)
-    row = f"|{dt}|{name}（{code}）|{code}|{side_cn}|{qty:,}|{price:.3f}|{gross:,.2f}|{fee_text}|{cash_text}|{note}| <!-- {marker} -->"
-
-    table_start = text.index("|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|")
-    table_end = text.index(section_end, table_start)
-    table = text[table_start:table_end]
-    lines = table.splitlines()
-    marker_index = next((index for index, line in enumerate(lines) if marker in line), None)
-    identity = f"|{dt}|{name}（{code}）|{code}|{side_cn}|{qty:,}|{price:.3f}|{gross:,.2f}|"
-    economic_index = next((index for index, line in enumerate(lines) if line.startswith(identity)), None)
-    enrichment_only = str(event.get("replay_semantics") or "").upper() == "FACT_ENRICHMENT_ONLY"
-    if enrichment_only and economic_index is not None:
-        lines[economic_index] = row
-        if marker_index is not None and marker_index != economic_index:
-            del lines[marker_index]
-        updated_table = "\n".join(lines)
-        text = text[:table_start] + updated_table + text[table_end:]
-    elif marker_index is not None:
-        lines[marker_index] = row
-        updated_table = "\n".join(lines)
-        text = text[:table_start] + updated_table + text[table_end:]
-    elif economic_index is not None:
-        lines[economic_index] = row
-        updated_table = "\n".join(lines)
-        text = text[:table_start] + updated_table + text[table_end:]
-    else:
-        idx = text.index(section_end)
-        text = text[:idx].rstrip() + "\n" + row + "\n" + text[idx:]
-
-    # Recompute the unique index counts from the actual table instead of carrying
-    # a hand-maintained number that can lag a newly confirmed fill.
-    table_start = text.index("|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|")
-    table_end = text.index(section_end, table_start)
-    rows = []
-    for line in text[table_start:table_end].splitlines():
-        if re.match(r"^\|20\d{2}-\d{2}-\d{2} ", line):
-            rows.append(line)
-    total = len(rows)
-    etf_count = sum("ETF（" in line for line in rows)
-    stock_count = total - etf_count
-    dates = [line.split("|")[1][:10] for line in rows]
-    last_date = max(dates) if dates else ""
-    text = re.sub(
-        r"统计区间为2026-07-13至\d{4}-\d{2}-\d{2}，共\d+笔证券交易：ETF \d+笔、个股\d+笔。",
-        f"统计区间为2026-07-13至{last_date}，共{total}笔证券交易：ETF {etf_count}笔、个股{stock_count}笔。",
-        text,
-        count=1,
-    )
-    text = re.sub(r"不属于\d+笔证券交易", f"不属于{total}笔证券交易", text, count=1)
-    table_start = text.index("|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|")
-    table_end = text.index(section_end, table_start)
-    text = _refresh_current_fee_projection(text, table_start, table_end)
-    write_formal_text_if_changed(ROOT, EXPERIENCE.name, text)
-
-
-def _refresh_current_fee_projection(text: str, table_start: int, table_end: int) -> str:
-    """Project current cumulative ETF fees from canonical facts without rewriting PIT history."""
-    try:
-        from confirmed_trade_facts import canonical_etf_fee_projection
-        equity_path = ROOT / "data" / "state" / "etf_strategy_equity.json"
-        equity = load_json(equity_path) if equity_path.exists() else {}
-        projection = canonical_etf_fee_projection(ROOT, equity.get("trades") or [])
-    except (OSError, ValueError, TypeError, ImportError):
-        return text
-    rows = [line for line in text[table_start:table_end].splitlines() if re.match(r"^\|20\d{2}-\d{2}-\d{2} ", line)]
-    dates = [line.split("|")[1][:10] for line in rows]
-    last_date = max(dates) if dates else ""
-    pending = "无" if projection["pending_fee_count"] == 0 else f"{projection['pending_fee_count']}笔"
-    sentence = f"截至{last_date}累计已确认ETF费用{projection['effective_confirmed_fee_sum']:.2f}元；待确认费用：{pending}。"
-    return re.sub(r"截至.*?。", sentence, text, count=1)
-
-def write_trade_review_required(event: dict) -> None:
-    event_id = str(event.get("event_id") or "")
-    if not event_id:
-        return
-    path = ROOT / "events" / "research" / "decision_outcomes" / f"TRADE_COMPLETED_REVIEW_REQUIRED_{event_id}.json"
-    if path.exists():
-        return
-    atomic_json_write(path, {
-        "event_type": "TRADE_COMPLETED_REVIEW_REQUIRED",
-        "event_id": event_id,
-        "notification_id": event.get("notification_id"),
-        "related_decision_id": event.get("linked_decision_id"),
-        "execution_date": event.get("execution_date"),
-        "confirmation_date": event.get("confirmation_date"),
-        "security_code": event.get("code"),
-        "security_name": event.get("name"),
-        "side": event.get("side"),
-        "quantity": event.get("quantity"),
-        "price": event.get("price"),
-        "amount": event.get("amount"),
-        "review_status": "PENDING_FORMAL_REVIEW",
-        "objective_fields": ["trade_event", "strategy_risk_rate_change", "cash_change", "next_observation_point"],
-        "safety_boundary": "只生成客观复盘待办，不自动判断交易正确/错误，不修改MASTER，不生成新的交易动作。",
-    })
-
-
-def _explicit_fact_type(request: dict) -> str:
-    return str(
-        request.get("formal_fact_type")
-        or request.get("fact_type")
-        or request.get("ingress_intent")
-        or ""
-    ).strip().upper()
-
-
-
-def _request_trade_events(request: dict) -> list[dict]:
-    """Normalize the existing singular and batch broker trade ingress shapes."""
-    plural = request.get("trade_events")
-    if isinstance(plural, list) and plural and all(isinstance(item, dict) for item in plural):
-        return plural
-    if "trade_events" in request:
-        return []
-    singular = request.get("trade_event")
-    return [singular] if isinstance(singular, dict) else []
-
-
-def _trade_event_id(request: dict, trade: dict, idempotency_key: str, ordinal: int, total: int) -> str:
-    """Use stable, collision-resistant IDs when a batch omits explicit event IDs."""
-    explicit = str(trade.get("event_id") or "").strip()
-    if explicit:
-        return explicit
-    request_id = str(request.get("request_id") or datetime.now(SHANGHAI).strftime("%Y%m%d_%H%M%S"))
-    if total == 1:
-        return request_id
-    suffix = hashlib.sha256(idempotency_key.encode("utf-8")).hexdigest()[:16]
-    return f"{request_id}_{ordinal + 1}_{suffix}"
-
-def canonical_ingress_contract_for_request(request: dict) -> dict:
-    """Return the actor-side terminal canonical ingress contract for formal facts."""
-
-    fact_type = _explicit_fact_type(request)
-    scenario = str(request.get("interaction_scenario") or "").strip().upper()
-    channel = str(request.get("channel") or request.get("delivery_channel") or "").strip().upper()
-    report_type = str(request.get("report_type") or request.get("report_kind") or "").strip().upper()
-
-    is_broker_fact = is_broker_screenshot_request(request)
-    trade_events = request.get("trade_events")
-    has_trade_events = isinstance(trade_events, list) and bool(trade_events) and all(isinstance(item, dict) for item in trade_events)
-    invalid_trade_events = "trade_events" in request and (
-        not has_trade_events or isinstance(request.get("trade_event"), dict)
-    )
-    is_trade_fact = fact_type in {"CONFIRMED_TRADE", "TRADE_EVENT"} or isinstance(request.get("trade_event"), dict) or has_trade_events
-    is_decision_fact = fact_type == "FORMAL_DECISION" or isinstance(request.get("formal_decision"), dict)
-    # POST_CLOSE_REVIEW is a session/scenario label as well as a review fact
-    # label. An explicit formal_decision payload remains a Decision Fact and
-    # must not be diverted into the review-ingress contract merely because the
-    # user requested the decision after A-share close.
-    is_review_fact = (
-        fact_type in {"FORMAL_POST_CLOSE_REVIEW", "POST_CLOSE_REVIEW"}
-        or (scenario == "POST_CLOSE_REVIEW" and not is_decision_fact and not is_trade_fact)
-    )
-    is_report_delivery = channel in {"REPORT", "REPORT_DELIVERY"} or report_type in {"ETF_TRADE_REVIEW", "SCHEDULED_TRADE_REVIEW"}
-
-    if not any([is_broker_fact, is_review_fact, is_trade_fact, is_decision_fact]):
-        return {
-            "required": False,
-            "terminal_state": CANONICAL_INGRESS_NOT_APPLICABLE,
-            "reason": "not_a_formal_fact_ingress_request",
-        }
-
-    receipt = request.get("_ingress_path") or request.get("canonical_request_path") or request.get("request_path")
-    submission_result = request.get("canonical_ingress_result") or request.get("canonical_submission_result")
-    if isinstance(submission_result, dict):
-        result_status = str(submission_result.get("status") or submission_result.get("terminal_state") or "").strip().upper()
-        result_receipt = submission_result.get("receipt") or submission_result.get("receipt_path") or submission_result.get("commit_sha")
-        if result_receipt and result_status in {"SUBMITTED", "SUCCESS", CANONICAL_INGRESS_SUBMITTED}:
-            receipt = result_receipt
-    if not receipt:
-        return {
-            "required": True,
-            "terminal_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
-            "reason": "missing_durable_ingress_receipt",
-        }
-
-    if invalid_trade_events:
-        return {
-            "required": True,
-            "terminal_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
-            "reason": "invalid_trade_events",
-        }
-
-    if is_broker_fact:
-        if isinstance(request.get("account_fact"), dict) or isinstance(request.get("trade_event"), dict) or has_trade_events:
-            return {
-                "required": True,
-                "terminal_state": CANONICAL_INGRESS_SUBMITTED,
-                "reason": "broker_account_fact_request_submitted",
-            }
-        return {
-            "required": True,
-            "terminal_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
-            "reason": "missing_account_fact",
-        }
-
-    if is_review_fact:
-        if isinstance(request.get("formal_review"), dict) or isinstance(request.get("review"), dict):
-            return {
-                "required": True,
-                "terminal_state": CANONICAL_INGRESS_SUBMITTED,
-                "reason": "post_close_review_request_submitted",
-            }
-        if is_report_delivery:
-            return {
-                "required": True,
-                "terminal_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
-                "reason": "report_delivery_is_not_canonical_review_ingress",
-            }
-        return {
-            "required": True,
-            "terminal_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
-            "reason": "missing_formal_review",
-        }
-
-    if is_trade_fact:
-        if isinstance(request.get("trade_event"), dict) or has_trade_events:
-            return {
-                "required": True,
-                "terminal_state": CANONICAL_INGRESS_SUBMITTED,
-                "reason": "confirmed_trade_request_submitted",
-            }
-        return {
-            "required": True,
-            "terminal_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
-            "reason": "missing_trade_event",
-        }
-
-    if is_decision_fact:
-        if isinstance(request.get("formal_decision"), dict):
-            return {
-                "required": True,
-                "terminal_state": CANONICAL_INGRESS_SUBMITTED,
-                "reason": "formal_decision_request_submitted",
-            }
-        return {
-            "required": True,
-            "terminal_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
-            "reason": "missing_formal_decision",
-        }
-
-    return {
-        "required": False,
-        "terminal_state": CANONICAL_INGRESS_NOT_APPLICABLE,
-        "reason": "not_a_formal_fact_ingress_request",
-    }
-
-
-def is_broker_screenshot_request(request: dict) -> bool:
-    """Recognize broker facts from an explicit contract, with legacy compatibility.
-
-    Free-form provenance remains metadata; it is not the business contract.
-    The historical query-time request is accepted because its stable reason and
-    ChatGPT origin explicitly identify a broker screenshot adoption.
-    """
-    explicit = _explicit_fact_type(request)
-    if explicit in {"BROKER_ACCOUNT_SNAPSHOT", "ACCOUNT_FACT_CONFIRMATION", "BROKER_SCREENSHOT"}:
-        return True
-    if str(request.get("interaction_scenario") or "").strip().upper() == "BROKER_SCREENSHOT_SYNC":
-        return True
-    if str(request.get("source") or "").strip().upper() == "CHATGPT_USER_BROKER_SCREENSHOT":
-        return True
-    reason = str(request.get("reason") or "").strip().upper()
-    requested_by = str(request.get("requested_by") or "").strip().lower()
-    return (
-        requested_by == "chatgpt"
-        and reason == "USER_BROKER_SCREENSHOT_QUERY_TIME_REFRESH"
-    )
-
-
-def validate_broker_account_fact_ingress(request: dict, supplied: object) -> str:
-    """Fail fast on malformed ChatGPT-translated broker account facts.
-
-    This validates transport shape only. It does not infer security identity,
-    trading permission, or market facts from names.
-    """
-    if not is_broker_screenshot_request(request):
-        return ""
-    if supplied is None:
-        # A broker screenshot request must carry the canonical account_fact
-        # envelope. Silently accepting account_after_screenshot (or any other
-        # non-canonical field) leaves the request durable but unconsumed and
-        # makes the downstream gate appear stuck.
-        if "account_after_screenshot" in request or "positions" in request:
-            return "broker screenshot request must provide account_fact"
-        return ""
-    if not isinstance(supplied, dict):
-        return "broker account_fact must be an object"
-    positions = supplied.get("positions")
-    if positions is None:
-        return ""
-    if not isinstance(positions, list):
-        return "broker account_fact.positions must be a list"
-    seen: set[str] = set()
-    for index, position in enumerate(positions):
-        if not isinstance(position, dict):
-            return f"broker account_fact.positions[{index}] must be an object"
-        code = str(position.get("code") or "").strip()
-        if not re.fullmatch(r"\d{6}", code):
-            return f"broker account_fact.positions[{index}].code must be a six-digit security code"
-        if code in seen:
-            return f"broker account_fact.positions contains duplicate code {code}"
-        seen.add(code)
-        if position.get("quantity") is None:
-            return f"broker account_fact.positions[{index}].quantity is required"
-        try:
-            float(position.get("quantity"))
-        except (TypeError, ValueError):
-            return f"broker account_fact.positions[{index}].quantity must be numeric"
-        asset_type = str(position.get("asset_type") or "").strip().upper()
-        if asset_type and asset_type not in {"ETF", "STOCK", "FUND", "OTHER"}:
-            return f"broker account_fact.positions[{index}].asset_type is invalid"
-    return ""
-
-
-def merge_account_fact(prior: dict, supplied: dict) -> dict:
-    """Merge confirmed screenshot facts and derive settlement cash canonically."""
-    merged = json.loads(json.dumps(prior or {}))
-    for key, value in (supplied or {}).items():
-        if key != "settlement_obligations" and value is not None:
-            merged[key] = json.loads(json.dumps(value))
-    # An ordinary screenshot is a partial observation.  Empty history-shaped
-    # defaults from an ingress adapter must not erase canonical trade,
-    # decision, fee, lifecycle, or reconciliation facts.
-    for key in ("formal_action", "orders", "trades", "fee_facts", "account_reconciliation",
-                "account_change_events_after_confirmed_at", "lifecycle", "confirmed_trades",
-                "formal_decision", "reconciliation_metadata"):
-        if key in (prior or {}) and (key not in (supplied or {}) or supplied.get(key) in (None, [], {})):
-            merged[key] = json.loads(json.dumps(prior[key]))
-    merged["settlement_obligations"] = _merge_settlement_obligations(prior or {}, supplied or {})
-    for key in ("formal_action", "orders", "trades", "fee_facts", "account_reconciliation",
-                "account_change_events_after_confirmed_at", "lifecycle", "confirmed_trades",
-                "formal_decision", "reconciliation_metadata"):
-        if key not in merged and key in (prior or {}):
-            merged[key] = json.loads(json.dumps(prior[key]))
-    _canonicalize_settlement_account(merged)
-    _annotate_confirmed_ipo_origins(merged)
-    _reconcile_known_ipo_events(merged)
-    return merged
-
-
-def process_historical_backfill_request(request: dict) -> dict:
-    """Persist confirmed historical trade facts without touching current account state."""
-    if str(request.get("ingress_mode") or "").upper() != "HISTORICAL_BACKFILL":
-        raise ValueError("historical backfill mode is required")
-    trades = request.get("historical_trades")
-    if not isinstance(trades, list) or not trades:
-        raise ValueError("historical_trades must be a non-empty list")
-    trade_dir = ROOT / "events" / "trades"
-    trade_dir.mkdir(parents=True, exist_ok=True)
-    created = enriched = 0
-    for raw in trades:
-        if not isinstance(raw, dict):
-            raise ValueError("historical trade must be an object")
-        code, side = str(raw.get("code") or "").strip(), str(raw.get("side") or "").upper()
-        quantity, price = safe_float(raw.get("quantity")), safe_float(raw.get("price"))
-        executed_at = str(raw.get("executed_at") or raw.get("executed_at_beijing") or "").strip()
-        confirmed_at = str(raw.get("confirmed_at_beijing") or "").strip()
-        adoption_at = str(raw.get("historical_fact_adopted_at") or request.get("historical_fact_adopted_at") or datetime.now(SHANGHAI).isoformat(timespec="seconds")).strip()
-        market_date = str(raw.get("market_date") or executed_at[:10]).strip()
-        if not code or side not in {"BUY", "SELL"} or quantity is None or price is None or not executed_at or not adoption_at or not market_date:
-            raise ValueError("historical trade core fields are incomplete")
-        event_id = str(raw.get("event_id") or f"HISTORICAL_{market_date}_{code}_{side}_{format(quantity, '.12g')}_{format(price, '.12g')}")
-        key = str(raw.get("idempotency_key") or f"HISTORICAL_BACKFILL|{code}|{side}|{format(quantity, '.12g')}|{format(price, '.12g')}|{executed_at}")
-        path = trade_dir / f"{event_id}.json"
-        existing = load_json(path) if path.exists() else None
-        if existing:
-            for field, expected in {"code": code, "side": side, "quantity": quantity, "price": price}.items():
-                actual = existing.get(field)
-                numeric_field = field in {"quantity", "price"}
-                normalized_actual = safe_float(actual) if numeric_field else actual
-                normalized_expected = expected
-                mismatch = (
-                    normalized_actual is None or normalized_actual != normalized_expected
-                    if numeric_field
-                    else str(actual) != str(expected)
-                )
-                if mismatch:
-                    source_path = str(request.get("_ingress_path") or "events/trades/" + f"{event_id}.json")
-                    detail = (
-                        f"historical core mismatch: {event_id}:{field}; "
-                        f"existing_value={actual!r}; existing_type={type(actual).__name__}; "
-                        f"expected_value={expected!r}; expected_type={type(expected).__name__}; "
-                        f"existing_source_path={source_path}; request_id={request.get('request_id')!r}; "
-                        f"normalized_existing={normalized_actual!r}; normalized_existing_type={type(normalized_actual).__name__}; "
-                        f"normalized_expected={normalized_expected!r}; normalized_expected_type={type(normalized_expected).__name__}"
-                    )
-                    raise ValueError(detail)
-            existing_executed_at = existing.get("executed_at") or existing.get("executed_at_beijing")
-            if existing_executed_at and str(existing_executed_at) != executed_at:
-                source_path = str(request.get("_ingress_path") or "events/trades/" + f"{event_id}.json")
-                raise ValueError(
-                    f"historical core mismatch: {event_id}:executed_at; "
-                    f"existing_value={existing_executed_at!r}; existing_type={type(existing_executed_at).__name__}; "
-                    f"expected_value={executed_at!r}; expected_type={type(executed_at).__name__}; "
-                    f"existing_source_path={source_path}; request_id={request.get('request_id')!r}; "
-                    f"normalized_existing={str(existing_executed_at)!r}; normalized_existing_type=str; "
-                    f"normalized_expected={executed_at!r}; normalized_expected_type=str"
-                )
-            changed = False
-            if not existing.get("historical_backfill") and confirmed_at:
-                existing["confirmed_at_beijing"] = confirmed_at
-                existing["confirmation_time_semantics"] = "RELIABLE_HISTORICAL_CONFIRMATION"
-                changed = True
-            for field, value in {"historical_fact_adopted_at": adoption_at, "executed_at": executed_at, "executed_at_beijing": executed_at, "market_date": market_date, "account_updated_at": raw.get("account_updated_at"), "amount": raw.get("gross_amount"), "fee_amount": raw.get("fee_amount"), "fee": raw.get("fee_amount"), "fee_status": raw.get("fee_status"), "source": raw.get("source"), "source_type": raw.get("source_type") or "user_confirmed_historical_fact", "source_period": request.get("source_period") or "2026-07-13..2026-09-15", "historical_execution_time_preserved": True, "historical_backfill": True}.items():
-                if value not in (None, "") and existing.get(field) != value:
-                    existing[field] = value
-                    changed = True
-            if changed:
-                atomic_json_write(path, existing)
-                enriched += 1
-            continue
-        event = {
-            "event_id": event_id, "idempotency_key": key, "event_type": "HISTORICAL_BACKFILL_TRADE",
-            "historical_backfill": True, "code": code, "side": side, "quantity": quantity, "price": price,
-            "executed_at": executed_at, "executed_at_beijing": executed_at,
-            "confirmed_at_beijing": confirmed_at or adoption_at, "historical_fact_adopted_at": adoption_at, "confirmation_time_semantics": "RELIABLE_HISTORICAL_CONFIRMATION" if confirmed_at else "CANONICAL_ADOPTION_TIME", "market_date": market_date,
-            "account_updated_at": raw.get("account_updated_at"), "amount": raw.get("gross_amount", raw.get("amount")),
-            "fee": raw.get("fee", raw.get("fee_amount")), "fee_amount": raw.get("fee_amount"), "fee_status": raw.get("fee_status"), "name": raw.get("name"),
-            "source": raw.get("source") or "USER_CONFIRMED_HISTORICAL_SCREENSHOT",
-            "source_type": raw.get("source_type") or "user_confirmed_historical_fact",
-            "source_period": request.get("source_period") or "2026-07-13..2026-09-15",
-            "historical_execution_time_preserved": True,
-            "source_confidence": raw.get("source_confidence") or "USER_CONFIRMED",
-            "execution_status": "EXECUTED", "replay_semantics": "FACT_ENRICHMENT_ONLY",
-        }
-        atomic_json_write(path, event)
-        created += 1
-    acquisition = request.get("acquisition")
-    if acquisition:
-        if not isinstance(acquisition, dict) or str(acquisition.get("code")) != "301689":
-            raise ValueError("invalid acquisition contract")
-        aid = str(acquisition.get("event_id") or "HISTORICAL_ACQUISITION_20260901_301689_500")
-        apath = trade_dir / f"{aid}.json"
-        if not apath.exists():
-            atomic_json_write(apath, {
-                "event_id": aid, "event_type": "IPO_ALLOTMENT_ACQUISITION",
-                "historical_backfill": True, "asset_type": "STOCK", "code": "301689",
-                "quantity": 500, "price": 16.0, "market_date": "2026-09-01",
-                "executed_at": acquisition.get("executed_at") or "2026-09-01T00:00:00+08:00",
-                "confirmed_at_beijing": acquisition.get("confirmed_at_beijing") or adoption_at,
-                "historical_fact_adopted_at": adoption_at,
-                "confirmation_time_semantics": "RELIABLE_HISTORICAL_CONFIRMATION" if acquisition.get("confirmed_at_beijing") else "CANONICAL_ADOPTION_TIME",
-                "source_type": acquisition.get("source_type") or "user_confirmed_historical_fact",
-                "source_period": request.get("source_period") or "2026-07-13..2026-09-15",
-                "historical_execution_time_preserved": True,
-                "lot_source": "confirmed_settlement_obligation",
-                "source": acquisition.get("source") or "USER_CONFIRMED_HISTORICAL_SCREENSHOT",
-                "execution_status": "ACQUIRED",
-            })
-            created += 1
-        for path in trade_dir.glob("*.json"):
-            event = load_json(path)
-            if (str(event.get("code") or "") != "301689"
-                    or str(event.get("side") or "").upper() != "SELL"
-                    or safe_float(event.get("quantity")) != 500.0):
-                continue
-            if event.get("lot_source_event_id") != aid:
-                event["lot_source_event_id"] = aid
-                event["lot_source_relation"] = "ACQUISITION_TO_SELL"
-                atomic_json_write(path, event)
-                enriched += 1
-    return {"ok": True, "ingress_mode": "HISTORICAL_BACKFILL", "created": created, "metadata_enriched": enriched, "current_account_mutated": False, "current_state_mutated": False}
-
-def is_unified_formal_entry(payload: dict) -> bool:
-    """Return true only for the three current Formal Decision entry identities."""
-    mode = str(payload.get("entry_mode") or "").strip().upper()
-    source = str(payload.get("trigger_source") or payload.get("source") or "").strip().upper()
-    expected = {
-        "MANUAL_CONVERSATION": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
-        "MANUAL_SCHEDULED_TASK": "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
-        "AUTOMATIC_SCHEDULED_TASK": "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
-    }
-    return mode in expected and source == expected[mode]
-
-
-def account_fact_is_older(prior: dict, supplied: dict) -> bool:
-    old_time = parse_time(prior.get("updated_at"))
-    new_time = parse_time(supplied.get("updated_at"))
-    return bool(old_time and new_time and new_time < old_time)
-
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("request_path")
-    parser.add_argument("--formal-replay-source-commit", default="")
-    parser.add_argument("--formal-replay-dwp-commit", default="")
-    args = parser.parse_args()
-    forensic_historical_replay = bool(str(args.formal_replay_source_commit or "").strip()) and os.environ.get("ETF_FORMAL_REPLAY_FORENSIC") == "1"
-    reset_formal_replay_forensic_trace(forensic_historical_replay)
-    raw_request_path = Path(str(args.request_path or "").strip())
-    # The workflow may pass either the repository-relative ingress path or the
-    # absolute path after its execution-time-main reset/recovery step. Resolve
-    # both forms through the same root boundary; never allow an outside path.
-    req_path = (raw_request_path if raw_request_path.is_absolute() else ROOT / raw_request_path).resolve()
-    if req_path == ROOT or ROOT not in req_path.parents or not req_path.is_file():
-        raise RuntimeError("invalid state sync request path")
-    request = load_json(req_path)
-    request["_ingress_path"] = str(req_path.relative_to(ROOT)).replace("\\\\", "/")
-
-    # New Formal Decision identities must not bypass the structured Business
-    # Decision Source ingress. Historical legacy completion artifacts remain
-    # readable/replayable, but a legacy envelope whose parent request was
-    # created after the production cutover is rejected at the canonical
-    # state-sync gateway even if a caller bypasses the CLI builder.
-    legacy_manual_completion = (
-        str(request.get("request_type") or "").strip().upper() == "STATE_SYNC_ONLY"
-        and str(request.get("source") or "").strip().upper() == "CHATGPT_MANUAL_FORMAL_COMPLETION"
-        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_DECISION"
-    )
-    if legacy_manual_completion:
-        parent_id = str(request.get("parent_request_id") or "").strip()
-        parent_path = ROOT / "requests" / "live_snapshot" / f"{parent_id}.json"
-        parent = load_json(parent_path) if parent_id and parent_path.exists() else {}
-        parent_requested = str(parent.get("requested_at_beijing") or request.get("requested_at_beijing") or "").strip()
-        production_cutover = "2026-09-25T17:17:43+08:00"
-        if parent_requested and parent_requested >= production_cutover:
-            raise ValueError(
-                "new Formal Decision legacy completion bypass is forbidden; "
-                "use BUSINESS_DECISION_SOURCE with structured decision_response"
-            )
-
-    # Formal Decision completion is a separate post-BDS ingress. It reuses the
-    # same canonical owner but never lets the BDS push itself create a Decision event.
-    original_source_dispatch = str(request.get("request_type") or "").strip().upper() == BUSINESS_DECISION_SOURCE
-    completion_dispatch = (
-        str(request.get("request_type") or "").strip().upper() == "STATE_SYNC_ONLY"
-        and str(request.get("source") or "").strip().upper() == "CHATGPT_FORMAL_DECISION_COMPLETION"
-        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_DECISION_COMPLETION"
-    )
-    if completion_dispatch:
-        parent_id = str(request.get("parent_request_id") or "").strip()
-        parent_path = ROOT / "requests" / "live_snapshot" / f"{parent_id}.json"
-        parent_request = load_json(parent_path) if parent_id and parent_path.exists() else {}
-        if is_unified_formal_entry(parent_request):
-            raise ValueError(
-                "legacy Formal Decision completion is forbidden for the unified three-entry contract"
-            )
-        bds_path = str(request.get("bds_path") or "").strip()
-        if not bds_path or ".." in bds_path:
-            raise ValueError("Formal Decision completion requires a safe BDS path")
-        bds_file = (ROOT / bds_path).resolve()
-        if ROOT not in bds_file.parents or not bds_file.is_file():
-            raise ValueError("Formal Decision completion BDS path is not durable")
-        bds = load_json(bds_file)
-        if str(bds.get("request_type") or "").strip().upper() != BUSINESS_DECISION_SOURCE:
-            raise ValueError("Formal Decision completion must reference BUSINESS_DECISION_SOURCE")
-        if str(bds.get("parent_request_id") or "").strip() != str(request.get("parent_request_id") or "").strip():
-            raise ValueError("Formal Decision completion parent does not match BDS")
-        if str(bds.get("decision_id") or "").strip() != str(request.get("decision_id") or "").strip():
-            raise ValueError("Formal Decision completion decision_id does not match BDS")
-        binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
-        response = bds.get("decision_response") if isinstance(bds.get("decision_response"), dict) else {}
-        # FINAL_CONTENT is immutable: preserve its exact bytes when validating
-        # and hashing.  Trimming here changes the hash and breaks the completion
-        # boundary even though the BDS and completion contain the same content.
-        content_candidates = [
-            str(bds.get("presentation_content") or ""),
-            str(binding.get("full_content") or ""),
-            str(response.get("presentation_content") or ""),
-        ]
-        present = [value for value in content_candidates if value]
-        if not present or len(set(present)) != 1:
-            raise ValueError("Formal Decision completion content binding is invalid")
-        content = present[0]
-        expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
-        supplied_hashes = {
-            str(value).strip()
-            for value in (
-                bds.get("content_hash"),
-                binding.get("content_hash"),
-                response.get("content_hash"),
-                request.get("content_hash"),
-            )
-            if value not in (None, "")
-        }
-        if supplied_hashes and supplied_hashes != {expected_hash}:
-            raise ValueError("Formal Decision completion content hash binding is invalid")
-        if str(request.get("content_hash") or "").strip() != expected_hash:
-            raise ValueError("Formal Decision completion content hash binding is invalid")
-        request.update({key: value for key, value in bds.items() if key not in {"request_id", "request_type", "source"}})
-        request["request_type"] = BUSINESS_DECISION_SOURCE
-        request["request_id"] = str(bds.get("request_id") or "").strip()
-        request["presentation_content"] = content
-        request["content_hash"] = expected_hash
-        recorded, idempotent, event_path = record_formal_decision_report_event(request, bds)
-        print(json.dumps({
-            "ok": True,
-            "request_id": request.get("request_id"),
-            "decision_id": request.get("decision_id"),
-            "formal_decision_event": True,
-            "canonical_publication": event_path,
-            "idempotent_replay": idempotent,
-        }, ensure_ascii=False))
-        return 0
-
-    # Explicit Business Decision Source dispatch. The ingress file itself is
-    # the immutable durable Source artifact; projection only occurs after the
-    # Phase 1 gate and never calls decision logic or refreshes market facts.
-    source_dispatch = str(request.get("request_type") or "").strip().upper() == BUSINESS_DECISION_SOURCE
-    source_fingerprint_value = ""
-    source_reply_ready = False
-    if source_dispatch:
-        parent_id = str(request.get("parent_request_id") or "").strip()
-        if not parent_id or any(part in parent_id for part in ("/", "\\", "..")):
-            raise ValueError("business decision source requires a safe parent Formal Decision request")
-        parent_path = ROOT / "requests" / "live_snapshot" / f"{parent_id}.json"
-        if not parent_path.exists():
-            raise ValueError("business decision source parent Formal Decision request is not durable")
-        parent_request = load_json(parent_path)
-        if str(parent_request.get("request_id") or "").strip() != parent_id:
-            raise ValueError("business decision source parent request identity mismatch")
-        if is_unified_formal_entry(parent_request):
-            raise ValueError(
-                "BUSINESS_DECISION_SOURCE is forbidden for the unified three-entry Formal contract"
-            )
-
-        replay_source_commit = str(args.formal_replay_source_commit or "").strip()
-        if replay_source_commit:
-            if not re.fullmatch(r"[0-9a-fA-F]{40}", replay_source_commit):
-                raise ValueError("formal replay source commit must be a full commit SHA")
-            request_rel = str(req_path.relative_to(ROOT)).replace("\\\\", "/")
-            historical_source = subprocess.run(
-                ["git", "show", f"{replay_source_commit}:{request_rel}"],
-                cwd=ROOT, capture_output=True, text=True, check=False,
-            )
-            if historical_source.returncode != 0 or historical_source.stdout.encode("utf-8") != req_path.read_bytes():
-                raise ValueError("formal replay source bytes must match the immutable source-introduction commit")
-            replay_dwp_commit = str(args.formal_replay_dwp_commit or replay_source_commit).strip()
-            historical_query = subprocess.run(
-                ["git", "show", f"{replay_dwp_commit}:data/state/query_context.json"],
-                cwd=ROOT, capture_output=True, text=True, check=False,
-            )
-            if historical_query.returncode != 0 or not historical_query.stdout.strip():
-                raise ValueError("formal replay DWP commit is missing historical request-bound query_context")
-            query_context = json.loads(historical_query.stdout)
-            decision_fact_pack = query_context.get("decision_fact_pack") or {}
-            historical_account = decision_fact_pack.get("account_fact")
-            if not isinstance(historical_account, dict) or not historical_account:
-                raise ValueError("formal replay DWP commit is missing request-bound account fact")
-            request["_historical_replay"] = True
-            request["_historical_account_fact"] = json.loads(json.dumps(historical_account))
-            # Keep discovery eligibility bound to the same immutable DWP context;
-            # execution-time query_context may belong to a later request.
-            request["_historical_query_context"] = query_context
-        else:
-            query_path = ROOT / "data" / "state" / "query_context.json"
-            query_context = load_json(query_path) if query_path.exists() else {}
-        packet = query_context.get("decision_fact_pack") or {}
-        trigger = packet.get("trigger") or {}
-        if str(trigger.get("request_id") or "").strip() != parent_id:
-            qualifier = "historical" if replay_source_commit else "current"
-            raise ValueError(f"business decision source requires {qualifier} request-bound Decision Work Package")
-        if forensic_historical_replay:
-            emit_formal_replay_forensic_fingerprint("A_HISTORICAL_PACKET", obj=packet, dwp=packet.get("decision_work_package"), object_type="query_context.decision_fact_pack", provenance=f"historical_query_context:{replay_dwp_commit}", historical=True)
-            emit_formal_replay_forensic_fingerprint("B_PACKET_DWP", obj=packet, dwp=packet.get("decision_work_package"), object_type="packet.decision_work_package", provenance=f"historical_query_context:{replay_dwp_commit}", historical=True)
-        # Historical replay is provenance-bound: only the DWP loaded from the
-        # explicitly selected historical query_context may define the problem graph.
-        # A request-local/current DWP must never override that PIT boundary.
-        if replay_source_commit:
-            decision_work_package = packet.get("decision_work_package") or {}
-        else:
-            decision_work_package = request.get("decision_work_package") or packet.get("decision_work_package") or {}
-        if not isinstance(decision_work_package, dict) or not decision_work_package.get("problem_graph"):
-            raise ValueError("business decision source Decision Work Package is missing")
-        if forensic_historical_replay:
-            emit_formal_replay_forensic_fingerprint("C_REQUEST_DWP_FREEZE", obj=request, dwp=decision_work_package, object_type="request.decision_work_package", provenance=f"historical_query_context:{replay_dwp_commit}", historical=True)
-        # Freeze the already-validated request-bound opportunity domain onto the
-        # in-memory ingress object. record_formal_decision() must validate the
-        # deterministic projection against the exact DWP that produced it,
-        # including REJECTed Discovery evaluation inputs, rather than falling
-        # back to the later post-disposition Observation set.
-        request["decision_work_package"] = json.loads(json.dumps(decision_work_package))
-
-        supplied_decision = request.get("formal_decision")
-        source_payload = dict(supplied_decision) if isinstance(supplied_decision, dict) else {}
-        current_context = query_context.get("current") or {}
-        source_payload.setdefault("request_id", str(request.get("request_id") or f"{parent_id}__business_decision_source"))
-        source_payload.setdefault("parent_request_id", parent_id)
-        source_payload.setdefault("decision_id", str(request.get("decision_id") or f"{parent_id}_decision"))
-        source_payload.setdefault("consumed_snapshot", str(request.get("consumed_snapshot") or current_context.get("latest_snapshot") or ""))
-        source_payload.setdefault("requested_at_beijing", parent_request.get("requested_at_beijing") or parent_request.get("request_time_beijing"))
-        source_payload.setdefault("market_date", query_context.get("market_date") or parent_request.get("market_date"))
-        source_payload.setdefault("data_as_of_beijing", query_context.get("generated_at_beijing") or source_payload.get("requested_at_beijing"))
-        source_payload["request_type"] = BUSINESS_DECISION_SOURCE
-        decision_response = request.get("decision_response")
-        request_presentation = request.get("presentation_content")
-        response_presentation = (
-            decision_response.get("presentation_content")
-            if isinstance(decision_response, dict)
-            else None
-        )
-        supplied_presentations = [
-            value for value in (request_presentation, response_presentation)
-            if value not in (None, "")
-        ]
-        if supplied_presentations and len(set(str(value) for value in supplied_presentations)) != 1:
-            raise ValueError("formal presentation content conflicts across request entry points")
-        presentation_content = (
-            response_presentation
-            if response_presentation not in (None, "")
-            else request_presentation
-        )
-        # A Business Decision Source without the frozen user-visible body is
-        # not a valid Formal Decision completion input.  Do not publish a
-        # half-complete decision event that notification_center cannot safely
-        # consume.
-        if presentation_content in (None, ""):
-            raise ValueError(
-                "business decision source requires frozen presentation_content"
-            )
-        if presentation_content not in (None, ""):
-            source_payload["presentation_content"] = presentation_content
-            binding = request.get("presentation_binding")
-            source_payload["presentation_binding"] = (
-                dict(binding) if isinstance(binding, dict) else {}
-            )
-            source_payload["presentation_binding"]["full_content"] = presentation_content
-            nested = source_payload.get("decision_response")
-            if not isinstance(nested, dict):
-                nested = {}
-            nested["presentation_content"] = presentation_content
-            source_payload["decision_response"] = nested
-            request["presentation_content"] = presentation_content
-        if isinstance(supplied_decision, dict) and supplied_decision:
-            # A pre-shaped formal_decision is only legitimate for an explicitly
-            # selected historical forensic replay. Current production ingress
-            # must always project actor answers through the request-bound DWP.
-            # Otherwise numeric/positional answers can bypass the problem_id
-            # coverage contract and still reach the canonical writer.
-            if not forensic_historical_replay:
-                raise ValueError(
-                    "current Business Decision Source ingress must use "
-                    "actor-only decision_response keyed by request-bound problem_id"
-                )
-            source_payload = source_payload
-        else:
-            if not isinstance(decision_response, dict):
-                raise ValueError("business decision source requires actor-only structured decision_response")
-            source_payload = project_decision_response(source_payload, decision_response, decision_work_package, forensic_historical_replay=forensic_historical_replay)
-        source_payload["request_bound_fact_binding"] = {
-            "snapshot_id": str(snapshot_rel or "").strip(),
-            "market_date": str(snapshot.get("market_date") or market_date or "").strip(),
-            "market_phase": str(snapshot.get("market_phase") or "").strip(),
-            "captured_at": str(snapshot.get("captured_at_beijing") or snapshot.get("captured_at") or "").strip(),
-        }
-        source = validate_source(
-            source_payload,
-            expected_snapshot=str(request.get("consumed_snapshot") or source_payload.get("consumed_snapshot") or "").strip(),
-            expected_market_date=str(snapshot.get("market_date") or market_date or "").strip(),
-            expected_market_phase=str(snapshot.get("market_phase") or "").strip(),
-            expected_captured_at=str(snapshot.get("captured_at_beijing") or snapshot.get("captured_at") or "").strip(),
-        )
-        # Bind the selected request-bound DWP only after Source identity and
-        # fingerprinting.  It is validation context, not mutable Source
-        # business content, so replay/idempotency fingerprints remain stable.
-        source = freeze_source_work_package(source, decision_work_package)
-        source_fingerprint_value = source["fingerprint"]
-        if forensic_historical_replay:
-            emit_formal_replay_forensic_fingerprint("D_SOURCE_BINDING", obj=source, dwp=source.get("decision_work_package"), object_type="business_decision_source.bound", provenance=f"historical_query_context:{replay_dwp_commit}", source_fingerprint_value=source_fingerprint_value, historical=True)
-        source_reply_ready = True
-        request["_business_decision_source"] = source
-        request["_source_fingerprint"] = source_fingerprint_value
-        # Deterministic projection only: no new facts, ranking, or investment
-        # judgment is introduced by this branch.
-        projected = build_formal_completion_from_source(source)
-        projected.pop("request_type", None)
-        projected.pop("source_type", None)
-        projected.pop("source_durable", None)
-        projected.pop("reply_ready", None)
-        projected.pop("projection_status", None)
-        projected.pop("fingerprint", None)
-        request["formal_decision"] = projected
-    if original_source_dispatch:
-        print(json.dumps({"ok": True, "request_id": request.get("request_id"), "business_decision_source_persisted": True, "completion_required": True}, ensure_ascii=False))
-        return 0
-    formal_review_recorded, formal_review_idempotent = record_scheduled_formal_decision_review(request)
-    if formal_review_recorded:
-        result = {"ok": True, "request_id": request.get("request_id"), "formal_scheduled_review_completion": True, "idempotent_replay": formal_review_idempotent, "canonical_publication": "events/reviews/formal_" + str((request.get("presentation_binding") or {}).get("task_run_id") or "") + ".json"}
-        print(json.dumps(result, ensure_ascii=False))
-        return 0
-    system_review_recorded, system_review_idempotent = record_scheduled_system_review(request)
-    if system_review_recorded:
-        result = {"ok": True, "request_id": request.get("request_id"), "system_review_completion": True, "idempotent_replay": system_review_idempotent, "canonical_publication": "events/reviews/system_" + str((request.get("presentation_binding") or {}).get("task_run_id") or "") + ".json"}
-        print(json.dumps(result, ensure_ascii=False))
-        return 0
-    if str(request.get("ingress_mode") or "").upper() == "HISTORICAL_BACKFILL":
-        result = process_historical_backfill_request(request)
-        result.update({
-            "request_id": request.get("request_id"),
-            "trade_event_recorded": True,
-            "account_sync_status": "NOT_APPLICABLE",
-            "canonical_ingress_state": CANONICAL_INGRESS_SUBMITTED,
-            "canonical_ingress_failure_reason": "",
-            "source_dispatch": source_dispatch,
-            "source_durable": bool(source_dispatch),
-            "source_immutable": bool(source_dispatch),
-            "source_fingerprint": source_fingerprint_value,
-            "reply_ready": source_reply_ready,
-        })
-        print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
-        return 0
-    canonical_ingress_contract = canonical_ingress_contract_for_request(request)
-    trades = _request_trade_events(request)
-    prior_account = load_json(ACCOUNT) if ACCOUNT.exists() else {}
-    supplied_account = request.get("account_fact")
-    existing_trades = []
-    for trade in trades:
-        confirmed_at = (
-            trade.get("confirmed_at_beijing") or request.get("requested_at_beijing")
-            or trade.get("executed_at") or prior_account.get("updated_at")
-        )
-        replay_key = _trade_idempotency_key(trade, confirmed_at)
-        existing = _find_existing_trade(trade, confirmed_at, replay_key)
-        existing_trades.append(existing)
-        if request.get("account_fact") is None and existing is None:
-            supplied_account = _apply_trade_to_account(supplied_account or prior_account, trade)
-    account_sync_status = "NOT_APPLICABLE"
-    if is_broker_screenshot_request(request) and not isinstance(supplied_account, dict) and not trades:
-        result = {
-            "ok": False,
-            "request_id": request.get("request_id"),
-            "interaction_scenario": request.get("interaction_scenario"),
-            "status": "NO_ACCOUNT_FACT",
-            "account_sync_status": "ACCOUNT_SYNC_NOT_PERFORMED",
-            "canonical_ingress_state": canonical_ingress_contract["terminal_state"],
-            "canonical_ingress_failure_reason": canonical_ingress_contract["reason"],
-            "dashboard_updated": False,
-            "detail": "Broker screenshot request has no request-scoped account_fact; market success must not be treated as account sync success.",
-        }
-        print(json.dumps(result, ensure_ascii=False))
-        return 1
-    if (
-        canonical_ingress_contract["required"]
-        and canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_FAILED_EXPLICITLY
-        and canonical_ingress_contract["reason"] != "missing_account_fact"
-    ):
-        print(json.dumps({
-            "ok": False,
-            "status": "CANONICAL_INGRESS_FAILED_EXPLICITLY",
-            "canonical_ingress_state": canonical_ingress_contract["terminal_state"],
-            "canonical_ingress_failure_reason": canonical_ingress_contract["reason"],
-            "request": str(req_path.relative_to(ROOT)).replace("\\", "/"),
-        }, ensure_ascii=False, indent=2, sort_keys=True))
-        return 1
-
-    broker_shape_error = validate_broker_account_fact_ingress(request, supplied_account)
-    if broker_shape_error:
-        print(json.dumps({
-            "ok": False,
-            "request_id": request.get("request_id"),
-            "status": "BROKER_ACCOUNT_FACT_SCHEMA_INVALID",
-            "account_sync_status": "ACCOUNT_SYNC_NOT_PERFORMED",
-            "canonical_ingress_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
-            "canonical_ingress_failure_reason": "broker_account_fact_schema_invalid",
-            "dashboard_updated": False,
-            "detail": broker_shape_error,
-        }, ensure_ascii=False))
-        return 1
-
-    if isinstance(supplied_account, dict):
-        supplied_account = merge_account_fact(prior_account, supplied_account)
-        supplied_account.setdefault("status", "VALID")
-        supplied_account.setdefault("validity_mode", "EVENT_DRIVEN_CARRY_FORWARD")
-        if account_fact_is_older(prior_account, supplied_account):
-            account_sync_status = "STALE_ACCOUNT_FACT_IGNORED"
-        else:
-            # Use the canonicalized event history returned by merge_account_fact:
-            # it may have upgraded a previously unresolved IPO registration.
-            prior_events = supplied_account.get("account_change_events_after_confirmed_at") or []
-            new_events = _account_change_events(prior_account, supplied_account, request, trades)
-            known = {str(x.get("idempotency_key") or x.get("event_id") or "") for x in prior_events}
-            supplied_account["account_change_events_after_confirmed_at"] = prior_events + [x for x in new_events if str(x.get("idempotency_key")) not in known]
-            if supplied_account == prior_account:
-                account_sync_status = "ACCOUNT_SYNC_IDEMPOTENT_NOOP"
-            else:
-                account_sync_status = "ACCOUNT_FACT_UPDATED"
-                atomic_json_write(ACCOUNT, supplied_account)
-    account = load_json(ACCOUNT)
-    if account.get("status") != "VALID":
-        raise RuntimeError("account_fact is not VALID")
-    decision_recorded, decision_id = record_formal_decision(request)
-    formal_decision_current = False
-    if decision_recorded:
-        formal_decision_current, formal_action_changed = project_current_formal_action(
-            account, request, decision_id
-        )
-        if formal_action_changed:
-            atomic_json_write(ACCOUNT, account)
-    trade_event_recorded = False
-    persisted_trade_events = []
-    for trade_index, trade in enumerate(trades):
-        confirmed_at = trade.get("confirmed_at_beijing") or request.get("requested_at_beijing") or trade.get("executed_at") or account.get("updated_at")
-        idempotency_key = _trade_idempotency_key(trade, confirmed_at)
-        existing = existing_trades[trade_index] or _find_existing_trade(trade, confirmed_at, idempotency_key)
-        if existing:
-            event, event_id, trade_event_recorded = existing, str(existing.get("event_id") or ""), True
-            # A request-scoped replay may repair an earlier unlinked trade, but
-            # never by guessing from the latest account action.  The replay must
-            # carry an explicit decision identity or a same-request formal decision.
-            explicit_replay_decision_id = str(trade.get("linked_decision_id") or trade.get("decision_id") or decision_id or "").strip()
-            if not str(event.get("linked_decision_id") or "").strip() and explicit_replay_decision_id:
-                event["linked_decision_id"] = explicit_replay_decision_id
-            # A request-scoped confirmation time is authoritative for an
-            # idempotent replay.  Never replace an earlier PIT confirmation with
-            # the current account snapshot's updated_at.
-            changed = False
-            requested_confirmed_at = str(trade.get("confirmed_at_beijing") or request.get("requested_at_beijing") or trade.get("executed_at") or "").strip()
-            if requested_confirmed_at and str(event.get("confirmed_at_beijing") or "") != requested_confirmed_at:
-                event["confirmed_at_beijing"] = requested_confirmed_at
-                event["execution_date"] = trade.get("market_date") or requested_confirmed_at[:10]
-                event["confirmation_date"] = trade.get("market_date") or requested_confirmed_at[:10]
-                event["idempotency_key"] = _trade_idempotency_key(trade, requested_confirmed_at)
-                changed = True
-            # Idempotent fee/account replays must also converge stale linkage and
-            # attribution written by an older producer; they never create another event.
-            linked_decision_id = resolve_trade_linked_decision_id(
-                trade,
-                decision_id,
-                existing_linked_decision_id=str(event.get("linked_decision_id") or ""),
-            )
-            if not str(event.get("linked_decision_id") or "").strip() and linked_decision_id:
-                event["linked_decision_id"] = linked_decision_id
-                changed = True
-            refreshed_attribution = execution_attribution(event, linked_decision_id)
-            refreshed_hypothesis = refreshed_attribution.get("hypothesis_id")
-            if (
-                event.get("execution_attribution") != refreshed_attribution
-                or event.get("hypothesis_id") != refreshed_hypothesis
-            ):
-                event["execution_attribution"] = refreshed_attribution
-                event["hypothesis_id"] = refreshed_hypothesis
-                changed = True
-            if changed:
-                atomic_json_write(ROOT / "events" / "trades" / f"{event_id}.json", event)
-        else:
-            event_id = _trade_event_id(request, trade, idempotency_key, trade_index, len(trades))
-            linked_decision_id = resolve_trade_linked_decision_id(trade, decision_id)
-            attribution = execution_attribution({**trade, "confirmed_at_beijing": confirmed_at}, linked_decision_id)
-            event = {"event_id": event_id, "idempotency_key": idempotency_key, "confirmed_at_beijing": confirmed_at, "execution_date": trade.get("execution_date") or str(confirmed_at)[:10], "confirmation_date": trade.get("confirmation_date") or str(confirmed_at)[:10], "notification_id": trade.get("notification_id"), "name": trade.get("name"), "code": trade.get("code"), "side": trade.get("side"), "quantity": trade.get("quantity"), "price": trade.get("price"), "amount": trade.get("amount"), "lifecycle": trade.get("lifecycle"), "source": trade.get("source", account.get("source")), "source_confidence": trade.get("source_confidence"), "linked_decision_id": linked_decision_id or None, "hypothesis_id": trade.get("hypothesis_id") or attribution.get("hypothesis_id") or None, "execution_status": "EXECUTED", "execution_attribution": attribution}
-            event_path = ROOT / "events" / "trades" / f"{event_id}.json"
-            event_path.parent.mkdir(parents=True, exist_ok=True)
-            atomic_json_write(event_path, event)
-            trade_event_recorded = True
-        # Always reconcile event-backed human-readable records, including idempotent replay.
-        # This repairs a missing archive/CASE line without creating a second trade event.
-        archive_line = f"- {event['confirmed_at_beijing']}：{event.get('name')}（{event.get('code')}）{event.get('side')} {int(event.get('quantity') or 0):,}份/股，成交价{event.get('price')}，成交本金{float(event.get('amount') or 0):,.2f}元；来源：{event.get('source')}。"
-        case_line = f"- 待复盘CASE｜{event['confirmed_at_beijing']}｜{event.get('name')}（{event.get('code')}）｜{event.get('side')} {int(event.get('quantity') or 0):,}份/股｜生命周期：{event.get('lifecycle') or '待确认'}｜仅登记真实成交，复盘结论留待盘后形成。"
-        upsert_formal_line(ROOT, ARCHIVE.name, TRADE_START, TRADE_END, event_id, archive_line, before_heading="## 6. 历史Excel与专项数据来源")
-        upsert_formal_line(ROOT, EXPERIENCE.name, CASE_START, CASE_END, event_id, case_line, before_heading="## 3. 历史研究与专项回测")
-        sync_experience_transaction_index(event)
-        linked_event_decision_id = str(event.get("linked_decision_id") or "").strip()
-        prior_formal_action = account.get("formal_action") or {}
-        if linked_event_decision_id:
-            decision_path = ROOT / "events" / "decisions" / f"{linked_event_decision_id}.json"
-            linked_decision = load_json(decision_path) if decision_path.exists() else {}
-            linked_formal = linked_decision.get("formal_decision") if isinstance(linked_decision.get("formal_decision"), dict) else {}
-            account["formal_action"] = {
-                **prior_formal_action,
-                "action": linked_formal.get("action") or linked_formal.get("amount_action") or prior_formal_action.get("action") or "",
-                "quantity": linked_formal.get("quantity", prior_formal_action.get("quantity")),
-                "decision_id": linked_event_decision_id,
-                "decision_time": linked_formal.get("decision_time") or linked_formal.get("data_as_of_beijing") or linked_decision.get("decision_time_beijing") or prior_formal_action.get("decision_time"),
-                "source": "CHATGPT_FORMAL_DECISION",
-                "lifecycle": linked_formal.get("lifecycle") or prior_formal_action.get("lifecycle"),
-                "applicable_object": linked_formal.get("candidate_code") or linked_formal.get("code") or linked_decision.get("candidate_code") or prior_formal_action.get("applicable_object") or "",
-                "validity": "ACTIVE",
-                "execution_status": "EXECUTED",
-                "execution_fact_ref": f"events/trades/{event_id}.json",
-                "last_executed_event_id": event_id,
-            }
-        else:
-            account["formal_action"] = {
-                **prior_formal_action,
-                "execution_status": "EXECUTED",
-                "execution_fact_ref": f"events/trades/{event_id}.json",
-                "last_executed_event_id": event_id,
-            }
-        atomic_json_write(ACCOUNT, account)
-        write_trade_review_required(event)
-        persisted_trade_events.append((trade, event))
-
-    # Refresh the CURRENT trade mirror only after this request's trade events
-    # are durable.  Doing this before the loop leaves CURRENT and downstream
-    # trigger construction one confirmed trade behind.
-    latest_trade_event_id = _latest_trade_event_id()
-    if latest_trade_event_id:
-        current_path = ROOT / "data/state/CURRENT.json"
-        current = load_json(current_path) if current_path.exists() else {}
-        if current.get("last_trade_event_id") != latest_trade_event_id:
-            current["last_trade_event_id"] = latest_trade_event_id
-            current["generated_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-            atomic_json_write(current_path, current)
-
-    sync_current_account_mirror(ROOT, account)
-    review_recorded, review_idempotent = record_post_close_review(account, request)
-    unavailable_recorded, unavailable_idempotent = (False, False)
-    for trade, event in persisted_trade_events:
-        recorded, idempotent = record_unrecoverable_review_prerequisite(account, request, event)
-        unavailable_recorded = unavailable_recorded or recorded
-        unavailable_idempotent = unavailable_idempotent or idempotent
-    # Render after event/review persistence so a newly confirmed execution is
-    # visible in the same canonical dashboard update, rather than one request
-    # behind the machine facts.
-    dashboard = replace_block(DASHBOARD.read_text(encoding="utf-8"), START, END, build_dashboard_block(account, latest_canonical_formal_decision(ROOT) or request.get("formal_decision"), request), insert_after_heading=True)
-    write_formal_text_if_changed(ROOT, DASHBOARD.name, dashboard)
-    # Keep the three human-readable fact documents synchronized even when the
-    # request only confirms a fee/account snapshot and creates no new trade event.
-    # Actual holdings are mandatory continuous-monitor objects.  Project account
-    # membership on the same canonical ingress that confirms an account/trade
-    # change; do not wait for a later formal decision to repair market coverage.
-    account_membership_changed = account_sync_status == "ACCOUNT_FACT_UPDATED" or bool(trade_event_recorded)
-    observation_universe_changed = persist_monitor_universe(
-        ROOT, account, (request.get("formal_decision") or {}) if formal_decision_current else {}
-    ) if (formal_decision_current or account_membership_changed) else False
-    formal_files_sync = sync_formal_files(ROOT, account)
-    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "review_prerequisite_unavailable_recorded": unavailable_recorded, "review_prerequisite_unavailable_idempotent_noop": unavailable_idempotent, "formal_files_sync": formal_files_sync, "observation_universe_changed": observation_universe_changed, "account_sync_status": account_sync_status, "canonical_ingress_state": canonical_ingress_contract["terminal_state"], "canonical_ingress_failure_reason": None if canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_SUBMITTED else canonical_ingress_contract["reason"]}
-    print(json.dumps(result, ensure_ascii=False))
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
