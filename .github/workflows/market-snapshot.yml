@@ -128,7 +128,7 @@ jobs:
           request = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
           is_completion = (
               str(request.get("source") or "").upper() in {"CHATGPT_FORMAL_DECISION_COMPLETION", "CHATGPT_MANUAL_FORMAL_COMPLETION"}
-              or str(request.get("formal_fact_type") or "").upper() in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_REVIEW", "FORMAL_SCHEDULED_SYSTEM_REVIEW"}
+              or str(request.get("formal_fact_type") or "").upper() in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_SYSTEM_REVIEW"}
           )
           raise SystemExit(0 if is_completion else 1)
           PY
@@ -692,7 +692,7 @@ jobs:
           request = json.load(open(sys.argv[1], encoding="utf-8"))
           is_completion = (
               str(request.get("source") or "").upper() in {"CHATGPT_FORMAL_DECISION_COMPLETION", "CHATGPT_MANUAL_FORMAL_COMPLETION"}
-              or str(request.get("formal_fact_type") or "").upper() in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_REVIEW", "FORMAL_SCHEDULED_SYSTEM_REVIEW"}
+              or str(request.get("formal_fact_type") or "").upper() in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_SYSTEM_REVIEW"}
           )
           print("true" if is_completion else "false")
           PY
