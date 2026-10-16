@@ -450,6 +450,38 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_SYSTEM_REVIEW")
 
 
+    def test_canonical_owner_derives_missing_hash_from_frozen_content(self):
+        from scripts import process_state_sync_request as owner
+        binding = {
+            "report_type": "ETF_TRADE_REVIEW",
+            "task_id": "ETF交易复盘",
+            "task_run_id": "run-missing-hash",
+            "request_id": "request-missing-hash",
+            "report_id": "report-missing-hash",
+            "full_content": "FROZEN CONTENT",
+        }
+        normalized = owner._validate_presentation_binding(binding, "ETF_TRADE_REVIEW")
+        self.assertEqual(
+            normalized["content_hash"],
+            hashlib.sha256(b"FROZEN CONTENT").hexdigest(),
+        )
+        self.assertEqual(normalized["content_hash_source"], "canonical_owner")
+
+    def test_canonical_owner_rejects_supplied_hash_drift(self):
+        from scripts import process_state_sync_request as owner
+        binding = {
+            "report_type": "ETF_TRADE_REVIEW",
+            "task_id": "ETF交易复盘",
+            "task_run_id": "run-drifted-hash",
+            "request_id": "request-drifted-hash",
+            "report_id": "report-drifted-hash",
+            "full_content": "FROZEN CONTENT",
+            "content_hash": "0" * 64,
+        }
+        with self.assertRaisesRegex(ValueError, "content_hash mismatch"):
+            owner._validate_presentation_binding(binding, "ETF_TRADE_REVIEW")
+
+
 if __name__ == "__main__":
     unittest.main()
 
