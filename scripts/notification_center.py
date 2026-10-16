@@ -186,12 +186,12 @@ def _validate_formal_presentation_layout(content: str) -> str:
             continue
         if re.search(r"[ \t]+[（(][0-9]{1,2}[）)]", line):
             return "formal_presentation_inline_secondary_numbering"
-        if re.match(r"^[（(][0-9]{1,2}[）)]\\s+", stripped):
+        if re.match(r"^[（(][0-9]{1,2}[）)]\s+", stripped):
             if not primary_seen:
                 return "formal_presentation_secondary_without_primary_parent"
             if index == 0 or lines[index - 1].strip() != "":
                 return "formal_presentation_numbered_items_need_blank_line"
-        if re.match(r"^[0-9]{1,2}\.", stripped):
+        if re.match(r"^[0-9]{1,2}\.\s+", stripped):
             primary_seen = True
             if index == 0 or lines[index - 1].strip() != "":
                 return "formal_presentation_numbered_items_need_blank_line"
