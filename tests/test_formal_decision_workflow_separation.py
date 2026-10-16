@@ -14,6 +14,12 @@ class FormalDecisionWorkflowSeparationTests(unittest.TestCase):
         self.assertNotIn("The BDS itself is the completion envelope", workflow)
         self.assertNotIn('request_files="$bds_file"', workflow)
 
+    def test_market_snapshot_classifies_formal_scheduled_review_as_completion(self):
+        workflow = (self.root / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        self.assertIn('"FORMAL_SCHEDULED_REVIEW"', workflow)
+        self.assertIn('"FORMAL_SCHEDULED_SYSTEM_REVIEW"', workflow)
+        self.assertIn("formal_completion=$(python", workflow)
+
     def test_notification_workflow_has_no_bds_push_wake(self):
         workflow = (self.root / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
         self.assertNotIn('requests/live_snapshot/*__bds*.json', workflow)
