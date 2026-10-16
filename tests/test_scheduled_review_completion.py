@@ -136,11 +136,15 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             {"action": "新增0元", "candidate_code": "561980", "risk_permission": "禁止新增"},
             "formal-request", "2026-09-30T10:00:00+08:00", "2026-09-29",
             "ETF正式决策", "formal-run", "FROZEN FORMAL SCHEDULED REPORT",
+            entry_mode="MANUAL_SCHEDULED_TASK",
+            trigger_source="CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+            occurrence_id="manual-scheduled-20260930T100000+0800-ab12cd34",
         )
         self.assertEqual(payload["request_type"], "STATE_SYNC_ONLY")
         self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_REVIEW")
         self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_REVIEW_ACTOR")
         self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_FORMAL_DECISION")
+        self.assertEqual(payload["occurrence_id"], "manual-scheduled-20260930T100000+0800-ab12cd34")
         self.assertEqual(payload["presentation_binding"]["report_id"], "ETF_FORMAL_DECISION:formal-run")
         report = completion.build_report_delivery_from_completion(payload)
         self.assertEqual(report["report_type"], "ETF_FORMAL_DECISION")
@@ -153,6 +157,9 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         payload = completion.build_formal_decision_scheduled_review_completion_request(
             {"action": "新增0元"}, "formal-request", "2026-09-30T10:00:00+08:00", "2026-09-29",
             "ETF正式决策", "formal-run", "FROZEN FORMAL SCHEDULED REPORT",
+            entry_mode="MANUAL_SCHEDULED_TASK",
+            trigger_source="CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+            occurrence_id="manual-scheduled-20260930T100000+0800-ab12cd34",
         )
         with TemporaryDirectory() as directory:
             root = Path(directory)
