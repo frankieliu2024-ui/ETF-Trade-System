@@ -3513,13 +3513,37 @@ def main() -> int:
             raise ValueError("Formal Decision completion parent does not match BDS")
         if str(bds.get("decision_id") or "").strip() != str(request.get("decision_id") or "").strip():
             raise ValueError("Formal Decision completion decision_id does not match BDS")
-        content = str(bds.get("presentation_content") or "").strip()
-        if not content or str(request.get("content_hash") or "").strip() != hashlib.sha256(content.encode("utf-8")).hexdigest():
+        binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
+        response = bds.get("decision_response") if isinstance(bds.get("decision_response"), dict) else {}
+        content_candidates = [
+            str(bds.get("presentation_content") or "").strip(),
+            str(binding.get("full_content") or "").strip(),
+            str(response.get("presentation_content") or "").strip(),
+        ]
+        present = [value for value in content_candidates if value]
+        if not present or len(set(present)) != 1:
             raise ValueError("Formal Decision completion content binding is invalid")
+        content = present[0]
+        expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        supplied_hashes = {
+            str(value).strip()
+            for value in (
+                bds.get("content_hash"),
+                binding.get("content_hash"),
+                response.get("content_hash"),
+                request.get("content_hash"),
+            )
+            if value not in (None, "")
+        }
+        if supplied_hashes and supplied_hashes != {expected_hash}:
+            raise ValueError("Formal Decision completion content hash binding is invalid")
+        if str(request.get("content_hash") or "").strip() != expected_hash:
+            raise ValueError("Formal Decision completion content hash binding is invalid")
         request.update({key: value for key, value in bds.items() if key not in {"request_id", "request_type", "source"}})
         request["request_type"] = BUSINESS_DECISION_SOURCE
         request["request_id"] = str(bds.get("request_id") or "").strip()
         request["presentation_content"] = content
+        request["content_hash"] = expected_hash
         recorded, idempotent, event_path = record_formal_decision_report_event(request, bds)
         print(json.dumps({
             "ok": True,
