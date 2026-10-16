@@ -450,6 +450,26 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_SYSTEM_REVIEW")
 
 
+
+
+def test_trade_completion_binds_occurrence_identity():
+    review = _full_day_review()
+    payload = build_completion_request(
+        review,
+        "req-occurrence",
+        "2026-10-16 20:30",
+        "2026-10-16",
+        task_id="ETF交易复盘",
+        task_run_id="run-occurrence",
+        occurrence_id="occurrence-20261016-2030",
+        final_content=_valid_final_content(),
+    )
+    assert payload["request_type"] == "SCHEDULED_REVIEW_COMPLETION"
+    assert payload["occurrence_id"] == "occurrence-20261016-2030"
+    assert payload["presentation_binding"]["task_run_id"] == "run-occurrence"
+    assert payload["presentation_binding"]["occurrence_id"] == "occurrence-20261016-2030"
+    assert payload["presentation_binding"]["report_id"] == "ETF_TRADE_REVIEW:run-occurrence"
+
 if __name__ == "__main__":
     unittest.main()
 
