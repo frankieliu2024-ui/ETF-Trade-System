@@ -720,6 +720,16 @@ jobs:
             )
           fi
           echo "formal_completion=$formal_completion" >> "$GITHUB_OUTPUT"
+          scheduled_review_completion=false
+          if [ -n "$triggering_request_file" ] && [ -f "$triggering_request_file" ]; then
+            scheduled_review_completion=$(python - "$triggering_request_file" <<'PY'
+          import json, sys
+          request = json.load(open(sys.argv[1], encoding="utf-8"))
+          print("true" if str(request.get("request_type") or "").upper() == "SCHEDULED_REVIEW_COMPLETION" else "false")
+          PY
+            )
+          fi
+          echo "scheduled_review_completion=$scheduled_review_completion" >> "$GITHUB_ENV"
           # Preserve the triggering request before execution-time main resets.
           # REFRESH_BEARING requests skip state sync but still own the exact
           # request identity/time consumed by query and decision contexts.
@@ -1157,15 +1167,13 @@ jobs:
           formal_ids = []
           triggering_id = str(os.environ.get("TRIGGERING_REQUEST_ID") or "").strip()
           triggering_path = Path(os.environ.get("TRIGGERING_REQUEST_FILE") or "")
-          if triggering_id:
-              formal_ids.append(triggering_id)
-          elif triggering_path.is_file():
+          if triggering_path.is_file():
               try:
                   obj = json.loads(triggering_path.read_text(encoding="utf-8"))
               except (OSError, json.JSONDecodeError):
                   obj = {}
               if str(obj.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH" and str(obj.get("source") or "") in {"CHATGPT_MANUAL_FORMAL_ANALYSIS", "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS", "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"}:
-                  formal_ids.append(str(obj.get("request_id") or "").strip())
+                  formal_ids.append(triggering_id or str(obj.get("request_id") or "").strip())
 
           recovery_path = Path(os.environ.get("FORMAL_CONTEXT_RECOVERY_REQUEST") or "")
           if recovery_path.is_file():
@@ -1227,7 +1235,7 @@ jobs:
             # decision_trigger cannot overwrite a newer trade/account fact.
             if grep -zqxF 'data/state/decision_trigger.json' /tmp/etf-downstream-files || \
                grep -zqxF 'data/state/capital_efficiency_ranking.json' /tmp/etf-downstream-files || \
-               [ -n "${TRIGGERING_REQUEST_FILE:-}" ]; then
+               { [ -n "${TRIGGERING_REQUEST_FILE:-}" ] && [ "${SCHEDULED_REVIEW_COMPLETION:-false}" != "true" ]; }; then
               python scripts/build_state_context.py --decision-ready-only
             fi
             # query_context is the request-bound Formal Decision handoff. Keep it
@@ -1242,7 +1250,9 @@ jobs:
             git add -f -- data/state/query_context.json
             git add -A -- data/market/snapshots data/market/discovery_history data/state post_market_review events config/market/etf_monitor_universe.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
             git reset -- data/state/system_consistency.json
-            if [ -n "$FORMAL_PARENT_ID" ] || [ -n "$TRIGGERING_REQUEST_FILE" ] || [ -n "${FORMAL_CONTEXT_RECOVERY_REQUEST:-}" ]; then
+            if [ -n "$FORMAL_PARENT_ID" ] || \
+               { [ -n "$TRIGGERING_REQUEST_FILE" ] && [ "${SCHEDULED_REVIEW_COMPLETION:-false}" != "true" ]; } || \
+               [ -n "${FORMAL_CONTEXT_RECOVERY_REQUEST:-}" ]; then
               python - <<'PY'
           import json, os
           from pathlib import Path
