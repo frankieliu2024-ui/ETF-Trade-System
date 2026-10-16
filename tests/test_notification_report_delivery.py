@@ -184,6 +184,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
                 "presentation_binding": {
                     "report_type": report_type, "task_id": report_type,
                     "task_run_id": f"run-{report_type}", "request_id": f"request-{report_type}",
+                    "report_id": f"{report_type}:run-{report_type}",
                     "full_content": body,
                     "content_hash": hashlib.sha256(body.encode("utf-8")).hexdigest(),
                 },
