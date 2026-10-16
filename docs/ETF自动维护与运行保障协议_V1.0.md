@@ -40,6 +40,12 @@
 
 缺失、冲突、历史复用或无法确认时必须fail-closed。不得根据文件名、任务名称、计划时间、普通行情时间或聊天记忆猜测身份。
 
+## 3.1 三类ETF任务运行身份校验
+
+System Review、Trade Review 和 Formal Decision 的运行身份必须在进入 canonical owner 前完成校验。校验至少覆盖 `task_id`、`source`、`entry_mode`、`task_run_id`、`occurrence_id`、`parent_request_id`、`request_id` 和 `market_date`；Formal Decision 还必须校验 `presentation_binding.task_id=ETF正式决策`。
+
+身份校验失败不得降级为普通任务、历史请求或另一条业务链，必须保留原输入和错误分类并停止当前投影。重试只能沿原身份和原输入继续，不得创建第二请求、第二正文、第二 event 或第二通知。
+
 ## 4. Owner与写入边界
 
 1. workflow只负责触发、准备环境、调用owner、提交owner生成的结果和暴露回执。

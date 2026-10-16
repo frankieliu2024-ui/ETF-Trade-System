@@ -30,7 +30,8 @@
           "最可能出错的地方"
         ],
         "validation_only_report_forbidden": true
-      }
+      },
+      "canonical_task_id": "ETF系统复核"
     },
     {
       "id": "ETF_TRADE_REVIEW",
@@ -41,7 +42,8 @@
       ],
       "sunday_rule": "20:30周复盘",
       "manual_allowed": true,
-      "route": "TRADE_REVIEW"
+      "route": "TRADE_REVIEW",
+      "canonical_task_id": "ETF交易复盘"
     },
     {
       "id": "ETF_FORMAL_DECISION",
@@ -60,7 +62,8 @@
         "MANUAL_CONVERSATION",
         "MANUAL_SCHEDULED_TASK"
       ],
-      "automatic_entry_mode": "AUTOMATIC_SCHEDULED_TASK"
+      "automatic_entry_mode": "AUTOMATIC_SCHEDULED_TASK",
+      "canonical_task_id": "ETF正式决策"
     }
   ],
   "invariants": [
@@ -74,7 +77,9 @@
     "same_task_same_full_review_content_contract",
     "chain_validation_cannot_masquerade_as_formal_system_review",
     "scheduled_review_requires_same_run_completion_readback",
-    "scheduled_review_cannot_use_formal_decision_projection"
+    "scheduled_review_cannot_use_formal_decision_projection",
+    "formal_decision_task_id_is_canonical",
+    "readback_identity_fields_are_contract_validated"
   ],
   "required_readback": [
     "task_id",
