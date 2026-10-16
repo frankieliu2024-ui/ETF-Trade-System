@@ -1,6 +1,6 @@
 # Formal Decision 定时任务重建合同 V2
 
-版本：V2.0  
+版本：V2.1  
 适用范围：仅限【ETF正式决策】定时任务。  
 唯一规则来源：本文件由 `ETF_SYSTEM_INDEX.md` 路由，交易权限、风险阈值、观察/机会/持仓定义仍分别服从 MASTER、数据规范和 Formal Decision 执行协议。
 
@@ -60,3 +60,18 @@ BDS写入、BDS回读、completion、event、notification_id、PushPlus provider
 `入口 → request → request-bound facts → READY → FINAL_CONTENT → BDS → completion → workflow_dispatch → event → notification_id → provider result`
 
 CI通过不等于真实通知成功；任务建立、运行已发起、workflow success或provider success均不等于用户实际收到。
+
+## 八、手动启动定时任务的运行身份建立（V2.1）
+
+“用户手动启动本自动化”与“系统按日历自动唤起”是两个不同入口。平台没有向模型暴露自动化运行凭据时，只能阻断自动入口；不得把该限制套用到用户手动启动入口。
+
+对 `MANUAL_SCHEDULED_TASK`：
+
+1. 用户在本自动化任务的运行界面明确发起本次运行，即是本次手动触发事实；不得因当前时间不在自动节点而 SKIP。
+2. `task_id` 使用当前任务的固定正式名称“ETF正式决策”；
+3. `task_run_id` 与 `occurrence_id` 必须在本次手动运行首次创建请求时一次性生成，格式为 `manual-scheduled-YYYYMMDDTHHMMSS+0800-<短随机后缀>`，并写入同一请求。该身份是本次手动 ingress 新建的当前运行身份，不得使用历史值，不得伪造为自动运行身份，也不得在后续步骤重新生成；
+4. `parent_request_id`、`request_id` 和 `market_date` 从同一请求 ingress 绑定并持续复用；
+5. 生成身份后必须立即写入并回读 `requests/live_snapshot/<request_id>.json`，后续所有事实、DWP、BDS、completion、event 和通知只能绑定这一组身份；
+6. 若同一手动运行已经取得当前 `task_run_id/occurrence_id`，只能继续消费该父请求；不得因后续读取不到自动化平台元数据而重新判定为未知、创建第二请求或暂停任务。
+
+对 `AUTOMATIC_SCHEDULED_TASK`，第三节的运行时注入和缺失即 fail-closed 规则保持不变；不得用本节的手动身份生成规则补齐自动入口。此次 V2.1 只修复手动启动入口的身份建立，不改变两个稳定任务、正式自动节点、交易规则或通知链。
