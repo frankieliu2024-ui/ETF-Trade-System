@@ -32,6 +32,7 @@ on:
   push:
     paths:
       - "requests/live_snapshot/**"
+      - "requests/trade_fact_correction/**"
       - "scripts/cloud_runner_snapshot.py"
       - "scripts/query_time_market_refresh.py"
       - "scripts/tencent_quote.py"
@@ -82,6 +83,33 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Apply confirmed trade fact corrections
+        if: ${{ github.event_name == 'push' }}
+        shell: bash
+        env:
+          EVENT_BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          correction_files="$(git diff --name-only "$EVENT_BEFORE" "$GITHUB_SHA" -- 'requests/trade_fact_correction/*.json' || true)"
+          if [ -z "$correction_files" ]; then
+            echo "No confirmed trade fact correction ingress in this push."
+            exit 0
+          fi
+          while IFS= read -r correction_file; do
+            [ -z "$correction_file" ] && continue
+            echo "Applying canonical trade fact correction: $correction_file"
+            python scripts/apply_trade_fact_correction.py "$correction_file"
+          done <<< "$correction_files"
+          if git diff --quiet; then
+            echo "Correction already projected; no commit required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/state/account_fact.json data/state/etf_strategy_equity.json data/state/trade_fact_correction_receipt.json events/trades ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md ETF当前状态_DASHBOARD.md
+          git commit -m "chore: apply confirmed trade fact corrections"
+          git push
+
       - name: Create deterministic Formal Decision schedule ingress
         if: ${{ github.event_name == 'schedule' }}
         env:
