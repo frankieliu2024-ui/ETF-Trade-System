@@ -22,8 +22,10 @@ class FormalScheduledScopeFirewallTest(unittest.TestCase):
         self.assertIn("## 场景作用域防火墙（强制）", text)
         self.assertIn("MANUAL_CONVERSATION", text)
         self.assertIn("MANUAL_SCHEDULED_TASK / AUTOMATIC_SCHEDULED_TASK", text)
-        self.assertIn("默认仅适用于 `MANUAL_CONVERSATION`", text)
-        self.assertIn("Scheduled Review completion", text)
+        self.assertIn("三个入口统一执行以下链条", text)
+        self.assertIn("STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW", text)
+        self.assertIn("MARKET_QUOTE_REFRESH", text)
+        self.assertIn("不再属于三个入口中的任何一个", text)
 
     def test_scheduled_contract_rejects_historical_formal_gate_and_bds(self):
         text = self.read("docs/formal-decision-scheduled-task-rebuild-v2.md")
