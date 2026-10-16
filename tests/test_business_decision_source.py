@@ -15,7 +15,12 @@ class BusinessDecisionSourceTests(unittest.TestCase):
         return {
             "request_type": BUSINESS_DECISION_SOURCE,
             "request_id": "r1",
+            "parent_request_id": "r1",
             "decision_id": "d1",
+            "formal_entry_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "entry_mode": "MANUAL_CONVERSATION",
+            "occurrence_id": "manual-occurrence",
+            "market_date": "2026-10-16",
             "consumed_snapshot": "snap-1",
             "risk_permission": "PERMITTED",
             "main_candidate": "NONE",
@@ -54,6 +59,20 @@ class BusinessDecisionSourceTests(unittest.TestCase):
         self.assertTrue(source["source_durable"])
         self.assertTrue(source["reply_ready"])
         self.assertNotIn("formal_completion_validator", source)
+
+    def test_entry_identity_mismatch_fails_closed(self):
+        source = self.base()
+        source["formal_entry_source"] = "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"
+        source["entry_mode"] = "MANUAL_CONVERSATION"
+        with self.assertRaisesRegex(ValueError, "entry_mode"):
+            validate_source(source)
+
+    def test_scheduled_entry_requires_task_identity(self):
+        source = self.base()
+        source["formal_entry_source"] = "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"
+        source["entry_mode"] = "AUTOMATIC_SCHEDULED_TASK"
+        with self.assertRaisesRegex(ValueError, "task_id"):
+            validate_source(source)
 
     def test_missing_business_judgment_fails_closed(self):
         source = self.base()
