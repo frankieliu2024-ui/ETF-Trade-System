@@ -918,6 +918,38 @@ _FORMAL_PRESENTATION_HEADINGS = (
 )
 
 
+def _validate_formal_presentation_layout(content: str) -> None:
+    """Fail closed on ambiguous user-visible layout before content is frozen.
+
+    The actor owns the single FINAL_CONTENT. This guard therefore rejects
+    presentation drift instead of silently rewriting text after the actor has
+    produced it. Plain-text delivery must retain paragraph boundaries, stable
+    numbering, and readable ETF identity.
+    """
+    import re
+
+    lines = content.splitlines()
+    if not lines or not lines[0].strip().startswith("【ETF正式决策】"):
+        raise ValueError("formal presentation title must be the first line")
+    heading_pattern = re.compile(r"^【[^】]+】$")
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith("【") and stripped.endswith("】") and not heading_pattern.fullmatch(stripped):
+            raise ValueError("formal presentation heading must occupy its own line")
+        if re.search(r"[ \\t]+[（(][0-9]{1,2}[）)]", line):
+            raise ValueError("formal presentation secondary numbering must start a new paragraph")
+        if re.match(r"^[（(][0-9]{1,2}[）)]", stripped):
+            if index == 0 or lines[index - 1].strip() != "":
+                raise ValueError("formal presentation secondary items require a blank line")
+        if re.match(r"^[0-9]{1,2}\\.", stripped):
+            if index == 0 or lines[index - 1].strip() != "":
+                raise ValueError("formal presentation primary items require a blank line")
+    if re.search(r"(?m)^\\s*[0-9]{1,2}\\.\\s+[^\\n]+\\n[0-9]{1,2}\\.\\s+", content):
+        raise ValueError("formal presentation primary items must be separate paragraphs")
+    if re.search(r"(?m)^\\s*[（(][0-9]{1,2}[）)]\\s+[^\\n]+\\n\\s*[（(][0-9]{1,2}[）)]\\s+", content):
+        raise ValueError("formal presentation secondary items must be separate paragraphs")
+
+
 def _validate_formal_presentation_contract(source: dict[str, Any]) -> None:
     """Validate the user-visible Formal Decision report, not only its envelope.
 
@@ -950,6 +982,7 @@ def _validate_formal_presentation_contract(source: dict[str, Any]) -> None:
     missing_headings = [heading for heading in _FORMAL_PRESENTATION_HEADINGS if heading not in content]
     if missing_headings:
         raise ValueError("formal presentation missing required sections: " + ",".join(missing_headings))
+    _validate_formal_presentation_layout(content)
     if "**" in content:
         raise ValueError("formal presentation must not contain Markdown bold markers")
     forbidden_internal_terms = ("canonical", "writer", "BDS", "reply_freezable", "control plane")
