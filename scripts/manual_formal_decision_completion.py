@@ -176,6 +176,7 @@ def build_structured_completion_request(
         "parent_request_id": parent_id,
         "request_type": "BUSINESS_DECISION_SOURCE",
         "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
+        "formal_entry_source": source_mode,
         "entry_mode": entry_mode,
         "task_id": source_request.get("task_id", ""),
         "task_run_id": source_request.get("task_run_id", ""),
