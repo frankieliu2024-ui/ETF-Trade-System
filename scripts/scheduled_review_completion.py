@@ -7,6 +7,11 @@ import os
 from pathlib import Path
 
 try:
+    from formal_entry_contract import validate_formal_entry_identity
+except ModuleNotFoundError:
+    from scripts.formal_entry_contract import validate_formal_entry_identity
+
+try:
     from runtime_session_gate import classify_live_snapshot_request
     from process_state_sync_request import (
         validate_current_lifecycle_contract,
@@ -284,6 +289,7 @@ def build_formal_decision_scheduled_review_completion_request(
     final_content: str,
     entry_mode: str = "",
     trigger_source: str = "",
+    occurrence_id: str = "",
 ) -> dict:
     """Build every Formal Decision entry using the one Scheduled Review contract."""
     if not isinstance(formal_decision, dict) or not formal_decision:
@@ -292,10 +298,28 @@ def build_formal_decision_scheduled_review_completion_request(
     task_run_id = _safe_id(task_run_id)
     market_date = str(market_date or "").strip()
     final_content = str(final_content or "")
+    entry_mode = str(entry_mode or "").strip().upper()
+    trigger_source = str(trigger_source or "").strip().upper()
+    occurrence_id = str(occurrence_id or "").strip()
     if not str(requested_at_beijing or "").strip() or not market_date or not final_content.strip():
         raise ValueError(
             "scheduled formal decision completion requires requested_at_beijing, market_date and frozen final_content"
         )
+    if not entry_mode or not trigger_source or not occurrence_id:
+        raise ValueError(
+            "scheduled formal decision completion requires entry_mode, trigger_source and occurrence_id"
+        )
+    valid, reason = validate_formal_entry_identity({
+        "request_id": request_id,
+        "source": trigger_source,
+        "entry_mode": entry_mode,
+        "task_id": task_id or "ETF正式决策",
+        "task_run_id": task_run_id,
+        "occurrence": occurrence_id,
+        "market_date": market_date,
+    })
+    if not valid:
+        raise ValueError("invalid Formal Decision entry identity: " + reason)
     validate_user_visible_content(final_content, canonical_closure_confirmed=False)
     content_hash = hashlib.sha256(final_content.encode("utf-8")).hexdigest()
     return {
@@ -308,11 +332,14 @@ def build_formal_decision_scheduled_review_completion_request(
         "interaction_scenario": "FORMAL_DECISION",
         "requested_at_beijing": str(requested_at_beijing),
         "market_date": market_date,
+        "occurrence": occurrence_id,
+        "occurrence_id": occurrence_id,
         "formal_decision": formal_decision,
         "presentation_binding": {
             "report_type": "ETF_FORMAL_DECISION",
             "task_id": str(task_id or "ETF正式决策"),
             "task_run_id": task_run_id,
+            "occurrence_id": occurrence_id,
             "report_id": f"ETF_FORMAL_DECISION:{task_run_id}",
             "full_content": final_content,
             "content_hash": content_hash,
