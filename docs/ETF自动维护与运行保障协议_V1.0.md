@@ -93,6 +93,10 @@ request_id、source、owner、input_hash、started_at_beijing、finished_at_beij
 
 回执不得代替canonical事实，也不得成为第二业务规则来源。
 
+## 8.1 Scheduled Review通知投影回读
+
+System Review和Trade Review均属于Scheduled Review投影场景。正文冻结后，唯一owner必须按`SCHEDULED_REVIEW_COMPLETION`完成后置交接，并至少回读：completion request、canonical review event、REPORT、notification_id和provider result。正文已生成但缺少completion、event、REPORT或notification_id时，必须归类为`PROJECTION_INCOMPLETE`或`MAINTENANCE_INCOMPLETE`，不得表述为通知完成，不得自动补发历史正文或创建第二通知。
+
 ## 9. 场景验收矩阵
 
 每个场景必须验证：
