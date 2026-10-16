@@ -30,6 +30,7 @@ def set_output(key: str, value: str) -> None:
 STATE_SYNC_FIELDS = ("account_fact", "formal_decision", "trade_event", "formal_review")
 EVIDENCE_REQUEST_TYPES = {"EMERGENCY_EXTERNAL_MARKET_EVIDENCE"}
 BUSINESS_DECISION_SOURCE_REQUEST_TYPE = "BUSINESS_DECISION_SOURCE"
+SCHEDULED_REVIEW_COMPLETION_REQUEST_TYPE = "SCHEDULED_REVIEW_COMPLETION"
 REFRESH_REQUEST_TYPES = {"MARKET_QUOTE_REFRESH", "QUERY_TIME_REFRESH", "LIVE_SNAPSHOT_REFRESH"}
 EXPLICIT_REFRESH_INTENTS = {"EXPLICIT_LATEST", "MARKET_QUOTE_REFRESH", "QUERY_TIME_REFRESH"}
 
@@ -115,6 +116,12 @@ def classify_live_snapshot_request(request: dict) -> str:
     request_type = str(request.get("request_type") or "").upper()
     if request_type == BUSINESS_DECISION_SOURCE_REQUEST_TYPE:
         return "BUSINESS_DECISION_SOURCE"
+    # Scheduled Review completion is a public completion ingress distinct from
+    # the legacy STATE_SYNC_ONLY request label. It still routes through the
+    # existing state-sync owner, but must not be mistaken by the actor for a
+    # request type that the Scheduled Review contract explicitly excludes.
+    if request_type == SCHEDULED_REVIEW_COMPLETION_REQUEST_TYPE:
+        return "STATE_SYNC_ONLY"
     source = str(request.get("source") or "").upper()
     scenario = str(request.get("interaction_scenario") or "").upper()
     has_state_sync = any(field in request for field in STATE_SYNC_FIELDS)
