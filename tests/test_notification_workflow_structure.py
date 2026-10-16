@@ -56,9 +56,10 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertIn("REVIEW_EVENT_PATH", self.text)
         self.assertNotIn("--formal-content-file", self.text)
 
-    def test_push_routes_accept_canonical_bds_suffix(self):
+    def test_push_routes_accept_canonical_formal_review_event(self):
         self.assertNotIn("__bds", self.text)
-        self.assertIn("__formal_decision_completion", self.text)
+        self.assertIn('events/reviews/*.json', self.text)
+        self.assertIn('events/reviews/formal_*.json', self.text)
 
     def test_account_and_trade_canonical_publications_wake_existing_notification_chain(self):
         self.assertIn('- "data/state/account_fact.json"', self.text)
