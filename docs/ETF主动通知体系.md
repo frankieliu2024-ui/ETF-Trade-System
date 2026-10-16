@@ -217,6 +217,8 @@ REPORT只接受已经达到合法终态并冻结的active正式节点结果，�
 
 Scheduled Review Actor达到合法终态并冻结唯一`FINAL_CONTENT`后，只提交一次现有canonical Scheduled Review completion ingress；completion事件携带`presentation_binding`（至少包含`report_type`、`task_id`、`task_run_id`、`report_id`、`full_content`、`content_hash`），由现有`notification_center`从该canonical review event投影REPORT并经统一sender投递。`ETF_TRADE_REVIEW`、`ETF_SYSTEM_REVIEW`和`ETF_FORMAL_DECISION`的一级标题分别固定为`【ETF交易复盘】`、`【ETF系统复核】`和`【ETF正式决策】`，不得沿用运行时间、报告后缀或自由标题。Scheduled Actor不得在completion之后另行创建`requests/report_delivery`或`requests/report_handoff`作为新的生产标准。`decision-notification.yml`在Formal completion触发的push中必须先将唯一`events/reviews/formal_*.json`事件持久化到current main，再精确绑定该路径；多个候选或binding/schema、哈希、来源、task/run identity不合法时fail closed，不得按目录排序猜测occurrence；Formal Decision completion模式下不得回退到BDS、旧REPORT或历史handoff。历史`report_delivery`/`report_handoff`仅保留current确需的compatibility/recovery语义。`notification_center.build_report_delivery_request`可以继续作为仓库内辅助构造/测试函数，但不是Scheduled Actor的生产前置执行依赖。Formal completion严格模式必须由统一的模块级模式判断函数同时约束校验和投影，不能依赖局部变量或静态字符串测试。
 
+Scheduled Review 的提交入口使用 `request_type=SCHEDULED_REVIEW_COMPLETION`；它由现有 state-sync owner 负责登记 `events/reviews/*.json`，随后仍由同一 REPORT/notification_center/PushPlus 链投影。该入口在运行路由上归类为 state-sync，但不等同于任务合同中排除的旧 `request_type=STATE_SYNC_ONLY`，不得因名称混淆而跳过本次 completion。
+
 canonical intake只接受已登记的`ETF_TRADE_REVIEW`、`ETF_SYSTEM_REVIEW`与`ETF_FORMAL_DECISION`三类REPORT，并校验来源身份、任务/运行身份、正文哈希和幂等键；重复幂等键不得重复投递。REPORT请求只能创建delivery event，不能修改MASTER、risk permission、lifecycle、formal decision、account、trade、CASE或订单。REPORT投递成功或失败都不得反向改写业务事实是否成功；业务事实失败也不得在正文中伪装为成功。REPORT是终态投递输入，不得重新进入INTERRUPT事件生成器；同一任务运行/节点继续由现有幂等键防止重复投递。
 
 ### 正式判断与raw trigger边界
