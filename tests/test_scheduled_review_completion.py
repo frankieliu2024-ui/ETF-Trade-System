@@ -202,6 +202,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             {"status": "PASS"}, "system-request", "2026-09-26T19:30:00+08:00",
             "ETF系统复核", "system-run", "FROZEN SYSTEM REPORT",
         )
+        self.assertEqual(payload["request_type"], "SCHEDULED_REVIEW_COMPLETION")
         self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_SYSTEM_REVIEW")
         self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_SYSTEM_REVIEW")
         self.assertEqual(payload["presentation_binding"]["report_id"], "etf_system_review:system-run")
@@ -506,7 +507,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             "【成交归因】159981买入5,700份已绑定昨日10:41正式判断的Confirm；"
             "561980两笔卖出已有正式决策身份。执行质量字段仍有缺口，不影响账户事实。",
         )
-        self.assertEqual(payload["request_type"], "STATE_SYNC_ONLY")
+        self.assertEqual(payload["request_type"], "SCHEDULED_REVIEW_COMPLETION")
         self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_SYSTEM_REVIEW")
 
 
