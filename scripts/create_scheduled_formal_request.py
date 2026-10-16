@@ -91,7 +91,7 @@ def build_scheduled_request(
         "source": SCHEDULED_REVIEW_SOURCE,
         "trigger_source": trigger_source,
         "entry_mode": mode,
-        "interaction_scenario": "SCHEDULED_FORMAL_DECISION",
+        "interaction_scenario": "FORMAL_DECISION",
         "requested_at_beijing": requested_at,
         "task_id": str(task_id),
         "task_run_id": str(task_run_id),
