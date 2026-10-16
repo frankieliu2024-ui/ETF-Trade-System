@@ -137,6 +137,7 @@ def build_completion_request(
     final_content: str = "",
     task_id: str = "",
     task_run_id: str = "",
+    occurrence_id: str = "",
 ) -> dict:
     """Wrap a frozen Scheduled Review for the existing state-sync owner."""
     scope = str((formal_review or {}).get("review_scope") or "").strip().upper()
@@ -150,8 +151,12 @@ def build_completion_request(
     effective_market_date = str(market_date or review_market_date).strip()
     if not effective_market_date or effective_market_date != review_market_date:
         raise ValueError("scheduled review completion market_date must match formal_review.market_date")
+    effective_request_id = _safe_id(request_id)
+    effective_task_run_id = _safe_id(task_run_id or effective_request_id)
+    effective_occurrence_id = _safe_id(occurrence_id or effective_task_run_id)
     payload = {
-        "request_id": _safe_id(request_id),
+        "request_id": effective_request_id,
+        "occurrence_id": effective_occurrence_id,
         "request_type": "SCHEDULED_REVIEW_COMPLETION",
         "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
         "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
@@ -163,9 +168,10 @@ def build_completion_request(
         "presentation_binding": {
             "report_type": "ETF_TRADE_REVIEW",
             "task_id": str(task_id or "ETF交易复盘"),
-            "task_run_id": str(task_run_id or request_id),
-            "request_id": str(request_id),
-            "report_id": f"ETF_TRADE_REVIEW:{str(task_run_id or request_id)}",
+            "task_run_id": effective_task_run_id,
+            "occurrence_id": effective_occurrence_id,
+            "request_id": effective_request_id,
+            "report_id": f"ETF_TRADE_REVIEW:{effective_task_run_id}",
             "full_content": str(final_content or ""),
             "content_hash": hashlib.sha256(str(final_content or "").encode("utf-8")).hexdigest(),
         },
@@ -379,6 +385,7 @@ def write_completion_request(
     final_content: str = "",
     task_id: str = "",
     task_run_id: str = "",
+    occurrence_id: str = "",
 ) -> Path:
     source = (ROOT / review_path).resolve()
     if ROOT not in source.parents:
@@ -388,7 +395,7 @@ def write_completion_request(
     account = json.loads(account_path.read_text(encoding="utf-8")) if account_path.exists() else None
     payload = build_completion_request(
         review, request_id, requested_at_beijing, market_date, parent_request_id, account,
-        final_content, task_id, task_run_id
+        final_content, task_id, task_run_id, occurrence_id
     )
     target = (ROOT / output_path).resolve() if output_path else REQUEST_DIR / f"{payload['request_id']}.json"
     if ROOT not in target.parents or target.suffix != ".json":
@@ -414,6 +421,7 @@ def main() -> int:
     parser.add_argument("--final-content", default="")
     parser.add_argument("--task-id", default="")
     parser.add_argument("--task-run-id", default="")
+    parser.add_argument("--occurrence-id", default="")
     args = parser.parse_args()
     target = write_completion_request(
         args.formal_review,
@@ -425,6 +433,7 @@ def main() -> int:
         args.final_content,
         args.task_id,
         args.task_run_id,
+        args.occurrence_id,
     )
     print(json.dumps({"ok": True, "request": str(target.relative_to(ROOT)).replace("\\", "/")}, ensure_ascii=False))
     return 0
