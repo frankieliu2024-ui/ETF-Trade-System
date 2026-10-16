@@ -313,6 +313,13 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
             continue
         report_type = str(binding["report_type"])
         content = str(binding["full_content"])
+        # Trade and system reviews retain their independent legacy event contracts.
+        # Only Formal Decision may use the new Formal event contract.
+        event_type = str(event.get("event_type") or "").strip()
+        if report_type == "ETF_TRADE_REVIEW" and event_type != "FORMAL_POST_CLOSE_REVIEW":
+            continue
+        if report_type == "ETF_SYSTEM_REVIEW" and event_type != "FORMAL_SCHEDULED_SYSTEM_REVIEW":
+            continue
         if report_type not in ACTIVE_REPORT_TYPES or not content:
             continue
         expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
