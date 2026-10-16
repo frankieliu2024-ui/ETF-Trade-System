@@ -80,13 +80,35 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
                 {}, "20260923_2030_scheduled_trade_review", "2026-09-23T20:30:00+08:00"
             )
 
-    def test_morning_stage_cannot_enter_full_day_completion(self):
+    def test_morning_stage_uses_midday_completion_without_close_snapshot(self):
         review = full_review()
-        review["review_scope"] = "MORNING_SESSION_STAGE_ONLY"
-        with self.assertRaisesRegex(ValueError, "review_scope=FULL_DAY"):
-            completion.build_completion_request(
-                review, "20260923_1230_scheduled_trade_review", "2026-09-23T12:30:00+08:00"
-            )
+        review.update({
+            "review_scope": "MORNING_SESSION_STAGE_ONLY",
+            "review_version": "V2.2.34_MORNING_REVIEW",
+            "market_phase": "MIDDAY_BREAK",
+            "account_change_status": "NO_CONFIRMED_NEW_CHANGE",
+            "trade_status": "NO_CONFIRMED_NEW_TRADE",
+            "holdings": {"半导体设备ETF（561980）": "持有"},
+            "discovery_status": "COMPLETED",
+            "observation_count": 1,
+            "opportunity_count": 0,
+            "deployable_cash_yuan": 18011.14,
+            "new_capital_yuan": 0,
+            "releasable_capital_yuan": 0,
+            "data_time": {
+                "a_share_fact_boundary_beijing": "2026-09-23T11:30:00+08:00",
+                "market_snapshot": "data/market/snapshots/2026-09-23_113000.json",
+            },
+        })
+        payload = completion.build_completion_request(
+            review, "20260923_1230_scheduled_trade_review", "2026-09-23T12:30:00+08:00",
+            final_content="FROZEN MIDDAY REPORT", task_id="ETF交易复盘",
+            task_run_id="20260923_1230_scheduled_trade_review",
+        )
+        self.assertEqual(payload["interaction_scenario"], "MIDDAY_REVIEW")
+        self.assertEqual(payload["market_phase"], "MIDDAY_BREAK")
+        self.assertEqual(payload["formal_review"]["review_scope"], "MORNING_SESSION_STAGE_ONLY")
+        self.assertNotIn("close_snapshot", payload["formal_review"]["data_time"])
 
     def test_market_date_mismatch_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "market_date must match"):
