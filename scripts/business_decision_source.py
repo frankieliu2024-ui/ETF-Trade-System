@@ -985,6 +985,27 @@ def _validate_formal_presentation_contract(source: dict[str, Any]) -> None:
     if not any(token in content for token in ("1）", "2）", "3）")):
         raise ValueError("formal presentation requires hanging-indent secondary numbering 1）/2）/3）")
 
+def _validate_formal_entry_identity(source: dict[str, Any]) -> None:
+    """Require the persisted Formal source to retain its actual ingress identity."""
+    expected = {
+        "CHATGPT_MANUAL_FORMAL_ANALYSIS": "MANUAL_CONVERSATION",
+        "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS": "MANUAL_SCHEDULED_TASK",
+        "CHATGPT_SCHEDULED_FORMAL_ANALYSIS": "AUTOMATIC_SCHEDULED_TASK",
+    }
+    origin = str(source.get("formal_entry_source") or "").strip().upper()
+    mode = str(source.get("entry_mode") or "").strip().upper()
+    if origin not in expected:
+        raise ValueError("formal source requires current formal_entry_source")
+    if mode != expected[origin]:
+        raise ValueError("formal source entry_mode does not match formal_entry_source")
+    for field in ("occurrence_id", "market_date"):
+        if not str(source.get(field) or "").strip():
+            raise ValueError("formal source requires " + field)
+    if mode in {"MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
+        for field in ("task_id", "task_run_id"):
+            if not str(source.get(field) or "").strip():
+                raise ValueError("scheduled Formal source requires " + field)
+
 def _validate_request_bound_identity(source: dict[str, Any]) -> None:
     """Fail closed on stale decision identity or stale request timestamp in frozen text."""
     request_id = str(source.get("request_id") or "").strip()
@@ -1059,6 +1080,7 @@ def validate_source(
     if not str(source.get("decision_id") or "").strip():
         raise ValueError("business source requires decision_id")
     _validate_request_bound_identity(source)
+    _validate_formal_entry_identity(source)
     snapshot = str(source.get("consumed_snapshot") or "").strip()
     if not snapshot or expected_snapshot and snapshot != expected_snapshot:
         raise ValueError("business source PIT binding failed")
