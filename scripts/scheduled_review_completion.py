@@ -23,6 +23,27 @@ except ModuleNotFoundError:
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 REQUEST_DIR = ROOT / "requests" / "live_snapshot"
+REQUIRED_MIDDAY_FIELDS = (
+    "market_date",
+    "review_scope",
+    "review_version",
+    "reviewed_at_beijing",
+    "market_phase",
+    "data_time",
+    "account_change_status",
+    "trade_status",
+    "holdings",
+    "holding_actions",
+    "discovery_status",
+    "observation_count",
+    "opportunity_count",
+    "deployable_cash_yuan",
+    "new_capital_yuan",
+    "releasable_capital_yuan",
+    "action",
+    "review_boundary",
+)
+
 REQUIRED_FULL_DAY_FIELDS = (
     "market_date",
     "review_scope",
@@ -84,6 +105,28 @@ def validate_full_day_review(review: dict, account: dict | None = None) -> None:
             raise ValueError(f"invalid formal review managed-position contract: {managed_error}")
 
 
+def validate_midday_review(review: dict, account: dict | None = None) -> None:
+    """Validate the frozen morning-stage review without requiring a 15:00 close."""
+    if not isinstance(review, dict) or not review:
+        raise ValueError("completed formal_review payload is required")
+    if str(review.get("review_scope") or "").strip().upper() != "MORNING_SESSION_STAGE_ONLY":
+        raise ValueError("scheduled midday completion requires review_scope=MORNING_SESSION_STAGE_ONLY")
+    missing = [key for key in REQUIRED_MIDDAY_FIELDS if key not in review or review[key] in (None, "")]
+    if missing:
+        raise ValueError("formal_review missing required midday fields: " + ", ".join(missing))
+    data_time = review.get("data_time")
+    if not isinstance(data_time, dict):
+        raise ValueError("formal_review.data_time must be an object")
+    if not str(data_time.get("a_share_fact_boundary_beijing") or "").strip():
+        raise ValueError("formal_review.data_time.a_share_fact_boundary_beijing is required")
+    if not str(data_time.get("market_snapshot") or "").strip():
+        raise ValueError("formal_review.data_time.market_snapshot is required")
+    if not isinstance(review.get("holdings"), (dict, list)):
+        raise ValueError("formal_review.holdings must be an object or list")
+    if not isinstance(review.get("holding_actions"), dict):
+        raise ValueError("formal_review.holding_actions must be an object")
+
+
 def build_completion_request(
     formal_review: dict,
     request_id: str,
@@ -95,8 +138,13 @@ def build_completion_request(
     task_id: str = "",
     task_run_id: str = "",
 ) -> dict:
-    """Wrap an already-formed full-day Scheduled Review for the existing state-sync owner."""
-    validate_full_day_review(formal_review, account)
+    """Wrap a frozen Scheduled Review for the existing state-sync owner."""
+    scope = str((formal_review or {}).get("review_scope") or "").strip().upper()
+    is_midday = scope == "MORNING_SESSION_STAGE_ONLY"
+    if is_midday:
+        validate_midday_review(formal_review, account)
+    else:
+        validate_full_day_review(formal_review, account)
     validate_user_visible_content(str(final_content or ""), canonical_closure_confirmed=False)
     review_market_date = str(formal_review.get("market_date") or "").strip()
     effective_market_date = str(market_date or review_market_date).strip()
@@ -107,7 +155,8 @@ def build_completion_request(
         "request_type": "STATE_SYNC_ONLY",
         "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
         "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
-        "interaction_scenario": "POST_CLOSE_REVIEW",
+        "interaction_scenario": "MIDDAY_REVIEW" if is_midday else "POST_CLOSE_REVIEW",
+        "market_phase": str(formal_review.get("market_phase") or ("MIDDAY_BREAK" if is_midday else "POST_CLOSE")),
         "requested_at_beijing": str(requested_at_beijing or "").strip(),
         "market_date": effective_market_date,
         "formal_review": formal_review,
