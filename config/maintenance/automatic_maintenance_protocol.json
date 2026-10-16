@@ -11,7 +11,9 @@
     "readback_required_for_success",
     "fail_closed_on_identity_or_schema_conflict",
     "no_master_permission_provider_or_monitor_scope_mutation",
-    "no_second_writer_workflow_state_or_business_chain"
+    "no_second_writer_workflow_state_or_business_chain",
+    "scheduled_review_completion_and_notification_readback",
+    "provider_success_is_not_user_received"
   ],
   "scenarios": [
     {
@@ -59,7 +61,12 @@
       "owner": "existing_system_review_owner",
       "outputs": [
         "review_report",
-        "notification_projection"
+        "notification_projection",
+        "completion_request",
+        "canonical_review_event",
+        "REPORT",
+        "notification_id",
+        "provider_result"
       ]
     },
     {
@@ -68,7 +75,12 @@
       "owner": "existing_trade_review_owner",
       "outputs": [
         "review_event",
-        "archive_and_experience_projection"
+        "archive_and_experience_projection",
+        "completion_request",
+        "canonical_review_event",
+        "REPORT",
+        "notification_id",
+        "provider_result"
       ]
     },
     {
