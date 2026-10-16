@@ -2375,8 +2375,15 @@ def record_formal_decision_report_event(request: dict, bds: dict) -> tuple[bool,
     if not full_content or not task_run_id:
         raise ValueError("Formal Decision canonical event requires frozen content and task_run_id")
     content_hash = hashlib.sha256(full_content.encode("utf-8")).hexdigest()
-    if str(bds.get("content_hash") or binding.get("content_hash") or "") != content_hash:
+    supplied_bds_hash = str(bds.get("content_hash") or "").strip()
+    supplied_binding_hash = str(binding.get("content_hash") or "").strip()
+    supplied_hashes = [value for value in (supplied_bds_hash, supplied_binding_hash) if value]
+    if any(value != content_hash for value in supplied_hashes):
         raise ValueError("Formal Decision canonical event content_hash mismatch")
+    # Formal Decision uses the same single-owner rule as Scheduled Review:
+    # the canonical event owner derives a missing hash from the already frozen
+    # presentation content. It never repairs a supplied, mismatching hash.
+    hash_source = "completion_builder" if supplied_hashes else "canonical_owner"
     binding = {
         "report_type": "ETF_FORMAL_DECISION",
         "task_id": str(bds.get("task_id") or binding.get("task_id") or "ETF正式决策"),
@@ -2388,6 +2395,7 @@ def record_formal_decision_report_event(request: dict, bds: dict) -> tuple[bool,
         "title": "【ETF正式决策】",
         "full_content": full_content,
         "content_hash": content_hash,
+        "content_hash_source": hash_source,
     }
     occurrence = str(bds.get("occurrence_id") or binding.get("occurrence_id") or task_run_id)
     payload = {
