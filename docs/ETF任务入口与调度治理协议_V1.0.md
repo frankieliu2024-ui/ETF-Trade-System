@@ -48,7 +48,7 @@
 
 三类任务的 `task_id` 必须使用本协议登记的任务名称，不得把 source、automation_id、conversation_id、时间戳或运行描述写入 `task_id`。Formal Decision 的 canonical `task_id` 固定为 `ETF正式决策`；`presentation_binding.task_id`、completion、event、REPORT 和 notification 必须逐字段保持一致。
 
-入口身份、task_id、task_run_id、occurrence_id、parent_request_id、request_id、report_id 或 content_hash 任一缺失、冲突或与本次运行不一致时，canonical owner 必须 fail-closed，并归类为 `OWNER_REJECTED` 或 `CONFLICT_REQUIRES_REVIEW`；不得用历史对象、任务名称推断结果或成功通知覆盖身份错误。
+入口身份、task_id、task_run_id、occurrence_id、parent_request_id、request_id、report_id 任一缺失、冲突或与本次运行不一致时，canonical owner 必须 fail-closed，并归类为 `OWNER_REJECTED` 或 `CONFLICT_REQUIRES_REVIEW`；不得用历史对象、任务名称推断结果或成功通知覆盖身份错误。
 
 每次成功通知验收必须回读正文、completion、event、REPORT、notification_id 和 provider result；“正文已生成”“workflow success”或“provider success”均不是端到端完成条件。
 
