@@ -19,7 +19,7 @@ class AutomaticMaintenanceProtocolTests(unittest.TestCase):
         text = (ROOT / "docs/ETF自动维护与运行保障协议_V1.0.md").read_text(encoding="utf-8")
         for phrase in ("唯一canonical owner", "不得为以上场景新增第二个producer", "MASTER", "回读"):
             self.assertIn(phrase, text)
-        self.assertIn("MAINTENANCE_INCOMPLETE", text)
+        self.assertIn("MAINTENANCE_INCOMPLETE", text)\n        self.assertIn("Scheduled Review通知投影回读", text)\n        self.assertIn("notification_id", text)
 
 
 if __name__ == "__main__":
