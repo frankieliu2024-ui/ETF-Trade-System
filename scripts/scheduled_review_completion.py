@@ -167,7 +167,6 @@ def build_completion_request(
             "request_id": str(request_id),
             "report_id": f"ETF_TRADE_REVIEW:{str(task_run_id or request_id)}",
             "full_content": str(final_content or ""),
-            "content_hash": hashlib.sha256(str(final_content or "").encode("utf-8")).hexdigest(),
         },
     }
     if parent_request_id:
@@ -304,7 +303,6 @@ def build_system_review_completion_request(
         raise ValueError("scheduled system review completion requires requested_at_beijing and frozen final_content")
     validate_system_review_presentation(system_review, final_content)
     validate_user_visible_content(str(final_content), canonical_closure_confirmed=False)
-    content_hash = hashlib.sha256(str(final_content).encode("utf-8")).hexdigest()
     return {
         "request_id": request_id,
         "request_type": "SCHEDULED_REVIEW_COMPLETION",
@@ -320,7 +318,6 @@ def build_system_review_completion_request(
             "request_id": request_id,
             "report_id": f"etf_system_review:{task_run_id}",
             "full_content": str(final_content),
-            "content_hash": content_hash,
         },
     }
 
