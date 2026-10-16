@@ -2303,7 +2303,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
 def _validate_presentation_binding(binding: dict, report_type: str) -> dict:
     if not isinstance(binding, dict):
         raise ValueError("scheduled completion presentation_binding must be an object")
-    required = ("task_id", "task_run_id", "request_id", "report_id", "full_content", "content_hash")
+    required = ("task_id", "task_run_id", "request_id", "report_id", "full_content")
     missing = [key for key in required if not str(binding.get(key) or "").strip()]
     if missing:
         raise ValueError("scheduled completion presentation_binding missing:" + ",".join(missing))
@@ -2311,10 +2311,16 @@ def _validate_presentation_binding(binding: dict, report_type: str) -> dict:
         raise ValueError("scheduled completion presentation_binding report_type mismatch")
     content = str(binding["full_content"])
     expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
-    if str(binding.get("content_hash") or "") != expected_hash:
+    supplied_hash = str(binding.get("content_hash") or "").strip()
+    # The canonical owner is the only permitted hash producer. Some external
+    # Scheduled Actors can write Contents but cannot invoke the repository
+    # builder; when they omit the hash, derive it from the frozen full_content
+    # at the owner boundary. A supplied hash is never repaired: it must match.
+    if supplied_hash and supplied_hash != expected_hash:
         raise ValueError("scheduled completion presentation_binding content_hash mismatch")
     binding = dict(binding)
     binding["content_hash"] = expected_hash
+    binding["content_hash_source"] = "canonical_owner" if not supplied_hash else "completion_builder"
     return binding
 
 
