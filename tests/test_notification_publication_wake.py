@@ -41,7 +41,7 @@ class NotificationPublicationWakeTests(unittest.TestCase):
         self.assertIn('github.event.workflow_run.name == \'ETF market snapshot\'', self.text)
         self.assertIn('github.event.workflow_run.name == \'Overseas pre-open pulse\'', self.text)
         self.assertIn('github.event.workflow_run.name == \'US extended-hours pulse\'', self.text)
-        self.assertIn("concurrency:\n  group: etf-decision-notification\n  cancel-in-progress: false", self.text)
+        self.assertIn("concurrency:\n  group: etf-decision-notification-${{ github.run_id }}\n  cancel-in-progress: false", self.text)
 
     def test_no_new_notification_workflow_or_direct_producer_notification_path(self):
         overseas = (ROOT / ".github" / "workflows" / "overseas-preopen-pulse.yml").read_text(encoding="utf-8")
