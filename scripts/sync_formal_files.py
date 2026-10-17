@@ -160,11 +160,13 @@ def canonical_risk(equity: dict, formal_override: float | None = None) -> float 
     if formal_override is not None:
         return float(formal_override)
     summary = equity.get("summary") or {}
-    for key in ("current_strategy_return_pct_gross", "known_net_current_strategy_return_pct"):
-        try:
-            return float(summary[key])
-        except (KeyError, TypeError, ValueError):
-            continue
+    as_of = str(equity.get("as_of_transaction_date") or summary.get("as_of_transaction_date") or equity.get("replay_cutoff") or "")
+    if not as_of:
+        return None
+    try:
+        return float(summary["current_strategy_return_pct_gross"])
+    except (KeyError, TypeError, ValueError):
+        return None
     return None
 
 

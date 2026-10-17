@@ -2191,6 +2191,13 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     market_date = str(review.get("market_date") or request.get("market_date") or account.get("last_confirmed_market_date") or "")
     if not market_date:
         raise RuntimeError("POST_CLOSE_REVIEW requires market_date")
+    current_path = ROOT / "data" / "state" / "CURRENT.json"
+    current_fact = load_json(current_path) if current_path.exists() else {}
+    current_market_date = str(current_fact.get("market_date") or "")
+    if current_market_date and market_date > current_market_date:
+        raise ValueError(
+            f"POST_CLOSE_REVIEW market_date {market_date} is later than CURRENT.market_date {current_market_date}"
+        )
     event_path = ROOT / "events" / "reviews" / f"{market_date}.json"
     prior = load_json(event_path) if event_path.exists() else {}
     prior_review = prior.get("review") if isinstance(prior.get("review"), dict) else {}

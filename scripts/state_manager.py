@@ -406,7 +406,7 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
     )
     capital = float(summary.get("starting_etf_strategy_capital") or 200000)
     reconstruction_risk = summary.get("current_strategy_return_pct_gross", summary.get("known_net_current_strategy_return_pct"))
-    reconstruction_as_of = str(equity.get("as_of_transaction_date") or summary.get("as_of_transaction_date") or "")
+    reconstruction_as_of = str(equity.get("as_of_transaction_date") or summary.get("as_of_transaction_date") or equity.get("replay_cutoff") or "")
     current = read_json(root / "data" / "state" / "CURRENT.json", {})
     current_market_date = str(current.get("market_date") or "")
     canonical_risk = read_json(root / "data" / "state" / "skfolio_risk_evidence.json", {})
@@ -446,7 +446,7 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
         risk_source_updated_at = formal.get("updated_at")
         strategy_equity = formal.get("equity") if formal.get("equity") is not None else summary.get("known_net_current_strategy_equity")
         risk_data_quality = "FORMAL_REVIEW_PRIMARY; RECONSTRUCTION_AUXILIARY"
-    elif reconstruction_fresh or "current_strategy_return_pct_gross" in summary:
+    elif reconstruction_fresh:
         risk_pct = round(float(reconstruction_risk), 2)
         risk_source = "data/state/etf_strategy_equity.json"
         risk_source_updated_at = equity.get("generated_at")
