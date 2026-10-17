@@ -367,6 +367,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
                 "review": {
                     "market_date": market_date,
                     "data_time": {"close_snapshot": close_snapshot},
+                    "discovery_close_status": "COMPLETED",
                 },
             }),
             encoding="utf-8",
