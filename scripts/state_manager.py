@@ -101,7 +101,10 @@ def read_json_checked(path: Path, fallback: Any) -> tuple[Any, str]:
     except OSError:
         return fallback, "READ_UNVERIFIED"
     if raw == "":
-        return fallback, "VERIFIED_EMPTY"
+        # A zero-byte JSON read cannot prove that the canonical object is empty.
+        # Treat it as an unverified transport/read result so consumers re-read the
+        # same source instead of projecting a false missing/empty state.
+        return fallback, "READ_UNVERIFIED"
     try:
         return json.loads(raw), "READ_OK"
     except json.JSONDecodeError:
