@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REQUEST_DIR = ROOT / "requests" / "live_snapshot"
 BEIJING = timezone(timedelta(hours=8))
 
-# GitHub Actions cron is UTC; these are the only four automatic Beijing nodes.
+# GitHub Actions cron is UTC; these are the five automatic Beijing nodes.
 SLOTS = {
     "0 1 * * 1-5": (9, 0),
     "0 2 * * 1-5": (10, 0),
