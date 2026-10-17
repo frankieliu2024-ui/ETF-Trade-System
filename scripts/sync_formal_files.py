@@ -160,7 +160,7 @@ def canonical_risk(equity: dict, formal_override: float | None = None) -> float 
     if formal_override is not None:
         return float(formal_override)
     summary = equity.get("summary") or {}
-    as_of = str(equity.get("as_of_transaction_date") or summary.get("as_of_transaction_date") or "")
+    as_of = str(equity.get("as_of_transaction_date") or summary.get("as_of_transaction_date") or equity.get("replay_cutoff") or "")
     if not as_of:
         return None
     try:
