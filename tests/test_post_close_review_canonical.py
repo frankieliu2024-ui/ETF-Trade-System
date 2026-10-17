@@ -47,6 +47,8 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
             "report_type": "ETF_TRADE_REVIEW",
             "task_id": "ETF交易复盘",
             "task_run_id": "trade-occurrence-1",
+            "request_id": request["request_id"],
+            "report_id": "etf_trade_review:trade-occurrence-1",
             "full_content": final_content,
         }
         account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
