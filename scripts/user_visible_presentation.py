@@ -75,6 +75,38 @@ def _security_identity_errors(content: str, security_map: dict[str, str]) -> lis
     return errors
 
 
+def _presentation_structure_errors(text: str) -> list[str]:
+    errors: list[str] = []
+    lines = text.splitlines()
+    section_seen = False
+    top_numbers: list[int] = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("【") and stripped.endswith("】"):
+            section_seen = True
+            continue
+        m = re.match(r"^(\d+)\.\s+", stripped)
+        if m:
+            if not section_seen:
+                errors.append("numbered items must follow a section heading")
+            top_numbers.append(int(m.group(1)))
+        if re.match(r"^\d+）\S", stripped):
+            errors.append("secondary numbering requires a space after the marker")
+        if re.match(r"^\d+\.\S", stripped):
+            errors.append("primary numbering requires a space after the marker")
+    if len(top_numbers) >= 3 and top_numbers == list(range(1, len(top_numbers) + 1)):
+        errors.append("primary numbering must not run globally across sections")
+    return list(dict.fromkeys(errors))
+
+
+def _time_presentation_errors(text: str) -> list[str]:
+    errors: list[str] = []
+    for line in text.splitlines():
+        if "北京时间" in line and len(line.strip()) > 90:
+            errors.append("Beijing-time statement is too verbose")
+    return errors
+
+
 def validate_user_visible_content(
     content: str,
     *,
@@ -89,6 +121,8 @@ def validate_user_visible_content(
         raise ValueError("user-visible content must not be empty")
     mapping = security_map if security_map is not None else canonical_security_map(root)
     errors = _security_identity_errors(text, mapping)
+    errors.extend(_presentation_structure_errors(text))
+    errors.extend(_time_presentation_errors(text))
     if not canonical_closure_confirmed:
         for phrase in CLOSURE_PHRASES:
             if phrase in text:
