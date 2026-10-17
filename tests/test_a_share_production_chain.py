@@ -165,7 +165,7 @@ class AShareProductionChainTests(unittest.TestCase):
         on_demand = (ROOT / ".github/workflows/on-demand-market-data.yml").read_text(encoding="utf-8")
         self.assertIn("workflow_dispatch", production)
         self.assertIn("if: ${{ steps.session_gate.outputs.should_capture == 'true' }}", production)
-        self.assertNotIn("github.event_name != 'push'", production)
+        self.assertNotIn("steps.session_gate.outputs.should_capture != 'true' && github.event_name != 'push'", production)
         self.assertIn("steps.snapshot_result.outputs.snapshot_written", production)
         self.assertIn("git add -A -- data/market/snapshots data/state", production)
         self.assertNotIn("run_full_snapshot_recovery.py", on_demand)
@@ -211,10 +211,12 @@ class AShareProductionChainTests(unittest.TestCase):
         primary = resolve_scheduled_pulse("*/10 8-23 * * 1-5", datetime.fromisoformat("2026-09-08T17:05:00+08:00"))
         backstop = resolve_scheduled_pulse("2,22,42 8-23 * * 1-5", datetime.fromisoformat("2026-09-08T20:05:00+08:00"))
         old_cron = resolve_scheduled_pulse("15,20,25,30,40,50 1 * * 1-5", datetime.fromisoformat("2026-09-08T13:55:42+08:00"))
-        self.assertEqual(primary["schedule_delay_class"], "BOUNDED_DELAY")
+        self.assertEqual(primary["schedule_delay_class"], "AMBIGUOUS")
+        self.assertEqual(primary["candidate_delay_class"], "BOUNDED_DELAY")
         self.assertTrue(primary["eligible"])
         self.assertEqual(backstop["schedule_delay_class"], "AMBIGUOUS")
-        self.assertFalse(backstop["eligible"])
+        self.assertEqual(backstop["candidate_delay_class"], "BOUNDED_DELAY")
+        self.assertTrue(backstop["eligible"])
         self.assertEqual(old_cron["schedule_delay_class"], "AMBIGUOUS")
         self.assertTrue(old_cron["eligible"])
         self.assertIn("SCHEDULED_CRON", (ROOT / ".github/workflows/us-extended-hours-pulse.yml").read_text(encoding="utf-8"))
@@ -295,7 +297,7 @@ class ManualRequestSessionAnchorTests(unittest.TestCase):
             "requested_at_beijing": "2026-09-21T14:55:00+08:00",
             "interaction_scenario": "INTRADAY",
         }
-        out = runtime_session_gate.normalize_manual_request_session(request, self.policy())
+        out = runtime_session_gate.normalize_manual_request_session(request, self.policy(), now=runtime_session_gate.parse_runtime_time("2026-09-21T14:55:00+08:00"))
         self.assertEqual(out["interaction_scenario"], "INTRADAY")
         self.assertNotIn("interaction_scenario_reclassified", out)
 
