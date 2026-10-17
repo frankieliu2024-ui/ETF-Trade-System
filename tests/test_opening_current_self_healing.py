@@ -324,6 +324,8 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         persist = workflow.split("- name: Persist bounded self-healing state and deterministic repairs", 1)[1]
         self.assertIn("always() && steps.assess.outcome == 'success'", persist)
         self.assertIn("git add -A -- data/state/self_healing_status.json", persist)
+        self.assertIn("checked_at and age counters are observations", persist)
+        self.assertIn("status_changed=", persist)
         self.assertIn('if [ "$action" != "NONE" ]; then', persist)
         self.assertLess(
             persist.index("git add -A -- data/state/self_healing_status.json"),
