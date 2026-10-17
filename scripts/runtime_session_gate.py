@@ -307,6 +307,8 @@ def main() -> int:
     now = datetime.now(SHANGHAI)
     date_text = now.date().isoformat()
     event_name = os.environ.get("GITHUB_EVENT_NAME", "")
+    manual_node = os.environ.get("GITHUB_EVENT_INPUTS_NODE", "").strip().lower()
+    manual_close_intent = event_name == "workflow_dispatch" and manual_node == "close"
     request_class = _event_request_class()
     scheduled_cron = os.environ.get("SCHEDULED_CRON", "").strip()
     policy = load_json(ROOT / "config" / "runtime_policy.json")
@@ -366,7 +368,7 @@ def main() -> int:
         reason = "business_decision_source_request" if request_class == "BUSINESS_DECISION_SOURCE" else "state_sync_only_request"
         request_time_close_recovery = False
 
-    close_intent = bool(scheduled_close_intent or boundary_close_intent or request_time_close_recovery)
+    close_intent = bool(scheduled_close_intent or boundary_close_intent or request_time_close_recovery or manual_close_intent)
     wait_for_close_boundary_seconds = 0
     if boundary_close_intent and minute < 15 * 60:
         wait_for_close_boundary_seconds = 15 * 60 - (now.hour * 60 * 60 + now.minute * 60 + now.second)
@@ -375,6 +377,10 @@ def main() -> int:
     if query_time_refresh and event_name == "push":
         reason = "query_time_refresh_midday_reference" if phase == "MIDDAY_BREAK" else "query_time_refresh_separate_global_path"
     elif event_name == "workflow_dispatch":
+        # A manually requested close consumes the latest legal close snapshot
+        # and must continue close-review projection outside capture hours.
+        if manual_close_intent and not should_capture:
+            reason = "manual_dispatch_close_existing_snapshot"
         # Preserve the canonical outside-window enum consumed by downstream
         # phase-consistency gates; dispatch observability must not rewrite it.
         if should_capture:
