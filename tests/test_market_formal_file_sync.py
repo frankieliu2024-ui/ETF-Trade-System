@@ -50,8 +50,19 @@ class FormalFileSyncTests(unittest.TestCase):
         self.assertIn("canonical account projection", normalized)
         self.assertNotIn("观察ETF：电网设备ETF（159326）", normalized)
 
-    def test_risk_reads_maintained_known_net_only(self):
-        self.assertEqual(canonical_risk({"summary": {"known_net_current_strategy_return_pct": -8.3}}), -8.3)
+    def test_risk_rejects_known_net_only_without_valuation_cutoff(self):
+        self.assertIsNone(canonical_risk({"summary": {"known_net_current_strategy_return_pct": -8.3}}))
+
+    def test_risk_accepts_existing_gross_replay_cutoff(self):
+        self.assertEqual(
+            canonical_risk(
+                {
+                    "replay_cutoff": "2026-10-16",
+                    "summary": {"current_strategy_return_pct_gross": -8.3},
+                }
+            ),
+            -8.3,
+        )
 
 
 if __name__ == "__main__":
