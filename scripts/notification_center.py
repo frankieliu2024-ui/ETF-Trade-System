@@ -1062,7 +1062,8 @@ def find_existing_notification(items: list[dict], event: dict) -> dict | None:
 
     Scheduled Review and legacy interrupt matching retain their existing contracts.
     Formal Decision delivery is stricter: a historical notification is reusable only
-    when it matches the current request/parent/decision identity and exact body hash.
+    when it matches the current request/parent/decision identity and, when present,
+    the exact frozen body. Hashes remain audit metadata.
     """
     report_type = str(event.get("report_type") or "")
     if report_type == "ETF_FORMAL_DECISION":
@@ -1073,7 +1074,7 @@ def find_existing_notification(items: list[dict], event: dict) -> dict | None:
             "content_hash": str(event.get("content_hash") or ""),
             "content": str(event.get("content") or ""),
         }
-        if not all(current.values()):
+        if not all(current[key] for key in ("request_id", "parent_request_id", "related_decision_id")):
             return None
         for item in items:
             if (
