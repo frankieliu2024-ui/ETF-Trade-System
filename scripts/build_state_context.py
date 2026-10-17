@@ -41,6 +41,7 @@ def compact_skfolio_risk(evidence: dict) -> dict:
         "mode": evidence.get("mode"),
         "risk_data_end": evidence.get("risk_data_end"),
         "data_alignment": evidence.get("data_alignment"),
+        "decision_block_reason": evidence.get("decision_block_reason"),
         "use_in_current_decision": evidence.get("use_in_current_decision", False),
         "current_account_high_corr_components": account.get("high_corr_components") or [],
         "risk_side_release_efficiency": release,
