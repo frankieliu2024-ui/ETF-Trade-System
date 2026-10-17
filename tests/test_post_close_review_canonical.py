@@ -236,6 +236,8 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
             "report_type": "ETF_TRADE_REVIEW",
             "task_id": "ETF交易复盘",
             "task_run_id": "midday-occurrence-1",
+            "request_id": stage["request_id"],
+            "report_id": "etf_trade_review:midday-occurrence-1",
             "full_content": "FROZEN MIDDAY REPORT",
         }
         self.assertEqual(sync.record_post_close_review(account, stage), (True, False))
