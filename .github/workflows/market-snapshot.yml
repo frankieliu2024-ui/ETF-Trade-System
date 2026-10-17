@@ -748,6 +748,16 @@ jobs:
             )
           fi
           echo "formal_completion=$formal_completion" >> "$GITHUB_OUTPUT"
+          formal_post_close_review=false
+          if [ -n "$triggering_request_file" ] && [ -f "$triggering_request_file" ]; then
+            formal_post_close_review=$(python - "$triggering_request_file" <<'PY'
+          import json, sys
+          request = json.load(open(sys.argv[1], encoding="utf-8"))
+          print("true" if str(request.get("formal_fact_type") or "").upper() == "FORMAL_POST_CLOSE_REVIEW" else "false")
+          PY
+            )
+          fi
+          echo "formal_post_close_review=$formal_post_close_review" >> "$GITHUB_OUTPUT"
           scheduled_review_completion=false
           if [ -n "$triggering_request_file" ] && [ -f "$triggering_request_file" ]; then
             scheduled_review_completion=$(python - "$triggering_request_file" <<'PY'
@@ -989,7 +999,7 @@ jobs:
         id: query_context
         # Formal decision critical path. Do not let an unrelated optional/derived
         # step failure suppress request binding and PIT qualification.
-        if: ${{ always() && steps.state_sync.outputs.formal_completion != 'true' && steps.triggering_request.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
         run: |
           REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"
           REQUEST_FILE="$(printf '%s' "$REQUEST_FILE" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
