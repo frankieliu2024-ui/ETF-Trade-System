@@ -372,8 +372,12 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
                     "business_completion_status": "COMPLETE",
                 },
                 "presentation_binding": {
+                    "report_type": "ETF_SYSTEM_REVIEW",
+                    "task_id": "ETF系统复核",
+                    "task_run_id": f"review-{market_date}",
                     "request_id": f"review-{market_date}",
                     "report_id": f"ETF_SYSTEM_REVIEW:{market_date}",
+                    "full_content": f"【ETF系统复核】{market_date}测试正文",
                 },
             }),
             encoding="utf-8",
@@ -490,7 +494,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
 
         e2e, consistency = self._with_review_consumers(run)
 
-        self.assertEqual(e2e["status"], "DEGRADED")
+        self.assertEqual(e2e["status"], "READY")
         self.assertEqual(e2e["reason"], "scheduled_review_not_due")
         self.assertEqual(consistency["checks"][-1]["status"], "PASS")
         self.assertIn("review_not_due", consistency["checks"][-1]["detail"])
