@@ -1,0 +1,41 @@
+{
+  "request_id": "scheduled-system-review-20261017T0821-4c79d2",
+  "request_type": "SCHEDULED_REVIEW_COMPLETION",
+  "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+  "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+  "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+  "requested_at_beijing": "2026-10-17T08:21:29+08:00",
+  "occurrence_id": "system-review-manual-20261017T0821-4c79d2",
+  "system_review": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "review_scope": "MANUAL_MORNING_SYSTEM_REVIEW",
+    "review_date": "2026-10-17",
+    "latest_formal_market_date": "2026-10-16",
+    "e2e_status": "READY",
+    "system_consistency_status": "PASS",
+    "system_consistency_as_of": "2026-09-29T14:31:00+08:00",
+    "account_fact_updated_at": "2026-10-16T15:00:00+08:00",
+    "account_reconciled_at": "2026-10-16T17:34:33+08:00",
+    "risk_status": "READY_WITH_AS_OF_MISMATCH",
+    "risk_metric_pct": -7.2959,
+    "observation_count": 11,
+    "discovery_evaluated_count": 11,
+    "opportunity_count": 0,
+    "actual_holding_codes": [
+      "159941",
+      "159981",
+      "159992"
+    ],
+    "execution_reconciliation": "NOT_APPLICABLE",
+    "user_attribution_requirement": "NONE"
+  },
+  "presentation_binding": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "task_id": "ETF系统复核",
+    "task_run_id": "system-review-manual-20261017T0821-4c79d2",
+    "occurrence_id": "system-review-manual-20261017T0821-4c79d2",
+    "request_id": "scheduled-system-review-20261017T0821-4c79d2",
+    "report_id": "etf_system_review:system-review-manual-20261017T0821-4c79d2",
+    "full_content": "【ETF系统复核】2026-10-17 08:21 早间复核\n\n【复核时点（北京时间）】\n\n本次为2026-10-17 08:21手动早间复核。今天是周六，A股休市；行情、账户与交易判断事实截至10月16日各自记录时点。\n\n【早间复核结论】\n\n当前系统汇总状态为READY，可用于整理和准备后续分析，但这不代表所有关键数据都已在今天重新验证。账户和收盘行情记录可读；策略风险的有效日期口径不一致，系统一致性检查记录较旧，海外运行状态为DEGRADED。今天没有A股决策节点，也没有形成新的交易判断。无需用户补交已确认的账户事实。\n\n【今日市场阶段与开门条件】\n\n1）A股今日休市，最近正式行情为10月16日15:00收盘。下一交易日为10月19日；届时应以当日正式日历、市场阶段和新行情质量判断是否进入分析，不能把周五收盘价当作周一可成交价格。\n\n【关键事实与数据可用性】\n\n1）current行情记录覆盖3个指数和14只监测ETF，共17项，收盘有效时点为10月16日15:00，快照于15:02:19生成，质量PASS。该记录是最近收盘事实，不是今天的实时行情。\n\n2）账户对账于10月16日17:34:33完成，记录总资产171,697.67元、现金及可部署现金121,196.87元。实际持仓为纳指ETF（159941）12,200份、能源化工ETF（159981）8,500份、创新药ETF（159992）17,200份；记录中没有待处理委托。账户事实的行情时点为15:00，结论不覆盖其后的账户变化。\n\n3）10月17日07:34的系统汇总为READY，市场、账户、风险、收盘复核、决策准备和生命周期组件均标记可用；但完整系统一致性检查最近记录为9月29日PASS，时效不足以证明今天已重新完成全量检查。\n\n4）风险指标约为-7.2959%。Dashboard标注估值as-of为9月23日；系统汇总称风险重建可用于10月16日，但底层策略权益记录仍显示待最新估值。估值截止时点尚未得到一致核实，不能仅凭READY标签认定风险数值足够新。\n\n【今日决策链准备度】\n\n1）10月16日完整日复盘记录：当节点没有对象取得机会ETF资格，新增部署为0元，现金是新增资本比较中的主用途；该复盘不是新的买卖许可。\n\n2）同一复盘列出11只Discovery评估对象；Dashboard另列11只正式观察ETF。数量相同不代表对象或身份相同。发现对象不会自动成为观察ETF或机会ETF；观察ETF也不自动获得交易资格。\n\n3）复盘记录提及创新药ETF（159992）既有退出建议待后续正式判断及真实成交确认。该建议不等于订单，也不构成本次复核的卖出结论。Dashboard显示的最近正式决策时点与复盘引用的较晚决策记录不一致，需在后续正式判断链按当时current main核对。\n\n【需要用户处理】\n\n目前无需补交账户资料，也无需因本次系统复核执行交易。若10月16日17:34之后发生了新的成交、转账或账户变化，应在下一次正式分析前按既有账户事实入口更新。\n\n【今日重点关注】\n\n1）保留风险数据日期口径、系统一致性检查时效，以及Dashboard与复盘所引正式决策时点不一致这三项待核事项；它们影响后续判断的事实可信度，但本次不据此新增交易结论。\n\n2）海外行情对象记录质量为PASS，但海外运行健康状态为DEGRADED，原因包含调度身份不明确及部分亚洲市场数据时点较早。下个交易日前应以新运行记录判断其对分析准备的影响。\n\n【下一阶段】\n\n下一交易日先确认正式行情与账户事实时点，再核对风险估值日期、系统一致性状态和正式判断记录。持仓、观察ETF、当日机会ETF、Discovery候选、现金及可释放资本仍须分别比较，身份或发现结果本身不产生交易许可。\n\n【执行状态】\n\n本次系统事实复核已完成。没有创建Formal Decision请求，没有形成新的买卖判断、金额或份额，也没有修改规则、权限、数据源、监控范围、代码或调度。\n\n【置信度】\n\n中。账户、收盘行情和10月16日复盘记录的时点明确；风险估值有效日期、全量一致性时效及正式决策记录之间仍有未核实之处。\n\n【最可能出错的地方】\n\n把系统汇总READY理解为所有事实都已及时复核；把11个Discovery评估对象当成11只观察ETF或机会ETF；或把创新药ETF（159992）的既有退出建议当成可直接执行的订单。"
+  }
+}
