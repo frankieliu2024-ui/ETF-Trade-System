@@ -75,6 +75,7 @@ jobs:
       FORMAL_REPLAY_REQUEST: ${{ github.event.inputs.formal_replay_request || '' }}
       ETF_FORMAL_REPLAY_FORENSIC: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.formal_replay_request != '' && github.event.inputs.formal_replay_forensic == 'true' && '1' || '0' }}
       FORMAL_CONTEXT_RECOVERY_REQUEST: ${{ github.event.inputs.formal_context_recovery_request || '' }}
+      GITHUB_EVENT_INPUTS_NODE: ${{ github.event.inputs.node || '' }}
       SCHEDULED_CRON: ${{ github.event.schedule || '' }}
     steps:
       - uses: actions/checkout@v5
@@ -1161,14 +1162,14 @@ jobs:
       - name: Build post-market review context
         # Review is a close/state-sync consumer, not a generic intraday pulse
         # responsibility. Explicit/manual close remains a legal recovery path.
-        if: ${{ always() && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.state_sync.outputs.processed == 'true' || (steps.snapshot_result.outputs.snapshot_written == 'true' && (steps.session_gate.outputs.close_intent == 'true' || github.event.inputs.node == 'close')) || steps.state_sync.outputs.formal_post_close_review == 'true') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.state_sync.outputs.processed == 'true' || (steps.snapshot_result.outputs.snapshot_written == 'true' && (steps.session_gate.outputs.close_intent == 'true' || github.event.inputs.node == 'close')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close') || steps.state_sync.outputs.formal_post_close_review == 'true') && github.event.inputs.probe_only != 'true' }}
         continue-on-error: true
         run: python scripts/build_post_market_review.py
       - name: Rebuild E2E usability state after close-review projection
         # The close-review producer must publish before the E2E consumer reads
         # closure/evidence/business-completion state; otherwise stale or future
         # close_review data can survive in e2e_status.
-        if: ${{ always() && steps.query_context.outcome == 'success' && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.query_context.outcome == 'success' && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_e2e_status.py
       - name: Commit downstream runtime/data artifacts
         # A failed close-derived refresh must not publish a mixed generation
