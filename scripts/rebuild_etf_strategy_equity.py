@@ -67,6 +67,26 @@ def _load_prices(root: Path, price_dir: Path | None = None):
             if close is None:
                 close = row.get("close_price")
             prices[market_date][code] = _f(close, f"{market_date}/{code}/close")
+    # Historical daily-feature files can predate an ETF's admission to the
+    # monitored universe.  Preserve the canonical close semantics by filling
+    # only missing object/date pairs from the quality-passed canonical market
+    # snapshot for the same date; never overwrite a research feature row.
+    snapshot_dir = root / "data" / "market" / "snapshots"
+    for path in sorted(snapshot_dir.glob("*.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if str(payload.get("quality_status") or "PASS").upper() != "PASS":
+            continue
+        market_date = str(payload.get("market_date") or "")
+        if not market_date:
+            continue
+        for row in payload.get("rows") or []:
+            if str(row.get("quality_status") or "PASS").upper() != "PASS":
+                continue
+            code = str(row.get("symbol") or "").strip()
+            if code and code not in prices[market_date]:
+                close = row.get("close")
+                if close is not None:
+                    prices[market_date][code] = _f(close, f"{market_date}/{code}/close")
     return prices
 
 

@@ -1135,6 +1135,7 @@ jobs:
           fi
 
       - name: Refresh close-derived research and risk evidence
+        id: risk_refresh
         # A close review may not consume a stale derived-risk snapshot. Build the
         # date-aligned feature, replay valuation and risk evidence from the same
         # canonical close before the downstream decision-ready context reuses it.
@@ -1170,7 +1171,9 @@ jobs:
         continue-on-error: true
         run: python scripts/build_post_market_review.py
       - name: Commit downstream runtime/data artifacts
-        if: ${{ always() && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success' || steps.state_sync.outputs.processed == 'true') }}
+        # A failed close-derived refresh must not publish a mixed generation
+        # containing fresh market facts alongside stale risk/decision state.
+        if: ${{ always() && steps.risk_refresh.outcome != 'failure' && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success' || steps.state_sync.outputs.processed == 'true') }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
