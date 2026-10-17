@@ -154,6 +154,15 @@ jobs:
           else
             echo "No changed production Python files."
           fi
+      - name: Run full system consistency check
+        shell: bash
+        env:
+          ETF_CONSISTENCY_REPORT_PATH: ${{ runner.temp }}/system_consistency.json
+        run: |
+          set -euo pipefail
+          python scripts/check_system_consistency.py
+          test -s "$ETF_CONSISTENCY_REPORT_PATH"
+
       - name: Validate OpenSSL SM4 runtime dependency
         shell: bash
         run: |
@@ -174,5 +183,5 @@ jobs:
         with:
           name: system-consistency-${{ github.run_id }}
           path: ${{ runner.temp }}/system_consistency.json
-          if-no-files-found: ignore
+          if-no-files-found: error
 
