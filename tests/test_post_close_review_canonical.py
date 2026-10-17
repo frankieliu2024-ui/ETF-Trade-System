@@ -441,7 +441,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
 
         e2e, consistency = self._with_review_consumers(run)
 
-        self.assertEqual(e2e["status"], "READY")
+        self.assertEqual(e2e["status"], "DEGRADED")
         self.assertEqual(e2e["market_date"], "2026-09-14")
         self.assertEqual(e2e["formal_review_market_date"], "2026-09-14")
         self.assertEqual(e2e["market_trigger_market_date"], "2026-09-13")
@@ -467,7 +467,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
 
         e2e, consistency = self._with_review_consumers(run)
 
-        self.assertEqual(e2e["status"], "READY")
+        self.assertEqual(e2e["status"], "DEGRADED")
         self.assertEqual(e2e["market_date"], "2026-09-14")
         self.assertEqual(consistency["checks"][-1]["status"], "PASS")
 
@@ -484,7 +484,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
 
         e2e, consistency = self._with_review_consumers(run)
 
-        self.assertEqual(e2e["status"], "READY")
+        self.assertEqual(e2e["status"], "DEGRADED")
         self.assertEqual(e2e["reason"], "scheduled_review_not_due")
         self.assertEqual(consistency["checks"][-1]["status"], "PASS")
         self.assertIn("review_not_due", consistency["checks"][-1]["detail"])

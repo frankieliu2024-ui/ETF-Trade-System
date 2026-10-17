@@ -469,8 +469,9 @@ def send(token: str, title: str, content: str, *, template: str = "markdown") ->
                 body = json.loads(raw)
             except json.JSONDecodeError:
                 body = {"raw": raw[:500]}
-            ok = response.status == 200 and int(body.get("code", 0) or 0) == 200
-            return ok, {"http_status": response.status, "pushplus_code": body.get("code"), "pushplus_message": body.get("msg")}
+            http_status = int(getattr(response, "status", None) or response.getcode())
+            ok = http_status == 200 and int(body.get("code", 0) or 0) == 200
+            return ok, {"http_status": http_status, "pushplus_code": body.get("code"), "pushplus_message": body.get("msg")}
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
         return False, {"error": type(exc).__name__, "message": str(exc)[:300]}
 
