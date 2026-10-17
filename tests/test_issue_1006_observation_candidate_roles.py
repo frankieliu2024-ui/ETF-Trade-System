@@ -152,5 +152,21 @@ class ObservationCandidateRoleContractTest(unittest.TestCase):
             })
 
 
+    def test_canonical_registry_backfills_required_thesis_for_current_observations(self) -> None:
+        from scripts.build_query_context import _latest_observation_thesis_state
+
+        state = _latest_observation_thesis_state(
+            __import__("scripts.build_query_context", fromlist=["ROOT"]).ROOT,
+            {"588000", "159781"},
+        )
+        required = {"name", "thscode", "thesis", "falsifier", "next_decision_information", "information_value_reason"}
+        self.assertEqual(state["588000"]["thscode"], "588000.SH")
+        self.assertEqual(state["159781"]["thscode"], "159781.SZ")
+        for code in ("588000", "159781"):
+            self.assertTrue(required.issubset(state[code]))
+            self.assertTrue(all(str(state[code][key]).strip() for key in required))
+
+
+
 if __name__ == "__main__":
     unittest.main()
