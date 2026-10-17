@@ -255,7 +255,8 @@ def _validate_formal_risk_precedence(report: dict) -> None:
         from build_e2e_status import risk_component
     except ModuleNotFoundError:
         from scripts.build_e2e_status import risk_component
-    e2e_risk = risk_component(equity, current).get("etf_strategy_risk_pct")
+    risk_evidence = _read_json("data/state/skfolio_risk_evidence.json")
+    e2e_risk = risk_component(equity, current, risk_evidence).get("etf_strategy_risk_pct")
     dashboard_risk = float(match.group(1)) if match else None
     mismatches = []
     if dashboard_risk is None or abs(dashboard_risk - formal_risk) > 0.03:
