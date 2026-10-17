@@ -60,8 +60,12 @@ on:
 permissions:
   contents: write
 
+# Each wake has its own runner. Canonical event/report/notification dedupe remains
+# the single duplicate-suppression boundary; notification state persistence already
+# merges against latest main with bounded retries. A global group here serialized
+# unrelated task runs and caused avoidable queue/cancel/retry noise.
 concurrency:
-  group: etf-decision-notification
+  group: etf-decision-notification-${{ github.run_id }}
   cancel-in-progress: false
 
 jobs:
